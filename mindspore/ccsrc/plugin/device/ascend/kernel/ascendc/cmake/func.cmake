@@ -117,8 +117,8 @@ function(add_npu_support_target)
 endfunction()
 
 function(add_bin_compile_target)
-  cmake_parse_arguments(BINCMP "" "TARGET;OPS_INFO;COMPUTE_UNIT;IMPL_DIR;ADP_DIR;OUT_DIR;INSTALL_DIR;OPC_PATH" ""
-    ${ARGN})
+  cmake_parse_arguments(BINCMP
+    "" "TARGET;OPS_INFO;COMPUTE_UNIT;IMPL_DIR;ADP_DIR;OUT_DIR;INSTALL_DIR;OPC_PATH;OPP_PATH" "" ${ARGN})
   file(MAKE_DIRECTORY ${BINCMP_OUT_DIR}/src)
   file(MAKE_DIRECTORY ${BINCMP_OUT_DIR}/bin)
   file(MAKE_DIRECTORY ${BINCMP_OUT_DIR}/gen)
@@ -147,12 +147,17 @@ function(add_bin_compile_target)
   )
   add_dependencies(binary ${BINCMP_TARGET}_gen_ops_config)
   file(GLOB bin_scripts ${BINCMP_OUT_DIR}/gen/*.sh)
+  set(USING_OPS "AllFinite")
   foreach(bin_script ${bin_scripts})
     get_filename_component(bin_file ${bin_script} NAME_WE)
     string(REPLACE "-" ";" bin_sep ${bin_file})
     list(GET bin_sep 0 op_type)
     list(GET bin_sep 1 op_file)
     list(GET bin_sep 2 op_index)
+    list(FIND USING_OPS ${op_type} kidx)
+    if(kidx LESS 0)
+      continue()
+    endif()
     if(NOT TARGET ${BINCMP_TARGET}_${op_file}_copy)
       file(MAKE_DIRECTORY ${BINCMP_OUT_DIR}/bin/${op_file})
       add_custom_target(${BINCMP_TARGET}_${op_file}_copy ALL
@@ -167,6 +172,7 @@ function(add_bin_compile_target)
     endif()
     add_custom_target(${BINCMP_TARGET}_${op_file}_${op_index} ALL
                       COMMAND export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION="python" &&
+                      export PYTHONPATH=${BINCMP_OPP_PATH}:${PYTHONPATH} &&
                       export HI_PYTHON=${ASCEND_PYTHON_EXECUTABLE} &&
                       bash ${bin_script} ${BINCMP_OUT_DIR}/src/${op_type}.py ${BINCMP_OUT_DIR}/bin/${op_file}
                       ${BINCMP_OPC_PATH} && echo $(MAKE) WORKING_DIRECTORY ${BINCMP_OUT_DIR}

@@ -168,7 +168,7 @@ class AllFinite : public OpDef {
 
     this->AICore().SetTiling(optiling::TilingFunc);
 
-    this->AICore().AddConfig("ascend910b");
+    this->AICore().AddConfig("ascend910").AddConfig("ascend910b").AddConfig("ascend310p");
   }
 };
 

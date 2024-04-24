@@ -103,7 +103,7 @@ def create_np_inputs(cache, update, batch_index):
     return cache.asnumpy(), update.asnumpy(), batch_index.asnumpy()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @test_utils.run_test_with_On
