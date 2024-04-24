@@ -229,7 +229,7 @@ WeightQuantBatchMatmul: 'aclnnWeightQuantBatchMatmulV2'
 # 80
 
 # 81
-
+IndexSelectExt: 'aclnnIndexSelect'
 # 82
 
 # 83

@@ -1325,6 +1325,16 @@ REG_BPROP_BUILDER("IndexAdd").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib)
   return {dout, ib->OutZeros(indices), dy};
 });
 
+REG_BPROP_BUILDER("IndexSelectExt").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto index = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto zeros = ib->Emit("ZerosLikeExt", {input, ib->Value(static_cast<int64_t>(ib->GetDtypeId(dout)))});
+  auto dx = ib->Emit("IndexAddExt", {zeros, index, dout, axis, ib->Value<int64_t>(1LL)});
+  return {dx, ib->OutZeros(axis), ib->OutZeros(index)};
+});
+
 REG_BPROP_BUILDER("Logit").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto eps = ib->GetInput(kIndex1);
