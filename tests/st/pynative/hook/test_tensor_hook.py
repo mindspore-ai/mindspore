@@ -106,9 +106,16 @@ def test_tensor_backward_hook_with_weight():
     input_x = Tensor(np.array([1.0, 2.0, 3.0]), ms.float32)
     net1 = Net()
     ms_grad = GradOfAllParams(net1, False)
+    # First step
     output = ms_grad(input_x)
     assert np.allclose(output[0].asnumpy(), Tensor(np.array([2, 4, 6])).astype(np.float32).asnumpy(), 0.001, 0.001)
     assert np.allclose(output[1].asnumpy(), Tensor(np.array([2, 4, 6])).astype(np.float32).asnumpy(), 0.001, 0.001)
+
+    # Second step, no need register hook again
+    input_x = Tensor(np.array([2.0, 3.0, 4.0]), ms.float32)
+    output = ms_grad(input_x)
+    assert np.allclose(output[0].asnumpy(), Tensor(np.array([4, 6, 8])).astype(np.float32).asnumpy(), 0.001, 0.001)
+    assert np.allclose(output[1].asnumpy(), Tensor(np.array([4, 6, 8])).astype(np.float32).asnumpy(), 0.001, 0.001)
 
 
 class NetRemove(nn.Cell):

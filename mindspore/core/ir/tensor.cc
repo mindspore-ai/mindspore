@@ -251,7 +251,6 @@ bool Tensor::operator==(const Tensor &tensor) const {
 Tensor &Tensor::AssignValue(const Tensor &tensor) {
   if (this != &tensor) {
     BaseTensor::AssignValue(tensor);
-    BaseTensor::operator=(tensor);
     need_release_device_mem_ = tensor.need_release_device_mem_;
 
     // Need execute callback when update host value of Tensor.
