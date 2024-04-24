@@ -49,6 +49,10 @@ enum FFNInputIndex : size_t {
   kInputOffset,
   kInputDeqScale1,
   kInputDeqScale2,
+  kInputAntiquantScale1,
+  kInputAntiquantScale2,
+  kInputAntiquantOffset1,
+  kInputAntiquantOffset2,
   kMaxInputNumber,  // 10
 };
 
@@ -103,6 +107,11 @@ class FFNInfer : public abstract::OpInferBase {
     auto real_w1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(w1_shape)[kShape];
     auto w2_shape = input_args[kInputIndexW2]->BuildShape();
     auto real_w2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(w2_shape)[kShape];
+    auto input_type = input_args[kInputIndexW1]->GetType()->cast<TensorTypePtr>()->element();
+    if (input_type->type_id() == TypeId::kNumberTypeInt4) {
+      real_w1_shape[real_w1_shape.size() - 1] *= 2;
+      real_w2_shape[real_w2_shape.size() - 1] *= 2;
+    }
 
     constexpr int64_t x_mini_rank_size = 2;
     (void)CheckAndConvertUtils::CheckInteger("x shape rank", SizeToLong(real_shape.size()), kGreaterEqual,
