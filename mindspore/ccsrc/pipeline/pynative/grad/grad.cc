@@ -740,7 +740,7 @@ void GradExecutor::EndGraphInner(const py::object &obj, const py::object &out, c
   bool is_need_do_custom_grad = (input_args_info->has_custom_bprop && custom_bprop_cell_count_ == 0);
   bool is_custom_running = (input_args_info->grad_is_running && !bprop_grad_stack_.empty());
   if (is_top_cell || is_need_do_custom_grad || is_custom_running) {
-    forward()->WaitForwardTask();
+    runtime::OpExecutor::GetInstance().WaitAll();
     input_args_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(out, false);
     EndGraphImpl(input_args_info);
   }
