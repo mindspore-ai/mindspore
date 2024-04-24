@@ -34,6 +34,7 @@ class FwkCANNParser:
     def __init__(self, source_path: str, msprof_data: List, rank_id: int):
         source_path = validate_and_normalize_path(source_path)
         ProfilerInfoParser.init_source_path(source_path)
+        ProfilerInfoParser.init_rank_id(rank_id)
         fwk_parser = FwkFileParser(source_path, rank_id)
         msprof_timeline_parser = MsprofTimelineParser(msprof_data)
         self._fwk_op_data = fwk_parser.get_op_range_data()

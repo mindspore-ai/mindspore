@@ -842,6 +842,8 @@ class Profiler:
                 self._md_profiler.start()
             self._ascend_graph_start()
         ProfilerInfo.set_profiling_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        ProfilerInfo.set_system_time(int(c_expression.get_clock_time() * 1e3)) # cast us to ns
+        ProfilerInfo.set_system_cnt(c_expression.get_clock_syscnt())
 
     def stop(self):
         """

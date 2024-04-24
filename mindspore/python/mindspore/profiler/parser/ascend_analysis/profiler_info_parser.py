@@ -20,9 +20,9 @@ from subprocess import CalledProcessError, TimeoutExpired
 from subprocess import Popen, PIPE
 
 from mindspore import log as logger
-import mindspore._c_expression as c_expression
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 from mindspore.profiler.parser.ascend_analysis.constant import Constant
+from mindspore.profiler.parser.profiler_info import ProfilerInfo
 
 
 class ProfilerInfoParser:
@@ -37,6 +37,7 @@ class ProfilerInfoParser:
     # profiler information related files
     _source_prof_path = None
     _loaded_frequency = False
+    _rank_id = 0
 
     @classmethod
     def init_source_path(cls, source_path: str):
@@ -49,11 +50,14 @@ class ProfilerInfoParser:
         cls._source_prof_path = prof_path
 
     @classmethod
+    def init_rank_id(cls, rank_id):
+        """initialize the rank id."""
+        cls._rank_id = rank_id
+
+    @classmethod
     def get_local_time(cls, syscnt: int) -> Decimal:
         """Convert syscnt to local time."""
         if not cls._loaded_frequency:
-            localtime_stamp = c_expression.get_clock_time()
-            syscnt_stamp = c_expression.get_clock_syscnt()
             outs, _ = cls.__run_cmd(['which', cls._msprof_cmd])
             if not outs:
                 raise FileNotFoundError("Failed to find msprof command!")
@@ -70,8 +74,16 @@ class ProfilerInfoParser:
                 cls._freq = float(cpu_info.get("Frequency", cls._freq))
             except ValueError:
                 pass
-            cls._start_cnt = syscnt_stamp
-            cls._time_offset = localtime_stamp
+            profiler_info_path = os.path.join(cls._source_prof_path, os.path.pardir,
+                                              f"profiler_info_{cls._rank_id}.json")
+            if not os.path.isfile(profiler_info_path):
+                raise RuntimeError(f"Can`t find the file {profiler_info_path}, please check!")
+            with os.fdopen(os.open(profiler_info_path, os.O_RDONLY, 0o600), 'r') as fr:
+                profiler_info_data = json.load(fr)
+            cls._start_cnt = profiler_info_data.get('system_cnt')
+            cls._time_offset = profiler_info_data.get('system_time')
+            ProfilerInfo.set_system_time(cls._time_offset)
+            ProfilerInfo.set_system_cnt(cls._start_cnt)
             cls._loaded_frequency = True
         start_ns = cls.__get_timestamp(syscnt)
         start_us = Decimal(start_ns) / Constant.NS_TO_US
