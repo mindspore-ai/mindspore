@@ -207,7 +207,7 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
  * Ascend and update step number of online debugger GPU.
  */
 void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *, int total_running_count_) {
-  MS_LOG(INFO) << "Debug on step begin.";
+  MS_LOG(INFO) << "Debug on step end. total_running_count is: " << total_running_count_;
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->backend_policy();
@@ -220,7 +220,8 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
     }
     dump_flag = false;
   }
-  if (backend == "ge") {
+  auto is_kbk = context->IsKByKExecutorMode();
+  if (backend == "ge" && !is_kbk) {
     MS_LOG(INFO) << "On GE backend, debug_actor is not supported except for acl dump.";
     datadump::DumpGraphBoundary::GetInstance().DataDrop(device_ctx_);
     return;
@@ -245,6 +246,7 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
   }
 #ifndef ENABLE_SECURITY
   DumpJsonParser::GetInstance().UpdateDumpIter(step_count);
+  MS_LOG(INFO) << "UpdateDumpIter: " << step_count;
 #endif
 #endif
 }
