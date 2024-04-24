@@ -960,6 +960,7 @@ REG_FALLBACK_BUILDER("ReplicationPad3DGrad").SetBody(BODYFUNC(ib) {
 });
 
 REG_FALLBACK_BUILDER("Embedding").SetBody(BODYFUNC(ib) {
+  MS_LOG(ERROR) << "ABCCC";
   auto input = ib->GetInput(kIndex0);
   auto weight = ib->GetInput(kIndex1);
   auto padding_idx = ib->GetInput(kIndex2);
@@ -976,6 +977,11 @@ REG_FALLBACK_BUILDER("Embedding").SetBody(BODYFUNC(ib) {
 
     auto max_norm_double = static_cast<double>(GetValue<float>(max_norm_value));
     auto norm_type_double = static_cast<double>(GetValue<float>(norm_type_value));
+
+    if (max_norm_double < 0) {
+      MS_EXCEPTION(ValueError) << "For Embedding, the max_norm must be greater equal than 0, but got: "
+                               << max_norm_double << ".";
+    }
 
     // do EmbeddingRenorm
     auto new_input = ib->Emit(ops::kNameReshape, {input, ib->Value(std::vector<int64_t>{-1})});

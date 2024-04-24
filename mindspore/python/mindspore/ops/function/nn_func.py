@@ -7772,7 +7772,8 @@ def embedding(input, weight, padding_idx=None, max_norm=None, norm_type=2.0, sca
     Retrieve the word embeddings in `weight` using indices specified in `input`.
 
     .. warning::
-        On Ascend, the behavior is unpredictable when the value of input is invalid.
+        On Ascend, the behavior is unpredictable when the value of input is invalid and `max_norm` must be greater
+        equal than 0 if it is not ``None``.
 
     Args:
         input (Tensor): The indices used to lookup in the `weight`. The data type must be mindspore.int32 or

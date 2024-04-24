@@ -49,6 +49,10 @@ tensor::BaseTensorPtr EmbeddingAscendCustomize(const std::shared_ptr<OpRunner> &
     MS_EXCEPTION_IF_NULL(norm_type);
     if (max_norm.has_value()) {
       MS_EXCEPTION_IF_NULL(max_norm.value());
+      if (max_norm.value()->value() < 0) {
+        MS_EXCEPTION(ValueError) << "For Embedding, the max_norm must be greater equal than 0, but got: "
+                                 << max_norm.value()->value() << ".";
+      }
       LAUNCH_ACLNN(aclnnEmbeddingRenorm, device_context, op->stream_id(), weight, input,
                    static_cast<double>(max_norm.value()->value()), static_cast<double>(norm_type->value()));
     }

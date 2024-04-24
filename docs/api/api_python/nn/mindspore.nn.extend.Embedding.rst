@@ -8,7 +8,7 @@ mindspore.nn.extend.Embedding
     用于存储词向量并使用索引进行检索。层的输入是一个索引列表的Tensor，从权重中查询对应位置的embedding向量。
 
     .. warning::
-        在Ascend后端，`input` 的值非法将导致不可预测的行为。
+        在Ascend后端，`input` 的值非法将导致不可预测的行为，并且当 `max_norm` 非 ``None`` 时需满足 `max_norm >= 0` 。
 
     参数：
         - **num_embeddings** (int) - 词典的大小。
