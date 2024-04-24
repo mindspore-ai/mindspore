@@ -41,5 +41,15 @@ bool AclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std
   MS_EXCEPTION_IF_NULL(stream_ptr);
   return true;
 }
+
+std::vector<size_t> AclnnKernelMod::GetLaunchIgnoredInputAddressIdx() const {
+  static const std::map<std::string, std::vector<size_t>> launch_ignored_input_addr_idx = {
+    {kTransposeOpName, {kIndex1}}};
+  if (launch_ignored_input_addr_idx.count(kernel_name_) > 0) {
+    return launch_ignored_input_addr_idx.at(kernel_name_);
+  }
+  return {};
+}
+
 }  // namespace kernel
 }  // namespace mindspore
