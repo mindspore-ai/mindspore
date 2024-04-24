@@ -470,14 +470,6 @@ def test_net_normal_recompute():
     Expectation: Run successfully and the memory usage is reduced.
     """
 
-    class OuterBlock(Cell):
-        def __init__(self):
-            super(OuterBlock, self).__init__()
-            self.block = Block()
-
-        def construct(self, x):
-            return self.block(x)
-
     class Net(Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -499,6 +491,15 @@ def test_net_normal_recompute():
     grad_net(x)
 
 
+class OuterBlock(Cell):
+    def __init__(self):
+        super(OuterBlock, self).__init__()
+        self.block = Block()
+
+    def construct(self, x):
+        return self.block(x)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -508,14 +509,6 @@ def test_net_normal_recompute_function():
     Description: Each block is set recompute by the cell recompute api.
     Expectation: Run successfully and the memory usage is reduced.
     """
-
-    class OuterBlock(Cell):
-        def __init__(self):
-            super(OuterBlock, self).__init__()
-            self.block = Block()
-
-        def construct(self, x):
-            return self.block(x)
 
     class Net(Cell):
         def __init__(self):
@@ -538,3 +531,85 @@ def test_net_normal_recompute_function():
     net = Net()
     grad_net = ops.GradOperation()(net)
     grad_net(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_net_normal_recompute_sequential_cell():
+    """
+    Feature: Recompute function with normal block
+    Description: Each block is set recompute by the cell recompute api.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+
+    class Net(Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.blocks = nn.SequentialCell(OuterBlock(), OuterBlock(), OuterBlock())
+            self.blocks.recompute()
+
+        def construct(self, x):
+            out = self.blocks(x)
+            return out
+
+    x = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
+    net = Net()
+    grad_net = ops.GradOperation()(net)
+    grad_net(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_net_normal_recompute_not_tensor_input():
+    """
+    Feature: Recompute function with normal block
+    Description: Each block is set recompute by the cell recompute api.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+
+    class Net(Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.blocks = nn.SequentialCell(OuterBlock(), OuterBlock(), OuterBlock())
+            self.blocks.recompute()
+
+        def construct(self, x, y, z):
+            out = self.blocks(x)
+            return out
+
+    x = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
+    y = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
+    z = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
+    net = Net()
+    grad_net = ops.GradOperation()(net)
+    grad_net(x, None, (y, z))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_net_recompute_not_tensor_input():
+    """
+    Feature: Recompute function with normal block
+    Description: Each block is set recompute by the cell recompute api.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+
+    class Net(Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.block = OuterBlock()
+            self.block.recompute()
+
+        def construct(self, x, y, z):
+            out = self.block(x)
+            return out
+
+    x = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
+    y = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
+    z = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
+    net = Net()
+    grad_net = ops.GradOperation()(net)
+    grad_net(x, None, (y, z))

@@ -804,17 +804,19 @@ def gen_pyboost_inner_prim(work_path, op_yaml_data):
         gen_header += template.PYBOOST_PY_FUNC_IMPORT_HEADEAR.replace(class_name=op_proto.class_name)
         args = operator_data.get('args')
         input_args = []
+        processed_args = []
         process_func = ''
         for arg_name, arg_info in args.items():
             arg_handler = arg_info.get('arg_handler')
-            input_arg = arg_name
+            processed_arg = arg_name
             if arg_handler is not None and arg_handler != 'dtype_to_type_id':
                 process_func += f"""converted_{arg_name} = {arg_handler}({arg_name})\n"""
-                input_arg = 'converted_' + arg_name
-            input_args.append(input_arg)
-
+                processed_arg = 'converted_' + arg_name
+            input_args.append(arg_name)
+            processed_args.append(processed_arg)
         gen_py += template.PYTHON_PRIM_TEMPLATE.replace(class_name=op_proto.class_name, input_args=input_args,
-                                                        process_func=process_func, func_impl_name=operator_name)
+                                                        process_func=process_func, func_impl_name=operator_name,
+                                                        processed_args=processed_args)
     dir_path = os.path.join(work_path, "mindspore/python/mindspore/ops/auto_generate")
     pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
     dst_file_path = os.path.join(dir_path, "pyboost_inner_prim.py")

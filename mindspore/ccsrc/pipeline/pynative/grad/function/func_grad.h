@@ -65,14 +65,16 @@ class FuncBackwardNode : public BackwardNode {
 
 class HookBackwardNode : public BackwardNode {
  public:
-  HookBackwardNode(const string &name, PrimitivePyPtr prim, VectorRef &&args, size_t output_size)
-      : BackwardNode(name, output_size), prim_(std::move(prim)), args_(args) {}
+  HookBackwardNode(const string &name, PrimitivePyPtr prim, VectorRef &&args, size_t output_size,
+                   abstract::AbstractBasePtr out_abstract)
+      : BackwardNode(name, output_size), prim_(std::move(prim)), args_(args), out_abstract_(std::move(out_abstract)) {}
   ValuePtrList CallBackward(const ValuePtrList &grads) override;
   void Release() override;
 
  private:
   PrimitivePyPtr prim_;
   VectorRef args_;
+  abstract::AbstractBasePtr out_abstract_;
 };
 
 class GraphBackwardNode : public BackwardNode {

@@ -365,6 +365,14 @@ bool is_param_scalar(const size_t &param_shape_size, const size_t &input_shape_s
   }
   return false;
 }
+
+ValuePtrList ConvertVectorRefOutputs(const VectorRef &op_outputs) {
+  ValuePtrList op_ouputs;
+  for (auto value : op_outputs.elements_) {
+    (void)op_ouputs.emplace_back(utils::cast<ValuePtr>(value));
+  }
+  return op_ouputs;
+}
 }  // namespace
 
 BaseRef SessionBasic::CreateNodeOutputTensors(const AnfNodePtr &anf, const KernelGraphPtr &graph,
@@ -650,7 +658,12 @@ void SessionBasic::HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op
   MS_EXCEPTION_IF_NULL(op_output_map);
   MS_EXCEPTION_IF_NULL(graph_output_info);
   MS_EXCEPTION_IF_NULL(graph_output_info->graph_outputs);
-  auto output_values = common::AnfAlgo::TransformVectorRefToMultiValue(op_outputs);
+  ValuePtrList output_values;
+  if (common::AnfAlgo::IsBpropCutOpExecInBackend(kernel)) {
+    output_values = ConvertVectorRefOutputs(op_outputs);
+  } else {
+    output_values = common::AnfAlgo::TransformVectorRefToMultiValue(op_outputs);
+  }
   if (output_values.size() > op_outputs.size()) {
     MS_LOG(EXCEPTION) << "Op output contains tuple, node = " << kernel->DebugString();
   }

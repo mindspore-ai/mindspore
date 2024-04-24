@@ -140,7 +140,7 @@ struct DataConvert {
   static void FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_tensor_seq, std::vector<ValuePtr> *flatten_v);
   static void FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens);
   static ValuePtrList FlattenTensorSeqInValue(const ValuePtr &v);
-  static ValuePtrList FlattenTensorSeqInValueSeq(const ValuePtrList &v);
+  static ValuePtrList FlattenTensorSeqInValueSeq(const ValuePtrList &v, bool only_flatten_tensor = true);
   static void GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell);
   static void ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_run_info,
                                            const tensor::CSRTensorPtr &csr_tensor, const TopCellInfoPtr &top_cell,

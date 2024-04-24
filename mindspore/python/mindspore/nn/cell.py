@@ -20,7 +20,6 @@ import inspect
 import os
 import time
 from collections import OrderedDict
-from types import MethodType
 import numpy
 
 from mindspore._checkparam import args_type_check, check_hook_fn
@@ -43,8 +42,7 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.parallel.shard import Shard
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._decorator import deprecated
-from mindspore.ops.composite import GradOperation
-
+from mindspore.common._register_for_recompute import recompute_registry
 
 class Cell(Cell_):
     """
@@ -2346,7 +2344,7 @@ class Cell(Cell_):
                 Default: ``False`` .
         """
         if context.get_context("mode") == context.PYNATIVE_MODE:
-            self.recompute_cell = _RecomputeCell(self.construct)
+            self.recompute_cell = recompute_registry.get()(self.construct)
             return
         self._recompute()
         if 'mp_comm_recompute' in kwargs.keys():
@@ -2594,79 +2592,6 @@ class GraphCell(Cell):
             return self.compile_and_run(*args, **kwargs)
         append_input = Tensor((numpy.ones((1,)) * self._branch_control_input).astype(numpy.int32))
         return self.compile_and_run(*args, append_input, **kwargs)
-
-
-class _WrapCell(Cell):
-    """
-    The warp cell is used by recompute cell,
-    which can set mixed precision to warp cell
-    """
-    def __init__(self, function):
-        super(_WrapCell, self).__init__()
-        self.function = function
-
-    def construct(self, *args, **kwargs):
-        return self.function(*args)
-
-
-class _RecomputeCell(Cell):
-    """
-    Recompute cell, given the sub block, this cell will recompute the block, rather than
-    storing the intermediate activation computed in forward pass, we will recompute it in backward pass.
-    Note:
-     - RecomputeCell now only support pynative mode.
-     - When use recompute function, block object should not decorated by @jit.
-    """
-
-    def __init__(self, block):
-        """Initialize Recompute cell."""
-        super(_RecomputeCell, self).__init__()
-        self.args = []
-        self.kwargs = []
-        self.wrap_cell = _WrapCell(block)
-        self.net = block
-        self.internal_params = []
-        self._add_attr("is_cell_recompute", "True")
-        self.grad = GradOperation(get_all=True, get_by_list=True, sens_param=True)
-        self.init_mixed_precision_type(block)
-
-    def construct(self, *args, **kwargs):
-        self.args.append(args)
-        self.kwargs.append(kwargs)
-        return self.net(*args)
-
-    def bprop(self, *args):
-        """Customize bprop."""
-        grad_input = args[-1]
-        input_args = self.args[-1]
-        self.args.pop()
-        self.kwargs.pop()
-
-        try:
-            _pynative_executor.set_is_run_recompute(True)
-            grads = self.grad(self.net, self.internal_params)(*input_args, grad_input)
-            _pynative_executor.set_is_run_recompute(False)
-        except Exception as err:
-            _pynative_executor.clear_res()
-            raise err
-
-        weights = OrderedDict()
-        for i, param in enumerate(self.internal_params):
-            weights[param] = grads[1][i]
-        return grads[0], weights
-
-    def init_mixed_precision_type(self, block):
-        """Init mixed precision type."""
-        if isinstance(block, Cell):
-            self.internal_params = block.trainable_params()
-            return
-        if isinstance(block, MethodType) and isinstance(block.__self__, Cell):
-            self.internal_params = block.__self__.trainable_params()
-            self.wrap_cell.set_mixed_precision_type(block.__self__.get_mixed_precision_type())
-            self.net = self.wrap_cell
-        else:
-            raise TypeError("For Recompute cell, it not support FunctionType function, "
-                            "only support Cell object or MethodType function!")
 
 
 def _check_param_list_tuple(value):
