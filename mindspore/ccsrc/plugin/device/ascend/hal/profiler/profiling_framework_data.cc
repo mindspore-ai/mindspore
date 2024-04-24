@@ -118,8 +118,7 @@ std::vector<uint8_t> OpRangeData::encode() {
   return resultTLV;
 }
 
-void ProfilingFrameworkData::RecordLaunchGETaskBegin(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
+void ProfilingFrameworkData::RecordLaunchGETaskBegin(const std::string &scope_name) {
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
   if (!ascend_profiler->GetEnableFlag()) {
@@ -128,11 +127,10 @@ void ProfilingFrameworkData::RecordLaunchGETaskBegin(const CNodePtr &node) {
 
   int64_t start_ns = GetClockSyscnt();
   auto tid = syscall(SYS_gettid);
-  kernel_launch_begin_[std::to_string(tid) + "_" + node->fullname_with_scope()] = start_ns;
+  kernel_launch_begin_[std::to_string(tid) + "_" + scope_name] = start_ns;
 }
 
-void ProfilingFrameworkData::RecordGETask(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
+void ProfilingFrameworkData::RecordGETask(const std::string &scope_name) {
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
   if (!ascend_profiler->GetEnableFlag()) {
@@ -140,23 +138,22 @@ void ProfilingFrameworkData::RecordGETask(const CNodePtr &node) {
   }
 
   auto tid = syscall(SYS_gettid);
-  std::string full_scope_name = node->fullname_with_scope();
-  auto iter = kernel_launch_begin_.find(std::to_string(tid) + "_" + full_scope_name);
+  auto iter = kernel_launch_begin_.find(std::to_string(tid) + "_" + scope_name);
   if (iter == kernel_launch_begin_.end()) {
-    MS_LOG(WARNING) << "Do not find op info: " << full_scope_name;
+    MS_LOG(WARNING) << "Do not find op info: " << scope_name;
     return;
   }
   int64_t start_ns = iter->second;
   int64_t end_ns = GetClockSyscnt();
   int64_t sequence_number = 0;
-  uint64_t process_id = getpid();
+  uint64_t process_id = 0;
   uint64_t start_thread_id = static_cast<uint64_t>(tid);
   uint64_t end_thread_id = start_thread_id;
   uint64_t forward_thread_id = start_thread_id;
   bool is_async = false;
 
   OpRangeData report = OpRangeData(start_ns, end_ns, sequence_number, process_id, start_thread_id, end_thread_id,
-                                   forward_thread_id, is_async, full_scope_name, ProfilingFrameworkData::Device_Id);
+                                   forward_thread_id, is_async, scope_name, ProfilingFrameworkData::Device_Id);
   ProfilingDataDumper::GetInstance()->Report(std::make_unique<OpRangeData>(report));
 }
 

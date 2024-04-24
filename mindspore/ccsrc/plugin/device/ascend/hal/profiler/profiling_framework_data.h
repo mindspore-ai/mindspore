@@ -74,8 +74,8 @@ struct OpRangeData : BaseReportData {
 
 class ProfilingFrameworkData {
  public:
-  static void RecordLaunchGETaskBegin(const CNodePtr &node);
-  static void RecordGETask(const CNodePtr &node);
+  static void RecordLaunchGETaskBegin(const std::string &scope_name);
+  static void RecordGETask(const std::string &scope_name);
 
   inline static std::map<std::string, uint64_t> kernel_launch_begin_;
   inline static int32_t Device_Id = 0;
