@@ -819,6 +819,20 @@ class _AutoParallelContext:
                             .format(type(enable_parallel_optimizer)))
         self._context_handle.set_enable_parallel_optimizer(enable_parallel_optimizer)
 
+    def set_force_fp32_communication(self, force_fp32_communication):
+        """
+        Set enable/disable force fp32 communication.
+
+        Args:
+            set_force_fp32_communication (bool): Enable/disable force fp32 communication.
+        """
+        self.check_context_handle()
+        if not isinstance(force_fp32_communication, bool):
+            raise TypeError("For 'set_auto_parallel_context', "
+                            "the argument 'force_fp32_communication' must be bool, but got the type : {}."
+                            .format(type(force_fp32_communication)))
+        self._context_handle.set_force_fp32_communication(force_fp32_communication)
+
     def get_enable_fold_pipeline(self):
         """Get parallel optimizer flag."""
         self.check_context_handle()
@@ -879,6 +893,12 @@ class _AutoParallelContext:
         """Get parallel optimizer flag."""
         self.check_context_handle()
         return self._context_handle.get_enable_parallel_optimizer()
+
+    def get_force_fp32_communication(self):
+        """Get force fp32 communication flag."""
+        self.check_context_handle()
+        return self._context_handle.get_force_fp32_communication()
+
 
     def set_parallel_optimizer_config(self, parallel_optimizer_config):
         r"""
@@ -1221,6 +1241,7 @@ _set_auto_parallel_context_func_map = {
     "full_batch": auto_parallel_context().set_full_batch,
     "dataset_strategy": auto_parallel_context().set_dataset_strategy,
     "enable_parallel_optimizer": auto_parallel_context().set_enable_parallel_optimizer,
+    "force_fp32_communication": auto_parallel_context().set_force_fp32_communication,
     "parallel_optimizer_config": auto_parallel_context().set_parallel_optimizer_config,
     "pipeline_config": auto_parallel_context().set_pipeline_config,
     "grad_accumulation_step": auto_parallel_context().set_grad_accumulation_step,
@@ -1252,6 +1273,7 @@ _get_auto_parallel_context_func_map = {
     "full_batch": auto_parallel_context().get_full_batch,
     "dataset_strategy": auto_parallel_context().get_dataset_strategy,
     "enable_parallel_optimizer": auto_parallel_context().get_enable_parallel_optimizer,
+    "force_fp32_communication": auto_parallel_context().get_force_fp32_communication,
     "grad_accumulation_step": auto_parallel_context().get_grad_accumulation_step,
     "all_reduce_fusion_config": auto_parallel_context().get_all_reduce_fusion_split_indices,
     "communi_parallel_mode": auto_parallel_context().get_communi_parallel_mode,
@@ -1271,7 +1293,7 @@ _get_auto_parallel_context_func_map = {
                  grad_accumulation_step=int, all_reduce_fusion_config=list, group_ckpt_save_file=str,
                  communi_parallel_mode=str, optimizer_weight_shard_size=int, sharding_propagation=bool,
                  optimizer_weight_shard_aggregated_save=bool, enable_alltoall=bool, comm_fusion=dict,
-                 strategy_ckpt_config=dict)
+                 strategy_ckpt_config=dict, force_fp32_communication=bool)
 def _set_auto_parallel_context(**kwargs):
     """
     Set auto parallel context.
@@ -1319,6 +1341,9 @@ def _set_auto_parallel_context(**kwargs):
         full_batch (bool): Whether to load the whole batch on each device. Default: ``False``.
         dataset_strategy Union[str, tuple]: Dataset sharding strategy. Default: "data_parallel".
         enable_parallel_optimizer (bool): Enable using optimizer segmentation or not. Default: ``False``.
+        force_fp32_communication (bool): A switch that determines whether reduce operators (AllReduce, ReduceScatter)
+                        are forced to use the fp32 data type for communication during communication. True is the enable
+                        switch. Default: ``False`` .
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how
                         the devices are distributed alone the pipeline. The total devices will be divided into
@@ -1409,6 +1434,7 @@ def _reset_auto_parallel_context():
     - strategy_ckpt_load_file: ""
     - strategy_ckpt_save_file: ""
     - enable_parallel_optimizer: False
+    - force_fp32_communication: False
     - search_mode: 'recursive_programming
     - auto_parallel_search_mode: 'recursive_programming
     - sharding_propagation: False

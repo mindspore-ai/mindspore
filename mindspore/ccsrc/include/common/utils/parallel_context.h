@@ -173,6 +173,11 @@ class COMMON_EXPORT ParallelContext {
   }
   bool enable_parallel_optimizer() const { return enable_parallel_optimizer_; }
 
+  void set_force_fp32_communication(bool force_fp32_communication) {
+    force_fp32_communication_ = force_fp32_communication;
+  }
+  bool force_fp32_communication() const { return force_fp32_communication_; }
+
   bool enable_fold_pipeline() const { return pipeline_segment_split_num_ > 1; }
 
   void set_pipeline_segment_split_num(const int64_t segments);
@@ -264,6 +269,7 @@ class COMMON_EXPORT ParallelContext {
   std::string group_ckpt_save_file_;
   bool enable_parallel_optimizer_;
   bool enable_fold_pipeline_;
+  bool force_fp32_communication_;
   std::string communi_parallel_mode_;
   int64_t optimizer_weight_shard_size_;
   bool optimizer_weight_shard_aggregated_save_;
