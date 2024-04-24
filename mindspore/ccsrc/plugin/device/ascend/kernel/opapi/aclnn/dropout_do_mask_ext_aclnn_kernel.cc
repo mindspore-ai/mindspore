@@ -39,7 +39,7 @@ void DropoutDoMaskExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> 
     p_value_ = static_cast<double>(inputs[kIndex2]->GetValueWithCheck<float>());
   }
 
-  MS_LOG(DEBUG) << "(" + TypeIdToString(inputs[kIndex2]->dtype_id()) + ")p = " << p_value_;
+  MS_LOG(DEBUG) << primitive_->name() << " got a (" << TypeIdToString(inputs[kIndex2]->dtype_id()) << ")p " << p_value_;
 
   GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], p_value_, outputs[kIndex0]);
 }

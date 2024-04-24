@@ -1,0 +1,14 @@
+#operator index_select
+index_select:
+    args:
+        input:
+            dtype: tensor
+        axis:
+            dtype: int
+        index:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
