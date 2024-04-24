@@ -1509,6 +1509,8 @@ void DataConvert::FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_ten
   } else if (v->isa<ValueSequence>()) {
     const auto &v_vec = v->cast<ValueSequencePtr>()->value();
     if (v_vec.empty()) {
+      MS_LOG(DEBUG) << "Get empty tuple value";
+      (void)flatten_v->emplace_back(v);
       return;
     }
     if (is_only_flatten_tensor_seq && !v_vec.front()->isa<tensor::BaseTensor>()) {
@@ -1527,6 +1529,9 @@ void DataConvert::FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_ten
     } else {
       (void)flatten_v->emplace_back(v);
     }
+  } else {
+    MS_LOG(DEBUG) << "Get not tensor value: " << v->ToString();
+    (void)flatten_v->emplace_back(v);
   }
 }
 
@@ -1537,10 +1542,10 @@ ValuePtrList DataConvert::FlattenTensorSeqInValue(const ValuePtr &v) {
   return outputs;
 }
 
-ValuePtrList DataConvert::FlattenTensorSeqInValueSeq(const ValuePtrList &v) {
+ValuePtrList DataConvert::FlattenTensorSeqInValueSeq(const ValuePtrList &v, bool only_flatten_tensor) {
   ValuePtrList outputs;
   for (const auto &item : v) {
-    FlattenValueSeqArg(item, true, &outputs);
+    FlattenValueSeqArg(item, only_flatten_tensor, &outputs);
   }
   return outputs;
 }

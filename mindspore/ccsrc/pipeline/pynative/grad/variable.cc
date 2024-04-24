@@ -43,7 +43,7 @@ void BackwardNode::UpdateNextEdges(const ValuePtrList &inputs) {
 
 ValuePtrList BackwardNode::PostProcess(const ValuePtrList &gradient_value) {
   ValuePtrList gradients;
-  ValuePtrList flatten_values = PyNativeAlgo::DataConvert::FlattenTensorSeqInValueSeq(gradient_value);
+  ValuePtrList flatten_values = PyNativeAlgo::DataConvert::FlattenTensorSeqInValueSeq(gradient_value, false);
   gradients.reserve(flatten_values.size());
   for (const auto index : gradient_index_) {
     if (index >= flatten_values.size()) {

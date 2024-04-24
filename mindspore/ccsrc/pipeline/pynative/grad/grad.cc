@@ -1332,8 +1332,8 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
       forward_run = top_cell()->forward_already_run();
       bool input_args_changed = !top_cell()->input_args_id().empty() && top_cell()->input_args_id() != input_args_id;
       if (forward_run && input_args_changed) {
-        MS_LOG(WARNING) << "The input info " << input_args_id << " is not the same with pre input info "
-                        << top_cell()->input_args_id() << ", forward process will run again";
+        MS_LOG(DEBUG) << "The input info " << input_args_id << " is not the same with pre input info "
+                      << top_cell()->input_args_id() << ", forward process will run again";
         forward_run = false;
         ClearParamGradInfo(top_cell());
       }

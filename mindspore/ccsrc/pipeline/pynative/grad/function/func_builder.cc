@@ -161,10 +161,10 @@ NodePtr FuncBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs)
   MS_LOG(DEBUG) << "Get output value size " << real_outputs.size() << ", "
                 << PyNativeAlgo::Common::PrintDebugInfo(real_outputs);
   ValuePtr value_result;
-  if (real_outputs.size() != kSizeOne) {
-    value_result = std::make_shared<ValueTuple>(std::move(real_outputs));
-  } else {
+  if (real_outputs.size() == kSizeOne && !op_runner_info.output_abs->isa<abstract::AbstractSequence>()) {
     value_result = real_outputs[kIndex0];
+  } else {
+    value_result = std::make_shared<ValueTuple>(std::move(real_outputs));
   }
   MS_EXCEPTION_IF_NULL(op_runner_info.output_abs);
   auto result = NewFuncNode(value_result, op_runner_info.output_abs, InputType::kOpOutput);
@@ -220,7 +220,22 @@ NodePtr FuncBuilder::TupleGetItem(const NodePtr &input, size_t i) {
   return NewFuncNode(seq->value()[i], item_abs, input->input_type());
 }
 
-NodePtr FuncBuilder::OutZeros(const NodePtr &node) { return NewFuncNode(kNone, nullptr, InputType::kConstant); }
+NodePtr FuncBuilder::OutZeros(const NodePtr &node) {
+  if (!node->Value()->isa<ValueSequence>()) {
+    return NewFuncNode(kNone, nullptr, InputType::kConstant);
+  }
+  auto val_seq = node->Value()->cast<ValueSequencePtr>();
+  if (val_seq->size() == kSizeZero) {
+    return NewFuncNode(kNone, nullptr, InputType::kConstant);
+  }
+  const auto &value = val_seq->value()[kIndexZero];
+  if (!value->isa<tensor::BaseTensor>()) {
+    return NewFuncNode(kNone, nullptr, InputType::kConstant);
+  } else {
+    ValuePtrList values(val_seq->size(), kNone);
+    return NewFuncNode(std::make_shared<ValueTuple>(values), nullptr, InputType::kConstant);
+  }
+}
 
 ValuePtr FuncBuilder::Ones(const ValuePtr &value) {
   auto ones_abs = PyNativeAlgo::Common::SetAbstractValueToAnyValue(value->ToAbstract());
