@@ -48,8 +48,7 @@ mindspore::HashMap<std::string, std::string> IOFormatMap::io_format_map_ = {{"BN
                                                                             {"Conv3DTranspose", "format"},
                                                                             {"DepthToSpace", "format"},
                                                                             {"DeformableOffsetsGrad", "format"},
-                                                                            {"ExtractVolumePatches", "format"},
-                                                                            {"Conv2DTransposeV2", "NCHW"}};
+                                                                            {"ExtractVolumePatches", "format"}};
 mindspore::HashMap<std::string, std::string> &IOFormatMap::get() { return io_format_map_; }
 }  // namespace transform
 }  // namespace mindspore

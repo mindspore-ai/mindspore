@@ -22,7 +22,6 @@
 #include <mutex>
 #include <string>
 #include <memory>
-#include <utility>
 #include "include/errorcode.h"
 
 namespace mindspore::kernel {
@@ -46,8 +45,8 @@ class AclMemManager {
     static AclMemManager instance;
     return instance;
   }
-  STATUS UpdateWorkspace(size_t work_size, size_t weight_size, int32_t device_id);
-  STATUS GetModelWorkMem(AclModelMemInfo *acl_work_mem_info, int32_t device_id);
+  void UpdateWorkspace(size_t work_size, size_t weight_size);
+  STATUS GetModelWorkMem(AclModelMemInfo *acl_work_mem_info);
   STATUS GetModelWeightMem(AclModelMemInfo *acl_weight_mem_info);
   void Lock() { return acl_execute_mutex_.lock(); }
   void Unlock() { return acl_execute_mutex_.unlock(); }
@@ -55,7 +54,7 @@ class AclMemManager {
  private:
   std::mutex acl_mem_alloc_mutex_;
   std::mutex acl_execute_mutex_;
-  std::map<int32_t, std::pair<AclModelMemInfo, bool>> work_mem_info_map_;
+  AclModelMemInfo work_mem_info_ = {nullptr, 0};
   AclModelMemInfo weight_mem_info_ = {nullptr, 0};
 };
 }  // namespace acl

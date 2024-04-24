@@ -558,11 +558,7 @@ bool ModelProcess::Load(const void *om_data, size_t om_data_size) {
       return false;
     }
     MS_LOG(INFO) << "work_size: " << work_size << " weight_size: " << weight_size;
-    auto ret = AclMemManager::GetInstance().UpdateWorkspace(work_size, weight_size, device_id_);
-    if (ret != lite::RET_OK) {
-      MS_LOG(ERROR) << "update workspace failed, ret = " << ret;
-      return false;
-    }
+    AclMemManager::GetInstance().UpdateWorkspace(work_size, weight_size);
     return true;
   } else if (options_->multi_model_sharing_mem) {
     MS_LOG(INFO) << "using sharing mem by model group.";
@@ -572,7 +568,7 @@ bool ModelProcess::Load(const void *om_data, size_t om_data_size) {
       return false;
     }
     AclModelMemInfo acl_work_mem_info;
-    auto ret = AclMemManager::GetInstance().GetModelWorkMem(&acl_work_mem_info, device_id_);
+    auto ret = AclMemManager::GetInstance().GetModelWorkMem(&acl_work_mem_info);
     if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "Get work mem failed.";
       return ret;
