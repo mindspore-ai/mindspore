@@ -159,7 +159,6 @@ class InternalRealDiv : public ElewiseBinary {
   }
 };
 
-MS_INTERNAL_KERNEL_FACTORY_REG(Add, InternalAdd);
 MS_INTERNAL_KERNEL_FACTORY_REG(Sub, InternalSub);
 MS_INTERNAL_KERNEL_FACTORY_REG(Equal, InternalEqual);
 MS_INTERNAL_KERNEL_FACTORY_REG(Less, InternalLess);
