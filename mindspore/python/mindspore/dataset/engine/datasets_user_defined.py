@@ -19,6 +19,7 @@ After declaring the dataset object, you can further apply dataset operations
 (e.g. filter, skip, concat, map, batch) on it.
 """
 import builtins
+import copy
 import errno
 import math
 import os
@@ -115,33 +116,28 @@ def _cpp_sampler_fn_mp(sample_ids, sample_fn):
     return sample_fn.process(sample_ids)
 
 
-def _fill_worker_indices(workers, indices, idx):
+def _fill_worker_indices(workers, indices, idx_cursor, worker_to_quit):
     """
-    Worker index queue filler, fill worker index queue in round robin order.
-    """
-    num_worker = len(workers)
-    while idx < len(indices):
-        try:
-            workers[idx % num_worker].put(indices[idx])
-            idx += 1
-        except queue.Full:
-            break
-    return idx
-
-
-def _fill_worker_quit_flag(workers, worker_to_quit):
-    """
-    Worker index queue filler, fill worker index queue with QUIT flag.
+    Worker index queue filler, fill worker index queue in round robin order or QUIT flag.
     """
     num_worker = len(workers)
-    for i in range(num_worker):
-        # just put only one QUIT flag to the sub-thread / sub-process
-        if str(i) not in worker_to_quit:
+    if idx_cursor < len(indices):
+        while idx_cursor < len(indices):
             try:
-                workers[i].put("QUIT")
-                worker_to_quit[str(i)] = "QUIT"
+                workers[idx_cursor % num_worker].put(indices[idx_cursor])
+                idx_cursor += 1
             except queue.Full:
-                continue
+                break
+    else:
+        for i in range(num_worker):
+            # just put only one QUIT flag to the sub-thread / sub-process
+            if str(i) not in worker_to_quit:
+                try:
+                    workers[i].put("QUIT")
+                    worker_to_quit[str(i)] = "QUIT"
+                except queue.Full:
+                    continue
+    return idx_cursor, worker_to_quit
 
 
 def _convert_row(row):
@@ -248,6 +244,13 @@ class SamplerFn:
             self.workers.append(worker)
         self._launch_cleanup_worker(multi_process=multi_process)
 
+    def _interval_log(self, start_time, wait_count):
+        cost_time = int(time.time()) - start_time
+        if cost_time / self.check_interval >= wait_count:
+            wait_count += 1
+            self._log_stuck_warning(self.workers[i % self.num_worker], cost_time)
+        return wait_count
+
     def process(self, indices):
         """
         The main process, start the child process or child thread, and fill the index queue.
@@ -267,10 +270,9 @@ class SamplerFn:
 
         # Fill initial index queues
         idx_cursor = 0
-        idx_cursor = _fill_worker_indices(self.workers, indices, idx_cursor)
-
         # worker to quit
         worker_to_quit = {}
+        idx_cursor, worker_to_quit = _fill_worker_indices(self.workers, indices, idx_cursor, worker_to_quit)
 
         # Fetch results
         for i in range(len(indices)):
@@ -292,11 +294,16 @@ class SamplerFn:
                         self._stop_subprocess()
                         return
                     time.sleep(0.1)
-                    cost_time = int(time.time()) - start_time
-                    if cost_time / self.check_interval >= wait_count:
-                        wait_count += 1
-                        self._log_stuck_warning(self.workers[i % self.num_worker], cost_time)
+                    wait_count = self._interval_log(start_time, wait_count)
                 result = self.workers[i % self.num_worker].get()
+                # Because there is no need to copy when creating Tensors in the C++layer, it reduces the time
+                # from np.ndarray to C++Tensor creation. However, when using shared memory in multiple processes,
+                # the address of the shared memory will always be passed to subsequent nodes in the dataset pipeline,
+                # and the shared memory will also be written by the current node, causing dirty data to be accessed
+                # by subsequent nodes in the pipeline. So make a memory copy here to solve the problem of
+                # shared memory being contaminated.
+                if self.multi_process is True and get_enable_shared_mem():
+                    result = copy.deepcopy(result)
                 if isinstance(result, ExceptionHandler):
                     result.reraise()
             except queue.Empty:
@@ -308,11 +315,9 @@ class SamplerFn:
             if self.eof.is_set():
                 self._stop_subprocess()
                 return
-            if idx_cursor < len(indices):
-                idx_cursor = _fill_worker_indices(self.workers, indices, idx_cursor)
-            else:
-                # send QUIT flag to workers
-                _fill_worker_quit_flag(self.workers, worker_to_quit)
+
+            idx_cursor, worker_to_quit = _fill_worker_indices(self.workers, indices, idx_cursor, worker_to_quit)
+
             yield _convert_row(result)
 
     def _log_stuck_warning(self, worker, waiting_time):

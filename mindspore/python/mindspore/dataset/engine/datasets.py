@@ -3203,6 +3203,14 @@ class _MPWorker(multiprocessing.Process):
                     logger.warning("Please `pip install py-spy` to get the stacks of the stuck process.")
             try:
                 res = self.pipe.master_receive()
+                # Because there is no need to copy when creating Tensors in the C++layer, it reduces the time
+                # from np.ndarray to C++Tensor creation. However, when using shared memory in multiple processes,
+                # the address of the shared memory will always be passed to subsequent nodes in the dataset pipeline,
+                # and the shared memory will also be written by the current node, causing dirty data to be accessed
+                # by subsequent nodes in the pipeline. So make a memory copy here to solve the problem of
+                # shared memory being contaminated.
+                if get_enable_shared_mem():
+                    res = copy.deepcopy(res)
             except queue.Empty:
                 continue
             if res is None:
