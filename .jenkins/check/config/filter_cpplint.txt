@@ -47,6 +47,7 @@
 "mindspore/mindspore/ccsrc/debug/data_dump/npy_header.h"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/hal/hardware/lowlatency_communication_group.h"       "build/include_subdir"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/hal/hardware/lowlatency_communication_group.h"       "build/namespaces"
+"mindspore/mindspore/ccsrc/backend/common/mem_reuse/mem_tracker.cc"                                 "whitespace/indent"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"

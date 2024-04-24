@@ -15,6 +15,7 @@
  */
 
 #include <algorithm>
+#include <utility>
 #include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
@@ -154,7 +155,7 @@ DeviceMemPtr AscendMemoryPool::AllocOverflowTensorMem(size_t size, bool from_per
 }
 
 size_t AscendMemoryPool::GetMaxUsedMemSize() const {
-  void *min_used_addr = GetMinUsedMemoryAddr();
+  void *min_used_addr = GetMinUsingMemoryAddr();
   if (min_used_addr == nullptr) {
     return 0;
   }
@@ -179,6 +180,12 @@ size_t AscendMemoryPool::FreeDeviceMemByEagerFree(const DeviceMemPtr addr, const
 
 bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {
   MS_EXCEPTION_IF_NULL(addr);
+  int64_t max_actual = ActualPeakStatistics();
+  MS_LOG(INFO) << "Max actual used memory size is " << max_actual;
+  AscendMemAdapter::GetInstance().UpdateActualPeakMemory(max_actual);
+  int64_t max_peak = UsedMemPeakStatistics();
+  MS_LOG(INFO) << "Max peak used memory size is " << max_peak;
+  AscendMemAdapter::GetInstance().UpdateUsedPeakMemory(max_peak);
   return AscendMemAdapter::GetInstance().FreeStaticDevMem(addr);
 }
 

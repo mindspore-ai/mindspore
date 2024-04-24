@@ -16,6 +16,7 @@
 
 #include "runtime/graph_scheduler/actor/control_flow/control_actor.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 #include "utils/profile.h"
 
 namespace mindspore {
@@ -416,6 +417,9 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
         {device_tensor->device_name(), device_tensor->device_id()});
       MS_EXCEPTION_IF_NULL(device_context);
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther, 0);
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "", "");
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(), device::tracker::MemType::kOther,
+                                                     device_tensor->GetSize(), device_tensor->kernel_tensor().get());
       auto data_stream_id = data->stream_id();
       auto device_tensor_stream_id = device_tensor->stream_id();
       if (device_tensor_stream_id != data_stream_id) {

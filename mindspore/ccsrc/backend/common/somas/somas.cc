@@ -1063,6 +1063,7 @@ void Somas::GraphOutputProcess(const session::KernelGraph &graph) {
         MS_EXCEPTION_IF_NULL(tensor);
         if (need_reuse_graph_output) {
           tensor->lifelong_value_ = kLifeLongGraphEnd;
+          tensor->is_graph_output_ = true;
         } else {
           tensor->aligned_size_ = 0;
           tensor->type_ = kGraphOutput;

@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_CPU_MEMORY_POOL_H_
 
 #include <memory>
+#include <string>
 #include "utils/ms_utils.h"
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 
@@ -36,6 +37,7 @@ class BACKEND_EXPORT CPUMemoryPool : public DynamicMemPoolBestFit {
   size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) override;
   bool FreeDeviceMem(const DeviceMemPtr &addr) override;
   size_t free_mem_size() override;
+  std::string GetMemoryPoolType() const override { return "CPU"; }
 
  private:
   CPUMemoryPool() = default;
