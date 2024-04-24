@@ -69,8 +69,9 @@ enum KernelType {
   kStaticShape = 0,
   kDynShape,
   kStaticParallel,
+  kStaticMix,
   kEager,
-  kKernelTmplEnd,
+  kKernelTypelEnd,
 };
 
 class NDObject;
@@ -128,6 +129,8 @@ class Kernel {
   NDObject *Copy(NDObject *input);
 
   NDObject *ElemAny(NDObject *input);
+
+  NDObject *MatMul(NDObject *lhs, NDObject *rhs, bool trans_a, bool trans_b);
 
   uint64_t CodeGen();
   int Launch(void *stream);
