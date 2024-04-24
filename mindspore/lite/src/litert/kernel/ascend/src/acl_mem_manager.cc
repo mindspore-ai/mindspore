@@ -15,7 +15,6 @@
  */
 
 #include "src/litert/kernel/ascend/src/acl_mem_manager.h"
-#include <utility>
 #include <memory>
 #include <algorithm>
 #include <map>
@@ -26,57 +25,33 @@
 
 namespace mindspore::kernel {
 namespace acl {
-STATUS AclMemManager::UpdateWorkspace(size_t work_size, size_t weight_size, int32_t device_id) {
-  auto it = work_mem_info_map_.find(device_id);
-  if (it == work_mem_info_map_.end()) {
-    AclModelMemInfo new_work_mem = {nullptr, 0};
-    work_mem_info_map_.insert(std::make_pair(device_id, std::make_pair(new_work_mem, false)));
-  } else if (it->second.second == true) {
-    MS_LOG(ERROR) << "Device " << device_id << " has alloc memory!";
-    return lite::RET_ERROR;
-  }
-
-  it = work_mem_info_map_.find(device_id);
-  if (it == work_mem_info_map_.end()) {
-    MS_LOG(ERROR) << "Get mem failed!";
-    return lite::RET_ERROR;
-  }
-
-  if (work_size > it->second.first.mem_size) {
-    it->second.first.mem_size = work_size;
-    MS_LOG(DEBUG) << "Update work_size = " << it->second.first.mem_size << " successful.";
+void AclMemManager::UpdateWorkspace(size_t work_size, size_t weight_size) {
+  if (work_size > work_mem_info_.mem_size) {
+    work_mem_info_.mem_size = work_size;
+    MS_LOG(DEBUG) << "Update work_size = " << work_size << " successful.";
   }
 
   if (weight_size > weight_mem_info_.mem_size) {
     weight_mem_info_.mem_size = weight_size;
     MS_LOG(DEBUG) << "Update weight_size = " << weight_size << " successful.";
   }
-  return lite::RET_OK;
 }
 
-STATUS AclMemManager::GetModelWorkMem(AclModelMemInfo *acl_work_mem_info, int32_t device_id) {
+STATUS AclMemManager::GetModelWorkMem(AclModelMemInfo *acl_work_mem_info) {
   std::unique_lock<std::mutex> acl_mtx(acl_mem_alloc_mutex_);
-
-  auto it = work_mem_info_map_.find(device_id);
-  if (it == work_mem_info_map_.end()) {
-    MS_LOG(ERROR) << "Get work mem failed!";
-    return lite::RET_ERROR;
-  }
-  it->second.second = true;
-
-  if (it->second.first.mem_addr == nullptr) {
-    if (it->second.first.mem_size == 0) {
+  if (work_mem_info_.mem_addr == nullptr) {
+    if (work_mem_info_.mem_size == 0) {
       return lite::RET_ERROR;
     }
     auto acl_ret =
-      CALL_ASCEND_API(aclrtMalloc, &(it->second.first.mem_addr), it->second.first.mem_size, ACL_MEM_MALLOC_HUGE_FIRST);
+      CALL_ASCEND_API(aclrtMalloc, &work_mem_info_.mem_addr, work_mem_info_.mem_size, ACL_MEM_MALLOC_HUGE_FIRST);
     if (acl_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Call aclrtMalloc failed, err_code = " << acl_ret;
       return lite::RET_ERROR;
     }
-    MS_LOG(DEBUG) << "Malloc max work size is " << it->second.first.mem_size;
+    MS_LOG(DEBUG) << "Malloc max work size is " << work_mem_info_.mem_size;
   }
-  *acl_work_mem_info = it->second.first;
+  *acl_work_mem_info = work_mem_info_;
   return lite::RET_OK;
 }
 
@@ -99,12 +74,10 @@ STATUS AclMemManager::GetModelWeightMem(AclModelMemInfo *acl_weight_mem_info) {
 }
 
 AclMemManager::~AclMemManager() {
-  for (auto &mem_info_pair : work_mem_info_map_) {
-    if (mem_info_pair.second.first.mem_addr != nullptr) {
-      (void)CALL_ASCEND_API(aclrtFree, mem_info_pair.second.first.mem_addr);
-      mem_info_pair.second.first.mem_addr = nullptr;
-      mem_info_pair.second.first.mem_size = 0;
-    }
+  if (work_mem_info_.mem_addr != nullptr) {
+    (void)CALL_ASCEND_API(aclrtFree, work_mem_info_.mem_addr);
+    work_mem_info_.mem_addr = nullptr;
+    work_mem_info_.mem_size = 0;
   }
   if (weight_mem_info_.mem_addr != nullptr) {
     (void)CALL_ASCEND_API(aclrtFree, weight_mem_info_.mem_addr);
