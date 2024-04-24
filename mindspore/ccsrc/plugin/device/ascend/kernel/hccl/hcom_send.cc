@@ -56,9 +56,14 @@ int HcomSendKernel::SendShapeForDynamic() {
 
     // rpc 2. lookuproute
     uint32_t src_rank = LongToUint(mindspore::parallel::ParallelContext::GetInstance()->global_rank());  // src rank id
+    int64_t sr_tag = -1;
+    if (primitive_->HasAttr(kAttrSrTag)) {
+      sr_tag = GetValue<int64_t>(primitive_->GetAttr(kAttrSrTag));
+    } else {
+      MS_LOG(EXCEPTION) << "Cannot find " << kAttrSrTag << " in attrs";
+    }
     std::string server_url_key = std::to_string(src_rank) + "_" + std::to_string(dest_rank_) + "_tag_" +
-                                 std::to_string(op_tag) + "_rpc_addr";  // rpc addr
-    op_tag++;
+                                 std::to_string(sr_tag) + "_rpc_addr";  // rpc addr
 
     auto node = distributed::cluster::ClusterContext::instance()->node();
     MS_EXCEPTION_IF_NULL(node);

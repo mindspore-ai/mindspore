@@ -518,6 +518,12 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
       base_shape_ptr = cnode->input(1)->Shape();
     }
   }
+  // If node is Depend, only first input should be used.
+  if (node->isa<CNode>() && IsPrimitiveCNode(node->cast<CNodePtr>(), prim::kPrimDepend)) {
+    auto depend_cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(depend_cnode->input(1));
+    return GetNodeShape(depend_cnode->input(1));
+  }
   if (base_shape_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "GetNodeShape: " << node->ToString() << " shape_ptr is nullptr, full name is "
                       << node->fullname_with_scope();
@@ -1530,6 +1536,27 @@ void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const st
       }
       next_cnode->AddPrimalAttr(kPrimalAttrMirrorUserId, comm_id);
     }
+  }
+}
+
+void AddNodeMirrorInfo(const CNodePtr &cnode, const std::string &param_name) {
+  auto comm_id = MakeValue<std::string>(param_name);
+  if (IsParallelCareNode(cnode)) {
+    cnode->AddPrimalAttr(kPrimalAttrMirrorUserId, comm_id);
+    return;
+  }
+  auto next_nodes = GetOutputNodesWithFilter(cnode, [&](const AnfNodePtr &anode) {
+    return IsPrimitiveCNode(anode, prim::kPrimLoad) || IsPrimitiveCNode(anode, prim::kPrimCast) ||
+           IsPrimitiveCNode(anode, prim::kPrimAllGather) || IsPrimitiveCNode(anode, prim::kPrimMirror) ||
+           IsPrimitiveCNode(anode, prim::kPrimMicroStepAllGather) ||
+           IsPrimitiveCNode(anode, prim::kPrimMirrorMicroStep) || IsPrimitiveCNode(anode, prim::kPrimMakeTuple);
+  });
+  for (auto &pair : next_nodes) {
+    if (!IsPrimitiveCNode(pair.first)) {
+      continue;
+    }
+    auto next_node = pair.first->cast<CNodePtr>();
+    next_node->AddPrimalAttr(kPrimalAttrMirrorUserId, comm_id);
   }
 }
 

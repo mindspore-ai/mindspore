@@ -70,9 +70,14 @@ int HcomReceiveKernel::ReceiveShapeForDynamic() {
     // The key of route is src_rank + "_" + dst_rank + "_tag_" + op_tag + "_rpc_addr"
     // The op_tag is used to identify multiple send/recv ops
     uint32_t kRemoteFuncId = 0;
+    int64_t sr_tag = -1;
+    if (primitive_->HasAttr(kAttrSrTag)) {
+      sr_tag = GetValue<int64_t>(primitive_->GetAttr(kAttrSrTag));
+    } else {
+      MS_LOG(EXCEPTION) << "Cannot find " << kAttrSrTag << " in attrs";
+    }
     std::string inter_process_edge_name = std::to_string(src_rank_) + "_" + std::to_string(dst_rank) + "_tag_" +
-                                          std::to_string(op_tag) + "_rpc_addr";  // rpc addr
-    op_tag++;
+                                          std::to_string(sr_tag) + "_rpc_addr";  // rpc addr
     MS_LOG(INFO) << "Start server for recv actor. Server address: " << server_url
                  << ", remote function id: " << kRemoteFuncId
                  << ", inter-process edge name: " << inter_process_edge_name;
