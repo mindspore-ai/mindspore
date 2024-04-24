@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-24 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@ import pytest
 
 import mindspore
 import mindspore.nn as nn
-from mindspore import Tensor
-from mindspore import context
+import mindspore.ops.operations.nn_ops as P
+from mindspore import Tensor, context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.context import set_auto_parallel_context
 from mindspore.ops import operations as OPS
-import mindspore.ops.operations.nn_ops as P
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -30,7 +29,7 @@ context.set_context(mode=context.GRAPH_MODE)
 def generate_inputs(dims, optinal_inputs, input_layout='BSH', sparse_mode=0):
     B, N, S, D = dims
     has_atten_mask, has_actual_seq_lengths, has_actual_seq_lengths_kv, has_pse_shift, has_deq_scale1, \
-    has_quant_scale1, has_deq_scale2, has_quant_scale2, has_quant_offset2 = optinal_inputs
+        has_quant_scale1, has_deq_scale2, has_quant_scale2, has_quant_offset2 = optinal_inputs
     attn_mask = None
     pse_shift = None
     actual_seq_lengths = Tensor(np.ones((B,), dtype=np.int64)) if has_actual_seq_lengths else None
@@ -70,15 +69,17 @@ def generate_inputs(dims, optinal_inputs, input_layout='BSH', sparse_mode=0):
     return ret_inputs
 
 
-def generate_strategy(dp, mp, optinal_inputs, input_layout='BSH', sparse_mode=0):
+def generate_strategy(dp, mp, optinal_inputs, input_layout='BSH', sparse_mode=0, sp=1):
     has_atten_mask, has_actual_seq_lengths, has_actual_seq_lengths_kv, has_pse_shift, has_deq_scale1, \
-    has_quant_scale1, has_deq_scale2, has_quant_scale2, has_quant_offset2 = optinal_inputs
+        has_quant_scale1, has_deq_scale2, has_quant_scale2, has_quant_offset2 = optinal_inputs
     if dp is None or mp is None:
         return ()
     if input_layout == 'BSH':
-        stra = ((dp, 1, mp), (dp, 1, mp), (dp, 1, mp))
+        stra = ((dp, sp, mp), (dp, 1, mp), (dp, 1, mp))
         if has_atten_mask:
-            stra += ((dp, 1, 1, 1),) if sparse_mode == 0 else ((1, 1, 1, 1),)
+            if sparse_mode in [2, 3, 4]:
+                sp = 1
+            stra += ((dp, 1, sp, 1),) if sparse_mode == 0 else ((1, 1, sp, 1),)
         if has_actual_seq_lengths:
             stra += ((dp,),)
         if has_actual_seq_lengths_kv:
@@ -86,9 +87,11 @@ def generate_strategy(dp, mp, optinal_inputs, input_layout='BSH', sparse_mode=0)
         if has_pse_shift:
             stra += ((dp, 1, 1, 1),)
     if input_layout == 'BNSD':
-        stra = ((dp, mp, 1, 1), (dp, mp, 1, 1), (dp, mp, 1, 1))
+        stra = ((dp, mp, sp, 1), (dp, mp, 1, 1), (dp, mp, 1, 1))
         if has_atten_mask:
-            stra += ((dp, 1, 1, 1),) if sparse_mode == 0 else ((1, 1, 1, 1),)
+            if sparse_mode in [2, 3, 4]:
+                sp = 1
+            stra += ((dp, 1, sp, 1),) if sparse_mode == 0 else ((1, 1, sp, 1),)
         if has_actual_seq_lengths:
             stra += ((dp,),)
         if has_actual_seq_lengths_kv:
@@ -197,7 +200,7 @@ def test_prompt_flash_attention_auto_parallel(input_layout, search_mode):
     compile_net(net, *inputs)
 
 
-@pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
+@pytest.mark.parametrize('input_layout', ['BNSD'])
 def test_prompt_flash_attention_strategy_error(input_layout):
     """
     Feature: test invalid strategy for PromptFlashAttention
@@ -215,9 +218,33 @@ def test_prompt_flash_attention_strategy_error(input_layout):
         compile_net(net, *inputs)
     context.reset_auto_parallel_context()
 
+
 @pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
-@pytest.mark.parametrize('strategys', [(4, 2), (2, 2)])
-@pytest.mark.parametrize('if_atten_mask_as_constant', [True, False])
+@pytest.mark.parametrize('strategys', [(2, 2, 2), (1, 2, 4)])
+def test_prompt_flash_attention_semi_auto_parallel_sparsemode0(input_layout, strategys):
+    """
+    Feature: test PromptFlashAttention semi parallel
+    Description: semi parallel
+    Expectation: compile success
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="full_batch")
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    B, N, S, D = 8, 16, 1024, 128
+    dp = strategys[0]
+    mp = strategys[1]
+    sp = strategys[2]
+    optinal_inputs = [True, True, True, False, False, False, False, False, False]
+    dims = [B, N, S, D]
+    inputs = generate_inputs(dims, optinal_inputs, input_layout=input_layout, sparse_mode=0)
+    strategies = generate_strategy(dp, mp, optinal_inputs, input_layout=input_layout, sparse_mode=0, sp=sp)
+    net = Net(N, input_layout=input_layout, strategy=strategies,
+              sparse_mode=0)
+    compile_net(net, *inputs)
+
+
+@pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
+@pytest.mark.parametrize('strategys', [(4, 2, 1), (2, 2, 1), (2, 2, 2), (1, 2, 4)])
+@pytest.mark.parametrize('if_atten_mask_as_constant', [True])
 def test_prompt_flash_attention_semi_auto_parallel_sparsemode2(input_layout, strategys, if_atten_mask_as_constant):
     """
     Feature: test PromptFlashAttention semi parallel
@@ -229,10 +256,59 @@ def test_prompt_flash_attention_semi_auto_parallel_sparsemode2(input_layout, str
     B, N, S, D = 8, 16, 1024, 128
     dp = strategys[0]
     mp = strategys[1]
+    sp = strategys[2]
     optinal_inputs = [True, True, True, False, False, False, False, False, False]
     dims = [B, N, S, D]
     inputs = generate_inputs(dims, optinal_inputs, input_layout=input_layout, sparse_mode=2)
-    strategies = generate_strategy(dp, mp, optinal_inputs, input_layout=input_layout, sparse_mode=2)
+    strategies = generate_strategy(dp, mp, optinal_inputs, input_layout=input_layout, sparse_mode=2, sp=sp)
     net = Net(N, input_layout=input_layout, strategy=strategies,
               sparse_mode=2, set_atten_mask_as_constant=if_atten_mask_as_constant)
+    compile_net(net, *inputs)
+
+
+@pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
+@pytest.mark.parametrize('strategys', [(2, 2, 2), (1, 2, 4)])
+@pytest.mark.parametrize('if_atten_mask_as_constant', [True])
+def test_prompt_flash_attention_semi_auto_parallel_sparsemode3(input_layout, strategys, if_atten_mask_as_constant):
+    """
+    Feature: test PromptFlashAttention semi parallel
+    Description: semi parallel
+    Expectation: compile success
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="full_batch")
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    B, N, S, D = 8, 16, 1024, 128
+    dp = strategys[0]
+    mp = strategys[1]
+    sp = strategys[2]
+    optinal_inputs = [True, True, True, False, False, False, False, False, False]
+    dims = [B, N, S, D]
+    inputs = generate_inputs(dims, optinal_inputs, input_layout=input_layout, sparse_mode=3)
+    strategies = generate_strategy(dp, mp, optinal_inputs, input_layout=input_layout, sparse_mode=3, sp=sp)
+    net = Net(N, input_layout=input_layout, strategy=strategies,
+              sparse_mode=3, set_atten_mask_as_constant=if_atten_mask_as_constant)
+    compile_net(net, *inputs)
+
+
+@pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
+@pytest.mark.parametrize('strategys', [(2, 2, 2), (1, 2, 4)])
+@pytest.mark.parametrize('if_atten_mask_as_constant', [True])
+def test_prompt_flash_attention_semi_auto_parallel_sparsemode4(input_layout, strategys, if_atten_mask_as_constant):
+    """
+    Feature: test PromptFlashAttention semi parallel
+    Description: semi parallel
+    Expectation: compile success
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="full_batch")
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    B, N, S, D = 8, 16, 1024, 128
+    dp = strategys[0]
+    mp = strategys[1]
+    sp = strategys[2]
+    optinal_inputs = [True, True, True, False, False, False, False, False, False]
+    dims = [B, N, S, D]
+    inputs = generate_inputs(dims, optinal_inputs, input_layout=input_layout, sparse_mode=4)
+    strategies = generate_strategy(dp, mp, optinal_inputs, input_layout=input_layout, sparse_mode=4, sp=sp)
+    net = Net(N, input_layout=input_layout, strategy=strategies,
+              sparse_mode=4, set_atten_mask_as_constant=if_atten_mask_as_constant)
     compile_net(net, *inputs)

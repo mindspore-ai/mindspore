@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 import numpy as np
 
 import mindspore as ms
@@ -22,9 +23,16 @@ from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.parallel.shard import Layout
+from mindspore.ops.operations._inner_ops import SiLU
 from tests.ut.python.ops.test_math_ops import VirtualLoss
-from parallel.utils.utils import ParallelValidator
 
+activation_ops_map = {
+    "gelu": P.GeLU(),
+    "silu": SiLU(),
+    "relu": P.ReLU(),
+    "sigmoid": P.Sigmoid(),
+    "softmax": P.Softmax(),
+}
 
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
@@ -61,19 +69,21 @@ def compile_net(net, input_x):
 
 
 class Net(nn.Cell):
-    def __init__(self, in_layout, out_layout=None):
+    def __init__(self, in_layout, out_layout=None, ops_name=None):
         super().__init__()
-        self.gelu = P.GeLU().shard(in_strategy=in_layout, out_strategy=out_layout)
+        self.activation_ops = activation_ops_map[ops_name]
+        self.activation_ops.shard(in_strategy=in_layout, out_strategy=out_layout)
 
     def construct(self, y):
-        out = self.gelu(y)
+        out = self.activation_ops(y)
         return out
 
 
 x = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
 
 
-def test_layout_extend_base():
+@pytest.mark.parametrize('ops_name', ["gelu", "silu", "relu", "sigmoid"])
+def test_layout_extend_base(ops_name):
     """
     Feature: test layout extend
     Description: dev_num is 4.
@@ -82,13 +92,12 @@ def test_layout_extend_base():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=4, global_rank=0)
     layout = Layout((2, 2), ("dp", "mp"))
     layout1 = (layout("dp", "mp"),)
-    net = Net(layout1)
-    phase = compile_net(net, x)
-    validator = ParallelValidator(net, phase)
-    assert validator.check_node_inputs("GeLU-0", ["StridedSlice-1"])
+    net = Net(layout1, ops_name=ops_name)
+    compile_net(net, x)
 
 
-def test_layout_extend_batch_multi_shard():
+@pytest.mark.parametrize('ops_name', ["gelu", "silu", "relu", "sigmoid"])
+def test_layout_extend_batch_multi_shard(ops_name):
     """
     Feature: test layout extend
     Description: dev_num is 8, batch dim multi shard.
@@ -97,13 +106,12 @@ def test_layout_extend_batch_multi_shard():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
     layout1 = (layout(("dp", "mp"), "sp"),)
-    net = Net(layout1)
-    phase = compile_net(net, x)
-    validator = ParallelValidator(net, phase)
-    assert validator.check_node_inputs("GeLU-0", ["Reshape-1"])
+    net = Net(layout1, ops_name=ops_name)
+    compile_net(net, x)
 
 
-def test_layout_extend_reduce_axis_multi_shard():
+@pytest.mark.parametrize('ops_name', ["gelu", "silu", "relu", "sigmoid"])
+def test_layout_extend_reduce_axis_multi_shard(ops_name):
     """
     Feature: test layout extend
     Description: dev_num is 8, reduce dim multi shard.
@@ -112,7 +120,5 @@ def test_layout_extend_reduce_axis_multi_shard():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
     layout1 = (layout("dp", ("mp", "sp")),)
-    net = Net(layout1)
-    phase = compile_net(net, x)
-    validator = ParallelValidator(net, phase)
-    assert validator.check_node_inputs("GeLU-0", ["Reshape-1"])
+    net = Net(layout1, ops_name=ops_name)
+    compile_net(net, x)

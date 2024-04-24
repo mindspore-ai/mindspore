@@ -40,6 +40,9 @@ class ArithmeticBase : public OperatorInfo {
   void ReComputeBatchSplitFlagList() override;
 
  protected:
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
+  Status InferOutputTensorInfo() override;
   Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status BaseCheckStrategy(const StrategyPtr &strategy);
@@ -49,6 +52,10 @@ class ArithmeticBase : public OperatorInfo {
   Status InferOutputTensorMap() override;
   Status CheckLayoutConfig() override;
   Shapes InferExpandShape();
+
+ private:
+  TensorLayout InferOutputLayout();
+  TensorLayout output_infer_tensor_layout_;
 };
 
 class SubInfo : public ArithmeticBase {
@@ -65,14 +72,7 @@ class AddInfo : public ArithmeticBase {
   ~AddInfo() override = default;
 
  protected:
-  Status CheckInputLayout() override;
-  Status CheckOutputLayout() override;
-  Status InferOutputTensorInfo() override;
   Status InferForwardCommunicationByLayout() override { return SUCCESS; }
-
- private:
-  TensorLayout InferOutputLayout();
-  TensorLayout output_infer_tensor_layout_;
 };
 
 class MulInfo : public ArithmeticBase {

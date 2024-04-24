@@ -43,13 +43,18 @@ class TransposeInfo : public OperatorInfo {
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferOutputTensorMap() override;
+  Status InferOutputTensorInfo() override;
   Status GetAttrs() override;
 
  private:
+  TensorLayout InferOutputLayout();
+  TensorLayout output_infer_tensor_layout_;
   Status ComputeAxis();
   std::vector<int64_t> axis_v_;
   Dimensions input_strategy_;

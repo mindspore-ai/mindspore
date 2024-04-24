@@ -18,6 +18,8 @@
 
 #include <memory>
 #include <vector>
+#include <numeric>
+#include <utility>
 
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
@@ -126,6 +128,158 @@ Status TransposeInfo::GetAttrs() { return ComputeAxis(); }
 
 Status TransposeInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
+}
+
+Status TransposeInfo::InferOutputTensorInfo() {
+  output_infer_tensor_layout_ = InferOutputLayout();
+  TensorInfo output_tensor_info(output_infer_tensor_layout_);
+  outputs_tensor_info_.push_back(output_tensor_info);
+  return SUCCESS;
+}
+
+std::vector<std::vector<int64_t>> CalculateExchangeAxes(const std::vector<int64_t> &target_arrangement) {
+  std::vector<std::vector<int64_t>> exchange_axes;
+  std::vector<int64_t> origin_arrangment(target_arrangement.size());
+  std::iota(origin_arrangment.begin(), origin_arrangment.end(), 0);
+  for (size_t i = 0; i < origin_arrangment.size(); ++i) {
+    if (origin_arrangment[i] != target_arrangement[i]) {
+      auto it = std::find(origin_arrangment.begin(), origin_arrangment.end(), target_arrangement[i]);
+      auto target_pos = it - origin_arrangment.begin();
+      std::vector<int64_t> exchange_axis = {SizeToLong(i), target_pos};
+      exchange_axes.push_back(exchange_axis);
+      std::swap(origin_arrangment[i], origin_arrangment[target_pos]);
+    }
+  }
+  return exchange_axes;
+}
+
+std::vector<int64_t> SwapElement(const std::vector<int64_t> &input_device_arrangement, const int64_t og_start_pos,
+                                 const int64_t target_start_pos, const int64_t target_end_pos,
+                                 const Shape &temp_og_device_arrangement, const Shape &temp_target_device_arrangement) {
+  std::vector<int64_t> expected_device_arrangement = input_device_arrangement;
+  expected_device_arrangement.insert(expected_device_arrangement.begin() + target_start_pos,
+                                     temp_og_device_arrangement.begin(), temp_og_device_arrangement.end());
+  auto og_current_pos = og_start_pos + temp_og_device_arrangement.size();
+  expected_device_arrangement.erase(
+    expected_device_arrangement.begin() + og_current_pos,
+    expected_device_arrangement.begin() + og_current_pos + temp_og_device_arrangement.size());
+  if ((og_start_pos - target_end_pos) != 1) {
+    expected_device_arrangement.insert(expected_device_arrangement.begin() + og_current_pos,
+                                       temp_target_device_arrangement.begin(), temp_target_device_arrangement.end());
+    auto target_current_pos = target_start_pos + temp_target_device_arrangement.size();
+    expected_device_arrangement.erase(
+      expected_device_arrangement.begin() + target_current_pos,
+      expected_device_arrangement.begin() + target_current_pos + temp_target_device_arrangement.size());
+  }
+  return expected_device_arrangement;
+}
+
+Status TransposeInfo::CheckOutputLayout() {
+  if (outputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << name_ << ": The size of output tensor info must be 1, but got " << outputs_tensor_info_.size();
+    return FAILED;
+  }
+  if (!output_infer_tensor_layout_.tensor_shape_before().array().empty()) {
+    MS_LOG(INFO) << name_ << ": Using output tensor layout infer by input tensor layout.";
+    return SUCCESS;
+  }
+
+  auto in_layout = inputs_tensor_info_[kIndex0].tensor_layout();
+  auto out_layout = outputs_tensor_info_[kIndex0].tensor_layout();
+  MS_LOG(INFO) << name_ << ": The output tensor layout is " << out_layout.ToString() << ", axis_v_ is " << axis_v_;
+
+  auto out_tensor_layout = InferOutputLayout();
+  // output layout is the same as inferred (transpose the tensor map)
+  if (out_layout == out_tensor_layout) {
+    return SUCCESS;
+  }
+
+  auto input_device_arrangement = in_layout.device_arrangement_origin().array();
+  auto output_device_arrangement = out_layout.device_arrangement_origin().array();
+  auto in_tensor_map = in_layout.tensor_map_before();
+  auto out_tensor_map = out_layout.tensor_map_before();
+  if ((input_device_arrangement.size() != output_device_arrangement.size()) ||
+      (in_tensor_map.size() != out_tensor_map.size())) {
+    MS_LOG(ERROR) << name_ << ": The size of input and output device arrangement and tensor map must be equal.";
+    return FAILED;
+  }
+  auto exchange_axes = CalculateExchangeAxes(axis_v_);
+  std::vector<int64_t> expected_device_arrangement(std::begin(input_device_arrangement),
+                                                   std::end(input_device_arrangement));
+  for (auto exchange_axis : exchange_axes) {
+    auto axis_0 = in_tensor_map[LongToUlong(exchange_axis[0])];
+    auto axis_1 = in_tensor_map[LongToUlong(exchange_axis[1])];
+
+    Shape correspond_og_tensor_map;
+    Shape correspond_target_tensor_map;
+    if (axis_0[0] < axis_1[0]) {
+      correspond_og_tensor_map = axis_1;
+      correspond_target_tensor_map = axis_0;
+    } else {
+      correspond_og_tensor_map = axis_0;
+      correspond_target_tensor_map = axis_1;
+    }
+
+    auto og_start_pos = correspond_og_tensor_map[0];
+    auto target_start_pos = correspond_target_tensor_map[0];
+    Shape temp_og_device_arrangement;
+    Shape temp_target_device_arrangement;
+    bool has_minus_one = false;
+    for (auto idx : correspond_og_tensor_map) {
+      if (idx == -1) {
+        has_minus_one = true;
+        break;
+      }
+      temp_og_device_arrangement.push_back(expected_device_arrangement[LongToUlong(idx)]);
+    }
+    for (auto idx : correspond_target_tensor_map) {
+      if (idx == -1) {
+        has_minus_one = true;
+        break;
+      }
+      temp_target_device_arrangement.push_back(expected_device_arrangement[LongToUlong(idx)]);
+    }
+    if (!has_minus_one) {
+      expected_device_arrangement =
+        SwapElement(expected_device_arrangement, og_start_pos, target_start_pos, correspond_target_tensor_map.back(),
+                    temp_og_device_arrangement, temp_target_device_arrangement);
+    }
+  }
+  if (expected_device_arrangement != output_device_arrangement) {
+    MS_LOG(ERROR) << name_ << ": The output device arrangement is not equal to the expected device arrangement.";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status TransposeInfo::CheckInputLayout() {
+  if (inputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << name_ << ": The size of inputs tensor info must be 1, but got " << inputs_tensor_info_.size();
+    return FAILED;
+  }
+  auto in_layout = inputs_tensor_info_[kIndex0].tensor_layout();
+  MS_LOG(INFO) << name_ << ": The input tensor layout is " << in_layout.ToString();
+  return SUCCESS;
+}
+
+TensorLayout TransposeInfo::InferOutputLayout() {
+  auto input_layout = inputs_tensor_info_[kIndex0].tensor_layout();
+  Shapes tensormap = input_layout.tensor_map_before();
+  Shape input_shape = inputs_shape_.at(kIndex0);
+
+  Shapes output_tensormap;
+  Shape output_shape;
+  for (uint64_t i = 0; i < input_shape.size(); i++) {
+    output_shape.push_back(input_shape[LongToUlong(axis_v_[i])]);
+    output_tensormap.push_back(tensormap[LongToUlong(axis_v_[i])]);
+  }
+
+  TensorLayout output_tensor_layout;
+  output_tensor_layout.InitFromExtendVector(input_layout.device_arrangement_origin().array(), output_tensormap,
+                                            output_shape);
+  MS_LOG(INFO) << name_ << ": The output tensor layout inferred by input tensor layout is "
+               << output_tensor_layout.ToString() << ", axis_v_ is " << axis_v_;
+  return output_tensor_layout;
 }
 
 std::vector<StrategyPtr> TransposeInfo::GenerateOpStrategies(int64_t stage_id) {
