@@ -1,0 +1,28 @@
+#operator norm
+norm:
+  args:
+    input_x:
+      dtype: tensor
+    ord:
+      dtype: number
+      type_cast: tensor
+      default: None
+    dim:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+      default: None
+    keepdim:
+      dtype: bool
+      default: False
+    dtype:
+      dtype: TypeId
+      arg_handler: dtype_to_type_id
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: NormAscend

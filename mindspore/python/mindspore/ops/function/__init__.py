@@ -198,6 +198,7 @@ from .math_func import (
     le,
     lerp,
     norm,
+    norm_ext,
     vector_norm,
     matrix_norm,
     round,
