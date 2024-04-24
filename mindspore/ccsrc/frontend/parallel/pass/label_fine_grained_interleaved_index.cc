@@ -229,85 +229,92 @@ void LabelFineGrainedInterleavedIndex(const FuncGraphPtr &graph) {
     return;
   }
 
-  FuncGraphPtr forward_graph = graph;
-  FuncGraphPtr backward_graph = graph;
+  std::vector<FuncGraphPtr> forward_graphs;
+  std::vector<FuncGraphPtr> backward_graphs;
   auto context = MsContext::GetInstance();
   const auto is_cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
-  if (is_cell_reuse) {
+  if (!is_cell_reuse) {
+    forward_graphs.emplace_back(graph);
+    backward_graphs.emplace_back(graph);
+  } else {
     for (const auto &each_graph : manager->func_graphs()) {
       if (IsCellReuseForwardGraph(each_graph)) {
-        forward_graph = each_graph;
-        backward_graph = GetCellReuseBackwardGraph(forward_graph);
+        auto forward_graph = each_graph;
+        auto backward_graph = GetCellReuseBackwardGraph(forward_graph);
         if (backward_graph == nullptr) {
           MS_LOG(WARNING)
             << "Failed to find backward cell reuse graph, skip pass 'overlap_gradmatmul_and_gradallreduce'.";
-          return;
+          continue;
         }
-        break;
+        forward_graphs.emplace_back(forward_graph);
+        backward_graphs.emplace_back(backward_graph);
       }
     }
   }
+  for (size_t index = 0; index < forward_graphs.size(); ++index) {
+    CNodePtrList forward_interleaved_end_cnode_list;
+    auto cur_forward_graph = forward_graphs.at(index);
+    auto forward_order_cnodes = cur_forward_graph->GetOrderedCnodes();
+    CNodePtrList forward_order_cnode_list(forward_order_cnodes.cbegin(), forward_order_cnodes.cend());
+    for (const auto &forward_cnode : forward_order_cnode_list) {
+      if (IsPrimitiveCNode(forward_cnode, prim::kPrimConcat) &&
+          GetCNodePrimitive(forward_cnode)->HasAttr(kAttrFineGrainedInterleavedBlockIndex)) {
+        if (forward_cnode->HasAttr(kAttrDuplicated)) {
+          continue;
+        }
+        forward_interleaved_end_cnode_list.push_back(forward_cnode);
+      }
+    }
 
-  CNodePtrList forward_interleaved_end_cnode_list;
-  auto forward_order_cnodes = forward_graph->GetOrderedCnodes();
-  CNodePtrList forward_order_cnode_list(forward_order_cnodes.cbegin(), forward_order_cnodes.cend());
-  for (const auto &forward_cnode : forward_order_cnode_list) {
-    if (IsPrimitiveCNode(forward_cnode, prim::kPrimConcat) &&
-        GetCNodePrimitive(forward_cnode)->HasAttr(kAttrFineGrainedInterleavedBlockIndex)) {
-      if (forward_cnode->HasAttr(kAttrDuplicated)) {
+    for (const auto &forward_interleaved_end_cnode : forward_interleaved_end_cnode_list) {
+      auto concat_input = forward_interleaved_end_cnode->input(1);
+      if (!concat_input->isa<CNode>()) {
         continue;
       }
-      forward_interleaved_end_cnode_list.push_back(forward_cnode);
-    }
-  }
-
-  for (const auto &forward_interleaved_end_cnode : forward_interleaved_end_cnode_list) {
-    auto concat_input = forward_interleaved_end_cnode->input(1);
-    if (!concat_input->isa<CNode>()) {
-      continue;
-    }
-    auto concat_input_cnode = concat_input->cast<CNodePtr>();
-    size_t interleaved_num = concat_input->cast<CNodePtr>()->size() - 1;
-    if (interleaved_num != kExpectInterleavedNum) {
-      MS_LOG(WARNING) << "For interleaved end node '" << forward_interleaved_end_cnode->ToString()
-                      << "', its interleaved num: " << interleaved_num << " is not equal to " << kExpectInterleavedNum
-                      << ", skip it.";
-      continue;
-    }
-    auto block_index = GetValue<int64_t>(
-      GetCNodePrimitive(forward_interleaved_end_cnode)->GetAttr(kAttrFineGrainedInterleavedBlockIndex));
-    forward_interleaved_end_cnode->AddAttr("fine_grained_interleaved_border", MakeValue<size_t>(1));
-    forward_interleaved_end_cnode->AddPrimalAttr(parallel::FINE_GRAINED_INTERLEAVED_BLOCK,
-                                                 MakeValue<int64_t>(block_index));
-    for (size_t interleaved_index = 0; interleaved_index < interleaved_num; ++interleaved_index) {
-      auto input_node = concat_input_cnode->input(interleaved_index + 1);
-      auto input_cnode = input_node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(input_cnode);
-      size_t forward_order = 0;
-      if (input_cnode->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId) &&
-          (parallel::IsSomePrimitiveList(input_cnode, {ALL_GATHER, ALL_REDUCE, REDUCE_SCATTER}))) {
-        input_cnode->AddPrimalAttr(parallel::FINE_GRAINED_INTERLEAVED_BLOCK, MakeValue<int64_t>(block_index));
-        input_cnode->AddAttr(parallel::MICRO_INTERLEAVED_INDEX, MakeValue<size_t>(LongToSize(interleaved_index)));
-        input_cnode->AddAttr(parallel::MICRO_INTERLEAVED_FORWARD_COMM_ORDER, MakeValue<size_t>(forward_order));
-        MS_LOG(INFO) << "pre_cnode:" << input_cnode->fullname_with_scope()
-                     << " fine_grained_block_index:" << block_index << " add forward_order:" << forward_order;
-        forward_order++;
+      auto concat_input_cnode = concat_input->cast<CNodePtr>();
+      size_t interleaved_num = concat_input->cast<CNodePtr>()->inputs().size() - 1;
+      if (interleaved_num != kExpectInterleavedNum) {
+        MS_LOG(WARNING) << "For interleaved end node '" << forward_interleaved_end_cnode->ToString()
+                        << "', its interleaved num: " << interleaved_num << " is not equal to " << kExpectInterleavedNum
+                        << ", skip it.";
+        continue;
       }
-      SpreadFineGrainedInterleavedIndexForForwardCommNodes(input_node->cast<CNodePtr>(), LongToSize(block_index),
-                                                           LongToSize(interleaved_index), forward_order);
-      MS_LOG(INFO) << "block_index:" << block_index
-                   << ", interleaved_end_cnode:" << forward_interleaved_end_cnode->fullname_with_scope();
+      auto block_index = GetValue<int64_t>(
+        GetCNodePrimitive(forward_interleaved_end_cnode)->GetAttr(kAttrFineGrainedInterleavedBlockIndex));
+      forward_interleaved_end_cnode->AddAttr("fine_grained_interleaved_border", MakeValue<size_t>(1));
+      forward_interleaved_end_cnode->AddPrimalAttr(parallel::FINE_GRAINED_INTERLEAVED_BLOCK,
+                                                   MakeValue<int64_t>(block_index));
+      for (size_t interleaved_index = 0; interleaved_index < interleaved_num; ++interleaved_index) {
+        auto input_node = concat_input_cnode->input(interleaved_index + 1);
+        auto input_cnode = input_node->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(input_cnode);
+        size_t forward_order = 0;
+        if (input_cnode->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId) &&
+            (parallel::IsSomePrimitiveList(input_cnode, {ALL_GATHER, ALL_REDUCE, REDUCE_SCATTER}))) {
+          input_cnode->AddPrimalAttr(parallel::FINE_GRAINED_INTERLEAVED_BLOCK, MakeValue<int64_t>(block_index));
+          input_cnode->AddAttr(parallel::MICRO_INTERLEAVED_INDEX, MakeValue<size_t>(LongToSize(interleaved_index)));
+          input_cnode->AddAttr(parallel::MICRO_INTERLEAVED_FORWARD_COMM_ORDER, MakeValue<size_t>(forward_order));
+          MS_LOG(INFO) << "pre_cnode:" << input_cnode->fullname_with_scope()
+                       << " fine_grained_block_index:" << block_index << " add forward_order:" << forward_order;
+          forward_order++;
+        }
+        SpreadFineGrainedInterleavedIndexForForwardCommNodes(input_node->cast<CNodePtr>(), LongToSize(block_index),
+                                                             LongToSize(interleaved_index), forward_order);
+        MS_LOG(INFO) << "block_index:" << block_index
+                     << ", interleaved_end_cnode:" << forward_interleaved_end_cnode->fullname_with_scope();
+      }
+      parallel::ParallelContext::GetInstance()->set_enable_fine_grained_micro_interleaved(true);
     }
-    parallel::ParallelContext::GetInstance()->set_enable_fine_grained_micro_interleaved(true);
-  }
 
-  auto backward_order_cnodes = backward_graph->GetOrderedCnodes();
-  CNodePtrList backward_order_cnode_list(backward_order_cnodes.cbegin(), backward_order_cnodes.cend());
-  CNodePtrList all_cnode_list(forward_order_cnode_list);
-  all_cnode_list.insert(all_cnode_list.end(), backward_order_cnode_list.begin(), backward_order_cnode_list.end());
-  LabelFineGrainedInterleavedBackWardBeginEnd(all_cnode_list);
-  LabelMicroInterleavedIndexForBackwardCommNodes(all_cnode_list);
-  LabelMicroInterleavedBranchTagForBackwardCommNodes(all_cnode_list);
+    auto cur_backward_graph = backward_graphs.at(index);
+    auto backward_order_cnodes = cur_backward_graph->GetOrderedCnodes();
+    CNodePtrList backward_order_cnode_list(backward_order_cnodes.cbegin(), backward_order_cnodes.cend());
+    CNodePtrList all_cnode_list(forward_order_cnode_list);
+    all_cnode_list.insert(all_cnode_list.end(), backward_order_cnode_list.begin(), backward_order_cnode_list.end());
+    LabelFineGrainedInterleavedBackWardBeginEnd(all_cnode_list);
+    LabelMicroInterleavedIndexForBackwardCommNodes(all_cnode_list);
+    LabelMicroInterleavedBranchTagForBackwardCommNodes(all_cnode_list);
+  }
 }
 }  // namespace parallel
 }  // namespace mindspore

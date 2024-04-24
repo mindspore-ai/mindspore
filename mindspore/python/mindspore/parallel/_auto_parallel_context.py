@@ -65,6 +65,19 @@ class _ParallelOptimizerConfig:
     OPTIMIZER_WEIGHT_SHARD_SIZE = "optimizer_weight_shard_size"
 
 
+class _PipelineConfig:
+    """
+    The key of the Pipeline parallelism.
+    """
+    PIPELINE_INTERLEAVE = "pipeline_interleave"
+    PIPELINE_SCHEDULER = "pipeline_scheduler"
+
+
+class _PipelineScheduler:
+    PIPELINE_1F1B = "1f1b"
+    PIPELINE_GPIPE = "gpipe"
+
+
 class _AutoParallelContext:
     """
     _AutoParallelContext is the environment in which operations are executed
@@ -247,6 +260,16 @@ class _AutoParallelContext:
         """Get the value of enabling pipeline result broadcast"""
         self.check_context_handle()
         return self._context_handle.get_pipeline_result_broadcast()
+
+    def get_pipeline_interleave(self):
+        """Get pipeline interleave flag"""
+        self.check_context_handle()
+        return self._context_handle.get_pipeline_interleave()
+
+    def get_pipeline_scheduler(self):
+        """Get pipeline scheduler"""
+        self.check_context_handle()
+        return self._context_handle.get_pipeline_scheduler()
 
     def set_pipeline_segments(self, segments):
         """Set the segments of the pipeline"""
@@ -801,6 +824,57 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_enable_fold_pipeline()
 
+    def set_pipeline_config(self, pipeline_config):
+        r"""
+        Set the configuration for pipeline parallelism. The configuration provides more detailed behavior control about
+        parallel training when pipeline parallelism is enabled.
+
+        Args:
+            pipeline_config (dict): The configuration for pipeline parallelism. It supports following keys:
+
+            - pipeline_interleave(bool): Setting true enable interleave scheduler for pipeline parallelism. This
+                                         scheduler requires more memory but less bubble.
+            - pipeline_scheduler(string): There are two choices, "1f1b" and "gpipe". default is "1f1b"
+
+              - 1f1b: It requires less memory and bubble ratio, for it run backward pass when corresponding forward pass
+                      finished.
+              - gpipe: It requires more memory and bubble ratio, for it run backward pass after all forward pass
+                       finished.
+
+        Raises:
+            TypeError: If the type of `pipeline_config` is not `dict`.
+            ValueError: If the key in `pipeline_config` not  in ["pipeline_interleave", "pipeline_scheduler"].
+            ValueError: If pipeline interleave is False, pipeline scheduler is not `1f1b`.
+        """
+        self.check_context_handle()
+
+        if not isinstance(pipeline_config, dict):
+            raise TypeError("For 'set_pipeline_config', the argument 'pipeine_config' "
+                            "must be dict, but got the type : {}.".format(type(pipeline_config)))
+
+        pp_interleave = _PipelineConfig.PIPELINE_INTERLEAVE
+        pp_scheduler = _PipelineConfig.PIPELINE_SCHEDULER
+
+        for config_name in pipeline_config:
+            unknown_config = []
+            if config_name not in [pp_interleave, pp_scheduler]:
+                unknown_config.append(config_name)
+
+            if unknown_config:
+                raise ValueError("Unknown config: {}".format(unknown_config))
+
+        Validator.check_bool(
+            pipeline_config[pp_interleave], pp_interleave, pp_interleave)
+        self._context_handle.set_pipeline_interleave(
+            pipeline_config[pp_interleave])
+
+        Validator.check_string(pipeline_config[pp_scheduler], [_PipelineScheduler.PIPELINE_1F1B,
+                                                               _PipelineScheduler.PIPELINE_GPIPE])
+        if not pipeline_config[pp_interleave] and pipeline_config[pp_scheduler] != _PipelineScheduler.PIPELINE_1F1B:
+            raise ValueError(f"When pipeline_interleave is False, {pp_scheduler} is not supported")
+
+        self._context_handle.set_pipeline_scheduler(pipeline_config[pp_scheduler])
+
     def get_enable_parallel_optimizer(self):
         """Get parallel optimizer flag."""
         self.check_context_handle()
@@ -1087,6 +1161,7 @@ class _AutoParallelContext:
             self.set_enable_all_gather_fusion(openstate)
             self.set_enable_reduce_scatter_fusion(openstate)
 
+
 def _set_ops_strategy_json_config(type="SAVE", path="", mode="all"):
     """
     Set strategy json configuration.
@@ -1109,6 +1184,7 @@ def _set_ops_strategy_json_config(type="SAVE", path="", mode="all"):
         auto_parallel_context().set_ops_strategy_json_config(type, path, mode)
     else:
         raise KeyError("Type must be 'SAVE' or 'LOAD' and mode must be 'all' or 'principal'")
+
 
 _AUTO_PARALLEL_CONTEXT = None
 
@@ -1146,6 +1222,7 @@ _set_auto_parallel_context_func_map = {
     "dataset_strategy": auto_parallel_context().set_dataset_strategy,
     "enable_parallel_optimizer": auto_parallel_context().set_enable_parallel_optimizer,
     "parallel_optimizer_config": auto_parallel_context().set_parallel_optimizer_config,
+    "pipeline_config": auto_parallel_context().set_pipeline_config,
     "grad_accumulation_step": auto_parallel_context().set_grad_accumulation_step,
     "all_reduce_fusion_config": auto_parallel_context().set_all_reduce_fusion_split_indices,
     "communi_parallel_mode": auto_parallel_context().set_communi_parallel_mode,
@@ -1164,6 +1241,8 @@ _get_auto_parallel_context_func_map = {
     "loss_repeated_mean": auto_parallel_context().get_loss_repeated_mean,
     "pipeline_stages": auto_parallel_context().get_pipeline_stages,
     "pipeline_result_broadcast": auto_parallel_context().get_pipeline_result_broadcast,
+    "pipeline_interleave": auto_parallel_context().get_pipeline_interleave,
+    "pipeline_scheduler": auto_parallel_context().get_pipeline_scheduler,
     "parallel_mode": auto_parallel_context().get_parallel_mode,
     "search_mode": auto_parallel_context().get_strategy_search_mode,
     "auto_parallel_search_mode": auto_parallel_context().get_auto_parallel_search_mode,
