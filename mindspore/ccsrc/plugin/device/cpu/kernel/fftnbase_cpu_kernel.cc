@@ -172,7 +172,7 @@ bool FFTNBaseCpuKernelMod::LaunchKernelR2C(const std::vector<kernel::KernelTenso
   PocketFFTR2C<T_out>(calculate_input, output_ptr, forward_, fct, calculate_shape_, dim_);
 
   if (kernel_name_ == prim::kPrimIHFFT2->name() || kernel_name_ == prim::kPrimIHFFTN->name()) {
-    std::transform(output_ptr, output_ptr + calculate_element_nums_, output_ptr,
+    std::transform(output_ptr, output_ptr + outputs[kIndex0]->size() / sizeof(std::complex<T_out>), output_ptr,
                    [](std::complex<T_out> x) { return std::conj(x); });
   }
   // Release temporary memory

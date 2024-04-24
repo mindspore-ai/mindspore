@@ -214,7 +214,7 @@ bool FFTNBaseComputeR2C(CpuKernelContext &ctx, bool forward, double norm_weight,
   PocketFFTR2C<T_out>(calculate_input, output_ptr, forward, fct, calculate_shape_, dim_);
 
   if (op_name_ == kIHFFT2 || op_name_ == kIHFFTN) {
-    std::transform(output_ptr, output_ptr + calculate_element_nums_, output_ptr,
+    std::transform(output_ptr, output_ptr + ctx.Output(kIndex0)->NumElements(), output_ptr,
                    [](std::complex<T_out> x) { return std::conj(x); });
   }
   // Release temporary memory
