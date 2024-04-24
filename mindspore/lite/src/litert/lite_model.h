@@ -300,13 +300,16 @@ class MS_API LiteModel : public Model {
       }
     } else {
       auto sub_graphs = meta_graph.subGraph();
-      MS_ASSERT(sub_graphs != nullptr);
+      if (MS_UNLIKELY(sub_graphs == nullptr)) {
+        MS_LOG(ERROR) << "sub graph is nullptr!";
+        return RET_ERROR;
+      }
       auto sub_graph_size = sub_graphs->size();
       for (size_t i = 0; i < sub_graph_size; i++) {
         auto sub_graph = sub_graphs->template GetAs<schema::SubGraph>(i);
         int ret = ConvertSubGraph(*sub_graph);
         if (ret != RET_OK) {
-          MS_LOG(ERROR) << "converter subgraph wrong.";
+          MS_LOG(ERROR) << "converter subgraph failed!ret = " << ret;
           return ret;
         }
       }

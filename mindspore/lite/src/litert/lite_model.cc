@@ -394,7 +394,11 @@ int LiteModel::GenerateModelByVersion() {
   if (schema_version_ == SCHEMA_VERSION::SCHEMA_CUR) {
     meta_graph = reinterpret_cast<const void *>(schema::GetMetaGraph(this->buf));
   }
-  MS_ASSERT(meta_graph != nullptr);
+  if (MS_UNLIKELY(meta_graph == nullptr)) {
+    MS_LOG(ERROR) << "Get meta graph failed!";
+    return RET_ERROR;
+  }
+
   int status = RET_ERROR;
 #ifdef ENABLE_MODEL_OBF
   DeObfuscator *model_deobf = nullptr;
@@ -406,6 +410,7 @@ int LiteModel::GenerateModelByVersion() {
                                                             this, this->buf_size_);
       this->graph_.model_obfuscated_ = true;
       if (model_deobf == nullptr) {
+        MS_LOG(ERROR) << "model_deobf is nullptr!";
         return RET_ERROR;
       }
     }
@@ -414,7 +419,6 @@ int LiteModel::GenerateModelByVersion() {
   }
 #ifdef ENABLE_MODEL_OBF
   if (this->graph_.model_obfuscated_) {
-    MS_ASSERT(model_deobf != nullptr);
     status = DeObfuscateModel(this, model_deobf);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "deobfuscate model wrong.";
@@ -434,10 +438,10 @@ int LiteModel::GenerateModelByVersion() {
 namespace {
 int InitModelBuffer(LiteModel *model, const char *model_buf, size_t size, bool take_buf) {
   if (model_buf == nullptr || size == 0) {
-    MS_LOG(ERROR) << "Input model buffer is nullptr.";
+    MS_LOG(ERROR) << "Input model buffer is nullptr!";
     return RET_INPUT_PARAM_INVALID;
   }
-  MS_ASSERT(model != nullptr);
+
   if (take_buf) {
     model->buf = const_cast<char *>(model_buf);
   } else {
@@ -445,7 +449,7 @@ int InitModelBuffer(LiteModel *model, const char *model_buf, size_t size, bool t
       MS_LOG(ERROR) << "Input model buffer size invalid, require (0, 2GB].";
       return RET_ERROR;
     }
-    model->buf = new char[size];
+    model->buf = new (std::nothrow) char[size];
     if (model->buf == nullptr) {
       MS_LOG(ERROR) << "new inner model buf fail!";
       return RET_NULL_PTR;

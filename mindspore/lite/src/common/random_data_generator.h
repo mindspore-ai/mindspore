@@ -25,15 +25,6 @@ namespace lite {
 int GenRandomData(mindspore::MSTensor *tensors);
 
 int GenRandomData(size_t size, void *data, int data_type);
-
-template <typename T, typename Distribution>
-void FillRandomData(size_t size, void *data, Distribution distribution) {
-  std::mt19937 random_engine;
-  MS_ASSERT(data != nullptr);
-  size_t elements_num = size / sizeof(T);
-  (void)std::generate_n(static_cast<T *>(data), elements_num,
-                        [&]() { return static_cast<T>(distribution(random_engine)); });
-}
 }  // namespace lite
 }  // namespace mindspore
 
