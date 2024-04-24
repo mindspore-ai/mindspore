@@ -62,6 +62,7 @@ class ModelInfer {
   ModelProcess model_process_;
   std::map<std::string, std::string> config_info_;
   std::shared_ptr<AclEnvGuard> acl_env_;
+  int32_t device_id_;
 };
 }  // namespace acl
 }  // namespace mindspore::kernel
