@@ -458,7 +458,11 @@ Status WeightQuantBatchMatmulInfo::InferTensorMap() {
   inputs_tensor_map_.push_back(mat_weight_tensor_map);
 
   for (size_t i = kInputAntiquantScale; i < inputs_shape_.size(); i++) {
-    inputs_tensor_map_.push_back({0});
+    if (inputs_shape_[i].size() == 1 && inputs_shape_[i][0] == 1) {
+      inputs_tensor_map_.push_back({MAP_NONE});
+    } else {
+      inputs_tensor_map_.push_back({output_tensor_map[output_tensor_map.size() - 1]});
+    }
   }
   outputs_tensor_map_.push_back(output_tensor_map);
   MS_LOG(DEBUG) << name_ << ": The mat_x's tensor map is " << mat_x_tensor_map << ", the mat_weight's tensor map is "

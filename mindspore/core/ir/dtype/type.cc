@@ -59,6 +59,7 @@ static mindspore::HashMap<TypeId, std::string> g_type_2_lable{{kTypeUnknown, "Un
                                                               {kObjectTypeRef, "Ref"},
                                                               {kNumberTypeBool, "Bool"},
                                                               {kNumberTypeInt, "Int"},
+                                                              {kNumberTypeInt4, "QInt4x2"},
                                                               {kNumberTypeInt8, "Int8"},
                                                               {kNumberTypeInt16, "Int16"},
                                                               {kNumberTypeInt32, "Int32"},
@@ -76,7 +77,6 @@ static mindspore::HashMap<TypeId, std::string> g_type_2_lable{{kTypeUnknown, "Un
                                                               {kNumberTypeComplex, "Complex"},
                                                               {kNumberTypeComplex64, "Complex64"},
                                                               {kNumberTypeComplex128, "Complex128"},
-                                                              {kNumberTypeInt4, "Int4"},
                                                               {kNumberTypeGLUInt, "GLUInt"},
                                                               {kObjectTypeMonad, "Monad"},
                                                               {kObjectTypeUMonad, "UMonad"},
@@ -92,15 +92,17 @@ const mindspore::HashMap<TypeId, int> &type_priority_map() {
 
 const mindspore::HashMap<TypeId, std::string> &type_name_map() {
   static const mindspore::HashMap<TypeId, std::string> type_name_map = {
-    {kNumberTypeBool, "bool_"},       {kNumberTypeInt8, "int8"},       {kNumberTypeUInt8, "uint8"},
-    {kNumberTypeInt16, "int16"},      {kNumberTypeInt32, "int32"},     {kNumberTypeInt64, "int64"},
-    {kNumberTypeFloat16, "float16"},  {kNumberTypeFloat32, "float32"}, {kNumberTypeFloat64, "float64"},
-    {kNumberTypeBFloat16, "bfloat16"}};
+    {kNumberTypeBool, "bool_"},        {kNumberTypeInt8, "int8"},       {kNumberTypeUInt8, "uint8"},
+    {kNumberTypeInt16, "int16"},       {kNumberTypeInt32, "int32"},     {kNumberTypeInt64, "int64"},
+    {kNumberTypeFloat16, "float16"},   {kNumberTypeFloat32, "float32"}, {kNumberTypeFloat64, "float64"},
+    {kNumberTypeBFloat16, "bfloat16"}, {kNumberTypeInt4, "int4"}};
   return type_name_map;
 }
 
 TypeId IntBitsToTypeId(const int nbits) {
   switch (nbits) {
+    case static_cast<int>(BitsNum::eBits4):
+      return kNumberTypeInt4;
     case static_cast<int>(BitsNum::eBits8):
       return kNumberTypeInt8;
     case static_cast<int>(BitsNum::eBits16):
@@ -209,6 +211,10 @@ size_t GetTypeByte(const TypePtr &type_ptr) {
       MS_LOG(DEBUG) << "Invalid TypePtr got from ApplyKernel.";
       return 0;
     } else {
+      if (number->nbits() < CHAR_BIT) {
+        MS_LOG(DEBUG) << "Number of bit " << number->nbits() << " is less than CHAR_BIT " << CHAR_BIT << ", return 1.";
+        return 1;
+      }
       return IntToSize(number->nbits() / CHAR_BIT);
     }
   } else {
