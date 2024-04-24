@@ -28,6 +28,8 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import randperm
+from mindspore.nn.generator import default_generator
+from mindspore.ops.auto_generate import UniformExt
 
 
 cast_ = P.Cast()
@@ -36,6 +38,7 @@ real_div_ = P.RealDiv()
 reshape_ = P.Reshape()
 shape_ = P.Shape()
 top_k_ = P.TopK()
+uniform_ = UniformExt()
 
 
 @constexpr
@@ -233,6 +236,37 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
                                                                  replacement=replacement)
     multinomial_with_replacement_ = _set_prim_op_user_data(multinomial_with_replacement_, "random_cache", False)
     return multinomial_with_replacement_(x, seed, offset)
+
+
+@_function_forbid_reuse
+def uniform_ext(tensor, a, b, generator=None):
+    """
+    Generates random numbers in the half-open interval [a, b).
+
+    Args:
+        tensor (Tensor): The origin input tensor.
+        a (float): The lower bound of the interval.
+        b (float): The upper bound of the interval.
+        generator (Generator, optional): The random seed. Default: None.
+
+    Raises:
+        TypeError: If `a` is larger than `b`.
+
+    Returns:
+        Tensor, with the same shape as tensor.
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
+        >>> import numpy as np
+        >>> x = mindspore.ops.ones(4, 2)
+        >>> output = ops.uniform_ext(x, 1., 2.)
+        >>> print(result)
+    """
+    if generator is None:
+        generator = default_generator()
+    seed, offset = generator.get_state()
+    return uniform_(tensor, a, b, seed, offset)
 
 
 @_function_forbid_reuse
@@ -1328,7 +1362,7 @@ def _check_param(op_name, param_name, param_value):
 
 
 __all__ = [
-    'standard_laplace', 'random_categorical', 'uniform', 'standard_normal', 'random_gamma',
+    'standard_laplace', 'random_categorical', 'uniform', 'uniform_ext', 'standard_normal', 'random_gamma',
     'uniform_candidate_sampler', 'random_poisson', 'log_uniform_candidate_sampler', 'shuffle', 'choice_with_mask',
     'normal', 'laplace', 'gamma', 'poisson', 'multinomial', 'rand', 'rand_like', 'randn', 'randn_like', 'randint',
     'randint_like', 'multinomial_with_replacement', 'randperm'

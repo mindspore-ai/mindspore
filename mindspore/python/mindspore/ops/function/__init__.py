@@ -594,6 +594,7 @@ from .random_func import (
     standard_laplace,
     random_categorical,
     uniform,
+    uniform_ext,
     standard_normal,
     random_gamma,
     uniform_candidate_sampler,
