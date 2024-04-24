@@ -1974,6 +1974,12 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
     new_cnode->set_abstract(cnode->abstract());
     new_cnode->set_scope(cnode->scope());
     new_cnode->set_attrs(cnode->attrs());
+
+    if (new_cnode->HasAttr(kAttrReplaceRealKernelInBackend)) {
+      MS_LOG(DEBUG) << "Erase flag for node: " << new_cnode->DebugString();
+      new_cnode->EraseAttr(kAttrReplaceRealKernelInBackend);
+    }
+
     if (cnode->user_data<pynative::JitCallGraph>()) {
       new_cnode->set_user_data(cnode->user_data<pynative::JitCallGraph>());
     }
