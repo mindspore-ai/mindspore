@@ -48,7 +48,7 @@ namespace mindspore {
 std::string GenDataFilePath(const CNodePtr &node, const std::string &kernel_name, const std::string &dump_path,
                             size_t slot, bool is_input) {
   std::string op_type = common::AnfAlgo::GetCNodeName(node);
-  std::string op_name = GetOpNameWithoutScope(kernel_name);
+  std::string op_name = kernel_name;
   uint64_t timestamp = Common::GetTimeStamp();
   uint32_t task_id = 0;
   uint32_t stream_id = 0;
@@ -148,7 +148,7 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
     GetDumpIntShape(node, j, NOT_NULL(&int_shapes), trans_flag);
     auto type = common::AnfAlgo::GetOutputInferDataType(node, j);
     std::string op_type = common::AnfAlgo::GetCNodeName(node);
-    std::string op_name = GetOpNameWithoutScope(*kernel_name);
+    std::string op_name = *kernel_name;
     uint32_t task_id = 0;
     uint32_t stream_id = 0;
     if (IsDeviceTargetAscend()) {
@@ -254,7 +254,7 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     GetDumpIntShape(input, index, NOT_NULL(&int_shapes), trans_flag);
     auto type = common::AnfAlgo::GetOutputInferDataType(input, index);
     std::string op_type = common::AnfAlgo::GetCNodeName(node);
-    std::string op_name = GetOpNameWithoutScope(*kernel_name);
+    std::string op_name = *kernel_name;
     uint64_t timestamp = Common::GetTimeStamp();
     uint32_t task_id = 0;
     uint32_t stream_id = 0;
