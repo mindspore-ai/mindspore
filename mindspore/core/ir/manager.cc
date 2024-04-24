@@ -437,7 +437,7 @@ void FuncGraphManager::KeepRoots(const std::vector<FuncGraphPtr> &func_graphs) {
     }
   }
 
-  // if the new_root in roots_, we add new_root first, then calculate the func_graphs
+  // If the new_root in roots_, we add new_root first, then calculate the func_graphs
   // relation to new_root, remove the func_graphs not relation to new_root
   // if the new_root not in roots_, we clear the all func_graphs in manager
   // then add the new_root

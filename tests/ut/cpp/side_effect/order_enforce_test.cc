@@ -96,7 +96,7 @@ TEST_F(TestSideEffectOrderEnforce, TwoLoads) {
 
   // Execute pass
   InsertUNode(test_graph);
-  pipeline::AbstractSpecializeAction(res);
+  pipeline::TypeInferenceAction(res);
   pipeline::OrderEnforce(res->func_graph());
 
   // Check tensor move indexes.
@@ -124,7 +124,7 @@ TEST_F(TestSideEffectOrderEnforce, PartialArgCallArg) {
 
   // Execute pass
   InsertUNode(test_graph);
-  pipeline::AbstractSpecializeAction(res);
+  pipeline::TypeInferenceAction(res);
   pipeline::OrderEnforce(res->func_graph());
 
   // Check tensor move indexes.
@@ -153,7 +153,7 @@ TEST_F(TestSideEffectOrderEnforce, CallOutAsArg) {
 
   // Execute pass
   InsertUNode(test_graph);
-  pipeline::AbstractSpecializeAction(res);
+  pipeline::TypeInferenceAction(res);
   pipeline::OrderEnforce(res->func_graph());
 
   // Check tensor move indexes.
@@ -181,7 +181,7 @@ TEST_F(TestSideEffectOrderEnforce, DISABLED_CallOutLoad) {
 
   // Execute pass
   InsertUNode(test_graph);
-  pipeline::AbstractSpecializeAction(res);
+  pipeline::TypeInferenceAction(res);
   pipeline::OrderEnforce(res->func_graph());
 
   // Check tensor move indexes.
@@ -211,7 +211,7 @@ TEST_F(TestSideEffectOrderEnforce, DISABLED_LoadRefSameToSwitchCallOutGetItemGet
 
   // Execute pass
   InsertUNode(test_graph);
-  pipeline::AbstractSpecializeAction(res);
+  pipeline::TypeInferenceAction(res);
   pipeline::OrderEnforce(res->func_graph());
 
   // Check tensor move indexes.
@@ -241,7 +241,7 @@ TEST_F(TestSideEffectOrderEnforce, DISABLED_LoadCallSwitchCallSwitchCallOut) {
 
   // Execute pass
   InsertUNode(test_graph);
-  pipeline::AbstractSpecializeAction(res);
+  pipeline::TypeInferenceAction(res);
   pipeline::OrderEnforce(res->func_graph());
   // Check tensor move indexes.
   auto tensor_move_indexes = GetInsertTensorMoveIndexes(res->func_graph());
