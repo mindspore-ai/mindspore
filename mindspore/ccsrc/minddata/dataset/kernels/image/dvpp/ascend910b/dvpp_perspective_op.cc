@@ -49,7 +49,7 @@ Status DvppPerspectiveOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
 
   // check Perspective support InterpolationMode
   if (interpolation_ != InterpolationMode::kLinear && interpolation_ != InterpolationMode::kNearestNeighbour) {
-    std::string error = "DvppPerspective: Invalid InterpolationMode, check input value of enum.";
+    auto error = "DvppPerspective: Invalid interpolation mode, only support BILINEAR and NEAREST.";
     RETURN_STATUS_UNEXPECTED(error);
   }
 

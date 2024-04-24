@@ -808,6 +808,8 @@ class Affine(ImageTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
+        if self.resample not in [Inter.BILINEAR, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR and NEAREST.")
         return self
 
     def parse(self):
@@ -3137,6 +3139,8 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
+        if self.interpolation not in [Inter.BILINEAR, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR and NEAREST.")
         return self
 
     def parse(self):
@@ -5673,9 +5677,8 @@ class Resize(ImageTensorOperation, PyTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
-        if self.interpolation == Inter.ANTIALIAS and self.device_target == "Ascend":
-            raise ValueError("The current InterpolationMode is not supported by DVPP. It is {}."
-                             .format(self.interpolation))
+        if self.interpolation not in [Inter.BILINEAR, Inter.CUBIC, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR, CUBIC and NEAREST.")
         return self
 
     def parse(self):
@@ -5821,9 +5824,8 @@ class ResizedCrop(ImageTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
-        if self.interpolation == Inter.ANTIALIAS and self.device_target == "Ascend":
-            raise ValueError("The current InterpolationMode is not supported by DVPP. It is {}."
-                             .format(self.interpolation))
+        if self.interpolation not in [Inter.BILINEAR, Inter.CUBIC, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR, CUBIC and NEAREST.")
         return self
 
     def parse(self):
