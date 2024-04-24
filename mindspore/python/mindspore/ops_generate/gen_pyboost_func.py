@@ -203,10 +203,15 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
             customize_include = "#include \"plugin/device/gpu/kernel/pyboost/customize/{}.h\"".format(
                 operator_name.lower())
         elif op_proto.is_view:
+            set_output_abs = "SetOutputAbstract();"
+            if converter.call_func_outputs == "outputs_":
+                set_output_abs = "SetOutputTupleAbstract();"
             call_impl = view_tpl.replace(op_name=op_proto.class_name,
                                          call_args=converter.call_args,
                                          call_tensors=call_args_tensor,
-                                         input=converter.call_args[0])
+                                         return_values=converter.call_func_outputs,
+                                         input=converter.call_args[0],
+                                         set_output_abs=set_output_abs)
             customize_include = "#include \"mindspore/core/ops/view/{}_strides_calc.h\"".format(proto_operator_name)
         else:
             cast_input_code, real_call_args_tensor = generate_tensor_cpu_cast_input_code(
