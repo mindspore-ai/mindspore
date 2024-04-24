@@ -62,6 +62,7 @@ void ParallelContext::Reset() {
   strategy_ckpt_load_file_ = "";
   strategy_ckpt_save_file_ = "";
   enable_parallel_optimizer_ = false;
+  force_fp32_communication_ = false;
   all_reduce_fusion_split_indices_.clear();
   all_reduce_fusion_split_sizes_.clear();
   strategy_search_mode_ = kRecursiveProgramming;
