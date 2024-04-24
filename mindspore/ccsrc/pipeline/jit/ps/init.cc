@@ -379,6 +379,10 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set enable/disable parallel optimizer.")
     .def("get_enable_parallel_optimizer", &ParallelContext::enable_parallel_optimizer,
          "Get enable/disable parallel optimizer.")
+    .def("set_force_fp32_communication", &ParallelContext::set_force_fp32_communication,
+         "Set whether to force fp32 communication value.")
+    .def("get_force_fp32_communication", &ParallelContext::force_fp32_communication,
+         "Get the switch whether to force  fp32 communication value")
     .def("get_enable_fold_pipeline", &ParallelContext::enable_fold_pipeline, "Get enable/disable fold pipeline.")
     .def("set_communi_parallel_mode", &ParallelContext::set_communi_parallel_mode, "Set communication parallel mode.")
     .def("get_communi_parallel_mode", &ParallelContext::communi_parallel_mode, "Get communication parallel mode.")

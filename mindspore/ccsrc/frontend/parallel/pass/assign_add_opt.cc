@@ -401,7 +401,6 @@ void AssignAddOpt(const FuncGraphPtr &graph) {
       (void)partial_cnode_inputs.insert(partial_cnode_inputs.begin() + bg_concat_input_index.back() + kPartialPreIndex,
                                         concat);
       auto new_partial_cnode = fg->NewCNode(partial_cnode_inputs);
-      new_partial_cnode->set_abstract(cnode->abstract()->Clone());
       (void)manager->Replace(cnode, new_partial_cnode);
       auto new_parameter = each_graph->add_parameter();
       new_parameter->set_abstract(concat->abstract()->Clone());

@@ -52,6 +52,7 @@
 #include "frontend/parallel/pass/micro_interleaved_order_control.h"
 #include "frontend/parallel/pass/full_micro_interleaved_order_control.h"
 #include "frontend/parallel/pass/assign_add_opt.h"
+#include "frontend/parallel/pass/float32_redistribution.h"
 #include "frontend/parallel/pass/merge_cast_opt.h"
 #include "frontend/parallel/pass/remove_cast_before_assign_add.h"
 #include "frontend/parallel/pass/comp_comm_scheduling.h"
@@ -769,13 +770,29 @@ bool LabelFineGrainedInterleavedIndexPass(const ResourcePtr &resource) {
 
 bool AssignAddOpt(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  parallel::AssignAddOpt(resource->func_graph());
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  parallel::AssignAddOpt(func_graph);
+  auto ms_context = MsContext::GetInstance();
+  auto enable_concat_eliminate = ms_context->get_param<bool>(MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT);
+  if (!enable_concat_eliminate) {
+    return true;
+  }
+  OptPassGroupMap map({{"renormalize", opt::OptPassConfig({opt::OptPassConfig::Renormalize()})}});
+  auto renormalize = opt::Optimizer::MakeOptimizer("renormalize", resource, map);
+  (void)renormalize->step(func_graph, false);
   return true;
 }
 
 bool MergeCastOpt(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::MergeCastOpt(resource->func_graph());
+  return true;
+}
+
+bool ForceFp32Comm(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::Float32Redistribution(resource->func_graph());
   return true;
 }
 
@@ -1147,6 +1164,7 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"slice_recompute_activation", SliceRecomputeActivationPass},
                                    {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
                                    {"assign_add_opt", AssignAddOpt},
+                                   {"ForceFp32Comm", ForceFp32Comm},
                                    {"remove_cast_before_assign_add", RemoveCastBeforeAssignAdd},
                                    {"full_micro_interleaved_order_control", FullMicroInterLeavedOrderControlPass},
                                    {"comp_comm_scheduling", CompCommSchedulingPass},
