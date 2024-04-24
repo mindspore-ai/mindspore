@@ -61,6 +61,7 @@
 #include "backend/common/pass/insert_tensor_move_for_communication.h"
 #include "plugin/device/ascend/optimizer/enhancer/eliminate_maketuple_getitem.h"
 #include "plugin/device/ascend/optimizer/ge/convert_pad_v3_paddings.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/shape_reshape_fusion.h"
 
 namespace mindspore {
 namespace opt {
@@ -169,6 +170,10 @@ void GEBackendOptimizeACLAfterKernelSelect(const KernelGraphPtr &kernel_graph) {
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<DealRefOutput>());
   if (!kernel_graph->is_from_single_op() && !kernel_graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
     opt_acl_after_kernel_select_pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
+  }
+  if (!kernel_graph->is_graph_run_mode()) {
+    opt_acl_after_kernel_select_pm->AddPass(std::make_shared<opt::ShapeReshapeFusion>());
+    opt_acl_after_kernel_select_pm->AddPass(std::make_shared<opt::ShapeReshapeDirectFusion>());
   }
 
   optimizer->AddPassManager(opt_acl_after_kernel_select_pm);

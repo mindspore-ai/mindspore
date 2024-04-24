@@ -36,6 +36,7 @@ enum class NType {
   Parameter,
   Tensor,
   Scalar,
+  Tuple,
   Output,
 };
 
@@ -125,6 +126,20 @@ class ConstScalarNode : public Node {
   ~ConstScalarNode() = default;
 
   NType NodeType() override { return NType::Scalar; }
+  const ValuePtr data() const { return data_; }
+  abstract::AbstractBasePtr ToAbstract() const override { return data_->ToAbstract(); }
+
+ protected:
+  ValuePtr data_;
+};
+
+class ConstTupleNode : public Node {
+ public:
+  explicit ConstTupleNode(const ValuePtr &data, const size_t len)
+      : Node({DShape({SizeToLong(len)}), data->type()->type_id(), kOpFormat_DEFAULT}), data_(data) {}
+  ~ConstTupleNode() = default;
+
+  NType NodeType() override { return NType::Tuple; }
   const ValuePtr data() const { return data_; }
   abstract::AbstractBasePtr ToAbstract() const override { return data_->ToAbstract(); }
 

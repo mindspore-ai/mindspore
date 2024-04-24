@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <unordered_map>
+#include <unordered_set>
+#include <algorithm>
 #include "backend/common/graph_kernel/split_model/split_model.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "utils/hash_set.h"
 
 namespace mindspore::graphkernel::inner {
@@ -147,13 +151,51 @@ void SplitModel::AddPattern(const std::shared_ptr<FusePattern> &pn, bool enable)
   patterns_.back().first->SetCircleChecker(reach_table_);
 }
 
-void SplitModel::LimitAreaSize(const AreaPtr &dom, std::vector<AreaPtr> *areas, size_t max_size) const {
+void SplitModel::LimitAreaSize(const AreaPtr &dom, std::vector<AreaPtr> *areas) const {
+  uint64_t max_size = GraphKernelFlags::GetInstance().composite_op_limit_size;
   auto dom_size = dom->size();
   for (auto a = areas->begin(); a != areas->end(); ++a) {
     dom_size += (*a)->size();
   }
-  if (dom_size <= max_size) {
-    return;
+  if (GraphKernelFlags::GetInstance().kernel_generator == "DVM") {
+    const uint64_t MAX_DVM_SIZE = 96;
+    max_size = std::min(MAX_DVM_SIZE, max_size);
+    if (dom_size <= max_size) {
+      std::unordered_map<PrimOpPtr, uint64_t> degree;
+      std::unordered_set<PrimOpPtr> visited;
+      uint64_t io_num = 0;
+      for (auto a = areas->begin(); a != areas->end(); ++a) {
+        for (auto op : (*a)->ops()) {
+          visited.insert(op);
+          for (auto o : op->inputs()) {
+            if (auto prim = o->As<PrimOp>(); prim) {
+              degree[prim]++;
+            }
+          }
+        }
+      }
+      for (auto op : visited) {
+        auto iter = degree.find(op);
+        if (iter == degree.end()) {  // is output node
+          io_num++;
+        }
+        io_num++;
+        for (auto o : op->inputs()) {
+          if (auto prim = o->As<PrimOp>(); prim && visited.find(prim) != visited.end()) {  // is not input node
+            io_num--;
+            break;
+          }
+        }
+      }
+      max_size = max_size >= io_num ? max_size - io_num : 0;
+      if (dom_size <= max_size) {
+        return;
+      }
+    }
+  } else {
+    if (dom_size <= max_size) {
+      return;
+    }
   }
   // fuse the smaller area in priority
   std::sort(areas->begin(), areas->end(),

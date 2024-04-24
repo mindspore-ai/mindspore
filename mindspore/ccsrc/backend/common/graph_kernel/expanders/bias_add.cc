@@ -41,7 +41,13 @@ class BiasAdd : public OpDesc {
       return input.type != kNumberTypeFloat32 && input.type != kNumberTypeFloat16;
     });
     if (it != std::end(inputs_info_)) {
-      MS_LOG(INFO) << "In BiasAdd, input's dtype must be float16 or float32, But input's type is " << it->type;
+      MS_LOG(DEBUG) << "In BiasAdd, input's dtype must be float16 or float32, But input's type is " << it->type;
+      return false;
+    }
+    auto x_shape = inputs_info_[0].shape;
+    auto y_shape = inputs_info_[1].shape;
+    if (IsDynamicRank(x_shape) || IsDynamic(y_shape)) {
+      MS_LOG(DEBUG) << "Skip dynamic shape case";
       return false;
     }
     return true;

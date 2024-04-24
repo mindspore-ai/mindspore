@@ -265,7 +265,14 @@ bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::
 }
 
 std::vector<size_t> AclKernelMod::GetLaunchIgnoredInputAddressIdx() const {
-  static const std::map<std::string, std::vector<size_t>> launch_ignored_input_addr_idx = {{kReshapeOpName, {kIndex1}}};
+  static const std::map<std::string, std::vector<size_t>> launch_ignored_input_addr_idx = {
+    {kReshapeOpName, {kIndex1}},
+    {"Conv2DBackpropInput", {2}},
+    {"ReduceSum", {1}},
+    {"ResizeNearestNeighborV2Grad", {1}},
+    {"StandardNormal", {0}},
+    {"Slice", {1, 2}},
+    {"Ones", {0, 1}}};
   if (launch_ignored_input_addr_idx.count(kernel_name_) > 0) {
     return launch_ignored_input_addr_idx.at(kernel_name_);
   } else {

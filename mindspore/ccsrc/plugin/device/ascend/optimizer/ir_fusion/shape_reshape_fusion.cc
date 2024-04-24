@@ -24,6 +24,7 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
+#include "plugin/device/ascend/optimizer/get_value_helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -226,6 +227,39 @@ const AnfNodePtr ShapeReshapeFusion::Process(const FuncGraphPtr &func_graph, con
   }
   scalar_graph_holder->SetShapeIndex(shape_index);
   prim->AddAttr("graph", MakeValue(scalar_graph_holder));
+
+  auto new_node = NewCNode(inputs, func_graph);
+  MS_EXCEPTION_IF_NULL(new_node);
+  new_node->set_abstract(node->abstract());
+  return new_node;
+}
+
+const BaseRef ShapeReshapeDirectFusion::DefinePattern() const {
+  auto shape_node = VectorRef({prim::kPrimShape, std::make_shared<Var>()});
+  auto reshape_input = std::make_shared<Var>();
+  return VectorRef({std::make_shared<Primitive>("Reshape"), reshape_input, shape_node});
+}
+
+const AnfNodePtr ShapeReshapeDirectFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                   const EquivPtr &equiv) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(equiv);
+
+  auto cnode = node->cast<CNodePtr>();  // reshape cnode
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  auto input_node = cnode->input(kIndex1);
+  MS_EXCEPTION_IF_NULL(input_node);
+
+  auto shape_node = cnode->input(kIndex2);
+  MS_EXCEPTION_IF_NULL(shape_node);
+  auto shape_cnode = shape_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(shape_cnode);
+  auto shape_input = shape_cnode->input(kIndex1);
+
+  // create new primitive ReshapeExt
+  auto prim = std::make_shared<Primitive>("ReshapeExt");
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), input_node, shape_input};
 
   auto new_node = NewCNode(inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_node);

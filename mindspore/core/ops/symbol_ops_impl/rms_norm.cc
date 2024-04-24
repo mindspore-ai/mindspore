@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,19 @@
  * limitations under the License.
  */
 #include "mindspore/core/symbolic_shape/operation_builder.h"
-#include "mindspore/core/ops/symbol_ops_impl/common.h"
 
 namespace mindspore {
 namespace symshape {
 namespace ops {
-REG_SYMBOL_OP_BUILDER("CudnnUniformReal").SetShapeDepend({DependOn::kValue}).SetShapeFunc([](OperationBuilder *b) {
-  auto s = b->GetInputValue(0);
-  auto symbolic_shape = s->as<ListSymbol>();
-  MS_EXCEPTION_IF_NULL(symbolic_shape);
-  InferShapeOp::SetPositive(symbolic_shape);
-  return s;
-});
-
-REG_SYMBOL_OP_BUILDER("StandardNormal").SetShapeDepend({DependOn::kValue}).SetShapeFunc([](OperationBuilder *b) {
-  auto s = b->GetInputValue(0);
-  auto symbolic_shape = s->as<ListSymbol>();
-  MS_EXCEPTION_IF_NULL(symbolic_shape);
-  InferShapeOp::SetPositive(symbolic_shape);
-  return s;
+REG_SYMBOL_OP_BUILDER("RmsNorm").SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
+  auto inp = b->GetInputShape(kIndex0)->as_sptr<ListSymbol>();
+  MS_EXCEPTION_IF_NULL(inp);
+  if (inp->is_dyn_len()) {
+    return nullptr;
+  }
+  auto rstd_shape = inp->symbols();
+  rstd_shape.back() = IntSymbol::Make(1LL);
+  return ListSymbol::Make(SymbolPtrList{inp, ListSymbol::Make(std::move(rstd_shape))});
 });
 }  // namespace ops
 }  // namespace symshape

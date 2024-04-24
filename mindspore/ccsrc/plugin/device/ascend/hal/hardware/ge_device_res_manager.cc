@@ -29,6 +29,8 @@
 #include "graph/types.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
+#include "transform/acl_ir/op_api_util.h"
+#include "graph/def_types.h"
 
 namespace mindspore {
 namespace device {
@@ -253,6 +255,7 @@ bool GeDeviceResManager::BindDeviceToCurrentThread(bool force_bind) const {
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtSetDevice failed, ret:" << static_cast<int>(ret);
     }
+    transform::AclUtil::SetDeterministic();
   });
 
   if (runtime_instance_ != nullptr) {

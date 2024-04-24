@@ -47,8 +47,9 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
         !AnfUtils::IsRealKernel(node) || !CanExpand(node)) {
       continue;
     }
-    MS_LOG(DEBUG) << "Expanding node: " << node->fullname_with_scope();
+    MS_LOG(DEBUG) << "Expanding node run start: " << node->fullname_with_scope();
     auto newnode = InitExpander(node)->Run(node);
+    MS_LOG(DEBUG) << "Expanding node run end: " << node->fullname_with_scope();
     if (newnode == nullptr) {
       MS_LOG(DEBUG) << "Skipped node: " << node->fullname_with_scope();
       continue;

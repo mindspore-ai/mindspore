@@ -135,6 +135,17 @@ bool IntSymbol::operator<=(const IntSymbol &s) const {
   return math_info_.MathLessEqual(s.math_info_);
 }
 
+bool IntSymbol::is_divisible_by(int64_t d) const {
+  if (has_data_) {
+    return value_ % d == 0;
+  }
+  return (divisor() % d == 0) && (remainder() % d == 0);
+}
+
+bool IntSymbol::is_divisible_by(const IntSymbolPtr &d) const {
+  return (d->HasData() && is_divisible_by(d->value())) || (this->HasData() && value() == 0) || this->EqualsTo(d);
+}
+
 bool ListSymbol::operator==(const Symbol &s) const {
   if (this == &s) {
     return true;

@@ -524,6 +524,7 @@ bool MsContext::IsKByKExecutorMode() const {
   const auto &jit_config = PhaseManager::GetInstance().jit_config();
   std::string jit_level = "";
   static std::string jit_level_log = "";
+  bool is_jit_level_changed = false;
   auto iter = jit_config.find("jit_level");
   if (iter != jit_config.end()) {
     jit_level = iter->second;
@@ -539,6 +540,7 @@ bool MsContext::IsKByKExecutorMode() const {
     }
   }
   if (jit_level_log != jit_level) {
+    is_jit_level_changed = true;
     jit_level_log = jit_level;
     MS_LOG(INFO) << "The jit level is: " << jit_level_log;
   }
@@ -549,19 +551,27 @@ bool MsContext::IsKByKExecutorMode() const {
 
   if (mode == kPynativeMode) {
     if (jit_level == "O2") {
-      MS_LOG(INFO) << "The pynative mode enable ge executor mode by JitLevelO2.";
+      if (is_jit_level_changed) {
+        MS_LOG(INFO) << "The pynative mode enable ge executor mode by JitLevelO2.";
+      }
       return false;
     }
-    MS_LOG(INFO) << "The pynative mode enable kbyk executor mode.";
+    if (is_jit_level_changed) {
+      MS_LOG(INFO) << "The pynative mode enable kbyk executor mode.";
+    }
     return true;
   }
 
   if (mode == kGraphMode) {
     if (common::GetEnv("GRAPH_OP_RUN") == "1" || jit_level == "O0" || jit_level == "O1") {
-      MS_LOG(INFO) << "The graph mode enable kbyk executor mode by GRAPH_OP_RUN or JitLevelO0.";
+      if (is_jit_level_changed) {
+        MS_LOG(INFO) << "The graph mode enable kbyk executor mode by GRAPH_OP_RUN or JitLevelO0.";
+      }
       return true;
     }
-    MS_LOG(INFO) << "The graph mode enable ge executor mode.";
+    if (is_jit_level_changed) {
+      MS_LOG(INFO) << "The graph mode enable ge executor mode.";
+    }
     return false;
   }
 

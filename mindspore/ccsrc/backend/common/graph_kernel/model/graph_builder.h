@@ -142,6 +142,12 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
     auto const_scalar = MakeValue(input);
     return std::make_shared<ConstScalarNode>(const_scalar);
   }
+
+  template <typename T>
+  NodePtr Tuple(const std::vector<T> &input) const {
+    auto const_tuple = MakeValue(input);
+    return std::make_shared<ConstTupleNode>(const_tuple, input.size());
+  }
 };
 }  // namespace mindspore::graphkernel::inner
 #endif

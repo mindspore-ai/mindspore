@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+import os
 import mindspore.ops as ops
 from mindspore import context, Tensor
 from mindspore.nn import Cell
@@ -31,6 +32,16 @@ class ReduceNet(Cell):
         return self.sum(z, axis)
 
 
+class ReduceAxisNet(Cell):
+    def __init__(self, axis):
+        super(ReduceAxisNet, self).__init__()
+        self.sum = ops.ReduceSum(keep_dims=False)
+        self.axis = axis
+
+    def construct(self, x):
+        return self.sum(x, self.axis)
+
+
 def run_case():
     np.random.seed(1)
     x = np.random.normal(0, 1, [1024, 1024]).astype(np.float32)
@@ -39,6 +50,16 @@ def run_case():
 
     net = ReduceNet()
     output = net(Tensor(x), Tensor(y), 0)
+    assert np.allclose(expect, output.asnumpy(), 1.e-4, 1.e-4, equal_nan=True)
+
+
+def run_reduce_with_axis(shape, axis):
+    np.random.seed(1)
+    x = np.random.normal(0, 1, shape).astype(np.float32)
+    expect = np.sum(x, axis=axis, keepdims=False)
+
+    net = ReduceAxisNet(axis)
+    output = net(Tensor(x))
     assert np.allclose(expect, output.asnumpy(), 1.e-4, 1.e-4, equal_nan=True)
 
 
@@ -54,3 +75,20 @@ def test_reduce():
                         enable_graph_kernel=True,
                         graph_kernel_flags="--enable_cluster_ops=ReduceSum")
     run_case()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("shape, axis", [((1,), (0,)), ((1024, 1, 32), (1,))])
+def test_reduce_arithmetic_simplify(shape, axis):
+    """
+    Feature: test reduce sum with enable_graph_kernel=True
+    Description: reduce sum with Arithmetic Simplify
+    Expectation: the result match with numpy result
+    """
+    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
+                        enable_graph_kernel=True)
+    run_reduce_with_axis(shape, axis)
+    del os.environ["GRAPH_OP_RUN"]

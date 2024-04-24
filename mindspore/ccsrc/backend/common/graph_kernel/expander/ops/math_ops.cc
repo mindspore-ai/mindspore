@@ -85,4 +85,28 @@ REG_EXPANDER_FUNC("FastGelu").SetBody(FastGeluExpand);
 REG_EXPANDER_FUNC("FastGeLU").SetBody(FastGeluExpand);
 REG_EXPANDER_FUNC("FastGeluGrad").SetBody(FastGeluGradExpand);
 REG_EXPANDER_FUNC("FastGeLUGrad").SetBody(FastGeluGradExpand);
+
+REG_EXPANDER_FUNC("SiLU").SetBody(BODYFUNC(ib) {
+  const auto &input_x = ib->input(kIndex0);
+  auto const_one = ib->Tensor(1.0, input_x->GetDtype());
+  auto neg_x = ib->Neg(input_x);
+  auto exp_neg_x = ib->Exp(neg_x);
+  auto add_exp = ib->Add(exp_neg_x, const_one);
+  auto result = ib->Div(input_x, add_exp);
+  return {result};
+});
+
+REG_EXPANDER_FUNC("SiLUGrad").SetBody(BODYFUNC(ib) {
+  const auto &input_x = ib->input(kIndex1);
+  const auto &dout = ib->input(kIndex0);
+  auto const_one = ib->Tensor(1.0, input_x->GetDtype());
+  auto neg_x = ib->Neg(input_x);
+  auto exp_neg_x = ib->Exp(neg_x);
+  auto add_exp = ib->Add(exp_neg_x, const_one);
+  auto sigmod = ib->Div(const_one, add_exp);
+  auto out = ib->Div(input_x, add_exp);
+
+  auto result = ib->Sub(ib->Add(sigmod, out), ib->Mul(sigmod, out));
+  return {ib->Mul(result, dout)};
+});
 }  // namespace mindspore::graphkernel::expander

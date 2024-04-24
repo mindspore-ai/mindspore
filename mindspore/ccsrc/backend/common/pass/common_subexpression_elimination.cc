@@ -124,9 +124,18 @@ bool BackendCSE::CheckEqualCnodeInputs(const AnfNodePtr &main, const AnfNodePtr 
     auto inp2_j = GetReplicatedNode(inp2[j]);
     MS_EXCEPTION_IF_NULL(inp1_j);
     MS_EXCEPTION_IF_NULL(inp2_j);
-    if (!(*inp1_j == *inp2_j)) {
-      return false;
+    if ((inp1_j == inp2_j) || (*inp1_j == *inp2_j)) {
+      continue;
     }
+    // Handle the case of two different Tensor, but with the same value.
+    if (IsValueNode<tensor::Tensor>(inp1_j) && IsValueNode<tensor::Tensor>(inp2_j)) {
+      auto tensor1 = GetValueNode<tensor::TensorPtr>(inp1_j);
+      auto tensor2 = GetValueNode<tensor::TensorPtr>(inp2_j);
+      if (tensor1->ValueEqual(*tensor2)) {
+        continue;
+      }
+    }
+    return false;
   }
   return true;
 }

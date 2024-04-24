@@ -42,6 +42,16 @@ class BiasAddGrad : public OpDesc {
   ~BiasAddGrad() = default;
 
  protected:
+  bool CheckInputs() override {
+    auto x_format = inputs_info_[0].format;
+    auto x_shape = inputs_info_[0].shape;
+    if (x_format == kOpFormat_FRAC_NZ && IsDynamic(x_shape)) {
+      MS_LOG(DEBUG) << "Skip dynamic shape case";
+      return false;
+    }
+    return true;
+  }
+
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
     ShapeVector reduce_axis;

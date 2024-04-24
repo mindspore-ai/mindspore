@@ -229,21 +229,22 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, 
                              return iter->second;
                            } else {
                              auto node_type = inp->NodeType();
-                             if (node_type != inner::NType::Tensor && node_type != inner::NType::Scalar) {
+                             if (node_type != inner::NType::Tensor && node_type != inner::NType::Scalar &&
+                                 node_type != inner::NType::Tuple) {
                                MS_LOG(EXCEPTION)
                                  << "Node " << inp->debug_name() << " should be a Tensor or Scalar node";
                              }
                              ValuePtr inp_value = nullptr;
                              if (node_type == inner::NType::Tensor) {
                                inp_value = inp->As<inner::ConstTensorNode>()->data();
-                             } else {
+                             } else if (node_type == inner::NType::Scalar) {
                                inp_value = inp->As<inner::ConstScalarNode>()->data();
+                             } else {
+                               inp_value = inp->As<inner::ConstTupleNode>()->data();
                              }
                              auto value_node = NewValueNode(inp_value);
                              value_node->set_abstract(inp_value->ToAbstract());
-                             if (node_type == inner::NType::Tensor) {
-                               cb->SetBasicNodeKernelInfo(value_node, {{inp->shape, inp->type, inp->format}});
-                             }
+                             cb->SetBasicNodeKernelInfo(value_node, {{inp->shape, inp->type, inp->format}});
                              return value_node;
                            }
                          });
@@ -349,7 +350,7 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
       auto input_value = input_value_node->value();
       constexpr size_t idx = 2;
       inner::NodePtr input_node;
-      if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) && i == idx) {
+      if ((IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) && i == idx) {
         input_node = std::make_shared<inner::ConstScalarNode>(input_value);
       } else {
         auto tensor = InputValue2Tensor(input_value);

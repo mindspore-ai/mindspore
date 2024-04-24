@@ -522,7 +522,9 @@ void SymbolEngineImpl::BuildCNodeSymbol(const CNodePtr &cnode) {
     }
   } else {
     prim = GetCNodePrimitive(cnode);
-    MS_EXCEPTION_IF_NULL(prim);
+    if (prim == nullptr) {
+      prim = std::make_shared<Primitive>("_UnsupportedCNode");
+    }
     inputs = ExtractInputsAbstract(cnode);
   }
   auto builder = OperationBuilderInfoRegistry::GetBuilder(prim->name(), emitter_.get());
