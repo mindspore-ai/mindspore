@@ -29,6 +29,7 @@
 #include "mindspore/core/ops/sparse_ops.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
+#include "utils/hashing.h"
 
 namespace mindspore {
 bool ValueToBool(const ValuePtr &v, bool *value) {
@@ -692,137 +693,136 @@ ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const std::string &att
 }
 
 namespace {
-static const std::map<std::pair<TypeId, TypeId>, TypeId> tensor_tensor_convert_map = {
+size_t GetHashId(int a, int b) { return a < b ? hash_combine(a, b) : hash_combine(b, a); }
+
+static const std::map<size_t, TypeId> tensor_tensor_convert_map = {
   // Bool
-  {std::make_pair(kNumberTypeBool, kNumberTypeBool), kNumberTypeBool},
-  {std::make_pair(kNumberTypeBool, kNumberTypeInt8), kNumberTypeInt8},
-  {std::make_pair(kNumberTypeBool, kNumberTypeInt16), kNumberTypeInt16},
-  {std::make_pair(kNumberTypeBool, kNumberTypeInt32), kNumberTypeInt32},
-  {std::make_pair(kNumberTypeBool, kNumberTypeInt64), kNumberTypeInt64},
-  {std::make_pair(kNumberTypeBool, kNumberTypeUInt8), kNumberTypeUInt8},
-  {std::make_pair(kNumberTypeBool, kNumberTypeUInt16), kNumberTypeUInt16},
-  {std::make_pair(kNumberTypeBool, kNumberTypeUInt32), kNumberTypeUInt32},
-  {std::make_pair(kNumberTypeBool, kNumberTypeUInt64), kNumberTypeUInt64},
-  {std::make_pair(kNumberTypeBool, kNumberTypeFloat16), kNumberTypeFloat16},
-  {std::make_pair(kNumberTypeBool, kNumberTypeBFloat16), kNumberTypeBFloat16},
-  {std::make_pair(kNumberTypeBool, kNumberTypeFloat32), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeBool, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeBool, kNumberTypeBool), kNumberTypeBool},
+  {GetHashId(kNumberTypeBool, kNumberTypeInt8), kNumberTypeInt8},
+  {GetHashId(kNumberTypeBool, kNumberTypeInt16), kNumberTypeInt16},
+  {GetHashId(kNumberTypeBool, kNumberTypeInt32), kNumberTypeInt32},
+  {GetHashId(kNumberTypeBool, kNumberTypeInt64), kNumberTypeInt64},
+  {GetHashId(kNumberTypeBool, kNumberTypeUInt8), kNumberTypeUInt8},
+  {GetHashId(kNumberTypeBool, kNumberTypeUInt16), kNumberTypeUInt16},
+  {GetHashId(kNumberTypeBool, kNumberTypeUInt32), kNumberTypeUInt32},
+  {GetHashId(kNumberTypeBool, kNumberTypeUInt64), kNumberTypeUInt64},
+  {GetHashId(kNumberTypeBool, kNumberTypeFloat16), kNumberTypeFloat16},
+  {GetHashId(kNumberTypeBool, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {GetHashId(kNumberTypeBool, kNumberTypeFloat32), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeBool, kNumberTypeFloat64), kNumberTypeFloat64},
   // Int8
-  {std::make_pair(kNumberTypeInt8, kNumberTypeInt8), kNumberTypeInt8},
-  {std::make_pair(kNumberTypeInt8, kNumberTypeInt16), kNumberTypeInt16},
-  {std::make_pair(kNumberTypeInt8, kNumberTypeInt32), kNumberTypeInt32},
-  {std::make_pair(kNumberTypeInt8, kNumberTypeInt64), kNumberTypeInt64},
-  {std::make_pair(kNumberTypeInt8, kNumberTypeUInt8), kNumberTypeInt16},
-  {std::make_pair(kNumberTypeInt8, kNumberTypeFloat16), kNumberTypeFloat16},
-  {std::make_pair(kNumberTypeInt8, kNumberTypeBFloat16), kNumberTypeBFloat16},
-  {std::make_pair(kNumberTypeInt8, kNumberTypeFloat32), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeInt8, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeInt8, kNumberTypeInt8), kNumberTypeInt8},
+  {GetHashId(kNumberTypeInt8, kNumberTypeInt16), kNumberTypeInt16},
+  {GetHashId(kNumberTypeInt8, kNumberTypeInt32), kNumberTypeInt32},
+  {GetHashId(kNumberTypeInt8, kNumberTypeInt64), kNumberTypeInt64},
+  {GetHashId(kNumberTypeInt8, kNumberTypeUInt8), kNumberTypeInt16},
+  {GetHashId(kNumberTypeInt8, kNumberTypeFloat16), kNumberTypeFloat16},
+  {GetHashId(kNumberTypeInt8, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {GetHashId(kNumberTypeInt8, kNumberTypeFloat32), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeInt8, kNumberTypeFloat64), kNumberTypeFloat64},
   // Int16
-  {std::make_pair(kNumberTypeInt16, kNumberTypeInt16), kNumberTypeInt16},
-  {std::make_pair(kNumberTypeInt16, kNumberTypeInt32), kNumberTypeInt32},
-  {std::make_pair(kNumberTypeInt16, kNumberTypeInt64), kNumberTypeInt64},
-  {std::make_pair(kNumberTypeInt16, kNumberTypeUInt8), kNumberTypeInt16},
-  {std::make_pair(kNumberTypeInt16, kNumberTypeFloat16), kNumberTypeFloat16},
-  {std::make_pair(kNumberTypeInt16, kNumberTypeBFloat16), kNumberTypeBFloat16},
-  {std::make_pair(kNumberTypeInt16, kNumberTypeFloat32), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeInt16, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeInt16, kNumberTypeInt16), kNumberTypeInt16},
+  {GetHashId(kNumberTypeInt16, kNumberTypeInt32), kNumberTypeInt32},
+  {GetHashId(kNumberTypeInt16, kNumberTypeInt64), kNumberTypeInt64},
+  {GetHashId(kNumberTypeInt16, kNumberTypeUInt8), kNumberTypeInt16},
+  {GetHashId(kNumberTypeInt16, kNumberTypeFloat16), kNumberTypeFloat16},
+  {GetHashId(kNumberTypeInt16, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {GetHashId(kNumberTypeInt16, kNumberTypeFloat32), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeInt16, kNumberTypeFloat64), kNumberTypeFloat64},
   // Int32
-  {std::make_pair(kNumberTypeInt32, kNumberTypeInt32), kNumberTypeInt32},
-  {std::make_pair(kNumberTypeInt32, kNumberTypeInt64), kNumberTypeInt64},
-  {std::make_pair(kNumberTypeInt32, kNumberTypeUInt8), kNumberTypeInt32},
-  {std::make_pair(kNumberTypeInt32, kNumberTypeFloat16), kNumberTypeFloat16},
-  {std::make_pair(kNumberTypeInt32, kNumberTypeBFloat16), kNumberTypeBFloat16},
-  {std::make_pair(kNumberTypeInt32, kNumberTypeFloat32), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeInt32, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeInt32, kNumberTypeInt32), kNumberTypeInt32},
+  {GetHashId(kNumberTypeInt32, kNumberTypeInt64), kNumberTypeInt64},
+  {GetHashId(kNumberTypeInt32, kNumberTypeUInt8), kNumberTypeInt32},
+  {GetHashId(kNumberTypeInt32, kNumberTypeFloat16), kNumberTypeFloat16},
+  {GetHashId(kNumberTypeInt32, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {GetHashId(kNumberTypeInt32, kNumberTypeFloat32), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeInt32, kNumberTypeFloat64), kNumberTypeFloat64},
   // Int64
-  {std::make_pair(kNumberTypeInt64, kNumberTypeInt64), kNumberTypeInt64},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeUInt8), kNumberTypeInt64},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat16), kNumberTypeFloat16},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeBFloat16), kNumberTypeBFloat16},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat32), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeInt64, kNumberTypeInt64), kNumberTypeInt64},
+  {GetHashId(kNumberTypeInt64, kNumberTypeUInt8), kNumberTypeInt64},
+  {GetHashId(kNumberTypeInt64, kNumberTypeFloat16), kNumberTypeFloat16},
+  {GetHashId(kNumberTypeInt64, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {GetHashId(kNumberTypeInt64, kNumberTypeFloat32), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeInt64, kNumberTypeFloat64), kNumberTypeFloat64},
   // UInt8
-  {std::make_pair(kNumberTypeUInt8, kNumberTypeUInt8), kNumberTypeUInt8},
-  {std::make_pair(kNumberTypeUInt8, kNumberTypeFloat16), kNumberTypeFloat16},
-  {std::make_pair(kNumberTypeUInt8, kNumberTypeBFloat16), kNumberTypeBFloat16},
-  {std::make_pair(kNumberTypeUInt8, kNumberTypeFloat32), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeUInt8, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeUInt8, kNumberTypeUInt8), kNumberTypeUInt8},
+  {GetHashId(kNumberTypeUInt8, kNumberTypeFloat16), kNumberTypeFloat16},
+  {GetHashId(kNumberTypeUInt8, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {GetHashId(kNumberTypeUInt8, kNumberTypeFloat32), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeUInt8, kNumberTypeFloat64), kNumberTypeFloat64},
   // UInt16
-  {std::make_pair(kNumberTypeUInt16, kNumberTypeUInt16), kNumberTypeUInt16},
+  {GetHashId(kNumberTypeUInt16, kNumberTypeUInt16), kNumberTypeUInt16},
   // UInt32
-  {std::make_pair(kNumberTypeUInt32, kNumberTypeUInt32), kNumberTypeUInt32},
+  {GetHashId(kNumberTypeUInt32, kNumberTypeUInt32), kNumberTypeUInt32},
   // UInt64
-  {std::make_pair(kNumberTypeUInt64, kNumberTypeUInt64), kNumberTypeUInt64},
+  {GetHashId(kNumberTypeUInt64, kNumberTypeUInt64), kNumberTypeUInt64},
   // Float16
-  {std::make_pair(kNumberTypeFloat16, kNumberTypeFloat16), kNumberTypeFloat16},
-  {std::make_pair(kNumberTypeFloat16, kNumberTypeBFloat16), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeFloat16, kNumberTypeFloat32), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeFloat16, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeFloat16, kNumberTypeFloat16), kNumberTypeFloat16},
+  {GetHashId(kNumberTypeFloat16, kNumberTypeBFloat16), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeFloat16, kNumberTypeFloat32), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeFloat16, kNumberTypeFloat64), kNumberTypeFloat64},
   // BFloat16
-  {std::make_pair(kNumberTypeBFloat16, kNumberTypeBFloat16), kNumberTypeBFloat16},
-  {std::make_pair(kNumberTypeBFloat16, kNumberTypeFloat32), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeBFloat16, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeBFloat16, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {GetHashId(kNumberTypeBFloat16, kNumberTypeFloat32), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeBFloat16, kNumberTypeFloat64), kNumberTypeFloat64},
   // Float32
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat32), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeFloat32), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeFloat64), kNumberTypeFloat64},
   // Float64
-  {std::make_pair(kNumberTypeFloat64, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeFloat64, kNumberTypeFloat64), kNumberTypeFloat64},
 };
 
-static const std::map<std::pair<TypeId, TypeId>, TypeId> scalar_tensor_convert_map = {
+static const std::map<size_t, TypeId> scalar_tensor_convert_map = {
   // Scalar is bool.
-  {std::make_pair(kNumberTypeBool, kNumberTypeBool), kNumberTypeBool},
-  {std::make_pair(kNumberTypeBool, kNumberTypeInt8), kNumberTypeInt8},
-  {std::make_pair(kNumberTypeBool, kNumberTypeInt16), kNumberTypeInt16},
-  {std::make_pair(kNumberTypeBool, kNumberTypeInt32), kNumberTypeInt32},
-  {std::make_pair(kNumberTypeBool, kNumberTypeInt64), kNumberTypeInt64},
-  {std::make_pair(kNumberTypeBool, kNumberTypeUInt8), kNumberTypeUInt8},
-  {std::make_pair(kNumberTypeBool, kNumberTypeUInt16), kNumberTypeUInt16},
-  {std::make_pair(kNumberTypeBool, kNumberTypeUInt32), kNumberTypeUInt32},
-  {std::make_pair(kNumberTypeBool, kNumberTypeUInt64), kNumberTypeUInt64},
-  {std::make_pair(kNumberTypeBool, kNumberTypeFloat16), kNumberTypeFloat16},
-  {std::make_pair(kNumberTypeBool, kNumberTypeBFloat16), kNumberTypeBFloat16},
-  {std::make_pair(kNumberTypeBool, kNumberTypeFloat32), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeBool, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeBool, kNumberTypeBool), kNumberTypeBool},
+  {GetHashId(kNumberTypeBool, kNumberTypeInt8), kNumberTypeInt8},
+  {GetHashId(kNumberTypeBool, kNumberTypeInt16), kNumberTypeInt16},
+  {GetHashId(kNumberTypeBool, kNumberTypeInt32), kNumberTypeInt32},
+  {GetHashId(kNumberTypeBool, kNumberTypeInt64), kNumberTypeInt64},
+  {GetHashId(kNumberTypeBool, kNumberTypeUInt8), kNumberTypeUInt8},
+  {GetHashId(kNumberTypeBool, kNumberTypeUInt16), kNumberTypeUInt16},
+  {GetHashId(kNumberTypeBool, kNumberTypeUInt32), kNumberTypeUInt32},
+  {GetHashId(kNumberTypeBool, kNumberTypeUInt64), kNumberTypeUInt64},
+  {GetHashId(kNumberTypeBool, kNumberTypeFloat16), kNumberTypeFloat16},
+  {GetHashId(kNumberTypeBool, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {GetHashId(kNumberTypeBool, kNumberTypeFloat32), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeBool, kNumberTypeFloat64), kNumberTypeFloat64},
   // Scalar is int.
-  {std::make_pair(kNumberTypeInt64, kNumberTypeBool), kNumberTypeInt64},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeInt8), kNumberTypeInt8},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeInt16), kNumberTypeInt16},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeInt32), kNumberTypeInt32},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeInt64), kNumberTypeInt64},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeUInt8), kNumberTypeUInt8},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat16), kNumberTypeFloat16},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeBFloat16), kNumberTypeBFloat16},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat32), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeInt64, kNumberTypeBool), kNumberTypeInt64},
+  {GetHashId(kNumberTypeInt64, kNumberTypeInt8), kNumberTypeInt8},
+  {GetHashId(kNumberTypeInt64, kNumberTypeInt16), kNumberTypeInt16},
+  {GetHashId(kNumberTypeInt64, kNumberTypeInt32), kNumberTypeInt32},
+  {GetHashId(kNumberTypeInt64, kNumberTypeInt64), kNumberTypeInt64},
+  {GetHashId(kNumberTypeInt64, kNumberTypeUInt8), kNumberTypeUInt8},
+  {GetHashId(kNumberTypeInt64, kNumberTypeFloat16), kNumberTypeFloat16},
+  {GetHashId(kNumberTypeInt64, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {GetHashId(kNumberTypeInt64, kNumberTypeFloat32), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeInt64, kNumberTypeFloat64), kNumberTypeFloat64},
   // Scalar is float.
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeBool), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeInt8), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeInt16), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeInt32), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeInt64), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeUInt8), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat16), kNumberTypeFloat16},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeBFloat16), kNumberTypeBFloat16},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat32), kNumberTypeFloat32},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeBool), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeInt8), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeInt16), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeInt32), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeInt64), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeUInt8), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeFloat16), kNumberTypeFloat16},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeBFloat16), kNumberTypeBFloat16},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeFloat32), kNumberTypeFloat32},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeFloat64), kNumberTypeFloat64},
 };
 
-TypeId ConvertTypeForTensorsOrScalars(const TypeId &current, const TypeId &other) {
-  auto iter = tensor_tensor_convert_map.find(std::make_pair(current, other));
+TypeId ConvertTypeForTensorsOrScalars(const TypeId &current, const TypeId &other, const size_t hash_id) {
+  auto iter = tensor_tensor_convert_map.find(hash_id);
   if (iter != tensor_tensor_convert_map.end()) {
     return iter->second;
-  }
-  auto iter_reverse = tensor_tensor_convert_map.find(std::make_pair(other, current));
-  if (iter_reverse != tensor_tensor_convert_map.end()) {
-    return iter_reverse->second;
   }
   MS_EXCEPTION(TypeError) << "Type implicit conversion between " << TypeIdToString(current) << " and "
                           << TypeIdToString(other) << " is not supported.";
 }
 
-TypeId ConvertTypeBetweenTensorAndScalar(const TypeId &tensor_type_id, const TypeId &scalar_type_id) {
-  auto iter = scalar_tensor_convert_map.find(std::make_pair(scalar_type_id, tensor_type_id));
+TypeId ConvertTypeBetweenTensorAndScalar(const TypeId &tensor_type_id, const TypeId &scalar_type_id,
+                                         const size_t hash_id) {
+  auto iter = scalar_tensor_convert_map.find(hash_id);
   if (iter != scalar_tensor_convert_map.end()) {
     return iter->second;
   }
@@ -830,25 +830,24 @@ TypeId ConvertTypeBetweenTensorAndScalar(const TypeId &tensor_type_id, const Typ
                           << TypeIdToString(scalar_type_id) << " is not supported.";
 }
 
-TypeId GetConversionType(const TypeId &current, const TypeId &saved_type_id, bool arg_is_tensor, bool has_tensor) {
+TypeId GetConversionType(const TypeId &current, const TypeId &saved_type_id, bool current_arg_is_tensor,
+                         bool saved_has_tensor) {
+  static std::set<int> black_types{kTypeUnknown, kNumberTypeComplex64, kNumberTypeComplex128};
   if (current == saved_type_id) {
     return current;
   }
-  if (current == kTypeUnknown || saved_type_id == kTypeUnknown || current == kNumberTypeComplex64 ||
-      current == kNumberTypeComplex128 || saved_type_id == kNumberTypeComplex64 ||
-      saved_type_id == kNumberTypeComplex128) {
+  if (MS_UNLIKELY(black_types.find(current) != black_types.end() ||
+                  black_types.find(saved_type_id) != black_types.end())) {
     return kTypeUnknown;
   }
-  // Tensor + Scalar
-  if (arg_is_tensor && !has_tensor) {
-    return ConvertTypeBetweenTensorAndScalar(current, saved_type_id);
-  }
-  // Scalar + Tensor
-  if (!arg_is_tensor && has_tensor) {
-    return ConvertTypeBetweenTensorAndScalar(saved_type_id, current);
+
+  // Tensor + Scalar, Scalar + Tensor
+  auto hash_id = GetHashId(current, saved_type_id);
+  if (MS_UNLIKELY(current_arg_is_tensor ^ saved_has_tensor)) {
+    return ConvertTypeBetweenTensorAndScalar(current, saved_type_id, hash_id);
   }
   // Tensor + Tensor, Scalar + Scalar
-  return ConvertTypeForTensorsOrScalars(current, saved_type_id);
+  return ConvertTypeForTensorsOrScalars(current, saved_type_id, hash_id);
 }
 }  // namespace
 
@@ -863,10 +862,8 @@ std::map<SignatureEnumDType, std::pair<TypeId, bool>> GetSignatureTypeMap(const 
     if (it == sig_type_map.end()) {
       (void)sig_type_map.insert(std::make_pair(dtypes[i], std::make_pair(args_type_id[i], args_is_tensor[i])));
     } else {
-      TypeId saved_type_id = (it->second).first;
-      bool has_tensor = (it->second).second;
-      TypeId target_type_id = GetConversionType(args_type_id[i], saved_type_id, args_is_tensor[i], has_tensor);
-      it->second = std::make_pair(target_type_id, args_is_tensor[i] || has_tensor);
+      it->second.first = GetConversionType(args_type_id[i], it->second.first, args_is_tensor[i], it->second.second);
+      it->second.second = args_is_tensor[i] || it->second.second;
     }
   }
   return sig_type_map;

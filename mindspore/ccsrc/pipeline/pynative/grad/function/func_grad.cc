@@ -206,7 +206,7 @@ NodePtrList FuncBackwardNode::PreProcess(const ValuePtrList &dout, FuncBuilder *
     (void)node_inputs.emplace_back(func_node);
   }
   (void)node_inputs.emplace_back(emitter->NewFuncNode(op_output_, out_abstract_, InputType::kOpOutput));
-  if (dout.size() == kSizeOne) {
+  if (dout.size() == kSizeOne && !op_output_->isa<ValueSequence>()) {
     (void)node_inputs.emplace_back(emitter->NewFuncNode(dout[kIndex0], out_abstract_, InputType::kOpOutput));
   } else {
     (void)node_inputs.emplace_back(
