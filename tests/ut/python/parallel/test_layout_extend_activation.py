@@ -82,7 +82,7 @@ class Net(nn.Cell):
 x = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
 
 
-@pytest.mark.parametrize('ops_name', ["gelu", "silu", "relu", "sigmoid", "softmax"])
+@pytest.mark.parametrize('ops_name', ["gelu", "silu", "relu", "sigmoid"])
 def test_layout_extend_base(ops_name):
     """
     Feature: test layout extend
@@ -96,7 +96,7 @@ def test_layout_extend_base(ops_name):
     compile_net(net, x)
 
 
-@pytest.mark.parametrize('ops_name', ["gelu", "silu", "relu", "sigmoid", "softmax"])
+@pytest.mark.parametrize('ops_name', ["gelu", "silu", "relu", "sigmoid"])
 def test_layout_extend_batch_multi_shard(ops_name):
     """
     Feature: test layout extend
@@ -110,7 +110,7 @@ def test_layout_extend_batch_multi_shard(ops_name):
     compile_net(net, x)
 
 
-@pytest.mark.parametrize('ops_name', ["gelu", "silu", "relu", "sigmoid", "softmax"])
+@pytest.mark.parametrize('ops_name', ["gelu", "silu", "relu", "sigmoid"])
 def test_layout_extend_reduce_axis_multi_shard(ops_name):
     """
     Feature: test layout extend
@@ -122,3 +122,18 @@ def test_layout_extend_reduce_axis_multi_shard(ops_name):
     layout1 = (layout("dp", ("mp", "sp")),)
     net = Net(layout1, ops_name=ops_name)
     compile_net(net, x)
+
+
+@pytest.mark.parametrize('ops_name', ["softmax"])
+def test_layout_extend_reduce_axis_failed(ops_name):
+    """
+    Feature: test layout extend
+    Description: dev_num is 8, reduce dim multi shard.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
+    layout1 = (layout("dp", ("mp", "sp")),)
+    net = Net(layout1, ops_name=ops_name)
+    with pytest.raises(RuntimeError):
+        compile_net(net, x)

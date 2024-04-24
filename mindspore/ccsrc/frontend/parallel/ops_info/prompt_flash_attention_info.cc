@@ -44,6 +44,7 @@ constexpr char kAttrKVHeadNum[] = "num_key_value_heads";
 constexpr char kAttrInputLayout[] = "input_layout";
 constexpr size_t kRank2 = 2;
 constexpr size_t kRank3 = 3;
+constexpr size_t kRank4 = 4;
 constexpr size_t kSparseMode0 = 0;
 enum SparseMode : int64_t {
   kSparseDefaultMask = 0,
@@ -104,17 +105,24 @@ void PromptFlashAttentionInfo::SetOptinalInputs() {
     }
   }
 
+  Shape atten_mask_tensor_map(atten_mask_rank_, -1);
   Shape atten_mask_strategy_map(atten_mask_rank_, 0);
   Shape padding_mask_tensor_map(padding_mask_rank_, -1);
   Shape padding_mask_strategy_map(padding_mask_rank_, 0);
+  if (atten_mask_rank_ >= kRank3 && sparse_mode_ == kSparseMode0) {
+    atten_mask_tensor_map[0] = 2;
+    atten_mask_strategy_map[0] = 2;
+  }
   if (padding_mask_rank_ >= kRank3) {
     padding_mask_tensor_map[0] = 2;
     padding_mask_strategy_map[0] = 2;
   }
+  optinal_tensor_map_[ops::kPromptFlashAttentionInputAttnMaskIndex] = atten_mask_tensor_map;
   optinal_tensor_map_[ops::kPromptFlashAttentionInputPaddingMaskIndex] = padding_mask_tensor_map;
   optinal_tensor_map_[ops::kPromptFlashAttentionInputActualSeqLengthsIndex] = {2};
   optinal_tensor_map_[ops::kPromptFlashAttentionInputActualSeqLengthsKvIndex] = {2};
 
+  optinal_op_strategies_[ops::kPromptFlashAttentionInputAttnMaskIndex] = atten_mask_strategy_map;
   optinal_op_strategies_[ops::kPromptFlashAttentionInputPaddingMaskIndex] = padding_mask_strategy_map;
   optinal_op_strategies_[ops::kPromptFlashAttentionInputActualSeqLengthsIndex] = {2};
   optinal_op_strategies_[ops::kPromptFlashAttentionInputActualSeqLengthsKvIndex] = {2};
@@ -287,10 +295,13 @@ Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
     }
   }
-  if (CheckAttenMaskStrategy(strategy, ops::kPromptFlashAttentionInputAttnMaskIndex) != SUCCESS) {
-    MS_LOG(ERROR) << "Check strategy for atten mask failed";
-    return FAILED;
+  if (atten_mask_rank_ >= 2) {
+    if (CheckAttenMaskStrategy(strategy, ops::kPromptFlashAttentionInputAttnMaskIndex) != SUCCESS) {
+      MS_LOG(ERROR) << "Check strategy for atten mask failed";
+      return FAILED;
+    }
   }
+
   return SUCCESS;
 }
 
@@ -334,17 +345,19 @@ Status PromptFlashAttentionInfo::InferTensorMap() {
     MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
     return FAILED;
   }
-  auto batch_dim = is_attn_mask_compressed_ ? -1 : dev_matrix_batch_dim_;
-  auto seq_dim = attn_sp_shard_ ? dev_matrix_s1_dim_ : -1;
+
   if (atten_mask_rank_ == kRank2) {
-    (void)inputs_tensor_map_.emplace_back(Shape{seq_dim, -1});  // attn_mask
+    optinal_tensor_map_[ops::kPromptFlashAttentionInputAttnMaskIndex][0] = dev_matrix_s1_dim_;
   } else if (atten_mask_rank_ == kRank3) {
-    (void)inputs_tensor_map_.emplace_back(Shape{batch_dim, seq_dim, -1});  // attn_mask
+    optinal_tensor_map_[ops::kPromptFlashAttentionInputAttnMaskIndex][1] = dev_matrix_s1_dim_;
+  } else if (atten_mask_rank_ == kRank4) {
+    optinal_tensor_map_[ops::kPromptFlashAttentionInputAttnMaskIndex][2] = dev_matrix_s1_dim_;
   } else {
-    (void)inputs_tensor_map_.emplace_back(Shape{batch_dim, -1, seq_dim, -1});  // attn_mask
+    MS_LOG(INFO) << "Attention mask rank is not in [2, 3, 4]， rank is " << atten_mask_rank_;
   }
-  for (auto index = static_cast<size_t>(ops::kPromptFlashAttentionInputActualSeqLengthsIndex);
-       index < optinal_inputs_.size(); index++) {
+
+  for (auto index = static_cast<size_t>(ops::kPromptFlashAttentionInputAttnMaskIndex); index < optinal_inputs_.size();
+       index++) {
     if (optinal_inputs_[index]) {
       (void)inputs_tensor_map_.emplace_back(optinal_tensor_map_[index]);
     }
@@ -370,16 +383,8 @@ std::vector<StrategyPtr> PromptFlashAttentionInfo::GenerateOpStrategies(int64_t 
   } else {
     MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
   }
-  auto batch_dim = is_attn_mask_compressed_ ? 0 : 1;
-  if (atten_mask_rank_ == kRank2) {
-    (void)inputs_tensor_map_.emplace_back(Shape{dev_matrix_s1_dim_, -1});  // attn_mask
-  } else if (atten_mask_rank_ == kRank3) {
-    (void)inputs_tensor_map_.emplace_back(Shape{batch_dim, dev_matrix_s1_dim_, -1});  // attn_mask
-  } else {
-    (void)inputs_tensor_map_.emplace_back(Shape{batch_dim, batch_dim, dev_matrix_s1_dim_, -1});  // attn_mask
-  }
-  for (auto index = static_cast<size_t>(ops::kPromptFlashAttentionInputActualSeqLengthsIndex);
-       index < optinal_inputs_.size(); index++) {
+  for (auto index = static_cast<size_t>(ops::kPromptFlashAttentionInputAttnMaskIndex); index < optinal_inputs_.size();
+       index++) {
     if (optinal_inputs_[index]) {
       (void)splitable_inputs.emplace_back(optinal_op_strategies_[index]);
     }

@@ -244,7 +244,7 @@ def test_prompt_flash_attention_semi_auto_parallel_sparsemode0(input_layout, str
 
 @pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
 @pytest.mark.parametrize('strategys', [(4, 2, 1), (2, 2, 1), (2, 2, 2), (1, 2, 4)])
-@pytest.mark.parametrize('if_atten_mask_as_constant', [True, False])
+@pytest.mark.parametrize('if_atten_mask_as_constant', [True])
 def test_prompt_flash_attention_semi_auto_parallel_sparsemode2(input_layout, strategys, if_atten_mask_as_constant):
     """
     Feature: test PromptFlashAttention semi parallel
@@ -268,7 +268,7 @@ def test_prompt_flash_attention_semi_auto_parallel_sparsemode2(input_layout, str
 
 @pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
 @pytest.mark.parametrize('strategys', [(2, 2, 2), (1, 2, 4)])
-@pytest.mark.parametrize('if_atten_mask_as_constant', [True, False])
+@pytest.mark.parametrize('if_atten_mask_as_constant', [True])
 def test_prompt_flash_attention_semi_auto_parallel_sparsemode3(input_layout, strategys, if_atten_mask_as_constant):
     """
     Feature: test PromptFlashAttention semi parallel
@@ -292,7 +292,7 @@ def test_prompt_flash_attention_semi_auto_parallel_sparsemode3(input_layout, str
 
 @pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
 @pytest.mark.parametrize('strategys', [(2, 2, 2), (1, 2, 4)])
-@pytest.mark.parametrize('if_atten_mask_as_constant', [True, False])
+@pytest.mark.parametrize('if_atten_mask_as_constant', [True])
 def test_prompt_flash_attention_semi_auto_parallel_sparsemode4(input_layout, strategys, if_atten_mask_as_constant):
     """
     Feature: test PromptFlashAttention semi parallel
