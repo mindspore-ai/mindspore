@@ -50,24 +50,7 @@ uint64_t AscendMemoryManager::GetMsUsedHbmSize() const { return AscendMemAdapter
 void *AscendMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle,
                                                 uint32_t stream_id) {
   auto align_size = GetCommonAlignSize(size);
-  void *device_addr =
-    AscendMemoryPool::GetInstance().AllocTensorMem(align_size, from_persistent_mem, need_recycle, stream_id);
-  if (device_addr != nullptr) {
-    return device_addr;
-  }
-  MS_LOG(INFO) << "Alloc tensor mem failed, will sync streams and try to alloc agagin later.";
-  AscendStreamMng::GetInstance().SyncAllStreams();
-  const int32_t max_alloc_retries = 2;
-  for (int32_t i = 0; i < max_alloc_retries; i++) {
-    MS_LOG(INFO) << "Try to alloc tensor mem again, count : " << i + 1 << ".";
-    std::this_thread::yield();
-    device_addr =
-      AscendMemoryPool::GetInstance().AllocTensorMem(align_size, from_persistent_mem, need_recycle, stream_id);
-    if (device_addr != nullptr) {
-      break;
-    }
-  }
-  return device_addr;
+  return AscendMemoryPool::GetInstance().AllocTensorMem(align_size, from_persistent_mem, need_recycle, stream_id);
 }
 
 void AscendMemoryManager::FreeMemFromMemPool(void *device_ptr) {
