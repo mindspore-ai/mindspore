@@ -90,6 +90,9 @@ void InternalStridedSlice::SetInOutIdx() {
   outputsIdxMap_[kIndex0] = kIndex0;
 }
 
-MS_INTERNAL_KERNEL_FACTORY_REG(StridedSlice, InternalStridedSlice);
+std::vector<size_t> InternalStridedSlice::GetLaunchIgnoredInputAddressIdx() const {
+  return {kIndex1, kIndex2, kIndex3};
+}
+
 }  // namespace kernel
 }  // namespace mindspore

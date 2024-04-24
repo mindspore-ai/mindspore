@@ -51,6 +51,8 @@ from mindspore.common.mutable import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore.common.auto_dynamic_shape import get_auto_dynamic_shape_args, update_auto_dynamic_shape_phase, \
     get_auto_dynamic_shape_args_with_check_input_signature, update_auto_dynamic_shape_phase_with_check_input_signature
+
+
 # Store ms_function class compiled pipeline cache.
 ms_compile_cache = set()
 # Store cell compiled pipeline cache.
@@ -291,6 +293,28 @@ def _handle_arg(obj, arg, compile_arg):
     return None
 
 
+def _handle_arg_predict(obj, arg, compile_arg):
+    """Handle arg for runtime .If need handle the arg, return True"""
+    if arg is None:
+        return None
+
+    if isinstance(arg, (int, float)):
+        return None
+
+    if isinstance(arg, (list, tuple)):
+        if compile_arg is not None and hasattr(compile_arg, "__ms_mutable__") and \
+                getattr(compile_arg, "__ms_mutable__"):
+            # mutable([]) will be eliminated by FuncGraphSpecializer, and empty list is not supported by backend.
+            if isinstance(arg, list) and not arg:
+                return None
+            return arg
+        if hasattr(obj, "enable_tuple_broaden") and obj.enable_tuple_broaden and isinstance(arg, tuple) and \
+                _check_all_tensor(arg):
+            return arg
+        return None
+    return arg
+
+
 def _get_args_for_run(obj, args, kwargs, compile_args):
     """Get the actual input args and kwargs for runtime."""
     new_args = []
@@ -301,6 +325,21 @@ def _get_args_for_run(obj, args, kwargs, compile_args):
 
     for _, value in kwargs.items():
         new_value = _handle_arg(obj, value, None)
+        if new_value is not None:
+            new_args.append(new_value)
+
+    return new_args
+
+def _get_args_for_run_predict(obj, args, kwargs, compile_args):
+    """Get the actual input args and kwargs for runtime."""
+    new_args = []
+    for arg, compile_arg in zip(args, compile_args):
+        new_arg = _handle_arg_predict(obj, arg, compile_arg)
+        if new_arg is not None:
+            new_args.append(new_arg)
+
+    for _, value in kwargs.items():
+        new_value = _handle_arg_predict(obj, value, None)
         if new_value is not None:
             new_args.append(new_value)
 
@@ -1565,7 +1604,9 @@ class _CellGraphExecutor:
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         key = self._graph_executor.generate_arguments_key(obj, args, kwargs, self.enable_tuple_broaden)
         obj.arguments_key = str(key)
+        raw_phase = phase
         phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
+        obj.phase_cache[raw_phase] = phase
         update_auto_dynamic_shape_phase(args, key_id, phase)
 
         if phase in obj.compile_cache and self.has_compiled(phase):

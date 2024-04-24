@@ -24,6 +24,7 @@
 #include <functional>
 #include <mutex>
 #include <vector>
+#include <optional>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 
@@ -233,6 +234,8 @@ class MS_CORE_API MsContext {
   bool IsDefaultDeviceTarget() const;
   bool IsSupportDevice(const std::string &device) const { return InitFuncMap().find(device) != InitFuncMap().end(); }
 
+  bool IsEnableInferBoost();
+
   void RegisterSetEnv(const EnvFunc &func);
   void RegisterCheckEnv(const EnvFunc &func);
 
@@ -319,6 +322,8 @@ class MS_CORE_API MsContext {
   static std::map<std::string, std::string> &PluginPathMap();
   enum CellReuseLevel cell_reuse_level_ = CellReuseLevel::kNoCellReuse;
   bool not_convert_jit_{false};
+
+  std::optional<bool> enalbe_infer_boost_ = std::nullopt;
 };
 
 // set method implementation for type bool/int/uint32_t/float/std::string
@@ -398,7 +403,7 @@ inline void MsContext::increase_param<uint32_t>(MsCtxParam param) {
   uint32_params_[param - MS_CTX_TYPE_UINT32_BEGIN]++;
 }
 
-// decreate method implementation for type uint32_t
+// decrease method implementation for type uint32_t
 template <>
 inline void MsContext::decrease_param<uint32_t>(MsCtxParam param) {
   uint32_params_[param - MS_CTX_TYPE_UINT32_BEGIN]--;

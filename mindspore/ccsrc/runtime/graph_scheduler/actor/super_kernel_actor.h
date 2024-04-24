@@ -25,6 +25,10 @@
 #include <queue>
 #include "runtime/graph_scheduler/actor/debug_aware_actor.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
+#include "runtime/graph_scheduler/actor/kernel_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_launch_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_infer_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_resize_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "ir/anf.h"
 
@@ -47,6 +51,11 @@ class SuperKernelActor : public DebugAwareActor {
       : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid), graph_(graph) {
     (void)device_contexts_.emplace_back(device_context);
     input_device_tensors_.resize(graph->input_nodes().size());
+    enable_kbk_sub_graph_execute_ = EnableKbkSubGraphExecute();
+    kernel_async_infer_aid_ = KernelAsyncInferActor::GetInstance()->GetAID();
+    kernel_async_resize_aid_ = KernelAsyncResizeActor::GetInstance()->GetAID();
+    kernel_async_launch_aid_ = KernelAsyncLaunchActor::GetInstance()->GetAID();
+    somas_info_ = graph_->MutableSomasInfo();
   }
   ~SuperKernelActor() override = default;
 
@@ -80,6 +89,10 @@ class SuperKernelActor : public DebugAwareActor {
  private:
   bool CopyInputDataPersistedHandle(const DeviceContext *device_context, DeviceTensor *input_device_tensor,
                                     const DeviceTensorPtr &node_device_tensor, size_t i);
+  void RunGraphKernelByKernel(OpContext<DeviceTensor> *const context);
+
+  void FetchPersistentDeviceTensor();
+
   friend class GraphScheduler;
   KernelGraphPtr graph_;
 
@@ -95,6 +108,24 @@ class SuperKernelActor : public DebugAwareActor {
   std::vector<DeviceTensorPtr> copy_input_device_tensors_;
   // Record the device address to the output node of graph.
   std::map<DeviceAddress *, OutputMemoryInfo> device_address_to_node_;
+
+  // For kerkel by kernl execute a sub garph.
+  void BuildKernelActors();
+  // Cache the kernel input index whose input is graph's input.
+  void ParseInputIndex();
+
+  void CalcRefCount();
+
+  // Kernel by kernel sub graph execute mode need not send actor message.
+  bool enable_kbk_sub_graph_execute_;
+  bool already_fetch_persistent_device_tensor_{false};
+  std::vector<KernelActorPtr> kernel_actors_;
+  mindspore::HashMap<AnfNode *, std::vector<std::pair<size_t, size_t>>> kernel_input_to_graph_input_indices_;
+  SomasInfo *somas_info_;
+
+  AID kernel_async_infer_aid_;
+  AID kernel_async_resize_aid_;
+  AID kernel_async_launch_aid_;
 };
 
 using SuperKernelActorPtr = std::shared_ptr<SuperKernelActor>;

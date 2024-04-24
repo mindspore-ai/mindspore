@@ -44,6 +44,7 @@ int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const st
     info.input_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(inputs[iter->first]->dtype_id()));
     info.input_format_.emplace_back(InternalKernelUtils::ToInternalFormat(inputs[iter->first]->format()));
   }
+
   for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
     info.output_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(outputs[iter->first]->dtype_id()));
     info.output_format_.emplace_back(InternalKernelUtils::ToInternalFormat(outputs[iter->first]->format()));
@@ -104,16 +105,11 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
     }
   }
   std::vector<internal::DIMS> input_shapes(inputs_.size());
-  std::vector<internal::DIMS> output_shapes;
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
     InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
     input_shapes[iter->second] = inputs_[iter->second]->desc.dims;
   }
   impl_->SetInputs(inputs_);
-
-  if (op_type_ == "MatMul") {
-    (void)impl_->InferShape(input_shapes, output_shapes);
-  }
 
   for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
     InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
@@ -151,18 +147,5 @@ bool InternalKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
   auto ret = impl_->Launch();
   return (ret == 0);
 }
-
-std::vector<size_t> InternalKernelMod::GetLaunchIgnoredInputAddressIdx() const {
-  static const mindspore::HashMap<std::string, std::vector<size_t>> launch_ignored_input_addr_op_to_idx = {
-    {kReshapeOpName, {kIndex1}}, {kStridedSliceOpName, {kIndex1, kIndex2, kIndex3}}};
-
-  const auto &iter = launch_ignored_input_addr_op_to_idx.find(kernel_name_);
-  if (iter != launch_ignored_input_addr_op_to_idx.end()) {
-    return iter->second;
-  } else {
-    return {};
-  }
-}
-
 }  // namespace kernel
 }  // namespace mindspore

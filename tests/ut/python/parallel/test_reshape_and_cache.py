@@ -24,11 +24,12 @@ import pytest
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
-def generate_inputs(bs=1, heads=40, head_dim=128, block_size=16, max_seq=2048):
-    key = Parameter(Tensor(np.ones([bs, heads, head_dim]), dtype=ms.float16), "key")
-    value = Parameter(Tensor(np.ones([bs, heads, head_dim]), dtype=ms.float16), "value")
-    key_cache = Parameter(Tensor(np.ones([max_seq, block_size, heads, head_dim]), dtype=ms.float16), "key_cache")
-    value_cache = Parameter(Tensor(np.ones([max_seq, block_size, heads, head_dim]), dtype=ms.float16), "value_cache")
+def generate_inputs(bs=1, seq_len=1, num_head=40, head_dim=128, block_size=16, max_seq=2048):
+    hidden_size = num_head * head_dim
+    key = Parameter(Tensor(np.ones([bs, seq_len, hidden_size]), dtype=ms.float16), "key")
+    value = Parameter(Tensor(np.ones([bs, seq_len, hidden_size]), dtype=ms.float16), "value")
+    key_cache = Parameter(Tensor(np.ones([max_seq, block_size, num_head, head_dim]), dtype=ms.float16), "key_cache")
+    value_cache = Parameter(Tensor(np.ones([max_seq, block_size, num_head, head_dim]), dtype=ms.float16), "value_cache")
     slot_mapping = Parameter(Tensor(np.ones([max_seq]), dtype=ms.int32), "slot_mapping")
     return key, value, key_cache, value_cache, slot_mapping
 
@@ -40,7 +41,7 @@ class ReshapeAndCacheNet(Cell):
         if strategy is not None:
             self.reshape_and_cache.shard(strategy)
         elif mp is not None:
-            strategy = ((1, mp, 1), (1, mp, 1), (1, 1, mp, 1), (1, 1, mp, 1), (1,))
+            strategy = ((1, 1, mp), (1, 1, mp), (1, 1, mp, 1), (1, 1, mp, 1), (1,))
             self.reshape_and_cache.shard(strategy)
 
     def construct(self, key, value, key_cache, value_cache, slot_mapping):
@@ -57,16 +58,17 @@ def test_reshape_and_cache_semi_auto_parallel():
     mp = 8
     net = ReshapeAndCacheNet(mp)
 
-    bs, heads, head_dim, blk_size, max_seq = 1, 40, 128, 16, 2048
-    net_inputs = generate_inputs(bs, heads, head_dim, blk_size, max_seq)
+    bs, seq_len, num_head, head_dim, blk_size, max_seq = 1, 1, 40, 128, 16, 2048
+    net_inputs = generate_inputs(bs, seq_len, num_head, head_dim, blk_size, max_seq)
     net.set_inputs(*net_inputs)
 
     phase = compile_net(net, *net_inputs)
     validator = ParallelValidator(net, phase)
-    assert validator.check_parameter_shape('key', [bs, heads // mp, head_dim])
-    assert validator.check_parameter_shape('value', [bs, heads // mp, head_dim])
-    assert validator.check_parameter_shape('key_cache', [max_seq, blk_size, heads // mp, head_dim])
-    assert validator.check_parameter_shape('value_cache', [max_seq, blk_size, heads // mp, head_dim])
+    hidden_size = num_head * head_dim
+    assert validator.check_parameter_shape('key', [bs, seq_len, hidden_size // mp])
+    assert validator.check_parameter_shape('value', [bs, seq_len, hidden_size // mp])
+    assert validator.check_parameter_shape('key_cache', [max_seq, blk_size, num_head // mp, head_dim])
+    assert validator.check_parameter_shape('value_cache', [max_seq, blk_size, num_head // mp, head_dim])
     assert validator.check_parameter_shape('slot_mapping', [max_seq])
 
 
@@ -81,8 +83,8 @@ def test_reshape_and_cache_standalone():
     context.set_auto_parallel_context(parallel_mode="stand_alone")
     net = ReshapeAndCacheNet()
 
-    bs, heads, head_dim, blk_size, max_seq = 1, 40, 128, 16, 2048
-    net_inputs = generate_inputs(bs, heads, head_dim, blk_size, max_seq)
+    bs, seq_len, num_head, head_dim, blk_size, max_seq = 1, 1, 40, 128, 16, 2048
+    net_inputs = generate_inputs(bs, seq_len, num_head, head_dim, blk_size, max_seq)
     net.set_inputs(*net_inputs)
     compile_net(net, *net_inputs)
 
@@ -98,16 +100,16 @@ def test_reshape_and_cache_strategy_error():
     mp = 4
     mp2 = 8
     strategies = [
-        ((1, mp, 1), (1, mp2, 1), (1, 1, mp, 1), (1, 1, mp, 1), (1,)),
-        ((1, mp, 1), (1, mp, 1), (1, 1, mp, 1), (1, 1, mp2, 1), (1,)),
-        ((1, mp, 1), (1, mp2, 1), (1, 1, mp, 1), (1, 1, mp2, 1), (1,)),
-        ((1, mp, 1), (1, mp, 1), (1, 1, mp, 1), (1, 1, mp, 1), (2,))
+        ((1, 1, mp), (1, mp2, 1), (1, 1, 1, mp), (1, 1, 1, mp), (1,)),
+        ((1, 1, mp), (1, 1, mp), (1, 1, 1, mp), (1, 1, mp2, 1), (1,)),
+        ((1, 1, mp), (1, mp2, 1), (1, 1, 1, mp), (1, 1, mp2, 1), (1,)),
+        ((1, 1, mp), (1, 1, mp), (1, 1, 1, mp), (1, 1, 1, mp), (2,))
     ]
     for strategy in strategies:
         net = ReshapeAndCacheNet(strategy=strategy)
         with pytest.raises(RuntimeError):
-            bs, heads, head_dim, blk_size, max_seq = 1, 40, 128, 16, 2048
-            net_inputs = generate_inputs(bs, heads, head_dim, blk_size, max_seq)
+            bs, seq_len, num_head, head_dim, blk_size, max_seq = 1, 1, 40, 128, 16, 2048
+            net_inputs = generate_inputs(bs, seq_len, num_head, head_dim, blk_size, max_seq)
             net.set_inputs(*net_inputs)
             compile_net(net, *net_inputs)
     context.reset_auto_parallel_context()

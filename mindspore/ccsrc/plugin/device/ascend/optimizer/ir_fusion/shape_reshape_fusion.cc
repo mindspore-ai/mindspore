@@ -22,6 +22,7 @@
 #include "mindspore/core/ops/reshape_ext.h"
 #include "mindspore/core/ops/scalar_graph_holder.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "plugin/device/ascend/optimizer/get_value_helper.h"
@@ -200,6 +201,12 @@ const BaseRef ShapeReshapeFusion::DefinePattern() const {
 
 const AnfNodePtr ShapeReshapeFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                              const EquivPtr &equiv) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!ms_context->IsEnableInferBoost()) {
+    return nullptr;
+  }
+
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(equiv);
 

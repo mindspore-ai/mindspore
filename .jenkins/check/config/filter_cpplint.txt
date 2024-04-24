@@ -45,6 +45,8 @@
 "mindspore/mindspore/ccsrc/runtime/pynative/op_function/func_object.h"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/dct_cpu_kernel.cc"
 "mindspore/mindspore/ccsrc/debug/data_dump/npy_header.h"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/hal/hardware/lowlatency_communication_group.h"       "build/include_subdir"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/hal/hardware/lowlatency_communication_group.h"       "build/namespaces"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"

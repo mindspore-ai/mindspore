@@ -58,6 +58,13 @@ class JitConfig:
               compiling performance.
             - ``DEBUG``: Used for debugging when errors occur, more information will be record in compiling process.
 
+        infer_boost (str, optional): enable infer boost mode.
+            The value must be ``"on"`` , ``"off"``. Default to an "off", which means that disable infer boost.
+            when infer boost mode is enabled, mindspore will use high perf kernel lib, use faster runtime make
+            infer speed is best.
+            Note: current infer boost only support jit_level == O0 and device is Ascend910B
+            Default: ``"off"`` .
+
         **kwargs (dict): A dictionary of keyword arguments that the class needs.
 
     Examples:
@@ -71,17 +78,21 @@ class JitConfig:
         >>>
         >>> net.set_jit_config(jitconfig)
     """
-    def __init__(self, jit_level="", exc_mode="auto", jit_syntax_level="", debug_level="RELEASE", **kwargs):
+    def __init__(self, jit_level="", exc_mode="auto", jit_syntax_level="", debug_level="RELEASE",
+                 infer_boost="off", **kwargs):
         if jit_level not in ["", "O0", "O1", "O2"]:
             raise ValueError("For 'jit_level' must be one of ['O0', 'O1', 'O2'].")
-        if exc_mode not in ['auto', 'sink', 'no_sink']:
+        if exc_mode not in ["auto", "sink", "no_sink"]:
             raise ValueError("For 'exc_mode' must be one of '['auto', 'sink', 'no_sink']'.")
-        if jit_syntax_level != "" and jit_syntax_level not in ['STRICT', 'COMPATIBLE', 'LAX']:
+        if jit_syntax_level != "" and jit_syntax_level not in ["STRICT", "COMPATIBLE", "LAX"]:
             raise ValueError("For 'jit_syntax_level' must be one of '['STRICT', 'LAX']'.")
-        if debug_level not in ['RELEASE', 'DEBUG']:
+        if debug_level not in ["RELEASE", "DEBUG"]:
             raise ValueError("For 'debug_level' must be one of '['RELEASE', 'DEBUG']'.")
+        if infer_boost != "" and infer_boost not in ["on", "off"]:
+            raise ValueError("For 'infer_boost' must be one of '['on', 'off']'.")
         self.jit_config_dict = kwargs
         self.jit_config_dict["jit_level"] = jit_level
         self.jit_config_dict["exc_mode"] = exc_mode
         self.jit_config_dict["jit_syntax_level"] = jit_syntax_level
         self.jit_config_dict["debug_level"] = debug_level
+        self.jit_config_dict["infer_boost"] = infer_boost
