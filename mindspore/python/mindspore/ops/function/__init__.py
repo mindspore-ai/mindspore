@@ -605,6 +605,7 @@ from .random_func import (
     log_uniform_candidate_sampler,
     shuffle,
     choice_with_mask,
+    normal_ext,
     normal,
     laplace,
     gamma,
