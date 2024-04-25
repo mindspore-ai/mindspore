@@ -395,6 +395,9 @@ constexpr char kAttrGatherIndex[] = "gather_index";
 constexpr char kAttrBranchOutputNum[] = "branch_output_num";
 constexpr char kAttrBranchGraphName[] = "branch_graph_name";
 constexpr char kInlineSubGraphName[] = "inline_sub_graph_name";
+constexpr char kAttrBpropAutoMonadLevel[] = "bprop_auto_monad_level";
+constexpr char kAttrSideEffectBpropAppPropagate[] = "side_effect_bprop_app_propagate";
+constexpr char kAttrSideEffectBpropApp[] = "side_effect_bprop_app";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
