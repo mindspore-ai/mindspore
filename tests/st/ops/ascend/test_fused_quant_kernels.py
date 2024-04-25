@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-from mindspore import Parameter, Tensor, context, dtype, GRAPH_MODE
+from mindspore import Parameter, Tensor, context, dtype, GRAPH_MODE, JitConfig, PYNATIVE_MODE
 from mindspore.nn import Cell
 from mindspore.ops import operations as msops
 from mindspore.ops.operations._inner_ops import Quant
@@ -103,7 +103,6 @@ class QuantDequantCell(Cell):
 
         self.quant_weight = Tensor(NumpyQuantOps.quant(weight, weight_scale, 0), dtype=dtype.int8)
         self.bias = Tensor(self._fused_bias(bias), dtype=dtype.int32)
-        self.dequant_offset = Parameter(Tensor(np.zeros(self.bias.shape), dtype=dtype.float32))
 
     def _dequant_scale(self, act_scale, weight_scale):
         """calculate dequant scale"""
@@ -111,8 +110,7 @@ class QuantDequantCell(Cell):
         scale_ui64 = NumpyQuantOps.trans_fp32_to_u64(dequant_scale)
         return Parameter(Tensor(np.squeeze(scale_ui64), dtype=dtype.uint64))
 
-    def _fused_bias(self,
-                    bias):
+    def _fused_bias(self, bias):
         """fused bias correction into bias"""
         bias_int32 = (bias / (self.act_scale * self.weight_scale)).astype(np.int32)
         add_item = - np.sum(self.act_offset.astype(np.int32) * self.quant_weight.asnumpy().astype(np.int32),
@@ -123,8 +121,7 @@ class QuantDequantCell(Cell):
         """construct quant and dequant forward process"""
         quant_act = self.quant(x)
         # (matmul(quant_act, x2) + bias) * scale + offset
-        return self.dbmm(quant_act, self.quant_weight,
-                         self.dequant_scale, self.dequant_offset, self.bias)
+        return self.dbmm(quant_act, self.quant_weight, self.dequant_scale, None, self.bias)
 
 
 class AntiquantBMMCell(Cell):
@@ -203,14 +200,13 @@ def test_weight_quant_bmm_cell_as_antiquant_1p():
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_quant_batch_matmul_with_bias_correction():
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
+def test_quant_batch_matmul_with_bias_correction(mode):
     """
     Feature: test quant and dequant cell with bias correction
     Description: test quant and dequant procedure correction
     Expectation: accuracy in tolerance
     """
-
-    context.set_context(device_target="Ascend", mode=GRAPH_MODE)
     weight = np.array([[2., 4.], [1., 3.]]).astype(np.float16)
     activation = np.array([[1, 10.], [12, 14]]).astype(np.float16)
     weight_scale = np.array([0.5, 0.7]).astype(np.float16)
@@ -225,6 +221,14 @@ def test_quant_batch_matmul_with_bias_correction():
                             activation_scale,
                             act_offset,
                             bias)
+    if mode == 'KBK':
+        context.set_context(device_target="Ascend", mode=GRAPH_MODE)
+        cell.set_jit_config(JitConfig(jit_level='O0'))
+    elif mode == 'GE':
+        context.set_context(device_target="Ascend", mode=GRAPH_MODE)
+    else:
+        context.set_context(device_target="Ascend", mode=PYNATIVE_MODE)
+
     t_activation = Tensor(activation, dtype=dtype.float16)
     ms_quant_out = cell(t_activation).asnumpy()
     np.testing.assert_allclose(quant_out, ms_quant_out, rtol=7e-2)

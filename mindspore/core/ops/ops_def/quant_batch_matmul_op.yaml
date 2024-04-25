@@ -31,3 +31,6 @@ quant_batch_matmul:
   returns:
     y:
       dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: QuantMatmulV3Ascend
