@@ -100,6 +100,8 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
     (*unify_mindir_pm)->AddPass(std::make_shared<opt::PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
   }
 
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutExtUnifyMindIR1>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutGradExtUnifyMindIR>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutUnifyMindIR1>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
 

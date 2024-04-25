@@ -645,6 +645,18 @@ REG_BPROP_BUILDER("Dropout").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(keep_prob), ib->OutZeros(seed0), ib->OutZeros(seed1)};
 });
 
+REG_BPROP_BUILDER("DropoutExt").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
+  auto p = ib->GetInput(kIndex1);
+  auto seed = ib->GetInput(kIndex2);
+  auto offset = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
+  auto mask = ib->TupleGetItem(out, kIndex1);
+  auto dy = ib->TupleGetItem(dout, kIndex0);
+  auto dx = ib->Emit("DropoutGradExt", {dy, mask, p});
+  return {dx, ib->OutZeros(p), ib->OutZeros(seed), ib->OutZeros(offset)};
+});
+
 REG_BPROP_BUILDER("BinaryCrossEntropy").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);

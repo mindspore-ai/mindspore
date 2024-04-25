@@ -49,7 +49,7 @@ from mindspore.nn.layer.basic import UpsampleExt as Upsample
 # 13
 
 # 14
-
+from mindspore.nn.layer.basic import DropoutExt as Dropout
 # 15
 
 # 16

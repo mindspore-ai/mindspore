@@ -36,10 +36,11 @@ from mindspore import _checkparam as Validator
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 from mindspore.common._decorator import deprecated
+from mindspore.ops.auto_generate import dropout_ext_op
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold', 'Tril', 'Triu',
            'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Dropout1d',
-           'Dropout2d', 'Dropout3d', 'Upsample', 'Roll', 'Identity', 'Unflatten']
+           'Dropout2d', 'Dropout3d', 'Upsample', 'Roll', 'Identity', 'Unflatten', 'DropoutExt']
 
 
 class L1Regularizer(Cell):
@@ -200,6 +201,71 @@ class Dropout(Cell):
             logger.warning("For Dropout, this parameter `keep_prob` will be deprecated, please use `p` instead.")
             return f'keep_prob={self.keep_prob}'
         return f'p={self.p}'
+
+
+class DropoutExt(Cell):
+    r"""
+    Dropout layer for the input.
+
+    Dropout is a means of regularization that reduces overfitting by preventing correlations between neuronal nodes.
+    The operator randomly sets some neurons output to 0 according to `p`, which means the probability of discarding
+    during training. And the return will be multiplied by :math:`\frac{1}{1-p}` during training.
+    During the reasoning, this layer returns the same Tensor as the `x`.
+
+    This technique is proposed in paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
+    <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ and proved to be effective to reduce
+    over-fitting and prevents neurons from co-adaptation. See more details in `Improving neural networks by
+    preventing co-adaptation of feature detectors
+    <https://arxiv.org/pdf/1207.0580.pdf>`_.
+
+    Note:
+        - Each channel will be zeroed out independently on every construct call.
+          Parameter `p` means the probability of the element of the input tensor to be zeroed.
+
+    Args:
+        p (float): The dropout rate, greater than or equal to 0 and less than 1.
+            E.g. rate=0.9, dropping out 90% of input neurons. Default: ``0.5`` .
+
+    Inputs:
+        - **x** (Tensor) - The input of Dropout with data type of float16 or float32.
+
+    Outputs:
+        Tensor, output tensor with the same shape as the `x`.
+
+    Raises:
+        ValueError: If `p` is not in range [0, 1).
+        ValueError: If length of shape of `x` is less than 1.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
+        >>> x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
+        >>> net = nn.DropoutExt(p=0.2)
+        >>> net.set_train()
+        >>> output = net(x)
+        >>> print(output.shape)
+        (2, 2, 3)
+    """
+
+    def __init__(self, p=0.5):
+        """Initialize DropoutExt."""
+        super(DropoutExt, self).__init__()
+        seed, offset = _get_graph_seed(0, "dropout_ext")
+        self.dropout = dropout_ext_op
+        self.p = p
+        self.seed = seed
+        self.offset = offset
+
+    def construct(self, x):
+        if not self.training or self.p == 0:
+            return x
+
+        out, _ = self.dropout(x, self.p, self.seed, self.offset)
+        return out
 
 
 class Dropout1d(Cell):

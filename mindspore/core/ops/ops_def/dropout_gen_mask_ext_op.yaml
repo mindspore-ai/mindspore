@@ -1,0 +1,24 @@
+#operator dropout_gen_mask_ext
+dropout_gen_mask_ext:
+    args:
+        shape:
+            dtype: tuple[int]
+        p:
+            dtype: float
+        seed:
+            dtype: int
+        offset:
+            dtype: int
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+    labels:
+        side_effect_hidden: True
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: DropoutGenMaskExtAscend
+    function:
+        disable: True

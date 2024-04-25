@@ -1,0 +1,26 @@
+#operator dropout_ext
+dropout_ext:
+    args:
+        input:
+            dtype: tensor
+        p:
+            dtype: float
+            default: 0.5
+        seed:
+            dtype: int
+            default: 0
+        offset:
+            dtype: int
+            default: 0
+    labels:
+        side_effect_hidden: True
+    returns:
+        output:
+            dtype: tensor
+        mask:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: DropoutExtAscend
+    function:
+        disable: True
