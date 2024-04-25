@@ -30,6 +30,7 @@ namespace ascend {
 using TensorType = somas::TensorType;
 using LifeLongType = somas::LifeLongType;
 constexpr size_t ALONE = 1;
+constexpr size_t kTensorsSize = 10;
 
 bool AclSomas::Initialize() { return true; }
 

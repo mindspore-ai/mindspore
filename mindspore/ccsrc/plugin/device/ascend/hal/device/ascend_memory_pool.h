@@ -36,6 +36,7 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
   size_t GetMaxUsedMemSize() const override;
   size_t free_mem_size() override;
   uint64_t total_mem_size() const override;
+  std::string GetMemoryPoolType() const override { return "Ascend"; }
   // Set mem pool block size
   void SetMemPoolBlockSize(size_t available_device_mem_size) override;
 

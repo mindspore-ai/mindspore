@@ -173,10 +173,16 @@ void SomasSolverCore::Clean() {
 }
 
 static bool GreaterSizeSmallerIndex(const BlockTensor &t1, const BlockTensor &t2) {
+  if (t1.m_start_tensor_->is_graph_output_ != t2.m_start_tensor_->is_graph_output_) {
+    return t1.m_start_tensor_->is_graph_output_;
+  }
   return t1.m_size_ > t2.m_size_ ||
          (t1.m_size_ == t2.m_size_ && t1.m_start_tensor_->index_ < t2.m_start_tensor_->index_);
 }
 static bool SmallerReusePeakMemGreaterSizeSmallerIndex(const BlockTensor &t1, const BlockTensor &t2) {
+  if (t1.m_start_tensor_->is_graph_output_ != t2.m_start_tensor_->is_graph_output_) {
+    return t1.m_start_tensor_->is_graph_output_;
+  }
   if (t1.m_start_tensor_->can_reuse_peak_mem_ != t2.m_start_tensor_->can_reuse_peak_mem_) {
     return t1.m_start_tensor_->can_reuse_peak_mem_ < t2.m_start_tensor_->can_reuse_peak_mem_;
   }

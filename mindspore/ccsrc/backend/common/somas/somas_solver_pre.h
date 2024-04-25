@@ -174,6 +174,7 @@ struct SomasSolverTensorDesc {
   size_t offset_;
   bool lifelong_;
   size_t can_reuse_peak_mem_;
+  bool is_graph_output_;
   using SomasSolverTensorDescPtr = std::shared_ptr<SomasSolverTensorDesc>;
   SomasSolverTensorDescPtr right_;
   SomasSolverTensorDescPtr left_;
@@ -187,16 +188,19 @@ struct SomasSolverTensorDesc {
         offset_(offset),
         lifelong_(blifelong),
         can_reuse_peak_mem_(0),
+        is_graph_output_(false),
         right_(nullptr),
         left_(nullptr),
         blocked_(false) {}
 
-  void Update(size_t index, size_t size, size_t offset, size_t can_reuse_peak_mem, bool blifelong) {
+  void Update(size_t index, size_t size, size_t offset, size_t can_reuse_peak_mem, bool is_graph_output,
+              bool blifelong) {
     index_ = index;
     size_ = size;
     offset_ = offset;
     lifelong_ = blifelong;
     can_reuse_peak_mem_ = can_reuse_peak_mem;
+    is_graph_output_ = is_graph_output;
   }
 
   friend std::ostream &operator<<(std::ostream &out, const SomasSolverTensorDescPtr n) {
