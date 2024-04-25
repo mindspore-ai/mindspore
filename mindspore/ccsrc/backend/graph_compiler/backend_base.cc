@@ -1422,8 +1422,8 @@ std::shared_ptr<GraphCompilerInfo> MindRTBackendBase::ConstructGraphCompilerInfo
   };
 
   return std::make_shared<GraphCompilerInfo>(graphs, device_contexts, tensors_mask, input_tensors, control_nodes_,
-                                             root_graph->parameters(), parser, outputs_order, outputs_num, name, false,
-                                             strategy, compile_func);
+                                             root_graph->parameters(), parser, outputs_order, outputs_num,
+                                             root_graph->GetPositionalArgsCount(), name, false, strategy, compile_func);
 }
 
 void MindRTBackendBase::ParseControlNodes(const GraphCompilerInfo &graph_compile_info) {
