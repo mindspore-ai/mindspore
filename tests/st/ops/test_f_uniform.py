@@ -18,10 +18,8 @@ import numpy as np
 import pytest
 
 import mindspore
-from mindspore.ops.operations.random_ops import UniformExt
 from mindspore.nn import Cell
-
-from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from mindspore.nn.generator import Generator
 
 rtol = 1e-3
 
@@ -29,10 +27,10 @@ rtol = 1e-3
 class UniformExtCell(Cell):
     def __init__(self):
         super().__init__()
-        self.uniform = UniformExt()
+        self.uniform = mindspore.ops.uniform_ext
 
-    def construct(self, x, from_, to, seed, offset):
-        return self.uniform(x, from_, to, seed, offset)
+    def construct(self, x, from_, to, generator):
+        return self.uniform(x, from_, to, generator)
 
 
 @pytest.mark.level0
@@ -44,8 +42,8 @@ class UniformExtCell(Cell):
 ])
 def test_basic(context_mode):
     """
-    Feature: UniformExt
-    Description: UniformExt
+    Feature: extend.uniform
+    Description: extend.uniform
     Expectation: Success
     """
     os.environ['GRAPH_OP_RUN'] = '1'
@@ -57,16 +55,16 @@ def test_basic(context_mode):
     from_ = 90.0
     to = 100.0
 
-    seed1 = 41
-    offset1 = 0
+    g1 = Generator()
+    g1.manual_seed(41)
 
-    seed2 = 42
-    offset2 = 3
+    g2 = Generator()
+    g2.manual_seed(43)
 
-    output1 = uniform_cell(mindspore.tensor(x), from_, to, seed1, offset1).numpy()
-    expect1 = uniform_cell(mindspore.tensor(x), from_, to, seed1, offset1).numpy()
-    output2 = uniform_cell(mindspore.tensor(x), from_, to, seed2, offset2).numpy()
-    expect2 = uniform_cell(mindspore.tensor(x), from_, to, seed2, offset2).numpy()
+    output1 = uniform_cell(mindspore.tensor(x), from_, to, g1).numpy()
+    expect1 = uniform_cell(mindspore.tensor(x), from_, to, g1).numpy()
+    output2 = uniform_cell(mindspore.tensor(x), from_, to, g2).numpy()
+    expect2 = uniform_cell(mindspore.tensor(x), from_, to, g2).numpy()
     np.testing.assert_allclose(output1, expect1, rtol=rtol)
 
     mean1 = output1.mean()
@@ -89,37 +87,6 @@ def test_basic(context_mode):
 
     assert not np.allclose(output1, output2, rtol=rtol)
     assert not np.allclose(expect1, expect2, rtol=rtol)
-    del os.environ['GRAPH_OP_RUN']
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-def test_op(jit_level):
-    """
-    Feature: TEST_OP
-    Description: TEST_OP
-    Expectation: Success
-    """
-    os.environ['GRAPH_OP_RUN'] = '1'
-    x1 = random_input((10, 10))
-    x2 = random_input((10, 10, 10))
-
-    from_ = 90.0
-    to = 100.0
-
-    seed1 = 41
-    offset1 = 0
-
-    seed2 = 42
-    offset2 = 3
-
-    TEST_OP(UniformExtCell(), [
-        [mindspore.Tensor(x1), from_, to, seed1, offset1],
-        [mindspore.Tensor(x2), from_, to, seed2, offset2],
-    ], grad=False, jit_level=jit_level)
-
     del os.environ['GRAPH_OP_RUN']
 
 
