@@ -1832,6 +1832,16 @@ REG_BPROP_BUILDER("Cross").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {dinput1, dinput2};
 });
 
+REG_BPROP_BUILDER("CrossExt").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto other = ib->GetInput(kIndex1);
+  auto dim = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dinput = ib->Emit("CrossExt", {ib->Conj(other), dout, dim});
+  auto dother = ib->Emit("CrossExt", {dout, ib->Conj(input), dim});
+  return {dinput, dother, ib->OutZeros(dim)};
+});
+
 REG_BPROP_BUILDER("Median").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);

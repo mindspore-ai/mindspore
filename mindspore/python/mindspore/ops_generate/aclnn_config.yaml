@@ -89,7 +89,7 @@ CumsumExt: 'aclnnCumsum'
 # 11
 
 # 12
-
+CrossExt: 'aclnnLinalgCross'
 # 13
 
 # 14

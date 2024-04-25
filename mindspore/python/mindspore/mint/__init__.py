@@ -31,6 +31,7 @@ from mindspore.ops.function.array_func import topk_ext as topk
 # 2
 from mindspore.ops.function.math_func import sin
 # 3
+from mindspore.ops.function.math_func import cross_ext as cross
 from mindspore.ops.function.clip_func import clamp
 # 4
 
@@ -484,7 +485,7 @@ __all__ = [
     # 89
 
     # 90
-
+    'cross',
     # 91
 
     # 92
