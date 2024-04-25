@@ -19,6 +19,8 @@
 
 #include <map>
 #include <memory>
+#include <utility>
+#include <string>
 #include "pybind11/pybind11.h"
 #include "pybind11/pytypes.h"
 #include "ir/tensor.h"
@@ -39,8 +41,15 @@ struct RegisterHook {
   /// \ void
   static void RemoveTensorBackwardHook(int id);
 
- private:
-  static std::map<int, AutoGradMetaDataWeakPtr> hook_meta_map_;
+  /// \brief Update weight meta
+  ///
+  /// \ void
+  static void UpdateTensorBackwardHook(const AutoGradMetaDataPtr &auto_grad_meta_data, const std::string &id);
+
+  static void ClearHookMap() { hook_meta_fn_map_.clear(); }
+
+  // For store hook
+  static std::map<int, std::pair<AutoGradMetaDataWeakPtr, TensorBackwardHookPtr>> hook_meta_fn_map_;
 };
 
 }  // namespace tensor

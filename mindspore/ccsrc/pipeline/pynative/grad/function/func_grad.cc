@@ -167,6 +167,7 @@ ValuePtrList CallBackwardHooks(const ValuePtr &value, ValuePtrList *grad_in) {
   }
   for (const auto &hook : auto_grad_meta->backward_hooks()) {
     MS_LOG(DEBUG) << "Run hook id " << hook.first;
+    MS_EXCEPTION_IF_NULL(hook.second);
     (*grad_in)[kIndex0] = (*(hook.second))((*grad_in).front());
   }
   MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(*grad_in, "After hook print gradient in: ");

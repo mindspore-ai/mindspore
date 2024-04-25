@@ -23,6 +23,7 @@
 #include "include/backend/optimizer/op_adaptation_info_factory.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "pybind_api/ir/hook_py.h"
 #include "utils/ms_context.h"
 #include "ir/cell.h"
 #include "include/common/utils/utils.h"
@@ -835,6 +836,7 @@ InputType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &
     } else {
       MS_LOG(DEBUG) << "Create new auto grad meta for tensor " << tensor_value->id();
       auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
+      tensor::RegisterHook::UpdateTensorBackwardHook(auto_grad_meta_data, tensor_value->id());
       tensor_value->set_auto_grad_meta_data(auto_grad_meta_data);
     }
 
@@ -884,6 +886,7 @@ InputType Common::SetTensorGradInfo(const tensor::TensorPtr &tensor, const TopCe
   } else {
     MS_LOG(DEBUG) << "Create new auto grad meta for tensor " << tensor->id();
     auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
+    tensor::RegisterHook::UpdateTensorBackwardHook(auto_grad_meta_data, tensor->id());
     tensor->set_auto_grad_meta_data(auto_grad_meta_data);
   }
   // Set weight tensor grad type
