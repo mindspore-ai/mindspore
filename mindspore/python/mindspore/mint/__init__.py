@@ -27,6 +27,7 @@ from mindspore.ops.auto_generate import abs
 # 1
 from mindspore.ops.function.math_func import divide, div
 from mindspore.ops.function.array_func import topk_ext as topk
+from mindspore.ops.auto_generate import binary_cross_entropy_with_logits
 # 2
 from mindspore.ops.function.math_func import sin
 # 3
@@ -241,6 +242,7 @@ __all__ = [
     'div',
     'divide',
     'topk',
+    'binary_cross_entropy_with_logits',
     # 2
     'sin',
     # 3
