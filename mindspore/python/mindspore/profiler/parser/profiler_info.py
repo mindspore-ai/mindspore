@@ -92,8 +92,18 @@ class ProfilerInfo:
 
     @staticmethod
     def set_export_flag(flag):
-        """Set the graph id list."""
+        """Set whether all-export or not."""
         ProfilerInfo._profiler_info_dict["all_export"] = flag
+
+    @staticmethod
+    def set_system_time(sys_time):
+        """Set system time."""
+        ProfilerInfo._profiler_info_dict["system_time"] = sys_time
+
+    @staticmethod
+    def set_system_cnt(sys_cnt):
+        """Set system cnt."""
+        ProfilerInfo._profiler_info_dict["system_cnt"] = sys_cnt
 
     @staticmethod
     def set_diff_time(diff_time):
