@@ -512,6 +512,16 @@ void SchedulerHelper::ConvertDataArrowToControlArrow(AbstractActor *const from_a
     return;
   }
 
+  auto kernel_info = dynamic_cast<KernelInfo *>(need_converted_node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  const auto &somas_outputs = kernel_info->somas_output_result();
+  if (kernel_info->IsTensorEnableSomas(somas_outputs, data_arrow->from_output_index_)) {
+    MS_LOG(INFO) << "Skip the invalid data arrow of somas inner address, from actor:" << from_actor->GetAID().Name()
+                 << ", from index:" << data_arrow->from_output_index_ << ", to actor:" << to_actor->GetAID().Name()
+                 << ", to index:" << data_arrow->to_input_index_;
+    return;
+  }
+
   // Erase the output data arrow in from actor.
   (void)from_actor->output_data_arrows_.erase(from_actor->output_data_arrows_.begin() + SizeToLong(data_arrow_index));
   (void)from_actor->output_data_nodes_.erase(from_actor->output_data_nodes_.begin() + SizeToLong(data_arrow_index));
