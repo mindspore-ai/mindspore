@@ -123,6 +123,7 @@ class Softmax : public ActivationBase {
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status CheckInputLayout() override;
   Status CheckLayoutConfig() override;
   Status GetAttrs() override;
   std::vector<int64_t> axis_;

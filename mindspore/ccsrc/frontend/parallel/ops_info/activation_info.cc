@@ -274,6 +274,26 @@ std::vector<StrategyPtr> Softmax::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
+Status Softmax::CheckInputLayout() {
+  if (inputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << "The size of input_tensor_layout for " << name_ << " is " << inputs_tensor_info_.size()
+                  << " rather than 1.";
+    return FAILED;
+  }
+  auto tensor_layout = inputs_tensor_info_[kIndex0].tensor_layout();
+  auto tensor_map = tensor_layout.tensor_map_before();
+
+  for (const auto &axis : axis_) {
+    auto corresponding_tensor_map = tensor_map[axis];
+    if (corresponding_tensor_map.size() == 1 && corresponding_tensor_map[0] == -1) {
+      return SUCCESS;
+    } else {
+      return FAILED;
+    }
+  }
+  return SUCCESS;
+}
+
 Status CumOpBase::GetAttrs() {
   std::string op_name = GetPrimNameFromInfoName(this->name_);
   if (input_value_.size() != ops::GetOpInputsNum(op_name)) {
