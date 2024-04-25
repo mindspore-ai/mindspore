@@ -31,7 +31,7 @@ from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._sequence_ops import TensorToList
 from mindspore.ops.auto_generate import OnesLikeExt, ZerosLikeExt, FillScalar, FillTensor, Arange, Chunk, Scatter,\
-    ScatterValue
+    ScatterValue, UniqueDim, Unique2
 from mindspore.ops.auto_generate.gen_ops_prim import SplitTensor
 from mindspore.ops.auto_generate.gen_ops_prim import SplitWithSize, RepeatInterleave
 from mindspore.ops.operations.array_ops import (
@@ -132,6 +132,8 @@ scatter_value_ = ScatterValue()
 arange_ = Arange()
 chunk_ = Chunk()
 repeat_interleave_ = RepeatInterleave()
+unique_dim_ = UniqueDim()
+unique2_ = Unique2()
 
 
 def get_x_shape(x_shape):
@@ -1194,6 +1196,76 @@ def unique(input):
     y, idx = unique_(input)
     idx = reshape_(idx, shape_x)
     return y, idx
+
+
+def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, dim=None):
+    """
+    Returns the unique elements of input tensor and also return a tensor containing the index of each value of input
+    tensor corresponding to the output unique tensor.
+
+    The output contains Tensor `y` and Tensor `idx`, the format is probably similar to (`y`, `idx`).
+    The shape of Tensor `y` and Tensor `idx` is different in most cases, because Tensor `y` will be deduplicated,
+    and the shape of Tensor `idx` is consistent with the input.
+
+    To get the same shape between `idx` and `y`, please ref to :class:`mindspore.ops.UniqueWithPad` operator.
+
+    Args:
+        input (Tensor): The input tensor.
+        sorted(bool): Whether to sort the unique elements in ascending order before returning as output.
+            Default: ``True`` .
+        return_inverse(bool): Whether to also return the indices for where elements in the original input ended up in
+            the returned unique list. Default: ``False`` .
+        return_counts(bool): Whether to also return the counts for each unique element. Default: ``False`` .
+        dim(int): the dimension to operate upon. If ``None``, the unique of the flattened input is returned.
+            Otherwise, each of the tensors indexed by the given dimension is treated as one of the elements to apply the
+            unique operation upon. See examples for more details. Default: ``None`` .
+
+
+    Returns:
+        A tensor or a tuple of tensors containing some of tensor objects (`output`, `inverse_indices`, `counts`).
+
+        - output(Tensor) - the output list of unique scalar elements.
+        - inverse_indices(Tensor) - Return when ``return_inverse`` is True. It represents the indices for where
+            elements in the original input map to in the output; When ``dim`` is ``None``, it has same shape as input,
+            otherwise, the shape is input.shape[dim].
+        - counts(Tensor) - Return when ``return_counts`` is True. It represents the number of occurrences for each
+            unique value or tensor.  When ``dim`` is ``None``, it has same shape as output, otherwise, the shape is
+            output.shape(dim).
+
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn
+        >>> from mindspore import ops
+        >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
+        >>> output = ops.unique_ext(x, return_inverse=True)
+        >>> print(output)
+        (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 1]))
+        >>> y = output[0]
+        >>> print(y)
+        [1 2 5]
+        >>> idx = output[1]
+        >>> print(idx)
+        [0 1 2 1]
+    """
+    if dim is None:
+        y, inverse, counts = unique2_(input, sorted, return_inverse, return_counts)
+    else:
+        y, inverse, counts = unique_dim_(input, sorted, return_inverse, dim)
+    if return_inverse and return_counts:
+        return y, inverse, counts
+    if return_inverse:
+        return y, inverse
+    if return_counts:
+        return y, counts
+    return y
 
 
 def unique_with_pad(x, pad_num):
