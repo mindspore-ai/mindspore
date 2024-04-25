@@ -56,6 +56,7 @@
 #include "frontend/parallel/pass/micro_interleaved_order_control.h"
 #include "frontend/parallel/pass/full_micro_interleaved_order_control.h"
 #include "frontend/parallel/pass/assign_add_opt.h"
+#include "frontend/parallel/pass/float32_redistribution.h"
 #include "frontend/parallel/pass/merge_cast_opt.h"
 #include "frontend/parallel/pass/remove_cast_before_assign_add.h"
 #include "frontend/parallel/pass/comp_comm_scheduling.h"
@@ -795,6 +796,12 @@ bool MergeCastOpt(const ResourcePtr &resource) {
   return true;
 }
 
+bool ForceFp32Comm(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::Float32Redistribution(resource->func_graph());
+  return true;
+}
+
 bool RemoveCastBeforeAssignAdd(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::RemoveCastBeforeAssignAdd(resource->func_graph());
@@ -1194,6 +1201,7 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"slice_recompute_activation", SliceRecomputeActivationPass},
                                    {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
                                    {"assign_add_opt", AssignAddOpt},
+                                   {"ForceFp32Comm", ForceFp32Comm},
                                    {"remove_cast_before_assign_add", RemoveCastBeforeAssignAdd},
                                    {"full_micro_interleaved_order_control", FullMicroInterLeavedOrderControlPass},
                                    {"comp_comm_scheduling", CompCommSchedulingPass},
