@@ -5699,6 +5699,83 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     return out
 
 
+def unfold_ext(input, kernel_size, dilation=1, padding=0, stride=1):
+    r"""
+    Extracts sliding local blocks from a batched input tensor.
+
+    Consider a batched input tensor of shape :math:`(N, C, *)`,
+    where :math:`N` is the batch dimension, :math:`C` is the channel dimension,
+    and :math:`*` represent arbitrary spatial dimensions. This operation flattens
+    each sliding `Kernel_size`- sized block within the spatial dimensions
+    of `input` into a column (i.e., last dimension) of a 3-D output
+    tensor of shape :math:`(N, C \times \prod(\text{kernel_size}), L)`, where
+    :math:`C \times \prod(\text{kernel_size})` is the total number of values
+    within each block (a block has :math:`\prod(\text{kernel_size})` spatial
+    locations each containing a `C`-channeled vector), and :math:`L` is
+    the total number of such blocks:
+
+    .. math::
+        L = \prod_d \left\lfloor\frac{\text{spatial_size}[d] + 2 \times \text{pads}[d] %
+            - \text{dilations}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{strides}[d]} + 1\right\rfloor,
+
+    where :math:`\text{spatial_size}` is formed by the spatial dimensions
+    of input `x` (:math:`*` above), and :math:`d` is over all spatial
+    dimensions.
+
+    Therefore, indexing `output` at the last dimension (column dimension)
+    gives all values within a certain block.
+
+    The `dilation`, `padding` and `stride` arguments specify
+    how the sliding blocks are retrieved.
+
+    .. warning::
+        Currently, only unbatched(3D) or batched(4D) image-like tensors are supported.
+
+    Args:
+        input (Tensor): 3-D or 4-D Tensor.
+        kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
+            for height and width. If type is int, it means that height equal with width. Must be specified.
+        dilation (Union[int, tuple[int], list[int]], optional): The dilation of the window, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
+        padding (Union[int, tuple[int], list[int]], optional): The pad of the window, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: ``0`` .
+        stride (Union[int, tuple[int], list[int]], optional): The stride of the window, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
+
+    Returns:
+        A Tensor, with same type as `input` .
+
+    Shape:
+        - Input: :math:`(N, C, *)` or :math:`(C, *)`
+        - Output: :math:`(N, C \times \prod(\text{kernel_size}), L)` or
+            :math:`(C \times \prod(\text{kernel_size}), L)`
+
+    Raises:
+        TypeError: If any data type of `kernel_size`, `stride`, `dilation`, `padding` is not int, tuple or list.
+        ValueError: If `kernel_size`, `dilation`, `stride` value is not
+            greater than zero or elements number more than `2`.
+        ValueError: If `padding` value is less than zero.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, mint
+        >>> x = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float64)
+        >>> output = mint.nn.functional.unfold(x, kernel_size=3, dilation=1, stride=1)
+        >>> print(output.shape)
+        (4, 36, 900)
+    """
+    rank = ops.rank(input)
+    if ops.isconstant(rank) and rank != 4:
+        raise ValueError(f"Input Error: Only 4D input Tensors are supported, but got {rank} D.")
+    unfold_op = _get_cache_prim(ops.auto_generate.Im2ColExt)()
+    out = unfold_op(input, kernel_size, dilation, padding, stride)
+    return out
+
+
 def _check_diagonal_axes(dim1, dim2, x_ndim):
     """Check the parameters of unfold op."""
     axes = validator.check_axis_valid((dim1, dim2), x_ndim)
