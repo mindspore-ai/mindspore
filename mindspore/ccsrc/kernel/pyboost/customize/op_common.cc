@@ -41,46 +41,44 @@ tensor::TensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const T
   // Create device address for output tensors
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
+  runtime::OpExecutor::GetInstance().WaitAll();
+  auto device_context = op->device_context();
+  const auto &op_outputs = op->outputs();
 
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
+  // Malloc for input tensors
+  PyBoostUtils::MallocOpInputs(device_context, input_tensor);
+  // Malloc for output tensors
+  PyBoostUtils::MallocOpOutputs(device_context, op_outputs);
 
-    const auto &input_device_sync = input_tensor->device_address();
-    MS_EXCEPTION_IF_NULL(input_device_sync);
-    if (input_device_sync->GetTensorStorageInfo() == nullptr) {
-      op->set_primitive(prim::kPrimTensorMove);
-      // Get inputs kernel tensors, the not-tensor value will malloc here
-      const auto &input_address_info =
-        PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), op->input_abs(), input_tensor);
-      // Get outputs kernel tensors
-      const auto &output_address_info =
-        PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
+  const auto &input_device_sync = input_tensor->device_address();
+  MS_EXCEPTION_IF_NULL(input_device_sync);
+  if (input_device_sync->GetTensorStorageInfo() == nullptr) {
+    op->set_primitive(prim::kPrimTensorMove);
+    // Get inputs kernel tensors, the not-tensor value will malloc here
+    const auto &input_address_info =
+      PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), op->input_abs(), input_tensor);
+    // Get outputs kernel tensors
+    const auto &output_address_info =
+      PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, op_outputs);
 
-      const auto &output_device_address =
-        std::dynamic_pointer_cast<device::DeviceAddress>(op->output(0)->device_address());
-      MS_EXCEPTION_IF_NULL(output_device_address);
-      if (output_device_address->GetSize() != 0) {
-        // Call kPrimTensorMove if input device address size if not 0.
-        PyBoostUtils::LaunchKernel(op->primitive(), op->device_context(), input_address_info, output_address_info,
-                                   op->stream_id());
-      }
-    } else {
-      const auto &input_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
-      const auto &output_address = std::dynamic_pointer_cast<device::DeviceAddress>(op->output(0)->device_address());
-      if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
-            runtime::KernelTaskType::kCONTIGUOUS_TASK, {input_address}, {output_address}, op->stream_id())) {
-        MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
-      }
+    const auto &output_device_address =
+      std::dynamic_pointer_cast<device::DeviceAddress>(op->output(0)->device_address());
+    MS_EXCEPTION_IF_NULL(output_device_address);
+    if (output_device_address->GetSize() != 0) {
+      // Call kPrimTensorMove if input device address size if not 0.
+      PyBoostUtils::LaunchKernel(op->primitive(), op->device_context(), input_address_info, output_address_info,
+                                 op->stream_id());
     }
+  } else {
+    const auto &input_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
+    const auto &output_address = std::dynamic_pointer_cast<device::DeviceAddress>(op->output(0)->device_address());
+    if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
+          runtime::KernelTaskType::kCONTIGUOUS_TASK, {input_address}, {output_address}, op->stream_id())) {
+      MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
+    }
+  }
 
-    MS_LOG(DEBUG) << "Launch end";
-  }));
+  MS_LOG(DEBUG) << "Launch end";
   return op->output(0);
 }
 
