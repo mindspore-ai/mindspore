@@ -77,6 +77,133 @@ def test_ops_where(mode):
     assert np.allclose(output.asnumpy(), expected)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_where_float32(mode):
+    """
+    Feature: Test functional where operator. Support x or y is a float32 Tensor.
+    Description: Operator where's inputs `x` and `y` are Tensor with float32 type.
+    Expectation: Assert result.
+    """
+    context.set_context(mode=mode)
+    cond = np.array([[True, False], [True, False]]).astype(np.bool)
+    x = np.array([[1.2, 1], [1, 0]]).astype(np.float32)
+    y = np.array([[1, 2], [3, 4.0]]).astype(np.float32)
+    output = where_forward_func(Tensor(cond), Tensor(x), Tensor(y))
+    print(output.asnumpy())
+    expect = [[1.2, 2], [1, 4.0]]
+    error = np.ones(shape=[2, 2]) * 1.0e-6
+    diff = output.asnumpy() - expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_where_float16(mode):
+    """
+    Feature: Test functional where operator. Support x or y is a float16 Tensor.
+    Description: Operator where's inputs `x` and `y` are Tensor with float16 type.
+    Expectation: Assert result.
+    """
+    context.set_context(mode=mode)
+    cond = np.array([[True, False], [True, False]]).astype(np.bool)
+    x = np.array([[1.2, 1], [1, 0]]).astype(np.float16)
+    y = np.array([[1, 2], [3, 4.0]]).astype(np.float16)
+    output = where_forward_func(Tensor(cond), Tensor(x), Tensor(y))
+    print(output.asnumpy())
+    expect = [[1.2, 2], [1, 4.0]]
+    error = np.ones(shape=[2, 2]) * 1.0e-3
+    diff = output.asnumpy() - expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_where_int32(mode):
+    """
+    Feature: Test functional where operator. Support x or y is a int32 Tensor.
+    Description: Operator where's inputs `x` and `y` are Tensor with int32 type.
+    Expectation: Assert result.
+    """
+    context.set_context(mode=mode)
+    cond = np.array([[True, False], [True, False]]).astype(np.bool)
+    x = np.array([[12, 1], [1, 0]]).astype(np.int32)
+    y = np.array([[1, 2], [3, 4]]).astype(np.int32)
+    output = where_forward_func(Tensor(cond), Tensor(x), Tensor(y))
+    print(output.asnumpy())
+    expect = [[12, 2], [1, 4]]
+    error = np.ones(shape=[2, 2]) * 1.0e-6
+    diff = output.asnumpy() - expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_functional_where_scalar(mode):
+    """
+    Feature: Test functional where operator. Support x or y is a int/float.
+    Description: Operator where's input `x` is a Tensor with int32 type, input `y` is a int.
+    Expectation: Assert result.
+    """
+    context.set_context(mode=mode)
+    cond = np.array([[True, False], [True, False]]).astype(np.bool)
+    x = np.array([[12, 1], [1, 0]]).astype(np.int32)
+    y = 2
+    output = where_forward_func(Tensor(cond), Tensor(x), y)
+    print(output.asnumpy())
+    expect = [[12, 2], [1, 2]]
+    error = np.ones(shape=[2, 2]) * 1.0e-6
+    diff = output.asnumpy() - expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_functional_where_broadcast(mode):
+    """
+    Feature: Test functional where operator support broadcast input.
+    Description: Operator where's support broadcast input.
+    Expectation: Assert result.
+    """
+    context.set_context(mode=mode)
+    cond = Tensor(np.random.rand(1, 65, 54, 12, 5, 2), dtype=mstype.bool_)
+    x = Tensor(np.random.rand(5, 5, 65, 1, 12, 5, 2).astype(np.float32))
+    y = Tensor(np.random.rand(65, 54, 1, 5, 2).astype(np.float32))
+    ret = where_forward_func(cond, x, y)
+    assert ret.shape == (5, 5, 65, 54, 12, 5, 2)
+
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
