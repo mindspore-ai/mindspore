@@ -55,24 +55,42 @@ class SoftmaxGradExt : public OpDesc {
   }
 
  protected:
+  bool CheckInputs() override {
+    const auto &x = inputs_info_[0];
+    if (IsDynamicRank(x.shape)) {
+      MS_LOG(DEBUG) << "Skip dynamic rank case";
+      return false;
+    }
+    auto axis = GetAxisList(attrs_["axis"]);
+    auto [reduce_axis, ori_reduced_shape] = GetReduceAxisShape(x.shape, x.format, std::move(axis));
+    if (x.format == kOpFormat_FRAC_NZ &&
+        std::count_if(ori_reduced_shape.begin(), ori_reduced_shape.end(), [](int64_t sh) { return sh < 0; }) > 1) {
+      MS_LOG(DEBUG) << "Skip dynamic shape case";
+      return false;
+    }
+    reduce_axis_ = reduce_axis;
+    ori_reduced_shape_ = ori_reduced_shape;
+    return true;
+  }
+
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &x = inputs[0];
     const auto &y = inputs[1];
     const auto &z = inputs[2];
-    auto axis = GetAxisList(attrs_["axis"]);
-
-    auto [reduce_axis, ori_reduced_shape] = GetReduceAxisShape(x->shape, x->format, std::move(axis));
     auto data_mul = gb.Mul(x, y);
-    auto data_sum = gb.Emit("ReduceSum", {data_mul, gb.Tensor(reduce_axis)},
+    auto data_sum = gb.Emit("ReduceSum", {data_mul, gb.Tensor(reduce_axis_)},
                             {{"keep_dims", MakeValue(true)}, {"reduce_output_fuse", MakeValue(true)}});
     if (x->format == kOpFormat_FRAC_NZ) {
-      data_sum = gb.Reshape(data_sum, ori_reduced_shape);
+      data_sum = gb.Reshape(data_sum, ori_reduced_shape_);
     }
     auto data_sub = gb.Sub(x, data_sum);
     auto data_mul2 = gb.Mul(data_sub, y);
     auto result = gb.Mul(data_mul2, z);
     return {result};
   }
+
+  ShapeVector reduce_axis_;
+  ShapeVector ori_reduced_shape_;
 };
 EXPANDER_OP_DESC_REGISTER("SoftmaxGradExt", SoftmaxGradExt);
 }  // namespace mindspore::graphkernel::expanders

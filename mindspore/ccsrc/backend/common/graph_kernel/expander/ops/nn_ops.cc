@@ -166,15 +166,25 @@ REG_EXPANDER_FUNC("BiasAdd").SetBody(BODYFUNC(ib) {
   // Expand
   auto input_x = ib->input(0);
   auto input_y = ib->input(1);
+  auto y_shape = input_y->GetShape();
+  if (IsDynamicRank(y_shape) || std::count_if(y_shape.begin(), y_shape.end(), [](int64_t sh) { return sh < 0; }) > 1) {
+    MS_LOG(DEBUG) << "Bias is dynamic shape";
+    return {};
+  }
   if (input_x->GetFormat() == kOpFormat_NCHW) {
-    auto target_shape = ExpandDimsInferShape(input_y->GetShape(), {1, 2});
+    auto target_shape = ExpandDimsInferShape(y_shape, {1, 2});
     input_y = ib->Reshape(input_y, target_shape);
   } else if (input_x->GetFormat() == kOpFormat_DEFAULT) {
+    auto x_shape = input_x->GetShape();
+    if (IsDynamicRank(x_shape)) {
+      MS_LOG(DEBUG) << "Input is dynamic rank";
+      return {};
+    }
     auto data_format = GetValue<std::string>(ib->attr("data_format"));
-    size_t channel_idx = (data_format == kOpFormat_NHWC) ? input_x->GetShape().size() - 1 : 1;
-    std::vector<int64_t> axis((input_x->GetShape().size() - channel_idx) - 1, -1);
+    size_t channel_idx = (data_format == kOpFormat_NHWC) ? x_shape.size() - 1 : 1;
+    std::vector<int64_t> axis((x_shape.size() - channel_idx) - 1, -1);
     if (!axis.empty()) {
-      auto target_shape = ExpandDimsInferShape(input_y->GetShape(), axis);
+      auto target_shape = ExpandDimsInferShape(y_shape, axis);
       input_y = ib->Reshape(input_y, target_shape);
     }
   }

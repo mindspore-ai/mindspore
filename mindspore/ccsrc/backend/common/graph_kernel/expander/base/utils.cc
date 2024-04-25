@@ -22,7 +22,13 @@
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::graphkernel::expander {
-bool CheckAllFormatsSame(const DefaultIrBuilder *ib) {
+bool FormatDefaultNchwSame(const std::string &f0, const std::string &f1) {
+  return f0 == f1 || (f0 == kOpFormat_DEFAULT && f1 == kOpFormat_NCHW) ||
+         (f0 == kOpFormat_NCHW && f1 == kOpFormat_DEFAULT);
+}
+
+bool CheckAllFormatsSame(const DefaultIrBuilder *ib,
+                         const std::function<bool(const std::string &, const std::string &)> &check) {
   auto inputs = ib->inputs();
   if (inputs.empty()) {
     return true;
@@ -30,7 +36,8 @@ bool CheckAllFormatsSame(const DefaultIrBuilder *ib) {
   const auto &fmt_0 = inputs[0]->GetFormat();
   for (size_t i = 1; i < inputs.size(); i++) {
     MS_LOG_INFO << i << "th format: " << inputs[i]->GetFormat();
-    if (inputs[i]->GetFormat() != fmt_0) {
+    bool is_same = check == nullptr ? (inputs[i]->GetFormat() == fmt_0) : check(inputs[i]->GetFormat(), fmt_0);
+    if (!is_same) {
       MS_LOG(INFO) << "The " << i << "th format: " << inputs[i]->GetFormat() << " is not same as 0th format: " << fmt_0
                    << " of op " << ib->name();
       return false;

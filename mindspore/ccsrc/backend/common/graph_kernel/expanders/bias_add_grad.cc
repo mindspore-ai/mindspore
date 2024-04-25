@@ -42,6 +42,17 @@ class BiasAddGrad : public OpDesc {
   ~BiasAddGrad() = default;
 
  protected:
+  bool CheckInputs() override {
+    const auto &x = inputs_info_[0];
+    if (x.format == kOpFormat_FRAC_NZ &&
+        (IsDynamicRank(x.shape) ||
+         std::count_if(x.shape.begin(), x.shape.end(), [](int64_t sh) { return sh < 0; }) > 1)) {
+      MS_LOG(DEBUG) << "For 'BiasAddGrad', dynamic shape is not supported if data format is " << x.format;
+      return false;
+    }
+    return true;
+  }
+
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
     ShapeVector reduce_axis;
