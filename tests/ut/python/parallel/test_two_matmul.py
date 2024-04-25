@@ -14,6 +14,9 @@
 
 import numpy as np
 import pytest
+import os
+import shutil
+import subprocess
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -22,9 +25,9 @@ from mindspore import context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 from parallel.utils.utils import ParallelValidator
-
 
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
@@ -223,6 +226,50 @@ def test_matmul_output_strategy_reduce_scatter():
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 64]), dtype=ms.float32)
     compile_net(net, x, y, b)
+
+
+def test_force_fp32_comm():
+    """
+    Feature: test output strategy for matmul operator
+    Description: transpose_b is false, set output strategy and use reduce scatter
+    Expectation: compile success
+    """
+
+    class Net(nn.Cell):
+        def __init__(self, matmul_in_strategy, matmul_out_strategy, mul_strategy):
+            super().__init__()
+            self.matmul = P.MatMul().shard(matmul_in_strategy, matmul_out_strategy)
+            self.mul = P.Mul().shard(mul_strategy)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = self.mul(out, b)
+            return out
+    context.set_context(save_graphs=True)
+    assert not auto_parallel_context().get_force_fp32_communication()
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
+                                      force_fp32_communication=True)
+    assert auto_parallel_context().get_force_fp32_communication()
+    matmul_in_strategy = ((2, 2), (2, 2))
+    matmul_out_strategy = ((4, 2),)
+    mul_strategy = ((4, 2), (4, 2))
+    net = GradWrap(NetWithLoss(Net(matmul_in_strategy, matmul_out_strategy, mul_strategy)))
+
+    x = Tensor(np.ones([128, 32]), dtype=ms.float16)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float16)
+    b = Tensor(np.ones([128, 64]), dtype=ms.float16)
+    if os.path.exists("./rank_0"):
+        shutil.rmtree("./rank_0")
+    compile_net(net, x, y, b)
+    file = "./rank_0/*validate*.ir"
+    para = "PrimFunc_Cast"
+    output = subprocess.check_output(
+        ["grep -r '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == "2"
+    context.reset_auto_parallel_context()
+    assert not auto_parallel_context().get_force_fp32_communication()
 
 
 def test_matmul_output_strategy_reduce_scatter_transpose():
