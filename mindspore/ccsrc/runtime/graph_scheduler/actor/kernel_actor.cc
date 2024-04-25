@@ -937,6 +937,10 @@ void KernelActor::ProcessMultiStream(OpContext<DeviceTensor> *const context) {
                     << " task id on stream is nullptr, will skip multi stream process.";
       continue;
     }
+    MS_LOG(DEBUG) << "Input_kernel_tensor : " << input_kernel_tensor
+                  << " ref count : " << input_kernel_tensor->pointer_ref_count()->ref_count()
+                  << ", dynamic ref count : " << input_kernel_tensor->pointer_ref_count()->dynamic_ref_count()
+                  << ", enable somas : " << IsSomasEnable(somas_info_);
     if (input_kernel_tensor->pointer_ref_count()->ref_count() == SIZE_MAX &&
         input_kernel_tensor->pointer_ref_count()->dynamic_ref_count() == INT32_MAX) {
       continue;
