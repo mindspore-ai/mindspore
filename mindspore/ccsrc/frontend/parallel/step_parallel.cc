@@ -28,6 +28,7 @@
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_map.h"
 #include "frontend/operator/ops.h"
@@ -1603,7 +1604,8 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
 // if reshape's output connect to several primitive, return the first layout found
 static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, bool *next_is_reshape,
                                                     mindspore::HashSet<AnfNodePtr> *visit, int make_tuple_index,
-                                                    int tuple_get_index) {
+                                                    int tuple_get_index,
+                                                    const std::shared_ptr<TensorLayout> &pre_layout) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(next_is_reshape);
   MS_EXCEPTION_IF_NULL(visit);
@@ -1617,12 +1619,17 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
       continue;
     }
     (void)(visit->insert(use_apply));
+
+    if (IsPrimitiveCNode(use_apply, prim::kPrimPrint) || IsPrimitiveCNode(use_apply, prim::kPrimTensorDump)) {
+      return pre_layout;
+    }
+
     if (IsValueNode<FuncGraph>(use_apply->input(0))) {
       auto fg = GetValueNode<FuncGraphPtr>(use_apply->input(0));
       MS_EXCEPTION_IF_NULL(fg);
       auto fg_parameters = fg->parameters();
       auto param = fg_parameters[IntToSize(node_pair.second - 1)];
-      auto next_layout = FindNextLayout(param, next_is_reshape, visit, make_tuple_index, tuple_get_index);
+      auto next_layout = FindNextLayout(param, next_is_reshape, visit, make_tuple_index, tuple_get_index, pre_layout);
       if (next_layout != nullptr) {
         return next_layout;
       }
@@ -1634,7 +1641,8 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
       for (auto &fg_use : fg_map) {
         auto fg_node = fg_use.first->first->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(fg_node);
-        auto next_layout = FindNextLayout(fg_node, next_is_reshape, visit, make_tuple_index, tuple_get_index);
+        auto next_layout =
+          FindNextLayout(fg_node, next_is_reshape, visit, make_tuple_index, tuple_get_index, pre_layout);
         if (next_layout != nullptr) {
           return next_layout;
         }
@@ -1647,7 +1655,7 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
         continue;
       }
       temp = make_tuple_index > 0 ? -1 : temp;
-      auto next_layout = FindNextLayout(use_apply, next_is_reshape, visit, temp, -1);
+      auto next_layout = FindNextLayout(use_apply, next_is_reshape, visit, temp, -1, pre_layout);
       if (next_layout != nullptr) {
         return next_layout;
       }
@@ -1665,7 +1673,8 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
     }
     if (IsPrimitiveCNode(use_apply, prim::kPrimMakeTuple)) {
       make_tuple_index = node_pair.second;
-      auto next_layout = FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index, tuple_get_index);
+      auto next_layout =
+        FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index, tuple_get_index, pre_layout);
       if (next_layout != nullptr) {
         return next_layout;
       }
@@ -1682,7 +1691,7 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
     MS_LOG(DEBUG) << "FindNextLayout failed node " << use_apply->DebugString() << "  " << IsParallelCareNode(use_apply)
                   << "   " << use_apply->has_user_data<OperatorInfo>();
 
-    auto layout_ptr = FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index, tuple_get_index);
+    auto layout_ptr = FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index, tuple_get_index, pre_layout);
     if (layout_ptr) {
       return layout_ptr;
     }
@@ -1914,7 +1923,7 @@ static void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
 
     bool is_next_reshape = false;
     mindspore::HashSet<AnfNodePtr> visit;
-    auto next_layout_ptr = FindNextLayout(cnode, &is_next_reshape, &visit, -1, -1);
+    auto next_layout_ptr = FindNextLayout(cnode, &is_next_reshape, &visit, -1, -1, prev_layout_ptr);
     if (next_layout_ptr == nullptr) {
       std::string is_reshape = is_next_reshape ? "true" : "false";
       MS_LOG(WARNING) << "FindNextLayout for " << cnode->fullname_with_scope()
