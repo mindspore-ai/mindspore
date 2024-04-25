@@ -67,7 +67,7 @@ class KernelActor : public DebugAwareActor {
               GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
               const std::set<size_t> &modifiable_ref_output_indexes,
               const KernelTransformType &type = KernelTransformType::kKernelActor)
-      : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid),
+      : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid, nullptr),
         kernel_(kernel),
         is_dynamic_value_(false),
         is_dynamic_type_(false),

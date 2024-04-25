@@ -158,7 +158,6 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
     }
   }
   if (backend == "ge") {
-    MS_LOG(INFO) << "On GE backend, debug_actor is not supported except for acl dump.";
     return;
   }
   MS_EXCEPTION_IF_NULL(op_context);

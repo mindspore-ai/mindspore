@@ -21,6 +21,7 @@
 #include "runtime/graph_scheduler/actor/kernel_actor.h"
 #include "runtime/graph_scheduler/actor/loop_count_actor.h"
 #include "runtime/graph_scheduler/actor/debug_actor.h"
+#include "runtime/graph_scheduler/actor/profiler_actor.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/auto_mem_offload.h"
 #include "runtime/device/device_address_utils.h"
@@ -531,6 +532,12 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
     SendDebugReq(context);
     return;
   }
+
+  if (profiler_aid_ != nullptr && strategy_ == GraphExecutionStrategy::kPipeline) {
+    SendProfilerReq(context);
+    return;
+  }
+
   PROFILER_END(start_time, runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kPreLaunch, GetAID().Name(),
                false);
 
@@ -545,6 +552,14 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
 void DataPrepareActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(graph_compiler_info_);
   ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugOnStepBegin, graph_compiler_info_->graphs_,
+                            graph_compiler_info_->origin_parameters_order_, graph_compiler_info_->device_contexts_,
+                            context, &GetAID());
+  OnDebugFinish(context);
+}
+
+void DataPrepareActor::SendProfilerReq(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(graph_compiler_info_);
+  ActorDispatcher::SendSync(*profiler_aid_, &ProfilerActor::ProfilerOnStepBegin, graph_compiler_info_->graphs_,
                             graph_compiler_info_->origin_parameters_order_, graph_compiler_info_->device_contexts_,
                             context, &GetAID());
   OnDebugFinish(context);

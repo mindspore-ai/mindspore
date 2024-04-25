@@ -26,8 +26,10 @@ namespace runtime {
 class DebugAwareActor : public MemoryAwareActor {
  public:
   explicit DebugAwareActor(const std::string &name, KernelTransformType type, const AID *recorder_aid,
-                           const AID &memory_manager_aid, const AID *debug_aid)
-      : MemoryAwareActor(name, type, recorder_aid, memory_manager_aid), debug_aid_(debug_aid) {}
+                           const AID &memory_manager_aid, const AID *debug_aid, const AID *profiler_aid)
+      : MemoryAwareActor(name, type, recorder_aid, memory_manager_aid),
+        debug_aid_(debug_aid),
+        profiler_aid_(profiler_aid) {}
   ~DebugAwareActor() override = default;
 
   virtual void SendDebugReq(OpContext<DeviceTensor> *const context) {}
@@ -36,6 +38,7 @@ class DebugAwareActor : public MemoryAwareActor {
  protected:
   // The id of debug actor. Send message to it for debug.
   const AID *debug_aid_;
+  const AID *profiler_aid_;
 };
 }  // namespace runtime
 }  // namespace mindspore

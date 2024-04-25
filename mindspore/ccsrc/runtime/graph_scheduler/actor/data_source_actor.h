@@ -44,7 +44,8 @@ class DataSourceActor : public DebugAwareActor {
  public:
   DataSourceActor(const std::string &name, KernelTransformType type, size_t buffer_capacity,
                   const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid)
-      : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid), buffer_capacity_(buffer_capacity) {}
+      : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid, nullptr),
+        buffer_capacity_(buffer_capacity) {}
   ~DataSourceActor() override = default;
 
   virtual void ReleaseData() {}
