@@ -20,6 +20,12 @@ moe_finalize_routing:
     expanded_expert_idx:
       dtype: tensor
       default: None
+  args_signature:
+    dtype_group: (expanded_x, x1, x2, bias, scales), (expanded_row_idx, expanded_expert_idx)
   returns:
     y:
       dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: MoeFinalizeRoutingAscend
+    CPU: MoeFinalizeRoutingCPU
