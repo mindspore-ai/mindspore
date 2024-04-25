@@ -279,6 +279,7 @@ ValuePtr ConvertStubTuple(const py::object &obj, bool use_signature) {
 
 ValuePtr ConvertList(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python list";
+  PyRecursionScope scope(obj);
 
   auto list = obj.cast<py::list>();
   std::vector<ValuePtr> value_list;
@@ -296,6 +297,7 @@ ValuePtr ConvertList(const py::object &obj, bool use_signature) {
 
 ValuePtr ConvertStubList(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python list";
+  PyRecursionScope scope(obj);
 
   auto list = obj.cast<py::list>();
   std::vector<ValuePtr> value_list;
@@ -312,6 +314,8 @@ ValuePtr ConvertStubList(const py::object &obj, bool use_signature) {
 
 ValuePtr ConvertCellList(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting cell list";
+  PyRecursionScope scope(obj);
+
   py::sequence list = obj;
   std::vector<ValuePtr> value_list;
 
@@ -338,6 +342,8 @@ ValuePtr ConvertCellList(const py::object &obj, bool use_signature) {
 
 ValuePtr ConvertDict(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python dict";
+  PyRecursionScope scope(obj);
+
   auto dict_values = obj.cast<py::dict>();
   std::vector<std::pair<ValuePtr, ValuePtr>> key_values;
   for (auto item : dict_values) {
