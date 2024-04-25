@@ -499,13 +499,9 @@ void DumpJsonParser::ParseSavedData(const nlohmann::json &content) {
                          "set saved_data to tensor or use a GPU or Ascend device";
   }
   if (IsStatisticDump() && context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    if (!IsNpyFormat()) {
+    if (!IsNpyFormat() && !e2e_dump_enabled_) {
       MS_LOG(EXCEPTION) << "Dump Json parse failed, storing statistic dump is only supported on Ascend when "
                            "file_format is set to 'npy'.";
-    }
-    if (e2e_dump_enabled_) {
-      MS_LOG(EXCEPTION)
-        << "Dump Json parse failed, storing statistic dump is only supported on Ascend asynchronous mode.";
     }
   }
 }
