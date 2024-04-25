@@ -13,7 +13,7 @@ grad_by_list = C.GradOperation(get_by_list=True)
 grad_all = C.GradOperation(get_all=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_while_with_const_param_grad():
