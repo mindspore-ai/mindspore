@@ -193,7 +193,7 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node,
     // Maybe this scene: tupleGetItem + depend + makeTuple, can be done correctly in VisitKernelWithReturnType.
     // The output may be updataState/load node for connecting dependencies between subgraphs.
     auto output_with_index = AnfAlgo::VisitKernelWithReturnType(
-      node, i, false, {prim::kPrimMakeTuple, prim::kPrimUpdateState, prim::kPrimLoad});
+      node, i, false, {prim::kPrimMakeTuple, prim::kPrimUpdateState, prim::kPrimLoad}, nullptr, true);
     MS_EXCEPTION_IF_NULL(output_with_index.first);
 
     // The MakeTuple/MakeSparse node need recurse.
@@ -277,7 +277,7 @@ KernelWithIndex AnfAlgo::VisitKernel(const AnfNodePtr &anf_node, size_t index) {
 
 KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, size_t index, bool skip_nop_node,
                                                    const std::vector<PrimitivePtr> &return_types,
-                                                   abstract::AbstractBasePtr *abstract) {
+                                                   abstract::AbstractBasePtr *abstract, bool is_index_valid) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (std::any_of(return_types.begin(), return_types.end(), [&anf_node](const PrimitivePtr &prim_type) -> bool {
         return CheckPrimitiveType(anf_node, prim_type);
@@ -344,6 +344,15 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
           real_index += index;
         }
         return {item_with_index_tmp.first, real_index};
+      }
+    }
+    if(is_index_valid) {
+      if(anf_node->abstract()!=nullptr&& anf_node->abstract()->isa<abstract::AbstractSequence>()){
+        const auto &seq_abs = anf_node->abstract()->cast<abstract::AbstractSequencePtr>();
+        MS_EXCEPTION_IF_NULL(seq_abs);
+        if(!seq_abs->dynamic_len()){
+          return {anf_node, index};
+        }
       }
     }
     return item_with_index_tmp;
