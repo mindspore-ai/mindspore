@@ -29,6 +29,8 @@ class Stream(Stream_):
     A device stream is a linear sequence of execution that belongs to a specific device,
     independent from other streams.
 
+    For a quick start of using Stream, please refer to `Illustration of stream management <https://www.mindspore.cn/docs/en/r2.3/api_python/samples/hal/stream_manager.html>`_ .
+
     Args:
         priority (int, optional): priority of the stream, lower numbers represent higher priorities.
             By default, streams have priority ``0``.
