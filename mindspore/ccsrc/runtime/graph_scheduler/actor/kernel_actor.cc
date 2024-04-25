@@ -931,6 +931,15 @@ void KernelActor::ProcessMultiStream(OpContext<DeviceTensor> *const context) {
     if (stream_id == input_kernel_tensor->stream_id()) {
       continue;
     }
+    if (input_kernel_tensor->task_id_on_stream() == nullptr) {
+      MS_LOG(INFO) << "input_kernel_tensor : " << input_kernel_tensor
+                   << " task id on stream is nullptr, will skip multi stream process.";
+      continue;
+    }
+    MS_LOG(DEBUG) << "Input_kernel_tensor : " << input_kernel_tensor
+                  << " ref count : " << input_kernel_tensor->pointer_ref_count()->ref_count()
+                  << ", dynamic ref count : " << input_kernel_tensor->pointer_ref_count()->dynamic_ref_count()
+                  << ", enable somas : " << IsSomasEnable(somas_info_);
     if (input_kernel_tensor->pointer_ref_count()->ref_count() == SIZE_MAX &&
         input_kernel_tensor->pointer_ref_count()->dynamic_ref_count() == INT32_MAX) {
       continue;
@@ -945,11 +954,6 @@ void KernelActor::ProcessMultiStream(OpContext<DeviceTensor> *const context) {
       // Input kernel tensor is memory stream id, this is important.
       auto user_stream_id = stream_id;
       auto memory_stream_id = cross_stream_kernel_tensor->stream_id();
-      if (cross_stream_kernel_tensor->task_id_on_stream() == nullptr) {
-        MS_LOG(WARNING) << "Cross_stream_kernel_tensor : " << cross_stream_kernel_tensor
-                        << " task id on stream is nullptr, will skip multi stream process.";
-        continue;
-      }
       auto memory_task_id_on_stream = *cross_stream_kernel_tensor->task_id_on_stream();
       auto safe_task_id_on_stream =
         multi_stream_controller->QueryTaskIdOnStream(device_context, user_stream_id, memory_stream_id);

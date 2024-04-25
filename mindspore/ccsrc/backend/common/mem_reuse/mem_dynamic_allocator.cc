@@ -456,7 +456,7 @@ const size_t DynamicMemPoolBestFit::FreeIdleMemsByEagerFree() {
     size_t real_free_size = 0;
     const auto &stream_ids = mem_mng->GetStreamIds();
     for (const auto &stream_id : stream_ids) {
-      auto key = std::make_pair(stream_id, DynamicMemBufStatus::kMemBufEagerFree);
+      auto key = std::make_pair(stream_id, DynamicMemBufStatus::kMemBufIdle);
       auto &&iter = mem_mng->mem_bufs_.find(key);
       if (iter == mem_mng->mem_bufs_.end()) {
         continue;
@@ -576,6 +576,7 @@ bool DynamicMemPoolBestFit::PreCombineMemBuf(const DynamicMemBufPtr &mem_buf, co
                                << ".";
   }
 
+  MS_LOG(DEBUG) << "Pre combine mem buf address : " << mem_buf->device_addr_ << " success.";
   return true;
 }
 
