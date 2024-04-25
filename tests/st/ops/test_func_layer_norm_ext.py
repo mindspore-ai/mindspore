@@ -33,9 +33,6 @@ def layer_norm_backward_func(input_x, normalized_shape, gamma, beta, eps=1e-7):
     return ops.grad(layer_norm_forward_func, (0, 2, 3))(input_x, normalized_shape, gamma, beta, eps)
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -58,9 +55,6 @@ def test_ops_layer_norm_ext_forward(mode):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -89,9 +83,8 @@ def test_ops_layer_norm_ext_backward(mode):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_layer_norm_ext_vmap(mode):
     """
@@ -99,7 +92,7 @@ def test_layer_norm_ext_vmap(mode):
     Description: test layer norm op vmap.
     Expectation: expect correct result.
     """
-    context.set_context(mode=mode, device_target="Ascend")
+    context.set_context(mode=mode)
     input_x = ms.Tensor(np.array([[1, 2, 3], [1, 2, 3]]), ms.float32)
     normalized_shape = (3,)
     in_axes = (0, None, 0, 0)
@@ -126,7 +119,7 @@ def test_layer_norm_ext_vmap(mode):
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_layer_norm_ext_dyn(mode):
     """
-    Feature: test vmap function.
+    Feature: test layer_norm_ext function.
     Description: test layer norm op dynamic_shape and dynamic_rank.
     Expectation: expect correct result.
     """
