@@ -117,7 +117,7 @@ def div_forward_dyn(x, y):
     return ms.ops.div(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -335,7 +335,7 @@ def test_sum_default_dtype(axis, in_dtype, context_mode):
     np.testing.assert_equal(grads.dtype, in_dtype)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -397,7 +397,7 @@ def test_prod_normal_1d(axis, keep_dims, in_dtype, out_dtype, context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training

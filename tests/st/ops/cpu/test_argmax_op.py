@@ -51,6 +51,11 @@ class DynRankNet(nn.Cell):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 def test_argmax_1d():
+    """
+    Feature: test argmax functional api.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
     x = Tensor(np.array([1., 20., 5.]).astype(np.float32))
     argmax = NetArgmax(axis=0)
     output = argmax(x)
@@ -61,6 +66,11 @@ def test_argmax_1d():
 @pytest.mark.level1
 @pytest.mark.env_onecard
 def test_argmax_2d():
+    """
+    Feature: test argmax functional api.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
     x = np.array([[1., 20., 5.],
                   [67., 8., 9.],
                   [130., 24., 15.]]).astype(np.float32)
@@ -78,6 +88,11 @@ def test_argmax_2d():
 @pytest.mark.level1
 @pytest.mark.env_onecard
 def test_argmax_high_dims():
+    """
+    Feature: test argmax functional api.
+    Description: test float32 inputs.
+    Expectation: the result match with expected result.
+    """
     for dim in range(3, 10):
         shape = np.random.randint(1, 10, size=dim)
         x = np.random.randn(reduce(lambda x, y: x * y, shape)).astype(np.float32)
