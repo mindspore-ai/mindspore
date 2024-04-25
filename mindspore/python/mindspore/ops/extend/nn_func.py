@@ -20,6 +20,7 @@ NN Operators with better performance
 """
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate.gen_ops_prim import Convolution, ConstantPadND, MaxPoolWithIndices, MaxPoolWithMask
+from mindspore.ops.auto_generate import leaky_relu_ext
 from mindspore import _checkparam as validator
 
 
@@ -304,4 +305,4 @@ def max_pool2d(input, kernel_size, stride=None, padding=0, dilation=1, *, ceil_m
     return out
 
 
-__all__ = ['conv2d', 'max_pool2d']
+__all__ = ['conv2d', 'max_pool2d', 'leaky_relu_ext']

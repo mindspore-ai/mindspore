@@ -43,7 +43,8 @@ from .math_func import (
 
 from .nn_func import (
     conv2d,
-    max_pool2d
+    max_pool2d,
+    leaky_relu_ext
 )
 
 __all__ = []
