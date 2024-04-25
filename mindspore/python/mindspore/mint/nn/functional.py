@@ -202,7 +202,7 @@ from mindspore.ops.function.nn_func import avg_pool2d_ext as avg_pool2d
 # 91
 
 # 92
-
+from mindspore.ops.extend import leaky_relu_ext as leaky_relu
 # 93
 from mindspore.ops.function.nn_func import softplus_ext as softplus
 # 94
@@ -405,7 +405,7 @@ __all__ = [
     # 91
     'grid_sample',
     # 92
-
+    'leaky_relu',
     # 93
     'softplus',
     # 94

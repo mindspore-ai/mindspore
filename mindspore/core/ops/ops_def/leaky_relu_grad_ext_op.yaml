@@ -1,0 +1,22 @@
+#operator leaky_relu_grad_ext
+leaky_relu_grad_ext:
+    args:
+        dy:
+            dtype: tensor
+        input:
+            dtype: tensor
+        negative_slope:
+            dtype: number
+            default: 0.01
+        is_result:
+            dtype: bool
+            default: False
+    returns:
+        dx:
+            dtype: tensor
+    class:
+        name: LeakyReLUGradExt
+    function:
+        disable: True
+    dispatch:
+        enable: True
