@@ -385,7 +385,7 @@ def test_p_dtype_input_scalar():
         2. the result is the same as psjit
     """
     input_shape = ()
-    input_np = np.float(8.88)
+    input_np = np.float32(8.88)
     dtype = np.float32
     fact = DTypeFactory(input_shape, dtype=dtype, input_x=input_np)
     net = DType()
