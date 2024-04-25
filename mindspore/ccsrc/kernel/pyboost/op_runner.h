@@ -32,8 +32,12 @@
 #include "kernel/pyboost/pyboost_utils.h"
 
 namespace mindspore {
+namespace tensor {
+using BaseTensorPtr = tensor::TensorPtr;
+}
 namespace kernel {
 namespace pyboost {
+using BaseTensorPtr = tensor::TensorPtr;
 using GradFunc = std::function<void()>;
 constexpr size_t kAbstractCacheSize = 8192;
 
