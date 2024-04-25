@@ -1,0 +1,15 @@
+#operator leaky_relu_ext
+leaky_relu_ext:
+    args:
+        input:
+            dtype: tensor
+        negative_slope:
+            dtype: number
+            default: 0.01
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: LeakyReLUExt
+    dispatch:
+        enable: True

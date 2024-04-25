@@ -1,0 +1,43 @@
+leaky_relu_ext:
+    description: |
+        leaky_relu activation function. The element of `input` less than 0 times `negative_slope` .
+    
+        The activation function is defined as:
+    
+        .. math::
+            \text{leaky_relu}(input) = \begin{cases}input, &\text{if } input \geq 0; \cr
+            {\negative_slope} * input, &\text{otherwise.}\end{cases}
+    
+        where :math:`\negative_slope` represents the `negative_slope` parameter.
+    
+        For more details, see `Rectifier Nonlinearities Improve Neural Network Acoustic Models
+        <https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_.
+    
+        LeakyReLU Activation Function Graph:
+    
+        .. image:: ../images/LeakyReLU.png
+            :align: center
+    
+        Args:
+            input (Tensor): The input of leaky_relu is a Tensor of any dimension.
+            negative_slope (Union[int, float]): Slope of the activation function when the element of `input` is less than 0.
+              Default: ``0.01`` .
+    
+        Returns:
+            Tensor, has the same type and shape as the `input`.
+    
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            TypeError: If `negative_slope` is not a float or an int.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+            >>> print(mint.leaky_relu(input, negative_slope=0.2))
+            [[-0.2  4.  -1.6]
+             [ 2.  -1.   9. ]]

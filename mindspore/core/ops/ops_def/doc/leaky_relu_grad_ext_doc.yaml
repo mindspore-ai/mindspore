@@ -1,0 +1,13 @@
+leaky_relu_grad_ext:
+    description: |
+        Computes gradient for the LeakyReLU activation.
+
+        Args:
+            dy (Tensor): Input gradients tensor, has the same dtype and shape as `input`.
+            input (Tensor): Origin input tensor.
+            negative_slope (Scalar): Origin negative_slope
+            is_result(bool): Output input if True.
+
+        Returns:
+            Tensor, has the same dtype and shape as `input`.
+            
