@@ -105,7 +105,7 @@ def get_optimizer(cfg, params, lr):
     raise ValueError(f"Not support {cfg.type}")
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
