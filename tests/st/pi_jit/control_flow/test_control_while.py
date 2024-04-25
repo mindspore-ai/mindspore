@@ -245,8 +245,8 @@ def test_ctrl_bool_while_addn_true():
     Description: create a net, test while, condition bool
     Expectation: No exception.
     """
-    x = np.array(True).astype(np.bool)
-    y = np.array(False).astype(np.bool)
+    x = np.array(True).astype(np.bool_)
+    y = np.array(False).astype(np.bool_)
     input_shape = (512, 512, 7, 7)
     input_param = np.random.randn(*input_shape).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE)
