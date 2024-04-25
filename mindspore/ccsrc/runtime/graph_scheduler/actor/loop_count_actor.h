@@ -36,10 +36,11 @@ namespace runtime {
 class LoopCountActor : public DebugAwareActor {
  public:
   LoopCountActor(const std::string &name, const std::string &graph_name, size_t loop_count,
-                 const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid,
+                 const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid, const AID *profiler_aid,
                  GraphExecutionStrategy strategy, const std::vector<DeviceContext *> &device_contexts,
                  const bool is_need_sync_stream)
-      : DebugAwareActor(name, KernelTransformType::kLoopCountActor, recorder_aid, memory_manager_aid, debug_aid),
+      : DebugAwareActor(name, KernelTransformType::kLoopCountActor, recorder_aid, memory_manager_aid, debug_aid,
+                        profiler_aid),
         graph_name_(graph_name),
         loop_count_(loop_count),
         current_count_(0),
@@ -58,6 +59,7 @@ class LoopCountActor : public DebugAwareActor {
 
   // The debug related operation interface.
   void SendDebugReq(OpContext<DeviceTensor> *const context) override;
+  void SendProfilerReq(OpContext<DeviceTensor> *const context);
 
   // Get the member.
   size_t loop_count() const { return loop_count_; }

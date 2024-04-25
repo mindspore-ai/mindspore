@@ -275,6 +275,7 @@ class BACKEND_EXPORT GraphScheduler {
   AID memory_manager_aid_;
   const AID *recorder_aid_{nullptr};
   const AID *debug_aid_{nullptr};
+  const AID *profiler_aid_{nullptr};
 
   // Whether actor running by the persistent execution order.
   bool execution_order_running_{false};

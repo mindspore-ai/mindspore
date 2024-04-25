@@ -44,7 +44,7 @@ class SuperKernelActor : public DebugAwareActor {
   SuperKernelActor(const std::string &name, const KernelGraphPtr &graph, const DeviceContext *device_context,
                    const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid,
                    KernelTransformType type = KernelTransformType::kSuperKernelActor)
-      : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid), graph_(graph) {
+      : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid, nullptr), graph_(graph) {
     (void)device_contexts_.emplace_back(device_context);
     input_device_tensors_.resize(graph->input_nodes().size());
   }
