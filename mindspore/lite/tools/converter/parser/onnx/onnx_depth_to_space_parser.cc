@@ -18,6 +18,7 @@
 #include <memory>
 #include "ops/depth_to_space.h"
 #include "nnacl/op_base.h"
+#include "include/registry/converter_context.h"
 
 namespace mindspore {
 namespace lite {
@@ -34,6 +35,10 @@ PrimitiveCPtr OnnxDepthToSpaceParser::Parse(const onnx::GraphProto &onnx_graph, 
     }
   }
 
+  auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+  int64_t fmk_type = converter::FmkType::kFmkTypeOnnx;
+  prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
   return prim->GetPrim();
 }
 
