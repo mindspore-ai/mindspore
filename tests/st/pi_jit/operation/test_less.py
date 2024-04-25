@@ -118,7 +118,7 @@ def test_p_less_forward_input_1d_left_float32_right_bool():
     Expectation: expect correct result.
     """
     left_input = np.random.randn(*(128,)).astype(np.float32)
-    right_input = np.random.randn(*(128,)).astype(np.bool)
+    right_input = np.random.randn(*(128,)).astype(np.bool_)
     fact = LessFactory(left_input, right_input)
     fact.forward_cmp()
 

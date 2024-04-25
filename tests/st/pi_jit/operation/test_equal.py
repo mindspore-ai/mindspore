@@ -299,7 +299,7 @@ def test_p_equal_forward_input_bool_for_gpu():
         1. the network run ok
         2. the result is the same as psjit
     """
-    input_1 = np.array([1]).astype(np.bool)
+    input_1 = np.array([1]).astype(np.bool_)
     input_2 = True
     ps_net = op.Equal()
     jit(ps_net, mode="PIJit")(Tensor(input_1), input_2)
@@ -380,9 +380,9 @@ def test_p_equal_input_dtype_bool():
         2. the result is the same as psjit
     """
     input_list = []
-    x0 = Tensor(np.random.randn(7, 6, 13).astype(np.bool))
+    x0 = Tensor(np.random.randn(7, 6, 13).astype(np.bool_))
     input_list.append(x0)
-    x1 = Tensor(np.random.randn(7, 6, 13).astype(np.bool))
+    x1 = Tensor(np.random.randn(7, 6, 13).astype(np.bool_))
     input_list.append(x1)
     fact = EqualMock(inputs=input_list)
     fact.forward_cmp()
@@ -401,9 +401,9 @@ def test_p_equal_input_dtype_bool2():
         2. the result is the same as psjit
     """
     input_list = []
-    x0 = Tensor(np.random.randn(7, 6, 13).astype(np.bool))
+    x0 = Tensor(np.random.randn(7, 6, 13).astype(np.bool_))
     input_list.append(x0)
-    x1 = Tensor(np.random.randn(7, 6, 13).astype(np.bool))
+    x1 = Tensor(np.random.randn(7, 6, 13).astype(np.bool_))
     input_list.append(x1)
     fact = EqualMock(inputs=input_list)
     fact.forward_cmp()
