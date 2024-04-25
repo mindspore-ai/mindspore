@@ -266,7 +266,7 @@ NodePtr StaticBinopGradCommon(BpropBuilder *ib, const NodePtr &dx, const ShapeAr
     if (broadcast_shape[index].empty()) {
       if (shift) {
         std::vector<int64_t> axis(broadcast_shape[index ^ 1].size());
-        std::iota(axis.begin(), axis.begin(), 0LL);
+        std::iota(axis.begin(), axis.end(), 0LL);
         reduce_dx = ib->ReduceSum(reduce_dx, axis);
       } else {
         reduce_dx = ib->ReduceSum(reduce_dx);
