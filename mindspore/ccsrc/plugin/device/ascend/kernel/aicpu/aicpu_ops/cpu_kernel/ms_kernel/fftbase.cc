@@ -104,7 +104,7 @@ uint32_t FFTBaseCpuKernel::FFTBaseComputeR2C(CpuKernelContext &ctx) {
   PocketFFTR2C<T_out>(calculate_input, output_ptr, forward, fct, calculate_shape, dim_vec);
 
   if (op_name == kHFFT || op_name == kIHFFT) {
-    std::transform(output_ptr, output_ptr + calculate_element, output_ptr,
+    std::transform(output_ptr, output_ptr + ctx.Output(kIndex0)->NumElements(), output_ptr,
                    [](std::complex<T_out> x) { return std::conj(x); });
   }
   // step5: Release temporary memory

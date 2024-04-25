@@ -143,7 +143,7 @@ bool FFTBaseCpuKernelMod::LaunchKernelR2C(const std::vector<kernel::KernelTensor
   PocketFFTR2C<T_out>(calculate_input, output_ptr, forward_, fct, calculate_shape_, dim);
 
   if (kernel_name_ == prim::kPrimIHFFT->name()) {
-    std::transform(output_ptr, output_ptr + calculate_element_nums_, output_ptr,
+    std::transform(output_ptr, output_ptr + outputs[kIndex0]->size() / sizeof(std::complex<T_out>), output_ptr,
                    [](std::complex<T_out> x) { return std::conj(x); });
   }
   // Release temporary memory
