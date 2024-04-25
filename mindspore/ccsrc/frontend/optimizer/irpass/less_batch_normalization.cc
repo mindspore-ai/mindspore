@@ -32,6 +32,7 @@ namespace irpass {
 namespace {
 enum class RemoveNodeType { kOtherNode = 0, kOptimizerNode };
 const char kLessBatchNormalizationPassName[] = "less_bn";
+const auto kBoostType = "boost_type";
 constexpr auto kValidResidualStructureIndex = 1;
 constexpr auto kBNParametersStartIndex = 2;
 // Pattern 1
@@ -354,6 +355,24 @@ void RemoveBatchNormalizetionNotUseParameters(const FuncGraphManagerPtr &manager
   root_graph->set_fv_param_count(fv_param_count);
   manager->SetParameters(root_graph, root_parameters);
 }
+
+bool CheckNodeLessBNAttr(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto nodes = TopoSort(func_graph->return_node());
+  auto result = std::find_if(nodes.begin(), nodes.end(), [](const AnfNodePtr &node) {
+    auto cnode = node->cast<CNodePtr>();
+    return cnode != nullptr && GetCNodeFuncName(cnode) == kBatchNormOpName &&
+           common::AnfAlgo::HasNodeAttr(kBoostType, cnode) &&
+           common::AnfAlgo::GetNodeAttr<std::string>(cnode, kBoostType) == kLessBatchNormalizationPassName;
+  });
+  if (result != nodes.end()) {
+    func_graph->set_attr(kLessBatchNormalizationPassName, MakeValue(true));
+    return true;
+  } else {
+    func_graph->set_attr(kLessBatchNormalizationPassName, MakeValue(false));
+    return false;
+  }
+}
 }  // namespace
 
 bool LessBatchNormalization::MatchStructureNode(const CNodePtr &cnode, const int32_t index,
@@ -411,9 +430,17 @@ void LessBatchNormalization::IsRemoveNode(const CNodePtr &cnode, const std::vect
 AnfNodePtr LessBatchNormalization::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
   const auto &fg = node->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
-  if (!fg->has_attr(kLessBatchNormalizationPassName)) {
-    return nullptr;
+  auto flag = fg->get_attr(kLessBatchNormalizationPassName);
+  if (flag != nullptr) {
+    if (!GetValue<bool>(flag)) {
+      return nullptr;
+    }
+  } else {
+    if (!CheckNodeLessBNAttr(fg)) {
+      return nullptr;
+    }
   }
+
   match_pattern_ = 0;
   while (match_pattern_ < kNeedMatchPattern.size()) {
     Reset();
