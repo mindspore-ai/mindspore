@@ -17,6 +17,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <map>
 
 #include "frontend/parallel/ops_info/prompt_flash_attention_info.h"
 #include "ir/value.h"
@@ -43,8 +44,30 @@ constexpr char kAttrKVHeadNum[] = "num_key_value_heads";
 constexpr char kAttrInputLayout[] = "input_layout";
 constexpr size_t kRank2 = 2;
 constexpr size_t kRank3 = 3;
+constexpr size_t kRank4 = 4;
 constexpr size_t kSparseMode0 = 0;
-enum class SparseMode { SPARSE_MODE_0, SPARSE_MODE_1, SPARSE_MODE_2 };
+constexpr size_t kDpAxis = 2;
+enum SparseMode : int64_t {
+  kSparseDefaultMask = 0,
+  kSparseAllMask,
+  kSparseLeftUpCausal,
+  kSparseRightDownCausal,
+  kSparseBand,
+  kSparsePrefix,
+  kSparseGlobal,
+  kSparseDilated,
+  kSparseBlockLocal,
+};
+enum OpAttrUpdateMode : int64_t {
+  kLeftUpToLeftUp = 0,
+  kLeftUpToRightDown = 1,
+  kRightDownToRightDown = 2,
+};
+const std::map<int64_t, int64_t> opAttrUpdateMap = {{kSparseDefaultMask, kLeftUpToLeftUp},
+                                                    {kSparseLeftUpCausal, kLeftUpToRightDown},
+                                                    {kSparseRightDownCausal, kRightDownToRightDown},
+                                                    {kSparseBand, kRightDownToRightDown}};
+const std::vector<int64_t> needCompressAttnMask = {kSparseLeftUpCausal, kSparseRightDownCausal, kSparseBand};
 }  // namespace
 
 bool PromptFlashAttentionInfo::CheckStrategy(int64_t strategy, int64_t true_value, const std::string &dim_name,
@@ -88,22 +111,22 @@ void PromptFlashAttentionInfo::SetOptinalInputs() {
   Shape padding_mask_tensor_map(padding_mask_rank_, -1);
   Shape padding_mask_strategy_map(padding_mask_rank_, 0);
   if (atten_mask_rank_ >= kRank3 && sparse_mode_ == kSparseMode0) {
-    atten_mask_tensor_map[0] = 1;
-    atten_mask_strategy_map[0] = 1;
+    atten_mask_tensor_map[0] = kDpAxis;
+    atten_mask_strategy_map[0] = kDpAxis;
   }
   if (padding_mask_rank_ >= kRank3) {
-    padding_mask_tensor_map[0] = 1;
-    padding_mask_strategy_map[0] = 1;
+    padding_mask_tensor_map[0] = kDpAxis;
+    padding_mask_strategy_map[0] = kDpAxis;
   }
   optinal_tensor_map_[ops::kPromptFlashAttentionInputAttnMaskIndex] = atten_mask_tensor_map;
   optinal_tensor_map_[ops::kPromptFlashAttentionInputPaddingMaskIndex] = padding_mask_tensor_map;
-  optinal_tensor_map_[ops::kPromptFlashAttentionInputActualSeqLengthsIndex] = {1};
-  optinal_tensor_map_[ops::kPromptFlashAttentionInputActualSeqLengthsKvIndex] = {1};
+  optinal_tensor_map_[ops::kPromptFlashAttentionInputActualSeqLengthsIndex] = {kDpAxis};
+  optinal_tensor_map_[ops::kPromptFlashAttentionInputActualSeqLengthsKvIndex] = {kDpAxis};
 
   optinal_op_strategies_[ops::kPromptFlashAttentionInputAttnMaskIndex] = atten_mask_strategy_map;
   optinal_op_strategies_[ops::kPromptFlashAttentionInputPaddingMaskIndex] = padding_mask_strategy_map;
-  optinal_op_strategies_[ops::kPromptFlashAttentionInputActualSeqLengthsIndex] = {1};
-  optinal_op_strategies_[ops::kPromptFlashAttentionInputActualSeqLengthsKvIndex] = {1};
+  optinal_op_strategies_[ops::kPromptFlashAttentionInputActualSeqLengthsIndex] = {kDpAxis};
+  optinal_op_strategies_[ops::kPromptFlashAttentionInputActualSeqLengthsKvIndex] = {kDpAxis};
 }
 
 Status PromptFlashAttentionInfo::GetAttrs() {
@@ -111,6 +134,11 @@ Status PromptFlashAttentionInfo::GetAttrs() {
   kv_head_num_ = GetIntAttr(kAttrKVHeadNum);
   input_layout_ = GetStringAttr(kAttrInputLayout);
   sparse_mode_ = GetIntAttr(kAttrSparseMode);
+  pre_tokens_ = GetIntAttr(kAttrPreTokens);
+  next_tokens_ = GetIntAttr(kAttrNextTokens);
+  is_attn_mask_compressed_ =
+    std::find(needCompressAttnMask.begin(), needCompressAttnMask.end(), sparse_mode_) != needCompressAttnMask.end();
+  need_update_op_attrs_mode_ = sparse_mode_ != kSparseAllMask;
   SetOptinalInputs();
   return SUCCESS;
 }
@@ -131,28 +159,97 @@ int PromptFlashAttentionInfo::GetSqueezedIndex(size_t original_index) {
 
 Status PromptFlashAttentionInfo::CheckAttenMaskStrategy(const StrategyPtr &strategy, size_t input_index) {
   auto strategies = strategy->GetInputDim();
-  if (!optinal_inputs_[input_index]) {
-    return SUCCESS;
+  auto attn_strategy = strategies[input_index];
+  attn_sp_shard_ = !is_attn_mask_compressed_;
+  int64_t attn_seq_dim;
+  if (atten_mask_rank_ == kRank2) {
+    attn_seq_dim = 0;
+  } else if (atten_mask_rank_ == kRank3) {
+    attn_seq_dim = 1;
+  } else {
+    attn_seq_dim = 2;
   }
-  auto atten_mask_idx = GetSqueezedIndex(input_index);
-  if (atten_mask_idx < 0) {
-    MS_LOG(ERROR) << "Unexpected attention mask index: " << atten_mask_idx;
+  int64_t attn_sp_dim = attn_sp_shard_ ? sp_ : 1;
+  if (!CheckStrategy(attn_strategy[attn_seq_dim], attn_sp_dim, "S-Dimention", "attn_mask")) {
     return FAILED;
   }
-  auto atten_mask_strategy = strategies[atten_mask_idx];
-  auto query_strategy = strategies[ops::kPromptFlashAttentionInputAttnMaskIndex];
-  if (atten_mask_idx >= 0) {
-    if (atten_mask_strategy[kInputBatchDim] != query_strategy[kInputBatchDim]) {
-      MS_LOG(ERROR) << "atten_mask strategy batch dim should be same.";
-      return FAILED;
+  return SUCCESS;
+}
+
+int64_t LongAdd(int64_t base, int64_t shift) {
+  int64_t result;
+  if (shift > 0) {
+    if (base > INT_MAX - shift) {
+      result = INT_MAX;
+    } else {
+      result = base + shift;
     }
-    for (size_t index = 1; index < atten_mask_strategy.size(); index++) {
-      if (!CheckStrategy(atten_mask_strategy[index], 1, "dims except batch", "atten_mask")) {
-        return FAILED;
-      }
+  } else {
+    if (base < INT_MIN - shift) {
+      result = INT_MIN;
+    } else {
+      result = base + shift;
     }
   }
-  return SUCCESS;
+  return result;
+}
+
+int64_t PromptFlashAttentionInfo::GetSplitIdAndRank() {
+  CheckGlobalDeviceManager();
+  int64_t rank = g_device_manager->global_rank();
+  DeviceMatrix dev_matrix(rank, stage_device_list_, dev_matrix_shape_);
+  RankList group_devices;
+  int64_t seq_dim = SizeToLong(dev_matrix_shape_.size()) - dev_matrix_s1_dim_ - 1;
+  if (dev_matrix.GetDevicesAlongDim(seq_dim, &group_devices) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << " get group devices along dim " << seq_dim << " failed.";
+  }
+  auto iter = std::find(group_devices.begin(), group_devices.end(), rank);
+  if (iter == group_devices.end()) {
+    MS_LOG(EXCEPTION) << "PromptFlashAttention S1 sequence parallel get split id failed. "
+                      << "rank " << rank << " not in group " << group_devices;
+  }
+  int64_t split_id = iter - group_devices.begin();
+  return split_id;
+}
+
+std::tuple<int64_t, int64_t> PromptFlashAttentionInfo::GetAttenionMaskAttrs(const int64_t split_id,
+                                                                            const int64_t split_num) {
+  int64_t kv_seq_length;
+  int64_t q_seq_length;
+  if (input_layout_ == "BSH") {
+    kv_seq_length = inputs_shape_[ops::kPromptFlashAttentionInputKeyIndex][kInputQuerySeqDimBSH];
+    q_seq_length = inputs_shape_[ops::kPromptFlashAttentionInputQueryIndex][kInputQuerySeqDimBSH];
+  } else {
+    kv_seq_length = inputs_shape_[ops::kPromptFlashAttentionInputKeyIndex][kInputQuerySeqDimBNSD];
+    q_seq_length = inputs_shape_[ops::kPromptFlashAttentionInputQueryIndex][kInputQuerySeqDimBNSD];
+  }
+  int64_t q_len_each_split = q_seq_length / split_num;
+  int64_t new_pre_tokens;
+  if (sparse_mode_ == kSparseDefaultMask || sparse_mode_ == kSparseBand) {
+    new_pre_tokens = pre_tokens_;
+  } else if (sparse_mode_ == kSparseLeftUpCausal) {
+    new_pre_tokens = q_seq_length;
+  } else {
+    new_pre_tokens = kv_seq_length;
+  }
+  int64_t new_next_tokens = (sparse_mode_ == kSparseDefaultMask || sparse_mode_ == kSparseBand) ? next_tokens_ : 0;
+  switch (opAttrUpdateMap.at(sparse_mode_)) {
+    case kLeftUpToLeftUp:
+      new_pre_tokens = LongAdd(new_pre_tokens, -split_id * q_len_each_split);
+      new_next_tokens = LongAdd(new_next_tokens, split_id * q_len_each_split);
+      break;
+    case kLeftUpToRightDown:
+      new_pre_tokens = LongAdd(new_pre_tokens, (kv_seq_length - (split_id + 1) * q_len_each_split));
+      new_next_tokens = LongAdd(new_next_tokens, -(kv_seq_length - (split_id + 1) * q_len_each_split));
+      break;
+    case kRightDownToRightDown:
+      new_pre_tokens = LongAdd(new_pre_tokens, (split_num - split_id - 1) * (q_seq_length / split_num));
+      new_next_tokens = LongAdd(new_next_tokens, -(split_num - split_id - 1) * (q_seq_length / split_num));
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Invalid sparse mode " << sparse_mode_ << ", sparse mode should be one of [0, 2, 3, 4].";
+  }
+  return std::make_tuple(new_pre_tokens, new_next_tokens);
 }
 
 Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
@@ -164,15 +261,12 @@ Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
   auto key_strategy = strategies[ops::kPromptFlashAttentionInputKeyIndex];
   auto value_strategy = strategies[ops::kPromptFlashAttentionInputValueIndex];
 
-  if (query_strategy != key_strategy || query_strategy != value_strategy) {
-    MS_LOG(ERROR) << "For " << name_ << " : The in_strategy among 'query' 'key' and 'value' must be same.";
+  if (key_strategy != value_strategy) {
+    MS_LOG(ERROR) << "For " << name_ << " : The in_strategy among 'key' and 'value' must be same.";
     return FAILED;
   }
 
   if (input_layout_ == "BSH") {
-    if (!CheckStrategy(query_strategy[kInputQuerySeqDimBSH], 1, "S-Dimention", "query")) {
-      return FAILED;
-    }
     if (head_num_ % query_strategy[kInputQueryHiddenDimBSH] != 0) {
       MS_LOG(ERROR) << "For " << name_ << ": head_num % query_strategy[2] must be 0, but got " << head_num_
                     << "(head_num) and " << query_strategy[kInputQueryHiddenDimBSH] << "(query_strategy[2])";
@@ -180,13 +274,14 @@ Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
     dp_ = query_strategy[kInputBatchDim];
     mp_ = query_strategy[kInputQueryHiddenDimBSH];
+    sp_ = query_strategy[kInputQuerySeqDimBSH];
   } else if (input_layout_ == "BNSD") {
-    if (!CheckStrategy(query_strategy[kInputQuerySeqDimBNSD], 1, "S-Dimention", "query") ||
-        !CheckStrategy(query_strategy[kInputQueryHiddenDimBNSD], 1, "D-Dimention", "query")) {
+    if (!CheckStrategy(query_strategy[kInputQueryHiddenDimBNSD], 1, "D-Dimention", "query")) {
       return FAILED;
     }
     dp_ = query_strategy[kInputBatchDim];
     mp_ = query_strategy[kInputQueryNDimBNSD];
+    sp_ = query_strategy[kInputQuerySeqDimBNSD];
   } else {
     MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
     return FAILED;
@@ -195,27 +290,37 @@ Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
     SetOptinalInputs();
   }
 
-  if (atten_mask_rank_ == kRank2 || sparse_mode_ != kSparseMode0) {
-    if (!CheckStrategy(strategies[ops::kPromptFlashAttentionInputAttnMaskIndex][kInputBatchDim], 1, "B-Dimention",
-                       "atten_mask")) {
-      return FAILED;
-    }
-  }
   if (padding_mask_rank_ == kRank2) {
     if (!CheckStrategy(strategies[ops::kPromptFlashAttentionInputPaddingMaskIndex][kInputBatchDim], 1, "B-Dimention",
                        "padding_mask")) {
       return FAILED;
     }
   }
-  if (CheckAttenMaskStrategy(strategy, ops::kPromptFlashAttentionInputAttnMaskIndex) != SUCCESS) {
-    MS_LOG(ERROR) << "Check strategy for atten mask failed";
-    return FAILED;
+  if (atten_mask_rank_ >= 2) {
+    if (CheckAttenMaskStrategy(strategy, ops::kPromptFlashAttentionInputAttnMaskIndex) != SUCCESS) {
+      MS_LOG(ERROR) << "Check strategy for atten mask failed";
+      return FAILED;
+    }
   }
+
   return SUCCESS;
 }
 
 Status PromptFlashAttentionInfo::InferDevMatrixShape() {
-  dev_matrix_shape_ = {dp_, mp_};
+  if (input_layout_ == "BSH") {
+    dev_matrix_shape_ = {dp_, sp_, mp_};
+    dev_matrix_batch_dim_ = 2;
+    dev_matrix_s1_dim_ = 1;
+    dev_matrix_n1_dim_ = 0;
+  } else if (input_layout_ == "BNSD") {
+    dev_matrix_shape_ = {dp_, mp_, sp_};
+    dev_matrix_batch_dim_ = 2;
+    dev_matrix_s1_dim_ = 0;
+    dev_matrix_n1_dim_ = 1;
+  } else {
+    MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
+    return FAILED;
+  }
   return SUCCESS;
 }
 
@@ -224,19 +329,34 @@ Status PromptFlashAttentionInfo::InferTensorMap() {
     SetOptinalInputs();
   }
   if (input_layout_ == "BSH") {
-    (void)inputs_tensor_map_.emplace_back(Shape{1, -1, 0});  // query
-    (void)inputs_tensor_map_.emplace_back(Shape{1, -1, 0});  // key
-    (void)inputs_tensor_map_.emplace_back(Shape{1, -1, 0});  // value
-    outputs_tensor_map_.push_back({1, -1, 0});               // attention_out
+    (void)inputs_tensor_map_.emplace_back(
+      Shape{dev_matrix_batch_dim_, dev_matrix_s1_dim_, dev_matrix_n1_dim_});                      // query
+    (void)inputs_tensor_map_.emplace_back(Shape{dev_matrix_batch_dim_, -1, dev_matrix_n1_dim_});  // key
+    (void)inputs_tensor_map_.emplace_back(Shape{dev_matrix_batch_dim_, -1, dev_matrix_n1_dim_});  // value
+    outputs_tensor_map_.push_back(
+      Shape{dev_matrix_batch_dim_, dev_matrix_s1_dim_, dev_matrix_n1_dim_});  // attention_out
   } else if (input_layout_ == "BNSD") {
-    (void)inputs_tensor_map_.emplace_back(Shape{1, 0, -1, -1});  // query
-    (void)inputs_tensor_map_.emplace_back(Shape{1, 0, -1, -1});  // key
-    (void)inputs_tensor_map_.emplace_back(Shape{1, 0, -1, -1});  // value
-    outputs_tensor_map_.push_back({1, 0, -1, -1});               // attention_out
+    (void)inputs_tensor_map_.emplace_back(
+      Shape{dev_matrix_batch_dim_, dev_matrix_n1_dim_, dev_matrix_s1_dim_, -1});                      // query
+    (void)inputs_tensor_map_.emplace_back(Shape{dev_matrix_batch_dim_, dev_matrix_n1_dim_, -1, -1});  // key
+    (void)inputs_tensor_map_.emplace_back(Shape{dev_matrix_batch_dim_, dev_matrix_n1_dim_, -1, -1});  // value
+    outputs_tensor_map_.push_back(
+      Shape{dev_matrix_batch_dim_, dev_matrix_n1_dim_, dev_matrix_s1_dim_, -1});  // attention_out
   } else {
     MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
     return FAILED;
   }
+
+  if (atten_mask_rank_ == kRank2) {
+    optinal_tensor_map_[ops::kPromptFlashAttentionInputAttnMaskIndex][0] = dev_matrix_s1_dim_;
+  } else if (atten_mask_rank_ == kRank3) {
+    optinal_tensor_map_[ops::kPromptFlashAttentionInputAttnMaskIndex][1] = dev_matrix_s1_dim_;
+  } else if (atten_mask_rank_ == kRank4) {
+    optinal_tensor_map_[ops::kPromptFlashAttentionInputAttnMaskIndex][2] = dev_matrix_s1_dim_;
+  } else {
+    MS_LOG(INFO) << "Attention mask rank is not in [2, 3, 4]， rank is " << atten_mask_rank_;
+  }
+
   for (auto index = static_cast<size_t>(ops::kPromptFlashAttentionInputAttnMaskIndex); index < optinal_inputs_.size();
        index++) {
     if (optinal_inputs_[index]) {
@@ -326,6 +446,15 @@ void PromptFlashAttentionInfo::ReplaceNodeInputOrAttrs() {
     auto clone_prim = prim->Clone();
     clone_prim->set_attr(kAttrHeadNum, MakeValue(head_num_ / mp_));
     clone_prim->set_attr(kAttrKVHeadNum, MakeValue(kv_head_num_ / mp_));
+    if (sp_ > 1 && need_update_op_attrs_mode_) {
+      int64_t split_id = GetSplitIdAndRank();
+      int64_t new_pre_tokens, new_next_tokens;
+      std::tie(new_pre_tokens, new_next_tokens) = GetAttenionMaskAttrs(split_id, sp_);
+      int64_t new_sparse_mode = is_attn_mask_compressed_ ? kSparseBand : sparse_mode_;
+      clone_prim->set_attr(kAttrSparseMode, MakeValue(new_sparse_mode));
+      clone_prim->set_attr(kAttrPreTokens, MakeValue(new_pre_tokens));
+      clone_prim->set_attr(kAttrNextTokens, MakeValue(new_next_tokens));
+    }
     cnode->set_input(0, NewValueNode(clone_prim)->cast<AnfNodePtr>());
   }
 }

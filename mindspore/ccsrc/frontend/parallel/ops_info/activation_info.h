@@ -42,6 +42,12 @@ class ActivationBase : public OperatorInfo {
   Status InferTensorMap() override;
   Status InferOutputTensorMap() override;
   Status InferDevMatrixShape() override;
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
+  Status InferOutputTensorInfo() override;
+
+ private:
+  TensorLayout output_infer_tensor_layout_;
 };
 
 class Activation : public ActivationBase {
@@ -88,12 +94,6 @@ class GeLUInfo : public ActivationOther {
 
  protected:
   Status InferForwardCommunicationByLayout() override;
-  Status CheckInputLayout() override;
-  Status CheckOutputLayout() override;
-  Status InferOutputTensorInfo() override;
-
- private:
-  TensorLayout output_infer_tensor_layout_;
 };
 
 class FastGeLUInfo : public ActivationOther {
@@ -123,6 +123,7 @@ class Softmax : public ActivationBase {
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status CheckInputLayout() override;
   Status CheckLayoutConfig() override;
   Status GetAttrs() override;
   std::vector<int64_t> axis_;
@@ -415,11 +416,10 @@ class IsFiniteInfo : public ActivationOther {
 class GenerateEodMaskInfo : public ActivationOther {
  public:
   GenerateEodMaskInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-               const PrimitiveAttrs &attrs)
+                      const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<IsFiniteCost>()) {}
   ~GenerateEodMaskInfo() = default;
 };
-
 
 class MishInfo : public ActivationOther {
  public:

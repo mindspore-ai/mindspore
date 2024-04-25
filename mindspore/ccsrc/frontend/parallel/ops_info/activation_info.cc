@@ -68,6 +68,36 @@ Status ActivationInfo::GetAttrs() {
   return SUCCESS;
 }
 
+Status ActivationBase::CheckInputLayout() {
+  if (inputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << "The size of input_tensor_layout for " << name_ << " is " << inputs_tensor_info_.size()
+                  << " rather than 1.";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status ActivationBase::CheckOutputLayout() {
+  if (outputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << "The size of output_tensor_layout for " << name_ << " is " << outputs_tensor_info_.size()
+                  << " rather than 1.";
+    return FAILED;
+  }
+  if (output_infer_tensor_layout_.tensor_shape_before().array().empty()) {
+    MS_LOG(ERROR) << "Parameter of output tensor layout for " << name_ << " is not allowed to be set by users.";
+    return FAILED;
+  }
+  MS_LOG(INFO) << name_ << ": Using output tensor layout infer by input tensor layout.";
+  return SUCCESS;
+}
+
+Status ActivationBase::InferOutputTensorInfo() {
+  output_infer_tensor_layout_ = inputs_tensor_info_[kIndex0].tensor_layout();
+  TensorInfo output_tensor_info(output_infer_tensor_layout_);
+  outputs_tensor_info_.push_back(output_tensor_info);
+  return SUCCESS;
+}
+
 Status ActivationOther::GetAttrs() {
   if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE)) {
     MS_LOG(ERROR) << name_ << " : Inputs shape size(" << inputs_shape_.size() << ") or outputs shape size("
@@ -242,6 +272,26 @@ std::vector<StrategyPtr> Softmax::GenerateOpStrategies(int64_t stage_id) {
     MS_LOG(EXCEPTION) << name_ << " : Generate strategies for independent inputs failed.";
   }
   return sp_vector;
+}
+
+Status Softmax::CheckInputLayout() {
+  if (inputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << "The size of input_tensor_layout for " << name_ << " is " << inputs_tensor_info_.size()
+                  << " rather than 1.";
+    return FAILED;
+  }
+  auto tensor_layout = inputs_tensor_info_[kIndex0].tensor_layout();
+  auto tensor_map = tensor_layout.tensor_map_before();
+
+  for (const auto &axis : axis_) {
+    auto corresponding_tensor_map = tensor_map[axis];
+    if (corresponding_tensor_map.size() == 1 && corresponding_tensor_map[0] == -1) {
+      return SUCCESS;
+    } else {
+      return FAILED;
+    }
+  }
+  return SUCCESS;
 }
 
 Status CumOpBase::GetAttrs() {
@@ -813,35 +863,6 @@ Status SortInfo::GetAttrs() {
     return FAILED;
   }
 
-  return SUCCESS;
-}
-
-Status GeLUInfo::CheckInputLayout() {
-  if (inputs_tensor_info_.size() != kSizeOne) {
-    MS_LOG(ERROR) << "The size of input_tensor_layout for gelu is " << inputs_tensor_info_.size() << " rather than 1.";
-    return FAILED;
-  }
-  return SUCCESS;
-}
-
-Status GeLUInfo::CheckOutputLayout() {
-  if (outputs_tensor_info_.size() != kSizeOne) {
-    MS_LOG(ERROR) << "The size of output_tensor_layout for gelu is " << outputs_tensor_info_.size()
-                  << " rather than 1.";
-    return FAILED;
-  }
-  if (output_infer_tensor_layout_.tensor_shape_before().array().empty()) {
-    MS_LOG(ERROR) << "Parameter of output tensor layout for gelu is not allowed to be set by users.";
-    return FAILED;
-  }
-  MS_LOG(INFO) << "Using output tensor layout infer by input tensor layout.";
-  return SUCCESS;
-}
-
-Status GeLUInfo::InferOutputTensorInfo() {
-  output_infer_tensor_layout_ = inputs_tensor_info_[kIndex0].tensor_layout();
-  TensorInfo output_tensor_info(output_infer_tensor_layout_);
-  outputs_tensor_info_.push_back(output_tensor_info);
   return SUCCESS;
 }
 

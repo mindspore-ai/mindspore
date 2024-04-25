@@ -198,6 +198,100 @@ Status RmsNormInfo::InitShapes() {
   return SUCCESS;
 }
 
+Status RmsNormInfo::CheckInputLayout() {
+  // Check all device matrix should be the same
+  if (inputs_tensor_info_.size() != kSizeTwo) {
+    MS_LOG(ERROR) << "The size of input_tensor_layout for rmsnorm is " << inputs_tensor_info_.size()
+                  << " rather than 2.";
+    return FAILED;
+  }
+  auto in_layout = inputs_tensor_info_[kIndex0].tensor_layout();
+  auto gamma_layout = inputs_tensor_info_[kIndex1].tensor_layout();
+
+  // check input layout
+  // [begin_norm_axis_, -1] should not shard after begin_norm_axis
+  const std::vector<int64_t> np_split_map = {-1};
+  for (size_t i = begin_norm_axis_; i < in_layout.tensor_map_before().size(); ++i) {
+    if (in_layout.tensor_map_before()[i] != np_split_map) {
+      MS_LOG(ERROR) << "RmsNorm Invalid input layout " << in_layout.tensor_map_before();
+      return FAILED;
+    }
+  }
+
+  size_t gamma_diff = in_layout.tensor_map_before().size() - gamma_layout.tensor_map_before().size();
+  for (size_t j = 0; j < gamma_layout.tensor_map_before().size(); ++j) {
+    if (gamma_layout.tensor_map_before()[j] != in_layout.tensor_map_before()[gamma_diff + j]) {
+      MS_LOG(ERROR) << "RmsNorm Invalid gamma layout " << gamma_layout.tensor_map_before();
+      return FAILED;
+    }
+  }
+
+  return SUCCESS;
+}
+
+Status RmsNormInfo::CheckOutputLayout() {
+  // Check all device matrix should be the same
+  if (outputs_tensor_info_.size() != kSizeTwo) {
+    MS_LOG(ERROR) << "The size of output_tensor_layout for rmsnorm is " << outputs_tensor_info_.size()
+                  << " rather than 2.";
+    return FAILED;
+  }
+  if (output_infer_tensor_layout_.tensor_shape_before().array().empty()) {
+    MS_LOG(ERROR) << "Parameter of output tensor layout for rmsnorm is not allowed to be set by users.";
+    return FAILED;
+  }
+  MS_LOG(INFO) << name_ << ": Using output tensor layout infer by input tensor layout.";
+  return SUCCESS;
+}
+
+Status RmsNormInfo::InferOutputLayout() {
+  auto input_layout = inputs_tensor_info_[kIndex0].tensor_layout();
+
+  TensorLayout output_tensor_layout;
+  TensorLayout rstd_tensor_layout;
+  output_tensor_layout = input_layout;
+  rstd_tensor_layout = output_tensor_layout;
+  std::vector<Shape> rstd_extended_tensor_map;
+  Shape rstd_tensor_shape;
+
+  for (size_t i = 0; i < rstd_tensor_layout.tensor_shape_before().array().size(); ++i) {
+    auto map_dim = input_layout.tensor_map_before()[i];
+    auto shp_dim = input_layout.tensor_shape_before().array()[i];
+    rstd_extended_tensor_map.push_back(map_dim);
+    if (i < begin_norm_axis_) {
+      rstd_tensor_shape.push_back(shp_dim);
+    } else {
+      rstd_tensor_shape.push_back(1);
+    }
+  }
+  rstd_tensor_layout.InitFromExtendVector(rstd_tensor_layout.device_arrangement_origin().array(),
+                                          rstd_extended_tensor_map, rstd_tensor_shape);
+
+  output_infer_tensor_layout_ = output_tensor_layout;
+  rstd_infer_tensor_layout_ = rstd_tensor_layout;
+
+  return SUCCESS;
+}
+
+Status RmsNormInfo::InferOutputTensorInfo() {
+  InferOutputLayout();
+  if (output_infer_tensor_layout_.tensor_shape_before().array() != outputs_shape_[kIndex0]) {
+    MS_LOG(ERROR) << "The infer output shape " << output_infer_tensor_layout_.tensor_shape_before().array()
+                  << " dose not match the output shape " << outputs_shape_[kIndex0];
+    return FAILED;
+  }
+  if (rstd_infer_tensor_layout_.tensor_shape_before().array() != outputs_shape_[kIndex1]) {
+    MS_LOG(ERROR) << "The infer output rstd shape " << rstd_infer_tensor_layout_.tensor_shape_before().array()
+                  << " dose not match the output shape " << outputs_shape_[kIndex1];
+    return FAILED;
+  }
+  TensorInfo output_tensor_info(output_infer_tensor_layout_);
+  TensorInfo rstd_tensor_info(rstd_infer_tensor_layout_);
+  outputs_tensor_info_.push_back(output_tensor_info);
+  outputs_tensor_info_.push_back(rstd_tensor_info);
+  return SUCCESS;
+}
+
 REGISTER(RmsNormInfo);
 }  // namespace parallel
 }  // namespace mindspore

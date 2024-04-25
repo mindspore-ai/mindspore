@@ -54,9 +54,15 @@ class RmsNormInfo : public OperatorInfo {
   Status CreateInputTensorMap(size_t input_index);
   Status GenerateGammaStrategies(const std::vector<StrategyPtr> &sp_vector);
   Status InitShapes();
+  Status InferOutputTensorInfo() override;
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
+  Status InferOutputLayout();
 
  private:
   size_t begin_norm_axis_;
+  TensorLayout output_infer_tensor_layout_;
+  TensorLayout rstd_infer_tensor_layout_;
   Shape input_shape_;
   Shape gamma_shape_;
 };

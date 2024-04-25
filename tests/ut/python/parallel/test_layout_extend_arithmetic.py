@@ -26,6 +26,13 @@ from mindspore.parallel.shard import Layout
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 from parallel.utils.utils import ParallelValidator
 
+arithmetic_ops_map = {
+    "add": P.Add(),
+    "sub": P.Sub(),
+    "mul": P.Mul(),
+    "div": P.Div(),
+    "real_div": P.RealDiv(),
+}
 
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
@@ -60,14 +67,15 @@ def compile_net(net, input_x):
 
 
 class Net(nn.Cell):
-    def __init__(self, weight, in_layout, out_layout=None):
+    def __init__(self, weight, in_layout, out_layout=None, ops_name=None):
         super().__init__()
-        self.add = P.Add().shard(in_strategy=in_layout, out_strategy=out_layout)
+        self.arithmetic_ops = arithmetic_ops_map[ops_name]
+        self.arithmetic_ops.shard(in_strategy=in_layout, out_strategy=out_layout)
         self.relu = P.ReLU()
         self.w = Parameter(weight, "w1")
 
     def construct(self, y):
-        out1 = self.add(y, self.w)
+        out1 = self.arithmetic_ops(y, self.w)
         out2 = self.relu(out1)
         out = out1 + out2
         return out
@@ -80,7 +88,8 @@ input_1_1024 = Tensor(np.ones([1, 1024]), dtype=ms.float32)
 input_1024_1024 = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
 
 
-def test_layout_extend_add_same_shape_same_shard():
+@pytest.mark.parametrize('ops_name', ['add', 'sub', 'mul', 'div', 'real_div'])
+def test_layout_extend_add_same_shape_same_shard(ops_name):
     """
     Feature: test layout extend
     Description: dev_num is 8.
@@ -90,12 +99,14 @@ def test_layout_extend_add_same_shape_same_shard():
     layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
     layout1 = (layout(("dp", "sp"), "mp"), layout(("dp", "sp"), "mp"))
     first, second = input_1024_1024, x
-    net = Net(second, layout1)
+    net = Net(second, layout1, ops_name=ops_name)
     phase = compile_net(net, first)
     validator = ParallelValidator(net, phase)
     assert validator.check_parameter_shape('w1', [256, 512])
 
-def test_layout_extend_add_same_shape_wrong_shard():
+
+@pytest.mark.parametrize('ops_name', ['add', 'sub', 'mul', 'div', 'real_div'])
+def test_layout_extend_add_same_shape_wrong_shard(ops_name):
     """
     Feature: test layout extend
     Description: dev_num is 8.
@@ -105,11 +116,13 @@ def test_layout_extend_add_same_shape_wrong_shard():
     layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
     layout1 = (layout(("dp", "sp"), "mp"), layout(("dp", "mp"), "sp"))
     first, second = input_1024_1024, x
-    net = Net(second, layout1)
+    net = Net(second, layout1, ops_name=ops_name)
     with pytest.raises(RuntimeError):
         compile_net(net, first)
 
-def test_layout_extend_add_same_dim_broadcast():
+
+@pytest.mark.parametrize('ops_name', ['add', 'sub', 'mul', 'div', 'real_div'])
+def test_layout_extend_add_same_dim_broadcast(ops_name):
     """
     Feature: test layout extend
     Description: dev_num is 8.
@@ -119,12 +132,14 @@ def test_layout_extend_add_same_dim_broadcast():
     layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
     layout1 = (layout(("dp", "sp"), "mp"), layout("None", "mp"))
     first, second = input_1024_1024, input_1_1024
-    net = Net(second, layout1)
+    net = Net(second, layout1, ops_name=ops_name)
     phase = compile_net(net, first)
     validator = ParallelValidator(net, phase)
     assert validator.check_parameter_shape('w1', [1, 512])
 
-def test_layout_extend_add_different_dim_broadcast():
+
+@pytest.mark.parametrize('ops_name', ['add', 'sub', 'mul', 'div', 'real_div'])
+def test_layout_extend_add_different_dim_broadcast(ops_name):
     """
     Feature: test layout extend
     Description: dev_num is 8.
@@ -134,12 +149,14 @@ def test_layout_extend_add_different_dim_broadcast():
     layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
     layout1 = (layout(("dp", "sp"), "mp"), layout("mp",))
     first, second = input_1024_1024, input_1024
-    net = Net(second, layout1)
+    net = Net(second, layout1, ops_name=ops_name)
     phase = compile_net(net, first)
     validator = ParallelValidator(net, phase)
     assert validator.check_parameter_shape('w1', [512])
 
-def test_layout_extend_add_different_dim_broadcast_failed():
+
+@pytest.mark.parametrize('ops_name', ['add', 'sub', 'mul', 'div', 'real_div'])
+def test_layout_extend_add_different_dim_broadcast_failed(ops_name):
     """
     Feature: test layout extend
     Description: dev_num is 8.
@@ -149,11 +166,13 @@ def test_layout_extend_add_different_dim_broadcast_failed():
     layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
     layout1 = (layout(("dp", "sp"), "mp"), layout("None",))
     first, second = input_1024_1024, input_1024
-    net = Net(second, layout1)
+    net = Net(second, layout1, ops_name=ops_name)
     with pytest.raises(RuntimeError):
         compile_net(net, first)
 
-def test_layout_extend_add_same_shape_same_shard_outputlayout_not_allowed():
+
+@pytest.mark.parametrize('ops_name', ['add', 'sub', 'mul', 'div', 'real_div'])
+def test_layout_extend_add_same_shape_same_shard_outputlayout_not_allowed(ops_name):
     """
     Feature: test layout extend
     Description: dev_num is 8.
@@ -164,6 +183,6 @@ def test_layout_extend_add_same_shape_same_shard_outputlayout_not_allowed():
     layout1 = (layout(("dp", "sp"), "mp"), layout(("dp", "sp"), "mp"))
     out_layout = (layout(("dp", "sp"), "mp"),)
     first, second = input_1024_1024, x
-    net = Net(second, layout1, out_layout)
+    net = Net(second, layout1, out_layout, ops_name=ops_name)
     with pytest.raises(RuntimeError):
         compile_net(net, first)
