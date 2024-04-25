@@ -30,7 +30,6 @@
 #include "ops/fusion/matmul_allreduce.h"
 #include "mindspore/core/ops/all_reduce.h"
 #include "plugin/device/ascend/optimizer/common/gllo_utils.h"
-#include "nnacl/op_base.h"
 #include "ops/op_utils.h"
 #include "mindspore/ccsrc/frontend/parallel/ops_info/ops_utils.h"
 #include "mindspore/core/ir/anf.h"
