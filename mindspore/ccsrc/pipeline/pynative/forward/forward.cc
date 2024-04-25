@@ -188,61 +188,6 @@ BackendOpRunInfoPtr CreateBackendOpRunInfo(const FrontendOpRunInfoPtr &op_run_in
   return backend_op_run_info;
 }
 
-void TransformOutputValues(const FrontendOpRunInfoPtr &op_run_info) {
-  std::vector<ValuePtr> output_values;
-  for (auto &output_tensor : op_run_info->base_op_run_info.output_tensors) {
-    MS_EXCEPTION_IF_NULL(output_tensor);
-
-    if (op_run_info->requires_grad) {
-      output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-      output_tensor->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
-    }
-    (void)output_values.emplace_back(output_tensor);
-  }
-  auto result_value = std::make_shared<ValueTuple>(output_values);
-  if (result_value->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
-      !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
-    op_run_info->real_out = result_value->value().front();
-  } else {
-    op_run_info->real_out = result_value;
-  }
-}
-
-void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs) {
-  auto create_tensor = [&outputs](const TypePtr &type, const ShapeVector &shape_vector) {
-    auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
-    output_tensor->set_need_pipeline_sync(true);
-    (void)outputs->emplace_back(output_tensor);
-    MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
-  };
-
-  MS_EXCEPTION_IF_NULL(abstract);
-  if (abstract->isa<abstract::AbstractSequence>()) {
-    auto seq = abstract->cast<abstract::AbstractSequencePtr>();
-    auto elements = seq->elements();
-    for (const auto &element : elements) {
-      CreateOutputTensor(element, outputs);
-    }
-  } else if (abstract->isa<abstract::AbstractTensor>()) {
-    auto abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
-    auto shape = abstract_tensor->BuildShape();
-    auto type = abstract_tensor->element()->BuildType();
-    MS_LOG(DEBUG) << "get abstract tensor shape " << shape->ToString() << " type " << type->ToString();
-    if (!shape->isa<abstract::Shape>()) {
-      MS_LOG(EXCEPTION) << "AbstractTensor shape is valid " << shape->ToString();
-    }
-    auto shape_vector = shape->cast<abstract::ShapePtr>()->shape();
-    create_tensor(type, shape_vector);
-  } else if (abstract->isa<abstract::AbstractScalar>()) {
-    auto scalar = abstract->cast<abstract::AbstractScalarPtr>();
-    const auto &type = scalar->BuildType();
-    MS_LOG(DEBUG) << "Create scalar tensor type " << type->ToString();
-    create_tensor(type, {});
-  } else {
-    MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
-  }
-}
-
 void UpdateStubTensor(const FrontendOpRunInfoPtr &op_run_info) {
   // Some operators do not have StubNodes, such as Cast inserted for automatic mixed precision.
   if (op_run_info->stub_output != nullptr) {
@@ -1089,18 +1034,6 @@ void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_
     output_tensor->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
   }
   (void)op_run_info->base_op_run_info.output_tensors.emplace_back(output_tensor);
-}
-
-void ForwardExecutor::PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) const {
-  CreateOutputTensor(op_run_info->base_op_run_info.abstract, &op_run_info->base_op_run_info.output_tensors);
-  TransformOutputValues(op_run_info);
-  UpdateOutputStubNodeValue(op_run_info);
-  // Not use GetNext abs
-  if (op_run_info->base_op_run_info.op_name != kGetNextOpName) {
-    op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->real_out);
-    // save abs for next infer
-    SetNodeAbsMapByValue(op_run_info);
-  }
 }
 
 ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info,

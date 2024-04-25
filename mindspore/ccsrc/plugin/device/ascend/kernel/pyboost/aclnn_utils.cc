@@ -37,6 +37,17 @@ void DispatchLaunchKernel(const DeviceContext *device_context, const std::string
     MS_LOG(DEBUG) << "launch task end, " << aclnn_name;
   });
 }
+
+void LaunchKernel(const std::string &aclnn_name, void *ws_ptr, size_t ws_size, transform::aclOpExecutor *executor,
+                  void *stream) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeLaunchTask,
+                                     aclnn_name, false);
+  MS_LOG(DEBUG) << "launch task start, " << aclnn_name;
+
+  RUN_OP_API_SYNC(aclnn_name, ws_ptr, ws_size, executor, stream);
+
+  MS_LOG(DEBUG) << "launch task end, " << aclnn_name;
+}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

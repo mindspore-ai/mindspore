@@ -19,6 +19,7 @@
 #include <complex>
 #include "utils/log_adapter.h"
 #include "kernel/kernel.h"
+#include "mindspore/ccsrc/runtime/device/convert_tensor_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -76,10 +77,16 @@ bool ContiguousCpuKernel::LaunchContiguousImpl(const kernel::KernelTensorPtr &in
   if (input_storage_info->is_contiguous) {
     auto &offset = input_storage_info->storage_offset;
     auto ret = memcpy_s(output_addr, output_size * sizeof(T), input_addr + offset, output_size * sizeof(T));
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "For 'ConvertToDynamic', memcpy_s error. Error no: " << ret
-                        << " ,output_addr:" << output_addr << " size=" << output_size * sizeof(T)
-                        << " ,input_addr:" << input_addr << " size=" << output_size * sizeof(T);
+    // Return ERANGE when the copy size is larger than SECUREC_MEM_MAX_LEN.
+    if (ret == ERANGE) {
+      device::ConvertSameType(output_addr, input_addr + offset, output_size * sizeof(T), output->dtype_id());
+      return true;
+    } else if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For 'Contiguous', memcpy_s error. Error no: " << ret << " ,output_addr:" << output_addr
+                        << " size=" << output_size * sizeof(T) << " ,input_addr:" << input_addr
+                        << " size=" << output_size * sizeof(T);
+    } else {
+      return true;
     }
   } else {
     size_t ndim = input_storage_info->shape.size();
