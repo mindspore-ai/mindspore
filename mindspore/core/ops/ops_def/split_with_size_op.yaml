@@ -1,0 +1,19 @@
+#operator split_with_size
+split_with_size:
+  args:
+    input_x:
+      dtype: tensor
+    split_sections:
+      dtype: tuple[int]
+      type_cast: list[int]
+    axis:
+      dtype: int
+      default: 0
+  returns:
+    output:
+      dtype: tuple[tensor]
+  view: True
+  dispatch:
+    enable: True
+  function:
+    disable: True

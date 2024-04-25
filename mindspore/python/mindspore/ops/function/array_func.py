@@ -31,6 +31,9 @@ from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._sequence_ops import TensorToList
 from mindspore.ops.auto_generate import OnesLikeExt, ZerosLikeExt, FillScalar, FillTensor, Arange
+from mindspore.ops.auto_generate.gen_ops_prim import SplitTensor
+from mindspore.ops.auto_generate.gen_ops_prim import SplitWithSize
+
 from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
     SearchSorted,
@@ -96,6 +99,8 @@ scatter_mul_ = P.ScatterMul()
 scatter_nd_ = P.ScatterNd()
 scatter_update_ = P.ScatterUpdate()
 shape_ = P.Shape()
+split_tensor = SplitTensor()
+split_with_size = SplitWithSize()
 size_ = P.Size()
 tensor_scatter_add_ = P.TensorScatterAdd()
 tensor_scatter_div_ = P.TensorScatterDiv()
@@ -4608,7 +4613,6 @@ def _split_sub_tensors(x, split_size_or_sections, axis):
         sub_tensors.append(sliced_tensor)
     return sub_tensors
 
-
 def split(tensor, split_size_or_sections, axis=0):
     """
     Splits the Tensor into chunks along the given axis.
@@ -4676,6 +4680,52 @@ def split(tensor, split_size_or_sections, axis=0):
                         f"but got {type(split_size_or_sections)}")
     return tuple(res)
 
+def split_ext(tensor, split_size_or_sections, axis=0):
+    """
+    Splits the Tensor into chunks along the given axis.
+
+    Args:
+        tensor (Tensor): A Tensor to be divided.
+        split_size_or_sections (Union[int, tuple(int), list(int)]):
+            If `split_size_or_sections` is an int type, `tensor` will be split into equally sized chunks,
+            each chunk with size `split_size_or_sections`. Last chunk will be smaller than `split_size_or_sections`
+            if `tensor.shape[axis]` is not divisible by `split_size_or_sections`.
+            If `split_size_or_sections` is a list type, then `tensor` will be split into len(split_size_or_sections)
+            chunks with sizes `split_size_or_sections` along the given `axis`.
+        axis (int): The axis along which to split. Default: ``0`` .
+
+    Returns:
+        A tuple of sub-tensors.
+
+    Raises:
+        TypeError: If argument `tensor` is not Tensor.
+        TypeError: If argument `axis` is not Tensor.
+        ValueError: If argument `axis` is out of range of :math:`[-tensor.ndim, tensor.ndim)` .
+        TypeError: If each element in `split_size_or_sections` is not integer.
+        TypeError: If argument `split_size_or_sections` is not int, tuple(int) or list(int).
+        ValueError: The sum of `split_size_or_sections` is not equal to x.shape[axis].
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import ops, Tensor
+        >>> input_x = np.arange(9).astype("float32")
+        >>> output = ops.split(Tensor(input_x), 3)
+        >>> print(output)
+        (Tensor(shape=[3], dtype=Float32, value= [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00]),
+         Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
+         Tensor(shape=[3], dtype=Float32, value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
+    """
+    if isinstance(split_size_or_sections, int):
+        res = split_tensor(tensor, split_size_or_sections, axis)
+    elif isinstance(split_size_or_sections, (list, tuple)):
+        res = split_with_size(tensor, split_size_or_sections, axis)
+    else:
+        raise TypeError(f"Type of Argument `split_size_or_sections` should be integer, tuple(int) or list(int), " \
+                        f"but got {type(split_size_or_sections)}")
+    return res
 
 @_primexpr
 def _canonicalize_axis(axis, ndim):

@@ -24,44 +24,38 @@ namespace ops {
 namespace {
 int64_t CaculateAxis(const AbstractBasePtr &input_abs) {
   auto axis_value = input_abs->GetValue();
-  if (axis_value == nullptr || axis_value->isa<ValueAny>()) {
-    MS_LOG(EXCEPTION) << "For SplitWithSize op, axis should be int64_t, but got " << axis_value->ToString();
-  }
-  auto axis = GetValue<int64_t>(axis_value);
+  auto axis = GetScalarValue<int64_t>(axis_value).value();
   return axis;
 }
 
 std::vector<int64_t> CaculateSplitSize(const AbstractBasePtr &input_abs) {
   auto split_size_value = input_abs->GetValue()->cast<ValueTuplePtr>();
-  if (split_size_value == nullptr || split_size_value->isa<ValueAny>()) {
-    MS_LOG(EXCEPTION) << "For SplitWithSize op, split size should be tuple[int], but got "
-                      << split_size_value->ToString();
-  }
-  std::vector<int64_t> split_size = GetValue<std::vector<int64_t>>(split_size_value);
+  std::vector<int64_t> split_size = GetArrayValue<int64_t>(split_size_value).value().ToVector();
   return split_size;
 }
 }  // namespace
 BaseShapePtr SplitWithSizeFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
   auto input_shape_ptr = input_args[kIndex0]->GetShape();
   auto input_shape = input_shape_ptr->GetShapeVector();
-
   auto axis = CaculateAxis(input_args[kIndex2]);
-  size_t pos = LongToSize(axis);
-
   std::vector<abstract::BaseShapePtr> output_list;
+
   auto rank = SizeToLong(input_shape.size());
-  (void)CheckAndConvertUtils::CheckInteger("rank", rank, kGreaterEqual, 1, prim_name);
+  MS_CHECK_VALUE(rank > 0, CheckAndConvertUtils::FormatCheckIntegerMsg("rank", rank, kGreaterEqual, 1, primitive));
+  MS_CHECK_VALUE(axis >= -rank && axis < rank,
+                 CheckAndConvertUtils::FormatCheckInRangeMsg("axis", axis, kIncludeLeft, {-rank, rank}, primitive));
   if (axis < 0) {
     axis += rank;
   }
-  CheckAndConvertUtils::CheckInRange("axis", axis, kIncludeLeft, {-rank, rank}, prim_name);
-
+  size_t pos = LongToSize(axis);
   auto split_size = CaculateSplitSize(input_args[kIndex1]);
   int64_t sum_split_size = std::accumulate(split_size.begin(), split_size.end(), 0);
-  (void)CheckAndConvertUtils::CheckInteger("sum_split_size", sum_split_size, kEqual, input_shape[pos], prim_name);
+  MS_CHECK_VALUE(sum_split_size == input_shape[pos],
+                 CheckAndConvertUtils::FormatCheckIntegerMsg("sum_split_size", sum_split_size, kEqual,
+                                                             SizeToLong(input_shape[pos]), primitive));
+
   auto output_shape = input_shape;
   for (const int64_t &size : split_size) {
     output_shape[pos] = size;
@@ -87,5 +81,6 @@ TypePtr SplitWithSizeFuncImpl::InferType(const PrimitivePtr &primitive,
   }
   return std::make_shared<Tuple>(type_tuple);
 }
+
 }  // namespace ops
 }  // namespace mindspore

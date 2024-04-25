@@ -19,7 +19,7 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 import mindspore.ops as ops
-
+from mindspore.ops.function.array_func import split_ext
 
 class TensorSplitNet(nn.Cell):
     def construct(self, x, indices_or_sections, axis=0):
@@ -347,19 +347,16 @@ def test_f_dsplit_list(mode):
 
 class SplitNet(nn.Cell):
     def construct(self, x, split_size_or_sections, axis=0):
-        out = ops.split(x, split_size_or_sections, axis)
+        out = split_ext(x, split_size_or_sections, axis)
         return out
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.level0
 @pytest.mark.env_onecard
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_f_split_int(mode):
+def test_f_split_ext_int(mode):
     """
     Feature: split
     Description: Verify the result of split.
@@ -376,16 +373,31 @@ def test_f_split_int(mode):
     for res, exp in zip(out, expect):
         assert np.allclose(res.asnumpy(), exp)
 
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.level0
 @pytest.mark.env_onecard
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_f_split_list(mode):
+def test_f_split_ext_int32(mode):
+    """
+    Feature: split
+    Description: Verify the result of split.
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    net = SplitNet()
+    a = np.array(np.arange(2000).reshape((1000, 2)), dtype=np.float32)
+    x = ms.Tensor(a, dtype=ms.float32)
+    split_size_or_sections = 10
+    out = net(x, split_size_or_sections)
+    assert np.allclose(len(out), 100)
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_f_split_ext_list(mode):
     """
     Feature: split
     Description: Verify the result of split.
@@ -402,3 +414,31 @@ def test_f_split_list(mode):
               np.array([[5, 6, 7, 8, 9], [15, 16, 17, 18, 19]], dtype=np.float32)]
     for res, exp in zip(out, expect):
         assert np.allclose(res.asnumpy(), exp)
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_f_split_ext_list32(mode):
+    """
+    Feature: split
+    Description: Verify the result of split.
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    net = SplitNet()
+    a = np.array(np.arange(2000).reshape((2, 1000)), dtype=np.float32)
+    x = ms.Tensor(a, dtype=ms.float32)
+    split_size_or_sections = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                              10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                              10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                              10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                              10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                              10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                              10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                              10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                              10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                              10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+    out = net(x, split_size_or_sections, axis=1)
+    assert np.allclose(len(out), 100)

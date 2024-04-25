@@ -1596,6 +1596,22 @@ REG_BPROP_BUILDER("Split").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(axis), ib->OutZeros(output_num)};
 });
 
+REG_BPROP_BUILDER("SplitTensor").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex4);
+  auto split_int = ib->GetInput(kIndex1);
+  auto axis = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("Concat", {dout, axis});
+  return {dx, ib->OutZeros(split_int), ib->OutZeros(axis)};
+});
+
+REG_BPROP_BUILDER("SplitWithSize").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex4);
+  auto split_sections = ib->GetInput(kIndex1);
+  auto axis = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("Concat", {dout, axis});
+  return {dx, ib->OutZeros(split_sections), ib->OutZeros(axis)};
+});
+
 DEF_PURE_SHAPE_CALC(g_slice_ext)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
     auto x_shape = inputs.at(0);

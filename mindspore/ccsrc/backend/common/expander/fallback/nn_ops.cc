@@ -1010,6 +1010,173 @@ REG_FALLBACK_BUILDER("Embedding").SetBody(BODYFUNC(ib) {
   return {out};
 });
 
+REG_FALLBACK_BUILDER("SplitTensor").SetBody(BODYFUNC(ib) {
+  constexpr int64_t SPLIT_LOOP_SIZE = 32;
+  auto input = ib->GetInput(kIndex0);
+  auto split_int = ib->GetInput(kIndex1);
+  auto axis = ib->GetInput(kIndex2);
+  auto split_int_val = GetValue<int64_t>(split_int->BuildValue());
+  auto axis_val = GetValue<int64_t>(axis->BuildValue());
+  auto dimSize = input->shape()[axis_val];
+  if (!ops::IsValueKnown(axis->BuildValue()) || !ops::IsValueKnown(split_int->BuildValue())) {
+    MS_EXCEPTION(ValueError) << "For `SplitTensor` , the `split_int` and `axis` must currently be a constant!";
+  }
+  if (static_cast<int64_t>(split_int_val) == dimSize) {
+    MS_LOG(INFO) << "split_int_val == dimSize ";
+    return {input};
+  } else {
+    int64_t numSplit = (split_int_val + dimSize - 1) / split_int_val;
+    int64_t lastSplitSize = split_int_val - (static_cast<int64_t>(split_int_val) * numSplit - dimSize);
+    std::vector<int64_t> splitVector(numSplit, static_cast<int64_t>(split_int_val));
+    splitVector[numSplit - 1] = lastSplitSize;
+    // Using loop splitting in the AiCore scene of the SplitV operator or when the number of outputs exceeds 32
+    if (splitVector.size() > SPLIT_LOOP_SIZE) {
+      MS_LOG(INFO) << "output num = :" << splitVector.size();
+      std::vector<mindspore::expander::NodePtr> subTensors;
+      const int64_t loopSize = (splitVector.size() + SPLIT_LOOP_SIZE - 1) / SPLIT_LOOP_SIZE;
+      const int64_t lastSize = splitVector.size() % SPLIT_LOOP_SIZE;
+      const size_t dim = input->shape().size();
+      // Construct splitsize as a new splitSize based on loopSize and lastSize
+      std::vector<int64_t> newSplitSize;
+      std::vector<int64_t> splitTmp;
+      std::vector<std::vector<int64_t>> splitList;
+      for (int64_t loopIndex = 0; loopIndex < loopSize; loopIndex++) {
+        int64_t newSplit = 0;
+        int64_t currentSplitVal = 0;
+        if (loopIndex != loopSize - 1) {
+          for (int64_t noLastIndex = 0; noLastIndex < SPLIT_LOOP_SIZE; noLastIndex++) {
+            currentSplitVal = *(splitVector.data() + loopIndex * SPLIT_LOOP_SIZE + noLastIndex);
+            splitTmp.emplace_back(currentSplitVal);
+            newSplit += currentSplitVal;
+          }
+        } else {
+          for (int64_t lastIndex = 0; lastIndex < lastSize; lastIndex++) {
+            currentSplitVal = *(splitVector.data() + loopIndex * SPLIT_LOOP_SIZE + lastIndex);
+            splitTmp.emplace_back(currentSplitVal);
+            newSplit += currentSplitVal;
+          }
+        }
+        splitList.emplace_back(splitTmp);
+        newSplitSize.emplace_back(newSplit);
+        splitTmp.clear();
+      }
+      // Loop call Slice to split self into N large blocks, and use SplitV to split each block again
+      int64_t offsetVal = 0;
+      for (size_t sliceIndex = 0; sliceIndex < newSplitSize.size(); sliceIndex++) {
+        // Calculate offset, increasing offset block by block
+        std::vector<int64_t> offsetVector(dim, 0);
+        offsetVal += sliceIndex == 0 ? 0 : newSplitSize[sliceIndex - 1];
+        offsetVector[static_cast<size_t>(axis_val)] = offsetVal;
+        // Calculate size, which is consistent with the output block size
+        std::vector<int64_t> sizeVector;
+        for (size_t selfIndex = 0; selfIndex < dim; selfIndex++) {
+          int64_t sizeValue =
+            selfIndex == static_cast<size_t>(axis_val) ? newSplitSize[sliceIndex] : input->shape()[selfIndex];
+          sizeVector.emplace_back(sizeValue);
+        }
+        // Using Slice to process each block
+        auto slice = ib->Emit("Slice", {input, ib->Value(offsetVector), ib->Value(sizeVector)});
+
+        // Using SPLitV to slice
+        auto out = ib->Emit("SplitV", {slice},
+                            {{"size_splits", MakeValue(splitList[sliceIndex])},
+                             {"split_dim", axis->BuildValue()},
+                             {"num_split", MakeValue<int64_t>(splitList[sliceIndex].size())}});
+        for (size_t i = 0; i < splitList[sliceIndex].size(); i++) {
+          subTensors.emplace_back(ib->TupleGetItem(out, i));
+        }
+      }
+      return {ib->MakeTuple(subTensors)};
+    } else {
+      MS_LOG(INFO) << "output num = :" << splitVector.size();
+      auto out = ib->Emit("SplitV", {input},
+                          {{"size_splits", MakeValue(splitVector)},
+                           {"split_dim", axis->BuildValue()},
+                           {"num_split", MakeValue<int64_t>(splitVector.size())}});
+      return {out};
+    }
+  }
+});
+
+REG_FALLBACK_BUILDER("SplitWithSize").SetBody(BODYFUNC(ib) {
+  constexpr int64_t SPLIT_LOOP_SIZE = 32;
+  auto input = ib->GetInput(kIndex0);
+  auto split_size = ib->GetInput(kIndex1);
+  auto axis = ib->GetInput(kIndex2);
+  auto split_size_shape = GetValue<std::vector<int64_t>>(split_size->BuildValue());
+  auto axis_val = GetValue<int64_t>(axis->BuildValue());
+  if (!ops::IsValueKnown(axis->BuildValue())) {
+    MS_EXCEPTION(ValueError) << "For `SplitWithSize` , the `split_int` and `axis` must currently be a constant!";
+  }
+  if (split_size_shape.size() == 1) {
+    MS_LOG(INFO) << "split_size_shape.size == 1 ";
+    return {input};
+  } else if (split_size_shape.size() > SPLIT_LOOP_SIZE) {
+    MS_LOG(INFO) << "output num = :" << split_size_shape.size();
+    std::vector<mindspore::expander::NodePtr> subTensors;
+    const int64_t loopSize = (split_size_shape.size() + SPLIT_LOOP_SIZE - 1) / SPLIT_LOOP_SIZE;
+    const int64_t lastSize = split_size_shape.size() % SPLIT_LOOP_SIZE;
+    const size_t dim = input->shape().size();
+    // 1. Construct splitsize as a new splitSize based on loopSize and lastSize
+    std::vector<int64_t> newSplitSize;
+    std::vector<int64_t> splitTmp;
+    std::vector<std::vector<int64_t>> splitList;
+    for (int64_t loopIndex = 0; loopIndex < loopSize; loopIndex++) {
+      int64_t newSplit = 0;
+      int64_t currentSplitVal = 0;
+      if (loopIndex != loopSize - 1) {
+        for (int64_t noLastIndex = 0; noLastIndex < SPLIT_LOOP_SIZE; noLastIndex++) {
+          currentSplitVal = *(split_size_shape.data() + loopIndex * SPLIT_LOOP_SIZE + noLastIndex);
+          splitTmp.emplace_back(currentSplitVal);
+          newSplit += currentSplitVal;
+        }
+      } else {
+        for (int64_t lastIndex = 0; lastIndex < lastSize; lastIndex++) {
+          currentSplitVal = *(split_size_shape.data() + loopIndex * SPLIT_LOOP_SIZE + lastIndex);
+          splitTmp.emplace_back(currentSplitVal);
+          newSplit += currentSplitVal;
+        }
+      }
+      splitList.emplace_back(splitTmp);
+      newSplitSize.emplace_back(newSplit);
+      splitTmp.clear();
+    }
+    // 2. Loop call Slice to split self into N large blocks, and use SplitV to split each block again
+    int64_t offsetVal = 0;
+    for (size_t sliceIndex = 0; sliceIndex < newSplitSize.size(); sliceIndex++) {
+      // Calculate offset, increasing offset block by block
+      std::vector<int64_t> offsetVector(dim, 0);
+      offsetVal += sliceIndex == 0 ? 0 : newSplitSize[sliceIndex - 1];
+      offsetVector[static_cast<size_t>(axis_val)] = offsetVal;
+      // Calculate size, which is consistent with the output block size
+      std::vector<int64_t> sizeVector;
+      for (size_t selfIndex = 0; selfIndex < dim; selfIndex++) {
+        int64_t sizeValue =
+          selfIndex == static_cast<size_t>(axis_val) ? newSplitSize[sliceIndex] : input->shape()[selfIndex];
+        sizeVector.emplace_back(sizeValue);
+      }
+      // Using Slice to process each block
+      auto slice = ib->Emit("Slice", {input, ib->Value(offsetVector), ib->Value(sizeVector)});
+      // Using SPLitV to slice
+      auto out = ib->Emit("SplitV", {slice},
+                          {{"size_splits", MakeValue(splitList[sliceIndex])},
+                           {"split_dim", axis->BuildValue()},
+                           {"num_split", MakeValue<int64_t>(splitList[sliceIndex].size())}});
+      for (size_t i = 0; i < splitList[sliceIndex].size(); i++) {
+        subTensors.emplace_back(ib->TupleGetItem(out, i));
+      }
+    }
+    return {ib->MakeTuple(subTensors)};
+  } else {
+    MS_LOG(INFO) << "output num = :" << split_size_shape.size();
+    auto out = ib->Emit("SplitV", {input},
+                        {{"size_splits", MakeValue(split_size->BuildValue())},
+                         {"split_dim", axis->BuildValue()},
+                         {"num_split", MakeValue<int64_t>(split_size_shape.size())}});
+    return {out};
+  }
+});
+
 REG_FALLBACK_BUILDER("OnesLikeExt").SetBody(BODYFUNC(ib) {
   auto input = ib->GetInput(kIndex0);
   auto dtype = ib->GetInput(kIndex1);
@@ -1060,5 +1227,6 @@ REG_FALLBACK_BUILDER("FillTensor").SetBody(BODYFUNC(ib) {
   auto out = ib->Emit("Cast", {org_out, dtype});
   return {out};
 });
+
 }  // namespace expander
 }  // namespace mindspore
