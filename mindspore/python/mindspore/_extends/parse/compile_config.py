@@ -212,6 +212,15 @@ Value Range:
 """
 TRACE_LABEL_WITH_UNIQUE_ID = ''
 
+"""
+Name: DUMP_IR_DDE_DETAIL
+Function: When generating IR files, whether to print DDE node detail.
+Value Range:
+    1: Print DDE node detail.
+    Default: Only print used flags.
+"""
+DUMP_IR_DDE_DETAIL = ''
+
 
 __all__ = [
     "BOOTSTRAP",
@@ -236,4 +245,5 @@ __all__ = [
     "ENABLE_FIX_CODE_LINE",
     "RECORD_MEMORY",
     "TRACE_LABEL_WITH_UNIQUE_ID",
+    "DUMP_IR_DDE_DETAIL",
 ]
