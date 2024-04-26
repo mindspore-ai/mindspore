@@ -131,3 +131,44 @@ def test_batchnorm1d_model_parallel2():
     strategy2 = ((2, 4),)
     net = Net2(strategy1=strategy1, strategy2=strategy2)
     compile_net2(net)
+
+
+def get_gradient(dx):
+    return dx
+
+
+class ReshapeTensorDumpNet(Cell):
+    def __init__(self, strategy1=None, strategy2=None):
+        super().__init__()
+        self.transpose = P.Transpose()
+        self.reshape1 = P.Reshape()
+        self.reshape2 = P.Reshape()
+        self.transpose.shard(strategy1)
+        self.dump = P.TensorDump()
+        self.matmul = P.MatMul()
+        self.matmul.shard(strategy2)
+        self.get_grad = P.InsertGradientOf(get_gradient)
+
+    def construct(self, x, b):
+        out = self.transpose(x, (0, 2, 1))
+        out = self.reshape1(out, (16, 8, -1))
+        self.dump("out", out)
+        out = self.reshape2(out, (-1, 128))
+        out = self.get_grad(out)
+        out = self.matmul(out, b)
+        return out
+
+
+def test_reshape_tensordump_net():
+    """
+    Feature: Test TensorDump/InsertGradientOf in parallel
+    Description: TensorDump + Reshape + InsertGradientOf
+    Expectation: Successful
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
+    strategy1 = ((2, 4, 1),)
+    strategy2 = ((8, 1), (1, 1))
+    net = ReshapeTensorDumpNet(strategy1=strategy1, strategy2=strategy2)
+    x = Tensor(np.ones([32, 16, 8]), dtype=ms.float32)
+    weight = Tensor(np.ones([128, 8]), dtype=ms.float32)
+    _cell_graph_executor.compile(net, x, weight)
