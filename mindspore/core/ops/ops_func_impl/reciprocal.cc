@@ -18,7 +18,6 @@
 #include <complex>
 #include "ops/ops_frontend_func_impl.h"
 #include "ops/ops_func_impl/reciprocal.h"
-#include "ops/ops_func_impl/eltwise_arithmetic.h"
 #include "utils/ms_context.h"
 
 namespace mindspore::ops {
