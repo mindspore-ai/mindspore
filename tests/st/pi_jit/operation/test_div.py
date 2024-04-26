@@ -332,7 +332,7 @@ def test_p_div_abnormal_input_2x2_str_2x2_str32():
         2. the result is the same as psjit
     """
     with pytest.raises(TypeError):
-        fact = DivFactory((2, 2), (2, 2), dtype=np.str)
+        fact = DivFactory((2, 2), (2, 2), dtype=np.str_)
         fact.forward_cmp()
 
 
