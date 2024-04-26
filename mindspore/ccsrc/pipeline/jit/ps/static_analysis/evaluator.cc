@@ -739,7 +739,7 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
 
 EvalResultPtr Evaluator::EvalUndeterminedArgs(const AbstractBasePtrList &args_abs_list) {
   auto is_undetermined = std::any_of(args_abs_list.begin(), args_abs_list.end(), [](auto &arg) -> bool {
-    return arg->BuildType()->type_id() == kObjectTypeUndeterminedType;
+    return arg->IsSameTypeId(AbstractUndetermined::kTypeId);
   });
   if (is_undetermined) {
     MS_LOG(DEBUG) << "Eval " << identifier_ << " return undetermined abstract result";
