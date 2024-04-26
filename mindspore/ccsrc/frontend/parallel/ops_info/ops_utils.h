@@ -173,6 +173,7 @@ constexpr char TARGET[] = "primitive_target";
 constexpr char CPU[] = "CPU";
 constexpr char TRANSPOSE_A[] = "transpose_a";
 constexpr char TRANSPOSE_B[] = "transpose_b";
+constexpr char DIAGONAL[] = "diagonal";
 constexpr char SHAPE[] = "shape";
 constexpr char BEGIN_MASK[] = "begin_mask";
 constexpr char END_MASK[] = "end_mask";
