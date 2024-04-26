@@ -140,7 +140,7 @@ if(ENABLE_MINDDATA)
   )
 
   if(MSVC)
-    if(NOT ENABLE_FFMPEG)
+    if(ENABLE_FFMPEG)
       set(ffmpeg_LIB_PATH ${CMAKE_SOURCE_DIR}/build/mindspore/ffmpeg_lib)
       file(GLOB FFMPEG_LIB_LIST ${ffmpeg_LIB_PATH}/*.dll)
       install(
