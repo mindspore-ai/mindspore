@@ -264,7 +264,7 @@ def uniform_ext(tensor, a, b, generator=None):
     """
     if generator is None:
         generator = default_generator()
-    seed, offset = generator.get_state()
+    seed, offset = generator(1)
     return uniform_(tensor, a, b, seed, offset)
 
 
