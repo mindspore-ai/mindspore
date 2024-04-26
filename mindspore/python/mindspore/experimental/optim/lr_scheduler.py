@@ -282,7 +282,8 @@ class LinearLR(LRScheduler):
 
         if end_factor > 1.0 or end_factor < 0:
             raise ValueError('Ending multiplicative factor expected to be between 0 and 1.')
-
+        if not isinstance(total_iters, int):
+            raise TypeError(f"For 'LinearLR', the type of total_iters must be int, but got {type(total_iters)}.")
         self.start_factor = start_factor
         self.end_factor = end_factor
         self.total_iters = total_iters
@@ -423,6 +424,8 @@ class PolynomialLR(LRScheduler):
             raise TypeError(f"For 'PolynomialLR', the 'power' must be float, but got {type(power)}.")
         if power < 0:
             raise ValueError(f"For 'PolynomialLR', the 'power' must be >= 0, but got {power}.")
+        if not isinstance(total_iters, int):
+            raise TypeError(f"For 'PolynomialLR', the type of total_iters must be int, but got {type(total_iters)}.")
         self.total_iters = total_iters
         self.power = power
         self.min = P.Minimum()
@@ -668,7 +671,8 @@ class ConstantLR(LRScheduler):
     def __init__(self, optimizer, factor=1.0 / 3, total_iters=5, last_epoch=-1):
         if factor > 1.0 or factor < 0:
             raise ValueError('Constant multiplicative factor expected to be between 0 and 1.')
-
+        if not isinstance(total_iters, int):
+            raise TypeError(f"For 'ConstantLR', the type of total_iters must be int, but got {type(total_iters)}.")
         self.factor = factor
         self.total_iters = total_iters
         super(ConstantLR, self).__init__(optimizer, last_epoch)
