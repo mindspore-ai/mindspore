@@ -1,0 +1,17 @@
+normal_ext:
+    description: |
+        Generates random numbers according to the Normal random number distribution.
+        
+        Inputs:
+            - **mean** (Union[float, Tensor]) - The mean is a tensor with the mean of each output element's normal distribution.
+            - **std** (Union[float, Tensor]) - The tensor of per-element standard deviations.
+            - **generator** (Generator, optional) - Mindspore generator.
+        
+        Outputs:
+            - **output** (Tensor) - With the same type and shape as the 'mean'.
+        
+        Raises:
+            TypeError: If `mean` or `std` is not Union[float, Tensor].
+        
+        Supported Platforms:
+            ``Ascend``
