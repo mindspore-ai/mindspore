@@ -21,7 +21,13 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-TCPClient::TCPClient(bool enable_ssl) : RPCClientBase(enable_ssl), tcp_comm_(nullptr), received_message_(nullptr) {}
+TCPClient::TCPClient(bool enable_ssl) : RPCClientBase(enable_ssl), tcp_comm_(nullptr), received_message_(nullptr) {
+  std::string env_receive_msg_timeout = common::GetEnv(kEnvReceiveMsgTimeOut);
+  int int_receive_timeout =
+    env_receive_msg_timeout.empty() ? kDefaultReceiveMsgTimeOut : std::stoi(env_receive_msg_timeout);
+  receive_timeout_ = (int_receive_timeout < 0) ? UINT64_MAX : int_receive_timeout;
+  MS_LOG(INFO) << "Tcp client receiving message timeout is " << receive_timeout_ << " seconds.";
+}
 TCPClient::~TCPClient() {}
 
 bool TCPClient::Initialize() {
@@ -114,6 +120,10 @@ bool TCPClient::SendSync(std::unique_ptr<MessageBase> &&msg, size_t *const send_
 void TCPClient::SendAsync(std::unique_ptr<MessageBase> &&msg) { (void)tcp_comm_->Send(msg.release(), nullptr, false); }
 
 MessageBase *TCPClient::ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t timeout) {
+  if (timeout == UINT32_MAX) {
+    // This means we should use default ReceiveMsgTimeOut as timeout.
+    timeout = receive_timeout_;
+  }
   bool retval = tcp_comm_->Send(msg.release(), nullptr, true);
   if (retval) {
     std::unique_lock<std::mutex> lock(mutex_);
@@ -125,7 +135,11 @@ MessageBase *TCPClient::ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t
       // `ReceiveSync` call will block on the received message's condition variable.
       MessageBase *message = received_message_;
       return message;
+    } else {
+      MS_LOG(WARNING) << "Failed to receive message.";
     }
+  } else {
+    MS_LOG(INFO) << "Failed to send message in ReceiveSync.";
   }
   return NULL_MSG;
 }

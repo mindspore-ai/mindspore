@@ -138,11 +138,7 @@ class MetaServerNode : public NodeBase {
  public:
   explicit MetaServerNode(const std::string &node_id, const std::string &role, const size_t &node_num,
                           uint64_t node_timeout = kDefaultNodeTimeout)
-      : NodeBase(node_id, role),
-        total_node_num_(node_num),
-        abnormal_node_num_(0),
-        enable_monitor_(true),
-        node_timeout_(node_timeout) {}
+      : NodeBase(node_id, role), total_node_num_(node_num), abnormal_node_num_(0), enable_monitor_(true) {}
   ~MetaServerNode() override;
 
   bool Initialize() override;
@@ -248,8 +244,6 @@ class MetaServerNode : public NodeBase {
   std::map<std::string, std::string> metadata_;
 
   mutable std::shared_mutex meta_mutex_;
-
-  uint64_t node_timeout_;
 
   // A key-value pairs metadata config used for failover recovery if enabled.
   std::unique_ptr<recovery::Configuration> configuration_;
