@@ -239,6 +239,7 @@ AnfNodePtr IrBprop::MapParameter(const ValuePtr &value, const abstract::Abstract
       param->set_abstract(abs);
       return param;
     }
+    bprop_graph_run_by_single_op_ = auto_grad_meta_data->is_register_hook();
     if (auto_grad_meta_data->input_type() == InputType::kParameter) {
       return AddParameterNode(tensor, abs);
     }

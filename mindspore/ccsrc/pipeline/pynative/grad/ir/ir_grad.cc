@@ -437,6 +437,18 @@ CNodePtr IrGrad::ConstructBpropGraphInput(const GradParamPtr &grad_param, const 
       (void)node_list.emplace_back(PyNativeAlgo::Common::CreateValueNodeByValue(
         grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]->Clone()));
     }
+    // Hook run by single op
+    if (!ir_bprop_->bprop_graph_run_by_single_op()) {
+      ir_bprop()->set_bprop_graph_run_by_single_op([&grad_param]() {
+        auto tensor = grad_param->op_grad_info->out_value->template cast<tensor::BaseTensorPtr>();
+        if (tensor == nullptr) {
+          return false;
+        }
+        auto auto_grad_meta = tensor->auto_grad_meta_data();
+        MS_EXCEPTION_IF_NULL(auto_grad_meta);
+        return auto_grad_meta->is_register_hook();
+      }());
+    }
     // Set out
     (void)node_list.emplace_back(PyNativeAlgo::Common::CreateValueNodeByValue(grad_param->op_grad_info->out_value,
                                                                               grad_param->op_grad_info->out_abs));
@@ -670,7 +682,7 @@ AnfNodePtr IrGrad::GetInputGrad(bool grad_all_inputs, bool get_by_position, cons
       if (index >= cell_inputs_.size()) {
         MS_LOG(EXCEPTION) << "Position index " << index << " is exceed input size.";
       }
-      // Tuple, List, scalar will be ignore
+      // Tuple, List, scalar will be ignored
       if (!IsValidTensorInput(cell_inputs_[index].first->abstract())) {
         MS_LOG(DEBUG) << "Get input node is not tensor "
                       << ", abs " << cell_inputs_[index].first->abstract()->ToString();
