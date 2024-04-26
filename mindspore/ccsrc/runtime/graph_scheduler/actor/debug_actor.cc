@@ -98,12 +98,23 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
 #ifdef ENABLE_DEBUGGER
     auto debugger = Debugger::GetInstance();
     if (debugger != nullptr) {
-      auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
-      debugger->InsertExecutedGraph(kernel_graph);
-      debugger->SetAscendKernelByKernelFlag(true);
-      bool read_data = CheckReadData(cnode);
-      if (read_data && DumpJsonParser::GetInstance().e2e_dump_enabled()) {
-        ReadDataAndDump(cnode, launch_info, exec_order_, device_context);
+      auto is_finite = CheckFinite(device_context, output);
+      if (is_finite && DumpJsonParser::GetInstance().overflow_enabled())) {
+        auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
+        debugger->InsertExecutedGraph(kernel_graph);
+        debugger->SetAscendKernelByKernelFlag(true);
+        bool read_data = CheckReadData(cnode);
+        if (read_data && DumpJsonParser::GetInstance().e2e_dump_enabled()) {
+          ReadDataAndDump(cnode, launch_info, exec_order_, device_context);
+        }
+      } else {
+        auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
+        debugger->InsertExecutedGraph(kernel_graph);
+        debugger->SetAscendKernelByKernelFlag(true);
+        bool read_data = CheckReadData(cnode);
+        if (read_data && DumpJsonParser::GetInstance().e2e_dump_enabled()) {
+          ReadDataAndDump(cnode, launch_info, exec_order_, device_context);
+        }
       }
     }
     exec_order_ += 1;
