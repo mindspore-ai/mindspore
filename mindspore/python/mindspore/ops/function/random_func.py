@@ -29,9 +29,9 @@ from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithM
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import randperm
 from mindspore.nn.generator import default_generator
-from mindspore.ops.auto_generate import UniformExt
+from mindspore.ops.auto_generate import UniformExt, NormalExt
 
-
+normal_ext_op = NormalExt()
 cast_ = P.Cast()
 log_ = P.Log()
 real_div_ = P.RealDiv()
@@ -661,6 +661,41 @@ def choice_with_mask(input_x, count=256, seed=None):
 def is_cpu_backend():
     """Check if the CPU is used"""
     return context.get_context('device_target') == 'CPU'
+
+def normal_ext(mean, std, generator=None):
+    r"""
+    Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
+
+    Args:
+        mean (Union[float, Tensor]): The mean is a tensor with the mean of each output
+            element's normal distribution.
+        std (Union[float, Tensor]): The tensor of per-element standard deviations.
+        generator (Generator, optional): Mindspore generator.
+
+    Returns:
+        Tensor, With the same type and shape as the `mean`.
+
+    Raises:
+        TypeError: If `mean` or `std` is not Union[float, Tensor].
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> mean = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> std = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> output = ops.normal(mean, std)
+        >>> print(output.shape)
+        (3,)
+    """
+    if generator is None:
+        generator = default_generator()
+    seed, offset = generator(1)
+    return normal_ext_op(mean, std, seed, offset)
 
 
 @_function_forbid_reuse
@@ -1364,7 +1399,7 @@ def _check_param(op_name, param_name, param_value):
 __all__ = [
     'standard_laplace', 'random_categorical', 'uniform', 'uniform_ext', 'standard_normal', 'random_gamma',
     'uniform_candidate_sampler', 'random_poisson', 'log_uniform_candidate_sampler', 'shuffle', 'choice_with_mask',
-    'normal', 'laplace', 'gamma', 'poisson', 'multinomial', 'rand', 'rand_like', 'randn', 'randn_like', 'randint',
-    'randint_like', 'multinomial_with_replacement', 'randperm'
+    'normal_ext', 'normal', 'laplace', 'gamma', 'poisson', 'multinomial', 'rand', 'rand_like', 'randn', 'randn_like',
+    'randint', 'randint_like', 'multinomial_with_replacement', 'randperm'
 ]
 __all__.sort()
