@@ -56,3 +56,5 @@ https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.0/MindSpore/lite/release
 https://github.com/git-lfs/git-lfs/releases/download/v3.1.2/
 https://www.mindspore.cn/lite/en
 https://mindspore.cn/search/en?inputValue=Index%20values
+https://ffmpeg.org/releases/ffmpeg-%SOFTWARE_VERSION%.tar.gz
+https://tools.mindspore.cn/libs/ffmpeg/ffmpeg-%SOFTWARE_VERSION%.tar.gz
