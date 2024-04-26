@@ -30,7 +30,8 @@ SET ENABLE_MSVC=OFF
 set BUILD_TYPE=Release
 set VERSION_STR=''
 set ENABLE_AKG=OFF
-set ENABLE_FFMPEG=OFF
+set ENABLE_FFMPEG=ON
+set ENABLE_FFMPEG_DOWNLOAD=OFF
 for /f "tokens=1" %%a in (version.txt) do (set VERSION_STR=%%a)
 
 ECHO %2%|FINDSTR "^[0-9][0-9]*$"
@@ -41,6 +42,10 @@ IF %errorlevel% == 0 (
 IF "%FROM_GITEE%" == "1" (
     echo "DownLoad from gitee"
     SET ENABLE_GITEE=ON
+)
+
+IF "%MSLIBS_SERVER%" == "tools.mindspore.cn" (
+    SET ENABLE_FFMPEG_DOWNLOAD=ON
 )
 
 ECHO %1%|FINDSTR "^ms_vs"
@@ -92,6 +97,11 @@ IF "%1%" == "lite" (
     )
     IF ON == %ENABLE_FFMPEG% (
         call %BASE_PATH%\cmake\external_libs\ffmpeg.bat
+        IF errorlevel 1 (
+            echo "cmake fail."
+            call :clean
+            EXIT /b 1
+        )
     )
     cmake !CMAKE_ARGS! -G Ninja ../..
 )
