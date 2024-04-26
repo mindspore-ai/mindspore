@@ -13,3 +13,4 @@ cummax:
       dtype: tensor
   dispatch:
     enable: True
+    Ascend: CumMaxAscend
