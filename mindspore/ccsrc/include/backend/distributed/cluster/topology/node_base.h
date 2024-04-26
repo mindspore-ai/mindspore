@@ -39,7 +39,17 @@ class NodeBase {
         role_(role),
         finalized_(false),
         start_time_(Now()),
-        topo_state_(TopoState::kInitializing) {}
+        topo_state_(TopoState::kInitializing) {
+    std::string env_topo_timeout = common::GetEnv(kEnvTopoTimeOut);
+    int int_topo_timeout = env_topo_timeout.empty() ? kDefaultTopoTimeOut : std::stoi(env_topo_timeout);
+    topo_timeout_ = (int_topo_timeout < 0) ? UINT64_MAX : int_topo_timeout;
+    MS_LOG(INFO) << "Cluster topo timeout is " << topo_timeout_ << " seconds.";
+
+    std::string env_node_timeout = common::GetEnv(kEnvNodeTimeOut);
+    int int_node_timeout = env_node_timeout.empty() ? kDefaultNodeTimeout : std::stoi(env_node_timeout);
+    node_timeout_ = (int_node_timeout < 0) ? UINT64_MAX : int_node_timeout;
+    MS_LOG(INFO) << "Node timeout after exception is " << node_timeout_ << " seconds.";
+  }
   virtual ~NodeBase() = default;
 
   // Prepare the resources hold in this node.
@@ -63,6 +73,9 @@ class NodeBase {
 
   std::string role() const { return role_; }
 
+  size_t topo_timeout() const { return topo_timeout_; }
+  size_t node_timeout() const { return node_timeout_; }
+
  protected:
   // Each node process has a unique node id which is immutable during the life cycle of this node.
   // The node id is used for identify authentication during networking and process recovery.
@@ -83,6 +96,12 @@ class NodeBase {
 
   // The state of the topology consisting of compute graph nodes.
   TopoState topo_state_;
+
+  // Cluster building time out window in second.
+  size_t topo_timeout_;
+
+  // The timeout(second) window for heartbeat from compute graph node to meta server.
+  size_t node_timeout_;
 };
 }  // namespace topology
 }  // namespace cluster

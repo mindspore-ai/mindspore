@@ -60,9 +60,6 @@ constexpr char kHostNames[] = "hostnames";
 // For port number conversion.
 static const int kDecimal = 10;
 
-// The timeout(second) for heartbeat from compute graph node to meta server.
-static const uint64_t kDefaultNodeTimeout = 30;
-
 // All kinds of messages sent between compute graph nodes and meta server node.
 enum class MessageName {
   kRegistration,
@@ -86,10 +83,14 @@ static const size_t kCgnExecuteRetryNum = 210;
 static const size_t kMsnExecuteRetryNum = 210;
 static const size_t kNoRetry = 1;
 static const uint32_t kExecuteInterval = 3;
-static const size_t kDefaultClusterTimeOut = 600;
 
-// Cluster building time out window in second.
-constexpr char kEnvClusterTimeOut[] = "MS_CLUSTER_TIMEOUT";
+// Cluster building time out window in second. Default: 30 minutes.
+constexpr char kEnvTopoTimeOut[] = "MS_TOPO_TIMEOUT";
+static const size_t kDefaultTopoTimeOut = 30 * 60;
+
+// The timeout(second) window for heartbeat from compute graph node to meta server. Default: 300 seconds.
+constexpr char kEnvNodeTimeOut[] = "MS_NODE_TIMEOUT";
+static const size_t kDefaultNodeTimeout = 300;
 
 #define EXECUTE_WITH_RETRY(func, retry, interval, err_msg)                     \
   do {                                                                         \
