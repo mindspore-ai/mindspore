@@ -82,8 +82,8 @@ struct BACKEND_EXPORT GraphCompilerInfo {
                     const std::vector<std::vector<TensorPtr> *> &input_tensors,
                     const std::vector<AnfNodePtr> &control_nodes,
                     const std::vector<AnfNodePtr> &origin_parameters_order, const ControlNodeParserPtr &parser,
-                    const KernelMapPosition &origin_outputs_order, const size_t outputs_num, const std::string &name,
-                    bool need_erase, GraphExecutionStrategy strategy, CompileFunc compile_func)
+                    const KernelMapPosition &origin_outputs_order, size_t outputs_num, size_t inputs_num,
+                    const std::string &name, bool need_erase, GraphExecutionStrategy strategy, CompileFunc compile_func)
       : graphs_(graphs),
         device_contexts_(device_contexts),
         tensors_mask_(tensors_mask),
@@ -93,6 +93,7 @@ struct BACKEND_EXPORT GraphCompilerInfo {
         origin_parameters_order_(origin_parameters_order),
         origin_outputs_order_(origin_outputs_order),
         outputs_num_(outputs_num),
+        inputs_num_(inputs_num),
         name_(name),
         need_erase_(need_erase),
         exist_flatten_concat_(false),
@@ -110,6 +111,7 @@ struct BACKEND_EXPORT GraphCompilerInfo {
     origin_parameters_to_backend_parameters_;
   KernelMapPosition origin_outputs_order_;
   size_t outputs_num_;
+  size_t inputs_num_;
   std::string name_;
   bool need_erase_;
   mutable bool exist_flatten_concat_;

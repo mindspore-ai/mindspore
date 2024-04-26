@@ -363,6 +363,14 @@ void DataPrepareActor::Init() {
     MS_LOG(EXCEPTION) << "The number of graphs is not equal to the number of device contexts.";
   }
 
+  size_t host_data_size = 0;
+  if (host_data_source_actor_ != nullptr) {
+    host_data_size = host_data_source_actor_->data_nodes().size();
+  }
+  has_parameter_input_ = graph_compiler_info_->inputs_num_ > host_data_size;
+  MS_LOG(INFO) << graph_compiler_info_->name_
+               << " has the parameter input num: " << graph_compiler_info_->inputs_num_ - host_data_size;
+
   for (auto &iter : continuous_memory_nodes_) {
     size_t total_size = 0;
     std::vector<size_t> size_list;
@@ -520,7 +528,7 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
   }
   try {
     auto mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
-    if (first_step_ || mode == kPynativeMode || !tensors_need_reprepare_.empty()) {
+    if (first_step_ || mode == kPynativeMode || !tensors_need_reprepare_.empty() || has_parameter_input_) {
       PrepareDataForDeviceTensorStore(input_tensors, args, context);
     }
     PrepareDataForHostTensorQueue(input_tensors, args, context);
