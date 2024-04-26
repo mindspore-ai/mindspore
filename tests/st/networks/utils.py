@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import time
 import re
+import numpy as np
 from mindspore import log as logger
 
 rank_table_path = "/home/workspace/mindspore_config/hccl/rank_table_8p.json"
@@ -127,3 +128,33 @@ def replace_check_param(head_path):
     old_list = ["Rel"]
     new_list = ["validator"]
     exec_sed_command(old_list, new_list, file_path)
+
+
+def get_num_from_log(log_path, search_str, cmd=None, is_loss=False):
+    """return number or number list from log """
+
+    def string_list_to_num(num_list, is_loss=False):
+        for idx, res_str in enumerate(num_list):
+            clean_res_str = "".join(re.findall(r"[\d\.,]", res_str))
+            if is_loss:
+                res_list = clean_res_str.split(",")
+                num_list[idx] = list(map(float, res_list))
+            else:
+                num_list[idx] = float(clean_res_str)
+        return num_list
+
+    if cmd is None:
+        loss_value_cmd = """ grep -a '{}' {}| awk '{{print $NF}}' """.format(search_str, log_path)
+    else:
+        loss_value_cmd = cmd
+    sub = subprocess.Popen(args="{}".format(loss_value_cmd), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE, universal_newlines=True)
+    stdout, _ = sub.communicate()
+    if sub.returncode != 0:
+        raise RuntimeError("get loss from {} failed".format(log_path))
+    logger.info("execute {} success".format(cmd))
+    stdout = stdout.strip().split("\n")
+    res = string_list_to_num(stdout, is_loss)
+    if is_loss:
+        return res[0]
+    return np.mean(res)
