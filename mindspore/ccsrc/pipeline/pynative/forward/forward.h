@@ -131,7 +131,6 @@ class ForwardExecutor {
   // Check sync condition in heterogeneous
   void CheckIfNeedSyncForHeterogeneous(const std::string &cur_target);
   void PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info);
-  void PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) const;
   void OpRunInfoUsePrimC(const FrontendOpRunInfoPtr &op_run_info) const;
   void CreateInputAddressForViewOp(const tensor::BaseTensorPtr &input_tensor, const FrontendOpRunInfoPtr &op_run_info);
   void DispatchViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const runtime::KernelTaskType &task_type);

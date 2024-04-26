@@ -60,7 +60,7 @@ struct BaseOpRunInfo {
   AbstractBasePtr abstract;
   std::vector<size_t> output_indexes;
   std::vector<int64_t> dyn_input_sizes;
-  std::vector<tensor::TensorPtr> output_tensors;
+  std::vector<tensor::BaseTensorPtr> output_tensors;
 };
 
 struct AsyncStatus {
