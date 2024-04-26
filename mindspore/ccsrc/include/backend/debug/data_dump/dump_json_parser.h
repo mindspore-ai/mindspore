@@ -82,6 +82,8 @@ class BACKEND_EXPORT DumpJsonParser {
   void PyNativeModeCheck();
   void CheckGEBackend();
   bool IsHCCLKernelInput(const std::string &kernel_name) const;
+  bool IsCallbackRegistered() { return dumpdatacallback_registered_; }
+  void SetCallbackRegistered() { dumpdatacallback_registered_ = true; }
 
   void ClearGraph() { graphs_.clear(); }
   void SaveGraph(session::KernelGraph *graph) { (void)graphs_.emplace_back(graph); }
@@ -110,6 +112,7 @@ class BACKEND_EXPORT DumpJsonParser {
   inline static std::mutex lock_;
   bool async_dump_enabled_{false};
   bool e2e_dump_enabled_{false};
+  bool dumpdatacallback_registered_{false};
   uint32_t dump_mode_{0};
   std::string path_;
   std::string net_name_;

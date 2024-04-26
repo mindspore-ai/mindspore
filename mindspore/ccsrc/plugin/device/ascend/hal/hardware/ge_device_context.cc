@@ -490,7 +490,12 @@ void GeDeviceContext::InitDump() const {
     return;
   }
   if (dump_parser.FileFormatIsNpy()) {
+    if (dump_parser.IsCallbackRegistered()) {
+      MS_LOG(INFO) << "DumpDataCallback already registered, no need to register again.";
+      return;
+    }
     (void)acldumpRegCallback(mindspore::ascend::DumpDataCallBack, 0);
+    dump_parser.SetCallbackRegistered();
   }
 }
 
