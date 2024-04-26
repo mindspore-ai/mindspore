@@ -111,7 +111,7 @@ kernel::KernelModPtr CreateKernelPacketKernelMod(const CNodePtr &kernel) {
   if (!kernel_mod->KernelMod::Init(common::AnfAlgo::GetCNodePrimitive(kernel), input_kernel_tensors,
                                    output_kernel_tensors) ||
       !kernel::kernelpacket::Init(kernel_mod.get(), real_kernel)) {
-    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op[" << kernel->fullname_with_scope()
+    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize kernel op[" << real_kernel->fullname_with_scope()
                       << "] failed.";
   }
   return kernel_mod;

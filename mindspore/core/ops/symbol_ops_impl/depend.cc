@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/core/symbolic_shape/operation_builder.h"
+#include "mindspore/core/ops/symbol_ops_impl/common.h"
 
 namespace mindspore {
 namespace symshape {
 namespace ops {
 REG_SYMBOL_OP_BUILDER("Depend")
   .SetShapeDepend({DependOn::kShape, DependOn::kNone})
-  .SetValueDepend({DependOn::kValue, DependOn::kNone});
+  .SetShapeFunc(TransparentInput)
+  .SetValueDepend({DependOn::kValue, DependOn::kNone})
+  .SetValueFunc(TransparentInput);
 
 REG_SYMBOL_OP_BUILDER("Load")
   .SetShapeDepend({DependOn::kShape, DependOn::kNone})
-  .SetValueDepend({DependOn::kValue, DependOn::kNone});
+  .SetShapeFunc(TransparentInput)
+  .SetValueDepend({DependOn::kValue, DependOn::kNone})
+  .SetValueFunc(TransparentInput);
 
 REG_SYMBOL_OP_BUILDER("UpdateState")
   .SetShapeDepend({DependOn::kNone, DependOn::kNone})

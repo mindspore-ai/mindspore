@@ -28,8 +28,8 @@ SymbolPtr ScalarEq::Eval() {
   return (*lhs == *rhs) ? BoolSymbol::Make(true) : BoolSymbol::Make(shared_from_this());
 }
 
-REG_SYMBOL_OP_BUILDER("ScalarEq").SetValueFunc(DefaultBuilder<ScalarEq, 2>);
-REG_SYMBOL_OP_BUILDER("scalar_eq").SetValueFunc(DefaultBuilder<ScalarEq, 2>);
+REG_SYMBOL_OP_BUILDER("ScalarEq").SetValueFunc(DefaultBuilder<ScalarEq>);
+REG_SYMBOL_OP_BUILDER("scalar_eq").SetValueFunc(DefaultBuilder<ScalarEq>);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

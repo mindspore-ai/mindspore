@@ -18,23 +18,6 @@
 
 namespace mindspore {
 namespace symshape {
-SymbolPtr OperationBuilder::TransparentInput(const PrimitivePtr &prim, bool build_value) const {
-  auto depends = symbol_builder_info_.GetDepends(prim, build_value);
-  if (depends.empty()) {
-    return nullptr;
-  }
-  auto iter1 = std::find_if(depends.begin(), depends.end(), [](DependOn d) { return d != DependOn::kNone; });
-  if (iter1 == depends.end()) {
-    return nullptr;
-  }
-  auto iter2 = std::find_if(iter1 + 1, depends.end(), [](DependOn d) { return d != DependOn::kNone; });
-  if (iter2 != depends.end()) {
-    return nullptr;
-  }
-  size_t idx = iter1 - depends.begin();
-  return (*iter1 == DependOn::kShape) ? GetInputShape(idx) : GetInputValue(idx);
-}
-
 SymbolPtr OperationBuilder::BuildShape(const PrimitivePtr &prim, const AbstractBasePtrList &input_args,
                                        const AbstractBasePtr &out) {
   is_building_shape_ = true;
@@ -42,7 +25,7 @@ SymbolPtr OperationBuilder::BuildShape(const PrimitivePtr &prim, const AbstractB
   input_args_ = &input_args;
   out_ = out;
   if (symbol_builder_info_.build_shape_func == nullptr) {
-    return TransparentInput(prim, false);
+    return nullptr;
   }
   return symbol_builder_info_.build_shape_func(this);
 }
@@ -54,7 +37,7 @@ SymbolPtr OperationBuilder::BuildValue(const PrimitivePtr &prim, const AbstractB
   input_args_ = &input_args;
   out_ = out;
   if (symbol_builder_info_.build_value_func == nullptr) {
-    return TransparentInput(prim, true);
+    return nullptr;
   }
   return symbol_builder_info_.build_value_func(this);
 }
