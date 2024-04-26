@@ -19,5 +19,6 @@
 namespace mindspore {
 namespace transform {
 REGISTER_ACL_OP(AvgPool).set_run_mode(false);
+REGISTER_ACL_OP(AvgPoolGrad).set_run_mode(false).set_is_const_input();
 }  // namespace transform
 }  // namespace mindspore
