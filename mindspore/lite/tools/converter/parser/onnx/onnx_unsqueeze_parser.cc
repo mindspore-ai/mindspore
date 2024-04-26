@@ -44,24 +44,44 @@ PrimitiveCPtr OnnxUnSqueezeParser::Parse(const onnx::GraphProto &onnx_graph, con
                     << onnx_node.name();
       return nullptr;
     }
-    const auto slope_raw_data = reinterpret_cast<const int64_t *>(slope_data->raw_data().data());
-    MS_CHECK_TRUE_RET(slope_raw_data != nullptr, nullptr);
-    const int64_t slope_size = slope_data->raw_data().size() / sizeof(int64_t);
-    axis.resize(slope_size);
-    if (INT_MUL_OVERFLOW_THRESHOLD(slope_size, sizeof(int64_t), SIZE_MAX)) {
-      MS_LOG(ERROR) << "data_size overflow";
+    auto onnx_data_type = static_cast<onnx::TensorProto_DataType>(slope_data->data_type());
+    auto data_type = OnnxNodeParser::GetDataTypeFromOnnx(onnx_data_type);
+    if (data_type != kNumberTypeInt64) {
+      MS_LOG(ERROR) << "currently, only supports kNumberTypeInt64, in fact its data type is " << data_type;
       return nullptr;
     }
-    if (memcpy_s(axis.data(), slope_size * sizeof(int64_t), slope_raw_data, slope_data->raw_data().size()) != EOK) {
-      MS_LOG(ERROR) << "memcpy_s failed.";
-      return nullptr;
+    if (slope_data->raw_data().size() != 0) {
+      const auto slope_raw_data = reinterpret_cast<const int64_t *>(slope_data->raw_data().data());
+      MS_CHECK_TRUE_RET(slope_raw_data != nullptr, nullptr);
+      const int64_t slope_size = slope_data->raw_data().size() / sizeof(int64_t);
+      axis.resize(slope_size);
+      if (INT_MUL_OVERFLOW_THRESHOLD(slope_size, sizeof(int64_t), SIZE_MAX)) {
+        MS_LOG(ERROR) << "data_size overflow";
+        return nullptr;
+      }
+      if (memcpy_s(axis.data(), slope_size * sizeof(int64_t), slope_raw_data, slope_data->raw_data().size()) != EOK) {
+        MS_LOG(ERROR) << "memcpy_s failed.";
+        return nullptr;
+      }
+    } else {
+      const auto slope_raw_data = slope_data->int64_data().data();
+      MS_CHECK_TRUE_RET(slope_raw_data != nullptr, nullptr);
+      const int64_t elem_count = slope_data->int64_data_size();
+      axis.resize(elem_count);
+      if (INT_MUL_OVERFLOW_THRESHOLD(elem_count, sizeof(int64_t), SIZE_MAX)) {
+        MS_LOG(ERROR) << "data_size overflow";
+        return nullptr;
+      }
+      if (memcpy_s(axis.data(), elem_count * sizeof(int64_t), slope_raw_data, elem_count * sizeof(int64_t)) != EOK) {
+        MS_LOG(ERROR) << "memcpy_s failed.";
+        return nullptr;
+      }
     }
   }
   prim->set_axis(axis);
 
   return prim->GetPrim();
 }
-
 OnnxNodeRegistrar g_onnxUnsqueezeParser("Unsqueeze", new OnnxUnSqueezeParser());
 }  // namespace lite
 }  // namespace mindspore
