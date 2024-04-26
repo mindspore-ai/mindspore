@@ -81,6 +81,7 @@ class ReduceCpuKernelFunc : public CpuKernelFunc {
   std::string kernel_name_;
   bool need_skip_execute_{false};
   bool skip_mode_{false};
+  bool is_null_input_{false};
 };
 
 template <typename T>
@@ -283,6 +284,7 @@ int ReduceCpuKernelFunc<T>::Resize(const std::vector<KernelTensor *> &inputs, co
   } else {
     need_skip_execute_ = false;
   }
+  is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input");
   HandleInputAxis();
   return KRET_OK;
 }
@@ -380,6 +382,11 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::KernelTensor *> &
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
     }
+    return true;
+  }
+
+  if (is_null_input_ && kernel_name_ == kReduceProd) {
+    *output_addr = static_cast<T>(1);
     return true;
   }
 

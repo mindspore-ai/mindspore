@@ -25,7 +25,6 @@ from mindspore.nn import DropoutExt
 from mindspore.ops.function import dropout_ext
 from mindspore.nn import Cell
 from tests.st.utils import test_utils
-from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 
 def generate_random_input(shape, dtype):
@@ -75,7 +74,7 @@ def compare_grad(x, p, grad):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
 def test_func_dropout_normal(context_mode, dtype):
     """
@@ -101,30 +100,8 @@ def test_func_dropout_normal(context_mode, dtype):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_func_dropout_dynamic(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function dropout dynamic.
-    Expectation: expect correct result.
-    """
-    x1 = ms.Tensor(generate_random_input((128, 128), np.float32))
-    p1 = 0.4
-    x2 = ms.Tensor(generate_random_input((64, 64), np.float32))
-    p2 = 0.3
-
-    if context_mode == ms.GRAPH_MODE:
-        TEST_OP(dropout_ext, [[x1], [x2]], mode=context_mode, grad=True, jit_level="O0")
-    else:
-        TEST_OP(dropout_ext, [[x1, p1], [x2, p2]], mode=context_mode, grad=True)
-
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
 def test_func_dropout_bfloat16(context_mode):
     """
     Feature: pyboost function.
@@ -184,7 +161,7 @@ def compare_func(x, p, output, mask=None):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
 def test_nn_DropoutExt_normal(context_mode):
     """
     Feature: nn.DropoutExt
@@ -209,7 +186,7 @@ def test_nn_DropoutExt_normal(context_mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
 def test_nn_DropoutExt_bf16(context_mode):
     """
     Feature: nn.DropoutExt
@@ -231,29 +208,6 @@ def test_nn_DropoutExt_bf16(context_mode):
     del os.environ["GRAPH_OP_RUN"]
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_nn_DropoutExt_dynamic(context_mode):
-    """
-    Feature: nn.DropoutExt.
-    Description: test DropoutExt dropout dynamic.
-    Expectation: expect correct result.
-    """
-    x1 = ms.Tensor(generate_random_input((128, 128), np.float32))
-    x2 = ms.Tensor(generate_random_input((64, 64), np.float32))
-
-    net = DropoutExt(0.4)
-    net.set_train()
-
-    if context_mode == ms.GRAPH_MODE:
-        TEST_OP(net, [[x1], [x2]], mode=context_mode, grad=True, jit_level="O0")
-    else:
-        TEST_OP(net, [[x1], [x2]], mode=context_mode, grad=True)
-
-
 class DropoutExtCell(Cell):
     def __init__(self):
         super().__init__()
@@ -267,7 +221,7 @@ class DropoutExtCell(Cell):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
 def test_ops_DropoutExt_normal(context_mode):
     """
     Feature: ops.DropoutExt

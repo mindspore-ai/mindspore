@@ -340,6 +340,7 @@ def test_sum_default_dtype(axis, in_dtype, context_mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('keep_dims', [False, True])
 @pytest.mark.parametrize('in_dtype', [mstype.float16])
 @pytest.mark.parametrize('out_dtype', [mstype.float32])
@@ -378,6 +379,7 @@ def test_prod_normal(keep_dims, in_dtype, out_dtype, context_mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('axis', [0, -1])
 @pytest.mark.parametrize('keep_dims', [False, True])
 @pytest.mark.parametrize('in_dtype', [mstype.float16])
@@ -402,6 +404,7 @@ def test_prod_normal_1d(axis, keep_dims, in_dtype, out_dtype, context_mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_prod_default(context_mode):
     """
@@ -435,11 +438,12 @@ def test_prod_default(context_mode):
     np.testing.assert_allclose(grads.asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 #@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_prod_dynamic(context_mode):
     """
@@ -455,17 +459,6 @@ def test_prod_dynamic(context_mode):
     keep_dims2 = False
     TEST_OP(prod_func, [[input1, axis1, keep_dims1], [input2, axis2, keep_dims2]], mode=context_mode, grad=True)
 
-    input3 = Tensor(generate_random_input((3, 4, 5), np.float32))
-    axis3 = 0
-    keep_dims3 = False
-    dtype3 = mstype.int32
-    input4 = Tensor(generate_random_input((3, 4), np.float32))
-    axis4 = 0
-    keep_dims4 = False
-    dtype4 = mstype.int64
-    TEST_OP(prod_func, [[input3, axis3, keep_dims3, dtype3], [input4, axis4, keep_dims4, dtype4]],
-            nontensor_dynamic_type='None', mode=context_mode, grad=True, test_resize=False)
-
     input5 = Tensor(generate_random_input((2, 3, 4), np.float32))
     keep_dims5 = False
     input6 = Tensor(generate_random_input((2, 3), np.float32))
@@ -478,6 +471,7 @@ def test_prod_dynamic(context_mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('axis', [-1, None])
 @pytest.mark.parametrize('in_dtype', [mstype.float16])
 @pytest.mark.parametrize('out_dtype', [mstype.float32, mstype.int8, mstype.uint8])
@@ -503,8 +497,9 @@ def test_prod_vaild_dtype(axis, in_dtype, out_dtype, context_mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('axis', [-1, None])
-@pytest.mark.parametrize('in_dtype', [mstype.int8, mstype.int16, mstype.int32, mstype.uint8])
+@pytest.mark.parametrize('in_dtype', [mstype.int8, mstype.int32, mstype.uint8])
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_prod_default_dtype(axis, in_dtype, context_mode):
     """

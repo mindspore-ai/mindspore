@@ -37,6 +37,7 @@ from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 from mindspore.common._decorator import deprecated
 from mindspore.ops.auto_generate import dropout_ext_op
+from mindspore.nn.generator import default_generator
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold', 'Tril', 'Triu',
            'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Dropout1d',
@@ -254,17 +255,16 @@ class DropoutExt(Cell):
     def __init__(self, p=0.5):
         """Initialize DropoutExt."""
         super(DropoutExt, self).__init__()
-        seed, offset = _get_graph_seed(0, "dropout_ext")
+        self.generator = default_generator()
         self.dropout = dropout_ext_op
         self.p = p
-        self.seed = seed
-        self.offset = offset
 
     def construct(self, x):
         if not self.training or self.p == 0:
             return x
 
-        out, _ = self.dropout(x, self.p, self.seed, self.offset)
+        seed, offset = self.generator(1)
+        out, _ = self.dropout(x, self.p, seed, offset)
         return out
 
 
