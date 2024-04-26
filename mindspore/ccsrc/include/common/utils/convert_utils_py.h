@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <unordered_set>
 
 #include "pybind11/pybind11.h"
 #include "utils/convert_utils_base.h"
@@ -33,6 +34,23 @@
 namespace py = pybind11;
 
 namespace mindspore {
+// Detect recursion for python object sych as a = [..., 1].
+class PyRecursionScope {
+ public:
+  explicit PyRecursionScope(const py::object &obj) {
+    address_ = obj.ptr();
+    if (!recursion_set_.insert(address_).second) {
+      MS_LOG(EXCEPTION) << "Detect recursion when converting python object.";
+    }
+  }
+
+  ~PyRecursionScope() { recursion_set_.erase(address_); }
+
+ private:
+  PyObject *address_;
+  static inline std::unordered_set<PyObject *> recursion_set_;
+};
+
 py::object AnyToPyData(const Any &value);
 COMMON_EXPORT py::object BaseRefToPyData(const BaseRef &value, const AbstractBasePtr &abs = nullptr);
 COMMON_EXPORT py::object ValueToPyData(const ValuePtr &value, const AbstractBasePtr &abs = nullptr);
