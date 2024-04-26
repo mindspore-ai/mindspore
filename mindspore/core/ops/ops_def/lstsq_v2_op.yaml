@@ -1,0 +1,22 @@
+#operator lstsq_v2
+lstsq_v2:
+    args:
+        A:
+            dtype: tensor
+        B:
+            dtype: tensor
+        driver:
+            dtype: int
+            arg_handler: str_to_enum
+            default: None
+    returns:
+        solution:
+            dtype: tensor
+        residuals:
+            dtype: tensor
+        rank:
+            dtype: tensor
+        singular_values:
+            dtype: tensor
+    function:
+        disable: True

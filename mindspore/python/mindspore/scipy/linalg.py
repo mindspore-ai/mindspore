@@ -26,7 +26,7 @@ from ..ops import functional as F
 from ..ops import operations as P
 
 __all__ = ['block_diag', 'inv', 'cho_factor', 'cholesky',
-           'cho_solve', 'eigh', 'lu_factor', 'lu', 'solve_triangular']
+           'cho_solve', 'eigh', 'lu_factor', 'lu', 'solve_triangular', 'lstsq']
 
 
 def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False, overwrite_b=False, debug=None, check_finite=True):
@@ -859,3 +859,62 @@ def det(a, overwrite_a=False, check_finite=True):
     pivot_sign = mnp.count_nonzero(pivot_not_equal, axis=-1)
     sign = -2. * (pivot_sign % 2) + 1.
     return sign * P.ReduceProd(keep_dims=False)(diag, -1)
+
+
+
+def lstsq(A, B, rcond=None, driver=None):
+    r"""
+    Computes a solution to the least squares problem of a system of linear equations :math:`AX = B`.
+
+    Note:
+        - `lstsq` is currently only used in `mindscience` scientific computing scenarios and
+          dose not support other usage scenarios.
+        - `lstsq` is not supported on Windows platform yet.
+
+    Args:
+        A (Tensor): LHS input tensor of shape :math:`(*, M, N)`, where :math:`*` is zero or more batch dimensions.
+        B (Tensor): RHS input tensor of shape :math:`(*, M, K)`, where :math:`*` is zero or more batch dimensions.
+        rcond (number.Number, optional): Not implemented now, Default is ``None``.
+        driver (string, optional): Which LAPACK driver is used to solve the least-squares problem.
+          Options are ``"gels"``, ``"gelsy"``, ``"gelss"``, ``"gelsd"``. Default is ``None`` (``"gelsy"``).
+          if `A` is well-conditioned, ``"gels"`` is a good choice for full-rank matrix, and ``"gelsy"``
+          for a general matrix. if `A` is not well-conditioned, ``"gelsd"`` works good, ``"gelss"``
+          was used historically. It is generally slow but uses less memory.
+
+    Returns:
+        - **solution** (Tensor), Least-squares solution. It has shape :math:`(*, N, K)`, where :math:`*` is same
+          as broadcast batch dimensions.
+        - **residual** (Tensor), Square of the 2-norm for each column in :math:`AX - B`,  It has shape
+          :math:`(*, K)`, where :math:`*` is same as broadcast batch dimensions.  It is computed
+          when `driver` is one of (``"gels"``, ``"gelss"``, ``"gelsd"``) and :math:`M > N` , otherwise,
+          it is an empty tensor.
+        - **rank** (Tensor), Effective rank of `A`. It has shape :math:`(*)`, where :math:`*` is same as batch
+          dimensions of `A`. It is computed when `driver` is one of (``"gelsy"``, ``"gelss"``, ``"gelsd"``),
+          otherwise it is an empty tensor.
+        - **singular_value** (Tensor), Singular values of `A`. It has shape :math:`(*, min(M, N))`, where :math:`*`
+          is same as batch dimensions of `A`. It is computed when `driver` is one of (``"gelss"``, ``"gelsd"``),
+          otherwise it is an empty tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Raises:
+        TypeError: If dtype of `A` and `B` are not the same.
+        ValueError: If `A` is less than 2 dimension.
+        ValueError: If the shape of `A` and `B` are not matched.
+        ValueError: If `driver` is not in set {``None``, ``"gels"``, ``"gelsy"``, ``"gelss"``, ``"gelsd"``}.
+
+    Examples:
+        >>> import numpy as onp
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore.scipy.linalg import lstsq
+        >>> a = Tensor(onp.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], onp.float32))
+        >>> b = Tensor(onp.array([3, 1, 3, 4], onp.float32))
+        >>> x = lstsq(a, b)
+        >>> print(x)
+        [ 1. -1.  2.  2.]
+        >>> print(a @ x)  # Check the result
+        [3. 1. 3. 4.]
+    """
+    return ops.auto_generate.lstsq_v2_op(A, B, driver)

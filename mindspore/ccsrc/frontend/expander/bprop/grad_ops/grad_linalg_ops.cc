@@ -137,5 +137,17 @@ REG_BPROP_BUILDER("Svd").SetBody(BODYFUNC(ib) {
     return {da_before_transpose};
   }
 });
+
+REG_BPROP_BUILDER("LstsqV2").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto a = ib->GetInput(kIndex0);
+  auto b = ib->GetInput(kIndex1);
+  auto driver = ib->GetInput(kIndex2);
+  auto grad_outs = ib->GetInput(kIndex4);
+  auto grad_solution = ib->TupleGetItem(grad_outs, 0);
+  auto grads = ib->Emit("LstsqV2Grad", {grad_solution, a, b});
+  auto grad_a = ib->TupleGetItem(grads, 0);
+  auto grad_b = ib->TupleGetItem(grads, 1);
+  return {grad_a, grad_b, ib->OutZeros(driver)};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
