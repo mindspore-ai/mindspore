@@ -38,7 +38,6 @@ def cummin_dyn_shape_func(x, axis):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
                                    np.uint32, np.uint64, np.float64, np.float32, np.float16])
@@ -62,7 +61,6 @@ def test_cummin_forward(context_mode, dtype):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
                                    np.uint32, np.uint64, np.float64, np.float32, np.float16])
@@ -88,7 +86,7 @@ def test_cummin_vmap(context_mode, dtype):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_cummin_dynamic(context_mode):
     """
@@ -122,7 +120,7 @@ def test_cummin_dynamic(context_mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_cummin_dynamic_rank(context_mode):
     """

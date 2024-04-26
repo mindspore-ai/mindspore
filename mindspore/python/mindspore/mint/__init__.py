@@ -145,8 +145,7 @@ from mindspore.ops.functional import broadcast_to
 # 59
 from mindspore.ops.functional import square
 # 60
-from mindspore.ops.function.math_func import all
-
+from mindspore.ops.function.math_func import all, cummax, cummin
 # 61
 from mindspore.ops.functional import rsqrt
 # 62

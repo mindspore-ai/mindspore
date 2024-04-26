@@ -11,3 +11,5 @@ cummax:
       dtype: tensor
     indices:
       dtype: tensor
+  dispatch:
+    enable: True
