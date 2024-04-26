@@ -38,6 +38,7 @@ bool ActorDispatcher::is_memory_allocation_sync_ = true;
 bool ActorDispatcher::is_memory_free_sync_ = true;
 bool ActorDispatcher::enable_runtime_multi_pipeline_ = false;
 bool ActorDispatcher::enable_async_launch_kernel_ = false;
+bool ActorDispatcher::disable_kbk_sub_graph_execute_ = false;
 bool ActorDispatcher::enable_static_shape_ = false;
 
 bool IsRunningFailed(const OpContext<DeviceTensor> *context) { return (context->error_info_ != ""); }
@@ -245,6 +246,11 @@ bool EnableKbkSubGraphExecute() {
   if (disable_sub_graph_execute_mode) {
     return false;
   }
+
+  if (ActorDispatcher::disable_kbk_sub_graph_execute()) {
+    return false;
+  }
+
   // Only support sub graph execution mode for inference.
   // static const bool enable_internal_kernels = common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "on";
   auto ms_context = MsContext::GetInstance();
@@ -265,6 +271,7 @@ bool WaitRuntimePipelineFinish(const OpContext<DeviceTensor> *context, bool wait
   }
 
   if (ActorDispatcher::enable_async_launch_kernel() && IsRunningFailed(context)) {
+    MS_LOG(ERROR) << "Wait runtime pipeline finish and an error occurred: " << context->error_info_;
     return false;
   }
   return true;
