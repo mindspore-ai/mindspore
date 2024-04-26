@@ -121,6 +121,7 @@ class AclnnKernelMod : public KernelMod {
 
   void ResetDeivceAddress(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {}
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override;
   bool IsNeedUpdateOutputShapeAndSize() override { return false; }
   std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in aclnn."; }
 
