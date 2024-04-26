@@ -61,7 +61,7 @@
 #include "backend/common/pass/insert_type_transform_op.h"
 #include "backend/common/pass/insert_tensor_move_for_communication.h"
 #include "plugin/device/ascend/optimizer/enhancer/eliminate_maketuple_getitem.h"
-#include "plugin/device/ascend/optimizer/ge/convert_pad_v3_paddings.h"
+#include "plugin/device/ascend/optimizer/ge/pad_v3_paddings.h"
 #include "plugin/device/ascend/optimizer/ge/broadcast_for_select.h"
 
 namespace mindspore {
@@ -133,8 +133,7 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   opt_acl_pm->AddPass(std::make_shared<opt::ProcessCallInline>());
   opt_acl_pm->AddPass(std::make_shared<opt::ProcessPartialInline>());
   opt_acl_pm->AddPass(std::make_shared<opt::ExpanderFallback>());
-  opt_acl_pm->AddPass(std::make_shared<opt::ConvertPadV3Paddings>());
-  opt_acl_pm->AddPass(std::make_shared<opt::ConvertPadV3GradPaddings>());
+  opt_acl_pm->AddPass(std::make_shared<opt::PadV3Paddings>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
