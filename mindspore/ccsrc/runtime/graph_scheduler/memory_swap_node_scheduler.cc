@@ -211,7 +211,8 @@ void MemorySwapNodeScheduler::CollectKernelInputMemStatistic(size_t kernel_index
   const auto &node = graph->execution_order()[kernel_index];
   auto kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  const bool is_communication_node = common::AnfAlgo::IsCommunicationOp(node);
+  const bool is_communication_node =
+    common::AnfAlgo::IsCommunicationOp(node) && common::AnfAlgo::GetCNodeName(node) != kMatMulAllReduceOpName;
   auto input_num = std::min(kernel_mod->GetInputSizeList().size(), node->size() - 1);
   const bool continuous_input_mem = is_communication_node && input_num > 1;
   size_t total_size = 0;
@@ -248,7 +249,8 @@ void MemorySwapNodeScheduler::CollectKernelOutputMemStatistic(size_t kernel_inde
   const auto &node = graph->execution_order()[kernel_index];
   auto kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  const bool is_communication_node = common::AnfAlgo::IsCommunicationOp(node);
+  const bool is_communication_node =
+    common::AnfAlgo::IsCommunicationOp(node) && common::AnfAlgo::GetCNodeName(node) != kMatMulAllReduceOpName;
   const auto output_num = kernel_mod->GetOutputSizeList().size();
   const bool continuous_output_mem = is_communication_node && output_num > 1;
   size_t total_size = 0;

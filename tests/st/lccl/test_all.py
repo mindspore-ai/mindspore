@@ -100,6 +100,7 @@ def test_lccl_matmul_allreduce():
     """
     os.environ['MS_ENABLE_LCCL'] = str(1)
     os.environ['GRAPH_OP_RUN'] = str(1)
+    os.environ['MS_ENABLE_INTERNAL_KERNELS'] = 'on'
     return_code = os.system(
         "msrun --worker_num=8 --local_worker_num=8 --join=True pytest -s test_lccl_matmul_allreduce.py")
     assert return_code == 0
