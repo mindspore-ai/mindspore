@@ -34,19 +34,18 @@ void LayerNormGradExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const 
                           beta_tensor);
 
   std::vector<int64_t> normalized_shape_vector = ConvertValueTupleToVector<int64_t>(normalized_shape);
-  std::vector<uint8_t> output_mask{1, 1, 1};
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), dy_tensor, x_tensor, mean_tensor,
                                 variance_tensor, gamma_tensor, beta_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, dy_tensor, x_tensor, normalized_shape_vector, mean_tensor,
-                                                  variance_tensor, gamma_tensor, beta_tensor, output_mask]() {
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
+    [op, dy_tensor, x_tensor, normalized_shape_vector, mean_tensor, variance_tensor, gamma_tensor, beta_tensor]() {
       MS_LOG(DEBUG) << "Run device task Add start";
       auto device_context = op->device_context();
       const auto &outputs = op->outputs();
+      std::vector<uint8_t> output_mask{1, 1, 1};
       // Malloc for input tensors
       PyBoostUtils::MallocOpInputs(device_context, dy_tensor, x_tensor, mean_tensor, variance_tensor, gamma_tensor,
                                    beta_tensor);
