@@ -30,11 +30,14 @@ from mindspore.ops.primitive import Primitive
 from mindspore.ops.primitive import PrimitiveWithInfer
 from mindspore.ops.primitive import PrimitiveWithCheck
 from mindspore.ops.primitive import prim_attr_register
-from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6,
-                             Elu, Sigmoid, Softmax, HSwish, HSigmoid, AvgPool, BiasAdd,
+from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6, Dense,
+                             Elu, Sigmoid, Softmax, SoftplusExt, HSwish, HSigmoid, AvgPool, BiasAdd,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
-                             GridSampler3D, GridSampler2D, LayerNorm, HShrink, AdamWeightDecay, Dropout,
-                             ApplyRotaryPosEmb, PagedAttention, PagedAttentionMask, ReshapeAndCache)
+                             GridSampler3D, GridSampler2D, LayerNorm, LayerNormExt, HShrink, AdamWeightDecay, Dropout,
+                             ApplyRotaryPosEmb, PagedAttention, PagedAttentionMask, ReshapeAndCache,
+                             FlashAttentionScore, Embedding, UpsampleNearest1D, UpsampleNearest2D,
+                             UpsampleNearest3D, UpsampleTrilinear3D,
+                             UpsampleBilinear2D, UpsampleLinear1D)
 from .manually_defined import BatchNorm
 
 
@@ -3036,84 +3039,6 @@ class L2Normalize(Primitive):
             raise TypeError(f"For '{self.name}', the length of 'axis' must be 1, but got {len(axis)}, "
                             f"later will support multiple axis!")
         self.axis = axis
-
-
-class UpsampleTrilinear3D(Primitive):
-    r"""
-    Performs upsampling with trilinear interpolation across 3dims for 5dim input Tensor.
-
-    This operator scale up the volumetric input with specified `output_size` or `scales` factors,
-    using trilinear upscaling algorithm.
-
-    Note:
-        One of `scales` and `output_size` must be specified. And it is an error if both are specified.
-
-    Args:
-        align_corners (bool, optional): An optional bool. Default: ``False``.
-            If ``True``, the input and output tensors are aligned by the center points of their corner pixels,
-            preserving the values at the corner pixels.
-            If ``False`` , the input and output tensors are aligned by the corner points of their corner pixels,
-            and the interpolation use edge value padding for out of boundary values.
-
-    Inputs:
-        - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. Supporting types:
-          [float16, float32, float64].
-        - **output_size** (Union[tuple[int], list[int]]):  A tuple or list of 3 int elements
-          :math:`(output\_depth, output\_height, output\_width)`. Default: ``None``.
-        - **scales** (Union[tuple[float], list[float]]): A tuple or list of 3 float
-          elements :math:`(scale\_depth, scale\_height, scale\_width)`. Default: ``None``.
-
-    Outputs:
-        - **y** (Tensor) - Upsampled output with the same data type as `x`, whose shape is
-          :math:`(N, C, D_{out}, H_{out}, W_{out})`.
-
-    Raises:
-        TypeError: When `output_size` is not ``None`` and `output_size` is not list[int] or tuple[int].
-        TypeError: When `scales` is not ``None`` and `scales` is not list[float] or tuple[float].
-        TypeError: If dtype of `x` is not in [float16, float32, float64].
-        TypeError: If type of `align_corners` is not bool.
-        ValueError: If any value of `output_size` is negative or zero when `output_size` is not ``None``.
-        ValueError: If any value of `scales` is negative or zero when `scales` is not ``None``.
-        ValueError: If shape of `x` is not 5D.
-        ValueError: If none of `scales` and `output_size` is specified or both specified.
-        ValueError: If size of `scales` is not equal 3 when `scales` is specified.
-        ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> net = ops.UpsampleTrilinear3D()
-        >>> in_x = Tensor(input_data=np.random.randn(2, 3, 4, 512, 256))
-        >>> output_size=[4, 64, 48]
-        >>> out = net(in_x, output_size, None)
-        >>> print(out.shape)
-        (2, 3, 4, 64, 48)
-        >>>
-        >>> net = ops.UpsampleTrilinear3D()
-        >>> in_x = Tensor(np.arange(1, 5, dtype=np.float32).reshape((1, 1, 1, 2, 2)))
-        >>> output_size=[2, 4, 4]
-        >>> out = net(in_x, output_size, None)
-        >>> print(out)
-        [[[[[1.   1.25 1.75 2.  ]
-            [1.5  1.75 2.25 2.5 ]
-            [2.5  2.75 3.25 3.5 ]
-            [3.   3.25 3.75 4.  ]]
-           [[1.   1.25 1.75 2.  ]
-            [1.5  1.75 2.25 2.5 ]
-            [2.5  2.75 3.25 3.5 ]
-            [3.   3.25 3.75 4.  ]]]]]
-    """
-
-    @prim_attr_register
-    def __init__(self, align_corners=False):
-        """Initialize UpsampleTrilinear3D."""
-        self.init_prim_io_names(inputs=['x', 'output_size', 'scales'], outputs=['y'])
-        self.align_corners = align_corners
-        validator.check_bool(self.align_corners, "align_corners", self.name)
-        self.add_prim_attr('align_corners', self.align_corners)
 
 
 class GetNext(Primitive):
@@ -9090,71 +9015,6 @@ class Pdist(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
-class UpsampleNearest3D(Primitive):
-    r"""
-    Performs nearest neighbor upsampling operation.
-
-    This operator scale up the volumetric input with specified `output_size` or `scales` factors, using nearest
-    neighbor algorithm.
-
-    One of `output_size` or `scales` must be given, and can not specified both at the same time.
-
-    Inputs:
-        - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
-          Supporting types: [float16, float32, float64].
-        - **output_size** (Union[tuple[int], list[int]]): A tuple or list of int specifying the output volumetric size.
-          Default: ``None``.
-        - **scales** (Union[tuple[float], list[float]]): A tuple or list of float specifying the upsampling factors.
-          Default: ``None``.
-
-    Outputs:
-        - **y** (Tensor) - Upsampled output with the same type as `x` , whose shape is
-          :math:`(N, C, D_{out}, H_{out}, W_{out})`.
-
-    Raises:
-        TypeError: When `output_size` is not ``None`` and `output_size` is not list[int] or tuple[int].
-        TypeError: When `scales` is not ``None`` and `scales` is not list[float] or tuple[float].
-        TypeError: If dtype of `x` is not int [uint8, float16, float32, float64].
-        ValueError: If any value of `output_size` is negative or zero when `output_size` is not ``None``.
-        ValueError: If any value of `scales` is negative or zero when `scales` is not ``None``.
-        ValueError: If shape of `x` is not 5D.
-        ValueError: If none of `scales` and `output_size` is specified or both specified.
-        ValueError: If size of `scales` is not equal 3 when `scales` is specified.
-        ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        ...       .reshape([1, 1, 2, 2, 4]), mstype.float32)
-        >>> output_size = [3, 4, 5]
-        >>> net = ops.UpsampleNearest3D()
-        >>> output = net(x, output_size, None)
-        >>> print(output)
-        [[[[[ 1.  1.  2.  3.  4.]
-            [ 1.  1.  2.  3.  4.]
-            [ 5.  5.  6.  7.  8.]
-            [ 5.  5.  6.  7.  8.]]
-           [[ 1.  1.  2.  3.  4.]
-            [ 1.  1.  2.  3.  4.]
-            [ 5.  5.  6.  7.  8.]
-            [ 5.  5.  6.  7.  8.]]
-           [[ 9.  9. 10. 11. 12.]
-            [ 9.  9. 10. 11. 12.]
-            [13. 13. 14. 15. 16.]
-            [13. 13. 14. 15. 16.]]]]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize UpsampleNearest3D."""
-        self.init_prim_io_names(inputs=['x', 'output_size', 'scales'], outputs=['y'])
-
-
 class SparseApplyAdagradDA(Primitive):
     r"""
     Update `var` according to the proximal adagrad scheme.
@@ -9797,54 +9657,6 @@ class MaxPoolWithArgmaxV2(Primitive):
         self.add_prim_attr("ceil_mode", self.ceil_mode)
 
 
-class Dense(Primitive):
-    r"""
-    The dense connected fusion operator.
-
-    Applies dense connected operator for the input. The implement of the operation is as:
-
-    .. math::
-        output = x @ w ^ T + b,
-
-    where :math:`x` is the input tensor, :math:`w` is a weight matrix with the same data type as the :math:`x` ,
-    and :math:`b` is a bias vector with the same data type as the :math:`x` (only if `b` is not ``None``).
-
-    Inputs:
-        - **x** (Tensor) - The shape must meet the following requirement: :math:`len(x.shape)>0`.
-        - **w** (Tensor) - The shape must meet the following requirements:
-          If :math:`len(x.shape)>1`, :math:`len(w.shape)=2`. If :math:`len(x.shape)=1`, :math:`len(w.shape)=1`.
-          :math:`w.shape[-1]=x.shape[-1]`.
-        - **b** (Union[Tensor, None]) - If `b` is not ``None``, the shape must meet the following requirements:
-          If :math:`len(x.shape)>1`, :math:`len(b.shape)=0` or :math:`len(b.shape)=1` .
-          If :math:`len(b.shape)=1`, :math:`b.shape[0]=w.shape[0]`.
-          If :math:`len(x.shape)=1`, :math:`len(b.shape)=0`.
-
-    Outputs:
-        If :math:`len(x.shape)>1`, Tensor of shape :math:`(*x.shape[:-1], w.shape[0])`.
-        If :math:`len(x.shape)=1`, Tensor of shape :math:`()`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.random.random((4, 5, 6, 7)).astype(np.float32))
-        >>> weight = Tensor(np.random.random((6, 7)).astype(np.float32))
-        >>> bias = Tensor(np.random.random((6,)).astype(np.float32))
-        >>> dense = ops.Dense()
-        >>> output = dense(x, weight, bias)
-        >>> print(output.shape)
-        (4, 5, 6, 6)
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Dense."""
-        self.init_prim_io_names(inputs=['x', 'w', 'b'], outputs=["output"])
-        self.add_prim_attr("has_bias", True)
-
-
 class WKV(Primitive):
     r"""
     The WKV computation is similar to AFT(Zhai et al., 2021), but W is now a channel-wise vector multiplied
@@ -10050,115 +9862,6 @@ class IncreFlashAttention(Primitive):
                                         "dequant_scale1", "quant_scale1", "dequant_scale2", "quant_scale2",
                                         "quant_offset2", "antiquant_scale", "antiquant_offset", "block_table"],
                                 outputs=["attention_out"])
-
-
-class FlashAttentionScore(Primitive):
-    r"""
-    FlashAttentionScore.
-    .. math::
-        \begin{array}{ll} \\
-            y = Dropout(Softmax(Mask(scale_value \mul (real_shift + query * key), attn_mask), -1), keep_prob) \\
-            \mul value \\
-        \end{array}
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-    B -- Batch size
-    S1 -- Sequence length of query. The value ranges from 1 to 32768 and is a multiple of 16.
-    S2 -- Sequence length of key and value. The value ranges from 1 to 32768 and is a multiple of 16.
-    N1 -- Num heads of query
-    N2 -- Num heads of key and value, and N2 must be a factor of N1
-    D -- Head size. Support value: 64, 80, 96, 120, 128 and 256.
-    H1 -- Hidden size of query, which equals to N1 * D
-    H2 -- Hidden size of key and value, which equals to N2 * D
-    Args:
-        head_num (int): The head num of query. Default: 1.
-        keep_prob (float): The keep probability of dropout. Default: 1.0.
-        scale_value (float): The scale factor of score. Default: 1.0.
-        pre_tokens (int): Parameter for sparse computation, represents how many tokens are counted forward.
-        When sparse_mode is set to 1, 2, 3, or 5, this parameter does not take effect. Default: 2147483647.
-        next_tokens (int): Parameter for sparse computation, represents how many tokens are counted backward.
-        When sparse_mode is set to 1, 2, 3, or 5, this parameter does not take effect. Default: 2147483647.
-        inner_precise (int): The parameter is reserved and not implemented yet. Default: 0.
-        input_layout (str): Specifies the layout of input `query`, key and value. The value can be "BSH" or "BNSD".
-        Default: "BSH".
-        sparse_mode (int): Indicates sparse mode. Default 0.
-
-            - 0: Indicates the defaultMask mode. If attn_mask is not passed, the mask operation is not performed,
-              and preTokens and nextTokens(internally assigned as INT_MAX) are ignored. If passed in, the full attn_mask
-              matrix (S1 * S2) needs to be passed in, indicating that the part between preTokens and nextTokens needs to
-              be calculated.
-            - 1: Represents allMask, that is, passing in the complete attn_mask matrix.
-            - 2: Representing the leftUpCausal mode corresponds to the lower triangle scenario divided by the left
-              vertex, and the optimized attn_mask matrix (2048*2048) is required.
-            - 3: Representing the rightDownCausal model corresponds to the lower triangle scene divided by the lower
-              right vertex, and the optimized attn_mask matrix (2048*2048) is required.
-            - 4: Represents the band scenario, that is, the part between counting preTokens and nextTokens, and the
-              optimized attn_mask matrix (2048*2048) is required..
-            - 5: Represents the prefix scenario, that is, on the basis of rightDownCasual, a matrix with length S1 and
-              width N is added to the left side. The value of N is obtained by the new input prefix, and the N value of
-              each Batch axis is different. Not implemented yet.
-            - 6: Represents the global scenario, not implemented yet.
-            - 7: Represents the dilated scenario, not implemented yet.
-            - 8: Represents the block_local scenario, not implemented yet.
-
-    Inputs:
-        - **query** (Tensor[float16, bfloat16]) - The query tensor.
-          Input tensor of shape :math:`(B, S1, H1)` or `(B, N1, S1, D)`.
-        - **key** (Tensor[float16, bfloat16]) - The key tensor.
-          Input tensor of shape :math:`(B, S2, H2)` or `(B, N2, S2, D)`.
-        - **value** (Tensor[float16, bfloat16]) - The value tensor.
-          Input tensor of shape :math:`(B, S2, H2)` or `(B, N2, S2, D)`.
-        - **real_shift** (Union[Tensor[float16, bfloat16], None]) - The position embedding code. If S is greater than
-          1024 and the mask of the lower triangle is used, enter only the inverse 1024 lines of the lower triangle for
-          memory optimization.
-          Input tensor of shape :math: `(B, N1, S1, S2)`, `(1, N1, S1, S2)`, `(B, N1, 1024, S2)`, `(1, N1, 1024, S2)`
-          or (1024, 1024).
-        - **drop_mask** (Union[Tensor[uint8], None]) - The dropout mask tensor.
-          Input tensor of shape :math:`(B, N1, S1, S2 // 8) or None`.
-        - **padding_mask** (None) - Reserved parameter. Not implemented yet.
-        - **attn_mask** (Union[Tensor[uint8], None]) - The attention mask tensor. For each element, 0 indicates
-          retention and 1 indicates discard. Input tensor of shape :math:`(B, N1, S1, S2)`, `(B, 1, S1, S2)`, `(S1, S2)`
-          or (2048, 2048).
-        - **prefix** (Union[Tensor[int64], None]) - N value of each Batch in the prefix sparse calculation scenario.
-          Input tensor of shape :math:`(B,)`.
-
-    Outputs:
-        - **softmax_max** (Tensor[float32]) - (B, N1, S1, 8)
-        - **softmax_sum** (Tensor[float32]) - (B, N1, S1, 8)
-        - **softmax_out** (Tensor[float16, bfloat16]) - Useless output, ignore it. Output tensor of shape : `()`
-        - **attention_out** (Tensor[float16, bfloat16]) - The output of attention, its shape, and data type
-          are the same as the query.
-
-    Supported Platforms:
-        ``Ascend910B``
-    """
-
-    @prim_attr_register
-    def __init__(self, head_num=1, keep_prob=1.0, scale_value=1.0, pre_tokens=2147483647, next_tokens=2147483647,
-                 inner_precise=0, input_layout="BSH", sparse_mode=0):
-        """Initialize FlashAttentionScore"""
-        validator.check_value_type('head_num', head_num, [int], self.name)
-        validator.check_value_type('keep_prob', keep_prob, [int, float], self.name)
-        validator.check_float(keep_prob, 0.0, validator.GE, "keep_prob", self.name)
-        validator.check_float(keep_prob, 1.0, validator.LE, "keep_prob", self.name)
-        validator.check_value_type('scale_value', scale_value, [float], self.name)
-        validator.check_value_type('pre_tokens', pre_tokens, [int], self.name)
-        validator.check_value_type('next_tokens', next_tokens, [int], self.name)
-        validator.check_value_type('inner_precise', inner_precise, [int], self.name)
-        validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
-        valid_sparse_mode = [0, 1, 2, 3, 4]
-        if sparse_mode not in valid_sparse_mode:
-            raise ValueError(f"Attribute 'sparse_mode' must be one of {valid_sparse_mode}, but got {sparse_mode}")
-        if inner_precise not in [0]:
-            raise ValueError(f"Attribute 'inner_precise' must be 0, but got {inner_precise}")
-        validator.check_value_type('input_layout', input_layout, [str], self.name)
-        support_layout = ["BSH", "BNSD"]
-        if input_layout not in support_layout:
-            raise ValueError(f"Attribute 'input_layout' must be one of {support_layout}, but got {input_layout}")
-        self.init_prim_io_names(
-            inputs=['query', 'key', 'value', 'real_shift', 'drop_mask', 'padding_mask', 'attn_mask', 'prefix'],
-            outputs=['softmax_max', 'softmax_sum', 'softmax_out', 'attention_out'])
 
 
 class RmsNorm(Primitive):

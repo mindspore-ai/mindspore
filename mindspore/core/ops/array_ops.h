@@ -30,8 +30,6 @@ namespace prim {
 GVAR_DEF(PrimitivePtr, kPrimExpand, std::make_shared<Primitive>("Expand"));
 GVAR_DEF(PrimitivePtr, kPrimMakeRange, std::make_shared<Primitive>("make_range"));
 GVAR_DEF(PrimitivePtr, kPrimBroadcast, std::make_shared<Primitive>("Broadcast"));
-GVAR_DEF(PrimitivePtr, kPrimZeros, std::make_shared<Primitive>("Zeros"));
-GVAR_DEF(PrimitivePtr, kPrimOnes, std::make_shared<Primitive>(kOnesOpName));
 GVAR_DEF(PrimitivePtr, kPrimFill, std::make_shared<Primitive>("Fill"));
 GVAR_DEF(PrimitivePtr, kPrimLeftShift, std::make_shared<Primitive>(kLeftShiftOpName));
 GVAR_DEF(PrimitivePtr, kPrimFillDiagonal, std::make_shared<Primitive>(kFillDiagonalOpName));
@@ -176,8 +174,6 @@ GVAR_DEF(PrimitivePtr, kPrimUpperBound, std::make_shared<Primitive>(kUpperBoundO
 GVAR_DEF(PrimitivePtr, kPrimMvlgamma, std::make_shared<Primitive>(kMvlgammaOpName));
 GVAR_DEF(PrimitivePtr, kPrimMvlgammaGrad, std::make_shared<Primitive>(kMvlgammaGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimLogSpace, std::make_shared<Primitive>(kLogSpaceOpName));
-GVAR_DEF(PrimitivePtr, kPrimTril, std::make_shared<Primitive>(kTrilOpName));
-GVAR_DEF(PrimitivePtr, kPrimTriu, std::make_shared<Primitive>(kTriuOpName));
 GVAR_DEF(PrimitivePtr, kPrimMeshgrid, std::make_shared<Primitive>(kMeshgridOpName));
 GVAR_DEF(PrimitivePtr, kPrimSegmentMax, std::make_shared<Primitive>(kSegmentMaxOpName));
 GVAR_DEF(PrimitivePtr, kPrimSegmentMin, std::make_shared<Primitive>(kSegmentMinOpName));

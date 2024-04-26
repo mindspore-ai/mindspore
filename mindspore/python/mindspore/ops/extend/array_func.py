@@ -18,12 +18,54 @@
 Array Operators
 
 """
-
+from mindspore.common import Tensor
 from mindspore.ops.operations.array_ops import ArgMaxWithValue, ArgMinWithValue
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops.auto_generate.gen_ops_prim import gather_d_op
+from mindspore.ops.auto_generate.gen_ops_prim import gather_d_op, slice_ext_op
+from mindspore.ops.auto_generate.gen_ops_def import max_, min_
+from mindspore import _checkparam as validator
+from ..auto_generate import OneHotExt
 
 # define Primitive global variables
+def narrow(input, dim, start, length):
+    """
+    Returns a narrowed tensor from input tensor, and
+    the dimension axis is input from start to start + length.
+
+    Args:
+        input (Tensor): the tensor to narrow.
+        dim (int): dimension  along which to narrow.
+        start (int): the starting dimension.
+        length (int): the distance to the ending dimension.
+
+    Returns:
+        Tensor.
+
+        - output (Tensors) - The narrowed tensor.
+
+    Raises:
+        TypeError: If the input is not a tensor or tuple or list of tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
+        >>> from mindspore import Tensor
+        >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mindspore.int32)
+        >>> output = ops.narrow(x, 0, 0, 2)
+        >>> print(output)
+        [[ 1 2 3]
+         [ 4 5 6]]
+        >>> output = ops.narrow(x, 1, 1, 2)
+        >>> print(output)
+        [[ 2 3]
+         [ 5 6]
+         [ 8 9]]
+    """
+    validator.check_value_type("input", input, Tensor, "narrow")
+    return slice_ext_op(input, dim, start, start+length, 1)
 
 
 def gather(input, dim, index):
@@ -75,25 +117,32 @@ def gather(input, dim, index):
     return gather_d_op(input, dim, index)
 
 
-def max(input, dim, keepdim=False):
+def max(input, dim=None, keepdim=False):
     """
-    Calculates the maximum value along with the given axis for the input tensor.
+    Calculates the maximum value along with the given dimension for the input tensor.
 
     Args:
         input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
-        dim (int): The dimension to reduce.
-        keepdim (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
-            the output will reduce dimension if false. Default: ``False`` .
+        dim (int, optional): The dimension to reduce. Default: ``None`` .
+        keepdim (bool, optional): Whether to reduce dimension, if true, the output will keep same dimension
+            with the input, the output will reduce dimension if false. Default: ``False`` .
 
     Returns:
-        tuple (Tensor), tuple of 2 tensors, containing the maximum value of the input tensor and the corresponding
-        index.
+        Tensor if `dim` is the default value ``None`` , the maximum value of input tensor, with the shape :math:`()` ,
+        and same dtype as `input`.
 
-        - values (Tensor) - The maximum value of input tensor, with same dtype as `input`. If `keepdim`
-          is true, the shape of output tensors is :math:`(input_1, input_2, ..., input_{axis-1}, 1, input_{axis+1},
-          ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ..., input_{axis-1}, input_{axis+1},
-          ..., input_N)` .
-        - index (Tensor) - The index for the maximum value of the input tensor, with the same shape as `values`.
+        tuple (Tensor) if `dim` is not the default value ``None`` , tuple of 2 tensors, containing the maximum
+        value of the input tensor along the given dimension `dim` and the corresponding index:
+
+        - **values (Tensor)** - The maximum value of input tensor along the given dimension `dim`, with same dtype as
+          `input`. If `keepdim` is ``True`` , the shape of output tensors is :math:`(input_1, input_2, ...,
+          input_{axis-1}, 1, input_{axis+1}, ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ...,
+          input_{axis-1}, input_{axis+1}, ..., input_N)` .
+        - **index (Tensor)** - The index for the maximum value of the input tensor along the given dimension `dim`, with
+          the same shape as `values`.
+
+    Raises:
+        ValueError: If `dim` is the default value ``None`` and `keepdim` is not ``False`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -108,30 +157,41 @@ def max(input, dim, keepdim=False):
         >>> print(output, index)
         [[3.2 0.4 0.4 2.9 4. ]] [[1 1 0 1 1]]
     """
+    if dim is None:
+        if keepdim is not False:
+            raise ValueError(f"For 'max', the `keepdim` must be False when the `dim` is None, but got {keepdim}")
+        return max_(input)
     argmax_with_value_op = _get_cache_prim(ArgMaxWithValue)(dim, keepdim)
     indices, values = argmax_with_value_op(input)
     return values, indices
 
 
-def min(input, dim, keepdim=False):
+def min(input, dim=None, keepdim=False):
     """
-    Calculates the minimum value along with the given axis for the input tensor.
+    Calculates the minimum value along with the given dimension for the input tensor.
 
     Args:
         input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
-        dim (int): The dimension to reduce.
-        keepdim (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
-            the output will reduce dimension if false. Default: ``False`` .
+        dim (int, optional): The dimension to reduce. Default: ``None`` .
+        keepdim (bool, optional): Whether to reduce dimension, if true, the output will keep same dimension
+            with the input, the output will reduce dimension if false. Default: ``False`` .
 
     Returns:
-        tuple (Tensor), tuple of 2 tensors, containing the minimum value of the input tensor and the corresponding
-        index.
+        Tensor if `dim` is the default value ``None`` , the minimum value of input tensor, with the shape :math:`()` ,
+        and same dtype as `input`.
 
-        - values (Tensor) - The minimum value of input tensor, with same dtype as `input`. If `keepdim`
-          is true, the shape of output tensors is :math:`(input_1, input_2, ..., input_{axis-1}, 1, input_{axis+1},
-          ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ..., input_{axis-1}, input_{axis+1},
-          ..., input_N)` .
-        - index (Tensor) - The index for the minimum value of the input tensor, with same shape as `values`.
+        tuple (Tensor) if `dim` is not the default value ``None`` , tuple of 2 tensors, containing the minimum value
+        of the input tensor along the given dimension `dim` and the corresponding index:
+
+        - **values (Tensor)** - The minimum value of input tensor along the given dimension `dim`, with same dtype as
+          `input`. If `keepdim` is ``True`` , the shape of output tensors is :math:`(input_1, input_2, ...,
+          input_{axis-1}, 1, input_{axis+1}, ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ...,
+          input_{axis-1}, input_{axis+1}, ..., input_N)` .
+        - **index (Tensor)** - The index for the minimum value of the input tensor along the given dimension `dim`,
+          with the same shape as `values`.
+
+    Raises:
+        ValueError: If `dim` is the default value ``None`` and `keepdim` is not ``False`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -145,8 +205,53 @@ def min(input, dim, keepdim=False):
         >>> print(output, index)
         [0.0] [0]
     """
+    if dim is None:
+        if keepdim is not False:
+            raise ValueError(f"For 'min', the `keepdim` must be False when the `dim` is None, but got {keepdim}")
+        return min_(input)
     argmin_with_value_op = _get_cache_prim(ArgMinWithValue)(dim, keepdim)
     indices, values = argmin_with_value_op(input)
     return values, indices
 
-__all__ = ['gather', 'max', 'min']
+def one_hot(tensor, num_classes):
+    r"""
+    Computes a one-hot tensor.
+
+    The locations represented by tensor in `tensor` take value `1`, while all
+    other locations take value `0`.
+
+    Args:
+        tensor (Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
+            Data type must be int32 or int64.
+        num_classes (Union[int, Tensor]): A scalar defining the depth of the one-hot dimension.
+
+    Returns:
+        Tensor, one-hot tensor.
+
+    Raises:
+        TypeError: If `num_classes` is not an int.
+        TypeError: If dtype of `tensor` is not int32 or int64.
+        ValueError: If `num_classes` is less than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> tensor = Tensor(np.array([0, 1, 2]), mindspore.int32)
+        >>> num_classes = 3
+        >>> output = ops.extend.one_hot(tensor, num_classes)
+        >>> print(output)
+        [[1. 0. 0.]
+        [0. 1. 0.]
+        [0. 0. 1.]]
+    """
+    on_value = Tensor(1, dtype=tensor.dtype)
+    off_value = Tensor(0, dtype=tensor.dtype)
+    onehot = _get_cache_prim(OneHotExt)(-1)
+    return onehot(tensor, num_classes, on_value, off_value)
+
+__all__ = ['gather', 'max', 'min', 'one_hot']

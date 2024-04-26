@@ -36,6 +36,30 @@
 
 namespace mindspore {
 namespace ops {
+ValuePtr MakeScalarZero(const AbstractBasePtr &abs) {
+  auto type_id = abs->GetType()->type_id();
+  ValuePtr value{nullptr};
+  switch (type_id) {
+    case TypeId::kNumberTypeFloat:
+    case TypeId::kNumberTypeFloat32:
+      value = MakeValue<float>(0);
+      break;
+    case TypeId::kNumberTypeFloat64:
+    case TypeId::kNumberTypeDouble:
+      value = MakeValue<double>(0);
+      break;
+    case TypeId::kNumberTypeInt64:
+      value = MakeValue<int64_t>(0);
+      break;
+    default:
+      MS_LOG(EXCEPTION)
+        << "For SequenceZerosLike with sequence[scalar], only support float, double and int64_t, but got "
+        << abs->ToString();
+      break;
+  }
+  return value;
+}
+
 AbstractBasePtr MakeSequenceZeros(const abstract::AbstractSequencePtr &seq_abs) {
   if (seq_abs->dynamic_len()) {
     return seq_abs;
@@ -48,7 +72,8 @@ AbstractBasePtr MakeSequenceZeros(const abstract::AbstractSequencePtr &seq_abs) 
                                seq_element->GetType(), seq_element->GetShape()->cast<abstract::ShapePtr>()->shape())
                                ->ToAbstract());
     } else if (seq_element->isa<abstract::AbstractScalar>()) {
-      (void)abs.emplace_back(std::make_shared<abstract::AbstractScalar>(MakeValue<int64_t>(0), seq_element->GetType()));
+      (void)abs.emplace_back(
+        std::make_shared<abstract::AbstractScalar>(MakeScalarZero(seq_element), seq_element->GetType()));
     } else if (seq_element->isa<abstract::AbstractTuple>() || seq_element->isa<abstract::AbstractList>()) {
       (void)abs.emplace_back(MakeSequenceZeros(seq_element->cast<abstract::AbstractSequencePtr>()));
     } else {

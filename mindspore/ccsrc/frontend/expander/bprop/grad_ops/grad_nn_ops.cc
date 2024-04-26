@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "ops/nn_optimizer_op_name.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "utils/ms_context.h"
 
 namespace mindspore::expander::bprop {
@@ -237,6 +238,39 @@ REG_BPROP_BUILDER("Conv2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {dx, dw};
 });
 
+REG_BPROP_BUILDER("Convolution").SetUnusedInputs({i9}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto w = ib->GetInput(kIndex1);
+  auto bias = ib->GetInput(kIndex2);
+  auto pad_value = ib->GetInput(kIndex3);
+  auto stride_value = ib->GetInput(kIndex4);
+  auto dilation_value = ib->GetInput(kIndex5);
+  auto transposed_value = ib->GetInput(kIndex6);
+  auto output_padding_value = ib->GetInput(kIndex7);
+  auto group_value = ib->GetInput(kIndex8);
+
+  auto bias_type = bias->abstract()->BuildType();
+  bool bias_mask = bias_type->isa<TypeNone>() ? false : bias->need_compute_grad_out();
+  std::vector<int64_t> output_mask_vec = {x->need_compute_grad_out(), w->need_compute_grad_out(), bias_mask};
+  auto output_mask = ib->EmitValue(MakeValue(output_mask_vec));
+
+  auto conv2d_grad_out =
+    ib->Emit(kConvolutionGradOpName, {ib->GetInput(kIndex10), x, w, bias, pad_value, stride_value, dilation_value,
+                                      transposed_value, output_padding_value, group_value, output_mask});
+  auto dx = ib->TupleGetItem(conv2d_grad_out, 0);
+  auto dw = ib->TupleGetItem(conv2d_grad_out, 1);
+  auto dbias = ib->TupleGetItem(conv2d_grad_out, 2);
+  return {dx,
+          dw,
+          dbias,
+          ib->OutZeros(pad_value),
+          ib->OutZeros(stride_value),
+          ib->OutZeros(dilation_value),
+          ib->OutZeros(transposed_value),
+          ib->OutZeros(output_padding_value),
+          ib->OutZeros(group_value)};
+});
+
 REG_BPROP_BUILDER("MaxPool").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
@@ -255,6 +289,23 @@ REG_BPROP_BUILDER("MaxPool").SetBody(BODYFUNC(ib) {
                       {"data_format", ib->GetAttr("format")},
                       {"format", ib->GetAttr("format")}});
   return {dx};
+});
+
+REG_BPROP_BUILDER("Embedding").SetUnusedInputs({i3, i4, i6}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto weight = ib->GetInput(kIndex1);
+  auto padding_idx = ib->GetInput(kIndex2);
+  auto norm_type = ib->GetInput(kIndex4);
+  auto scale_grad_by_freq = ib->GetInput(kIndex5);
+
+  auto dout = ib->GetInput(kIndex7);
+
+  auto weight_shape = ib->Shape(weight);
+  auto num_weights = ib->TupleGetItem(weight_shape, 0);
+  auto dx = ib->Emit(ops::kNameEmbeddingDenseBackward, {dout, input, num_weights, padding_idx, scale_grad_by_freq});
+  return {ib->OutZeros(input),       dx,
+          ib->OutZeros(padding_idx), ib->OutZeros(norm_type),
+          ib->OutZeros(norm_type),   ib->OutZeros(scale_grad_by_freq)};
 });
 
 REG_BPROP_BUILDER("BiasAdd").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
@@ -289,15 +340,50 @@ REG_BPROP_BUILDER("BiasAdd").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) 
 
 DEF_PURE_SHAPE_CALC(g_dense_shapecalc0)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
-    auto &b_shape = inputs.at(kIndex0);
-    ShapeVector ret_shape;
-    if (b_shape.size() > 0) {
-      ret_shape.push_back(0);
+    auto &x_shape = inputs.at(kIndex0);
+    auto &w_shape = inputs.at(kIndex1);
+    auto &b_shape = inputs.at(kIndex2);
+    auto &dout_shape = inputs.at(kIndex3);
+    ShapeVector x_2d_shape = {-1, x_shape.back()};
+    ShapeVector w_2d_shape = {-1, w_shape.back()};
+    ShapeVector dout_2d_shape;
+    if (dout_shape.size() == 0) {
+      dout_2d_shape = {1, 1};
+    } else if (w_shape.size() == 1) {
+      dout_2d_shape = {-1, 1};
+    } else {
+      dout_2d_shape = {-1, dout_shape.back()};
     }
-    return {ret_shape};
+    ShapeVector b_reduce_shape;
+    if (b_shape.size() > 0) {
+      b_reduce_shape.push_back(0);
+    }
+
+    return {x_2d_shape, w_2d_shape, dout_2d_shape, b_reduce_shape, x_shape, w_shape};
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
-    return {IsDynamicRank(inputs[0]) ? -1LL : static_cast<int64_t>(inputs[0].size())};
+    auto &x_shape = inputs[0];
+    auto &w_shape = inputs[1];
+    auto &b_shape = inputs[2];
+    auto &dout_shape = inputs[3];
+
+    auto b_reduce_rank = -1LL;
+    if (!IsDynamicRank(b_shape)) {
+      if (b_shape.size() > 0) {
+        b_reduce_rank = 1;
+      } else {
+        b_reduce_rank = 0;
+      }
+    }
+
+    return {
+      IsDynamicRank(x_shape) ? -1LL : 2LL,
+      IsDynamicRank(w_shape) ? -1LL : 2LL,
+      IsDynamicRank(dout_shape) ? -1LL : 2LL,
+      b_reduce_rank,
+      IsDynamicRank(x_shape) ? -1LL : static_cast<int64_t>(x_shape.size()),
+      IsDynamicRank(w_shape) ? -1LL : static_cast<int64_t>(w_shape.size()),
+    };
   });
 
 REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
@@ -308,69 +394,86 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto dtype = ib->GetDtype(x);
   bool is_complex = (*dtype) == (*kComplex64) || (*dtype) == (*kComplex128);
   NodePtr dx, dw, db;
-  auto dout_shp = dout->shape();
-  if (dout_shp.size() == 0) {
-    db = b->need_compute_grad_out() ? dout : ib->OutZeros(b);
-    if (is_complex) {
-      dout = ib->Emit("Conj", {dout});
-    }
-    if (w->need_compute_grad_out()) {
-      dw = ib->Mul(dout, x);
-      if (is_complex) {
-        dw = ib->Emit("Conj", {dw});
-      }
-    } else {
-      dw = ib->OutZeros(w);
-    }
 
-    if (x->need_compute_grad_out()) {
-      dx = ib->Mul(dout, w);
-      if (is_complex) {
-        dx = ib->Emit("Conj", {dx});
+  if (!IsDynamic(x->shape()) && !IsDynamic(w->shape())) {
+    if (ib->GetRank(x) == 1 && ib->GetRank(w) == 1) {
+      if (x->need_compute_grad_out()) {
+        if (is_complex) {
+          dx = ib->Mul(dout, ib->Emit("Conj", {w}));
+        } else {
+          dx = ib->Mul(dout, w);
+        }
+      } else {
+        dx = ib->OutZeros(x);
       }
-    } else {
-      dx = ib->OutZeros(x);
+      if (w->need_compute_grad_out()) {
+        if (is_complex) {
+          dw = ib->Mul(dout, ib->Emit("Conj", {x}));
+        } else {
+          dw = ib->Mul(dout, x);
+        }
+      } else {
+        dw = ib->OutZeros(w);
+      }
+      db = b->need_compute_grad_out() ? dout : ib->OutZeros(b);
+      return {dx, dw, db};
+    } else if (ib->GetRank(x) == 2 && ib->GetRank(w) == 1) {
+      if (x->need_compute_grad_out()) {
+        ShapeVector dout_reshape = {dout->shape()[0], 1};
+        ShapeVector w_reshape = {1, w->shape()[0]};
+        dx = ib->Mul(ib->Reshape(dout, dout_reshape), ib->Reshape(w, w_reshape));
+        if (is_complex) {
+          dx = ib->Emit("Conj", {dx});
+        }
+      } else {
+        dx = ib->OutZeros(x);
+      }
+      if (w->need_compute_grad_out()) {
+        dw = ib->Emit("Mv", {ib->Transpose(x, ib->Value(ShapeVector{1, 0})), dout});
+        if (is_complex) {
+          dw = ib->Emit("Conj", {dw});
+        }
+      } else {
+        dw = ib->OutZeros(w);
+      }
+      db = b->need_compute_grad_out() ? dout : ib->OutZeros(b);
+      return {dx, dw, db};
     }
-    return {dx, dw, db};
   }
-  ShapeVector dout_2d_shape = {-1, dout_shp.back()};
-  ShapeVector x_shape = dout_shp;
-  if (w->shape().back() == -2) {
-    x_shape.back() = -1;
-  } else {
-    x_shape.back() = w->shape().back();
-  }
+
+  NodePtrList ret_shape = ib->ShapeCalc(g_dense_shapecalc0, {x, w, b, dout});
+
+  auto x_2d_shape = ret_shape[kIndex0];
+  auto w_2d_shape = ret_shape[kIndex1];
+  auto dout_2d_shape = ret_shape[kIndex2];
+  auto b_reduce_shape = ret_shape[kIndex3];
+  auto x_shape = ret_shape[kIndex4];
+  auto w_shape = ret_shape[kIndex5];
+
   dout = ib->Reshape(dout, dout_2d_shape);
-  NodePtrList ret_shape = ib->ShapeCalc(g_dense_shapecalc0, {b});
-  db = b->need_compute_grad_out() ? ib->ReduceSum(dout, ret_shape[kIndex0]) : ib->OutZeros(b);
+  db = b->need_compute_grad_out() ? ib->Emit("SumExt", {dout, b_reduce_shape, ib->Value(false), ib->EmitValue(kNone)})
+                                  : ib->OutZeros(b);
   if (is_complex) {
     dout = ib->Emit("Conj", {dout});
   }
   if (x->need_compute_grad_out()) {
+    w = ib->Reshape(w, w_2d_shape);
     dx = ib->MatMul(dout, w, false, false);
     if (is_complex) {
       dx = ib->Emit("Conj", {dx});
     }
-    if (x_shape.size() != 2) {
-      dx = ib->Reshape(dx, x_shape);
-    }
+    dx = ib->Reshape(dx, x_shape);
   } else {
     dx = ib->OutZeros(x);
   }
 
   if (w->need_compute_grad_out()) {
-    if (x_shape.size() != 2) {
-      int64_t first_dim = 1;
-      for (size_t i = 0; i < x_shape.size() - 1; ++i) {
-        first_dim *= x_shape[i];
-      }
-      ShapeVector x_2d_shape = {first_dim, x_shape.back()};
-      x = ib->Reshape(x, x_2d_shape);
-    }
+    x = ib->Reshape(x, x_2d_shape);
     dw = ib->MatMul(dout, x, true, false);
     if (is_complex) {
       dw = ib->Emit("Conj", {dw});
     }
+    dw = ib->Reshape(dw, w_shape);
   } else {
     dw = ib->OutZeros(w);
   }
@@ -444,6 +547,26 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   }
 });
 
+REG_BPROP_BUILDER("TopkExt").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib) {
+  // x, k, dim, largest, sorted, out(values, indices), dout(grad_values, grad_indices)
+  auto input_x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex6);
+  auto indices = ib->TupleGetItem(out, kIndex1);
+  auto dout0 = ib->TupleGetItem(dout, kIndex0);
+  auto dim = ib->GetInput(kIndex2);
+  auto zeros = ib->ZerosLike(input_x);
+
+  auto dim_value = dim->BuildValue();
+  MS_EXCEPTION_IF_CHECK_FAIL(dim_value != nullptr, "The input dim of 'Topk' must be constant.");
+  MS_EXCEPTION_IF_CHECK_FAIL(!dim_value->isa<ValueAny>(), "The input dim of 'Topk' must be constant.");
+
+  auto out_grad = ib->Emit("TensorScatterElements", {zeros, indices, dout0},
+                           {{"reduction", MakeValue<string>("none")}, {"axis", dim_value}});
+  return {out_grad, ib->OutZeros(ib->GetInput(kIndex1)), ib->OutZeros(ib->GetInput(kIndex2)),
+          ib->OutZeros(ib->GetInput(kIndex3)), ib->OutZeros(ib->GetInput(kIndex4))};
+});
+
 REG_BPROP_BUILDER("PReLU").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
@@ -452,6 +575,14 @@ REG_BPROP_BUILDER("PReLU").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto dx = ib->TupleGetItem(res, kIndex0);
   auto dw = ib->TupleGetItem(res, kIndex1);
   return {dx, dw};
+});
+
+REG_BPROP_BUILDER("LeakyReLUExt").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto negative_slope = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("LeakyReLUGradExt", {dout, input, negative_slope, ib->Value(false)});
+  return {dx, ib->OutZeros(negative_slope)};
 });
 
 REG_BPROP_BUILDER("SigmoidCrossEntropyWithLogits").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
@@ -677,6 +808,102 @@ REG_BPROP_BUILDER("MaxPoolWithArgmaxV2").SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
+REG_BPROP_BUILDER("MaxPoolWithMask").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto kernel_size = ib->GetInput(kIndex1);
+  auto strides = ib->GetInput(kIndex2);
+  auto pads = ib->GetInput(kIndex3);
+  auto dilation = ib->GetInput(kIndex4);
+  auto ceil_mode = ib->GetInput(kIndex5);
+  auto argmax_type = ib->GetInput(kIndex6);
+  auto out = ib->GetInput(kIndex7);
+  auto dout = ib->GetInput(kIndex8);
+  auto dx = ib->Emit("MaxPoolGradWithMask", {x, ib->TupleGetItem(dout, i0), ib->TupleGetItem(out, i1), kernel_size,
+                                             strides, pads, dilation, ceil_mode, argmax_type});
+  auto g_kernel_size = ib->OutZeros(kernel_size);
+  auto g_strides = ib->OutZeros(strides);
+  auto g_pads = ib->OutZeros(pads);
+  auto g_dilation = ib->OutZeros(dilation);
+  auto g_ceil_mode = ib->OutZeros(ceil_mode);
+  auto g_argmax_type = ib->OutZeros(argmax_type);
+  return {dx, g_kernel_size, g_strides, g_pads, g_dilation, g_ceil_mode, g_argmax_type};
+});
+
+REG_BPROP_BUILDER("MaxPoolWithIndices").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto kernel_size = ib->GetInput(kIndex1);
+  auto strides = ib->GetInput(kIndex2);
+  auto pads = ib->GetInput(kIndex3);
+  auto dilation = ib->GetInput(kIndex4);
+  auto ceil_mode = ib->GetInput(kIndex5);
+  auto argmax_type = ib->GetInput(kIndex6);
+  auto out = ib->GetInput(kIndex7);
+  auto dout = ib->GetInput(kIndex8);
+  auto dx = ib->Emit("MaxPoolGradWithIndices", {x, ib->TupleGetItem(dout, i0), ib->TupleGetItem(out, i1), kernel_size,
+                                                strides, pads, dilation, ceil_mode, argmax_type});
+  auto g_kernel_size = ib->OutZeros(kernel_size);
+  auto g_strides = ib->OutZeros(strides);
+  auto g_pads = ib->OutZeros(pads);
+  auto g_dilation = ib->OutZeros(dilation);
+  auto g_ceil_mode = ib->OutZeros(ceil_mode);
+  auto g_argmax_type = ib->OutZeros(argmax_type);
+  return {dx, g_kernel_size, g_strides, g_pads, g_dilation, g_ceil_mode, g_argmax_type};
+});
+
+REG_BPROP_BUILDER("GroupNorm").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto num_groups = ib->GetInput(kIndex1);
+  auto gamma = ib->GetInput(kIndex2);
+  auto beta = ib->GetInput(kIndex3);
+  auto epsilon = ib->GetInput(kIndex4);
+  auto out = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex6);
+
+  auto result =
+    ib->Emit("GroupNormGrad",
+             {ib->TupleGetItem(dout, 0), x, ib->TupleGetItem(out, 1), ib->TupleGetItem(out, 2), gamma, num_groups,
+              ib->Value<bool>(x->need_compute_grad_out()), ib->Value<bool>(gamma->need_compute_grad_out()),
+              ib->Value<bool>(beta->need_compute_grad_out())},
+             {{"data_format", MakeValue("NCHW")}});
+
+  auto d_x = ib->TupleGetItem(result, 0);
+  auto d_gamma = ib->TupleGetItem(result, 1);
+  auto d_beta = ib->TupleGetItem(result, 2);
+  auto grad_group = ib->OutZeros(num_groups);
+  auto grad_epsilon = ib->OutZeros(epsilon);
+  return {d_x, grad_group, d_gamma, d_beta, grad_epsilon};
+});
+
+REG_BPROP_BUILDER("LayerNormExt").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto normalized_shape = ib->GetInput(kIndex1);
+  auto gamma = ib->GetInput(kIndex2);
+  auto beta = ib->GetInput(kIndex3);
+  auto eps = ib->GetInput(kIndex4);
+  auto out = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex6);
+  auto normalized_shape_ptr = normalized_shape->BuildValue();
+  bool is_shape_mutable = true;
+  if (normalized_shape_ptr != nullptr &&
+      (normalized_shape_ptr->isa<ValueSequence>() || normalized_shape_ptr->isa<Scalar>() ||
+       normalized_shape_ptr->isa<tensor::Tensor>())) {
+    is_shape_mutable = false;
+  }
+  auto result = ib->Emit(
+    "LayerNormGradExt",
+    {ib->TupleGetItem(dout, 0), x, normalized_shape, ib->TupleGetItem(out, 1), ib->TupleGetItem(out, 2), gamma, beta},
+    {});
+  auto d_x = x->need_compute_grad_out() ? ib->TupleGetItem(result, 0) : ib->OutZeros(x);
+  auto d_gamma = gamma->need_compute_grad_out() ? ib->TupleGetItem(result, 1) : ib->OutZeros(gamma);
+  auto d_beta = beta->need_compute_grad_out() ? ib->TupleGetItem(result, 2) : ib->OutZeros(beta);
+  auto grad_normalized_shape = ib->OutZeros(normalized_shape);
+  auto grad_eps = ib->OutZeros(eps);
+  if (is_shape_mutable) {
+    return {d_x, d_gamma, d_beta, grad_normalized_shape, grad_eps};
+  }
+  return {d_x, grad_normalized_shape, d_gamma, d_beta, grad_eps};
+});
+
 REG_BPROP_BUILDER("LayerNorm").SetUnusedInputs({i2, i5}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto gamma = ib->GetInput(kIndex1);
@@ -787,6 +1014,16 @@ REG_BPROP_BUILDER("ResizeBilinear").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("OneHot").SetUnusedInputs({i0, i1, i2, i3, i5, i6}).SetBody(BODYFUNC(ib) {
+  auto indices = ib->GetInput(kIndex0);
+  auto depth = ib->GetInput(kIndex1);
+  auto on_value = ib->GetInput(kIndex2);
+  auto off_value = ib->GetInput(kIndex3);
+  auto axis = ib->GetInput(kIndex4);
+  return {ib->OutZeros(indices), ib->OutZeros(ib->Tensor(0, ib->GetDtype(depth))), ib->OutZeros(on_value),
+          ib->OutZeros(off_value), ib->OutZeros(axis)};
+});
+
+REG_BPROP_BUILDER("OneHotExt").SetUnusedInputs({i0, i1, i2, i3, i5, i6}).SetBody(BODYFUNC(ib) {
   auto indices = ib->GetInput(kIndex0);
   auto depth = ib->GetInput(kIndex1);
   auto on_value = ib->GetInput(kIndex2);
@@ -1025,6 +1262,48 @@ REG_BPROP_BUILDER("MaxPoolGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) 
   return {dx1, dx2, dgrad};
 });
 
+REG_BPROP_BUILDER("UpsampleNearest1D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto x_shape = ib->Shape(x);
+  auto output_size = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dx = ib->Emit("UpsampleNearest1DGrad", {dout, x_shape, output_size, scales});
+  return {dx, ib->OutZeros(output_size), ib->OutZeros(scales)};
+});
+
+REG_BPROP_BUILDER("UpsampleLinear1D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto x_shape = ib->Shape(x);
+  auto output_size = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+  auto align_corners = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = ib->Emit("UpsampleLinear1DGrad", {dout, x_shape, output_size, scales, align_corners});
+  return {dx, ib->OutZeros(output_size), ib->OutZeros(scales), ib->OutZeros(align_corners)};
+});
+
+REG_BPROP_BUILDER("UpsampleNearest2D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto x_shape = ib->Shape(x);
+  auto output_size = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dx = ib->Emit("UpsampleNearest2DGrad", {dout, x_shape, output_size, scales});
+  return {dx, ib->OutZeros(output_size), ib->OutZeros(scales)};
+});
+
+REG_BPROP_BUILDER("UpsampleBilinear2D").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto x_shape = ib->Shape(x);
+  auto output_size = ib->GetInput(kIndex1);
+  auto scales = ib->GetInput(kIndex2);
+  auto align_corners = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = ib->Emit("UpsampleBilinear2DGrad", {dout, x_shape, output_size, scales, align_corners});
+  return {dx, ib->OutZeros(output_size), ib->OutZeros(scales), ib->OutZeros(align_corners)};
+});
+
 REG_BPROP_BUILDER("UpsampleNearest3D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_shape = ib->Shape(x);
@@ -1035,15 +1314,15 @@ REG_BPROP_BUILDER("UpsampleNearest3D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib
   return {dx, ib->OutZeros(output_size), ib->OutZeros(scales)};
 });
 
-REG_BPROP_BUILDER("UpsampleTrilinear3D").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("UpsampleTrilinear3D").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_shape = ib->Shape(x);
   auto output_size = ib->GetInput(kIndex1);
   auto scales = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex4);
-  auto dx = ib->Emit("UpsampleTrilinear3DGrad", {dout, x_shape, output_size, scales},
-                     {{"align_corners", ib->GetAttr("align_corners")}});
-  return {dx, ib->OutZeros(output_size), ib->OutZeros(scales)};
+  auto align_corners = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = ib->Emit("UpsampleTrilinear3DGrad", {dout, x_shape, output_size, scales, align_corners});
+  return {dx, ib->OutZeros(output_size), ib->OutZeros(scales), ib->OutZeros(align_corners)};
 });
 
 REG_BPROP_BUILDER("Dropout2D").SetUnusedInputs({i0}).SetBody(Dropout2DBpropExpander);
@@ -1301,6 +1580,15 @@ REG_BPROP_BUILDER("Softplus").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("SoftplusGrad", {dout, x});
   return {dx};
+});
+
+REG_BPROP_BUILDER("SoftplusExt").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto beta = ib->GetInput(kIndex1);
+  auto threshold = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dx = ib->Emit("SoftplusGradExt", {dout, x, beta, threshold});
+  return {dx, ib->OutZeros(beta), ib->OutZeros(threshold)};
 });
 
 REG_BPROP_BUILDER("SoftplusGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
@@ -2159,6 +2447,82 @@ REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
   }
 });
 
+REG_BPROP_BUILDER("ConstantPadND").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto paddings = ib->GetInput(kIndex1);
+  bool has_constant_values = ib->GetInputs().size() == kDim5;
+  auto dout = has_constant_values ? ib->GetInput(kIndex4) : ib->GetInput(kIndex3);
+  NodePtr neg_pad;
+
+  MS_EXCEPTION_IF_NULL(paddings);
+  auto pad_opt = ops::GetArrayValue<int64_t>(paddings->BuildValue());
+  if (pad_opt.has_value()) {
+    auto pad_value = pad_opt.value().ToVector();
+    (void)std::transform(pad_value.begin(), pad_value.end(), pad_value.begin(), [](const int64_t &c) { return -c; });
+    neg_pad = ib->Value<ShapeVector>(pad_value);
+  } else {
+    auto pad_tensor = ib->SequenceToTensor(paddings);
+    auto neg_pad_tensor = ib->Emit("Neg", {pad_tensor});
+    neg_pad = ib->TensorToTuple(neg_pad_tensor);
+  }
+
+  auto constant_values = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("ConstantPadND", {dout, neg_pad, ib->ZerosLike(constant_values)});
+  if (has_constant_values) {
+    auto constant_values = ib->GetInput(kIndex2);
+    return {dx, ib->OutZeros(paddings), ib->OutZeros(constant_values)};
+  } else {
+    return {dx, ib->OutZeros(paddings)};
+  }
+});
+
+REG_BPROP_BUILDER("ReflectionPad1D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto paddings = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr dx = ib->Emit("ReflectionPad1DGrad", {dout, input_x, paddings});
+  return {dx, ib->OutZeros(paddings)};
+});
+
+REG_BPROP_BUILDER("ReflectionPad2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto paddings = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr dx = ib->Emit("ReflectionPad2DGrad", {dout, input_x, paddings});
+  return {dx, ib->OutZeros(paddings)};
+});
+
+REG_BPROP_BUILDER("ReflectionPad3D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto paddings = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr dx = ib->Emit("ReflectionPad3DGrad", {dout, input_x, paddings});
+  return {dx, ib->OutZeros(paddings)};
+});
+
+REG_BPROP_BUILDER("ReplicationPad1D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto paddings = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr dx = ib->Emit("ReplicationPad1DGrad", {dout, input_x, paddings});
+  return {dx, ib->OutZeros(paddings)};
+});
+
+REG_BPROP_BUILDER("ReplicationPad2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto paddings = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr dx = ib->Emit("ReplicationPad2DGrad", {dout, input_x, paddings});
+  return {dx, ib->OutZeros(paddings)};
+});
+
+REG_BPROP_BUILDER("ReplicationPad3D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto paddings = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr dx = ib->Emit("ReplicationPad3DGrad", {dout, input_x, paddings});
+  return {dx, ib->OutZeros(paddings)};
+});
+
 REG_BPROP_BUILDER("WKV").SetBody(BODYFUNC(ib) {
   auto w = ib->GetInput(kIndex0);
   auto u = ib->GetInput(kIndex1);
@@ -2187,35 +2551,50 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
   auto padding_mask = ib->GetInput(kIndex5);
   auto attn_mask = ib->GetInput(kIndex6);
   auto prefix = ib->GetInput(kIndex7);
-  auto out = ib->GetInput(kIndex8);
+  auto actual_seq_qlen = ib->GetInput(kIndex8);
+  auto actual_seq_kvlen = ib->GetInput(kIndex9);
+  auto head_num = ib->GetInput(kIndex10);
+  auto keep_prob = ib->GetInput(kIndex11);
+  auto scale_value = ib->GetInput(kIndex12);
+  auto pre_tokens = ib->GetInput(kIndex13);
+  auto next_tokens = ib->GetInput(kIndex14);
+  auto inner_precise = ib->GetInput(kIndex15);
+  auto input_layout = ib->GetInput(kIndex16);
+  auto sparse_mode = ib->GetInput(kIndex17);
+  auto out = ib->GetInput(kIndex18);
   auto softmax_max = ib->TupleGetItem(out, kIndex0);
   auto softmax_sum = ib->TupleGetItem(out, kIndex1);
   auto softmax_out = ib->TupleGetItem(out, kIndex2);
   auto attention_out = ib->TupleGetItem(out, kIndex3);
-  auto dout = ib->GetInput(kIndex9);
+  auto dout = ib->GetInput(kIndex19);
   auto d_attention_out = ib->TupleGetItem(dout, kIndex3);
-  auto grad = ib->Emit("FlashAttentionScoreGrad",
-                       {query, key, value, d_attention_out, pse_shift, drop_mask, padding_mask, attn_mask, softmax_max,
-                        softmax_sum, softmax_out, attention_out, prefix},
-                       {
-                         {"head_num", ib->GetAttr("head_num")},
-                         {"keep_prob", ib->GetAttr("keep_prob")},
-                         {"scale_value", ib->GetAttr("scale_value")},
-                         {"pre_tokens", ib->GetAttr("pre_tokens")},
-                         {"next_tokens", ib->GetAttr("next_tokens")},
-                         {"inner_precise", ib->GetAttr("inner_precise")},
-                         {"input_layout", ib->GetAttr("input_layout")},
-                         {"sparse_mode", ib->GetAttr("sparse_mode")},
-                       });
+  auto grad =
+    ib->Emit("FlashAttentionScoreGrad", {query,         key,           value,       d_attention_out, pse_shift,
+                                         drop_mask,     padding_mask,  attn_mask,   softmax_max,     softmax_sum,
+                                         softmax_out,   attention_out, prefix,      actual_seq_qlen, actual_seq_kvlen,
+                                         head_num,      keep_prob,     scale_value, pre_tokens,      next_tokens,
+                                         inner_precise, input_layout,  sparse_mode});
   auto g_query = ib->TupleGetItem(grad, kIndex0);
   auto g_key = ib->TupleGetItem(grad, kIndex1);
   auto g_value = ib->TupleGetItem(grad, kIndex2);
   auto g_pse_shift = ib->TupleGetItem(grad, kIndex3);
-  auto g_drop_mask = ib->ZerosLike(drop_mask);
-  auto g_padding_mask = ib->ZerosLike(padding_mask);
-  auto g_attn_mask = ib->ZerosLike(attn_mask);
-  auto g_prefix = ib->ZerosLike(prefix);
-  return {g_query, g_key, g_value, g_pse_shift, g_drop_mask, g_padding_mask, g_attn_mask, g_prefix};
+  auto g_drop_mask = ib->OutZeros(drop_mask);
+  auto g_padding_mask = ib->OutZeros(padding_mask);
+  auto g_attn_mask = ib->OutZeros(attn_mask);
+  auto g_prefix = ib->OutZeros(prefix);
+  auto g_actual_seq_qlen = ib->OutZeros(actual_seq_qlen);
+  auto g_actual_seq_kvlen = ib->OutZeros(actual_seq_kvlen);
+  auto g_head_num = ib->OutZeros(head_num);
+  auto g_keep_prob = ib->OutZeros(keep_prob);
+  auto g_scale_value = ib->OutZeros(scale_value);
+  auto g_pre_tokens = ib->OutZeros(pre_tokens);
+  auto g_next_tokens = ib->OutZeros(next_tokens);
+  auto g_inner_precise = ib->OutZeros(inner_precise);
+  auto g_input_layout = ib->OutZeros(input_layout);
+  auto g_sparse_mode = ib->OutZeros(sparse_mode);
+  return {g_query,       g_key,        g_value,           g_pse_shift,        g_drop_mask,    g_padding_mask,
+          g_attn_mask,   g_prefix,     g_actual_seq_qlen, g_actual_seq_kvlen, g_head_num,     g_keep_prob,
+          g_scale_value, g_pre_tokens, g_next_tokens,     g_inner_precise,    g_input_layout, g_sparse_mode};
 }));
 
 REG_BPROP_BUILDER("RmsNorm").SetBody((BODYFUNC(ib) {
@@ -2230,6 +2609,50 @@ REG_BPROP_BUILDER("RmsNorm").SetBody((BODYFUNC(ib) {
   auto dx = ib->TupleGetItem(grad, kIndex0);
   auto dgamma = ib->TupleGetItem(grad, kIndex1);
   return {dx, dgamma};
+}));
+
+REG_BPROP_BUILDER("AvgPool2D").SetBody((BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto kernel_size = ib->GetInput(kIndex1);
+  auto stride = ib->GetInput(kIndex2);
+  auto padding = ib->GetInput(kIndex3);
+  auto ceil_mode = ib->GetInput(kIndex4);
+  auto count_include_pad = ib->GetInput(kIndex5);
+  auto divisor_override = ib->GetInput(kIndex6);
+  auto dout = ib->GetInput(kIndex8);
+
+  auto dx = ib->Emit("AvgPool2DGrad",
+                     {dout, input, kernel_size, stride, padding, ceil_mode, count_include_pad, divisor_override});
+  return {dx,
+          ib->OutZeros(kernel_size),
+          ib->OutZeros(stride),
+          ib->OutZeros(padding),
+          ib->OutZeros(ceil_mode),
+          ib->OutZeros(count_include_pad),
+          ib->OutZeros(divisor_override)};
+}));
+
+REG_BPROP_BUILDER("AvgPool2DGrad").SetBody((BODYFUNC(ib) {
+  auto grad_output = ib->GetInput(kIndex0);
+  auto image = ib->GetInput(kIndex1);
+  auto kernel_size = ib->GetInput(kIndex2);
+  auto stride = ib->GetInput(kIndex3);
+  auto padding = ib->GetInput(kIndex4);
+  auto ceil_mode = ib->GetInput(kIndex5);
+  auto count_include_pad = ib->GetInput(kIndex6);
+  auto divisor_override = ib->GetInput(kIndex7);
+  auto dout = ib->GetInput(kIndex9);
+
+  auto grad_dout =
+    ib->Emit("AvgPool2D", {dout, kernel_size, stride, padding, ceil_mode, count_include_pad, divisor_override});
+  return {grad_dout,
+          ib->OutZeros(image),
+          ib->OutZeros(kernel_size),
+          ib->OutZeros(stride),
+          ib->OutZeros(padding),
+          ib->OutZeros(ceil_mode),
+          ib->OutZeros(count_include_pad),
+          ib->OutZeros(divisor_override)};
 }));
 
 REG_BPROP_BUILDERS_END

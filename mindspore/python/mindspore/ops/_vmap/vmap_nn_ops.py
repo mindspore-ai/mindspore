@@ -30,6 +30,7 @@ from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_prepr
     _vmap_clone_prim, _get_reduce_batch_axis
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.auto_generate.gen_arg_handler import Format
+from mindspore.ops.auto_generate import Embedding
 
 
 @vmap_rules_getters.register(P.ApplyAdaMax)
@@ -1935,12 +1936,18 @@ def get_grid_sampler_vmap_rule(prim, axis_size):
 
     return vmap_rule
 
-
+@vmap_rules_getters.register(NN.UpsampleNearest1D)
+@vmap_rules_getters.register(NN.UpsampleNearest2D)
 @vmap_rules_getters.register(NN.UpsampleNearest3D)
-@vmap_rules_getters.register(NN.UpsampleTrilinear3D)
 def get_upsample_nearest_3d_vmap_rule(prim, axis_size):
-    """VmapRule for `UpsampleNearest3D` and `UpsampleTrilinear3D`."""
-    cdhw_reverse_index = -4
+    """VmapRule for `UpsampleNearest1D`, `UpsampleNearest2D` and `UpsampleNearest3D`."""
+    prim_name = prim.name
+    if prim_name == "UpsampleNearest1D":
+        reverse_index = -2
+    elif prim_name == "UpsampleNearest2D":
+        reverse_index = -3
+    else:
+        reverse_index = -4
 
     def vmap_rule(x_bdim, size_bdim, scales_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim, size_bdim,
@@ -1954,16 +1961,56 @@ def get_upsample_nearest_3d_vmap_rule(prim, axis_size):
         scales, scales_dim = scales_bdim
         if size_dim is not None or scales_dim is not None:
             _raise_value_error(
-                "The source axis of `output_size` and `scales` must be None, but got {0} and {1}."
-                .format(size_dim, scales_dim))
+                "For {0}, the source axis of `output_size` and `scales` must be None,"
+                " but got {1} and {2}.".format(prim_name, size_dim, scales_dim))
 
         x_shape = F.shape(x)
-        input_shape = (-1,) + x_shape[cdhw_reverse_index:]
+        input_shape = (-1,) + x_shape[reverse_index:]
         x = F.reshape(x, input_shape)
         out = prim(x, size, scales)
         out_shape = F.shape(out)
-        return_shape = x_shape[:cdhw_reverse_index] + out_shape[
-            cdhw_reverse_index:]
+        return_shape = x_shape[:reverse_index] + out_shape[reverse_index:]
+        out = F.reshape(out, return_shape)
+        return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(NN.UpsampleLinear1D)
+@vmap_rules_getters.register(NN.UpsampleBilinear2D)
+@vmap_rules_getters.register(NN.UpsampleTrilinear3D)
+def get_upsample_linear_vmap_rule(prim, axis_size):
+    """VmapRule for `UpsampleLinear1D`, `UpsampleBilinear2D` and `UpsampleTrilinear3D`."""
+    prim_name = prim.name
+    if prim_name == "UpsampleLinear1D":
+        reverse_index = -2
+    elif prim_name == "UpsampleBilinear2D":
+        reverse_index = -3
+    else:
+        reverse_index = -4
+
+    def vmap_rule(x_bdim, size_bdim, scales_bdim, align_corners_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, size_bdim,
+                                                      scales_bdim, align_corners_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        size, size_dim = size_bdim
+        scales, scales_dim = scales_bdim
+        align_corners, align_corners_dim = align_corners_bdim
+        if size_dim is not None or scales_dim is not None or align_corners_dim is not None:
+            _raise_value_error(
+                "For {0}, the source axis of `output_size`, `scales` and `align_corners`must"
+                "be None, but got {1} and {2}.".format(prim_name, size_dim, scales_dim))
+
+        x_shape = F.shape(x)
+        input_shape = (-1,) + x_shape[reverse_index:]
+        x = F.reshape(x, input_shape)
+        out = prim(x, size, scales, align_corners)
+        out_shape = F.shape(out)
+        return_shape = x_shape[:reverse_index] + out_shape[reverse_index:]
         out = F.reshape(out, return_shape)
         return out, 0
 
@@ -2128,6 +2175,16 @@ def get_elu_vmap_rule(prim, axis_size):
         return out, dim
 
     return vmap_rule
+
+
+@vmap_rules_getters.register(Embedding)
+def get_embedding_vmap_rule(prim, axis_size):
+    """VmapRule for Embedding operations."""
+    if isinstance(prim, str):
+        prim_name = prim
+    else:
+        prim_name = prim.name
+    raise RuntimeError(f"THe {prim_name} does not support vmap.")
 
 
 # Unary vmap

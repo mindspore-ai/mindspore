@@ -1,0 +1,18 @@
+#operator dense
+dense:
+  args:
+    input:
+      dtype: tensor
+    weight:
+      dtype: tensor
+    bias:
+      dtype: tensor
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: DenseAscend
+    GPU: DenseGPU
+    CPU: DenseCPU

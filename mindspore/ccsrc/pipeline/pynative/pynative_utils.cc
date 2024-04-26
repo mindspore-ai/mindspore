@@ -1840,11 +1840,16 @@ void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
     return;
   }
 
-  auto seq = inputs[1]->cast<ValueSequencePtr>();
-  MS_EXCEPTION_IF_NULL(seq);
-  // 2nd input tensor is {}, means reduce all axis.
-  if (seq->size() == 0) {
-    auto size = inputs[0]->cast<tensor::TensorPtr>()->shape().size();
+  // 2nd input tensor is {} or nulltpr, means reduce all axis.
+  bool reduce_all_axis = false;
+  if (inputs[kIndex1]->isa<ValueSequence>()) {
+    auto seq_size = inputs[1]->cast<ValueSequencePtr>()->size();
+    reduce_all_axis = seq_size == 0;
+  } else if (inputs[kIndex1]->isa<None>()) {
+    reduce_all_axis = true;
+  }
+  if (reduce_all_axis) {
+    auto size = inputs[0]->cast<tensor::BaseTensorPtr>()->shape().size();
     // For example, input 0 is Tensor(shape=[], value=1), the axis to reduce is 0.
     std::vector<ValuePtr> axis = {std::make_shared<Int64Imm>(0)};
     for (size_t i = 1; i < size; ++i) {

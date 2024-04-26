@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Huawei Technologies Co., Ltd
+# Copyright 2022-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -99,6 +99,7 @@ from .array_func import (
     tensor_scatter_elements,
     scatter,
     scatter_add,
+    scatter_add_ext,
     scatter_mul,
     scatter_max,
     scatter_min,
@@ -129,6 +130,7 @@ from .array_func import (
     unsorted_segment_sum,
     col2im,
     split,
+    split_ext,
     tensor_split,
     vsplit,
     hsplit,
@@ -136,7 +138,6 @@ from .array_func import (
     index_fill,
     index_select,
     max,
-    argmax,
     min,
     population_count,
     topk,
@@ -163,6 +164,10 @@ from .array_func import (
     sort,
     top_k,
     deepcopy,
+    arange_ext,
+    zeros_like_ext,
+    ones_like_ext,
+    full_ext,
 )
 from .parameter_func import (
     assign,
@@ -175,6 +180,7 @@ from .math_func import (
     addn,
     absolute,
     abs,
+    argmax,
     argmin,
     angle,
     bincount,
@@ -194,6 +200,7 @@ from .math_func import (
     le,
     lerp,
     norm,
+    norm_ext,
     vector_norm,
     matrix_norm,
     round,
@@ -261,6 +268,7 @@ from .math_func import (
     matrix_determinant,
     det,
     linspace,
+    linspace_ext,
     lu_solve,
     matrix_solve,
     maximum,
@@ -464,6 +472,7 @@ from .nn_func import (
     dropout3d,
     dense,
     deformable_conv2d,
+    embedding,
     fast_gelu,
     flip,
     fliplr,
@@ -479,6 +488,7 @@ from .nn_func import (
     interpolate,
     upsample,
     kl_div,
+    layer_norm,
     log_softmax,
     lrn,
     mish,
@@ -499,6 +509,7 @@ from .nn_func import (
     softplus,
     pdist,
     pad,
+    pad_ext,
     prelu,
     mirror_pad,
     nll_loss,
@@ -514,6 +525,7 @@ from .nn_func import (
     conv3d_transpose,
     conv1d,
     conv2d,
+    conv_transpose2d,
     sigmoid,
     logsigmoid,
     relu,
@@ -535,6 +547,7 @@ from .nn_func import (
     msort,
     channel_shuffle,
     hardsigmoid,
+    group_norm,
 )
 from .linalg_func import (
     cond,

@@ -193,19 +193,15 @@ NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) {
 }
 
 NodePtr Emitter::MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) {
-  return UnifyDtypeAndEmit(prim::kPrimMatMul->name(), a, b,
-                           {{"transpose_x1", MakeValue(transpose_a)},
-                            {"transpose_x2", MakeValue(transpose_b)},
-                            {"transpose_a", MakeValue(transpose_a)},
-                            {"transpose_b", MakeValue(transpose_b)}});
+  return Emit(prim::kPrimMatMul->name(), {a, b, Value(transpose_a), Value(transpose_b)});
 }
 
 NodePtr Emitter::BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) {
-  return UnifyDtypeAndEmit(prim::kPrimBatchMatMul->name(), a, b,
-                           {{"adj_x1", MakeValue(transpose_a)},
-                            {"adj_x2", MakeValue(transpose_b)},
-                            {"transpose_a", MakeValue(transpose_a)},
-                            {"transpose_b", MakeValue(transpose_b)}});
+  return Emit(prim::kPrimBatchMatMul->name(), {a, b, Value(transpose_a), Value(transpose_b)});
+}
+
+NodePtr Emitter::MatMulExt(const NodePtr &a, const NodePtr &b) {
+  return UnifyDtypeAndEmit(prim::kPrimMatMulExt->name(), a, b, {});
 }
 
 NodePtr Emitter::Transpose(const NodePtr &node, const NodePtr &perm) {
@@ -325,6 +321,26 @@ NodePtr Emitter::ScalarToTensor(const NodePtr &node, const TypePtr &dtype) {
   MS_EXCEPTION_IF_NULL(scalar);
   auto tensor = mindspore::ScalarToTensor(scalar);
   return EmitValue(tensor);
+}
+
+NodePtr Emitter::BoolNot(const NodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  NodePtr new_node{nullptr};
+  if (abs->isa<abstract::AbstractScalar>()) {
+    auto value_ptr = node->BuildValue();
+    MS_EXCEPTION_IF_NULL(value_ptr);
+    if (!(value_ptr->isa<ValueAny>() || value_ptr->isa<None>())) {
+      auto value = GetValue<bool>(value_ptr);
+      new_node = Value(static_cast<bool>(!value));
+    } else {
+      new_node = Emit("BoolNot", {node});
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "BooNot only support scalar, but got " << abs->ToString();
+  }
+  return new_node;
 }
 
 std::pair<bool, ShapeVector> Emitter::NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis,

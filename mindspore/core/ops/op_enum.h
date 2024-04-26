@@ -40,11 +40,15 @@ enum Group : int64_t { SYNC_BN_GROUP0 = 0 };
 
 enum InterpolationMode : int64_t { BILINEAR = 0, NEAREST = 1 };
 
+enum RoundingMode : int64_t { TRUNC = 1, FLOOR = 2 };
+
 enum NormMode : int64_t { BACKWARD = 0, FORWARD = 1, ORTHO = 2 };
 
 enum GridSamplerPaddingMode : int64_t { ZEROS = 0, BORDER = 1, REFLECTION = 2 };
 
 enum KVCacheAlignMode : int64_t { RIGHT = 0, LEFT = 1 };
+
+enum FASInputLayoutMode : int64_t { BSH = 0, BNSD = 1, SBH = 2, BSND = 3, TND = 4 };
 }  // namespace ops
 }  // namespace mindspore
 #endif  //  MINDSPORE_CORE_OPS_ENUM_H_

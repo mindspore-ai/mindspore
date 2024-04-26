@@ -57,6 +57,10 @@ INSTANTIATE_TEST_CASE_P(TestPowGroup, TestPow,
                           BroadcastOpParams{{-1, 3}, kFloat32, {-1, 1}, kFloat32, {-1, 3}, kFloat32},
                           BroadcastOpParams{{-1, 1, 3}, kFloat32, {1, -1, 3}, kFloat32, {-1, -1, 3}, kFloat32},
                           BroadcastOpParams{{-1, 2, 3}, kFloat32, {2, -1, 3}, kFloat32, {2, 2, 3}, kFloat32},
-                          BroadcastOpParams{{-2}, kFloat32, {2, 3}, kFloat32, {-2}, kFloat32}));
+                          BroadcastOpParams{{-2}, kFloat32, {2, 3}, kFloat32, {-2}, kFloat32},
+                          BroadcastOpParams{{1, 3}, kFloat32, {2, 1}, kFloat16, {2, 3}, kFloat32},
+                          BroadcastOpParams{{1, 3}, kInt64, {2, 1}, kFloat32, {2, 3}, kFloat32},
+                          BroadcastOpParams{{1, 3}, kFloat16, {2, 1}, kUInt8, {2, 3}, kFloat16}
+                          ));
 }  // namespace ops
 }  // namespace mindspore

@@ -131,7 +131,8 @@ class MIND_API DynamicBroadcastGradientArgsInfer : public abstract::OpInferBase 
   }
 };
 
-ShapeArray BroadcastGradientArgsInferValue(const ShapeVector &x_shape, const ShapeVector &y_shape) {
+ShapeArray BroadcastGradientArgsInferValue(const ShapeVector &x_shape, const ShapeVector &y_shape,
+                                           const size_t ignore_offset) {
   ShapeArray bc_axis;
   if (x_shape == y_shape) {
     (void)bc_axis.emplace_back(ShapeVector{});
@@ -143,7 +144,7 @@ ShapeArray BroadcastGradientArgsInferValue(const ShapeVector &x_shape, const Sha
   auto x_size = x_shape.size();
   auto y_size = y_shape.size();
   auto n = std::max(x_size, y_size);
-  for (size_t i = n; i >= 1; i--) {
+  for (size_t i = n; i >= 1 + ignore_offset; i--) {
     auto x_i = x_size < i ? 1 : x_shape[x_size - i];
     auto y_i = y_size < i ? 1 : y_shape[y_size - i];
     const int64_t reduce_idx = SizeToLong(n - i);

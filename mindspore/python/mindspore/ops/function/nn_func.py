@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 
 """Defines nn operators with functional form."""
 from __future__ import absolute_import
-from math import pi, log
+from math import pi, log, floor
 
 from mindspore import context
 from mindspore import log as logger
@@ -29,6 +29,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops.function.math_func import logsumexp
 from mindspore.ops.function.random_func import _get_seed, _set_prim_op_user_data
 from mindspore.common.tensor import Tensor
+from mindspore.common.parameter import Parameter
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore import _checkparam as validator
@@ -38,9 +39,15 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, Fra
 from mindspore.ops.operations.nn_ops import PadV3
 from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
+from mindspore.ops.operations.nn_ops import LayerNormExt
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
+from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
+from mindspore.ops.auto_generate.gen_ops_prim import GroupNorm
+from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op,
+                                         replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
+                                         constant_pad_nd_op)
+from mindspore.ops.auto_generate.gen_ops_prim import embedding_op, Convolution
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -507,7 +514,75 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     return input_x
 
 
-@constexpr
+def avg_pool2d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True,
+                   divisor_override=None):
+    r"""
+        Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D input planes.
+        Typically the input is of shape :math:`(N, C, H_{in}, W_{in})`, outputs regional average in the
+        :math:`(H_{in}, W_{in})`-dimension. Given kernel size :math:`(k_{H}, k_{W})` and `stride` , the operation
+        is as follows.
+
+        .. math::
+            \text{output}(N_i, C_j, h, w) = \frac{1}{k_{H} * k_{W}} \sum_{m=0}^{k_{H}-1} \sum_{n=0}^{k_{W}-1}
+            \text{input}(N_i, C_j, stride[0] \times h + m, stride[1] \times w + n)
+
+        Args:
+            input (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})`.
+            kernel_size (Union[int, tuple[int], list[int]]): The size of kernel used to take the average value.
+                Can be a single number or a tuple (kH, kW).
+            stride (Union[int, tuple[int], list[int]]): The distance of kernel moving. Can be a single number or
+                a tuple (sH, sW). Default value is `kernel_size` .
+            padding (Union(int, tuple[int], list[int])): Implicit zero padding to be added on both sides.
+                Can be a single number or a tuple (padH, padW). Default: 0.
+            ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape.
+                Default: ``False``.
+            count_include_pad (bool): If True, include the zero-padding in the averaging calculation.
+                Default: ``True`` .
+            divisor_override (int): If specified, it will be used as divisor in the averaging calculation,
+                otherwise `kernel_size` will be used. Default: ``None``.
+
+        Returns:
+            Tensor, with shape :math:`(N, C, H_{out}, W_{out})`.
+
+        .. math::
+
+            H_{out} = \frac{H_{in} + 2 \times padding[0] - kernel_size[0]}{stride[0]} + 1
+            W_{out} = \frac{W_{in} + 2 \times padding[1] - kernel_size[1]}{stride[1]} + 1
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            TypeError: If `kernel_size` or `stride` is neither int nor tuple.
+            TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
+            TypeError: If `divisor_override` is not an int.
+            ValueError: If length of shape of `input` is not equal to `4` or `3`.
+            ValueError: If `kernel_size` or `stride` is less than 1.
+            ValueError: If `kernel_size` or `stride` is a tuple whose length is not equal to `2` or `1`.
+            ValueError: If `padding` is neither a int nor a tuple whose length is equal to `2` or `1`.
+            ValueError: If value of `padding` is less than `0`.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, mint
+            >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mindspore.float32)
+            >>> output = mint.avg_pool2d(x, kernel_size=2, stride=1)
+            >>> print(output)
+            [[[[ 2.5   3.5   4.5]
+            [ 6.5   7.5   8.5]]
+            [[14.5  15.5  16.5]
+            [18.5  19.5  20.5]]
+            [[26.5  27.5  28.5]
+            [30.5  31.5  32.5]]]]
+    """
+    if stride is None:
+        stride = kernel_size
+    return _get_cache_prim(ops.auto_generate.AvgPool2D)()(input, kernel_size, stride, padding,
+                                                          ceil_mode, count_include_pad, divisor_override)
+
+
 def _check_avg_pool3d_padding(padding):
     """Check the padding value in avg_pool3d op."""
     if isinstance(padding, int):
@@ -2083,7 +2158,11 @@ def _is_dim_unknown(shape):
 @_primexpr
 def _interploate_make_tuple(rank, value):
     s = tuple_to_tensor_((rank,), mstype.int32)
-    v = Tensor(value)
+    v = None
+    if isinstance(value, int):
+        v = F.scalar_to_tensor(value, mstype.int64)
+    else:
+        v = F.scalar_to_tensor(value, mstype.float32)
     t = fillv2_(s, v)
     out = tensor_to_tuple_(t)
     return out
@@ -2457,6 +2536,265 @@ def interpolate(input,
     return resize_func.get(mode)(input, size, align_corners, scale_factor)
 
 
+
+def interpolate_ext(input,
+                    size=None,
+                    scale_factor=None,
+                    mode="nearest",
+                    align_corners=None,
+                    recompute_scale_factor=None):
+    r"""
+    Samples the input Tensor to the given size or scale_factor by using one of the interpolate algorithms.
+
+    .. note::
+        - In 'linear' mode, backpropagation does not support scenarios where `scale_factor` is not None
+          and `align_corners` is False.
+
+    Args:
+        input (Tensor): Tensor to be resized.
+            Input tensor must be a 3-D, 4-D, or 5-D tensor with shape
+            :math:`(N, C, [optional D], [optional H], W)` , with data type of float.
+        size (Union[int, tuple[int], list[int]], optional): The target size.
+            If size is a tuple or list, its length should be the same as the number of dimensions in input
+            after removing the first two dimensions N, C.
+            One and only one of size and scale_factor can be set to None. Default: ``None`` .
+        scale_factor (Union[float, tuple[float], list[float]], optional): The scale factor of new size of the tensor.
+            If scale_factor is a tuple or list, its length should be the same as the number of dimensions in input
+            after removing the first two dimensions N, C.
+            One and only one of size and scale_factor can be set to None. Default: ``None`` .
+        mode (str): The sampling algorithm.
+            One of 'nearest', 'linear' (3D only), 'bilinear' (4D only), 'trilinear' (5D only), 'bicubic' (4D only),
+            'area', 'nearest-exact'(matches Scikit-Image and PIL nearest neighbours interpolation algorithms and fixes
+            knows issues with `nearest`, 3D and 4D). Default: ``"nearest"`` .
+
+        align_corners (bool): Whether to use corner alignment for coordinate mapping. Assuming a transformation is
+            applied to the input Tensor along the x-axis, the specific calculation formula is as follows:
+
+            .. code-block::
+
+                ori_i = new_length != 1 ? new_i * (ori_length - 1) / (new_length - 1) : 0   # 'align_corners' = True
+
+                ori_i = new_length > 1 ? (new_i + 0.5) * ori_length / new_length - 0.5 : 0  # 'align_corners' = False
+
+            Among them, :math:`ori\_length` and :math:`new\_length` represent the length of the Tensor before and after
+            transformation along the x-axis respectively; :math:`new\_i` represents the coordinate of the i-th element
+            along the x-axis after transformation; :math:`ori\_i` represents
+            the corresponding coordinate of the original
+            data along the x-axis.
+
+            This is only valid for ``'linear'``, ``'bilinear'``, or ``'bicubic'`` modes. Default: ``False`` .
+        recompute_scale_factor (bool, optional): Recalculate `scale_factor`.
+            If True, the parameter `size` will be calculated using the value of the `scale_factor`,
+            and finally scaled using the value of `size`.
+            If False, the value of `size` or `scale_factor` will be used for direct interpolation. Default: ``None`` .
+
+    .. note::
+        The 'nearest-exact' mode is the same as the nearest-neighbor interpolation algorithm used in
+        scikit-image and PIL. The 'nearest' mode produces the same results as the INTER_NEAREST interpolation
+        algorithm used in OpenCV.
+
+    Args Support List and Supported Platforms:
+
+    +---------------+-----------+---------------+--------------+----------------+
+    | mode          | input.dim | align_corners | scale_factor | device         |
+    +===============+===========+===============+==============+================+
+    | nearest       | 3         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 4         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 5         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    | linear        | 3         | √             | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    | bilinear      | 4         | √             | ×            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    | bicubic       | 4         | √             | ×            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    | area          | 3         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 4         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 5         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+    | nearest-exact | 3         | \-            | ×            | Ascend,CPU     |
+    +---------------+-----------+---------------+--------------+----------------+
+    |               | 4         | \-            | ×            | Ascend,CPU     |
+    +---------------+-----------+---------------+--------------+----------------+
+    | trilinear     | 5         | √             | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
+
+    - `-` indicates that there is no such parameter.
+    - `×` indicates that this parameter is not currently supported.
+    - `√` indicates that this parameter is supported.
+
+    Returns:
+        Tensor, resized, whose dimensions and dtype are the same as `input`.
+
+    Raises:
+        TypeError: `input` is not a Tensor.
+        ValueError: Both `size` and `scale_factor` are not empty.
+        ValueError: Both `size` and `scale_factor` are empty.
+        ValueError: When `size` is a tuple or list, its length is not equal to `input.ndim - 2`.
+        ValueError: When `scale_factor` is a tuple or list, its length is not equal to `input.ndim - 2`.
+        ValueError: `mode` is not in the list of supported modes.
+        ValueError: `input.ndim` is not in the list of supported dimensions for the corresponding mode.
+        ValueError: `size` is not empty, `recompute_scale_factor` is not empty.
+        ValueError: `scale_factor` is not in the corresponding list of supported values.
+        ValueError: `align_corners` is not in the corresponding list of supported values.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, mint
+        >>> input = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
+        >>> output = mint.interpolate(input, size=(6,), mode='nearest')
+        >>> print(output)
+            [[[1. 1. 2. 2. 3. 3.]
+              [4. 4. 5. 5. 6. 6.]]]
+    """
+    def run_nearest(x, size, align_corners=None, scale_factor=None):
+        x_rank = F.rank(x)
+        if x_rank == 3:
+            x = _get_cache_prim(ops.auto_generate.UpsampleNearest1D)()(
+                x, size, scale_factor)
+        elif x_rank == 4:
+            x = _get_cache_prim(ops.auto_generate.UpsampleNearest2D)()(
+                x, size, scale_factor)
+        else:
+            x = _get_cache_prim(P.UpsampleNearest3D)()(x, size, scale_factor)
+        return x
+
+    def run_linear(x, size, align_corners=None, scale_factor=None):
+        out = _get_cache_prim(
+            ops.auto_generate.UpsampleLinear1D)()(x, size, scale_factor, align_corners)
+        return out
+
+    def run_bilinear(x, size, align_corners=None, scale_factor=None):
+        out = _get_cache_prim(
+            ops.auto_generate.UpsampleBilinear2D)()(x, size, scale_factor, align_corners)
+        return out
+
+    def run_trilinear(x, size, align_corners=None, scale_factor=None):
+        resize = _get_cache_prim(P.nn_ops.UpsampleTrilinear3D)(align_corners)
+        return resize(x, size, scale_factor)
+
+    def run_bicubic(x, size, align_corners=None, scale_factor=None):
+        resize = _get_cache_prim(P.image_ops.ResizeBicubic)(
+            align_corners=align_corners, half_pixel_centers=not align_corners)
+        x = resize(x, size)
+        return x
+
+    def run_area(x, size, align_corners=None, scale_factor=None):
+        x_rank = F.rank(x)
+        if x_rank == 3:
+            x = F.adaptive_avg_pool1d(x, size[0])
+        elif x_rank == 4:
+            x = F.adaptive_avg_pool2d(x, tuple(size))
+        else:
+            x = F.adaptive_avg_pool3d(x, tuple(size))
+        return x
+
+    def run_nearest_exact(x, size, align_corners=None, scale_factor=None):
+        x_rank = F.rank(x)
+        if x_rank == 3:
+            size = size[:1] + (1,)
+            # For impl of nearest 3D use 4D.
+            x = x.unsqueeze(-1)
+            resize = _get_cache_prim(P.ResizeNearestNeighborV2)(
+                align_corners=False,
+                half_pixel_centers=True)
+            x = resize(x, size)
+            x = _get_cache_prim(P.Squeeze)(-1)(x)
+        if x_rank == 4:
+            resize = _get_cache_prim(P.ResizeNearestNeighborV2)(
+                align_corners=False,
+                half_pixel_centers=True)
+            x = resize(x, size)
+        return x
+
+
+    resize_funcs = {
+        "nearest": run_nearest,
+        "linear": run_linear,
+        "bilinear": run_bilinear,
+        "bicubic": run_bicubic,
+        "trilinear": run_trilinear,
+        "area": run_area,
+        "nearest-exact": run_nearest_exact,
+    }
+
+    # mode check
+    if mode not in resize_funcs:
+        raise ValueError(
+            f"For 'interpolate', 'mode' must be in '{list(resize_funcs)}', but got {mode}"
+        )
+    if mode in ("nearest", "area", "nearest-exact"):
+        if align_corners is not None:
+            raise ValueError("align_corners option can only be set with the "
+                             "interpolating modes: linear | bilinear | bicubic | trilinear"
+                             )
+    else:
+        if align_corners is None:
+            align_corners = False
+
+    # check for size and scale_factor
+    if size is not None and scale_factor is not None:
+        raise ValueError(
+            "For 'interpolate', 'size' and 'scale_factor' cannot be set simultaneously"
+        )
+    if size is not None:
+        if isinstance(size, (list, tuple)):
+            size = size
+        else:
+            rank = F.rank(input) - 2
+            if F.isconstant(size) and F.isconstant(rank):
+                size = tuple([size for _ in range(rank)])
+            else:
+                size = _interploate_make_tuple(rank, size)
+    elif scale_factor is not None:
+        if isinstance(scale_factor, (list, tuple)):
+            scale_factor = scale_factor
+        else:
+            rank = F.rank(input) - 2
+            if F.isconstant(scale_factor) and F.isconstant(rank):
+                scale_factor = tuple([scale_factor for _ in range(rank)])
+            else:
+                scale_factor = _interploate_make_tuple(rank, scale_factor)
+    else:
+        raise ValueError(
+            "For 'interpolate', 'size' and 'scale_factor' cannot be both empty"
+        )
+
+    # "area" mode always requires an explicit size rather than scale factor.
+    if mode == "area" and size is None:
+        recompute_scale_factor = True
+
+    # recompute_scale_factor
+    if recompute_scale_factor is not None and recompute_scale_factor:
+        if size is not None:
+            raise ValueError(
+                "For 'interpolate', it is incorrect to set 'recompute_scale_factor' to True"
+                " after specifying an explicit 'size'.")
+        shape = F.shape(input)
+        if F.isconstant(shape) and F.isconstant(scale_factor):
+            size = tuple([floor(shape[i + 2] * scale_factor[i]) for i in
+                          range(min(len(shape) - 2), len(scale_factor))])
+        else:
+            size = _interpolate_scale_factor_convert_size(shape, scale_factor)
+        scale_factor = None
+
+    # scale_factor
+    if mode in ("bilinear", "bicubic", "nearest-exact"):
+        if scale_factor is not None:
+            raise ValueError("scale_factor option can only be set with the "
+                             "interpolating modes: nearest | linear | area | trilinear"
+                             )
+
+    return resize_funcs.get(mode)(input, size, align_corners, scale_factor)
+
+
 def upsample(input, size=None, scale_factor=None, mode="nearest", align_corners=None, recompute_scale_factor=None):
     r"""
     Alias for :func:`mindspore.ops.interpolate` .
@@ -2762,6 +3100,51 @@ def softplus(input, beta=1, threshold=20): # pylint:disable=redefined-outer-name
     return ops.select(input * beta > threshold, input, op_output)
 
 
+def softplus_ext(input, beta=1, threshold=20): # pylint:disable=redefined-outer-name
+    r"""
+    Applies softplus function to `input` element-wise.
+
+    The softplus function is shown as follows, x is the element of `input` :
+
+    .. math::
+
+        \text{output} = \frac{1}{beta}\log(1 + \exp(\text{beta * x}))
+
+    When :math:`input * beta > threshold`, the implementation converts to the linear function
+    to ensure numerical stability.
+
+    Args:
+        input (Tensor) - Tensor of any dimension.
+            Supported dtypes:
+
+            - Ascend: float16, float32, bfloat16
+
+        beta (number, optional) - The :math:`\beta` value in softplus function. Default: ``1`` .
+        threshold (number, optional) - When :math:`input * beta > threshold`, converting softplus to a linear function.
+            Default: ``20`` .
+
+    Returns:
+        Tensor, with the same type and shape as the `input` .
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If the dtype of `input` is not float16, float32, bfloat16.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, mint
+        >>> input = Tensor(np.array([0.1, 0.2, 30, 25]), mindspore.float32)
+        >>> output = mint.softplus(input)
+        >>> print(output)
+        [0.74439657 0.7981388 30. 25.]
+    """
+    return _get_cache_prim(ops.auto_generate.SoftplusExt)()(input, beta, threshold)
+
+
 def selu(input_x):
     r"""
     Activation function SeLU (Scaled exponential Linear Unit).
@@ -2853,59 +3236,6 @@ def logsigmoid(x):
     output = sigmoid_(x)
     ret = log_(output)
     return ret
-
-
-def dense(input, weight, bias=None):
-    r"""
-    Applies the dense connected operation to the `input`. The dense function is defined as:
-
-    .. math::
-        output = input * weight^{T} + bias
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Args:
-        input (Tensor): Input Tensor of shape :math:`(*, in\_channels)`,
-            where :math:`*` means any number of additional dimensions.
-        weight (Tensor): The weight applied to the input.
-            The shape is :math:`(out\_channels, in\_channels)` or :math:`(in\_channels)`.
-        bias (Tensor, optional): Additive biases to the output.
-            The shape is :math:`(out\_channels)` or :math:`()`. Defaults: ``None``, the `bias` is 0.
-
-    Returns:
-        Output whose shape is determined by the shape of the input and the weight.
-
-    Raises:
-        TypeError: If `input` is not Tensor.
-        TypeError: If `weight` is not Tensor.
-        TypeError: If `bias` is not Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU``  ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor([[-1., 1., 2.], [-3., -3., 1.]], mindspore.float32)
-        >>> weight = Tensor([[-2., -2., -2.], [0., -1., 0.]], mindspore.float32)
-        >>> bias = Tensor([0., 1.], mindspore.float32)
-        >>> output = ops.dense(input, weight, bias)
-        >>> print(output)
-        [[-4.  0.]
-         [10.  4.]]
-    """
-    _check_is_tensor("input", input, "dense")
-    _check_is_tensor("weight", weight, "dense")
-    _check_is_tensor("bias", bias, "dense")
-    weight = ops.t(weight)
-    input = ops.matmul(input, weight)
-    input_shape = input.shape
-    if bias is not None:
-        input = input + bias
-        _check_dense_add_bias_shape(input_shape, input.shape, bias.shape)
-    return input
 
 
 def _check_dense_add_bias_shape(input_shape, output_shape, bias_shape):
@@ -3003,7 +3333,7 @@ def bidense(input1, input2, weight, bias=None):
     output = output.transpose(2, 0, 1) * input2
     output = output.sum(2).swapaxes(0, 1)
     if bias is not None:
-        output = bias_add_(output, bias)
+        output = bias_add_(output.astype(bias.dtype), bias)
     if len(input1_shape) != 2:
         output_shape = input1_shape[:-1] + (-1,)
         output = output.reshape(output_shape)
@@ -3147,7 +3477,102 @@ def pdist(input, p=2.0):
     return pdist_(input)
 
 
-@_primexpr
+def _circular_pad(input_x, padding):
+    """circular pad"""
+    padding = scalar_to_tensor_(padding, const_arg=True)
+    is_expand = False
+    if padding.shape[0] // 2 + 1 == input_x.ndim:
+        input_x = input_x.expand_dims(0)
+        is_expand = True
+    out = PadV3(mode="circular", paddings_contiguous=True)(input_x, padding, None)
+    if is_expand:
+        out = out.squeeze(0)
+    return out
+
+
+def pad_ext(input, pad, mode='constant', value=None):
+    r"""
+    Pads the input tensor according to the pad.
+
+    Args:
+        input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+        pad (tuple[int]): Filling position of pad.
+        mode (str, optional): Pad filling mode, ``'constant'`` , ``'reflect'`` , ``'replicate'``  or ``'circular'`` .
+            Default: ``'constant'`` .
+        value (Union[int, float, None], optional): Valid only in ``'constant'`` mode.
+            Set the pad value in ``'constant'`` mode. If the value is None, 0 is used as the default pad value.
+            Default: ``None`` .
+
+    Returns:
+        Tensor, the tensor after pad.
+
+    Raises:
+        TypeError: If `pad` is not an int of tuple.
+        TypeError: If `input` is not a Tensor.
+        ValueError: If length of `pad` is not even.
+        ValueError: If length of `pad` is greater than 6.
+        ValueError: If `mode` is not ``'constant'`` and `value` not ``None``.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore.mint.nn.functional import pad
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.arange(1 * 2 * 2 * 2).reshape((1, 2, 2, 2)), dtype=ms.float64)
+        >>> output = pad(x, [1, 0, 0, 1], mode='constant', value=6.0)
+        >>> print(output)
+        [[[[6. 0. 1.]
+           [6. 2. 3.]
+           [6. 6. 6.]]
+          [[6. 4. 5.]
+           [6. 6. 7.]
+           [6. 6. 6.]]]]
+        >>> output1 = ops.pad(x, (1, 0, 0, 1), mode='reflect')
+        >>> print(output1)
+        [[[[1. 0. 1.]
+           [3. 2. 3.]
+           [1. 0. 1.]]
+          [[5. 4. 5.]
+           [7. 6. 7.]
+           [5. 4. 5.]]]]
+    """
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For 'pad', the type of 'input' must be Tensor, but got {type(input)}.")
+    out = input
+    if (isinstance(pad, tuple) and not pad):
+        return out
+    if mode == "constant":
+        value = 0 if value is None else value
+        out = constant_pad_nd_op(input, pad, value)
+    elif mode == "circular":
+        out = _circular_pad(input, pad)
+    else:
+        if len(pad) == 2:
+            if mode == "reflect":
+                out = reflection_pad_1d_op(input, pad)
+            elif mode == "replicate":
+                out = replication_pad_1d_op(input, pad)
+            else:
+                raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
+        elif len(pad) == 4:
+            if mode == "reflect":
+                out = reflection_pad_2d_op(input, pad)
+            elif mode == "replicate":
+                out = replication_pad_2d_op(input, pad)
+            else:
+                raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
+        else:
+            if mode == "reflect":
+                out = reflection_pad_3d_op(input, pad)
+            elif mode == "replicate":
+                out = replication_pad_3d_op(input, pad)
+            else:
+                raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
+    return out
+
+
 def _check_pad_inputs(padding):
     """check the input of pad"""
     if len(padding) % 2 != 0:
@@ -5209,6 +5634,75 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     return output
 
 
+def conv_transpose2d(input, weight, bias=None, stride=1, padding=0, output_padding=0, groups=1, dilation=1):
+    r"""
+    Calculates a 2D transposed convolution, which can be regarded as Conv2d for the gradient of the input,
+    also called deconvolution (although it is not an actual deconvolution).
+
+    The input is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
+    where :math:`N` is batch size, :math:`C_{in}` is space dimension,
+    :math:`H_{in}, W_{in}` are the height and width of the feature layer respectively.
+
+    When Conv2d and Conv2dTranspose are initialized with the same parameters, and `pad_mode` is set to 'pad',
+    :math:`dilation * (kernel\_size - 1) - padding` amount of zero will be paded to the height and width
+    directions of the input, they are inverses of each other in regard to the input and output shapes in this case.
+    However, when `stride` > 1, Conv2d maps multiple input shapes to the same output shape. Deconvolutional network
+    can refer to `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_.
+
+    Args:
+        input (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        weight (Tensor): Tensor of shape
+            :math:`(N, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})`, then the size of kernel
+            is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`.
+        bias (Tensor, optional): Bias Tensor with shape :math:`(C_{out})`.
+            When bias is ``None`` , zeros will be used. Default: ``None`` .
+        stride (Union(int, tuple[int]), optional): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: ``1`` .
+        padding (Union(int, tuple[int], list[int]), optional): Implicit paddings on both sides of the input `x`.
+            Can be an integer or a tuple/list with 2 integers.
+        output_padding (Union[int, tuple[int]]): The number of padding on the height and width directions of the output.
+            The data type is an integer or a tuple of two integers. If `output_padding` is an integer,
+            then the bottom and right padding are all equal to `output_padding`. If `output_padding` is a tuple of
+            2 integers, then the bottom and right padding is equal to `output_padding[0]`, `output_padding[1]`
+            respectively.
+        groups (int, optional): Splits `input` into groups. Default: ``1`` .
+        dilation (Union(int, tuple[int]), optional): Gaps between kernel elements.The data type is int or a tuple of
+            2 integers. Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
+            there will be :math:`k - 1` pixels skipped for each sampling location. Its value must
+            be greater than or equal to 1 and bounded by the height and width of the input `x`. Default: ``1`` .
+
+    Returns:
+        Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
+        To see how different pad modes affect the output shape, please refer to
+        :class:`mindspore.nn.Conv2dTranspose` for more details.
+
+
+    Raises:
+        TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
+        TypeError: `groups` is not an int.
+        TypeError: If `bias` is not a Tensor.
+        ValueError: If  the shape of `bias` is not :math:`(C_{out})` .
+        ValueError: If `stride` or `dilation` is less than 1.
+        ValueError: If `padding` is a tuple/list whose length is not equal to 2.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.ones([1, 6, 32, 32]), mindspore.float32)
+        >>> weight = Tensor(np.ones([6, 3, 5, 5]), mindspore.float32)
+        >>> output = ops.conv_transpose2d(x, weight)
+        >>> print(output.shape)
+        (1, 3, 36, 36)
+    """
+    conv = _get_cache_prim(Convolution)(stride, padding, dilation, True, output_padding, groups)
+    return conv(input, weight, bias)
+
+
 def hardsigmoid(input):
     r"""
     Hard sigmoid activation function.
@@ -5467,6 +5961,116 @@ def adaptive_avg_pool1d(input, output_size):
     input = squeeze_(input)
     return input
 
+def layer_norm(input, normalized_shape, weight=None, bias=None, eps=1e-5):
+    r"""Applies the Layer Normalization to the input tensor.
+
+    This operator will normalize the input tensor on given axis. LayerNorm is described in the paper
+    `Layer Normalization <https://arxiv.org/abs/1607.06450>`_.
+
+    .. math::
+        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
+
+    where :math:`\gamma` is weight, :math:`\beta` is bias, :math:`\epsilon` is eps.
+
+    Args:
+        input (Tensor): Tensor of shape :math:`(N, \ldots)`. The input of LayerNorm.
+        normalized_shape (Union(int, tuple[int], list[int])): The normalized shape of `input` for LayerNorm.
+          `normalized_shape` equal to `input_shape[begin_norm_axis:]`, where `begin_norm_axis` represents the axis
+          where normalization begins.
+        weight (Tensor, optional): Learnable parameter :math:`\gamma` . Tensor of shape `normalized_shape`.
+          Default: ``None``, has the same data type with `input`. Initialized to ``1`` when `weight` is None.
+        bias (Tensor, optional): Learnable parameter :math:`\beta` . Tensor of shape `normalized_shape`.
+          Default: ``None``, has the same data type with `input`. Initialized to ``0`` when `bias` is None.
+        eps (float, optional): A value added to the denominator for numerical stability(:math:`\epsilon`).
+          Default: ``1e-5`` .
+
+    Returns:
+        - **output** (Tensor) - The normalized input, has the same type and shape as the `input`.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `normalized_shape` is not an integer, a list or a tuple.
+        TypeError: If `eps` is not a float.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input_x = Tensor(np.array([[1, 2, 3], [1, 2, 3]]), mindspore.float32)
+        >>> normalized_shape = (3,)
+        >>> gamma = Tensor(np.ones(normalized_shape), mindspore.float32)
+        >>> beta = Tensor(np.zeros(normalized_shape), mindspore.float32)
+        >>> eps = 1e-7
+        >>> output = ops.layer_norm(input_x, normalized_shape, gamma, beta, eps)
+        >>> print(output)
+        [[-1.2247448 0. 1.2247448]
+         [-1.2247448 0. 1.2247448]]
+    """
+    if weight is None:
+        weight = ops.ones(normalized_shape, dtype=input.dtype)
+    if bias is None:
+        bias = ops.zeros(normalized_shape, dtype=input.dtype)
+    layer_norm_ext_op = LayerNormExt()
+    return layer_norm_ext_op(input, normalized_shape, weight, bias, eps)[0]
+
+
+def group_norm(input, num_groups, weight=None, bias=None, eps=1e-5):
+    r"""Group Normalization over a mini-batch of inputs.
+
+    Group Normalization is widely used in recurrent neural networks. It applies
+    normalization on a mini-batch of inputs for each single training case as described
+    in the paper `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_. Group Normalization
+    divides the channels into groups and computes within each group the mean and variance for normalization,
+    and it performs very stable over a wide range of batch size. :math:`\gamma` and :math:`\beta` are trainable scale
+    and shift.
+    It can be described using the following formula:
+
+    .. math::
+        y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
+
+    where :math:`\gamma` is `weight`, :math:`\beta` is `bias`, :math:`\epsilon` is `eps`.
+
+    Args:
+        input (Tensor) : The input feature with shape :math:`(N, C, *)` where :math:`*` means, any number of
+            additional dimensions.
+        num_groups (int): The number of groups to be divided along the channel dimension.
+        weight (Tensor, optional): The shape :math:`(C,)`, Default: ``None``, has the same data type with `input`.
+        bias (Tensor, optional): The shape :math:`(C,)`, Default: ``None``, has the same data type with `input`.
+        eps (float, optional): A value added to the denominator for numerical stability. Default: ``1e-5`` .
+
+    Returns:
+        Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `input`.
+
+    Raises:
+        TypeError: If `num_groups` is not an int.
+        TypeError: If `eps` is not a float.
+        ValueError: If `num_groups` is less than 1.
+        ValueError: If `C` (the second parameter of dimensions of `input`) is not divided by `num_groups`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> from mindspore.ops import group_norm
+        >>> x = ms.Tensor(np.ones([1, 2, 4, 4], np.float32))
+        >>> output = group_norm(x, 2)
+        >>> print(output)
+        [[[[0. 0. 0. 0.]
+           [0. 0. 0. 0.]
+           [0. 0. 0. 0.]
+           [0. 0. 0. 0.]]
+          [[0. 0. 0. 0.]
+           [0. 0. 0. 0.]
+           [0. 0. 0. 0.]
+           [0. 0. 0. 0.]]]]
+    """
+    group_norm_op = GroupNorm()
+    return group_norm_op(input, num_groups, weight, bias, eps)[0]
 
 def batch_norm(input_x, running_mean, running_var, weight, bias, training=False, momentum=0.1, eps=1e-5):
     r"""
@@ -7201,6 +7805,60 @@ def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, pse_
                 dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table)
 
 
+def embedding(input, weight, padding_idx=None, max_norm=None, norm_type=2.0, scale_grad_by_freq=False):
+    r"""
+    Retrieve the word embeddings in `weight` using indices specified in `input`.
+
+    .. warning::
+        On Ascend, the behavior is unpredictable when the value of input is invalid.
+
+    Args:
+        input (Tensor): The indices used to lookup in the `weight`. The data type must be mindspore.int32 or
+            mindspore.int64, and the value should be in range `[0, weight.shape[0])`.
+        weight (Parameter): The matrix where to lookup from. The shape must be 2D.
+        padding_idx (int, optional): If the value is not None, the corresponding row of `weight` will not be updated
+            in training. The value should be in range `[-weight.shape[0], weight.shape[0])` if it's not ``None``.
+            Default ``None``.
+        max_norm (float, optional): If not None, firstly get the p-norm result of the `weight` specified by `input`
+            where p is specified by `norm_type`; if the result is larger then `max_norm`, update the `weight`
+            with :math:`\frac{max\_norm}{result+1e^{-7}}` in-place. Default ``None``.
+        norm_type (float, optional): Indicates the value of p in p-norm. Default ``2.0``.
+        scale_grad_by_freq (bool, optional): If ``True`` the gradients will be scaled by the inverse of frequency of
+            the index in `input`. Default ``False``.
+
+    Returns:
+        Tensor, has the same data type as `weight`, the shape is :math:`(*input.shape, weight.shape[1])`.
+
+    Raises:
+        ValueError: If `padding_idx` is out of valid range.
+        ValueError: If the shape of `weight` is invalid.
+        TypeError: `weight` is not a :class:`mindspore.Parameter`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, Parameter, ops
+        >>> input = Tensor([[1, 0, 1, 1], [0, 0, 1, 0]])
+        >>> weight = Parameter(np.random.randn(3, 3).astype(np.float32))
+        >>> output = ops.embedding(input, weight, max_norm=0.4)
+        >>> print(output)
+        [[[ 5.49015924e-02,  3.47811311e-01, -1.89771220e-01],
+          [ 2.09307984e-01, -2.24846993e-02,  3.40124398e-01],
+          [ 5.49015924e-02,  3.47811311e-01, -1.89771220e-01],
+          [ 5.49015924e-02,  3.47811311e-01, -1.89771220e-01]],
+         [[ 2.09307984e-01, -2.24846993e-02,  3.40124398e-01],
+          [ 2.09307984e-01, -2.24846993e-02,  3.40124398e-01],
+          [ 5.49015924e-02,  3.47811311e-01, -1.89771220e-01],
+          [ 2.09307984e-01, -2.24846993e-02,  3.40124398e-01]]]
+    """
+    if not isinstance(weight, Parameter):
+        raise TypeError(f"For Embedding, the weight must be a mindspore.Parameter, but got {type(weight)}.")
+    return embedding_op(input, weight, padding_idx, max_norm, norm_type, scale_grad_by_freq)
+
+
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
@@ -7226,6 +7884,7 @@ __all__ = [
     'dropout1d',
     'dropout2d',
     'dropout3d',
+    'embedding',
     'fast_gelu',
     'fractional_max_pool2d',
     'fractional_max_pool3d',
@@ -7239,6 +7898,7 @@ __all__ = [
     'intopk',
     'interpolate',
     'upsample',
+    'layer_norm',
     'log_softmax',
     'mish',
     'lrn',
@@ -7256,6 +7916,7 @@ __all__ = [
     'softmin',
     'pdist',
     'pad',
+    'pad_ext',
     'prelu',
     'mirror_pad',
     'cross_entropy',
@@ -7271,6 +7932,7 @@ __all__ = [
     'conv3d_transpose',
     'conv1d',
     'conv2d',
+    'conv_transpose2d',
     'sigmoid',
     'logsigmoid',
     'relu',
@@ -7295,6 +7957,7 @@ __all__ = [
     'msort',
     'triplet_margin_loss',
     'channel_shuffle',
-    'hardsigmoid'
+    'hardsigmoid',
+    'group_norm'
 ]
 __all__.sort()

@@ -1,0 +1,15 @@
+#operator bmm_ext
+bmm_ext:
+  args:
+    input:
+      dtype: tensor
+    mat2:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: BatchMatMulExt
+  dispatch:
+    enable: True
+    Ascend: BatchMatMulExtAscend

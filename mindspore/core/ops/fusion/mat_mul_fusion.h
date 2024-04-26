@@ -17,19 +17,18 @@
 #ifndef MINDSPORE_CORE_OPS_FUSION_MAT_MUL_FUSION_H_
 #define MINDSPORE_CORE_OPS_FUSION_MAT_MUL_FUSION_H_
 #include <memory>
-#include "mindapi/base/types.h"
 #include "ops/base_operator.h"
-#include "ops/mat_mul.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMatMulFusion = "MatMulFusion";
 /// \brief Multiplies matrix a and matrix b. Refer to Python API @ref mindspore.ops.MatMul for more details.
-class MIND_API MatMulFusion : public MatMul {
+class MIND_API MatMulFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatMulFusion);
   /// \brief Constructor.
-  MatMulFusion() : MatMul(kNameMatMulFusion) {}
+  MatMulFusion() : BaseOperator(kNameMatMulFusion) {}
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MatMulFusion for the inputs.
   void Init(bool transpose_a = false, bool transpose_b = false, const ActivationType &activation_type = NO_ACTIVATION);
   /// \brief Method to set activation type.
@@ -40,6 +39,18 @@ class MIND_API MatMulFusion : public MatMul {
   ///
   /// \return activation type.
   ActivationType get_activation_type() const;
+  /// \brief Set transpose_a.
+  void set_transpose_a(bool transpose_a);
+  /// \brief Set transpose_b.
+  void set_transpose_b(bool transpose_b);
+  /// \brief Get transpose_a.
+  ///
+  /// \return transpose_a.
+  bool get_transpose_a() const;
+  /// \brief Get transpose_b.
+  ///
+  /// \return transpose_b.
+  bool get_transpose_b() const;
 };
 }  // namespace ops
 }  // namespace mindspore

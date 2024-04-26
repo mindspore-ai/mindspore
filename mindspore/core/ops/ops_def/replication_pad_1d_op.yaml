@@ -1,0 +1,17 @@
+#operator replication_pad_1d
+replication_pad_1d:
+  args:
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReplicationPad1D
+  dispatch:
+    enable: True

@@ -1,0 +1,17 @@
+#operator reflection_pad_2d
+reflection_pad_2d:
+  args:
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReflectionPad2D
+  dispatch:
+    enable: True

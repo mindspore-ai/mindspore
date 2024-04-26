@@ -18,7 +18,6 @@
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/activation.h"
 #include "ops/leaky_relu.h"
-#include "ops/tanh.h"
 #include "ops/ops_func_impl/hswish.h"
 #include "ops/softplus.h"
 using mindspore::ops::kActivationType;

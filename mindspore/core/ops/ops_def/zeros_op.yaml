@@ -1,0 +1,18 @@
+#operator zeros
+zeros:
+    args:
+        size:
+            dtype: tuple[int]
+            type_cast: int, list[int], tensor
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        y:
+            dtype: tensor
+    class:
+        disable: true
+    dispatch:
+        enable: True
+        Ascend: ZerosAscend

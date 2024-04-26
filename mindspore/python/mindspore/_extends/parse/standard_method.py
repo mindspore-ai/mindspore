@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ itemsize_map = {mstype.bool_: 1, mstype.int8: 1, mstype.uint8: 1,
 nan_tensor = Tensor(float('nan'), dtype=mstype.float32)
 
 
-def mean(x, axis=None, keep_dims=False):
+def mean(x, axis=None, keep_dims=False, dtype=None):
     """
     Reduces a dimension of a tensor by averaging all elements in the dimension.
 
@@ -78,6 +78,7 @@ def mean(x, axis=None, keep_dims=False):
         axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
             when axis is None or empty tuple, reduce all dimensions. Default: ().
         keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
+        dtype (:class:`mindspore.dtype`): The desired data type of returned Tensor. Default: ``None``.
 
     Returns:
         Tensor, has the same data type as input tensor.
@@ -93,7 +94,7 @@ def mean(x, axis=None, keep_dims=False):
         >>> print(output)
         2.0
     """
-    return F.mean(x, axis, keep_dims)
+    return F.mean(x, axis, keep_dims, dtype)
 
 
 def ndimension(x):
@@ -101,7 +102,7 @@ def ndimension(x):
     return len(x.shape)
 
 
-def prod(input, axis=None, keep_dims=False):
+def prod(input, axis=None, keep_dims=False, dtype=None):
     """
     Reduces a dimension of a tensor by product all elements in the dimension.
 
@@ -110,6 +111,7 @@ def prod(input, axis=None, keep_dims=False):
         axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
             when axis is None or empty tuple, reduce all dimensions. Default: ``None``.
         keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
+        dtype (:class:`mindspore.dtype`): The desired data type of returned Tensor. Default: ``None`` .
 
     Returns:
         Tensor, has the same data type as input tensor.
@@ -125,7 +127,7 @@ def prod(input, axis=None, keep_dims=False):
         >>> print(output)
         6.0
     """
-    return F.prod(input, axis, keep_dims)
+    return F.prod(input, axis, keep_dims, dtype)
 
 
 def addcdiv(input, tensor1, tensor2, value=1):
@@ -2421,11 +2423,11 @@ def float_func(*data):
             tensor_shape = F.shape(data)
             tensor_shape_len = len(tensor_shape)
             if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
-                data = F.cast(data, mstype.float64)
+                data = F.cast(data, mstype.float32)
                 return TensorToScalar()(data)
             raise ValueError(f"Can not convert Tensor with more than one element to Scalar, "
                              f"while the data's shape is: {tensor_shape}")
-        return F.scalar_cast(data, mstype.float64)
+        return F.scalar_cast(data, mstype.float32)
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error(
             "float() does not support sparse tensor input.")

@@ -1,0 +1,20 @@
+#operator clamp
+clamp_scalar:
+    args:
+        input:
+            dtype: tensor
+        min:
+            dtype: number
+            default: None
+        max:
+            dtype: number
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: ClampScalar
+    dispatch:
+        enable: True
+        CPU: ClampScalarCPU
+        GPU: ClampScalarGPU

@@ -34,7 +34,8 @@ from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad, AsinGrad, 
                              GatherDGradV2, ResizeBilinearGrad, ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
                              SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad, GridSampler2DGrad,
                              ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad, ResizeNearestNeighborGrad, LayerNormGrad,
-                             HShrinkGrad, LayerNormGradGrad, SiLUGrad, MaximumGrad, MaximumGradGrad)
+                             HShrinkGrad, LayerNormGradGrad, SiLUGrad, MaximumGrad, MaximumGradGrad,
+                             FlashAttentionScoreGrad, UpsampleTrilinear3DGrad, UpsampleNearest3DGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):
@@ -1534,40 +1535,6 @@ class RandomGammaGrad(Primitive):
         self.add_prim_attr("side_effect_hidden", True)
 
 
-class UpsampleNearest3DGrad(Primitive):
-    """
-    Upsample the 3-D gradient data  with the nearest neighbor interpolation algorithm.
-
-    Note:
-        Only one of 'scales' and 'output_size' can be specified, and it is an error if both are specified.
-
-    Inputs:
-        - **dy** (Tensor) - Tensor of shape [N, C, D, H, W], Must be one of the following types:
-            float16, float32, float64.
-        - **input_size** (listInt): An required listInt, which contain 5 elements:
-            [min_batch, channels, depth, height, width].
-            Must: input_size[0] == dy_tensor_size[0], input_size[1] == dy_tensor_size[1].
-        - **output_size** (listInt): An optional listInt. Default: ``None``.
-            It contains 3 elements: depth, height, width, whose elements should be the same as `dy`.
-            Must:
-            dy_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0],
-            dy_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1],
-            dy_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2].
-        - **scales** (listFloat): An optional listFloat. Default: ``None``.
-            The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
-            The number of elements of 'scales' should be the same as the rank of `dy`.
-
-    Outputs:
-        - **dx**- (Tensor) - A 5-D tensor. Has the same type as `dy`, shape depends on `input_size`.
-    """
-    @prim_attr_register
-    def __init__(self):
-        """Initialize UpsampleNearest3DGrad."""
-        self.init_prim_io_names(
-            inputs=['dy', 'input_size', 'output_size', 'scales'],
-            outputs=['dx'])
-
-
 class ROIAlignGrad(Primitive):
     """
     ROIAlignGrad operator.
@@ -2499,45 +2466,6 @@ class MultiMarginLossGrad(Primitive):
         return super().__call__(y_grad, x, target, weight)
 
 
-class UpsampleTrilinear3DGrad(Primitive):
-    r"""
-    Upsample the 3-D gradient data with trilinear interpolation algorithm.
-
-    Note:
-        One of 'scales' and 'output_size' must be specified. And it is an error if both are specified.
-
-    Args:
-        align_corners (bool): An optional bool. Default: ``False``.
-
-    Inputs:
-        - **dy** (Tensor) - Tensor of shape [N, C, D, H, W]. Must be one of the following types:
-          float16, float32, float64.
-        - **input_size** (Union[tuple[int], list[int]]): An required listInt which contains 5 elements:
-          [batch, channels, depth, height, width]. Must:
-          input_size[0] == dy_tensor_size[0]
-          input_size[1] == dy_tensor_size[1].
-        - **output_size** (Union[tuple[int], list[int]]): An optional listInt. Default: ``None``.
-          It contains 3 elements: depth, height, width, whose elements should be the same as `dy`. Must:
-          dy_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]
-          dy_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]
-          dy_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2].
-        - **scales** (Union[tuple[float], list[float]]): An optional listFloat. Default: ``None``.
-          The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
-          The number of elements of 'scales' should be the same as the rank of input `dy`.
-
-    Outputs:
-        - **dx** (Tensor) - A Tensor with shape depending on intput_size, and its' dtype is the same as `dy`.
-    """
-    @prim_attr_register
-    def __init__(self, align_corners=False):
-        """Initialize UpsampleTrilinear3DGrad."""
-        self.init_prim_io_names(
-            inputs=['dy', 'input_size', 'output_size', 'scales'],
-            outputs=['dx'])
-        self.align_corners = align_corners
-        self.add_prim_attr('align_corners', self.align_corners)
-
-
 class SparseSegmentMeanGrad(Primitive):
     """
     Compute gradients for SparseSegmentMeanGrad operation.
@@ -3129,39 +3057,6 @@ class WKVGrad(Primitive):
         """Initialize WKVGrad."""
         self.init_prim_io_names(inputs=["time_first", "time_decay", "key", "value", "gy"],
                                 outputs=["gw", "gu", "gk", "gv"])
-
-
-class FlashAttentionScoreGrad(Primitive):
-    r"""
-    Calculates the gradient of FlashAttentionScore operation.
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Supported Platforms:
-        ``Ascend``
-    """
-    @prim_attr_register
-    def __init__(self, head_num, keep_prob=1.0, scale_value=1.0, pre_tokens=65536, next_tokens=65536, inner_precise=1,
-                 input_layout='BSH', sparse_mode=0):
-        """Initialize FlashAttentionScoreGrad."""
-        validator.check_value_type('head_num', head_num, [int], self.name)
-        validator.check_value_type('keep_prob', keep_prob, [int, float], self.name)
-        validator.check_float(keep_prob, 0.0, validator.GE, "keep_prob", self.name)
-        validator.check_float(keep_prob, 1.0, validator.LE, "keep_prob", self.name)
-        validator.check_value_type('scale_value', scale_value, [float], self.name)
-        validator.check_value_type('pre_tokens', pre_tokens, [int], self.name)
-        validator.check_value_type('next_tokens', next_tokens, [int], self.name)
-        validator.check_value_type('inner_precise', inner_precise, [int], self.name)
-        validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
-        if inner_precise not in [0, 1]:
-            raise ValueError(f"Attribute 'inner_precise' must be either 0 or 1, but got {inner_precise}")
-        validator.check_value_type('input_layout', input_layout, [str], self.name)
-        if input_layout not in ["BSH", "BNSD"]:
-            raise ValueError(f"Attribute 'input_layout' must be either 'BSH' or 'BNSD', but got {input_layout}")
-        self.init_prim_io_names(inputs=['query', 'key', 'value', 'dy', 'pse_shift', 'drop_mask', "padding_mask",
-                                        'attn_mask', 'softmax_max', 'softmax_sum', 'softmax_out', 'attention_in',
-                                        'prefix'],
-                                outputs=['dq', 'dk', 'dv', 'dpse'])
 
 
 class RmsNormGrad(Primitive):

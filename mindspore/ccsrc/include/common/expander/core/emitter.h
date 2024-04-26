@@ -101,6 +101,7 @@ class COMMON_EXPORT Emitter {
   NodePtr Mod(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit("Mod", lhs, rhs); }
   NodePtr Pow(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(kPowOpName, lhs, rhs); }
   NodePtr MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false);
+  NodePtr MatMulExt(const NodePtr &a, const NodePtr &b);
   NodePtr BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false);
   NodePtr Maximum(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(kMaximumOpName, lhs, rhs); }
   NodePtr Minimum(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(kMinimumOpName, lhs, rhs); }
@@ -143,6 +144,8 @@ class COMMON_EXPORT Emitter {
   NodePtr LogicalAnd(const NodePtr &lhs, const NodePtr &rhs) { return Emit("LogicalAnd", {lhs, rhs}); }
   NodePtr LogicalOr(const NodePtr &lhs, const NodePtr &rhs) { return Emit("LogicalOr", {lhs, rhs}); }
   NodePtr LogicalNot(const NodePtr &x) { return Emit("LogicalNot", {x}); }
+
+  NodePtr BoolNot(const NodePtr &node);
 
   NodePtr OnesLike(const NodePtr &x) { return Emit("OnesLike", {x}); }
   NodePtr UnsortedSegmentSum(const NodePtr &x, const NodePtr &segment_ids, const NodePtr &num_segments) {
@@ -245,6 +248,19 @@ class COMMON_EXPORT Emitter {
   }
   virtual NodePtr SparseSoftmaxCrossEntropyWithLogits(const NodePtrList &inputs, const DAttr &attrs, const NodePtr &out,
                                                       const NodePtr &dout, bool is_graph_mode);
+
+  // By comparing x with itself, test whether x is NaN
+  inline NodePtr IsNanFunc(const NodePtr &x) { return NotEqual(x, x); }
+
+  NodePtr Zeros(const NodePtr &x) {
+    auto x_shape = x->shape();
+    if (!x_shape.empty() && !IsDynamicRank(x_shape)) {
+      // There are currently some problems under 0d that need to be fixed later.
+      return Emit("Zeros", {Shape(x), Value<int64_t>(x->dtype()->type_id())});
+    }
+    return ZerosLike(x);
+  }
+
   /// \brief Emit a value node
   template <typename T>
   NodePtr Value(const T &value) {

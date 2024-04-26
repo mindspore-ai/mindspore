@@ -72,7 +72,7 @@ def test_hal_stream_query():
     a = Tensor(np.ones([5000, 5000]), ms.float32)
     s1 = ms.hal.Stream()
     with ms.hal.StreamCtx(s1):
-        ops.matmul(a, a)
+        ops.bmm(a, a)
         assert not s1.query()
 
     s1.synchronize()
@@ -289,7 +289,7 @@ def test_hal_none_streams():
     assert is_curr_stream_same is True
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard

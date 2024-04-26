@@ -20,7 +20,7 @@
 #include <vector>
 #include <memory>
 #include <map>
-#include "ops/tril.h"
+#include "ops/ops_func_impl/tril.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 

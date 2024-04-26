@@ -78,3 +78,12 @@ class GradOfAllInputsAndParams(_Grad):
         super().__init__(grad=GradOperation(get_all=True, get_by_list=True,
                                             sens_param=sens_param),
                          network=network, wrt_params=True, real_inputs_count=real_inputs_count)
+
+class GradOfFirstInput(_Grad):
+    """
+    get grad of first input
+    """
+
+    def __init__(self, network, sens_param=True, real_inputs_count=None):
+        super().__init__(grad=GradOperation(sens_param=sens_param),
+                         network=network, real_inputs_count=real_inputs_count)

@@ -1,0 +1,14 @@
+ones_like_ext:
+    description: |
+        Returns a Tensor with a value of 1 and its shape and data type is the same as the input.
+
+        Refer to :func:`mindspore.ops.ones_like` for more details.
+
+        Args:
+            - **input_x** (Tensor) - Tensor of any dimension.
+
+        Returns:
+            Tensor, has the same shape and type as `input_x` but filled with ones.
+
+        Supported Platforms:
+            ``Ascend``

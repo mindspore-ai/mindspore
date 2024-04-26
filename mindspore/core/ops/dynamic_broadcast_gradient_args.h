@@ -31,7 +31,8 @@ class MIND_API DynamicBroadcastGradientArgs : public BaseOperator {
   void Init() const {}
 };
 
-MIND_API ShapeArray BroadcastGradientArgsInferValue(const ShapeVector &x_shape, const ShapeVector &y_shape);
+MIND_API ShapeArray BroadcastGradientArgsInferValue(const ShapeVector &x_shape, const ShapeVector &y_shape,
+                                                    size_t ignore_offset = 0UL);
 }  // namespace ops
 }  // namespace mindspore
 

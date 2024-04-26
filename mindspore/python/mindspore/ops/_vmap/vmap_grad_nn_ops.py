@@ -711,8 +711,7 @@ def get_grid_sampler_grad_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(G.UpsampleNearest3DGrad)
-@vmap_rules_getters.register(G.UpsampleTrilinear3DGrad)
-def get_upsample_grad_vmap_rule(prim, axis_size):
+def get_upsample_nearesst3d_grad_vmap_rule(prim, axis_size):
     """VmapRule for `UpsampleNearest3DGrad` and `UpsampleTrilinear3DGrad`."""
     cdhw_reverse_index = -4
 
@@ -739,6 +738,42 @@ def get_upsample_grad_vmap_rule(prim, axis_size):
         new_isize = (real_in_shape[0],) + isize[1:]
 
         out = prim(grad, new_isize, osize, scales)
+        out_shape = F.shape(out)
+        real_out_shape = grad_shape[:cdhw_reverse_index] + out_shape[cdhw_reverse_index:]
+        out = F.reshape(out, real_out_shape)
+        return out, 0
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.UpsampleTrilinear3DGrad)
+def get_upsample_trilinear3d_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `UpsampleNearest3DGrad` and `UpsampleTrilinear3DGrad`."""
+    cdhw_reverse_index = -4
+
+    def vmap_rule(grad_bdim, isize_bdim, osize_bdim, scales_bdim, align_corners_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, grad_bdim)
+        if is_all_none:
+            return result
+
+        grad, grad_dim = grad_bdim
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        grad_shape = F.shape(grad)
+        input_shape = (-1,) + grad_shape[cdhw_reverse_index:]
+        grad = F.reshape(grad, input_shape)
+        real_in_shape = F.shape(grad)
+
+        isize, isize_dim = isize_bdim
+        osize, osize_dim = osize_bdim
+        scales, scales_dim = scales_bdim
+        align_corners, align_corners_dim = align_corners_bdim
+        if isize_dim is not None or osize_dim is not None or scales_dim is not None or align_corners_dim is not None:
+            _raise_value_error(
+                "The source axis of `input_size`, `output_size` and `scales` must be None, but got {0}, {1} and {2}."
+                .format(isize_dim, osize_dim, scales_dim))
+        # update batch dimension of input_size
+        new_isize = (real_in_shape[0],) + isize[1:]
+
+        out = prim(grad, new_isize, osize, scales, align_corners)
         out_shape = F.shape(out)
         real_out_shape = grad_shape[:cdhw_reverse_index] + out_shape[cdhw_reverse_index:]
         out = F.reshape(out, real_out_shape)

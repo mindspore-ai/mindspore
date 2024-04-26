@@ -71,6 +71,10 @@ inline std::unordered_map<std::string, int64_t> GetStringToFormatMap() {
 }
 REG_STRING_TO_ENUM(format, GetStringToFormatMap())
 
+// RoundingMode
+StrToEnumMap StrToRoundingModeMap = {{"FLOOR", RoundingMode::FLOOR}, {"TRUNC", RoundingMode::TRUNC}};
+REG_STRING_TO_ENUM(rounding_mode, StrToRoundingModeMap)
+
 // PadMode
 StrToEnumMap StrToPadModeMap = {
   {"PAD", PadMode::PAD}, {"SAME", PadMode::SAME}, {"VALID", PadMode::VALID}, {"FULL", PadMode::FULL}};
@@ -151,6 +155,11 @@ REG_STRING_TO_ENUM(grid_sampler_padding_mode, StrToGridSamplerPaddingMode)
 REG_STRING_TO_ENUM(k_v_cache_align_mode,
                    StrToEnumMap{{"LEFT", KVCacheAlignMode::LEFT}, {"RIGHT", KVCacheAlignMode::RIGHT}})
 
+REG_STRING_TO_ENUM(fas_input_layout_mode, StrToEnumMap{{"BSH", FASInputLayoutMode::BSH},
+                                                       {"BNSD", FASInputLayoutMode::BNSD},
+                                                       {"SBH", FASInputLayoutMode::SBH},
+                                                       {"BSND", FASInputLayoutMode::BSND},
+                                                       {"TND", FASInputLayoutMode::TND}})
 }  // namespace
 
 int64_t StringToEnumImpl(const std::string &op_name, const std::string &arg_name, const std::string &enum_string) {

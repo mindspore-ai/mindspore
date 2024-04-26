@@ -35,12 +35,13 @@ from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import COOTensor as COOTensor_
-from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
+from mindspore._c_expression import pyboost_zeros, pyboost_ones
+from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax, ArgMaxExt,
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
                              CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, ScalarToTensor,
-                             BroadcastTo, StridedSlice, Select)
-from .manually_defined import Rank, Shape, Tile, Cast
+                             BroadcastTo, StridedSlice, Select, TopkExt)
+from .manually_defined import Rank, Shape, Tile, Cast, Ones, Zeros
 from ..auto_generate import ArgMaxWithValue, ArgMinWithValue
 
 class _ScatterOp(PrimitiveWithInfer):
@@ -1287,81 +1288,6 @@ class FillV2(PrimitiveWithCheck):
             out = Tensor(shape=dims, dtype=x.dtype, init=init_func)
             return out
         return Tensor(np.full(dims, x.asnumpy()))
-
-
-class Ones(Primitive):
-    r"""
-    Creates a tensor filled with value ones.
-
-    Refer to :func:`mindspore.ops.ones` for more details.
-
-    Inputs:
-        - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
-        - **type** (:class:`mindspore.dtype`) - The specified type of output tensor.
-
-    Outputs:
-        Tensor, has the same type and shape as input shape value.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> ones = ops.Ones()
-        >>> output = ones((2, 2), mindspore.float32)
-        >>> print(output)
-        [[1. 1.]
-         [1. 1.]]
-        >>> output = ones((3, 3), mindspore.float32)
-        >>> print(output)
-        [[1. 1. 1.]
-         [1. 1. 1.]
-         [1. 1. 1.]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Ones"""
-
-
-class Zeros(Primitive):
-    r"""
-    Zeros will be deprecated in the future. Please use class `mindspore.ops.zeros` instead.
-
-    Creates a tensor filled with value zeros.
-
-    Creates a tensor with shape described by the first argument and
-    fills it with value zeros in type of the second argument.
-
-    Inputs:
-        - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
-        - **type** (mindspore.dtype) - The specified type of output tensor.
-
-    Outputs:
-        Tensor, has the same type and shape as input shape value.
-
-    Raises:
-        TypeError: If `shape` is neither int nor tuple.
-        TypeError: If `shape` is a tuple whose elements are not all int.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> zeros = ops.Zeros()
-        >>> output = zeros((2, 2), mindspore.float32)
-        >>> print(output)
-        [[0. 0.]
-         [0. 0.]]
-
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Zeros"""
 
 
 class TupleToArray(PrimitiveWithInfer):
@@ -5190,8 +5116,6 @@ class TensorScatterElements(Primitive):
         - **indices** (Tensor) - The index of `input_x` to do scatter operation whose data type must be int32 or
           int64. It has the same rank as `data`. And accepted range is [-s, s) where s is the size along axis.
         - **updates** (Tensor) - The tensor doing the scatter operation with `data`,
-          it has the same shape and type as `data`.
-        - **update** (Tensor) - The tensor doing the scatter operation with `data`,
           it has the same type as `data` and the same shape as `indices`.
 
     Outputs:
@@ -6338,7 +6262,8 @@ class TopK(Primitive):
           - GPU: float16, float32.
           - CPU: all numeric types.
 
-        - **k** (int) - The number of top elements to be computed along the last dimension, constant input is needed.
+        - **k** (Union(Tensor, int)) - The number of top elements to be computed along the last dimension.
+          If `k` is a Tensor, the supported dtype is int32 and it should be 0-D or 1-D with shape :math:`(1, )` .
 
     Outputs:
         A tuple consisting of `values` and `indexes`.

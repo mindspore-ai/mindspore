@@ -26,9 +26,8 @@ from mindspore.ops.auto_generate import gen_arg_handler as handler
 from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore.common._stub_tensor import _convert_stub
 from mindspore._c_expression import typing
-from mindspore._c_expression import pyboost_cast
 from mindspore._c_expression import Tensor as Tensor_
-from mindspore._c_expression import pyboost_tile
+from mindspore._c_expression import pyboost_cast, pyboost_tile, pyboost_zeros, pyboost_ones
 from mindspore.common import dtype as mstype
 from mindspore.common._utils import is_shape_unknown
 from mindspore import _checkparam as validator
@@ -36,6 +35,10 @@ from mindspore.ops.operations.manually_defined._inner import ScalarCast
 from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum
 from mindspore.common.initializer import Zero
 from mindspore.common.parameter import Parameter
+from mindspore.ops.auto_generate.gen_ops_prim import FlashAttentionScore
+
+
+dtype_to_type_id = DtypeToEnum()
 
 
 dtype_to_type_id = DtypeToEnum()
@@ -1249,6 +1252,54 @@ def _infer_value_for_Reduce(input_x, axis, keep_dims, prim_name):
     return value
 
 
+def _infer_value_for_ReduceExtand(input_x, axis, keep_dims, dtype, prim_name):
+    """Infer value for Common ReduceExtand op."""
+    value = None
+    if input_x is not None:
+        prim_map = {
+            'MeanExt': np.mean,
+            'SumExt': np.sum,
+            'ProdExt': np.prod,
+        }
+        np_reduce_extand_func = prim_map.get(prim_name, None)
+
+        if np_reduce_extand_func is not None:
+            value = input_x.asnumpy()
+            if isinstance(axis, int):
+                pass
+            elif axis:
+                axis = tuple(set(axis))
+            else:
+                axis = tuple(range(len(value.shape)))
+            if dtype is not None:
+                np_dtype = mstype.dtype_to_nptype(typing.type_id_to_type(dtype))
+                value = np_reduce_extand_func(value, axis, dtype=np_dtype, keepdims=keep_dims)
+            else:
+                value = np_reduce_extand_func(value, axis, keepdims=keep_dims)
+
+            value = np.array(value)
+            value = Tensor(value)
+    return value
+
+
+def _infer_value_for_MaxMin(input_x, prim_name):
+    """Infer value for Max/Min op."""
+    value = None
+    if input_x is not None:
+        prim_map = {
+            'Max': np.max,
+            'Min': np.min,
+        }
+        np_reduce_func = prim_map.get(prim_name, None)
+
+        if np_reduce_func is not None:
+            value = input_x.asnumpy()
+            value = np_reduce_func(value, None, keepdims=False)
+            value = np.array(value)
+            value = Tensor(value)
+    return value
+
+
 def infer_value_for_Cast(x, dst_type_enum):
     """Infer value for Cast op."""
     if x is None:
@@ -1279,10 +1330,19 @@ def infer_value_for_ReduceMax(input_x, axis, keep_dims):
     """Infer value for ReduceMax op."""
     return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceMax')
 
+def infer_value_for_Max(input_x):
+    """Infer value for Max op."""
+    return _infer_value_for_MaxMin(input_x, 'Max')
+
 
 def infer_value_for_ReduceMin(input_x, axis, keep_dims):
     """Infer value for ReduceMin op."""
     return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceMin')
+
+
+def infer_value_for_Min(input_x):
+    """Infer value for Max op."""
+    return _infer_value_for_MaxMin(input_x, 'Min')
 
 
 def infer_value_for_ReduceProd(input_x, axis, keep_dims):
@@ -1303,6 +1363,21 @@ def infer_value_for_ReduceAll(input_x, axis, keep_dims):
 def infer_value_for_ReduceAny(input_x, axis, keep_dims):
     """Infer value for ReduceAny op."""
     return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceAny')
+
+
+def infer_value_for_MeanExt(input_x, axis, keep_dims, dtype):
+    """Infer value for MeanExt op."""
+    return _infer_value_for_ReduceExtand(input_x, axis, keep_dims, dtype, 'MeanExt')
+
+
+def infer_value_for_SumExt(input_x, axis, keep_dims, dtype):
+    """Infer value for SumExt op."""
+    return _infer_value_for_ReduceExtand(input_x, axis, keep_dims, dtype, 'SumExt')
+
+
+def infer_value_for_ProdExt(input_x, axis, keep_dims, dtype):
+    """Infer value for ProdExt op."""
+    return _infer_value_for_ReduceExtand(input_x, axis, keep_dims, dtype, 'ProdExt')
 
 
 def infer_value_for_Diag(input_x):
@@ -1389,3 +1464,250 @@ def infer_value_for_Reshape(x, shape):
         else:
             out = Tensor(x.asnumpy().reshape(shape))
     return out
+
+
+class Ones(Primitive):
+    r"""
+    Creates a tensor filled with value ones.
+
+    Refer to :func:`mindspore.ops.ones` for more details.
+
+    .. warning::
+        For argument `size`, Tensor type input will be deprecated in the future version.
+
+    Inputs:
+        - **shape** (Union[tuple[int], List[int], int, Tensor]) - The specified shape of output tensor.
+        - **type** (:class:`mindspore.dtype`) - The specified type of output tensor.
+
+    Outputs:
+        Tensor, whose dtype and size are defined by input.
+
+    Raises:
+        TypeError: If `shape` is neither an int nor an tuple/list/Tensor of int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
+        >>> ones = ops.Ones()
+        >>> output = ones((2, 2), mindspore.float32)
+        >>> print(output)
+        [[1. 1.]
+         [1. 1.]]
+        >>> output = ones((3, 3), mindspore.float32)
+        >>> print(output)
+        [[1. 1. 1.]
+         [1. 1. 1.]
+         [1. 1. 1.]]
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('size'),
+        sig.make_sig('type', default=None),
+    )
+
+    @prim_arg_register
+    def __init__(self):
+        pass
+
+    def __call__(self, size, type=None):
+        return _convert_stub(pyboost_ones(self, [size, type if type is None \
+            else handler.dtype_to_type_id('Ones', 'type', type)]))
+
+
+class Zeros(Primitive):
+    r"""
+    Zeros will be deprecated in the future. Please use class `mindspore.ops.zeros` instead.
+
+    Creates a tensor filled with value zeros.
+
+    Creates a tensor with shape described by the first argument and
+    fills it with value zeros in type of the second argument.
+
+    .. warning::
+        For argument `size`, Tensor type input will be deprecated in the future version.
+
+    Inputs:
+        - **shape** (tuple[int], List[int], int, Tensor) - The specified shape of output tensor.
+        - **type** (mindspore.dtype) - The specified type of output tensor.
+
+    Outputs:
+        Tensor, whose dtype and size are defined by input.
+
+    Raises:
+        TypeError: If `shape` is neither an int nor an tuple/list/Tensor of int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
+        >>> zeros = ops.Zeros()
+        >>> output = zeros((2, 2), mindspore.float32)
+        >>> print(output)
+        [[0. 0.]
+         [0. 0.]]
+
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('size'),
+        sig.make_sig('type', default=None),
+    )
+
+    @prim_arg_register
+    def __init__(self):
+        pass
+
+    def __call__(self, size, type=None):
+        return _convert_stub(pyboost_zeros(self, [size, type if type is None else \
+            handler.dtype_to_type_id('Zeros', 'type', type)]))
+
+
+def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mask=None, padding_mask=None,
+                          attn_mask=None, prefix=None, actual_seq_qlen=None, actual_seq_kvlen=None, keep_prob=1.0,
+                          scalar_value=1.0, pre_tokens=2147483647, next_tokens=2147483647, inner_precise=0,
+                          input_layout='BSH', sparse_mode=0):
+    r"""
+    The interface is not open to the public, just for internal use,
+
+    .. math::
+        \begin{array}{ll} \\
+            y = Dropout(Softmax(Mask(scale_value \mul (real_shift + query * key), attn_mask), -1), keep_prob) \\
+            \mul value \\
+        \end{array}
+
+    B -- Batch size. Value range 1 to 2k.
+    S1 -- Sequence length of query. Value range 1 to 512k.
+    S2 -- Sequence length of key and value. Value range 1 to 512k.
+    N1 -- Num heads of query. Value range 1 to 256.
+    N2 -- Num heads of key and value, and N2 must be a factor of N1.
+    D -- Head size. The value ranges is a multiple of 16, with the max value of 512.
+    H1 -- Hidden size of query, which equals to N1 * D.
+    H2 -- Hidden size of key and value, which equals to N2 * D.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion. Only support on Atlas training series.
+
+    Args:
+        query (Tensor[float16, bfloat16]): The query tensor. Input tensor of shape :math:`(B, S1, H1)`,
+            `(B, N1, S1, D)`, `(S1, B, H1)`, `(B, S1, N1, D)` or `(T1, N1, D)`.
+        key (Tensor[float16, bfloat16]): The key tensor. Input tensor of shape :math:`(B, S2, H2)`,
+            `(B, N2, S2, D)`, `(S2, B, H2)`, `(B, S2, N2, D)` or `(T2, N2, D)`.
+        value (Tensor[float16, bfloat16]): The value tensor. Input tensor of shape :math:`(B, S2, H2)`,
+            `(B, N2, S2, D)`, `(S2, B, H2)`, `(B, S2, N2, D)` or `(T2, N2, D)`. The key and value have the same shape.
+        head_num (int): The head num of query, equal to N1.
+        real_shift (Union[Tensor[float16, bfloat16], None]): Also known as pse. The position embedding code. If S
+            is greater than 1024 and the mask of the lower triangle is used, enter only the inverse 1024 lines of
+            the lower triangle for memory optimization. Input tensor of shape :math: `(B, N1, S1, S2)`,
+            `(1, N1, S1, S2)`, `(B, N1, 1024, S2)`, `(1, N1, 1024, S2)`.
+
+            - ALiBi scenario: real_shift must meet the ALiBi rule, and sparse_mode is 2 or 3 for the lower triangle.
+              In this scenario, real_shift is `(B, N1, 1024, S2)`, `(1, N1, 1024, S2)`.
+            - Non-ALiBi scenario: real_shift is `(B, N1, S1, S2)`, `(1, N1, S1, S2)`.
+
+            The shape of `real_shift` should be `(B, N1, 1024, S2)` and `(1, N1, 1024, S2)` when input_layout is
+            `TND`.
+        drop_mask (Union[Tensor[uint8], None]): The dropout mask tensor. Input tensor of shape :math:
+            `(B, N1, S1, S2 // 8) or None`. S2 is a multiple of 8 when not None.
+        padding_mask (None): Reserved parameter. Not implemented yet.
+        attn_mask (Union[Tensor[uint8], Tensor[bool], None]): The attention mask tensor. For each element, 0
+            indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, N1, S1, S2)`,
+            `(B, 1, S1, S2)`, `(S1, S2)` or `(2048, 2048)`. In compression scenario, sparse_mode is 2, 3, or 4,
+            attn_mask must be `(2048, 2048)`. When sparse_mode is 5, attn_mask must be '(B, N1, S1, S2)`,
+            `(B, 1, S1, S2)`.
+        prefix (Union[List[int64], Tuple[int64] None]): N value of each Batch in the prefix sparse calculation
+            scenario. Input tensor of shape :math:`(B,)`. B max value 32. Not none only when sparse_mode is 5.
+            If S1 > S2, N ranges from 0 to S2. If S1 <= S2, N ranges from S2 - S1 to S2.
+        actual_seq_qlen (Union[List[int64], Tuple[int64], None]): Size of query corresponding to each batch, array
+            with increasing values and the last value equal to T1.
+        actual_seq_kvlen (Union[List[int64], Tuple[int64], None]): Size of key and value corresponding to each batch,
+            array with increasing values and the last value equal to T2.
+        keep_prob (float): The keep probability of dropout. Value range is (0.0, 1.0]. Default: 1.0.
+        scale_value (float): The scale factor of score. Generally, the value is 1.0 / (D ** 0.5). Default: 1.0.
+        pre_tokens (int): Parameter for sparse computation, represents how many tokens are counted forward.
+            When sparse_mode is set to 1, 2, 3, or 5, this parameter does not take effect. Default: 2147483647.
+        next_tokens (int): Parameter for sparse computation, represents how many tokens are counted backward.
+            When sparse_mode is set to 1, 2, 3, or 5, this parameter does not take effect. Default: 2147483647.
+            The value of pre_tokens corresponds to S1, and the value of next_tokens corresponds to S2. They define the
+            valid area on the attn_mask matrix. It must ensure that the band is not empty.
+            The following values are not allowed:
+
+            - pre_tokens < 0 and next_tokens < 0.
+            - (pre_tokens < 0 and next_tokens >= 0) and (next_tokens < abs(pre_tokens) or abs(pre_tokens) >= S2).
+            - (pre_tokens >= 0 and next_tokens < 0) and (abs(next_tokens) > pre_tokens or abs(next_tokens) >= S1).
+
+        inner_precise (int): The parameter is reserved and not implemented yet. Default: 0.
+        input_layout (str): Specifies the layout of input `query`, key and value. The value can be "BSH", "BNSD",
+            "SBH", "BSND" or "TND". "TND" is an experimental format. Default: "BSH".
+            When input_layout is "TND", the following restrictions must be met.
+            There are two lists that represent the length of the input sequence: list_seq_q and list_seq_k. Each
+            value in the list indicates the length of the sequence in the batch. For example, list_seq_q = [4, 2, 6],
+            list_seq_k = [10, 3, 9]. The element of list indicate S. T1 is sum(list_seq_q) = 12, T2 is
+            sum(list_seq_k) = 22.
+            max_seqlen_q = max(list_seq_q), max_seqlen_k = max(list_seq_k).
+            qk_pointer = sum(list_seq_q * list_seq_k), which is the sum of the element multiplication.
+
+            - The lengths of two lists are the same, and size of list is batch. batch is less than or equal to 1024.
+            - When input_layout is "TND", actual_seq_qlen and actual_seq_kvlen must be not none.
+              Otherwise, they are none.
+            - The actual_seq_qlen and actual_seq_kvlen are the cumulative sum of sequence of key/value, so they must
+              be non-decreasing.
+            - If real_shift is not none, list_seq_q and list_seq_k must be same. The maximum value of list_seq_q and
+              list_seq_k is greater than 1024. Real_shift should be `(B, N1, 1024, S2)` and `(1, N1, 1024, S2)`, and
+              S2 is equal to max_seqlen_k.
+            - Attn mask must be a lower trianglar matrix, so sparse_mode should be 2 or 3. The shape of attn_mask
+              should be `(2048, 2048)`.
+            - The shape of drop_mask is (qk_pointer * N1 // 8,).
+            - Prefix is none.
+            - Next_tokens is 0, and pre_tokens is not less than max_seqlen_q.
+            - When sparse_mode is 3, S1 of each batch should be less than or equal to S2.
+            - 0 should not exist in list_seq_k.
+
+        sparse_mode (int): Indicates sparse mode. Default 0.
+
+            - 0: Indicates the defaultMask mode. If attn_mask is not passed, the mask operation is not performed,
+              and preTokens and nextTokens(internally assigned as INT_MAX) are ignored. If passed in, the full
+              attn_mask matrix (S1 * S2) needs to be passed in, indicating that the part between preTokens and
+              nextTokens needs to be calculated.
+            - 1: Represents allMask, that is, passing in the complete attn_mask matrix.
+            - 2: Representing the leftUpCausal mode corresponds to the lower triangle scenario divided by the left
+              vertex, and the optimized attn_mask matrix (2048*2048) is required.
+            - 3: Representing the rightDownCausal model corresponds to the lower triangle scene divided by the lower
+              right vertex, and the optimized attn_mask matrix (2048*2048) is required.
+            - 4: Represents the band scenario, that is, the part between counting preTokens and nextTokens, and the
+              optimized attn_mask matrix (2048*2048) is required.
+            - 5: Represents the prefix scenario, that is, on the basis of rightDownCasual, a matrix with length S1 and
+              width N is added to the left side. The value of N is obtained by the new input prefix, and the N value
+              of each Batch axis is different, not implemented yet.
+            - 6: Represents the global scenario, not implemented yet.
+            - 7: Represents the dilated scenario, not implemented yet.
+            - 8: Represents the block_local scenario, not implemented yet.
+
+    Returns:
+        attention_out (Tensor[float16, bfloat16]), The output of attention, its shape, and data type are the same
+        as the query.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.common.dtype as mstype
+        >>> import numpy as np
+        >>> from mindspore import ops, Tensor
+        >>> query = Tensor(np.ones([2, 4, 64]), dtype=mstype.float16)
+        >>> key = Tensor(np.ones([2, 4, 64]), dtype=mstype.float16)
+        >>> value = Tensor(np.ones([2, 4, 64]), dtype=mstype.float16)
+        >>> head_num = 4
+        >>> output = ops.flash_attention_score(query, key, value, head_num)
+        >>> print(output.shape)
+        (2, 4, 64)
+    """
+    rank_op = _get_cache_prim(FlashAttentionScore)(head_num, keep_prob, scalar_value, pre_tokens, next_tokens,
+                                                   inner_precise, input_layout, sparse_mode)
+    return rank_op(query, key, value, real_shift, drop_mask, padding_mask, attn_mask, prefix, actual_seq_qlen,
+                   actual_seq_kvlen)[3]

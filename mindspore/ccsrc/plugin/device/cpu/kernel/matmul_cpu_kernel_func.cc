@@ -23,7 +23,6 @@
 #include "plugin/device/cpu/kernel/nnacl/fp32/matmul_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
-#include "mindspore/core/ops/mat_mul.h"
 #include "plugin/device/cpu/kernel/matmul_cpu_kernel_func.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel/init_exec_env.h"
@@ -32,9 +31,11 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kMatMulInputsNum = 2;
-constexpr size_t kMatMulWithBiasAddInputsNum = 3;
+constexpr size_t kMatMulInputsNum = 4;
+constexpr size_t kMatMulInputsCheckNum = 4;
+constexpr size_t kMatMulWithBiasAddInputsNum = 5;
 constexpr size_t kMatMulOutputsNum = 1;
+constexpr size_t kTransInputNum = 2;
 }  // namespace
 
 MatMulCpuKernelFunc::~MatMulCpuKernelFunc() {
@@ -64,8 +65,6 @@ MatMulCpuKernelFunc::~MatMulCpuKernelFunc() {
 void MatMulCpuKernelFunc::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = primitive->name();
-  trans_a_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeA));
-  trans_b_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeB));
 
   in_size_ = inputs.size();
   out_size_ = outputs.size();
@@ -76,12 +75,21 @@ void MatMulCpuKernelFunc::InitFunc(const PrimitivePtr &primitive, const std::vec
     with_relu_ = GetValue<bool>(primitive->GetAttr(kAttrWithRelu));
   }
 
-  in_size_ = inputs.size();
+  auto transpose_a_opt = inputs[in_size_ - 2]->GetOptionalValueWithCheck<bool>();
+  auto transpose_b_opt = inputs[in_size_ - 1]->GetOptionalValueWithCheck<bool>();
+  if (!transpose_a_opt.has_value() || !transpose_b_opt.has_value()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', transpose_a and transpose_b should be specified.";
+    return;
+  }
+  trans_a_ = transpose_a_opt.value();
+  trans_b_ = transpose_b_opt.value();
+
   if (with_bias_add_) {
     CHECK_KERNEL_INPUTS_NUM(in_size_, kMatMulWithBiasAddInputsNum, kernel_name_);
   } else {
-    CHECK_KERNEL_INPUTS_NUM(in_size_, kMatMulInputsNum, kernel_name_);
+    CHECK_KERNEL_INPUTS_NUM(in_size_, kMatMulInputsCheckNum, kernel_name_);
   }
+  in_size_ = with_bias_add_ ? kMatMulWithBiasAddInputsNum - kTransInputNum : kMatMulInputsNum - kTransInputNum;
   out_size_ = outputs.size();
   CHECK_KERNEL_OUTPUTS_NUM(out_size_, kMatMulOutputsNum, kernel_name_);
 

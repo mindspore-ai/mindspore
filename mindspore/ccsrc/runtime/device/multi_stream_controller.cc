@@ -94,7 +94,9 @@ bool MultiStreamController::RecordEvent(const DeviceContext *device_context, int
   }
 
   auto event = device_context->device_res_manager_->CreateRuntimeEvent(false, true);
-  MS_EXCEPTION_IF_NULL(event);
+  if (event == nullptr) {
+    return true;
+  }
   event->RecordEvent(user_stream_id);
   // Record event on mem buf.
   return mem_manager->RecordEvent(task_id_on_stream, user_stream_id, memory_stream_addresses, event);

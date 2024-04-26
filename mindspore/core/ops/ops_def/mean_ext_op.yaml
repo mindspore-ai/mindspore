@@ -1,0 +1,26 @@
+#operator mean_ext
+mean_ext:
+    args:
+        input:
+            dtype: tensor
+        axis:
+            dtype: tuple[int]
+            type_cast: int, list[int], tensor
+            default: None
+        keep_dims:
+            dtype: bool
+            default: False
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: MeanExtAscend
+        CPU: MeanExtCPU
+        GPU: MeanExtGPU
+    function:
+        name: mean

@@ -16,11 +16,9 @@ import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-
+context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend", device_id=6)
 
 class Net(nn.Cell):
     def __init__(self):
@@ -33,11 +31,18 @@ class Net(nn.Cell):
 
 arr_x = np.random.randn(2, 4).astype(np.float32)
 
-
-def test_net():
-    split = Net()
-    output = split(Tensor(arr_x))
-    print("====input========")
-    print(arr_x)
-    print("====output=======")
-    print(output)
+def test_f_tensor_split_int(mode):
+    """
+    Feature: tensor_split
+    Description: Verify the result of tensor_split when the type of `indices_or_sections` is int.
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    net = TensorSplitNet()
+    a = np.array(np.arange(20).reshape((10, 2)), dtype=np.float32)
+    x = ms.Tensor(a, dtype=ms.float32)
+    indices_or_sections = 3
+    out = net(x, indices_or_sections)
+    expect = np.array_split(a, indices_or_sections)
+    for res, exp in zip(out, expect):
+        assert np.allclose(res.asnumpy(), exp)

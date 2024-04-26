@@ -222,6 +222,7 @@ constexpr auto kReduction = "reduction";
 constexpr auto kRho = "rho";
 constexpr auto kRootRank = "root_rank";
 constexpr auto kRoundMode = "round_mode";
+constexpr auto kRoundingMode = "rounding_mode";
 constexpr auto kRtol = "rtol";
 constexpr auto kSame = "same";
 constexpr auto kScale = "scale";
@@ -427,6 +428,7 @@ constexpr auto KTableLog = "table_log";
 constexpr auto kIgnoreIndex = "ignore_index";
 constexpr auto kLiteQuantAttrName = "quant_params";
 constexpr auto kPreferAxes = "prefer_axes";
+constexpr auto kInputLayout = "input_layout";
 
 constexpr size_t kInputIndex0 = 0;
 constexpr size_t kInputIndex1 = 1;

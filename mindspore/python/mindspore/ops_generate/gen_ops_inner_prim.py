@@ -68,6 +68,8 @@ class StringToEnum(Primitive):
 
     def __call__(self, op_name, arg_name, enum_str):
         """Run in PyNative mode"""
+        if enum_str is None:
+            return None
         if not isinstance(enum_str, str):
             raise TypeError(f"For '{op_name}', the input '{arg_name}' should be a str, but got {type(enum_str)}.")
         return op_enum.str_to_enum(op_name, arg_name, enum_str)

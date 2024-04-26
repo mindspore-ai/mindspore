@@ -59,6 +59,8 @@ int64_t CheckRange(int64_t idx, int64_t dim_size);
 
 NodePtrList BinopGradCommon(BpropBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx, const NodePtr &dy,
                             size_t shift = 0UL);
+NodePtrList MatMulExtBroadCastGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
+                                   const NodePtr &dy, size_t ignore_offset = 0UL);
 
 std::vector<int64_t> Range(int64_t start, int64_t stop, int64_t step = 1);
 std::vector<int64_t> Range(int64_t stop);
@@ -85,7 +87,7 @@ std::vector<int64_t> RegenerateOutputShape(const std::vector<int64_t> &x_shp, co
 std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm);
 std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank);
 
-NodePtr SumGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout, bool keep_dims = false,
+NodePtr SumGrad(Emitter *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout, bool keep_dims = false,
                 bool skip_mode = false);
 NodePtr MinOrMaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
                      const NodePtr &out, const NodePtr &dout);
@@ -99,6 +101,7 @@ ShapeVector PoolToNHWC(const ShapeVector &v);
 ShapeVector ConvToNHWC(const ShapeVector &v);
 ShapeVector GetShapeByRange(const ShapeVector &v, int64_t begin = 0, int64_t end = -1);
 NodePtr MatrixTranspose(BpropBuilder *ib, const NodePtr &x);
+NodePtr MatrixTransposeExt(BpropBuilder *ib, const NodePtr &x);
 NodePtr Adjoint(BpropBuilder *ib, const NodePtr &x);
 }  // namespace mindspore::expander::bprop
 #endif  // MINDSPORE_CCSRC_FRONTEND_EXPANDER_BPROP_GRAD_OPS_COMMON_UTILS_H_

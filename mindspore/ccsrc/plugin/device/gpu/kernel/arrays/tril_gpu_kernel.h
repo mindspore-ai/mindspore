@@ -23,7 +23,7 @@
 #include <algorithm>
 #include <functional>
 #include <map>
-#include "mindspore/core/ops/tril.h"
+#include "mindspore/core/ops/ops_func_impl/tril.h"
 #include "abstract/utils.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"

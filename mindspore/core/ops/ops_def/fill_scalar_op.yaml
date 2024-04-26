@@ -1,0 +1,20 @@
+#operator fill_scalar
+fill_scalar:
+    args:
+        size:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+        fill_value:
+            dtype: number
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: FillScalarAscend

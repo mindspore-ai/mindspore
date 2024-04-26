@@ -69,14 +69,16 @@ BaseShapePtr GridSampler2DGradFuncImpl::InferShape(const PrimitivePtr &primitive
     MS_EXCEPTION(ValueError) << "Grid must be a 4-dimensional tensor, but got " << std::to_string(grid_shape.size())
                              << "-dimensional tensor.";
   }
-  if (input_x_shape[kInputIndex0] != grid_shape[kInputIndex0]) {
-    MS_EXCEPTION(ValueError) << "The shape of grid is " << input_args[kInputIndex2]->GetShape()->ToString()
-                             << " , but the shape of input_x is " << input_args[kInputIndex1]->GetShape()->ToString()
-                             << " . The first dimension of grid and input_x must be equal.";
-  }
-  if (grid_shape[kInputIndex3] != SizeToLong(kInputIndex2)) {
-    MS_EXCEPTION(ValueError) << "The last dimension of grid must be 2, but got "
-                             << std::to_string(grid_shape[kInputIndex3]);
+  if (!IsDynamic(input_x_shape) && !IsDynamic(grid_shape)) {
+    if (input_x_shape[kInputIndex0] != grid_shape[kInputIndex0]) {
+      MS_EXCEPTION(ValueError) << "The shape of grid is " << input_args[kInputIndex2]->GetShape()->ToString()
+                               << " , but the shape of input_x is " << input_args[kInputIndex1]->GetShape()->ToString()
+                               << " . The first dimension of grid and input_x must be equal.";
+    }
+    if (grid_shape[kInputIndex3] != SizeToLong(kInputIndex2)) {
+      MS_EXCEPTION(ValueError) << "The last dimension of grid must be 2, but got "
+                               << std::to_string(grid_shape[kInputIndex3]);
+    }
   }
   std::vector<int64_t> out_shape = {input_x_shape[kInputIndex0], input_x_shape[kInputIndex1], grid_shape[kInputIndex1],
                                     grid_shape[kInputIndex2]};

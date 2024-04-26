@@ -1,0 +1,58 @@
+#operator convolution_grad
+convolution_grad:
+  args:
+    dout:
+      dtype: tensor
+    input:
+      dtype: tensor
+    weight:
+      dtype: tensor
+    bias:
+      dtype: tensor
+      default: None
+    stride:
+      dtype: tuple[int]
+      default: 1
+      prim_init: True
+      arg_handler: to_strides
+    padding:
+      dtype: tuple[int]
+      default: 0
+      prim_init: True
+      arg_handler: to_2d_paddings
+    dilation:
+      dtype: tuple[int]
+      default: 1
+      prim_init: True
+      arg_handler: to_dilations
+    transposed:
+      dtype: bool
+      default: False
+      prim_init: True
+    output_padding:
+      dtype: tuple[int]
+      default: 0
+      prim_init: True
+      arg_handler: to_output_padding
+    groups:
+      dtype: int
+      default: 1
+      prim_init: True
+    output_mask:
+      dtype: tuple[int]
+      default: ()
+      prim_init: True
+  returns:
+    dx:
+      dtype: tensor
+    dw:
+      dtype: tensor
+    dbias:
+      dtype: tensor
+  class:
+      name: ConvolutionGrad
+  function:
+      disable: True
+  dispatch:
+    enable: True
+    Ascend: ConvolutionGradAscend

@@ -1,0 +1,62 @@
+max_pool_with_indices:
+  description: |
+    Performs max pooling on the input Tensor and returns both max values and indices.
+
+    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool outputs
+    regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
+    :math:`(h_{ker}, w_{ker})` and stride :math:`(s_0, s_1)`, the operation is as follows:
+
+    .. math::
+        \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion. Only support on Atlas training series.
+
+    Args:
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and argmax
+            value, is an int number that represents height and width of the kernel, or a tuple of
+            two int numbers that represent height and width respectively.
+        strides (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents
+            not only the height of movement but also the width of movement, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: ``None`` , meaning that
+            `strides = kernel_size`.
+        pads (Union[int, tuple[int]], optional): An int number that represents the depth,
+            height and width of movement are both strides, or a tuple of two int numbers that represent
+            depth, height and width of movement respectively.
+            Default: 0.
+        dilation (Union[int, tuple[int]], optional): Control the stride of elements in the kernel. Default: ``(1, 1)`` .
+        ceil_mode (bool, optional): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
+        argmax_type (mindspore.dtype, optional) : The dtype for argmax.
+            Default: ``mstype.int64`` . [Disabled in Ascend.]
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of float32 in Ascend.
+
+    Outputs:
+        Tuple of 2 Tensors, representing the maxpool result and where the max values are generated.
+
+        - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, H_{out}, W_{out})`.
+          It has the same data type as `x`.
+
+          .. math::
+              H_{out} = \left\lfloor\frac{H_{in} + 2 * \text{pads[0]} - \text{dilation[0]}
+               \times (\text{kernel_size[0]} - 1) - 1}{\text{strides[0]}} + 1\right\rfloor
+
+          .. math::
+              W_{out} = \left\lfloor\frac{W_{in} + 2 * \text{pads[1]} - \text{dilation[1]}
+               \times (\text{kernel_size[1]} - 1) - 1}{\text{strides[1]}} + 1\right\rfloor
+
+        - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int32 in Ascend.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        ValueError: If length of shape of `x` is not equal to 4.
+        TypeError: If `kernel_size` , `strides` , `pads` or `dilation` is not int or tuple.
+        ValueError: If `kernel_size`, `strides` or `dilation` is less than 1.
+        ValueError: If `pads` is less than 0.
+        ValueError: If `pads` is more than half of `kernel_size`.
+        TypeError: If `ceil_mode` is not bool.
+
+    Supported Platforms:
+        ``Ascend``

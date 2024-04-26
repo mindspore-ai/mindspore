@@ -1,0 +1,17 @@
+#operator ones_like_ext
+ones_like_ext:
+    args:
+        input:
+            dtype: tensor
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: OnesLikeExtAscend

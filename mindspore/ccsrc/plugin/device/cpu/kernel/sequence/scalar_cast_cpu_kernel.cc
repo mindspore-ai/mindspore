@@ -60,6 +60,8 @@ bool ScalarCastCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inp
   MS_EXCEPTION_IF_NULL(output_addr);
   if (*input_type_addr == TypeId::kNumberTypeInt64) {
     *(static_cast<int64_t *>(output_addr)) = static_cast<int64_t>(ele_addr[0]);
+  } else if (*input_type_addr == TypeId::kNumberTypeFloat32) {
+    *(static_cast<float_t *>(output_addr)) = static_cast<float_t>(ele_addr[0]);
   } else if (*input_type_addr == TypeId::kNumberTypeFloat64) {
     *(static_cast<double *>(output_addr)) = static_cast<double>(ele_addr[0]);
   } else if (*input_type_addr == TypeId::kNumberTypeBool) {

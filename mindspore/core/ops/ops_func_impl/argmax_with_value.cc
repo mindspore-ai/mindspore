@@ -90,7 +90,7 @@ BaseShapePtr ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive,
 TypePtr ArgMaxWithValueFuncImpl::InferType(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) const {
   TypePtr input_x_type = input_args[0]->GetType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, common_valid_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, common_valid_types_with_bool, primitive->name());
   return std::make_shared<Tuple>(TypePtrList{std::make_shared<TensorType>(kInt64), input_args[0]->GetType()});
 }
 }  // namespace ops

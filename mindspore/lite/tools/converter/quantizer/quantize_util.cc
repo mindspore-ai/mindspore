@@ -34,7 +34,7 @@
 #include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/fusion/mat_mul_fusion.h"
-#include "ops/batch_matmul.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/ops_func_impl/gather.h"
 #include "ops/op_utils.h"

@@ -34,7 +34,6 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "ops/base_operator.h"
-#include "ops/mat_mul.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
@@ -43,7 +42,27 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(FusedMatMulBiasAdd, MatMul);
+MIND_API_OPERATOR_IMPL(FusedMatMulBiasAdd, BaseOperator);
+
+void FusedMatMulBiasAdd::Init(bool transpose_a, bool transpose_b) {
+  set_transpose_a(transpose_a);
+  set_transpose_b(transpose_b);
+}
+
+void FusedMatMulBiasAdd::set_transpose_a(bool transpose_a) { (void)AddAttr(kTransposeA, api::MakeValue(transpose_a)); }
+
+void FusedMatMulBiasAdd::set_transpose_b(bool transpose_b) { (void)AddAttr(kTransposeB, api::MakeValue(transpose_b)); }
+
+bool FusedMatMulBiasAdd::get_transpose_a() const {
+  auto value_ptr = GetAttr(kTransposeA);
+  return GetValue<bool>(value_ptr);
+}
+
+bool FusedMatMulBiasAdd::get_transpose_b() const {
+  auto value_ptr = GetAttr(kTransposeB);
+  return GetValue<bool>(value_ptr);
+}
+
 class FusedMatMulBiasAddInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,

@@ -100,7 +100,6 @@ GVAR_DEF(PrimitivePtr, kPrimRmsNormGrad, std::make_shared<Primitive>("RmsNormGra
 
 GVAR_DEF(PrimitivePtr, kPrimWKV, std::make_shared<Primitive>("WKV"));
 GVAR_DEF(PrimitivePtr, kPrimWKVGrad, std::make_shared<Primitive>("WKVGrad"));
-GVAR_DEF(PrimitivePtr, kPrimDense, std::make_shared<Primitive>("Dense"));
 GVAR_DEF(PrimitivePtr, kPrimDenseGrad, std::make_shared<Primitive>("DenseGrad"));
 GVAR_DEF(PrimitivePtr, kPrimEmbeddingLookup, std::make_shared<Primitive>("EmbeddingLookup"));
 GVAR_DEF(PrimitivePtr, kPrimEmbeddingLookupCommGrad, std::make_shared<Primitive>("EmbeddingLookupCommGrad"));
@@ -178,8 +177,6 @@ GVAR_DEF(PrimitivePtr, kPrimIFMR, std::make_shared<Primitive>(kIFMROpName));
 GVAR_DEF(PrimitivePtr, kPrimChannelShuffle, std::make_shared<Primitive>(kChannelShuffleOpName));
 GVAR_DEF(PrimitivePtr, kPrimPromptFlashAttention, std::make_shared<Primitive>(kFlashPromptFlashAttentionOpName));
 GVAR_DEF(PrimitivePtr, kPrimIncreFlashAttention, std::make_shared<Primitive>(kFlashIncreFlashAttentionOpName));
-GVAR_DEF(PrimitivePtr, kPrimFlashAttentionScore, std::make_shared<Primitive>(kFlashAttentionScoreOpName));
-GVAR_DEF(PrimitivePtr, kPrimFlashAttentionScoreGrad, std::make_shared<Primitive>(kFlashAttentionScoreGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimRNNTLoss, std::make_shared<Primitive>(kRNNTLossOpName));
 GVAR_DEF(PrimitivePtr, kPrimMatmulQkv, std::make_shared<Primitive>(kMatmulQkvOpName));
 GVAR_DEF(PrimitivePtr, kPrimMatmulFfn, std::make_shared<Primitive>(kMatmulFfnOpName));

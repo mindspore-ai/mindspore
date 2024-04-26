@@ -35,6 +35,7 @@ class MatMulCpuKernelFunc : public CpuKernelFunc, private MKLCpuKernelMod {
                const std::vector<KernelTensor *> &outputs) override;
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  void ProcessTranspose(const std::vector<KernelTensor *> &inputs);
 
  private:
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {

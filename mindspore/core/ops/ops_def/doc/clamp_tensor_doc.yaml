@@ -1,0 +1,53 @@
+clamp_tensor:
+    description: |
+        Clamps tensor values between the specified minimum value and maximum value.
+
+        Limits the value of :math:`input` to a range, whose lower limit is `min` and upper limit is `max` .
+
+        .. math::
+
+            out_i= \left\{
+            \begin{array}{align}
+                max & \text{ if } input_i\ge max \\
+                input_i & \text{ if } min \lt input_i \lt max \\
+                min & \text{ if } input_i \le min \\
+            \end{array}\right
+
+        Note:
+            - `min` and `max` cannot be None at the same time;
+            - When `min` is None and `max` is not None, the elements in Tensor larger than `max` will become `max`;
+            - When `min` is not None and `max` is None, the elements in Tensor smaller than `min` will become `min`;
+            - If `min` is greater than `max`, the value of all elements in Tensor will be set to `max`;
+            - The data type of `input`, `min` and `max` should support implicit type conversion and cannot be bool type.
+
+        Args:
+              input (Tensor): Input data, which type is Tensor. Tensors of arbitrary dimensions are supported.
+              min (Tensor, optional): The minimum value. Default: ``None`` .
+              max (Tensor, optional): The maximum value. Default: ``None`` .
+
+        Returns:
+              Tensor, a clipped Tensor.
+              The data type and shape are the same as input.
+
+        Raises:
+              ValueError: If both `min` and `max` are None.
+              TypeError: If the type of `input` is not Tensor.
+              TypeError: If the type of `min` is not in None, Tensor.
+              TypeError: If the type of `max` is not in None, Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> # case 1: the data type of input is Tensor
+            >>> import mindspore
+            >>> from mindspore import Tensor
+            >>> from mindspore.ops.auto_generate import clamp_tensor
+            >>> import numpy as np
+            >>> min_value = Tensor(5, mindspore.float32)
+            >>> max_value = Tensor(20, mindspore.float32)
+            >>> input = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
+            >>> output = clamp_tensor(input, min_value, max_value)
+            >>> print(output)
+            [[ 5. 20.  5.  7.]
+            [ 5. 11.  6. 20.]]

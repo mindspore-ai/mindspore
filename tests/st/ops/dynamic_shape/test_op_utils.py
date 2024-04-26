@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import copy
 import os
 
 import numpy as np
-from mindspore import Tensor, context, nn, ops
+from mindspore import Tensor, context, nn, ops, Parameter
 from mindspore.common import mutable, JitConfig
 
 
@@ -81,7 +81,7 @@ class GradNet(nn.Cell):
     def __init__(self, net):
         super().__init__()
         self.net = net
-        self.grad_func = ops.GradOperation()
+        self.grad_func = ops.GradOperation(get_all=True)
 
     def construct(self, *args):
         func = self.grad_func(self.net)
@@ -90,39 +90,33 @@ class GradNet(nn.Cell):
         return forward_out, grad_out
 
 
-class DynamicEnv():
-    """Dynamic environment"""
-    def __init__(self, env_type):
-        if env_type not in ["DYNAMIC_SHAPE", "DYNAMIC_RANK"]:
-            raise ValueError(f"The supported dynamic mode is [DYNAMIC_SHAPE, DYNAMIC_RANK], but got {env_type}.")
+def remove_scalar_grad(grad):
+    """the grad of scalar input is nonsense"""
+    if isinstance(grad, tuple):
+        grad_new = []
+        for var in grad:
+            if not is_nontensor(var):
+                grad_new.append(var)
+        return tuple(grad_new)
 
-        self.env_name = 'MS_DEV_AUTO_' + env_type
+    return grad
 
-    def __enter__(self):
-        os.environ[self.env_name] = 'on'
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        os.environ.pop(self.env_name, None)
-
-
-def get_env(env_type):
-    return DynamicEnv(env_type)
-
-
-def compare(expect, actual, grad):
+def compare(expect, actual, grad, ignore_output_index):
     if not grad:
-        compare_result(expect, actual, 'Forward')
+        compare_result(expect, actual, 'Forward', None, ignore_output_index)
     else:
         expect_forward = expect[0]
         expect_grad = expect[1]
         actual_forward = actual[0]
         actual_grad = actual[1]
 
-        compare_result(expect_forward, actual_forward, 'Forward')
-        compare_result(expect_grad, actual_grad, 'Grad')
+        actual_grad = remove_scalar_grad(actual_grad)
+
+        compare_result(expect_forward, actual_forward, 'Forward', None, ignore_output_index)
+        compare_result(expect_grad, actual_grad, 'Grad', None, ignore_output_index)
 
 
-def compare_result(expect, actual, stage='', index=None):
+def compare_result(expect, actual, stage='', index=None, ignore_output_index=None):
     if not isinstance(actual, type(expect)):
         print("Compare Failed because the types of static-shape out(as expect) and dynamic-shape out(as actual) "
               "are not matched(exepct is a sequence).")
@@ -138,19 +132,21 @@ def compare_result(expect, actual, stage='', index=None):
                   f"dynamic-shape out(as actual) length: {len(actual)}")
             assert False
         if is_numerical_sequence(expect) and is_numerical_sequence(actual):
-            result = np.allclose(expect, actual, rtol=1e-03, atol=1e-03)
+            result = np.allclose(expect, actual, rtol=1e-03, atol=1e-03, equal_nan=True)
             print(f"Compare {['Success'] if result else ['Failed']} for " \
                   f"{0 if index is None else index}'th output of {stage}.")
             assert result
             return
 
         for i, (exp, act) in enumerate(zip(expect, actual)):
+            if ignore_output_index is not None and i == ignore_output_index:
+                continue
             compare_result(exp, act, stage, i)
     else:
         if isinstance(expect, Tensor):
-            result = np.allclose(expect.asnumpy(), actual.asnumpy(), rtol=1e-03, atol=1e-03)
+            result = np.allclose(expect.asnumpy(), actual.asnumpy(), rtol=1e-03, atol=1e-03, equal_nan=True)
         else:
-            result = np.allclose(expect, actual, rtol=1e-03, atol=1e-03)
+            result = np.allclose(expect, actual, rtol=1e-03, atol=1e-03, equal_nan=True)
         print(f"Compare {['Success'] if result else ['Failed']} for " \
               f"{0 if index is None else index}'th output of {stage}.")
         assert result
@@ -190,14 +186,15 @@ def run_in_dynamic_env(prim, inputs, dump_ir, ir_path, dynamic_type, grad):
     """set dynamic env before execute"""
     out_actual = None
     global JIT_CONFIG
-    with get_env(dynamic_type) as _:
-        if dump_ir:
-            context.set_context(save_graphs=IR_LEVEL, save_graphs_path=ir_path)
+    compile_inputs = convert_tensor_to_dynamic(inputs, dynamic_type)
+    if dump_ir:
+        context.set_context(save_graphs=IR_LEVEL, save_graphs_path=ir_path)
 
-        dynamic_net = create_net(prim, grad)
-        if JIT_CONFIG:
-            dynamic_net.set_jit_config(JIT_CONFIG)
-        out_actual = dynamic_net(*inputs)
+    dynamic_net = create_net(prim, grad)
+    dynamic_net.set_inputs(*compile_inputs)
+    if JIT_CONFIG:
+        dynamic_net.set_jit_config(JIT_CONFIG)
+    out_actual = dynamic_net(*inputs)
 
     return out_actual
 
@@ -253,7 +250,7 @@ def replace_nontensor_with_help_tensor(inputs):
             nontensor_input_type += [FLOAT]
             nontensor_input_index += [i]
             new_inputs[i] = Tensor(x)
-        elif not isinstance(x, (Tensor, tuple, list, str)):
+        elif x is not None and not isinstance(x, (Tensor, tuple, list, str)):
             raise TypeError(f"Unsupported type: {type(x)}")
 
     new_inputs += [nontensor_input_index, nontensor_input_type]
@@ -264,7 +261,7 @@ def convert_tensor_to_dynamic(inputs, dynamic_type):
     """create tesnor with dynamic shape"""
     new_inputs = copy.deepcopy(inputs)
     for i, x in enumerate(inputs):
-        if isinstance(x, Tensor):
+        if isinstance(x, Tensor) and not isinstance(x, Parameter):
             ori_shape = x.shape
             if dynamic_type == 'DYNAMIC_SHAPE':
                 new_shape = [None for _ in ori_shape]
@@ -289,7 +286,7 @@ def convert_sequence_of_tensor_to_mutable(inputs):
     return inputs
 
 
-def run_with_dynamic_resize(prim, inputs_seq, dump_ir, ir_path, expect_resize):
+def run_with_dynamic_resize(prim, inputs_seq, dump_ir, ir_path, expect_resize, ignore_output_index):
     """test resize"""
     print("Start testing with [Resize]...")
     out_actual = None
@@ -313,7 +310,7 @@ def run_with_dynamic_resize(prim, inputs_seq, dump_ir, ir_path, expect_resize):
     run_inputs = convert_sequence_of_tensor_to_mutable(run_inputs)
     out_actual = dynamic_net(*run_inputs)
 
-    compare_result(expect_resize, out_actual, 'Resize')
+    compare_result(expect_resize, out_actual, 'Resize', None, ignore_output_index)
     print("End")
 
 
@@ -330,12 +327,13 @@ def convert_nontensor_to_mutable(inputs, dynamic_type):
     return inputs
 
 
-def run_and_compare(prim, inputs, dump_ir, prefix_dir, post_str, tensor_dynamic_type, expect, grad):
+def run_and_compare(prim, inputs, dump_ir, prefix_dir, post_str, tensor_dynamic_type, expect,
+                    grad, ignore_output_index):
     ir_path = f"{prefix_dir}/{tensor_dynamic_type}_{post_str}"
     print(f"Start testing with [{tensor_dynamic_type}] [{post_str}]...")
     out_actual = run_in_dynamic_env(prim, inputs, dump_ir, ir_path, tensor_dynamic_type, grad)
 
-    compare(expect, out_actual, grad)
+    compare(expect, out_actual, grad, ignore_output_index)
     print("End")
 
 
@@ -359,7 +357,7 @@ def has_tensor(inputs):
 
 
 def run_with_dynamic(prim, inputs_seq, tensor_dynamic_type, nontensor_dynamic_type, grad,
-                     dump_ir, prefix_name, expect, expect_second):
+                     dump_ir, prefix_name, expect, expect_second, ignore_output_index):
     """run_with_dynamic"""
     types = []
     if tensor_dynamic_type == 'BOTH':
@@ -370,13 +368,14 @@ def run_with_dynamic(prim, inputs_seq, tensor_dynamic_type, nontensor_dynamic_ty
     if has_tensor(inputs_seq[0]) and (nontensor_dynamic_type == 'None' or nontensor_dynamic_type == 'BOTH'):
         # Test dynamic Tensor
         for item in types:
-            run_and_compare(prim, inputs_seq[0], dump_ir, prefix_name, 'None', item, expect, grad)
+            run_and_compare(prim, inputs_seq[0], dump_ir, prefix_name, 'None', item, expect,
+                            grad, ignore_output_index)
 
     # Test Resize of the KernelMod
     if expect_second is not None:
         ir_path = f"{prefix_name}/Resize"
         expect_resize = expect_second[0] if grad else expect_second
-        run_with_dynamic_resize(prim, inputs_seq, dump_ir, ir_path, expect_resize)
+        run_with_dynamic_resize(prim, inputs_seq, dump_ir, ir_path, expect_resize, ignore_output_index)
 
     # Test dynamic nontensor
     seq_dynamic_list = get_nontensor_dynamic_type_list(nontensor_dynamic_type)
@@ -390,13 +389,13 @@ def run_with_dynamic(prim, inputs_seq, tensor_dynamic_type, nontensor_dynamic_ty
         inputs_new = convert_nontensor_to_mutable(inputs_seq[0], 'STATIC_LEN')
         for item in types:
             run_and_compare(prim, inputs_new, dump_ir, prefix_name, 'VARIABLE_NONTENSOR_STATIC_LEN',
-                            item, expect, grad)
+                            item, expect, grad, ignore_output_index)
 
     if 'MUTABLE_LEN' in seq_dynamic_list and not has_scalar_only:
         inputs_new = convert_nontensor_to_mutable(inputs_seq[0], 'MUTABLE_LEN')
         for item in types:
             run_and_compare(prim, inputs_new, dump_ir, prefix_name, 'VARIABLE_NONTENSOR_MUTABLE_LEN',
-                            item, expect, grad)
+                            item, expect, grad, ignore_output_index)
 
 
 def get_name_by_op(prim):
@@ -438,14 +437,14 @@ def create_net(prim, grad):
 
 def TEST_OP(op, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type='BOTH',
             mode=context.GRAPH_MODE, target=None, grad=True, dump_ir=False, custom_flag='',
-            test_resize=True, jit_level=None):
+            test_resize=True, jit_level=None, ignore_output_index=None):
     """
     This function creates several dynamic cases by converting Tensor/tuple/list/scalar inputs to dynamic shape to test the correctness of the op's InferShape
     and Resize. Both Primitive and Functional API are supported.
     For Tensor, including tuple/list of tensor, the dynamic cases include 'DYNAMIC_RANK' and 'DYNAMIC_SHAPE'.
-    For tuple/list, the dynamic cases include 'NONE', 'STATIC_LEN' and 'MUTABLE_LEN'.
-    For scalar, the dynamic cases include 'NONE' and 'STATIC_LEN'.
-    So the all testcases should be: ['DYNAMIC_RANK', 'DYNAMIC_SHAPE'] * ['NONE', 'STATIC_LEN', 'MUTABLE_LEN'].
+    For tuple/list, the dynamic cases include 'None', 'STATIC_LEN' and 'MUTABLE_LEN'.
+    For scalar, the dynamic cases include 'None' and 'STATIC_LEN'.
+    So the all testcases should be: ['DYNAMIC_RANK', 'DYNAMIC_SHAPE'] * ['None', 'STATIC_LEN', 'MUTABLE_LEN'].
     The dynamic of string and other types of data is not supported yet.
     Furthermore, two groups of inputs are used to run twice with the same Cell to test the correctness of Resize.
     The expected data is generated by running with static shape.
@@ -460,8 +459,8 @@ def TEST_OP(op, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type='
         - **tensor_dynamic_type** (str) - The dynamic type of Tensor inputs. Default 'BOTH'.
           The supported value are ['DYNAMIC_RANK', 'DYNAMIC_SHAPE', 'BOTH'] where 'BOTH' means 'DYNAMIC_RANK' and 'DYNAMIC_SHAPE'.
         - **nontensor_dynamic_type** (str) - The dynamic type of inputs expect Tensor like tuple/list/scalar. Default 'BOTH'.
-          The supported value are ['NONE', 'STATIC_LEN', 'MUTABLE_LEN', 'BOTH'] where 'BOTH' means 'STATIC_LEN' and 'MUTABLE_LEN'. 'NONE' will always be test.
-          'NONE' means the input is a constant.
+          The supported value are ['None', 'STATIC_LEN', 'MUTABLE_LEN', 'BOTH'] where 'BOTH' means 'STATIC_LEN' and 'MUTABLE_LEN'. 'None' will always be test.
+          'None' means the input is a constant.
           'STATIC_LEN' means the input is a variable but the length is fixed.
           'MUTABLE_LEN' means the input is a variable and the length is changeable.
           'MUTABLE_LEN' will be discarded If input is a scalar.
@@ -473,6 +472,7 @@ def TEST_OP(op, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type='
           `custom_flag` can be used to distinguish the calling of TEST_OP with the same Primitive
         - **test_resize** (bool) - whether to test the Resize function. Default True.
         - ***jit_level* (str) - set JitConfig for function or Cell. Default None.
+        - **ignore_output_index** (int) - Ignore `index` output compare. Default None.
 
     Outputs:
         None
@@ -497,6 +497,9 @@ def TEST_OP(op, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type='
         ...
     """
     prefix_name = get_name_by_op(op)
+    old_mod = context.get_context("mode")
+    old_target = context.get_context('device_target')
+
     if custom_flag != '':
         prefix_name += '_' + custom_flag
 
@@ -541,6 +544,8 @@ def TEST_OP(op, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type='
 
     # step 2: run in dynamic mode and compare results
     run_with_dynamic(op, inputs_seq, tensor_dynamic_type, nontensor_dynamic_type, grad,
-                     dump_ir, prefix_name, out_expect, out_expect_second)
+                     dump_ir, prefix_name, out_expect, out_expect_second, ignore_output_index)
 
     print("******************************End test for " + test_cast_name + "******************************")
+
+    context.set_context(mode=old_mod, device_target=old_target)

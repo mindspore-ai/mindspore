@@ -26,3 +26,5 @@ grid_sampler_2d:
         name: GridSampler2D
     function:
         disable: True
+    dispatch:
+        enable: True

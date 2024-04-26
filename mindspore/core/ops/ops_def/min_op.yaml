@@ -1,0 +1,14 @@
+#operator min
+min:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    out:
+      dtype: tensor
+  function:
+    name: min_
+  dispatch:
+    enable: True
+    CPU: MinCPU
+    GPU: MinGPU

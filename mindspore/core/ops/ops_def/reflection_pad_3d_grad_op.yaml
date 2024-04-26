@@ -1,0 +1,19 @@
+#operator reflection_pad_3d_backward
+reflection_pad_3d_grad:
+  args:
+    grad_output:
+      dtype: tensor
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReflectionPad3DGrad
+  dispatch:
+    enable: True

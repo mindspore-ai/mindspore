@@ -69,45 +69,57 @@ OUTPUT_MAP(IncreFlashAttention) = {{0, OUTPUT_DESC(attention_out)}};
 REG_ADPT_DESC(IncreFlashAttention, "IncreFlashAttention", ADPT_DESC(IncreFlashAttention))
 
 // FlashAttentionScore
-INPUT_MAP(FlashAttentionScore) = {
-  {1, INPUT_DESC(query)},     {2, INPUT_DESC(key)},          {3, INPUT_DESC(value)},      {4, INPUT_DESC(real_shift)},
-  {5, INPUT_DESC(drop_mask)}, {6, INPUT_DESC(padding_mask)}, {7, INPUT_DESC(atten_mask)}, {8, INPUT_DESC(prefix)},
+INPUT_MAP(FlashAttentionScore) = {{kIndex1, INPUT_DESC(query)},           {kIndex2, INPUT_DESC(key)},
+                                  {kIndex3, INPUT_DESC(value)},           {kIndex4, INPUT_DESC(real_shift)},
+                                  {kIndex5, INPUT_DESC(drop_mask)},       {kIndex6, INPUT_DESC(padding_mask)},
+                                  {kIndex7, INPUT_DESC(atten_mask)},      {kIndex8, INPUT_DESC(prefix)},
+                                  {kIndex9, INPUT_DESC(actual_seq_qlen)}, {kIndex10, INPUT_DESC(actual_seq_kvlen)}};
+ATTR_MAP(FlashAttentionScore) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(FlashAttentionScore) = {
+  {kIndex11, ATTR_DESC(head_num, AnyTraits<int64_t>())},
+  {kIndex12, ATTR_DESC(keep_prob, AnyTraits<float>())},
+  {kIndex13, ATTR_DESC(scale_value, AnyTraits<float>())},
+  {kIndex14, ATTR_DESC(pre_tockens, AnyTraits<int64_t>())},
+  {kIndex15, ATTR_DESC(next_tockens, AnyTraits<int64_t>())},
+  {kIndex16, ATTR_DESC(inner_precise, AnyTraits<int64_t>())},
+  {kIndex17, ATTR_DESC(input_layout, AnyTraits<FASInputLayoutMode>())},
+  {kIndex18, ATTR_DESC(sparse_mode, AnyTraits<int64_t>())},
 };
-ATTR_MAP(FlashAttentionScore) = {
-  {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())},
-  {"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())},
-  {"pre_tokens", ATTR_DESC(pre_tockens, AnyTraits<int64_t>())},
-  {"next_tokens", ATTR_DESC(next_tockens, AnyTraits<int64_t>())},
-  {"head_num", ATTR_DESC(head_num, AnyTraits<int64_t>())},
-  {"inner_precise", ATTR_DESC(inner_precise, AnyTraits<int64_t>())},
-  {"input_layout", ATTR_DESC(input_layout, AnyTraits<std::string>())},
-  {"sparse_mode", ATTR_DESC(sparse_mode, AnyTraits<int64_t>())},
-};
-OUTPUT_MAP(FlashAttentionScore) = {{0, OUTPUT_DESC(softmax_max)},
-                                   {1, OUTPUT_DESC(softmax_sum)},
-                                   {2, OUTPUT_DESC(softmax_out)},
-                                   {3, OUTPUT_DESC(attention_out)}};
+OUTPUT_MAP(FlashAttentionScore) = {{kIndex0, OUTPUT_DESC(softmax_max)},
+                                   {kIndex1, OUTPUT_DESC(softmax_sum)},
+                                   {kIndex2, OUTPUT_DESC(softmax_out)},
+                                   {kIndex3, OUTPUT_DESC(attention_out)}};
 REG_ADPT_DESC(FlashAttentionScore, kNameFlashAttentionScore, ADPT_DESC(FlashAttentionScore))
 
 // FlashAttentionScoreGrad
-INPUT_MAP(FlashAttentionScoreGrad) = {
-  {1, INPUT_DESC(query)},        {2, INPUT_DESC(key)},         {3, INPUT_DESC(value)},
-  {4, INPUT_DESC(dy)},           {5, INPUT_DESC(pse_shift)},   {6, INPUT_DESC(drop_mask)},
-  {7, INPUT_DESC(padding_mask)}, {8, INPUT_DESC(atten_mask)},  {9, INPUT_DESC(softmax_max)},
-  {10, INPUT_DESC(softmax_sum)}, {11, INPUT_DESC(softmax_in)}, {12, INPUT_DESC(attention_in)},
-  {13, INPUT_DESC(prefix)}};
-ATTR_MAP(FlashAttentionScoreGrad) = {
-  {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())},
-  {"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())},
-  {"pre_tokens", ATTR_DESC(pre_tockens, AnyTraits<int64_t>())},
-  {"next_tokens", ATTR_DESC(next_tockens, AnyTraits<int64_t>())},
-  {"head_num", ATTR_DESC(head_num, AnyTraits<int64_t>())},
-  {"inner_precise", ATTR_DESC(inner_precise, AnyTraits<int64_t>())},
-  {"input_layout", ATTR_DESC(input_layout, AnyTraits<std::string>())},
-  {"sparse_mode", ATTR_DESC(sparse_mode, AnyTraits<int64_t>())},
+INPUT_MAP(FlashAttentionScoreGrad) = {{kIndex1, INPUT_DESC(query)},
+                                      {kIndex2, INPUT_DESC(key)},
+                                      {kIndex3, INPUT_DESC(value)},
+                                      {kIndex4, INPUT_DESC(dy)},
+                                      {kIndex5, INPUT_DESC(pse_shift)},
+                                      {kIndex6, INPUT_DESC(drop_mask)},
+                                      {kIndex7, INPUT_DESC(padding_mask)},
+                                      {kIndex8, INPUT_DESC(atten_mask)},
+                                      {kIndex9, INPUT_DESC(softmax_max)},
+                                      {kIndex10, INPUT_DESC(softmax_sum)},
+                                      {kIndex11, INPUT_DESC(softmax_in)},
+                                      {kIndex12, INPUT_DESC(attention_in)},
+                                      {kIndex13, INPUT_DESC(prefix)},
+                                      {kIndex14, INPUT_DESC(actual_seq_qlen)},
+                                      {kIndex15, INPUT_DESC(actual_seq_kvlen)}};
+ATTR_MAP(FlashAttentionScoreGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(FlashAttentionScoreGrad) = {
+  {kIndex16, ATTR_DESC(head_num, AnyTraits<int64_t>())},
+  {kIndex17, ATTR_DESC(keep_prob, AnyTraits<float>())},
+  {kIndex18, ATTR_DESC(scale_value, AnyTraits<float>())},
+  {kIndex19, ATTR_DESC(pre_tockens, AnyTraits<int64_t>())},
+  {kIndex20, ATTR_DESC(next_tockens, AnyTraits<int64_t>())},
+  {kIndex21, ATTR_DESC(inner_precise, AnyTraits<int64_t>())},
+  {kIndex22, ATTR_DESC(input_layout, AnyTraits<FASInputLayoutMode>())},
+  {kIndex23, ATTR_DESC(sparse_mode, AnyTraits<int64_t>())},
 };
 OUTPUT_MAP(FlashAttentionScoreGrad) = {
-  {0, OUTPUT_DESC(dq)}, {1, OUTPUT_DESC(dk)}, {2, OUTPUT_DESC(dv)}, {3, OUTPUT_DESC(dpse)}};
+  {kIndex0, OUTPUT_DESC(dq)}, {kIndex1, OUTPUT_DESC(dk)}, {kIndex2, OUTPUT_DESC(dv)}, {kIndex3, OUTPUT_DESC(dpse)}};
 REG_ADPT_DESC(FlashAttentionScoreGrad, kNameFlashAttentionScoreGrad, ADPT_DESC(FlashAttentionScoreGrad))
 
 // MatmulReduceScatter

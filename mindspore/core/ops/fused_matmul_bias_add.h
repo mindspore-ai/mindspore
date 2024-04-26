@@ -20,19 +20,31 @@
 #include <string>
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
-#include "ops/mat_mul.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFusedMatMulBiasAdd = "FusedMatMulBiasAdd";
 /// \brief Multiplies matrix a and matrix b. Refer to Python API @ref mindspore.ops.FusedMatMulBiasAdd for more details.
-class MIND_API FusedMatMulBiasAdd : public MatMul {
+class MIND_API FusedMatMulBiasAdd : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FusedMatMulBiasAdd);
   /// \brief Constructor.
-  FusedMatMulBiasAdd() : MatMul(kNameFusedMatMulBiasAdd) { InitIOName({"x1", "x2"}, {"output"}); }
-  explicit FusedMatMulBiasAdd(const std::string k_name) : MatMul(k_name) { InitIOName({"x", "x2"}, {"output"}); }
+  FusedMatMulBiasAdd() : BaseOperator(kNameFusedMatMulBiasAdd) { InitIOName({"x1", "x2"}, {"output"}); }
+  explicit FusedMatMulBiasAdd(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "x2"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FusedMatMulBiasAdd for the inputs.
+  void Init(bool transpose_a = false, bool transpose_b = false);
+  /// \brief Set transpose_a.
+  void set_transpose_a(bool transpose_a);
+  /// \brief Set transpose_b.
+  void set_transpose_b(bool transpose_b);
+  /// \brief Get transpose_a.
+
+  /// \return transpose_a.
+  bool get_transpose_a() const;
+  /// \brief Get transpose_b.
+  ///
+  /// \return transpose_b.
+  bool get_transpose_b() const;
 };
 }  // namespace ops
 }  // namespace mindspore

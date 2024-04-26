@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ namespace mindspore {
 namespace pynative {
 
 namespace {
-static constexpr size_t N = 10;
 using OP_DTYPE = mindspore::ops::OP_DTYPE;
 template <typename T, typename U>
 std::shared_ptr<U> PyCast(const py::object &obj) {
@@ -32,12 +31,20 @@ std::shared_ptr<U> PyCast(const py::object &obj) {
 
 BoolImmPtr ConvertBool(const py::object &obj) {
   if (!py::isinstance<py::bool_>(obj)) {
-    return nullptr;
+    // The mutable _Bool class inherits from int, because base class 'bool' is a marked final.
+    if (py::isinstance<py::int_>(obj) && py::hasattr(obj, "__ms_mutable_bool__")) {
+      auto obj_int64 = py::cast<int64_t>(obj);
+      bool obj_bool = obj_int64 != 0;
+      return std::make_shared<BoolImm>(obj_bool);
+    } else {
+      return nullptr;
+    }
   }
   return PyCast<bool, BoolImm>(obj);
 }
 
 Int64ImmPtr ConvertInt(const py::object &obj) {
+  // bool is also an instance of py::int_
   if (py::isinstance<py::bool_>(obj) || !py::isinstance<py::int_>(obj)) {
     return nullptr;
   }
@@ -91,7 +98,8 @@ ValueTuplePtr ConvertList(const py::object &obj) {
 }
 }  // namespace
 
-Converter::Converter(ops::OpDef *op_def) : op_def_(op_def), source_type_(std::vector<ops::OP_DTYPE>(N)) {}
+Converter::Converter(ops::OpDef *op_def)
+    : op_def_(op_def), source_type_(std::vector<ops::OP_DTYPE>(op_def->args_.size())) {}
 
 void Converter::Parse(const py::list &python_args) {
   if (op_def_->args_.size() != python_args.size()) {
@@ -252,6 +260,14 @@ FP32ImmPtr Converter::ToFloat(const py::list &python_args, size_t i) {
   }
   PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, python_args, i);
   return nullptr;
+}
+
+std::optional<FP32ImmPtr> Converter::ToFloatOptional(const py::list &python_args, size_t i) {
+  const py::object &obj = python_args[i];
+  if (py::isinstance<py::none>(obj)) {
+    return std::nullopt;
+  }
+  return std::make_optional(ToFloat(python_args, i));
 }
 
 template <typename T>

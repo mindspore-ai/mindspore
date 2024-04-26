@@ -29,8 +29,8 @@ class Net(nn.Cell):
         super().__init__()
         self.func = func
 
-    def construct(self, *inputs):
-        return self.func(*inputs)
+    def construct(self, *inputs, **kwargs):
+        return self.func(*inputs, **kwargs)
 
 
 def run_with_cell(fn):
@@ -38,9 +38,9 @@ def run_with_cell(fn):
         raise ValueError("fn cannot be none!")
 
     @wraps(fn)
-    def wrapper(*args):
+    def wrapper(*args, **kwargs):
         cell_obj = Net(fn)
-        return cell_obj(*args)
+        return cell_obj(*args, **kwargs)
 
     return wrapper
 
@@ -64,7 +64,7 @@ def compare(output, expect):
             rtol, atol = 1e-4, 1e-4
         else:
             rtol, atol = 1e-3, 1e-3
-        if not np.allclose(output.asnumpy(), expect, rtol, atol):
+        if not np.allclose(output.asnumpy(), expect, rtol, atol, equal_nan=True):
             raise ValueError(f"compare failed \n output: {output.asnumpy()}\n expect: {expect}")
 
 
