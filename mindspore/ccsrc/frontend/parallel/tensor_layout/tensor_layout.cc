@@ -72,15 +72,19 @@ Status TensorLayout::Init(const Arrangement &device_arrangement, const Map &tens
 Status TensorLayout::InitFromVector(const Shape &device_arrangement, const Shape &tensor_map,
                                     const Shape &tensor_shape) {
   if (device_arrangement_origin_.Init(device_arrangement) != SUCCESS) {
+    MS_LOG(ERROR) << "Init device_arrangement failed.";
     return FAILED;
   }
   if (tensor_map_origin_.Init(tensor_map) != SUCCESS) {
+    MS_LOG(ERROR) << "Init tensor_map failed.";
     return FAILED;
   }
   if (tensor_shape_origin_.Init(tensor_shape) != SUCCESS) {
+    MS_LOG(ERROR) << "Init tensor_shape failed.";
     return FAILED;
   }
   if (Init(device_arrangement_origin_, tensor_map_origin_, tensor_shape_origin_) != SUCCESS) {
+    MS_LOG(ERROR) << "Init tensor_layout failed.";
     return FAILED;
   }
   return SUCCESS;
@@ -213,12 +217,20 @@ TensorLayout TensorLayout::LayoutForRedistribution() const {
 }
 
 bool TensorLayout::IsValidTensorLayout() const {
-  if (tensor_map_origin_.GetMaxItem() >= static_cast<int64_t>(device_arrangement_origin_.GetDimSize())) {
-    MS_LOG(ERROR) << "the max element in tensor_map_origin_ must be smaller than device_arrangement_origin_ size!";
+  int64_t max_tensor_map_item = tensor_map_origin_.GetMaxItem();
+  int64_t device_arr_size = SizeToLong(device_arrangement_origin_.GetDimSize());
+  if (max_tensor_map_item >= device_arr_size) {
+    MS_LOG(ERROR) << "the max element in tensor_map_origin_ must be smaller than device_arrangement_origin_ size! "
+                  << "Max element in tensor_map_origin_ is " << max_tensor_map_item
+                  << ", device_arrangement_origin_ size is " << device_arr_size;
     return false;
   }
-  if (tensor_map_origin_.GetDimSize() != tensor_shape_origin_.GetDimSize()) {
-    MS_LOG(ERROR) << "tensor_map_origin_ size must be equal to tensor_shape_origin_ size!";
+  size_t tensor_map_size = tensor_map_origin_.GetDimSize();
+  size_t tensor_shape_size = tensor_shape_origin_.GetDimSize();
+  if (tensor_map_size != tensor_shape_size) {
+    MS_LOG(ERROR) << "tensor_map_origin_ size must be equal to tensor_shape_origin_ size! "
+                  << "tensor_map_origin_ size is " << tensor_map_size << ", tensor_shape_origin_ size is "
+                  << tensor_shape_size;
     return false;
   }
   if (!TensorShapeDimensionIsDividedBySplitDeviceDimension()) {
