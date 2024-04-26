@@ -143,6 +143,10 @@ void ControlActor::Run(OpContext<DeviceTensor> *const context) {
     }
 
     FetchInput(context);
+    if (IsRunningFailed(context)) {
+      MS_LOG(INFO) << "Run failed and early stop.";
+      return;
+    }
 
     // Note that IncreaseDynamicRefCounts must be in front of SendMemoryFreeReq. SendMemoryFreeReq will decreasing the
     // dynamic ref count. Avoid the illegal timing problem that the dynamic reference count is decremented and then

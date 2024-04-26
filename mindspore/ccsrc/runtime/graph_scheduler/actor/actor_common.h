@@ -158,6 +158,8 @@ enum class KernelTransformType {
     }                                                                                                              \
     if ((strategy) == GraphExecutionStrategy::kStep) {                                                             \
       MS_LOG(EXCEPTION) << message;                                                                                \
+    } else {                                                                                                       \
+      MS_LOG(ERROR) << message;                                                                                    \
     }                                                                                                              \
     (op_context).error_info_ = message;                                                                            \
     (op_context).SetFailed(kFailure);                                                                              \

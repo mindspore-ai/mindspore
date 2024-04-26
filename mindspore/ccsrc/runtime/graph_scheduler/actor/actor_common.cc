@@ -250,6 +250,7 @@ bool WaitRuntimePipelineFinish(const OpContext<DeviceTensor> *context, bool wait
   }
 
   if (ActorDispatcher::enable_async_launch_kernel() && IsRunningFailed(context)) {
+    MS_LOG(ERROR) << "Wait runtime pipeline finish and an error occurred: " << context->error_info_;
     return false;
   }
   return true;
