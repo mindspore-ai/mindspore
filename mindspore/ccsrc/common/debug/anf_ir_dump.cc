@@ -256,26 +256,42 @@ void PrintTupleNodeUsedFlags(std::ostringstream &buffer, const abstract::Abstrac
   if (sequence_abs == nullptr || sequence_abs->sequence_nodes() == nullptr || sequence_abs->sequence_nodes()->empty()) {
     return;
   }
-
-  buffer << ", sequence_nodes={";
-  for (size_t i = 0; i < sequence_abs->sequence_nodes()->size(); ++i) {
-    auto node = (*sequence_abs->sequence_nodes())[i].lock();
-    if (node == nullptr) {
-      MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
-      buffer << "node={<freed node>}";
-    } else {
-      buffer << "node={" << node->DebugString();
+  static const bool dump_dde_detail = (common::GetCompileConfig("DUMP_IR_DDE_DETAIL") == "1");
+  if (dump_dde_detail) {
+    buffer << ", sequence_nodes={";
+    for (size_t i = 0; i < sequence_abs->sequence_nodes()->size(); ++i) {
+      auto node = (*sequence_abs->sequence_nodes())[i].lock();
+      if (node == nullptr) {
+        MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
+        buffer << "node={<freed node>}";
+      } else {
+        buffer << "node={" << node << "/" << node->DebugString();
+        auto flags = GetSequenceNodeElementsUseFlags(node);
+        if (flags != nullptr) {
+          buffer << ", elements_use_flags: {ptr: " << flags << ", value: " << (*flags) << "}";
+        }
+        buffer << "}";
+      }
+      if (i != sequence_abs->sequence_nodes()->size() - 1) {
+        buffer << ", ";
+      }
+    }
+    buffer << "}";
+  } else {
+    buffer << ", elements_use_flags={";
+    for (size_t i = 0; i < sequence_abs->sequence_nodes()->size(); ++i) {
+      auto node = (*sequence_abs->sequence_nodes())[i].lock();
+      if (node == nullptr) {
+        continue;
+      }
       auto flags = GetSequenceNodeElementsUseFlags(node);
       if (flags != nullptr) {
-        buffer << ", elements_use_flags: {ptr: " << flags << ", value: " << (*flags) << "}";
+        buffer << (*flags);
+        break;
       }
-      buffer << "}";
     }
-    if (i != sequence_abs->sequence_nodes()->size() - 1) {
-      buffer << ", ";
-    }
+    buffer << "}";
   }
-  buffer << "}";
 }
 
 void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
