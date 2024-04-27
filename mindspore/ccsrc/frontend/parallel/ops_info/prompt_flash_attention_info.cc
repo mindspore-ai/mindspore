@@ -47,6 +47,7 @@ constexpr size_t kRank3 = 3;
 constexpr size_t kRank4 = 4;
 constexpr size_t kSparseMode0 = 0;
 constexpr size_t kDpAxis = 2;
+constexpr size_t kAttenSeqPosRank4 = 2;
 enum SparseMode : int64_t {
   kSparseDefaultMask = 0,
   kSparseAllMask,
@@ -167,7 +168,7 @@ Status PromptFlashAttentionInfo::CheckAttenMaskStrategy(const StrategyPtr &strat
   } else if (atten_mask_rank_ == kRank3) {
     attn_seq_dim = 1;
   } else {
-    attn_seq_dim = 2;
+    attn_seq_dim = kAttenSeqPosRank4;
   }
   int64_t attn_sp_dim = attn_sp_shard_ ? sp_ : 1;
   if (!CheckStrategy(attn_strategy[attn_seq_dim], attn_sp_dim, "S-Dimention", "attn_mask")) {
@@ -296,7 +297,7 @@ Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
     }
   }
-  if (atten_mask_rank_ >= 2) {
+  if (atten_mask_rank_ >= kRank2) {
     if (CheckAttenMaskStrategy(strategy, ops::kPromptFlashAttentionInputAttnMaskIndex) != SUCCESS) {
       MS_LOG(ERROR) << "Check strategy for atten mask failed";
       return FAILED;
@@ -309,12 +310,12 @@ Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
 Status PromptFlashAttentionInfo::InferDevMatrixShape() {
   if (input_layout_ == "BSH") {
     dev_matrix_shape_ = {dp_, sp_, mp_};
-    dev_matrix_batch_dim_ = 2;
+    dev_matrix_batch_dim_ = kDpAxis;
     dev_matrix_s1_dim_ = 1;
     dev_matrix_n1_dim_ = 0;
   } else if (input_layout_ == "BNSD") {
     dev_matrix_shape_ = {dp_, mp_, sp_};
-    dev_matrix_batch_dim_ = 2;
+    dev_matrix_batch_dim_ = kDpAxis;
     dev_matrix_s1_dim_ = 0;
     dev_matrix_n1_dim_ = 1;
   } else {
@@ -352,7 +353,7 @@ Status PromptFlashAttentionInfo::InferTensorMap() {
   } else if (atten_mask_rank_ == kRank3) {
     optinal_tensor_map_[ops::kPromptFlashAttentionInputAttnMaskIndex][1] = dev_matrix_s1_dim_;
   } else if (atten_mask_rank_ == kRank4) {
-    optinal_tensor_map_[ops::kPromptFlashAttentionInputAttnMaskIndex][2] = dev_matrix_s1_dim_;
+    optinal_tensor_map_[ops::kPromptFlashAttentionInputAttnMaskIndex][kAttenSeqPosRank4] = dev_matrix_s1_dim_;
   } else {
     MS_LOG(INFO) << "Attention mask rank is not in [2, 3, 4]， rank is " << atten_mask_rank_;
   }

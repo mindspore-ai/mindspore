@@ -283,11 +283,14 @@ Status Softmax::CheckInputLayout() {
   auto tensor_layout = inputs_tensor_info_[kIndex0].tensor_layout();
   auto tensor_map = tensor_layout.tensor_map_before();
 
-  for (const auto &axis : axis_) {
+  for (const auto &raw_axis : axis_) {
+    int64_t dim = SizeToLong(inputs_shape_.at(0).size());
+    auto axis = raw_axis + dim;
     auto corresponding_tensor_map = tensor_map[axis];
     if (corresponding_tensor_map.size() == 1 && corresponding_tensor_map[0] == -1) {
       return SUCCESS;
     } else {
+      MS_LOG(ERROR) << "Calculate axis can not be split";
       return FAILED;
     }
   }

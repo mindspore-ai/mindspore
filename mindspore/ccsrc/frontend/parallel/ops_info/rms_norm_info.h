@@ -51,6 +51,7 @@ class RmsNormInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferAsLossDivisor() override;
+  Status InferAsLossDivisorByLayout() override;
   Status CreateInputTensorMap(size_t input_index);
   Status GenerateGammaStrategies(const std::vector<StrategyPtr> &sp_vector);
   Status InitShapes();

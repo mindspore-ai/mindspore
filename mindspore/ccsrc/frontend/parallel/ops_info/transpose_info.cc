@@ -20,6 +20,7 @@
 #include <vector>
 #include <numeric>
 #include <utility>
+#include <algorithm>
 
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
@@ -174,6 +175,24 @@ std::vector<int64_t> SwapElement(const std::vector<int64_t> &input_device_arrang
   return expected_device_arrangement;
 }
 
+bool IsValidTensorMap(const Shape &tensor_map) {
+  if (tensor_map.empty()) {
+    return false;
+  }
+  int64_t last_value = tensor_map[0];
+  for (size_t i = 1; i < tensor_map.size(); ++i) {
+    auto current_value = tensor_map[i];
+    // If tensor map is not ordered in ascending order or descending order, and diff between adjacent elements is not 1
+    // return false
+    if (std::abs(last_value - current_value) != 1) {
+      return false;
+    }
+    last_value = current_value;
+  }
+
+  return true;
+}
+
 Status TransposeInfo::CheckOutputLayout() {
   if (outputs_tensor_info_.size() != kSizeOne) {
     MS_LOG(ERROR) << name_ << ": The size of output tensor info must be 1, but got " << outputs_tensor_info_.size();
@@ -198,6 +217,11 @@ Status TransposeInfo::CheckOutputLayout() {
   auto output_device_arrangement = out_layout.device_arrangement_origin().array();
   auto in_tensor_map = in_layout.tensor_map_before();
   auto out_tensor_map = out_layout.tensor_map_before();
+  if (in_tensor_map != out_tensor_map) {
+    MS_LOG(ERROR) << "To apply device matrix transposes, the input and output tensor map must be equal. But got "
+                  << in_tensor_map << " and " << out_tensor_map;
+    return FAILED;
+  }
   if ((input_device_arrangement.size() != output_device_arrangement.size()) ||
       (in_tensor_map.size() != out_tensor_map.size())) {
     MS_LOG(ERROR) << name_ << ": The size of input and output device arrangement and tensor map must be equal.";
@@ -219,7 +243,10 @@ Status TransposeInfo::CheckOutputLayout() {
       correspond_og_tensor_map = axis_0;
       correspond_target_tensor_map = axis_1;
     }
-
+    if (!(IsValidTensorMap(correspond_target_tensor_map) && IsValidTensorMap(correspond_og_tensor_map))) {
+      MS_LOG(ERROR) << name_ << ": the output tensor layout is not matched, and devicematrix can not be transpose.";
+      return FAILED;
+    }
     auto og_start_pos = correspond_og_tensor_map[0];
     auto target_start_pos = correspond_target_tensor_map[0];
     Shape temp_og_device_arrangement;
