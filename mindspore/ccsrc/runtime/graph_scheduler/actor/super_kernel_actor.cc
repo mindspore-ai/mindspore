@@ -635,7 +635,8 @@ void SuperKernelActor::BuildKernelActors() {
     kernel_actor->is_launch_skipped_ =
       common::AnfAlgo::IsNopNode(kernel) && graph_->IsInRefOutputMap(std::make_pair(kernel, 0));
     kernel_actor->inputs_continuous_memory_ =
-      common::AnfAlgo::IsCommunicationOp(kernel) && (common::AnfAlgo::GetInputTensorNum(kernel) > 1);
+      (common::AnfAlgo::IsCommunicationOp(kernel) && common::AnfAlgo::GetCNodeName(kernel) != kMatMulAllReduceOpName) &&
+      (common::AnfAlgo::GetInputTensorNum(kernel) > 1);
 
     SchedulerHelper::AddSomasInfo(kernel_actor.get());
 

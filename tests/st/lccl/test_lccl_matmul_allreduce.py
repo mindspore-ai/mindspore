@@ -31,9 +31,9 @@ context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
 init()
 rank = get_rank()
 size = get_group_size()
-x = np.random.rand(32, 4096).astype(np.float16)
-weight1 = np.random.rand(4096, 2048).astype(np.float16)
-weight2 = np.random.rand(2048, 16).astype(np.float16)
+x = Tensor(np.random.rand(32, 4096).astype(np.float16)*0.01)
+weight1 = np.random.rand(4096, 2048).astype(np.float16)*0.01
+weight2 = np.random.rand(2048, 16).astype(np.float16)*0.01
 
 
 class Net(nn.Cell):
@@ -55,7 +55,7 @@ class Net(nn.Cell):
     def construct(self, input_x):
         output = self.matmul1(input_x, self.weight1)
         output = self.all_reduce1(output)
-        output = output + 0.01
+        output = output * 0.01
         output = self.matmul2(output, self.weight2)
         output = self.all_reduce2(output)
         return output
@@ -73,6 +73,7 @@ def test_MatMulAllReduce():
 
     os.environ["DISABLE_MATMUL_ALLREDUCE_FUSION"] = "False"
     mmar_fusion_net = Net()
+    mmar_fusion_net.phase = "prefill"
     output_fusion = mmar_fusion_net(x)
 
     print(output_no_fusion.asnumpy(), output_fusion.asnumpy(),
