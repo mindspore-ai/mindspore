@@ -130,6 +130,36 @@ Status RmsNormInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
+Status RmsNormInfo::InferAsLossDivisorByLayout() {
+  if (outputs_tensor_info_.size() != RMS_NORM_INPUT_SIZE) {
+    MS_LOG(ERROR) << name_ << ": The size of outputs tensor info " << outputs_tensor_info_.size() << " is error";
+    return FAILED;
+  }
+
+  TensorMaps outputs_tensor_map = outputs_tensor_info_[0].tensor_layout().tensor_map_before();
+  if (outputs_tensor_map.empty()) {
+    as_loss_divisor_ = stage_device_size_;
+    MS_LOG(INFO) << name_ << ": The output is a scalar, use the dev size " << as_loss_divisor_ << ", loss divisor.";
+    return SUCCESS;
+  }
+
+  auto out_dev_matrix_shape = outputs_tensor_info_[0].tensor_layout().device_arrangement_origin().array();
+  if (out_dev_matrix_shape.empty()) {
+    MS_LOG(INFO) << name_ << ": out_dev_matrix_shape is empty";
+    out_dev_matrix_shape = dev_matrix_shape_;
+  }
+  Shape squashed_tensor_map;
+  for (const auto &tensor_map : outputs_tensor_map) {
+    std::copy(tensor_map.begin(), tensor_map.end(), std::back_inserter(squashed_tensor_map));
+  }
+
+  as_loss_divisor_ = ComputeRepeatDeviceNumByTensorMap(out_dev_matrix_shape, squashed_tensor_map);
+  MS_LOG(INFO) << name_ << ": the dev matrix shape is " << ShapeToString(out_dev_matrix_shape)
+               << ", the output tensor map is " << ShapeToString(squashed_tensor_map) << ", loss divisor is "
+               << as_loss_divisor_;
+  return SUCCESS;
+}
+
 Status RmsNormInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status RmsNormInfo::GenerateGammaStrategies(const std::vector<StrategyPtr> &sp_vector) {
@@ -213,7 +243,8 @@ Status RmsNormInfo::CheckInputLayout() {
   const std::vector<int64_t> np_split_map = {-1};
   for (size_t i = begin_norm_axis_; i < in_layout.tensor_map_before().size(); ++i) {
     if (in_layout.tensor_map_before()[i] != np_split_map) {
-      MS_LOG(ERROR) << "RmsNorm Invalid input layout " << in_layout.tensor_map_before();
+      MS_LOG(ERROR) << "RmsNorm Invalid input layout " << in_layout.tensor_map_before() << ", " << i
+                    << "th tensor map input layout must be " << np_split_map;
       return FAILED;
     }
   }
@@ -221,7 +252,8 @@ Status RmsNormInfo::CheckInputLayout() {
   size_t gamma_diff = in_layout.tensor_map_before().size() - gamma_layout.tensor_map_before().size();
   for (size_t j = 0; j < gamma_layout.tensor_map_before().size(); ++j) {
     if (gamma_layout.tensor_map_before()[j] != in_layout.tensor_map_before()[gamma_diff + j]) {
-      MS_LOG(ERROR) << "RmsNorm Invalid gamma layout " << gamma_layout.tensor_map_before();
+      MS_LOG(ERROR) << "RmsNorm Invalid gamma layout " << gamma_layout.tensor_map_before() << ", " << j
+                    << "th tensor map in gamma must equal to input layout";
       return FAILED;
     }
   }

@@ -149,7 +149,7 @@ class TensorLayout {
 
   Arrangement tensor_shape_before() { return tensor_shape_before_; }
 
-  std::vector<Shape> tensor_map_before() { return tensor_map_before_; }
+  std::vector<Shape> tensor_map_before() const { return tensor_map_before_; }
 
   int64_t GetSliceNumByTensorDimensionIndex(uint64_t idx) const;
 

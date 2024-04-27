@@ -1314,6 +1314,10 @@ Status OperatorInfo::InitWithTensorLayout(const std::vector<std::shared_ptr<Tens
     MS_LOG(ERROR) << name_ << ": InferMirrorOps failed.";
     return FAILED;
   }
+  if (InferVirtualDivOpsByLayout() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": InferVirtualDivOps failed.";
+    return FAILED;
+  }
   return SUCCESS;
 }
 
@@ -2259,9 +2263,70 @@ Status OperatorInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
+Status OperatorInfo::InferAsLossDivisorByLayout() {
+  if (!ParallelContext::GetInstance()->loss_repeated_mean()) {
+    as_loss_divisor_ = 1;
+    return SUCCESS;
+  }
+
+  if (outputs_tensor_info_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The outputs tensor info is empty.";
+    return FAILED;
+  }
+
+  if (outputs_tensor_info_.size() > 1) {
+    MS_LOG(ERROR) << name_ << ": The output size is " << outputs_tensor_info_.size()
+                  << ", need to override this function ";
+    return FAILED;
+  }
+
+  TensorMaps outputs_tensor_map = outputs_tensor_info_[0].tensor_layout().tensor_map_before();
+  if (outputs_tensor_map.empty()) {
+    MS_LOG(INFO) << name_ << ": out_dev_matrix_shape is empty";
+    as_loss_divisor_ = stage_device_size_;
+    MS_LOG(INFO) << name_ << ": The output is a scalar, use the dev size " << as_loss_divisor_ << ", loss divisor.";
+    return SUCCESS;
+  }
+
+  auto out_dev_matrix_shape = outputs_tensor_info_[0].tensor_layout().device_arrangement_origin().array();
+  if (out_dev_matrix_shape.empty()) {
+    out_dev_matrix_shape = dev_matrix_shape_;
+  }
+  Shape squashed_tensor_map;
+  for (const auto &tensor_map : outputs_tensor_map) {
+    std::copy(tensor_map.begin(), tensor_map.end(), std::back_inserter(squashed_tensor_map));
+  }
+  as_loss_divisor_ = ComputeRepeatDeviceNumByTensorMap(out_dev_matrix_shape, squashed_tensor_map);
+  MS_LOG(INFO) << name_ << ": the dev matrix shape is " << ShapeToString(out_dev_matrix_shape)
+               << ", the output tensor map is " << ShapeToString(squashed_tensor_map) << ", loss divisor is "
+               << as_loss_divisor_;
+  return SUCCESS;
+}
+
 // If the operator is used as a loss, a div node is inserted for the grad of all its inputs.
 Status OperatorInfo::InferVirtualDivOps() {
   if (InferAsLossDivisor() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": InferAsLossDivisor failed.";
+    return FAILED;
+  }
+
+  if (as_loss_divisor_ <= 0) {
+    MS_LOG(ERROR) << name_ << ": Invalid loss divisor: " << as_loss_divisor_;
+    return FAILED;
+  } else if (as_loss_divisor_ == 1) {
+    MS_LOG(INFO) << name_ << ": The loss divisor is 1, no need to create virtual div op.";
+    return SUCCESS;
+  }
+
+  virtual_div_op_.clear();
+  // if loss is repeated calculation, insert div op
+  Operator op = CreateVirtualDivOp(as_loss_divisor_);
+  virtual_div_op_.push_back(op);
+  return SUCCESS;
+}
+
+Status OperatorInfo::InferVirtualDivOpsByLayout() {
+  if (InferAsLossDivisorByLayout() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": InferAsLossDivisor failed.";
     return FAILED;
   }
