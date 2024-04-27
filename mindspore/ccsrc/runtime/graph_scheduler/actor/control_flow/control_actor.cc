@@ -569,33 +569,7 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_tensor);
   if (addr_list.empty()) {
-    // Create device address for empty tuple.
-    // Fetch the default device context for empty sequence.
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET), context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-    MS_EXCEPTION_IF_NULL(device_context);
-    MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-
-    auto tuple_shape = std::make_shared<abstract::TupleShape>();
-    auto tuple_type = std::make_shared<Tuple>();
-    const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      tuple_shape, tuple_type, nullptr, nullptr, 0, kOpFormat_DEFAULT, TypeId::kNumberTypeInt64, ShapeVector(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-    const auto &new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
-    MS_EXCEPTION_IF_NULL(new_device_tensor);
-    new_device_tensor->set_dynamic_ref_count(0);
-    new_device_tensor->set_original_ref_count(SIZE_MAX);
-    new_device_tensor->ResetRefCount();
-    if (!device_context->device_res_manager_->AllocateMemory(new_device_tensor.get())) {
-      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
-                                                  GetAID().Name(), new_device_tensor->GetSize());
-    }
-    created_device_tensors_.emplace_back(new_device_tensor);
-    (*device_tensor) = new_device_tensor.get();
-    MS_LOG(DEBUG) << "actor:" << GetAID() << " create new device address:" << new_device_tensor
-                  << " for empty addr list";
+    MergeEmptyAddressDeviceAddress(context, addr_list, device_tensor);
     return;
   }
 
@@ -651,13 +625,27 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
   const auto &tmp_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(tmp_kernel_tensor);
   MS_EXCEPTION_IF_NULL(tmp_device_tensor);
   MS_LOG(DEBUG) << "Create device tensor:" << tmp_device_tensor << " type:" << tmp_device_tensor->type_id();
+  std::shared_ptr<int64_t> max_task_id_on_stream = nullptr;
   for (size_t i = 0; i < addr_list.size(); ++i) {
+    auto device_tensor_addr = addr_list[i];
+    auto task_id_on_stream = device_tensor_addr->kernel_tensor()->task_id_on_stream();
+    if (task_id_on_stream != nullptr) {
+      if (max_task_id_on_stream == nullptr) {
+        max_task_id_on_stream = task_id_on_stream;
+      } else {
+        if (*max_task_id_on_stream < *task_id_on_stream) {
+          max_task_id_on_stream = task_id_on_stream;
+        }
+      }
+    }
+
     if (!tmp_device_tensor->SyncDeviceToDevice(addr_list[i])) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Sync device to device failed.");
     }
     tmp_device_tensor->set_ptr((reinterpret_cast<char *>(tmp_device_tensor->GetMutablePtr())) +
                                addr_list[0]->GetSize());
   }
+  new_device_tensor->kernel_tensor()->set_task_id_on_stream(max_task_id_on_stream);
   tmp_device_tensor->set_ptr(nullptr);
   created_device_tensors_.emplace_back(new_device_tensor);
   MS_LOG(DEBUG) << "actor:" << GetAID() << " create new device address:" << new_device_tensor
@@ -665,6 +653,37 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
                 << " device address shape:" << new_device_tensor->host_shape();
   (*device_tensor) = new_device_tensor.get();
   return;
+}
+
+void ControlActor::MergeEmptyAddressDeviceAddress(OpContext<DeviceTensor> *const context,
+                                                  const std::vector<DeviceTensor *> &addr_list,
+                                                  DeviceTensor **device_tensor) {
+  // Create device address for empty tuple.
+  // Fetch the default device context for empty sequence.
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET), context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+
+  auto tuple_shape = std::make_shared<abstract::TupleShape>();
+  auto tuple_type = std::make_shared<Tuple>();
+  const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    tuple_shape, tuple_type, nullptr, nullptr, 0, kOpFormat_DEFAULT, TypeId::kNumberTypeInt64, ShapeVector(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  const auto &new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  MS_EXCEPTION_IF_NULL(new_device_tensor);
+  new_device_tensor->set_dynamic_ref_count(0);
+  new_device_tensor->set_original_ref_count(SIZE_MAX);
+  new_device_tensor->ResetRefCount();
+  if (!device_context->device_res_manager_->AllocateMemory(new_device_tensor.get())) {
+    SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
+                                                GetAID().Name(), new_device_tensor->GetSize());
+  }
+  created_device_tensors_.emplace_back(new_device_tensor);
+  (*device_tensor) = new_device_tensor.get();
+  MS_LOG(DEBUG) << "actor:" << GetAID() << " create new device address:" << new_device_tensor << " for empty addr list";
 }
 }  // namespace runtime
 }  // namespace mindspore

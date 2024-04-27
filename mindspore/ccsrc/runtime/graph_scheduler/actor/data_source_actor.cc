@@ -334,6 +334,7 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
             host_tensor->data_ptr())) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
       }
+
       if (IsDynamic(device_tensor->host_shape())) {
         device_tensor->set_host_shape(host_tensor->shape());
       }
