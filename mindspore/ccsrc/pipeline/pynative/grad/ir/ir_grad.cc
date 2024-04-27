@@ -436,6 +436,18 @@ CNodePtr IrGrad::ConstructBpropGraphInput(const GradParamPtr &grad_param, const 
       (void)node_list.emplace_back(PyNativeAlgo::Common::CreateValueNodeByValue(
         grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]->Clone()));
     }
+    // Hook run by single op
+    if (!ir_bprop_->bprop_graph_run_by_single_op()) {
+      ir_bprop()->set_bprop_graph_run_by_single_op([&grad_param]() {
+        auto tensor = grad_param->op_grad_info->out_value->template cast<tensor::BaseTensorPtr>();
+        if (tensor == nullptr) {
+          return false;
+        }
+        auto auto_grad_meta = tensor->auto_grad_meta_data();
+        MS_EXCEPTION_IF_NULL(auto_grad_meta);
+        return auto_grad_meta->is_register_hook();
+      }());
+    }
     // Set out
     (void)node_list.emplace_back(PyNativeAlgo::Common::CreateValueNodeByValue(grad_param->op_grad_info->out_value,
                                                                               grad_param->op_grad_info->out_abs));
@@ -669,7 +681,7 @@ AnfNodePtr IrGrad::GetInputGrad(bool grad_all_inputs, bool get_by_position, cons
       if (index >= cell_inputs_.size()) {
         MS_LOG(EXCEPTION) << "Position index " << index << " is exceed input size.";
       }
-      // Tuple, List, scalar will be ignore
+      // Tuple, List, scalar will be ignored
       if (!IsValidTensorInput(cell_inputs_[index].first->abstract())) {
         MS_LOG(DEBUG) << "Get input node is not tensor "
                       << ", abs " << cell_inputs_[index].first->abstract()->ToString();
@@ -827,7 +839,7 @@ void IrGrad::DoParameterReplaceByUser(bool has_sens_arg, expander::bprop::UserTy
 
 void IrGrad::ReplacePrimalParameter(bool has_sens_arg) {
   PyNativeAlgo::Common::DumpGraphIR("replace_param.ir", ad_param()->tape_);
-  if (need_do_manager_replace_) {
+  if (need_do_manager_replace_ || ad_param()->tape_->has_flag(kFlagIsControlFlow)) {
     MS_LOG(DEBUG) << "Do parameter replace by manager.";
     DoParameterReplaceByManager(has_sens_arg);
     need_do_manager_replace_ = false;

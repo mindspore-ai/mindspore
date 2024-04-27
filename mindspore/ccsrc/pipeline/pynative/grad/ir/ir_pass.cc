@@ -492,6 +492,7 @@ void IrPassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, 
       // Pyboost op no need plant tuple inputs
       auto prim = GetCNodePrimitive(cnode);
       MS_EXCEPTION_IF_NULL(prim);
+      MS_LOG(DEBUG) << "Get run by single op " << run_by_single_op;
       if (run_by_single_op && runtime::PyBoostOpExecute::GetInstance().IsPyBoostOpRegistered(prim->name())) {
         cnode->AddAttr(kAttrIsPyboostTupleInput, MakeValue(true));
         return;

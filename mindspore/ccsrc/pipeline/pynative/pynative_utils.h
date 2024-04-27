@@ -85,7 +85,8 @@ struct Common {
   static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor);
   static ValuePtr CreateTensorByConstantValue(const ValuePtr &value);
   template <typename T>
-  static std::string PrintDebugInfo(std::vector<T> items, const std::string &info_header = "") {
+  static std::string PrintDebugInfo(std::vector<T> items, const std::string &info_header = "",
+                                    bool is_print_tensor_data = false) {
     static constexpr size_t end_char_size = 2;
     std::ostringstream buf;
     buf << info_header;
@@ -94,7 +95,7 @@ struct Common {
         MS_LOG(DEBUG) << "The " << i << "'th item is nullptr!";
         continue;
       }
-      if (items[i]->template isa<tensor::Tensor>()) {
+      if (items[i]->template isa<tensor::Tensor>() && is_print_tensor_data) {
         auto tensor = items[i]->template cast<tensor::TensorPtr>();
         auto grad = std::make_shared<tensor::Tensor>(*tensor);
         grad->data_sync();
@@ -161,7 +162,7 @@ struct DataConvert {
 struct PyBoost {
   static FrontendOpRunInfoPtr Init(const PrimitivePtr &prim, const py::list &args);
   static void DoGrad(const FrontendOpRunInfoPtr &op_run_info);
-  static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs);
+  static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const kernel::pyboost::OpPtr &op);
   static void UpdateOutputTensorGradInfo(const std::vector<TensorPtr> &outputs);
   static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract);
   static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
