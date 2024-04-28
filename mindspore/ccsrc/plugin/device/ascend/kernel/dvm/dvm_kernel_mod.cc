@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "utils/file_utils.h"
 
 namespace mindspore {
@@ -49,7 +50,8 @@ BaseShapePtr DvmInfer::InferShape(const AbstractBasePtrList &args) { return kern
 
 std::mutex DvmKernelMod::lock_;
 
-DvmKernelMod::DvmKernelMod(dvm::KernelType kernel_type) {
+DvmKernelMod::DvmKernelMod(dvm::KernelType kernel_type, const std::string &op_name, const std::string &op_fullname)
+    : op_name_(op_name), op_fullname_(op_fullname) {
   kernel_.Reset(kernel_type);
   dump_kernel_ = graphkernel::GraphKernelFlags::GetInstance().dump_as_text;
 }
@@ -194,6 +196,11 @@ bool SingleDvmKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const
   for (size_t i = 0; i < outputs_addr_.size(); ++i) {
     outputs_addr_[i] = outputs[outputs_idx_[i]]->device_ptr();
   }
+  if (profiler::Profiler::GetInstance(kAscendDevice)->GetEnableFlag()) {
+    auto ret = kernel_.MsProfLaunch(op_name_.c_str(), op_fullname_.c_str(), reloc_table_, inputs_addr_.data(),
+                                    outputs_addr_.data(), stream_ptr);
+    return ret == 0;
+  }
   auto ret = kernel_.Launch(reloc_table_, inputs_addr_.data(), outputs_addr_.data(), stream_ptr);
   return ret == 0;
 }
@@ -258,6 +265,11 @@ bool ParallelDvmKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   }
   for (size_t i = 0; i < outputs_map_.size(); i++) {
     outputs_addr_[i] = outputs[outputs_map_[i]]->device_ptr();
+  }
+  if (profiler::Profiler::GetInstance(kAscendDevice)->GetEnableFlag()) {
+    auto ret = kernel_.MsProfLaunch(op_name_.c_str(), op_fullname_.c_str(), reloc_table_, inputs_addr_.data(),
+                                    outputs_addr_.data(), stream_ptr);
+    return ret == 0;
   }
   auto ret = kernel_.Launch(reloc_table_, inputs_addr_.data(), outputs_addr_.data(), stream_ptr);
   return ret == 0;

@@ -43,7 +43,7 @@ class DvmInfer : public InferShapeFunctor {
 
 class DvmKernelMod : public KernelMod {
  public:
-  explicit DvmKernelMod(dvm::KernelType kernel_type);
+  explicit DvmKernelMod(dvm::KernelType kernel_type, const std::string &op_name, const std::string &op_fullname);
   ~DvmKernelMod() = default;
 
   std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in VKernel."; }
@@ -92,11 +92,14 @@ class DvmKernelMod : public KernelMod {
   bool dump_kernel_{false};
   static std::mutex lock_;
   std::ostringstream dump_buf_;
+  std::string op_name_;
+  std::string op_fullname_;
 };
 
 class SingleDvmKernelMod : public DvmKernelMod {
  public:
-  explicit SingleDvmKernelMod(dvm::KernelType kernel_type) : DvmKernelMod(kernel_type) {}
+  explicit SingleDvmKernelMod(dvm::KernelType kernel_type, const std::string &op_name, const std::string &op_fullname)
+      : DvmKernelMod(kernel_type, op_name, op_fullname) {}
   ~SingleDvmKernelMod() = default;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -124,8 +127,9 @@ class SingleDvmKernelMod : public DvmKernelMod {
 
 class ParallelDvmKernelMod : public DvmKernelMod {
  public:
-  ParallelDvmKernelMod(dvm::KernelType kernel_type, size_t sub_graph_count)
-      : DvmKernelMod(kernel_type),
+  ParallelDvmKernelMod(dvm::KernelType kernel_type, const std::string &op_name, const std::string &op_fullname,
+                       size_t sub_graph_count)
+      : DvmKernelMod(kernel_type, op_name, op_fullname),
         sub_graph_count_(sub_graph_count),
         shapes_ref_source_(sub_graph_count),
         inputs_(sub_graph_count),
