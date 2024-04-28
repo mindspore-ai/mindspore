@@ -332,8 +332,8 @@ Status Model::UpdateWeights(const std::vector<MSTensor> &new_weights) {
 }
 
 Status Model::RunStep(const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Model implement is null.";
+  if (MS_UNLIKELY(impl_ == nullptr)) {
+    MS_LOG(ERROR) << "Model implement is null!";
     return kLiteNullptr;
   }
   auto inputs = impl_->GetInputs();
@@ -343,16 +343,16 @@ Status Model::RunStep(const MSKernelCallBack &before, const MSKernelCallBack &af
 
 Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                       const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Model implement is null.";
+  if (MS_UNLIKELY(impl_ == nullptr)) {
+    MS_LOG(ERROR) << "Model implement is null!";
     return kLiteNullptr;
   }
   return impl_->Predict(inputs, outputs, before, after);
 }
 
 Status Model::Predict(const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Model implement is null.";
+  if (MS_UNLIKELY(impl_ == nullptr)) {
+    MS_LOG(ERROR) << "Model implement is null!";
     return kLiteNullptr;
   }
   return impl_->Predict(before, after);
