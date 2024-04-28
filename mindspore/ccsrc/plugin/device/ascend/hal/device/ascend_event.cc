@@ -100,9 +100,7 @@ void AscendEvent::WaitEvent() {
 
 bool AscendEvent::WaitEvent(uint32_t stream_id) {
   MS_LOG(DEBUG) << "Ascend wait event on stream id : " << stream_id << ".";
-  MS_EXCEPTION_IF_NULL(event_);
   wait_stream_ = AscendStreamMng::GetInstance().GetStream(stream_id);
-  MS_EXCEPTION_IF_NULL(wait_stream_);
   auto ret = CALL_ASCEND_API(aclrtStreamWaitEvent, wait_stream_, event_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "aclrtStreamWaitEvent failed, ret:" << ret;

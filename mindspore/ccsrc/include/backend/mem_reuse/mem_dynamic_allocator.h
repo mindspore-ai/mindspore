@@ -79,7 +79,8 @@ struct pair_hash {
   template <class L, class R>
   std::size_t operator()(const std::pair<L, R> &param) const {
     size_t hash = std::hash<L>{}(param.first);
-    hash <<= (sizeof(size_t) << 2);
+    const int shift_offset = 2;
+    hash <<= (sizeof(size_t) << shift_offset);
     hash ^= std::hash<R>{}(param.second);
     return std::hash<size_t>{}(hash);
   }
