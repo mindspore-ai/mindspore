@@ -71,7 +71,8 @@ from .queue import _SharedQueue, _Queue
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_device_send, check_take, check_output_shape, check_project, \
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
-    check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_padded_batch
+    check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_padded_batch, \
+    check_total_batch
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_enable_watchdog, get_seed, set_seed, get_debug_mode, get_multiprocessing_timeout_interval, _get_debug_hook_list
 from ..core.datatypes import mstype_to_detype
@@ -1568,32 +1569,34 @@ class Dataset:
     @check_tuple_iterator
     def create_tuple_iterator(self, columns=None, num_epochs=-1, output_numpy=False, do_copy=True):
         """
-        Create an iterator over the dataset. The datatype retrieved back will be a list of `numpy.ndarray` .
-
-        To specify which columns to list and the order needed, use columns_list. If columns_list
-        is not provided, the order of the columns will remain unchanged.
+        Create an iterator over the dataset that yields samples of type list, whose elements are
+        the data for each column.
 
         Args:
-            columns (list[str], optional): List of columns to be used to specify the order of columns.
-                Default: ``None``, means all columns.
-            num_epochs (int, optional): Maximum number of epochs that iterator can be iterated.
-                Default: ``-1``, iterator can be iterated infinite number of epochs.
-            output_numpy (bool, optional): Whether or not to output NumPy datatype.
-                If `output_numpy` is ``False``, iterator will output MSTensor. Default: ``False``.
-            do_copy (bool, optional): When output data type is :class:`mindspore.Tensor`,
-                use this param to select the conversion method, only take False for better performance.
-                Default: ``True``.
+            columns (list[str], optional): Specify the output columns and the order.
+                Default: ``None``, keep all the output columns and their original order.
+            num_epochs (int, optional): The number of epochs to iterate over the entire dataset.
+                Default: ``-1`` , the dataset can be iterated indefinitely.
+            output_numpy (bool, optional): Whether to keep the output data as NumPy ndarray, or
+                convert it to Tensor. Default: ``False`` .
+            do_copy (bool, optional): Whether to copy the data when converting output to Tensor,
+                or reuse the buffer for better performance, only works when `output_numpy` is ``False`` .
+                Default: ``True`` .
 
         Returns:
-            Iterator, a dataset iterator that returns data of type Tuple.
+            Iterator, a dataset iterator that yields samples of type list.
 
         Examples:
             >>> import mindspore.dataset as ds
-            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
-            >>> iterator = dataset.create_tuple_iterator()
-            >>> for item in iterator:
-            ...     # item is a list
-            ...     print(type(item))
+            >>>
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "data")
+            >>> num_epochs = 3
+            >>> iterator = dataset.create_tuple_iterator(num_epochs=num_epochs)
+            >>> for epoch in range(num_epochs):
+            ...     for item in iterator:
+            ...         # output is of type tuple
+            ...         print(type(item))
+            ...         break
             ...     break
             <class 'list'>
         """
@@ -1607,27 +1610,32 @@ class Dataset:
     @check_dict_iterator
     def create_dict_iterator(self, num_epochs=-1, output_numpy=False, do_copy=True):
         """
-        Create an iterator over the dataset. The data retrieved will be a dictionary datatype.
+        Create an iterator over the dataset that yields samples of type dict,
+        while the key is the column name and the value is the data.
 
         Args:
-            num_epochs (int, optional): Maximum number of epochs that iterator can be iterated.
-                Default: ``-1`` , iterator can be iterated infinite number of epochs.
-            output_numpy (bool, optional): Whether or not to output NumPy datatype,
-                if `output_numpy` is ``False``, iterator will output MSTensor. Default: ``False`` .
-            do_copy (bool, optional): When output data type is :class:`mindspore.Tensor`,
-                use this param to select the conversion method, only take False for better performance.
+            num_epochs (int, optional): The number of epochs to iterate over the entire dataset.
+                Default: ``-1`` , the dataset can be iterated indefinitely.
+            output_numpy (bool, optional): Whether to keep the output data as NumPy ndarray, or
+                convert it to Tensor. Default: ``False`` .
+            do_copy (bool, optional): Whether to copy the data when converting output to Tensor,
+                or reuse the buffer for better performance, only works when `output_numpy` is ``False`` .
                 Default: ``True`` .
 
         Returns:
-            Iterator, a dataset iterator that returns data of type Dict.
+            Iterator, a dataset iterator that yields samples of type dict.
 
         Examples:
             >>> import mindspore.dataset as ds
-            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
-            >>> iterator = dataset.create_dict_iterator()
-            >>> for item in iterator:
-            ...     # item is a dict
-            ...     print(type(item))
+            >>>
+            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "data")
+            >>> num_epochs = 3
+            >>> iterator = dataset.create_dict_iterator(num_epochs=num_epochs)
+            >>> for epoch in range(num_epochs):
+            ...     for item in iterator:
+            ...         # output is of type dict
+            ...         print(type(item))
+            ...         break
             ...     break
             <class 'dict'>
         """
@@ -4303,6 +4311,7 @@ class TransferDataset(Dataset):
         total_batch = 0
         if hasattr(self.children[0], "__total_batch__"):
             total_batch = self.children[0].__total_batch__
+            check_total_batch(total_batch)
         return cde.DataQueueNode(children[0], self.queue_name, self.device_type, self.device_id, self._send_epoch_end,
                                  total_batch, self._create_data_info_queue)
 
