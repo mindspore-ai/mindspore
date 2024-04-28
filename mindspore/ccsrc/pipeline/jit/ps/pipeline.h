@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -235,6 +235,7 @@ bool PyIsCipherFile(const std::string &file_path);
 void FinalizeCluster();
 FuncGraphPtr DynamicObfuscateMindIR(const std::string &file_name, float obf_ratio, int branch_control_input,
                                     char *dec_key, const size_t key_len, const std::string &dec_mode);
+bool IsPhaseExport(const std::string &phase);
 }  // namespace pipeline
 }  // namespace mindspore
 

@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -380,7 +380,8 @@ def test_compile_cache_lenet_with_force_use_compile_cache():
     Description: Test whether the env MS_DEV_FORCE_USE_COMPILE_CACHE takes effect.
     Expectation: success.
     """
-    run_network_once_with_force_use_compile_cache("run_lenet.py", "./lenet", "lenet_first.txt")
+    run_network_once_with_force_use_compile_cache("run_lenet.py", "./lenet_with_force_use_compile_cache",
+                                                  "lenet_first.txt")
 
 
 @pytest.mark.level0
@@ -500,3 +501,16 @@ def test_compile_cache_lenet_ge():
     Expectation: success.
     """
     run_twice_with_same_network("run_lenet.py", "./lenet", "lenet_first.txt", "lenet_second.txt", True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_resnet_infer_compile_cache():
+    """
+    Feature: Support compile cache in inference scenarios.
+    Description: Support compile cache in inference scenarios.
+    Expectation: Run success.
+    """
+    run_twice_with_same_network("run_resnet_infer.py", "./resnet_infer", "resnet_infer_first.txt",
+                                "resnet_infer_second.txt")
