@@ -29,9 +29,9 @@ namespace irpass {
 namespace internal {
 // White list of ops with taylor rule.
 const mindspore::HashSet<std::string> taylor_ops{
-  prim::kPrimAdd->name(), prim::kPrimSub->name(), prim::kPrimRealDiv->name(),
-  prim::kPrimMul->name(), prim::kPrimSin->name(), prim::kPrimCos->name(),
-  prim::kPrimTan->name(), prim::kPrimExp->name(), prim::kPrimLog->name()};
+  prim::kPrimAdd->name(), prim::kPrimSub->name(), prim::kPrimRealDiv->name(), prim::kPrimMul->name(),
+  prim::kPrimSin->name(), prim::kPrimCos->name(), prim::kPrimTan->name(),     prim::kPrimExp->name(),
+  prim::kPrimLog->name(), prim::kPrimDiv->name()};
 // The ops below are excluded when considering taylor rules.
 const mindspore::HashSet<std::string> taylor_exception_ops{prim::kPrimReturn->name(), prim::kPrimMakeTuple->name(),
                                                            prim::kPrimTupleGetItem->name(), prim::kPrimCast->name()};
