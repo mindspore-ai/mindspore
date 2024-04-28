@@ -28,7 +28,7 @@ namespace mindspore {
 namespace distributed {
 namespace cluster {
 // The timeout in milliseconds for one lookup.
-constexpr uint32_t kDefaultLookupTimeout = 300000;
+constexpr uint32_t kDefaultLookupTimeout = 2400 * 1000;
 
 // The time in milliseconds between two lookup operations.
 constexpr uint32_t kLookupInterval = 3000;
