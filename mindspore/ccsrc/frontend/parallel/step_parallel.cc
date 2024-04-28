@@ -1005,6 +1005,7 @@ static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_
         }
         MS_LOG(INFO) << "Find parameter " << param_name << " for node " << GetPrimName(node->cast<CNodePtr>())
                      << " and share the mirror.";
+        AddNodeMirrorInfo(node->cast<CNodePtr>(), param_name);
         continue;
       }
     }
@@ -1290,6 +1291,9 @@ void InsertParallelOpt(const FuncGraphPtr &root, const AnfNodePtr &parameter, co
         auto next_cnode = FindCNode(parameter, op_name, cnode->func_graph(), 0);
         if (next_cnode.first) {
           manager->SetEdge(cnode, param_pair.second, next_cnode.second);
+          auto param_ptr = parameter->cast<ParameterPtr>();
+          MS_EXCEPTION_IF_NULL(param_ptr);
+          AddNodeMirrorInfo(cnode, param_ptr->name());
           MS_LOG(INFO) << "Parallel optimizer is shared between " << parameter->ToString() << " and "
                        << GetPrimName(cnode);
         } else {
@@ -2912,6 +2916,41 @@ static void MoveMicroMirrorOutCallFunc(const FuncGraphPtr &root) {
   }
 }
 
+static void MergeMicroMirrorForSharedParameter(const FuncGraphPtr &root) {
+  AnfNodePtr ret_after = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret_after);
+  auto all_nodes = TopoSort(ret_after, SuccDeeperSimple);
+  auto manager = root->manager();
+  std::unordered_map<ParameterPtr, std::vector<CNodePtr>> param_mirror_map;
+  for (const auto &node : all_nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimMirrorMicroStep)) {
+      continue;
+    }
+    auto micro_mirror = node->cast<CNodePtr>();
+    auto param_anf_node = GetInputNodeWithFilter(micro_mirror, [&](const CNodePtr &cnode) {
+      bool filter = IsPrimitiveCNode(cnode, prim::kPrimMirrorMicroStep) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
+                    IsPrimitiveCNode(cnode, prim::kPrimDepend) ||
+                    IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather);
+      return std::make_pair(filter, 1);
+    });
+    if (!param_anf_node->isa<Parameter>()) {
+      continue;
+    }
+    auto param = param_anf_node->cast<ParameterPtr>();
+    param_mirror_map[param].push_back(micro_mirror);
+  }
+  for (const auto &parm_pair : param_mirror_map) {
+    if (parm_pair.second.size() <= 1) {
+      continue;
+    }
+    MS_LOG(INFO) << "Parameter " << parm_pair.first->name() << " still has multi mirror user, merge those mirror.";
+    auto mirror0 = parm_pair.second.front();
+    for (size_t i = 1; i < parm_pair.second.size(); ++i) {
+      (void)manager->Replace(parm_pair.second[i], mirror0);
+    }
+  }
+}
+
 static void BroadcastMultiOutputs(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager, const Group &group) {
   auto output = root->get_return()->input(1)->cast<CNodePtr>();
   auto output_abstract = output->abstract();
@@ -3121,6 +3160,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   StrategyCheckpoint::GetInstance().set_common_mirror_group(comm_group);
   HandleGlobalNormScale(root, manager);
   MoveMicroMirrorOutCallFunc(root);
+  MergeMicroMirrorForSharedParameter(root);
   DumpGraph(root, std::string(STEP_PARALLEL_END));
 
   // step parallel only run once

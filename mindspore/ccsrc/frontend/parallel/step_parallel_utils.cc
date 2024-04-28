@@ -1533,6 +1533,27 @@ void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const st
   }
 }
 
+void AddNodeMirrorInfo(const CNodePtr &cnode, const std::string &param_name) {
+  auto comm_id = MakeValue<std::string>(param_name);
+  if (IsParallelCareNode(cnode)) {
+    cnode->AddPrimalAttr(kPrimalAttrMirrorUserId, comm_id);
+    return;
+  }
+  auto next_nodes = GetOutputNodesWithFilter(cnode, [&](const AnfNodePtr &anode) {
+    return IsPrimitiveCNode(anode, prim::kPrimLoad) || IsPrimitiveCNode(anode, prim::kPrimCast) ||
+           IsPrimitiveCNode(anode, prim::kPrimAllGather) || IsPrimitiveCNode(anode, prim::kPrimMirror) ||
+           IsPrimitiveCNode(anode, prim::kPrimMicroStepAllGather) ||
+           IsPrimitiveCNode(anode, prim::kPrimMirrorMicroStep) || IsPrimitiveCNode(anode, prim::kPrimMakeTuple);
+  });
+  for (auto &pair : next_nodes) {
+    if (!IsPrimitiveCNode(pair.first)) {
+      continue;
+    }
+    auto next_node = pair.first->cast<CNodePtr>();
+    next_node->AddPrimalAttr(kPrimalAttrMirrorUserId, comm_id);
+  }
+}
+
 static ValuePtr GetMakeTupleValue(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   auto &inputs = cnode->inputs();
