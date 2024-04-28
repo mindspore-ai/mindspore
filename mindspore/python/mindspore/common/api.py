@@ -614,6 +614,18 @@ def _get_jit_hash(hash_input):
     return _get_obj_id(hash_input)
 
 
+def _update_graph_executor_config(jit_config):
+    """Update GraphExecutor jit_config"""
+    if isinstance(jit_config, JitConfig):
+        jit_config = jit_config.jit_config_dict
+    if not isinstance(jit_config, dict):
+        return
+    valid_config = dict()
+    for k, v in jit_config.items():
+        valid_config[str(k)] = str(v)
+    GraphExecutor_.get_instance().set_jit_config(JitConfig(**valid_config).jit_config_dict)
+
+
 def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=None, compile_once=False):
     """
     Create a callable MindSpore graph from a Python function.
@@ -761,6 +773,7 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
         if func.__code__.co_flags & UNSUPPORTED_CODE_TYPE:
             return decorated
 
+        _update_graph_executor_config(jit_config)
         config = dict()
         if isinstance(jit_config, JitConfig):
             config.update(jit_config.jit_config_dict)
