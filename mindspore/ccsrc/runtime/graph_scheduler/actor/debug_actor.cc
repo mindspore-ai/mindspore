@@ -233,6 +233,7 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
     }
     dump_flag = false;
   }
+  device_ctx_->device_res_manager_->SyncAllStreams();
   if (backend == "ge") {
     MS_LOG(INFO) << "On GE backend, debug_actor is not supported except for acl dump.";
     return;
