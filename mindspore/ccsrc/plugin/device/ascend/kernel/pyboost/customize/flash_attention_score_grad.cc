@@ -69,13 +69,13 @@ void FlashAttentionScoreGradAscendCall(
                  pse_shift, drop_mask, padding_mask, attn_mask, softmax_max, softmax_sum, softmax_in, attention_in,
                  prefix_array, actual_seq_qlen_array, actual_seq_kvlen_array, scale_value_value, keep_prob_value,
                  pre_tokens_value, next_tokens_value, head_num_value, input_layout_string, inner_precise_value,
-                 sparse_mode_value, outputs[0], outputs[1], outputs[2], outputs[3]);
+                 sparse_mode_value, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]);
   } else {
     LAUNCH_ACLNN(aclnnFlashAttentionScoreGrad, device_context, op->stream_id(), query, key, value, dy, pse_shift,
                  drop_mask, padding_mask, attn_mask, softmax_max, softmax_sum, softmax_in, attention_in, prefix_array,
                  scale_value_value, keep_prob_value, pre_tokens_value, next_tokens_value, head_num_value,
-                 input_layout_string, inner_precise_value, sparse_mode_value, outputs[0], outputs[1], outputs[2],
-                 outputs[3]);
+                 input_layout_string, inner_precise_value, sparse_mode_value, outputs[kIndex0], outputs[kIndex1],
+                 outputs[kIndex2], outputs[kIndex3]);
   }
 }
 }  // namespace

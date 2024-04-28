@@ -563,21 +563,21 @@ Status FlashAttentionScoreInfo::InferDevMatrixShape() {
     case FASInputLayoutMode::BSH:
     case FASInputLayoutMode::BSND:
       dev_matrix_shape_ = {batch_split_num_, s1_split_num_, n1_split_num_};
-      dev_matrix_batch_dim_ = 2;
-      dev_matrix_s1_dim_ = 1;
-      dev_matrix_n1_dim_ = 0;
+      dev_matrix_batch_dim_ = kIndex2;
+      dev_matrix_s1_dim_ = kIndex1;
+      dev_matrix_n1_dim_ = kIndex0;
       break;
     case FASInputLayoutMode::SBH:
       dev_matrix_shape_ = {s1_split_num_, batch_split_num_, n1_split_num_};
-      dev_matrix_s1_dim_ = 2;
-      dev_matrix_batch_dim_ = 1;
-      dev_matrix_n1_dim_ = 0;
+      dev_matrix_s1_dim_ = kIndex2;
+      dev_matrix_batch_dim_ = kIndex1;
+      dev_matrix_n1_dim_ = kIndex0;
       break;
     case FASInputLayoutMode::BNSD:
       dev_matrix_shape_ = {batch_split_num_, n1_split_num_, s1_split_num_};
-      dev_matrix_batch_dim_ = 2;
-      dev_matrix_n1_dim_ = 1;
-      dev_matrix_s1_dim_ = 0;
+      dev_matrix_batch_dim_ = kIndex2;
+      dev_matrix_n1_dim_ = kIndex1;
+      dev_matrix_s1_dim_ = kIndex0;
       break;
     default:
       MS_LOG(ERROR) << name_ << ": Not support layout: " << input_layout_;
@@ -690,7 +690,7 @@ void FlashAttentionScoreInfo::LoadBalanceSplitAlongSeqDim(size_t input_index, Ge
   int64_t q_split_axis;
   switch (input_index) {
     case ops::kFlashAttentionScoreInputQueryIndex:
-      q_split_axis = qkv_seq_dim_;
+      q_split_axis = SizeToLong(qkv_seq_dim_);
       split_attrs = {std::make_pair(AXIS, MakeValue(q_split_axis)),
                      std::make_pair(OUTPUT_NUM, MakeValue(kLoadBalanceSplitNum))};
       *split_node = gen_g->PushBack({gen_g->NewOpInst(SPLIT, split_attrs), gen_g->virtual_input_node()});
@@ -919,7 +919,7 @@ Status FlashAttentionScoreInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     gen_g.PushBack({NewValueNode(prim::kPrimMakeTuple), softmax_sum_keep, softmax_sum_target});
   auto softmax_sum =
     gen_g.PushBack({gen_g.NewOpInst(CONCAT), softmax_sum_maketuple, CreatInt64Imm(softmax_concat_axis)});
-  int64_t attention_out_concat_axis = qkv_seq_dim_;
+  int64_t attention_out_concat_axis = SizeToLong(qkv_seq_dim_);
   auto attention_out_maketuple =
     gen_g.PushBack({NewValueNode(prim::kPrimMakeTuple), attention_out_keep, attention_out_exchange});
   auto attention_out =

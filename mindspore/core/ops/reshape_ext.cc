@@ -126,13 +126,13 @@ abstract::ShapePtr ReshapeExtInferShape(const PrimitivePtr &primitive, const std
       << "The last node in ReshapeExt graph should be Reshape. Please check the ShapeReshapeFusion pass.";
   }
   auto output_shape = std::make_shared<abstract::Shape>(graph->GetScalarValue(graph->GetNodeSize() - 1));
-  auto input_shape = input_args[0]->GetShape();
+  auto input_shape = input_args[kIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_shape);
   auto input_shape_vector = input_shape->GetShapeVector();
   auto output_shape_vector = output_shape->GetShapeVector();
   if (!IsDynamic(input_shape_vector) && IsDynamic(output_shape_vector)) {
     int cnt = 0;
-    int index = 0;
+    size_t index = 0;
     for (size_t i = 0; i < output_shape_vector.size(); ++i) {
       if (output_shape_vector[i] == -1) {
         cnt++;
