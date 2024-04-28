@@ -202,7 +202,7 @@ from mindspore.ops.function import arange_ext as arange
 # 87
 
 # 88
-
+from mindspore.ops.function.array_func import chunk_ext as chunk
 # 89
 
 # 90
@@ -419,7 +419,7 @@ __all__ = [
     # 87
 
     # 88
-
+    'chunk',
     # 89
 
     # 90
