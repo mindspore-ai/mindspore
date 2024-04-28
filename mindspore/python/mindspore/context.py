@@ -1394,16 +1394,18 @@ def set_context(**kwargs):
               is ``force_fp16`` . The value range is as follows:
 
               - force_fp16: When the operator supports both float16 and float32, select float16 directly.
-              - allow_fp32_to_fp16: When the operator does not support the float32 data type, directly reduce
-                the precision of float16.
+              - allow_fp32_to_fp16: For cube operators, use the float16. For vector operators,
+                prefer to keep the origin dtype, if the operator in model can support float32,
+                it will keep original dtype, otherwise it will reduce to float16.
               - allow_mix_precision: Automatic mixing precision, facing the whole network operator, according
                 to the built-in optimization strategy, automatically reduces the precision of some operators
                 to float16 or bfloat16.
               - must_keep_origin_dtype: Keep the accuracy of the original drawing.
               - force_fp32: When the input of the matrix calculation operator is float16 and the output supports
                 float16 and float32, output is forced to float32.
-              - allow_fp32_to_bf16: When the operator does not support the float32 data type, directly reduce
-                the precision of bfloat16.
+              - allow_fp32_to_bf16: For cube operators, use the bfloat16. For vector operators,
+                prefer to keep the origin dtype, if the operator in model can support float32,
+                it will keep original dtype, otherwise it will reduce to bfloat16.
               - allow_mix_precision_fp16: Automatic mixing precision, facing the whole network operator, automatically
                 reduces the precision of some operators to float16 according to the built-in optimization strategy.
               - allow_mix_precision_bf16: Automatic mixing precision, facing the whole network operator, according to
