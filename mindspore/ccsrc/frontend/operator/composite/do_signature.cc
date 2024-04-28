@@ -111,7 +111,7 @@ void DoAutoCast(const std::vector<Signature> &signature, const std::vector<TypeP
   std::vector<TypeId> args_type_id;
   std::vector<bool> args_has_tensor;
   GetTypeInfo(input_types, &args_type_id, &args_has_tensor);
-  auto sig_type_map = GetSignatureTypeMap(dtypes, args_type_id, args_has_tensor);
+  auto sig_type_map = GetSignatureTypeMap(dtypes, args_type_id, args_has_tensor, write_indices);
   for (size_t i = 0; i < args_size; ++i) {
     auto it = sig_type_map.find(dtypes[i]);
     if (it == sig_type_map.end()) {
