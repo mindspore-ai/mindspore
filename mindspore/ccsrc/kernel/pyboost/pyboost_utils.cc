@@ -179,7 +179,7 @@ DeviceSyncPtr PyBoostUtils::ContiguousByDeviceAddress(const DeviceSyncPtr &devic
   auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
   auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(storage_info->shape);
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, address_size, storage_info->shape, kOpFormat_DEFAULT, old_device_address->type_id(),
+    nullptr, address_size, storage_info->shape, DEFAULT_FORMAT, old_device_address->type_id(),
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_, stream_id);
   new_device_address->set_device_shape(storage_info->shape);
   new_device_address->set_original_ref_count(SIZE_MAX);
@@ -222,7 +222,7 @@ void PyBoostUtils::CreateOutputTensor(const DeviceContext *device_context, const
 
   // Create view output address
   auto output_device_address = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, input_device_address->GetSize(), output_tensor->shape(), kOpFormat_DEFAULT, output_tensor->data_type(),
+    nullptr, input_device_address->GetSize(), output_tensor->shape(), DEFAULT_FORMAT, output_tensor->data_type(),
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_,
     input_device_address->stream_id());
   MS_EXCEPTION_IF_NULL(output_device_address);
