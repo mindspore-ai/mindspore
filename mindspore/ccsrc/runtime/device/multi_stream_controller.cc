@@ -39,7 +39,8 @@ void MultiStreamController::Refresh(const DeviceContext *device_context) {
   if (stream_size == 0) {
     // CPU has no concept of stream, stream size must be zero.
     MS_LOG(INFO) << "Stream size is 0, will initialize with 2 streams.";
-    stream_size = 2;
+    const size_t default_stream_size = 2;
+    stream_size = default_stream_size;
   }
   task_id_on_stream_manager_[device_context].Resize(stream_size);
   if (event_pools_.count(device_context) == 0) {
