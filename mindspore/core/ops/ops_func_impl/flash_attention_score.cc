@@ -184,7 +184,7 @@ std::vector<int64_t> GetFASInfoFromInputLayout(int64_t input_layout, int64_t q_h
     batch_size = query_shape[kIndex0];
     if (q_head_num != query_shape[kIndex2]) {
       MS_LOG(EXCEPTION) << op_name << ": query_shape[2] must be equal to attribute 'head_num', but got "
-                        << query_shape[2] << " and " << q_head_num;
+                        << query_shape[kIndex2] << " and " << q_head_num;
     }
     q_seq_len = query_shape[kIndex1];
     kv_seq_len = key_shape[kIndex1];
@@ -249,13 +249,13 @@ BaseShapePtr FlashAttentionScoreFuncImpl::InferShape(const PrimitivePtr &primiti
     }
   }
 
-  size_t seq_index = 1;
-  size_t batch_index = 0;
+  size_t seq_index = kIndex1;
+  size_t batch_index = kIndex0;
   if (input_layout == FASInputLayoutMode::SBH) {
-    seq_index = 0;
-    batch_index = 1;
+    seq_index = kIndex0;
+    batch_index = kIndex1;
   } else if (input_layout == FASInputLayoutMode::BNSD) {
-    seq_index = 2;
+    seq_index = kIndex2;
   }
   if (head_num_no_value) {
     return ConstructInferShape(ShapeVector{query_shape[batch_index], abstract::Shape::kShapeDimAny,
