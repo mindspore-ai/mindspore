@@ -63,9 +63,8 @@ bool ComputeGraphNode::Initialize() {
   // Register itself to meta server node.
   bool success = false;
   if (!enable_ssl) {
-    success =
-      ReconnectWithTimeoutWindow(std::bind(&ComputeGraphNode::Register, this),
-                                 "Failed to register and try to reconnect to the meta server.", GetClusterTimeout());
+    success = ReconnectWithTimeoutWindow(std::bind(&ComputeGraphNode::Register, this),
+                                         "Failed to register and try to reconnect to the meta server.", topo_timeout_);
   } else {
     const auto &server_url = meta_server_addr_.GetUrl();
     size_t retry = 10;
@@ -193,7 +192,8 @@ bool ComputeGraphNode::Register() {
   auto message = CreateMessage(server_url, MessageName::kRegistration, content);
   MS_EXCEPTION_IF_NULL(message);
 
-  MessageBase *response = hb_client_->ReceiveSync(std::move(message));
+  const uint32_t timeout = 10;
+  MessageBase *response = hb_client_->ReceiveSync(std::move(message), timeout);
   if (response == nullptr) {
     return false;
   }
@@ -225,7 +225,7 @@ bool ComputeGraphNode::Unregister() {
   auto message = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kUnregistration, content);
   MS_EXCEPTION_IF_NULL(message);
 
-  const uint32_t timeout = 6;
+  const uint32_t timeout = 10;
   MessageBase *response = hb_client_->ReceiveSync(std::move(message), timeout);
   if (response == nullptr) {
     return false;
@@ -247,7 +247,6 @@ bool ComputeGraphNode::Heartbeat() {
 
     MS_LOG(INFO) << "The heartbeat thread is started.";
     uint32_t interval = 3;
-    uint32_t timeout = 10;
 
     while (enable_hb_) {
       HeartbeatMessage hb_msg;
@@ -258,7 +257,7 @@ bool ComputeGraphNode::Heartbeat() {
       auto message = CreateMessage(server_url, MessageName::kHeartbeat, content);
       MS_EXCEPTION_IF_NULL(message);
 
-      MessageBase *response = hb_client_->ReceiveSync(std::move(message), timeout);
+      MessageBase *response = hb_client_->ReceiveSync(std::move(message));
       if (response == nullptr) {
         MS_LOG(ERROR)
           << "Failed to send heartbeat message to meta server node and try to reconnect to the meta server.";
@@ -401,7 +400,7 @@ bool ComputeGraphNode::PutMetadata(const std::string &name, const void *value, c
   return SendMessageToMSN(std::to_string(static_cast<int>(MessageName::kWriteMetadata)), metadata.SerializeAsString());
 }
 
-std::string ComputeGraphNode::GetMetadata(const std::string &name, uint32_t timeout) {
+std::string ComputeGraphNode::GetMetadata(const std::string &name, uint32_t) {
   MetadataMessage metadata;
   metadata.set_name(name);
 
@@ -410,7 +409,7 @@ std::string ComputeGraphNode::GetMetadata(const std::string &name, uint32_t time
   MS_EXCEPTION_IF_NULL(message);
 
   MS_EXCEPTION_IF_NULL(tcp_client_);
-  auto retval = tcp_client_->ReceiveSync(std::move(message), timeout);
+  auto retval = tcp_client_->ReceiveSync(std::move(message));
   if (retval != rpc::NULL_MSG && (retval->name == std::to_string(static_cast<int>(MessageName::kValidMetadata)))) {
     (void)metadata.ParseFromArray(retval->body.c_str(), SizeToInt(retval->body.length()));
     return metadata.value();
@@ -418,7 +417,7 @@ std::string ComputeGraphNode::GetMetadata(const std::string &name, uint32_t time
   return "";
 }
 
-bool ComputeGraphNode::DeleteMetadata(const std::string &name, uint32_t timeout) {
+bool ComputeGraphNode::DeleteMetadata(const std::string &name, uint32_t) {
   MetadataMessage metadata;
   metadata.set_name(name);
 
@@ -428,7 +427,7 @@ bool ComputeGraphNode::DeleteMetadata(const std::string &name, uint32_t timeout)
   MS_EXCEPTION_IF_NULL(message);
 
   MS_EXCEPTION_IF_NULL(tcp_client_);
-  auto retval = tcp_client_->ReceiveSync(std::move(message), timeout);
+  auto retval = tcp_client_->ReceiveSync(std::move(message));
   if (retval != rpc::NULL_MSG && (retval->name == std::to_string(static_cast<int>(MessageName::kValidMetadata)))) {
     return true;
   } else {
@@ -542,13 +541,13 @@ void ComputeGraphNode::set_abnormal_callback(std::shared_ptr<std::function<void(
 const std::string &ComputeGraphNode::client_ip() const { return client_ip_; }
 
 std::shared_ptr<std::string> ComputeGraphNode::RetrieveMessageFromMSN(const std::string &msg_name,
-                                                                      const std::string &msg_body, uint32_t timeout) {
+                                                                      const std::string &msg_body, uint32_t) {
   MS_EXCEPTION_IF_NULL(tcp_client_);
 
   auto message = CreateMessage(meta_server_addr_.GetUrl(), msg_name, msg_body);
   MS_EXCEPTION_IF_NULL(message);
 
-  auto retval = tcp_client_->ReceiveSync(std::move(message), timeout);
+  auto retval = tcp_client_->ReceiveSync(std::move(message));
   if (retval != rpc::NULL_MSG) {
     return std::make_shared<std::string>(retval->body);
   }
