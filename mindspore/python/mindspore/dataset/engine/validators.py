@@ -27,7 +27,7 @@ from ..core.validator_helpers import parse_user_args, type_check, type_check_lis
     INT32_MAX, check_valid_detype, check_dir, check_file, check_sampler_shuffle_shard_options, \
     validate_dataset_param_value, check_padding_options, \
     check_num_parallel_workers, check_columns, check_pos_int32, check_valid_str, check_dataset_num_shards_shard_id, \
-    check_valid_list_tuple
+    check_valid_list_tuple, check_int32
 
 from . import datasets
 from . import samplers
@@ -1596,6 +1596,10 @@ def check_device_send(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_total_batch(total_batch):
+    check_int32(total_batch, "total_batch")
 
 
 def check_zip(method):
