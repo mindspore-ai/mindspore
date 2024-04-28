@@ -114,7 +114,7 @@ void int_to_byte(size_t number, char *byte, size_t length) {
 std::string GenerateNpyHeader(const ShapeVector &shape, TypeId type_id, bool fortran_order) {
   auto type_desc = type_desc_map.find(type_id);
   if (type_desc == type_desc_map.end()) {
-    MS_LOG(INFO) << "Not support dump the " << TypeIdToType(type_id)->ToString() << " data to npy file.";
+    MS_LOG(WARNING) << "Not support dump the " << TypeIdToType(type_id)->ToString() << " data to npy file.";
     return std::string();
   }
 

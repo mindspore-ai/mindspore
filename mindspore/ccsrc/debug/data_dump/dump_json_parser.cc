@@ -292,6 +292,11 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
     MS_LOG(ERROR) << "Incorrect parameter.";
     return false;
   }
+  std::string npy_header = GenerateNpyHeader(shape, type);
+  if (npy_header.empty()) {
+    MS_LOG(WARNING) << "Failed to generate npy_header for file: " << filename;
+    return false;
+  }
   std::string npy_suffix = ".npy";
   std::string origin_file_path = filename + npy_suffix;
   std::optional<std::string> prefix_path;
@@ -337,19 +342,16 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
   if (!fd.is_open()) {
     MS_LOG(EXCEPTION) << "Open file " << file_path_str << " failed." << ErrnoToString(errno);
   }
-  std::string npy_header = GenerateNpyHeader(shape, type);
-  if (!npy_header.empty()) {
-    fd << npy_header;
-    (void)fd.write(reinterpret_cast<const char *>(data), SizeToLong(len));
-    if (fd.bad()) {
-      fd.close();
-      MS_LOG(EXCEPTION)
-        << "Write mem to file " << file_path_str
-        << " failed. This error may be caused by insufficient disk space. Please check the available disk space.";
-    }
+  fd << npy_header;
+  (void)fd.write(reinterpret_cast<const char *>(data), SizeToLong(len));
+  if (fd.bad()) {
     fd.close();
-    ChangeFileMode(file_path_str, S_IRUSR);
+    MS_LOG(EXCEPTION)
+      << "Write mem to file " << file_path_str
+      << " failed. This error may be caused by insufficient disk space. Please check the available disk space.";
   }
+  fd.close();
+  ChangeFileMode(file_path_str, S_IRUSR);
   return true;
 }
 
