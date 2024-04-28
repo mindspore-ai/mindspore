@@ -147,7 +147,7 @@ std::vector<BorderPair> GpipeInterleavedScheduler::SortBetweenMicro(const std::v
   return sorted_borders;
 }
 
-void GpipeInterleavedScheduler::ForwardReorder(int64_t bias, int64_t flag) {
+void GpipeInterleavedScheduler::ForwardReorder(size_t bias, int64_t flag) {
   auto sorted_fwd_begin = SortBetweenMicro(fwd_begin_, false);
   auto sorted_fwd_end = SortBetweenMicro(fwd_end_, false);
   auto sorted_fwd_cell = SortBetweenMicro(fwd_cell_, false);
@@ -203,9 +203,9 @@ void GpipeInterleavedScheduler::Reorder() {
   auto sorted_bwd_begin = SortBetweenMicro(bwd_begin_, true);
   auto sorted_bwd_end = SortBetweenMicro(bwd_end_, true);
   auto sorted_bwd_cell = SortBetweenMicro(bwd_cell_, true);
-  int64_t bias = 0;
+  size_t bias = 0;
   if (micro_size_ > stage_num_) {
-    bias = micro_size_ - stage_num_;
+    bias = LongToSize(micro_size_ - stage_num_);
   }
 
   // Sort forward

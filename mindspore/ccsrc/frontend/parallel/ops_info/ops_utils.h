@@ -22,6 +22,8 @@
 namespace mindspore {
 namespace parallel {
 constexpr size_t MAX_RECURSIVE_DEPTH = 100000;
+constexpr int64_t MAX_MICRO_BATCH_NUM = 4096;
+constexpr int64_t MAX_INTERLEAVE_NUM = 128;
 constexpr size_t PRELU_INPUTS_SIZE = 2;
 constexpr size_t PRELU_OUTPUTS_SIZE = 1;
 constexpr size_t PRELU_SECOND_INPUT_SIZE = 1;
