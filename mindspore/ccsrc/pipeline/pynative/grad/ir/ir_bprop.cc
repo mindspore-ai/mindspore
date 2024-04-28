@@ -30,6 +30,7 @@
 
 namespace mindspore::pynative::autograd {
 namespace {
+constexpr size_t kOutAndDoutNum = 2;
 const mindspore::HashSet<std::string> kMonadOp = {kLoadOpName, kDependOpName, kUpdateStateOpName};
 const mindspore::HashSet<std::string> kMetaFuncGraphOp{
   kPyExecuteOpName,
@@ -200,12 +201,12 @@ void IrBprop::BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim
 
   // Create gradient outputs cnode
   AnfNodePtrList inputs{NewValueNode(bprop_cut)};
-  for (size_t i = 1; i < cnode->size() - 2; ++i) {
+  for (size_t i = 1; i < cnode->size() - kOutAndDoutNum; ++i) {
     (void)inputs.emplace_back(cnode->input(i));
   }
   if (!is_need_recompute) {
     // If not recompute, we should add out as bprop input.
-    (void)inputs.emplace_back(cnode->input(cnode->size() - 2));
+    (void)inputs.emplace_back(cnode->input(cnode->size() - kOutAndDoutNum));
   }
   (void)inputs.emplace_back(cnode->input(cnode->size() - 1));
 
