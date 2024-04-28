@@ -71,7 +71,7 @@ class PipelineInterleave {
   mindspore::HashMap<AnfNodePtr, std::set<int64_t>> parameter_color_map_ = {};
   std::string world_group_;
   bool is_train_{true};
-  int64_t global_rank_;
+  int64_t global_rank_ = 0;
   int64_t per_stage_rank_num_ = 0;
 };
 

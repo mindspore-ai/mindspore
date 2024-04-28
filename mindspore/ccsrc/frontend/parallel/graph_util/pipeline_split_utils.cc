@@ -1201,8 +1201,8 @@ int64_t GetRank() {
 std::string GetWorldGroup() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  std::string world_group;
   std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  std::string world_group = "";
   if (backend == kAscendDevice) {
     world_group = parallel::HCCL_WORLD_GROUP;
   } else if (backend == kGPUDevice) {

@@ -215,17 +215,24 @@ void LabelMicroInterleavedBranchTagForBackwardCommNodes(const std::vector<CNodeP
   }
 }
 }  // namespace
-void LabelFineGrainedInterleavedIndex(const FuncGraphPtr &graph) {
+
+static bool IsNeedFineGrainedInterleaved(const FuncGraphManagerPtr &manager) {
   if (parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kSemiAutoParallel &&
       parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
-    return;
+    return false;
   }
+  if (!IsTraining(manager)) {
+    return false;
+  }
+  return true;
+}
 
+void LabelFineGrainedInterleavedIndex(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
 
-  if (!IsTraining(manager)) {
+  if (!IsNeedFineGrainedInterleaved(manager)) {
     return;
   }
 
