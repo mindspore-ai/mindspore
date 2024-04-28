@@ -3519,6 +3519,30 @@ def _circular_pad(input_x, padding):
     return out
 
 
+def _reflection_pad(input, pad):
+    """reflection pad"""
+    out = input
+    if len(pad) == 2:
+        out = reflection_pad_1d_op(input, pad)
+    elif len(pad) == 4:
+        out = reflection_pad_2d_op(input, pad)
+    else:
+        out = reflection_pad_3d_op(input, pad)
+    return out
+
+
+def _replication_pad(input, pad):
+    """replication pad"""
+    out = input
+    if len(pad) == 2:
+        out = replication_pad_1d_op(input, pad)
+    elif len(pad) == 4:
+        out = replication_pad_2d_op(input, pad)
+    else:
+        out = replication_pad_3d_op(input, pad)
+    return out
+
+
 def pad_ext(input, pad, mode='constant', value=None):
     r"""
     Pads the input tensor according to the pad.
@@ -3578,27 +3602,12 @@ def pad_ext(input, pad, mode='constant', value=None):
     elif mode == "circular":
         out = _circular_pad(input, pad)
     else:
-        if len(pad) == 2:
-            if mode == "reflect":
-                out = reflection_pad_1d_op(input, pad)
-            elif mode == "replicate":
-                out = replication_pad_1d_op(input, pad)
-            else:
-                raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
-        elif len(pad) == 4:
-            if mode == "reflect":
-                out = reflection_pad_2d_op(input, pad)
-            elif mode == "replicate":
-                out = replication_pad_2d_op(input, pad)
-            else:
-                raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
+        if mode == "reflect":
+            out = _reflection_pad(input, pad)
+        elif mode == "replicate":
+            out = _replication_pad(input, pad)
         else:
-            if mode == "reflect":
-                out = reflection_pad_3d_op(input, pad)
-            elif mode == "replicate":
-                out = replication_pad_3d_op(input, pad)
-            else:
-                raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
+            raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
     return out
 
 

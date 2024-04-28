@@ -456,6 +456,50 @@ BaseShapePtr SetPadShape(const ShapeVector &x_shape, const ArrayValue<int64_t> &
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
+BaseShapePtr PadInferShapeBase(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
+                               const size_t pad_dim) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto x_base_shape = input_args[kInputIndex0]->GetShape();
+  auto x_shape = x_base_shape->GetShapeVector();
+  // input x dynamic rank
+  MS_EXCEPTION_IF_NULL(x_base_shape);
+  if (x_base_shape->IsDimUnknown()) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+  }
+  // input x dynamic shape
+  auto x_rank = x_shape.size();
+  constexpr size_t minValidDim = 1;
+  constexpr size_t maxValidDim = 2;
+  if (x_rank != pad_dim + minValidDim && x_rank != pad_dim + maxValidDim) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input should be " << pad_dim + minValidDim
+                             << "D or " << pad_dim + maxValidDim << "D, but got " << x_rank;
+  }
+  // padding
+  auto paddings_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
+  if (!paddings_opt.has_value()) {
+    ShapeVector out_shape = x_shape;
+    for (size_t dim = 1; dim <= pad_dim; ++dim) {
+      out_shape[x_rank - dim] = abstract::Shape::kShapeDimAny;
+    }
+    return std::make_shared<abstract::Shape>(std::move(out_shape));
+  }
+
+  auto padding_type = input_args[kInputIndex1]->GetType();
+  if (!padding_type->isa<Tuple>()) {
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', type of 'padding' should be tuple of int, but got"
+                            << padding_type;
+  }
+  constexpr size_t kScaleNum = 2;
+  auto paddings = paddings_opt.value();
+  if (paddings.size() != pad_dim * kScaleNum) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the padding length should be "
+                             << pad_dim * kScaleNum << ", but got " << paddings.size();
+  }
+
+  auto out_shape = SetPadShape(x_shape, paddings);
+  return out_shape;
+}
+
 bool ObscureShapeEqual(const ShapeVector &lhs, const ShapeVector &rhs) {
   if (lhs == rhs) {
     return true;
