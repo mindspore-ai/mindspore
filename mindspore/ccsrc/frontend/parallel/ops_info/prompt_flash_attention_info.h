@@ -69,7 +69,8 @@ class PromptFlashAttentionInfo : public OperatorInfo {
   std::vector<bool> optinal_inputs_;
   size_t atten_mask_rank_ = 0;
   size_t padding_mask_rank_ = 0;
-  bool CheckStrategy(int64_t strategy, int64_t true_value, const std::string &dim_name, const std::string &input_name);
+  bool CheckStrategyOnIndex(int64_t strategy, int64_t true_value, const std::string &dim_name,
+                            const std::string &input_name);
   int GetSqueezedIndex(size_t original_index);
   std::tuple<int64_t, int64_t> GetAttenionMaskAttrs(const int64_t split_id, const int64_t split_num);
   int64_t GetSplitIdAndRank();
