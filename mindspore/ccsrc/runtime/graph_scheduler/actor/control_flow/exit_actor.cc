@@ -363,7 +363,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
                                                      new_device_tensor->GetSize(),
                                                      new_device_tensor->kernel_tensor().get());
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther);
-      if (!device_context->device_res_manager_->AllocateMemory(new_device_tensor.get())) {
+      if (!device_context->device_res_manager_->AllocateMemory(new_device_tensor.get(), kDefaultStreamIndex)) {
         SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
                                                     GetAID().Name(), new_device_tensor->GetSize());
       }

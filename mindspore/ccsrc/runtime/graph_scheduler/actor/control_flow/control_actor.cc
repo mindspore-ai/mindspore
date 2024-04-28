@@ -446,7 +446,7 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
         device_tensor->set_stream_id(data_stream_id);
       }
       if ((device_tensor->GetPtr() == nullptr) &&
-          (!device_context->device_res_manager_->AllocateMemory(device_tensor.get()))) {
+          (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), kDefaultStreamIndex))) {
         SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
                                                     formal_parameter.first->DebugString(), device_tensor->GetSize());
       }
@@ -594,7 +594,7 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
   MS_EXCEPTION_IF_NULL(new_device_tensor);
 
   MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id();
-  if (!device_context->device_res_manager_->AllocateMemory(new_device_tensor.get())) {
+  if (!device_context->device_res_manager_->AllocateMemory(new_device_tensor.get(), kDefaultStreamIndex)) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
                                                 GetAID().Name(), new_device_tensor->GetSize());
   }
@@ -673,7 +673,7 @@ void ControlActor::MergeEmptyAddressDeviceAddress(OpContext<DeviceTensor> *const
   new_device_tensor->set_dynamic_ref_count(0);
   new_device_tensor->set_original_ref_count(SIZE_MAX);
   new_device_tensor->ResetRefCount();
-  if (!device_context->device_res_manager_->AllocateMemory(new_device_tensor.get())) {
+  if (!device_context->device_res_manager_->AllocateMemory(new_device_tensor.get(), kDefaultStreamIndex)) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
                                                 GetAID().Name(), new_device_tensor->GetSize());
   }

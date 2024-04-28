@@ -110,6 +110,8 @@ class BACKEND_EXPORT MemoryManager {
     return memory_pool_->SyncAllEvents();
   }
 
+  DynamicMemPoolBestFit *memory_pool() { return memory_pool_; }
+
  protected:
   virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id) = 0;
   virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem) {

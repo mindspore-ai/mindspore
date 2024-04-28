@@ -113,6 +113,7 @@ bool MultiStreamController::WaitEvent(const DeviceContext *device_context, int64
   }
   // If update task id on stream failed, means task id on stream is elder one, no need to wait event on mem manager.
   if (!UpdateTaskIdOnStream(device_context, task_id_on_stream, user_stream_id, memory_stream_id)) {
+    MS_LOG(DEBUG) << "Skip Wait Event.";
     return false;
   }
   return mem_manager->WaitEvent(task_id_on_stream, user_stream_id, memory_stream_id);

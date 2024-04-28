@@ -175,7 +175,7 @@ class BACKEND_EXPORT DeviceResManager {
   }
 
   // Relevant function to allocate and free device memory of DeviceAddress.
-  virtual bool AllocateMemory(DeviceAddress *const &address) const;
+  virtual bool AllocateMemory(DeviceAddress *const &address, uint32_t stream_id = UINT32_MAX) const;
   virtual void FreeMemory(DeviceAddress *const &address) const;
   virtual size_t GetMaxUsedMemorySize() const { return 0; }
 

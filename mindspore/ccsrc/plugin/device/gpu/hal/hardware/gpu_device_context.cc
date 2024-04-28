@@ -270,7 +270,7 @@ void GPUDeviceResManager::FreePartMemorys(const std::vector<void *> &free_addrs,
   GPUMemoryAllocator::GetInstance().FreePartTensorMems(free_addrs, keep_addrs, keep_addr_sizes);
 }
 
-bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
+bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address, uint32_t stream_id) const {
   MS_EXCEPTION_IF_NULL(address);
   auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
   if (device_name_in_address != device_context_->device_context_key().device_name_) {
@@ -286,12 +286,17 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   if (!BindDeviceToCurrentThread(false)) {
     return false;
   }
+
+  if (stream_id == UINT32_MAX) {
+    stream_id = address->stream_id();
+  }
+
   void *device_ptr;
   if (swap_manager_ != nullptr) {
-    device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize(), address->stream_id());
+    device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize(), stream_id);
   } else {
-    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), false,
-                                                    address->stream_id());
+    device_ptr =
+      mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), false, stream_id);
   }
   if (!device_ptr) {
     return false;
