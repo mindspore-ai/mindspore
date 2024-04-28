@@ -309,7 +309,11 @@ void ChangeGraphMode(const GraphCompilerInfo &graph_compiler_info) {
       const auto &graph = graph_compiler_info.graphs_[i];
       MS_LOG(INFO) << "Enable kbk subgraph execute and set run mode for graph: " << graph->graph_id()
                    << " to GraphMode.";
-      graph->set_run_mode(device::RunMode::kGraphMode);
+      if (graph->RunMode() == device::RunMode::kGraphMode) {
+        MS_LOG(WARNING) << "Can not set graph sink when execute sub graph kernel by kernel mode.";
+      } else {
+        graph->set_run_mode(device::RunMode::kGraphMode);
+      }
     }
   }
 }
@@ -472,6 +476,12 @@ void GraphScheduler::Initialize() {
 #endif
 
   BuildAndScheduleGlobalActor();
+
+  // Runtime pipeline optimization must enable when executing graph kernel by kernel mode.
+  bool disable_kbk_sub_graph_execute = (default_actor_thread_num_ <= kAsyncLaunchThreadNum) || !EnableRuntimePipeline();
+  if (disable_kbk_sub_graph_execute) {
+    ActorDispatcher::set_disable_kbk_sub_graph_execute(true);
+  }
 }
 
 void GraphScheduler::BuildAndScheduleGlobalActor() {

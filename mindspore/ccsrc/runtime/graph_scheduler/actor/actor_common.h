@@ -158,6 +158,8 @@ enum class KernelTransformType {
     }                                                                                                              \
     if ((strategy) == GraphExecutionStrategy::kStep) {                                                             \
       MS_LOG(EXCEPTION) << message;                                                                                \
+    } else {                                                                                                       \
+      MS_LOG(ERROR) << message;                                                                                    \
     }                                                                                                              \
     (op_context).error_info_ = message;                                                                            \
     (op_context).SetFailed(kFailure);                                                                              \
@@ -183,7 +185,7 @@ class ActorDispatcher {
   }
 
   template <typename T, typename... Args0, typename... Args1>
-  static void Send(const AID &aid, void (T::*method)(Args0...), Args1 &&...args) {
+  static void Send(const AID &aid, void (T::*method)(Args0...), Args1 &&... args) {
     if (is_multi_thread_execution_) {
       auto tuple = std::make_tuple(std::forward<Args1>(args)...);
       Async(aid, method, std::move(tuple));
@@ -209,7 +211,7 @@ class ActorDispatcher {
   }
 
   template <typename T, typename... Args0, typename... Args1>
-  static void SendSync(const AID &aid, void (T::*method)(Args0...), Args1 &&...args) {
+  static void SendSync(const AID &aid, void (T::*method)(Args0...), Args1 &&... args) {
     auto actor_manager = ActorMgr::GetActorMgrRef();
     auto base_actor = actor_manager->GetActor(aid);
     T *actor = static_cast<T *>(base_actor.get());
@@ -218,7 +220,7 @@ class ActorDispatcher {
   }
 
   template <typename T, typename... Args0, typename... Args1>
-  static void SendSync(OpActor<DeviceTensor> *to_actor, void (T::*method)(Args0...), Args1 &&...args) {
+  static void SendSync(OpActor<DeviceTensor> *to_actor, void (T::*method)(Args0...), Args1 &&... args) {
     T *actor = static_cast<T *>(to_actor);
     MS_EXCEPTION_IF_NULL(actor);
     (actor->*method)(std::forward<Args1>(args)...);
@@ -257,6 +259,11 @@ class ActorDispatcher {
   }
   static bool enable_async_launch_kernel() { return enable_async_launch_kernel_; }
 
+  static void set_disable_kbk_sub_graph_execute(bool disable_kbk_sub_graph_execute) {
+    disable_kbk_sub_graph_execute_ = disable_kbk_sub_graph_execute;
+  }
+  static bool disable_kbk_sub_graph_execute() { return disable_kbk_sub_graph_execute_; }
+
   // The first five executions are for warm-up, the next five executions are statistics of multi thread execution time,
   // and the next next five executions are statistics of single thread execution time. The first 30 step which do search
   // if there are cpu kernels.
@@ -291,6 +298,7 @@ class ActorDispatcher {
   static bool enable_runtime_multi_pipeline_;
   static bool enable_static_shape_;
   static bool enable_async_launch_kernel_;
+  static bool disable_kbk_sub_graph_execute_;
 };
 
 bool IsRunningFailed(const OpContext<DeviceTensor> *context);

@@ -262,6 +262,13 @@ void SuperKernelActor::FetchPersistentDeviceTensor() {
 }
 
 void SuperKernelActor::RunGraphKernelByKernel(OpContext<DeviceTensor> *const context) {
+  if (!ActorDispatcher::enable_async_launch_kernel()) {
+    std::string error_info =
+      "Runtime pipeline optimization is disabled, failed to execute graph kernel by kernel mode.";
+    MS_LOG(ERROR) << "Run graph failed, graph id: " << std::to_string(graph_->graph_id()) << ". " << error_info;
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+  }
+
   // 1. Fetch input data
   FetchInputDeviceTensor(context);
   if (!already_fetch_persistent_device_tensor_) {
@@ -294,8 +301,8 @@ void SuperKernelActor::RunGraphKernelByKernel(OpContext<DeviceTensor> *const con
 
     // 3.2 Allocate somas memory for this kernel
     kernel_actor->SetSomasMemory(context);
-    // Async Run Infer or Launch
 
+    // Async Run Infer or Launch
     if (ActorDispatcher::enable_runtime_multi_pipeline() && !ActorDispatcher::enable_static_shape()) {
       // If the kernel need user data and is dynamic, maybe need input kernel's output user data to infer shape, this
       // value depend case can not handle in KernelTensor auto sync phase currently.
