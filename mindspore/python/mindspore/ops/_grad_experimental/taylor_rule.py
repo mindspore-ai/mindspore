@@ -116,6 +116,7 @@ def _taylor_fprop_realdiv(input_x, input_y):
     return series
 
 
+@taylor_fprop_getters.register(P.Div)
 @taylor_fprop_getters.register(P.RealDiv)
 def taylor_realdiv(self):
     """Higher order derivatives rule definition for `RealDiv` operation."""
