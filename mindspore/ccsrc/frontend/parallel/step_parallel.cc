@@ -2068,7 +2068,10 @@ static void SplitSens(const CNodePtr &grad_sens_node, const TensorLayout &loss_g
     return;
   }
   auto loss_shape = loss_grad_layout.tensor_shape().array();
-  if (loss_shape != sens_shape) {
+  auto loss_tensor_map = loss_grad_layout.tensor_map_before();
+  bool multi_split = std::any_of(loss_tensor_map.begin(), loss_tensor_map.end(),
+                                 [](const auto &tensor_map) { return tensor_map.size() != 1; });
+  if ((loss_shape != sens_shape) && !multi_split) {
     MS_LOG(EXCEPTION) << "The shape of sens is not equal to loss output, it is unsupported now. Sens shape is "
                       << ShapeToString(sens_shape) << ", loss shape is " << ShapeToString(loss_shape);
   }
