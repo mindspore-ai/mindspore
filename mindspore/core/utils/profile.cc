@@ -385,7 +385,7 @@ void MsProfile::StatTime(const std::string &id, double time) { GetSingleton().ti
 
 void MsProfile::Print() {
   GetProfile()->Print();
-  std::vector<std::string> items = {"substitution.",          "renormalize.", "replace.", "match.",
+  std::vector<std::string> items = {"substitution.",          "renormalize.", "replace.", "match.",  "predicate.",
                                     "func_graph_cloner_run.", "meta_graph.",  "manager.", "pynative"};
   std::vector<TimeInfoGroup> groups(items.size() + 1);
   const auto &stat = GetSingleton().time_stat_;
