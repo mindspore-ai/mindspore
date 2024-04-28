@@ -264,32 +264,32 @@ void InterleavedScheduler::WarmUpPhaseReorder() {
       }
       if (is_even_stage_) {
         if (offset_ > 0) {
-          if (i + offset_ >= LongToSize(bias_)) {
-            auto prior1 = sorted_bwd_cell[i + offset_ - bias_].second;
+          if (i + LongToSize(offset_) >= LongToSize(bias_)) {
+            auto prior1 = sorted_bwd_cell[i + LongToSize(offset_) - bias_].second;
             auto last1 = sorted_fwd_end[i].first;
             ControlOrder(prior1, last1);
           } else {
-            auto prior1 = sorted_fwd_cell[i + offset_].second;
+            auto prior1 = sorted_fwd_cell[i + LongToSize(offset_)].second;
             auto last1 = sorted_fwd_end[i].first;
             ControlOrder(prior1, last1);
           }
         }
         auto prior2 = sorted_fwd_end[i].second;
-        auto last2 = sorted_fwd_begin[i + offset_ + 1].first;
+        auto last2 = sorted_fwd_begin[i + LongToSize(offset_) + 1].first;
         ControlOrder(prior2, last2);
         continue;
       }
-      auto prior1 = sorted_fwd_cell[i + offset_].second;
-      if (i + offset_ >= LongToSize(bias_)) {
-        prior1 = sorted_bwd_cell[i + offset_ - bias_].second;
+      auto prior1 = sorted_fwd_cell[i + LongToSize(offset_)].second;
+      if (i + LongToSize(offset_) >= LongToSize(bias_)) {
+        prior1 = sorted_bwd_cell[i + LongToSize(offset_) - bias_].second;
       }
-      auto last1 = sorted_fwd_begin[i + offset_ + 1].first;
+      auto last1 = sorted_fwd_begin[i + LongToSize(offset_) + 1].first;
       ControlOrder(prior1, last1);
-      auto prior2 = sorted_fwd_begin[i + offset_ + 1].second;
+      auto prior2 = sorted_fwd_begin[i + LongToSize(offset_) + 1].second;
       auto last2 = sorted_fwd_end[i].first;
       ControlOrder(prior2, last2);
       auto prior3 = sorted_fwd_end[i].second;
-      auto last3 = sorted_fwd_cell[i + offset_ + 1].first;
+      auto last3 = sorted_fwd_cell[i + LongToSize(offset_) + 1].first;
       ControlOrder(prior3, last3);
       continue;
     }
@@ -372,10 +372,10 @@ void InterleavedScheduler::EndPhaseReorder() {
   auto sorted_bwd_cell = SortBetweenMicro(bwd_cell_, true);
   auto sorted_bwd_end = SortBetweenMicro(bwd_end_, true);
   auto begin_index = chunk_num_ * micro_size_ > bias_ ? chunk_num_ * micro_size_ - bias_ - 1 : 0;
-  for (size_t i = begin_index; i < LongToSize(chunk_num_ * micro_size_ - 1); ++i) {
+  for (size_t i = LongToSize(begin_index); i < LongToSize(chunk_num_ * micro_size_ - 1); ++i) {
     if (stage_ == 0) {
       auto loop_index = sorted_bwd_end[i].second.micro / (stage_num_ + offset_);
-      auto offset = offset_;
+      auto offset = LongToSize(offset_);
       if (loop_index != 0 || sorted_bwd_end[i].second.chunk == 0) {
         offset = 0;
       }
@@ -496,51 +496,51 @@ void InterleavedScheduler::Reorder() {
   // WarmUp phase
   WarmUpPhaseReorder();
 
-  for (size_t i = bias_; i < LongToSize(micro_size_ * chunk_num_ - 1); ++i) {
+  for (size_t i = LongToSize(bias_); i < LongToSize(micro_size_ * chunk_num_ - 1); ++i) {
     if (stage_ == stage_num_ - 1 && sorted_fwd_end[i].first.chunk == chunk_num_ - 1) {
       auto prior = sorted_fwd_end[i].second;
-      auto last = sorted_bwd_begin[i - bias_].first;
+      auto last = sorted_bwd_begin[i - LongToSize(bias_)].first;
       ControlOrder(prior, last);
-      auto prior1 = sorted_bwd_cell[i - bias_].second;
+      auto prior1 = sorted_bwd_cell[i - LongToSize(bias_)].second;
       auto last1 = sorted_fwd_begin[i + 1].first;
       ControlOrder(prior1, last1);
     } else {
       auto prior = sorted_fwd_cell[i].second;
-      auto last = sorted_bwd_begin[i - bias_].first;
+      auto last = sorted_bwd_begin[i - LongToSize(bias_)].first;
       ControlOrder(prior, last);
     }
     if (is_even_stage_) {
       if (stage_ != stage_num_ - 1 || sorted_fwd_end[i].first.chunk != chunk_num_ - 1) {
-        auto prior = sorted_bwd_cell[i - bias_].second;
+        auto prior = sorted_bwd_cell[i - LongToSize(bias_)].second;
         auto last = sorted_fwd_end[i].first;
         ControlOrder(prior, last);
         auto prior1 = sorted_fwd_end[i].second;
         auto last1 = sorted_fwd_begin[i + 1].first;
         ControlOrder(prior1, last1);
       }
-      if (stage_ != 0 || sorted_bwd_end[i - bias_].first.chunk != 0) {
-        auto loop_index = sorted_bwd_end[i - bias_].first.micro / (stage_num_ + offset_);
-        auto offset = offset_;
+      if (stage_ != 0 || sorted_bwd_end[i - LongToSize(bias_)].first.chunk != 0) {
+        auto loop_index = sorted_bwd_end[i - LongToSize(bias_)].first.micro / (stage_num_ + offset_);
+        auto offset = LongToSize(offset_);
         if (loop_index != 0 || stage_ != 0) {
           offset = 0;
         }
         if (i + offset + 1 > LongToSize(micro_size_ * chunk_num_ - 1)) {
-          auto prior = sorted_bwd_cell[i + offset - bias_].second;
-          auto last = sorted_bwd_end[i - bias_].first;
+          auto prior = sorted_bwd_cell[i + offset - LongToSize(bias_)].second;
+          auto last = sorted_bwd_end[i - LongToSize(bias_)].first;
           ControlOrder(prior, last);
         } else {
           auto prior = sorted_fwd_cell[i + offset + 1].second;
-          auto last = sorted_bwd_end[i - bias_].first;
+          auto last = sorted_bwd_end[i - LongToSize(bias_)].first;
           ControlOrder(prior, last);
         }
-        auto prior1 = sorted_bwd_end[i - bias_].second;
-        auto last1 = sorted_bwd_begin[i + offset + 1 - bias_].first;
+        auto prior1 = sorted_bwd_end[i - LongToSize(bias_)].second;
+        auto last1 = sorted_bwd_begin[i + offset + 1 - LongToSize(bias_)].first;
         ControlOrder(prior1, last1);
       }
       continue;
     }
     if (stage_ != stage_num_ - 1 || sorted_fwd_end[i].first.chunk != chunk_num_ - 1) {
-      auto prior = sorted_bwd_cell[i - bias_].second;
+      auto prior = sorted_bwd_cell[i - LongToSize(bias_)].second;
       auto last = sorted_fwd_begin[i + 1].first;
       ControlOrder(prior, last);
       auto prior1 = sorted_fwd_begin[i + 1].second;
@@ -550,20 +550,20 @@ void InterleavedScheduler::Reorder() {
       auto last2 = sorted_fwd_cell[i + 1].first;
       ControlOrder(prior2, last2);
     }
-    if (stage_ != stage_num_ - 1 || sorted_bwd_begin[i - bias_ + 1].second.chunk != chunk_num_ - 1) {
-      auto prior = sorted_bwd_begin[i - bias_ + 1].second;
-      auto last = sorted_bwd_end[i - bias_].first;
+    if (stage_ != stage_num_ - 1 || sorted_bwd_begin[i - LongToSize(bias_) + 1].second.chunk != chunk_num_ - 1) {
+      auto prior = sorted_bwd_begin[i - LongToSize(bias_) + 1].second;
+      auto last = sorted_bwd_end[i - LongToSize(bias_)].first;
       ControlOrder(prior, last);
-      auto prior1 = sorted_bwd_end[i - bias_].second;
-      auto last1 = sorted_bwd_cell[i - bias_ + 1].first;
+      auto prior1 = sorted_bwd_end[i - LongToSize(bias_)].second;
+      auto last1 = sorted_bwd_cell[i - LongToSize(bias_) + 1].first;
       ControlOrder(prior1, last1);
       continue;
     }
     auto prior = sorted_fwd_cell[i + 1].second;
-    auto last = sorted_bwd_end[i - bias_].first;
+    auto last = sorted_bwd_end[i - LongToSize(bias_)].first;
     ControlOrder(prior, last);
-    auto prior1 = sorted_bwd_end[i - bias_].second;
-    auto last1 = sorted_bwd_cell[i - bias_ + 1].first;
+    auto prior1 = sorted_bwd_end[i - LongToSize(bias_)].second;
+    auto last1 = sorted_bwd_cell[i - LongToSize(bias_) + 1].first;
     ControlOrder(prior1, last1);
   }
   LastForwardMicroReorder();

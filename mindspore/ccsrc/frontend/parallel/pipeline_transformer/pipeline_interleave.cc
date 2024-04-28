@@ -130,7 +130,6 @@ ValuePtr PipelineInterleave::SetMicroBatch(const AnfNodePtr &node, int64_t micro
       MS_LOG(EXCEPTION) << "the begin of stridedslice is not constant value, and not make tuple";
     }
     auto make_tuple_cnode = cnode->input(2)->cast<CNodePtr>();
-
     if (IsPrimitiveCNode(make_tuple_cnode->input(1), prim::kPrimScalarMul)) {
       auto scalar_mul_cnode = make_tuple_cnode->input(1)->cast<CNodePtr>();
       auto mul_value = GetValueNode(scalar_mul_cnode->input(2));
@@ -820,7 +819,7 @@ void PipelinePostProcess::ModifySendRecvAttr(const std::vector<AnfNodePtr> &all_
 }
 
 static int64_t CalSrTag(int64_t order, int64_t micro, int64_t interleave_index) {
-  return order * 4096 * 128 + interleave_index * 128 + micro;
+  return order * MAX_MICRO_BATCH_NUM * MAX_INTERLEAVE_NUM + interleave_index * MAX_INTERLEAVE_NUM + micro;
 }
 
 AnfNodePtr PipelinePostProcess::GenNewNodeFromOld(const AnfNodePtr &node, const AnfNodePtr &input, int64_t micro,
