@@ -267,6 +267,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"SplitTensor", kTuple},
                                                        {"SplitWithSize", kTuple},
                                                        {"SplitV", kTuple},
+                                                       {"Chunk", kTuple},
                                                        {"SquareSumAll", kTupleTensor2},
                                                        {"SquareSumV2", kTupleTensor2},
                                                        {"Sspaddmm", kTupleTensor3},

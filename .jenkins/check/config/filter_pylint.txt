@@ -255,6 +255,7 @@
 "mindspore/tests/ut/python/parallel/test_graph_utils.py"                                                "too-many-function-args"
 "mindspore/tests/st/ops/ascend/test_aclnn_ops/test_all_finite.py"                                       "singleton-comparison"
 "mindspore/tests/st/pynative/pyboost/test_pyboost_ops_abs.py"                                           "redefined-builtin"
+"mindspore/tests/st/mint/test_chunk.py"                                                                 "pointless-string-statement"
 
 #MindSpore Lite
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/generator.py"                                         "redefined-builtin"
