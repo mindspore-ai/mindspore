@@ -19,6 +19,7 @@ from __future__ import absolute_import
 import mindspore.numpy as mnp
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops.auto_generate import MatMulExt
 from mindspore.ops.primitive import _primexpr
 from mindspore.common import Tensor
 from mindspore.ops.operations import math_ops
@@ -305,6 +306,27 @@ def get_matmul_vmap_rule(prim, axis_size):
 
         batch_matmul = P.BatchMatMul(trans_a, trans_b)
         out = batch_matmul(a, b)
+        return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(MatMulExt)
+def get_matmul_ext_vmap_rule(prim, axis_size):
+    """VmapRule for `*MatMulExt` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(a_bdim, b_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, a_bdim, b_bdim)
+        if is_all_none:
+            return result
+
+        a, _ = a_bdim
+        b, _ = b_bdim
+
+        matmul_ext = MatMulExt()
+        out = matmul_ext(a, b)
         return out, 0
 
     return vmap_rule

@@ -33,7 +33,7 @@ class UniformExtCell(Cell):
         return self.uniform(x, from_, to, generator)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [
@@ -59,11 +59,11 @@ def test_basic(context_mode):
     g1.manual_seed(41)
 
     g2 = Generator()
-    g2.manual_seed(43)
+    g2.manual_seed(41)
 
     output1 = uniform_cell(mindspore.tensor(x), from_, to, g1).numpy()
-    expect1 = uniform_cell(mindspore.tensor(x), from_, to, g1).numpy()
-    output2 = uniform_cell(mindspore.tensor(x), from_, to, g2).numpy()
+    output2 = uniform_cell(mindspore.tensor(x), from_, to, g1).numpy()
+    expect1 = uniform_cell(mindspore.tensor(x), from_, to, g2).numpy()
     expect2 = uniform_cell(mindspore.tensor(x), from_, to, g2).numpy()
     np.testing.assert_allclose(output1, expect1, rtol=rtol)
 
