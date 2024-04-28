@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include "ir/tensor_storage_info.h"
 #include "kernel/kernel.h"
+#include "include/backend/device_address.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,17 +30,17 @@ class CopyWithSliceGpuKernel {
   ~CopyWithSliceGpuKernel() = default;
 
   bool LaunchCopyWithSlice(TypeId type_id, const TensorStorageInfoPtr &src_storage_info,
-                           const kernel::KernelTensorPtr &src_addr, const TensorStorageInfoPtr &dst_storage_info,
-                           const kernel::KernelTensorPtr &dst_addr, void *stream_ptr);
+                           const device::DeviceAddressPtr &src_addr, const TensorStorageInfoPtr &dst_storage_info,
+                           const device::DeviceAddressPtr &dst_addr, void *stream_ptr);
 
  private:
   using CopyWithSliceFunc =
-    std::function<bool(CopyWithSliceGpuKernel *, const TensorStorageInfoPtr &, const kernel::KernelTensorPtr &,
-                       const TensorStorageInfoPtr &, const kernel::KernelTensorPtr &, void *)>;
+    std::function<bool(CopyWithSliceGpuKernel *, const TensorStorageInfoPtr &, const device::DeviceAddressPtr &,
+                       const TensorStorageInfoPtr &, const device::DeviceAddressPtr &, void *)>;
 
   template <typename T>
-  bool LaunchCopyWithSliceImpl(const TensorStorageInfoPtr &src_storage_info, const kernel::KernelTensorPtr &src_addr,
-                               const TensorStorageInfoPtr &dst_storage_info, const kernel::KernelTensorPtr &dst_addr,
+  bool LaunchCopyWithSliceImpl(const TensorStorageInfoPtr &src_storage_info, const device::DeviceAddressPtr &src_addr,
+                               const TensorStorageInfoPtr &dst_storage_info, const device::DeviceAddressPtr &dst_addr,
                                void *stream_ptr);
   static std::unordered_map<TypeId, CopyWithSliceFunc> func_list_;
 };

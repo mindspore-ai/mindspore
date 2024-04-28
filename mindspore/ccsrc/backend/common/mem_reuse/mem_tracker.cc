@@ -153,6 +153,9 @@ void MemoryTrackerEnabled::AddCompileTimeMemInfo(const std::string &task_name, s
 
 void MemoryTrackerEnabled::BindDevicePtr(KernelTensorPtr kernel_tensor, DeviceMemPtr device_ptr,
                                          const std::string &file_name, size_t line_num) {
+  if (kernel_tensor == nullptr) {
+    return;
+  }
   std::lock_guard<std::mutex> lock(mutex_);
   auto iter = kernel_tensor_mem_map.find(kernel_tensor);
   if (iter == kernel_tensor_mem_map.end()) {
