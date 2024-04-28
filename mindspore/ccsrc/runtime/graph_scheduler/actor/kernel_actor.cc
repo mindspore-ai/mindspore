@@ -110,6 +110,13 @@ void KernelActor::Init() {
     MS_LOG(WARNING) << "cnode is not a func graph value node : " << kernel_->DebugString() << ".";
     return;
   }
+  auto device_context = device_contexts_[0];
+  if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
+    MS_LOG(DEBUG) << "kernel : " << cnode->DebugString() << " is cpu kernel, will skip multi stream process.";
+    is_multi_stream_process_skipped_ = true;
+    return;
+  }
+
   auto multi_stream_safe_value = cnode->GetAttr(kAttrInputMultiStreamSafe);
   if (multi_stream_safe_value != nullptr) {
     is_multi_stream_safe_ = GetValue<bool>(multi_stream_safe_value);
@@ -889,7 +896,7 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
   }
 
   // Cpu not support stream lock with LaunchKernel.
-  if (!ActorDispatcher::enable_multi_stream()) {
+  if (!ActorDispatcher::enable_multi_stream() || is_multi_stream_process_skipped_) {
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel_->fullname_with_scope();
     auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
       kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_mod_, stream_);
@@ -898,18 +905,22 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
   }
 
   auto multi_stream_controller = device::MultiStreamController::GetInstance();
-  std::lock_guard<std::mutex> lock(
-    multi_stream_controller->GetStreamMutex(device_contexts_[0], kernel_info_->stream_id()));
-  // Here should process multi stream first to make inputs is memory safe.
-  ProcessMultiStream(context);
-  MS_LOG(DEBUG) << "Begin launch kernel: " << kernel_->fullname_with_scope();
-  auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
-    kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_mod_, stream_);
-  MS_LOG(DEBUG) << "End launch kernel: " << kernel_->fullname_with_scope();
+  bool ret = false;
+  {
+    std::lock_guard<std::mutex> lock(
+      multi_stream_controller->GetStreamMutex(device_contexts_[0], kernel_info_->stream_id()));
+    // Here should process multi stream first to make inputs is memory safe.
+    ProcessMultiStreamBeforeKernelLaunch(context);
+    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel_->fullname_with_scope();
+    ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
+      kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_mod_, stream_);
+    MS_LOG(DEBUG) << "End launch kernel: " << kernel_->fullname_with_scope();
+  }
+  ProcessMultiStreamAfterKernelLaunch(context);
   return ret;
 }
 
-void KernelActor::ProcessMultiStream(OpContext<DeviceTensor> *const context) {
+void KernelActor::ProcessMultiStreamBeforeKernelLaunch(OpContext<DeviceTensor> *const context) {
   ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kProcessMultiStream, GetAID().Name());
   auto device_context = device_contexts_[0];
   auto stream_id = kernel_info_->stream_id();
@@ -920,8 +931,9 @@ void KernelActor::ProcessMultiStream(OpContext<DeviceTensor> *const context) {
   auto multi_stream_controller = device::MultiStreamController::GetInstance();
   auto task_id_on_stream = multi_stream_controller->LaunchTaskIdOnStream(device_context, stream_id);
   if (INT64_MAX == task_id_on_stream) {
+    // Cpu kernel task id on stream is meanless.
     *task_id_on_stream_ = 0;
-    MS_LOG(DEBUG) << "Skip ProcessMultiStream since kernel type is CPU.";
+    MS_LOG(DEBUG) << "Skip ProcessMultiStreamBeforeKernelLaunch since kernel type is CPU.";
     return;
   }
   *task_id_on_stream_ = task_id_on_stream;
@@ -948,14 +960,13 @@ void KernelActor::ProcessMultiStream(OpContext<DeviceTensor> *const context) {
 
   // Process inputs.
   if (input_kernel_tensors_.empty()) {
-    MS_LOG(DEBUG) << "Exit process multi stream as inputs is empty.";
     return;
   }
 
-  std::vector<std::pair<uint32_t, void *>> cross_stream_addresses;
+  cross_stream_addresses_.clear();
   std::vector<KernelTensor *> cross_stream_kernel_tensors;
   for (const auto &input_kernel_tensor : input_kernel_tensors_) {
-    if (stream_id == input_kernel_tensor->stream_id()) {
+    if (input_kernel_tensor->stream_id() == stream_id) {
       continue;
     }
     if (input_kernel_tensor->task_id_on_stream() == nullptr) {
@@ -963,21 +974,26 @@ void KernelActor::ProcessMultiStream(OpContext<DeviceTensor> *const context) {
                     << " task id on stream is nullptr, will skip multi stream process.";
       continue;
     }
-    MS_LOG(DEBUG) << "Input_kernel_tensor : " << input_kernel_tensor
-                  << " ref count : " << input_kernel_tensor->pointer_ref_count()->ref_count()
-                  << ", dynamic ref count : " << input_kernel_tensor->pointer_ref_count()->dynamic_ref_count()
-                  << ", enable somas : " << IsSomasEnable(somas_info_);
     if (input_kernel_tensor->pointer_ref_count()->ref_count() == SIZE_MAX &&
         input_kernel_tensor->pointer_ref_count()->dynamic_ref_count() == INT32_MAX) {
       continue;
     }
-    (void)cross_stream_addresses.emplace_back(input_kernel_tensor->stream_id(), input_kernel_tensor->device_ptr());
-    (void)cross_stream_kernel_tensors.emplace_back(input_kernel_tensor);
+    (void)cross_stream_addresses_.emplace_back(input_kernel_tensor->stream_id(), input_kernel_tensor->device_ptr());
+    if (!is_multi_stream_safe_) {
+      (void)cross_stream_kernel_tensors.emplace_back(input_kernel_tensor);
+    }
   }
 
   // Dispatch record/wait.
   if (!is_multi_stream_safe_) {
     for (const auto &cross_stream_kernel_tensor : cross_stream_kernel_tensors) {
+      // Nullptr of task id on stream is normal case.
+      // If cross_stream_kernel_tensor's task id on stream is nullptr, kernel tensor must be safe.
+      // Data prepare actor, data source actor and so on has prepare device tensors without task id on stream, and
+      // those device tensors is multi-stream safe.
+      if (cross_stream_kernel_tensor->task_id_on_stream() == nullptr) {
+        continue;
+      }
       // Input kernel tensor is memory stream id, this is important.
       auto user_stream_id = stream_id;
       auto memory_stream_id = cross_stream_kernel_tensor->stream_id();
@@ -986,12 +1002,9 @@ void KernelActor::ProcessMultiStream(OpContext<DeviceTensor> *const context) {
         multi_stream_controller->QueryTaskIdOnStream(device_context, user_stream_id, memory_stream_id);
       if (safe_task_id_on_stream >= memory_task_id_on_stream) {
         MS_LOG(DEBUG) << "safe_task_id_on_stream : " << safe_task_id_on_stream
-                      << " is bigger than memory_task_id_on_stream : " << memory_task_id_on_stream;
+                      << " is bigger than memory_task_id_on_stream : " << memory_task_id_on_stream << ".";
         continue;
       }
-
-      MS_LOG(DEBUG) << "Dispatch record/wait safe_task_id_on_stream : " << safe_task_id_on_stream
-                    << ", memory_task_id_on_stream : " << memory_task_id_on_stream;
       multi_stream_controller->DispatchRecordWaitEvent(device_context, user_stream_id, memory_stream_id);
       // Add recv process.
       user_stream_id = memory_stream_id;
@@ -1005,13 +1018,18 @@ void KernelActor::ProcessMultiStream(OpContext<DeviceTensor> *const context) {
                                                memory_stream_id);
     }
   }
+}
 
+void KernelActor::ProcessMultiStreamAfterKernelLaunch(OpContext<DeviceTensor> *const context) {
   // Record event.
-  if (!cross_stream_addresses.empty()) {
+  if (!cross_stream_addresses_.empty()) {
     MS_LOG(DEBUG) << "Record event for kernel : " << kernel_->fullname_with_scope()
-                  << ", addresses size : " << cross_stream_addresses.size() << ".";
+                  << ", addresses size : " << cross_stream_addresses_.size() << ".";
     // Record event on stream.
-    multi_stream_controller->RecordEvent(device_context, task_id_on_stream, stream_id, cross_stream_addresses);
+    auto device_context = device_contexts_[0];
+    auto stream_id = kernel_info_->stream_id();
+    auto multi_stream_controller = device::MultiStreamController::GetInstance();
+    multi_stream_controller->RecordEvent(device_context, *task_id_on_stream_, stream_id, cross_stream_addresses_);
   }
 }
 
