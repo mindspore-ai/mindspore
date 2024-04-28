@@ -1615,8 +1615,9 @@ def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mas
         attn_mask (Union[Tensor[uint8], Tensor[bool], None]): The attention mask tensor. For each element, 0
             indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, N1, S1, S2)`,
             `(B, 1, S1, S2)`, `(S1, S2)` or `(2048, 2048)`. In compression scenario, sparse_mode is 2, 3, or 4,
-            attn_mask must be `(2048, 2048)`. When sparse_mode is 5, attn_mask must be '(B, N1, S1, S2)`,
-            `(B, 1, S1, S2)`.
+            attn_mask must be `(2048, 2048)`. When sparse_mode is 5, attn_mask must be `(B, N1, S1, S2)`,
+            `(B, 1, S1, S2)`. When sparse_mode is 0 and 1, attn_mask should be `(B, N1, S1, S2)`, `(B, 1, S1, S2)`,
+            `(S1, S2)`.
         prefix (Union[List[int64], Tuple[int64] None]): N value of each Batch in the prefix sparse calculation
             scenario. Input tensor of shape :math:`(B,)`. B max value 32. Not none only when sparse_mode is 5.
             If S1 > S2, N ranges from 0 to S2. If S1 <= S2, N ranges from S2 - S1 to S2.
@@ -1624,7 +1625,8 @@ def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mas
             with increasing values and the last value equal to T1.
         actual_seq_kvlen (Union[List[int64], Tuple[int64], None]): Size of key and value corresponding to each batch,
             array with increasing values and the last value equal to T2.
-        keep_prob (float): The keep probability of dropout. Value range is (0.0, 1.0]. Default: 1.0.
+        keep_prob (float): The keep probability of dropout. Value range is (0.0, 1.0]. Default: 1.0. when keep_prob
+            is 1.0, drop_mask should be none.
         scale_value (float): The scale factor of score. Generally, the value is 1.0 / (D ** 0.5). Default: 1.0.
         pre_tokens (int): Parameter for sparse computation, represents how many tokens are counted forward.
             When sparse_mode is set to 1, 2, 3, or 5, this parameter does not take effect. Default: 2147483647.
