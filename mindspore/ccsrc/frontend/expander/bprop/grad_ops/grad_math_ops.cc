@@ -1818,6 +1818,18 @@ REG_BPROP_BUILDER("Trace").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
+REG_BPROP_BUILDER("TraceV2").SetUnusedInputs({i5}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto offset = ib->GetInput(kIndex1);
+  auto axis1 = ib->GetInput(kIndex2);
+  auto axis2 = ib->GetInput(kIndex3);
+  auto dtype = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex6);
+  auto shape = ib->Shape(input, true);
+  auto dx = ib->Emit("TraceV2Grad", {dout, shape, offset, axis1, axis2});
+  return {dx, ib->OutZeros(offset), ib->OutZeros(axis1), ib->OutZeros(axis2), ib->OutZeros(dtype)};
+});
+
 REG_BPROP_BUILDER("Erfinv").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);

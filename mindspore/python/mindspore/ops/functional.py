@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -135,6 +135,7 @@ tensor_operator_registry.register('rsqrt', rsqrt)
 tensor_operator_registry.register('bincount', bincount)
 tensor_operator_registry.register('slogdet', slogdet)
 tensor_operator_registry.register('trace', trace)
+tensor_operator_registry.register('tracev2', auto_generate.trace_v2_op)
 tensor_operator_registry.register('tril', tril)
 tensor_operator_registry.register('chunk', chunk)
 tensor_operator_registry.register('count_nonzero', count_nonzero)

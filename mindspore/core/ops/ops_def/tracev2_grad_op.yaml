@@ -1,0 +1,23 @@
+#operator tracev2_grad
+tracev2_grad:
+    args:
+        dout:
+            dtype: tensor
+        shape:
+            dtype: tensor
+        offset:
+            dtype: int
+            default: 0
+        axis1:
+            dtype: int
+            default: 1
+        axis2:
+            dtype: int
+            default: 0
+    returns:
+        din:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: TraceV2Grad

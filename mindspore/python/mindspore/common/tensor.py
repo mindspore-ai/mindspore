@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -3006,16 +3006,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> print(x.trace())
             3.0
         """
-        if offset == 0 and axis1 == 0 and axis2 == 1 and dtype is None:
-            return tensor_operator_registry.get('trace')(self)
-        d = self.diagonal(offset, axis1=axis1, axis2=axis2)
-        shape = d.shape
-        if dtype is None:
-            dtype = d.dtype
-        if shape[-1] == 0:
-            return tensor_operator_registry.get('fill')(dtype, shape[:-1], 0)
-        res = tensor_operator_registry.get('reduce_sum')(d.astype(mstype.float32), -1)
-        return res.astype(dtype)
+        return tensor_operator_registry.get('tracev2')(self, offset, axis1, axis2, dtype)
 
     def take(self, indices, axis=None, mode='clip'):
         """
