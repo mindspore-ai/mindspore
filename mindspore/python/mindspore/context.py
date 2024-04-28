@@ -758,7 +758,8 @@ def _context():
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool, enable_alltoall=bool,
                  all_reduce_fusion_config=list, pipeline_stages=int, pipeline_segments=int,
                  pipeline_result_broadcast=bool, parallel_optimizer_config=dict,
-                 comm_fusion=dict, strategy_ckpt_config=dict)
+                 pipeline_config=dict,
+                 comm_fusion=dict, strategy_ckpt_config=dict, force_fp32_communication=bool)
 def set_auto_parallel_context(**kwargs):
     r"""
     Set auto parallel context, only data parallel supported on CPU.
@@ -784,7 +785,7 @@ def set_auto_parallel_context(**kwargs):
     enable_parallel_optimizer    strategy_ckpt_save_file
     parallel_optimizer_config    full_batch
     enable_alltoall              dataset_strategy
-               \                 pipeline_stages
+    force_fp32_communication      pipeline_stages
                \                 pipeline_result_broadcast
                \                 auto_parallel_search_mode
                \                 comm_fusion
@@ -850,6 +851,9 @@ def set_auto_parallel_context(**kwargs):
                        data parallel training in the benefit of time and memory saving. Currently, auto and semi auto
                        parallel mode support all optimizers in both Ascend and GPU. Data parallel mode only supports
                        `Lamb` and `AdamWeightDecay` in Ascend . Default: ``False`` .
+        force_fp32_communication (bool): A switch that determines whether reduce operators (AllReduce, ReduceScatter)
+                        are forced to use the fp32 data type for communication during communication. True is the enable
+                        switch. Default: ``False`` .
         enable_alltoall (bool): A switch that allows AllToAll operators to be generated during communication. If its
                         value is ``False`` , there will be a combination of operators such as AllGather, Split and
                         Concat instead of AllToAll. Default: ``False`` .
@@ -999,6 +1003,7 @@ def reset_auto_parallel_context():
     - strategy_ckpt_save_file: ''.
     - full_batch: False.
     - enable_parallel_optimizer: False.
+    - force_fp32_communication: False
     - enable_alltoall: False.
     - pipeline_stages: 1.
     - pipeline_result_broadcast: False.
