@@ -194,6 +194,9 @@ void ShardHeader::GetHeadersOneTask(int start, int end, std::vector<json> &heade
   if (thread_status || end > realAddresses.size()) {
     return;
   }
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  pthread_setname_np(pthread_self(), std::string(__func__ + std::to_string(start) + ":" + std::to_string(end)).c_str());
+#endif
   for (int x = start; x < end; ++x) {
     std::shared_ptr<json> header;
     auto status = ValidateHeader(realAddresses[x], &header);

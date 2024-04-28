@@ -217,10 +217,11 @@ class SamplerFn:
             # res_queue is used shared memory, so it' size is max_rowsize which is defined by user.
             _check_shm_usage(num_worker, queue_size, 0, max_rowsize)
         self.count = multiprocessing.Value('i', 0)
-        for _ in range(num_worker):
+        for worker_id in range(num_worker):
             if multi_process is True:
                 try:
-                    worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size, self.ppid, self.count)
+                    worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size, self.ppid, self.count,
+                                                worker_id)
                     worker.daemon = True
                     # When multi processes fork a subprocess, the lock of the main process is copied to the subprocess,
                     # which may cause deadlock. Therefore, the subprocess startup is performed in the initialization
@@ -239,7 +240,7 @@ class SamplerFn:
                 self.pids.append(worker.pid)
                 self.need_join = True
             else:
-                worker = _GeneratorWorkerMt(dataset, self.eof)
+                worker = _GeneratorWorkerMt(dataset, self.eof, worker_id)
                 worker.daemon = True
             self.workers.append(worker)
         self._launch_cleanup_worker(multi_process=multi_process)
@@ -366,6 +367,7 @@ class SamplerFn:
         if multi_process is True and platform.system().lower() != 'windows':
             _clean_worker_func = _PythonMultiprocessing._clean_process  # pylint: disable=W0212
             self.cleaning_process = multiprocessing.Process(target=_clean_worker_func,
+                                                            name="GeneratorCleanProcess",
                                                             args=(self.ppid, self.workers, self.eof))
             self.cleaning_process.daemon = True
             self.cleaning_process.start()
@@ -373,6 +375,7 @@ class SamplerFn:
             if get_enable_watchdog():
                 self.eot = threading.Event()
                 self.watch_dog = threading.Thread(target=_PythonMultiprocessing._watch_dog,  # pylint: disable=W0212
+                                                  name="GeneratorWatchDog",
                                                   args=(self.eot, self.workers + [self.cleaning_process]))
                 self.watch_dog.daemon = True
                 self.watch_dog.start()
@@ -546,11 +549,11 @@ class _GeneratorWorkerMt(threading.Thread):
     Worker process for multi-thread Generator.
     """
 
-    def __init__(self, dataset, eof):
+    def __init__(self, dataset, eof, worker_id):
         self.idx_queue = queue.Queue(16)
         self.res_queue = queue.Queue(16)
         super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eof, False),
-                         name="GeneratorWorkerThread")
+                         name="GeneratorWorkerThread" + str(worker_id))
 
     def put(self, item):
         """
@@ -579,7 +582,7 @@ class _GeneratorWorkerMp(multiprocessing.Process):
     Worker process for multiprocess Generator.
     """
 
-    def __init__(self, dataset, eof, max_rowsize, queue_size, ppid, count):
+    def __init__(self, dataset, eof, max_rowsize, queue_size, ppid, count, worker_id):
         self.idx_queue = multiprocessing.Queue(queue_size)
         if get_enable_shared_mem():
             self.res_queue = _SharedQueue(queue_size, count, max_rowsize=max_rowsize)
@@ -587,7 +590,7 @@ class _GeneratorWorkerMp(multiprocessing.Process):
             self.res_queue = multiprocessing.Queue(queue_size)
         self.idx_queue.cancel_join_thread()  # Ensure that the process does not hung when exiting
         super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eof, True, ppid),
-                         name="GeneratorWorkerProcess")
+                         name="GeneratorWorkerProcess" + str(worker_id))
 
     def put(self, item):
         """

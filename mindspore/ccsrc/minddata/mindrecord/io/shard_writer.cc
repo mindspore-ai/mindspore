@@ -340,6 +340,10 @@ void ShardWriter::CheckSliceData(int start_row, int end_row, json schema, const 
   if (start_row < 0 || start_row > end_row || end_row > static_cast<int>(sub_raw_data.size())) {
     return;
   }
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  pthread_setname_np(pthread_self(),
+                     std::string(__func__ + std::to_string(start_row) + ":" + std::to_string(end_row)).c_str());
+#endif
   for (int i = start_row; i < end_row; i++) {
     json data = sub_raw_data[i];
 
@@ -476,6 +480,9 @@ void ShardWriter::FillArray(int start, int end, std::map<uint64_t, vector<json>>
     flag_ = true;
     return;
   }
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  pthread_setname_np(pthread_self(), std::string(__func__ + std::to_string(start) + ":" + std::to_string(end)).c_str());
+#endif
   int schema_count = static_cast<int>(raw_data.size());
   std::map<uint64_t, vector<json>>::const_iterator rawdata_iter;
   for (int x = start; x < end; ++x) {
@@ -735,6 +742,9 @@ Status ShardWriter::WriteByShard(int shard_id, int start_row, int end_row,
   if (start_row == end_row) {
     return Status::OK();
   }
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  pthread_setname_np(pthread_self(), std::string(__func__ + std::to_string(shard_id)).c_str());
+#endif
   vector<std::pair<int, int>> rows_in_group;
   std::shared_ptr<Page> last_raw_page = nullptr;
   std::shared_ptr<Page> last_blob_page = nullptr;

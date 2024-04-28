@@ -159,6 +159,11 @@ void BindShardWriter(py::module *m) {
              uint32_t start = x * step;
              uint32_t end = ((x + 1) * step) < blob_data.size() ? ((x + 1) * step) : blob_data.size();
              thread_set[x] = std::thread([&vector_blob_data, &blob_data, start, end]() {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+               pthread_setname_np(
+                 pthread_self(),
+                 std::string("ParallelConvert" + std::to_string(start) + ":" + std::to_string(end)).c_str());
+#endif
                for (auto i = start; i < end; i++) {
                  char *buffer = nullptr;
                  ssize_t length = 0;
