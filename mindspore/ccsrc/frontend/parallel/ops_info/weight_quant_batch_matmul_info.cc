@@ -458,10 +458,18 @@ Status WeightQuantBatchMatmulInfo::InferTensorMap() {
   inputs_tensor_map_.push_back(mat_weight_tensor_map);
 
   for (size_t i = kInputAntiquantScale; i < inputs_shape_.size(); i++) {
-    if (inputs_shape_[i].size() == 1 && inputs_shape_[i][0] == 1) {
-      inputs_tensor_map_.push_back({MAP_NONE});
+    if (inputs_shape_[i].size() == 1) {
+      if (inputs_shape_[i][0] == 1) {
+        inputs_tensor_map_.push_back({MAP_NONE});
+      } else {
+        inputs_tensor_map_.push_back({output_tensor_map[output_tensor_map.size() - 1]});
+      }
+    } else if (inputs_shape_[i].size() == 2) {
+      TensorMap mat_quant_tensor_map(mat_weight_tensor_map.end() - 2, mat_weight_tensor_map.end());
+      inputs_tensor_map_.push_back(mat_quant_tensor_map);
     } else {
-      inputs_tensor_map_.push_back({output_tensor_map[output_tensor_map.size() - 1]});
+      MS_LOG(ERROR) << "Failed to set quant tensormap";
+      return FAILED;
     }
   }
   outputs_tensor_map_.push_back(output_tensor_map);
