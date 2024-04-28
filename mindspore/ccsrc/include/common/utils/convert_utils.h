@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/convert_utils_base.h"
@@ -98,7 +99,7 @@ COMMON_EXPORT ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const st
 
 COMMON_EXPORT std::map<SignatureEnumDType, std::pair<TypeId, bool>> GetSignatureTypeMap(
   const std::vector<SignatureEnumDType> &dtypes, const std::vector<TypeId> &args_type_id,
-  const std::vector<bool> &args_is_tensor);
+  const std::vector<bool> &args_is_tensor, const std::set<size_t> &write_indices = {});
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CONVERT_UTILS_H_
