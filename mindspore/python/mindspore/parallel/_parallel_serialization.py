@@ -259,6 +259,33 @@ def _extract_pipeline_stage_num(strategy_file):
     return pipeline_stage_num
 
 
+def _extract_src_dst_layout_map_by_src(src_strategy_file=None, dst_strategy_file=None):
+    """Extract strategy list by src strategy"""
+    src_layout_map = _extract_layout_map(src_strategy_file)
+    dst_layout_map = _extract_layout_map(dst_strategy_file)
+    if dst_layout_map is None:
+        return src_layout_map, dst_layout_map
+    for param_name in list(dst_layout_map.keys()):
+        if param_name in src_layout_map.keys():
+            continue
+        dst_layout_map.pop(param_name)
+    stage_id = 0
+    if src_strategy_file[-5:] == ".json":
+        with open(src_strategy_file, 'r') as f:
+            json_content = json.load(f)
+        strategy_items = json_content.get("parallel_strategy_item")
+        if not strategy_items:
+            raise ValueError("The strategy file {} if empty.".format(src_strategy_file))
+        stage_id = strategy_items.get(list(strategy_items.keys())[0]).get('stage')
+    else:
+        src_parallel_strategy_map = _load_protobuf_strategy(src_strategy_file)
+        strategy_items = src_parallel_strategy_map.parallel_strategy_item
+        if not strategy_items:
+            raise ValueError("The strategy file {} if empty.".format(src_strategy_file))
+        stage_id = strategy_items[0].parallel_strategys.stage
+    return src_layout_map, dst_layout_map, stage_id
+
+
 def _extract_src_dst_layout_map(rank_id, src_strategy_file=None, dst_strategy_file=None):
     """Extract strategy list"""
     src_layout_map = _extract_layout_map(src_strategy_file, None)
@@ -357,6 +384,7 @@ def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, s
     Transform model parallel dimension for distributed checkpoint files.
     """
     transform_param_dict = {}
+    device_num = -1
     for param_name, _ in param_total_dict.items():
         tensor_shape = list(param_total_dict[param_name].values())[0].shape
         from_dev_matrix = [1]
@@ -410,14 +438,18 @@ def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, s
         to_info_tuple = (to_opt_shard_size, to_dev_matrix_origin, to_tensor_map_origin, origin_tensor_shape)
         _insert_opt_shard_reshape(param_rank_map, from_info_tuple, to_info_tuple)
         transform_operator_stack = _generate_transform_operator_stack(param_rank_map, rank_id)
-        _apply_tensor_transform_operators(transform_operator_stack, param_total_dict[param_name], device_num)
-        transform_tensor = ms.Tensor(param_total_dict[param_name][rank_id % device_num])
+        param_total_dict_copy = param_total_dict[param_name].copy()
+        _apply_tensor_transform_operators(transform_operator_stack, param_total_dict_copy, device_num)
+        transform_tensor = ms.Tensor(param_total_dict_copy[rank_id % device_num])
         requires_grad = param_attr_dict[param_name][rank_id % device_num][0]
         layerwise_parallel = param_attr_dict[param_name][rank_id % device_num][1]
         transform_para = ms.Parameter(transform_tensor, param_name, requires_grad, layerwise_parallel)
         if param_type_dict[param_name][rank_id % device_num] == "BFloat16":
             transform_para.set_dtype(ms.bfloat16)
         transform_param_dict[param_name] = transform_para
+    if device_num < 1:
+        raise ValueError("None of the parameters in checkpoint file are in either src strategy or "
+                         "dst strategy. Please check correctness of strategy files.")
 
     # Handle those parameter like learning_rate, global_step which not in strategy_file.
     for param_name, _ in param_total_dict.items():
