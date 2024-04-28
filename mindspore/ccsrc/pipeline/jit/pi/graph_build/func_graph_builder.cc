@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <utility>
 #include <set>
+#include "frontend/operator/composite/do_signature.h"
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "pipeline/jit/ps/action.h"
 #include "pipeline/jit/ps/parse/parse_base.h"
@@ -355,6 +356,90 @@ bool FuncGraphBuilder::GetInputNodesAndAbstracts(const ValuePtr &callable_value,
   return true;
 }
 
+CNodePtr FuncGraphBuilder::DoPrimitiveInferAndCheck(const PrimitivePtr &primitive,
+                                                    const AnfNodePtrList &input_node_list,
+                                                    const AbstractBasePtrList &args_abs_list) {
+  try {
+    const CNodePtr &new_node = AddPrimitiveCNode(primitive, input_node_list, args_abs_list);
+    if (new_node == nullptr) {
+      MS_LOG(INFO) << "Failed to add CNode for Primitive=" << primitive->name();
+      return nullptr;
+    }
+
+    const AbstractBasePtr &abs = GetAbstractOf(new_node);
+
+    if (!CheckCallable(primitive, abs)) {
+      MS_LOG(INFO) << "Check callable failed for Primitive=" << primitive->name();
+      return nullptr;
+    }
+    new_node->set_abstract(abs);
+    return new_node;
+  } catch (const std::exception &e) {
+    MS_LOG(INFO) << "Failed to infer Primitive=" << primitive->name() << ". The exception:\n" << e.what();
+    return nullptr;
+  }
+}
+
+CNodePtr FuncGraphBuilder::AddPrimitiveCNode(const PrimitivePtr &primitive, const AnfNodePtrList &input_node_list,
+                                             const AbstractBasePtrList &args_abs_list) {
+  auto op_def = mindspore::ops::GetOpDef(primitive->name());
+
+  if (op_def == nullptr) {
+    if (primitive->has_signature()) {
+      // follow the implementations in DoSignatureEvaluator
+      AnfNodePtrList args_node_list(input_node_list.cbegin() + 1, input_node_list.cend());
+      AnfNodePtrList new_node_list =
+        prim::GetNewInputsBySignatures(graph_, primitive->ToString(), primitive, args_abs_list, args_node_list);
+
+      new_node_list.insert(new_node_list.begin(), input_node_list[0]);
+      return graph_->NewCNodeInOrder(new_node_list);
+    }
+  } else if (primitive->isa<PrimitivePy>()) {
+    // follow the implementations in PrimitiveArgsToInputsEvaluator and DoTransPrimitiveFunctionEvaluator
+    auto arg_signatures = op_def->signatures_;
+    primitive->set_signatures(arg_signatures);
+    primitive->set_has_signature(!arg_signatures.empty());
+
+    const AnfNodePtrList &init_args = abstract::GetPrimitiveInitArgs(primitive->cast<PrimitivePyPtr>(), op_def);
+    AnfNodePtrList call_args(input_node_list.cbegin() + 1, input_node_list.cend());
+
+    return abstract::GeneratePrimitiveCNode(
+      primitive, op_def, graph_, init_args, call_args,
+      [](const AnfNodePtr &node) { return FuncGraphBuilder::GetAbstractOf(node); });
+  }
+  MS_LOG(DEBUG) << "Primitive " << primitive->name() << " no need to process signatures and OpDef";
+  return graph_->NewCNodeInOrder(input_node_list);
+}
+
+AbstractBasePtr FuncGraphBuilder::GetAbstractOf(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return nullptr;
+  }
+  if (node->abstract() != nullptr) {
+    return node->abstract();
+  }
+  if (node->isa<ValueNode>()) {
+    return node->cast<ValueNodePtr>()->value()->ToAbstract();
+  } else if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode->empty() || !cnode->input(0)->isa<ValueNode>()) {
+      return nullptr;
+    }
+    ValuePtr value = cnode->input(0)->cast<ValueNodePtr>()->value();
+    std::vector<AbstractBasePtr> abs_list;
+    std::transform(cnode->inputs().begin() + 1, cnode->inputs().end(), std::back_inserter(abs_list),
+                   [](const AnfNodePtr &node) {
+                     if (node->abstract() == nullptr) {
+                       node->set_abstract(FuncGraphBuilder::GetAbstractOf(node));
+                     }
+                     return node->abstract();
+                   });
+    return EvalValue(value, abs_list);
+  }
+  MS_LOG(INFO) << "Unsupported Node type for GetAbstractOf() method, node: " << node->DebugString();
+  return nullptr;
+}
+
 AbstractBasePtr FuncGraphBuilder::DoInferAndCheck(const ValuePtr &callable_value,
                                                   const vector<AbstractBasePtr> &input_abs_list) {
   auto abs = EvalValue(callable_value, input_abs_list);
@@ -377,13 +462,24 @@ py::object FuncGraphBuilder::TryToAddNode(const ValuePtr &callable_value, const 
     return py::object();
   }
 
-  // Do infer and check callable.
-  auto abs = DoInferAndCheck(callable_value, input_abs_list);
-  if (abs == nullptr) {
+  CNodePtr new_node;
+  AbstractBasePtr abs;
+  if (callable_value->isa<Primitive>()) {
+    new_node = DoPrimitiveInferAndCheck(callable_value->cast<PrimitivePtr>(), input_node_list, input_abs_list);
+    if (new_node != nullptr) {
+      abs = new_node->abstract();
+    }
+  } else {
+    // Do infer and check callable.
+    abs = DoInferAndCheck(callable_value, input_abs_list);
+    if (abs != nullptr) {
+      new_node = graph_->NewCNodeInOrder(input_node_list);
+    }
+  }
+  if (new_node == nullptr || abs == nullptr) {
     return py::object();
   }
 
-  auto new_node = graph_->NewCNodeInOrder(input_node_list);
   // Return the converted python object.
   py::object output_py_obj;
   if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
