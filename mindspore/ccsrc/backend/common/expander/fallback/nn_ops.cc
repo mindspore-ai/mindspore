@@ -709,7 +709,8 @@ NodePtr PaddingTupleToTensor(NodePtr paddings, FallbackIRBuilder *ib) {
 bool IsInputNeedExpand(NodePtr paddingsTensor, NodePtr inputTensor) {
   auto padding_shape = paddingsTensor->shape();
   auto input_x_shape = inputTensor->shape();
-  return ((padding_shape[0] / 2) + 1) == SizeToLong(input_x_shape.size());
+  constexpr int64_t kScaleNum = 2;
+  return ((padding_shape[0] / kScaleNum) + 1) == SizeToLong(input_x_shape.size());
 }
 
 REG_FALLBACK_BUILDER("ConstantPadND").SetBody(BODYFUNC(ib) {
@@ -733,7 +734,7 @@ REG_FALLBACK_BUILDER("ConstantPadND").SetBody(BODYFUNC(ib) {
   return {out};
 });
 
-REG_FALLBACK_BUILDER("ReflectionPad1D").SetBody(BODYFUNC(ib) {
+NodePtrList PadExpanderBase(FallbackIRBuilder *ib, const string &mode) {
   auto input_x = ib->GetInput(kIndex0);
   auto padding = ib->GetInput(kIndex1);
 
@@ -743,99 +744,26 @@ REG_FALLBACK_BUILDER("ReflectionPad1D").SetBody(BODYFUNC(ib) {
     input_x = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(0)});
   }
   auto out = ib->Emit("PadV3", {input_x, padding_tensor, ib->EmitValue(kNone)},
-                      {{"mode", MakeValue<string>("reflect")}, {"paddings_contiguous", MakeValue(true)}});
+                      {{"mode", MakeValue<string>(mode)}, {"paddings_contiguous", MakeValue(true)}});
   if (is_expand) {
     out = ib->Squeeze(out, MakeValue(ShapeVector{0}));
   }
   return {out};
-});
+}
 
-REG_FALLBACK_BUILDER("ReflectionPad2D").SetBody(BODYFUNC(ib) {
-  auto input_x = ib->GetInput(kIndex0);
-  auto padding = ib->GetInput(kIndex1);
+REG_FALLBACK_BUILDER("ReflectionPad1D").SetBody(BODYFUNC(ib) { return PadExpanderBase(ib, "reflect"); });
 
-  auto padding_tensor = PaddingTupleToTensor(padding, ib);
-  bool is_expand = IsInputNeedExpand(padding_tensor, input_x);
-  if (is_expand) {
-    input_x = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(0)});
-  }
-  auto out = ib->Emit("PadV3", {input_x, padding_tensor, ib->EmitValue(kNone)},
-                      {{"mode", MakeValue<string>("reflect")}, {"paddings_contiguous", MakeValue(true)}});
-  if (is_expand) {
-    out = ib->Squeeze(out, MakeValue(ShapeVector{0}));
-  }
-  return {out};
-});
+REG_FALLBACK_BUILDER("ReflectionPad2D").SetBody(BODYFUNC(ib) { return PadExpanderBase(ib, "reflect"); });
 
-REG_FALLBACK_BUILDER("ReflectionPad3D").SetBody(BODYFUNC(ib) {
-  auto input_x = ib->GetInput(kIndex0);
-  auto padding = ib->GetInput(kIndex1);
+REG_FALLBACK_BUILDER("ReflectionPad3D").SetBody(BODYFUNC(ib) { return PadExpanderBase(ib, "reflect"); });
 
-  auto padding_tensor = PaddingTupleToTensor(padding, ib);
-  bool is_expand = IsInputNeedExpand(padding_tensor, input_x);
-  if (is_expand) {
-    input_x = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(0)});
-  }
-  auto out = ib->Emit("PadV3", {input_x, padding_tensor, ib->EmitValue(kNone)},
-                      {{"mode", MakeValue<string>("reflect")}, {"paddings_contiguous", MakeValue(true)}});
-  if (is_expand) {
-    out = ib->Squeeze(out, MakeValue(ShapeVector{0}));
-  }
-  return {out};
-});
+REG_FALLBACK_BUILDER("ReplicationPad1D").SetBody(BODYFUNC(ib) { return PadExpanderBase(ib, "edge"); });
 
-REG_FALLBACK_BUILDER("ReplicationPad1D").SetBody(BODYFUNC(ib) {
-  auto input_x = ib->GetInput(kIndex0);
-  auto padding = ib->GetInput(kIndex1);
+REG_FALLBACK_BUILDER("ReplicationPad2D").SetBody(BODYFUNC(ib) { return PadExpanderBase(ib, "edge"); });
 
-  auto padding_tensor = PaddingTupleToTensor(padding, ib);
-  bool is_expand = IsInputNeedExpand(padding_tensor, input_x);
-  if (is_expand) {
-    input_x = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(0)});
-  }
-  auto out = ib->Emit("PadV3", {input_x, padding_tensor, ib->EmitValue(kNone)},
-                      {{"mode", MakeValue<string>("edge")}, {"paddings_contiguous", MakeValue(true)}});
-  if (is_expand) {
-    out = ib->Squeeze(out, MakeValue(ShapeVector{0}));
-  }
-  return {out};
-});
+REG_FALLBACK_BUILDER("ReplicationPad3D").SetBody(BODYFUNC(ib) { return PadExpanderBase(ib, "edge"); });
 
-REG_FALLBACK_BUILDER("ReplicationPad2D").SetBody(BODYFUNC(ib) {
-  auto input_x = ib->GetInput(kIndex0);
-  auto padding = ib->GetInput(kIndex1);
-
-  auto padding_tensor = PaddingTupleToTensor(padding, ib);
-  bool is_expand = IsInputNeedExpand(padding_tensor, input_x);
-  if (is_expand) {
-    input_x = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(0)});
-  }
-  auto out = ib->Emit("PadV3", {input_x, padding_tensor, ib->EmitValue(kNone)},
-                      {{"mode", MakeValue<string>("edge")}, {"paddings_contiguous", MakeValue(true)}});
-  if (is_expand) {
-    out = ib->Squeeze(out, MakeValue(ShapeVector{0}));
-  }
-  return {out};
-});
-
-REG_FALLBACK_BUILDER("ReplicationPad3D").SetBody(BODYFUNC(ib) {
-  auto input_x = ib->GetInput(kIndex0);
-  auto padding = ib->GetInput(kIndex1);
-
-  auto padding_tensor = PaddingTupleToTensor(padding, ib);
-  bool is_expand = IsInputNeedExpand(padding_tensor, input_x);
-  if (is_expand) {
-    input_x = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(0)});
-  }
-  auto out = ib->Emit("PadV3", {input_x, padding_tensor, ib->EmitValue(kNone)},
-                      {{"mode", MakeValue<string>("edge")}, {"paddings_contiguous", MakeValue(true)}});
-  if (is_expand) {
-    out = ib->Squeeze(out, MakeValue(ShapeVector{0}));
-  }
-  return {out};
-});
-
-REG_FALLBACK_BUILDER("ReflectionPad1DGrad").SetBody(BODYFUNC(ib) {
+NodePtrList PadGradExpanderBase(FallbackIRBuilder *ib, const string &mode) {
   auto input_x = ib->GetInput(kIndex0);
   auto padding = ib->GetInput(kIndex2);
 
@@ -845,97 +773,24 @@ REG_FALLBACK_BUILDER("ReflectionPad1DGrad").SetBody(BODYFUNC(ib) {
     input_x = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(0)});
   }
   auto out = ib->Emit("PadV3Grad", {input_x, padding_tensor},
-                      {{"mode", MakeValue<string>("reflect")}, {"paddings_contiguous", MakeValue(true)}});
+                      {{"mode", MakeValue<string>(mode)}, {"paddings_contiguous", MakeValue(true)}});
   if (is_expand) {
     out = ib->Squeeze(out, MakeValue(ShapeVector{0}));
   }
   return {out};
-});
+}
 
-REG_FALLBACK_BUILDER("ReflectionPad2DGrad").SetBody(BODYFUNC(ib) {
-  auto input_x = ib->GetInput(kIndex0);
-  auto padding = ib->GetInput(kIndex2);
+REG_FALLBACK_BUILDER("ReflectionPad1DGrad").SetBody(BODYFUNC(ib) { return PadGradExpanderBase(ib, "reflect"); });
 
-  auto padding_tensor = PaddingTupleToTensor(padding, ib);
-  bool is_expand = IsInputNeedExpand(padding_tensor, input_x);
-  if (is_expand) {
-    input_x = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(0)});
-  }
-  auto out = ib->Emit("PadV3Grad", {input_x, padding_tensor},
-                      {{"mode", MakeValue<string>("reflect")}, {"paddings_contiguous", MakeValue(true)}});
-  if (is_expand) {
-    out = ib->Squeeze(out, MakeValue(ShapeVector{0}));
-  }
-  return {out};
-});
+REG_FALLBACK_BUILDER("ReflectionPad2DGrad").SetBody(BODYFUNC(ib) { return PadGradExpanderBase(ib, "reflect"); });
 
-REG_FALLBACK_BUILDER("ReflectionPad3DGrad").SetBody(BODYFUNC(ib) {
-  auto input_x = ib->GetInput(kIndex0);
-  auto padding = ib->GetInput(kIndex2);
+REG_FALLBACK_BUILDER("ReflectionPad3DGrad").SetBody(BODYFUNC(ib) { return PadGradExpanderBase(ib, "reflect"); });
 
-  auto padding_tensor = PaddingTupleToTensor(padding, ib);
-  bool is_expand = IsInputNeedExpand(padding_tensor, input_x);
-  if (is_expand) {
-    input_x = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(0)});
-  }
-  auto out = ib->Emit("PadV3Grad", {input_x, padding_tensor},
-                      {{"mode", MakeValue<string>("reflect")}, {"paddings_contiguous", MakeValue(true)}});
-  if (is_expand) {
-    out = ib->Squeeze(out, MakeValue(ShapeVector{0}));
-  }
-  return {out};
-});
+REG_FALLBACK_BUILDER("ReplicationPad1DGrad").SetBody(BODYFUNC(ib) { return PadGradExpanderBase(ib, "edge"); });
 
-REG_FALLBACK_BUILDER("ReplicationPad1DGrad").SetBody(BODYFUNC(ib) {
-  auto input_x = ib->GetInput(kIndex0);
-  auto padding = ib->GetInput(kIndex2);
+REG_FALLBACK_BUILDER("ReplicationPad2DGrad").SetBody(BODYFUNC(ib) { return PadGradExpanderBase(ib, "edge"); });
 
-  auto padding_tensor = PaddingTupleToTensor(padding, ib);
-  bool is_expand = IsInputNeedExpand(padding_tensor, input_x);
-  if (is_expand) {
-    input_x = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(0)});
-  }
-  auto out = ib->Emit("PadV3Grad", {input_x, padding_tensor},
-                      {{"mode", MakeValue<string>("edge")}, {"paddings_contiguous", MakeValue(true)}});
-  if (is_expand) {
-    out = ib->Squeeze(out, MakeValue(ShapeVector{0}));
-  }
-  return {out};
-});
-
-REG_FALLBACK_BUILDER("ReplicationPad2DGrad").SetBody(BODYFUNC(ib) {
-  auto input_x = ib->GetInput(kIndex0);
-  auto padding = ib->GetInput(kIndex2);
-
-  auto padding_tensor = PaddingTupleToTensor(padding, ib);
-  bool is_expand = IsInputNeedExpand(padding_tensor, input_x);
-  if (is_expand) {
-    input_x = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(0)});
-  }
-  auto out = ib->Emit("PadV3Grad", {input_x, padding_tensor},
-                      {{"mode", MakeValue<string>("edge")}, {"paddings_contiguous", MakeValue(true)}});
-  if (is_expand) {
-    out = ib->Squeeze(out, MakeValue(ShapeVector{0}));
-  }
-  return {out};
-});
-
-REG_FALLBACK_BUILDER("ReplicationPad3DGrad").SetBody(BODYFUNC(ib) {
-  auto input_x = ib->GetInput(kIndex0);
-  auto padding = ib->GetInput(kIndex2);
-
-  auto padding_tensor = PaddingTupleToTensor(padding, ib);
-  bool is_expand = IsInputNeedExpand(padding_tensor, input_x);
-  if (is_expand) {
-    input_x = ib->Emit("ExpandDims", {input_x, ib->Value<int64_t>(0)});
-  }
-  auto out = ib->Emit("PadV3Grad", {input_x, padding_tensor},
-                      {{"mode", MakeValue<string>("edge")}, {"paddings_contiguous", MakeValue(true)}});
-  if (is_expand) {
-    out = ib->Squeeze(out, MakeValue(ShapeVector{0}));
-  }
-  return {out};
-});
+REG_FALLBACK_BUILDER("ReplicationPad3DGrad").SetBody(BODYFUNC(ib) { return PadGradExpanderBase(ib, "edge"); });
 
 REG_FALLBACK_BUILDER("Embedding").SetBody(BODYFUNC(ib) {
   auto input = ib->GetInput(kIndex0);

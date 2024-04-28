@@ -3578,7 +3578,10 @@ def pdist(input, p=2.0):
 
 def _circular_pad(input_x, padding):
     """circular pad"""
-    padding = scalar_to_tensor_(padding, const_arg=True)
+    if isinstance(padding, tuple):
+        padding = tuple_to_tensor_(padding, mstype.int64)
+    elif isinstance(padding, list):
+        padding = list_to_tensor_(padding, mstype.int64)
     is_expand = False
     if padding.shape[0] // 2 + 1 == input_x.ndim:
         input_x = input_x.expand_dims(0)
@@ -3589,24 +3592,85 @@ def _circular_pad(input_x, padding):
     return out
 
 
-def pad_ext(input, pad, mode='constant', value=None):
+def _reflection_pad(input, pad):
+    """reflection pad"""
+    out = input
+    if len(pad) == 2:
+        out = reflection_pad_1d_op(input, pad)
+    elif len(pad) == 4:
+        out = reflection_pad_2d_op(input, pad)
+    else:
+        out = reflection_pad_3d_op(input, pad)
+    return out
+
+
+def _replication_pad(input, pad):
+    """replication pad"""
+    out = input
+    if len(pad) == 2:
+        out = replication_pad_1d_op(input, pad)
+    elif len(pad) == 4:
+        out = replication_pad_2d_op(input, pad)
+    else:
+        out = replication_pad_3d_op(input, pad)
+    return out
+
+
+def pad_ext(input, pad, mode='constant', value=0.0):
     r"""
     Pads the input tensor according to the pad.
 
+    .. warning::
+        `circular` mode has poor performance and is not recommended.
+
     Args:
         input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
-        pad (tuple[int]): Filling position of pad.
+        pad (Union[tuple[int], list[int], Tensor]): Filling position of pad.
+            :math:`\left\lfloor\frac{\text{len(pad)}}{2}\right\rfloor` dimensions
+            of `input` will be padded.
+
+            Example: to pad only the last dimension of the input tensor, then
+            :attr:`pad` has the form
+            :math:`(\text{padding_left}, \text{padding_right})`;
+
+            Example: to pad the last 2 dimensions of the input tensor, then use
+            :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})`;
+
+            Example: to pad the last 3 dimensions, use
+            :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom},
+            \text{padding_front}, \text{padding_back})` and so on.
+
         mode (str, optional): Pad filling mode, ``'constant'`` , ``'reflect'`` , ``'replicate'``  or ``'circular'`` .
             Default: ``'constant'`` .
+
+            For ``'constant'`` mode, please refer to :class:`mindspore.nn.ConstantPad1d` as an example to understand
+            this filling pattern and extend the padding pattern to n dimensions.
+
+            For ``'reflect'`` mode, please refer to :class:`mindspore.nn.ReflectionPad1d` as an example to understand
+            this filling pattern.
+            The reflect mode is used to pad the last three dimensions of 4D or 5D input, the last two dimensions of 3D
+            or 4D input, or the last dimension of 2D or 3D input.
+
+            For ``'replicate'`` mode, please refer to :class:`mindspore.nn.ReplicationPad1d` as an example to understand
+            this filling pattern.
+            The replicate mode is used to pad the last three dimensions of 4D or 5D input, the last two dimensions of 3D
+            or 4D input, or the last dimension of 2D or 3D input.
+
+            For ``'circular'`` mode, the pixels from one edge of the image are wrapped around to the opposite edge,
+            such that the pixel on the right edge of the image is replaced with the pixel on the left edge,
+            and the pixel on the bottom edge is replaced with the pixel on the top edge.
+            The circular mode is used to pad the last three dimensions of 4D or 5D input, the last two dimensions of 3D
+            or 4D input, or the last dimension of 2D or 3D input.
+
         value (Union[int, float, None], optional): Valid only in ``'constant'`` mode.
-            Set the pad value in ``'constant'`` mode. If the value is None, 0 is used as the default pad value.
-            Default: ``None`` .
+            Set the padding value in ``'constant'`` mode. If the value is None, 0 is used as the default padding value.
+            Default: ``0.0`` .
 
     Returns:
-        Tensor, the tensor after pad.
+        Tensor, the tensor after padding.
 
     Raises:
-        TypeError: If `pad` is not an int of tuple.
+        TypeError: If `pad` is not an int of tuple or int of list.
         TypeError: If `input` is not a Tensor.
         ValueError: If length of `pad` is not even.
         ValueError: If length of `pad` is greater than 6.
@@ -3616,11 +3680,10 @@ def pad_ext(input, pad, mode='constant', value=None):
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
-        >>> from mindspore.mint.nn.functional import pad
+        >>> from mindspore import ops
         >>> import numpy as np
         >>> x = ms.Tensor(np.arange(1 * 2 * 2 * 2).reshape((1, 2, 2, 2)), dtype=ms.float64)
-        >>> output = pad(x, [1, 0, 0, 1], mode='constant', value=6.0)
+        >>> output = ops.pad_ext(x, [1, 0, 0, 1], mode='constant', value=6.0)
         >>> print(output)
         [[[[6. 0. 1.]
            [6. 2. 3.]
@@ -3628,14 +3691,6 @@ def pad_ext(input, pad, mode='constant', value=None):
           [[6. 4. 5.]
            [6. 6. 7.]
            [6. 6. 6.]]]]
-        >>> output1 = ops.pad(x, (1, 0, 0, 1), mode='reflect')
-        >>> print(output1)
-        [[[[1. 0. 1.]
-           [3. 2. 3.]
-           [1. 0. 1.]]
-          [[5. 4. 5.]
-           [7. 6. 7.]
-           [5. 4. 5.]]]]
     """
     if not isinstance(input, Tensor):
         raise TypeError(f"For 'pad', the type of 'input' must be Tensor, but got {type(input)}.")
@@ -3645,30 +3700,17 @@ def pad_ext(input, pad, mode='constant', value=None):
     if mode == "constant":
         value = 0 if value is None else value
         out = constant_pad_nd_op(input, pad, value)
-    elif mode == "circular":
-        out = _circular_pad(input, pad)
     else:
-        if len(pad) == 2:
-            if mode == "reflect":
-                out = reflection_pad_1d_op(input, pad)
-            elif mode == "replicate":
-                out = replication_pad_1d_op(input, pad)
-            else:
-                raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
-        elif len(pad) == 4:
-            if mode == "reflect":
-                out = reflection_pad_2d_op(input, pad)
-            elif mode == "replicate":
-                out = replication_pad_2d_op(input, pad)
-            else:
-                raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
+        if value != 0.0:
+            raise ValueError(f"Padding mode {mode} doesn\'t take in value argument.")
+        if mode == "circular":
+            out = _circular_pad(input, pad)
+        elif mode == "reflect":
+            out = _reflection_pad(input, pad)
+        elif mode == "replicate":
+            out = _replication_pad(input, pad)
         else:
-            if mode == "reflect":
-                out = reflection_pad_3d_op(input, pad)
-            elif mode == "replicate":
-                out = replication_pad_3d_op(input, pad)
-            else:
-                raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
+            raise ValueError(f"Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
     return out
 
 
