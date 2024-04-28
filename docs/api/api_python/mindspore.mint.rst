@@ -69,6 +69,16 @@ Reduction函数
     mindspore.mint.prod
     mindspore.mint.sum
 
+逐元素运算
+^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.abs
+
 mindspore.mint.nn
 ------------------
 

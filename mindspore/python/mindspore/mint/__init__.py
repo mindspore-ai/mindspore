@@ -248,6 +248,7 @@ __all__ = [
     'full',
     'ones_like',
     'zeros_like',
+    'abs',
     'erf',
     'where',
     'linspace',
