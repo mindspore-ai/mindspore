@@ -73,10 +73,10 @@ std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr, tensor::BaseTensorPtr> 
       std::vector<int64_t> bias_size = {dout_shape[c_axis]};
       LAUNCH_ACLNN(aclnnConvolutionBackward, device_context, op->stream_id(), dout_tensor, input_tensor, weight_tensor,
                    bias_size, stride_vector, pad_vector, dilation_vector, transposed_imm, output_padding_vector,
-                   group_imm, output_mask_u8_vec, GetCubeMathType(), outputs[0], outputs[1], outputs[2]);
+                   group_imm, output_mask_u8_vec, GetCubeMathType(), outputs[0], outputs[1], outputs[kIndex2]);
       MS_LOG(DEBUG) << "Run device task ConvolutionGrad end";
     }));
-  return std::make_tuple(op->output(0), op->output(1), op->output(2));
+  return std::make_tuple(op->output(0), op->output(1), op->output(kIndex2));
 }
 }  // namespace pyboost
 }  // namespace kernel

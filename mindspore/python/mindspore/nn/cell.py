@@ -2605,7 +2605,7 @@ class _WrapCell(Cell):
         super(_WrapCell, self).__init__()
         self.function = function
 
-    def construct(self, *args):
+    def construct(self, *args, **kwargs):
         return self.function(*args)
 
 
@@ -2636,6 +2636,7 @@ class _RecomputeCell(Cell):
         return self.net(*args)
 
     def bprop(self, *args):
+        """Customize bprop."""
         grad_input = args[-1]
         input_args = self.args[-1]
         self.args.pop()
@@ -2647,6 +2648,7 @@ class _RecomputeCell(Cell):
         return grads[0], weights
 
     def init_mixed_precision_type(self, block):
+        """Init mixed precision type."""
         if isinstance(block, Cell):
             self.internal_params = block.trainable_params()
             return

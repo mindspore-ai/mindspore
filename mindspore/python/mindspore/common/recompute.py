@@ -18,6 +18,8 @@ from mindspore import log as logger
 from mindspore.nn.cell import Cell, _RecomputeCell
 from mindspore import context
 
+__all__ = ['recompute']
+
 
 def _check_validation(block):
     if not isinstance(block, Cell):
@@ -28,7 +30,6 @@ def _check_validation(block):
     if block.construct.__code__.co_name == "staging_specialize":
         logger.warning('Block\'s construct method decorated by @jit that recompute \
                         function will not come into effect.')
-    return True
 
 
 def recompute(block, *args, **kwargs):
@@ -86,9 +87,3 @@ def recompute(block, *args, **kwargs):
 
     _check_validation(block)
     return _RecomputeCell(block)(*args, **kwargs)
-
-
-__all__ = [
-    'recompute',
-]
-__all__.sort()

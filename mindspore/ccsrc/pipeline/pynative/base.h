@@ -159,7 +159,7 @@ struct InputArgsInfo {
   bool is_grad_topest_cell;
   bool is_high_order_top_cell;
   bool grad_is_running;
-  bool is_need_recompute;
+  bool is_need_recompute{false};
   size_t obj_order;
 
   bool has_custom_bprop{false};
