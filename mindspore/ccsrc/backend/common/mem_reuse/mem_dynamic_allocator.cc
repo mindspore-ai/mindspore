@@ -104,7 +104,7 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   }
 
   if (device_addr == nullptr) {
-    MS_LOG(WARNING) << "Alloc tensor mem failed and try to sync all events to release memory.";
+    MS_LOG(INFO) << "Alloc tensor mem failed and try to sync all events to release memory.";
     SyncAllEventsInner();
     device_addr = FindAvailableMemBuf(align_size, from_persistent_mem, stream_id);
   }
@@ -987,7 +987,11 @@ bool DynamicMemPoolBestFit::RecordEvent(int64_t task_id_on_stream, uint32_t user
     MS_LOG(DEBUG) << "Record event for address : " << address << ".";
     auto &&mem_buf_tuple = FindByStrictAddr(address);
     auto mem_block = std::get<0>(mem_buf_tuple);
-    MS_EXCEPTION_IF_NULL(mem_block);
+    // Output of somas sub graph may be used by somas sub graph inner node, address may not be kept in mem pool.
+    if (mem_block == nullptr) {
+      MS_LOG(DEBUG) << "Can't find memblock by address in memory pool.";
+      continue;
+    }
     auto mem_buf = (std::get<1>(mem_buf_tuple))->second;
     mem_buf->RecordEvent(task_id_on_stream, user_stream_id, event);
     (void)stream_pair_addresses_[std::make_pair(user_stream_id, memory_stream_id)].emplace(mem_buf);
@@ -1010,12 +1014,10 @@ bool DynamicMemPoolBestFit::WaitEvent(int64_t task_id_on_stream, uint32_t user_s
   }
 
   auto addresses = iter->second;
-  MS_LOG(DEBUG) << "Bounded addresses size : " << iter->second.size();
   for (const auto &address : addresses) {
     address->WaitEvent(task_id_on_stream, user_stream_id);
     if (address->IsEventNotUsed() && address->status_ == DynamicMemBufStatus::kMemBufUsedByEvent) {
       iter->second.erase(address);
-      MS_LOG(DEBUG) << "Address : " << address->device_addr_ << " can release, and status is : " << address->status_;
       FreeTensorMemInner(address->device_addr_);
     }
   }
@@ -1038,12 +1040,10 @@ bool DynamicMemPoolBestFit::WaitEvent(int64_t task_id_on_stream, uint32_t memory
       continue;
     }
     auto addresses = stream_pair_addresses.second;
-    MS_LOG(DEBUG) << "Bounded addresses size : " << stream_pair_addresses.second.size();
     for (const auto &address : addresses) {
       address->WaitEvent(task_id_on_stream, user_stream);
       if (address->IsEventNotUsed() && address->status_ == DynamicMemBufStatus::kMemBufUsedByEvent) {
         stream_pair_addresses.second.erase(address);
-        MS_LOG(DEBUG) << "Address : " << address->device_addr_ << " can release, and status is : " << address->status_;
         FreeTensorMemInner(address->device_addr_);
       }
     }
@@ -1169,7 +1169,7 @@ bool DynamicMemBuf::WaitEvent(uint32_t task_id_on_stream, uint32_t user_stream_i
 bool DynamicMemBuf::IsEventNotUsed() { return events_ == nullptr ? true : events_->empty(); }
 
 bool DynamicMemBuf::SyncAllEvents() {
-  MS_LOG(INFO) << "Sync all events for address : " << device_addr_ << ".";
+  MS_LOG(DEBUG) << "Sync all events for address : " << device_addr_ << ".";
   if (IsEventNotUsed()) {
     return false;
   }
