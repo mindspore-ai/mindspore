@@ -34,6 +34,9 @@ class TestMSCollectiveTopo : public UT::Common {
 /// Description: create the topology node.
 /// Expectation: the topology node is created successfully.
 TEST_F(TestMSCollectiveTopo, InitCollectiveTopoNode) {
+  common::SetEnv("MS_NODE_TIMEOUT", "30");
+  common::SetEnv("MS_TOPO_TIMEOUT", "600");
+  common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
   common::SetEnv(distributed::cluster::topology::kEnvMetaServerHost, server_host.c_str());
