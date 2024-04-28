@@ -159,8 +159,6 @@ class KernelActor : public DebugAwareActor {
   bool is_dynamic_value_;
   bool is_dynamic_type_;
   bool has_dynamic_;
-  // whether the kernel has input node which is a computed depend kernel.
-  bool has_computed_depend_input_{false};
   // Whether enable asynchronously infer shape and resize kernel mod by KernelInferActor and KernelResizeActor.
   bool enable_async_infer_;
   AID kernel_async_infer_aid_;
