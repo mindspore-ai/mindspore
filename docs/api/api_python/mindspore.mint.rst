@@ -13,9 +13,16 @@ Array操作
 
     mindspore.mint.index_select
 
+
 逐元素运算
 ^^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.abs
 
 mindspore.mint.nn
 ------------------
