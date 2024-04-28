@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,6 +237,7 @@ FuncGraphPtr DynamicObfuscateMindIR(const std::string &file_name, float obf_rati
                                     char *dec_key, const size_t key_len, const std::string &dec_mode);
 void SwapCache(const tensor::TensorPtr &host, const tensor::TensorPtr &device, const tensor::TensorPtr &block_mapping,
                const bool &type);
+bool IsPhaseExport(const std::string &phase);
 }  // namespace pipeline
 }  // namespace mindspore
 

@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1571,7 +1571,7 @@ class _CellGraphExecutor:
         enable_compile_cache = context.get_context("enable_compile_cache")
         if enable_compile_cache is not True and enable_compile_cache != "1":
             enable_compile_cache = os.getenv('MS_COMPILER_CACHE_ENABLE')
-        if "train" in phase and (enable_compile_cache is True or enable_compile_cache == "1"):
+        if enable_compile_cache is True or enable_compile_cache == "1":
             self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
 
     def compile(self, obj, *args, phase='predict', do_convert=True, jit_config_dict=None, **kwargs):
