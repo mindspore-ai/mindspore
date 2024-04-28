@@ -107,7 +107,7 @@ void KernelActor::Init() {
   }
   auto input0 = cnode->input(kAnfPrimitiveIndex);
   if (IsValueNode<FuncGraph>(input0)) {
-    MS_LOG(WARNING) << "cnode is not a func graph value node : " << kernel_->DebugString() << ".";
+    MS_LOG(INFO) << "cnode is not a func graph value node : " << kernel_->DebugString() << ".";
     return;
   }
   auto multi_stream_safe_value = cnode->GetAttr(kAttrInputMultiStreamSafe);
