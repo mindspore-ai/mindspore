@@ -528,6 +528,7 @@ constexpr const char kNameFFTWithSize[] = "FFTWithSize";
 constexpr const char kNameCumulativeLogsumexp[] = "CumulativeLogsumexp";
 constexpr const char kNameMatmulReduceScatter[] = "MatmulReduceScatter";
 constexpr const char kNameAllGatherMatmul[] = "AllGatherMatmul";
+constexpr const char kNameMoeFinalizeRouting[] = "MoeFinalizeRouting";
 constexpr const char kSilentCheck[] = "SilentCheck";
 constexpr const char kNameUniformCandidateSampler[] = "UniformCandidateSampler";
 

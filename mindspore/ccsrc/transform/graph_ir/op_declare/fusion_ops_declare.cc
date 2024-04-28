@@ -139,4 +139,16 @@ ATTR_MAP(AllGatherMatmul) = {{"is_trans_a", ATTR_DESC(is_trans_a, AnyTraits<bool
                              {"comm_turn", ATTR_DESC(comm_turn, AnyTraits<int64_t>())}};
 OUTPUT_MAP(AllGatherMatmul) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(gather_out)}};
 REG_ADPT_DESC(AllGatherMatmul, kNameAllGatherMatmul, ADPT_DESC(AllGatherMatmul))
+
+// MoeFinalizeRouting
+INPUT_MAP(MoeFinalizeRouting) = {{1, INPUT_DESC(expanded_x)},
+                                 {2, INPUT_DESC(x1)},
+                                 {3, INPUT_DESC(x2)},
+                                 {4, INPUT_DESC(bias)},
+                                 {5, INPUT_DESC(scales)},
+                                 {6, INPUT_DESC(expanded_row_idx)},
+                                 {7, INPUT_DESC(expanded_expert_idx)}};
+ATTR_MAP(MoeFinalizeRouting) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MoeFinalizeRouting) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MoeFinalizeRouting, kNameMoeFinalizeRouting, ADPT_DESC(MoeFinalizeRouting))
 }  // namespace mindspore::transform
