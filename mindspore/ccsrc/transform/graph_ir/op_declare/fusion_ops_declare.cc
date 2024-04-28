@@ -147,4 +147,16 @@ ATTR_MAP(GeGluV2) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())},
                      {"activate_left", ATTR_DESC(activate_left, AnyTraits<bool>())}};
 OUTPUT_MAP(GeGluV2) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(gelu)}};
 REG_ADPT_DESC(GeGluV2, "GeGluV2", ADPT_DESC(GeGluV2))
+
+// MoeFinalizeRouting
+INPUT_MAP(MoeFinalizeRouting) = {{1, INPUT_DESC(expanded_x)},
+                                 {2, INPUT_DESC(x1)},
+                                 {3, INPUT_DESC(x2)},
+                                 {4, INPUT_DESC(bias)},
+                                 {5, INPUT_DESC(scales)},
+                                 {6, INPUT_DESC(expanded_row_idx)},
+                                 {7, INPUT_DESC(expanded_expert_idx)}};
+ATTR_MAP(MoeFinalizeRouting) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MoeFinalizeRouting) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MoeFinalizeRouting, kNameMoeFinalizeRouting, ADPT_DESC(MoeFinalizeRouting))
 }  // namespace mindspore::transform
