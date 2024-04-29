@@ -134,6 +134,7 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr
   common::AnfAlgo::SetNodeAttr(kAttrNumSplit, MakeValue<int64_t>(*num_split), split_v);
   common::AnfAlgo::SetNodeAttr(kAttrSizeSplits, MakeValue<std::vector<int64_t>>(size_splits), split_v);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), split_v);
+  common::AnfAlgo::SetNodeAttr("side_effect_hidden", MakeValue(true), split_v);
   return split_v;
 }
 
