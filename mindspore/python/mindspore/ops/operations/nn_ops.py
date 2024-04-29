@@ -6303,6 +6303,7 @@ class DynamicRNN(Primitive):
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
         self.use_peephole = validator.check_value_type("use_peephole", use_peephole, [bool], self.name)
         self.time_major = validator.check_value_type("time_major", time_major, [bool], self.name)
+        validator.check("time_major", time_major, "the supported value", True, validator.EQ, self.name)
         self.is_training = validator.check_value_type("is_training", is_training, [bool], self.name)
         validator.check_value_type("cell_type", cell_type, [str], self.name)
         self.cell_type = validator.check_string(cell_type, ['LSTM'], "cell_type", self.name)
