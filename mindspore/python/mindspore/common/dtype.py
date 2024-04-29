@@ -349,7 +349,7 @@ class QuantDtype(enum.Enum):
     An enum for quant datatype, contains `INT1` ~ `INT16`, `UINT1` ~ `UINT16`.
 
     `QuantDtype` is defined in
-    `dtype.py <https://gitee.com/mindspore/mindspore/tree/r2.3.q1/mindspore/python/mindspore/common/dtype.py>`_ ,
+    `dtype.py <https://gitee.com/mindspore/mindspore/blob/r2.3.q1/mindspore/python/mindspore/common/dtype.py>`_ ,
     use command below to import:
 
     .. code-block::
