@@ -121,8 +121,7 @@ class BACKEND_EXPORT ConstTensorNode : public Node {
 
 class ConstScalarNode : public Node {
  public:
-  explicit ConstScalarNode(const ValuePtr &data)
-      : Node({DShape({}), data->type()->type_id(), kOpFormat_DEFAULT}), data_(data) {}
+  explicit ConstScalarNode(const ValuePtr &data);
   ~ConstScalarNode() = default;
 
   NType NodeType() override { return NType::Scalar; }
@@ -135,8 +134,7 @@ class ConstScalarNode : public Node {
 
 class ConstTupleNode : public Node {
  public:
-  explicit ConstTupleNode(const ValuePtr &data, const size_t len)
-      : Node({DShape({SizeToLong(len)}), data->type()->type_id(), kOpFormat_DEFAULT}), data_(data) {}
+  explicit ConstTupleNode(const ValuePtr &data, const size_t len);
   ~ConstTupleNode() = default;
 
   NType NodeType() override { return NType::Tuple; }
