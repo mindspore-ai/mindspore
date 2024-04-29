@@ -22,7 +22,7 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr TriuFuncImpl::InferShape(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
-  auto input_shape_vec = input_args[0]->GetShape()->GetShapeVector();
+  auto input_shape_vec = input_args[kInputIndex0]->GetShape()->GetShapeVector();
   if (MS_UNLIKELY(IsDynamicRank(input_shape_vec))) {
     return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
   }
@@ -36,11 +36,11 @@ BaseShapePtr TriuFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr TriuFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto input_type = input_args[0]->GetType();
-  MS_EXCEPTION_IF_NULL(input_type);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, common_valid_types_with_bool,
-                                                   primitive->name());
+  auto input_type = input_args[kInputIndex0]->GetType();
+  if (!CheckAndConvertUtils::IsScalar(input_args[kInputIndex1])) {
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'diagonal' must be a scalar type, but got type: "
+                            << input_args[kInputIndex1]->GetType()->ToString();
+  }
   return input_type->Clone();
 }
 }  // namespace ops
