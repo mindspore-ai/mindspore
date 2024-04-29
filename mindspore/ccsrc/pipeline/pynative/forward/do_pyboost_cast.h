@@ -118,6 +118,7 @@ class PyBoostCastOperation : public CastBaseOperation {
       if (!has_dtype_sig) {
         PrimSignature sig_value{has_dtype_sig, {}};
         implicit_cast_map_[op_run_info->base_op_run_info.op_name] = sig_value;
+        MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name << " has no signature";
         return input_args;
       }
       PrimSignature sig_value{has_dtype_sig, dtypes};
@@ -159,10 +160,13 @@ class PyBoostCastOperation : public CastBaseOperation {
     // No need to implicit cast if no dtype.
     const auto &signature = op_run_info->signatures;
     if (dtypes.empty() || index >= dtypes.size() || dtypes[index] == SignatureEnumDType::kDTypeEmptyDefaultValue) {
+      MS_LOG(DEBUG) << "Get kDTypeEmptyDefaultValue, or index " << index << " larger than dtype size " << dtypes.size();
       return t;
     }
     auto it = dst_type.find(dtypes[index]);
     if (it == dst_type.end() || it->second.first == kTypeUnknown) {
+      MS_LOG(DEBUG) << "Can not find dtype " << (it == dst_type.end()) << ", or type is unknown "
+                    << (it->second.first == kTypeUnknown);
       return t;
     }
 
@@ -181,6 +185,7 @@ class PyBoostCastOperation : public CastBaseOperation {
                                              TypeIdToMsTypeStr(it->second.first), index);
     }
     if (is_same_type) {
+      MS_LOG(DEBUG) << "Get same dtype";
       return t;
     }
 

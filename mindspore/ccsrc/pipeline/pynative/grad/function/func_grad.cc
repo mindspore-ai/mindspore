@@ -148,12 +148,13 @@ bool IsNeedComputeGrad(const ValuePtr &input) {
 
 ValuePtrList CallBackwardHooks(const ValuePtr &value, ValuePtrList *grad_in) {
   if (value == nullptr) {
+    MS_LOG(DEBUG) << "Get null value";
     return *grad_in;
   }
   MS_EXCEPTION_IF_NULL(grad_in);
   auto tensor = value->cast<tensor::TensorPtr>();
   if (tensor == nullptr) {
-    MS_LOG(DEBUG) << "Get not tensor input value " << value->ToString();
+    MS_LOG(DEBUG) << "Hook just work on tensor, not support value " << value->ToString();
     return *grad_in;
   }
   auto auto_grad_meta = tensor->auto_grad_meta_data();
@@ -427,6 +428,7 @@ void FuncGrad::BackPropagate() {
   const auto &root_fn = (*last_node_reverse_iter)->func_node();
   mindspore::HashMap<BackwardNode *, ValuePtrList> input_buffer;
   (void)input_buffer.insert({root_fn.get(), root_gradients_});
+  MS_LOG(DEBUG) << "Is running recompute grad " << is_run_recompute_;
   for (auto iter = last_node_reverse_iter; iter != variable_set_.rend(); ++iter) {
     const auto &variable = *iter;
     const auto &fn = variable->func_node();
@@ -548,7 +550,7 @@ BackwardNodePtr FuncGrad::BuildCustomBackwardNode(const PrimitivePtr &prim, cons
       fn = GetBpropFunction(prim->name());
     }
     if (!fn || py::isinstance<py::none>(fn)) {
-      MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << py::str(fn);
+      MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << ConvertPyObjToString(fn);
       return BuildFakeBackwardNode(prim, flatten_inputs, op_grad_info);
     }
     (void)prim_py->AddBackwardHookFn(0, fn);

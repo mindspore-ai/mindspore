@@ -54,6 +54,7 @@ const size_t kContainerRatio = 2;
 void ParsePyArgsToInputArgsInfo(const InputArgsInfoPtr &input_args_info, const py::object &obj, const py::args &args) {
   MS_EXCEPTION_IF_NULL(input_args_info);
   input_args_info->has_custom_bprop = py::hasattr(obj, parse::CUSTOM_BPROP_NAME);
+  MS_LOG(DEBUG) << "Cell has custom bprop " << input_args_info->has_custom_bprop;
   bool is_top_cell = input_args_info->is_grad_topest_cell || input_args_info->is_high_order_top_cell;
   if (is_top_cell || input_args_info->grad_is_running) {
     pipeline::CheckArgsValid(obj, args);
@@ -122,6 +123,7 @@ ValuePtr ConvertOutputValueToTensor(const ValuePtr &v, bool dict_convert_to_tupl
     // All value are tensor
     if (std::all_of(v_seq->value().begin(), v_seq->value().end(),
                     [](const ValuePtr &e) { return PyNativeAlgo::Common::IsTensor(e, true); })) {
+      MS_LOG(DEBUG) << "All output value is tensor";
       return v;
     }
     MS_LOG(DEBUG) << "Output is value sequence, but have tensor and other type mixed. Its value is " << v->ToString();
@@ -135,6 +137,7 @@ ValuePtr ConvertOutputValueToTensor(const ValuePtr &v, bool dict_convert_to_tupl
     int64_t input = v->cast<Int64ImmPtr>()->value();
     return std::make_shared<tensor::Tensor>(input, kInt64);
   } else if (v->isa<ValueDictionary>() && dict_convert_to_tuple) {
+    MS_LOG(DEBUG) << "Get dict value";
     return PyNativeAlgo::DataConvert::ConvertValueDictToValueTuple(v);
   } else {
     MS_LOG(DEBUG) << "Output is " << v->ToString() << ", abstract "
@@ -166,7 +169,7 @@ void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::R
   const auto &graph_params = graph->parameters();
   if (graph_params.size() < graph_param_size) {
     MS_LOG(EXCEPTION) << "Get initial bprop graph param size " << graph_param_size << " less than current param size "
-                      << graph_params.size();
+                      << graph_params.size() << ". Graph parameters maybe update by kernel graph compile stage";
   }
   std::vector<ValuePtr> input_arg_list;
   if (sens_type == SensType::kNormal) {
@@ -229,14 +232,14 @@ void SetSensValue(const prim::GradOperationPtr &grad, const InputArgsInfoPtr &in
   if (!grad->sens_param()) {
     return;
   }
-  MS_LOG(DEBUG) << "Get sens param";
   size_t forward_args_size = args.size() - 1;
   auto sens_v = PyNativeAlgo::DataConvert::PyObjToValue(args[forward_args_size]);
+  MS_LOG(DEBUG) << "Get sens param " << sens_v->ToString();
   const auto &sens_tensor = ConvertOutputValueToTensor(sens_v, dict_convert_to_tuple);
   if (sens_tensor == nullptr) {
     MS_LOG(EXCEPTION) << "sens convert tensor is nullptr";
   }
-  // Sens have already exist, which may be need update
+  // Sens have already existed, which may be need update
   MS_EXCEPTION_IF_NULL(input_args_info);
   if (input_args_info->input_arg_value_vec.size() == args.size()) {
     input_args_info->input_arg_value_vec.pop_back();
@@ -748,6 +751,7 @@ void GradExecutor::EndGraphInner(const py::object &obj, const py::object &out, c
     if (input_args_info->is_need_recompute) {
       input_args_info->out_value = ConvertOutputValueToTensor(input_args_info->out_value, false);
     }
+    MS_LOG(DEBUG) << "Get cell output value " << input_args_info->out_value->ToString();
     EndGraphImpl(input_args_info);
   }
   PopInputArgsInfoStack();
@@ -1575,21 +1579,31 @@ void GradExecutor::ClearGradRes() {
 void GradExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear grad res";
   WaitBpropTask();
+  init_ = false;
   grad_flag_ = false;
+  enable_grad_ = true;
+  is_run_recompute_ = false;
+  save_graphs_ = false;
+  forward_use_dynamic_shape_process_ = false;
+
   grad_is_running_ = 0;
+  kernel_graph_id_for_control_flow_ = UINT32_MAX;
   custom_bprop_cell_count_ = 0;
+  obj_order_ = 0;
   grad_order_ = 0;
+  op_num_in_bprop_graph_ = kDefaultContainerSize;
+  grad_operation_.clear();
+
   top_cell_ = nullptr;
   top_input_args_info_ = nullptr;
   bprop_cell_list_.clear();
-  grad_operation_.clear();
   already_run_top_cell_.clear();
+  dynamic_inputs_cells_.clear();
   need_gc_top_cell_list_.clear();
-  dynamic_shape()->Clear();
   std::stack<InputArgsInfoPtr>().swap(input_args_info_stack_);
   std::stack<std::pair<std::string, bool>>().swap(bprop_grad_stack_);
   std::stack<TopCellInfoPtr>().swap(high_order_stack_);
-  forward_use_dynamic_shape_process_ = false;
+  dynamic_shape()->Clear();
 }
 
 void GradExecutor::AsyncClearTopCell() {
