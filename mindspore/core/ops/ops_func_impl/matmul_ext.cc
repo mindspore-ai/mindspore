@@ -52,10 +52,11 @@ ShapeVector CheckMatMulShapes(const ShapeVector &shape1, const ShapeVector &shap
     shape2_padded.insert(shape2_padded.end(), shape2.begin(), shape2.end());
     shape1_padded = shape1;
   }
-  int max_len = std::max(static_cast<int>(shape1_padded.size()) - 2, static_cast<int>(shape2_padded.size()) - 2);
+  int max_len = std::max(static_cast<int>(shape1_padded.size()) - kInputIndex2,
+                         static_cast<int>(shape2_padded.size()) - kInputIndex2);
   for (int i = 0; i < max_len; ++i) {
-    size_t dim1 = i < static_cast<int>(shape1_padded.size()) - 2 ? shape1_padded[i] : 1;
-    size_t dim2 = i < static_cast<int>(shape2_padded.size()) - 2 ? shape2_padded[i] : 1;
+    int64_t dim1 = i < static_cast<int>(shape1_padded.size() - kInputIndex2) ? shape1_padded[i] : 1;
+    int64_t dim2 = i < static_cast<int>(shape2_padded.size() - kInputIndex2) ? shape2_padded[i] : 1;
     if (dim1 != 1 && dim2 != 1 && dim1 != dim2) {
       MS_EXCEPTION(RuntimeError) << "For 'MatMulExt' op,  shape1 and shape2 must be broadcastable, but got "
                                  << shape1_padded << " and " << shape2_padded;
@@ -80,8 +81,8 @@ ShapeVector GetMatMulExtBroadcastShape(const ShapeVector &base_shape, const Shap
 
 ShapeVector InferShapeRem(const ShapeVector &shape_backbone, const ShapeVector &shape1, const ShapeVector &shape2,
                           bool transpose_b) {
-  int ndim1 = shape1.size();
-  int ndim2 = shape2.size();
+  int ndim1 = SizeToInt(shape1.size());
+  int ndim2 = SizeToInt(shape2.size());
   ShapeVector shape_rem(shape_backbone);
   if (ndim1 >= SizeToInt(kDim2)) {
     shape_rem.push_back(shape1[ndim1 - SizeToInt(kDim2)]);
@@ -141,19 +142,8 @@ BaseShapePtr MatMulExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto constexpr kMatMulExtInputNum = 2;
   (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(input_args.size()), kEqual, kMatMulExtInputNum,
                                            primitive->name());
-  auto prim_name = primitive->name();
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
-  auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
-  if (x_shape_map.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name
-                      << "', input 'x' must be a Tensor type, but got:" << input_args[0]->ToString();
-  }
-  if (y_shape_map.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name
-                      << "', input 'y' must be a Tensor type, but got:" << input_args[1]->ToString();
-  }
-  auto shape1_orig = x_shape_map[kShape];
-  auto shape2_orig = y_shape_map[kShape];
+  auto shape1_orig = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+  auto shape2_orig = input_args[kInputIndex1]->GetShape()->GetShapeVector();
   if (IsDynamicRank(shape1_orig) || IsDynamicRank(shape2_orig)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
@@ -163,12 +153,12 @@ BaseShapePtr MatMulExtFuncImpl::InferShape(const PrimitivePtr &primitive,
     bool transpose_b = shape2_orig.size() == 1;
     ShapeVector shape_backbone = CheckMatMulShapes(shape1_orig, shape2_orig);
     ShapeVector ret_shape = InferShapeRem(shape_backbone, shape1_orig, shape2_orig, transpose_b);
-    return std::make_shared<abstract::Shape>(ret_shape);
+    return std::make_shared<abstract::Shape>(std::move(ret_shape));
   }
 
   ShapeVector ret_shape;
   MatMulMakeShape(&ret_shape, shape1_orig, shape2_orig);
-  return std::make_shared<abstract::Shape>(ret_shape);
+  return std::make_shared<abstract::Shape>(std::move(ret_shape));
 }
 
 TypePtr MatMulExtFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const {

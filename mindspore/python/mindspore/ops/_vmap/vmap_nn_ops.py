@@ -1936,6 +1936,7 @@ def get_grid_sampler_vmap_rule(prim, axis_size):
 
     return vmap_rule
 
+
 @vmap_rules_getters.register(NN.UpsampleNearest1D)
 @vmap_rules_getters.register(NN.UpsampleNearest2D)
 @vmap_rules_getters.register(NN.UpsampleNearest3D)

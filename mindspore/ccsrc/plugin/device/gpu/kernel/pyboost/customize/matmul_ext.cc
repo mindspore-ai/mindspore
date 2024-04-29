@@ -37,7 +37,7 @@ ValueTuplePtr ShapeVectorToValueTuple(ShapeVector shape_vector) {
   std::vector<ValuePtr> shape_out_vector;
   std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(shape_out_vector),
                  [](int64_t x) { return MakeValue(x); });
-  return std::make_shared<ValueTuple>(shape_out_vector);
+  return std::make_shared<ValueTuple>(std::move(shape_out_vector));
 }
 
 TensorPtr Expand(TensorPtr tensor, size_t ndim, const DeviceContext *device_context) {

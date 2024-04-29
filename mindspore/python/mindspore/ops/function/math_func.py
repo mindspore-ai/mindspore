@@ -2576,7 +2576,7 @@ def linspace_ext(start, end, steps, *, dtype=None):
         >>> print(output)
         [ 1.    3.25  5.5   7.75 10.  ]
     """
-    return  _get_cache_prim(LinSpaceExt)()(start, end, steps, dtype)
+    return _get_cache_prim(LinSpaceExt)()(start, end, steps, dtype)
 
 
 def det(input):

@@ -450,8 +450,8 @@ BaseShapePtr SetPadShape(const ShapeVector &x_shape, const ArrayValue<int64_t> &
     auto pad_idx = i * kNum2;
     if (out_shape[x_rank - i - 1] != abstract::Shape::kShapeDimAny) {
       auto paddings_l = paddings[pad_idx];
-      auto paddings_r = paddings[pad_idx + 1];
-      out_shape[x_rank - i - 1] = out_shape[x_rank - i - 1] + paddings_l + paddings_r;
+      auto paddings_r = paddings[pad_idx + kIndex1];
+      out_shape[x_rank - i - kIndex1] = out_shape[x_rank - i - kIndex1] + paddings_l + paddings_r;
     }
   }
   return std::make_shared<abstract::Shape>(out_shape);
