@@ -701,6 +701,7 @@ class _Context:
                             "enable_task_opt": (ms_ctx_param.enable_task_opt, bool),
                             "enable_grad_comm_opt": (ms_ctx_param.enable_grad_comm_opt, bool),
                             "interleaved_matmul_comm": (ms_ctx_param.interleaved_matmul_comm, bool),
+                            "bias_add_comm_swap": (ms_ctx_param.bias_add_comm_swap, bool),
                             "enable_opt_shard_comm_opt": (ms_ctx_param.enable_opt_shard_comm_opt, bool),
                             "enable_begin_end_inline_opt": (ms_ctx_param.enable_begin_end_inline_opt, bool),
                             "enable_concat_eliminate_opt": (ms_ctx_param.enable_concat_eliminate_opt, bool),

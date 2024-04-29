@@ -133,6 +133,7 @@ void RegMsContext(const py::module *m) {
     .value("debug_level", MsCtxParam::MS_CTX_DEBUG_LEVEL)
     .value("interleaved_matmul_comm", MsCtxParam::MS_CTX_INTERLEAVED_MATMUL_COMM)
     .value("interleaved_layernorm_comm", MsCtxParam::MS_CTX_INTERLEAVED_LAYERNORM_COMM)
+    .value("bias_add_comm_swap", MsCtxParam::MS_CTX_BIAS_ADD_COMM_SWAP)
     .value("enable_begin_end_inline_opt", MsCtxParam::MS_CTX_ENABLE_BEGIN_END_INLINE_OPT)
     .value("enable_concat_eliminate_opt", MsCtxParam::MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT)
     .value("host_scheduling_max_threshold", MsCtxParam::MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD)
