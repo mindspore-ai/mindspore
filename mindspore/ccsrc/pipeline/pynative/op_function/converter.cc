@@ -86,7 +86,7 @@ ValueTuplePtr ConvertList(const py::object &obj) {
   std::vector<ValuePtr> convert(size);
   for (size_t i = 0; i < size; ++i) {
     if (!py::isinstance<U>(seq[i])) {
-      return {};
+      return nullptr;
     }
     auto out = PyCast<U, N>(seq[i]);
     if (out == nullptr) {
@@ -95,6 +95,38 @@ ValueTuplePtr ConvertList(const py::object &obj) {
     convert[i] = out;
   }
   return std::make_shared<ValueTuple>(std::move(convert));
+}
+
+template <typename T>
+ValueTuplePtr ConvertIntList(const py::object &obj) {
+  if (!py::isinstance<T>(obj)) {
+    return nullptr;
+  }
+  auto seq = py::cast<T>(obj);
+  size_t size = seq.size();
+  std::vector<ValuePtr> convert(size);
+  for (size_t i = 0; i < size; ++i) {
+    // bool is also an instance of py::int_
+    if (py::isinstance<py::bool_>(seq[i]) || !py::isinstance<py::int_>(seq[i])) {
+      return nullptr;
+    }
+    auto out = PyCast<py::int_, Int64Imm>(seq[i]);
+    if (out == nullptr) {
+      return nullptr;
+    }
+    convert[i] = out;
+  }
+  return std::make_shared<ValueTuple>(std::move(convert));
+}
+
+template <>
+ValueTuplePtr ConvertList<py::tuple, py::int_, Int64Imm>(const py::object &obj) {
+  return ConvertIntList<py::tuple>(obj);
+}
+
+template <>
+ValueTuplePtr ConvertList<py::list, py::int_, Int64Imm>(const py::object &obj) {
+  return ConvertIntList<py::list>(obj);
 }
 }  // namespace
 
