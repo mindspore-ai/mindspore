@@ -36,9 +36,6 @@ class MvAclnnKernelMod : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
-
-  std::pair<KernelTensor *, bool> input_a_;
-  std::pair<KernelTensor *, bool> input_b_;
 };
 }  // namespace kernel
 }  // namespace mindspore
