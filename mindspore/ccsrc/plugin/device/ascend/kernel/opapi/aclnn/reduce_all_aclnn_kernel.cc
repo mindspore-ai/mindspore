@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/opapi/aclnn/reduce_all_aclnn_kernel.h"
-#include <algorithm>
 #include <vector>
 #include <memory>
 #include <functional>
