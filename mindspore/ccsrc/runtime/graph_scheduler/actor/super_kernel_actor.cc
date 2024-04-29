@@ -306,8 +306,7 @@ void SuperKernelActor::RunGraphKernelByKernel(OpContext<DeviceTensor> *const con
     if (ActorDispatcher::enable_runtime_multi_pipeline() && !ActorDispatcher::enable_static_shape()) {
       // If the kernel need user data and is dynamic, maybe need input kernel's output user data to infer shape, this
       // value depend case can not handle in KernelTensor auto sync phase currently.
-      if (kernel_actor->has_computed_depend_input_ ||
-          (kernel_actor->kernel_mod_->need_user_data() && kernel_actor->has_dynamic_)) {
+      if (kernel_actor->kernel_mod_->need_user_data() && kernel_actor->has_dynamic_) {
         MS_LOG(DEBUG) << "Begin wait runtime pipeline for kernel: " << kernel_actor->kernel_->fullname_with_scope();
         if (!WaitRuntimePipelineFinish(context)) {
           MS_LOG(INFO) << "Run failed and early stop for kernel: " << kernel_actor->kernel_->fullname_with_scope();
@@ -320,6 +319,16 @@ void SuperKernelActor::RunGraphKernelByKernel(OpContext<DeviceTensor> *const con
       // Note: dynamic value or static shape also need push task into infer actor to make sure correct kernel
       // execution order.
       Async(kernel_async_infer_aid_, &KernelAsyncInferActor::InferShape, context, kernel_actor.get());
+
+      // The computed depend kernel should wait output shape update after kernel launch.
+      if (kernel_actor->kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
+        MS_LOG(DEBUG) << "Begin wait runtime pipeline for kernel: " << kernel_actor->kernel_->fullname_with_scope();
+        if (!WaitRuntimePipelineFinish(context)) {
+          MS_LOG(INFO) << "Run failed and early stop for kernel: " << kernel_actor->kernel_->fullname_with_scope();
+          return;
+        }
+        MS_LOG(DEBUG) << "End wait runtime pipeline for kernel: " << kernel_actor->kernel_->fullname_with_scope();
+      }
     } else {
       Async(kernel_async_launch_aid_, &KernelAsyncLaunchActor::LaunchKernel, context, kernel_actor.get());
     }
