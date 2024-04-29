@@ -947,4 +947,6 @@ void ConvertCTensorToPyTensor(const py::tuple &input_args, py::tuple *convert_ar
     }
   }
 }
+
+std::string ConvertPyObjToString(const py::object &obj) { return py::str(obj).cast<std::string>(); }
 }  // namespace mindspore

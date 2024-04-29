@@ -185,7 +185,7 @@ void IrBprop::BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &p
       fn = GetBpropFunction(prim->name());
     }
     if (!fn || py::isinstance<py::none>(fn)) {
-      MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << py::str(fn);
+      MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << ConvertPyObjToString(fn);
       return;
     }
     (void)prim_py->AddBackwardHookFn(0, fn);
@@ -347,6 +347,7 @@ void IrBprop::BackPropagate() {
   UpdateLazyUser();
   const auto &last_node_reverse_iter = GetLastNodeReverseIter();
   SeenNum seen = NewSeenGeneration();
+  MS_LOG(DEBUG) << "Is running recompute grad " << is_run_recompute_;
   for (auto iter = last_node_reverse_iter; iter != ad_param_->variable_adjoint_set_.rend(); ++iter) {
     const auto &variable = *iter;
     if (!variable->is_need_propagate() || !variable->is_need_grad()) {

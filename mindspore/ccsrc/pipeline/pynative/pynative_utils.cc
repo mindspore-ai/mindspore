@@ -458,6 +458,7 @@ bool Common::IsTensor(const ValuePtr &v, bool include_sequence) {
     } else if (v->isa<ValueSequence>()) {
       auto v_seq = v->cast<ValueSequencePtr>();
       if (v_seq->size() == 0) {
+        MS_LOG(DEBUG) << "Get empty value sequence";
         return false;
       }
       // SpareTensor have scalar index, so just check have csr tensor
@@ -468,10 +469,12 @@ bool Common::IsTensor(const ValuePtr &v, bool include_sequence) {
       return std::all_of(v_seq->value().begin(), v_seq->value().end(),
                          [](const ValuePtr &e) { return IsTensor(e, true); });
     } else {
+      MS_LOG(DEBUG) << "Get value " << v->ToString();
       return false;
     }
   }
-  return v->isa<tensor::MetaSparseTensor>() || v->isa<tensor::BaseTensor>();
+  MS_LOG(DEBUG) << "Get value " << v->ToString();
+  return v->isa<tensor::BaseTensor>() || v->isa<tensor::MetaSparseTensor>();
 }
 
 bool Common::IsControlFlowGraph(const FuncGraphPtr &func_graph) {
@@ -1452,7 +1455,7 @@ ValuePtr DataConvert::PyObjToValue(const py::object &obj, bool stub) {
     converted_ret = parse::data_converter::PyDataToValue(obj);
   }
   if (converted_ret == nullptr) {
-    MS_LOG(EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(obj));
+    MS_LOG(EXCEPTION) << "Attribute convert error with type: " << ConvertPyObjToString(obj);
   }
   return converted_ret;
 }
@@ -1504,6 +1507,7 @@ void DataConvert::FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_ten
                                      std::vector<ValuePtr> *flatten_v) {
   MS_EXCEPTION_IF_NULL(v);
   MS_EXCEPTION_IF_NULL(flatten_v);
+  MS_LOG(DEBUG) << "Get is only flatten tensor seq " << is_only_flatten_tensor_seq;
   if (v->isa<tensor::BaseTensor>()) {
     (void)flatten_v->emplace_back(v);
   } else if (v->isa<ValueSequence>()) {
@@ -1511,6 +1515,7 @@ void DataConvert::FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_ten
     if (v_vec.empty() && !is_filter_tensor) {
       MS_LOG(DEBUG) << "Get empty tuple value";
       (void)flatten_v->emplace_back(v);
+      MS_LOG(DEBUG) << "Get empty value sequence";
       return;
     }
     if (is_only_flatten_tensor_seq && !v_vec.front()->isa<tensor::BaseTensor>()) {
@@ -1566,6 +1571,7 @@ void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<Va
     if (Common::IsTensor(v_vec[input_size])) {
       (void)flatten_v->emplace_back(v_vec[input_size]);
     } else if (v_vec[input_size]->isa<ValueSequence>()) {
+      MS_LOG(DEBUG) << "Get value tuple size " << v_vec[input_size]->cast<ValueSequencePtr>()->size();
       FlattenValueSeqArg(v_vec[input_size], false, false, flatten_v);
     }
   }
@@ -2108,6 +2114,7 @@ bool AutoGrad::NeedGrad(const std::vector<ValuePtr> &input_values) {
     } else if (input_arg->isa<tensor::COOTensor>() || input_arg->isa<tensor::CSRTensor>()) {
       return true;
     }
+    MS_LOG(DEBUG) << "Get value " << input_arg->ToString();
   }
   return false;
 }
@@ -2451,11 +2458,13 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
         size_t tuple_input_num = input_c->size() - 1;
         for (size_t j = 0; j < tuple_input_num; ++j) {
           if (auto f_node = common::AnfAlgo::VisitKernel(input_c, j).first; f_node->isa<CNode>() && IsRealOp(f_node)) {
+            MS_LOG(DEBUG) << "Get used input node " << f_node->DebugString();
             (void)node_list->emplace_back(f_node);
           }
         }
       } else {
         if (auto f_node = common::AnfAlgo::VisitKernel(input_c, 0).first; f_node->isa<CNode>() && IsRealOp(f_node)) {
+          MS_LOG(DEBUG) << "Get used input node " << f_node->DebugString();
           (void)node_list->emplace_back(f_node);
         }
       }
@@ -2463,6 +2472,7 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
   }
   // Check output used in single op bprop graph
   if (unused_inputs.find(cnode->size() - 1) == unused_inputs.end()) {
+    MS_LOG(DEBUG) << "Get used output node " << cnode->DebugString();
     (void)node_list->emplace_back(cnode);
   }
 }
