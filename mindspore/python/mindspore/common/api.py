@@ -330,6 +330,7 @@ def _get_args_for_run(obj, args, kwargs, compile_args):
 
     return new_args
 
+
 def _get_args_for_run_predict(obj, args, kwargs, compile_args):
     """Get the actual input args and kwargs for runtime."""
     new_args = []
