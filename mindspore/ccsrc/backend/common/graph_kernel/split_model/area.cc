@@ -50,13 +50,34 @@ bool AreaWithRelationCmp(const AreaWithRelation &a, const AreaWithRelation &b) {
 Area::Area(size_t id, const PrimOpPtr &prim_op, bool is_output, const HashMap<NodePtr, AreaPtr> &node_area_map)
     : hd_(new NodeHandle(this, prim_op)), unique_id_(id), is_output_(is_output), ops_(1, prim_op) {
   // link inputs of the handle node
+  auto init_pattern = pattern();
   for (auto &inp : prim_op->inputs()) {
     auto input_relation = GetRelation(prim_op, inp);
-    if (pattern() == NodePattern::ELEMWISE && input_relation == EdgeRelation::BROADCAST) {
+    if (init_pattern == NodePattern::ELEMWISE && input_relation == EdgeRelation::BROADCAST) {
       hd_->compute_type_ = NodePattern::BROADCAST;
     }
     if (auto inp_area_iter = node_area_map.find(inp); inp_area_iter != node_area_map.end()) {
       (void)inputs_with_relation_.emplace_back(std::make_pair(inp_area_iter->second, input_relation));
+    }
+  }
+  // ELEMWISE if op has one variable input, other inputs are const input with shape [1]
+  // e.g. Cast(out_0, 43)
+  //      Add(param0, const)
+  if (hd_->compute_type_ == NodePattern::BROADCAST && init_pattern == NodePattern::ELEMWISE) {
+    size_t scalar_input_num = 0;
+    auto input_num = prim_op->inputs().size();
+    for (size_t i = 0; i < input_num; ++i) {
+      auto inp = prim_op->inputs()[i];
+      if (inp != nullptr && inp->tensor_size() == 1 &&
+          (inp->NodeType() == NType::Tensor || inp->NodeType() == NType::Scalar)) {
+        scalar_input_num++;
+      }
+    }
+    if (scalar_input_num + 1 == input_num) {
+      hd_->compute_type_ = NodePattern::ELEMWISE;
+      if (!inputs_with_relation_.empty()) {
+        inputs_with_relation_[0].second = EdgeRelation::INJECTIVE;
+      }
     }
   }
   MakeUniqueAndSyncInputs();
