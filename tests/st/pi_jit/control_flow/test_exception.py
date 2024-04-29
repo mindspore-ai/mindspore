@@ -3,6 +3,11 @@ from mindspore.ops import operations as P
 from mindspore import jit
 from mindspore._c_expression import get_code_extra
 import pytest
+import sys
+
+SYS_VER = (sys.version_info.major, sys.version_info.minor)
+if SYS_VER != (3, 7) and SYS_VER != (3, 9):
+    pytest.skip(reason="not implement for python" + str(SYS_VER), allow_module_level=True)
 
 
 @pytest.mark.level0

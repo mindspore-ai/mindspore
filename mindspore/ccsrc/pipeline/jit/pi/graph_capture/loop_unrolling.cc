@@ -274,7 +274,7 @@ void LoopUnrolling::FixupInstr() {
     }
     int jump_bci = bb->GetJumpBB()->instrs().front().bci();
     Instr &curr_instr = bb->instrs().back();
-    int jump_arg = Utils::GetBranchDestArg(curr_instr.op(), jump_bci, curr_instr.bci());
+    int jump_arg = Opcode(curr_instr.op()).JumpOffset(curr_instr.bci(), jump_bci);
     curr_instr.set_arg(jump_arg);
   }
   // fixup deaded bb bci, because BuildGraph traverse instructions in bci order

@@ -60,25 +60,20 @@ static bool IsRepeatWithoutSideEffect(ValueNode *v, bool repeat_attr_item_access
   }
 
   AObject::Type type = v->GetVobj() ? v->GetVobj()->GetType() : AObject::kTypeAnyValue;
-  switch (v->GetOpcode()) {
-    case BUILD_TUPLE:
-      return CheckBuildTupleRepeatable(v, repeat_attr_item_access);
-    case BUILD_SLICE:
-      // NOTE: mindspore can't resolve call 'slice' class
-      return CheckBuildSliceRepeatable(v->getInputs(), repeat_attr_item_access);
-    case BINARY_SUBSCR:
-    case LOAD_ATTR:
-      return type == AObject::kTypeAnyValue ? false : repeat_attr_item_access;
-    case BUILD_CONST_KEY_MAP:
-      return true;
-    case BUILD_MAP:
-      if (type == AObject::kTypeDict) {
-        AbstractDict *d = static_cast<AbstractDict *>(v->GetVobj());
-        return d->size() == 0 || d->KeyType() != AObject::kTypeAnyValue;
-      }
-      return false;
-    default:
-      break;
+  auto opcode = v->GetOpcode();
+  if (opcode == BUILD_TUPLE) {
+    return CheckBuildTupleRepeatable(v, repeat_attr_item_access);
+  } else if (opcode == BUILD_SLICE) {
+    // NOTE: mindspore can't resolve call 'slice' class
+    return CheckBuildSliceRepeatable(v->getInputs(), repeat_attr_item_access);
+  } else if (opcode == BINARY_SUBSCR || opcode == LOAD_ATTR) {
+    return type == AObject::kTypeAnyValue ? false : repeat_attr_item_access;
+  } else if (opcode == BUILD_MAP) {
+    if (type == AObject::kTypeDict) {
+      AbstractDict *d = static_cast<AbstractDict *>(v->GetVobj());
+      return d->size() == 0 || d->KeyType() != AObject::kTypeAnyValue;
+    }
+    return false;
   }
   return false;
 }
@@ -144,13 +139,27 @@ static bool CheckAttrItemSupport(ValueNode *v, bool repeat_op) {
   return true;
 }
 
-static bool CheckSideEffectedFunc(ValueNode *v) {
-  std::set<std::string> funcs = {"assign", "Assign"};
-  if (Utils::IsCallOp(v->GetOpcode())) {
-    py::object callable = v->input(0)->GetVobj() ? v->input(0)->GetVobj()->GetPyObject() : py::object();
-    return callable.ptr() != nullptr ? funcs.find(GetFuncName(callable)) != funcs.end() : true;
+static bool IsSideEffect(ValueNode *v) {
+  static const std::set<std::string> funcs = {"assign", "Assign"};
+  static const std::set<int> unsupported_op = {
+    STORE_DEREF,  DELETE_DEREF,  STORE_GLOBAL, DELETE_GLOBAL, STORE_ATTR, DELETE_ATTR,
+    STORE_SUBSCR, DELETE_SUBSCR, IMPORT_STAR,  RAISE_VARARGS, RERAISE,
+  };
+  Opcode opcode(v->GetOpcode());
+  if (opcode.MayDelete()) {
+    return false;
   }
-  return false;
+  if (opcode.IsCall()) {
+    AObject *f = v->input(0)->GetVobj();
+    if (f == nullptr) {
+      return true;
+    }
+    if (f->TestMsFlag(AObject::kMsFlagGradFunc)) {
+      return false;
+    }
+    return funcs.find(GetFuncName(f->GetPyObject())) != funcs.end();
+  }
+  return unsupported_op.find(v->GetOpcode()) != unsupported_op.end();
 }
 
 bool GraphAnalyzer::HandleCallableToGraph(AObject *f) {
@@ -184,13 +193,21 @@ bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
   if (IsNonLocalValue(v)) {
     return true;
   }
+  if (v->GetVobj() && v->GetVobj()->TestMsFlag(AObject::kMsFlagGradFunc)) {
+    GetCaptureInfo().has_grad_ = true;
+    GetCaptureInfo().captured_.values.insert(v);
+    GetCaptureInfo().captured_.operations.push_back(v);
+    return true;
+  }
+
   int op = v->GetOpcode();
   bool repeat_op = graph_->Config().GetBoolConfig(GraphJitConfig::kEnableOptimizeForAttrItem);
   if ((op == LOAD_ATTR || op == BINARY_SUBSCR) && !CheckAttrItemSupport(v, repeat_op)) {
     return false;
   }
 
-  if (Utils::IsCallOp(v->GetOpcode())) {
+  bool is_call_op = Opcode(v->GetOpcode()).IsCall();
+  if (is_call_op) {
     AObject *f = v->input(0)->GetVobj();
     bool can_pass = HandleCallableToGraph(f);
     if (!can_pass) {
@@ -214,7 +231,7 @@ bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
       // don't pass unknown object to graph
       return false;
     }
-    if (type == AObject::kTypeCell && !Utils::IsCallOp(op)) {
+    if (type == AObject::kTypeCell && !is_call_op) {
       // don't pass a cell object that not call to graph.
       return false;
     }
@@ -256,27 +273,14 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
   }
 
   ValueNode *v = static_cast<ValueNode *>(n);
-  AObject *o = v->GetVobj();
   if (IsNonLocalValue(v)) {
     return true;
   }
-
-  if (Utils::IsMsUnsupported(v->GetOpcode())) {
-    // if mindspore unsupported, must be interpret
-  } else if (AddToCaptured(v)) {
+  bool is_side_effect = IsSideEffect(v);
+  if (!is_side_effect && AddToCaptured(v)) {
     return true;
   }
-
-  const int ms_flag =
-    AObject::kMsFlagGradFunc | AObject::kMsFlagShardFunc | AObject::kMsFlagVmapFunc | AObject::kMsFlagJitFunc;
-  if (o && o->TestMsFlag(ms_flag) && AddToCaptured(v)) {
-    GetCaptureInfo().has_grad_ = o->TestMsFlag(AObject::kMsFlagGradFunc);
-    return true;
-  }
-  if (v->GetOpcode() == STORE_ATTR || v->GetOpcode() == STORE_DEREF) {
-    return false;
-  }
-  if (!GetCaptureInfo().captured_.values.empty() && CheckSideEffectedFunc(v)) {
+  if (!GetCaptureInfo().captured_.values.empty() && is_side_effect) {
     return false;
   }
   if (ProduceInterpretValue(v)) {
@@ -498,8 +502,8 @@ bool GraphAnalyzer::HasTensorOperation() const {
   bool has_tensor_cal = false;
   for (auto i : info_.captured_.values) {
     AObject *value = i->GetVobj();
-    int op = i->GetOpcode();
-    if (Utils::IsCallOp(op)) {
+    Opcode op(i->GetOpcode());
+    if (op.IsCall()) {
       if (SkipSpecialFuncOrPrimitive(i->input(0)->GetVobj()->GetPyObject())) {
         continue;
       }
@@ -508,7 +512,7 @@ bool GraphAnalyzer::HasTensorOperation() const {
       }
       return true;
     }
-    if (Utils::IsBinaryMathOp(op) && value->GetType() == AObject::kTypeTensor) {
+    if (op.IsBinaryMath() && value->GetType() == AObject::kTypeTensor) {
       return true;
     }
   }

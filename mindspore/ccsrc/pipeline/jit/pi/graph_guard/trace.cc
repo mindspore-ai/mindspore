@@ -1018,35 +1018,23 @@ void TypeTrace::Detach() {
 bool TypeTrace::Support(TraceType tt) { return tt == TraceType::Type; }
 
 static PyObject *RichCompare(PyObject *left, PyObject *right, int oparg) {
-#if (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 9)
-  int stat;
-  PyObject *ret;
-  switch (oparg) {
-    case PyCmp_IS:
-      ret = left == right ? Py_True : Py_False;
-      Py_INCREF(ret);
-      return ret;
-    case PyCmp_IS_NOT:
-      ret = left != right ? Py_True : Py_False;
-      Py_INCREF(ret);
-      return ret;
-    case PyCmp_IN:
-    case PyCmp_NOT_IN:
-      stat = PySequence_Contains(right, left);
-      if (stat < 0) {
-        return nullptr;
-      }
-      stat = oparg == PyCmp_IN ? stat : !stat;
-      ret = (stat) ? Py_True : Py_False;
-      Py_INCREF(ret);
-      return ret;
-    case PyCmp_EXC_MATCH:
+  bool invert;
+  if (oparg >= Py_LT && oparg <= Py_GE) {
+    return PyObject_RichCompare(left, right, oparg);
+  } else if (Opcode(COMPARE_OP).CheckIsOp(oparg, &invert)) {
+    auto ret = ((left == right) ^ invert) ? Py_True : Py_False;
+    Py_INCREF(ret);
+    return ret;
+  } else if (Opcode(COMPARE_OP).CheckContainsOp(oparg, &invert)) {
+    auto stat = PySequence_Contains(right, left);
+    if (stat < 0) {
       return nullptr;
-    default:
-      break;
+    }
+    auto ret = (stat ^ invert) ? Py_True : Py_False;
+    Py_INCREF(ret);
+    return ret;
   }
-#endif
-  return PyObject_RichCompare(left, right, oparg);
+  return nullptr;
 }
 
 static bool support_infer_primitive(PyObject *obj) {
@@ -1110,7 +1098,7 @@ static bool SupportCall(PyObject *func, const std::string &name) {
 }
 
 static PyObject *DoCall(const std::vector<PyObject *> &params, int op, const std::string &name) {
-  if (!Utils::IsCallOp(op) || params.size() < 1) {
+  if (!Opcode(op).IsCall() || params.size() < 1) {
     return nullptr;
   }
   if (support_infer_primitive(params[0])) {
@@ -1122,17 +1110,14 @@ static PyObject *DoCall(const std::vector<PyObject *> &params, int op, const std
   }
 
   size_t nargs = (params.size() - 1);
-  size_t kw_cnt = 0;
-  switch (op) {
-    case CALL_FUNCTION:
-      return PyObject_Vectorcall(params[0], params.data() + 1, nargs, NULL);
-    case CALL_FUNCTION_KW:
-      kw_cnt = PyTuple_GET_SIZE(params.back());
-      return PyObject_Vectorcall(params[0], params.data() + 1, nargs - 1 - kw_cnt, params.back());
-    case CALL_FUNCTION_EX:
-      return PyObject_Call(params[0], params[1], params.size() > 2 ? params[2] : nullptr);
-    default:
-      break;
+  size_t kw_cnt;
+  if (op == CALL_FUNCTION) {
+    return PyObject_Vectorcall(params[0], params.data() + 1, nargs, NULL);
+  } else if (op == CALL_FUNCTION_KW) {
+    kw_cnt = PyTuple_GET_SIZE(params.back());
+    return PyObject_Vectorcall(params[0], params.data() + 1, nargs - 1 - kw_cnt, params.back());
+  } else if (op == CALL_FUNCTION_EX) {
+    return PyObject_Call(params[0], params[1], params.size() > 2 ? params[2] : nullptr);
   }
   return nullptr;
 }
@@ -1518,7 +1503,6 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
   {YIELD_VALUE, {ByteCodeUnsupported, nullptr}},
   {POP_BLOCK, {ByteCodeUnsupported, nullptr}},
   {POP_EXCEPT, {ByteCodeUnsupported, nullptr}},
-  {HAVE_ARGUMENT, {ByteCodeUnsupported, nullptr}},
   {STORE_NAME, {ByteCodeUnsupported, nullptr}},
   {DELETE_NAME, {ByteCodeUnsupported, nullptr}},
   {UNPACK_SEQUENCE, {ByteCodeUnsupported, nullptr}},
@@ -1578,11 +1562,6 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
   {LOAD_ATTR, {ByteCodeSupported, nullptr}},
   {COMPARE_OP,
    {[](int opargs, const PyObjectArray &objs) {
-#if (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 9)
-      if (opargs == PyCmp_EXC_MATCH) {
-        return false;
-      }
-#endif
       return OptStrategy::MakeCalcStrategyByInputs(COMPARE_OP, opargs, objs) != OptStrategy::CalcKind::kCalcUnsupported;
     },
     [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
@@ -1683,7 +1662,6 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
                                                                    }}},
   {LOAD_METHOD, {ByteCodeUnsupported, nullptr}},
   {CALL_METHOD, {ByteCodeUnsupported, nullptr}},
-#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 9)
   {ROT_FOUR, {ByteCodeUnsupported, nullptr}},
   {RERAISE, {ByteCodeUnsupported, nullptr}},
   {WITH_EXCEPT_START, {ByteCodeUnsupported, nullptr}},
@@ -1746,8 +1724,6 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
                                                                      PyDict_Update(objs[0], objs[1]);
                                                                      return objs[0];
                                                                    }}},
-#endif
-#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
   {BREAK_LOOP, {ByteCodeUnsupported, nullptr}},
   {WITH_CLEANUP_START, {ByteCodeUnsupported, nullptr}},
   {WITH_CLEANUP_FINISH, {ByteCodeUnsupported, nullptr}},
@@ -1828,8 +1804,6 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
                                                                      Py_DECREF(sum);
                                                                      return ret;
                                                                    }}},
-  {EXCEPT_HANDLER, {ByteCodeUnsupported, nullptr}},
-#endif
 };
 
 OpTrace::OpTrace(PyObject *obj, int opcode, int opargs, TraceVector params, std::string name)
@@ -1899,21 +1873,11 @@ PyObject *OpTrace::Retrieve(PTraceContext context, bool perf) {
   if (kBytecodeExecuter.find(opcode_) != kBytecodeExecuter.end() && kBytecodeExecuter[opcode_].first(opargs_, params) &&
       kBytecodeExecuter[opcode_].second != nullptr) {
     ret = kBytecodeExecuter[opcode_].second(opargs_, params, context);
-  } else {
-    switch (opcode_) {
-      case LOAD_ATTR:
-        MS_EXCEPTION_IF_CHECK_FAIL(name_.size(), "check trace");
-        ret = PyObject_GetAttrString(params[0], name_.c_str());
-        break;
-      case CALL_FUNCTION:
-      case CALL_FUNCTION_EX:
-      case CALL_FUNCTION_KW:
-        ret = DoCall(params, opcode_, name_);
-        break;
-      /* fall-through */
-      default:
-        break;
-    }
+  } else if (opcode_ == LOAD_ATTR) {
+    MS_EXCEPTION_IF_CHECK_FAIL(name_.size(), "check trace");
+    ret = PyObject_GetAttrString(params[0], name_.c_str());
+  } else if (opcode_ == CALL_FUNCTION || opcode_ == CALL_FUNCTION_EX || opcode_ == CALL_FUNCTION_KW) {
+    ret = DoCall(params, opcode_, name_);
   }
   for (auto p : params) {
     Py_DECREF(p);
@@ -1930,7 +1894,8 @@ std::string OpTrace::ToString(bool include_param) {
     return strTrace_;
   }
   std::string ret = "operation ";
-  ret += Utils::GetOpName(opcode_) + "(arg:";
+  ret += Opcode(opcode_).name();
+  ret += "(arg:";
   ret += std::to_string(opargs_);
   if (name_.size() != 0 || params_.size() > 0) {
     ret += ",";
@@ -1956,7 +1921,7 @@ std::string OpTrace::ToString(bool include_param) {
 
 std::string OpTrace::FormatString() {
   std::stringstream s;
-  s << "operation" << Utils::GetOpName(opcode_) << " " << opargs_;
+  s << "operation" << Opcode(opcode_).name() << " " << opargs_;
   if (!name_.empty()) {
     s << ",name: " << name_;
   }
@@ -2341,29 +2306,25 @@ void OpTrace::CheckSpecialize() {
       break;
     }
   }
-  switch (opcode_) {
-    case CALL_FUNCTION:
-      if ((name_ == kShape_Name || name_ == kCastToAdapterTensor || name_ == kCastToMSTensor) &&
-          !any_params_specialized) {
-        is_specialized_ = true;
-      } else if (params_.size() > kParamCountOne &&
-                 py::isinstance<mindspore::PrimitivePyAdapter>(params_[kParamIndexOne]->GetObject())) {
-        std::string prim_name =
-          py::cast<mindspore::PrimitivePyAdapterPtr>(params_[kParamIndexOne]->GetObject())->name();
-        if (prim_name == kCastPrimName) {
-          is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
-        } else if (prim_name == kLayerNormPrimName) {
-          is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
-        } else if (prim_name == kReshapePrimName) {
-          is_specialized_ = any_params_specialized || !params_[kParamIndexThree]->IsConst();
-        } else if (prim_name == kShapePrimName) {
-          is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
-        }
-      }
-      break;
-    default:
+  if (opcode_ == CALL_FUNCTION) {
+    if ((name_ == kShape_Name || name_ == kCastToAdapterTensor || name_ == kCastToMSTensor) &&
+        !any_params_specialized) {
       is_specialized_ = true;
-      break;
+    } else if (params_.size() > kParamCountOne &&
+               py::isinstance<mindspore::PrimitivePyAdapter>(params_[kParamIndexOne]->GetObject())) {
+      std::string prim_name = py::cast<mindspore::PrimitivePyAdapterPtr>(params_[kParamIndexOne]->GetObject())->name();
+      if (prim_name == kCastPrimName) {
+        is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
+      } else if (prim_name == kLayerNormPrimName) {
+        is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
+      } else if (prim_name == kReshapePrimName) {
+        is_specialized_ = any_params_specialized || !params_[kParamIndexThree]->IsConst();
+      } else if (prim_name == kShapePrimName) {
+        is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
+      }
+    }
+  } else {
+    is_specialized_ = true;
   }
 }
 
@@ -2460,27 +2421,23 @@ static std::map<int, TraceType> kMapBytecodeToTraceType = {
 
 TracePtr CreateOpTraceByBytecode(PyObject *obj, int opcode, int opargs, TraceVector params, std::string module_name,
                                  std::string name, bool strict) {
-  switch (opcode) {
-    case LOAD_CLOSURE:
-    case LOAD_DEREF:
-    case LOAD_GLOBAL:
-    case LOAD_NAME:
-    case LOAD_CLASSDEREF:
-      return std::make_shared<RootTrace>(obj, kMapBytecodeToTraceType[opcode], opargs, name, module_name);
-    case LOAD_CONST:
-      return std::make_shared<ConstTrace>(obj, -1);
-    case CALL_FUNCTION:
-    case CALL_FUNCTION_EX:
-    case CALL_FUNCTION_KW:
-      if (params.size() < 1 || !SupportCall(params[0]->GetObject(), name)) {
-        if (strict) {
-          return nullptr;
-        } else {
-          return std::make_shared<UnsupportedTrace>(obj, params, opcode, opargs);
-        }
+  static const std::set<int> root_op = {
+    LOAD_CLOSURE, LOAD_DEREF, LOAD_GLOBAL, LOAD_NAME, LOAD_CLASSDEREF,
+  };
+  if (root_op.find(opcode) != root_op.end()) {
+    return std::make_shared<RootTrace>(obj, kMapBytecodeToTraceType[opcode], opargs, name, module_name);
+  }
+  if (opcode == LOAD_CONST) {
+    return std::make_shared<ConstTrace>(obj, -1);
+  }
+  if (Opcode(opcode).IsCall()) {
+    if (params.size() < 1 || !SupportCall(params[0]->GetObject(), name)) {
+      if (strict) {
+        return nullptr;
+      } else {
+        return std::make_shared<UnsupportedTrace>(obj, params, opcode, opargs);
       }
-    default:
-      break;
+    }
   }
   return std::make_shared<OpTrace>(obj, opcode, opargs, params, name);
 }
@@ -2612,7 +2569,8 @@ std::string UnsupportedTrace::ToString(bool include_param) {
     return strTrace_;
   }
   std::string ret = "unsupported ";
-  ret += Utils::GetOpName(op_) + "(arg:";
+  ret += Opcode(op_).name();
+  ret += "(arg:";
   ret += std::to_string(arg_);
   if (include_param && params_.size() > 0) {
     ret += ",";
@@ -2630,7 +2588,7 @@ std::string UnsupportedTrace::ToString(bool include_param) {
 
 std::string UnsupportedTrace::FormatString() {
   std::stringstream s;
-  s << "unsupported " << Utils::GetOpName(op_) << " " << arg_ << ":\n";
+  s << "unsupported " << Opcode(op_).name() << " " << arg_ << ":\n";
   for (auto i : params_) {
     s << "| " << std::regex_replace(i->FormatString(), std::regex("\n"), "\n| ") << "\n";
   }

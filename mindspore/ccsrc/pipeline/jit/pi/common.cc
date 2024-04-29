@@ -518,11 +518,7 @@ static bool GraphCapture(JitCompileResults *jcr) {
   if (g->StackSize() > 0) {
     auto block = g->PeekStack(0);
     auto type = block.type;
-    if (type == SETUP_WITH || type == SETUP_FINALLY
-#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
-        || type == SETUP_EXCEPT
-#endif
-    ) {
+    if (type == SETUP_WITH || type == SETUP_FINALLY || type == SETUP_EXCEPT) {
       // something happened in with syntax
       jcr->code->SetGuard(std::make_shared<OptGuard>());
       AddConfigToGuard(*jcr->conf, jcr->code->GetGuard());
@@ -639,13 +635,13 @@ void AddConfigToGuard(const GraphJitConfig &c, OptGuardPtr guard) {
 
 void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
   int argc = f->f_code->co_argcount + f->f_code->co_kwonlyargcount;
-  PyTupleObject *vargs = NULL;
-  PyDictObject *kwargs = NULL;
+  PyObject *vargs = NULL;
+  PyObject *kwargs = NULL;
   if (static_cast<unsigned int>(f->f_code->co_flags) & CO_VARARGS) {
-    vargs = _PyTuple_CAST(f->f_localsplus[argc]);
+    vargs = f->f_localsplus[argc];
   }
   if (static_cast<unsigned int>(f->f_code->co_flags) & CO_VARKEYWORDS) {
-    kwargs = reinterpret_cast<PyDictObject *>(f->f_localsplus[argc + (vargs ? 1 : 0)]);
+    kwargs = f->f_localsplus[argc + (vargs ? 1 : 0)];
   }
   for (int i = 0; i < argc; ++i) {
     if (f->f_localsplus[i] == nullptr) {
@@ -1472,12 +1468,13 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
 
 namespace mindspore {
 
-#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 9 || PY_MINOR_VERSION == 7)
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION >= 7) && (PY_MINOR_VERSION <= 10)
 
 py::bool_ pi_jit_enable() {
   PyInterpreterState *inter = PyInterpreterState_Main();
   _PyFrameEvalFunction prev = _PyInterpreterState_GetEvalFrameFunc(inter);
-  if (prev != _PyEval_EvalFrameDefault) {
+  _PyFrameEvalFunction def = _PyEval_EvalFrameDefault;
+  if (prev != def) {
     return false;
   }
   mindspore::pijit::ensureInitialize();
@@ -1488,10 +1485,11 @@ py::bool_ pi_jit_enable() {
 py::bool_ pi_jit_disable() {
   PyInterpreterState *inter = PyInterpreterState_Main();
   _PyFrameEvalFunction prev = _PyInterpreterState_GetEvalFrameFunc(inter);
+  _PyFrameEvalFunction def = _PyEval_EvalFrameDefault;
   if (prev != mindspore::pijit::EvalFrame) {
     return false;
   }
-  _PyInterpreterState_SetEvalFrameFunc(inter, _PyEval_EvalFrameDefault);
+  _PyInterpreterState_SetEvalFrameFunc(inter, def);
   return true;
 }
 
@@ -1538,7 +1536,7 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
 
 py::bool_ pi_jit_enable() {
   MS_LOG(ERROR) << "PiJit not support this python version " << PY_MAJOR_VERSION << '.' << PY_MINOR_VERSION
-                << " only support on python3.9 or python3.7";
+                << " only support on python3.7, python3.8, python3.9, python3.10";
   return py::bool_(false);
 }
 py::bool_ pi_jit_disable() { return py::bool_(false); }

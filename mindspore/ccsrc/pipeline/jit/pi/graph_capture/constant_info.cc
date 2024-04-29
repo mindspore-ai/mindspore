@@ -66,7 +66,8 @@ bool IsConstantValue(int op, const std::vector<ValueNode *> &inputs) {
     BINARY_SUBSCR, COMPARE_OP, IS_OP,     CONTAINS_OP, LOAD_ATTR,           LIST_TO_TUPLE,
     BUILD_TUPLE,   BUILD_LIST, BUILD_MAP, BUILD_SLICE, BUILD_CONST_KEY_MAP,
   };
-  if (op == LOAD_CONST) {
+  Opcode code_info(op);
+  if (code_info.HasConst()) {
     return true;
   }
   auto iter = std::find_if_not(inputs.begin(), inputs.end(), [](ValueNode *i) { return i->IsConstantValue(); });
@@ -76,7 +77,7 @@ bool IsConstantValue(int op, const std::vector<ValueNode *> &inputs) {
   if (support_constant_op.find(op) != support_constant_op.end()) {
     return true;
   }
-  if (Utils::IsBinaryMathOp(op) && Utils::IsGeneralNoSideEffectOp(op)) {
+  if (code_info.IsBinaryMath() && code_info.MayDelete()) {
     return true;
   }
   return false;
@@ -230,7 +231,7 @@ static void MakeSpecializeConstantValue(ValueNode *node) {
   if (node->IsConstantValue()) {
     return;
   }
-  if (Utils::IsBinaryMathOp(node->GetOpcode())) {
+  if (Opcode(node->GetOpcode()).IsBinaryMath()) {
     MakeConstantBinary(node);
   }
   static const std::map<int, bool (*)(ValueNode *)> specialize = {

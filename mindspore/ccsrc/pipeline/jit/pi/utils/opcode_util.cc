@@ -18,23 +18,109 @@
 
 namespace mindspore {
 namespace pijit {
-namespace code {
-const Opcode &GetOpcodeInfo(int op) {
-  static Opcode kOpcodes[NO_IMPL_OPCODE] = {{"", 0, 0}};
-  if (!kOpcodes[0].name_.empty()) {
-    return op > 0 && op < NO_IMPL_OPCODE ? kOpcodes[op] : kOpcodes[NO_IMPL_OPCODE - 1];
+
+Opcode Opcode::opmap[Opcode::kMaxCode];
+const Opcode Opcode::k_ILLEGAL_OPCODE = {"ILLEGAL_OPCODE", ILLEGAL_OPCODE, Opcode::Class::kOther, 0};
+
+enum OpcodeFlag {
+  kJRel = 1 << 0,      // is jump relative
+  kJAbs = 1 << 1,      // is jump relative
+  kNotFall = 1 << 2,   // jump directly, return, raise
+  kHasConst = 1 << 3,  // has const in co_consts
+  kHasName = 1 << 4,   // has name in co_names
+  kHasFree = 1 << 5,   // has free variable operations, not is 'free' of this function
+  kCanDel = 1 << 6,    // can be remove if result is unused
+  /**
+   * Maybe remove if result is unused.
+   * Generally or literally, it's no side effect, check it and parse
+   * all user-defined operation to call function while graph building
+   */
+  kMayDel = 1 << 7,
+};
+
+Opcode::Opcode() { *this = k_ILLEGAL_OPCODE; }
+
+bool Opcode::IsJRel() const { return flag_ & kJRel; }
+bool Opcode::IsJAbs() const { return flag_ & kJAbs; }
+bool Opcode::IsNotFall() const { return flag_ & kNotFall; }
+bool Opcode::HasName() const { return flag_ & kHasName; }
+bool Opcode::HasFree() const { return flag_ & kHasFree; }
+bool Opcode::HasConst() const { return flag_ & kHasConst; }
+bool Opcode::CanDelete(int oparg) const { return (flag_ & kCanDel) || CheckIsOp(oparg); }
+bool Opcode::MayDelete(int oparg) const { return (flag_ & kMayDel) || CanDelete(oparg); }
+bool Opcode::CheckIsOp(int oparg, bool *invert) const {
+#if (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 9)
+  if (invert != nullptr) {
+    *invert = oparg == PyCmp_IS_NOT;
   }
-  kOpcodes[0] = Opcode();
-#define DEF_OPCODE_ATTR(code, flag)                                 \
-  kOpcodes[code < NO_IMPL_OPCODE ? code : (NO_IMPL_OPCODE - 1)] = { \
-    /* define opcode attr, and check opcode define */               \
-    (code < NO_IMPL_OPCODE ? #code : "NOT_IMPLEMENT"), flag, code};
-#include "opcode_attr.def"
-#undef DEF_OPCODE_ATTR
-  return kOpcodes[op];
+  return code_ == COMPARE_OP ? oparg == PyCmp_IS : false;
+#else
+  if (invert != nullptr) {
+    *invert = oparg;
+  }
+  return code_ == IS_OP;
+#endif
+}
+bool Opcode::CheckContainsOp(int oparg, bool *invert) const {
+#if (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 9)
+  if (invert != nullptr) {
+    *invert = oparg == PyCmp_NOT_IN;
+  }
+  return code_ == COMPARE_OP ? oparg == PyCmp_IN : false;
+#else
+  if (invert != nullptr) {
+    *invert = oparg;
+  }
+  return code_ == CONTAINS_OP;
+#endif
 }
 
-#undef DEF_OPCODE_ATTR
-}  // namespace code
+bool Opcode::HasArg() const { return HAS_ARG(code_); }
+
+const Opcode *Opcode::Map() {
+  static bool init = false;
+  if (init) {
+    return opmap;
+  }
+  init = true;
+
+#define DEF_OPCODE(name, cls, flag) \
+  opmap[(name)] = (name) == ILLEGAL_OPCODE ? Opcode::k_ILLEGAL_OPCODE : Opcode(#name, (name), (cls), (flag));
+
+#include "./opcode_attr.def"
+#undef DEF_OPCODE
+
+  return opmap;
+}
+
+int Opcode::JumpTarget(int pc, int off) const {
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 10)
+  constexpr int mul = sizeof(_Py_CODEUNIT);
+#else
+  constexpr int mul = 1;
+#endif
+  if (IsJRel()) {
+    return pc + 1 + off / mul;
+  }
+  if (IsJAbs()) {
+    return off / mul;
+  }
+  return -1;
+}
+int Opcode::JumpOffset(int pc, int tar) const {
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 10)
+  constexpr int mul = sizeof(_Py_CODEUNIT);
+#else
+  constexpr int mul = 1;
+#endif
+  if (IsJRel()) {
+    return (tar - pc - 1) * mul;
+  }
+  if (IsJAbs()) {
+    return tar * mul;
+  }
+  return -1;
+}
+
 }  // namespace pijit
 }  // namespace mindspore

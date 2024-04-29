@@ -107,6 +107,10 @@ class AbstractObjectBase {
    * \return container if success, else a empty AbstractObject
    **/
   static AObject *MergeOperations(AObject *container, std::vector<AObject *> args, int opcode);
+
+  static int BinaryContains(AObject *l, AObject *r);
+  static int BinaryIs(AObject *l, AObject *r);
+
   static const char *GetTypeDesc(AObject::Type type);
   static std::string ToString(PyObject *);
 

@@ -309,7 +309,7 @@ void BytecodeInliner::FixInstr(Graph *graph, int local_off, std::vector<std::uni
     return;
   }
   for (const auto &i : *list) {
-    if (Utils::IsLocalAccessOp(i->op())) {
+    if (Opcode(i->op()).IsLocalAccess()) {
       i->set_arg(i->arg() + local_off);
       continue;
     }
@@ -362,7 +362,7 @@ void BytecodeInliner::InitCFG() {
   blocks.insert({0, cfg_->NewBBAppend()});
   for (const auto &i : list) {
     size_t bci = list.size();
-    if (Utils::IsNonFall(i->op())) {
+    if (Opcode(i->op()).IsNotFall()) {
       bci = (size_t)i->bci() + 1;
     }
     if (i->extra_jump() != nullptr) {
@@ -393,7 +393,7 @@ void BytecodeInliner::InitCFG() {
     if (instr->extra_jump()) {
       cur->SetJumpBB(blocks[instr->extra_jump()->bci()]);
     }
-    if (!Utils::IsNonFall(instr->op())) {
+    if (!Opcode(instr->op()).IsNotFall()) {
       cur->SetFallBB(iter->second);
     }
   }
@@ -402,20 +402,17 @@ void BytecodeInliner::InitCFG() {
 }
 
 static bool IsEliminate(ValueNode *v) {
-  int op = v->GetOpcode();
-  if (Utils::IsNoSideEffectOp(op)) {
+  auto op = Opcode(v->GetOpcode());
+  if (op.MayDelete()) {
     return true;
   }
-  if (Utils::IsGeneralNoSideEffectOp(op)) {
-    return true;
-  }
-  if (Utils::IsBinaryMathOp(op)) {
+  if (op.IsBinaryMath()) {
     // inplace binary
     AObject::Type t = v->input(0)->GetVobj()->GetType();
     return t != AObject::kTypeAnyValue && t != AObject::kTypeList && t != AObject::kTypeCell &&
            t != AObject::kTypeNNCellList;
   }
-  if (Utils::IsCallOp(op)) {
+  if (op.IsCall()) {
     py::object callable = v->GetVobj()->GetPyObject();
     if (callable.ptr() == nullptr) {
       return false;

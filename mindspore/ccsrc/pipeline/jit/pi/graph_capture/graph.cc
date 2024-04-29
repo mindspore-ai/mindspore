@@ -65,7 +65,7 @@ Graph::Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf)
 
 ValueNode *Graph::NewValueNode(AObject *obj_info, int op, int arg, const std::vector<ValueNode *> &inputs,
                                const std::string &name) {
-  MS_EXCEPTION_IF_CHECK_FAIL(!Utils::IsCallOp(op), "must not be call function opcode");
+  MS_EXCEPTION_IF_CHECK_FAIL(!Opcode(op).IsCall(), "must not be call function opcode");
   ValueNode *node = this->allocator().NewNode<ValueNode>(obj_info, op, arg, inputs);
   node->SetName(name);
   node->SetGraph(this);
@@ -79,7 +79,7 @@ ValueNode *Graph::NewValueNode(AObject *obj_info, int op, int arg, const std::ve
 }
 
 CallNode *Graph::NewCallNode(int op, int arg, const std::vector<ValueNode *> &inputs) {
-  MS_EXCEPTION_IF_CHECK_FAIL(Utils::IsCallOp(op), "must be call function opcode");
+  MS_EXCEPTION_IF_CHECK_FAIL(Opcode(op).IsCall(), "must be call function opcode");
   CallNode *node = this->allocator().NewNode<CallNode>(op, arg, inputs);
   node->SetGraph(this);
   return node;
@@ -396,8 +396,8 @@ static std::string TraceInferFailed(ValueNode *node) {
   switch (node->GetType()) {
     case AbstractNode::Call:
     case AbstractNode::Value: {
-      s << "bci " << node->bci() << " " << Utils::GetOpName(node->GetOpcode()) << " " << node->GetOparg();
-      if (Utils::IsNameRelated(node->GetOpcode())) {
+      s << "bci " << node->bci() << " " << Opcode(node->GetOpcode()).name() << " " << node->GetOparg();
+      if (Opcode(node->GetOpcode()).HasName()) {
         s << " " << node->GetName();
       }
       break;
@@ -478,11 +478,11 @@ std::string Graph::ToString(int depth) const {
   return s.str();
 }
 
-void DumpUnsupportedByteCodeInfo(std::stringstream &s, int op, int arg) {
+void DumpUnsupportedByteCodeInfo(std::stringstream &s, Opcode op, int arg) {
   if (op == SETUP_WITH || op == SETUP_FINALLY) {
-    s << Utils::GetOpName(op) << " " << arg << " is skipped in break_graph or a exception happened.\n";
+    s << op.name() << " " << arg << " is skipped in break_graph or a exception happened.\n";
   } else {
-    s << Utils::GetOpName(op) << " " << arg << " is not support.\n";
+    s << op.name() << " " << arg << " is not support.\n";
   }
 }
 
@@ -500,41 +500,28 @@ std::string Graph::DumpBreakInfo() const {
   std::vector<ValueNode *> parameters;
   if (nodes.size() == 0 || nodes.back()->bci() < break_bci) {
     // break at unsupported bytecode
-    int op = instrs[break_bci]->op();
+    Opcode op(instrs[break_bci]->op());
     int arg = instrs[break_bci]->arg();
     DumpUnsupportedByteCodeInfo(s, op, arg);
-    switch (op) {
-      case POP_JUMP_IF_FALSE:
-      case POP_JUMP_IF_TRUE:
-      case JUMP_IF_FALSE_OR_POP:
-      case JUMP_IF_TRUE_OR_POP:
-      case FOR_ITER:
-      case UNPACK_SEQUENCE:
-      case UNPACK_EX: {
-        parameters.push_back(f.Peek(0));
-        break;
-      }
-      case CALL_FUNCTION_EX: {
-        arg = (arg & 0x01);
-      }
-      case CALL_FUNCTION_KW: {
-        arg++;
-      }
-      case CALL_METHOD:
-      case CALL_FUNCTION: {
-        for (int i = arg; i >= 0; --i) {
-          parameters.push_back(f.Peek(i));
-          AObject *v = f.Peek(i)->GetVobj();
-          // just print the first infer failed value
-          if (v == nullptr || v->GetPyObject().ptr() == nullptr) {
-            parameters = {f.Peek(i)};
-            break;
-          }
+    if (op == POP_JUMP_IF_FALSE || op == POP_JUMP_IF_TRUE || op == JUMP_IF_FALSE_OR_POP || op == JUMP_IF_TRUE_OR_POP ||
+        op == FOR_ITER || op == UNPACK_SEQUENCE || op == UNPACK_EX) {
+      parameters.push_back(f.Peek(0));
+    } else if (op == CALL_FUNCTION_EX) {
+      arg = (arg & 0x01) + 1;
+    } else if (op == CALL_FUNCTION_KW) {
+      arg++;
+    } else {
+      return s.str();
+    }
+    if (op.IsCall()) {
+      for (int i = arg; i >= 0; --i) {
+        parameters.push_back(f.Peek(i));
+        AObject *v = f.Peek(i)->GetVobj();
+        // just print the first infer failed value
+        if (v == nullptr || v->GetPyObject().ptr() == nullptr) {
+          parameters = {f.Peek(i)};
+          break;
         }
-        break;
-      }
-      default: {
-        return s.str();
       }
     }
   } else {
