@@ -373,6 +373,36 @@ Dynamic LR函数
     mindspore.nn.polynomial_decay_lr
     mindspore.nn.warmup_lr
 
+随机状态管理
+--------------
+
+Generator类
+^^^^^^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.Generator
+
+Default Generator函数
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+本模块中的随机状态管理都是function，用于对默认generator进行管理。当用户没有指定生成器时，随机算子会调用默认generator来生成随机数。
+
+.. mscnplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.default_generator
+    mindspore.nn.get_rng_state
+    mindspore.nn.initial_seed
+    mindspore.nn.manual_seed
+    mindspore.nn.seed
+    mindspore.nn.set_rng_state
+
 图像处理层
 -----------
 

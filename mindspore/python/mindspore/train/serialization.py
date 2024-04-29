@@ -543,7 +543,7 @@ def _convert_list_to_param_list(save_obj, choice_func):
                 each_param = {"name": param["name"], "data": param["data"]}
                 param_list.append(each_param)
             else:
-                raise TypeError(f"For save_checkpoint, save_obj should be a list of dict items, and the dict should"
+                raise TypeError(f"For save_checkpoint, save_obj should be a list of dict items, and the dict should "
                                 f"have key values 'name' and 'value', but got {type(param)} and {param}.")
     else:
         for param in save_obj:
