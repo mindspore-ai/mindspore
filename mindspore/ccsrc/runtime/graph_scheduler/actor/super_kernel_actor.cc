@@ -660,7 +660,6 @@ void SuperKernelActor::BuildKernelActors() {
 
     SchedulerHelper::AddSomasInfo(kernel_actor.get());
 
-    // InsertActor(kernel_actor.get());
     node_to_kernel_actor_[kernel] = kernel_actor.get();
   }
 
