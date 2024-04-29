@@ -214,7 +214,7 @@ void IrBprop::BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim
   AbstractBasePtrList abs_list;
   // Only add last input dout to user.
   AddUser(cnode->input(cnode->size() - 1), bprop_cut_cnode, bprop_cut_cnode->size() - 1);
-  for (size_t i = 1; i < cnode->size() - 2; ++i) {
+  for (size_t i = 1; i < cnode->size() - kOutAndDoutNum; ++i) {
     // Input may be parameter, we need add to user map.
     AddUser(cnode->input(i), bprop_cut_cnode, i);
     auto din = ad_param_->tape_->FuncGraph::NewCNode(
