@@ -762,7 +762,7 @@ def test_while_with_param_basic_grad_three():
     assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_while_if_with_param_grad():
