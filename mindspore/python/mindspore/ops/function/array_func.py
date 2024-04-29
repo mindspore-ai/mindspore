@@ -4765,6 +4765,7 @@ def split_ext(tensor, split_size_or_sections, axis=0):
                         f"but got {type(split_size_or_sections)}")
     return res
 
+
 @_primexpr
 def _canonicalize_axis(axis, ndim):
     """
