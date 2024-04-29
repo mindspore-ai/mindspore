@@ -561,6 +561,99 @@ CUST_COMMON_INFER_FUNC_REG(CholeskyInverse, CholeskyInverseInferShape);
 
 // -----------------------CholeskyInverse END---------------------
 
+// ----------------TraceV2 Begin------------------------
+CUST_IMPLEMT_INFERFUNC(TraceV2, TraceV2InferShape) {
+  TensorDesc output_desc = op.GetOutputDescByName("output");
+  // infer type
+  DataType input_type = op.GetInputDescByName("input").GetDataType();
+  ge::DataType output_dtype;
+  op.GetAttr("dtype", output_dtype);
+  if (op.GetAttr("dtype", output_dtype) == GRAPH_SUCCESS && output_dtype != DT_UNDEFINED) {
+    output_desc.SetDataType(output_dtype);
+  } else {
+    OP_LOGW(TbeGetName(op).c_str(), "get attr dtype failed.");
+    static const std::vector<DataType> type_to_int64 = {DT_INT16, DT_INT32, DT_INT8, DT_UINT16, DT_UINT32, DT_UINT8};
+    bool is_type_to_int64 = std::any_of(type_to_int64.begin(), type_to_int64.end(),
+                                        [&input_type](const DataType &dtype) { return input_type == dtype; });
+    if (is_type_to_int64) {
+      output_desc.SetDataType(DT_INT64);
+    } else {
+      output_desc.SetDataType(input_type);
+    }
+  }
+
+  // infer shape
+  Shape input_shape = op.GetInputDescByName("input").GetShape();
+  if (IsUnknownDimNum(input_shape)) {
+    output_desc.SetShape(input_shape);
+  } else {
+    Tensor axis1_data;
+    DataType axis1_dtype = op.GetInputDescByName("axis1").GetDataType();
+    if (op.GetInputConstData("axis1", axis1_data) == GRAPH_FAILED) {
+      AICPU_INFER_SHAPE_INNER_ERR_REPORT(
+        TbeGetName(op), ConcatString("get const data from input[axis1] failed in [TraceV2InferShape]"));
+      return GRAPH_FAILED;
+    }
+    std::vector<int64_t> axis1_value;
+    GetConstValue(op, axis1_data, axis1_dtype, axis1_value);
+    Tensor axis2_data;
+    DataType axis2_dtype = op.GetInputDescByName("axis2").GetDataType();
+    if (op.GetInputConstData("axis2", axis2_data) == GRAPH_FAILED) {
+      AICPU_INFER_SHAPE_INNER_ERR_REPORT(
+        TbeGetName(op), ConcatString("get const data from input[axis1] failed in [TraceV2InferShape]"));
+      return GRAPH_FAILED;
+    }
+    std::vector<int64_t> axis2_value;
+    GetConstValue(op, axis2_data, axis2_dtype, axis2_value);
+    std::vector<int64_t> input_shape_vec = input_shape.GetDims();
+    int64_t axis1 = axis1_value[0];
+    int64_t axis2 = axis2_value[0];
+    int64_t input_rank = input_shape_vec.size();
+    axis1 = axis1 < 0 ? axis1 + input_rank : axis1;
+    axis2 = axis2 < 0 ? axis2 + input_rank : axis2;
+    std::vector<int64_t> output_shape_vec;
+    for (int64_t i = 0; i < input_rank; i++) {
+      if (i != axis1 && i != axis2) {
+        output_shape_vec.emplace_back(input_shape_vec[i]);
+      }
+    }
+    output_desc.SetShape(Shape(output_shape_vec));
+  }
+  if (op.UpdateOutputDesc("output", output_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Update output desc failed.");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+CUST_INFER_FUNC_REG(TraceV2, TraceV2InferShape);
+// ---------------TraceV2 END-------------------------------
+
+// ----------------TraceV2Grad Begin------------------------
+CUST_IMPLEMT_INFERFUNC(TraceV2Grad, TraceV2GradInferShape) {
+  TensorDesc din_desc = op.GetOutputDescByName("din");
+  // infer type
+  DataType dout_type = op.GetInputDescByName("dout").GetDataType();
+  din_desc.SetDataType(dout_type);
+
+  // infer shape
+  DataType shape_dtype = op.GetInputDescByName("shape").GetDataType();
+  Tensor shape_data;
+  std::vector<int64_t> shape_value;
+  if (op.GetInputConstData("shape", shape_data) == GRAPH_FAILED) {
+    shape_value = {-2};
+  } else {
+    GetConstValue(op, shape_data, shape_dtype, shape_value);
+  }
+  din_desc.SetShape(Shape(shape_value));
+  if (op.UpdateOutputDesc("din", din_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Update din desc failed.");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+CUST_INFER_FUNC_REG(TraceV2Grad, TraceV2GradInferShape);
+// ---------------TraceV2Grad END-------------------------------
+
 // ----------------Logit-------------------
 CUST_IMPLEMT_INFERFUNC(Logit, LogitInfer) {
   TensorDesc out_desc = op.GetInputDescByName("x");

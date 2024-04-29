@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1382,47 +1382,45 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
 
 def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
     """
-    Returns the sum along diagonals of the array.
-
-    If `a` is 2-D, the sum along its diagonal with the given offset is returned,
-    i.e., the sum of elements ``a[i,i+offset]`` for all `i`.
-    If `a` has more than two dimensions, then the axes specified by `axis1` and
-    `axis2` are used to determine the 2-D sub-arrays whose traces are returned.
-    The shape of the resulting array is the same as that of a with `axis1` and
-    `axis2` removed.
+    Return the sum along diagonals of the tensor.
 
     Note:
-        On GPU, the supported dtypes are np.float16, and np.float32.
-        On CPU, the supported dtypes are np.float16, np.float32, and np.float64.
+        - `trace` is currently only used in `mindscience` scientific computing scenarios and
+          dose not support other usage scenarios.
+        - `trace` is not supported on Windows platform yet.
 
     Args:
-        a (Tensor): Array from which the diagonals are taken.
+        a (Tensor): A matrix to be calculated.
         offset (int, optional): Offset of the diagonal from the main diagonal.
-            Can be positive or negative. Defaults to main diagonal.
+          Can be positive or negative. Default: ``0``.
         axis1 (int, optional): Axis to be used as the first axis of the 2-D
-            sub-arrays from which the diagonals should be taken. Defaults to
-            first axis (0).
+          sub-arrays from which the diagonals should be taken. Default: ``0``.
         axis2 (int, optional): Axis to be used as the second axis of the 2-D
-            sub-arrays from which the diagonals should be taken. Defaults to
-            second axis.
-        dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
-            output Tensor.
+          sub-arrays from which the diagonals should be taken. Default: ``1``.
+        dtype (:class:`mindspore.dtype`, optional): Overrides the dtype of the
+          output Tensor if not ``None``. Default: ``None``.
+        out (Tensor, optional): Not implemented now. Default: ``None``.
 
     Returns:
-        Tensor, sum_along_diagonals. If `a` is 2-D, the sum along the diagonal
-        is returned. If `a` has larger dimensions, then an array of sums along
-        diagonals is returned.
+        Tensor, the sum along diagonals. If `a` is 2-D, the sum along the diagonal is returned.
+        If `a` has more than two dimensions, then the axes specified by `axis1` and `axis2` are used
+        to determine the 2-D sub-arrays whose traces are returned. The shape of the resulting
+        array is the same as that of `a` with `axis1` and `axis2` removed.
 
     Raises:
-        ValueError: If the input tensor has less than two dimensions.
+        ValueError: If `a` has less than two dimensions.
+        ValueError: If `axis1` or `axis2` is not in [-dims, dims), which dims is dimension of `a`.
+        ValueError: If axes specified by `axis1` and `axis2` are same.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.numpy as np
-        >>> output = np.trace(np.eye(3))
-        >>> print(output)
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.numpy import trace
+        >>> x = Tensor(np.eye(3, dtype=np.float32))
+        >>> print(trace(x))
         3.0
     """
     return a.trace(offset=offset, axis1=axis1, axis2=axis2, dtype=dtype)
