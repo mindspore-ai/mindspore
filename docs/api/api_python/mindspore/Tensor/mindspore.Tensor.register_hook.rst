@@ -16,5 +16,5 @@ mindspore.Tensor.register_hook
     返回：
         返回与该hook_fn函数对应的handle对象。可通过调用handle.remove()来删除添加的hook_fn函数。
 
-     异常：
-         - **TypeError** - 如果 `hook_fn` 不是Python函数。
+    异常：
+        - **TypeError** - 如果 `hook_fn` 不是Python函数。

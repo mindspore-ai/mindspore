@@ -1399,7 +1399,6 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
           sub-arrays from which the diagonals should be taken. Default: ``1``.
         dtype (:class:`mindspore.dtype`, optional): Overrides the dtype of the
           output Tensor if not ``None``. Default: ``None``.
-        out (Tensor, optional): Not implemented now. Default: ``None``.
 
     Returns:
         Tensor, the sum along diagonals. If `a` is 2-D, the sum along the diagonal is returned.

@@ -90,7 +90,7 @@ class FlashAttention(Cell):
         - **alibi_mask** (Union[Tensor[float16, bfloat16], None]) - The position embedding code. If S is greater than
           1024 and the mask of the lower triangle is used, enter only the inverse 1024 lines of the lower triangle for
           memory optimization.
-          Input tensor of shape :math: `(B, N1, S1, S2)`, `(1, N1, S1, S2)`, `(B, N1, 1024, S2)`, `(1, N1, 1024, S2)`
+          Input tensor of shape :math:`(B, N1, S1, S2)`, `(1, N1, S1, S2)`, `(B, N1, 1024, S2)`, `(1, N1, 1024, S2)`
           or (1024, 1024).
         - **padding_mask** (None) - Reserved parameter. Not implemented yet.
         - **prefix** (Union[Tensor[int64], None]) - N value of each Batch in the prefix sparse calculation scenario.

@@ -1249,7 +1249,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             TypeError: If the `hook_fn` is not a function of python.
 
         Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> import mindspore as ms

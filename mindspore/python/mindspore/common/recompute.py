@@ -36,19 +36,20 @@ def recompute(block, *args, **kwargs):
     This function is used to reduce memory, when run block, rather than
     storing the intermediate activation computed in forward pass, we will recompute it in backward pass.
 
-    note:
-     - Recompute function only support block which inherited from Cell object.
-     - This function interface now only support pynative mode. you can use Cell.recompute interface
-       in graph mode.
-     - When use recompute function, block object should not decorated by @jit.
+    Note:
+        - Recompute function only support block which inherited from Cell object.
+        - This function interface now only support pynative mode. you can use Cell.recompute interface
+          in graph mode.
+        - When use recompute function, block object should not decorated by @jit.
 
     Args:
         block (Cell): Block to be recompute, which inherited from Cell object, mixed precision can be set by to_float
-        method to cell.
+            method to cell.
         args(tuple): Inputs for block object to run forward pass.
         kwargs(dict): Optional input for recompute function.
 
-    Returns: Same as return type of block.
+    Returns:
+        Same as return type of block.
 
     Raises:
         TypeError: If `block` is not Cell object.
