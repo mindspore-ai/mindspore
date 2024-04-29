@@ -31,17 +31,17 @@ namespace pyboost {
 namespace {
 ValueTuplePtr GetTransposePerm(const TensorPtr &weight_tensor) {
   const auto &shape = weight_tensor->shape();
-  int64_t size = shape.size();
+  size_t size = shape.size();
   std::vector<ValuePtr> perm(size);
-  if (size < 2) {
+  if (size < kDim2) {
     auto zero = std::make_shared<Int64Imm>(0);
     perm[0] = MakeValue(zero);
     return std::make_shared<ValueTuple>(perm);
   }
-  perm[size - 1] = MakeValue(size - 2);
-  perm[size - 2] = MakeValue(size - 1);
-  for (int64_t i = 0; i < size - 2; ++i) {
-    perm[i] = MakeValue(i);
+  perm[size - kDim1] = MakeValue(static_cast<int64_t>(size - kDim2));
+  perm[size - kDim2] = MakeValue(static_cast<int64_t>(size - kDim1));
+  for (size_t i = 0; i < size - kDim2; ++i) {
+    perm[i] = MakeValue(static_cast<int64_t>(i));
   }
   return std::make_shared<ValueTuple>(perm);
 }

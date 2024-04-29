@@ -50,15 +50,15 @@ TensorPtr Expand(TensorPtr tensor, size_t ndim, const DeviceContext *device_cont
   return tensor;
 }
 
-ValueTuplePtr To3D(ShapeVector shape) {
+ValueTuplePtr ReduceTo3D(const ShapeVector &shape) {
   ShapeVector ret;
   int64_t dim0 = 1;
-  for (size_t i = 0; i < shape.size() - 2; ++i) {
+  for (size_t i = 0; i < shape.size() - kDim2; ++i) {
     dim0 *= shape[i];
   }
   ret.push_back(dim0);
-  ret.push_back(shape[shape.size() - 2]);
-  ret.push_back(shape[shape.size() - 1]);
+  ret.push_back(shape[shape.size() - kDim2]);
+  ret.push_back(shape[shape.size() - kDim1]);
   return ShapeVectorToValueTuple(ret);
 }
 
@@ -145,8 +145,8 @@ void MatMulExtCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr 
         other, ShapeVectorToValueTuple(ops::GetMatMulExtBroadcastShape(shape_backbone, shape2_orig))));
     }
 
-    input = contiguous_3->Call(reshape_3->Call(input, To3D(input->shape())));
-    other = contiguous_4->Call(reshape_4->Call(other, To3D(other->shape())));
+    input = contiguous_3->Call(reshape_3->Call(input, ReduceTo3D(input->shape())));
+    other = contiguous_4->Call(reshape_4->Call(other, ReduceTo3D(other->shape())));
 
     res = batch_matmul->Call(input, other, std::make_shared<BoolImm>(false), std::make_shared<BoolImm>(transpose_b));
   }
