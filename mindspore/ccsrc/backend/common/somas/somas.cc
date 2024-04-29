@@ -1408,7 +1408,6 @@ void Somas::ComputeBasicMatrix() {
     }
     auto core_list = GetCoreList();
     (void)common::ThreadPool::GetInstance().SyncRun(tasks, core_list);
-    common::ThreadPool::GetInstance().ClearThreadPool();
   }
 
   auto end_conflict = std::chrono::system_clock::now();
@@ -2087,7 +2086,6 @@ void Somas::UpdateTensorPeak(const std::vector<SomasTensorPtr> &peak_tensors) co
   }
   auto core_list = GetCoreList();
   (void)common::ThreadPool::GetInstance().SyncRun(tasks, core_list);
-  common::ThreadPool::GetInstance().ClearThreadPool();
 }
 
 size_t Somas::CalcLowerBound() const {
