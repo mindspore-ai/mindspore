@@ -97,7 +97,7 @@ void MatMulExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTen
 
   if (input_rank == kDim2 && other_rank == kDim2) {
     matmul->Call(input, other, std::make_shared<BoolImm>(false), std::make_shared<BoolImm>(false));
-    op->set_input_abs({input_tensor->ToAbstract(), mat2_tensor->ToAbstract()});
+    op->set_input_abs({ToAbstractNoValue(input_tensor), ToAbstractNoValue(mat2_tensor)});
     op->set_output_abs(matmul->output_abs());
     op->set_outputs(matmul->outputs());
     MS_LOG(DEBUG) << "Launch end"
@@ -155,7 +155,7 @@ void MatMulExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTen
     res = batch_matmul->Call(input, other, std::make_shared<BoolImm>(false), std::make_shared<BoolImm>(transpose_b));
   }
   contiguous_2->Call(reshape_2->Call(res, ShapeVectorToValueTuple(shape_out)));
-  op->set_input_abs({input_tensor->ToAbstract(), mat2_tensor->ToAbstract()});
+  op->set_input_abs({ToAbstractNoValue(input_tensor), ToAbstractNoValue(mat2_tensor)});
   op->set_output_abs(contiguous_2->output_abs());
   op->set_outputs(contiguous_2->outputs());
   MS_LOG(DEBUG) << "Launch end"

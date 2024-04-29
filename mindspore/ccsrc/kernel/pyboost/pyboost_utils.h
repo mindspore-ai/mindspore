@@ -54,6 +54,8 @@ class BACKEND_EXPORT AbstractConvertFunc {
   }
 };
 
+AbstractBasePtr BACKEND_EXPORT ToAbstractNoValue(const BaseTensorPtr &tensor);
+
 class BACKEND_EXPORT PyBoostUtils {
  public:
   static AbstractBasePtr InferByOpDef(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_abs);
