@@ -16,7 +16,7 @@ import pytest
 import numpy as np
 
 import mindspore as ms
-from mindspore.nn.generator import Generator, default_generator, get_rng_state, set_rng_state
+from mindspore.nn import Generator, default_generator, get_rng_state, set_rng_state
 
 
 def run(generator):

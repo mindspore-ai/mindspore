@@ -294,4 +294,4 @@ def set_rng_state(seed, offset=None):  # pylint: disable=redefined-outer-name
     default_generator_.set_state(seed, offset)
 
 
-__all__ = ["Generator"]
+__all__ = ["Generator", "default_generator", "seed", "manual_seed", "initial_seed", "set_rng_state", "get_rng_state"]
