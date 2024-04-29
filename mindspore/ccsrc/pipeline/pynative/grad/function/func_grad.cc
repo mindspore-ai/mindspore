@@ -286,7 +286,8 @@ ValuePtrList GraphRoot::BuildFlattenSensGradient(const ValuePtrList &sens_gradie
   return real_gradients;
 }
 
-FuncGrad::FuncGrad(const ValuePtrList &input_param_values, size_t op_num_in_bprop_graph, bool grad_by_value) {
+FuncGrad::FuncGrad(const ValuePtrList &input_param_values, size_t op_num_in_bprop_graph, bool grad_by_value,
+                   bool is_run_recompute) {
   MS_LOG(DEBUG) << "Start FuncGrad, input size: " << input_param_values.size();
   for (size_t i = 0; i < input_param_values.size(); ++i) {
     const auto &input_param_value = input_param_values[i];
@@ -303,6 +304,7 @@ FuncGrad::FuncGrad(const ValuePtrList &input_param_values, size_t op_num_in_bpro
     (void)variable_set_.insert(variable);
     (void)cell_inputs_.emplace_back(input_param_value, variable);
   }
+  is_run_recompute_ = is_run_recompute;
   device_target_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   func_impl_ = std::make_shared<FuncBuilder>("func_emitter", device_target_);
 }
@@ -433,7 +435,10 @@ void FuncGrad::BackPropagate() {
     }
     auto &gradient_in = input_buffer[fn.get()];
     MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(gradient_in, "Begin print gradient in: ");
-    gradient_in = CallBackwardHooks(fn->op_output(), &gradient_in);
+    // If register hook by weight, and weight in recompute cell.So, hook will execute, which is not expect.
+    if (!is_run_recompute_) {
+      gradient_in = CallBackwardHooks(fn->op_output(), &gradient_in);
+    }
     auto gradient_out = fn->CallBackward(gradient_in);
     MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(gradient_out, "Begin print gradient out: ");
     if (gradient_out.size() != fn->next_edges().size()) {

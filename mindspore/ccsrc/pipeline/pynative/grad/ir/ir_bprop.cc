@@ -363,9 +363,12 @@ void IrBprop::BackPropagate() {
       fn->set_accumulate_dout(PyNativeAlgo::AutoGrad::BuildSpecialNode(
         fn->tape(), variable->out_value(), fn->accumulate_dout()->abstract(), SpecialType::kZerosLikeType));
     }
+    // If register hook by weight, and weight in recompute cell.So, hook will execute, which is not expect.
+    if (!is_run_recompute_) {
+      fn->set_accumulate_dout(pass_forward_->PassBackwardHook(variable->out_value(), fn->accumulate_dout()));
+    }
     // Replace real dout to fake dout, update replace result to eliminate tuplegetitem
     // when accumulate_dout is tuplegetitem
-    fn->set_accumulate_dout(pass_forward_->PassBackwardHook(variable->out_value(), fn->accumulate_dout()));
     Replace(fn->fake_dout(), fn->accumulate_dout(), &ad_param_->users_.dout_user_, true);
     // replace edges which exist fake dout
     fn->ReplaceEdges();

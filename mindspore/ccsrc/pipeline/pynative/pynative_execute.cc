@@ -289,6 +289,10 @@ void PyNativeExecutor::SetJitCompileStatus(bool is_compiling, const std::string 
   grad_executor()->jit()->set_graph_phase(phase);
 }
 
+void PyNativeExecutor::SetIsRunRecompute(bool is_runing_recompute) const {
+  grad_executor()->set_is_run_recompute(is_runing_recompute);
+}
+
 void PyNativeExecutor::SetDynamicInput(const py::object &obj, const py::args &args) const {
   grad_executor()->SaveDynamicInputsCells(obj, args);
   if (grad_executor()->dynamic_shape()->enable_unknown_shape()) {
@@ -363,7 +367,7 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("set_kernel_build_server_dir", &PyNativeExecutor::set_kernel_build_server_dir,
          py::arg("kernel_build_server_dir") = py::str(""), "set kernel build server directory path.")
     .def("set_jit_compile_status", &PyNativeExecutor::SetJitCompileStatus, "set jit compile status.")
-    .def("real_run_op", &PyNativeExecutor::RealRunOp, "Run op pynatively.")
+    .def("set_is_run_recompute", &PyNativeExecutor::SetIsRunRecompute, "set grad is in recompile status.")
     .def("run_op_async", &PyNativeExecutor::RunOpStub, "run op asynchronously")
     .def("constant_folding", &PyNativeExecutor::CallConstantFolding, "Call Constant Folding Primitive");
 }
