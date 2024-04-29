@@ -1811,6 +1811,9 @@ bool KernelGraphMgr::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGrap
     new_cnode->set_fullname_with_scope(fullname);
   }
   new_cnode->set_scope(cnode->scope());
+  if (!graph->is_dynamic_shape() && common::AnfAlgo::IsDynamicShape(new_cnode)) {
+    graph->SetGraphDynamicAttr(true);
+  }
   graph->FrontBackendMapAdd(node, new_cnode);
   SetReturnNode(new_cnode, graph);
   FlattenTuple(new_cnode);
@@ -1977,6 +1980,9 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
     }
     // record map relations between anf from ME and new anf node used in backend
     graph->FrontBackendMapAdd(node, new_cnode);
+    if (!graph->is_dynamic_shape() && common::AnfAlgo::IsDynamicShape(new_cnode)) {
+      graph->SetGraphDynamicAttr(true);
+    }
   }
   // add a make_tuple at the end of graph as output
   graph->set_child_graph_order(child_graph_order);

@@ -102,18 +102,6 @@ TypeId GetInputDeviceType(const AnfNodePtr &kernel_node, size_t input_idx) {
   return type;
 }
 
-void ProcessInconsistentDtype(const AnfNodePtr &node, size_t input_num) {
-  MS_EXCEPTION_IF_NULL(node);
-  std::vector<size_t> inconsistent_dtype_inputs;
-  for (size_t i = 0; i < input_num; ++i) {
-    TypeId input_dtype = AnfAlgo::GetInputDeviceDataType(node, i);
-    TypeId prev_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i);
-    if (input_dtype != kTypeUnknown && prev_dtype != kTypeUnknown && input_dtype != prev_dtype) {
-      (void)inconsistent_dtype_inputs.emplace_back(i);
-    }
-  }
-}
-
 void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> output_format, const CNodePtr &kernel_node,
                      size_t input_index, bool force_fresh = false) {
   MS_EXCEPTION_IF_NULL(real_input_node);
@@ -397,10 +385,10 @@ bool IsEmptyTupleInput(const CNodePtr &kernel, const size_t i, const TypeId cur_
 
 static std::once_flag kAclnnEnableListInit;
 static std::unordered_set<std::string> kAclnnEnableList;
-bool ReadAclnnEnableEnv(const AnfNodePtr &node) {
+bool ReadAclnnEnableEnv(const std::string &op_name) {
   static auto enable_aclnn_env = common::GetEnv("MS_ENABLE_ACLNN");
   if (enable_aclnn_env == "1") {
-    return kernel::IsRegisteredAclnnOp(node);
+    return kernel::IsRegisteredAclnnOp(op_name);
   }
 
   static auto read_config = !enable_aclnn_env.empty() && enable_aclnn_env != "0";
@@ -418,9 +406,8 @@ bool ReadAclnnEnableEnv(const AnfNodePtr &node) {
       in_file.close();
     });
 
-    std::string op_name = common::AnfAlgo::GetCNodeName(node);
     if (kAclnnEnableList.count(op_name) != 0) {
-      return kernel::IsRegisteredAclnnOp(node);
+      return kernel::IsRegisteredAclnnOp(op_name);
     }
   }
 
@@ -457,8 +444,8 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
       auto output_reshape_type = output_reshape_types[kFirstItem];
       output_formats.clear();
       output_reshape_types.clear();
-      output_formats.push_back(output_format);
-      output_reshape_types.push_back(output_reshape_type);
+      output_formats.emplace_back(output_format);
+      output_reshape_types.emplace_back(output_reshape_type);
     } else if (cnode_output_object_type == kernel::KernelObjectType::SCALAR) {
       output_object_type = cnode_output_object_type;
     }
@@ -475,13 +462,6 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
     output_formats = cand_format.at(kFirstItem).second;
     input_reshape_types.assign(input_num, "");
     output_reshape_types.assign(output_num, "");
-    for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel); i++) {
-      auto input_format = AnfAlgo::GetPrevNodeOutputFormat(kernel, i);
-      if ((!transform::AclHelper::CheckDefaultSupportFormat(input_format)) && (kernel_type != HCCL_KERNEL)) {
-        MS_LOG(EXCEPTION) << "Aicpu kernel input not support this format: " << input_format
-                          << ", kernel: " << kernel->fullname_with_scope() << ", input idx: " << i;
-      }
-    }
   }
 
   std::vector<TypeId> input_types;
@@ -494,15 +474,15 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
 
   for (size_t i = 0; i < input_num; i++) {
     auto cur_input_type = GetInputDeviceType(kernel, i);
-    if (IsEmptyTupleInput(kernel, i, cur_input_type)) {
+    if (kernel_type != RT_KERNEL && IsEmptyTupleInput(kernel, i, cur_input_type)) {
       cur_input_type = TypeId::kNumberTypeInt64;
     }
-    (void)input_types.push_back(cur_input_type);
+    (void)input_types.emplace_back(cur_input_type);
   }
   for (size_t i = 0; i < output_num; i++) {
-    (void)output_types.push_back(common::AnfAlgo::GetOutputInferDataType(kernel, i));
+    (void)output_types.emplace_back(common::AnfAlgo::GetOutputInferDataType(kernel, i));
     // no tuple in PyNative dynamic shape
-    (void)output_object_types.push_back(output_object_type);
+    (void)output_object_types.emplace_back(output_object_type);
   }
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   MS_EXCEPTION_IF_NULL(builder);
@@ -528,7 +508,6 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
                       << ", output_object_types size: " << output_object_types.size();
   }
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel.get());
-  ProcessInconsistentDtype(kernel, input_num);
 }
 
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
@@ -545,7 +524,7 @@ std::vector<std::string> SplitString(const std::string &str, char delim) {
   std::vector<std::string> elems;
   while (std::getline(ss, item, delim)) {
     if (!item.empty()) {
-      elems.push_back(item);
+      elems.emplace_back(item);
     }
   }
   return elems;
@@ -567,10 +546,13 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
   }
 
   std::string op_name = common::AnfAlgo::GetCNodeName(node);
+  if (op_name == "ReshapeExt") {
+    enable_internal = true;
+  }
   std::string disable_name_list = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
   std::vector<std::string> op_name_vec = SplitString(disable_name_list, ',');
-  if (std::any_of(op_name_vec.begin(), op_name_vec.end(),
-                  [&op_name](const std::string &name) { return name == op_name; })) {
+  if (enable_internal && std::any_of(op_name_vec.begin(), op_name_vec.end(),
+                                     [&op_name](const std::string &name) { return name == op_name; })) {
     enable_internal = false;
   }
 
@@ -653,15 +635,24 @@ bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
     return false;
   }
 
-  if (kernel::IsEnabledAclnnDispatch(node)) {
-    if (!kernel::IsRegisteredAclnnOp(node)) {
+  static std::unordered_map<std::string, bool> kIsEnableAclnnMap;
+  std::string op_name = common::AnfAlgo::GetCNodeName(node);
+  auto iter = kIsEnableAclnnMap.find(op_name);
+  if (iter != kIsEnableAclnnMap.end()) {
+    return iter->second;
+  }
+  if (kernel::IsEnabledAclnnDispatch(op_name)) {
+    if (!kernel::IsRegisteredAclnnOp(op_name)) {
       MS_LOG(EXCEPTION) << "Kernel " << node->fullname_with_scope()
                         << " is enabled dispatch in yaml, but not registered an aclnn kernelmod.";
     }
+    kIsEnableAclnnMap.insert({op_name, true});
     return true;
   }
 
-  return ReadAclnnEnableEnv(node);
+  bool ret = ReadAclnnEnableEnv(op_name);
+  kIsEnableAclnnMap.insert({op_name, ret});
+  return ret;
 }
 
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
