@@ -195,7 +195,7 @@ bool PipelineTransformer::MainGraph() {
     return true;
   }
   auto value_nodes = main_graph_->value_nodes();
-  std::set<AnfNodePtr> shared_cell_nodes;
+  mindspore::CompactSet<AnfNodePtr> shared_cell_nodes;
   for (auto value_pair = value_nodes.cbegin(); value_pair != value_nodes.cend(); ++value_pair) {
     auto node = (*value_pair).first;
     if (!IsValueNode<FuncGraph>(node)) {

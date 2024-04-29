@@ -1199,18 +1199,18 @@ int64_t GetRank() {
 }
 
 std::string GetWorldGroup() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  std::string world_group = "";
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string group;
+  std::string backend = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (backend == kAscendDevice) {
-    world_group = parallel::HCCL_WORLD_GROUP;
+    group = parallel::HCCL_WORLD_GROUP;
   } else if (backend == kGPUDevice) {
-    world_group = parallel::NCCL_WORLD_GROUP;
+    group = parallel::NCCL_WORLD_GROUP;
   } else {
     MS_LOG(EXCEPTION) << "Invalid backend: " << backend;
   }
-  return world_group;
+  return group;
 }
 
 int64_t InferStage() {
