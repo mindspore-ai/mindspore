@@ -67,9 +67,6 @@ void KernelActor::Init() {
   has_dynamic_ = is_dynamic_shape_ || is_dynamic_type_ || is_dynamic_value_;
 
   // Check whether the kernel has input node which is a computed depend kernel.
-  has_computed_depend_input_ = AnfAlgo::HasComputedDependInputNode(kernel_);
-  MS_LOG(DEBUG) << "The kernel: " << kernel_->fullname_with_scope()
-                << " has computed depend input kernel: " << has_computed_depend_input_;
   launch_ignored_inputs_ = kernel_mod_->GetLaunchIgnoredInputAddressIdx();
 
   stream_ = device_contexts_[0]->device_res_manager_->GetStream(kernel_info_->stream_id());
@@ -300,7 +297,7 @@ void KernelActor::RunWithMultiPipeline(OpContext<DeviceTensor> *const context) {
 
   // If the kernel need user data and is dynamic, maybe need input kernel's output user data to infer shape, this value
   // depend case can not handle in KernelTensor auto sync phase currently.
-  if (has_computed_depend_input_ || (kernel_mod_->need_user_data() && has_dynamic_)) {
+  if (kernel_mod_->need_user_data() && has_dynamic_) {
     MS_LOG(DEBUG) << "Begin wait runtime pipeline for kernel: " << kernel_->fullname_with_scope();
     if (!WaitRuntimePipelineFinish(context)) {
       MS_LOG(INFO) << "Run failed and early stop for kernel: " << kernel_->fullname_with_scope();
@@ -313,6 +310,16 @@ void KernelActor::RunWithMultiPipeline(OpContext<DeviceTensor> *const context) {
   // Note: dynamic value or static shape also need push task into infer actor to make sure correct kernel execution
   // order.
   Async(kernel_async_infer_aid_, &KernelAsyncInferActor::InferShape, context, this);
+
+  // The computed depend kernel should wait output shape update after kernel launch.
+  if (kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
+    MS_LOG(DEBUG) << "Begin wait runtime pipeline for kernel: " << kernel_->fullname_with_scope();
+    if (!WaitRuntimePipelineFinish(context)) {
+      MS_LOG(INFO) << "Run failed and early stop for kernel: " << kernel_->fullname_with_scope();
+      return;
+    }
+    MS_LOG(DEBUG) << "End wait runtime pipeline for kernel: " << kernel_->fullname_with_scope();
+  }
 
   // 3. Post run.
   EraseInput(context);
