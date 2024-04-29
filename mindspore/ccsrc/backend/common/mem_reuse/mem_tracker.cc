@@ -61,7 +61,6 @@ void MemoryTrackerEnabled::SetPath() {
   }
   static const char kMemoryTracePath[] = "MS_MEMORY_TRACE_PATH";
   auto trace_path = common::GetEnv(kMemoryTracePath);
-
   if (trace_path.empty()) {
     trace_path = "./";
   }
@@ -340,7 +339,6 @@ void MemoryTrackerEnabled::Dump() {
     // for single rank
     static const char kMemoryTracePath[] = "MS_MEMORY_TRACE_PATH";
     auto trace_path = common::GetEnv(kMemoryTracePath);
-
     if (trace_path.empty()) {
       trace_path = "./";
     }
