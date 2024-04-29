@@ -22,13 +22,13 @@ A collection of operators to build neural networks or to compute functions.
 from ._embedding_cache_ops import (CacheSwapTable, UpdateCache, MapCacheIdx, SubAndFilter,
                                    MapUniform, DynamicAssign, PadAndShift)
 from ._inner_ops import (MatmulDDS, DSDMatmul, Cummin, ExtractImagePatches, SelectView, CopyWithSlice)
+from ._ms_kernel import (ms_kernel, kernel)
 from ._quant_ops import *
 from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg2Col, CusMatMulCubeDenseLeft,
                         CusMatMulCubeFraczRightMul, CusMatMulCube, CusMatrixCombine, CusTranspose02314,
                         CusMatMulCubeDenseRight, CusMatMulCubeFraczLeftCast, NewIm2Col,
                         LoadIm2Col, UpdateThorGradient, CholeskyTrsm,
                         DetTriangle, ProdForceSeA)
-from ._ms_kernel import (ms_kernel, kernel)
 from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchToSpace,
                         BatchToSpaceNDV2, BroadcastTo, Cast, Coalesce, Concat, Cummax, DType, DepthToSpace, Diag,
                         DiagPart, EditDistance, EmbeddingLookup, ExpandDims, ExtractVolumePatches,
