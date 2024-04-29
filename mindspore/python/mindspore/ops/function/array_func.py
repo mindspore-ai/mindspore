@@ -31,7 +31,7 @@ from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._sequence_ops import TensorToList
-from mindspore.ops.auto_generate import OnesLikeExt, ZerosLikeExt, FillScalar, FillTensor, Arange
+from mindspore.ops.auto_generate import OnesLikeExt, ZerosLikeExt, FillScalar, FillTensor, Arange, Chunk
 from mindspore.ops.auto_generate.gen_ops_prim import SplitTensor
 from mindspore.ops.auto_generate.gen_ops_prim import SplitWithSize
 
@@ -129,6 +129,7 @@ zeros_like_ext_ = ZerosLikeExt()
 fill_scalar_ = FillScalar()
 fill_tensor_ = FillTensor()
 arange_ = Arange()
+chunk_ = Chunk()
 
 
 @_primexpr
@@ -938,6 +939,44 @@ def chunk(input, chunks, axis=0):
         if length2:
             res += _get_cache_prim(P.Split)(arr_axis, 1)(tensor_slice(input, start2, size2))
     return res
+
+def chunk_ext(input, chunks, dim=0):
+    """
+    Cut the input Tensor into `chunks` sub-tensors along the specified axis.
+
+    Note:
+        This function may return less than the specified number of chunks!
+
+    Args:
+        input (Tensor): A Tensor to be cut.
+        chunks (int): Number of sub-tensors to cut.
+        dim (int, optional): Specify the dimensions that you want to split. Default: ``0`` .
+
+    Returns:
+        A tuple of sub-tensors.
+
+    Raises:
+        TypeError: If argument `input` is not Tensor.
+        TypeError: The sum of `chunks` is not int.
+        TypeError: If argument `dim` is not int.
+        ValueError: If argument `dim` is out of range of :math:`[-input.ndim, input.ndim)` .
+        ValueError: If argument `chunks` is not positive number.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> input_x = np.arange(9).astype("float32")
+        >>> output = mindspore.mint.chunk(Tensor(input_x), 3)
+        >>> print(output)
+        (Tensor(shape=[3], dtype=Float32, value= [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00]),
+         Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
+         Tensor(shape=[3], dtype=Float32, value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
+    """
+    return chunk_(input, chunks, dim)
 
 
 def fills(x, value):

@@ -1,0 +1,18 @@
+#operator chunk
+chunk:
+    args:
+        input:
+            dtype: tensor
+        chunks:
+            dtype: int
+        dim:
+            dtype: int
+            default: 0
+    returns:
+        y:
+            dtype: tuple[tensor]
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: ChunkAscend
