@@ -597,9 +597,16 @@ def load_segmented_checkpoints(ckpt_file_dir, net=None, strict_load=False, filte
         ValueError: Parameter's dict is None after load checkpoint file.
         TypeError: The type of `specify_prefix` or `filter_prefix` is incorrect.
 
+    Examples:
+        >>> import mindspore as ms
+        >>> net = Network()
+        >>> checkpoint_file_dir = "./checkpoint/"
+        >>> param_dict = ms.load_segmented_checkpoints(checkpoint_file_dir)
+        >>> param_not_load, _ = ms.load_param_into_net(net, param_dict)
+
     Tutorial Examples:
-        - `Saving and Loading the Model - Saving and Loading the Model Weight
-          <https://mindspore.cn/tutorials/en/r2.3/beginner/save_load.html#saving-and-loading-the-model-weight>`_
+        - `Model Transformation - Pipeline Parallel Subnetwork Model Transformation
+          <https://www.mindspore.cn/tutorials/experts/en/r2.3/parallel/model_transformation.html#pipeline-parallel-model-transformation>`_
     """
     if not isinstance(ckpt_file_dir, str):
         raise TypeError("The ckpt_file_dir should be a str.")
