@@ -216,8 +216,9 @@ Status IsFeasibleDeiveList(const RankList &rank_list) {
 Status DeviceManager::CheckDeviceList(const RankList &rank_list) const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (backend == kAscendDevice || backend == kDavinciDevice) {
+  auto backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  auto soc_version = ms_context->ascend_soc_version();
+  if (backend == kAscendDevice && (soc_version.empty() || soc_version == kAscendVersion910)) {
     return IsFeasibleDeiveList(rank_list);
   }
   return SUCCESS;
