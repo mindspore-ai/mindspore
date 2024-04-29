@@ -9,8 +9,6 @@ select:
         other:
             dtype: tensor
             type_cast: number
-    args_signature:
-        dtype_group: (condition), (input, other)
     returns:
         output:
             dtype: tensor
