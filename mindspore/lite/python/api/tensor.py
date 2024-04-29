@@ -290,8 +290,11 @@ class Tensor:
             Default: ``None``.
         dtype(DataType, optional): The dtype of the Tensor.
             Default: ``None``.
-        device(str, optional): The device type of the Tensor.
-            Default: ``None``.
+        device(str, optional): The device type of the Tensor. It can be ``"ascend"`` or
+            ``"ascend:device_id"`` or ``None``. ``device_id`` indicates the device number, which can be ``0`` ,
+            ``1`` , ``2`` , ``3`` , ``4`` , ``5`` , ``6`` , or ``7``. If ``device`` is ``None``, the tensor will be
+            initialized at CPU. Default: ``None``.
+
     Raises:
         TypeError: `tensor` is neither a Tensor nor ``None``.
 
