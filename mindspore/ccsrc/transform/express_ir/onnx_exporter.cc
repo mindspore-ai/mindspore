@@ -1282,6 +1282,8 @@ class OnnxExporter {
                            std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimNotEqual(const FuncGraphPtr &func_graph, const CNodePtr &node,
                           std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimDense(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                       std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimSqueeze(const FuncGraphPtr &func_graph, const CNodePtr &node,
                          std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimDynamicRNN(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -3220,6 +3222,19 @@ void OnnxExporter::ExportPrimNotEqual(const FuncGraphPtr &, const CNodePtr &node
   AddOp("Not", {equal_name}, {node_name}, graph_proto);
 }
 
+void OnnxExporter::ExportPrimDense(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                                   std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                   onnx::GraphProto *const graph_proto) {
+  auto matmul_node = dyn_cast<CNode>(node->input(kOneNum));
+  auto input_x = matmul_node->input(kOneNum);  // matmul input x
+  auto input_y = matmul_node->input(kTwoNum);  // matmul input y
+  auto input_b = node->input(kTwoNum);         // matmul bias
+
+  PrimitivePtr prim_matmul = dyn_cast<Primitive>((dyn_cast<ValueNode>(matmul_node->input(kZeroNum)))->value());
+  std::vector<AnfNodePtr> inputs{input_x, input_y, input_b};
+  (*node_map_ptr)[node] = ExportPrimitive(func_graph, node_map_ptr, prim_matmul, inputs, graph_proto);
+}
+
 void OnnxExporter::ExportPrimSqueeze(const FuncGraphPtr &, const CNodePtr &node,
                                      std::map<AnfNodePtr, std::string> *node_map_ptr,
                                      onnx::GraphProto *const graph_proto) {
@@ -3926,6 +3941,7 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     {prim::kPrimGreaterEqual, &OnnxExporter::ExportPrimGreaterEqual},
     {prim::kPrimLessEqual, &OnnxExporter::ExportPrimLessEqual},
     {prim::kPrimNotEqual, &OnnxExporter::ExportPrimNotEqual},
+    {prim::kPrimDense, &OnnxExporter::ExportPrimDense},
     {prim::kPrimSqueeze, &OnnxExporter::ExportPrimSqueeze},
     {prim::kPrimExpandDims, &OnnxExporter::ExportPrimExpandDims},
     {prim::kPrimGatherD, &OnnxExporter::ExportPrimGatherD},
