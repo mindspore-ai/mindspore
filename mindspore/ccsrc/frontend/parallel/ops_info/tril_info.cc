@@ -109,7 +109,11 @@ void TrilInfo::ReplaceNodeInputOrAttrs() {
 }
 
 Status TrilInfo::GetAttrs() {
-  diagonal_ = GetIntAttr("diagonal");
+  auto diagonal_value = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, DIAGONAL);
+  if (!diagonal_value.has_value()) {
+    return FAILED;
+  }
+  diagonal_ = diagonal_value.value();
   return SUCCESS;
 }
 

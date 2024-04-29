@@ -40,7 +40,7 @@ from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
                              CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, ScalarToTensor,
-                             BroadcastTo, StridedSlice, Select, TopkExt)
+                             Tril, Triu, BroadcastTo, StridedSlice, Select, TopkExt)
 from .manually_defined import Rank, Shape, Tile, Cast, Ones, Zeros
 from ..auto_generate import ArgMaxWithValue, ArgMinWithValue
 
@@ -2762,80 +2762,6 @@ class ScatterSub(Primitive):
         self.add_prim_attr('side_effect_mem', True)
 
 
-class Triu(Primitive):
-    """
-    Returns the upper triangular portion of the 2-D matrix or the set of matrices
-    in a batch. The remaining elements of the resulting Tensor are assigned a value of 0.
-    The upper triangular section of the matrix comprises of the
-    elements present on and above the main diagonal.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Args:
-        diagonal (int, optional): The index of diagonal. Default: ``0`` , indicating the main diagonal.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor with shape :math:`(M, N, *)`
-          where :math:`*` means any number of additional dimensions.
-
-    Outputs:
-        - **y** (Tensor) - A tensor has the same shape and data type as input.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If `diagonal` is not an int.
-        ValueError: If the dimension of `input` is less than 2.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> triu = ops.Triu()
-        >>> result = triu(x)
-        >>> print(result)
-        [[ 1  2  3  4]
-         [ 0  6  7  8]
-         [ 0  0 12 13]
-         [ 0  0  0 17]]
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> triu = ops.Triu(diagonal=1)
-        >>> result = triu(x)
-        >>> print(result)
-        [[ 0  2  3  4]
-         [ 0  0  7  8]
-         [ 0  0  0 13]
-         [ 0  0  0  0]]
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> triu = ops.Triu(diagonal=-1)
-        >>> result = triu(x)
-        >>> print(result)
-        [[ 1  2  3  4]
-         [ 5  6  7  8]
-         [ 0 11 12 13]
-         [ 0  0 16 17]]
-    """
-
-    @prim_attr_register
-    def __init__(self, diagonal=0):
-        """Initialize Triu"""
-        validator.check_value_type("diagonal", diagonal, [int], self.name)
-        self.diagonal = diagonal
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-
 class ScatterMul(_ScatterOpDynamic):
     r"""
     Updates the value of the input tensor through the multiply operation.
@@ -5482,80 +5408,6 @@ class LogSpace(Primitive):
         valid_values = (mstype.float16, mstype.float32, mstype.float64)
         validator.check_type_name("dtype", dtype, valid_values, self.name)
         self.init_prim_io_names(inputs=['start', 'end'], outputs=['y'])
-
-
-class Tril(Primitive):
-    """
-    Returns the lower triangular portion of the 2-D matrix or the set of matrices
-    in a batch. The remaining elements of the resulting Tensor are assigned a value of 0.
-    The lower triangular section of the matrix comprises of the
-    elements present on and below the main diagonal.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Args:
-        diagonal (int, optional): An optional attribute indicates the diagonal to consider, default: ``0`` ,
-            indicating the main diagonal.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor with shape :math:`(M, N, *)`
-          where :math:`*` means any number of additional dimensions.
-
-    Outputs:
-        Tensor, the same shape and data type as the input `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If `diagonal` is not an int.
-        ValueError: If the rank of `x` is less than 2.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> tril = ops.Tril()
-        >>> result = tril(x)
-        >>> print(result)
-        [[ 1  0  0  0]
-         [ 5  6  0  0]
-         [10 11 12  0]
-         [14 15 16 17]]
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> tril = ops.Tril(diagonal=1)
-        >>> result = tril(x)
-        >>> print(result)
-        [[ 1  2  0  0]
-         [ 5  6  7  0]
-         [10 11 12 13]
-         [14 15 16 17]]
-        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...                      [ 5,  6,  7,  8],
-        ...                      [10, 11, 12, 13],
-        ...                      [14, 15, 16, 17]]))
-        >>> tril = ops.Tril(diagonal=-1)
-        >>> result = tril(x)
-        >>> print(result)
-        [[ 0  0  0  0]
-         [ 5  0  0  0]
-         [10 11  0  0]
-         [14 15 16  0]]
-    """
-
-    @prim_attr_register
-    def __init__(self, diagonal=0):
-        """Initialize Tril."""
-        self.init_prim_io_names(inputs=["x"], outputs=["y"])
-        validator.check_value_type("diagonal", diagonal, [int], self.name)
 
 
 class IndexFill(Primitive):
