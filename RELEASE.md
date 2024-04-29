@@ -2688,7 +2688,7 @@ Contributions of any kind are welcome!
 
 #### Auto Parallel
 
-- [STABLE] Docking the AllToAll single-operator mode. Support AllToAll Operator in the KernelByKernel execution mode.
+- [STABLE] Docking the AllToAll single-operator mode. Support AllToAll Operator in the graph compilation level O0.
 - [STABLE] Whole-graph offloading supports MPI launching. In Whole-graph offloading, launching with MPI is supported.
 - [STABLE] Seeds of model weights provide parallel interface configuration. If you do not set the random number of seeds through the mindspore.set_seed command, the weights initialized by each parameter is determined by the current fragment index. If the random number of seeds are configured, the initialization results of the same shape and weight of the same segmentation policy are the same.
 - [STABLE] The HCCL shields internal full-mesh and non-full-mesh connections. Both fully-connected AllToAllv and hierarchical AllToAllv are allowed in one training session.

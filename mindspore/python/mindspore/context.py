@@ -1391,7 +1391,7 @@ def set_context(**kwargs):
             range of ['ON', 'OFF'], and the default value is ``'OFF'`` .
 
             - ON: Enable the memory Offload function. On Ascend hardware platform, this parameter does not take effect
-              when jit_level of JitConfig is not set 'O0'; This parameter does not take effect when
+              when the graph compilation level is not 'O0'; This parameter does not take effect when
               memory_optimize_level is set 'O1'.
             - OFF: Turn off the memory Offload function.
         ascend_config (dict): Set the parameters specific to Ascend hardware platform. It is not set by default.

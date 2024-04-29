@@ -180,7 +180,7 @@ mindspore.set_context
           - O1: 内存性能优先，使能 SOMAS 和一些其他内存优化。
         - **memory_offload** (str) - 是否开启Offload功能，在内存不足场景下将空闲数据临时拷贝至Host侧内存。其值必须在['ON', 'OFF']范围中，默认值为 ``'OFF'`` 。
 
-          - ON：开启memory offload功能。在Ascend硬件平台，未设置JitConfig接口的jit_level='O0'时本参数不生效；设置memory_optimize_level='O1'时本参数不生效。
+          - ON：开启memory offload功能。在Ascend硬件平台，在图编译等级不为O0时本参数不生效；设置memory_optimize_level='O1'时本参数不生效。
           - OFF：关闭memory offload功能。
         - **ascend_config** (dict) - 设置Ascend硬件平台专用的参数，默认不设置。
           precision_mode、jit_compile和atomic_clean_policy参数的默认值属于实验性质参数，将来可能会发生变化。
