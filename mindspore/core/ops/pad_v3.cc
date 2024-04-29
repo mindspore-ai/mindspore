@@ -60,6 +60,17 @@ void PaddingsSizeCheck(const PrimitivePtr &primitive, const int64_t paddings_siz
   constexpr int64_t nFour = 4;
   constexpr int64_t nFive = 5;
   auto prim_name = primitive->name();
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    auto is_dyn_paddings = primitive->GetAttr("is_dyn_paddings");
+    if (is_dyn_paddings != nullptr && GetValue<bool>(is_dyn_paddings)) {
+      if (paddings_size / nTwo != size) {
+        MS_EXCEPTION(ValueError) << "For '" << prim_name << "', paddings length must be equal to " << size * nTwo;
+      }
+      return;
+    }
+  }
   auto mode = GetValue<std::string>(primitive->GetAttr("mode"));
   if (mode == kConstant) {
     if (paddings_size / nTwo > size) {
@@ -162,6 +173,23 @@ void CheckAscendInputXDim(const size_t &x_dim, const std::string &prim_name) {
   }
 }
 
+void AscendTransformPaddingsAttr(const PrimitivePtr &primitive,
+                                 std::vector<std::pair<int64_t, int64_t>> *ori_paddings_attr) {
+  // If the `paddings` comes from the node added by pass, there are two features as followed:
+  // 1. the length of `paddings` is twice than the rank of `x`.
+  // 2. the mapper between `x` and `paddings` is lower to lower,
+  //    which is different from that in another backends, which is lower to higher.
+  // So, the transform should be activated only where the `paddings` is from the node added by pass.
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    auto is_dyn_paddings = primitive->GetAttr("is_dyn_paddings");
+    if (is_dyn_paddings != nullptr && GetValue<bool>(is_dyn_paddings)) {
+      std::reverse(ori_paddings_attr->begin(), ori_paddings_attr->end());
+    }
+  }
+}
+
 abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t kEdgeMaxDims = 5;
   constexpr int64_t kOtherMinDims = 3;
@@ -242,6 +270,7 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
         std::make_pair(paddings_val[LongToSize(nTwo * i)], paddings_val[LongToSize(nTwo * i + 1)]));
     }
   }
+  AscendTransformPaddingsAttr(primitive, &paddings_attr);
   std::vector<int64_t> out_shape;
   for (int64_t i = 0; i < size; ++i) {
     int64_t now_dim_size = x_shape[LongToSize(i)] + paddings_attr[LongToSize(size - i - 1)].first +
