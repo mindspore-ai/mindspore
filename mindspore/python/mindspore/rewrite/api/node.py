@@ -434,7 +434,7 @@ class Node:
         ...         x = self.relu(x)
         ...         return x
         ...
-        ... class Net(nn.Cell):
+        >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()
         ...         self.subnet = SubNet()
