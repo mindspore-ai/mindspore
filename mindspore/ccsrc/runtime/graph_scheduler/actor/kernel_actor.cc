@@ -346,6 +346,9 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
   if (workspace_device_tensors_.size() > workspace_sizes.size()) {
     size_t size = workspace_device_tensors_.size() - workspace_sizes.size();
     (void)workspace_device_tensors_.erase(workspace_device_tensors_.end() - size, workspace_device_tensors_.end());
+    if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
+      (void)mem_info_.workspaces_.erase(mem_info_.workspaces_.end() - size, mem_info_.workspaces_.end());
+    }
 
     MS_EXCEPTION_IF_CHECK_FAIL((memory_alloc_list_.size() >= size), "The memory alloc list size is wrong.");
     MS_EXCEPTION_IF_CHECK_FAIL((memory_free_list_.size() >= size), "The memory free list size is wrong.");
@@ -367,6 +370,9 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
                     << " addr:" << device_address;
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel_.get());  // set to kernel_info
       (void)workspace_device_tensors_.emplace_back(device_address.get());
+      if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
+        (void)mem_info_.workspaces_.emplace_back(std::make_shared<Address>());
+      }
       (void)memory_alloc_list_.emplace_back(device_address.get());
       (void)memory_free_list_.emplace_back(device_address.get());
     }
