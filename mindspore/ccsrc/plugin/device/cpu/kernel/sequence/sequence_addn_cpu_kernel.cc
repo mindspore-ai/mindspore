@@ -85,6 +85,7 @@ bool SequenceAddNCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &i
                                             const std::vector<KernelTensor *> &outputs) {
   size_t elements_num = outputs[0]->size() / sizeof(T);
   const auto input_0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  MS_EXCEPTION_IF_NULL(input_0);
   auto input_1 = input_0 + elements_num;
 
   auto output = reinterpret_cast<T *>(outputs[0]->device_ptr());
