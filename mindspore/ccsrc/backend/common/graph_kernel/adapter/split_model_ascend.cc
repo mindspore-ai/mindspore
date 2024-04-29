@@ -133,21 +133,83 @@ class FuseElemAny : public FusePattern {
 };
 }  // namespace ascend
 
+namespace dvm {
+class FuseReduceFwd : public FusePattern {
+ public:
+  FuseReduceFwd(FuseType fuse_type, size_t size_limit)
+      : FusePattern("reduce_fwd"), fuse_type_(fuse_type), size_limit_(size_limit) {
+    direction_ = FuseDirection::FORWARD;
+    name_ += (fuse_type == FuseType::kWidth ? "_width" : "_depth");
+  }
+  ~FuseReduceFwd() = default;
+  static FusePatternPtr CreateDepthMatcher(size_t size_limit) {
+    return std::make_shared<FuseReduceFwd>(FuseType::kDepth, size_limit);
+  }
+  static FusePatternPtr CreateWidthMatcher(size_t size_limit) {
+    return std::make_shared<FuseReduceFwd>(FuseType::kWidth, size_limit);
+  }
+
+ protected:
+  bool Check(const AreaPtr &dom) override {
+    if (dom->pattern() != NodePattern::REDUCE) {
+      return false;
+    }
+    return fuse_type_ == FuseType::kWidth || dom->input_num() == 1;
+  }
+  bool Match(const AreaPtr &dom) override {
+    for (auto &[a, r] : dom->inputs_with_relation()) {
+      if (fuse_type_ == FuseType::kDepth && a->user_num() != 1) {
+        continue;
+      }
+      if (a->size() > size_limit_) {
+        continue;
+      }
+      if (a->pattern() <= NodePattern::BROADCAST) {
+        if (r != EdgeRelation::INJECTIVE && a->user_num() != 1) {
+          continue;
+        }
+        if (fuse_type_ == FuseType::kWidth && HasCircle(a, dom)) {
+          continue;
+        }
+        (void)fused_areas_.emplace_back(a);
+      }
+    }
+    return !fused_areas_.empty();
+  }
+
+  FuseType fuse_type_;
+  size_t size_limit_;
+};
+}  // namespace dvm
+
 void SplitModelAscend::InitFusePatterns() {
   is_dvm_ = (GraphKernelFlags::GetInstance().kernel_generator == "DVM");
-  AddPattern(std::make_shared<FuseVirtualNode>(), true);
-  AddPattern(std::make_shared<FuseReshape>(), !is_dvm_);
-  AddPattern(FuseElemwiseBroadcastFwd::CreateDepthMatcher(), true);
-  AddPattern(FuseElemwiseBroadcastFwd::CreateWidthMatcher(), true);
-  AddPattern(FuseReduceFwd::CreateDepthMatcher(inner::ascend::kReduceFusionDepth), true);
-  AddPattern(FuseReduceFwd::CreateWidthMatcher(inner::ascend::kReduceFusionDepth), true);
-  AddPattern(FuseElemwiseBroadcastBwd::CreateDepthMatcher(inner::ascend::kBroadcastFusionDepth), true);
-  AddPattern(FuseElemwiseBroadcastBwd::CreateWidthMatcher(inner::ascend::kBroadcastFusionDepth), true);
-  AddPattern(std::make_shared<inner::ascend::FuseMatMul>(), true);
-  AddPattern(std::make_shared<inner::ascend::FuseReduceBwd>(), true);
-  AddPattern(std::make_shared<inner::ascend::FuseTransdata>(), true);
-  AddPattern(std::make_shared<inner::ascend::FuseElemAny>(), is_dvm_);
-  AddPattern(std::make_shared<inner::ascend::FuseSlice>(), is_dvm_);
+  if (is_dvm_) {
+    // fuse pattern for dvm
+    AddPattern(std::make_shared<FuseVirtualNode>(), true);
+    AddPattern(std::make_shared<FuseReshape>(), true);
+    AddPattern(FuseElemwiseBroadcastFwd::CreateDepthMatcher(), true);
+    AddPattern(FuseElemwiseBroadcastFwd::CreateWidthMatcher(), true);
+    AddPattern(inner::dvm::FuseReduceFwd::CreateDepthMatcher(inner::ascend::kReduceFusionDepth), true);
+    AddPattern(inner::dvm::FuseReduceFwd::CreateWidthMatcher(inner::ascend::kReduceFusionDepth), true);
+    AddPattern(FuseElemwiseBroadcastBwd::CreateDepthMatcher(inner::ascend::kBroadcastFusionDepth), true);
+    AddPattern(FuseElemwiseBroadcastBwd::CreateWidthMatcher(inner::ascend::kBroadcastFusionDepth), true);
+    AddPattern(std::make_shared<inner::ascend::FuseElemAny>(), true);
+    AddPattern(std::make_shared<inner::ascend::FuseSlice>(), true);
+  } else {
+    // fuse pattern for akg
+    AddPattern(std::make_shared<FuseVirtualNode>(), true);
+    AddPattern(std::make_shared<FuseReshape>(), true);
+    AddPattern(FuseElemwiseBroadcastFwd::CreateDepthMatcher(), true);
+    AddPattern(FuseElemwiseBroadcastFwd::CreateWidthMatcher(), true);
+    AddPattern(FuseReduceFwd::CreateDepthMatcher(inner::ascend::kReduceFusionDepth), true);
+    AddPattern(FuseReduceFwd::CreateWidthMatcher(inner::ascend::kReduceFusionDepth), true);
+    AddPattern(FuseElemwiseBroadcastBwd::CreateDepthMatcher(inner::ascend::kBroadcastFusionDepth), true);
+    AddPattern(FuseElemwiseBroadcastBwd::CreateWidthMatcher(inner::ascend::kBroadcastFusionDepth), true);
+    AddPattern(std::make_shared<inner::ascend::FuseMatMul>(), true);
+    AddPattern(std::make_shared<inner::ascend::FuseReduceBwd>(), true);
+    AddPattern(std::make_shared<inner::ascend::FuseTransdata>(), true);
+  }
 }
 
 AreaMode SplitModelAscend::GetDefaultAreaMode(const PrimOpPtr &node) const {
