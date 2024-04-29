@@ -38,6 +38,8 @@ constexpr size_t kInputBatchDim = 0;
 constexpr size_t kInputQueryNDimBNSD = 1;
 constexpr size_t kInputQuerySeqDimBNSD = 2;
 constexpr size_t kInputQueryHiddenDimBNSD = 3;
+constexpr size_t kBatchAxis = 2;
+constexpr size_t kAttenSeqPosRank4 = 2;
 constexpr char kAttrHeadNum[] = "num_heads";
 constexpr char kAttrSparseMode[] = "sparse_mode";
 constexpr char kAttrKVHeadNum[] = "num_key_value_heads";
@@ -110,22 +112,22 @@ void PromptFlashAttentionInfo::SetOptinalInputs() {
   Shape padding_mask_tensor_map(padding_mask_rank_, -1);
   Shape padding_mask_strategy_map(padding_mask_rank_, 0);
   if (atten_mask_rank_ >= kRank3 && sparse_mode_ == kSparseMode0) {
-    atten_mask_tensor_map[0] = 2;
-    atten_mask_strategy_map[0] = 2;
+    atten_mask_tensor_map[0] = kBatchAxis;
+    atten_mask_strategy_map[0] = kBatchAxis;
   }
   if (padding_mask_rank_ >= kRank3) {
-    padding_mask_tensor_map[0] = 2;
-    padding_mask_strategy_map[0] = 2;
+    padding_mask_tensor_map[0] = kBatchAxis;
+    padding_mask_strategy_map[0] = kBatchAxis;
   }
   optinal_tensor_map_[ops::kPromptFlashAttentionInputAttnMaskIndex] = atten_mask_tensor_map;
   optinal_tensor_map_[ops::kPromptFlashAttentionInputPaddingMaskIndex] = padding_mask_tensor_map;
-  optinal_tensor_map_[ops::kPromptFlashAttentionInputActualSeqLengthsIndex] = {2};
-  optinal_tensor_map_[ops::kPromptFlashAttentionInputActualSeqLengthsKvIndex] = {2};
+  optinal_tensor_map_[ops::kPromptFlashAttentionInputActualSeqLengthsIndex] = {kBatchAxis};
+  optinal_tensor_map_[ops::kPromptFlashAttentionInputActualSeqLengthsKvIndex] = {kBatchAxis};
 
   optinal_op_strategies_[ops::kPromptFlashAttentionInputAttnMaskIndex] = atten_mask_strategy_map;
   optinal_op_strategies_[ops::kPromptFlashAttentionInputPaddingMaskIndex] = padding_mask_strategy_map;
-  optinal_op_strategies_[ops::kPromptFlashAttentionInputActualSeqLengthsIndex] = {2};
-  optinal_op_strategies_[ops::kPromptFlashAttentionInputActualSeqLengthsKvIndex] = {2};
+  optinal_op_strategies_[ops::kPromptFlashAttentionInputActualSeqLengthsIndex] = {kBatchAxis};
+  optinal_op_strategies_[ops::kPromptFlashAttentionInputActualSeqLengthsKvIndex] = {kBatchAxis};
 }
 
 Status PromptFlashAttentionInfo::GetAttrs() {
@@ -166,7 +168,7 @@ Status PromptFlashAttentionInfo::CheckAttenMaskStrategy(const StrategyPtr &strat
   } else if (atten_mask_rank_ == kRank3) {
     attn_seq_dim = 1;
   } else {
-    attn_seq_dim = 2;
+    attn_seq_dim = kAttenSeqPosRank4;
   }
   int64_t attn_sp_dim = attn_sp_shard_ ? sp_ : 1;
   if (!CheckStrategy(attn_strategy[attn_seq_dim], attn_sp_dim, "S-Dimention", "attn_mask")) {
@@ -295,7 +297,7 @@ Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
     }
   }
-  if (atten_mask_rank_ >= 2) {
+  if (atten_mask_rank_ >= kRank2) {
     if (CheckAttenMaskStrategy(strategy, ops::kPromptFlashAttentionInputAttnMaskIndex) != SUCCESS) {
       MS_LOG(ERROR) << "Check strategy for atten mask failed";
       return FAILED;
@@ -308,12 +310,12 @@ Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
 Status PromptFlashAttentionInfo::InferDevMatrixShape() {
   if (input_layout_ == "BSH") {
     dev_matrix_shape_ = {dp_, sp_, mp_};
-    dev_matrix_batch_dim_ = 2;
+    dev_matrix_batch_dim_ = kBatchAxis;
     dev_matrix_s1_dim_ = 1;
     dev_matrix_n1_dim_ = 0;
   } else if (input_layout_ == "BNSD") {
     dev_matrix_shape_ = {dp_, mp_, sp_};
-    dev_matrix_batch_dim_ = 2;
+    dev_matrix_batch_dim_ = kBatchAxis;
     dev_matrix_s1_dim_ = 0;
     dev_matrix_n1_dim_ = 1;
   } else {
@@ -447,7 +449,8 @@ void PromptFlashAttentionInfo::ReplaceNodeInputOrAttrs() {
     clone_prim->set_attr(kAttrKVHeadNum, MakeValue(kv_head_num_ / mp_));
     if (sp_ > 1 && need_update_op_attrs_mode_) {
       int64_t split_id = GetSplitIdAndRank();
-      int64_t new_pre_tokens, new_next_tokens;
+      int64_t new_pre_tokens;
+      int64_t new_next_tokens;
       std::tie(new_pre_tokens, new_next_tokens) = GetAttenionMaskAttrs(split_id, sp_);
       int64_t new_sparse_mode = is_attn_mask_compressed_ ? kSparseBand : sparse_mode_;
       clone_prim->set_attr(kAttrSparseMode, MakeValue(new_sparse_mode));
