@@ -54,7 +54,6 @@ namespace mindspore {
 namespace opt {
 PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &graph) {
   auto common_pm = std::make_shared<PassManager>("common_pm");
-  common_pm->AddPass(std::make_shared<AddDynamicShapeAttr>());
   common_pm->AddPass(std::make_shared<ConvertDynamicBroadcastTo>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<CustomOpConstInputToAttr>());

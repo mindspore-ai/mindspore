@@ -58,15 +58,11 @@ KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
   return kernel_ptr;
 }
 
-bool IsRegisteredAclnnOp(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  std::string opname = common::AnfAlgo::GetCNodeName(anf_node);
-  return Factory<AclnnKernelMod>::Instance().IsRegistered(opname);
+bool IsRegisteredAclnnOp(const std::string &op_name) {
+  return Factory<AclnnKernelMod>::Instance().IsRegistered(op_name);
 }
 
-bool IsEnabledAclnnDispatch(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  std::string op_name = common::AnfAlgo::GetCNodeName(anf_node);
+bool IsEnabledAclnnDispatch(const std::string &op_name) {
   mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
   if (op_def == nullptr) {
     MS_LOG(INFO) << op_name << " is not defined in opdef.";
