@@ -234,11 +234,11 @@ def get_level():
 
     Examples:
         >>> import os
+        >>> os.environ['GLOG_v'] = '3'
         >>> import mindspore as ms
-        >>> os.environ['GLOG_v'] = '0'
         >>> level = ms.get_level()
         >>> print(level)
-        '0'
+        '3'
     """
     # level and glog level mapping dictionary
     level_to_glog_level = dict(zip(_name_to_level.values(), _gloglevel_to_name.keys()))
