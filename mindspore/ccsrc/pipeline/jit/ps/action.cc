@@ -17,6 +17,7 @@
 #include "pipeline/jit/ps/action.h"
 
 #include <memory>
+#include <map>
 #include <utility>
 #include <vector>
 #include <set>
@@ -1614,11 +1615,22 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
   return actions;
 }
 
-std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag) {
+std::vector<ActionItem> EraseParseActions(const std::vector<ActionItem> &actions) {
+  std::vector<ActionItem> filtered_actions;
+  for (const auto &item : actions) {
+    if (item.first != "parse") {
+      (void)filtered_actions.emplace_back(item);
+    }
+  }
+  return filtered_actions;
+}
+
+std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag, bool erase_parse) {
   is_cluster_initialized = distributed::cluster::ClusterContext::instance()->initialized();
   std::vector<ActionItem> actions;
   // If enable compilation cache and the cache is read successfully, only do the backend actions.
-  if (IsPhaseLoadFromMindIR(PhaseManager::GetInstance().phase())) {
+  const std::string &phase = PhaseManager::GetInstance().phase();
+  if (IsPhaseLoadFromMindIR(phase)) {
     actions = MindIRPipeline();
   } else if (!resource->EnableCompileCache() || resource->func_graph() == nullptr) {
     actions = CommonPipeline(trace_flag);
@@ -1639,7 +1651,9 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag)
     (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
 
 #if defined(__linux__) && defined(WITH_BACKEND)
-    (void)actions.emplace_back(std::make_pair(kDistributedSplit, DistributedSplitAction));
+    if (!pipeline::IsPhaseExport(phase)) {
+      (void)actions.emplace_back(std::make_pair(kDistributedSplit, DistributedSplitAction));
+    }
     if (ps::PSContext::instance()->is_worker()) {
       if (distributed::cluster::ClusterContext::instance()->initialized()) {
         MS_LOG(INFO) << "This worker is initialized. No need to add worker action.";
@@ -1648,6 +1662,10 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag)
       }
     }
 #endif
+  }
+
+  if (erase_parse) {
+    actions = EraseParseActions(actions);
   }
 
   auto is_precompile_only = MsContext::GetInstance()->get_param<bool>(MS_CTX_PRECOMPILE_ONLY);
@@ -1665,6 +1683,10 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag)
 #ifndef WITH_BACKEND
   if (ms_context->backend_policy() != "ge") {
 #endif
+    // Phase with "export" prefix need to skip backend compilation.
+    if (pipeline::IsPhaseExport(phase)) {
+      return actions;
+    }
     // Compile the ANF graph
     (void)actions.emplace_back(std::make_pair(kTaskEmit, TaskEmitAction));
 

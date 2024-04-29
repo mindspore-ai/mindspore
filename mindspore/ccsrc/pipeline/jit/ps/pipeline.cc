@@ -891,6 +891,11 @@ bool IsPhaseExportAir(const std::string &phase) {
   return phase.rfind(phase_to_export) != std::string::npos;
 }
 
+bool IsPhaseExport(const std::string &phase) {
+  constexpr auto export_str = "export";
+  return phase.compare(0, strlen(export_str), export_str) == 0;
+}
+
 bool IsPhaseTrain(const std::string &phase) {
   const std::string phase_to_train = "train";
   return phase.rfind(phase_to_train) != std::string::npos;
@@ -901,11 +906,11 @@ bool IsPhaseLoadFromMindIR(const std::string &phase) {
   return phase.rfind(mindir_graph) != std::string::npos;
 }
 
-std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase, bool use_vm,
-                                    bool trace_flag = false) {
+std::vector<ActionItem> GetActions(const ResourcePtr &resource, const std::string &phase, bool use_vm,
+                                   bool trace_flag = false, bool erase_parse = false) {
   MS_EXCEPTION_IF_NULL(resource);
   compile::SetMindRTEnable();
-  return VmPipeline(resource, trace_flag);
+  return VmPipeline(resource, trace_flag, erase_parse);
 }
 
 void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const std::string &phase) {
@@ -981,15 +986,9 @@ bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &a
   bool use_compile_cache = resource->EnableCompileCache() && resource->func_graph();
   ConfigManager::GetInstance().ResetQueue(queue_name_);
 
-  auto actions = GetPipeline(resource, phase, use_vm, trace_flag);
-  for (auto iter = actions.begin(); iter != actions.end();) {
-    if (iter->first == "parse") {
-      iter = actions.erase(iter);
-    } else {
-      iter++;
-    }
-  }
-  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase));
+  bool erase_parse = true;
+  auto actions = GetActions(resource, phase, use_vm, trace_flag, erase_parse);
+  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, actions);
 
   if (pip->NeedCreateBackend()) {
     // Create backend asynchronously.
@@ -1064,8 +1063,8 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   compile_cache_context.SetUseCompileCache(use_compile_cache);
 
-  auto actions = GetPipeline(resource, phase_, use_vm);
-  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase_));
+  auto actions = GetActions(resource, phase_, use_vm, false, false);
+  std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, actions);
 
   (void)profiler::CollectHostInfo(kCompiler, kCreateBackend, kCreateBackend, 0, 0, 0);
   if (pip->NeedCreateBackend()) {
@@ -1241,23 +1240,6 @@ void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePt
     abs->SetSymbolicShape(symbolic_shape_list[i]);
     (*args_abs)[i] = abs;
   }
-}
-
-std::vector<ActionItem> GraphExecutorPy::FilterActions(const std::vector<ActionItem> &actions,
-                                                       const std::string &phase) {
-  // filter action after validate when 'export'.
-  if (GetPhasePrefix(phase).rfind("export", 0) == std::string::npos) {
-    return actions;
-  }
-  MS_LOG(INFO) << "Phase is '" << phase << "', filter out actions after stage 'validate'";
-  std::vector<ActionItem> filtered_actions;
-  for (const auto &item : actions) {
-    (void)filtered_actions.emplace_back(item);
-    if (item.first == "validate") {
-      break;
-    }
-  }
-  return filtered_actions;
 }
 
 void GraphExecutorPy::ReleaseResourceOnException(const py::object &phase) {
@@ -1460,6 +1442,9 @@ void Pipeline::Run() {
   FuncGraphPtr user_graph = nullptr;
 #if defined(__linux__) && defined(WITH_BACKEND)
   std::string last_compile_action = kDistributedSplit;
+  if (pipeline::IsPhaseExport(PhaseManager::GetInstance().phase())) {
+    last_compile_action = kValidate;
+  }
 #else
   std::string last_compile_action = kValidate;
 #endif
