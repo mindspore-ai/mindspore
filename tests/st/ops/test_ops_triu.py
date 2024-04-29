@@ -27,7 +27,10 @@ def generate_expect_forward_output(x, k, dtype):
     return np.triu(x, k=k).astype(dtype)
 
 def generate_expect_backward_output(x, k, dtype):
-    return np.triu(x, k=k).astype(dtype)
+    grad = np.zeros_like(x)
+    grad_mask = np.triu(np.ones_like(x), k=k)
+    out = np.ma.array(grad, mask=grad_mask)
+    return out.filled(fill_value=1)
 
 @test_utils.run_with_cell
 def triu_forward_func(x, k):
