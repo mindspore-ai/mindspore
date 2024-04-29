@@ -670,7 +670,9 @@ def normal_ext(mean, std, generator=None):
         mean (Union[float, Tensor]): The mean is a tensor with the mean of each output
             element's normal distribution.
         std (Union[float, Tensor]): The tensor of per-element standard deviations.
-        generator (Generator, optional): Mindspore generator.
+        generator (Generator, optional): A generator that manages the state of random numbers and provides
+            seed and offset for random functions.. Default: ``None``. When `generator` is ``None``,
+            random function will use the default generator. For details, refer to :class:`mindspore.nn.Generator`.
 
     Returns:
         Tensor, With the same type and shape as the `mean`.
