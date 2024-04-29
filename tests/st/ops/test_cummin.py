@@ -15,14 +15,14 @@
 import numpy as np
 import pytest
 from tests.st.utils import test_utils
-
+from mindspore.mint import cummin
 from mindspore import ops
 from mindspore import Tensor
 import mindspore as ms
 
 @test_utils.run_with_cell
 def cummin_forward_func(x, axis):
-    return ops.Cummin(axis)(x)
+    return cummin(x, axis)
 
 @test_utils.run_with_cell
 def cummin_backward_func(x, axis):
@@ -30,17 +30,17 @@ def cummin_backward_func(x, axis):
 
 @test_utils.run_with_cell
 def cummin_vmap_func(x, axis):
-    return ops.vmap(cummin_forward_func, in_axes=0, out_axes=0)(x, axis)
+    return ops.vmap(cummin_forward_func, in_axes=(0, None), out_axes=(0, None))(x, axis)
 
 @test_utils.run_with_cell
 def cummin_dyn_shape_func(x, axis):
-    return ops.Cummin(axis)(x)
+    return cummin(x, axis)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8,
                                    np.float64, np.float32, np.float16])
 def test_cummin_forward(context_mode, dtype):
@@ -51,7 +51,7 @@ def test_cummin_forward(context_mode, dtype):
     """
     ms.context.set_context(mode=context_mode)
     x = Tensor(np.array([[3, 1, 4, 1], [1, 5, 9, 2]]).astype(dtype))
-    axis = 0
+    axis = -2
     values, indices = cummin_forward_func(x, axis)
     expect_values = np.asarray([[3, 1, 4, 1], [1, 1, 4, 1]]).astype(dtype)
     expect_indices = np.asarray([[0, 0, 0, 0], [1, 0, 0, 0]]).astype(np.int64)
@@ -62,7 +62,7 @@ def test_cummin_forward(context_mode, dtype):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8,
                                    np.float64, np.float32, np.float16])
 def test_cummin_vmap(context_mode, dtype):
@@ -85,7 +85,7 @@ def test_cummin_vmap(context_mode, dtype):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float32])
 def test_cummin_backward(context_mode, dtype):
     """

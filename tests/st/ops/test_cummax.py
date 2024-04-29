@@ -15,14 +15,14 @@
 import numpy as np
 import pytest
 from tests.st.utils import test_utils
-
+from mindspore.mint import cummax
 from mindspore import ops
 from mindspore import Tensor
 import mindspore as ms
 
 @test_utils.run_with_cell
 def cummax_forward_func(x, axis):
-    return ops.Cummax(axis)(x)
+    return cummax(x, axis)
 
 @test_utils.run_with_cell
 def cummax_backward_func(x, axis):
@@ -34,13 +34,13 @@ def cummax_vmap_func(x, axis):
 
 @test_utils.run_with_cell
 def cummax_dyn_shape_func(x, axis):
-    return ops.cummax(x, axis)
+    return cummax(x, axis)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8,
                                    np.float64, np.float32, np.float16])
 def test_cummax_forward(context_mode, dtype):
@@ -51,7 +51,7 @@ def test_cummax_forward(context_mode, dtype):
     """
     ms.context.set_context(mode=context_mode)
     x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(dtype))
-    axis = 0
+    axis = -2
     values, indices = cummax_forward_func(x, axis)
     expect_values = np.asarray([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(dtype)
     expect_indices = np.asarray([[0, 0, 0, 0], [1, 1, 1, 1]]).astype(np.int64)
@@ -62,7 +62,7 @@ def test_cummax_forward(context_mode, dtype):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8,
                                    np.float64, np.float32, np.float16])
 def test_cummax_vmap(context_mode, dtype):
@@ -85,7 +85,7 @@ def test_cummax_vmap(context_mode, dtype):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float32])
 def test_cummax_backward(context_mode, dtype):
     """

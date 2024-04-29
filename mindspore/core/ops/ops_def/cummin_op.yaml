@@ -15,3 +15,4 @@ cummin:
       disable: True
   dispatch:
     enable: True
+    Ascend: CumMinAscend
