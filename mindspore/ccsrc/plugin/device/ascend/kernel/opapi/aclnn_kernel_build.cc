@@ -53,6 +53,8 @@ KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
       MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#hostapi kernel op[" << cnode->fullname_with_scope()
                         << "] Resize failed.";
     }
+  } else {
+    kernel_ptr->SetDynamic(true);
   }
   transform::AclnnInit();
   return kernel_ptr;

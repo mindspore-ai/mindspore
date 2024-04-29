@@ -24,6 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
+bool AclnnKernelMod::is_dynamic_ = false;
 
 bool AclnnKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   MS_LOG(DEBUG) << "AclnnKernelMod Init";
