@@ -349,7 +349,7 @@ class FileWriter:
 
                 # launch the workers for parallel write
                 self._queue._joincancelled = True  # pylint: disable=W0212
-                p = mp.Process(target=self._write_worker, args=(i, self._queue))
+                p = mp.Process(target=self._write_worker, name="WriterWorker" + str(i), args=(i, self._queue))
                 p.daemon = True
                 p.start()
                 logger.info("Start worker process(pid:{}) to parallel write.".format(p.pid))
@@ -546,7 +546,7 @@ class FileWriter:
             # use parallel index workers to generator index
             self._index_workers = [None] * len(self._paths)
             for index in range(len(self._paths)):
-                p = mp.Process(target=self._index_worker, args=(index,))
+                p = mp.Process(target=self._index_worker, name="IndexWorker" + str(index), args=(index,))
                 p.daemon = True
                 p.start()
                 logger.info("Start worker process(pid:{}) to generate index.".format(p.pid))

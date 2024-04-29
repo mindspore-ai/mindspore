@@ -345,15 +345,14 @@ class MINDRECORD_API ShardReader {
   int64_t num_padded_;  // number of padding samples
 
   // Delivery/Iterator mode begin
-  const std::string kThreadName = "THRD_ITER_";  // prefix of thread name
-  std::vector<std::thread> thread_set_;          // thread list
-  int64_t num_rows_;                             // number of rows
-  int64_t total_blob_size_;                      // total size of blob data
-  std::mutex mtx_delivery_;                      // locker for delivery
-  std::condition_variable cv_delivery_;          // conditional variable for delivery
-  std::condition_variable cv_iterator_;          // conditional variable for iterator
-  std::atomic<int> sample_id_position_;          // index into the sample ids vector for the current sample id
-  std::atomic<int> deliver_id_;                  // delivery ID which is picked up by iterator
+  std::vector<std::thread> thread_set_;  // thread list
+  int64_t num_rows_;                     // number of rows
+  int64_t total_blob_size_;              // total size of blob data
+  std::mutex mtx_delivery_;              // locker for delivery
+  std::condition_variable cv_delivery_;  // conditional variable for delivery
+  std::condition_variable cv_iterator_;  // conditional variable for iterator
+  std::atomic<int> sample_id_position_;  // index into the sample ids vector for the current sample id
+  std::atomic<int> deliver_id_;          // delivery ID which is picked up by iterator
   // map of delivery
   std::unordered_map<int, std::shared_ptr<std::vector<std::tuple<std::vector<uint8_t>, json>>>> delivery_map_;
   // Delivery/Iterator mode end

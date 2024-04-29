@@ -810,7 +810,8 @@ Status DataQueueOp::LaunchParallelCopyThread() {
   receive_queues_.Init(num_workers_, queue_capacity_);
   RETURN_IF_NOT_OK(receive_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(static_cast<int>(num_workers_),
-                                        std::bind(&DataQueueOp::WorkerEntry, this, std::placeholders::_1), "", id()));
+                                        std::bind(&DataQueueOp::WorkerEntry, this, std::placeholders::_1),
+                                        Name() + "::WorkerEntry", id()));
   RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask("Push data to GPU queue",
                                                       std::bind(&DataQueueOp::PushDataToGPU, this), nullptr, id()));
   if (enable_prefetch_cache_pipeline_) {

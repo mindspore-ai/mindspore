@@ -3176,7 +3176,8 @@ class _MPWorker(multiprocessing.Process):
         shared_memory = get_enable_shared_mem()
         self.pipe = Pipe(warning_ctl, shared_memory=shared_memory, max_rowsize=max_rowsize)
         self.check_interval = get_multiprocessing_timeout_interval()
-        super().__init__(target=worker_target(operations, worker_id), args=(self.pipe,), daemon=True)
+        super().__init__(target=worker_target(operations, worker_id), name="MapWorker" + str(worker_id),
+                         args=(self.pipe,), daemon=True)
 
     def execute(self, idx, *args):
         """Acquiring data from a worker in an infinite loop"""
@@ -3571,16 +3572,16 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         if platform.system().lower() != 'windows':
             self.eof = multiprocessing.Event()
             self.cleaning_process = multiprocessing.Process(target=self._clean_process,
+                                                            name="MapCleanProcess",
                                                             args=(self.ppid, self.workers, self.eof),
-                                                            name="OrphanCleaner",
                                                             daemon=True)
             self.cleaning_process.start()
 
             if get_enable_watchdog():
                 self.eot = threading.Event()
                 self.watch_dog = threading.Thread(target=self._watch_dog,
+                                                  name="MapWatchDog",
                                                   args=(self.eot, self.workers + [self.cleaning_process]),
-                                                  name="WatchDog",
                                                   daemon=True)
                 self.watch_dog.start()
 

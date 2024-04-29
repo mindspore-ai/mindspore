@@ -78,8 +78,8 @@ Status BuildVocabOp::operator()() {
   RETURN_IF_NOT_OK(distributor_queue_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(collector_queue_->Register(tree_->AllTasks()));
   // launch worker threads and collector thread
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&BuildVocabOp::WorkerEntry, this, std::placeholders::_1), "", id()));
+  RETURN_IF_NOT_OK(tree_->LaunchWorkers(
+    num_workers_, std::bind(&BuildVocabOp::WorkerEntry, this, std::placeholders::_1), Name() + "::WorkerEntry", id()));
   RETURN_IF_NOT_OK(
     tree_->AllTasks()->CreateAsyncTask("collector", std::bind(&BuildVocabOp::CollectorThread, this), nullptr, id()));
   TaskManager::FindMe()->Post();

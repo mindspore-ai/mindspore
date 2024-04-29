@@ -541,6 +541,9 @@ void ShardReader::GetClassesInShard(sqlite3 *db, int shard_id, const std::string
   if (db == nullptr) {
     return;
   }
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  pthread_setname_np(pthread_self(), std::string(__func__ + std::to_string(shard_id)).c_str());
+#endif
   std::vector<std::vector<std::string>> columns;
   char *errmsg = nullptr;
   int ret = sqlite3_exec(db, common::SafeCStr(sql), SelectCallback, &columns, &errmsg);
@@ -1319,6 +1322,9 @@ Status ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, int,
   uint32_t current_offset = 0;
   for (uint32_t shard_id = 0; shard_id < shard_count_; shard_id++) {
     init_tasks_thread[shard_id] = std::thread([this, &offsets, &local_columns, shard_id, current_offset]() {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+      pthread_setname_np(pthread_self(), std::string("ParallelCreateTasks" + std::to_string(shard_id)).c_str());
+#endif
       auto offset = current_offset;
       for (uint32_t i = 0; i < offsets[shard_id].size(); i += 1) {
         tasks_.InsertTask(offset, TaskType::kCommonTask, offsets[shard_id][i][0], offsets[shard_id][i][1],
@@ -1356,6 +1362,9 @@ Status ShardReader::CreateLazyTasksByRow(const std::vector<std::tuple<int, int, 
     uint32_t shard_count =
       shard_id == 0 ? shard_sample_count_[0] : shard_sample_count_[shard_id] - shard_sample_count_[shard_id - 1];
     init_tasks_thread[shard_id] = std::thread([this, shard_id, current_offset, shard_count]() {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+      pthread_setname_np(pthread_self(), std::string("ParallelCreateLazyTasks" + std::to_string(shard_id)).c_str());
+#endif
       for (uint32_t i = current_offset; i < shard_count + current_offset; ++i) {
         // here "i - current_offset" indicate the sample id in the shard
         tasks_.InsertTask(i, TaskType::kCommonTask, shard_id, i - current_offset, {}, json());
@@ -1535,8 +1544,7 @@ Status ShardReader::ConsumerOneTask(int64_t task_id, uint32_t consumer_id,
 void ShardReader::ConsumerByRow(int consumer_id) {
   // Set thread name
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
-  auto thread_id = kThreadName + std::to_string(consumer_id);
-  prctl(PR_SET_NAME, common::SafeCStr(thread_id), 0, 0, 0);
+  pthread_setname_np(pthread_self(), std::string(__func__ + std::to_string(consumer_id)).c_str());
 #endif
 
   // Loop forever
