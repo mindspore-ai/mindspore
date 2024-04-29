@@ -1726,7 +1726,12 @@ void LogGuardFailed(ValueNode *node, const GraphJitConfig &conf, const std::stri
   }
   auto tr = GetTrace(node, false, true, 0, -1);
   std::stringstream s;
-  s << "trace:\n" << (tr ? tr->FormatString().c_str() : "trace failed") << "\n";
+  if (node->GetVobj() == nullptr || node->GetVobj()->GetPyObject().ptr() == nullptr) {
+    s << "infer failed\n";
+  } else {
+    std::map<Trace *, size_t> cache;
+    s << "trace:\n" << (tr ? tr->FormatString(&cache).c_str() : "trace failed") << "\n";
+  }
   s << msg << " [" << node->ToString() << "]";
   GRAPH_JIT_LOG_F("%s", s.str().c_str());
 }
@@ -2856,8 +2861,13 @@ static void LogPrunBranch(ValueNode *cond, const Instr &instr, const GraphJitCon
   }
 
   if (conf.GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
-    auto tr = GetTrace(cond, false, true, 0, conf.getIntConfig(GraphJitConfig::kMaxTraceDepth));
-    GRAPH_JIT_LOG_F("trace:\n %s\n", tr ? tr->FormatString().c_str() : "trace failed");
+    if (CondIsTrue(cond) == -1) {
+      GRAPH_JIT_LOG_F("infer failed\n");
+    } else {
+      auto tr = GetTrace(cond, false, true, 0, conf.getIntConfig(GraphJitConfig::kMaxTraceDepth));
+      std::map<Trace *, size_t> cache;
+      GRAPH_JIT_LOG_F("trace:\n%s\n", tr ? tr->FormatString(&cache).c_str() : "trace failed");
+    }
     GRAPH_JIT_LOG_F("if branch prune failed, condition [%s] at [%U : %d]", cond->ToString().c_str(),
                     cond->GetGraph()->GetCodeObj()->co_filename, cond->GetLineNo());
   }

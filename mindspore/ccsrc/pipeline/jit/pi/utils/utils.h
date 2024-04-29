@@ -164,32 +164,26 @@ class TimeRecorder {
  public:
   using RecorderType = const char *;
   static constexpr double scale = std::nano::den;
-  static constexpr const char *kTimeCompile = "kTimeCompile";
-  static constexpr const char *kTimeCompileCapture = "kTimeCompileCapture";
-  static constexpr const char *kTimeCompileGraph = "kTimeCompileGraph";
-  static constexpr const char *kTimeGuard = "kTimeGuard";
-  static constexpr const char *kTimeInferPrimitive = "kTimeInferPrimitive";
 
-  struct PerfData {
-    uint64_t count;
-    uint64_t nano;
+  class TimeData {
+   public:
+    struct Data {
+      uint64_t count;
+      uint64_t nano;
+    };
+    TimeData() = default;
+    ~TimeData();
+    std::string ToString();
+
+    std::map<RecorderType, Data> data_;
   };
-  static std::map<RecorderType, PerfData> data_;
 
-  explicit TimeRecorder(const RecorderType &descr, bool record = true) : descr_(descr), record_(record) {
-    if (record_) {
-      start_ = std::chrono::steady_clock::now();
-    }
-  }
-  ~TimeRecorder() {
-    if (record_) {
-      uint64_t clk = (std::chrono::steady_clock::now() - start_).count();
-      data_[descr_].count++;
-      data_[descr_].nano += clk;
-    }
-  }
+  explicit TimeRecorder(const RecorderType &descr, bool record = true);
+  ~TimeRecorder();
 
  private:
+  static TimeData *Data();
+
   RecorderType descr_;
   std::chrono::steady_clock::time_point start_;
   bool record_;

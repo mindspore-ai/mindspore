@@ -77,7 +77,7 @@ class Trace : public std::enable_shared_from_this<Trace> {
   /// \param[out] borrow reference for PyObject
   virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
   virtual std::string ToString(bool include_param = true) = 0;
-  virtual std::string FormatString() = 0;
+  virtual std::string FormatString(std::map<Trace *, size_t> *cache);
   virtual const InfoPack &Info() = 0;
   virtual void Cache(PTraceContext context, PyObject *obj);
   virtual bool IsConst() const;
@@ -114,7 +114,6 @@ class RootTrace : public Trace {
   virtual std::string ToString(bool include_param = true);
   virtual void GetParam(int *index, std::string *name, std::string *module_name);
   virtual bool operator==(const Trace &trace);
-  std::string FormatString() override { return ToString(); }
   virtual const InfoPack &Info();
   static bool Support(TraceType tt);
 
@@ -144,7 +143,6 @@ class ItemTrace : public Trace {
   virtual std::string ToString(bool include_param = true);
   virtual bool operator==(const Trace &trace);
   virtual void Detach();
-  std::string FormatString() override { return ToString(); }
   virtual const InfoPack &Info();
   virtual TracePtr Optimize();
   virtual void SetRelaxCount(int cnt);
@@ -163,7 +161,6 @@ class AttrTrace : public Trace {
   virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
   virtual std::string ToString(bool include_param = true);
   virtual bool operator==(const Trace &trace);
-  std::string FormatString() override { return ToString(); }
   virtual const InfoPack &Info();
   virtual TracePtr Optimize();
   virtual void SetRelaxCount(int cnt);
@@ -183,7 +180,6 @@ class ConstTrace : public Trace {
   virtual std::string ToString(bool include_param = true);
   virtual bool operator==(const Trace &trace);
   virtual void Detach();
-  std::string FormatString() override { return ToString(); }
   virtual const InfoPack &Info();
   static bool Support(TraceType tt);
 
@@ -200,7 +196,6 @@ class TypeTrace : public Trace {
   virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
   virtual std::string ToString(bool include_param = true);
   virtual bool operator==(const Trace &trace);
-  std::string FormatString() override { return ToString(); }
   virtual const InfoPack &Info();
   virtual void Detach();
   virtual TracePtr Optimize();
@@ -226,7 +221,7 @@ class OpTrace : public Trace {
   virtual std::string ToString(bool include_param = true);
   virtual bool operator==(const Trace &trace);
   virtual void Detach();
-  std::string FormatString() override;
+  std::string FormatString(std::map<Trace *, size_t> *cache) override;
   virtual const InfoPack &Info();
   virtual TracePtr Optimize();
   virtual void SetRelaxCount(int cnt);
@@ -270,7 +265,6 @@ class CustomizedTrace : public Trace {
   virtual ~CustomizedTrace() = default;
   virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
   virtual std::string ToString(bool include_param = true);
-  std::string FormatString() override { return ToString(); }
   virtual const InfoPack &Info();
   static bool Support(TraceType tt);
 
@@ -288,7 +282,7 @@ class UnsupportedTrace : public Trace {
   virtual std::string ToString(bool include_param = true);
   virtual TraceVector GetParams();
   virtual void Detach();
-  std::string FormatString() override;
+  std::string FormatString(std::map<Trace *, size_t> *cache) override;
   virtual const InfoPack &Info();
   virtual void SetRelaxCount(int cnt);
   static bool Support(TraceType tt);

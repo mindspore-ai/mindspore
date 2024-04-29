@@ -33,7 +33,6 @@ namespace pijit {
 namespace py = pybind11;
 
 class ValueNode;
-class FrameStates;
 class CodeExtra;
 class GraphParameterBuilder;
 
