@@ -836,18 +836,27 @@ TypeId GetConversionType(const TypeId &current, const TypeId &saved_type_id, boo
   if (current == saved_type_id) {
     return current;
   }
-  if (MS_UNLIKELY(black_types.find(current) != black_types.end() ||
-                  black_types.find(saved_type_id) != black_types.end())) {
-    return kTypeUnknown;
-  }
 
-  // Tensor + Scalar, Scalar + Tensor
-  auto hash_id = GetHashId(current, saved_type_id);
-  if (MS_UNLIKELY(current_arg_is_tensor ^ saved_has_tensor)) {
-    return ConvertTypeBetweenTensorAndScalar(current, saved_type_id, hash_id);
+  bool cur_is_in_black = black_types.find(current) != black_types.end();
+  bool saved_is_in_black = black_types.find(saved_type_id) != black_types.end();
+  if (!cur_is_in_black && !saved_is_in_black) {
+    // Tensor + Scalar, Scalar + Tensor
+    auto hash_id = GetHashId(current, saved_type_id);
+    if (MS_UNLIKELY(current_arg_is_tensor ^ saved_has_tensor)) {
+      return ConvertTypeBetweenTensorAndScalar(current, saved_type_id, hash_id);
+    }
+    // Tensor + Tensor, Scalar + Scalar
+    return ConvertTypeForTensorsOrScalars(current, saved_type_id, hash_id);
+  } else if (cur_is_in_black && !saved_is_in_black) {
+    // Current is in black, but saved is not in block
+    return saved_type_id;
+  } else if (!cur_is_in_black) {
+    // Current is not in black, but saved is in block
+    return current;
+  } else {
+    // All in black, git higher
+    return current > saved_type_id ? current : saved_type_id;
   }
-  // Tensor + Tensor, Scalar + Scalar
-  return ConvertTypeForTensorsOrScalars(current, saved_type_id, hash_id);
 }
 }  // namespace
 

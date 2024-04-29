@@ -90,6 +90,7 @@ class GradExecutor {
   inline bool enable_grad() const { return enable_grad_; }
   inline void set_enable_grad(bool enable_grad) { enable_grad_ = enable_grad; }
   inline bool RequiresGrad() const { return enable_grad() && grad_flag(); }
+  inline void set_is_run_recompute(bool is_run_recompute) { is_run_recompute_ = is_run_recompute; }
   // Construct grad graph for jit
   inline size_t custom_bprop_cell_count() const { return custom_bprop_cell_count_; }
   inline runtime::AsyncHqueuePtr bprop_queue() const { return bprop_queue_; }
@@ -226,6 +227,7 @@ class GradExecutor {
   bool grad_flag_{false};
   bool enable_grad_{true};
   size_t grad_is_running_{0};
+  bool is_run_recompute_{false};
   bool save_graphs_{false};
   uint32_t kernel_graph_id_for_control_flow_{UINT32_MAX};
   size_t custom_bprop_cell_count_{0};

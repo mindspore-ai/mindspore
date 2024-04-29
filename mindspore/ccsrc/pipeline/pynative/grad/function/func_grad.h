@@ -115,7 +115,8 @@ class FakeBackwardNode : public BackwardNode {
 
 class FuncGrad : public AutoGrad {
  public:
-  FuncGrad(const ValuePtrList &input_param_values, size_t op_num_in_bprop_graph, bool grad_by_value);
+  FuncGrad(const ValuePtrList &input_param_values, size_t op_num_in_bprop_graph, bool grad_by_value,
+           bool is_run_recompute);
   ~FuncGrad() override = default;
 
   bool KPynativeOp(const GradParamPtr &grad_param) override;
@@ -152,6 +153,8 @@ class FuncGrad : public AutoGrad {
                         const std::vector<size_t> &grad_position);
   void PruningInput(const GradAttr &grad_attr, const std::vector<size_t> &grad_position);
   void PruningWeights(const TensorPtrList &weights, const GradAttr &grad_attr);
+
+  bool is_run_recompute_{false};
   std::shared_ptr<FuncBuilder> func_impl_;
   OrderedSet<FuncVariablePtr> variable_set_;
   std::vector<std::pair<ValuePtr, FuncVariablePtr>> cell_inputs_;

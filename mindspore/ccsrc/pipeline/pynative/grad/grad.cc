@@ -537,10 +537,11 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
   if (top_cell()->is_ir_grad()) {
     top_cell()->set_auto_grad_cell_ptr(
       std::make_shared<autograd::IrGrad>(input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio,
-                                         assist_queue_, !top_cell()->is_high_order_top_cell()));
+                                         assist_queue_, !top_cell()->is_high_order_top_cell(), is_run_recompute_));
   } else {
-    top_cell()->set_auto_grad_cell_ptr(std::make_shared<autograd::FuncGrad>(
-      input_param_values, op_num_in_bprop_graph_ * kContainerRatio, !top_cell()->is_high_order_top_cell()));
+    top_cell()->set_auto_grad_cell_ptr(
+      std::make_shared<autograd::FuncGrad>(input_param_values, op_num_in_bprop_graph_ * kContainerRatio,
+                                           !top_cell()->is_high_order_top_cell(), is_run_recompute_));
   }
 }
 
