@@ -505,7 +505,7 @@ class ReducePatternTree : public PatternTree {
     auto axis = CheckAndConvertUtils::CheckTensorIntValue("axis", reduce_axis->data(), "Reduce");
     for (auto &i : axis) {
       if (i < 0) {
-        i += reduce_shape.size();
+        i += SizeToLong(reduce_shape.size());
       }
       if (reduce_shape[i] != 1) {
         return false;

@@ -21,6 +21,38 @@
 #include "utils/hash_set.h"
 
 namespace mindspore::graphkernel::inner {
+namespace {
+uint64_t FindIoNum(const std::vector<AreaPtr> *areas) {
+  std::unordered_map<PrimOpPtr, uint64_t> degree;
+  std::unordered_set<PrimOpPtr> visited;
+  uint64_t io_num = 0;
+  for (auto a = areas->begin(); a != areas->end(); ++a) {
+    for (auto op : (*a)->ops()) {
+      visited.insert(op);
+      for (auto o : op->inputs()) {
+        if (auto prim = o->As<PrimOp>(); prim) {
+          degree[prim]++;
+        }
+      }
+    }
+  }
+  for (auto op : visited) {
+    auto iter = degree.find(op);
+    if (iter == degree.end()) {  // is output node
+      io_num++;
+    }
+    io_num++;
+    for (auto o : op->inputs()) {
+      if (auto prim = o->As<PrimOp>(); prim && visited.find(prim) != visited.end()) {  // is not input node
+        io_num--;
+        break;
+      }
+    }
+  }
+  return io_num;
+}
+}  // namespace
+
 ReachTable::ReachTable(size_t size) : size_(size), reach_(size, std::vector<bool>(size, false)) {
   for (size_t i = 0; i < size_; ++i) {
     reach_[i][i] = true;
@@ -161,32 +193,7 @@ void SplitModel::LimitAreaSize(const AreaPtr &dom, std::vector<AreaPtr> *areas) 
     const uint64_t MAX_DVM_SIZE = 96;
     max_size = std::min(MAX_DVM_SIZE, max_size);
     if (dom_size <= max_size) {
-      std::unordered_map<PrimOpPtr, uint64_t> degree;
-      std::unordered_set<PrimOpPtr> visited;
-      uint64_t io_num = 0;
-      for (auto a = areas->begin(); a != areas->end(); ++a) {
-        for (auto op : (*a)->ops()) {
-          visited.insert(op);
-          for (auto o : op->inputs()) {
-            if (auto prim = o->As<PrimOp>(); prim) {
-              degree[prim]++;
-            }
-          }
-        }
-      }
-      for (auto op : visited) {
-        auto iter = degree.find(op);
-        if (iter == degree.end()) {  // is output node
-          io_num++;
-        }
-        io_num++;
-        for (auto o : op->inputs()) {
-          if (auto prim = o->As<PrimOp>(); prim && visited.find(prim) != visited.end()) {  // is not input node
-            io_num--;
-            break;
-          }
-        }
-      }
+      uint64_t io_num = FindIoNum(areas);
       max_size = max_size >= io_num ? max_size - io_num : 0;
       if (dom_size <= max_size) {
         return;
