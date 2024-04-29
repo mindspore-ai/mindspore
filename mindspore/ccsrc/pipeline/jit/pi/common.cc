@@ -55,9 +55,42 @@ void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach);
 static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach);
 static void CollectTraceBack(JitCompileResults *c, PyCodeObject *code, bool is_graph_mode);
 
-std::map<TimeRecorder::RecorderType, TimeRecorder::PerfData> TimeRecorder::data_;
-static std::map<uint64_t, size_t> code_size_execute_python;  // execute count, code size
-static std::map<uint64_t, size_t> code_size_execute_graph;   // execute count, code size
+class ByteCodeRunStatistic {
+ public:
+  ~ByteCodeRunStatistic() {
+    if (py_.empty() && graph_.empty()) {
+      return;
+    }
+    std::cout << ToString() << std::endl;
+  }
+
+  void Count(PyObject *code, bool graph_preferred) {
+    if (graph_preferred) {
+      graph_[PyBytes_GET_SIZE(code)]++;
+    } else {
+      py_[PyBytes_GET_SIZE(code)]++;
+    }
+  }
+
+  std::string ToString() {
+    const auto SumFunc = [](size_t sum, const std::pair<uint64_t, size_t> &i) { return sum + (i.first * i.second); };
+    size_t sum_py = std::accumulate(py_.begin(), py_.end(), 0, SumFunc);
+    size_t sum_graph = std::accumulate(graph_.begin(), graph_.end(), 0, SumFunc);
+    double ratio = static_cast<double>(sum_graph) / (sum_graph + sum_py);
+    return "execute code ratio (graph / (graph + python)): " + std::to_string(ratio);
+  }
+
+  static ByteCodeRunStatistic *GetInstance() {
+    static ByteCodeRunStatistic instance;
+    return &instance;
+  }
+
+ private:
+  ByteCodeRunStatistic() = default;
+  std::map<uint64_t, size_t> py_;
+  std::map<uint64_t, size_t> graph_;
+};
+
 static void PrintGuardPerf() {
   std::map<std::string, std::pair<size_t, size_t>> guard_info;
   std::map<std::string, std::pair<size_t, size_t>> guard_freq_info;
@@ -101,27 +134,9 @@ static void ensureInitialize() {
     PyThread_tss_create(tss);
   }
   std::atexit([]() {
-    if (!kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf)) {
-      return;
-    }
-    for (const auto &i : TimeRecorder::data_) {
-      std::cout << i.first << " " << i.second.count << " times, " << (i.second.nano / TimeRecorder::scale) << " seconds"
-                << std::endl;
-    }
-
     if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogGuardPerf)) {
       PrintGuardPerf();
     }
-
-    size_t sum_code_py =
-      std::accumulate(code_size_execute_python.begin(), code_size_execute_python.end(), 0,
-                      [](size_t sum, const std::pair<uint64_t, size_t> &i) { return sum + (i.first * i.second); });
-    size_t sum_code_graph =
-      std::accumulate(code_size_execute_graph.begin(), code_size_execute_graph.end(), 0,
-                      [](size_t sum, const std::pair<uint64_t, size_t> &i) { return sum + (i.first * i.second); });
-
-    std::cout << "execute code ratio (graph / (graph + python)): "
-              << (sum_code_graph / static_cast<double>(sum_code_graph + sum_code_py)) << std::endl;
   });
 }
 
@@ -500,21 +515,28 @@ std::vector<py::object> GetAllArgs(JitCompileResults *jcr) {
   return args.cast<std::vector<py::object>>();
 }
 
-// preprocess before compile, split bytecode to sub-function
-// return whether the code should be modified
-static bool GraphCapture(JitCompileResults *jcr) {
-  MS_EXCEPTION_IF_NULL(jcr->code);
-
-  GraphJitConfig &conf = *jcr->conf;
-
-  auto g = GraphBuilder::Creator(jcr->origin_frame_, conf.GetBoolConfig(GraphJitConfig::kTraceFlag));
-
-  if (conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
-    auto mg = std::dynamic_pointer_cast<MindGraphBuilder>(g);
-    mg->FGAddInputs(GetAllArgs(jcr));
+static void GraphCapture(JitCompileResults *jcr);
+static auto HandleBreakAtLoop(JitCompileResults *jcr, const GraphBuilderPtr &g) {
+  // one stage need adapter
+  if (g->GetGraph()->IsBreakAtLoopAfterUnrolling()) {
+    if (jcr->conf->GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
+      GRAPH_JIT_LOG_F("===> graph break after loop unrolling\n%s\n", g->GetGraph()->ToString(1).c_str());
+    }
+    // reset guard
+    jcr->code->SetGuard(std::make_shared<OptGuard>());
+    AddConfigToGuard(*jcr->conf, jcr->code->GetGuard());
+    // disable loop unroll
+    jcr->conf->SetBool<GraphJitConfig::kLoopUnrolling>(Py_False);
+    // restart captured
+    GraphCapture(jcr);
+    // reset config
+    jcr->conf->SetBool<GraphJitConfig::kLoopUnrolling>(Py_True);
+    return true;
   }
-  (void)g->TraceRun();
+  return false;
+}
 
+static auto HandleUnsupportedSyntax(JitCompileResults *jcr, const GraphBuilderPtr &g) {
   if (g->StackSize() > 0) {
     auto block = g->PeekStack(0);
     auto type = block.type;
@@ -523,48 +545,67 @@ static bool GraphCapture(JitCompileResults *jcr) {
       jcr->code->SetGuard(std::make_shared<OptGuard>());
       AddConfigToGuard(*jcr->conf, jcr->code->GetGuard());
       jcr->conf->SetBool<GraphJitConfig::kSkipException>(Py_True);
-      bool code_change = GraphCapture(jcr);
+      GraphCapture(jcr);
       g->GetTryBlockStacks().clear();
       jcr->conf->SetBool<GraphJitConfig::kSkipException>(Py_False);
-      return code_change;
+      return true;
     }
   }
+  return false;
+}
 
-  if (g->GetGraph()->IsBreakAtLoop() && !g->GetGraph()->RestoreLoopStatus()) {
-    jcr->stat = JitCompileResults::NEVER_COMPILE;
-    AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
-    return false;
+static auto TraceRun(JitCompileResults *jcr) {
+  TimeRecorder recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+
+  GraphJitConfig &conf = *jcr->conf;
+  GraphBuilderPtr g = GraphBuilder::Creator(jcr->origin_frame_, conf.GetBoolConfig(GraphJitConfig::kTraceFlag));
+
+  if (conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+    auto mg = std::dynamic_pointer_cast<MindGraphBuilder>(g);
+    mg->FGAddInputs(GetAllArgs(jcr));
   }
+  (void)g->TraceRun();
+  return g;
+}
 
+static void Inline(JitCompileResults *jcr, const GraphBuilderPtr &g) {
+  GraphJitConfig &conf = *jcr->conf;
   // One stage should skip inline process.
   if (!conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
     BytecodeInliner inliner(g->GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
     inliner.Run();
   }
+}
+
+static auto Analyze(const GraphBuilderPtr &g) {
+  TimeRecorder recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
 
   auto analyzer = GraphAnalyzer::Creator(g);
   analyzer->Analyze();
+  return analyzer;
+}
 
-  MarkBreak(g->GetGraph());
+// preprocess before compile, split bytecode to sub-function
+// return whether the code should be modified
+static void GraphCapture(JitCompileResults *jcr) {
+  MS_EXCEPTION_IF_NULL(jcr->code);
 
-  // one stage need adapter
-  if (g->GetGraph()->IsBreakAtLoopAfterUnrolling()) {
-    if (conf.GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
-      std::string repr = std::regex_replace(g->GetGraph()->ToString(), std::regex("\nbreak bci: [^-]"),
-                                            "\ngraph break after loop unrolling");
-      GRAPH_JIT_LOG_F("%s\n", repr.c_str());
-    }
-    // reset guard
-    jcr->code->SetGuard(std::make_shared<OptGuard>());
-    AddConfigToGuard(*jcr->conf, jcr->code->GetGuard());
-    // disable loop unroll
-    jcr->conf->SetBool<GraphJitConfig::kLoopUnrolling>(Py_False);
-    // restart captured
-    bool code_change = GraphCapture(jcr);
-    // reset config
-    jcr->conf->SetBool<GraphJitConfig::kLoopUnrolling>(Py_True);
-    return code_change;
+  GraphJitConfig &conf = *jcr->conf;
+  GraphBuilderPtr g = TraceRun(jcr);
+  if (HandleUnsupportedSyntax(jcr, g)) {
+    return;
   }
+  if (g->GetGraph()->IsBreakAtLoop() && !g->GetGraph()->RestoreLoopStatus()) {
+    jcr->stat = JitCompileResults::NEVER_COMPILE;
+    AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
+    return;
+  }
+  Inline(jcr, g);
+  GraphAnalyzerPtr analyzer = Analyze(g);
+  if (HandleBreakAtLoop(jcr, g)) {
+    return;
+  }
+  MarkBreak(g->GetGraph());
 
   // dump DFG
   if (conf.GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
@@ -593,7 +634,6 @@ static bool GraphCapture(JitCompileResults *jcr) {
   if (captured && !jcr->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
     jcr->stat = JitCompileResults::GRAPH_CAPTURED;
   }
-  return new_code.ptr() != reinterpret_cast<PyObject *>(jcr->origin_frame_->f_code);
 }
 
 static void CollectTraceBack(JitCompileResults *c, PyCodeObject *code, bool is_graph_mode) {
@@ -869,16 +909,14 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   // new guard code
   c->code = c->codehub->AddOptTarget(OptOption::CreateOptionByPoint(c));
   AddConfigToGuard(*c->conf, c->code->GetGuard());
-  bool code_changed = false;
 
   py::object frame = py::reinterpret_borrow<py::object>(reinterpret_cast<PyObject *>(c->origin_frame_));
   if (c->stat == JitCompileResults::GRAPH_CANDIDATE) {
-    TimeRecorder _time_recorder(TimeRecorder::kTimeCompileCapture,
-                                kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+    TimeRecorder time_recorder("kTimeCompileCapture", kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureProcess,
                                        "PIJitCapture");
     c->stat = JitCompileResults::GRAPH_BUILDING;
-    code_changed = GraphCapture(c);
+    GraphCapture(c);
     if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
       PyFrameObject *f = PrepareCallCompiledCallable(tstate, c->origin_frame_, c);
       frame = py::reinterpret_steal<py::object>(reinterpret_cast<PyObject *>(f));
@@ -891,8 +929,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   }
 
   if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
-    TimeRecorder _time_recorder(TimeRecorder::kTimeCompileGraph,
-                                kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+    TimeRecorder time_recorder("kTimeCompileGraph", kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureCompile,
                                        "PIJitCompile");
     c->stat = JitCompileResults::GRAPH_BUILDING;
@@ -911,7 +948,6 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   if (c->conf->GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
     GRAPH_JIT_LOG_F("%s\n", c->tbs->Dump().c_str());
 
-    GRAPH_JIT_LOG_F("code changed %d\n", code_changed);
     GRAPH_JIT_LOG_F("generated guard at %s\n", code_str.c_str());
     GRAPH_JIT_LOG_F("%s\n", c->code->GetGuard()->ToString().c_str());
   }
@@ -1003,8 +1039,6 @@ static py::object CallCompiledCallable(PyThreadState *tstate, PyFrameObject *f, 
   } else {
     res = _PyEval_EvalFrameDefault(tstate, new_f, 0);
   }
-
-  code_size_execute_python[PyBytes_GET_SIZE(new_f->f_code->co_code)]++;
 
   bci = new_f->f_lasti;
   Py_DECREF(new_f);
@@ -1166,8 +1200,9 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
   py::object res = graph_preferred ? CallGraph(c, args, kwvargs) : CallCompiledCallable(tstate, f, c);
   c->code->Inc();
 
-  if (graph_preferred) {
-    code_size_execute_graph[PyBytes_GET_SIZE(f->f_code->co_code)]++;
+  if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf)) {
+    PyObject *new_code = c->code->GetPythonCode() ? c->code->GetPythonCode()->co_code : f->f_code->co_code;
+    ByteCodeRunStatistic::GetInstance()->Count(graph_preferred ? f->f_code->co_code : new_code, graph_preferred);
   }
 
   // dump traceback
@@ -1182,7 +1217,8 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
 }
 
 static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
-  TimeRecorder _time_recorder(TimeRecorder::kTimeGuard, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+  TimeRecorder time_recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureGuard,
                                      "PIJitGuard");
   c->code = nullptr;
@@ -1231,7 +1267,7 @@ class JitSyntaxLevelScope {
 };
 
 static bool JitCompileWithTry(PyThreadState *tstate, JitCompileResults *c) {
-  TimeRecorder _time_recorder(TimeRecorder::kTimeCompile, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+  TimeRecorder time_recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
 
   JitSyntaxLevelScope jit_syntax_level_scope(c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag));
 

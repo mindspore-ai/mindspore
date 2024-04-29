@@ -154,6 +154,9 @@ static bool PrepareTraceParam(ValueNode *node, TraceVector *tv, int depth, int m
   for (auto it : inputs) {
     auto t = GetTrace(it, strict, print, depth + 1, max_depth);
     if (t == nullptr) {
+      if (it->GetTrace() != nullptr) {
+        tv->push_back(it->GetTrace());
+      }
       return false;
     } else if (t->GetTraceType() == TraceType::Unsupported) {
       *has_unsupported = true;
@@ -390,9 +393,10 @@ bool Graph::GuardInlinedFunc(CallNode *call_node) {
   return true;
 }
 
-static std::string TraceInferFailed(ValueNode *node) {
+static std::string TraceInferFailed(ValueNode *node, int depth = 0) {
+  std::string prefix(depth << 1, ' ');
   std::stringstream s;
-  s << node << " ";
+  s << prefix << node << " ";
   switch (node->GetType()) {
     case AbstractNode::Call:
     case AbstractNode::Value: {
@@ -425,12 +429,10 @@ static std::string TraceInferFailed(ValueNode *node) {
     s << AObject::ToString(op);
     return s.str();
   }
-  s << "<NULL>:\n";
+  s << "<NULL>:" << std::endl;
   for (size_t i = 0; i < node->getInputs().size(); ++i) {
-    s << " " << std::regex_replace(TraceInferFailed(node->input(i)), std::regex("\n"), "\n  ") << "\n";
+    s << prefix << " " << TraceInferFailed(node->input(i), depth + 1) << std::endl;
   }
-  s.seekp(-1, s.cur);
-  s << " ";
   return s.str();
 }
 

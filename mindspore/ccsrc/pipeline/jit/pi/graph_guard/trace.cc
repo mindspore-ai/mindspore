@@ -282,6 +282,11 @@ int Trace::GetDepth() const { return depth_; }
 
 TracePtr Trace::Optimize() { return nullptr; }
 
+std::string Trace::FormatString(std::map<Trace *, size_t> *cache) {
+  cache->insert(std::make_pair(this, cache->size()));
+  return "%" + std::to_string(cache->find(this)->second) + " = " + this->ToString();
+}
+
 RootTrace::RootTrace(PyObject *pObj, TraceType tt, int index, std::string name, std::string module_name)
     : Trace(pObj, nullptr), idx_(index), name_(name), module_name_(module_name) {
   depth_ = 1;
@@ -296,6 +301,9 @@ RootTrace::RootTrace(PyObject *pObj, TraceType tt, int index, std::string name, 
   if (!is_const_ && (module_name.find(kMindSporePackPrefix) == 0 || module_name.find(kMindtorchPackPrefix) == 0 ||
                      name.find(kCastToAdapterTensor) == 0 || name.find(kCastToMSTensor) == 0)) {
     is_const_ = true;
+  }
+  if (curType_ == TraceType::Deref) {
+    is_const_ = false;
   }
   if (pObj == nullptr) {
     return;
@@ -1106,7 +1114,14 @@ static PyObject *DoCall(const std::vector<PyObject *> &params, int op, const std
     auto inst = mindspore::pijit::InferEngine::GetInstance();
     list.insert(list.begin(), params.begin() + 1, params.end());
     bool is_abstract = false;
-    return inst->InferPrimitive(params[0], list, &is_abstract);
+    try {
+      return inst->InferPrimitive(params[0], list, &is_abstract);
+    } catch (py::error_already_set &e) {
+      MS_LOG(ERROR) << "InferPrimitive failed " << std::endl << e.what();
+    } catch (py::builtin_exception &e) {
+      MS_LOG(ERROR) << "InferPrimitive failed " << std::endl << e.what();
+    }
+    return nullptr;
   }
 
   size_t nargs = (params.size() - 1);
@@ -1919,18 +1934,24 @@ std::string OpTrace::ToString(bool include_param) {
   return ret;
 }
 
-std::string OpTrace::FormatString() {
+std::string OpTrace::FormatString(std::map<Trace *, size_t> *cache) {
   std::stringstream s;
-  s << "operation" << Opcode(opcode_).name() << " " << opargs_;
-  if (!name_.empty()) {
-    s << ",name: " << name_;
-  }
-  s << ":\n";
+  std::stringstream params_str;
+  params_str << "(";
   for (auto i : params_) {
-    s << "| " << std::regex_replace(i->FormatString(), std::regex("\n"), "\n| ") << "\n";
+    if (cache->find(i.get()) == cache->end()) {
+      s << i->FormatString(cache) << std::endl;
+    }
+    params_str << "%" << (cache->find(i.get())->second) << ", ";
   }
-  s.seekp(-1, s.cur);
-  s << " ";
+  params_str << ")";
+
+  cache->insert(std::make_pair(this, cache->size()));
+  s << "%" << cache->find(this)->second << " = operation " << Opcode(opcode_).name() << " " << opargs_;
+  if (!name_.empty()) {
+    s << ", name: " << name_;
+  }
+  s << ": " << params_str.str();
   return s.str();
 }
 
@@ -2586,14 +2607,25 @@ std::string UnsupportedTrace::ToString(bool include_param) {
   return ret;
 }
 
-std::string UnsupportedTrace::FormatString() {
+std::string UnsupportedTrace::FormatString(std::map<Trace *, size_t> *cache) {
   std::stringstream s;
-  s << "unsupported " << Opcode(op_).name() << " " << arg_ << ":\n";
+  std::stringstream params_str;
+  params_str << "(";
   for (auto i : params_) {
-    s << "| " << std::regex_replace(i->FormatString(), std::regex("\n"), "\n| ") << "\n";
+    if (cache->find(i.get()) == cache->end()) {
+      s << i->FormatString(cache) << std::endl;
+    }
+    params_str << "%" << (cache->find(i.get())->second) << ", ";
+    if (i->GetTraceType() == TraceType::Unsupported) {
+      params_str << "...";
+      break;
+    }
   }
-  s.seekp(-1, s.cur);
-  s << " ";
+  params_str << ")";
+
+  cache->insert(std::make_pair(this, cache->size()));
+  s << "%" << cache->find(this)->second << " = unsupported " << Opcode(op_).name() << " " << arg_ << ": "
+    << params_str.str();
   return s.str();
 }
 
