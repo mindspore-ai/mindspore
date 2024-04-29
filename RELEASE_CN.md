@@ -2686,7 +2686,7 @@ AGroupofProbiotocs, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bing
 
 #### Auto Parallel
 
-- [STABLE] 对接AllToAll单算子模式。在KernelByKernel的执行模式下，支持AllToAll算子调用。
+- [STABLE] 对接AllToAll单算子模式。在图编译等级为O0下，支持AllToAll算子调用。
 - [STABLE] 整图下沉支持MPI启动。整图下沉的模式下，支持使用MPI的方式启动。
 - [STABLE] 模型权重的Seed提供并行接口配置。在用户不通过mindspore.set_seed设置随机数种子时，每个参数初始化的随机数种子为当前分片索引决定。当配置随机数种子之后，相同shape以及相同切分策略的权重，其初始化的结果一致。
 - [STABLE] HCCL屏蔽内部全连接/非全连接。允许一次训练过程中同时有全连接AllToAllv和分级AllToAllv。
