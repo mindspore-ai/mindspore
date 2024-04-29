@@ -60,7 +60,7 @@ class PrimitivePy : public Primitive {
   void AddBackwardHookFn(const int &key, const py::function &backward_hook_fn);
   void RemoveBackwardHookFn(const int &key);
   BaseRef RunHookFunction(const VectorRef &args) const;
-  BaseRef RunCustomBpropFunction(const py::tuple &py_args) const;
+  BaseRef RunCellCustomBpropFunction(const py::tuple &py_args) const;
   BaseRef RunCustomOpBpropFunction(const py::tuple &py_args) const;
   BaseRef RunCellHookFunction(const py::tuple &py_args) const;
   BaseRef RunVariableHookFunction(const py::tuple &py_args, bool is_tensor_hook) const;

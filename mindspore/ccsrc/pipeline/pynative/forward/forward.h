@@ -53,8 +53,6 @@ class ForwardExecutor {
     RunOpFrontend(std::forward<decltype(PH1)>(PH1));
   };
 
-  void DispatchBackendTask(const FrontendOpRunInfoPtr &op_run_info,
-                           const session::BackendOpRunInfoPtr &backend_op_run_info);
   void DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_info);
   void RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info);
   // If sub is true, this function will not convert StubTensor to Tensor.
