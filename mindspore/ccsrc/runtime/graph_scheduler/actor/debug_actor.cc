@@ -157,6 +157,20 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
       ACLDump(device_id, graphs, is_kbyk);
     }
   }
+#ifndef ENABLE_SECURITY
+  if (DumpJsonParser::GetInstance().e2e_dump_enabled() && !graphs.empty()) {
+    // First graph is the dataset graph when dataset_sink_mode = True
+    auto graph = graphs[0];
+    bool is_dataset_sink = graph->IsDatasetGraph();
+    uint32_t cur_step = DumpJsonParser::GetInstance().cur_dump_iter();
+    if (cur_step == 1 && DumpJsonParser::GetInstance().GetDatasetSink()) {
+      uint32_t init_step = 0;
+      DumpJsonParser::GetInstance().UpdateDumpIter(init_step);
+      MS_LOG(INFO) << "In dataset sink mode, reset step to init_step: " << init_step;
+    }
+    DumpJsonParser::GetInstance().SetDatasetSink(is_dataset_sink);
+  }
+#endif
   if (backend == "ge") {
     return;
   }
