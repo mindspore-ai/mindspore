@@ -53,16 +53,16 @@ int GroupNormGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
 
   const auto &x_shape_vector = inputs[kIndex1]->GetShapeVector();
-  batch_ = x_shape_vector[kIndex0];
-  num_channel_ = x_shape_vector[kIndex1];
+  batch_ = LongToSize(x_shape_vector[kIndex0]);
+  num_channel_ = LongToSize(x_shape_vector[kIndex1]);
   HxW_ = (x_shape_vector.size() == kNumberTwo)
            ? 1
            : std::accumulate(x_shape_vector.begin() + kIndex2, x_shape_vector.end(), 1, std::multiplies<int64_t>());
-  num_groups_ = inputs[kIndex5]->GetValueWithCheck<int64_t>();
-  inner_size_ = LongToSize(num_channel_ * HxW_ / num_groups_);
+  num_groups_ = LongToSize(inputs[kIndex5]->GetValueWithCheck<int64_t>());
+  inner_size_ = num_channel_ * LongToSize(HxW_) / num_groups_;
 
-  const size_t dscale_shape_size = LongToSize(batch_ * num_channel_) * sizeof(float);
-  const size_t dbias_shape_size = LongToSize(batch_ * num_channel_) * sizeof(float);
+  const size_t dscale_shape_size = batch_ * num_channel_ * sizeof(float);
+  const size_t dbias_shape_size = batch_ * num_channel_ * sizeof(float);
 
   workspace_size_list_.clear();
   workspace_size_list_ = {dscale_shape_size, dbias_shape_size};
@@ -94,10 +94,10 @@ void GroupNormGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
   auto *dscale = reinterpret_cast<float *>(workspace[kIndex0]->device_ptr());
   auto *dbias = reinterpret_cast<float *>(workspace[kIndex1]->device_ptr());
 
-  for (size_t idx = 0; idx < LongToSize(batch_ * num_channel_); ++idx) {
+  for (size_t idx = 0; idx < batch_ * num_channel_; ++idx) {
     float ds_val = 0.0;
     float db_val = 0.0;
-    for (size_t j = idx * HxW_; j < (idx + 1) * HxW_; ++j) {
+    for (size_t j = idx * LongToSize(HxW_); j < (idx + 1) * LongToSize(HxW_); ++j) {
       ds_val += static_cast<float>(dy[j]) * static_cast<float>(x[j]);
       db_val += static_cast<float>(dy[j]);
     }
@@ -105,7 +105,7 @@ void GroupNormGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
     dbias[idx] = db_val;
   }
 
-  for (size_t param_index = 0; param_index < LongToSize(num_channel_); ++param_index) {
+  for (size_t param_index = 0; param_index < num_channel_; ++param_index) {
     float dg = 0.0;
     float db = 0.0;
     for (size_t j = 0; j < LongToSize(batch_); ++j) {
@@ -124,7 +124,7 @@ void GroupNormGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
       float sum2 = 0.0;
       float sum3 = 0.0;
       for (size_t j = i * inner_size_; j < (i + 1) * inner_size_; ++j) {
-        auto param_index = (j / HxW_) % num_channel_;
+        auto param_index = (j / LongToSize(HxW_)) % num_channel_;
         auto dxm = static_cast<float>(x[j]) - static_cast<float>(mean[i]);
         auto dyg = static_cast<float>(dy[j] * gamma[param_index]);
         sum1 += dyg * dxm;
@@ -138,7 +138,7 @@ void GroupNormGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
       auto dx3 = 2.0 * sum1 * inv_inner_size;
       auto dx4 = (-1.0 * static_cast<float>(rstd[i]) * sum2 + inv_inner_size * sum1 * sum3) * inv_inner_size;
       for (size_t j = i * inner_size_; j < (i + 1) * inner_size_; ++j) {
-        auto param_index = (j / HxW_) % num_channel_;
+        auto param_index = (j / LongToSize(HxW_)) % num_channel_;
         auto dx1 = static_cast<float>(dy[j] * gamma[param_index]);
         auto dx2 = static_cast<float>(x[j]) - static_cast<float>(mean[i]);
         dx[j] = static_cast<T>(dx1 * static_cast<float>(rstd[i]) + dx2 * dx3 + dx4);
