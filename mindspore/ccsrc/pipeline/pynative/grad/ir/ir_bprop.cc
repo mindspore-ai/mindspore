@@ -184,7 +184,7 @@ void IrBprop::BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &p
       fn = GetBpropFunction(prim->name());
     }
     if (!fn || py::isinstance<py::none>(fn)) {
-      MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << py::str(fn);
+      MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << ConvertPyObjToString(fn);
       return;
     }
     (void)prim_py->AddBackwardHookFn(0, fn);
@@ -346,6 +346,7 @@ void IrBprop::BackPropagate() {
   UpdateLazyUser();
   const auto &last_node_reverse_iter = GetLastNodeReverseIter();
   SeenNum seen = NewSeenGeneration();
+  MS_LOG(DEBUG) << "Is running recompute grad " << is_run_recompute_;
   for (auto iter = last_node_reverse_iter; iter != ad_param_->variable_adjoint_set_.rend(); ++iter) {
     const auto &variable = *iter;
     if (!variable->is_need_propagate() || !variable->is_need_grad()) {
@@ -362,9 +363,12 @@ void IrBprop::BackPropagate() {
       fn->set_accumulate_dout(PyNativeAlgo::AutoGrad::BuildSpecialNode(
         fn->tape(), variable->out_value(), fn->accumulate_dout()->abstract(), SpecialType::kZerosLikeType));
     }
+    // If register hook by weight, and weight in recompute cell.So, hook will execute, which is not expect.
+    if (!is_run_recompute_) {
+      fn->set_accumulate_dout(pass_forward_->PassBackwardHook(variable->out_value(), fn->accumulate_dout()));
+    }
     // Replace real dout to fake dout, update replace result to eliminate tuplegetitem
     // when accumulate_dout is tuplegetitem
-    fn->set_accumulate_dout(pass_forward_->PassBackwardHook(variable->out_value(), fn->accumulate_dout()));
     Replace(fn->fake_dout(), fn->accumulate_dout(), &ad_param_->users_.dout_user_, true);
     // replace edges which exist fake dout
     fn->ReplaceEdges();

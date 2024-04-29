@@ -148,12 +148,13 @@ bool IsNeedComputeGrad(const ValuePtr &input) {
 
 ValuePtrList CallBackwardHooks(const ValuePtr &value, ValuePtrList *grad_in) {
   if (value == nullptr) {
+    MS_LOG(DEBUG) << "Get null value";
     return *grad_in;
   }
   MS_EXCEPTION_IF_NULL(grad_in);
   auto tensor = value->cast<tensor::BaseTensorPtr>();
   if (tensor == nullptr) {
-    MS_LOG(DEBUG) << "Get not tensor input value " << value->ToString();
+    MS_LOG(DEBUG) << "Hook just work on tensor, not support value " << value->ToString();
     return *grad_in;
   }
   auto auto_grad_meta = tensor->auto_grad_meta_data();
@@ -290,7 +291,8 @@ ValuePtrList GraphRoot::BuildFlattenSensGradient(const ValuePtrList &sens_gradie
   return real_gradients;
 }
 
-FuncGrad::FuncGrad(const ValuePtrList &input_param_values, size_t op_num_in_bprop_graph, bool grad_by_value) {
+FuncGrad::FuncGrad(const ValuePtrList &input_param_values, size_t op_num_in_bprop_graph, bool grad_by_value,
+                   bool is_run_recompute) {
   MS_LOG(DEBUG) << "Start FuncGrad, input size: " << input_param_values.size();
   for (size_t i = 0; i < input_param_values.size(); ++i) {
     const auto &input_param_value = input_param_values[i];
@@ -307,6 +309,7 @@ FuncGrad::FuncGrad(const ValuePtrList &input_param_values, size_t op_num_in_bpro
     (void)variable_set_.insert(variable);
     (void)cell_inputs_.emplace_back(input_param_value, variable);
   }
+  is_run_recompute_ = is_run_recompute;
   device_target_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   func_impl_ = std::make_shared<FuncBuilder>("func_emitter", device_target_);
 }
@@ -421,6 +424,7 @@ void FuncGrad::BackPropagate() {
   const auto &root_fn = (*last_node_reverse_iter)->func_node();
   mindspore::HashMap<BackwardNode *, ValuePtrList> input_buffer;
   (void)input_buffer.insert({root_fn.get(), root_gradients_});
+  MS_LOG(DEBUG) << "Is running recompute grad " << is_run_recompute_;
   for (auto iter = last_node_reverse_iter; iter != variable_set_.rend(); ++iter) {
     const auto &variable = *iter;
     const auto &fn = variable->func_node();
@@ -437,7 +441,10 @@ void FuncGrad::BackPropagate() {
     }
     auto &gradient_in = input_buffer[fn.get()];
     MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(gradient_in, "Begin print gradient in: ");
-    gradient_in = CallBackwardHooks(fn->op_output(), &gradient_in);
+    // If register hook by weight, and weight in recompute cell.So, hook will execute, which is not expect.
+    if (!is_run_recompute_) {
+      gradient_in = CallBackwardHooks(fn->op_output(), &gradient_in);
+    }
     auto gradient_out = fn->CallBackward(gradient_in);
     MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(gradient_out, "Begin print gradient out: ");
     if (gradient_out.size() != fn->next_edges().size()) {
@@ -538,7 +545,7 @@ BackwardNodePtr FuncGrad::BuildCustomBackwardNode(const PrimitivePtr &prim, cons
       fn = GetBpropFunction(prim->name());
     }
     if (!fn || py::isinstance<py::none>(fn)) {
-      MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << py::str(fn);
+      MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << ConvertPyObjToString(fn);
       return std::make_shared<FakeBackwardNode>(prim->name());
     }
     (void)prim_py->AddBackwardHookFn(0, fn);

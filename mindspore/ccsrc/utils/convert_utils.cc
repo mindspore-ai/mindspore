@@ -839,37 +839,46 @@ TypeId GetConversionType(const TypeId &current, bool current_arg_is_tensor, bool
   if (current == saved_type_id) {
     return current;
   }
-  if (MS_UNLIKELY(black_types.find(current) != black_types.end() ||
-                  black_types.find(saved_type_id) != black_types.end())) {
-    return kTypeUnknown;
-  }
 
-  auto hash_id = GetHashId(current, saved_type_id);
-  // BFloat16 + Float16
-  if (hash_id == hash_fp16_bf16) {
-    // If Parameter exists, its type_id should be equal to the saved_type_id,
-    // otherwise it means that the wrong type cast will be performed on Parameter.
-    if (saved_type_id == ref_type_id) {
-      MS_LOG(WARNING) << "There is an implicit type conversion from " << TypeIdToString(current) << " to "
-                      << TypeIdToString(saved_type_id)
-                      << ", which may result in loss of precision. It is recommended to use Float32.";
-      return saved_type_id;
+  bool cur_is_in_black = black_types.find(current) != black_types.end();
+  bool saved_is_in_black = black_types.find(saved_type_id) != black_types.end();
+  if (!cur_is_in_black && !saved_is_in_black) {
+    auto hash_id = GetHashId(current, saved_type_id);
+    // BFloat16 + Float16
+    if (hash_id == hash_fp16_bf16) {
+      // If Parameter exists, its type_id should be equal to the saved_type_id,
+      // otherwise it means that the wrong type cast will be performed on Parameter.
+      if (saved_type_id == ref_type_id) {
+        MS_LOG(WARNING) << "There is an implicit type conversion from " << TypeIdToString(current) << " to "
+                        << TypeIdToString(saved_type_id)
+                        << ", which may result in loss of precision. It is recommended to use Float32.";
+        return saved_type_id;
+      }
+      if (is_parameter) {
+        MS_LOG(WARNING) << "There is an implicit type conversion from " << TypeIdToString(saved_type_id) << " to "
+                        << TypeIdToString(current)
+                        << ", which may result in loss of precision. It is recommended to use Float32.";
+        return current;
+      }
+      return kNumberTypeFloat32;
     }
-    if (is_parameter) {
-      MS_LOG(WARNING) << "There is an implicit type conversion from " << TypeIdToString(saved_type_id) << " to "
-                      << TypeIdToString(current)
-                      << ", which may result in loss of precision. It is recommended to use Float32.";
-      return current;
-    }
-    return kNumberTypeFloat32;
-  }
 
-  // Tensor + Scalar, Scalar + Tensor
-  if (MS_UNLIKELY(current_arg_is_tensor ^ saved_has_tensor)) {
-    return ConvertTypeBetweenTensorAndScalar(current, saved_type_id, hash_id);
+    // Tensor + Scalar, Scalar + Tensor
+    if (MS_UNLIKELY(current_arg_is_tensor ^ saved_has_tensor)) {
+      return ConvertTypeBetweenTensorAndScalar(current, saved_type_id, hash_id);
+    }
+    // Tensor + Tensor, Scalar + Scalar
+    return ConvertTypeForTensorsOrScalars(current, saved_type_id, hash_id);
+  } else if (cur_is_in_black && !saved_is_in_black) {
+    // Current is in black, but saved is not in block
+    return saved_type_id;
+  } else if (!cur_is_in_black) {
+    // Current is not in black, but saved is in block
+    return current;
+  } else {
+    // All in black, git higher
+    return current > saved_type_id ? current : saved_type_id;
   }
-  // Tensor + Tensor, Scalar + Scalar
-  return ConvertTypeForTensorsOrScalars(current, saved_type_id, hash_id);
 }
 }  // namespace
 

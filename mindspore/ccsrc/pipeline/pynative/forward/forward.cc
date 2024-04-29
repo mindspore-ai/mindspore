@@ -1058,7 +1058,9 @@ void ForwardExecutor::ClearRes() {
     item.second->ClearOpExecutorResource();
   }
   init_ = false;
+  enable_async_ = false;
   is_jit_compiling_ = false;
+  last_target_ = "Unknown";
   cast_operation()->ClearRes();
   ClearNodeAbsMap();
   infer_operation()->ClearPrimAbsList();
