@@ -1,0 +1,25 @@
+#operator index_add_ext
+index_add_ext:
+    args:
+        input:
+            dtype: tensor
+        index:
+            dtype: tensor
+        source:
+            dtype: tensor
+        axis:
+            dtype: int
+        alpha:
+            dtype: number
+            default: 1
+    args_signature:
+        rw_write: input
+        dtype_group: (input, source)
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: IndexAddExtAscend
+    function:
+        disable: True

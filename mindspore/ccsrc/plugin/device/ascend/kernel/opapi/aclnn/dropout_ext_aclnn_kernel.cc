@@ -21,12 +21,13 @@ namespace mindspore {
 namespace kernel {
 void DropoutExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {
+  MS_EXCEPTION_IF_NULL(primitive_);
   p_value_ = static_cast<double>(inputs[kIndex1]->GetValueWithCheck<float>());
   seed_value_ = inputs[kIndex2]->GetValueWithCheck<int64_t>();
   offset_value_ = inputs[kIndex3]->GetValueWithCheck<int64_t>();
   dtype_value_ = inputs[kIndex0]->dtype_id();
 
-  MS_LOG(DEBUG) << "(" + TypeIdToString(inputs[kIndex1]->dtype_id()) + ")p = " << p_value_;
+  MS_LOG(DEBUG) << primitive_->name() << " got a (" << TypeIdToString(inputs[kIndex1]->dtype_id()) << ")p " << p_value_;
 
   GetWorkspaceForResize(inputs[kIndex0], p_value_, seed_value_, offset_value_, dtype_value_, outputs[kIndex0],
                         outputs[kIndex1]);
