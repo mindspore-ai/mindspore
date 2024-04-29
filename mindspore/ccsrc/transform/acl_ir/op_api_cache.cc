@@ -24,7 +24,7 @@ typedef void (*AddTensorAddrToCachedList)(void *addr);
 
 void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
   if (tensor == nullptr || tensor->type_id() == kMetaTypeNone) {
-    MemcpyToBuf("None", 5);
+    MemcpyToBuf("None", kSizeFive);
     return;
   }
 
