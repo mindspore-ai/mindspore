@@ -1546,8 +1546,15 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
   if (c == nullptr) {
     return false;
   }
+  auto new_config = mindspore::pijit::GraphJitConfig(tag);
+  // When switching between one-stage and two-stage, reset the config.
+  if (c->conf->GetBoolConfig(pijit::GraphJitConfig::kTraceFlag) !=
+      new_config.GetBoolConfig(pijit::GraphJitConfig::kTraceFlag)) {
+    c->code = nullptr;
+    c->codehub = std::make_shared<pijit::OptCodeHub>();
+  }
   if (c->stat != mindspore::pijit::JitCompileResults::NEVER_COMPILE) {
-    *c->conf = mindspore::pijit::GraphJitConfig(tag);
+    *c->conf = new_config;
     return true;
   }
 
@@ -1564,7 +1571,7 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
   }
 
   c->stat = mindspore::pijit::JitCompileResults::GRAPH_CANDIDATE;
-  *c->conf = mindspore::pijit::GraphJitConfig(tag);
+  *c->conf = new_config;
   *c->tbs = mindspore::pijit::Tracebackes(raw_func_name, raw_func_info_name, raw_code_size);
   return true;
 }
