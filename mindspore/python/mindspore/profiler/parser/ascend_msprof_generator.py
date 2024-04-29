@@ -129,7 +129,10 @@ class AscendMsprofDataGenerator:
         """read op statistic to memory"""
         op_statistic = []
         op_statistic_name = fr'{self.mindstudio_profiler_output}/op_statistic_*.csv'
-        op_statistic_file = get_newest_file(glob.glob(op_statistic_name))[0]
+        op_statistic_files = glob.glob(op_statistic_name)
+        if not op_statistic_files:
+            return
+        op_statistic_file = get_newest_file(op_statistic_files)[0]
         with open(op_statistic_file, newline='') as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for row in reader:
@@ -140,7 +143,8 @@ class AscendMsprofDataGenerator:
                 )
                 new_row = tuple(['0' if d == 'N/A' else d for d in new_row])
                 op_statistic.append(new_row)
-
+        if not op_statistic:
+            return
         op_statistic_dt = np.dtype(self.op_statistic_type)
         self.op_statistic = np.array(op_statistic, dtype=op_statistic_dt)
         self.op_statistic['Total Time'] *= 1e-3

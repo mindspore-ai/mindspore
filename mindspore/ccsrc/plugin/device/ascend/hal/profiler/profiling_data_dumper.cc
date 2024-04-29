@@ -160,7 +160,6 @@ uint64_t Utils::GetPid() {
 template <typename T>
 void RingBuffer<T>::Init(size_t capacity) {
   capacity_ = capacity;
-  mask_ = capacity_ - 1;
   data_queue_.resize(capacity);
   is_inited_ = true;
   is_quit_ = false;
@@ -174,7 +173,6 @@ void RingBuffer<T>::UnInit() {
     write_index_ = 0;
     idle_write_index_ = 0;
     capacity_ = 0;
-    mask_ = 0;
     is_quit_ = true;
     is_inited_ = false;
   }
@@ -182,37 +180,32 @@ void RingBuffer<T>::UnInit() {
 
 template <typename T>
 size_t RingBuffer<T>::Size() {
-  size_t curr_read_index = read_index_.load(std::memory_order_relaxed);
-  size_t curr_write_index = write_index_.load(std::memory_order_relaxed);
-  if (curr_read_index > curr_write_index) {
-    return capacity_ - (curr_read_index & mask_) + (curr_write_index & mask_);
+  size_t curr_read_index = read_index_.load(std::memory_order_acquire);
+  size_t curr_write_index = write_index_.load(std::memory_order_acquire);
+  if (curr_read_index >= curr_write_index) {
+    return 0;
   }
   return curr_write_index - curr_read_index;
 }
 
 template <typename T>
+bool RingBuffer<T>::Full() {
+  size_t curr_write_index = write_index_.load(std::memory_order_acquire);
+  if (curr_write_index >= capacity_) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+template <typename T>
 bool RingBuffer<T>::Push(T data) {
   size_t curr_write_index = 0;
-  size_t next_write_index = 0;
-  size_t cycles = 0;
-  do {
-    if (!is_inited_ || is_quit_) {
-      return false;
-    }
-    cycles++;
-    if (cycles >= 1024) {
-      return false;
-    }
-    size_t curr_read_index = read_index_.load(std::memory_order_relaxed);
-    curr_write_index = idle_write_index_.load(std::memory_order_relaxed);
-    next_write_index = curr_write_index + 1;
-    if ((next_write_index & mask_) == (curr_read_index & mask_)) {
-      return false;
-    }
-  } while (!idle_write_index_.compare_exchange_weak(curr_write_index, next_write_index));
-  size_t index = curr_write_index & mask_;
-  data_queue_[index] = std::move(data);
-  write_index_++;
+  curr_write_index = write_index_.fetch_add(1, std::memory_order_acquire);
+  if (curr_write_index >= capacity_) {
+    return false;
+  }
+  data_queue_[curr_write_index] = std::move(data);
   return true;
 }
 
@@ -221,15 +214,19 @@ T RingBuffer<T>::Pop() {
   if (!is_inited_) {
     return nullptr;
   }
-  size_t curr_read_index = read_index_.load(std::memory_order_relaxed);
-  size_t curr_write_index = write_index_.load(std::memory_order_relaxed);
-  if ((curr_read_index & mask_) == (curr_write_index & mask_) && !is_quit_) {
+  size_t curr_read_index = read_index_.fetch_add(1, std::memory_order_acquire);
+  size_t curr_write_index = write_index_.load(std::memory_order_acquire);
+  if (curr_read_index >= curr_write_index || curr_read_index >= capacity_) {
     return nullptr;
   }
-  size_t index = curr_read_index & mask_;
-  T data = std::move(data_queue_[index]);
-  read_index_++;
+  T data = std::move(data_queue_[curr_read_index]);
   return data;
+}
+
+template <typename T>
+void RingBuffer<T>::Reset() {
+  write_index_ = 0;
+  read_index_ = 0;
 }
 
 ProfilingDataDumper::ProfilingDataDumper() : path_(""), start_(false), init_(false) {}
@@ -237,7 +234,7 @@ ProfilingDataDumper::ProfilingDataDumper() : path_(""), start_(false), init_(fal
 ProfilingDataDumper::~ProfilingDataDumper() { UnInit(); }
 
 void ProfilingDataDumper::Init(const std::string &path, size_t capacity) {
-  MS_LOG(INFO) << "init profiling data dumper.";
+  MS_LOG(INFO) << "init profiling data dumper, capacity: " << capacity;
   path_ = path;
   data_chunk_buf_.Init(capacity);
   init_.store(true);
@@ -263,10 +260,6 @@ void ProfilingDataDumper::Start() {
   if (!init_.load() || !Utils::CreateDir(path_)) {
     return;
   }
-  if (Thread::Start() != 0) {
-    MS_LOG(ERROR) << "profiling data dumper thread start failed.";
-    return;
-  }
   start_.store(true);
 }
 
@@ -274,7 +267,6 @@ void ProfilingDataDumper::Stop() {
   MS_LOG(INFO) << "stop profiling data dumper.";
   if (start_.load() == true) {
     start_.store(false);
-    Thread::Stop();
   }
   Flush();
 }
@@ -302,30 +294,34 @@ void ProfilingDataDumper::GatherAndDumpData() {
   }
 }
 
-void ProfilingDataDumper::Run() {
-  for (;;) {
-    if (!start_.load()) {
-      break;
-    }
-    if (data_chunk_buf_.Size() > kNotifyInterval) {
-      GatherAndDumpData();
-    } else {
-      usleep(kMaxWaitTimeUs);
-    }
-  }
-}
-
 void ProfilingDataDumper::Flush() {
-  while (data_chunk_buf_.Size() != 0) {
+  MS_LOG(INFO) << "data_chunk_buf_.Size: " << data_chunk_buf_.Size();
+  while (data_chunk_buf_.Size() > 0) {
     GatherAndDumpData();
   }
+  data_chunk_buf_.Reset();
 }
 
 void ProfilingDataDumper::Report(std::unique_ptr<BaseReportData> data) {
   if (!start_.load() || data == nullptr) {
     return;
   }
-  data_chunk_buf_.Push(std::move(data));
+  int i = 0;
+  while (is_flush_.load() && i < 10) {
+    usleep(kMaxWaitTimeUs);
+    i++;
+  }
+  if (!data_chunk_buf_.Push(std::move(data))) {
+    is_flush_.store(true);
+    std::lock_guard<std::mutex> flush_lock_(flush_mutex_);
+    if (data_chunk_buf_.Full()) {
+      Flush();
+    }
+    is_flush_.store(false);
+    if (!data_chunk_buf_.Push(std::move(data))) {
+      MS_LOG(ERROR) << "profiling data Report failed.";
+    }
+  }
 }
 
 void ProfilingDataDumper::Dump(const std::map<std::string, std::vector<uint8_t>> &dataMap) {
