@@ -18,7 +18,6 @@
 #include <vector>
 #include <string>
 #include "ops/fusion/flash_attention.h"
-#include "ops/fusion/matmul_allreduce.h"
 
 namespace mindspore::transform {
 // KVCacheMgr
