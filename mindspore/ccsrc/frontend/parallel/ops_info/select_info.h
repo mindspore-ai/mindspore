@@ -46,6 +46,7 @@ class SelectInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  bool CheckIsBroadcast(const std::vector<int64_t> &shape1, const std::vector<int64_t> &shape2);
 };
 
 class BetaincInfo : public SelectInfo {
