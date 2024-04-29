@@ -37,12 +37,13 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
     scope_index = 1
     cpu_index = 2
 
-    def __init__(self, profiling_dir, source_path, mindstudio_profiler_output, rank_id, mode):
+    def __init__(self, profiling_dir, source_path, mindstudio_profiler_output, rank_id, rank_size, mode):
         super().__init__(DeviceTarget.ASCEND.value, mode)
         self._profiling_dir = profiling_dir
         self._source_path = source_path
         self._mindstudio_profiler_output = mindstudio_profiler_output
         self._rank_id = rank_id
+        self._rank_size = rank_size
         self._timeline_display_filename = self._timeline_display_filename.format(rank_id)
         self._timeline_summary_filename = self._timeline_summary_filename.format(rank_id)
         self._timeline_data = []
@@ -180,8 +181,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         fwk_file_path = fr'{self._profiling_dir}/{self._framework_dir}/{oprange_name}'
         if os.path.exists(fwk_file_path):
             # It is faster not to submit to the pool
-            msprof_side_data = msprof_timeline
-            result = self._parse_fwk_device_data(msprof_side_data)
+            result = self._parse_fwk_device_data(msprof_timeline)
             timeline_data.extend(result.get("trace_data", []))
             self._kernel_events = result.get("kernels", [])
 
@@ -489,10 +489,9 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
     def _compute_time_inside_step(self, metric_timeline, step_time_list):
         """Compute per step time of metric_timeline."""
-        per_step_time_list = [0 for i in range(len(step_time_list))]
+        per_step_time_list = [0 for _ in range(len(step_time_list))]
         step = 0
-        step_end_time = step_time_list[step][self._start_time_idx] + \
-                        step_time_list[step][self._duration_idx]
+        step_end_time = step_time_list[step][self._start_time_idx] + step_time_list[step][self._duration_idx]
         for time_item in metric_timeline:
             start_time = time_item[self._start_time_idx]
             if start_time > step_end_time:
@@ -502,8 +501,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                                    "find the data length is more than step count, "
                                    "maybe current graph has multi sub graph, skip the last data.")
                     break
-                step_end_time = step_time_list[step][self._start_time_idx] + \
-                                step_time_list[step][self._duration_idx]
+                step_end_time = step_time_list[step][self._start_time_idx] + step_time_list[step][self._duration_idx]
             per_step_time_list[step] += time_item[self._duration_idx]
 
         return per_step_time_list

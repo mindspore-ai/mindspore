@@ -742,7 +742,6 @@ class Profiler:
         stage_num = get_auto_parallel_context("pipeline_stages")
 
         ProfilerInfo.set_parallel_info(parallel_mode, stage_num)
-        ProfilerInfo.set_rank_size(self._rank_size)
         ProfilerInfo.set_heterogeneous(self._is_heterogeneous)
         if offline_path:
             ProfilerInfo.set_analyse_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
@@ -1136,6 +1135,7 @@ class Profiler:
             self._rank_size = get_group_size()
         else:
             self._rank_size = int(os.getenv('RANK_SIZE', '1'))
+        ProfilerInfo.set_rank_size(self._rank_size)
 
         if self._has_started:
             self.stop()
@@ -1254,7 +1254,7 @@ class Profiler:
         try:
             logger.info("Profiling: analyzing the timeline data")
             timeline_analyser = AscendTimelineGenerator(self._output_path, source_path, mindstudio_profiler_output,
-                                                        self._rank_id, context.get_context('mode'))
+                                                        self._rank_id, self._rank_size, context.get_context('mode'))
             timeline_analyser.parse_cluster_data(op_summary, steptrace)
             timeline_analyser.parse_timeline_data(pretty=self._pretty_json)
             timeline_analyser.write_timeline_display()
@@ -1506,6 +1506,8 @@ class Profiler:
             self._rank_size = get_group_size()
         else:
             self._rank_size = int(os.getenv('RANK_SIZE', '1'))
+
+        ProfilerInfo.set_rank_size(self._rank_size)
 
         if self._has_started:
             self.stop()
