@@ -32,6 +32,8 @@ bool MultiMatmulsFusion::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(mng);
   const auto &node_users_map = mng->node_users();
   auto node_list = TopoSort(graph->output());
+  constexpr size_t kMatMulFfnNum = 2;
+  constexpr size_t kMatMulQkvNum = 3;
 
   for (const auto &node : node_list) {
     AnfNodePtrList user_matmuls;
@@ -46,9 +48,9 @@ bool MultiMatmulsFusion::Run(const FuncGraphPtr &graph) {
       continue;
     }
     AnfNodePtrList getitems;
-    if (user_matmuls.size() == 2) {
+    if (user_matmuls.size() == kMatMulFfnNum) {
       Process("MatmulFfn", node, user_matmuls, &getitems);
-    } else if (user_matmuls.size() == 3) {
+    } else if (user_matmuls.size() == kMatMulQkvNum) {
       Process("MatmulQkv", node, user_matmuls, &getitems);
     } else {
       MS_LOG(INFO) << "user_matmuls.size() == " << user_matmuls.size();
@@ -71,7 +73,8 @@ void MultiMatmulsFusion::Process(const std::string &name, const AnfNodePtr &node
     auto matmul = user->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(matmul);
     // insert "B, trans_a, trans_b"
-    fused_inputs.insert(fused_inputs.end(), matmul->inputs().begin() + 2, matmul->inputs().end());
+    constexpr int64_t fused_begin_index = 2;
+    fused_inputs.insert(fused_inputs.end(), matmul->inputs().begin() + fused_begin_index, matmul->inputs().end());
     new_abs.push_back(user->abstract());
   }
   auto fused_matmul = node->func_graph()->NewCNode(fused_inputs);
