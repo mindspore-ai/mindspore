@@ -566,6 +566,9 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
   }
 
   std::string op_name = common::AnfAlgo::GetCNodeName(node);
+   if (op_name == "ReshapeExt") {
+    enable_internal = true;
+  }
   std::string disable_name_list = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
   std::vector<std::string> op_name_vec = SplitString(disable_name_list, ',');
   if (std::any_of(op_name_vec.begin(), op_name_vec.end(),

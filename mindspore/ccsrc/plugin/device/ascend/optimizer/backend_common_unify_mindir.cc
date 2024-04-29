@@ -60,7 +60,6 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/add_rms_norm_fusion.h"
 #include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/mc2_fusion.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/shape_reshape_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/matmul_allreduce_fusion.h"
 
 namespace mindspore {
@@ -136,7 +135,6 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
 #ifdef ENABLE_INTERNAL_KERNELS
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MultiMatmulsFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddLayernormFusion>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::ShapeReshapeFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddRmsNormFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatMulAllReduceFusion>());
 #endif  // ENABLE_INTERNAL_KERNELS
