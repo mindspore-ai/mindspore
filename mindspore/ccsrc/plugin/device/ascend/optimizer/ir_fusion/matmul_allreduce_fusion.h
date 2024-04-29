@@ -32,7 +32,7 @@ class MatMulAllReduceFusion : public PatternProcessPass {
 
  private:
   virtual AnfNodePtr CreateMatMulAllReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
-  PrimitivePtr CreateMatMulAllReducePrim(const PrimitivePtr &allreduce_prim, const PrimitivePtr &matmul_prim) const;
+  PrimitivePtr CreateMatMulAllReducePrim(const PrimitivePtr &allreduce_prim, const CNodePtr &matmul_node) const;
 
  protected:
   const std::string kAttrNameGroup = "group";

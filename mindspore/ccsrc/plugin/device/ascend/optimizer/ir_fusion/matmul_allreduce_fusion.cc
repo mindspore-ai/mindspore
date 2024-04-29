@@ -51,16 +51,18 @@ const BaseRef MatMulAllReduceFusion::DefinePattern() const {
 }
 
 PrimitivePtr MatMulAllReduceFusion::CreateMatMulAllReducePrim(const PrimitivePtr &allreduce_prim,
-                                                              const PrimitivePtr &matmul_prim) const {
+                                                              const CNodePtr &matmul_node) const {
   // create op
   auto matmul_allreduce_prim = prim::kPrimMatMulAllReduce->Clone();
   MS_CHECK_TRUE_RET(matmul_allreduce_prim, {});
+  auto transpose_a_node = matmul_node->input(kIndex3)->cast<ValueNodePtr>();
+  auto transpose_b_node = matmul_node->input(kIndex4)->cast<ValueNodePtr>();
   // add attr
   matmul_allreduce_prim->AddAttr(kAttrNameGroup, allreduce_prim->GetAttr(kAttrNameGroup));
   matmul_allreduce_prim->AddAttr(kAttrNameFusion, allreduce_prim->GetAttr(kAttrNameFusion));
   matmul_allreduce_prim->AddAttr(kAttrNameOp, allreduce_prim->GetAttr(kAttrNameOp));
-  matmul_allreduce_prim->AddAttr(kAttrNameTransposeA, matmul_prim->GetAttr(kAttrNameTransposeA));
-  matmul_allreduce_prim->AddAttr(kAttrNameTransposeB, matmul_prim->GetAttr(kAttrNameTransposeB));
+  matmul_allreduce_prim->AddAttr(kAttrNameTransposeA, transpose_a_node->value());
+  matmul_allreduce_prim->AddAttr(kAttrNameTransposeB, transpose_b_node->value());
   return matmul_allreduce_prim;
 }
 
@@ -73,7 +75,6 @@ AnfNodePtr MatMulAllReduceFusion::CreateMatMulAllReduceNode(const FuncGraphPtr &
   auto allreduce_prim = GetCNodePrimitive(allreduce_cnode);
   auto matmul_cnode = allreduce_cnode->input(kIndex1)->cast<CNodePtr>();
   MS_ASSERT(matmul_cnode != nullptr);
-  auto matmul_prim = GetCNodePrimitive(matmul_cnode);
   auto input_x_node = matmul_cnode->input(kIndex1);
   MS_ASSERT(input_x_node != nullptr);
   auto input_y_node = matmul_cnode->input(kIndex2);
@@ -84,7 +85,7 @@ AnfNodePtr MatMulAllReduceFusion::CreateMatMulAllReduceNode(const FuncGraphPtr &
     return nullptr;
   }
 
-  auto matmul_allreduce_prim_c = CreateMatMulAllReducePrim(allreduce_prim, matmul_prim);
+  auto matmul_allreduce_prim_c = CreateMatMulAllReducePrim(allreduce_prim, matmul_cnode);
   std::vector<AnfNodePtr> matmul_allreduce_inputs = {input_x_node, input_y_node};
 
   auto matmul_allreduce_cnode = func_graph->NewCNode(matmul_allreduce_prim_c, matmul_allreduce_inputs);
