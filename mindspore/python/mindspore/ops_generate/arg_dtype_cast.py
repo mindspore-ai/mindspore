@@ -20,15 +20,23 @@ import mindspore as ms
 from mindspore import ops
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations._sequence_ops import TensorToScalar, TensorToTuple
-from mindspore.ops_generate.gen_ops_inner_prim import ListToTuple, TupleToList
+from mindspore.ops_generate.gen_ops_inner_prim import TupleToList
 from mindspore._c_expression import OpDtype
 
 tensor_to_tuple_ = TensorToTuple()
-list_to_tuple = ListToTuple()
 tuple_to_list = TupleToList()
+
 
 def int_to_float(data):
     return float(data)
+
+
+def list_to_tuple(data):
+    # tuple() currently does not support Any from JIT Fallback.
+    res = ()
+    for element in data:
+        res += (element,)
+    return res
 
 
 def scalar_to_tuple(data):
@@ -60,6 +68,7 @@ def tuple_to_tensor(data):
 
 def list_to_tensor(data):
     return ops.tuple_to_array(list_to_tuple(data))
+
 
 # There will be some problems in using OpDtype.xxx directly in GRAPH_MODE, so convert it to int.
 # type
@@ -243,6 +252,6 @@ def type_it(op_name, arg_name, data, src_type, dst_type):
     dst_type = int(dst_type)
     if not is_instance_in(data, src_type) and not is_instance_of(data, dst_type):
         support_list = get_support_dtype_list(src_type, dst_type)
-        raise TypeError(f"For '{op_name}', the type of '{arg_name}' should be one of '[{support_list}]', " \
+        raise TypeError(f"For '{op_name}', the type of '{arg_name}' should be one of '[{support_list}]', "
                         f"but got {type(data)}.")
     return do_type_cast(data, dst_type)
