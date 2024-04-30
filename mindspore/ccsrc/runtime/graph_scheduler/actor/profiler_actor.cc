@@ -104,6 +104,7 @@ void ProfilerActor::ProfilerOnStepEnd(OpContext<DeviceTensor> *const op_context,
   step_count = total_running_count_;
   if (backend == "ge") {
     AscendStepEnd();
+    device_ctx_->device_res_manager_->SyncAllStreams();
     MS_LOG(INFO) << "Profiler_actor ProfilerOnStepEnd.";
     return;
   }
