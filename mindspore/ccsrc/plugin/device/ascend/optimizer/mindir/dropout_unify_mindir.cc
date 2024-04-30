@@ -257,11 +257,11 @@ CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePt
   dropout_gen_mask->set_scope(dropout->scope());
   common::AnfAlgo::CopyNodeAttrs(dropout, dropout_gen_mask);
   auto dropout_gen_mask_primitive = common::AnfAlgo::GetCNodePrimitive(dropout_gen_mask);
-  auto seed0 = dropout->input(kIndex3)->cast<ValueNodePtr>()->value();
-  auto seed1 = dropout->input(kIndex4)->cast<ValueNodePtr>()->value();
   if (enable_keep_prob) {
     dropout_gen_mask_primitive->set_attr("enable_keep_prob", MakeValue(true));
   } else {
+    auto seed0 = dropout->input(kIndex3)->cast<ValueNodePtr>()->value();
+    auto seed1 = dropout->input(kIndex4)->cast<ValueNodePtr>()->value();
     dropout_gen_mask_primitive->set_attr(kAttrSeed0, seed0);
     dropout_gen_mask_primitive->set_attr(kAttrSeed1, seed1);
   }

@@ -47,6 +47,7 @@ from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d
                                          replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
                                          constant_pad_nd_op, dropout_ext_op)
 from mindspore.ops.auto_generate.gen_ops_prim import embedding_op, Convolution
+from mindspore.nn.generator import default_generator
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -1389,7 +1390,8 @@ def dropout_ext(input, p=0.5, training=True, seed=None):
     check_bool_const(training, "training", "dropout_ext")
     if training is False:
         return input
-    seed, offset = _get_seed(seed, "dropout_ext")
+    generator = default_generator()
+    seed, offset = generator(1)
     out, _ = dropout_ext_op(input, p, seed, offset)
     return out
 

@@ -3647,6 +3647,7 @@ REG_BPROP_BUILDER("ProdExt").SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex4);
   auto out_dtype = ib->GetDtype(out);
   auto dout = ib->GetInput(kIndex5);
+  auto dout_dtype = ib->GetDtype(dout);
   auto dx = input;
   if (ib->GetRank(input) == 0) {
     return {dout, ib->OutZeros(axis), ib->OutZeros(keep_dims), ib->OutZeros(dtype)};
@@ -3662,7 +3663,7 @@ REG_BPROP_BUILDER("ProdExt").SetBody(BODYFUNC(ib) {
 
     auto all_false_branch = [&dx](const Emitter *e) -> NodePtrList { return {dx}; };
     auto no_zero_true_branch = [&](Emitter *e) -> NodePtrList {
-      return {e->Cast(e->Mul(dout, e->Div(out, e->Cast(input, out_dtype))), input_dtype)};
+      return {e->Cast(e->Mul(dout, e->Cast(e->Div(out, e->Cast(input, out_dtype)), dout_dtype)), input_dtype)};
     };
     dx = ib->Conditional(has_no_zero, no_zero_true_branch, all_false_branch);
 
@@ -3701,12 +3702,12 @@ REG_BPROP_BUILDER("ProdExt").SetBody(BODYFUNC(ib) {
     }
 
     auto zero_input = ib->ZerosLike(input);
-    auto zero_mask = ib->Cast(ib->Equal(input, zero_input), kInt64);
+    auto zero_mask = ib->Equal(input, zero_input);
     auto zero_num = ib->Emit("SumExt", {zero_mask, ib->EmitValue(kNone), ib->Value(false), ib->EmitValue(kNone)});
     auto has_no_zero = ib->Equal(zero_num, ib->Tensor(static_cast<int64_t>(0)));
 
     auto no_zero_true_branch = [&](Emitter *e) -> NodePtrList {
-      return {e->Cast(e->Mul(dout, e->Div(out, e->Cast(input, out_dtype))), input_dtype)};
+      return {e->Cast(e->Mul(dout, e->Cast(e->Div(out, e->Cast(input, out_dtype)), dout_dtype)), input_dtype)};
     };
     auto no_zero_false_branch = [&](Emitter *e) -> NodePtrList {
       auto grad = e->Tile(dout, res[kIndex1]);

@@ -8,9 +8,11 @@ dropout_ext:
             default: 0.5
         seed:
             dtype: int
+            type_cast: tensor
             default: 0
         offset:
             dtype: int
+            type_cast: tensor
             default: 0
     labels:
         side_effect_hidden: True
