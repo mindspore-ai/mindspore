@@ -1,0 +1,25 @@
+#operator moe_finalize_routing
+moe_finalize_routing:
+  args:
+    expanded_x:
+      dtype: tensor
+    x1:
+      dtype: tensor
+    x2:
+      dtype: tensor
+      default: None
+    bias:
+      dtype: tensor
+      default: None
+    scales:
+      dtype: tensor
+      default: None
+    expanded_row_idx:
+      dtype: tensor
+      default: None
+    expanded_expert_idx:
+      dtype: tensor
+      default: None
+  returns:
+    y:
+      dtype: tensor
