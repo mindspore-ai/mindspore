@@ -13,10 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
+#include <utility>
 #include "backend/common/graph_kernel/model/node.h"
 #include "abstract/utils.h"
 
 namespace mindspore::graphkernel::inner {
+ConstScalarNode::ConstScalarNode(const ValuePtr &data)
+    : Node({DShape({}), kNumberTypeEnd, kOpFormat_DEFAULT}), data_(data) {
+  auto type_ptr = data->ToAbstract()->BuildType();
+  MS_EXCEPTION_IF_NULL(type_ptr);
+  type = type_ptr->type_id();
+}
+
+ConstTupleNode::ConstTupleNode(const ValuePtr &data, const size_t len)
+    : Node({DShape({SizeToLong(len)}), kNumberTypeEnd, kOpFormat_DEFAULT}), data_(data) {
+  auto type_ptr = data->ToAbstract()->BuildType();
+  MS_EXCEPTION_IF_NULL(type_ptr);
+  type = type_ptr->type_id();
+}
+
 void Node::SetBaseInfo(const NodeBaseList &baseinfo) {
   this->shape = baseinfo[0].shape;
   this->type = baseinfo[0].type;
