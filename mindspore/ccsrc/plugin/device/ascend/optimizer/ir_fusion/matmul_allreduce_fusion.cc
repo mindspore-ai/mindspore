@@ -113,7 +113,7 @@ const AnfNodePtr MatMulAllReduceFusion::Process(const mindspore::FuncGraphPtr &f
     return nullptr;
   }
   auto allreduce_cnode = node->cast<CNodePtr>();
-  if (allreduce_cnode->size() != 2) {
+  if (allreduce_cnode->size() != kSizeTwo) {
     return nullptr;
   }
 

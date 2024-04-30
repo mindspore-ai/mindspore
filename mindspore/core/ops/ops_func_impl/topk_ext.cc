@@ -75,7 +75,7 @@ BaseShapePtr TopkExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   if (!x_shape.empty()) {
     auto ndims = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue()).value();
     if (ndims < 0) {
-      ndims = x_shape.size() + ndims;
+      ndims = SizeToLong(x_shape.size()) + ndims;
     }
     if (x_shape[ndims] != abstract::Shape::kShapeDimAny) {
       std::pair<int64_t, int64_t> k_range(0, x_shape[ndims]);
