@@ -18,6 +18,7 @@
 #include "ir/primitive.h"
 #include "backend/common/graph_kernel/expander/mindir_adapter/anf_node_holder.h"
 #include "backend/common/graph_kernel/model/op_register.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore::graphkernel::expander {
 NodePtr MindirEmitter::EmitOp(MetaOp op, const NodePtrList &args, const NodePtrDict &kargs) {
@@ -32,12 +33,25 @@ NodePtr MindirEmitter::EmitOp(MetaOp op, const NodePtrList &args, const NodePtrD
 NodePtrList MindirEmitter::Inputs(const CNodePtr &cnode) {
   NodePtrList result(cnode->size() - 1);
   auto &inputs = cnode->inputs();
-  (void)std::transform(inputs.cbegin() + 1, inputs.cend(), result.begin(), [this](const AnfNodePtr &node) {
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    auto node = inputs[i];
+    // Tensor has no device type in build_info, so skip
+    if (node->isa<ValueNode>()) {
+      result[i - 1] = NewNode(node);
+      continue;
+    }
     auto p = func_graph_->add_parameter();
     p->set_abstract(node->abstract());
-    p->set_kernel_info(node->kernel_info_ptr());
-    return NewNode(p);
-  });
+    // Parameter has no output type in build info, so create one from input of cnode
+    auto kernel_info = std::make_shared<device::KernelInfo>();
+    p->set_kernel_info(kernel_info);
+    auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+    MS_EXCEPTION_IF_NULL(builder);
+    builder->SetOutputsFormat({AnfAlgo::GetInputFormat(cnode, i - 1)});
+    builder->SetOutputsDeviceType({AnfAlgo::GetInputDeviceDataType(cnode, i - 1)});
+    kernel_info->set_select_kernel_build_info(builder->Build());
+    result[i - 1] = NewNode(p);
+  }
   infer_->HandleInputs(result);
   return result;
 }

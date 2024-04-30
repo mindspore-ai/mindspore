@@ -45,6 +45,16 @@ class ExpandDims : public OpDesc {
   }
 
  protected:
+  bool CheckInputs() override {
+    const auto &x = inputs_info_[0];
+    if (IsDynamicRank(x.shape) ||
+        std::count_if(x.shape.begin(), x.shape.end(), [](int64_t sh) { return sh < 0; }) > 1) {
+      MS_LOG(INFO) << "Skip dynamic shape case";
+      return false;
+    }
+    return true;
+  }
+
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
     auto target_shape = ExpandDims::InferShape(input_x->shape, GetAxisList(this->attrs_["axis"]));
@@ -84,12 +94,27 @@ class Squeeze : public OpDesc {
   }
 
  protected:
+  bool CheckInputs() override {
+    const auto &x = inputs_info_[0];
+    if (IsDynamicRank(x.shape)) {
+      MS_LOG(DEBUG) << "Skip dynamic rank case";
+      return false;
+    }
+    target_shape_ = Squeeze::InferShape(x.shape, GetAxisList(attrs_["axis"]));
+    if (std::count_if(target_shape_.begin(), target_shape_.end(), [](int64_t sh) { return sh < 0; }) > 1) {
+      MS_LOG(DEBUG) << "Skip dynamic shape case";
+      return false;
+    }
+    return true;
+  }
+
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
-    auto target_shape = Squeeze::InferShape(input_x->shape, GetAxisList(this->attrs_["axis"]));
-    auto result = gb.Reshape(input_x, target_shape);
+    auto result = gb.Reshape(input_x, target_shape_);
     return {result};
   }
+
+  ShapeVector target_shape_;
 };
 EXPANDER_OP_DESC_REGISTER("Squeeze", Squeeze);
 

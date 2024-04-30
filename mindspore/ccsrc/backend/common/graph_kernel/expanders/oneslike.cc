@@ -24,7 +24,8 @@ class OnesLike : public OpDesc {
 
  protected:
   bool CheckInputs() override {
-    auto x_shape = inputs_info_[0].shape;
+    const auto &x = inputs_info_[0];
+    auto x_shape = x.shape;
     if (IsDynamic(x_shape)) {
       MS_LOG(DEBUG) << "Skip dynamic shape case";
       return false;
