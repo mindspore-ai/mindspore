@@ -78,8 +78,7 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   void MapFreeMorphism();
   void BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din);
   void BackPropagateSwitchLayer(const CNodePtr &cnode_morph, const CNodePtr &env);
-  void BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app, const AdjointPtr &node_adjoint,
-                     bool side_effect_bprop_app_propagate = false);
+  void BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app, const AdjointPtr &node_adjoint);
   AnfNodePtr AttachFvDoutToTape(const AnfNodePtr &grad_fv);
   AnfNodePtr AttachIndirectFvDoutToTape(const AnfNodePtr &grad_fv);
   // Map CNode/Index of Primitive to K.
