@@ -35,48 +35,33 @@ constexpr size_t kNumberTwo = 2;
 void GroupNormGradAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
   const auto &x_shape = inputs[kIndex1]->GetShapeVector();
-  const int64_t N = x_shape[kIndex0];
-  const int64_t C = x_shape[kIndex1];
-  const int64_t HxW = (x_shape.size() == kNumberTwo)
-                        ? 1
-                        : std::accumulate(x_shape.begin() + 2, x_shape.end(), 1, std::multiplies<int64_t>());
-  auto num_groups = transform::ConvertKernelTensor<int64_t>(inputs[kIndex5]);
+  batch_ = x_shape[kIndex0];
+  channel_ = x_shape[kIndex1];
+  HxW_ = (x_shape.size() == kNumberTwo)
+           ? 1
+           : std::accumulate(x_shape.begin() + kIndex2, x_shape.end(), 1, std::multiplies<int64_t>());
+  num_groups_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex5]);
   auto dx_is_require = static_cast<uint8_t>(transform::ConvertKernelTensor<bool>(inputs[kIndex6]));
   auto dgamma_is_require = static_cast<uint8_t>(transform::ConvertKernelTensor<bool>(inputs[kIndex7]));
   auto dbeta_is_require = static_cast<uint8_t>(transform::ConvertKernelTensor<bool>(inputs[kIndex8]));
 
-  std::vector<uint8_t> output_mask{};
-  (void)output_mask.emplace_back(dx_is_require);
-  (void)output_mask.emplace_back(dgamma_is_require);
-  (void)output_mask.emplace_back(dbeta_is_require);
+  (void)output_mask_.emplace_back(dx_is_require);
+  (void)output_mask_.emplace_back(dgamma_is_require);
+  (void)output_mask_.emplace_back(dbeta_is_require);
 
-  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4], N, C, HxW,
-                        num_groups, output_mask, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]);
+  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4], batch_,
+                        channel_, HxW_, num_groups_, output_mask_, outputs[kIndex0], outputs[kIndex1],
+                        outputs[kIndex2]);
 }
 
 bool GroupNormGradAscend::Launch(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &workspace,
                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  const auto &x_shape = inputs[kIndex1]->GetShapeVector();
-  const int64_t N = x_shape[kIndex0];
-  const int64_t C = x_shape[kIndex1];
-  const int64_t HxW = (x_shape.size() == kNumberTwo)
-                        ? 1
-                        : std::accumulate(x_shape.begin() + 2, x_shape.end(), 1, std::multiplies<int64_t>());
-  auto num_groups = transform::ConvertKernelTensor<int64_t>(inputs[kIndex5]);
-  auto dx_is_require = static_cast<uint8_t>(transform::ConvertKernelTensor<bool>(inputs[kIndex6]));
-  auto dgamma_is_require = static_cast<uint8_t>(transform::ConvertKernelTensor<bool>(inputs[kIndex7]));
-  auto dbeta_is_require = static_cast<uint8_t>(transform::ConvertKernelTensor<bool>(inputs[kIndex8]));
-
-  std::vector<uint8_t> output_mask{};
-  (void)output_mask.emplace_back(dx_is_require);
-  (void)output_mask.emplace_back(dgamma_is_require);
-  (void)output_mask.emplace_back(dbeta_is_require);
 
   ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2],
-                                      inputs[kIndex3], inputs[kIndex4], N, C, HxW, num_groups, output_mask,
-                                      outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]));
+                                      inputs[kIndex3], inputs[kIndex4], batch_, channel_, HxW_, num_groups_,
+                                      output_mask_, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]));
   RunOp(stream_ptr, workspace);
   return true;
 }

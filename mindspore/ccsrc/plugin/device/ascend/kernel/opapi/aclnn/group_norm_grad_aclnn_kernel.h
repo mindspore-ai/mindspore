@@ -34,6 +34,12 @@ class GroupNormGradAscend : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+
+  int64_t batch_{1};
+  int64_t channel_{1};
+  int64_t HxW_{1};
+  int64_t num_groups_{1};
+  std::vector<uint8_t> output_mask_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

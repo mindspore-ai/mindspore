@@ -52,7 +52,7 @@ void LayerNormExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const Base
       PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
       LAUNCH_ACLNN(aclnnLayerNorm, device_context, op->stream_id(), input_tensor, normalized_shape_vector,
-                   weight_opt_tensor, bias_opt_tensor, eps_imm, outputs[0], outputs[1], outputs[2]);
+                   weight_opt_tensor, bias_opt_tensor, eps_imm, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]);
       MS_LOG(DEBUG) << "Run device task Add end";
     }));
 }

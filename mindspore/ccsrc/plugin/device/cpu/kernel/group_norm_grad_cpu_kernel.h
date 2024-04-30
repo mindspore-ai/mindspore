@@ -46,10 +46,10 @@ class GroupNormGradCpuKernelMod : public NativeCpuKernelMod {
   KernelFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, KernelFunc>> func_list_;
 
-  int64_t batch_{1};
-  int64_t num_channel_{1};
+  size_t batch_{1};
+  size_t num_channel_{1};
   int64_t HxW_{1};
-  int64_t num_groups_{1};
+  size_t num_groups_{1};
   size_t inner_size_{1};
 };
 }  // namespace kernel

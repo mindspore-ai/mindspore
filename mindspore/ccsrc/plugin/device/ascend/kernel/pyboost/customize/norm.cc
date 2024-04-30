@@ -24,10 +24,13 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+namespace {
+constexpr size_t kNumberTwo = 2;
+}  // namespace
 void NormAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_x_tensor,
                          const std::optional<ScalarPtr> &ord, const std::optional<ValueTuplePtr> &dim,
                          const BoolImmPtr &keepdim, const std::optional<Int64ImmPtr> &dtype) {
-  MS_LOG(DEBUG) << "Call start";
+  MS_LOG(DEBUG) << "Call Norm start";
   // Convert ValuePtr to c++ scalar
   OpRunner::InferOpOutput(op, input_x_tensor, ord, dim, keepdim, dtype);
   std::vector<int64_t> dim_vector{};
@@ -36,7 +39,7 @@ void NormAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPt
   }
   ScalarPtr ord_scalar = nullptr;
   if (!ord.has_value()) {
-    MAKE_SCALAR(2.0, kNumberTypeFloat32, ord_scalar);
+    MAKE_SCALAR(kNumberTwo, kNumberTypeFloat32, ord_scalar);
   } else {
     ord_scalar = ord.value();
   }
@@ -56,7 +59,7 @@ void NormAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPt
 
       LAUNCH_ACLNN(aclnnLinalgVectorNorm, device_context, op->stream_id(), input_x_tensor, ord_scalar, dim_vector,
                    keepdim_imm, out_dtype, outputs[kIndex0]);
-      MS_LOG(DEBUG) << "Launch end";
+      MS_LOG(DEBUG) << "Launch Norm end";
     }));
 }
 }  // namespace pyboost

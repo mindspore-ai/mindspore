@@ -5965,6 +5965,7 @@ def adaptive_avg_pool1d(input, output_size):
     input = squeeze_(input)
     return input
 
+
 def layer_norm(input, normalized_shape, weight=None, bias=None, eps=1e-5):
     r"""Applies the Layer Normalization to the input tensor.
 

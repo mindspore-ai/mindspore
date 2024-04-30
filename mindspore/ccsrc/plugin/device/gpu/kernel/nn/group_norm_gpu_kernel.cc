@@ -50,11 +50,6 @@ int GroupNormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
 
   const auto &x_shape = inputs[kIndex0]->GetShapeVector();
-  if (x_shape.size() < 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dims of input tesnor must be not less than 2 "
-                      << "but got: " << x_shape.size();
-  }
-
   auto batch = x_shape[0];
   auto num_groups = inputs[kIndex1]->GetValueWithCheck<int64_t>();
   HxW_ = LongToSize((x_shape.size() == kNumberTwo)
