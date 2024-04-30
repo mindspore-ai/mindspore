@@ -55,8 +55,8 @@ BaseShapePtr ArgMaxExtFuncImpl::InferShape(const PrimitivePtr &primitive,
       output_shape.assign(output_rank, abstract::Shape::kShapeDimAny);
     }
   } else {
-    auto output_rank = x_shape_vec.size() - 1;
-    output_shape.assign(output_rank, abstract::Shape::kShapeDimAny);
+    // dim is None, return index of flatten input
+    output_shape = ShapeVector{};
   }
   return std::make_shared<abstract::TensorShape>(output_shape);
 }
