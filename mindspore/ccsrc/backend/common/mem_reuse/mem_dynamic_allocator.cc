@@ -866,7 +866,7 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
         }
       }
       buf << ", block[" << i << "] stream id:" << mem_mng->mem_block_list_[i]->stream_id_
-          << "block size:" << mem_mng->mem_block_list_[i]->mem_block_size_ / kMBToByte
+          << " block size:" << mem_mng->mem_block_list_[i]->mem_block_size_ / kMBToByte
           << "M idle size:" << (mem_mng->mem_block_list_[i]->mem_block_size_ - mem_block_used_size) / kMBToByte << "M";
     }
 
