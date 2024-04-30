@@ -7867,6 +7867,7 @@ def matmul(input, other):
         On GPU, the supported dtypes are np.float16 and np.float32.
         On CPU, the supported dtypes are np.float16 and np.float32.
         The dtype of `input` and `other` must be same.
+        On Ascend, the rank of `input` or `other` must be between 1 and 6.
 
     Args:
         input (Tensor): Input tensor, scalar not allowed.
@@ -7884,7 +7885,8 @@ def matmul(input, other):
         TypeError: If the dtype of `input` and the dtype of `other` are not the same.
         ValueError: If the last dimension of `input` is not the same size as the
             second-to-last dimension of `other`, or if a scalar value is passed in.
-        ValueError: If the shape of `input` and `other` could not broadcast together.
+        ValueError: If the shape of `input` and `input` could not broadcast together.
+        RuntimeError: If the rank of `input` or `other` is less than 1 or greater than 6.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
