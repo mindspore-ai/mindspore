@@ -23,6 +23,7 @@
 #include <chrono>
 #include "pybind11/pybind11.h"
 #include "pipeline/jit/pi/pydef.h"
+#include "mindspore/core/ir/cell.h"
 
 namespace mindspore {
 namespace pijit {
@@ -86,6 +87,8 @@ class Utils {
   static void DisFuncObject(PyObject *);
   // alias python 'print(...)'
   static void PyBuiltinPrint(PyObject *);
+
+  static PyObject *MixedPrecisionTypeToDType(MixedPrecisionType mixedPrecisionType);
 };
 
 #define GRAPH_JIT_LOG_F PY_PRINT_F

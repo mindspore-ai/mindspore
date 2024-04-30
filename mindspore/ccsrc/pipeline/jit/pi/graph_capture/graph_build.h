@@ -286,6 +286,8 @@ class GraphBuilder {
   static const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> bytecode_meth_map_;
 
   bool HandleSideEffectOfFuncInWhiteList(CallNode *call_node, InferFunc);
+  bool DoMixedPrecisionLocalAccess(const Instr &instr, ValueNode *node);
+  ValueNode *DoMixedPrecisionAttrAccess(const Instr &instr, ValueNode *node, ValueNode *attr);
 };
 
 class MindGraphBuilder : public GraphBuilder {

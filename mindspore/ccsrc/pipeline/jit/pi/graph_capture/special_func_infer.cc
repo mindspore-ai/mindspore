@@ -679,6 +679,23 @@ bool InferMsApiFunc(CallNode *call_node) {
   return false;
 }
 
+bool InferMappingGet(CallNode *call_node) {
+  if (call_node->getInputs().size() == 2 &&
+      call_node->input(0)->GetVobj()->GetType() == AbstractObjectBase::kTypeBoundMethod) {
+    auto func_node = call_node->input(0);
+    auto self = func_node->input(0);
+    auto param_node = call_node->input(1);
+    if (self->IsConstantValue() && param_node->IsConstantValue()) {
+      Graph *g = call_node->GetSubGraph();
+      JustCallAndSetRes(call_node);
+      return CallNodeReturnConst(call_node, g, call_node->GetVobj());
+    }
+  }
+  SetCallResType<AObject::kTypeAnyValue>(call_node);
+  call_node->SetInlineReason(InlineReason::kInlineFunc_Type_Unsupported);
+  return false;
+}
+
 enum FuncKey {
   FUNC_KEY_EMPTY = 0,             // ""
   FUNC_KEY_PIJIT_CONSTEXPR,       // "pijit.constexpr"
@@ -698,6 +715,7 @@ enum FuncKey {
   FUNC_KEY_PSJIT_CONVERTMAP,      // "mindspore._extends.parse.resources.convert_object_map"
   FUNC_KEY_GRAPH_CELL,            // "mindspore.nn.cell.GraphCell"
   FUNC_KEY_MS_API,                // mindspore api
+  FUNC_KEY_MAPPING_GET,           // mapping get
   FUNC_KEY_COUNT,
 };
 static FuncKey FindFuncKey(const py::object &callable);
@@ -720,6 +738,7 @@ static const std::unordered_map<FuncKey, InferFunc> infer_func_map = {
   {FUNC_KEY_PSJIT_CONVERTMAP, InferConvertMap},
   {FUNC_KEY_GRAPH_CELL, SetCallResType<AObject::kTypeTensor>},
   {FUNC_KEY_MS_API, InferMsApiFunc},
+  {FUNC_KEY_MAPPING_GET, InferMappingGet},
 };
 
 static const std::unordered_map<FuncKey, InferFunc> mind_infer_func_map = {
@@ -776,6 +795,17 @@ static FuncKey KeyFinderFuncCodeId(const py::object &callable) {
   }
   auto iter = GetFuncKeyMap().find(reinterpret_cast<size_t>(func));
   return iter != GetFuncKeyMap().end() ? iter->second : FUNC_KEY_EMPTY;
+}
+
+static FuncKey KeyFinderMappingGet(const py::object &callable) {
+  auto callable_obj = callable.ptr();
+  if (PyMethod_Check(callable_obj)) {
+    callable_obj = PyMethod_GET_FUNCTION(callable_obj);
+    auto mapping_obj = Utils::GetModuleAttr("collections.abc", "Mapping");
+    auto mapping_get_obj = PyObject_GetAttrString(mapping_obj.ptr(), "get");
+    return callable_obj == mapping_get_obj ? FUNC_KEY_MAPPING_GET : FUNC_KEY_EMPTY;
+  }
+  return FUNC_KEY_EMPTY;
 }
 
 static FuncKey KeyFinderPrimitive(const py::object &callable) {
@@ -842,8 +872,8 @@ static FuncKey FindFuncKey(const py::object &callable) {
     return FUNC_KEY_EMPTY;
   }
   std::vector<FuncKey (*)(const py::object &callable)> finders = {
-    KeyFinderFuncId,   KeyFinderFuncCodeId, KeyFinderPrimitive,
-    KeyFinderMetaFunc, KeyFinderGraphCell,  KeyFinderSkipModule,  // must be last for check modules
+    KeyFinderFuncId,    KeyFinderFuncCodeId, KeyFinderPrimitive,  KeyFinderMetaFunc,
+    KeyFinderGraphCell, KeyFinderMappingGet, KeyFinderSkipModule,  // must be last for check modules
   };
   FuncKey res = FUNC_KEY_EMPTY;
   for (auto iter = finders.begin(), end = finders.end(); iter != end && res == FUNC_KEY_EMPTY; ++iter) {

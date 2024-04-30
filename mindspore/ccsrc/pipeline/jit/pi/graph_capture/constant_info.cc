@@ -249,10 +249,37 @@ static void MakeSpecializeConstantValue(ValueNode *node) {
   node->SetConstantValue(true);
 }
 
+static void MakeSpecificConstantInfo(ValueNode *node) {
+  if (!node) {
+    return;
+  }
+  // os.environ
+  if (node->GetOpcode() == LOAD_ATTR && node->input(0)->GetVobj() &&
+      node->input(0)->GetVobj()->GetType() == AObject::kTypeModule && node->input(0)->GetVobj()->GetPyObject().ptr()) {
+    auto module_obj = node->input(0)->GetVobj()->GetPyObject().ptr();
+    const std::string &name = node->GetName();
+    const char *module_name = PyModule_GetName(module_obj);
+    if (module_name == nullptr) {
+      PyErr_Clear();
+      return;
+    }
+    if (strncmp(module_name, "os", 2) == 0 && name == "environ") {
+      auto env_obj = PyObject_GetAttrString(module_obj, "environ");
+      node->SetConstantValue(true);
+      node->MakeConstantInfo()->set_value(env_obj);
+      node->SetOpcode(LOAD_CONST);
+      node->SetOparg(-1);
+      node->ClearInputs();
+      return;
+    }
+  }
+}
+
 void ConstantInfo::CollectConstantInfo(ValueNode *node) {
   MakeConstantFold(node);
   MakeCodeConstantInfo(node);
   MakeSpecializeConstantValue(node);
+  MakeSpecificConstantInfo(node);
 }
 
 void MakeConstantInfoOfPrimScalarToTensor(ValueNode *node) {
