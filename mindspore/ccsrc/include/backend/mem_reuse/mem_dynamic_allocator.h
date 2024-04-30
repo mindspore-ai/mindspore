@@ -46,6 +46,7 @@ namespace device {
 enum class DynamicMemBufStatus : int { kMemBufIdle, kMemBufUsed, kMemBufEagerFree, kMemBufUsedByEvent };
 // Memory allocator type is used to record the memory classification statistics information.
 enum class AllocatorType : int { kWeight, kConstantValue, kKernelOutput, kGraphOutput, kOther };
+constexpr int kShiftOffset = 2;
 constexpr int kAllocatorTypeNum = 5;
 // Alloc memory aligned according to 512 bytes.
 constexpr size_t kDynamicMemAlignSize = 512;
@@ -79,8 +80,7 @@ struct pair_hash {
   template <class L, class R>
   std::size_t operator()(const std::pair<L, R> &param) const {
     size_t hash = std::hash<L>{}(param.first);
-    const int shift_offset = 2;
-    hash <<= (sizeof(size_t) << shift_offset);
+    hash <<= (sizeof(size_t) << kShiftOffset);
     hash ^= std::hash<R>{}(param.second);
     return std::hash<size_t>{}(hash);
   }

@@ -19,6 +19,8 @@
 
 namespace mindspore {
 namespace device {
+constexpr size_t kDefaultStreamRefreshSize = 2;
+
 MultiStreamControllerPtr &MultiStreamController::GetInstance() {
   static std::once_flag init_flag = {};
   static MultiStreamControllerPtr multi_stream_controller = nullptr;
@@ -39,8 +41,7 @@ void MultiStreamController::Refresh(const DeviceContext *device_context) {
   if (stream_size == 0) {
     // CPU has no concept of stream, stream size must be zero.
     MS_LOG(INFO) << "Stream size is 0, will initialize with 2 streams.";
-    const size_t default_stream_size = 2;
-    stream_size = default_stream_size;
+    stream_size = kDefaultStreamRefreshSize;
   }
   task_id_on_stream_manager_[device_context].Resize(stream_size);
   if (event_pools_.count(device_context) == 0) {
