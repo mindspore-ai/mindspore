@@ -305,6 +305,7 @@ REG_ADPT_DESC(ArgMaxD, kArgMaxDOpName, ADPT_DESC(ArgMaxD))
 // ArgMaxV2
 INPUT_MAP(ArgMaxV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dimension)}};
 ATTR_INPUT_MAP(ArgMaxV2) = {{"axis", "dimension"}};
+INPUT_ATTR_MAP(ArgMaxV2) = {{kIndex3, ATTR_DESC(dtype, AnyTraits<GEType>())}};
 ATTR_MAP(ArgMaxV2) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMaxV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ArgMaxV2, kNameArgMaxV2, ADPT_DESC(ArgMaxV2))
