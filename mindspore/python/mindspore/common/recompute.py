@@ -14,7 +14,7 @@
 # ============================================================================
 """Defines other operators with functional form."""
 
-import logging
+from mindspore import log as logger
 from mindspore.nn.cell import Cell, _RecomputeCell
 from mindspore import context
 
@@ -26,7 +26,7 @@ def _check_validation(block):
         raise AssertionError("Recompute function now only support pynative mode, you can use \
                              Cell.recompute() in graph mode.")
     if block.construct.__code__.co_name == "staging_specialize":
-        logging.warning('Block\'s construct method decorated by @jit that recompute \
+        logger.warning('Block\'s construct method decorated by @jit that recompute \
                         function will not come into effect.')
     return True
 

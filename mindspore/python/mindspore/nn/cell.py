@@ -2589,6 +2589,7 @@ class _WrapCell(Cell):
     The warp cell is used by recompute cell,
     which can set mixed precision to warp cell
     """
+
     def __init__(self, function):
         super(_WrapCell, self).__init__()
         self.function = function
@@ -2619,26 +2620,44 @@ class _RecomputeCell(Cell):
         self.init_mixed_precision_type(block)
 
     def construct(self, *args, **kwargs):
+        _check_input_args_validate(self.net, args)
         self.args.append(args)
         self.kwargs.append(kwargs)
         return self.net(*args)
 
     def bprop(self, *args):
+        """
+        Custom grad method for recompute
+        :param args:
+        :return: input grad and weight grads
+        """
         grad_input = args[-1]
         input_args = self.args[-1]
         self.args.pop()
         self.kwargs.pop()
         grads = self.grad(self.net, self.internal_params)(*input_args, grad_input)
+
         weights = OrderedDict()
+        input_grads = list(grads[0])
+        _padding_input_grads(input_args, input_grads)
         for i, param in enumerate(self.internal_params):
             weights[param] = grads[1][i]
-        return grads[0], weights
+        return tuple(input_grads), weights
 
     def init_mixed_precision_type(self, block):
+        """
+        init mix precision
+        :param block:
+        :return:
+        """
         if isinstance(block, Cell):
+            # To avoid sub cell same name
+            block.check_names_and_refresh_name()
             self.internal_params = block.trainable_params()
             return
         if isinstance(block, MethodType) and isinstance(block.__self__, Cell):
+            # To avoid sub cell same name
+            block.__self__.check_names_and_refresh_name()
             self.internal_params = block.__self__.trainable_params()
             self.wrap_cell.set_mixed_precision_type(block.__self__.get_mixed_precision_type())
             self.net = self.wrap_cell
@@ -2657,3 +2676,42 @@ def _check_param_list_tuple(value):
         if not isinstance(item, Parameter):
             return False
     return True
+
+
+def _check_input_args_validate(block, args):
+    """
+    Check recompute input args validate
+    :param args:
+    :return:
+    """
+    if not any([isinstance(arg, Tensor) for arg in args]):
+        logger.warning("None of the inputs of function are tensors, which not need use recompute!")
+    for arg in args:
+        if isinstance(arg, (tuple, list)):
+            for data in arg:
+                if isinstance(data, Tensor):
+                    logger.info("For recompute block {}, tensor input in Tuple or list \
+                                will not calculate grads!".format(block))
+                    break
+
+
+def _padding_input_grads(args, input_grads):
+    """
+    Padding input grads to same as input args
+    :param args:
+    :param input_grads:
+    :return:
+    """
+    for i, arg in enumerate(args):
+        if isinstance(arg, (list, tuple)):
+            if all([not isinstance(data, Tensor) for data in arg]):
+                input_grads.insert(i, None)
+            else:
+                # None is placeholder
+                grads = [None for data in arg]
+                input_grads.insert(i, grads)
+        elif not isinstance(arg, Tensor):
+            input_grads.insert(i, None)
+    if len(args) != len(input_grads):
+        raise ValueError("For recompute cell, the input grads size should be same as input args size: {}, \
+                         but got {}".format(len(args), len(input_grads)))
