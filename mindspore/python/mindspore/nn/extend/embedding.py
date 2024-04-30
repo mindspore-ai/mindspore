@@ -49,7 +49,7 @@ class Embedding(Cell):
             of the index in `input`. Default ``False``.
         _weight (Tensor, optional): Used to initialize the weight of Embedding. If ``None``, the weight will be
             initialized from normal distribution :math:`{N}(\text{sigma=1.0}, \text{mean=0.0})`. Default ``None``.
-        dtype (mindspore.dtype) : Dtype of Parameters. It is meaningless when `_weight` is not None.
+        dtype (mindspore.dtype, optional) : Dtype of Parameters. It is meaningless when `_weight` is not None.
             Default: ``mindspore.float32``.
 
     Inputs:
@@ -83,7 +83,6 @@ class Embedding(Cell):
           [ 0.00233847 -0.00596091  0.00536799]
           [-0.0024154  -0.01203444  0.00811537]
           [-0.0024154  -0.01203444  0.00811537]]
-
          [[ 0.00233847 -0.00596091  0.00536799]
           [ 0.00233847 -0.00596091  0.00536799]
           [-0.0024154  -0.01203444  0.00811537]

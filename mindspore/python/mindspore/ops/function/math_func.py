@@ -3646,7 +3646,7 @@ def nanmedian(input, axis=-1, keepdims=False):
 
     .. warning::
         `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
-          unless it is unique.
+        unless it is unique.
 
     Args:
         input (Tensor): The input tensor to calculate the median and indices.
