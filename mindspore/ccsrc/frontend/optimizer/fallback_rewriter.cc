@@ -927,6 +927,12 @@ class AfterOptARewriter : public BaseRewriter {
     if (not_convert_jit_) {
       return cnode;
     }
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the DictGetItem statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
+      return nullptr;
+    }
     MS_EXCEPTION_IF_NULL(cnode);
     // Inputs should be [dict_setitem, dict, item]
     const size_t expect_inputs_size = 3;
@@ -1105,6 +1111,12 @@ class AfterOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertMakeDict(const CNodePtr &node) const {
     if (not_convert_jit_) {
       return node;
+    }
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the MakeDict statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
+      return nullptr;
     }
     const auto &fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
@@ -1647,6 +1659,12 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertMakeSlice(const CNodePtr &cnode) const {
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      MS_LOG(WARNING) << "When using the MakeSlice statement with some syntaxes that is not supported in graph mode, "
+                      << "it is best to set jit_syntax_level to LAX.\n";
+      return nullptr;
+    }
     MS_EXCEPTION_IF_NULL(cnode);
     const auto &fg = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
@@ -1878,15 +1896,15 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertMakeRange(const CNodePtr &cnode) const {
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    if (!CheckInputsHasAnyType(cnode) && !HasPyExecuteInput(cnode)) {
+      return nullptr;
+    }
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
       MS_LOG(WARNING) << "When using the range statement with some syntaxes that is not supported in graph mode, "
                       << "it is best to set jit_syntax_level to LAX.\n";
-      return nullptr;
-    }
-    const auto &fg = cnode->func_graph();
-    MS_EXCEPTION_IF_NULL(fg);
-    if (!CheckInputsHasAnyType(cnode) && !HasPyExecuteInput(cnode)) {
       return nullptr;
     }
     auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "range");
