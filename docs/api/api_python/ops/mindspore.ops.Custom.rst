@@ -13,21 +13,83 @@ mindspore.ops.Custom
     .. note::
         不同自定义算子的函数类型（func_type）支持的平台类型不同。每种类型支持的平台如下：
 
-        - "hybrid": ["Ascend", "GPU", "CPU"].
-        - "akg": ["Ascend", "GPU", "CPU"].
-        - "tbe": ["Ascend"].
+        - "hybrid": ["GPU", "CPU"].
+        - "akg": ["GPU", "CPU"].
         - "aot": ["GPU", "CPU"].
         - "pyfunc": ["CPU"].
         - "julia": ["CPU"].
-        - "aicpu": ["Ascend"].
-
-        当运行在ge后端时，通过 `CustomRegOp` 生成"aicpu"和"tbe"类型的自定义算子的算子信息，通过 `custom_info_register` 将算子信息绑定到"tbe"类型的自定义算子的 `func` 上，然后将"aicpu"类型的自定义算子的算子信息以及"tbe"类型的自定义算子的 `func` 实现保存在一个或多个文件里，并且将这些文件保存在一个单独的目录里，在网络运行前将此目录的绝对路径设置到环境变量"MS_DEV_CUSTOM_OPP_PATH"。
 
     参数：
         - **func** (Union[function, str]) - 自定义算子的函数表达。
+
+          - function：如果 `func` 是函数类型，那么 `func` 应该是一个Python函数，它描述了用户定义的操作符的计算逻辑。该函数可以是以下之一：
+            
+            1. AKG操作符实现函数，可以使用ir builder/tvm compute/hybrid语法。
+            2. 纯Python函数。
+            3. 使用Hybrid DSL编写的带有装饰器的内核函数。
+
+          - 字符串：如果 `func` 是字符串类型，那么 `str` 应该是包含函数名的文件路径。当 `func_type` 是"aot"或"julia"时，可以使用这种方式。
+
+            1. 对于"aot"：
+
+               目前"aot"支持GPU/CPU（仅Linux）平台。"aot"意味着提前编译，在这种情况下，Custom直接启动用户定义的"xxx.so"文件作为操作符。用户需要提前将手写的"xxx.cu"/"xxx.cc"文件编译成"xxx.so"，并提供文件路径和函数名。
+
+               - "xxx.so"文件生成：
+
+                 1) GPU平台：给定用户定义的"xxx.cu"文件（例如"{path}/add.cu"），使用nvcc命令进行编译（例如"nvcc --shared -Xcompiler -fPIC -o add.so add.cu"）。
+
+                 2) CPU平台：给定用户定义的"xxx.cc"文件（例如"{path}/add.cc"），使用g++/gcc命令进行编译（例如"g++ --shared -fPIC  -o add.so add.cc"）。
+
+               - 定义"xxx.cc"/"xxx.cu"文件：
+
+                 "aot"是一个跨平台的标识符。"xxx.cc"或"xxx.cu"中定义的函数具有相同的参数。通常，该函数应该像这样：
+
+                 .. code-block::
+
+                     int func(int nparam, void **params, int *ndims, int64_t **shapes, const char **dtypes, void *stream, void *extra)
+
+                 参数：
+
+                 - `nparam(int)` : 输入和输出的总数；假设操作符有2个输入和3个输出，那么 `nparam=5` 。
+                 - `params(void **)` : 输入和输出指针的数组指针；输入和输出的指针类型为 `void *` ；假设操作符有2个输入和3个输出，那么第一个输入的指针是 `params[0]` ，第二个输出的指针是 `params[3]` 。
+                 - `ndims(int *)` : 输入和输出维度数的数组指针；假设 `params[i]` 是一个1024x1024的张量，`params[j]` 是一个77x83x4的张量，那么 `ndims[i]=2` ， `ndims[j]=3` 。
+                 - `shapes(int64_t **)` : 输入和输出形状（ `int64_t *` ）的数组指针；第 `i` 个输入的第 `j` 个维度的大小是 `shapes[i][j]` （其中 `0<=j<ndims[i]` ）；假设 `params[i]` 是一个2x3的张量，`params[j]`是一个3x3x4的张量，那么 `shapes[i][0]=2` ， `shapes[j][2]=4` 。
+                 - `dtypes(const char **)` : 输入和输出类型（ `const char *` ）的数组指针；（例如："float32"、"float16"、"float"、"float64"、"int"、"int8"、"int16"、"int32"、"int64"、"uint"、"uint8"、"uint16"、"uint32"、"uint64"、"bool"）
+                 - `stream(void *)` : 流指针，仅在CUDA文件中使用。
+                 - `extra(void *)` : 用于进一步扩展。
+
+                 返回值（int）:
+
+                 - 0: 如果这个AOT内核成功执行，MindSpore将继续运行。
+                 - 其他值: MindSpore将引发异常并退出。
+
+                 示例：详见 `tests/st/ops/graph_kernel/custom/aot_test_files/` 中的详细信息。
+
+               - 在Custom中使用：
+
+                 .. code-block::
+
+                     Custom(func="{dir_path}/{file_name}:{func_name}", ...)
+
+                 例如：Custom(func="./reorganize.so:CustomReorganize", out_shape=[1], out_dtype=mstype.float32, "aot")
+
+
+            2. 对于"julia"：
+
+               目前，"julia"仅支持CPU（仅限Linux平台）。对于julia，它使用JIT编译器（即时编译器），并且julia支持C API来调用julia代码。自定义功能可以直接将用户定义的"xxx.jl"文件作为一个操作符来启动。用户需要编写一个包含模块和函数的"xxx.jl"文件，并提供该文件的路径以及模块名称和函数名称。
+
+               示例：详情见 `tests/st/ops/graph_kernel/custom/julia_test_files/`
+
+               - 在Custom中使用：
+
+                 .. code-block::
+
+                     Custom(func="{dir_path}/{file_name}:{module_name}:{func_name}",...)
+
+                 例如：Custom(func="./add.jl:Add:add", out_shape=[1], out_dtype=mstype.float32, "julia")
         - **out_shape** (Union[function, list, tuple]) - 自定义算子的输入的形状或者输出形状的推导函数。默认值： ``None`` 。
         - **out_dtype** (Union[function, :class:`mindspore.dtype`, tuple[:class:`mindspore.dtype`]]) - 自定义算子的输入的数据类型或者输出数据类型的推导函数。默认值： ``None`` 。
-        - **func_type** (str) - 自定义算子的函数类型，必须是[ ``"hybrid"`` , ``"akg"`` , ``"tbe"`` , ``"aot"`` , ``"pyfunc"`` , ``"julia"`` , ``"aicpu"`` ]中之一。默认值： ``"hybrid"`` 。
+        - **func_type** (str) - 自定义算子的函数类型，必须是[ ``"hybrid"`` , ``"akg"`` , ``"aot"`` , ``"pyfunc"`` , ``"julia"``]中之一。默认值： ``"hybrid"`` 。
         - **bprop** (function) - 自定义算子的反向函数。默认值： ``None``。
         - **reg_info** (Union[str, dict, list, tuple]) - 自定义算子的算子注册信息。默认值： ``None`` 。
 
