@@ -280,7 +280,7 @@ void DynamicMemPoolBestFit::SetMemAllocUintSize(size_t common_size, size_t persi
   persistent_mem_->unit_size_ = persist_size;
   common_mem_->unit_size_ = common_size;
   config_unit_size_ = common_size;
-  MS_LOG(INFO) << "Set mem alloc unit size, common " << common_size << " persistent " << persist_size;
+  MS_LOG(DEBUG) << "Set mem alloc unit size, common " << common_size << " persistent " << persist_size;
 }
 
 void *DynamicMemPoolBestFit::GetMinUsingMemoryAddr() const {
