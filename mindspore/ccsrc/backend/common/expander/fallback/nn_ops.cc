@@ -987,5 +987,114 @@ REG_FALLBACK_BUILDER("Embedding").SetBody(BODYFUNC(ib) {
   auto out = ib->Emit(ops::kNameGather, {weight, input, ib->Value((int64_t)0), ib->Value((int64_t)0)});
   return {out};
 });
+
+REG_FALLBACK_BUILDER("GroupNorm").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto x = ib->Cast(input, kFloat32);
+  auto groups = ib->GetInput(kIndex1);
+  auto weight = ib->Cast(ib->GetInput(kIndex2), kFloat32);
+  auto bias = ib->Cast(ib->GetInput(kIndex3), kFloat32);
+  auto eps = ib->GetInput(kIndex4);
+  if (!ops::IsValueKnown(eps->BuildValue()) || !ops::IsValueKnown(groups->BuildValue())) {
+    MS_EXCEPTION(ValueError) << "For `GroupNorm` op, the  `num_groups` and `eps` must be a constant!";
+  }
+  auto eps_value = ib->Tensor(GetValue<float>(eps->BuildValue()));
+  auto num_groups = GetValue<int64_t>(groups->BuildValue());
+
+  if (IsDynamic(input->shape())) {
+    MS_INTERNAL_EXCEPTION(ValueError)
+      << "For `GroupNorm` op, dynamic_shape is not support on Fallback path, but got input shape: " << input->shape()
+      << ".";
+  }
+
+  auto x_shape = x->shape();
+  const int64_t batch = x_shape[0];
+  const int64_t channel = x_shape[1];
+  const int64_t HxW =
+    (x_shape.size() == 2) ? 1 : std::accumulate(x_shape.begin() + 2, x_shape.end(), 1, std::multiplies<int64_t>());
+  const int64_t g = channel / num_groups;
+
+  auto x_reshape = ib->Reshape(x, ShapeVector{batch, num_groups, g * HxW});
+  ShapeVector weight_and_bias_reshape(x_shape.size() - 1, 1);
+  weight_and_bias_reshape[0] = channel;
+  auto weight_reshape = ib->Reshape(weight, weight_and_bias_reshape);
+  auto bias_reshape = ib->Reshape(bias, weight_and_bias_reshape);
+  auto factor = ib->Tensor(HxW * g, kFloat32);
+
+  auto mean = ib->Emit("ReduceMean", {x_reshape, ib->Value<std::vector<int64_t>>({2}), ib->Value(true)});
+  auto variance = ib->Div(ib->ReduceSum(ib->Square(ib->Sub(x_reshape, mean)), ShapeVector{2}, true), factor);
+  auto rstd = ib->Reciprocal(ib->Sqrt(ib->Add(variance, eps_value)));
+  auto tmp1 = ib->Reshape(ib->Mul(ib->Sub(x_reshape, mean), rstd), x_shape);
+  auto output = ib->Cast(ib->Add(ib->Mul(tmp1, weight_reshape), bias_reshape), input->dtype());
+  auto mean_out = ib->Cast(ib->Reshape(mean, ShapeVector{batch, num_groups}), input->dtype());
+  auto rstd_out = ib->Cast(ib->Reshape(rstd, ShapeVector{batch, num_groups}), input->dtype());
+  return {ib->MakeTuple({output, mean_out, rstd_out})};
+});
+
+REG_FALLBACK_BUILDER("GroupNormGrad").SetBody(BODYFUNC(ib) {
+  auto dy = ib->Cast(ib->GetInput(kIndex0), kFloat32);
+  auto input = ib->GetInput(kIndex1);
+  auto x = ib->Cast(input, kFloat32);
+  auto mean = ib->Cast(ib->GetInput(kIndex2), kFloat32);
+  auto rstd = ib->Cast(ib->GetInput(kIndex3), kFloat32);
+  auto gamma = ib->Cast(ib->GetInput(kIndex4), kFloat32);
+  auto groups = ib->GetInput(kIndex5);
+
+  if (!ops::IsValueKnown(groups->BuildValue())) {
+    MS_EXCEPTION(ValueError) << "For `GroupNormGrad` op, the  `num_groups` must be a constant!";
+  }
+  auto x_shape = x->shape();
+
+  if (IsDynamic(x_shape)) {
+    MS_INTERNAL_EXCEPTION(ValueError)
+      << "For `GroupNormGrad` op, dynamic_shape is not support on Fallback path, but got input shape: "
+      << input->shape() << ".";
+  }
+
+  auto num_groups = GetValue<int64_t>(groups->BuildValue());
+  const int64_t batch = x_shape[0];
+  const int64_t channel = x_shape[1];
+  const int64_t HxW =
+    (x_shape.size() == 2) ? 1 : std::accumulate(x_shape.begin() + 2, x_shape.end(), 1, std::multiplies<int64_t>());
+  const int64_t g = channel / num_groups;
+  auto ds = ib->ReduceSum(ib->Reshape(ib->Mul(dy, x), ShapeVector{batch, channel, HxW}), ShapeVector{2});
+  auto db = ib->ReduceSum(ib->Reshape(dy, ShapeVector{batch, channel, HxW}), ShapeVector{2});
+
+  auto ds_reshape = ib->Reshape(ds, ShapeVector{batch, num_groups, g});
+  auto db_reshape = ib->Reshape(db, ShapeVector{batch, num_groups, g});
+  auto mean_reshape = ib->Reshape(mean, ShapeVector{batch, num_groups, 1});
+  auto rstd_reshape = ib->Reshape(rstd, ShapeVector{batch, num_groups, 1});
+  auto dy_reshape = ib->Reshape(dy, ShapeVector{batch, num_groups, g, HxW});
+  auto x_reshape = ib->Reshape(x, ShapeVector{batch, num_groups, g, HxW});
+
+  auto three = ib->Tensor(3.0, kFloat32);
+  auto factor = ib->Tensor(HxW * g, kFloat32);
+
+  auto ds_val = ib->ReduceSum(
+    ib->Reshape(ib->Mul(ds, ib->Reshape(gamma, ShapeVector{1, channel})), ShapeVector{batch, num_groups, g}),
+    ShapeVector{2});
+  auto db_val = ib->ReduceSum(
+    ib->Reshape(ib->Mul(db, ib->Reshape(gamma, ShapeVector{1, channel})), ShapeVector{batch, num_groups, g}),
+    ShapeVector{2});
+
+  auto tmp1 = ib->Mul(rstd_reshape, ib->Reshape(gamma, ShapeVector{1, num_groups, g}));
+  auto tmp2 = ib->Div(ib->Mul(ib->Sub(ib->Mul(db_val, mean), ds_val), ib->Pow(rstd, three)), factor);
+  auto tmp3 = ib->Neg(ib->Add(ib->Mul(tmp2, mean), ib->Div(ib->Mul(db_val, rstd), factor)));
+  auto tmp1_reshape = ib->Reshape(tmp1, ShapeVector{batch, num_groups, g, 1});
+  auto tmp2_reshape = ib->Reshape(tmp2, ShapeVector{batch, num_groups, 1, 1});
+  auto tmp3_reshape = ib->Reshape(tmp3, ShapeVector{batch, num_groups, 1, 1});
+
+  auto dx = ib->Cast(
+    ib->Reshape(ib->Add(ib->Add(ib->Mul(dy_reshape, tmp1_reshape), ib->Mul(x_reshape, tmp2_reshape)), tmp3_reshape),
+                x_shape),
+    input->dtype());
+  auto dgamma = ib->Cast(
+    ib->Reshape(
+      ib->ReduceSum(ib->Mul(ib->Sub(ds_reshape, ib->Mul(db_reshape, mean_reshape)), rstd_reshape), ShapeVector{0}),
+      ShapeVector{channel}),
+    input->dtype());
+  auto dbeta = ib->Cast(ib->ReduceSum(db, ShapeVector{0}), input->dtype());
+  return {ib->MakeTuple({dx, dgamma, dbeta})};
+});
 }  // namespace expander
 }  // namespace mindspore
