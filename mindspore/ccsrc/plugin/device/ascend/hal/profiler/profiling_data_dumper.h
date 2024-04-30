@@ -36,10 +36,10 @@
 namespace mindspore {
 namespace profiler {
 namespace ascend {
-constexpr uint32_t kDefaultRingBuffer = 1024;
+constexpr uint32_t kDefaultRingBuffer = 1000 * 1000;
 constexpr uint32_t kBatchMaxLen = 5 * 1024 * 1024;  // 5 MB
-constexpr uint32_t kMaxWaitTimeUs = 1000 * 1000;
-constexpr uint32_t kNotifyInterval = 1000;
+constexpr uint32_t kMaxWaitTimeUs = 100 * 1000;
+constexpr uint32_t kMaxWaitTimes = 10;
 
 class Utils {
  public:
@@ -75,6 +75,8 @@ class RingBuffer {
   size_t Size();
   bool Push(T data);
   T Pop();
+  bool Full();
+  void Reset();
 
  private:
   bool is_inited_;
@@ -87,53 +89,6 @@ class RingBuffer {
   std::vector<T> data_queue_;
 };
 
-class Thread {
- public:
-  Thread() : is_alive_(false), pid_(0), thread_name_("NPUProfiler") {}
-
-  ~Thread() {
-    if (is_alive_) {
-      (void)pthread_cancel(pid_);
-      (void)pthread_join(pid_, nullptr);
-    }
-  }
-
-  void SetThreadName(const std::string &name) {
-    if (!name.empty()) {
-      thread_name_ = name;
-    }
-  }
-
-  std::string GetThreadName() { return thread_name_; }
-
-  int Start() {
-    int ret = pthread_create(&pid_, nullptr, Execute, reinterpret_cast<void *>(this));
-    is_alive_ = (ret == 0) ? true : false;
-    return ret;
-  }
-
-  int Stop() { return Join(); }
-
-  int Join() {
-    int ret = pthread_join(pid_, nullptr);
-    is_alive_ = (ret == 0) ? false : true;
-    return ret;
-  }
-
- private:
-  static void *Execute(void *args) {
-    Thread *thr = reinterpret_cast<Thread *>(args);
-    thr->Run();
-    return nullptr;
-  }
-  virtual void Run() = 0;
-
- private:
-  bool is_alive_;
-  pthread_t pid_;
-  std::string thread_name_;
-};
-
 struct BaseReportData {
   int32_t device_id{0};
   std::string tag;
@@ -142,7 +97,7 @@ struct BaseReportData {
   virtual std::vector<uint8_t> encode() = 0;
 };
 
-class ProfilingDataDumper : public Thread {
+class ProfilingDataDumper {
  public:
   ProfilingDataDumper();
   virtual ~ProfilingDataDumper();
@@ -151,6 +106,7 @@ class ProfilingDataDumper : public Thread {
   void Report(std::unique_ptr<BaseReportData> data);
   void Start();
   void Stop();
+  void Flush();
 
   static std::shared_ptr<ProfilingDataDumper> &GetInstance() {
     static std::shared_ptr<ProfilingDataDumper> instance = std::make_shared<ProfilingDataDumper>();
@@ -158,7 +114,6 @@ class ProfilingDataDumper : public Thread {
   }
 
  private:
-  void Flush();
   void Dump(const std::map<std::string, std::vector<uint8_t>> &dataMap);
   void Run();
   void GatherAndDumpData();
@@ -167,8 +122,10 @@ class ProfilingDataDumper : public Thread {
   std::string path_;
   std::atomic<bool> start_;
   std::atomic<bool> init_;
+  std::atomic<bool> is_flush_{false};
   RingBuffer<std::unique_ptr<BaseReportData>> data_chunk_buf_;
   std::map<std::string, FILE *> fd_map_;
+  std::mutex flush_mutex_;
 };
 
 }  // namespace ascend
