@@ -137,7 +137,8 @@ def data_update_by_ops(transfer_type, arg, data, new_index, origin_data, value=N
     elif transfer_type == ValueTransferType.kGatherND:
         if isinstance(new_index, list):
             new_index = handle_multi_dim_index_tensor(new_index, arg)
-        data = F.gather_nd(data, Tensor(new_index))
+        new_index = format_index_tensor(new_index, (None, F.shape(data)[:F.shape(new_index)[-1]]))
+        data = F.gather_nd(data, new_index)
     elif transfer_type == ValueTransferType.kTensorScatterUpdate:
         if isinstance(new_index, list):
             new_index = handle_multi_dim_index_tensor(new_index, arg)
