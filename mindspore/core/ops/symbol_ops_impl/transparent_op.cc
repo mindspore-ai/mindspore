@@ -23,7 +23,7 @@ REG_SYMBOL_OP_BUILDER("Abs").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("Assign").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("BiasAdd").SetShapeDepend({DependOn::kShape, DependOn::kNone});
 REG_SYMBOL_OP_BUILDER("Cast").SetShapeDepend({DependOn::kShape});
-REG_SYMBOL_OP_BUILDER("Conv2DBackpropInput").SetShapeDepend({DependOn::kShape});
+REG_SYMBOL_OP_BUILDER("Conv2DBackpropInput").SetShapeDepend({DependOn::kNone, DependOn::kNone, DependOn::kValue});
 REG_SYMBOL_OP_BUILDER("DropoutGrad").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("Exp").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("GeLU").SetShapeDepend({DependOn::kShape});

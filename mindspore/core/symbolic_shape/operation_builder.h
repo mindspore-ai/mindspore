@@ -50,7 +50,7 @@ class MS_CORE_API OperationBuilder {
   SymbolPtr BuildShape(const PrimitivePtr &prim, const AbstractBasePtrList &input_args, const AbstractBasePtr &out);
   SymbolPtr BuildValue(const PrimitivePtr &prim, const AbstractBasePtrList &input_args, const AbstractBasePtr &out);
 
-  SymbolPtr Emit(const OpPtr &op) const { return emitter_->Emit(op); }
+  SymbolPtr Emit(const OpPtr &op) const;
   SymbolPtr GetShape(const AbstractBasePtr &abs) const;
   SymbolPtr GetValue(const AbstractBasePtr &abs) const;
   const AbstractBasePtr &GetInput(size_t i) const { return input_args_->at(i); }
