@@ -24,9 +24,14 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr BinaryOpFuncImpl::InferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) const {
+  for (auto &input_arg : input_args) {
+    MS_EXCEPTION_IF_NULL(input_arg);
+  }
   auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
+  MS_EXCEPTION_IF_NULL(x_shape_ptr);
   auto x_shape = x_shape_ptr->GetShapeVector();
   auto y_shape_ptr = input_args[kInputIndex1]->GetShape();
+  MS_EXCEPTION_IF_NULL(y_shape_ptr);
   auto y_shape = y_shape_ptr->GetShapeVector();
   auto output_shape = CalBroadCastShape(x_shape, y_shape, primitive->name());
   return std::make_shared<abstract::TensorShape>(output_shape);
@@ -34,7 +39,9 @@ BaseShapePtr BinaryOpFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr BinaryOpFuncImpl::InferType(const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto input_type = input_args[kInputIndex0]->GetType();
+  MS_EXCEPTION_IF_NULL(input_type);
   return input_type->Clone();
 }
 }  // namespace ops
