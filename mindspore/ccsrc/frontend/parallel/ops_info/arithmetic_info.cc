@@ -307,7 +307,10 @@ Status ArithmeticBase::CheckInputLayout() {
 
   for (size_t i = 0; i < input_shape_0.size(); ++i) {
     if (tensormap0[i] != tensormap1[i] && input_shape_0[i] != 1 && input_shape_1[i] != 1) {
-      MS_LOG(ERROR) << name_ << " : Invalid strategy.";
+      MS_LOG(ERROR) << name_ << " : Invalid strategy. The " << i << "th dim of input 0 tensor map is " << tensormap0[i]
+                    << " is not equal to input 1 tensor map " << tensormap1[i] << ", also " << i
+                    << "th input_shape0 and input_shape1 are not equal to 1 which is " << input_shape_0[i] << " and "
+                    << input_shape_1[i];
       return FAILED;
     }
   }
