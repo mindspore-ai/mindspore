@@ -48,6 +48,20 @@ REG_BPROP_BUILDER("AllReduce").SetBody(BODYFUNC(ib) {
   }
 });
 
+REG_BPROP_BUILDER("NeighborExchange").SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("NeighborExchange", {dout},
+                     {{"send_rank_ids", ib->GetAttr("recv_rank_ids")},
+                      {"recv_rank_ids", ib->GetAttr("send_rank_ids")},
+                      {"recv_shapes", ib->GetAttr("send_shapes")},
+                      {"send_shapes", ib->GetAttr("recv_shapes")},
+                      {"recv_type", ib->GetAttr("recv_type")},
+                      {"group", ib->GetAttr("group")}});
+  auto ins_name = ib->GetInstanceName();
+  dx->set_debug_info("grad" + ins_name);
+  return {dx};
+});
+
 REG_BPROP_BUILDER("AllGather").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit(kReduceScatterOpName, {dout},
