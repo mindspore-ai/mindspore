@@ -79,6 +79,7 @@
 #include "frontend/optimizer/environ_conversion.h"
 #include "frontend/optimizer/comm_op_reuse_tag.h"
 #include "frontend/optimizer/py_interpret_to_execute.h"
+#include "frontend/optimizer/flash_sp.h"
 #include "utils/log_adapter.h"
 #include "utils/compile_config.h"
 #include "pipeline/jit/ps/pipeline_split.h"
@@ -404,6 +405,15 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
   });
 }
 
+bool FlashSPFrontPass(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer) {
+  if (func_graph->has_flag(parallel::FLASH_SP_RUN_ONCE_ONLY)) {
+    return false;
+  }
+  auto result = parallel::SetFlashSP(func_graph);
+  func_graph->set_flag(parallel::FLASH_SP_RUN_ONCE_ONLY, true);
+  return result;
+}
+
 OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_1 = GetOptPassA1(irpass);
   opt::OptPassConfig a_2 = opt::OptPassConfig(
@@ -481,6 +491,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"pynative_shard", opt::OptPassConfig(parallel::PynativeShard)},
                          {"auto_parallel", opt::OptPassConfig(parallel::StepAutoParallel)},
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
+                         {"flash_sp", opt::OptPassConfig(FlashSPFrontPass)},
                          {"merge_comm", opt::OptPassConfig(parallel::MergeComm)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"virtual_dataset", virtual_dataset},
