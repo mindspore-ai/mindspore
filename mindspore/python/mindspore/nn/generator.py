@@ -25,7 +25,8 @@ from mindspore.ops.operations import Assign, AssignAdd, Depend
 
 class Generator(Cell):
     """
-    A generator that manages the state of random numbers and provides seed and offset for random functions
+    A generator that manages the state of random numbers and provides seed and offset for random functions.
+    When the seed and offset are fixed, the random function generates the same random sequence.
 
     Inputs:
         - **step** (int) - Set the step size for offset update.
@@ -74,7 +75,7 @@ class Generator(Cell):
 
         Args:
             seed (int): Seed of the generator.
-            offset (int): Offset of the generator, default: ``None`` .
+            offset (int, optional): Offset of the generator, default: ``None`` , means ``0``.
         """
         self._seed_val = int(seed)
         self._assign(self._seed, self._seed_val)
@@ -121,7 +122,7 @@ class Generator(Cell):
         Return the initial seed of generator.
 
         Returns:
-            The initial seed.
+            The initial seed of generator.
         """
         return self._seed.value()
 
@@ -167,6 +168,15 @@ def default_generator():
 
     Returns:
         The default generator.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.nn import default_generator
+        >>> default_gen = default_generator()
+        >>> print(type(default_gen))
+        <class 'mindspore.nn.generator.Generator'>
     """
     if default_generator_ is None:
         _init_default_generator()
@@ -179,6 +189,16 @@ def seed():  # pylint: disable=redefined-outer-name
 
     Returns:
         Randomly generated seeds.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore.nn import seed
+        >>> np.random.seed(20)
+        >>> print(seed())
+        1663920602
     """
     if default_generator_ is None:
         _init_default_generator()
@@ -194,6 +214,15 @@ def manual_seed(seed):  # pylint: disable=redefined-outer-name
 
     Returns:
         The default generator self.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.nn import manual_seed, initial_seed
+        >>> manual_seed(13)
+        >>> print(initial_seed())
+        13
     """
     if default_generator_ is None:
         _init_default_generator()
@@ -206,6 +235,15 @@ def initial_seed():
 
     Returns:
         The initial seed of default generator.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.nn import manual_seed, initial_seed
+        >>> manual_seed(14)
+        >>> print(initial_seed())
+        14
     """
     if default_generator_ is None:
         _init_default_generator()
@@ -218,6 +256,16 @@ def get_rng_state():
 
     Returns:
         Tuple consisting of the seed and offset of default generator.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore.nn import get_rng_state
+        >>> np.random.seed(20)
+        >>> print(get_rng_state())
+        (Tensor(shape=[], dtype=Int32, value= 378518883), Tensor(shape=[], dtype=Int32, value= 0))
     """
     if default_generator_ is None:
         _init_default_generator()
@@ -230,11 +278,20 @@ def set_rng_state(seed, offset=None):  # pylint: disable=redefined-outer-name
 
     Args:
         seed (int): Seed of the default generator.
-        offset (int): Offset of the default generator, default: ``None`` .
+        offset (int, optional): Offset of the default generator, default: ``None`` , means ``0``.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.nn import set_rng_state, get_rng_state
+        >>> set_rng_state(10)
+        >>> print(get_rng_state())
+        (Tensor(shape=[], dtype=Int32, value= 10), Tensor(shape=[], dtype=Int32, value= 0))
     """
     if default_generator_ is None:
         _init_default_generator()
     default_generator_.set_state(seed, offset)
 
 
-__all__ = ["Generator"]
+__all__ = ["Generator", "default_generator", "seed", "manual_seed", "initial_seed", "set_rng_state", "get_rng_state"]
