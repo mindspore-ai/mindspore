@@ -32,7 +32,7 @@ from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_util
 from mindspore.ops.operations._sequence_ops import TensorToList
 from mindspore.ops.auto_generate import OnesLikeExt, ZerosLikeExt, FillScalar, FillTensor, Arange, Chunk
 from mindspore.ops.auto_generate.gen_ops_prim import SplitTensor
-from mindspore.ops.auto_generate.gen_ops_prim import SplitWithSize
+from mindspore.ops.auto_generate.gen_ops_prim import SplitWithSize, RepeatInterleave
 
 from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
@@ -129,6 +129,7 @@ fill_scalar_ = FillScalar()
 fill_tensor_ = FillTensor()
 arange_ = Arange()
 chunk_ = Chunk()
+repeat_interleave_ = RepeatInterleave()
 
 
 def get_x_shape(x_shape):
@@ -6284,6 +6285,53 @@ def repeat_interleave(input, repeats, axis=None):
         repeats = TensorToList()(repeats)
     output = input.repeat(repeats, axis)
     return output
+
+
+def repeat_interleave_ext(tensor, repeats, axis=None, output_size=None):
+    r"""
+    Repeat elements of a tensor.
+
+    Args:
+        tensor (Tensor): the input tensor.
+        repeats (Union[int, list, tuple, Tensor]) the number of repetitions for each element
+        axis (int, optional) the axis along wich to repeat, if None, defaults to 0.
+        output_size (int, optional): Calculated output size along specified axis.
+
+    Returns:
+        Tensor, one-hot tensor.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import mint
+        >>> from mindspore import Tensor
+        >>> tensor = Tensor(np.array([0, 1, 2], [3, 4, 5]), mindspore.int32)
+        >>> repeats = 2
+        >>> axis = 0
+        >>> output = mint.repeat_interleave(tensor, repeats, axis)
+        >>> print(output)
+        [[0. 1. 2.]
+        [0. 1. 2.]
+        [3. 4. 5.]
+        [3. 4. 5.]]
+    """
+    if axis is None:
+        tensor = tensor.ravel()
+        axis = 0
+
+    size = tensor.shape[axis]
+    if output_size is None:
+        if isinstance(repeats, int):
+            output_size = size*repeats
+        elif len(repeats) == 1:
+            output_size = size*repeats[0]
+        else:
+            output_size = sum(repeats)
+
+    return repeat_interleave_(tensor, repeats, axis, output_size)
 
 
 def repeat_elements(x, rep, axis=0):
