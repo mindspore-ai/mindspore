@@ -197,16 +197,6 @@ static bool HasSideEffectBackProp(const CNodePtr &cnode) {
   return false;
 }
 
-static bool HasSideEffectBackPropMem(const CNodePtr &cnode) {
-  if (IsPrimitiveCNode(cnode)) {
-    const auto &prim = GetCNodePrimitive(cnode);
-    MS_EXCEPTION_IF_NULL(prim);
-    auto bprop_flag = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_BACKPROP_MEM);
-    return bprop_flag;
-  }
-  return false;
-}
-
 static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (IsPrimitiveCNode(node, prim::kPrimHookBackward) || IsPrimitiveCNode(node, prim::kPrimCellBackwardHook)) {
@@ -294,8 +284,7 @@ AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const CNodePtr &din, con
   return new_din;
 }
 
-void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app, const AdjointPtr &node_adjoint,
-                             bool side_effect_bprop_app_propagate) {
+void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app, const AdjointPtr &node_adjoint) {
   auto bprop =
     k_graph_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), k_app, NewValueNode(static_cast<int64_t>(1))});
   // Call with delimited continuation dout.
@@ -306,15 +295,6 @@ void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app,
     tape_->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
   } else {
     bprop_app = tape_->NewCNode({bprop, node_adjoint->dout()});
-  }
-
-  if (HasSideEffectBackPropMem(cnode_morph)) {
-    bprop_app->AddAttr(kAttrSideEffectBpropApp, MakeValue(true));
-    k_graph_->set_flag(kAttrSideEffectBpropAppPropagate, true);
-  }
-  if (side_effect_bprop_app_propagate) {
-    bprop_app->AddAttr(kAttrSideEffectBpropAppPropagate, MakeValue(true));
-    k_graph_->set_flag(kAttrSideEffectBpropAppPropagate, true);
   }
   node_adjoint->RegisterDoutUser(bprop_app, 1);
   // Special case for switch_layer
@@ -377,7 +357,6 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
 
   std::vector<AnfNodePtr> inputs;
   std::vector<AdjointPtr> param_adjoints;
-  bool side_effect_bprop_app_propagate = false;
   for (size_t i = 0; i < cnode_morph->size(); i++) {
     auto node = SkipHookNodeInBackProp(cnode_morph->input(i));
     AdjointPtr node_adjoint = nullptr;
@@ -399,7 +378,6 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
       auto k_fg = GetValueNode<FuncGraphPtr>(k);
       if (k_fg != nullptr) {
         (void)k_fg->transforms().emplace("primal_cnode", FuncGraphTransform(cnode_morph));
-        side_effect_bprop_app_propagate = k_fg->has_flag(kAttrSideEffectBpropAppPropagate);
       }
     }
     inputs.push_back(k);
@@ -431,7 +409,7 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   }
 
   // Do sens backpropagation
-  BackPropagate(cnode_morph, k_app, node_adjoint, side_effect_bprop_app_propagate);
+  BackPropagate(cnode_morph, k_app, node_adjoint);
   MS_LOG(DEBUG) << "End, node: " << morph->DebugString(recursive_level);
   return node_adjoint;
 }
