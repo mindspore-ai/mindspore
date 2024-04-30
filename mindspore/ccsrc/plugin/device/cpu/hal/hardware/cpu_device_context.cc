@@ -216,7 +216,7 @@ DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(const KernelTensorPtr 
 }
 
 DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector,
-                                                          const string &format, TypeId type_id,
+                                                          const Format &format, TypeId type_id,
                                                           const std::string &device_name, uint32_t device_id,
                                                           uint32_t stream_id) const {
   return std::make_shared<CPUDeviceAddress>(ptr, size, shape_vector, format, type_id, device_name, device_id,

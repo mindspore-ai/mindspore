@@ -864,7 +864,7 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
   auto tensor_size = LongToSize(tensor->data().nbytes());
   const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, tensor_size, tensor->shape(), kernel::GetFormatFromEnumToStr(format), tensor->data_type(),
+    nullptr, tensor_size, tensor->shape(), format, tensor->data_type(),
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_, stream_id);
   if (device_address->GetDeviceType() != device::DeviceType::kAscend) {
     // CPU or GPU need KernelTensor to LaunchKernel
@@ -1120,7 +1120,7 @@ void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_c
     auto tensor_size = LongToSize(tensor->data().nbytes());
     const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
     auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, tensor_size, tensor->shape(), kernel::GetFormatFromEnumToStr(format), tensor->data_type(),
+      nullptr, tensor_size, tensor->shape(), format, tensor->data_type(),
       device_context->device_context_key().device_name_, device_context->device_context_key().device_id_, stream_id);
     if (device_address->GetDeviceType() != device::DeviceType::kAscend) {
       // CPU or GPU need KernelTensor to LaunchKernel
@@ -1140,7 +1140,7 @@ void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_c
   MS_EXCEPTION_IF_NULL(output_tensor);
   const auto &format = GetFormatByTensorShape(device_context, output_tensor->shape());
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, size, output_tensor->shape(), kernel::GetFormatFromEnumToStr(format), output_tensor->data_type(),
+    nullptr, size, output_tensor->shape(), format, output_tensor->data_type(),
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_, stream_id);
   MS_EXCEPTION_IF_NULL(device_address);
   output_tensor->set_device_address(device_address);

@@ -146,10 +146,10 @@ class DeviceAddress : public mindspore::DeviceSync {
     kernel_tensor_->SetStringFormat(format);
     kernel_tensor_->set_device_id(device_id);
   }
-  explicit DeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector, const string &format, TypeId type_id,
+  explicit DeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector, const Format &format, TypeId type_id,
                          const std::string &device_name, uint32_t device_id, uint32_t stream_id) {
-    address_common_ = std::make_shared<AddressCommon>(ptr, size, shape_vector, kernel::GetFormatFromStrToEnum(format),
-                                                      type_id, device_name, device_id, stream_id);
+    address_common_ =
+      std::make_shared<AddressCommon>(ptr, size, shape_vector, format, type_id, device_name, device_id, stream_id);
   }
   explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                          const KernelWithIndex &node_index, const std::string &device_name, uint32_t device_id)
