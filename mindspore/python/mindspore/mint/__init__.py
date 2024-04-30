@@ -133,7 +133,7 @@ from mindspore.ops.functional import tile
 # 53
 
 # 54
-
+from mindspore.ops import normal_ext as normal
 # 55
 
 # 56
@@ -347,7 +347,7 @@ __all__ = [
     # 53
 
     # 54
-
+    'normal',
     # 55
 
     # 56
