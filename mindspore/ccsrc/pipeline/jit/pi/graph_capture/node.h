@@ -189,7 +189,13 @@ class ParamNode : public ValueNode {
  public:
   ParamNode(AObject *o, int index) : ValueNode(Param, o, 0, index, {}) {}
   std::string ToString() const override;
+  bool IsMixedPrecisionType() { return mixedPrecisionType_ != nullptr; }
+  PyObject *GetMixedPrecisionType() { return mixedPrecisionType_; }
+  void SetMixedPrecisionType(PyObject *type) { mixedPrecisionType_ = type; }
   virtual ~ParamNode() {}
+
+ protected:
+  PyObject *mixedPrecisionType_{nullptr};
 };
 
 class CallNode : public ValueNode {

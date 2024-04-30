@@ -256,6 +256,20 @@ PyFrameObject *Utils::PrepareFrame(PyObject *callable, PyObject *args, PyObject 
   return nullptr;
 }
 
+PyObject *Utils::MixedPrecisionTypeToDType(MixedPrecisionType mixed_type) {
+  auto ms_dtype_obj = Utils::GetModuleAttr("mindspore", "dtype");
+  auto dtype_fp16_obj = ms_dtype_obj.attr("float16").ptr();
+  auto dtype_fp32_obj = ms_dtype_obj.attr("float32").ptr();
+  auto dtype_bf16_obj = ms_dtype_obj.attr("bfloat16").ptr();
+  auto dst_dtype = dtype_fp16_obj;
+  if (mixed_type == kFP32) {
+    dst_dtype = dtype_fp32_obj;
+  } else if (mixed_type == kBF16) {
+    dst_dtype = dtype_bf16_obj;
+  }
+  return dst_dtype;
+}
+
 bool HasMutableOrConstAttr(PyObject *obj) {
   auto pyObj = py::cast<py::object>(obj);
   return py::hasattr(pyObj, kMutableAttr) || py::hasattr(pyObj, kConstArgAttr);
