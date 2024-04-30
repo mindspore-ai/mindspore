@@ -39,15 +39,18 @@ BaseShapePtr ReplicationPad2DFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
   // input x dynamic shape
   auto x_rank = x_shape.size();
-  if (x_rank != 3 && x_rank != 4) {
+  const size_t kRank3DNum = 3;
+  const size_t kRank4DNum = 4;
+  if (x_rank != kRank3DNum && x_rank != kRank4DNum) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input should be 3D or 4D, but got " << x_rank;
   }
   // padding
   auto paddings_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
   if (!paddings_opt.has_value()) {
+    const size_t kNum2 = 2;
     ShapeVector out_shape = x_shape;
     out_shape[x_rank - 1] = abstract::Shape::kShapeDimAny;
-    out_shape[x_rank - 2] = abstract::Shape::kShapeDimAny;
+    out_shape[x_rank - kNum2] = abstract::Shape::kShapeDimAny;
     return std::make_shared<abstract::Shape>(std::move(out_shape));
   }
 
@@ -57,7 +60,8 @@ BaseShapePtr ReplicationPad2DFuncImpl::InferShape(const PrimitivePtr &primitive,
                             << padding_type;
   }
   auto paddings = paddings_opt.value();
-  if (paddings.size() != 4) {
+  const size_t kExpectedPaddingLength = 4;
+  if (paddings.size() != kExpectedPaddingLength) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The padding length should be 4, but got "
                              << paddings.size();
   }

@@ -443,10 +443,11 @@ TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract
 }
 
 BaseShapePtr SetPadShape(const ShapeVector &x_shape, const ArrayValue<int64_t> &paddings) {
+  const size_t kNum2 = 2;
   auto out_shape = x_shape;
   auto x_rank = x_shape.size();
-  for (size_t i = 0; i < paddings.size() / 2; i++) {
-    auto pad_idx = i * 2;
+  for (size_t i = 0; i < paddings.size() / kNum2; i++) {
+    auto pad_idx = i * kNum2;
     if (out_shape[x_rank - i - 1] != abstract::Shape::kShapeDimAny) {
       auto paddings_l = paddings[pad_idx];
       auto paddings_r = paddings[pad_idx + 1];

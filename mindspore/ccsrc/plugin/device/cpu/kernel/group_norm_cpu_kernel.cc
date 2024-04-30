@@ -116,7 +116,7 @@ void GroupNormCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
       double mean_val = sum / inner_size_;
       double rstd_val = std::sqrt(1 / ((sum_square / inner_size_ - mean_val * mean_val) + static_cast<double>(eps_)));
       for (size_t j = i * inner_size_; j < (i + 1) * inner_size_; ++j) {
-        auto param_index = (j / HxW_) % LongToSize(num_channel_);
+        auto param_index = (j / LongToSize(HxW_)) % LongToSize(num_channel_);
         y[j] = (x[j] - static_cast<T>(mean_val)) * static_cast<T>(rstd_val) * gamma[param_index] + beta[param_index];
       }
       mean[i] = static_cast<T>(mean_val);

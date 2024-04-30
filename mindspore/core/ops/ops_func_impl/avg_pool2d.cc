@@ -67,34 +67,36 @@ static inline int64_t AvgPool2DOutputShapePadLR(int64_t input_size, int64_t kern
 }  // namespace
 BaseShapePtr AvgPool2DFuncImpl::InferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) const {
+  const size_t kNum2 = 2;
+  const size_t kRank3 = 3;
+  const size_t kRank4 = 4;
+
   const auto &input_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
   if (MS_UNLIKELY(IsDynamicRank(input_shape))) {
     return std::make_shared<abstract::TensorShape>(std::vector<int64_t>{abstract::TensorShape::kShapeRankAny});
   }
-
   auto input_rank = input_shape.size();
-  MS_CHECK_VALUE(
-    input_rank >= 3 && input_rank <= 4,
-    CheckAndConvertUtils::FormatCheckInRangeMsg("input rank", SizeToLong(input_rank), kIncludeBoth, {3, 4}, primitive));
+
+  MS_CHECK_VALUE(input_rank >= kRank3 && input_rank <= kRank4,
+                 CheckAndConvertUtils::FormatCheckInRangeMsg("input rank", SizeToLong(input_rank), kIncludeBoth,
+                                                             {kRank3, kRank4}, primitive));
 
   std::vector<int64_t> output_shape(input_rank, abstract::TensorShape::kShapeDimAny);
-  std::transform(input_shape.begin(), input_shape.begin() + input_rank - 2, output_shape.begin(),
+  std::transform(input_shape.begin(), input_shape.begin() + input_rank - kNum2, output_shape.begin(),
                  [](const int64_t v) { return v; });
 
   auto kernel_size_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
   auto stride_opt = GetArrayValue<int64_t>(input_args[kInputIndex2]);
   auto padding_opt = GetArrayValue<int64_t>(input_args[kInputIndex3]);
   auto ceil_mode_opt = GetScalarValue<bool>(input_args[kInputIndex4]->GetValue());
-
   if (MS_LIKELY((ceil_mode_opt.has_value() && kernel_size_opt.has_value() && stride_opt.has_value() &&
                  padding_opt.has_value()))) {
     auto ceil_mode = ceil_mode_opt.value();
     auto kernel_size = kernel_size_opt.value();
     auto stride = stride_opt.value();
     auto padding = padding_opt.value();
-
-    for (size_t i = 0; i < 2; ++i) {
-      auto dim = input_rank - 2 + i;
+    for (size_t i = 0; i < kNum2; ++i) {
+      auto dim = input_rank - kNum2 + i;
       auto cur_dim_value = input_shape[dim];
 
       auto idx_kernel_size = i % kernel_size.size();
@@ -159,7 +161,8 @@ int32_t AvgPool2DFuncImpl::CheckValidation(const PrimitivePtr &primitive,
     if (MS_UNLIKELY(kernel_size.IsValueUnknown(idx_kernel_size) || padding.IsValueUnknown(idx_padding))) {
       continue;
     }
-    if (MS_UNLIKELY(kernel_size[idx_kernel_size] / 2 < padding[idx_padding])) {
+    const int kNum2 = 2;
+    if (MS_UNLIKELY(kernel_size[idx_kernel_size] / kNum2 < padding[idx_padding])) {
       MS_EXCEPTION(ValueError) << "For " << primitive->name()
                                << ", pad should be at most half of kernel size, but got pad = " << padding[idx_padding]
                                << " and kernel_size = " << kernel_size[idx_kernel_size];

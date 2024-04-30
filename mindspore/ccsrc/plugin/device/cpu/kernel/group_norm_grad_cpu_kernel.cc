@@ -109,7 +109,7 @@ void GroupNormGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
     float dg = 0.0;
     float db = 0.0;
     for (size_t j = 0; j < LongToSize(batch_); ++j) {
-      auto idx1 = j * num_channel_ + param_index;
+      auto idx1 = j * LongToSize(num_channel_) + param_index;
       auto idx2 = static_cast<size_t>(std::floor(idx1 * num_groups_ / num_channel_));
       dg += (dscale[idx1] - dbias[idx1] * static_cast<float>(mean[idx2])) * static_cast<float>(rstd[idx2]);
       db += dbias[idx1];
