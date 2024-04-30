@@ -18,8 +18,8 @@ if [[ -n "${MS_INTERNAL_KERNEL_HOME}" ]]; then
   echo "Use local MS_INTERNAL_KERNEL_HOME : ${MS_INTERNAL_KERNEL_HOME}"
   return
 fi
-if [[ "$(uname)" != Linux || ("$(arch)" != x86_64 && "$(arch)" != aarch64) ]]; then
-  echo "[WARNING] Internal kernels only supports linux system, x86_64 or aarch64 CPU arch."
+if [[ "$(uname)" != Linux || "$(arch)" != aarch64 ]]; then
+  echo "[WARNING] Internal kernels only supports linux system, aarch64 CPU arch."
   return
 fi
 file_path=${BASEPATH}/mindspore/ccsrc/plugin/device/ascend/kernel/internal/prebuild/$(arch)
