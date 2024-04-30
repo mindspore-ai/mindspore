@@ -126,6 +126,10 @@ std::unique_ptr<T[]> CopyData(const ShapeVector &shape, void *const data, TypeId
       auto buf = static_cast<uint8_t *>(data);
       return NewData<T>(buf, size);
     }
+    case kNumberTypeInt4: {
+      auto buf = static_cast<int8_t *>(data);
+      return NewData<T>(buf, size);
+    }
     case kNumberTypeInt8: {
       auto buf = static_cast<int8_t *>(data);
       return NewData<T>(buf, size);
@@ -614,6 +618,8 @@ TensorDataPtr MakeTensorData(TypeId data_type, Args &&... args) {
       return std::make_shared<ImplClass<bool>>(std::forward<Args>(args)...);
     case kNumberTypeUInt8:
       return std::make_shared<ImplClass<uint8_t>>(std::forward<Args>(args)...);
+    case kNumberTypeInt4:
+      return std::make_shared<ImplClass<int8_t>>(std::forward<Args>(args)...);
     case kNumberTypeInt8:
       return std::make_shared<ImplClass<int8_t>>(std::forward<Args>(args)...);
     case kNumberTypeInt16:

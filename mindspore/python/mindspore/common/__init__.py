@@ -21,7 +21,7 @@ from mindspore.common.dtype import Type, int8, byte, int16, short, int32, intc, 
     float32, single, float64, bfloat16, double, bool_, float_, list_, tuple_, int_, \
     uint, number, tensor_type, string, type_none, TensorType, Int, \
     complex64, complex128, dtype_to_nptype, _null, _NullType, \
-    dtype_to_pytype, pytype_to_dtype, get_py_obj_dtype, QuantDtype
+    dtype_to_pytype, pytype_to_dtype, get_py_obj_dtype, QuantDtype, qint4x2
 from mindspore.common.dump import set_dump
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.seed import set_seed, get_seed
@@ -58,7 +58,7 @@ __all__ = [
     # __method__ from dtype
     "dtype_to_nptype", "dtype_to_pytype",
     "pytype_to_dtype", "get_py_obj_dtype",
-    "bfloat16",
+    "bfloat16", "qint4x2"
 ]
 
 __all__.extend([

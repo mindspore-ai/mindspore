@@ -61,6 +61,7 @@ constexpr const size_t PARA_ROUND = 1024;
 // anf type to mindir type map
 static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_type_map = {
   {kNumberTypeBool, mind_ir::TensorProto_DataType_BOOL},
+  {kNumberTypeInt4, mind_ir::TensorProto_DataType_QINT4X2},
   {kNumberTypeInt8, mind_ir::TensorProto_DataType_INT8},
   {kNumberTypeInt16, mind_ir::TensorProto_DataType_INT16},
   {kNumberTypeInt, mind_ir::TensorProto_DataType_INT32},
@@ -80,9 +81,8 @@ static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_type_map = 
   {kNumberTypeComplex128, mind_ir::TensorProto_DataType_COMPLEX128}};
 
 static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_int_map = {
-  {8, mind_ir::TensorProto_DataType_INT8},
-  {16, mind_ir::TensorProto_DataType_INT16},
-  {32, mind_ir::TensorProto_DataType_INT32},
+  {4, mind_ir::TensorProto_DataType_QINT4X2}, {8, mind_ir::TensorProto_DataType_INT8},
+  {16, mind_ir::TensorProto_DataType_INT16},  {32, mind_ir::TensorProto_DataType_INT32},
   {64, mind_ir::TensorProto_DataType_INT64},
 };
 
