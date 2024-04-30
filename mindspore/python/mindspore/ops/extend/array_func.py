@@ -213,6 +213,7 @@ def min(input, dim=None, keepdim=False):
     indices, values = argmin_with_value_op(input)
     return values, indices
 
+
 def one_hot(tensor, num_classes):
     r"""
     Computes a one-hot tensor.
@@ -253,5 +254,6 @@ def one_hot(tensor, num_classes):
     off_value = Tensor(0, dtype=tensor.dtype)
     onehot = _get_cache_prim(OneHotExt)(-1)
     return onehot(tensor, num_classes, on_value, off_value)
+
 
 __all__ = ['gather', 'max', 'min', 'one_hot']
