@@ -385,12 +385,13 @@ class OpBuilder {
       // for it, because it's value is only needed in infer shape
       auto param = node->input(input_idx);
       MS_EXCEPTION_IF_NULL(param);
-      if (!param->isa<Parameter>()) {
-        MS_LOG(EXCEPTION) << "For " << node->fullname_with_scope() << ", input[" << (input_idx - 1)
-                          << "] must be a Parameter, but got: " << param->ToString();
+      if (param->isa<Parameter>()) {
+        (*shapes_ref_)[param] = std::make_shared<dvm::ShapeRef>();
+        return (*shapes_ref_)[param].get();
       }
-      (*shapes_ref_)[param] = std::make_shared<dvm::ShapeRef>();
-      return (*shapes_ref_)[param].get();
+      // else, the shape input is a const input, but has -1 value and the real value of -1 can be
+      //   inferred from the first input's shape at runtime.
+      // e.g. Reshape(x, (1, -1)) or BroadcastTo(x, (-1, 3))
     }
     shapes_ref_source_->push_back(shape);
     (*shapes_ref_)[node] = std::make_shared<dvm::ShapeRef>(shapes_ref_source_->back());
