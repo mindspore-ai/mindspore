@@ -852,6 +852,7 @@ class DiceLoss(LossBase):
     def construct(self, logits, label):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', label, self.cls_name)
+        _check_dice_shape(logits.shape, label.shape, self.cls_name)
         if logits.dtype == mstype.uint8:
             raise TypeError(f"For '{self.cls_name}', the dtype of 'logits' can not be uint8.")
         if label.dtype == mstype.uint8:
