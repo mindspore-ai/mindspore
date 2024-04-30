@@ -211,7 +211,7 @@ TopkExt: 'aclnnTopk'
 # 73
 
 # 74
-
+SortExt: 'aclnnSort'
 # 75
 
 # 76

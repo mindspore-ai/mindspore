@@ -62,7 +62,7 @@ from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
     nonzero, flip, transpose, tril, triu, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, \
-    broadcast_to, strided_slice, ones, zeros, max_, min_, select
+    broadcast_to, strided_slice, ones, zeros, max_, min_, select, sort_ext
 from mindspore.ops.auto_generate.gen_ops_prim import scatter_add_ext_op
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
@@ -6515,6 +6515,7 @@ __all__ = [
     'moveaxis',
     'aminmax',
     'sort',
+    'sort_ext',
     'top_k',
     'deepcopy',
     'flip'
