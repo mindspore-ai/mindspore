@@ -107,7 +107,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kPruneCase - kBoolConf] = true;
   bool_conf[kLoopUnrolling - kBoolConf] = false;
   bool_conf[kSkipException - kBoolConf] = false;
-  bool_conf[kInferOnly - kBoolConf] = false;
+  bool_conf[kInferOnly - kBoolConf] = true;
   bool_conf[kInferPrimitive - kBoolConf] = true;
   bool_conf[kStrictTrace - kBoolConf] = true;
   bool_conf[kPerfStatistics - kBoolConf] = false;

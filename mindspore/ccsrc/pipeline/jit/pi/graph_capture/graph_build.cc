@@ -34,6 +34,7 @@
 #include "ops/sequence_ops.h"
 #include "ops/framework_ops.h"
 #include "ops/structure_ops.h"
+#include "mindspore/core/ir/cell.h"
 
 namespace mindspore {
 namespace pijit {
@@ -429,9 +430,36 @@ bool GraphBuilder::DoReturn(const Instr &instr) {
   return true;
 }
 
+bool GraphBuilder::DoMixedPrecisionLocalAccess(const Instr &instr, ValueNode *node) {
+  auto param_node = static_cast<ParamNode *>(node);
+  auto dst_dtype = param_node->GetMixedPrecisionType();
+  py::object prim_cast = Utils::GetModuleAttr("mindspore.ops.functional", "cast", false, true);
+  ValueNode *prim_node = NewValueNode(AObject::Convert(prim_cast), LOAD_CONST, {});
+  ValueNode *dtype_node = NewValueNode(AObject::Convert(dst_dtype), LOAD_CONST, -1, {});
+  std::vector<ValueNode *> cast_args = {prim_node, node, dtype_node};
+  ValueNode *call_node = NewValueNode(nullptr, CALL_FUNCTION, cast_args.size() - 1, cast_args);
+  push(call_node);
+  auto *call = static_cast<CallNode *>(call_node);
+  call->SetVobj(AObject::MakeAObject(AObject::kTypeAnyValue));
+  call->SetLineNo(instr.line());
+  call->set_bci(instr.bci());
+  StopTraceReason r = HandleCall(0);
+  if (r != StopTraceReason::kNonStopTrace) {
+    graph_->StopTraceAt(cur_bci_, r);
+    return false;
+  }
+  this->graph_->GetTracedNodes().push_back(call_node);
+  return true;
+}
+
 bool GraphBuilder::DoLocalAccess(const Instr &instr) {
   if (instr.op() == LOAD_FAST) {
-    push(getLocal(instr.arg()));
+    auto local = getLocal(instr.arg());
+    if (local->GetType() == AbstractNode::Param && reinterpret_cast<ParamNode *>(local)->IsMixedPrecisionType()) {
+      DoMixedPrecisionLocalAccess(instr, local);
+    } else {
+      push(local);
+    }
   } else if (instr.op() == STORE_FAST) {
     setLocal(instr.arg(), pop());
   } else if (instr.op() == DELETE_FAST) {
@@ -684,6 +712,56 @@ ValueNode *GraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &inst
   return NewValueNode(target_node->get_attr(instr.name()), instr, {target_node});
 }
 
+ValueNode *GraphBuilder::DoMixedPrecisionAttrAccess(const Instr &instr, ValueNode *node, ValueNode *attr) {
+  if (node->GetVobj() == nullptr || node->GetVobj()->GetPyObject().ptr() == nullptr ||
+      node->GetVobj()->GetType() != AbstractObjectBase::kTypeCell) {
+    return nullptr;
+  }
+  auto cell = py::cast<CellPtr>(node->GetVobj()->GetPyObject());
+  auto mixed_type = cell->GetMixedPrecisionType();
+  if (mixed_type == kNotSet) {
+    return nullptr;
+  }
+  if (attr->GetVobj() == nullptr || attr->GetVobj()->GetPyObject().ptr() == nullptr) {
+    return nullptr;
+  }
+  if (attr->GetVobj()->GetType() == AObject::kTypeTensor && !attr->GetVobj()->GetPyObject().attr("dtype").is_none()) {
+    auto src_dtype = attr->GetVobj()->GetPyObject().attr("dtype");
+    bool is_cast = false;
+    if (py::isinstance<Float>(src_dtype)) {
+      auto float_nbits = py::cast<Float>(src_dtype).nbits();
+      if (float_nbits == 64 || (float_nbits == 32 && mixed_type != kFP32) ||
+          (float_nbits == 16 && mixed_type != kFP16)) {
+        is_cast = true;
+      }
+    }
+    if (py::isinstance<BFloat>(src_dtype) && mixed_type != kBF16) {
+      is_cast = true;
+    }
+    if (is_cast) {
+      auto dst_dtype = Utils::MixedPrecisionTypeToDType(mixed_type);
+      py::object prim_cast = Utils::GetModuleAttr("mindspore.ops.functional", "cast", false, true);
+      ValueNode *prim_node = NewValueNode(AObject::Convert(prim_cast), LOAD_CONST, {});
+      ValueNode *dtype_node = NewValueNode(AObject::Convert(dst_dtype), LOAD_CONST, -1, {});
+      std::vector<ValueNode *> cast_args = {prim_node, attr, dtype_node};
+      ValueNode *call_node = NewValueNode(nullptr, CALL_FUNCTION, cast_args.size() - 1, cast_args);
+      CallNode *call = static_cast<CallNode *>(call_node);
+      call->SetVobj(AObject::MakeAObject(AObject::kTypeAnyValue));
+      call->SetLineNo(instr.line());
+      call->set_bci(instr.bci());
+      push(call_node);
+      StopTraceReason r = HandleCall(0);
+      if (r != StopTraceReason::kNonStopTrace) {
+        graph_->StopTraceAt(cur_bci_, r);
+        return nullptr;
+      }
+      this->graph_->GetTracedNodes().push_back(call_node);
+      return pop();
+    }
+  }
+  return nullptr;
+}
+
 bool GraphBuilder::DoAttrAccess(const Instr &instr) {
   int opcode = instr.op();
   if (opcode == LOAD_METHOD || opcode == LOAD_ATTR) {
@@ -692,6 +770,10 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
       return true;
     }
     push(HandleGetattr(o, instr));
+    auto attr = DoMixedPrecisionAttrAccess(instr, o, seek(0));
+    if (attr) {
+      seek(0) = attr;
+    }
   } else if (opcode == STORE_ATTR) {
     auto o = pop();
     auto v = pop();
@@ -2538,6 +2620,39 @@ void GraphBuilder::ResolveClosure(const py::object &func_info, ValueNode *callab
   }
 }
 
+void SetMixedPrecisionType(CallNode *call_node, FrameStates *frame) {
+  auto func_node = call_node->input(0);
+  if (func_node->GetVobj() && func_node->GetVobj()->GetType() == AbstractObjectBase::kTypeCell) {
+    auto cell = py::cast<CellPtr>(func_node->GetVobj()->GetPyObject());
+    auto mixed_type = cell->GetMixedPrecisionType();
+    if (mixed_type != MixedPrecisionType::kNotSet) {
+      for (size_t i = 0; i < frame->GetLocals().size(); i++) {
+        auto paramNode = reinterpret_cast<ParamNode *>(frame->Local(i));
+        if (paramNode->GetVobj()->GetType() == AObject::kTypeTensor &&
+            !paramNode->GetVobj()->GetPyObject().attr("dtype").is_none()) {
+          auto src_dtype = paramNode->GetVobj()->GetPyObject().attr("dtype");
+          bool is_cast = false;
+          if (py::isinstance<Float>(src_dtype)) {
+            auto float_nbits = py::cast<Float>(src_dtype).nbits();
+            if (float_nbits == 64 || (float_nbits == 32 && mixed_type != kFP32) ||
+                (float_nbits == 16 && mixed_type != kFP16)) {
+              is_cast = true;
+            }
+          }
+          if (py::isinstance<BFloat>(src_dtype) && mixed_type != kBF16) {
+            is_cast = true;
+          }
+          if (!is_cast) {
+            continue;
+          }
+          auto dst_dtype = Utils::MixedPrecisionTypeToDType(mixed_type);
+          paramNode->SetMixedPrecisionType(dst_dtype);
+        }
+      }
+    }
+  }
+}
+
 StopTraceReason GraphBuilder::HandleCall(int depth) {
   MS_EXCEPTION_IF_CHECK_FAIL(seek(0)->GetType() == ValueNode::Call, "must be call node");
   CallNode *call_node = reinterpret_cast<CallNode *>(seek(0));
@@ -2566,6 +2681,7 @@ StopTraceReason GraphBuilder::HandleCall(int depth) {
     return StopTraceReason::kStopTraceFunc_ArgHandle_Unsupported;
   }
 
+  SetMixedPrecisionType(call_node, frame);
   // build sub-graph
   stop_reason = BuildSubGraph(call_node, depth, callable_info, subgraph);
   CollectInlineInfo(call_node, depth);

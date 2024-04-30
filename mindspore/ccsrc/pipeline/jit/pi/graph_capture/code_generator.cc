@@ -961,7 +961,7 @@ void CodeBreakGenerator::CallUntrackedCode(CodeGenerator *code_gen) {
     BreakAtIf(code_gen);
     return;
   }
-  if (start_op != JUMP_ABSOLUTE && start_op != JUMP_FORWARD) {
+  if (start_op != JUMP_ABSOLUTE && start_op != JUMP_FORWARD && start_op != UNPACK_SEQUENCE && start_op != UNPACK_EX) {
     MS_EXCEPTION_IF_CHECK_FAIL(list[start_bci]->extra_jump() == nullptr, "unexpected jump instruction");
     // break at unsupported bytecode
     untracked_stack_effect = PyCompile_OpcodeStackEffect(start_op, list[start_bci]->arg());
