@@ -102,7 +102,6 @@ bool GetNeedSyncStream(const GraphCompilerInfo &graph_compiler_info) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   static const bool enable_internal_kernel = ms_context->IsEnableInferBoost();
-  // static auto enable_internal_kernel = common::GetEnv("MS_ENABLE_INTERNAL_KERNELS");
   static auto enable_syn = common::GetEnv("MS_SYNC_RUN");
   if (enable_internal_kernel && enable_syn != "on") {
     return false;
