@@ -49,7 +49,7 @@ from mindspore.ops.function.math_func import ne
 # 11
 
 # 12
-
+from mindspore.ops.function.array_func import repeat_interleave_ext as repeat_interleave
 # 13
 
 # 14
@@ -262,7 +262,7 @@ __all__ = [
     # 11
 
     # 12
-
+    "repeat_interleave",
     # 13
 
     # 14

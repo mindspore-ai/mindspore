@@ -2421,5 +2421,41 @@ REG_BPROP_BUILDER("Min").SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
+REG_BPROP_BUILDER("RepeatInterleave").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto repeats = ib->GetInput(kIndex1);
+  auto axis = ib->GetInput(kIndex2);
+  auto output_size = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto axis_ptr = axis->BuildValue();
+  auto axis_value = GetValue<int64_t>(axis_ptr);
+  auto repeats_ptr = repeats->BuildValue();
+  auto repeats_values = GetIntList(repeats_ptr);
+  NodePtr result;
+  if (repeats_values.size() == 1) {
+    auto shape_out = ib->GetShape(dout);
+    shape_out[axis_value] = shape_out[axis_value] / repeats_values[0];
+    shape_out.insert(shape_out.begin() + axis_value, repeats_values[0]);
+    auto reshape = ib->Reshape(dout, shape_out);
+    result = ib->ReduceSum(reshape, {axis_value});
+  } else {
+    int idx = 0;
+    NodePtrList to_merge;
+    for (size_t i = 0; i < repeats_values.size(); i++) {
+      std::map<int64_t, std::vector<int64_t>> slices;
+      (void)slices.emplace(axis_value, std::vector<int64_t>{idx, idx + repeats_values[i]});
+      auto dx = ib->StridedSlice(dout, slices);
+      NodePtr rs = ib->ReduceSum(dx, {axis_value});
+      auto rs_shape = rs->shape();
+      rs_shape.insert(rs_shape.begin() + axis_value, 1);
+      NodePtr rsh = ib->Reshape(rs, rs_shape);
+      to_merge.push_back(rsh);
+      idx += repeats_values[i];
+    }
+    result = ib->Concat(to_merge, axis_value);
+  }
+  return {result, ib->OutZeros(repeats), ib->OutZeros(axis), ib->OutZeros(output_size)};
+});
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
