@@ -279,11 +279,6 @@
 
         `parameter_layout_dict` 表示一个参数的张量layout，这种张量layout是由分片策略和分布式算子信息推断出来的。
 
-    .. py:method:: pipeline_stage
-        :property:
-
-        `pipeline_stage` 表示当前Cell所在的stage。
-
     .. py:method:: parameters_and_names(name_prefix='', expand=True)
 
         返回Cell中parameter的迭代器。
@@ -319,6 +314,11 @@
 
         返回：
             OrderedDict类型，返回参数字典。
+
+    .. py:method:: pipeline_stage
+        :property:
+
+        `pipeline_stage` 表示当前Cell所在的stage。
 
     .. py:method:: place(role, rank_id)
 

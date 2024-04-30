@@ -1,5 +1,5 @@
-- **float** - �̶���ѧϰ�ʡ�������ڵ����㡣
-- **int** - �̶���ѧϰ�ʡ�������ڵ����㡣�������ͻᱻת��Ϊ��������
-- **Tensor** - �����Ǳ�����һά�����������ǹ̶���ѧϰ�ʡ�һά�����Ƕ�̬��ѧϰ�ʣ���i����ȡ�����е�i��ֵ��Ϊѧϰ�ʡ�
-- **Iterable** - ��̬��ѧϰ�ʡ���i����ȡ��������i��ֵ��Ϊѧϰ�ʡ�
-- **LearningRateSchedule** - ��̬��ѧϰ�ʡ���ѵ�������У��Ż�����ʹ�ò�����mindspore.cn/docs/zh-CN/masterateSchedule <https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/mindspore.nn.html#learningrateschedule%E7%B1%BB>`_ ʵ�������㵱ǰѧϰ�ʡ�
+- **float** - 固定的学习率。必须大于等于零。
+- **int** - 固定的学习率。必须大于等于零。整数类型会被转换为浮点数。
+- **Tensor** - 可以是标量或一维向量。标量是固定的学习率。一维向量是动态的学习率，第i步将取向量中第i个值作为学习率。
+- **Iterable** - 动态的学习率。第i步将取迭代器第i个值作为学习率。
+- **LearningRateSchedule** - 动态的学习率。在训练过程中，优化器将使用步数（step）作为输入，调用 `LearningRateSchedule <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.nn.html#learningrateschedule%E7%B1%BB>`_ 实例来计算当前学习率。

@@ -22,7 +22,7 @@ mindspore.ops.layer_norm
         - **bias** (Tensor, 可选) - 可学习的偏移值，shape为 `normalized_shape` ，默认值: ``None`` 。为 ``None`` 时，初始化为 ``0`` 。
         - **eps** (float, 可选) - 添加到分母中的值（:math:`\epsilon`），以确保数值稳定。默认值： ``1e-5`` 。
 
-    输出：
+    返回：
         Tensor，归一化后的Tensor，shape和数据类型与 `input` 相同。
 
     异常：

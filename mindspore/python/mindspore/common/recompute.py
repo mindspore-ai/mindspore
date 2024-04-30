@@ -38,17 +38,18 @@ def recompute(block, *args, **kwargs):
     storing the intermediate activation computed in forward pass, we will recompute it in backward pass.
 
     Note:
-     - Recompute function only support block which inherited from Cell object.
-     - This function interface now only support pynative mode. you can use Cell.recompute interface
-       in graph mode.
-     - When use recompute function, block object should not decorated by @jit.
+        - Recompute function only support block which inherited from Cell object.
+        - This function interface now only support pynative mode. you can use Cell.recompute interface
+          in graph mode.
+        - When use recompute function, block object should not decorated by @jit.
 
     Args:
         block (Cell): Block to be recompute.
         args(tuple): Inputs for block object to run forward pass.
         kwargs(dict): Optional input for recompute function.
 
-    Returns: Same as return type of block.
+    Returns:
+        Same as return type of block.
 
     Raises:
         TypeError: If `block` is not Cell object.
