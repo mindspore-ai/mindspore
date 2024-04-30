@@ -811,8 +811,10 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
         fn (Function): The Python function that will be run as a graph. Default: ``None`` .
         mode (str): The type of jit used, the value of mode should be ``PIJit`` or ``PSJit``. Default: ``PSJit`` .
 
-            - `PSJit <https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html>`_ : MindSpore GRAPH_MODE.
-            - `PIJit <https://www.mindspore.cn/docs/en/master/design/dynamic_graph_and_static_graph.html>`_ : MindSpore PYNATIVE_MODE.
+            - `PSJit <https://www.mindspore.cn/docs/en/r2.3/note/static_graph_syntax_support.html>`_ :
+              Parse python ast to build graph.
+            - `PIJit <https://www.mindspore.cn/docs/en/r2.3/design/dynamic_graph_and_static_graph.html>`_ :
+              Parse python bytecode to build graph at runtime.
 
         input_signature (Union[Tuple, List, Dict, Tensor]): The Tensor which describes the input arguments. The
             shape and dtype of the Tensor will be supplied to this function. If `input_signature` is specified, the
