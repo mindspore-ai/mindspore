@@ -266,7 +266,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
         axes (tuple[int], optional): The dimension along which to take the one dimensional `fft2`.
             Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
         norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
-            Three modes are defined as, :math: `n = prod(s)`
+            Three modes are defined as, :math:`n = prod(s)`
 
             - ``"backward"`` (no normalization).
             - ``"forward"`` (normalize by :math:`1/n`).
@@ -313,7 +313,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
         axes (tuple[int], optional): The dimension along which to take the one dimensional `ifft2`.
             Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
         norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
-            Three modes are defined as, where :math: `n = prod(s)`
+            Three modes are defined as, where :math:`n = prod(s)`
 
             - ``"backward"`` (normalize by :math:`1/n`).
             - ``"forward"`` (no normalization).
@@ -680,7 +680,7 @@ def ihfft(a, n=None, axis=-1, norm=None):
 
     Note:
         - `ihfft` is currently only used in `mindscience` scientific computing scenarios and
-        dose not support other usage scenarios.
+          dose not support other usage scenarios.
         - `ihfft` is not supported on Windows platform yet.
 
     Args:

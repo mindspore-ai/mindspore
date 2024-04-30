@@ -10307,7 +10307,7 @@ def fft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-na
             Default: -1.
         norm (string, optional): Normalization mode. Three modes are defined as,
             ``"forward"`` (normalize by :math `1/n`), ``"backward"``(no normalization),
-            ``"ortho"`` (normalize by :math: `1/\sqrt{n}`).
+            ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
             Default: ``None`` that means ``"backward"``.
 
     Returns:
@@ -10386,7 +10386,7 @@ def fft2(input, s=None, dim=(-2, -1), norm=None):  # pylint: disable=redefined-o
             Default: last two dimensions.
         norm (string, optional): Normalization mode. Three modes are defined as,
             ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
-            ``"ortho"``(normalize by :math: `1/\sqrt{n}`). Where :math `n = prod(s)` is the logical FFT size.
+            ``"ortho"``(normalize by :math:`1/\sqrt{n}`). Where :math `n = prod(s)` is the logical FFT size.
             Default: ``None`` that means ``"backward"``.
 
     Returns:
@@ -10429,7 +10429,7 @@ def fftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-outer
             Default: all dimensions, or the last `len(s)` dimensions if `s` is given.
         norm (string, optional): Normalization mode. Three modes are defined as,
             ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
-            ``"ortho"``(normalize by :math: `1/\sqrt{n}`). Where :math `n = prod(s)` is the logical FFT size.
+            ``"ortho"``(normalize by :math:`1/\sqrt{n}`). Where :math `n = prod(s)` is the logical FFT size.
             Default: ``None`` that means ``"backward"``.
 
     Returns:
@@ -10478,7 +10478,7 @@ def ifft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-n
             Default: -1.
         norm (string, optional): Normalization mode. Three modes are defined as,
             ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
-            ``"ortho"``(normalize by :math: `1/\sqrt{n}`).
+            ``"ortho"``(normalize by :math:`1/\sqrt{n}`).
             Default: ``None`` that means ``"backward"``.
 
     Returns:
@@ -10558,7 +10558,7 @@ def ifft2(input, s=None, dim=(-2, -1), norm=None):  # pylint: disable=redefined-
             Default: (-2, -1).
         norm (string, optional): Normalization mode. Three modes are defined as,
             ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
-            ``"ortho"``(normalize by :math: `1/\sqrt{n}`). Where :math `n = prod(s)` is the logical IFFT size.
+            ``"ortho"``(normalize by :math:`1/\sqrt{n}`). Where :math `n = prod(s)` is the logical IFFT size.
             Default: ``None`` that means ``"backward"``.
 
     Returns:
@@ -10601,7 +10601,7 @@ def ifftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-oute
             Default: all dimensions, or the last `len(s)` dimensions if `s` is given.
         norm (string, optional): Normalization mode. Three modes are defined as,
             ``"forward"``(normalize by :math `1/n`), ``"backward"``(no normalization),
-            ``"ortho"``(normalize by :math: `1/\sqrt{n}`). Where :math `n = prod(s)` is the logical IFFT size.
+            ``"ortho"``(normalize by :math:`1/\sqrt{n}`). Where :math `n = prod(s)` is the logical IFFT size.
             Default: ``None`` that means ``"backward"``.
 
     Returns:

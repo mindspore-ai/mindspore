@@ -895,14 +895,14 @@ def lstsq(A, B, rcond=None, driver=None):
           is same as batch dimensions of `A`. It is computed when `driver` is one of (``"gelss"``, ``"gelsd"``),
           otherwise it is an empty tensor.
 
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
     Raises:
         TypeError: If dtype of `A` and `B` are not the same.
         ValueError: If `A` is less than 2 dimension.
         ValueError: If the shape of `A` and `B` are not matched.
         ValueError: If `driver` is not in set {``None``, ``"gels"``, ``"gelsy"``, ``"gelss"``, ``"gelsd"``}.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import numpy as onp

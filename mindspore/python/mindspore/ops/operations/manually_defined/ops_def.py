@@ -1600,7 +1600,7 @@ def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mas
         head_num (int): The head num of query, equal to N1.
         real_shift (Union[Tensor[float16, bfloat16], None]): Also known as pse. The position embedding code. If S
             is greater than 1024 and the mask of the lower triangle is used, enter only the inverse 1024 lines of
-            the lower triangle for memory optimization. Input tensor of shape :math: `(B, N1, S1, S2)`,
+            the lower triangle for memory optimization. Input tensor of shape :math:`(B, N1, S1, S2)`,
             `(1, N1, S1, S2)`, `(B, N1, 1024, S2)`, `(1, N1, 1024, S2)`.
 
             - ALiBi scenario: real_shift must meet the ALiBi rule, and sparse_mode is 2 or 3 for the lower triangle.

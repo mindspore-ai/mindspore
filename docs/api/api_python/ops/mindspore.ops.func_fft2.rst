@@ -18,7 +18,7 @@ mindspore.ops.fft2
           默认值： ``None`` , 表示无需对 `input` 进行处理。
         - **dim** (tuple[int], 可选) - 指定进行 `fft2` 的维度。默认值： ``(-2,-1)`` ，表示对 `input` 的最后两个维度进行变换。
         - **norm** (str, 可选) - 标准化模式。默认值： ``None`` ，采用 ``'backward'`` 。
-          三种模式定义如下，其中:math: `n = prod(s)`：
+          三种模式定义如下，其中:math:`n = prod(s)`：
 
           - ``'backward'`` 表示不进行标准化。
           - ``'forward'`` 表示按 :math:`1/n` 标准化。
