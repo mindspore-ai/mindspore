@@ -158,6 +158,6 @@ TypePtr StackExtFuncImpl::InferType(const PrimitivePtr &primitive,
       }
     }
   }
-  return std::make_shared<TensorType>(out_type->Clone());
+  return std::make_shared<TensorType>(out_type);
 }
 }  // namespace mindspore::ops

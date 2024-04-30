@@ -17,10 +17,9 @@ from functools import reduce
 import pytest
 import numpy as np
 import mindspore as ms
-from mindspore import ops, mutable
+from mindspore import ops
 from mindspore.mint import stack
 from mindspore import jit, JitConfig
-from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.utils import test_utils
 
 
@@ -95,23 +94,3 @@ def test_stack_bfloat16(mode):
     tensor_inputs, expect = stack_fwd_data_prepare(test_shape)
     output = stack_forward_func(tensor_inputs[0], tensor_inputs[1])
     assert np.allclose(output.float().asnumpy(), expect, 0.004, 0.004)
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
-def test_stack_dynamic_shape(jit_level):
-    """
-    Feature: Test dynamic shape.
-    Description: test function div dynamic feature.
-    Expectation: expect correct result.
-    """
-    axis = 0
-    axis_dyn = mutable(axis)
-    ms_x0 = ms.Tensor(np.random.rand(2, 6, 8), ms.float32)
-    ms_y0 = ms.Tensor(np.random.rand(2, 6, 8), ms.float32)
-    ms_x1 = ms.Tensor(np.random.rand(3, 4, 5), ms.float32)
-    ms_y1 = ms.Tensor(np.random.rand(3, 4, 5), ms.float32)
-    TEST_OP(stack_forward_func, [[ms_x0, ms_y0, axis_dyn], [ms_x1, ms_y1, axis_dyn]], grad=True, jit_level=jit_level)

@@ -32,6 +32,65 @@ REG_FALLBACK_BUILDER("OneHotExt").SetBody(BODYFUNC(ib) {
   return {out};
 });
 
+DEF_PURE_SHAPE_CALC(g_flatten_ext_fallback_shapecalc)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto &input_shape = inputs.at(kIndex0);
+    auto start_dim = inputs.at(kIndex1)[0];
+    auto end_dim = inputs.at(kIndex2)[0];
+    int64_t dim_size = SizeToLong(input_shape.size());
+    if (dim_size == 0) {
+      return {{1}};
+    }
+    auto start_dim_fix = start_dim < 0 ? start_dim + dim_size : start_dim;
+    auto end_dim_fix = end_dim < 0 ? end_dim + dim_size : end_dim;
+    if (start_dim_fix == end_dim_fix) {
+      return {input_shape};
+    }
+
+    auto begin = input_shape.begin() + start_dim_fix;
+    auto end = input_shape.begin() + end_dim_fix + 1;
+    auto slice_numel = std::accumulate(begin, end, static_cast<int64_t>(1), std::multiplies<int64_t>());
+    ShapeVector shape;
+    shape.reserve(dim_size - end_dim_fix + start_dim_fix);
+    for (int64_t i = 0; i < start_dim_fix; i++) {
+      shape.push_back(input_shape[i]);
+    }
+    shape.push_back(slice_numel);
+    for (int64_t i = end_dim_fix + 1; i < dim_size; i++) {
+      shape.push_back(input_shape[i]);
+    }
+    return {shape};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
+    if (IsDynamicRank(inputs[0])) {
+      return {-1};
+    }
+    int64_t dim_size = SizeToLong(inputs[0].size());
+    auto start_vec = inputs.at(kIndex1);
+    auto end_vec = inputs.at(kIndex2);
+    if (start_vec.empty() || end_vec.empty()) {
+      return {-1};
+    }
+    auto start_dim = start_vec[0];
+    auto end_dim = end_vec[0];
+    if (dim_size == 0) {
+      return {1};
+    }
+    auto start_dim_fix = start_dim < 0 ? start_dim + dim_size : start_dim;
+    auto end_dim_fix = end_dim < 0 ? end_dim + dim_size : end_dim;
+    auto res = dim_size - end_dim_fix + start_dim_fix;
+    return {res};
+  });
+
+REG_FALLBACK_BUILDER("FlattenExt").SetBody(BODYFUNC(ib) {
+  NodePtr input = ib->GetInput(kIndex0);
+  NodePtr start_dim = ib->GetInput(kIndex1);
+  NodePtr end_dim = ib->GetInput(kIndex2);
+  auto shape = ib->ShapeCalc(g_flatten_ext_fallback_shapecalc, {input, start_dim, end_dim}, {1, 2})[0];
+  auto out = ib->Reshape(input, shape);
+  return {out};
+});
+
 REG_FALLBACK_BUILDER("Ones").SetBody(BODYFUNC(ib) {
   auto size = ib->GetInput(kIndex0);
   auto dtype = ib->GetInput(kIndex1);
