@@ -16,13 +16,13 @@
 
 #define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/matmul_allreduce_fusion.h"
-#include "ops/fusion/matmul_allreduce.h"
 #include <set>
 #include <memory>
 #include <vector>
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/all_reduce.h"
+#include "mindspore/core/ops/lite_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
@@ -104,22 +104,20 @@ VectorRef MatMulAllReduceFusion::DefineMatMulDequantAllReducePattern() const {
 
 PrimitivePtr MatMulAllReduceFusion::CreateMatMulAllReducePrim(const PrimitivePtr &allreduce_prim,
                                                               const PrimitivePtr &matmul_prim) const {
-  auto matmul_allreduce_prim = std::make_shared<ops::MatMulAllReduce>();
-  MS_CHECK_TRUE_RET(matmul_allreduce_prim != nullptr, nullptr);
+  auto matmul_allreduce_prim = prim::kPrimMatMulAllReduce->Clone();
+  MS_CHECK_TRUE_RET(matmul_allreduce_prim, {});
   // add attr
-  auto matmul_allreduce_prim_c = matmul_allreduce_prim->GetPrim();
-  MS_CHECK_TRUE_RET(matmul_allreduce_prim != nullptr, nullptr);
-  matmul_allreduce_prim_c->AddAttr(kAttrNameCommRenuse, allreduce_prim->GetAttr(kAttrNameCommRenuse));
-  matmul_allreduce_prim_c->AddAttr(kAttrNameGroup, allreduce_prim->GetAttr(kAttrNameGroup));
-  matmul_allreduce_prim_c->AddAttr(kAttrNameFusion, allreduce_prim->GetAttr(kAttrNameFusion));
-  matmul_allreduce_prim_c->AddAttr(kAttrNameOp, allreduce_prim->GetAttr(kAttrNameOp));
-  matmul_allreduce_prim_c->AddAttr(kAttrNameTransposeA, matmul_prim->GetAttr(kAttrNameTransposeA));
-  matmul_allreduce_prim_c->AddAttr(kAttrNameTransposeB, matmul_prim->GetAttr(kAttrNameTransposeB));
+  matmul_allreduce_prim->AddAttr(kAttrNameCommRenuse, allreduce_prim->GetAttr(kAttrNameCommRenuse));
+  matmul_allreduce_prim->AddAttr(kAttrNameGroup, allreduce_prim->GetAttr(kAttrNameGroup));
+  matmul_allreduce_prim->AddAttr(kAttrNameFusion, allreduce_prim->GetAttr(kAttrNameFusion));
+  matmul_allreduce_prim->AddAttr(kAttrNameOp, allreduce_prim->GetAttr(kAttrNameOp));
+  matmul_allreduce_prim->AddAttr(kAttrNameTransposeA, matmul_prim->GetAttr(kAttrNameTransposeA));
+  matmul_allreduce_prim->AddAttr(kAttrNameTransposeB, matmul_prim->GetAttr(kAttrNameTransposeB));
   if (matmul_prim->HasAttr(kAttrNameNeedFusedXoffsetToBias)) {
-    matmul_allreduce_prim_c->AddAttr(kAttrNameNeedFusedXoffsetToBias,
-                                     matmul_prim->GetAttr(kAttrNameNeedFusedXoffsetToBias));
+    matmul_allreduce_prim->AddAttr(kAttrNameNeedFusedXoffsetToBias,
+                                   matmul_prim->GetAttr(kAttrNameNeedFusedXoffsetToBias));
   }
-  return matmul_allreduce_prim_c;
+  return matmul_allreduce_prim;
 }
 
 CNodePtr MatMulAllReduceFusion::CreateMatMulAllReduceNode(const FuncGraphPtr &func_graph,
