@@ -71,6 +71,11 @@ enum ActivationType : int64_t {
   GELU = 19,
   GLU = 20,
   UNKNOWN = 21,
+  FASTGELU = 22,
+  SILU = 23,
+  GEGLU = 24,
+  SWIGLU = 25,
+  REGLU = 26,
 };
 
 enum ReduceMode : int64_t {

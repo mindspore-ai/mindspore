@@ -1,0 +1,60 @@
+#operator ffn_ext
+ffn_ext:
+    args:
+        x:
+            dtype: tensor
+        weight1:
+            dtype: tensor
+        weight2:
+            dtype: tensor
+        expertTokens:
+            dtype: tuple[int]
+            type_cast: tensor
+            default: None
+        bias1:
+            dtype: tensor
+            default: None
+        bias2:
+            dtype: tensor
+            default: None
+        scale:
+            dtype: tensor
+            default: None
+        offset:
+            dtype: tensor
+            default: None
+        deqScale1:
+            dtype: tensor
+            default: None
+        deqScale2:
+            dtype: tensor
+            default: None
+        antiquant_scale1:
+            dtype: tensor
+            default: None
+        antiquant_scale2:
+            dtype: tensor
+            default: None
+        antiquant_offset1:
+            dtype: tensor
+            default: None
+        antiquant_offset2:
+            dtype: tensor
+            default: None
+        activation:
+            dtype: int
+            default: "'fastgelu'"
+            prim_init: True
+            arg_handler: str_to_enum
+        inner_precise:
+            dtype: int
+            default: 0
+            prim_init: True
+    returns:
+        y:
+            dtype: tensor
+    class:
+        name: FFNExt
+    dispatch:
+        Ascend: FFNExtAscend
+        enable: True
