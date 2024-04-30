@@ -37,8 +37,9 @@ Status TrilInfo::CheckStrategy(const StrategyPtr &strategy) {
   Strategies strategies = strategy->GetInputDim();
   auto stra_value = strategies.at(0);
   constexpr size_t smallest_stra_len = 2;
-  if (stra_value.size() < smallest_stra_len) {
-    MS_LOG(ERROR) << name_ << ": The strategy value size must be greater than 2"
+  constexpr size_t max_stra_len = 6;
+  if (stra_value.size() < smallest_stra_len || stra_value.size() > max_stra_len) {
+    MS_LOG(ERROR) << name_ << ": The strategy value size must be greater than 2 and less than 7"
                   << ", but got strategie value size is " << stra_value.size();
     return FAILED;
   }
