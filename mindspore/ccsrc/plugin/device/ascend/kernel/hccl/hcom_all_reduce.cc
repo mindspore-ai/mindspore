@@ -23,8 +23,6 @@ namespace mindspore {
 namespace kernel {
 #define CURRENT_TIMESTAMP_MILLI \
   (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()))
-// static size_t count = 0;
-// static size_t total_cost = 0;
 bool HcomAllReduceKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_LOG(DEBUG) << "HcclAllReduce launch";
