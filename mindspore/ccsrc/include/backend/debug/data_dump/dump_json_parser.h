@@ -70,6 +70,8 @@ class BACKEND_EXPORT DumpJsonParser {
   uint32_t input_output() const { return input_output_; }
   void UpdateDumpIter() { ++cur_dump_iter_; }
   void UpdateDumpIter(int cur_step_count) { cur_dump_iter_ = cur_step_count; }
+  bool GetDatasetSink() { return is_dataset_sink_; }
+  void SetDatasetSink(bool is_dataset_sink) { is_dataset_sink_ = is_dataset_sink; }
   bool FileFormatIsNpy() const { return file_format_ == JsonFileFormat::FORMAT_NPY; }
   bool GetIterDumpFlag() const;
   bool DumpEnabledForIter() const;
@@ -113,6 +115,7 @@ class BACKEND_EXPORT DumpJsonParser {
   bool async_dump_enabled_{false};
   bool e2e_dump_enabled_{false};
   bool dumpdatacallback_registered_{false};
+  bool is_dataset_sink_{false};
   uint32_t dump_mode_{0};
   std::string path_;
   std::string net_name_;
