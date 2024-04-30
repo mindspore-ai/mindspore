@@ -44,16 +44,16 @@ NodePtr Expand(FallbackIRBuilder *ib, NodePtr tensor, size_t ndim) {
   return tensor;
 }
 
-ShapeVector To3D(ShapeVector shape) {
+ShapeVector ReduceTo3D(const ShapeVector &shape) {
   ShapeVector ret;
 
   int64_t dim0 = 1;
-  for (size_t i = 0; i < shape.size() - 2; ++i) {
+  for (size_t i = 0; i < shape.size() - kDim2; ++i) {
     dim0 *= shape[i];
   }
   ret.push_back(dim0);
-  ret.push_back(shape[shape.size() - 2]);
-  ret.push_back(shape[shape.size() - 1]);
+  ret.push_back(shape[shape.size() - kDim2]);
+  ret.push_back(shape[shape.size() - kDim1]);
   return ret;
 }
 }  // namespace
@@ -127,8 +127,8 @@ REG_FALLBACK_BUILDER("MatMulExt").SetBody(BODYFUNC(ib) {
     if (other->shape() != broadcast_shape2) {
       other = ib->Emit("BroadcastTo", {other, ib->Value(broadcast_shape2)});
     }
-    input = ib->Reshape(input, To3D(input->shape()));
-    other = ib->Reshape(other, To3D(other->shape()));
+    input = ib->Reshape(input, ReduceTo3D(input->shape()));
+    other = ib->Reshape(other, ReduceTo3D(other->shape()));
     ret = ib->BatchMatMul(input, other, false, transpose_b);
   }
   ret = ib->Reshape(ret, ib->Value(shape_out));
