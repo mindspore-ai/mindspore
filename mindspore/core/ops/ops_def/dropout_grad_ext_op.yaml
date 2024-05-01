@@ -1,0 +1,17 @@
+#operator dropout_grad_ext
+dropout_grad_ext:
+    args:
+        x:
+            dtype: tensor
+        mask:
+            dtype: tensor
+        p:
+            dtype: float
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: DropoutGradExtAscend
+    function:
+        disable: True

@@ -46,8 +46,9 @@ from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, f
 from mindspore.ops.auto_generate.gen_ops_prim import GroupNorm
 from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op,
                                          replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
-                                         constant_pad_nd_op)
+                                         constant_pad_nd_op, dropout_ext_op)
 from mindspore.ops.auto_generate.gen_ops_prim import embedding_op, Convolution
+from mindspore.nn.generator import default_generator
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -1363,6 +1364,50 @@ def dropout(input, p=0.5, training=True, seed=None):
     return out
 
 
+@_function_forbid_reuse
+def dropout_ext(input, p=0.5, training=True, seed=None):
+    r"""
+    During training, randomly zeroes some of the elements of the input tensor
+    with probability `p` from a Bernoulli distribution. It plays the role of reducing neuron correlation and
+    avoid overfitting. And the return will be multiplied by :math:`\frac{1}{1-p}` during training.
+    During the reasoning, this operation returns the same Tensor as the `x`.
+
+    Args:
+        input (Tensor): The input Tensor of shape :math:`(*, N)`, with data type of float16, float32 or float64.
+        p (float, optional): The dropping rate, between 0 and 1, e.g. p = 0.1,
+            means dropping out 10% of input units. Default: ``0.5`` .
+        training (bool): Apply dropout_ext if is True. Default: ``True``.
+        seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
+            Default: ``None`` , which will be treated as ``0`` .
+
+    Returns:
+        - **output** (Tensor) - Zeroed tensor, with the same shape and data type as `input`.
+
+    Raises:
+        TypeError: If `p` is not a float.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
+        TypeError: If `input` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor(((20, 16), (50, 50)), mindspore.float32)
+        >>> output = ops.dropout_ext(input, p=0.5)
+        >>> print(output.shape)
+        (2, 2)
+    """
+    check_bool_const(training, "training", "dropout_ext")
+    if training is False:
+        return input
+    generator = default_generator()
+    seed, offset = generator(1)
+    out, _ = dropout_ext_op(input, p, seed, offset)
+    return out
+
+
 def dropout1d(input, p=0.5, training=True):
     r"""
     During training, randomly zeroes some channels of the input tensor with probability `p`
@@ -2155,6 +2200,7 @@ def _is_dim_unknown(shape):
     return isinstance(shape, tuple) and -2 in shape
 
 
+# pylint: disable=missing-docstring
 @_primexpr
 def _interploate_make_tuple(rank, value):
     """tensor to tuple"""
@@ -7963,6 +8009,7 @@ __all__ = [
     'triplet_margin_loss',
     'channel_shuffle',
     'hardsigmoid',
-    'group_norm'
+    'group_norm',
+    'dropout_ext',
 ]
 __all__.sort()

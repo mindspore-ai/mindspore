@@ -548,6 +548,7 @@ from .nn_func import (
     channel_shuffle,
     hardsigmoid,
     group_norm,
+    dropout_ext,
 )
 from .linalg_func import (
     cond,
