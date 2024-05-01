@@ -60,7 +60,6 @@ def test_select(dtype, mode):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_functional_select_scalar():
     """

@@ -704,6 +704,199 @@ class SortShapeCalc1 : public ShapeCalcFunctor {
 };
 REG_FUNCTOR("ShapeCalc_Sort_1", SortShapeCalc1);
 
+std::pair<std::vector<bool>, std::vector<std::vector<int64_t>>> DynBroadcastGradientArgsSelect(
+  const std::vector<int64_t> &cond_shape, const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape) {
+  auto cond_size = cond_shape.size();
+  auto x_size = x_shape.size();
+  auto y_size = y_shape.size();
+  ShapeVector shape[kDim3] = {cond_shape, x_shape, y_shape};
+  auto n = std::max(cond_size, std::max(x_size, y_size));
+  std::vector<bool> need_shapecalc = {false, false, false};
+  std::vector<std::vector<int64_t>> reduce_axis(kDim3);
+  if (IsDynamicRank(shape[0]) || IsDynamicRank(shape[1]) || IsDynamicRank(shape[2])) {
+    return {{true, true, true}, reduce_axis};
+  }
+  for (size_t i = n; i >= 1; i--) {
+    int64_t dim_value[3] = {cond_size < i ? 1 : shape[0][cond_size - i], x_size < i ? 1 : shape[1][x_size - i],
+                            y_size < i ? 1 : shape[2][y_size - i]};
+    const int64_t reduce_idx = SizeToLong(n - i);
+    bool is_dynamic = false;
+    if (dim_value[1] == dim_value[0] && dim_value[2] == dim_value[0]) {
+      if (dim_value[0] == -1) {
+        need_shapecalc[0] = need_shapecalc[1] = need_shapecalc[2] = true;
+        break;
+      }
+    } else {
+      for (size_t j = 0; j < kDim3; j++) {
+        if (dim_value[j] == 1) {
+          (void)reduce_axis[j].emplace_back(reduce_idx);
+        } else if (dim_value[j] > 0) {
+          is_dynamic = true;
+        }
+      }
+      for (size_t j = 0; j < kDim3; j++) {
+        if (is_dynamic && dim_value[j] == -1) {
+          need_shapecalc[j] = true;
+          (void)reduce_axis[j].emplace_back(reduce_idx);
+        }
+      }
+    }
+  }
+  return {need_shapecalc, reduce_axis};
+}
+
+ShapeArray BroadcastGradientArgsInferValueSelect(const ShapeVector &cond_shape, const ShapeVector &x_shape,
+                                                 const ShapeVector &y_shape) {
+  ShapeArray bc_axis;
+  if (cond_shape == x_shape && cond_shape == y_shape) {
+    (void)bc_axis.emplace_back(ShapeVector{});
+    (void)bc_axis.emplace_back(ShapeVector{});
+    (void)bc_axis.emplace_back(ShapeVector{});
+    return bc_axis;
+  }
+  ShapeVector grad_cond_reduce_idx;
+  ShapeVector grad_x_reduce_idx;
+  ShapeVector grad_y_reduce_idy;
+  auto cond_size = cond_shape.size();
+  auto x_size = x_shape.size();
+  auto y_size = y_shape.size();
+  auto n = std::max(cond_size, std::max(x_size, y_size));
+  for (size_t i = n; i >= 1; i--) {
+    auto cond_i = cond_size < i ? 1 : cond_shape[cond_size - i];
+    auto x_i = x_size < i ? 1 : x_shape[x_size - i];
+    auto y_i = y_size < i ? 1 : y_shape[y_size - i];
+    const int64_t reduce_idx = SizeToLong(n - i);
+    if (cond_i == x_i && cond_i == y_i) {
+      continue;
+    }
+    if (cond_i == 1) {
+      grad_cond_reduce_idx.push_back(reduce_idx);
+    }
+    if (x_i == 1) {
+      grad_x_reduce_idx.push_back(reduce_idx);
+    }
+    if (y_i == 1) {
+      grad_y_reduce_idy.push_back(reduce_idx);
+    }
+  }
+
+  (void)bc_axis.emplace_back(std::move(grad_cond_reduce_idx));
+  (void)bc_axis.emplace_back(std::move(grad_x_reduce_idx));
+  (void)bc_axis.emplace_back(std::move(grad_y_reduce_idy));
+  return bc_axis;
+}
+
+DEF_PURE_SHAPE_CALC(g_select_broadcast)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto shape_cond = inputs.at(kIndex0);
+    auto shape_x = inputs.at(kIndex1);
+    auto shape_y = inputs.at(kIndex2);
+    return BroadcastGradientArgsInferValueSelect(shape_cond, shape_x, shape_y);
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) -> std::vector<int64_t> {
+    constexpr int64_t kShapeDimAny = -1;
+    return {kShapeDimAny, kShapeDimAny, kShapeDimAny};
+  });
+
+NodePtrList DynBinopGradSelect(BpropBuilder *ib, const NodePtr &cond, const NodePtr &x, const NodePtr &y,
+                               const NodePtr &dout, const NodePtr &dx, const NodePtr &dy, size_t shift = 0UL) {
+  NodePtr inputs[] = {cond, x, y};
+  NodePtrList reduce = {dout, dx, dy};
+  ShapeVector shape[] = {ib->GetShape(inputs[0]), ib->GetShape(inputs[1]), ib->GetShape(inputs[2])};
+  auto [need_shapecalc, reduce_axis] = DynBroadcastGradientArgsSelect(shape[0], shape[1], shape[2]);
+  NodePtrList broadcast_axes;
+  if (need_shapecalc[0] || need_shapecalc[1] || need_shapecalc[2]) {
+    broadcast_axes = ib->ShapeCalc(g_select_broadcast, {inputs[0], inputs[1], inputs[2]});
+  }
+  for (size_t i = 1; i < kDim3; i++) {
+    auto dout_shape = ib->GetShape(reduce[i]);
+    if (!need_shapecalc[i] && IsDynamicRank(dout_shape)) {
+      MS_LOG(WARNING) << "The dynamic shape inference of" << reduce[i]->ToString() << " is overly generalized.";
+    }
+    if (!need_shapecalc[i] && !IsDynamicRank(dout_shape)) {
+      if (!reduce_axis[i].empty()) {
+        reduce[i] = ib->Emit("SumExt", {reduce[i], ib->Value<ShapeVector>(reduce_axis[i]),
+                                        ib->Value<bool>(dout_shape.size() == shape[i].size()), ib->EmitValue(kNone)});
+      }
+      if (ib->GetRank(reduce[i]) != shape[i].size()) {
+        reduce[i] = ib->Reshape(reduce[i], ib->Shape(inputs[i]));
+      }
+    } else {
+      bool keep_dims = (!IsDynamicRank(shape[0]) && !IsDynamicRank(shape[1]) && !IsDynamicRank(shape[2]) &&
+                        shape[i].size() >= shape[i ^ 1].size());
+      reduce[i] = ib->ReduceSum(reduce[i], broadcast_axes[i], keep_dims, true);
+      reduce[i] = ib->Reshape(reduce[i], ib->Shape(inputs[i]));
+    }
+  }
+  return reduce;
+}
+
+NodePtr StaticBinopGradSelect(BpropBuilder *ib, const NodePtr &dx, const ShapeArray &shape,
+                              const ShapeArray &broadcast_shape, size_t shift, size_t index, bool *is_dynamic_shape) {
+  NodePtr reduce_dx = dx;
+  auto shape_dynamic_dims = std::count_if(shape[index].begin(), shape[index].end(), [](int64_t x) { return x <= -1; });
+  if (broadcast_shape[kIndex0].empty() || broadcast_shape[kIndex1].empty() || broadcast_shape[kIndex2].empty()) {
+    if (broadcast_shape[index].empty()) {
+      if (shift) {
+        std::vector<int64_t> axis(broadcast_shape[index ^ 1].size());
+        std::iota(axis.begin(), axis.end(), 0LL);
+        reduce_dx =
+          ib->Emit("SumExt", {reduce_dx, ib->Value<ShapeVector>(axis), ib->Value(false), ib->EmitValue(kNone)});
+      } else {
+        reduce_dx = ib->Emit("SumExt", {reduce_dx, ib->EmitValue(kNone), ib->Value(false), ib->EmitValue(kNone)});
+      }
+    }
+  } else if (!IsDynamic(broadcast_shape[0]) && !IsDynamic(broadcast_shape[1]) && !IsDynamic(broadcast_shape[2]) &&
+             shape_dynamic_dims <= 1) {
+    std::vector<std::vector<int64_t>> bc_axis =
+      BroadcastGradientArgsInferValueSelect(broadcast_shape[0], broadcast_shape[1], broadcast_shape[2]);
+    if (!bc_axis[index].empty()) {
+      reduce_dx =
+        ib->Emit("SumExt", {reduce_dx, ib->Value<ShapeVector>(bc_axis[index]),
+                            ib->Value<bool>(ib->GetRank(reduce_dx) == shape[index].size()), ib->EmitValue(kNone)});
+    }
+    reduce_dx = ib->Reshape(reduce_dx, shape[index]);
+  } else {
+    *is_dynamic_shape = true;
+  }
+  return reduce_dx;
+}
+
+NodePtrList BinopGradSelect(BpropBuilder *ib, const NodePtr &cond, const NodePtr &x, const NodePtr &y,
+                            const NodePtr &dout, const NodePtr &dx, const NodePtr &dy, size_t shift = 0UL) {
+  // Grad definition for where/select operations with shift.
+  // The function is usually used in backprop op to reduce additional dimensions
+  // created by broadcasting.
+  NodePtrList inputs{cond, x, y};
+  ShapeArray shape{ib->GetShape(inputs[kIndex0]), ib->GetShape(inputs[kIndex1]), ib->GetShape(inputs[kIndex2])};
+  NodePtrList reduce = {dout, dx, dy};
+  if (IsDynamicRank(shape[kIndex0]) || IsDynamicRank(shape[kIndex1]) || IsDynamicRank(shape[kIndex2])) {
+    return DynBinopGradSelect(ib, cond, x, y, dout, dx, dy, shift);
+  }
+  if (shape[kIndex0].size() <= shift && shape[kIndex0].size() == shape[kIndex1].size() &&
+      shape[kIndex0].size() == shape[kIndex2].size()) {
+    return reduce;
+  }
+  ShapeArray broadcast_shape(kDim3);
+  for (size_t i = 0; i < kDim3; i++) {
+    broadcast_shape[i] = ShapeVector(shape[i].begin(), shape[i].end() - shift);
+  }
+  bool is_x_shape_dynamic = false;
+  bool is_y_shape_dynamic = false;
+  if (dx != nullptr) {
+    reduce[kIndex1] =
+      StaticBinopGradSelect(ib, reduce[kIndex1], shape, broadcast_shape, shift, kIndex1, &is_x_shape_dynamic);
+  }
+  if (dy != nullptr) {
+    reduce[kIndex2] =
+      StaticBinopGradSelect(ib, reduce[kIndex2], shape, broadcast_shape, shift, kIndex2, &is_y_shape_dynamic);
+  }
+  if (is_x_shape_dynamic || is_y_shape_dynamic) {
+    return DynBinopGradSelect(ib, cond, x, y, dout, dx, dy, shift);
+  }
+  return reduce;
+}
+
 REG_BPROP_BUILDERS_BEGIN(GradArrayOps)
 REG_BPROP_BUILDER("GatherD").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
@@ -946,10 +1139,8 @@ REG_BPROP_BUILDER("Select").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex4);
   auto dx = x->need_compute_grad_out() ? ib->Select(cond, dout, ib->ZerosLike(dout)) : nullptr;
   auto dy = y->need_compute_grad_out() ? ib->Select(cond, ib->ZerosLike(dout), dout) : nullptr;
-  auto bc_x = BinopGradCommon(ib, cond, x, dout, dx);
-  auto bc_y = BinopGradCommon(ib, cond, y, dout, dy);
-  auto ret = BinopGradCommon(ib, x, y, bc_x[kIndex1], bc_y[kIndex1]);
-  return {ib->OutZeros(cond), ret[kIndex0], ret[kIndex1]};
+  auto ret = BinopGradSelect(ib, cond, x, y, dout, dx, dy);
+  return {ib->OutZeros(cond), ret[kIndex1], ret[kIndex2]};
 });
 
 REG_BPROP_BUILDER("OnesLike").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
