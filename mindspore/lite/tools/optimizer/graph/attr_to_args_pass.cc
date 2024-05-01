@@ -21,6 +21,7 @@
 #include "src/common/log_util.h"
 #include "ops/primitive_c.h"
 #include "ops/base_operator.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -207,15 +208,15 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
    }},
 };
 
-constexpr size_t kMatMulInputSizeWithoutBias = 3;  // primitive, x1, x2
+constexpr size_t kMatMulInputSizeWithBias = 6;  // primitive, x1, x2, bias, transpose_a, transpose_b
 constexpr auto kMatMulOpName = "MatMul";
 constexpr auto kMatMulV2OpName = "MatMulV2";
 
-void AddBiasForMatMul(const FuncGraphManagerPtr &manager, const CNodePtr &cnode) {
-  auto none_value = std::make_shared<None>();
-  auto none_node = NewValueNode(none_value);
-  none_node->set_abstract(none_value->ToAbstract());
-  manager->AddEdge(cnode, none_node);
+void RearrangeBiasForMatMul(const FuncGraphManagerPtr &manager, const CNodePtr &cnode) {
+  auto node_inputs = cnode->inputs();
+  auto bias_add_node_it = node_inputs.begin() + kIndexThree;
+  std::rotate(bias_add_node_it, bias_add_node_it + 1, node_inputs.end());
+  cnode->set_inputs(node_inputs);
 }
 
 int ConvertAttrToArgsForNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager) {
@@ -230,11 +231,6 @@ int ConvertAttrToArgsForNode(const AnfNodePtr &node, const FuncGraphManagerPtr &
   // Create new primitive and inherit the origin attributes.
   MS_LOG(INFO) << "Begin to convert Primitive to Primitive_Func for node: " << node->DebugString()
                << "new name: " << prim_name;
-  if ((prim_name == kMatMulOpName || prim_name == kMatMulV2OpName) &&
-      cnode->inputs().size() == kMatMulInputSizeWithoutBias) {
-    AddBiasForMatMul(manager, cnode);
-  }
-
   for (const auto &attr : attrs_adjust) {
     if (origin_attrs.count(attr) == 0) {
       MS_LOG(INFO) << "Origin primitive: " << prim_name << " has no attribute : " << attr;
@@ -247,6 +243,11 @@ int ConvertAttrToArgsForNode(const AnfNodePtr &node, const FuncGraphManagerPtr &
       new_value_node->set_abstract(attr_value->ToAbstract());
       manager->AddEdge(cnode, new_value_node);
     }
+  }
+
+  if ((prim_name == kMatMulOpName || prim_name == kMatMulV2OpName) &&
+      cnode->inputs().size() == kMatMulInputSizeWithBias) {
+    RearrangeBiasForMatMul(manager, cnode);
   }
   MS_LOG(INFO) << "End, new node: " << node->DebugString();
   return RET_OK;
