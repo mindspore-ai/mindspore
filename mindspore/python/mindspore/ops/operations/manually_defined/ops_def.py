@@ -1282,7 +1282,7 @@ def _infer_value_for_ReduceExtand(input_x, axis, keep_dims, dtype, prim_name):
     return value
 
 
-def _infer_value_for_MaxMin(input_x, prim_name):
+def _infer_value_for_max_min(input_x, prim_name):
     """Infer value for Max/Min op."""
     value = None
     if input_x is not None:
@@ -1330,9 +1330,10 @@ def infer_value_for_ReduceMax(input_x, axis, keep_dims):
     """Infer value for ReduceMax op."""
     return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceMax')
 
+
 def infer_value_for_Max(input_x):
     """Infer value for Max op."""
-    return _infer_value_for_MaxMin(input_x, 'Max')
+    return _infer_value_for_max_min(input_x, 'Max')
 
 
 def infer_value_for_ReduceMin(input_x, axis, keep_dims):
@@ -1342,7 +1343,7 @@ def infer_value_for_ReduceMin(input_x, axis, keep_dims):
 
 def infer_value_for_Min(input_x):
     """Infer value for Max op."""
-    return _infer_value_for_MaxMin(input_x, 'Min')
+    return _infer_value_for_max_min(input_x, 'Min')
 
 
 def infer_value_for_ReduceProd(input_x, axis, keep_dims):
