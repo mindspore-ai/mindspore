@@ -74,7 +74,8 @@ void MultiMatmulsFusion::Process(const std::string &name, const AnfNodePtr &node
     MS_EXCEPTION_IF_NULL(matmul);
     // insert "B, trans_a, trans_b"
     constexpr int64_t fused_begin_index = 2;
-    fused_inputs.insert(fused_inputs.end(), matmul->inputs().begin() + fused_begin_index, matmul->inputs().end());
+    fused_inputs.insert(fused_inputs.end(), matmul->inputs().begin() + fused_begin_index,
+                        matmul->inputs().begin() + fused_begin_index + 1);
     new_abs.push_back(user->abstract());
   }
   auto fused_matmul = node->func_graph()->NewCNode(fused_inputs);
