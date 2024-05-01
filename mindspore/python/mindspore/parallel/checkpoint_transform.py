@@ -394,53 +394,80 @@ def sync_pipeline_shared_parameters(net):
     Args:
         net (nn.Cell): the inference network.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
+            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+
         >>> import numpy as np
         >>> import mindspore as ms
-        >>> from mindspore import nn, ops, Parameter, Tensor
-        >>> class VocabEmbedding(nn.Cell):
-        ...     def __init__(self, vocab_size, embedding_size):
+        >>> import mindspore.communication.management as D
+        >>> from mindspore import lazy_inline, context, nn, ops, Parameter, Tensor
+        >>> context.set_context(mode=context.GRAPH_MODE)
+        >>> class Embedding(nn.Cell):
+        ...     def __init__(self, shape):
         ...         super().__init__()
-        ...         self.embedding_table = Parameter(Tensor(np.ones([vocab_size, embedding_size]), ms.float32),
-        ...                                          name='embedding')
-        ...         self.gather = ops.Gather()
-        ...
+        ...         self.w = Parameter(Tensor(np.ones(shape), ms.float32), name='w')
+        ...         self.matmul = ops.MatMul().shard(((1, 1), (1, 1)))
         ...     def construct(self, x):
-        ...         output = self.gather(self.embedding_table, x, 0)
-        ...         output = output.squeeze(1)
-        ...         return output, self.embedding_table.value()
+        ...         return self.matmul(x, self.w), self.w
         ...
         >>> class LMHead(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()
-        ...         self.matmul = ops.MatMul(transpose_b=True)
-        ...
-        ...     def construct(self, state, embed):
-        ...         return self.matmul(state, embed)
+        ...         self.matmul = ops.MatMul(transpose_b=True).shard(((1, 1), (1, 1)))
+        ...     def construct(self, x, w):
+        ...         return self.matmul(x, w)
         ...
         >>> class Network(nn.Cell):
         ...     @lazy_inline
         ...     def __init__(self):
         ...         super().__init__()
-        ...         self.word_embedding = VocabEmbedding(vocab_size=4, embedding_size=4)
-        ...         self.head = LMHead()
-        ...
+        ...         shape = (4, 4)
+        ...         self.word_embedding = Embedding(shape)
+        ...         self.lm_head = LMHead()
+        ...         self.word_embedding.pipeline_stage = 0
+        ...         self.lm_head.pipeline_stage = 1
         ...     def construct(self, x):
         ...         x, embed = self.word_embedding(x)
-        ...         x = self.head(x, embed)
-        ...         return x
-        >>>
+        ...         return self.lm_head(x, embed)
+        ...
+        >>> class PipelineCellInference(nn.Cell):
+        ...     def __init__(self, network, micro_batch_num):
+        ...         super().__init__()
+        ...         self.network = network
+        ...         self.micro_batch_num = micro_batch_num
+        ...         self.concat = ops.Concat()
+        ...     def construct(self, x):
+        ...         ret = ()
+        ...         for i in range(self.micro_batch_num):
+        ...             micro_batch_size = x.shape[0] // self.micro_batch_num
+        ...             start = micro_batch_size * i
+        ...             end = micro_batch_size * (i + 1)
+        ...             micro_input = x[start:end]
+        ...             y = self.network(micro_input)
+        ...             ret = ret + (y,)
+        ...         ret = self.concat(ret)
+        ...         return ret
+
+        >>> D.init()
+        >>> context.set_auto_parallel_context(parallel_mode='semi_auto_parallel', full_batch=True, pipeline_stages=2)
         >>> net = Network()
-        >>> net.word_embedding.pipeline_stage = 0
-        >>> net.head.pipeline_stage = 1
-        >>> x = Tensor(np.ones((8, 4))
-        >>> net.compile()
+        >>> net = PipelineCellInference(net, 2)
+        >>> net.set_train(False)
+        >>> x = Tensor(np.ones((2, 4)), ms.float32)
+        >>> net.compile(x)
         >>> ms.sync_pipeline_shared_parameters(net)
-        >>> print(net.word_embedding.embedding_table.asnumpy())
-        >>> [[1. 1. 1. 1.]
-             [1. 1. 1. 1.]
-             [1. 1. 1. 1.]
-             [1. 1. 1. 1.]]
+        >>> print(net.network.word_embedding.w.asnumpy())
+        [[1. 1. 1. 1.]
+         [1. 1. 1. 1.]
+         [1. 1. 1. 1.]
+         [1. 1. 1. 1.]]
     """
 
     if not isinstance(net, ms.nn.Cell):
