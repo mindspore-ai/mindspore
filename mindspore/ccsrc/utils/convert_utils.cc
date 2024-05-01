@@ -830,9 +830,12 @@ TypeId ConvertTypeBetweenTensorAndScalar(const TypeId &tensor_type_id, const Typ
                           << TypeIdToString(scalar_type_id) << " is not supported.";
 }
 
-TypeId GetConversionType(const TypeId &current, const TypeId &saved_type_id, bool current_arg_is_tensor,
-                         bool saved_has_tensor) {
+TypeId GetConversionType(const TypeId &current, bool current_arg_is_tensor, bool is_parameter,
+                         const std::pair<TypeId, bool> &sig_type, const TypeId &ref_type_id) {
+  TypeId saved_type_id = sig_type.first;
+  bool saved_has_tensor = sig_type.second;
   static std::set<int> black_types{kTypeUnknown, kNumberTypeComplex64, kNumberTypeComplex128};
+  static auto hash_fp16_bf16 = GetHashId(kNumberTypeFloat16, kNumberTypeBFloat16);
   if (current == saved_type_id) {
     return current;
   }
@@ -842,6 +845,24 @@ TypeId GetConversionType(const TypeId &current, const TypeId &saved_type_id, boo
   if (!cur_is_in_black && !saved_is_in_black) {
     // Tensor + Scalar, Scalar + Tensor
     auto hash_id = GetHashId(current, saved_type_id);
+    // BFloat16 + Float16
+    if (hash_id == hash_fp16_bf16) {
+      // If Parameter exists, its type_id should be equal to the saved_type_id,
+      // otherwise it means that the wrong type cast will be performed on Parameter.
+      if (saved_type_id == ref_type_id) {
+        MS_LOG(WARNING) << "There is an implicit type conversion from " << TypeIdToString(current) << " to "
+                        << TypeIdToString(saved_type_id)
+                        << ", which may result in loss of precision. It is recommended to use Float32.";
+        return saved_type_id;
+      }
+      if (is_parameter) {
+        MS_LOG(WARNING) << "There is an implicit type conversion from " << TypeIdToString(saved_type_id) << " to "
+                        << TypeIdToString(current)
+                        << ", which may result in loss of precision. It is recommended to use Float32.";
+        return current;
+      }
+      return kNumberTypeFloat32;
+    }
     if (MS_UNLIKELY(current_arg_is_tensor ^ saved_has_tensor)) {
       return ConvertTypeBetweenTensorAndScalar(current, saved_type_id, hash_id);
     }
@@ -862,17 +883,25 @@ TypeId GetConversionType(const TypeId &current, const TypeId &saved_type_id, boo
 
 std::map<SignatureEnumDType, std::pair<TypeId, bool>> GetSignatureTypeMap(const std::vector<SignatureEnumDType> &dtypes,
                                                                           const std::vector<TypeId> &args_type_id,
-                                                                          const std::vector<bool> &args_is_tensor) {
+                                                                          const std::vector<bool> &args_is_tensor,
+                                                                          const std::set<size_t> &write_indices) {
   // {T0: (target_type_id=Int32, has_tensor=true), T1: (target_type_id=Float32, has_tensor=false), ...}
   std::map<SignatureEnumDType, std::pair<TypeId, bool>> sig_type_map;
+  std::map<SignatureEnumDType, TypeId> ref_type_map;
   size_t args_size = args_type_id.size();
   for (size_t i = 0; i < args_size; ++i) {
+    bool is_parameter = write_indices.find(i) != write_indices.end();
     const auto &it = sig_type_map.find(dtypes[i]);
     if (it == sig_type_map.end()) {
       (void)sig_type_map.insert(std::make_pair(dtypes[i], std::make_pair(args_type_id[i], args_is_tensor[i])));
+      (void)ref_type_map.insert(std::make_pair(dtypes[i], is_parameter ? args_type_id[i] : kTypeUnknown));
     } else {
-      it->second.first = GetConversionType(args_type_id[i], it->second.first, args_is_tensor[i], it->second.second);
+      it->second.first =
+        GetConversionType(args_type_id[i], args_is_tensor[i], is_parameter, it->second, ref_type_map[dtypes[i]]);
       it->second.second = args_is_tensor[i] || it->second.second;
+      if (is_parameter && ref_type_map[dtypes[i]] == kTypeUnknown) {
+        ref_type_map[dtypes[i]] = args_type_id[i];
+      }
     }
   }
   return sig_type_map;

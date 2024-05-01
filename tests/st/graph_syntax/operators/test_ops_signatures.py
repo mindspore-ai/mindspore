@@ -109,3 +109,24 @@ def test_tensor_add_scalar_compare(mode):
             dtype_ms = get_dtype(out_ms)
             dtype_torch = get_dtype(out_torch)
             assert dtype_ms == dtype_torch, f"{key} + {num_dtype} = {dtype_ms}, expect {dtype_torch}"
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+def test_assignadd_bfloat16_float16(mode):
+    """
+    Feature: Implicit type conversion.
+    Description: Test AssignAdd with bfloat16 and float16.
+    Expectation: No exception.
+    """
+    class Net(ms.nn.Cell):
+        def construct(self, x, y):
+            ms.ops.assign_add(x, y)
+            return x
+
+    ms.context.set_context(mode=mode)
+    out = Net()(ms.Parameter(ms_data["float16"], name="x"), ms_data["bfloat16"])
+    assert out.dtype == ms.float16
