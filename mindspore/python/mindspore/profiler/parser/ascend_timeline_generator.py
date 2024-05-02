@@ -63,7 +63,9 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         """
 
         logger.info('parse cluster data...')
-
+        if isinstance(op_summary, np.ndarray) and op_summary.shape[0] == 0 or \
+                not isinstance(op_summary, np.ndarray) and not op_summary:
+            return
         timeline_list = op_summary[~np.isin(op_summary['Task Type'], ['AI_CPU', 'HCCL'])][
             ['Op Name', 'Stream ID', 'Task Start Time', 'Task Duration']]
 
