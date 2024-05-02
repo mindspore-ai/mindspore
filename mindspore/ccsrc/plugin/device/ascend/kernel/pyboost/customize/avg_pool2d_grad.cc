@@ -32,7 +32,7 @@ tensor::BaseTensorPtr AvgPool2DGradAscendCall(const std::shared_ptr<OpRunner> &o
                                               const int64_t divisor_override,
                                               const std::vector<tensor::BaseTensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
-  const int8_t cube_math_type = 0;
+  const int8_t cube_math_type = GetCubeMathType();
   LAUNCH_ACLNN(aclnnAvgPool2dBackward, device_context, op->stream_id(), grad, image, kernel_size, stride, padding,
                ceil_mode, count_include_pad, divisor_override, cube_math_type, outputs[0]);
   MS_LOG(DEBUG) << "Call end";

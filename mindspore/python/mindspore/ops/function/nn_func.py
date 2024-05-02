@@ -2203,7 +2203,9 @@ def _is_dim_unknown(shape):
 # pylint: disable=missing-docstring
 @_primexpr
 def _interploate_make_tuple(rank, value):
-    """tensor to tuple"""
+    """
+    make tuple in dynamic scenarios
+    """
     s = tuple_to_tensor_((rank,), mstype.int32)
     v = None
     if isinstance(value, int):
@@ -2565,7 +2567,11 @@ def interpolate(input,
             raise ValueError(
                 "For 'interpolate', it is incorrect to set 'recompute_scale_factor' to True"
                 " after specifying an explicit 'size'.")
-        size = _interpolate_scale_factor_convert_size(shape, scale_factor)
+        if F.isconstant(shape) and F.isconstant(scale_factor):
+            size = tuple([floor(shape[i + 2] * scale_factor[i]) for i in
+                          range(min(len(shape) - 2), len(scale_factor))])
+        else:
+            size = _interpolate_scale_factor_convert_size(shape, scale_factor)
         scale_factor = None
     else:
         if dim_unknown is False:

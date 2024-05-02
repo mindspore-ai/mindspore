@@ -41,7 +41,7 @@ AvgPool2DGradGenerate(const std::vector<KernelTensor *> &inputs, const std::vect
   if (inputs[kIndex7]->GetType()->type_id() != kMetaTypeNone) {
     divisor_override = inputs[kIndex7]->GetValueWithCheck<int64_t>();
   }
-  int8_t cube_math_type = 0;
+  int8_t cube_math_type = OpApiUtil::GetCubeMathType();
   return std::make_tuple(std::move(kernel_size), std::move(stride), std::move(padding),
                          std::make_tuple(ceil_mode, count_include_pad, divisor_override, cube_math_type));
 }
