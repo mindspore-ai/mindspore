@@ -2147,7 +2147,7 @@ REG_BPROP_BUILDER("ConjugateTranspose").SetUnusedInputs({i0, i2}).SetBody(BODYFU
 
 REG_BPROP_BUILDER("Triu").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto diagonal = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
   auto dx = ib->Emit("Triu", {dout, diagonal});
   return {dx, ib->OutZeros(diagonal)};
 });
@@ -2177,7 +2177,7 @@ REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i1, i4}).SetBody(B
 
 REG_BPROP_BUILDER("Tril").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto diagonal = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex3);
   auto dx = ib->Emit("Tril", {dout, diagonal});
   return {dx, ib->OutZeros(diagonal)};
 });

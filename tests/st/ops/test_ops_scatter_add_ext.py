@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import os
 import pytest
 import numpy as np
 import mindspore as ms
@@ -32,7 +33,7 @@ def scatter_add_ext_backward_func(x, dim, index, src):
     return ops.grad(scatter_add_ext_forward_func, (0, 3))(x, dim, index, src)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -42,6 +43,8 @@ def test_scatter_add_ext_normal(mode):
     Description: test op scatter_add_ext.
     Expectation: expect correct result.
     """
+    if mode == ms.GRAPH_MODE:
+        os.environ['GRAPH_OP_RUN'] = "1"
     ms.context.set_context(mode=mode, device_target="Ascend")
     ## forward
     x = Tensor(np.array([[1, 2, 3, 4, 5]]), dtype=ms.float32)
@@ -84,6 +87,8 @@ def test_scatter_add_ext_normal(mode):
     expect_dsrc = np.ones((1, 2))
     assert np.allclose(out1[0].asnumpy(), expect_dx)
     assert np.allclose(out1[1].asnumpy(), expect_dsrc)
+    if mode == ms.GRAPH_MODE:
+        del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level1
@@ -93,9 +98,11 @@ def test_scatter_add_ext_normal(mode):
 def test_scatter_add_ext_vmap(mode):
     """
     Feature: test vmap function.
-    Description: test scatter_add_ext op vmap.
+    Descfop vmap.
     Expectation: expect correct result.
     """
+    if mode == ms.GRAPH_MODE:
+        os.environ['GRAPH_OP_RUN'] = "1"
     ms.context.set_context(mode=mode)
     x = Tensor(np.array([[[1, 2, 3, 4, 5]]]), dtype=ms.float32)
     src = Tensor(np.array([[8, 8]]), dtype=ms.float32)
@@ -106,11 +113,13 @@ def test_scatter_add_ext_vmap(mode):
     out = nest_vmap(x, dim, index, src)
     expect = scatter_add_ext_forward_func(x[0], dim, index, src)
     assert np.allclose(out.asnumpy(), expect.asnumpy())
+    if mode == ms.GRAPH_MODE:
+        del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatter_add_ext_bfloat16(mode):
     """
@@ -118,6 +127,8 @@ def test_scatter_add_ext_bfloat16(mode):
     Description: test op scatter_add_ext.
     Expectation: expect correct result.
     """
+    if mode == ms.GRAPH_MODE:
+        os.environ['GRAPH_OP_RUN'] = "1"
     ms.context.set_context(mode=mode, device_target="Ascend")
     ## forward
     x = Tensor(np.array([[1, 2, 3, 4, 5]]), dtype=ms.bfloat16)
@@ -160,6 +171,8 @@ def test_scatter_add_ext_bfloat16(mode):
     expect_dsrc = np.ones((1, 2))
     assert np.allclose(out1[0].float().asnumpy(), expect_dx, rtol=4e-3, atol=4e-3)
     assert np.allclose(out1[1].float().asnumpy(), expect_dsrc, rtol=4e-3, atol=4e-3)
+    if mode == ms.GRAPH_MODE:
+        del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level1
@@ -172,6 +185,8 @@ def test_scatter_add_ext_dynamic(mode):
     Description: test ops.scatter_add_ext dynamic shape feature.
     Expectation: expect correct result.
     """
+    if mode == ms.GRAPH_MODE:
+        os.environ['GRAPH_OP_RUN'] = "1"
     x1 = Tensor(np.array([[1, 2, 3, 4, 5]]), dtype=ms.float32)
     dim1 = 1
     index1 = Tensor(np.array([[2, 4]]), dtype=ms.int64)
@@ -182,3 +197,5 @@ def test_scatter_add_ext_dynamic(mode):
     index2 = Tensor(np.array([[0, 0, 0], [2, 2, 2], [4, 4, 4]]), dtype=ms.int64)
     src2 = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
     TEST_OP(scatter_add_ext_forward_func, [[x1, dim1, index1, src1], [x2, dim2, index2, src2]], mode=mode, grad=True)
+    if mode == ms.GRAPH_MODE:
+        del os.environ['GRAPH_OP_RUN']
