@@ -58,10 +58,10 @@ class FuncBuilder : public BpropBuilder {
   ValuePtr Add(const ValuePtr &input, const ValuePtr &other);
   void SetInputs(std::string instance_name, const std::vector<NodePtr> *inputs,
                  mindspore::HashMap<std::string, ValuePtr> *attrs_ptr);
+  ValuePtr FillZeros(const ValuePtr &value, const abstract::AbstractBasePtr &abs);
 
  private:
   NodePtrList FlattenNode(const NodePtr &input);
-  ValuePtr FillZeros(const ValuePtr &value, const abstract::AbstractBasePtr &abs);
   std::string device_target_;
   bprop_pass::FuncPassForwardPtr pass_forward_;
 };

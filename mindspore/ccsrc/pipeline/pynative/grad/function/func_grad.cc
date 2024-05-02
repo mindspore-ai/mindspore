@@ -77,11 +77,11 @@ VectorRef GeneratePythonArgs(const ValuePtrList &inputs, const ValuePtr &output,
   return args;
 }
 
-ValuePtr ValueListToValue(const ValuePtrList &values) {
+ValuePtr ValueListToValue(const ValuePtrList &values, const abstract::AbstractBasePtr &abs) {
   if (values.size() == kSizeZero) {
     MS_LOG(EXCEPTION) << "tensors size should not be empty!";
   }
-  if (values.size() == kSizeOne) {
+  if (values.size() == kSizeOne && !abs->isa<abstract::AbstractSequence>()) {
     return values[kIndex0];
   }
   return std::make_shared<ValueTuple>(values);
@@ -223,8 +223,12 @@ void FuncBackwardNode::Release() {
 
 ValuePtrList HookBackwardNode::CallBackward(const ValuePtrList &grads) {
   MS_LOG(DEBUG) << "Begin HookBackwardNode CallBackward ";
-  auto gradient = ValueListToValue(grads);
-  (void)args_.emplace_back(gradient);
+  auto gradient = ValueListToValue(grads, out_abstract_);
+  const auto &device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  // Python grad func can not process None, we need to convert None to zero tensor.
+  auto func_builder = FuncBuilder(name_, device_target, nullptr);
+  auto filled_zeros_grad = func_builder.FillZeros(gradient, out_abstract_);
+  (void)args_.emplace_back(filled_zeros_grad);
   py::gil_scoped_acquire gil_acquire;
   auto out = prim_->RunHookFunction(args_);
   ValuePtrList gradient_values;
@@ -447,6 +451,11 @@ void FuncGrad::BackPropagate() {
     for (size_t i = 0; i < fn->next_edges().size(); ++i) {
       const auto &next_edge = fn->next_edges()[i];
       const auto &last_variable = next_edge.variable;
+      // If network not calculate inputs grad, some op will be pruning, we need skip this op.
+      if (!last_variable->is_need_grad()) {
+        MS_LOG(DEBUG) << "variable is not need grad, " << last_variable->ToString();
+        continue;
+      }
       const auto &last_fn = last_variable->func_node();
       const auto &last_gradient = gradient_out[i];
       // If last_gradient is None, It represents that this tensor grad is zeros.
@@ -549,7 +558,8 @@ BackwardNodePtr FuncGrad::BuildHookBackwardNode(const PrimitivePtr &prim, const 
   auto bprop_cut = PyNativeAlgo::AutoGrad::BuildBpropCutPrim(prim, op_grad_info->is_need_recompute);
   VectorRef args =
     GeneratePythonArgs(op_grad_info->input_value, op_grad_info->out_value, op_grad_info->is_need_recompute);
-  auto fn = std::make_shared<HookBackwardNode>(prim->name(), bprop_cut, std::move(args), op_grad_info->output_size);
+  auto fn = std::make_shared<HookBackwardNode>(prim->name(), bprop_cut, std::move(args), op_grad_info->output_size,
+                                               op_grad_info->out_abs);
   fn->UpdateNextEdges(flatten_inputs);
   return fn;
 }

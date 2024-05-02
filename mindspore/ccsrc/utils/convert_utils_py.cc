@@ -866,39 +866,52 @@ ValuePtr ShallowCopyTensorValue(const ValuePtr &value) {
   }
 }
 
-void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePtr> *tensors) {
-  MS_EXCEPTION_IF_NULL(tensors);
-  ValuePtr tensor_ptr = nullptr;
+ValuePtr ConvertPyObjectToCObject(const py::object &input_object) {
+  ValuePtr output = nullptr;
   if (py::isinstance<tensor::Tensor>(input_object)) {
-    tensor_ptr = py::cast<tensor::TensorPtr>(input_object);
+    output = py::cast<tensor::TensorPtr>(input_object);
   } else if (IsStubTensor(input_object)) {
-    tensor_ptr = ConvertStubTensor(input_object);
+    output = ConvertStubTensor(input_object);
   } else if (py::isinstance<py::float_>(input_object)) {
     double input_value = py::cast<py::float_>(input_object);
-    tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);
+    output = std::make_shared<tensor::Tensor>(input_value, kFloat32);
   } else if (py::isinstance<py::int_>(input_object)) {
-    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<int64_t>(input_object), kInt64);
+    output = std::make_shared<tensor::Tensor>(py::cast<int64_t>(input_object), kInt64);
   } else if (py::isinstance<py::list>(input_object)) {
+    ValuePtrList values;
     auto list_inputs = py::cast<py::list>(input_object);
     for (size_t i = 0; i < list_inputs.size(); ++i) {
-      ConvertPyObjectToTensor(list_inputs[i], tensors);
+      (void)values.emplace_back(ConvertPyObjectToCObject(list_inputs[i]));
     }
-    return;
+    output = std::make_shared<ValueList>(values);
   } else if (py::isinstance<py::tuple>(input_object)) {
+    ValuePtrList values;
     auto tuple_inputs = py::cast<py::tuple>(input_object);
     for (size_t i = 0; i < tuple_inputs.size(); ++i) {
-      ConvertPyObjectToTensor(tuple_inputs[i], tensors);
+      (void)values.emplace_back(ConvertPyObjectToCObject(tuple_inputs[i]));
     }
-    return;
+    output = std::make_shared<ValueTuple>(values);
   } else if (py::isinstance<tensor::CSRTensor>(input_object)) {
-    tensor_ptr = py::cast<tensor::CSRTensorPtr>(input_object);
+    output = py::cast<tensor::CSRTensorPtr>(input_object);
   } else if (py::isinstance<tensor::COOTensor>(input_object)) {
-    tensor_ptr = py::cast<tensor::COOTensorPtr>(input_object);
+    output = py::cast<tensor::COOTensorPtr>(input_object);
+  } else if (py::isinstance<py::none>(input_object)) {
+    output = kNone;
   } else {
     MS_EXCEPTION(TypeError) << "Unreasonable data type: " << input_object.get_type() << ".";
   }
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  (void)tensors->emplace_back(tensor_ptr);
+  MS_EXCEPTION_IF_NULL(output);
+  return output;
+}
+
+void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePtr> *tensors) {
+  if (!py::isinstance<py::tuple>(input_object)) {
+    MS_LOG(EXCEPTION) << "Input object should be tuple";
+  }
+  auto tuple_inputs = py::cast<py::tuple>(input_object);
+  for (size_t i = 0; i < tuple_inputs.size(); ++i) {
+    (void)tensors->emplace_back(ConvertPyObjectToCObject(tuple_inputs[i]));
+  }
 }
 
 void ConvertCTensorToPyTensor(const py::tuple &input_args, py::tuple *convert_args) {
