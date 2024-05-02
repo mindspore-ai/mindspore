@@ -443,8 +443,9 @@ void CameCommHandler::InsertAllReduceAndRealDivToReduceMeanInput(CNodePtr reduce
   MS_EXCEPTION_IF_NULL(pyop_instance);
 
   size_t group_rank_size = comm_rank_list.size();
-  mindspore::tensor::TensorPtr tensor_ptr =
-    std::make_shared<mindspore::tensor::Tensor>(static_cast<float>(group_rank_size));
+  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(
+    static_cast<float>(group_rank_size),
+    reduce_mean->abstract()->cast<abstract::AbstractTensorPtr>()->element()->GetType());
   ValuePtr scale_value = MakeValue(tensor_ptr);
 
   std::vector<AnfNodePtr> real_div_input = {NewValueNode(pyop_instance), all_reduce_node->cast<AnfNodePtr>(),
