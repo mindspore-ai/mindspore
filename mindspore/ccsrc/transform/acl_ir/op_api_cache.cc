@@ -177,6 +177,8 @@ void GatherInfo(const ScalarPtr &scalar) {
 void GatherInfo(const std::optional<ScalarPtr> &scalar) {
   if (scalar.has_value()) {
     GatherInfo(scalar.value());
+  } else {
+    MemcpyToBuf("None", 5);
   }
 }
 
