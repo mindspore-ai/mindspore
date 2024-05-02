@@ -1469,6 +1469,9 @@ class Profiler:
             ProfilerInfo.set_export_flag(flag)
             op_summary, op_statistic, steptrace, steptrace_model \
                 = _ascend_graph_msprof_analyse(mindstudio_profiler_output)
+            if isinstance(op_statistic, np.ndarray) and op_statistic.shape[0] == 0 or \
+                    not isinstance(op_statistic, np.ndarray) and not op_statistic:
+                return
             kernels = self._ascend_timeline_analyse(op_summary, steptrace, source_path, mindstudio_profiler_output)
             launch_ops = self._get_kernel_op_map(op_summary, kernels)
             self._ascend_op_analyse(op_summary, op_statistic, self._dynamic_status, launch_ops)

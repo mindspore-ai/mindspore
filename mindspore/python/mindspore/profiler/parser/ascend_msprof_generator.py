@@ -88,7 +88,10 @@ class AscendMsprofDataGenerator:
         """read op summary to memory"""
         op_summary = []
         op_summary_name = fr'{self.mindstudio_profiler_output}/op_summary_*.csv'
-        op_summary_file = get_newest_file(glob.glob(op_summary_name))[0]
+        op_summary_files = glob.glob(op_summary_name)
+        if not op_summary_files:
+            return
+        op_summary_file = get_newest_file(op_summary_files)[0]
         with open(op_summary_file, newline='') as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
             for row in reader:

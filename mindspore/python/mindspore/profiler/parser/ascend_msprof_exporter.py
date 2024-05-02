@@ -251,10 +251,10 @@ class AscendMsprofExporter:
                 msprof_json.add(f)
 
         if not op_summary:
-            raise RuntimeError("The op_summary csv file was not found, perhaps the original data was not collected.")
+            logger.warning("The op_summary csv file was not found, perhaps the original data was not collected.")
         if not op_statistic:
             raise RuntimeError("The op_statistics csv file was not found, perhaps the original data was not collected.")
         if not msprof_json:
-            raise RuntimeError("The msprof json file was not found, perhaps the original data was not collected.")
+            logger.warning("The msprof json file was not found, perhaps the original data was not collected.")
 
         logger.info("Finish checking files.")
