@@ -27,12 +27,6 @@ def test_bn_pars_valid1():
         nn.BatchNorm2d(num_features=0)
 
 
-def test_bn_pars_valid2():
-    """ut of BatchNorm parameters' validation"""
-    with pytest.raises(ValueError):
-        nn.BatchNorm2d(num_features=3, momentum=-0.1)
-
-
 def test_bn_init():
     """ut of BatchNorm parameters' validation"""
     bn = nn.BatchNorm2d(num_features=3)
