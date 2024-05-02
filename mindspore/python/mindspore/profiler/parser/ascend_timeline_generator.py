@@ -37,12 +37,13 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
     scope_index = 1
     cpu_index = 2
 
-    def __init__(self, profiling_dir, source_path, mindstudio_profiler_output, rank_id, mode):
+    def __init__(self, profiling_dir, source_path, mindstudio_profiler_output, rank_id, rank_size, mode):
         super().__init__(DeviceTarget.ASCEND.value, mode)
         self._profiling_dir = profiling_dir
         self._source_path = source_path
         self._mindstudio_profiler_output = mindstudio_profiler_output
         self._rank_id = rank_id
+        self._rank_size = rank_size
         self._timeline_display_filename = self._timeline_display_filename.format(rank_id)
         self._timeline_summary_filename = self._timeline_summary_filename.format(rank_id)
         self._timeline_data = []
@@ -180,8 +181,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         fwk_file_path = fr'{self._profiling_dir}/{self._framework_dir}/{oprange_name}'
         if os.path.exists(fwk_file_path):
             # It is faster not to submit to the pool
-            msprof_side_data = msprof_timeline
-            result = self._parse_fwk_device_data(msprof_side_data)
+            result = self._parse_fwk_device_data(msprof_timeline)
             timeline_data.extend(result.get("trace_data", []))
             self._kernel_events = result.get("kernels", [])
 
