@@ -698,6 +698,10 @@ const AnfNodePtr PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process
     return nullptr;
   }
 
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
+  MS_EXCEPTION_IF_CHECK_FAIL(
+    !is_dynamic, "SparseSoftmaxCrossEntropyWithLogits with Dynamical inpputs is not supported yet in PyNative mode.");
+
   CNodePtr softmax_node;
   auto one_hot_node = CreateOneHot(graph, sparse_softmax_node, *this);
   softmax_node = CreateSoftmaxCrossEntropyWithLogits(graph, sparse_softmax_node, one_hot_node, *this);
@@ -739,6 +743,10 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Pro
   CheckCNodeInputSize(mul_node, kMulInputTensorNum);
 
   auto sparse_softmax_node = mul_node->input(kIndex1);
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
+  MS_EXCEPTION_IF_CHECK_FAIL(
+    !is_dynamic, "SparseSoftmaxCrossEntropyWithLogits with Dynamical inpputs is not supported yet in PyNative mode.");
+
   bool is_sp_grad_flag = true;
   std::vector<AnfNodePtr> softmax_node_outputs;
   auto expand_dims_node =
@@ -756,8 +764,7 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Pro
   int64_t batch_size;
   int64_t depth;
   opt::GetDepthAndBatchSizeFromSparseSoftmaxNode(sparse_softmax_node, &batch_size, &depth);
-  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
-  ShapeVector shape = is_dynamic ? ShapeVector{-1, depth} : ShapeVector{batch_size, depth};
+  ShapeVector shape = ShapeVector{batch_size, depth};
   common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {shape}, new_mul_node.get());
 
   auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0UL);
@@ -798,6 +805,10 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::P
   CheckCNodeInputSize(cast_cnode, kCastInputNum);
 
   auto sparse_softmax_node = cast_cnode->input(kIndex1);
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
+  MS_EXCEPTION_IF_CHECK_FAIL(
+    !is_dynamic, "SparseSoftmaxCrossEntropyWithLogits with Dynamical inpputs is not supported yet in PyNative mode.");
+
   bool is_sp_grad_flag = true;
   std::vector<AnfNodePtr> softmax_node_outputs;
   auto expand_dims_node =
@@ -816,8 +827,7 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::P
   int64_t batch_size;
   int64_t depth;
   GetDepthAndBatchSizeFromSparseSoftmaxNode(sparse_softmax_node, &batch_size, &depth);
-  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
-  ShapeVector shape = is_dynamic ? ShapeVector{-1, depth} : ShapeVector{batch_size, depth};
+  ShapeVector shape = ShapeVector{batch_size, depth};
   common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {shape}, new_mul_node.get());
 
   // Reshape 1D result to multi-dim result.
