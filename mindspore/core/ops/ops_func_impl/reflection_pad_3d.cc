@@ -29,6 +29,11 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr ReflectionPad3DFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) const {
+  const size_t kNum1 = 1;
+  const size_t kNum2 = 2;
+  const size_t kNum3 = 3;
+  const size_t kRank4DNum = 4;
+  const size_t kRank5DNum = 5;
   MS_EXCEPTION_IF_NULL(primitive);
   auto x_base_shape = input_args[kInputIndex0]->GetShape();
   auto x_shape = x_base_shape->GetShapeVector();
@@ -39,16 +44,16 @@ BaseShapePtr ReflectionPad3DFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
   // input x dynamic shape
   auto x_rank = x_shape.size();
-  if (x_rank != 4 && x_rank != 5) {
+  if (x_rank != kRank4DNum && x_rank != kRank5DNum) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input should be 4D or 5D, but got " << x_rank;
   }
   // padding
   auto paddings_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
   if (!paddings_opt.has_value()) {
     ShapeVector out_shape = x_shape;
-    out_shape[x_rank - 1] = abstract::Shape::kShapeDimAny;
-    out_shape[x_rank - 2] = abstract::Shape::kShapeDimAny;
-    out_shape[x_rank - 3] = abstract::Shape::kShapeDimAny;
+    out_shape[x_rank - kNum1] = abstract::Shape::kShapeDimAny;
+    out_shape[x_rank - kNum2] = abstract::Shape::kShapeDimAny;
+    out_shape[x_rank - kNum3] = abstract::Shape::kShapeDimAny;
     return std::make_shared<abstract::Shape>(std::move(out_shape));
   }
 
@@ -58,7 +63,8 @@ BaseShapePtr ReflectionPad3DFuncImpl::InferShape(const PrimitivePtr &primitive,
                             << padding_type;
   }
   auto paddings = paddings_opt.value();
-  if (paddings.size() != 6) {
+  const size_t kExpectedPaddingLength = 6;
+  if (paddings.size() != kExpectedPaddingLength) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the padding length should be 6, but got "
                              << paddings.size();
   }

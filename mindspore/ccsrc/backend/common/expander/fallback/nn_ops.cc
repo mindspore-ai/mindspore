@@ -311,9 +311,10 @@ class UpsampleNearest2DShapeCalc : public ShapeCalcFunctor {
   ValuePtr ToValue() const override { return nullptr; }
   void FromValue(const ValuePtr &value) override {}
   ShapeArray Calc(const ShapeArray &inputs) const override {
+    const int kSizeSize = 2;
     // inputs: {output_size}
     auto output_size = inputs.at(0);
-    std::vector<int64_t> size(2, 1);
+    std::vector<int64_t> size(kSizeSize, 1);
     std::transform(output_size.begin(), std::min(output_size.begin() + kIndex2, output_size.end()), size.begin(),
                    [](int64_t v) { return v; });
     return {size};

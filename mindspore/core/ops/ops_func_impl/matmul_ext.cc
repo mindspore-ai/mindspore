@@ -41,7 +41,8 @@ ShapeVector CheckMatMulShapes(const ShapeVector &shape1, const ShapeVector &shap
                                << shape1.back() << " and " << shape2[shape2.size() - kDim2] << ".";
   }
   int len_diff = std::abs(static_cast<int>(shape1.size()) - static_cast<int>(shape2.size()));
-  ShapeVector shape1_padded, shape2_padded;
+  ShapeVector shape1_padded;
+  ShapeVector shape2_padded;
   if (shape1.size() < shape2.size()) {
     shape1_padded = ShapeVector(len_diff, 1);
     shape1_padded.insert(shape1_padded.end(), shape1.begin(), shape1.end());
@@ -65,12 +66,13 @@ ShapeVector CheckMatMulShapes(const ShapeVector &shape1, const ShapeVector &shap
 }
 
 ShapeVector GetMatMulExtBroadcastShape(const ShapeVector &base_shape, const ShapeVector &input_shape) {
+  const size_t kNum2 = 2;
   ShapeVector broadcast_shape = base_shape;
   if (input_shape.size() == 1) {
     broadcast_shape.push_back(1);
     broadcast_shape.push_back(input_shape[0]);
   } else {
-    broadcast_shape.push_back(input_shape[input_shape.size() - 2]);
+    broadcast_shape.push_back(input_shape[input_shape.size() - kNum2]);
     broadcast_shape.push_back(input_shape[input_shape.size() - 1]);
   }
   return broadcast_shape;
@@ -157,7 +159,6 @@ BaseShapePtr MatMulExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   bool dynamic_shape = IsDynamic(shape1_orig) || IsDynamic(shape2_orig);
-
   if (!dynamic_shape) {
     bool transpose_b = shape2_orig.size() == 1;
     ShapeVector shape_backbone = CheckMatMulShapes(shape1_orig, shape2_orig);

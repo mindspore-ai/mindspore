@@ -117,7 +117,6 @@ std::vector<int64_t> InferShapeWithNone(const PrimitivePtr &primitive,
   auto &[size_arg, scale_arg] = input_args;
   auto is_output_size_none = size_arg->GetType()->type_id() == kMetaTypeNone;
   auto is_scales_none = scale_arg->GetType()->type_id() == kMetaTypeNone;
-
   if (MS_UNLIKELY(is_output_size_none == is_scales_none)) {
     if (is_output_size_none) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', either output_size or scales should be defined.";

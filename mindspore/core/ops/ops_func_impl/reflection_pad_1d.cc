@@ -29,6 +29,8 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr ReflectionPad1DFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) const {
+  const size_t kRank2DNum = 2;
+  const size_t kRank3DNum = 3;
   MS_EXCEPTION_IF_NULL(primitive);
   auto x_base_shape = input_args[kInputIndex0]->GetShape();
   auto x_shape = x_base_shape->GetShapeVector();
@@ -39,7 +41,7 @@ BaseShapePtr ReflectionPad1DFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
   // input x dynamic shape
   auto x_rank = x_shape.size();
-  if (x_rank != 2 && x_rank != 3) {
+  if (x_rank != kRank2DNum && x_rank != kRank3DNum) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input should be 2D or 3D, but got " << x_rank;
   }
   // padding
@@ -56,7 +58,8 @@ BaseShapePtr ReflectionPad1DFuncImpl::InferShape(const PrimitivePtr &primitive,
                             << padding_type;
   }
   auto paddings = paddings_opt.value();
-  if (paddings.size() != 2) {
+  const size_t kExpectedPaddingLength = 2;
+  if (paddings.size() != kExpectedPaddingLength) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the padding length should be 2, but got "
                              << paddings.size();
   }

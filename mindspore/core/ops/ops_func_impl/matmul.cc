@@ -104,7 +104,6 @@ TypePtr MatMulFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
   MS_EXCEPTION_IF_NULL(y_tensor_type);
   TypePtr x_type = x_tensor_type->element();
   TypePtr y_type = y_tensor_type->element();
-
   if (x_type->type_id() != y_type->type_id()) {
     MS_EXCEPTION(TypeError) << "For '" << op_name
                             << "', the type of 'x2' should be same as 'x1', but got 'x1' with type Tensor["

@@ -36,7 +36,6 @@ BaseShapePtr SliceExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto input_begin_value_opt = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue());
   auto input_end_value_opt = GetScalarValue<int64_t>(input_args[kInputIndex3]->GetValue());
   auto input_step_value_opt = GetScalarValue<int64_t>(input_args[kInputIndex4]->GetValue());
-
   if (!axis_value_opt.has_value() || !input_begin_value_opt.has_value() || !input_end_value_opt.has_value() ||
       !input_step_value_opt.has_value()) {
     return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
