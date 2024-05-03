@@ -16,6 +16,7 @@
 #include "slice_grad.h"
 #include <functional>
 #include "securec.h"
+#include "base/bfloat16.h"
 #include "context/inc/cpu_kernel_utils.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "context/common/status.h"
@@ -228,6 +229,7 @@ uint32_t SliceGradKernel::Compute(CpuKernelContext &ctx) {
   func_list[DT_INT32][DT_INT16] = std::bind(&SliceGradKernel::SliceGradTask<int32_t, int16_t>, this, _1);
   func_list[DT_INT32][DT_INT32] = std::bind(&SliceGradKernel::SliceGradTask<int32_t, int32_t>, this, _1);
   func_list[DT_INT32][DT_INT64] = std::bind(&SliceGradKernel::SliceGradTask<int32_t, int64_t>, this, _1);
+  func_list[DT_INT32][DT_BFLOAT16] = std::bind(&SliceGradKernel::SliceGradTask<int32_t, bfloat16>, this, _1);
   // begin type int64
   func_list[DT_INT64][DT_FLOAT16] = std::bind(&SliceGradKernel::SliceGradTask<int64_t, Eigen::half>, this, _1);
   func_list[DT_INT64][DT_FLOAT] = std::bind(&SliceGradKernel::SliceGradTask<int64_t, float>, this, _1);
@@ -240,6 +242,7 @@ uint32_t SliceGradKernel::Compute(CpuKernelContext &ctx) {
   func_list[DT_INT64][DT_INT16] = std::bind(&SliceGradKernel::SliceGradTask<int64_t, int16_t>, this, _1);
   func_list[DT_INT64][DT_INT32] = std::bind(&SliceGradKernel::SliceGradTask<int64_t, int32_t>, this, _1);
   func_list[DT_INT64][DT_INT64] = std::bind(&SliceGradKernel::SliceGradTask<int64_t, int64_t>, this, _1);
+  func_list[DT_INT64][DT_BFLOAT16] = std::bind(&SliceGradKernel::SliceGradTask<int64_t, bfloat16>, this, _1);
 
   if (func_list.find(begin_type_) == func_list.end()) {
     CUST_AICPU_LOGE(ctx, "'SliceGrad' does not support current 'begin' type.");
