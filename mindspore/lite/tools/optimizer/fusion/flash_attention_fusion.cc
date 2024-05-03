@@ -345,7 +345,7 @@ CNodePtr FlashAttentionFusion::CreatePadCNode(const FuncGraphPtr &func_graph, co
     MS_LOG(ERROR) << "new pad cnode failed, cnode is nulpptr.";
     return nullptr;
   }
-  pad_cnode->set_fullname_with_scope(+node->fullname_with_scope() + std::to_string(kNameIndex++) + kNamePadNodeSuffix);
+  pad_cnode->set_fullname_with_scope(node->fullname_with_scope() + std::to_string(kNameIndex++) + kNamePadNodeSuffix);
   if (node->abstract() != nullptr) {
     pad_cnode->set_abstract(node->abstract()->Clone());
   }
