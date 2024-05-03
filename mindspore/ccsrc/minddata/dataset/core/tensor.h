@@ -442,7 +442,7 @@ class DATASET_API Tensor {
   /// Get the starting memory address as a constant for the data of the tensor.  This potentially
   /// drives an allocation if the data area.
   /// \return const unsigned char*
-  const unsigned char *GetBuffer() const { return data_; }
+  const uchar *GetBuffer() const { return data_; }
 
   /// Getter of the type
   /// \return
@@ -792,7 +792,12 @@ class DATASET_API Tensor {
   /// Get the starting memory address for the data of the tensor.  This potentially
   /// drives an allocation if the data is null.
   /// \return unsigned char*
-  unsigned char *GetMutableBuffer() { return data_; }
+  uchar *GetMutableBuffer() { return data_; }
+
+  /// Skip the offsets and returns the start of the buffer where the real strings is stored. Caller needs to check if
+  /// the tensor's type is a string, otherwise undefined address would be returned.
+  /// \return return the address of the first string of the tensor.
+  uchar *GetStringsBuffer() const { return data_ + kOffsetSize * shape_.NumOfElements() + kOffsetSize; }
 
  protected:
   /// Allocate memory for the tensor using the data_allocator
@@ -837,11 +842,6 @@ class DATASET_API Tensor {
   /// \param[out] length Length of the string.
   /// \return Status code.
   Status GetStringAt(dsize_t index, uchar **string_start, offset_t *length) const;
-
-  /// Skip the offsets and returns the start of the buffer where the real strings is stored. Caller needs to check if
-  /// the tensor's type is a string, otherwise undefined address would be returned.
-  /// \return return the address of the first string of the tensor.
-  uchar *GetStringsBuffer() const { return data_ + kOffsetSize * shape_.NumOfElements() + kOffsetSize; }
 
   static const std::unique_ptr<Allocator<unsigned char>> &GetAllocator() {
     static auto allocator = std::make_unique<Allocator<unsigned char>>(GlobalContext::Instance()->mem_pool());
