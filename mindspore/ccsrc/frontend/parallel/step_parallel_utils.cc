@@ -399,7 +399,15 @@ std::vector<std::pair<AnfNodePtr, int>> FuncGraphNodeUsers(const std::pair<AnfNo
     auto param = fg_parameters[IntToSize(node_pair.second - 1)];
     auto manager = fg->manager();
     auto param_node_users = manager->node_users()[param];
-    (void)std::copy(param_node_users.begin(), param_node_users.end(), std::back_inserter(func_users_vector));
+    for (const auto &node_user : param_node_users) {
+      auto cnode = node_user.first->cast<CNodePtr>();
+      if (IsValueNode<FuncGraph>(cnode->input(0))) {
+        auto sub_graph_users = FuncGraphNodeUsers(node_user);
+        (void)std::copy(sub_graph_users.begin(), sub_graph_users.end(), std::back_inserter(func_users_vector));
+      } else {
+        func_users_vector.emplace_back(node_user);
+      }
+    }
   }
   return func_users_vector;
 }
@@ -2156,7 +2164,7 @@ static bool IsCohesiveNode(const CNodePtr &cnode) {
          IsPrimitiveCNode(cnode, prim::kPrimDepend) || IsPrimitiveCNode(cnode, prim::kPrimAllGather) ||
          IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMirrorMicroStep) ||
          IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMirror) ||
-         IsPrimitiveCNode(cnode, prim::kPrimMirrorMiniStep);
+         IsPrimitiveCNode(cnode, prim::kPrimMirrorMiniStep) || IsPrimitiveCNode(cnode, prim::kPrimVirtualDiv);
 }
 
 ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth) {
