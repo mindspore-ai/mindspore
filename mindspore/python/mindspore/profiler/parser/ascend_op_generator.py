@@ -67,7 +67,9 @@ class AscendOPGenerator:
         """
         Analyse op summary op statistic generate op data.
         """
-
+        if isinstance(self.op_summary, np.ndarray) and self.op_summary.shape[0] == 0 or \
+            not isinstance(self.op_summary, np.ndarray) and not self.op_summary:
+            return
         self._combine_op_and_kernel(self.op_summary, self.launch_ops)
         # aicore intermediation detail
         self.op_detail = self._parse_op_detail(self.op_summary)
@@ -174,6 +176,9 @@ class AscendOPGenerator:
 
     def _combine_op_and_kernel(self, op_summary, launch_ops):
         """update op name, kernel name etc."""
+        if isinstance(op_summary, np.ndarray) and op_summary.shape[0] == 0 or not isinstance(op_summary, np.ndarray) \
+                and not op_summary:
+            return
         self._full_kernel_name = op_summary['Op Name'].copy()
         self._op_name = op_summary['Op Name'].copy()
         self._kernel_name = np.array(
@@ -200,6 +205,9 @@ class AscendOPGenerator:
         Args:
             op_summary(DataFrame): op summary data.
         """
+        if isinstance(op_summary, np.ndarray) and op_summary.shape[0] == 0 or \
+                not isinstance(op_summary, np.ndarray) and not op_summary:
+            return None
         if self.aclnn_status:
             op_detail = np.empty((len(op_summary),), dtype=self.op_detail_dt)
             op_detail['task_type'] = op_summary['Task Type']
@@ -227,7 +235,9 @@ class AscendOPGenerator:
         Args:
             op_statistic(DataFrame): op statistic data.
         """
-
+        if isinstance(op_statistic, np.ndarray) and op_statistic.shape[0] == 0 or \
+                not isinstance(op_statistic, np.ndarray) and not op_statistic:
+            return None
         groups, _, inverse, _ = np.unique(op_statistic['Op Type'], return_index=True, return_inverse=True,
                                           return_counts=True)
 
@@ -247,7 +257,9 @@ class AscendOPGenerator:
         Args:
             op_summary(DataFrame): op summary data.
         """
-
+        if isinstance(op_summary, np.ndarray) and op_summary.shape[0] == 0 or \
+                not isinstance(op_summary, np.ndarray) and not op_summary:
+            return None
         op_summary = op_summary[op_summary['Task Type'] == 'AI_CPU']
 
         aicpu_detail = np.empty((len(op_summary),), dtype=self.aicpu_detail_dt)
@@ -272,6 +284,8 @@ class AscendOPGenerator:
 
         def op_info_analyse(row):
             """generate op info data"""
+            if not row['Input Shapes']:
+                return ""
             input_shapes = row['Input Shapes'].replace('"', '').split(';')
             input_data_types = row['Input Data Types'].replace('_', '').split(';')
             input_formats = row['Input Formats'].replace('_', '').split(';')
@@ -296,7 +310,9 @@ class AscendOPGenerator:
                         'shape': output_shapes[i]
                     }
             return json.dumps(op_info)
-
+        if isinstance(op_summary, np.ndarray) and op_summary.shape[0] == 0 or \
+                not isinstance(op_summary, np.ndarray) and not op_summary:
+            return None
         if self.dynamic_status or self.aclnn_status:
             index = list(range(op_summary.shape[0]))
         else:
