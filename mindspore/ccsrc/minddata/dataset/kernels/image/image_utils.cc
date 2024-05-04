@@ -329,15 +329,35 @@ const unsigned char kPngMagic[] = "\x89\x50\x4E\x47";
 constexpr dsize_t kPngMagicLen = 4;
 
 bool IsNonEmptyJPEG(const std::shared_ptr<Tensor> &input) {
-  return input->SizeInBytes() > kJpegMagicLen && memcmp(input->GetBuffer(), kJpegMagic, kJpegMagicLen) == 0;
+  if (input->type() == DataType::DE_BYTES) {
+    uint32_t len = 0;
+    if (input->GetStringLength(&len) != Status::OK()) {
+      MS_LOG(ERROR) << "Get string length from bytes field failed.";
+      return false;
+    }
+    return len > kJpegMagicLen && memcmp(input->GetStringsBuffer(), kJpegMagic, kJpegMagicLen) == 0;
+  }
+  return input->SizeInBytes() > kJpegMagicLen && memcmp(input->GetMutableBuffer(), kJpegMagic, kJpegMagicLen) == 0;
 }
 
 bool IsNonEmptyPNG(const std::shared_ptr<Tensor> &input) {
-  return input->SizeInBytes() > kPngMagicLen && memcmp(input->GetBuffer(), kPngMagic, kPngMagicLen) == 0;
+  if (input->type() == DataType::DE_BYTES) {
+    uint32_t len = 0;
+    if (input->GetStringLength(&len) != Status::OK()) {
+      MS_LOG(ERROR) << "Get string length from bytes field failed.";
+      return false;
+    }
+    return len > kPngMagicLen && memcmp(input->GetStringsBuffer(), kPngMagic, kPngMagicLen) == 0;
+  }
+  return input->SizeInBytes() > kPngMagicLen && memcmp(input->GetMutableBuffer(), kPngMagic, kPngMagicLen) == 0;
 }
 
 Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   RETURN_IF_NOT_OK(CheckUnsupportedImage(input));
+
+  if (input->type() == DataType::DE_BYTES && input->shape().NumOfElements() != 1) {
+    RETURN_STATUS_UNEXPECTED("Decode: couldn't decode bytes field with multi dims.");
+  }
 
   Status ret;
   if (IsNonEmptyJPEG(input)) {
@@ -529,7 +549,13 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   jerr.pub.error_exit = JpegErrorExitCustom;
   try {
     jpeg_create_decompress(&cinfo);
-    JpegSetSource(&cinfo, input->GetBuffer(), input->SizeInBytes());
+    if (input->type() == DataType::DE_BYTES) {
+      uint32_t len = 0;
+      RETURN_IF_NOT_OK(input->GetStringLength(&len));
+      JpegSetSource(&cinfo, input->GetStringsBuffer(), len);
+    } else {
+      JpegSetSource(&cinfo, input->GetMutableBuffer(), input->SizeInBytes());
+    }
     (void)jpeg_read_header(&cinfo, TRUE);
     RETURN_IF_NOT_OK(JpegSetColorSpace(&cinfo));
     jpeg_calc_output_dimensions(&cinfo);
@@ -1943,7 +1969,13 @@ Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, in
   jerr.pub.error_exit = JpegErrorExitCustom;
   try {
     jpeg_create_decompress(&cinfo);
-    JpegSetSource(&cinfo, input->GetBuffer(), input->SizeInBytes());
+    if (input->type() == DataType::DE_BYTES) {
+      uint32_t len = 0;
+      RETURN_IF_NOT_OK(input->GetStringLength(&len));
+      JpegSetSource(&cinfo, input->GetStringsBuffer(), len);
+    } else {
+      JpegSetSource(&cinfo, input->GetMutableBuffer(), input->SizeInBytes());
+    }
     (void)jpeg_read_header(&cinfo, TRUE);
     jpeg_calc_output_dimensions(&cinfo);
     RETURN_IF_NOT_OK(CheckJpegExit(&cinfo));
@@ -2503,7 +2535,11 @@ Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &dat
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   if (data_size > 0) {
-    data_buffer = (const char *)data->GetBuffer();
+    if (data->type() == DataType::DE_BYTES) {
+      data_buffer = (const char *)data->GetStringsBuffer();
+    } else {
+      data_buffer = (const char *)data->GetMutableBuffer();
+    }
     if (data_buffer == nullptr) {
       err_msg = "WriteFile: Invalid data->GetBufferSize() , should not be nullptr.";
       RETURN_STATUS_UNEXPECTED(err_msg);
@@ -2721,18 +2757,29 @@ Status DumpImageAndAppendStatus(const std::shared_ptr<Tensor> &image, const Stat
   std::string file_name = "./abnormal_image.";
   std::string file_suffix;
   std::string error_info = local_status.GetErrDescription();
-  if (image->SizeInBytes() == 0) {
+
+  uint32_t image_length = 0;
+  uchar *image_ptr = nullptr;
+  if (image->type() == DataType::DE_BYTES) {
+    RETURN_IF_NOT_OK(image->GetStringLength(&image_length));
+    image_ptr = image->GetStringsBuffer();
+  } else {
+    image_length = image->SizeInBytes();
+    image_ptr = image->GetMutableBuffer();
+  }
+
+  if (image_length == 0) {
     return local_status;
   }
 
-  if (memcmp(image->GetBuffer(), kJpegMagic, kJpegMagicLen) == 0) {  // support
+  if (memcmp(image_ptr, kJpegMagic, kJpegMagicLen) == 0) {  // support
     file_suffix = "jpg";
-  } else if (memcmp(image->GetBuffer(), kPngMagic, kPngMagicLen) == 0) {  // support
+  } else if (memcmp(image_ptr, kPngMagic, kPngMagicLen) == 0) {  // support
     file_suffix = "png";
-  } else if (memcmp(image->GetBuffer(), kBmpMagic, kBmpMagicLen) == 0) {  // support
+  } else if (memcmp(image_ptr, kBmpMagic, kBmpMagicLen) == 0) {  // support
     file_suffix = "bmp";
-  } else if (memcmp(image->GetBuffer(), kTiffMagic1, kTiffMagicLen) == 0 ||  // support
-             memcmp(image->GetBuffer(), kTiffMagic2, kTiffMagicLen) == 0) {
+  } else if (memcmp(image_ptr, kTiffMagic1, kTiffMagicLen) == 0 ||  // support
+             memcmp(image_ptr, kTiffMagic2, kTiffMagicLen) == 0) {
     file_suffix = "tif";
   } else {
     file_suffix = "exception";
@@ -2764,10 +2811,17 @@ Status CheckUnsupportedImage(const std::shared_ptr<Tensor> &image) {
     RETURN_STATUS_UNEXPECTED("Image file size is 0.");
   }
 
-  if (memcmp(image->GetBuffer(), kGifMagic, kGifMagicLen) == 0) {  // unsupported
+  uchar *image_ptr = nullptr;
+  if (image->type() == DataType::DE_BYTES) {
+    image_ptr = image->GetStringsBuffer();
+  } else {
+    image_ptr = image->GetMutableBuffer();
+  }
+
+  if (memcmp(image_ptr, kGifMagic, kGifMagicLen) == 0) {  // unsupported
     file_suffix = "gif";
     unsupport_flag = true;
-  } else if (memcmp(image->GetBuffer() + 7, kWebpMagic, kWebpMagicLen) == 0) {  // unsupported: skip the 7 bytes
+  } else if (memcmp(image_ptr + 7, kWebpMagic, kWebpMagicLen) == 0) {  // unsupported: skip the 7 bytes
     file_suffix = "webp";
     unsupport_flag = true;
   }
