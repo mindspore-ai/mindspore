@@ -459,13 +459,22 @@ def tuple_index_type_cnt(types, op_name):
 def check_value_elements(types):
     """Judges the type of all elements of the tuple."""
     tensor_number = 0
+    last_type = None
+    mix_but_no_tensor = False
     for ele in types:
         if isinstance(ele, mstype.TensorType):
             tensor_number += 1
         elif isinstance(ele, (list, tuple)):
             return MIXED
 
+        if last_type is None:
+            last_type = type(ele)
+        elif not isinstance(ele, last_type):
+            mix_but_no_tensor = True
+
     if tensor_number == 0:
+        if mix_but_no_tensor:
+            return MIXED
         return NO_TENSOR
     if tensor_number == len(types):
         return ALL_TENSOR
