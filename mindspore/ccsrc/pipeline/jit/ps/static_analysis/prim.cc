@@ -1231,7 +1231,7 @@ bool HasAbstractUndetermined(const AbstractBasePtr &abs) {
     auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
     return std::any_of(abs_seq->elements().cbegin(), abs_seq->elements().cend(), HasAbstractUndetermined);
   }
-  return abs->IsSameTypeId(AbstractUndetermined::kTypeId);
+  return abs->isa<AbstractUndetermined>();
 }
 
 void PrimitiveFunctionEvaluator::CheckArgsSizeAndType(const AbstractBasePtrList &abs_args) {
