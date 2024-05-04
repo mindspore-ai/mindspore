@@ -63,6 +63,20 @@ class SplitVInfo : public SplitInfo {
   Status GetAttrs() override;
   Status InferMirrorOps() override { return OperatorInfo::InferMirrorOps(); }
 };
+class SplitWithSizeInfo : public SplitInfo {
+ public:
+  SplitWithSizeInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                    const PrimitiveAttrs &attrs)
+      : SplitInfo(operator_name, inputs_shape, outputs_shape, attrs) {}
+  ~SplitWithSizeInfo() override = default;
+};
+class SplitTensorInfo : public SplitInfo {
+ public:
+  SplitTensorInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                  const PrimitiveAttrs &attrs)
+      : SplitInfo(operator_name, inputs_shape, outputs_shape, attrs) {}
+  ~SplitTensorInfo() override = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
 
