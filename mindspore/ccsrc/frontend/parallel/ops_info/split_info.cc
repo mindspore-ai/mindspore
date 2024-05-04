@@ -237,6 +237,8 @@ Status SplitInfo::InferAsLossDivisor() {
 }
 
 REGISTER(SplitInfo);
+REGISTER(SplitWithSizeInfo);
+REGISTER(SplitTensorInfo);
 REGISTER(SplitVInfo);
 }  // namespace parallel
 }  // namespace mindspore
