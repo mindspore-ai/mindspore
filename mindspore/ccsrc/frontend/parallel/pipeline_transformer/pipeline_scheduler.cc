@@ -265,7 +265,7 @@ void InterleavedScheduler::WarmUpPhaseReorder() {
       if (is_even_stage_) {
         if (offset_ > 0) {
           if (i + LongToSize(offset_) >= LongToSize(bias_)) {
-            auto prior1 = sorted_bwd_cell[i + LongToSize(offset_) - bias_].second;
+            auto prior1 = sorted_bwd_cell[i + LongToSize(offset_) - LongToSize(bias_)].second;
             auto last1 = sorted_fwd_end[i].first;
             ControlOrder(prior1, last1);
           } else {
@@ -281,7 +281,7 @@ void InterleavedScheduler::WarmUpPhaseReorder() {
       }
       auto prior1 = sorted_fwd_cell[i + LongToSize(offset_)].second;
       if (i + LongToSize(offset_) >= LongToSize(bias_)) {
-        prior1 = sorted_bwd_cell[i + LongToSize(offset_) - bias_].second;
+        prior1 = sorted_bwd_cell[i + LongToSize(offset_) - LongToSize(bias_)].second;
       }
       auto last1 = sorted_fwd_begin[i + LongToSize(offset_) + 1].first;
       ControlOrder(prior1, last1);
