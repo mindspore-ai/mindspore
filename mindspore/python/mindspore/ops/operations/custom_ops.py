@@ -172,19 +172,11 @@ class Custom(ops.PrimitiveWithInfer):
     .. note::
         The supported platforms are determined by the input `func_type`. The supported platforms are as follows:
 
-        - "hybrid": supports ["Ascend", "GPU", "CPU"].
-        - "akg": supports ["Ascend", "GPU", "CPU"].
-        - "tbe": supports ["Ascend"].
+        - "hybrid": supports ["GPU", "CPU"].
+        - "akg": supports ["GPU", "CPU"].
         - "aot": supports ["GPU", "CPU"].
         - "pyfunc": supports ["CPU"].
         - "julia": supports ["CPU"].
-        - "aicpu": supports ["Ascend"].
-
-        If run on ge backend, use `CustomRegOp` to generate the registration information of "aicpu" and "tbe" operator,
-        use `custom_info_register` to bind the registration information to the `func` of the "tbe" operator,
-        then save the registration information of "aicpu" operator and the `func` implementation of "tbe" operator to
-        a file or separate files, keep these files in a separate directory, and set the absolute path of this directory
-        to environment variable "MS_DEV_CUSTOM_OPP_PATH" before running the network.
 
     Args:
         func (Union[function, str]):
@@ -193,9 +185,8 @@ class Custom(ops.PrimitiveWithInfer):
               computation logic of a user defined operator. The function can be one of the following:
 
               1. A AKG operator implementation function, which can use ir builder/tvm compute/hybrid grammar.
-              2. A TBE operator implementation function.
-              3. A pure python function
-              4. An kernel decorated function written by the Hybrid DSL.
+              2. A pure python function
+              3. An kernel decorated function written by the Hybrid DSL.
 
             - str: If func is of str type, then str should be a path of file along with a function name.
               This could be used when func_type is "aot" or "julia".
@@ -299,18 +290,7 @@ class Custom(ops.PrimitiveWithInfer):
 
         func_type (str): The implementation type of `func`, should be one of
 
-            [ ``"hybrid"`` , ``"akg"`` , ``"tbe"`` , ``"aot"`` , ``"pyfunc"`` , ``"julia"`` , ``"aicpu"`` ].
-
-            Each `func_type` only supports specific platforms(targets). Default: ``"hybrid"`` .
-            The supported platforms of `func_type`:
-
-            - ``"hybrid"``: supports ["Ascend", "GPU", "CPU"].
-            - ``"akg"``: supports ["Ascend", "GPU", "CPU"].
-            - ``"tbe"``: supports ["Ascend"].
-            - ``"aot"``: supports ["GPU", "CPU"].
-            - ``"pyfunc"``: supports ["CPU"].
-            - ``"julia"``: supports ["CPU"].
-            - ``"aicpu"``: supports ["Ascend"].
+            [ ``"hybrid"`` , ``"akg"`` , ``"aot"`` , ``"pyfunc"`` , ``"julia"`` ].
 
         bprop (function): The back propagation function of `func`. Default: ``None`` .
         reg_info (Union[str, dict, list, tuple]): Represents the registration information(reg info) of `func` with
@@ -343,7 +323,7 @@ class Custom(ops.PrimitiveWithInfer):
             or the attributes of `func` differs in different targets.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -372,68 +352,6 @@ class Custom(ops.PrimitiveWithInfer):
         >>> # the result will be a 16 * 16 tensor with all elements 2
         >>> print(output.shape)
         (16, 16)
-        >>> # Example, func_type = "tbe"
-        >>> square_with_bias_op_info = CustomRegOp() \
-        ...     .fusion_type("OPAQUE") \
-        ...     .attr("bias", "required", "float") \
-        ...     .input(0, "x") \
-        ...     .output(0, "y") \
-        ...     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-        ...     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-        ...     .target("Ascend") \
-        ...     .get_op_info()
-        >>>
-        >>> @custom_info_register(square_with_bias_op_info)
-        ... def square_with_bias(input_x, output_y, bias=0.0, kernel_name="square_with_bias"):
-        ...     import te.lang.cce
-        ...     from te import tvm
-        ...     from topi.cce import util
-        ...
-        ...     shape = input_x.get("shape")
-        ...     dtype = input_x.get("dtype").lower()
-        ...
-        ...     shape = util.shape_refine(shape)
-        ...     data = tvm.placeholder(shape, name="data", dtype=dtype)
-        ...
-        ...     with tvm.target.cce():
-        ...         res0 = te.lang.cce.vmul(data, data)
-        ...         res = te.lang.cce.vadds(res0, bias)
-        ...         sch = te.lang.cce.auto_schedule(res)
-        ...
-        ...     config = {"print_ir": False,
-        ...               "name": kernel_name,
-        ...               "tensor_list": [data, res]}
-        ...
-        ...     te.lang.cce.cce_build_code(sch, config)
-        >>>
-        >>> def test_tbe():
-        ...     square_with_bias = ops.Custom(square_with_bias, out_shape=lambda x, _: x, \
-        ...                                   out_dtype=lambda x, _: x, func_type="tbe")
-        ...     res = self.square_with_bias(input_x, 1.0)
-        ...     return res
-        >>>
-        >>> # Example, func_type = "aicpu"
-        >>> resize_bilinear_op_info = CustomRegOp("ResizeBilinear") \
-        ...     .fusion_type("OPAQUE") \
-        ...     .input(0, "input", "required") \
-        ...     .output(1, "output", "required") \
-        ...     .attr("align_corners", "required", "bool") \
-        ...     .attr("cust_aicpu", "optional", "str", "aicpu_kernels") \
-        ...     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-        ...     .dtype_format(DataType.F16_Default, DataType.F32_Default) \
-        ...     .target("Ascend") \
-        ...     .get_op_info()
-        >>>
-        >>> @custom_info_register(resize_bilinear_op_info)
-        ... def resize_bilinear_aicpu():
-        ...     return
-        >>>
-        >>> def test_aicpu(x):
-        ...     resize_bilinear_op = ops.Custom(resize_bilinear_aicpu, out_shape=[1, 1, 9, 9], \
-        ...                                     out_dtype=mstype.float32, func_type="aicpu")
-        ...     res = resize_bilinear_op(x, True, "aicpu_kernels")
-        ...     return res
-        >>>
         >>> # Example, func_type = "aot"
         >>> def test_aot(x, y, out_shapes, out_types):
         ...     program = ops.Custom("./reorganize.so:CustomReorganize", out_shapes, out_types, "aot")
