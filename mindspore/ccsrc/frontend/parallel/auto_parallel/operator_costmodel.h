@@ -1046,6 +1046,7 @@ class LayerNormCost : public OperatorCost {
   // Taking account of input
   void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
+using GroupNormCost = LayerNormCost;
 
 class UniqueCost : public OperatorCost {
  public:
