@@ -90,6 +90,7 @@ class GradExecutor {
   inline bool enable_grad() const { return enable_grad_; }
   inline void set_enable_grad(bool enable_grad) { enable_grad_ = enable_grad; }
   inline bool RequiresGrad() const { return enable_grad() && grad_flag(); }
+  inline void set_is_run_recompute(bool is_run_recompute) { is_run_recompute_ = is_run_recompute; }
   // Construct grad graph for jit
   inline size_t custom_bprop_cell_count() const { return custom_bprop_cell_count_; }
   inline runtime::AsyncHqueuePtr bprop_queue() const { return bprop_queue_; }
@@ -222,11 +223,15 @@ class GradExecutor {
                                     const std::pair<AnfNodePtr, std::vector<int64_t>> &out) const;
   void DispatchGradQueueTask(std::function<void(void)> &&task) const;
   void ClearBpropTask() const;
+
   bool init_{false};
   bool grad_flag_{false};
   bool enable_grad_{true};
-  size_t grad_is_running_{0};
+  bool is_run_recompute_{false};
   bool save_graphs_{false};
+  bool forward_use_dynamic_shape_process_{false};
+
+  size_t grad_is_running_{0};
   uint32_t kernel_graph_id_for_control_flow_{UINT32_MAX};
   size_t custom_bprop_cell_count_{0};
   size_t obj_order_{0};
@@ -235,6 +240,7 @@ class GradExecutor {
   // Used for auto grad map reserve
   size_t op_num_in_bprop_graph_{kDefaultContainerSize};
   std::string grad_operation_;
+
   TopCellInfoPtr top_cell_{nullptr};
   InputArgsInfoPtr top_input_args_info_{nullptr};
   // Records every cell info for share, regardless of whether need construct grad graph
@@ -246,6 +252,9 @@ class GradExecutor {
   std::stack<TopCellInfoPtr> high_order_stack_;
   // Record all top cell which has been ran
   mindspore::OrderedMap<std::string, TopCellInfoPtr> already_run_top_cell_;
+  std::set<std::string> dynamic_inputs_cells_;
+  std::vector<TopCellInfoPtr> need_gc_top_cell_list_;
+
   // parent top cell for custom nested grad.
   TopCellInfoPtr parent_top_cell_;
   ForwardExecutorWeakPtr forward_executor_;
@@ -253,9 +262,6 @@ class GradExecutor {
   DynamicShapePtr dynamic_shape_{nullptr};
   runtime::AsyncHqueuePtr bprop_queue_;
   runtime::AsyncHqueuePtr assist_queue_;
-  std::set<std::string> dynamic_inputs_cells_;
-  std::vector<TopCellInfoPtr> need_gc_top_cell_list_;
-  bool forward_use_dynamic_shape_process_{false};
 };
 }  // namespace pynative
 }  // namespace mindspore

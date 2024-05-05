@@ -53,8 +53,8 @@ using AdParamPtr = std::shared_ptr<AdParam>;
 
 class IrBprop {
  public:
-  IrBprop(AdParamPtr ad_param, std::string device_target, bool grad_by_value)
-      : ad_param_(std::move(ad_param)), grad_by_value_(grad_by_value) {
+  IrBprop(AdParamPtr ad_param, std::string device_target, bool grad_by_value, bool is_run_recompute = false)
+      : ad_param_(std::move(ad_param)), grad_by_value_(grad_by_value), is_run_recompute_(is_run_recompute) {
     pass_forward_ = std::make_shared<bprop_pass::IrPassForward>(this, std::move(device_target), grad_by_value_);
   }
 
@@ -172,6 +172,7 @@ class IrBprop {
 
   AdParamPtr ad_param_{nullptr};
   bool grad_by_value_{false};
+  bool is_run_recompute_{false};
   // Flag for ms_funtcion and high order
   bool bprop_graph_run_by_single_op_{false};
   bprop_pass::PyNativePassForwardPtr pass_forward_;

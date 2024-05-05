@@ -1394,6 +1394,17 @@ class _PyNativeExecutor:
         """
         self._executor.set_jit_compile_status(status, phase)
 
+    def set_is_run_recompute(self, status):
+        """
+        Set recompute grad is running
+
+        Args:
+            status(bool): grad is in recompute status
+        Return:
+            None.
+        """
+        self._executor.set_is_run_recompute(status)
+
     def set_dynamic_input(self, obj, *args):
         """
         Set dynamic shape tensor of input arguments.

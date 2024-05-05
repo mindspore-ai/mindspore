@@ -2635,7 +2635,14 @@ class _RecomputeCell(Cell):
         input_args = self.args[-1]
         self.args.pop()
         self.kwargs.pop()
-        grads = self.grad(self.net, self.internal_params)(*input_args, grad_input)
+
+        try:
+            _pynative_executor.set_is_run_recompute(True)
+            grads = self.grad(self.net, self.internal_params)(*input_args, grad_input)
+            _pynative_executor.set_is_run_recompute(False)
+        except Exception as err:
+            _pynative_executor.clear_res()
+            raise err
 
         weights = OrderedDict()
         input_grads = list(grads[0])
