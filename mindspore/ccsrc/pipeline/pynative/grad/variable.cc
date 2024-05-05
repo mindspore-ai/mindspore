@@ -61,7 +61,7 @@ ValuePtrList BackwardNode::LazeUpdateZeroGradient(const ValuePtrList &dout, Func
     return dout;
   }
   ValuePtrList outputs;
-  PyNativeAlgo::DataConvert::FlattenValueSeqArg(output, true, &outputs);
+  PyNativeAlgo::DataConvert::FlattenValueSeqArg(output, true, false, &outputs);
   if (outputs.size() != dout.size()) {
     MS_LOG(EXCEPTION) << "Gradients size should be same as output size! But got output size: " << outputs.size()
                       << ", gradients size: " << dout.size();

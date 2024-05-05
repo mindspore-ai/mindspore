@@ -44,6 +44,7 @@ from mindspore._check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._decorator import deprecated
 from mindspore.common._register_for_recompute import recompute_registry
 
+
 class Cell(Cell_):
     """
     The basic building block of neural networks in MindSpore. The model or neural network layer should inherit this
@@ -662,7 +663,6 @@ class Cell(Cell_):
         if not self._is_check_and_refresh:
             self.check_names_and_refresh_name()
             self._is_check_and_refresh = True
-
 
     def _predict(self, *args, **kwargs):
         if not hasattr(self, "phase"):
