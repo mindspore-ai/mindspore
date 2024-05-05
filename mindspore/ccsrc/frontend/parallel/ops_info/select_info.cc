@@ -31,13 +31,12 @@ namespace mindspore {
 namespace parallel {
 
 bool SelectInfo::CheckIsBroadcast(const std::vector<int64_t> &shape1, const std::vector<int64_t> &shape2) {
-  int size1 = shape1.size();
-  int size2 = shape2.size();
-
+  auto size1 = shape1.size();
+  auto size2 = shape2.size();
   if (size1 > size2 || size1 < size2) {
     return false;
   }
-  for (int i = 0; i < size1 && i < size2; ++i) {
+  for (size_t i = 0; i < size1 && i < size2; ++i) {
     if (shape1[i] != shape2[i] && (shape1[i] != 1 && shape2[i] != 1)) {
       return false;
     }
@@ -61,12 +60,12 @@ Status SelectInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  if ((inputs_shape_[0] != inputs_shape_[2]) && !CheckIsBroadcast(inputs_shape_[0], inputs_shape_[2])) {
+  if ((inputs_shape_[0] != inputs_shape_[kSizeTwo]) && !CheckIsBroadcast(inputs_shape_[0], inputs_shape_[kSizeTwo])) {
     MS_LOG(ERROR) << name_ << ": Now we only support the case that all three input shapes are equal";
     return FAILED;
   }
 
-  if (inputs_shape_[1] != inputs_shape_[2]) {
+  if (inputs_shape_[1] != inputs_shape_[kSizeTwo]) {
     MS_LOG(ERROR) << name_ << ": Now we only support the case that all three input shapes are equal";
     return FAILED;
   }
