@@ -538,7 +538,6 @@ def sync_pipeline_shared_parameters(net):
         ...             ret = ret + (y,)
         ...         ret = self.concat(ret)
         ...         return ret
-
         >>> D.init()
         >>> context.set_auto_parallel_context(parallel_mode='semi_auto_parallel', full_batch=True, pipeline_stages=2)
         >>> net = Network()
