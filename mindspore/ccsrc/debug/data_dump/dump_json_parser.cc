@@ -289,8 +289,14 @@ bool DumpJsonParser::DumpEnabledForIter() const {
  */
 bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, size_t len, const ShapeVector &shape,
                                 TypeId type) {
-  if (filename.empty() || data == nullptr || len == 0) {
-    MS_LOG(WARNING) << "Incorrect parameter.";
+  if (filename.empty() && (data == nullptr || len == 0)) {
+    MS_LOG(ERROR) << "Filename and data are empty or null.";
+    return false;
+  } else if (filename.empty()) {
+    MS_LOG(ERROR) << "Filename is empty.";
+    return false;
+  } else if (data == nullptr || len == 0) {
+    MS_LOG(WARNING) << "Data is empty or null for file: " << filename;
     return false;
   }
   std::string npy_header = GenerateNpyHeader(shape, type);
