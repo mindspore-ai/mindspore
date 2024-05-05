@@ -25,6 +25,7 @@ from mindspore.common._register_for_recompute import recompute_registry
 from mindspore.common.api import _pynative_executor
 from mindspore.nn.generator import get_rng_state, set_rng_state
 
+
 class _WrapCell(Cell):
     """
     The warp cell is used by recompute cell,
@@ -35,8 +36,8 @@ class _WrapCell(Cell):
         super(_WrapCell, self).__init__()
         self.function = function
 
-    def construct(self, *args):
-        return self.function(*args)
+    def construct(self, *args, **kwargs):
+        return self.function(*args, **kwargs)
 
 
 class _RecomputeCell(Cell):
@@ -69,7 +70,7 @@ class _RecomputeCell(Cell):
         self.save_rng_state = kwargs.pop("save_rng_state", True)
         if self.save_rng_state:
             self.cpu_rng_state = get_rng_state()
-        return self.net(*args)
+        return self.net(*args, **kwargs)
 
     def bprop(self, *args):
         """
@@ -79,8 +80,11 @@ class _RecomputeCell(Cell):
         """
         grad_input = args[-1]
         input_args = self.args[-1]
+        kwargs = self.kwargs[-1]
         self.args.pop()
         self.kwargs.pop()
+        if not kwargs:
+            input_args = list(input_args) + list(kwargs.values())
         try:
             pre_rng_state = get_rng_state()
             set_rng_state(*self.cpu_rng_state)
@@ -132,8 +136,8 @@ def _check_input_args_validate(block, args):
         if isinstance(arg, (tuple, list)):
             for data in arg:
                 if isinstance(data, Tensor):
-                    logger.info("For recompute block {}, tensor input in Tuple or list \
-                                will not calculate grads!".format(block))
+                    logger.info("For recompute block {}, tensor input in Tuple or list "
+                                "will not calculate grads!".format(block))
                     break
 
 
@@ -155,20 +159,19 @@ def _padding_input_grads(args, input_grads):
         elif not isinstance(arg, Tensor):
             input_grads.insert(i, None)
     if len(args) != len(input_grads):
-        raise ValueError("For recompute cell, the input grads size should be same as input args size: {}, \
-                         but got {}".format(len(args), len(input_grads)))
+        raise ValueError("For recompute cell, the input grads size should be same as input args size: {}, "
+                         "but got {}".format(len(args), len(input_grads)))
 
 
 def _check_validation(block):
     if not isinstance(block, Cell):
         raise TypeError("Recompute function now only support block which inherited from Cell!")
     if context.get_context("mode") != context.PYNATIVE_MODE:
-        raise AssertionError("Recompute function now only support pynative mode, you can use \
-                             Cell.recompute() in graph mode.")
+        raise AssertionError("Recompute function now only support pynative mode, you can use "
+                             "Cell.recompute() in graph mode.")
     if block.construct.__code__.co_name == "staging_specialize":
-        logger.warning('Block\'s construct method decorated by @jit that recompute \
-                        function will not come into effect.')
-    return True
+        logger.warning('Block\'s construct method decorated by @jit that recompute '
+                       'function will not come into effect.')
 
 
 def recompute(block, *args, **kwargs):
@@ -241,7 +244,5 @@ def recompute_generator(block):
 
 recompute_registry.register(recompute_generator)
 
-__all__ = [
-    'recompute',
-]
+__all__ = ['recompute']
 __all__.sort()
