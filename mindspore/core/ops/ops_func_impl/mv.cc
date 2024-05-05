@@ -38,20 +38,8 @@ BaseShapePtr MvFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto constexpr kMvInputNum = 2;
   (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(input_args.size()), kEqual, kMvInputNum,
                                            primitive->name());
-  auto prim_name = primitive->name();
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
-  auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
-  if (x_shape_map.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name
-                      << "', input 'x' must be a Tensor type, but got:" << input_args[0]->ToString();
-  }
-  if (y_shape_map.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name
-                      << "', input 'y' must be a Tensor type, but got:" << input_args[1]->ToString();
-  }
-
-  auto x_shp = x_shape_map[kShape];
-  auto y_shp = y_shape_map[kShape];
+  auto x_shp = input_args[kIndex0]->GetShape()->GetShapeVector();
+  auto y_shp = input_args[kIndex1]->GetShape()->GetShapeVector();
   if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
     ShapeVector ret_shape = {};
     return std::make_shared<abstract::Shape>(ret_shape);

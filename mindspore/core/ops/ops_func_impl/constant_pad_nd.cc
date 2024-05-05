@@ -51,6 +51,7 @@ BaseShapePtr ConstantPadNDFuncImpl::InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(std::move(out_shape));
   }
 
+  const size_t kNumTwo = 2;
   auto paddings = paddings_opt.value();
   if (!(paddings.size() % kNum2 == 0)) {
     MS_EXCEPTION(ValueError) << "Length of padding must be even but got " << paddings.size();
@@ -60,7 +61,7 @@ BaseShapePtr ConstantPadNDFuncImpl::InferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "Length of padding must be no more than 2 * dim of the input. "
                              << "Length of padding is: " << paddings.size() << "，while the input's dim is:" << x_rank;
   }
-  auto l_diff = x_rank - (paddings.size() / 2);
+  auto l_diff = x_rank - (paddings.size() / kNumTwo);
   for (size_t i = 0; i < l_diff; ++i) {
     (void)out_shape.emplace_back(x_shape[i]);
   }

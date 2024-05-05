@@ -55,7 +55,7 @@ BaseShapePtr ProdExtFuncImpl::InferShape(const PrimitivePtr &primitive,
 
   auto axis_opt = GetScalarValue<int64_t>(input_args[kIndex1]->GetValue());
   if (!axis_opt.has_value()) {
-    int64_t x_rank = x_shape.size();
+    int64_t x_rank = static_cast<int64_t>(x_shape.size());
     int64_t dim_any = abstract::TensorShape::kShapeDimAny;
     return keep_dims ? std::make_shared<abstract::Shape>(ShapeVector(x_rank, dim_any))
                      : std::make_shared<abstract::Shape>(x_rank > 0 ? ShapeVector(x_rank - 1, dim_any) : ShapeVector{});

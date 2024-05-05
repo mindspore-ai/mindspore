@@ -766,7 +766,11 @@ def get_upsample_trilinear3d_grad_vmap_rule(prim, axis_size):
         osize, osize_dim = osize_bdim
         scales, scales_dim = scales_bdim
         align_corners, align_corners_dim = align_corners_bdim
-        if isize_dim is not None or osize_dim is not None or scales_dim is not None or align_corners_dim is not None:
+        check_args = [isize_dim, osize_dim, scales_dim, align_corners_dim]
+        is_all_none = True
+        for arg in check_args:
+            is_all_none = is_all_none and arg is None
+        if not is_all_none:
             _raise_value_error(
                 "The source axis of `input_size`, `output_size` and `scales` must be None, but got {0}, {1} and {2}."
                 .format(isize_dim, osize_dim, scales_dim))

@@ -85,7 +85,7 @@ BaseShapePtr StackExtFuncImpl::InferShape(const PrimitivePtr &primitive,
     } else {
       auto tuple_shape = input_shape->cast<abstract::TupleShapePtr>();
       MS_EXCEPTION_IF_NULL(tuple_shape);
-      num = tuple_shape->size();
+      num = SizeToLong(tuple_shape->size());
       auto element_shapes = tuple_shape->shape();
       inferred_shape = CheckAndGetInferredShape(primitive, element_shapes);
     }

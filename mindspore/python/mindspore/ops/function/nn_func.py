@@ -2589,6 +2589,47 @@ def interpolate(input,
     return resize_func.get(mode)(input, size, align_corners, scale_factor)
 
 
+def _interploate_ext_make_tuple(input, value):
+    """
+    make tuple
+    """
+    if isinstance(value, (list, tuple)):
+        return value
+
+    rank = F.rank(input) - 2
+    out = None
+    if F.isconstant(value) and F.isconstant(rank):
+        out = tuple([value for _ in range(rank)])
+    else:
+        s = tuple_to_tensor_((rank,), mstype.int32)
+        v = None
+        if isinstance(value, int):
+            v = F.scalar_to_tensor(value, mstype.int64)
+        else:
+            v = F.scalar_to_tensor(value, mstype.float32)
+        t = fillv2_(s, v)
+        out = tensor_to_tuple_(t)
+    return out
+
+
+def _interpolate_ext_scale_factor_convert_size(input, scale_factor):
+    """
+    convert scale_factor to size
+    """
+    shape = F.shape(input)
+    size = None
+    if F.isconstant(shape) and F.isconstant(scale_factor):
+        size = tuple([floor(shape[i + 2] * scale_factor[i]) for i in
+                      range(min(len(shape) - 2), len(scale_factor))])
+    else:
+        x = tuple_to_tensor_(shape[2:], mstype.int64)
+        y = tuple_to_tensor_(scale_factor, mstype.float32)
+        t = x * y
+        t = ops.TruncateDiv()(t, Tensor(1))
+        t = ops.cast(t, mstype.int64)
+        size = tensor_to_tuple_(t)
+    return size
+
 
 def interpolate_ext(input,
                     size=None,
@@ -2798,23 +2839,9 @@ def interpolate_ext(input,
             "For 'interpolate', 'size' and 'scale_factor' cannot be set simultaneously"
         )
     if size is not None:
-        if isinstance(size, (list, tuple)):
-            size = size
-        else:
-            rank = F.rank(input) - 2
-            if F.isconstant(size) and F.isconstant(rank):
-                size = tuple([size for _ in range(rank)])
-            else:
-                size = _interploate_make_tuple(rank, size)
+        size = _interploate_ext_make_tuple(input, size)
     elif scale_factor is not None:
-        if isinstance(scale_factor, (list, tuple)):
-            scale_factor = scale_factor
-        else:
-            rank = F.rank(input) - 2
-            if F.isconstant(scale_factor) and F.isconstant(rank):
-                scale_factor = tuple([scale_factor for _ in range(rank)])
-            else:
-                scale_factor = _interploate_make_tuple(rank, scale_factor)
+        scale_factor = _interploate_ext_make_tuple(input, scale_factor)
     else:
         raise ValueError(
             "For 'interpolate', 'size' and 'scale_factor' cannot be both empty"
@@ -2830,12 +2857,7 @@ def interpolate_ext(input,
             raise ValueError(
                 "For 'interpolate', it is incorrect to set 'recompute_scale_factor' to True"
                 " after specifying an explicit 'size'.")
-        shape = F.shape(input)
-        if F.isconstant(shape) and F.isconstant(scale_factor):
-            size = tuple([floor(shape[i + 2] * scale_factor[i]) for i in
-                          range(min(len(shape) - 2), len(scale_factor))])
-        else:
-            size = _interpolate_scale_factor_convert_size(shape, scale_factor)
+        size = _interpolate_ext_scale_factor_convert_size(input, scale_factor)
         scale_factor = None
 
     # scale_factor

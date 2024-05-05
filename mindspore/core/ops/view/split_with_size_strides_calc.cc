@@ -17,6 +17,7 @@
 #include <memory>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/convert_utils_base.h"
 #include "ops/view/split_with_size_strides_calc.h"
 
 namespace {
@@ -67,7 +68,7 @@ TensorStorageInfoPtrList SplitWithSizeCalc(const PrimitivePtr &prim, const std::
     // Calculate the storage offset of sub tensors
     size_t new_storage_offset = current_offset;
     // Update current offset
-    current_offset += split_iter * old_strides[wrap_dim];
+    current_offset += LongToSize(split_iter * old_strides[wrap_dim]);
 
     // Creating storage information for sub tensors
     auto new_storage_info =

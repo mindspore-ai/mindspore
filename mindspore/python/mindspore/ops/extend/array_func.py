@@ -21,10 +21,10 @@ Array Operators
 from mindspore.common import Tensor
 from mindspore.ops.operations.array_ops import ArgMaxWithValue, ArgMinWithValue
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops.auto_generate.gen_ops_prim import gather_d_op, slice_ext_op
+from mindspore.ops.auto_generate.gen_ops_prim import gather_d_op, slice_ext_op, OneHotExt
 from mindspore.ops.auto_generate.gen_ops_def import max_, min_
 from mindspore import _checkparam as validator
-from ..auto_generate import OneHotExt
+
 
 # define Primitive global variables
 def narrow(input, dim, start, length):

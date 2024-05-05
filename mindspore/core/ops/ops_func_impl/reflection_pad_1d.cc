@@ -48,7 +48,7 @@ BaseShapePtr ReflectionPad1DFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto paddings_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
   if (!paddings_opt.has_value()) {
     ShapeVector out_shape = x_shape;
-    out_shape[x_rank - 1] = abstract::Shape::kShapeDimAny;
+    out_shape[x_rank - kInputIndex1] = abstract::Shape::kShapeDimAny;
     return std::make_shared<abstract::Shape>(std::move(out_shape));
   }
 
