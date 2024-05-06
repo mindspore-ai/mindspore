@@ -797,17 +797,6 @@ static FuncKey KeyFinderFuncCodeId(const py::object &callable) {
   return iter != GetFuncKeyMap().end() ? iter->second : FUNC_KEY_EMPTY;
 }
 
-static FuncKey KeyFinderMappingGet(const py::object &callable) {
-  auto callable_obj = callable.ptr();
-  if (PyMethod_Check(callable_obj)) {
-    callable_obj = PyMethod_GET_FUNCTION(callable_obj);
-    auto mapping_obj = Utils::GetModuleAttr("collections.abc", "Mapping");
-    auto mapping_get_obj = PyObject_GetAttrString(mapping_obj.ptr(), "get");
-    return callable_obj == mapping_get_obj ? FUNC_KEY_MAPPING_GET : FUNC_KEY_EMPTY;
-  }
-  return FUNC_KEY_EMPTY;
-}
-
 static FuncKey KeyFinderPrimitive(const py::object &callable) {
   PyTypeObject *type_object = Py_TYPE(callable.ptr());
   bool convert_to_prim = IsPrimitiveType<true>(type_object) || IsPrimitiveFunctionType<true>(type_object);
@@ -872,8 +861,8 @@ static FuncKey FindFuncKey(const py::object &callable) {
     return FUNC_KEY_EMPTY;
   }
   std::vector<FuncKey (*)(const py::object &callable)> finders = {
-    KeyFinderFuncId,    KeyFinderFuncCodeId, KeyFinderPrimitive,  KeyFinderMetaFunc,
-    KeyFinderGraphCell, KeyFinderMappingGet, KeyFinderSkipModule,  // must be last for check modules
+    KeyFinderFuncId,   KeyFinderFuncCodeId, KeyFinderPrimitive,
+    KeyFinderMetaFunc, KeyFinderGraphCell,  KeyFinderSkipModule,  // must be last for check modules
   };
   FuncKey res = FUNC_KEY_EMPTY;
   for (auto iter = finders.begin(), end = finders.end(); iter != end && res == FUNC_KEY_EMPTY; ++iter) {
