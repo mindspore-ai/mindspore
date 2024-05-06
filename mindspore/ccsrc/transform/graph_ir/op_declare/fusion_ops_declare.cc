@@ -129,4 +129,19 @@ ATTR_MAP(AllGatherMatmul) = {{"group", ATTR_DESC(group, AnyTraits<std::string>()
                              {"comm_turn", ATTR_DESC(comm_turn, AnyTraits<int64_t>())}};
 OUTPUT_MAP(AllGatherMatmul) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(gather_out)}};
 REG_ADPT_DESC(AllGatherMatmul, kNameAllGatherMatmul, ADPT_DESC(AllGatherMatmul))
+
+// GroupedMatmul
+DYN_INPUT_MAP(GroupedMatmul) = {{1, DYN_INPUT_DESC(x)},
+                                {2, DYN_INPUT_DESC(weight)},
+                                {3, DYN_INPUT_DESC(bias)},
+                                {4, DYN_INPUT_DESC(scale)},
+                                {5, DYN_INPUT_DESC(offset)},
+                                {6, DYN_INPUT_DESC(antiquant_scale)},
+                                {7, DYN_INPUT_DESC(antiquant_offset)}};
+INPUT_MAP(GroupedMatmul) = {{8, INPUT_DESC(group_list)}};
+ATTR_MAP(GroupedMatmul) = {{"split_item", ATTR_DESC(split_item, AnyTraits<int64_t>())},
+                           {"dtype", ATTR_DESC(dtype, AnyTraits<int64_t>())},
+                           {"transpose_weight", ATTR_DESC(transpose_weight, AnyTraits<bool>())}};
+DYN_OUTPUT_MAP(GroupedMatmul) = {{0, DYN_OUTPUT_DESC(y)}};
+REG_ADPT_DESC(GroupedMatmul, kNameGroupedMatmul, ADPT_DESC(GroupedMatmul))
 }  // namespace mindspore::transform
