@@ -223,7 +223,7 @@ std::vector<int64_t> GetFASGradInfoFromInputLayout(int64_t input_layout, int64_t
     batch_size = query_shape[kIndex0];
     if (q_head_num != query_shape[kIndex2]) {
       MS_LOG(EXCEPTION) << op_name << ": query_shape[2] must be equal to attribute 'head_num', but got "
-                        << query_shape[2] << " and " << q_head_num;
+                        << query_shape[kIndex2] << " and " << q_head_num;
     }
     q_seq_len = query_shape[kIndex1];
     kv_seq_len = key_shape[kIndex1];
@@ -262,7 +262,6 @@ BaseShapePtr FlashAttentionScoreGradFuncImpl::InferShape(const PrimitivePtr &pri
     return std::make_shared<abstract::TupleShape>(output_shape_ptr_list);
   }
   auto input_layout = input_layout_opt.value();
-
   if (input_layout == FASInputLayoutMode::TND) {
     if (IsFlashAttentionScoreGradOptionalInputNotPass(input_args[kFASGradInputActualSeqQlenIndex]) ||
         IsFlashAttentionScoreGradOptionalInputNotPass(input_args[kFASGradInputActualSeqKVlenIndex])) {
