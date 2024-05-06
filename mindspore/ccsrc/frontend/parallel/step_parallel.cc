@@ -1719,6 +1719,29 @@ static void CoverSliceShape(const FuncGraphPtr &root) {
   g_RefMap.clear();
 }
 
+static void EliminateTensorToTupleForFlashAttentionScore(const FuncGraphPtr &root,
+                                                         const std::vector<AnfNodePtr> &all_nodes) {
+  auto manager = root->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  for (auto node : all_nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimTensorToTuple)) {
+      auto tensor_to_tuple_cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(tensor_to_tuple_cnode);
+      auto tensor_to_tuple_node_users = root->manager()->node_users()[tensor_to_tuple_cnode];
+      for (auto node_user : tensor_to_tuple_node_users) {
+        if (!(IsPrimitiveCNode(node_user.first, prim::kPrimFlashAttentionScore))) {
+          continue;
+        }
+        auto flash_attention_score_cnode = node_user.first->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(flash_attention_score_cnode);
+        manager->SetEdge(flash_attention_score_cnode, node_user.second, tensor_to_tuple_cnode->input(kIndex1));
+        MS_LOG(DEBUG) << "Eliminate TensorToTuple for " << flash_attention_score_cnode->fullname_with_scope()
+                      << ", index is " << node_user.second;
+      }
+    }
+  }
+}
+
 ValuePtr ObtainStrategyForNewShapes(const ShapeBasePtr &shape, const int64_t &dev_num) {
   ValuePtr stra_value_ptr;
   if (shape->is_list()) {
@@ -3475,6 +3498,9 @@ static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const 
   CheckParameterSplit(all_nodes);
 
   HandleSymbolicKeyInstance(root, all_nodes);
+
+  // Eliminate TensorToTuple if satisfied TensorToTuple->FlashAttention
+  EliminateTensorToTupleForFlashAttentionScore(root, all_nodes);
 
   // cover Parallel shape
   CoverSliceShape(root);

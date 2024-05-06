@@ -27,6 +27,7 @@ from mindspore.ops.operations.nn_ops import FlashAttentionScore
 
 grad = C.GradOperation(get_all=True)
 
+
 class FlashAttentionNet(nn.Cell):
     def __init__(self, num_heads, head_dim, dropout_rate=0.0, prev_tockens=65536, next_tockens=65536):
         super(FlashAttentionNet, self).__init__()

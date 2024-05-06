@@ -18,7 +18,7 @@ import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, Layout
 from mindspore import context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.context import set_auto_parallel_context
@@ -38,7 +38,7 @@ grad_all = C.GradOperation(get_all=True)
 def generate_inputs(B, N, S, D, input_layout, use_mqa=False, with_real_shift=True, sparse_mode=0):
     N_Q = N
     N_KV = 1 if use_mqa else N
-    compressed_mask_mode = [2, 3, 4]
+    compressed_mask_mode = [2, 3, 4, 5, 6, 7, 8]
     if input_layout == "BSH":
         H_Q = N_Q * D
         H_KV = N_KV * D
@@ -59,6 +59,10 @@ def generate_inputs(B, N, S, D, input_layout, use_mqa=False, with_real_shift=Tru
         query = Tensor(np.ones((B, S, N_Q, D), dtype=np.float16))
         key = Tensor(np.ones((B, S, N_KV, D), dtype=np.float16))
         value = Tensor(np.ones((B, S, N_KV, D), dtype=np.float16))
+    elif input_layout == "TND":
+        query = Tensor(np.ones((B * S, N_Q, D), dtype=np.float16))
+        key = Tensor(np.ones((B * S, N_KV, D), dtype=np.float16))
+        value = Tensor(np.ones((B * S, N_KV, D), dtype=np.float16))
     else:
         raise ValueError(f"input_layout is invalid.")
     real_shift = Tensor(np.ones((B, N, S, S), dtype=np.float16)) if with_real_shift else None
@@ -101,7 +105,7 @@ class Net(nn.Cell):
         self.reshape = P.Reshape()
         self.drop_gen_mask = P.DropoutGenMask()
         self.keep_prob = Tensor(keep_prob, ms.float16)
-        compressed_mask_mode = [2, 3, 4]
+        compressed_mask_mode = [2, 3, 4, 5, 6, 7, 8]
         self.head_num = head_num
         self.input_layout = input_layout
         pre_tokens = 2147483647 if sparse_mode not in compressed_mask_mode else 512
@@ -122,6 +126,8 @@ class Net(nn.Cell):
                 stra = ((dp, mp, sp, 1), (dp, kv_head_stra, 1, 1), (dp, kv_head_stra, 1, 1))
             elif input_layout == "BSND":
                 stra = ((dp, sp, mp, 1), (dp, 1, kv_head_stra, 1), (dp, 1, kv_head_stra, 1))
+            elif input_layout == "TND":
+                stra = ((dp * sp, mp, 1), (dp, kv_head_stra, 1), (dp, kv_head_stra, 1))
             else:
                 raise ValueError(f"input_layout is invalid.")
             if with_real_shift:
@@ -132,26 +138,40 @@ class Net(nn.Cell):
                 stra += ((dp, 1, sp, 1),)
             else:
                 stra += ((1, 1),)
+            if input_layout == "TND":
+                stra += ((dp * sp,),)
+                stra += ((dp,),)
             self.fa_op.shard(stra)
 
-    def construct(self, query, key, value, real_shift, attn_mask):
-        if self.input_layout == "BSH":
-            bsz, seq_len, _ = query.shape
-        elif self.input_layout == "SBH":
-            seq_len, bsz, _ = query.shape
-        elif self.input_layout == "BNSD":
-            bsz, _, seq_len, _ = query.shape
-        elif self.input_layout == "BSND":
-            bsz, seq_len, _, _ = query.shape
-        else:
-            raise ValueError(f"input_layout is invalid.")
-        if self.keep_prob < 1.0:
-            drop_mask_bits = self.reshape(self.drop_gen_mask((bsz, self.head_num, seq_len, seq_len),
-                                                             self.keep_prob),
-                                          (bsz, self.head_num, seq_len, 128))
-        else:
-            drop_mask_bits = None
-        return self.fa_op(query, key, value, real_shift, drop_mask_bits, None, attn_mask, None)
+            if input_layout == "TND":
+                layout = Layout(device_matrix=(dp, sp, mp), alias_name=("dp", "sp", "mp"))
+                kv_head_map_name = "None" if use_mqa else "sp"
+                self.fa_op.shard(in_strategy=(layout(("dp", "sp"), "mp", "None"),
+                                              layout("dp", kv_head_map_name, "None"),
+                                              layout("dp", kv_head_map_name, "None"),
+                                              layout("None", "None"),
+                                              layout("dp"),
+                                              layout("dp")))
+
+    def construct(self, query, key, value, real_shift, attn_mask, actual_seq_qlen=None, actual_seq_kvlen=None):
+        drop_mask_bits = None
+        if self.input_layout != "TND":
+            if self.input_layout == "BSH":
+                bsz, seq_len, _ = query.shape
+            elif self.input_layout == "SBH":
+                seq_len, bsz, _ = query.shape
+            elif self.input_layout == "BNSD":
+                bsz, _, seq_len, _ = query.shape
+            elif self.input_layout == "BSND":
+                bsz, seq_len, _, _ = query.shape
+            else:
+                raise ValueError(f"input_layout is invalid.")
+            if self.keep_prob < 1.0:
+                drop_mask_bits = self.reshape(self.drop_gen_mask((bsz, self.head_num, seq_len, seq_len),
+                                                                 self.keep_prob),
+                                              (bsz, self.head_num, seq_len, 128))
+        return self.fa_op(query, key, value, real_shift, drop_mask_bits, None, attn_mask, None, actual_seq_qlen,
+                          actual_seq_kvlen)
 
 
 @pytest.mark.parametrize('keep_prob', [0.9, 1.0])
@@ -397,3 +417,32 @@ def test_flash_attention_dynamic_shape_constraint(keep_prob):
     net = Net(N, keep_prob, dp=dp, mp=mp)
     with pytest.raises(RuntimeError):
         compile_net(net, *inputs)
+
+
+@pytest.mark.parametrize('input_layout', ["TND"])
+@pytest.mark.parametrize('sparse_mode', [3])
+@pytest.mark.parametrize('use_mqa', [0])
+def test_flash_attention_tnd(input_layout, sparse_mode, use_mqa):
+    """
+    Features: test FlashAttentionScoreInfo FlashAttentionScore
+    Description: semi_auto_parallel with strategy
+    Expectation: compile success
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode='semi_auto_parallel')
+    dp = 2
+    mp = 2
+    sp = 2
+    B, N, S, D = 8, 16, 1024, 128
+    query, key, value, real_shift, attn_mask = generate_inputs(B, N, S, D,
+                                                               input_layout,
+                                                               use_mqa,
+                                                               sparse_mode=sparse_mode,
+                                                               with_real_shift=False
+                                                               )
+    inter = 1024
+    actual_seq_qlen = Tensor(np.array(range(inter, B * S + 1, inter), np.int64))
+    actual_seq_kvlen = Tensor(np.array(range(inter, B * S + 1, inter), np.int64))
+    net = Net(N, input_layout=input_layout, use_mqa=use_mqa, keep_prob=1.0, sparse_mode=sparse_mode, dp=dp, mp=mp,
+              sp=sp)
+    compile_net(net, query, key, value, real_shift, attn_mask, actual_seq_qlen, actual_seq_kvlen)
