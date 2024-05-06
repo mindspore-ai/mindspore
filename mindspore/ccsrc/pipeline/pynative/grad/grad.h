@@ -197,7 +197,7 @@ class GradExecutor {
   void MakeNewTopGraph(const InputArgsInfoPtr &input_args_info);
 
   // Manage resource when run grad process.
-  bool IsBpropGraph(const std::string &cell_id) const;
+  auto IsBpropGraph(bool grad_is_running, const std::string &cell_id) const;
   void NewGraphInner(const py::object &obj, const py::args &args);
   InputArgsInfoPtr GetInputArgsInfo(const py::object &obj, const py::args &args);
   void EndGraphInner(const py::object &obj, const py::object &out, const py::args &args);
