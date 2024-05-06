@@ -83,7 +83,7 @@ class _RecomputeCell(Cell):
         kwargs = self.kwargs[-1]
         self.args.pop()
         self.kwargs.pop()
-        if not kwargs:
+        if kwargs:
             input_args = list(input_args) + list(kwargs.values())
         try:
             pre_rng_state = get_rng_state()

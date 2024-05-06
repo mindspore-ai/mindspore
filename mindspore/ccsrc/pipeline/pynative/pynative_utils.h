@@ -232,6 +232,7 @@ struct AutoGrad {
   static CallBackFn CreateGraphCallBack(const FuncGraphPtr &call_graph, const std::string &cache_key,
                                         const GraphCallCondition &graph_call_condition);
   static PrimitivePyPtr BuildBpropCutPrim(const PrimitivePtr &prim, bool is_need_recompute = false);
+  static void CheckRecomputeInputs(const GradParamPtr &grad_param);
   static void ClearAutoGradStaticCache();
 };
 

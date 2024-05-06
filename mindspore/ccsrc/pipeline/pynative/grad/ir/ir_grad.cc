@@ -268,6 +268,7 @@ bool IrGrad::KPynativeOp(const GradParamPtr &grad_param) {
       ir_bprop_->BuildCustomBpropCNode(input_node, prim, &outputs);
     }
   } else {
+    PyNativeAlgo::AutoGrad::CheckRecomputeInputs(grad_param);
     ir_bprop_->BuildBPropCutCNode(input_node, prim, &outputs, grad_param->op_grad_info->is_need_recompute);
   }
   // cppcheck-suppress unreadVariable
