@@ -51,12 +51,9 @@ std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr, tensor::BaseTensorPtr> 
       MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
       LAUNCH_ACLNN(aclnnApplyAdamWV2, device_context, op->stream_id(), var, m, v, max_v, grad, step, lr_imm, beta1_imm,
                    beta2_imm, decay_imm, epsilon_imm, amsgrad_imm, maximize_imm);
-      // LAUNCH_ACLNN(aclnnInplaceCopy, device_context, op->stream_id(), op->output(0), var);
-      // LAUNCH_ACLNN(aclnnInplaceCopy, device_context, op->stream_id(), op->output(1), m);
-      // LAUNCH_ACLNN(aclnnInplaceCopy, device_context, op->stream_id(), op->output(2), v);
       MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
     }));
-  return std::make_tuple(op->outputs()[0], op->outputs()[1], op->outputs()[2]);
+  return std::make_tuple(op->outputs()[kIndex0], op->outputs()[kIndex1], op->outputs()[kIndex2]);
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -37,6 +37,7 @@ def _run_optim_adamw_opt(opt, beta1, beta2, lr, eps, weight_decay, step, amsgrad
         weight_decay, eps, amsgrad, maximize)
     return success
 
+
 def _check_param_value(betas, eps, weight_decay, lr, amsgrad, maximize, prim_name):
     """Check the type of inputs."""
     validator.check_value_type('betas', betas, [tuple], prim_name)
@@ -48,6 +49,7 @@ def _check_param_value(betas, eps, weight_decay, lr, amsgrad, maximize, prim_nam
     validator.check_value_type("lr", lr, [float], prim_name)
     validator.check_value_type("amsgrad", amsgrad, [bool], prim_name)
     validator.check_value_type("maximize", maximize, [bool], prim_name)
+
 
 class AdamW(Optimizer):
     r"""
