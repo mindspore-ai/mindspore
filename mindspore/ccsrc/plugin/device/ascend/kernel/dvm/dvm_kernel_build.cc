@@ -564,7 +564,8 @@ class SingleDvmKernelBuilder : public DvmKernelBuilder {
                    const std::vector<AnfNodePtr> &outputs) override {
     // Create kernel mod
     auto kernel_type = is_dynamic_ ? dvm::KernelType::kDynShape : dvm::KernelType::kStaticShape;
-    kernel_mod_ = std::make_shared<SingleDvmKernelMod>(kernel_type);
+    kernel_mod_ = std::make_shared<SingleDvmKernelMod>(kernel_type, common::AnfAlgo::GetCNodeName(node_),
+                                                       node_->fullname_with_scope());
     auto inputs_type = AnfAlgo::GetAllInputDeviceTypes(node_);
     auto outputs_type = AnfAlgo::GetAllOutputDeviceTypes(node_);
     kernel_mod_->Initialize(inputs_type, outputs_type);
@@ -611,7 +612,9 @@ class ParallelDvmKernelBuilder : public DvmKernelBuilder {
   void BuildKernel(const FuncGraphPtr &graph, const CNodePtr &out_node,
                    const std::vector<AnfNodePtr> &outputs) override {
     // Create kernel mod
-    kernel_mod_ = std::make_shared<ParallelDvmKernelMod>(dvm::KernelType::kStaticParallel, sub_graph_count_);
+    kernel_mod_ =
+      std::make_shared<ParallelDvmKernelMod>(dvm::KernelType::kStaticParallel, common::AnfAlgo::GetCNodeName(node_),
+                                             node_->fullname_with_scope(), sub_graph_count_);
     auto inputs_type = AnfAlgo::GetAllInputDeviceTypes(node_);
     auto outputs_type = AnfAlgo::GetAllOutputDeviceTypes(node_);
     kernel_mod_->Initialize(inputs_type, outputs_type);
