@@ -284,8 +284,11 @@ Status Softmax::CheckInputLayout() {
   auto tensor_map = tensor_layout.tensor_map_before();
 
   for (const auto &raw_axis : axis_) {
-    int64_t dim = SizeToLong(inputs_shape_.at(0).size());
-    auto axis = raw_axis + dim;
+    int64_t axis = raw_axis;
+    if (raw_axis < 0) {
+      int64_t dim = SizeToLong(inputs_shape_.at(0).size());
+      axis += dim;
+    }
     auto corresponding_tensor_map = tensor_map[axis];
     if (corresponding_tensor_map.size() == 1 && corresponding_tensor_map[0] == -1) {
       return SUCCESS;
