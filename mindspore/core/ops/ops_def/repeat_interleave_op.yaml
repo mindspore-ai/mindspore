@@ -1,0 +1,20 @@
+#operator repeat_interleave
+repeat_interleave:
+  args:
+    input:
+      dtype: tensor
+    repeats:
+      dtype: tensor
+      type_cast: int, list[int], tuple[int]
+    axis:
+      dtype: int
+      default: None
+    output_size:
+      dtype: int
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: RepeatInterleaveAscend
