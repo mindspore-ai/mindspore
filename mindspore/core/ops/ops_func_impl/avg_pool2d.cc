@@ -98,11 +98,9 @@ BaseShapePtr AvgPool2DFuncImpl::InferShape(const PrimitivePtr &primitive,
     for (size_t i = 0; i < kNum2; ++i) {
       auto dim = input_rank - kNum2 + i;
       auto cur_dim_value = input_shape[dim];
-
       auto idx_kernel_size = i % kernel_size.size();
       auto idx_stride = i % stride.size();
       auto idx_padding = i % padding.size();
-
       if (MS_UNLIKELY(cur_dim_value == abstract::TensorShape::kShapeDimAny ||
                       kernel_size.IsValueUnknown(idx_kernel_size) || stride.IsValueUnknown(idx_stride) ||
                       padding.IsValueUnknown(idx_padding))) {

@@ -2200,7 +2200,6 @@ def _is_dim_unknown(shape):
     return isinstance(shape, tuple) and -2 in shape
 
 
-# pylint: disable=missing-docstring
 @_primexpr
 def _interploate_make_tuple(rank, value):
     """
@@ -2219,6 +2218,9 @@ def _interploate_make_tuple(rank, value):
 
 @_primexpr
 def _interpolate_scale_factor_convert_size(shape, scale_factor):
+    """
+    convert scale_factor to size
+    """
     x = tuple_to_tensor_(shape[2:], mstype.int64)
     y = tuple_to_tensor_(scale_factor, mstype.float32)
     t = x * y
@@ -2228,6 +2230,9 @@ def _interpolate_scale_factor_convert_size(shape, scale_factor):
 
 
 def _interpolate_size_check_with_rank(size, input_rank):
+    """
+    size rank check
+    """
     if len(size) != input_rank - 2:
         raise ValueError(
             f"For 'interpolate', 'input' and 'size' must have the same spatial dimensions, "
@@ -2235,6 +2240,9 @@ def _interpolate_size_check_with_rank(size, input_rank):
 
 
 def _interpolate_scale_factor_check_with_rank(scale_factor, input_rank):
+    """
+    scale_factor rank check
+    """
     if len(scale_factor) != input_rank - 2:
         raise ValueError(
             f"For 'interpolate', 'input' and 'scale_factor' must have the same spatial dimensions, "
@@ -2243,6 +2251,9 @@ def _interpolate_scale_factor_check_with_rank(scale_factor, input_rank):
 
 
 def _interpolate_mode_check(mode, supported_dict):
+    """
+    mode check
+    """
     if isinstance(mode, list) or mode not in supported_dict:
         raise ValueError(
             f"For 'interpolate', 'mode' must be in '{list(supported_dict)}', but got {mode}"
@@ -2250,6 +2261,9 @@ def _interpolate_mode_check(mode, supported_dict):
 
 
 def _interpolate_rank_check(input_rank, mode, supported_dict):
+    """
+    rank check
+    """
     if input_rank not in supported_dict.get(mode):
         raise ValueError(
             f"For 'interpolate', {mode} only support '{list(supported_dict.get(mode, {}))}'D, but got {input_rank}D"
@@ -2257,6 +2271,9 @@ def _interpolate_rank_check(input_rank, mode, supported_dict):
 
 
 def _interpolate_scale_factor_check(scale_factor, mode, rank, supported_dict):
+    """
+    scale_factor check
+    """
     if scale_factor is not None and "scale_factor" not in supported_dict.get(
             mode, {}).get(rank):
         raise ValueError(
@@ -2265,6 +2282,9 @@ def _interpolate_scale_factor_check(scale_factor, mode, rank, supported_dict):
 
 
 def _interpolate_align_corners_mode_check(rank, mode, supported_dict):
+    """
+    align_corners check
+    """
     if "align_corners" not in supported_dict.get(mode, {}).get(rank):
         raise ValueError(
             f"For 'interpolate', 'align_corners' option cannot currently be set with the "

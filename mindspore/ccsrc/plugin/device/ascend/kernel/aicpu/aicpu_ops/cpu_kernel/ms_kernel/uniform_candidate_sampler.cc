@@ -24,6 +24,7 @@ namespace aicpu {
 namespace {
 const char *kUniformCandidateSampler = "UniformCandidateSampler";
 const char *kLogUniformCandidateSampler = "CustLogUniformCandidateSampler";
+const size_t kIndex2 = 2;
 }  // namespace
 
 uint32_t CandidateSamplerKernel::ParseKernelParam(CpuKernelContext &ctx) {
@@ -51,8 +52,7 @@ uint32_t CandidateSamplerKernel::ParseKernelParam(CpuKernelContext &ctx) {
   auto x_tensor = ctx.Input(0);
   x_dtype_ = x_tensor->GetDataType();
   x_shape_ = x_tensor->GetTensorShape()->GetDimSizes();
-
-  if (x_shape_.size() != 2) {
+  if (x_shape_.size() != kIndex2) {
     CUST_AICPU_LOGE(ctx, "true_classes must be a matrix");
     return KERNEL_STATUS_INNER_ERROR;
   }
@@ -126,7 +126,7 @@ uint32_t CandidateSamplerKernel::DoCompute(CpuKernelContext &ctx) {
   int ret2 = memcpy_s(reinterpret_cast<void *>(ctx.Output(1)->GetData()), true_count_size,
                       reinterpret_cast<void *>(&true_expected_count.front()), true_count_size);
   int ret3 =
-    memcpy_s(reinterpret_cast<void *>(ctx.Output(2)->GetData()), num_sampled_ * sizeof(float),
+    memcpy_s(reinterpret_cast<void *>(ctx.Output(kIndex2)->GetData()), num_sampled_ * sizeof(float),
              reinterpret_cast<void *>(&sampled_expected_count.front()), sampled_expected_count.size() * sizeof(float));
   if (ret1 != EOK || ret2 != EOK || ret3 != EOK) {
     CUST_KERNEL_LOG_ERROR(ctx, "For 'CandidateSampler', memcpy_s failed.");

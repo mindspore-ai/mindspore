@@ -57,7 +57,7 @@ uint32_t PoissonKernel::Compute(CpuKernelContext &ctx) {
   int *tmp_out;
   if (out_count_ > 0) {
     tmp_out = static_cast<int *>(malloc(out_count_ * sizeof(int)));
-    if (tmp_out == NULL) {
+    if (tmp_out == nullptr) {
       return KERNEL_STATUS_INNER_ERROR;
     }
   } else {
@@ -91,7 +91,7 @@ uint32_t PoissonKernel::Compute(CpuKernelContext &ctx) {
 
   int ret = memcpy_s(ctx.Output(0)->GetData(), out_count_ * sizeof(int), tmp_out, out_count_ * sizeof(int));
   free(tmp_out);
-  tmp_out = NULL;
+  tmp_out = nullptr;
   if (ret < 0) {
     return KERNEL_STATUS_INNER_ERROR;
   }

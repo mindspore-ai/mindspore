@@ -941,6 +941,7 @@ def chunk(input, chunks, axis=0):
             res += _get_cache_prim(P.Split)(arr_axis, 1)(tensor_slice(input, start2, size2))
     return res
 
+
 def chunk_ext(input, chunks, dim=0):
     """
     Cut the input Tensor into `chunks` sub-tensors along the specified axis.

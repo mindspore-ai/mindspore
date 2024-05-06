@@ -56,7 +56,6 @@ class CandidateSamplerKernel : public CpuKernel {
   DataType true_expected_count_dtype_;
 
   void set_sampler(RangeSampler *sampler) { sampler_.reset(sampler); }
-
 };  // CandidateSamplerKernel
 }  // namespace aicpu
 #endif  // AICPU_AICPU_OPS_CANDIDATE_SAMPLER_KERNELS_H

@@ -183,8 +183,8 @@ NodePtrList SplitTensorFallbackFunc(FallbackIRBuilder *ib, const NodePtr &input,
     // Using loop splitting in the AiCore scene of the SplitV operator or when the number of outputs exceeds 32
     if (splitVector.size() > SPLIT_LOOP_SIZE) {
       std::vector<mindspore::expander::NodePtr> subTensors;
-      const int64_t loopSize = (splitVector.size() + SPLIT_LOOP_SIZE - 1) / SPLIT_LOOP_SIZE;
-      const int64_t lastSize = splitVector.size() % SPLIT_LOOP_SIZE;
+      const int64_t loopSize = (SizeToLong(splitVector.size()) + SPLIT_LOOP_SIZE - 1) / SPLIT_LOOP_SIZE;
+      const int64_t lastSize = SizeToLong(splitVector.size()) % SPLIT_LOOP_SIZE;
       const size_t dim = input->shape().size();
       // Construct splitsize as a new splitSize based on loopSize and lastSize
       std::vector<int64_t> newSplitSize;
@@ -260,8 +260,8 @@ NodePtrList SplitWithSizeFallbackFunc(FallbackIRBuilder *ib, const NodePtr &inpu
     return {input};
   } else if (split_size_shape.size() > SPLIT_LOOP_SIZE) {
     std::vector<mindspore::expander::NodePtr> subTensors;
-    const int64_t loopSize = (split_size_shape.size() + SPLIT_LOOP_SIZE - 1) / SPLIT_LOOP_SIZE;
-    const int64_t lastSize = split_size_shape.size() % SPLIT_LOOP_SIZE;
+    const int64_t loopSize = (SizeToLong(split_size_shape.size()) + SPLIT_LOOP_SIZE - 1) / SPLIT_LOOP_SIZE;
+    const int64_t lastSize = SizeToLong(split_size_shape.size()) % SPLIT_LOOP_SIZE;
     const size_t dim = input->shape().size();
     // 1. Construct splitsize as a new splitSize based on loopSize and lastSize
     std::vector<int64_t> newSplitSize;

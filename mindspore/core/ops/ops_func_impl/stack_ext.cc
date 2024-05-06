@@ -91,7 +91,7 @@ BaseShapePtr StackExtFuncImpl::InferShape(const PrimitivePtr &primitive,
     }
   } else if (input_args.size() > kTupleInputNum) {
     // Here for the case expanding tuple to tensors, it maybe deleted in the near future...
-    num = axis_index;
+    num = SizeToLong(axis_index);
     abstract::BaseShapePtrList element_shapes;
     element_shapes.reserve(axis_index);
     for (size_t i = 0; i < axis_index; ++i) {

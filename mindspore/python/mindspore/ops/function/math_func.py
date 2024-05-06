@@ -765,6 +765,7 @@ def div(input, other, *, rounding_mode=None):
         output = P.Div()(input, other)
     return output
 
+
 def true_divide(dividend, divisor):
     r"""
     Alias for :func:`mindspore.ops.div` with :math:`rounding\_mode=None`.
