@@ -430,14 +430,19 @@ bool GraphBuilder::DoReturn(const Instr &instr) {
   return true;
 }
 
-bool GraphBuilder::DoMixedPrecisionLocalAccess(const Instr &instr, ValueNode *node) {
-  auto param_node = static_cast<ParamNode *>(node);
-  auto dst_dtype = param_node->GetMixedPrecisionType();
+ValueNode *GraphBuilder::GetCallFunctionNode(ValueNode *node, PyObject *dst_dtype) {
   py::object prim_cast = Utils::GetModuleAttr("mindspore.ops.functional", "cast", false, true);
   ValueNode *prim_node = NewValueNode(AObject::Convert(prim_cast), LOAD_CONST, {});
   ValueNode *dtype_node = NewValueNode(AObject::Convert(dst_dtype), LOAD_CONST, -1, {});
   std::vector<ValueNode *> cast_args = {prim_node, node, dtype_node};
   ValueNode *call_node = NewValueNode(nullptr, CALL_FUNCTION, cast_args.size() - 1, cast_args);
+  return call_node;
+}
+
+bool GraphBuilder::DoMixedPrecisionLocalAccess(const Instr &instr, ValueNode *node) {
+  auto param_node = static_cast<ParamNode *>(node);
+  auto dst_dtype = param_node->GetMixedPrecisionType();
+  ValueNode *call_node = GetCallFunctionNode(node, dst_dtype);
   push(call_node);
   auto *call = static_cast<CallNode *>(call_node);
   call->SetVobj(AObject::MakeAObject(AObject::kTypeAnyValue));
@@ -456,6 +461,7 @@ bool GraphBuilder::DoLocalAccess(const Instr &instr) {
   if (instr.op() == LOAD_FAST) {
     auto local = getLocal(instr.arg());
     if (local->GetType() == AbstractNode::Param && reinterpret_cast<ParamNode *>(local)->IsMixedPrecisionType()) {
+      // TODO(lvxudong): fix multi cast
       DoMixedPrecisionLocalAccess(instr, local);
     } else {
       push(local);
@@ -740,11 +746,7 @@ ValueNode *GraphBuilder::DoMixedPrecisionAttrAccess(const Instr &instr, ValueNod
     }
     if (is_cast) {
       auto dst_dtype = Utils::MixedPrecisionTypeToDType(mixed_type);
-      py::object prim_cast = Utils::GetModuleAttr("mindspore.ops.functional", "cast", false, true);
-      ValueNode *prim_node = NewValueNode(AObject::Convert(prim_cast), LOAD_CONST, {});
-      ValueNode *dtype_node = NewValueNode(AObject::Convert(dst_dtype), LOAD_CONST, -1, {});
-      std::vector<ValueNode *> cast_args = {prim_node, attr, dtype_node};
-      ValueNode *call_node = NewValueNode(nullptr, CALL_FUNCTION, cast_args.size() - 1, cast_args);
+      ValueNode *call_node = GetCallFunctionNode(attr, dst_dtype);
       CallNode *call = static_cast<CallNode *>(call_node);
       call->SetVobj(AObject::MakeAObject(AObject::kTypeAnyValue));
       call->SetLineNo(instr.line());
@@ -2627,26 +2629,28 @@ void SetMixedPrecisionType(CallNode *call_node, FrameStates *frame) {
     auto mixed_type = cell->GetMixedPrecisionType();
     if (mixed_type != MixedPrecisionType::kNotSet) {
       for (size_t i = 0; i < frame->GetLocals().size(); i++) {
-        auto paramNode = reinterpret_cast<ParamNode *>(frame->Local(i));
-        if (paramNode->GetVobj()->GetType() == AObject::kTypeTensor &&
-            !paramNode->GetVobj()->GetPyObject().attr("dtype").is_none()) {
-          auto src_dtype = paramNode->GetVobj()->GetPyObject().attr("dtype");
-          bool is_cast = false;
-          if (py::isinstance<Float>(src_dtype)) {
-            auto float_nbits = py::cast<Float>(src_dtype).nbits();
-            if (float_nbits == 64 || (float_nbits == 32 && mixed_type != kFP32) ||
-                (float_nbits == 16 && mixed_type != kFP16)) {
+        if (frame->Local(i)->GetType() == AbstractNode::Param) {
+          auto paramNode = reinterpret_cast<ParamNode *>(frame->Local(i));
+          if (paramNode->GetVobj()->GetType() == AObject::kTypeTensor &&
+              !paramNode->GetVobj()->GetPyObject().attr("dtype").is_none()) {
+            auto src_dtype = paramNode->GetVobj()->GetPyObject().attr("dtype");
+            bool is_cast = false;
+            if (py::isinstance<Float>(src_dtype)) {
+              auto float_nbits = py::cast<Float>(src_dtype).nbits();
+              if (float_nbits == 64 || (float_nbits == 32 && mixed_type != kFP32) ||
+                  (float_nbits == 16 && mixed_type != kFP16)) {
+                is_cast = true;
+              }
+            }
+            if (py::isinstance<BFloat>(src_dtype) && mixed_type != kBF16) {
               is_cast = true;
             }
+            if (!is_cast) {
+              continue;
+            }
+            auto dst_dtype = Utils::MixedPrecisionTypeToDType(mixed_type);
+            paramNode->SetMixedPrecisionType(dst_dtype);
           }
-          if (py::isinstance<BFloat>(src_dtype) && mixed_type != kBF16) {
-            is_cast = true;
-          }
-          if (!is_cast) {
-            continue;
-          }
-          auto dst_dtype = Utils::MixedPrecisionTypeToDType(mixed_type);
-          paramNode->SetMixedPrecisionType(dst_dtype);
         }
       }
     }
