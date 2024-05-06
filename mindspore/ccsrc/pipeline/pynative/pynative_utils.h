@@ -137,7 +137,8 @@ struct DataConvert {
   static ValuePtr PyObjToValue(const py::object &obj, bool stub = false);
   static ValuePtr BaseRefToValue(const BaseRef &value, bool requires_grad, bool is_out_sequence);
   static ValuePtr VectorRefToValue(const VectorRef &vec_ref, bool requires_grad, bool is_out_sequence);
-  static void FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_tensor_seq, std::vector<ValuePtr> *flatten_v);
+  static void FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_tensor_seq, bool is_filter_tensor,
+                                 std::vector<ValuePtr> *flatten_v);
   static void FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens);
   static ValuePtrList FlattenTensorSeqInValue(const ValuePtr &v);
   static ValuePtrList FlattenTensorSeqInValueSeq(const ValuePtrList &v, bool only_flatten_tensor = true);
