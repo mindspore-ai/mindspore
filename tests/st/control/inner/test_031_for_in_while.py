@@ -76,7 +76,7 @@ def test_for_in_while_01():
     assert graph_backward_res == expect_backward_res
 
 
-@case_register.level1
+@case_register.level0
 @case_register.target_gpu
 @case_register.target_ascend
 def test_for_in_while_02():
@@ -87,8 +87,8 @@ def test_for_in_while_02():
             self.add = P.Add()
             self.sub = P.Sub()
             self.assign = P.Assign()
-            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-            self.param_b = Parameter(Tensor(7, mstype.int32), name='b')
+            self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+            self.param_b = Parameter(Tensor(7, mstype.float32), name='b')
 
         def construct(self, x):
             self.assign(self.param_a, x + self.param_a)
@@ -108,7 +108,7 @@ def test_for_in_while_02():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([2], mstype.int32)
+    x = Tensor([2], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -117,7 +117,7 @@ def test_for_in_while_02():
     graph_forward_res = for_in_while_net(x)
     graph_backward_res = net(x)
 
-    expect_forward_res = Tensor([2], mstype.int32)
-    expect_backward_res = (Tensor([1], mstype.int32),)
+    expect_forward_res = Tensor([2], mstype.float32)
+    expect_backward_res = (Tensor([1], mstype.float32),)
     assert graph_forward_res == expect_forward_res
     assert graph_backward_res == expect_backward_res
