@@ -655,7 +655,7 @@ def hfft(a, n=None, axis=-1, norm=None):
 
     Returns:
         Tensor, The result of `hfft()` function.
-        If `n` is given, result.shape[axis] is :math:`(n - 1) * 2`, otherwise math:`(a.shape[axis] - 1) * 2`.
+        If `n` is given, result.shape[axis] is :math:`(n - 1) * 2`, otherwise :math:`(a.shape[axis] - 1) * 2`.
         When the `a` is int16, int32, int64, float16, float32, complex64, the return value type is float32.
         When the `a` is float64 or complex128, the return value type is float64.
 
@@ -703,7 +703,7 @@ def ihfft(a, n=None, axis=-1, norm=None):
 
     Returns:
         Tensor, The result of `ihfft()` function.
-        If `n` is given, result.shape[axis] is :math:`n // 2 + 1`, otherwise math:`a.shape[axis] // 2 + 1`.
+        If `n` is given, result.shape[axis] is :math:`n // 2 + 1`, otherwise :math:`a.shape[axis] // 2 + 1`.
         When the `a` is int16, int32, int64, float16, float32, the return value type is complex64.
         When the `a` is float64, the return value type is complex128.
 
