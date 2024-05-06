@@ -189,6 +189,8 @@ inline void SetReserved(const FuncGraphPtr &root) {
     fg->set_reserved(true);
   }
 }
+
+abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, const AnfNodePtrList &input_list);
 }  // namespace parallel
 }  // namespace mindspore
 

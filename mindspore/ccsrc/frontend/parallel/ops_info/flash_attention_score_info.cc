@@ -21,6 +21,7 @@
 #include <vector>
 #include <tuple>
 #include <map>
+#include <algorithm>
 
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
@@ -30,7 +31,6 @@
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/graph_util/graph_utils.h"
 #include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/ops_func_impl/flash_attention_score.h"
 #include "ops/op_enum.h"
 
@@ -38,7 +38,6 @@ namespace mindspore {
 using mindspore::ops::FASInputLayoutMode;
 namespace parallel {
 namespace {
-
 constexpr size_t kInputRealShiftSeqDim = 2;
 constexpr size_t kInputDropMaskSeqDim = 2;
 constexpr size_t kOutputSoftmaxSeqDim = 2;
@@ -49,11 +48,12 @@ enum OpAttrUpdateMode : int64_t {
   kRightDownToRightDown = 2,
 };
 const std::vector<int64_t> needCompressAttnMask = {ops::kSparseLeftUpCausal, ops::kSparseRightDownCausal,
-                                                   ops::kSparseBand};
+                                                   ops::kSparseBand, ops::kSparseBlockLocal};
 const std::map<int64_t, int64_t> opAttrUpdateMap = {{ops::kSparseDefaultMask, kLeftUpToLeftUp},
                                                     {ops::kSparseLeftUpCausal, kLeftUpToRightDown},
                                                     {ops::kSparseRightDownCausal, kRightDownToRightDown},
-                                                    {ops::kSparseBand, kRightDownToRightDown}};
+                                                    {ops::kSparseBand, kRightDownToRightDown},
+                                                    {ops::kSparseBlockLocal, kLeftUpToRightDown}};
 
 size_t GetNonMonadInputSize(const CNodePtr &cnode) {
   size_t cnode_non_monad_size = cnode->size();
@@ -119,6 +119,25 @@ int64_t LongAdd(int64_t base, int64_t shift) {
     }
   }
   return result;
+}
+
+int64_t GetSplitNumByMapId(const Shape &dev_matrix, int64_t map_id) {
+  if (map_id == MAP_NONE) {
+    return (int64_t)1;
+  }
+  auto axis = dev_matrix.size() - 1 - LongToSize(map_id);
+  if (axis >= dev_matrix.size()) {
+    MS_LOG(EXCEPTION) << "The tensor map id (" << map_id
+                      << ") is out of device matrix's range. device_matrix: " << dev_matrix;
+  }
+  return dev_matrix[axis];
+}
+
+int64_t GetSplitNumByTensorMap(const Shape &dev_matrix, const Shape &tensor_map) {
+  auto split_num = std::accumulate(tensor_map.begin(), tensor_map.end(), 1, [&dev_matrix](int64_t a, int64_t map_id) {
+    return a * GetSplitNumByMapId(dev_matrix, map_id);
+  });
+  return split_num;
 }
 }  // namespace
 
@@ -250,6 +269,12 @@ Status FlashAttentionScoreInfo::InitExpectedStrategies() {
       expect_strategies_[ops::kFlashAttentionScoreInputValueIndex] = {batch_split_num_, s2_split_num_, n2_split_num_,
                                                                       1};
       break;
+    case FASInputLayoutMode::TND:
+      expect_strategies_[ops::kFlashAttentionScoreInputQueryIndex] = {batch_split_num_ * s1_split_num_, n1_split_num_,
+                                                                      1};
+      expect_strategies_[ops::kFlashAttentionScoreInputKeyIndex] = {batch_split_num_, n2_split_num_, 1};
+      expect_strategies_[ops::kFlashAttentionScoreInputValueIndex] = {batch_split_num_, n2_split_num_, 1};
+      break;
     default:
       MS_LOG(ERROR) << name_ << "Not support layout: " << input_layout_;
       return FAILED;
@@ -269,14 +294,17 @@ Status FlashAttentionScoreInfo::InitExpectedStrategies() {
     expect_strategies_[ops::kFlashAttentionScoreInputPaddingMaskIndex] = {};
   }
   InitAttnMaskStrategies();
+
+  // padding_mask is not support yet, skip it.
+
   if (is_input_passed_[ops::kFlashAttentionScoreInputPrefixIndex]) {
     expect_strategies_[ops::kFlashAttentionScoreInputPrefixIndex] = {batch_split_num_};
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputActualSeqQlenIndex]) {
-    expect_strategies_[ops::kFlashAttentionScoreInputActualSeqQlenIndex] = {NO_SPLIT_STRATEGY};
+    expect_strategies_[ops::kFlashAttentionScoreInputActualSeqQlenIndex] = {batch_split_num_};
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputActualSeqKVlenIndex]) {
-    expect_strategies_[ops::kFlashAttentionScoreInputActualSeqKVlenIndex] = {NO_SPLIT_STRATEGY};
+    expect_strategies_[ops::kFlashAttentionScoreInputActualSeqKVlenIndex] = {batch_split_num_};
   }
   expect_strategies_.erase(std::remove(expect_strategies_.begin(), expect_strategies_.end(), Shape{}),
                            expect_strategies_.end());
@@ -318,6 +346,11 @@ Status FlashAttentionScoreInfo::InitQKVTensorMap() {
                                                                     kv_head_num_map, -1};
       inputs_tensor_map_[ops::kFlashAttentionScoreInputValueIndex] = {dev_matrix_batch_dim_, dev_matrix_s2_dim,
                                                                       kv_head_num_map, -1};
+      break;
+    case FASInputLayoutMode::TND:
+      inputs_tensor_map_[ops::kFlashAttentionScoreInputQueryIndex] = {dev_matrix_batch_dim_, dev_matrix_n1_dim_, -1};
+      inputs_tensor_map_[ops::kFlashAttentionScoreInputKeyIndex] = {dev_matrix_batch_dim_, kv_head_num_map, -1};
+      inputs_tensor_map_[ops::kFlashAttentionScoreInputValueIndex] = {dev_matrix_batch_dim_, kv_head_num_map, -1};
       break;
     default:
       MS_LOG(ERROR) << name_ << "Not support layout: " << input_layout_;
@@ -422,6 +455,11 @@ Status FlashAttentionScoreInfo::InitSplittableInputs() {
       splittable_inputs_[ops::kFlashAttentionScoreInputKeyIndex] = {batch_group, s2_group, n2_group, 0};
       splittable_inputs_[ops::kFlashAttentionScoreInputValueIndex] = {batch_group, s2_group, n2_group, 0};
       break;
+    case FASInputLayoutMode::TND:
+      splittable_inputs_[ops::kFlashAttentionScoreInputQueryIndex] = {batch_group, n1_group, 0};
+      splittable_inputs_[ops::kFlashAttentionScoreInputKeyIndex] = {batch_group, n2_group, 0};
+      splittable_inputs_[ops::kFlashAttentionScoreInputValueIndex] = {batch_group, n2_group, 0};
+      break;
     default:
       MS_LOG(ERROR) << name_ << "Not support layout: " << input_layout_;
       return FAILED;
@@ -475,6 +513,10 @@ Status FlashAttentionScoreInfo::InitQKVHeadAndSeqDimFromInputLayout() {
       qkv_head_dim_ = kSizeTwo;
       break;
     case FASInputLayoutMode::TND:
+      qkv_batch_dim_ = kSizeZero;
+      qkv_seq_dim_ = kSizeZero;
+      qkv_head_dim_ = kSizeOne;
+      break;
     default:
       MS_LOG(ERROR) << name_ << ": Not support layout in parallel currently.";
       return FAILED;
@@ -483,6 +525,166 @@ Status FlashAttentionScoreInfo::InitQKVHeadAndSeqDimFromInputLayout() {
 }
 
 Status FlashAttentionScoreInfo::InitAttrs() { return GetAttrs(); }
+
+Status FlashAttentionScoreInfo::CheckInputLayout() {
+  if (InferSplitNumAndDevMatrixShapeByLayout() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Infer device matrix shape by layout failed.";
+    return FAILED;
+  }
+
+  auto query_shape = inputs_shape_[ops::kFlashAttentionScoreInputQueryIndex];
+  auto key_shape = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex];
+  if (s1_split_num_ > 1 && input_layout_ == FASInputLayoutMode::TND &&
+      (sparse_mode_ != ops::kSparseRightDownCausal || query_shape[0] != key_shape[0])) {
+    MS_LOG(ERROR)
+      << name_
+      << ": When input_layout is TND, sparse_mode is 3, and the T-dimension of query and key are the same, the "
+         "T-dimension of query can be sliced. query_shape: "
+      << query_shape << ", key_shape: " << key_shape << ", sparse_mode: " << sparse_mode_;
+    return FAILED;
+  }
+
+  // Check all device matrix should be the same
+  if (ops::kFlashAttentionScoreInputQueryIndex >= inputs_tensor_info_.size()) {
+    return FAILED;
+  }
+  auto query_tensor_info = inputs_tensor_info_[GetStrategyRealIndex(ops::kFlashAttentionScoreInputQueryIndex)];
+  dev_matrix_shape_ = query_tensor_info.tensor_layout().device_arrangement_origin().array();
+  return SUCCESS;
+}
+
+Status FlashAttentionScoreInfo::CheckOutputLayout() { return SUCCESS; }
+
+Status FlashAttentionScoreInfo::InferOutputLayout() {
+  auto query_layout = inputs_tensor_info_[ops::kFlashAttentionScoreInputQueryIndex].tensor_layout();
+
+  // Construct layout for softmax_max and softmax_sum
+  std::vector<Shape> softmax_max_sum_tensor_map;
+  Shape softmax_max_sum_tensor_shape;
+  if (input_layout_ == FASInputLayoutMode::TND) {
+    softmax_max_tensor_layout_ = query_layout;
+    softmax_sum_tensor_layout_ = query_layout;
+  } else {
+    softmax_max_sum_tensor_map.push_back(query_layout.tensor_map_before()[qkv_batch_dim_]);              // B
+    softmax_max_sum_tensor_shape.push_back(query_layout.tensor_shape_before().array()[qkv_batch_dim_]);  // B
+    softmax_max_sum_tensor_map.push_back(query_layout.tensor_map_before()[qkv_head_dim_]);               // N
+    softmax_max_sum_tensor_shape.push_back(head_num_);                                                   // N
+    softmax_max_sum_tensor_map.push_back(query_layout.tensor_map_before()[qkv_seq_dim_]);                // S
+    softmax_max_sum_tensor_shape.push_back(query_layout.tensor_shape_before().array()[qkv_seq_dim_]);    // S
+    softmax_max_sum_tensor_map.push_back({MAP_NONE});                                                    // 8
+    softmax_max_sum_tensor_shape.push_back(8);                                                           // 8
+    softmax_max_tensor_layout_.InitFromExtendVector(query_layout.device_arrangement_origin().array(),
+                                                    softmax_max_sum_tensor_map,
+                                                    outputs_shape()[ops::kFlashAttentionScoreOutputSoftmaxMaxIndex]);
+    softmax_sum_tensor_layout_.InitFromExtendVector(query_layout.device_arrangement_origin().array(),
+                                                    softmax_max_sum_tensor_map,
+                                                    outputs_shape()[ops::kFlashAttentionScoreOutputSoftmaxSumIndex]);
+  }
+
+  // Construct layout for softmax_out
+  softmax_out_tensor_layout_.InitFromExtendVector(query_layout.device_arrangement_origin().array(),
+                                                  std::vector<Shape>{{MAP_NONE}},
+                                                  outputs_shape()[ops::kFlashAttentionScoreOutputSoftmaxOutIndex]);
+  attention_out_tensor_layout_ = query_layout;
+  return SUCCESS;
+}
+
+Status FlashAttentionScoreInfo::InferOutputTensorInfo() {
+  auto status = InferOutputLayout();
+  if (status != SUCCESS) {
+    return status;
+  }
+  (void)outputs_tensor_info_.emplace_back(TensorInfo(softmax_max_tensor_layout_));
+  (void)outputs_tensor_info_.emplace_back(TensorInfo(softmax_sum_tensor_layout_));
+  (void)outputs_tensor_info_.emplace_back(TensorInfo(softmax_out_tensor_layout_));
+  (void)outputs_tensor_info_.emplace_back(TensorInfo(attention_out_tensor_layout_));
+  return SUCCESS;
+}
+
+Status FlashAttentionScoreInfo::InferAsLossDivisorByLayout() {
+  if (outputs_tensor_info_.size() != ops::kFlashAttentionScoreOutputsNum) {
+    MS_LOG(ERROR)
+      << name_
+      << ": The size of outputs tensor info must be equal to the size of FlashAttentionScore's output size, but got  "
+      << outputs_tensor_info_.size() << " and " << ops::kFlashAttentionScoreOutputsNum;
+    return FAILED;
+  }
+
+  auto attention_out_tensor_info = outputs_tensor_info_[ops::kFlashAttentionScoreOutputAttentionOutIndex];
+  TensorMaps attention_out_tensor_map = attention_out_tensor_info.tensor_layout().tensor_map_before();
+  if (attention_out_tensor_map.empty()) {
+    as_loss_divisor_ = stage_device_size_;
+    MS_LOG(INFO) << name_ << ": The output is a scalar, use the dev size " << as_loss_divisor_ << ", loss divisor.";
+    return SUCCESS;
+  }
+
+  auto out_dev_matrix_shape = attention_out_tensor_info.tensor_layout().device_arrangement_origin().array();
+  if (out_dev_matrix_shape.empty()) {
+    MS_LOG(INFO) << name_ << ": out_dev_matrix_shape is empty";
+    out_dev_matrix_shape = dev_matrix_shape_;
+  }
+  Shape squashed_tensor_map;
+  for (const auto &tensor_map : attention_out_tensor_map) {
+    std::copy(tensor_map.begin(), tensor_map.end(), std::back_inserter(squashed_tensor_map));
+  }
+
+  as_loss_divisor_ = ComputeRepeatDeviceNumByTensorMap(out_dev_matrix_shape, squashed_tensor_map);
+  MS_LOG(INFO) << name_ << ": the dev matrix shape is " << ShapeToString(out_dev_matrix_shape)
+               << ", the output tensor map is " << ShapeToString(squashed_tensor_map) << ", loss divisor is "
+               << as_loss_divisor_;
+  return SUCCESS;
+}
+
+Status FlashAttentionScoreInfo::InferMirrorOpsByLayout() {
+  mirror_ops_.clear();
+  if (inputs_shape_.empty()) {
+    MS_LOG(INFO) << name_ << ": The inputs size is empty";
+    return SUCCESS;
+  }
+
+  bool group_is_empty = true;
+  for (size_t i = 0; i < inputs_tensor_info_.size(); ++i) {
+    if (inputs_tensor_info_[i] == TensorInfo()) {
+      (void)mirror_ops_.emplace_back(OperatorVector());
+      continue;
+    }
+    auto input_tensor_layout = inputs_tensor_info_[i].tensor_layout();
+    auto repeated_rank_list = input_tensor_layout.InferRepeatedGroup();
+
+    OperatorVector mirror_op;
+    if (repeated_rank_list.size() == 1) {
+      MS_LOG(INFO) << name_ << ": The mirror group is empty, the input index is " << i;
+      mirror_ops_.push_back(mirror_op);
+      continue;
+    }
+    if (is_auto_parallel_) {
+      if (g_device_manager->CheckDeviceList(repeated_rank_list) != SUCCESS) {
+        MS_LOG(INFO) << name_ << ": Try to create communication group : " << repeated_rank_list
+                     << " failed in auto parallel mode, "
+                        "this error can be ignored in parallel strategies searching step";
+        return FAILED;
+      }
+      return SUCCESS;
+    }
+
+    Group mirror_group;
+    if (g_device_manager->CreateGroup(repeated_rank_list, &mirror_group) != SUCCESS) {
+      MS_LOG(ERROR) << name_
+                    << ": Create communication group by tensor_map failed, the rank_list is: " << repeated_rank_list
+                    << ", the full_name of node is: " << cnode_->fullname_with_scope();
+      return FAILED;
+    }
+    group_is_empty = false;
+    mirror_op = CreateMirrorOps(mirror_group.name(), mirror_group.GetDevNum());
+    mirror_ops_.push_back(mirror_op);
+  }
+
+  if (group_is_empty) {
+    mirror_ops_.clear();
+    MS_LOG(INFO) << name_ << ": No need to insert mirror ops";
+  }
+  return SUCCESS;
+}
 
 Status FlashAttentionScoreInfo::GetAttrs() {
   InitIsInputPassed();
@@ -496,6 +698,11 @@ Status FlashAttentionScoreInfo::GetAttrs() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   enable_load_balance_ = ms_context->get_param<bool>(MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE);
+
+  if (input_layout_ == FASInputLayoutMode::TND && enable_load_balance_) {
+    MS_LOG(WARNING) << name_ << ": Load balancing is not supported in the layout 'TND' and will be disabled.";
+    enable_load_balance_ = false;
+  }
 
   auto enable_ring_attention_iter = attrs_.find(ENABLE_RING_ATTENTION);
   if (enable_ring_attention_iter != attrs_.end()) {
@@ -574,16 +781,34 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << ": Under the MQA，the hidden-dim of input 'key' cannot be split.";
     return FAILED;
   }
-  auto s2_split_num = key_strategy[qkv_seq_dim_];
-  if (s2_split_num != 1 && !enable_ring_attention_) {
-    MS_LOG(ERROR) << name_ << ": The S-Dimension of input 'key' cannot be split, but got the strategy of key is "
-                  << key_strategy;
-    return FAILED;
+
+  if (input_layout_ == FASInputLayoutMode::TND) {
+    if (query_strategy[qkv_seq_dim_] != key_strategy[qkv_seq_dim_]) {
+      MS_LOG(ERROR)
+        << name_ << ": The split num of seq-dim between query and key must be the same when layout is 'TND'. But got "
+        << query_strategy[qkv_seq_dim_] << " and " << key_strategy[qkv_seq_dim_];
+      return FAILED;
+    }
+  } else {
+    auto s2_split_num = key_strategy[qkv_seq_dim_];
+    if (s2_split_num != 1 && !enable_ring_attention_) {
+      MS_LOG(ERROR) << name_ << ": The S-Dimension of input 'key' cannot be split, but got the strategy of key is "
+                    << key_strategy;
+      return FAILED;
+    }
   }
-  batch_split_num_ = query_strategy[qkv_batch_dim_];
+
+  if (input_layout_ == FASInputLayoutMode::TND) {
+    batch_split_num_ = key_strategy[qkv_batch_dim_];
+    s1_split_num_ = query_strategy[qkv_batch_dim_] / batch_split_num_;
+  } else {
+    batch_split_num_ = query_strategy[qkv_batch_dim_];
+    s1_split_num_ = query_strategy[qkv_seq_dim_];
+  }
   n1_split_num_ = query_strategy[qkv_head_dim_];
-  s1_split_num_ = query_strategy[qkv_seq_dim_];
+
   s2_split_num_ = enable_ring_attention_ ? s1_split_num_ : 1;
+
   n2_split_num_ = key_strategy[qkv_head_dim_];
 
   if (kv_split_ && n1_split_num_ != n2_split_num_) {
@@ -592,11 +817,12 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  if (s1_split_num_ > 1 && (is_input_passed_[ops::kFlashAttentionScoreInputActualSeqQlenIndex] ||
-                            is_input_passed_[ops::kFlashAttentionScoreInputActualSeqKVlenIndex])) {
-    MS_LOG(EXCEPTION)
+  if (s1_split_num_ > 1 && input_layout_ == FASInputLayoutMode::TND) {
+    MS_LOG(ERROR)
       << name_
-      << ": When splitting the seq dimension of Query, actual_seq_qlen and actual_kvlen in the input must be None.";
+      << ": Currently, input_layout is TND, and the seq dimension of query is segmented. Please use Layout to "
+         "set the strategy.";
+    return FAILED;
   }
 
   if (InitExpectedStrategies() != SUCCESS) {
@@ -624,7 +850,6 @@ Status FlashAttentionScoreInfo::CheckStrategyForDynamicShape(const StrategyPtr &
       << ShapesToString(inputs_shape_);
     return FAILED;
   }
-
   return SUCCESS;
 }
 
@@ -632,6 +857,7 @@ Status FlashAttentionScoreInfo::InferDevMatrixShape() {
   switch (input_layout_) {
     case FASInputLayoutMode::BSH:
     case FASInputLayoutMode::BSND:
+    case FASInputLayoutMode::TND:
       dev_matrix_shape_ = {batch_split_num_, s1_split_num_, n1_split_num_};
       dev_matrix_batch_dim_ = kIndex2;
       dev_matrix_s1_dim_ = kIndex1;
@@ -656,14 +882,73 @@ Status FlashAttentionScoreInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
+Status FlashAttentionScoreInfo::InferSplitNumAndDevMatrixShapeByLayout() {
+  dev_matrix_shape_ =
+    inputs_tensor_info_[ops::kFlashAttentionScoreInputQueryIndex].tensor_layout().device_arrangement_origin().array();
+  auto query_layout = inputs_tensor_info_[ops::kFlashAttentionScoreInputQueryIndex].tensor_layout();
+  auto key_layout = inputs_tensor_info_[ops::kFlashAttentionScoreInputKeyIndex].tensor_layout();
+  auto query_tensor_map = query_layout.tensor_map_before();
+  auto query_batch_map = query_tensor_map.at(qkv_batch_dim_);
+  auto query_seq_map = query_tensor_map.at(qkv_seq_dim_);
+  auto query_head_map = query_tensor_map.at(qkv_head_dim_);
+  auto key_seq_map = key_layout.tensor_map_before().at(qkv_seq_dim_);
+
+  auto dev_matrix_shape = dev_matrix_shape_;
+  if (input_layout_ == FASInputLayoutMode::TND) {
+    if (query_batch_map.size() == 1) {
+      dev_matrix_batch_dim_ = query_batch_map[0];
+      dev_matrix_s1_dim_ = MAP_NONE;
+    } else if (query_batch_map.size() == 2) {
+      dev_matrix_batch_dim_ = query_batch_map[0];
+      dev_matrix_s1_dim_ = query_batch_map[1];
+    } else {
+      MS_LOG(ERROR) << name_
+                    << ": The seq-dimension of query can only be mapped upto 2 device matrix dimension, but got "
+                    << query_batch_map;
+      return FAILED;
+    }
+    n1_split_num_ = 1;
+    for (auto map_id : query_head_map) {
+      n1_split_num_ *= GetSplitNumByMapId(dev_matrix_shape, map_id);
+    }
+  } else {
+    if (query_batch_map.size() != 1 || query_seq_map.size() != 1 || query_head_map.size() != 1) {
+      MS_LOG(ERROR) << name_
+                    << ": Each dimension of query can only be mapped to one device matrix dimension, but got the "
+                       "tensor info of query is "
+                    << query_layout.ToString();
+      return FAILED;
+    }
+    dev_matrix_batch_dim_ = query_batch_map[0];
+    dev_matrix_s1_dim_ = query_seq_map[0];
+    dev_matrix_n1_dim_ = query_head_map[0];
+    n1_split_num_ = GetSplitNumByMapId(dev_matrix_shape, dev_matrix_n1_dim_);
+  }
+  batch_split_num_ = GetSplitNumByMapId(dev_matrix_shape, dev_matrix_batch_dim_);
+  s1_split_num_ = GetSplitNumByMapId(dev_matrix_shape, dev_matrix_s1_dim_);
+  if (s1_split_num_ > 1 && GetSplitNumByTensorMap(dev_matrix_shape, query_seq_map) !=
+                             GetSplitNumByTensorMap(dev_matrix_shape, key_seq_map) * s1_split_num_) {
+    MS_LOG(EXCEPTION) << name_ << ": Cannot split the seq-dimension of key. query_seq_slice: "
+                      << GetSplitNumByTensorMap(dev_matrix_shape, query_seq_map)
+                      << ", key_seq_slice: " << GetSplitNumByTensorMap(dev_matrix_shape, key_seq_map)
+                      << ", s1_split_num: " << s1_split_num_;
+  }
+  return SUCCESS;
+}
+
 Status FlashAttentionScoreInfo::InferTensorMap() {
   if (InitInputsTensorMap() != SUCCESS) {
     return FAILED;
   }
-  outputs_tensor_map_.push_back({dev_matrix_batch_dim_, dev_matrix_n1_dim_, dev_matrix_s1_dim_, -1});  // softmax_max
-  outputs_tensor_map_.push_back({dev_matrix_batch_dim_, dev_matrix_n1_dim_, dev_matrix_s1_dim_, -1});  // softmax_sum
-  outputs_tensor_map_.push_back({-1});                                                                 // softmax_out
-  outputs_tensor_map_.push_back(inputs_tensor_map_[0]);                                                // attention_out
+  if (input_layout_ == FASInputLayoutMode::TND) {
+    outputs_tensor_map_.push_back({inputs_tensor_map_[0]});  // softmax_max
+    outputs_tensor_map_.push_back({inputs_tensor_map_[0]});  // softmax_sum
+  } else {
+    outputs_tensor_map_.push_back({dev_matrix_batch_dim_, dev_matrix_n1_dim_, dev_matrix_s1_dim_, -1});  // softmax_max
+    outputs_tensor_map_.push_back({dev_matrix_batch_dim_, dev_matrix_n1_dim_, dev_matrix_s1_dim_, -1});  // softmax_sum
+  }
+  outputs_tensor_map_.push_back({-1});                   // softmax_out
+  outputs_tensor_map_.push_back(inputs_tensor_map_[0]);  // attention_out
   return SUCCESS;
 }
 
@@ -717,18 +1002,71 @@ std::tuple<int64_t, int64_t> FlashAttentionScoreInfo::GetAttentionMaskAttrs(cons
   return std::make_tuple(new_pre_tokens, new_next_tokens);
 }
 
+Status FlashAttentionScoreInfo::ReplaceActualSeqLenForSplitSeqInTnd(const CNodePtr &cnode) {
+  std::vector<int64_t> split_info = GetSplitIdAndRank();
+  int64_t tq = inputs_shape_[GetStrategyRealIndex(ops::kFlashAttentionScoreInputQueryIndex)][qkv_batch_dim_];
+  int64_t tk = inputs_shape_[GetStrategyRealIndex(ops::kFlashAttentionScoreInputKeyIndex)][qkv_batch_dim_];
+  int64_t slice_tq = tq / s1_split_num_ / batch_split_num_;
+  int64_t slice_tk = tk / batch_split_num_;
+  int64_t split_id = split_info[kIndex2];
+  int64_t offset = slice_tq * split_id;
+  if (!is_input_passed_[ops::kFlashAttentionScoreInputActualSeqQlenIndex] ||
+      !is_input_passed_[ops::kFlashAttentionScoreInputActualSeqKVlenIndex]) {
+    MS_LOG(ERROR) << name_ << ": The input 'actual_seq_qlen' and 'actual_seq_kvlen' cannot be None under 'TND'.";
+    return FAILED;
+  }
+  auto actual_seq_qlen_input_index = ops::kFlashAttentionScoreInputActualSeqQlenIndex + 1;
+  auto actual_seq_kvlen_input_index = ops::kFlashAttentionScoreInputActualSeqKVlenIndex + 1;
+  auto actual_seq_qlen_node = cnode->input(actual_seq_qlen_input_index);
+  auto actual_seq_kvlen_node = cnode->input(actual_seq_kvlen_input_index);
+
+  auto func_graph = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+
+  // new_actual_seq_qlen = clip(actual_seq_qlen - offset, 0, slice_tq)
+  auto qlen_offset_sub_cnode =
+    func_graph->NewCNode({NewValueNode(prim::kPrimSub), actual_seq_qlen_node, CreateInt32Tensor(offset, true)});
+  auto new_actual_seq_qlen_cnode =
+    func_graph->NewCNode({NewValueNode(prim::kPrimClipByValue), qlen_offset_sub_cnode, CreateInt32Tensor(0, true),
+                          CreateInt32Tensor(slice_tq, true)});
+  manager->SetEdge(cnode, actual_seq_qlen_input_index, new_actual_seq_qlen_cnode);
+
+  // new_actual_seq_kvlen = actual_seq_kvlen - (ReLU(actual_seq_qlen - offset) - new_actual_seq_qlen)
+  auto relu_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimReLU), qlen_offset_sub_cnode});
+  auto kvlen_offset_sub_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimSub), actual_seq_qlen_node, relu_cnode});
+  auto tmp_new_actual_seq_kvlen_cnode =
+    func_graph->NewCNode({NewValueNode(prim::kPrimSub), actual_seq_kvlen_node, kvlen_offset_sub_cnode});
+
+  // new_actual_seq_kvlen[actual_seq_kvlen == slice_tk] = slice_tk
+  auto equal =
+    func_graph->NewCNode({NewValueNode(prim::kPrimEqual), actual_seq_kvlen_node, CreateInt32Tensor(slice_tk, true)});
+  auto new_actual_seq_kvlen_cnode = func_graph->NewCNode(
+    {NewValueNode(prim::kPrimSelect), equal, actual_seq_kvlen_node, tmp_new_actual_seq_kvlen_cnode});
+  manager->SetEdge(cnode, actual_seq_kvlen_input_index, new_actual_seq_kvlen_cnode);
+
+  return SUCCESS;
+}
+
 void FlashAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
   for (auto &cnode : cnodes_) {
     SetValueInputToCNode<int64_t>(cnode, ops::kFlashAttentionScoreInputHeadNumIndex + 1, head_num_ / n1_split_num_);
     if (s1_split_num_ > 1 && !enable_load_balance_ && need_update_op_attrs_mode_) {
-      std::vector<int64_t> split_info = GetSplitIdAndRank();
-      int64_t split_id = split_info[kIndex2];
-      int64_t new_pre_tokens, new_next_tokens;
-      std::tie(new_pre_tokens, new_next_tokens) = GetAttentionMaskAttrs(split_id, s1_split_num_);
-      int64_t new_sparse_mode = is_attn_mask_compressed_ ? ops::kSparseBand : sparse_mode_;
-      SetValueInputToCNode<int64_t>(cnode, ops::kFlashAttentionScoreInputSparseModeIndex + 1, new_sparse_mode);
-      SetValueInputToCNode<int64_t>(cnode, ops::kFlashAttentionScoreInputPreTokensIndex + 1, new_pre_tokens);
-      SetValueInputToCNode<int64_t>(cnode, ops::kFlashAttentionScoreInputNextTokensIndex + 1, new_next_tokens);
+      if (input_layout_ == FASInputLayoutMode::TND) {
+        if (ReplaceActualSeqLenForSplitSeqInTnd(cnode) != SUCCESS) {
+          MS_LOG(EXCEPTION) << name_ << ": Replace actual_seq_qlen and actual_seq_kvlen failed.";
+        }
+      } else {
+        int64_t new_pre_tokens, new_next_tokens;
+        std::vector<int64_t> split_info = GetSplitIdAndRank();
+        int64_t split_id = split_info[kIndex2];
+        std::tie(new_pre_tokens, new_next_tokens) = GetAttentionMaskAttrs(split_id, s1_split_num_);
+        int64_t new_sparse_mode = is_attn_mask_compressed_ ? ops::kSparseBand : sparse_mode_;
+        SetValueInputToCNode<int64_t>(cnode, ops::kFlashAttentionScoreInputSparseModeIndex + 1, new_sparse_mode);
+        SetValueInputToCNode<int64_t>(cnode, ops::kFlashAttentionScoreInputPreTokensIndex + 1, new_pre_tokens);
+        SetValueInputToCNode<int64_t>(cnode, ops::kFlashAttentionScoreInputNextTokensIndex + 1, new_next_tokens);
+      }
     }
     // If DropoutGenMask -> Reshape -> FlashAttentionScore, replace its.
     auto reshape_node = cnode->input(ops::kFlashAttentionScoreInputDropMaskIndex + 1);
@@ -887,14 +1225,14 @@ std::vector<std::pair<AnfNodePtr, int64_t>> FlashAttentionScoreInfo::ReplaceGrap
                                                               std::make_pair(flash_attention_score_target, kIndex2),
                                                               std::make_pair(flash_attention_score_target, kIndex3)};
   if (!is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
-    inputs_nodes.push_back(std::make_pair(flash_attention_score_target, kIndex4));
+    (void)inputs_nodes.emplace_back(std::make_pair(flash_attention_score_target, kIndex4));
   }
   if (!is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex]) {
-    inputs_nodes.push_back(std::make_pair(flash_attention_score_target, kIndex5));
+    (void)inputs_nodes.emplace_back(std::make_pair(flash_attention_score_target, kIndex5));
   }
-  inputs_nodes.push_back(std::make_pair(flash_attention_score_target, kIndex6));
+  (void)inputs_nodes.emplace_back(std::make_pair(flash_attention_score_target, kIndex6));
   if (!is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex] || is_attn_mask_compressed_) {
-    inputs_nodes.push_back(std::make_pair(flash_attention_score_target, kIndex7));
+    (void)inputs_nodes.emplace_back(std::make_pair(flash_attention_score_target, kIndex7));
   }
   inputs_nodes.insert(inputs_nodes.end(), {std::make_pair(flash_attention_score_target, kIndex8),
                                            std::make_pair(flash_attention_score_target, kIndex9),
@@ -902,7 +1240,7 @@ std::vector<std::pair<AnfNodePtr, int64_t>> FlashAttentionScoreInfo::ReplaceGrap
   return inputs_nodes;
 }
 
-Status FlashAttentionScoreInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
+Status FlashAttentionScoreInfo::ComputeReplaceGraphForLoadBalance(const CNodePtr &cnode) {
   GenerateGraph gen_g = GenerateGraph(attrs_);
   if (gen_g.Init(cnode) != SUCCESS) {
     return FAILED;
@@ -1008,8 +1346,9 @@ Status FlashAttentionScoreInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 
 ReplaceGraphPtr FlashAttentionScoreInfo::replace_graph(const CNodePtr &cnode) {
   if (s1_split_num_ > 1 && enable_load_balance_) {
-    if (ComputeReplaceGraph(cnode) != SUCCESS) {
-      MS_LOG(EXCEPTION) << "FlashAttentionScore S1 sequence parallel with load balance get replace graph failed";
+    if (ComputeReplaceGraphForLoadBalance(cnode) != SUCCESS) {
+      MS_LOG(EXCEPTION) << name_
+                        << ": FlashAttentionScore S1 sequence parallel with load balance get replace graph failed";
     }
   }
   return replace_graph_;

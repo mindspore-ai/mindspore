@@ -69,6 +69,13 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
   Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
+  Status InferOutputTensorInfo() override;
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
+  Status InferOutputLayout();
+  Status InferAsLossDivisorByLayout() override;
+  Status InferMirrorOpsByLayout() override;
+  Status InferSplitNumAndDevMatrixShapeByLayout();
 
  private:
   void UpdateDropoutGenMaskSliceShapeAndSeed(const CNodePtr &reshape_cnode);
@@ -95,7 +102,8 @@ class FlashAttentionScoreInfo : public OperatorInfo {
                                                                         const AnfNodePtr &attn_mask_split,
                                                                         const AnfNodePtr &flash_attention_score_keep,
                                                                         const AnfNodePtr &flash_attention_score_target);
-  Status ComputeReplaceGraph(const CNodePtr &cnode);
+  Status ComputeReplaceGraphForLoadBalance(const CNodePtr &cnode);
+  Status ReplaceActualSeqLenForSplitSeqInTnd(const CNodePtr &cnode);
   int64_t head_num_ = 1;
   float keep_prob_ = 1.0;
   float scale_value_ = 1.0;
@@ -109,6 +117,8 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   int64_t n2_split_num_;
   int64_t s1_split_num_;
   int64_t s2_split_num_;
+  int64_t t1_split_num_;  // The split num of query's T-dim under 'TND'
+  int64_t t2_split_num_;  // The split num of key and value's T=dim under 'TND'
   int64_t dev_matrix_batch_dim_;
   int64_t dev_matrix_n1_dim_;
   int64_t dev_matrix_s1_dim_;
@@ -124,8 +134,13 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   bool is_attn_mask_compressed_ = false;
   bool need_update_op_attrs_mode_ = false;
   std::vector<bool> is_input_passed_;
+  size_t real_input_size_ = 0;
   std::vector<Shape> splittable_inputs_;
   Strategies expect_strategies_;
+  TensorLayout softmax_max_tensor_layout_;
+  TensorLayout softmax_sum_tensor_layout_;
+  TensorLayout softmax_out_tensor_layout_;
+  TensorLayout attention_out_tensor_layout_;
 };
 }  // namespace parallel
 }  // namespace mindspore
