@@ -619,6 +619,8 @@ def load_segmented_checkpoints(ckpt_file_dir, net=None, strict_load=False, filte
         Parameter.
 
     Raises:
+        TypeError: `ckpt_file_dir` is not a string.
+        ValueError: `ckpt_file_dir` path does not exist or it is not a directory.
         ValueError: Checkpoint file's format is incorrect.
         ValueError: Parameter's dict is None after load checkpoint file.
         TypeError: The type of `specify_prefix` or `filter_prefix` is incorrect.
