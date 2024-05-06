@@ -1144,15 +1144,11 @@ class Profiler:
         # export op data before analyse
         self._ascend_graph_analyse()
 
-    def _minddata_analyse(self, source_path):
+    def _minddata_analyse(self):
         """Analyse mindadata for ascend graph model."""
         if not self._data_process:
             return
         store_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
-        # Parsing minddata AICPU profiling
-        if self._device_target == DeviceTarget.ASCEND.value:
-            logger.info("Profiling: analyzing the minddata AICPU data.")
-            MinddataParser.execute(source_path, self._output_path, store_id)
 
         # parse minddata pipeline operator and queue
         try:
@@ -1171,6 +1167,16 @@ class Profiler:
             logger.warning(err.message)
         finally:
             pass
+
+    def _minddata_aicpu_analyse(self, source_path, job_id):
+        """Analyse minddata aicpu after ascend."""
+        if not self._data_process:
+            return
+        store_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
+        # Parsing minddata AICPU profiling
+        if self._device_target == DeviceTarget.ASCEND.value:
+            logger.info("Profiling: analyzing the minddata AICPU data.")
+            MinddataParser.execute(source_path, self._output_path, job_id, store_id)
 
     def _ascend_fpbp_analyse(self, op_summary, steptrace):
         """
@@ -1459,7 +1465,7 @@ class Profiler:
 
         self._check_output_path(output_path=self._output_path)
         source_path = os.path.join(self._output_path, job_id)
-        self._minddata_analyse(source_path)
+        self._minddata_analyse()
         if self._op_time:
             mindstudio_profiler_output = os.path.abspath(os.path.join(source_path, os.path.pardir,
                                                                       'mindstudio_profiler_output'))
@@ -1489,6 +1495,7 @@ class Profiler:
             self._ascend_ms_analyze(mindstudio_profiler_output)
             self._ascend_graph_hccl_analyse(mindstudio_profiler_output, steptrace)
             self._ascend_graph_msadvisor_analyse(job_id)
+            self._minddata_aicpu_analyse(self._output_path, job_id)
             ProfilerInfo.set_graph_ids(graph_ids)
 
     def _ascend_graph_start(self):
@@ -1518,7 +1525,7 @@ class Profiler:
         else:
             logger.info("No need to stop profiler because profiler has been stopped.")
 
-        self._minddata_analyse(self._output_path)
+        self._minddata_analyse()
 
         try:
             self._analyse_step_relation_info()
