@@ -492,12 +492,12 @@ void GradExecutor::PopInputArgsInfoStack() {
   input_args_info_stack_.pop();
 }
 
-bool GradExecutor::IsBpropGraph(const std::string &cell_id) const {
-  if (top_cell_ == nullptr) {
-    return false;
+auto GradExecutor::IsBpropGraph(bool grad_is_running, const std::string &cell_id) const {
+  if (!grad_is_running || top_cell_ == nullptr) {
+    return bprop_cell_list_.end();
   }
-  return std::any_of(bprop_cell_list_.begin(), bprop_cell_list_.end(),
-                     [&cell_id](const std::string &value) { return cell_id.find(value) != std::string::npos; });
+  return std::find_if(bprop_cell_list_.begin(), bprop_cell_list_.end(),
+                      [&cell_id](const auto &item) { return cell_id.find(item) != std::string::npos; });
 }
 
 void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_info, bool is_bprop_top) {
@@ -578,7 +578,8 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
   if (input_args_info->is_grad_topest_cell && !input_args_info->grad_is_running) {
     MS_LOG(DEBUG) << "Make new topest graph";
     MakeNewTopGraph(input_args_info);
-  } else if (input_args_info->grad_is_running && IsBpropGraph(input_args_info->cell_id)) {
+  } else if (auto it = IsBpropGraph(input_args_info->grad_is_running, input_args_info->cell_id);
+             it != bprop_cell_list_.end()) {
     MS_LOG(DEBUG) << "Run custom bprop cell";
     auto fg = std::make_shared<FuncGraph>();
     top_cell()->set_fg(fg);
@@ -586,6 +587,7 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
     top_cell()->SetGraphInfoMap(fg, graph_info_cg);
     HandleInputArgsForTopCell(input_args_info, true);
     bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, false));
+    bprop_cell_list_.erase(it);
   } else if (input_args_info->grad_is_running && top_cell()->grad_order() != input_args_info->grad_order) {
     MS_LOG(DEBUG) << "Nested grad graph existed in custom bprop";
     parent_top_cell_ = top_cell();
