@@ -11,3 +11,13 @@ mindspore.sync_pipeline_shared_parameters
 
     参数：
         - **net** (nn.Cell) - 推理网络。
+
+    支持平台：
+        ``Ascend``
+
+    样例：
+
+    .. note::
+        运行以下样例之前，需要配置好通信环境变量。
+
+        针对Ascend设备，用户需要编写动态组网启动脚本，详见 `动态组网启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/dynamic_cluster.html>`_ 。
