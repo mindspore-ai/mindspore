@@ -619,6 +619,22 @@ class TestPipelineSplitWithNoOptimizer:
         self.cat_fp16_from_ir(pattern='(<Tensor[Float16], (4, 64)>) -> (<Tensor[Float16], (64, 64)>)',
                               target_count=2)
 
+    def test_pipeline_with_micro_batch_dp1_parallel_optimizer(self):
+        """
+        Feature: Test Pipeline with Mirror Operator.
+        Description: Dp1, enable parallel optimizer.
+        Expectation: dp1 still insert micro mirror.
+        """
+        context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2,
+                                          enable_parallel_optimizer=True)
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        strategy1 = ((1, 1), (1, 16))
+        strategy2 = ((8, 1), (1, 1))
+        pipeline_net = PipelineSplit(strategy1, strategy2, dtype=ms.float16)
+        run_pipeline_split_function(pipeline_net, micro_batch_interleaved=2)
+        self.cat_fp16_from_ir(pattern='grad_mirror_MirrorMicroStepOperator',
+                              target_count=2)
+
 
 def test_pipeline_split_stage0_device_num_48():
     """
