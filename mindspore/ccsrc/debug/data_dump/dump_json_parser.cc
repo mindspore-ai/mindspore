@@ -62,6 +62,14 @@ auto DumpJsonParser::CheckJsonKeyExist(const nlohmann::json &content, const std:
   return iter;
 }
 
+auto DumpJsonParser::CheckOpDumpExist(const nlohmann::json &content, const std::string &key) {
+  nlohmann::json::const_iterator iter = content.find(key);
+  if (iter == content.end()) {
+    return false;
+  }
+  return true;
+}
+
 std::string GetIfstreamString(const std::ifstream &ifstream) {
   std::stringstream buffer;
   buffer << ifstream.rdbuf();
@@ -383,6 +391,10 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   nlohmann::detail::iter_impl<const nlohmann::json> op_debug_mode;
   if (!e2e_dump_enabled_) {
     op_debug_mode = CheckJsonKeyExist(*common_dump_settings, kOpDebugMode);
+  } else {
+    if (CheckOpDumpExist(*common_dump_settings, kOpDebugMode)) {
+      op_debug_mode = CheckJsonKeyExist(*common_dump_settings, kOpDebugMode);
+    }
   }
 
   ParseDumpMode(*dump_mode);
@@ -396,6 +408,10 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
     ParseOpDebugMode(*op_debug_mode);
     ParseFileFormat(
       *common_dump_settings);  // Pass in the whole json string to parse because file_format field is optional.
+  } else {
+    if (CheckOpDumpExist(*common_dump_settings, kOpDebugMode)) {
+      ParseOpDebugMode(*op_debug_mode);
+    }
   }
   ParseSavedData(*common_dump_settings);  // saved data optional
 }
