@@ -2,6 +2,60 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.3.0-rc2 Release Notes
+
+### 主要特性和增强
+
+#### AutoParallel
+
+- [STABLE] Transpose/Sub/Add/Mul/Div/ReLU/Softmax/Sigmoid算子支持配置Layout。
+- [STABLE] 集合通信精度会影响网络收敛，在接口mindspore.set_auto_parallel_context提供配置项force_fp32_communication，设为True时可以强制将reduce类通信算子的通信类型转为float32。
+- [BETA] 流水并行支持Interleave调度，优化micro batch大小受限场景下的模型性能。
+- [BETA] 优化流水线并行场景下提高模型转换速度，支持单个stage单独转换。
+- [BETA] 动态图长序列并行支持RingAttention，优化长序列训练性能。
+
+#### PyNative
+
+- [STABLE] 动态图下支持重计算功能。
+- [STABLE] 动态图下支持register_hook功能。
+
+### API变更
+
+增加动态组网场景下各类超时时间环境变量配置：
+
+- MS_TOPO_TIMEOUT： 集群组网阶段超时时间，单位：秒。
+- MS_NODE_TIMEOUT：节点心跳超时时间，单位：秒。
+- MS_RECEIVE_MSG_TIMEOUT：节点接收消息超时时间，单位：秒。
+
+新增环境变量 MS_ENABLE_LCCL，支持昇腾后端单机多卡场景下使用LCCL通信库。
+
+### 问题修复
+
+- [#I9CR96] 修复在大规模集群下，动态组网启动方式的超时时间不足导致集群启动失败的问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+bantao,caifubi,changzherui,chenfei_mindspore,chenweifeng,dairenjie,dingjinshan,fangzehua,fanyi20,fary86,GuoZhibin,hanhuifeng,haozhang,hedongdong,Henry Shi,huandong1,huangbingjian,huoxinyou,jiangchenglin3,jiangshanfeng,jiaorui,jiaxueyu,jxl,kairui_kou,lichen,limingqi107,liuluobin,LLLRT,looop5,luochao60,luojianing,maning202007,NaCN,niyuxin94520,nomindcarry,shiziyang,tanghuikang,TronZhang,TuDouNi,VectorSL,wang_ziqi,wanghenchang,wudawei,XianglongZeng,xiaoxiongzhu,xiaoyao,yanghaoran,Yanzhi_YI,yao_yf,yide12,YijieChen,YingLai Lin,yuchaojie,YuJianfeng,zangqx,zhanghanLeo,ZhangZGC,zhengzuohe,zhouyaqiang0,zichun_ye,zjun,ZPaC,zyli2020,冯一航,李林杰,刘力力,王禹程,俞涵,张栩浩,朱家兴,邹文祥
+
+欢迎以任何形式对项目提供贡献！
+
+## MindSpore Lite 2.3.0-rc2 Release Notes
+
+### 主要特性和增强
+
+- [STABLE] 支持云侧转换工具所用的配置文件配置FlashAttention相关属性。
+- [STABLE] 支持在多张卡上进行内存共享。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+emmmmtang,熊攀
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 2.3.0-rc1 Release Notes
 
 ### 主要特性及增强

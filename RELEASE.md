@@ -2,6 +2,60 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.3.0-rc2 Release Notes
+
+### Major Features and Improvements
+
+#### AutoParallel
+
+- [STABLE] Transpose/Sub/Add/Mul/Div/ReLU/Softmax/Sigmoid supports layout configuration.
+- [STABLE] The collective communication precision will affect network convergence. The configuration item force_fp32_communication is provided in the interface mindspore.set_auto_parallel_context. When set to True, the communication type of the reduce communication operator can be forced to be converted to float32.
+- [BETA] Pipeline parallel support Interleave. Optimize the performance when micro batch is limited.
+- [BETA] Optimize checkpoint transformation speed when using pipeline parallel, support single stage transform.
+- [BETA] Pynative mode supports long sequence parallel of RingAttention. Optimizes long sequence training performance.
+
+#### PyNative
+
+- [STABLE] Support recompute on PyNative mode
+- [STABLE] Support register_hook on PyNative mode
+
+### API Change
+
+Add timeout environment variables in dynamic networking scenarios:
+
+- MS_TOPO_TIMEOUT: Cluster networking phase timeout time in seconds.
+- MS_NODE_TIMEOUT: Node heartbeat timeout in seconds.
+- MS_RECEIVE_MSG_TIMEOUT: Node timeout for receiving messages in seconds.
+
+Added new environment variable MS_ENABLE_LCCL to support the use of LCCL communication library.
+
+### Bug Fixes
+
+- [#I9CR96] Fix the issue of insufficient timeout time causing failure for dynamic networking startup in large-scale clusters.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+bantao,caifubi,changzherui,chenfei_mindspore,chenweifeng,dairenjie,dingjinshan,fangzehua,fanyi20,fary86,GuoZhibin,hanhuifeng,haozhang,hedongdong,Henry Shi,huandong1,huangbingjian,huoxinyou,jiangchenglin3,jiangshanfeng,jiaorui,jiaxueyu,jxl,kairui_kou,lichen,limingqi107,liuluobin,LLLRT,looop5,luochao60,luojianing,maning202007,NaCN,niyuxin94520,nomindcarry,shiziyang,tanghuikang,TronZhang,TuDouNi,VectorSL,wang_ziqi,wanghenchang,wudawei,XianglongZeng,xiaoxiongzhu,xiaoyao,yanghaoran,Yanzhi_YI,yao_yf,yide12,YijieChen,YingLai Lin,yuchaojie,YuJianfeng,zangqx,zhanghanLeo,ZhangZGC,zhengzuohe,zhouyaqiang0,zichun_ye,zjun,ZPaC,zyli2020,冯一航,李林杰,刘力力,王禹程,俞涵,张栩浩,朱家兴,邹文祥
+
+Contributions of any kind are welcome!
+
+## MindSpore Lite 2.3.0-rc2 Release Notes
+
+### Major Features and Improvements
+
+- [STABLE] Support the configuration of FlashAttention related properties in the configuration file used by the cloud-side conversion tool.
+- [STABLE] Support multi-devices memory sharing.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+emmmmtang,熊攀
+
+Contributions of any kind are welcome!
+
 ## MindSpore 2.3.0-rc1 Release Notes
 
 ### Major Features and Improvements
