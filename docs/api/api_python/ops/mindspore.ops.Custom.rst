@@ -52,8 +52,8 @@ mindspore.ops.Custom
 
                  - `nparam(int)` : 输入和输出的总数；假设操作符有2个输入和3个输出，那么 `nparam=5` 。
                  - `params(void **)` : 输入和输出指针的数组指针；输入和输出的指针类型为 `void *` ；假设操作符有2个输入和3个输出，那么第一个输入的指针是 `params[0]` ，第二个输出的指针是 `params[3]` 。
-                 - `ndims(int *)` : 输入和输出维度数的数组指针；假设 `params[i]` 是一个1024x1024的张量，`params[j]` 是一个77x83x4的张量，那么 `ndims[i]=2` ， `ndims[j]=3` 。
-                 - `shapes(int64_t **)` : 输入和输出形状（ `int64_t *` ）的数组指针；第 `i` 个输入的第 `j` 个维度的大小是 `shapes[i][j]` （其中 `0<=j<ndims[i]` ）；假设 `params[i]` 是一个2x3的张量，`params[j]`是一个3x3x4的张量，那么 `shapes[i][0]=2` ， `shapes[j][2]=4` 。
+                 - `ndims(int *)` : 输入和输出维度数的数组指针；假设 `params[i]` 是一个1024x1024的张量， `params[j]` 是一个77x83x4的张量，那么 `ndims[i]=2` ， `ndims[j]=3` 。
+                 - `shapes(int64_t **)` : 输入和输出形状（ `int64_t *` ）的数组指针；第 `i` 个输入的第 `j` 个维度的大小是 `shapes[i][j]` （其中 `0<=j<ndims[i]` ）；假设 `params[i]` 是一个2x3的张量， `params[j]` 是一个3x3x4的张量，那么 `shapes[i][0]=2` ， `shapes[j][2]=4` 。
                  - `dtypes(const char **)` : 输入和输出类型（ `const char *` ）的数组指针；（例如："float32"、"float16"、"float"、"float64"、"int"、"int8"、"int16"、"int32"、"int64"、"uint"、"uint8"、"uint16"、"uint32"、"uint64"、"bool"）
                  - `stream(void *)` : 流指针，仅在CUDA文件中使用。
                  - `extra(void *)` : 用于进一步扩展。
