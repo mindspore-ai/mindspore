@@ -19,7 +19,7 @@ mindspore.ops.hfftn
         - **dim** (tuple[int], 可选) - 指定进行 `fftn` 的维度。
           默认值：``None`` ，如果 `s` 给定则对最后 `len(s)` 维度进行变换，否则对所有维度进行变换。
         - **norm** (str, 可选) - 标准化模式。默认值： ``None`` ，采用 ``'backward'`` 。
-          三种模式定义如下，其中:math:`n = prod(s)`：
+          三种模式定义如下，其中 :math:`n = prod(s)` ：
 
           - ``'backward'`` 表示不进行标准化。
           - ``'forward'`` 表示按 :math:`1/n` 标准化。

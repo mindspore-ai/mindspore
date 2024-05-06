@@ -27,7 +27,7 @@ hfft:
 
       Returns:
           Tensor, The result of `hfft()` function.
-          If `n` is given, result.shape[dim] is :math:`(n - 1) * 2`, otherwise math:`(input.shape[dim] - 1) * 2`.
+          If `n` is given, result.shape[dim] is :math:`(n - 1) * 2`, otherwise :math:`(input.shape[dim] - 1) * 2`.
           When the `input` is int16, int32, int64, float16, float32, complex64, the return value type is float32.
           When the `input` is float64 or complex128, the return value type is float64.
 

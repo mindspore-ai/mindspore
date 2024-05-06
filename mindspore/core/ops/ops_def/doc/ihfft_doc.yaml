@@ -27,7 +27,7 @@ ihfft:
 
       Returns:
           Tensor, The result of `ihfft()` function.
-          If `n` is given, result.shape[dim] is :math:`n // 2 + 1`, otherwise math:`input.shape[dim] // 2 + 1`.
+          If `n` is given, result.shape[dim] is :math:`n // 2 + 1`, otherwise :math:`input.shape[dim] // 2 + 1`.
           When the input is int16, int32, int64, float16, float32, the return value type is complex64.
           When the input is float64, the return value type is complex128.
 
