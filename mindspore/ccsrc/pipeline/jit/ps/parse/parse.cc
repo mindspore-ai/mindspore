@@ -1455,7 +1455,8 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
 bool Parser::CompareIs(const FunctionBlockPtr &, const py::object &left_obj, const py::object &comparator_obj,
                        bool *bool_res) const {
   auto comparator_type_name = ast_->GetNodeType(comparator_obj)->node_name();
-  if (comparator_type_name != "NameConstant") {
+  // The type_name is "Constant" in py3.9.
+  if (comparator_type_name != "NameConstant" && comparator_type_name != "Constant") {
     return false;
   }
   // xxx is None, the comparator must be a NameConstant.
@@ -1523,6 +1524,17 @@ bool Parser::CompareEqual(const FunctionBlockPtr &block, const py::object &left_
       return false;
     }
     *bool_res = left_obj.equal(attr_cond);
+    return true;
+  }
+  // The type_name is "Constant" in py3.9.
+  if (comparator_type_name == "Constant") {
+    py::object constant_value = python_adapter::GetPyObjAttr(comparator_obj, "value");
+    MS_LOG(DEBUG) << "constant_value: " << py::str(constant_value);
+    if (!py::isinstance<py::int_>(constant_value) && !py::isinstance<py::float_>(constant_value) &&
+        !py::isinstance<py::str>(constant_value)) {
+      return false;
+    }
+    *bool_res = left_obj.equal(constant_value);
     return true;
   }
   return false;
