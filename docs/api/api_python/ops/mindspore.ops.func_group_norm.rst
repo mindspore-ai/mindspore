@@ -19,8 +19,8 @@ mindspore.ops.group_norm
     参数：
         - **input** (Tensor) - shape为 :math:`(N, C, *)` 的特征输入，其中 :math:`*` 表示任意的附加维度。
         - **num_groups** (int) - 沿通道维度待划分的组数。
-        - **weight** (Tensor, 可选) - shape为 :math:`(C,)`，默认值为: ``None``, 具有与`input` 相同的数据类型。
-        - **bias** (Tensor, 可选) - shape为 :math:`(C,)`，默认值为: ``None``, 具有与`input` 相同的数据类型。
+        - **weight** (Tensor, 可选) - shape为 :math:`(C,)` ，默认值为： ``None`` ，具有与 `input` 相同的数据类型。
+        - **bias** (Tensor, 可选) - shape为 :math:`(C,)` ，默认值为： ``None`` ，具有与 `input` 相同的数据类型。
         - **eps** (float, 可选) - 添加到分母中的值，以确保数值稳定。默认值： ``1e-5`` 。
 
     返回：
