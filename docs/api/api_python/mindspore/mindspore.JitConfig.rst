@@ -1,7 +1,7 @@
 mindspore.JitConfig
 ====================
 
-.. py:class:: mindspore.JitConfig(jit_level="", exc_mode="auto", jit_syntax_level="", debug_level="RELEASE", **kwargs)
+.. py:class:: mindspore.JitConfig(jit_level="", exc_mode="auto", jit_syntax_level="", debug_level="RELEASE", infer_boost="off", **kwargs)
 
     编译时所使用的JitConfig配置项。
 
@@ -30,5 +30,10 @@ mindspore.JitConfig
 
           - ``RELEASE`` : 正常场景下使用，一些调试信息会被丢弃以获取一个较好的编译性能。
           - ``DEBUG`` : 当错误发生时，用来调试，在编译过程中，更多的调试信息会被记录下来。
+
+        - **infer_boost** (str, 可选): 使能推理加速模式。
+          只能设置为 ``"on"`` 或 ``"off"``。 默认设置为 "off"，表示关闭推理加速。
+          当使能了推理加速模式，MindSpore会优先使用高性能算子库，并优化运行时，提高推理性能。
+          注意：当前推理加速模式只能在 `jit_level` 设为 ``"O0"`` 时使用，且仅支持Atlas A2系列产品。
 
         - **kwargs** (dict) - 关键字参数字典。

@@ -60,10 +60,10 @@ class JitConfig:
 
         infer_boost (str, optional): enable infer boost mode.
             The value must be ``"on"`` , ``"off"``. Default to an "off", which means that disable infer boost.
-            when infer boost mode is enabled, mindspore will use high perf kernel lib, use faster runtime make
+            when infer boost mode is enabled, MindSpore will use high perf kernel lib, use faster runtime make
             infer speed is best.
-            Note: current infer boost only support jit_level == O0 and device is Ascend910B
-            Default: ``"off"`` .
+            Note: current infer boost only support `jit_level` == ``"O0"`` and only Atlas A2 series products
+            are supported.
 
         **kwargs (dict): A dictionary of keyword arguments that the class needs.
 
