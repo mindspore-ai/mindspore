@@ -488,7 +488,7 @@ CUST_IMPLEMT_INFERFUNC(FFTWithSize, FFTWithSizeInfer) {
   }
 
   constexpr int64_t kDimNum = 2;
-  if (!real && !onesided) {
+  if (real && onesided) {
     if (!inverse) {
       y_shape.back() = x_shape.back() / kDimNum + 1;
     } else {
