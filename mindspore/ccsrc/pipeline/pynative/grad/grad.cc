@@ -743,6 +743,9 @@ void GradExecutor::EndGraphInner(const py::object &obj, const py::object &out, c
   if (is_top_cell || is_need_do_custom_grad || is_custom_running) {
     forward()->WaitForwardTask();
     input_args_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(out, false);
+    if (input_args_info->is_need_recompute) {
+      input_args_info->out_value = ConvertOutputValueToTensor(input_args_info->out_value, false);
+    }
     EndGraphImpl(input_args_info);
   }
   PopInputArgsInfoStack();
