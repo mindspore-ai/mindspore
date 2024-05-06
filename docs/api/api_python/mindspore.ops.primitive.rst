@@ -65,8 +65,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.MaxPool
     mindspore.ops.MaxPool3D
     mindspore.ops.MaxPool3DWithArgmax
-    mindspore.ops.MaxPoolWithArgmax
-    mindspore.ops.MaxPoolWithArgmaxV2
     mindspore.ops.MaxUnpool2D
     mindspore.ops.MaxUnpool3D
     mindspore.ops.MirrorPad
