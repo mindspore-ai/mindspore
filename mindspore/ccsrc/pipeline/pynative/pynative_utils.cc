@@ -2288,6 +2288,22 @@ PrimitivePyPtr AutoGrad::BuildBpropCutPrim(const PrimitivePtr &prim, bool is_nee
   return bprop_cut;
 }
 
+void AutoGrad::CheckRecomputeInputs(const GradParamPtr &grad_param) {
+  if (grad_param->op_grad_info->is_need_recompute) {
+    for (const auto &input : grad_param->op_grad_info->input_value) {
+      if (input->isa<ValueSequence>()) {
+        const auto &seq = input->cast<ValueSequencePtr>();
+        const auto val = seq->value();
+        if (PyNativeAlgo::AutoGrad::NeedGrad(val)) {
+          MS_LOG(EXCEPTION) << "For recompute cell, now we do not support calculate tensor's gradient from tuple. "
+                               "You need check your inputs of construct function from recompute cell, and not put "
+                               "tensors in tuple which need grad!";
+        }
+      }
+    }
+  }
+}
+
 void AutoGrad::ClearAutoGradStaticCache() { jit_call_graph_compile_cache_.clear(); }
 
 bool GradCommon::IsRealOp(const AnfNodePtr &cnode) {

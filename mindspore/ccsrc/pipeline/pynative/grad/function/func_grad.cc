@@ -335,6 +335,7 @@ bool FuncGrad::KPynativeOp(const GradParamPtr &grad_param) {
       fn = BuildCustomBackwardNode(prim, flatten_inputs, grad_param->op_grad_info);
     }
   } else {
+    PyNativeAlgo::AutoGrad::CheckRecomputeInputs(grad_param);
     fn = BuildHookBackwardNode(prim, flatten_inputs, grad_param->op_grad_info);
   }
   auto variable = std::make_shared<FuncVariable>(fn, false);
