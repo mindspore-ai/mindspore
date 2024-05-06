@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 #include "tools/optimizer/common/gllo_utils.h"
+#include "ops/array_ops.h"
 
 namespace mindspore::lite {
 namespace {

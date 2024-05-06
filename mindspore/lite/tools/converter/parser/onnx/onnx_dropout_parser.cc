@@ -17,6 +17,7 @@
 #include "tools/converter/parser/onnx/onnx_dropout_parser.h"
 #include <memory>
 #include "ops/ops_func_impl/dropout.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
