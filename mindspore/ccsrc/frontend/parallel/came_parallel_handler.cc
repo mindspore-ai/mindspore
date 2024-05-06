@@ -231,8 +231,9 @@ std::pair<Status, RankList> CameCommHandler::GetOptShardRankList(const int64_t r
 
   int64_t optimizer_weight_shard_size = ParallelContext::GetInstance()->optimizer_weight_shard_size();
   MS_EXCEPTION_IF_ZERO("optimizer_weight_shard_size", optimizer_weight_shard_size);
-  if (optimizer_weight_shard_size == -1) {
-    MS_LOG(INFO) << "[CAME] detect optimizer_weight_shard_size = -1, use group devices size: " << group_devices.size();
+  if ((optimizer_weight_shard_size == -1) || (optimizer_weight_shard_size > SizeToLong(group_devices.size()))) {
+    MS_LOG(INFO) << "[CAME] detect optimizer_weight_shard_size = -1 or exceed max shard size, use group devices size: "
+                 << group_devices.size();
     optimizer_weight_shard_size = SizeToLong(group_devices.size());
   }
 
@@ -444,8 +445,9 @@ void CameCommHandler::InsertAllReduceAndRealDivToReduceMeanInput(CNodePtr reduce
   MS_EXCEPTION_IF_NULL(pyop_instance);
 
   size_t group_rank_size = comm_rank_list.size();
-  mindspore::tensor::TensorPtr tensor_ptr =
-    std::make_shared<mindspore::tensor::Tensor>(static_cast<float>(group_rank_size));
+  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(
+    static_cast<float>(group_rank_size),
+    reduce_mean->abstract()->cast<abstract::AbstractTensorPtr>()->element()->GetType());
   ValuePtr scale_value = MakeValue(tensor_ptr);
 
   std::vector<AnfNodePtr> real_div_input = {NewValueNode(pyop_instance), all_reduce_node->cast<AnfNodePtr>(),
