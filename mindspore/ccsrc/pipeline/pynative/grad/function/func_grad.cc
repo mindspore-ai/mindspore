@@ -222,6 +222,7 @@ void FuncBackwardNode::Release() {
 }
 
 ValuePtrList HookBackwardNode::CallBackward(const ValuePtrList &grads) {
+  runtime::OpExecutor::GetInstance().WaitAll();
   MS_LOG(DEBUG) << "Begin HookBackwardNode CallBackward ";
   auto gradient = ValueListToValue(grads, out_abstract_);
   const auto &device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -242,6 +243,7 @@ ValuePtrList HookBackwardNode::CallBackward(const ValuePtrList &grads) {
   }
   auto gradient_tensors = PostProcess(gradient_values);
   MS_LOG(DEBUG) << "End HookBackwardNode CallBackward";
+  runtime::OpExecutor::GetInstance().WaitAll();
   return gradient_tensors;
 }
 
