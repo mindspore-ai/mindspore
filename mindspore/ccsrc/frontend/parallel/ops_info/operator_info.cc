@@ -915,7 +915,9 @@ Status OperatorInfo::CreateGroupByTensorMap(const Shape &tensor_map, std::vector
     return FAILED;
   }
 
-  if (group_devices.size() == 1) {
+  if (group_devices.size() == 1 && !((ParallelContext::GetInstance()->grad_accumulation_step() > 1 ||
+                                      ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) &&
+                                     ParallelContext::GetInstance()->enable_parallel_optimizer())) {
     MS_LOG(INFO) << name_ << ": The dev size is 1, no need to create group.";
     return SUCCESS;
   }
