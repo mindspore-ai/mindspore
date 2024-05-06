@@ -22,6 +22,8 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr ReshapeFuncImpl::InferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  MS_EXCEPTION_IF_NULL(input_args[1]);
   auto input_shape = input_args[0]->GetShape();
   auto input_shape_vec = input_shape->GetShapeVector();
   auto shape_shape = input_args[1]->GetShape();
