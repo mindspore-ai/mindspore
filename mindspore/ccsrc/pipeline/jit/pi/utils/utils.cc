@@ -262,9 +262,9 @@ PyObject *Utils::MixedPrecisionTypeToDType(MixedPrecisionType mixed_type) {
   auto dtype_fp32_obj = ms_dtype_obj.attr("float32").ptr();
   auto dtype_bf16_obj = ms_dtype_obj.attr("bfloat16").ptr();
   auto dst_dtype = dtype_fp16_obj;
-  if (mixed_type == kFP32) {
+  if (mixed_type == MixedPrecisionType::kFP32) {
     dst_dtype = dtype_fp32_obj;
-  } else if (mixed_type == kBF16) {
+  } else if (mixed_type == MixedPrecisionType::kBF16) {
     dst_dtype = dtype_bf16_obj;
   }
   return dst_dtype;

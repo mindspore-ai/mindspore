@@ -16,6 +16,7 @@
 # ============================================================================
 """The module of parser python object, called by c++."""
 
+import collections
 import types
 import math
 import numpy
@@ -242,6 +243,7 @@ _func_map = {
     function_id(Tensor_.asnumpy): FUNC_KEY_BUILTIN_FUNC,
 
     # other builtin function
+    function_id(collections.abc.Mapping.get): FUNC_KEY_BUILTIN_FUNC,
     function_id(math.log): FUNC_KEY_BUILTIN_FUNC,
 
     function_id(numpy.isinf): FUNC_KEY_BUILTIN_FUNC,
