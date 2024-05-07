@@ -42,7 +42,7 @@ class _Node:
         os.environ["MS_WORKER_NUM"] = str(self.worker_num)
         os.environ["MS_SCHED_HOST"] = self.sched_host
         os.environ["MS_SCHED_PORT"] = str(self.sched_port)
-        os.environ["MS_CLUSTER_TIMEOUT"] = str(self.timeout)
+        os.environ["MS_TOPO_TIMEOUT"] = str(self.timeout)
 
 class _MetaServerNode(_Node):
     """
