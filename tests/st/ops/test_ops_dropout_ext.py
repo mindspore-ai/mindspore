@@ -70,7 +70,7 @@ def compare_grad(x, p, grad):
     np.testing.assert_allclose(grad_sum * keep_prob, nonzero_count, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
