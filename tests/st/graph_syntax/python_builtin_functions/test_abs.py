@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 import pytest
 import numpy as np
 from mindspore import Tensor, context, nn
+from mindspore.nn import Cell
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -39,3 +40,32 @@ def test_fallback_abs_tensor():
 
     net = Net()
     assert np.all(net(Tensor([-1, 2])).asnumpy() == np.array([2, 4]))
+
+
+class GetAttrNet(Cell):
+    def __init__(self, attr_name, default=None):
+        super().__init__()
+        self.attr_name = attr_name
+        self.default = default
+
+    def construct(self, x, y):
+        if (x == y).all():
+            get_attr = getattr(x, self.attr_name)
+        else:
+            get_attr = getattr(x, self.attr_name, self.default)
+        return get_attr()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_getattr_tensor_with_default():
+    """
+    Feature: test tensor abs attribute.
+    Description: test tensor abs attribute.
+    Expectation: No exception.
+    """
+    x = Tensor([-1, -2, -3])
+    y = Tensor([-1, -2, -3])
+    net = GetAttrNet("abs", y)
+    out = net(x, y)
+    assert (out.asnumpy() == [1, 2, 3]).all()
