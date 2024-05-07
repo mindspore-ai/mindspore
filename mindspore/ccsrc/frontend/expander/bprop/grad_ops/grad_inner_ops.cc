@@ -127,7 +127,7 @@ REG_BPROP_BUILDER("FillTensor").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFU
   auto type = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto dout_shape = dout->shape();
-  auto dvalue = ib->Emit("SumExt", {dout, ib->EmitValue(kNone), ib->Value(false), ib->EmitValue(kNone)});
+  auto dvalue = ib->SumExt(dout, ib->EmitValue(kNone), ib->Value(false));
   if (IsDynamicRank(dout_shape)) {
     auto value_shape = ib->Shape(value);
     auto input_dtype = ib->GetDtype(value)->type_id();
