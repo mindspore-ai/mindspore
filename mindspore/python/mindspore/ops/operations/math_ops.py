@@ -2212,7 +2212,7 @@ class NPUGetFloatStatus(Primitive):
         >>> import mindspore.nn as nn
         >>> from mindspore import ops
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.common.tensor import Tensor
+        >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()
@@ -2277,7 +2277,7 @@ class NPUClearFloatStatus(Primitive):
         >>> import mindspore.nn as nn
         >>> from mindspore import ops
         >>> from mindspore import dtype as mstype
-        >>> from mindspore.common.tensor import Tensor
+        >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()
