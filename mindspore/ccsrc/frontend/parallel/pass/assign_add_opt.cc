@@ -215,6 +215,14 @@ void MergeMultiMatmulAssignAdd(const FuncGraphManagerPtr &manager, const FuncGra
   }
 
   std::vector<AnfNodePtr> assign_add_inputs{NewValueNode(prim::kPrimAssignAdd->Clone()), pair.first, replace_node};
+  if (!pair.second.empty()) {
+    auto assign_add_origin_cnode = dyn_cast<CNode>(pair.second[0]);
+    MS_EXCEPTION_IF_NULL(assign_add_origin_cnode);
+    auto final_input = assign_add_origin_cnode->input(assign_add_origin_cnode->size() - 1);
+    if (HasAbstractUMonad(final_input)) {
+      (void)assign_add_inputs.emplace_back(final_input);
+    }
+  }
   auto assign_add_cnode = each_graph->NewCNode(assign_add_inputs);
   assign_add_cnode->set_abstract(merged_matmul->abstract()->Clone());
   for (const auto &assgin_add_origin_node : pair.second) {
