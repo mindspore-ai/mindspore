@@ -2655,10 +2655,10 @@ class FFN(Primitive):
         >>> h = 1024
         >>> h_f = 4 * h
         >>> e = 16
-        >>> x = Tensor(np.random.randn(b * s, h).astype(np.float16))
+        >>> x = Tensor(np.random.randn(s, h).astype(np.float16))
         >>> w1 = Tensor(np.random.randn(e, h, h_f).astype(np.float16))
         >>> w2 = Tensor(np.random.randn(e, h_f, h).astype(np.float16))
-        >>> expert_tokens = Tensor(np.random.randn(e).astype(np.int64))
+        >>> expert_tokens = Tensor(np.full(e, 8))
         >>> bias1 = Tensor(np.random.randn(e, h_f).astype(np.float16))
         >>> bias2 = Tensor(np.random.randn(e, h).astype(np.float16))
         >>> ffn = _inner_ops.FFN("fastgelu", 1)
