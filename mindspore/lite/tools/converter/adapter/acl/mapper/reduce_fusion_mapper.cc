@@ -21,6 +21,7 @@
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "tools/converter/adapter/acl/common/utils.h"
+#include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_util.h"
 #include "ops/op_utils.h"
 #include "ops/auto_generate/gen_lite_ops.h"
@@ -148,6 +149,23 @@ STATUS ReduceFusionMapper::AdjustInput(const CNodePtr &cnode, const PrimitivePtr
   ParameterPtr axes_param = axes_input->cast<ParameterPtr>();
   CHECK_NULL_RETURN(axes_param);
   auto data = acl::GetIntParameterData(axes_param);
+  if (cnode->size() == kNameReduceInputNum && mode == static_cast<int64_t>(ReduceMode::Reduce_Max) &&
+      data.size() == 0) {
+    auto abstract = opt::GetCNodeInputAbstract(cnode, 1);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "GetCNodeInputAbstract in reduce_fusion!";
+      return lite::RET_ERROR;
+    }
+    std::vector<int64_t> shape = {};
+    if (opt::FetchShapeFromAbstract(abstract, &shape) != lite::RET_OK) {
+      MS_LOG(ERROR) << "FetchShapeFromAbstract failed!";
+      return lite::RET_ERROR;
+    }
+    int rank = shape.size();
+    for (int dim = 0; dim < rank; dim++) {
+      data.push_back(dim);
+    }
+  }
   std::vector<int64_t> axes;
   std::transform(data.begin(), data.end(), std::back_inserter(axes),
                  [](int32_t n) -> int64_t { return static_cast<int64_t>(n); });
