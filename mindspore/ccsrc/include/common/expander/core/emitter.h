@@ -213,6 +213,7 @@ class COMMON_EXPORT Emitter {
   std::pair<bool, NodePtr> NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim, bool skip_mode = false);
   NodePtr ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims = false, bool skip_mode = false);
   NodePtr ReduceSum(const NodePtr &x, const ShapeVector &axis = {}, bool keep_dims = false);
+  NodePtr SumExt(const NodePtr &input, const NodePtr &axis, const NodePtr &keep_dims);
   NodePtr BroadcastTo(const NodePtr &x, const NodePtr &y);
 
   NodePtr ZerosLike(const NodePtr &node);
