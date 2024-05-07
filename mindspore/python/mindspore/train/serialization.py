@@ -1442,7 +1442,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
             # Add has attr protection when load server checkpoint file on worker.
             if not hasattr(parameter_dict[param.name], "data"):
                 continue
-            new_param = copy.deepcopy(parameter_dict[param.name])
+            new_param = parameter_dict[param.name]
             _update_param(param, new_param, strict_load)
             ckpt_not_load.remove(param.name)
         else:
