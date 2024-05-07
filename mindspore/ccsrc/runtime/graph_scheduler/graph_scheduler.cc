@@ -581,7 +581,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   }
 
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimize, 1, 0, 0);
-  Optimize(actor_set);
+  Optimize(actor_set, graph_compiler_info);
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimize, 1, 0, 1);
   DumpFinalActor(actor_set.get(), graph_compiler_info);
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor end.";
@@ -1159,7 +1159,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
                                              }) != group_name_to_communication_nodes.end());
 }
 
-void GraphScheduler::Optimize(const ActorSetPtr &actor_set) const {
+void GraphScheduler::Optimize(const ActorSetPtr &actor_set, const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(actor_set);
 
   auto optimizer = std::make_shared<ActorSetOptimizer>();
@@ -1180,6 +1180,7 @@ void GraphScheduler::Optimize(const ActorSetPtr &actor_set) const {
   }
   optimizer->AddPass(std::make_shared<BatchDataArrowFusion>());
   optimizer->Optimize(actor_set);
+  control_node_scheduler_.Optimize(actor_set, graph_compiler_info);
   any_type_graph_scheduler_.Optimize(actor_set, graph_output_to_actor_);
 }
 
@@ -1271,6 +1272,9 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
 
 std::vector<CustomActorPtr> GraphScheduler::BuildCustomActor(const GraphCompilerInfo &graph_compiler_info) {
   std::vector<CustomActorPtr> custom_actors;
+  if (!is_enable_custom_actor) {
+    return custom_actors;
+  }
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &device_context = graph_compiler_info.device_contexts_[i];
     const auto &graph = graph_compiler_info.graphs_[i];
@@ -1736,9 +1740,13 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
 
   // Collect all the depend updatestate nodes of the kernels for linking control arrow.
   mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> cnode_to_monad_inputs;
-  MS_LOG(INFO) << "Get all u input of cnode in graph:" << graph->ToString() << " start.";
-  GetAllCNodeUInputByGraph(graph, &cnode_to_monad_inputs);
-  MS_LOG(INFO) << "Get all u input of cnode in graph:" << graph->ToString() << " end.";
+  MS_LOG(INFO) << "Get all monad input of cnode in graph:" << graph->ToString() << " start.";
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO0) {
+    GetAllCNodeUInputByGraph(graph, &cnode_to_monad_inputs);
+  }
+  MS_LOG(INFO) << "Get all monad input of cnode in graph:" << graph->ToString() << " end.";
 
   auto &execution_order = graph->execution_order();
   // Foreach the execution order to link the actors.
@@ -2292,8 +2300,10 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
   LinkDeviceTensorStoreForAutoMonadActor(auto_monad_actors);
 
   // Link arrows for custom actor.
-  LinkDataArrowForCustomActor(actor_set, graph_compiler_info);
-  LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
+  if (is_enable_custom_actor) {
+    LinkDataArrowForCustomActor(actor_set, graph_compiler_info);
+    LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
+  }
 
   // BuildNoInputKernelActor depends on whether kernel actors have input, so must be behind the link of kernel actors.
   actor_set->no_input_kernel_actors_ = BuildNoInputKernelActor(actor_set, graph_compiler_info.strategy_);

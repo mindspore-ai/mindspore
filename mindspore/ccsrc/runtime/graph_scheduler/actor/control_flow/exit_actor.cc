@@ -141,6 +141,7 @@ void ExitActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
                             IntToSize(arrow->to_input_index_), context);
     }
   }
+  last_step_created_device_tensors_.clear();
 }
 
 void ExitActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) {
