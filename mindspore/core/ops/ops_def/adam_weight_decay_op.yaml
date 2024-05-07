@@ -30,7 +30,7 @@ adam_weight_decay:
       prim_init: True
   args_signature:
     rw_write: var, m, v
-    dtype_group: (m, v), (lr, beta1, beta2, epsilon, decay)
+    dtype_group: (m, v), (lr, beta1, beta2, epsilon, decay), (var, gradient)
   labels:
     side_effect_mem: True
   returns:
