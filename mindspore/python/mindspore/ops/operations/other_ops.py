@@ -842,7 +842,7 @@ class Reusing(Primitive):
     Examples:
         >>> import mindspore
         >>> from mindspore import Tensor, jit
-        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>> from mindspore import ops
         >>> def for_body_fun(i,val):
                 x = i *3
