@@ -2334,8 +2334,8 @@ bool AnfAlgo::IsReduceOp(const std::string &op_name) {
 
 bool AnfAlgo::IsTypeTransformOp(const std::string &op_name) {
   static const std::set<std::string> type_trans_op_names = {
-    prim::kPrimTupleToTensor->name(), prim::kPrimTensorToTuple->name(), prim::kPrimScalarToTensor->name(),
-    prim::kPrimTensorToScalar->name()};
+    prim::kPrimTupleToTensor->name(),  prim::kPrimTensorToTuple->name(), prim::kPrimScalarToTensor->name(),
+    prim::kPrimTensorToScalar->name(), prim::kPrimRealMakeTuple->name(), prim::kPrimRealTupleGetItem->name()};
   return type_trans_op_names.find(op_name) != type_trans_op_names.end();
 }
 
