@@ -41,6 +41,7 @@ class DefaultExpander : public Expander {
 
  protected:
   virtual FuncGraphPtr ExpandToGraph(const CNodePtr &node);
+  virtual AnfNodePtr CreateCallCNode(const FuncGraphPtr &fg, const CNodePtr &cnode);
   CallbackPtr cb_;
 };
 
@@ -51,6 +52,7 @@ class LitegraphExpander : public DefaultExpander {
 
  protected:
   FuncGraphPtr ExpandToGraph(const CNodePtr &node) override;
+  AnfNodePtr CreateCallCNode(const FuncGraphPtr &sub_fg, const CNodePtr &cnode) override;
 };
 
 class BACKEND_EXPORT ExpanderDecorator : public Expander {

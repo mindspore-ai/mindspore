@@ -17,6 +17,7 @@
 #include "backend/common/graph_kernel/core/expander.h"
 
 #include <string>
+#include <algorithm>
 
 #include "utils/anf_utils.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
@@ -67,10 +68,7 @@ AnfNodePtr DefaultExpander::Run(const AnfNodePtr &node) {
   if (new_fg == nullptr) {
     return nullptr;
   }
-  const auto fg_node = NewValueNode(new_fg);
-  AnfNodeWeakPtrList inputs = {fg_node};
-  (void)inputs.insert(inputs.end(), cnode->weak_inputs().cbegin() + 1, cnode->weak_inputs().cend());
-  return node->func_graph()->NewCNodeWeak(inputs);
+  return CreateCallCNode(new_fg, cnode);
 }
 
 FuncGraphPtr DefaultExpander::ExpandToGraph(const CNodePtr &node) {
@@ -96,6 +94,15 @@ FuncGraphPtr DefaultExpander::ExpandToGraph(const CNodePtr &node) {
     fg->set_output(outputs[0]->as<AnfNodePtr>());
   }
   return fg;
+}
+
+AnfNodePtr DefaultExpander::CreateCallCNode(const FuncGraphPtr &sub_fg, const CNodePtr &cnode) {
+  const auto fg = NewValueNode(sub_fg);
+  AnfNodeWeakPtrList inputs = {fg};
+  // Be consistent with e->inputs(node)
+  std::copy_if(cnode->weak_inputs().cbegin() + 1, cnode->weak_inputs().cend(), std::back_inserter(inputs),
+               [](const AnfNodeWeakPtr &node) { return !(node.lock()->isa<ValueNode>()); });
+  return cnode->func_graph()->NewCNodeWeak(inputs);
 }
 
 FuncGraphPtr LitegraphExpander::ExpandToGraph(const CNodePtr &node) {
@@ -129,5 +136,15 @@ FuncGraphPtr LitegraphExpander::ExpandToGraph(const CNodePtr &node) {
     return nullptr;
   }
   return GkUtils::LiteGraph2AnfGraph(litegraph, cb_);
+}
+
+AnfNodePtr LitegraphExpander::CreateCallCNode(const FuncGraphPtr &fg, const CNodePtr &cnode) {
+  if (expander::IrBuilderRegistry::Instance().HasOp(AnfUtils::GetCNodeName(cnode))) {
+    return DefaultExpander::CreateCallCNode(fg, cnode);
+  }
+  const auto fg_node = NewValueNode(fg);
+  AnfNodeWeakPtrList inputs = {fg_node};
+  (void)inputs.insert(inputs.end(), cnode->weak_inputs().cbegin() + 1, cnode->weak_inputs().cend());
+  return cnode->func_graph()->NewCNodeWeak(inputs);
 }
 }  // namespace mindspore::graphkernel

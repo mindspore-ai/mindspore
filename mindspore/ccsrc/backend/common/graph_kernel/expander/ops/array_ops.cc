@@ -14,13 +14,25 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/expander/base/ir_builder.h"
+#include "backend/common/graph_kernel/expander/base/utils.h"
 
 namespace mindspore::graphkernel::expander {
+REG_EXPANDER_FUNC("Identity").SetBody(BODYFUNC(ib) {
+  const auto &input_x = ib->input(0);
+  auto x_shape = input_x->GetShape();
+  if (IsDynamicRank(x_shape) || std::count_if(x_shape.begin(), x_shape.end(), [](int64_t sh) { return sh < 0; }) > 1) {
+    MS_LOG(DEBUG) << "Skip dynamic shape case";
+    return {};
+  }
+  auto result = ib->Reshape(input_x, ib->Tensor(x_shape));
+  return {result};
+});
+
 REG_EXPANDER_FUNC("ZerosLike").SetBody(BODYFUNC(ib) {
   const auto &input_x = ib->input(kIndex0);
   auto x_shape = input_x->GetShape();
   if (IsDynamic(x_shape)) {
-    MS_LOG(INFO) << "Skip dynamic shape case";
+    MS_LOG(DEBUG) << "Skip dynamic shape case";
     return {};
   }
   auto shape = ib->Value(x_shape);

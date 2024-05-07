@@ -62,6 +62,7 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, const ExpanderPtr &init) {
   constexpr size_t kRandomInputIdx = 1;
   constexpr size_t kAdamInputIdx = 10;
   constexpr size_t kAdamWeightDecayInputIdx = 9;
+  constexpr size_t kApplyMomentumInputIdx = 1;
   std::map<std::string, ExpanderCreatorFuncList> creators = {
     {prim::kPrimAssignAdd->name(), {OpUMonadExpanderDeco::GetCreator(kAssignInputIdx)}},
     {prim::kLambApplyOptimizerAssign->name(), {OpUMonadExpanderDeco::GetCreator(kLambOptimizerInputIdx)}},
@@ -69,6 +70,7 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, const ExpanderPtr &init) {
     {prim::kPrimStandardNormal->name(), {OpUMonadExpanderDeco::GetCreator(kRandomInputIdx)}},
     {prim::kPrimAdam->name(), {OpUMonadExpanderDeco::GetCreator(kAdamInputIdx)}},
     {prim::kPrimAdamWeightDecay->name(), {OpUMonadExpanderDeco::GetCreator(kAdamWeightDecayInputIdx)}},
+    {prim::kPrimApplyMomentum->name(), {OpUMonadExpanderDeco::GetCreator(kApplyMomentumInputIdx)}},
     {prim::kPrimDropout->name(), {DropoutExpanderDeco::Creator}},
     {prim::kPrimArgMaxWithValue->name(), {ArgWithValueDeco::Creator}},
     {prim::kPrimArgMinWithValue->name(), {ArgWithValueDeco::Creator}},

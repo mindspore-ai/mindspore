@@ -43,10 +43,11 @@ class BiasAddGrad : public OpDesc {
 
  protected:
   bool CheckInputs() override {
-    auto x_format = inputs_info_[0].format;
-    auto x_shape = inputs_info_[0].shape;
-    if (x_format == kOpFormat_FRAC_NZ && IsDynamic(x_shape)) {
-      MS_LOG(DEBUG) << "Skip dynamic shape case";
+    const auto &x = inputs_info_[0];
+    if (x.format == kOpFormat_FRAC_NZ &&
+        (IsDynamicRank(x.shape) ||
+         std::count_if(x.shape.begin(), x.shape.end(), [](int64_t sh) { return sh < 0; }) > 1)) {
+      MS_LOG(DEBUG) << "For 'BiasAddGrad', dynamic shape is not supported if data format is " << x.format;
       return false;
     }
     return true;
