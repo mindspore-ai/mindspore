@@ -29,6 +29,8 @@ ms_data = {
     "float32": ms.Tensor(1, dtype=ms.float32),
     "float64": ms.Tensor(1, dtype=ms.float64),
     "bfloat16": ms.Tensor(1, dtype=ms.bfloat16),
+    "complex64": ms.Tensor(1, dtype=ms.complex64),
+    "complex128": ms.Tensor(1, dtype=ms.complex128)
 }
 
 
@@ -44,6 +46,8 @@ torch_data = {
     "float32": torch.tensor(1, dtype=torch.float32),
     "float64": torch.tensor(1, dtype=torch.float64),
     "bfloat16": torch.tensor(1, dtype=torch.bfloat16),
+    "complex64": torch.tensor(1, dtype=torch.complex64),
+    "complex128": torch.tensor(1, dtype=torch.complex128)
 }
 
 
