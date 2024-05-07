@@ -95,7 +95,7 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
     MS_LOG(EXCEPTION) << "Failed to call aclprofInit function. error_code : " << static_cast<int>(aclRet);
   }
 
-  if (options["hbm_ddr"] == "on") {
+  if (options["hbm_ddr"] == "on" || options["profile_memory"] == "on") {
     const char *hbmFreq = "100";
     aclError hbmRet = CALL_ASCEND_API(aclprofSetConfig, ACL_PROF_SYS_HARDWARE_MEM_FREQ, hbmFreq, strlen(hbmFreq));
     if (hbmRet != ACL_SUCCESS) {
