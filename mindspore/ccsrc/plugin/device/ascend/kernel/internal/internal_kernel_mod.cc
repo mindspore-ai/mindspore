@@ -36,6 +36,9 @@ InternalKernelMod::~InternalKernelMod() {
 int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto param = CreateOpParam(inputs, outputs);
   impl_ = internal::CreateInternalKernelImpl(param);
+  if (impl_ == nullptr) {
+    return 1;
+  }
 
   // abstract validation info from inputs
   internal::ValidateInfo info;
