@@ -71,8 +71,8 @@ const std::map<int64_t, int64_t> opAttrUpdateMap = {{kSparseDefaultMask, kLeftUp
 const std::vector<int64_t> needCompressAttnMask = {kSparseLeftUpCausal, kSparseRightDownCausal, kSparseBand};
 }  // namespace
 
-bool PromptFlashAttentionInfo::CheckStrategy(int64_t strategy, int64_t true_value, const std::string &dim_name,
-                                             const std::string &input_name) {
+bool PromptFlashAttentionInfo::CheckStrategyOnIndex(int64_t strategy, int64_t true_value, const std::string &dim_name,
+                                                    const std::string &input_name) {
   if (strategy != true_value) {
     MS_LOG(ERROR) << "For " << name_ << ": The " << dim_name << " of input " << input_name << " should be "
                   << true_value << ", but got strategy: " << strategy;
@@ -171,7 +171,7 @@ Status PromptFlashAttentionInfo::CheckAttenMaskStrategy(const StrategyPtr &strat
     attn_seq_dim = kAttenSeqPosRank4;
   }
   int64_t attn_sp_dim = attn_sp_shard_ ? sp_ : 1;
-  if (!CheckStrategy(attn_strategy[attn_seq_dim], attn_sp_dim, "S-Dimention", "attn_mask")) {
+  if (!CheckStrategyOnIndex(attn_strategy[attn_seq_dim], attn_sp_dim, "S-Dimention", "attn_mask")) {
     return FAILED;
   }
   return SUCCESS;
@@ -277,7 +277,7 @@ Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
     mp_ = query_strategy[kInputQueryHiddenDimBSH];
     sp_ = query_strategy[kInputQuerySeqDimBSH];
   } else if (input_layout_ == "BNSD") {
-    if (!CheckStrategy(query_strategy[kInputQueryHiddenDimBNSD], 1, "D-Dimention", "query")) {
+    if (!CheckStrategyOnIndex(query_strategy[kInputQueryHiddenDimBNSD], 1, "D-Dimention", "query")) {
       return FAILED;
     }
     dp_ = query_strategy[kInputBatchDim];
@@ -292,8 +292,8 @@ Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   if (padding_mask_rank_ == kRank2) {
-    if (!CheckStrategy(strategies[ops::kPromptFlashAttentionInputPaddingMaskIndex][kInputBatchDim], 1, "B-Dimention",
-                       "padding_mask")) {
+    if (!CheckStrategyOnIndex(strategies[ops::kPromptFlashAttentionInputPaddingMaskIndex][kInputBatchDim], 1,
+                              "B-Dimention", "padding_mask")) {
       return FAILED;
     }
   }
