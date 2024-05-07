@@ -281,6 +281,51 @@ REG_FALLBACK_BUILDER("Max").SetBody(BODYFUNC(ib) { return {BuilderForMaxorMin(ib
 
 REG_FALLBACK_BUILDER("Min").SetBody(BODYFUNC(ib) { return {BuilderForMaxorMin(ib, "ReduceMin")}; });
 
+REG_FALLBACK_BUILDER("BitwiseAndScalar").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto other_value = ib->GetInput(kIndex1);
+  auto other = ib->Cast(ib->ScalarToTensor(other_value), input->dtype());
+  auto out = ib->Emit("BitwiseAnd", {input, other});
+  return {out};
+});
+
+REG_FALLBACK_BUILDER("BitwiseAndTensor").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto other = ib->GetInput(kIndex1);
+  auto out = ib->Emit("BitwiseAnd", {input, other});
+  return {out};
+});
+
+REG_FALLBACK_BUILDER("BitwiseOrScalar").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto other_value = ib->GetInput(kIndex1);
+  auto other = ib->Cast(ib->ScalarToTensor(other_value), input->dtype());
+  auto out = ib->Emit("BitwiseOr", {input, other});
+  return {out};
+});
+
+REG_FALLBACK_BUILDER("BitwiseOrTensor").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto other = ib->GetInput(kIndex1);
+  auto out = ib->Emit("BitwiseOr", {input, other});
+  return {out};
+});
+
+REG_FALLBACK_BUILDER("BitwiseXorScalar").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto other_value = ib->GetInput(kIndex1);
+  auto other = ib->Cast(ib->ScalarToTensor(other_value), input->dtype());
+  auto out = ib->Emit("BitwiseXor", {input, other});
+  return {out};
+});
+
+REG_FALLBACK_BUILDER("BitwiseXorTensor").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto other = ib->GetInput(kIndex1);
+  auto out = ib->Emit("BitwiseXor", {input, other});
+  return {out};
+});
+
 REG_FALLBACK_BUILDER("DivMod").SetBody(BODYFUNC(ib) {
   auto input_x = ib->GetInput(kIndex0);
   auto input_y = ib->GetInput(kIndex1);
