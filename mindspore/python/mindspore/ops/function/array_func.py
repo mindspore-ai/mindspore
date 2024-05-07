@@ -30,10 +30,10 @@ from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._sequence_ops import TensorToList
-from mindspore.ops.auto_generate import OnesLikeExt, ZerosLikeExt, FillScalar, FillTensor, Arange, Chunk
+from mindspore.ops.auto_generate import OnesLikeExt, ZerosLikeExt, FillScalar, FillTensor, Arange, Chunk, Scatter,\
+    ScatterValue
 from mindspore.ops.auto_generate.gen_ops_prim import SplitTensor
 from mindspore.ops.auto_generate.gen_ops_prim import SplitWithSize, RepeatInterleave
-
 from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
     SearchSorted,
@@ -127,6 +127,8 @@ ones_like_ext_ = OnesLikeExt()
 zeros_like_ext_ = ZerosLikeExt()
 fill_scalar_ = FillScalar()
 fill_tensor_ = FillTensor()
+scatter_ = Scatter()
+scatter_value_ = ScatterValue()
 arange_ = Arange()
 chunk_ = Chunk()
 repeat_interleave_ = RepeatInterleave()
@@ -960,13 +962,14 @@ def chunk_ext(input, chunks, dim=0):
         ValueError: If argument `chunks` is not positive number.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import ops, Tensor
+        >>> import mindspore
+        >>> from mindspore import Tensor
         >>> input_x = np.arange(9).astype("float32")
-        >>> output = ops.mint.chunk(Tensor(input_x), 3)
+        >>> output = mindspore.mint.chunk(Tensor(input_x), 3)
         >>> print(output)
         (Tensor(shape=[3], dtype=Float32, value= [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00]),
          Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
@@ -3197,8 +3200,8 @@ def scatter(input, axis, index, src):
         axis (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(input).
         index (Tensor): The index to do update operation whose data type must be mindspore.int32 or
             mindspore.int64. Same rank as `input` . And accepted range is [-s, s) where s is the size along axis.
-        src (Tensor): The tensor doing the update operation with `input` , has the same type as `input` ,
-            and the shape of `src` should be equal to the shape of `index` .
+        src (Tensor, float): The tensor doing the update operation with `input` , has the same data type as
+            `input` ,and the shape of `src` should be equal to the shape of `index`, or the float number to scatter.
 
     Returns:
         Tensor, has the same shape and type as `input` .
@@ -3245,7 +3248,9 @@ def scatter(input, axis, index, src):
         [0. 0. 0. 0. 0.]
         [0. 0. 0. 0. 0.]]
     """
-    return ops.tensor_scatter_elements(input_x=input, indices=index, updates=src, axis=axis)
+    if isinstance(src, Tensor):
+        return scatter_(input, axis, index, src)
+    return scatter_value_(input, axis, index, src)
 
 
 def scatter_add_ext(input, dim, index, src):

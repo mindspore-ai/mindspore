@@ -631,10 +631,11 @@ REG_FALLBACK_BUILDER("Scatter").SetBody(BODYFUNC(ib) {
   if (!ops::IsValueKnown(dim_val) || !ops::IsValueKnown(reduce_val)) {
     MS_EXCEPTION(ValueError) << "For `TensorScatterElements` op, the `dim` and `reduce` must currently be a constant!";
   }
-  std::unordered_map<int64_t, std::string> reduce_val_string{{0, "none"}, {1, "add"}};
+  std::unordered_map<int64_t, std::string> reduce_to_string{
+    {Reduce::REDUCE_NONE, "none"}, {Reduce::ADD, "add"}, {Reduce::MULTIPLY, "mul"}};
   auto reduce_val_int = GetValue<int64_t>(reduce_val);
-  const auto iter = reduce_val_string.find(reduce_val_int);
-  if (iter == reduce_val_string.end()) {
+  const auto iter = reduce_to_string.find(reduce_val_int);
+  if (iter == reduce_to_string.end()) {
     MS_EXCEPTION(ValueError) << "For `Scatter` op, fail to convert `reduce` val `" << reduce_val_int << "` to string!";
   }
   auto reduce_string = iter->second;

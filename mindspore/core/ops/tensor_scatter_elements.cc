@@ -56,12 +56,6 @@ abstract::ShapePtr TensorScatterElementsInferShape(const PrimitivePtr &primitive
                              << "update dims: " << updates_shape.size() << ".";
   }
 
-  if (updates_shape != indices_shape) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", "
-                             << "'updates_shape' must be as same as 'indices_shape' but got indices_shape: "
-                             << indices_shape << ", updates_shape: " << updates_shape << ".";
-  }
-
   return input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
 }
 

@@ -1,5 +1,5 @@
-# operator: Scatter
-scatter:
+# operator: ScatterValue
+scatter_value:
     args:
         input:
             dtype: tensor
@@ -8,7 +8,7 @@ scatter:
         index:
             dtype: tensor
         src:
-            dtype: tensor
+            dtype: number
         reduce:
             dtype: int
             default: 0
@@ -17,6 +17,5 @@ scatter:
             dtype: tensor
     dispatch:
         enable: True
-        Ascend: ScatterAscend
     function:
         disable: True

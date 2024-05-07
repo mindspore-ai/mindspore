@@ -36,8 +36,8 @@ def chunk_backward_func(x, chunks, dim):
 @pytest.mark.parametrize("mode", ['GE', 'pynative', 'KBK'])
 def test_chunk_forward(mode):
     """
-    Feature: Split
-    Description: test op Split
+    Feature: Chunk
+    Description: test op Chunk
     Expectation: expect correct result.
     """
     np_x = np.array(np.arange(10).reshape((5, 2)), dtype=np.float32)
@@ -67,7 +67,7 @@ def test_chunk_forward(mode):
 def test_chunk_backward(mode):
     """
     Feature: Auto grad.
-    Description: test auto grad of op Split.
+    Description: test auto grad of op Chunk.
     Expectation: expect correct result.
     """
     x = Tensor(np.arange(20).reshape(10, 2), dtype=ms.float32)
@@ -205,7 +205,7 @@ def test_chunk_backward_dynamic_rank(context_mode):
 def test_chunk_forward_mutable(context_mode):
     """
     Feature: Auto grad.
-    Description: test auto grad of op Split.
+    Description: test auto grad of op Chunk.
     Expectation: expect correct result.
     """
     context.set_context(mode=context_mode)
@@ -237,8 +237,8 @@ def test_chunk_forward_mutable(context_mode):
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_f_chunk_dynamic(mode):
     """
-    Feature: test dynamic split.
-    Description: test auto grad of op Split.
+    Feature: test dynamic chunk.
+    Description: test auto grad of op Chunk.
     Expectation: expect correct result.
     """
     np_x1 = np.arange(4 * 4).reshape(4, 4)
