@@ -114,6 +114,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   void PyExePath(const py::object &py_exe_path) const;
   void KernelBuildServerDir(const py::object &kernel_build_server_dir) const;
   py::dict GetParameterLayout(const std::string &phase);
+  py::tuple FlopsCollection(const std::string &phase);
   // Get CNode name, input node name and attribute from each graph
   py::dict GetParallelGraphInfo(const std::string &phase);
   py::dict GetCNodeStrategy(const std::string &phase);

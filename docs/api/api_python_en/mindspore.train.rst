@@ -23,6 +23,7 @@ Callback
     mindspore.train.Callback
     mindspore.train.CheckpointConfig
     mindspore.train.EarlyStopping
+    mindspore.train.FlopsUtilizationCollector
     mindspore.train.History
     mindspore.train.LambdaCallback
     mindspore.train.LearningRateScheduler

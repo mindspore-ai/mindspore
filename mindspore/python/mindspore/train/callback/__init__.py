@@ -35,7 +35,8 @@ from mindspore.train.callback._early_stop import EarlyStopping
 from mindspore.train.callback._reduce_lr_on_plateau import ReduceLROnPlateau
 from mindspore.train.callback._on_request_exit import OnRequestExit
 from mindspore.train.callback._backup_and_restore import BackupAndRestore
+from mindspore.train.callback._flops_collector import FlopsUtilizationCollector
 
-__all__ = ["Callback", "LossMonitor", "TimeMonitor", "ModelCheckpoint",
+__all__ = ["Callback", "LossMonitor", "TimeMonitor", "ModelCheckpoint", "FlopsUtilizationCollector",
            "SummaryCollector", "CheckpointConfig", "RunContext", "LearningRateScheduler", "SummaryLandscape",
            "History", "LambdaCallback", "ReduceLROnPlateau", "EarlyStopping", "OnRequestExit", "BackupAndRestore"]

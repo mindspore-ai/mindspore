@@ -41,6 +41,7 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/graph_util/get_parallel_info.h"
+#include "frontend/parallel/graph_util/flops_collection.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/step_parallel.h"
@@ -764,6 +765,11 @@ py::dict GraphExecutorPy::GetParameterLayout(const std::string &phase) {
     return mindspore::parallel::GetParameterLayoutFromResource(resource);
   }
   return mindspore::parallel::GetParameterLayoutFromGraph(graph);
+}
+
+py::tuple GraphExecutorPy::FlopsCollection(const std::string &phase) {
+  auto graph = GetFuncGraph(phase);
+  return mindspore::parallel::FlopsCollection(graph);
 }
 
 py::dict GraphExecutorPy::GetCNodeStrategy(const std::string &phase) {
