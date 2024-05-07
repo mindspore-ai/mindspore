@@ -75,7 +75,7 @@ TopkExt: 'aclnnTopk'
 # 5
 
 # 6
-
+CumsumExt: 'aclnnCumsum'
 # 7
 
 # 8
