@@ -24,7 +24,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
-from mindspore.train import Model
+from mindspore.train import Model, FlopsUtilizationCollector
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, GradAccumulationCell
 import mindspore.common.lazy_inline as lazy_inline
 
@@ -399,3 +399,62 @@ def test_grad_accumulation_with_begin_end_inline():
     if os.path.exists("./speed_up.json"):
         os.remove("./speed_up.json")
     context.set_context(save_graphs=False)
+
+
+def test_pipeline_split_stage0_flops():
+    """
+    Feature: parallel subgraph inline
+    Description: parallel subgraph inline in grad parallel
+    Expectation: success
+    """
+    context.set_context(save_graphs=True)
+    context.set_auto_parallel_context(
+        device_num=32, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
+    net = PipelineCell(Net(strategy1, strategy2), 4)
+    params = net.network.cell1.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optimizer = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optimizer)
+    model.train(2, dataset, dataset_sink_mode=False, callbacks=[
+                FlopsUtilizationCollector(dataset.get_dataset_size())])
+
+
+def test_pipeline_split_stage0_flops_ma():
+    """
+    Feature: parallel subgraph inline
+    Description: parallel subgraph inline in grad parallel
+    Expectation: success
+    """
+    context.set_auto_parallel_context(
+        device_num=32, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
+    net = PipelineCell(Net(strategy1, strategy2), 4)
+    params = net.network.cell1.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optimizer = nn.Lamb(params, learning_rate=0.01)
+    os.environ["ENABLE_FLOPS_UTILIZATION_COLLECTOR"] = "1"
+    os.environ["MA_LOG_DIR"] = os.getcwd()
+    model = Model(net, optimizer=optimizer)
+    model.train(2, dataset, dataset_sink_mode=False)
+    file = "flops_rank_0.txt"
+    para = "flops{type=\"model_flops\"} 2097152"
+    output = subprocess.check_output(
+        ["grep '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == "1"
+    if os.path.exists("time_step_rank_0"):
+        os.remove("time_step_rank_0")
+    if os.path.exists("flops_rank_0"):
+        os.remove("flops_rank_0")
+    os.environ["ENABLE_FLOPS_UTILIZATION_COLLECTOR"] = ""
+    os.environ["MA_LOG_DIR"] = ""

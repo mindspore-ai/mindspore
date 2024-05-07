@@ -61,6 +61,8 @@
 #include "utils/symbolic.h"
 #include "mindspore/core/utils/parallel_node_check.h"
 #include "frontend/parallel/parallel_optimizer/opt_param_mgr.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/ps/util.h"
 #include "include/backend/distributed/ps/ps_context.h"
@@ -3082,6 +3084,26 @@ static void BroadcastLastResult(const FuncGraphPtr &root, const FuncGraphManager
   return_node->input(1)->set_abstract(abstract);
 }
 
+static void RecordFlopsOriginShape(const FuncGraphManagerPtr &mng) {
+  for (const auto &each_graph : mng->func_graphs()) {
+    std::list<CNodePtr> graph_orders = each_graph->GetOrderedCnodes();
+    std::vector<CNodePtr> origin_nodes_topological(graph_orders.cbegin(), graph_orders.cend());
+    for (const auto &node : origin_nodes_topological) {
+      if (IsPrimitiveCNode(node, prim::kPrimConv2D) || IsPrimitiveCNode(node, prim::kPrimBatchMatMul) ||
+          IsPrimitiveCNode(node, prim::kPrimMatMul)) {
+        node->AddPrimalAttr("origin_output_shape", MakeValue(node->abstract()->GetShapeTrack()->GetShapeVector()));
+        node->AddPrimalAttr("origin_input_shapes", MakeValue<std::vector<ShapeVector>>(
+                                                     {node->input(1)->abstract()->GetShapeTrack()->GetShapeVector(),
+                                                      node->input(2)->abstract()->GetShapeTrack()->GetShapeVector()}));
+      } else if (IsPrimitiveCNode(node, prim::kPrimFlashAttentionScore)) {
+        node->AddPrimalAttr("origin_input_shapes", MakeValue<std::vector<ShapeVector>>(
+                                                     {node->input(1)->abstract()->GetShapeTrack()->GetShapeVector(),
+                                                      node->input(2)->abstract()->GetShapeTrack()->GetShapeVector()}));
+      }
+    }
+  }
+}
+
 static void HandleSilentCheck(const FuncGraphPtr &root, const FuncGraphManagerPtr &mng) {
   auto env = common::GetEnv(NPU_ASD_ENABLE);
   if (env != kSilentCheckEnvEnable) {
@@ -3215,6 +3237,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   MSLogTime msTime;
   msTime.Start();
   DumpGraph(root, std::string(STEP_PARALLEL_BEGIN));
+  RecordFlopsOriginShape(manager);
   AnfNodePtr ret = root->get_return();
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
