@@ -566,7 +566,6 @@ inline ScalarPtr ConvertKernelTensor<ScalarPtr>(mindspore::kernel::KernelTensor 
     return nullptr;
   }
   auto value_ptr = tensor->GetValueTrack();
-
   if (value_ptr == nullptr) {
     if (tensor->dtype_id() == kNumberTypeBool) {
       auto value = tensor->GetValueWithCheck<bool>();
