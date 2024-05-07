@@ -60,7 +60,7 @@ class SparseDenseCwiseAdd(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.common.tensor import Tensor
+        >>> from mindspore import Tensor
         >>> from mindspore.common import dtype as ms
         >>> from mindspore.ops.operations import sparse_ops as ops
         >>> x1_indices = Tensor([[0, 0], [2, 2]], dtype=ms.int64)
@@ -115,7 +115,7 @@ class SparseDenseCwiseMul(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.common.tensor import Tensor
+        >>> from mindspore import Tensor
         >>> from mindspore.common import dtype as ms
         >>> from mindspore.ops.operations import sparse_ops as ops
         >>> x1_indices = Tensor([[0, 0], [2, 2]], dtype=ms.int64)
@@ -170,7 +170,7 @@ class SparseDenseCwiseDiv(Primitive):
         ``Ascend`` ``GPU``
 
     Examples:
-      >>> from mindspore.common.tensor import Tensor
+      >>> from mindspore import Tensor
       >>> from mindspore.common import dtype as ms
       >>> from mindspore.ops.operations import sparse_ops as ops
       >>> x1_indices = Tensor([[0, 0], [2, 2]], dtype=ms.int64)
