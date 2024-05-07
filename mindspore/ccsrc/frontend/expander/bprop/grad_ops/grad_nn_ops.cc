@@ -451,8 +451,7 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto w_shape = ret_shape[kIndex5];
 
   dout = ib->Reshape(dout, dout_2d_shape);
-  db = b->need_compute_grad_out() ? ib->Emit("SumExt", {dout, b_reduce_shape, ib->Value(false), ib->EmitValue(kNone)})
-                                  : ib->OutZeros(b);
+  db = b->need_compute_grad_out() ? ib->SumExt(dout, b_reduce_shape, ib->Value(false)) : ib->OutZeros(b);
   if (is_complex) {
     dout = ib->Emit("Conj", {dout});
   }
