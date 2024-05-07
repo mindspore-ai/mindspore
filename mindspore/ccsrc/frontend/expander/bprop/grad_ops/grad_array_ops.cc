@@ -713,17 +713,18 @@ std::pair<std::vector<bool>, std::vector<std::vector<int64_t>>> DynBroadcastGrad
   auto n = std::max(cond_size, std::max(x_size, y_size));
   std::vector<bool> need_shapecalc = {false, false, false};
   std::vector<std::vector<int64_t>> reduce_axis(kDim3);
-  if (IsDynamicRank(shape[0]) || IsDynamicRank(shape[1]) || IsDynamicRank(shape[2])) {
+  if (IsDynamicRank(shape[kIndex0]) || IsDynamicRank(shape[kIndex1]) || IsDynamicRank(shape[kIndex2])) {
     return {{true, true, true}, reduce_axis};
   }
   for (size_t i = n; i >= 1; i--) {
-    int64_t dim_value[3] = {cond_size < i ? 1 : shape[0][cond_size - i], x_size < i ? 1 : shape[1][x_size - i],
-                            y_size < i ? 1 : shape[2][y_size - i]};
+    int64_t dim_value[kDim3] = {cond_size < i ? 1 : shape[kIndex0][cond_size - i],
+                                x_size < i ? 1 : shape[kIndex1][x_size - i],
+                                y_size < i ? 1 : shape[kIndex2][y_size - i]};
     const int64_t reduce_idx = SizeToLong(n - i);
     bool is_dynamic = false;
-    if (dim_value[1] == dim_value[0] && dim_value[2] == dim_value[0]) {
-      if (dim_value[0] == -1) {
-        need_shapecalc[0] = need_shapecalc[1] = need_shapecalc[2] = true;
+    if (dim_value[kIndex1] == dim_value[kIndex0] && dim_value[kIndex2] == dim_value[kIndex0]) {
+      if (dim_value[kIndex0] == -1) {
+        need_shapecalc[kIndex0] = need_shapecalc[kIndex1] = need_shapecalc[kIndex2] = true;
         break;
       }
     } else {
@@ -802,11 +803,11 @@ NodePtrList DynBinopGradSelect(BpropBuilder *ib, const NodePtr &cond, const Node
                                const NodePtr &dout, const NodePtr &dx, const NodePtr &dy, size_t shift = 0UL) {
   NodePtr inputs[] = {cond, x, y};
   NodePtrList reduce = {dout, dx, dy};
-  ShapeVector shape[] = {ib->GetShape(inputs[0]), ib->GetShape(inputs[1]), ib->GetShape(inputs[2])};
-  auto [need_shapecalc, reduce_axis] = DynBroadcastGradientArgsSelect(shape[0], shape[1], shape[2]);
+  ShapeVector shape[] = {ib->GetShape(inputs[kIndex0]), ib->GetShape(inputs[kIndex1]), ib->GetShape(inputs[kIndex2])};
+  auto [need_shapecalc, reduce_axis] = DynBroadcastGradientArgsSelect(shape[kIndex0], shape[kIndex1], shape[kIndex2]);
   NodePtrList broadcast_axes;
-  if (need_shapecalc[0] || need_shapecalc[1] || need_shapecalc[2]) {
-    broadcast_axes = ib->ShapeCalc(g_select_broadcast, {inputs[0], inputs[1], inputs[2]});
+  if (need_shapecalc[kIndex0] || need_shapecalc[kIndex1] || need_shapecalc[kIndex2]) {
+    broadcast_axes = ib->ShapeCalc(g_select_broadcast, {inputs[kIndex0], inputs[kIndex1], inputs[kIndex2]});
   }
   for (size_t i = 1; i < kDim3; i++) {
     auto dout_shape = ib->GetShape(reduce[i]);
@@ -822,8 +823,8 @@ NodePtrList DynBinopGradSelect(BpropBuilder *ib, const NodePtr &cond, const Node
         reduce[i] = ib->Reshape(reduce[i], ib->Shape(inputs[i]));
       }
     } else {
-      bool keep_dims = (!IsDynamicRank(shape[0]) && !IsDynamicRank(shape[1]) && !IsDynamicRank(shape[2]) &&
-                        shape[i].size() >= shape[i ^ 1].size());
+      bool keep_dims = (!IsDynamicRank(shape[kIndex0]) && !IsDynamicRank(shape[kIndex1]) &&
+                        !IsDynamicRank(shape[kIndex2]) && shape[i].size() >= shape[i ^ 1].size());
       reduce[i] = ib->ReduceSum(reduce[i], broadcast_axes[i], keep_dims, true);
       reduce[i] = ib->Reshape(reduce[i], ib->Shape(inputs[i]));
     }
@@ -846,10 +847,10 @@ NodePtr StaticBinopGradSelect(BpropBuilder *ib, const NodePtr &dx, const ShapeAr
         reduce_dx = ib->Emit("SumExt", {reduce_dx, ib->EmitValue(kNone), ib->Value(false), ib->EmitValue(kNone)});
       }
     }
-  } else if (!IsDynamic(broadcast_shape[0]) && !IsDynamic(broadcast_shape[1]) && !IsDynamic(broadcast_shape[2]) &&
-             shape_dynamic_dims <= 1) {
-    std::vector<std::vector<int64_t>> bc_axis =
-      BroadcastGradientArgsInferValueSelect(broadcast_shape[0], broadcast_shape[1], broadcast_shape[2]);
+  } else if (!IsDynamic(broadcast_shape[kIndex0]) && !IsDynamic(broadcast_shape[kIndex1]) &&
+             !IsDynamic(broadcast_shape[kIndex2]) && shape_dynamic_dims <= 1) {
+    std::vector<std::vector<int64_t>> bc_axis = BroadcastGradientArgsInferValueSelect(
+      broadcast_shape[kIndex0], broadcast_shape[kIndex1], broadcast_shape[kIndex2]);
     if (!bc_axis[index].empty()) {
       reduce_dx =
         ib->Emit("SumExt", {reduce_dx, ib->Value<ShapeVector>(bc_axis[index]),
