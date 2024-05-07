@@ -64,10 +64,15 @@ ShapeVector CalcBroadcastShape(AnfNodePtr cond, AnfNodePtr x, AnfNodePtr y) {
   return broadcast_shape;
 }
 
-CNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
-                            const std::vector<int64_t> &broad_shape) {
+AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
+                              const std::vector<int64_t> &broad_shape) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input_node);
+  auto input_shape = GetSelectInputShape(input_node);
+  if (input_shape == broad_shape) {
+    return input_node;
+  }
+
   auto shape_value = MakeValue(broad_shape);
   auto shape_node = NewValueNode(shape_value);
   shape_node->set_abstract(shape_value->ToAbstract());
@@ -79,11 +84,11 @@ CNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &in
   MS_EXCEPTION_IF_NULL(broadcastto_node);
   broadcastto_node->set_scope(input_node->scope());
   broadcastto_node->set_abstract(input_node->abstract());
-  return broadcastto_node;
+  return broadcastto_node->cast<AnfNodePtr>();
 }
 
-CNodePtr AddSelectNode(const FuncGraphPtr &func_graph, const CNodePtr &cond_node, const CNodePtr &x_node,
-                       const CNodePtr &y_node, const CNodePtr &select_node, const std::vector<int64_t> &broad_shape) {
+CNodePtr AddSelectNode(const FuncGraphPtr &func_graph, const AnfNodePtr &cond_node, const AnfNodePtr &x_node,
+                       const AnfNodePtr &y_node, const CNodePtr &select_node, const std::vector<int64_t> &broad_shape) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cond_node);
   MS_EXCEPTION_IF_NULL(x_node);
