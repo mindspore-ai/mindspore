@@ -430,6 +430,17 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_
   return ReduceSum(x, Value<ShapeVector>(real_axis), keep_dims, false);
 }
 
+NodePtr Emitter::SumExt(const NodePtr &input, const NodePtr &axis, const NodePtr &keep_dims) {
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(axis);
+  MS_EXCEPTION_IF_NULL(keep_dims);
+  auto input_dtype_id = input->dtype()->type_id();
+  auto dtype = Value(static_cast<int64_t>(input_dtype_id));
+  MS_EXCEPTION_IF_NULL(dtype);
+
+  return Emit("SumExt", {input, axis, keep_dims, dtype});
+}
+
 NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, const NodePtr &axis, int64_t batch_dims) {
   MS_EXCEPTION_IF_NULL(params);
   MS_EXCEPTION_IF_NULL(indices);
