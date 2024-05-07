@@ -38,6 +38,9 @@ int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const st
     param->dtype_ = InternalKernelUtils::ToInternalDType(inputs[kIndex0]->dtype_id());
   }
   impl_ = internal::CreateInternalKernelImpl(param);
+  if(impl_ == nullptr){
+    return 1;
+  }
 
   // abstract validation info from inputs
   internal::ValidateInfo info;
