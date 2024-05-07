@@ -107,7 +107,12 @@ StrToEnumMap StrToActivationMap = {{"NO_ACTIVATION", ActivationType::NO_ACTIVATI
                                    {"SWISH", ActivationType::SWISH},
                                    {"GELU", ActivationType::GELU},
                                    {"GLU", ActivationType::GLU},
-                                   {"UNKNOWN", ActivationType::UNKNOWN}};
+                                   {"UNKNOWN", ActivationType::UNKNOWN},
+                                   {"FASTGELU", ActivationType::FASTGELU},
+                                   {"SILU", ActivationType::SILU},
+                                   {"GEGLU", ActivationType::GEGLU},
+                                   {"SWIGLU", ActivationType::SWIGLU},
+                                   {"REGLU", ActivationType::REGLU}};
 REG_STRING_TO_ENUM(activation, StrToActivationMap)
 
 // GateOrder

@@ -235,6 +235,21 @@ class FASInputLayoutMode {
   }
 };
 
+class FFNActivationMode {
+ public:
+  static std::string ConvertEnumToString(int64_t id) {
+    static const std::vector<std::string> activation_mode = {
+      "no_activation", "relu", "sigmoid", "relu6",   "elu",      "leaky_relu",    "abs",    "relu1",     "softsign",
+      "softplus",      "tanh", "selu",    "hswish",  "hsigmoid", "thresholdrelu", "linear", "hard_tanh", "sign",
+      "swish",         "gelu", "glu",     "unknown", "fastgelu", "silu",          "geglu",  "swiglu",    "reglu"};
+    if (id < 0 || id >= static_cast<int64_t>(activation_mode.size())) {
+      MS_LOG(EXCEPTION) << "Invalid moe ffn activation " << id;
+      return "";
+    }
+    return activation_mode[id];
+  }
+};
+
 class GEPadMod {
  public:
   static std::string ConvertEnumToString(int64_t id) {
