@@ -54,6 +54,12 @@ namespace {
 constexpr size_t kType32Len = 4;
 constexpr size_t kType64Len = 8;
 constexpr auto kNopNodeRealInputIndex = 1;
+const std::map<std::string, std::map<size_t, TypeId>> OpInputDtype = {{prim::kPrimGroupedMatmul->name(),
+                                                                       {{2, TypeId::kNumberTypeFloat16},
+                                                                        {3, TypeId::kNumberTypeUInt64},
+                                                                        {4, TypeId::kNumberTypeFloat32},
+                                                                        {5, TypeId::kNumberTypeFloat16},
+                                                                        {6, TypeId::kNumberTypeFloat16}}}};
 
 void UpdateDumpFlagAndDebugInfo(const CNodePtr &node, const std::vector<AnfNodePtr> &orig_nodes) {
   MS_EXCEPTION_IF_NULL(node);
@@ -1451,6 +1457,13 @@ std::vector<int64_t> GenPrintAttrDynInputSizes(const CNodePtr &cnode) {
   return std::vector<int64_t>{-1, num_inputs - 1, -1};
 }
 
+bool InputArgTypeIsDynamicType(const mindspore::ops::OP_DTYPE input_arg_dtype) {
+  if (input_arg_dtype >= mindspore::ops::DT_TUPLE_BOOL && input_arg_dtype <= mindspore::ops::DT_LIST_ANY) {
+    return true;
+  }
+  return false;
+}
+
 AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);
@@ -1488,6 +1501,31 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
         plant_inputs.push_back(input_node);
       } else {
         (void)dyn_input_sizes.emplace_back(dyn_input_size);
+      }
+    } else if (OpInputDtype.find(common::AnfAlgo::GetCNodeName(cnode_ptr)) != OpInputDtype.end()) {
+      // If op input_args[i] type is dynamic type(list, tuple) in yaml, but current input_arg[i] is None
+      // Use new value_node(empty_tensor) replace None. Set dyn_input_size = 1
+      auto op_name = common::AnfAlgo::GetCNodeName(cnode_ptr);
+      auto op_name_opdef = mindspore::ops::GetOpDef(op_name);
+      MS_EXCEPTION_IF_NULL(op_name_opdef);
+      auto input_args = (op_name_opdef)->args_;
+      if (InputArgTypeIsDynamicType(input_args[i].arg_dtype_)) {
+        if (OpInputDtype.find(op_name) != OpInputDtype.end() &&
+            OpInputDtype.at(op_name).find(i) != OpInputDtype.at(op_name).end()) {
+          std::vector<int64_t> empty_shape = {0};
+          auto empty_tensor = std::make_shared<tensor::Tensor>(OpInputDtype.at(op_name).at(i), empty_shape);
+          ValueNodePtr empty_value_node = std::make_shared<ValueNode>(empty_tensor);
+          empty_value_node->set_abstract(empty_tensor->ToAbstract());
+          dyn_input_sizes.push_back(1);
+          plant_inputs.push_back(empty_value_node);
+        } else {
+          MS_LOG(EXCEPTION) << "The op [" << op_name
+                            << "] is not supported use new value_node(empty_tensor) replace None in input args.";
+        }
+      } else {
+        // non-dynamic input args
+        dyn_input_sizes.push_back(-1);
+        plant_inputs.push_back(input_node);
       }
     } else {
       dyn_input_sizes.push_back(-1);

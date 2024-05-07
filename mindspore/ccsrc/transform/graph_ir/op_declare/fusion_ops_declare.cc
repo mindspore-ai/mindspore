@@ -174,6 +174,21 @@ ATTR_MAP(AllGatherMatmul) = {{"is_trans_a", ATTR_DESC(is_trans_a, AnyTraits<bool
 OUTPUT_MAP(AllGatherMatmul) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(gather_out)}};
 REG_ADPT_DESC(AllGatherMatmul, kNameAllGatherMatmul, ADPT_DESC(AllGatherMatmul))
 
+// GroupedMatmul
+DYN_INPUT_MAP(GroupedMatmul) = {{1, DYN_INPUT_DESC(x)},
+                                {2, DYN_INPUT_DESC(weight)},
+                                {3, DYN_INPUT_DESC(bias)},
+                                {4, DYN_INPUT_DESC(scale)},
+                                {5, DYN_INPUT_DESC(offset)},
+                                {6, DYN_INPUT_DESC(antiquant_scale)},
+                                {7, DYN_INPUT_DESC(antiquant_offset)}};
+INPUT_MAP(GroupedMatmul) = {{8, INPUT_DESC(group_list)}};
+INPUT_ATTR_MAP(GroupedMatmul) = {{9, ATTR_DESC(split_item, AnyTraits<int64_t>())},
+                                 {10, ATTR_DESC(group_type, AnyTraits<int64_t>())}};
+ATTR_MAP(GroupedMatmul) = EMPTY_ATTR_MAP;
+DYN_OUTPUT_MAP(GroupedMatmul) = {{0, DYN_OUTPUT_DESC(y)}};
+REG_ADPT_DESC(GroupedMatmul, kNameGroupedMatmul, ADPT_DESC(GroupedMatmul))
+
 // MoeFinalizeRouting
 INPUT_MAP(MoeFinalizeRouting) = {{1, INPUT_DESC(expanded_x)},
                                  {2, INPUT_DESC(x1)},
