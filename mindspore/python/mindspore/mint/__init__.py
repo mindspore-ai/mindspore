@@ -123,11 +123,11 @@ from mindspore.ops.functional import cos
 # 45
 
 # 46
-
+from mindspore.ops.function.math_func import bitwise_and_ext as bitwise_and
 # 47
-
+from mindspore.ops.function.math_func import bitwise_or_ext as bitwise_or
 # 48
-
+from mindspore.ops.function.math_func import bitwise_xor_ext as bitwise_xor
 # 49
 
 # 50
@@ -1012,7 +1012,9 @@ __all__ = [
     # 45
 
     # 46
-
+    'bitwise_and',
+    'bitwise_or',
+    'bitwise_xor',
     # 47
     'max',
     # 48

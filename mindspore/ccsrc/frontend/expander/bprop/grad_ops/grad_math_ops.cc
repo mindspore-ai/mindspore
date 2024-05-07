@@ -850,8 +850,14 @@ REG_BPROP_BUILDER("DivMod").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("BitwiseAnd").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("BitwiseAndScalar").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("BitwiseAndTensor").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
 REG_BPROP_BUILDER("BitwiseOr").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("BitwiseOrScalar").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("BitwiseOrTensor").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
 REG_BPROP_BUILDER("BitwiseXor").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("BitwiseXorScalar").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("BitwiseXorTensor").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
 REG_BPROP_BUILDER("InplaceSub").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
 REG_BPROP_BUILDER("InplaceAdd").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
 REG_BPROP_BUILDER("InplaceUpdate").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);

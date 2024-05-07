@@ -1,0 +1,16 @@
+#operator bitwise_and_tensor
+bitwise_and_tensor:
+    args:
+        input:
+            dtype: tensor
+        other:
+            dtype: tensor
+    args_signature:
+        dtype_group: (input, other)
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True

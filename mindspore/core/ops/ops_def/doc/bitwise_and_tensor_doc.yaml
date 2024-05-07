@@ -1,0 +1,13 @@
+bitwise_and_tensor:
+    description: |
+        Returns bitwise `and` of two tensors element-wise.
+
+        Inputs:
+            - **input** (Tensor) - The input tensor must be of integral or Boolean types.
+            - **other** (Tensor) - The second input tensor with same type as the `input`.
+
+        Outputs:
+            Tensor, has the same type as the `input`.
+
+        Supported Platforms:
+            ``Ascend``
