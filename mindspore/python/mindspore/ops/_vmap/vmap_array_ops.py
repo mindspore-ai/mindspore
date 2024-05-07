@@ -2113,6 +2113,33 @@ def get_split_vmap_rule(prim, axis_size):
 
     return vmap_rule
 
+@vmap_rules_getters.register(P.SearchSorted)
+def get_searchsorted_vmap_rule(prim, axis_size):
+    """VmapRule for `SearchSorted`."""
+    def vmap_rule(sequence_bdim, values_bdim, sorter_bdim, dtype_bdim, right_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, sequence_bdim, values_bdim,
+                                                      sorter_bdim, dtype_bdim, right_bdim)
+        if is_all_none:
+            return result
+
+        sequence, sequence_dim = sequence_bdim
+        values, values_dim = values_bdim
+        sorter, sorter_dim = sorter_bdim
+
+        sequence = _bdim_at_front(sequence, sequence_dim, axis_size)
+        values = _bdim_at_front(values, values_dim, axis_size)
+        if sorter is not None and sorter_dim is not None:
+            sorter = _bdim_at_front(sorter, sorter_dim, axis_size)
+
+        dtype, _ = dtype_bdim
+        right, _ = right_bdim
+
+        outputs = prim(sequence, values, sorter, dtype, right)
+
+        return outputs, 0
+
+    return vmap_rule
+
 
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(NonZero)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.Unique)(get_unsupported_dynamic_vmap_rule)
