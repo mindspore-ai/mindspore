@@ -125,7 +125,7 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
 }
 
 uint64_t AscendProfiler::GetOptionsMask(aclprofAicoreMetrics aic_metrics) const {
-  uint64_t mask = 0;
+  uint64_t mask = ACL_PROF_ACL_API;
   nlohmann::json options_json;
   try {
     options_json = nlohmann::json::parse(profiling_options_);
