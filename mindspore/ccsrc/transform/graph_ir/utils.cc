@@ -16,6 +16,7 @@
 #include "include/transform/graph_ir/utils.h"
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/sequence_op_name.h"
 #include "transform/graph_ir/aoe_util.h"
 #include "transform/graph_ir/convert.h"
 #include "transform/graph_ir/op_adapter_map.h"
@@ -56,7 +57,15 @@ OpAdapterPtr FindAdapter(const AnfNodePtr node, bool train) {
     if (it_adpt != OpAdapterMap::get().end()) {
       return it_adpt->second->Get(train);
     }
-    MS_LOG(WARNING) << "Can't find OpAdapter for " << name;
+
+    std::set<std::string> cpu_only_ops{kRealMakeTupleOpName, kRealTupleGetItemOpName};
+    auto iter = cpu_only_ops.find(name);
+    if (iter != cpu_only_ops.end()) {
+      MS_LOG(INFO) << "Can't find OpAdapter for " << name;
+    } else {
+      MS_LOG(WARNING) << "Can't find OpAdapter for " << name;
+    }
+
     return OpAdapterPtr(nullptr);
   }
 
@@ -74,7 +83,15 @@ OpAdapterPtr FindAdapter(const std::string &name, bool train) {
   if (it != OpAdapterMap::get().end()) {
     return it->second->Get(train);
   }
-  MS_LOG(WARNING) << "Can't find OpAdapter for " << name;
+
+  std::set<std::string> cpu_only_ops{kRealMakeTupleOpName, kRealTupleGetItemOpName};
+  auto iter = cpu_only_ops.find(name);
+  if (iter != cpu_only_ops.end()) {
+    MS_LOG(WARNING) << "Can't find OpAdapter for " << name;
+  } else {
+    MS_LOG(INFO) << "Can't find OpAdapter for " << name;
+  }
+
   return nullptr;
 }
 
