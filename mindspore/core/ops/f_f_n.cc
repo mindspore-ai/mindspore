@@ -60,7 +60,7 @@ constexpr int64_t kWeightShapeRank = 2;
 constexpr int64_t kWeightShapeRankMoe = 3;
 constexpr int64_t kBiasShapeRank = 1;
 constexpr int64_t kBiasShapeRankMoe = 2;
-constexpr int64_t kExpertShapeRank = 1;
+constexpr int64_t kExpertShapeRank = 0;
 
 void CheckInputsNum(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
@@ -155,8 +155,8 @@ class FFNInfer : public abstract::OpInferBase {
     if (input_args.size() > kInputIndexExpert && !input_args[kInputIndexExpert]->isa<abstract::AbstractNone>()) {
       auto expert_shape = input_args[kInputIndexExpert]->GetShape();
       auto real_expert_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(expert_shape)[kShape];
-      (void)CheckAndConvertUtils::CheckInteger("expert_tokens shape rank", SizeToLong(real_expert_shape.size()), kEqual,
-                                               kExpertShapeRank, primitive->name());
+      (void)CheckAndConvertUtils::CheckInteger("expert_tokens shape rank", SizeToLong(real_expert_shape.size()),
+                                               kGreaterEqual, kExpertShapeRank, primitive->name());
     }
     // optional bias1
     if (input_args.size() > kInputIndexBias1 && !input_args[kInputIndexBias1]->isa<abstract::AbstractNone>()) {
