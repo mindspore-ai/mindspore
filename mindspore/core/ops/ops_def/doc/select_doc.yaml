@@ -15,13 +15,13 @@ select:
         Args:
             condition (Tensor[bool]): The condition tensor, decides which element is chosen.
                 The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-            input (Tensor): The first Tensor to be selected.
+            input (Union[Tensor, int, float]): The first Tensor to be selected.
                 If input is a Tensor, its shape should be or be braodcast to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
                 If input is int or float, it will be casted to int32 or float32, and broadcast to the same shape as y.
                 There must be at least one Tensor between x and y.
-            other (Tensor): The second Tensor to be selected.
-                If input is a Tensor, its shape should be or be braodcast to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-                If input is int or float, it will be casted to int32 or float32, and broadcast to the same shape as y.
+            other (Union[Tensor, int, float]): The second Tensor to be selected.
+                If other is a Tensor, its shape should be or be braodcast to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+                If other is int or float, it will be casted to int32 or float32, and broadcast to the same shape as y.
                 There must be at least one Tensor between x and y.
 
         Returns:
