@@ -137,8 +137,6 @@ void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option) {
                  << ", Graph name: " << graph->ToString();
     (void)option->insert(std::make_pair("ge.exec.inputReuseMemIndexes", "0"));
   }
-
-  (void)option->insert(std::make_pair("ge.featureBaseRefreshable", "1"));
 }
 
 void SetPassthroughGeOptions(bool is_global, OptionMap *options) {
