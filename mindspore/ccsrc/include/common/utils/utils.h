@@ -166,6 +166,7 @@ constexpr auto kAttrNeedRecordEvent = "need_record_event";
 constexpr auto kAttrStreamId = "stream_id";
 constexpr auto kAttrRecomputeId = "recompute_id";
 constexpr auto kAttrRecordEvent = "record_event";
+constexpr auto kAttrAccumulatedAttention = "AccumulatedAttention";
 constexpr auto kAttrWaitEvent = "wait_event";
 constexpr auto kAttrRecordEventStream = "record_event_stream";
 constexpr auto kAttrWaitEventStream = "wait_event_stream";

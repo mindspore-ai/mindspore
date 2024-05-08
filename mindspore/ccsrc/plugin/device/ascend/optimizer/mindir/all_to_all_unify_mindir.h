@@ -32,6 +32,7 @@ class NeighborExchangeUnifyMindIR : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
+  CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange) const;
   std::vector<std::string> MustExistPrimitiveName() const override;
 };
 

@@ -32,21 +32,6 @@ namespace {
 constexpr size_t kCNodePrimitiveIdx = 0;
 constexpr size_t kAllToAllInputIdx = 1;
 
-void ChangePrimitiveToAllToAllV(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto neighbor_exchange = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(neighbor_exchange);
-
-  if (neighbor_exchange->size() == kCNodePrimitiveIdx) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Inputs should not be empty for cnode " << node->DebugString()
-                               << trace::DumpSourceLines(neighbor_exchange);
-  }
-
-  auto prim = GetValueNode<PrimitivePtr>(neighbor_exchange->input(kCNodePrimitiveIdx));
-  MS_EXCEPTION_IF_NULL(prim);
-  prim->Named::operator=(Named(kAllToAllvOpName));
-}
-
 uint32_t GetRankSize(const std::string &group) {
   uint32_t rank_size;
   if (!CommManager::GetInstance().GetRankSize(group, &rank_size)) {
@@ -95,6 +80,60 @@ CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const C
                                split_v);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), split_v);
   return split_v;
+}
+
+CNodePtr NeighborExchangeUnifyMindIR::CreateAllToAllvNode(const FuncGraphPtr &graph,
+                                                          const CNodePtr &neighbor_exchange) const {
+  std::string group = common::AnfAlgo::GetNodeAttr<std::string>(neighbor_exchange, kAttrGroup);
+  std::vector<uint32_t> group_rank_ids =
+    common::AnfAlgo::HasNodeAttr(kAttrGroupRankIds, neighbor_exchange)
+      ? common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(neighbor_exchange, kAttrGroupRankIds)
+      : std::vector<uint32_t>();
+  std::vector<int64_t> send_rank_ids =
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange, kAttrSendRankIds);
+  std::vector<int64_t> recv_rank_ids =
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange, kAttrRecvRankIds);
+
+  int64_t send_count = send_rank_ids.size(), recv_count = recv_rank_ids.size();
+  auto tuple_input = neighbor_exchange->input(1);
+  std::vector<AnfNodePtr> split_outputs;
+  CreateMultipleOutputsOfAnfNode(graph, tuple_input, static_cast<size_t>(send_count), &split_outputs);
+  if (split_outputs.empty()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The node " << tuple_input->DebugString()
+                               << " should have at least one output, but got 0." << trace::DumpSourceLines(tuple_input);
+  }
+  std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllvOpName))};
+  (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs.begin(), split_outputs.end());
+  auto all_to_all_v = NewCNode(all_to_all_v_input, graph);
+  MS_EXCEPTION_IF_NULL(all_to_all_v);
+
+  auto single_shape = AnfAlgo::GetOutputDetailShape(split_outputs[0], 0UL);
+  auto single_type = common::AnfAlgo::GetOutputInferDataType(split_outputs[0], 0UL);
+  std::vector<TypeId> dtypes(recv_count, single_type);
+  std::vector<BaseShapePtr> shapes(recv_count, single_shape);
+  common::AnfAlgo::SetSingleOutputTypeAndDetailShape(dtypes, shapes, all_to_all_v.get());
+
+  common::AnfAlgo::SetNodeAttr(kAttrSendRankIds, MakeValue<std::vector<int64_t>>(send_rank_ids), all_to_all_v);
+  common::AnfAlgo::SetNodeAttr(kAttrRecvRankIds, MakeValue<std::vector<int64_t>>(recv_rank_ids), all_to_all_v);
+  common::AnfAlgo::SetNodeAttr(kAttrGroup, MakeValue<std::string>(group), all_to_all_v);
+  common::AnfAlgo::SetNodeAttr(kAttrGroupRankIds, MakeValue<std::vector<uint32_t>>(group_rank_ids), all_to_all_v);
+
+  auto neighbor_exchange_prim = GetCNodePrimitive(neighbor_exchange);
+  MS_EXCEPTION_IF_NULL(neighbor_exchange_prim);
+  if (neighbor_exchange_prim->HasAttr(parallel::COMM_REUSE) &&
+      GetValue<bool>(neighbor_exchange_prim->GetAttr(parallel::COMM_REUSE))) {
+    auto all_to_all_v_prim = GetCNodePrimitive(all_to_all_v);
+    MS_EXCEPTION_IF_NULL(all_to_all_v_prim);
+    (void)all_to_all_v_prim->AddAttr(parallel::COMM_REUSE, MakeValue(true));
+  }
+
+  if (neighbor_exchange_prim->HasAttr("FLASH_INDEX")) {
+    auto flash_index = GetValue<std::string>(neighbor_exchange_prim->GetAttr("FLASH_INDEX"));
+    auto all_to_all_v_prim = GetCNodePrimitive(all_to_all_v);
+    MS_EXCEPTION_IF_NULL(all_to_all_v_prim);
+    (void)all_to_all_v_prim->AddAttr("FLASH_INDEX", MakeValue<std::string>(flash_index));
+  }
+  return all_to_all_v;
 }
 
 CNodePtr AllToAllUnifyMindIR::CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all,
@@ -193,8 +232,10 @@ const AnfNodePtr NeighborExchangeUnifyMindIR::Process(const FuncGraphPtr &graph,
                                                       const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  ChangePrimitiveToAllToAllV(node);
-  return node;
+  auto neighbor_exchange = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(neighbor_exchange);
+  auto all_to_all_v = CreateAllToAllvNode(graph, neighbor_exchange);
+  return all_to_all_v;
 }
 
 std::vector<std::string> AllToAllUnifyMindIR::MustExistPrimitiveName() const {

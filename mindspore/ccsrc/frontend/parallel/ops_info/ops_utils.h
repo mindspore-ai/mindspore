@@ -122,6 +122,7 @@ constexpr char AUTO_PARALLEL_RUN_ONCE_ONLY[] = "auto_parallel_run_once_only";
 constexpr char SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY[] = "semi_auto_parallel_run_once_only";
 constexpr char CHECK_SET_STRATEGY_VALID_ONCE_ONLY[] = "check_set_strategy_valid_once_only";
 constexpr char REPEATED_NUM_IN_DEV_MATRIX_RIGHT[] = "repeated_num_in_dev_matrix_right_";
+constexpr char FLASH_SP_RUN_ONCE_ONLY[] = "FLASH_SP_RUN_ONCE_ONLY";
 constexpr char IN_STRATEGY[] = "in_strategy";
 constexpr char OUT_STRATEGY[] = "out_strategy";
 constexpr char LAYOUT[] = "layout";
@@ -332,6 +333,8 @@ constexpr char NEXT_TOKENS[] = "next_tokens";
 constexpr char INNER_PRECISE[] = "inner_precise";
 constexpr char INPUT_LAYOUT[] = "input_layout";
 constexpr char SPARSE_MODE[] = "sparse_mode";
+constexpr char ENABLE_RING_ATTENTION[] = "enable_ring_attention";
+constexpr char FLASH_INDEX[] = "FLASH_INDEX";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";

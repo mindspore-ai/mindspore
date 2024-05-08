@@ -47,7 +47,9 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
   int64_t input_layout() { return input_layout_; }
+  int64_t s1_split_num() { return s1_split_num_; }
   bool kv_split() { return kv_split_; }
+  int64_t head_num() { return head_num_; }
   bool real_shift_have_s1_dim() { return real_shift_have_s1_dim_; }
   bool real_shift_have_batch_dim() { return real_shift_have_batch_dim_; }
   bool is_attn_mask_compressed() { return is_attn_mask_compressed_; }
@@ -56,6 +58,7 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   std::vector<bool> is_input_passed() { return is_input_passed_; }
   size_t GetStrategyRealIndex(size_t index);
   Status InitAttrs();
+  RankList GetSPRankList();
 
  protected:
   Status InferForwardCommunication() override { return SUCCESS; }
@@ -73,7 +76,9 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   Status InitQKVTensorMap();
   Status InitInputsTensorMap();
   Status InitSplittableInputs();
+  Status InitAttnMaskSplittableInputs();
   Status InitExpectedStrategies();
+  Status InitAttnMaskStrategies();
   Status InitQKVHeadAndSeqDimFromInputLayout();
   std::vector<int64_t> GetSplitIdAndRank();
   std::tuple<int64_t, int64_t> GetAttentionMaskAttrs(const int64_t split_id, const int64_t split_num);
@@ -103,6 +108,7 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   int64_t n1_split_num_;
   int64_t n2_split_num_;
   int64_t s1_split_num_;
+  int64_t s2_split_num_;
   int64_t dev_matrix_batch_dim_;
   int64_t dev_matrix_n1_dim_;
   int64_t dev_matrix_s1_dim_;
@@ -111,6 +117,7 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   bool attn_mask_have_batch_dim_ = false;   // true if attn_mask have batch dim.
   bool attn_mask_have_n1_dim_ = false;      // true if attn_mask have n1 dim.
   bool enable_load_balance_ = false;
+  bool enable_ring_attention_ = false;
   int64_t input_layout_;  // "BSH": 0; "BNSD": 1;
   int64_t sparse_mode_;
   bool kv_split_ = false;
