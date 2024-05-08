@@ -152,6 +152,13 @@ class FuncGraphBuilder {
   static AbstractBasePtr DoInferAndCheck(const ValuePtr &callable_value,
                                          const std::vector<AbstractBasePtr> &input_abs_list);
 
+  CNodePtr DoPrimitiveInferAndCheck(const PrimitivePtr &primitive, const AnfNodePtrList &input_node_list,
+                                    const AbstractBasePtrList &args_abs_list);
+  CNodePtr AddPrimitiveCNode(const PrimitivePtr &primitive, const AnfNodePtrList &input_node_list,
+                             const AbstractBasePtrList &args_abs_list);
+
+  static AbstractBasePtr GetAbstractOf(const AnfNodePtr &node);
+
   py::object TryToAddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj);
 
   FuncGraphPtr graph_{nullptr};
