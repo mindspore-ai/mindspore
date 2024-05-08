@@ -53,8 +53,18 @@ BaseShapePtr WeightQuantBatchMatmulFuncImpl::InferShape(const PrimitivePtr &prim
 
   ValuePtr transpose_x_ptr = input_args[kInputTransposeX]->GetValue();
   ValuePtr transpose_weight_ptr = input_args[kInputTransposeWeight]->GetValue();
-  bool transpose_x = GetValue<bool>(transpose_x_ptr);
-  bool transpose_weight = GetValue<bool>(transpose_weight_ptr);
+  auto transpose_x_any = GetScalarValue<bool>(transpose_x_ptr);
+  if (!transpose_x_any.has_value()) {
+    MS_LOG(EXCEPTION) << "For '" << prim_name
+                      << "', input 'transpose_x' has no value:" << input_args[kInputTransposeX]->ToString();
+  }
+  bool transpose_x = transpose_x_any.value();
+  auto transpose_weight_any = GetScalarValue<bool>(transpose_weight_ptr);
+  if (!transpose_weight_any.has_value()) {
+    MS_LOG(EXCEPTION) << "For '" << prim_name
+                      << "', input 'transpose_weight' has no value:" << input_args[kInputTransposeWeight]->ToString();
+  }
+  bool transpose_weight = transpose_weight_any.value();
 
   auto x_shp = x_shape_map[kShape];
   auto weight_shp = weight_shape_map[kShape];
