@@ -7,6 +7,19 @@
 "mindspore/tests/"                                                                                      "missing-docstring"
 "mindspore/tests/"                                                                                      "import-self"
 "mindspore/"                                                                                            "consider-using-in"
+"mindspore/mindspore/python/mindspore/ops/auto_generate/"                                                          "trailing-whitespace"
+"mindspore/mindspore/python/mindspore/ops/auto_generate/"                                                          "line-too-long"
+"mindspore/mindspore/python/mindspore/ops/auto_generate/"                                                          "wildcard-import"
+"mindspore/mindspore/python/mindspore/ops/auto_generate/"                                                          "empty-docstring"
+"mindspore/mindspore/python/mindspore/ops/auto_generate/"                                                          "function-redefined"
+"mindspore/mindspore/python/mindspore/ops/auto_generate/"                                                          "redefined-outer-name"
+"mindspore/mindspore/python/mindspore/ops/auto_generate/"                                                          "unused-wildcard-import"
+"mindspore/mindspore/python/mindspore/ops/auto_generate/"                                                          "super-init-not-called"
+"mindspore/mindspore/python/mindspore/ops/auto_generate/"                                                          "useless-super-delegation"
+"mindspore/mindspore/python/mindspore/ops/auto_generate/"                                                          "unused-import"
+"mindspore/mindspore/python/mindspore/ops/auto_generate/"                                                          "wrong-import-order"
+"mindspore/mindspore/python/mindspore/ops/auto_generate/"                                                          "dangerous-default-value"
+
 
 # Mindspore
 "mindspore/mindspore/python/mindspore/_check_deps_version.py"                                                            "broad-except"
