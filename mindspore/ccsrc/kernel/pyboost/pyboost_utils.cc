@@ -45,6 +45,7 @@ void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, const Ab
 
 void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, std::vector<tensor::BaseTensorPtr> *outputs) {
   auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
+  output_tensor->set_need_pipeline_sync(true);
   (void)outputs->emplace_back(output_tensor);
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
 }

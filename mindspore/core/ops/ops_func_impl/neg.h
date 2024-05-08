@@ -22,7 +22,12 @@
 
 namespace mindspore {
 namespace ops {
-class MIND_API NegFuncImpl : public EltwiseOpFuncImpl {};
+class MIND_API NegFuncImpl : public EltwiseOpFuncImpl {
+ public:
+  // simply infer
+  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
 

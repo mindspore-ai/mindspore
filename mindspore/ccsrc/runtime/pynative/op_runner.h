@@ -31,6 +31,7 @@ struct OpRunnerInfo {
   const abstract::AbstractBasePtrList &inputs_abs;
   const std::vector<InputType> &inputs_mask;
   abstract::AbstractBasePtr output_abs;
+  ValueSimpleInfoPtr output_value_simple_info{nullptr};
 };
 
 class OpRunner {
