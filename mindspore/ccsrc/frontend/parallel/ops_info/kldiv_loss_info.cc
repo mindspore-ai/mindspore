@@ -117,7 +117,7 @@ Status KLDivLossInfo::InferForwardCommunication() {
     MS_LOG(ERROR) << "Infer group failed";
     return FAILED;
   }
-  if (group_list_.empty()) {
+  if (group_list_.empty() || group_list_.front().GetDevNum() <= kSizeOne) {
     MS_LOG(INFO) << name_ << ": Forward all reduce is not required";
     return SUCCESS;
   }
