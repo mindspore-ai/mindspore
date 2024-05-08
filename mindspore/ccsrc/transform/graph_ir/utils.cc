@@ -87,9 +87,9 @@ OpAdapterPtr FindAdapter(const std::string &name, bool train) {
   std::set<std::string> cpu_only_ops{kRealMakeTupleOpName, kRealTupleGetItemOpName};
   auto iter = cpu_only_ops.find(name);
   if (iter != cpu_only_ops.end()) {
-    MS_LOG(WARNING) << "Can't find OpAdapter for " << name;
-  } else {
     MS_LOG(INFO) << "Can't find OpAdapter for " << name;
+  } else {
+    MS_LOG(WARNING) << "Can't find OpAdapter for " << name;
   }
 
   return nullptr;
@@ -342,6 +342,7 @@ GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options) {
 
 void SetGraphRunner(const GraphRunnerPtr &runner) { DfGraphManager::GetInstance().SetGraphRunner(runner); }
 void ClearGraph() { DfGraphManager::GetInstance().ClearGraph(); }
+
 Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options, const bool &is_cloud,
                 const bool &need_aoe) {
   auto ret = DfGraphManager::GetInstance().AddGraph(name, graph, options, is_cloud);
