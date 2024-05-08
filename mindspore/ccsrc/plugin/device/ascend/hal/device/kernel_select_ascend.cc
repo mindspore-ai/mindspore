@@ -467,15 +467,6 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
     output_formats = cand_format.at(kFirstItem).second;
     input_reshape_types.assign(input_num, "");
     output_reshape_types.assign(output_num, "");
-    if (kernel_type == AICPU_KERNEL) {
-      for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel); i++) {
-        auto input_format = AnfAlgo::GetPrevNodeOutputFormat(kernel, i);
-        if (!transform::AclHelper::CheckDefaultSupportFormat(input_format)) {
-          MS_LOG(EXCEPTION) << "Aicpu kernel input not support this format: " << input_format
-                            << ", kernel: " << kernel->fullname_with_scope() << ", input idx: " << i;
-        }
-      }
-    }
   }
 
   std::vector<TypeId> input_types;
