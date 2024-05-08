@@ -49,6 +49,7 @@ def _check_param_value(betas, eps, weight_decay, lr, amsgrad, maximize, prim_nam
     validator.check_value_type("amsgrad", amsgrad, [bool], prim_name)
     validator.check_value_type("maximize", maximize, [bool], prim_name)
 
+
 class AdamW(Optimizer):
     r"""
     Implements Adam Weight Decay algorithm.
