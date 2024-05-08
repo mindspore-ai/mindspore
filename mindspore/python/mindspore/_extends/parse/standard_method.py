@@ -1413,10 +1413,6 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
         >>> print(output)
         [0 3]
     """
-    ndim = x.ndim
-    if ndim < 2:
-        const_utils.raise_value_error(
-            'diagonal requires an array of at least two dimensions')
     return F.diagonal(x, offset, axis1, axis2)
 
 
@@ -2104,8 +2100,6 @@ def _count_axes(size, input_shape, shape_input):
         element = size[i]
         if element != input_shape[i] and element == 1:
             axes.append(i)
-        elif element != input_shape[i]:
-            raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_input}.")
     return axes
 
 
@@ -2116,9 +2110,8 @@ def sum_to_size(input, *size):
     if len(size) == 1 and isinstance(size[0], tuple):
         size = size[0]
     shape_input = input.shape
-    _check_sum_to_size(size, input.ndim, shape_input)
     if len(size) < input.ndim:
-        pre_axis = tuple(axis for axis in range(input.ndim - len(size)))
+        pre_axis = tuple(range(input.ndim - len(size)))
         input = input.sum(pre_axis)
 
     axes = _count_axes(size, input.shape, shape_input)
@@ -2196,7 +2189,6 @@ def repeat(x, repeats, axis=None):
         axis = 0
     if not isinstance(axis, int):
         const_utils.raise_type_error('axes should be integers')
-    check_axis_in_range(axis, x.ndim)
     axis = axis + x.ndim if axis < 0 else axis
 
     if len(repeats) == 1:
@@ -2340,18 +2332,12 @@ def cast_to_bool(data):
 def bool_func(*data):
     """Implementation of `bool`."""
     data_len = len(data)
-    if data_len >= 2:
-        const_utils.raise_type_error("bool() requires 0 or 1 arguments.")
     if data_len == 0:
         return False
     data = data[0]
     if isinstance(data, (Tensor, Tensor_)):
-        tensor_shape = F.shape(data)
-        tensor_shape_len = len(tensor_shape)
-        if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
-            data = F.cast(data, mstype.bool_)
-            return TensorToScalar()(data)
-        raise ValueError("The truth value of an array with more than one element is ambiguous.")
+        data = F.cast(data, mstype.bool_)
+        return TensorToScalar()(data)
     if not F.isconstant(data):
         if hasattr(data, "__bool__"):
             return data.__bool__()

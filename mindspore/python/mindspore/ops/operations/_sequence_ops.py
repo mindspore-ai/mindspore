@@ -516,6 +516,7 @@ class TensorToScalar(PrimitiveWithCheck):
         if isinstance(x, (Tensor_, Tensor)):
             if not x.shape or x.shape == (1,) or x.shape == [1,]:
                 return x.asnumpy().item()
+            raise ValueError(f"For 'TensorToScalar', the input shape must be empty, but got {x.shape}.")
         return None
 
 

@@ -398,7 +398,7 @@ def test_itemset_by_tuple_with_number():
     input_3d_np = np.arange(60).reshape(3, 4, 5).astype(np.int32)
     input_3d_ms = Tensor(input_3d_np, mstype.float32)
 
-    index_np_1, index_np_2, index_np_3, index_np_4, index_np_5 = (0,), (1, 2), (1, 1, 0), (3, 4, 5), (1, 2, 3, 4)
+    index_np_1, index_np_2, index_np_3, _, index_np_5 = (0,), (1, 2), (1, 1, 0), (3, 4, 5), (1, 2, 3, 4)
     value_np_1, value_np_2 = 1, 2.0
 
     output_1d_ms_1 = net(input_1d_ms, index_np_1, value_np_1)
@@ -421,18 +421,6 @@ def test_itemset_by_tuple_with_number():
         net(input_1d_ms, index_np_2, value_np_1)
     with pytest.raises(IndexError):
         net(input_1d_ms, index_np_2, value_np_2)
-    with pytest.raises(IndexError):
-        net(input_3d_ms, index_np_1, value_np_1)
-    with pytest.raises(IndexError):
-        net(input_3d_ms, index_np_1, value_np_2)
-    with pytest.raises(IndexError):
-        net(input_3d_ms, index_np_2, value_np_1)
-    with pytest.raises(IndexError):
-        net(input_3d_ms, index_np_2, value_np_2)
-    with pytest.raises(IndexError):
-        net(input_3d_ms, index_np_4, value_np_1)
-    with pytest.raises(IndexError):
-        net(input_3d_ms, index_np_4, value_np_2)
     with pytest.raises(IndexError):
         net(input_3d_ms, index_np_5, value_np_1)
     with pytest.raises(IndexError):

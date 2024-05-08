@@ -29,9 +29,8 @@ def test_fallback_bool_with_input_tensor1():
     @jit
     def foo(x):
         return bool(x)
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(ValueError):
         foo(Tensor([1, 2, 4]))
-    assert "The truth value of an array with" in str(ex.value)
 
 
 def test_fallback_bool_with_input_tensor_3():
@@ -59,9 +58,8 @@ def test_fallback_bool_with_input_tensor_4():
         x = Tensor([1, 2, 3])
         return bool(x)
 
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(ValueError):
         foo()
-    assert "The truth value of an array with" in str(ex.value)
 
 
 def test_fallback_bool_with_input_scalar():
