@@ -39,10 +39,6 @@ mindspore.ops.CustomRegOp
             - **TypeError** - `value_type` 既不是str也不是None。
             - **TypeError** - `default_value` 既不是str也不是None。
 
-        教程样例：
-            - `自定义算子（基于Custom表达） - aicpu类型的自定义算子开发
-              <https://mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html#aicpu类型的自定义算子开发>`_
-
     .. py:method:: dtype_format(*args)
 
         指定 :class:`mindspore.ops.Custom` 的 `func` 参数的每个输入Tensor和输出Tensor所支持的数据类型和数据格式。正如上面给出的样例，该函数应在 `input` 和 `output` 函数之后被调用。
@@ -53,17 +49,9 @@ mindspore.ops.CustomRegOp
         异常：
             - **ValueError** - `args` 的长度不等于输入Tensor和输出Tensor数目的总和。
 
-        教程样例：
-            - `自定义算子（基于Custom表达） - aicpu类型的自定义算子开发
-              <https://mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html#aicpu类型的自定义算子开发>`_
-
     .. py:method:: get_op_info()
 
         将生成的注册信息以字典类型返回。正如上面给出的样例， `CustomRegOp` 实例最后调用该函数。
-
-        教程样例：
-            - `自定义算子（基于Custom表达） - aicpu类型的自定义算子开发
-              <https://mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html#aicpu类型的自定义算子开发>`_
 
     .. py:method:: input(index=None, name=None, param_type="required", **kwargs)
 
@@ -85,10 +73,6 @@ mindspore.ops.CustomRegOp
             - **TypeError** - `name` 既不是str也不是None。
             - **TypeError** - `param_type` 既不是str也不是None。
 
-        教程样例：
-            - `自定义算子（基于Custom表达） - aicpu类型的自定义算子开发
-              <https://mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html#aicpu类型的自定义算子开发>`_
-
     .. py:method:: output(index=None, name=None, param_type="required", **kwargs)
 
         指定 :class:`mindspore.ops.Custom` 的 `func` 参数的输出Tensor信息。每次调用该函数都会产生一个输出Tensor信息，也就是说，如果 `func` 有两个输出Tensor，那么该函数应该被连续调用两次。输出Tensor信息将生成为一个字典：{"index": `index`, "name": `name`, "param_type": `param_type`}。
@@ -109,10 +93,6 @@ mindspore.ops.CustomRegOp
             - **TypeError** - `name` 既不是str也不是None。
             - **TypeError** - `param_type` 既不是str也不是None。
 
-        教程样例：
-            - `自定义算子（基于Custom表达） - aicpu类型的自定义算子开发
-              <https://mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html#aicpu类型的自定义算子开发>`_
-
     .. py:method:: target(target=None)
 
         指定当前注册信息所对应的target。
@@ -122,7 +102,3 @@ mindspore.ops.CustomRegOp
 
         异常：
             - **TypeError** - `target` 既不是str也不是None。
-
-        教程样例：
-            - `自定义算子（基于Custom表达） - aicpu类型的自定义算子开发
-              <https://mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html#aicpu类型的自定义算子开发>`_
