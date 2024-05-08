@@ -172,7 +172,7 @@ Status GridSampler2DInfo::InferForwardCommunication() {
   if (CreateGroupByTensorMap(tmp_group_tensor_map, &group_list) != SUCCESS) {
     ReportError(name_ + ": Create group failed.");
     return FAILED;
-  } else if (group_list.empty()) {
+  } else if (group_list.empty() || group_list.front().GetDevNum() <= kSizeOne) {
     MS_LOG(INFO) << name_ << " : Forward all reduce is not required.";
     return SUCCESS;
   } else {

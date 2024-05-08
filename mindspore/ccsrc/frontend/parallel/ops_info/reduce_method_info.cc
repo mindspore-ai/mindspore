@@ -192,7 +192,7 @@ Status ReduceMethod::InferForwardCommunication() {
     ReportError(name_ + ": Create group failed.");
     return FAILED;
   }
-  if (!forward_group.empty()) {
+  if (!forward_group.empty() && forward_group.front().GetDevNum() > kSizeOne) {
     Operator op = CreateAllReduceOp(reduce_method_, forward_group[0].name());
     forward_op_.push_back(op);
     std::string group_name = forward_group[0].name();
