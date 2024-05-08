@@ -33,13 +33,14 @@
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/operator/composite/composite.h"
 #include "frontend/expander/bprop/bprop.h"
+#include "frontend/expander/bprop/bprop_meta_func_graph.h"
+#include "include/common/utils/primitive_utils.h"
 #include "include/common/utils/utils.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
 #include "utils/info.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "utils/anf_utils.h"
-#include "frontend/optimizer/ad/bprop_utils.h"
 #include "frontend/expander/utils.h"
 
 namespace mindspore {
@@ -48,6 +49,54 @@ KPrim g_k_prims;
 
 namespace {
 constexpr char kLiftedUserDataKey[] = "lifted_from_fv";
+
+FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources, const CNodePtr &cnode) {
+  // Set a child scope named "grad'PrimitiveName'" for the bprop function,
+  // and add "Gradients" to the front.
+  static const std::string gradients_scope = "Gradients/";
+  static const std::string grad_op_child_scope_prefix = "/grad";
+  MS_EXCEPTION_IF_NULL(prim);
+  const auto &prim_name = prim->name();
+  auto scope = std::make_shared<Scope>(gradients_scope + ScopeManager::GetInstance().GetCurrentScope()->name() +
+                                       grad_op_child_scope_prefix + prim_name);
+  ScopeGuard scope_guard(scope);
+
+  // Firstly we get bprop from expander. If failed, try mindir. If still failed, try the python bprop function.
+  FuncGraphPtr func_graph = expander::bprop::GetBpropMetaFuncGraph(prim, cnode);
+  if (func_graph != nullptr) {
+    return func_graph;
+  }
+
+  py::function fn;
+  if (prim->is_base()) {
+    fn = GetBpropFunction(prim_name);
+  } else if (mindspore::ops::IsPrimitiveFunction(prim_name)) {
+    fn = GetBpropFunction(prim_name);
+  } else if (prim->isa<PrimitivePy>()) {
+    fn = prim->cast_ptr<PrimitivePy>()->GetBpropFunction();
+    if (py::isinstance<py::none>(fn)) {
+      fn = GetBpropFunction(prim_name);
+    }
+  } else {
+    MS_LOG(INTERNAL_EXCEPTION) << "Unexpected prim: " << prim->ToString();
+  }
+  if (!fn || py::isinstance<py::none>(fn)) {
+    MS_LOG(DEBUG) << "Fail to find bprop function for " << prim_name << ". fn: " << py::str(fn);
+    return nullptr;
+  }
+  func_graph = parse::ParsePythonCode(fn);
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Fail to parse bprop function for " << prim_name << ".";
+    return nullptr;
+  }
+  auto bprop_flag = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_BACKPROP);
+  if (bprop_flag) {
+    func_graph->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
+  }
+  pipeline::ResourceBasePtr res = (resources != nullptr) ? resources : std::make_shared<pipeline::Resource>();
+  (void)parse::ResolveFuncGraph(func_graph, res, false);
+  return func_graph;
+}
 }  // namespace
 
 FuncGraphPtr KPrim::GetPrimBprop(const PrimitivePtr &prim, const ValueNodePtr &value_node,
