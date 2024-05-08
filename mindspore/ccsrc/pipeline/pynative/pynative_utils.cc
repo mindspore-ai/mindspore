@@ -568,6 +568,8 @@ std::pair<TypePtr, TypeId> Common::GetTypeFromValue(const ValuePtr &v) {
     return std::make_pair(v->type(), kObjectTypeTuple);
   } else if (v->isa<ValueList>()) {
     return std::make_pair(v->type(), kObjectTypeList);
+  } else if (v->isa<None>()) {
+    return std::make_pair(kTypeNone, kMetaTypeNone);
   } else {
     return std::make_pair(v->type(), v->type()->object_type());
   }
