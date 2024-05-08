@@ -568,6 +568,8 @@ std::pair<TypePtr, TypeId> Common::GetTypeFromValue(const ValuePtr &v) {
     return std::make_pair(v->type(), kObjectTypeTuple);
   } else if (v->isa<ValueList>()) {
     return std::make_pair(v->type(), kObjectTypeList);
+  } else if (v->isa<None>()) {
+    return std::make_pair(kTypeNone, kMetaTypeNone);
   } else {
     return std::make_pair(v->type(), v->type()->object_type());
   }
@@ -1095,8 +1097,7 @@ ValuePtr Common::CreateTensorByConstantValue(const ValuePtr &value) {
   return tensor_ptr;
 }
 
-namespace {
-void CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs) {
+void Common::CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(v);
   MS_EXCEPTION_IF_NULL(abs);
 
@@ -1120,6 +1121,7 @@ void CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs
   }
 }
 
+namespace {
 void ConvertSimpleInferInfoToAbstract(const OpGradInfoPtr &op_grad_info) {
   MS_EXCEPTION_IF_NULL(op_grad_info);
   // Get inputs abstract
@@ -1132,7 +1134,7 @@ void ConvertSimpleInferInfoToAbstract(const OpGradInfoPtr &op_grad_info) {
   op_grad_info->out_abs = TransformValueSimpleInfoToAbstract(*op_grad_info->output_value_simple_info);
 
   // Set abstract to tensor
-  CacheOutputAbstract(op_grad_info->out_value, op_grad_info->out_abs);
+  Common::CacheOutputAbstract(op_grad_info->out_value, op_grad_info->out_abs);
   MS_LOG(DEBUG) << "Get output abstract " << op_grad_info->out_abs->ToString();
 }
 }  // namespace
@@ -1621,7 +1623,8 @@ FrontendOpRunInfoPtr PyBoost::Init(const PrimitivePtr &prim, const py::list &arg
 void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const kernel::pyboost::OpPtr &op) {
   size_t size = op->outputs().size();
   if (size == kSizeOne) {
-    if (op->output_abs() != nullptr && !op->output_abs()->isa<abstract::AbstractSequence>()) {
+    if ((op->output_abs() != nullptr && !op->output_abs()->isa<abstract::AbstractSequence>()) ||
+        (op->output_value_simple_info() != nullptr && op->output_value_simple_info()->size == kSizeOne)) {
       op_run_info->real_out = op->outputs()[0];
       return;
     }

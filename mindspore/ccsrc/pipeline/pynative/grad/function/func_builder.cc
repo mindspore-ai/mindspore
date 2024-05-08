@@ -160,13 +160,21 @@ NodePtr FuncBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs)
   auto real_outputs = common::AnfAlgo::TransformVectorRefToMultiValue(outputs);
   MS_LOG(DEBUG) << "Get output value size " << real_outputs.size() << ", "
                 << PyNativeAlgo::Common::PrintDebugInfo(real_outputs);
+  if (op_runner_info.output_value_simple_info != nullptr) {
+    // Get output abstract
+    op_runner_info.output_abs = TransformValueSimpleInfoToAbstract(*op_runner_info.output_value_simple_info);
+  }
   ValuePtr value_result;
+  MS_EXCEPTION_IF_NULL(op_runner_info.output_abs);
   if (real_outputs.size() == kSizeOne && !op_runner_info.output_abs->isa<abstract::AbstractSequence>()) {
     value_result = real_outputs[kIndex0];
   } else {
     value_result = std::make_shared<ValueTuple>(std::move(real_outputs));
   }
-  MS_EXCEPTION_IF_NULL(op_runner_info.output_abs);
+  // Set abstract to tensor cache
+  if (op_runner_info.output_value_simple_info != nullptr) {
+    PyNativeAlgo::Common::CacheOutputAbstract(value_result, op_runner_info.output_abs);
+  }
   auto result = NewFuncNode(value_result, op_runner_info.output_abs, InputType::kOpOutput);
   return result;
 }

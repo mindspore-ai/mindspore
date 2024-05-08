@@ -87,6 +87,7 @@ struct Common {
   static size_t GetValueSize(const ValuePtr &v);
   static ValuePtr CreateTensorByConstantValue(const ValuePtr &value);
   static void CheckAndSetAbstract(const OpGradInfoPtr &op_grad_info);
+  static void CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs);
 
   template <typename T>
   static std::string PrintDebugInfo(std::vector<T> items, const std::string &info_header = "",
