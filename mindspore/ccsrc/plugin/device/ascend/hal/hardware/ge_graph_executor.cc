@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -462,13 +462,6 @@ void SetKernelInfo(const AnfNodePtr &node) {
   kernel_info->set_select_kernel_build_info(build_info);
 }
 
-std::string RemoveSuffix(const std::string &str, const std::string &suffix) {
-  if (str.size() >= suffix.size() && str.substr(str.size() - suffix.size()) == suffix) {
-    return str.substr(0, str.length() - suffix.length());
-  }
-  return str;
-}
-
 bool BuildFakeGraph(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
 #ifdef ENABLE_DUMP_IR
@@ -704,48 +697,18 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_inputs;
   std::vector<std::pair<AnfNodeWeakPtr, size_t>> need_update_input;
-  InputNameAndType input_names;
-  auto input_name_list = kernel_graph->user_data<transform::InputNameList>();
-  if (input_name_list) {
-    input_names = input_name_list->input_names;
+  std::vector<AnfNodeWeakPtr> ge_input_nodes;
+  auto ge_input_list = kernel_graph->user_data<transform::GEInputList>();
+  if (ge_input_list) {
+    ge_input_nodes = ge_input_list->ge_inputs;
   }
-  if (input_names.empty()) {
-    MS_LOG(INFO) << "Kernel graph: " << kernel_graph->graph_id() << " input data list is nullptr";
-    input_datas_[kernel_graph.get()] = {ge_inputs, need_update_input};
-    return;
-  }
-  auto parameters = FilterAllParameters(kernel_graph);
-  const auto &cur_inputs = kernel_graph->get_inputs();
-  size_t cur_inputs_index = 0;
-  for (auto [name, is_ref] : input_names) {
-    AnfNodePtr node = nullptr;
-    if (!is_ref) {
-      while (HasAbstractMonad(cur_inputs.at(cur_inputs_index))) {
-        cur_inputs_index++;
-      }
-      auto abs = cur_inputs.at(cur_inputs_index)->abstract();
-      MS_EXCEPTION_IF_NULL(abs);
-      while (abs->isa<abstract::AbstractSequence>()) {
-        cur_inputs_index++;
-        abs = cur_inputs.at(cur_inputs_index)->abstract();
-        MS_EXCEPTION_IF_NULL(abs);
-      }
-      node = cur_inputs.at(cur_inputs_index);
-      cur_inputs_index++;
-    } else {
-      auto iter = parameters.find(name);
-      if (iter == parameters.end()) {
-        MS_LOG(WARNING) << "Cannot find parameter " << name << " from kernel graph: " << kernel_graph->graph_id();
-        name = RemoveSuffix(name, "_temp");
-        iter = parameters.find(name);
-      }
-      if (iter != parameters.end()) {
-        node = iter->second;
-      } else {
-        MS_LOG(EXCEPTION) << "Cannot find parameter " << name << " from kernel graph: " << kernel_graph->graph_id();
-      }
+  for (const auto &node_wptr : ge_input_nodes) {
+    auto node = node_wptr.lock();
+    if (!node) {
+      MS_LOG(ERROR) << "Get node lock failed, kerne graph: " << kernel_graph->ToString();
+      continue;
     }
-    MS_EXCEPTION_IF_NULL(node);
+    auto name = node->fullname_with_scope();
     MS_LOG(INFO) << "Build input ge tensor: " << name << ", kernel graph: " << kernel_graph->graph_id();
     auto output_addr = AnfAlgo::GetMutableOutputAddr(node, 0, false);
     auto shapes = trans::GetRuntimePaddingShape(node, 0);
@@ -769,13 +732,6 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
     // Always keep the input node address consistent with the input tensor address.
     (void)need_update_input.emplace_back(node, ge_inputs.size());
     (void)ge_inputs.emplace_back(std::move(ge_tensor));
-  }
-  while (cur_inputs_index < cur_inputs.size() && HasAbstractMonad(cur_inputs.at(cur_inputs_index))) {
-    cur_inputs_index++;
-  }
-  if (cur_inputs_index != cur_inputs.size()) {
-    MS_LOG(WARNING) << "Not use all cur inputs, cur_inputs_index: " << cur_inputs_index
-                    << ", cur_inputs.size(): " << cur_inputs.size() << ", kernel graph: " << kernel_graph->graph_id();
   }
   input_datas_[kernel_graph.get()] = {ge_inputs, need_update_input};
   MS_LOG(INFO) << "BuildInputDataGeTensor finish.";

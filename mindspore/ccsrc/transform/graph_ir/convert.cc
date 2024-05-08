@@ -21,9 +21,7 @@
 #include <vector>
 
 #include "op_proto/inc/array_ops.h"
-#include "op_proto/inc/data_flow_ops.h"
 #include "op_proto/inc/elewise_calculation_ops.h"
-#include "op_proto/inc/math_ops.h"
 #include "op_proto/inc/save_ops.h"
 #include "op_proto/inc/state_ops.h"
 #include "include/common/debug/anf_ir_dump.h"
@@ -59,8 +57,7 @@
 #include "utils/symbolic.h"
 #include "utils/singleton.h"
 
-namespace mindspore {
-namespace transform {
+namespace mindspore::transform {
 using ::ge::Operator;
 using mindspore::kValueAny;
 using std::make_shared;
@@ -737,8 +734,6 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   int index = 0;
   std::vector<Operator> init_input;
   MS_EXCEPTION_IF_NULL(graph_manager_);
-  auto &infer_need_update_parameter_names =
-    Singleton<mindspore::device::ascend::InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
   // The format of Momentum's accum is updated according to format of Momentum's var, so here sort tensors to put
   // Momentum's accum parameter at last
   auto cmp = std::bind(ParamCompare, std::placeholders::_1, std::placeholders::_2, std::cref(params_),
@@ -791,17 +786,17 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     }
     if (as_ref_data) {
       StorageFormatConvertor::SetupStorageFormat(anf_graph_, node, desc);
-      auto variable = std::make_shared<RefData>(name);
-      MS_EXCEPTION_IF_NULL(variable);
-      (void)variable->update_output_desc_y(*desc);
-      (void)variable->update_input_desc_x(*desc);
-      (void)variable->set_attr_index(SizeToInt(ref_datas_.size()));
-      (void)ref_datas_.emplace_back(variable);
+      auto ref_data = std::make_shared<RefData>(name);
+      MS_EXCEPTION_IF_NULL(ref_data);
+      (void)ref_data->update_output_desc_y(*desc);
+      (void)ref_data->update_input_desc_x(*desc);
+      (void)ref_data->set_attr_index(SizeToInt(ref_datas_.size()));
+      (void)ref_datas_.emplace_back(ref_data);
       ref_data_names_.emplace_back(name);
-      // do not use read variable while variable sink
-      MS_LOG(DEBUG) << "InitParam, op_name = " << name << ", var = " << variable->GetName() << ".";
-      op_itor->second = variable;  // replace parameter with variable
-      vars_[name] = variable;      // prevent the variable operator from being freed
+      // do not use read ref_data while ref_data sink
+      MS_LOG(DEBUG) << "InitParam, op_name = " << name << ", var = " << ref_data->GetName() << ".";
+      op_itor->second = ref_data;  // replace parameter with ref_data
+      vars_[name] = ref_data;      // prevent the ref_data operator from being freed
     } else if (as_constant) {
       auto adpt_const = FindAdapter(kNameConst, training_);
       if (adpt_const == nullptr) {
@@ -814,6 +809,8 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       vars_[name] = const_op;
       op_itor->second = const_op;
     } else {
+      auto &infer_need_update_parameter_names =
+        Singleton<mindspore::device::ascend::InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
       // we need three variable ops for each graph with same name
       // build init subgraph
       auto adpt = FindAdapter(kNameParam, training_);
@@ -836,11 +833,60 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       DrawParamInitSubGraph(name, node);
     }
   }
+  ReplaceAllParameterToRefData();
   if (ref_mode_) {
     SetupParamInitSubGraph();
   } else {
     bool is_sink_size_repeat = InitLoopVar(&init_input);
     SetupParamInitSubGraph(tensors, &init_input, is_sink_size_repeat);
+  }
+}
+
+void DfGraphConvertor::ReplaceAllParameterToRefData() {
+  if (ref_mode_ && (ref_mode_type_ == RefModeFlag::kRefModeAll) && !export_air_) {
+    MS_LOG(INFO) << "Graph abs ref tenor to ref data, " << anf_graph_->ToString();
+    auto parameters = anf_graph_->parameters();
+    int64_t idx = 0;
+    for (const auto &param : parameters) {
+      auto op_itor = op_cache_.find(param.get());
+      if (op_itor != op_cache_.end() && op_itor->second->GetOpType() == kTypeRefData) {
+        MS_LOG(INFO) << "This process param has default, have been change to RefData: " << param->fullname_with_scope();
+        continue;
+      }
+      auto para = param->cast<ParameterPtr>();
+      MS_EXCEPTION_IF_NULL(para);
+      auto abs = para->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      if (!abs->isa<abstract::AbstractRefTensor>()) {
+        continue;
+      }
+      MS_EXCEPTION_IF_NULL(abs->BuildShape());
+      auto shape = abs->BuildShape()->GetShapeVector();
+      auto type = abs->BuildType()->type_id();
+      if (type == kObjectTypeTensorType) {
+        type = dyn_cast<TensorType>(abs->BuildType())->element()->type_id();
+      }
+      auto name = para->name();
+      if (name.empty()) {
+        name = "RefData_NULL_" + std::to_string(idx++);
+      }
+      auto ref_data = std::make_shared<RefData>(name);
+      MS_EXCEPTION_IF_NULL(ref_data);
+      auto desc = TransformUtil::GetGeTensorDesc(shape, type, SelectParamOriFormat(graph_manager_, para));
+      if (!desc) {
+        MS_LOG(ERROR) << "Create ge node desc failed, node name:" << name << ", shape: " << shape << ", type: " << type;
+        continue;
+      }
+      (void)ref_data->update_output_desc_y(*desc);
+      (void)ref_data->update_input_desc_x(*desc);
+      (void)ref_data->set_attr_index(SizeToInt(ref_datas_.size()));
+      (void)ref_datas_.emplace_back(ref_data);
+      ref_data_names_.emplace_back(name);
+      // do not use read ref_data while ref_data sink
+      MS_LOG(INFO) << "Change no default param: " << name << " to ref data. ";
+      op_itor->second = ref_data;  // replace parameter with ref_data
+      vars_[name] = ref_data;      // prevent the ref_data operator from being freed
+    }
   }
 }
 
@@ -1969,15 +2015,16 @@ OperatorPtr DfGraphConvertor::SetGraphInputsForNotVar(const AnfNodePtr &it, int6
   return op;
 }
 
-void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, InputNameAndType *input_names) {
+void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, AnfNodeWeakPtrList *ge_inputs) {
   MS_EXCEPTION_IF_NULL(inputs);
-  MS_EXCEPTION_IF_NULL(input_names);
+  MS_EXCEPTION_IF_NULL(ge_inputs);
   MS_LOG(INFO) << "IsNormalGraph=" << IsNormalGraph() << ", dataset_mode"
                << ConfigManager::GetInstance().dataset_mode();
   AddInputInDataSink(inputs);
   auto params = anf_graph_->parameters();
   MS_LOG(INFO) << "Parameters size " << params.size();
   int64_t index = 0;
+  std::set<std::string> name_records = {};
   for (auto &it : params) {
     auto name = std::static_pointer_cast<Parameter>(it)->name();
     OperatorPtr op;
@@ -1994,13 +2041,12 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, InputNameAn
       MS_LOG(INFO) << "add var input " << it->ToString() << ", index " << index;
       op = Convert(it);
       MS_EXCEPTION_IF_NULL(op);
-      auto iter =
-        std::find_if(input_names->begin(), input_names->end(), [op, name](const auto &p) { return p.first == name; });
-      if (iter != input_names->end()) {
+      if (name_records.count(name) != 0) {
         // two parameters have same ref_key
         MS_LOG(INFO) << "var input " << it->ToString() << " is already added";
         continue;
       }
+      (void)name_records.insert(name);
       UpdateConstOpDesc(it, vars_[name]);
       auto op_type = op->GetOpType();
       if (op_type == kTypeRefData) {
@@ -2013,12 +2059,7 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, InputNameAn
       }
       inputs->push_back(*op);
     }
-    auto op_type = op->GetOpType();
-    if (op_type == kTypeData) {
-      input_names->emplace_back(name, false);
-    } else if (op_type == kTypeRefData) {
-      input_names->emplace_back(name, true);
-    }
+    (void)ge_inputs->emplace_back(AnfNodeWeakPtr(it));
   }
   MS_LOG(INFO) << "Input size " << inputs->size();
 }
@@ -2048,7 +2089,7 @@ void DfGraphConvertor::AddInputInDataSink(vector<Operator> *inputs) {
     }
   }
   if (IsNormalGraph() && ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE && input != nullptr) {
-    inputs->emplace_back(*input);
+    (void)inputs->emplace_back(*input);
     MS_EXCEPTION_IF_NULL(anf_graph_);
     anf_graph_->set_flag(kGraphFlagHasGetNext, true);
   }
@@ -2115,8 +2156,7 @@ void DfGraphConvertor::FillEmptyInputsWithNoInputOp(std::vector<Operator> *input
   }
 }
 
-void DfGraphConvertor::SetupInputFormat(const FuncGraphManagerPtr &manager, const AnfNodePtr &node,
-                                        InputNameAndType *input_names) {
+void DfGraphConvertor::SetupInputFormat(const FuncGraphManagerPtr &manager, const AnfNodePtr &node) {
   if (!node->isa<Parameter>()) {
     return;
   }
@@ -2125,7 +2165,6 @@ void DfGraphConvertor::SetupInputFormat(const FuncGraphManagerPtr &manager, cons
   TypeId type;
   std::string format = kOpFormat_DEFAULT;
   if (para->has_default()) {
-    input_names->emplace_back(para->name(), true);
     auto value = para->default_param();
     MS_EXCEPTION_IF_NULL(value);
     auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
@@ -2134,7 +2173,6 @@ void DfGraphConvertor::SetupInputFormat(const FuncGraphManagerPtr &manager, cons
     type = tensor->data_type();
     format = SelectParamOriFormat(manager, para);
   } else {
-    input_names->emplace_back(para->name(), false);
     if (auto normal_shape_ptr = dyn_cast<abstract::Shape>(para->Shape()); normal_shape_ptr != nullptr) {
       shape = normal_shape_ptr->shape();
     } else if (!dyn_cast<abstract::NoShape>(para->Shape())) {
@@ -2171,7 +2209,7 @@ void DfGraphConvertor::GenFakeGraphInRefMode() {
   }
   auto manager = Manage(anf_graph_, true);
   MS_EXCEPTION_IF_NULL(manager);
-  InputNameAndType input_names;
+  std::vector<AnfNodeWeakPtr> ge_input_nodes = {};
   const auto &params = anf_graph_->parameters();
   for (auto &node : params) {
     MS_EXCEPTION_IF_NULL(node);
@@ -2180,10 +2218,11 @@ void DfGraphConvertor::GenFakeGraphInRefMode() {
     if (HasAbstractMonad(node) || abs->isa<abstract::AbstractSequence>()) {
       continue;
     }
-    SetupInputFormat(manager, node, &input_names);
+    SetupInputFormat(manager, node);
+    (void)ge_input_nodes.emplace_back(AnfNodeWeakPtr(node));
   }
-  auto input_name_list = std::make_shared<InputNameList>();
-  input_name_list->input_names = input_names;
+  auto input_name_list = std::make_shared<GEInputList>();
+  input_name_list->ge_inputs = ge_input_nodes;
   anf_graph_->set_user_data(input_name_list);
   for (auto &anf_node : params) {
     MS_EXCEPTION_IF_NULL(anf_node);
@@ -2289,9 +2328,9 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
 
   // set graph input according to the order from anf graph
   std::vector<Operator> inputs;
-  InputNameAndType input_names;
+  std::vector<AnfNodeWeakPtr> ge_input_nodes = {};
   if (ref_mode_ && !export_air_) {
-    SetGraphInputs(&inputs, &input_names);
+    SetGraphInputs(&inputs, &ge_input_nodes);
   } else {
     SetGraphInputs(&inputs);
   }
@@ -2330,9 +2369,9 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
       right->GetAttr(kTypeIndex, right_idx);
       return left_idx < right_idx;
     });
-    auto input_name_list = std::make_shared<InputNameList>();
+    auto input_name_list = std::make_shared<GEInputList>();
     MS_EXCEPTION_IF_NULL(input_name_list);
-    input_name_list->input_names = input_names;
+    input_name_list->ge_inputs = ge_input_nodes;
     anf_graph_->set_user_data(input_name_list);
   }
   MS_LOG(INFO) << "End BuildGraph, graph: " << anf_graph_->ToString();
@@ -4376,5 +4415,4 @@ std::map<int, std::string> GeOpConvertor::GetAclDynamicOutputNames(const AnfNode
   }
   return dyn_output_names;
 }
-}  // namespace transform
-}  // namespace mindspore
+}  // namespace mindspore::transform
