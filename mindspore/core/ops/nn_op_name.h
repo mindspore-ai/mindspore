@@ -154,6 +154,7 @@ constexpr auto kRmsNormGradOpName = "RmsNormGrad";
 constexpr auto kRNNTLossOpName = "RNNTLoss";
 constexpr auto kMatmulQkvOpName = "MatmulQkv";
 constexpr auto kAllFiniteOpName = "AllFinite";
+constexpr auto kMatmulFfnOpName = "MatmulFfn";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_NN_OP_NAME_H_

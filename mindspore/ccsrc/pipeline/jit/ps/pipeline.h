@@ -236,6 +236,8 @@ void FinalizeCluster();
 FuncGraphPtr DynamicObfuscateMindIR(const std::string &file_name, float obf_ratio, int branch_control_input,
                                     char *dec_key, const size_t key_len, const std::string &dec_mode);
 bool IsPhaseExport(const std::string &phase);
+void SwapCache(const tensor::TensorPtr &host, const tensor::TensorPtr &device, const tensor::TensorPtr &block_mapping,
+               const bool &type);
 }  // namespace pipeline
 }  // namespace mindspore
 

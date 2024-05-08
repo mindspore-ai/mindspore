@@ -59,6 +59,7 @@ GVAR_DEF(PrimitivePtr, kPrimLuUnpackGrad, std::make_shared<Primitive>("LuUnpackG
 GVAR_DEF(PrimitivePtr, kPrimTensorAdd, std::make_shared<Primitive>("TensorAdd"));
 GVAR_DEF(PrimitivePtr, kPrimAddV2, std::make_shared<Primitive>(kAddV2OpName));
 GVAR_DEF(PrimitivePtr, kPrimAddLayerNorm, std::make_shared<Primitive>("AddLayerNorm"));
+GVAR_DEF(PrimitivePtr, kPrimAddRmsNorm, std::make_shared<Primitive>("AddRmsNorm"));
 GVAR_DEF(PrimitivePtr, kPrimMatMulV2, std::make_shared<Primitive>("MatMulV2"));
 GVAR_DEF(PrimitivePtr, kPrimMatrixDiag, std::make_shared<Primitive>("MatrixDiag"));
 GVAR_DEF(PrimitivePtr, kPrimBatchMatMulV2, std::make_shared<Primitive>("BatchMatMulV2"));

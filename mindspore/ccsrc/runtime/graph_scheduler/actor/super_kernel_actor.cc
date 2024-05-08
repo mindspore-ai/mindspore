@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "include/backend/mem_reuse/mem_tracker.h"
 #include "runtime/graph_scheduler/actor/super_kernel_actor.h"
+#include "runtime/graph_scheduler/scheduler_helper.h"
 #include "runtime/graph_scheduler/actor/output_actor.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
 #include "runtime/graph_scheduler/actor/debug_actor.h"
@@ -106,6 +107,12 @@ void SuperKernelActor::Init() {
     // If the parameter has ref attribute and is directly used by the kernel in the graph, it needs to be copied.
     is_parameters_need_copy_[i] = true;
   }
+
+  if (enable_kbk_sub_graph_execute_) {
+    BuildKernelActors();
+    ParseInputIndex();
+    CalcRefCount();
+  }
 }
 
 size_t SuperKernelActor::FetchInputNodePosition(const AnfNodePtr &intput_node) {
@@ -158,32 +165,40 @@ void SuperKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const con
   }
 
   // Check device tensor store.
-  for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-    auto input_device_tensor = DeviceTensorStore::GetInstance()
-                                 .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
-                                 .get();
-    // Ge backend maybe nullptr.
-    if (input_device_tensor == nullptr) {
-      MS_LOG(DEBUG) << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()
-                    << " index:" << device_tensor_store_key.first;
-      continue;
-    }
+  if (!enable_kbk_sub_graph_execute_) {
+    for (auto &device_tensor_store_key : device_tensor_store_keys_) {
+      auto input_device_tensor = DeviceTensorStore::GetInstance()
+                                   .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
+                                   .get();
+      // Ge backend maybe nullptr.
+      if (input_device_tensor == nullptr) {
+        MS_LOG(DEBUG) << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()
+                      << " index:" << device_tensor_store_key.first;
+        continue;
+      }
 
-    size_t index = device_tensor_store_key.first;
-    if (index >= input_device_tensors_.size()) {
-      std::string error_info = "Invalid input index:" + std::to_string(index) +
-                               " total:" + std::to_string(input_device_tensors_.size()) +
-                               " for actor:" + GetAID().Name();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      size_t index = device_tensor_store_key.first;
+      if (index >= input_device_tensors_.size()) {
+        std::string error_info = "Invalid input index:" + std::to_string(index) +
+                                 " total:" + std::to_string(input_device_tensors_.size()) +
+                                 " for actor:" + GetAID().Name();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      }
+      input_device_tensors_[index] = input_device_tensor;
     }
-    input_device_tensors_[index] = input_device_tensor;
   }
 }
 
 void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph_);
+
+  if (enable_kbk_sub_graph_execute_) {
+    return RunGraphKernelByKernel(context);
+  }
+
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "", graph_->ToString());
+
   if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Invalid device context for super kernel actor:" + GetAID().Name());
   }
@@ -229,6 +244,100 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
     MS_LOG(WARNING) << "Need Profile Memory, end launch, actor name: " << GetAID().Name()
                     << ", kernel graph: " << graph_->ToString();
   }
+}
+
+void SuperKernelActor::FetchPersistentDeviceTensor() {
+  for (auto &device_tensor_store_key : device_tensor_store_keys_) {
+    auto input_device_tensor = DeviceTensorStore::GetInstance()
+                                 .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
+                                 .get();
+    // Ge backend maybe nullptr.
+    if (input_device_tensor == nullptr) {
+      MS_LOG(DEBUG) << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()
+                    << " index:" << device_tensor_store_key.first;
+      continue;
+    }
+
+    size_t index = device_tensor_store_key.first;
+    input_device_tensors_[index] = input_device_tensor;
+  }
+}
+
+void SuperKernelActor::RunGraphKernelByKernel(OpContext<DeviceTensor> *const context) {
+  // 1. Fetch input data
+  FetchInputDeviceTensor(context);
+  if (!already_fetch_persistent_device_tensor_) {
+    FetchPersistentDeviceTensor();
+    already_fetch_persistent_device_tensor_ = true;
+  }
+
+  // 2. Allocate somas memory for graph
+  if ((somas_info_ != nullptr) && (somas_info_->whole_block_size_ != 0)) {
+    MemoryManagerActor::GetInstance()->AllocateSomasMemory(somas_info_, device_contexts_[0], context, GetAID());
+  }
+
+  // 3. Launch all kernels
+  size_t kernel_num = kernel_actors_.size();
+  const auto &execution_order = graph_->execution_order();
+  for (size_t i = 0; i < kernel_num; i++) {
+    const auto &kernel_actor = kernel_actors_[i];
+    if (kernel_actor == nullptr) {
+      continue;
+    }
+    const auto &kernel = execution_order[i];
+    // 3.1 Prepare input data for kernel
+    const auto &iter = kernel_input_to_graph_input_indices_.find(kernel.get());
+    if (iter != kernel_input_to_graph_input_indices_.end()) {
+      std::vector<std::pair<size_t, size_t>> &input_to_graph_input_indices = iter->second;
+      for (const auto &item : input_to_graph_input_indices) {
+        kernel_actor->SetInputDeviceTensor(input_device_tensors_[item.second], item.first);
+      }
+    }
+
+    // 3.2 Allocate somas memory for this kernel
+    kernel_actor->SetSomasMemory(context);
+    // Async Run Infer or Launch
+
+    if (ActorDispatcher::enable_runtime_multi_pipeline() && !ActorDispatcher::enable_static_shape()) {
+      // If the kernel need user data and is dynamic, maybe need input kernel's output user data to infer shape, this
+      // value depend case can not handle in KernelTensor auto sync phase currently.
+      if (kernel_actor->kernel_mod_->need_user_data() && kernel_actor->has_dynamic_) {
+        MS_LOG(DEBUG) << "Begin wait runtime pipeline for kernel: " << kernel_actor->kernel_->fullname_with_scope();
+        if (!WaitRuntimePipelineFinish(context)) {
+          MS_LOG(INFO) << "Run failed and early stop for kernel: " << kernel_actor->kernel_->fullname_with_scope();
+          return;
+        }
+        MS_LOG(DEBUG) << "End wait runtime pipeline for kernel: " << kernel_actor->kernel_->fullname_with_scope();
+      }
+
+      // Push run task to pipeline.
+      // Note: dynamic value or static shape also need push task into infer actor to make sure correct kernel
+      // execution order.
+      Async(kernel_async_infer_aid_, &KernelAsyncInferActor::InferShape, context, kernel_actor.get());
+
+      // The computed depend kernel should wait output shape update after kernel launch.
+      if (kernel_actor->kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
+        MS_LOG(DEBUG) << "Begin wait runtime pipeline for kernel: " << kernel_actor->kernel_->fullname_with_scope();
+        if (!WaitRuntimePipelineFinish(context)) {
+          MS_LOG(INFO) << "Run failed and early stop for kernel: " << kernel_actor->kernel_->fullname_with_scope();
+          return;
+        }
+        MS_LOG(DEBUG) << "End wait runtime pipeline for kernel: " << kernel_actor->kernel_->fullname_with_scope();
+      }
+    } else {
+      Async(kernel_async_launch_aid_, &KernelAsyncLaunchActor::LaunchKernel, context, kernel_actor.get());
+    }
+  }
+
+  WaitRuntimePipelineFinish(context);
+
+  // 4. Free somas memory for graph
+  if ((somas_info_ != nullptr) && (somas_info_->whole_block_size_ != 0)) {
+    MemoryManagerActor::GetInstance()->FreeSomasMemory(somas_info_, device_contexts_[0], context, GetAID());
+  }
+
+  // Free input data.
+  PostRun(context);
 }
 
 void SuperKernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
@@ -502,6 +611,169 @@ void SuperKernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context)
   for (auto &copy_input_device_tensor : copy_input_device_tensors_) {
     if ((copy_input_device_tensor != nullptr) && (copy_input_device_tensor->GetPtr() != nullptr)) {
       device_contexts_[0]->device_res_manager_->FreeMemory(copy_input_device_tensor.get());
+    }
+  }
+}
+
+void SuperKernelActor::BuildKernelActors() {
+  MS_EXCEPTION_IF_NULL(graph_);
+  const auto &execution_order = graph_->execution_order();
+  size_t kernel_num = execution_order.size();
+  kernel_actors_.resize(kernel_num);
+
+  mindspore::HashMap<AnfNodePtr, KernelActor *> node_to_kernel_actor_;
+
+  // 1. Create kernel actor if need.
+  for (size_t i = 0; i < kernel_num; i++) {
+    const auto &kernel = execution_order[i];
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (IsSkippedKernelActor(kernel)) {
+      kernel_actors_[i] = nullptr;
+      continue;
+    }
+
+    if (!IsKernelActor(kernel, GraphExecutionStrategy::kPipeline)) {
+      MS_LOG(WARNING) << "Find not real cnode in execution order for graph: " << graph_->graph_id();
+      kernel_actors_[i] = nullptr;
+      continue;
+    }
+
+    auto ref_input_indexes = FetchModifiableRefInputIndex(kernel);
+    auto ref_output_indexes = FetchModifiableRefOutputIndex(kernel, graph_);
+    const auto &real_device_context = device::FetchRealDeviceContext(kernel, device_contexts_[0]);
+    MS_EXCEPTION_IF_NULL(real_device_context);
+    if (IsRpcActor(kernel)) {
+      MS_LOG(EXCEPTION) << "Can not launch a sub graph which contains rpc kernel by kbk.";
+    } else if (IsInnerControlFlowActor(kernel)) {
+      MS_LOG(EXCEPTION) << "Can not launch a sub graph which contains ConditionSwitch or ConditionSwitch by kbk.";
+    }
+
+    KernelActorPtr kernel_actor = std::make_shared<KernelActor>(
+      kernel->fullname_with_scope(), kernel, real_device_context, memory_manager_aid_, debug_aid_, recorder_aid_,
+      GraphExecutionStrategy::kPipeline, ref_input_indexes, ref_output_indexes);
+    MS_EXCEPTION_IF_NULL(kernel_actor);
+    kernel_actors_[i] = kernel_actor;
+
+    // Set the member of kernel actor.
+    kernel_actor->is_launch_skipped_ =
+      common::AnfAlgo::IsNopNode(kernel) && graph_->IsInRefOutputMap(std::make_pair(kernel, 0));
+    kernel_actor->inputs_continuous_memory_ =
+      common::AnfAlgo::IsCommunicationOp(kernel) && (common::AnfAlgo::GetInputTensorNum(kernel) > 1);
+
+    SchedulerHelper::AddSomasInfo(kernel_actor.get());
+
+    // InsertActor(kernel_actor.get());
+    node_to_kernel_actor_[kernel] = kernel_actor.get();
+  }
+
+  // 2. Add somas info.
+  // AddSomasOutput
+  for (const auto &front_backend_pair : graph_->front_node_to_graph_output_map()) {
+    const auto &output_with_index = front_backend_pair.second;
+    auto output_kernel = output_with_index.first;
+    auto output_index = output_with_index.second;
+    MS_EXCEPTION_IF_NULL(output_kernel);
+    auto origin_output_with_index = front_backend_pair.first;
+    if (origin_output_with_index.first == nullptr) {
+      MS_LOG(WARNING) << "The graph " << graph_->graph_id() << " output node:" << output_kernel->fullname_with_scope()
+                      << " with index: " << output_index << " has no front node.";
+      continue;
+    }
+    if (!output_kernel->isa<CNode>()) {
+      continue;
+    }
+    auto iter = node_to_kernel_actor_.find(output_kernel);
+    if (iter == node_to_kernel_actor_.end()) {
+      MS_LOG(EXCEPTION) << "Can not find kernel actor for node: " << output_kernel->fullname_with_scope();
+    }
+    const auto &output_actor = iter->second;
+    MS_EXCEPTION_IF_NULL(output_actor);
+    SchedulerHelper::AddSomasInfoForGraphOutput(output_actor, output_kernel, output_index, graph_->graph_id());
+  }
+
+  // 3. Initialize all kernel actor.
+  for (size_t i = 0; i < kernel_num; i++) {
+    const auto &kernel_actor = kernel_actors_[i];
+    if (kernel_actor) {
+      kernel_actor->Init();
+    }
+  }
+}
+
+void SuperKernelActor::ParseInputIndex() {
+  const auto &input_nodes = graph_->input_nodes();
+  size_t input_num = input_nodes.size();
+  mindspore::HashMap<AnfNode *, size_t> node_to_input_idx;
+  node_to_input_idx.reserve(input_num);
+
+  for (size_t i = 0; i < input_num; i++) {
+    node_to_input_idx[input_nodes[i].get()] = i;
+  }
+
+  const auto &execution_order = graph_->execution_order();
+  size_t kernel_num = execution_order.size();
+  for (size_t i = 0; i < kernel_num; i++) {
+    const auto &kernel = execution_order[i];
+    MS_EXCEPTION_IF_NULL(kernel);
+
+    if (!IsKernelActor(kernel, GraphExecutionStrategy::kPipeline) || IsSkippedKernelActor(kernel)) {
+      continue;
+    }
+
+    auto real_input_num = common::AnfAlgo::GetInputTensorNum(kernel);
+    for (size_t j = 0; j < real_input_num; j++) {
+      auto real_input_node = common::AnfAlgo::GetPrevNodeOutput(kernel, j, false);
+      MS_EXCEPTION_IF_NULL(real_input_node.first);
+      // Note: only record input data, persist weight in compile phase.
+      if (real_input_node.first->isa<Parameter>()) {
+        auto iter = node_to_input_idx.find(real_input_node.first.get());
+        if (iter == node_to_input_idx.end()) {
+          MS_LOG(EXCEPTION) << "Can not find index for input node: " << real_input_node.first->fullname_with_scope();
+        }
+        kernel_input_to_graph_input_indices_[kernel.get()].emplace_back(j, iter->second);
+      } else if (real_input_node.first->isa<ValueNode>()) {
+        const auto &kernel_actor = kernel_actors_[i];
+        MS_EXCEPTION_IF_NULL(kernel_actor);
+
+        const auto &real_device_context = device::FetchRealDeviceContext(kernel, device_contexts_[0]);
+        MS_EXCEPTION_IF_NULL(real_device_context);
+        const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(real_input_node.first, *graph_);
+        MS_EXCEPTION_IF_NULL(front_node);
+        auto device_address =
+          DeviceTensorStore::GetInstance().Fetch(front_node.get(), real_device_context->GetDeviceType());
+        MS_EXCEPTION_IF_NULL(device_address);
+        kernel_actor->SetInputDeviceTensor(device_address.get(), j);
+      }
+    }
+  }
+}
+
+void SuperKernelActor::CalcRefCount() {
+  const auto &execution_order = graph_->execution_order();
+  size_t kernel_num = execution_order.size();
+  for (size_t i = 0; i < kernel_num; i++) {
+    const auto &kernel = execution_order[i];
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (!IsKernelActor(kernel, GraphExecutionStrategy::kPipeline) || IsSkippedKernelActor(kernel)) {
+      continue;
+    }
+
+    auto input_num = common::AnfAlgo::GetInputTensorNum(kernel);
+    for (size_t j = 0; j < input_num; j++) {
+      auto input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(kernel, j, false);
+      MS_EXCEPTION_IF_NULL(input_node_with_idx.first);
+
+      if (input_node_with_idx.first->isa<CNode>()) {
+        if (IsSkippedKernelActor(input_node_with_idx.first)) {
+          const auto &real_input_node_with_idx =
+            common::AnfAlgo::GetPrevNodeOutput(input_node_with_idx.first, 0, false);
+          UpdateRefCount(real_input_node_with_idx.first, real_input_node_with_idx.second, false);
+        } else {
+          UpdateRefCount(input_node_with_idx.first, input_node_with_idx.second, false);
+        }
+      } else if (IsPersistentDeviceTensor(input_node_with_idx.first)) {
+        UpdateRefCount(input_node_with_idx.first, input_node_with_idx.second, true);
+      }
     }
   }
 }

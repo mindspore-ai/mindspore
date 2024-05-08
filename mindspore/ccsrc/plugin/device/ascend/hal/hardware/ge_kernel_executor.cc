@@ -34,6 +34,7 @@
 #include "plugin/device/ascend/kernel/pyboost/customize/customize_copy.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_build.h"
 #include "kernel/graph_kernel/kernel_packet/kernel_packet_kernel_mod.h"
+
 #ifdef ENABLE_DVM
 #include "plugin/device/ascend/kernel/dvm/dvm_kernel_build.h"
 #endif
@@ -940,9 +941,7 @@ void GeKernelExecutor::DoSomas(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  static const char kAscendEnableInternalKernels[] = "MS_ENABLE_INTERNAL_KERNELS";
-  static bool enable_runtime_pipeline = common::GetEnv(kAscendEnableInternalKernels) == "on";
-  if (!enable_runtime_pipeline) {
+  if (!ms_context->IsEnableInferBoost()) {
     DoStreamAssign(kernel_graph);
   }
   // somas

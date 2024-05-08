@@ -53,6 +53,8 @@
 "mindspore/mindspore/ccsrc/backend/common/mem_reuse/mem_tracker.cc"                                 "whitespace/indent"
 "mindspore/mindspore/ccsrc/frontend/parallel/ops_info/fft_info.h"                                   "readability/namespace"
 "mindspore/mindspore/ccsrc/frontend/parallel/ops_info/fft_info.h"                                   "whitespace/indent"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/hal/hardware/lowlatency_communication_group.h"       "build/include_subdir"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/hal/hardware/lowlatency_communication_group.h"       "build/namespaces"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"

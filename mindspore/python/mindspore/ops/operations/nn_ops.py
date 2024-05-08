@@ -9901,17 +9901,6 @@ class RmsNorm(Primitive):
         self.init_prim_io_names(inputs=['x', 'gamma'], outputs=["y", "rstd"])
 
 
-class MatmulQkv(Primitive):
-    r"""
-    Fuse three matmul ops for q k v attention into one
-    """
-    @prim_attr_register
-    def __init__(self):
-        """Initialize"""
-        self.init_prim_io_names(inputs=['hidden_states', 'weight_q', 'weight_k', 'weight_v'],
-                                outputs=["output_q", "output_k", "output_v"])
-
-
 class AllFinite(Primitive):
     r"""
     Check all gradients is finite.

@@ -183,7 +183,7 @@ class ActorDispatcher {
   }
 
   template <typename T, typename... Args0, typename... Args1>
-  static void Send(const AID &aid, void (T::*method)(Args0...), Args1 &&... args) {
+  static void Send(const AID &aid, void (T::*method)(Args0...), Args1 &&...args) {
     if (is_multi_thread_execution_) {
       auto tuple = std::make_tuple(std::forward<Args1>(args)...);
       Async(aid, method, std::move(tuple));
@@ -209,7 +209,7 @@ class ActorDispatcher {
   }
 
   template <typename T, typename... Args0, typename... Args1>
-  static void SendSync(const AID &aid, void (T::*method)(Args0...), Args1 &&... args) {
+  static void SendSync(const AID &aid, void (T::*method)(Args0...), Args1 &&...args) {
     auto actor_manager = ActorMgr::GetActorMgrRef();
     auto base_actor = actor_manager->GetActor(aid);
     T *actor = static_cast<T *>(base_actor.get());
@@ -218,7 +218,7 @@ class ActorDispatcher {
   }
 
   template <typename T, typename... Args0, typename... Args1>
-  static void SendSync(OpActor<DeviceTensor> *to_actor, void (T::*method)(Args0...), Args1 &&... args) {
+  static void SendSync(OpActor<DeviceTensor> *to_actor, void (T::*method)(Args0...), Args1 &&...args) {
     T *actor = static_cast<T *>(to_actor);
     MS_EXCEPTION_IF_NULL(actor);
     (actor->*method)(std::forward<Args1>(args)...);
@@ -248,6 +248,8 @@ class ActorDispatcher {
   static void set_enable_runtime_multi_pipeline(bool enable_runtime_multi_pipeline) {
     enable_runtime_multi_pipeline_ = enable_runtime_multi_pipeline;
   }
+  static void set_enable_static_shape(bool enable_static_shape) { enable_static_shape_ = enable_static_shape; }
+  static bool enable_static_shape() { return enable_static_shape_; }
   static bool enable_runtime_multi_pipeline() { return enable_runtime_multi_pipeline_; }
 
   static void set_enable_async_launch_kernel(bool enable_async_launch_kernel) {
@@ -287,6 +289,7 @@ class ActorDispatcher {
   static bool is_memory_free_sync_;
 
   static bool enable_runtime_multi_pipeline_;
+  static bool enable_static_shape_;
   static bool enable_async_launch_kernel_;
 };
 
@@ -330,6 +333,10 @@ bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph)
 
 // Whether enable asynchronously infer shape and resize kernel mod by KernelInferActor and KernelResizeActor.
 bool EnableAsyncInfer();
+
+// Kernel by kernel sub graph execute mode need not send actor message by kernel actor, just launch all kernels in super
+// kernel actor directly.
+bool EnableKbkSubGraphExecute();
 
 // If enable async launch kernel, wait all kernels launch task finish.
 // If enable infer->resize->launch pipeline, also wait all infer, resize and launch task finish.

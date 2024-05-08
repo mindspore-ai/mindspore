@@ -172,6 +172,7 @@ class DeviceAddress : public mindspore::DeviceSync {
       address_common_->pointer_ref_count_ = nullptr;
     }
   }
+  virtual bool AsyncHostToDevice(size_t size, TypeId /* type */, const void *host_ptr) const { return true; }
 
   // Asynchronously copy host memory to device side.
   virtual bool AsyncHostToDevice(const ShapeVector &, size_t, TypeId, const void *, size_t) const { return true; }
@@ -189,6 +190,8 @@ class DeviceAddress : public mindspore::DeviceSync {
     return true;
   }
   virtual void DeviceSynchronizerInit() { MS_LOG(EXCEPTION) << "Not implemented."; }
+  virtual bool CopyDeviceToHost(void *dst, const void *src, const size_t &size) const { return true; }
+  virtual bool CopyHostToDevice(void *dst, const void *src, const size_t &size) const { return true; }
 
   // Get kernel tensor pointer.
   const KernelTensorPtr &kernel_tensor() const { return kernel_tensor_; }
