@@ -1142,6 +1142,10 @@ void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_c
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
     nullptr, size, output_tensor->shape(), format, output_tensor->data_type(),
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_, stream_id);
+  if (device_address->GetDeviceType() != device::DeviceType::kAscend) {
+    // CPU or GPU need KernelTensor to LaunchKernel
+    CreateKernelTensor(device_address, output_tensor);
+  }
   MS_EXCEPTION_IF_NULL(device_address);
   output_tensor->set_device_address(device_address);
   MS_LOG(DEBUG) << "Create output tensor device address " << device_address << "the output, Shape: "
