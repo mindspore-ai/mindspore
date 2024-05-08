@@ -358,6 +358,7 @@ class OperatorInfo {
   TensorMaps inputs_tensor_map_;
   TensorMaps outputs_tensor_map_;
   ForwardOp forward_op_;
+  ForwardOp forward_op_interleaved_;
   Ops sub_ops_;
   ForwardOp replace_op_;
   OutPutInfoVector replace_op_info_;

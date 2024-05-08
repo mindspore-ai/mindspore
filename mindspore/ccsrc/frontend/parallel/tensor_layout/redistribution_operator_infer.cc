@@ -43,6 +43,9 @@ Status RedistributionOperatorInfer::Init(const TensorLayout &tensor_layout, cons
     MS_LOG(ERROR) << "Init constructor failed";
     return Status::FAILED;
   }
+  if (virtual_rank_ >= 0) {
+    constructor_.SetVirtualRank(virtual_rank_);
+  }
   constructor_.UpdateTensorShape(cur_tensor_layout_.slice_shape().array());
 
   size_t key = 0;

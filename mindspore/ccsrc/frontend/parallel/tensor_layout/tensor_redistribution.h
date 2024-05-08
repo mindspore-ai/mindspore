@@ -60,6 +60,7 @@ class TensorRedistribution {
   Status Init(const TensorLayout &from, const TensorLayout &to, const RankList &dev_list);
   ~TensorRedistribution() = default;
   RedistributionOpListPtr InferTensorRedistributionOperatorList(bool is_cost_model = false);
+  std::vector<RedistributionOpListPtr> InferTensorRedistributionOperatorVirtualGraphs();
   OperatorList operator_list() const { return operator_list_; }
   bool reshape_flag() const { return reshape_flag_; }
   bool IsInited() const { return this->is_inited_; }
@@ -90,6 +91,7 @@ class TensorRedistribution {
   AssembledDynamicDimsMapping GetDynamicDimsMapping() const { return this->dynamic_dim_mapping_; }
   void CreateAssembledDynamicMapping(const CNodePtr &cur_cnode, const AnfNodePtr &pre_cnode,
                                      const FuncGraphPtr &func_graph, int64_t redistribution_index);
+  void SetVirtualRank(const int64_t virtual_rank) { virtual_rank_ = virtual_rank; }
 
  private:
   void GetAssembledOriginLayout(TensorLayout *from_origin, TensorLayout *to_origin);
@@ -104,6 +106,7 @@ class TensorRedistribution {
   Status ComputeConcatCost(double input_size, const Shape &attrs);
   Status ComputePermuteCost(double input_size, const Shape &attrs);
   RedistributionOpListPtr InferTensorRedistributionOperatorListUnExpand(bool is_cost_model = false);
+  Status MakeFromToLayout(const TensorLayout &from, const TensorLayout &to);
   RedistributionLayoutTransfer layout_transfer_;
   AssembledDynamicDimsMapping dynamic_dim_mapping_;
   TensorLayout from_origin_;
@@ -132,6 +135,8 @@ class TensorRedistribution {
   bool expand_able_ = true;
   AnfNodePtr pre_cnode_;
   CNodePtr next_cnode_;
+  int64_t virtual_rank_ = -1;
+  std::vector<int64_t> virtual_rank_list_;
 };
 }  // namespace parallel
 }  // namespace mindspore
