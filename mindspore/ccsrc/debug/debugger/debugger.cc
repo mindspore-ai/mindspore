@@ -1677,7 +1677,7 @@ void Debugger::UpdateStepNumGPU() {
 }
 
 void Debugger::ClearCurrentData() {
-  if ((device_target_ == kGPUDevice) && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration())) {
+  if (device::KernelRuntime::DumpDataEnabledIteration()) {
     if (debug_services_) {
       debug_services_->EmptyCurrentTensor();
     } else {
