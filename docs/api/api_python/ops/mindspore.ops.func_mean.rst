@@ -1,7 +1,7 @@
 mindspore.ops.mean
 ==================
 
-.. py:function:: mindspore.ops.mean(input, axis=None, keep_dims=False, dtype=None)
+.. py:function:: mindspore.ops.mean(input, axis=None, keep_dims=False)
 
     默认情况下，移除输入所有维度，返回 `input` 中所有元素的平均值。也可仅缩小指定维度 `axis` 大小至1。 `keep_dims` 控制输出和输入的维度是否相同。
 
@@ -12,7 +12,6 @@ mindspore.ops.mean
         - **input** (Tensor[Number]) - 输入Tensor，其数据类型为数值型。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
         - **axis** (Union[int, tuple(int), list(int), Tensor]) - 要减少的维度。默认值:  ``None`` ，缩小所有维度。只允许常量值。假设 `input` 的秩为r，取值范围[-r,r)。
         - **keep_dims** (bool) - 如果为 ``True`` ，则保留缩小的维度，大小为1。否则移除维度。默认值： ``False`` 。
-        - **dtype** (:class:`mindspore.dtype`) - 期望输出Tensor的类型。默认值： ``None`` 。
 
     返回：
         Tensor。

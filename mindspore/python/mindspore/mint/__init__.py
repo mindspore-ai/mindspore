@@ -65,13 +65,13 @@ from mindspore.ops.functional import sum
 # 19
 from mindspore.ops.functional import log
 # 20
-from mindspore.ops import prod
+from mindspore.ops.functional import prod
 # 21
 from mindspore.ops.functional import mul
 # 22
 
 # 23
-
+from mindspore.ops.functional import mean_ext as mean
 # 24
 
 # 25
@@ -284,7 +284,7 @@ __all__ = [
     # 22
 
     # 23
-
+    'mean',
     # 24
 
     # 25

@@ -23,4 +23,4 @@ mean_ext:
         CPU: MeanExtCPU
         GPU: MeanExtGPU
     function:
-        name: mean
+        name: mean_ext
