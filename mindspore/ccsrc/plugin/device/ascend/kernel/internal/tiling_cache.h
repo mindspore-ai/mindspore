@@ -65,6 +65,8 @@ constexpr int kBufSize = 8192;
 constexpr int kBufMaxSize = kBufSize + 1024;
 constexpr size_t kMemAlignSize = 64;
 constexpr size_t kMaxDevBlockSize = kMaxSize * kMemAlignSize;
+// this is a trick make memory pool allocate memory section for tiling cache
+constexpr int kTilingCacheStreamId = 100;
 
 class TilingCacheMgr {
  public:
@@ -154,7 +156,8 @@ class TilingCacheMgr {
     if (cache_buf_.size() >= cache_capcity_) {
       dev_addr_ = nullptr;
       dev_offset_ = 0;
-      dev_addr_ = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(aligned_size);
+      dev_addr_ = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(aligned_size, false, false,
+                                                                                 kTilingCacheStreamId);
       tiling_cache_addr = dev_addr_;
       tiling_cache_elem->device_buf_.addr_ = tiling_cache_addr;
       tiling_cache_elem->need_free_device_buf_ = true;
@@ -166,7 +169,8 @@ class TilingCacheMgr {
     } else {
       dev_addr_ = nullptr;
       dev_offset_ = 0;
-      dev_addr_ = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(kMaxDevBlockSize);
+      dev_addr_ = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(kMaxDevBlockSize, false, false,
+                                                                                 kTilingCacheStreamId);
       tiling_cache_addr = dev_addr_;
     }
     dev_offset_ += aligned_size;
