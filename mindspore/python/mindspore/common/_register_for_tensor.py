@@ -16,30 +16,29 @@
 """Registry the relation."""
 
 from __future__ import absolute_import
-from collections import UserDict
 from mindspore._c_expression import Tensor as Tensor_
 
 
-class Registry(UserDict):
-    """Registry class for registry functions for tensor call primitive ops function."""
+class Registry:
+    """Used for tensor operator registration"""
 
-    def register(self, obj_str, obj):
-        if isinstance(obj_str, str):
-            self[obj_str] = obj
+    def __init__(self):
+        pass
 
     def get(self, obj_str):
-        """Get the value by str."""
+        """Get property if obj is not vm_compare"""
+
         if not isinstance(obj_str, str):
             raise TypeError("key for tensor registry must be string.")
         if Tensor_._is_test_stub() is True:  # pylint: disable=W0212
             def wrap(*args):
                 new_args = list(args)
                 new_args.append(obj_str)
-                return self["vm_compare"](*new_args)
+                return getattr(self, "vm_compare")(*new_args)
 
             obj = wrap
         else:
-            obj = self[obj_str]
+            obj = getattr(self, obj_str)
         return obj
 
 
