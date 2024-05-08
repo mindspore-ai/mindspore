@@ -374,6 +374,7 @@ from .math_func import (
     amin,
     amax,
     mean,
+    mean_ext,
     prod,
     all,
     any,
