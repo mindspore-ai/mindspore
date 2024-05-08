@@ -72,6 +72,12 @@ void StackActor::Init() {
                       << " device tensor store size:" << device_tensor_store_keys_.size()
                       << " need total size:" << formal_parameters_.size() << " for actor:" << GetAID();
   }
+  MS_LOG(DEBUG) << "Stack actor input stack data num:" << input_stack_data_num_
+                << " stack partial num:" << input_stack_partials_num_ << " input data num:" << input_datas_num_
+                << " input partial num:" << input_partials_num_
+                << " device tensor store num:" << device_tensor_store_keys_.size()
+                << " local tensor num:" << local_device_tensors_.size()
+                << " formal parameter num:" << formal_parameters_.size();
 }
 
 void StackActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
@@ -157,7 +163,7 @@ bool StackActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) c
 bool StackActor::CheckStackDataRunningCondition(const OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
   auto iter = input_branch_ids_.find(context->sequential_num_);
-  bool is_branch_id_available = (iter == input_branch_ids_.end() || iter->second.empty());
+  bool is_branch_id_invalid = (is_branch_id_enable_ && (iter == input_branch_ids_.end() || iter->second.empty()));
 
   if (input_stack_data_num_ != 0) {
     const auto &data_iter = input_stack_data_.find(context->sequential_num_);
@@ -172,11 +178,14 @@ bool StackActor::CheckStackDataRunningCondition(const OpContext<DeviceTensor> *c
       return false;
     }
 
-    if (is_branch_id_available) {
+    if (is_branch_id_invalid) {
       MS_LOG(ERROR) << "There is no branch id for actor:" << GetAID().Name();
       return false;
     }
-    size_t branch_id_size = iter->second.size();
+    size_t branch_id_size = 1;
+    if (is_branch_id_enable_) {
+      branch_id_size = iter->second.size();
+    }
     for (const auto &one_stack : data_iter->second) {
       if (one_stack.second.size() < branch_id_size) {
         return false;
@@ -194,7 +203,7 @@ bool StackActor::CheckStackDataRunningCondition(const OpContext<DeviceTensor> *c
 bool StackActor::CheckStackPartialRunningCondition(const OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
   auto iter = input_branch_ids_.find(context->sequential_num_);
-  bool is_branch_id_available = (iter == input_branch_ids_.end() || iter->second.empty());
+  bool is_branch_id_invalid = (is_branch_id_enable_ && (iter == input_branch_ids_.end() || iter->second.empty()));
 
   if (input_stack_partials_num_ != 0) {
     const auto &partial_iter = input_stack_partials_.find(context->sequential_num_);
@@ -209,11 +218,14 @@ bool StackActor::CheckStackPartialRunningCondition(const OpContext<DeviceTensor>
       return false;
     }
 
-    if (is_branch_id_available) {
+    if (is_branch_id_invalid) {
       MS_LOG(ERROR) << "There is no branch id for actor:" << GetAID().Name();
       return false;
     }
-    size_t branch_id_size = iter->second.size();
+    size_t branch_id_size = 1;
+    if (is_branch_id_enable_) {
+      branch_id_size = iter->second.size();
+    }
     for (const auto &one_stack : partial_iter->second) {
       if (one_stack.second.size() < branch_id_size) {
         return false;
@@ -231,7 +243,7 @@ bool StackActor::CheckStackPartialRunningCondition(const OpContext<DeviceTensor>
 bool StackActor::CheckStackControlRunningCondition(const OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
   auto iter = input_branch_ids_.find(context->sequential_num_);
-  bool is_branch_id_available = (iter == input_branch_ids_.end() || iter->second.empty());
+  bool is_branch_id_invalid = (is_branch_id_enable_ && (iter == input_branch_ids_.end() || iter->second.empty()));
 
   if (input_stack_controls_num_ != 0) {
     const auto &control_iter = input_stack_controls_.find(context->sequential_num_);
@@ -246,11 +258,14 @@ bool StackActor::CheckStackControlRunningCondition(const OpContext<DeviceTensor>
       return false;
     }
 
-    if (is_branch_id_available) {
+    if (is_branch_id_invalid) {
       MS_LOG(ERROR) << "There is no branch id for actor:" << GetAID().Name();
       return false;
     }
-    size_t branch_id_size = iter->second.size();
+    size_t branch_id_size = 1;
+    if (is_branch_id_enable_) {
+      branch_id_size = iter->second.size();
+    }
     for (const auto &one_stack : control_iter->second) {
       if (one_stack.second < branch_id_size) {
         return false;

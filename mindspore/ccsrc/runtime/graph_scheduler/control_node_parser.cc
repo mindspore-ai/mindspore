@@ -1340,17 +1340,6 @@ bool ControlNodeParser::IsParallelCallRecursionGraph(const AnfNodePtr &call_node
 
 void ControlNodeParser::InsertDependForParallelCall(const std::vector<AnfNodePtr> &control_nodes) {
   MS_LOG(INFO) << "InsertDependForParallelCall start";
-  // Fetch call node in funcgraph.
-  FuncGraphToCallNode func_graph_to_call_nodes;
-  for (const auto &control_node : control_nodes) {
-    MS_EXCEPTION_IF_NULL(control_node);
-    if (common::AnfAlgo::IsCallNode(control_node)) {
-      const auto &func_graph = control_node->func_graph();
-      MS_EXCEPTION_IF_NULL(func_graph);
-      (void)func_graph_to_call_nodes[func_graph].emplace(control_node);
-    }
-  }
-
   std::vector<AnfNodePtr> call_nodes;
   for (const auto &control_node : control_nodes) {
     MS_EXCEPTION_IF_NULL(control_node);
@@ -1366,8 +1355,8 @@ void ControlNodeParser::InsertDependForParallelCall(const std::vector<AnfNodePtr
     for (size_t i = 0; i < call_nodes.size(); ++i) {
       for (size_t j = 0; j < i; ++j) {
         std::set<AnfNodePtr> checked_nodes;
-        if (IsTopoDependNode(call_nodes[i], call_nodes[j], &checked_nodes) ||
-            (!IsParallelCallRecursionGraph(call_nodes[i], call_nodes[j], func_graph_to_call_nodes))) {
+        if ((!IsParallelCallRecursionGraph(call_nodes[i], call_nodes[j], func_graph_to_call_nodes_)) ||
+            IsTopoDependNode(call_nodes[i], call_nodes[j], &checked_nodes)) {
           continue;
         }
         // If there is no topological relationship between call nodes, and the same recursive graph will be called
@@ -1491,7 +1480,7 @@ bool ControlNodeParser::IsRecursionCallNode(const AnfNodePtr &node) {
   if (!common::AnfAlgo::IsCallNode(node)) {
     return false;
   }
-  return find(unrecursion_call_nodes_.begin(), unrecursion_call_nodes_.end(), node) == unrecursion_call_nodes_.end();
+  return unrecursion_call_nodes_.find(node) == unrecursion_call_nodes_.end();
 }
 
 bool ControlNodeParser::IsRecursionKernelGraph(const KernelGraphPtr &graph) {
@@ -2289,6 +2278,10 @@ void ControlNodeParser::ParseCallNodeToFuncGraph(const std::vector<AnfNodePtr> &
     if (!common::AnfAlgo::IsCallNode(control_node)) {
       continue;
     }
+
+    const auto &belong_func_graph = control_node->func_graph();
+    MS_EXCEPTION_IF_NULL(belong_func_graph);
+    (void)func_graph_to_call_nodes_[belong_func_graph].emplace(control_node);
 
     const auto &cnode = control_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
