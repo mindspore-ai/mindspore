@@ -148,18 +148,14 @@ void AnfNode::set_kernel_info(const KernelInfoDevicePtr &kernel_info) { set_user
 
 NodeDebugInfoPtr AnfNode::debug_info() {
   MS_EXCEPTION_IF_NULL(debug_info_);
-  if (debug_info_->get_node() == nullptr) {
-    debug_info_->set_node(shared_from_base<AnfNode>());
-  }
   return debug_info_;
 }
 
 void AnfNode::set_debug_info(const NodeDebugInfoPtr &debug_info) {
   MS_EXCEPTION_IF_NULL(debug_info);
+  debug_info->set_type_name(type_name());
+  debug_info->set_debug_name(std::string());  // Clear cached debug name.
   debug_info_ = debug_info;
-  if (debug_info_->get_node() == nullptr) {
-    debug_info_->set_node(shared_from_base<AnfNode>());
-  }
 }
 
 std::size_t AnfNode::hash() const { return PointerHash<AnfNode>{}(this); }
@@ -234,7 +230,7 @@ CNode::CNode(const AnfNodePtrList &inputs, const FuncGraphPtr &func_graph)
     inputs_ = inputs;
   }
   CheckCNodeInputsNum(weak_inputs_);
-  CheckCNodeWeakInput();
+  Init();
 }
 
 CNode::CNode(const AnfNodePtrList &inputs, const VarPtr &func_graph_as_var) : AnfNode(nullptr), inputs_(inputs) {
@@ -245,7 +241,7 @@ CNode::CNode(const AnfNodePtrList &inputs, const VarPtr &func_graph_as_var) : An
   primal_attrs_ = PrimalAttrManager::GetInstance().GetCurrentPrimalAttr();
   primal_debug_infos_ = PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo();
   set_user_data(kFuncGraphVarKey, func_graph_as_var);
-  CheckCNodeWeakInput();
+  Init();
 }
 
 CNode::CNode(AnfNodeWeakPtrList &&weak_inputs, const FuncGraphPtr &func_graph)
@@ -260,7 +256,7 @@ CNode::CNode(AnfNodeWeakPtrList &&weak_inputs, const FuncGraphPtr &func_graph)
     MS_LOG(INTERNAL_EXCEPTION) << "The func graph should not be null.";
   }
   CheckCNodeInputsNum(weak_inputs_);
-  CheckCNodeWeakInput();
+  Init();
 }
 
 CNode::CNode(AnfNodeWeakPtrList &&weak_inputs, const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
@@ -275,7 +271,7 @@ CNode::CNode(AnfNodeWeakPtrList &&weak_inputs, const FuncGraphPtr &func_graph, N
     MS_LOG(INTERNAL_EXCEPTION) << "The func graph should not be null.";
   }
   CheckCNodeInputsNum(weak_inputs_);
-  CheckCNodeWeakInput();
+  Init();
 }
 
 CNode::CNode(const AnfNodeWeakPtrList &weak_inputs, const FuncGraphPtr &func_graph)
@@ -290,7 +286,19 @@ CNode::CNode(const AnfNodeWeakPtrList &weak_inputs, const FuncGraphPtr &func_gra
     MS_LOG(INTERNAL_EXCEPTION) << "The func graph should not be null.";
   }
   CheckCNodeInputsNum(weak_inputs_);
+  Init();
+}
+
+void CNode::Init() {
   CheckCNodeWeakInput();
+  debug_info()->set_type_name(type_name());
+}
+
+void CNode::set_debug_info(const NodeDebugInfoPtr &debug_info) {
+  MS_EXCEPTION_IF_NULL(debug_info);
+  debug_info->set_type_name(type_name());
+  debug_info->set_debug_name(std::string());  // Clear cached debug name.
+  debug_info_ = debug_info;
 }
 
 const size_t CNode::size() const { return weak_inputs_.size(); }
@@ -603,10 +611,21 @@ bool CNode::has_side_effect_node() const { return has_side_effect_node_; }
 
 void CNode::set_has_side_effect_node(bool has_side_effect_node) { has_side_effect_node_ = has_side_effect_node; }
 
-Parameter::Parameter(const FuncGraphPtr &func_graph) : ANode(func_graph) {}
+Parameter::Parameter(const FuncGraphPtr &func_graph) : ANode(func_graph) { Init(); }
 
 Parameter::Parameter(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
-    : ANode(func_graph, std::move(debug_info)) {}
+    : ANode(func_graph, std::move(debug_info)) {
+  Init();
+}
+
+void Parameter::Init() { debug_info()->set_type_name(type_name()); }
+
+void Parameter::set_debug_info(const NodeDebugInfoPtr &debug_info) {
+  MS_EXCEPTION_IF_NULL(debug_info);
+  debug_info->set_type_name(type_name());
+  debug_info->set_debug_name(std::string());  // Clear cached debug name.
+  debug_info_ = debug_info;
+}
 
 std::string Parameter::name() const { return name_; }
 
@@ -723,6 +742,7 @@ ValueNode::ValueNode(const ValuePtr &value) : value_(value) {
     MS_LOG(WARNING) << fg->ToString() << "(ptr: " << fg << ") maybe released early, or not set return yet."
   }
 #endif
+  Init();
 }
 
 ValueNode::ValueNode(const ValuePtr &value, NodeDebugInfoPtr &&debug_info)
@@ -738,6 +758,16 @@ ValueNode::ValueNode(const ValuePtr &value, NodeDebugInfoPtr &&debug_info)
     MS_LOG(WARNING) << fg->ToString() << "(ptr: " << fg << ") maybe released early, or not set return yet."
   }
 #endif
+  Init();
+}
+
+void ValueNode::Init() { debug_info()->set_type_name(type_name()); }
+
+void ValueNode::set_debug_info(const NodeDebugInfoPtr &debug_info) {
+  MS_EXCEPTION_IF_NULL(debug_info);
+  debug_info->set_type_name(type_name());
+  debug_info->set_debug_name(std::string());  // Clear cached debug name.
+  debug_info_ = debug_info;
 }
 
 void ValueNode::set_func_graph(const FuncGraphPtr &) {

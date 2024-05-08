@@ -22,6 +22,7 @@
 
 namespace {
 using mindspore::DebugInfoPtr;
+using mindspore::NodeDebugInfo;
 using mindspore::TraceInfoPtr;
 using mindspore::trace::TraceLabelType;
 
@@ -94,13 +95,22 @@ NameWithTrace CollectTraceInfos(const DebugInfoPtr &debug_info, TraceLabelType t
         root_info->trace_info()->isa<mindspore::TraceGenerateKwArg>()) {
       break;
     }
-    name_and_traces.trace_labels.push_back(GetTraceName(root_info->trace_info(), trace_label));
+    const auto trace_name = GetTraceName(root_info->trace_info(), trace_label);
+    if (!trace_name.empty()) {
+      (void)name_and_traces.trace_labels.emplace_back(trace_name);
+    }
     root_info = root_info->trace_info()->debug_info();
   }
 
   if (!root_info->name().empty()) {
     name_and_traces.root_name = root_info->name();
   } else {
+    // If it's node debug info and no trace label, use current node debug info.
+    auto node_root_info = std::dynamic_pointer_cast<NodeDebugInfo>(root_info);
+    if (node_root_info != nullptr && name_and_traces.trace_labels.empty()) {
+      root_info = debug_info;
+    }
+
     name_and_traces.root_name = root_info->debug_name();
   }
   return name_and_traces;

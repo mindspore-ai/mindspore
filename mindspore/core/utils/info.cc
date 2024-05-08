@@ -291,26 +291,22 @@ DebugInfoPtr DebugInfo::UpdateInlineCNodeDebugInfo(const DebugInfoPtr &call_debu
 }
 
 std::string NodeDebugInfo::debug_name() {
-  if (!name_.empty()) {
-    return name_;
+  if (!debug_name_.empty()) {
+    return debug_name_;
   }
-  std::string prefix = "Unbound_";
-  if (node_.lock() != nullptr) {
-    std::ostringstream oss;
-    oss << node_.lock()->type_name() << "_";
-    prefix = oss.str();
-  }
-  name_ = prefix + std::to_string(get_id());
-  return name_;
+  std::ostringstream oss;
+  oss << type_name_ << "_" << get_id();
+  debug_name_ = oss.str();
+  return debug_name_;
 }
 
 DebugInfoPtr NodeDebugInfo::Copy() const {
   auto new_debug_info = std::make_shared<NodeDebugInfo>();
-  new_debug_info->node_ = node_;
   new_debug_info->location_ = location_;
   new_debug_info->trace_info_ = trace_info_;
   new_debug_info->id_ = id_;
   new_debug_info->name_ = name_;
+  new_debug_info->type_name_ = type_name_;
   new_debug_info->unique_id_ = unique_id_;
   new_debug_info->through_copy_unique_id_ = through_copy_unique_id_;
   new_debug_info->inlined_ = inlined_;
@@ -318,10 +314,10 @@ DebugInfoPtr NodeDebugInfo::Copy() const {
 }
 
 std::string GraphDebugInfo::debug_name() {
-  if (name_.empty()) {
-    name_ = "_anonymous_";  // Represent <anonymous>
+  if (debug_name_.empty()) {
+    debug_name_ = "_anonymous_";  // Represent <anonymous>
   }
-  return name_;
+  return debug_name_;
 }
 
 LocationPtr GraphDebugInfo::location() const {

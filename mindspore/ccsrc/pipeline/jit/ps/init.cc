@@ -33,7 +33,6 @@
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/offload_context.h"
 #include "frontend/parallel/costmodel_context.h"
-#include "frontend/optimizer/ad/bprop_utils.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "include/backend/distributed/ps/util.h"
 #endif

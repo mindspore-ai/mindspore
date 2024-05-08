@@ -182,7 +182,7 @@ class MS_CORE_API AnfNode : public Base {
   /// \brief Set the debugging information of this AnfNode.
   ///
   /// \return New debugging information.
-  void set_debug_info(const NodeDebugInfoPtr &debug_info);
+  virtual void set_debug_info(const NodeDebugInfoPtr &debug_info);
 
   /// \brief Obtain the type of the element in this AnfNode.
   ///
@@ -594,7 +594,13 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \param[in] has_side_effect_node Boolean.
   void set_has_side_effect_node(bool has_side_effect_node);
 
+  /// \brief Set the debugging information of this AnfNode.
+  ///
+  /// \return New debugging information.
+  void set_debug_info(const NodeDebugInfoPtr &debug_info) override;
+
  private:
+  void Init();
   void CheckCNodeWeakInput();
 
   static constexpr size_t kStopGradient = 0;
@@ -767,7 +773,13 @@ class MS_CORE_API Parameter final : public ANode {
   /// \return hidden_size attr in FracNZ_RNN or ND_RNN_Bias format.
   int64_t hidden_size() const;
 
+  /// \brief Set the debugging information of this AnfNode.
+  ///
+  /// \return New debugging information.
+  void set_debug_info(const NodeDebugInfoPtr &debug_info) override;
+
  private:
+  void Init();
   struct FormatAttr {
     int64_t fracz_group = 1;
     int64_t input_size = 0;
@@ -913,7 +925,13 @@ class MS_CORE_API ValueNode final : public ANode {
     return os;
   }
 
+  /// \brief Set the debugging information of this AnfNode.
+  ///
+  /// \return New debugging information.
+  void set_debug_info(const NodeDebugInfoPtr &debug_info) override;
+
  private:
+  void Init();
   struct FormatAttr {
     int64_t fracz_group = 1;
     int64_t input_size = 0;
