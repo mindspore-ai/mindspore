@@ -913,7 +913,13 @@ void GeKernelExecutor::DoStreamAssign(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(ms_context);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // stream assign
-  AclStreamAssign::GetInstance().AssignStream(NOT_NULL(kernel_graph));
+  static const char kForceSingleStream[] = "MS_FORCE_SINGLE_STREAM";
+  static bool forceSingleStream = common::GetEnv(kForceSingleStream) == "1";
+  if (forceSingleStream) {
+    MS_LOG(INFO) << "Force single stream.";
+  } else {
+    AclStreamAssign::GetInstance().AssignStream(NOT_NULL(kernel_graph));
+  }
   CreateEventKernelMod(kernel_graph);
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
