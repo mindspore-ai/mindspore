@@ -269,7 +269,7 @@ Status BatchNormInfo::InferForwardCommunication() {
     return FAILED;
   }
 
-  if (group_list.empty()) {
+  if (group_list.empty() || group_list.front().GetDevNum() <= kSizeOne) {
     MS_LOG(INFO) << name_ << ": Forward all reduce is not required";
     return SUCCESS;
   } else {

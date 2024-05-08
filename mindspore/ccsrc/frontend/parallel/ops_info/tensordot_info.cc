@@ -199,7 +199,7 @@ Status TensorDotInfo::InferForwardCommunication() {
     return FAILED;
   }
 
-  if (forward_group.empty()) {
+  if (forward_group.empty() || forward_group.front().GetDevNum() <= kSizeOne) {
     MS_LOG(INFO) << name_ << ": No need to create forward op";
     return SUCCESS;
   }
