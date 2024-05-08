@@ -216,7 +216,7 @@ def make_tensor(a, dtype=mstype.int64, data_shape=None, dim_size=None):
 
     return Tensor(a, dtype)
 
-tensor_operator_registry.register('make_tensor', make_tensor)
+setattr(tensor_operator_registry, 'make_tensor', make_tensor)
 
 
 def judge_data_dim(data_dim, min_data_dim=0, max_data_dim=8):

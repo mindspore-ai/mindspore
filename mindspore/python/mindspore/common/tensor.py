@@ -4819,4 +4819,4 @@ def _check_astype_and_convert(dtype):
     return dtype
 
 
-tensor_operator_registry.register('vm_compare', _vm_compare)
+setattr(tensor_operator_registry, 'vm_compare', _vm_compare)
