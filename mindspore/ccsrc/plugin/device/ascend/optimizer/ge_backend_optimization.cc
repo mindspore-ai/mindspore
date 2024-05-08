@@ -62,6 +62,7 @@
 #include "plugin/device/ascend/optimizer/enhancer/eliminate_maketuple_getitem.h"
 #include "plugin/device/ascend/optimizer/ge/convert_pad_v3_paddings.h"
 #include "plugin/device/ascend/optimizer/ge/broadcast_for_select.h"
+#include "plugin/device/ascend/optimizer/ge/fa_alltoallv_parallel.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/shape_reshape_fusion.h"
 
 namespace mindspore {
@@ -83,6 +84,7 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::GEConvertConstInputToTensorInput>());
   opt_ge_pm->AddPass(std::make_shared<opt::RemoveTensorToScalarOrTupleOps>());
   opt_ge_pm->AddPass(std::make_shared<opt::AllToAllvForGE>());
+  opt_ge_pm->AddPass(std::make_shared<opt::FaAlltoAllvParallel>());
   opt_ge_pm->AddPass(std::make_shared<opt::InsertLoadForAllGather>());
   opt_ge_pm->AddPass(std::make_shared<opt::InsertTensorMoveForHcclOpGe>());
   opt_ge_pm->AddPass(std::make_shared<opt::InsertDependForAllGatherGe>());
