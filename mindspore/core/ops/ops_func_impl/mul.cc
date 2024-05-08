@@ -29,6 +29,7 @@ TypePtr MulFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[kInputIndex0]->GetType());
   (void)types.emplace("y", input_args[kInputIndex1]->GetType());
-  return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types, primitive->name());
+  return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types_with_complex_and_bool,
+                                                           primitive->name());
 }
 }  // namespace mindspore::ops
