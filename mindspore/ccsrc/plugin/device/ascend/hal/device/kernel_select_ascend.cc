@@ -102,18 +102,6 @@ TypeId GetInputDeviceType(const AnfNodePtr &kernel_node, size_t input_idx) {
   return type;
 }
 
-void ProcessInconsistentDtype(const AnfNodePtr &node, size_t input_num) {
-  MS_EXCEPTION_IF_NULL(node);
-  std::vector<size_t> inconsistent_dtype_inputs;
-  for (size_t i = 0; i < input_num; ++i) {
-    TypeId input_dtype = AnfAlgo::GetInputDeviceDataType(node, i);
-    TypeId prev_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i);
-    if (input_dtype != kTypeUnknown && prev_dtype != kTypeUnknown && input_dtype != prev_dtype) {
-      (void)inconsistent_dtype_inputs.emplace_back(i);
-    }
-  }
-}
-
 void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> output_format, const CNodePtr &kernel_node,
                      size_t input_index, bool force_fresh = false) {
   MS_EXCEPTION_IF_NULL(real_input_node);
@@ -479,11 +467,13 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
     output_formats = cand_format.at(kFirstItem).second;
     input_reshape_types.assign(input_num, "");
     output_reshape_types.assign(output_num, "");
-    for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel); i++) {
-      auto input_format = AnfAlgo::GetPrevNodeOutputFormat(kernel, i);
-      if ((!transform::AclHelper::CheckDefaultSupportFormat(input_format)) && (kernel_type != HCCL_KERNEL)) {
-        MS_LOG(EXCEPTION) << "Aicpu kernel input not support this format: " << input_format
-                          << ", kernel: " << kernel->fullname_with_scope() << ", input idx: " << i;
+    if (kernel_type == AICPU_KERNEL) {
+      for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel); i++) {
+        auto input_format = AnfAlgo::GetPrevNodeOutputFormat(kernel, i);
+        if (!transform::AclHelper::CheckDefaultSupportFormat(input_format)) {
+          MS_LOG(EXCEPTION) << "Aicpu kernel input not support this format: " << input_format
+                            << ", kernel: " << kernel->fullname_with_scope() << ", input idx: " << i;
+        }
       }
     }
   }
@@ -498,7 +488,7 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
 
   for (size_t i = 0; i < input_num; i++) {
     auto cur_input_type = GetInputDeviceType(kernel, i);
-    if (IsEmptyTupleInput(kernel, i, cur_input_type)) {
+    if (kernel_type != RT_KERNEL && IsEmptyTupleInput(kernel, i, cur_input_type)) {
       cur_input_type = TypeId::kNumberTypeInt64;
     }
     (void)input_types.emplace_back(cur_input_type);
@@ -532,7 +522,6 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
                       << ", output_object_types size: " << output_object_types.size();
   }
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel.get());
-  ProcessInconsistentDtype(kernel, input_num);
 }
 
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
