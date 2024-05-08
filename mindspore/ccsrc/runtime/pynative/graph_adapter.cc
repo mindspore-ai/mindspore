@@ -328,9 +328,9 @@ void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
     MS_EXCEPTION_IF_NULL(tensor);
 
     auto device_address = HandleAddressForHeterogeneous(tensor, value_node, device_context);
-    runtime::DeviceAddressUtils::CreateKernelTensor(device_address, tensor);
     device_address = std::dynamic_pointer_cast<device::DeviceAddress>(
       kernel::pyboost::PyBoostUtils::ContiguousByDeviceAddress(device_address));
+    runtime::DeviceAddressUtils::CreateKernelTensor(device_address, tensor);
     tensor->set_device_address(device_address);
     auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
     MS_EXCEPTION_IF_NULL(front_node);
