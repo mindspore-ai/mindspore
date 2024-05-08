@@ -35,9 +35,7 @@ class MIND_API GroupNormSilu : public BaseOperator {
 };
 MIND_API abstract::AbstractBasePtr GroupNormSiluInfer(const abstract::AnalysisEnginePtr &,
                                                       const PrimitivePtr &primitive,
-                                                      const std::vector<abstract::AbstractBasePtr> &input_args) {
-  return nullptr;
-}
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_GROUP_NORM_SILU_H_
