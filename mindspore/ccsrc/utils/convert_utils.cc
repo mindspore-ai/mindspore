@@ -846,22 +846,17 @@ TypeId GetConversionType(const TypeId &current, bool current_arg_is_tensor, bool
     // Tensor + Scalar, Scalar + Tensor
     auto hash_id = GetHashId(current, saved_type_id);
     // BFloat16 + Float16
-    if (hash_id == hash_fp16_bf16) {
+    if (hash_id == hash_fp16_bf16 && (is_parameter || saved_type_id == ref_type_id)) {
       // If Parameter exists, its type_id should be equal to the saved_type_id,
       // otherwise it means that the wrong type cast will be performed on Parameter.
-      if (saved_type_id == ref_type_id) {
-        MS_LOG(WARNING) << "There is an implicit type conversion from " << TypeIdToString(current) << " to "
-                        << TypeIdToString(saved_type_id)
+      static int count_warning = 0;
+      if (count_warning == 0) {
+        MS_LOG(WARNING) << "For operators with side effects, there is an implicit type conversion between "
+                        << TypeIdToString(current) << " and " << TypeIdToString(saved_type_id)
                         << ", which may result in loss of precision. It is recommended to use Float32.";
-        return saved_type_id;
+        ++count_warning;
       }
-      if (is_parameter) {
-        MS_LOG(WARNING) << "There is an implicit type conversion from " << TypeIdToString(saved_type_id) << " to "
-                        << TypeIdToString(current)
-                        << ", which may result in loss of precision. It is recommended to use Float32.";
-        return current;
-      }
-      return kNumberTypeFloat32;
+      return is_parameter ? current : saved_type_id;
     }
     if (MS_UNLIKELY(current_arg_is_tensor ^ saved_has_tensor)) {
       return ConvertTypeBetweenTensorAndScalar(current, saved_type_id, hash_id);
