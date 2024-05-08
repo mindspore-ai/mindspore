@@ -33,9 +33,9 @@ TypePtr FFNExtFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto x_type = input_args[kInputIndex0]->GetType();
-  const std::set<TypePtr> valid_types = {kFloat16, kInt8};
+  const std::set<TypePtr> valid_types = {kFloat16, kBFloat16, kInt8};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, primitive->name());
-  return kFloat16;
+  return x_type;
 }
 }  // namespace ops
 }  // namespace mindspore
