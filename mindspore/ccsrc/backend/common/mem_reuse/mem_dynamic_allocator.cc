@@ -999,9 +999,6 @@ bool DynamicMemPoolBestFit::RecordEvent(int64_t task_id_on_stream, uint32_t user
 }
 
 bool DynamicMemPoolBestFit::WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id, uint32_t memory_stream_id) {
-  MS_LOG(DEBUG) << "Release events, task_id_on_stream : " << task_id_on_stream
-                << ", user_stream_id : " << user_stream_id << ", memory_stream_id : " << memory_stream_id
-                << ", used by event size : " << TotalUsedByEventMemStatistics() << ".";
 #ifdef __APPLE__
   std::lock_guard<SpinLock> spin_lock(spin_lock_);
 #else
@@ -1031,9 +1028,6 @@ bool DynamicMemPoolBestFit::WaitEvent(int64_t task_id_on_stream, uint32_t user_s
 
 // WaitEvent is called before sync stream, so performance may not be the issue.
 bool DynamicMemPoolBestFit::WaitEvent(int64_t task_id_on_stream, uint32_t memory_stream_id) {
-  MS_LOG(DEBUG) << "Release events, task_id_on_stream : " << task_id_on_stream
-                << ", memory_stream_id : " << memory_stream_id
-                << ", used by event size : " << TotalUsedByEventMemStatistics() << ".";
 #ifdef __APPLE__
   std::lock_guard<SpinLock> spin_lock(spin_lock_);
 #else
@@ -1072,7 +1066,7 @@ bool DynamicMemPoolBestFit::SyncAllEvents() {
 }
 
 bool DynamicMemPoolBestFit::SyncAllEventsInner() {
-  MS_LOG(INFO) << "Sync all events, stream_pair_addresses_ size : " << stream_pair_addresses_.size() << ".";
+  MS_LOG(DEBUG) << "Sync all events, stream_pair_addresses_ size : " << stream_pair_addresses_.size() << ".";
   if (stream_pair_addresses_.empty()) {
     return false;
   }
@@ -1133,8 +1127,6 @@ size_t MemStatusManager::CalActualPeak() {
 }
 
 bool DynamicMemBuf::RecordEvent(int64_t task_id_on_stream, uint32_t user_stream_id, const DeviceEventPtr &event) {
-  MS_LOG(DEBUG) << "Record event for address : " << device_addr_ << ", task_id_on_stream : " << task_id_on_stream
-                << ", user_stream_id : " << user_stream_id << ", size : " << size_ << ".";
   MS_EXCEPTION_IF_NULL(event);
   if (events_ == nullptr) {
     events_ = std::make_shared<std::unordered_map<uint32_t, std::shared_ptr<std::list<TaskIdOnStreamEvent>>>>();
@@ -1153,8 +1145,6 @@ bool DynamicMemBuf::RecordEvent(int64_t task_id_on_stream, uint32_t user_stream_
 }
 
 bool DynamicMemBuf::WaitEvent(uint32_t task_id_on_stream, uint32_t user_stream_id) {
-  MS_LOG(DEBUG) << "Release events for address : " << device_addr_ << ", task_id_on_stream : " << task_id_on_stream
-                << ", user_stream_id : " << user_stream_id << ", size : " << size_ << ".";
   if (events_ == nullptr) {
     return false;
   }
@@ -1171,8 +1161,6 @@ bool DynamicMemBuf::WaitEvent(uint32_t task_id_on_stream, uint32_t user_stream_i
   // Remove list if event list is empty.
   if (event_list->empty()) {
     events_->erase(iter);
-  } else {
-    MS_LOG(ERROR) << "After wait event for address : " << device_addr_ << ", event_list : " << event_list->size();
   }
   return true;
 }
@@ -1180,7 +1168,6 @@ bool DynamicMemBuf::WaitEvent(uint32_t task_id_on_stream, uint32_t user_stream_i
 bool DynamicMemBuf::IsEventNotUsed() { return events_ == nullptr ? true : events_->empty(); }
 
 bool DynamicMemBuf::SyncAllEvents() {
-  MS_LOG(DEBUG) << "Sync all events for address : " << device_addr_ << ".";
   if (IsEventNotUsed()) {
     return false;
   }
