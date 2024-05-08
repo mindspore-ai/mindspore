@@ -302,13 +302,8 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   // Add the new tensors to the kernel_graph
   pm->Add(std::make_shared<BindValueToGraph>(), OptLevel_1);
 
-  // For gpu, default enable kernelpacket. For ascend, default disable kernelpacket.
-  bool enable_kernel_packet;
-  if (is_gpu) {
-    enable_kernel_packet = common::GetEnv("MS_DEV_ENABLE_KERNEL_PACKET") != "off";
-  } else {
-    enable_kernel_packet = common::GetEnv("MS_DEV_ENABLE_KERNEL_PACKET") == "on";
-  }
+  // Default enable kernelpacket.
+  bool enable_kernel_packet = common::GetEnv("MS_DEV_ENABLE_KERNEL_PACKET") != "off";
   auto kernel_packet_lv = GetPassLevelByFlag(enable_kernel_packet);
   pm->Add(std::make_shared<SymbolEngineBuilder>(true), kernel_packet_lv, is_gpu || is_dvm);
   pm->Add(std::make_shared<SymbolEngineExtender>(), kernel_packet_lv, is_gpu || is_dvm);

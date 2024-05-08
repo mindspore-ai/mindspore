@@ -252,7 +252,7 @@ SymbolPtr ShapeCalcValueBuilder(OperationBuilder *b) {
 }
 
 REG_SYMBOL_OP_BUILDER("ShapeCalc")
-  .SetValueDepend([](const PrimitivePtr &p) -> std::vector<DependOn> {
+  .SetValueDepend([](const PrimitivePtr &p, size_t) -> std::vector<DependOn> {
     auto value_depend_attr = p->GetAttr(mindspore::ops::kAttrValueDepend);
     MS_EXCEPTION_IF_NULL(value_depend_attr);
     auto value_depend = GetValue<std::vector<bool>>(value_depend_attr);

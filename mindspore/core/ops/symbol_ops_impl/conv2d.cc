@@ -15,14 +15,19 @@
  */
 #include "mindspore/core/ops/symbol_ops_impl/common.h"
 #include "mindspore/core/ops/conv2d.h"
+#include "mindspore/core/ops/symbol_ops_impl/scalar_add.h"
+#include "mindspore/core/ops/symbol_ops_impl/scalar_sub.h"
+#include "mindspore/core/ops/symbol_ops_impl/scalar_mul.h"
 #include "mindspore/core/ops/symbol_ops_impl/scalar_div.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace symshape {
 namespace ops {
 namespace {
 constexpr size_t kNum2 = 2;
-}
+constexpr size_t kNum4 = 4;
+}  // namespace
 class MS_CORE_API Conv2D : public InferShapeOp {
  public:
   using InferShapeOp::InferShapeOp;
@@ -40,9 +45,13 @@ class MS_CORE_API Conv2D : public InferShapeOp {
     auto format = input_as<StrSymbol>(kIndex7)->value();
     return format == "NCHW" ? ListSymbol::Make({n, out_channel, h, w}) : ListSymbol::Make({n, h, w, out_channel});
   }
+  SymbolPtr CalcForPadValid(const SymbolPtr &x, const SymbolPtr &kernel, const SymbolPtr &stride,
+                            const SymbolPtr &dilation);
   SymbolPtr CalcForPadSame(const SymbolPtr &x, const SymbolPtr &stride) {
     return Emit(std::make_shared<ScalarCeilDiv>(x, stride));
   }
+  SymbolPtr CalcForPadding(const SymbolPtr &x, const SymbolPtr &kernel, const SymbolPtr &padding,
+                           const SymbolPtr &stride, const SymbolPtr &dilation);
 
   ListSymbolPtr ProcessAttr(const SymbolPtr &attr, size_t begin_idx, size_t num) {
     if (attr->is<ListSymbol>()) {
@@ -58,15 +67,43 @@ class MS_CORE_API Conv2D : public InferShapeOp {
   }
 };
 
+SymbolPtr Conv2D::CalcForPadValid(const SymbolPtr &x, const SymbolPtr &kernel, const SymbolPtr &stride,
+                                  const SymbolPtr &dilation) {
+  // `x - (dilation * (kernel - 1))) / stride`, to ceil
+  auto t1 = Emit(std::make_shared<ScalarSub>(kernel, GenInt(1)));
+  auto t2 = Emit(std::make_shared<ScalarMul>(dilation, t1));
+  auto t3 = Emit(std::make_shared<ScalarSub>(x, t2));
+  auto t4 = Emit(std::make_shared<ScalarCeilDiv>(t3, stride));
+  return t4;
+}
+
+SymbolPtr Conv2D::CalcForPadding(const SymbolPtr &x, const SymbolPtr &kernel, const SymbolPtr &padding,
+                                 const SymbolPtr &stride, const SymbolPtr &dilation) {
+  //    `[(x + padding - kernel - (kernel - 1) * (dilation - 1)) / stride] + 1`, [] is to floor.
+  // => `[(x + padding - kernel * (dilation - 1) - 1) / stride] + 1`.
+  auto const_1 = GenInt(1);
+  auto t1 = Emit(std::make_shared<ScalarSub>(dilation, const_1));
+  auto t2 = Emit(std::make_shared<ScalarMul>(kernel, t1));
+  auto t3 = Emit(std::make_shared<ScalarAdd>(x, padding));
+  auto t4 = Emit(std::make_shared<ScalarSub>(t3, t2));
+  auto t5 = Emit(std::make_shared<ScalarSub>(t4, const_1));
+  auto t6 = Emit(std::make_shared<ScalarFloorDiv>(t5, stride));
+  auto t7 = Emit(std::make_shared<ScalarAdd>(t6, const_1));
+  return t7;
+}
+
 SymbolPtr Conv2D::Eval() {
   auto x = input_as<ListSymbol>(kIndex0);
-  auto pad_mode = input_as<IntSymbol>(kIndex3)->value();
-  auto stride = ProcessAttr(input(kIndex5), kIndex2, kNum2);
-  auto format = input_as<StrSymbol>(kIndex7)->value();
-  if (pad_mode != PadMode::SAME) {
-    // only support SAME pad now.
-    return nullptr;
+  auto pad_mode_sym = input(kIndex3);
+  int64_t pad_mode;
+  if (pad_mode_sym->is<StrSymbol>()) {
+    CheckAndConvertUtils::GetPadModEnumValue(MakeValue(pad_mode_sym->as<StrSymbol>()->value()), &pad_mode);
+  } else if (pad_mode_sym->is<IntSymbol>()) {
+    pad_mode = pad_mode_sym->as<IntSymbol>()->value();
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported pad_mode " << pad_mode_sym->ToString();
   }
+  auto format = input_as<StrSymbol>(kIndex7)->value();
   if (!x->HasData()) {
     return GenOutput(GenVInt(), GenVInt(), GenVInt());
   }
@@ -77,22 +114,50 @@ SymbolPtr Conv2D::Eval() {
     w_axis = kIndex2;
   }
   auto out_n = x->item(kIndex0);
-  auto out_h = CalcForPadSame(x->item(h_axis), stride->item(kIndex0));
-  auto out_w = CalcForPadSame(x->item(w_axis), stride->item(kIndex1));
+  SymbolPtr out_h;
+  SymbolPtr out_w;
+  if (pad_mode == PadMode::VALID) {
+    auto kernel = ProcessAttr(input(kIndex2), kIndex0, kNum2);
+    auto stride = ProcessAttr(input(kIndex5), kIndex2, kNum2);
+    auto dilation = ProcessAttr(input(kIndex6), kIndex2, kNum2);
+    out_h = CalcForPadValid(x->item(h_axis), kernel->item(kIndex0), stride->item(kIndex0), dilation->item(kIndex0));
+    out_w = CalcForPadValid(x->item(w_axis), kernel->item(kIndex1), stride->item(kIndex1), dilation->item(kIndex1));
+  } else if (pad_mode == PadMode::SAME) {
+    auto stride = ProcessAttr(input(kIndex5), kIndex2, kNum2);
+    out_h = CalcForPadSame(x->item(h_axis), stride->item(kIndex0));
+    out_w = CalcForPadSame(x->item(w_axis), stride->item(kIndex1));
+  } else if (pad_mode == PadMode::PAD) {
+    auto kernel = ProcessAttr(input(kIndex2), kIndex0, kNum2);
+    auto padding = ProcessAttr(input(kIndex4), kIndex0, kNum4);
+    auto stride = ProcessAttr(input(kIndex5), kIndex2, kNum2);
+    auto dilation = ProcessAttr(input(kIndex6), kIndex2, kNum2);
+    auto padding_h = Emit(std::make_shared<ScalarAdd>(padding->item(kIndex0), padding->item(kIndex1)));
+    auto padding_w = Emit(std::make_shared<ScalarAdd>(padding->item(kIndex2), padding->item(kIndex3)));
+    out_h =
+      CalcForPadding(x->item(h_axis), kernel->item(kIndex0), padding_h, stride->item(kIndex0), dilation->item(kIndex0));
+    out_w =
+      CalcForPadding(x->item(w_axis), kernel->item(kIndex1), padding_w, stride->item(kIndex1), dilation->item(kIndex1));
+  } else {
+    MS_LOG(DEBUG) << "The pad_mode " << pad_mode << " is not supported now.";
+    return nullptr;
+  }
+  DoNotEvalOnRun();
   return GenOutput(out_n, out_h, out_w);
 }
 
-REG_SYMBOL_OP_BUILDER("Conv2D").SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
-  auto x = b->GetInputShape(kIndex0);
-  auto out_channel = b->GetInputOrAttr(kIndex3, "out_channel");
-  auto kernel_size = b->GetInputOrAttr(kIndex4, "kernel_size");
-  auto pad_mode = b->GetInputOrAttr(kIndex6, "pad_mode");
-  auto padding = b->GetInputOrAttr(kIndex7, "pad");
-  auto stride = b->GetInputOrAttr(kIndex8, "stride");
-  auto dilation = b->GetInputOrAttr(kIndex9, "dilation");
-  auto format = b->GetInputOrAttr(kIndex11, "format");
-  return b->Emit(std::make_shared<Conv2D>(x, out_channel, kernel_size, pad_mode, padding, stride, dilation, format));
-});
+REG_SYMBOL_OP_BUILDER("Conv2D")
+  .SetShapeDepend({DependOn::kShape, DependOn::kNone})
+  .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
+    auto x = b->GetInputShape(kIndex0);
+    auto out_channel = b->GetInputOrAttr(kIndex3, "out_channel");
+    auto kernel_size = b->GetInputOrAttr(kIndex4, "kernel_size");
+    auto pad_mode = b->GetInputOrAttr(kIndex6, "pad_mode");
+    auto padding = b->GetInputOrAttr(kIndex7, "pad");
+    auto stride = b->GetInputOrAttr(kIndex8, "stride");
+    auto dilation = b->GetInputOrAttr(kIndex9, "dilation");
+    auto format = b->GetInputOrAttr(kIndex11, "format");
+    return b->Emit(std::make_shared<Conv2D>(x, out_channel, kernel_size, pad_mode, padding, stride, dilation, format));
+  });
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

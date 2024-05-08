@@ -28,7 +28,7 @@ namespace symshape {
 class OperationBuilder;
 enum class DependOn : int { kShape, kValue, kNone };
 using InferFunc = std::function<SymbolPtr(OperationBuilder *)>;
-using DependFunc = std::function<std::vector<DependOn>(const PrimitivePtr &)>;
+using DependFunc = std::function<std::vector<DependOn>(const PrimitivePtr &, size_t)>;
 struct MS_CORE_API OperationBuilderInfo {
   InferFunc build_shape_func{nullptr};
   InferFunc build_value_func{nullptr};
@@ -36,9 +36,9 @@ struct MS_CORE_API OperationBuilderInfo {
   DependFunc value_depend_func{nullptr};
   std::vector<DependOn> shape_depend_list;
   std::vector<DependOn> value_depend_list;
-  std::vector<DependOn> GetDepends(const PrimitivePtr &prim, bool build_value) const {
-    return build_value ? (value_depend_func != nullptr ? value_depend_func(prim) : value_depend_list)
-                       : (shape_depend_func != nullptr ? shape_depend_func(prim) : shape_depend_list);
+  std::vector<DependOn> GetDepends(const PrimitivePtr &prim, size_t input_num, bool build_value) const {
+    return build_value ? (value_depend_func != nullptr ? value_depend_func(prim, input_num) : value_depend_list)
+                       : (shape_depend_func != nullptr ? shape_depend_func(prim, input_num) : shape_depend_list);
   }
 };
 

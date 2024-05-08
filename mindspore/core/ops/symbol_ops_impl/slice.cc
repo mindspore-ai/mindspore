@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 #include "mindspore/core/ops/symbol_ops_impl/common.h"
-#include "mindspore/core/ops/symbol_ops_impl/scalar_add.h"
 #include "mindspore/core/ops/symbol_ops_impl/scalar_sub.h"
-#include "mindspore/core/ops/symbol_ops_impl/scalar_div.h"
-#include "mindspore/core/ops/symbol_ops_impl/scalar_min.h"
-#include "symbolic_shape/symbol.h"
 
 namespace mindspore {
 namespace symshape {
@@ -33,62 +29,47 @@ class MS_CORE_API Slice : public InferShapeOp {
 };
 
 SymbolPtr Slice::Eval() {
-  auto data_sym = input_as_sptr<ListSymbol>(kIndex0);
-  MS_EXCEPTION_IF_NULL(data_sym);
-  auto begin_sym = input_as_sptr<ListSymbol>(kIndex1);
-  MS_EXCEPTION_IF_NULL(begin_sym);
-  auto size_sym = input_as_sptr<ListSymbol>(kIndex2);
-  MS_EXCEPTION_IF_NULL(size_sym);
-
-  if (data_sym->HasData() && begin_sym->HasData() && size_sym->HasData()) {
-    auto rank = data_sym->size();
-    if (begin_sym->size() != rank || size_sym->size() != rank) {
-      MS_LOG(ERROR) << "For Slice, the shape of input|begin|size must be equal, but got " << rank << "|"
-                    << begin_sym->size() << "|" << size_sym->size() << ".";
+  auto data = input_as_sptr<ListSymbol>(kIndex0);
+  auto begin = input_as_sptr<ListSymbol>(kIndex1);
+  auto size = input_as_sptr<ListSymbol>(kIndex2);
+  if (!data->HasData() || !begin->HasData() || !size->HasData()) {
+    if (data->HasData()) {
+      return GenVIntList(data->size());
     }
-
-    SymbolPtrList new_syms;
-    new_syms.reserve(rank);
-    bool is_change = false;
-    for (size_t i = 0; i < rank; ++i) {
-      auto size_s = size_sym->item_as_sptr<IntSymbol>(i);
-      MS_EXCEPTION_IF_NULL(size_s);
-      if (size_s->is_positive()) {
-        new_syms.push_back(size_s);
-        continue;
-      }
-
-      auto data_s = data_sym->item_as_sptr<IntSymbol>(i);
-      MS_EXCEPTION_IF_NULL(data_s);
-      auto begin_s = begin_sym->item_as_sptr<IntSymbol>(i);
-      MS_EXCEPTION_IF_NULL(begin_s);
-      if (!data_s->HasData() || !begin_s->HasData() || !size_s->HasData()) {
-        new_syms.push_back(GenVInt());
-        continue;
-      }
-
-      auto data_v = data_s->value();
-      auto begin_v = begin_s->value();
-      auto size_v = size_s->value();
-      if (begin_v + size_v > data_v) {
-        MS_EXCEPTION(ValueError) << "For Slice, the sum of begin[" << i << "](" << begin_v << ") and size[" << i << "]("
-                                 << size_v << ") must be no greater than input_shape[" << i << "](" << data_v << ").";
-      }
-      if (size_v == -1) {
-        size_v = data_v - begin_v;
-        is_change = true;
-        new_syms.push_back(GenInt(size_v));
-        continue;
-      }
-      new_syms.push_back(size_s);
+    if (begin->HasData()) {
+      return GenVIntList(begin->size());
     }
-
-    if (is_change) {
-      size_sym = ListSymbol::Make(std::move(new_syms));
+    if (size->HasData()) {
+      return GenVIntList(size->size());
     }
   }
 
-  return size_sym;
+  auto rank = data->size();
+  if (begin->size() != rank || size->size() != rank) {
+    MS_LOG(ERROR) << "For Slice, the shape of input|begin|size must be equal, but got " << rank << "|" << begin->size()
+                  << "|" << size->size() << ".";
+  }
+
+  SymbolPtrList new_syms(rank);
+  bool has_unknown_size = false;
+  for (size_t i = 0; i < rank; ++i) {
+    auto data_s = data->item_as_sptr<IntSymbol>(i);
+    auto begin_s = begin->item_as_sptr<IntSymbol>(i);
+    auto size_s = size->item_as_sptr<IntSymbol>(i);
+    if (size_s->is_positive()) {
+      new_syms[i] = size_s;
+    } else if (size_s->is_negative()) {
+      // when the size is "-1", result is data[begin:]
+      new_syms[i] = Emit(std::make_shared<ScalarSub>(data_s, begin_s));
+    } else {
+      has_unknown_size = true;
+      new_syms[i] = GenVInt();
+    }
+  }
+  if (!has_unknown_size) {
+    DoNotEvalOnRun();
+  }
+  return GenList(std::move(new_syms));
 }
 
 REG_SYMBOL_OP_BUILDER("Slice")
