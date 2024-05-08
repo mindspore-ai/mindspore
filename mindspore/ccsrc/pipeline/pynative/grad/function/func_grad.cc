@@ -455,6 +455,7 @@ void FuncGrad::BackPropagate() {
       const auto &last_variable = next_edge.variable;
       // If network not calculate inputs grad, some op will be pruning, we need skip this op.
       if (!last_variable->is_need_grad()) {
+        MS_LOG(DEBUG) << "variable is not need grad, " << last_variable->ToString();
         continue;
       }
       const auto &last_fn = last_variable->func_node();

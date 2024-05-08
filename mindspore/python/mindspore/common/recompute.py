@@ -14,9 +14,149 @@
 # ============================================================================
 """Defines other operators with functional form."""
 
+from collections import OrderedDict
+from types import MethodType
 from mindspore import log as logger
-from mindspore.nn.cell import Cell, _RecomputeCell
+from mindspore.nn.cell import Cell
 from mindspore import context
+from mindspore.common.tensor import Tensor
+from mindspore.ops.composite import GradOperation
+from mindspore.common._register_for_recompute import recompute_registry
+from mindspore.common.api import _pynative_executor
+from mindspore.nn.generator import get_rng_state, set_rng_state
+
+class _WrapCell(Cell):
+    """
+    The warp cell is used by recompute cell,
+    which can set mixed precision to warp cell
+    """
+
+    def __init__(self, function):
+        super(_WrapCell, self).__init__()
+        self.function = function
+
+    def construct(self, *args):
+        return self.function(*args)
+
+
+class _RecomputeCell(Cell):
+    """
+    Recompute cell, given the sub block, this cell will recompute the block, rather than
+    storing the intermediate activation computed in forward pass, we will recompute it in backward pass.
+    Note:
+     - RecomputeCell now only support pynative mode.
+     - When use recompute function, block object should not decorated by @jit.
+    """
+
+    def __init__(self, block):
+        """Initialize Recompute cell."""
+        super(_RecomputeCell, self).__init__()
+        self.args = []
+        self.kwargs = []
+        self.wrap_cell = _WrapCell(block)
+        self.net = block
+        self.internal_params = []
+        self.save_rng_state = False
+        self.cpu_rng_state = None
+        self._add_attr("is_cell_recompute", "True")
+        self.grad = GradOperation(get_all=True, get_by_list=True, sens_param=True)
+        self.init_mixed_precision_type(block)
+
+    def construct(self, *args, **kwargs):
+        _check_input_args_validate(self.net, args)
+        self.args.append(args)
+        self.kwargs.append(kwargs)
+        self.save_rng_state = kwargs.pop("save_rng_state", True)
+        if self.save_rng_state:
+            self.cpu_rng_state = get_rng_state()
+        return self.net(*args)
+
+    def bprop(self, *args):
+        """
+        Custom grad method for recompute
+        :param args:
+        :return: input grad and weight grads
+        """
+        grad_input = args[-1]
+        input_args = self.args[-1]
+        self.args.pop()
+        self.kwargs.pop()
+        try:
+            pre_rng_state = get_rng_state()
+            set_rng_state(*self.cpu_rng_state)
+            _pynative_executor.set_is_run_recompute(True)
+            grads = self.grad(self.net, self.internal_params)(*input_args, grad_input)
+            _pynative_executor.set_is_run_recompute(False)
+            set_rng_state(*pre_rng_state)
+        except Exception as err:
+            _pynative_executor.clear_res()
+            raise err
+        weights = OrderedDict()
+        input_grads = list(grads[0])
+        _padding_input_grads(input_args, input_grads)
+        for i, param in enumerate(self.internal_params):
+            weights[param] = grads[1][i]
+        return tuple(input_grads), weights
+
+    def init_mixed_precision_type(self, block):
+        """
+        init mix precision
+        :param block:
+        :return:
+        """
+        if isinstance(block, Cell):
+            # To avoid sub cell same name
+            block.check_names_and_refresh_name()
+            self.internal_params = block.trainable_params()
+            return
+        if isinstance(block, MethodType) and isinstance(block.__self__, Cell):
+            # To avoid sub cell same name
+            block.__self__.check_names_and_refresh_name()
+            self.internal_params = block.__self__.trainable_params()
+            self.wrap_cell.set_mixed_precision_type(block.__self__.get_mixed_precision_type())
+            self.net = self.wrap_cell
+        else:
+            raise TypeError("For Recompute cell, it not support FunctionType function, "
+                            "only support Cell object or MethodType function!")
+
+
+def _check_input_args_validate(block, args):
+    """
+    Check recompute input args validate
+    :param args:
+    :return:
+    """
+    if not any([isinstance(arg, Tensor) for arg in args]):
+        logger.warning("None of the inputs of function are tensors, which not need use recompute!")
+    for arg in args:
+        if isinstance(arg, (tuple, list)):
+            for data in arg:
+                if isinstance(data, Tensor):
+                    logger.info("For recompute block {}, tensor input in Tuple or list \
+                                will not calculate grads!".format(block))
+                    break
+
+
+def _padding_input_grads(args, input_grads):
+    """
+    Padding input grads to same as input args
+    :param args:
+    :param input_grads:
+    :return:
+    """
+    for i, arg in enumerate(args):
+        if isinstance(arg, (list, tuple)):
+            if all([not isinstance(data, Tensor) for data in arg]):
+                input_grads.insert(i, None)
+            else:
+                # None is placeholder
+                grads = [None for data in arg]
+                input_grads.insert(i, grads)
+        elif not isinstance(arg, Tensor):
+            input_grads.insert(i, None)
+    if len(args) != len(input_grads):
+        raise ValueError("For recompute cell, the input grads size should be same as input args size: {}, \
+                         but got {}".format(len(args), len(input_grads)))
 
 
 def _check_validation(block):
@@ -89,6 +229,17 @@ def recompute(block, *args, **kwargs):
     _check_validation(block)
     return _RecomputeCell(block)(*args, **kwargs)
 
+
+def recompute_generator(block):
+    """
+    generator of recompute object.
+    :param block:
+    :return:
+    """
+    return _RecomputeCell(block)
+
+
+recompute_registry.register(recompute_generator)
 
 __all__ = [
     'recompute',
