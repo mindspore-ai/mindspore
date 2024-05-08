@@ -36,26 +36,30 @@ namespace mindspore::kernel {
 struct TilingInfo {
   internal::DeviceRawBuf device_buf_;
   internal::CacheInfo cache_info_;
+  bool need_free_device_buf_;
 
   TilingInfo() {
     this->device_buf_.size_ = 0;
     this->device_buf_.addr_ = nullptr;
+    this->need_free_device_buf_ = false;
   }
 
   TilingInfo(const TilingInfo &other) {
     this->device_buf_ = other.device_buf_;
-    cache_info_ = other.cache_info_;
+    this->cache_info_ = other.cache_info_;
+    this->need_free_device_buf_ = other.need_free_device_buf_;
   }
 
   const TilingInfo &operator=(const TilingInfo &other) {
     this->device_buf_ = other.device_buf_;
-    cache_info_ = other.cache_info_;
+    this->cache_info_ = other.cache_info_;
+    this->need_free_device_buf_ = other.need_free_device_buf_;
     return *this;
   }
 };
 
 // Set the max cache size to avoid memory leak. one buf_ 8192/8/1024 = 1kb, total kMaxSize kb.
-constexpr int kMaxSize = 10240;
+constexpr size_t kMaxSize = 10240;
 // Detail buffer parameters.
 constexpr int kBufSize = 8192;
 constexpr int kBufMaxSize = kBufSize + 1024;
@@ -65,7 +69,14 @@ constexpr size_t kMaxDevBlockSize = kMaxSize * kMemAlignSize;
 class TilingCacheMgr {
  public:
   // TilingCacheMgr is used to manage the tiling caches.
-  TilingCacheMgr() { SetDeviceContext(); }
+  TilingCacheMgr() {
+    auto tiling_cache_size_env_str = common::GetEnv("MS_INTERNAL_TILING_CACHE_SIZE");
+    if (tiling_cache_size_env_str != "") {
+      auto tiling_cache_size = std::stoi(tiling_cache_size_env_str);
+      cache_capcity_ = tiling_cache_size;
+    }
+    SetDeviceContext();
+  }
   ~TilingCacheMgr() { Clear(); }
   static TilingCacheMgr &GetInstance() noexcept {
     static TilingCacheMgr instance;
@@ -117,6 +128,7 @@ class TilingCacheMgr {
   internal::HostRawBuf host_tiling_buf_;
   device::DeviceContext *device_context_;
   std::mutex key_mtx_, cache_mtx_;
+  size_t cache_capcity_{kMaxSize};
 
   uint64_t calc_hash_id();
 
@@ -128,8 +140,8 @@ class TilingCacheMgr {
   }
 
   inline void FreeMemoryIfFull() {
-    if (cache_buf_.size() >= kMaxSize && dev_addr_ != nullptr) {
-      device::ascend::AscendMemoryPool::GetInstance().FreeDeviceMem(&dev_addr_);
+    if (cache_buf_.size() >= cache_capcity_ && dev_addr_ != nullptr) {
+      device::ascend::AscendMemoryPool::GetInstance().FreeTensorMem(dev_addr_);
       dev_addr_ = nullptr;
     }
   }
@@ -138,16 +150,28 @@ class TilingCacheMgr {
     tiling_cache_elem->device_buf_.size_ = tiling_size;
     auto aligned_size = AlignMemorySize(tiling_size);
     void *tiling_cache_addr = nullptr;
-    if (dev_addr_ != nullptr && dev_offset_ + aligned_size < kMaxDevBlockSize && cache_buf_.size() < kMaxSize) {
+
+    if (cache_buf_.size() >= cache_capcity_) {
+      dev_addr_ = nullptr;
+      dev_offset_ = 0;
+      dev_addr_ = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(aligned_size);
+      tiling_cache_addr = dev_addr_;
+      tiling_cache_elem->device_buf_.addr_ = tiling_cache_addr;
+      tiling_cache_elem->need_free_device_buf_ = true;
+      return;
+    }
+
+    if (dev_addr_ != nullptr && dev_offset_ + aligned_size < kMaxDevBlockSize) {
       tiling_cache_addr = static_cast<void *>(static_cast<char *>(dev_addr_) + dev_offset_);
     } else {
       dev_addr_ = nullptr;
       dev_offset_ = 0;
-      device::ascend::AscendMemoryPool::GetInstance().AllocDeviceMem(kMaxDevBlockSize, &dev_addr_);
+      dev_addr_ = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(kMaxDevBlockSize);
       tiling_cache_addr = dev_addr_;
     }
     dev_offset_ += aligned_size;
     tiling_cache_elem->device_buf_.addr_ = tiling_cache_addr;
+    tiling_cache_elem->need_free_device_buf_ = false;
   }
 
   // concat all the data which influence tiling result into an array[char].
@@ -250,7 +274,7 @@ class TilingCacheMgr {
     }
   }
   void AppendToCache(const uint64_t key, TilingInfo device_tiling_buf) {
-    if (cache_buf_.size() >= kMaxSize) {
+    if (cache_buf_.size() >= cache_capcity_) {
       MS_LOG(WARNING) << "Cache buffer is full, stop cache tiling buf_.";
       return;
     }

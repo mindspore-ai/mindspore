@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/kernel/internal/internal_kernel_mod.h"
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
 #include "acl/acl_rt.h"
 
 namespace mindspore {
@@ -73,6 +74,9 @@ void InternalKernelMod::SetTilingInfo(const uint64_t key) {
     cache_info = this->impl_->GetCacheInfo();
     return ret;
   };
+  if (tiling_info_.need_free_device_buf_) {
+    device::ascend::AscendMemoryPool::GetInstance().FreeTensorMem(tiling_info_.device_buf_.addr_);
+  }
   tiling_info_ = TilingCacheMgr::GetInstance().GetOrCreateTilingInfo(key, tiling_func, tiling_size);
   impl_->SetCacheInfo(tiling_info_.cache_info_);
   impl_->SetDeviceTilingBuf(tiling_info_.device_buf_);
