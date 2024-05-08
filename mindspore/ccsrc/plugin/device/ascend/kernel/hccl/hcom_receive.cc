@@ -168,6 +168,8 @@ MessageBase *HcomReceiveKernel::HandleMessage(MessageBase *const msg) {
   while (std::getline(t_string, token, '_')) {
     recv_shape.push_back(std::stoll(token));
   }
+  // Delete msg manually. Please refer to mindspore/ccsrc/distributed/rpc/tcp/connection.cc::473 for the reason.
+  delete msg;
 
   std::lock_guard<std::mutex> lock(mtx_);
   recv_shape_ = recv_shape;
