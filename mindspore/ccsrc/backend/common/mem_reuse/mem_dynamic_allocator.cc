@@ -1115,7 +1115,12 @@ size_t DynamicMemPoolBestFit::UsedMemPeakStatistics() const {
   return common_mem_->mps_.used_mem_peak_size_ + persistent_mem_->mps_.used_mem_peak_size_;
 }
 size_t DynamicMemPoolBestFit::ActualPeakStatistics() const {
-  return common_mem_->CalActualPeak() + persistent_mem_->CalActualPeak();
+  if (IsMemoryPoolRecycle()) {
+    // not need to calculate the actual peak in GE sub graph mode.
+    return 0;
+  } else {
+    return common_mem_->CalActualPeak() + persistent_mem_->CalActualPeak();
+  }
 }
 
 size_t MemStatusManager::CalActualPeak() {
