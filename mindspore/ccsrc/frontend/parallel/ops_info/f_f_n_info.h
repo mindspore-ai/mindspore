@@ -55,6 +55,14 @@ class FFNInfo : public OperatorInfo {
   Shape origin_dev_matrix_shape_;
   std::vector<bool> inputs_exist_;
 };
+
+class FFNExtInfo : public FFNInfo {
+ public:
+  FFNExtInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : FFNInfo(operator_name, inputs_shape, outputs_shape, attrs) {}
+  ~FFNExtInfo() override = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_MOE_F_F_N_INFO_H_

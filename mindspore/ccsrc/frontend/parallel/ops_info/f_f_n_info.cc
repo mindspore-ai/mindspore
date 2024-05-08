@@ -419,5 +419,6 @@ std::vector<StrategyPtr> FFNInfo::GenerateOpStrategies(int64_t stage_id) {
 }
 
 REGISTER(FFNInfo);
+REGISTER(FFNExtInfo);
 }  // namespace parallel
 }  // namespace mindspore

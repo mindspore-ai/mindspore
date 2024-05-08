@@ -132,7 +132,7 @@ def test_ffn_forward_net():
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
+@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_ffn_forward_mode(mode):
     """
     Feature: Test ffn with static shape in kbk and pynative mode.
@@ -144,7 +144,8 @@ def test_ffn_forward_mode(mode):
         output = ffn_forward_func(x, w1, w2, expert_tokens, bias1, bias2)
     elif mode == 'KBK':
         output = (jit(ffn_forward_func, jit_config=JitConfig(jit_level="O0")))(x, w1, w2, expert_tokens, bias1, bias2)
-
+    else:
+        output = (jit(ffn_forward_func, jit_config=JitConfig(jit_level="O2")))(x, w1, w2, expert_tokens, bias1, bias2)
     assert np.allclose(output.asnumpy(), expect, rtol=1e-1)
 
 @pytest.mark.level0
