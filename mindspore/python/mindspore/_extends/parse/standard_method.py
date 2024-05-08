@@ -54,7 +54,6 @@ __all__ = ['MultitypeFuncGraph', 'env_get',
 
 shape_ = P.Shape()
 dtype_ = P.DType()
-abs_ = P.Abs()
 ndim_ = P.Rank()
 cumsum_ = P.CumSum()
 size_op_ = P.Size()
@@ -70,6 +69,10 @@ itemsize_map = {mstype.bool_: 1, mstype.int8: 1, mstype.uint8: 1,
 
 nan_tensor = Tensor(float('nan'), dtype=mstype.float32)
 
+
+def abs_(x):
+    """Return the absolute value of input which is Tensor."""
+    return P.Abs()(x)
 
 def mean(x, axis=None, keep_dims=False, dtype=None):
     """
