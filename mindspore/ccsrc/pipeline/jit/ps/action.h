@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ bool StartPSSchedulerAction(const ResourcePtr &resource);
 bool DistributedSplitAction(const ResourcePtr &resource);
 #endif
 
-std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag = false);
+std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag = false, bool erase_parse = false);
 std::vector<ActionItem> MindIRPipeline();
 #if defined(__linux__) && defined(WITH_BACKEND)
 std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource);
