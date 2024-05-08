@@ -752,6 +752,10 @@ void KernelActor::ExecuteResizeKernelModTask(OpContext<DeviceTensor> *const cont
 }
 
 void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context) {
+  if (IsRunningFailed(context)) {
+    MS_LOG(INFO) << "Run failed and early stop launch kernel: " << kernel_->fullname_with_scope();
+    return;
+  }
   // 1. Allocate memory.
   if (!memory_alloc_list_.empty()) {
     SendMemoryAllocReq(context);
