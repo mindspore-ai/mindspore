@@ -53,8 +53,6 @@ std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr, tensor::BaseTensorPtr> 
     [op, dout_tensor, input_tensor, weight_tensor, bias_tensor, pad_vector, stride_vector, dilation_vector,
      transposed_imm, output_padding_vector, group_imm, output_mask_u8_vec]() {
       MS_LOG(DEBUG) << "Run device task ConvolutionGrad end";
-      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
-                                         "ConvolutionGrad", false);
       auto device_context = op->device_context();
       const auto &outputs = op->outputs();
       // Malloc for input tensors
