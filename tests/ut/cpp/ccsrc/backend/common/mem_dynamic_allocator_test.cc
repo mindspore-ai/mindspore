@@ -239,5 +239,74 @@ TEST_F(TestMemDynamicAllocator, test_malloc_with_multi_stream_id) {
   EXPECT_EQ(persitent_mem_pool->mem_bufs_[std::make_pair(stream1, DynamicMemBufStatus::kMemBufIdle)].size(),
             expected_size_two);
 }
+
+class DummyDeviceEvent : public DeviceEvent {
+  bool IsReady() const override { return true; };
+  void WaitEvent() override{};
+  bool WaitEvent(uint32_t stream_id) override { return true; };
+  void WaitEventWithoutReset() override{};
+  void RecordEvent() override{};
+  void RecordEvent(uint32_t stream_id) override{};
+  bool NeedWait() override { return true; };
+  void SyncEvent() override{};
+  bool QueryEvent() override { return true; };
+  void ElapsedTime(float *cost_time, const DeviceEvent *other) override{};
+  bool DestroyEvent() override { return true; };
+  void set_wait_stream(void *stream) override{};
+  void set_record_stream(void *stream) override{};
+};
+using DummyDeviceEventPtr = std::shared_ptr<DummyDeviceEvent>;
+
+/// Feature: test memory malloc with multi stream.
+/// Description: test mem dynamic allocation strategy with multi stream.
+/// Expectation: all interface work normally and can not throw exception.
+TEST_F(TestMemDynamicAllocator, test_malloc_with_multi_stream) {
+  int stream0 = 0;
+  int stream1 = 1;
+  auto persitent_mem_pool = mem_pool_.persistent_mem();
+  // Malloc from persistent mem pool.
+  auto addr1 = mem_pool_.AllocTensorMem(kSize1G >> 1, true, true, stream0);
+  auto addr2 = mem_pool_.AllocTensorMem(kSize1G >> 1, true, true, stream1);
+  EXPECT_EQ(persitent_mem_pool->mem_bufs_.size(), expected_size_two);
+  EXPECT_EQ(persitent_mem_pool->mem_bufs_.count(std::make_pair(stream0, DynamicMemBufStatus::kMemBufIdle)),
+            expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->mem_bufs_[std::make_pair(stream0, DynamicMemBufStatus::kMemBufIdle)].size(),
+            expected_size_one);
+  EXPECT_EQ(persitent_mem_pool->mem_bufs_[std::make_pair(stream1, DynamicMemBufStatus::kMemBufIdle)].size(),
+            expected_size_one);
+  // Wait event before free tensor.
+  int64_t task_id_on_stream_0 = 1;
+  uint32_t user_stream_id = 1;
+  std::vector<std::pair<uint32_t, DeviceMemPtr>> memory_stream_addresses;
+  memory_stream_addresses.emplace_back(0, addr1);
+  DeviceEventPtr event = std::make_shared<DummyDeviceEvent>();
+  mem_pool_.RecordEvent(task_id_on_stream_0, user_stream_id, memory_stream_addresses, event);
+  EXPECT_EQ(mem_pool_.stream_pair_addresses_.size(), 1);
+  uint32_t memory_stream_id = 0;
+  EXPECT_EQ(mem_pool_.stream_pair_addresses_[std::make_pair(user_stream_id, memory_stream_id)].size(), 1);
+  mem_pool_.WaitEvent(task_id_on_stream_0, user_stream_id, memory_stream_id);
+  EXPECT_EQ(mem_pool_.stream_pair_addresses_.size(), 1);
+  EXPECT_EQ(mem_pool_.stream_pair_addresses_[std::make_pair(user_stream_id, memory_stream_id)].size(), 0);
+  mem_pool_.FreeTensorMem(addr1);
+
+  // Wait event after free tensor.
+  int64_t task_id_on_stream_1 = 1;
+  user_stream_id = 0;
+  memory_stream_id = 1;
+  memory_stream_addresses.clear();
+  memory_stream_addresses.emplace_back(1, addr2);
+  DeviceEventPtr event2 = std::make_shared<DummyDeviceEvent>();
+  mem_pool_.RecordEvent(task_id_on_stream_1, user_stream_id, memory_stream_addresses, event);
+  EXPECT_EQ(mem_pool_.stream_pair_addresses_.size(), 2);
+  EXPECT_EQ(mem_pool_.stream_pair_addresses_[std::make_pair(user_stream_id, memory_stream_id)].size(), 1);
+  mem_pool_.FreeTensorMem(addr2);
+  // Assert addr2 not free.
+  auto &&mem_buf_tuple = mem_pool_.FindByStrictAddr(addr2);
+  auto mem_block = std::get<0>(mem_buf_tuple);
+  EXPECT_TRUE(mem_block != nullptr);
+  mem_pool_.WaitEvent(task_id_on_stream_1, user_stream_id, memory_stream_id);
+  EXPECT_EQ(mem_pool_.stream_pair_addresses_.size(), 2);
+  EXPECT_EQ(mem_pool_.stream_pair_addresses_[std::make_pair(user_stream_id, memory_stream_id)].size(), 0);
+}
 }  // namespace device
 }  // namespace mindspore
