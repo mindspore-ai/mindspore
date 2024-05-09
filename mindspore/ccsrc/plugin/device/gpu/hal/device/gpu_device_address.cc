@@ -79,8 +79,8 @@ bool GPUDeviceAddress::SyncDeviceToHost(size_t size, void *host_ptr) const {
   MoveToDevice(false);
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   if (mem_offloaded()) {
-    MS_EXCEPTION_IF_NULL(offload_ptr_);
-    return GPUDeviceManager::GetInstance().CopyHostMemToHost(host_ptr, offload_ptr_, size);
+    MS_EXCEPTION_IF_NULL(loadable_mem_->offload_ptr_);
+    return GPUDeviceManager::GetInstance().CopyHostMemToHost(host_ptr, loadable_mem_->offload_ptr_, size);
   } else {
     MS_EXCEPTION_IF_NULL(GetDevicePtr());
     return GPUDeviceManager::GetInstance().CopyDeviceMemToHost(host_ptr, GetDevicePtr(), size);
@@ -116,8 +116,8 @@ bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const
   MoveToDevice(false);
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   if (mem_offloaded()) {
-    MS_EXCEPTION_IF_NULL(offload_ptr_);
-    return GPUDeviceManager::GetInstance().CopyHostMemToHost(offload_ptr_, host_ptr, size);
+    MS_EXCEPTION_IF_NULL(loadable_mem_->offload_ptr_);
+    return GPUDeviceManager::GetInstance().CopyHostMemToHost(loadable_mem_->offload_ptr_, host_ptr, size);
   } else {
     MS_EXCEPTION_IF_NULL(GetDevicePtr());
     auto stream = GPUDeviceManager::GetInstance().GetStream(this->stream_id());
@@ -234,7 +234,7 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, Type
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
   MS_EXCEPTION_IF_NULL(stream);
   if (mem_offloaded()) {
-    if (!GPUDeviceManager::GetInstance().CopyDeviceMemToHostAsync(offload_ptr_, src_ptr, size, stream)) {
+    if (!GPUDeviceManager::GetInstance().CopyDeviceMemToHostAsync(loadable_mem_->offload_ptr_, src_ptr, size, stream)) {
       MS_LOG(ERROR) << "CopyDeviceMemToDeviceAsync failed";
       return false;
     }
@@ -319,11 +319,11 @@ bool GPUDeviceAddress::AsyncDeviceToHost(const ShapeVector &, size_t size, TypeI
 
 void GPUDeviceAddress::ClearDeviceMemory() {
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-  if (offload_ptr_ != nullptr) {
+  if (loadable_mem_ != nullptr && loadable_mem_->offload_ptr_ != nullptr) {
     auto device_context = GetDeviceContext();
     MS_EXCEPTION_IF_NULL(device_context);
-    device_context->device_res_manager_->FreeOffloadMemory(offload_ptr_);
-    offload_ptr_ = nullptr;
+    device_context->device_res_manager_->FreeOffloadMemory(loadable_mem_->offload_ptr_);
+    loadable_mem_->offload_ptr_ = nullptr;
   }
   if (GetDevicePtr() != nullptr && from_mem_pool()) {
     GPUMemoryAllocator::GetInstance().FreeTensorMem(GetDevicePtr());
@@ -360,11 +360,11 @@ GPUDeviceAddress::~GPUDeviceAddress() {
   // Only release offload memory, release device memory when `kernel_tensor_` in base class destroyed, because maybe
   // multi GPUDeviceAddress objects use same device pointer in ref case.
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-  if (offload_ptr_ != nullptr) {
+  if (loadable_mem_ != nullptr && loadable_mem_->offload_ptr_ != nullptr) {
     auto device_context = GetDeviceContext();
     MS_EXCEPTION_IF_NULL(device_context);
-    device_context->device_res_manager_->FreeOffloadMemory(offload_ptr_);
-    offload_ptr_ = nullptr;
+    device_context->device_res_manager_->FreeOffloadMemory(loadable_mem_->offload_ptr_);
+    loadable_mem_->offload_ptr_ = nullptr;
   }
   LoadableDeviceAddress::ReleaseResource();
 }
@@ -386,7 +386,10 @@ bool GPUDeviceAddress::CopyBetweenHostDevice(void *dst, const void *src, size_t 
     auto record_event = std::make_shared<GpuEvent>();
     record_event->set_record_stream(stream);
     record_event->RecordEvent();
-    swap_event_.device_event_ = record_event;
+    if (loadable_mem_ == nullptr) {
+      loadable_mem_ = std::make_unique<LoadableMember>();
+    }
+    loadable_mem_->swap_event_.device_event_ = record_event;
   } else {
     GPUDeviceManager::GetInstance().SyncStream(stream);
   }
