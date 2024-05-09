@@ -125,5 +125,5 @@ def test_two_net_with_different_stages():
     train_network.set_train()
     phase = compile_net(train_network, inputs, label)
     validator = ParallelValidator(train_network, phase)
-    expect_output = ['Net_construct', 'ValueNode', 'ValueNode', 'ValueNode', 0, 0, 0, 0, 0]
+    expect_output = ['Net_construct', '(0, 0)', '(4, 768)', '(1, 1)', 0, 0, 0, 0, 0]
     assert validator.check_node_inputs_fuzzy_match("StridedSlice-1", expect_output, graph_id=1)

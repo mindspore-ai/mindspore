@@ -89,7 +89,7 @@ def test_layout_extend_transpose_without_output_layout1():
     net = Net(layout1)
     phase = compile_net(net, input_512_1024)
     validator = ParallelValidator(net, phase)
-    assert validator.check_node_inputs("Transpose-0", ["Reshape-1", "CNode_16((1, 0))"])
+    assert validator.check_node_inputs("Transpose-0", ["Reshape-1", "(1, 0)"])
 
 
 def test_layout_extend_transpose_without_output_layout2():
@@ -104,7 +104,7 @@ def test_layout_extend_transpose_without_output_layout2():
     net = Net(layout1)
     phase = compile_net(net, input_512_1024)
     validator = ParallelValidator(net, phase)
-    assert validator.check_node_inputs("Transpose-0", ["StridedSlice-1", "CNode_11((1, 0))"])
+    assert validator.check_node_inputs("Transpose-0", ["StridedSlice-1", "(1, 0)"])
 
 
 def test_layout_extend_transpose_with_output_layout1():
@@ -120,7 +120,7 @@ def test_layout_extend_transpose_with_output_layout1():
     net = Net(layout1, layout2)
     phase = compile_net(net, input_512_1024)
     validator = ParallelValidator(net, phase)
-    assert validator.check_node_inputs("Transpose-0", ["Reshape-1", "CNode_16((1, 0))"])
+    assert validator.check_node_inputs("Transpose-0", ["Reshape-1", "(1, 0)"])
 
 
 def test_layout_extend_transpose_with_output_layout2():
@@ -137,7 +137,7 @@ def test_layout_extend_transpose_with_output_layout2():
     net = Net(layout1, layout2)
     phase = compile_net(net, input_512_1024)
     validator = ParallelValidator(net, phase)
-    assert validator.check_node_inputs("Transpose-0", ["StridedSlice-1", "CNode_11((1, 0))"])
+    assert validator.check_node_inputs("Transpose-0", ["StridedSlice-1", "(1, 0)"])
 
 
 def test_layout_extend_transpose_with_output_layout_fail1():

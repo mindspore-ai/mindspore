@@ -175,7 +175,7 @@ py::list GetCNodeOperandNameList(const CNodePtr &cnode, const FuncGraphNameMap &
       } else if (value_node->isa<StringImm>()) {
         cnode_inputs_name_list.append(py::str(GetValue<std::string>(value_node)));
       } else {
-        cnode_inputs_name_list.append(py::str(input->ToString()));
+        cnode_inputs_name_list.append(py::str(value_node->ToString()));
       }
     } else {
       cnode_inputs_name_list.append(py::str(input->ToString()));
