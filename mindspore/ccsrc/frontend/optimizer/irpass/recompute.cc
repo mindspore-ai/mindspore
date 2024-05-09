@@ -90,9 +90,37 @@ bool IsRecomputeKGraphCaller(const AnfNodePtr &node) {
   return false;
 }
 
+bool WithGradientScope(const AnfNodePtr &node) {
+  return node->fullname_with_scope().compare(0, strlen(kGradientsFlag), kGradientsFlag) == 0;
+}
+
+bool IsFromBpropOutput(const AnfNodePtr &node) {
+  if (!IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    return false;
+  }
+  auto cur_node = node;
+  while (IsPrimitiveCNode(cur_node, prim::kPrimTupleGetItem)) {
+    cur_node = cur_node->cast<CNodePtr>()->input(kRealInputNodeIndexInTupleGetItem);
+  }
+  if (WithGradientScope(cur_node)) {
+    return true;
+  }
+  auto cur_cnode = cur_node->cast<CNodePtr>();
+  if (cur_cnode == nullptr) {
+    return false;
+  }
+  auto func_abs = dyn_cast<abstract::FuncGraphAbstractClosure>(cur_cnode->input(0)->abstract());
+  if (func_abs == nullptr) {
+    return false;
+  }
+  auto fg = func_abs->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  return fg->has_flag(FUNC_GRAPH_RECOMPUTE_GRAD_GRAPH);
+}
+
 bool IsGradNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  return node->fullname_with_scope().compare(0, strlen(kGradientsFlag), kGradientsFlag) == 0;
+  return WithGradientScope(node) || IsFromBpropOutput(node);
 }
 
 bool IsFpropReturn(const AnfNodePtr &make_tuple) {
@@ -284,7 +312,7 @@ void GetGradUsers(const FuncGraphManagerPtr &manager, const CNodePtr &node, cons
   if (IsGradNode(node)) {
     const auto &inputs = node->inputs();
     for (size_t i = 1; i < inputs.size(); ++i) {
-      if (inputs[i] != pre_node && IsGradNode(inputs[i])) {
+      if (inputs[i] != pre_node && !inputs[i]->isa<ValueNode>() && IsGradNode(inputs[i])) {
         (void)grad_users->emplace_back(inputs[i]);
       }
     }
@@ -422,6 +450,7 @@ CNodePtr MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGraphP
     if (origin_bprop_getter != nullptr) {
       auto new_bprop_getter = bprop_fg->NewCNodeInOrder(
         {NewValueNode(prim::kPrimTupleGetItem), new_k_fg_caller, NewValueNode(static_cast<int64_t>(1))});
+      new_bprop_getter->set_abstract(origin_bprop_getter->abstract());
       (void)manager->Replace(origin_bprop_getter, new_bprop_getter);
     }
     (void)origin_to_new_nodes->emplace(node, new_k_fg_caller);
