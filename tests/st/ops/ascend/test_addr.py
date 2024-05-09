@@ -49,3 +49,20 @@ def test_addr_float32_tensor_api():
     addr_tensor_api(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     addr_tensor_api(np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_addr_invalid_dtypes():
+    """
+    Feature: test addr invalid dtypes.
+    Description: test invalid dtypes inputs.
+    Expectation: the result match to the expect value.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    with pytest.raises(TypeError):
+        addr_tensor_api(np.uint16)
+    with pytest.raises(TypeError):
+        addr_tensor_api(np.int8)
