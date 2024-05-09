@@ -28,8 +28,15 @@ internal::OpParamPtr InternalMatMul::CreateOpParam(const std::vector<KernelTenso
   internal::MatMulParam matmul_param;
   param_ptr->opId = internal::OpId::MatMul;
   // setup matmul param from inputs
-  bool transpose_a = primitive_->HasAttr("transpose_a") ? GetValue<bool>(primitive_->GetAttr("transpose_a")) : false;
-  bool transpose_b = primitive_->HasAttr("transpose_b") ? GetValue<bool>(primitive_->GetAttr("transpose_b")) : false;
+  bool transpose_a = false;
+  bool transpose_b = false;
+  if (primitive_->HasAttr("transpose_a") && primitive_->HasAttr("transpose_b")) {
+    transpose_a = GetValue<bool>(primitive_->GetAttr("transpose_a"));
+    transpose_b = GetValue<bool>(primitive_->GetAttr("transpose_b"));
+  } else {
+    transpose_a = inputs[inputs.size() - 2]->GetValueWithCheck<bool>();
+    transpose_b = inputs[inputs.size() - 1]->GetValueWithCheck<bool>();
+  }
   auto shape_a = inputs[kIndex0]->GetShapeVector();
   auto shape_b = inputs[kIndex1]->GetShapeVector();
   int m = (!transpose_a) ? shape_a[kIndex0] : shape_a[kIndex1];
