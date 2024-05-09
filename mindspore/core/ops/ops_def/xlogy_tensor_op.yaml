@@ -1,0 +1,14 @@
+#operator XLogYTensor
+xlogy_tensor:
+    args:
+        input:
+            dtype: tensor
+        other:
+            dtype: tensor
+    returns:
+        out:
+            dtype: tensor
+    class:
+        name: XLogYTensor
+    dispatch:
+        enable: True

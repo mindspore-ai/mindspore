@@ -35,6 +35,7 @@
 #include "ops/op_def.h"
 #include "ir/primitive.h"
 #include "ops/shape_calc.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace expander {
@@ -577,6 +578,22 @@ std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const Node
     return {this->Cast(lhs, rhs->dtype()), rhs};
   }
   return {lhs, this->Cast(rhs, lhs->dtype())};
+}
+
+std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype(const NodePtr &lhs, const NodePtr &rhs, const std::string &op_name) {
+  auto res_type = ops::PromoteType(lhs->dtype(), rhs->dtype(), op_name);
+  auto res_type_id = res_type->type_id();
+  if (res_type->isa<TensorType>()) {
+    auto res_tensor_type = res_type->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(res_tensor_type);
+    res_type = res_tensor_type->element();
+    MS_EXCEPTION_IF_NULL(res_type);
+    res_type_id = res_type->type_id();
+  }
+
+  auto res_lhs = res_type_id == lhs->dtype()->type_id() ? lhs : this->Cast(lhs, res_type);
+  auto res_rhs = res_type_id == rhs->dtype()->type_id() ? rhs : this->Cast(rhs, res_type);
+  return {res_lhs, res_rhs};
 }
 
 NodePtr Emitter::SparseSoftmaxCrossEntropyWithLogits(const NodePtrList &inputs, const DAttr &attrs, const NodePtr &out,

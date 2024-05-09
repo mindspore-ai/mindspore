@@ -44,7 +44,8 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
                                          log, log1p, neg, not_equal, pow, round, isfinite, argmax, mean, sum_ext_op,
-                                         prod_ext_op, cross_ext, all)
+                                         prod_ext_op, cross_ext, all, xlogy_scalar_other_op, xlogy_scalar_self_op,
+                                         xlogy_tensor_op)
 from mindspore.ops.auto_generate import tanh
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
@@ -1684,6 +1685,60 @@ def xlogy(input, other):
         other = other.astype(mstype.float32)
     return xlogy_(input, other)
 
+
+def xlogy_ext(input, other):
+    r"""
+    Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
+    Returns zero when `input` is zero.
+
+    .. math::
+
+        out_i = input_{i}\ln{other_{i}}
+
+    Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors, the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar could only be a constant.
+
+    Args:
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+            a bool or a tensor whose data type is
+            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        other (Union[Tensor, number.Number, bool]): The second input is a number.Number or
+            a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
+            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `input` and `other` is not a number.Number or a bool or a Tensor.
+        TypeError: If dtype of `input` and `other` is not in [float16, float32, float64, complex64, complex128].
+        ValueError: If `input` could not be broadcast to a tensor with shape of `other`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor(np.array([-5, 0, 4]), mindspore.float32)
+        >>> other = Tensor(np.array([2, 2, 2]), mindspore.float32)
+        >>> output = ops.xlogy_ext(input, other)
+        >>> print(output)
+        [-3.465736   0.        2.7725887]
+    """
+    if isinstance(input, Tensor) and isinstance(other, Tensor):
+        return xlogy_tensor_op(input, other)
+    if isinstance(input, Tensor) and isinstance(other, numbers.Number):
+        return xlogy_scalar_other_op(input, other)
+    if isinstance(input, numbers.Number) and isinstance(other, Tensor):
+        return xlogy_scalar_self_op(input, other)
+    raise TypeError(f"For 'xlogy', at least one of input and other should be Tensor.")
 
 def arccosh(input):
     r"""

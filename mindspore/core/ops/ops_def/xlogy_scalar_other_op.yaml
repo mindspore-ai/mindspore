@@ -1,0 +1,14 @@
+#operator XLogYScalarOther
+xlogy_scalar_other:
+    args:
+        input:
+            dtype: tensor
+        other:
+            dtype: number
+    returns:
+        out:
+            dtype: tensor
+    class:
+        name: XLogYScalarOther
+    dispatch:
+        enable: True
