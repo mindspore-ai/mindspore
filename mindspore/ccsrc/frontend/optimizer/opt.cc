@@ -68,8 +68,8 @@ SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std:
 AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) {
   AnfNodePtr result;
   if (optimizer != nullptr) {
-    MsProfileStatGuard stat_subs_guard("substitution." + name_);
-    MsProfileStatGuard stat_match_guard("match." + name_);
+    MsProfileStatGuard stat_subs_guard("substitution.", name_);
+    MsProfileStatGuard stat_match_guard("match.", name_);
     result = (*transform_)(optimizer, node);
     if (result == nullptr) {
       stat_match_guard.Interrupt();
@@ -107,7 +107,7 @@ static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &n
   MS_EXCEPTION_IF_NULL(manager);
   bool is_match;
   {
-    MsProfileStatGuard stat_predicate_guard("predicate." + substitution->name_);
+    MsProfileStatGuard stat_predicate_guard("predicate.", substitution->name_);
     is_match = substitution->predicate_(node);
   }
   if (is_match) {
@@ -115,7 +115,7 @@ static AnfNodePtr DoTransform(const OptimizerPtr &optimizer, const AnfNodePtr &n
     ScopeGuard scope_guard(node->scope());
     auto res = (*substitution)(optimizer, node);
     if (res != nullptr && res != node) {
-      MsProfileStatGuard stat_guard("replace." + substitution->name_);
+      MsProfileStatGuard stat_guard("replace.", substitution->name_);
       MS_LOG(DEBUG) << "Replace " << node->DebugString() << " with " << res->DebugString() << ", by "
                     << substitution->name_;
       (void)manager->Replace(node, res);
@@ -187,7 +187,7 @@ static void UpdateTransformingListWithUserNodes(const FuncGraphManagerPtr &manag
 }
 
 bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph) const {
-  MsProfileStatGuard stat_guard("opt.transform." + optimizer->name());
+  MsProfileStatGuard stat_guard("opt.transform.", optimizer->name());
   FuncGraphManagerPtr manager = optimizer->manager();
   auto seen = NewSeenGeneration();
   std::deque<AnfNodePtr> todo;
@@ -221,7 +221,7 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
 
 bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph,
                                              const SubstitutionPtr &substitution) const {
-  MsProfileStatGuard stat_guard("opt.transform." + optimizer->name());
+  MsProfileStatGuard stat_guard("opt.transform.", optimizer->name());
   FuncGraphManagerPtr manager = optimizer->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto seen = NewSeenGeneration();
