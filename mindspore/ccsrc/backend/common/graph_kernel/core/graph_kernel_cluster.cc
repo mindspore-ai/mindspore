@@ -306,10 +306,17 @@ void GraphKernelCluster::DumpClusterInfo(const AnfNodePtrList &old_nodes, const 
 void GraphKernelCluster::DumpToFile() {
   auto dir_path = FileUtils::CreateNotExistDirs(std::string("./") + kGraphKernelDumpPath);
   if (!dir_path.has_value()) {
-    MS_LOG(INFO) << "Failed to CreateNotExistDirs: ./" << kGraphKernelDumpPath;
+    MS_LOG(WARNING) << "Failed to CreateNotExistDirs: ./" << kGraphKernelDumpPath;
     return;
   }
-  std::string filepath = dir_path.value() + "/" + "graph_kernel_cluster.txt";
+  std::optional<std::string> whole_path = "";
+  std::optional<std::string> file_name = "graph_kernel_cluster.txt";
+  FileUtils::ConcatDirAndFileName(&dir_path, &file_name, &whole_path);
+  if (!whole_path.has_value()) {
+    MS_LOG(WARNING) << "Failed to get real path of file: " << file_name.value();
+    return;
+  }
+  auto filepath = whole_path.value();
   ChangeFileMode(filepath, S_IWUSR);
   std::ofstream fout(filepath, std::ios::app);
   if (!fout.is_open()) {
