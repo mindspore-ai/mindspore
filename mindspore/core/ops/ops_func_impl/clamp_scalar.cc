@@ -20,6 +20,7 @@
 #include <string>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore::ops {
 TypePtr ClampScalarFuncImpl::InferType(const PrimitivePtr &primitive,
@@ -41,6 +42,21 @@ TypePtr ClampScalarFuncImpl::InferType(const PrimitivePtr &primitive,
 
   return input0_type->Clone();
 }
+TypePtrList ClampScalarFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  if (input_values[kInputIndex1] == mindspore::kNone && input_values[kInputIndex2] == mindspore::kNone) {
+    MS_EXCEPTION(ValueError) << "For Clamp, at least one of 'min' or 'max' must not be None.";
+  }
+  if (x_tensor->data_type() == kNumberTypeBool ||
+      (input_values[kInputIndex1]->type() != nullptr &&
+       input_values[kInputIndex1]->type()->type_id() == kNumberTypeBool) ||
+      (input_values[kInputIndex2]->type() != nullptr &&
+       input_values[kInputIndex2]->type()->type_id() == kNumberTypeBool)) {
+    MS_EXCEPTION(ValueError) << "For Clamp, the dtype of 'input', 'min' and 'max' must not be bool.";
+  }
+  return {x_tensor->Dtype()};
+}
 
 BaseShapePtr ClampScalarFuncImpl::InferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) const {
@@ -48,4 +64,10 @@ BaseShapePtr ClampScalarFuncImpl::InferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(input0_shape);
   return input0_shape->Clone();
 }
+ShapeArray ClampScalarFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameClampScalar, ClampScalarFuncImpl)
 }  // namespace mindspore::ops
