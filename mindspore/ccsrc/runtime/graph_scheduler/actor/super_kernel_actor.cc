@@ -325,6 +325,11 @@ void SuperKernelActor::RunGraphKernelByKernel(OpContext<DeviceTensor> *const con
         MS_LOG(DEBUG) << "End wait runtime pipeline for kernel: " << kernel_actor->kernel_->fullname_with_scope();
       }
     } else {
+      if (kernel_actor->is_dynamic_value_ && !kernel_actor->is_dynamic_shape_) {
+        kernel_actor->ResizeKernelMod();
+        kernel_actor->FetchOutputDeviceTensor(context);
+        kernel_actor->FetchWorkspaceDeviceTensor();
+      }
       Async(kernel_async_launch_aid_, &KernelAsyncLaunchActor::LaunchKernel, context, kernel_actor.get());
     }
   }
