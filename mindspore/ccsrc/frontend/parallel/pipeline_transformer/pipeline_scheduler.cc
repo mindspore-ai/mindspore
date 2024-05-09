@@ -371,7 +371,8 @@ void InterleavedScheduler::EndPhaseReorder() {
   auto sorted_bwd_begin = SortBetweenMicro(bwd_begin_, true);
   auto sorted_bwd_cell = SortBetweenMicro(bwd_cell_, true);
   auto sorted_bwd_end = SortBetweenMicro(bwd_end_, true);
-  auto begin_index = chunk_num_ * micro_size_ > bias_ ? chunk_num_ * micro_size_ - bias_ - 1 : 0;
+  auto begin_index =
+    LongToSize(chunk_num_ * micro_size_) > bias_ ? LongToSize(chunk_num_ * micro_size_ - bias_ - 1) : 0;
   for (size_t i = LongToSize(begin_index); i < LongToSize(chunk_num_ * micro_size_ - 1); ++i) {
     if (stage_ == 0) {
       auto loop_index = sorted_bwd_end[i].second.micro / (stage_num_ + offset_);
@@ -479,23 +480,182 @@ void InterleavedScheduler::ParameterReorder(const std::vector<BorderPair> &sorte
   }
 }
 
-void InterleavedScheduler::Reorder() {
-  offset_ = micro_size_ % stage_num_;
-  bias_ = (stage_num_ + offset_) * (chunk_num_ - 1) + (stage_num_ - stage_ - 1) * 2;
-  is_even_stage_ = stage_ % 2 == 0;
+void InterleavedScheduler::MemoryOptimizedWarmUpPhaseReorder() {
+  auto sorted_fwd_begin = SortBetweenMicro(fwd_begin_, false);
+  auto sorted_fwd_end = SortBetweenMicro(fwd_end_, false);
+  auto sorted_fwd_cell = SortBetweenMicro(fwd_cell_, false);
+  auto sorted_bwd_cell = SortBetweenMicro(bwd_cell_, true);
+  for (size_t i = 0; i < LongToSize(bias_); ++i) {
+    if (stage_ != 0) {
+      auto prior = sorted_fwd_end[i].second;
+      auto last = sorted_fwd_begin[i + 1].first;
+      ControlOrder(prior, last);
+      continue;
+    } else {
+      auto offset = 0;
+      if (sorted_fwd_begin[i + 1].first.chunk != 0) {
+        offset = offset_;
+      }
+      auto prior = sorted_fwd_end[i].second;
+      auto last = sorted_fwd_cell[i + 1].first;
+      ControlOrder(prior, last);
+      auto prior1 = sorted_fwd_cell[i - offset].second;
+      auto last1 = sorted_fwd_begin[i + 1].first;
+      ControlOrder(prior1, last1);
+      auto prior2 = sorted_fwd_begin[i + 1].second;
+      auto last2 = sorted_fwd_end[i - offset].first;
+      ControlOrder(prior1, last1);
+    }
+  }
+}
+
+void InterleavedScheduler::MemoryOptimizedStablePhaseReorder() {
   auto sorted_fwd_begin = SortBetweenMicro(fwd_begin_, false);
   auto sorted_fwd_end = SortBetweenMicro(fwd_end_, false);
   auto sorted_bwd_begin = SortBetweenMicro(bwd_begin_, true);
   auto sorted_bwd_end = SortBetweenMicro(bwd_end_, true);
   auto sorted_fwd_cell = SortBetweenMicro(fwd_cell_, false);
   auto sorted_bwd_cell = SortBetweenMicro(bwd_cell_, true);
+  for (size_t i = bias_; i < LongToSize(micro_size_ * chunk_num_); ++i) {
+    if (i == LongToSize(micro_size_ * chunk_num_ - 1)) {
+      if (stage_ != 0) {
+        auto prior = sorted_fwd_end[i].second;
+        auto last = sorted_bwd_begin[i - bias_].first;
+        ControlOrder(prior, last);
+      } else {
+        auto prior = sorted_fwd_cell[i].second;
+        auto last = sorted_bwd_begin[i - bias_].first;
+        ControlOrder(prior, last);
+        auto prior1 = sorted_bwd_begin[i - bias_].second;
+        auto last1 = sorted_fwd_end[i].first;
+        ControlOrder(prior1, last1);
+        auto prior2 = sorted_fwd_end[i].second;
+        auto last2 = sorted_bwd_cell[i - bias_].first;
+        ControlOrder(prior2, last2);
+      }
+      continue;
+    }
+    if (stage_ != 0) {
+      auto prior = sorted_bwd_end[i - bias_].second;
+      auto last = sorted_fwd_begin[i + 1].first;
+      ControlOrder(prior, last);
+    } else {
+      auto offset = offset_;
+      auto loop_index_bwd = sorted_bwd_end[i - bias_].second.micro / (LongToSize(stage_num_) + offset_);
+      if (loop_index_bwd != 0) {
+        offset = 0;
+      }
+      auto loop_index_fwd = sorted_fwd_end[i + 1].second.micro / (LongToSize(stage_num_) + offset_);
+      if (loop_index_fwd == 0) {
+        auto prior1 = sorted_fwd_end[i - offset_].second;
+        auto last1 = sorted_fwd_cell[i + 1 - offset_].first;
+        ControlOrder(prior1, last1);
+        auto prior2 = sorted_fwd_cell[i - offset_].second;
+        auto last2 = sorted_fwd_begin[i + 1].first;
+        ControlOrder(prior2, last2);
+        auto prior3 = sorted_fwd_begin[i + 1].second;
+        auto last3 = sorted_fwd_end[i - offset_].first;
+        ControlOrder(prior3, last3);
+      }
+      if (sorted_bwd_end[i - bias_].second.chunk != 0) {
+        auto prior1 = sorted_bwd_cell[i - bias_].second;
+        auto last1 = sorted_fwd_cell[i + 1].first;
+        ControlOrder(prior1, last1);
+        if (i + 1 + offset > LongToSize(micro_size_ * chunk_num_ - 1)) {
+          auto prior2 = sorted_bwd_begin[i - bias_ + 1 + offset].second;
+          auto last2 = sorted_bwd_end[i - bias_].first;
+          ControlOrder(prior2, last2);
+        } else {
+          auto prior2 = sorted_fwd_end[i + 1 + offset].second;
+          auto last2 = sorted_bwd_end[i - bias_].first;
+          ControlOrder(prior2, last2);
+        }
+        if ((i + 1 + offset <= LongToSize(micro_size_ * chunk_num_ - 1)) &&
+            sorted_fwd_end[i + 1 + offset].second.chunk != chunk_num_ - 1) {
+          auto prior3 = sorted_bwd_end[i - bias_].second;
+          auto last3 = sorted_fwd_begin[i + 1 + LongToSize(stage_num_) + offset].first;
+          ControlOrder(prior3, last3);
+          auto prior4 = sorted_fwd_begin[i + 1 + LongToSize(stage_num_) + offset].second;
+          auto last4 = sorted_bwd_cell[i - bias_ + 1 + offset].first;
+          ControlOrder(prior4, last4);
+        } else {
+          auto prior3 = sorted_bwd_end[i - bias_].second;
+          auto last3 = sorted_bwd_cell[i - bias_ + 1 + offset].first;
+          ControlOrder(prior3, last3);
+        }
+      } else {
+        auto prior = sorted_bwd_end[i - bias_].second;
+        auto last = sorted_fwd_cell[i + 1].first;
+        ControlOrder(prior, last);
+      }
+    }
+    if (stage_ != stage_num_ - 1 || sorted_fwd_end[i].second.chunk != chunk_num_ - 1) {
+      auto prior = sorted_fwd_cell[i].second;
+      auto last = sorted_bwd_begin[i - bias_].first;
+      ControlOrder(prior, last);
+      auto prior1 = sorted_bwd_begin[i - bias_].second;
+      auto last1 = sorted_fwd_end[i].first;
+      ControlOrder(prior1, last1);
+      auto prior2 = sorted_fwd_end[i].second;
+      auto last2 = sorted_bwd_cell[i - bias_].first;
+      ControlOrder(prior2, last2);
+    } else {
+      auto prior = sorted_fwd_end[i].second;
+      auto last = sorted_bwd_begin[i - bias_].first;
+      ControlOrder(prior, last);
+    }
+  }
+}
+
+void InterleavedScheduler::MemoryOptimizedReorder() {
+  offset_ = LongToSize(micro_size_ % stage_num_);
+  bias_ = LongToSize((stage_num_ + offset_) * (chunk_num_ - 1) + stage_num_ - stage_ - 1);
+  auto sorted_bwd_begin = SortBetweenMicro(bwd_begin_, true);
+  auto sorted_bwd_end = SortBetweenMicro(bwd_end_, true);
+  auto sorted_bwd_cell = SortBetweenMicro(bwd_cell_, true);
   if (micro_size_ < stage_num_) {
     MS_LOG(EXCEPTION) << "For 1F1B Scheduler, MicroBatch num must be larger or equal than StageNum, but got MicroBatch:"
                       << micro_size_ << " StageNum:" << stage_num_;
   }
   // WarmUp phase
-  WarmUpPhaseReorder();
+  MemoryOptimizedWarmUpPhaseReorder();
 
+  // Stable phase
+  MemoryOptimizedStablePhaseReorder();
+
+  for (size_t i = LongToSize(micro_size_ * chunk_num_ - bias_ - 1); i < LongToSize(micro_size_ * chunk_num_ - 1); ++i) {
+    if (stage_ != stage_num_ - 1 || sorted_bwd_begin[i + 1].first.chunk == chunk_num_ - 1) {
+      auto prior = sorted_bwd_end[i].second;
+      auto last = sorted_bwd_begin[i + 1].first;
+      ControlOrder(prior, last);
+    } else {
+      auto prior = sorted_bwd_cell[i].second;
+      auto last = sorted_bwd_begin[i + 1].first;
+      ControlOrder(prior, last);
+      auto prior1 = sorted_bwd_begin[i + 1].second;
+      auto last1 = sorted_bwd_end[i].first;
+      ControlOrder(prior1, last1);
+      auto prior2 = sorted_bwd_end[i].second;
+      auto last2 = sorted_bwd_cell[i + 1].first;
+      ControlOrder(prior2, last2);
+    }
+  }
+}
+
+static bool EnableKbk() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto jit_level = context->get_param<std::string>(MS_CTX_JIT_LEVEL);
+  return (jit_level == "O0" || jit_level == "O1");
+}
+
+void InterleavedScheduler::StablePhaseReorder() {
+  auto sorted_fwd_begin = SortBetweenMicro(fwd_begin_, false);
+  auto sorted_fwd_end = SortBetweenMicro(fwd_end_, false);
+  auto sorted_bwd_begin = SortBetweenMicro(bwd_begin_, true);
+  auto sorted_bwd_end = SortBetweenMicro(bwd_end_, true);
+  auto sorted_fwd_cell = SortBetweenMicro(fwd_cell_, false);
+  auto sorted_bwd_cell = SortBetweenMicro(bwd_cell_, true);
   for (size_t i = LongToSize(bias_); i < LongToSize(micro_size_ * chunk_num_ - 1); ++i) {
     if (stage_ == stage_num_ - 1 && sorted_fwd_end[i].first.chunk == chunk_num_ - 1) {
       auto prior = sorted_fwd_end[i].second;
@@ -566,9 +726,35 @@ void InterleavedScheduler::Reorder() {
     auto last1 = sorted_bwd_cell[i - LongToSize(bias_) + 1].first;
     ControlOrder(prior1, last1);
   }
+}
+
+void InterleavedScheduler::Reorder() {
+  auto enable_kbk = EnableKbk();
+  auto sorted_fwd_begin = SortBetweenMicro(fwd_begin_, false);
+  auto sorted_bwd_end = SortBetweenMicro(bwd_end_, true);
+  if (enable_kbk) {
+    MemoryOptimizedReorder();
+    ParameterReorder(sorted_fwd_begin, sorted_bwd_end);
+    OptimizerShardCommReorder();
+    return;
+  }
+  offset_ = micro_size_ % stage_num_;
+  bias_ = (stage_num_ + offset_) * (chunk_num_ - 1) + (stage_num_ - stage_ - 1) * 2;
+  is_even_stage_ = stage_ % 2 == 0;
+  if (micro_size_ < stage_num_) {
+    MS_LOG(EXCEPTION) << "For 1F1B Scheduler, MicroBatch num must be larger or equal than StageNum, but got MicroBatch:"
+                      << micro_size_ << " StageNum:" << stage_num_;
+  }
+  // WarmUp phase
+  WarmUpPhaseReorder();
+
+  // Stable phase
+  StablePhaseReorder();
   LastForwardMicroReorder();
+
   // End phase
   EndPhaseReorder();
+
   // Parameters phase
   ParameterReorder(sorted_fwd_begin, sorted_bwd_end);
   OptimizerShardCommReorder();
