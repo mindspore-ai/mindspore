@@ -128,8 +128,6 @@ class ForwardExecutor {
   VectorRef RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_info, const BackendOpRunInfoPtr &backend_op_run_info);
   // Infer output abstract
   void InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) const;
-  // Check sync condition in heterogeneous
-  void CheckIfNeedSyncForHeterogeneous(const std::string &cur_target);
   void PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info);
   void PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) const;
   void OpRunInfoUsePrimC(const FrontendOpRunInfoPtr &op_run_info) const;

@@ -149,6 +149,7 @@ void RegModule(py::module *m) {
   RegPrimitive(m);
   RegPrimitiveFunction(m);
   RegSignatureEnumRW(m);
+  RegRandomSeededGenerator(m);
   mindspore::tensor::RegMetaTensor(m);
   mindspore::tensor::RegCSRTensor(m);
   mindspore::tensor::RegCOOTensor(m);

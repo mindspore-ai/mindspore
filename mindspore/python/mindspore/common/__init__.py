@@ -33,6 +33,9 @@ from mindspore.common.lazy_inline import lazy_inline
 from mindspore.common.mindir_util import load_mindir, save_mindir
 from mindspore.common.symbol import Symbol
 from mindspore.common.recompute import recompute
+from mindspore.common import generator
+from mindspore.common.generator import (
+    Generator, default_generator, seed, manual_seed, initial_seed, get_rng_state, set_rng_state)
 
 # symbols from dtype
 __all__ = [
@@ -75,3 +78,4 @@ __all__.extend([
     "Symbol",
     "recompute"
 ])
+__all__.extend(generator.__all__)
