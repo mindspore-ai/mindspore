@@ -15,6 +15,7 @@
  */
 #include "pipeline/jit/pi/utils/utils.h"
 #include <unordered_set>
+#include <iomanip>
 #include "ir/tensor.h"
 #include "ir/map_tensor.h"
 #include "pipeline/jit/pi/pydef.h"
@@ -479,6 +480,55 @@ RefTracker::~RefTracker() {
 }
 
 RefTracker::RefTracker() : mdef_({"ref_untrack", &RefTracker::UnTrack, METH_O, PyDoc_STR("")}) {}
+
+TimeRecorder::TimeRecorder(const RecorderType &descr, bool record) : descr_(descr), record_(record) {
+  if (record_) {
+    start_ = std::chrono::steady_clock::now();
+  }
+}
+
+TimeRecorder::~TimeRecorder() {
+  if (record_) {
+    uint64_t clk = (std::chrono::steady_clock::now() - start_).count();
+    auto &data = TimeRecorder::Data()->data_[descr_];
+    data.count++;
+    data.nano += clk;
+  }
+}
+
+TimeRecorder::TimeData *TimeRecorder::Data() {
+  static TimeData data;
+  return &data;
+}
+
+TimeRecorder::TimeData::~TimeData() {
+  if (!data_.empty()) {
+    std::cout << ToString() << std::endl;
+  }
+}
+
+std::string TimeRecorder::TimeData::ToString() {
+  if (data_.empty()) {
+    return std::string();
+  }
+
+  const auto Fmt = [](std::ostream &s) -> std::ostream & {
+    const int w = 20;
+    s << std::setw(w) << std::left;
+    return s;
+  };
+
+  std::stringstream s;
+  s.precision(6);
+  s.setf(std::ios::fixed);
+  s << "============= TimeRecorder =============" << std::endl;
+  s << Fmt << "type" << Fmt << "times" << Fmt << "seconds" << std::endl;
+  for (const auto &i : data_) {
+    s << Fmt << i.first << Fmt << i.second.count << Fmt << (i.second.nano / TimeRecorder::scale) << std::endl;
+  }
+  s << "========================================" << std::endl;
+  return s.str();
+}
 
 }  // namespace pijit
 }  // namespace mindspore

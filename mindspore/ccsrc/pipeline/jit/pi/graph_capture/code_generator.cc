@@ -1346,6 +1346,8 @@ static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_ef
 #endif
 
 py::object MakeCodeFromCodeGen(const GraphBuilderPtr &builder, const GraphAnalyzerPtr &analyzer, PyObject *globals) {
+  TimeRecorder time_recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+
   auto graph = builder->GetGraph();
   auto cg = CodeBreakGenerator::Creator(builder, graph->GetCodeObj());
   cg->Init(graph, *analyzer);
