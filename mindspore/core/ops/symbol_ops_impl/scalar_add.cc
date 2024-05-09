@@ -58,7 +58,7 @@ void ScalarAdd::UpdateMathInfo() {
   }
 }
 
-REG_SYMBOL_OP_BUILDER("ScalarAdd").SetValueFunc(DefaultBuilder<ScalarAdd, 2>);
+REG_SYMBOL_OP_BUILDER("ScalarAdd").SetValueFunc(DefaultBuilder<ScalarAdd>);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

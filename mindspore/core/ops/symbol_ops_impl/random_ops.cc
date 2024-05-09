@@ -26,6 +26,14 @@ REG_SYMBOL_OP_BUILDER("CudnnUniformReal").SetShapeDepend({DependOn::kValue}).Set
   InferShapeOp::SetPositive(symbolic_shape);
   return s;
 });
+
+REG_SYMBOL_OP_BUILDER("StandardNormal").SetShapeDepend({DependOn::kValue}).SetShapeFunc([](OperationBuilder *b) {
+  auto s = b->GetInputValue(0);
+  auto symbolic_shape = s->as<ListSymbol>();
+  MS_EXCEPTION_IF_NULL(symbolic_shape);
+  InferShapeOp::SetPositive(symbolic_shape);
+  return s;
+});
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore
