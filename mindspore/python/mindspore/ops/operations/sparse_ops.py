@@ -61,7 +61,7 @@ class SparseDenseCwiseAdd(Primitive):
 
     Examples:
         >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as ms
+        >>> from mindspore import dtype as ms
         >>> from mindspore.ops.operations import sparse_ops as ops
         >>> x1_indices = Tensor([[0, 0], [2, 2]], dtype=ms.int64)
         >>> x1_values = Tensor([1, 2], dtype=ms.int32)
@@ -116,7 +116,7 @@ class SparseDenseCwiseMul(Primitive):
 
     Examples:
         >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as ms
+        >>> from mindspore import dtype as ms
         >>> from mindspore.ops.operations import sparse_ops as ops
         >>> x1_indices = Tensor([[0, 0], [2, 2]], dtype=ms.int64)
         >>> x1_values = Tensor([1, 2], dtype=ms.int32)
@@ -171,7 +171,7 @@ class SparseDenseCwiseDiv(Primitive):
 
     Examples:
       >>> from mindspore import Tensor
-      >>> from mindspore.common import dtype as ms
+      >>> from mindspore import dtype as ms
       >>> from mindspore.ops.operations import sparse_ops as ops
       >>> x1_indices = Tensor([[0, 0], [2, 2]], dtype=ms.int64)
       >>> x1_values = Tensor([4, 2], dtype=ms.int32)

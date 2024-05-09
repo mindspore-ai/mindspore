@@ -2210,9 +2210,8 @@ class NPUGetFloatStatus(Primitive):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import ops
+        >>> from mindspore import ops, Tensor
         >>> from mindspore import dtype as mstype
-        >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()
@@ -2275,9 +2274,8 @@ class NPUClearFloatStatus(Primitive):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import ops
+        >>> from mindspore import ops, Tensor
         >>> from mindspore import dtype as mstype
-        >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()

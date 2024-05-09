@@ -32,8 +32,7 @@ class BatchWrite(Cell):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import nn
-        >>> from mindspore.common.parameter import Parameter, ParameterTuple
+        >>> from mindspore import nn, Parameter, ParameterTuple
         >>> from mindspore.nn.reinforcement import BatchWrite
         >>> class SourceNet(nn.Cell):
         ...   def __init__(self):
@@ -92,8 +91,7 @@ class BatchRead(Cell):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import nn
-        >>> from mindspore.common.parameter import Parameter, ParameterTuple
+        >>> from mindspore import nn, Parameter, ParameterTuple
         >>> from mindspore.nn.reinforcement import BatchRead
         >>> class SNet(nn.Cell):
         ...   def __init__(self):

@@ -46,11 +46,10 @@ def parameter_broadcast(net, layout, cur_rank=0, initial_rank=0):
         >>> import os
         >>> import mindspore as ms
         >>> import mindspore.dataset as ds
-        >>> from mindspore import nn, ops
+        >>> from mindspore import nn, ops, parameter_broadcast
         >>> from mindspore.communication import init
         >>> from mindspore.common.initializer import initializer
         >>> from mindspore.train import Model
-        >>> from mindspore.parallel.parameter_broadcast import parameter_broadcast
         >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
         >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> ms.set_context(max_device_memory="28GB")

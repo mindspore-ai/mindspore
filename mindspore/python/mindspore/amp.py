@@ -163,7 +163,7 @@ class LossScaler(ABC):
     Examples:
         >>> from mindspore.amp import LossScaler, _grad_scale_map, _grad_unscale_map
         >>> from mindspore import ops, Parameter, Tensor
-        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>>
         >>> class MyLossScaler(LossScaler):
         ...     def __init__(self, scale_value):
