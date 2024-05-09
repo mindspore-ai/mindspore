@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,8 @@ const std::set<std::string> kIgnoreGEShapeOps = {kSoftMarginLossOpName};
 mindspore::HashMap<std::string, size_t> feature_memorys;
 mindspore::HashMap<std::string, size_t> streams;
 constexpr size_t kNeedRecycleOutput = 5;
+constexpr int kCollectHostInfoStart = 0;
+constexpr int kCollectHostInfoEnd = 1;
 
 void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me_types) {
   MS_EXCEPTION_IF_NULL(cnode_data);
@@ -1095,12 +1097,18 @@ void GeGraphExecutor::AddRefCorrespondPairs(const KernelGraphPtr &graph,
 
 bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) {
   MS_EXCEPTION_IF_NULL(graph);
+
+  auto graph_name = GetGraphName(graph);
+  profiler::CollectHostInfo("Ascend", "CompileGraph", "GeCompileGraph_" + graph_name, 1, 0, kCollectHostInfoStart);
+
   // cppcheck-suppress unreadVariable
   ContextReset reset_context(device_context_);
   KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
   MS_EXCEPTION_IF_NULL(kg);
   if (IsEnableRefMode()) {
-    return CompileGraph(kg, compile_options);
+    auto ret = CompileGraph(kg, compile_options);
+    profiler::CollectHostInfo("Ascend", "CompileGraph", "GeCompileGraph_" + graph_name, 1, 0, kCollectHostInfoEnd);
+    return ret;
   } else {
     // delete SetCPUMemManager when delete env MS_DISABLE_REF_MODE
     ResManager()->SetCPUMemManager();
@@ -1113,6 +1121,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
       std::set<KernelGraphPtr> memo;
       GEGraphOptimization::GetInstance().OptimizeGEGraph(kg, &memo);
       if (!BuildFakeGraph(kg)) {
+        profiler::CollectHostInfo("Ascend", "CompileGraph", "GeCompileGraph_" + graph_name, 1, 0, kCollectHostInfoEnd);
         return false;
       }
     } else {
@@ -1128,6 +1137,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     // copy init weight to device
     RunGEInitGraph(kg);
     RevertOriginShape(kg, origin_shape);
+    profiler::CollectHostInfo("Ascend", "CompileGraph", "GeCompileGraph_" + graph_name, 1, 0, kCollectHostInfoEnd);
     return true;
   }
 }
@@ -1354,10 +1364,10 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
                                const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
-  profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 0);
+  profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, kCollectHostInfoStart);
   if (IsEnableRefMode()) {
     if (!RunGraphRefMode(graph, inputs)) {
-      profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 1);
+      profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, kCollectHostInfoEnd);
       return false;
     }
   } else {
@@ -1406,7 +1416,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
       MS_LOG(DEBUG) << "Run graph finish, outputs size is: " << ge_outputs.size();
       if (ret == transform::Status::NOT_FOUND) {
         MS_LOG(WARNING) << "The Graph[" << graph_name << "] is not found, skip run it.";
-        profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 1);
+        profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, kCollectHostInfoEnd);
         return true;
       } else if (ret != transform::Status::SUCCESS) {
         MS_LOG(EXCEPTION) << "Exec graph failed";
@@ -1429,7 +1439,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     ConfigManager::GetInstance().ResetConfig();
     ConfigManager::GetInstance().ResetIterNum();
   }
-  profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 1);
+  profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, kCollectHostInfoEnd);
   MS_LOG(INFO) << "GE run graph end.";
   return true;
 }
