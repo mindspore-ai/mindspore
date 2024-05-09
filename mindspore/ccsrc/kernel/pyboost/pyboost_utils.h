@@ -31,6 +31,8 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 using AddressInfoPair = std::pair<std::vector<kernel::KernelTensor *>, device::DeviceAddressPtrList>;
+AbstractBasePtr BACKEND_EXPORT ToAbstractNoValue(const tensor::TensorPtr &tensor);
+
 class BACKEND_EXPORT PyBoostUtils {
  public:
   static AbstractBasePtr InferByOpDef(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_abs);
