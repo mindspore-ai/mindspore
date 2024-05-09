@@ -67,7 +67,7 @@ class DebugActor : public ActorBase {
 
  private:
   // Check kernel output is finite or not synchronously.
-  bool CheckFinite(const DeviceContext *device_context, const std::vector<KernelTensor *> &inputs);
+  bool CheckOverflow(const DeviceContext *device_context, const std::vector<KernelTensor *> &inputs);
   // Release device memory for AllFinite kernel.
   void Finalize() override;
 
