@@ -20,13 +20,20 @@
 namespace mindspore {
 namespace opt {
 bool MultiMatmulsFusion::Run(const FuncGraphPtr &graph) {
-  bool changed = false;
-
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (!ms_context->IsEnableInferBoost() || common::GetEnv("ENABLE_MATMUL_FUSION") != "on") {
-    return changed;
+  if (!ms_context->IsEnableInferBoost()) {
+    return false;
   }
+
+  std::string fusion_name = "MultiMatMul";
+  std::vector<std::string> enable_fusion_list = ms_context->ms_enable_internal_fusion_list();
+  if (std::all_of(enable_fusion_list.begin(), enable_fusion_list.end(),
+                  [&fusion_name](const std::string &name) { return name != fusion_name; })) {
+    return false;
+  }
+
+  bool changed = false;
 
   auto mng = graph->manager();
   MS_EXCEPTION_IF_NULL(mng);

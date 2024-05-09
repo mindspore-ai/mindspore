@@ -65,7 +65,14 @@ const AnfNodePtr AddRmsNormFusion::Process(const FuncGraphPtr &graph, const AnfN
                                            const EquivPtr &equiv) const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (!ms_context->IsEnableInferBoost()|| common::GetEnv("DISABLE_ADDRMSNORM_FUSION") == "True") {
+  if (!ms_context->IsEnableInferBoost()) {
+    return nullptr;
+  }
+
+  std::string fusion_name = "AddRmsNorm";
+  std::vector<std::string> enable_fusion_list = ms_context->ms_enable_internal_fusion_list();
+  if (std::all_of(enable_fusion_list.begin(), enable_fusion_list.end(),
+                  [&fusion_name](const std::string &name) { return name != fusion_name; })) {
     return nullptr;
   }
 

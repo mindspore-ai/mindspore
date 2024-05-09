@@ -104,8 +104,14 @@ const AnfNodePtr MatMulAllReduceFusion::Process(const mindspore::FuncGraphPtr &f
   }
 
   auto phase = PhaseManager::GetInstance().phase();
-  if (common::GetEnv("DISABLE_MATMULALLREDUCE_FUSION") == "True" || common::GetEnv("MS_ENABLE_LCCL").empty() ||
-      phase.rfind(kPhaseNamePrefill) == std::string::npos) {
+  if (common::GetEnv("MS_ENABLE_LCCL").empty() || phase.rfind(kPhaseNamePrefill) == std::string::npos) {
+    return nullptr;
+  }
+
+  std::string fusion_name = "MatMulAllReduce";
+  std::vector<std::string> enable_fusion_list = ms_context->ms_enable_internal_fusion_list();
+  if (std::all_of(enable_fusion_list.begin(), enable_fusion_list.end(),
+                  [&fusion_name](const std::string &name) { return name != fusion_name; })) {
     return nullptr;
   }
 
