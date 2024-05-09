@@ -105,6 +105,38 @@ bool PipelineInterleave::MainGraph() {
   return true;
 }
 
+void PipelineInterleave::CreateSendReceiveGroup() {
+  MS_EXCEPTION_IF_NULL(g_device_manager);
+  auto rank_list = g_device_manager->GetDeviceListBetweenStage();
+  auto dev_list = g_device_manager->CreateDeviceListByRankList(rank_list);
+  Group forward_send_group;
+  if (g_device_manager->CreateGroup(rank_list, &forward_send_group) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Create forward Send communication group failed, the rank list is: " << rank_list;
+  }
+  group_.emplace_back(forward_send_group.name());
+
+  Group backward_send_group;
+  auto backward_send_group_name = forward_send_group.name() + BACKWARD;
+  if (g_device_manager->CreateGroup(backward_send_group_name, dev_list, &backward_send_group) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Create backward Send communication group failed, the rank list is: " << rank_list;
+  }
+  group_.emplace_back(backward_send_group_name);
+
+  Group forward_recv_group;
+  auto forward_recv_group_name = forward_send_group.name() + RECEIVE;
+  if (g_device_manager->CreateGroup(forward_recv_group_name, dev_list, &forward_recv_group) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Create forward Receive communication group failed, the rank list is: " << rank_list;
+  }
+  group_.emplace_back(forward_recv_group_name);
+
+  Group backward_recv_group;
+  auto backward_recv_group_name = forward_recv_group_name + BACKWARD;
+  if (g_device_manager->CreateGroup(backward_recv_group_name, dev_list, &backward_recv_group) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Create backward Receive communication group failed, the rank list is: " << rank_list;
+  }
+  group_.emplace_back(backward_recv_group_name);
+}
+
 ValuePtr PipelineInterleave::SetMicroBatch(const AnfNodePtr &node, int64_t micro_size, size_t batch_axis) const {
   if (!IsPrimitiveCNode(node, prim::kPrimStridedSlice)) {
     MS_LOG(EXCEPTION) << "Can't find MicroBatch information.";
@@ -470,7 +502,7 @@ void PipelineInterleave::ParameterColoring() {
 }
 
 void PipelineInterleave::RemoveMonadNode() {
-  auto all_nodes = DeepScopedGraphSearch(main_graph_->get_return());
+  auto all_nodes = DeepScopedGraphSearch(shared_cell_->get_return());
   auto node_users_map = manager_->node_users();
   for (auto &node : all_nodes) {
     if (!IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
@@ -478,6 +510,8 @@ void PipelineInterleave::RemoveMonadNode() {
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
+    auto abs = cnode->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
     auto stage_info = cnode->user_data<NodeStageInfo>();
     if (stage_info == nullptr) {
       continue;
@@ -486,8 +520,11 @@ void PipelineInterleave::RemoveMonadNode() {
     if (stage != stage_ && stage != -1) {
       auto node_users = node_users_map[node];
       for (auto &user_node : node_users) {
-        auto u_node = NewValueNode(kUMonad);
-        manager_->SetEdge(user_node.first, user_node.second, u_node);
+        auto monad_node = NewValueNode(kUMonad);
+        if (abs->isa<abstract::AbstractIOMonad>()) {
+          monad_node = NewValueNode(kIOMonad);
+        }
+        manager_->SetEdge(user_node.first, user_node.second, monad_node);
       }
     }
   }
@@ -515,11 +552,14 @@ void PipelineInterleave::InsertSendReceive(const AnfNodePtr &node, const AnfNode
   auto user_node_stage_info = user_node->user_data<NodeStageInfo>();
   auto node_stage = node_stage_info->stage();
   auto user_stage = user_node_stage_info->stage();
-  auto dest_rank = global_rank_ + (user_stage - node_stage) * per_stage_rank_num_;
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(0));
-  Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(dest_rank));
-  Attr attr_group = std::make_pair(GROUP, MakeValue(world_group_));
-  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(world_group_));
+  Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(user_stage));
+  Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
+  Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
+  if (node_stage > user_stage) {
+    attr_group = std::make_pair(GROUP, MakeValue(group_[2]));
+    attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[3]));
+  }
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_group, attr_group_back};
   auto send_op = CreateOpInstance(attrs, SEND, SEND);
   auto send_node = NewValueNode(send_op);
@@ -532,8 +572,7 @@ void PipelineInterleave::InsertSendReceive(const AnfNodePtr &node, const AnfNode
   send->AddPrimalAttr(STAGE, MakeValue(node_stage_info->stage()));
   send->AddPrimalAttr(ORDER, MakeValue(order));
 
-  auto src_rank = global_rank_ - (user_stage - node_stage) * per_stage_rank_num_;
-  attr_rank = std::make_pair(SRC_RANK, MakeValue(src_rank));
+  attr_rank = std::make_pair(SRC_RANK, MakeValue(node_stage));
   auto shape_type_pair = GetShapeType(node, {1}, 0);
   Attr attr_shape = std::make_pair(SHAPE, shape_type_pair.first);
   Attr attr_dtype = std::make_pair(DTYPE, shape_type_pair.second);
@@ -605,6 +644,9 @@ void PipelineInterleave::RedundancyNode(const AnfNodePtr &node,
     }
     // node->make_tuple, record with a map, Unified deleted later.
     if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+      if (fg == main_graph_) {
+        continue;
+      }
       if (make_tuple_map->find(cnode) == (*make_tuple_map).end()) {
         (*make_tuple_map)[cnode] = {node};
       } else {
@@ -706,6 +748,7 @@ void PipelinePostProcess::ModifyParameterList() {
 }
 
 void PipelineInterleave::CutBorder() {
+  CreateSendReceiveGroup();
   MS_EXCEPTION_IF_NULL(shared_cell_);
   auto ret = shared_cell_->get_return();
   MS_EXCEPTION_IF_NULL(ret);
