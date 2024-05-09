@@ -73,6 +73,31 @@ class Net(nn.Cell):
         out = out1 + out2
         return out
 
+class NetWithReshape(nn.Cell):
+    def __init__(self, weight1, weight2, in_layout1, in_layout2, out_layout1=None, out_layout2=None):
+        super().__init__()
+        self.matmul1 = P.MatMul().shard(in_strategy=in_layout1, out_strategy=out_layout1)
+        self.matmul2 = P.MatMul().shard(in_strategy=in_layout2, out_strategy=out_layout2)
+        self.matmul2.add_prim_attr("recompute_comm_op", True)
+        self.reshape = P.Reshape().add_prim_attr("recompute_comm_op", True)
+        self.relu = P.ReLU()
+        self.cast = P.Cast()
+        self.gelu = P.GeLU()
+        self.depend = P.Depend()
+        self.w1 = Parameter(weight1, "w1")
+        self.w2 = Parameter(weight2, "w2")
+
+    def construct(self, y):
+        y_new = self.gelu(y)
+        y_new = self.cast(y_new, ms.float32)
+        y_new = self.reshape(y_new, (1024, 1024))
+        out1 = self.matmul1(y_new, self.w1)
+        out1 = self.cast(out1, ms.float16)
+        out1 = self.reshape(out1, (512, 2048))
+        out2 = self.matmul2(out1, self.w2)
+        out2 = self.reshape(out2, (1024, 1024))
+        return self.relu(out2)
+
 class NetTwoMatMul(nn.Cell):
     def __init__(self, weight1, weight2, in_layout1, in_layout2, out_layout1=None, out_layout2=None):
         super().__init__()
@@ -127,5 +152,24 @@ def test_interleaved_two_matmul():
     w1 = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
     w2 = Tensor(np.ones([1024, 1024]), dtype=ms.float16)
     net = GradWrap(NetWithLoss(NetTwoMatMul(w1, w2, layout1, layout2, out_layout1, out_layout2)))
+    phase = compile_net(net, x)
+    _ = ParallelValidator(net, phase)
+
+def test_interleaved_with_reshape():
+    """
+    Feature: test micro interleaved using two matmul
+    Description: dev_num is 16.
+    Expectation: compile success, forward reduce_scatter
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    layout = Layout((2, 4, 2, 2), ("dp", "mp", "sp", "interleaved_parallel"))
+    layout1 = (layout(("dp", "interleaved_parallel"), "mp"), layout("mp", "sp"))
+    out_layout1 = (layout(("dp", "interleaved_parallel", "mp"), "sp"),)
+    layout2 = (layout(("dp", "interleaved_parallel", "mp"), "sp"), layout("sp", "None"))
+    out_layout2 = (layout(("dp", "interleaved_parallel", "mp", "sp"), "None"),)
+    x = Tensor(np.ones([1024, 1024]), dtype=ms.float16)
+    w1 = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
+    w2 = Tensor(np.ones([2048, 2048]), dtype=ms.float16)
+    net = GradWrap(NetWithLoss(NetWithReshape(w1, w2, layout1, layout2, out_layout1, out_layout2)))
     phase = compile_net(net, x)
     _ = ParallelValidator(net, phase)

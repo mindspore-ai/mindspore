@@ -83,6 +83,9 @@ class ReshapeInfo : public OperatorInfo {
   TensorLayout GetInputLayoutBySWCIndex(int64_t swc_index) const;
   TensorLayout GetOutputLayoutBySWCIndex(int64_t swc_index) const;
 
+  bool InterleavedParallel() const { return interleaved_parallel_; }
+  TensorRedistributionPtr ReshapeRedistribution();
+
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
@@ -114,6 +117,7 @@ class ReshapeInfo : public OperatorInfo {
   bool output_layout_set_flag_;
   bool is_generating_costs_ = false;
   bool is_skip_ = false;
+  bool interleaved_parallel_ = false;
   std::string pre_operator_name_;
   std::string next_operator_name_;
 };
