@@ -128,12 +128,6 @@ void Cloner::CloneCNodeWithoutInputs(const AnfNodePtr &node, const FuncGraphPtr 
   }
   auto cloned_debug_info = CloneNodeDebugInfo(debug_info, relation_);
   CNodePtr new_node = std::make_shared<CNode>(std::move(inputs), target, std::move(cloned_debug_info));
-  MS_EXCEPTION_IF_NULL(new_node->debug_info());
-  new_node->debug_info()->set_node(new_node);
-  auto node_debug_info = std::dynamic_pointer_cast<NodeDebugInfo>(debug_info);
-  if (node_debug_info != nullptr) {
-    node_debug_info->set_node(new_node);
-  }
   new_node->CloneCNodeInfo(old_node);
   // Copy to target graph
   if (new_node->forward().first != nullptr) {

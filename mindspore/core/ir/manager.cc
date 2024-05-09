@@ -258,7 +258,7 @@ FuncGraphPtr FuncGraphManager::parent(const FuncGraphPtr &fg) const {
   MS_LOG(DEBUG) << "Start parents func graph " << fg->ToString();
   func_graph_parent_->Recompute(fg);
   if (func_graph_parent_->parent_analysis().count(fg) == 0) {
-    MS_LOG(WARNING) << "This func graph is not in manager:" << fg->ToString();
+    MS_LOG(WARNING) << "This func graph is not in manager: " << fg->ToString();
     return nullptr;
   }
   MS_LOG(DEBUG) << "End parents func graph " << fg->ToString();
@@ -276,9 +276,9 @@ FuncGraphSet &FuncGraphManager::children(const FuncGraphPtr &fg) const {
 FuncGraphSet &FuncGraphManager::scopes(const FuncGraphPtr &fg) const {
   MS_EXCEPTION_IF_NULL(fg);
   MS_EXCEPTION_IF_NULL(scopes_);
-  MS_LOG(DEBUG) << "Start scopes func graph:" << fg->ToString();
+  MS_LOG(DEBUG) << "Start scopes func graph: " << fg->ToString();
   scopes_->Recompute(fg);
-  MS_LOG(DEBUG) << "End scopes func graph:" << fg->ToString();
+  MS_LOG(DEBUG) << "End scopes func graph: " << fg->ToString();
   return scopes_->scope_analysis()[fg];
 }
 
@@ -779,12 +779,11 @@ void FuncGraphManager::MoveAllCNodeDropGraph(const FuncGraphPtr &source, const F
       node->set_scope(scope);
     }
     if (update_debug_info && node->isa<CNode>()) {
-      MS_LOG(DEBUG) << "Start move inlined node:" << node->DebugString();
+      MS_LOG(DEBUG) << "Start move inlined node: " << node->DebugString();
       auto new_debug_info = DebugInfo::UpdateInlineCNodeDebugInfo(call_node->debug_info(), node->debug_info());
       auto node_new_debug_info = std::dynamic_pointer_cast<NodeDebugInfo>(new_debug_info);
       MS_EXCEPTION_IF_NULL(node_new_debug_info);
       node->set_debug_info(node_new_debug_info);
-      node_new_debug_info->set_node(node);
     }
   }
 

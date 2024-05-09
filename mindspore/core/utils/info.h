@@ -235,7 +235,7 @@ class MS_CORE_API DebugInfo {
   /// \brief Get the name.
   ///
   /// \return The name of the DebugInfo.
-  std::string name() { return name_; }
+  std::string name() const { return name_; }
 
   /// \brief Set the name.
   ///
@@ -245,7 +245,12 @@ class MS_CORE_API DebugInfo {
   /// \brief Get the debug name.
   ///
   /// \return The debug name of the DebugInfo.
-  virtual std::string debug_name() { return name_; }
+  virtual std::string debug_name() { return debug_name_; }
+
+  /// \brief Set the debug name.
+  ///
+  /// \param[in] debug_name The name to be set.
+  void set_debug_name(const std::string &debug_name) { debug_name_ = debug_name; }
 
   virtual DebugInfoPtr Copy() const;
 
@@ -265,6 +270,7 @@ class MS_CORE_API DebugInfo {
   TraceInfoPtr trace_info_;
   LocationPtr location_;
   std::string name_;
+  std::string debug_name_;
   bool inlined_{false};
 };
 
@@ -289,20 +295,15 @@ class MS_CORE_API NodeDebugInfo : public DebugInfo {
 
   std::string debug_name() override;
 
-  /// \brief Set the node.
+  /// \brief Set the node's type name.
   ///
-  /// \param[in] node The node to be set.
-  void set_node(const AnfNodePtr &node) { node_ = AnfNodeWeakPtr(node); }
-
-  /// \brief Get the node.
-  ///
-  /// \return The node.
-  AnfNodePtr get_node() const { return node_.lock(); }
+  /// \param[in] type_name The node type name to be set.
+  void set_type_name(const std::string &type_name) { type_name_ = type_name; }
 
   DebugInfoPtr Copy() const override;
 
  private:
-  AnfNodeWeakPtr node_;
+  std::string type_name_;
 };
 
 using NodeDebugInfoPtr = std::shared_ptr<NodeDebugInfo>;
