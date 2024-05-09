@@ -880,12 +880,14 @@ TypeId GetConversionType(const TypeId &current, bool current_arg_is_tensor, bool
         hash_id == GetHashId(kNumberTypeFloat16, kNumberTypeBFloat16)) {
       // "saved_type_id == ref_type_id": if Parameter exists, its type_id should be equal to the saved_type_id,
       // otherwise it means that the wrong type cast will be performed on the Parameter.
-      TypeId from_id = is_parameter ? saved_type_id : current;
-      TypeId to_id = is_parameter ? current : saved_type_id;
-      MS_LOG(WARNING) << "There is an implicit type conversion from " << TypeIdToString(from_id) << " to "
-                      << TypeIdToString(to_id)
-                      << ", which may result in loss of precision. It is recommended to use Float32.";
-      return to_id;
+      static bool already_printed = false;
+      if (!already_printed) {
+        already_printed = true;
+        MS_LOG(WARNING) << "For operators with side effects, there is an implicit type conversion between "
+                        << TypeIdToString(current) << " and " << TypeIdToString(saved_type_id)
+                        << ", which may result in loss of precision. It is recommended to use Float32.";
+      }
+      return is_parameter ? current : saved_type_id;
     }
     return ConvertTypeForTensorsOrScalars(current, saved_type_id, hash_id);
   }
