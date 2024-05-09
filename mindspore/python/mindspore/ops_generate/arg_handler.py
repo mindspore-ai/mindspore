@@ -18,6 +18,8 @@ from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum, StringToEnum
 # Enum Class:
 from mindspore._c_expression import FormatEnum as Format
 from mindspore._c_expression import ReductionEnum as Reduction
+from mindspore.common import Tensor
+from mindspore.common import dtype as mstype
 
 
 def arg_invalid_info(op_name, arg_name, arg_val):
@@ -162,6 +164,19 @@ def to_3d_paddings(op_name, arg_name, pad):
     if isinstance(pad, (tuple, list)):
         return pad
     raise ValueError(arg_invalid_info(op_name, arg_name, pad))
+
+
+def generator_handler(op_name, arg_name, inputs):
+    """
+    convert constant value in tuple to tensor
+    """
+    new_inputs = []
+    for input_ in inputs:
+        if isinstance(input_, int):
+            new_inputs.append(Tensor(input_, mstype.int64))
+        else:
+            new_inputs.append(input_)
+    return tuple(new_inputs)
 
 dtype_to_type_id = DtypeToEnum()
 

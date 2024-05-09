@@ -24,7 +24,7 @@ from mindspore import ops
 from mindspore.ops.composite import GradOperation
 from mindspore.common._register_for_recompute import recompute_registry
 from mindspore.common.api import _pynative_executor
-from mindspore.nn.generator import get_rng_state, set_rng_state
+from mindspore.common.generator import get_rng_state, set_rng_state
 
 
 class _WrapCell(Cell):
@@ -90,11 +90,11 @@ class _RecomputeCell(Cell):
         input_args = _detach_input(input_args)
         try:
             pre_rng_state = get_rng_state()
-            set_rng_state(*self.cpu_rng_state)
+            set_rng_state(self.cpu_rng_state)
             _pynative_executor.set_is_run_recompute(True)
             grads = self.grad(self.net, self.internal_params)(*input_args, grad_input)
             _pynative_executor.set_is_run_recompute(False)
-            set_rng_state(*pre_rng_state)
+            set_rng_state(pre_rng_state)
         except Exception as err:
             _pynative_executor.clear_res()
             raise err

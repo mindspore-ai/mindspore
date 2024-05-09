@@ -28,7 +28,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import randperm
-from mindspore.nn.generator import default_generator
+from mindspore.common.generator import default_generator
 from mindspore.ops.auto_generate import UniformExt, NormalExt
 
 normal_ext_op = NormalExt()
@@ -263,8 +263,8 @@ def uniform_ext(tensor, a, b, generator=None):
         >>> print(result)
     """
     if generator is None:
-        generator = default_generator()
-    seed, offset = generator(1)
+        generator = default_generator
+    seed, offset = generator._step(1)  # pylint: disable=protected-access
     return uniform_(tensor, a, b, seed, offset)
 
 
@@ -662,6 +662,7 @@ def is_cpu_backend():
     """Check if the CPU is used"""
     return context.get_context('device_target') == 'CPU'
 
+
 def normal_ext(mean, std, generator=None):
     r"""
     Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
@@ -693,8 +694,8 @@ def normal_ext(mean, std, generator=None):
         (3,)
     """
     if generator is None:
-        generator = default_generator()
-    seed, offset = generator(1)
+        generator = default_generator
+    seed, offset = generator._step(1)  # pylint: disable=protected-access
     return normal_ext_op(mean, std, seed, offset)
 
 

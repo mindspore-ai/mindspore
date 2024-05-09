@@ -31,6 +31,7 @@ from mindspore.parallel._recovery_context import _set_recovery_context, _get_rec
 from mindspore.train.callback._callback import Callback, set_cur_net
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
+from mindspore.common.generator import Generator
 from mindspore._c_expression import _collect_host_info
 
 
@@ -355,7 +356,8 @@ class CheckpointConfig:
                     raise TypeError(f"For 'CheckpointConfig', the element of 'append_info' must has only one dict, "
                                     "but got {dict_num}")
                 for key, value in element.items():
-                    if isinstance(key, str) and isinstance(value, (int, float, bool, str, Parameter, Tensor)):
+                    if isinstance(key, str) and isinstance(value,
+                                                           (int, float, bool, str, Parameter, Tensor, Generator)):
                         handle_append_info[key] = value
                     else:
                         raise TypeError(f"For 'CheckpointConfig', the key type of the dict 'append_info' "
