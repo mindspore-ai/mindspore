@@ -59,32 +59,55 @@ AnfNodePtr GetBpropUser(const FuncGraphManagerPtr &manager, const AnfNodePtr &bp
   return user_node_idx->first;
 }
 
-void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &bprop_graph, const AbstractBasePtr &u_abs) {
+bool IsMemSideEffectNode(const AnfNodePtr &node) {
+  auto prim = GetCNodePrimitive(node);
+  if (prim == nullptr) {
+    return false;
+  }
+  return prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_MEM);
+}
+
+void AddUMonadInput(const FuncGraphManagerPtr &manager, const FuncGraphPtr &bprop_graph, const AnfNodePtr &new_u_para) {
+  auto fprop_graph = bprop_graph->parent();
+  auto is_bprop_node = [&fprop_graph](const AnfNodePtr &node) {
+    if (node->func_graph() == fprop_graph) {
+      return EXCLUDE;
+    }
+    return FOLLOW;
+  };
+  auto all_nodes = TopoSort(bprop_graph->get_return(), SuccDeeperSimple, is_bprop_node);
+  for (const auto &node : all_nodes) {
+    if (!IsMemSideEffectNode(node)) {
+      continue;
+    }
+    MS_LOG(DEBUG) << "Add u monad input for node " << node->DebugString();
+    manager->AddEdge(node, new_u_para);
+  }
+}
+
+void PropagateUMonadInput(const FuncGraphManagerPtr &manager, const FuncGraphPtr &bprop_graph,
+                          const AbstractBasePtr &u_abs, bool add_u_input) {
   auto new_u_para = bprop_graph->add_parameter();
   new_u_para->debug_info()->set_name("forward_u");
   new_u_para->set_abstract(u_abs);
   bprop_graph->set_flag(kFlagAddedForwardU, true);
-  std::vector<CNodePtr> side_effect_bprop_apps;
+  if (add_u_input) {
+    AddUMonadInput(manager, bprop_graph, new_u_para);
+  }
   std::vector<CNodePtr> side_effect_bprop_app_propagate_nodes;
   for (const auto &node : bprop_graph->nodes()) {
     auto cnode = dyn_cast<CNode>(node);
     if (cnode == nullptr) {
       continue;
     }
-    if (cnode->HasAttr(kAttrSideEffectBpropAppPropagate)) {
+    if (cnode->HasAttr(kAttrSideEffectBpropAppPropagate) || cnode->HasAttr(kAttrSideEffectBpropApp)) {
       (void)side_effect_bprop_app_propagate_nodes.emplace_back(cnode);
     }
-    if (cnode->HasAttr(kAttrSideEffectBpropApp)) {
-      (void)side_effect_bprop_apps.emplace_back(cnode);
-    }
   }
-  if (side_effect_bprop_apps.empty() && side_effect_bprop_app_propagate_nodes.empty()) {
+  if (side_effect_bprop_app_propagate_nodes.empty()) {
     return;
   }
-  for (const auto &bprop_app : side_effect_bprop_apps) {
-    std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), bprop_app->input(1), new_u_para};
-    manager->SetEdge(bprop_app, 1, bprop_graph->NewCNode(depend_inputs));
-  }
+
   for (const auto &propagate_node : side_effect_bprop_app_propagate_nodes) {
     manager->AddEdge(propagate_node, new_u_para);
     auto bprop_getter_abs = dyn_cast<abstract::FuncGraphAbstractClosure>(propagate_node->input(0)->abstract());
@@ -97,7 +120,7 @@ void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &bpro
     if (bprop_fg->has_flag(kFlagAddedForwardU)) {
       continue;
     }
-    AddDependNodes(manager, bprop_fg, u_abs);
+    PropagateUMonadInput(manager, bprop_fg, u_abs, propagate_node->HasAttr(kAttrSideEffectBpropApp));
   }
 }
 }  // namespace internal
@@ -106,27 +129,39 @@ void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &bpro
 // %0 = U
 // %1 = call fprop(x, y, %0)
 // %2 = get_item(%1, 1)
-// %3 = %2(dout)
+// %3 = %2[@@bprop](dout)
+//
+// graph bprop(dout):
+//   %0 = side_effect_mem_op(dout)
 //
 // After the pass:
 // kLevelNone(no changes)
 // %0 = U
 // %1 = call fprop(x, y, %0)
 // %2 = get_item(%1, 1)
-// %3 = %2(dout)
+// %3 = %2[@@bprop](dout)
+//
+// graph bprop(dout):
+//   %0 = side_effect_mem_op(dout)
 //
 // kLevelTop
 // %0 = U
 // %1 = call fprop(x, y, %0)
 // %2 = get_item(%1, 1)
-// %3 = %2(dout, %0)
+// %3 = %2[@@bprop](dout, %0)
+//
+// graph bprop(dout, u):
+//   %0 = side_effect_mem_op(dout, u)
 //
 // kLevelWhole
 // %0 = U
 // %1 = call fprop(x, y, %0)
 // %2 = UpdateState(U, %1)
 // %3 = get_item(%1, 1)
-// %4 = %2(dout, %2)
+// %4 = %3[@@bprop](dout, %2)
+//
+// graph bprop(dout, u):
+//   %0 = side_effect_mem_op(dout, u)
 bool AddForwardMonadDepend(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(opt);
@@ -192,7 +227,9 @@ bool AddForwardMonadDepend(const FuncGraphPtr &root, const opt::OptimizerPtr &op
       changed = true;
       u_abs = umonad_input->abstract();
     }
-    internal::AddDependNodes(manager, bprop_graph, u_abs);
+    if (bprop_graph != nullptr && u_abs != nullptr) {
+      internal::PropagateUMonadInput(manager, bprop_graph, u_abs, false);
+    }
   }
   return changed;
 }
