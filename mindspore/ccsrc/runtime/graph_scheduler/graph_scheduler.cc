@@ -46,6 +46,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "utils/ms_context.h"
 #include "utils/profile.h"
+#include "utils/phase.h"
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 #include "include/common/utils/signal_util.h"
 #include "include/backend/distributed/cluster/topology/compute_graph_node.h"
@@ -750,6 +751,14 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
 }
 
 void GraphScheduler::RefreshContextAndThreadPool(ActorSet *const actor_set, ActorThreadPool *const thread_pool) {
+  auto phase = PhaseManager::GetInstance().phase();
+  if (phase.find("prefill") != std::string::npos || phase.find("increment") != std::string::npos) {
+    // GE backend's memory optimization litmits the thread number to be 1, but the memory is not a problem in inference
+    // so the multi-thread can be enabled.
+    return;
+  }
+  PhaseManager::GetInstance().ClearPhase();
+
   static constexpr size_t kSingleThreadNum = 1;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);

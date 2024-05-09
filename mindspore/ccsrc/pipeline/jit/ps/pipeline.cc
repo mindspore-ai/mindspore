@@ -1671,6 +1671,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
     MS_LOG(INTERNAL_EXCEPTION) << "Run failed, phase input is not a str";
   }
   auto phase = py::cast<std::string>(phase_obj);
+  PhaseManager::GetInstance().set_phase(phase);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 #ifdef WITH_BACKEND
