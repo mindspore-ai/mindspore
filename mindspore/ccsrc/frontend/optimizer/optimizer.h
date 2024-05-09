@@ -260,7 +260,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
     MS_LOG(INTERNAL_EXCEPTION) << "No ResourceBase exists.";
   }
 
-  const std::string name() const { return name_; }
+  const std::string &name() const { return name_; }
 
   void set_is_untyped_generated() { is_untyped_generated_ = true; }
   void clear_is_untyped_generated() { is_untyped_generated_ = false; }

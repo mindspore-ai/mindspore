@@ -260,6 +260,15 @@ class MsProfileStatGuard {
     state_name_ = std::move(state_name);
   }
 
+  MsProfileStatGuard(std::string &&group_name, const std::string &state_name) {
+    if (!EnabledProfile()) {
+      return;
+    }
+    start_ = GetTime();
+    state_name_ = std::move(group_name);
+    state_name_ += state_name;
+  }
+
   ~MsProfileStatGuard() {
     if (!EnabledProfile()) {
       return;
