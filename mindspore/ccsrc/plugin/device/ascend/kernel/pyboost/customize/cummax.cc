@@ -36,8 +36,6 @@ std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr> CumMaxAscendCustomize(c
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, axis_imm]() {
     MS_LOG(DEBUG) << "Run device task cummax end";
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
-                                       op->primitive()->name(), false);
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
     // Malloc for input tensors

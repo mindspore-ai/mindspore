@@ -40,8 +40,6 @@ tensor::BaseTensorPtr NormalExtAscendCustomize(const std::shared_ptr<OpRunner> &
   PyBoostUtils::DispatchRun(
     std::make_shared<runtime::PyBoostDeviceTask>([op, mean_tensor, std_tensor, seed_imm, offset_imm]() {
       MS_LOG(DEBUG) << "Run device task NormalExt end";
-      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
-                                         "normal", false);
       auto device_context = op->device_context();
       const auto &outputs = op->outputs();
       // Malloc for input tensors

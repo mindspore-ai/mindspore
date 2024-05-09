@@ -48,8 +48,6 @@ tensor::BaseTensorPtr ConvolutionAscendCustomize(const std::shared_ptr<OpRunner>
     [op, input_tensor, weight_tensor, bias_tensor, pad_vector, stride_vector, dilation_vector, transposed_imm,
      output_padding_vector, group_imm]() {
       MS_LOG(DEBUG) << "Run device task Convolution end";
-      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
-                                         "Convolution", false);
 
       auto device_context = op->device_context();
       const auto &outputs = op->outputs();
