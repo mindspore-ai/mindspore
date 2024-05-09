@@ -41,8 +41,6 @@ tensor::BaseTensorPtr ScatterAscendCustomize(const std::shared_ptr<OpRunner> &op
     std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, dim_imm, index_tensor, src_tensor, reduce_imm]() {
       auto op_name = op->primitive()->name();
       MS_LOG(DEBUG) << "Run device task " << op_name << " end";
-      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
-                                         op_name, false);
       auto device_context = op->device_context();
       const auto &outputs = op->outputs();
       // Malloc for input tensors

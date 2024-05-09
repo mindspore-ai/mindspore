@@ -47,8 +47,6 @@ tensor::BaseTensorPtr ArgMaxAscendCustomize(const std::shared_ptr<OpRunner> &op,
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_x_imm, dim_imm, keepdim_imm]() {
     MS_LOG(DEBUG) << "Run device task ArgMax end";
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
-                                       "ArgMax", false);
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
     // Malloc for input tensors

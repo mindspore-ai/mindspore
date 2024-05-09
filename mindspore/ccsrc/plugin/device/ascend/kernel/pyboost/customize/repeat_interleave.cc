@@ -40,8 +40,6 @@ tensor::BaseTensorPtr RepeatInterleaveAscendCustomize(const std::shared_ptr<OpRu
   // Async
   PyBoostUtils::DispatchRun(
     std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, repeats, axis_imm, output_size_imm]() {
-      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
-                                         "RepeatInterleave", false);
       auto device_context = op->device_context();
       const auto &outputs = op->outputs();
       // Malloc for input tensors
