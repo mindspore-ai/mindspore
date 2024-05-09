@@ -162,7 +162,8 @@ def test_dvm_multiple_run():
     """
     np.random.seed(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_graph_kernel=True, graph_kernel_flags="--enable_cluster_ops=Reshape")
+    context.set_context(enable_graph_kernel=True,
+                        graph_kernel_flags="--enable_cluster_ops=Reshape")
     x0_dyn = Tensor(shape=(None,), dtype=ms.float16)
     x1_dyn = Tensor(shape=(None,), dtype=ms.float16)
     x0 = np.random.normal(0, 1, (4,)).astype(np.float16)
