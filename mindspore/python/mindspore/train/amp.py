@@ -604,8 +604,10 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
         >>> amp_level="O3"
         >>> net = amp.build_train_network(network, net_opt, net_loss, amp_level)
     """
-    validator.check_value_type('optimizer', optimizer, (nn.Optimizer, boost.FreezeOpt,
-                                                        nn.AdaSumByGradWrapCell, nn.AdaSumByDeltaWeightWrapCell))
+    from mindspore.experimental import optim
+    validator.check_value_type('optimizer', optimizer,
+                               (nn.Optimizer, optim.optimizer.Optimizer, boost.FreezeOpt,
+                                nn.AdaSumByGradWrapCell, nn.AdaSumByDeltaWeightWrapCell))
 
     level, enable_boost = _check_level(level, boost_level)
 
