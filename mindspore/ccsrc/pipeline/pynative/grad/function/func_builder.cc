@@ -119,7 +119,8 @@ bool ParseCond(const NodePtr &cond) {
   auto cond_val = cond->Value();
   if (cond_val->isa<BoolImm>()) {
     return GetValue<bool>(cond_val);
-  } else if (cond_val->isa<tensor::BaseTensor>()) {
+  }
+  if (cond_val->isa<tensor::BaseTensor>()) {
     auto tensor = cond_val->cast<tensor::BaseTensorPtr>();
     tensor->data_sync();
     size_t data_size = tensor->DataSize();

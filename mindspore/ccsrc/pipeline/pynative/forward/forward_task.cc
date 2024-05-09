@@ -18,7 +18,6 @@
 
 #include <string>
 #include <memory>
-#include "include/common/utils/tensor_future.h"
 #include "include/common/profiler.h"
 
 namespace mindspore {

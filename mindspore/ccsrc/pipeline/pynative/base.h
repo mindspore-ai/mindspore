@@ -21,23 +21,20 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <set>
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/primitive_py.h"
-#include "pipeline/jit/ps/parse/parse.h"
 #include "abstract/abstract_value.h"
 #include "include/common/utils/stub_tensor.h"
-#include "include/common/utils/tensor_future.h"
 #include "mindspore/core/utils/simple_info.h"
 #include "ops/op_def.h"
 
 namespace mindspore {
 namespace pynative {
 namespace py = pybind11;
-const size_t kDefaultContainerSize = 5000;
+constexpr size_t kDefaultContainerSize = 5000;
 enum class SensType { kNormal = 0, kTuple = 1, kDict = 2 };
 
 struct BaseOpRunInfo {
@@ -151,18 +148,13 @@ using FrontendOpRunInfoPtr = std::shared_ptr<FrontendOpRunInfo>;
 struct InputArgsInfo {
   InputArgsInfo() = default;
   ~InputArgsInfo() = default;
-  InputArgsInfo(bool is_grad_topest_cell, bool is_high_order_top_cell, bool grad_is_running, size_t obj_order)
-      : is_grad_topest_cell(is_grad_topest_cell),
-        is_high_order_top_cell(is_high_order_top_cell),
-        grad_is_running(grad_is_running),
-        obj_order(obj_order) {}
+  InputArgsInfo(bool is_grad_topest_cell, bool is_high_order_top_cell)
+      : is_grad_topest_cell(is_grad_topest_cell), is_high_order_top_cell(is_high_order_top_cell) {}
 
   bool is_grad_topest_cell;
   bool is_high_order_top_cell;
-  bool grad_is_running;
-  bool is_need_recompute{false};
-  size_t obj_order;
 
+  bool is_need_recompute{false};
   bool has_custom_bprop{false};
   SensType sens_type{SensType::kNormal};
   PrimitivePyPtr custom_bprop_prim{nullptr};
@@ -171,10 +163,7 @@ struct InputArgsInfo {
   std::string cell_id;
   std::string already_run_cell_id;
   std::string input_args_id;
-  // Cell unique id, cell_id + cell_order;
-  std::string obj_order_id;
   size_t input_size = 0;
-  size_t grad_order = 0;
   std::vector<std::string> input_arg_id_vec;
   std::vector<ValuePtr> input_arg_value_vec;
   // Used for dynamic shape auto detect

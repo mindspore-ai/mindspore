@@ -24,14 +24,12 @@
 #include "pipeline/pynative/pynative_utils.h"
 #include "pipeline/pynative/grad/jit/jit_dfunctor.h"
 #include "ir/func_graph_cloner.h"
-#include "pipeline/pynative/grad/bprop_task.h"
-#include "pipeline/jit/ps/pass.h"
 #include "frontend/expander/bprop/bprop.h"
 
 namespace mindspore {
 namespace pynative {
 namespace {
-const char kAddedValue[] = "added_value";
+constexpr char kAddedValue[] = "added_value";
 
 const mindspore::HashSet<std::string> kExpanderWhiteList{
   kVmapStackAssignOpName,
@@ -438,7 +436,7 @@ void Jit::UpdateJitForwardTensorInfoInBpropGraph(const std::string &op_info, con
   }
   // Not first run
   MS_LOG(DEBUG) << "Update jit forward output tensor info " << op_info;
-  UpdateForwardOutputTensorInfo(op_info, v, it->second, stream_id);
+  UpdateForwardOutputTensorInfo(op_info, v, it->second);
 }
 
 void Jit::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph) {

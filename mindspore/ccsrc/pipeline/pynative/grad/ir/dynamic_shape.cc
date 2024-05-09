@@ -23,7 +23,7 @@ namespace pynative {
 namespace {
 constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
-const size_t kMaxCacheDynamicShapeCellNum = 2;
+constexpr size_t kMaxCacheDynamicShapeCellNum = 2;
 
 bool IsValuePtrEqual(const ValuePtr &v1, const ValuePtr &v2) {
   if (v1 == v2) {
