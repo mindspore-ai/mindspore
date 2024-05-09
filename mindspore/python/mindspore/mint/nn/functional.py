@@ -14,7 +14,6 @@
 # ============================================================================
 """mint nn functional."""
 from __future__ import absolute_import
-from mindspore.ops.extend import max_pool2d
 from mindspore.ops.functional import (
     conv_transpose2d,
     grid_sample
@@ -62,6 +61,7 @@ from mindspore.ops.function.nn_func import dropout_ext as dropout
 # 21
 
 # 22
+from mindspore.ops.extend import max_pool2d as max_pool2d_ex
 
 # 23
 
@@ -80,12 +80,14 @@ from mindspore.ops.function.nn_func import dropout_ext as dropout
 # 30
 
 # 31
+from mindspore.ops.functional import softmax as softmax_ex
 
 # 32
 
 # 33
 
 # 34
+from mindspore.ops.functional import batch_norm as batch_norm_ex
 
 # 35
 
@@ -94,6 +96,7 @@ from mindspore.ops.functional import gelu
 # 37
 
 # 38
+from mindspore.ops.auto_generate import dense
 
 # 39
 from mindspore.ops.functional import group_norm
@@ -146,6 +149,7 @@ from mindspore.ops import normal_ext as normal
 # 63
 
 # 64
+from mindspore.ops.extend import one_hot as one_hot_ext
 
 # 65
 
@@ -207,6 +211,8 @@ from mindspore.ops.extend import leaky_relu_ext as leaky_relu
 from mindspore.ops.function.nn_func import softplus_ext as softplus
 # 94
 from mindspore.ops.function.math_func import tanh
+
+
 # 95
 
 # 96
@@ -221,6 +227,28 @@ from mindspore.ops.function.math_func import tanh
 from mindspore.ops.auto_generate import binary_cross_entropy_with_logits as bce_with_logits
 def binary_cross_entropy_with_logits(input, target, weight, reduction, pos_weight):
     return bce_with_logits(input, target, weight, pos_weight, reduction)
+
+def batch_norm(input_x, running_mean, running_var, weight=None, bias=None, training=False, momentum=0.1, eps=1e-5):
+    return batch_norm_ex(input_x, running_mean, running_var, weight, bias, training, momentum, eps)
+
+
+def linear(input, weight, bias=None):
+    return dense(input, weight, bias)
+
+
+def max_pool2d(input, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
+    return max_pool2d_ex(input, kernel_size, stride=stride, padding=padding, dilation=dilation,
+                         return_indices=return_indices, ceil_mode=ceil_mode)
+
+
+def one_hot(tensor, num_classes=-1):
+    return one_hot_ext(tensor, num_classes)
+
+
+def softmax(input, dim=None, dtype=None):
+    dim = -1 if dim is None else dim
+    return softmax_ex(input, dim, dtype=dtype)
+
 
 __all__ = [
     'conv_transpose2d',
@@ -286,13 +314,13 @@ __all__ = [
     # 30
 
     # 31
-
+    'softmax',
     # 32
 
     # 33
 
     # 34
-
+    'batch_norm',
     # 35
 
     # 36
@@ -300,7 +328,7 @@ __all__ = [
     # 37
 
     # 38
-
+    'linear',
     # 39
     'group_norm',
     # 40
@@ -352,7 +380,7 @@ __all__ = [
     # 63
 
     # 64
-
+    'one_hot',
     # 65
 
     # 66
