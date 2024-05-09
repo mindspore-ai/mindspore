@@ -287,12 +287,15 @@ TensorLayout GetTensorInLayout(const AnfNodePtr &pre_node, int get_item_index) {
   return tensorinfo_in.tensor_layout();
 }
 
-static void InsertRedistributionForMicroInterleaved(const TensorRedistributionPtr &tensor_redistribution,
-                                                    const CNodePtr &next_cnode, const FuncGraphPtr &func_graph,
-                                                    int64_t next_cnode_index, const CNodePtr &pre_cnode) {
+void InsertRedistributionForMicroInterleaved(const TensorRedistributionPtr &tensor_redistribution,
+                                             const std::pair<AnfNodePtr, int64_t> &node_pair,
+                                             const FuncGraphPtr &func_graph, const CNodePtr &attr_cnode,
+                                             const CNodePtr &real_pre_node) {
   auto redistribution_oplist_ptr_vector = tensor_redistribution->InferTensorRedistributionOperatorVirtualGraphs();
+  auto next_cnode = node_pair.first->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(next_cnode);
+  auto next_cnode_index = node_pair.second;
   // create VirtualConverterBeginNode
-  auto real_pre_node = next_cnode->input(next_cnode_index)->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(real_pre_node);
   auto virtual_converter_begin =
     CreateVirtualConverterBeginNode(real_pre_node, redistribution_oplist_ptr_vector.size());
@@ -340,7 +343,7 @@ static void InsertRedistributionForMicroInterleaved(const TensorRedistributionPt
       }
     }
     ag_group_ranks_vectors.push_back(ag_group_ranks_vector);
-    InsertRedistribution(redistribution_oplist_ptr, virtual_converter_end, func_graph, i + 1, pre_cnode,
+    InsertRedistribution(redistribution_oplist_ptr, virtual_converter_end, func_graph, i + 1, attr_cnode,
                          tensor_redistribution);
   }
   ConvertInterleaveAllGatherToConcat(func_graph, virtual_converter_end, ag_group_ranks_vectors);
@@ -409,7 +412,8 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
     MS_LOG(EXCEPTION) << "Failure:tensor_redistribution init failed";
   }
   if (tensorlayout_in.GetVirtualRank().size() > 1 || tensorlayout_out.GetVirtualRank().size() > 1) {
-    InsertRedistributionForMicroInterleaved(tensor_redistribution, next_cnode, func_graph, node_pair.second, pre_cnode);
+    auto real_pre_node = next_cnode->input(node_pair.second)->cast<CNodePtr>();
+    InsertRedistributionForMicroInterleaved(tensor_redistribution, node_pair, func_graph, pre_cnode, real_pre_node);
     return;
   }
   RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
@@ -2222,6 +2226,24 @@ static void StepReplace(const std::vector<AnfNodePtr> &all_nodes) {
       if (replace_graph) {
         MS_LOG(INFO) << "StepReplaceGraph " << cnode->ToString();
         StepReplaceGraph(replace_graph, cnode, distribute_operator);
+      }
+      if (distribute_operator->name().find(RESHAPEINFO) != std::string::npos) {
+        auto reshape_info = std::dynamic_pointer_cast<ReshapeInfo>(distribute_operator);
+        if (!reshape_info->InterleavedParallel()) {
+          continue;
+        }
+        auto reshape_redis = reshape_info->ReshapeRedistribution();
+        InsertRedistributionForMicroInterleaved(reshape_redis, {cnode, 1}, cnode->func_graph(), cnode,
+                                                cnode->input(kIndex1)->cast<CNodePtr>());
+        if (!IsPrimitiveCNode(cnode->input(kIndex1), prim::kPrimVirtualConverterEnd)) {
+          continue;
+        }
+        auto virtual_converter_end = cnode->input(kIndex1)->cast<CNodePtr>();
+        auto func_graph = cnode->func_graph();
+        MS_EXCEPTION_IF_NULL(func_graph);
+        auto manager = func_graph->manager();
+        MS_EXCEPTION_IF_NULL(manager);
+        manager->Replace(cnode, virtual_converter_end);
       }
     }
   }

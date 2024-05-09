@@ -318,6 +318,15 @@ void ReshapeInfo::ChangeDynamicDstShapeForSkipRedistribution(const AnfNodePtr &s
   }
 }
 
+TensorRedistributionPtr ReshapeInfo::ReshapeRedistribution() {
+  TensorRedistributionPtr tensor_redistribution = this->CreateReshapeTensorRedistribution(!is_generating_costs_, true);
+  RankList dev_list = stage_device_list();
+  if (tensor_redistribution->Init(input_layout_, output_layout_, dev_list) == FAILED) {
+    MS_LOG(EXCEPTION) << name_ << ": tensor_redistribution init failed.";
+  }
+  return tensor_redistribution;
+}
+
 Status ReshapeInfo::ComputeReplaceOp() {
   MS_LOG(DEBUG) << "Infer reshape redistribution for " << this->cnode_->fullname_with_scope() << "." << std::endl
                 << "input_layout_: " << this->input_layout_.ToString() << std::endl
@@ -597,6 +606,11 @@ Status ReshapeInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_
       return FAILED;
     }
   }
+  if (input_layout_.GetVirtualRank().size() > 1 || output_layout_.GetVirtualRank().size() > 1) {
+    interleaved_parallel_ = true;
+    return SUCCESS;
+  }
+
   Status status = ComputeReplaceOp();
   if (status != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": ComputeReplaceOp failed.";
