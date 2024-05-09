@@ -19,6 +19,7 @@
 #include <atomic>
 #include <fstream>
 #include <algorithm>
+#include <unordered_map>
 #include <utility>
 #include "utils/ms_utils.h"
 #include "include/common/utils/utils.h"
@@ -591,27 +592,133 @@ void MsContext::SetAscendConfig() {
   set_param<std::string>(MS_CTX_GE_OPTIONS, "");
 }
 
+std::vector<std::string> SplitString(const std::string &str, char delim) {
+  std::stringstream ss(str);
+  std::string item;
+  std::vector<std::string> elems;
+  while (std::getline(ss, item, delim)) {
+    if (!item.empty()) {
+      elems.push_back(item);
+    }
+  }
+  return elems;
+}
+
+static inline std::string GetEnv(const std::string &env_var) {
+  const char *value = std::getenv(env_var.c_str());
+  if (value == nullptr) {
+    return std::string();
+  }
+  return std::string(value);
+}
+
+static inline std::string JoinStringVector(std::vector<std::string> str_vec, std::string delim) {
+  std::string res;
+  for (size_t i = 0; i < str_vec.size(); i++) {
+    res += str_vec[i];
+    if (i != str_vec.size() - 1) {
+      res += delim;
+    }
+  }
+  return res;
+}
+
+void MsContext::SetMsEnableInternalFusionList(const std::string &infer_boost_level) {
+  // take environment as priority
+  if (!GetEnv("MS_ENABLE_INTERNAL_FUSION_LIST").empty()) {
+    std::string list_env = GetEnv("MS_ENABLE_INTERNAL_FUSION_LIST");
+    ms_enable_internal_fusion_list_ = SplitString(list_env, ',');
+    return;
+  }
+  if (infer_boost_level == "on" || infer_boost_level == "O0") {
+    ms_enable_internal_fusion_list_ = {};
+  } else if (infer_boost_level == "O1") {
+    ms_enable_internal_fusion_list_ = {"AddLayerNorm", "AddRmsNorm", "MultiMatMul"};
+  } else if (infer_boost_level == "O2") {
+    ms_enable_internal_fusion_list_ = {"AddLayerNorm", "AddRmsNorm", "MultiMatMul", "MatMulAllReduce"};
+  }
+  MS_LOG(INFO) << "MS enable internal fusion list is " << ms_enable_internal_fusion_list_;
+}
+
+void MsContext::SetMsInternalEnableCustomKernelList(const std::string &infer_boost_level) {
+  // take environment as priority
+  if (!GetEnv("MS_INTERNAL_ENABLE_CUSTOM_KERNEL_LIST").empty()) {
+    std::string list_env = GetEnv("MS_INTERNAL_ENABLE_CUSTOM_KERNEL_LIST");
+    ms_internal_enable_custom_kernel_list_ = SplitString(list_env, ',');
+    return;
+  }
+  if (infer_boost_level == "on" || infer_boost_level == "O0") {
+    ms_internal_enable_custom_kernel_list_ = {};
+  } else if (infer_boost_level == "O1") {
+    ms_internal_enable_custom_kernel_list_ = {
+      // have both custom and asd kernels
+      "MatMul", "RmsNorm", "Add", "Sub",
+      // have custom kernels only
+      "MatmulFfn", "MatmulQkv", "ApplyRotaryPosEmb", "ReshapeAndCache", "AddRmsNorm", "AddLayerNorm", "Cast"};
+  } else if (infer_boost_level == "O2") {
+    ms_internal_enable_custom_kernel_list_ = {
+      // have both custom and asd kernels
+      "MatMul", "RmsNorm", "Add", "Sub", "FlashAttentionScore", "PagedAttention",
+      // have custom kernels only
+      "MatmulFfn", "MatmulQkv", "ApplyRotaryPosEmb", "ReshapeAndCache", "AddRmsNorm", "AddLayerNorm", "Cast"};
+  }
+  // If enabling a fusion pass, the corresponding fused ops should be enabled
+  const std::unordered_map<std::string, std::vector<std::string>> fusion_pass_to_fused_ops_map = {
+    {"AddLayerNorm", {"AddLayerNorm"}},
+    {"AddRmsNorm", {"AddRmsNorm"}},
+    {"MultiMatMul", {"MatmulQkv", "MatmulFfn"}},
+  };
+  for (auto &it : fusion_pass_to_fused_ops_map) {
+    auto pass_name = it.first;
+    auto fused_ops_vec = it.second;
+    if (std::find(ms_enable_internal_fusion_list_.begin(), ms_enable_internal_fusion_list_.end(), pass_name) !=
+        ms_enable_internal_fusion_list_.end()) {
+      for (auto fused_op : fused_ops_vec) {
+        (void)ms_internal_enable_custom_kernel_list_.emplace_back(fused_op);
+      }
+    }
+  }
+  // concatenate the string vector and set into the environment var
+  auto concat_str = JoinStringVector(ms_internal_enable_custom_kernel_list_, ",").c_str();
+  int overwrite = 1;
+  (void)setenv("MS_INTERNAL_ENABLE_CUSTOM_KERNEL_LIST", concat_str, overwrite);
+
+  MS_LOG(INFO) << "MS internal enable custom kernel list is " << ms_internal_enable_custom_kernel_list_;
+}
+
 bool MsContext::IsEnableInferBoost() {
-  if (enalbe_infer_boost_.has_value()) {
-    return enalbe_infer_boost_.value();
+  if (enable_infer_boost_.has_value()) {
+    return enable_infer_boost_.value();
   }
 
   const auto &jit_config = PhaseManager::GetInstance().jit_config();
   auto iter = jit_config.find("infer_boost");
-  if (iter != jit_config.end() && iter->second == "on") {
-    enalbe_infer_boost_ = true;
+  if (iter != jit_config.end() && iter->second != "off") {
+    enable_infer_boost_ = true;
     MS_LOG(INFO) << "MSContext enable ms infer boost from JitConfig";
-    return enalbe_infer_boost_.value();
+    SetMsEnableInternalFusionList(iter->second);
+    SetMsInternalEnableCustomKernelList(iter->second);
+    return enable_infer_boost_.value();
   }
 
   if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "on") {
-    enalbe_infer_boost_ = true;
+    enable_infer_boost_ = true;
     MS_LOG(INFO) << "MSContext enable ms infer boost from Env";
+    SetMsEnableInternalFusionList("");
+    SetMsInternalEnableCustomKernelList("");
   } else {
-    enalbe_infer_boost_ = false;
+    enable_infer_boost_ = false;
   }
 
-  return enalbe_infer_boost_.value();
+  return enable_infer_boost_.value();
+}
+
+std::vector<std::string> MsContext::ms_enable_internal_fusion_list() const {
+  return ms_enable_internal_fusion_list_;
+}
+
+std::vector<std::string> MsContext::ms_internal_enable_custom_kernel_list() const {
+  return ms_internal_enable_custom_kernel_list_;
 }
 
 template MS_CORE_API void MsContext::CheckReadStatus<bool>(MsCtxParam, const bool &) const;

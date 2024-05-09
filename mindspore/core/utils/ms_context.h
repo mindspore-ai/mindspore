@@ -236,6 +236,10 @@ class MS_CORE_API MsContext {
   bool IsSupportDevice(const std::string &device) const { return InitFuncMap().find(device) != InitFuncMap().end(); }
 
   bool IsEnableInferBoost();
+  void SetMsEnableInternalFusionList(const std::string &infer_boost_level);
+  void SetMsInternalEnableCustomKernelList(const std::string &infer_boost_level);
+  std::vector<std::string> ms_enable_internal_fusion_list() const;
+  std::vector<std::string> ms_internal_enable_custom_kernel_list() const;
 
   void RegisterSetEnv(const EnvFunc &func);
   void RegisterCheckEnv(const EnvFunc &func);
@@ -324,7 +328,9 @@ class MS_CORE_API MsContext {
   enum CellReuseLevel cell_reuse_level_ = CellReuseLevel::kNoCellReuse;
   bool not_convert_jit_{false};
 
-  std::optional<bool> enalbe_infer_boost_ = std::nullopt;
+  std::optional<bool> enable_infer_boost_ = std::nullopt;
+  std::vector<std::string> ms_enable_internal_fusion_list_;
+  std::vector<std::string> ms_internal_enable_custom_kernel_list_;
 };
 
 // set method implementation for type bool/int/uint32_t/float/std::string
