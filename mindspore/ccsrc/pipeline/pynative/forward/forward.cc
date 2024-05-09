@@ -20,8 +20,6 @@
 #include <unordered_set>
 #include <vector>
 #include "ops/structure_op_name.h"
-#include "ops/conv_pool_op_name.h"
-#include "ops/nn_op_name.h"
 #include "ops/array_ops.h"
 #include "ops/framework_ops.h"
 #include "pipeline/pynative/pynative_utils.h"
@@ -37,7 +35,6 @@
 #include "include/backend/debug/profiler/profiling.h"
 using mindspore::profiler::ProfilerManager;
 #endif
-#include "include/common/utils/tensor_future.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "runtime/pipeline/pipeline.h"
 #include "runtime/device/device_address_utils.h"
@@ -66,15 +63,15 @@ ValuePtr ShallowCopyValue(const FrontendOpRunInfoPtr &op_run_info, const ValuePt
     auto tensor_value = value->cast<mindspore::tensor::BaseTensorPtr>();
     return std::make_shared<mindspore::tensor::Tensor>(tensor_value->data_type(), new_shape->shape(),
                                                        tensor_value->data_c(), tensor_value->Size());
-  } else if (value->isa<ValueTuple>()) {
+  }
+  if (value->isa<ValueTuple>()) {
     std::vector<ValuePtr> values;
     auto value_tuple = value->cast<ValueTuplePtr>();
     (void)std::transform(value_tuple->value().begin(), value_tuple->value().end(), std::back_inserter(values),
                          [op_run_info](const ValuePtr &elem) { return ShallowCopyValue(op_run_info, elem); });
     return std::make_shared<ValueTuple>(values);
-  } else {
-    return value;
   }
+  return value;
 }
 
 ValuePtr CopyTensorValueWithNewId(const ValuePtr &v) {
@@ -87,23 +84,24 @@ ValuePtr CopyTensorValueWithNewId(const ValuePtr &v) {
     new_tensor->set_device_address(tensor->device_address());
     new_tensor->set_sync_status(tensor->sync_status());
     return new_tensor;
-  } else if (v->isa<ValueTuple>()) {
+  }
+  if (v->isa<ValueTuple>()) {
     const auto &v_tup = v->cast<ValueTuplePtr>();
     ValuePtrList list;
     for (const auto &ele : v_tup->value()) {
       (void)list.emplace_back(CopyTensorValueWithNewId(ele));
     }
     return std::make_shared<ValueTuple>(list);
-  } else if (v->isa<ValueList>()) {
+  }
+  if (v->isa<ValueList>()) {
     const auto &v_list = v->cast<ValueListPtr>();
     ValuePtrList list;
     for (const auto &ele : v_list->value()) {
       (void)list.emplace_back(CopyTensorValueWithNewId(ele));
     }
     return std::make_shared<ValueList>(list);
-  } else {
-    return v;
   }
+  return v;
 }
 
 void UpdateOutputStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
@@ -215,8 +213,7 @@ void EmplaceSliceInputs(const FrontendOpRunInfoPtr &op_run_info, const std::vect
     (void)op_run_info->op_grad_info->input_value.emplace_back(input_values[idx]);
   }
 
-  for (size_t i = 0; i < slice_op_info->slice_index_inputs.size(); i++) {
-    auto slice_index = slice_op_info->slice_index_inputs[i];
+  for (const auto &slice_index : slice_op_info->slice_index_inputs) {
     ValuePtr v = nullptr;
     if (slice_index->is_int()) {
       v = MakeValue(slice_index->int_value());
@@ -317,7 +314,6 @@ void ForwardExecutor::RefreshForwardCallback() {
   });
 #endif
   // ForwardCallback has been set in ForwardExecutor::Init, no need to refresh anymore.
-  return;
 }
 
 bool ForwardExecutor::enable_async() const {
@@ -339,13 +335,14 @@ void ForwardExecutor::DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_in
   runtime::Pipeline::Get().frontend_stage()->Push(forward_task);
 }
 
-void ForwardExecutor::ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info) {
+void ForwardExecutor::ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info) const {
   if (!op_run_info->requires_grad) {
     MS_LOG(DEBUG) << "Grad flag is false";
     return;
   }
   // 4. Do op grad and record op info
-  // If ms function is compile, op info will not be find in second training step
+  // If jit is compiled in first step, op info will not be find in second training step
+  MS_LOG(DEBUG) << "Current custom bprop cell count " << op_run_info->async_status.custom_bprop_cell_count;
   if (!op_run_info->async_status.is_jit_compiling && op_run_info->async_status.custom_bprop_cell_count <= 0) {
     grad()->ProcessOpGradInfo(op_run_info);
   }
@@ -482,7 +479,7 @@ ValuePtr ForwardExecutor::RunSliceOpFrontend(const std::vector<ValuePtr> &input_
   auto last_tensor = input_values[0];
 
   for (size_t i = 0; i < slice_op_infos.size(); i++) {
-    auto slice_op_info = slice_op_infos[i];
+    const auto &slice_op_info = slice_op_infos[i];
     MS_EXCEPTION_IF_NULL(slice_op_info);
     MS_LOG(DEBUG) << "Run slice op name:" << slice_op_info->slice_op_name;
     MS_EXCEPTION_IF_CHECK_FAIL(!slice_op_info->data_indexs.empty(), "data_indexs can not be empty");
@@ -850,7 +847,7 @@ void ForwardExecutor::PrintPyObjInfo(const py::object &obj, const std::string &s
 void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::args &args) {
   bool is_cell = py::isinstance<Cell>(obj);
   if (is_cell) {
-    CellPtr cell = obj.cast<CellPtr>();
+    auto cell = obj.cast<CellPtr>();
     MS_EXCEPTION_IF_NULL(cell);
     PushForwardCell(cell);
     if (!grad()->RequiresGrad()) {
@@ -861,6 +858,8 @@ void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::arg
         ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
 #endif
       }
+    } else {
+      PrintPyObjInfo(obj, kBegin, is_cell);
     }
   }
 }

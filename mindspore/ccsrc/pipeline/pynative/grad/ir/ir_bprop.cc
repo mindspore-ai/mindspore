@@ -22,7 +22,6 @@
 #include "include/common/utils/primitive_utils.h"
 #include "pipeline/jit/ps/pass.h"
 #include "ir/func_graph_cloner.h"
-#include "ops/array_ops.h"
 #include "ops/sequence_ops.h"
 #include "ops/framework_ops.h"
 #include "ops/structure_ops.h"
@@ -559,7 +558,8 @@ FuncGraphPtr IrBprop::GetBpropGraphFromExpander(const GradParamPtr &grad_param) 
 
 void IrBprop::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node, expander::bprop::UserType *user,
                       bool need_update) {
-  if ((*user).find(old_node) == (*user).end()) {
+  MS_EXCEPTION_IF_NULL(user);
+  if (user->find(old_node) == user->end()) {
     return;
   }
   const auto &old_node_users = (*user)[old_node];

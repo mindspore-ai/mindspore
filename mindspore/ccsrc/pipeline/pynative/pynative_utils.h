@@ -28,7 +28,6 @@
 #include "pipeline/pynative/forward/forward_task.h"
 #include "pipeline/pynative/grad/function/func_builder.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
-#include "include/common/utils/primfunc_utils.h"
 
 namespace mindspore {
 namespace pynative {

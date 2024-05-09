@@ -511,7 +511,7 @@ void IrPassForward::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, 
 AnfNodePtr IrPassForward::PassBackwardHook(const ValuePtr &value, const AnfNodePtr &grad_node) {
   MS_EXCEPTION_IF_NULL(value);
   MS_EXCEPTION_IF_NULL(grad_node);
-  auto tensor = value->cast<tensor::TensorPtr>();
+  auto tensor = value->cast<tensor::BaseTensorPtr>();
   if (tensor == nullptr) {
     MS_LOG(DEBUG) << "Hook just work on tensor, not support value " << value->ToString();
     return grad_node;
@@ -538,7 +538,7 @@ AnfNodePtr IrPassForward::PassBackwardHook(const ValuePtr &value, const AnfNodeP
     bprop_cut->AddAttr("tensor_hook", MakeValue(true));
     bprop_cut->AddBackwardHookFn(kIndex0, hook_fn);
     // Need input out and dout for bprop run, current just make a fake
-    AnfNodePtrList inputs{NewValueNode(bprop_cut), grad_node, NewValueNode(value), res};
+    AnfNodePtrList inputs{NewValueNode(bprop_cut), grad_node, NewValueNode(MakeValue("FakeOutput")), res};
     res = ir_bprop_->ad_param()->tape_->FuncGraph::NewCNode(inputs);
     // Need update after execute
     res->set_abstract(grad_node->abstract());
@@ -622,8 +622,7 @@ AnfNodePtr IrPassForward::BatchNormGradToBNInferGrad(const AnfNodePtr &node, con
   if (!is_training_opt.has_value()) {
     return cnode;
   }
-  auto is_training = is_training_opt.value();
-  if (is_training) {
+  if (is_training_opt.value()) {
     MS_LOG(DEBUG) << "Attr 'is_training' is true, no need do fusion";
     return cnode;
   }

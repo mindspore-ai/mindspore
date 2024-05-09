@@ -169,7 +169,7 @@ ValuePtrList CallBackwardHooks(const ValuePtr &value, ValuePtrList *grad_in) {
   for (const auto &hook : auto_grad_meta->backward_hooks()) {
     MS_LOG(DEBUG) << "Run hook id " << hook.first;
     MS_EXCEPTION_IF_NULL(hook.second);
-    (*grad_in)[kIndex0] = (*(hook.second))((*grad_in).front());
+    (*grad_in)[kIndex0] = (*(hook.second))(grad_in->front());
   }
   MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(*grad_in, "After hook print gradient in: ");
   auto_grad_meta->ClearBackwardHooks();
@@ -781,8 +781,8 @@ void FuncGrad::PruningInput(const GradAttr &grad_attr, const std::vector<size_t>
 
   // Pruning all inputs not grad
   if (!grad_attr.grad_all_inputs && grad_attr.grad_weights) {
-    for (size_t i = 0; i < cell_inputs_.size(); ++i) {
-      cell_inputs_[i].second->set_is_need_grad(false);
+    for (auto &cell_input : cell_inputs_) {
+      cell_input.second->set_is_need_grad(false);
     }
   }
 }

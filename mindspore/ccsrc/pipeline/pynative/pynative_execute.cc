@@ -30,17 +30,12 @@
 #include "runtime/pynative/op_compiler.h"
 #include "runtime/pynative/op_runner.h"
 #include "include/common/profiler.h"
-#include "pipeline/jit/ps/parse/data_converter.h"
 #include "ir/cell.h"
-#include "abstract/utils.h"
 #include "include/common/utils/stub_tensor.h"
 #include "include/common/utils/python_utils.h"
 #include "frontend/operator/ops_front_infer_function.h"
-#include "backend/operator/ops_backend_infer_function.h"
-#include "include/common/utils/python_fallback_running.h"
 #include "kernel/kernel_mod_cache.h"
 #include "runtime/pipeline/pipeline.h"
-#include "kernel/pyboost/pyboost_utils.h"
 
 namespace mindspore::pynative {
 std::shared_ptr<PyNativeExecutor> PyNativeExecutor::executor_ = nullptr;
@@ -49,7 +44,6 @@ GradExecutorPtr PyNativeExecutor::grad_executor_ = nullptr;
 std::mutex PyNativeExecutor::instance_lock_;
 
 namespace {
-enum class AsyncRunOpArgsEnum : size_t { PY_PRIM = 0, PY_INPUTS, PY_ARGS_NUM };
 template <typename T, typename... Args>
 T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Args &... args) {
   const auto &inst = PyNativeExecutor::GetInstance();
