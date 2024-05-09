@@ -38,7 +38,7 @@ constexpr size_t kInputFlashAttentionScoreQueryBNSDRank = 4;
 constexpr size_t kInputFlashAttentionScoreQueryBSNDRank = 4;
 constexpr size_t kFAGRealShiftCompressionDim = 1024;
 constexpr size_t kInputFlashAttentionScoreAttnMaskCompressionDim = 2048;
-constexpr auto ENABLE_RING_ATTENTION = "enable_ring_attention";
+constexpr auto kEnableRingAttention = "enable_ring_attention";
 
 // None indicates that the optional input is not passed
 bool IsFlashAttentionScoreOptionalInputNotPass(const AbstractBasePtr &input) {
@@ -291,8 +291,8 @@ BaseShapePtr FlashAttentionScoreFuncImpl::InferShape(const PrimitivePtr &primiti
     auto sparse_mode = sparse_mode_opt.value();
 
     bool enable_ring_attention = false;
-    if (primitive->HasAttr(ENABLE_RING_ATTENTION)) {
-      enable_ring_attention = GetValue<bool>(primitive->GetAttr(ENABLE_RING_ATTENTION));
+    if (primitive->HasAttr(kEnableRingAttention)) {
+      enable_ring_attention = GetValue<bool>(primitive->GetAttr(kEnableRingAttention));
     }
     if (!enable_ring_attention) {
       CheckFlashAttentionScoreAttnMaskShape(input_args[kFlashAttentionScoreInputAttnMaskIndex], op_name, sparse_mode,

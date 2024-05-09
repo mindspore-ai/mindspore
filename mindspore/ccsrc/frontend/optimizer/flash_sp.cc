@@ -70,7 +70,7 @@ FlashSPInfo::FlashSPInfo(CNodePtr fa_score_node) {
 
   auto rankList = flash_score_info_ptr->GetSPRankList();
   size_t pos = -1;
-  for (size_t i = 0; i < rankList.size(); i++) {
+  for (size_t i = 0; i < rankList.size(); ++i) {
     if (dev_rank_id_ == rankList[i]) {
       pos = i;
     }
@@ -85,7 +85,7 @@ using FSPInfo = FlashSPInfo;
 std::vector<CNodePtr> FindFWFlashAttentionScore(const FuncGraphManagerPtr &manager,
                                                 const std::vector<CNodePtr> &origin_nodes_topological) {
   std::vector<CNodePtr> result;
-  for (size_t i = 0; i < origin_nodes_topological.size(); i++) {
+  for (size_t i = 0; i < origin_nodes_topological.size(); ++i) {
     auto cnode = origin_nodes_topological[i];
     if (IsPrimitiveCNode(cnode, prim::kPrimFlashAttentionScore)) {
       result.push_back(cnode);
@@ -119,7 +119,7 @@ CNodePtr NewConcatNode(const AnfNodePtr &input_node, size_t concat_dim) {
 CNodePtr NewMakeTupleNode(const std::vector<AnfNodePtr> &input_nodes) {
   // input_nodes are getitem nodes
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-  for (size_t i = 0; i < input_nodes.size(); i++) {
+  for (size_t i = 0; i < input_nodes.size(); ++i) {
     make_tuple_inputs.push_back(input_nodes[i]);
   }
   auto make_tuple = input_nodes[0]->func_graph()->NewCNode(make_tuple_inputs);
@@ -183,7 +183,7 @@ CNodePtr NewNeighborExchangeNode(const AnfNodePtr &input_node, const std::vector
   parallel::Shape shape = neigh_shape;
   parallel::Shapes send_shapes;
   parallel::Shapes recv_shapes;
-  for (size_t i = 0; i < send_rank_ids.size(); i++) {
+  for (size_t i = 0; i < send_rank_ids.size(); ++i) {
     send_shapes.push_back(shape);
     recv_shapes.push_back(shape);
   }
@@ -200,7 +200,7 @@ CNodePtr NewFlashAttentionScoreNode(const std::vector<AnfNodePtr> &input_nodes, 
   std::vector<AnfNodePtr> fa_inputs = {
     NewValueNode(std::make_shared<Primitive>(prim::kPrimFlashAttentionScore->name()))};
 
-  for (size_t i = 0; i < input_nodes.size(); i++) {
+  for (size_t i = 0; i < input_nodes.size(); ++i) {
     fa_inputs.push_back(input_nodes[i]);
   }
   auto fa_score = input_nodes[0]->func_graph()->NewCNode(fa_inputs);
@@ -316,13 +316,13 @@ tensor::TensorPtr make_mask_tensor(TypeId type_id, ShapeVector shape, uint8_t va
   int tensor_size = SizeToInt(mask_tensor->data().size());
   uint8_t *uint8_data = reinterpret_cast<uint8_t *>(mask_tensor->data_c());
   if (!is_causle) {
-    for (int i = 0; i < tensor_size; i++) {
+    for (int i = 0; i < tensor_size; ++i) {
       uint8_data[i] = value;
     }
   } else {
     int res = sqrt(tensor_size);
-    for (int i = 0; i < res; i++) {
-      for (int j = 0; j < res; j++) {
+    for (int i = 0; i < res; ++i) {
+      for (int j = 0; j < res; ++j) {
         if (i >= j) {
           uint8_data[i * res + j] = 0;
         } else {
@@ -349,11 +349,22 @@ AnfNodePtr GetActualMask(int index, int64_t rank_id, TypeId mask_dtype, ShapeVec
   return actual_mask;
 }
 
+int64_t GetPosInSpDevice(std::shared_ptr<FlashAttentionScoreInfo> flash_score_info_ptr, int64_t rank_id) {
+  auto rankList = flash_score_info_ptr->GetSPRankList();
+  int64_t pos = -1;
+  for (size_t rank_list_idx = 0; rank_list_idx < rankList.size(); ++rank_list_idx) {
+    if (rank_id == rankList[rank_list_idx]) {
+      pos = rank_list_idx;
+    }
+  }
+  return pos;
+}
+
 CNodePtr CreateReplaceFSPGraph(const FuncGraphManagerPtr &manager,
                                const std::vector<CNodePtr> &origin_nodes_topological, const CNodePtr &fa_score_node,
                                FSPInfo *fsp_info, int fa_index) {
   std::vector<AnfNodePtr> fa_inputs;
-  for (size_t i = 0; i < ops::FlashAttentionScoreInputIndex::kFlashAttentionScoreInputsNum; i++) {
+  for (size_t i = 0; i < ops::FlashAttentionScoreInputIndex::kFlashAttentionScoreInputsNum; ++i) {
     fa_inputs.push_back(fa_score_node->input(i + 1));
   }
 
@@ -367,14 +378,17 @@ CNodePtr CreateReplaceFSPGraph(const FuncGraphManagerPtr &manager,
   auto flash_score_info_ptr = std::dynamic_pointer_cast<FlashAttentionScoreInfo>(operator_info);
   auto qkv_dp_shape = operator_info->inputs_tensor_info()[0].tensor_layout().base_slice_shape().array();
   int64_t fa_s = qkv_dp_shape[0], fa_b = qkv_dp_shape[1], fa_h = qkv_dp_shape[2],
-          fa_n = flash_score_info_ptr->head_num();
+          fa_n = GetValue<int64_t>(
+            fa_score_node->input(ops::FlashAttentionScoreInputIndex::kFlashAttentionScoreInputHeadNumIndex + 1)
+              ->cast<ValueNodePtr>()
+              ->value());
   auto mask_shape = std::vector<int64_t>{qkv_dp_shape[0], qkv_dp_shape[0]};
   auto mask_dtype = TypeId::kNumberTypeUInt8;
   CNodePtr local_fa_node, kv_received_tuple, softmax_max, softmax_sum, softmax_out, attention_output;
   CNodePtr history_max, history_sum, acc_attention;
   AnfNodePtr actual_mask;
   int64_t send_rank_id = fsp_info->GetSendRankId(), recv_rank_id = fsp_info->GetRecvRankId();
-  for (int i = 0; i < sp_num; i++) {
+  for (int i = 0; i < sp_num; ++i) {
     std::vector<AnfNodePtr> kv_nodes = {key_node, value_node};
     auto kv_tuple = NewMakeTupleNode(kv_nodes);
     auto kv_concat = NewConcatNode(kv_tuple, 0);
@@ -382,25 +396,26 @@ CNodePtr CreateReplaceFSPGraph(const FuncGraphManagerPtr &manager,
     auto kv_concat_tuple = NewMakeTupleNode(concat_tuple);
     if (i != sp_num - 1) {
       auto neigh_shape = qkv_dp_shape;
-      neigh_shape[0] = neigh_shape[0] * 2;
+      neigh_shape[0] = neigh_shape[0] * kIndex2;
       kv_received_tuple =
         NewNeighborExchangeNode(kv_concat_tuple, {send_rank_id}, {recv_rank_id}, fa_index, i, neigh_shape);
     }
-    actual_mask = GetActualMask(i, rank_id, mask_dtype, mask_shape);
+    auto pos = GetPosInSpDevice(flash_score_info_ptr, rank_id);
+    actual_mask = GetActualMask(i, pos, mask_dtype, mask_shape);
     fa_inputs[ops::FlashAttentionScoreInputIndex::kFlashAttentionScoreInputKeyIndex] = key_node;
     fa_inputs[ops::FlashAttentionScoreInputIndex::kFlashAttentionScoreInputValueIndex] = value_node;
     fa_inputs[ops::FlashAttentionScoreInputIndex::kFlashAttentionScoreInputAttnMaskIndex] = actual_mask;
     local_fa_node = NewFlashAttentionScoreNode(fa_inputs, fa_index, i);
     common::AnfAlgo::CopyNodeAttrs(fa_score_node, local_fa_node);
     if (i != sp_num - 1) {
-      auto kv_exchanged_item = NewTupleGetItemNode(kv_received_tuple, 0);
-      auto kv_split = NewSplitNode(kv_exchanged_item, 0, 2);
-      key_node = NewTupleGetItemNode(kv_split, 0);
-      value_node = NewTupleGetItemNode(kv_split, 1);
+      auto kv_exchanged_item = NewTupleGetItemNode(kv_received_tuple, kIndex0);
+      auto kv_split = NewSplitNode(kv_exchanged_item, kIndex0, kIndex2);
+      key_node = NewTupleGetItemNode(kv_split, kIndex0);
+      value_node = NewTupleGetItemNode(kv_split, kIndex1);
     }
-    softmax_max = NewTupleGetItemNode(local_fa_node, 0);  // m_i
-    softmax_sum = NewTupleGetItemNode(local_fa_node, 1);  // l_i
-    attention_output = NewTupleGetItemNode(local_fa_node, 3);
+    softmax_max = NewTupleGetItemNode(local_fa_node, kIndex0);  // m_i
+    softmax_sum = NewTupleGetItemNode(local_fa_node, kIndex1);  // l_i
+    attention_output = NewTupleGetItemNode(local_fa_node, kIndex3);
     if (i == 0) {
       acc_attention = attention_output->cast<CNodePtr>();
       history_max = softmax_max->cast<CNodePtr>();
@@ -460,7 +475,7 @@ bool CheckUserSettings(const FuncGraphPtr &fg, FSPInfo *fsp_info) {
 
   int64_t sp_num = fsp_info->GetSPNum();
   if (sp_num <= 1) {
-    MS_LOG(DEBUG) << "FSP: To activate the pass, sp num " << sp_num << " should between larger than 1";
+    MS_LOG(WARNING) << "FSP: To activate the pass, sp num " << sp_num << " should between larger than 1";
     return false;
   }
   return true;
@@ -484,7 +499,7 @@ bool SetFlashSP(const FuncGraphPtr &func_graph) {
     return false;
   }
 
-  for (size_t i = 0; i < fa_score_nodes.size(); i++) {
+  for (size_t i = 0; i < fa_score_nodes.size(); ++i) {
     auto fa_score_node = fa_score_nodes[i];
     auto fa_score_node_prim = GetCNodePrimitive(fa_score_node);
     MS_EXCEPTION_IF_NULL(fa_score_node_prim);
