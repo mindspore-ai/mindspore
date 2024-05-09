@@ -1447,7 +1447,8 @@ def set_context(**kwargs):
                 Default: False.
               - matmul_grad_comm_overlap (bool): Enable overlap between dw matmul and
                 tensor parallel communication ops if True. Default: False.
-              - enable_task_opt (bool): Enable the optimization of the number of tasks for each communication if True.
+              - enable_task_opt (bool): Enable communication fusion to optimize the number of communication operator
+                tasks if True.
                 Default: False.
               - enable_grad_comm_opt (bool): Enable overlap between dx ops and data parallel communication ops if True.
                 Currently, do not support

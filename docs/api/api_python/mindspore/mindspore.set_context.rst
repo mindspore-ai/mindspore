@@ -220,7 +220,7 @@ mindspore.set_context
 
             - **recompute_comm_overlap** (bool): 为 ``True`` 时表示开启反向重计算和通信掩盖。默认值： ``False`` 。
             - **matmul_grad_comm_overlap** (bool): 为 ``True`` 时表示开启反向Matmul和通信掩盖。默认值： ``False`` 。
-            - **enable_task_opt** (bool): 为 ``True`` 时表示开启通信算子task数量优化。默认值： ``False`` 。
+            - **enable_task_opt** (bool): 为 ``True`` 时表示开启通信融合进行通信算子task数量优化。默认值： ``False`` 。
             - **enable_grad_comm_opt** (bool): 为 ``True`` 时表示开启梯度dx计算与数据并行梯度通信的掩盖，暂时不支持 `LazyInline <https://www.mindspore.cn/docs/zh-CN/r2.3.0rc1/api_python/mindspore/mindspore.lazy_inline.html>`_ 功能下开启。默认值： ``False`` 。
             - **enable_opt_shard_comm_opt** (bool): 为 ``True`` 时表示开启正向计算与优化器并行的AllGather通信的掩盖，暂时不支持 `LazyInline <https://www.mindspore.cn/docs/zh-CN/r2.3.0rc1/api_python/mindspore/mindspore.lazy_inline.html>`_ 功能下开启。默认值： ``False`` 。
             - **enable_concat_eliminate_opt** (bool): 为 ``True`` 时表示开启Concat消除优化，当前在开启细粒度双副本优化时有收益。默认值： ``False`` 。
