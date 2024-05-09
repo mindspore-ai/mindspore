@@ -62,7 +62,9 @@ void CheckBatchNormInputsHasFloat16(const std::vector<AbstractBasePtr> &input_ar
         }
       }
     }
-    if (exist_float16_input) {
+    static bool print_warning = true;
+    if (exist_float16_input && print_warning) {
+      print_warning = false;
       MS_LOG(WARNING) << "When the type of the last four inputs of the BatchNorm operator are float16, the precision"
                          " may be affected. You are advised to change the input type to float32.";
     }
