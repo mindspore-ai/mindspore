@@ -356,7 +356,7 @@ def test_attention_reshape():
     assert validator.check_node_inputs_has('Transpose-0', ['Reshape-0'])
     assert validator.check_parameter_shape('w1', [32, 8])
     assert validator.check_parameter_shape('bias', [8])
-    reshape_expect_inputs = ['Add-0', '((1, -1, 2, 4))']
+    reshape_expect_inputs = ['Add-0', '(1, -1, 2, 4)']
     assert validator.check_node_inputs_fuzzy_match('Reshape-0', reshape_expect_inputs)
 
 
