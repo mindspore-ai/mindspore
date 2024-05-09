@@ -232,8 +232,45 @@ def test_tfrecord_with_full_schema(do_batch, load_type):
 
 
 @pytest.mark.parametrize("do_batch", (True, False))
+def test_tfrecord_with_empty_or_unknown_shape_schema(do_batch):
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset with schema while the shape is empty or unknown
+    Expectation: The data can be processed as expected
+    """
+    schema = ds.Schema()
+    schema.add_column("col_1d", de_type=mstype.int64, shape=[-1])
+    schema.add_column("col_2d", de_type=mstype.int64, shape=[2, -1])
+    schema.add_column("col_3d", de_type=mstype.int64, shape=[2, 2, -1])
+    schema.add_column("col_binary", de_type=mstype.string, shape=[])
+    schema.add_column("col_float", de_type=mstype.float32, shape=[-1])
+    schema.add_column("col_sint16", de_type=mstype.int64, shape=[])
+    schema.add_column("col_sint32", de_type=mstype.int64, shape=[-1])
+    schema.add_column("col_sint64", de_type=mstype.int64, shape=[])
+    schema.add_column("col_sint8", de_type=mstype.int64, shape=[-1])
+    dataset = ds.TFRecordDataset(FILES, schema=schema, shuffle=ds.Shuffle.FILES)
+    if do_batch:
+        dataset = dataset.batch(2)
+
+    count = 0
+    for _ in dataset:
+        count += 1
+    assert dataset.get_dataset_size() == count
+    assert dataset.get_col_names() == ["col_1d", "col_2d", "col_3d",
+                                       "col_binary", "col_float",
+                                       "col_sint16", "col_sint32", "col_sint64", "col_sint8"]
+    assert dataset.output_types() == [np.int64, np.int64, np.int64, np.str_, np.float32, np.int64, np.int64, np.int64,
+                                      np.int64]
+    if do_batch:
+        expected_shape = [[2, 2], [2, 2, 2], [2, 2, 2, 2], [2], [2, 1], [2], [2, 1], [2], [2, 1]]
+    else:
+        expected_shape = [[2], [2, 2], [2, 2, 2], [], [1], [], [1], [], [1]]
+    assert dataset.output_shapes() == expected_shape
+
+
+@pytest.mark.parametrize("do_batch", (True, False))
 @pytest.mark.parametrize("load_type", ("uint8", "string"))
-def test_tfrecord_with_unknown_shape_schema(do_batch, load_type):
+def test_tfrecord_with_no_shape_schema(do_batch, load_type):
     """
     Feature: TFRecordDataset
     Description: Test TFRecordDataset with schema missing feature shape
@@ -301,10 +338,10 @@ def test_tfrecord_with_wrong_shape_schema(do_batch):
 
 
 @pytest.mark.parametrize("do_batch", (True, False))
-def test_tfrecord_with_wrong_type_schema(do_batch):
+def test_tfrecord_with_mismatch_type_schema(do_batch):
     """
     Feature: TFRecordDataset
-    Description: Test TFRecordDataset with schema containing wrong feature type
+    Description: Test TFRecordDataset with schema containing mismatch feature type and will cause a type cast
     Expectation: The output columns can be converted to the specified type
     """
     schema = ds.Schema()
@@ -335,6 +372,63 @@ def test_tfrecord_with_wrong_type_schema(do_batch):
     else:
         expected_shape = [[2], [2, 2], [2, 2, 2], [1], [1], [1], [1], [1], [1]]
     assert dataset.output_shapes() == expected_shape
+
+
+@pytest.mark.parametrize("do_batch", (True, False))
+@pytest.mark.parametrize("with_shape", (True, False))
+def test_tfrecord_with_wrong_type_schema(do_batch, with_shape):
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset with schema containing wrong feature shape
+    Expectation: Raise a RuntimeError as expected
+    """
+    schema = ds.Schema()
+    # feature of type int64 can not be cast to string
+    if with_shape:
+        schema.add_column("col_1d", de_type=mstype.string, shape=[2])
+    else:
+        schema.add_column("col_1d", de_type=mstype.string)
+    dataset = ds.TFRecordDataset(FILES, schema=schema, shuffle=ds.Shuffle.FILES)
+    if do_batch:
+        dataset = dataset.batch(2)
+
+    with pytest.raises(RuntimeError) as e:
+        for _ in dataset:
+            pass
+    assert ("The data type loaded from the example for feature name: col_1d does not match the "
+            "predefined type in schema") in str(e.value)
+
+    schema = ds.Schema()
+    # feature of type float32 can not be cast to string
+    if with_shape:
+        schema.add_column("col_float", de_type=mstype.string, shape=[1])
+    else:
+        schema.add_column("col_float", de_type=mstype.string)
+    dataset = ds.TFRecordDataset(FILES, schema=schema, shuffle=ds.Shuffle.FILES)
+    if do_batch:
+        dataset = dataset.batch(2)
+
+    with pytest.raises(RuntimeError) as e:
+        for _ in dataset:
+            pass
+    assert ("The data type loaded from the example for feature name: col_float does not match the "
+            "predefined type in schema") in str(e.value)
+
+    schema = ds.Schema()
+    # feature of type string can not be cast to int64
+    if with_shape:
+        schema.add_column("col_binary", de_type=mstype.int64, shape=[1])
+    else:
+        schema.add_column("col_binary", de_type=mstype.int64)
+    dataset = ds.TFRecordDataset(FILES, schema=schema, shuffle=ds.Shuffle.FILES)
+    if do_batch:
+        dataset = dataset.batch(2)
+
+    with pytest.raises(RuntimeError) as e:
+        for _ in dataset:
+            pass
+    assert ("The data type loaded from the example for feature name: col_binary does not match the "
+            "predefined type in schema") in str(e.value)
 
 
 @pytest.mark.parametrize("do_batch", (True, False))
@@ -1348,9 +1442,11 @@ if __name__ == '__main__':
     test_tfrecord_read_files()
     test_tfrecord_multi_files()
     test_tfrecord_with_full_schema(True, "string")
-    test_tfrecord_with_unknown_shape_schema(True, "string")
+    test_tfrecord_with_empty_or_unknown_shape_schema(True)
+    test_tfrecord_with_no_shape_schema(True, "string")
     test_tfrecord_with_wrong_shape_schema(True)
-    test_tfrecord_with_wrong_type_schema(True)
+    test_tfrecord_with_mismatch_type_schema(True)
+    test_tfrecord_with_wrong_type_schema(True, True)
     test_tfrecord_with_column_list(True)
     test_tfrecord_without_schema_and_column_list(True)
     test_tfrecord_with_both_schema_and_column_list(True, "string")
