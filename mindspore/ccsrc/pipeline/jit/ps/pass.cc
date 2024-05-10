@@ -522,6 +522,7 @@ OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irp
     irpass.switch_call_monad_eliminater_,
     irpass.stopgrad_eliminater_,
     irpass.partial_eliminate_,
+    irpass.slice_to_tuple_,
   });
   opt::OptPassConfig updatestate_depend_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateDependEliminater());
   opt::OptPassConfig updatestate_assign_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateAssignEliminater());

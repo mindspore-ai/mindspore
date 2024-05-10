@@ -99,7 +99,10 @@ typedef enum DbgDataType : unsigned int {
   DT_BFLOATS16 = 47,  // list of bfloat16
 
   // quant type
-  DT_INT4 = 48
+  DT_INT4 = 48,
+
+  // slice type
+  DT_SLICE = 49
 } DbgDataType;
 
 class TensorData {

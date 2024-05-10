@@ -99,6 +99,9 @@ enum DataType {
 
   // quant type
   DT_INT4 = 48;        // int4
+
+  // slice type
+  DT_SLICE = 49;
 }
 
 // Value definition for attribute value or parameter default value
