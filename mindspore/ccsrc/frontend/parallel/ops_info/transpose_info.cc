@@ -27,6 +27,7 @@
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
 #include "include/common/utils/convert_utils.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -200,6 +201,7 @@ Status TransposeInfo::CheckOutputLayout() {
   }
   if (!output_infer_tensor_layout_.tensor_shape_before().array().empty()) {
     MS_LOG(INFO) << name_ << ": Using output tensor layout infer by input tensor layout.";
+    UpdateOutputTensorInfoForInterleaved();
     return SUCCESS;
   }
 
@@ -210,6 +212,7 @@ Status TransposeInfo::CheckOutputLayout() {
   auto out_tensor_layout = InferOutputLayout();
   // output layout is the same as inferred (transpose the tensor map)
   if (out_layout == out_tensor_layout) {
+    UpdateOutputTensorInfoForInterleaved();
     return SUCCESS;
   }
 
@@ -271,6 +274,7 @@ Status TransposeInfo::CheckOutputLayout() {
     MS_LOG(ERROR) << name_ << ": The output device arrangement is not equal to the expected device arrangement.";
     return FAILED;
   }
+  UpdateOutputTensorInfoForInterleaved();
   return SUCCESS;
 }
 
@@ -302,6 +306,47 @@ TensorLayout TransposeInfo::InferOutputLayout() {
   MS_LOG(INFO) << name_ << ": The output tensor layout inferred by input tensor layout is "
                << output_tensor_layout.ToString() << ", axis_v_ is " << axis_v_;
   return output_tensor_layout;
+}
+
+Status TransposeInfo::ComputeReplaceGraphForInterleaved(const CNodePtr &cnode) {
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << "GenerateGraph Init failed";
+    return FAILED;
+  }
+  auto interleaved_num = ParallelContext::GetInstance()->fine_grained_micro_interleaved_size();
+  Attr output_nums_attr = {"output_nums", MakeValue(interleaved_num)};
+  OperatorAttrs virtual_converter_begin_attrs = {output_nums_attr};
+  auto virtual_converter_begin = gen_g.PushBack(
+    {gen_g.NewOpInst(VIRTUAL_CONVERTER_BEGIN, virtual_converter_begin_attrs), gen_g.virtual_input_node()});
+  std::vector<AnfNodePtr> virtual_converter_end_inputs_vector;
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(virtual_converter_begin, 1)};
+  for (int64_t i = 0; i < interleaved_num; ++i) {
+    auto tuple_get_item = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), virtual_converter_begin, CreatInt64Imm(i)});
+    auto trans_value = CreateTuple(axis_v_);
+    auto transpose = gen_g.PushBack({gen_g.NewOpInst(TRANSPOSE), tuple_get_item, trans_value});
+    virtual_converter_end_inputs_vector.push_back(transpose);
+  }
+  Attr input_nums_attr = {"input_nums", MakeValue(interleaved_num)};
+  OperatorAttrs virtual_converter_end_attrs = {input_nums_attr};
+  std::vector<AnfNodePtr> virtual_converter_end_inputs = {
+    gen_g.NewOpInst(VIRTUAL_CONVERTER_END, virtual_converter_end_attrs)};
+  std::copy(virtual_converter_end_inputs_vector.begin(), virtual_converter_end_inputs_vector.end(),
+            std::back_inserter(virtual_converter_end_inputs));
+  auto virtual_converter_end = gen_g.PushBack(virtual_converter_end_inputs);
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, virtual_converter_end));
+  return SUCCESS;
+}
+
+ReplaceGraphPtr TransposeInfo::replace_graph(const CNodePtr &cnode) {
+  if (!inputs_tensor_info_[kIndex0].tensor_layout().device_arrangement_interleaved().array().empty()) {
+    if (ComputeReplaceGraphForInterleaved(cnode) != SUCCESS) {
+      MS_LOG(EXCEPTION) << name_ << " splitting micro interleaved failed.";
+    }
+    return replace_graph_;
+  }
+  return nullptr;
 }
 
 std::vector<StrategyPtr> TransposeInfo::GenerateOpStrategies(int64_t stage_id) {

@@ -2523,15 +2523,15 @@ std::vector<std::vector<CNodePtr>> CreateInterleavedNeedReplaceOpLists(const CNo
   return need_replace_op_lists;
 }
 
-void ReplaceInterleavedAllGatherToConcat(const FuncGraphPtr &func_graph, const std::vector<CNodePtr> &ag_vector,
-                                         const std::vector<std::vector<int64_t>> &new_group_ranks_vector,
-                                         size_t independent_size) {
+CNodePtr ReplaceInterleavedAllGatherToConcat(const FuncGraphPtr &func_graph, const std::vector<CNodePtr> &ag_vector,
+                                             const std::vector<std::vector<int64_t>> &new_group_ranks_vector,
+                                             size_t independent_size) {
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple->Clone())};
   std::transform(ag_vector.begin(), ag_vector.end(), std::back_inserter(make_tuple_inputs),
                  [&](auto node) { return independent_size == 1 ? node->input(kIndex1) : node; });
   auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
   auto replace_nodes = InterleavedReplacedConcatNodes(ag_vector);
-  bool replace_concat = (!replace_nodes.empty() && replace_nodes.size() == ag_vector.size() && independent_size == 1);
+  bool replace_concat = (!replace_nodes.empty() && independent_size == 1);
   AnfNodePtr axis = NewValueNode(MakeValue<int64_t>(0));
   if (replace_concat) {
     axis = replace_nodes.front()->input(kIndex2);
@@ -2549,10 +2549,15 @@ void ReplaceInterleavedAllGatherToConcat(const FuncGraphPtr &func_graph, const s
     }
     if (!replace_concat) {
       manager->Replace(ag, concat);
-      continue;
     }
+  }
+  if (!replace_concat) {
+    return concat;
+  }
+  for (size_t i = 0; i < replace_nodes.size(); ++i) {
     manager->Replace(replace_nodes[i], concat);
   }
+  return concat;
 }
 
 void MergeOpBeforeInterleaveSlice(const FuncGraphPtr &func_graph, const CNodePtr &virtual_converter_end) {
@@ -2586,8 +2591,10 @@ void MergeOpBeforeInterleaveSlice(const FuncGraphPtr &func_graph, const CNodePtr
     }
     // merge nodes before multi slice
     auto slice_input = need_replace_op_lists[kIndex0][col]->input(kIndex1);
+    need_replace_op_lists[kIndex0][col]->AddAttr(INTERLEAVED_PARALLEL, MakeValue(true));
     for (size_t row = 1; row < need_replace_op_lists.size(); ++row) {
       auto slice_cnode = need_replace_op_lists[row][col];
+      slice_cnode->AddAttr(INTERLEAVED_PARALLEL, MakeValue(true));
       manager->SetEdge(slice_cnode, kIndex1, slice_input);
     }
   }
@@ -2650,12 +2657,26 @@ void ConvertInterleaveAllGatherToConcat(const FuncGraphPtr &func_graph, const CN
     }
 
     // replace allgathers to one concat.
-    ReplaceInterleavedAllGatherToConcat(func_graph, ag_vector, new_group_ranks_vector, independent_size);
+    auto replaced_concat =
+      ReplaceInterleavedAllGatherToConcat(func_graph, ag_vector, new_group_ranks_vector, independent_size);
+    auto manager = func_graph->manager();
+    auto replaced_concat_users =
+      GetOutputNodesWithFilter(replaced_concat, [&](const AnfNodePtr &anode) { return false; });
+    if (replaced_concat_users.size() == kSizeOne) {
+      continue;
+    }
+    if (std::all_of(replaced_concat_users.begin(), replaced_concat_users.end(),
+                    [](const std::pair<AnfNodePtr, int> &pair) {
+                      return IsPrimitiveCNode(pair.first, prim::kPrimStridedSlice) &&
+                             pair.first->cast<CNodePtr>()->HasAttr(INTERLEAVED_PARALLEL);
+                    })) {
+      continue;
+    }
     // merge the nodes afer the interleaved parallel concat.
     auto virtual_end_input1 = virtual_converter_end->input(kIndex1)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(virtual_end_input1);
     auto new_virtual_converter_end = CreateVirtualConverterEndNode(func_graph, {virtual_end_input1});
-    auto manager = func_graph->manager();
+
     manager->Replace(virtual_converter_end, new_virtual_converter_end);
   }
 }

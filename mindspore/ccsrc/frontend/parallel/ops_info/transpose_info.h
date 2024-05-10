@@ -39,6 +39,7 @@ class TransposeInfo : public OperatorInfo {
   ~TransposeInfo() override = default;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
@@ -56,6 +57,7 @@ class TransposeInfo : public OperatorInfo {
   TensorLayout InferOutputLayout();
   TensorLayout output_infer_tensor_layout_;
   Status ComputeAxis();
+  Status ComputeReplaceGraphForInterleaved(const CNodePtr &cnode);
   std::vector<int64_t> axis_v_;
   Dimensions input_strategy_;
 };
