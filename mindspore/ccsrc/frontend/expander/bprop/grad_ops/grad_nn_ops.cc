@@ -2686,5 +2686,19 @@ REG_BPROP_BUILDER("AvgPool2DGrad").SetBody((BODYFUNC(ib) {
           ib->OutZeros(divisor_override)};
 }));
 
+REG_BPROP_BUILDER("BinaryCrossEntropyWithLogits").SetBody((BODYFUNC(ib) {
+  // input, target, weight, posWeight, reduction, out, dout
+  auto grad_output = ib->GetInput(kIndex6);
+  auto input = ib->GetInput(kIndex0);
+  auto target = ib->GetInput(kIndex1);
+  auto weight = ib->GetInput(kIndex2);
+  auto posweight = ib->GetInput(kIndex3);
+  auto reduction = ib->GetInput(kIndex4);
+
+  auto grad_dout =
+    ib->Emit("BinaryCrossEntropyWithLogitsBackward", {grad_output, input, target, weight, posweight, reduction});
+  return {grad_dout, ib->OutZeros(target), ib->OutZeros(weight), ib->OutZeros(posweight), ib->OutZeros(reduction)};
+}));
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
