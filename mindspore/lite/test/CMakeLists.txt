@@ -7,6 +7,7 @@ include_directories(${TEST_DIR})
 include_directories(${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
 
 include(${TOP_DIR}/cmake/external_libs/gtest.cmake)
+include(${TOP_DIR}/cmake/external_libs/mockcpp.cmake)
 
 if(MSLITE_ENABLE_RUNTIME_CONVERT)
     add_definitions(-DRUNTIME_CONVERT)
