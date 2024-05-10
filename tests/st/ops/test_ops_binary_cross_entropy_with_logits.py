@@ -15,7 +15,7 @@
 import pytest
 import numpy as np
 from mindspore import ops
-from mindspore.mint import binary_cross_entropy_with_logits
+from mindspore.mint.nn.functional import binary_cross_entropy_with_logits
 import mindspore as ms
 import tests.st.utils.test_utils as test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
@@ -26,7 +26,7 @@ def generate_random_input(shape, dtype):
 
 @test_utils.run_with_cell
 def binary_cross_entropy_with_logits_forward_func(inputx, target, weight=None, posWeight=None, reduction="mean"):
-    return binary_cross_entropy_with_logits(inputx, target, weight, posWeight, reduction)
+    return binary_cross_entropy_with_logits(inputx, target, weight, reduction, posWeight)
 
 
 @test_utils.run_with_cell
@@ -77,7 +77,7 @@ def test_ops_binary_cross_entropy_with_logits_forward(mode):
     np.testing.assert_allclose(out_none.asnumpy(), expect_none, rtol=1e-3)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
@@ -120,7 +120,7 @@ def test_ops_binary_cross_entropy_with_logits_backward(mode):
     np.testing.assert_allclose(out_none[0].asnumpy(), expect_none, rtol=1e-3)
 
 
-@pytest.mark.level2
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
