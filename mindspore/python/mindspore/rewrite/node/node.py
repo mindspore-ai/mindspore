@@ -1153,20 +1153,27 @@ class Node:
         if (args or kwargs) and self._instance and hasattr(type(self._instance), "construct"):
             parameters = inspect.signature(type(self._instance).construct).parameters
             names = Node._get_construct_arg_names(parameters)
-            Node._map_args_names(names, args, kwargs, self._normalized_args_keys, normalized_args)
-        else:
-            logger.debug("fail to get arg name from op, using arg_xx for args' name")
-            arg_temp_name, suffix = "arg", 0
-            for arg in args:
+            try:
+                Node._map_args_names(names, args, kwargs, self._normalized_args_keys, normalized_args)
+            except RuntimeError:
+                # arg name is not in the construct function of self._instance
+                # e.g. different cell instances share one name
+                self._normalized_args_keys.clear()
+                normalized_args.clear()
+            else:
+                return normalized_args
+        logger.debug("fail to get arg name from op, using arg_xx for args' name")
+        arg_temp_name, suffix = "arg", 0
+        for arg in args:
+            arg_key = "{}_{}".format(arg_temp_name, suffix)
+            while arg_key in kwargs.keys() or arg_key in normalized_args.keys():
+                suffix += 1
                 arg_key = "{}_{}".format(arg_temp_name, suffix)
-                while arg_key in kwargs.keys() or arg_key in normalized_args.keys():
-                    suffix += 1
-                    arg_key = "{}_{}".format(arg_temp_name, suffix)
-                normalized_args[arg_key] = arg
-                self._normalized_args_keys.append(arg_key)
-            for arg_key, value in kwargs.items():
-                normalized_args[arg_key] = value
-                self._normalized_args_keys.append(arg_key)
+            normalized_args[arg_key] = arg
+            self._normalized_args_keys.append(arg_key)
+        for arg_key, value in kwargs.items():
+            normalized_args[arg_key] = value
+            self._normalized_args_keys.append(arg_key)
         return normalized_args
 
     # Synchronize rewrite node args to ast node

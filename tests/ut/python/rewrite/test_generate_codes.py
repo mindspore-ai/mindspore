@@ -277,8 +277,9 @@ class MOE3(nn.Cell):
         super().__init__()
         self.net = TransformerEncoderLayer3()
 
-    def construct(self, x):
+    def construct(self, x, y):
         x = self.net(x)
+        x = x + y
         return x
 
 
@@ -292,7 +293,10 @@ class IfInInitNetSubNet3(nn.Cell):
             self.net = TransformerEncoderLayer3()
 
     def construct(self, x):
-        x = self.net(x)
+        if self.use_moe:
+            x = self.net(x, x)
+        else:
+            x = self.net(x)
         return x
 
 
@@ -327,8 +331,8 @@ def test_generate_codes_with_if_in_init_same_func_name():
     assert codes.count("self.subnet2 = IfInInitNetSubNet3Opt_1(self.subnet2)") == 1
     assert codes.count("self.subnet3 = IfInInitNetSubNet3Opt(self.subnet3)") == 1
     assert codes.count("self.subnet3 = IfInInitNetSubNet3Opt(self.subnet3)") == 1
-    assert codes.count("self.net = MOE3Opt(self.net)") == 1
-    assert codes.count("self.net = TransformerEncoderLayer3Opt(self.net)") == 2
+    assert codes.count("self.net = MOE3Opt(self.net)") == 2
+    assert codes.count("self.net = TransformerEncoderLayer3Opt(self.net)") == 3
 
 
 class TestAnnotationSubNet(nn.Cell):
