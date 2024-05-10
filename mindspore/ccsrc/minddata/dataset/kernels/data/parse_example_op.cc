@@ -649,8 +649,10 @@ Status ParseSingleKnownShapeColumn(const parsed::Feature &feature, std::shared_p
         if (bytes_list.size() != num_elements) {
           return ReportUnexpectedDataShape(feature_name);
         }
-        RETURN_IF_NOT_OK(Tensor::CreateFromVector(bytes_list, TensorShape{static_cast<dsize_t>(num_elements)},
-                                                  DataType(DataType::DE_STRING), column_tensor));
+        TensorShape string_tensor_shape = TensorShape::CreateUnknownRankShape();
+        RETURN_IF_NOT_OK(column_descriptor.MaterializeTensorShape(num_elements, &string_tensor_shape));
+        RETURN_IF_NOT_OK(
+          Tensor::CreateFromVector(bytes_list, string_tensor_shape, DataType(DataType::DE_STRING), column_tensor));
       } else {
         // load string or bytes as uint8 tensor
         RETURN_IF_NOT_OK(
@@ -750,7 +752,7 @@ Status ParseExampleOp::ParseSingleExample(const TensorRow &raw_bytes, TensorRow 
 
   for (int32_t column_index = 0; column_index < data_schema_.NumColumns(); ++column_index) {
     const ColDescriptor &column_descriptor = data_schema_.Column(column_index);
-    if (column_descriptor.HasShape()) {
+    if (column_descriptor.HasKnownShape()) {
       if (!column_descriptor.Type().IsString()) {
         DataType type;
         if (column_descriptor.Type().IsInt() || column_descriptor.Type().IsBool()) {
@@ -806,9 +808,10 @@ Status ParseExampleOp::ParseSingleExample(const TensorRow &raw_bytes, TensorRow 
     bool type_cast_flag = false;
     if (example_dtype != column_descriptor.Type()) {
       const std::string msg =
-        "The data type loaded from the example does not match the predefined type in schema, the actual type: " +
-        example_dtype.ToString() + ", but the predefined type: " + column_descriptor.Type().ToString();
-      if (!example_dtype.IsString()) {
+        "The data type loaded from the example for feature name: " + column_descriptor.Name() +
+        " does not match the predefined type in schema, the actual type: " + example_dtype.ToString() +
+        ", but the predefined type: " + column_descriptor.Type().ToString();
+      if (!example_dtype.IsString() && !column_descriptor.Type().IsString()) {
         MS_LOG(INFO) << msg << ". This will cause a type cast.";
         type_cast_flag = true;
       } else if (column_descriptor.Type().value() != DataType::DE_UINT8) {
@@ -817,7 +820,7 @@ Status ParseExampleOp::ParseSingleExample(const TensorRow &raw_bytes, TensorRow 
       }
     }
 
-    if (column_descriptor.HasShape()) {
+    if (column_descriptor.HasKnownShape()) {
       RETURN_IF_NOT_OK(ParseSingleKnownShapeColumn(feature, &(*parsed_row)[column_index], feature_name,
                                                    column_descriptor, example_dtype));
     } else {  // if variable length
@@ -833,10 +836,9 @@ Status ParseExampleOp::ParseSingleExample(const TensorRow &raw_bytes, TensorRow 
   }
 
   for (int32_t column_index = 0; column_index < data_schema_.NumColumns(); ++column_index) {
-    if (!feature_already_seen[column_index]) {
-      RETURN_STATUS_UNEXPECTED("Feature name: " + data_schema_.Column(column_index).Name() +
-                               " is required in schema but could not be found in tfrecord file.");
-    }
+    CHECK_FAIL_RETURN_UNEXPECTED(feature_already_seen[column_index],
+                                 "Feature name: " + data_schema_.Column(column_index).Name() +
+                                   " is required in schema but could not be found in tfrecord file.");
   }
 
   parsed_row->setPath(file_paths);
@@ -1007,7 +1009,7 @@ Status MergeDenseVarLenMiniBatches(const std::vector<std::vector<VarLenTensorBuf
                                    TensorRow *parsed_row, int32_t column_index, const DataSchema &data_schema,
                                    dsize_t batch_size) {
   const ColDescriptor &column_descriptor = data_schema.Column(column_index);
-  if (column_descriptor.HasShape()) {
+  if (column_descriptor.HasKnownShape()) {
     return Status::OK();
   }
   std::shared_ptr<Tensor> column_tensor;
@@ -1035,7 +1037,7 @@ Status ParseExampleOp::ParallelParseExample(const TensorRow &raw_bytes, TensorRo
   std::unordered_map<int32_t, std::vector<std::string>> string_column_map;
   for (int32_t column_index = 0; column_index < data_schema_.NumColumns(); ++column_index) {
     const ColDescriptor &column_descriptor = data_schema_.Column(column_index);
-    if (column_descriptor.HasShape()) {
+    if (column_descriptor.HasKnownShape()) {
       if (!column_descriptor.Type().IsString()) {
         auto column_shape = column_descriptor.Shape().InsertDim(0, batch_size);
         DataType type;
@@ -1139,8 +1141,9 @@ Status ParseSerializedKnownShapeColumn(const parsed::Feature &feature, TensorRow
   std::shared_ptr<Tensor> &column_tensor = (*parsed_row)[column_index];
   if (example_dtype != column_descriptor.Type()) {
     const std::string msg =
-      "The data type loaded from the example does not match the predefined type in schema, the actual type: " +
-      example_dtype.ToString() + ", but the predefined type: " + column_descriptor.Type().ToString();
+      "The data type loaded from the example for feature name: " + column_descriptor.Name() +
+      " does not match the predefined type in schema, the actual type: " + example_dtype.ToString() +
+      ", but the predefined type: " + column_descriptor.Type().ToString();
     if (example_dtype == column_tensor->type()) {
       // if the actual data type is the same as the pre-allocated tensor,
       // we can first read it into the tensor, then cast to the type specified by the schema
@@ -1233,9 +1236,10 @@ Status ParseSerializedVarLenColumn(const parsed::Feature &feature, VarLenTensorB
   bool type_cast_flag = false;
   if (example_dtype != column_descriptor.Type()) {
     const std::string msg =
-      "The data type loaded from the example does not match the predefined type in schema, the actual type: " +
-      example_dtype.ToString() + ", but the predefined type: " + column_descriptor.Type().ToString();
-    if (!example_dtype.IsString()) {
+      "The data type loaded from the example for feature name: " + column_descriptor.Name() +
+      " does not match the predefined type in schema, the actual type: " + example_dtype.ToString() +
+      ", but the predefined type: " + column_descriptor.Type().ToString();
+    if (!example_dtype.IsString() && !column_descriptor.Type().IsString()) {
       MS_LOG(INFO) << msg << ". This will cause a type cast.";
       type_cast_flag = true;
     } else if (column_descriptor.Type().value() != DataType::DE_UINT8) {
@@ -1355,7 +1359,7 @@ Status ParseExampleOp::ParseSerializedExample(const std::string &example_bytes, 
     feature_already_seen[column_index] = true;
 
     const ColDescriptor &column_descriptor = data_schema_.Column(column_index);
-    if (column_descriptor.HasShape()) {
+    if (column_descriptor.HasKnownShape()) {
       RETURN_IF_NOT_OK(ParseSerializedKnownShapeColumn(feature, parsed_row, string_column_map, column_index,
                                                        tensor_index, feature_name, column_descriptor, example_dtype));
     } else {  // if variable length
