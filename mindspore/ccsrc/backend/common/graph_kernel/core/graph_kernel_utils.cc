@@ -294,6 +294,9 @@ tensor::TensorPtr InputValue2Tensor(ValuePtr input_value) {
     input_tensor = std::make_shared<tensor::Tensor>(input_vec);
   } else if (input_value->isa<tensor::Tensor>()) {
     input_tensor = input_value->cast<tensor::TensorPtr>();
+  } else if (input_value->isa<BoolImm>()) {
+    auto input_bool = GetValue<bool>(input_value);
+    input_tensor = std::make_shared<tensor::Tensor>(input_bool);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported Type in InputValue2Tensor";
   }

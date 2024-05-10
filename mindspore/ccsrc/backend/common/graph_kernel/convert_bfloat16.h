@@ -47,11 +47,11 @@ class ConvertBFloat16 : public opt::Pass {
   AnfNodePtr GetCastedInput(const AnfNodePtr &input_node, TypeId dst_type, const FuncGraphPtr &func_graph);
   AnfNodePtr CastTensor(const ValueNodePtr &value_node);
   void CastInput(const CNodePtr &cnode, size_t input_idx, const FuncGraphPtr &func_graph);
-  void CacheOutputs(const FuncGraphPtr &func_graph);
+  void GetKeepBF16Nodes(const FuncGraphPtr &func_graph);
   bool Process(const FuncGraphPtr &func_graph);
   HashMap<AnfNodePtr, AnfNodePtr> cast_nodes_;
-  // (output_node, {node_user, input_idx}), node_user's input[input_idx] is output_node
-  HashMap<AnfNodePtr, std::pair<CNodePtr, size_t>> output_nodes_;
+  // (keep_bf16_node, {node_user, input_idx}), node_user's input[input_idx] is keep_bf16_node
+  HashMap<AnfNodePtr, std::pair<CNodePtr, size_t>> keep_bf16_nodes_;
   CNodePtr last_node_;
 };
 }  // namespace mindspore::graphkernel
