@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -252,3 +253,51 @@ def test_slice_vmap():
     Expectation: success
     """
     vmap_1_batch()
+
+
+def test_slice_with_control_flow_and_dyn_shape():
+    """
+    Feature: Slice with dynamic shape
+    Description: When slice with dynamic shape, control flow exists, and MakeSlice and SliceGetItem in different graphs,
+                 which cause some compiling error.
+    Expectation: No exception raised.
+    """
+    ms.set_context(mode=ms.GRAPH_MODE, jit_syntax_level=ms.STRICT)
+
+    class IndexNet(ms.nn.Cell):
+        def construct(self, x, H, W):
+            if H % 2 != 0:
+                H = (H // 1) * 2
+            if W % 2 != 0:
+                W = (W // 1) * 2
+
+            y = ms.ops.zeros((1, H, W, 1))
+            y[:, H - 1:H, W - 1:W, :] = -1
+
+            return y
+
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.nets = ms.nn.CellList([IndexNet(), IndexNet(), IndexNet(), IndexNet()])
+            # self.net = IndexNet()
+
+        def construct(self, x):
+            Wh, Ww = x.shape[2], x.shape[3]
+            outs = ()
+            for i in range(4):
+                y = self.nets[i](x, Wh, Ww)
+                outs += (y,)
+
+            return outs
+
+    net = Net()
+
+    img_dyn = ms.Tensor(shape=[1, 3, None, None], dtype=ms.float32)
+    net.set_inputs(img_dyn)
+
+    x = ms.Tensor(np.arange(1 * 3 * 2 * 2).reshape(1, 3, 2, 2), dtype=ms.float32)
+
+    z = net(x)
+    print(z, z[0].dim(), z[0].shape)
+    print("=" * 20)
