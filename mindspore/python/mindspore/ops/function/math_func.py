@@ -31,7 +31,7 @@ from mindspore.ops import composite as C
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops.operations._inner_ops import TileSize
-from mindspore.ops.auto_generate import Cummin, BatchMatMul, LinSpaceExt, Norm
+from mindspore.ops.auto_generate import Cummin, BatchMatMul, LinSpaceExt, Norm, RemainderTensorTensor
 from mindspore.ops import auto_generate
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import LuUnpack
@@ -232,6 +232,7 @@ zeta_ = P.Zeta()
 #####################################
 # Element-wise Operation Functions.
 #####################################
+remainder_tt_ = RemainderTensorTensor()
 
 
 def addn(x):
@@ -8647,6 +8648,53 @@ def remainder(input, other):
     return out
 
 
+def remainder_ext(input, other):
+    r"""
+    Computes the remainder of dividing the first input tensor by the second input tensor element-wise.
+
+    Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
+    The inputs must be two tensors or one tensor and one scalar. When the inputs are two tensors, the shapes of them
+    should be broadcastable. When the inputs are one tensor and one scalar, the scalar should be a constant.
+
+    .. math::
+
+        remainder(input, other) = input - input.div(other, rounding\_mode="floor") * other
+
+    .. warning::
+        - When the elements of input exceed 2048, there might be accuracy problems.
+        - The calculation results of this operator on Ascend and CPU might be inconsistent.
+        - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
+
+    Args:
+        input (Union[Tensor, numbers.Number]): The first input is a number
+            or a tensor whose data type is number.
+        other (Union[Tensor, numbers.Number]): When the first input is a tensor, The second input
+            could be a number, or a tensor whose data type is number and is broadcastable with the first input.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision.
+
+    Raises:
+        TypeError: If neither `input` nor `other` is one of the following: Tensor, number.
+        ValueError: If the shape of `input` and `other` cannot be broadcasted to each other.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, mint
+        >>> x = Tensor(np.array([-4.0, 5.0, 6.0]).astype(np.float16))
+        >>> y = Tensor(np.array([3.0, 2.0, 3.0]).astype(np.float16))
+        >>> output = mint.remainder(x, y)
+        >>> print(output)
+        [2.  1.  0.]
+    """
+
+    out = remainder_tt_(input, other)
+    return out
+
 def accumulate_n(x):
     r"""
     Computes accumulation of all input tensors element-wise.
@@ -11581,6 +11629,7 @@ __all__ = [
     'kron',
     'rot90',
     'remainder',
+    'remainder_ext',
     'sgn',
     'sign',
     'signbit',
