@@ -40,9 +40,13 @@ const BaseRef MatMulAllReduceFusion::DefinePattern() const {
   MS_CHECK_TRUE_RET(matmul_input_1 != nullptr, {});
   auto matmul_input_2 = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(matmul_input_2 != nullptr, {});
+  auto transpose_a = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(transpose_a != nullptr, {});
+  auto transpose_b = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(transpose_b != nullptr, {});
   auto is_matmul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMatMul>);
   MS_CHECK_TRUE_RET(is_matmul != nullptr, {});
-  VectorRef matmul_ref = VectorRef({is_matmul, matmul_input_1, matmul_input_2});
+  VectorRef matmul_ref = VectorRef({is_matmul, matmul_input_1, matmul_input_2, transpose_a, transpose_b});
 
   auto is_allreduce = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAllReduce>);
   MS_CHECK_TRUE_RET(is_allreduce != nullptr, {});
@@ -125,7 +129,7 @@ const AnfNodePtr MatMulAllReduceFusion::Process(const mindspore::FuncGraphPtr &f
 
   // replace allreduce to MatMulAllReduce
   (void)manager->Replace(allreduce_cnode, matmul_allreduce_cnode);
-  MS_LOG(DEBUG) << "MatMulAllReduce replace success";
+  MS_LOG(INFO) << "MatMulAllReduce replace success";
   return matmul_allreduce_cnode;
 }
 }  // namespace mindspore::opt
