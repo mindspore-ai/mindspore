@@ -91,3 +91,17 @@ def test_hccl_get_process_group_ranks_func_8p():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_get_process_group_ranks.py")
     assert return_code == 0
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+@test_utils.run_test_with_On
+def test_hccl_batch_isend_irecv():
+    """
+    Feature: mpi run 8P case of 'BatchISendIRecv' communication operator.
+    Description: mpi run 8P case of 'BatchISendIRecv' communication operator.
+    Expectation: success
+    """
+    return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_batch_isend_irecv.py")
+    assert return_code == 0

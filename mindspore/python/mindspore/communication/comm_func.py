@@ -29,6 +29,8 @@ __all__ = [
     'all_gather_into_tensor',
     'reduce_scatter_tensor',
     'reduce',
+    'P2POp',
+    'batch_isend_irecv',
 ]
 
 
@@ -287,3 +289,176 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
     group_rank = get_group_rank_from_world_rank(dst, group)
     reduce_op = _get_cache_prim(P.Reduce)(dest_rank=group_rank, op=op, group=group)
     return reduce_op(tensor)
+
+
+class P2POp:
+    """
+    Object for ``batch_isend_irecv``, to store information of ``"isend"`` and ``"irecv"``.
+
+    Note:
+        - Allow pass-in recv shape rather than tensor when ``op`` is ``"irecv"``.
+        - ``tensor`` will not be modified in-place.
+
+    Args:
+        op(Union[str, function]: Only string of ``"isend"`` and ``"irecv"`` are allow.
+                                 Or function of ``comm_func.isend`` and ``comm_func.irecv`` are allow.
+        tensor(Union[Tensor, Tuple(int)]): tensor for sending/receiving or receive tensor shape
+                                           when op is ``"irecv"``.
+        peer(int): remote global rank for send/receive.
+        tag(int): currently not supported yet. default: 0.
+        recv_dtype(mindspore.dtype): when ``tensor`` is a tuple shape, this arg will be used and has
+                                     to be configured. default: None
+
+    Returns:
+        P2POP Object.
+
+    Raises:
+        ValueError: when ``op`` is not string or function of ``"isend"`` and ``"irecv"``.
+        TypeError: when ``tensor`` is not type of mindspore.Tensor or Tuple.
+        NotImplementedError: when ``tag`` is not 0.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore.communication.comm_func import batch_isend_irecv, P2POp, isend, irecv
+        >>> from mindspore import Tensor
+        >>> send_tensor = Tensor(1.)
+        >>> send_op = P2POp('isend', send_tensor, 1)
+        >>> send_op = P2POp(isend, send_tensor, 1)
+        >>> recv_tensor = Tensor(0.)
+        >>> recv_op = P2POp('irecv', recv_tensor, 0)
+        >>> recv_op = P2POp(irecv, recv_tensor, 0)
+        >>> recv_op = P2POp('irecv', (), 0, recv_dtype=mindspore.float32)
+    """
+    def __init__(self, op, tensor, peer, group=None, tag=0, *, recv_dtype=None):
+        self.op = op
+        self.tensor = tensor
+        self.peer = peer
+        self.group = group
+        self.tag = tag
+        self.recv_dtype = recv_dtype
+
+    def __new__(cls, op, tensor, peer, group=None, tag=0, recv_dtype=None):
+        if isinstance(op, str):
+            op_name = op
+        else:
+            op_name = op.__name__
+        if op_name not in ['isend', 'irecv']:
+            raise ValueError(f"Expected ``op`` to be of type ``isend`` or `irecv``, but got {op_name}")
+        if not isinstance(tensor, (Tensor, tuple)):
+            raise TypeError(f"Expected ``tensor`` to be type of tuple of Tensor, but got {type(tensor)}.")
+        if tag != 0:
+            raise NotImplementedError("``tag`` not support yet.")
+        return object.__new__(cls)
+
+
+def batch_isend_irecv(p2p_op_list):
+    """
+    Batch send and recv tensors asynchronously.
+
+    Note:
+        - The ``isend`` and ``irecv`` of ``P2POp`` in ``p2p_op_list`` between ranks need to match each other.
+        - ``P2POp`` in ``p2p_op_list`` can only use the same communication group.
+        - ``tag`` of ``P2POp`` in ``p2p_op_list`` is not support yet.
+        - Only support pynative mode, graph mode is not currently supported.
+
+    Args:
+        p2p_op_list(P2POp): list contains P2POps.
+
+    Returns:
+        tuple(Tensor). Output tensors is corresponding to ``p2p_op_list``:
+        At P2POp with "isend" position, output tensor is a fake tensor with scalar, which has no meaning.
+        At P2POp with "irecv" position, output tensor is a tensor received from remote end.
+
+    Raises:
+        TypeError: If ``p2p_op_list`` is not type of ``P2POp``.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun start up
+            <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/msrun_launcher.html>`_
+            for more details.
+
+            This example should be run with 2 devices.
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore.communication import init, get_rank, get_group_size
+        >>> from mindspore.communication.comm_func import batch_isend_irecv, P2POp
+        >>> from mindspore import Tensor
+        >>>
+        >>> init()
+        >>> this_rank = get_rank()
+        >>> world_size = get_group_size()
+        >>> next_rank = (this_rank + 1) % world_size
+        >>> prev_rank = (this_rank + world_size - 1) % world_size
+        >>>
+        >>> send_tensor = Tensor(this_rank + 1, dtype=mindspore.float32)
+        >>> recv_tensor = Tensor(0., dtype=mindspore.float32)
+        >>>
+        >>> send_op = P2POp('isend', send_tensor, next_rank)
+        >>> recv_op = P2POp('irecv', recv_tensor, prev_rank)
+        >>>
+        >>> p2p_op_list = [send_op, recv_op]
+        >>> output = batch_isend_irecv(p2p_op_list)
+        >>> print(output)
+        rank 0:
+        (Tensor(shape=[], dtype=Float32, value= 0), Tensor(shape=[], dtype=Float32, value= 2))
+        rank 1:
+        (Tensor(shape=[], dtype=Float32, value= 0), Tensor(shape=[], dtype=Float32, value= 1))
+    """
+    send_tensors = []
+    op_types = []
+    remotes_ranks = []
+    receive_shapes = []
+    receive_dtypes = []
+    tags = []
+    group = p2p_op_list[0].group
+    if group is None:
+        group = GlobalComm.WORLD_COMM_GROUP
+    type_ = None
+    for i, p2p_op in enumerate(p2p_op_list):
+        if not isinstance(p2p_op, P2POp):
+            raise TypeError("must be type of P2POp")
+        if isinstance(p2p_op.op, str):
+            type_ = p2p_op.op
+        else:
+            type_ = p2p_op.op.__name__
+        rank_ = p2p_op.peer if p2p_op.group is None else \
+            get_group_rank_from_world_rank(p2p_op.peer, p2p_op.group)
+        remotes_ranks.append(rank_)
+        tags.append(p2p_op.tag)
+        if type_ == "isend":
+            send_tensors.append(p2p_op.tensor)
+        elif type_ == "irecv":
+            if isinstance(p2p_op.tensor, Tensor):
+                receive_shapes.append(p2p_op.tensor.shape)
+                receive_dtypes.append(p2p_op.tensor.dtype)
+            elif isinstance(p2p_op.tensor, tuple):
+                receive_shapes.append(p2p_op.tensor)
+                if p2p_op.recv_dtype is None:
+                    raise ValueError(f"'recv_dtype' of {i}th P2POp in p2p_op_list is None but op_types is"
+                                     "'irecv' and P2POp.tensor is a tuple type.")
+                receive_dtypes.append(p2p_op.recv_dtype)
+            else:
+                raise TypeError("p2p_op.tensor must be tensor or shape")
+        else:
+            raise TypeError("p2p_op.op must be isend or irecv")
+        op_types.append(type_)
+
+    _op = _get_cache_prim(P.BatchISendIRecv)(op_types,
+                                             remotes_ranks,
+                                             receive_shapes,
+                                             receive_dtypes,
+                                             group)
+    output = _op(send_tensors)
+    return output

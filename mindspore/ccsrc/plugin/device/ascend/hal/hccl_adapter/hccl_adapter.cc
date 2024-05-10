@@ -107,6 +107,7 @@ void HcclAdapter::InitPlugin() {
   launch_hccl_send_ = DlsymFuncObj(HcclSend, plugin_handle_);
   launch_hccl_recv_ = DlsymFuncObj(HcclRecv, plugin_handle_);
   launch_hccl_barrier_ = DlsymFuncObj(HcclBarrier, plugin_handle_);
+  launch_hccl_batch_isend_irecv_ = DlsymFuncObj(HcclBatchSendRecv, plugin_handle_);
   hccl_create_group_ = DlsymFuncObj(HcomCreateGroup, plugin_handle_);
   hccl_destroy_group_ = DlsymFuncObj(HcomDestroyGroup, plugin_handle_);
   hccl_get_rank_id_ = DlsymFuncObj(HcomGetRankId, plugin_handle_);
@@ -141,6 +142,7 @@ void HcclAdapter::FinalizePlugin() {
   launch_hccl_send_ = nullptr;
   launch_hccl_recv_ = nullptr;
   launch_hccl_barrier_ = nullptr;
+  launch_hccl_batch_isend_irecv_ = nullptr;
   hccl_create_group_ = nullptr;
   hccl_destroy_group_ = nullptr;
   hccl_get_rank_id_ = nullptr;
@@ -305,6 +307,11 @@ HcclResult HcclAdapter::HcclRecv(void *recv_buf, uint64_t count, HcclDataType da
 
 HcclResult HcclAdapter::HcclBarrier(const aclrtStream stream, HcclComm hccl_comm) const {
   return launch_hccl_barrier_(hccl_comm, stream);
+}
+
+HcclResult HcclAdapter::HcclBatchISendIRecv(HcclSendRecvItem *sendRecvInfo, uint32_t itemNum, HcclComm comm,
+                                            aclrtStream stream) const {
+  return launch_hccl_batch_isend_irecv_(sendRecvInfo, itemNum, comm, stream);
 }
 
 bool HcclAdapter::InitKernelInfoStore(const std::map<std::string, std::string> options) {
