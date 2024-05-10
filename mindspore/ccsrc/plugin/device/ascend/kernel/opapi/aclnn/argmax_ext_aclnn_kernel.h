@@ -34,6 +34,10 @@ class ArgMaxAscend : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+  int64_t dim_ = 0;
+  bool keepdim_ = false;
+  ShapeVector input_realshape_;
+  ShapeVector output_realshape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

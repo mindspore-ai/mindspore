@@ -28,29 +28,27 @@ namespace kernel {
 
 void ArgMaxAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
-  int64_t dim = 0;
-  bool keepdim = false;
+  dim_ = 0;
+  keepdim_ = false;
+  auto in_shape = inputs[kIndex0]->GetShapeVector();
+  input_realshape_ = in_shape;
+  output_realshape_ = outputs[kIndex0]->GetShapeVector();
   auto dim_value_opt = inputs[kIndex1]->GetOptionalValueWithCheck<int64_t>();
   if (dim_value_opt.has_value()) {
-    dim = dim_value_opt.value();
-    keepdim = transform::ConvertKernelTensor<bool>(inputs[kIndex2]);
+    dim_ = dim_value_opt.value();
+    keepdim_ = transform::ConvertKernelTensor<bool>(inputs[kIndex2]);
+  } else {  // input dim is None set flatten size
+    int input_flatten_size = std::accumulate(in_shape.begin(), in_shape.end(), 1, std::multiplies<int64_t>());
+    input_realshape_ = ShapeVector{input_flatten_size};
+    inputs[kIndex0]->SetShapeVector(input_realshape_);
   }
-
-  GetWorkspaceForResize(inputs[kIndex0], dim, keepdim, outputs[kIndex0]);
+  GetWorkspaceForResize(inputs[kIndex0], dim_, keepdim_, outputs[kIndex0]);
 }
 
 bool ArgMaxAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  int64_t dim = 0;
-  bool keepdim = false;
-  auto dim_value_opt = inputs[kIndex1]->GetOptionalValueWithCheck<int64_t>();
-  if (dim_value_opt.has_value()) {
-    dim = dim_value_opt.value();
-    keepdim = transform::ConvertKernelTensor<bool>(inputs[kIndex2]);
-  }
-
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], dim, keepdim, outputs[kIndex0]));
+  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], dim_, keepdim_, outputs[kIndex0]));
   RunOp(stream_ptr, workspace);
   return true;
 }

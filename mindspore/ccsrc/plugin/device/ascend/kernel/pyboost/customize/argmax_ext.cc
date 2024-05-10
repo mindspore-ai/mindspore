@@ -27,6 +27,7 @@ namespace kernel {
 namespace pyboost {
 tensor::BaseTensorPtr ArgMaxAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_x_tensor,
                                             const std::optional<Int64ImmPtr> &dim, const BoolImmPtr &keepdim) {
+  OpRunner::InferOpOutput(op, input_x_tensor, dim, keepdim);
   int64_t dim_imm = 0;
   bool keepdim_imm = GetValue<bool>(keepdim);
 
@@ -38,8 +39,6 @@ tensor::BaseTensorPtr ArgMaxAscendCustomize(const std::shared_ptr<OpRunner> &op,
     dim_imm = GetValue<int64_t>(dim.value());
     input_x_imm = input_x_tensor;
   }
-  OpRunner::InferOpOutput(op, input_x_imm, dim, keepdim);
-
   // No need to convert input
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_x_imm);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
