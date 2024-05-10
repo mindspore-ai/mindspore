@@ -504,7 +504,12 @@ Status FlashAttentionScoreInfo::GetAttrs() {
       enable_ring_attention_ = enable_ring_attention_iter->second->cast<BoolImmPtr>()->value();
       enable_load_balance_ = false;
       MS_LOG(DEBUG) << "enable_ring_attention_: " << enable_ring_attention_;
+    } else {
+      MS_LOG(ERROR) << "enable_ring_attention should be bool";
     }
+  }
+  if (enable_ring_attention_ && input_layout_ != FASInputLayoutMode::SBH) {
+    MS_LOG(ERROR) << "Ring attention currently only supports SBH layout";
   }
 
   is_attn_mask_compressed_ =
