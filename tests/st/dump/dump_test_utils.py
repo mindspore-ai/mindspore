@@ -155,6 +155,10 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
     elif test_key == "test_acl_dump":
         data = async_dump_dict_acl
         data["common_dump_settings"]["path"] = dump_path
+    elif test_key == "test_acl_dump_dynamic_shape":
+        data = async_dump_dict_acl
+        data["common_dump_settings"]["path"] = dump_path
+        data["common_dump_settings"]["file_format"] = "npy"
     else:
         raise ValueError(
             "Failed to generate dump json file. The test name value " + test_key + " is invalid.")

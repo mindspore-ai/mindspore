@@ -59,8 +59,36 @@ x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
 y = np.array([[7, 8, 9], [10, 11, 12]]).astype(np.float32)
 
 
-def check_ge_dump_structure_acl(dump_path, num_iteration, device_num=1, check_overflow=False, saved_data=None):
+def check_aclnn_dump(abs_device_path):
+    files = os.listdir(abs_device_path)
+    for every_file in files:
+        abs_path = os.path.join(abs_device_path, every_file)
+        assert os.path.isfile(abs_path)
+    assert len(files) == 4
+
+
+def check_acldump_wholegraph(abs_device_path, check_overflow=False, saved_data=None):
     overflow_num = 0
+    model_names = os.listdir(abs_device_path)
+    for model_name in model_names:
+        model_path = os.path.join(abs_device_path, model_name)
+        assert os.path.isdir(model_path)
+        model_ids = os.listdir(model_path)
+        for model_id in model_ids:
+            model_id_path = os.path.join(model_path, model_id)
+            assert os.path.isdir(model_id_path)
+            iteration_ids = os.listdir(model_id_path)
+            for iteration_id in iteration_ids:
+                iteration_path = os.path.join(model_id_path, iteration_id)
+                assert os.path.isdir(iteration_path)
+                check_saved_data(iteration_path, saved_data)
+                overflow_num = check_overflow_file(iteration_path, overflow_num, check_overflow)
+    if check_overflow:
+        assert overflow_num
+
+
+def check_ge_dump_structure_acl(dump_path, num_iteration, device_num=1, check_overflow=False, saved_data=None,
+                                is_kbk=False):
     for _ in range(3):
         if not os.path.exists(dump_path):
             time.sleep(2)
@@ -77,22 +105,10 @@ def check_ge_dump_structure_acl(dump_path, num_iteration, device_num=1, check_ov
             assert device_path.isdigit()
             abs_device_path = os.path.join(time_path, device_path)
             assert os.path.isdir(abs_device_path)
-            model_names = os.listdir(abs_device_path)
-            for model_name in model_names:
-                model_path = os.path.join(abs_device_path, model_name)
-                assert os.path.isdir(model_path)
-                model_ids = os.listdir(model_path)
-                for model_id in model_ids:
-                    model_id_path = os.path.join(model_path, model_id)
-                    assert os.path.isdir(model_id_path)
-                    iteration_ids = os.listdir(model_id_path)
-                    for iteration_id in iteration_ids:
-                        iteration_path = os.path.join(model_id_path, iteration_id)
-                        assert os.path.isdir(iteration_path)
-                        check_saved_data(iteration_path, saved_data)
-                        overflow_num = check_overflow_file(iteration_path, overflow_num, check_overflow)
-    if check_overflow:
-        assert overflow_num
+            if not is_kbk:
+                check_acldump_wholegraph(abs_device_path, check_overflow, saved_data)
+            else:
+                check_aclnn_dump(abs_device_path)
 
 
 def run_ge_dump(test_name):
@@ -170,6 +186,7 @@ def test_ge_dump_acl():
     Expectation: dump data are generated as protobuf file format (suffix with timestamp)
     """
     run_ge_dump_acl("test_acl_dump")
+
 
 class ReluReduceMeanDenseRelu(Cell):
     def __init__(self, kernel, bias, in_channel, num_class):
@@ -417,3 +434,59 @@ def test_ge_dump_npy():
     Expectation: dump data are generated as npy files, and the value is correct
     """
     run_ge_dump("test_ge_dump_npy")
+
+
+class DynamicNet(Cell):
+    def __init__(self):
+        """init"""
+        super(DynamicNet, self).__init__()
+        self.relu = nn.ReLU()
+        self.cast = P.Cast()
+        self.expanddim = P.ExpandDims()
+
+
+    def construct(self, x_):
+        """construct."""
+        y_ = self.expanddim(x_, 1)
+        out = self.relu(y_)
+        return out
+
+
+def train_dynamic_net():
+    mindspore.set_context(mode=mindspore.GRAPH_MODE)
+    net = DynamicNet()
+    input_dyn = Tensor(shape=[3, None], dtype=mindspore.float32)
+    net.set_inputs(input_dyn)
+    input1 = Tensor(np.random.random([3, 10]), dtype=mindspore.float32)
+    _ = net(input1)
+
+
+def run_ge_dump_acl_dynamic_shape(test_name):
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'acl_dump_dynamic_shape')
+        dump_config_path = os.path.join(tmp_dir, 'acl_dump.json')
+        generate_dump_json(dump_path, dump_config_path, test_name)
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        os.environ['MS_ACL_DUMP_CFG_PATH'] = dump_config_path
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+        os.mkdir(dump_path)
+        train_dynamic_net()
+        check_ge_dump_structure_acl(dump_path, 0, 1, saved_data="tensor", is_kbk=True)
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+        del os.environ['MS_ACL_DUMP_CFG_PATH']
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ge_dump_acl_dynamic_shape():
+    """
+    Feature: async dump on Ascend on GE backend.
+    Description: test async dump with default file_format value ("bin")
+    Expectation: dump data are generated as protobuf file format (suffix with timestamp)
+    """
+    run_ge_dump_acl_dynamic_shape("test_acl_dump_dynamic_shape")
