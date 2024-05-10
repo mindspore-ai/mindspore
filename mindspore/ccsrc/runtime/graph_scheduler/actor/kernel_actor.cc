@@ -940,6 +940,10 @@ void KernelActor::ProcessMultiStreamBeforeKernelLaunch(OpContext<DeviceTensor> *
       MS_LOG(DEBUG) << "stream_send_actor_ is nullptr.";
       return;
     }
+    if (stream_send_actor_->task_id_on_stream_ == nullptr) {
+      MS_LOG(DEBUG) << "stream_send_actor_ task id on stream is nullptr.";
+      return;
+    }
     MS_LOG(DEBUG) << "Process wait stream start, memory_stream_id : " << memory_stream_id
                   << ", send task id on stream : " << *(stream_send_actor_->task_id_on_stream_) << ".";
     // Here, need get task id on stream from send node.
@@ -960,8 +964,8 @@ void KernelActor::ProcessMultiStreamBeforeKernelLaunch(OpContext<DeviceTensor> *
       continue;
     }
     if (input_kernel_tensor->task_id_on_stream() == nullptr) {
-      MS_LOG(INFO) << "input_kernel_tensor : " << input_kernel_tensor
-                   << " task id on stream is nullptr, will skip multi stream process.";
+      MS_LOG(DEBUG) << "input_kernel_tensor : " << input_kernel_tensor
+                    << " task id on stream is nullptr, will skip multi stream process.";
       continue;
     }
     if (input_kernel_tensor->pointer_ref_count()->ref_count() == SIZE_MAX &&
