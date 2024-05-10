@@ -35,6 +35,14 @@ InternalKernelMod::~InternalKernelMod() {
 
 int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto param = CreateOpParam(inputs, outputs);
+
+  for (size_t i = 0; i < inputs.size(); i++) {
+    param->in_dtypes_.push_back(InternalKernelUtils::ToInternalDType(inputs[i]->dtype_id()));
+  }
+  for (size_t i = 0; i < outputs.size(); i++) {
+    param->out_dtypes_.push_back(InternalKernelUtils::ToInternalDType(outputs[i]->dtype_id()));
+  }
+
   impl_ = internal::CreateInternalKernelImpl(param);
   if (impl_ == nullptr) {
     return 1;
