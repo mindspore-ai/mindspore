@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,9 @@ void ValidateOperation(const AnfNodePtr &node) {
   auto prim = GetValueNode<PrimitivePtr>(node);
   MS_EXCEPTION_IF_NULL(prim);
   if (prim->isa<prim::DoSignaturePrimitive>()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Illegal DoSignaturePrimitive '" << prim->name() << "' in the graph.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Illegal DoSignaturePrimitive '" << prim->name() << "' in the graph."
+                               << "node:" << node->DebugString()
+                               << ", location:" << trace::GetDebugInfoStr(node->debug_info());
   }
   if (abstract::IsInWhiteList(prim)) {
     return;
@@ -78,10 +80,14 @@ void ValidateOperation(const AnfNodePtr &node) {
     return;
   }
   if (prim->name() == "fake_bprop") {
-    MS_LOG(INTERNAL_EXCEPTION) << "Illegal primitive: " << GetValue<std::string>(prim->GetAttr("info"));
+    MS_LOG(INTERNAL_EXCEPTION) << "Illegal primitive: " << GetValue<std::string>(prim->GetAttr("info"))
+                               << "node:" << node->DebugString()
+                               << ", location:" << trace::GetDebugInfoStr(node->debug_info());
   }
 
-  MS_LOG(EXCEPTION) << "Illegal primitive: " << prim->name() << ". Please check whether to use unsupported primitive";
+  MS_LOG(EXCEPTION) << "Illegal primitive: " << prim->name()
+                    << ". Please check whether to use unsupported primitive:" << node->DebugString()
+                    << ", location:" << trace::GetDebugInfoStr(node->debug_info());
 }
 
 bool CheckAbstractScalar(const AnfNodePtr &node) {
@@ -91,7 +97,8 @@ bool CheckAbstractScalar(const AnfNodePtr &node) {
     TypePtr type = abstract->GetTypeTrack();
     MS_EXCEPTION_IF_NULL(type);
     if (type->isa<EnvType>() || type->isa<MsClassType>()) {
-      MS_LOG(EXCEPTION) << "Illegal type in the graph: " << abstract->ToString() << ", node: " << node->DebugString();
+      MS_LOG(EXCEPTION) << "Illegal type in the graph: " << abstract->ToString() << ", node: " << node->DebugString()
+                        << ", location:" << trace::GetDebugInfoStr(node->debug_info());
     }
     auto real_node = node;
     if (IsPrimitiveCNode(node, prim::kPrimReturn) || IsPrimitiveCNode(node, prim::kPrimDepend)) {
@@ -101,7 +108,8 @@ bool CheckAbstractScalar(const AnfNodePtr &node) {
     if (type->isa<External>() && !IsValueNode<StringImm>(real_node) && !IsValueNode<FP32Imm>(real_node) &&
         !IsValueNode<FP64Imm>(real_node)) {
       MS_LOG(EXCEPTION) << "Illegal type in the graph: " << abstract->ToString()
-                        << ", node: " << real_node->DebugString();
+                        << ", node: " << real_node->DebugString()
+                        << "\nPlease check your code:" << trace::GetDebugInfoStr(node->debug_info());
     }
     // When a DeadNode is renormalized before, its abstract may be changed to
     // AbstractScalar(std:: make_shared<Int32Imm>(0), std:: make_shared<Problem>()).
@@ -125,11 +133,6 @@ void ValidateAbstract(const AnfNodePtr &node) {
     MS_LOG(DEBUG) << "Abstract is null in node: " << node->DebugString();
     return;
   }
-  if (abstract->isa<AbstractJTagged>()) {
-    // Validate a type.
-    MS_LOG(INTERNAL_EXCEPTION) << "Illegal type in the graph: " << abstract->ToString()
-                               << ", node: " << node->DebugString();
-  }
   if (CheckAbstractScalar(node)) {
     return;
   }
@@ -149,7 +152,9 @@ void ValidateAbstract(const AnfNodePtr &node) {
   }
 
   // Other types show exception
-  MS_LOG(INTERNAL_EXCEPTION) << "Illegal type in the graph: " << abstract->ToString();
+  MS_LOG(INTERNAL_EXCEPTION) << "Illegal type in the graph: " << abstract->ToString()
+                             << ", node: " << node->DebugString()
+                             << "\nPlease check your code:" << trace::GetDebugInfoStr(node->debug_info());
 }
 
 void CheckValueTuple(const AnfNodePtr &node) {
