@@ -32,6 +32,7 @@
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 #include "proto/onnx.pb.h"
 #include "schema/inner/model_generated.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace lite {

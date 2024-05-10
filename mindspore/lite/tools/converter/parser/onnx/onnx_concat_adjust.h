@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_CONCAT_ADJUST_H_
 #include <string>
 #include <vector>
+#include "ir/anf.h"
 
 namespace mindspore::lite {
 class OnnxConcatAdjust {

@@ -22,6 +22,7 @@
 #include "./onnx.pb.h"
 #include "include/registry/node_parser_registry.h"
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {
