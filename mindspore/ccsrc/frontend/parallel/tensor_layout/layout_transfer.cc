@@ -584,7 +584,7 @@ Status LayoutTransfer::AssembleStaticTensorShape(const TensorLayout &from_in, co
   // Unify shape from begin to end.
   UnifyFromAndToShape(&new_from_shape, &new_to_shape, from_in, to_in, &this->from_dims_replace_memo_);
 
-  MS_LOG(DEBUG) << "new_from_shape=" << new_from_shape << ", new_to_shape=" << new_to_shape;
+  MS_LOG(INFO) << "new_from_shape=" << new_from_shape << ", new_to_shape=" << new_to_shape;
   if (new_from_layout->InitFromVector(from_in.device_arrangement().array(), from_in.tensor_map().array(),
                                       new_from_shape) != Status::SUCCESS) {
     MS_LOG(ERROR) << "Failed to init new from_tensor layout.";
