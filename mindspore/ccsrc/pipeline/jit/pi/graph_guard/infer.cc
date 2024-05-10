@@ -900,6 +900,9 @@ py::object EvalMSAPIValue(const py::object &ms_api, const py::object &args, cons
     auto eval_res = abstract::EvalOnePrim(func_graph->cast<PrimitivePtr>(), inputs_abs_list);
     eval_result = eval_res == nullptr ? nullptr : eval_res->abstract();
   } else if (func_graph->ToAbstract()->isa<abstract::AbstractFunction>()) {
+    for (size_t i = 0, size = inputs_abs_list.size(); i != size; ++i) {
+      inputs_abs_list[i] = inputs_abs_list[i]->Broaden();
+    }
     auto analyze_res = pipeline::AbstractAnalyze(func_graph, inputs_abs_list);
     eval_result = analyze_res.eval_result == nullptr ? nullptr : analyze_res.eval_result->abstract();
   }
