@@ -114,7 +114,9 @@ int Cropper::GetModelOps() {
                     << " QuantType:" << schema::EnumNameQuantType(node->quantType());
       // QuantType_AwareTraining may change
       if (node->quantType() == schema::QuantType_AwareTraining || node->quantType() == schema::QuantType_PostTraining ||
-          node->quantType() == schema::QuantType_QUANT_ALL) {
+          node->quantType() == schema::QuantType_QUANT_ALL ||
+          (node->quantType() == schema::QuantType_QUANT_DYNAMIC &&
+           node->primitive()->value_type() != schema::PrimitiveType_DynamicQuant)) {
         this->int8_operators_.insert(node->primitive()->value_type());
       } else {
         this->fp32_operators_.insert(node->primitive()->value_type());
