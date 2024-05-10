@@ -1,0 +1,299 @@
+From c050505bbee806f7389d1c7360eef08d6a39aad6 Mon Sep 17 00:00:00 2001
+From: Zhu Guodong <zhuguodong0001@163.com>
+Date: Fri, 10 May 2024 18:33:50 +0800
+Subject: [PATCH] mockcpp patch
+
+---
+ include/mockcpp/JmpCode.h |  1 +
+ include/mockcpp/mockcpp.h |  6 +++-
+ src/JmpCode.cpp           | 16 ++++++++-
+ src/JmpCodeAARCH64.h      | 69 +++++++++++++++++++++++++++++++++++++++
+ src/JmpCodeARM32.h        | 36 ++++++++++++++++++++
+ src/JmpCodeArch.h         | 20 +++++++++++-
+ src/JmpCodeX64.h          |  3 +-
+ src/JmpCodeX86.h          |  3 +-
+ src/JmpOnlyApiHook.cpp    |  1 +
+ src/UnixCodeModifier.cpp  |  2 ++
+ 10 files changed, 152 insertions(+), 5 deletions(-)
+ create mode 100644 src/JmpCodeAARCH64.h
+ create mode 100644 src/JmpCodeARM32.h
+
+diff --git a/include/mockcpp/JmpCode.h b/include/mockcpp/JmpCode.h
+index 26f77b0..ed0fac6 100644
+--- a/include/mockcpp/JmpCode.h
++++ b/include/mockcpp/JmpCode.h
+@@ -33,6 +33,7 @@ struct JmpCode
+
+     void*  getCodeData() const;
+     size_t getCodeSize() const;
++    void flushCache() const;
+ private:
+ 	JmpCodeImpl* This;
+ };
+diff --git a/include/mockcpp/mockcpp.h b/include/mockcpp/mockcpp.h
+index 306bc7a..8cc385d 100644
+--- a/include/mockcpp/mockcpp.h
++++ b/include/mockcpp/mockcpp.h
+@@ -39,7 +39,11 @@
+ #endif
+
+
+-#if  ( defined (__LP64__) \
++#if  defined (__aarch64__)
++#define BUILD_FOR_AARCH64
++#elif defined (__arm__)
++#define BUILD_FOR_ARM32
++#elif ( defined (__LP64__) \
+     || defined (__64BIT__) \
+     || defined (_LP64) \
+     || ((defined(__WORDSIZE)) && (__WORDSIZE == 64)) \
+diff --git a/src/JmpCode.cpp b/src/JmpCode.cpp
+index 35794fb..6aac228 100644
+--- a/src/JmpCode.cpp
++++ b/src/JmpCode.cpp
+@@ -30,6 +30,7 @@ struct JmpCodeImpl
+    ////////////////////////////////////////////////
+    JmpCodeImpl(const void* from, const void* to)
+    {
++      m_from = from;
+       ::memcpy(m_code, jmpCodeTemplate, JMP_CODE_SIZE);
+       SET_JMP_CODE(m_code, from, to);
+    }
+@@ -47,7 +48,14 @@ struct JmpCodeImpl
+    }
+
+    ////////////////////////////////////////////////
++   void flushCache() const
++   {
++      FLUSH_CACHE((const char *)m_from, JMP_CODE_SIZE);
++   }
+
++   ////////////////////////////////////////////////
++
++   const void *m_from;
+    unsigned char m_code[JMP_CODE_SIZE];
+ };
+
+@@ -77,5 +85,11 @@ JmpCode::getCodeSize() const
+    return This->getCodeSize();
+ }
+
+-MOCKCPP_NS_END
++///////////////////////////////////////////////////
++void
++JmpCode::flushCache() const
++{
++   return This->flushCache();
++}
+
++MOCKCPP_NS_END
+diff --git a/src/JmpCodeAARCH64.h b/src/JmpCodeAARCH64.h
+new file mode 100644
+index 0000000..4f5e90b
+--- /dev/null
++++ b/src/JmpCodeAARCH64.h
+@@ -0,0 +1,69 @@
++/***
++   mockcpp is a C/C++ mock framework.
++   Copyright [2008] [Darwin Yuan <darwin.yuan@gmail.com>]
++                    [Chen Guodong <sinojelly@gmail.com>]
++   Licensed under the Apache License, Version 2.0 (the "License");
++   you may not use this file except in compliance with the License.
++   You may obtain a copy of the License at
++
++      http://www.apache.org/licenses/LICENSE-2.0
++
++   Unless required by applicable law or agreed to in writing, software
++   distributed under the License is distributed on an "AS IS" BASIS,
++   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++   See the License for the specific language governing permissions and
++   limitations under the License.
++***/
++#ifndef __MOCKCPP_JMP_CODE_AARCH64_H__
++#define __MOCKCPP_JMP_CODE_AARCH64_H__
++
++#include <asm/unistd.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <sys/ioctl.h>
++#include <sys/mman.h>
++#include <sys/prctl.h>
++#include <sys/stat.h>
++#include <sys/syscall.h>
++
++MOCKCPP_NS_START
++
++struct l2cache_addr_range {
++   uintptr_t start;
++   uintptr_t end;
++};
++
++MOCKCPP_NS_END
++
++#define ADDR_ALIGN_UP(addr) ((((addr) + ((4096) - 1)) & (~((4096) - 1))) & 0xffffffffffffffff)
++#define ADDR_ALIGN_DOWN(addr) (((addr) & (~((4096) - 1))) & 0xffffffffffffffff)
++#define OUTER_CACHE_INV_RANGE _IOWR('S', 0x00, struct l2cache_addr_range)
++#define OUTER_CACHE_CLEAN_RANGE _IOWR('S', 0x01, struct l2cache_addr_range)
++#define OUTER_CACHE_FLUSH_RANGE _IOWR('S', 0x02, struct l2cache_addr_range)
++#define L1_INV_I_CACHE _IOWR('S', 0x03, struct l2cache_addr_range)
++#define D_TO_I_CACHE_FLUSH_RANGE _IOWR('S', 0x04, struct l2cache_addr_range)
++
++const unsigned char jmpCodeTemplate[] =
++   { 0x57, 0x00, 0x00, 0x58, 0xe0, 0x02, 0x1f, 0xd6, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
++
++#define SET_SJMP_CODE(base, from, to) do { \
++      using instruct_t = signed int; \
++      instruct_t offset = (intptr_t)to - (intptr_t)from; \
++      offset = ((offset >> 2) & 0x03FFFFFF) | 0x14000000; \
++      *(instruct_t *)(base) = offset; \
++   } while(0)
++
++#define SET_JMP_CODE(base, from, to) do { \
++      *(void **)(base + 8) = (void *)to; \
++   } while(0)
++
++#define FLUSH_CACHE(from, length) do { \
++   struct l2cache_addr_range usr_data; \
++   usr_data.start = ADDR_ALIGN_DOWN((unsigned long long)from); \
++   usr_data.end = ADDR_ALIGN_UP((unsigned long long)from) + length; \
++   __builtin___clear_cache((char *)usr_data.start, (char *)usr_data.end); \
++} while (0)
++
++#endif
+diff --git a/src/JmpCodeARM32.h b/src/JmpCodeARM32.h
+new file mode 100644
+index 0000000..1eec42b
+--- /dev/null
++++ b/src/JmpCodeARM32.h
+@@ -0,0 +1,36 @@
++/***
++   mockcpp is a C/C++ mock framework.
++   Copyright [2008] [Darwin Yuan <darwin.yuan@gmail.com>]
++                    [Chen Guodong <sinojelly@gmail.com>]
++   Licensed under the Apache License, Version 2.0 (the "License");
++   you may not use this file except in compliance with the License.
++   You may obtain a copy of the License at
++
++      http://www.apache.org/licenses/LICENSE-2.0
++
++   Unless required by applicable law or agreed to in writing, software
++   distributed under the License is distributed on an "AS IS" BASIS,
++   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++   See the License for the specific language governing permissions and
++   limitations under the License.
++***/
++#ifndef __MOCKCPP_JMP_CODE_ARM32_H__
++#define __MOCKCPP_JMP_CODE_ARM32_H__
++
++#include <stdlib.h>
++
++const unsigned char jmpCodeTemplate[] =
++   { 0xEA, 0x00, 0x00, 0x00 };
++
++#define SET_JMP_CODE(base, from, to) do { \
++       int offset = (int)to - (int)from - 8; \
++       offset = (offset >> 2) & 0x00FFFFFF; \
++       int code = *(int *)(base) | offset; \
++       *(int *)(base) = changeByteOrder(code); \
++   } while(0)
++
++#define FLUSH_CACHE(from, length) do { \
++   ::system("echo 3 > /proc/sys/vm/drop_caches"); \
++} while (0)
++
++#endif
+diff --git a/src/JmpCodeArch.h b/src/JmpCodeArch.h
+index 26abd73..53353eb 100644
+--- a/src/JmpCodeArch.h
++++ b/src/JmpCodeArch.h
+@@ -19,11 +19,29 @@
+
+ #include <mockcpp/mockcpp.h>
+
++template <typename T>
++inline T changeByteOrder(const T v) {
++   enum { S = sizeof(T) };
++   T rst = v;
++   char *p = (char *)&rst;
++   char tmp = 0;
++   for (unsigned int i = 0; i < S / 2; ++i) {
++      tmp = p[i];
++      p[i] = p[S - i - 1];
++      p [S - i - 1] = tmp;
++   }
++
++   return rst;
++}
++
+ #if BUILD_FOR_X64
+ # include "JmpCodeX64.h"
+ #elif BUILD_FOR_X86
+ # include "JmpCodeX86.h"
++#elif defined(BUILD_FOR_ARM32)
++# include "JmpCodeARM32.h"
++#elif defined(BUILD_FOR_AARCH64)
++# include "JmpCodeAARCH64.h"
+ #endif
+
+ #endif
+-
+diff --git a/src/JmpCodeX64.h b/src/JmpCodeX64.h
+index 198507a..e5b4f31 100644
+--- a/src/JmpCodeX64.h
++++ b/src/JmpCodeX64.h
+@@ -27,5 +27,6 @@ const unsigned char jmpCodeTemplate[]  =
+        *(uintptr_t *)(base + 6) = (uintptr_t)to; \
+    } while(0)
+
+-#endif
++#define FLUSH_CACHE(from, length) ((void)0)
+
++#endif
+diff --git a/src/JmpCodeX86.h b/src/JmpCodeX86.h
+index ebdc526..a06a02e 100644
+--- a/src/JmpCodeX86.h
++++ b/src/JmpCodeX86.h
+@@ -23,5 +23,6 @@ const unsigned char jmpCodeTemplate[]  = { 0xE9, 0x00, 0x00, 0x00, 0x00 };
+             (unsigned long long)to - (unsigned long long)from - sizeof(jmpCodeTemplate); \
+    } while(0)
+
+-#endif
++#define FLUSH_CACHE(from, length) ((void)0)
+
++#endif
+diff --git a/src/JmpOnlyApiHook.cpp b/src/JmpOnlyApiHook.cpp
+index d4cfa68..964828f 100644
+--- a/src/JmpOnlyApiHook.cpp
++++ b/src/JmpOnlyApiHook.cpp
+@@ -68,6 +68,7 @@ struct JmpOnlyApiHookImpl
+    void changeCode(const void* data)
+    {
+       CodeModifier::modify(const_cast<void*>(m_api), data, m_jmpCode.getCodeSize());
++      m_jmpCode.flushCache();
+    }
+
+    /////////////////////////////////////////////////////
+diff --git a/src/UnixCodeModifier.cpp b/src/UnixCodeModifier.cpp
+index ab4014e..8e7dde9 100644
+--- a/src/UnixCodeModifier.cpp
++++ b/src/UnixCodeModifier.cpp
+@@ -20,6 +20,7 @@
+ #include <sys/mman.h>
+
+ #include <mockcpp/CodeModifier.h>
++#include "JmpCodeArch.h"
+
+ #define PAGE_ALIGN_BITS  12
+
+@@ -39,6 +40,7 @@ bool CodeModifier::modify(void *dest, const void *src, size_t size)
+
+     ::memcpy(dest, src, size);
+
++    FLUSH_CACHE(dest, size);
+
+ #if 0
+ 	#if BUILD_FOR_X86
+--
+2.34.1
