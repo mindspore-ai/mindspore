@@ -180,7 +180,6 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
   registry::KernelDesc desc{static_cast<DataType>(key.data_type), key.type, key.kernel_arch, key.provider};
   auto creator = registry::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
   if (creator == nullptr) {
-    MS_LOG(ERROR) << "creator is nullptr!";
     return RET_NOT_SUPPORT;
   }
 
