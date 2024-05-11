@@ -218,12 +218,15 @@ from mindspore.ops.function.math_func import tanh
 # 99
 
 # 100
+from mindspore.ops.auto_generate import binary_cross_entropy_with_logits as bce_with_logits
+def binary_cross_entropy_with_logits(input, target, weight, reduction, pos_weight):
+    return bce_with_logits(input, target, weight, pos_weight, reduction)
 
 __all__ = [
     'conv_transpose2d',
     'max_pool2d',
     # 1
-
+    'binary_cross_entropy_with_logits',
     # 2
 
     # 3
