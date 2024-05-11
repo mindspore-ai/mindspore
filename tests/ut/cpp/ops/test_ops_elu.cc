@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,8 @@
 
 namespace mindspore {
 namespace ops {
-struct EluOpsParams {
-  ShapeVector x_shape;
-  TypePtr x_type;
-  ShapeVector out_shape;
-  TypePtr out_type;
-};
 
-class TestElu : public TestOps, public testing::WithParamInterface<EluOpsParams> {};
+class TestElu : public TestOps, public testing::WithParamInterface<EltwiseOpParams> {};
 
 TEST_P(TestElu, dyn_shape) {
   const auto &param = GetParam();
@@ -47,9 +41,9 @@ TEST_P(TestElu, dyn_shape) {
   ASSERT_TRUE(*out_shape == *expect_shape);
 }
 
-OP_FUNC_IMPL_TEST_CASES(Elu, testing::Values(EluOpsParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-                                             EluOpsParams{{2, -1}, kFloat32, {2, -1}, kFloat32},
-                                             EluOpsParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-                                             EluOpsParams{{-2}, kFloat32, {-2}, kFloat32}));
+OP_FUNC_IMPL_TEST_CASES(Elu, testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
+                                             EltwiseOpParams{{2, -1}, kFloat32, {2, -1}, kFloat32},
+                                             EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
+                                             EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
 }  // namespace ops
 }  // namespace mindspore

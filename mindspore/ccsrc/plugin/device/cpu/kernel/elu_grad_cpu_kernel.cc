@@ -29,10 +29,10 @@ bool EluGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
   const auto *input0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
   const auto *input1 = reinterpret_cast<T *>(inputs[1]->device_ptr());
   auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
+  const T alpha = static_cast<T>(inputs[kIndex2]->GetValueWithCheck<float>());
 
   size_t lens = outputs[0]->size() > 0 ? static_cast<size_t>(outputs[0]->size() / sizeof(T)) : 1;
-  auto task = [input0, input1, output](const size_t start, const size_t end) {
-    const T alpha = T(1);
+  auto task = [input0, input1, alpha, output](const size_t start, const size_t end) {
     for (size_t i = start; i < end; i++) {
       output[i] = (input1[i] < static_cast<T>(0)) ? input0[i] * (input1[i] + alpha) : input0[i];
     }
@@ -43,11 +43,26 @@ bool EluGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
 
 const std::vector<std::pair<KernelAttr, EluGradCpuKernelMod::KernelRunFunc>> &EluGradCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, EluGradCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat32),
      &EluGradCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat).AddInputAttr(kNumberTypeFloat).AddOutputAttr(kNumberTypeFloat),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat)
+       .AddInputAttr(kNumberTypeFloat)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat),
      &EluGradCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat64),
      &EluGradCpuKernelMod::LaunchKernel<double>}};
   return func_list;
 }
