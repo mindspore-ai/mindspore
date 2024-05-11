@@ -40,6 +40,10 @@ inline int64_t ComputeValid(int64_t in_value, const ArrayValue<int64_t> &kernel_
   } else {
     out_value = static_cast<int64_t>(
       std::ceil((in_value - (kernel_size_array[index] - 1)) / static_cast<float>(strides_array[index])));
+    if (MS_UNLIKELY(out_value <= 0)) {
+      MS_LOG(EXCEPTION) << "For 'AvgPool' op, H_out/W_out must be positive, but H_out/W_out is " << out_value
+                        << ", please check input and parameters of op";
+    }
   }
 
   return out_value;
@@ -177,8 +181,8 @@ inline void CheckKernelSizeAndStrides(const PrimitivePtr &primitive, const Array
   }
   for (size_t i = 0; i < strides_array.size(); i++) {
     if (MS_UNLIKELY(strides_array[i] <= 0)) {
-      MS_LOG(EXCEPTION) << "For '" << op_name << "', kernel size must be positive, but it's "
-                        << strides_array.ToString() << ".";
+      MS_LOG(EXCEPTION) << "For '" << op_name << "', strides must be positive, but it's " << strides_array.ToString()
+                        << ".";
     }
   }
 }
