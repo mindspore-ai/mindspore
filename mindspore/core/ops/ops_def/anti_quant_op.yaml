@@ -1,0 +1,29 @@
+#operator anti_quant
+anti_quant:
+  args:
+    x:
+      dtype: tensor
+    scale:
+      dtype: tensor
+      type_cast: number
+    offset:
+      dtype: tensor
+      type_cast: number
+      default: None
+    sqrt_mode:
+      dtype: bool
+      default: False
+      prim_init: True
+    dtype:
+      dtype: TypeId
+      default: mstype.float16
+      arg_handler: dtype_to_type_id
+      prim_init: True
+  returns:
+    y:
+      dtype: tensor
+  class:
+    name: AntiQuant
+  dispatch:
+    enable: True
+    Ascend: AntiQuantAscend

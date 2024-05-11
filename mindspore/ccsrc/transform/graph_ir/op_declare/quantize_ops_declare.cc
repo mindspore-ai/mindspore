@@ -55,8 +55,9 @@ OUTPUT_MAP(QuantBatchMatmulV3) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(QuantBatchMatmulV3, kNameQuantBatchMatmul, ADPT_DESC(QuantBatchMatmulV3))
 
 INPUT_MAP(AscendAntiQuantV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(scale)}, {3, INPUT_DESC(offset)}};
-ATTR_MAP(AscendAntiQuantV2) = {{"sqrt_mode", ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
-                               {"dtype", ATTR_DESC(dst_type, AnyTraits<GEType>(), AnyTraits<int64_t>())}};
+ATTR_MAP(AscendAntiQuantV2) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(AscendAntiQuantV2) = {{4, ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
+                                     {5, ATTR_DESC(dst_type, AnyTraits<GEType>(), AnyTraits<int64_t>())}};
 OUTPUT_MAP(AscendAntiQuantV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AscendAntiQuantV2, kNameAscendAntiQuantV2, ADPT_DESC(AscendAntiQuantV2))
 
