@@ -1160,8 +1160,6 @@ bool DynamicMemBuf::RecordEvent(int64_t task_id_on_stream, uint32_t user_stream_
 }
 
 bool DynamicMemBuf::WaitEvent(uint32_t task_id_on_stream, uint32_t user_stream_id) {
-  MS_LOG(DEBUG) << "Release events for address : " << device_addr_ << ", task_id_on_stream : " << task_id_on_stream
-                << ", user_stream_id : " << user_stream_id << ", size : " << size_ << ".";
   if (events_ == nullptr) {
     return false;
   }
@@ -1178,8 +1176,6 @@ bool DynamicMemBuf::WaitEvent(uint32_t task_id_on_stream, uint32_t user_stream_i
   // Remove list if event list is empty.
   if (event_list->empty()) {
     events_->erase(iter);
-  } else {
-    MS_LOG(ERROR) << "After wait event for address : " << device_addr_ << ", event_list : " << event_list->size();
   }
   return true;
 }
