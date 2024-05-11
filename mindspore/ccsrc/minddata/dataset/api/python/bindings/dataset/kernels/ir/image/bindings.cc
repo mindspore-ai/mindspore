@@ -290,8 +290,8 @@ PYBIND_REGISTER(EqualizeOperation, 1, ([](const py::module *m) {
                   (void)
                     py::class_<vision::EqualizeOperation, TensorOperation, std::shared_ptr<vision::EqualizeOperation>>(
                       *m, "EqualizeOperation")
-                      .def(py::init([]() {
-                        auto equalize = std::make_shared<vision::EqualizeOperation>();
+                      .def(py::init([](const std::string &device_target) {
+                        auto equalize = std::make_shared<vision::EqualizeOperation>(device_target);
                         THROW_IF_ERROR(equalize->ValidateParams());
                         return equalize;
                       }));

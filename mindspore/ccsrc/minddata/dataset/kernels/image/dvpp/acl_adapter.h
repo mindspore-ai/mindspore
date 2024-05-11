@@ -106,6 +106,9 @@ class AclAdapter {
   APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
                        std::shared_ptr<DeviceTensorAscend910B> *output);
 
+  APP_ERROR DvppEqualize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                         std::shared_ptr<DeviceTensorAscend910B> *output);
+
   APP_ERROR DvppGaussianBlur(const std::shared_ptr<DeviceTensorAscend910B> &input,
                              std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<int64_t> &kernel_size,
                              const std::vector<float> &sigma, uint32_t padding_mode);
@@ -209,6 +212,7 @@ class AclAdapter {
   DvppAffineFunObj dvpp_affine_fun_obj_;
   DvppCropFunObj dvpp_crop_fun_obj_;
   DvppDecodeFunObj dvpp_decode_fun_obj_;
+  DvppEqualizeFunObj dvpp_equalize_fun_obj_;
   DvppGaussianBlurFunObj dvpp_gaussian_blur_fun_obj_;
   DvppHorizontalFlipFunObj dvpp_horizontal_flip_fun_obj_;
   DvppNormalizeFunObj dvpp_normalize_fun_obj_;

@@ -1464,6 +1464,7 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       RETURN_STATUS_UNEXPECTED("Equalize: image rank should be 2 or 3,  but got: " + std::to_string(input_cv->Rank()));
     }
     // For greyscale images, extend dimension if rank is 2 and reshape output to be of rank 2.
+    auto input_rank = input_cv->Rank();
     if (input_cv->Rank() == kMinImageRank) {
       RETURN_IF_NOT_OK(input_cv->ExpandDim(kMinImageRank));
     }
@@ -1489,7 +1490,9 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, input_cv->Rank(), &output_cv));
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
-    RETURN_IF_NOT_OK((*output)->Reshape(input_cv->shape()));
+    if (input_rank == kMinImageRank) {
+      (*output)->Squeeze();
+    }
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Equalize: " + std::string(e.what()));
   }

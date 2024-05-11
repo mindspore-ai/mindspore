@@ -33,6 +33,8 @@ constexpr char kEqualizeOperation[] = "Equalize";
 
 class EqualizeOperation : public TensorOperation {
  public:
+  explicit EqualizeOperation(const std::string &device_target = "CPU");
+
   ~EqualizeOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
@@ -41,7 +43,14 @@ class EqualizeOperation : public TensorOperation {
 
   std::string Name() const override;
 
+  Status to_json(nlohmann::json *out_json) override;
+
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
+  MapTargetDevice Type() override;
+
+ private:
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset
