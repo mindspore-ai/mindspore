@@ -371,6 +371,192 @@ Status AVFrameAllocate(struct AudioVisual *avinfo, struct MediaContainer *contai
   return Status::OK();
 }
 
+// Read the presentation time stamps of a visual stream by decoding each frame
+Status AVReadVisualPtsByFrame(struct AudioVisual *avinfo, struct MediaContainer *container,
+                              std::vector<int64_t> *pts_int64_vector) {
+  int status = 0;
+  int64_t frame_number = 0;
+  int64_t packet_number = 0;
+  AVFormatContext *avformat = avinfo->avformat;
+  AVPacket *packet = avinfo->packet;
+  int stream_index = container->stream_index;
+  AVCodecContext *decoder_context = container->codec_context;
+  AVFrame *frame = container->frame;
+  int timestamp_increment = container->timestamp_increment;
+  char err_buf[AV_ERROR_MAX_STRING_SIZE];
+  int64_t pts_number = 0;
+  int adjust_pts_flag = 0;
+  std::string err_msg;
+
+  // Read a packet
+  status = av_read_frame(avformat, packet);
+  while (status >= 0) {
+    if (packet->stream_index == stream_index) {
+      // Send it to decoder
+      status = avcodec_send_packet(decoder_context, packet);
+      if (status < 0) {
+        // The decoder failed to receive the packet
+        av_make_error_string(err_buf, AV_ERROR_MAX_STRING_SIZE, status);
+        err_msg = "Failed to receive packet " + std::to_string(packet_number) + ". ";
+        err_msg += std::string(err_buf);
+        RETURN_STATUS_UNEXPECTED(err_msg);
+      }
+      while (status >= 0) {
+        // Read a frame from the decoder
+        status = avcodec_receive_frame(decoder_context, frame);
+        if (status < 0) {
+          if (status != AVERROR_EOF && status != AVERROR(EAGAIN)) {
+            // Failed to receive frame from the decoder
+            av_make_error_string(err_buf, AV_ERROR_MAX_STRING_SIZE, status);
+            err_msg = "Failed to receive frame " + std::to_string(frame_number) + ". ";
+            err_msg += std::string(err_buf);
+            RETURN_STATUS_UNEXPECTED(err_msg);
+          }
+          break;
+        }
+        // frame_number = 0 is the first frame
+        // frame_number = 1 is the second frame
+        // check whether the pts_number should be adjusted
+        // for example
+        // the frame_number       :  0, 1, 2, 3, 4, ...
+        // the frame->pkt_dts     :  2, 3, 4, 5, 6, ...
+        // should be adjusted to  :  1, 2, 3, 4, 5, ... when frame->pkt_dts == frame->coded_picture_number
+        //                        :  1, 3, 4, 5, 6, ... when frame->pkt_dts != frame->coded_picture_number
+        // the adjust method is let it - 1 from the second frame
+        // we check the condition on the second frame, the first frame will be adjusted directly
+        // The condition can be described as:
+        // frame_number == 1 : this is the second frame
+        // timestamp_increment == 1 : the timestamp is incremented by 1
+        // frame->pts == AV_NOPTS_VALUE : there is no valid pts value
+        // frame->pkt_dts == frame->coded_picture_number : the frame->pkt_dts is same as frame->coded_picture_number
+        // frame->pkt_dts -1 == frame_number + 1 : when the frame->pkt_dts is 3 for the second frame
+        if (frame_number == 1 && timestamp_increment == 1 && frame->pts == AV_NOPTS_VALUE &&
+            frame->pkt_dts == frame->coded_picture_number && frame->pkt_dts - 1 == frame_number + 1) {
+          adjust_pts_flag = 1;
+        }
+
+        pts_number = frame->best_effort_timestamp;
+        if (pts_number == AV_NOPTS_VALUE) {
+          pts_number = frame_number * timestamp_increment;
+        } else {
+          if (timestamp_increment == 1) {
+            if (frame_number == 0) {
+              if (pts_number > 1) {
+                pts_number = 1;
+              }
+            } else {
+              if (adjust_pts_flag) {
+                pts_number -= 1;
+              }
+            }
+          }
+        }
+        pts_int64_vector->push_back(pts_number);
+        frame_number++;
+        av_frame_unref(frame);
+      }
+    }
+    packet_number++;
+    av_packet_unref(packet);
+    status = av_read_frame(avformat, packet);
+  }
+  avinfo->visual.current_pts = pts_number;
+  avinfo->visual.adjust_pts_flag = adjust_pts_flag;
+
+  return Status::OK();
+}
+
+Status AVReadVisualPtsByPacket(struct AudioVisual *avinfo, struct MediaContainer *container,
+                               std::vector<int64_t> *pts_int64_vector) {
+  int status = 0;
+  int64_t packet_number = 0;
+  int64_t pts_number = 0;
+  std::string err_msg;
+
+  AVFormatContext *avformat = avinfo->avformat;
+  AVPacket *packet = avinfo->packet;
+  int stream_index = container->stream_index;
+
+  status = av_read_frame(avformat, packet);
+  while (status >= 0) {
+    if (packet->stream_index == stream_index) {
+      pts_number = packet->pts;
+      // Check the pts_number, make sure it is a valid number
+      if (pts_number == AV_NOPTS_VALUE) {
+        err_msg = "Failed to skip frame because there is no pts value for packet " + std::to_string(packet_number);
+        RETURN_STATUS_UNEXPECTED(err_msg);
+      }
+      pts_int64_vector->push_back(pts_number);
+    }
+    av_packet_unref(packet);
+    packet_number++;
+    status = av_read_frame(avformat, packet);
+  }
+  avinfo->visual.current_pts = pts_number;
+  return Status::OK();
+}
+
+// Flush the decoder and read it's pts
+Status AVReadVisualPtsFlushDecoder(struct AudioVisual *avinfo, struct MediaContainer *container,
+                                   std::vector<int64_t> *pts_int64_vector) {
+  int status;
+  std::string err_msg;
+
+  int64_t *pts_number = &(avinfo->visual.current_pts);
+
+  AVCodecContext *decoder_context = container->codec_context;
+  AVFrame *frame = container->frame;
+  int timestamp_increment = container->timestamp_increment;
+
+  status = avcodec_send_packet(decoder_context, nullptr);
+
+  while (status >= 0) {
+    status = avcodec_receive_frame(decoder_context, frame);
+    if (status < 0) {
+      if (status != AVERROR_EOF && status != AVERROR(EAGAIN)) {
+        err_msg = "Failed to receive frame during the flushing of the decoders.";
+        RETURN_STATUS_UNEXPECTED(err_msg);
+      }
+      break;
+    }
+    if (frame->best_effort_timestamp != AV_NOPTS_VALUE) {
+      *pts_number = frame->best_effort_timestamp;
+    } else {
+      *pts_number += timestamp_increment;
+    }
+    pts_int64_vector->push_back(*pts_number);
+    av_frame_unref(frame);
+  }
+  return Status::OK();
+}
+
+Status AVReadVisualPts(struct AudioVisual *avinfo, std::vector<int64_t> *pts_int64_vector, float *video_fps,
+                       float *time_base) {
+  // Calculate the time_base
+  RETURN_IF_NOT_OK(AVCalculateVisualTimeBase(avinfo));
+  *time_base = avinfo->visual.time_base;
+
+  // Calculate the frame_rate
+  RETURN_IF_NOT_OK(AVCalculateVisualFrameRate(avinfo));
+  *video_fps = avinfo->visual.frame_rate;
+
+  // Calculate the timestampe_increment
+  AVStream *stream = avinfo->visual.stream;
+  int timestamp_increment =
+    (stream->time_base.den * stream->avg_frame_rate.den) / (stream->time_base.num * stream->avg_frame_rate.num);
+  avinfo->visual.timestamp_increment = timestamp_increment;
+
+  bool skip_frame = FindStringInCodecContextExtradata(avinfo->visual.codec_context, "Lavc");
+  if (skip_frame) {
+    RETURN_IF_NOT_OK(AVReadVisualPtsByPacket(avinfo, &(avinfo->visual), pts_int64_vector));
+  } else {
+    RETURN_IF_NOT_OK(AVReadVisualPtsByFrame(avinfo, &(avinfo->visual), pts_int64_vector));
+  }
+
+  // Flush the decoders
+  return AVReadVisualPtsFlushDecoder(avinfo, &(avinfo->visual), pts_int64_vector);
+}
+
 Status AVDecodeVisualFrame(struct AudioVisual *avinfo, std::shared_ptr<Tensor> *output) {
   int status = 0;
   int channels = avinfo->visual.channels;
@@ -1122,11 +1308,59 @@ Status ReadVideo(const std::string &filename, std::shared_ptr<Tensor> *video_out
   // Read the packets
   return AVReadVisualAudio(&avinfo, video_output, audio_output);
 }
+
+Status ReadVideoTimestamps(const std::string &filename, std::vector<int64_t> *pts_int64_vector, float *video_fps,
+                           float *time_base, const std::string &pts_unit) {
+  // check the output parameters
+  RETURN_UNEXPECTED_IF_NULL(pts_int64_vector);
+  RETURN_UNEXPECTED_IF_NULL(video_fps);
+  RETURN_UNEXPECTED_IF_NULL(time_base);
+
+  std::string err_msg = "";
+
+  // check the input parameter: pts_unit
+  if (pts_unit != "pts" && pts_unit != "sec") {
+    err_msg = "ReadVideoTimestamps: Not supported pts_unit for " + pts_unit;
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  // set default outputs
+  // when there is not any video stream, assume the video_fps and time_base are both 1.0
+  *video_fps = 1.0;
+  *time_base = 1.0;
+
+  struct AudioVisual avinfo;
+  av_log_set_level(avinfo.av_log_level);
+  // check the input parameter filename and open it
+  RETURN_IF_NOT_OK(AVOpenFile(filename, &avinfo));
+
+  int video_stream_index = AVFindVisualStream(&avinfo);
+  if (video_stream_index < 0) {
+    return Status::OK();
+  }
+
+  // Allocate the packet
+  RETURN_IF_NOT_OK(AVPacketAllocate(&avinfo));
+
+  // Allocate the frames
+  RETURN_IF_NOT_OK(AVFrameAllocate(&avinfo, &avinfo.visual));
+
+  // Open the decoder for the visual
+  RETURN_IF_NOT_OK(AVOpenStreamCodecContext(&avinfo.visual, false, true));
+
+  return AVReadVisualPts(&avinfo, pts_int64_vector, video_fps, time_base);
+}
 #else
 Status ReadVideo(const std::string &filename, std::shared_ptr<Tensor> *visual_output,
                  std::shared_ptr<Tensor> *audio_output, std::map<std::string, std::string> *metadata_output,
                  float start_pts, float end_pts, const std::string &pts_unit) {
   std::string err_msg = "ReadVideo is not supported.";
+  return Status(StatusCode::kMDNotImplementedYet, err_msg);
+}
+
+Status ReadVideoTimestamps(const std::string &filename, std::vector<int64_t> *pts_int64_vector, float *video_fps,
+                           float *time_base, const std::string &pts_unit) {
+  std::string err_msg = "ReadVideoTimestamps is not supported.";
   return Status(StatusCode::kMDNotImplementedYet, err_msg);
 }
 #endif

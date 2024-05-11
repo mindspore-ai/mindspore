@@ -1575,6 +1575,70 @@ TEST_F(MindDataTestPipeline, TestWritePngException) {
 }
 
 #if (defined(ENABLE_MINDDATA) && defined(ENABLE_FFMPEG) && !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__))
+/// Description: a function used by the test cases for ReadVideoTimestamps
+/// Expectation: create the timestamps according to the vector_length, video_fps, start_index
+void create_expected_video_timestamps(std::tuple<std::vector<float>, float> *output, int vector_length, float video_fps,
+                                      int start_index=0) {
+  std::vector<float> pts_float_vector;
+  int index;
+  for (index=start_index; index<vector_length + start_index; index++) {
+    pts_float_vector.push_back(static_cast<float>(index));
+  }
+  *output = std::make_tuple(pts_float_vector, video_fps);
+}
+
+/// Description: a function used by the test cases for ReadVideoTimestamps
+/// Expectation: the difference between the mindspore_data and expected_data should be less than error_rate_limit
+void check_video_timestamps(const std::tuple<std::vector<float>, float> &mindspore_data,
+                            const std::tuple<std::vector<float>, float> &expected_data,
+                            float timestamp_unit, float error_rate_limit=0.0005) {
+  std::vector<float> mindspore_vector;
+  std::vector<float> expected_vector;
+  mindspore_vector = std::get<0>(mindspore_data);
+  expected_vector = std::get<0>(expected_data);
+  EXPECT_EQ(mindspore_vector.size(), expected_vector.size());
+
+  float difference;
+
+  float mindspore_timestamp_sum=0.0;
+  float expected_timestamp_sum=0.0;
+
+  for (float timestamp : mindspore_vector) {
+    mindspore_timestamp_sum += timestamp;
+  }
+  for (float timestamp : expected_vector) {
+    expected_timestamp_sum += timestamp;
+  }
+  expected_timestamp_sum *= timestamp_unit;
+
+  int pts_ok = 0;
+  float pts_error_rate;
+  difference = std::abs(mindspore_timestamp_sum - expected_timestamp_sum);
+  pts_error_rate = difference;
+  if (expected_timestamp_sum > 1.0e-5) {
+    pts_error_rate = difference / expected_timestamp_sum;
+  }
+  if (pts_error_rate < error_rate_limit) {
+    pts_ok = 1;
+  }
+  EXPECT_EQ(pts_ok, 1);
+
+  float mindspore_video_fps;
+  float expected_video_fps;
+  int fps_ok = 0;
+  mindspore_video_fps = std::get<1>(mindspore_data);
+  expected_video_fps = std::get<1>(expected_data);
+  difference = std::abs(mindspore_video_fps - expected_video_fps);
+  float fps_error_rate = difference;
+  if (expected_video_fps > 1.0e-5) {
+      fps_error_rate = difference / expected_video_fps;
+  }
+  if (fps_error_rate < error_rate_limit) {
+    fps_ok = 1;
+  }
+  EXPECT_EQ(fps_ok, 1);
+}
+
 void check_meta_data(std::map<std::string, std::string> &meta_data, const std::string &fps_name, float expected_fps,
                      float error_rate_limit = 0.0005) {
   float error_rate;
@@ -1729,5 +1793,221 @@ TEST_F(MindDataTestPipeline, TestReadVideoException) {
   // Test with a not supported pts_unit
   ASSERT_ERROR(mindspore::dataset::vision::ReadVideo(filename, &video_output, &audio_output, &metadata_output,
                                                      start_pts, end_pts, "min"));
+}
+
+/// Feature: ReadVideoTimestamps
+/// Description: Test ReadVideoTimestamps with AVI file
+/// Expectation: The Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestReadVideoTimestampsAVINormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoTimestampsAVINormal.";
+
+  std::tuple<std::vector<float>, float> mindspore_output;
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  int expected_vector_length;
+  float timestamp_increment;
+  float expected_video_fps;
+  std::tuple<std::vector<float>, float> expected_output;
+
+  filename = folder_path + "campus.avi";
+  expected_vector_length = 5;
+  timestamp_increment = 1;
+  expected_video_fps = 29.97003;
+
+  create_expected_video_timestamps(&expected_output, expected_vector_length, expected_video_fps);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output));
+  check_video_timestamps(mindspore_output, expected_output, timestamp_increment);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output, "pts"));
+  check_video_timestamps(mindspore_output, expected_output, timestamp_increment);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output, "sec"));
+  check_video_timestamps(mindspore_output, expected_output, 1.0 / expected_video_fps);
+}
+
+/// Feature: ReadVideoTimestamps
+/// Description: Test ReadVideoTimestamps with H264 file
+/// Expectation: The Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestReadVideoTimestampsH264Normal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoTimestampsH264Normal.";
+
+  std::tuple<std::vector<float>, float> mindspore_output;
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  int expected_vector_length;
+  float timestamp_increment;
+  float expected_video_fps;
+  std::tuple<std::vector<float>, float> expected_output;
+
+  filename = folder_path + "campus.h264";
+  expected_vector_length = 19;
+  timestamp_increment= 512;
+  expected_video_fps = 30.0;
+
+  create_expected_video_timestamps(&expected_output, expected_vector_length, expected_video_fps);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output));
+  check_video_timestamps(mindspore_output, expected_output, timestamp_increment);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output, "pts"));
+  check_video_timestamps(mindspore_output, expected_output, timestamp_increment);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output, "sec"));
+  check_video_timestamps(mindspore_output, expected_output, 1.0 / expected_video_fps);
+}
+
+/// Feature: ReadVideoTimestamps
+/// Description: Test ReadVideoTimestamps with H265 file
+/// Expectation: The Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestReadVideoTimestampsH265Normal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoTimestampsH265Normal.";
+
+  std::tuple<std::vector<float>, float> mindspore_output;
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  int expected_vector_length;
+  float timestamp_increment;
+  float expected_video_fps;
+  std::tuple<std::vector<float>, float> expected_output;
+
+  filename = folder_path + "campus.h265";
+  expected_vector_length = 1;
+  timestamp_increment= 5110;
+  expected_video_fps = 25.0;
+
+  create_expected_video_timestamps(&expected_output, expected_vector_length, expected_video_fps, 1);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output));
+  check_video_timestamps(mindspore_output, expected_output, timestamp_increment);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output, "pts"));
+  check_video_timestamps(mindspore_output, expected_output, timestamp_increment);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output, "sec"));
+  check_video_timestamps(mindspore_output, expected_output, timestamp_increment / (3600.0 * expected_video_fps));
+}
+
+/// Feature: ReadVideoTimestamps
+/// Description: Test ReadVideoTimestamps with MOV file
+/// Expectation: The Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestReadVideoTimestampsMOVNormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoTimestampsMOVNormal.";
+
+  std::tuple<std::vector<float>, float> mindspore_output;
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  int expected_vector_length;
+  float timestamp_increment;
+  float expected_video_fps;
+  std::tuple<std::vector<float>, float> expected_output;
+
+  filename = folder_path + "campus.mov";
+  expected_vector_length = 5;
+  timestamp_increment= 512;
+  expected_video_fps = 25.0;
+
+  create_expected_video_timestamps(&expected_output, expected_vector_length, expected_video_fps);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output));
+  check_video_timestamps(mindspore_output, expected_output, timestamp_increment);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output, "pts"));
+  check_video_timestamps(mindspore_output, expected_output, timestamp_increment);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output, "sec"));
+  check_video_timestamps(mindspore_output, expected_output, 1.0 / expected_video_fps);
+}
+
+/// Feature: ReadVideoTimestamps
+/// Description: Test ReadVideoTimestamps with MP4 file
+/// Expectation: The Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestReadVideoTimestampsMP4Normal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoTimestampsMP4Normal.";
+
+  std::tuple<std::vector<float>, float> mindspore_output;
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  int expected_vector_length;
+  float timestamp_increment;
+  float expected_video_fps;
+  std::tuple<std::vector<float>, float> expected_output;
+
+  filename = folder_path + "campus.mp4";
+  expected_vector_length = 5;
+  timestamp_increment= 512;
+  expected_video_fps = 25.0;
+
+  create_expected_video_timestamps(&expected_output, expected_vector_length, expected_video_fps);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output));
+  check_video_timestamps(mindspore_output, expected_output, timestamp_increment);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output, "pts"));
+  check_video_timestamps(mindspore_output, expected_output, timestamp_increment);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output, "sec"));
+  check_video_timestamps(mindspore_output, expected_output, 1.0 / expected_video_fps);
+}
+
+/// Feature: ReadVideoTimestamps
+/// Description: Test ReadVideoTimestamps with WMV file
+/// Expectation: The Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestReadVideoTimestampsWMVNormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoTimestampsWMVNormal.";
+
+  std::tuple<std::vector<float>, float> mindspore_output;
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  int expected_vector_length;
+  float timestamp_increment;
+  float expected_video_fps;
+  std::tuple<std::vector<float>, float> expected_output;
+
+  filename = folder_path + "campus.wmv";
+  expected_vector_length = 4;
+  timestamp_increment= 40.0;
+  expected_video_fps = 25.0;
+
+  create_expected_video_timestamps(&expected_output, expected_vector_length, expected_video_fps);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output));
+  check_video_timestamps(mindspore_output, expected_output, timestamp_increment);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output, "pts"));
+  check_video_timestamps(mindspore_output, expected_output, timestamp_increment);
+
+  ASSERT_OK(mindspore::dataset::vision::ReadVideoTimestamps(filename, &mindspore_output, "sec"));
+  check_video_timestamps(mindspore_output, expected_output, 1.0 / expected_video_fps);
+}
+
+/// Feature: ReadVideoTimestamps
+/// Description: Test ReadVideoTimestamps with invalid parameter
+/// Expectation: Error is caught when the the parameter is invalid
+TEST_F(MindDataTestPipeline, TestReadVideoTimestampsException) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestReadVideoTimestampsException.";
+  std::tuple<std::vector<float>, float> output;
+  std::string folder_path = "./data/dataset/video/";
+  std::string filename;
+
+  filename = folder_path + "campus.mp4";
+
+  // Test with a not exist filename
+  ASSERT_ERROR(mindspore::dataset::vision::ReadVideoTimestamps("./this_file_is_not_exist", &output));
+
+  // Test with a directory name
+  ASSERT_ERROR(mindspore::dataset::vision::ReadVideoTimestamps(folder_path, &output));
+
+  // Test with a not supported type of file
+  ASSERT_ERROR(mindspore::dataset::vision::ReadVideoTimestamps("./data/dataset/declient.cfg", &output));
+
+  // Test with a not supported pts_unit
+  ASSERT_ERROR(mindspore::dataset::vision::ReadVideoTimestamps(filename, &output, "min"));
 }
 #endif

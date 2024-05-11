@@ -704,6 +704,47 @@ def read_video(filename, start_pts=0, end_pts=None, pts_unit="pts"):
     return video_output, audio_output, metadata_output
 
 
+def read_video_timestamps(filename, pts_unit="pts"):
+    """
+    Read the timestamps and frames per second of a video file.
+    It supports AVI, H264, H265, MOV, MP4, WMV files.
+
+    Args:
+        filename(str): The path to the video file to be read.
+        pts_unit(str, optional): The unit of the timestamps. It can be any of ["pts", "sec"]. Default: "pts".
+
+    Returns:
+        list, when `pts_unit` is set to "pts", list[int] is returned, when `pts_unit` is set to "sec",
+            list[float] is returned.
+        float, the frames per second of the video file.
+
+    Raises:
+        TypeError: If `filename` is not of type str.
+        TypeError: If `pts_unit` is not of type str.
+        RuntimeError: If `filename` does not exist, or not a regular file, or not a supported video file.
+        RuntimeError: If `pts_unit` is not in ["pts", "sec"].
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import mindspore.dataset.vision as vision
+        >>> video_timestamps, video_fps = vision.read_video_timestamps("/path/to/file")
+    """
+    if not isinstance(filename, str):
+        raise TypeError("Input filename is not of type {0}, but got: {1}.".format(str, type(filename)))
+    if not isinstance(pts_unit, str):
+        raise TypeError("Input pts_unit is not of type {0}, but got: {1}.".format(str, type(pts_unit)))
+
+    video_pts, video_fps, time_base = cde.read_video_timestamps(filename, pts_unit)
+
+    if video_pts == []:
+        return video_pts, None
+    if pts_unit == "pts":
+        return video_pts, video_fps
+    return [x * time_base for x in video_pts], video_fps
+
+
 def write_file(filename, data):
     """
     Write the one dimension uint8 data into a file using binary mode.
