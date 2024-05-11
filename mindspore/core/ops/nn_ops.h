@@ -181,6 +181,10 @@ GVAR_DEF(PrimitivePtr, kPrimRNNTLoss, std::make_shared<Primitive>(kRNNTLossOpNam
 GVAR_DEF(PrimitivePtr, kPrimMatmulQkv, std::make_shared<Primitive>(kMatmulQkvOpName));
 GVAR_DEF(PrimitivePtr, kPrimMatmulFfn, std::make_shared<Primitive>(kMatmulFfnOpName));
 GVAR_DEF(PrimitivePtr, kPrimAllFinite, std::make_shared<Primitive>(kAllFiniteOpName));
+GVAR_DEF(PrimitivePtr, kPrimEmbeddingTableExport, std::make_shared<Primitive>("EmbeddingTableExport"));
+GVAR_DEF(PrimitivePtr, kPrimEmbeddingTableImport, std::make_shared<Primitive>("EmbeddingTableImport"));
+GVAR_DEF(PrimitivePtr, kPrimEmbeddingComputeVarExport, std::make_shared<Primitive>("EmbeddingComputeVarExport"));
+GVAR_DEF(PrimitivePtr, kPrimEmbeddingComputeVarImport, std::make_shared<Primitive>("EmbeddingComputeVarImport"));
 }  // namespace prim
 }  // namespace mindspore
 

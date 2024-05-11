@@ -51,10 +51,13 @@ ValuePtr MakeScalarZero(const AbstractBasePtr &abs) {
     case TypeId::kNumberTypeInt64:
       value = MakeValue<int64_t>(0);
       break;
+    case TypeId::kNumberTypeBool:
+      value = MakeValue<bool>(false);
+      break;
     default:
-      MS_LOG(EXCEPTION)
-        << "For SequenceZerosLike with sequence[scalar], only support float, double and int64_t, but got "
-        << abs->ToString();
+      MS_LOG(EXCEPTION) << "For SequenceZerosLike with sequence[scalar], "
+                        << "only support bool, float, double and int64_t, "
+                        << "but got " << abs->ToString();
       break;
   }
   return value;

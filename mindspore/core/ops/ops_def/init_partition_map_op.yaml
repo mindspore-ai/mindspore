@@ -1,0 +1,24 @@
+#operator InitPartitionMap
+init_partition_map:
+    args:
+        ps_num:
+            dtype: tensor
+        ps_ids:
+            dtype: tensor
+        partition_num:
+            dtype: int
+            default: 65537
+        _embedding_dim:
+            dtype: int
+            default: None
+        _max_key_num:
+            dtype: int
+            default: None
+        _ps_num:
+            dtype: int
+            default: 1
+    labels:
+        _process_node_engine_id: "'PS'"
+    returns:
+        fake_output:
+            dtype: tensor
