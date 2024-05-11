@@ -50,11 +50,6 @@ int GroupNormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
 
   const auto &x_shape = inputs[kIndex0]->GetShapeVector();
-  if (x_shape.size() < 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dims of input tesnor must be not less than 2 "
-                      << "but got: " << x_shape.size();
-  }
-
   auto batch = x_shape[0];
   auto num_groups = inputs[kIndex1]->GetValueWithCheck<int64_t>();
   HxW_ = LongToSize((x_shape.size() == kNumberTwo)
@@ -64,11 +59,6 @@ int GroupNormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   num_channel_ = LongToSize(x_shape[1]);
   inner_size_ = LongToSize(num_channel_ * HxW_ / num_groups);
   outter_size_ = LongToSize(batch * num_groups);
-
-  if (num_channel_ % num_groups != 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'num_channels' must be divided by 'num_groups', "
-                      << "but got 'num_channels': " << num_channel_ << " ,'num_groups': " << num_groups;
-  }
 
   return ret;
 }
@@ -85,11 +75,6 @@ bool GroupNormGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, co
 template <typename T>
 void GroupNormGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  size_t f_size = sizeof(T);
-  if (inputs[kIndex2]->size() != f_size * LongToUlong(num_channel_) ||
-      inputs[kIndex3]->size() != f_size * LongToUlong(num_channel_)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the product of gamma and beta's shape must be " << num_channel_;
-  }
   auto x = GetDeviceAddress<T>(inputs, kIndex0);
   auto gamma = GetDeviceAddress<T>(inputs, kIndex2);
   auto beta = GetDeviceAddress<T>(inputs, kIndex3);

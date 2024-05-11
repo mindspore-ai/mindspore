@@ -14,6 +14,7 @@
 # ============================================================================
 
 import numpy as np
+import os
 import pytest
 
 import mindspore as ms
@@ -44,6 +45,7 @@ def test_ops_norm_forward(mode):
     Description: Verify the result of norm
     Expectation: success
     """
+    os.environ['GRAPH_OP_RUN'] = '1'
     ms.set_context(mode=mode)
     a = ops.arange(9, dtype=ms.float32) - 4
     b = a.reshape((3, 3))
@@ -54,6 +56,7 @@ def test_ops_norm_forward(mode):
     output2 = norm_ext_forward_func(b)
     expect_output2 = np.array(7.745967)
     assert np.allclose(output2.asnumpy(), expect_output2)
+    del os.environ['GRAPH_OP_RUN']
 
 
 
@@ -68,6 +71,7 @@ def test_ops_norm_backward(mode):
     Description: Verify the result of norm backward
     Expectation: success
     """
+    os.environ['GRAPH_OP_RUN'] = '1'
     ms.set_context(mode=mode)
     a = ops.arange(9, dtype=ms.float32) - 4
     b = a.reshape((3, 3))
@@ -78,6 +82,7 @@ def test_ops_norm_backward(mode):
     output2 = norm_ext_backward_func(b)
     expect_output2 = ops.grad(ops.norm, (0))(b).asnumpy()
     assert np.allclose(output2.asnumpy(), expect_output2)
+    del os.environ['GRAPH_OP_RUN']
 
 
 
@@ -92,9 +97,11 @@ def test_ops_norm_dyn(mode):
     Description: test Norm with dynamic rank/shape.
     Expectation: success.
     """
+    os.environ['GRAPH_OP_RUN'] = '1'
     ms.set_context(mode=mode)
     input_x1 = np.random.randn(*(3, 3)).astype(np.float32)
     input_x2 = np.random.randn(*(3, 3, 3)).astype(np.float32)
     in1 = Tensor(input_x1)
     in2 = Tensor(input_x2)
     TEST_OP(norm_ext_forward_func, [[in1], [in2]])
+    del os.environ['GRAPH_OP_RUN']
