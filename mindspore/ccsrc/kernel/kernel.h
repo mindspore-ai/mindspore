@@ -839,8 +839,10 @@ inline T *GetDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t 
   }
 
   if (addr_list[index]->device_ptr() == nullptr) {
-    MS_LOG(WARNING) << "The memory of device address is nullptr, address index: " << index
-                    << ", and the length of 'addr_list' is " << addr_list.size();
+    if (addr_list[index]->type_id() != kMetaTypeNone) {
+      MS_LOG(WARNING) << "The memory of device address is nullptr, address index: " << index
+                      << ", and the length of 'addr_list' is " << addr_list.size();
+    }
     return nullptr;
   }
 
