@@ -1600,7 +1600,7 @@ REG_BPROP_BUILDER("SeLU").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto scale = 1.0507009873554805;
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto tmp_grad = ib->Emit("EluGrad", {dout, out});
+  auto tmp_grad = ib->Emit("EluGrad", {dout, out, ib->Value<float>(1.f), ib->Value<bool>(true)});
   auto dx = ib->Mul(tmp_grad, ib->Tensor(scale, ib->GetDtype(tmp_grad)));
   return {dx};
 });
@@ -1723,7 +1723,7 @@ REG_BPROP_BUILDER("Elu").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto alpha = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit("EluGrad", {dout, out});
+  auto dx = ib->Emit("EluGrad", {dout, out, alpha, ib->Value<bool>(true)});
   return {dx, ib->OutZeros(alpha)};
 });
 
