@@ -98,27 +98,11 @@ TypePtr MoeFinalizeRoutingFuncImpl::InferType(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(infer_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, tensor_valid_types, prim_name);
 
-  const auto &skip_type = input_args[kx1]->GetType();
-  MS_EXCEPTION_IF_NULL(skip_type);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("skip1", skip_type, tensor_valid_types, prim_name);
-
-  const auto &bias_type = input_args[kbias]->GetType();
-  MS_EXCEPTION_IF_NULL(bias_type);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("bias", bias_type, tensor_valid_types, prim_name);
-
-  const auto &scales_type = input_args[kscales]->GetType();
-  MS_EXCEPTION_IF_NULL(scales_type);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("scales", scales_type, tensor_valid_types, prim_name);
-
   const auto &row_idx_type = input_args[krowIdx]->GetType();
   MS_EXCEPTION_IF_NULL(row_idx_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("expanded_row_idx", row_idx_type, idx_valid_types, prim_name);
 
-  const auto &expert_idx_type = input_args[kexpertIdx]->GetType();
-  MS_EXCEPTION_IF_NULL(expert_idx_type);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("expanded_expert_idx", expert_idx_type, idx_valid_types, prim_name);
-
-  return input_args[kExpandedX]->GetType()->Clone();
+  return input_args[kExpandedX]->GetType();
 }
 
 }  // namespace ops

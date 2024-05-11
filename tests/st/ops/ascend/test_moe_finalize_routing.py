@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
+import pytest
 from copy import deepcopy
 
 import mindspore as ms
@@ -61,13 +62,18 @@ class MoeFinalizeRoutingNet(Cell):
         return out
 
 
-def test_moe_finalize_routing_case0():
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_moe_finalize_routing_case0(mode):
     """
     Feature: Test the moe_finalize_routing calculate
     Description: Test the moe_finalize_routing ops in Ascend backend
     Expectation: The result match to the expect value.
     """
-    context.set_context(device_target="Ascend", mode=ms.GRAPH_MODE)
+    context.set_context(device_target="Ascend", mode=mode)
 
     top_k = 2
     token_num = 6
@@ -102,13 +108,18 @@ def test_moe_finalize_routing_case0():
     np.testing.assert_allclose(resnpy, expect0, rtol=1e-3)
 
 
-def test_moe_finalize_routing_case1():
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_moe_finalize_routing_case1(mode):
     """
     Feature: Test the moe_finalize_routing calculate
     Description: Test the moe_finalize_routing ops in Ascend backend
     Expectation: The result match to the expect value.
     """
-    context.set_context(device_target="Ascend", mode=ms.GRAPH_MODE)
+    context.set_context(device_target="Ascend", mode=mode)
 
     top_k = 2
     token_num = 512
