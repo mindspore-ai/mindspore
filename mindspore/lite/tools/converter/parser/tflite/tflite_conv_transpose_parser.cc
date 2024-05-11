@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020~2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,13 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr int kChannelIn = 3;
+constexpr int kChannelOut = 0;
+constexpr int kKernelH = 1;
+constexpr int kKernelW = 2;
+}  // namespace
+
 PrimitiveCPtr TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
@@ -66,9 +73,9 @@ PrimitiveCPtr TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT>
     MS_LOG(ERROR) << "the weight shape is illegal";
     return nullptr;
   }
-  prim->set_in_channel(weight_shape[kWeightChannelIn]);
-  prim->set_out_channel(weight_shape[kWeightChannelOut]);
-  prim->set_kernel_size({weight_shape[kWeightKernelH], weight_shape[kWeightKernelW]});
+  prim->set_in_channel(weight_shape[kChannelIn]);
+  prim->set_out_channel(weight_shape[kChannelOut]);
+  prim->set_kernel_size({weight_shape[kKernelH], weight_shape[kKernelW]});
 
   // calculate pad params
   const auto &data_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(THIRD_INPUT));
@@ -78,7 +85,7 @@ PrimitiveCPtr TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT>
   }
   std::vector<int64_t> params;
   int status = getPaddingParam(data_tensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w,
-                               weight_shape[kWeightKernelH], weight_shape[kWeightKernelW], &params);
+                               weight_shape[kKernelH], weight_shape[kKernelW], &params);
   if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "get padding params failed";
     return nullptr;

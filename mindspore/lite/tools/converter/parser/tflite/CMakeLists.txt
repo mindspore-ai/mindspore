@@ -1,6 +1,10 @@
-include(${TOP_DIR}/mindspore/lite/cmake/merge.cmake)
-merge_parser(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_BINARY_DIR}/tools/converter/parser/tflite/tflite_op_parser.cc)
-file(GLOB_RECURSE TFLITE_SRC_LIST ${CMAKE_BINARY_DIR}/tools/converter/parser/tflite/tflite_op_parser.cc)
+if(MSLITE_MERGE_DISABLE)
+    file(GLOB_RECURSE TFLITE_SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
+else()
+    include(${TOP_DIR}/mindspore/lite/cmake/merge.cmake)
+    merge_parser(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_BINARY_DIR}/tools/converter/parser/tflite/tflite_op_parser.cc)
+    file(GLOB_RECURSE TFLITE_SRC_LIST ${CMAKE_BINARY_DIR}/tools/converter/parser/tflite/tflite_op_parser.cc)
+endif()
 
 set_property(SOURCE ${TFLITE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${TFLITE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS FLATBUFFERS_LOCALE_INDEPENDENT=0)
