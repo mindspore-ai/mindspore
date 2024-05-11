@@ -9,29 +9,29 @@
 #### AutoParallel
 
 - [STABLE] Transpose/Sub/Add/Mul/Div/ReLU/Softmax/Sigmoid算子支持配置Layout。
-- [STABLE] 集合通信精度会影响网络收敛，在接口mindspore.set_auto_parallel_context提供配置项force_fp32_communication，设为True时可以强制将reduce类通信算子的通信类型转为float32。
-- [BETA] 流水并行支持Interleave调度，优化micro batch大小受限场景下的模型性能。
-- [BETA] 优化流水线并行场景下提高模型转换速度，支持单个stage单独转换。
-- [BETA] 动态图长序列并行支持RingAttention，优化长序列训练性能。
+- [STABLE] 集合通信精度会影响网络收敛，在接口mindspore.set_auto_parallel_context提供配置项[force_fp32_communication](https://www.mindspore.cn/docs/zh-CN/r2.3.0rc2/api_python/mindspore/mindspore.set_auto_parallel_context.html)，设为True时可以强制将reduce类通信算子的通信类型转为float32。
+- [BETA] pipeline并行支持Interleave调度，优化micro batch大小受限场景下的模型性能。
+- [BETA] 优化pipeline并行场景下提高模型转换速度，支持单个stage单独转换。
 
 #### PyNative
 
-- [STABLE] 动态图下支持重计算功能。
-- [STABLE] 动态图下支持register_hook功能。
+- [BETA] 动态图下支持[重计算](https://www.mindspore.cn/docs/zh-CN/r2.3.0rc2/api_python/mindspore/mindspore.recompute.html)功能。
+- [STABLE] 动态图下支持[register_hook](https://www.mindspore.cn/docs/zh-CN/r2.3.0rc2/api_python/mindspore/Tensor/mindspore.Tensor.register_hook.html#mindspore.Tensor.register_hook)功能。
 
 ### API变更
 
-增加动态组网场景下各类超时时间环境变量配置：
+增加[动态组网](https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.0rc2/parallel/dynamic_cluster.html)场景下各类超时时间环境变量配置：
 
-- MS_TOPO_TIMEOUT： 集群组网阶段超时时间，单位：秒。
-- MS_NODE_TIMEOUT：节点心跳超时时间，单位：秒。
-- MS_RECEIVE_MSG_TIMEOUT：节点接收消息超时时间，单位：秒。
+- `MS_TOPO_TIMEOUT`： 集群组网阶段超时时间，单位：秒。
+- `MS_NODE_TIMEOUT`：节点心跳超时时间，单位：秒。
+- `MS_RECEIVE_MSG_TIMEOUT`：节点接收消息超时时间，单位：秒。
 
-新增环境变量 MS_ENABLE_LCCL，支持昇腾后端单机多卡场景下使用LCCL通信库。
+新增环境变量 `MS_ENABLE_LCCL`，支持昇腾后端单机多卡场景下使用LCCL通信库。
 
 ### 问题修复
 
 - [#I9CR96] 修复在大规模集群下，动态组网启动方式的超时时间不足导致集群启动失败的问题。
+- [#I94AQQ] 修复ops.Addcdiv算子在图模式下输出shape有误问题。
 
 ### 贡献者
 
