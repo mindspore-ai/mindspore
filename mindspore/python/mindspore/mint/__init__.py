@@ -57,7 +57,7 @@ from mindspore.ops.function.array_func import repeat_interleave_ext as repeat_in
 # 14
 
 # 15
-
+from mindspore.ops.auto_generate import flatten_ext as flatten
 # 16
 from mindspore.ops.functional import matmul
 # 17
@@ -275,7 +275,7 @@ __all__ = [
     # 14
 
     # 15
-
+    'flatten',
     # 16
     'matmul',
     # 17

@@ -49,7 +49,7 @@ bool StackExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const std
                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto [tensor, axis] = GetStackRealInputs(inputs);
-  ParseGenExecutor(GEN_EXECUTOR(op_type_, tensor, axis, outputs[kIndex0]));
+  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, tensor, axis, outputs[kIndex0]));
   RunOp(stream_ptr, workspace);
   return true;
 }
