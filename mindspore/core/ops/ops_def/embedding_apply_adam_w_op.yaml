@@ -1,0 +1,49 @@
+#operator EmbeddingApplyAdamW
+embedding_apply_adam_w:
+    args:
+        var_handle:
+            dtype: tensor
+        beta1_power:
+            dtype: tensor
+        beta2_power:
+            dtype: tensor
+        lr:
+            dtype: tensor
+        weight_decay:
+            dtype: tensor
+        beta1:
+            dtype: tensor
+        beta2:
+            dtype: tensor
+        epsilon:
+            dtype: tensor
+        grad:
+            dtype: tensor
+        keys:
+            dtype: tensor
+        max_grad_norm:
+            dtype: tensor
+            default: None
+        embedding_dim:
+            dtype: int
+            default: 1
+        amsgrad:
+            dtype: bool
+            default: False
+        maximize:
+            dtype: bool
+            default: False
+        mask_zero:
+            dtype: bool
+            default: False
+        _embedding_dim:
+            dtype: int
+            default: 1
+        _max_key_num:
+            dtype: int
+            default: 1
+    labels:
+        _process_node_engine_id: "'PS'"
+    returns:
+        var_handle:
+            dtype: tensor

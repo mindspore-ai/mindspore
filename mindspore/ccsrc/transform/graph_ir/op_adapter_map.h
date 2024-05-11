@@ -533,6 +533,19 @@ constexpr const char kNameMoeFinalizeRouting[] = "MoeFinalizeRouting";
 constexpr const char kSilentCheck[] = "SilentCheck";
 constexpr const char kNameUniformCandidateSampler[] = "UniformCandidateSampler";
 constexpr const char kNameAllFinite[] = "AllFinite";
+constexpr const char kNameInitPartitionMap[] = "InitPartitionMap";
+constexpr const char kNameInitEmbeddingHashmap[] = "InitEmbeddingHashmap";
+constexpr const char kNameEmbeddingTableImport[] = "EmbeddingTableImport";
+constexpr const char kNameEmbeddingTableFind[] = "EmbeddingTableFind";
+constexpr const char kNameEmbeddingTableFindAndInit[] = "EmbeddingTableFindAndInit";
+constexpr const char kNameEmbeddingApplyFtrl[] = "EmbeddingApplyFtrl";
+constexpr const char kNameEmbeddingApplyAdam[] = "EmbeddingApplyAdam";
+constexpr const char kNameEmbeddingApplyAdamW[] = "EmbeddingApplyAdamW";
+constexpr const char kNameEmbeddingApplyAdaGrad[] = "EmbeddingApplyAdaGrad";
+constexpr const char kNameEmbeddingComputeVarExport[] = "EmbeddingComputeVarExport";
+constexpr const char kNameEmbeddingComputeVarImport[] = "EmbeddingComputeVarImport";
+constexpr const char kNameEmbeddingTableExport[] = "EmbeddingTableExport";
+constexpr const char kNameFakeRemoteLookupUniqued[] = "FakeRemoteLookupUniqued";
 
 class OpAdapterDesc;
 

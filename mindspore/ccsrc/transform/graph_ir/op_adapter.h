@@ -668,6 +668,18 @@ class OpAdapter : public BaseOpAdapter {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
 
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEInitializerMode> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEFilterMode> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEOptimizerMode> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
   static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEEnumToStr> enum_str,
                                 const std::vector<std::string> &enum_string) {
     return ConvertAnyUtil(value, enum_str, enum_string);
@@ -860,6 +872,21 @@ class OpAdapter : public BaseOpAdapter {
   }
 
   static std::string GetAttrType(const AnyTraits<GECoordinateTransformMode> anyTraitsGE) {
+    std::string ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<GEInitializerMode> anyTraitsGE) {
+    std::string ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<GEFilterMode> anyTraitsGE) {
+    std::string ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<GEOptimizerMode> anyTraitsGE) {
     std::string ret{};
     return ret;
   }

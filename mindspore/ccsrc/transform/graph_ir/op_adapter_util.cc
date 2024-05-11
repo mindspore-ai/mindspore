@@ -242,6 +242,33 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GECoordinateTr
   return GECoordinateTransformMode::ConvertEnumToString(mode_id);
 }
 
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEInitializerMode>) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  }
+  int64_t mode_id = GetCastIntegralValue<int64_t>(value);
+  return GEInitializerMode::ConvertEnumToString(mode_id);
+}
+
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEFilterMode>) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  }
+  int64_t mode_id = GetCastIntegralValue<int64_t>(value);
+  return GEFilterMode::ConvertEnumToString(mode_id);
+}
+
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEOptimizerMode>) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  }
+  int64_t mode_id = GetCastIntegralValue<int64_t>(value);
+  return GEOptimizerMode::ConvertEnumToString(mode_id);
+}  // namespace transform
+
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEEnumToStr>,
                            const std::vector<std::string> &enum_string) {
   MS_EXCEPTION_IF_NULL(value);
