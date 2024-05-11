@@ -60,7 +60,7 @@ constexpr int64_t kWeightShapeRank = 2;
 constexpr int64_t kWeightShapeRankMoe = 3;
 constexpr int64_t kBiasShapeRank = 1;
 constexpr int64_t kBiasShapeRankMoe = 2;
-constexpr int64_t kExpertShapeRank = 1;
+constexpr int64_t kExpertShapeRank = 0;
 
 void CheckInputsNum(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
@@ -102,6 +102,80 @@ class FFNInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     CheckInputsNum(primitive, input_args);
     auto x_shape = input_args[kInputIndexX]->BuildShape();
+    auto real_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape)[kShape];
+    auto w1_shape = input_args[kInputIndexW1]->BuildShape();
+    auto real_w1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(w1_shape)[kShape];
+    auto w2_shape = input_args[kInputIndexW2]->BuildShape();
+    auto real_w2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(w2_shape)[kShape];
+    auto input_type = input_args[kInputIndexW1]->GetType()->cast<TensorTypePtr>()->element();
+    if (input_type->type_id() == TypeId::kNumberTypeInt4) {
+      real_w1_shape[real_w1_shape.size() - 1] *= 2;
+      real_w2_shape[real_w2_shape.size() - 1] *= 2;
+    }
+
+    constexpr int64_t x_mini_rank_size = 2;
+    (void)CheckAndConvertUtils::CheckInteger("x shape rank", SizeToLong(real_shape.size()), kGreaterEqual,
+                                             x_mini_rank_size, primitive->name());
+
+    int64_t weight_rank_size = kWeightShapeRankMoe;
+    int64_t bias_rank_size = kBiasShapeRankMoe;
+    if (input_args.size() <= kInputIndexExpert ||
+        input_args[kInputIndexExpert]->isa<abstract::AbstractNone>()) {  // without expert
+      weight_rank_size = kWeightShapeRank;
+      bias_rank_size = kBiasShapeRank;
+    }
+    auto get_dim = [](const ShapeVector &shape, int64_t org_dim) {
+      auto dim = org_dim;
+      if (dim < 0) {
+        dim += static_cast<int64_t>(shape.size());
+      }
+      MS_EXCEPTION_IF_CHECK_FAIL(
+        dim < SizeToLong(shape.size()),
+        "Failed to get dim, dim index " + std::to_string(org_dim) + ", size " + std::to_string(shape.size()));
+      return shape[dim];
+    };
+    (void)CheckAndConvertUtils::CheckInteger("w1 shape rank", SizeToLong(real_w1_shape.size()), kEqual,
+                                             weight_rank_size, primitive->name());
+    (void)CheckAndConvertUtils::CheckInteger("w2 shape rank", SizeToLong(real_w2_shape.size()), kEqual,
+                                             weight_rank_size, primitive->name());
+
+    auto hidden_size = get_dim(real_shape, -1);         // x.shape[-1]
+    auto ffn_hidden_size = get_dim(real_w1_shape, -1);  // w1.shape[-1]
+    // w1: [expert], h, ffn_h
+    (void)CheckAndConvertUtils::CheckInteger("x and w1 hidden size", hidden_size, kEqual, get_dim(real_w1_shape, -2),
+                                             primitive->name());
+    // w2: [expert], ffn_h, h
+    (void)CheckAndConvertUtils::CheckInteger("x and w2 hidden size", hidden_size, kEqual, get_dim(real_w2_shape, -1),
+                                             primitive->name());
+
+    (void)CheckAndConvertUtils::CheckInteger("w1 and w2 ffn hidden size", ffn_hidden_size, kEqual,
+                                             get_dim(real_w2_shape, -2), primitive->name());
+
+    // optional expert_tokens
+    if (input_args.size() > kInputIndexExpert && !input_args[kInputIndexExpert]->isa<abstract::AbstractNone>()) {
+      auto expert_shape = input_args[kInputIndexExpert]->BuildShape();
+      auto real_expert_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(expert_shape)[kShape];
+      (void)CheckAndConvertUtils::CheckInteger("expert_tokens shape rank", SizeToLong(real_expert_shape.size()),
+                                               kGreaterEqual, kExpertShapeRank, primitive->name());
+    }
+    // optional bias1
+    if (input_args.size() > kInputIndexBias1 && !input_args[kInputIndexBias1]->isa<abstract::AbstractNone>()) {
+      auto bias1_shape = input_args[kInputIndexBias1]->BuildShape();
+      auto real_bias1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(bias1_shape)[kShape];
+      (void)CheckAndConvertUtils::CheckInteger("bias1 shape rank", SizeToLong(real_bias1_shape.size()), kEqual,
+                                               bias_rank_size, primitive->name());
+      (void)CheckAndConvertUtils::CheckInteger("w1 and bias1 ffn hidden size", ffn_hidden_size, kEqual,
+                                               get_dim(real_bias1_shape, -1), primitive->name());
+    }
+    // optional bias2
+    if (input_args.size() > kInputIndexBias2 && !input_args[kInputIndexBias2]->isa<abstract::AbstractNone>()) {
+      auto bias2_shape = input_args[kInputIndexBias2]->BuildShape();
+      auto real_bias2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(bias2_shape)[kShape];
+      (void)CheckAndConvertUtils::CheckInteger("bias2 shape rank", SizeToLong(real_bias2_shape.size()), kEqual,
+                                               bias_rank_size, primitive->name());
+      (void)CheckAndConvertUtils::CheckInteger("w2 and bias2 hidden size", hidden_size, kEqual,
+                                               get_dim(real_bias2_shape, -1), primitive->name());
+    }
     return x_shape;
   }
 

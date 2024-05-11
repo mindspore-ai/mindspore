@@ -54,8 +54,7 @@ std::string FFNExtConvertEnumToString(int64_t id) {
     "softplus",      "tanh", "selu",    "hswish",  "hsigmoid", "thresholdrelu", "linear", "hard_tanh", "sign",
     "swish",         "gelu", "glu",     "unknown", "fastgelu", "silu",          "geglu",  "swiglu",    "reglu"};
   if (id < 0 || id >= static_cast<int64_t>(activation_mode.size())) {
-    MS_LOG(EXCEPTION) << "Invalid moe ffn activation " << id;
-    return "";
+    MS_LOG(EXCEPTION) << "Invalid FFN activation " << id;
   }
   return activation_mode[id];
 }
