@@ -218,7 +218,7 @@ AreaMode SplitModelAscend::GetDefaultAreaMode(const PrimOpPtr &node) const {
     if (node_name == kReshapeOpName || node_name == kAssignOpName) {
       return AreaMode::BASIC;
     }
-    if (node_name == kTransposeOpName && is_dvm_) {
+    if (is_dvm_ && (node_name == kTransposeOpName || node_name == kCastOpName)) {
       return AreaMode::BASIC;
     }
   }
