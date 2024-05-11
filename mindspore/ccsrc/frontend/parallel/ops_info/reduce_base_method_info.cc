@@ -36,6 +36,8 @@ namespace parallel {
 namespace {
 constexpr auto kNameAxis = "axis";
 constexpr auto kNameKeepDims = "keep_dims";
+constexpr auto kNameDim = "dim";
+constexpr auto kNameKeepDim = "keepdim";
 
 bool IsDataParallelStrategy(const Dimensions &strategy, int32_t stage_id) {
   CheckGlobalDeviceManager();
@@ -258,6 +260,69 @@ Status ReduceAnyInfo::InferForwardCommunication() {
   return SUCCESS;
 }
 
+std::vector<int64_t> SumExtInfo::reduce_dim() {
+  std::vector<int64_t> dim_list{};
+  auto prim_name = GetPrimNameFromInfoName(name_);
+  auto idx = ops::GetInputIndexByName(prim_name, kNameDim);
+  if (input_value_.size() <= idx || input_value_[idx] == nullptr) {
+    MS_LOG(EXCEPTION) << "For " << name_ << ", the input_value_ is less than " << idx
+                      << ", or input_value_[idx] == nullptr.";
+  }
+  std::vector<int64_t> axis_value;
+  if (input_value_[idx]->isa<None>()) {
+    axis_value = {};
+  } else {
+    auto axis_opt = GetArrayValueFromInputs<int64_t>(input_value_, name_, kNameDim);
+    if (!axis_opt.has_value()) {
+      MS_LOG(EXCEPTION) << "For " << name_ << ", failed to get value for " << kNameDim << ".";
+    }
+    axis_value = axis_opt.value();
+  }
+  MS_ASSERT(inputs_shape_.size() >= 1);
+  auto x_dim = inputs_shape_.at(0).size();
+  // axis is (), reduce all dim
+  if (axis_value.empty()) {
+    for (size_t i = 0; i < x_dim; ++i) {
+      dim_list.push_back(SizeToLong(i));
+    }
+  } else {
+    auto AxisCorrectFunc = [x_dim](const int64_t axis) {
+      if (axis < 0) {
+        return axis + SizeToLong(x_dim);
+      }
+      return axis;
+    };
+    std::transform(axis_value.begin(), axis_value.end(), std::back_inserter(dim_list), AxisCorrectFunc);
+  }
+  return dim_list;
+}
+
+Status SumExtInfo::GetAttrs() {
+  // get attr cross_batch and keep_dims
+  auto keep_dims_opt = GetScalarValueFromInputs<bool>(input_value_, name_, kNameKeepDim);
+  if (!keep_dims_opt.has_value()) {
+    MS_LOG(EXCEPTION) << "For " << name_ << ", failed to get value for " << kNameKeepDim << ".";
+  }
+  keepdims_ = keep_dims_opt.value();
+
+  auto cross_batch_iter = attrs_.find(CROSS_BATCH);
+  if (cross_batch_iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(cross_batch_iter->second);
+    if (!cross_batch_iter->second->isa<BoolImm>()) {
+      MS_LOG(ERROR) << name_ << ": cross_batch is not a bool.";
+      return FAILED;
+    }
+    cross_batch_ = cross_batch_iter->second->cast<BoolImmPtr>()->value();
+  }
+  auto reducemethodcost = std::dynamic_pointer_cast<ReduceMethodCost>(operator_cost());
+  if (reducemethodcost == nullptr) {
+    MS_LOG(ERROR) << "Cost cast to ReduceMethodCostPtr failed!";
+    return FAILED;
+  }
+  reducemethodcost->set_cross_batch(cross_batch_);
+  return SUCCESS;
+}
+
 REGISTER(ReduceMaxInfo);
 REGISTER(ReduceMeanInfo);
 REGISTER(ReduceSumInfo);
@@ -265,5 +330,6 @@ REGISTER(ReduceAnyInfo);
 REGISTER(ReduceMinInfo);
 REGISTER(ReduceProdInfo);
 REGISTER(ReduceAllInfo);
+REGISTER(SumExtInfo);
 }  // namespace parallel
 }  // namespace mindspore

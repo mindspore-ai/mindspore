@@ -17,6 +17,7 @@ import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore import ops
 from mindspore import context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
@@ -74,6 +75,35 @@ def test_sum_mul():
         def construct(self, x, y, b):
             out = self.mul1(x, y)
             out = self.reduce_sum(out, (0,))
+            out = self.mul2(out, b)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    net = GradWrap(NetWithLoss(Net()))
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming")
+
+    x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
+    y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_sumext_mul():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.mul1 = P.Mul()
+            self.mul2 = P.Mul()
+
+        def construct(self, x, y, b):
+            out = self.mul1(x, y)
+            out = ops.sum(out, None)
             out = self.mul2(out, b)
             return out
 

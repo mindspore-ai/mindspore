@@ -118,6 +118,21 @@ class ReduceAllInfo : public ReduceAnyInfo {
 
   ~ReduceAllInfo() override = default;
 };
+
+class SumExtInfo : public ReduceBaseMethod {
+ public:
+  SumExtInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : ReduceBaseMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceSumCost>()) {
+    reduce_method_ = REDUCE_OP_SUM;
+  }
+
+  ~SumExtInfo() override = default;
+
+ protected:
+  std::vector<int64_t> reduce_dim() override;
+  Status GetAttrs() override;
+};
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_REDUCE_BASE_METHOD_INFO_H_

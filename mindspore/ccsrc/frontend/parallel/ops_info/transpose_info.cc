@@ -217,6 +217,11 @@ Status TransposeInfo::CheckOutputLayout() {
   auto output_device_arrangement = out_layout.device_arrangement_origin().array();
   auto in_tensor_map = in_layout.tensor_map_before();
   auto out_tensor_map = out_layout.tensor_map_before();
+  if (in_tensor_map != out_tensor_map) {
+    MS_LOG(ERROR) << "To apply device matrix transposes, the input and output tensor map must be equal. But got "
+                  << in_tensor_map << " and " << out_tensor_map;
+    return FAILED;
+  }
   if ((input_device_arrangement.size() != output_device_arrangement.size()) ||
       (in_tensor_map.size() != out_tensor_map.size())) {
     MS_LOG(ERROR) << name_ << ": The size of input and output device arrangement and tensor map must be equal.";
