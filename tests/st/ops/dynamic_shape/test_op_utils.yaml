@@ -2037,6 +2037,24 @@ dropout:
   function:
     disable: True
 
+#operator dynamic_quant_ext
+dynamic_quant_ext:
+  args:
+    x:
+      dtype: tensor
+    smooth_scales:
+      dtype: tensor
+      default: None
+  returns:
+    y:
+      dtype: tensor
+    scale:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+
 #operator eig
 eig:
   args:
@@ -2875,6 +2893,20 @@ gelu:
         disable: True
     dispatch:
         enable: True
+
+#operator generator
+generator:
+    args:
+        cmd:
+            dtype: int
+        inputs:
+            dtype: tuple[tensor]
+            arg_handler: generator_handler
+    returns:
+        outputs: 
+            dtype: tuple[tensor]
+    function:
+        disable: True
 
 #operator geqrf
 geqrf: 
@@ -6887,9 +6919,11 @@ uniform_ext:
         tensor:
             dtype: tensor
         a:
-            dtype: float
+            dtype: number
+            type_cast: tensor
         b:
-            dtype: float
+            dtype: number
+            type_cast: tensor
         seed:
             dtype: int
             type_cast: tensor

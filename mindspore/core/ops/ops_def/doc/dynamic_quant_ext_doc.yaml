@@ -1,0 +1,44 @@
+dynamic_quant_ext:
+  description: |
+    Performs dynamic quantization on the input tensor.
+
+    Note:
+      - Dynamic quantization is performed by adjusting the scale of the input tensor dynamically.
+      - The `smooth_scales` tensor provides a mechanism to smooth out the scaling factors to avoid sudden changes.
+      - The input tensor `x` must be at least 1-dimensional, with shape :math:`(batches, n)`.
+      - The `smooth_scales` tensor must have shape `(n)`.
+      - The output `scale` tensor has shape `(batches)`.
+
+    .. math::
+      \begin{array}{ll} \\
+          \text{scale} = \frac{\max(\left| x \right|, \text{axis}=-1)}{127} \\
+          \text{y} = \text{round}\left(\frac{x}{\text{scale}}\right) \\
+      \end{array}
+
+    Inputs:
+      x (Tensor): The first input is a tensor of data type float16 or bfloat16. 
+          It contains the data to be quantized. 
+      smooth_scales (Tensor): The second input is a tensor of data type float16 or bfloat16. 
+          It contains the scaling factors used for dynamic quantization.
+
+    Outputs:
+      tuple[Tensor], tuple of 2 tensors, representing the quantized values and the scales used.
+
+      - **y** (Tensor) - The quantized tensor.
+      - **scale** (Tensor) - The scales used for quantization.
+
+    Raises:
+      ValueError: If the rank of `x` is not at least 1.
+
+    Supported Platforms:
+      ``Ascend``
+
+    Examples:
+      >>> import mindspore
+      >>> import numpy as np
+      >>> from mindspore import Tensor, ops
+      >>> input = Tensor(np.random.rand(2, 3), mindspore.float16)
+      >>> smooth_scales = Tensor(np.random.rand(3), mindspore.float16)
+      >>> output = ops.auto_generate.DynamicQuantExt()(input, smooth_scales)
+      >>> print(output.shape)
+      (2, 3)
