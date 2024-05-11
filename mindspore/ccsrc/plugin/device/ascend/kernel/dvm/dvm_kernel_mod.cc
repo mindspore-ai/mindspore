@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/kernel/dvm/dvm_kernel_mod.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include <algorithm>
 
 namespace mindspore {
@@ -126,7 +127,12 @@ bool SingleDvmKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const
   for (size_t i = 0; i < outputs_addr_.size(); ++i) {
     outputs_addr_[i] = outputs[outputs_idx_[i]]->device_ptr();
   }
-  auto ret = kernel_.Launch(reloc_table_, inputs_addr_.data(), outputs_addr_.data(), stream_ptr);
+  if (profiler::Profiler::GetInstance(kAscendDevice)->GetEnableFlag()) {
+    auto ret = kernel_.MsProfLaunch(op_name_.c_str(), op_fullname_.c_str(), reloc_table_, inputs_addr_.data(),
+                                    outputs_addr_.data(), nullptr, stream_ptr);
+    return ret == 0;
+  }
+  auto ret = kernel_.Launch(reloc_table_, inputs_addr_.data(), outputs_addr_.data(), nullptr, stream_ptr);
   return ret == 0;
 }
 
@@ -191,7 +197,12 @@ bool ParallelDvmKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   for (size_t i = 0; i < outputs_map_.size(); i++) {
     outputs_addr_[i] = outputs[outputs_map_[i]]->device_ptr();
   }
-  auto ret = kernel_.Launch(reloc_table_, inputs_addr_.data(), outputs_addr_.data(), stream_ptr);
+  if (profiler::Profiler::GetInstance(kAscendDevice)->GetEnableFlag()) {
+    auto ret = kernel_.MsProfLaunch(op_name_.c_str(), op_fullname_.c_str(), reloc_table_, inputs_addr_.data(),
+                                    outputs_addr_.data(), nullptr, stream_ptr);
+    return ret == 0;
+  }
+  auto ret = kernel_.Launch(reloc_table_, inputs_addr_.data(), outputs_addr_.data(), nullptr, stream_ptr);
   return ret == 0;
 }
 

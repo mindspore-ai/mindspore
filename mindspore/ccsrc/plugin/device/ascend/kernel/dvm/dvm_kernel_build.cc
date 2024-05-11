@@ -79,11 +79,11 @@ static std::unordered_map<std::string, std::pair<OpType, int>> op_type_map = {
   {"Sub", {OP_BINARY, dvm::BinaryOpType::kSub}},
   {"Mul", {OP_BINARY, dvm::BinaryOpType::kMul}},
   {"Div", {OP_BINARY, dvm::BinaryOpType::kDiv}},
-  {"Pow", {OP_BINARY, dvm::BinaryOpType::kPow}},
   {"RealDiv", {OP_BINARY, dvm::BinaryOpType::kDiv}},
   {"Greater", {OP_BINARY, dvm::BinaryOpType::kGreater}},
   {"Maximum", {OP_BINARY, dvm::BinaryOpType::kMaximum}},
   {"Minimum", {OP_BINARY, dvm::BinaryOpType::kMinimum}},
+  {"Pow", {OP_BINARY, dvm::BinaryOpType::kPow}},
   {"BroadcastTo", {OP_BROADCAST, 0}},
   {"GreaterEqual", {OP_BINARY, dvm::BinaryOpType::kGreaterEqual}},
   {"Less", {OP_BINARY, dvm::BinaryOpType::kLess}},
@@ -659,7 +659,9 @@ class ParallelDvmKernelBuilder : public DvmKernelBuilder {
   void BuildKernel(const FuncGraphPtr &graph, const CNodePtr &out_node,
                    const std::vector<AnfNodePtr> &outputs) override {
     // Create kernel mod
-    kernel_mod_ = std::make_shared<ParallelDvmKernelMod>(dvm::KernelType::kStaticParallel, sub_graph_count_);
+    kernel_mod_ =
+      std::make_shared<ParallelDvmKernelMod>(dvm::KernelType::kStaticParallel, common::AnfAlgo::GetCNodeName(node_),
+                                             node_->fullname_with_scope(), sub_graph_count_);
     auto inputs_type = AnfAlgo::GetAllInputDeviceTypes(node_);
     auto outputs_type = AnfAlgo::GetAllOutputDeviceTypes(node_);
     kernel_mod_->Initialize(inputs_type, outputs_type);
