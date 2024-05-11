@@ -20,6 +20,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -1698,6 +1699,14 @@ Status DATASET_API ReadImage(const std::string &filename, mindspore::MSTensor *o
 Status DATASET_API ReadVideo(const std::string &filename, mindspore::MSTensor *video_output,
                              mindspore::MSTensor *audio_output, std::map<std::string, std::string> *metadata_output,
                              float start_pts = 0.0, float end_pts = 2147483647.0, const std::string &pts_unit = "pts");
+
+/// \brief Read the timestamps and frame rate of a video file. It supports AVI, H264, H265, MOV, MP4, WMV files.
+/// \param[in] filename The path to the videoe file to be read.
+/// \param[out] output The tuple(video_timestamps, video_fps) of the video.
+/// \param[in] pts_unit The unit for the timestamps, can be one of ["pts", "sec"]. Default: "pts".
+/// \return The status code.
+Status DATASET_API ReadVideoTimestamps(const std::string &filename, std::tuple<std::vector<float>, float> *output,
+                                       const std::string &pts_unit = "pts");
 
 /// \brief Crop the given image and zoom to the specified size.
 class DATASET_API ResizedCrop final : public TensorTransform {

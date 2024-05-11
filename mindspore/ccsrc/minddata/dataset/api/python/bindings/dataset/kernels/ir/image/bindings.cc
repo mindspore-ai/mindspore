@@ -807,6 +807,17 @@ PYBIND_REGISTER(ReadVideo, 1, ([](py::module *m) {
                     }));
                 }));
 
+PYBIND_REGISTER(ReadVideoTimestampsOperation, 1, ([](py::module *m) {
+                  (void)m->def("read_video_timestamps", ([](const std::string &filename, const std::string &pts_unit) {
+                                 std::vector<int64_t> pts_int64_vector;
+                                 float video_fps;
+                                 float time_base;
+                                 THROW_IF_ERROR(mindspore::dataset::ReadVideoTimestamps(
+                                   filename, &pts_int64_vector, &video_fps, &time_base, pts_unit));
+                                 return std::make_tuple(pts_int64_vector, video_fps, time_base);
+                               }));
+                }));
+
 PYBIND_REGISTER(RescaleOperation, 1, ([](const py::module *m) {
                   (void)
                     py::class_<vision::RescaleOperation, TensorOperation, std::shared_ptr<vision::RescaleOperation>>(

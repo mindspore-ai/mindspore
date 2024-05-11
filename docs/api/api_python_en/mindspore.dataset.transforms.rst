@@ -158,6 +158,7 @@ Utilities
     mindspore.dataset.vision.read_file
     mindspore.dataset.vision.read_image
     mindspore.dataset.vision.read_video
+    mindspore.dataset.vision.read_video_timestamps
     mindspore.dataset.vision.write_file
     mindspore.dataset.vision.write_jpeg
     mindspore.dataset.vision.write_png

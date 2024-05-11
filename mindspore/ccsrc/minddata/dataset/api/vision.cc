@@ -1213,6 +1213,37 @@ Status ReadVideo(const std::string &filename, mindspore::MSTensor *video_output,
   return Status::OK();
 }
 
+// ReadVideoTimestamps.
+Status ReadVideoTimestamps(const std::string &filename, std::tuple<std::vector<float>, float> *output,
+                           const std::string &pts_unit) {
+#if !defined(ENABLE_ANDROID) && defined(ENABLE_FFMPEG)
+  RETURN_UNEXPECTED_IF_NULL(output);
+  std::vector<int64_t> pts_int64_vector;
+  float video_fps;
+  float time_base;
+
+  RETURN_IF_NOT_OK(
+    mindspore::dataset::ReadVideoTimestamps(filename, &pts_int64_vector, &video_fps, &time_base, pts_unit));
+
+  std::vector<float> pts_float_vector;
+
+  if (pts_unit == "pts") {
+    for (int64_t pts_int64 : pts_int64_vector) {
+      pts_float_vector.push_back(static_cast<float>(pts_int64));
+    }
+  }
+  if (pts_unit == "sec") {
+    for (int64_t pts_int64 : pts_int64_vector) {
+      pts_float_vector.push_back(static_cast<float>(pts_int64 * time_base));
+    }
+  }
+  *output = std::make_tuple(pts_float_vector, video_fps);
+#else
+  MS_LOG(ERROR) << "Unsupported ReadVideoTimestamps.";
+#endif
+  return Status::OK();
+}
+
 // Rescale Transform Operation.
 struct Rescale::Data {
   Data(float rescale, float shift) : rescale_(rescale), shift_(shift) {}
