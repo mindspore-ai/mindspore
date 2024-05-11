@@ -254,7 +254,7 @@ def test_cdistfission():
                 "Default/net-Net/BroadcastTo-op",
                 "Default/net-Net/ExpandDims-op",
                 "Default/net-Net/BroadcastTo-op",
-                "Default/net-Net/Cdist-op0"]
+                "Default/net-Net/Cdist-op"]
     cap.check_output(patterns)
 
 
@@ -288,7 +288,7 @@ def test_cdistgrad_fission():
 
     patterns = ["Gradients/Default/net-Net/gradReLU-expand/ExpandDims-op",
                 "Gradients/Default/net-Net/gradReLU-expand/BroadcastTo-op",
-                "Gradients/Default/net-Net/gradCdist-expand/CdistGrad-op0"]
+                "Gradients/Default/net-Net/gradCdist-expand/CdistGrad-op"]
     cap.check_output(patterns)
 
 
@@ -423,7 +423,7 @@ def test_batchnorm_grad():
 
         net(input_x)
 
-    patterns = ["Gradients/Default/net-Net/gradBatchNorm-expand/BatchNormGrad-op0"]
+    patterns = ["Gradients/Default/net-Net/gradBatchNorm-expand/BatchNormGrad-op"]
     cap.check_output(patterns)
 
 
