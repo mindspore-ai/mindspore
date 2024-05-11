@@ -61,8 +61,8 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
-    nonzero, flip, transpose, tril, triu, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, \
-    broadcast_to, strided_slice, ones, zeros, max_, min_, select, sort_ext
+    non_zero, flip, transpose, tril, triu, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, \
+    broadcast_to, strided_slice, ones, zeros, max_, min_, select, sort_ext, non_zero_ext
 from mindspore.ops.auto_generate.gen_ops_prim import scatter_add_ext_op
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
@@ -5985,6 +5985,65 @@ def mvlgamma(input, p):
     """
     mvlgamma_op = _get_cache_prim(Mvlgamma)(p)
     return mvlgamma_op(input)
+
+
+def nonzero(input, as_tuple=False):
+    r"""
+    Return a Tensor of the positions of all non-zero values.
+
+    Args:
+        input (Tensor): The input Tensor, its rank should be greater than or eaqual to 1.
+        as_tuple (Bool):
+            If ``False`` , return Tensor. Default: ``False`` .
+            If ``True`` , return Tuple of Tensor, Only support``Ascend``.
+
+
+    Returns:
+        If `as_tuple` is ``False``, return the Tensor, a 2-D Tensor whose data type is int64,
+                                    containing the positions of all non-zero values of the input.
+        If `as_tuple` is ``True``, return the Tuple of Tensor and data type is int64.
+                                    The Tuple length is the dimension of the input tensor,
+                                    and each element is the 1D tensor of the subscript of all non-zero elements of
+                                    the input tensor in that dimension.
+
+    Raises:
+        TypeError: If `input` is not Tensor.
+        TypeError: If `as_tuple` is not Bool.
+        ValueError: If dim of `input` equals to 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
+        >>> output = ops.nonzero(x)
+        >>> print(output)
+        [[0 0 0]
+         [0 1 0]]
+        >>> x = Tensor(np.array([1, 0, 2, 0, 3]), mindspore.int32)
+        >>> output = ops.nonzero(x, False)
+        >>> print(output)
+        [[0]
+         [2]
+         [4]]
+        >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
+        >>> output = ops.nonzero(x, True)
+        >>> print(output)
+        (Tensor(shape=[2], dtype=Int64, value=[0, 0]),
+         Tensor(shape=[2], dtype=Int64, value=[0, 1]),
+         Tensor(shape=[2], dtype=Int64, value=[0, 0]))
+        >>> x = Tensor(np.array([1, 0, 2, 0, 3]), mindspore.int32)
+        >>> output = ops.nonzero(x, True)
+        >>> print(output)
+        (Tensor(shape=[3], dtype=Int64, value=[0, 2, 4]), )
+    """
+    if as_tuple:
+        return non_zero_ext(input)
+    return non_zero(input)
 
 
 def argwhere(input):

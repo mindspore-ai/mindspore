@@ -1,0 +1,13 @@
+#operator non_zero_ext
+non_zero_ext:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tuple[tensor]
+    class:
+        name: NonZeroExt
+    dispatch:
+        enable: True
+        Ascend: NonZeroExtAscend

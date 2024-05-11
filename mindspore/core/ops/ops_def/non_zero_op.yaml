@@ -6,5 +6,8 @@ non_zero:
     returns:
         output:
             dtype: tensor
-    function:
-        name: nonzero
+    dispatch:
+        enable: True
+        Ascend: NonZeroAscend
+        CPU: NonZeroCPU
+        GPU: NonZeroGPU
