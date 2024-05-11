@@ -387,7 +387,7 @@ void Jit::GradJitInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecut
   bool added_v_is_empty = true;
   if (added_out_v != nullptr) {
     ValuePtrList total_output_tensors;
-    PyNativeAlgo::DataConvert::FlattenValueSeqArg(added_out_v, false, &total_output_tensors);
+    PyNativeAlgo::DataConvert::FlattenValueSeqArg(added_out_v, false, true, &total_output_tensors);
     flatten_v = std::make_shared<ValueTuple>(total_output_tensors);
     added_v_is_empty = total_output_tensors.empty();
     ReplaceAddedCnodeActualOutput(added_node, total_output_tensors);

@@ -1505,7 +1505,7 @@ ValuePtr DataConvert::VectorRefToValue(const VectorRef &vec_ref, bool requires_g
   return std::make_shared<ValueTuple>(v_list);
 }
 
-void DataConvert::FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_tensor_seq,
+void DataConvert::FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_tensor_seq, bool is_filter_tensor,
                                      std::vector<ValuePtr> *flatten_v) {
   MS_EXCEPTION_IF_NULL(v);
   MS_EXCEPTION_IF_NULL(flatten_v);
@@ -1514,7 +1514,8 @@ void DataConvert::FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_ten
     (void)flatten_v->emplace_back(v);
   } else if (v->isa<ValueSequence>()) {
     const auto &v_vec = v->cast<ValueSequencePtr>()->value();
-    if (v_vec.empty()) {
+    if (v_vec.empty() && !is_filter_tensor) {
+      MS_LOG(DEBUG) << "Get empty tuple value";
       (void)flatten_v->emplace_back(v);
       MS_LOG(DEBUG) << "Get empty value sequence";
       return;
@@ -1523,19 +1524,19 @@ void DataConvert::FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_ten
       (void)flatten_v->emplace_back(v);
     } else {
       for (const auto &elem : v_vec) {
-        FlattenValueSeqArg(elem, is_only_flatten_tensor_seq, flatten_v);
+        FlattenValueSeqArg(elem, is_only_flatten_tensor_seq, is_filter_tensor, flatten_v);
       }
     }
   } else if (is_only_flatten_tensor_seq) {
     if (v->isa<ValueDictionary>()) {
       auto dic_v = v->cast<ValueDictionaryPtr>();
       for (const auto &elem : dic_v->value()) {
-        FlattenValueSeqArg(elem.second, is_only_flatten_tensor_seq, flatten_v);
+        FlattenValueSeqArg(elem.second, is_only_flatten_tensor_seq, is_filter_tensor, flatten_v);
       }
     } else {
       (void)flatten_v->emplace_back(v);
     }
-  } else {
+  } else if (!is_filter_tensor) {
     MS_LOG(DEBUG) << "Get not tensor value: " << v->ToString();
     (void)flatten_v->emplace_back(v);
   }
@@ -1544,14 +1545,14 @@ void DataConvert::FlattenValueSeqArg(const ValuePtr &v, bool is_only_flatten_ten
 ValuePtrList DataConvert::FlattenTensorSeqInValue(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
   ValuePtrList outputs;
-  FlattenValueSeqArg(v, true, &outputs);
+  FlattenValueSeqArg(v, true, false, &outputs);
   return outputs;
 }
 
 ValuePtrList DataConvert::FlattenTensorSeqInValueSeq(const ValuePtrList &v, bool only_flatten_tensor) {
   ValuePtrList outputs;
   for (const auto &item : v) {
-    FlattenValueSeqArg(item, only_flatten_tensor, &outputs);
+    FlattenValueSeqArg(item, only_flatten_tensor, false, &outputs);
   }
   return outputs;
 }
@@ -1573,7 +1574,7 @@ void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<Va
       (void)flatten_v->emplace_back(v_vec[input_size]);
     } else if (v_vec[input_size]->isa<ValueSequence>()) {
       MS_LOG(DEBUG) << "Get value tuple size " << v_vec[input_size]->cast<ValueSequencePtr>()->size();
-      FlattenValueSeqArg(v_vec[input_size], false, flatten_v);
+      FlattenValueSeqArg(v_vec[input_size], false, false, flatten_v);
     }
   }
 }
@@ -2404,6 +2405,22 @@ PrimitivePyPtr AutoGrad::BuildBpropCutPrim(const PrimitivePtr &prim, bool is_nee
     (void)bprop_cut->AddAttr("is_recompute", MakeValue(true));
   }
   return bprop_cut;
+}
+
+void AutoGrad::CheckRecomputeInputs(const GradParamPtr &grad_param) {
+  if (grad_param->op_grad_info->is_need_recompute) {
+    for (const auto &input : grad_param->op_grad_info->input_value) {
+      if (input->isa<ValueSequence>()) {
+        const auto &seq = input->cast<ValueSequencePtr>();
+        const auto val = seq->value();
+        if (PyNativeAlgo::AutoGrad::NeedGrad(val)) {
+          MS_LOG(EXCEPTION) << "For recompute cell, now we do not support calculate tensor's gradient from tuple. "
+                               "You need check your inputs of construct function from recompute cell, and not put "
+                               "tensors in tuple which need grad!";
+        }
+      }
+    }
+  }
 }
 
 void AutoGrad::ClearAutoGradStaticCache() { jit_call_graph_compile_cache_.clear(); }

@@ -34,6 +34,7 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.wrap.cell_wrapper import WithLossCell
 from mindspore import ops
 from mindspore import recompute
+
 random.seed(1)
 np.random.seed(1)
 ds.config.set_seed(1)
@@ -613,3 +614,4 @@ def test_net_recompute_not_tensor_input():
     net = Net()
     grad_net = ops.GradOperation()(net)
     grad_net(x, None, (y, z))
+    

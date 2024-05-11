@@ -534,7 +534,7 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
     RecordForwardGraphForInput(v, input_args_info->input_arg_id_vec[i], param_i_abs);
   }
   // If New cellid come up, bprop graph use cnode for reusing
-  if (IsNewCellId()) {
+  if (IsNewCellId() && !top_cell()->use_dynamic_shape_process()) {
     top_cell_->set_is_ir_grad(true);
   }
   if (top_cell()->is_ir_grad()) {
@@ -749,6 +749,9 @@ void GradExecutor::EndGraphInner(const py::object &obj, const py::object &out, c
     runtime::OpExecutor::GetInstance().WaitAll();
     input_args_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(out, false);
     MS_LOG(DEBUG) << "Get cell output value " << input_args_info->out_value->ToString();
+    if (input_args_info->is_need_recompute) {
+      input_args_info->out_value = ConvertOutputValueToTensor(input_args_info->out_value, false);
+    }
     EndGraphImpl(input_args_info);
   }
   PopInputArgsInfoStack();
@@ -869,13 +872,15 @@ void GradExecutor::GetCustomBpropPrim(const py::object &obj, const py::args &arg
   }
 
   auto bprop_func_cellid = PyNativeAlgo::PyParser::GetIdByPyObj(bprop_func);
-  (void)bprop_cell_list_.emplace_back(bprop_func_cellid);
   auto fake_prim = std::make_shared<PrimitivePy>(prim::kPrimHookBackward->name());
   MS_EXCEPTION_IF_NULL(input_args_info);
   if (py::isinstance<Cell>(obj)) {
     const auto &cell_ptr = obj.cast<CellPtr>();
     input_args_info->is_need_recompute = cell_ptr->HasAttr(kNeedRecompute);
     fake_prim->set_bprop_cls_name(cell_ptr->name());
+  }
+  if (!input_args_info->is_need_recompute) {
+    (void)bprop_cell_list_.emplace_back(bprop_func_cellid);
   }
   if (py::hasattr(obj, kInternalParams)) {
     py::object weights = py::getattr(obj, kInternalParams);
@@ -1275,7 +1280,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
   // 2. Has bprop cut op
   // If set_inputs, but has constrol flow, we need run by actor.
   bprop_graph->set_flag(kFlagEnableRunGraphBySingleOp,
-                        auto_grad_cell->bprop_graph_run_by_single_op() && !top_cell()->has_control_flow());
+                        auto_grad_cell->bprop_graph_run_by_single_op() && !bprop_graph->has_flag(kFlagIsControlFlow));
   if (top_cell()->has_call_graph()) {
     bprop_graph->set_flag(kFlagPyNativeWithJitCallGraph, true);
   }
