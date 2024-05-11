@@ -156,18 +156,17 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode, bool is_proto)
     }
   }
 
-  if (op_infer_opt.has_value()) {
+  if (primitive->HasAttr(ops::kAttrValueDepend)) {
+    auto value_depend_vector = GetValue<std::vector<bool>>(primitive->GetAttr(ops::kAttrValueDepend));
+    for (size_t i = 0; i < value_depend_vector.size(); i++) {
+      if (value_depend_vector[i]) {
+        ori.insert(i);
+      }
+    }
+  } else if (op_infer_opt.has_value()) {
     auto op_infer = op_infer_opt.value().Get();
     if (op_infer != nullptr && ori.empty()) {
       ori = op_infer->GetValueDependArgIndices();
-    }
-    if (prim_name == ops::kNameShapeCalc) {
-      auto value_depend_vector = GetValue<std::vector<bool>>(primitive->GetAttr(ops::kAttrValueDepend));
-      for (size_t i = 0; i < value_depend_vector.size(); i++) {
-        if (value_depend_vector[i]) {
-          ori.insert(i);
-        }
-      }
     }
   } else if (ori.empty()) {
     MS_LOG(DEBUG) << "Not find infer function GetValueDependArgIndices, prim name: " << prim_name;
