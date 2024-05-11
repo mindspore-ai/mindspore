@@ -51,6 +51,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr tuple_to_list_eliminator_;
   SubstitutionPtr tuple_list_convert_item_index_to_positive_;
   SubstitutionPtr make_slice_get_slice_eliminator_;
+  SubstitutionPtr slice_to_tuple_;
   SubstitutionPtr dict_get_item_eliminator_;
   SubstitutionPtr dict_get_item_const_eliminator_;
   SubstitutionPtr dict_set_item_eliminator_;
