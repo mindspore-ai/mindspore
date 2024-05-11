@@ -635,7 +635,7 @@ class Equalize(ImageTensorOperation):
         super().__init__()
 
     def parse(self):
-        return cde.EqualizeOperation()
+        return cde.EqualizeOperation("CPU")
 
 
 class GaussianBlur(ImageTensorOperation):

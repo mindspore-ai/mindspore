@@ -115,6 +115,7 @@ enum {
   APP_ERR_DVPP_PAD_FAIL = APP_ERR_DVPP_BASE + 24,                // DVPP: pad fail
   APP_ERR_DVPP_AFFINE_FAIL = APP_ERR_DVPP_BASE + 25,             // DVPP: affine fail
   APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL = APP_ERR_DVPP_BASE + 26,      // DVPP: gaussian blur fail
+  APP_ERR_DVPP_EQUALIZE_FAIL = APP_ERR_DVPP_BASE + 27,           // DVPP: equalize blur fail
   APP_ERR_DVPP_END,  // Not an error code, define the range of common error code
 
   // define the error code of inference

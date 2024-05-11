@@ -111,6 +111,7 @@ void AclAdapter::InitPlugin() {
   dvpp_contrast_fun_obj_ = DlsymFuncObj(DvppAdjustContrast, plugin_handle_);
   dvpp_crop_fun_obj_ = DlsymFuncObj(DvppCrop, plugin_handle_);
   dvpp_decode_fun_obj_ = DlsymFuncObj(DvppDecode, plugin_handle_);
+  dvpp_equalize_fun_obj_ = DlsymFuncObj(DvppEqualize, plugin_handle_);
   dvpp_gaussian_blur_fun_obj_ = DlsymFuncObj(DvppGaussianBlur, plugin_handle_);
   dvpp_horizontal_flip_fun_obj_ = DlsymFuncObj(DvppHorizontalFlip, plugin_handle_);
   dvpp_hue_fun_obj_ = DlsymFuncObj(DvppAdjustHue, plugin_handle_);
@@ -183,6 +184,7 @@ void AclAdapter::FinalizePlugin() {
   dvpp_contrast_fun_obj_ = nullptr;
   dvpp_crop_fun_obj_ = nullptr;
   dvpp_decode_fun_obj_ = nullptr;
+  dvpp_equalize_fun_obj_ = nullptr;
   dvpp_gaussian_blur_fun_obj_ = nullptr;
   dvpp_horizontal_flip_fun_obj_ = nullptr;
   dvpp_hue_fun_obj_ = nullptr;
@@ -546,6 +548,14 @@ APP_ERROR AclAdapter::DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &
     return APP_ERR_ACL_FAILURE;
   }
   return dvpp_decode_fun_obj_(input, output);
+}
+
+APP_ERROR AclAdapter::DvppEqualize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                   std::shared_ptr<DeviceTensorAscend910B> *output) {
+  if (!HasAclPlugin() || dvpp_equalize_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_equalize_fun_obj_(input, output);
 }
 
 APP_ERROR AclAdapter::DvppGaussianBlur(const std::shared_ptr<DeviceTensorAscend910B> &input,

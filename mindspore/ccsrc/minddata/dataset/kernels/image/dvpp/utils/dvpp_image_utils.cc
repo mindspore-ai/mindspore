@@ -49,6 +49,7 @@
 #include "acldvppop/acldvpp_crop.h"
 #include "acldvppop/acldvpp_crop_and_resize.h"
 #include "acldvppop/acldvpp_decode_jpeg.h"
+#include "acldvppop/acldvpp_equalize.h"
 #include "acldvppop/acldvpp_gaussian_blur.h"
 #include "acldvppop/acldvpp_horizontal_flip.h"
 #include "acldvppop/acldvpp_normalize.h"
@@ -689,6 +690,99 @@ APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
   if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Call acldvppDecodeJpeg failed, error code: " + std::to_string(ret) + ".";
     return APP_ERR_DVPP_JPEG_DECODE_FAIL;
+  }
+
+  *output = std::move(device_tensor);  // currently the data is still in device
+  return APP_ERR_OK;
+}
+
+APP_ERROR DvppEqualize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output) {
+  MS_LOG(DEBUG) << "Begin execute dvpp equalize.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  // the input should be 1HWC or 1CHW
+  if (input->GetShape().Rank() != kNHWCImageRank) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  // the channel should be equal to 3 or 1
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != kChannelIndexNHWC &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != kMinImageChannel) {
+    MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC or 1CHW.";  // N == 1
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  // the type is uint8
+  if (input->GetType() != DataType::DE_UINT8) {
+    MS_LOG(ERROR) << "The input data is not uint8";
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  // create the output shape and type
+  TensorShape shape = input->GetShape();
+  DataType type = input->GetType();
+
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor, true) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  // call DVPP step1
+  uint64_t workspace_size = 0;
+  aclOpExecutor *executor;
+  // decode output C is 3
+  // don't recovery truncate
+  auto ret = acldvppEqualizeGetWorkspaceSize(reinterpret_cast<aclTensor *>(input->GetDeviceTensor()),
+                                             reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()),
+                                             &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppEqualizeGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  // call DVPP step2
+  void *workspace_addr = nullptr;
+  if (workspace_size > 0) {
+    // create new device address for data copy
+    workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
+    if (workspace_addr == nullptr) {
+      MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+      return APP_ERR_DVPP_EQUALIZE_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppEqualize(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
+      return APP_ERR_DVPP_EQUALIZE_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppEqualize(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+  }
+
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppEqualize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
   }
 
   *output = std::move(device_tensor);  // currently the data is still in device

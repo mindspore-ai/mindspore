@@ -366,6 +366,17 @@ APP_ERROR PluginDvppDecode(const std::shared_ptr<mindspore::dataset::DeviceTenso
   return DvppDecode(input, output);
 }
 
+APP_ERROR PluginDvppEqualize(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                             std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppEqualize(input, output);
+}
+
 APP_ERROR PluginDvppGaussianBlur(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                                  std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
                                  const std::vector<int64_t> &kernel_size, const std::vector<float> &sigma,

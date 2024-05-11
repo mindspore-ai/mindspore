@@ -142,6 +142,12 @@ APP_ERROR DvppCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
 APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
                      std::shared_ptr<DeviceTensorAscend910B> *output);
 
+/// \brief Returns equalized image.
+/// \param input: Tensor of shape <N,H,W,C>, c == 1 or c == 3.
+/// \param output: Equalized image Tensor (type DE_UINT8).
+APP_ERROR DvppEqualize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output);
+
 /// \brief Blur input image with the specified Gaussian kernel.
 /// \param input: input containing the not decoded image 1D bytes.
 /// \param output: Blured image Tensor (type DE_FLOAT32 or DE_UINT8).
