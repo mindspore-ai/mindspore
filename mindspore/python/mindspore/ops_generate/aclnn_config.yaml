@@ -178,7 +178,7 @@ NonZero: 'aclnnNonzero'
 # 55
 
 # 56
-
+MaskedSelectExt: 'aclnnMaskedSelect'
 # 57
 
 # 58
