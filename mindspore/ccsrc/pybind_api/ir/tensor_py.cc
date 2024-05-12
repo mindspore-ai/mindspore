@@ -20,13 +20,14 @@
 
 #include "include/common/pybind_api/api_register.h"
 #include "abstract/abstract_value.h"
-#include "utils/shape_utils.h"
 #include "utils/cache_embedding_hashmap_struct.h"
 #include "include/common/utils/python_adapter.h"
 #include "mindspore/ccsrc/include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #include "pybind_api/ir/tensor_index_py.h"
 #include "pybind_api/ir/hook_py.h"
 #include "include/common/profiler.h"
+#include "runtime/hardware/device_context_manager.h"
+#include "runtime/pynative/op_executor.h"
 
 namespace mindspore {
 namespace tensor {
@@ -34,6 +35,19 @@ namespace {
 struct TensorToNumpyRegister {
   TensorToNumpyRegister() { python_adapter::PyAdapterCallback::SetTensorToNumpyHandler(tensor::TensorPy::AsNumpy); }
 } callback_register;
+
+device::DeviceContext *GetDeviceCtx(const std::string &to) {
+  const auto &device = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (to != "CPU" && to != device) {
+    MS_LOG(EXCEPTION) << "The value of 'to' should be same with device, bug got to:" << to << ", device: " << device;
+  }
+  auto device_ctx = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {device, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  MS_EXCEPTION_IF_NULL(device_ctx);
+
+  device_ctx->Initialize();
+  return device_ctx;
+}
 }  // namespace
 constexpr ssize_t kPyBufItemSize1 = 1;
 constexpr ssize_t kPyBufItemSize2 = 2;
@@ -546,6 +560,26 @@ void TensorPy::Offload(const Tensor &tensor) {
   const_cast<Tensor &>(tensor).set_device_address(nullptr);
 }
 
+TensorPtr TensorPy::MoveTo(const Tensor &self, const std::string &to, bool blocking) {
+  py::gil_scoped_release gil_release;
+  if (self.device_address() == nullptr) {
+    MS_LOG(EXCEPTION) << "Tensor has no device address, can not move to " << to;
+  }
+  auto context = GetDeviceCtx(to);
+  MS_EXCEPTION_IF_NULL(context);
+  auto target_tensor = std::make_shared<tensor::Tensor>(self.data_type(), self.shape());
+  target_tensor->set_device_address(nullptr);
+  bool return_self = false;
+  // make sure op execute end before data copy
+  runtime::OpExecutor::GetInstance().WaitAll();
+  context->device_res_manager_->MoveTo(std::make_shared<tensor::Tensor>(self), target_tensor, to, blocking,
+                                       &return_self);
+  if (return_self) {
+    return std::make_shared<tensor::Tensor>(self);
+  }
+  return target_tensor;
+}
+
 py::array TensorPy::AsNumpyOfSlice(const Tensor &tensor, const int32_t param_key, const int slice_index) {
   py::gil_scoped_acquire acquire;
   py::object owner = py::cast(tensor.data_ptr());
@@ -892,6 +926,22 @@ void RegMetaTensor(const py::module *m) {
                                   >>> ret = data.offload('./test.data')
                                   >>> ret = (data.offload_file_path() != '')
                                   True
+                              )mydelimiter")
+    .def("move_to", &TensorPy::MoveTo, R"mydelimiter(
+                               Copy tensor between host and device asynchronously if blocking=False,
+                               otherwise synchronously. if the arg `to`=`CPU`, means D2H copy;
+                               if the arg `to`=`GPU` or `to`=`ASCEND`, means H2D copy.
+
+                               Args:
+                                   str: A string, "CPU" or "ASCEND" or "GPU".
+                                   bool: A bool type value, Default: ``True`` .
+
+                               Returns:
+                                      Tensor, with the same type and shape as the "self".
+
+                              Examples:
+                                  >>> data = mindspore.Tensor(np.ones((1, 2), np.float32))
+                                  >>> ret = data.move_to("CPU")
                               )mydelimiter")
     .def("set_cast_dtype", &Tensor::set_cast_dtype, py::arg("dtype") = nullptr)
     .def("data_sync", &Tensor::data_sync)
