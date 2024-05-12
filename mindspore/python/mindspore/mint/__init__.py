@@ -53,7 +53,7 @@ from mindspore.ops.auto_generate import stack_ext as stack
 # 8
 
 # 9
-
+from mindspore.ops.auto_generate import masked_select
 # 10
 from mindspore.ops.function.math_func import ne
 # 11
@@ -1106,7 +1106,7 @@ __all__ = [
     'narrow',
     # 84
 
-    # 85
+    'masked_select',
 
     # 86
 
