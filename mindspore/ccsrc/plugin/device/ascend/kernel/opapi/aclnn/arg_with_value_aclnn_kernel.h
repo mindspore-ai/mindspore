@@ -26,31 +26,31 @@
 namespace mindspore {
 namespace kernel {
 
-class ArgWithValueAscend : public AclnnKernelMod {
+class ArgMaxWithValueAscend : public AclnnKernelMod {
  public:
-  explicit ArgWithValueAscend(std::string &&op_type) : AclnnKernelMod(std::move(op_type)) {}
-  ~ArgWithValueAscend() = default;
+  ArgMaxWithValueAscend() : AclnnKernelMod(std::move("aclnnMaxDim")) {}
+  ~ArgMaxWithValueAscend() = default;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
-
   int64_t axis_;
   bool keep_dims_;
 };
-
-class ArgMaxWithValueAscend : public ArgWithValueAscend {
+class ArgMinWithValueAscend : public AclnnKernelMod {
  public:
-  ArgMaxWithValueAscend() : ArgWithValueAscend("aclnnMaxDim") {}
-  ~ArgMaxWithValueAscend() = default;
-};
-
-class ArgMinWithValueAscend : public ArgWithValueAscend {
- public:
-  ArgMinWithValueAscend() : ArgWithValueAscend("aclnnMinDim") {}
+  ArgMinWithValueAscend() : AclnnKernelMod(std::move("aclnnMinDim")) {}
   ~ArgMinWithValueAscend() = default;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+ private:
+  DEFINE_GET_WORKSPACE_FOR_RESIZE()
+  int64_t axis_;
+  bool keep_dims_;
 };
 }  // namespace kernel
 }  // namespace mindspore
