@@ -485,7 +485,7 @@ class ReducePatternTree : public PatternTree {
     MS_EXCEPTION_IF_NULL(para_to_ref);
     inner::GraphBuilder gb("");
     // Because an empty Tensor cannot be generated, the second input for the reshape function needs to be a Tuple.
-    auto shape_node = gb.Tuple(origin_root->shape);
+    auto shape_node = gb.Tensor(origin_root->shape);
     (*para_to_ref)['C'] = shape_node;
     (void)para_to_ref->erase('B');
     return para_to_ref;

@@ -215,7 +215,7 @@ bool ConvertFrontEndToGraphKernel::Process(const CNodePtr &cnode, const ops::OpD
     cnode->set_inputs(new_inputs);
     auto cb = Callback::Instance();
     MS_EXCEPTION_IF_NULL(cb);
-    cb->ResetKernelInfoInputs(cnode, false);
+    cb->ResetKernelInfoInputs(cnode, {});
   }
   return changed;
 }
@@ -313,7 +313,6 @@ bool ConvertGraphKernelToFrontEnd::Process(const AnfNodePtr &node) {
     return false;
   }
   const auto &op_def_args = op_def->args_;
-  bool changed = false;
 
   // 1. Convert attr to input.
   auto cnode = node->cast<CNodePtr>();
@@ -324,6 +323,7 @@ bool ConvertGraphKernelToFrontEnd::Process(const AnfNodePtr &node) {
                  << "op_def_args.size():" << op_def_args.size();
   }
 
+  std::vector<size_t> update_indices;
   for (auto i = ori_input_size; i < op_def_args.size(); i++) {
     // as_init_arg_ == 1 indicate the arg need convert
     if (op_def_args[i].as_init_arg_ != 1) {
@@ -333,7 +333,7 @@ bool ConvertGraphKernelToFrontEnd::Process(const AnfNodePtr &node) {
     MS_LOG(DEBUG) << cnode->DebugString() << " convert attr [" << op_def_args[i].arg_name_ << "] to input: " << i;
     ConvertGraphKernelToFrontEnd::AddAttrToInput(cnode, op_def_args[i].arg_name_, op_def_args[i].arg_handler_,
                                                  primitive, i + 1);
-    changed = true;
+    (void)update_indices.emplace_back(i + 1);
   }
 
   // 2. Convert inputs type.
@@ -342,15 +342,15 @@ bool ConvertGraphKernelToFrontEnd::Process(const AnfNodePtr &node) {
     auto indices = obj_map_iter->second;
     for (auto idx : indices) {
       if (ConvertGraphKernelToFrontEnd::ConvertInputsType(cnode, idx, op_def_args[idx - 1].arg_dtype_)) {
-        changed = true;
+        (void)update_indices.emplace_back(idx);
       }
     }
   }
-
+  bool changed = !update_indices.empty();
   if (changed) {
     auto cb = Callback::Instance();
     MS_EXCEPTION_IF_NULL(cb);
-    cb->ResetKernelInfoInputs(cnode, false);
+    cb->ResetKernelInfoInputs(cnode, update_indices);
   }
   return changed;
 }

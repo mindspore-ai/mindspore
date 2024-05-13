@@ -263,7 +263,7 @@ void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vec
   AnfAlgo::SetSelectKernelBuildInfo(selected_info, node.get());
 }
 
-void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node, bool overwrite) {
+void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node, const std::vector<size_t> &indices) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   if (kernel_info == nullptr) {
@@ -281,20 +281,19 @@ void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node, bool overwrite)
   std::vector<kernel::KernelObjectType> input_obj_type;
   std::vector<kernel::KernelObjectType> output_obj_type;
   auto cnode = node->cast<CNodePtr>();
-  if (cnode != nullptr) {
+  if (cnode) {
     auto &inputs = cnode->inputs();
+    std::vector<bool> visited(inputs.size(), false);
+    std::for_each(indices.begin(), indices.end(), [&visited](size_t index) { visited[index] = true; });
     for (size_t i = 1; i < inputs.size(); ++i) {
-      CollectInputTypesAndFormats(inputs[i], &input_types, &input_formats, true);
+      if (visited[i]) {
+        CollectInputTypesAndFormats(inputs[i], &input_types, &input_formats, true);
+      } else {
+        input_types.emplace_back(build_info->GetInputDeviceType(i - 1));
+        input_formats.emplace_back(build_info->GetInputFormat(i - 1));
+      }
     }
     opt::GenerateKernelObjectTypeForNewCNode(cnode, &input_obj_type, &output_obj_type);
-    if (!overwrite) {
-      auto orig_input_formats = build_info->GetAllInputFormats();
-      auto orig_input_types = build_info->GetAllInputDeviceTypes();
-      auto orig_input_obj_type = build_info->GetAllInputKernelObjectTypes();
-      UpdateToOriginalBuildInfo(node, &input_formats, &orig_input_formats);
-      UpdateToOriginalBuildInfo(node, &input_types, &orig_input_types);
-      UpdateToOriginalBuildInfo(node, &input_obj_type, &orig_input_obj_type);
-    }
   }
   auto input_num = AnfUtils::GetInputTensorNum(cnode);
   if (input_formats.size() > input_num) {
@@ -369,7 +368,9 @@ void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
   }
   if (need_convert) {
     ori_cnode->set_kernel_info(cnode->kernel_info_ptr());
-    ResetKernelInfoInputs(ori_cnode, true);
+    std::vector<size_t> indices(ori_cnode->inputs().size());
+    std::iota(indices.begin(), indices.end(), kIndex0);
+    ResetKernelInfoInputs(ori_cnode, indices);
   }
 }
 
