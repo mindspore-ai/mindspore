@@ -2,6 +2,7 @@ import numpy as onp
 from mindspore import Tensor
 from mindspore import dtype as mstype
 from mindspore import ops
+from mindspore._c_expression import get_code_extra
 
 
 def get_empty_tensor(dtype=mstype.float32):
@@ -97,3 +98,10 @@ def is_empty(variable):
     if isinstance(variable, (list, tuple, dict, set)) and len(variable) == 0:
         return True
     return False
+
+def assert_executed_by_graph_mode(func):
+    jcr = get_code_extra(func)
+    assert jcr is not None
+    assert jcr['stat'] == 'GRAPH_CALLABLE'
+    assert jcr['break_count_'] == 0
+    assert len(jcr['code']['phase_']) > 0

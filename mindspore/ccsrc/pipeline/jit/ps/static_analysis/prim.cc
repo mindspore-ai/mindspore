@@ -4647,8 +4647,15 @@ CNodePtr GeneratePrimitiveCNode(const PrimitivePtr &primitive, const ops::OpDef 
                                 const std::function<AbstractBasePtr(const AnfNodePtr &)> &eval_func) {
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(op_def);
+
   auto args_pair = std::make_pair(init_args_nodes, call_args_nodes);
-  return CheckAndConvertPrimitiveArgs(primitive, graph, args_pair, eval_func, false);
+
+  // Follow the implementations in PrimitiveArgsToInputsEvaluator, convert to base Primitive, and is_preprocessed=true
+  auto new_prim = std::make_shared<Primitive>(*primitive);
+  auto new_cnode = CheckAndConvertPrimitiveArgs(new_prim, graph, args_pair, eval_func, true);
+
+  MS_LOG(INFO) << "Convert primitive args: " << primitive->name() << ", new node: " << new_cnode->DebugString();
+  return new_cnode;
 }
 }  // namespace abstract
 }  // namespace mindspore

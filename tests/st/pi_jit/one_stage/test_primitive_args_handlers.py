@@ -20,7 +20,7 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore import ops
 from mindspore.common.api import jit
-from ..share.utils import match_array
+from ..share.utils import match_array, assert_executed_by_graph_mode
 
 cfg = {
     "replace_nncell_by_construct": True,
@@ -453,7 +453,29 @@ def test_pad_mode_default_value():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_MutMul_with_init_args():
+def test_MutMul_with_no_init_args():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    @jit(mode="PIJit", jit_config=cfg)
+    def fn(x, y):
+        op = ops.MatMul()
+        return op(x, y)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    a = Tensor([[1, 2, 3], [1, 2, 3]], dtype=ms.float32)
+    b = Tensor([[1], [2], [3]], dtype=ms.float32)
+    ret = fn(a, b)
+
+    match_array(ret.asnumpy(), np.array([[14], [14]]).astype(np.float32))
+    assert_executed_by_graph_mode(fn)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_MutMul_with_two_init_args():
     """
     Feature: One stage basic operation.
     Description: Test one stage basic operation.
@@ -461,33 +483,105 @@ def test_MutMul_with_init_args():
     """
     @jit(mode="PIJit", jit_config=cfg)
     def fn(x, y, transpose_a=None, transpose_b=None):
-        if transpose_a is not None and transpose_b is not None:
-            op = ops.MatMul(transpose_a=transpose_a, transpose_b=transpose_b)
-        elif transpose_a is not None:
-            op = ops.MatMul(transpose_a=transpose_a)
-        elif transpose_b is not None:
-            op = ops.MatMul(transpose_b=transpose_b)
-        else:
-            op = ops.MatMul()
+        op = ops.MatMul(transpose_a=transpose_a, transpose_b=transpose_b)
+        return op(x, y)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    a = Tensor([[1, 1], [2, 2], [3, 3]], dtype=ms.float32)
+    b = Tensor([[1, 2, 3]], dtype=ms.float32)
+    ret = fn(a, b, transpose_a=True, transpose_b=True)
+
+    match_array(ret.asnumpy(), np.array([[14], [14]]).astype(np.float32))
+    assert_executed_by_graph_mode(fn)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_MutMul_with_one_init_arg_transpose_a():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    @jit(mode="PIJit", jit_config=cfg)
+    def fn(x, y, transpose_a=None):
+        op = ops.MatMul(transpose_a=transpose_a)
+        return op(x, y)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    a = Tensor([[1, 1], [2, 2], [3, 3]], dtype=ms.float32)
+    b = Tensor([[1], [2], [3]], dtype=ms.float32)
+    ret = fn(a, b, transpose_a=True)
+
+    match_array(ret.asnumpy(), np.array([[14], [14]]).astype(np.float32))
+    assert_executed_by_graph_mode(fn)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_MutMul_with_one_init_arg_transpose_b():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    @jit(mode="PIJit", jit_config=cfg)
+    def fn(x, y, transpose_b=None):
+        op = ops.MatMul(transpose_b=transpose_b)
         return op(x, y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
     a = Tensor([[1, 2, 3], [1, 2, 3]], dtype=ms.float32)
-    b = Tensor([[1], [2], [3]], dtype=ms.float32)
-    ret = fn(a, b)
-    match_array(ret.asnumpy(), np.array([[14], [14]]).astype(np.float32))
-
-    a = Tensor([[1, 1], [2, 2], [3, 3]], dtype=ms.float32)
-    b = Tensor([[1], [2], [3]], dtype=ms.float32)
-    ret = fn(a, b, transpose_a=True)
-    match_array(ret.asnumpy(), np.array([[14], [14]]).astype(np.float32))
-
-    a = Tensor([[1, 2, 3], [1, 2, 3]], dtype=ms.float32)
     b = Tensor([[1, 2, 3]], dtype=ms.float32)
     ret = fn(a, b, transpose_b=True)
-    match_array(ret.asnumpy(), np.array([[14], [14]]).astype(np.float32))
 
-    a = Tensor([[1, 1], [2, 2], [3, 3]], dtype=ms.float32)
-    b = Tensor([[1, 2, 3]], dtype=ms.float32)
-    ret = fn(a, b, transpose_a=True, transpose_b=True)
     match_array(ret.asnumpy(), np.array([[14], [14]]).astype(np.float32))
+    assert_executed_by_graph_mode(fn)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_BiasAdd_with_no_init_args():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    @jit(mode="PIJit", jit_config=cfg)
+    def fn(x, y):
+        op = ops.BiasAdd()
+        return op(x, y)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    a = Tensor([[1, 2, 3], [2, 3, 4]], dtype=ms.float32)
+    b = Tensor([1, 1, 1], dtype=ms.float32)
+    ret = fn(a, b)
+
+    match_array(ret.asnumpy(), np.array([[2, 3, 4], [3, 4, 5]]).astype(np.float32))
+    assert_executed_by_graph_mode(fn)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_BiasAdd_with_one_init_args():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    @jit(mode="PIJit", jit_config=cfg)
+    def fn(x, y):
+        op = ops.BiasAdd(data_format='NCHW')
+        return op(x, y)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    a = Tensor([[1, 2, 3], [2, 3, 4]], dtype=ms.float32)
+    b = Tensor([1, 1, 1], dtype=ms.float32)
+    ret = fn(a, b)
+
+    match_array(ret.asnumpy(), np.array([[2, 3, 4], [3, 4, 5]]).astype(np.float32))
+    assert_executed_by_graph_mode(fn)
