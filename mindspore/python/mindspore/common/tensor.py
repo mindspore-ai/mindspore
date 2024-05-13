@@ -537,6 +537,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         return self._shape
 
+    @shape.setter
+    def shape(self, shape_value):
+        r"""
+        Set the shape value.
+        """
+        self._shape = shape_value
+
     @property
     def dtype(self):
         """Return the dtype of the tensor (:class:`mindspore.dtype`)."""
