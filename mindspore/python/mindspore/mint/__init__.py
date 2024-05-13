@@ -14,7 +14,7 @@
 # ============================================================================
 """mint module."""
 from __future__ import absolute_import
-from mindspore.ops.extend import *
+from mindspore.ops.extend import gather, max, min, one_hot, bmm, conv2d
 from mindspore.ops.extend import array_func, math_func, nn_func
 from mindspore.mint.nn.functional import *
 from mindspore.mint.nn import functional
@@ -40,7 +40,8 @@ from mindspore.ops.auto_generate import cumsum_ext as cumsum
 from mindspore.ops.auto_generate import stack_ext as stack
 
 # 7
-
+from mindspore.ops.auto_generate import ones as ones_ex
+from mindspore.ops.auto_generate import zeros as zeros_ex
 # 8
 
 # 9
@@ -52,6 +53,7 @@ from mindspore.ops.function.math_func import ne
 # 12
 from mindspore.ops.function.array_func import repeat_interleave_ext as repeat_interleave
 # 13
+from mindspore.ops.auto_generate import flip as flip_ex
 
 # 14
 
@@ -60,6 +62,7 @@ from mindspore.ops.auto_generate import flatten_ext as flatten
 # 16
 from mindspore.ops.functional import matmul
 # 17
+from mindspore.ops.auto_generate import mean as mean_ex
 
 # 18
 from mindspore.ops.functional import sum
@@ -84,12 +87,14 @@ from mindspore.ops.functional import reciprocal
 # 28
 from mindspore.ops.functional import exp
 # 29
-from mindspore.ops.functional import sqrt
+from mindspore.ops.functional import sqrt as sqrt_ex
+
 # 30
 from mindspore.ops.functional import searchsorted
 # 31
 
 # 32
+from mindspore.ops.extend import sub as sub_ex
 
 # 33
 from mindspore.ops.function.array_func import split_ext as split
@@ -106,12 +111,15 @@ from mindspore.ops.function.array_func import nonzero
 # 39
 
 # 40
+from mindspore.ops.functional import any as any_ex
 
 # 41
+from mindspore.ops.extend import add as add_ex
 
 # 42
 from mindspore.ops.functional import argmax
 # 43
+from mindspore.ops.functional import cat as cat_ex
 
 # 44
 from mindspore.ops.functional import cos
@@ -128,6 +136,7 @@ from mindspore.ops.functional import cos
 # 50
 from mindspore.ops.functional import tile
 # 51
+from mindspore.ops.functional import permute as permute_ex
 
 # 52
 
@@ -227,11 +236,58 @@ from mindspore.ops.function.math_func import tanh
 
 # 100
 
+# 102
+from mindspore.ops.extend import baddbmm as baddbmm_ex
+
 # 157
 from mindspore.ops.function.array_func import scatter
 
 # 285
 from mindspore.ops.function.array_func import scatter_add_ext as scatter_add
+
+
+def add(input, other, *, alpha=1):
+    return add_ex(input, other, alpha)
+
+
+def any(input, dim=None, keepdim=False):
+    return any_ex(input, dim, keepdim)
+
+
+def baddbmm(input, batch1, batch2, *, beta=1, alpha=1):
+    return baddbmm_ex(input, batch1, batch2, beta, alpha)
+
+
+def cat(tensors, dim=0):
+    return cat_ex(tensors, dim)
+
+
+def flip(input, dims):
+    return flip_ex(input, dims)
+
+
+def mean(input, dim=None, keepdim=False, *, dtype=None):
+    return mean_ex(input, axis=dim, keep_dims=keepdim, dtype=dtype)
+
+
+def ones(size, *, dtype=None):
+    return ones_ex(size, dtype)
+
+
+def permute(input, dims):
+    return permute_ex(input, dims)
+
+
+def sqrt(input):
+    return sqrt_ex(input)
+
+
+def sub(input, other, *, alpha=1):
+    return sub_ex(input, other, alpha)
+
+
+def zeros(size, *, dtype=None):
+    return zeros_ex(size, dtype)
 
 
 __all__ = [
@@ -257,7 +313,7 @@ __all__ = [
     # 6
     'stack',
     # 7
-
+    'zeros',
     # 8
 
     # 9
@@ -269,7 +325,7 @@ __all__ = [
     # 12
     "repeat_interleave",
     # 13
-
+    'flip',
     # 14
 
     # 15
@@ -277,7 +333,7 @@ __all__ = [
     # 16
     'matmul',
     # 17
-
+    'mean',
     # 18
     'sum',
     # 19
@@ -308,7 +364,7 @@ __all__ = [
     # 31
 
     # 32
-
+    'sub',
     # 33
     'split',
     # 34
@@ -324,13 +380,13 @@ __all__ = [
     # 39
 
     # 40
-
+    'any',
     # 41
-
+    'add',
     # 42
     'argmax',
     # 43
-
+    'cat',
     # 44
     'cos',
     # 45
@@ -346,7 +402,7 @@ __all__ = [
     # 50
     'tile',
     # 51
-
+    'permute',
     # 52
 
     # 53
@@ -449,6 +505,8 @@ __all__ = [
 
     # 100
 
+    # 102
+    'baddbmm',
     # 157
     'scatter',
     # 285
