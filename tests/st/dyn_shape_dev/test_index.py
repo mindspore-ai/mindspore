@@ -448,6 +448,29 @@ def test_tensor_fancy_index_integer_list_negative(mode):
     assert np.allclose(grad_ms.asnumpy(), [3, 0, 12])
 
 
+class EllipsisIndexNet(nn.Cell):
+    def construct(self, x):
+        return x[..., 0]
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_tensor_index_with_ellipsis(mode):
+    """
+    Feature: Test index with ellipsis
+    Description: Test index with ellipsis
+    Expectation: Success
+    """
+    context.set_context(mode=mode)
+    net = EllipsisIndexNet()
+    dyn_x = Tensor(shape=[None, 2, 2], dtype=ms.int64)
+    net.set_inputs(dyn_x)
+    x = ms.Tensor([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+    y = net(x)
+    assert np.allclose(y.asnumpy(), [[1, 3], [5, 7]])
+
+
 # usage: python test_index.py RUN_MODE IR_LEVEL
 # RUN_MODE: 0-run and compare result, 1-run with graph_mode, 2-run with pynative_mode
 # IR_LEVEL: reference to 'save_graphs' in set_context
