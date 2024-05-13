@@ -19,7 +19,7 @@ from mindspore import Parameter, Tensor, context, dtype, GRAPH_MODE, JitConfig, 
 from mindspore.nn import Cell
 from mindspore.ops import operations as msops
 from mindspore.ops.operations._inner_ops import Quant
-from mindspore.ops.auto_generate import WeightQuantBatchMatmul, QuantBatchMatmul
+from mindspore.ops.operations._infer_ops import WeightQuantBatchMatmul, QuantBatchMatmul
 
 
 class NumpyQuantOps:

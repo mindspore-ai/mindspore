@@ -17,7 +17,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
 from mindspore.nn import Cell
-from mindspore.ops.auto_generate import WeightQuantBatchMatmul
+from mindspore.ops.operations._infer_ops import WeightQuantBatchMatmul
 from parallel.utils.utils import ParallelValidator, compile_net
 
 def setup_function():

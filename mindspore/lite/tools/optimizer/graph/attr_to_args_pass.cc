@@ -200,6 +200,12 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
      "padding_mode",
      "align_corners",
    }},
+  {"QuantV2",
+   {
+     "sqrt_mode",
+     "rounding_mode",
+     "dst_type",
+   }},
   {"WeightQuantBatchMatmul",
    {
      "transpose_x",
