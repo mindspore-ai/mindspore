@@ -113,15 +113,16 @@ def check_hcom_group_valid(group, prim_name=None):
 
 class AllReduce(Primitive):
     """
-    Reduces the tensor data across all devices in such a way that all devices will get the same final result.
+    Reduces tensors across all devices in such a way that all devices will get the same final result,
+    returns the tensor which is all reduced.
 
     Note:
         The tensors must have the same shape and format in all processes of the collection.
 
     Args:
-        op (str): Specifies an operation used for element-wise reductions, like sum, prod, max, and min.
+        op (str, optional): Specifies an operation used for element-wise reductions, like sum, prod, max, and min.
                   On the CPU, only 'sum' is supported. Default: ``ReduceOp.SUM`` .
-        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
                   means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
 
     Inputs:
@@ -132,8 +133,8 @@ class AllReduce(Primitive):
         The contents depend on the specified operation.
 
     Raises:
-        TypeError: If any of `op` and `group` is not a str,
-                   or fusion is not an integer, or the input's dtype is bool.
+        TypeError: If any of `op` and `group` is not a str or the input's dtype is bool.
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -142,16 +143,11 @@ class AllReduce(Primitive):
         .. note::
             Before running the following examples, you need to configure the communication environment variables.
 
-            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
-            Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun start up
+            <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/msrun_launcher.html>`_
             for more details.
-
-            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
-
-            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with 2 devices.
 
@@ -200,16 +196,102 @@ class AllReduce(Primitive):
         self.add_prim_attr('no_eliminate', True)
 
 
+class Reduce(PrimitiveWithInfer):
+    """
+    Reduces tensors across the processes in the specified communication group, sends the result
+    to the target dest_rank(local rank), and returns the tensor which is sent to the target process.
+
+    Note:
+        Only process with destination rank receives the reduced output.
+        Support Pynative mode and Graph mode, but Graph mode only supports scenes with a graph compilation level of O0.
+        Other processes only get a tensor with shape [1], which has no mathematical meaning.
+
+    Args:
+        dest_rank (int): The target process(local rank) in the specific group that receives the reduced output.
+        op (str, optional): Specifies an operation used for element-wise reductions, like sum, prod, max, and min.
+                  On the CPU, only 'sum' is supported. Default: ``ReduceOp.SUM`` .
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
+                  means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor. Return the tensor in the specific rank of the process after reduction.
+        The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If the type of the first input parameter is not Tensor,
+                or any of `op` and `group` is not a str.
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
+
+    Supported Platforms:
+    ``Ascend`` ``GPU``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+                without any third-party or configuration file dependencies.
+            Please see the `msrun start up
+            <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/msrun_launcher.html>`_
+            for more details.
+
+            This example should be run with 4 devices.
+
+        >>> import mindspore.ops as ops
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> # Launch 4 processes.
+        >>> init()
+        >>> class ReduceNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.reduce = ops.Reduce(dest_rank=1)
+        >>>
+        >>>     def construct(self, x):
+        >>>         out = self.reduce(x)
+        >>>         return out
+        >>> input = Tensor(np.ones([2, 8]).astype(np.float32))
+        >>> net = ReduceNet()
+        >>> output = net(input)
+        >>> print(output)
+        Process with rank 1: [[4. 4. 4. 4. 4. 4. 4. 4.]
+                             [4. 4. 4. 4. 4. 4. 4. 4.]],
+        Other proesses: [0.].
+    """
+
+    @prim_attr_register
+    def __init__(self, dest_rank, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
+        validator.check_value_type('op', op, (type(ReduceOp.SUM),), self.name)
+        self.dest_rank = dest_rank
+        self.op = op
+        self.group = group
+
+    def infer_shape(self, x_shape):
+        # The process with dest_rank returns the reduced output.
+        # Other processes only gets a tensor with shape [1], which has no mathematical meaning.
+        if self.dest_rank == get_rank():
+            return x_shape
+        return [1]
+
+    def infer_dtype(self, x_dtype):
+        return x_dtype
+
+
 class AllGather(PrimitiveWithInfer):
     """
-    Gathers tensors from the specified communication group.
+    Gathers tensors from the specified communication group and returns the tensor which is all gathered.
 
     Note:
         - The tensors must have the same shape and format in all processes of the collection.
-        - Currently only supports GRAPH_MODE and it should be called in Cell.
 
     Args:
-        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
             means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
 
     Inputs:
@@ -223,6 +305,7 @@ class AllGather(PrimitiveWithInfer):
         TypeError: If `group` is not a str.
         ValueError: If the local rank id of the calling process in the group
                     is larger than the group's rank size.
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -231,16 +314,11 @@ class AllGather(PrimitiveWithInfer):
         .. note::
             Before running the following examples, you need to configure the communication environment variables.
 
-            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
-            Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun start up
+            <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/msrun_launcher.html>`_
             for more details.
-
-            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
-
-            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with 2 devices.
 
@@ -427,7 +505,8 @@ class _HostAllGather(PrimitiveWithInfer):
 
 class ReduceScatter(Primitive):
     r"""
-    Reduces and scatters tensors from the specified communication group.
+    Reduces and scatters tensors from the specified communication group
+    and returns the tensor which is reduced and scattered.
 
     Note:
         The tensors must have the same shape and format in all processes of the collection.
@@ -448,6 +527,7 @@ class ReduceScatter(Primitive):
     Raises:
         TypeError: If any of operation and group is not a string.
         ValueError: If the first dimension of the input cannot be divided by the rank_size.
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -456,16 +536,11 @@ class ReduceScatter(Primitive):
         .. note::
             Before running the following examples, you need to configure the communication environment variables.
 
-            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
-            Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun start up
+            <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/msrun_launcher.html>`_
             for more details.
-
-            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
-
-            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with 2 devices.
 

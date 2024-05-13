@@ -21,13 +21,13 @@ from mindspore.communication._comm_helper import Backend, _get_rank_helper, _get
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
     MCCL_WORLD_COMM_GROUP, DEVICE_TO_BACKEND, _get_local_rank_helper, _get_local_size_helper, GlobalComm, \
-    _check_mpi_envs, _set_elegant_exit_handle
+    _check_mpi_envs, _set_elegant_exit_handle, _get_group_ranks
 from mindspore._c_expression import init_hccl, finalize_hccl, init_cluster, MSContext, ms_ctx_param
 from mindspore.hal.device import is_initialized
 
 __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
            "get_local_rank_size", "get_world_rank_from_group_rank",
-           "get_group_rank_from_world_rank", "create_group", "destroy_group",
+           "get_group_rank_from_world_rank", "create_group", "destroy_group", "get_process_group_ranks",
            "HCCL_WORLD_COMM_GROUP", "NCCL_WORLD_COMM_GROUP", "MCCL_WORLD_COMM_GROUP"]
 
 DEFAULT_WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
@@ -678,3 +678,46 @@ def destroy_group(group):
         raise TypeError("For 'destroy_group', the argument 'group' must be type of string, "
                         "but got 'group' type : {}.".format(type(group)))
     _destroy_group_helper(group)
+
+
+def get_process_group_ranks(group=GlobalComm.WORLD_COMM_GROUP):
+    """
+    Gets the ranks of the specific group and returns the process ranks in the communication group as a list.
+
+    Args:
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
+            means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
+
+    Returns:
+        List (List[int]): List of process ranks in the specified communication group.
+
+    Raises:
+        TypeError: If the `group` is not a str.
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+
+            Please see the `msrun start up
+            <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/msrun_launcher.html>`_
+            for more details.
+
+            This example should be run with 4 devices.
+
+        >>> import numpy as np
+        >>> from mindspore.communication import init, get_process_group_ranks
+        >>>
+        >>> init()
+        >>> output = get_process_group_ranks()
+        >>> print(output)
+        [0, 1, 2, 3]
+
+    """
+    return _get_group_ranks(group)

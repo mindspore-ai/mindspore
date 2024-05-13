@@ -19,25 +19,42 @@ import os
 import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops.operations import _inner_ops as inner_p
+from mindspore.ops.operations import comm_ops
 from mindspore.communication.management import init, get_rank
+from mindspore.communication.comm_func import reduce
+from mindspore import context
+from mindspore.communication import GlobalComm
 
 # 'Reduce' operator only supports KernelByKernel mode by now. So we set 'GRAPH_OP_RUN' to 1.
 np.random.seed(1)
 os.environ['GRAPH_OP_RUN'] = str(1)
+context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 init()
 this_rank = get_rank()
+
 
 class ReduceNet(nn.Cell):
     def __init__(self):
         super(ReduceNet, self).__init__()
-        self.reduce1 = inner_p.Reduce(2)
-        self.reduce2 = inner_p.Reduce(6)
+        self.reduce1 = comm_ops.Reduce(2)
+        self.reduce2 = comm_ops.Reduce(6)
 
     def construct(self, x):
         output1 = self.reduce1(x)
         output2 = self.reduce2(x)
         return output1, output2
+
+
+class ReduceFuncNet(nn.Cell):
+    def __init__(self, group=GlobalComm.WORLD_COMM_GROUP):
+        super(ReduceFuncNet, self).__init__()
+        self.group = group
+
+    def construct(self, x):
+        output1 = reduce(x, 2)
+        output2 = reduce(x, 6)
+        return output1, output2
+
 
 def test_hccl_reduce_8p():
     """
@@ -46,9 +63,45 @@ def test_hccl_reduce_8p():
     Expectation: expect correct result.
     """
     net = ReduceNet()
-    input_x = np.ones([2, 3, 4, 5]).astype(np.float32)
-    expect_output = np.ones([2, 3, 4, 5]).astype(np.float32) * 8
+    input_x = np.array([0, 1, 2, 3]).astype(np.float32)
+    expect_output = np.array([0, 8, 16, 24]).astype(np.float32)
     output1, output2 = net(Tensor(input_x))
+    if this_rank == 2:
+        assert np.allclose(output1.asnumpy(), expect_output)
+
+    if this_rank == 6:
+        assert np.allclose(output2.asnumpy(), expect_output)
+    print("outputs are", output1, output2)
+
+
+def test_hccl_reduce_func_net_8p():
+    """
+    Feature: test 'Reduce' communication operator.
+    Description: test 'Reduce' communication operator.
+    Expectation: expect correct result.
+    """
+    net = ReduceFuncNet()
+    input_x = np.array([0, 1, 2, 3]).astype(np.float32)
+    expect_output = np.array([0, 8, 16, 24]).astype(np.float32)
+    output1, output2 = net(Tensor(input_x))
+    if this_rank == 2:
+        assert np.allclose(output1.asnumpy(), expect_output)
+
+    if this_rank == 6:
+        assert np.allclose(output2.asnumpy(), expect_output)
+    print("outputs are", output1, output2)
+
+
+def test_hccl_reduce_func_8p():
+    """
+    Feature: test 'reduce' communication function.
+    Description: test 'reduce' communication function.
+    Expectation: expect correct result.
+    """
+    input_x = np.array([0, 1, 2, 3]).astype(np.float32)
+    expect_output = np.array([0, 8, 16, 24]).astype(np.float32)
+    output1 = reduce(Tensor(input_x), 2)
+    output2 = reduce(Tensor(input_x), 6)
     if this_rank == 2:
         assert np.allclose(output1.asnumpy(), expect_output)
 
