@@ -7821,6 +7821,94 @@ def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, pse_
                 dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table)
 
 
+def fused_infer_attention_score(query, key, value, pse_shift, attn_mask, actual_seq_lengths, actual_seq_lengths_kv,
+                                dequant_scale1, quant_scale1, dequant_scale2, quant_scale2, quant_offset2,
+                                antiquant_scale, antiquant_offset, block_table, query_padding_size, kv_padding_size,
+                                num_heads, scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
+                                num_key_value_heads=0, sparse_mode=0, inner_precise=1, block_size=0, antiquant_mode=0,
+                                softmax_lse_flag=False):
+    r"""
+    The interface for fully inference.
+    B -- Batch size
+    S -- Sequence length
+    H -- Hidden size
+
+    Note:
+    is only supported on ascend910B
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Inputs:
+        query (Tensor) - The query tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        key (TensorList) - The key tensor with data type of float16 or float32.
+        ): Default: 0  Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        value (TensorList) - The value tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        pse_shift (Tensor) - The padding mask tensor with data type of float16 or float32
+        attn_mask (Tensor) - The attention mask tensor with data type of int8、uint8 or bool.
+          For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
+        actual_seq_lengths (list[int]): Describe actual sequence length of each input with data type of int.
+        actual_seq_lengths_kv (list[int]): Describe actual sequence length of each input with data type of int.
+        dequant_scale1 (Tensor)
+        quant_scale1 (Tensor)
+        dequant_scale2 (Tensor)
+        quant_scale2 (Tensor)
+        quant_offset2 (Tensor)
+        antiquant_scale (Tensor)
+        antiquant_offset (Tensor)
+        block_table (Tensor)
+        query_padding_size (Tensor)
+        kv_padding_size (Tensor)
+        num_heads (int): The number of heads.
+        scale_value (float): The scale value indicating the scale coefficient, which is used as the scalar of
+          Muls in the calculation. Default: 1.0.
+        pre_tokens (int): Previous tokens. Default: 2147483547.
+        next_tokens (int): next tokens.  Default: 0.
+          indicate the upper triangle, Indicate the number of data blocks involved in the calculation. The value 0
+          indicates that the data blocks in the upper triangle are not involved in the calculation
+        input_layout (str): the data layout of the input qkv, support `(BSH)` and `(BNSD)`, Default `BSH`.
+        num_key_value_heads (int): head numbers of key/value which are used in GQA algorithm.
+          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+        sparse_mode (int): Default: 0.
+        inner_precise (int): Default: 1.
+        block_size (int): Default: 0
+        antiquant_mode (int)
+        softmax_lse_flag (bool)
+
+    Outputs:
+        attention_out (Tensor) - Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+
+        Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> from mindspore.ops.function.nn_func import fused_infer_attention_score
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> B = 1
+        >>> N = 16
+        >>> S = 256
+        >>> D = 16
+        >>> query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> out = ops.fused_infer_attention_score(query, key, value, None, None, None, None, None, None, None, None,
+                                                  None, None, None, None, N, input_layout='BNSD')
+        >>> print(out[0].shape)
+        (1, 16, 256, 16)
+    """
+
+    fias = _get_cache_prim(NN_OPS.FusedInferAttentionScore)(num_heads, scale_value, pre_tokens, next_tokens,
+                                                            input_layout, num_key_value_heads, sparse_mode,
+                                                            inner_precise, block_size, antiquant_mode,
+                                                            softmax_lse_flag)
+    return fias(query, key, value, pse_shift, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, dequant_scale1,
+                quant_scale1, dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset,
+                block_table, query_padding_size, kv_padding_size)
+
+
 def embedding(input, weight, padding_idx=None, max_norm=None, norm_type=2.0, scale_grad_by_freq=False):
     r"""
     Retrieve the word embeddings in `weight` using indices specified in `input`.

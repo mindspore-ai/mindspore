@@ -32,7 +32,7 @@ from mindspore.ops.primitive import PrimitiveWithCheck
 from mindspore.ops.primitive import prim_attr_register
 from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6, Dense,
                              Elu, Sigmoid, Softmax, SoftplusExt, HSwish, HSigmoid, AvgPool, BiasAdd,
-                             NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
+                             NLLLoss, OneHot, GeLU, FastGeLU, PReLU, FusedInferAttentionScore,
                              GridSampler3D, GridSampler2D, LayerNorm, LayerNormExt, HShrink, AdamWeightDecay, Dropout,
                              ApplyRotaryPosEmb, PagedAttention, PagedAttentionMask, ReshapeAndCache,
                              FlashAttentionScore, Embedding, UpsampleNearest1D, UpsampleNearest2D,
@@ -9863,6 +9863,7 @@ class IncreFlashAttention(Primitive):
                                         "dequant_scale1", "quant_scale1", "dequant_scale2", "quant_scale2",
                                         "quant_offset2", "antiquant_scale", "antiquant_offset", "block_table"],
                                 outputs=["attention_out"])
+
 
 class RmsNorm(Primitive):
     r"""
