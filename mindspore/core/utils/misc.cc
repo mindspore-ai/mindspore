@@ -40,7 +40,6 @@ static std::map<TypeId, size_t> datatype_size_map = {{TypeId::kNumberTypeFloat16
                                                      {TypeId::kNumberTypeFloat32, sizeof(float)},
                                                      {TypeId::kNumberTypeFloat64, sizeof(double)},
                                                      {TypeId::kNumberTypeBFloat16, sizeof(float) / 2},
-                                                     {TypeId::kNumberTypeInt4, sizeof(int8_t)},
                                                      {TypeId::kNumberTypeInt8, sizeof(int8_t)},
                                                      {TypeId::kNumberTypeInt16, sizeof(int16_t)},
                                                      {TypeId::kNumberTypeInt32, sizeof(int32_t)},

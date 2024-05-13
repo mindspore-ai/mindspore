@@ -95,11 +95,8 @@ typedef enum DbgDataType : unsigned int {
   DT_REF = 42,         // type ref
 
   // bfloat type
-  DT_BFLOAT16 = 46,   // bfloat16
-  DT_BFLOATS16 = 47,  // list of bfloat16
-
-  // quant type
-  DT_INT4 = 48
+  DT_BFLOAT16 = 46,  // bfloat16
+  DT_BFLOATS16 = 47  // list of bfloat16
 } DbgDataType;
 
 class TensorData {

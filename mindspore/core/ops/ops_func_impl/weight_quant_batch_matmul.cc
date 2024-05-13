@@ -63,20 +63,15 @@ BaseShapePtr WeightQuantBatchMatmulFuncImpl::InferShape(const PrimitivePtr &prim
   }
 
   bool dynamic_shape = IsDynamic(x_shp) || IsDynamic(weight_shp);
-  auto input_type = input_args[kInputWeight]->GetType()->cast<TensorTypePtr>()->element();
   if (!dynamic_shape) {
     CheckBatchMatmulInputSize(prim_name, "x", x_shp);
     CheckBatchMatmulInputSize(prim_name, "weight", weight_shp);
-    CheckBatchMatmulInputWhetherCanBeMul(prim_name, x_shp, weight_shp, transpose_x, transpose_weight,
-                                         input_type->type_id());
+    CheckBatchMatmulInputWhetherCanBeMul(prim_name, x_shp, weight_shp, transpose_x, transpose_weight);
     CheckBatchMatmulInputWhetherCanBeBroadcast(prim_name, x_shp, weight_shp);
   }
 
   ShapeVector ret_shape;
   BatchMatMulMakeShape(&ret_shape, x_shp, weight_shp, transpose_x, transpose_weight, kMatSize);
-  if (input_type->type_id() == TypeId::kNumberTypeInt4 && !transpose_weight) {
-    ret_shape[ret_shape.size() - 1] *= 2;
-  }
   return std::make_shared<abstract::Shape>(ret_shape);
 }
 
@@ -85,7 +80,7 @@ TypePtr WeightQuantBatchMatmulFuncImpl::InferType(const PrimitivePtr &primitive,
   std::map<std::string, TypePtr> types;
   MS_EXCEPTION_IF_NULL(input_args[kInputWeight]);
   (void)types.emplace("weight", input_args[kInputWeight]->GetType());
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, {kInt4, kInt8, kInt32}, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, {kInt8}, primitive->name());
 
   types.clear();
   MS_EXCEPTION_IF_NULL(input_args[kInputAntiquantScale]);
@@ -140,15 +135,12 @@ TypePtr WeightQuantBatchMatmulFuncImpl::InferType(const PrimitivePtr &primitive,
 void WeightQuantBatchMatmulFuncImpl::CheckBatchMatmulInputWhetherCanBeMul(const std::string &name,
                                                                           const ShapeVector &x_shape,
                                                                           const ShapeVector &weight_shape,
-                                                                          bool transpose_x, bool transpose_weight,
-                                                                          int type_id) const {
+                                                                          bool transpose_x,
+                                                                          bool transpose_weight) const {
   ShapeVector x_mat_shape(x_shape.end() - SizeToLong(kMatSize), x_shape.end());
   ShapeVector weight_mat_shape(weight_shape.end() - SizeToLong(kMatSize), weight_shape.end());
   int64_t x_col = x_mat_shape[static_cast<size_t>(!transpose_x)];
   int64_t weight_row = weight_mat_shape[static_cast<size_t>(transpose_weight)];
-  if (type_id == TypeId::kNumberTypeInt4) {
-    weight_row = transpose_weight ? weight_row * 2 : weight_row;  // int4x2 = 2 * int4
-  }
   if (std::find(x_shape.begin(), x_shape.end(), -1) == x_shape.end() &&
       std::find(weight_shape.begin(), weight_shape.end(), -1) == weight_shape.end()) {
     if (x_col != weight_row) {
