@@ -19,12 +19,13 @@
 #include <memory>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "param/matmul_ext_param.h"
 
 namespace mindspore {
 namespace kernel {
 internal::OpParamPtr InternalMatMul::CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                                    const std::vector<KernelTensor *> &outputs) {
-  internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
+  auto param_ptr = std::make_shared<internal::MatMulExtParam>();
   internal::MatMulParam matmul_param;
   param_ptr->opId = internal::OpId::MatMul;
   // setup matmul param from inputs
@@ -43,9 +44,22 @@ internal::OpParamPtr InternalMatMul::CreateOpParam(const std::vector<KernelTenso
   int k = (!transpose_a) ? shape_a[kIndex1] : shape_a[kIndex0];
   int n = (!transpose_b) ? shape_b[kIndex1] : shape_b[kIndex0];
 
-  matmul_param = {transpose_a, transpose_b, {m, k, n}};
+  param_ptr->input_dtype = InternalKernelUtils::ToInternalDType(inputs[kIndex0]->dtype_id());
+  param_ptr->weight_dtype = InternalKernelUtils::ToInternalDType(inputs[kIndex1]->dtype_id());
+  param_ptr->output_dtype = InternalKernelUtils::ToInternalDType(outputs[kIndex0]->dtype_id());
+
+  matmul_param = {
+    transpose_a,  // transposeA
+    transpose_b,  // transposeB
+    {m, k, n},    // oriShape
+    false,        // withBias
+    false,        // enDequant
+    0,            // tilingN
+    0,            // tilingK
+    false,        // enShuffleK
+  };
   param_ptr->specificParam = matmul_param;
-  return param_ptr;
+  return std::static_pointer_cast<internal::OpParam>(param_ptr);
 }
 void InternalMatMul::SetInOutIdx() {
   inputsIdxMap_[kIndex0] = kIndex0;
