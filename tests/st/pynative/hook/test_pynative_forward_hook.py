@@ -24,49 +24,49 @@ from mindspore.common.api import jit
 from mindspore import ops as P
 
 
-def forward_pre_hook_fn_bn(cell_id, inp):
+def forward_pre_hook_fn_bn(cell, inp):
     out = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")(inp[0])
     return out
 
 
-def forward_pre_hook_fn_add(cell_id, inp):
+def forward_pre_hook_fn_add(cell, inp):
     out = inp[0] + inp[0]
     return out
 
 
-def forward_pre_hook_fn_mul(cell_id, inp):
+def forward_pre_hook_fn_mul(cell, inp):
     out = inp[0] * inp[0]
     return out
 
 
-def forward_pre_hook_fn_multi_relu(cell_id, inp):
+def forward_pre_hook_fn_multi_relu(cell, inp):
     out = nn.ReLU()(inp[0])
     return out, inp[1]
 
 
-def forward_pre_hook_fn_multi_add(cell_id, inp):
+def forward_pre_hook_fn_multi_add(cell, inp):
     x = inp[0] + inp[1]
     y = inp[0] * inp[1]
     return x, y
 
 
-def forward_hook_fn_conv(cell_id, inp, outp):
+def forward_hook_fn_conv(cell, inp, outp):
     out = P.Log()(outp)
     return out
 
 
-def forward_hook_fn_add(cell_id, inp, outp):
+def forward_hook_fn_add(cell, inp, outp):
     out = outp + outp
     return out
 
 
-def forward_hook_fn_mul(cell_id, inp, outp):
+def forward_hook_fn_mul(cell, inp, outp):
     out = outp * outp
     return out
 
 
 @jit
-def forward_hook_fn_with_ms_func(cell_id, inp, outp):
+def forward_hook_fn_with_ms_func(cell, inp, outp):
     return outp
 
 
@@ -545,3 +545,40 @@ def test_pynative_forward_hook_delete():
     net.handle.remove()
     grads = grad_net(x, y)
     assert grads[1].asnumpy().all() == np.array([1]).all()
+
+
+test_cell_id = None
+def forward_pre_hook_input_fn(cell, inputs):
+    global test_cell_id
+    test_cell_id = id(cell)
+
+class TestHookInputNet(nn.Cell):
+    def __init__(self):
+        super(TestHookInputNet, self).__init__()
+        self.relu = nn.ReLU()
+        self.handle = self.relu.register_forward_pre_hook(forward_pre_hook_input_fn)
+
+    def construct(self, x, y):
+        x = x + y
+        x = self.relu(x)
+        return x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pynative_forward_hook_cell_input():
+    """
+    Feature: PyNative hook function.
+    Description: Test forward hook input.
+    Expectation: The calculation result is correct.
+    """
+    net = TestHookInputNet()
+
+    x = ms.Tensor(np.ones([1]).astype(np.float32))
+    y = ms.Tensor(np.ones([1]).astype(np.float32))
+
+    net(x, y)
+
+    global test_cell_id
+    assert test_cell_id == id(net.relu)
