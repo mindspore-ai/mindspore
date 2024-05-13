@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/rsqrt.h"
+#include <set>
+#include <memory>
+#include "ops/ops_func_impl/simple_infer.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -40,5 +44,27 @@ TypePtr RsqrtFuncImpl::InferType(const PrimitivePtr &primitive, const std::vecto
     return input_type->Clone();
   }
 }
+TypePtrList RsqrtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &input_type = x_tensor->Dtype();
+  const auto &input_type_id = x_tensor->Dtype()->type_id();
+  static const std::set<TypeId> int_or_bool = {kNumberTypeUInt8,  kNumberTypeInt8,   kNumberTypeUInt16,
+                                               kNumberTypeInt16,  kNumberTypeUInt32, kNumberTypeInt32,
+                                               kNumberTypeUInt64, kNumberTypeInt64,  kNumberTypeBool};
+  bool is_int_or_bool = std::any_of(int_or_bool.begin(), int_or_bool.end(),
+                                    [&input_type_id](const TypeId &type_id) { return input_type_id == type_id; });
+  if (is_int_or_bool) {
+    return {kFloat32};
+  } else {
+    return {input_type};
+  }
+}
+ShapeArray RsqrtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameRsqrt, RsqrtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

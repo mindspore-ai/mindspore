@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <memory>
+
 #include "ops/ops_func_impl/max.h"
+#include <memory>
+#include "ops/ops_func_impl/simple_infer.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -27,5 +30,15 @@ BaseShapePtr MaxFuncImpl::InferShape(const PrimitivePtr &primitive,
 TypePtr MaxFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   return input_args[0]->GetType();
 }
+TypePtrList MaxFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->Dtype()};
+}
+ShapeArray MaxFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {std::vector<int64_t>()};
+}
+REGISTER_SIMPLE_INFER(kNameMax, MaxFuncImpl)
+REGISTER_SIMPLE_INFER(kNameMin, MaxFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
