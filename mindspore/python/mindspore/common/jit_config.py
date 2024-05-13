@@ -14,6 +14,7 @@
 # ============================================================================
 """JitConfig for compile."""
 
+from mindspore import context
 
 class JitConfig:
     """
@@ -90,6 +91,14 @@ class JitConfig:
             raise ValueError("For 'debug_level' must be one of '['RELEASE', 'DEBUG']'.")
         if infer_boost != "" and infer_boost not in ["on", "off"]:
             raise ValueError("For 'infer_boost' must be one of '['on', 'off']'.")
+        # jit_level can be set globally by Context
+        global_jit_config = context.get_jit_config()
+        if jit_level == "" and global_jit_config:
+            global_jit_level = global_jit_config['jit_level']
+            if global_jit_level in ["O0", "O1", "O2"]:
+                jit_level = global_jit_level
+            else:
+                raise ValueError("'jit_level' must be one of ['O0', 'O1', 'O2'].")
         self.jit_config_dict = kwargs
         self.jit_config_dict["jit_level"] = jit_level
         self.jit_config_dict["exc_mode"] = exc_mode
