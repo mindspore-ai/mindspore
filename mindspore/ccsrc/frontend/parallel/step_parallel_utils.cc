@@ -2924,14 +2924,14 @@ CNodePtr ReplaceInterleavedAllGatherToConcat(const FuncGraphPtr &func_graph, con
       ChangeAllGatherGroup(ag, new_group_ranks_vector[i]);
     }
     if (!replace_concat) {
-      manager->Replace(ag, concat);
+      (void)manager->Replace(ag, concat);
     }
   }
   if (!replace_concat) {
     return concat;
   }
   for (size_t i = 0; i < replace_nodes.size(); ++i) {
-    manager->Replace(replace_nodes[i], concat);
+    (void)manager->Replace(replace_nodes[i], concat);
   }
   return concat;
 }
@@ -2971,7 +2971,7 @@ void MergeOpBeforeInterleaveSlice(const FuncGraphPtr &func_graph, const CNodePtr
     for (size_t row = 1; row < need_replace_op_lists.size(); ++row) {
       auto slice_cnode = need_replace_op_lists[row][col];
       slice_cnode->AddAttr(INTERLEAVED_PARALLEL, MakeValue(true));
-      manager->SetEdge(slice_cnode, kIndex1, slice_input);
+      (void)manager->SetEdge(slice_cnode, kIndex1, slice_input);
     }
   }
 }
@@ -3053,7 +3053,7 @@ void ConvertInterleaveAllGatherToConcat(const FuncGraphPtr &func_graph, const CN
     MS_EXCEPTION_IF_NULL(virtual_end_input1);
     auto new_virtual_converter_end = CreateVirtualConverterEndNode(func_graph, {virtual_end_input1});
 
-    manager->Replace(virtual_converter_end, new_virtual_converter_end);
+    (void)manager->Replace(virtual_converter_end, new_virtual_converter_end);
   }
 }
 
@@ -3101,6 +3101,8 @@ std::vector<CNodePtr> DoSplitForNotParallelCareOpsInterleaved(const FuncGraphMan
   auto virtual_converter_begin_input = virtual_converter_begin->input(kSizeOne);
   auto virtual_converter_begin_users = GetOutputNodesWithFilter(
     virtual_converter_begin, [&](const AnfNodePtr &anode) { return IsPrimitiveCNode(anode, prim::kPrimTupleGetItem); });
+  std::sort(virtual_converter_begin_users.begin(), virtual_converter_begin_users.end(),
+            [](const auto &pair1, const auto &pair2) { return pair1.second < pair2.second; });
   auto virtual_converter_begin_input_cnode = virtual_converter_begin_input->cast<CNodePtr>();
   std::vector<AnfNodePtr> new_inputs;
   std::vector<CNodePtr> new_virtual_converter_begin_vector;
@@ -3179,7 +3181,7 @@ void EraseVirtualConverter(const FuncGraphPtr &root) {
                    << virtual_converter_begin->input(kIndex1)->fullname_with_scope();
       auto virtual_converter_begin_input_node = virtual_converter_begin->input(kIndex1);
       for (const auto &v_user_pair : node_users.at(virtual_converter_begin)) {
-        manager->Replace(v_user_pair.first, virtual_converter_begin_input_node);
+        (void)manager->Replace(v_user_pair.first, virtual_converter_begin_input_node);
       }
       continue;
     }
@@ -3197,7 +3199,7 @@ void EraseVirtualConverter(const FuncGraphPtr &root) {
       auto tuple_get_item_index_value = GetValueNode(tuple_get_item->input(kIndex2));
       MS_EXCEPTION_IF_NULL(tuple_get_item_index_value);
       auto get_item_index = GetValue<int64_t>(tuple_get_item_index_value);
-      manager->Replace(tuple_get_item, virtual_converter_end->input(get_item_index + 1));
+      (void)manager->Replace(tuple_get_item, virtual_converter_end->input(get_item_index + 1));
     }
   }
   AnfNodePtr new_ret_after = root->get_return();
@@ -3210,7 +3212,7 @@ void EraseVirtualConverter(const FuncGraphPtr &root) {
         MS_LOG(INTERNAL_EXCEPTION) << "The VirtualConverterEnd nums is not equal to VirtualConverterBegin nums.";
       }
       auto virtual_converter_end_input = virtual_converter_end_cnode->input(kIndex1);
-      manager->Replace(virtual_converter_end_cnode, virtual_converter_end_input);
+      (void)manager->Replace(virtual_converter_end_cnode, virtual_converter_end_input);
     }
   }
 }

@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Tensor, Parameter
-from mindspore import context
+from mindspore import Tensor, Parameter, context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
@@ -123,6 +123,137 @@ class NetTwoMatMul(nn.Cell):
         out2 = self.matmul2(out1, self.w2)
         return self.relu(out2) + y_new
 
+
+class NetWithAddActivation(nn.Cell):
+    def __init__(self, weight, bias, matmul_in_layout, add_in_layout, relu_in_layout=None, softmax_in_layout=None,
+                 out_layout=None):
+        super().__init__()
+        self.matmul1 = P.MatMul().shard(in_strategy=matmul_in_layout, out_strategy=out_layout)
+        self.matmul1.add_prim_attr("recompute_comm_op", True)
+        self.add = P.Add().shard(in_strategy=add_in_layout)
+        self.gelu = P.GeLU()
+        if relu_in_layout is not None:
+            self.activation = P.ReLU().shard(in_strategy=relu_in_layout)
+        elif softmax_in_layout is not None:
+            self.activation = P.Softmax().shard(in_strategy=softmax_in_layout)
+        else:
+            self.activation = P.Softmax()
+        self.w = Parameter(weight, "w1")
+        self.bias = Parameter(bias, "bias")
+
+    def construct(self, y):
+        y_new = self.gelu(y)
+        out1 = self.matmul1(y, self.w)
+        out1 = self.add(out1, self.bias)
+        out1 = self.activation(out1)
+        out = out1 + y_new
+        return out
+
+
+class NetWithAdd(nn.Cell):
+    def __init__(self, weight, bias, matmul_in_layout, add_1_in_layout, add_2_in_layout, add_3_in_layout):
+        super().__init__()
+        self.matmul1 = P.MatMul().shard(in_strategy=matmul_in_layout)
+        self.matmul1.add_prim_attr("recompute_comm_op", True)
+        self.add_1 = P.Add().shard(in_strategy=add_1_in_layout)
+        self.add_2 = P.Add().shard(in_strategy=add_2_in_layout)
+        self.add_3 = P.Add().shard(in_strategy=add_3_in_layout)
+        self.gelu = P.GeLU()
+        self.w = Parameter(weight, "w1")
+        self.bias = Parameter(bias, "bias")
+
+    def construct(self, y):
+        y_new = self.gelu(y)
+        out1 = self.matmul1(y, self.w)
+        out1 = self.add_1(out1, self.bias)
+        out2 = self.add_2(self.bias, out1)
+        out3 = self.add_3(out1, out2)
+        out = out3 + y_new
+        return out
+
+
+class NetWithAdd2(nn.Cell):
+    def __init__(self, bias, add_in_layout):
+        super().__init__()
+        self.add = P.Add().shard(in_strategy=add_in_layout)
+        self.gelu = P.GeLU()
+        self.bias = Parameter(bias, "bias")
+
+    def construct(self, y):
+        y_new = self.gelu(y)
+        out1 = self.add(y, self.bias)
+        out = out1 + y_new
+        return out
+
+
+class NetWithRmsNorm(nn.Cell):
+    def __init__(self, weight, bias, gamma, matmul_in_layout, add_in_layout, relu_in_layout, rmsnorm_in_layout,
+                 out_layout=None):
+        super().__init__()
+        self.matmul1 = P.MatMul().shard(in_strategy=matmul_in_layout, out_strategy=out_layout)
+        self.matmul1.add_prim_attr("recompute_comm_op", True)
+        self.add = P.Add().shard(in_strategy=add_in_layout)
+        self.gelu = P.GeLU()
+        self.activation = P.ReLU().shard(in_strategy=relu_in_layout)
+        self.rmsnorm = P.RmsNorm().shard(in_strategy=rmsnorm_in_layout)
+        self.w = Parameter(weight, "w1")
+        self.bias = Parameter(bias, "bias")
+        self.gamma = Parameter(gamma, "gamma")
+
+    def construct(self, y):
+        y_new = self.gelu(y)
+        out1 = self.matmul1(y, self.w)
+        out1 = self.add(out1, self.bias)
+        out1 = self.activation(out1)
+        out1 = self.rmsnorm(out1, self.gamma)
+        out = out1[0] + y_new
+        return out
+
+
+class NetWithLayernorm(nn.Cell):
+    def __init__(self, weight, bias, gamma, beta, matmul_in_layout, add_in_layout, relu_in_layout, layernorm_in_layout,
+                 out_layout=None):
+        super().__init__()
+        self.matmul1 = P.MatMul().shard(in_strategy=matmul_in_layout, out_strategy=out_layout)
+        self.matmul1.add_prim_attr("recompute_comm_op", True)
+        self.add = P.Add().shard(in_strategy=add_in_layout)
+        self.gelu = P.GeLU()
+        self.activation = P.ReLU().shard(in_strategy=relu_in_layout)
+        self.layernorm = P.LayerNorm(begin_norm_axis=1, begin_params_axis=1, epsilon=1e-7).shard(
+            in_strategy=layernorm_in_layout)
+        self.w = Parameter(weight, "w1")
+        self.bias = Parameter(bias, "bias")
+        self.gamma = Parameter(gamma, "gamma")
+        self.beta = Parameter(beta, "beta")
+
+    def construct(self, y):
+        y_new = self.gelu(y)
+        out1 = self.matmul1(y, self.w)
+        out1 = self.add(out1, self.bias)
+        out1 = self.activation(out1)
+        out1 = self.layernorm(out1, self.gamma, self.beta)
+        out = out1[0] + y_new
+        return out
+
+
+class NetWithTranspose(nn.Cell):
+    def __init__(self, mul_size, perm=(1, 0), in_strategy=None, out_strategy=None):
+        super().__init__()
+        mul_np = np.full(mul_size, 0.5, dtype=np.float32)
+        self.mul_weight = Parameter(Tensor(mul_np), name="mul_weight")
+        self.mul = P.Mul()
+        self.transpose = P.Transpose()
+        self.perm = perm
+        self.transpose.shard(in_strategy=in_strategy, out_strategy=out_strategy)
+        self.add = P.Add()
+
+    def construct(self, inputs):
+        x = self.mul(inputs, self.mul_weight)
+        x = self.transpose(x, self.perm)
+        x = self.add(x, x)
+        return x
+
+
 def test_interleaved_base():
     """
     Feature: test micro interleaved
@@ -175,3 +306,138 @@ def test_interleaved_with_reshape():
     net = GradWrap(NetWithLoss(NetWithReshape(w1, w2, layout1, layout2, out_layout1, out_layout2)))
     phase = compile_net(net, x)
     _ = ParallelValidator(net, phase)
+
+
+def test_interleaved_with_relu_add():
+    """
+    Feature: test micro interleaved
+    Description: dev_num is 8.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 4, 2), ("dp", "mp", "interleaved_parallel"))
+    matmul_layout = (layout(("dp", "interleaved_parallel"), "mp"), layout("mp", "None"))
+    add_layout = (layout(("dp", "interleaved_parallel"), "None"), layout("None"))
+    activation_layout = (layout(("dp", "interleaved_parallel"), "None"),)
+    x = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
+    w = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
+    bias = Tensor(np.ones([1024,]), dtype=ms.float32)
+    net = GradWrap(
+        NetWithLoss(NetWithAddActivation(w, bias, matmul_layout, add_layout, relu_in_layout=activation_layout)))
+    _ = compile_net(net, x)
+
+
+def test_interleaved_with_add():
+    """
+    Feature: test micro interleaved
+    Description: dev_num is 8.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 4, 2), ("dp", "mp", "interleaved_parallel"))
+    matmul_layout = (layout(("dp", "interleaved_parallel"), "mp"), layout("mp", "None"))
+    add_1_layout = (layout(("dp", "interleaved_parallel"), "None"), layout("None"))
+    add_2_layout = (layout("None"), layout(("dp", "interleaved_parallel"), "None"))
+    add_3_layout = (layout(("dp", "interleaved_parallel"), "None"), layout(("dp", "interleaved_parallel"), "None"))
+    x = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
+    w = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
+    bias = Tensor(np.ones([1024,]), dtype=ms.float32)
+    net = GradWrap(
+        NetWithLoss(NetWithAdd(w, bias, matmul_layout, add_1_layout, add_2_layout, add_3_layout)))
+    _ = compile_net(net, x)
+
+
+def test_interleaved_with_add_failed():
+    """
+    Feature: test micro interleaved in parameter
+    Description: dev_num is 8.
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 4, 2), ("dp", "mp", "interleaved_parallel"))
+    add_layout = (layout("None"), layout(("dp", "interleaved_parallel"), "None"))
+    x = Tensor(np.ones([1024,]), dtype=ms.float32)
+    bias = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
+    net = GradWrap(
+        NetWithLoss(NetWithAdd2(bias, add_layout)))
+    with pytest.raises(RuntimeError):
+        _ = compile_net(net, x)
+
+
+def test_interleaved_with_softmax_add():
+    """
+    Feature: test micro interleaved
+    Description: dev_num is 8.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 4, 2), ("dp", "mp", "interleaved_parallel"))
+    matmul_layout = (layout(("dp", "interleaved_parallel"), "mp"), layout("mp", "None"))
+    add_layout = (layout(("dp", "interleaved_parallel"), "None"), layout("None"))
+    activation_layout = (layout(("dp", "interleaved_parallel"), "None"),)
+    x = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
+    w = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
+    bias = Tensor(np.ones([1024,]), dtype=ms.float32)
+    net = GradWrap(
+        NetWithLoss(NetWithAddActivation(w, bias, matmul_layout, add_layout, softmax_in_layout=activation_layout)))
+    _ = compile_net(net, x)
+
+
+def test_interleaved_with_rmsnorm():
+    """
+    Feature: test micro interleaved
+    Description: dev_num is 8.
+    Expectation: compile success
+    """
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 4, 2), ("dp", "mp", "interleaved_parallel"))
+    matmul_layout = (layout(("dp", "interleaved_parallel"), "mp"), layout("mp", "None"))
+    add_layout = (layout(("dp", "interleaved_parallel"), "None"), layout("None"))
+    activation_layout = (layout(("dp", "interleaved_parallel"), "None"),)
+    rmsnorm_layout = (layout(("dp", "interleaved_parallel"), "None"), layout("None"))
+    x = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
+    w = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
+    bias = Tensor(np.ones([1024,]), dtype=ms.float32)
+    net = GradWrap(
+        NetWithLoss(NetWithRmsNorm(w, bias, bias, matmul_layout, add_layout, activation_layout, rmsnorm_layout)))
+    _ = compile_net(net, x)
+
+
+def test_interleaved_with_layernorm():
+    """
+    Feature: test micro interleaved
+    Description: dev_num is 8.
+    Expectation: compile success
+    """
+
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 4, 2), ("dp", "mp", "interleaved_parallel"))
+    matmul_layout = (layout(("dp", "interleaved_parallel"), "mp"), layout("mp", "None"))
+    add_layout = (layout(("dp", "interleaved_parallel"), "None"), layout("None"))
+    activation_layout = (layout(("dp", "interleaved_parallel"), "None"),)
+    layernorm_layout = (layout(("dp", "interleaved_parallel"), "None"), layout("None"), layout("None"))
+    x = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
+    w = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
+    bias = Tensor(np.ones([1024,]), dtype=ms.float32)
+    net = GradWrap(
+        NetWithLoss(
+            NetWithLayernorm(w, bias, bias, bias, matmul_layout, add_layout, activation_layout, layernorm_layout)))
+    _ = compile_net(net, x)
+
+
+def test_interleaved_with_transpose():
+    """
+    Feature: test micro interleaved
+    Description: dev_num is 4.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=4, global_rank=0)
+    layout = Layout((2, 2, 1, 1, 2), ("dp", "sp", "mp", "cp", "interleaved_parallel"))
+    in_strategy = (layout("dp", ("sp", "cp"), "mp", "interleaved_parallel"),)
+    out_strategy = (layout(("sp", "cp"), "interleaved_parallel", "dp", "mp"),)
+    x = Tensor(np.ones([64, 96, 16, 16]), dtype=ms.float32)
+    net = GradWrap(
+        NetWithLoss(
+            NetWithTranspose((64, 96, 16, 16), (1, 3, 0, 2), in_strategy, out_strategy)))
+    _ = compile_net(net, x)

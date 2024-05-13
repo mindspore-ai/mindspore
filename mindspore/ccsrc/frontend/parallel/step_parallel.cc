@@ -448,7 +448,7 @@ void InsertRedistributionForMicroInterleaved(const TensorRedistributionPtr &tens
   // create VirtualConverterEndNode
   auto virtual_converter_end = CreateVirtualConverterEndNode(func_graph, tuple_get_item_vector);
   auto manager = func_graph->manager();
-  manager->SetEdge(next_cnode, next_cnode_index, virtual_converter_end);
+  (void)manager->SetEdge(next_cnode, next_cnode_index, virtual_converter_end);
   // add recompute_comm_op attrs
   auto prim_out = GetCNodePrimitive(next_cnode);
   if (prim_out != nullptr && prim_out->HasAttr(RECOMPUTE_COMM_OP)) {
@@ -1652,6 +1652,9 @@ static std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair
   parameter->set_abstract(cloned_abstract);
   ParameterPtr parameter_ptr = parameter->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(parameter_ptr);
+  if (tensor_layout.IsInterleavedParallel()) {
+    MS_LOG(EXCEPTION) << "parameter " << parameter->ToString() << " can not set to interleaved parallel";
+  }
   parameter_ptr->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(tensor_layout));
   if (ParallelContext::GetInstance()->direct_split() && parameter_ptr->has_default()) {
     auto layout = parameter_ptr->user_data<TensorLayout>();
@@ -2705,7 +2708,13 @@ static void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const F
       } else {
         stra = operator_info->strategy();
       }
-      stra_map[strategy_key_name] = stra;
+      if (stra) {
+        stra_map[strategy_key_name] = stra;
+      } else {
+        Strategies new_stra_v;
+        StrategyPtr new_stra = std::make_shared<Strategy>(g_device_manager->stage_id(), new_stra_v);
+        stra_map[strategy_key_name] = new_stra;
+      }
 
       for (auto param_name_pair : param_names) {
         tensor_info_map[param_name_pair.first] = param_name_pair.second->user_data<TensorLayout>();

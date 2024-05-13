@@ -188,7 +188,7 @@ Status TensorLayout::InitFromExtendVector(const Shape &device_matrix, const std:
 
 std::vector<int64_t> TensorLayout::GetVirtualRank() const {
   int64_t rank = g_device_manager->global_rank();
-  if (device_arrangement_interleaved_.array().empty()) {
+  if (!IsInterleavedParallel()) {
     return {rank};
   }
   auto interleaved_num = device_arrangement_interleaved_.array().back();
@@ -200,7 +200,7 @@ std::vector<int64_t> TensorLayout::GetVirtualRank() const {
 }
 
 TensorLayout TensorLayout::LayoutForRedistribution() const {
-  if (device_arrangement_interleaved_.array().empty()) {
+  if (!IsInterleavedParallel()) {
     return *this;
   }
   TensorLayout interleaved_layout;
@@ -545,6 +545,21 @@ bool TensorLayout::IsSameWithoutSplit(const TensorLayout &t1) const {
     return false;
   }
   return true;
+}
+
+// Check whether layout has interleaved dev mat and the tensor map use the interleaved parallel
+bool TensorLayout::IsInterleavedParallel() const {
+  if (device_arrangement_interleaved_.array().empty()) {
+    return false;
+  }
+  bool is_interleaved_parallel = false;
+  for (size_t i = 0; i < origin_tensor_map().array().size(); ++i) {
+    if (origin_tensor_map().array()[i] == 0) {
+      is_interleaved_parallel = true;
+      break;
+    }
+  }
+  return is_interleaved_parallel;
 }
 
 /*

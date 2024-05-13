@@ -102,6 +102,8 @@ class TensorLayout {
 
   bool IsSameWithoutSplit(const TensorLayout &t1) const;
 
+  bool IsInterleavedParallel() const;
+
   bool TensorShapeCanBeExpanded(const Arrangement &expand_shape) const;
 
   std::shared_ptr<Arrangement> ComputeExpandedTensorShape(const Arrangement &expand_shape) const;
