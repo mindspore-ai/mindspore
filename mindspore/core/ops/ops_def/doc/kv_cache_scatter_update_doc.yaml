@@ -1,0 +1,16 @@
+kv_cache_scatter_update:
+  description: |
+    Update var with updates and indices along sequence axis.
+
+    Args:
+        var (Tensor): 4-D tensor.
+        indices (Tensor): 1-D tensor.
+        updates (Tensor): 4-D tensor.
+        axis (Int): Default to 0 and can be '-1', '-2'.
+        reduce (String): Default to string "none" and can be "update".
+
+    Returns:
+        Tensor, has the same data type and shape as original `var`.
+
+    Supported Platforms:
+        ``Ascend``

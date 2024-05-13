@@ -81,8 +81,10 @@ StrToEnumMap StrToPadModeMap = {
 REG_STRING_TO_ENUM(pad_mode, StrToPadModeMap)
 
 // Reduction
-StrToEnumMap StrToReductionMap = {
-  {"SUM", Reduction::REDUCTION_SUM}, {"MEAN", Reduction::MEAN}, {"NONE", Reduction::NONE}};
+StrToEnumMap StrToReductionMap = {{"SUM", Reduction::REDUCTION_SUM},
+                                  {"MEAN", Reduction::MEAN},
+                                  {"NONE", Reduction::NONE},
+                                  {"UPDATE", Reduction::UPDATE}};
 REG_STRING_TO_ENUM(reduction, StrToReductionMap)
 
 // Activation

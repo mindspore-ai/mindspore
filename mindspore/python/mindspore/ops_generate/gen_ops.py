@@ -22,7 +22,7 @@ import pathlib
 import logging
 import gen_utils
 from gen_utils import (py_licence_str, cc_license_str, check_change_and_replace_file, merge_files,
-                       safe_load_yaml, convert_dtype_str, write_file)
+                       merge_files_append, safe_load_yaml, convert_dtype_str, write_file)
 from pyboost_utils import get_pyboost_name, is_pyboost_enable, AclnnUtils, get_dtypes
 import template
 from template import CppTemplate
@@ -1027,10 +1027,13 @@ def main():
     st_yaml_path = os.path.join(work_path, 'tests/st/ops/dynamic_shape/test_op_utils.yaml')
 
     ops_yaml_dir_path = os.path.join(work_path, 'mindspore/core/ops/ops_def/')
+    infer_ops_yaml_dir_path = os.path.join(work_path, 'mindspore/core/ops/ops_def/infer/')
     doc_yaml_dir_path = os.path.join(work_path, 'mindspore/core/ops/ops_def/doc/')
     merge_files(ops_yaml_dir_path, ops_yaml_path, '*op.yaml')
+    merge_files_append(infer_ops_yaml_dir_path, ops_yaml_path, '*op.yaml')
     merge_files(doc_yaml_dir_path, doc_yaml_path, '*doc.yaml')
     merge_files(ops_yaml_dir_path, st_yaml_path, '*op.yaml')
+    merge_files_append(infer_ops_yaml_dir_path, st_yaml_path, '*op.yaml')
 
     # make auto_generate dir
     cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/')
