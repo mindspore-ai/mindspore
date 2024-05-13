@@ -65,6 +65,7 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, const ExpanderPtr &init) {
   constexpr size_t kApplyMomentumInputIdx = 1;
   std::map<std::string, ExpanderCreatorFuncList> creators = {
     {prim::kPrimAssignAdd->name(), {OpUMonadExpanderDeco::GetCreator(kAssignInputIdx)}},
+    {prim::kPrimAdamApplyOneWithDecayAssign->name(), {OpUMonadExpanderDeco::GetCreator(kIndex2)}},
     {prim::kLambApplyOptimizerAssign->name(), {OpUMonadExpanderDeco::GetCreator(kLambOptimizerInputIdx)}},
     {prim::kLambApplyWeightAssign->name(), {OpUMonadExpanderDeco::GetCreator(kLambWeightInputIdx)}},
     {prim::kPrimStandardNormal->name(), {OpUMonadExpanderDeco::GetCreator(kRandomInputIdx)}},
