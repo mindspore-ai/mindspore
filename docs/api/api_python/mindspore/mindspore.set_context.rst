@@ -88,6 +88,8 @@ mindspore.set_context
     |                         |  jit_syntax_level            |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  gpu_config                  |  GPU                       |
+    |                         +------------------------------+----------------------------+
+    |                         |  jit_config                  |  CPU/GPU/Ascend            |
     +-------------------------+------------------------------+----------------------------+
 
     参数：
@@ -95,7 +97,7 @@ mindspore.set_context
         - **device_target** (str) - 表示待运行的目标设备，支持 'Ascend'、 'GPU'和 'CPU'。如果未设置此参数，则使用MindSpore包对应的后端设备。
         - **max_device_memory** (str) - 设置设备可用的最大内存。格式为"xxGB"。默认值： ``1024GB`` 。实际使用的内存大小是设备的可用内存和 `max_device_memory` 值中的最小值。 `max_device_memory` 需要在程序运行之前设置。
         - **variable_memory_max_size** (str) - 此参数已弃用，将被删除。请使用 `max_device_memory` 。
-        - **mempool_block_size** (str) - 设置设备内存池的块大小。格式为"xxGB"。默认值： ``1GB`` 。最小值是1GB。实际使用的内存池块大小是设备的可用内存和 `mempool_block_size` 值中的最小值。
+        - **mempool_block_size** (str) - 设置PyNative模式或者jit level为"O0"或"O1"时设备内存池的块大小。格式为"xxGB"。默认值： ``1GB`` 。最小值是1GB。实际使用的内存池块大小是设备的可用内存和 `mempool_block_size` 值中的最小值。
         - **op_timeout** (int) - 设置一个算子的最大执行时间，以秒为单位。如果执行时间超过这个值，系统将终止该任务。0意味着使用默认值，AI Core和AICPU算子在不同硬件上的默认值有差异，详细信息请查看 `昇腾社区 <https://www.hiascend.com/>`_。MindSpore默认设置值： ``900`` 。
         - **save_graphs** (bool 或 int) - 表示是否保存中间编译图。默认值： ``0`` 。可用的选项为：
 
@@ -287,6 +289,16 @@ mindspore.set_context
           - **conv_allow_tf32** (bool): 该标志表示是否开启卷积在CUDNN下的TF32张量核计算。默认值： ``True`` 。
 
           - **matmul_allow_tf32** (bool): 该标志表示是否开启矩阵乘在CUBLAS下的TF32张量核计算。默认值： ``False`` 。
+
+      - **jit_config** (dict) - 设置全局编译选项的配置，只在使用Cell或者jit装饰器定义的网络中生效，默认不设置。
+        context设置全局jit config，而JitConfig设置局部网络的jit config，二者同时存在时，全局jit config不会覆盖局部网络的jit config。
+
+        - **jit_level** (str): 用来控制编译优化级别。默认值为空，框架自动选择优化级别。其值范围如下：
+
+          - O0: 除必要影响功能的优化外，其他优化均关闭，使用逐算子执行的执行方式。
+          - O1: 使能常用优化和自动算子融合优化，使用逐算子执行的执行方式。
+          - O2: 开启极致性能优化，使用下沉的执行方式。
+
 
     异常：
         - **ValueError** - 输入key不是上下文中的属性。
