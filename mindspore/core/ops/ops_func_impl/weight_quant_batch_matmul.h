@@ -34,8 +34,7 @@ class MIND_API WeightQuantBatchMatmulFuncImpl : public OpFuncImpl {
   void CheckBatchMatmulInputSize(const std::string &op_name, const std::string &input_name,
                                  const ShapeVector &shape) const;
   void CheckBatchMatmulInputWhetherCanBeMul(const std::string &name, const ShapeVector &x1_shape,
-                                            const ShapeVector &x2_shape, bool transpose_x, bool transpose_weight,
-                                            int type_id) const;
+                                            const ShapeVector &x2_shape, bool transpose_x, bool transpose_weight) const;
   void CheckBatchMatmulInputWhetherCanBeBroadcast(const std::string &name, const ShapeVector &x1_shape,
                                                   const ShapeVector &x2_shape) const;
   void BatchMatMulMakeShape(ShapeVector *output, const ShapeVector xshp, const ShapeVector yshp, bool transpose_x,

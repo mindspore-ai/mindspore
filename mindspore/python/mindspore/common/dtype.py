@@ -43,7 +43,7 @@ __dtype__ = [
     "TensorType", "_null",
     "Type", "Int",
     "complex64", "complex128",
-    "bfloat16", "qint4x2"
+    "bfloat16"
 ]
 
 __method__ = [
@@ -58,7 +58,6 @@ __all__.extend(__method__)
 # type definition
 bool_ = typing.Bool()
 
-qint4x2 = typing.Int(4)
 int8 = typing.Int(8)
 byte = int8
 int16 = typing.Int(16)
@@ -141,8 +140,7 @@ number_type = (int8,
                float64,
                bfloat16,
                complex64,
-               complex128,
-               qint4x2,)
+               complex128,)
 
 int_type = (int8, int16, int32, int64,)
 uint_type = (uint8, uint16, uint32, uint64,)

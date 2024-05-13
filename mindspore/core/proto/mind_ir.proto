@@ -173,7 +173,6 @@ message TensorProto {
     COMPLEX128 = 15;
     BFLOAT16 = 16;
     FLOAT64 = 17;
-    QINT4X2 = 18;
   }
   enum CompressionType {
     NO_COMPRESSION = 0;

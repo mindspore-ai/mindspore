@@ -96,9 +96,6 @@ enum DataType {
   // bfloat type
   DT_BFLOAT16 = 46;   // bfloat16
   DT_BFLOATS16 = 47;  // list of bfloat16
-
-  // quant type
-  DT_INT4 = 48;        // int4
 }
 
 // Value definition for attribute value or parameter default value

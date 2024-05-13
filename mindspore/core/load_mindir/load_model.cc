@@ -84,7 +84,6 @@ static mindspore::HashMap<int, TypeId> kDefaultValueSwitchMap{
   {mind_ir::TensorProto_DataType_UINT64, kNumberTypeUInt64},
   {mind_ir::TensorProto_DataType_FLOAT16, kNumberTypeFloat16},
   {mind_ir::TensorProto_DataType_BFLOAT16, kNumberTypeBFloat16},
-  {mind_ir::TensorProto_DataType_QINT4X2, kNumberTypeInt4},
   {mind_ir::TensorProto_DataType_FLOAT, kNumberTypeFloat32},
   {mind_ir::TensorProto_DataType_FLOAT64, kNumberTypeFloat64},
   {mind_ir::TensorProto_DataType_DOUBLE, kNumberTypeFloat64},
