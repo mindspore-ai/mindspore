@@ -31,6 +31,7 @@
 
 namespace mindspore::opt {
 namespace {
+static int g_name_index = 0;
 constexpr auto kNameFlashAttentionPatternForMsSD21 = "FlashAttentionPatternForMsSD21";
 constexpr auto kNameFlashAttentionPatternForMsSDXL = "FlashAttentionPatternForMsSDXL";
 constexpr auto kNameFlashAttentionPatternForVideoComposer = "FlashAttentionPatternForVideoComposer";
@@ -330,8 +331,8 @@ CNodePtr FlashAttentionFusion::CreatePadCNode(const FuncGraphPtr &func_graph, co
     MS_LOG(WARNING) << "pad_prim_c is nullptr.";
     return nullptr;
   }
-  AnfNodePtr paddings_node =
-    BuildIntVec2DParameterNode(func_graph, paddings, node_name + "_" + node->fullname_with_scope() + "_paddings");
+  AnfNodePtr paddings_node = BuildIntVec2DParameterNode(
+    func_graph, paddings, node->fullname_with_scope() + std::to_string(g_name_index) + "_paddings");
   if (paddings_node == nullptr) {
     MS_LOG(WARNING) << "paddings_node is nullptr.";
     return nullptr;
@@ -342,7 +343,7 @@ CNodePtr FlashAttentionFusion::CreatePadCNode(const FuncGraphPtr &func_graph, co
     MS_LOG(ERROR) << "new pad cnode failed, cnode is nulpptr.";
     return nullptr;
   }
-  pad_cnode->set_fullname_with_scope(node_name + "_" + node->fullname_with_scope() + kNamePadNodeSuffix);
+  pad_cnode->set_fullname_with_scope(node->fullname_with_scope() + std::to_string(g_name_index++) + kNamePadNodeSuffix);
   if (node->abstract() != nullptr) {
     pad_cnode->set_abstract(node->abstract()->Clone());
   }
