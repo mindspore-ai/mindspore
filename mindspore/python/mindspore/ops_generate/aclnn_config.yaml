@@ -65,6 +65,7 @@ SoftplusExt: 'aclnnSoftplus'
 SoftplusGradExt: 'aclnnSoftplusBackward'
 StackExt: 'aclnnStack'
 TopkExt: 'aclnnTopk'
+WeightQuantBatchMatmul: 'aclnnWeightQuantBatchMatmulV2'
 # 1
 
 # 2

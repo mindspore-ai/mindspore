@@ -15,17 +15,19 @@
 
 import numpy as np
 import pytest
-import mindspore as ms
-from mindspore import Parameter, Tensor, export
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell, GraphCell
 from mindspore.ops.auto_generate import WeightQuantBatchMatmul
+
+import mindspore as ms
+from mindspore import Parameter, Tensor, export, JitConfig
 
 
 class WeightQuantBatchMatmulNet(Cell):
     """
     WeightQuantBatchMatmulNet.
     """
+
     def __init__(self, weight=None, transpose_x=False, transpose_weight=False, antiquant_group_size=0):
         super().__init__()
         self.wqbmm = WeightQuantBatchMatmul(transpose_x, transpose_weight, antiquant_group_size)
@@ -34,6 +36,7 @@ class WeightQuantBatchMatmulNet(Cell):
     def construct(self, x, antiquant_scale, antiquant_offset, quant_scale, quant_offset, bias):
         out = self.wqbmm(x, self.weight, antiquant_scale, antiquant_offset, quant_scale, quant_offset, bias)
         return out
+
 
 def np_antiquant(np_data, scale=1.0, offset=0.):
     """mindspore implemented antiquant"""
@@ -54,8 +57,8 @@ def np_antiquant_pergroup(np_data, scale, offset, group_num):
 
     np_antiquant_data = np_data.astype(np.float16)
     for i in range(group_num):
-        np_antiquant_data[i * group_size : (i+1) * group_size, :] = \
-            (np_antiquant_data[i * group_size : (i+1) * group_size, :] +
+        np_antiquant_data[i * group_size: (i + 1) * group_size, :] = \
+            (np_antiquant_data[i * group_size: (i + 1) * group_size, :] +
              offset[i, :].astype(np.float16)) * scale[i, :].astype(np.float16)
     return np_antiquant_data
 
@@ -87,7 +90,7 @@ def np_quant_int4_pergroup(np_data, scale=1.0, offset=0.0, group_size=2):
     for i in range(k_size):
         group_size_dim = i // group_size
         np_data[i, :] = (np_data[i, :] / scale[group_size_dim, :].astype(np.float16)) \
-                       + offset[group_size_dim, :].astype(np.float16)
+                        + offset[group_size_dim, :].astype(np.float16)
     np_quant_int8_data = np.round(np_data / scale + offset).astype(np.int8)
     np_quant_int8_data = np.clip(np_quant_int8_data, -8, 7).astype(np.int8)
     np_quant_int4_data = np_int4data_pack_to_int8(np_quant_int8_data)
@@ -146,17 +149,16 @@ def np_quant_int4_pergroup_data_gen(channel_in, channel_out, group_num):
     return np_quant_fp16_data, np_quant_int4_data, antiquant_scale, antiquant_offset
 
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_ms_int4_weight_quant_1p():
+@pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
+def test_ms_int4_weight_quant_1p(mode):
     """
     feature: test int4 dtype parameter save and load
     Description: test antiquant using weight quant bmm cell
     Expectation: accuracy in tolerance
     """
-    ms.set_context(device_target='Ascend', mode=ms.GRAPH_MODE)
     scale = 0.1
     offset = 4
     np_x, np_int8_data, np_int4_weight = np_gen_int4_data(scale, offset)
@@ -165,12 +167,20 @@ def test_ms_int4_weight_quant_1p():
     expect = np.matmul(np_x, np_anti_weight)
     ms_int4_weight = Parameter(Tensor(np_int4_weight, dtype=mstype.qint4x2))
 
-    antiquant_scale = Tensor(scale, dtype=mstype.float16)
-    antiquant_offset = Tensor(-offset, dtype=mstype.float16)
+    antiquant_scale = Tensor([scale], dtype=mstype.float16)
+    antiquant_offset = Tensor([-offset], dtype=mstype.float16)
     quant_scale = None
     quant_offset = None
     bias = None
     wqbm_net = WeightQuantBatchMatmulNet(ms_int4_weight)
+    if mode == 'pynative':
+        ms.context.set_context(mode=ms.PYNATIVE_MODE)
+    elif mode == 'GE':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+    elif mode == 'KBK':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+        wqbm_net.set_jit_config(JitConfig(jit_level='O0'))
+
     x = Tensor(np_x, dtype=mstype.float16)
     fact = wqbm_net(x, antiquant_scale, antiquant_offset,
                     quant_scale, quant_offset, bias).asnumpy()
@@ -180,13 +190,13 @@ def test_ms_int4_weight_quant_1p():
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_ms_int4_weight_quant_perchannel_1p():
+@pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
+def test_ms_int4_weight_quant_perchannel_1p(mode):
     """
     feature: test int4 dtype parameter save and load
     Description: test antiquant using weight quant bmm cell
     Expectation: accuracy in tolerance
     """
-    ms.set_context(device_target='Ascend', mode=ms.GRAPH_MODE)
     np_x, np_int8_data, np_int4_weight, scale, offset = np_gen_int4_data_perchannel()
 
     np_anti_weight = np_antiquant(np_int8_data, scale, offset)
@@ -199,6 +209,14 @@ def test_ms_int4_weight_quant_perchannel_1p():
     quant_offset = None
     bias = None
     wqbm_net = WeightQuantBatchMatmulNet(ms_int4_weight)
+    if mode == 'pynative':
+        ms.context.set_context(mode=ms.PYNATIVE_MODE)
+    elif mode == 'GE':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+    elif mode == 'KBK':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+        wqbm_net.set_jit_config(JitConfig(jit_level='O0'))
+
     x = Tensor(np_x, dtype=mstype.float16)
     fact = wqbm_net(x, antiquant_scale, antiquant_offset,
                     quant_scale, quant_offset, bias).asnumpy()
@@ -208,24 +226,32 @@ def test_ms_int4_weight_quant_perchannel_1p():
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_ms_int4_ckpt_save_and_load():
+@pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
+def test_ms_int4_ckpt_save_and_load(mode):
     """
     feature: test weight quant int4 net save ckpt and load
     Description: test int4 ckpt save and load procedure
     Expectation: save and load successful with the same inference results
     """
-    ms.set_context(device_target='Ascend', mode=ms.GRAPH_MODE)
     scale = 0.1
     np_x, _, np_int4_weight = np_gen_int4_data(scale)
 
     ms_int4_weight = Parameter(Tensor(np_int4_weight, dtype=mstype.qint4x2))
 
-    antiquant_scale = Tensor(scale, dtype=mstype.float16)
-    antiquant_offset = Tensor(0, dtype=mstype.float16)
+    antiquant_scale = Tensor([scale], dtype=mstype.float16)
+    antiquant_offset = Tensor([0], dtype=mstype.float16)
     quant_scale = None
     quant_offset = None
     bias = None
     wqbm_net = WeightQuantBatchMatmulNet(ms_int4_weight)
+    if mode == 'pynative':
+        ms.context.set_context(mode=ms.PYNATIVE_MODE)
+    elif mode == 'GE':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+    elif mode == 'KBK':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+        wqbm_net.set_jit_config(JitConfig(jit_level='O0'))
+
     x = Tensor(np_x, dtype=mstype.float16)
     expect = wqbm_net(x, antiquant_scale, antiquant_offset,
                       quant_scale, quant_offset, bias).asnumpy()
@@ -238,6 +264,7 @@ def test_ms_int4_ckpt_save_and_load():
     np_weight_tensor = np.ones(shape=(8, 4))
     weight_tensor = Parameter(Tensor(np_weight_tensor, dtype=mstype.qint4x2))
     new_net = WeightQuantBatchMatmulNet(weight_tensor)
+    new_net.set_jit_config(JitConfig(jit_level='O0'))
     ms.load_checkpoint(ckpt_file_name, new_net)
     fact = new_net(x, antiquant_scale, antiquant_offset, quant_scale, quant_offset, bias).asnumpy()
     np.testing.assert_equal(expect, fact)
@@ -246,25 +273,33 @@ def test_ms_int4_ckpt_save_and_load():
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_ms_int4_mindir_save_and_load():
+@pytest.mark.parametrize('mode', ['GE', 'KBK'])
+def test_ms_int4_mindir_save_and_load(mode):
     """
     feature: test weight quant int4 net save as mindir and load
     Description: test int4 mindir save and load procedure
     Expectation: save and load successful with the same inference results
     """
-    ms.set_context(device_target='Ascend', mode=ms.GRAPH_MODE)
     scale = 0.1
     offset = 4.0
     np_x, _, np_int4_weight = np_gen_int4_data(scale, offset)
 
     ms_int4_weight = Parameter(Tensor(np_int4_weight, dtype=mstype.qint4x2))
 
-    antiquant_scale = Tensor(scale, dtype=mstype.float16)
-    antiquant_offset = Tensor(offset * -1.0, dtype=mstype.float16)
+    antiquant_scale = Tensor([scale], dtype=mstype.float16)
+    antiquant_offset = Tensor([offset * -1.0], dtype=mstype.float16)
     quant_scale = None
     quant_offset = None
     bias = None
     wqbm_net = WeightQuantBatchMatmulNet(ms_int4_weight)
+    if mode == 'pynative':
+        ms.context.set_context(mode=ms.PYNATIVE_MODE)
+    elif mode == 'GE':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+    elif mode == 'KBK':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+        wqbm_net.set_jit_config(JitConfig(jit_level='O0'))
+
     x = Tensor(np_x, dtype=mstype.float16)
     expect = wqbm_net(x, antiquant_scale, antiquant_offset,
                       quant_scale, quant_offset, bias).asnumpy()
@@ -280,11 +315,11 @@ def test_ms_int4_mindir_save_and_load():
     fact = net(x, antiquant_scale, antiquant_offset).asnumpy()
     np.testing.assert_equal(expect, fact)
 
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_ms_int4_weight_quant_pergroup_1p():
+@pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
+def test_ms_int4_weight_quant_pergroup_1p_GE(mode):
     """
     feature: test int4 dtype parameter save and load
     Description: test antiquant using weight quant bmm cell
@@ -309,6 +344,13 @@ def test_ms_int4_weight_quant_pergroup_1p():
     antiquant_offset = Tensor(antiquant_offset)
     bias = None
     wqbm_net = WeightQuantBatchMatmulNet(ms_int4_weight, antiquant_group_size=group_size)
+    if mode == 'pynative':
+        ms.context.set_context(mode=ms.PYNATIVE_MODE)
+    elif mode == 'GE':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+    elif mode == 'KBK':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+        wqbm_net.set_jit_config(JitConfig(jit_level='O0'))
     x = Tensor(np_x, dtype=mstype.float16)
     fact = wqbm_net(x, antiquant_scale, antiquant_offset,
                     quant_scale, quant_offset, bias).asnumpy()
