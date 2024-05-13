@@ -689,6 +689,7 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
           (void)end_strides.emplace_back(NewValueNode(static_cast<int64_t>(0)));
           (void)step_strides.emplace_back(NewValueNode(static_cast<int64_t>(1)));
         }
+        index_count += ellipsis_range_size;
       }
     }
   }
