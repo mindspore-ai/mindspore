@@ -224,6 +224,15 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<FFNActivationM
   return FFNActivationMode::ConvertEnumToString(activation_id);
 }
 
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<ScatterReduceMode>) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  }
+  int64_t reduce_id = GetCastIntegralValue<int64_t>(value);
+  return ScatterReduceMode::ConvertEnumToString(reduce_id);
+}
+
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GECoordinateTransformMode>) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<StringImm>()) {

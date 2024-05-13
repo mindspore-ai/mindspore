@@ -672,6 +672,10 @@ class OpAdapter : public BaseOpAdapter {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
 
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<ScatterReduceMode> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
   static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GECoordinateTransformMode> anyTraitsGE) {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
@@ -860,6 +864,11 @@ class OpAdapter : public BaseOpAdapter {
   }
 
   static std::string GetAttrType(const AnyTraits<FFNActivationMode> anyTraitsGE) {
+    std::string ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<ScatterReduceMode> anyTraitsGE) {
     std::string ret{};
     return ret;
   }

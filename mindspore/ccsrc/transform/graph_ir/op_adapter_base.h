@@ -250,6 +250,18 @@ class FFNActivationMode {
   }
 };
 
+class ScatterReduceMode {
+ public:
+  static std::string ConvertEnumToString(int64_t id) {
+    static const std::vector<std::string> reduce_mode = {"sum", "mean", "none", "update"};
+    if (id < 0 || id >= static_cast<int64_t>(reduce_mode.size())) {
+      MS_LOG(EXCEPTION) << "Invalid reduce mode " << id;
+      return "";
+    }
+    return reduce_mode[id];
+  }
+};
+
 class GEPadMod {
  public:
   static std::string ConvertEnumToString(int64_t id) {

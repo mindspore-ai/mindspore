@@ -141,6 +141,8 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<FASInputLayout
 
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<FFNActivationMode>);
 
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<ScatterReduceMode>);
+
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GECoordinateTransformMode>);
 
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEInitializerMode>);
