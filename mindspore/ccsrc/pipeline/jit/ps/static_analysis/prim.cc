@@ -3111,6 +3111,8 @@ EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abstr
   return res;
 }
 
+// Function to convert the graph node to interpreted object.
+namespace {
 AbstractBasePtr CreateRealAbstract(const TypePtr &preset_type, const BaseShapePtr &shape, const AnfNodePtr &node,
                                    const AbstractBasePtrList &args_abs_list) {
   AbstractBasePtr res = nullptr;
@@ -3141,6 +3143,110 @@ AbstractBasePtr CreateRealAbstract(const TypePtr &preset_type, const BaseShapePt
   return res;
 }
 
+bool check_abs_function(const AbstractBasePtr &input) {
+  MS_EXCEPTION_IF_NULL(input);
+  if (input->isa<abstract::AbstractSequence>()) {
+    auto abs_seq = input->cast<abstract::AbstractSequencePtr>();
+    const auto &elements = abs_seq->elements();
+    return std::any_of(elements.begin(), elements.end(),
+                       [](const AbstractBasePtr &inner_abs) { return check_abs_function(inner_abs); });
+  }
+  if (input->isa<abstract::AbstractDictionary>()) {
+    auto abs_dict = input->cast<abstract::AbstractDictionaryPtr>();
+    const auto &elements = abs_dict->elements();
+    return std::any_of(elements.begin(), elements.end(), [](const abstract::AbstractElementPair &inner_abs) {
+      // Dictionary key can not be abstract function, no need to check.
+      return check_abs_function(inner_abs.second);
+    });
+  }
+  return input->isa<abstract::FuncGraphAbstractClosure>();
+}
+
+AnfNodePtr ConvertLocalValueInputNode(const AnfNodePtr &local_node, const AbstractBasePtr &local_abs) {
+  MS_EXCEPTION_IF_NULL(local_node);
+  MS_EXCEPTION_IF_NULL(local_abs);
+  AnfNodePtr ret_node = nullptr;
+  // Not consider AbstractDictionary scene yet.
+  if (local_abs->isa<abstract::AbstractSequence>() &&
+      IsOneOfPrimitiveCNode(local_node, {prim::kPrimMakeTuple, prim::kPrimMakeList})) {
+    auto local_cnode = local_node->cast<CNodePtr>();
+    auto local_abs_seq = local_abs->cast<abstract::AbstractSequencePtr>();
+    if (local_cnode->size() - 1 != local_abs_seq->size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "For node: " << local_node->DebugString() << ", input size is "
+                                 << local_cnode->size() << " and abstract size is " << local_abs_seq->size()
+                                 << ". Size not matched.";
+    }
+    const auto &local_elements_abs = local_abs_seq->elements();
+    AnfNodePtrList new_inputs;
+    (void)new_inputs.emplace_back(local_cnode->input(0));
+    for (size_t i = 1; i < local_cnode->size(); ++i) {
+      (void)new_inputs.emplace_back(ConvertLocalValueInputNode(local_cnode->input(i), local_elements_abs[i - 1]));
+    }
+    auto fg = local_cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    ret_node = fg->NewCNode(new_inputs);
+  } else {
+    auto py_obj = fallback::GetPyObjForFuncGraphAbstractClosure(local_abs);
+    if (py::isinstance<py::none>(py_obj)) {
+      return local_node;
+    }
+    ret_node = NewValueNode(std::make_shared<parse::InterpretedObject>(py_obj));
+  }
+  MS_EXCEPTION_IF_NULL(ret_node);
+  ret_node->set_debug_info(local_node->debug_info());
+  return ret_node;
+}
+
+AnfNodePtr ConvertPyExecuteNode(const AnfNodePtr &node, const AbstractBasePtrList &args_abs_list) {
+  MS_EXCEPTION_IF_NULL(node);
+  // Ensure the same node only check local dict once.
+  if (node->has_user_data(fallback::kLocalDictCheck) && *node->user_data<bool>(fallback::kLocalDictCheck)) {
+    return nullptr;
+  }
+  node->set_user_data(fallback::kLocalDictCheck, std::make_shared<bool>(true));
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  constexpr size_t interpret_min_len = 4;
+  if (cnode->size() < interpret_min_len) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The minimum input number for PyInterpret node should be " << interpret_min_len
+                               << " but got " << cnode->size();
+  }
+  if (args_abs_list.size() < interpret_min_len - 1) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The minimum number for PyInterpret input abstract should be "
+                               << interpret_min_len - 1 << " but got " << args_abs_list.size();
+  }
+  constexpr size_t local_index = 3;
+  auto local_node = cnode->input(local_index);
+  auto local_node_abs = args_abs_list[local_index - 1];
+  MS_EXCEPTION_IF_NULL(local_node);
+  MS_EXCEPTION_IF_NULL(local_node_abs);
+  if (!IsPrimitiveCNode(local_node, prim::kPrimMakeTuple)) {
+    return nullptr;
+  }
+  auto local_cnode = local_node->cast<CNodePtr>();
+
+  if (!check_abs_function(local_node_abs)) {
+    return nullptr;
+  }
+  auto local_value_abs = local_node_abs->cast<abstract::AbstractTuplePtr>();
+  auto new_local_cnode = ConvertLocalValueInputNode(local_cnode, local_value_abs);
+  auto fg = node->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  std::vector<AnfNodePtr> new_cnode_inputs;
+  for (size_t i = 0; i < local_index; ++i) {
+    new_cnode_inputs.push_back(cnode->input(i));
+  }
+  new_cnode_inputs.push_back(new_local_cnode);
+  for (size_t i = local_index + 1; i < cnode->size(); ++i) {
+    new_cnode_inputs.push_back(cnode->input(i));
+  }
+  auto new_cnode = fg->NewCNode(new_cnode_inputs);
+  new_cnode->set_debug_info(cnode->debug_info());
+  new_cnode->set_user_data(fallback::kLocalDictCheck, std::make_shared<bool>(true));
+  return new_cnode;
+}
+}  // namespace
+
 EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list,
                                            const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
   MS_EXCEPTION_IF_NULL(out_conf);
@@ -3161,6 +3267,16 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   auto node = out_conf->node();
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "The current pyexecute node: " << node->DebugString();
+
+  // If the interpret node contains FuncGraph node input, need to convert the Graph node to Interpreted object.
+  AnfNodePtr converted_interpret_node = ConvertPyExecuteNode(node, args_abs_list);
+  if (converted_interpret_node != nullptr) {
+    AnalysisEnginePtr eng = out_conf->engine();
+    MS_EXCEPTION_IF_NULL(eng);
+    AnfNodeConfigPtr fn_conf = eng->MakeConfig(converted_interpret_node, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
+  }
+
   // Get the type parameter.
   MS_EXCEPTION_IF_NULL(args_abs_list[0]);
   ValuePtr script_value_track = args_abs_list[0]->GetValueTrack();
@@ -3538,41 +3654,6 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     return global_params_dict;
   }
 
-  AnfNodePtr ConvertLocalValueInputNode(const AnfNodePtr &local_node, const AbstractBasePtr &local_abs) const {
-    MS_EXCEPTION_IF_NULL(local_node);
-    MS_EXCEPTION_IF_NULL(local_abs);
-    AnfNodePtr ret_node = nullptr;
-    // Not consider AbstractDictionary scene yet.
-    if (local_abs->isa<abstract::AbstractSequence>() &&
-        IsOneOfPrimitiveCNode(local_node, {prim::kPrimMakeTuple, prim::kPrimMakeList})) {
-      auto local_cnode = local_node->cast<CNodePtr>();
-      auto local_abs_seq = local_abs->cast<abstract::AbstractSequencePtr>();
-      if (local_cnode->size() - 1 != local_abs_seq->size()) {
-        MS_LOG(INTERNAL_EXCEPTION) << "For node: " << local_node->DebugString() << ", input size is "
-                                   << local_cnode->size() << " and abstract size is " << local_abs_seq->size()
-                                   << ". Size not matched.";
-      }
-      const auto &local_elements_abs = local_abs_seq->elements();
-      AnfNodePtrList new_inputs;
-      (void)new_inputs.emplace_back(local_cnode->input(0));
-      for (size_t i = 1; i < local_cnode->size(); ++i) {
-        (void)new_inputs.emplace_back(ConvertLocalValueInputNode(local_cnode->input(i), local_elements_abs[i - 1]));
-      }
-      auto fg = local_cnode->func_graph();
-      MS_EXCEPTION_IF_NULL(fg);
-      ret_node = fg->NewCNode(new_inputs);
-    } else {
-      auto py_obj = fallback::GetPyObjForFuncGraphAbstractClosure(local_abs);
-      if (py::isinstance<py::none>(py_obj)) {
-        return local_node;
-      }
-      ret_node = NewValueNode(std::make_shared<parse::InterpretedObject>(py_obj));
-    }
-    MS_EXCEPTION_IF_NULL(ret_node);
-    ret_node->set_debug_info(local_node->debug_info());
-    return ret_node;
-  }
-
   AnfNodePtr ConvertPyInterpretNode(const AnfNodePtr &node, const AbstractBasePtrList &args_abs_list) const {
     MS_EXCEPTION_IF_NULL(node);
     // Ensure the same node only check local dict once.
@@ -3605,33 +3686,6 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       MS_LOG(INTERNAL_EXCEPTION) << "Make dict mode input size should be " << make_dict_len << " but got "
                                  << local_cnode->size();
     }
-
-    const auto &check_abs_function = [](const AbstractBasePtr &input) {
-      std::function<bool(const AbstractBasePtr &)> check_abs_function_inner;
-      check_abs_function_inner = [&](const AbstractBasePtr &abs) {
-        MS_EXCEPTION_IF_NULL(abs);
-        if (abs->isa<abstract::AbstractSequence>()) {
-          auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-          const auto &elements = abs_seq->elements();
-          return std::any_of(elements.begin(), elements.end(),
-                             [check_abs_function_inner](const AbstractBasePtr &inner_abs) {
-                               return check_abs_function_inner(inner_abs);
-                             });
-        }
-        if (abs->isa<abstract::AbstractDictionary>()) {
-          auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
-          const auto elements = abs_dict->elements();
-          return std::any_of(elements.begin(), elements.end(),
-                             [check_abs_function_inner](const abstract::AbstractElementPair &inner_abs) {
-                               // Dictionary key can not be abstract function, no need to check.
-                               return check_abs_function_inner(inner_abs.second);
-                             });
-        }
-        return abs->isa<abstract::FuncGraphAbstractClosure>();
-      };
-      return check_abs_function_inner(input);
-    };
-
     if (!check_abs_function(local_node_abs)) {
       return nullptr;
     }
