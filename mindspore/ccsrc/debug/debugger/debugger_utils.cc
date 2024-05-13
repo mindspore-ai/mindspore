@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &
  */
 void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order, uint32_t root_graph_id,
                 const DeviceContext *device_context, const bool trans_flag, const uint32_t sample_mode,
-                const uint32_t sample_num) {
+                const uint32_t sample_num, const bool async_copy) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(launch_info);
   MS_EXCEPTION_IF_NULL(device_context);
@@ -119,7 +119,7 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint
       }
     }
     auto ret = device_addr->LoadMemToHost(input_tensor_name, UintToInt(exec_order), host_format, int_shapes, type, 0,
-                                          true, root_graph_id, false, trans_flag);
+                                          true, root_graph_id, false, trans_flag, async_copy);
     if (!ret) {
       MS_LOG(WARNING) << "LoadMemToHost failed: tensor_name:" << input_tensor_name << ", host_format:" << host_format
                       << ", device_format:" << device_format << ".";
@@ -251,7 +251,7 @@ uint32_t GetSampleNum() {
 void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info,
                      std::vector<KernelTensor *> input_kernel_tensors,
                      std::vector<KernelTensor *> output_kernel_tensors, uint32_t exec_order,
-                     const DeviceContext *device_context) {
+                     const DeviceContext *device_context, const bool abnormal_dump) {
   auto debugger = Debugger::GetInstance();
   if (!debugger) {
     return;
@@ -271,7 +271,9 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info,
       datadump::DumpKernelTensorStats(device_context, input_kernel_tensors, true, cnode->fullname_with_scope(),
                                       kernel_name);
     } else {
-      LoadInputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag, sample_mode, sample_num);
+      bool async_copy = !abnormal_dump;
+      LoadInputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag, sample_mode, sample_num,
+                 async_copy);
     }
   }
   if (debugger->debugger_enabled() || dump_json_parser.OutputNeedDump()) {
@@ -279,7 +281,7 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info,
       string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
       datadump::DumpKernelTensorStats(device_context, output_kernel_tensors, false, cnode->fullname_with_scope(),
                                       kernel_name);
-    } else {
+    } else if (!abnormal_dump) {
       LoadOutputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag, sample_mode, sample_num);
     }
   }

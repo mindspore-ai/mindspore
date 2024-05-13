@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -192,6 +192,11 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
         data["common_dump_settings"]["dump_mode"] = 1
         data["common_dump_settings"]["path"] = dump_path
         data["common_dump_settings"]["kernels"] = ["name-regex(.+/Add[^/]*)"]
+        data["e2e_dump_settings"]["trans_flag"] = True
+    elif test_key == "test_exception_dump":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["path"] = dump_path
+        data["common_dump_settings"]["op_debug_mode"] = 4
         data["e2e_dump_settings"]["trans_flag"] = True
     else:
         raise ValueError(

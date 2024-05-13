@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,38 +96,13 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(DEBUG) << "kernel by kernel debug for node: " << cnode->fullname_with_scope() << ".";
   if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
-#ifdef ENABLE_DEBUGGER
-    auto debugger = Debugger::GetInstance();
-    if (debugger != nullptr) {
-      if (DumpJsonParser::GetInstance().op_debug_mode() == DumpJsonParser::DUMP_BOTH_OVERFLOW) {
-        auto is_overflow = CheckOverflow(device_context, op_output_kernel_tensors);
-        if (is_overflow) {
-          auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
-          MS_EXCEPTION_IF_NULL(kernel_graph);
-          debugger->InsertExecutedGraph(kernel_graph);
-          debugger->SetAscendKernelByKernelFlag(true);
-          bool read_data = CheckReadData(cnode);
-          if (read_data && DumpJsonParser::GetInstance().e2e_dump_enabled()) {
-            ReadDataAndDump(cnode, launch_info, op_input_kernel_tensors, op_output_kernel_tensors, exec_order_,
-                            device_context);
-          }
-        }
-      } else {
-        auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
-        MS_EXCEPTION_IF_NULL(kernel_graph);
-        debugger->InsertExecutedGraph(kernel_graph);
-        debugger->SetAscendKernelByKernelFlag(true);
-        bool read_data = CheckReadData(cnode);
-        if (read_data && DumpJsonParser::GetInstance().e2e_dump_enabled()) {
-          ReadDataAndDump(cnode, launch_info, op_input_kernel_tensors, op_output_kernel_tensors, exec_order_,
-                          device_context);
-        }
-      }
-    }
-    exec_order_ += 1;
-#endif
+    AscendKbkDump(cnode, launch_info, op_input_kernel_tensors, op_output_kernel_tensors, device_context);
   } else if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
 #ifndef ENABLE_SECURITY
+    if (DumpJsonParser::GetInstance().op_debug_mode() == DumpJsonParser::DUMP_LITE_EXCEPTION) {
+      MS_LOG(WARNING) << "Abnormal dump is not supported on CPU backend.";
+      return;
+    }
     if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
       auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
       MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -137,6 +112,10 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
 #endif
   } else if (device_context->GetDeviceType() == device::DeviceType::kGPU) {
 #ifdef ENABLE_DEBUGGER
+    if (DumpJsonParser::GetInstance().op_debug_mode() == DumpJsonParser::DUMP_LITE_EXCEPTION) {
+      MS_LOG(WARNING) << "Abnormal dump is not supported on GPU backend.";
+      return;
+    }
     auto debugger = Debugger::GetInstance();
     if (debugger != nullptr) {
       auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
@@ -154,6 +133,54 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
   }
 }
 
+/*
+ * Feature group: Dump, Ascend.
+ * Target device group: Ascend.
+ * Runtime category: MindRT.
+ * Description: Dump data for the given node if needed. It can be normal dump and overflow dump and exception dump
+ * (ascend kernel-by-kernel e2e dump).
+ */
+void DebugActor::AscendKbkDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info,
+                               const std::vector<KernelTensor *> &input_kernel_tensors,
+                               const std::vector<KernelTensor *> &output_kernel_tensors,
+                               const DeviceContext *device_context) {
+#ifdef ENABLE_DEBUGGER
+  auto debugger = Debugger::GetInstance();
+  if (debugger != nullptr) {
+    auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    debugger->InsertExecutedGraph(kernel_graph);
+    debugger->SetAscendKernelByKernelFlag(true);
+    bool sync_ok = true;
+    bool read_data = false;
+    bool abnormal_dump = false;
+    auto &dump_json_parser = DumpJsonParser::GetInstance();
+    if (dump_json_parser.e2e_dump_enabled() &&
+        dump_json_parser.op_debug_mode() == DumpJsonParser::DUMP_LITE_EXCEPTION) {
+      abnormal_dump = true;
+      sync_ok = device_ctx_->device_res_manager_->SyncAllStreams();
+      if (!sync_ok) {
+        MS_LOG(ERROR) << "Sync stream error! The node input will be dumped";
+      }
+    } else if (dump_json_parser.op_debug_mode() == DumpJsonParser::DUMP_BOTH_OVERFLOW) {
+      auto is_overflow = CheckOverflow(device_context, output_kernel_tensors);
+      if (is_overflow) {
+        read_data = CheckReadData(cnode);
+      }
+    } else {
+      read_data = CheckReadData(cnode);
+    }
+    if ((read_data && dump_json_parser.e2e_dump_enabled()) || !sync_ok) {
+      ReadDataAndDump(cnode, launch_info, input_kernel_tensors, output_kernel_tensors, exec_order_, device_context,
+                      abnormal_dump);
+      if (!sync_ok) {
+        MS_LOG(EXCEPTION) << "Sync stream error!";
+      }
+    }
+  }
+  exec_order_ += 1;
+#endif
+}
 /*
  * Feature group: Dump, Online debugger.
  * Target device group: Ascend, GPU.

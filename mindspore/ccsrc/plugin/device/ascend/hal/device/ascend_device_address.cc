@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1070,7 +1070,7 @@ int64_t AscendDeviceAddress::GetGroupsWithCache() const {
 bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order,
                                         const std::string &host_fmt, const ShapeVector &host_shape, TypeId host_type,
                                         size_t slot, bool keep_prev, uint32_t root_graph_id, bool force_update,
-                                        bool trans_flag) const {
+                                        bool trans_flag, bool async_copy) const {
   bool ret = false;
   auto debugger = Debugger::GetInstance();
   MS_EXCEPTION_IF_NULL(debugger);
@@ -1098,9 +1098,36 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
   }
   bool ret_sync = false;
   if (trans_flag) {
-    ret_sync = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
+    if (async_copy) {
+      ret_sync = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
+    } else {
+      // copy device to host using sync mode
+      auto ret_rt_memcpy = CALL_ASCEND_API(aclrtMemcpy, out_tensor->data_c(), host_size, GetDevicePtr(), GetSize(),
+                                           ACL_MEMCPY_DEVICE_TO_HOST);
+      if (ret_rt_memcpy != ACL_ERROR_NONE) {
+        MS_LOG(ERROR) << "SyncDeviceToHost: aclrtMemcpy mem size[" << GetSize() << "] fail, ret[" << ret_rt_memcpy
+                      << "]";
+        return false;
+      } else {
+        ret_sync = true;
+      }
+    }
+
   } else {
-    ret_sync = SyncDeviceToHost(host_size, out_tensor->data_c());
+    if (async_copy) {
+      ret_sync = SyncDeviceToHost(host_size, out_tensor->data_c());
+    } else {
+      // copy device to host using sync mode
+      auto ret_rt_memcpy = CALL_ASCEND_API(aclrtMemcpy, out_tensor->data_c(), host_size, GetDevicePtr(), GetSize(),
+                                           ACL_MEMCPY_DEVICE_TO_HOST);
+      if (ret_rt_memcpy != ACL_ERROR_NONE) {
+        MS_LOG(ERROR) << "SyncDeviceToHost: aclrtMemcpy mem size[" << GetSize() << "] fail, ret[" << ret_rt_memcpy
+                      << "]";
+        return false;
+      } else {
+        ret_sync = true;
+      }
+    }
   }
   if (!ret_sync) {
     MS_LOG(ERROR) << "Convert format or Copy device mem to host failed";
