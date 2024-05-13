@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,10 @@ class DebugActor : public ActorBase {
              const std::vector<KernelTensor *> &op_input_kernel_tensors,
              const std::vector<KernelTensor *> &op_output_kernel_tensors, const DeviceContext *device_context,
              OpContext<DeviceTensor> *const op_context, const AID *from_aid);
+
+  void AscendKbkDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info,
+                     const std::vector<KernelTensor *> &input_kernel_tensors,
+                     const std::vector<KernelTensor *> &output_kernel_tensors, const DeviceContext *device_context);
 
   void AscendStepStart(const std::vector<KernelGraphPtr> &graphs, std::vector<DeviceContext *> device_contexts);
 

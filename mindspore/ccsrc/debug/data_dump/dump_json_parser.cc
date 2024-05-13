@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,8 +153,7 @@ void DumpJsonParser::Parse() {
 
   std::ifstream json_file(dump_config_file.value());
   if (!json_file.is_open()) {
-    MS_LOG(EXCEPTION) << "Dump file:" << dump_config_file.value() << " open failed."
-                      << " Errno:" << errno;
+    MS_LOG(EXCEPTION) << "Dump file:" << dump_config_file.value() << " open failed. Errno:" << errno;
   }
 
   nlohmann::json j;
@@ -761,17 +760,31 @@ void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
       break;
     case static_cast<uint32_t>(DUMP_AICORE_OVERFLOW):
     case static_cast<uint32_t>(DUMP_ATOMIC_OVERFLOW):
+      if (e2e_dump_enabled_) {
+        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 3, 4";
+      }
+      break;
     case static_cast<uint32_t>(DUMP_BOTH_OVERFLOW):
       break;
-    case static_cast<uint32_t>(DUMP_LITE_EXCEPTION):
-      if (IsAclDump()) {
+    case static_cast<uint32_t>(DUMP_LITE_EXCEPTION): {
+      auto context = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(context);
+      auto device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+      if (device_target == "CPU" || device_target == "GPU") {
+        MS_LOG(WARNING) << "Abnormal dump is not supported on " << device_target
+                        << " backend, and none operator data would be saved when abnormal dump is enabled. ";
+      }
+      if (IsAclDump() || e2e_dump_enabled_) {
         break;
       } else {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
       }
+    }
     default:
       if (IsAclDump()) {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3, 4";
+      } else if (e2e_dump_enabled_) {
+        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 3, 4";
       } else {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
       }

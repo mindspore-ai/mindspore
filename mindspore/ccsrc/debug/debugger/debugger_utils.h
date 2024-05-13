@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,10 @@ using mindspore::kernel::KernelTensor;
 namespace mindspore {
 std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &output_size);
 
+// when used in abnormal dump, the async_copy should set to false
 void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order, uint32_t root_graph_id,
                 const DeviceContext *device_context, const bool trans_flag, const uint32_t sample_mode,
-                const uint32_t sample_num);
+                const uint32_t sample_num, const bool async_copy = true);
 
 void LoadOutputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order,
                  uint32_t root_graph_id, const DeviceContext *device_context, const bool trans_flag,
@@ -44,7 +45,7 @@ bool CheckReadData(const CNodePtr &cnode);
 void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info,
                      std::vector<KernelTensor *> input_kernel_tensors,
                      std::vector<KernelTensor *> output_kernel_tensors, uint32_t exec_order,
-                     const DeviceContext *device_context);
+                     const DeviceContext *device_context, const bool abnormal_dump = false);
 
 std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr);
 
