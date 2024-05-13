@@ -362,20 +362,20 @@ CNodePtr FuncGraphBuilder::DoPrimitiveInferAndCheck(const PrimitivePtr &primitiv
   try {
     const CNodePtr &new_node = AddPrimitiveCNode(primitive, input_node_list, args_abs_list);
     if (new_node == nullptr) {
-      MS_LOG(INFO) << "Failed to add CNode for Primitive=" << primitive->name();
+      MS_LOG(INFO) << "Failed to add CNode for Primitive: " << primitive->name();
       return nullptr;
     }
 
     const AbstractBasePtr &abs = GetAbstractOf(new_node);
 
     if (!CheckCallable(primitive, abs)) {
-      MS_LOG(INFO) << "Check callable failed for Primitive=" << primitive->name();
+      MS_LOG(INFO) << "Check callable failed for Primitive: " << primitive->name();
       return nullptr;
     }
     new_node->set_abstract(abs);
     return new_node;
   } catch (const std::exception &e) {
-    MS_LOG(INFO) << "Failed to infer Primitive=" << primitive->name() << ". The exception:\n" << e.what();
+    MS_LOG(INFO) << "Failed to infer Primitive: " << primitive->name() << ". The exception:\n" << e.what();
     return nullptr;
   }
 }
@@ -386,7 +386,7 @@ CNodePtr FuncGraphBuilder::AddPrimitiveCNode(const PrimitivePtr &primitive, cons
 
   if (op_def == nullptr) {
     if (primitive->has_signature()) {
-      // follow the implementations in DoSignatureEvaluator
+      // Follow the implementations in DoSignatureEvaluator
       AnfNodePtrList args_node_list(input_node_list.cbegin() + 1, input_node_list.cend());
       AnfNodePtrList new_node_list =
         prim::GetNewInputsBySignatures(graph_, primitive->ToString(), primitive, args_abs_list, args_node_list);
@@ -395,16 +395,22 @@ CNodePtr FuncGraphBuilder::AddPrimitiveCNode(const PrimitivePtr &primitive, cons
       return graph_->NewCNodeInOrder(new_node_list);
     }
   } else if (primitive->isa<PrimitivePy>()) {
-    // follow the implementations in PrimitiveArgsToInputsEvaluator and DoTransPrimitiveFunctionEvaluator
+    // Follow the implementations in PrimitiveArgsToInputsEvaluator and DoTransPrimitiveFunctionEvaluator
     auto arg_signatures = op_def->signatures_;
     primitive->set_signatures(arg_signatures);
     primitive->set_has_signature(!arg_signatures.empty());
 
     const AnfNodePtrList &init_args = abstract::GetPrimitiveInitArgs(primitive->cast<PrimitivePyPtr>(), op_def);
+
     AnfNodePtrList call_args(input_node_list.cbegin() + 1, input_node_list.cend());
+    AbstractBasePtrList call_abs_list;
+    (void)std::transform(call_args.cbegin(), call_args.cend(), std::back_inserter(call_abs_list),
+                         [](const AnfNodePtr &node) { return FuncGraphBuilder::GetAbstractOf(node); });
+    const AnfNodePtrList &new_call_args =
+      prim::GetNewInputsBySignatures(graph_, primitive->name(), primitive, call_abs_list, call_args);
 
     return abstract::GeneratePrimitiveCNode(
-      primitive, op_def, graph_, init_args, call_args,
+      primitive, op_def, graph_, init_args, new_call_args,
       [](const AnfNodePtr &node) { return FuncGraphBuilder::GetAbstractOf(node); });
   }
   MS_LOG(DEBUG) << "Primitive " << primitive->name() << " no need to process signatures and OpDef";
