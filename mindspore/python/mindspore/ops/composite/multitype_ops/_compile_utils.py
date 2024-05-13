@@ -1204,7 +1204,10 @@ def tensor_setitem_by_ellipsis_with_tensor(data, value):
     value = value.astype(data_dtype)
 
     value_shape = F.shape(value)
-    source_shape = const_utils.get_source_shape(data_shape, value_shape)
+
+    if len(value_shape) > len(data_shape):
+        source_shape = data_shape
+    source_shape = value_shape
     value = F.reshape(value, source_shape)
     data = F.broadcast_to(value, data_shape)
     return data
@@ -1229,7 +1232,9 @@ def tensor_setitem_by_bool(data, index, value):
 
     if index:
         value_shape = F.shape(value)
-        source_shape = const_utils.get_source_shape(data_shape, value_shape)
+        if len(value_shape) > len(data_shape):
+            source_shape = data_shape
+        source_shape = value_shape
         value = F.reshape(value, source_shape)
         data = F.broadcast_to(value, data_shape)
     return data
