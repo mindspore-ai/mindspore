@@ -40,7 +40,7 @@ enum Group : int64_t { SYNC_BN_GROUP0 = 0 };
 
 enum InterpolationMode : int64_t { BILINEAR = 0, NEAREST = 1 };
 
-enum RoundingMode : int64_t { TRUNC = 1, FLOOR = 2 };
+enum RoundingMode : int64_t { ROUND = 0, TRUNC = 1, FLOOR = 2, CEIL = 3 };
 
 enum NormMode : int64_t { BACKWARD = 0, FORWARD = 1, ORTHO = 2 };
 

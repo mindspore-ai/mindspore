@@ -25,6 +25,7 @@ from mindspore import nn, Tensor, context, JitConfig
 
 
 def generate_random_input(shape, dtype):
+    np.random.seed(0)
     return np.random.randn(*shape).astype(dtype)
 
 
@@ -48,7 +49,7 @@ class Add_LayerNorm(nn.Cell):
         return y, meanOut, rstdOut, res
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.platform_x86_ascend910b_training
@@ -76,14 +77,14 @@ def test_add_layer_norm(tensor_type):
     output = net(x1_tensor, x2_tensor, gamma_tensor, beta_tensor)
 
     expect = generate_expect_forward_output(x1, x2, gamma, beta)
-    assert np.allclose(output[0].float().asnumpy(), expect[0], rtol=5e-3, atol=5e-3)
-    assert np.allclose(output[1].float().asnumpy(), expect[1], rtol=5e-3, atol=5e-3)
-    assert np.allclose(output[2].float().asnumpy(), expect[2], rtol=5e-3, atol=5e-3)
+    np.testing.assert_allclose(output[0].float().asnumpy(), expect[0], rtol=5e-3, atol=5e-3)
+    np.testing.assert_allclose(output[1].float().asnumpy(), expect[1], rtol=5e-3, atol=5e-3)
+    np.testing.assert_allclose(output[2].float().asnumpy(), expect[2], rtol=5e-3, atol=5e-3)
 
     os.unsetenv("MS_DISABLE_INTERNAL_KERNELS_LIST")
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.platform_x86_ascend910b_training
@@ -114,8 +115,8 @@ def test_add_layer_norm_dynamic_shape(tensor_type):
     output = net(x1_tensor, x2_tensor, gamma_tensor, beta_tensor)
 
     expect = generate_expect_forward_output(x1, x2, gamma, beta)
-    assert np.allclose(output[0].float().asnumpy(), expect[0], rtol=5e-3, atol=5e-3)
-    assert np.allclose(output[1].float().asnumpy(), expect[1], rtol=5e-3, atol=5e-3)
-    assert np.allclose(output[2].float().asnumpy(), expect[2], rtol=5e-3, atol=5e-3)
+    np.testing.assert_allclose(output[0].float().asnumpy(), expect[0], rtol=5e-3, atol=5e-3)
+    np.testing.assert_allclose(output[1].float().asnumpy(), expect[1], rtol=5e-3, atol=5e-3)
+    np.testing.assert_allclose(output[2].float().asnumpy(), expect[2], rtol=5e-3, atol=5e-3)
 
     os.unsetenv("MS_DISABLE_INTERNAL_KERNELS_LIST")

@@ -28,6 +28,15 @@ ATTR_MAP(AscendQuant) = {{"scale", ATTR_DESC(scale, AnyTraits<float>())},
 OUTPUT_MAP(AscendQuant) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AscendQuant, kNameAscendQuant, ADPT_DESC(AscendQuant))
 
+// AscendQuantV2
+INPUT_MAP(AscendQuantV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(scale)}, {3, INPUT_DESC(offset)}};
+ATTR_MAP(AscendQuantV2) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(AscendQuantV2) = {{4, ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
+                                 {5, ATTR_DESC(round_mode, AnyTraits<AscendQuantRoundMode>())},
+                                 {6, ATTR_DESC(dst_type, AnyTraits<GEType>(), AnyTraits<int64_t>())}};
+OUTPUT_MAP(AscendQuantV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AscendQuantV2, kNameAscendQuantV2, ADPT_DESC(AscendQuantV2))
+
 // AscendDequant
 INPUT_MAP(AscendDequant) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(deq_scale)}};
 ATTR_MAP(AscendDequant) = {{"sqrt_mode", ATTR_DESC(sqrt_mode, AnyTraits<bool>())},

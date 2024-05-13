@@ -87,5 +87,24 @@ TypePtr AddLayerNormV2FuncImpl::InferType(const PrimitivePtr &prim,
   return std::make_shared<Tuple>(types_list);
 }
 
+ShapeArray AddLayerNormV2FuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &x_shape = x_tensor->shape();
+  const size_t x_rank = x_shape.size();
+  auto mean_var_shape = x_shape;
+  mean_var_shape[x_rank - 1] = 1;
+
+  return {x_shape, mean_var_shape, mean_var_shape, x_shape};
+}
+
+TypePtrList AddLayerNormV2FuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &mean_var_type = std::make_shared<TensorType>(kFloat32);
+  return {x_tensor->Dtype(), mean_var_type, mean_var_type, x_tensor->Dtype()};
+}
+
 }  // namespace ops
 }  // namespace mindspore

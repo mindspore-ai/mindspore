@@ -365,6 +365,7 @@ constexpr const char kNameCTCLoss[] = "CTCLoss";
 constexpr const char kNameRange[] = "Range";
 constexpr const char kNameSquareSumAll[] = "SquareSumAll";
 constexpr const char kNameAscendQuant[] = "Quant";
+constexpr const char kNameAscendQuantV2[] = "QuantV2";
 constexpr const char kNameAscendDequant[] = "Dequant";
 constexpr const char kNameQuantBatchMatmul[] = "QuantBatchMatmul";
 constexpr const char kNameWeightQuantBatchMatmul[] = "WeightQuantBatchMatmul";

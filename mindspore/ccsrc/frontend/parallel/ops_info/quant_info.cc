@@ -550,6 +550,7 @@ REGISTER(FakeQuantPerChannelInfo);
 REGISTER(MinMaxUpdatePerLayerInfo);
 REGISTER(MinMaxUpdatePerChannelInfo);
 REGISTER(QuantInfo);
+REGISTER(QuantV2Info);
 REGISTER(DequantInfo);
 }  // namespace parallel
 }  // namespace mindspore
