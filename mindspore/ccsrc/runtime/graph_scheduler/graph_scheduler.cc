@@ -3231,10 +3231,6 @@ bool GraphScheduler::EnableRuntimePipeline() {
     return false;
   }
 
-  if (debug_aid_ != nullptr) {
-    return false;
-  }
-
   return true;
 }
 

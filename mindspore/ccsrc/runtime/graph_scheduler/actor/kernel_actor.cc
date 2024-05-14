@@ -821,6 +821,20 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
     MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope()
                       << trace::DumpSourceLines(kernel_);
   }
+
+  if (debug_aid_ != nullptr || recorder_aid_ != nullptr) {
+    SetMemInfoForDebugAndRdr();
+
+    if (debug_aid_ != nullptr) {
+      ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &mem_info_, device_contexts_[0], context,
+                                &GetAID());
+    }
+    if (recorder_aid_ != nullptr) {
+      ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &mem_info_,
+                            device_contexts_[0], context);
+    }
+  }
+
   if (is_dynamic_shape_ && kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
     kernel_mod_->UpdateOutputShapeAndSize(input_kernel_tensors_, output_kernel_tensors_);
   }
