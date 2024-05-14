@@ -338,7 +338,7 @@ bool AscendKernelRuntime::Init() {
                       << "2. You can set NotifyWaitTimeout via environment variable HCCL_EXEC_TIMEOUT. ";
     }
     // 310P does not contain the following interfaces
-    if (ms_context->ascend_soc_version() != "ascend310p") {
+    if (ms_context->ascend_soc_version() != "ascend310p" || ms_context->ascend_soc_version() != "ascend310b") {
       const uint32_t reserve_time = 180;
       uint32_t op_wait_timeout = notify_wait_timeout + reserve_time;
       auto acl_ret = CALL_ASCEND_API(aclrtSetOpWaitTimeout, op_wait_timeout);
