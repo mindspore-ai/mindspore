@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -690,17 +690,7 @@ void RegMetaTensor(const py::module *m) {
                                  >>> data.dtype
                                  Int32
                              )mydelimiter")
-    .def_property_readonly("_shape", TensorPy::GetPyTupleShape, R"mydelimiter(
-                             Get the tensor's shape.
-
-                             Returns:
-                                 tuple[int], the shape of tensor.
-
-                             Examples:
-                                 >>> data = mindspore.Tensor(np.ones((3, 3)))
-                                 >>> data.shape()
-                                 (3, 3)
-                             )mydelimiter")
+    .def_property("_shape", TensorPy::GetPyTupleShape, &Tensor::set_shape)
     .def_property_readonly("_size", &Tensor::DataSize, R"mydelimiter(
                              Get tensor's data size.
 

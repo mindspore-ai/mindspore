@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -223,6 +223,7 @@ class Parameter(Tensor_):
         # it's better to make the Initializer a kind of tensor.
         obj.init_mode = None
         obj.is_default_input_init = init_data_flag
+        obj.from_ckpt = False
         if obj.has_init:
             obj.init_mode = default_input
         else:
@@ -814,9 +815,9 @@ class Parameter(Tensor_):
                         f"Use .set_dtype(xxx) to change the dtype.")
 
     @staticmethod
-    def _set_data_check_input_valid(current_shape, data_shape, current_tensor_is_init,
-                                    incoming_tensor_is_init, slice_shape=False, slice_num=1):
-        if incoming_tensor_is_init and not current_tensor_is_init:
+    def _set_data_check_input_valid(current_shape, data_shape, current_tensor_is_init, incoming_tensor_is_init,
+                                    from_ckpt, slice_shape=False, slice_num=1):
+        if not from_ckpt and incoming_tensor_is_init and not current_tensor_is_init:
             raise TypeError("The original tensor data is initialized, but the argument 'data' is not initialized."
                             "Please initialize 'data' before call this method.")
         if tuple(current_shape) != tuple(data_shape):
@@ -871,7 +872,7 @@ class Parameter(Tensor_):
         incoming_tensor_is_init = isinstance(data, Tensor) and not data.has_init
         current_tensor_is_init = isinstance(self, Tensor) and not self.has_init
         Parameter._set_data_check_input_valid(self.shape, data.shape, current_tensor_is_init, incoming_tensor_is_init,
-                                              slice_shape, self.slice_num)
+                                              self.from_ckpt, slice_shape, self.slice_num)
         if self.dtype != data.dtype:
             if mstype.implicit_conversion_seq.get(self.dtype) < mstype.implicit_conversion_seq.get(data.dtype):
                 self._raise_type_error(data.dtype)
