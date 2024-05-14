@@ -19,6 +19,8 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <sstream>
+#include <mutex>
 #include "kernel/kernel.h"
 #include "plugin/device/ascend/kernel/dvm/dvm.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
@@ -70,6 +72,12 @@ class DvmKernelMod : public KernelMod {
 
   void UpdateInputShapeRef(size_t input_idx, dvm::ShapeRef *ref);
 
+  bool EnableDump() const { return dump_kernel_; }
+
+  std::ostringstream &DumpBuffer() { return dump_buf_; }
+
+  void DumpToFile();
+
  protected:
   std::vector<ShapeVector> inputs_shape_;
   std::vector<ShapeVector> outputs_shape_;
@@ -81,11 +89,17 @@ class DvmKernelMod : public KernelMod {
   std::vector<size_t> inputs_type_byte_;
   std::vector<size_t> outputs_type_byte_;
   dvm::Kernel kernel_;
+  bool dump_kernel_{false};
+  static std::mutex lock_;
+  std::ostringstream dump_buf_;
+  std::string op_name_;
+  std::string op_fullname_;
 };
 
 class SingleDvmKernelMod : public DvmKernelMod {
  public:
-  explicit SingleDvmKernelMod(dvm::KernelType kernel_type) : DvmKernelMod(kernel_type) {}
+  explicit SingleDvmKernelMod(dvm::KernelType kernel_type, const std::string &op_name, const std::string &op_fullname)
+      : DvmKernelMod(kernel_type, op_name, op_fullname) {}
   ~SingleDvmKernelMod() = default;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
