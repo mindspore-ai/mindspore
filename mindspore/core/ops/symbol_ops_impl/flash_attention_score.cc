@@ -70,7 +70,7 @@ SymbolPtr FlashAttentionScoreShapeBuilder(OperationBuilder *b) {
 }
 
 REG_SYMBOL_OP_BUILDER("FlashAttentionScore")
-  .SetShapeDepend([](const PrimitivePtr &) {
+  .SetShapeDepend([](const PrimitivePtr &, size_t) {
     std::vector<DependOn> depends(mindspore::ops::kFlashAttentionScoreInputsNum, DependOn::kNone);
     depends[mindspore::ops::kFlashAttentionScoreInputQueryIndex] = DependOn::kShape;
     depends[mindspore::ops::kFlashAttentionScoreInputLayoutIndex] = DependOn::kValue;

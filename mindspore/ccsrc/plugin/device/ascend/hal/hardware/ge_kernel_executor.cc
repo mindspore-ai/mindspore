@@ -32,7 +32,7 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 #include "plugin/device/ascend/kernel/pyboost/customize/customize_copy.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_build.h"
-
+#include "kernel/graph_kernel/kernel_packet/kernel_packet_kernel_mod.h"
 #ifdef ENABLE_DVM
 #include "plugin/device/ascend/kernel/dvm/dvm_kernel_build.h"
 #endif
@@ -79,8 +79,50 @@ std::string GetKernelTypeStr(const KernelType &kernel_type) {
     type = "opapi_kernel";
   } else if (kernel_type == KernelType::INTERNAL_KERNEL) {
     type = "internal_kernel";
+  } else if (kernel_type == KernelType::AKG_KERNEL) {
+    type = "akg_kernel";
   }
   return type;
+}
+
+bool GenerateKernelMod(const std::vector<CNodePtr> &kernels);
+
+kernel::KernelModPtr CreateKernelPacketKernelMod(const CNodePtr &kernel) {
+  MS_LOG(DEBUG) << "Build KernelPacket: " << kernel->DebugString();
+  auto real_kernel = kernel::GetKernelPacketRealNode(kernel);
+  if (!GenerateKernelMod({real_kernel})) {
+    MS_LOG(ERROR) << "Build " << real_kernel->DebugString() << " failed.";
+    return nullptr;
+  }
+  auto kernel_mod =
+    std::make_shared<kernel::KernelPacketKernelMod>([](void *dst, const void *src, size_t count, void *stream) -> bool {
+      aclError status = CALL_ASCEND_API(aclrtMemcpyAsync, dst, count, src, count, ACL_MEMCPY_HOST_TO_DEVICE, stream);
+      if (status != ACL_ERROR_NONE) {
+        MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status;
+        return false;
+      }
+      return true;
+    });
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
+  if (!kernel_mod->KernelMod::Init(common::AnfAlgo::GetCNodePrimitive(kernel), input_kernel_tensors,
+                                   output_kernel_tensors) ||
+      !kernel::kernelpacket::Init(kernel_mod.get(), real_kernel)) {
+    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize kernel op[" << real_kernel->fullname_with_scope()
+                      << "] failed.";
+  }
+  return kernel_mod;
+}
+
+kernel::KernelModPtr GenerateAkgKernelMod(const CNodePtr &kernel) {
+  if (IsPrimitiveCNode(kernel, prim::kPrimKernelPacket)) {
+    return CreateKernelPacketKernelMod(kernel);
+  }
+#ifdef ENABLE_DVM
+  return kernel::DvmOpBuild(kernel);
+#else
+  return nullptr;
+#endif
 }
 
 bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
@@ -103,10 +145,8 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
       kernel_mod_ptr = kernel::HcclOpBuild(kernel);
     } else if (kernel_type == KernelType::OPAPI_KERNEL) {
       kernel_mod_ptr = kernel::AclnnOpBuild(kernel);
-#ifdef ENABLE_DVM
     } else if (kernel_type == KernelType::AKG_KERNEL) {
-      kernel_mod_ptr = kernel::DvmOpBuild(kernel);
-#endif
+      kernel_mod_ptr = GenerateAkgKernelMod(kernel);
     } else if (AnfAlgo::GetKernelType(kernel) == KernelType::RT_KERNEL) {
       kernel_mod_ptr = kernel::RtOpBuild(kernel);
     } else if (kernel_type == KernelType::INTERNAL_KERNEL) {

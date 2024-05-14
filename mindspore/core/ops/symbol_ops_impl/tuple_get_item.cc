@@ -13,25 +13,64 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/core/ops/symbol_ops_impl/make_tuple.h"
+#include "base/base.h"
+#include "mindapi/base/macros.h"
+#include "mindspore/core/ops/symbol_ops_impl/common.h"
+#include "ops/symbol_ops_impl/common.h"
+#include "symbolic_shape/symbol.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace symshape {
 namespace ops {
-SymbolPtr TupleGetItemBuilder(OperationBuilder *b) {
-  ListSymbolPtr input = nullptr;
-  if (b->is_building_shape()) {
-    input = b->GetInputShape(kIndex0)->as_sptr<ListSymbol>();
-  } else {
-    input = b->GetInputValue(kIndex0)->as_sptr<ListSymbol>();
-  }
-  MS_EXCEPTION_IF_NULL(input);
-  int64_t index = GetValue<int64_t>(b->GetInput(kIndex1)->GetValue());
-  return input->item(index);
-}
+class MS_CORE_API TupleGetItemShapeOp : public InferShapeOp {
+ public:
+  using InferShapeOp::InferShapeOp;
+  TupleGetItemShapeOp(const SymbolPtr &data, const SymbolPtr &idx) : InferShapeOp({data, idx}) {}
+  ~TupleGetItemShapeOp() override = default;
+  MS_DECLARE_PARENT(TupleGetItemShapeOp, InferShapeOp)
 
-REG_SYMBOL_OP_BUILDER("TupleGetItem").SetShapeFunc(TupleGetItemBuilder).SetValueFunc(TupleGetItemBuilder);
-REG_SYMBOL_OP_BUILDER("RealTupleGetItem").SetShapeFunc(TupleGetItemBuilder).SetValueFunc(TupleGetItemBuilder);
+ protected:
+  SymbolPtr Eval() override {
+    auto input = input_as<ListSymbol>(kIndex0);
+    auto idx = input_as<IntSymbol>(kIndex1);
+    if (!input->HasData() || !idx->HasData()) {
+      return out_abstract()->GetShape()->BuildSymbolicShape();
+    }
+    DoNotEvalOnRun();
+    return input->item(idx->value());
+  }
+};
+
+class MS_CORE_API TupleGetItemValueOp : public InferValueOp {
+ public:
+  using InferValueOp::InferValueOp;
+  TupleGetItemValueOp(const SymbolPtr &data, const SymbolPtr &idx) : InferValueOp({data, idx}) {}
+  ~TupleGetItemValueOp() override = default;
+  MS_DECLARE_PARENT(TupleGetItemValueOp, InferValueOp)
+
+ protected:
+  SymbolPtr Eval() override {
+    auto input = input_as<ListSymbol>(kIndex0);
+    auto idx = input_as<IntSymbol>(kIndex1);
+    if (!input->HasData() || !idx->HasData()) {
+      return BuildSymbolicValue(out_abstract());
+    }
+    DoNotEvalOnRun();
+    return input->item(idx->value());
+  }
+};
+
+REG_SYMBOL_OP_BUILDER("TupleGetItem")
+  .SetShapeDepend({DependOn::kShape, DependOn::kValue})
+  .SetShapeFunc(DefaultBuilder<TupleGetItemShapeOp>)
+  .SetValueDepend({DependOn::kValue, DependOn::kValue})
+  .SetValueFunc(DefaultBuilder<TupleGetItemValueOp>);
+REG_SYMBOL_OP_BUILDER("RealTupleGetItem")
+  .SetShapeDepend({DependOn::kShape, DependOn::kValue})
+  .SetShapeFunc(DefaultBuilder<TupleGetItemShapeOp>)
+  .SetValueDepend({DependOn::kValue, DependOn::kValue})
+  .SetValueFunc(DefaultBuilder<TupleGetItemValueOp>);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

@@ -95,6 +95,8 @@ if(MSLITE_ENABLE_CONVERTER)
                 ${CCSRC_DIR}/kernel/graph_kernel/graph_kernel_json_generator.cc
                 ${CCSRC_DIR}/backend/common/optimizer/optimizer.cc
                 )
+        set_property(SOURCE ${GRAPH_KERNEL_SRC}
+            PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_GRAPH_KERNEL)
         set(CCSRC_SRC
                 ${CCSRC_SRC}
                 ${GRAPH_KERNEL_SRC}
