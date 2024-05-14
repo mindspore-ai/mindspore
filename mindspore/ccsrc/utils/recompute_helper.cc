@@ -24,6 +24,7 @@
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/array_op_name.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore {
@@ -79,6 +80,14 @@ bool IsSetRecomputeCNodeAttr(const AnfNodePtr &node) {
 bool IsCandidateRecomputedNode(const CNodePtr &node) {
   // The tuple_getitem in the bprop function should also be recomputed.
   return (!IsBpropNode(node) || IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) && IsSetRecomputeCNodeAttr(node);
+}
+
+bool DynShapeOpInsertedInBprop(const AnfNodePtr &node) {
+  static const PrimitiveSet dyn_shape_ops_prim_set = {prim::kPrimShape, std::make_shared<Primitive>(kShapeCalcOpName)};
+  if (IsOneOfPrimitiveCNode(node, dyn_shape_ops_prim_set)) {
+    return true;
+  }
+  return false;
 }
 
 std::vector<CNodePtr> FindCandidateRecomputedNodes(const FuncGraphManagerPtr &mng,
@@ -184,6 +193,9 @@ void GetOriginRecomputeAndTargetNodes(const FuncGraphManagerPtr &mng,
       if (!IsBpropNode(output_node) || IsPrimitiveCNode(output_node, prim::kPrimTupleGetItem)) {
         continue;
       }
+      if (DynShapeOpInsertedInBprop(output_node)) {
+        continue;
+      }
       (void)target_nodes->insert(output_node->cast<CNodePtr>());
       if (!inserted) {
         (void)recompute_nodes->insert(node);
@@ -265,7 +277,7 @@ bool HasTargetOrRecomputeInputs(const mindspore::HashSet<CNodePtr> &recomputed_o
     return true;
   }
 
-  if (IsBpropNode(node)) {
+  if (IsBpropNode(node) && !DynShapeOpInsertedInBprop(node)) {
     for (auto &weak_input : node->weak_inputs()) {
       auto input = weak_input.lock();
       MS_EXCEPTION_IF_NULL(input);
