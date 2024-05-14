@@ -59,7 +59,6 @@
 #include "backend/common/graph_kernel/tensor_inplace.h"
 #include "backend/common/graph_kernel/floatstatus_fusion.h"
 #include "backend/common/graph_kernel/floatstatus_addn_fusion.h"
-#include "backend/common/graph_kernel/parallel_optimizer.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/compact_tensor_liveness.h"
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
@@ -101,6 +100,7 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   // convert input to attr adapter for dyn-shape
   pm->Add(std::make_shared<ConvertFrontEndToGraphKernel>(), OptLevel_1);
 
+  pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
   // Do DependElimination all passes of graphkernel
   pm->Add(std::make_shared<DependElimination>(), OptLevel_1);
 
@@ -115,9 +115,6 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Spread the MakeTuple input of UpdateState
   pm->Add(std::make_shared<SpreadUpdateState>(), OptLevel_1);
-
-  // Parallel optimizer by UpdateState reorganization
-  pm->Add(std::make_shared<ParallelOptimizer>(PARALLEL_OPS_LIMIT), OptLevel_2);
 
   // Eliminate the common nodes that generated in SpreadUpdateState
   pm->Add(std::make_shared<GraphKernelCSE>(), OptLevel_1);

@@ -292,7 +292,7 @@ def block_parallel_estimate(graphs):
 
 def block_parallel_estimate_dvm(graphs):
     """estimate block parallel gain when on Ascend platform"""
-    max_ops = 100
+    max_ops = 96
     total_ops = 0
     bottleneck = 1000
     gain = 1000
