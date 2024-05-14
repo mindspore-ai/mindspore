@@ -92,6 +92,11 @@ def _need_to_full():
 
 def _slice_parameter(parameter, phase, layout):
     """Slice python parameter obj according to the layout."""
+    is_train_phase = phase.startswith('train')
+    if layout is not None and parameter.from_ckpt and not is_train_phase:
+        layout_shape = layout[2]
+        parameter.shape = tuple(layout_shape)
+        return
     graph_executor = GraphExecutor_.get_instance()
     new_param = parameter.init_data(layout, set_sliced=True)
     parameter = new_param
