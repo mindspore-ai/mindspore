@@ -272,7 +272,7 @@ def test_tanh_forward_static_shape(mode):
         output = (jit(tanh_forward_func, jit_config=JitConfig(jit_level="O2")))(x_tensor)
 
     expect = generate_expect_forward_output(x_np, np.float32)
-    assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
 @pytest.mark.level1
@@ -300,7 +300,7 @@ def test_tanh_backward_static_shape(mode):
         output = (jit(tanh_backward_func, jit_config=JitConfig(jit_level="O2")))(x_tensor)
 
     expect = generate_expect_backward_output(x_np, np.float32)
-    assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
 @pytest.mark.level0
