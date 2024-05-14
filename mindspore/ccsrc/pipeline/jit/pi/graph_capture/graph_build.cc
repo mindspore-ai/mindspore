@@ -2066,13 +2066,7 @@ std::string GetFuncGraphName(const py::object &func, const MindGraphBuilderPtr &
 StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
                                                 const GraphBuilderPtr &subgraph) {
   auto sg = std::dynamic_pointer_cast<MindGraphBuilder>(subgraph);
-  InlineReason stat = InlineReason::kInline;
-  bool is_make_func = call_node->input(0)->GetOpcode() == MAKE_FUNCTION;
-  if (is_make_func) {
-    // inline MAKE_FUNCTION, need eliminate cell and free variable if the function is not dead local.
-    bool has_cell = PyTuple_GET_SIZE(sg->GetGraph()->GetCodeObj()->co_cellvars) != 0;
-    stat = has_cell ? InlineReason::kInlinePolicyDisabled : stat;
-  }
+  sg->FGBuilder()->AddPrevBuilder(FGBuilder());
 
   auto code = sg->GetGraph()->GetGuard();
   MS_EXCEPTION_IF_NULL(code);
@@ -2083,10 +2077,14 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
     args = GetNewArgs(call_node, AObject::Convert(func.ptr()));
   }
 
-  MS_LOG(INFO) << "new subgraph->TraceRun:" << py::str(func);
-  sg->FGAddInputs(args);
+  MS_LOG(INFO) << "new subgraph->TraceRun: " << py::str(func);
+  bool succ = sg->FGAddInputs(args);
+  if (!succ) {
+    MS_LOG(INFO) << "Add input fail for new subgraph->TraceRun: " << py::str(func);
+    return StopTraceReason::kStopTraceFunc_ArgHandle_Unsupported;
+  }
   auto reason = sg->TraceRun();
-  MS_LOG(INFO) << "new subgraph->TraceRun end:" << py::str(func);
+  MS_LOG(INFO) << "new subgraph->TraceRun end: " << py::str(func);
 
   call_node->SetSubGraph(sg->GetGraph());
   auto sub_ret = sg->GetGraph()->GetRetVal();
@@ -2098,7 +2096,7 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
       sg->FGBuilder()->SetGraphName(GetFuncGraphName(func, sg));
       sg->FGAddOutput(false);
       if (sg->FGBuilder()->graph() == nullptr) {
-        MS_LOG(ERROR) << "subgraph trace null";
+        MS_LOG(INFO) << "subgraph trace null";
         return StopTraceReason::kTrace_Fail;
       } else {
         TraceGuard trace_guard(GetLocation(call_node));
@@ -2106,39 +2104,14 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
         if (res.ptr()) {
           MS_LOG(INFO) << "add fg node suc: ";
           call_node->SetVobj(AbstractTraceNode::MakeAObject(res));
-        } else {
-          MS_LOG(ERROR) << "add fg node fail";
-          stat = InlineReason::kInlineInfer_Fail;
         }
       }
     }
-    stat = is_make_func || ApplyInlinePolicy(call_node) ? stat : InlineReason::kInlinePolicyDisabled;
-  } else {
-    stat = InlineReason::kInlineInfer_Fail;
   }
-  if (stat != InlineReason::kInline) {
-    code->GetGuard()->Rollback();
-    if (!is_make_func) {
-      /**
-       * replace function call, inline or resume capture after break graph
-       * exclude make function, because of function always a new function but code is constant
-       **/
-      stat = ReplaceCall(call_node, func) ? stat : InlineReason::kInlinePolicyDisabled;
-    }
-  } else {
-    if (!is_make_func) {
-      // exclude make function, because of function always a new function but code is constant
-      stat = graph_->GuardInlinedFunc(call_node) ? stat : InlineReason::kInlinePolicyDisabled;
-    }
-    if (stat != InlineReason::kInline) {
-      code->GetGuard()->Rollback();
-    } else {
-      code->GetGuard()->Pop();
-    }
+  bool is_make_func = call_node->input(0)->GetOpcode() == MAKE_FUNCTION;
+  if (is_make_func) {
+    graph_->GuardInlinedFunc(call_node);
   }
-
-  // if stat == InlineReason::kInline, guard free variable
-  call_node->SetInlineReason(stat);
   return reason;
 }
 
@@ -3266,13 +3239,17 @@ bool MindGraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py:
   return false;
 }
 
-void MindGraphBuilder::FGAddInputs(const std::vector<py::object> &args) {
+bool MindGraphBuilder::FGAddInputs(const std::vector<py::object> &args) {
   // Add function graph inputs.
   for (size_t i = 0; i < args.size(); ++i) {
-    MS_LOG(INFO) << "try add input: " << py::str(args[i]);
-    FGBuilder()->AddInput(args[i]);
-    MS_LOG(INFO) << "add input suc";
+    auto obj = FGBuilder()->AddInput(args[i]);
+    if (obj.ptr() == nullptr) {
+      MS_LOG(INFO) << "Add input fail for input: " << std::string(py::str(args[i]));
+      return false;
+    }
+    MS_LOG(INFO) << "Add input success for input: " << std::string(py::str(args[i]));
   }
+  return true;
 }
 
 void MindGraphBuilder::FGAddOutput(bool is_top_graph) {
@@ -3316,6 +3293,8 @@ std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node, AObjec
   auto new_callable_info = FindPyFunc(vobj);
   FrameStates f;
   ResolveClosure(new_callable_info, call_node->input(0), &f);
+
+  // Need to consider repeat add issue.
   if (!HandleCallParameters(new_callable_info, call_node, &f)) {
     MS_LOG(INFO) << "HandleCallParameters error" << std::endl;
   }
@@ -3440,7 +3419,7 @@ ValueNode *MindGraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &
   ValueNode *graph_attr_node = nullptr;
   auto attr_obj = attr_node->GetVobj()->GetPyObject();
   // If the attr_obj can convert to anf node directly, return the origin attr node.
-  if (fg_builder_->AddPythonObject(attr_obj)) {
+  if (fg_builder_->AddAttrPythonObject(attr_obj)) {
     graph_attr_node = attr_node;
   } else {
     std::vector<py::object> input_objects = {target_node->GetVobj()->GetPyObject(), py::str(instr.name())};
@@ -3596,5 +3575,164 @@ bool MindGraphBuilder::DoBuildOp(const Instr &instr) {
 }
 
 bool MindGraphBuilder::DoIsOp(const Instr &instr) { return GraphBuilder::DoBinary(instr); }
+
+bool MindGraphBuilder::HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params,
+                                            FrameStates *frame) {
+  CallNode *call_node = reinterpret_cast<CallNode *>(seek(0));
+  PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func.ptr()));
+  auto vobj = trace_flag() ? AObject::Convert(func.ptr()) : call_node->input(0)->GetVobj();
+  AObject::Type callable_type = vobj->GetType();
+
+  ValueNode *self = GetBoundSelf(call_node);
+  if (self != nullptr) {
+    params->insert(params->begin(), self);
+  }
+
+  const int argc = co->co_argcount;
+  const int has_varg = (co->co_flags & CO_VARARGS) ? 1 : 0;
+  const int has_kwvarg = (co->co_flags & CO_VARKEYWORDS) ? 1 : 0;
+  const int varg_loc = argc + co->co_kwonlyargcount;
+  const int kwvarg_loc = argc + co->co_kwonlyargcount + has_varg;
+  int pargc = params->size();
+  if (pargc > argc && !has_varg) {
+    MS_LOG(DEBUG) << "too many parameters";
+    return false;
+  }
+  bool append_self_to_varg = has_varg && self && callable_type == AObject::kTypeBoundMethod && argc == 0;
+  if (append_self_to_varg) {  // self is in variable arguments
+    MS_LOG(INFO) << "not implement append self to variable arguments, inline failed";
+    return false;
+  }
+
+  if (has_kwvarg && frame->Local(kwvarg_loc) == &ValueNode::kUnboundLocal) {
+    auto vo = AObject::Convert(py::dict());
+    auto m = NewValueNode(vo, BUILD_MAP, 0, {});
+    call_node->AddParam(m);
+    frame->SetLocal(kwvarg_loc, m);
+  }
+
+  if (has_varg) {
+    int vargc = pargc > argc ? pargc - argc : 0;
+    std::vector<ValueNode *> vargs(params->end() - vargc, params->end());
+    params->resize(params->size() - vargc);
+    std::for_each(vargs.begin(), vargs.end(), [this](ValueNode *i) { this->push(i); });
+    DoBuildOp({BUILD_TUPLE, static_cast<int>(vargs.size())});
+    ValueNode *build_tuple = pop();
+    call_node->AddParam(build_tuple);
+    frame->SetLocal(varg_loc, build_tuple);
+  }
+
+  pargc = params->size();
+  for (int i = pargc - 1; i >= 0; --i) {
+    if (frame->Local(i) != &ValueNode::kUnboundLocal) {
+      MS_LOG(DEBUG) << "duplicate key-word parameter error";
+      return false;
+    }
+    frame->SetLocal(i, params->back());
+    params->pop_back();
+  }
+
+  return CheckAndSetDefaultParams(func, frame, pargc);
+}
+
+bool MindGraphBuilder::UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, bool *has_kw,
+                                          CallNode *call_node) {
+  bool has_dict = params->size() > 1;
+  ValueNode *args_node = params->operator[](0);
+  if (!has_dict) {
+    params->clear();
+  } else if (!UnpackCallExDict(params, call_node)) {
+    return false;
+  }
+  *has_kw = params->size();
+
+  if (args_node->GetVobj() == nullptr) {
+    return false;
+  }
+  py::object object = args_node->GetVobj()->GetPyObject();
+  if (!py::isinstance<py::tuple>(object)) {
+    return false;
+  }
+  size_t args_len = py::len(py::cast<py::tuple>(object));
+  if (args_len == 0) {
+    return true;
+  }
+
+  std::vector<ValueNode *> new_args_inputs;
+  for (size_t i = 0; i < args_len; ++i) {
+    Instr instr(BINARY_SUBSCR, 2);
+    auto l = args_node;
+    auto r = NewValueNode(AObject::Convert(py::int_(i)), LOAD_CONST, -1, {});
+    auto o = HandleMultiOp(instr, {l, r}, false);
+    new_args_inputs.push_back(NewValueNode(o, instr, {l, r}));
+  }
+
+  params->insert(params->begin(), new_args_inputs.begin(), new_args_inputs.end());
+  return true;
+}
+
+bool MindGraphBuilder::HandleKWParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame) {
+  PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func.ptr()));
+  std::vector<ValueNode *> kwvargs;
+  if (!PackKwParams(func, params, frame, &kwvargs)) {
+    // illegal arguments
+    return false;
+  }
+
+  const int argc = co->co_argcount + co->co_kwonlyargcount;
+  if (!(co->co_flags & CO_VARKEYWORDS)) {
+    // kw_2_p_cnt == k_cnt, all kw arguments is positions arguments
+    return true;
+  }
+
+  int kwvarg_loc = argc + ((co->co_flags & CO_VARARGS) ? 1 : 0);
+  std::for_each(kwvargs.begin(), kwvargs.end(), [this](ValueNode *i) { this->push(i); });
+  DoBuildOp({BUILD_MAP, SizeToInt(kwvargs.size() / 2)});
+  ValueNode *new_node = pop();
+  frame->SetLocal(kwvarg_loc, new_node);
+  graph_->GetTracedNodes().pop_back();
+
+  static_cast<CallNode *>(seek(0))->AddParam(frame->Local(kwvarg_loc));
+  return true;
+}
+
+bool MindGraphBuilder::UnpackCallExDict(std::vector<ValueNode *> *params, CallNode *call_node) {
+  ValueNode *dict_node = params->back();
+  params->clear();
+
+  if (dict_node->GetVobj() == nullptr) {
+    return false;
+  }
+
+  auto object = dict_node->GetVobj()->GetPyObject();
+  if (!py::isinstance<py::dict>(object)) {
+    return false;
+  }
+  auto dict_object = py::cast<py::dict>(object);
+  Py_ssize_t dict_len = py::len(dict_object);
+  if (dict_len == 0) {
+    return true;
+  }
+
+  py::tuple keys(dict_len);
+  size_t i = 0;
+  for (const auto &pair : dict_object) {
+    auto cur_key = pair.first;
+    if (!py::isinstance<py::str>(cur_key)) {
+      return false;
+    }
+    keys[i] = cur_key;
+    Instr instr(BINARY_SUBSCR, 2);
+    auto l = dict_node;
+    auto r = NewValueNode(AObject::Convert(py::cast<py::str>(cur_key)), LOAD_CONST, -1, {});
+    auto o = HandleMultiOp(instr, {l, r}, false);
+    params->push_back(NewValueNode(o, instr, {l, r}));
+    i++;
+  }
+
+  ValueNode *const_keys = this->NewValueNode(AObject::Convert(keys), LOAD_CONST, -1, {});
+  params->push_back(const_keys);
+  return true;
+}
 }  // namespace pijit
 }  // namespace mindspore
