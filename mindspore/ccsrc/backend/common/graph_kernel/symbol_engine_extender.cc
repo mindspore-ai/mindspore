@@ -26,6 +26,7 @@
 #include <vector>
 #include "ir/anf.h"
 #include "ir/manager.h"
+#include "utils/anf_utils.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/anfalgo.h"
@@ -40,7 +41,7 @@
 namespace mindspore::graphkernel {
 bool IsBeginOp(const AnfNodePtr &node, const SymbolEnginePtr &main_engine) {
   if (main_engine->IsDependShape(node) && common::AnfAlgo::IsDynamicShape(node) &&
-      !common::AnfAlgo::IsDynamicRankNode(node)) {
+      !common::AnfAlgo::IsDynamicRankNode(node) && AnfUtils::IsRealCNodeKernel(node)) {
     MS_LOG(DEBUG) << "A begin op: " << node->DebugString();
     return true;
   }
@@ -175,6 +176,9 @@ void FuseOnlyShapeDependedNodes(const AnfNodePtr &base_node, const SymbolEngineP
     auto cnode = node->cast<CNodePtr>();
     for (size_t i = 1; i < cnode->size(); ++i) {
       auto input_node = cnode->input(i);
+      if (IsPrimitiveCNode(input_node, prim::kPrimTupleGetItem)) {
+        continue;
+      }
       if (input_node->isa<CNode>() && inner.find(input_node) == inner.end()) {
         input_cnodes.push_back(input_node);
       }

@@ -343,7 +343,7 @@ bool SymbolEngineImpl::Infer(const AbstractBasePtrList &inputs) {
       MS_LOG(DEBUG) << "Update shape for input[" << i << "]: " << cur_shape->ToRawString();
       shape->Update(cur_shape);
     }
-    if (auto value = params[i]->abstract()->GetSymbolicValue(); value != nullptr) {
+    if (auto value = params[i]->abstract()->GetSymbolicValue(); value != nullptr && value->CanUpdate()) {
       auto cur_value = BuildSymbolicValue(inputs[i]);
       MS_EXCEPTION_IF_NULL(cur_value);
       MS_LOG(DEBUG) << "Update value for input[" << i << "]: " << cur_value->ToRawString();

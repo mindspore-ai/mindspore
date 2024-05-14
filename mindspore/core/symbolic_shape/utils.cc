@@ -120,8 +120,16 @@ SymbolPtr ConstValueToSymbol(const ValuePtr &v) {
     if (type_ptr->type_id() == kObjectTypeString) {
       return StrSymbol::Make(ops::GetScalarValue<std::string>(v).value());
     }
-    auto value = CheckAndConvertUtils::CheckTensorIntValue(v->ToString(), v, "ConstSymbolicValue", type_ptr);
-    return IntValues2Symbol(value);
+    if (type_ptr->type_id() == kNumberTypeInt64) {
+      return IntSymbol::Make(ops::GetScalarValue<int64_t>(v).value());
+    }
+    if (type_ptr->type_id() == kNumberTypeInt32) {
+      return IntSymbol::Make(static_cast<int64_t>(ops::GetScalarValue<int32_t>(v).value()));
+    }
+    auto value_opt = ops::GetArrayValue<int64_t>(v);
+    if (value_opt.has_value()) {
+      return IntValues2Symbol(value_opt.value().ToVector());
+    }
   }
   MS_LOG(EXCEPTION)
     << "Value should be one of {ValueSequence, Tensor, IntegerImm, BoolImm, FloatImm, StringImm}, but got "
