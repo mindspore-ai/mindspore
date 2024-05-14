@@ -508,8 +508,19 @@ Status FlashAttentionScoreInfo::GetAttrs() {
       MS_LOG(ERROR) << "enable_ring_attention should be bool";
     }
   }
-  if (enable_ring_attention_ && input_layout_ != FASInputLayoutMode::SBH) {
-    MS_LOG(ERROR) << "Ring attention currently only supports SBH layout";
+  if (enable_ring_attention_) {
+    if (input_layout_ != FASInputLayoutMode::BSH && input_layout_ != FASInputLayoutMode::BNSD) {
+      MS_LOG(ERROR) << "Ring attention currently only supports BSH and BNSD layout";
+    }
+    if (sparse_mode_ != 0) {
+      MS_LOG(ERROR) << "Ring attention currently only supports sparse mode 0";
+    }
+    if (keep_prob_ != 1.0) {
+      MS_LOG(ERROR) << "Ring attention currently only supports keep prob 1.0";
+    }
+    if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
+      MS_LOG(ERROR) << "Ring attention do not need input attn mask";
+    }
   }
 
   is_attn_mask_compressed_ =

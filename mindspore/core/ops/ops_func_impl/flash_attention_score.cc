@@ -250,8 +250,7 @@ BaseShapePtr FlashAttentionScoreFuncImpl::InferShape(const PrimitivePtr &primiti
     }
   }
 
-  size_t seq_index = kIndex1;
-  size_t batch_index = kIndex0;
+  size_t seq_index = kIndex1, batch_index = kIndex0;
   if (input_layout == FASInputLayoutMode::SBH) {
     seq_index = kIndex0;
     batch_index = kIndex1;
@@ -292,7 +291,12 @@ BaseShapePtr FlashAttentionScoreFuncImpl::InferShape(const PrimitivePtr &primiti
 
     bool enable_ring_attention = false;
     if (primitive->HasAttr(kEnableRingAttention)) {
-      enable_ring_attention = GetValue<bool>(primitive->GetAttr(kEnableRingAttention));
+      auto enable_ring_attention_valueptr = primitive->GetAttr(kEnableRingAttention);
+      if (enable_ring_attention_valueptr->isa<BoolImm>()) {
+        enable_ring_attention = enable_ring_attention_valueptr->cast<BoolImmPtr>()->value();
+      } else {
+        MS_LOG(ERROR) << "enable_ring_attention should be bool";
+      }
     }
     if (!enable_ring_attention) {
       CheckFlashAttentionScoreAttnMaskShape(input_args[kFlashAttentionScoreInputAttnMaskIndex], op_name, sparse_mode,

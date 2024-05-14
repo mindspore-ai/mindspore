@@ -56,7 +56,8 @@ def generate_inputs(B, N, S, D, input_layout, use_mqa=False, with_real_shift=Fal
     else:
         raise ValueError(f"input_layout is invalid.")
     real_shift = Tensor(np.ones((B, N, S, S), dtype=np.float16)) if with_real_shift else None
-    attn_mask = Tensor(np.ones((S, S), dtype=np.uint8))
+    # attn_mask = Tensor(np.ones((S, S), dtype=np.uint8))
+    attn_mask = None
     return query, key, value, real_shift, attn_mask
 
 
@@ -110,7 +111,6 @@ class Net(nn.Cell):
                 stra += ((dp, mp, sp, 1),)
             if keep_prob < 1.0:
                 stra += ((dp, mp, sp, 1),)
-            stra += ((sp, sp),)
             self.fa_op.shard(stra)
         self.fa_op.add_prim_attr("enable_ring_attention", enable_ring_attention)
 
@@ -134,7 +134,7 @@ class Net(nn.Cell):
         return self.fa_op(query, key, value, real_shift, drop_mask_bits, None, attn_mask, None)
 
 
-@pytest.mark.parametrize('input_layout', ["SBH"])
+@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
 def test_ring_attention_semi_auto_parallel(input_layout):
     """
     Features: test Ring Attention
