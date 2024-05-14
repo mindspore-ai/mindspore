@@ -97,6 +97,21 @@ class FutureBase {
   std::future<std::shared_ptr<tensor::FutureData<T>>> future_;
   std::shared_ptr<tensor::FutureData<T>> future_data_;
 };
+// brief Device info of Tensor
+//
+// Includes the format, data type and host format of a tensor.
+struct DeviceInfo {
+  explicit DeviceInfo(std::string format = "DefaultFormat", TypePtr data_type = nullptr,
+                      std::string host_format = "DefaultFormat", int32_t device_id = 0)
+      : format_(std::move(format)),
+        data_type_(std::move(data_type)),
+        host_format_(std::move(host_format)),
+        device_id_(device_id) {}
+  std::string format_ = "DefaultFormat";
+  TypePtr data_type_ = nullptr;
+  std::string host_format_ = "DefaultFormat";
+  int32_t device_id_ = 0;
+};
 
 // Tensor entity class
 class MS_CORE_API Tensor : public BaseTensor {
@@ -504,6 +519,24 @@ class MS_CORE_API Tensor : public BaseTensor {
   /// \brief unpin tensor memory.
   void UnPinMemory();
 
+  /// \brief Get tensor's device info.
+  ///
+  /// \return The device info of this tensor.
+  DeviceInfo device_info() const { return device_info_; }
+
+  /// \brief Set tensor's device info.
+  ///
+  /// \param[in] device_info The tensor's device info.
+  void set_device_info(const DeviceInfo &device_info) { device_info_ = device_info; }
+
+  /// \brief Set tensor's device info.
+  ///
+  /// \param[in] format The input format.
+  /// \param[in] data_type The input data type.
+  /// \param[in] host_format The input host format.
+  void SetDeviceInfo(const std::string &format, const TypePtr &data_type,
+                     const std::string &host_format = "DefaultFormat");
+
  private:
   // Really execute callback function when host value is updated of Tensor.
   void ExecuteUpdateValueCallback() const;
@@ -523,6 +556,10 @@ class MS_CORE_API Tensor : public BaseTensor {
   TensorCompressionType compression_type_{kNoCompression};
   std::vector<std::shared_ptr<QuantizationParam>> quant_params_;
   std::string tensor_name_;
+  // brief Device info of Tensor
+  //
+  // Includes the format and data type of a tensor on device.
+  DeviceInfo device_info_;
 };
 
 // CSRTensor entity class
