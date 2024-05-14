@@ -16,6 +16,7 @@
 
 #include "ir/meta_tensor.h"
 #include <numeric>
+#include <functional>
 
 namespace mindspore {
 namespace tensor {
@@ -37,7 +38,6 @@ MetaTensor &MetaTensor::operator=(const MetaTensor &meta_tensor) {
 
   data_type_ = meta_tensor.data_type();
   shape_ = meta_tensor.shape();
-  device_info_ = meta_tensor.device_info();
 
   return *this;
 }
@@ -71,11 +71,6 @@ TypePtr MetaTensor::SetDtype(const TypePtr type_ptr) {
   }
   (void)set_data_type(type_ptr->type_id());
   return type_ptr;
-}
-
-void MetaTensor::SetDeviceInfo(const std::string &format, const TypePtr &data_type, const std::string &host_format) {
-  DeviceInfo info(format, data_type, host_format);
-  set_device_info(info);
 }
 
 std::string MetaTensor::ToString() const {

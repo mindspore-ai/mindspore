@@ -144,7 +144,8 @@ Tensor::Tensor(const Tensor &tensor)
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       pin_mem_register_(tensor.pin_mem_register_),
       compression_type_(tensor.compression_type_),
-      tensor_name_(tensor.tensor_name_) {}
+      tensor_name_(tensor.tensor_name_),
+      device_info_(tensor.device_info_) {}
 
 Tensor::Tensor(const Tensor &tensor, TypeId data_type)
     : BaseTensor(tensor, data_type),
@@ -155,7 +156,8 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       pin_mem_register_(tensor.pin_mem_register_),
       compression_type_(tensor.compression_type_),
-      tensor_name_(tensor.tensor_name_) {}
+      tensor_name_(tensor.tensor_name_),
+      device_info_(tensor.device_info_) {}
 
 Tensor::Tensor(const BaseTensor &tensor, TypeId data_type) : BaseTensor(tensor, data_type) {}
 
@@ -179,6 +181,7 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
   graph_output_ = tensor.graph_output_;
   quant_params_ = tensor.quant_params_;
   updated_by_device_ = tensor.updated_by_device_;
+  device_info_ = tensor.device_info_;
   return *this;
 }
 
@@ -251,6 +254,7 @@ bool Tensor::operator==(const Tensor &tensor) const {
 Tensor &Tensor::AssignValue(const Tensor &tensor) {
   if (this != &tensor) {
     BaseTensor::AssignValue(tensor);
+    device_info_ = tensor.device_info_;
     need_release_device_mem_ = tensor.need_release_device_mem_;
 
     // Need execute callback when update host value of Tensor.
@@ -273,6 +277,11 @@ void Tensor::ExecuteUpdateValueCallback() const {
   if (update_value_callback_ != nullptr) {
     update_value_callback_(this);
   }
+}
+
+void Tensor::SetDeviceInfo(const std::string &format, const TypePtr &data_type, const std::string &host_format) {
+  DeviceInfo info(format, data_type, host_format);
+  set_device_info(info);
 }
 
 void Tensor::data_sync_directly(const DeviceSync *const device_sync, bool need_wait) const {

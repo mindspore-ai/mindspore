@@ -89,7 +89,6 @@ BaseTensor::BaseTensor(const BaseTensor &tensor)
       base_shape_ptr_(tensor.base_shape_ptr_),
       contiguous_callback_(tensor.contiguous_callback_) {
   user_data_ = tensor.user_data_;
-  set_device_info(tensor.device_info());
 }
 
 BaseTensor::BaseTensor(const BaseTensor &tensor, TypeId data_type)
@@ -104,7 +103,6 @@ BaseTensor::BaseTensor(const BaseTensor &tensor, TypeId data_type)
       base_shape_ptr_(tensor.base_shape_ptr_),
       contiguous_callback_(tensor.contiguous_callback_) {
   user_data_ = tensor.user_data_;
-  set_device_info(tensor.device_info());
 }
 
 BaseTensor &BaseTensor::operator=(const BaseTensor &tensor) {
