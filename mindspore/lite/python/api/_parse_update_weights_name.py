@@ -81,6 +81,10 @@ def _maybe_map_sgm_blocks_to_diffusers(name, layers_per_block=2, delimiter="_", 
 
     return name
 
+def _judge_name_begin(name):
+    return not name.startswith("lora_unet_") and not name.startswith("lora_te1_") \
+        and not name.startswith("lora_te2_") and not name.startswith("lora_te_")
+
 def _convert_kohya_name(name):
     '''
     convert name like input_blocks_xxxx to down_blocks_xxxx
@@ -88,10 +92,14 @@ def _convert_kohya_name(name):
     diffusers_name = name
     lora_name = name.split(".")[0]
 
-    if not lora_name.startswith("lora_unet_"):
+    if _judge_name_begin(lora_name):
         return diffusers_name
 
-    diffusers_name = name.replace("lora_unet_", "").replace("_", ".")
+    diffusers_name = name.replace("lora_te1_", "")
+    diffusers_name = diffusers_name.replace("lora_te2_", "")
+    diffusers_name = diffusers_name.replace("lora_te_", "")
+    diffusers_name = diffusers_name.replace("lora_unet_", "").replace("_", ".")
+    diffusers_name = diffusers_name.replace("text.model", "text_model")
 
     if "input.blocks" in diffusers_name:
         diffusers_name = diffusers_name.replace("input.blocks", "down_blocks")
@@ -115,6 +123,11 @@ def _convert_kohya_name(name):
     diffusers_name = diffusers_name.replace("proj.in", "proj_in")
     diffusers_name = diffusers_name.replace("proj.out", "proj_out")
     diffusers_name = diffusers_name.replace("emb.layers", "time_emb_proj")
+    diffusers_name = diffusers_name.replace("self.attn", "self_attn")
+    diffusers_name = diffusers_name.replace("q.proj", "q_proj")
+    diffusers_name = diffusers_name.replace("k.proj", "k_proj")
+    diffusers_name = diffusers_name.replace("v.proj", "v_proj")
+    diffusers_name = diffusers_name.replace("out.proj", "out_proj")
 
     # SDXL specificity.
     if "emb" in diffusers_name and "time.emb.proj" not in diffusers_name:
@@ -156,7 +169,7 @@ def _rename_variable_weight(name):
         name = name.replace("lora_up.", '')
         name = name.replace("lora_down.", '')
         name = name.replace("net.0", "net.net.0")
-
+    name = name.replace('unet.', '')
     name = _maybe_map_sgm_blocks_to_diffusers(name)
 
     name = _convert_kohya_name(name)
@@ -165,11 +178,16 @@ def _rename_variable_weight(name):
 
     name = name.replace('_lora', '')
     name = name.replace('lora.', '')
-    name = name.replace('unet.', '')
+    name = name.replace('te1.', '')
+    name = name.replace('te2.', '')
+    name = name.replace('te.', '')
     name = name.replace('processor.', '')
+    name = name.replace('text_encoder.', '')
+    name = name.replace('text_encoder_2.', '')
+    name = name.replace('lora_linear_layer.', '')
+    name = name.replace('linear_layer.', '')
     name_split = name.split('.')
     name_split.pop()
-    name_split.append('MatMul')
     merged_name = []
     index = len(name_split) - 1
     while index >= 0:
