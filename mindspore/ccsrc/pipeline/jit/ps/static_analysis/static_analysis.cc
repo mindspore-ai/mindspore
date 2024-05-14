@@ -403,6 +403,128 @@ AbstractFuncAtomPtr GetRealFuncAtom(const AbstractFuncAtomPtr &possible_func) {
   }
   return real_atom;
 }
+
+template <typename T>
+bool Match(const ValuePtr &prim) {
+  return prim->isa<T>();
+}
+using MetaFgMatchFunc = std::function<bool(const ValuePtr &)>;
+
+bool MatchMetaFg(const ValuePtr &prim) {
+  static const std::vector<MetaFgMatchFunc> meta_fg_ops{
+    Match<prim::GradOperation>,
+    Match<prim::VmapOperation>,
+    Match<prim::Shard>,
+  };
+  return std::any_of(meta_fg_ops.cbegin(), meta_fg_ops.cend(),
+                     [&prim](const MetaFgMatchFunc &match_func) { return match_func(prim); });
+}
+
+void RemoveSequenceFromOrderList(const CNodePtr &origin_cnode) {
+  constexpr size_t sequence_input_pos = 2;
+  if (origin_cnode->size() <= sequence_input_pos) {
+    return;
+  }
+  auto seq_node = origin_cnode->input(sequence_input_pos);
+  auto prim = GetCNodePrimitiveWithoutDoSignature(seq_node);
+  if (prim != nullptr &&
+      (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList))) {
+    auto seq_cnode = dyn_cast<CNode>(seq_node);
+    MS_EXCEPTION_IF_NULL(seq_cnode);
+    seq_cnode->func_graph()->EraseUnusedNodeInOrder(seq_cnode);
+  }
+}
+
+AbstractBasePtr GetEvalResult(const AnfNodePtr &node, const AnalysisEnginePtr &engine, const AnfNodeConfigPtr &conf) {
+  AnfNodeConfigPtr func_conf = std::make_shared<AnfNodeConfig>(engine, node, conf->context(), conf->func_graph());
+  auto possible_func_eval_result = func_conf->ObtainEvalResult();
+  MS_EXCEPTION_IF_NULL(possible_func_eval_result);
+  return possible_func_eval_result->abstract();
+}
+
+bool IsFuncGraphAbstractInput(const CNodePtr &origin_cnode, const AnalysisEnginePtr &engine,
+                              const AnfNodeConfigPtr &conf) {
+  auto possible_func = GetEvalResult(origin_cnode->input(1), engine, conf);
+  if (possible_func == nullptr || !possible_func->isa<FuncGraphAbstractClosure>()) {
+    return false;
+  }
+  // Check whether it is a high order scene such as GradOperation(GradOperation(net)), the meta_unpack_prepare doesn't
+  // handle before. To handle this later.
+  if (!origin_cnode->input(1)->isa<CNode>()) {
+    return true;
+  }
+  auto input1_cnode = origin_cnode->input(1)->cast<CNodePtr>();
+  auto possible_prim = GetEvalResult(input1_cnode->input(0), engine, conf);
+  if (possible_prim == nullptr || !possible_prim->isa<PrimitiveAbstractClosure>()) {
+    return true;
+  }
+  auto value = GetValueWithoutDoSignature(possible_prim->cast<PrimitiveAbstractClosurePtr>()->prim());
+  return !MatchMetaFg(value);
+}
+
+// {{meta_fg, g, w}, Ys} => {{meta_fg, {UnpackGraph, g, Ys}, w}, Ys}
+// {UnpackCall, {meta_fg, g, w}, Ys} => {UnpackCall, {meta_fg, {UnpackGraph, g, Ys}, w}, Ys}
+AnfNodePtr InsertUnpackGraph(const CNodePtr &origin_cnode, const ValuePtr &value, const AnfNodeConfigPtr &conf,
+                             const AnalysisEnginePtr &engine) {
+  // origin_cnode is {meta_fg, g, ...}
+  const size_t inputs_x_minimum_size = 2;
+  if (origin_cnode->size() < inputs_x_minimum_size) {
+    return nullptr;
+  }
+
+  if (value == nullptr || !MatchMetaFg(value)) {
+    return nullptr;
+  }
+
+  if (!IsFuncGraphAbstractInput(origin_cnode, engine, conf)) {
+    return nullptr;
+  }
+
+  auto manager = conf->engine()->func_graph_manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto node_users = manager->node_users()[origin_cnode];
+  if (node_users.empty()) {
+    return nullptr;
+  }
+  auto meta_user = node_users.begin()->first->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(meta_user);
+  int index = node_users.begin()->second;
+  if (index != 0 && index != 1) {
+    return nullptr;
+  }
+
+  bool need_unpack_args = false;
+  if (index == 1) {
+    // The meta_fg user node should be UnpackCall.
+    auto input0_value = GetValueWithoutDoSignature(meta_user->input(0));
+    if (input0_value == nullptr || !input0_value->isa<prim::UnpackCall>()) {
+      return nullptr;
+    }
+    need_unpack_args = true;
+  }
+  // Create UnpackGraph node.
+  bool sens_param = false;
+  if (value->isa<prim::GradOperation>()) {
+    sens_param = value->cast<prim::GradOperationPtr>()->sens_param();
+    RemoveSequenceFromOrderList(origin_cnode);
+  }
+  auto unpack_graph = std::make_shared<prim::UnpackGraphPrimitive>(sens_param, need_unpack_args);
+  std::vector<AnfNodePtr> unpack_graph_inputs{NewValueNode(unpack_graph), origin_cnode->input(1)};
+  const auto &meta_user_inputs = meta_user->inputs();
+  constexpr int64_t unpack_inputs_begin_index = 2;
+  int64_t offset = (need_unpack_args ? unpack_inputs_begin_index : 1);
+  (void)std::transform(meta_user_inputs.begin() + offset, meta_user_inputs.end(),
+                       std::back_inserter(unpack_graph_inputs),
+                       [](const AnfNodePtr &node) -> AnfNodePtr { return node; });
+  auto fg = origin_cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto unpack_graph_node = fg->NewCNodeBefore(meta_user, unpack_graph_inputs);
+  // Create new call_node.
+  auto new_cnode_inputs = origin_cnode->inputs();
+  new_cnode_inputs[1] = unpack_graph_node;
+  auto new_cnode = fg->NewCNodeBefore(meta_user, new_cnode_inputs);
+  return new_cnode;
+}
 }  // namespace
 
 EvalResultPtr PrimitiveEvalCache::Get(const PrimitivePtr &prim, const AbstractBasePtrList &args) const {
@@ -809,6 +931,17 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
 
   if (possible_func->isa<AbstractAny>()) {
     return ConvertToPyInterpretCall(cnode, conf);
+  }
+
+  if (possible_func->isa<PrimitiveAbstractClosure>()) {
+    auto value = GetValueWithoutDoSignature(possible_func->cast<PrimitiveAbstractClosurePtr>()->prim());
+    auto new_cnode = InsertUnpackGraph(cnode, value, conf, shared_from_this());
+    if (new_cnode != nullptr) {
+      AnalysisEnginePtr eng = conf->engine();
+      MS_EXCEPTION_IF_NULL(eng);
+      AnfNodeConfigPtr new_conf = eng->MakeConfig(new_cnode, conf->context(), conf->func_graph());
+      return eng->ForwardConfig(conf, new_conf);
+    }
   }
 
   auto func = dyn_cast_ptr<AbstractFunction>(possible_func);
