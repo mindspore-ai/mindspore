@@ -1229,6 +1229,13 @@ NodePtr StridedSliceOnnxOp::InferValue(const NodePtrList &inputs, const DAttrs &
   return res == nullptr ? nullptr : std::make_shared<ConstTensorNode>(res);
 }
 
+void MatMulOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  CHECK_ATTR(prim->attrs(), "transpose_a");
+  (void)abs_list->emplace_back(prim->GetAttr("transpose_a")->ToAbstract());
+  CHECK_ATTR(prim->attrs(), "transpose_b");
+  (void)abs_list->emplace_back(prim->GetAttr("transpose_b")->ToAbstract());
+}
+
 std::vector<DShape> MatMulOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   // the prim's infer shape does not supports batch dims
   constexpr size_t kMatMulRank = 2;

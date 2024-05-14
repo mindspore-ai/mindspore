@@ -123,13 +123,8 @@ TypePtr MatMulFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
   MS_EXCEPTION_IF_NULL(context_ptr);
   std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   std::set<TypePtr> valid_types;
-  if (device_target == kCPUDevice) {
-    valid_types = {kUInt8, kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-  } else if (device_target == kGPUDevice) {
-    valid_types = {kInt32, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-  } else {
-    valid_types = {kUInt8, kInt8, kInt32, kInt64, kFloat16, kFloat32, kBFloat16};
-  }
+  valid_types = {kUInt8,   kInt8,    kInt16,     kInt32,      kInt64,   kFloat16,
+                 kFloat32, kFloat64, kComplex64, kComplex128, kBFloat16};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[kInputIndex0]->GetType());
   (void)types.emplace("y", input_args[kInputIndex1]->GetType());
