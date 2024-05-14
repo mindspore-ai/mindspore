@@ -1,0 +1,16 @@
+#operator cross_ext
+cross_ext:
+  args:
+    input:
+      dtype: tensor
+    other:
+      dtype: tensor
+    dim:
+      dtype: int
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: CrossExtAscend
