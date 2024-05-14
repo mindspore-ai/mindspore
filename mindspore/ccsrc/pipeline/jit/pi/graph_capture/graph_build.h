@@ -147,9 +147,9 @@ class GraphBuilder {
    * \param[out] has_kw this call has key-word arguments
    * \return false if can't generate unpack operations
    */
-  bool UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, bool *has_kw, CallNode *call_node);
+  virtual bool UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, bool *has_kw, CallNode *call_node);
 
-  bool UnpackCallExDict(std::vector<ValueNode *> *params, CallNode *call_node);
+  virtual bool UnpackCallExDict(std::vector<ValueNode *> *params, CallNode *call_node);
 
   bool UnpackDynamicLengthDictByBytecode(std::vector<ValueNode *> *params, CallNode *call_node, ValueNode *dict_node);
   // generate the general unpack operations of dict, return operations
@@ -163,7 +163,7 @@ class GraphBuilder {
    * \param[out] extra_oper the move operations to move parameters to locals
    * \return false if parameters is illegal
    */
-  bool HandleKWParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame);
+  virtual bool HandleKWParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame);
 
   /**
    * Pack key-word parameters to dict, unpack the position arguments by key from the dict.
@@ -192,7 +192,7 @@ class GraphBuilder {
   /**
    * Use the call stack without key-word arguments to fill the frame locals
    */
-  bool HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame);
+  virtual bool HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame);
 
   // build subgraph, return stop trace reason
   virtual StopTraceReason BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
@@ -304,7 +304,7 @@ class MindGraphBuilder : public GraphBuilder {
   }
   bool trace_flag() { return true; }
   mindspore::FuncGraphBuilderPtr FGBuilder() const { return fg_builder_; }
-  void FGAddInputs(const std::vector<py::object> &args);
+  bool FGAddInputs(const std::vector<py::object> &args);
   py::object FGAddNode(CallNode *call_node, const py::object &callable_info, const std::vector<py::object> &args,
                        StopTraceReason *stop_reason);
   void FGAddOutput(bool is_top_graph);
@@ -324,12 +324,16 @@ class MindGraphBuilder : public GraphBuilder {
   bool DoCompare(const Instr &instr) override;
   bool DoBuildOp(const Instr &instr) override;
   ValueNode *HandleGetattr(ValueNode *target_node, const Instr &instr) override;
+  bool HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame) override;
+  bool UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, bool *has_kw,
+                          CallNode *call_node) override;
+  bool HandleKWParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame) override;
+  bool UnpackCallExDict(std::vector<ValueNode *> *params, CallNode *call_node) override;
 
  private:
   std::vector<py::object> GetNewArgs(CallNode *call_node, AObject *vobj = nullptr);
   bool AllConstantArgs(const std::vector<py::object> &args, const py::object &callable_info, CallNode *call_node);
 
- private:
   mindspore::FuncGraphBuilderPtr fg_builder_{nullptr};
   std::string co_name_;
   AObject *HandleMultiOp(const Instr &instr, const std::vector<ValueNode *> &p, bool is_compare);

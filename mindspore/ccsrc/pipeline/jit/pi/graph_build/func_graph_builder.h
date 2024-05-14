@@ -26,6 +26,9 @@
 #include "pipeline/jit/ps/parse/parse.h"
 
 namespace mindspore {
+class FuncGraphBuilder;
+using FuncGraphBuilderPtr = std::shared_ptr<FuncGraphBuilder>;
+
 class FuncGraphBuilder {
  public:
   explicit FuncGraphBuilder(bool is_top = false) : graph_(std::make_shared<FuncGraph>()) {
@@ -63,7 +66,7 @@ class FuncGraphBuilder {
   /// \param[in] object The python object add to graph.
   ///
   /// \return Indicate whether the python object add to graph successfully.
-  bool AddPythonObject(const py::object &object);
+  bool AddAttrPythonObject(const py::object &object);
 
   /// \brief Add a binary operation cnode to the graph.
   ///
@@ -136,6 +139,14 @@ class FuncGraphBuilder {
 
   static py::object ConvertToPyObj(const AbstractBasePtr &abs);
 
+  void AddPrevBuilder(const FuncGraphBuilderPtr &builder);
+
+  const std::vector<FuncGraphBuilder *> &prev_builders() const { return prev_builders_; }
+
+  AnfNodePtr GetNodeByObject(const py::object &obj);
+
+  AnfNodePtr ReadLocalVariable(const py::object &obj);
+
  private:
   static bool CheckCallable(const ValuePtr &value, const AbstractBasePtr &abs);
 
@@ -165,7 +176,9 @@ class FuncGraphBuilder {
   bool has_set_output_{false};
   HashMap<PyObject *, AnfNodePtr> py_obj_to_node_;
   std::vector<AnfNodePtr> output_nodes_;
+
+  // Store all previous builders for subgraph call and control flow.
+  std::vector<FuncGraphBuilder *> prev_builders_;
 };
-using FuncGraphBuilderPtr = std::shared_ptr<FuncGraphBuilder>;
 }  // namespace mindspore
 #endif  // MINDSPORE_PI_JIT_GRAPH_BUILD_FUNC_GRAPH_BUILDER_H_
