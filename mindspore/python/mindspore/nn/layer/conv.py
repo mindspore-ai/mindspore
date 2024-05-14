@@ -903,11 +903,11 @@ class Conv3dTranspose(_Conv):
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by `group`. Default: ``1`` .
         output_padding (Union(int, tuple[int])): The number of padding on the depth, height and width directions of
-            the output. The data type is an integer or a tuple of six integers. If `output_padding` is an integer,
-            then the head, tail, top, bottom, left, and right padding are all equal to `output_padding`.
-            If `output_padding` is a tuple of six integers, then the head, tail, top, bottom, left, and right padding
-            is equal to `output_padding[0]`, `output_padding[1]`, `output_padding[2]`, `output_padding[3]`,
-            `output_padding[4]` and `output_padding[5]` respectively. The value should be greater than or equal to 0.
+            the output. The data type is an integer or a tuple of three integers. If `output_padding` is an integer,
+            then the depth, height, and width dimension padding are all equal to `output_padding`.
+            If `output_padding` is a tuple of three integers, then the depth, height, and width padding is equal to
+            `output_padding[0]`, `output_padding[1]` and `output_padding[2]` respectively.
+            The value should be greater than or equal to 0.
             Default: ``0`` .
         has_bias (bool): Whether the Conv3dTranspose layer has a bias parameter. Default: ``False`` .
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of weight parameter.
