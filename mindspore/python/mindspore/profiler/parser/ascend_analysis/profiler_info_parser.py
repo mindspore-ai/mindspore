@@ -50,7 +50,7 @@ class ProfilerInfoParser:
         cls._source_prof_path = prof_path
 
     @classmethod
-    def init_rank_id(cls, rank_id):
+    def init_rank_id(cls, rank_id: int):
         """initialize the rank id."""
         cls._rank_id = rank_id
 
@@ -77,8 +77,9 @@ class ProfilerInfoParser:
             profiler_info_path = os.path.join(cls._source_prof_path, os.path.pardir,
                                               f"profiler_info_{cls._rank_id}.json")
             if not os.path.isfile(profiler_info_path):
-                raise RuntimeError(f"Can`t find the file {profiler_info_path}, please check!")
-            with os.fdopen(os.open(profiler_info_path, os.O_RDONLY, 0o600), 'r') as fr:
+                raise RuntimeError(f"Can`t find the file {profiler_info_path}, please check !")
+            with os.fdopen(os.open(profiler_info_path, os.O_RDONLY, 0o600),
+                           'r') as fr:
                 profiler_info_data = json.load(fr)
             cls._start_cnt = profiler_info_data.get('system_cnt')
             cls._time_offset = profiler_info_data.get('system_time')
