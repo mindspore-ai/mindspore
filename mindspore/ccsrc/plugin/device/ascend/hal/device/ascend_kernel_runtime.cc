@@ -339,7 +339,7 @@ bool AscendKernelRuntime::Init() {
     }
     MS_EXCEPTION_IF_NULL(ms_context);
 
-    if (ms_context->ascend_soc_version() != "ascend310p") {
+    if (ms_context->ascend_soc_version() != "ascend310p" || ms_context->ascend_soc_version() != "ascend310b") {
       const uint32_t reserve_time = 180;
       uint32_t op_wait_timeout = notify_wait_timeout + reserve_time;
       auto acl_ret = CALL_ASCEND_API(aclrtSetOpWaitTimeout, op_wait_timeout);
