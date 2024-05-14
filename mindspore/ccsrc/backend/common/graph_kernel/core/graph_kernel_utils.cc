@@ -34,6 +34,37 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::graphkernel {
+namespace {
+ListSymbolPtr GetOutputSymbolicShape(const AnfNodePtr &node, size_t i) {
+  if (node == nullptr) {
+    return nullptr;
+  }
+  auto abstract = node->abstract();
+  if (abstract == nullptr) {
+    return nullptr;
+  }
+  auto symbol_shape = abstract->GetSymbolicShape();
+  if (symbol_shape == nullptr) {
+    return nullptr;
+  }
+  if (abstract->isa<abstract::AbstractSequence>()) {
+    // multiple outputs
+    if (i >= symbol_shape->size()) {
+      MS_LOG(WARNING) << "Output idx '" << i << "' is out of range [0, " << symbol_shape->size()
+                      << ") for node: " << node->ToString();
+      return nullptr;
+    }
+    auto shape_i = symbol_shape->symbols()[i];
+    if (shape_i == nullptr) {
+      return nullptr;
+    }
+    return shape_i->as_sptr<ListSymbol>();
+  }
+  // single output
+  return symbol_shape;
+}
+}  // namespace
+
 std::string GkUtils::ExtractGraphKernelName(const AnfNodePtrList &nodes, const std::string &prefix,
                                             const std::string &postfix) {
   std::stringstream name;
@@ -322,7 +353,8 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
       auto shape = cb->GetOutputShape(node, i);
       auto type = cb->GetOutputType(node, i);
       auto format = cb->GetOutputFormat(node, i);
-      listinfo.push_back(inner::NodeBase({shape, type, format}));
+      auto symbol_shape = GetOutputSymbolicShape(node, i);
+      listinfo.push_back(inner::NodeBase({shape, type, format, symbol_shape}));
     }
     return listinfo;
   };

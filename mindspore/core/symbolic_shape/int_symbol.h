@@ -102,6 +102,9 @@ class MS_CORE_API IntSymbol : public ScalarSymbol {
   MathInfo math_info_;
   int64_t value_{0};
 };
+
+using IntSymbolPtr = std::shared_ptr<IntSymbol>;
+GVAR_DEF(IntSymbolPtr, kSym1, IntSymbol::Make(1));
 }  // namespace symshape
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_SYMBOLIC_SHAPE_INT_SYMBOL_H_

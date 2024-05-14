@@ -16,9 +16,51 @@
 #include "backend/common/graph_kernel/split_model/area.h"
 #include <algorithm>
 #include <sstream>
+#include "mindspore/core/symbolic_shape/int_symbol.h"
 
 namespace mindspore::graphkernel::inner {
 namespace {
+bool ShapeEqual(const NodePtr &a, const NodePtr &b, bool skip_leading_one = true) {
+  MS_EXCEPTION_IF_NULL(a);
+  MS_EXCEPTION_IF_NULL(b);
+  auto l = a->shape.size() < b->shape.size() ? b : a;
+  auto s = a->shape.size() < b->shape.size() ? a : b;
+  auto l_shape = l->shape;
+  auto s_shape = s->shape;
+  auto l_symbol_shape = l->symbolic_shape;
+  auto s_symbol_shape = s->symbolic_shape;
+  bool use_symbol = (l_symbol_shape != nullptr && s_symbol_shape != nullptr);
+  if (IsDynamicRank(l_shape)) {
+    return use_symbol ? (l_symbol_shape == s_symbol_shape) : false;
+  }
+  auto diff = l_shape.size() - s_shape.size();
+  if (diff != 0 && !skip_leading_one) {
+    // shapes with different rank
+    return false;
+  }
+  // check leading one
+  for (size_t i = 0; i < diff; ++i) {
+    if (l_shape[i] == 1 ||
+        (l_shape[i] < 0 && l_symbol_shape != nullptr && l_symbol_shape->symbols().at(i)->EqualsTo(symshape::kSym1))) {
+      continue;
+    }
+    return false;
+  }
+  // check other dimensions
+  for (size_t i = 0; i < s_shape.size(); ++i) {
+    auto il = i + diff;
+    if (l_shape[il] < 0 || s_shape[i] < 0) {
+      if (use_symbol && l_symbol_shape->symbols().at(il)->EqualsTo(s_symbol_shape->symbols().at(i))) {
+        continue;
+      }
+      return false;
+    } else if (l_shape[il] != s_shape[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 EdgeRelation GetRelation(const PrimOpPtr &node, const NodePtr &input) {
   if (node->compute_type() != NodePattern::ELEMWISE) {
     return EdgeRelation::INJECTIVE;
@@ -32,10 +74,9 @@ EdgeRelation GetRelation(const PrimOpPtr &node, const NodePtr &input) {
                     [input](const NodePtr &inp) { return inp == input; })) {
       return EdgeRelation::INJECTIVE;
     }
-    return EdgeRelation::BROADCAST;
   }
   // naively set the edge relation to "broadcast" if the result shape is not equal to the input shape.
-  return (node->shape == input->shape) ? EdgeRelation::INJECTIVE : EdgeRelation::BROADCAST;
+  return ShapeEqual(node, input) ? EdgeRelation::INJECTIVE : EdgeRelation::BROADCAST;
 }
 
 bool SameArea(const AreaWithRelation &a, const AreaWithRelation &b) { return a.first == b.first; }
@@ -115,6 +156,23 @@ int64_t Area::compute_size() const {
   auto op = dom();
   MS_EXCEPTION_IF_NULL(op);
   return SizeToLong(op->tensor_size());
+}
+
+bool Area::ComputeSizeEqual(const AreaPtr &other) const {
+  if (other == nullptr) {
+    return false;
+  }
+  auto op = dom();
+  auto other_op = other->dom();
+  if (op == nullptr || other_op == nullptr) {
+    return false;
+  }
+  auto op_shape = op->shape;
+  auto other_op_shape = other_op->shape;
+  if (!IsDynamic(op_shape) && !IsDynamic(other_op_shape)) {
+    return compute_size() == other->compute_size();
+  }
+  return ShapeEqual(op, other_op);
 }
 
 std::string Area::ToString() const {

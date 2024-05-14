@@ -17,7 +17,7 @@ import numpy as np
 import os
 import pytest
 import mindspore.context as context
-from mindspore import Tensor, nn
+from mindspore import Tensor, nn, JitConfig
 import mindspore as ms
 import mindspore.ops as ops
 import mindspore.ops.operations as P
@@ -181,3 +181,39 @@ def test_dvm_multiple_run():
     expect2 = x2.reshape((-1, 1)) + x3
     assert np.allclose(expect1, output1, 1e-3, 1e-3)
     assert np.allclose(expect2, output2, 1e-3, 1e-3)
+
+
+class NetT(nn.Cell):
+    def __init__(self, trans):
+        super(NetT, self).__init__()
+        self.trans = trans
+
+    def construct(self, x0):
+        y0 = ops.Transpose()(x0, self.trans[0])
+        y1 = ops.Transpose()(y0, self.trans[1])
+        return y1
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_dvm_transpose():
+    """
+    Feature: Transpose test case
+    Description: test dvm Transpose optimize
+    Expectation: the result match with expect
+    """
+    np.random.seed(1)
+    enable_graph_kernel = True
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(enable_graph_kernel=enable_graph_kernel,
+                        graph_kernel_flags="--enable_cluster_ops=Transpose")
+    x0 = np.random.normal(0, 1, (16, 32, 16)).astype(np.float16)
+    trans = [(1, 0, 2), (0, 2, 1)]
+    with AssertGKEnable(enable_graph_kernel):
+        net = NetT(trans)
+        net.set_jit_config(JitConfig(jit_level="O1"))
+        output = net(Tensor(x0))
+        output = output.asnumpy()
+    expect = np.transpose(np.transpose(x0, trans[0]), trans[1])
+    assert np.allclose(expect, output, 1e-3, 1e-3)

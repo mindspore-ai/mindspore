@@ -108,7 +108,7 @@ bool FuseElemwiseBroadcastFwd::Match(const AreaPtr &dom) {
       if (fuse_type_ == FuseType::kWidth && HasCircle(a, dom)) {
         continue;
       }
-      if (a->compute_size() == dom->compute_size()) {
+      if (a->ComputeSizeEqual(dom)) {
         (void)fused_areas_.emplace_back(a);
       }
     }
@@ -217,8 +217,7 @@ bool FuseElemwiseBroadcastBwd::Match(const AreaPtr &dom) {
       return false;
     }
     if (fuse_type_ == FuseType::kWidth) {
-      if (!fused_areas_.empty() && (IsDynamic(fused_areas_[0]->dom()->shape) || IsDynamic(a->dom()->shape) ||
-                                    fused_areas_[0]->compute_size() != a->compute_size())) {
+      if (!fused_areas_.empty() && !fused_areas_[0]->ComputeSizeEqual(a)) {
         return false;
       }
       if (HasCircle(dom, a)) {

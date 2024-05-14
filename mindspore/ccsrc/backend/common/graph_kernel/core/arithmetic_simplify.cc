@@ -1158,11 +1158,17 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
       inner::LiteGraphPtr lg = GkUtils::AnfGraph2LiteGraph(sub_graph);
       bool find_pattern = true;
       bool change_anf_graph = false;
-      while (find_pattern) {
-        find_pattern = false;
-        find_pattern = DoConstantFold(lg) || find_pattern;
-        find_pattern = DoArithmeticTrans(lg) || find_pattern;
-        change_anf_graph = change_anf_graph || find_pattern;
+      try {
+        while (find_pattern) {
+          find_pattern = false;
+          find_pattern = DoConstantFold(lg) || find_pattern;
+          find_pattern = DoArithmeticTrans(lg) || find_pattern;
+          change_anf_graph = change_anf_graph || find_pattern;
+        }
+      } catch (const std::exception &e) {
+        MS_LOG(INFO) << "During arithmetic simplify for node [" << node->fullname_with_scope()
+                     << "], an error occurs: " << e.what();
+        continue;
       }
       AnfNodePtrList input_nodes{inputs.begin() + 1, inputs.end()};
       if (!change_anf_graph) {

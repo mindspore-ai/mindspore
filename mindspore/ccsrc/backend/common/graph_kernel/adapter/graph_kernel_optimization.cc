@@ -125,6 +125,9 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   // Recognize ops that will be fused by GE
   pm->Add(std::make_shared<RecognizeSoftmaxGradExt>(), OptLevel_1, is_ge);
 
+  // Remove redundant TupleGetItem to enable cluster ops before and after TupleGetItem
+  pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
+
   return pm;
 }
 
@@ -192,6 +195,8 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
   pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape};
   pm->Add(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
+  // Use symbol to calculate a more precise edge relation between nodes
+  pm->Add(std::make_shared<SymbolEngineBuilder>(false), OptLevel_1);
   // Split kernel according to costmodel
   pm->Add(std::make_shared<GraphKernelSplitterWithPy>(false), OptLevel_1);
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
