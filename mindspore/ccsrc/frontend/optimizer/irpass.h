@@ -110,6 +110,7 @@ class OptimizeIRPassLib {
 
   // Gradient irpasses
   SubstitutionPtr minmaximum_grad_;
+  SubstitutionPtr j_node_and_user_rematch_;
 
   // inline
   SubstitutionPtr inline_;
@@ -194,13 +195,6 @@ class ResolveIRPassLib {
   ResolveIRPassLib();
   ~ResolveIRPassLib() = default;
   SubstitutionPtr resolver_;
-};
-
-class MetaUnpackPrepareLib {
- public:
-  MetaUnpackPrepareLib();
-  ~MetaUnpackPrepareLib() = default;
-  SubstitutionPtr meta_unpack_prepare_;
 };
 
 class GradPartialPassLib {
