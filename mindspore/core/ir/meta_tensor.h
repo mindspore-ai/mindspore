@@ -38,22 +38,6 @@ namespace mindspore {
 //
 // A sub namespace in ME to support tensor related definition.
 namespace tensor {
-// brief Device info of Tensor
-//
-// Includes the format, data type and host format of a tensor.
-struct DeviceInfo {
-  explicit DeviceInfo(std::string format = "DefaultFormat", TypePtr data_type = nullptr,
-                      std::string host_format = "DefaultFormat", int32_t device_id = 0)
-      : format_(std::move(format)),
-        data_type_(std::move(data_type)),
-        host_format_(std::move(host_format)),
-        device_id_(device_id) {}
-  std::string format_ = "DefaultFormat";
-  TypePtr data_type_ = nullptr;
-  std::string host_format_ = "DefaultFormat";
-  int32_t device_id_ = 0;
-};
-
 // brief Metadata of Tensor
 //
 // Includes the metadata information of a tensor, such as data type, shape
@@ -147,24 +131,6 @@ class MS_CORE_API MetaTensor : public Value {
     return shape_.size();
   }
 
-  /// \brief Get tensor's device info.
-  ///
-  /// \return The device info of this tensor.
-  DeviceInfo device_info() const { return device_info_; }
-
-  /// \brief Set tensor's device info.
-  ///
-  /// \param[in] device_info The tensor's device info.
-  void set_device_info(const DeviceInfo &device_info) { device_info_ = device_info; }
-
-  /// \brief Set tensor's device info.
-  ///
-  /// \param[in] format The input format.
-  /// \param[in] data_type The input data type.
-  /// \param[in] host_format The input host format.
-  void SetDeviceInfo(const std::string &format, const TypePtr &data_type,
-                     const std::string &host_format = "DefaultFormat");
-
   /// \brief Get the size of a given dimension by its index number.
   ///
   /// \return The size of a given dimension by its index number.
@@ -226,11 +192,6 @@ class MS_CORE_API MetaTensor : public Value {
   // The order of each element in the vector is as same as the the dimension's
   // order it represents. If the dimension size is not set, its value will be -1.
   ShapeVector shape_;
-
-  // brief Device info of Tensor
-  //
-  // Includes the format and data type of a tensor on device.
-  DeviceInfo device_info_;
 
   bool is_parameter_{false};
   ParamInfoPtr param_info_{nullptr};

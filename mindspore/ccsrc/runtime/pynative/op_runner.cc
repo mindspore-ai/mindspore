@@ -170,7 +170,7 @@ void CopyTensorDataToDevice(const tensor::BaseTensorPtr &tensor, const AnfNodePt
   auto tensor_type = tensor->data_type();
   MS_LOG(DEBUG) << "Copy to device, node:" << common::AnfAlgo::GetNodeDebugString(node);
   if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), tensor_size, tensor_type,
-                                        tensor->device_info().host_format_, tensor->data_ptr())) {
+                                        "DefaultFormat", tensor->data_ptr())) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
 }
@@ -1029,8 +1029,7 @@ void DynamicOpRunner::CopyHostToDevice(const OpCompilerInfoPtr &op_compiler_info
                         << ", alloc size: " << device_address->GetSize() << "B.";
     }
     if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(input_node, 0), device_address->GetSize(),
-                                          device_address->type_id(), input_tensor->device_info().host_format_,
-                                          input_tensor->data_ptr())) {
+                                          device_address->type_id(), "DefaultFormat", input_tensor->data_ptr())) {
       MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
     }
     MS_LOG(DEBUG) << "Copy host tensor to device for op " << op_compiler_info->graph_info_ << " input " << i;

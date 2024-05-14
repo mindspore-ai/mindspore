@@ -1009,8 +1009,7 @@ class MetaTensorData : public ItemData {
       if (is_stubtensor_ || other.is_stubtensor_) {
         ret = CheckShape(shape_, other.shape_) && CheckDataType(other);
       } else {
-        ret = tid_ == other.tid_ && CheckShape(shape_, other.shape_) && format_.compare(other.format_) == 0 &&
-              host_format_.compare(other.host_format_) == 0 && is_parameter_ == other.is_parameter_ &&
+        ret = tid_ == other.tid_ && CheckShape(shape_, other.shape_) && is_parameter_ == other.is_parameter_ &&
               CheckDataType(other);
       }
       if (ret) {
@@ -1069,8 +1068,8 @@ class MetaTensorData : public ItemData {
       shape += DESC_INDEX_V(shape_, i);
     }
     std::string is_stubtensor = is_stubtensor_ ? "true" : "false";
-    return DESC_STRING(tid_) + DESC(format_) + DESC(host_format_) + DESC_TOSTRING(data_type_) +
-           DESC_STRING(is_parameter_) + DESC(param_desc) + DESC(shape) + DESC(is_stubtensor);
+    return DESC_STRING(tid_) + DESC_TOSTRING(data_type_) + DESC_STRING(is_parameter_) + DESC(param_desc) + DESC(shape) +
+           DESC(is_stubtensor);
   }
 
   bool CheckDataType(const MetaTensorData &other) const {
@@ -1081,9 +1080,6 @@ class MetaTensorData : public ItemData {
   void StoreTensor(mindspore::tensor::MetaTensorPtr tensor_ptr) {
     tid_ = tensor_ptr->data_type();
     shape_ = tensor_ptr->shape();
-    mindspore::tensor::DeviceInfo info = tensor_ptr->device_info();
-    format_ = info.format_;
-    host_format_ = info.host_format_;
     data_type_ = tensor_ptr->Dtype();
     is_parameter_ = tensor_ptr->is_parameter();
     param_ = tensor_ptr->param_info();
@@ -1106,14 +1102,12 @@ class MetaTensorData : public ItemData {
   }
 
   void SubInfo(InfoPack *info) override {
-    (*info) << uint8_t(tid_) << format_ << host_format_ << data_type_ << is_parameter_ << shape_ << is_stubtensor_;
+    (*info) << uint8_t(tid_) << data_type_ << is_parameter_ << shape_ << is_stubtensor_;
     ParamInfoData::SubInfo(info, param_);
   }
 
   mindspore::TypeId tid_ = TypeId::kTypeUnknown;
   ShapeVector shape_;
-  std::string format_;
-  std::string host_format_;
   TypePtr data_type_;
   bool is_parameter_ = false;
   bool is_stubtensor_ = false;
