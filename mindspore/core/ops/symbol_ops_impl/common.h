@@ -70,7 +70,7 @@ SymbolPtr TransparentInput(OperationBuilder *b);
 template <typename OP, typename = std::enable_if_t<std::is_base_of_v<Operation, OP>>>
 SymbolPtr DefaultBuilder(OperationBuilder *b) {
   bool build_value = !b->is_building_shape();
-  auto depends = b->symbol_builder_info().GetDepends(b->prim(), build_value);
+  auto depends = b->symbol_builder_info().GetDepends(b->prim(), b->input_num(), build_value);
   if (depends.empty()) {
     depends.resize(b->input_num(), (build_value ? DependOn::kValue : DependOn::kShape));
   }
@@ -90,6 +90,10 @@ SymbolPtr DefaultBuilder(OperationBuilder *b) {
   }
   return b->Emit(std::make_shared<OP>(std::move(inputs)));
 }
+
+/// \brief accumulate int symbols, only support ScalarAdd or ScalarMul
+template <typename OP>
+SymbolPtr Accumulate(const SymbolPtrList &symbols, const OperationEmitter &e);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

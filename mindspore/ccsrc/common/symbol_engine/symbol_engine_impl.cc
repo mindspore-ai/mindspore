@@ -271,7 +271,7 @@ void SymbolEngineImpl::PreBuildQueryDependStatus(const AnfNodePtrList &cnodes) {
     }
     auto prim = GetCNodePrimitive(cnode);
     auto set_prev_node_func = [this, &cnode, info](const PrimitivePtr &prim, bool depend_value) {
-      auto depends = info->GetDepends(prim, depend_value);
+      auto depends = info->GetDepends(prim, cnode->size() - 1, depend_value);
       for (size_t i = 0; i + 1 < cnode->size(); i++) {
         DependOn input_depend;
         if (depends.empty()) {

@@ -30,6 +30,7 @@ REG_SYMBOL_OP_BUILDER("Conv2DBackpropInput")
   .SetShapeDepend({DependOn::kNone, DependOn::kNone, DependOn::kValue})
   .SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("DropoutGrad").SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("Erf").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Exp").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("GeLU").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("LogicalNot").SetShapeFunc(TransparentInput);

@@ -213,9 +213,8 @@ int KernelPacketKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
       inner_inputs[i]->SetValue(value_ptr);
       AllocWorkspace(i, data_size);
     } else {
-      MS_LOG(ERROR) << "The " << i
-                    << "th input of inner kernel is neither from outer input nor from shape of other inner nodes ";
-      return KRET_RESIZE_FAILED;
+      MS_LOG(DEBUG) << "Inner input " << i << " is not found in input_map and input_workspace_map.";
+      inner_inputs[i] = inputs_cache_[i].get();
     }
   }
 
@@ -275,6 +274,7 @@ KernelPacketKernelMod::AddressArgs KernelPacketKernelMod::GetLaunchArgs(const st
       }
     } else {
       MS_LOG(DEBUG) << "Inner input " << i << " is not found in input_map and input_workspace_map.";
+      res_inputs[i] = inputs_cache_[i].get();
     }
   }
   MS_LOG(DEBUG) << "Worspaces size: " << workspaces.size();
