@@ -880,17 +880,6 @@ bool OrderEnforceAction(const ResourcePtr &resource) {
   return true;
 }
 
-bool MetaUnpackPrepareAction(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  if (resource->manager() == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "MetaUnpackPrepareAction error, manager is null.";
-  }
-  if (resource->func_graph() == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "MetaUnpackPrepareAction error, graph is null.";
-  }
-  return MetaUnpackPreparePass(resource);
-}
-
 // Get abstract of the default value in the given parameter.
 AbstractBasePtr GetDefaultValueAbstract(const ParameterPtr &param) {
   auto value = param->default_param();
@@ -1694,7 +1683,6 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
         (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
       }
 
-      (void)actions.emplace_back(std::make_pair(kMetaUnpackPrepare, MetaUnpackPrepareAction));
       // Pre-Lift the func graphs.
       (void)actions.emplace_back(std::make_pair(kPreCConv, PreCConvAction));
     } else {

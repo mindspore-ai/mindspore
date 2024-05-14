@@ -60,7 +60,6 @@ const char kSymbolResolve[] = "symbol_resolve";
 const char kSetMixedPrecisionFlag[] = "set_mixed_precision_flag";
 const char kCombineLikeGraphs[] = "combine_like_graphs";
 const char kGraphReusing[] = "graph_reusing";
-const char kMetaUnpackPrepare[] = "meta_unpack_prepare";
 const char kPreCConv[] = "pre_cconv";
 const char kTypeInference[] = "type_inference";
 const char kAutoMonad[] = "auto_monad";

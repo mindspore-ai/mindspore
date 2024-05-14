@@ -431,6 +431,8 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     },
     false, true);
 
+  opt::OptPassConfig before_grad = opt::OptPassConfig({irpass.j_node_and_user_rematch_});
+
   opt::OptPassConfig a_after_grad = opt::OptPassConfig({irpass.inline_without_move_, irpass.stack_unstack_eliminate_});
 
   opt::OptPassConfig a_3 = opt::OptPassConfig(
@@ -492,6 +494,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"merge_forward", opt::OptPassConfig(ad::MergeForward)},
                          {"cell_reuse_recompute_pass", opt::OptPassConfig(opt::irpass::AddRecomputeNodes)},
                          {"cell_reuse_handle_not_recompute_node_pass", cell_reuse_handle_not_recompute_node_pass},
+                         {"before_grad", before_grad},
                          {"meta_fg_expand", opt::OptPassConfig(opt::irpass::ExpandMetaFg())},
                          {"receive_attached", opt::OptPassConfig(parallel::IsolatedNodeAttach)},
                          {"after_resolve", after_resolve_pass},
@@ -631,13 +634,6 @@ OptPassGroupMap GetOptPynativeGradEpiloguePhases(const opt::irpass::OptimizeIRPa
     {a3},
   });
   return map;
-}
-
-OptPassGroupMap GetMetaUnpackPreparePhases() {
-  opt::irpass::MetaUnpackPrepareLib irpass;
-  auto meta_unpack_prepare = opt::OptPassConfig({irpass.meta_unpack_prepare_});
-  opt::OptPassGroupMap prepare_map({{"meta_unpack_prepare", meta_unpack_prepare}});
-  return prepare_map;
 }
 
 OptPassGroupMap GetGradPartialTransformPhases() {
@@ -1062,16 +1058,6 @@ bool ValidatePass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource->func_graph());
   FuncGraphPtr func_graph = resource->func_graph();
   Validate(func_graph);
-  return true;
-}
-
-bool MetaUnpackPreparePass(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  FuncGraphPtr func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto prepare_map = GetMetaUnpackPreparePhases();
-  auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("meta_unpack_prepare", resource, prepare_map);
-  (void)infer_opt_prepare->step(func_graph, false);
   return true;
 }
 
