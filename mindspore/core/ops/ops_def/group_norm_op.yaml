@@ -14,8 +14,6 @@ group_norm:
     eps:
       dtype: float
       default: 1e-5
-  args_signature:
-    dtype_group: (input, weight, bias)
   returns:
     out:
       dtype: tensor
