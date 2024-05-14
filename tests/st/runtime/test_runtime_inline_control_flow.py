@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore import context, Tensor, jit, ops, mutable
+from mindspore import context, Tensor, jit, ops, mutable, nn, lazy_inline
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True, save_graphs_path='./log/')
+from mindspore.nn import Cell
+import mindspore.ops.operations as P
+import numpy as np
+
+context.set_context(mode=context.GRAPH_MODE, save_graphs=True, save_graphs_path='./log/', memory_optimize_level='O0')
 
 def test_single_if():
     """
@@ -53,6 +57,31 @@ def test_return_parameter():
         if x < 3:
             return param_a
         return param_b
+
+    ret1 = foo(Tensor(1), param_a, param_b)
+    assert ret1
+
+
+def test_return_param_untail_call():
+    """
+    Feature: Contrtol flow inline.
+    Description: Control flow if.
+    Expectation: AttributeError.
+    """
+    param_a = Parameter(Tensor(5))
+    param_b = Parameter(Tensor(6))
+
+    @jit
+    def foo(x, param_a, param_b):
+        if x < 3:
+            z = param_a
+        else:
+            z = param_b
+        z = z + 1
+        z = z - 2
+        z = z * 3
+        z = z / 4
+        return z
 
     ret1 = foo(Tensor(1), param_a, param_b)
     assert ret1
@@ -410,7 +439,7 @@ def test_return_include_other_output():
     assert ret3
 
 
-def test_branch_output_include_refnode():
+def test_branch_output_include_refnode_with_dynamic_shape():
     """
     Feature: Contrtol flow inline.
     Description: Control flow if.
@@ -432,6 +461,111 @@ def test_branch_output_include_refnode():
     assert ret1[0][0]
     assert ret2[0][0]
     assert ret3[0][0]
+
+
+def test_branch_output_include_refnode_true():
+    """
+    Feature: Contrtol flow inline.
+    Description: Control flow if.
+    Expectation: AttributeError.
+    """
+
+    @jit
+    def foo(x, y):
+        if x < 3:
+            y = ops.expand_dims(y, 1)
+            y = ops.flatten(y)
+            y = y + Tensor([[6, 12], [18, 24], [30, 36]])
+        return y
+
+    ret1 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret2 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret3 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    assert ret1.shape
+    assert ret2.shape
+    assert ret3.shape
+
+
+def test_branch_output_include_refnode_false():
+    """
+    Feature: Contrtol flow inline.
+    Description: Control flow if.
+    Expectation: AttributeError.
+    """
+
+    @jit
+    def foo(x, y):
+        if x > 3:
+            y = ops.expand_dims(y, 1)
+            y = ops.flatten(y)
+            y = y + Tensor([[6, 12], [18, 24], [30, 36]])
+        else:
+            z = y + Tensor([[36, 30], [24, 18], [12, 6]])
+            y = y + Tensor([[36, 30], [24, 18], [12, 36]])
+            y = z + y
+        return y * 2
+
+    ret1 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret2 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret3 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    assert ret1.shape
+    assert ret2.shape
+    assert ret3.shape
+
+
+def test_branch_output_include_refnode_output_ref():
+    """
+    Feature: Contrtol flow inline.
+    Description: Control flow if.
+    Expectation: AttributeError.
+    """
+
+    @jit
+    def foo(x, y):
+        if x > 3:
+            y = ops.expand_dims(y, 1)
+            y = ops.flatten(y)
+        else:
+            z = y + Tensor([[36, 30], [24, 18], [12, 6]])
+            y = y + Tensor([[36, 30], [24, 18], [12, 36]])
+            y = z + y
+        return y * 2
+
+    ret1 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret2 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret3 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    assert ret1.shape
+    assert ret2.shape
+    assert ret3.shape
+
+def test_branch_output_include_refnode_twice():
+    """
+    Feature: Contrtol flow inline.
+    Description: Control flow if.
+    Expectation: AttributeError.
+    """
+
+    @jit
+    def foo(x, y):
+        if x > 3:
+            y = ops.expand_dims(y, 1)
+            z1 = ops.flatten(y)
+            z2 = ops.reshape(y, (3, 2))
+            z3 = z2 * 2
+            z4 = z2 * 3
+            y = z1 + z2 + z3 + z4
+        else:
+            z = y + Tensor([[36, 30], [24, 18], [12, 6]])
+            y = y + Tensor([[36, 30], [24, 18], [12, 36]])
+            y = z + y
+        return y * 2
+
+    ret1 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret2 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret3 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    assert ret1.shape
+    assert ret2.shape
+    assert ret3.shape
 
 
 def test_include_dynamic_shape():
@@ -457,7 +591,6 @@ def test_include_dynamic_shape():
     ret1 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36], [6, 18, 36]]))
     ret2 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36], [12, 18, 30], [18, 24, 36]]))
     ret3 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36]]))
-    print("*********************************", ret1)
     assert ret1[0]
     assert ret2[0]
     assert ret3[0]
@@ -625,3 +758,147 @@ def test_if_in_if():
     ret2 = foo(x, x, param_a, param_b)
     assert ret1 == (Tensor(7, mstype.int32), Tensor(7, mstype.int32))
     assert ret2
+
+
+def test_output_ref_of_parameter():
+    """
+    Feature: Contrtol flow inline.
+    Description: Inline switch node into kernel graph.
+    Expectation: Not throw exception.
+    """
+    param_a = Parameter(Tensor(5, mstype.int32), name='a')
+
+    @jit
+    def foo(x, y, param_a):
+        if x > y:
+            out = ops.addn([x, x, param_a])
+        else:
+            out = ops.assign(param_a, x)
+        return out
+
+    x = Tensor(2, mstype.int32)
+    y = Tensor(1, mstype.int32)
+    ret1 = foo(x, x, param_a)
+    ret2 = foo(x, y, param_a)
+    assert ret1
+    assert ret2
+
+
+def test_gather_switch_gather_output():
+    """
+    Feature: Contrtol flow inline.
+    Description: Inline switch node into kernel graph.
+    Expectation: Not throw exception.
+    """
+    param_a = Parameter(Tensor(5, mstype.int32), name='a')
+
+    @jit
+    def foo(x, y, param_a):
+        if x > y:
+            out = param_a
+        else:
+            out = ops.addn([x, x, x])
+        if x > y:
+            out = ops.assign(param_a, x)
+        return out
+
+    x = Tensor(1, mstype.int32)
+    y = Tensor(1, mstype.int32)
+    ret1 = foo(x, y, param_a)
+    assert ret1
+
+
+def test_if_in_if_directly():
+    """
+    Feature: Contrtol flow inline.
+    Description: Inline switch node into kernel graph.
+    Expectation: Not throw exception.
+    """
+    param_a = Parameter(Tensor(5, mstype.int32), name='a')
+    param_b = Parameter(Tensor(4, mstype.int32), name='b')
+
+    @jit
+    def foo(x, y, param_a, param_b):
+        x = x + 2
+        if param_a > param_b:
+            if x > y:
+                x += 3
+            x = x + param_a
+        y = x + y
+        return y
+
+    x = Tensor(2, mstype.int32)
+    ret1 = foo(x, x, param_a, param_b)
+    ret2 = foo(x, x, param_a, param_b)
+    assert ret1
+    assert ret2
+
+
+def test_lazy_inline():
+    """
+    Feature: Switch inline with lazy inline.
+    Description: All inline in single graph.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+    class Grad(Cell):
+        def __init__(self, net):
+            super(Grad, self).__init__()
+            self.grad = ops.GradOperation()
+            self.net = net
+
+        def construct(self, x):
+            grad_net = self.grad(self.net)
+            return grad_net(x)
+
+    class Block(Cell):
+        def __init__(self):
+            super(Block, self).__init__()
+            self.batch_matmul = P.BatchMatMul()
+            self.expand_dims = P.ExpandDims()
+            self.y = Parameter(Tensor(np.ones((8)).astype(np.float32)))
+
+        def construct(self, x):
+            z1 = self.batch_matmul(x, x)
+            z2 = self.expand_dims(self.y, 1)
+            return z1 + z2
+
+    class BaseBlock(Cell):
+        @lazy_inline
+        def __init__(self):
+            super(BaseBlock, self).__init__()
+            self.block = Block()
+
+        def construct(self, x):
+            return self.block(x)
+
+    class Net(Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.blocks = nn.CellList()
+            b = BaseBlock()
+            self.blocks.append(b)
+
+        def construct(self, x):
+            out = x
+            for i in range(1):
+                out = self.blocks[i](out)
+            return out
+    class GradNet(Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.grad_net = Grad(net)
+            self.a = Parameter(Tensor(np.ones((8)).astype(np.float32)))
+            self.b = Parameter(Tensor(np.ones((8)).astype(np.float32)))
+
+        def construct(self, x, y):
+            out = self.grad_net(x)
+            if y > 3:
+                return out * 2, self.a
+            return out, self.b
+
+    x = Tensor(np.ones((8, 8)).astype(np.float32))
+    y = Tensor(6)
+    net = Net()
+    grad_net = GradNet(net)
+    grad_net(x, y)
+    grad_net(x, y)

@@ -627,6 +627,7 @@ std::pair<bool, std::pair<std::string, ExceptionType>> GetSelectKernelObjectType
   if (kernel_attrs.empty() || kernel_attrs[0].GetSkipCheck()) {
     std::vector<kernel::KernelObjectType> input_object_types;
     std::vector<kernel::KernelObjectType> output_object_types;
+    std::vector<kernel::KernelObjectType> output_element_object_types;
     if (!kernel_attrs.empty() && common::AnfAlgo::HasNodeAttr(kInputRealTuple, kernel_node)) {
       input_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(kernel_node));
     } else {
@@ -639,7 +640,21 @@ std::pair<bool, std::pair<std::string, ExceptionType>> GetSelectKernelObjectType
       output_object_types =
         kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(kernel_node));
     }
-    kernel::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types);
+
+    if ((!kernel_attrs.empty()) && kernel_attrs[0].GetSkipCheck() && output_object_types.size() == 1 &&
+        output_object_types[0] == kernel::KernelObjectType::TUPLE_UNFOLD) {
+      size_t output_num = kernel::GetOutputNum(kernel_node);
+      for (size_t i = 0; i < output_num; ++i) {
+        auto object_type_ptr = common::AnfAlgo::GetOutputInferType(kernel_node, i);
+        MS_EXCEPTION_IF_NULL(object_type_ptr);
+        output_element_object_types.emplace_back(kernel::TypeIdToKernelObjectType(object_type_ptr->type_id()));
+      }
+    }
+
+    MS_LOG(DEBUG) << "Set kernel object type build info for node:" << kernel_node->DebugString(2)
+                  << " output type:" << output_object_types << " output element type:" << output_element_object_types;
+    kernel::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types,
+                                         output_element_object_types);
     if (!kernel_attrs.empty()) {
       auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
       kernel_build_info->SetOpType(kernel::OpType::SKIP);

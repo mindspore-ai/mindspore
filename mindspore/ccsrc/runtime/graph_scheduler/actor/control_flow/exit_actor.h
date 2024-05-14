@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 #include <memory>
 #include <utility>
 #include "utils/hash_map.h"
@@ -67,6 +68,7 @@ class ExitActor : public ControlActor {
 
   void CopyDeviceAddress(OpContext<DeviceTensor> *const context);
   void MergeDynamiclenDeviceAddress(OpContext<DeviceTensor> *const context);
+  bool IsNeedCopyDeviceAddress(DeviceTensor *const input_device_tensor, size_t index);
 
   // Exit actor will send to different actors according to different callers, so the output data, control,
   // and partial arrows will have branch.
@@ -82,6 +84,8 @@ class ExitActor : public ControlActor {
   // In exit actor, we need to copy a new device tensor for the output of the kernel actor, but parameter is not
   // needed. This mark is used to record whether it need to be copied.
   std::vector<bool> is_need_copy_device_tensors_;
+  std::vector<bool> is_need_dynamic_checks_;
+  std::map<KernelWithIndex, KernelWithIndex> ref_out_in_map_;
   // Cache the dynamic shape flag to optimize the running performance.
   std::vector<bool> is_dynamic_shapes_;
   // Output data.

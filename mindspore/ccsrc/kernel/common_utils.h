@@ -239,6 +239,11 @@ BACKEND_EXPORT TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_ty
 BACKEND_EXPORT bool CheckAttrForAllSameInput(const size_t input_num, const std::vector<mindspore::TypeId> &input_types,
                                              const KernelAttr &cur_kernel_attr);
 
+BACKEND_EXPORT void SetKernelObjectTypeBuildInfo(
+  const AnfNodePtr &kernel_node, const std::vector<KernelObjectType> &input_kernel_object_types,
+  const std::vector<KernelObjectType> &output_kernel_object_types,
+  const std::vector<KernelObjectType> &output_elements_kernel_object_types);
+
 template <typename Derived>
 class MatchKernelHelper {
  public:

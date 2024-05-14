@@ -112,7 +112,7 @@ class BACKEND_EXPORT GraphScheduler {
   // Link actors to DAG through the edge connection of graph and graph execution strategy.
   void Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
   // Optimize the actor DAG. For example, erase invalid data arrow, etc.
-  void Optimize(const ActorSetPtr &actor_set) const;
+  void Optimize(const ActorSetPtr &actor_set, const GraphCompilerInfo &graph_compiler_info) const;
 
   // The processing of actors build.
   std::vector<DataSourceActorPtr> BuildDataSourceActor(const GraphCompilerInfo &graph_compiler_info,
@@ -287,6 +287,9 @@ class BACKEND_EXPORT GraphScheduler {
   bool init_{false};
   bool already_spawn_kernel_async_launch_actor_{false};
   bool already_spawn_kernel_async_infer_resize_actor_{false};
+
+  // Disable custom actor in scheduler.
+  bool is_enable_custom_actor{false};
 };
 }  // namespace runtime
 }  // namespace mindspore

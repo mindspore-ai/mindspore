@@ -1314,17 +1314,6 @@ bool ControlNodeParser::IsParallelCallRecursionGraph(const AnfNodePtr &call_node
 
 void ControlNodeParser::InsertDependForParallelCall(const std::vector<AnfNodePtr> &control_nodes) {
   MS_LOG(INFO) << "InsertDependForParallelCall start";
-  // Fetch call node in funcgraph.
-  FuncGraphToCallNode func_graph_to_call_nodes;
-  for (const auto &control_node : control_nodes) {
-    MS_EXCEPTION_IF_NULL(control_node);
-    if (common::AnfAlgo::IsCallNode(control_node)) {
-      const auto &func_graph = control_node->func_graph();
-      MS_EXCEPTION_IF_NULL(func_graph);
-      (void)func_graph_to_call_nodes[func_graph].emplace(control_node);
-    }
-  }
-
   std::vector<AnfNodePtr> call_nodes;
   for (const auto &control_node : control_nodes) {
     MS_EXCEPTION_IF_NULL(control_node);
@@ -1340,8 +1329,8 @@ void ControlNodeParser::InsertDependForParallelCall(const std::vector<AnfNodePtr
     for (size_t i = 0; i < call_nodes.size(); ++i) {
       for (size_t j = 0; j < i; ++j) {
         std::set<AnfNodePtr> checked_nodes;
-        if (IsTopoDependNode(call_nodes[i], call_nodes[j], &checked_nodes) ||
-            (!IsParallelCallRecursionGraph(call_nodes[i], call_nodes[j], func_graph_to_call_nodes))) {
+        if ((!IsParallelCallRecursionGraph(call_nodes[i], call_nodes[j], func_graph_to_call_nodes_)) ||
+            IsTopoDependNode(call_nodes[i], call_nodes[j], &checked_nodes)) {
           continue;
         }
         // If there is no topological relationship between call nodes, and the same recursive graph will be called
@@ -1465,7 +1454,7 @@ bool ControlNodeParser::IsRecursionCallNode(const AnfNodePtr &node) {
   if (!common::AnfAlgo::IsCallNode(node)) {
     return false;
   }
-  return find(unrecursion_call_nodes_.begin(), unrecursion_call_nodes_.end(), node) == unrecursion_call_nodes_.end();
+  return unrecursion_call_nodes_.find(node) == unrecursion_call_nodes_.end();
 }
 
 bool ControlNodeParser::IsRecursionKernelGraph(const KernelGraphPtr &graph) {
@@ -2264,6 +2253,10 @@ void ControlNodeParser::ParseCallNodeToFuncGraph(const std::vector<AnfNodePtr> &
       continue;
     }
 
+    const auto &belong_func_graph = control_node->func_graph();
+    MS_EXCEPTION_IF_NULL(belong_func_graph);
+    (void)func_graph_to_call_nodes_[belong_func_graph].emplace(control_node);
+
     const auto &cnode = control_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     const auto &func_graphs = abstract::GetFuncGraphsFromCallNode(cnode);
@@ -2305,11 +2298,10 @@ void ControlNodeParser::ParseFrontToBackendKernel(const std::vector<KernelGraphP
       }
     }
 
-    const auto graph_output_map = graph->graph_output_map();
-    for (const auto &output_pair : graph_output_map) {
-      MS_EXCEPTION_IF_NULL(output_pair.first.first);
-      if (output_pair.first.first->isa<CNode>()) {
-        front_to_backend_kernels_[output_pair.second] = {output_pair.first, device_context};
+    for (const auto &output_pair : graph->front_node_to_graph_output_map()) {
+      MS_EXCEPTION_IF_NULL(output_pair.second.first);
+      if (output_pair.second.first->isa<CNode>()) {
+        front_to_backend_kernels_[output_pair.first] = {output_pair.second, device_context};
       }
     }
   }
@@ -2558,39 +2550,39 @@ void CollectEffectiveOutputByGraph(const KernelGraphPtr &graph, DeviceContext *c
   MS_EXCEPTION_IF_NULL(outputs);
   MS_EXCEPTION_IF_NULL(monad_outputs);
 
-  for (const auto &backend_to_front : graph->graph_output_map()) {
-    MS_EXCEPTION_IF_NULL(backend_to_front.first.first);
-    MS_EXCEPTION_IF_NULL(backend_to_front.second.first);
-    if (HasAbstractMonad(backend_to_front.second.first) || HasAbstractMonad(backend_to_front.first.first) ||
-        backend_to_front.first.first->isa<Parameter>() ||
-        common::AnfAlgo::CheckPrimitiveType(backend_to_front.second.first, prim::kPrimPartial) ||
-        backend_to_front.second.first->isa<ValueNode>()) {
-      if (HasAbstractMonad(backend_to_front.second.first) || HasAbstractMonad(backend_to_front.first.first)) {
+  for (const auto &front_to_backend : graph->front_node_to_graph_output_map()) {
+    MS_EXCEPTION_IF_NULL(front_to_backend.first.first);
+    MS_EXCEPTION_IF_NULL(front_to_backend.second.first);
+    if (HasAbstractMonad(front_to_backend.second.first) || HasAbstractMonad(front_to_backend.first.first) ||
+        front_to_backend.second.first->isa<Parameter>() ||
+        common::AnfAlgo::CheckPrimitiveType(front_to_backend.first.first, prim::kPrimPartial) ||
+        front_to_backend.first.first->isa<ValueNode>()) {
+      if (HasAbstractMonad(front_to_backend.first.first) || HasAbstractMonad(front_to_backend.second.first)) {
         MS_LOG(DEBUG) << "Kernel graph:" << graph->ToString() << " add monad output node:"
-                      << (backend_to_front.second.first != nullptr ? backend_to_front.second.first->DebugString()
-                                                                   : "null")
-                      << " index:" << backend_to_front.second.second;
-        (void)monad_outputs->emplace(backend_to_front.second);
+                      << (front_to_backend.first.first != nullptr ? front_to_backend.first.first->DebugString()
+                                                                  : "null")
+                      << " index:" << front_to_backend.first.second;
+        (void)monad_outputs->emplace(front_to_backend.first);
       }
       continue;
     }
 
     // Skip the function input.
-    const auto &abstract = backend_to_front.second.first->abstract();
+    const auto &abstract = front_to_backend.first.first->abstract();
     MS_EXCEPTION_IF_NULL(abstract);
-    const auto &real_abstract = common::AnfAlgo::FetchAbstractByIndex(abstract, backend_to_front.second.second);
+    const auto &real_abstract = common::AnfAlgo::FetchAbstractByIndex(abstract, front_to_backend.first.second);
     MS_EXCEPTION_IF_NULL(real_abstract);
     if (real_abstract->isa<abstract::AbstractFunction>()) {
       continue;
     }
 
     MS_LOG(DEBUG) << "Kernel graph:" << graph->ToString()
-                  << " add front output node:" << backend_to_front.second.first->DebugString()
-                  << " index:" << backend_to_front.second.second
-                  << " backend node:" << backend_to_front.first.first->DebugString()
-                  << " full name:" << backend_to_front.first.first->fullname_with_scope()
-                  << " index:" << backend_to_front.first.second;
-    (*outputs)[backend_to_front.second] = {backend_to_front.first, device_context};
+                  << " add front output node:" << front_to_backend.first.first->DebugString()
+                  << " index:" << front_to_backend.first.second
+                  << " backend node:" << front_to_backend.second.first->DebugString()
+                  << " full name:" << front_to_backend.second.first->fullname_with_scope()
+                  << " index:" << front_to_backend.second.second;
+    (*outputs)[front_to_backend.first] = {front_to_backend.second, device_context};
   }
 }
 

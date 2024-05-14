@@ -1177,12 +1177,12 @@ void KernelGraph::CacheGraphOutputToFrontNodeWithIndex(const AnfNodePtrList &bac
 kernel::KernelObjectType GetTupleGetItemOutputKernelObjectType(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto tuple_get_item = node->cast<CNodePtr>();
-  auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(tuple_get_item, 0);
+  auto kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(tuple_get_item, 0);
   auto input_node = kernel_with_index.first;
   MS_EXCEPTION_IF_NULL(input_node);
   auto output_idx = kernel_with_index.second;
   auto kernel_info = dynamic_cast<device::KernelInfo *>(input_node->kernel_info());
-  MS_LOG(DEBUG) << "GetItem node:" << node->DebugString() << " real node:" << input_node->DebugString()
+  MS_LOG(DEBUG) << "GetItem node:" << node->DebugString(2) << " real node:" << input_node->DebugString(2)
                 << " index:" << output_idx << " kernel info:" << kernel_info;
   if (kernel_info != nullptr && kernel_info->has_build_info()) {
     auto build_info = kernel_info->select_kernel_build_info();

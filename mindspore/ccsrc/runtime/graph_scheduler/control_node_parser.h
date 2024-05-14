@@ -301,6 +301,7 @@ class ControlNodeParser {
   // stack to d.
   mindspore::HashMap<AnfNodePtr, size_t> node_to_level_;
   CallNodeToFuncGraph call_node_to_func_graphs_;
+  FuncGraphToCallNode func_graph_to_call_nodes_;
   // The front value node saves all value nodes that are not in the kernel graph. These nodes are generally the
   // input of the control node.
   NodeWithDeviceContext front_value_nodes_;

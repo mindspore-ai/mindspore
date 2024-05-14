@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_INLINE_CONTROL_FLOW_SCHEDULER_H_
 
 #include <string>
+#include <stack>
 #include "runtime/graph_scheduler/actor/actor_set.h"
 
 namespace mindspore {
@@ -30,12 +31,11 @@ class InlineControlFlowScheduler {
   DISABLE_COPY_AND_ASSIGN(InlineControlFlowScheduler);
 
   // Link control arrows and fix the member variables for condition actors.
-  void Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
+  void Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info, bool execution_order_running);
+  void LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph,
+                                        const GraphCompilerInfo &graph_compiler_info) const;
 
  private:
-  void LinkControlArrowByExecutionOrder(
-    const KernelGraphPtr &graph, const GraphCompilerInfo &graph_compiler_info,
-    const mindspore::HashMap<std::string, AbstractActor *> &branch_name_to_gather_actor);
   // Fix the member variables for condition actors.
   void HandleConditionSwitchActor(const KernelActorPtr &kernel_actor);
   void HandleConditionGatherActor(const KernelActorPtr &kernel_actor);
@@ -59,19 +59,22 @@ class InlineControlFlowScheduler {
   // In condition switch actor, the ref count of actor should be change to total num for both branch.
   // In condition gather actor, the ref count of gather input should add the ref count of gather output.
   // The ref count of ref node should be add to the input of condition actor.
-  void FixRefCountByConditionSwitchActor(ConditionSwitchActor *const condition_switch_actor,
-                                         const KernelGraphPtr &kernel_graph);
-  void FixRefCountByKernelGraphRefMap(ConditionSwitchActor *const condition_switch_actor,
-                                      const KernelGraphPtr &kernel_graph);
   void FixRefCountByConditionGatherActor(ConditionGatherActor *const condition_gather_actor,
                                          const KernelGraphPtr &kernel_graph);
-  void FixRefCountByKernelGraphRefMap(ConditionGatherActor *const condition_gather_actor,
-                                      const KernelGraphPtr &kernel_graph);
-  void FixRefCountByConditionGatherActor(ConditionGatherActor *const condition_gather_actor, size_t input_index,
-                                         size_t ref_count);
+  void FixRefCountForRefNode(const KernelWithIndex &input_with_index, size_t ref_count, const std::string &branch_name,
+                             const KernelGraph *const kernel_graph);
+  void FixRefCountForInputNode(const KernelWithIndex &input_with_index, size_t ref_count,
+                               const std::string &branch_name);
   std::string GetBranchNameByConditionGatherActor(KernelActor *condition_switch_actor,
                                                   KernelActor *condition_gather_actor, DataArrow *data_arrow,
                                                   const KernelGraphPtr &kernel_graph);
+  void FixRefCountRecursively(const KernelWithIndex &output_pair, const KernelWithIndex &input_pair,
+                              const KernelGraphPtr &kernel_graph, size_t ref_count = 0);
+  void AddRefCountForConditionSwitchActor(ConditionSwitchActor *const switch_actor, const std::string &branch_name,
+                                          size_t output_index, size_t ref_count);
+  void LinkControlArrowForNoInputOrOutputActor(
+    ActorSet *actor_set, const mindspore::HashMap<std::string, AbstractActor *> &branch_name_to_switch_actor,
+    const mindspore::HashMap<std::string, AbstractActor *> &branch_name_to_gather_actor);
 };
 }  // namespace runtime
 }  // namespace mindspore
