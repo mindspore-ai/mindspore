@@ -29,14 +29,14 @@
 namespace mindspore::lite {
 tensor::TensorPtr OnnxQuantizeLinearParser::GetConstData(const onnx::GraphProto &onnx_graph,
                                                          const std::string &input_name) {
-  auto node_iter = std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
-                                [input_name](const onnx::TensorProto &proto) { return proto.name() == input_name; });
-  if (node_iter == onnx_graph.initializer().end()) {
+  auto onnx_tensor = GetConstantTensorData(onnx_graph, input_name);
+  if (onnx_tensor == nullptr) {
     MS_LOG(ERROR) << "graph not find node: " << input_name;
     return nullptr;
   }
-  auto tensor = OnnxNodeParser::CopyOnnxTensorData(*node_iter);
+  auto tensor = OnnxNodeParser::CopyOnnxTensorData(*onnx_tensor);
   if (tensor == nullptr || tensor->data_c() == nullptr || tensor->Dtype() == nullptr) {
+    MS_LOG(ERROR) << "data or dtype in const tensor: " << input_name << " is null!";
     return nullptr;
   }
   return tensor;
