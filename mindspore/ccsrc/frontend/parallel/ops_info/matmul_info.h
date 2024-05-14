@@ -85,7 +85,6 @@ class MatMul : public MatMulBase {
   Status CheckInputStrategy(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
   TensorLayout InferOutputLayout();
   TensorLayout output_infer_tensor_layout_;
-  void UpdateOutputTensorInfoForInterleaved();
 };
 
 class MatMulInfo : public MatMul {

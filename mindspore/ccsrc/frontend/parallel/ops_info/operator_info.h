@@ -292,6 +292,7 @@ class OperatorInfo {
   virtual Status InferTensorInfo();
 
   virtual void InferReplaceOps() {}
+  virtual void UpdateOutputTensorInfoForInterleaved();
   virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
   virtual Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) { return SUCCESS; }
   Status CheckStrategyByVector(const Shapes &strategy, const Shapes &inputs_shape);
