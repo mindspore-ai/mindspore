@@ -31,7 +31,7 @@ from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._sequence_ops import TensorToList
 from mindspore.ops.auto_generate import OnesLikeExt, ZerosLikeExt, FillScalar, FillTensor, Arange, Chunk, Scatter,\
-    ScatterValue, UniqueDim, Unique2
+    ScatterValue, UniqueDim, Unique2, SortExt
 from mindspore.ops.auto_generate.gen_ops_prim import SplitTensor
 from mindspore.ops.auto_generate.gen_ops_prim import SplitWithSize, RepeatInterleave
 from mindspore.ops.operations.array_ops import (
@@ -62,7 +62,7 @@ from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
     non_zero, flip, transpose, tril, triu, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, \
-    broadcast_to, strided_slice, ones, zeros, max_, min_, select, sort_ext, non_zero_ext
+    broadcast_to, strided_slice, ones, zeros, max_, min_, select, non_zero_ext
 from mindspore.ops.auto_generate.gen_ops_prim import scatter_add_ext_op
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
@@ -134,6 +134,7 @@ chunk_ = Chunk()
 repeat_interleave_ = RepeatInterleave()
 unique_dim_ = UniqueDim()
 unique2_ = Unique2()
+sort_ext_ = SortExt()
 
 
 def get_x_shape(x_shape):
@@ -2863,6 +2864,56 @@ def sort(input_x, axis=-1, descending=False):
     """
     _sort = _get_cache_prim(P.Sort)(axis, descending)
     return _sort(input_x)
+
+
+def sort_ext(input, *, dim=-1, descending=False, stable=False):
+    r"""
+    Sorts the elements of the input tensor along the given dimension in the specified order.
+
+    Args:
+        input(Tensor): The input tensor to sort.
+            The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Keyword Args:
+        dim (int, optional): The dimension to sort along. Default: ``-1``, means the last dimension.
+            The Ascend backend only supports sorting the last dimension.
+        descending (bool, optional): Controls the sort order. If `descending` is True, the elements
+            are sorted in descending order, or else sorted in ascending order. Default: ``False`` .
+        stable (bool, optional): Controls the sort order. If stable is True then the sorting routine
+            becomes stable, preserving the order of equivalent elements. Default: ``False`` .
+
+    Returns:
+        - y1, a tensor whose values are the sorted values, with the same shape and data type as input.
+        - y2, a tensor that consists of the indices of the elements in the original input tensor.
+          Data type is int32.
+
+    Raises:
+        TypeError: If `dim` is not an int.
+        TypeError: If `descending` is not a bool.
+        TypeError: If `input` not in float16, float32, uint8, int8, int16, int32, int64, bfloat16。
+        TypeError: If `stable` is not a bool.
+        ValueError: If `dim` is not in range of [-len(input_x.shape), len(input_x.shape)).
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
+        >>> output = ops.sort_ext(x)
+        >>> # The output below is based on the Ascend platform.
+        >>> print(output)
+        (Tensor(shape=[3, 3], dtype=Float16, value=
+        [[ 1.0000e+00,  2.0000e+00,  8.0000e+00],
+        [ 3.0000e+00,  5.0000e+00,  9.0000e+00],
+        [ 4.0000e+00,  6.0000e+00,  7.0000e+00]]), Tensor(shape=[3, 3], dtype=Int32, value=
+        [[2, 1, 0],
+        [2, 0, 1],
+        [0, 1, 2]]))
+    """
+    return sort_ext_(input, dim, descending, stable)
 
 
 def argsort(input, axis=-1, descending=False):

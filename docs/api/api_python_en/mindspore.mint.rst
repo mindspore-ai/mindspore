@@ -3,7 +3,15 @@ mindspore.mint
 
 mindspore.mint
 ---------------
+Array Operation
+^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.sort
 
 mindspore.mint.nn
 ------------------
