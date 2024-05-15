@@ -125,11 +125,14 @@ class LessBN(Cell):
     def __init__(self, network, fn_flag=False):
         super(LessBN, self).__init__()
         self.network = network
-        self.network.set_boost("less_bn")
-        self.network.update_cell_prefix()
-        if fn_flag:
-            self._convert_to_less_bn_net(self.network)
-        self.network.add_flags(defer_inline=True)
+        if "less_bn" not in self.network.get_flags():
+            self.network.set_boost("less_bn")
+            self.network.update_cell_prefix()
+            if fn_flag:
+                self._convert_to_less_bn_net(self.network)
+            # Please use this interface with caution as it may cause uncontrollable problem.
+            # The purpose here is to prevent the "less_bn" flag from disappearing.
+            self.network.add_flags(defer_inline=True)
 
     @staticmethod
     def _convert_dense(subcell):
