@@ -59,7 +59,7 @@ struct TilingInfo {
 };
 
 // Set the max cache size to avoid memory leak. one buf_ 8192/8/1024 = 1kb, total kMaxSize kb.
-constexpr size_t kMaxSize = 10240;
+constexpr size_t kMaxSize = 1024000;
 // Detail buffer parameters.
 constexpr int kBufSize = 8192;
 constexpr int kBufMaxSize = kBufSize + 1024;
@@ -131,6 +131,7 @@ class TilingCacheMgr {
   device::DeviceContext *device_context_;
   std::mutex key_mtx_, cache_mtx_;
   size_t cache_capcity_{kMaxSize};
+  bool has_warned_cache_full_{false};
 
   uint64_t calc_hash_id();
 
@@ -279,7 +280,10 @@ class TilingCacheMgr {
   }
   void AppendToCache(const uint64_t key, TilingInfo device_tiling_buf) {
     if (cache_buf_.size() >= cache_capcity_) {
-      MS_LOG(WARNING) << "Cache buffer is full, stop cache tiling buf_.";
+      if (!has_warned_cache_full_) {
+        MS_LOG(WARNING) << "Cache buffer is full, stop cache tiling buf_.";
+        has_warned_cache_full_ = true;
+      }
       return;
     }
     cache_buf_[key] = device_tiling_buf;
