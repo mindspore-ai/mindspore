@@ -143,6 +143,7 @@ FUNC_KEY_GRAD_OPERATIONS_CODE = 14 # "mindspore.ops.composite.base._Grad.__call_
 FUNC_KEY_PSJIT_CONVERTMAP = 15 # "mindspore._extends.parse.resources.convert_object_map"
 FUNC_KEY_GRAPH_CELL = 16  # "mindspore.nn.cell.GraphCell"
 FUNC_KEY_MS_API = 17  # mindspore common api
+FUNC_KEY_MAPPING_GET = 18 # collections.abc.Mapping.get
 
 # Initialized only once. This map will initialize by c++ when start pijit.
 # key is customer if fuzzy match. (Primitive, constexpr, primexpr, MetaFuncGraph)
@@ -243,7 +244,7 @@ _func_map = {
     function_id(Tensor_.asnumpy): FUNC_KEY_BUILTIN_FUNC,
 
     # other builtin function
-    function_id(collections.abc.Mapping.get): FUNC_KEY_BUILTIN_FUNC,
+    function_id(collections.abc.Mapping.get): FUNC_KEY_MAPPING_GET,
     function_id(math.log): FUNC_KEY_BUILTIN_FUNC,
 
     function_id(numpy.isinf): FUNC_KEY_BUILTIN_FUNC,
