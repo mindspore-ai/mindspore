@@ -152,11 +152,28 @@ Status ShardReader::VerifyDataset(sqlite3 **db, const string &file) {
   }
 
   // sqlite3_open create a database if not found, use sqlite3_open_v2 instead of it
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  // use "unix-none" to avoid flock and achieve better performance on shared storage platform
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(
+    sqlite3_open_v2(path_utf8.data(), db, SQLITE_OPEN_READONLY, "unix-none") == SQLITE_OK,
+    "Invalid file, failed to open mindrecord meta file. Please check whether the meta file: " + file +
+      ".db exists and do not rename the mindrecord file and meta file.");
+#else
   CHECK_FAIL_RETURN_UNEXPECTED_MR(
     sqlite3_open_v2(path_utf8.data(), db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK,
     "Invalid file, failed to open mindrecord meta file. Please check whether the meta file: " + file +
       ".db exists and do not rename the mindrecord file and meta file.");
+#endif
   MS_LOG(DEBUG) << "Succeed to open meta file, path: " << file << ".db.";
+
+  // starting a transaction during a read-only select operation can solve the problem of frequently
+  // accessing *-journal / *-wal files.
+  auto sql_code = sqlite3_exec(*db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+  if (sql_code != SQLITE_OK) {
+    sqlite3_free(*db);
+    RETURN_STATUS_UNEXPECTED_MR("Execute SQL statement `BEGIN TRANSACTION;` failed, SQLite result code: " +
+                                std::to_string(sql_code));
+  }
 
   string sql = "SELECT NAME from SHARD_NAME;";
   std::vector<std::vector<std::string>> name;
@@ -323,6 +340,13 @@ void ShardReader::FileStreamsOperator() {
   }
   for (int i = static_cast<int>(database_paths_.size()) - 1; i >= 0; --i) {
     if (database_paths_[i] != nullptr) {
+      auto sql_code = sqlite3_exec(database_paths_[i], "END TRANSACTION;", nullptr, nullptr, nullptr);
+      if (sql_code != SQLITE_OK) {
+        sqlite3_close(database_paths_[i]);
+        MS_LOG(ERROR) << "Execute SQL statement `END TRANSACTION;` failed, SQLite result code: "
+                      << std::to_string(sql_code);
+        continue;
+      }
       auto ret = sqlite3_close(database_paths_[i]);
       if (ret != SQLITE_OK) {
         MS_LOG(ERROR) << "[Internal ERROR] Failed to close meta file, " << ret << ".";
@@ -1097,9 +1121,24 @@ int64_t ShardReader::GetNumClasses(const std::string &category_field) {
       path_utf8 = file_paths_[x] + ".db";
     }
 
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+    // use "unix-none" to avoid flock and achieve better performance on shared storage platform
+    int rc = sqlite3_open_v2(path_utf8.data(), &db, SQLITE_OPEN_READONLY, "unix-none");
+#else
     int rc = sqlite3_open_v2(path_utf8.data(), &db, SQLITE_OPEN_READONLY, nullptr);
+#endif
     if (SQLITE_OK != rc) {
       MS_LOG(ERROR) << "[Internal ERROR] Failed to open meta file: " << file_paths_[x] + ".db, " << sqlite3_errmsg(db);
+      return -1;
+    }
+
+    // starting a transaction during a read-only select operation can solve the problem of frequently
+    // accessing *-journal / *-wal files.
+    auto sql_code = sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+    if (sql_code != SQLITE_OK) {
+      sqlite3_free(db);
+      MS_LOG(ERROR) << "Execute SQL statement `BEGIN TRANSACTION;` failed, SQLite result code: "
+                    << std::to_string(sql_code);
       return -1;
     }
     threads[x] = std::thread(&ShardReader::GetClassesInShard, this, db, x, sql, category_ptr);
