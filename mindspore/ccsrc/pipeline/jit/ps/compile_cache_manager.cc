@@ -177,10 +177,8 @@ std::pair<FuncGraphPtr, LayoutMap> LoadFuncGraphFromMindIR(const py::dict &weigh
     MS_LOG(ERROR) << "Get real path of file " << compile_cache_path << " failed.";
     return std::make_pair(nullptr, layout_map);
   }
-  std::ifstream f(realpath.value());
-  bool file_is_good = f.good();
-  f.close();
-  if (!file_is_good) {
+  struct stat buffer;
+  if (stat(realpath.value().c_str(), &buffer) != 0) {
     MS_LOG(WARNING) << "Open the compilation cache file " << realpath.value() << " failed.";
     return std::make_pair(nullptr, layout_map);
   }
@@ -196,6 +194,7 @@ std::pair<FuncGraphPtr, LayoutMap> LoadFuncGraphFromMindIR(const py::dict &weigh
   context.SetFrontNameToFrontNode(name_to_node);
   context.SetFrontGraph(fg);
   context.InsertBackendGraphCachePath(fg, GetBackendCompileCachePathWithoutExtension(idx));
+
   if (ms_context->CellReuseLevel() != CellReuseLevel::kNoCellReuse) {
     MS_LOG(INFO) << "Cell reuse(@lazy_inline) actually takes effect.";
   }
