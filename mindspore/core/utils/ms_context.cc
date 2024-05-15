@@ -19,7 +19,6 @@
 #include <atomic>
 #include <fstream>
 #include <algorithm>
-#include <unordered_map>
 #include <utility>
 #include "utils/ms_utils.h"
 #include "include/common/utils/utils.h"
