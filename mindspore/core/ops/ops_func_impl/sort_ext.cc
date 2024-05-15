@@ -30,7 +30,7 @@ TypePtr SortExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                    const std::vector<abstract::AbstractBasePtr> &input_args) const {
   auto prim_name = primitive->name();
   auto output0_type = input_args[kInputIndex0]->GetType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kUInt8, kInt8, kInt16, kInt32, kInt64};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kInt8, kInt16, kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", output0_type, valid_types, prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{output0_type, kInt64});
 }
@@ -53,8 +53,16 @@ BaseShapePtr SortExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   if (dim_opt.has_value()) {
     dim_val = dim_opt.value();
   }
-
-  CheckAndConvertUtils::CheckInRange<int64_t>("dim", dim_val, kIncludeBoth, {-input_rank, input_rank - 1}, prim_name);
+  auto min_dim = 0;
+  auto max_dim = 0;
+  if ((-input_rank) <= (input_rank - 1)) {
+    min_dim = -input_rank;
+    max_dim = input_rank - 1;
+  } else {
+    min_dim = input_rank - 1;
+    max_dim = -input_rank;
+  }
+  CheckAndConvertUtils::CheckInRange<int64_t>("dim", dim_val, kIncludeBoth, {min_dim, max_dim}, prim_name);
   auto out_shape_ptr = std::make_shared<abstract::Shape>(x_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
 }

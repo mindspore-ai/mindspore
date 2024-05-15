@@ -28,11 +28,11 @@ def generate_expect_backward_output(values, indices, x, dim):
 
 
 def sort_forward_func(x, dim, descending, stable):
-    return mint.sort(x, dim, descending, stable)
+    return mint.sort(x, dim=dim, descending=descending, stable=stable)
 
 
 def sort_backward_func(x, dim, descending, stable):
-    return ops.grad(sort_forward_func, (0, 1, 2, 3))(x, dim, descending, stable)
+    return ops.grad(sort_forward_func, (0, 1, 2, 3))(x, dim=dim, descending=descending, stable=stable)
 
 
 @pytest.mark.level0
@@ -89,7 +89,7 @@ def test_sort_std(descending, mode):
 
 
 def sort_forward_dyn_func(input_tensor):
-    return mint.sort(input_tensor, -1, True, True)
+    return mint.sort(input_tensor, dim=-1, descending=True, stable=True)
 
 
 @pytest.mark.level0
