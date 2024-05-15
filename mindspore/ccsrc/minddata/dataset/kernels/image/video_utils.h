@@ -22,10 +22,17 @@
 #include <vector>
 
 #include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
+/// \brief Decode the raw input video bytes. Supported video formats are AVI, H264, H265, MOV, MP4 and WMV.
+/// \param input: CVTensor containing the not decoded video 1D bytes.
+/// \param output: Decoded visual Tensor and audio Tensor. For visual tensor, the shape is <T,H,W,C>, the type is
+///     DE_UINT8. Pixel order is RGB. For audio tensor, the shape is <C, L>.
+Status DecodeVideo(const TensorRow &input, TensorRow *output);
+
 /// \brief Read the video, audio, metadata from a video file. It supports AVI, H264, H265, MOV, MP4, WMV files.
 /// \param[in] filename The path to the videoe file to be read.
 /// \param[out] video_output The video frames of the video file.

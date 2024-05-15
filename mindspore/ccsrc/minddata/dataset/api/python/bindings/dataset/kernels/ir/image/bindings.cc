@@ -37,6 +37,7 @@
 #include "minddata/dataset/kernels/ir/vision/cutmix_batch_ir.h"
 #include "minddata/dataset/kernels/ir/vision/cutout_ir.h"
 #include "minddata/dataset/kernels/ir/vision/decode_ir.h"
+#include "minddata/dataset/kernels/ir/vision/decode_video_ir.h"
 #include "minddata/dataset/kernels/ir/vision/equalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/erase_ir.h"
 #include "minddata/dataset/kernels/ir/vision/gaussian_blur_ir.h"
@@ -270,6 +271,17 @@ PYBIND_REGISTER(DecodeOperation, 1, ([](const py::module *m) {
                       return decode;
                     }));
                 }));
+
+PYBIND_REGISTER(
+  DecodeVideoOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::DecodeVideoOperation, TensorOperation, std::shared_ptr<vision::DecodeVideoOperation>>(
+      *m, "DecodeVideoOperation")
+      .def(py::init([]() {
+        auto decode_video = std::make_shared<vision::DecodeVideoOperation>();
+        THROW_IF_ERROR(decode_video->ValidateParams());
+        return decode_video;
+      }));
+  }));
 
 PYBIND_REGISTER(EncodeJpegOperation, 1, ([](py::module *m) {
                   (void)m->def("encode_jpeg", ([](const std::shared_ptr<Tensor> &image, int quality) {
