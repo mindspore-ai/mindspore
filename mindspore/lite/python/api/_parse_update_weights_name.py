@@ -17,7 +17,6 @@ Parse Update Weights Name.
 """
 import re
 import os
-
 def _maybe_map_sgm_blocks_to_diffusers(name, layers_per_block=2, delimiter="_", block_slice_pos=5):
     '''
     convert name like input_blocks.1.1_xxx to input_blocks.1.resnets_xxx
@@ -208,6 +207,7 @@ def _get_variable_weights_name(name_list_file):
     """Get variable weights name"""
     if not os.path.exists(name_list_file):
         raise RuntimeError("variable weight name list is not exists.")
+    name_map = {}
     new_name_str = ""
     new_names = []
     with open(name_list_file, 'r') as f:
@@ -215,11 +215,19 @@ def _get_variable_weights_name(name_list_file):
         for line in lines:
             if line[-1] == "\n":
                 line = line[:-1]
-            new_name = _rename_variable_weight(line)
+            line_split = line.split(',')
+            if len(line_split) == 2:
+                name_map[line_split[0]] = line_split[1]
+                new_name = line_split[1]
+            elif len(line_split) == 1:
+                new_name = _rename_variable_weight(line)
+            else:
+                raise RuntimeError("only support 1 or 2 row name list, current row num:",
+                                   len(line_split), ' !')
             if new_name not in new_names:
                 new_names.append(new_name)
                 new_name_str += ',' + new_name
-    return new_name_str[1:]
+    return new_name_str[1:], name_map
 
 def _parse_update_weight_config_name(name_list_file):
     """Parse update weight config name"""
