@@ -84,7 +84,7 @@ Status GPUGraphImpl::FinalizeEnv() {
     return kSuccess;
   }
 
-  MS_LOG_INFO << "Start finalize env";
+  MS_LOG(INFO) << "Start finalize env";
   session::ExecutorManager::Instance().Clear();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
 
@@ -125,11 +125,11 @@ Status GPUGraphImpl::Load(uint32_t device_id) {
   GraphImpl::GetModelInputsInfo(kg, &inputs_info_, &input_names_);
   GraphImpl::GetModelOutputsInfo(kg, &outputs_info_, &output_names_);
   if (inputs_info_.empty() || inputs_info_.size() != input_names_.size()) {
-    MS_LOG_ERROR << "Get model inputs info failed";
+    MS_LOG(ERROR) << "Get model inputs info failed";
     return kMCInvalidInput;
   }
   if (outputs_info_.empty() || outputs_info_.size() != output_names_.size()) {
-    MS_LOG_ERROR << "Get model outputs info failed";
+    MS_LOG(ERROR) << "Get model outputs info failed";
     return kMCInvalidInput;
   }
   load_flag_ = true;

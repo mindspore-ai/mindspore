@@ -111,7 +111,7 @@ bool PSROIPoolingCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
   if (!is_match) {
-    MS_LOG_ERROR << "Can not match kernel based on given attr!";
+    MS_LOG(ERROR) << "Can not match kernel based on given attr!";
     return false;
   }
   return true;

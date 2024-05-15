@@ -38,7 +38,7 @@ bool PSROIPoolingV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
   if (!is_match) {
-    MS_LOG_ERROR << "Can not match kernel based on given attr!";
+    MS_LOG(ERROR) << "Can not match kernel based on given attr!";
     return false;
   }
   return true;
@@ -114,9 +114,9 @@ int PSROIPoolingV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
 
   input_shape = inputs[0]->GetShapeVector();
   if (input_shape[1] != group_size_ * group_size_ * output_channels_) {
-    MS_LOG_ERROR << "For '" << kernel_name_ << "', input[features].shape[1](" << input_shape[1]
-                 << ") should be equal to group_size(" << group_size_ << ") * group_size(" << group_size_
-                 << ") * output_dim(" << output_channels_ << "), but it's not true.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input[features].shape[1](" << input_shape[1]
+                  << ") should be equal to group_size(" << group_size_ << ") * group_size(" << group_size_
+                  << ") * output_dim(" << output_channels_ << "), but it's not true.";
     return KRET_RESIZE_FAILED;
   }
 

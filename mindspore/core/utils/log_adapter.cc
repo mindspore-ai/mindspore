@@ -143,6 +143,11 @@ LogWriter::TraceProvider &LogWriter::trace_provider() {
   return g_trace_provider;
 }
 
+LogWriter::GetTraceStrProvider &LogWriter::get_trace_str_provider() {
+  static LogWriter::GetTraceStrProvider g_get_trace_str_provider = nullptr;
+  return g_get_trace_str_provider;
+}
+
 const LogWriter::ExceptionHandler &LogWriter::GetExceptionHandler() {
   const auto &exception_handler_tmp = exception_handler();
   return exception_handler_tmp;
@@ -171,6 +176,15 @@ void LogWriter::SetTraceProvider(const LogWriter::TraceProvider &new_trace_provi
     return;
   }
   trace_provider_tmp = new_trace_provider;
+}
+
+void LogWriter::SetGetTraceStrProvider(const LogWriter::GetTraceStrProvider &provider) {
+  auto &provider_tmp = get_trace_str_provider();
+  if (provider_tmp != nullptr) {
+    MS_LOG(INFO) << "trace provider has been set, skip.";
+    return;
+  }
+  provider_tmp = provider;
 }
 
 static inline std::string GetEnv(const std::string &envvar) {
@@ -326,6 +340,17 @@ void DisplayUserExceptionMessage(std::ostringstream &oss, const std::vector<std:
   }
 }
 
+const std::string LogWriter::GetNodeDebugInfoStr() const {
+  if (node_ == nullptr) {
+    return std::string();
+  }
+  const auto &provider = get_trace_str_provider();
+  if (provider != nullptr) {
+    return provider(node_, true);
+  }
+  return std::string();
+}
+
 void LogWriter::OutputLog(const std::ostringstream &msg) const {
 #ifdef USE_GLOG
 #define google mindspore_private
@@ -351,11 +376,14 @@ void LogWriter::OutputLog(const std::ostringstream &msg) const {
 void LogWriter::operator<(const LogStream &stream) const noexcept {
   std::ostringstream msg;
   msg << stream.sstream_->rdbuf();
+  msg << GetNodeDebugInfoStr();
   OutputLog(msg);
 }
+
 void LogWriter::operator^(const LogStream &stream) const {
   std::ostringstream msg;
   msg << stream.sstream_->rdbuf();
+  msg << GetNodeDebugInfoStr();
 
   const auto &message_handler = GetMessageHandler();
   if (message_handler != nullptr) {

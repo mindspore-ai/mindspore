@@ -88,9 +88,9 @@ TEST_F(TestLogAdapter, TestInternalException) {
     ASSERT_TRUE(exception_str.find(content) != std::string::npos);
   }
 
-  // Test MS_LOG_INTERNAL_EXCEPTION
+  // Test MS_LOG(INTERNAL_EXCEPTION), too.
   try {
-    MS_LOG_INTERNAL_EXCEPTION << "test content3";
+    MS_LOG(INTERNAL_EXCEPTION) << "test content3";
   } catch (const std::exception &ex) {
     const std::string &exception_str = ex.what();
     MS_LOG(INFO) << exception_str;

@@ -819,6 +819,24 @@ void GetTraceStackInfo(std::ostringstream &oss, bool add_title) {
   running = false;
 }
 
+std::string GetTraceStackInfoStr(const AnfNodePtr &node, bool add_title) {
+  if (node == nullptr) {
+    return std::string();
+  }
+  if (node->debug_info() == nullptr) {
+    return std::string();
+  }
+  auto debug_str = trace::GetTracedDebugInfoStr(node->debug_info());
+  if (debug_str.empty()) {
+    return std::string();
+  }
+  std::ostringstream oss;
+  std::ostringstream content;
+  content << "\n\n" << debug_str;
+  PrintMessage(oss, content.str(), add_title);
+  return oss.str();
+}
+
 // Register trace provider to LogWriter.
 struct TraceProviderRegister {
   TraceProviderRegister() noexcept { LogWriter::SetTraceProvider(GetTraceStackInfo); }
@@ -838,5 +856,11 @@ struct TraceNodeProviderRegister {
   }
   ~TraceNodeProviderRegister() = default;
 } trace_node_provider_register;
+
+// Register trace node stack provider.
+struct GetTraceStrProviderRegister {
+  GetTraceStrProviderRegister() noexcept { LogWriter::SetGetTraceStrProvider(GetTraceStackInfoStr); }
+  ~GetTraceStrProviderRegister() = default;
+} get_trace_str_provider_register;
 }  // namespace trace
 }  // namespace mindspore

@@ -32,12 +32,12 @@ bool RankCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
   if (!is_match) {
-    MS_LOG_ERROR << "Can not match kernel based on given attr!";
+    MS_LOG(ERROR) << "Can not match kernel based on given attr!";
     return false;
   }
 
   if (Resize(inputs, outputs) == KRET_RESIZE_FAILED) {
-    MS_LOG_ERROR << "Resize failed!";
+    MS_LOG(ERROR) << "Resize failed!";
     return false;
   }
   return true;

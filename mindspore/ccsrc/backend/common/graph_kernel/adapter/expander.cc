@@ -371,7 +371,7 @@ void InlineExpandFuncGraph(const AnfNodePtr &expanding_node, const FuncGraphPtr 
   auto cnode = expanding_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   AnfNodePtrList inp(cnode->inputs().begin() + 1, cnode->inputs().end());
-  auto out = InlineClone(expanded_graph, main_graph, inp, cnode->input(0)->scope(), cnode->debug_info());
+  auto out = InlineClone(expanded_graph, main_graph, inp, cnode);
   (void)mng->Replace(expanding_node, out);
 }
 
