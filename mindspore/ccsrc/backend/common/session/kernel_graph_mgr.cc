@@ -1271,7 +1271,7 @@ CNodePtr KernelGraphMgr::CreateNewCNode(const CNodePtr &cnode, KernelGraph *grap
     // 2. the call in frontend is map to the partial/switch/switch_layer in backend and haven't been created
     cnode_inputs = CreateSwitchOrPartialNode(cnode, graph);
     if (cnode_inputs.empty()) {
-      MS_LOG_ERROR << "Create switch or partial failed, cnode:" << cnode->DebugString();
+      MS_LOG(ERROR) << "Create switch or partial failed, cnode:" << cnode->DebugString();
       return nullptr;
     }
   } else {

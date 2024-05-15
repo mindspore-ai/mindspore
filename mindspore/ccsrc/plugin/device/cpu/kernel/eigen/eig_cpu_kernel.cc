@@ -97,8 +97,8 @@ bool EigCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, co
       v = solver.eigenvectors();
     }
     if (solver.info() != Eigen::Success) {
-      MS_LOG_WARNING << "For '" << kernel_name_
-                     << "', the computation was not successful. Eigen::ComplexEigenSolver returns 'NoConvergence'.";
+      MS_LOG(WARNING) << "For '" << kernel_name_
+                      << "', the computation was not successful. Eigen::ComplexEigenSolver returns 'NoConvergence'.";
     }
   }
   return true;

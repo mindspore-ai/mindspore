@@ -167,7 +167,7 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     // send original model to child
     auto status = multi_process->SendMsg(model_data.GetData(), model_data.GetSize());
     if (status != kSuccess) {
-      MS_LOG_ERROR << "Send original model to child process failed";
+      MS_LOG(ERROR) << "Send original model to child process failed";
       return status;
     }
     // receive convert model result from child
@@ -177,7 +177,7 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     };
     status = multi_process->ReceiveMsg(call);
     if (status != kSuccess) {
-      MS_LOG_ERROR << "Receive result model from child process failed";
+      MS_LOG(ERROR) << "Receive result model from child process failed";
       return status;
     }
     return kSuccess;
@@ -192,27 +192,27 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     };
     auto status = multi_process->ReceiveMsg(call);
     if (status != kSuccess) {
-      MS_LOG_ERROR << "Receive original model from parent process failed";
+      MS_LOG(ERROR) << "Receive original model from parent process failed";
       return status;
     }
     Buffer model_result = LoadAscendIRInner(model);
     if (model_result.DataSize() == 0) {
-      MS_LOG_ERROR << "Convert model from MindIR to OM failed";
+      MS_LOG(ERROR) << "Convert model from MindIR to OM failed";
       return kMCFailed;
     }
     // send result model to parent
     status = multi_process->SendMsg(model_result.Data(), model_result.DataSize());
     if (status != kSuccess) {
-      MS_LOG_ERROR << "Send result model to parent process failed";
+      MS_LOG(ERROR) << "Send result model to parent process failed";
       return status;
     }
     return kSuccess;
   };
   auto status = multi_process.MainProcess(parent_process, child_process);
   if (status != kSuccess) {
-    MS_LOG_ERROR << "Convert MindIR model to OM model failed";
+    MS_LOG(ERROR) << "Convert MindIR model to OM model failed";
   } else {
-    MS_LOG_INFO << "Convert MindIR model to OM model success";
+    MS_LOG(INFO) << "Convert MindIR model to OM model success";
   }
   return buffer_ret;
 }

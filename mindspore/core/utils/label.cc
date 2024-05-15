@@ -82,6 +82,7 @@ NameWithTrace CollectTraceInfos(const DebugInfoPtr &debug_info, TraceLabelType t
   NameWithTrace name_and_traces;
   // Find debug info after Resolve/ExpandJ/GenMetaFuncGraph/GenerateVarArg/GenerateKwArg, it is a new node.
   MS_EXCEPTION_IF_NULL(debug_info);
+  const auto &shadow_debug_infos_map = debug_info->shadow_debug_infos_map();
   auto root_info = debug_info;
   while (root_info != nullptr) {
     if (root_info->trace_info() == nullptr) {
@@ -99,20 +100,46 @@ NameWithTrace CollectTraceInfos(const DebugInfoPtr &debug_info, TraceLabelType t
     if (!trace_name.empty()) {
       (void)name_and_traces.trace_labels.emplace_back(trace_name);
     }
+    // Insert shadow debug info.
+    auto iter = shadow_debug_infos_map.find(root_info);
+    if (iter != shadow_debug_infos_map.end()) {
+      DebugInfoPtr shadowed_debug_info = iter->first;
+      DebugInfoPtr shadow_debug_info = iter->second;
+      MS_LOG(DEBUG) << "Insert debug info, root_info: " << root_info << "/" << root_info->name() << "/"
+                    << root_info->debug_name() << ", shadow_debug_info: " << shadow_debug_info << "/"
+                    << shadow_debug_info->name() << "/" << shadow_debug_info->debug_name()
+                    << ", shadowed_debug_info: " << shadowed_debug_info << "/" << shadowed_debug_info->name() << "/"
+                    << shadowed_debug_info->debug_name();
+      const auto shadow_trace_name = GetTraceName(shadow_debug_info->trace_info(), trace_label);
+      if (!shadow_trace_name.empty()) {
+        (void)name_and_traces.trace_labels.emplace_back(shadow_trace_name);
+      }
+    }
     root_info = root_info->trace_info()->debug_info();
   }
 
   if (!root_info->name().empty()) {
     name_and_traces.root_name = root_info->name();
-  } else {
-    // If it's node debug info and no trace label, use current node debug info.
-    auto node_root_info = std::dynamic_pointer_cast<NodeDebugInfo>(root_info);
-    if (node_root_info != nullptr && name_and_traces.trace_labels.empty()) {
-      root_info = debug_info;
-    }
-
-    name_and_traces.root_name = root_info->debug_name();
+    return name_and_traces;
   }
+  // If it's node debug info and no trace label, use current node debug info.
+  auto node_root_info = std::dynamic_pointer_cast<NodeDebugInfo>(root_info);
+  if (node_root_info != nullptr && name_and_traces.trace_labels.empty()) {
+    root_info = debug_info;
+    // Use shadow debug info's name.
+    if (!shadow_debug_infos_map.empty()) {
+      name_and_traces.root_name = root_info->debug_name();
+      for (const auto &shadow_pair : shadow_debug_infos_map) {
+        DebugInfoPtr shadow_debug_info = shadow_pair.second;
+        if (!shadow_debug_info->name().empty()) {
+          name_and_traces.root_name += '$';
+          name_and_traces.root_name += shadow_debug_info->name();
+        }
+      }
+      return name_and_traces;
+    }
+  }
+  name_and_traces.root_name = root_info->debug_name();
   return name_and_traces;
 }
 

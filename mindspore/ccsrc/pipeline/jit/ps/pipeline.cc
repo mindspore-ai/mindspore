@@ -1414,11 +1414,7 @@ void RecordIR(const size_t action_index, const size_t action_size, const std::st
     if (switch_order) {
       ExportIR(base_name + ".ir", graph);
     } else {
-      if (action_index == action_size - 1) {
-        DumpIR(base_name + ".ir", graph, false, kWholeStack);
-      } else {
-        DumpIR(base_name + ".ir", graph, false, kTopStack);
-      }
+      DumpIR(base_name + ".ir", graph, true, kWholeStack);
     }
     if (context->CanDump(kFully)) {
       draw::Draw(base_name + ".dot", graph);

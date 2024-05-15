@@ -779,11 +779,9 @@ void FuncGraphManager::MoveAllCNodeDropGraph(const FuncGraphPtr &source, const F
       node->set_scope(scope);
     }
     if (update_debug_info && node->isa<CNode>()) {
-      MS_LOG(DEBUG) << "Start move inlined node: " << node->DebugString();
-      auto new_debug_info = DebugInfo::UpdateInlineCNodeDebugInfo(call_node->debug_info(), node->debug_info());
-      auto node_new_debug_info = std::dynamic_pointer_cast<NodeDebugInfo>(new_debug_info);
-      MS_EXCEPTION_IF_NULL(node_new_debug_info);
-      node->set_debug_info(node_new_debug_info);
+      MS_LOG(DEBUG) << "call_node: " << call_node << "/" << call_node->DebugString() << ", node: " << node << "/"
+                    << node->DebugString();
+      UpdateInlineCNodeDebugInfo(call_node, node);
     }
   }
 

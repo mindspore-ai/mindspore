@@ -257,7 +257,7 @@ bool TensorRTExecutor::Init() {
     return false;
   }
   if (context_ == nullptr) {
-    MS_LOG_ERROR << "Context cannot be nullptr";
+    MS_LOG(ERROR) << "Context cannot be nullptr";
     return false;
   }
 
@@ -332,7 +332,7 @@ int TensorRTExecutor::ParseOptimizationProfile() {
   auto &gpu_context = gpu_context_it->second;
   ProfileConfigs profile_configs;
   if (!ProfileParser::Parse(gpu_context, true, &profile_configs)) {
-    MS_LOG_WARNING << "Failed to parse profile info from '" << kGPUContextSection << "'";
+    MS_LOG(WARNING) << "Failed to parse profile info from '" << kGPUContextSection << "'";
     return RET_FAILED;
   }
   trt_profile_configs_ = profile_configs;
@@ -502,7 +502,7 @@ std::shared_ptr<TensorRTSubGraph> TensorRTExecutor::CreateTensorRTGraph(const st
     std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_names),
                    [](auto &item) { return item.Name(); });
     if (!ProfileParser::ReorderByInputNames(input_names, &trt_profile_configs_)) {
-      MS_LOG_ERROR << "Reorder profile by input names failed, input names: " << input_names;
+      MS_LOG(ERROR) << "Reorder profile by input names failed, input names: " << input_names;
       return nullptr;
     }
   }

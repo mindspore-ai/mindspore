@@ -129,7 +129,7 @@ abstract::AbstractBasePtr DeduceNodeAbstract(const ir::NodePtr &node) {
   try {
     return EvalFunctionValue(func, &args_spec);
   } catch (const std::exception &e) {
-    MS_LOG_WARNING << e.what();
+    MS_LOG(WARNING) << e.what();
   }
   return nullptr;
 }

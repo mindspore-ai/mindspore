@@ -102,8 +102,8 @@ void TransformVisitor::VisitImpl(IntSymbol *symbol) {
       auto smbl_p = symbols_.back();
       auto val_p = NewVal(smbl_p, symbol->ToRawString());
       symbols_.pop_back();
-      MS_LOG_DEBUG << "<<< val symbol " << val_p->ToString() << " point to " << symbol->ToString()
-                   << "---: " << smbl_p->ToString();
+      MS_LOG(DEBUG) << "<<< val symbol " << val_p->ToString() << " point to " << symbol->ToString()
+                    << "---: " << smbl_p->ToString();
       temp_map_[symbol->ToRawString()] = val_p;
       symbols_.push_back(val_p);
     }
