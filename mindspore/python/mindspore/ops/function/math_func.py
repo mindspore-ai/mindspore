@@ -227,7 +227,12 @@ truncate_mod_ = P.TruncateMod()
 xlogy_ = P.Xlogy()
 zeros_ = P.Zeros()
 zeta_ = P.Zeta()
-
+bitwise_and_scalar_ = auto_generate.BitwiseAndScalar()
+bitwise_and_tensor_ = auto_generate.BitwiseAndTensor()
+bitwise_or_scalar_ = auto_generate.BitwiseOrScalar()
+bitwise_or_tensor_ = auto_generate.BitwiseOrTensor()
+bitwise_xor_scalar_ = auto_generate.BitwiseXorScalar()
+bitwise_xor_tensor_ = auto_generate.BitwiseXorTensor()
 
 #####################################
 # Element-wise Operation Functions.
@@ -1869,6 +1874,50 @@ def bitwise_and(input, other):
     return bitwise_and_(input, other)
 
 
+def bitwise_and_ext(input, other):
+    r"""
+    Returns bitwise `and` of two tensors element-wise.
+
+    .. math::
+
+        out_i = input_{i} \wedge other_{i}
+
+    Args of `input` and `other` comply with the implicit type conversion rules to
+    make the data types consistent.
+    If they have different data types, the lower priority data type will be converted to
+    the relatively highest priority data type.
+
+    Args:
+        input (Tensor): The first input tensor with shape :math:`(N, *)` where :math:`*` means
+            any number of additional dimensions.
+        other (Tensor): The second input tensor with the same dtype as `input`.
+
+    Returns:
+        Tensor, has the same type as the `input`.
+
+    Raises:
+        TypeError: If `input` or `other` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
+        >>> other = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
+        >>> output = ops.bitwise_and(input, other)
+        >>> print(output)
+        [ 0  0  1 -1  1  0  1]
+    """
+    if not isinstance(input, Tensor):
+        return bitwise_and_scalar_(other, input)
+    if not isinstance(other, Tensor):
+        return bitwise_and_scalar_(input, other)
+    return bitwise_and_tensor_(input, other)
+
+
 def bitwise_or(input, other):
     r"""
     Returns bitwise `or` of two tensors element-wise.
@@ -1909,6 +1958,50 @@ def bitwise_or(input, other):
     return bitwise_or_(input, other)
 
 
+def bitwise_or_ext(input, other):
+    r"""
+    Returns bitwise `or` of two tensors element-wise.
+
+    .. math::
+
+        out_i = input_{i} \mid other_{i}
+
+    Args of `input` and `other` comply with the implicit type conversion rules to
+    make the data types consistent.
+    If they have different data types, the lower priority data type will be converted to
+    the relatively highest priority data type.
+
+    Args:
+        input (Tensor): The first input tensor with shape :math:`(N, *)` where :math:`*` means
+            any number of additional dimensions.
+        other (Tensor): The second input tensor with the same dtype as `input`.
+
+    Returns:
+        Tensor, has the same type as the `input`.
+
+    Raises:
+        TypeError: If `input` or `other` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
+        >>> other = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
+        >>> output = ops.bitwise_or(input, other)
+        >>> print(output)
+        [ 0  1  1 -1 -1  3  3]
+    """
+    if not isinstance(input, Tensor):
+        return bitwise_or_scalar_(other, input)
+    if not isinstance(other, Tensor):
+        return bitwise_or_scalar_(input, other)
+    return bitwise_or_tensor_(input, other)
+
+
 def bitwise_xor(input, other):
     r"""
     Returns bitwise `xor` of two tensors element-wise.
@@ -1947,6 +2040,50 @@ def bitwise_xor(input, other):
         [ 0  1  0  0 -2  3  2]
     """
     return bitwise_xor_(input, other)
+
+
+def bitwise_xor_ext(input, other):
+    r"""
+    Returns bitwise `xor` of two tensors element-wise.
+
+    .. math::
+
+        out_i = input_{i} \oplus other_{i}
+
+    Args of `input` and `other` comply with the implicit type conversion rules to
+    make the data types consistent.
+    If they have different data types, the lower priority data type will be converted to
+    the relatively highest priority data type.
+
+    Args:
+        input (Tensor): The first input tensor with shape :math:`(N, *)` where :math:`*` means
+            any number of additional dimensions.
+        other (Tensor): The second input tensor with the same dtype as `input`.
+
+    Returns:
+        Tensor, has the same type as the `input`.
+
+    Raises:
+        TypeError: If `input` or `other` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
+        >>> other = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
+        >>> output = ops.bitwise_xor(input, other)
+        >>> print(output)
+        [ 0  1  0  0 -2  3  2]
+    """
+    if not isinstance(input, Tensor):
+        return bitwise_xor_scalar_(other, input)
+    if not isinstance(other, Tensor):
+        return bitwise_xor_scalar_(input, other)
+    return bitwise_xor_tensor_(input, other)
 
 
 def bitwise_left_shift(input, other):
