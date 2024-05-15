@@ -313,7 +313,8 @@ Status NonMappableLeafOp::PrepareData() {
   RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
 
   // launch one thread, responsible for filling IOBlockQueue
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&NonMappableLeafOp::WaitToFillIOBlockQueue, this), "", id()));
+  RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&NonMappableLeafOp::WaitToFillIOBlockQueue, this),
+                                        Name() + "::WaitToFillIOBlockQueue", id()));
 
   // launch num_workers_ worker threads, responsible for pulling from the IOBlockQueue and reading
   // data from disk into TensorRows
