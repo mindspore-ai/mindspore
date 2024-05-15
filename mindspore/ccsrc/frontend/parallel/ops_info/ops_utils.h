@@ -98,6 +98,7 @@ constexpr size_t MATMUL_DDS_INPUTS_SIZE = 4;
 constexpr size_t MATMUL_DDS_OUTPUTS_SIZE = 2;
 constexpr size_t MATMUL_DDS_STRATEGY_SIZE = 4;
 constexpr size_t BATCH_NORM_INPUTS_SIZE = 5;
+constexpr size_t CONV_IN_CHANNEL_INDEX = 1;
 constexpr double EPS = 1e-6;
 constexpr double INF = 1e20;
 constexpr double COST_FACTOR = 2.0;
@@ -621,6 +622,7 @@ constexpr char FFN[] = "FFN";
 constexpr char FLASH_ATTENTION_SCORE[] = "FlashAttentionScore";
 constexpr char KV_CACHE_MGR[] = "KVCacheMgr";
 constexpr char TUPLE_GETITEM_OP[] = "TupleGetItem";
+constexpr char CONVOLUTION[] = "Convolution";
 
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;

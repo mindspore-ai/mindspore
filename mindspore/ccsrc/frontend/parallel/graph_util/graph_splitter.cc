@@ -1267,7 +1267,7 @@ void GraphSplitter::Run() {
   DyeGraph();
   // If all nodes are all on this process, no need to split the graph. So return.
   if (!NeedSplitGraph()) {
-    MS_LOG(INFO) << "All nodes are on this precoess so there's no need to build and split distributed graph.";
+    MS_LOG(INFO) << "All nodes are on this process so there's no need to build and split distributed graph.";
     return;
   }
 

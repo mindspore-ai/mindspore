@@ -2852,7 +2852,7 @@ static void InsertDivAndAllReduceForNorm(const NodeUsersMap &node_user_map, cons
     if (dev_num > 0) {
       InsertRealDivOpToNodeInput(expand_dims_node->cast<CNodePtr>(), dev_num, PARALLEL_GLOBALNORM_DIV);
       MS_LOG(INFO) << "Insert the realdiv with " << dev_num << " for the parameter " << parameter->fullname_with_scope()
-                   << "succeed!";
+                   << " succeed!";
     }
     // If already inserted allreduce, the pattern will not be matched and thus no allreduce will be inserted.
     InsertAllReduceForNormValue(expand_dims_node);
