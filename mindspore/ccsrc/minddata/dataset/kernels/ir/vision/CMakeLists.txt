@@ -18,6 +18,7 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         cutmix_batch_ir.cc
         cutout_ir.cc
         decode_ir.cc
+        decode_video_ir.cc
         equalize_ir.cc
         erase_ir.cc
         gaussian_blur_ir.cc

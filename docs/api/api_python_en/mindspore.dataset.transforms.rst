@@ -73,6 +73,7 @@ Transforms
     mindspore.dataset.vision.CutMixBatch
     mindspore.dataset.vision.CutOut
     mindspore.dataset.vision.Decode
+    mindspore.dataset.vision.DecodeVideo
     mindspore.dataset.vision.Equalize
     mindspore.dataset.vision.Erase
     mindspore.dataset.vision.FiveCrop

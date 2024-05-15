@@ -68,6 +68,7 @@ constexpr char kAutoAugmentOp[] = "AutoAugmentOp";
 constexpr char kAutoContrastOp[] = "AutoContrastOp";
 constexpr char kBoundingBoxAugmentOp[] = "BoundingBoxAugmentOp";
 constexpr char kDecodeOp[] = "DecodeOp";
+constexpr char kDecodeVideoOp[] = "DecodeVideoOp";
 constexpr char kCenterCropOp[] = "CenterCropOp";
 constexpr char kConvertColorOp[] = "ConvertColorOp";
 constexpr char kCutMixBatchOp[] = "CutMixBatchOp";

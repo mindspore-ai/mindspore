@@ -36,6 +36,7 @@
 #include "minddata/dataset/kernels/ir/vision/cutmix_batch_ir.h"
 #include "minddata/dataset/kernels/ir/vision/cutout_ir.h"
 #include "minddata/dataset/kernels/ir/vision/decode_ir.h"
+#include "minddata/dataset/kernels/ir/vision/decode_video_ir.h"
 #include "minddata/dataset/kernels/ir/vision/equalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/erase_ir.h"
 #include "minddata/dataset/kernels/ir/vision/gaussian_blur_ir.h"
@@ -381,6 +382,14 @@ std::shared_ptr<TensorOperation> Decode::Parse(const MapTargetDevice &env) {
   MS_LOG(ERROR) << "Unsupported MapTargetDevice, only supported kCpu and kAscend310.";
   return nullptr;
 }
+
+#ifndef ENABLE_ANDROID
+// DecodeVideo Transform Operation.
+DecodeVideo::DecodeVideo() {}
+
+std::shared_ptr<TensorOperation> DecodeVideo::Parse() { return std::make_shared<DecodeVideoOperation>(); }
+#endif  // not ENABLE_ANDROID
+
 #if defined(WITH_BACKEND) || defined(ENABLE_ACL) || defined(ENABLE_DVPP)
 // DvppDecodeVideo Transform Operation.
 struct DvppDecodeVideo::Data {
