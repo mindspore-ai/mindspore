@@ -15,6 +15,7 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fusion/multi_matmuls_fusion.h"
 
+#include "ops/nn_op_name.h"
 #include "mindspore/core/utils/ms_context.h"
 
 namespace mindspore {
@@ -26,10 +27,12 @@ bool MultiMatmulsFusion::Run(const FuncGraphPtr &graph) {
     return false;
   }
 
-  std::string fusion_name = "MultiMatMul";
-  std::vector<std::string> enable_fusion_list = ms_context->ms_enable_internal_fusion_list();
-  if (std::all_of(enable_fusion_list.begin(), enable_fusion_list.end(),
-                  [&fusion_name](const std::string &name) { return name != fusion_name; })) {
+  std::vector<std::string> enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
+  bool enable_matmul_qkv =
+    (std::find(enable_op_list.begin(), enable_op_list.end(), kMatmulQkvOpName) != enable_op_list.end());
+  bool enable_matmul_ffn =
+    (std::find(enable_op_list.begin(), enable_op_list.end(), kMatmulFfnOpName) != enable_op_list.end());
+  if (!(enable_matmul_qkv || enable_matmul_ffn)) {
     return false;
   }
 
@@ -55,9 +58,9 @@ bool MultiMatmulsFusion::Run(const FuncGraphPtr &graph) {
       continue;
     }
     AnfNodePtrList getitems;
-    if (user_matmuls.size() == kMatMulFfnNum) {
+    if (enable_matmul_ffn && user_matmuls.size() == kMatMulFfnNum) {
       Process("MatmulFfn", node, user_matmuls, &getitems);
-    } else if (user_matmuls.size() == kMatMulQkvNum) {
+    } else if (enable_matmul_qkv && user_matmuls.size() == kMatMulQkvNum) {
       Process("MatmulQkv", node, user_matmuls, &getitems);
     } else {
       MS_LOG(INFO) << "user_matmuls.size() == " << user_matmuls.size();

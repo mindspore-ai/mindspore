@@ -69,10 +69,11 @@ const AnfNodePtr AddRmsNormFusion::Process(const FuncGraphPtr &graph, const AnfN
     return nullptr;
   }
 
-  std::string fusion_name = "AddRmsNorm";
-  std::vector<std::string> enable_fusion_list = ms_context->ms_enable_internal_fusion_list();
-  if (std::all_of(enable_fusion_list.begin(), enable_fusion_list.end(),
-                  [&fusion_name](const std::string &name) { return name != fusion_name; })) {
+  std::string fusion_op_name = "AddRmsNorm";
+  std::vector<std::string> enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
+  bool enable_add_rmsnorm =
+    (std::find(enable_op_list.begin(), enable_op_list.end(), fusion_op_name) != enable_op_list.end());
+  if (!enable_add_rmsnorm) {
     return nullptr;
   }
 
