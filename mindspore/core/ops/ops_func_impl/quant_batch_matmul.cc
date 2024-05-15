@@ -51,8 +51,18 @@ BaseShapePtr QuantBatchMatmulFuncImpl::InferShape(const PrimitivePtr &primitive,
 
   ValuePtr transpose_x1_ptr = input_args[kQbmmInputTransposeX1]->GetValue();
   ValuePtr transpose_x2_ptr = input_args[kQbmmInputTransposeX2]->GetValue();
-  bool transpose_x1 = GetValue<bool>(transpose_x1_ptr);
-  bool transpose_x2 = GetValue<bool>(transpose_x2_ptr);
+  auto transpose_x1_any = GetScalarValue<bool>(transpose_x1_ptr);
+  if (!transpose_x1_any.has_value()) {
+    MS_LOG(EXCEPTION) << "For '" << prim_name
+                      << "', input 'transpose_x1' has no value:" << input_args[kQbmmInputX1]->ToString();
+  }
+  bool transpose_x1 = transpose_x1_any.value();
+  auto transpose_x2_any = GetScalarValue<bool>(transpose_x2_ptr);
+  if (!transpose_x2_any.has_value()) {
+    MS_LOG(EXCEPTION) << "For '" << prim_name
+                      << "', input 'transpose_x2' has no value:" << input_args[kQbmmInputX2]->ToString();
+  }
+  bool transpose_x2 = transpose_x2_any.value();
 
   auto x1_shp = x1_shape_map[kShape];
   auto x2_shp = x2_shape_map[kShape];

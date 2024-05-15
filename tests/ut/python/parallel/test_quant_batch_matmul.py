@@ -201,3 +201,31 @@ def test_quant_batch_matmul_optional_input_case2():
     assert validator.check_parameter_shape("x1", [2048, 1024])
     assert validator.check_parameter_shape("x2", [8, 1024, 128])
     assert validator.check_parameter_shape("scale", [128])
+
+
+def test_quant_batch_matmul_optional_input_case3():
+    """
+    Feature: test quant ops
+    Description:
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=4, global_rank=0)
+
+    strategy = ((1, 1), (4, 1, 1), (1,), (1,))
+
+    net = QuantBatchMatmulNet(False, False, strategy)
+
+    x1 = Parameter(Tensor(np.ones([2048, 1024]), dtype=ms.int8), "x1")
+    x2 = Parameter(Tensor(np.ones([32, 1024, 128]), dtype=ms.int8), "x2")
+    scale = Parameter(Tensor(np.ones([128]), dtype=ms.uint64), "scale")
+    offset = None
+    bias = Parameter(Tensor(np.ones([128]), dtype=ms.int32), "bias")
+    net.set_inputs(x1, x2, scale, offset, bias)
+
+    phase = compile_net(net, x1, x2, scale, offset, bias)
+    validator = ParallelValidator(net, phase)
+
+    assert validator.check_parameter_shape("x1", [2048, 1024])
+    assert validator.check_parameter_shape("x2", [8, 1024, 128])
+    assert validator.check_parameter_shape("scale", [128])
+    assert validator.check_parameter_shape("bias", [128])

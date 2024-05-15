@@ -32,8 +32,16 @@ void WeightQuantBatchMatmulV2Ascend::GetWorkSpaceInfo(const std::vector<KernelTe
   auto trans_weight = transform::ConvertKernelTensor<bool>(inputs[kIndex8]);
   auto antiquant_group_size = transform::ConvertKernelTensor<int64_t>(inputs[kIndex9]);
 
+  auto weight = inputs[kIndex1];
+  if (weight->dtype_id() == kNumberTypeInt4) {
+    ShapeVector weight_shape = weight->GetShapeVector();
+    int kInt4ShapeMul = 2;
+    weight_shape.back() *= kInt4ShapeMul;
+    weight->SetShapeVector(weight_shape);
+  }
+
   input_x_ = std::pair<KernelTensor *, bool>(inputs[kIndex0], trans_x);
-  input_weight_ = std::pair<KernelTensor *, bool>(inputs[kIndex1], trans_weight);
+  input_weight_ = std::pair<KernelTensor *, bool>(weight, trans_weight);
   GetWorkspaceForResize(input_x_, input_weight_, inputs[kIndex2], inputs[kIndex3], inputs[kIndex4], inputs[kIndex5],
                         inputs[kIndex6], antiquant_group_size, outputs[kIndex0]);
 }
