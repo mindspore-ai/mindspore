@@ -21,6 +21,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -60,5 +61,19 @@ int32_t SoftmaxFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   }
   return OP_CHECK_SUCCESS;
 }
+
+TypePtrList SoftmaxFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const std::set<TypePtr> valid_types{kBFloat16, kFloat16, kFloat32, kFloat64};
+  (void)CheckAndConvertUtils::CheckTypeValid("x", x_tensor->Dtype(), valid_types, primitive->name());
+  return {x_tensor->Dtype()};
+}
+ShapeArray SoftmaxFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameSoftmax, SoftmaxFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

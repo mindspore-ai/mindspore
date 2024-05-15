@@ -20,6 +20,8 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -42,6 +44,19 @@ TypePtr GeLUFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector
   MS_EXCEPTION_IF_NULL(x_type);
   return x_type->Clone();
 }
-
+TypePtrList GeLUFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &x_type = x_tensor->Dtype();
+  const std::set<TypePtr> valid_types = {kBFloat16, kFloat16, kFloat32, kFloat64};
+  (void)CheckAndConvertUtils::CheckTypeValid("x", x_type, valid_types, primitive->name());
+  return {x_type};
+}
+ShapeArray GeLUFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameGeLU, GeLUFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

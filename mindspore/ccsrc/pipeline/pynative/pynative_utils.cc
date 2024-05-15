@@ -1097,8 +1097,7 @@ ValuePtr Common::CreateTensorByConstantValue(const ValuePtr &value) {
   return tensor_ptr;
 }
 
-namespace {
-void CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs) {
+void Common::CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(v);
   MS_EXCEPTION_IF_NULL(abs);
 
@@ -1122,6 +1121,7 @@ void CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs
   }
 }
 
+namespace {
 void ConvertSimpleInferInfoToAbstract(const OpGradInfoPtr &op_grad_info) {
   MS_EXCEPTION_IF_NULL(op_grad_info);
   // Get inputs abstract
@@ -1134,7 +1134,7 @@ void ConvertSimpleInferInfoToAbstract(const OpGradInfoPtr &op_grad_info) {
   op_grad_info->out_abs = TransformValueSimpleInfoToAbstract(*op_grad_info->output_value_simple_info);
 
   // Set abstract to tensor
-  CacheOutputAbstract(op_grad_info->out_value, op_grad_info->out_abs);
+  Common::CacheOutputAbstract(op_grad_info->out_value, op_grad_info->out_abs);
   MS_LOG(DEBUG) << "Get output abstract " << op_grad_info->out_abs->ToString();
 }
 }  // namespace
