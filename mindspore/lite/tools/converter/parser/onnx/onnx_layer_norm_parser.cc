@@ -30,7 +30,7 @@ PrimitiveCPtr OnnxLayerNormParser::Parse(const onnx::GraphProto &onnx_graph, con
       prim->set_begin_norm_axis(onnx_node_attr.i());
       prim->set_begin_params_axis(onnx_node_attr.i());
     } else if (attribute_name == "epsilon") {
-      prim->set_epsilon(onnx_node_attr.i());
+      prim->set_epsilon(onnx_node_attr.f());
     }
   }
 
