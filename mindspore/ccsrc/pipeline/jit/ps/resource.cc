@@ -676,12 +676,13 @@ Any Resource::GetAttrPtr(const TypeId &type, const std::string &name) {
 
 void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, const py::dict &weights,
                                        const std::string &queue_name, size_t compile_cache_id,
-                                       bool *compile_cache_consistent) {
+                                       bool *compile_cache_consistent, bool has_python_script) {
   compile_cache_manager_ = std::make_shared<CompileCacheManager>(compile_cache_id);
   compile_cache_manager_->InitParallelGroupCkptSaveFile();
   const bool force_use_compile_cache = (common::GetEnv("MS_DEV_FORCE_USE_COMPILE_CACHE") == "1");
   auto &context = CompileCacheContext::GetInstance();
-  if (force_use_compile_cache) {
+  // When enabling compile cache, it is possible to enable it even without Python script.
+  if (force_use_compile_cache || !has_python_script) {
     context.set_init_compile_cache(true);
     MS_LOG(WARNING)
       << "The env MS_DEV_FORCE_USE_COMPILE_CACHE has been set. It will force to use the compile cache without "
