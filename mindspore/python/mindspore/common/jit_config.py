@@ -58,12 +58,9 @@ class JitConfig:
             - ``DEBUG``: Used for debugging when errors occur, more information will be record in compiling process.
 
         infer_boost (str, optional): enable infer boost mode.
-            The value must be ``"on"`` , ``"off"``, ``"O0"``, ``"O1"``, ``"O2"``.
-            Default to an "off", which means that disable infer boost.
+            The value must be ``"on"`` , ``"off"``. Default to an "off", which means that disable infer boost.
             when infer boost mode is enabled, MindSpore will use high perf kernel lib, use faster runtime make
-            infer speed is best. When set to "on" or "O0",  MindSpore will use basic version of kernels.
-            When set to "O1", part of fusion passes and high-perf kernels will be enabled. When set to "O2",
-            all fusion passes and high-perf kernels will be enabled.
+            infer speed is best.
             Note: current infer boost only support `jit_level` == ``"O0"`` and only Atlas A2 series products
             are supported.
 
