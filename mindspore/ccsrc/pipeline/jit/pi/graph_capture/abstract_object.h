@@ -31,6 +31,12 @@ namespace pijit {
 class AbstractObjectBase;
 using AObject = AbstractObjectBase;
 
+class AObjectSourceScope {
+ public:
+  AObjectSourceScope();
+  ~AObjectSourceScope();
+};
+
 class AbstractObjectBase {
  public:
   enum Type {
