@@ -78,20 +78,48 @@ class FloatStatusReshapeFusion : public FloatStatusBaseFusion {
   VarPtr to_shape_;
 };
 
+class CastFloatStatusBaseFusion : public FloatStatusBaseFusion {
+ public:
+  explicit CastFloatStatusBaseFusion(const std::string &pass_name, bool multigraph = true)
+      : FloatStatusBaseFusion(pass_name, multigraph), type_fp32_{std::make_shared<Var>()} {}
+  ~CastFloatStatusBaseFusion() override = default;
+  const BaseRef DefinePattern() const override;
+
+ private:
+  VarPtr type_fp32_;
+};
+
+class CastFloatStatusReshapeFusion : public CastFloatStatusBaseFusion {
+ public:
+  explicit CastFloatStatusReshapeFusion(const std::string &pass_name, bool multigraph = true)
+      : CastFloatStatusBaseFusion(pass_name, multigraph), to_shape_{std::make_shared<Var>()} {}
+  ~CastFloatStatusReshapeFusion() override = default;
+  const BaseRef DefinePattern() const override;
+
+ private:
+  VarPtr to_shape_;
+};
+
 class FloatStatusFusion : public opt::Pass {
  public:
   FloatStatusFusion() : Pass("floatstatus_fusion") {
+    cast_floatstatus_reshape_ = std::make_shared<CastFloatStatusReshapeFusion>("cast_floatstatus_reshape_fusion");
+    cast_floatstatus_base_ = std::make_shared<CastFloatStatusBaseFusion>("cast_floatstatus_base_fusion");
     floatstatus_reshape_ = std::make_shared<FloatStatusReshapeFusion>("floatstatus_reshape_fusion");
     floatstatus_base_ = std::make_shared<FloatStatusBaseFusion>("floatstatus_base_fusion");
   }
   ~FloatStatusFusion() override = default;
   bool Run(const FuncGraphPtr &func_graph) override {
+    cast_floatstatus_reshape_->Run(func_graph);
+    cast_floatstatus_base_->Run(func_graph);
     floatstatus_reshape_->Run(func_graph);
     floatstatus_base_->Run(func_graph);
     return true;
   }
 
  private:
+  opt::PassPtr cast_floatstatus_reshape_;
+  opt::PassPtr cast_floatstatus_base_;
   opt::PassPtr floatstatus_reshape_;
   opt::PassPtr floatstatus_base_;
 };

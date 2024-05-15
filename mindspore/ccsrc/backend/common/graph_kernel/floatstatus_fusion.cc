@@ -36,6 +36,19 @@ const BaseRef FloatStatusReshapeFusion::DefinePattern() const {
   return VectorRef({prim::kPrimReshape, FloatStatusBaseFusion::DefinePattern(), to_shape_});
 }
 
+const BaseRef CastFloatStatusBaseFusion::DefinePattern() const {
+  VectorRef cast_tmp = VectorRef({prim::kPrimCast, input_, type_fp32_});
+  VectorRef is_finite = VectorRef({prim::kPrimIsFinite, cast_tmp});
+  VectorRef reduce = VectorRef({prim::kPrimReduceAll, is_finite, axis_, keep_dims_});
+  VectorRef cast = VectorRef({prim::kPrimCast, reduce, type_});
+  VectorRef sub = VectorRef({prim::kPrimSub, s_, cast});
+  return sub;
+}
+
+const BaseRef CastFloatStatusReshapeFusion::DefinePattern() const {
+  return VectorRef({prim::kPrimReshape, CastFloatStatusBaseFusion::DefinePattern(), to_shape_});
+}
+
 const AnfNodePtr FloatStatusBaseFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                 const EquivPtr &equiv) const {
   auto input_node = opt::GetAnfNodeByVar(equiv, input_);
