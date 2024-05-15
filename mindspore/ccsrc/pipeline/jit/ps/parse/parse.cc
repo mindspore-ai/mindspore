@@ -187,14 +187,14 @@ void Parser::CheckFuncReturn(const FuncGraphManagerPtr &manager, const FuncGraph
     }
     py::object node = ast_->GetAstNode();
     const auto &location = GetLocation(node);
+    MS_EXCEPTION_IF_NULL(location);
     py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
                                                location->file_name(), location->line());
     MS_LOG(INFO) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
-                 << ". FuncGraph: " << func_graph->ToString()
-                 << ". We will add a 'return None' statement automatically.";
+                 << ". FuncGraph: " << func_graph->ToString() << ", location: " << location->ToString()
+                 << "\nWe will add a 'return None' statement automatically.";
     // If the def function has no return statement, mean that return none.
-    MS_EXCEPTION_IF_NULL(fn->debug_info()->location());
-    TraceGuard trace_guard_none(fn->debug_info()->location());
+    TraceGuard trace_guard_none(location);
     auto none_node = NewValueNode(kNone);
     auto return_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), none_node});
     func_graph->set_return(return_node);
@@ -724,7 +724,8 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
   ScopePtr scope = GetScopeForParseFunction();
   // The node created in the parsefunction context, will inherit the scope created using scope_guard
   ScopeGuard scope_guard(scope);
-  TraceGuard trace_guard(std::make_shared<TraceParse>(std::make_shared<DebugInfo>(GetLocation(node))));
+  const auto debug_info = std::make_shared<DebugInfo>(GetLocation(node));
+  TraceGuard trace_guard(std::make_shared<TraceParse>(debug_info));
   FunctionBlockPtr func_block = MakeFunctionBlock();
   if (block != nullptr) {
     func_block->AddPrevBlock(block);
@@ -787,12 +788,13 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
     // If the def function has no return statement, mean that return none.
     py::object location_node = ast_->GetAstNode();
     const auto &location = GetLocation(location_node);
+    MS_EXCEPTION_IF_NULL(location);
     py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
                                                location->file_name(), location->line());
     MS_LOG(INFO) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
-                 << ". FuncGraph: " << current_fg->ToString()
+                 << ". FuncGraph: " << current_fg->ToString() << ", location: " << location->ToString()
                  << ". We will add a 'return None' statement automatically.";
-    TraceGuard trace_guard_none(current_fg->debug_info()->location());
+    TraceGuard trace_guard_none(location);
     auto none_node = NewValueNode(kNone);
     auto return_node = current_fg->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), none_node});
     current_fg->set_return(return_node);
@@ -819,7 +821,8 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
   MS_EXCEPTION_IF_NULL(ast_);
   ScopePtr scope = GetScopeForParseFunction();
   ScopeGuard scope_guard(scope);
-  TraceGuard trace_guard(std::make_shared<TraceParse>(std::make_shared<DebugInfo>(GetLocation(node))));
+  const auto debug_info = std::make_shared<DebugInfo>(GetLocation(node));
+  TraceGuard trace_guard(std::make_shared<TraceParse>(debug_info));
   FunctionBlockPtr func_block = MakeFunctionBlock();
   MS_EXCEPTION_IF_NULL(func_block);
   if (block != nullptr) {

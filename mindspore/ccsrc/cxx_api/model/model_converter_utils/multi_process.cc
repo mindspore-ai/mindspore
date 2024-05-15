@@ -49,34 +49,34 @@ Status MultiProcess::MainProcess(const ProcessFuncCall &parent_process, const Pr
   SharedMemory shared_memory;
   ret = shared_memory.Create(memory_size_);
   if (ret != kSuccess) {
-    MS_LOG_ERROR << "Create shared memory failed";
+    MS_LOG(ERROR) << "Create shared memory failed";
     return ret;
   }
   pid_t pid = fork();
   if (pid < 0) {
     shared_memory.Destroy();
-    MS_LOG_ERROR << "Fork process to convert model failed";
+    MS_LOG(ERROR) << "Fork process to convert model failed";
     return kMEFailed;
   }
   ret = shared_memory.Attach();
   if (ret != kSuccess) {
-    MS_LOG_ERROR << "Process attach shared memory failed, pid " << pid;
+    MS_LOG(ERROR) << "Process attach shared memory failed, pid " << pid;
     return ret;
   }
   shmat_addr_ = shared_memory.GetSharedMemoryAddr();
   if (shmat_addr_ == nullptr) {
-    MS_LOG_ERROR << "Get shared memory failed";
+    MS_LOG(ERROR) << "Get shared memory failed";
     return ret;
   }
   constexpr size_t kMsgStructNum = 2;
   shmat_data_addr_ = shmat_addr_ + sizeof(MessageFlag) * kMsgStructNum;
   shmat_data_max_size_ =
     memory_size_ - (reinterpret_cast<uintptr_t>(shmat_data_addr_) - reinterpret_cast<uintptr_t>(shmat_addr_));
-  MS_LOG_INFO << "Shm addr " << reinterpret_cast<uintptr_t>(shmat_addr_);
+  MS_LOG(INFO) << "Shm addr " << reinterpret_cast<uintptr_t>(shmat_addr_);
   if (pid == 0) {
     ChildProcess(child_process);
     shared_memory.Detach();
-    MS_LOG_INFO << "Model converter: child process sleep waiting for exit signal.";
+    MS_LOG(INFO) << "Model converter: child process sleep waiting for exit signal.";
     while (1) {
       // waiting for signal
     }
@@ -84,7 +84,7 @@ Status MultiProcess::MainProcess(const ProcessFuncCall &parent_process, const Pr
     ret = ParentProcess(parent_process);
     shared_memory.Detach();
 
-    MS_LOG_INFO << "Model converter: parent process kills child of fork.";
+    MS_LOG(INFO) << "Model converter: parent process kills child of fork.";
     (void)kill(pid, SIGKILL);
     constexpr uint32_t kMaxLoopCount = 5;
     bool child_exited = false;
@@ -115,10 +115,10 @@ Status MultiProcess::ParentProcess(const ProcessFuncCall &parent_process) {
   try {
     ret = parent_process(this);
     if (ret != kSuccess) {
-      MS_LOG_ERROR << "Parent process process failed";
+      MS_LOG(ERROR) << "Parent process process failed";
     }
   } catch (const std::runtime_error &ex) {
-    MS_LOG_ERROR << "Catch parent process runtime error: " << ex.what();
+    MS_LOG(ERROR) << "Catch parent process runtime error: " << ex.what();
     ret = kMEFailed;
   }
   stopped_ = true;
@@ -137,10 +137,10 @@ void MultiProcess::ChildProcess(const ProcessFuncCall &child_process) {
     MS_EXCEPTION_IF_NULL(child_process);
     auto ret = child_process(this);
     if (ret != kSuccess) {
-      MS_LOG_ERROR << "Child process process failed";
+      MS_LOG(ERROR) << "Child process process failed";
     }
   } catch (const std::runtime_error &ex) {
-    MS_LOG_ERROR << "Catch child process runtime error: " << ex.what();
+    MS_LOG(ERROR) << "Catch child process runtime error: " << ex.what();
   }
   stopped_ = true;
   send_msg_->stop = 1;
@@ -149,7 +149,7 @@ void MultiProcess::ChildProcess(const ProcessFuncCall &child_process) {
 
 Status MultiProcess::SendMsg(const void *buffer, uint64_t msg_len) {
   MS_EXCEPTION_IF_NULL(buffer);
-  MS_LOG_INFO << "Start to send message to peer process, msg len " << msg_len;
+  MS_LOG(INFO) << "Start to send message to peer process, msg len " << msg_len;
   send_msg_->msg_total_len = msg_len;
   uint64_t cur_offset = 0;
   while (msg_len > cur_offset) {
@@ -169,7 +169,7 @@ Status MultiProcess::SendMsg(const void *buffer, uint64_t msg_len) {
     send_msg_->msg_len = sub_msg_len;
     send_msg_->read_finish_flag = 0;
     send_msg_->read_ready_flag = 1;
-    MS_LOG_INFO << "Send start " << cur_offset << ", msg len " << sub_msg_len << ", total len " << msg_len;
+    MS_LOG(INFO) << "Send start " << cur_offset << ", msg len " << sub_msg_len << ", total len " << msg_len;
     while (!send_msg_->read_finish_flag && !peer_stopped_) {
       (void)nanosleep(&kOneMillisecond, nullptr);  // 1ms
     }
@@ -179,9 +179,9 @@ Status MultiProcess::SendMsg(const void *buffer, uint64_t msg_len) {
       }
       break;
     }
-    MS_LOG_INFO << "Send end " << cur_offset << ", msg len " << sub_msg_len << ", total len " << msg_len;
+    MS_LOG(INFO) << "Send end " << cur_offset << ", msg len " << sub_msg_len << ", total len " << msg_len;
   }
-  MS_LOG_INFO << "End to send message to peer process, msg len " << msg_len;
+  MS_LOG(INFO) << "End to send message to peer process, msg len " << msg_len;
   return kSuccess;
 }
 
@@ -190,7 +190,7 @@ Status MultiProcess::ReceiveMsg(const CreateBufferCall &create_buffer_call) cons
   uint8_t *msg_buffer = nullptr;
   uint64_t msg_len = 0;
   do {
-    MS_LOG_INFO << "Receive start from " << cur_offset;
+    MS_LOG(INFO) << "Receive start from " << cur_offset;
     while (!receive_msg_->read_ready_flag && !peer_stopped_) {
       (void)nanosleep(&kOneMillisecond, nullptr);  // 1ms
     }
@@ -211,7 +211,7 @@ Status MultiProcess::ReceiveMsg(const CreateBufferCall &create_buffer_call) cons
     cur_offset += receive_msg_->msg_len;
     receive_msg_->read_ready_flag = 0;
     receive_msg_->read_finish_flag = 1;
-    MS_LOG_INFO << "Receive end, current length " << cur_offset << ", total length " << msg_len << std::endl;
+    MS_LOG(INFO) << "Receive end, current length " << cur_offset << ", total length " << msg_len << std::endl;
   } while (msg_len > cur_offset);
   return kSuccess;
 }
@@ -225,7 +225,7 @@ void MultiProcess::HeartbeatThreadFuncInner() {
   while (!stopped_) {
     if (receive_msg_->stop) {
       peer_stopped_ = true;
-      MS_LOG_WARNING << "Peer stopped";
+      MS_LOG(WARNING) << "Peer stopped";
       break;
     }
     uint64_t heartbeat_gap = receive_msg_->heartbeat - last_beat_cnt;
@@ -236,7 +236,7 @@ void MultiProcess::HeartbeatThreadFuncInner() {
       repeat_cnt++;
       if (repeat_cnt > 30) {  // 30*100ms = 3s no reply
         peer_stopped_ = true;
-        MS_LOG_WARNING << "Peer stopped";
+        MS_LOG(WARNING) << "Peer stopped";
         break;
       }
     }

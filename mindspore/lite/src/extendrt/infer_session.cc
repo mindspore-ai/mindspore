@@ -85,7 +85,7 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context, bool u
       auto provider = gpu_device->GetProvider();
       if (provider.empty() || provider == default_gpu_provider) {
         if (!lite::TensorRTExecutorPlugin::GetInstance().Register()) {
-          MS_LOG_WARNING << "Failed to register TensorRT plugin";
+          MS_LOG(WARNING) << "Failed to register TensorRT plugin";
           return;
         }
         gpu_device->SetProvider(default_gpu_provider);
@@ -108,7 +108,7 @@ void InferSession::HandleContext(const std::shared_ptr<Context> &context, bool u
       auto provider = cpu_device->GetProvider();
       if (provider.empty() || provider == default_cpu_provider) {
         if (!infer::LiteRTExecutorPlugin::GetInstance().Register()) {
-          MS_LOG_WARNING << "Failed to register LiteRT plugin";
+          MS_LOG(WARNING) << "Failed to register LiteRT plugin";
           return;
         }
         cpu_device->SetProvider(default_cpu_provider);

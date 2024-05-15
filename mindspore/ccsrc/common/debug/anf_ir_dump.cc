@@ -781,8 +781,25 @@ void DumpShape(const AnfNodePtr &node, const FuncGraphPtr &sub_graph, const std:
 void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::shared_ptr<SubGraphIRInfo> &gsub) {
   auto dump_debug_info = debug_info;
   std::list<DebugInfoPtr> need_dump_debug_infos;
+  const auto &shadow_debug_infos_map = debug_info->shadow_debug_infos_map();
   while (dump_debug_info != nullptr) {
     need_dump_debug_infos.push_front(dump_debug_info);
+    auto iter = shadow_debug_infos_map.find(dump_debug_info);
+    if (iter != shadow_debug_infos_map.end()) {
+      DebugInfoPtr shadowed_debug_info = iter->first;
+      DebugInfoPtr shadow_debug_info = iter->second;
+      MS_LOG(DEBUG) << "Insert debug info, shadow_debug_info: " << shadow_debug_info << "/" << shadow_debug_info->name()
+                    << "/" << shadow_debug_info->debug_name() << "/"
+                    << trace::GetDebugInfoStr(shadow_debug_info, "", kSourceLineTipNextLine, true) << ", shadow_trace: "
+                    << (shadow_debug_info->trace_info() != nullptr ? shadow_debug_info->trace_info()->name() : "none")
+                    << ", shadowed_debug_info: " << shadowed_debug_info << "/" << shadowed_debug_info->name() << "/"
+                    << shadowed_debug_info->debug_name() << "/"
+                    << trace::GetDebugInfoStr(shadowed_debug_info, "", kSourceLineTipNextLine, true)
+                    << ", shadowed_trace: "
+                    << (shadowed_debug_info->trace_info() != nullptr ? shadowed_debug_info->trace_info()->name()
+                                                                     : "none");
+      need_dump_debug_infos.push_front(shadow_debug_info);
+    }
     if (dump_debug_info->trace_info() == nullptr) {
       break;
     }
@@ -791,9 +808,9 @@ void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::share
   HashSet<std::string> visited_locations;
   for (const auto &cur_debug_info : need_dump_debug_infos) {
     if (cur_debug_info->location() != nullptr) {
-      auto prefix = cur_debug_info->inlined() ? "      # inlined:" : "      # ";
       auto debug_info_str = trace::GetDebugInfoStr(cur_debug_info, "", kSourceLineTipDiscard);
       if (visited_locations.find(debug_info_str) == visited_locations.cend()) {
+        constexpr auto prefix = "      # ";
         gsub->buffer << prefix << debug_info_str << "\n";
         (void)visited_locations.insert(debug_info_str);
       }

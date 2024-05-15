@@ -755,7 +755,7 @@ int64_t GeGraphExecutor::GetSessionId() {
   }
   int64_t session_id = kUnkonwnSessionId;
   if (!lite::ConvertStrToInt(inner_group_id, &session_id)) {
-    MS_LOG_WARNING << "Failed to parse session_id " << inner_group_id << " to int64_t";
+    MS_LOG(WARNING) << "Failed to parse session_id " << inner_group_id << " to int64_t";
     return kUnkonwnSessionId;
   }
   return session_id;

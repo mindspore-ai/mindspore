@@ -161,7 +161,7 @@ class InlinerBase : public AnfVisitor {
       if (IsUniqueUse(nullptr, fg, nullptr)) {
         return InlineMove(node, fg, args, inputs);
       }
-      return InlineClone(fg, node->func_graph(), args, inputs[0]->scope(), cnode->debug_info());
+      return InlineClone(fg, node->func_graph(), args, cnode);
     }
 
     if (IsUniqueUse(nullptr, fg, nullptr)) {
@@ -185,7 +185,7 @@ class InlinerBase : public AnfVisitor {
       }
     }
     // Or, just make a clone for not single used fg.
-    auto res = InlineClone(fg, node->func_graph(), args, inputs[0]->scope(), cnode->debug_info());
+    auto res = InlineClone(fg, node->func_graph(), args, cnode);
     return res;
   }
 
@@ -235,9 +235,7 @@ class InlinerBase : public AnfVisitor {
     MS_EXCEPTION_IF_NULL(mng);
     ReplaceParams(mng, args, fg);
     auto out_node = fg->output();
-    const auto update_debug_info = MsContext::GetInstance()->get_param<int>(MS_CTX_DEBUG_LEVEL) == kLevelDebug ||
-                                   MsContext::GetInstance()->GetSaveGraphsLevel() > 0;
-    mng->MoveAllCNodeDropGraph(fg, node->func_graph(), node, inputs[0]->scope(), update_debug_info);
+    mng->MoveAllCNodeDropGraph(fg, node->func_graph(), node, inputs[0]->scope(), true);
     return out_node;
   }
 

@@ -249,8 +249,8 @@ void TensorRtOptimizer::RunOptimizer(const FuncGraphPtr &func_graph) {
     }
     auto resize_cnode = node->cast<CNodePtr>();
     if (common::AnfAlgo::GetInputNum(resize_cnode) != resize_input_size) {
-      MS_LOG_WARNING << "Input size " << common::AnfAlgo::GetInputNum(resize_cnode) << " of resize node "
-                     << resize_cnode->fullname_with_scope() << " != 2";
+      MS_LOG(WARNING) << "Input size " << common::AnfAlgo::GetInputNum(resize_cnode) << " of resize node "
+                      << resize_cnode->fullname_with_scope() << " != 2";
       continue;
     }
     if (OptResizeScales(func_graph, resize_cnode)) {

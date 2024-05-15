@@ -35,7 +35,7 @@ bool CheckAllFormatsSame(const DefaultIrBuilder *ib,
   }
   const auto &fmt_0 = inputs[0]->GetFormat();
   for (size_t i = 1; i < inputs.size(); i++) {
-    MS_LOG_INFO << i << "th format: " << inputs[i]->GetFormat();
+    MS_LOG(INFO) << i << "th format: " << inputs[i]->GetFormat();
     bool is_same = check == nullptr ? (inputs[i]->GetFormat() == fmt_0) : check(inputs[i]->GetFormat(), fmt_0);
     if (!is_same) {
       MS_LOG(INFO) << "The " << i << "th format: " << inputs[i]->GetFormat() << " is not same as 0th format: " << fmt_0
