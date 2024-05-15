@@ -63,6 +63,15 @@ static const std::set<AObject::Type> kMsSupportedType = {
 
 MemPool<AbstractObjectBase> AbstractObjectBase::aobject_mem_pool_(__FILE__, __LINE__, "AObject");
 
+AObjectSourceScope::AObjectSourceScope() {
+  // can't reentrant
+}
+
+AObjectSourceScope::~AObjectSourceScope() {
+  // release the resource
+  AbstractObjectBase::aobject_mem_pool_.Clear(__FILE__, __LINE__);
+}
+
 // exact equal check
 static const std::unordered_map<PyTypeObject *, AObject::Type> exact_type_map = {
   {&PyFunction_Type, AObject::kTypeFunction},
