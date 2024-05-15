@@ -35,23 +35,8 @@ namespace ops {
 BaseShapePtr MvFuncImpl::InferShape(const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto constexpr kMvInputNum = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(input_args.size()), kEqual, kMvInputNum,
-                                           primitive->name());
-  auto prim_name = primitive->name();
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
-  auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
-  if (x_shape_map.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name
-                      << "', input 'x' must be a Tensor type, but got:" << input_args[0]->ToString();
-  }
-  if (y_shape_map.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name
-                      << "', input 'y' must be a Tensor type, but got:" << input_args[1]->ToString();
-  }
-
-  auto x_shp = x_shape_map[kShape];
-  auto y_shp = y_shape_map[kShape];
+  auto x_shp = input_args[0]->GetShape()->GetShapeVector();
+  auto y_shp = input_args[1]->GetShape()->GetShapeVector();
   if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
     ShapeVector ret_shape = {};
     return std::make_shared<abstract::Shape>(ret_shape);
@@ -66,7 +51,7 @@ BaseShapePtr MvFuncImpl::InferShape(const PrimitivePtr &primitive,
     }
     if (y_shp.size() != kDim1) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                               << "', the input 'other' must be a 1D dimensional Tensor, but got " << y_shp.size()
+                               << "', the input 'vec' must be a 1D dimensional Tensor, but got " << y_shp.size()
                                << "D shape " << y_shp;
     }
     int64_t x_col = x_shp[1];
@@ -87,7 +72,7 @@ TypePtr MvFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<Abstra
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kBFloat16};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("input", input_args[0]->GetType());
-  (void)types.emplace("other", input_args[1]->GetType());
+  (void)types.emplace("vec", input_args[1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   return input_args[0]->GetType();
 }

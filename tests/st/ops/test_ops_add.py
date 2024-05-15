@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-from mindspore import ops
+from mindspore import ops, JitConfig
 from mindspore.nn import Cell
 from mindspore.ops.extend import add
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
@@ -183,6 +183,7 @@ def test_ops_bool(context_mode):
     ms.context.set_context(mode=context_mode)
 
     add_cell = AddCell()
+    add_cell.set_jit_config(JitConfig(jit_level='O0'))
 
     # 2 x 2
     x = np.array([[True, True], [False, False]], np.bool_)
