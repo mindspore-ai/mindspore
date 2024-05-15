@@ -43,13 +43,16 @@ class HcomMatMulAllReduceKernel : public HcclKernel {
   bool transpose_a_{false};
   bool transpose_b_{false};
 
-  std::shared_ptr<Lcal::Lcoc> lcoc_;
   Lcal::CoCDataTypeDesc lcoc_dtype_{Lcal::CoCDataTypeDesc::FP16FP16_FP32_FP16};
   Lcal::LcalType lcoc_type_{Lcal::LcalType::MATMUL_ALL_REDUCE};
   Lcal::QuantInfo quant_info_{};
   Lcal::CoCTiling tiling_{};
   Lcal::MatMulInfo matmul_info_{};
   Lcal::CoCParamDesc param_desc_{};
+
+  SetParamForLcocFunPtr set_param_for_lcoc_func_{nullptr};
+  GetLcocWorkspaceSizeFunPtr get_lcoc_workspace_func_{nullptr};
+  MatmulAllReduceFunPtr matmul_all_reduce_func_{nullptr};
 };
 
 MS_HCCL_REG_KERNEL(MatMulAllReduce, HcomMatMulAllReduceKernel);

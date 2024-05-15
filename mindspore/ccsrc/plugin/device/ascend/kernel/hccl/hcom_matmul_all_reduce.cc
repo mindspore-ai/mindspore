@@ -42,12 +42,26 @@ bool HcomMatMulAllReduceKernel::Init(const std::vector<KernelTensor *> &inputs,
   if (!HcomUtil::GetHcomAttr<bool>(primitive_, kAttrNameTransposeB, &transpose_b_)) {
     return false;
   }
-  lcoc_ = std::make_shared<Lcal::Lcoc>(*(lcal_comm_.get()));
+
   if (GetHcclDataType() != HCCL_DATA_TYPE_FP16 && GetHcclDataType() != HCCL_DATA_TYPE_BFP16) {
     MS_LOG(EXCEPTION) << "MatMulAllReduce only support data type fp16 or bf16.";
   }
   lcoc_dtype_ = (GetHcclDataType() == HCCL_DATA_TYPE_FP16) ? Lcal::CoCDataTypeDesc::FP16FP16_FP32_FP16
                                                            : Lcal::CoCDataTypeDesc::BF16BF16_FP32_BF16;
+
+  // Dynamic load lcoc symbols.
+  auto get_lcoc_func = DlsymFuncObj(CreateLcocForOp, lowlatency_comm_lib_handle_);
+  lcoc_ptr_ = get_lcoc_func(group_);
+  MS_EXCEPTION_IF_NULL(lcoc_ptr_);
+
+  set_param_for_lcoc_func_ = DlsymFuncObj(SetParamForLcoc, lowlatency_comm_lib_handle_);
+  MS_EXCEPTION_IF_NULL(set_param_for_lcoc_func_);
+
+  get_lcoc_workspace_func_ = DlsymFuncObj(GetLcocWorkspaceSize, lowlatency_comm_lib_handle_);
+  MS_EXCEPTION_IF_NULL(get_lcoc_workspace_func_);
+
+  matmul_all_reduce_func_ = DlsymFuncObj(MatmulAllReduce, lowlatency_comm_lib_handle_);
+  MS_EXCEPTION_IF_NULL(matmul_all_reduce_func_);
   return true;
 }
 
@@ -72,10 +86,10 @@ int HcomMatMulAllReduceKernel::Resize(const std::vector<KernelTensor *> &inputs,
   param_desc_.mmInfo = matmul_info_;
   param_desc_.quantInfo = quant_info_;
   param_desc_.op = op_type_;
+  set_param_for_lcoc_func_(lcoc_ptr_, lcoc_type_, tiling_, param_desc_);
 
-  lcoc_->SetParam(lcoc_type_, tiling_, param_desc_);
   workspace_size_list_.clear();
-  workspace_size_list_.push_back(lcoc_->GetWorkspaceSize());
+  workspace_size_list_.push_back(get_lcoc_workspace_func_(lcoc_ptr_));
   return KRET_OK;
 }
 
@@ -97,7 +111,8 @@ bool HcomMatMulAllReduceKernel::Launch(const std::vector<KernelTensor *> &inputs
   Lcal::CoCInputPkg coc_input_args = {
     inputs[0]->device_ptr(), inputs[1]->device_ptr(), nullptr, nullptr, nullptr, nullptr, nullptr};
   Lcal::CoCOutputPkg coc_output_args = {outputs[0]->device_ptr(), nullptr};
-  auto lccl_result = lcoc_->MatmulAllReduce(coc_input_args, coc_output_args, workspace[0]->device_ptr(), stream_ptr);
+  auto lccl_result =
+    matmul_all_reduce_func_(lcoc_ptr_, coc_input_args, coc_output_args, workspace[0]->device_ptr(), stream_ptr);
   if (lccl_result != Lcal::LCAL_SUCCESS) {
     MS_LOG(EXCEPTION) << "LCOC MatmulAllReduce failed.";
   }

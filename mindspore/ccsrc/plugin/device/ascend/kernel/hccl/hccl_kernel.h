@@ -35,12 +35,6 @@
 
 namespace mindspore {
 namespace kernel {
-#ifdef ENABLE_INTERNAL_KERNELS
-using LcclPtr = mindspore::device::ascend::LcclPtr;
-using LcalCommPtr = mindspore::device::ascend::LcalCommPtr;
-using LowlatencyCollectiveCommLib = mindspore::device::ascend::LowlatencyCollectiveCommLib;
-#endif
-
 using CollectiveCommunicationLib = mindspore::device::CollectiveCommunicationLib;
 using CollectiveCommLibLoader = mindspore::device::CollectiveCommLibLoader;
 class HcclKernel : public KernelMod {
@@ -86,9 +80,9 @@ class HcclKernel : public KernelMod {
 #ifdef ENABLE_INTERNAL_KERNELS
   // The LCCL collective communication library.
   void LoadLcclLibrary();
-  LowlatencyCollectiveCommLib *collective_comm_lib_{nullptr};
-  LcclPtr lccl_comm_{nullptr};
-  LcalCommPtr lcal_comm_{nullptr};
+  void *lowlatency_comm_lib_handle_{nullptr};
+  LcclPtr lccl_ptr_{nullptr};
+  LcocPtr lcoc_ptr_{nullptr};
 #endif
 };
 

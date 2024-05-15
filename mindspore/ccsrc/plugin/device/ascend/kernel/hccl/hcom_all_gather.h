@@ -28,11 +28,15 @@ class HcomAllGatherKernel : public HcclKernel {
   HcomAllGatherKernel() = default;
   ~HcomAllGatherKernel() override = default;
 
-  /* Inherit from kernelmod */
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
  private:
+#ifdef ENABLE_INTERNAL_KERNELS
+  AllGatherFunPtr lccl_all_gather_func_;
+#endif
 };
 MS_HCCL_REG_KERNEL(AllGather, HcomAllGatherKernel);
 }  // namespace kernel

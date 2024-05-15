@@ -21,8 +21,20 @@
 
 namespace mindspore {
 namespace kernel {
-#define CURRENT_TIMESTAMP_MILLI \
-  (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()))
+bool HcomAllReduceKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  bool ret = HcclKernel::Init(inputs, outputs);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Failed to init HcomAllReduceKernel";
+  }
+#ifdef ENABLE_INTERNAL_KERNELS
+  if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {
+    lccl_all_reduce_func_ = DlsymFuncObj(AllReduce, lowlatency_comm_lib_handle_);
+    MS_EXCEPTION_IF_NULL(lccl_all_reduce_func_);
+  }
+#endif
+  return true;
+}
+
 bool HcomAllReduceKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_LOG(DEBUG) << "HcclAllReduce launch";
@@ -37,7 +49,7 @@ bool HcomAllReduceKernel::Launch(const std::vector<KernelTensor *> &inputs, cons
 
 #ifdef ENABLE_INTERNAL_KERNELS
   if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {
-    auto lccl_result = lccl_comm_->AllReduce(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
+    auto lccl_result = lccl_all_reduce_func_(lccl_ptr_, inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
                                              hccl_data_type_list_[0], op_type_, stream_ptr);
     if (lccl_result != Lcal::LCAL_SUCCESS) {
       MS_LOG(EXCEPTION) << "LCCL AllReduce failed.";

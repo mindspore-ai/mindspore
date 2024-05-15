@@ -301,16 +301,12 @@ void HcclKernel::LoadLcclLibrary() {
   if (!loader->Initialize()) {
     MS_LOG(EXCEPTION) << "Loading LCCL collective library failed.";
   }
-  void *collective_comm_lib_handle = loader->collective_comm_lib_ptr();
-  MS_EXCEPTION_IF_NULL(collective_comm_lib_handle);
+  lowlatency_comm_lib_handle_ = loader->collective_comm_lib_ptr();
+  MS_EXCEPTION_IF_NULL(lowlatency_comm_lib_handle_);
 
-  auto instance_func = DlsymFuncObj(communication_lib_instance, collective_comm_lib_handle);
-  collective_comm_lib_ = dynamic_cast<LowlatencyCollectiveCommLib *>(instance_func());
-  MS_EXCEPTION_IF_NULL(collective_comm_lib_);
-  lccl_comm_ = collective_comm_lib_->LcclCommunicator(group_);
-  MS_EXCEPTION_IF_NULL(lccl_comm_);
-  lcal_comm_ = collective_comm_lib_->LcalCommunicator(group_);
-  MS_EXCEPTION_IF_NULL(lcal_comm_);
+  auto get_lccl_func = DlsymFuncObj(LcclCommunicator, lowlatency_comm_lib_handle_);
+  lccl_ptr_ = get_lccl_func(group_);
+  MS_EXCEPTION_IF_NULL(lccl_ptr_);
 }
 #endif
 }  // namespace kernel
