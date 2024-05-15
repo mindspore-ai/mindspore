@@ -18,6 +18,7 @@ add_library(kernels-image OBJECT
     cut_out_op.cc
     cutmix_batch_op.cc
     decode_op.cc
+    decode_video_op.cc
     equalize_op.cc
     erase_op.cc
     gaussian_blur_op.cc

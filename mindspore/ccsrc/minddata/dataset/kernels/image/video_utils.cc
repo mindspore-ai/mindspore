@@ -30,12 +30,19 @@ extern "C" {
 #endif
 #endif
 
+#include <limits>
+#include <map>
+#include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "utils/file_utils.h"
+
+const int32_t MAX_AVIO_BUFFER_SIZE = 1073741824;
 
 namespace mindspore {
 namespace dataset {
@@ -48,6 +55,7 @@ struct MediaContainer {
   AVFrame *frame = nullptr;
   int64_t frame_number = 0;
   float frame_rate = 1.0;
+  int64_t samples_count = 0;
 
   AVStream *stream = nullptr;
   int stream_index = -1;
@@ -87,6 +95,12 @@ struct MediaContainer {
   }
 };
 
+struct TensorData {
+  const uint8_t *ptr;
+  // size left in the tensor
+  size_t size;
+};
+
 struct AudioVisual {
   AVFormatContext *avformat = nullptr;
   AVPacket *packet = nullptr;
@@ -94,6 +108,7 @@ struct AudioVisual {
   // for audio
   struct MediaContainer audio;
   AVSampleFormat sample_format = AV_SAMPLE_FMT_NONE;
+  int sample_rate = 1;
   int64_t nb_samples = 0;
   SwrContext *audio_conversion = nullptr;
 
@@ -107,10 +122,20 @@ struct AudioVisual {
   int visual_aligned_linesize[kMaxImageChannel] = {0, 0, 0, 0};
   uint8_t *visual_unaligned_buffer = nullptr;
 
+  // for DecodeVideo op
+  struct TensorData tensor_data = {nullptr, 0};
+  uint8_t *avio_context_buffer = nullptr;
+  AVIOContext *avio_context = nullptr;
+
   // for debug and the log_level of FFMPEG
   int av_log_level = AV_LOG_FATAL;
 
   ~AudioVisual() {
+    if (avio_context) {
+      av_freep(&avio_context->buffer);
+      avio_context_free(&avio_context);
+    }
+
     if (packet) {
       av_packet_free(&packet);
       packet = nullptr;
@@ -144,6 +169,77 @@ struct AudioVisual {
     }
   }
 };
+
+int avio_read_buffer(void *opaque, uint8_t *buf, int buf_size) {
+  struct TensorData *tensor_data = (struct TensorData *)opaque;
+  buf_size = FFMIN(buf_size, tensor_data->size);
+  if (!buf_size) {
+    return AVERROR_EOF;
+  }
+  memcpy_s(buf, buf_size, tensor_data->ptr, buf_size);
+  tensor_data->ptr += buf_size;
+  tensor_data->size -= buf_size;
+  return buf_size;
+}
+
+Status AVOpenMemoryRead(const TensorRow &input, struct AudioVisual *avinfo) {
+  std::string err_msg;
+  if (input.size() != 1) {
+    err_msg = "The input has invalid size " + std::to_string(input.size());
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  if (input[0]->type() != DataType::DE_UINT8) {
+    err_msg = "The type of the elements of input data should be UINT8, but got " + input[0]->type().ToString() + ".";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  int64_t data_size = input[0]->Size();
+  if (data_size >= kDeMaxDim || data_size <= 0) {
+    err_msg = "The input[0] has invalid size " + std::to_string(data_size);
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  const uint8_t *data_buffer;
+  data_buffer = (const uint8_t *)input[0]->GetBuffer();
+  avinfo->tensor_data.ptr = data_buffer;
+  avinfo->tensor_data.size = data_size;
+
+  // Allocate the avformat
+  avinfo->avformat = avformat_alloc_context();
+  if (avinfo->avformat == nullptr) {
+    err_msg = "Failed to call avformat_alloc_context().";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  // Set the flags so that it will discard corrupt frames
+  avinfo->avformat->flags |= AVFMT_FLAG_DISCARD_CORRUPT;
+
+  int avio_buffer_size = FFMIN(data_size, MAX_AVIO_BUFFER_SIZE);
+  avinfo->avio_context_buffer = reinterpret_cast<uint8_t *>(av_malloc(avio_buffer_size));
+  if (avinfo->avio_context_buffer == nullptr) {
+    err_msg = "Failed to allocate buffer for avio_context";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  avinfo->avio_context = avio_alloc_context(avinfo->avio_context_buffer, avio_buffer_size, 0, &avinfo->tensor_data,
+                                            &avio_read_buffer, NULL, NULL);
+  if (avinfo->avio_context == nullptr) {
+    err_msg = "Failed to allocate avio_context";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  avinfo->avformat->pb = avinfo->avio_context;
+
+  // Open the input from memory
+  if (avformat_open_input(&(avinfo->avformat), nullptr, nullptr, nullptr) < 0) {
+    err_msg = "Failed to open the input.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  // Find all the streams
+  if (avformat_find_stream_info(avinfo->avformat, nullptr) < 0) {
+    err_msg = "Failed to find stream information.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  return Status::OK();
+}
 
 // Check the filename and open it by FFMPEG
 Status AVOpenFile(const std::string &filename, struct AudioVisual *avinfo) {
@@ -1266,6 +1362,25 @@ Status AVReadVisualAudio(struct AudioVisual *avinfo, std::shared_ptr<Tensor> *vi
   return Status::OK();
 }
 
+Status DecodeVideo(const TensorRow &input, TensorRow *output) {
+  std::shared_ptr<Tensor> visual_output;
+  std::shared_ptr<Tensor> audio_output;
+  std::map<std::string, std::string> metadata_output;
+
+  struct AudioVisual avinfo;
+  av_log_set_level(avinfo.av_log_level);
+  RETURN_IF_NOT_OK(AVOpenMemoryRead(input, &avinfo));
+
+  RETURN_IF_NOT_OK(PrepareRead(&avinfo, 0, INT_MAX, "pts"));
+
+  // Read the packets
+  RETURN_IF_NOT_OK(AVReadVisualAudio(&avinfo, &visual_output, &audio_output));
+
+  output->emplace_back(visual_output);
+  output->emplace_back(audio_output);
+  return Status::OK();
+}
+
 Status ReadVideo(const std::string &filename, std::shared_ptr<Tensor> *video_output,
                  std::shared_ptr<Tensor> *audio_output, std::map<std::string, std::string> *metadata_output,
                  float start_pts, float end_pts, const std::string &pts_unit) {
@@ -1351,6 +1466,11 @@ Status ReadVideoTimestamps(const std::string &filename, std::vector<int64_t> *pt
   return AVReadVisualPts(&avinfo, pts_int64_vector, video_fps, time_base);
 }
 #else
+Status DecodeVideo(const TensorRow &input, TensorRow *output) {
+  std::string err_msg = "DecodeVideo is not supported.";
+  return Status(StatusCode::kMDNotImplementedYet, err_msg);
+}
+
 Status ReadVideo(const std::string &filename, std::shared_ptr<Tensor> *visual_output,
                  std::shared_ptr<Tensor> *audio_output, std::map<std::string, std::string> *metadata_output,
                  float start_pts, float end_pts, const std::string &pts_unit) {

@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -99,6 +99,22 @@ class ImageTensorOperation(TensorOperation):
     def parse(self):
         # Note: subclasses must implement `def parse(self)` so do not make ImageTensorOperation's parse a staticmethod.
         raise NotImplementedError("ImageTensorOperation has to implement parse() method.")
+
+
+class VideoTensorOperation(TensorOperation):
+    """
+    Base class of Video Tensor Ops
+    """
+
+    def __call__(self, *input_tensor_list):
+        for tensor in input_tensor_list:
+            if not isinstance(tensor, np.ndarray):
+                raise TypeError(
+                    "Input should be ndarray, got {}.".format(type(tensor)))
+        return super().__call__(*input_tensor_list)
+
+    def parse(self):
+        raise NotImplementedError("VideoTensorOperation has to implement parse() method.")
 
 
 class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
@@ -1652,6 +1668,56 @@ class Decode(ImageTensorOperation, PyTensorOperation):
             img (NumPy, PIL Image), Decoded image.
         """
         return util.decode(img)
+
+
+class DecodeVideo(VideoTensorOperation):
+    """
+    Decode the input raw video bytes.
+
+    Supported video formats: AVI, H264, H265, MOV, MP4, WMV.
+
+    Raises:
+        RuntimeError: If the input ndarray is not 1D array.
+        RuntimeError: If data type of the elements is not uint8.
+        RuntimeError: If the input ndarray is empty.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
+        >>>
+        >>> # Use the transform in dataset pipeline mode
+        >>> # Custom class to generate and read video dataset
+        >>> class VideoDataset:
+        ...     def __init__(self, file_list):
+        ...         self.file_list = file_list
+        ...
+        ...     def __getitem__(self, index):
+        ...         filename = self.file_list[index]
+        ...         return np.fromfile(filename, np.uint8)
+        ...
+        ...     def __len__(self):
+        ...         return len(self.file_list)
+        >>>
+        >>> dataset = ds.GeneratorDataset(VideoDataset(["/path/to/video/file"]), ["data"])
+        >>> decode_video = vision.DecodeVideo()
+        >>> dataset = dataset.map(operations=[decode_video], input_columns=["data"], output_columns=["video", "audio"])
+        >>>
+        >>> # Use the transform in eager mode
+        >>> filename = "/path/to/video/file"
+        >>> raw_ndarray = np.fromfile(filename, np.uint8)
+        >>> mindspore_output = vision.DecodeVideo()(raw_ndarray)
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.implementation = Implementation.C
+
+    def parse(self):
+        return cde.DecodeVideoOperation()
 
 
 class Equalize(ImageTensorOperation, PyTensorOperation):

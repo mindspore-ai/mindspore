@@ -441,6 +441,36 @@ class DATASET_API CutOut final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Decode the input video.
+class DATASET_API DecodeVideo final : public TensorTransform {
+ public:
+  /// \brief Constructor. It will decode a vector containing a raw video tensor into a vector containing two tensors.
+  ///     The raw video tensor in the input vector should be 1D array of UINT8.
+  ///     The first tensor in the output vector is a visual tensor, the shape is <T,H,W,C>, the type is DE_UINT8. Pixel
+  ///     order is RGB. The second tensor in the output vector is an audio tensor, the shape is <C, L>.
+  /// \par Example
+  /// \code
+  ///     /* Read video file into tensor */
+  ///     mindspore::MSTensor video;
+  ///     ASSERT_OK(mindspore::dataset::vision::ReadFile("/path/to/video/file", &video));
+  ///     std::vector<mindspore::MSTensor> input_tensor;
+  ///     std::vector<mindspore::MSTensor> output_tensor;
+  ///     input_tensor.push_back(video);
+  ///     auto decode_video = vision::DecodeVideo();
+  ///     auto transform = Execute(decode_video);
+  ///     Status rc = transform(input_tensor, &output_tensor);
+  /// \endcode
+  DecodeVideo();
+
+  /// \brief Destructor.
+  ~DecodeVideo() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+};
+
 /// \brief Encode the image as JPEG data.
 /// \param[in] image The image to be encoded.
 /// \param[out] output The Tensor data.

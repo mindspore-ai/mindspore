@@ -122,6 +122,7 @@ API样例中常用的导入模块如下：
     mindspore.dataset.vision.CutMixBatch
     mindspore.dataset.vision.CutOut
     mindspore.dataset.vision.Decode
+    mindspore.dataset.vision.DecodeVideo
     mindspore.dataset.vision.Equalize
     mindspore.dataset.vision.Erase
     mindspore.dataset.vision.FiveCrop
