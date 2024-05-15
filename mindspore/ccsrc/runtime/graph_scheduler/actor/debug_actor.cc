@@ -100,12 +100,25 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
 #ifdef ENABLE_DEBUGGER
     auto debugger = Debugger::GetInstance();
     if (debugger != nullptr) {
-      auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
-      debugger->InsertExecutedGraph(kernel_graph);
-      debugger->SetAscendKernelByKernelFlag(true);
-      bool read_data = CheckReadData(cnode);
-      if (read_data && DumpJsonParser::GetInstance().e2e_dump_enabled()) {
-        ReadDataAndDump(cnode, launch_info, exec_order_, device_context);
+      if (DumpJsonParser::GetInstance().op_debug_mode() == 3) {
+        auto is_overflow = CheckOverflow(device_context, op_output_kernel_tensors);
+        if (is_overflow) {
+          auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
+          debugger->InsertExecutedGraph(kernel_graph);
+          debugger->SetAscendKernelByKernelFlag(true);
+          bool read_data = CheckReadData(cnode);
+          if (read_data && DumpJsonParser::GetInstance().e2e_dump_enabled()) {
+            ReadDataAndDump(cnode, launch_info, exec_order_, device_context);
+          }
+        }
+      } else {
+        auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
+        debugger->InsertExecutedGraph(kernel_graph);
+        debugger->SetAscendKernelByKernelFlag(true);
+        bool read_data = CheckReadData(cnode);
+        if (read_data && DumpJsonParser::GetInstance().e2e_dump_enabled()) {
+          ReadDataAndDump(cnode, launch_info, exec_order_, device_context);
+        }
       }
     }
     exec_order_ += 1;
@@ -267,8 +280,16 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
 #endif
 }
 
-bool DebugActor::CheckFinite(const DeviceContext *device_context, const std::vector<KernelTensor *> &inputs) {
-  if (inputs.empty()) {
+bool DebugActor::CheckOverflow(const DeviceContext *device_context, const std::vector<KernelTensor *> &inputs) {
+  std::vector<KernelTensor *> check_kernel_tensors;
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto types = inputs[i]->dtype_id();
+    if (types == mindspore::kNumberTypeFloat16 || types == mindspore::kNumberTypeFloat32 ||
+        types == mindspore::kNumberTypeBFloat16) {
+      check_kernel_tensors.push_back(inputs[i]);
+    }
+  }
+  if (check_kernel_tensors.empty()) {
     return false;
   }
   MS_EXCEPTION_IF_NULL(device_context);
@@ -288,8 +309,8 @@ bool DebugActor::CheckFinite(const DeviceContext *device_context, const std::vec
   MS_EXCEPTION_IF_NULL(finite_kernel_mod);
 
   // 2. Get output kernel tensor for AllFinite kernel.
-  MS_EXCEPTION_IF_NULL(inputs[0]);
-  const auto &stream_id = inputs[0]->stream_id();
+  MS_EXCEPTION_IF_NULL(check_kernel_tensors[0]);
+  const auto &stream_id = check_kernel_tensors[0]->stream_id();
   auto &stream_id_to_output_device_address = finite_output_device_addresses_[device_context];
   if (stream_id_to_output_device_address.find(stream_id) == stream_id_to_output_device_address.end()) {
     auto finite_output_addr = device_context->device_res_manager_->AllocateMemory(1, stream_id);
@@ -313,7 +334,7 @@ bool DebugActor::CheckFinite(const DeviceContext *device_context, const std::vec
 
   void *stream_ptr = device_context->device_res_manager_->GetStream(stream_id);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  bool ret = finite_kernel_mod->Launch(inputs, {}, {output_kernel_tensor.get()}, stream_ptr);
+  bool ret = finite_kernel_mod->Launch(check_kernel_tensors, {}, {output_kernel_tensor.get()}, stream_ptr);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Launch AllFinite kernel failed.";
   }
