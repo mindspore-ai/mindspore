@@ -236,9 +236,7 @@ class MS_CORE_API MsContext {
   bool IsSupportDevice(const std::string &device) const { return InitFuncMap().find(device) != InitFuncMap().end(); }
 
   bool IsEnableInferBoost();
-  void SetMsEnableInternalFusionList(const std::string &infer_boost_level);
-  void SetMsInternalEnableCustomKernelList(const std::string &infer_boost_level);
-  std::vector<std::string> ms_enable_internal_fusion_list() const;
+  void SetMsInternalEnableCustomKernelList();
   std::vector<std::string> ms_internal_enable_custom_kernel_list() const;
 
   void RegisterSetEnv(const EnvFunc &func);
@@ -329,7 +327,6 @@ class MS_CORE_API MsContext {
   bool not_convert_jit_{false};
 
   std::optional<bool> enable_infer_boost_ = std::nullopt;
-  std::vector<std::string> ms_enable_internal_fusion_list_;
   std::vector<std::string> ms_internal_enable_custom_kernel_list_;
 };
 
