@@ -2,6 +2,7 @@ approvers:
 - zh_qh #
 - ginfung
 - chenfei52
+- liangzhibo
 
 reviewers:
 - lanzhineng
@@ -15,3 +16,54 @@ reviewers:
 
 options:
     no_parent_owners: true
+
+files:
+  "tensor.*":
+    approvers:
+    - chujinjin
+    - hwcaifubi
+    - zjun3021
+    - zh_qh
+    - ginfung
+    - chenfei52
+    - liangzhibo
+
+  "base_tensor.*":
+    approvers:
+    - chujinjin
+    - hwcaifubi
+    - zjun3021
+    - zh_qh
+    - ginfung
+    - chenfei52
+    - liangzhibo
+
+  "meta_tensor.*":
+    approvers:
+    - chujinjin
+    - hwcaifubi
+    - zjun3021
+    - zh_qh
+    - ginfung
+    - chenfei52
+    - liangzhibo
+
+  "meta_grad_data.h":
+    approvers:
+    - chujinjin
+    - hwcaifubi
+    - zjun3021
+    - zh_qh
+    - ginfung
+    - chenfei52
+    - liangzhibo
+
+  "tensor_storage_info.h":
+    approvers:
+    - chujinjin
+    - hwcaifubi
+    - zjun3021
+    - zh_qh
+    - ginfung
+    - chenfei52
+    - liangzhibo
