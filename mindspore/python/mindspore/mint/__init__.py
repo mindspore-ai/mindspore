@@ -243,6 +243,9 @@ from mindspore.ops.extend import baddbmm as baddbmm_ex
 # 157
 from mindspore.ops.function.array_func import scatter
 
+# 275
+from mindspore.ops.function.math_func import remainder_ext as remainder
+
 # 285
 from mindspore.ops.function.array_func import scatter_add_ext as scatter_add
 
@@ -511,6 +514,8 @@ __all__ = [
     'baddbmm',
     # 157
     'scatter',
+    # 275
+    'remainder',
     # 285
     'scatter_add',
     # 304
