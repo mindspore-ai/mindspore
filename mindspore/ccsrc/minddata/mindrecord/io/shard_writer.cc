@@ -565,11 +565,26 @@ Status ShardWriter::WriteRawDataPreCheck(std::map<uint64_t, std::vector<json>> &
                                          std::vector<std::vector<uint8_t>> &blob_data, bool sign, int *schema_count,
                                          int *row_count) {
   // check the free disk size
-  std::shared_ptr<uint64_t> size_ptr;
-  RETURN_IF_NOT_OK_MR(GetDiskSize(file_paths_[0], kFreeSize, &size_ptr));
-  CHECK_FAIL_RETURN_UNEXPECTED_MR(
-    *size_ptr >= kMinFreeDiskSize,
-    "No free disk to be used while writing mindrecord files, available free disk size: " + std::to_string(*size_ptr));
+  std::string env_free_disk_check = common::GetEnv("MS_FREE_DISK_CHECK");
+  transform(env_free_disk_check.begin(), env_free_disk_check.end(), env_free_disk_check.begin(), ::tolower);
+  bool free_disk_check = true;
+  if (env_free_disk_check == "false") {
+    free_disk_check = false;
+    MS_LOG(INFO) << "environment MS_FREE_DISK_CHECK is false, free disk checking will be turned off.";
+  } else if (env_free_disk_check == "true" || env_free_disk_check == "") {
+    free_disk_check = true;
+    MS_LOG(INFO) << "environment MS_FREE_DISK_CHECK is true, free disk checking will be turned on.";
+  } else {
+    MS_LOG(WARNING) << "environment MS_FREE_DISK_CHECK: " << env_free_disk_check
+                    << " is configured wrong, free disk checking will be turned on.";
+  }
+  if (free_disk_check) {
+    std::shared_ptr<uint64_t> size_ptr;
+    RETURN_IF_NOT_OK_MR(GetDiskSize(file_paths_[0], kFreeSize, &size_ptr));
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(
+      *size_ptr >= kMinFreeDiskSize,
+      "No free disk to be used while writing mindrecord files, available free disk size: " + std::to_string(*size_ptr));
+  }
   // compress blob
   if (shard_column_->CheckCompressBlob()) {
     for (auto &blob : blob_data) {
