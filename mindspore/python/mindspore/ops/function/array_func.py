@@ -1429,7 +1429,7 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False, side=
 
     validator.check_value_type("out_int32", out_int32, [bool], "search_sorted")
     validator.check_value_type("right", right, [bool], "search_sorted")
-    dtype = mstype.int64 if not out_int32 else mstype.int32
+    dtype = mstype.int32 if bool(out_int32) else mstype.int64
     if (side == "left" and right is True):
         raise ValueError(f"For 'searchsorted', side and right can't be set to opposites,"
                          f"got side of left while right was True.")
