@@ -13,6 +13,16 @@ Array Operation
 
     mindspore.mint.sort
 
+Element-wise Operation
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.abs
+
 mindspore.mint.nn
 ------------------
 
