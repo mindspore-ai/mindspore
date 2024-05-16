@@ -55,6 +55,7 @@
 #include "acldvppop/acldvpp_normalize.h"
 #include "acldvppop/acldvpp_pad.h"
 #include "acldvppop/acldvpp_resize.h"
+#include "acldvppop/acldvpp_rotate.h"
 #include "acldvppop/acldvpp_vertical_flip.h"
 #include "acldvppop/acldvpp_warp_affine.h"
 #include "acldvppop/acldvpp_warp_perspective.h"
@@ -1718,6 +1719,111 @@ APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
   if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Call acldvppVerticalFlip failed, error code: " + std::to_string(ret) + ".";
     return APP_ERR_DVPP_VERTICAL_FLIP_FAIL;
+  }
+
+  *output = std::move(device_tensor);  // currently the data is still in device
+  return APP_ERR_OK;
+}
+
+APP_ERROR DvppRotate(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                     std::shared_ptr<DeviceTensorAscend910B> *output, float degrees, InterpolationMode mode,
+                     bool expand, const std::vector<float> &center, std::vector<float> fill) {
+  MS_LOG(DEBUG) << "Begin execute dvpp rotate.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // the input should be 1HWC or 1CHW
+  if (input->GetShape().Rank() != 4) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // the channel should be equal to 3 or 1
+  if (input->GetShape().AsVector()[3] != 3 && input->GetShape().AsVector()[3] != 1) {
+    MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC or 1CHW.";  // N == 1
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // the type is uint8 / float
+  if (input->GetType() != DataType::DE_UINT8 && input->GetType() != DataType::DE_FLOAT32) {
+    MS_LOG(ERROR) << "The input data is not uint8 or float32";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // create the output shape and type, it's 1HWC or 1CHW
+  TensorShape shape = input->GetShape();
+  DataType type = input->GetType();
+
+  // convert InterpolationMode mode to DVPP mode
+  auto dvpp_interpolation_mode = GetDVPPRotateMode(mode);
+  if (dvpp_interpolation_mode == kInvalidRotateMode) {
+    std::string err_msg =
+      "The current InterpolationMode is not supported by DVPP. It is " + std::to_string(static_cast<int>(mode));
+    MS_LOG(ERROR) << err_msg;
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // convert to the dvpp type
+  std::vector<int64_t> center_data = {static_cast<int>(center[0]), static_cast<int>(center[1])};
+  aclIntArray *dvpp_center = aclCreateIntArray(center_data.data(), center_data.size());
+  aclFloatArray *dvpp_fill = aclCreateFloatArray(fill.data(), fill.size());
+
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor, true) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // call DVPP step1
+  uint64_t workspace_size = 0;
+  aclOpExecutor *executor;
+  auto ret = acldvppRotateGetWorkspaceSize(
+    reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), degrees, dvpp_interpolation_mode, expand, dvpp_center,
+    dvpp_fill, reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()), &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppRotateGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // call DVPP step2
+  void *workspace_addr = nullptr;
+  if (workspace_size > 0) {
+    // create new device address for data copy
+    workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
+    if (workspace_addr == nullptr) {
+      MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+      return APP_ERR_DVPP_ROTATE_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppRotate(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
+      return APP_ERR_DVPP_ROTATE_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppRotate(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+  }
+
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppRotate failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_ROTATE_FAIL;
   }
 
   *output = std::move(device_tensor);  // currently the data is still in device

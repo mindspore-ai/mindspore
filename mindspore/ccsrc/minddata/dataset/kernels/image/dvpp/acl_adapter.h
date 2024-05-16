@@ -138,6 +138,10 @@ class AclAdapter {
                             int32_t width, int32_t output_height, int32_t output_width,
                             InterpolationMode interpolation);
 
+  APP_ERROR DvppRotate(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output, float degrees, InterpolationMode mode,
+                       bool expand, const std::vector<float> &center, std::vector<float> fill);
+
   APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
                              std::shared_ptr<DeviceTensorAscend910B> *output);
 
@@ -220,6 +224,7 @@ class AclAdapter {
   DvppPerspectiveFunObj dvpp_perspective_fun_obj_;
   DvppResizeFunObj dvpp_resize_fun_obj_;
   DvppResizedCropFunObj dvpp_resized_crop_fun_obj_;
+  DvppRotateFunObj dvpp_rotate_fun_obj_;
   DvppVerticalFlipFunObj dvpp_vertical_flip_fun_obj_;
 
   // acl interface

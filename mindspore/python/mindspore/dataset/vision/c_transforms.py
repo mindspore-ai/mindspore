@@ -2422,7 +2422,7 @@ class Rotate(ImageTensorOperation):
 
     def parse(self):
         return cde.RotateOperation(self.degrees, DE_C_INTER_MODE.get(self.resample), self.expand, self.center,
-                                   self.fill_value)
+                                   self.fill_value, "CPU")
 
 
 class SlicePatches(ImageTensorOperation):

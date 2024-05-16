@@ -133,6 +133,10 @@ PLUGIN_METHOD(DvppResizedCrop, int, const std::shared_ptr<mindspore::dataset::De
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, int32_t, int32_t, int32_t, int32_t,
               int32_t, int32_t, mindspore::dataset::InterpolationMode);
 
+PLUGIN_METHOD(DvppRotate, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, float,
+              mindspore::dataset::InterpolationMode, bool, const std::vector<float> &, std::vector<float>);
+
 PLUGIN_METHOD(DvppVerticalFlip, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *);
 // acl
