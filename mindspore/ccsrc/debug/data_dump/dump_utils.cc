@@ -88,10 +88,12 @@ void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *
       MS_EXCEPTION_IF_NULL(value_node);
       auto node_value = value_node->value();
       MS_EXCEPTION_IF_NULL(node_value);
-      auto tensor = node_value->cast<tensor::TensorPtr>();
-      if (tensor == nullptr) {
-        MS_LOG(WARNING) << " The node[ " << node->DebugString() << "]'s cannot convert, skip to GetDumpIntShape.";
-        return;
+      if (!node_value->isa<Scalar>() && !node_value->isa<StringImm>() && !node_value->isa<ValueSequence>()) {
+        auto tensor = node_value->cast<tensor::TensorPtr>();
+        if (tensor == nullptr) {
+          MS_LOG(WARNING) << " The node[ " << node->DebugString() << "]'s cannot convert, skip to GetDumpIntShape.";
+          return;
+        }
       }
     }
     *int_shapes = trans::GetRuntimePaddingShape(node, index);
