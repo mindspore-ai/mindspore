@@ -58,9 +58,6 @@ void AclDumpJsonWriter::Parse() {
   }
   layer_ = kernels;
   auto op_debug_mode = dump_parser.op_debug_mode();
-  if (op_debug_mode >= 1 && op_debug_mode <= 3) {
-    MS_LOG(EXCEPTION) << "When ACL dump is enabled, overflow dump is not supported.";
-  }
   MS_LOG(INFO) << "Op_debug_mode is: " << op_debug_mode;
   switch (op_debug_mode) {
     case 0:
@@ -92,7 +89,14 @@ bool AclDumpJsonWriter::WriteToFile(uint32_t device_id, uint32_t step_id, bool i
   }
   std::string dump_path = dump_base_path_ + "/" + std::to_string(step_id);
   nlohmann::json dump;
-  if (dump_scene_ == "overflow") {
+  if (dump_scene_ == "lite_exception") {
+    dump = {{"dump_scene", "lite_exception"}};
+  } else if (dump_scene_ == "overflow") {
+    auto real_path = FileUtils::CreateNotExistDirs(dump_path, false);
+    if (!real_path.has_value()) {
+      MS_LOG(WARNING) << "Fail to create acl dump dir " << real_path.value();
+      return false;
+    }
     dump = {{"dump_path", dump_path}, {"dump_debug", "on"}};
   } else {
     if (is_init == True) {
