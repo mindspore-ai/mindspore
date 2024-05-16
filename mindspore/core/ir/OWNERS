@@ -47,3 +47,23 @@ files:
     - ginfung
     - chenfei52
     - liangzhibo
+
+  "meta_grad_data.h":
+    approvers:
+    - chujinjin
+    - hwcaifubi
+    - zjun3021
+    - zh_qh
+    - ginfung
+    - chenfei52
+    - liangzhibo
+
+  "tensor_storage_info.h":
+    approvers:
+    - chujinjin
+    - hwcaifubi
+    - zjun3021
+    - zh_qh
+    - ginfung
+    - chenfei52
+    - liangzhibo
