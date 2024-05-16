@@ -242,6 +242,9 @@ from mindspore.ops.extend import baddbmm as baddbmm_ex
 # 157
 from mindspore.ops.function.array_func import scatter
 
+# 232
+from mindspore.ops.function.math_func import isclose
+
 # 275
 from mindspore.ops.function.math_func import remainder_ext as remainder
 
@@ -513,6 +516,8 @@ __all__ = [
     'baddbmm',
     # 157
     'scatter',
+    # 232
+    'isclose',
     # 275
     'remainder',
     # 285

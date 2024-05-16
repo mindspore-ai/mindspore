@@ -51,6 +51,7 @@ class IsCloseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   float rtol_{1e-5};
   float atol_{1e-8};
   bool equal_nan_{true};
+  static const std::vector<std::pair<KernelAttr, IsCloseCpuKernelMod::KernelRunFunc>> func_list_;
 
   // Broadcast related.
   std::vector<size_t> index_list1_{};

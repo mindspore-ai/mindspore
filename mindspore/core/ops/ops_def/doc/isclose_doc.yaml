@@ -1,0 +1,42 @@
+isclose:
+  description: |
+    Returns a tensor of Boolean values indicating whether two input tensors
+    are element-wise equal within a given tolerance.
+    
+    .. math::
+        |input-other| <= atol + rtol * |other|
+  
+    Args:
+        input (Tensor): First tensor to compare. 
+            - Support dtype: float16, float32, float64, int8, int16, int32, int64 and uint8.
+            - On Ascned, more dtypes are support: bool and bfloat16.
+        other (Tensor): Second tensor to compare. Dtype must be same as `input`.
+        rtol (float, optional): Relative tolerance. Default: ``1e-05`` .
+        atol (float, optional): Absolute tolerance. Default: ``1e-08`` .
+        equal_nan (bool, optional): If ``True`` , then two NaNs will be considered equal. Default: ``False``.
+    
+    Outputs:
+        Tensor, with the same shape as `input` and `other` after broadcasting, its dtype is bool.
+    
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    
+    Raises:
+        - **TypeError** - `input` or `other` is not Tensor.
+        - **TypeError** - `input` or `other` dtype is not support.
+        - **TypeError** - `atol` or `rtol` is not float, int or bool.
+        - **TypeError** - `equal_nan` is not bool.
+        - **TypeError** - `input` and `other` have different dtypes.
+        - **ValueError** - `input` and `other` cannot broadcast.
+    
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import IsClose
+        >>> input = Tensor(np.array([1.3, 2.1, 3.2, 4.1, 5.1]), mindspore.float16)
+        >>> other = Tensor(np.array([1.3, 3.3, 2.3, 3.1, 5.1]), mindspore.float16)
+        >>> isclose = IsClose()
+        >>> output = isclose(input, other)
+        >>> print(output)
+        [ True False False False  True]
