@@ -41,6 +41,7 @@ namespace mindspore {
 namespace dataset {
 const int kInvalidInterpolationMode = 100;
 const int kInvalidPaddingMode = 101;
+const int kInvalidRotateMode = 102;
 
 /// \brief Convert InterpolationMode to dvpp mode
 inline int GetDVPPInterpolationMode(InterpolationMode mode) {
@@ -71,6 +72,18 @@ inline uint32_t GetDVPPPaddingMode(BorderType type) {
       return 3;  // dvpp Symmetric
     default:
       return kInvalidPaddingMode;
+  }
+}
+
+/// \brief Convert Rotate InterpolationMode to dvpp mode
+inline uint32_t GetDVPPRotateMode(InterpolationMode mode) {
+  switch (mode) {
+    case InterpolationMode::kLinear:
+      return 0;  // dvpp BILINEAR
+    case InterpolationMode::kNearestNeighbour:
+      return 1;  // dvpp NEAREST
+    default:
+      return kInvalidRotateMode;
   }
 }
 
@@ -228,6 +241,13 @@ APP_ERROR DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
 /// \param output: Filpped image Tensor of same input shape (type DE_FLOAT32 and DE_UINT8)
 APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
                            std::shared_ptr<DeviceTensorAscend910B> *output);
+
+/// \brief Returns rotate image.
+/// \param input: Tensor of shape <N,H,W,C>, c == 1 or c == 3
+/// \param output: Rotate image Tensor (type DE_FLOAT32 or DE_UINT8).
+APP_ERROR DvppRotate(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                     std::shared_ptr<DeviceTensorAscend910B> *output, float degrees, InterpolationMode mode,
+                     bool expand, const std::vector<float> &center, std::vector<float> fill);
 
 APP_ERROR GetSocName(std::string *soc_name);
 

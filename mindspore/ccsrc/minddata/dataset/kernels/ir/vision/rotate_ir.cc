@@ -19,6 +19,10 @@
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_rotate_op.h"
+#endif
+
 namespace mindspore {
 namespace dataset {
 namespace vision {
@@ -32,13 +36,15 @@ RotateOperation::RotateOperation(FixRotationAngle angle)
       fill_value_({}) {}
 
 RotateOperation::RotateOperation(float degrees, InterpolationMode resample, bool expand,
-                                 const std::vector<float> &center, const std::vector<uint8_t> &fill_value)
+                                 const std::vector<float> &center, const std::vector<uint8_t> &fill_value,
+                                 const std::string &device_target)
     : angle_id_(0),
       degrees_(degrees),
       interpolation_mode_(resample),
       expand_(expand),
       center_(center),
-      fill_value_(fill_value) {}
+      fill_value_(fill_value),
+      device_target_(device_target) {}
 
 RotateOperation::~RotateOperation() = default;
 
@@ -62,6 +68,11 @@ Status RotateOperation::ValidateParams() {
   }
   // fill_value
   RETURN_IF_NOT_OK(ValidateVectorFillvalue("Rotate", fill_value_));
+  // device target
+  if (device_target_ != "CPU" && device_target_ != "Ascend") {
+    std::string err_msg = "Pad: Invalid device target. It's not CPU or Ascend.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
 #else
   if (angle_id_ < 1 || angle_id_ > 8) {
     std::string err_msg = "Rotate: angle_id must be in range of [1, 8], got: " + std::to_string(angle_id_);
@@ -84,9 +95,20 @@ std::shared_ptr<TensorOp> RotateOperation::Build() {
     fill_b = fill_value_[2];
   }
 
-  std::shared_ptr<RotateOp> tensor_op =
-    std::make_shared<RotateOp>(degrees_, interpolation_mode_, expand_, center_, fill_r, fill_g, fill_b);
-  return tensor_op;
+  if (device_target_ == "CPU") {
+    std::shared_ptr<RotateOp> tensor_op =
+      std::make_shared<RotateOp>(degrees_, interpolation_mode_, expand_, center_, fill_r, fill_g, fill_b);
+    return tensor_op;
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  } else if (device_target_ == "Ascend") {
+    std::shared_ptr<DvppRotateOp> dvpp_tensor_op = std::make_shared<DvppRotateOp>(
+      degrees_, interpolation_mode_, expand_, center_, fill_r, fill_g, fill_b);  // need change shenwei
+    return dvpp_tensor_op;
+#endif
+  } else {
+    MS_LOG(ERROR) << "Rotate: Invalid device target. It's not CPU or Ascend.";
+    return nullptr;
+  }
 #else
   rotate_op_ = std::make_shared<RotateOp>(0);
   setAngle(angle_id_);
@@ -103,6 +125,7 @@ Status RotateOperation::to_json(nlohmann::json *out_json) {
   args["expand"] = expand_;
   args["center"] = center_;
   args["fill_value"] = fill_value_;
+  args["device_target"] = device_target_;
 #else
   args["angle_id"] = angle_id_;
 #endif
@@ -118,6 +141,7 @@ Status RotateOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tens
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "expand", kRotateOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "center", kRotateOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kRotateOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "device_target", kRotateOperation));
   float degrees = op_params["degree"];
   auto resample = static_cast<InterpolationMode>(op_params["resample"]);
   bool expand = op_params["expand"];
@@ -137,6 +161,17 @@ Status RotateOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tens
 
 void RotateOperation::setAngle(uint64_t angle_id) {
   std::dynamic_pointer_cast<RotateOp>(rotate_op_)->setAngle(angle_id);
+}
+
+MapTargetDevice PadOperation::Type() {
+  if (device_target_ == "CPU") {
+    return MapTargetDevice::kCpu;
+  } else if (device_target_ == "Ascend") {
+    return MapTargetDevice::kAscend910B;
+  } else {
+    MS_LOG(ERROR) << "Pad: Invalid device target. It's not CPU or Ascend.";
+    return MapTargetDevice::kInvalid;
+  }
 }
 }  // namespace vision
 }  // namespace dataset

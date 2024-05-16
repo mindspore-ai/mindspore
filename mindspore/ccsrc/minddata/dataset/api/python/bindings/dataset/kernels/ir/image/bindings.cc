@@ -854,9 +854,10 @@ PYBIND_REGISTER(RotateOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RotateOperation, TensorOperation, std::shared_ptr<vision::RotateOperation>>(
                     *m, "RotateOperation")
                     .def(py::init([](float degrees, InterpolationMode resample, bool expand,
-                                     const std::vector<float> &center, const std::vector<uint8_t> &fill_value) {
-                      auto rotate =
-                        std::make_shared<vision::RotateOperation>(degrees, resample, expand, center, fill_value);
+                                     const std::vector<float> &center, const std::vector<uint8_t> &fill_value,
+                                     const std::string &device_target) {
+                      auto rotate = std::make_shared<vision::RotateOperation>(degrees, resample, expand, center,
+                                                                              fill_value, device_target);
                       THROW_IF_ERROR(rotate->ValidateParams());
                       return rotate;
                     }));

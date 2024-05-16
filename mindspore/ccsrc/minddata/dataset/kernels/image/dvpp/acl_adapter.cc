@@ -120,6 +120,7 @@ void AclAdapter::InitPlugin() {
   dvpp_perspective_fun_obj_ = DlsymFuncObj(DvppPerspective, plugin_handle_);
   dvpp_resize_fun_obj_ = DlsymFuncObj(DvppResize, plugin_handle_);
   dvpp_resized_crop_fun_obj_ = DlsymFuncObj(DvppResizedCrop, plugin_handle_);
+  dvpp_rotate_fun_obj_ = DlsymFuncObj(DvppRotate, plugin_handle_);
   dvpp_saturation_fun_obj_ = DlsymFuncObj(DvppAdjustSaturation, plugin_handle_);
   dvpp_vertical_flip_fun_obj_ = DlsymFuncObj(DvppVerticalFlip, plugin_handle_);
 
@@ -193,6 +194,7 @@ void AclAdapter::FinalizePlugin() {
   dvpp_perspective_fun_obj_ = nullptr;
   dvpp_resize_fun_obj_ = nullptr;
   dvpp_resized_crop_fun_obj_ = nullptr;
+  dvpp_rotate_fun_obj_ = nullptr;
   dvpp_saturation_fun_obj_ = nullptr;
   dvpp_vertical_flip_fun_obj_ = nullptr;
 
@@ -623,6 +625,15 @@ APP_ERROR AclAdapter::DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend91
   }
   return dvpp_resized_crop_fun_obj_(input, output, top, left, height, width, output_height, output_width,
                                     interpolation);
+}
+
+APP_ERROR AclAdapter::DvppRotate(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<DeviceTensorAscend910B> *output, float degrees, InterpolationMode mode,
+                                 bool expand, const std::vector<float> &center, std::vector<float> fill) {
+  if (!HasAclPlugin() || dvpp_rotate_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_rotate_fun_obj_(input, output, degrees, mode, expand, center, fill);
 }
 
 APP_ERROR AclAdapter::DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,

@@ -464,6 +464,19 @@ APP_ERROR PluginDvppResizedCrop(const std::shared_ptr<mindspore::dataset::Device
   return DvppResizedCrop(input, output, top, left, height, width, output_height, output_width, mode);
 }
 
+APP_ERROR PluginDvppRotate(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                           std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, float degrees,
+                           mindspore::dataset::InterpolationMode mode, bool expand, const std::vector<float> &center,
+                           std::vector<float> fill) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppRotate(input, output, degrees, mode, expand, center, fill);
+}
+
 APP_ERROR PluginDvppVerticalFlip(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                                  std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output) {
   if (input == nullptr) {
