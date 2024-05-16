@@ -384,6 +384,7 @@ class MatMulOp : public OpaqueOp {
   ~MatMulOp() = default;
 
  protected:
+  void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
   std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
   std::vector<TypeId> InferType(const NodePtrList &inputs, const DAttrs &attrs) override;
 };

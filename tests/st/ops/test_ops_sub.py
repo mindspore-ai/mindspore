@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-from mindspore import ops
+from mindspore import ops, JitConfig
 from mindspore.nn import Cell
 from mindspore.ops.extend import sub
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
@@ -178,3 +178,29 @@ def test_ops_bf16(context_mode):
 
     np.testing.assert_allclose(output, expect, rtol=rtol)
     del os.environ["GRAPH_OP_RUN"]
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_bool(context_mode):
+    """
+    Feature: test sub backward
+    Description: test sub backward
+    Expectation: success
+    """
+    ms.context.set_context(mode=context_mode)
+
+    sub_cell = SubCell()
+    sub_cell.set_jit_config(JitConfig(jit_level='O0'))
+
+    # 2 x 2
+    x = np.array([[True, True], [False, False]], np.bool_)
+    y = np.array([[True, False], [True, False]], np.bool_)
+    alpha = True
+
+    output = ops.grad(sub_cell, (0))(ms.tensor(x), ms.tensor(y), alpha).asnumpy()
+    expect = np.ones_like(y)
+
+    np.testing.assert_allclose(output, expect, rtol=rtol)
