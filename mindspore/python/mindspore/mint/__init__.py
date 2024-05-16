@@ -15,7 +15,6 @@
 """mint module."""
 from __future__ import absolute_import
 from mindspore.ops.extend import gather, max, min, one_hot, bmm, conv2d
-from mindspore.ops.extend import array_func, math_func, nn_func
 from mindspore.mint.nn.functional import *
 from mindspore.mint.nn import functional
 from mindspore.ops import erf, where, tril, triu
@@ -522,8 +521,9 @@ __all__ = [
     'tril',
     # 305
     'triu',
+    'gather',
+    'max',
+    'min',
+    'bmm'
 ]
-__all__.extend(array_func.__all__)
-__all__.extend(math_func.__all__)
-__all__.extend(nn_func.__all__)
 __all__.extend(functional.__all__)
