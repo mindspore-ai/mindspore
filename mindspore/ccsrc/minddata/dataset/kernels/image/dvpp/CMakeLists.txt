@@ -24,6 +24,7 @@ set(DVPP_IMAGE_SOURCE
         ascend910b/dvpp_adjust_hue_op.cc
         ascend910b/dvpp_adjust_saturation_op.cc
         ascend910b/dvpp_affine_op.cc
+        ascend910b/dvpp_auto_contrast_op.cc
         ascend910b/dvpp_crop_op.cc
         ascend910b/dvpp_decode_op.cc
         ascend910b/dvpp_equalize_op.cc
