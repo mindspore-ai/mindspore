@@ -16,3 +16,34 @@ reviewers:
 
 options:
     no_parent_owners: true
+
+files:
+  "tensor.*":
+    approvers:
+    - chujinjin
+    - hwcaifubi
+    - zjun3021
+    - zh_qh
+    - ginfung
+    - chenfei52
+    - liangzhibo
+
+  "base_tensor.*":
+    approvers:
+    - chujinjin
+    - hwcaifubi
+    - zjun3021
+    - zh_qh
+    - ginfung
+    - chenfei52
+    - liangzhibo
+
+  "meta_tensor.*":
+    approvers:
+    - chujinjin
+    - hwcaifubi
+    - zjun3021
+    - zh_qh
+    - ginfung
+    - chenfei52
+    - liangzhibo
