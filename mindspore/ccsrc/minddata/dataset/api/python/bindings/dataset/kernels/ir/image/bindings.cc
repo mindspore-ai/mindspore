@@ -183,8 +183,8 @@ PYBIND_REGISTER(
   AutoContrastOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::AutoContrastOperation, TensorOperation, std::shared_ptr<vision::AutoContrastOperation>>(
       *m, "AutoContrastOperation")
-      .def(py::init([](float cutoff, const std::vector<uint32_t> &ignore) {
-        auto auto_contrast = std::make_shared<vision::AutoContrastOperation>(cutoff, ignore);
+      .def(py::init([](float cutoff, const std::vector<uint32_t> &ignore, const std::string &device_target) {
+        auto auto_contrast = std::make_shared<vision::AutoContrastOperation>(cutoff, ignore, device_target);
         THROW_IF_ERROR(auto_contrast->ValidateParams());
         return auto_contrast;
       }));

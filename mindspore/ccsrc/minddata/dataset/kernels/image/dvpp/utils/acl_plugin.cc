@@ -343,6 +343,18 @@ APP_ERROR PluginDvppAffine(const std::shared_ptr<mindspore::dataset::DeviceTenso
   return DvppAffine(input, output, matrix, interpolation_mode, padding_mode, fill);
 }
 
+APP_ERROR PluginDvppAutoContrast(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
+                                 const std::vector<float> &cutoff, const std::vector<uint32_t> &ignore) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppAutoContrast(input, output, cutoff, ignore);
+}
+
 APP_ERROR PluginDvppCrop(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                          std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, uint32_t top,
                          uint32_t left, uint32_t height, uint32_t width) {

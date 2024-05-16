@@ -97,6 +97,10 @@ PLUGIN_METHOD(DvppAffine, int, const std::shared_ptr<mindspore::dataset::DeviceT
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, const std::vector<float> &, uint32_t,
               uint32_t, const std::vector<float> &);
 
+PLUGIN_METHOD(DvppAutoContrast, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, const std::vector<float> &,
+              const std::vector<uint32_t> &);
+
 PLUGIN_METHOD(DvppCrop, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, uint32_t, uint32_t, uint32_t, uint32_t);
 

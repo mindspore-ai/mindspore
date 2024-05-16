@@ -283,7 +283,7 @@ class AutoContrast(ImageTensorOperation):
         self.ignore = ignore
 
     def parse(self):
-        return cde.AutoContrastOperation(self.cutoff, self.ignore)
+        return cde.AutoContrastOperation(self.cutoff, self.ignore, "CPU")
 
 
 class BoundingBoxAugment(ImageTensorOperation):

@@ -107,6 +107,7 @@ void AclAdapter::InitPlugin() {
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
   // Ascend910B
   dvpp_affine_fun_obj_ = DlsymFuncObj(DvppAffine, plugin_handle_);
+  dvpp_auto_contrast_fun_obj_ = DlsymFuncObj(DvppAutoContrast, plugin_handle_);
   dvpp_brightness_fun_obj_ = DlsymFuncObj(DvppAdjustBrightness, plugin_handle_);
   dvpp_contrast_fun_obj_ = DlsymFuncObj(DvppAdjustContrast, plugin_handle_);
   dvpp_crop_fun_obj_ = DlsymFuncObj(DvppCrop, plugin_handle_);
@@ -181,6 +182,7 @@ void AclAdapter::FinalizePlugin() {
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
   // Ascend910B
   dvpp_affine_fun_obj_ = nullptr;
+  dvpp_auto_contrast_fun_obj_ = nullptr;
   dvpp_brightness_fun_obj_ = nullptr;
   dvpp_contrast_fun_obj_ = nullptr;
   dvpp_crop_fun_obj_ = nullptr;
@@ -533,6 +535,15 @@ APP_ERROR AclAdapter::DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &
     return APP_ERR_ACL_FAILURE;
   }
   return dvpp_affine_fun_obj_(input, output, matrix, interpolation_mode, padding_mode, fill);
+}
+
+APP_ERROR AclAdapter::DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                       std::shared_ptr<DeviceTensorAscend910B> *output,
+                                       const std::vector<float> &cutoff, const std::vector<uint32_t> &ignore) {
+  if (!HasAclPlugin() || dvpp_auto_contrast_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_auto_contrast_fun_obj_(input, output, cutoff, ignore);
 }
 
 APP_ERROR AclAdapter::DvppCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,

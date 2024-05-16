@@ -137,6 +137,15 @@ APP_ERROR DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &input,
                      std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &matrix,
                      uint32_t interpolation_mode, uint32_t padding_mode, const std::vector<float> &fill);
 
+/// \brief Returns image with contrast maximized.
+/// \param input: Tensor of shape <H,W,C> format.
+/// \param output: Transformed image Tensor (type DE_FLOAT32 or DE_UINT8).
+/// \param cutoff: cutoff percentage of how many pixels are to be removed from the high and low ends of the histogram.
+/// \param ignore: pixel values to be ignored in the algorithm.
+APP_ERROR DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                           std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &cutoff,
+                           const std::vector<uint32_t> &ignore);
+
 /// \brief Returns croped image.
 /// \param input: Tensor of shape <H,W,C> format.
 /// \param output: Croped image Tensor (type DE_FLOAT32 or DE_UINT8).
