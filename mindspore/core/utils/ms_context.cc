@@ -591,25 +591,44 @@ void MsContext::SetAscendConfig() {
   set_param<std::string>(MS_CTX_GE_OPTIONS, "");
 }
 
-std::vector<std::string> SplitString(const std::string &str, char delim) {
+inline void SplitString(const std::string &str, char delim, std::set<std::string> *output_list) {
   std::stringstream ss(str);
   std::string item;
-  std::vector<std::string> elems;
   while (std::getline(ss, item, delim)) {
     if (!item.empty()) {
-      elems.push_back(item);
+      output_list->emplace(item);
     }
   }
-  return elems;
+}
+
+inline std::string SetToString(const std::set<std::string> &kernel_list) {
+  std::string out = "";
+  for (auto &name : kernel_list) {
+    out.append(name).append(", ");
+  }
+  return out;
 }
 
 void MsContext::SetMsInternalEnableCustomKernelList() {
+  const std::string kDefaultEnabledOpList =
+    "MatMul,RmsNorm,Add,Sub,FlashAttentionScore,PagedAttention,AddRmsNorm,AddLayerNorm";
+  auto internal_op_boost_env = common::GetEnv("MS_ENABLE_INTERNAL_BOOST");
+  bool is_enalbe_internal_op = true;
+  if (internal_op_boost_env == "off") {
+    is_enalbe_internal_op = false;
+  }
+
+  ms_internal_enable_custom_kernel_list_.clear();
+  if (is_enalbe_internal_op) {
+    SplitString(kDefaultEnabledOpList, ',', &ms_internal_enable_custom_kernel_list_);
+  }
+
   std::string env = common::GetEnv("MS_INTERNAL_ENABLE_CUSTOM_KERNEL_LIST");
   if (!env.empty()) {
-    ms_internal_enable_custom_kernel_list_ = SplitString(env, ',');
-    MS_LOG(INFO) << "MS internal enable custom kernel list is " << ms_internal_enable_custom_kernel_list_;
-    return;
+    SplitString(env, ',', &ms_internal_enable_custom_kernel_list_);
   }
+
+  MS_LOG(INFO) << "Enable internal kernel list: " << SetToString(ms_internal_enable_custom_kernel_list_);
 }
 
 bool MsContext::IsEnableInferBoost() {
@@ -637,7 +656,7 @@ bool MsContext::IsEnableInferBoost() {
   return enable_infer_boost_.value();
 }
 
-std::vector<std::string> MsContext::ms_internal_enable_custom_kernel_list() const {
+const std::set<std::string> &MsContext::ms_internal_enable_custom_kernel_list() const {
   return ms_internal_enable_custom_kernel_list_;
 }
 

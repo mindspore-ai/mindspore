@@ -27,7 +27,7 @@ bool MultiMatmulsFusion::Run(const FuncGraphPtr &graph) {
     return false;
   }
 
-  std::vector<std::string> enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
+  auto enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
   bool enable_matmul_qkv =
     (std::find(enable_op_list.begin(), enable_op_list.end(), kMatmulQkvOpName) != enable_op_list.end());
   bool enable_matmul_ffn =
