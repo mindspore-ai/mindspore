@@ -555,6 +555,15 @@ class AssignParser(Parser):
             logger.info(f"Ignore mindspore function '{func_scope_name}'.")
             self.insert_callfunction_node(func_scope_name, node_name, None, function_object, False)
             return
+        # process staticmethod functions
+        if function_object.__qualname__.count('.') > 0:
+            logger.info(f"Ignore staticmethod function '{func_scope_name}'({function_object.__qualname__}).")
+            first_scope = func_scope_name.scope.split('.')[0]
+            if first_scope and first_scope not in ('self', self.stree.get_opt_cls_name()):
+                # import class when class of staticmethod function is not current class
+                self._add_import(function_object.__qualname__.split('.')[0])
+            self.insert_callfunction_node(func_scope_name, node_name, None, function_object, False)
+            return
         # get ast.FunctionDef
         source_code = inspect.getsource(function_object)
         ast_functiondef = ast.parse(dedent(source_code)).body[0]
@@ -664,6 +673,7 @@ class AssignParser(Parser):
             if inspect.ismethod(method_object):
                 self.process_class_method(func_scope_name, func_name, method_object)
             else:
+                # staticmethod object
                 self.process_function(func_scope_name, func_name, method_object, False)
             return
         # Local variable

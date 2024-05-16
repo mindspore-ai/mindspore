@@ -114,7 +114,8 @@ class ClassDefParser(Parser):
             if key.startswith('__'):
                 # ignore inner functions
                 continue
-            if callable(value) and key in function_defs:
+            # when value is staticmethod type, type(value) is callable
+            if (callable(value) or callable(type(value))) and key in function_defs:
                 # ignore functions defined by self
                 continue
             assign_code = f"self.__class__.{key} = obj.__class__.{key}"

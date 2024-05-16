@@ -437,3 +437,38 @@ def test_closure_func():
     assert codes.count("import closure_func") == 1, codes
     assert codes.count("def closure_func(x):") == 0, codes
     assert codes.count("def inner_func(x):") == 0, codes
+
+
+class StaticMethodNet(nn.Cell):
+    @staticmethod
+    def func(x):
+        return x
+
+
+class StaticMethodMainNet(nn.Cell):
+    def construct(self, x):
+        x = self.func(x)
+        x = StaticMethodMainNet.func(x)
+        x = StaticMethodNet.func(x)
+        return x
+
+    @staticmethod
+    def func(x):
+        return x
+
+def test_staticmethod_func():
+    """
+    Feature: Python Rewrite api.
+    Description: Test rewrite process staticmethod function.
+    Expectation: Success.
+    """
+    net = StaticMethodMainNet()
+    y0 = net(Tensor(1))
+    stree = SymbolTree.create(net)
+    codes = stree.get_code()
+    assert codes.count("x = self.func(x)") == 1, codes
+    assert codes.count("x = StaticMethodMainNetOpt.func(x)") == 1, codes
+    assert codes.count("x = StaticMethodNet.func(x):") == 0, codes
+    new_net = stree.get_network()
+    y = new_net(Tensor(1))
+    assert y0 == y
