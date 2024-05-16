@@ -3,6 +3,7 @@ from mindspore import Tensor
 from mindspore.rewrite import SymbolTree
 import mindspore.nn as nn
 import mindspore as ms
+from . import models
 from .models import BaseNet, NoCellNet, NetWithClassVar
 
 
@@ -26,8 +27,8 @@ def test_one_father_class(mode):
     y0 = net(Tensor(1))
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class NetAOpt(NetA, BaseNetOpt):") == 1
-    assert codes.count("class BaseNetOpt(BaseNet, nn.Cell):") == 1
+    assert codes.count("class NetAOpt(NetA, BaseNetFOpt):") == 1
+    assert codes.count("class BaseNetFOpt(BaseNet, nn.Cell):") == 1
     new_net = stree.get_network()
     y = new_net(Tensor(1))
     assert y == y0
@@ -54,9 +55,9 @@ def test_two_level_father_classes(mode):
     y0 = net(Tensor(1))
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class NetBOpt(NetB, NetAOpt):") == 1, codes
-    assert codes.count("class NetAOpt(NetA, BaseNetOpt):") == 1, codes
-    assert codes.count("class BaseNetOpt(BaseNet, nn.Cell):") == 1, codes
+    assert codes.count("class NetBOpt(NetB, NetAFOpt):") == 1, codes
+    assert codes.count("class NetAFOpt(NetA, BaseNetFOpt):") == 1, codes
+    assert codes.count("class BaseNetFOpt(BaseNet, nn.Cell):") == 1, codes
     new_net = stree.get_network()
     y = new_net(Tensor(1))
     assert y == y0
@@ -98,9 +99,9 @@ def test_two_level_father_classes_in_tree(mode):
     stree = SymbolTree.create(net)
     codes = stree.get_code()
     assert codes.count("class NetCOpt(NetC, nn.Cell):") == 1
-    assert codes.count("class NetB1Opt(NetB1, NetAOpt):") == 1
-    assert codes.count("class NetAOpt(NetA, BaseNetOpt):") == 1
-    assert codes.count("class BaseNetOpt(BaseNet, nn.Cell):") == 1
+    assert codes.count("class NetB1Opt(NetB1, NetAFOpt):") == 1
+    assert codes.count("class NetAFOpt(NetA, BaseNetFOpt):") == 1
+    assert codes.count("class BaseNetFOpt(BaseNet, nn.Cell):") == 1
     new_net = stree.get_network()
     y = new_net(Tensor(1))
     assert y == y0
@@ -133,9 +134,9 @@ def test_two_father_classes_one_not_cell(mode):
     y0 = net(Tensor(1))
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class NetDOpt(NetD, BaseNetOpt, NoCellNetOpt):") == 1
-    assert codes.count("class NoCellNetOpt(NoCellNet):") == 1
-    assert codes.count("class BaseNetOpt(BaseNet, nn.Cell):") == 1
+    assert codes.count("class NetDOpt(NetD, BaseNetFOpt, NoCellNetFOpt):") == 1
+    assert codes.count("class NoCellNetFOpt(NoCellNet):") == 1
+    assert codes.count("class BaseNetFOpt(BaseNet, nn.Cell):") == 1
     new_net = stree.get_network()
     y = new_net(Tensor(1))
     assert y == y0
@@ -214,10 +215,10 @@ def test_father_classes_with_class_var(mode):
     y0 = net(Tensor(1))
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class NetFOpt(NetF, BaseNetOpt, NoCellNetOpt, NetWithClassVarOpt):") == 1
-    assert codes.count("class NoCellNetOpt(NoCellNet):") == 1
-    assert codes.count("class BaseNetOpt(BaseNet, nn.Cell):") == 1
-    assert codes.count("class NetWithClassVarOpt(NetWithClassVar):") == 1
+    assert codes.count("class NetFOpt(NetF, BaseNetFOpt, NoCellNetFOpt, NetWithClassVarFOpt):") == 1
+    assert codes.count("class NoCellNetFOpt(NoCellNet):") == 1
+    assert codes.count("class BaseNetFOpt(BaseNet, nn.Cell):") == 1
+    assert codes.count("class NetWithClassVarFOpt(NetWithClassVar):") == 1
     assert codes.count("var1 = Tensor(1.0)") == 0
     assert codes.count("var2 = external_func") == 0
     assert codes.count("var3 = external_func2") == 0
@@ -334,3 +335,36 @@ def test_father_classes_has_two_bases(mode):
     net = stree.get_network()
     y = net(Tensor(1))
     assert y == y0
+
+
+class FatherNet3(models.FatherNet3):
+    def add_x(self, x):
+        x = x + x
+        return x
+
+class MyNet3(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+        self.father_net = FatherNet3()
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = self.father_net(x)
+        return x
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
+def test_father_class_with_repeat_name(mode):
+    """
+    Feature: Test Rewrite.
+    Description: Test Rewrite when father class has same name with child class.
+    Expectation: Success.
+    """
+    net = MyNet3()
+    y0 = net(Tensor(1))
+    stree = SymbolTree.create(net)
+    net = stree.get_network()
+    y = net(Tensor(1))
+    assert y0 == y

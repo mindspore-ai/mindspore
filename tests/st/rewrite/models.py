@@ -69,3 +69,13 @@ class NetWithClassVar():
         # test instance variable
         x = x + self.a
         return x
+
+
+class FatherNet3(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        return x

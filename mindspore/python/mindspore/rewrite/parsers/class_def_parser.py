@@ -164,7 +164,7 @@ class ClassDefParser(Parser):
                 father_classes[idx] = astunparse.unparse(base).strip()
                 continue
             # update father class name
-            father_class_name_opt = f"{father_class_name}Opt"
+            father_class_name_opt = f"{father_class_name}FOpt"
             father_classes[idx] = father_class_name_opt
             ClassDefParser._process_one_father_class(stree, father_class_type, father_class_name, father_class_name_opt)
             node.bases[idx] = ast.Name(id=father_class_name_opt, ctx=ast.Load())
@@ -176,7 +176,7 @@ class ClassDefParser(Parser):
         # get father class's ast
         source_code = inspect.getsource(class_type)
         class_ast: ast.ClassDef = ast.parse(dedent(source_code)).body[0]
-        # update class name from xxx to xxxOpt
+        # update class name from xxx to xxxFOpt
         replacer = AstReplacer(class_ast)
         replacer.replace_all(class_name_ori, class_name_opt)
         # process father class's father classes
