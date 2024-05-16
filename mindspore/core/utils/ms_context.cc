@@ -591,27 +591,54 @@ void MsContext::SetAscendConfig() {
   set_param<std::string>(MS_CTX_GE_OPTIONS, "");
 }
 
+std::vector<std::string> SplitString(const std::string &str, char delim) {
+  std::stringstream ss(str);
+  std::string item;
+  std::vector<std::string> elems;
+  while (std::getline(ss, item, delim)) {
+    if (!item.empty()) {
+      elems.push_back(item);
+    }
+  }
+  return elems;
+}
+
+void MsContext::SetMsInternalEnableCustomKernelList() {
+  std::string env = common::GetEnv("MS_INTERNAL_ENABLE_CUSTOM_KERNEL_LIST");
+  if (!env.empty()) {
+    ms_internal_enable_custom_kernel_list_ = SplitString(env, ',');
+    MS_LOG(INFO) << "MS internal enable custom kernel list is " << ms_internal_enable_custom_kernel_list_;
+    return;
+  }
+}
+
 bool MsContext::IsEnableInferBoost() {
-  if (enalbe_infer_boost_.has_value()) {
-    return enalbe_infer_boost_.value();
+  if (enable_infer_boost_.has_value()) {
+    return enable_infer_boost_.value();
   }
 
   const auto &jit_config = PhaseManager::GetInstance().jit_config();
   auto iter = jit_config.find("infer_boost");
   if (iter != jit_config.end() && iter->second == "on") {
-    enalbe_infer_boost_ = true;
+    enable_infer_boost_ = true;
     MS_LOG(INFO) << "MSContext enable ms infer boost from JitConfig";
-    return enalbe_infer_boost_.value();
+    SetMsInternalEnableCustomKernelList();
+    return enable_infer_boost_.value();
   }
 
   if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "on") {
-    enalbe_infer_boost_ = true;
+    enable_infer_boost_ = true;
     MS_LOG(INFO) << "MSContext enable ms infer boost from Env";
+    SetMsInternalEnableCustomKernelList();
   } else {
-    enalbe_infer_boost_ = false;
+    enable_infer_boost_ = false;
   }
 
-  return enalbe_infer_boost_.value();
+  return enable_infer_boost_.value();
+}
+
+std::vector<std::string> MsContext::ms_internal_enable_custom_kernel_list() const {
+  return ms_internal_enable_custom_kernel_list_;
 }
 
 template MS_CORE_API void MsContext::CheckReadStatus<bool>(MsCtxParam, const bool &) const;

@@ -15,18 +15,28 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fusion/multi_matmuls_fusion.h"
 
+#include "ops/nn_op_name.h"
 #include "mindspore/core/utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
 bool MultiMatmulsFusion::Run(const FuncGraphPtr &graph) {
-  bool changed = false;
-
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (!ms_context->IsEnableInferBoost() || common::GetEnv("ENABLE_MATMUL_FUSION") != "on") {
-    return changed;
+  if (!ms_context->IsEnableInferBoost()) {
+    return false;
   }
+
+  std::vector<std::string> enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
+  bool enable_matmul_qkv =
+    (std::find(enable_op_list.begin(), enable_op_list.end(), kMatmulQkvOpName) != enable_op_list.end());
+  bool enable_matmul_ffn =
+    (std::find(enable_op_list.begin(), enable_op_list.end(), kMatmulFfnOpName) != enable_op_list.end());
+  if (!(enable_matmul_qkv || enable_matmul_ffn)) {
+    return false;
+  }
+
+  bool changed = false;
 
   auto mng = graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
@@ -48,9 +58,9 @@ bool MultiMatmulsFusion::Run(const FuncGraphPtr &graph) {
       continue;
     }
     AnfNodePtrList getitems;
-    if (user_matmuls.size() == kMatMulFfnNum) {
+    if (enable_matmul_ffn && user_matmuls.size() == kMatMulFfnNum) {
       Process("MatmulFfn", node, user_matmuls, &getitems);
-    } else if (user_matmuls.size() == kMatMulQkvNum) {
+    } else if (enable_matmul_qkv && user_matmuls.size() == kMatMulQkvNum) {
       Process("MatmulQkv", node, user_matmuls, &getitems);
     } else {
       MS_LOG(INFO) << "user_matmuls.size() == " << user_matmuls.size();

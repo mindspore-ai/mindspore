@@ -30,6 +30,7 @@
 #include "mindspore/core/ops/all_reduce.h"
 #include "plugin/device/ascend/optimizer/common/gllo_utils.h"
 #include "ops/op_utils.h"
+#include "ops/other_op_name.h"
 #include "mindspore/ccsrc/frontend/parallel/ops_info/ops_utils.h"
 #include "mindspore/core/ir/anf.h"
 #include "utils/phase.h"
@@ -104,8 +105,15 @@ const AnfNodePtr MatMulAllReduceFusion::Process(const mindspore::FuncGraphPtr &f
   }
 
   auto phase = PhaseManager::GetInstance().phase();
-  if (common::GetEnv("DISABLE_MATMULALLREDUCE_FUSION") == "True" || common::GetEnv("MS_ENABLE_LCCL").empty() ||
-      phase.rfind(kPhaseNamePrefill) == std::string::npos) {
+  if (common::GetEnv("MS_ENABLE_LCCL").empty() || phase.rfind(kPhaseNamePrefill) == std::string::npos) {
+    return nullptr;
+  }
+
+  std::string fusion_op_name = kMatMulAllReduceOpName;
+  std::vector<std::string> enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
+  bool enable_matmul_allreduce =
+    (std::find(enable_op_list.begin(), enable_op_list.end(), fusion_op_name) != enable_op_list.end());
+  if (!enable_matmul_allreduce) {
     return nullptr;
   }
 
