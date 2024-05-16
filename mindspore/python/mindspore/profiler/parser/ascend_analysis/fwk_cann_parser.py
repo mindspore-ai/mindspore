@@ -39,7 +39,8 @@ class FwkCANNParser:
         msprof_timeline_parser = MsprofTimelineParser(msprof_data)
         self._fwk_op_data = fwk_parser.get_op_range_data()
         self._fwk_trace_data = fwk_parser.get_fwk_trace_data(self._fwk_op_data)
-        self._acl_to_npu = msprof_timeline_parser.get_acl_to_npu_data()
+        # self._acl_to_npu is hardware event with flow, self.other_event_list is other event
+        self._acl_to_npu, self.other_trace_data = msprof_timeline_parser.get_acl_to_npu_data()
         self.rank_id: int = rank_id
         self.kernels: List[CANNEvent] = []
 
@@ -49,7 +50,7 @@ class FwkCANNParser:
         device side data.
         """
         trace_data = self.__link_msop_kernel()
-        return self._fwk_trace_data + trace_data
+        return self.other_trace_data + self._fwk_trace_data + trace_data
 
     def __link_msop_kernel(self) -> List:
         """Associate the frame-side operator with the device-side kernel"""
@@ -77,6 +78,7 @@ class FwkCANNParser:
                     flow_list = TraceEventManager.create_mindspore_to_npu_flow(op_data_sorted[op_idx], cann_event)
                     self.kernels.append(cann_event)
                     trace_data += flow_list
+                    trace_data.append(cann_event.to_json())
         return trace_data
 
     @staticmethod
