@@ -173,6 +173,8 @@ class ControlNodeParser {
   int FetchBranchIDByCallNode(const AnfNodePtr &call_node);
   // Fetch the kernel graph which the kernel belongs.
   KernelGraphPtr FetchKernelGraphByFrontNode(const AnfNodePtr &kernel);
+  KernelWithIndex FetchBackendOutputByKernelGraph(const KernelGraphPtr &graph,
+                                                  const KernelWithIndex &front_node_with_index);
   // Fetch the backend kernel of front node.
   KernelWithIndex FetchBackendNodeByFrontNode(const KernelWithIndex &node_with_index);
   FuncGraphPtr FetchFuncGraphByKernelGraph(const KernelGraph *const graph);
@@ -182,6 +184,7 @@ class ControlNodeParser {
   // Create tensor for value like scalar or monad U.
   tensor::TensorPtr CreateTensorForValue(const ValuePtr &value);
   void AddControlNodeTensor(const tensor::TensorPtr &tensor) { (void)control_node_tensors_.emplace_back(tensor); }
+  void PrintParseInfo();
 
  private:
   friend class GraphScheduler;

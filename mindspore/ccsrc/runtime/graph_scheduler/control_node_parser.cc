@@ -2681,6 +2681,27 @@ size_t ControlNodeParser::ParseControlNodeLevel(const AnfNodePtr &node, std::set
   return level;
 }
 
+namespace {
+AnfNodePtr GetRealOutputNode(const KernelWithIndex &front_pair, const KernelWithIndex &backend_pair) {
+  if (front_pair.first == nullptr || backend_pair.first == nullptr) {
+    return nullptr;
+  }
+  if (common::AnfAlgo::CheckPrimitiveType(backend_pair.first, prim::kPrimLoad) &&
+      common::AnfAlgo::CheckPrimitiveType(front_pair.first, prim::kPrimLoad)) {
+    const auto &backend_cnode = backend_pair.first->cast<CNodePtr>();
+    const auto &front_cnode = front_pair.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(backend_cnode);
+    MS_EXCEPTION_IF_NULL(front_cnode);
+    if (backend_cnode->inputs().size() > 1 && backend_cnode->input(1) != nullptr &&
+        backend_cnode->input(1)->isa<CNode>() && front_cnode->inputs().size() > 1 && front_cnode->input(1) != nullptr &&
+        front_cnode->input(1)->isa<CNode>()) {
+      return front_cnode->input(1);
+    }
+  }
+  return nullptr;
+}
+}  // namespace
+
 void ControlNodeParser::ParseNodeLevel(const std::vector<AnfNodePtr> &control_nodes) {
   size_t level = 0;
   // 1. Parse levels of control nodes.
@@ -2730,6 +2751,10 @@ void ControlNodeParser::ParseNodeLevel(const std::vector<AnfNodePtr> &control_no
       MS_EXCEPTION_IF_NULL(output_node);
       MS_LOG(DEBUG) << "Add level:" << level << " for node:" << output_node->DebugString();
       node_to_level_[output_node] = level;
+      const auto &real_output_node = GetRealOutputNode(front_output_node.first, front_output_node.second.first);
+      if (real_output_node != nullptr && node_to_level_.find(real_output_node) == node_to_level_.end()) {
+        node_to_level_[real_output_node] = level;
+      }
     }
   }
 
@@ -2816,6 +2841,72 @@ std::string ControlNodeParser::FetchGroupNameByKernelGraph(const KernelGraphPtr 
   }
   MS_EXCEPTION_IF_NULL(group_info_iter->second);
   return group_info_iter->second->group_name_;
+}
+
+KernelWithIndex ControlNodeParser::FetchBackendOutputByKernelGraph(const KernelGraphPtr &graph,
+                                                                   const KernelWithIndex &front_node_with_index) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto group_info_iter = kernel_graphs_to_group_info_.find(graph);
+  if (group_info_iter == kernel_graphs_to_group_info_.end()) {
+    MS_LOG(WARNING) << "Failed to get kernel graph group info for graph:" << graph->ToString();
+    return {nullptr, 0};
+  }
+  MS_EXCEPTION_IF_NULL(group_info_iter->second);
+  const auto &output_iter = group_info_iter->second->front_output_nodes_.find(front_node_with_index);
+  if (output_iter != group_info_iter->second->front_output_nodes_.end()) {
+    return output_iter->second.first;
+  }
+  const auto &backend_iter = std::find_if(
+    group_info_iter->second->front_output_nodes_.begin(), group_info_iter->second->front_output_nodes_.end(),
+    [front_node_with_index](const auto &pair) {
+      return front_node_with_index == common::AnfAlgo::VisitKernelWithReturnType(pair.first.first, pair.first.second);
+    });
+  if (backend_iter == group_info_iter->second->front_output_nodes_.end()) {
+    return {nullptr, 0};
+  }
+  return common::AnfAlgo::VisitKernelWithReturnType(backend_iter->second.first.first,
+                                                    backend_iter->second.first.second);
+}
+
+void ControlNodeParser::PrintParseInfo() {
+  for (const auto &group : kernel_graph_group_infos_) {
+    MS_EXCEPTION_IF_NULL(group);
+    for (const auto &input_pair : group->front_input_nodes_) {
+      if (input_pair.first.first != nullptr) {
+        MS_LOG(WARNING) << "Kernel graph group:" << group->group_name_
+                        << " input node:" << input_pair.first.first->fullname_with_scope()
+                        << " debug string:" << input_pair.first.first->DebugString(2)
+                        << " index:" << input_pair.first.second;
+      }
+    }
+    for (const auto &output_pair : group->front_output_nodes_) {
+      if (output_pair.first.first != nullptr && output_pair.second.first.first != nullptr) {
+        MS_LOG(WARNING) << "Kernel graph group:" << group->group_name_
+                        << " output node:" << output_pair.first.first->fullname_with_scope()
+                        << " debug string:" << output_pair.first.first->DebugString(2)
+                        << " index:" << output_pair.first.second
+                        << " backend node:" << output_pair.second.first.first->fullname_with_scope()
+                        << " debug string:" << output_pair.second.first.first->DebugString(2)
+                        << " index:" << output_pair.second.first.second;
+      }
+    }
+  }
+  for (const auto &f_to_b : front_to_backend_kernels_) {
+    if (f_to_b.first.first != nullptr && f_to_b.second.first.first != nullptr) {
+      MS_LOG(WARNING) << "Front to backend map front node:" << f_to_b.first.first->fullname_with_scope()
+                      << " debug string:" << f_to_b.first.first->DebugString(2) << " index:" << f_to_b.first.second
+                      << " backend node:" << f_to_b.second.first.first->fullname_with_scope()
+                      << " debug string:" << f_to_b.second.first.first->DebugString(2)
+                      << " index:" << f_to_b.second.first.second;
+    }
+  }
+  for (const auto &pair : front_node_to_kernel_graph_) {
+    if (pair.first != nullptr && pair.second == nullptr) {
+      MS_LOG(WARNING) << "Front node:" << pair.first->fullname_with_scope()
+                      << " debug string:" << pair.first->DebugString(2)
+                      << " to kernel graph:" << pair.second->ToString();
+    }
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore
