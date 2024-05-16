@@ -345,17 +345,27 @@ static inline TypePtr PromoteType(TypePtr a, TypePtr b, const std::string &op_na
     {u8, kUInt8},    {s16, kInt16},   {u16, kUInt16},  {s32, kInt32},     {u32, kUInt32},
     {s64, kInt64},   {u64, kUInt64},  {b1, kBool},     {c64, kComplex64}, {c128, kComplex128}};
 
-  auto a_tensor_type = a->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(a_tensor_type);
-  auto a_element = a_tensor_type->element();
-  MS_EXCEPTION_IF_NULL(a_element);
-  const TypeId &a_type_id = a_element->type_id();
+  TypeId a_type_id;
+  if (a->isa<TensorType>()) {
+    auto a_tensor_type = a->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(a_tensor_type);
+    auto a_element = a_tensor_type->element();
+    MS_EXCEPTION_IF_NULL(a_element);
+    a_type_id = a_element->type_id();
+  } else {
+    a_type_id = a->type_id();
+  }
 
-  auto b_tensor_type = b->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(b_tensor_type);
-  auto b_element = b_tensor_type->element();
-  MS_EXCEPTION_IF_NULL(b_element);
-  const TypeId &b_type_id = b_element->type_id();
+  TypeId b_type_id;
+  if (b->isa<TensorType>()) {
+    auto b_tensor_type = b->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(b_tensor_type);
+    auto b_element = b_tensor_type->element();
+    MS_EXCEPTION_IF_NULL(b_element);
+    b_type_id = b_element->type_id();
+  } else {
+    b_type_id = b->type_id();
+  }
 
   if (typeid_idx.find(a_type_id) == typeid_idx.end()) {
     MS_EXCEPTION(TypeError) << "For Op[" << op_name << "], the type " << a->ToString() << "is invalid";
@@ -366,7 +376,7 @@ static inline TypePtr PromoteType(TypePtr a, TypePtr b, const std::string &op_na
   }
 
   if (a_type_id == b_type_id) {
-    return a->Clone();
+    return a->isa<TensorType>() ? a->Clone() : b->Clone();
   }
 
   static const std::vector<std::vector<TypeId>> promote_types_lookup = {

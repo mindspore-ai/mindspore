@@ -1679,6 +1679,41 @@ REG_BPROP_BUILDER("Xlogy").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
 });
 
+REG_BPROP_BUILDER("XLogYTensor").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  // input, other, out, dout
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto x_dtype = ib->GetDtype(x);
+  auto not_zero_x = ib->Cast(ib->NotEqual(x, ib->Tensor(0.0, x_dtype)), x_dtype);
+  NodePtr bc_dx = ib->Xlogy(not_zero_x, y) * dout;
+  NodePtr bc_dy = ib->Div(x, y) * dout;
+  return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
+});
+
+REG_BPROP_BUILDER("XLogYScalarSelf").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  // input, other, out, dout
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr bc_dx = ib->OutZeros(x);
+  x = ib->ScalarToTensor(x, ib->GetDtype(x));
+  NodePtr bc_dy = ib->Div(x, y) * dout;
+  return {bc_dx, bc_dy};
+});
+
+REG_BPROP_BUILDER("XLogYScalarOther").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  // input, other, out, dout
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto x_dtype = ib->GetDtype(x);
+  auto not_zero_x = ib->Cast(ib->NotEqual(x, ib->Tensor(0.0, x_dtype)), x_dtype);
+  NodePtr bc_dx = ib->Emit("XLogYScalarOther", {not_zero_x, y}) * dout;
+  NodePtr bc_dy = ib->OutZeros(y);
+  return {bc_dx, bc_dy};
+});
+
 REG_BPROP_BUILDER("Sqrt").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);

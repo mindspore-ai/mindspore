@@ -334,8 +334,9 @@ class COMMON_EXPORT Emitter {
     return dst_type == nullptr ? node : Cast(node, dst_type);
   }
   std::tuple<NodePtr, NodePtr> UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs);
+  std::tuple<NodePtr, NodePtr> UnifyDtype(const NodePtr &lhs, const NodePtr &rhs, const std::string &op_name);
   NodePtr UnifyDtypeAndEmit(const std::string &op, const NodePtr &a, const NodePtr &b, const DAttr &attrs = {}) {
-    auto [lhs, rhs] = UnifyDtype2(a, b);
+    auto [lhs, rhs] = UnifyDtype(a, b, op);
     return Emit(op, {lhs, rhs}, attrs);
   }
 
