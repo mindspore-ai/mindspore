@@ -859,7 +859,9 @@ AnfNodePtr RefParameterToActualParameter(const AnfNodePtr &node) {
     auto new_cnode = GetInputNodeWithFilter(cnode_input, [&](const CNodePtr &cnode) {
       bool filter = IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather) ||
                     IsPrimitiveCNode(cnode, prim::kPrimLoad) || IsPrimitiveCNode(cnode, prim::kPrimDepend) ||
-                    IsPrimitiveCNode(cnode, prim::kPrimCast);
+                    IsPrimitiveCNode(cnode, prim::kPrimCast) ||
+                    (IsPrimitiveCNode(cnode, prim::kPrimAllGather) &&
+                     GetCNodePrimitive(cnode)->instance_name().find(PARALLEL_OPTIMIZER) != std::string::npos);
       return std::make_pair(filter, 1);
     });
     return RefParameterToActualParameter(new_cnode);
