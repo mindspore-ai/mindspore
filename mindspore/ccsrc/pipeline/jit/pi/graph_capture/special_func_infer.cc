@@ -638,6 +638,7 @@ static bool SetForbiddenFuncInfo(CallNode *call_node) {
   return false;
 }
 
+template <bool force_ms_api>
 bool InferMsApiFunc(CallNode *call_node) {
   Graph *sub_graph = call_node->GetSubGraph();
   SetCallResType<AObject::kTypeAnyValue>(call_node);
@@ -657,7 +658,7 @@ bool InferMsApiFunc(CallNode *call_node) {
 
   AObject *info;
 
-  bool enable_func_graph_eval = kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kEnableMsApiInfer);
+  bool enable_func_graph_eval = force_ms_api || kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kEnableMsApiInfer);
   if (enable_func_graph_eval) {
     py::object res = EvalMSAPIValue(callable_object, pair.first, pair.second);
     info = AObject::Convert(res);
@@ -670,7 +671,6 @@ bool InferMsApiFunc(CallNode *call_node) {
 
   call_node->SetVobj(info);
   if (info->GetPyObject().ptr() != nullptr) {
-    ConstantInfo::CollectBuiltinFuncConstantInfo(call_node);
     call_node->input(0)->GetVobj()->SetMsFlag(AObject::kMsFlagStandardFunc);
   }
   if (call_node->IsConstantValue()) {
@@ -728,7 +728,7 @@ static const std::unordered_map<FuncKey, InferFunc> infer_func_map = {
   {FUNC_KEY_DICT_POP, InferPopAsGet},
   {FUNC_KEY_PRIMITIVE, InferPrimitive},
   {FUNC_KEY_META_FUNCG_RAPH, InferMetaFunc},
-  {FUNC_KEY_PSJIT_CODE, SetCallResType<AObject::kTypeTensor>},
+  {FUNC_KEY_PSJIT_CODE, InferMsApiFunc<true>},
   {FUNC_KEY_CONSTEXPR, InferMSConstexpr},
   {FUNC_KEY_PRIMEXPR, InferMSConstexpr},
   {FUNC_KEY_GET_CACHE_PRIM, InferGetCachePrim},
@@ -737,7 +737,7 @@ static const std::unordered_map<FuncKey, InferFunc> infer_func_map = {
   {FUNC_KEY_GRAD_OPERATIONS_CODE, InferGradFunc},
   {FUNC_KEY_PSJIT_CONVERTMAP, InferConvertMap},
   {FUNC_KEY_GRAPH_CELL, SetCallResType<AObject::kTypeTensor>},
-  {FUNC_KEY_MS_API, InferMsApiFunc},
+  {FUNC_KEY_MS_API, InferMsApiFunc<false>},
   {FUNC_KEY_MAPPING_GET, InferMappingGet},
 };
 
