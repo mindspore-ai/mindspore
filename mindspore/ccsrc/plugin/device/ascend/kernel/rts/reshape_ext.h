@@ -33,7 +33,7 @@ class ReshapeExtKernel : public RtKernel {
   std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in RtKernel."; }
 };
 
-MS_REG_RTKERNEL(ReshapeExt, ReshapeExtKernel);
+MS_REG_RTKERNEL(reshapeext, ReshapeExtKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
