@@ -462,7 +462,12 @@ class TupleListGetitemDependReorder : public AnfVisitor {
       return new_node;
     }
 
-    auto item_node = NewCNode({NewValueNode(prim::kPrimTupleGetItem), x_, c_}, fg);
+    AnfNodePtr item_node;
+    if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+      item_node = NewCNode({NewValueNode(prim::kPrimTupleGetItem), x_, c_}, fg);
+    } else {
+      item_node = NewCNode({NewValueNode(prim::kPrimListGetItem), x_, c_}, fg);
+    }
     item_node->set_abstract(node->abstract());
     auto depend_node = NewCNode({depend_cnode->input(0), item_node, y_}, fg);
     depend_node->set_abstract(node->abstract());
@@ -473,18 +478,16 @@ class TupleListGetitemDependReorder : public AnfVisitor {
     auto idx_value = GetValueNode<Int64ImmPtr>(c_);
     MS_EXCEPTION_IF_NULL(idx_value);
     int64_t idx = idx_value->value();
-    if (abs->isa<abstract::AbstractTuple>()) {
-      auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
+    if (abs->isa<abstract::AbstractSequence>()) {
+      auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
       if (idx < 0) {
-        idx += SizeToLong(abs_tuple->elements().size());
+        idx += SizeToLong(abs_seq->elements().size());
       }
-      if (idx < 0 || LongToSize(idx) >= abs_tuple->elements().size()) {
+      if (idx < 0 || LongToSize(idx) >= abs_seq->elements().size()) {
         MS_LOG(EXCEPTION) << "The idx value " << idx << " of tuple_getitem node " << c_->DebugString()
                           << " is out of range.";
       }
-      item_node->set_abstract(abs_tuple->elements()[LongToSize(idx)]);
-    } else {
-      item_node->set_abstract(abs);
+      item_node->set_abstract(abs_seq->elements()[LongToSize(idx)]);
     }
     depend_node->set_abstract(item_node->abstract());
     return depend_node;
