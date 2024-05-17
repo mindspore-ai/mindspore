@@ -2735,7 +2735,35 @@ static bool GuardLoopSequence(Graph *graph, ValueNode *seq_node, Py_ssize_t seq_
   return true;
 }
 
-bool GraphBuilder::TraceRunForIterSequence(int jump_bci) {
+bool GuardIterInputs(Graph *graph, ValueNode *seq_node, Py_ssize_t seq_size = -1) {
+  PyObject *seq = seq_node->GetVobj()->GetPyObject().ptr();
+  if (seq != nullptr && seq_size == -1) {
+    seq_size = PySequence_Size(seq);
+  }
+  if (seq == nullptr || seq_size == -1) {
+    PyErr_Clear();
+    return false;
+  }
+  if (!graph->GuardSequenceNodeLength(seq_node, seq_size)) {
+    return false;
+  }
+  auto input_nodes = seq_node->getInputs();
+  for (size_t i = 1; i < input_nodes.size(); ++i) {
+    ValueNode *input_node = input_nodes[i];
+    if (input_node == nullptr) {
+      return false;
+    }
+    TracePtr tr = graph->TraceValueNode(input_node);
+    if (!(graph->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GEqual))) {
+      MS_LOG(INFO) << "Iterator guard fail: " << seq_node->ToString();
+      return false;
+    }
+  }
+  MS_LOG(INFO) << "Iterator guard success: " << seq_node->ToString();
+  return true;
+}
+
+bool GraphBuilder::TraceRunForIterSequence(int jump_bci, bool is_range_type) {
   // check for iter
   ValueNode *iter_node = seek(0);
   ValueNode *seq_node = iter_node->input(0);
@@ -2751,7 +2779,8 @@ bool GraphBuilder::TraceRunForIterSequence(int jump_bci) {
   }
 
   int &index = iter_node->marker_;
-  if (index == 0 && !GuardLoopSequence(graph_, seq_node)) {
+  if (index == 0 && ((is_range_type && !GuardIterInputs(graph_, seq_node)) ||
+                     (!is_range_type && !GuardLoopSequence(graph_, seq_node)))) {
     // loop start.
     return false;
   }
@@ -2915,6 +2944,18 @@ bool GraphBuilder::TraceRunForIterZip(int jump_bci) {
   return true;
 }
 
+bool IsRangeType(ValueNode *iter_node) {
+  if (iter_node->input(0)->GetOpcode() != CALL_FUNCTION) {
+    return false;
+  }
+  auto vobj = iter_node->input(0)->input(0)->GetVobj();
+  if (vobj == nullptr) {
+    return false;
+  }
+  PyTypeObject *type = reinterpret_cast<PyTypeObject *>(static_cast<AbstractType *>(vobj)->GetPyObject().ptr());
+  return type == &PyRange_Type;
+}
+
 bool GraphBuilder::TraceRunForIter(const Instr &instr) {
   MS_EXCEPTION_IF_NULL(instr.extra_jump());
 
@@ -2932,7 +2973,7 @@ bool GraphBuilder::TraceRunForIter(const Instr &instr) {
   } else if (iterable->GetTypeObject() == &PyZip_Type) {
     succ = TraceRunForIterZip(instr.extra_jump()->bci());
   } else {
-    succ = TraceRunForIterSequence(instr.extra_jump()->bci());
+    succ = TraceRunForIterSequence(instr.extra_jump()->bci(), IsRangeType(iter_node));
   }
   if (!succ) {
     graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceLoop_Unsupported);

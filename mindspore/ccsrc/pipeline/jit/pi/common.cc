@@ -474,6 +474,7 @@ static void ValidateCompiledResults(const JitCompileResults *c) {
 }
 
 static void MarkBreak(Graph *g) {
+  TimeRecorder recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
   int break_bci = g->GetStopTraceBci();
   if (break_bci == -1) {
     return;
@@ -566,6 +567,7 @@ static auto TraceRun(JitCompileResults *jcr) {
 }
 
 static void Inline(JitCompileResults *jcr, const GraphBuilderPtr &g) {
+  TimeRecorder recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
   GraphJitConfig &conf = *jcr->conf;
   // One stage should skip inline process.
   if (!conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
@@ -585,6 +587,7 @@ static auto Analyze(const GraphBuilderPtr &g) {
 // preprocess before compile, split bytecode to sub-function
 // return whether the code should be modified
 static void GraphCapture(JitCompileResults *jcr) {
+  TimeRecorder recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
   MS_EXCEPTION_IF_NULL(jcr->code);
   AObjectSourceScope resource;
 
@@ -837,6 +840,7 @@ std::string GraphToString(FuncGraphPtr graph) {
 }
 
 static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
+  TimeRecorder recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
   GuardForFrame(frame, jcr->code, *jcr->conf);
   AddGuardForGlobals(frame, jcr->code->GetGuard(), jcr->conf->GetBoolConfig(GraphJitConfig::kGuardDetachObject));
 
