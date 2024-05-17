@@ -30,8 +30,8 @@ Added new environment variable `MS_ENABLE_LCCL` to support the use of LCCL commu
 
 ### Bug Fixes
 
-- [#I9CR96] Fix the issue of insufficient timeout time causing failure for dynamic networking startup in large-scale clusters.
-- [#I94AQQ] Fixed the problem of incorrect output shape of ops.Addcdiv operator in graph mode.
+- [#I9CR96](https://gitee.com/mindspore/mindspore/issues/I9CR96) Fix the issue of insufficient timeout time causing failure for dynamic networking startup in large-scale clusters.
+- [#I94AQQ](https://gitee.com/mindspore/mindspore/issues/I94AQQ) Fixed the problem of incorrect output shape of ops.Addcdiv operator in graph mode.
 
 ### Contributors
 
