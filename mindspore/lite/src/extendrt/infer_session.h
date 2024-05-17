@@ -142,6 +142,9 @@ class InferSession : public std::enable_shared_from_this<InferSession> {
     return kLiteError;
   }
 
+  // release inference resource, only used for mindspore_lite's ascend backend now.
+  virtual Status Finalize();
+
  protected:
   /// \brief Handle session according to context.
   ///

@@ -886,4 +886,6 @@ bool ModelImpl::CheckModelSupport(DeviceType device_type, ModelType model_type) 
   }
   return false;
 }
+
+Status ModelImpl::Finalize() { return session_->Finalize(); }
 }  // namespace mindspore

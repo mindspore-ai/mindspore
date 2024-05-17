@@ -606,4 +606,6 @@ std::vector<char> Model::GetModelInfo(const std::vector<char> &key) {
   std::vector<char> empty;
   return empty;
 }
+
+Status Model::Finalize() { return impl_->Finalize(); }
 }  // namespace mindspore

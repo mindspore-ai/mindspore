@@ -370,6 +370,9 @@ class MS_API Model {
   /// \return The value of the model info associated with the given key.
   inline std::string GetModelInfo(const std::string &key);
 
+  // release inference resourcec, only used for mindspore_lite's ascend backend now.
+  Status Finalize();
+
  private:
   friend class Serialization;
   // api without std::string

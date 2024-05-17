@@ -1453,15 +1453,19 @@ int BenchmarkUnifiedApi::RunBenchmark() {
     MS_LOG(ERROR) << "Generate input data error";
     return status;
   }
+  return GetBenchmarkResult();
+}
+
+int BenchmarkUnifiedApi::GetBenchmarkResult() {
   if (!flags_->benchmark_data_file_.empty()) {
-    status = MarkAccuracy();
+    auto status = MarkAccuracy();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: " << status;
       std::cout << "Run MarkAccuracy error: " << status << std::endl;
       return status;
     }
   } else {
-    status = MarkPerformance();
+    auto status = MarkPerformance();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkPerformance error: " << status;
       std::cout << "Run MarkPerformance error: " << status << std::endl;
@@ -1470,6 +1474,10 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   }
   if (flags_->dump_tensor_data_) {
     std::cout << "Dumped file is saved to : " + dump_file_output_dir_ << std::endl;
+  }
+  Status finalize_ret = ms_model_.Finalize();
+  if (finalize_ret == kSuccess) {
+    MS_LOG(INFO) << "Benchmark finalize executed success.";
   }
   return RET_OK;
 }
