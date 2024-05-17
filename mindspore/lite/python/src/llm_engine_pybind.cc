@@ -169,8 +169,7 @@ void LLMEnginePyBind(const py::module &m) {
     .def_readwrite("prompt_length", &LLMReq::prompt_length)
     .def_readwrite("prompt_cluster_id", &LLMReq::prompt_cluster_id)
     .def_readwrite("decoder_cluster_id", &LLMReq::decoder_cluster_id)
-    .def_readwrite("prefix_id", &LLMReq::prefix_id)
-    .def_readwrite("sequence_length", &LLMReq::sequence_length);
+    .def_readwrite("prefix_id", &LLMReq::prefix_id);
 
   py::class_<LLMClusterInfo>(m, "LLMClusterInfo_")
     .def(py::init<>())
@@ -189,10 +188,7 @@ void LLMEnginePyBind(const py::module &m) {
 
   py::class_<LLMEngineStatus>(m, "LLMEngineStatus_")
     .def(py::init<>())
-    .def_readwrite("empty_max_prompt_kv", &LLMEngineStatus::empty_max_prompt_kv)
-    .def_readwrite("num_free_blocks", &LLMEngineStatus::num_free_blocks)
-    .def_readwrite("num_total_blocks", &LLMEngineStatus::num_total_blocks)
-    .def_readwrite("block_size", &LLMEngineStatus::block_size);
+    .def_readwrite("empty_max_prompt_kv", &LLMEngineStatus::empty_max_prompt_kv);
 
   (void)py::class_<LLMModel, std::shared_ptr<LLMModel>>(m, "LLMModel_")
     .def(py::init<>())

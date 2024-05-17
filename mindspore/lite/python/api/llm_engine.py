@@ -107,17 +107,6 @@ class LLMReq:
         check_uint64_number_range("prefix_id", prefix_id)
         self.llm_request_.prefix_id = prefix_id
 
-    @property
-    def sequence_length(self):
-        """Get decoder sequence length of this inference task for PagedAttention in LLMEngine"""
-        return self.llm_request_.sequence_length
-
-    @sequence_length.setter
-    def sequence_length(self, sequence_length: int):
-        """Set decoder sequence length of this inference task for PagedAttention in LLMEngine"""
-        check_uint64_number_range("sequence_length", sequence_length)
-        self.llm_request_.sequence_length = sequence_length
-
 
 class LLMEngineStatus:
     """
@@ -131,21 +120,6 @@ class LLMEngineStatus:
     def empty_max_prompt_kv(self):
         """Get empty count of prompt KV cache of this LLMEngine object"""
         return self.status_.empty_max_prompt_kv
-
-    @property
-    def num_free_blocks(self):
-        """Get number of free blocks PagedAttention"""
-        return self.status_.num_free_blocks
-
-    @property
-    def num_total_blocks(self):
-        """Get number of total blocks PagedAttention"""
-        return self.status_.num_total_blocks
-
-    @property
-    def block_size(self):
-        """Get block size of PagedAttention"""
-        return self.status_.block_size
 
 
 class LLMStatusCode(Enum):
@@ -207,7 +181,6 @@ class LLMException(RuntimeError):
         return self._status_code
 
 
-
 class LLMKVCacheNotExist(LLMException):
     """
     Key & Value cache does not exist in Prompt cluster specified by parameter LLMReq.prompt_cluster_id, and the
@@ -217,7 +190,6 @@ class LLMKVCacheNotExist(LLMException):
     def __init__(self, *args: object):
         super().__init__(*args)
         self._status_code = LLMStatusCode.LLM_KV_CACHE_NOT_EXIST
-
 
 
 class LLMWaitProcessTimeOut(LLMException):
@@ -265,7 +237,6 @@ class LLMParamInvalid(LLMException):
         self._status_code = LLMStatusCode.LLM_PARAM_INVALID
 
 
-
 class LLMNotYetLink(LLMException):
     """
     Decoder cluster has no link with prompt.
@@ -273,7 +244,6 @@ class LLMNotYetLink(LLMException):
     def __init__(self, *args: object):
         super().__init__(*args)
         self._status_code = LLMStatusCode.LLM_NOT_YET_LINK
-
 
 
 class LLMOutOfMemory(LLMException):
@@ -285,7 +255,6 @@ class LLMOutOfMemory(LLMException):
         self._status_code = LLMStatusCode.LLM_DEVICE_OUT_OF_MEMORY
 
 
-
 class LLMPrefixAlreadyExist(LLMException):
     """
     Prefix has already existed.
@@ -293,7 +262,6 @@ class LLMPrefixAlreadyExist(LLMException):
     def __init__(self, *args: object):
         super().__init__(*args)
         self._status_code = LLMStatusCode.LLM_PREFIX_ALREADY_EXIST
-
 
 
 class LLMPrefixNotExist(LLMException):
@@ -305,7 +273,6 @@ class LLMPrefixNotExist(LLMException):
         self._status_code = LLMStatusCode.LLM_PREFIX_NOT_EXIST
 
 
-
 class LLMSeqLenOverLimit(LLMException):
     """
     Sequence length exceed limit.
@@ -313,7 +280,6 @@ class LLMSeqLenOverLimit(LLMException):
     def __init__(self, *args: object):
         super().__init__(*args)
         self._status_code = LLMStatusCode.LLM_SEQ_LEN_OVER_LIMIT
-
 
 
 class LLMNoFreeBlocks(LLMException):
@@ -325,7 +291,6 @@ class LLMNoFreeBlocks(LLMException):
         self._status_code = LLMStatusCode.LLM_NO_FREE_BLOCK
 
 
-
 class LLMBlockOutOfMemory(LLMException):
     """
     Block is out of memory.
@@ -333,7 +298,6 @@ class LLMBlockOutOfMemory(LLMException):
     def __init__(self, *args: object):
         super().__init__(*args)
         self._status_code = LLMStatusCode.LLM_BLOCKS_OUT_OF_MEMORY
-
 
 
 class LLMClusterInfo:

@@ -63,9 +63,6 @@ class LLMEnginePlugin : public LLMEnginePluginBase {
   bool finalized_ = false;
   bool inited_ = false;
   std::map<uint64_t, LLMModelInfo> model_infos_;
-  int32_t num_total_blocks_ = 0;  // For PagedAttention
-  int32_t block_size_ = 0;        // For PagedAttention
-  int32_t max_seq_len_ = 0;       // For PagedAttention
 
   MSTensor ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr);
   Status Run(const llm::LLMReq &req, const std::vector<::ge::Tensor> &ge_inputs, std::vector<::ge::Tensor> *ge_outputs,
@@ -80,7 +77,6 @@ class LLMEnginePlugin : public LLMEnginePluginBase {
                                    std::vector<llm::ClusterInfo> *llm_clusters);
   Status MSTensorToGeTensor(const std::vector<MSTensor> &inputs, std::vector<::ge::Tensor> *ge_inputs);
   Status OnGeStatus(ge::Status ge_status, const std::string &func_s, const std::string &phase);
-  void SetPagedAttentionOptions(std::map<std::string, std::string> *options);
 };
 
 LLMEnginePluginBase *CreateLLMEnginePlugin(LLMRole role, uint64_t cluster_id, const std::string &batch_mode) {
@@ -270,95 +266,6 @@ Status LLMEnginePlugin::OnGeStatus(ge::Status ge_status, const std::string &func
   return lite_status;
 }
 
-void LLMEnginePlugin::SetPagedAttentionOptions(std::map<std::string, std::string> *options_ptr) {
-  auto &options = *options_ptr;
-  auto it = options.find("llm.EnablePagedAttention");
-  if (it == options.end()) {
-    return;
-  }
-  auto option = lite::StringTolower(it->second);
-  if (option != "true" && option != "1") {
-    return;
-  }
-  if (model_infos_.size() != 1) {
-    MS_LOG(WARNING) << "PagedAttention is not supported when model count " << model_infos_.size() << " is not 1";
-    return;
-  }
-  auto &model_infos = model_infos_.begin()->second.model_infos;
-  if (model_infos.empty()) {
-    MS_LOG(WARNING) << "Model count is model paths is 0";
-    return;
-  }
-  if (model_infos[0].ref_input_shapes.empty()) {
-    MS_LOG(WARNING) << "Not found RefData input in model " << model_infos[0].name;
-    return;
-  }
-  auto kv_shape = model_infos[0].ref_input_shapes[0];
-  if (kv_shape.size() != kShape3dDims) {
-    MS_LOG(WARNING) << "KVCache shape " << kv_shape << " is not 3D likes [num_blocks, block_size, hidden_size]";
-    return;
-  }
-  num_total_blocks_ = kv_shape[kDim0];
-  it = options.find("llm.PagedAttentionBlocksNum");
-  if (it != options.end()) {
-    int64_t option_num_total_blocks = 0;
-    lite::ConvertStrToInt(it->second, &option_num_total_blocks);
-    MS_LOG(INFO) << "Found llm.PagedAttentionBlocksNum in model config, value: " << it->second;
-    if (num_total_blocks_ != option_num_total_blocks) {
-      MS_LOG(WARNING) << "llm.PagedAttentionBlocksNum got from option " << it->second << " != KVCache dim 0 value "
-                      << num_total_blocks_ << ", KVCache shape " << kv_shape;
-      num_total_blocks_ = option_num_total_blocks;
-    }
-  } else {
-    options["llm.PagedAttentionBlocksNum"] = std::to_string(num_total_blocks_);
-    MS_LOG(INFO) << "Set model option llm.PagedAttentionBlocksNum to value: " << num_total_blocks_ << ", KVCache shape "
-                 << kv_shape;
-  }
-  block_size_ = kv_shape[kDim1];
-  it = options.find("llm.PagedAttentionBlockSize");
-  if (it != options.end()) {
-    int64_t option_block_size = 0;
-    lite::ConvertStrToInt(it->second, &option_block_size);
-    MS_LOG(INFO) << "Found llm.PagedAttentionBlockSize in model config, value: " << it->second;
-    if (block_size_ != option_block_size) {
-      MS_LOG(WARNING) << "llm.PagedAttentionBlockSize got from option " << it->second << " != KVCache dim 1 value "
-                      << block_size_ << ", KVCache shape " << kv_shape;
-      block_size_ = option_block_size;
-    }
-  } else {
-    options["llm.PagedAttentionBlockSize"] = std::to_string(block_size_);
-    MS_LOG(INFO) << "Set model option llm.PagedAttentionBlockSize to value: " << block_size_ << ", KVCache shape "
-                 << kv_shape;
-  }
-  if (model_infos[0].input_shapes.empty()) {
-    MS_LOG(WARNING) << "Not found Data input in model " << model_infos[0].name;
-    return;
-  }
-  auto block_table_shape = *model_infos[0].input_shapes.rbegin();
-  if (block_table_shape.size() != kShape2dDims) {
-    MS_LOG(WARNING) << "Block table(last input) shape " << block_table_shape
-                    << " is not 2D likes [batch_size, max_block_num_per_seq]";
-    return;
-  }
-  max_seq_len_ = block_table_shape[kDim1] * block_size_;
-  it = options.find("llm.PagedAttentionMaxSeqLen");
-  if (it != options.end()) {
-    int64_t option_max_seq_len = 0;
-    lite::ConvertStrToInt(it->second, &option_max_seq_len);
-    MS_LOG(INFO) << "Found llm.PagedAttentionMaxSeqLen in model config, value: " << it->second;
-    if (max_seq_len_ != option_max_seq_len) {
-      MS_LOG(WARNING) << "llm.PagedAttentionMaxSeqLen got from option " << it->second << " != " << max_seq_len_
-                      << " calculated from block_table(last input) shape " << block_table_shape << " and block_size "
-                      << block_size_;
-      max_seq_len_ = option_max_seq_len;
-    }
-  } else {
-    options["llm.PagedAttentionMaxSeqLen"] = std::to_string(max_seq_len_);
-    MS_LOG(INFO) << "Set model option llm.PagedAttentionMaxSeqLen to value: " << max_seq_len_
-                 << ", block_table(last input) shape " << block_table_shape << ", block_size " << block_size_;
-  }
-}
-
 Status LLMEnginePlugin::AddModel(const std::vector<LLMEngineModelInfo> &model_infos,
                                  const std::map<std::string, std::string> &options_i,
                                  const LLMEngineModelInfo &postprocess_model, uint64_t *model_id) {
@@ -457,7 +364,6 @@ Status LLMEnginePlugin::Init(const std::map<std::string, std::string> &options_i
   auto options = options_i;
   options["llm.Role"] = role_ == LLMRole::kLLMRolePrompt ? "Prompt" : "Decoder";
   options["llm.batch_mode"] = batch_mode_;
-  SetPagedAttentionOptions(&options);
   std::map<ge::AscendString, ge::AscendString> init_options;
   for (auto &option : options) {
     init_options[ge::AscendString(option.first.c_str())] = ge::AscendString(option.second.c_str());
@@ -552,7 +458,6 @@ void LLMEnginePlugin::TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req_ptr) {
   llm_req.SetPromptClusterId(req.prompt_cluster_id);
   llm_req.SetDecoderClusterId(req.decoder_cluster_id);
   llm_req.SetPrefixId(req.prefix_id);
-  llm_req.SetSequenceLen(req.sequence_length);
 }
 
 void LLMEnginePlugin::TransLLMClusterInfos(const std::vector<LLMClusterInfo> &clusters,
@@ -774,11 +679,8 @@ LLMEngineStatus LLMEnginePlugin::FetchStatus() {
     return LLMEngineStatus();
   }
   LLMEngineStatus status;
-  auto llm_status = llm_engine_->FetchLLMEngineStatus();
-  status.empty_max_prompt_kv = llm_status.empty_max_prompt_kv;
-  status.num_free_blocks = llm_status.num_free_blocks;
-  status.num_total_blocks = num_total_blocks_;
-  status.block_size = block_size_;
+  // When llm_engine_->fetchLLMEngineStatus() is implemented, it will be replaced by return of fetchLLMEngineStatus.
+  status.empty_max_prompt_kv = 0;
   return status;
 }
 
