@@ -24,11 +24,17 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr TanhFuncImpl::InferShape(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
+  const int64_t kInputsNum = 1;
+  auto rank = SizeToLong(input_args.size());
+  MS_CHECK_VALUE(rank == kInputsNum,
+                 CheckAndConvertUtils::FormatCheckIntegerMsg("Input numbers", rank, kEqual, kInputsNum, primitive));
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto x_shape = input_args[kInputIndex0]->GetShape();
   return x_shape->Clone();
 }
 
 TypePtr TanhFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto input_type = input_args[kIndex0]->GetType();
   auto input_type_id = input_type->cast<TensorTypePtr>()->element()->type_id();
   static const std::vector<TypeId> int_or_bool = {kNumberTypeUInt8, kNumberTypeInt8,  kNumberTypeInt16,
