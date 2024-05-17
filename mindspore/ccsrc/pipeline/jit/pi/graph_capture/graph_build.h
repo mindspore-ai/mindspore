@@ -228,7 +228,7 @@ class GraphBuilder {
 
   bool ReplaceAll(ValueNode *old_node, ValueNode *new_node, bool *referenced = nullptr);
 
-  bool TraceRunForIterSequence(int jump_bci);
+  bool TraceRunForIterSequence(int jump_bci, bool is_range_type);
   bool TraceRunForIterEnumerate(int jump_bci);
   bool TraceRunForIterZip(int jump_bci);
 
