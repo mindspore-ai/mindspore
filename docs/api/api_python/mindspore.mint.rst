@@ -11,6 +11,7 @@ Array操作
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.index_select
     mindspore.mint.sort
     mindspore.mint.stack
 

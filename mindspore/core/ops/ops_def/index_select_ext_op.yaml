@@ -1,9 +1,9 @@
-#operator index_select
-index_select:
+#operator index_select_ext
+index_select_ext:
     args:
         input:
             dtype: tensor
-        axis:
+        dim:
             dtype: int
         index:
             dtype: tensor

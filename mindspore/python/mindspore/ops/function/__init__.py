@@ -137,6 +137,7 @@ from .array_func import (
     dsplit,
     index_fill,
     index_select,
+    index_select_ext,
     max,
     min,
     population_count,

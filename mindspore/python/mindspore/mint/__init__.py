@@ -197,7 +197,7 @@ from mindspore.ops.function import arange_ext as arange
 # 80
 
 # 81
-from mindspore.ops.auto_generate import index_select
+from mindspore.ops.function.array_func import index_select_ext as index_select
 # 82
 
 # 83

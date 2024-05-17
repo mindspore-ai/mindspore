@@ -1418,7 +1418,7 @@ REG_BPROP_BUILDER("IndexAdd").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib)
   return {dout, ib->OutZeros(indices), dy};
 });
 
-REG_BPROP_BUILDER("IndexSelect").SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("IndexSelectExt").SetBody(BODYFUNC(ib) {
   auto input = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto index = ib->GetInput(kIndex2);
