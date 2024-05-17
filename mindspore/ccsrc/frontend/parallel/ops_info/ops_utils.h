@@ -498,6 +498,7 @@ constexpr char FLOOR[] = "Floor";
 constexpr char SIGN[] = "Sign";
 constexpr char ERF[] = "Erf";
 constexpr char ERFC[] = "Erfc";
+constexpr char ZEROS[] = "Zeros";
 constexpr char ZEROSLIKE[] = "ZerosLike";
 constexpr char ONESLIKE[] = "OnesLike";
 constexpr char BESSELI0E[] = "BesselI0e";

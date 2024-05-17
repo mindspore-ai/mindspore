@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <functional>
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
@@ -44,8 +45,19 @@ Status BroadcastToInfo::GetAttrs() {
 
 Status BroadcastToInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
+  is_stand_alone_ = false;
+  Shapes stra = strategy->GetInputDim();
+  if (stra.empty()) {
+    MS_LOG(ERROR) << name_ << ": the strategy is empty";
+    return FAILED;
+  }
+  int64_t shard_num = std::accumulate(stra[0].begin(), stra[0].end(), 1, std::multiplies<int64_t>());
+  is_stand_alone_ = (shard_num == 1);
+  if (is_stand_alone_) {
+    return SUCCESS;
+  }
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy";
+    MS_LOG(ERROR) << name_ << ": Invalid strategy " << stra;
     return FAILED;
   }
 
@@ -53,6 +65,9 @@ Status BroadcastToInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status BroadcastToInfo::CheckStrategyForDynamicShape(const StrategyPtr &) {
+  if (is_stand_alone_) {
+    return SUCCESS;
+  }
   MS_LOG(ERROR) << name_
                 << ": it does not support dynamic shape now, the inputs's shape: " << ShapesToString(inputs_shape_)
                 << ", the outputs' shape: " << ShapesToString(outputs_shape_);
@@ -92,6 +107,32 @@ Status BroadcastToInfo::InferTensorMap() {
   }
   (void)std::copy(in_tensor_map.begin(), in_tensor_map.end(), std::back_inserter(out_tensor_map));
   outputs_tensor_map_.push_back(out_tensor_map);
+  return SUCCESS;
+}
+
+Status BroadcastToInfo::InferMirrorOps() {
+  mirror_ops_.clear();
+
+  if (inputs_tensor_map_.empty()) {
+    MS_LOG(ERROR) << name_ << ": the inputs tensor map is empty";
+    return FAILED;
+  }
+
+  std::vector<Group> group;
+  if (CreateGroupByTensorMap(inputs_tensor_map_[0], &group) != SUCCESS) {
+    ReportError(name_ + ": Create group failed");
+    mirror_ops_.clear();
+    return FAILED;
+  }
+
+  OperatorVector mirror_op;
+  if (group.empty()) {
+    return SUCCESS;
+  }
+
+  mirror_op = CreateMirrorOps(group[0].name(), group[0].GetDevNum());
+  mirror_ops_.push_back(mirror_op);
+
   return SUCCESS;
 }
 
@@ -153,6 +194,9 @@ Status BroadcastToInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 }
 
 ReplaceGraphPtr BroadcastToInfo::replace_graph(const CNodePtr &cnode) {
+  if (is_stand_alone_) {
+    return nullptr;
+  }
   if (ComputeReplaceGraph(cnode) != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": ComputeReplaceGraph failed.";
   }

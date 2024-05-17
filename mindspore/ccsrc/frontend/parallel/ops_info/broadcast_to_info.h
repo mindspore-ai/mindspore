@@ -51,9 +51,11 @@ class BroadcastToInfo : public OperatorInfo {
   Status InferTensorMap() override;
   Status ComputeReplaceGraph(const CNodePtr &cnode);
   Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
+  Status InferMirrorOps() override;
 
  private:
   Shape out_shape_;
+  bool is_stand_alone_ = false;
 };
 }  // namespace parallel
 }  // namespace mindspore
