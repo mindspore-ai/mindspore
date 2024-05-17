@@ -14,7 +14,7 @@
 # ============================================================================
 """msprof timeline file parser"""
 from collections import defaultdict
-from typing import List, Dict, Tuple
+from typing import List
 
 from mindspore.profiler.parser.ascend_analysis.function_event import CANNEvent
 
@@ -30,7 +30,7 @@ class MsprofTimelineParser:
     def __init__(self, msprof_data: List):
         self.timeline_data = msprof_data
 
-    def get_acl_to_npu_data(self) -> Dict[Tuple, List[CANNEvent]]:
+    def get_acl_to_npu_data(self):
         """Get all the acl to npu flow events."""
         flow_start_dict, flow_end_dict = {}, {}
         cann_event_list: List[CANNEvent] = []
@@ -42,11 +42,15 @@ class MsprofTimelineParser:
             elif cann_event.is_flow_end_event():
                 flow_end_dict[cann_event.unique_id] = cann_event.id
         acl_to_npu_dict = defaultdict(list)
+        other_trace_data = []
         for cann_event in cann_event_list:
             if not cann_event.is_x_event():
+                other_trace_data.append(cann_event.to_json())
                 continue
             corr_id = flow_end_dict.get(cann_event.unique_id)
             acl_ts_tid = flow_start_dict.get(corr_id)
             if corr_id is not None and acl_ts_tid is not None:
                 acl_to_npu_dict[acl_ts_tid].append(cann_event)
-        return acl_to_npu_dict
+            else:
+                other_trace_data.append(cann_event.to_json())
+        return acl_to_npu_dict, other_trace_data
