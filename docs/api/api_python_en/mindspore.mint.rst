@@ -12,6 +12,7 @@ Array Operation
     :template: classtemplate.rst
 
     mindspore.mint.sort
+    mindspore.mint.stack
 
 mindspore.mint.nn
 ------------------
