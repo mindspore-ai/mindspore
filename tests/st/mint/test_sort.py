@@ -88,8 +88,8 @@ def test_sort_std(descending, mode):
         np.testing.assert_array_equal(ms_grad.asnumpy(), expected_grad)
 
 
-def sort_forward_dyn_func(input_tensor):
-    return mint.sort(input_tensor, dim=-1, descending=True, stable=True)
+def sort_forward_dyn_func(input_tensor, dim):
+    return mint.sort(input_tensor, dim=dim, descending=True, stable=True)
 
 
 @pytest.mark.level0
@@ -106,11 +106,13 @@ def test_sort_dynamic_shape(mode):
     x1 = np.array([[[1, 2, 3, 4], [8, 7, 2, 0], [9, 4, 1, 8]],
                    [[5, 4, 1, 8], [2, 9, 0, 7], [6, 1, 7, 4]]]).astype(np.float32)
     tensor_1 = ms.Tensor(x1)
+    dim_1 = 1
     x2 = np.array([1, 0, 3, 4]).astype(np.float32)
     tensor_2 = ms.Tensor(x2)
+    dim_2 = 0
     test_cell = test_utils.to_cell_obj(sort_forward_dyn_func)
     if mode == 'pynative':
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
-        TEST_OP(test_cell, [[tensor_1], [tensor_2]], grad=True, mode=ms.PYNATIVE_MODE)
+        TEST_OP(test_cell, [[tensor_1, dim_1], [tensor_2, dim_2]], grad=True, mode=ms.PYNATIVE_MODE)
     else:
-        TEST_OP(test_cell, [[tensor_1], [tensor_2]], grad=True, jit_level='O0')
+        TEST_OP(test_cell, [[tensor_1, dim_1], [tensor_2, dim_2]], grad=True, jit_level='O0')
