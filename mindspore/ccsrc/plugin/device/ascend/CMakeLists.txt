@@ -136,7 +136,6 @@ if(DVM_LIB)
 endif()
 
 if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
-    target_link_libraries(mindspore_ascend PRIVATE lowlatency_collective)
     target_link_libraries(mindspore_ascend PRIVATE ms_kernels_internal)
     set_target_properties(lowlatency_collective PROPERTIES INSTALL_RPATH
                     ${ORIGIN_PATH}/ms_kernels_internal/lccl/lib)

@@ -25,12 +25,14 @@
 #include "runtime/collective/communication_group.h"
 #include "utils/dlopen_macro.h"
 
-namespace mindspore {
-namespace device {
-namespace ascend {
 using namespace Lcal;
 using LcalCommPtr = std::shared_ptr<LcalComm>;
 using LcclPtr = std::shared_ptr<Lccl>;
+using LcocPtr = std::shared_ptr<Lcoc>;
+
+namespace mindspore {
+namespace device {
+namespace ascend {
 
 class LowlatencyCommunicationGroup : public CommunicationGroup {
  public:
