@@ -45,7 +45,7 @@ from mindspore.ops.auto_generate import zeros as zeros_ex
 # 8
 
 # 9
-
+from mindspore.ops.auto_generate import masked_select_ext as masked_select
 # 10
 from mindspore.ops.function.math_func import ne
 # 11
@@ -477,7 +477,7 @@ __all__ = [
 
     # 84
 
-    # 85
+    'masked_select',
 
     # 86
 

@@ -2284,6 +2284,15 @@ REG_BPROP_BUILDER("MaskedSelect").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(mask)};
 });
 
+REG_BPROP_BUILDER("MaskedSelectExt").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto x_zero = ib->ZerosLike(x);
+  auto mask = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("MaskedScatter", {x_zero, mask, dout});
+  return {dx, ib->OutZeros(mask)};
+});
+
 REG_BPROP_BUILDER("SplitV").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto split_dim = GetValue<int64_t>(ib->GetAttr("split_dim"));
   auto dout = ib->GetInput(kIndex2);
