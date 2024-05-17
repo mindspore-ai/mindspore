@@ -420,11 +420,11 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
         if dst_stage_num > 1:
             raise NotImplementedError("When using unmerged src strategy, dst strategy doesn't \
                                        support strategy with pipeline parallel.")
-        log.info("Transform checkpoint by every pipeline stage.")
+        ms.log.info("Transform checkpoint by every pipeline stage.")
         _transform_checkpoint_by_stage(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
                                        src_strategy_file, dst_strategy_file)
     else:
-        log.info("Transform checkpoints by all pipeline stage.")
+        ms.log.info("Transform checkpoints by all pipeline stage.")
         _transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
                                src_strategy_file, dst_strategy_file)
 
