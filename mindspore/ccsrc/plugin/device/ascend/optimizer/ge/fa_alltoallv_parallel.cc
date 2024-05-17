@@ -37,19 +37,17 @@ namespace mindspore {
 namespace opt {
 namespace {
 
-bool FindAlltoAllvNodes(const std::vector<CNodePtr> &origin_nodes_topological, std::vector<CNodePtr> *alltoallv_nodes,
-                        std::vector<CNodePtr> *fa_nodes) {
-  std::map<std::string, CNodePtr> fa_map;
-  std::map<std::string, CNodePtr> alltoallv_map;
-
+bool FindTargetNodes(const std::vector<CNodePtr> &origin_nodes_topological,
+                     std::map<std::string, CNodePtr> *alltoallv_map, std::map<std::string, CNodePtr> *fa_map,
+                     std::map<std::string, CNodePtr> *update_node_map) {
+  bool found = false;
   for (size_t i = 0; i < origin_nodes_topological.size(); i++) {
     auto cnode = origin_nodes_topological[i];
-
     if (IsPrimitiveCNode(cnode, prim::kPrimAllToAllv)) {
       auto AllToAllv_prim = GetCNodePrimitive(cnode);
       if (AllToAllv_prim->HasAttr("FLASH_INDEX")) {
         auto flash_index = GetValue<std::string>(AllToAllv_prim->GetAttr("FLASH_INDEX"));
-        alltoallv_map[flash_index] = cnode;
+        alltoallv_map->insert({flash_index, cnode});
       }
     }
 
@@ -57,30 +55,18 @@ bool FindAlltoAllvNodes(const std::vector<CNodePtr> &origin_nodes_topological, s
       auto FlashAttentionScore_prim = GetCNodePrimitive(cnode);
       if (FlashAttentionScore_prim->HasAttr("FLASH_INDEX")) {
         auto flash_index = GetValue<std::string>(FlashAttentionScore_prim->GetAttr("FLASH_INDEX"));
-        fa_map[flash_index] = cnode;
+        fa_map->insert({flash_index, cnode});
       }
     }
-  }
 
-  for (auto it = alltoallv_map.begin(); it != alltoallv_map.end(); ++it) {
-    fa_nodes->push_back(fa_map[it->first]);
-    alltoallv_nodes->push_back(alltoallv_map[it->first]);
-  }
-  return true;
-}
-
-bool FindTargetNodes(const std::vector<CNodePtr> &origin_nodes_topological, std::vector<CNodePtr> *target_nodes,
-                     const std::string &look_up_key) {
-  bool found = false;
-  for (size_t i = 0; i < origin_nodes_topological.size(); i++) {
-    auto cnode = origin_nodes_topological[i];
-    if (common::AnfAlgo::HasNodeAttr(look_up_key, cnode)) {
-      target_nodes->push_back(cnode);
-      found = true;
+    if (common::AnfAlgo::HasNodeAttr("AccumulatedAttention", cnode)) {
+      auto node_prim = GetCNodePrimitive(cnode);
+      if (node_prim->HasAttr("FLASH_INDEX")) {
+        auto update_node_index = GetValue<std::string>(node_prim->GetAttr("FLASH_INDEX"));
+        update_node_map->insert({update_node_index, cnode});
+        found = true;
+      }
     }
-  }
-  if (!found) {
-    MS_LOG(DEBUG) << "FSP: Can not find matched add node";
   }
   return found;
 }
@@ -142,13 +128,12 @@ CNodePtr CreateDepend(const AnfNodePtr &latter_node, const AnfNodePtr &former_no
   return depend;
 }
 
-bool AddDependForFA(const FuncGraphPtr &graph, const std::vector<CNodePtr> &alltoallv_nodes,
-                    const std::vector<CNodePtr> &fa_nodes, const std::vector<CNodePtr> &last_update_nodes) {
+bool AddDependForFA(const FuncGraphPtr &graph, std::map<std::string, CNodePtr> *alltoallv_map,
+                    std::map<std::string, CNodePtr> *fa_map, std::map<std::string, CNodePtr> *update_node_map) {
   auto manager = graph->manager();
-  bool finished = true;
-  for (size_t i = 0; i < alltoallv_nodes.size(); i++) {
-    auto alltoallv = alltoallv_nodes[i];
-    auto fa_score_node = fa_nodes[i];
+  for (auto it = alltoallv_map->begin(); it != alltoallv_map->end(); ++it) {
+    auto alltoallv = alltoallv_map->at(it->first);
+    auto fa_score_node = fa_map->at(it->first);
 
     std::vector<AnfNodePtr> fa_inputs;
     for (size_t idx = 0; idx < ops::FlashAttentionScoreInputIndex::kFlashAttentionScoreInputsNum; idx++) {
@@ -158,7 +143,7 @@ bool AddDependForFA(const FuncGraphPtr &graph, const std::vector<CNodePtr> &allt
 
     std::vector<ShapeVector> fa_output_shapes;
     std::vector<TypeId> fa_output_dtypes;
-    for (int idx = 0; idx < 4; idx++) {
+    for (size_t idx = 0; idx < ops::FlashAttentionScoreOutputIndex::kFlashAttentionScoreOutputsNum; idx++) {
       fa_output_shapes.push_back(common::AnfAlgo::GetOutputInferShape(fa_score_node, idx));
       fa_output_dtypes.push_back(common::AnfAlgo::GetOutputInferDataType(fa_score_node, idx));
     }
@@ -182,17 +167,16 @@ bool AddDependForFA(const FuncGraphPtr &graph, const std::vector<CNodePtr> &allt
     manager->Replace(fa_score_node, depend_fa_node);
     CNodePtr splitvd_depend_alltoallv;
 
-    if (i == 0) {
-      splitvd_depend_alltoallv = CreateDepend(alltoallv, depend_fa_node, graph);
+    if (update_node_map->find(it->first) != update_node_map->end()) {
+      splitvd_depend_alltoallv = CreateDepend(alltoallv, update_node_map->at(it->first), graph);
     } else {
-      auto accumulated_attention = last_update_nodes[i - 1];
-      splitvd_depend_alltoallv = CreateDepend(alltoallv, accumulated_attention, graph);
+      splitvd_depend_alltoallv = CreateDepend(alltoallv, depend_fa_node, graph);
     }
 
     auto depend_splitvd_node = CloneSplitVDNode(splitvd_node, splitvd_depend_alltoallv);
     manager->Replace(splitvd_node, depend_splitvd_node);
   }
-  return finished;
+  return true;
 }
 }  // namespace
 
@@ -200,13 +184,11 @@ bool FaAlltoAllvParallel::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   std::list<CNodePtr> orders = graph->GetOrderedCnodes();
   std::vector<CNodePtr> origin_nodes_topological(orders.cbegin(), orders.cend());
-  std::vector<CNodePtr> alltoallv_nodes, fa_nodes, last_update_nodes;
-  FindAlltoAllvNodes(origin_nodes_topological, &alltoallv_nodes, &fa_nodes);
-  bool found = FindTargetNodes(origin_nodes_topological, &last_update_nodes, "AccumulatedAttention");
-  if (!found) {
-    return found;
+  std::map<std::string, CNodePtr> alltoallv_map, fa_map, update_node_map;
+  if (!FindTargetNodes(origin_nodes_topological, &alltoallv_map, &fa_map, &update_node_map)) {
+    return false;
   }
-  return AddDependForFA(graph, alltoallv_nodes, fa_nodes, last_update_nodes);
+  return AddDependForFA(graph, &alltoallv_map, &fa_map, &update_node_map);
 }
 }  // namespace opt
 }  // namespace mindspore
