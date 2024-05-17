@@ -30,8 +30,8 @@
 
 ### 问题修复
 
-- [#I9CR96] 修复在大规模集群下，动态组网启动方式的超时时间不足导致集群启动失败的问题。
-- [#I94AQQ] 修复ops.Addcdiv算子在图模式下输出shape有误问题。
+- [#I9CR96](https://gitee.com/mindspore/mindspore/issues/I9CR96) 修复在大规模集群下，动态组网启动方式的超时时间不足导致集群启动失败的问题。
+- [#I94AQQ](https://gitee.com/mindspore/mindspore/issues/I94AQQ) 修复ops.Addcdiv算子在图模式下输出shape有误问题。
 
 ### 贡献者
 
