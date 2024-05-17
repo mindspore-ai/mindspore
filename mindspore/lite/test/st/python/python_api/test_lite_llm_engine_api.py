@@ -392,6 +392,10 @@ def test_lite_llm_engine_llm_req_parameter_type_check():
         llm_req = mslite.LLMReq(0, 0, 0)
         llm_req.decoder_cluster_id = "123"
     assert "decoder_cluster_id must be int, but got" in str(raise_info.value)
+    with pytest.raises(TypeError) as raise_info:
+        llm_req = mslite.LLMReq(0, 0, 0)
+        llm_req.sequence_length = "123"
+    assert "sequence_length must be int, but got" in str(raise_info.value)
 
 
 def test_lite_llm_engine_llm_req_parameter_num_range_check():
@@ -404,3 +408,13 @@ def test_lite_llm_engine_llm_req_parameter_num_range_check():
         llm_req = mslite.LLMReq(0, 0, 0)
         llm_req.decoder_cluster_id = pow(2, 64)
     assert "decoder_cluster_id value should be in range [0, UINT64_MAX], but got" in str(raise_info.value)
+
+    with pytest.raises(ValueError) as raise_info:
+        llm_req = mslite.LLMReq(0, 0, 0)
+        llm_req.sequence_length = -1
+    assert "sequence_length value should be in range [0, UINT64_MAX], but got" in str(raise_info.value)
+
+    with pytest.raises(ValueError) as raise_info:
+        llm_req = mslite.LLMReq(0, 0, 0)
+        llm_req.sequence_length = pow(2, 64)
+    assert "sequence_length value should be in range [0, UINT64_MAX], but got" in str(raise_info.value)
