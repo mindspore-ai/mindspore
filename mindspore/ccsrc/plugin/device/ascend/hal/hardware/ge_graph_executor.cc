@@ -1230,6 +1230,8 @@ void SetOutput(GeDeviceResManager *res_manager, GeTensor *ge_output, const AnfNo
 void SetDynamicOutputs(const std::vector<KernelWithIndex> &graph_outputs, std::vector<GeTensor> *ge_outputs,
                        GeDeviceResManager *res_manager) {
   MS_EXCEPTION_IF_NULL(res_manager);
+  size_t ge_outputs_index = 0;
+  size_t ge_outputs_size = ge_outputs->size();
   for (size_t i = 0; i < graph_outputs.size(); ++i) {
     const auto &[output_node, idx] = common::AnfAlgo::FetchRealNodeSkipMonadControl(graph_outputs[i]);
     MS_EXCEPTION_IF_NULL(output_node);
@@ -1239,7 +1241,11 @@ void SetDynamicOutputs(const std::vector<KernelWithIndex> &graph_outputs, std::v
     if (common::AnfAlgo::IsNoOuputNode(output_node)) {
       continue;
     }
-    SetOutput(res_manager, &((*ge_outputs)[i]), output_node, idx);
+    if (ge_outputs_index >= ge_outputs_size) {
+      MS_LOG(EXCEPTION) << "GE data access is out of bounds, which the current index value is " << ge_outputs_index
+                        << ", the total number of GE output is " << ge_outputs_size << ".";
+    }
+    SetOutput(res_manager, &((*ge_outputs)[ge_outputs_index++]), output_node, idx);
   }
 }
 
