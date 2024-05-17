@@ -30,6 +30,7 @@
 #include "mindspore/core/ops/all_reduce.h"
 #include "plugin/device/ascend/optimizer/common/gllo_utils.h"
 #include "ops/op_utils.h"
+#include "ops/other_op_name.h"
 #include "mindspore/ccsrc/frontend/parallel/ops_info/ops_utils.h"
 #include "mindspore/core/ir/anf.h"
 #include "utils/phase.h"
@@ -40,9 +41,13 @@ const BaseRef MatMulAllReduceFusion::DefinePattern() const {
   MS_CHECK_TRUE_RET(matmul_input_1 != nullptr, {});
   auto matmul_input_2 = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(matmul_input_2 != nullptr, {});
+  auto transpose_a = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(transpose_a != nullptr, {});
+  auto transpose_b = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(transpose_b != nullptr, {});
   auto is_matmul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMatMul>);
   MS_CHECK_TRUE_RET(is_matmul != nullptr, {});
-  VectorRef matmul_ref = VectorRef({is_matmul, matmul_input_1, matmul_input_2});
+  VectorRef matmul_ref = VectorRef({is_matmul, matmul_input_1, matmul_input_2, transpose_a, transpose_b});
 
   auto is_allreduce = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAllReduce>);
   MS_CHECK_TRUE_RET(is_allreduce != nullptr, {});
@@ -104,8 +109,14 @@ const AnfNodePtr MatMulAllReduceFusion::Process(const mindspore::FuncGraphPtr &f
   }
 
   auto phase = PhaseManager::GetInstance().phase();
-  if (common::GetEnv("DISABLE_MATMULALLREDUCE_FUSION") == "True" || common::GetEnv("MS_ENABLE_LCCL").empty() ||
-      phase.rfind(kPhaseNamePrefill) == std::string::npos) {
+  if (common::GetEnv("MS_ENABLE_LCCL").empty() || phase.rfind(kPhaseNamePrefill) == std::string::npos) {
+    return nullptr;
+  }
+
+  auto enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
+  bool enable_matmul_allreduce =
+    (std::find(enable_op_list.begin(), enable_op_list.end(), kMatMulAllReduceOpName) != enable_op_list.end());
+  if (!enable_matmul_allreduce) {
     return nullptr;
   }
 
@@ -125,7 +136,7 @@ const AnfNodePtr MatMulAllReduceFusion::Process(const mindspore::FuncGraphPtr &f
 
   // replace allreduce to MatMulAllReduce
   (void)manager->Replace(allreduce_cnode, matmul_allreduce_cnode);
-  MS_LOG(DEBUG) << "MatMulAllReduce replace success";
+  MS_LOG(INFO) << "MatMulAllReduce replace success";
   return matmul_allreduce_cnode;
 }
 }  // namespace mindspore::opt
