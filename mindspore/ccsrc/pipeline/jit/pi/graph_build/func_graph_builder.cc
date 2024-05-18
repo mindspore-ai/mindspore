@@ -156,6 +156,10 @@ bool FunctionShouldBeParseInAst(const py::object &obj) {
 }
 
 py::object ConvertToPythonTensor(const py::object &obj) {
+  constexpr auto ms_class_attr = "__ms_class__";
+  if (py::hasattr(obj, ms_class_attr) && py::cast<bool>(py::getattr(obj, ms_class_attr))) {
+    return obj;
+  }
   if (py::isinstance<tensor::Tensor>(obj)) {
     bool is_adapter_tensor = py::hasattr(obj, kAdapterFlag) && py::cast<bool>(py::getattr(obj, kAdapterFlag));
     py::module mod = python_adapter::GetPyModule(kTensorModule);
@@ -748,10 +752,12 @@ py::object FuncGraphBuilder::AddFgCallNode(const FuncGraphPtr &fg, const vector<
 }
 
 bool FuncGraphBuilder::CheckCallable(const py::object &obj) {
+  constexpr auto ms_class_attr = "__ms_class__";
   return py::isinstance<MetaFuncGraph>(obj) ||
          (py::hasattr(obj, PYTHON_PRIMITIVE_FLAG) &&
           parse::data_converter::GetObjType(obj) != parse::RESOLVE_TYPE_CLASS_TYPE) ||
-         FunctionShouldBeParseInAst(obj);
+         FunctionShouldBeParseInAst(obj) ||
+         (py::hasattr(obj, ms_class_attr) && py::cast<bool>(py::getattr(obj, ms_class_attr)));
 }
 
 py::object FuncGraphBuilder::ConvertMethod(const py::object &obj) {
