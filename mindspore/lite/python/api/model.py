@@ -237,8 +237,8 @@ class Model(BaseModel):
                 raise RuntimeError(
                     f"load configuration failed! Error is {ret.ToString()}")
             parse_res = _parse_update_weight_config_name(config_path)
-            update_names, self.lora_name_map = parse_res[0], parse_res[1]
-            if update_names is not None:
+            if parse_res is not None and len(parse_res) >= 2:
+                update_names, self.lora_name_map = parse_res[0], parse_res[1]
                 if config_dict is None:
                     config_dict = {"ascend_context": {"variable_weights_list": update_names}}
                 else:
