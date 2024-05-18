@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/kernels/image/video_utils.h"
 
-#if (defined(ENABLE_MINDDATA) && !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__))
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,7 +26,6 @@ extern "C" {
 #include <libswscale/swscale.h>
 #ifdef __cplusplus
 };
-#endif
 #endif
 
 #include <limits>
@@ -46,7 +44,6 @@ const int32_t MAX_AVIO_BUFFER_SIZE = 1073741824;
 
 namespace mindspore {
 namespace dataset {
-#if (defined(ENABLE_MINDDATA) && !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__))
 struct MediaContainer {
   int channels = 1;
 
@@ -712,7 +709,7 @@ void AVDecodeAudioFramePacket(struct AudioVisual *avinfo, std::vector<std::vecto
 
   const uint8_t **out_data = (const uint8_t **)(frame->extended_data);
 
-  if (audio_vector->size() <= 0) {
+  if (audio_vector->size() == 0) {
     audio_vector->resize(avinfo->audio.channels, std::vector<T>());
   }
 
@@ -734,7 +731,7 @@ void AVDecodeAudioFramePlanar(struct AudioVisual *avinfo, std::vector<std::vecto
 
   const uint8_t **out_data = (const uint8_t **)(frame->extended_data);
 
-  if (audio_vector->size() <= 0) {
+  if (audio_vector->size() == 0) {
     audio_vector->resize(avinfo->audio.channels, std::vector<T>());
   }
 
@@ -784,7 +781,7 @@ template <typename T>
 Status AVDecodeAudioFrameByConversion(struct AudioVisual *avinfo, std::vector<std::vector<T>> *audio_vector) {
   AVFrame *frame = avinfo->audio.frame;
 
-  if (audio_vector->size() <= 0) {
+  if (audio_vector->size() == 0) {
     audio_vector->resize(avinfo->audio.channels, std::vector<T>());
   }
 
@@ -1027,7 +1024,6 @@ Status AVDecodePacketAudio(struct AudioVisual *avinfo, std::vector<std::vector<T
   AVFrame *frame = avinfo->audio.frame;
 
   int64_t *frame_number = &(avinfo->audio.frame_number);
-  char err_buf[AV_ERROR_MAX_STRING_SIZE];
 
   std::string err_msg;
   int status = avcodec_send_packet(codec_context, packet);
@@ -1036,6 +1032,7 @@ Status AVDecodePacketAudio(struct AudioVisual *avinfo, std::vector<std::vector<T
     if (packet == nullptr) {
       err_msg += " when flushing the codec_context";
     }
+    char err_buf[AV_ERROR_MAX_STRING_SIZE];
     av_make_error_string(err_buf, AV_ERROR_MAX_STRING_SIZE, status);
     err_msg += ". " + std::string(err_buf);
     MS_LOG(WARNING) << err_msg;
@@ -1321,42 +1318,35 @@ Status AVReadVisualAudio(struct AudioVisual *avinfo, std::shared_ptr<Tensor> *vi
     case AV_SAMPLE_FMT_DBLP: {
       std::vector<std::vector<double>> audio_double_vector;
       return AVReadPackets(avinfo, visual_output, audio_output, &audio_double_vector);
-      break;
     }
     case AV_SAMPLE_FMT_FLT:
     case AV_SAMPLE_FMT_FLTP: {
       std::vector<std::vector<float>> audio_float_vector;
       return AVReadPackets(avinfo, visual_output, audio_output, &audio_float_vector);
-      break;
     }
     case AV_SAMPLE_FMT_S16:
     case AV_SAMPLE_FMT_S16P: {
       std::vector<std::vector<int16_t>> audio_int16_vector;
       return AVReadPackets(avinfo, visual_output, audio_output, &audio_int16_vector);
-      break;
     }
     case AV_SAMPLE_FMT_S32:
     case AV_SAMPLE_FMT_S32P: {
       std::vector<std::vector<int32_t>> audio_int32_vector;
       return AVReadPackets(avinfo, visual_output, audio_output, &audio_int32_vector);
-      break;
     }
     case AV_SAMPLE_FMT_S64:
     case AV_SAMPLE_FMT_S64P: {
       std::vector<std::vector<int64_t>> audio_int64_vector;
       return AVReadPackets(avinfo, visual_output, audio_output, &audio_int64_vector);
-      break;
     }
     case AV_SAMPLE_FMT_U8:
     case AV_SAMPLE_FMT_U8P: {
       std::vector<std::vector<uint8_t>> audio_uint8_vector;
       return AVReadPackets(avinfo, visual_output, audio_output, &audio_uint8_vector);
-      break;
     }
     default: {
       std::vector<std::vector<float>> audio_float_vector;
       return AVReadPackets(avinfo, visual_output, audio_output, &audio_float_vector);
-      break;
     }
   }
   return Status::OK();
@@ -1365,7 +1355,6 @@ Status AVReadVisualAudio(struct AudioVisual *avinfo, std::shared_ptr<Tensor> *vi
 Status DecodeVideo(const TensorRow &input, TensorRow *output) {
   std::shared_ptr<Tensor> visual_output;
   std::shared_ptr<Tensor> audio_output;
-  std::map<std::string, std::string> metadata_output;
 
   struct AudioVisual avinfo;
   av_log_set_level(avinfo.av_log_level);
@@ -1431,11 +1420,9 @@ Status ReadVideoTimestamps(const std::string &filename, std::vector<int64_t> *pt
   RETURN_UNEXPECTED_IF_NULL(video_fps);
   RETURN_UNEXPECTED_IF_NULL(time_base);
 
-  std::string err_msg = "";
-
   // check the input parameter: pts_unit
   if (pts_unit != "pts" && pts_unit != "sec") {
-    err_msg = "ReadVideoTimestamps: Not supported pts_unit for " + pts_unit;
+    std::string err_msg = "ReadVideoTimestamps: Not supported pts_unit for " + pts_unit;
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -1465,24 +1452,5 @@ Status ReadVideoTimestamps(const std::string &filename, std::vector<int64_t> *pt
 
   return AVReadVisualPts(&avinfo, pts_int64_vector, video_fps, time_base);
 }
-#else
-Status DecodeVideo(const TensorRow &input, TensorRow *output) {
-  std::string err_msg = "DecodeVideo is not supported.";
-  return Status(StatusCode::kMDNotImplementedYet, err_msg);
-}
-
-Status ReadVideo(const std::string &filename, std::shared_ptr<Tensor> *visual_output,
-                 std::shared_ptr<Tensor> *audio_output, std::map<std::string, std::string> *metadata_output,
-                 float start_pts, float end_pts, const std::string &pts_unit) {
-  std::string err_msg = "ReadVideo is not supported.";
-  return Status(StatusCode::kMDNotImplementedYet, err_msg);
-}
-
-Status ReadVideoTimestamps(const std::string &filename, std::vector<int64_t> *pts_int64_vector, float *video_fps,
-                           float *time_base, const std::string &pts_unit) {
-  std::string err_msg = "ReadVideoTimestamps is not supported.";
-  return Status(StatusCode::kMDNotImplementedYet, err_msg);
-}
-#endif
 }  // namespace dataset
 }  // namespace mindspore

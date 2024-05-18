@@ -127,6 +127,7 @@ if(ENABLE_MINDDATA)
         DESTINATION ${INSTALL_LIB_DIR} RENAME libswresample.4.dylib COMPONENT mindspore)
     install(FILES ${ffmpeg_LIBPATH}/libswscale.6.7.100.dylib
         DESTINATION ${INSTALL_LIB_DIR} RENAME libswscale.6.dylib COMPONENT mindspore)
+
 endif()
 
 if(ENABLE_CPU)

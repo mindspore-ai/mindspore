@@ -235,11 +235,9 @@ else()
 endif()
 
 if(ENABLE_FFMPEG)
-    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        set(FFMPEG_LIB mindspore::avcodec mindspore::avdevice mindspore::avfilter mindspore::avformat mindspore::avutil
-            mindspore::swresample mindspore::swscale)
-        target_link_libraries(_c_dataengine PUBLIC -Wl,--no-as-needed ${FFMPEG_LIB})
-    endif()
+    set(FFMPEG_LIB mindspore::avcodec mindspore::avdevice mindspore::avfilter mindspore::avformat mindspore::avutil
+    mindspore::swresample mindspore::swscale)
+    target_link_libraries(_c_dataengine PUBLIC ${FFMPEG_LIB})
 endif()
 
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turbojpeg mindspore::opencv_core
