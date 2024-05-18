@@ -2890,7 +2890,7 @@ def sort_ext(input, *, dim=-1, descending=False, stable=False):
     Raises:
         TypeError: If `dim` is not an int.
         TypeError: If `descending` is not a bool.
-        TypeError: If `input` not in float16, float32, uint8, int8, int16, int32, int64, bfloat16。
+        TypeError: If `input` not in float16, float32, uint8, int8, int16, int32, int64, bfloat16
         TypeError: If `stable` is not a bool.
         ValueError: If `dim` is not in range of [-len(input_x.shape), len(input_x.shape)).
 

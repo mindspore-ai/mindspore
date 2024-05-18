@@ -1023,18 +1023,12 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("SortExt").SetUnusedInputs({i1, i3}).SetBody(BODYFUNC(ib) {
   auto input = ib->GetInput(kIndex0);
   auto dim = ib->GetInput(kIndex1);
-  auto dim_val = dim->BuildValue();
 
   auto indices = ib->TupleGetItem(ib->GetInput(kIndex4), kIndex1);
   auto dout0 = ib->TupleGetItem(ib->GetInput(kIndex5), kIndex0);
 
-  MS_EXCEPTION_IF_CHECK_FAIL(dim_val != nullptr, "The input dim of 'Sort' must be constant.");
-  MS_EXCEPTION_IF_CHECK_FAIL(!dim_val->isa<ValueAny>(), "The input dim of 'Sort' must be constant.");
-
-  auto res = ib->Emit("TensorScatterElements", {ib->ZerosLike(input), indices, dout0},
-                      {{"reduction", MakeValue<string>("none")}, {"axis", dim_val}});
-  return {res, ib->OutZeros(ib->GetInput(kIndex1)), ib->OutZeros(ib->GetInput(kIndex2)),
-          ib->OutZeros(ib->GetInput(kIndex3))};
+  auto res = ib->Emit("Scatter", {ib->ZerosLike(input), dim, indices, dout0, ib->EmitValue(MakeValue<int64_t>(0))});
+  return {res, ib->OutZeros(dim), ib->OutZeros(ib->GetInput(kIndex2)), ib->OutZeros(ib->GetInput(kIndex3))};
 });
 
 REG_BPROP_BUILDER("Identity").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
