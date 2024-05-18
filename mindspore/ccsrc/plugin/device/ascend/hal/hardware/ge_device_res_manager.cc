@@ -15,6 +15,10 @@
  */
 
 #include "plugin/device/ascend/hal/hardware/ge_device_res_manager.h"
+#ifndef _WIN32
+#include <dlfcn.h>
+#include <libgen.h>
+#endif
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
@@ -36,6 +40,20 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+std::string GetCurrentDir() {
+#ifndef _WIN32
+  Dl_info dl_info;
+  if (dladdr(reinterpret_cast<void *>(GetCurrentDir), &dl_info) == 0) {
+    MS_LOG(WARNING) << "Get dladdr error";
+    return "";
+  }
+  std::string cur_so_path = dl_info.dli_fname;
+  return dirname(cur_so_path.data());
+#else
+  return "";
+#endif
+}
+
 ::ge::MemBlock *GeAllocator::Malloc(size_t size) {
   auto addr = res_manager_->AllocateMemory(size);
   MS_LOG(DEBUG) << "GE Allocator malloc addr: " << addr << " size: " << size;
@@ -255,7 +273,7 @@ bool GeDeviceResManager::LoadCollectiveCommLib() {
   }
   // Ascend backend supports HCCL and LCCL collective communication libraries.
   if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {
-    std::string lowlatency_comm_lib_name = "liblowlatency_collective.so";
+    std::string lowlatency_comm_lib_name = GetCurrentDir() + "/ascend/liblowlatency_collective.so";
     auto loader = std::make_shared<CollectiveCommLibLoader>(lowlatency_comm_lib_name);
     MS_EXCEPTION_IF_NULL(loader);
     if (!loader->Initialize()) {
