@@ -451,6 +451,17 @@ APP_ERROR PluginDvppPerspective(const std::shared_ptr<mindspore::dataset::Device
   return DvppPerspective(input, output, start_points, end_points, interpolation);
 }
 
+APP_ERROR PluginDvppPosterize(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, uint8_t bits) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppPosterize(input, output, bits);
+}
+
 APP_ERROR PluginDvppResize(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                            std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, int32_t output_height,
                            int32_t output_width, double fx, double fy, mindspore::dataset::InterpolationMode mode) {

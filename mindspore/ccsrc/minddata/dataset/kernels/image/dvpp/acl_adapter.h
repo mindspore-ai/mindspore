@@ -133,6 +133,9 @@ class AclAdapter {
                             const std::vector<std::vector<int32_t>> &start_points,
                             const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation);
 
+  APP_ERROR DvppPosterize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                          std::shared_ptr<DeviceTensorAscend910B> *output, uint8_t bits);
+
   APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
                        std::shared_ptr<DeviceTensorAscend910B> *output, int32_t output_height, int32_t output_width,
                        double fx, double fy, InterpolationMode mode);
@@ -227,6 +230,7 @@ class AclAdapter {
   DvppNormalizeFunObj dvpp_normalize_fun_obj_;
   DvppPadFunObj dvpp_pad_fun_obj_;
   DvppPerspectiveFunObj dvpp_perspective_fun_obj_;
+  DvppPosterizeFunObj dvpp_posterize_fun_obj_;
   DvppResizeFunObj dvpp_resize_fun_obj_;
   DvppResizedCropFunObj dvpp_resized_crop_fun_obj_;
   DvppRotateFunObj dvpp_rotate_fun_obj_;

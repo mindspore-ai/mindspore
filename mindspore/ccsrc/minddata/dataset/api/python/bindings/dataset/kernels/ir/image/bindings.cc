@@ -460,8 +460,8 @@ PYBIND_REGISTER(
   PosterizeOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::PosterizeOperation, TensorOperation, std::shared_ptr<vision::PosterizeOperation>>(
       *m, "PosterizeOperation")
-      .def(py::init([](uint8_t bits) {
-        auto posterize = std::make_shared<vision::PosterizeOperation>(bits);
+      .def(py::init([](uint8_t bits, const std::string &device_target) {
+        auto posterize = std::make_shared<vision::PosterizeOperation>(bits, device_target);
         THROW_IF_ERROR(posterize->ValidateParams());
         return posterize;
       }));

@@ -33,6 +33,7 @@ set(DVPP_IMAGE_SOURCE
         ascend910b/dvpp_normalize_v2_op.cc
         ascend910b/dvpp_pad_op.cc
         ascend910b/dvpp_perspective_op.cc
+        ascend910b/dvpp_posterize_op.cc
         ascend910b/dvpp_resize_op.cc
         ascend910b/dvpp_resized_crop_op.cc
         ascend910b/dvpp_rotate_op.cc
