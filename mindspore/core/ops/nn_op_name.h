@@ -157,6 +157,8 @@ constexpr auto kMatmulQkvOpName = "MatmulQkv";
 constexpr auto kMatmulFfnOpName = "MatmulFfn";
 constexpr auto kMultiWeightMatmulV2OpName = "MultiWeightMatmulV2";
 constexpr auto kAllFiniteOpName = "AllFinite";
+constexpr auto kWeightQuantMatmulQkvOpName = "WeightQuantMatmulQkv";
+constexpr auto kWeightQuantMatmulFfnOpName = "WeightQuantMatmulFfn";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_NN_OP_NAME_H_
