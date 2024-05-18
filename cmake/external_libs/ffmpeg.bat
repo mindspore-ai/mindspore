@@ -30,6 +30,7 @@ del %TEMP_FILE%
 
 SET MSYS64_PATH=%file_path:~0,-12%
 SET FFMPEG_DLL_SOURCE_PATH=%MSYS64_PATH%\home\ffmpeg\install_ffmpeg_lib\bin
+SET FFMPEG_COMPILE_SOURCE_PATH=%MSYS64_PATH%\home\ffmpeg\install_ffmpeg_lib
 SET FFMPEG_DLL_PATH=%BASE_PATH%\build\mindspore\ffmpeg_lib
 SET FFMPEG_ERROR_LOG=%MSYS64_PATH%\home\ffmpeg\ffbuild\config.log
 
@@ -116,8 +117,8 @@ echo FFmpeg compile is ended. Continuing the next processing
 
 
 
-xcopy %FFMPEG_DLL_SOURCE_PATH% %FFMPEG_DLL_PATH% /E /I /Y
-xcopy %FFMPEG_DLL_SOURCE_PATH% %FFMPEG_CACHE_DIR% /E /I /Y
+xcopy %FFMPEG_COMPILE_SOURCE_PATH% %FFMPEG_DLL_PATH% /E /I /Y
+xcopy %FFMPEG_COMPILE_SOURCE_PATH% %FFMPEG_CACHE_DIR% /E /I /Y
 
 call :dll_file_exist
 if errorlevel 1 (
@@ -137,7 +138,7 @@ EXIT /b 0
     for %%a in ("%FFMPEG_LIB_NAME:-=" "%") do (
         echo Checking for %%a...
         
-        if exist "%FFMPEG_CACHE_DIR%\%%a*.dll" (
+        if exist "%FFMPEG_CACHE_DIR%\bin\%%a*.dll" (
             echo The file %%a is found in %FFMPEG_CACHE_DIR%
         ) else (
             echo The file %%a is not found in %FFMPEG_CACHE_DIR%

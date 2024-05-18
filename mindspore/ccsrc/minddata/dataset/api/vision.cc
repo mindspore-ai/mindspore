@@ -1199,13 +1199,11 @@ Status ReadImage(const std::string &filename, mindspore::MSTensor *output, Image
   *output = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
   return Status::OK();
 }
-#endif  // not ENABLE_ANDROID
 
 // ReadVideo Function.
 Status ReadVideo(const std::string &filename, mindspore::MSTensor *video_output, mindspore::MSTensor *audio_output,
                  std::map<std::string, std::string> *metadata_output, float start_pts, float end_pts,
                  const std::string &pts_unit) {
-#if !defined(ENABLE_ANDROID) && defined(ENABLE_FFMPEG)
   RETURN_UNEXPECTED_IF_NULL(video_output);
   RETURN_UNEXPECTED_IF_NULL(audio_output);
   RETURN_UNEXPECTED_IF_NULL(metadata_output);
@@ -1216,16 +1214,12 @@ Status ReadVideo(const std::string &filename, mindspore::MSTensor *video_output,
                                                  start_pts, end_pts, pts_unit));
   *video_output = mindspore::MSTensor(std::make_shared<DETensor>(de_video_output));
   *audio_output = mindspore::MSTensor(std::make_shared<DETensor>(de_audio_output));
-#else
-  MS_LOG(ERROR) << "Unsupported ReadVideo.";
-#endif
   return Status::OK();
 }
 
 // ReadVideoTimestamps.
 Status ReadVideoTimestamps(const std::string &filename, std::tuple<std::vector<float>, float> *output,
                            const std::string &pts_unit) {
-#if !defined(ENABLE_ANDROID) && defined(ENABLE_FFMPEG)
   RETURN_UNEXPECTED_IF_NULL(output);
   std::vector<int64_t> pts_int64_vector;
   float video_fps;
@@ -1247,11 +1241,9 @@ Status ReadVideoTimestamps(const std::string &filename, std::tuple<std::vector<f
     }
   }
   *output = std::make_tuple(pts_float_vector, video_fps);
-#else
-  MS_LOG(ERROR) << "Unsupported ReadVideoTimestamps.";
-#endif
   return Status::OK();
 }
+#endif  // not ENABLE_ANDROID
 
 // Rescale Transform Operation.
 struct Rescale::Data {
