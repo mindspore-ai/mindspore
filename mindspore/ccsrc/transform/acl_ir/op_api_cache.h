@@ -94,6 +94,11 @@ void GatherInfo(const T &arg, const Args &... args) {
 
 void RefreshAddr(mindspore::kernel::KernelTensor *);
 void RefreshAddr(const std::pair<mindspore::kernel::KernelTensor *, bool> &);
+inline void RefreshAddr(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
+  for (auto tensor : tensor_list) {
+    RefreshAddr(tensor);
+  }
+}
 
 template <typename Args>
 void RefreshAddr(const Args &values) {}
