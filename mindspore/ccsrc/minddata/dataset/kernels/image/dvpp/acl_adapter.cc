@@ -119,6 +119,7 @@ void AclAdapter::InitPlugin() {
   dvpp_normalize_fun_obj_ = DlsymFuncObj(DvppNormalize, plugin_handle_);
   dvpp_pad_fun_obj_ = DlsymFuncObj(DvppPad, plugin_handle_);
   dvpp_perspective_fun_obj_ = DlsymFuncObj(DvppPerspective, plugin_handle_);
+  dvpp_posterize_fun_obj_ = DlsymFuncObj(DvppPosterize, plugin_handle_);
   dvpp_resize_fun_obj_ = DlsymFuncObj(DvppResize, plugin_handle_);
   dvpp_resized_crop_fun_obj_ = DlsymFuncObj(DvppResizedCrop, plugin_handle_);
   dvpp_rotate_fun_obj_ = DlsymFuncObj(DvppRotate, plugin_handle_);
@@ -194,6 +195,7 @@ void AclAdapter::FinalizePlugin() {
   dvpp_normalize_fun_obj_ = nullptr;
   dvpp_pad_fun_obj_ = nullptr;
   dvpp_perspective_fun_obj_ = nullptr;
+  dvpp_posterize_fun_obj_ = nullptr;
   dvpp_resize_fun_obj_ = nullptr;
   dvpp_resized_crop_fun_obj_ = nullptr;
   dvpp_rotate_fun_obj_ = nullptr;
@@ -616,6 +618,14 @@ APP_ERROR AclAdapter::DvppPerspective(const std::shared_ptr<DeviceTensorAscend91
     return APP_ERR_ACL_FAILURE;
   }
   return dvpp_perspective_fun_obj_(input, output, start_points, end_points, interpolation);
+}
+
+APP_ERROR AclAdapter::DvppPosterize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                      std::shared_ptr<DeviceTensorAscend910B> *output, uint8_t bits) {
+  if (!HasAclPlugin() || dvpp_posterize_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_posterize_fun_obj_(input, output, bits);
 }
 
 APP_ERROR AclAdapter::DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,

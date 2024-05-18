@@ -129,6 +129,9 @@ PLUGIN_METHOD(DvppPerspective, int, const std::shared_ptr<mindspore::dataset::De
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, const std::vector<std::vector<int32_t>> &,
               const std::vector<std::vector<int32_t>> &, mindspore::dataset::InterpolationMode);
 
+PLUGIN_METHOD(DvppPosterize, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, uint8_t);
+
 PLUGIN_METHOD(DvppResize, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, int32_t, int32_t, double, double,
               mindspore::dataset::InterpolationMode);

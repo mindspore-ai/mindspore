@@ -219,6 +219,12 @@ APP_ERROR DvppPerspective(const std::shared_ptr<DeviceTensorAscend910B> &input,
                           const std::vector<std::vector<int32_t>> &end_points,
                           InterpolationMode interpolation = InterpolationMode::kLinear);
 
+/// \brief Returns Padded image.
+/// \param input: Tensor of shape <H,W,C> format.
+/// \param output: Padded image (type DE_FLOAT32 or DE_UINT8).
+APP_ERROR DvppPosterize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                        std::shared_ptr<DeviceTensorAscend910B> *output, uint8_t bits);
+
 /// \brief Returns Resized image.
 /// \param input: Tensor of shape <N,H,W,C>, c == 1 or c == 3
 /// \param output: Resized image of shape <H,outputHeight,outputWidth,C> and same type as input.

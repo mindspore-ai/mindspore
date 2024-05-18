@@ -118,6 +118,7 @@ enum {
   APP_ERR_DVPP_EQUALIZE_FAIL = APP_ERR_DVPP_BASE + 27,           // DVPP: equalize blur fail
   APP_ERR_DVPP_ROTATE_FAIL = APP_ERR_DVPP_BASE + 28,             // DVPP: rotate fail
   APP_ERR_DVPP_AUTO_CONTRAST_FAIL = APP_ERR_DVPP_BASE + 29,      // DVPP: auto contrast fail
+  APP_ERR_DVPP_POSTERIZE_FAIL = APP_ERR_DVPP_BASE + 30,          // DVPP: posterize fail
   APP_ERR_DVPP_END,  // Not an error code, define the range of common error code
 
   // define the error code of inference
