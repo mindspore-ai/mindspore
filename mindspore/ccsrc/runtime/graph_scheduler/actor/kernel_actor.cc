@@ -579,6 +579,9 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
     MS_LOG(DEBUG) << GetAID().Name() << " ignore the input address for input index: " << input_data_index;
     return;
   }
+  if (skip_launch_shape_related_op_) {
+    return;
+  }
   if (input_data_index >= real_input_data_infos_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, "The input index is of range.");
   }
@@ -934,6 +937,11 @@ void KernelActor::ResizeKernelMod() {
 }
 
 bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
+  if (skip_launch_shape_related_op_) {
+    MS_LOG(DEBUG) << "Skip launch real make tuple kernel: " << kernel_->fullname_with_scope()
+                  << " input kernel tensor: " << input_kernel_tensors_;
+    return true;
+  }
   // Check the skipped launch condition.
   if (is_launch_skipped_) {
     MS_EXCEPTION_IF_CHECK_FAIL((input_device_tensors_.size() >= 1), "The inputs size is wrong.");

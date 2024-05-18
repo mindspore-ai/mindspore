@@ -123,6 +123,10 @@ class KernelActor : public DebugAwareActor {
   // Set the memory address for the tensors which use the somas.
   void SetSomasMemory(OpContext<DeviceTensor> *const context) const;
 
+  void set_skip_launch_shape_related_op(bool skip_launch_shape_related_op) {
+    skip_launch_shape_related_op_ = skip_launch_shape_related_op;
+  }
+
  protected:
   void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override;
@@ -272,6 +276,11 @@ class KernelActor : public DebugAwareActor {
 
   bool is_multi_stream_process_skipped_{false};
   std::vector<std::pair<uint32_t, void *>> cross_stream_addresses_;
+
+  // Flag for skipping launch shape related operator, such as RealMakeTuple.
+  // RealMakeTuple --> ShapeCalc pattern: if ShapeCalc is not value depend for one input RealMakeTuple op, we can skip
+  // launch this RealMakeTuple.
+  bool skip_launch_shape_related_op_{false};
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;

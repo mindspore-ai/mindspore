@@ -16,6 +16,7 @@
 
 #include "runtime/graph_scheduler/scheduler_helper.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "runtime/graph_scheduler/actor/actor_dump.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -54,6 +55,65 @@ void CollectControlActors(const ActorSet *actor_set, std::vector<AbstractActorPt
       (void)actors->emplace_back(static_cast<AbstractActorPtr>(stack_actor));
     }
   }
+}
+
+bool IsSkipLaunchShapeRelatedOp(KernelActor *kernel_actor) {
+  MS_EXCEPTION_IF_NULL(kernel_actor);
+  auto &kernel = kernel_actor->kernel();
+  MS_EXCEPTION_IF_NULL(kernel);
+
+  // RealMakeTuple --> ShapeCalc pattern:
+  // If ShapeCalc is not value depend for one input RealMakeTuple op, we can skip launch this RealMakeTuple.
+  if (IsPrimitiveCNode(kernel, prim::kPrimRealMakeTuple)) {
+    auto func_graph = kernel->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto manager = func_graph->manager();
+    if (manager == nullptr) {
+      manager = Manage(func_graph, true);
+      func_graph->set_manager(manager);
+    }
+
+    const auto &users_set = manager->node_users()[kernel];
+    bool can_skip_launch_real_make_tuple = true;
+    for (const auto &item : users_set) {
+      const auto &user_node = item.first;
+      if (!user_node->isa<CNode>()) {
+        can_skip_launch_real_make_tuple = false;
+        break;
+      }
+      auto user_cnode = user_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(user_cnode);
+      if (!IsPrimitiveCNode(user_cnode, prim::kPrimShapeCalc)) {
+        can_skip_launch_real_make_tuple = false;
+        break;
+      }
+
+      if (!common::AnfAlgo::HasNodeAttr("value_depend", user_cnode)) {
+        can_skip_launch_real_make_tuple = false;
+        break;
+      }
+      const auto &value_depend = common::AnfAlgo::GetNodeAttr<std::vector<bool>>(user_cnode, "value_depend");
+      auto user_input_index = item.second;
+      if (user_input_index < 1) {
+        MS_LOG(EXCEPTION) << "The input index should start from 1, but got: " << user_input_index;
+      }
+      if (IntToSize(user_input_index) > value_depend.size()) {
+        MS_LOG(EXCEPTION) << "The input index[" << user_input_index
+                          << "] is out of range, input size: " << value_depend.size();
+      }
+      if (value_depend[user_input_index - 1]) {
+        can_skip_launch_real_make_tuple = false;
+        break;
+      }
+    }
+
+    if (can_skip_launch_real_make_tuple) {
+      kernel_actor->set_skip_launch_shape_related_op(true);
+      return true;
+    }
+  }
+
+  return false;
 }
 }  // namespace
 
@@ -212,6 +272,11 @@ bool SchedulerHelper::IsIgnoredInputAddress(AbstractActor *const to_actor, size_
   auto kernel_actor = dynamic_cast<KernelActor *>(to_actor);
   auto &to_kernel = kernel_actor->kernel();
   MS_EXCEPTION_IF_NULL(to_kernel);
+
+  if (IsSkipLaunchShapeRelatedOp(kernel_actor)) {
+    return true;
+  }
+
   auto kernel_mod = AnfAlgo::GetKernelMod(to_kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   const auto &ignored_address = kernel_mod->GetLaunchIgnoredInputAddressIdx();
