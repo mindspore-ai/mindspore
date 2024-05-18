@@ -126,6 +126,13 @@ APP_ERROR DvppAdjustHue(const std::shared_ptr<DeviceTensorAscend910B> &input,
 APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
 
+/// \brief Returns image with adjusting sharpness.
+/// \param input: Tensor of shape <H,W,C> format.
+/// \param output: Augmented image Tensor of same input shape (type DE_FLOAT32 or DE_UINT8).
+/// \param factor: sharpness factor.
+APP_ERROR DvppAdjustSharpness(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                              std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
 /// \brief Returns transformed image with affine matrix.
 /// \param input: Tensor of shape <H,W,C> format.
 /// \param output: Transformed image Tensor (type DE_FLOAT32 or DE_UINT8).

@@ -330,6 +330,17 @@ APP_ERROR PluginDvppAdjustSaturation(const std::shared_ptr<mindspore::dataset::D
   return DvppAdjustSaturation(input, output, factor);
 }
 
+APP_ERROR PluginDvppAdjustSharpness(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                                    std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, float factor) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppAdjustSaturation(input, output, factor);
+}
+
 APP_ERROR PluginDvppAffine(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                            std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
                            const std::vector<float> &matrix, uint32_t interpolation_mode, uint32_t padding_mode,

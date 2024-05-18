@@ -93,6 +93,9 @@ PLUGIN_METHOD(DvppAdjustHue, int, const std::shared_ptr<mindspore::dataset::Devi
 PLUGIN_METHOD(DvppAdjustSaturation, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, float);
 
+PLUGIN_METHOD(DvppAdjustSharpness, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, float);
+
 PLUGIN_METHOD(DvppAffine, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, const std::vector<float> &, uint32_t,
               uint32_t, const std::vector<float> &);

@@ -677,8 +677,56 @@ class AdjustSharpness(ImageTensorOperation):
         self.sharpness_factor = sharpness_factor
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        - When the device is Ascend, input type supports `uint8` or `float32` , input channel supports 1 and 3.
+          The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> # create a dataset that reads all files in dataset_dir with 8 threads
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> transforms_list = [vision.AdjustSharpness(sharpness_factor=2.0).device("Ascend")]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.AdjustSharpness(sharpness_factor=0).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.AdjustSharpnessOperation(self.sharpness_factor)
+        return cde.AdjustSharpnessOperation(self.sharpness_factor, self.device_target)
 
 
 class Affine(ImageTensorOperation):

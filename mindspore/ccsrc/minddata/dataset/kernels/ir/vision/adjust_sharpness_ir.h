@@ -33,7 +33,7 @@ constexpr char kAdjustSharpnessOperation[] = "AdjustSharpness";
 
 class AdjustSharpnessOperation : public TensorOperation {
  public:
-  explicit AdjustSharpnessOperation(float sharpness_factor);
+  explicit AdjustSharpnessOperation(float sharpness_factor, const std::string &device_target = "CPU");
 
   ~AdjustSharpnessOperation() override = default;
 
@@ -47,8 +47,11 @@ class AdjustSharpnessOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   float sharpness_factor_;
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset

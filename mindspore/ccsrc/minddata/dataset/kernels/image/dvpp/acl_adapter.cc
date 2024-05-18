@@ -124,6 +124,7 @@ void AclAdapter::InitPlugin() {
   dvpp_resized_crop_fun_obj_ = DlsymFuncObj(DvppResizedCrop, plugin_handle_);
   dvpp_rotate_fun_obj_ = DlsymFuncObj(DvppRotate, plugin_handle_);
   dvpp_saturation_fun_obj_ = DlsymFuncObj(DvppAdjustSaturation, plugin_handle_);
+  dvpp_sharpness_fun_obj_ = DlsymFuncObj(DvppAdjustSharpness, plugin_handle_);
   dvpp_vertical_flip_fun_obj_ = DlsymFuncObj(DvppVerticalFlip, plugin_handle_);
 
   // acl
@@ -200,6 +201,7 @@ void AclAdapter::FinalizePlugin() {
   dvpp_resized_crop_fun_obj_ = nullptr;
   dvpp_rotate_fun_obj_ = nullptr;
   dvpp_saturation_fun_obj_ = nullptr;
+  dvpp_sharpness_fun_obj_ = nullptr;
   dvpp_vertical_flip_fun_obj_ = nullptr;
 
   // acl
@@ -528,6 +530,14 @@ APP_ERROR AclAdapter::DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAsc
     return APP_ERR_ACL_FAILURE;
   }
   return dvpp_saturation_fun_obj_(input, output, factor);
+}
+
+APP_ERROR AclAdapter::DvppAdjustSharpness(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                          std::shared_ptr<DeviceTensorAscend910B> *output, float factor) {
+  if (!HasAclPlugin() || dvpp_sharpness_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_sharpness_fun_obj_(input, output, factor);
 }
 
 APP_ERROR AclAdapter::DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &input,

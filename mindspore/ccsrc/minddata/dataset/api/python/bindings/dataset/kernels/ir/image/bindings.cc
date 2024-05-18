@@ -147,8 +147,9 @@ PYBIND_REGISTER(AdjustSaturationOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(AdjustSharpnessOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::AdjustSharpnessOperation, TensorOperation,
                                    std::shared_ptr<vision::AdjustSharpnessOperation>>(*m, "AdjustSharpnessOperation")
-                    .def(py::init([](float sharpness_factor) {
-                      auto adjust_sharpness = std::make_shared<vision::AdjustSharpnessOperation>(sharpness_factor);
+                    .def(py::init([](float sharpness_factor, const std::string &device_target) {
+                      auto adjust_sharpness =
+                        std::make_shared<vision::AdjustSharpnessOperation>(sharpness_factor, device_target);
                       THROW_IF_ERROR(adjust_sharpness->ValidateParams());
                       return adjust_sharpness;
                     }));

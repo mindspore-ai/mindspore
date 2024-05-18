@@ -95,6 +95,9 @@ class AclAdapter {
   APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                  std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
 
+  APP_ERROR DvppAdjustSharpness(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
   APP_ERROR DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &input,
                        std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &matrix,
                        uint32_t interpolation_mode, uint32_t padding_mode, const std::vector<float> &fill);
@@ -220,6 +223,7 @@ class AclAdapter {
   DvppAdjustContrastFunObj dvpp_contrast_fun_obj_;
   DvppAdjustHueFunObj dvpp_hue_fun_obj_;
   DvppAdjustSaturationFunObj dvpp_saturation_fun_obj_;
+  DvppAdjustSharpnessFunObj dvpp_sharpness_fun_obj_;
   DvppAffineFunObj dvpp_affine_fun_obj_;
   DvppAutoContrastFunObj dvpp_auto_contrast_fun_obj_;
   DvppCropFunObj dvpp_crop_fun_obj_;
