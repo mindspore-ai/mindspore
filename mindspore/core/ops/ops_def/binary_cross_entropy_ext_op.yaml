@@ -1,0 +1,22 @@
+#operator binary_cross_entropy_ext
+binary_cross_entropy_ext:
+  args:
+    input:
+      dtype: tensor
+    target:
+      dtype: tensor
+    weight:
+      dtype: tensor
+      default: None
+    reduction:
+      dtype: int
+      default: "'mean'"
+      arg_handler: str_to_enum
+  returns:
+    out:
+      dtype: tensor
+  class:
+    name: BinaryCrossEntropyExt
+  dispatch:
+    enable: True
+    Ascend: BinaryCrossEntropyExtAscend

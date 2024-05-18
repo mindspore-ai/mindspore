@@ -192,7 +192,8 @@ MaskedSelectExt: 'aclnnMaskedSelect'
 # 62
 
 # 63
-
+BinaryCrossEntropyExt: 'aclnnBinaryCrossEntropy'
+BinaryCrossEntropyBackwardExt: 'aclnnBinaryCrossEntropyBackward'
 # 64
 
 # 65
