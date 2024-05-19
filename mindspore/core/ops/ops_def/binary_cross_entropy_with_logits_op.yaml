@@ -20,6 +20,8 @@ binary_cross_entropy_with_logits:
       dtype: tensor
   class:
     name: BinaryCrossEntropyWithLogits
+  function:
+    disable: True
   dispatch:
     enable: True
     Ascend: BinaryCrossEntropyWithLogitsAscend
