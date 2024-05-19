@@ -162,8 +162,10 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   virtual size_t AllocDeviceMemByEagerFree(size_t size, DeviceMemPtr *addr) { return 0; }
   virtual size_t FreeDeviceMemByEagerFree(const DeviceMemPtr addr, const size_t size) { return 0; }
   const size_t FreeIdleMemsByEagerFree();
+#ifdef WITH_BACKEND
 
  private:
+#endif
   // Find available memory buf from total pools by status, which contains idle and eager free.
   DeviceMemPtr FindAvailableMemBuf(size_t size, bool from_persistent_mem, uint32_t stream_id);
   // Find the target status memory buf from total pools by aligned size when memory alloc.
