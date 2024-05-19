@@ -3363,8 +3363,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             [10. 35.]
         """
         if initial is None:
-            return tensor_operator_registry.get("sum")(self, axis, keepdims, dtype=dtype)
-        return tensor_operator_registry.get("sum")(self, axis, keepdims, dtype=dtype) + initial
+            res = tensor_operator_registry.get("sum")(self, axis, keepdims, dtype=dtype)
+        else:
+            res = tensor_operator_registry.get("sum")(self, axis, keepdims, dtype=dtype) + initial
+        if dtype is not None and (dtype == mstype.bool_):
+            res = res.astype(mstype.bool_)
+        return res
 
     def sum_to_size(self, *size):
         r"""
