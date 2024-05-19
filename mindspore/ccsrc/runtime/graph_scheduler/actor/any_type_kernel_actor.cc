@@ -418,7 +418,8 @@ void AnyTypeKernelActor::RunForGraphInput(OpContext<DeviceTensor> *const context
       AnfNodePtrList inputs{};
       AnfNodePtrList outputs{return_node->cast<CNodePtr>()->input(1)};
       auto io_nodes = std::make_pair(inputs, outputs);
-      auto new_graph = compile_func_(BuildSegmentByGraph(graph()), io_nodes, device_contexts()[0], graph()->RunMode());
+      auto new_graph =
+        compile_func_(BuildSegmentByGraph(graph()), io_nodes, device_contexts()[0], device::RunMode::kKernelMode);
       MS_EXCEPTION_IF_NULL(new_graph);
       MS_LOG(INFO) << "Add new kernel graph:" << new_graph->ToString() << " for graph:" << graph()->ToString();
       real_graphs_[current_data_type_] = new_graph;
