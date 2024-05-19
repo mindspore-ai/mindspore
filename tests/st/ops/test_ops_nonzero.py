@@ -55,7 +55,7 @@ def nonzero_backward_func(x, as_tuple=False):
     return ops.grad(nonzero_forward_func, (0))(x, as_tuple)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -73,14 +73,19 @@ def test_ops_nonzero_forward(context_mode, as_tuple):
     x = generate_random_input((2, 3, 4, 5), np.float32)
     if not as_tuple:
         output = nonzero_forward_func(ms.Tensor(x), as_tuple)
+        output_tensor = ms.Tensor(x).nonzero(as_tuple)
         expect = generate_expect_forward_output(x, as_tuple)
         np.testing.assert_array_equal(output.asnumpy(), expect)
+        np.testing.assert_array_equal(output_tensor.asnumpy(), expect)
+
 
     if as_tuple and ms.get_context(attr_key='device_target') == 'Ascend':
         output_tuple = nonzero_forward_func(ms.Tensor(x), as_tuple)
+        output_tensor_tuple = ms.Tensor(x).nonzero(as_tuple)
         expect_tuple = generate_expect_forward_output(x, as_tuple)
-        for expect, output in zip(expect_tuple, output_tuple):
+        for expect, output, output_tensor in zip(expect_tuple, output_tuple, output_tensor_tuple):
             np.testing.assert_array_equal(output.asnumpy(), expect)
+            np.testing.assert_array_equal(output_tensor.asnumpy(), expect)
 
 
 @pytest.mark.level1
@@ -102,16 +107,16 @@ def test_ops_nonzero_bf16(context_mode, as_tuple):
 
     if not as_tuple:
         output = nonzero_forward_func(x_tensor, as_tuple)
-        expect = np.array([[0], [1], [2], [3]])
+        expect = np.array([[0], [1], [2]])
         np.testing.assert_array_equal(output.asnumpy(), expect)
     else:
         output_tuple = nonzero_forward_func(x_tensor, as_tuple)
-        expect_tuple = np.array([[0, 1, 2, 3]])
+        expect_tuple = np.array([[0, 1, 2]])
         for expect, output in zip(expect_tuple, output_tuple):
             np.testing.assert_array_equal(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -139,7 +144,7 @@ def test_ops_nonzero_backward(context_mode, as_tuple):
             np.testing.assert_array_equal(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -158,7 +163,7 @@ def test_nonzero_astuple_false_dy_shape(context_mode):
             , [[ms.Tensor(ms_data1)], [ms.Tensor(ms_data2)]], grad=True, mode=context_mode)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training

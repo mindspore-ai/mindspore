@@ -22,6 +22,7 @@
 #include <vector>
 #include "transform/acl_ir/op_api_exec.h"
 #include "runtime/device/device_address_utils.h"
+#include "runtime/pynative/op_executor.h"
 
 #define LAUNCH_ACLNN(aclnn_api, device_context, stream_id, ...)                                                    \
   do {                                                                                                             \
@@ -51,6 +52,7 @@
 #define LAUNCH_ACLNN_SYNC(aclnn_api, device_context, stream_id, ...)                                             \
   [](const std::string &aclnn_name, const device::DeviceContext *device_context, size_t real_stream_id,          \
      auto &... args) -> auto {                                                                                   \
+    runtime::OpExecutor::GetInstance().WaitAll();                                                                \
     runtime::ProfilerRecorder aclnn_profiler(runtime::ProfilerModule::kPynative,                                 \
                                              runtime::ProfilerEvent::kPyBoostLaunchAclnn, aclnn_name, false);    \
     auto stream_ptr = device_context->device_res_manager_->GetStream(real_stream_id);                            \
