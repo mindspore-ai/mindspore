@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include "mindapi/base/types.h"
+#include "utils/ms_context.h"
 #include "ops/base_operator.h"
 #include "ops/ops_func_impl/matmul.h"
 
