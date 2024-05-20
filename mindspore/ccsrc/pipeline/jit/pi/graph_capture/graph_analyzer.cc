@@ -812,5 +812,49 @@ void MindGraphAnalyzer::UseDefAnalyze() {
   }
 }
 
+void MindGraphAnalyzer::CollectGraphInputs() {
+  PyCodeObject *co_ = graph_->GetCodeObj();
+  auto &interpret_ = GetCaptureInfo().interpret_;
+  auto &captured_ = GetCaptureInfo().captured_;
+  auto &graph_inputs = GetCaptureInfo().graph_inputs_;
+
+  // NOTE: if *vargs is cell variable, it is not parameter node
+  MS_EXCEPTION_IF_CHECK_FAIL(co_->co_nlocals == static_cast<int>(interpret_.inputs.size()),
+                             "interpret inputs must be same as locals");
+
+  ValueNode *vargs = nullptr;
+  ValueNode *kwargs = nullptr;
+  int arg_index = co_->co_argcount + co_->co_kwonlyargcount;
+  if ((co_->co_flags & CO_VARARGS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
+    vargs = interpret_.inputs[arg_index];
+  }
+  arg_index += (IntToSize(co_->co_flags) & CO_VARARGS) != 0;
+  if ((IntToSize(co_->co_flags) & CO_VARKEYWORDS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
+    kwargs = interpret_.inputs[arg_index];
+  }
+
+  // Identify parameters and global variables
+  for (auto input : captured_.inputs) {
+    if (input == graph_inputs.vargs) {
+      graph_inputs.vargs = vargs;
+    } else if (input == graph_inputs.kwargs) {
+      graph_inputs.kwargs = kwargs;
+    } else {
+      graph_inputs.args.push_back(input);
+    }
+  }
+
+  size_t inputs_count = captured_.inputs.size();
+  captured_.inputs = graph_inputs.args;
+  if (graph_inputs.vargs != nullptr) {
+    captured_.inputs.push_back(graph_inputs.vargs);
+  }
+  if (graph_inputs.kwargs != nullptr) {
+    captured_.inputs.push_back(graph_inputs.kwargs);
+  }
+  captured_.inputs.insert(captured_.inputs.end(), graph_inputs.globals.begin(), graph_inputs.globals.end());
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs_count == captured_.inputs.size(), "error parameters");
+}
+
 }  // namespace pijit
 }  // namespace mindspore

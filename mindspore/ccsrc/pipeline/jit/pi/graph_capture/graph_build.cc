@@ -237,12 +237,6 @@ static bool CheckValueValid(AObject *obj) {
   if (obj->GetType() == AObject::kTypeTensor) {
     AbstractTensor *tensor = static_cast<AbstractTensor *>(obj);
     return tensor->IsStubTensor() || CheckTensorDataInitialized(obj->GetPyObject());
-  } else if (obj->GetType() == AObject::kTypeTraceNode) {
-    auto py_obj = obj->GetPyObject();
-    if (!py::isinstance<tensor::Tensor>(py_obj)) {
-      return true;
-    }
-    return py_obj.cast<tensor::TensorPtr>()->data().const_data() != nullptr;
   } else {
     return true;
   }
@@ -777,11 +771,7 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
       seek(0) = attr;
     }
   } else if (opcode == STORE_ATTR) {
-    auto o = pop();
-    auto v = pop();
-    o->store_attr(instr.name().c_str(), v);
-    NewValueNode(nullptr, instr, {v, o});
-    current_block_->SetTrackResult(Block::kHasAttrSideEffect);
+    return false;
   } else if (opcode == DELETE_ATTR) {
     auto o = pop();
     o->del_attr(instr.name().c_str());
@@ -1310,14 +1300,7 @@ bool GraphBuilder::DoMergeOp(const Instr &instr) {
     return true;
   }
 
-  std::vector<AObject *> args_info = {inputs[1]->GetVobj()};
-  if (opcode == MAP_ADD) {
-    args_info.push_back(inputs[2]->GetVobj());
-  }
-  AObject *vo = AObject::MergeOperations(container->GetVobj(), args_info, opcode);
-  MS_EXCEPTION_IF_CHECK_FAIL(this->frame_.GetStacks()[index] == container, "stack error");
-  this->frame_.GetStacks()[index] = NewValueNode(vo, instr, inputs);
-  return true;
+  return false;
 }
 
 bool GraphBuilder::DoFormatValue(const Instr &instr) {
@@ -2007,7 +1990,7 @@ MindGraphBuilder::MindGraphBuilder(const PyFrameObject *f) : GraphBuilder(this) 
     if (f->f_localsplus[i] == nullptr) {
       continue;
     }
-    auto vo = AbstractTraceNode::MakeAObject(py::cast<py::object>(f->f_localsplus[i]));
+    auto vo = AObject::Convert(py::cast<py::object>(f->f_localsplus[i]));
     ParamNode *n = graph_->allocator().NewNode<ParamNode>(vo, i);
     n->SetName(PyUnicode_AsUTF8(PyTuple_GET_ITEM(co->co_varnames, i)));
     frame_.SetLocal(i, n);
@@ -2103,7 +2086,7 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
         auto res = FGBuilder()->AddNode(sg->FGBuilder()->graph(), args);
         if (res.ptr()) {
           MS_LOG(INFO) << "add fg node suc: ";
-          call_node->SetVobj(AbstractTraceNode::MakeAObject(res));
+          call_node->SetVobj(AObject::Convert(res));
         }
       }
     }
@@ -2392,7 +2375,6 @@ ValueNode *GetBoundSelf(CallNode *call_node) {
       self = func_val;
       break;
     case AObject::kTypeCFunction:
-    case AObject::kTypeTraceNode:
     case AObject::kTypeFunction:
       break;
     default:
@@ -3275,7 +3257,7 @@ py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &ca
     *stop_reason = StopTraceReason::kTrace_Fail;
   } else {
     MS_LOG(INFO) << "add node suc";
-    auto node = AbstractTraceNode::MakeAObject(res);
+    auto node = AObject::Convert(res);
     MS_LOG(INFO) << py::str(node->GetPyObject());
     MS_LOG(INFO) << node->ToString();
     call_node->SetVobj(node);
@@ -3427,7 +3409,7 @@ ValueNode *MindGraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &
     if (graph_attr_obj.ptr() == nullptr) {
       graph_attr_node = attr_node;
     } else {
-      graph_attr_node = NewValueNode(AbstractTraceNode::MakeAObject(graph_attr_obj), instr, {target_node});
+      graph_attr_node = NewValueNode(AObject::Convert(graph_attr_obj), instr, {target_node});
     }
   }
   // Add Guard for getattr node. For scalar/list/tuple/primitive, need to guard value. Otherwise, guard type and shape.
@@ -3464,7 +3446,7 @@ AObject *MindGraphBuilder::HandleMultiOp(const Instr &instr, const std::vector<V
   if (node.ptr() == nullptr) {
     return AObject::MakeAObject(AObject::kTypeAnyValue);
   }
-  return AbstractTraceNode::MakeAObject(node);
+  return AObject::Convert(node);
 }
 
 AObject *MindGraphBuilder::HandleBuildOp(const Instr &instr, const std::vector<ValueNode *> &p) {
@@ -3513,7 +3495,7 @@ AObject *MindGraphBuilder::HandleBuildOp(const Instr &instr, const std::vector<V
     }
   }
   auto node = fg_builder_->AddNode(primitive, input_obj);
-  return AbstractTraceNode::MakeAObject(node);
+  return AObject::Convert(node);
 }
 
 bool MindGraphBuilder::DoGetItem(const Instr &instr) {
