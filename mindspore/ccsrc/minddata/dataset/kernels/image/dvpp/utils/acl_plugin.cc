@@ -424,6 +424,17 @@ APP_ERROR PluginDvppHorizontalFlip(const std::shared_ptr<mindspore::dataset::Dev
   return DvppHorizontalFlip(input, output);
 }
 
+APP_ERROR PluginDvppInvert(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                           std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppInvert(input, output);
+}
+
 APP_ERROR PluginDvppNormalize(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
                               std::vector<float> mean, std::vector<float> std, bool is_hwc) {

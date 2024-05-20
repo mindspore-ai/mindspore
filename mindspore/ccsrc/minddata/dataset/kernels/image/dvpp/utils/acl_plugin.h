@@ -120,6 +120,9 @@ PLUGIN_METHOD(DvppGaussianBlur, int, const std::shared_ptr<mindspore::dataset::D
 PLUGIN_METHOD(DvppHorizontalFlip, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *);
 
+PLUGIN_METHOD(DvppInvert, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *);
+
 PLUGIN_METHOD(DvppNormalize, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, std::vector<float>, std::vector<float>,
               bool);

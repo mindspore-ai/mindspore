@@ -123,6 +123,9 @@ class AclAdapter {
   APP_ERROR DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                std::shared_ptr<DeviceTensorAscend910B> *output);
 
+  APP_ERROR DvppInvert(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output);
+
   APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
                           std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
                           std::vector<float> std, bool is_hwc);
@@ -231,6 +234,7 @@ class AclAdapter {
   DvppEqualizeFunObj dvpp_equalize_fun_obj_;
   DvppGaussianBlurFunObj dvpp_gaussian_blur_fun_obj_;
   DvppHorizontalFlipFunObj dvpp_horizontal_flip_fun_obj_;
+  DvppInvertFunObj dvpp_invert_fun_obj_;
   DvppNormalizeFunObj dvpp_normalize_fun_obj_;
   DvppPadFunObj dvpp_pad_fun_obj_;
   DvppPerspectiveFunObj dvpp_perspective_fun_obj_;

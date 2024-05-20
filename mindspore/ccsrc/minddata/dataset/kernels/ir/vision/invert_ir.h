@@ -33,6 +33,8 @@ constexpr char kInvertOperation[] = "Invert";
 
 class InvertOperation : public TensorOperation {
  public:
+  explicit InvertOperation(const std::string &device_target = "CPU");
+
   ~InvertOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
@@ -42,6 +44,11 @@ class InvertOperation : public TensorOperation {
   std::string Name() const override;
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
+  MapTargetDevice Type() override;
+
+private:
+  std::string device_target_;
 };
 }  // namespace vision
 }  // namespace dataset

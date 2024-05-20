@@ -760,7 +760,7 @@ class Invert(ImageTensorOperation):
         super().__init__()
 
     def parse(self):
-        return cde.InvertOperation()
+        return cde.InvertOperation("CPU")
 
 
 class MixUpBatch(ImageTensorOperation):
