@@ -31,6 +31,7 @@ set(DVPP_IMAGE_SOURCE
         ascend910b/dvpp_equalize_op.cc
         ascend910b/dvpp_gaussian_blur_op.cc
         ascend910b/dvpp_horizontal_flip_op.cc
+        ascend910b/dvpp_invert_op.cc
         ascend910b/dvpp_normalize_v2_op.cc
         ascend910b/dvpp_pad_op.cc
         ascend910b/dvpp_perspective_op.cc

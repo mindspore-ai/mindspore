@@ -193,6 +193,12 @@ APP_ERROR DvppGaussianBlur(const std::shared_ptr<DeviceTensorAscend910B> &input,
 APP_ERROR DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
                              std::shared_ptr<DeviceTensorAscend910B> *output);
 
+/// \brief Returns invert image
+/// \param input: Tensor of shape <N,H,W,C>, c == 1 or c == 3
+/// \param output: Invert image Tensor of same input shape (type DE_FLOAT32 or DE_UINT8)
+APP_ERROR DvppInvert(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                     std::shared_ptr<DeviceTensorAscend910B> *output);
+
 /// \brief Returns Normalized image.
 /// \param input: Tensor of shape <H,W,C> in RGB order.
 /// \param output: Normalized image Tensor of same input shape and type DE_FLOAT32.

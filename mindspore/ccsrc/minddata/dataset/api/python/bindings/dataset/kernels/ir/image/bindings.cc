@@ -377,8 +377,8 @@ PYBIND_REGISTER(HwcToChwOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(InvertOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::InvertOperation, TensorOperation, std::shared_ptr<vision::InvertOperation>>(
                     *m, "InvertOperation")
-                    .def(py::init([]() {
-                      auto invert = std::make_shared<vision::InvertOperation>();
+                    .def(py::init([](const std::string &device_target) {
+                      auto invert = std::make_shared<vision::InvertOperation>(device_target);
                       THROW_IF_ERROR(invert->ValidateParams());
                       return invert;
                     }));
