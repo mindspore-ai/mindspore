@@ -17,8 +17,10 @@
 #include "plugin/device/ascend/kernel/internal/flash_attention_score.h"
 
 #include <memory>
+#include <string>
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "param/attention_param.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -69,6 +71,29 @@ internal::OpParamPtr InternalFlashAttentionScore::CreateOpParam(const std::vecto
 
   param_ptr->opId = internal::OpId::FlashAttentionScore;
   return param_ptr;
+}
+
+bool InternalFlashAttentionScore::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  const std::string op_name = "FlashAttentionScore";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto &enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
+  enable_internal_fa_ = (std::find(enable_op_list.begin(), enable_op_list.end(), op_name) != enable_op_list.end());
+  return InternalKernelMod::Init(inputs, outputs);
+}
+
+int InternalFlashAttentionScore::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (!enable_internal_fa_) {
+    impl_ = nullptr;
+  }
+  auto ret = InternalKernelMod::Resize(inputs, outputs);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "op " << op_type_ << " invoke resize failed";
+    return KRET_RESIZE_FAILED;
+  }
+  return 0;
 }
 
 void InternalFlashAttentionScore::SetInOutIdx() {
