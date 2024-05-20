@@ -44,6 +44,9 @@ class FFNInfo : public OperatorInfo {
   Status InferForwardCommunication() override;
   Status InferTensorMap() override;
   Status InferDevMatrixShape() override;
+  Status SetAntiquantTensorMap(int64_t antiquant_index, const Shape &antiquant_tensor_map,
+                               const Shape &antiquant_group_tensor_map);
+  Status InferAntiQuantTensorMap(int64_t expert_pos);
   void InitInputsExist();
   bool IsInputExist(size_t index);
   size_t GetStrategyRealIndex(size_t index);
