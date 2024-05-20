@@ -35,25 +35,12 @@ TypePtr DivFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<
   auto prim_name = primitive->name();
   auto x_dtype = input_args[kIndex0]->GetType();
   auto y_dtype = input_args[kIndex1]->GetType();
-
-  // temporary code for aclnnLog，need to be deleted when aclnnDiv is done
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    static std::set<int> x_set = {kNumberTypeUInt8, kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32,
-                                  kNumberTypeInt64};
-    static std::set<int> integral_set = {kNumberTypeBool,  kNumberTypeUInt8, kNumberTypeInt8,
-                                         kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64};
-    auto x_tensor_type = x_dtype->cast<TensorTypePtr>();
-    auto y_tensor_type = y_dtype->cast<TensorTypePtr>();
-    MS_EXCEPTION_IF_NULL(x_tensor_type);
-    MS_EXCEPTION_IF_NULL(y_tensor_type);
-    auto x_type_id = x_tensor_type->element()->type_id();
-    auto y_type_id = y_tensor_type->element()->type_id();
-    if ((x_type_id == kNumberTypeFloat32 && integral_set.find(y_type_id) != integral_set.end()) ||
-        (x_set.find(x_type_id) != x_set.end() && integral_set.find(y_type_id) != integral_set.end())) {
-      return kFloat32;
-    }
+  static std::set<int> x_set = {kNumberTypeBool,   kNumberTypeUInt8,  kNumberTypeInt8,
+                                kNumberTypeInt16,  kNumberTypeUInt16, kNumberTypeInt32,
+                                kNumberTypeUInt32, kNumberTypeInt64,  kNumberTypeUInt64};
+  auto input_type_id = x_dtype->cast<TensorTypePtr>()->element()->type_id();
+  if (x_set.find(input_type_id) != x_set.end()) {
+    return std::make_shared<TensorType>(kFloat32);
   }
 
   std::map<std::string, TypePtr> types;

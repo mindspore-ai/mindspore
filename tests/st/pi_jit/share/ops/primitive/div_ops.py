@@ -51,7 +51,7 @@ class DivFactory():
             out = self.forward_mindspore_impl(net)
             sens = np.random.randn(*list(out.shape))
             self.output_grad_np = np.array(sens, dtype=out.dtype)
-        output = net_me(self.inputx_ms, self.inputy_ms, Tensor(self.output_grad_np.astype(self.dtype)))
+        output = net_me(self.inputx_ms, self.inputy_ms, Tensor(self.output_grad_np))
         return output[0].asnumpy(), output[1].asnumpy()
 
     def forward_cmp(self):
