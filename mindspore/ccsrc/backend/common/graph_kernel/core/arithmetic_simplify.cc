@@ -1129,11 +1129,12 @@ bool ResetOutputs(const inner::LiteGraphPtr &litegraph) {
       auto op_ptr = gb.BroadcastTo(outputs[i], output_shape);
       litegraph->SetOutput(i, op_ptr);
     } else if (outputs[i]->NodeType() == inner::NType::Parameter) {
-      if (IsDynamic(out_shape)) {
+      if (IsDynamicRank(out_shape) ||
+          std::count_if(out_shape.begin(), out_shape.end(), [](int64_t sh) { return sh < 0; }) > 1) {
         return false;
       }
       inner::GraphBuilder gb;
-      auto op_ptr = gb.Reshape(outputs[i], outputs[i]->shape);
+      auto op_ptr = gb.Reshape(outputs[i], out_shape);
       litegraph->SetOutput(i, op_ptr);
     }
   }

@@ -165,7 +165,7 @@ class FuseReduceFwd : public FusePattern {
         continue;
       }
       if (a->pattern() <= NodePattern::BROADCAST) {
-        if (r != EdgeRelation::INJECTIVE && a->user_num() != 1) {
+        if (r != EdgeRelation::INJECTIVE && (a->user_num() != 1 || a->is_output())) {
           continue;
         }
         if (fuse_type_ == FuseType::kWidth && HasCircle(a, dom)) {
