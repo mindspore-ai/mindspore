@@ -411,17 +411,17 @@ class _Context:
 
     def set_aoe_tune_mode(self, tune_mode):
         """
-        Set aoe tune mode, support "online" and "offline".
+        Set aoe tune mode, support "online".
 
         Args:
-            tune_mode (str): "online" and "offline".
+            tune_mode (str): "online".
         """
-        candidate = ["online", "offline"]
+        candidate = ["online"]
         if tune_mode in candidate:
             self.set_param(ms_ctx_param.aoe_tune_mode, tune_mode)
         else:
             raise ValueError(f"For 'context.set_context', the argument 'aoe_tune_mode' must be in "
-                             f"['online', 'offline'], but got {tune_mode}.")
+                             f"'online', but got {tune_mode}.")
 
     def set_aoe_config(self, aoe_config):
         """
@@ -1338,7 +1338,6 @@ def set_context(**kwargs):
             be changed automatically. Default: ``True`` .
         aoe_tune_mode (str): AOE tuning mode setting, which is not set by default.
             When set to ``"online"`` , the tuning in online function is turned on.
-            When set to ``"offline"`` , ge graph will be save for offline tuning.
         aoe_config (dict): Set the parameters specific to Ascend Optimization Engine. It is not set by default.
 
             - job_type (str): Mode type setting, default value is ``"2"``.
