@@ -452,6 +452,11 @@ GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
   kernel_graph->erase_flag(kFlagPyNativeRunInGraph);
   SetRunGraphBySingleOpFlag(kernel_graph);
   kernel_graph->UpdateGraphAquireGilAttr();
+  auto manager = MakeManager({kernel_graph});
+  if (manager) {
+    manager->AddFuncGraph(kernel_graph);
+    kernel_graph->set_manager(manager);
+  }
   opt::OptimizationWithoutBackend(kernel_graph);
   // Unify the MindIR, must be before of the kernel_graph optimization.
   auto kernel_executor = device_context->GetKernelExecutor(false);
@@ -459,11 +464,6 @@ GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
     kernel_executor->AddMindIRPass(kernel_graph);
   }
   kernel_graph->SetInputNodes();
-  auto manager = MakeManager({kernel_graph});
-  if (manager) {
-    manager->AddFuncGraph(kernel_graph);
-    kernel_graph->set_manager(manager);
-  }
   auto context_ptr = MsContext::GetInstance();
   session_->SetInputNodeUsage(kernel_graph, manager);
   MS_EXCEPTION_IF_NULL(context_ptr);

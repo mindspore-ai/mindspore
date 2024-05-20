@@ -1988,11 +1988,6 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
   // add a make_tuple at the end of graph as output
   graph->set_child_graph_order(child_graph_order);
   graph->set_output(ConstructOutput(outputs, graph));
-  FuncGraphManagerPtr manager = MakeManager({graph}, false);
-  if (manager) {
-    manager->AddFuncGraph(graph);
-    graph->set_manager(manager);
-  }
   graph->SetExecOrderByDefault();
 
 #ifndef ENABLE_SECURITY
@@ -2002,6 +1997,11 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
 #endif
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+    FuncGraphManagerPtr manager = MakeManager({graph}, false);
+    if (manager) {
+      manager->AddFuncGraph(graph);
+      graph->set_manager(manager);
+    }
     UnifyMindIR(graph);
     graph->UpdateGraphAquireGilAttr();
     if (common_opt) {
