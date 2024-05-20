@@ -28,19 +28,25 @@ bool ReshapeExtKernel::Init(const AnfNodePtr &anf_node) {
   std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
   std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(anf_node);
 
+  auto prim = common::AnfAlgo::GetCNodePrimitive(anf_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  primitive_ = prim;
+  kernel_name_ = prim->name();
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (CheckResizeCondition(cnode)) {
     if (Resize(input_kernel_tensors, output_kernel_tensors) == KRET_RESIZE_FAILED) {
-      MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#hostapi kernel op[" << cnode->fullname_with_scope()
+      MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#rts kernel op[" << cnode->fullname_with_scope()
                         << "] Resize failed.";
     }
   }
   return true;
 }
 
-bool ReshapeExtKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
-                              const std::vector<KernelTensor *> &, void *stream_ptr) {
+std::vector<size_t> ReshapeExtKernel::GetLaunchIgnoredInputAddressIdx() const { return {kIndex1}; }
+
+bool ReshapeExtKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
