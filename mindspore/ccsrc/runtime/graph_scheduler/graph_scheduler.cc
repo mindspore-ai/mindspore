@@ -38,6 +38,7 @@
 #include "mindrt/include/async/async.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/parallel_context.h"
 #include "include/backend/optimizer/helper.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/config_manager.h"
@@ -2155,8 +2156,11 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
   if (checked_nodes != nullptr) {
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
-    if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0 &&
-        context_ptr->CellReuseLevel() == CellReuseLevel::kLazyInline && context_ptr->IsKByKExecutorMode()) {
+    auto parallel_context = parallel::ParallelContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(parallel_context);
+    auto stages = parallel_context->pipeline_stage_split_num();
+    if (stages > 1 && context_ptr->CellReuseLevel() == CellReuseLevel::kLazyInline &&
+        context_ptr->IsKByKExecutorMode()) {
       return;
     }
     if (checked_nodes->find(input_cnode) != checked_nodes->end()) {

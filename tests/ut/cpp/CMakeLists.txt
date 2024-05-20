@@ -139,6 +139,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_device_address.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_stream_manager.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_memory_pool.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_vmm_adapter.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/lic_manager.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/tasksink/rtmodel_zero_copy.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.cc"

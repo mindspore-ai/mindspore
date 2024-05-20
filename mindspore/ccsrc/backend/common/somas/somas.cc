@@ -228,6 +228,9 @@ std::pair<bool, std::string> Somas::GetDebugConfig() const {
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
   }
+  if (common::GetEnv("MS_MEMORY_STATISTIC") == "2") {
+    enable_save_graphs = true;
+  }
   return std::make_pair(enable_save_graphs, save_graphs_path);
 }
 

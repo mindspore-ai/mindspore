@@ -63,6 +63,12 @@ aclrtSubscribeReportFunObj aclrtSubscribeReport_ = nullptr;
 aclrtSynchronizeEventFunObj aclrtSynchronizeEvent_ = nullptr;
 aclrtSynchronizeStreamFunObj aclrtSynchronizeStream_ = nullptr;
 aclrtSynchronizeStreamWithTimeoutFunObj aclrtSynchronizeStreamWithTimeout_ = nullptr;
+aclrtUnmapMemFunObj aclrtUnmapMem_ = nullptr;
+aclrtReserveMemAddressFunObj aclrtReserveMemAddress_ = nullptr;
+aclrtMallocPhysicalFunObj aclrtMallocPhysical_ = nullptr;
+aclrtMapMemFunObj aclrtMapMem_ = nullptr;
+aclrtFreePhysicalFunObj aclrtFreePhysical_ = nullptr;
+aclrtReleaseMemAddressFunObj aclrtReleaseMemAddress_ = nullptr;
 
 void LoadAclRtApiSymbol(const std::string &ascend_path) {
   std::string aclrt_plugin_path = ascend_path + "lib64/libascendcl.so";
@@ -115,6 +121,12 @@ void LoadAclRtApiSymbol(const std::string &ascend_path) {
   aclrtSynchronizeEvent_ = DlsymAscendFuncObj(aclrtSynchronizeEvent, handler);
   aclrtSynchronizeStream_ = DlsymAscendFuncObj(aclrtSynchronizeStream, handler);
   aclrtSynchronizeStreamWithTimeout_ = DlsymAscendFuncObj(aclrtSynchronizeStreamWithTimeout, handler);
+  aclrtUnmapMem_ = DlsymAscendFuncObj(aclrtUnmapMem, handler);
+  aclrtReserveMemAddress_ = DlsymAscendFuncObj(aclrtReserveMemAddress, handler);
+  aclrtMallocPhysical_ = DlsymAscendFuncObj(aclrtMallocPhysical, handler);
+  aclrtMapMem_ = DlsymAscendFuncObj(aclrtMapMem, handler);
+  aclrtFreePhysical_ = DlsymAscendFuncObj(aclrtFreePhysical, handler);
+  aclrtReleaseMemAddress_ = DlsymAscendFuncObj(aclrtReleaseMemAddress, handler);
   MS_LOG(INFO) << "Load acl rt api success!";
 }
 

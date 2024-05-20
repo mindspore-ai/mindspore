@@ -288,12 +288,6 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), kernel_->fullname_with_scope(),
                                                    kernel_->func_graph()->ToString());
     FetchInputDeviceTensor(context);
-    for (auto &device_addr : input_device_tensors_) {
-      if (device_addr == nullptr || !device_addr->IsPtrValid()) {
-        continue;
-      }
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(UseMemBlock, GetAID().Name(), device_addr->GetPtr());
-    }
 
     if (ActorDispatcher::enable_runtime_multi_pipeline()) {
       RunWithMultiPipeline(context);
@@ -795,11 +789,25 @@ void KernelActor::ExecuteResizeKernelModTask(OpContext<DeviceTensor> *const cont
   Async(kernel_async_launch_aid_, &KernelAsyncLaunchActor::LaunchKernel, context, this);
 }
 
+namespace {
+void TrackInputMemory(const std::vector<DeviceTensor *> &input_device_tensors, const std::string &actor_name) {
+  if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
+    for (auto &device_addr : input_device_tensors) {
+      if (device_addr == nullptr || !device_addr->IsPtrValid()) {
+        continue;
+      }
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(UseMemBlock, actor_name, device_addr->GetPtr());
+    }
+  }
+}
+}  // namespace
+
 void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context) {
   if (IsRunningFailed(context)) {
     MS_LOG(INFO) << "Run failed and early stop launch kernel: " << kernel_->fullname_with_scope();
     return;
   }
+  TrackInputMemory(input_device_tensors_, GetAID().Name());
   // 1. Allocate memory.
   if (!memory_alloc_list_.empty()) {
     SendMemoryAllocReq(context);

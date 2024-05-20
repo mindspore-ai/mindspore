@@ -23,6 +23,7 @@
 #include "utils/convert_utils_base.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
+#include "plugin/device/ascend/hal/device/ascend_vmm_adapter.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 
@@ -99,7 +100,9 @@ bool AscendMemAdapter::Initialize() {
     }
   }
 
-  if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {
+  if (AscendVmmAdapter::GetInstance().IsEnabled()) {
+    ms_used_hbm_size_ = SizeToLong(AscendVmmAdapter::GetInstance().GetRoundDownAlignSize(ms_used_hbm_size_));
+  } else if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {
     ms_used_hbm_size_ = SizeToLong(AscendGmemAdapter::GetInstance().GetRoundDownAlignSize(ms_used_hbm_size_));
   } else {
     ms_used_hbm_size_ = SizeToLong(GetRoundDownAlignSize(ms_used_hbm_size_));
@@ -157,6 +160,10 @@ bool AscendMemAdapter::DeInitialize() {
 
 uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, const std::string &tag) {
   std::lock_guard<std::mutex> locker(mutex_);
+  if (AscendVmmAdapter::GetInstance().IsEnabled()) {
+    MS_LOG(ERROR) << "VMM is enabled, can not allocate static memory.";
+    return nullptr;
+  }
   size = GetRoundUpAlignSize(size);
   if (!common::IsNeedProfileMemory() && (static_mem_offset_ < static_cast<int64_t>(size) ||
                                          (static_mem_offset_ - static_cast<int64_t>(size)) < max_dynamic_mem_offset_)) {
@@ -175,6 +182,9 @@ uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, const std::string &ta
 
 uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, const std::string &tag) {
   std::lock_guard<std::mutex> locker(mutex_);
+  if (AscendVmmAdapter::GetInstance().IsEnabled()) {
+    MS_LOG(EXCEPTION) << "VMM is enabled, can not allocate dynamic memory.";
+  }
   size = GetRoundUpAlignSize(size);
   int64_t new_dynamic_offset = cur_dynamic_mem_offset_ + static_cast<int64_t>(size);
   if (!common::IsNeedProfileMemory() && new_dynamic_offset > static_mem_offset_) {
@@ -201,7 +211,9 @@ void AscendMemAdapter::ResetDynamicMemory() {
   if (IsMemoryPoolRecycle()) {
     max_dynamic_mem_offset_ = 0;
   }
-  if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {
+  if (AscendVmmAdapter::GetInstance().IsEnabled()) {
+    AscendVmmAdapter::GetInstance().ClearAllMemory();
+  } else if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {
     AscendGmemAdapter::GetInstance().EagerFreeDeviceMem(device_mem_base_addr_, ms_used_hbm_size_);
   }
 }
@@ -277,6 +289,9 @@ size_t AscendMemAdapter::GetDeviceMemSizeFromContext() const {
 
 uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
   uint8_t *ptr = nullptr;
+  if (AscendVmmAdapter::GetInstance().IsEnabled()) {
+    return nullptr;
+  }
   if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {
     return AscendGmemAdapter::GetInstance().MmapMemory(size, reinterpret_cast<void *>(ptr));
   }

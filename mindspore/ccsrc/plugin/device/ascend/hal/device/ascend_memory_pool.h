@@ -33,6 +33,7 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
 
   size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) override;
   bool FreeDeviceMem(const DeviceMemPtr &addr) override;
+  size_t MmapDeviceMem(const size_t size, const DeviceMemPtr addr) override;
   size_t GetMaxUsedMemSize() const override;
   size_t free_mem_size() override;
   uint64_t total_mem_size() const override;
@@ -56,6 +57,7 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
 
   // The related interface of device memory eager free.
   const bool IsEnableEagerFree() const override;
+  const bool IsEnableVmm() const override;
   const bool SyncAllStreams() override;
   size_t AllocDeviceMemByEagerFree(size_t size, DeviceMemPtr *addr) override;
   size_t FreeDeviceMemByEagerFree(const DeviceMemPtr addr, const size_t size) override;

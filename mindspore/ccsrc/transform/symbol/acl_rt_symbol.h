@@ -66,6 +66,12 @@ ORIGIN_METHOD(aclrtSubscribeReport, aclError, uint64_t, aclrtStream)
 ORIGIN_METHOD(aclrtSynchronizeEvent, aclError, aclrtEvent)
 ORIGIN_METHOD(aclrtSynchronizeStream, aclError, aclrtStream)
 ORIGIN_METHOD(aclrtSynchronizeStreamWithTimeout, aclError, aclrtStream, int32_t)
+ORIGIN_METHOD(aclrtUnmapMem, aclError, void *)
+ORIGIN_METHOD(aclrtReserveMemAddress, aclError, void **, size_t, size_t, void *, uint64_t)
+ORIGIN_METHOD(aclrtMallocPhysical, aclError, aclrtDrvMemHandle *, size_t, const aclrtPhysicalMemProp *, uint64_t)
+ORIGIN_METHOD(aclrtMapMem, aclError, void *, size_t, size_t, aclrtDrvMemHandle, uint64_t)
+ORIGIN_METHOD(aclrtFreePhysical, aclError, aclrtDrvMemHandle)
+ORIGIN_METHOD(aclrtReleaseMemAddress, aclError, void *)
 
 extern aclrtCreateContextFunObj aclrtCreateContext_;
 extern aclrtCreateEventFunObj aclrtCreateEvent_;
@@ -111,6 +117,12 @@ extern aclrtSubscribeReportFunObj aclrtSubscribeReport_;
 extern aclrtSynchronizeEventFunObj aclrtSynchronizeEvent_;
 extern aclrtSynchronizeStreamFunObj aclrtSynchronizeStream_;
 extern aclrtSynchronizeStreamWithTimeoutFunObj aclrtSynchronizeStreamWithTimeout_;
+extern aclrtUnmapMemFunObj aclrtUnmapMem_;
+extern aclrtReserveMemAddressFunObj aclrtReserveMemAddress_;
+extern aclrtMallocPhysicalFunObj aclrtMallocPhysical_;
+extern aclrtMapMemFunObj aclrtMapMem_;
+extern aclrtFreePhysicalFunObj aclrtFreePhysical_;
+extern aclrtReleaseMemAddressFunObj aclrtReleaseMemAddress_;
 
 void LoadAclRtApiSymbol(const std::string &ascend_path);
 }  // namespace transform

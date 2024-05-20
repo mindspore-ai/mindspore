@@ -138,6 +138,7 @@ class BACKEND_EXPORT MemTracker {
   virtual void BindDevicePtr(KernelTensorPtr kernel_tensor, DeviceMemPtr device_ptr, const std::string &file_name,
                              size_t line_num) = 0;
   virtual void Dump() = 0;
+  virtual bool IsEnabled() = 0;
   virtual ~MemTracker() = default;
 };
 
@@ -161,6 +162,7 @@ class BACKEND_EXPORT MemoryTrackerEnabled : public MemTracker {
   void BindDevicePtr(KernelTensorPtr kernel_tensor, DeviceMemPtr device_ptr, const std::string &file_name,
                      size_t line_num) override;
   void Dump() override;
+  bool IsEnabled() override { return true; }
   void SetPath();
   MemoryTrackerEnabled(const MemoryTrackerEnabled &) = delete;
   MemoryTrackerEnabled &operator=(const MemoryTrackerEnabled &) = delete;
@@ -212,6 +214,7 @@ class BACKEND_EXPORT MemoryTrackerDisabled : public MemTracker {
   void BindDevicePtr(KernelTensorPtr kernel_tensor, DeviceMemPtr device_ptr, const std::string &file_name,
                      size_t line_num) override {}
   void Dump() override {}
+  bool IsEnabled() override { return false; }
   MemoryTrackerDisabled(const MemoryTrackerDisabled &) = delete;
   MemoryTrackerDisabled &operator=(const MemoryTrackerDisabled &) = delete;
 

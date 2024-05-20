@@ -202,7 +202,7 @@ DeviceMemPtr DynamicMemPoolBestFit::FindAvailableMemBuf(size_t size, bool from_p
     // Check total used max memory limits, since real occupy memory size equals to used mem size plus idle mem size.
     // Eager free mem may occupy some memory, so total_mem_size need multiply by a factor.
     float threshold_factor = 0.8f;
-    size_t threshold = static_cast<size_t>(total_mem_size() * threshold_factor);
+    size_t threshold = IsEnableVmm() ? total_mem_size() : static_cast<size_t>(total_mem_size() * threshold_factor);
     if (TotalUsedMemStatistics() + TotalUsedByEventMemStatistics() + TotalIdleMemStatistics() + size <= threshold) {
       addr = FindMemBufByStatus(size, from_persistent_mem, DynamicMemBufStatus::kMemBufEagerFree, stream_id);
     }
@@ -213,7 +213,7 @@ DeviceMemPtr DynamicMemPoolBestFit::FindAvailableMemBuf(size_t size, bool from_p
 DeviceMemPtr DynamicMemPoolBestFit::FindMemBufByStatus(size_t size, bool from_persistent_mem,
                                                        DynamicMemBufStatus target_status, uint32_t stream_id) {
   auto addr = FindMemBufInSpecifiedMng(size, from_persistent_mem, target_status, stream_id);
-  if (addr == nullptr) {
+  if (addr == nullptr && !IsEnableVmm()) {
     if (from_persistent_mem && !persistent_mem_->mem_block_list_.empty()) {
       MS_LOG(DEBUG) << "Find mem buf in current pool failed, try to find in another one.";
       addr = FindMemBufInSpecifiedMng(size, !from_persistent_mem, target_status, stream_id);
@@ -249,6 +249,14 @@ DeviceMemPtr DynamicMemPoolBestFit::FindMemBufInSpecifiedMng(size_t size, bool f
     }
     mem_buf->allocator_name_ = DynamicMemAllocatorDebugInfo::GetDebugInfo().name_;
     mem_buf->allocator_type_ = DynamicMemAllocatorDebugInfo::GetDebugInfo().type_;
+    if (mem_buf->status_ == DynamicMemBufStatus::kMemBufEagerFree && IsEnableVmm()) {
+      MS_LOG(DEBUG) << "Find eager free memory, mem_buf_size[" << mem_buf->size_ << "] mem_buf_address["
+                    << mem_buf->device_addr_ << "], need size: " << size;
+      auto ret = MmapDeviceMem(size, mem_buf->device_addr_);
+      if (ret != size) {
+        return nullptr;
+      }
+    }
     // Remove map of old idle memory buf
     (void)mem_buf_map.erase(iter);
     // Divide memory buf
@@ -319,7 +327,8 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size, bool from_
   }
 
   // Try eager free routine.
-  if (is_trigger_eager_free_) {
+  if (IsEnableVmm() || is_trigger_eager_free_) {
+    is_trigger_eager_free_ = true;
     return AddMemBlockAndMemBufByEagerFree(size, from_persistent_mem, stream_id);
   }
 
@@ -373,7 +382,7 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBufByEagerFree(size_t size,
     return mem_addr;
   }
 
-  auto alloc_size = total_mem_size();
+  auto alloc_size = std::max(size, static_cast<size_t>(total_mem_size()));
   MS_LOG(INFO) << "Try to alloc eager free mem block, size : " << alloc_size << ".";
   DeviceMemPtr device_addr = nullptr;
   auto real_alloc_size = AllocDeviceMemByEagerFree(alloc_size, &device_addr);
@@ -395,6 +404,14 @@ DeviceMemPtr DynamicMemPoolBestFit::CreateMemBlockAndMemBuf(size_t size, bool fr
   auto mem_buf = std::make_shared<DynamicMemBuf>(mem_block->device_addr(), mem_buf_status, mem_block->size(), stream_id,
                                                  DynamicMemAllocatorDebugInfo::GetDebugInfo().name_,
                                                  DynamicMemAllocatorDebugInfo::GetDebugInfo().type_);
+  if (mem_buf->status_ == DynamicMemBufStatus::kMemBufEagerFree && IsEnableVmm()) {
+    MS_LOG(DEBUG) << "Find eager free memory, mem_buf_size[" << mem_buf->size_ << "] mem_buf_address["
+                  << mem_buf->device_addr_ << "], need size: " << size;
+    auto ret = MmapDeviceMem(size, mem_buf->device_addr_);
+    if (ret != size) {
+      return nullptr;
+    }
+  }
   // Add map of new memory buf in the block
   (void)mem_block->block_all_mem_buf_map_.emplace(mem_block->device_addr(), mem_buf);
   // Split memory buf
@@ -479,7 +496,8 @@ const size_t DynamicMemPoolBestFit::FreeIdleMemsByEagerFree() {
   const auto [common_free_size, common_real_free_size] = eager_free_mem_func(common_mem_);
   auto free_size = persistent_free_size + common_free_size;
   auto real_free_size = persistent_real_free_size + common_real_free_size;
-  MS_LOG(DEBUG) << "Total eager free memory : " << free_size << ", real free : " << real_free_size << ".";
+  MS_LOG(INFO) << "Total eager free memory : " << free_size << ", real free : " << real_free_size
+               << ", not free size: " << (free_size - real_free_size) << ".";
   return real_free_size;
 }
 
@@ -864,7 +882,8 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
       }
       buf << ", block[" << i << "] stream id:" << mem_mng->mem_block_list_[i]->stream_id_
           << " block size:" << mem_mng->mem_block_list_[i]->mem_block_size_ / kMBToByte
-          << "M idle size:" << (mem_mng->mem_block_list_[i]->mem_block_size_ - mem_block_used_size) / kMBToByte << "M";
+          << "M idle size:" << (mem_mng->mem_block_list_[i]->mem_block_size_ - mem_block_used_size) / kMBToByte
+          << "M actual size: " << (mem_mng->mem_block_list_[i]->get_actual_peak()) / kMBToByte << "M.";
     }
 
     // Dump all the memory buf info
