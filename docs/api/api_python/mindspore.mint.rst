@@ -12,6 +12,7 @@ Array操作
     :template: classtemplate.rst
 
     mindspore.mint.sort
+    mindspore.mint.stack
 
 逐元素运算
 ^^^^^^^^^^^^^^^^
