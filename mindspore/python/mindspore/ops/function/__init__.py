@@ -747,6 +747,8 @@ from .fft_func import (
     ihfft2,
     hfftn,
     ihfftn,
+    fftfreq,
+    rfftfreq
 )
 from .other_func import (
     depend,

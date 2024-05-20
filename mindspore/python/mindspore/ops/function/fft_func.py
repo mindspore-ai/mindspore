@@ -14,7 +14,7 @@
 # ============================================================================
 """Defines Fast Fourier Transform operators with functional form."""
 from mindspore.ops.auto_generate import fft, fft2, fftn, ifft, ifft2, ifftn, fftshift, ifftshift, \
-    rfft, irfft, rfft2, irfft2, rfftn, irfftn, hfft, ihfft, hfft2, ihfft2, hfftn, ihfftn
+    rfft, irfft, rfft2, irfft2, rfftn, irfftn, hfft, ihfft, hfft2, ihfft2, hfftn, ihfftn, fftfreq, rfftfreq
 
 __all__ = [
     'fftshift',
@@ -37,6 +37,8 @@ __all__ = [
     'ihfft2',
     'hfftn',
     'ihfftn',
+    'fftfreq',
+    'rfftfreq'
 ]
 
 __all__.sort()

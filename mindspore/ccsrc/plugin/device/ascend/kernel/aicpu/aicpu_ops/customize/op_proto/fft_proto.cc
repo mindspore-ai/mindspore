@@ -239,6 +239,49 @@ IMPLEMT_COMMON_INFERFUNC(FFTShapeCopyInferShape) {
   return GRAPH_SUCCESS;
 }
 
+IMPLEMT_COMMON_INFERFUNC(FFTFreqInferShape) {
+  TensorDesc output_desc = op.GetOutputDescByName("y");
+  auto op_name = GetOpName(op.GetOpType());
+  // infer type
+  const static std::unordered_map<int64_t, DataType> MSTypes2GETypes{
+    {30, DT_BOOL},  {32, DT_INT8},   {33, DT_INT16},  {34, DT_INT32},     {35, DT_INT64},
+    {37, DT_UINT8}, {38, DT_UINT16}, {39, DT_UINT32}, {40, DT_UINT64},    {42, DT_FLOAT16},
+    {43, DT_FLOAT}, {44, DT_DOUBLE}, {45, DT_BF16},   {48, DT_COMPLEX64}, {49, DT_COMPLEX128}};
+
+  ge::DataType output_dtype = DT_FLOAT;
+  Tensor dtype_tensor;
+  std::vector<int64_t> dtype_vec;
+  if (op.GetInputConstData("dtype", dtype_tensor) == GRAPH_SUCCESS) {
+    DataType dtype = op.GetInputDescByName("dtype").GetDataType();
+    GetConstValue(op, dtype_tensor, dtype, dtype_vec);
+    output_dtype = MSTypes2GETypes.find(dtype_vec[0])->second;
+  }
+  output_desc.SetDataType(output_dtype);
+
+  // infer shape
+  Tensor n_tensor;
+  std::vector<int64_t> n_vec;
+  if (op.GetInputConstData("n", n_tensor) == GRAPH_SUCCESS) {
+    DataType dtype = op.GetInputDescByName("n").GetDataType();
+    GetConstValue(op, n_tensor, dtype, n_vec);
+  }
+  int64_t n = n_vec[0];
+  if (op_name == "RFFTFreq") {
+    n = n / 2 + 1;
+  }
+  vector<int64_t> output_shape{n};
+  output_desc.SetShape(Shape(output_shape));
+
+  if (op.UpdateOutputDesc("y", output_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Update output desc failed.");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_COMMON_INFER_FUNC_REG(FFTFreq, FFTFreqInferShape);
+CUST_COMMON_INFER_FUNC_REG(RFFTFreq, FFTFreqInferShape);
+
 CUST_COMMON_INFER_FUNC_REG(FFTShapeCopy, FFTShapeCopyInferShape);
 
 CUST_COMMON_INFER_FUNC_REG(FFTShift, FFTShiftInferShape);

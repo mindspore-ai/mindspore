@@ -500,6 +500,18 @@ CUST_ATTR_MAP(IRFFTDouble) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(IRFFTDouble) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(IRFFTDouble, prim::kPrimIRFFTDouble->name(), CUST_ADPT_DESC(IRFFTDouble));
 
+// FFTFreq
+CUST_INPUT_MAP(FFTFreq) = {{1, INPUT_DESC(n)}, {2, INPUT_DESC(d)}, {3, INPUT_DESC(dtype)}};
+CUST_ATTR_MAP(FFTFreq) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(FFTFreq) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FFTFreq, prim::kPrimFFTFreq->name(), CUST_ADPT_DESC(FFTFreq));
+
+// RFFTFreq
+CUST_INPUT_MAP(RFFTFreq) = {{1, INPUT_DESC(n)}, {2, INPUT_DESC(d)}, {3, INPUT_DESC(dtype)}};
+CUST_ATTR_MAP(RFFTFreq) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(RFFTFreq) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(RFFTFreq, prim::kPrimRFFTFreq->name(), CUST_ADPT_DESC(RFFTFreq));
+
 std::vector<std::string> mode_strings = {"pad", "same", "valid", "full"};
 // Correlate
 CUST_INPUT_MAP(Correlate) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(v)}};

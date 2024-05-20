@@ -1,0 +1,33 @@
+rfftfreq:
+    description: |
+      Computes the sample frequencies for `rfft` with a signal of size `n`.
+      For instance, Given a length `n` and a sample spacing `d` , the returned result `f` is:
+
+      .. math::
+          f = [0, 1, ..., n // 2] / (d * n)
+
+      Note:
+          - `rfftfreq` is currently only used in `mindscience` scientific computing scenarios and
+            dose not support other usage scenarios.
+          - `rfftfreq` is not supported on Windows platform yet.
+
+      Args:
+          n (int): Window length.
+          d (float, optional): Sample spacing (inverse of the sampling rate). Default: ``1.0`` .
+          dtype (mindspore.dtype, optional): The dtype of the returned frequencies. Default: ``None`` represents float32.
+
+      Returns:
+          Tensor, Array of length ``n`` containing the sample frequencies.
+
+      Raises:
+          ValueError: If `n` is less than 1.
+
+      Supported Platforms:
+          ``Ascend`` ``CPU``
+
+      Examples:
+          >>> import mindspore
+          >>> from mindspore import ops
+          >>> out = ops.rfftfreq(n=4, d=1.0)
+          >>> print(out)
+          [0.   0.25 0.5 ]
