@@ -89,6 +89,23 @@ bool IsNodesDTypeSameAndValid(const std::vector<AnfNodePtr> &nodes, const std::v
   auto type0 = types[0];
   return std::all_of(types.begin() + 1, types.end(), [&type0](TypeId type) { return type == type0; });
 }
+
+template <typename T>
+T GetInputValueFromCNode(const CNodePtr &cnode, size_t index) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto inputs = cnode->inputs();
+  if (index >= inputs.size()) {
+    MS_LOG(EXCEPTION) << "The input index (" << index << ") is exceed of inputs size (" << inputs.size() << ").";
+  }
+  auto input_node = inputs[index];
+  MS_EXCEPTION_IF_NULL(input_node);
+  if (!input_node->isa<ValueNode>()) {
+    MS_LOG(EXCEPTION) << "The " << index << "-th input is not a value node.";
+  }
+  auto value = input_node->cast<ValueNodePtr>()->value();
+  MS_EXCEPTION_IF_NULL(value);
+  return GetValue<T>(value);
+}
 }  // namespace
 const BaseRef MC2FusionBase::DefinePattern() const {
   VectorRef pattern = DefineFusionPattern();
@@ -137,15 +154,19 @@ const AnfNodePtr MC2FusionBase::Process(const FuncGraphPtr &func_graph, const An
 const VectorRef MatmulReduceScatterFusion::DefineFusionPattern() const {
   MS_LOG(DEBUG) << "Do MatmulReduceScatterPattern.";
   // MatMul
-  auto x_input = std::make_shared<Var>();  // input x
-  auto w_input = std::make_shared<Var>();  // input w
+  auto x_input = std::make_shared<Var>();       // input x
+  auto w_input = std::make_shared<Var>();       // input w
+  auto transpose_x1 = std::make_shared<Var>();  // transpose_x1
+  auto transpose_x2 = std::make_shared<Var>();  // transpose_x2
   MS_CHECK_TRUE_RET(w_input != nullptr, {});
   MS_CHECK_TRUE_RET(x_input != nullptr, {});
+  MS_CHECK_TRUE_RET(transpose_x1 != nullptr, {});
+  MS_CHECK_TRUE_RET(transpose_x2 != nullptr, {});
 
   auto is_matmul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMatMul>);
   MS_CHECK_TRUE_RET(is_matmul != nullptr, {});
 
-  auto matmul_x_w = VectorRef({is_matmul, x_input, w_input});
+  auto matmul_x_w = VectorRef({is_matmul, x_input, w_input, transpose_x1, transpose_x2});
 
   // ReduceScatter
   auto is_reduce_scatter = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReduceScatter>);
@@ -184,14 +205,15 @@ CNodePtr MatmulReduceScatterFusion::CreateFusionCNode(const FuncGraphPtr &func_g
   // Only support 8p comm group currently.
   MS_CHECK_TRUE_RET(IsSingleNodeCommGroup(rank_list), {});
 
-  auto matmul_prim = GetCNodePrimitive(matmul_cnode);
+  auto is_trans_a = GetInputValueFromCNode<bool>(matmul_cnode, kIndex3);
+  auto is_trans_b = GetInputValueFromCNode<bool>(matmul_cnode, kIndex4);
   matmul_reduce_scatter_prim->AddAttr(kAttrGroup, reduce_scatter_prim->GetAttr(kAttrGroup));
   matmul_reduce_scatter_prim->AddAttr(kAttrRankSize, reduce_scatter_prim->GetAttr(kAttrRankSize));
   matmul_reduce_scatter_prim->AddAttr(kAttrReduceOp, reduce_scatter_prim->GetAttr(kAttrOp));
   matmul_reduce_scatter_prim->AddAttr(kAttrRankList, rank_list_attr);
   matmul_reduce_scatter_prim->AddAttr(kAttrCommTurn, MakeValue<int64_t>(0));  // default value: 0
-  matmul_reduce_scatter_prim->AddAttr(kAttrIsTransA, matmul_prim->GetAttr(kAttrTransposeX1));
-  matmul_reduce_scatter_prim->AddAttr(kAttrIsTransB, matmul_prim->GetAttr(kAttrTransposeX2));
+  matmul_reduce_scatter_prim->AddAttr(kAttrIsTransA, MakeValue<bool>(is_trans_a));
+  matmul_reduce_scatter_prim->AddAttr(kAttrIsTransB, MakeValue<bool>(is_trans_b));
 
   auto matmul_reduce_scatter_cnode = func_graph->NewCNode({NewValueNode(matmul_reduce_scatter_prim), input_x, input_w});
   if (matmul_reduce_scatter_cnode == nullptr) {
@@ -208,10 +230,14 @@ CNodePtr MatmulReduceScatterFusion::CreateFusionCNode(const FuncGraphPtr &func_g
 const VectorRef AllGatherMatmulFusion::DefineFusionPattern() const {
   MS_LOG(DEBUG) << "Do AllGatherMatmulPattern.";
   // MatMul
-  auto x_input = std::make_shared<Var>();  // input x
-  auto w_input = std::make_shared<Var>();  // input w
+  auto x_input = std::make_shared<Var>();       // input x
+  auto w_input = std::make_shared<Var>();       // input w
+  auto transpose_x1 = std::make_shared<Var>();  // transpose_x1
+  auto transpose_x2 = std::make_shared<Var>();  // transpose_x2
   MS_CHECK_TRUE_RET(w_input != nullptr, {});
   MS_CHECK_TRUE_RET(x_input != nullptr, {});
+  MS_CHECK_TRUE_RET(transpose_x1 != nullptr, {});
+  MS_CHECK_TRUE_RET(transpose_x2 != nullptr, {});
 
   auto is_allgather = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAllGather>);
   MS_CHECK_TRUE_RET(is_allgather != nullptr, {});
@@ -221,7 +247,7 @@ const VectorRef AllGatherMatmulFusion::DefineFusionPattern() const {
   // ReduceScatter
   auto is_matmul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMatMul>);
   MS_CHECK_TRUE_RET(is_matmul != nullptr, {});
-  auto matmul = VectorRef({is_matmul, allgather_x, w_input});
+  auto matmul = VectorRef({is_matmul, allgather_x, w_input, transpose_x1, transpose_x2});
   return matmul;
 }
 
@@ -252,10 +278,8 @@ CNodePtr AllGatherMatmulFusion::CreateFusionCNode(const FuncGraphPtr &func_graph
 
   MS_CHECK_TRUE_RET(IsSingleNodeCommGroup(rank_list), {});  // Only support 8p comm group currently.
 
-  auto matmul_prim = GetCNodePrimitive(matmul_cnode);
-  auto is_trans_a_attr = matmul_prim->GetAttr(kAttrIsTransA);
-  MS_CHECK_TRUE_RET(is_trans_a_attr != nullptr, {});
-  auto is_trans_a = GetValue<bool>(is_trans_a_attr);
+  auto is_trans_a = GetInputValueFromCNode<bool>(matmul_cnode, kIndex3);
+  auto is_trans_b = GetInputValueFromCNode<bool>(matmul_cnode, kIndex4);
   MS_CHECK_TRUE_RET(!is_trans_a, {});  // Only support is_trans_a = false.
 
   all_gather_matmul_prim->AddAttr(kAttrGroup, all_gather_prim->GetAttr(kAttrGroup));
@@ -263,8 +287,8 @@ CNodePtr AllGatherMatmulFusion::CreateFusionCNode(const FuncGraphPtr &func_graph
   all_gather_matmul_prim->AddAttr(kAttrRankList, rank_list_attr);
   all_gather_matmul_prim->AddAttr(kAttrCommTurn, MakeValue<int64_t>(0));     // default value: 0
   all_gather_matmul_prim->AddAttr(kAttrGatherIndex, MakeValue<int64_t>(0));  // only support 0 currently
-  all_gather_matmul_prim->AddAttr(kAttrIsTransA, matmul_prim->GetAttr(kAttrTransposeX1));
-  all_gather_matmul_prim->AddAttr(kAttrIsTransB, matmul_prim->GetAttr(kAttrTransposeX2));
+  all_gather_matmul_prim->AddAttr(kAttrIsTransA, MakeValue<bool>(is_trans_a));
+  all_gather_matmul_prim->AddAttr(kAttrIsTransB, MakeValue<bool>(is_trans_b));
 
   auto all_gather_matmul_cnode = func_graph->NewCNode({NewValueNode(all_gather_matmul_prim), input_x, input_w});
   if (all_gather_matmul_cnode == nullptr) {
