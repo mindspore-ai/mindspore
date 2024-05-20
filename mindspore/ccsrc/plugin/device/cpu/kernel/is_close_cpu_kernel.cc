@@ -18,13 +18,13 @@
 #include <functional>
 #include <algorithm>
 #include <memory>
-#include "mindspore/core/ops/is_close.h"
+#include "mindspore/core/ops/ops_func_impl/isclose.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kIsCloseInputsNum = 2;
+constexpr size_t kIsCloseInputsNum = 5;
 constexpr size_t kIsCloseOutputsNum = 1;
 template <typename T>
 inline bool IsClose(T a, T b, float rtol, float atol, bool equal_nan) {
@@ -48,9 +48,6 @@ bool IsCloseCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
   if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  rtol_ = GetValue<float>(primitive_->GetAttr(ops::kRtol));
-  atol_ = GetValue<float>(primitive_->GetAttr(ops::kAtol));
-  equal_nan_ = GetValue<bool>(primitive_->GetAttr(ops::kEqualNan));
   return true;
 }
 
@@ -58,6 +55,9 @@ int IsCloseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+  rtol_ = inputs[kIndex2]->GetValueWithCheck<float>();
+  atol_ = inputs[kIndex3]->GetValueWithCheck<float>();
+  equal_nan_ = inputs[kIndex4]->GetValueWithCheck<bool>();
   auto input_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
   auto other_shape = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
   auto output_shape = LongVecToSizeVec(outputs.at(kIndex0)->GetShapeVector());
@@ -120,34 +120,107 @@ bool IsCloseCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
   return true;
 }
 
+const std::vector<std::pair<KernelAttr, IsCloseCpuKernelMod::KernelRunFunc>> IsCloseCpuKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &IsCloseCpuKernelMod::LaunchKernel<bool>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &IsCloseCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &IsCloseCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &IsCloseCpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &IsCloseCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &IsCloseCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &IsCloseCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &IsCloseCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &IsCloseCpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &IsCloseCpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &IsCloseCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &IsCloseCpuKernelMod::LaunchKernel<uint64_t>},
+};
+
 const std::vector<std::pair<KernelAttr, IsCloseCpuKernelMod::KernelRunFunc>> &IsCloseCpuKernelMod::GetFuncList() const {
-  static const std::vector<std::pair<KernelAttr, IsCloseCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-     &IsCloseCpuKernelMod::LaunchKernel<bool>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
-     &IsCloseCpuKernelMod::LaunchKernel<int8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
-     &IsCloseCpuKernelMod::LaunchKernel<int16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-     &IsCloseCpuKernelMod::LaunchKernel<int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-     &IsCloseCpuKernelMod::LaunchKernel<int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-     &IsCloseCpuKernelMod::LaunchKernel<float16>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-     &IsCloseCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-     &IsCloseCpuKernelMod::LaunchKernel<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
-     &IsCloseCpuKernelMod::LaunchKernel<uint8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool),
-     &IsCloseCpuKernelMod::LaunchKernel<uint16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
-     &IsCloseCpuKernelMod::LaunchKernel<uint32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeBool),
-     &IsCloseCpuKernelMod::LaunchKernel<uint64_t>},
-  };
-  return func_list;
+  return func_list_;
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IsClose, IsCloseCpuKernelMod);
 }  // namespace kernel

@@ -1,0 +1,31 @@
+#operator isclose
+isclose:
+  args:
+    input:
+      dtype: tensor
+    other:
+      dtype: tensor
+    rtol:
+      dtype: float
+      default: 1e-05
+      type_cast: bool, int
+      prim_init: True
+    atol:
+      dtype: float
+      default: 1e-08
+      type_cast: bool, int
+      prim_init: True
+    equal_nan:
+      dtype: bool
+      default: True
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: IsClose
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: IsCloseAscend

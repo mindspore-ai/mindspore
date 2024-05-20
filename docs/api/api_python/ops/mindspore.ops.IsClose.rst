@@ -13,8 +13,8 @@ mindspore.ops.IsClose
         - **equal_nan** (bool, 可选) - 若为True，则两个NaN被视为相同。默认值： ``True`` 。
 
     输入：
-        - **input** (Tensor) - 对比的第一个输入，支持的类型有float32、float16、int32。
-        - **other** (Tensor) - 对比的第二个输入，支持的类型有float32、float16、int32。
+        - **input** (Tensor) - 对比的第一个输入。
+        - **other** (Tensor) - 对比的第二个输入。
 
     输出：
         Tensor，shape与 `input` 和 `other` 广播后的shape相同，数据类型是bool。
