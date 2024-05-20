@@ -917,8 +917,8 @@ PYBIND_REGISTER(SolarizeOperation, 1, ([](const py::module *m) {
                   (void)
                     py::class_<vision::SolarizeOperation, TensorOperation, std::shared_ptr<vision::SolarizeOperation>>(
                       *m, "SolarizeOperation")
-                      .def(py::init([](const std::vector<float> &threshold) {
-                        auto solarize = std::make_shared<vision::SolarizeOperation>(threshold);
+                      .def(py::init([](const std::vector<float> &threshold, const std::string &device_target) {
+                        auto solarize = std::make_shared<vision::SolarizeOperation>(threshold, device_target);
                         THROW_IF_ERROR(solarize->ValidateParams());
                         return solarize;
                       }));

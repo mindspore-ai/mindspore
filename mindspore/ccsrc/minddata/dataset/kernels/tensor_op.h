@@ -102,6 +102,7 @@ constexpr char kDvppPosterizeOp[] = "DvppPosterizeOp";
 constexpr char kDvppResizeOp[] = "DvppResizeOp";
 constexpr char kDvppResizedCropOp[] = "DvppResizedCropOp";
 constexpr char kDvppRotateOp[] = "DvppRotateOp";
+constexpr char kDvppSolarizeOp[] = "DvppSolarizeOp";
 constexpr char kDvppVerticalFlipOp[] = "DvppVerticalFlipOp";
 constexpr char kEqualizeOp[] = "EqualizeOp";
 constexpr char kEraseOp[] = "EraseOp";

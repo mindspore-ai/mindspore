@@ -522,6 +522,18 @@ APP_ERROR PluginDvppRotate(const std::shared_ptr<mindspore::dataset::DeviceTenso
   return DvppRotate(input, output, degrees, mode, expand, center, fill);
 }
 
+APP_ERROR PluginDvppSolarize(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                             std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
+                             const std::vector<float> &threshold) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppSolarize(input, output, threshold);
+}
+
 APP_ERROR PluginDvppVerticalFlip(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                                  std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output) {
   if (input == nullptr) {

@@ -264,6 +264,13 @@ APP_ERROR DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
                           std::shared_ptr<DeviceTensorAscend910B> *output, int32_t top, int32_t left, int32_t height,
                           int32_t width, int32_t output_height, int32_t output_width, InterpolationMode mode);
 
+/// \brief Returns image with solarize.
+/// \param input: Tensor of shape <H,W,C> format.
+/// \param output: solarize image Tensor of same input shape (type DE_FLOAT32 or DE_UINT8).
+/// \param factor: saturation factor.
+APP_ERROR DvppSolarize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &threshold);
+
 /// \brief Returns vertical flip image.
 /// \param input: Tensor of shape <N,H,W,C>, c == 1 or c == 3
 /// \param output: Filpped image Tensor of same input shape (type DE_FLOAT32 and DE_UINT8)

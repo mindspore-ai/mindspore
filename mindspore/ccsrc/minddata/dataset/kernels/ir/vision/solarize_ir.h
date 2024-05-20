@@ -34,7 +34,7 @@ constexpr char kSolarizeOperation[] = "Solarize";
 
 class SolarizeOperation : public TensorOperation {
  public:
-  explicit SolarizeOperation(const std::vector<float> &threshold);
+  SolarizeOperation(const std::vector<float> &threshold, const std::string &device_target = "CPU");
 
   ~SolarizeOperation() override;
 
@@ -48,8 +48,11 @@ class SolarizeOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   std::vector<float> threshold_;
+  std::string device_target_;
 };
 }  // namespace vision
 }  // namespace dataset
