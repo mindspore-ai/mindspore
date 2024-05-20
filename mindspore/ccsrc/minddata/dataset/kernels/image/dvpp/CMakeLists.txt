@@ -39,6 +39,7 @@ set(DVPP_IMAGE_SOURCE
         ascend910b/dvpp_resize_op.cc
         ascend910b/dvpp_resized_crop_op.cc
         ascend910b/dvpp_rotate_op.cc
+        ascend910b/dvpp_solarize_op.cc
         ascend910b/dvpp_vertical_flip_op.cc
         )
 endif()

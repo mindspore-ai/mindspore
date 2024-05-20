@@ -126,6 +126,7 @@ void AclAdapter::InitPlugin() {
   dvpp_rotate_fun_obj_ = DlsymFuncObj(DvppRotate, plugin_handle_);
   dvpp_saturation_fun_obj_ = DlsymFuncObj(DvppAdjustSaturation, plugin_handle_);
   dvpp_sharpness_fun_obj_ = DlsymFuncObj(DvppAdjustSharpness, plugin_handle_);
+  dvpp_solarize_fun_obj_ = DlsymFuncObj(DvppSolarize, plugin_handle_);
   dvpp_vertical_flip_fun_obj_ = DlsymFuncObj(DvppVerticalFlip, plugin_handle_);
 
   // acl
@@ -204,6 +205,7 @@ void AclAdapter::FinalizePlugin() {
   dvpp_rotate_fun_obj_ = nullptr;
   dvpp_saturation_fun_obj_ = nullptr;
   dvpp_sharpness_fun_obj_ = nullptr;
+  dvpp_solarize_fun_obj_ = nullptr;
   dvpp_vertical_flip_fun_obj_ = nullptr;
 
   // acl
@@ -683,6 +685,14 @@ APP_ERROR AclAdapter::DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend9
     return APP_ERR_ACL_FAILURE;
   }
   return dvpp_vertical_flip_fun_obj_(input, output);
+}
+
+APP_ERROR AclAdapter::DvppSolarize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                       std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &threshold) {
+  if (!HasAclPlugin() || dvpp_solarize_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_solarize_fun_obj_(input, output, threshold);
 }
 
 // acl
