@@ -45,6 +45,7 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ir_fusion/shape_reshape_fusion.cc"
         "./ir_fusion/add_rms_norm_fusion.cc"
         "./ir_fusion/matmul_allreduce_fusion.cc"
+        "./ir_fusion/matmul_elemwise_fusion.cc"
         "./enhancer/eliminate_maketuple_getitem.cc"
         )
 list(REMOVE_ITEM MS_OPTIMIZER_910B
