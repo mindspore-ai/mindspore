@@ -31,6 +31,7 @@ class ReshapeExtKernel : public RtKernel {
   bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &, void *) override;
   std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in RtKernel."; }
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override;
 };
 
 MS_REG_RTKERNEL(reshapeext, ReshapeExtKernel);
