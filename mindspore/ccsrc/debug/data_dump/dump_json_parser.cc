@@ -121,9 +121,6 @@ void DumpJsonParser::CheckGEBackend() {
     if (e2e_dump_enabled()) {
       MS_LOG(WARNING) << "E2e dump only support kernel by kernel mode on Ascend platform.";
     }
-    if (dump_mode_ == static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
-      MS_LOG(EXCEPTION) << "Cell dump is not supported on 1980B. Please set dump_mode to 0 or 1.";
-    }
   }
 }
 
@@ -462,7 +459,7 @@ void DumpJsonParser::ParseDumpMode(const nlohmann::json &content) {
     MS_LOG(EXCEPTION) << "Dump config parse failed, dump_mode should be 0, 1 or 2, but got " << dump_mode_;
   }
   if (dump_mode_ == static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
-    if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice || e2e_dump_enabled_) {
+    if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
       MS_LOG(EXCEPTION) << "Cell dump is only supported in Ascend async dump. Please set dump_mode to 0 or 1.";
     }
   }
@@ -901,12 +898,12 @@ void DumpJsonParser::GetCellDumpFlag(const session::KernelGraph &kernel_graph) {
 }
 
 void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_graph) {
+  MS_LOG(INFO) << "Get kernel dump flag";
+  GetCellDumpFlag(kernel_graph);
+
   if (!async_dump_enabled_) {
     return;
   }
-
-  MS_LOG(INFO) << "Get async kernel dump flag";
-  GetCellDumpFlag(kernel_graph);
 
   MS_LOG(INFO) << "Update async dump kernel list for hccl";
   for (const auto &kernel : kernel_graph.execution_order()) {
