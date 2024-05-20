@@ -159,6 +159,11 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
         data = async_dump_dict_acl
         data["common_dump_settings"]["path"] = dump_path
         data["common_dump_settings"]["file_format"] = "npy"
+    elif test_key == "test_kbk_e2e_set_dump":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["dump_mode"] = 2
+        data["common_dump_settings"]["path"] = dump_path
+        data["e2e_dump_settings"]["trans_flag"] = True
     else:
         raise ValueError(
             "Failed to generate dump json file. The test name value " + test_key + " is invalid.")
@@ -230,7 +235,7 @@ def generate_cell_dump_json(dump_path, json_file_name, test_key, dump_mode):
 
 
 def check_dump_structure(dump_path, json_file_path, num_card, num_graph, num_iteration, root_graph_id=None,
-                         test_iteration_id=None):
+                         test_iteration_id=None, execution_history=True):
     """
     Util to check if the dump structure is correct.
     """
@@ -263,9 +268,10 @@ def check_dump_structure(dump_path, json_file_path, num_card, num_graph, num_ite
                                                 + str(graph_id) + ".csv")
             assert os.path.exists(execution_order_file)
             if graph_id in root_graph_id:
-                execution_history_file = os.path.join(execution_order_path,
-                                                      "ms_global_execution_order_graph_" + str(graph_id) + ".csv")
-                assert os.path.exists(execution_history_file)
+                if execution_history:
+                    execution_history_file = os.path.join(execution_order_path,
+                                                          "ms_global_execution_order_graph_" + str(graph_id) + ".csv")
+                    assert os.path.exists(execution_history_file)
                 graph_id_path = os.path.join(net_name_path, str(graph_id))
                 assert os.path.exists(graph_id_path)
                 for iteration_id in test_iteration_id:

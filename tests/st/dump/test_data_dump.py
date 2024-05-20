@@ -25,7 +25,7 @@ import mindspore.context as context
 
 import mindspore.nn as nn
 import mindspore.ops as ops
-from mindspore import Tensor
+from mindspore import Tensor, set_dump
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops import operations as P, constexpr
 from mindspore.nn import Cell
@@ -48,18 +48,20 @@ x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
 y = np.array([[7, 8, 9], [10, 11, 12]]).astype(np.float32)
 
 
-def run_e2e_dump():
+def run_e2e_dump(test_key="test_e2e_dump"):
     if sys.platform != 'linux':
         return
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'e2e_dump')
         dump_config_path = os.path.join(tmp_dir, 'e2e_dump.json')
-        generate_dump_json(dump_path, dump_config_path, 'test_e2e_dump')
+        generate_dump_json(dump_path, dump_config_path, test_key)
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
         dump_file_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
         add = Net()
+        if test_key == "test_kbk_e2e_set_dump":
+            set_dump(add)
         add(Tensor(x), Tensor(y))
         if context.get_context("device_target") == "Ascend":
             assert len(os.listdir(dump_file_path)) == 3
@@ -79,7 +81,10 @@ def run_e2e_dump():
         for _ in range(3):
             if not os.path.exists(dump_file_path):
                 time.sleep(2)
-        check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
+        if test_key == "test_kbk_e2e_set_dump":
+            check_dump_structure(dump_path, dump_config_path, 1, 1, 1, execution_history=False)
+        else:
+            check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
@@ -125,6 +130,23 @@ def test_gpu_e2e_dump_with_hccl_set():
     run_e2e_dump()
     del os.environ['RANK_TABLE_FILE']
     del os.environ['RANK_ID']
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_kbk_e2e_set_dump():
+    """
+    Feature: set_dump API for kbk e2e dump
+    Description: Test set_dump API for kbk e2e dump
+    Expectation: Targets are dumped
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    os.environ["GRAPH_OP_RUN"] = "1"
+    run_e2e_dump(test_key="test_kbk_e2e_set_dump")
+    del os.environ["GRAPH_OP_RUN"]
 
 
 class ReluReduceMeanDenseRelu(Cell):
