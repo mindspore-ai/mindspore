@@ -23,6 +23,7 @@ Element-wise Operation
     :template: classtemplate.rst
 
     mindspore.mint.abs
+    mindspore.mint.tanh
 
 mindspore.mint.nn
 ------------------

@@ -23,6 +23,7 @@ Array操作
     :template: classtemplate.rst
 
     mindspore.mint.abs
+    mindspore.mint.tanh
 
 mindspore.mint.nn
 ------------------
