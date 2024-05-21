@@ -40,7 +40,7 @@ static const std::set<std::string> CANDIDATE_DYNAMIC_VALUE_OPS = {RESHAPE, STRID
 // split tensor only for first input
 static const std::set<std::string> SPLIT_TENSOR_ONLY_FOR_FIRST_INPUT_OPS = {PAD_V3};
 // the input is tuple or list
-static const std::set<std::string> INPUT_IS_TUPLE_OR_LIST_OPS = {CONCAT, STACK, ADDN, INCRE_FLASH_ATTENTION};
+static const std::set<std::string> INPUT_IS_TUPLE_OR_LIST_OPS = {CONCAT, STACK, ADDN, INCRE_FLASH_ATTENTION, MESHGRID};
 // op list for allreduce pull down
 static const std::set<std::string> ALLREDUCE_PULL_DOWN_WHITE_LIST = {
   STRIDED_SLICE, TUPLE_GETITEM_OP, RESHAPE, TRANSPOSE, MIRROR_OPERATOR, ADD, MUL, DIV, GATHERV2, PRELU, RELU, SILU,
