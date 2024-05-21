@@ -325,6 +325,7 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/mint
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/multiprocessing
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/hal
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/custom_compiler
     DESTINATION ${INSTALL_PY_DIR}
     COMPONENT mindspore
 )
@@ -440,3 +441,14 @@ if(ENABLE_AIO)
         COMPONENT mindspore
     )
 endif()
+
+if(ENABLE_D)
+    install(
+        DIRECTORY
+        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/hal/custom_compiler
+        DESTINATION ${INSTALL_PY_DIR}
+        COMPONENT mindspore
+    )
+endif()
+
+

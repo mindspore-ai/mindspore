@@ -18,12 +18,14 @@
 #include <vector>
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_build.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
+#include "plugin/device/ascend/kernel/opapi/aclnn/custom_aclnn_kernel.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/factory/ms_factory.h"
 #include "kernel/framework_utils.h"
 #include "ops/op_def.h"
 #include "utils/trace_base.h"
+#include "mindspore/core/ops/framework_ops.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,7 +34,9 @@ KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
 
   std::string opname = common::AnfAlgo::GetCNodeName(anf_node);
   MS_LOG(DEBUG) << "aclnn op [" << opname << "]";
-  auto kernel_ptr = Factory<AclnnKernelMod>::Instance().Create(opname);
+  std::shared_ptr<AclnnKernelMod> kernel_ptr;
+  kernel_ptr = IsPrimitiveCNode(anf_node, prim::kPrimCustom) ? GetCustomAclNNKernelMod(anf_node)
+                                                             : Factory<AclnnKernelMod>::Instance().Create(opname);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "aclnn can't find Kernel[" << opname << "]";
     return nullptr;

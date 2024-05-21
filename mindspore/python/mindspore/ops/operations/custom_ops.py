@@ -174,7 +174,7 @@ class Custom(ops.PrimitiveWithInfer):
 
         - "hybrid": supports ["GPU", "CPU"].
         - "akg": supports ["GPU", "CPU"].
-        - "aot": supports ["GPU", "CPU"].
+        - "aot": supports ["GPU", "CPU", "ASCEDN"].
         - "pyfunc": supports ["CPU"].
         - "julia": supports ["CPU"].
 
@@ -193,7 +193,7 @@ class Custom(ops.PrimitiveWithInfer):
 
               1. for "aot":
 
-                 Currently "aot" supports GPU/CPU(linux only) platform.
+                 a) GPU/CPU platform.
                  "aot" means ahead of time, in which case Custom directly launches user defined "xxx.so" file as an
                  operator. Users need to compile a handwriting "xxx.cu"/"xxx.cc" file into "xxx.so" ahead of time,
                  and offer the path of the file along with a function name.
@@ -248,6 +248,21 @@ class Custom(ops.PrimitiveWithInfer):
                        Custom(func="{dir_path}/{file_name}:{func_name}",...)
                        (ex. Custom(func="./reorganize.so:CustomReorganize", out_shape=[1], out_dtype=mstype.float32,
                        "aot"))
+
+                 b) ASCEND platform
+                 Before using Custom operators on the ASCEND platform, users must first develop custom operators
+                 based on Ascend C and compile them. For operator development, you can refer to the tutorial on
+                 `Quick Start for End-to-End Operator Development
+                 <https://www.hiascend.com/document/detail/zh/canncommercial/70RC1/operatordev/Ascendcopdevg/atlas_ascendc_10_0022.html>`_,
+                 and for compiling custom operators, you can use the `Offline Compilation of Ascend C Custom Operators
+                 <https://www.mindspore.cn/tutorials/experts/en/master/operation/ascendc_compile.html>` tool.
+                 When passing the operator's name into the func parameter, taking AddCustom as an example for the
+                 name given in the custom operator implementation, there are several ways to use it:
+
+                 - Usin TBE: func="AddCustom"
+                 - Using AclNN: func="aclnnAddCustom"
+                 - Inferring the shape of the operator through C++ derivation: func="infer_shape.cc:aclnnAddCustom",
+                   where infer_shape.cc is the shape derivation implemented in C++.
 
               2. for "julia":
 
@@ -323,7 +338,7 @@ class Custom(ops.PrimitiveWithInfer):
             or the attributes of `func` differs in different targets.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``GPU`` ``CPU`` ``ASCEND``
 
     Examples:
         >>> import numpy as np
@@ -402,6 +417,7 @@ class Custom(ops.PrimitiveWithInfer):
         self.func_source_str = ""
         self._func_compile_attrs = {}
         self._is_ms_kernel = False
+        self.out_shape = out_shape
 
         self._check_platform()
         self._check_func()
@@ -417,7 +433,6 @@ class Custom(ops.PrimitiveWithInfer):
             add_pyfunc(func_id, self.func)
             self.add_prim_attr("fn_id", func_id)
 
-        self.out_shape = out_shape
         if self.out_shape is None and self.func_type == "aot":
             self.add_prim_attr("cpp_infer_shape", True)
         self.out_dtype = out_dtype
@@ -531,7 +546,37 @@ class Custom(ops.PrimitiveWithInfer):
                 raise Exception("{}, function {} is not found in source file {}!"
                                 .format(self.log_prefix, func, source_file))
 
+    def _check_aot_func(self):
+        """Check the source code and bin lib for aot type custom op"""
+        if not isinstance(self.func, str):
+            raise TypeError("{}, 'func' must be of type str, but got {}".format(
+                self.log_prefix, type(self.func)))
+        if callable(self.out_shape):
+            return
+        file_name_list = self.func.split(":")
+        if len(file_name_list) != 2:
+            raise TypeError(
+                "{}, 'func' should be like 'file_name:func_name', but got {}".format(
+                    self.log_prefix, self.func))
+        file_path = os.path.abspath(file_name_list[0])
+        if os.environ.get('MS_CUSTOM_AOT_WHITE_LIST') is None:
+            if Custom.custom_aot_warning:
+                logger.info("{}, no white list is set and it might cause problems. "
+                            "Set the legal path of the file in MS_CUSTOM_AOT_WHITE_LIST"
+                            .format(self.log_prefix))
+                Custom.custom_aot_warning = False
+        else:
+            legal_path = os.path.abspath(os.environ.get('MS_CUSTOM_AOT_WHITE_LIST'))
+            if legal_path not in file_path:
+                raise TypeError(
+                    "{}, the legal path for the file is {}, but the file is {}".format(
+                        self.log_prefix, legal_path, file_path))
+        if file_path.endswith(("cu", "cpp", "cc")):
+            file_path = _compile_aot(file_path)
+            self.func = file_path + ":" + file_name_list[1]
+
     def _check_platform(self):
+        """check the platform"""
         if platform.system() != 'Linux':
             raise Exception("Custom op only supported on Linux platform currently.")
 
@@ -541,30 +586,7 @@ class Custom(ops.PrimitiveWithInfer):
             raise ValueError("{}, 'func_type' must be one of {}, but got {}"
                              .format(self.log_prefix, self.supported_func_type, self.func_type))
         if self.func_type == "aot":
-            if not isinstance(self.func, str):
-                raise TypeError("{}, 'func' must be of type str, but got {}".format(
-                    self.log_prefix, type(self.func)))
-            file_name_list = self.func.split(":")
-            if len(file_name_list) != 2:
-                raise TypeError(
-                    "{}, 'func' should be like 'file_name:func_name', but got {}".format(
-                        self.log_prefix, self.func))
-            file_path = os.path.abspath(file_name_list[0])
-            if os.environ.get('MS_CUSTOM_AOT_WHITE_LIST') is None:
-                if Custom.custom_aot_warning:
-                    logger.info("{}, no white list is set and it might cause problems. "
-                                "Set the legal path of the file in MS_CUSTOM_AOT_WHITE_LIST"
-                                .format(self.log_prefix))
-                    Custom.custom_aot_warning = False
-            else:
-                legal_path = os.path.abspath(os.environ.get('MS_CUSTOM_AOT_WHITE_LIST'))
-                if legal_path not in file_path:
-                    raise TypeError(
-                        "{}, the legal path for the file is {}, but the file is {}".format(
-                            self.log_prefix, legal_path, file_path))
-            if file_path.endswith(("cu", "cpp", "cc")):
-                file_path = _compile_aot(file_path)
-                self.func = file_path + ":" + file_name_list[1]
+            self._check_aot_func()
 
         elif self.func_type == "julia":
             self._check_julia_func()
