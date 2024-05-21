@@ -116,6 +116,10 @@ PLUGIN_METHOD(DvppDecode, int, const std::shared_ptr<mindspore::dataset::DeviceT
 PLUGIN_METHOD(DvppEqualize, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *);
 
+PLUGIN_METHOD(DvppErase, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, uint32_t, uint32_t, uint32_t, uint32_t,
+              const std::vector<float> &);
+
 PLUGIN_METHOD(DvppGaussianBlur, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, const std::vector<int64_t> &,
               const std::vector<float> &, uint32_t);
@@ -151,7 +155,7 @@ PLUGIN_METHOD(DvppResizedCrop, int, const std::shared_ptr<mindspore::dataset::De
 
 PLUGIN_METHOD(DvppRotate, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, float,
-              mindspore::dataset::InterpolationMode, bool, const std::vector<float> &, std::vector<float>);
+              mindspore::dataset::InterpolationMode, bool, const std::vector<float> &, const std::vector<float> &);
 
 PLUGIN_METHOD(DvppSolarize, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, const std::vector<float> &);

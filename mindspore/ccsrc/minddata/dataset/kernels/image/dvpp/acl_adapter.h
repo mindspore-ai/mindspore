@@ -102,14 +102,11 @@ class AclAdapter {
                        std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &matrix,
                        uint32_t interpolation_mode, uint32_t padding_mode, const std::vector<float> &fill);
 
-<<<<<<< HEAD
   APP_ERROR DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
                              std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &cutoff,
                              const std::vector<uint32_t> &ignore);
-=======
   APP_ERROR DvppConvertColor(const std::shared_ptr<DeviceTensorAscend910B> &input,
                              std::shared_ptr<DeviceTensorAscend910B> *output, ConvertMode convertMode);
->>>>>>> 1449a0556fc... Add dvpp convertcolor operator into minddata
 
   APP_ERROR DvppCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
                      std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left, uint32_t height,
@@ -120,6 +117,10 @@ class AclAdapter {
 
   APP_ERROR DvppEqualize(const std::shared_ptr<DeviceTensorAscend910B> &input,
                          std::shared_ptr<DeviceTensorAscend910B> *output);
+
+  APP_ERROR DvppErase(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                      std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left, uint32_t height,
+                      uint32_t width, const std::vector<float> &value);
 
   APP_ERROR DvppGaussianBlur(const std::shared_ptr<DeviceTensorAscend910B> &input,
                              std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<int64_t> &kernel_size,
@@ -158,7 +159,7 @@ class AclAdapter {
 
   APP_ERROR DvppRotate(const std::shared_ptr<DeviceTensorAscend910B> &input,
                        std::shared_ptr<DeviceTensorAscend910B> *output, float degrees, InterpolationMode mode,
-                       bool expand, const std::vector<float> &center, std::vector<float> fill);
+                       bool expand, const std::vector<float> &center, const std::vector<float> &fill);
   APP_ERROR DvppSolarize(const std::shared_ptr<DeviceTensorAscend910B> &input,
                          std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &threshold);
 
@@ -240,6 +241,7 @@ class AclAdapter {
   DvppCropFunObj dvpp_crop_fun_obj_;
   DvppDecodeFunObj dvpp_decode_fun_obj_;
   DvppEqualizeFunObj dvpp_equalize_fun_obj_;
+  DvppEraseFunObj dvpp_erase_fun_obj_;
   DvppGaussianBlurFunObj dvpp_gaussian_blur_fun_obj_;
   DvppHorizontalFlipFunObj dvpp_horizontal_flip_fun_obj_;
   DvppInvertFunObj dvpp_invert_fun_obj_;

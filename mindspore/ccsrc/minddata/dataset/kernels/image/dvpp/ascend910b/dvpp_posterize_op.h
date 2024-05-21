@@ -28,7 +28,7 @@ namespace mindspore {
 namespace dataset {
 class DvppPosterizeOp : public TensorOp {
  public:
-  explicit DvppPosterizeOp(uint8_t bits) : bits_(bits){};
+  explicit DvppPosterizeOp(uint8_t bits) : bits_(bits) {}
 
   ~DvppPosterizeOp() override = default;
 

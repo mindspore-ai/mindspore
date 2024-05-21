@@ -114,6 +114,7 @@ void AclAdapter::InitPlugin() {
   dvpp_crop_fun_obj_ = DlsymFuncObj(DvppCrop, plugin_handle_);
   dvpp_decode_fun_obj_ = DlsymFuncObj(DvppDecode, plugin_handle_);
   dvpp_equalize_fun_obj_ = DlsymFuncObj(DvppEqualize, plugin_handle_);
+  dvpp_erase_fun_obj_ = DlsymFuncObj(DvppErase, plugin_handle_);
   dvpp_gaussian_blur_fun_obj_ = DlsymFuncObj(DvppGaussianBlur, plugin_handle_);
   dvpp_horizontal_flip_fun_obj_ = DlsymFuncObj(DvppHorizontalFlip, plugin_handle_);
   dvpp_invert_fun_obj_ = DlsymFuncObj(DvppInvert, plugin_handle_);
@@ -194,6 +195,7 @@ void AclAdapter::FinalizePlugin() {
   dvpp_crop_fun_obj_ = nullptr;
   dvpp_decode_fun_obj_ = nullptr;
   dvpp_equalize_fun_obj_ = nullptr;
+  dvpp_erase_fun_obj_ = nullptr;
   dvpp_gaussian_blur_fun_obj_ = nullptr;
   dvpp_horizontal_flip_fun_obj_ = nullptr;
   dvpp_invert_fun_obj_ = nullptr;
@@ -597,6 +599,15 @@ APP_ERROR AclAdapter::DvppEqualize(const std::shared_ptr<DeviceTensorAscend910B>
   return dvpp_equalize_fun_obj_(input, output);
 }
 
+APP_ERROR AclAdapter::DvppErase(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left,
+                                uint32_t height, uint32_t width, const std::vector<float> &value) {
+  if (!HasAclPlugin() || dvpp_erase_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_erase_fun_obj_(input, output, top, left, height, width, value);
+}
+
 APP_ERROR AclAdapter::DvppGaussianBlur(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                        std::shared_ptr<DeviceTensorAscend910B> *output,
                                        const std::vector<int64_t> &kernel_size, const std::vector<float> &sigma,
@@ -653,7 +664,7 @@ APP_ERROR AclAdapter::DvppPerspective(const std::shared_ptr<DeviceTensorAscend91
 }
 
 APP_ERROR AclAdapter::DvppPosterize(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                                      std::shared_ptr<DeviceTensorAscend910B> *output, uint8_t bits) {
+                                    std::shared_ptr<DeviceTensorAscend910B> *output, uint8_t bits) {
   if (!HasAclPlugin() || dvpp_posterize_fun_obj_ == nullptr) {
     return APP_ERR_ACL_FAILURE;
   }
@@ -682,7 +693,7 @@ APP_ERROR AclAdapter::DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend91
 
 APP_ERROR AclAdapter::DvppRotate(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                  std::shared_ptr<DeviceTensorAscend910B> *output, float degrees, InterpolationMode mode,
-                                 bool expand, const std::vector<float> &center, std::vector<float> fill) {
+                                 bool expand, const std::vector<float> &center, const std::vector<float> &fill) {
   if (!HasAclPlugin() || dvpp_rotate_fun_obj_ == nullptr) {
     return APP_ERR_ACL_FAILURE;
   }

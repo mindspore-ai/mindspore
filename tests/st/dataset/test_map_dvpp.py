@@ -456,7 +456,7 @@ def test_map_with_dvpp_resize_with_exception():
         count = 0
         for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is HW4
     class RandomAccessDatasetHW4:
@@ -478,7 +478,7 @@ def test_map_with_dvpp_resize_with_exception():
         count = 0
         for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is 23HW4
     class RandomAccessDataset23HW4:
@@ -1399,7 +1399,7 @@ def test_map_with_dvpp_normalize_exception():
         count = 0
         for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # float16
     class RandomAccessDatasetHWCFloat16:
@@ -1493,7 +1493,7 @@ def test_map_with_dvpp_horizontal_flip_with_exception():
         count = 0
         for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is HW4
     class RandomAccessDatasetHW4:
@@ -1514,7 +1514,7 @@ def test_map_with_dvpp_horizontal_flip_with_exception():
         count = 0
         for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is 23HW4
     class RandomAccessDataset23HW4:
@@ -1570,7 +1570,7 @@ def test_map_with_dvpp_vertical_flip_with_exception():
         count = 0
         for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is HW4
     class RandomAccessDatasetHW4:
@@ -1591,7 +1591,7 @@ def test_map_with_dvpp_vertical_flip_with_exception():
         count = 0
         for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is 23HW4
     class RandomAccessDataset23HW4:
@@ -1647,7 +1647,7 @@ def test_map_with_dvpp_resize_crop_with_exception():
         count = 0
         for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is HW4
     class RandomAccessDatasetHW4:
@@ -1668,7 +1668,7 @@ def test_map_with_dvpp_resize_crop_with_exception():
         count = 0
         for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is 23HW4
     class RandomAccessDataset23HW4:
@@ -1728,7 +1728,7 @@ def test_map_with_dvpp_perspective_with_exception():
         count = 0
         for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is HW4
     class RandomAccessDatasetHW4:
@@ -1750,7 +1750,7 @@ def test_map_with_dvpp_perspective_with_exception():
         count = 0
         for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is 23HW4
     class RandomAccessDataset23HW4:

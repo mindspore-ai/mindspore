@@ -495,7 +495,7 @@ class DATASET_API Erase final : public TensorTransform {
   ///                             std::make_shared<vision::Erase>(10, 10, 10, 10)}, // operations
   ///                            {"image"});                                        // input columns
   /// \endcode
-  Erase(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<uint8_t> &value = {0, 0, 0},
+  Erase(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<float> &value = {0., 0., 0.},
         bool inplace = false);
 
   /// \brief Destructor.

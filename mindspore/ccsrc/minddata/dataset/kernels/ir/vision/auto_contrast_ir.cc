@@ -84,6 +84,7 @@ Status AutoContrastOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["cutoff"] = cutoff_;
   args["ignore"] = ignore_;
+  args["device_target"] = device_target_;
   *out_json = args;
   return Status::OK();
 }
@@ -107,8 +108,8 @@ MapTargetDevice AutoContrastOperation::Type() {
     return MapTargetDevice::kAscend910B;
   } else {
     MS_LOG(ERROR) << "AutoContrast: Invalid device target. It's not CPU or Ascend.";
-    return MapTargetDevice::kInvalid;
   }
+  return MapTargetDevice::kInvalid;
 }
 #endif
 }  // namespace vision

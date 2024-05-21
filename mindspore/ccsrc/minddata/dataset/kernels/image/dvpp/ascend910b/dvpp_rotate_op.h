@@ -28,8 +28,8 @@ namespace mindspore {
 namespace dataset {
 class DvppRotateOp : public TensorOp {
  public:
-  DvppRotateOp(float degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
-               uint8_t fill_r, uint8_t fill_g, uint8_t fill_b);
+  DvppRotateOp(float degrees, InterpolationMode resample, bool expand, const std::vector<float> &center, uint8_t fill_r,
+               uint8_t fill_g, uint8_t fill_b);
 
   ~DvppRotateOp() override = default;
 
@@ -43,6 +43,8 @@ class DvppRotateOp : public TensorOp {
   std::string Name() const override { return kDvppRotateOp; }
 
   bool IsDvppOp() override { return true; }
+
+  TensorShape ConstructShape(const TensorShape &in_shape);
 
  private:
   float degrees_;

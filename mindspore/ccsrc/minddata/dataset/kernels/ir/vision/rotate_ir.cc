@@ -163,15 +163,15 @@ void RotateOperation::setAngle(uint64_t angle_id) {
   std::dynamic_pointer_cast<RotateOp>(rotate_op_)->setAngle(angle_id);
 }
 
-MapTargetDevice PadOperation::Type() {
+MapTargetDevice RotateOperation::Type() {
   if (device_target_ == "CPU") {
     return MapTargetDevice::kCpu;
   } else if (device_target_ == "Ascend") {
     return MapTargetDevice::kAscend910B;
   } else {
     MS_LOG(ERROR) << "Pad: Invalid device target. It's not CPU or Ascend.";
-    return MapTargetDevice::kInvalid;
   }
+  return MapTargetDevice::kInvalid;
 }
 }  // namespace vision
 }  // namespace dataset

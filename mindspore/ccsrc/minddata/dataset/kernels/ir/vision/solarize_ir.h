@@ -34,7 +34,7 @@ constexpr char kSolarizeOperation[] = "Solarize";
 
 class SolarizeOperation : public TensorOperation {
  public:
-  SolarizeOperation(const std::vector<float> &threshold, const std::string &device_target = "CPU");
+  explicit SolarizeOperation(const std::vector<float> &threshold, const std::string &device_target = "CPU");
 
   ~SolarizeOperation() override;
 

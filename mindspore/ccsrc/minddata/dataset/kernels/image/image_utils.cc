@@ -1683,7 +1683,7 @@ Status CutOut(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 }
 
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t top, int32_t left,
-             int32_t height, int32_t width, const std::vector<uint8_t> &value, bool inplace) {
+             int32_t height, int32_t width, const std::vector<float> &value, bool inplace) {
   try {
     std::vector<dsize_t> size;
     RETURN_IF_NOT_OK(ImageSize(input, &size));
@@ -1696,8 +1696,13 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
         ", image width: " + std::to_string(image_w));
     }
 
-    RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(*output);
+    std::shared_ptr<CVTensor> input_cv;
+    if (!inplace) {
+      RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
+      input_cv = CVTensor::AsCVTensor(*output);
+    } else {
+      input_cv = CVTensor::AsCVTensor(input);
+    }
     cv::Mat input_img = input_cv->mat();
 
     int32_t h_start = top;
@@ -1710,15 +1715,22 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
     int32_t true_width = max_width - w_start;
     int32_t true_height = max_height - h_start;
 
-    uint8_t fill_r = value[kRIndex];
-    uint8_t fill_g = value[kGIndex];
-    uint8_t fill_b = value[kBIndex];
+    float fill_r = value[kRIndex];
+    float fill_g = value[kGIndex];
+    float fill_b = value[kBIndex];
 
     cv::Rect idx = cv::Rect(w_start, h_start, true_width, true_height);
     cv::Scalar fill_color = cv::Scalar(fill_r, fill_g, fill_b);
     (void)input_img(idx).setTo(fill_color);
 
-    *output = std::static_pointer_cast<Tensor>(input_cv);
+    if (!inplace) {
+      *output = std::static_pointer_cast<Tensor>(input_cv);
+    } else {
+      std::shared_ptr<CVTensor> output_cv;
+      RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_img, input_cv->Rank(), &output_cv));
+      *output = std::static_pointer_cast<Tensor>(output_cv);
+    }
+
     return Status::OK();
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Erase: " + std::string(e.what()));

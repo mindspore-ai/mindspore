@@ -123,6 +123,7 @@ enum {
   APP_ERR_DVPP_INVERT_FAIL = APP_ERR_DVPP_BASE + 32,             // DVPP: invert fail
   APP_ERR_DVPP_SOLARIZE_FAIL = APP_ERR_DVPP_BASE + 33,           // DVPP: solarize fail
   APP_ERR_DVPP_CONVERT_COLOR_FAIL = APP_ERR_DVPP_BASE + 34,      // DVPP: convert color fail
+  APP_ERR_DVPP_ERASE_FAIL = APP_ERR_DVPP_BASE + 35,              // DVPP: erase fail
   APP_ERR_DVPP_END,  // Not an error code, define the range of common error code
 
   // define the error code of inference

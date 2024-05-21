@@ -288,7 +288,15 @@ def check_erase(method):
         check_pos_int32(height, "height")
         check_pos_int32(width, "width")
         type_check(inplace, (bool,), "inplace")
-        check_fill_value(value)
+        type_check(value, (float, int, tuple), "value")
+        if isinstance(value, (float, int)):
+            value = tuple([value] * 3)
+        type_check_list(value, (float, int), "value")
+        if isinstance(value, tuple) and len(value) == 3:
+            for i, val in enumerate(value):
+                check_value(val, (UINT8_MIN, UINT8_MAX), "value[{}]".format(i))
+        else:
+            raise TypeError("fill_value should be a single integer/float or a 3-tuple.")
 
         return method(self, *args, **kwargs)
 
