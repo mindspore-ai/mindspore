@@ -19,4 +19,4 @@ mindspore.nn.Flatten
         - **TypeError** - `x` 不是Tensor。
         - **TypeError** - `start_dim` 或 `end_dim` 不是int类型。
         - **ValueError** - 规范化后，`start_dim` 大于 `end_dim`。
-        - **ValueError** - `start_dim` 或 `end_dim` 不在 [-input.dim, input.dim-1] 范围内。
+        - **ValueError** - `start_dim` 或 `end_dim` 不在 [-input.dim, input.dim-1] 范围内。例如参数使用默认值且输入为零维或一维Tensor。
