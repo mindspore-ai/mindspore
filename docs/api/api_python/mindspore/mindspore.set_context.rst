@@ -157,7 +157,7 @@ mindspore.set_context
           - **dump_as_text**：将关键过程的详细信息生成文本文件保存到"graph_kernel_dump"目录里。默认值： ``False`` 。
 
         - **enable_reduce_precision** (bool) - 表示是否开启降低精度计算。默认值： ``True`` 。设置为 ``True`` 时，不支持用户指定的精度，且精度将自动更改。设置为 ``False`` 时，如果未指定用例的精度，则会报错并退出。
-        - **aoe_tune_mode** (str) - 表示启动AOE调优，默认不设置。设置为 ``online`` 时，将启动在线调优，设置为 ``offline`` 时，将为离线调优保存GE图 。
+        - **aoe_tune_mode** (str) - 表示启动AOE调优，默认不设置。设置为 ``online`` 时，将启动在线调优。
         - **aoe_config** (dict) - 设置aoe工具专用的参数，默认不设置。
 
           - **job_type** (str): 设置调优类型，有算子调优和子图调优。默认为算子调优。
