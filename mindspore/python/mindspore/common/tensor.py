@@ -3229,7 +3229,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Generates random numbers in the half-open interval [from_, to).
 
         Args:
-            tensor (Tensor): The origin input tensor.
             from_ (float): The lower bound of the interval.
             to (float): The upper bound of the interval.
             generator (Generator, optional): The random seed. Default: None.
@@ -3241,12 +3240,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             Tensor, with the same shape as tensor.
 
         Examples:
-            >>> from mindspore import Tensor, ops
             >>> import mindspore
-            >>> import numpy as np
             >>> x = mindspore.ops.ones(4, 2)
             >>> output = x.uniform(1., 2.)
-            >>> print(output)
+            >>> print(output.shape)
+            (4, 2)
         """
         return tensor_operator_registry.get('uniform')(self, from_, to, generator)
 

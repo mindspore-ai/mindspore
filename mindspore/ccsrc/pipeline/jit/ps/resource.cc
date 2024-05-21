@@ -289,6 +289,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"fill", std::string("fill")},                                      // P.fill()
        {"fills", std::string("fills")},                                    // P.fills
        {"fill_diagonal", std::string("fill_diagonal")},                    // P.FillDiagonal()
+       {"uniform", std::string("uniform")},                                // P.UniformExt()
        {"ptp", std::string("ptp")},                                        // P.reduce_max() - P.reduce_min()
        {"clamp", std::string("clamp")},                                    // clamp()
        {"clip", std::string("clamp")},                                     // clamp()
