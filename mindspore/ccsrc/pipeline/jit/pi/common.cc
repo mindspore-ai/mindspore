@@ -561,6 +561,7 @@ static auto TraceRun(JitCompileResults *jcr) {
   GraphBuilderPtr g = GraphBuilder::Creator(jcr->origin_frame_, conf.GetBoolConfig(GraphJitConfig::kTraceFlag));
 
   if (conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+    AObject::trace_flag_ = true;
     auto mg = std::dynamic_pointer_cast<MindGraphBuilder>(g);
     mg->FGAddInputs(GetAllArgs(jcr));
   }

@@ -58,10 +58,11 @@ namespace pijit {
 // mindspore graph can accept these value
 static const std::set<AObject::Type> kMsSupportedType = {
   AObject::kTypeInt,    AObject::kTypeBool,   AObject::kTypeFloat,     AObject::kTypeNone,
-  AObject::kTypeString, AObject::kTypeTensor, AObject::kTypeTraceNode,
+  AObject::kTypeString, AObject::kTypeTensor,
 };
 
 MemPool<AbstractObjectBase> AbstractObjectBase::aobject_mem_pool_(__FILE__, __LINE__, "AObject");
+bool AbstractObjectBase::trace_flag_ = false;
 
 // exact equal check
 static const std::unordered_map<PyTypeObject *, AObject::Type> exact_type_map = {
@@ -473,7 +474,7 @@ AObject *AbstractObjectBase::GetAttr(const std::string &name) {
       attr = m;
     } else {
       // other type
-      attr = nullptr;
+      attr = MakeAObject(kTypeAnyValue);
     }
   }
   return attr;
@@ -1267,6 +1268,9 @@ bool AbstractTuple::Update() {
   if (!this->IsElementValid()) {
     return false;
   }
+  if (trace_flag_) {
+    return true;
+  }
   this->element_type_ = kTypeAnyValue;
   // copy it
   PyObject *c = (this->type_ == kTypeTuple) ? PyTuple_New(items_.size()) : PyList_New(items_.size());
@@ -1304,6 +1308,9 @@ py::object AbstractList::GetPyObject() {
 }
 
 bool AbstractDict::Update() {
+  if (trace_flag_) {
+    return true;
+  }
   value_ = py::object();
   for (auto i : this->write_cache_) {
     PyObject *key = i.first == nullptr ? nullptr : i.first->GetPyObject().ptr();

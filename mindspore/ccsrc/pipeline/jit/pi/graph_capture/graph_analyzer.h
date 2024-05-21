@@ -135,6 +135,7 @@ class MindGraphAnalyzer : public GraphAnalyzer {
   // UD analyze
   void UseDefAnalyze() override;
   void CollectCapturedInputs() override;
+  void CollectGraphInputs() override;
   void UpdateCapturedOrder();
   void CollectCapturedAndInterpret() override;
   bool AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) override;
