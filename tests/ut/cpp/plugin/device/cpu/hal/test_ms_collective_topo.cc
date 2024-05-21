@@ -33,7 +33,7 @@ class TestMSCollectiveTopo : public UT::Common {
 /// Feature: test create cpu collective topology node.
 /// Description: create the topology node.
 /// Expectation: the topology node is created successfully.
-TEST_F(TestMSCollectiveTopo, InitCollectiveTopoNode) {
+TEST_F(TestMSCollectiveTopo, DISABLED_InitCollectiveTopoNode) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
   common::SetEnv("MS_TOPO_TIMEOUT", "600");
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");

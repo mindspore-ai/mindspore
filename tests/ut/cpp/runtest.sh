@@ -56,10 +56,17 @@ set +e
 
 pids=()
 tasks=(./ut_CORE_tests ./ut_API_tests ./ut_FRONTEND_tests ./ut_BACKEND_tests ./ut_PS_tests ./ut_OTHERS_tests)
+#tasks=(./ut_CORE_tests ./ut_API_tests ./ut_FRONTEND_tests ./ut_BACKEND_tests ./ut_PS_tests ./ut_OTHERS_tests ./ut_MINDDATA0_tests ./ut_MINDDATA1_tests)
 set +e
 for task in "${tasks[@]}"; do
   $task
-  pids+=($!)
+#  $task &
+#  pids+=($!)
+  status=$?
+  if [ $status != 0 ]; then
+    RET=$status
+    exit $RET
+  fi
 done
 cd -
 #for pid in "${pids[@]}"; do
