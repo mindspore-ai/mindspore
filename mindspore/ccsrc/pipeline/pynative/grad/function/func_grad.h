@@ -142,6 +142,8 @@ class FuncGrad : public AutoGrad {
                                           const OpGradInfoPtr &op_grad_info);
   BackwardNodePtr BuildHookBackwardNode(const PrimitivePtr &prim, const ValuePtrList &flatten_inputs,
                                         const OpGradInfoPtr &op_grad_info);
+  BackwardNodePtr BuildFakeBackwardNode(const PrimitivePtr &prim, const ValuePtrList &flatten_inputs,
+                                        const OpGradInfoPtr &op_grad_info);
   BackwardNodePtr BuildGraphBackwardNode(const GradParamPtr &grad_param);
   ValuePtr GetGrads(const tensor::TensorPtrList &weights, const std::vector<size_t> &grad_position,
                     const GradAttr &grad_attr);

@@ -368,8 +368,10 @@ void ForwardExecutor::Init() {
   MS_LOG(DEBUG) << "Init ForwardExecutor";
   compile::SetMindRTEnable();
   python_adapter::set_python_env_flag(true);
-  runtime::OpExecutor::GetInstance().RegisterForwardCallback(
-    []() { runtime::Pipeline::Get().frontend_stage()->Wait(); });
+  runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() {
+    runtime::Pipeline::Get().frontend_stage()->Wait();
+    grad()->WaitBpropTask();
+  });
 }
 
 void ForwardExecutor::RefreshForwardCallback() {

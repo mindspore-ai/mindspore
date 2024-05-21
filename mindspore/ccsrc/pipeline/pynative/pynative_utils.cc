@@ -1564,7 +1564,6 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
   MS_EXCEPTION_IF_NULL(op_run_info);
   // Set result to python
   MakeOutputValue(op_run_info, op);
-  UpdateStubOutput(op_run_info, op->output_abs());
 
   // Update op run info for auto grad
   if (op_run_info->requires_grad) {
@@ -1580,6 +1579,8 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
     op_run_info->op_grad_info->output_size = op->outputs().size();
     UpdateOutputTensorGradInfo(op->outputs());
   }
+  // We need set value after tensor set auto grad info, auto grad info may not set  when tensor copying in main thread.
+  UpdateStubOutput(op_run_info, op->output_abs());
 }
 
 void PyBoost::DataSyncForGraph(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs) {

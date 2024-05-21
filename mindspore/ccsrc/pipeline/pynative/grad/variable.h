@@ -320,6 +320,12 @@ class IrVariable : public Variable {
   AnfNodePtr k_node_{nullptr};
 };
 using IrVariablePtr = std::shared_ptr<IrVariable>;
+
+template <typename T>
+bool isa(const BackwardNodePtr &base_ptr) {
+  const auto &object = (*base_ptr);
+  return typeid(object) == typeid(T);
+}
 }  // namespace mindspore::pynative::autograd
 
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_VARIABLE_H_
