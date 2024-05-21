@@ -75,11 +75,11 @@ internal::OpParamPtr InternalFlashAttentionScore::CreateOpParam(const std::vecto
 
 bool InternalFlashAttentionScore::Init(const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &outputs) {
-  const std::string op_name = "FlashAttentionScore";
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto &enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
-  enable_internal_fa_ = (std::find(enable_op_list.begin(), enable_op_list.end(), op_name) != enable_op_list.end());
+  // const std::string op_name = "FlashAttentionScore";
+  // auto ms_context = MsContext::GetInstance();
+  // MS_EXCEPTION_IF_NULL(ms_context);
+  // auto &enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
+  // enable_internal_fa_ = (std::find(enable_op_list.begin(), enable_op_list.end(), op_name) != enable_op_list.end());
   return InternalKernelMod::Init(inputs, outputs);
 }
 
