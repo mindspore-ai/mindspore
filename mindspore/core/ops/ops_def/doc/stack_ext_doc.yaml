@@ -21,7 +21,7 @@ stack_ext:
                         or if the shapes of elements in tensors are not the same.
 
         Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+            ``Ascend``
 
         Examples:
             >>> import mindspore
