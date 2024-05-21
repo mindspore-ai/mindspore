@@ -32,7 +32,6 @@
 #include "frontend/optimizer/irpass/get_grad_eliminate.h"
 #include "frontend/optimizer/irpass/print_converter.h"
 #include "frontend/optimizer/irpass/environ_eliminate.h"
-#include "frontend/optimizer/irpass/meta_fg_var_prepare.h"
 #include "frontend/optimizer/irpass/inline.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #include "frontend/optimizer/irpass/load_eliminate.h"
@@ -70,6 +69,7 @@
 #include "frontend/optimizer/irpass/grad_partial_transform.h"
 #include "frontend/optimizer/irpass/symbol_engine_optimizer.h"
 #include "frontend/optimizer/irpass/const_output_eliminate.h"
+#include "frontend/optimizer/irpass/j_node_and_user_rematch.h"
 #include "frontend/optimizer/irpass/slice_to_tuple.h"
 
 namespace mindspore {
@@ -180,7 +180,11 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // Ref eliminate
   replace_old_param_ = MakeSubstitution(std::make_shared<ReplaceOldParam>(), "replace_old_param", IsParam);
+
+  // Gradient
   minmaximum_grad_ = MakeSubstitution(std::make_shared<MinMaximumGrad>(), "minmaximum_grad", prim::kPrimTupleGetItem);
+  j_node_and_user_rematch_ =
+    MakeSubstitution(std::make_shared<JNodeAndUserRematch>(), "j_node_and_user_rematch", IsCNode);
 
   // branch culling
   switch_simplify_ = MakeSubstitution(std::make_shared<SwitchSimplify>(), "switch_simplify", prim::kPrimSwitch);
@@ -317,10 +321,6 @@ ResolveIRPassLib::ResolveIRPassLib() {
   // In resolver_, some patterns have priority over others.
   resolver_ = MakeSubstitution(std::make_shared<Resolver>(), "getattr_setattr_resolve",
                                {prim::kPrimGetAttr, prim::kPrimSetAttr, prim::kPrimResolve}, opt::CHECK_RENORM, true);
-}
-
-MetaUnpackPrepareLib::MetaUnpackPrepareLib() {
-  meta_unpack_prepare_ = MakeSubstitution(std::make_shared<MetaFgVarPrepare>(), "meta_unpack_prepare", IsCNode);
 }
 
 GradPartialPassLib::GradPartialPassLib() {

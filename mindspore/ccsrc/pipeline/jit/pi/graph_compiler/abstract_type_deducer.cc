@@ -78,7 +78,6 @@ void PrepareEvalFuncGraph(const AnfNodePtr &func, AbstractBasePtrList *args_spec
   res->set_func_graph(func_graph);
   res->set_args_abs(*args_spec);
   parse::ResolveFuncGraph(func_graph, res);
-  pipeline::MetaUnpackPreparePass(res);
   ExpandFuncGraphVarargs(func_graph, args_spec);
   ExpandFuncGraphKwargs(func_graph, args_spec);
 }
