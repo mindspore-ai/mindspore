@@ -263,6 +263,7 @@ class Parameter(Tensor_):
         self.is_in_shard = False
         self._pipeline_stage_list = []
         self.slice_num = 1
+        self.from_ckpt = False
         if -1 in self.shape:
             raise ValueError(f"All shape elements of the Parameter must be positive. But got None.")
         if isinstance(default_input, (Tensor_, Tensor)):
