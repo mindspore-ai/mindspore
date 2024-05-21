@@ -78,12 +78,6 @@ void MatMulFusionMapper::SetMatMulTransposeAttr(const PrimitivePtr &src_prim, co
 // BMM(x1=[a,b,c],x2=[c,d]) -> reshape(x1,[a*b,c]) + output=MM(x1=[a*b,c],x2=[c,d]) + reshape(output,[a,b,d])
 PrimitiveCPtr MatMulFusionMapper::BMMToMM(const CNodePtr &cnode, const std::vector<int64_t> &shape_vector) {
   auto input_1_shape = GetTensorShape(cnode, kNumIndex1);
-  auto input_2_shape = GetTensorShape(cnode, kNumIndex2);
-  if (input_1_shape.size() != DIMENSION_3D || input_2_shape.size() != DIMENSION_2D ||
-      shape_vector.size() != DIMENSION_3D) {
-    MS_LOG(ERROR) << "This mapper is not BMM(3D,2D)";
-    return nullptr;
-  }
   auto func_graph = cnode->func_graph();
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Failed to get func graph from cnode " << cnode->fullname_with_scope();
@@ -193,8 +187,8 @@ STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
     dst_prim = std::make_shared<acl::MatMulV2>();
     value_node->set_value(dst_prim);
   } else if (cnode->size() == kInputSizeWithoutBias) {
-    if (input_1_shape.size() == DIMENSION_3D && input_2_shape.size() == DIMENSION_2D && !is_dyn_input_1 &&
-        !is_dyn_input_2) {
+    if (input_1_shape.size() == DIMENSION_3D && input_2_shape.size() == DIMENSION_2D &&
+        shape_vector.size() == DIMENSION_3D && !is_dyn_input_1 && !is_dyn_input_2) {
       dst_prim = BMMToMM(cnode, shape_vector);
     } else {
       ops::BatchMatMul mat_mul;
