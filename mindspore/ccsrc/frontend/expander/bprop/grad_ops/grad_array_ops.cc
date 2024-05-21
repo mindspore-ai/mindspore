@@ -2366,13 +2366,15 @@ REG_BPROP_BUILDER("CountNonZero").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZe
 REG_BPROP_BUILDER("ParameterizedTruncatedNormal").SetUnusedInputs({i0, i1, i2, i3, i4, i5, i6}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("Ones").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
-  auto dims = ib->GetInput(0);
-  return {ib->OutZeros(dims)};
+  auto dims = ib->GetInput(kIndex0);
+  auto type = ib->GetInput(kIndex1);
+  return {ib->OutZeros(dims), ib->OutZeros(type)};
 });
 
 REG_BPROP_BUILDER("Zeros").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
-  auto dims = ib->GetInput(0);
-  return {ib->OutZeros(dims)};
+  auto dims = ib->GetInput(kIndex0);
+  auto type = ib->GetInput(kIndex1);
+  return {ib->OutZeros(dims), ib->OutZeros(type)};
 });
 
 REG_BPROP_BUILDER("Im2Col").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
