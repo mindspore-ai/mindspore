@@ -26,10 +26,9 @@
 namespace mindspore {
 namespace parallel {
 Status RmsNormInfo::GetAttrs() {
-  // RmsNorm always run in last dim
-  int64_t dim = SizeToLong(inputs_shape_[0].size());
-  // begin_norm_axis_ will be the last axis
-  begin_norm_axis_ = LongToSize(dim) - 1;
+  size_t x_rank = inputs_shape_[0].size();
+  size_t gamma_rank = inputs_shape_[1].size();
+  begin_norm_axis_ = x_rank - gamma_rank;
   return SUCCESS;
 }
 
@@ -52,6 +51,13 @@ Status RmsNormInfo::CheckStrategy(const StrategyPtr &strategy) {
   for (size_t i = begin_norm_axis_; i < input_strategy.size(); ++i) {
     if (input_strategy[i] != NO_SPLIT_STRATEGY) {
       MS_LOG(ERROR) << name_ << ": Invalid input strategy " << ShapeToString(input_strategy);
+      return FAILED;
+    }
+  }
+  for (size_t i = 0; i < gamma_strategy.size(); ++i) {
+    if (gamma_strategy[i] != NO_SPLIT_STRATEGY) {
+      MS_LOG(ERROR) << name_
+                    << ": Invalid gamma strategy. Gamma can not be split, but got: " << ShapeToString(gamma_strategy);
       return FAILED;
     }
   }

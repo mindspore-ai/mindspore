@@ -41,7 +41,7 @@ from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations.nn_ops import LayerNormExt
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
+from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6, rms_norm
 from mindspore.ops.auto_generate.gen_ops_prim import GroupNorm
 from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op,
                                          replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
@@ -8065,5 +8065,6 @@ __all__ = [
     'hardsigmoid',
     'group_norm',
     'dropout_ext',
+    'rms_norm'
 ]
 __all__.sort()
