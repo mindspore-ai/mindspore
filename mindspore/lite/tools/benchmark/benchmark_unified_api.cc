@@ -892,9 +892,9 @@ int BenchmarkUnifiedApi::CompareDataGetTotalCosineDistanceAndSize(const std::str
 int BenchmarkUnifiedApi::MarkPerformance() {
   MS_LOG(INFO) << "Running warm up loops...";
   std::cout << "Running warm up loops..." << std::endl;
-  std::vector<MSTensor> outputs;
 
   for (int i = 0; i < flags_->warm_up_loop_count_; i++) {
+    std::vector<MSTensor> outputs;
     auto status = ms_model_.Predict(ms_inputs_for_api_, &outputs);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "Inference error ";
@@ -910,6 +910,7 @@ int BenchmarkUnifiedApi::MarkPerformance() {
   uint64_t time_avg = 0;
 
   for (int i = 0; i < flags_->loop_count_; i++) {
+    std::vector<MSTensor> outputs;
     auto inputs = ms_model_.GetInputs();
     for (auto tensor : inputs) {
       tensor.MutableData();  // prepare data
@@ -1453,15 +1454,19 @@ int BenchmarkUnifiedApi::RunBenchmark() {
     MS_LOG(ERROR) << "Generate input data error";
     return status;
   }
+  return GetBenchmarkResult();
+}
+
+int BenchmarkUnifiedApi::GetBenchmarkResult() {
   if (!flags_->benchmark_data_file_.empty()) {
-    status = MarkAccuracy();
+    auto status = MarkAccuracy();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: " << status;
       std::cout << "Run MarkAccuracy error: " << status << std::endl;
       return status;
     }
   } else {
-    status = MarkPerformance();
+    auto status = MarkPerformance();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkPerformance error: " << status;
       std::cout << "Run MarkPerformance error: " << status << std::endl;
@@ -1470,6 +1475,10 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   }
   if (flags_->dump_tensor_data_) {
     std::cout << "Dumped file is saved to : " + dump_file_output_dir_ << std::endl;
+  }
+  Status finalize_ret = ms_model_.Finalize();
+  if (finalize_ret == kSuccess) {
+    MS_LOG(INFO) << "Benchmark finalize executed success.";
   }
   return RET_OK;
 }

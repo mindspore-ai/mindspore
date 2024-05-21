@@ -129,6 +129,52 @@ bool PFACheckShape(float scale_value, const std::vector<int64_t> &q_shape, const
   return false;
 }
 
+int32_t GetReshapeParam(const AnfNodePtr &reshape_node, size_t index) {
+  if (!utils::isa<CNodePtr>(reshape_node)) {
+    MS_LOG(INFO) << "reshape_node is not CNode!";
+    return -1;
+  }
+  auto reshape_cnode = reshape_node->cast<CNodePtr>();
+  if (reshape_cnode->inputs().size() < kNumShapeSize3) {
+    MS_LOG(WARNING) << "reshape_cnode size < 3!";
+    return -1;
+  }
+  auto reshape_input_2 = reshape_cnode->input(kNumIndex2);
+  if (!utils::isa<ParameterPtr>(reshape_input_2)) {
+    MS_LOG(INFO) << "reshape_input_2 is not ParameterPtr!";
+    return -1;
+  }
+  auto reshape_param = reshape_input_2->cast<ParameterPtr>();
+  if (reshape_param == nullptr) {
+    MS_LOG(WARNING) << "reshape_param is nullptr!";
+    return -1;
+  }
+  auto reshape_default_param = reshape_param->default_param();
+  if (reshape_default_param == nullptr) {
+    MS_LOG(WARNING) << "reshape_default_param is nullptr!";
+    return -1;
+  }
+  auto reshape_value = std::dynamic_pointer_cast<tensor::Tensor>(reshape_default_param);
+  if (reshape_value == nullptr) {
+    MS_LOG(WARNING) << "reshape_value is nullptr!";
+    return -1;
+  }
+  if (reshape_value->ElementsNum() != kNumShapeSize4) {
+    MS_LOG(WARNING) << "reshape_value elements num is not 4, ElementsNum is: " << reshape_value->ElementsNum();
+    return -1;
+  }
+  if (reshape_value->data_type() != kNumberTypeInt32) {
+    MS_LOG(WARNING) << "reshape_value is not or int32, now not support other data type.";
+    return -1;
+  }
+  auto reshape_data = static_cast<int32_t *>(reshape_value->data_c());
+  if (reshape_data == nullptr) {
+    MS_LOG(WARNING) << "reshape_data is nullptr.";
+    return -1;
+  }
+  return static_cast<int64_t>(reshape_data[index]);
+}
+
 int64_t GetNumHeadForSD(const AnfNodePtr &q_trans_reshape) {
   auto concat_cnode = q_trans_reshape->cast<CNodePtr>()->input(kNumIndex2)->cast<CNodePtr>();
   if (concat_cnode == nullptr) {
@@ -2155,7 +2201,14 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSDPreMul(
   int64_t num_head = 0;
   int64_t next_tokens = kNumMaxNextTokenSize;
   int64_t d_value = 0;
-  if (input_tensor_q_shape.size() != kNumShapeSize4 || input_tensor_k_shape.size() != kNumShapeSize4) {
+  if (input_tensor_q_shape.size() == 0 && input_tensor_k_shape.size() == 0 && input_tensor_v_shape.size() == 0) {
+    MS_CHECK_TRUE_RET(q_trans_BNSD->inputs().size() > kNumIndex1, nullptr);
+    auto q_reshape = q_trans_BNSD->input(kNumIndex1)->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(q_reshape != nullptr, nullptr);
+    num_head = GetReshapeParam(q_reshape, kNumIndex2);
+    d_value = GetReshapeParam(q_reshape, kNumIndex3);
+    MS_LOG(INFO) << "num_head: " << num_head << ", d_value: " << d_value;
+  } else if (input_tensor_q_shape.size() != kNumShapeSize4 || input_tensor_k_shape.size() != kNumShapeSize4) {
     auto pd2_q_conv = PD2DecoderPattern(q_trans_BNSD);
     if (IpAdapterPattern(q_trans_BNSD, k_trans_BNDS)) {
       if (!GetParamForIpAdapterPattern(q_trans_BNSD, k_trans_BNDS, &num_head, &d_value)) {

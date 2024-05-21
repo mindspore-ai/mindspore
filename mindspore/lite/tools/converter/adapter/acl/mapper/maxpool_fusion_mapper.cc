@@ -56,6 +56,7 @@ STATUS MaxPoolFusionMapper::Mapper(const CNodePtr &cnode) {
   }
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "Get primitive by fmk type failed.");
   dst_prim->SetAttrs(src_prim->attrs());
+  dst_prim->AddAttr(mindspore::ops::kFormat, MakeValue<int64_t>(mindspore::Format::NCHW));
   if (AdjustPoolAttr(fmk_type, max_pool_name, dst_prim) != lite::RET_OK) {
     MS_LOG(ERROR) << "Adjust pool attr failed.";
     return lite::RET_ERROR;

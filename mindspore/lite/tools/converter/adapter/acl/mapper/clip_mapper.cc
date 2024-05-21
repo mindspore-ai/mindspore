@@ -26,6 +26,8 @@
 namespace mindspore {
 namespace lite {
 namespace {
+const size_t kNumInputIndex0 = 0;
+const size_t kNumInputIndex1 = 1;
 const size_t kNumInputIndex2 = 2;
 const size_t kNumInputIndex3 = 3;
 const size_t kNumInputSize3 = 3;
@@ -49,25 +51,50 @@ STATUS ClipMapper::Mapper(const CNodePtr &cnode) {
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   CHECK_NULL_RETURN(value_node);
   value_node->set_value(dst_prim);
-
   auto inputs = cnode->inputs();
   const size_t input_size_with_min = 3;  // prim, data, min
   const size_t input_size_with_max = 4;  // prim, data, min, max
   auto value_ptr = prim->GetAttr("empty_input_index");
   std::vector<AnfNodePtr> new_inputs;
-  if (value_ptr != nullptr && inputs.size() == kNumInputSize3 && GetValue<int>(value_ptr) == 1) {
+  if (value_ptr != nullptr && inputs.size() == kNumInputSize3 &&
+      (GetValue<int>(value_ptr) == kNumInputIndex1 || GetValue<int>(value_ptr) == kNumInputIndex2)) {
     MS_LOG(INFO) << "empty input index: " << GetValue<int>(value_ptr);
-    new_inputs = {inputs[0], inputs[1], min_param, inputs[kNumInputIndex2]};
+    TypeId type_id;
+    if (cnode->inputs().size() < kNumInputIndex2 + 1) {
+      MS_LOG(ERROR) << "The inputs num of " << cnode->fullname_with_scope() << " is smaller than "
+                    << (kNumInputIndex2 + 1) << ", please check it!";
+      return RET_ERROR;
+    }
+    auto last_input = cnode->inputs()[kNumInputIndex2];
+    if (opt::GetDataTypeFromAnfNode(last_input, &type_id) != RET_OK) {
+      MS_LOG(ERROR) << "GetDataTypeFromAnfNode failed!";
+      return RET_ERROR;
+    }
+    if (GetValue<int>(value_ptr) == kNumInputIndex1) {
+      new_inputs = {inputs[kNumInputIndex0], inputs[kNumInputIndex1], min_param, inputs[kNumInputIndex2]};
+    } else {
+      new_inputs = {inputs[kNumInputIndex0], inputs[kNumInputIndex1], inputs[kNumInputIndex2], max_param};
+    }
     cnode->set_inputs(new_inputs);
-    auto cast_int64_node_2 =
-      NewCNode(cnode, prim::kPrimCast, {cnode->input(kNumInputIndex2), NewValueNode(TypeIdToType(kNumberTypeInt32))},
-               cnode->input(1)->abstract(), cnode->fullname_with_scope() + "_input2_cast_int32");
-    cnode->set_input(kNumInputIndex2, cast_int64_node_2);
+    if (type_id == kNumberTypeInt32 && cnode->input(kNumInputIndex1)->abstract() != nullptr) {
+      auto cast_int32_node_2 = NewCNode(
+        cnode, prim::kPrimCast, {cnode->input(kNumInputIndex2), NewValueNode(TypeIdToType(kNumberTypeInt32))},
+        cnode->input(kNumInputIndex1)->abstract()->Clone(), cnode->fullname_with_scope() + "_input2_cast_int32");
+      if (cast_int32_node_2 == nullptr) {
+        MS_LOG(ERROR) << "Make CNode failed!";
+        return RET_ERROR;
+      }
+      cnode->set_input(kNumInputIndex2, cast_int32_node_2);
 
-    auto cast_int64_node_3 =
-      NewCNode(cnode, prim::kPrimCast, {cnode->input(kNumInputIndex3), NewValueNode(TypeIdToType(kNumberTypeInt32))},
-               cnode->input(1)->abstract(), cnode->fullname_with_scope() + "_input3_cast_int32");
-    cnode->set_input(kNumInputIndex3, cast_int64_node_3);
+      auto cast_int32_node_3 = NewCNode(
+        cnode, prim::kPrimCast, {cnode->input(kNumInputIndex3), NewValueNode(TypeIdToType(kNumberTypeInt32))},
+        cnode->input(kNumInputIndex1)->abstract()->Clone(), cnode->fullname_with_scope() + "_input3_cast_int32");
+      if (cast_int32_node_3 == nullptr) {
+        MS_LOG(ERROR) << "Make CNode failed!";
+        return RET_ERROR;
+      }
+      cnode->set_input(kNumInputIndex3, cast_int32_node_3);
+    }
   } else {
     MS_LOG(INFO) << "clip cnode inputs size: " << cnode->inputs().size();
     if (inputs.size() < input_size_with_min) {

@@ -32,6 +32,8 @@ constexpr int kInputChannal = 3;
 constexpr int kNumGatherIndiceSize_4 = 4;
 constexpr int kNumGatherIndiceSize_2 = 2;
 constexpr int kNumResizeInputShape = 2;
+constexpr int kNumResizeInputShape_3 = 3;
+constexpr int kNumResizeInputShape_5 = 5;
 constexpr int kNumInputSize = 2;
 constexpr int kNumIndex_0 = 0;
 constexpr int kNumIndex_1 = 1;
@@ -270,11 +272,15 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &fun
   }
   MS_CHECK_TRUE_MSG(shape_tensor->data_c() != nullptr, RET_ERROR, "shape_tensor->data_c() is nullptr.");
   MS_CHECK_TRUE_MSG(!shape_tensor->shape().empty(), RET_NULL_PTR, "out of range.");
-  if (shape_tensor->shape().at(0) != kNumGatherIndiceSize_2 && shape_tensor->shape().at(0) != kNumGatherIndiceSize_4) {
-    return RET_ERROR;
-  }
-  if (shape_tensor->shape().at(0) == kNumGatherIndiceSize_2) {
+  if (shape_tensor->shape().at(0) == kNumGatherIndiceSize_2 || shape_tensor->shape().at(0) == kNumResizeInputShape_3 ||
+      shape_tensor->shape().at(0) == kNumResizeInputShape_5) {
+    MS_LOG(INFO) << "The pass for the axis transform will run.";
     return RET_OK;
+  }
+
+  if (shape_tensor->shape().at(0) != kNumGatherIndiceSize_4) {
+    MS_LOG(ERROR) << "The dimension of resize must be 2 or 4 or 3 or 5, but got " << shape_tensor->shape().at(0) << "!";
+    return RET_ERROR;
   }
 
   auto new_shape_node = func_graph->add_parameter();

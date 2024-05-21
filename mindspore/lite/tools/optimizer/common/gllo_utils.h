@@ -148,6 +148,10 @@ CNodePtr GenReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_
 CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &indices,
                        const std::string &cnode_name, const std::vector<int> &axis = {0});
 
+CNodePtr GenGatherNodeDynamicIndex(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
+                                   const AnfNodePtr &indices_node, const std::string &cnode_name,
+                                   const std::vector<int> &axis);
+
 CNodePtr GenConcatNode(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &input_node_vec,
                        const std::string &cnode_name, int64_t axis = 0);
 
