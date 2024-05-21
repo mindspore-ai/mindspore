@@ -24,9 +24,8 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kTrilInputsNum = 2;
+constexpr size_t kTrilInputsNum = 1;
 constexpr size_t kTrilOutputsNum = 1;
-constexpr size_t kDiagonalIndex = 1;
 constexpr size_t kDim = 2;
 }  // namespace
 
@@ -34,6 +33,7 @@ bool TrilCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   dtype_ = inputs.at(kIndex0)->dtype_id();
+  diagonal_ = GetValue<int64_t>(primitive_->GetAttr(ops::kDiagonal));
   return true;
 }
 
@@ -43,7 +43,6 @@ int TrilCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  diagonal_ = inputs[kDiagonalIndex]->GetValueWithCheck<int64_t>();
   input_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
   input_dims_ = input_shape_.size();
   if (input_dims_ < kDim) {
@@ -144,54 +143,19 @@ void TrilCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
 }
 
 std::vector<KernelAttr> TrilCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> kernel_attr_list = {KernelAttr()
-                                                       .AddInputAttr(kNumberTypeUInt8)
-                                                       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeUInt8),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeUInt16)
-                                                       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeUInt16),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeUInt32)
-                                                       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeUInt32),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeUInt64)
-                                                       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeUInt64),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt8)
-                                                       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeInt8),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt16)
-                                                       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeInt16),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt32)
-                                                       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeInt32),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeInt64)
-                                                       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeInt64),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeFloat16)
-                                                       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeFloat16),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeFloat32)
-                                                       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeFloat32),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeFloat64)
-                                                       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeFloat64),
-                                                     KernelAttr()
-                                                       .AddInputAttr(kNumberTypeBool)
-                                                       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                                                       .AddOutputAttr(kNumberTypeBool)};
+  static std::vector<KernelAttr> kernel_attr_list = {
+    KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+    KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+    KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+    KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+    KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+    KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+    KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+    KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool)};
   return kernel_attr_list;
 }
 
