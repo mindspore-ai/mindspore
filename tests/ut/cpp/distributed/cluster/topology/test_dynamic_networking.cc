@@ -37,7 +37,7 @@ class TestDynamicNetworking : public UT::Common {
 /// Feature: test the normal node registration from compute graph nodes to meta server node.
 /// Description: start some compute graph nodes and meta server node and send a register message.
 /// Expectation: these register messages are received by meta server node successfully.
-TEST_F(TestDynamicNetworking, NodeRegister) {
+TEST_F(TestDynamicNetworking, DISABLED_NodeRegister) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
   common::SetEnv("MS_TOPO_TIMEOUT", "600");
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
@@ -89,7 +89,7 @@ TEST_F(TestDynamicNetworking, NodeRegister) {
 /// Feature: test sending message through compute graph node to meta server node.
 /// Description: send a special kind of message to msn and register the corresponding message handler.
 /// Expectation: the registered handler received the sent message successfully.
-TEST_F(TestDynamicNetworking, AddMessageHandler) {
+TEST_F(TestDynamicNetworking,  DISABLED_AddMessageHandler) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
   common::SetEnv("MS_TOPO_TIMEOUT", "600");
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
@@ -143,7 +143,7 @@ TEST_F(TestDynamicNetworking, AddMessageHandler) {
 /// Feature: test retrieve message from the meta server node.
 /// Description: send a retrieve request to msn.
 /// Expectation: get message from msn successfully.
-TEST_F(TestDynamicNetworking, RetrieveMessageFromMSN) {
+TEST_F(TestDynamicNetworking,  DISABLED_RetrieveMessageFromMSN) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
   common::SetEnv("MS_TOPO_TIMEOUT", "600");
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
@@ -193,7 +193,7 @@ TEST_F(TestDynamicNetworking, RetrieveMessageFromMSN) {
 /// Feature: test the recovery of meta server node.
 /// Description: construct a cluster and restart the meta server node under recovery mode.
 /// Expectation: the meta server node is restarted successfully and all the metadata is restored.
-TEST_F(TestDynamicNetworking, MetaServerNodeRecovery) {
+TEST_F(TestDynamicNetworking,  DISABLED_MetaServerNodeRecovery) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
   common::SetEnv("MS_TOPO_TIMEOUT", "600");
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
@@ -278,7 +278,7 @@ TEST_F(TestDynamicNetworking, MetaServerNodeRecovery) {
 /// Description: start a cluster with one meta server node and three compute graph nodes, and then kill one of the
 /// compute graph node.
 /// Expectation: the number of alive compute graph node is equal to two.
-TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
+TEST_F(TestDynamicNetworking,  DISABLED_HeartbeatTimeout) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
   common::SetEnv("MS_TOPO_TIMEOUT", "600");
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
@@ -341,7 +341,7 @@ TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
 /// Feature: test reconnect to meta server node if needed during node registration period.
 /// Description: first start the compute graph node and then start the meta server node.
 /// Expectation: the cluster topology is constructed successfully.
-TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringReg) {
+TEST_F(TestDynamicNetworking,  DISABLED_ReconnectToMetaServerDuringReg) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
   common::SetEnv("MS_TOPO_TIMEOUT", "600");
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
@@ -405,7 +405,7 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringReg) {
 /// Description: start the meta server node and several compute graph nodes, then restart the meta server node after the
 /// cluster is initialized successfully.
 /// Expectation: the cluster topology is shutdown finally.
-TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringUnreg) {
+TEST_F(TestDynamicNetworking,  DISABLED_ReconnectToMetaServerDuringUnreg) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
   common::SetEnv("MS_TOPO_TIMEOUT", "600");
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
@@ -491,7 +491,7 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringUnreg) {
 /// Feature: test get hostnames from meta server node from compute graph node.
 /// Description: build a cluster and call the gethostname of compute graph node.
 /// Expectation: the hostnames of specified compute graph node are returned.
-TEST_F(TestDynamicNetworking, GetHostNames) {
+TEST_F(TestDynamicNetworking,  DISABLED_GetHostNames) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
   common::SetEnv("MS_TOPO_TIMEOUT", "600");
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");

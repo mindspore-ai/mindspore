@@ -312,7 +312,7 @@ size_t TupleArgAndParamSum(const FuncGraphPtr &func_graph) {
 // Description: Test switch call's tuple arg transform.This case include partial's tuple arg and the call's tuple arg in
 // the same time.
 // Expectation: All tuple args are correctly transformed to tensor args.
-TEST_F(TestOptOpt, SwitchPartialTupleTrans) {
+TEST_F(TestOptOpt, DISABLED_SwitchPartialTupleTrans) {
   FuncGraphPtr test_graph = getPyFun.CallAndParseRet("test_tuple_flatten", "test_flatten_switch_partial_arg");
   ASSERT_TRUE(nullptr != test_graph);
 

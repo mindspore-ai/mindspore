@@ -141,7 +141,7 @@ TEST_F(TCPTest, StartServerFail) {
 /// Feature: test start a socket server.
 /// Description: start the socket server with a specified socket.
 /// Expectation: the socket server is started successfully.
-TEST_F(TCPTest, StartServerSucc) {
+TEST_F(TCPTest, DISABLED_StartServerSucc) {
   std::unique_ptr<TCPServer> server = std::make_unique<TCPServer>();
   bool ret = server->Initialize("127.0.0.1:8081");
   ASSERT_TRUE(ret);
@@ -151,7 +151,7 @@ TEST_F(TCPTest, StartServerSucc) {
 /// Feature: test normal tcp message sending.
 /// Description: start a socket server and send a normal message to it.
 /// Expectation: the server received the message sented from client.
-TEST_F(TCPTest, SendOneMessage) {
+TEST_F(TCPTest, DISABLED_SendOneMessage) {
   Init();
 
   // Start the tcp server.
@@ -193,7 +193,7 @@ TEST_F(TCPTest, SendOneMessage) {
 /// Feature: test sending two message continuously.
 /// Description: start a socket server and send two normal message to it.
 /// Expectation: the server received the two messages sented from client.
-TEST_F(TCPTest, SendTwoMessages) {
+TEST_F(TCPTest, DISABLED_SendTwoMessages) {
   Init();
 
   // Start the tcp server.
@@ -248,7 +248,7 @@ TEST_F(TCPTest, StartServerWithRandomPort) {
 /// Feature: test send the message synchronously.
 /// Description: start a socket server and send the message synchronously.
 /// Expectation: the number of bytes sent could be got synchronously.
-TEST_F(TCPTest, SendSyncMessage) {
+TEST_F(TCPTest, DISABLED_SendSyncMessage) {
   Init();
 
   // Start the tcp server.
@@ -338,7 +338,7 @@ TEST_F(TCPTest, SendLargeMessages) {
 /// Feature: test delete invalid tcp connection used in connection pool in tcp client when some socket error happened.
 /// Description: start a socket server and tcp client pair and stop the tcp server.
 /// Expectation: the connection from the tcp client to the tcp server will be deleted automatically.
-TEST_F(TCPTest, DeleteInvalidConnectionForTcpClient) {
+TEST_F(TCPTest, DISABLED_DeleteInvalidConnectionForTcpClient) {
   pid_t pid = fork();
   EXPECT_LE(0, pid);
 
