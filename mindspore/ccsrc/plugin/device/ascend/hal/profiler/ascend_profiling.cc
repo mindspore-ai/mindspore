@@ -51,6 +51,8 @@ std::map<std::string, aclprofAicoreMetrics> kAicMetrics{{"ArithmeticUtilization"
                                                         {"L2Cache", ACL_AICORE_L2_CACHE},
                                                         {"None", ACL_AICORE_NONE}};
 
+std::map<std::string, uint64_t> profLevelMap{{"Level0", Level0}, {"Level1", Level1}, {"Level2", Level2}};
+
 std::shared_ptr<AscendProfiler> AscendProfiler::GetInstance() {
   auto instance = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(instance);
@@ -142,16 +144,24 @@ uint64_t AscendProfiler::GetOptionsMask(aclprofAicoreMetrics aic_metrics) const 
     mask |= ACL_PROF_TASK_TIME;
   }
 
+  if (options_json["aicpu"] == "on") {
+    mask |= ACL_PROF_AICPU;
+  }
+
+  if (options_json["hccl"] == "on") {
+    mask |= ACL_PROF_HCCL_TRACE;
+  }
+
+  if (options_json["profiler_level"] != "off" &&
+      profLevelMap.find(options_json["profiler_level"]) != profLevelMap.end()) {
+    mask = ACL_PROF_ACL_API;  // reset mask
+    mask |= profLevelMap[options_json["profiler_level"]];
+  }
+
   if (options_json["training_trace"] == "on") {
     mask |= ACL_PROF_TRAINING_TRACE;
   }
 
-  if (options_json["aicpu"] == "on") {
-    mask |= ACL_PROF_AICPU;
-  }
-  if (options_json["hccl"] == "on") {
-    mask |= ACL_PROF_HCCL_TRACE;
-  }
   if (options_json["l2_cache"] == "on") {
     mask |= ACL_PROF_L2CACHE;
   }

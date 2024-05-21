@@ -86,6 +86,12 @@ class ModelTraingMode(Enum):
     UNKNOWN = 3
 
 
+class ProfilerLevel(Enum):
+    Level0 = "Level0"
+    Level1 = "Level1"
+    Level2 = "Level2"
+
+
 class DeviceSupportParam(Enum):
     """The device target enum."""
     CPU = ['start', 'start_profile', 'output_path', 'timeline_limit', 'profile_framework', 'op_time']
@@ -96,13 +102,13 @@ class DeviceSupportParam(Enum):
     ASCEND = [
         'start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'profile_memory',
         'parallel_strategy', 'profile_communication', 'aicore_metrics', 'l2_cache', 'hbm_ddr', 'pcie', 'op_time',
-        'ascend_job_id', 'profile_framework', 'data_simplification'
+        'ascend_job_id', 'profile_framework', 'profiler_level', 'data_simplification'
     ]
 
 
 ALWAYS_VALID_PARAM = [
     'start', 'start_profile', 'output_path', 'data_process', 'parallel_strategy', 'l2_cache',
-    'hbm_ddr', 'pcie', 'ascend_job_id', 'op_time', 'profile_framework'
+    'hbm_ddr', 'pcie', 'ascend_job_id', 'op_time', 'profile_framework', 'profiler_level'
 ]
 
 
@@ -340,6 +346,14 @@ class Profiler:
 
     Args:
         output_path (str, optional): Output data path. Default: ``"./data"`` .
+        profiler_level (ProfilerLevel, optional): (Ascend only) The level of profiling. Default: ``None``.
+
+            - Profiler.Level0: Leanest level of profiling data collection, collects information about the elapsed
+              time of the computational operators on the NPU and communication large operator information.
+            - Profiler.Level1: Collect more CANN layer AscendCL data and AICore performance metrics and communication
+              mini operator information based on Level0.
+            - Profiler.Level2: Collect GE and Runtime information in CANN layer on top of Level1
+
         op_time (bool, optional): (Ascend/GPU) Whether to collect operators performance data. Default value: ``True``.
         profile_communication (bool, optional): (Ascend only) Whether to collect communication performance data in
             a multi devices training,collect when True. Setting this parameter has no effect during single card
@@ -491,6 +505,7 @@ class Profiler:
         self._dynamic_status = False
         self._profile_framework = "all"
         self._msprof_enable = os.getenv("PROFILER_SAMPLECONFIG")
+        self.profiler_level = None
         self._pretty_json = False
         self._analyse_only = kwargs.get("analyse_only", False)
         self._data_simplification = kwargs.get("data_simplification", True)
@@ -1060,7 +1075,8 @@ class Profiler:
             "pcie": self._pcie,
             "parallel_strategy": self.ENABLE_STATUS if self._parallel_strategy else self.DISABLE_STATUS,
             "op_time": self.ENABLE_STATUS if self._op_time else self.DISABLE_STATUS,
-            "profile_framework": self._profile_framework
+            "profile_framework": self._profile_framework,
+            "profiler_level": self.profiler_level.value if self.profiler_level else self.DISABLE_STATUS
         }
 
         return profiling_options
@@ -1139,6 +1155,22 @@ class Profiler:
             logger.warning(f"For '{self.__class__.__name__}', the parameter parallel_strategy must be bool, "
                            f"but got type {type(self._parallel_strategy)}, it will be set to True.")
             self._parallel_strategy = True
+
+        self.profiler_level = kwargs.pop("profiler_level", None)
+        if self.profiler_level and not isinstance(self.profiler_level, ProfilerLevel):
+            logger.warning(f"For '{self.__class__.__name__}', the parameter profiler_level must be one of "
+                           f"[ProfilerLevel.Level0, ProfilerLevel.Level1, ProfilerLevel.Level2], but got type "
+                           f"{type(self.profiler_level)}, it will be set to ProfilerLevel.Level0.")
+            self.profiler_level = ProfilerLevel.Level0
+        elif self.profiler_level == ProfilerLevel.Level0:
+            self._data_process = False
+            self._aicore_metrics_id = -1
+            logger.warning(f"For '{self.__class__.__name__}', when profiler_level set Level0, data_process will be set "
+                           f"to False and aicore_metrics set to -1.")
+        elif self.profiler_level == ProfilerLevel.Level1:
+            self._data_process = False
+            logger.warning(f"For '{self.__class__.__name__}', when profiler_level set Level1, data_process will be set "
+                           f"to False.")
 
     def _ascend_analyse(self):
         """Collect and analyse ascend performance data."""
@@ -1917,6 +1949,7 @@ class Profiler:
             logger.warning(f"For '{self.__class__.__name__}', the parameter profile_framework must be one of ['memory',"
                            f" 'time', 'all', None], but got {self._profile_framework}, it will be set to 'all'.")
             self._profile_framework = "all"
+
         if not isinstance(self._data_simplification, bool):
             logger.warning(f"For '{self.__class__.__name__}', the parameter data_simplification must be bool, "
                            f"but got type {type(self._data_simplification)}, it will be set to True.")
