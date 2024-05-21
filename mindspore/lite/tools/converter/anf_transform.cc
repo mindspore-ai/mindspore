@@ -143,6 +143,7 @@
 #include "tools/optimizer/graph/make_list_pass.h"
 #include "tools/optimizer/fusion/flash_attention_fusion.h"
 #include "tools/optimizer/fusion/groupnormsilu_fusion.h"
+#include "tools/optimizer/fusion/adjust_resize_dims_pass.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -814,6 +815,7 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
     {"SpecialNodePostProcess", std::make_shared<opt::SpecialNodePostProcess>(), false},
     {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true},
     {"RemoveUnusedAddNodePass", std::make_shared<opt::RemoveUnusedAddNodePass>(), false},
+    {"AdjustResizeDimsPass", std::make_shared<opt::AdjustResizeDimsPass>(), false},
     {"ScalarOpPass", std::make_shared<opt::ScalarOpPass>(), true},
     {"FlashAttentionFusionForCustom",
      std::make_shared<opt::FlashAttentionFusionForCustom>(param->aclModelOptionCfgParam.plugin_custom_ops,
