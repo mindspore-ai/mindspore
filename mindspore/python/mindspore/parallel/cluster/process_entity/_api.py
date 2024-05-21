@@ -218,8 +218,8 @@ class _ProcessManager:
                 raise RuntimeError("Fail to get cpu number from /proc/cpuinfo.")
             if self.bind_core:
                 avg = int(cpu_num) // self.local_worker_num
-                cpu_start = avg * i + 1
-                cpu_end = avg * (i + 1)
+                cpu_start = avg * i
+                cpu_end = cpu_start + avg - 1
                 cmd = _generate_cmd_args_list_with_core(self.cmd, self.cmd_args, cpu_start, cpu_end)
             else:
                 cmd = _generate_cmd_args_list(self.cmd, self.cmd_args)
