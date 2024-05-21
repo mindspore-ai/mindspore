@@ -42,7 +42,7 @@ DeviceTensorAscend910B::DeviceTensorAscend910B(const TensorShape &shape, const D
 
 DeviceTensorAscend910B::~DeviceTensorAscend910B() {}
 
-Status ValidShape(TensorShape *input_shape, bool is_hwc) {
+Status ValidShape(TensorShape *input_shape, bool is_hwc, std::vector<int> channels = {1, 3}) {
   // change the shape from HWC to 1HWC
   if (input_shape->Rank() == 1) {                                                    // no expand
     MS_LOG(DEBUG) << "The input is not RGB which is no need convert to 1HWC/1CHW.";  // used by Dvpp Decode
@@ -53,22 +53,29 @@ Status ValidShape(TensorShape *input_shape, bool is_hwc) {
   const auto kChannelIndexNHWC = 3;
   const auto kDefaultImageChannel = 3;
   if (is_hwc) {
+    std::string delimiter = ", ";
+    std::ostringstream oss;
+    if (!channels.empty()) {
+      oss << channels[0];
+      for (size_t i = 1; i < channels.size(); ++i) {
+        oss << delimiter << channels[i];
+      }
+    }
+    std::string result = oss.str();
     // change the shape from HWC to 1HWC
     if (input_shape->Rank() == kMinImageRank) {  // expand HW to 1HW1
       *input_shape = input_shape->AppendDim(1);
       *input_shape = input_shape->PrependDim(1);
     } else if (input_shape->Rank() == kDefaultImageRank) {  // expand HWC to 1HWC
-      if (input_shape->AsVector()[kChannelIndexHWC] != 1 &&
-          input_shape->AsVector()[kChannelIndexHWC] != kDefaultImageChannel) {
-        RETURN_STATUS_UNEXPECTED("The channel of the input tensor of shape [H,W,C] is not 1 or 3, but got: " +
-                                 std::to_string(input_shape->AsVector()[kChannelIndexHWC]));
+      if (std::find(channels.begin(), channels.end(), input_shape->AsVector()[kChannelIndexHWC]) == channels.end()) {
+        RETURN_STATUS_UNEXPECTED("The channel of the input tensor of shape [H,W,C] is not " + result +
+                                 ", but got: " + std::to_string(input_shape->AsVector()[kChannelIndexHWC]));
       }
       *input_shape = input_shape->PrependDim(1);
     } else if (input_shape->Rank() == kDefaultImageRank + 1) {  // NHWC
-      if (input_shape->AsVector()[kChannelIndexNHWC] != 1 &&
-          input_shape->AsVector()[kChannelIndexNHWC] != kDefaultImageChannel) {
-        RETURN_STATUS_UNEXPECTED("The channel of the input tensor of shape [N,H,W,C] is not 1 or 3, but got: " +
-                                 std::to_string(input_shape->AsVector()[kChannelIndexNHWC]));
+      if (std::find(channels.begin(), channels.end(), input_shape->AsVector()[kChannelIndexNHWC]) == channels.end()) {
+        RETURN_STATUS_UNEXPECTED("The channel of the input tensor of shape [N,H,W,C] is not " + result +
+                                 ", but got: " + std::to_string(input_shape->AsVector()[kChannelIndexNHWC]));
       }
       if (input_shape->AsVector()[0] != 1) {
         RETURN_STATUS_UNEXPECTED("The input tensor NHWC should be 1HWC or HWC.");
@@ -105,12 +112,13 @@ Status ValidShape(TensorShape *input_shape, bool is_hwc) {
 // create device_tensor by empty
 Status DeviceTensorAscend910B::CreateDeviceTensor(const TensorShape &shape, const DataType &type,
                                                   device::DeviceContext *device_context, const size_t &stream_id,
-                                                  std::shared_ptr<DeviceTensorAscend910B> *out, bool is_hwc) {
+                                                  std::shared_ptr<DeviceTensorAscend910B> *out, bool is_hwc,
+                                                  std::vector<int> channels) {
   RETURN_UNEXPECTED_IF_NULL(device_context);
   RETURN_UNEXPECTED_IF_NULL(out);
 
   TensorShape input_shape(shape);
-  RETURN_IF_NOT_OK(ValidShape(&input_shape, is_hwc));
+  RETURN_IF_NOT_OK(ValidShape(&input_shape, is_hwc, channels));
 
   *out = std::make_shared<DeviceTensorAscend910B>(input_shape, type, device_context, stream_id, is_hwc);
 
@@ -149,13 +157,13 @@ Status DeviceTensorAscend910B::CreateDeviceTensor(const TensorShape &shape, cons
 // create device_tensor by host tensor
 Status DeviceTensorAscend910B::CreateDeviceTensor(std::shared_ptr<Tensor> tensor, device::DeviceContext *device_context,
                                                   const size_t &stream_id, std::shared_ptr<DeviceTensorAscend910B> *out,
-                                                  bool is_hwc) {
+                                                  bool is_hwc, std::vector<int> channels) {
   RETURN_UNEXPECTED_IF_NULL(tensor);
   RETURN_UNEXPECTED_IF_NULL(device_context);
   RETURN_UNEXPECTED_IF_NULL(out);
 
   RETURN_IF_NOT_OK(DeviceTensorAscend910B::CreateDeviceTensor(tensor->shape(), tensor->type(), device_context,
-                                                              stream_id, out, is_hwc));
+                                                              stream_id, out, is_hwc, channels));
 
   CHECK_FAIL_RETURN_UNEXPECTED(
     tensor->SizeInBytes() == (*out)->GetShape().NumOfElements() * (*out)->GetType().SizeInBytes(),

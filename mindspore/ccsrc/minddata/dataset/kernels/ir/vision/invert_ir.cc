@@ -58,6 +58,12 @@ std::shared_ptr<TensorOp> InvertOperation::Build() {
   }
 }
 
+Status InvertOperation::to_json(nlohmann::json *out_json) {
+  RETURN_UNEXPECTED_IF_NULL(out_json);
+  (*out_json)["device_target"] = device_target_;
+  return Status::OK();
+}
+
 Status InvertOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
   RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "device_target", kInvertOperation));
@@ -66,15 +72,15 @@ Status InvertOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tens
   return Status::OK();
 }
 
-MapTargetDevice PadOperation::Type() {
+MapTargetDevice InvertOperation::Type() {
   if (device_target_ == "CPU") {
     return MapTargetDevice::kCpu;
   } else if (device_target_ == "Ascend") {
     return MapTargetDevice::kAscend910B;
   } else {
     MS_LOG(ERROR) << "Invert: Invalid device target. It's not CPU or Ascend.";
-    return MapTargetDevice::kInvalid;
   }
+  return MapTargetDevice::kInvalid;
 }
 #endif
 }  // namespace vision

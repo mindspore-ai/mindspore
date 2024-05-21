@@ -84,15 +84,15 @@ Status ConvertColorOperation::from_json(nlohmann::json op_params, std::shared_pt
   return Status::OK();
 }
 
-MapTargetDevice AutoContrastOperation::Type() {
+MapTargetDevice ConvertColorOperation::Type() {
   if (device_target_ == "CPU") {
     return MapTargetDevice::kCpu;
   } else if (device_target_ == "Ascend") {
     return MapTargetDevice::kAscend910B;
   } else {
-    MS_LOG(ERROR) << "AutoContrast: Invalid device target. It's not CPU or Ascend.";
-    return MapTargetDevice::kInvalid;
+    MS_LOG(ERROR) << "ConvertColor: Invalid device target. It's not CPU or Ascend.";
   }
+  return MapTargetDevice::kInvalid;
 }
 #endif
 }  // namespace vision

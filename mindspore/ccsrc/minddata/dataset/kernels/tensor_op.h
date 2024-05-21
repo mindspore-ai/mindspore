@@ -94,6 +94,7 @@ constexpr char kDvppConvertColorOp[] = "DvppConvertColorOp";
 constexpr char kDvppCropOp[] = "DvppCropOp";
 constexpr char kDvppDecodeOp[] = "DvppDecodeOp";
 constexpr char kDvppEqualizeOp[] = "DvppEqualizeOp";
+constexpr char kDvppEraseOp[] = "DvppEraseOp";
 constexpr char kDvppGaussianBlurOp[] = "DvppGaussianBlurOp";
 constexpr char kDvppHorizontalFlipOp[] = "DvppHorizontalFlipOp";
 constexpr char kDvppInvertOp[] = "DvppInvertOp";

@@ -90,15 +90,15 @@ Status SolarizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<Te
   return Status::OK();
 }
 
-MapTargetDevice PadOperation::Type() {
+MapTargetDevice SolarizeOperation::Type() {
   if (device_target_ == "CPU") {
     return MapTargetDevice::kCpu;
   } else if (device_target_ == "Ascend") {
     return MapTargetDevice::kAscend910B;
   } else {
     MS_LOG(ERROR) << "Solarize: Invalid device target. It's not CPU or Ascend.";
-    return MapTargetDevice::kInvalid;
   }
+  return MapTargetDevice::kInvalid;
 }
 #endif
 }  // namespace vision

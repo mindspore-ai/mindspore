@@ -512,17 +512,17 @@ std::shared_ptr<TensorOperation> Equalize::Parse() { return std::make_shared<Equ
 
 // Erase Operation.
 struct Erase::Data {
-  Data(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<uint8_t> &value, bool inplace)
+  Data(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<float> &value, bool inplace)
       : top_(top), left_(left), height_(height), width_(width), value_(value), inplace_(inplace) {}
   int32_t top_;
   int32_t left_;
   int32_t height_;
   int32_t width_;
-  std::vector<uint8_t> value_;
+  std::vector<float> value_;
   bool inplace_;
 };
 
-Erase::Erase(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<uint8_t> &value, bool inplace)
+Erase::Erase(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<float> &value, bool inplace)
     : data_(std::make_shared<Data>(top, left, height, width, value, inplace)) {}
 
 std::shared_ptr<TensorOperation> Erase::Parse() {

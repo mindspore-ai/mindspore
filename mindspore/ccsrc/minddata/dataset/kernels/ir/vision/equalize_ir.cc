@@ -80,8 +80,8 @@ MapTargetDevice EqualizeOperation::Type() {
     return MapTargetDevice::kAscend910B;
   } else {
     MS_LOG(ERROR) << "Equalize: Invalid device target. It's not CPU or Ascend.";
-    return MapTargetDevice::kInvalid;
   }
+  return MapTargetDevice::kInvalid;
 }
 #endif
 }  // namespace vision

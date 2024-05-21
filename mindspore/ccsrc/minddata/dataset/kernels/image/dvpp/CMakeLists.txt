@@ -30,6 +30,7 @@ set(DVPP_IMAGE_SOURCE
         ascend910b/dvpp_convert_color_op.cc
         ascend910b/dvpp_decode_op.cc
         ascend910b/dvpp_equalize_op.cc
+        ascend910b/dvpp_erase_op.cc
         ascend910b/dvpp_gaussian_blur_op.cc
         ascend910b/dvpp_horizontal_flip_op.cc
         ascend910b/dvpp_invert_op.cc

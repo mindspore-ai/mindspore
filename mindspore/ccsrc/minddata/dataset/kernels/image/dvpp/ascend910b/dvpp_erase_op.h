@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_AUTO_CONTRAST_OP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_AUTO_CONTRAST_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_ERASE_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_ERASE_OP_H_
 
 #include <memory>
-#include <string>
 #include <vector>
+#include <string>
 
 #include "minddata/dataset/core/device_tensor_ascend910b.h"
 #include "minddata/dataset/core/tensor.h"
@@ -26,23 +26,28 @@
 
 namespace mindspore {
 namespace dataset {
-class DvppAutoContrastOp : public TensorOp {
+class DvppEraseOp : public TensorOp {
  public:
-  DvppAutoContrastOp(const std::vector<float> &cutoff, const std::vector<uint32_t> &ignore);
+  DvppEraseOp(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<float> &value)
+      : top_(top), left_(left), height_(height), width_(width), value_(value) {}
 
-  ~DvppAutoContrastOp() override = default;
+  ~DvppEraseOp() override = default;
 
   Status Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
                  std::shared_ptr<DeviceTensorAscend910B> *output) override;
 
-  std::string Name() const override { return kDvppAutoContrastOp; }
+  std::string Name() const override { return kDvppEraseOp; }
 
   bool IsDvppOp() override { return true; }
 
  private:
-  std::vector<float> cutoff_;
-  std::vector<uint32_t> ignore_;
+  int32_t top_;
+  int32_t left_;
+  int32_t height_;
+  int32_t width_;
+  std::vector<float> value_;
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_AUTO_CONTRAST_OP_H_
+
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_ERASE_OP_H_

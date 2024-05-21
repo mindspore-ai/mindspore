@@ -43,11 +43,13 @@ class InvertOperation : public TensorOperation {
 
   std::string Name() const override;
 
+  Status to_json(nlohmann::json *out_json) override;
+
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
   MapTargetDevice Type() override;
 
-private:
+ private:
   std::string device_target_;
 };
 }  // namespace vision

@@ -2031,13 +2031,61 @@ class Erase(ImageTensorOperation):
         self.left = left
         self.height = height
         self.width = width
-        if isinstance(value, int):
+        if isinstance(value, (int, float)):
             value = tuple([value] * 3)
         self.value = value
         self.inplace = inplace
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        - When the device is Ascend, input type supports `uint8` or `float32` , input channel supports 1 and 3.
+          The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> transforms_list = [vision.Erase(10,10,10,10).device("Ascend")]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+            >>> output = vision.Erase(0, 0, 2, 1).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (2, 2, 3) uint8
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.EraseOperation(self.top, self.left, self.height, self.width, self.value, self.inplace)
+        return cde.EraseOperation(self.top, self.left, self.height, self.width, self.value, self.inplace,
+                                  self.device_target)
 
 
 class FiveCrop(PyTensorOperation):
@@ -2601,7 +2649,7 @@ class Invert(ImageTensorOperation, PyTensorOperation):
         """
         Set the device for the current operator execution.
 
-        - When the device is CPU, input type support  `uint8`/`float32`/`float64`, input channel support 1/2/3.
+        - When the device is CPU, input type only support `uint8` , input channel support 1/2/3.
         - When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1/3.
           input shape should be limited from [4, 6] to [8192, 4096].
 
@@ -2647,7 +2695,7 @@ class Invert(ImageTensorOperation, PyTensorOperation):
         return self
 
     def parse(self):
-        return cde.InvertOperation()
+        return cde.InvertOperation(self.device_target)
 
     def _execute_py(self, img):
         """
@@ -3552,7 +3600,7 @@ class Posterize(ImageTensorOperation):
         return self
 
     def parse(self):
-        return cde.PosterizeOperation(self.bits)
+        return cde.PosterizeOperation(self.bits, self.device_target)
 
 
 class RandAugment(ImageTensorOperation):
@@ -6432,7 +6480,7 @@ class Rotate(ImageTensorOperation):
 
     def parse(self):
         return cde.RotateOperation(self.degrees, Inter.to_c_type(self.resample), self.expand, self.center,
-                                   self.fill_value)
+                                   self.fill_value, self.device_target)
 
 
 class SlicePatches(ImageTensorOperation):
@@ -6569,7 +6617,7 @@ class Solarize(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
-        - When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1 and 3.
+        - When the device is Ascend, input type only supports `uint8` , input channel supports 1 and 3.
           The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
 
         Args:
@@ -6613,7 +6661,7 @@ class Solarize(ImageTensorOperation):
         return self
 
     def parse(self):
-        return cde.SolarizeOperation(self.threshold)
+        return cde.SolarizeOperation(self.threshold, self.device_target)
 
 
 class TenCrop(PyTensorOperation):

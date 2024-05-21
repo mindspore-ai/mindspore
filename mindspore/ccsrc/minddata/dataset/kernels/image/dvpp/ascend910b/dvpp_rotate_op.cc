@@ -62,7 +62,9 @@ Status DvppRotateOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &inpu
                                "DvppRotate: Invalid interpolation mode, only support BILINEAR and NEAREST.");
 
   // Dvpp Limit
-  // need change shenwei
+  int64_t input_h = input->GetShape()[kHeightIndexNHWC];
+  int64_t input_w = input->GetShape()[kWidthIndexNHWC];
+  RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppRotateOp));
 
   // run dvpp
   APP_ERROR ret = AclAdapter::GetInstance().DvppRotate(input, output, degrees_, resample_, expand_, center_, fill);
@@ -106,6 +108,22 @@ Status DvppRotateOp::OutputShape(const std::vector<TensorShape> &inputs, std::ve
 Status DvppRotateOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
   return Status::OK();
+}
+
+TensorShape DvppRotateOp::ConstructShape(const TensorShape &in_shape) {
+  auto in_shape_vec = in_shape.AsVector();
+  const int h_index = -3;
+  const int w_index = -2;
+  int32_t outputH = -1;
+  int32_t outputW = -1;
+  if (!expand_) {
+    outputH = static_cast<int32_t>(in_shape[h_index]);
+    outputW = static_cast<int32_t>(in_shape[w_index]);
+  }
+  in_shape_vec[in_shape_vec.size() + h_index] = outputH;
+  in_shape_vec[in_shape_vec.size() + w_index] = outputW;
+  TensorShape out = TensorShape(in_shape_vec);
+  return out;
 }
 }  // namespace dataset
 }  // namespace mindspore

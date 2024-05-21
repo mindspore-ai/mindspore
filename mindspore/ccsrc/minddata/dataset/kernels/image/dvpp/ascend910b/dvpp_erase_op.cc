@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_erase_op.h"
 
-#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_adjust_sharpness_op.h"
+#include <vector>
 
+#include "minddata/dataset/kernels/data/data_utils.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/dvpp_image_utils.h"
@@ -33,36 +35,27 @@ constexpr int64_t h_ub = 8192;  // height upper bound
 constexpr int64_t w_lb = 6;     // width lower bound
 constexpr int64_t w_ub = 4096;  // width upper bound
 
-Status DvppAdjustSharpnessOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                                      std::shared_ptr<DeviceTensorAscend910B> *output) {
+Status DvppEraseOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                            std::shared_ptr<DeviceTensorAscend910B> *output) {
   IO_CHECK(input, output);
-  // check the input tensor shape
-  if (input->GetShape().Rank() != kNHWCImageRank) {
-    RETURN_STATUS_UNEXPECTED("DvppAdjustSharpness: the input tensor is not HW, HWC or 1HWC, but got: " +
-                             std::to_string(input->GetShape().Rank()));
-  }
+
+  // the input should be NHWC, N is 1.
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    input->GetShape().Rank() == kNHWCImageRank,
+    "DvppErase: the input tensor is not HW, HWC or 1HWC, but got: " + std::to_string(input->GetShape().Rank()));
 
   // Dvpp Limit
-  int64_t input_h = input->GetShape()[kHeightIndexNHWC];
-  int64_t input_w = input->GetShape()[kWidthIndexNHWC];
-  RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppAdjustSharpnessOp));
+  std::vector<dsize_t> size = {input->GetShape().AsVector()[kHeightIndexNHWC],
+                               input->GetShape().AsVector()[kWidthIndexNHWC]};
+  int32_t input_h = size[kHeightIndex];
+  int32_t input_w = size[kWidthIndex];
+  RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppEraseOp, "input"));
 
-  APP_ERROR ret = AclAdapter::GetInstance().DvppAdjustSharpness(input, output, factor_);
+  APP_ERROR ret = AclAdapter::GetInstance().DvppErase(input, output, top_, left_, height_, width_, value_);
   if (ret != APP_ERR_OK) {
-    std::string error = "DvppAdjustSharpness: Error in dvpp processing: " + std::to_string(ret);
+    std::string error = "DvppCrop: Error in dvpp processing: " + std::to_string(ret);
     RETURN_STATUS_UNEXPECTED(error);
   }
-
-  return Status::OK();
-}
-
-Status DvppAdjustSharpnessOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
-  RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
-  return Status::OK();
-}
-
-Status DvppAdjustSharpnessOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
-  RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
   return Status::OK();
 }
 }  // namespace dataset

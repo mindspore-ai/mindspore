@@ -315,8 +315,9 @@ PYBIND_REGISTER(EraseOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::EraseOperation, TensorOperation, std::shared_ptr<vision::EraseOperation>>(
                     *m, "EraseOperation")
                     .def(py::init([](int32_t top, int32_t left, int32_t height, int32_t width,
-                                     const std::vector<uint8_t> &value, bool inplace) {
-                      auto erase = std::make_shared<vision::EraseOperation>(top, left, height, width, value, inplace);
+                                     const std::vector<float> &value, bool inplace, const std::string &device_target) {
+                      auto erase = std::make_shared<vision::EraseOperation>(top, left, height, width, value, inplace,
+                                                                            device_target);
                       THROW_IF_ERROR(erase->ValidateParams());
                       return erase;
                     }));

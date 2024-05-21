@@ -412,6 +412,18 @@ APP_ERROR PluginDvppEqualize(const std::shared_ptr<mindspore::dataset::DeviceTen
   return DvppEqualize(input, output);
 }
 
+APP_ERROR PluginDvppErase(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                          std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, uint32_t top,
+                          uint32_t left, uint32_t height, uint32_t width, const std::vector<float> &value) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppErase(input, output, top, left, height, width, value);
+}
+
 APP_ERROR PluginDvppGaussianBlur(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                                  std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
                                  const std::vector<int64_t> &kernel_size, const std::vector<float> &sigma,
@@ -524,7 +536,7 @@ APP_ERROR PluginDvppResizedCrop(const std::shared_ptr<mindspore::dataset::Device
 APP_ERROR PluginDvppRotate(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                            std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, float degrees,
                            mindspore::dataset::InterpolationMode mode, bool expand, const std::vector<float> &center,
-                           std::vector<float> fill) {
+                           const std::vector<float> &fill) {
   if (input == nullptr) {
     return APP_ERR_ACL_FAILURE;
   }
