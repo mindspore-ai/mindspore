@@ -104,6 +104,9 @@ PLUGIN_METHOD(DvppAutoContrast, int, const std::shared_ptr<mindspore::dataset::D
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, const std::vector<float> &,
               const std::vector<uint32_t> &);
 
+PLUGIN_METHOD(DvppConvertColor, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
+              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, mindspore::dataset::ConvertMode);
+
 PLUGIN_METHOD(DvppCrop, int, const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &,
               std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *, uint32_t, uint32_t, uint32_t, uint32_t);
 

@@ -442,7 +442,7 @@ class ConvertColor(ImageTensorOperation):
         self.convert_mode = convert_mode
 
     def parse(self):
-        return cde.ConvertColorOperation(DE_C_CONVERT_COLOR_MODE.get(self.convert_mode))
+        return cde.ConvertColorOperation(DE_C_CONVERT_COLOR_MODE.get(self.convert_mode), "CPU")
 
 
 class Crop(ImageTensorOperation):

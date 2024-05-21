@@ -102,9 +102,14 @@ class AclAdapter {
                        std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &matrix,
                        uint32_t interpolation_mode, uint32_t padding_mode, const std::vector<float> &fill);
 
+<<<<<<< HEAD
   APP_ERROR DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
                              std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &cutoff,
                              const std::vector<uint32_t> &ignore);
+=======
+  APP_ERROR DvppConvertColor(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                             std::shared_ptr<DeviceTensorAscend910B> *output, ConvertMode convertMode);
+>>>>>>> 1449a0556fc... Add dvpp convertcolor operator into minddata
 
   APP_ERROR DvppCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
                      std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left, uint32_t height,
@@ -231,6 +236,7 @@ class AclAdapter {
   DvppAdjustSharpnessFunObj dvpp_sharpness_fun_obj_;
   DvppAffineFunObj dvpp_affine_fun_obj_;
   DvppAutoContrastFunObj dvpp_auto_contrast_fun_obj_;
+  DvppConvertColorFunObj dvpp_convert_color_fun_obj_;
   DvppCropFunObj dvpp_crop_fun_obj_;
   DvppDecodeFunObj dvpp_decode_fun_obj_;
   DvppEqualizeFunObj dvpp_equalize_fun_obj_;

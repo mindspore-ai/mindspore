@@ -42,6 +42,39 @@ namespace dataset {
 const int kInvalidInterpolationMode = 100;
 const int kInvalidPaddingMode = 101;
 const int kInvalidRotateMode = 102;
+const int kInvalidConvertMode = 103;
+
+/// \brief Convert ConvertMode to dvpp mode
+inline int GetDVPPConvertMode(ConvertMode convertMode) {
+  switch (convertMode) {
+    case ConvertMode::COLOR_BGR2BGRA:  // COLOR_BGR2BGRA=COLOR_RGB2RGBA
+      return acldvppConvertMode::COLOR_BGR2BGRA;  // dvpp alpah channel COLOR_BGR2BGRA/COLOR_RGB2RGBA
+    case ConvertMode::COLOR_BGRA2BGR:  // COLOR_BGRA2BGR=COLOR_RGBA2RGB
+      return acldvppConvertMode::COLOR_BGRA2BGR;  // dvpp alpah channel COLOR_BGRA2BGR/COLOR_RGBA2RGB
+    case ConvertMode::COLOR_BGR2RGBA:  // COLOR_BGR2RGBA=COLOR_RGB2BGRA
+      return acldvppConvertMode::COLOR_BGR2RGBA;  // dvpp COLOR_BGR2RGBA/COLOR_RGB2BGRA
+    case ConvertMode::COLOR_RGBA2BGR:  // COLOR_RGBA2BGR=COLOR_BGRA2RGB
+      return acldvppConvertMode::COLOR_RGBA2BGR;  // dvpp COLOR_RGBA2BGR/COLOR_BGRA2RGB
+    case ConvertMode::COLOR_BGR2RGB:  // COLOR_BGR2RGB=COLOR_RGB2BGR
+      return acldvppConvertMode::COLOR_BGR2RGB;  // dvpp COLOR_BGR2RGB/COLOR_RGB2BGR
+    case ConvertMode::COLOR_BGRA2RGBA:  // COLOR_BGRA2RGBA=COLOR_RGBA2BGRA
+      return acldvppConvertMode::COLOR_BGRA2RGBA;  // dvpp COLOR_BGRA2RGBA/COLOR_RGBA2BGRA
+    case ConvertMode::COLOR_BGR2GRAY:
+      return acldvppConvertMode::COLOR_BGR2GRAY;  // dvpp COLOR_BGR2GRAY
+    case ConvertMode::COLOR_RGB2GRAY:
+      return acldvppConvertMode::COLOR_RGB2GRAY;  // dvpp COLOR_RGB2GRAY
+    case ConvertMode::COLOR_GRAY2BGR:  // COLOR_GRAY2BGR=COLOR_GRAY2RGB
+      return acldvppConvertMode::COLOR_GRAY2BGR;  // dvpp COLOR_GRAY2BGR/COLOR_GRAY2RGB
+    case ConvertMode::COLOR_GRAY2BGRA:  // COLOR_GRAY2BGRA=COLOR_GRAY2RGBA
+      return acldvppConvertMode::COLOR_GRAY2BGRA;  // dvpp COLOR_GRAY2BGRA/COLOR_GRAY2RGBA
+    case ConvertMode::COLOR_BGRA2GRAY:
+      return acldvppConvertMode::COLOR_BGRA2GRAY;  // dvpp COLOR_BGRA2GRAY
+    case ConvertMode::COLOR_RGBA2GRAY:
+      return acldvppConvertMode::COLOR_RGBA2GRAY;  // dvpp COLOR_RGBA2GRAY
+    default:
+      return kInvalidConvertMode;
+  }
+}
 
 /// \brief Convert InterpolationMode to dvpp mode
 inline int GetDVPPInterpolationMode(InterpolationMode mode) {
@@ -144,6 +177,7 @@ APP_ERROR DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &input,
                      std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &matrix,
                      uint32_t interpolation_mode, uint32_t padding_mode, const std::vector<float> &fill);
 
+<<<<<<< HEAD
 /// \brief Returns image with contrast maximized.
 /// \param input: Tensor of shape <H,W,C> format.
 /// \param output: Transformed image Tensor (type DE_FLOAT32 or DE_UINT8).
@@ -152,6 +186,14 @@ APP_ERROR DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &input,
 APP_ERROR DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
                            std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &cutoff,
                            const std::vector<uint32_t> &ignore);
+=======
+/// \brief Returns Convertcolor image.
+/// \param input: Tensor of shape <N,H,W,C>, c support [1, 3, 4], N only support 1.
+/// \param output: Transformed image Tensor (type DE_FLOAT32 or DE_UINT8), c = [1, 3, 4].
+/// \param convertMode: the ConvertMode mode.
+APP_ERROR DvppConvertColor(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                           std::shared_ptr<DeviceTensorAscend910B> *output, ConvertMode convertMode);
+>>>>>>> 1449a0556fc... Add dvpp convertcolor operator into minddata
 
 /// \brief Returns croped image.
 /// \param input: Tensor of shape <H,W,C> format.
