@@ -35,7 +35,7 @@ constexpr char kConvertColorOperation[] = "ConvertColor";
 
 class ConvertColorOperation : public TensorOperation {
  public:
-  explicit ConvertColorOperation(ConvertMode convert_mode);
+  explicit ConvertColorOperation(ConvertMode convert_mode, const std::string &device_target = "CPU");
 
   ~ConvertColorOperation() override;
 
@@ -49,8 +49,11 @@ class ConvertColorOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   ConvertMode convert_mode_;
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset

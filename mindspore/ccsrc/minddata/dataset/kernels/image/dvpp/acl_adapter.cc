@@ -110,6 +110,7 @@ void AclAdapter::InitPlugin() {
   dvpp_auto_contrast_fun_obj_ = DlsymFuncObj(DvppAutoContrast, plugin_handle_);
   dvpp_brightness_fun_obj_ = DlsymFuncObj(DvppAdjustBrightness, plugin_handle_);
   dvpp_contrast_fun_obj_ = DlsymFuncObj(DvppAdjustContrast, plugin_handle_);
+  dvpp_convert_color_fun_obj_ = DlsymFuncObj(DvppConvertColor, plugin_handle_);
   dvpp_crop_fun_obj_ = DlsymFuncObj(DvppCrop, plugin_handle_);
   dvpp_decode_fun_obj_ = DlsymFuncObj(DvppDecode, plugin_handle_);
   dvpp_equalize_fun_obj_ = DlsymFuncObj(DvppEqualize, plugin_handle_);
@@ -189,6 +190,7 @@ void AclAdapter::FinalizePlugin() {
   dvpp_auto_contrast_fun_obj_ = nullptr;
   dvpp_brightness_fun_obj_ = nullptr;
   dvpp_contrast_fun_obj_ = nullptr;
+  dvpp_convert_color_fun_obj_ = nullptr;
   dvpp_crop_fun_obj_ = nullptr;
   dvpp_decode_fun_obj_ = nullptr;
   dvpp_equalize_fun_obj_ = nullptr;
@@ -562,6 +564,14 @@ APP_ERROR AclAdapter::DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend9
   return dvpp_auto_contrast_fun_obj_(input, output, cutoff, ignore);
 }
 
+APP_ERROR AclAdapter::DvppConvertColor(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                       std::shared_ptr<DeviceTensorAscend910B> *output, ConvertMode convertMode) {
+  if (!HasAclPlugin() || dvpp_convert_color_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_convert_color_fun_obj_(input, output, convertMode);
+}
+
 APP_ERROR AclAdapter::DvppCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left,
                                uint32_t height, uint32_t width) {
@@ -688,7 +698,8 @@ APP_ERROR AclAdapter::DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend9
 }
 
 APP_ERROR AclAdapter::DvppSolarize(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                                       std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &threshold) {
+                                   std::shared_ptr<DeviceTensorAscend910B> *output,
+                                   const std::vector<float> &threshold) {
   if (!HasAclPlugin() || dvpp_solarize_fun_obj_ == nullptr) {
     return APP_ERR_ACL_FAILURE;
   }

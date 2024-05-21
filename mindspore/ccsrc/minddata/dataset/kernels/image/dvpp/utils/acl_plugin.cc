@@ -366,6 +366,18 @@ APP_ERROR PluginDvppAutoContrast(const std::shared_ptr<mindspore::dataset::Devic
   return DvppAutoContrast(input, output, cutoff, ignore);
 }
 
+APP_ERROR PluginDvppConvertColor(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
+                                 mindspore::dataset::ConvertMode convertMode) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppConvertColor(input, output, convertMode);
+}
+
 APP_ERROR PluginDvppCrop(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                          std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, uint32_t top,
                          uint32_t left, uint32_t height, uint32_t width) {

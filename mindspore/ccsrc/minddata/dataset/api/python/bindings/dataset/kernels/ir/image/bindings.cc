@@ -220,8 +220,8 @@ PYBIND_REGISTER(
   ConvertColorOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::ConvertColorOperation, TensorOperation, std::shared_ptr<vision::ConvertColorOperation>>(
       *m, "ConvertColorOperation", "Tensor operation to change the color space of the image.")
-      .def(py::init([](ConvertMode convert_mode) {
-        auto convert = std::make_shared<vision::ConvertColorOperation>(convert_mode);
+      .def(py::init([](ConvertMode convert_mode, const std::string &device_target) {
+        auto convert = std::make_shared<vision::ConvertColorOperation>(convert_mode, device_target);
         THROW_IF_ERROR(convert->ValidateParams());
         return convert;
       }));

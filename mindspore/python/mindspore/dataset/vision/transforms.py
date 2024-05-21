@@ -1330,8 +1330,55 @@ class ConvertColor(ImageTensorOperation):
         self.convert_mode = convert_mode
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        - When the device is Ascend, input type only supports `uint8` , input channel supports 1 and 3.
+          The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> transforms_list = [vision.Equalize().device("Ascend")]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+            >>> output = vision.Equalize().device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (2, 2, 3) uint8
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.ConvertColorOperation(ConvertMode.to_c_type(self.convert_mode))
+        return cde.ConvertColorOperation(ConvertMode.to_c_type(self.convert_mode), self.device_target)
 
 
 class Crop(ImageTensorOperation):

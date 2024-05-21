@@ -48,6 +48,7 @@
 #include "acldvppop/acldvpp_adjust_saturation.h"
 #include "acldvppop/acldvpp_auto_contrast.h"
 #include "acldvppop/acldvpp_adjust_sharpness.h"
+#include "acldvppop/acldvpp_convert_color.h"
 #include "acldvppop/acldvpp_crop.h"
 #include "acldvppop/acldvpp_crop_and_resize.h"
 #include "acldvppop/acldvpp_decode_jpeg.h"
@@ -637,6 +638,7 @@ APP_ERROR DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &input,
   return APP_ERR_OK;
 }
 
+<<<<<<< HEAD
 APP_ERROR DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
                            std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &cutoff,
                            const std::vector<uint32_t> &ignore) {
@@ -661,19 +663,48 @@ APP_ERROR DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
 
   if (input->GetShape().AsVector()[0] != 1) {
     MS_LOG(ERROR) << "The input data is not 1HWC or 1CHW.";  // N == 1
+=======
+APP_ERROR DvppConvertColor(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                           std::shared_ptr<DeviceTensorAscend910B> *output, ConvertMode convertMode) {
+  MS_LOG(DEBUG) << "Begin execute dvpp convertcolor.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+
+  // the input should be NHWC
+  if (input->GetShape().Rank() != kNHWCImageRank) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != 1 &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != kDefaultImageChannel)
+    &&input->GetShape().AsVector()[kChannelIndexNHWC] != kMaxImageChannel {
+      MS_LOG(ERROR) << "The input data's channel is not 1 or 3 or 4.";  // C == 1 or 3 or 4
+      return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+    }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC.";  // N == 1
+>>>>>>> 1449a0556fc... Add dvpp convertcolor operator into minddata
     return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
   }
 
   // the type is uint8 / float
   if (input->GetType() != DataType::DE_UINT8 && input->GetType() != DataType::DE_FLOAT32) {
     MS_LOG(ERROR) << "The input data is not uint8 or float32";
+<<<<<<< HEAD
     return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+=======
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+>>>>>>> 1449a0556fc... Add dvpp convertcolor operator into minddata
   }
 
   // create the output shape and type
   TensorShape shape = input->GetShape();
   DataType type = input->GetType();
 
+<<<<<<< HEAD
   // create ignore vector
   std::vector<int64_t> ignore_cast{ignore.begin(), ignore.end()};
   aclIntArray *acl_ignore = aclCreateIntArray(ignore_cast.data(), ignore_cast.size());
@@ -706,11 +737,40 @@ APP_ERROR DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                                  &device_tensor, true) != Status::OK()) {
     MS_LOG(ERROR) << "Create output device tensor failed.";
     return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+=======
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+
+  if (input->GetType() != DataType::DE_UINT8 &&
+      (convertMode == ConvertMode::COLOR_BGR2BGRA && convertMode == ConvertMode::COLOR_BGRA2BGR &&
+       convertMode == ConvertMode::COLOR_BGR2RGBA && convertMode == ConvertMode::COLOR_RGBA2BGR)) {
+    std::string err_msg =
+      "The conversion mode of alpha channel [COLOR_BGR2BGRA, COLOR_RGB2RGBA, COLOR_BGRA2BGR, COLOR_RGBA2RGB, "
+      "COLOR_BGR2RGBA, COLOR_RGB2BGRA, COLOR_RGBA2BGR, COLOR_BGRA2RGB] only "
+      "supports uint8 type input";
+    MS_LOG(ERROR) << err_msg;
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+
+  // convert ConvertMode mode to DVPP mode
+  auto dvpp_convert_mode = GetDVPPConvertMode(convertMode);
+  if (dvpp_convert_mode == kInvalidConvertMode) {
+    std::string err_msg =
+      "The current ConvertMode is not supported by DVPP. It is " + std::to_string(static_cast<int>(dvpp_convert_mode));
+    MS_LOG(ERROR) << err_msg;
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+>>>>>>> 1449a0556fc... Add dvpp convertcolor operator into minddata
   }
 
   // call DVPP step1
   uint64_t workspace_size = 0;
   aclOpExecutor *executor;
+<<<<<<< HEAD
   // decode output C is 3
   // don't recovery truncate
   auto ret = acldvppAutoContrastGetWorkspaceSize(
@@ -719,6 +779,14 @@ APP_ERROR DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
   if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Call acldvppAutoContrastGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
     return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+=======
+  auto ret = acldvppAdjustGammaGetWorkspaceSize(
+    reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), dvpp_convert_mode,
+    reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()), &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppAdjustGammaGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+>>>>>>> 1449a0556fc... Add dvpp convertcolor operator into minddata
   }
 
   // call DVPP step2
@@ -728,29 +796,50 @@ APP_ERROR DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
     workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
     if (workspace_addr == nullptr) {
       MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+<<<<<<< HEAD
       return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
     }
 
     // call DVPP step3
     ret = acldvppAutoContrast(
+=======
+      return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppConvertColor(
+>>>>>>> 1449a0556fc... Add dvpp convertcolor operator into minddata
       workspace_addr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
     // use the input to hold the workspace and release it when the executor / npu_map_job finish
     if (!input->AddWorkSpace(workspace_addr)) {
       MS_LOG(ERROR) << "Add workspace to the input failed";
+<<<<<<< HEAD
       return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
     }
   } else {
     // call DVPP step3
     ret = acldvppAutoContrast(
+=======
+      return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppConvertColor(
+>>>>>>> 1449a0556fc... Add dvpp convertcolor operator into minddata
       nullptr, workspace_size, executor,
       static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
   }
 
   if (ret != ACL_SUCCESS) {
+<<<<<<< HEAD
     MS_LOG(ERROR) << "Call acldvppAutoContrast failed, error code: " + std::to_string(ret) + ".";
     return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+=======
+    MS_LOG(ERROR) << "Call acldvppConvertColor failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+>>>>>>> 1449a0556fc... Add dvpp convertcolor operator into minddata
   }
 
   *output = std::move(device_tensor);  // currently the data is still in device
