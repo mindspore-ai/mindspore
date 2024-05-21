@@ -155,6 +155,9 @@ uint64_t AscendProfiler::GetOptionsMask(aclprofAicoreMetrics aic_metrics) const 
   if (options_json["l2_cache"] == "on") {
     mask |= ACL_PROF_L2CACHE;
   }
+  if (options_json["profile_memory"] == "on") {
+    mask |= ACL_PROF_TASK_MEMORY;
+  }
   return mask;
 }
 

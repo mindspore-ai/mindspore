@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Profiler file manager"""
+import csv
 import json
 import os.path
 from typing import List
@@ -75,3 +76,83 @@ class FileManager:
         flags = os.O_WRONLY | os.O_CREAT
         with os.fdopen(os.open(file_path, flags, cls.DATA_FILE_AUTHORITY), 'w') as fp:
             json.dump(json_data, fp, ensure_ascii=False)
+
+    @classmethod
+    def read_csv_file(cls, file_path: str) -> list:
+        """Read csv file and return list"""
+        if not os.path.isfile(file_path):
+            return []
+        file_size = os.path.getsize(file_path)
+        if file_size <= 0:
+            return []
+        if file_size > Constant.MAX_CSV_SIZE:
+            msg = f"The file size exceeds the preset value, please check the file: {file_path}"
+            logger.warning(msg)
+            return []
+        result_data = []
+        try:
+            with open(file_path, newline="") as csv_file:
+                reader = csv.reader(csv_file)
+                for row in reader:
+                    result_data.append(row)
+        except Exception as err:
+            raise RuntimeError(f"Failed to read the file: {file_path}") from err
+        return result_data
+
+    @classmethod
+    def create_csv_file(cls, file_path: str, data: list, headers: list = None) -> None:
+        """Create csv file and write the data"""
+        if not data:
+            return
+        try:
+            with open(file_path, "w", newline="") as file:
+                writer = csv.writer(file)
+                if headers:
+                    writer.writerow(headers)
+                writer.writerows(data)
+        except Exception as err:
+            raise RuntimeError(f"Can't create file: {file_path}") from err
+
+    @classmethod
+    def combine_csv_file(cls, source_file_list: list, target_file_path: str, header_map: dict = None):
+        """Merge multiple CSV files into one"""
+        headers, all_data = [], []
+        for source_file in source_file_list:
+            data = cls.read_csv_file(source_file)
+            if len(data) > 1:
+                headers = data[0]
+                all_data.extend(data[1:])
+        if all_data:
+            if isinstance(header_map, dict):
+                headers = [header_map.get(header, header) for header in headers]
+            FileManager.create_csv_file(target_file_path, all_data, headers)
+
+    @classmethod
+    def get_csv_file_list_by_start_name(cls, source_path: str, start_name: str):
+        """Get all the csv files that match the name"""
+        file_list = []
+        for file_name in os.listdir(source_path):
+            if file_name.startswith(start_name) and file_name.endswith(".csv"):
+                file_list.append(os.path.join(source_path, file_name))
+        return file_list
+
+    @classmethod
+    def read_txt_file(cls, file_path: str) -> list:
+        """Read txt file and return list"""
+        if not os.path.isfile(file_path):
+            return []
+        file_size = os.path.getsize(file_path)
+        if file_size <= 0:
+            return []
+        if file_size > Constant.MAX_FILE_SIZE:
+            msg = f"The file size exceeds the preset value, please check the file: {file_path}"
+            logger.warning(msg)
+            return []
+        result_data = []
+        try:
+            with open(file_path, "r") as file:
+                for line in file.readlines():
+                    result_data.append(line.strip().split(","))
+        except Exception as err:
+            raise RuntimeError(f"Failed to read the file: {file_path}") from err
+        return result_data
