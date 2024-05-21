@@ -438,7 +438,7 @@ void Jit::UpdateJitForwardTensorInfoInBpropGraph(const std::string &op_info, con
   }
   // Not first run
   MS_LOG(DEBUG) << "Update jit forward output tensor info " << op_info;
-  UpdateForwardOutputTensorInfo(op_info, v, it->second, stream_id);
+  UpdateForwardOutputTensorInfo(op_info, v, it->second);
 }
 
 void Jit::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph) {

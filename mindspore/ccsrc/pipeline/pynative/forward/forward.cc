@@ -337,13 +337,14 @@ void ForwardExecutor::DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_in
   runtime::Pipeline::Get().frontend_stage()->Push(forward_task);
 }
 
-void ForwardExecutor::ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info) {
+void ForwardExecutor::ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info) const {
   if (!op_run_info->requires_grad) {
     MS_LOG(DEBUG) << "Grad flag is false";
     return;
   }
   // 4. Do op grad and record op info
-  // If ms function is compile, op info will not be find in second training step
+  // If ms function is compiled, op info will not be find in second training step
+  MS_LOG(DEBUG) << "Current custom bprop cell count " << op_run_info->async_status.custom_bprop_cell_count;
   if (!op_run_info->async_status.is_jit_compiling && op_run_info->async_status.custom_bprop_cell_count <= 0) {
     grad()->ProcessOpGradInfo(op_run_info);
   }
@@ -859,6 +860,8 @@ void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::arg
         ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
 #endif
       }
+    } else {
+      PrintPyObjInfo(obj, kBegin, is_cell);
     }
   }
 }

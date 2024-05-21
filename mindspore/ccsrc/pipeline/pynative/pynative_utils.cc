@@ -883,7 +883,7 @@ InputType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &
     }
     auto_grad_meta_data->set_input_type(grad_type);
     if (top_cell != nullptr && IsParam(grad_type)) {
-      top_cell->AddParamGradInfo(tensor_value, auto_grad_meta_data);
+      top_cell->AddMetaGradInfo(tensor_value, auto_grad_meta_data);
     }
     return grad_type;
   } else if (value->isa<ValueSequence>()) {
@@ -931,7 +931,7 @@ InputType Common::SetTensorGradInfo(const tensor::BaseTensorPtr &tensor, const T
   if (tensor->is_parameter()) {
     auto_grad_meta_data->set_input_type(InputType::kParameter);
     if (top_cell != nullptr) {
-      top_cell->AddParamGradInfo(tensor, auto_grad_meta_data);
+      top_cell->AddMetaGradInfo(tensor, auto_grad_meta_data);
     }
     return InputType::kParameter;
   }
@@ -1732,6 +1732,9 @@ void PyBoost::DoGrad(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPt
   // Update op grad info
   op_run_info->op_grad_info->input_value = std::move(op_inputs);
   op_run_info->op_grad_info->out_value = op_run_info->real_out;
+
+  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
+  const auto &forward = pynative_executor->forward_executor();
   op_run_info->op_grad_info->output_size = op->outputs().size();
   if (op->output_value_simple_info() != nullptr) {
     op_run_info->op_grad_info->output_value_simple_info = op->output_value_simple_info();
@@ -1740,22 +1743,22 @@ void PyBoost::DoGrad(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPt
     op_run_info->base_op_run_info.abstract = op->output_abs();
   }
 
-  // Set auto grad meta data for outputs
-  for (const auto &output_tensor : op->outputs()) {
-    output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-    output_tensor->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
-  }
+  if (MS_LIKELY(!forward->grad()->top_cell()->is_bprop_need_get_forward_graph())) {
+    // Set auto grad meta data for outputs
+    for (const auto &output_tensor : op->outputs()) {
+      output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
+      output_tensor->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
+    }
 
-  // Set input and output unused value and set grad type
-  PyParser::PrepareOpGradInfo(op_run_info);
+    // Set input and output unused value and set grad type
+    PyParser::PrepareOpGradInfo(op_run_info);
 
-  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
-  const auto &forward = pynative_executor->forward_executor();
-  for (size_t index = 0; index < op_run_info->input_size; ++index) {
-    // Inplace input_value with contiguous tensor.
-    RefreshGradContiguousTensor(op_run_info, index);
-    const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
-    DataConvert::MarkInputs(op_run_info, input_object, index, forward->grad()->top_cell());
+    for (size_t index = 0; index < op_run_info->input_size; ++index) {
+      // Inplace input_value with contiguous tensor.
+      RefreshGradContiguousTensor(op_run_info, index);
+      const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
+      DataConvert::MarkInputs(op_run_info, input_object, index, forward->grad()->top_cell());
+    }
   }
   forward->ForwardOpGradImpl(op_run_info);
 }
