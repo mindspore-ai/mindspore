@@ -121,6 +121,7 @@ Non-linear activation functions
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
     mindspore.mint.nn.functional.softmax
+    mindspore.mint.nn.functional.tanh
 
 
 
