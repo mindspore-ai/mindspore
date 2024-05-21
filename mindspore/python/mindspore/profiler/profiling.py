@@ -842,6 +842,8 @@ class Profiler:
         self._cpu_profiler.step_profiling_enable(True)
         if self._op_time:
             self._cpu_profiler.enable_op_time()
+        if self._profile_memory:
+            self._cpu_profiler.enable_profile_memory()
 
         if self._device_target and self._device_target == DeviceTarget.GPU.value:
             if self._data_process:
