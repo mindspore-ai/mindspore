@@ -32,17 +32,20 @@ namespace kernel {
 
 void MaskedFillAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {
-  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2]);
+  GetWorkspaceForResize(outputs[kIndex0], inputs[kIndex1], inputs[kIndex2]);
+  SetWorkspaceForInplaceCopy(outputs[kIndex0], inputs[kIndex0]);
 }
 
 bool MaskedFillAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto status = CALL_ASCEND_API(aclrtMemcpyAsync, outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
-                                inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
-  if (status != ACL_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "MaskedFillAscend Launch and call rtMemcpyAsync failed, ret = 0x" << status;
-  }
+  void *ws_addr = copy_ws_size_ != 0 ? workspace.back()->device_ptr() : nullptr;
+  transform::aclOpExecutor *executor;
+  std::function<void()> release_func;
+  std::tie(std::ignore, executor, release_func, std::ignore, std::ignore) =
+    GEN_EXECUTOR_BOOST(inplace_copy_str_, copy_hash_id_, outputs[kIndex0], inputs[kIndex0]);
+  RUN_OP_API_ASYNC(inplace_copy_str_, ws_addr, copy_ws_size_, executor, stream_ptr, release_func);
+
   ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, outputs[kIndex0], inputs[kIndex1], inputs[kIndex2]));
   RunOp(stream_ptr, workspace);
   return true;

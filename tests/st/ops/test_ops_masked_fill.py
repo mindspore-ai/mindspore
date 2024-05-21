@@ -244,3 +244,25 @@ def test_ops_masked_fill_backward_dynamic_rank(context_mode):
     np.testing.assert_allclose(mask_output2.asnumpy(), expect_mask_output2, rtol=1e-3)
     if context_mode == ms.GRAPH_MODE and ms.context.get_context("device_target") == "Asecnd":
         del os.environ["MS_DISABLE_KERNEL_BACKOFF"]
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('run_mode', ["1", "0"])
+def test_ops_masked_fill_forward_with_broadcast(context_mode, run_mode):
+    """
+    Feature: pyboost function.
+    Description: test function masked_fill forward.
+    Expectation: expect correct result.
+    """
+    os.environ["GRAPH_OP_RUN"] = run_mode
+    ms.context.set_context(mode=context_mode)
+    input_x = ms.Tensor(np.array([[1., 2.]]).astype(np.float32))
+    mask = ms.Tensor(np.array([[False], [True]]).astype(np.bool_))
+    output = masked_fill_forward_func(input_x, mask, 0.5)
+    expect_output = np.asarray([[1, 2], [0.5, 0.5]]).astype(np.float32)
+    np.testing.assert_allclose(output.asnumpy(), expect_output, rtol=1e-3)
