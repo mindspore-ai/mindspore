@@ -29,8 +29,7 @@ int64_t CaculateAxis(const AbstractBasePtr &input_abs) {
 }
 
 std::vector<int64_t> CaculateSplitSize(const AbstractBasePtr &input_abs) {
-  auto split_size_value = input_abs->GetValue()->cast<ValueTuplePtr>();
-  std::vector<int64_t> split_size = GetArrayValue<int64_t>(split_size_value).value().ToVector();
+  std::vector<int64_t> split_size = GetArrayValue<int64_t>(input_abs).value().ToVector();
   return split_size;
 }
 }  // namespace
