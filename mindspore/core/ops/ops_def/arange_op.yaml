@@ -3,13 +3,14 @@ arange:
     args:
         start:
             dtype: number
-            type_cast: tensor
         end:
             dtype: number
-            type_cast: tensor
         step:
             dtype: number
-            type_cast: tensor
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
     args_signature:
         dtype_group: (start, end, step)
     returns:
@@ -19,3 +20,4 @@ arange:
       disable: True
     dispatch:
       enable: True
+      Ascend: ArangeAscend

@@ -19,17 +19,17 @@ from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 import mindspore as ms
-from mindspore import Tensor, mint, int32, int64, float32, float64
+from mindspore import mint, int32, int64, float32
 
 
 @test_utils.run_with_cell
-def arange_forward_func(start=0, end=None, step=1, *, dtype=None):
+def arange_forward(start=0, end=None, step=1, *, dtype=None):
     return mint.arange(start, end, step, dtype=dtype)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_arange_forward(mode):
@@ -39,6 +39,8 @@ def test_arange_forward(mode):
     Expectation: success
     """
     ms.set_context(mode=mode)
+    if mode == ms.GRAPH_MODE:
+        ms.set_context(jit_config={'jit_level': 'O0'})
     cases = [
         {
             'args': (1, 6),
@@ -57,24 +59,18 @@ def test_arange_forward(mode):
             'kwargs': {'dtype': int32},
             'expected': np.array(range(10)),
             'dtype': int32
-        },
-        {
-            'args': (Tensor(12.0, float64), 2, Tensor(-1.0, float32)),
-            'kwargs': {},
-            'expected': np.array(range(12, 2, -1)),
-            'dtype': float32
         }
     ]
 
     for case in cases:
-        res = arange_forward_func(*case['args'], **case['kwargs'])
+        res = arange_forward(*case['args'], **case['kwargs'])
         assert np.allclose(res.asnumpy(), case['expected'])
         assert res.dtype == case['dtype']
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_forward_dynamic_shape():
     """
@@ -84,6 +80,5 @@ def test_forward_dynamic_shape():
     """
     inputs1 = [[1, 10, 2], [0, 6, 1]]
     inputs2 = [[5, 0.1, -1.2], [0, 5.5, 1.2]]
-    TEST_OP(arange_forward_func, inputs1, 'arange', disable_input_check=True,
-            disable_nontensor_dynamic_type='MUTABLE_LEN', disable_grad=True, disable_resize=True)
-    TEST_OP(arange_forward_func, inputs2, 'arange', disable_input_check=True, disable_grad=True)
+    TEST_OP(arange_forward, inputs1, 'arange', disable_mode=['GRAPH_MODE'], disable_grad=True, disable_yaml_check=True)
+    TEST_OP(arange_forward, inputs2, 'arange', disable_mode=['GRAPH_MODE'], disable_grad=True, disable_yaml_check=True)

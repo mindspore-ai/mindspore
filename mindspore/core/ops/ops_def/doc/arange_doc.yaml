@@ -1,0 +1,38 @@
+arange:
+    description: |
+        Creates a sequence of numbers that begins at `start` and extends by increments of
+        `step` up to but not including `end`.
+
+        Inputs:
+            start (number): The first number in the sequence.
+                Must have type: int32 ,int64, float32, or float64.
+            end (number): Upper end of the sequence, exclusive.
+                Must have type: int32 ,int64, float32, or float64.
+            step (number): Number that increments `start`.
+                Must have type: int32 ,int64, float32, or float64.
+            dtype (mindspore.dtype, optional): Specified dtype of the result tensor. Default: ``None`` .
+                Supported values are: int32, int64, float32, float64, and bfloat16.
+
+        Outputs:
+            A 1-D Tensor with the required dtype. When dtype is ``None``, then:
+            If `start`, `end` and `step` are all integers, the Tensor dtype is int64.
+            If at least one of `start`, `end` and `step` is floating-point numbers, the Tensor dtype is float32.
+
+        Raises:
+            TypeError: If the datatype of `start`, `end` or `step` is not supported.
+            ValueError: If `step` = 0.
+            ValueError: If `start` >= `end` when `step` > 0.
+            ValueError: If `start` <= `end` when `step` < 0.
+
+        Supported Platforms:
+            `Ascend`
+
+        Examples:
+            >>> from mindspore import ops
+            >>> start = 0
+            >>> end = 10
+            >>> step = 4
+            >>> net = ops.Arange()
+            >>> output = net(start, end, step)
+            >>> print(output)
+            [0 4 8]
