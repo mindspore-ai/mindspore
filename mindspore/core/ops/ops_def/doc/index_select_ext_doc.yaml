@@ -1,0 +1,42 @@
+index_select_ext:
+    description: |
+        Generates a new Tensor that accesses the values of `input` along the specified `dim` dimension
+        using the indices specified in `index`. The new Tensor has the same number of dimensions as `input`,
+        with the size of the `dim` dimension being equal to the length of `index`, and the size of all other
+        dimensions will be unchanged from the original `input` Tensor.
+
+        .. note::
+            The value of index must be in the range of `[0, input.shape[dim])`, the result is undefined out of range.
+
+        Args:
+            input (Tensor): The input Tensor.
+            dim (int): The dimension to be indexed.
+            index (Tensor): A 1-D Tensor with the indices.
+
+        Returns:
+            Tensor, has the same dtype as input Tensor.
+
+        Raises:
+            TypeError: If `input` or `index` is not a Tensor.
+            TypeError: If `dim` is not int number.
+            ValueError: If the value of `dim` is out the range of `[-input.ndim, input.ndim - 1]`.
+            ValueError: If the dimension of `index` is not equal to 1.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import mindspore
+            >>> from mindspore import Tensor, ops
+            >>> import numpy as np
+            >>> input = Tensor(np.arange(16).astype(np.float32).reshape(2, 2, 4))
+            >>> print(input)
+            [[[ 0.  1.  2.  3.]
+            [ 4.  5.  6.  7.]]
+            [[ 8.  9. 10. 11.]
+            [12. 13. 14. 15.]]]
+            >>> index = Tensor([0,], mindspore.int32)
+            >>> y = ops.index_select_ext(input, 1, index)
+            >>> print(y)
+            [[[ 0.  1.  2.  3.]]
+            [[ 8.  9. 10. 11.]]]

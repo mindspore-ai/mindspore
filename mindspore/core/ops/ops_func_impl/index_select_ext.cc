@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "ops/ops_func_impl/index_select.h"
+#include "ops/ops_func_impl/index_select_ext.h"
 #include <memory>
 #include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr IndexSelectFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                             const std::vector<AbstractBasePtr> &input_args) const {
+BaseShapePtr IndexSelectExtFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                                const std::vector<AbstractBasePtr> &input_args) const {
   auto input_shape = input_args[kIndex0]->GetShape()->GetShapeVector();
   if (MS_UNLIKELY(IsDynamicRank(input_shape))) {
     return std::make_shared<abstract::TensorShape>(ShapeVector({abstract::TensorShape::kShapeRankAny}));
@@ -33,7 +33,7 @@ BaseShapePtr IndexSelectFuncImpl::InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::TensorShape>(ShapeVector(input_rank, abstract::TensorShape::kShapeDimAny));
   }
   if (MS_UNLIKELY(axis_opt.value() >= input_rank || axis_opt.value() < -input_rank)) {
-    MS_EXCEPTION(ValueError) << "For 'IndexSelect', the axis must be in '[" << -input_rank << ", " << input_rank
+    MS_EXCEPTION(ValueError) << "For 'IndexSelectExt', the axis must be in '[" << -input_rank << ", " << input_rank
                              << ")', but got " << axis_opt.value() << ".";
   }
   auto axis = axis_opt.value() < 0 ? axis_opt.value() + input_rank : axis_opt.value();
@@ -43,7 +43,7 @@ BaseShapePtr IndexSelectFuncImpl::InferShape(const PrimitivePtr &primitive,
   if (MS_UNLIKELY(IsDynamic(index_shape))) {
     output_shape[axis] = abstract::TensorShape::kShapeDimAny;
   } else {
-    MS_CHECK_VALUE(index_shape.size() == 1, "For 'IndexSelect', the dimension of 'index' must be 1, but got " +
+    MS_CHECK_VALUE(index_shape.size() == 1, "For 'IndexSelectExt', the dimension of 'index' must be 1, but got " +
                                               std::to_string(index_shape.size()) + ".");
     output_shape[axis] = index_shape[kIndex0];
   }
@@ -51,8 +51,8 @@ BaseShapePtr IndexSelectFuncImpl::InferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::TensorShape>(output_shape);
 }
 
-TypePtr IndexSelectFuncImpl::InferType(const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args) const {
+TypePtr IndexSelectExtFuncImpl::InferType(const PrimitivePtr &primitive,
+                                          const std::vector<AbstractBasePtr> &input_args) const {
   return input_args[kIndex0]->GetType();
 }
 }  // namespace ops
