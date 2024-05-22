@@ -185,6 +185,11 @@ std::vector<std::pair<KernelAttr, RealMakeTupleCpuKernelMod::RealMakeTupleFunc>>
     &RealMakeTupleCpuKernelMod::LaunchKernel<float16>},
    {KernelAttr()
       .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeBFloat16)
+      .AddOutputAttr(kObjectTypeTuple, kNumberTypeBFloat16),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<bfloat16>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
       .AddInputAttr(kNumberTypeComplex64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeComplex64),
     &RealMakeTupleCpuKernelMod::LaunchKernel<complex64>},
