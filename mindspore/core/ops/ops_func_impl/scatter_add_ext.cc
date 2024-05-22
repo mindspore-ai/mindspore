@@ -62,7 +62,7 @@ BaseShapePtr ScatterAddExtFuncImpl::InferShape(const PrimitivePtr &primitive,
                                << "except for the dimension specified by 'dim', the size of each dimension of 'index' "
                                   "must be less than or equal to to that of 'input'. But got "
                                << d << "th dim of 'index' and 'input' " << index_shape_vec[d] << ", "
-                               << input_shape_vec[d] << "respectiely.";
+                               << input_shape_vec[d] << "respectively.";
     }
   }
   return input_shape->cast<abstract::ShapePtr>();

@@ -6206,7 +6206,7 @@ def group_norm(input, num_groups, weight=None, bias=None, eps=1e-5):
     where :math:`\gamma` is `weight`, :math:`\beta` is `bias`, :math:`\epsilon` is `eps`.
 
     Args:
-        input (Tensor) : The input feature with shape :math:`(N, C, *)` where :math:`*` means, any number of
+        input (Tensor): The input feature with shape :math:`(N, C, *)` where :math:`*` means, any number of
             additional dimensions.
         num_groups (int): The number of groups to be divided along the channel dimension.
         weight (Tensor, optional): The shape :math:`(C,)`, Default: ``None``, has the same data type with `input`.
@@ -6228,9 +6228,9 @@ def group_norm(input, num_groups, weight=None, bias=None, eps=1e-5):
     Examples:
         >>> import mindspore as ms
         >>> import numpy as np
-        >>> from mindspore.ops import group_norm
+        >>> from mindspore import ops
         >>> x = ms.Tensor(np.ones([1, 2, 4, 4], np.float32))
-        >>> output = group_norm(x, 2)
+        >>> output = ops.group_norm(x, 2)
         >>> print(output)
         [[[[0. 0. 0. 0.]
            [0. 0. 0. 0.]
