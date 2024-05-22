@@ -1068,7 +1068,8 @@ ParameterPtr KernelGraphMgr::CreateNewParameterFromParameter(const AnfNodePtr &a
   }
   // if parameter's python parameter has been exist a backend parameter, reuse the exist parameter
   if (!is_pynative_bprop_kernel_graph) {
-    if (param_value != nullptr) {
+    auto context = MsContext::GetInstance();
+    if (!context->IsKByKExecutorMode() && param_value != nullptr) {
       new_parameter = param_value->parameter();
     }
     if (new_parameter == nullptr) {
