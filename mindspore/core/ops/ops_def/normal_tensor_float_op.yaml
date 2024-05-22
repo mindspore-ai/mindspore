@@ -1,0 +1,22 @@
+#operator normal_tensor_float
+normal_tensor_float:
+    args:
+        mean:
+            dtype: tensor
+        std:
+            dtype: float
+        seed:
+            dtype: int
+            type_cast: tensor
+        offset:
+            dtype: int
+            type_cast: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: NormalTensorFloat
+    function:
+        disable: True
+    dispatch:
+        enable: True
