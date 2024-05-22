@@ -97,7 +97,7 @@ def test_llama_pipeline_parallel():
     compile_time = get_num_from_log(f"{cur_path}/llama_finetune*/finetune_llama_log*log", "Compile time:")
     assert compile_time < 95
     exp_loss = [10.448, 10.430, 10.242, 9.881, 9.467, 9.319, 8.987, 8.550, 8.557, 8.245]
-    exp_res = (1713, 463, 2094, 28.0, exp_loss)
+    exp_res = (1748, 463, 2129, 27.5, exp_loss)
     check_result(cur_path, exp_res)
 
 

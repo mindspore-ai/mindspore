@@ -55,6 +55,7 @@
 #include "frontend/parallel/pass/reorder_send_recv_between_fp_bp.h"
 #include "frontend/parallel/pass/micro_interleaved_order_control.h"
 #include "frontend/parallel/pass/full_micro_interleaved_order_control.h"
+#include "frontend/parallel/pass/overlap_recompute_allgather_and_flashattention_grad.h"
 #include "frontend/parallel/pass/assign_add_opt.h"
 #include "frontend/parallel/pass/float32_redistribution.h"
 #include "frontend/parallel/pass/merge_cast_opt.h"
@@ -767,6 +768,12 @@ bool LabelMicroInterleavedIndexPass(const ResourcePtr &resource) {
   return true;
 }
 
+bool OverlapRecomputeAllGatherAndFlashAttentionGradPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::OverlapRecomputeAllGatherAndFlashAttentionGrad(resource->func_graph());
+  return true;
+}
+
 bool LabelFineGrainedInterleavedIndexPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::LabelFineGrainedInterleavedIndex(resource->func_graph());
@@ -1183,48 +1190,50 @@ bool AddEmbeddingCachePass(const ResourcePtr &resource) {
   return true;
 }
 
-std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExecutePass},
-                                   {"rewriter_before_opt_a", RewriterBeforeOptAPass},
-                                   {"opt_a", OptPassAGroup},
-                                   {"py_interpret_to_execute_after_opt_a", PyInterpretToExecutePass},
-                                   {"slice_cell_reuse_recomputed_activation", SliceReuseRecomputedActivationPass},
-                                   {"rewriter_after_opt_a", RewriterAfterOptAPass},
-                                   {"convert_after_rewriter", ConvertAfterRewriterPass},
-                                   {"order_py_execute_after_rewriter", OrderPyExecuteAfterRewriterPass},
-                                   {"opt_b", OptPassBGroup},
-                                   {"cconv", CconvPass},
-                                   {"opt_after_cconv", OptPassAfterCconvGroup},
-                                   {"remove_dup_value", RemoveValueNodeDuplicationsPass},
-                                   {"tuple_transform", OptPassTransformGraphGroup},
-                                   {"add_cache_embedding", AddCacheEmbeddingPass},
-                                   {"add_recomputation", AddRecomputationPass},
-                                   {"cse_after_recomputation", OptAfterRecomputeGroup},
-                                   {"environ_conv", EnvironConversionPass},
-                                   {"bias_add_comm_swap", BiasAddCommSwap},
-                                   {"label_micro_interleaved_index", LabelMicroInterleavedIndexPass},
-                                   {"label_fine_grained_interleaved_index", LabelFineGrainedInterleavedIndexPass},
-                                   {"merge_cast_opt", MergeCastOpt},
-                                   {"slice_recompute_activation", SliceRecomputeActivationPass},
-                                   {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
-                                   {"assign_add_opt", AssignAddOpt},
-                                   {"ForceFp32Comm", ForceFp32Comm},
-                                   {"remove_cast_before_assign_add", RemoveCastBeforeAssignAdd},
-                                   {"full_micro_interleaved_order_control", FullMicroInterLeavedOrderControlPass},
-                                   {"comp_comm_scheduling", CompCommSchedulingPass},
-                                   {"reorder_send_recv_between_fp_bp", ReorderSendRecvBetweenFpBpPass},
-                                   {"comm_op_add_attrs", CommOpAddAttrs},
-                                   {"add_comm_op_reuse_tag", AddCommOpReusePass},
-                                   {"overlap_opt_shard_in_pipeline", OverlapOptShardInPipelinePass},
-                                   {"grouped_pairwise_exchange_alltoall", GroupedPairwiseExchangeAllToAllPass},
-                                   {"overlap_recompute_and_grad_model_parallel", OverlapRecomputeAndGradModelParallel},
-                                   {"overlap_grad_matmul_and_grad_allreduce", OverlapGradMatmulAndGradAllreduce},
-                                   {"begin_end_overlap_inline", BeginEndOverlapInlinePass},
-                                   {"overlap_grad_comm", OverlapGradCommPass},
-                                   {"split_matmul_comm_elemetwise", SplitMatmulCommElementwiseOpFpPass},
-                                   {"split_layernorm_comm", SplitLayerNormCommFpPass},
-                                   // The pass cache hccl group, so the hccl group should be created before the pass
-                                   {"handle_group_info", HandleGroupInfoPass},
-                                   {"symbol_engine_optimizer", SymEngOptGroup}};
+std::vector<PassItem> kVmPasses = {
+  {"py_interpret_to_execute", PyInterpretToExecutePass},
+  {"rewriter_before_opt_a", RewriterBeforeOptAPass},
+  {"opt_a", OptPassAGroup},
+  {"py_interpret_to_execute_after_opt_a", PyInterpretToExecutePass},
+  {"slice_cell_reuse_recomputed_activation", SliceReuseRecomputedActivationPass},
+  {"rewriter_after_opt_a", RewriterAfterOptAPass},
+  {"convert_after_rewriter", ConvertAfterRewriterPass},
+  {"order_py_execute_after_rewriter", OrderPyExecuteAfterRewriterPass},
+  {"opt_b", OptPassBGroup},
+  {"cconv", CconvPass},
+  {"opt_after_cconv", OptPassAfterCconvGroup},
+  {"remove_dup_value", RemoveValueNodeDuplicationsPass},
+  {"tuple_transform", OptPassTransformGraphGroup},
+  {"add_cache_embedding", AddCacheEmbeddingPass},
+  {"add_recomputation", AddRecomputationPass},
+  {"cse_after_recomputation", OptAfterRecomputeGroup},
+  {"environ_conv", EnvironConversionPass},
+  {"bias_add_comm_swap", BiasAddCommSwap},
+  {"label_micro_interleaved_index", LabelMicroInterleavedIndexPass},
+  {"label_fine_grained_interleaved_index", LabelFineGrainedInterleavedIndexPass},
+  {"merge_cast_opt", MergeCastOpt},
+  {"slice_recompute_activation", SliceRecomputeActivationPass},
+  {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
+  {"assign_add_opt", AssignAddOpt},
+  {"ForceFp32Comm", ForceFp32Comm},
+  {"remove_cast_before_assign_add", RemoveCastBeforeAssignAdd},
+  {"full_micro_interleaved_order_control", FullMicroInterLeavedOrderControlPass},
+  {"comp_comm_scheduling", CompCommSchedulingPass},
+  {"reorder_send_recv_between_fp_bp", ReorderSendRecvBetweenFpBpPass},
+  {"comm_op_add_attrs", CommOpAddAttrs},
+  {"add_comm_op_reuse_tag", AddCommOpReusePass},
+  {"overlap_opt_shard_in_pipeline", OverlapOptShardInPipelinePass},
+  {"grouped_pairwise_exchange_alltoall", GroupedPairwiseExchangeAllToAllPass},
+  {"overlap_recompute_and_grad_model_parallel", OverlapRecomputeAndGradModelParallel},
+  {"overlap_grad_matmul_and_grad_allreduce", OverlapGradMatmulAndGradAllreduce},
+  {"overlap_recompute_allgather_and_fa_grad", OverlapRecomputeAllGatherAndFlashAttentionGradPass},
+  {"begin_end_overlap_inline", BeginEndOverlapInlinePass},
+  {"overlap_grad_comm", OverlapGradCommPass},
+  {"split_matmul_comm_elemetwise", SplitMatmulCommElementwiseOpFpPass},
+  {"split_layernorm_comm", SplitLayerNormCommFpPass},
+  // The pass cache hccl group, so the hccl group should be created before the pass
+  {"handle_group_info", HandleGroupInfoPass},
+  {"symbol_engine_optimizer", SymEngOptGroup}};
 
 std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup},
                                          {"opt_b", OptPassBGroup},
