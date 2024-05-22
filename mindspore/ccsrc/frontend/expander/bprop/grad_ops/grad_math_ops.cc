@@ -3471,6 +3471,9 @@ REG_BPROP_BUILDER("IFFTShift").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   return {ib->Emit("FFTShift", {dout, dim}), ib->OutZeros(dim)};
 });
 
+REG_BPROP_BUILDER("FFTFreq").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("RFFTFreq").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(ReturnZeros);
+
 DEF_PURE_SHAPE_CALC(g_correlate)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
     constexpr int64_t input_num = 4;

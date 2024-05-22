@@ -16,7 +16,7 @@
 from __future__ import absolute_import
 __all__ = ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn',
            'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn',
-           'hfft', 'ihfft', 'fftshift', 'ifftshift']
+           'hfft', 'ihfft', 'fftshift', 'ifftshift', 'fftfreq', 'rfftfreq']
 from mindspore import ops
 
 
@@ -920,3 +920,51 @@ def ihfftn(a, s=None, axes=None, norm=None):
          [ 0.  0.  0.  0.]]
     """
     return ops.hfftn(a, s, axes, norm)
+
+
+def fftfreq(n, d=1.0, dtype=None):
+    r"""
+    Return the Discrete Fourier Transform sample frequencies.
+
+    Args:
+        n (int): Window length.
+        d (float, optional): Sample spacing (inverse of the sampling rate). Default: ``1.0`` .
+        dtype (mindspore.dtype, optional): The dtype of the returned frequencies. Default: ``float32`` .
+
+    Returns:
+        Tensor, Array of length ``n`` containing the sample frequencies.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> out = np.fft.fftfreq(n=4, d=1.0)
+        >>> print(out)
+        [ 0.    0.25 -0.5  -0.25]
+    """
+    return ops.fftfreq(n, d, dtype)
+
+
+def rfftfreq(n, d=1.0, dtype=None):
+    r"""
+    Return the Discrete Fourier Transform sample frequencies (for usage with rfft, irfft).
+
+    Args:
+        n (int): Window length.
+        d (float, optional): Sample spacing (inverse of the sampling rate). Default: ``1.0`` .
+        dtype (mindspore.dtype, optional): The dtype of the returned frequencies. Default: ``float32`` .
+
+    Returns:
+        Tensor, Array of length math:`n // 2 + 1` containing the sample frequencies.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> out = np.fft.rfftfreq(n=4, d=1.0)
+        >>> print(out)
+        [0.   0.25 0.5 ]
+    """
+    return ops.rfftfreq(n, d, dtype)

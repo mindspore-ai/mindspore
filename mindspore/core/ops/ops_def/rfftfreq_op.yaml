@@ -1,0 +1,17 @@
+#operator rfftfreq
+rfftfreq:
+  args:
+    n:
+      dtype: int
+    d:
+      dtype: float
+      default: 1.0
+    dtype:
+      dtype: TypeId
+      arg_handler: dtype_to_type_id
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: RFFTFreq
