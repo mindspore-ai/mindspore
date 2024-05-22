@@ -3316,12 +3316,14 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
   AObject *callable = call_node->input(0)->GetVobj();
   py::object callable_info;
   *stop_reason = StopTraceReason::kStopTraceInfer_Fail;
-  call_node->SetInlineReason(InlineReason::kInlineInfer_Fail);
   if (!callable) {
     return callable_info;
   }
   callable_info = callable->GetPyObject();
   if (callable_info.ptr() == nullptr) {
+    return py::object();
+  }
+  if (!FGBuilder()->ValidateCallableObject(callable_info)) {
     return py::object();
   }
   MS_LOG(INFO) << "trace_flag for: " << py::str(callable_info);
@@ -3384,7 +3386,6 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
   callable_info = (vobj->GetType() == AObject::kTypeCFunction) ? py::object() : FindPyFunc(vobj);
   if (callable_info.ptr() == nullptr) {
     *stop_reason = StopTraceReason::kStopTraceFunc_Type_Unsupported;
-    call_node->SetInlineReason(InlineReason::kInlineCFunction_Unsupported);
   }
   return callable_info;
 }

@@ -2160,14 +2160,21 @@ class ReprGuard : public GuardItem {
     }
     PyObject *repr_flag = GetAttrReprCacheStr();
     PyObject *repr;
+    bool from_cache = false;
     if (PyObject_HasAttr(obj, repr_flag)) {
+      from_cache = true;
       repr = PyObject_GetAttr(obj, repr_flag);
     } else {
       repr = PyObject_Repr(obj);
       PyObject_SetAttr(obj, repr_flag, repr);
     }
     if (PyUnicode_Compare(repr, refRepr_)) {
-      ret = false;
+      // Inplace operation may change the object without clearing the cache of guard.
+      if (from_cache && !PyUnicode_Compare(PyObject_Repr(obj), refRepr_)) {
+        ret = true;
+      } else {
+        ret = false;
+      }
     } else {
       ret = true;
     }
