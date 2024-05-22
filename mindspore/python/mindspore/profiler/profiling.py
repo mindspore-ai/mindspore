@@ -64,6 +64,8 @@ from mindspore.profiler.parser.ascend_flops_generator import AscendFlopsGenerato
 from mindspore.profiler.parser.ascend_cluster_generator import AscendClusterGenerator
 from mindspore.profiler.parser.ascend_hccl_generator import AscendHCCLGenerator
 from mindspore.profiler.parser.ascend_communicate_generator import AscendCommunicationGenerator
+from mindspore.profiler.parser.ascend_memory_generator import AscendMemoryGenerator
+from mindspore.profiler.parser.ascend_integrate_generator import AscendIntegrateGenerator
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
@@ -1394,6 +1396,8 @@ class Profiler:
 
         self._ascend_graph_cluster_analyse(source_path, ascend_profiler_output_path)
         self._ascend_graph_communicate_analyse(source_path, ascend_profiler_output_path)
+        AscendIntegrateGenerator(source_path, ascend_profiler_output_path).parse()
+        AscendMemoryGenerator(self._output_path, self._rank_id, source_path, ascend_profiler_output_path).parse()
 
     def _ascend_graph_cluster_analyse(self, source_path, ascend_profiler_output_path):
         """Analyse step trace time info"""
