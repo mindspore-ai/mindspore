@@ -23,8 +23,9 @@ from mindspore.common import Tensor
 from mindspore.common.api import jit
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.ops import operations as P
+from mindspore.ops import GradOperation
 from tests.mindspore_test_framework.utils.bprop_util import bprop
-from tests.st.pynative.utils import GradOfFirstInput, GradOfAllInputs
+from tests.st.pynative.utils import GradOfFirstInput, GradOfAllInputs, GradOfAllInputsAndParams
 
 
 def setup_module():
@@ -410,3 +411,91 @@ def test_forward_value_and_grad_1():
     fact.one_backnet_call_twice(first_input, second_input)
     fact.two_backnet_call_twice(first_input, second_input)
     fact.first_forward_second_backnet(first_input, second_input)
+
+
+class CustomNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.p1 = Parameter(Tensor(np.array([1.0], np.float32)), name='p1')
+        self.p2 = Parameter(Tensor(np.array([1.0], np.float32)), name='p2')
+        self.p3 = Parameter(Tensor(np.array([1.0], np.float32)), name='p2')
+        self.p1.requires_grad = False
+        self.p2.requires_grad = False
+        self.p3.requires_grad = True
+
+    def construct(self, x):
+        out = self.p1 * x
+        out = out * self.p2
+        out = out + self.p3
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pynative_requires_grad():
+    """
+    Feature: Test pynative requires grad
+    Description: Test the code for requires grad
+    Expectation: success
+    """
+    x = Tensor([1], ms.float32)
+    net = CustomNet()
+    output = GradOfAllInputsAndParams(net, sens_param=False)(x)
+    assert (output[1][0].asnumpy() == np.array([1.0], dtype=np.float32)).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pynative_requires_grad_use_grad_operation():
+    """
+    Feature: Test pynative requires grad use grad operation
+    Description: Test the code for requires grad
+    Expectation: success
+    """
+
+    # Cell object to be differentiated
+    x = Tensor([1], ms.float32)
+    net = CustomNet()
+    output = GradOperation(get_all=True, get_by_list=True)(net, [net.p1, net.p2, net.p3])(x)
+    assert (output[1][0].asnumpy() == np.array([0.0], dtype=np.float32)).all()
+    assert (output[1][1].asnumpy() == np.array([0.0], dtype=np.float32)).all()
+    assert (output[1][2].asnumpy() == np.array([1.0], dtype=np.float32)).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pynative_requires_grad_without_params():
+    """
+    Feature: Test pynative requires grad without params
+    Description: Test the code for requires grad
+    Expectation: success
+    """
+
+    # Cell object to be differentiated
+    x = Tensor([1], ms.float32)
+    net = CustomNet()
+    output = GradOperation(get_all=True, get_by_list=True)(net)(x)
+    assert (output[1][0].asnumpy() == np.array([0.0], dtype=np.float32)).all()
+    assert (output[1][1].asnumpy() == np.array([0.0], dtype=np.float32)).all()
+    assert (output[1][2].asnumpy() == np.array([1.0], dtype=np.float32)).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pynative_requires_grad_case2():
+    """
+    Feature: Test pynative requires grad case2
+    Description: Test the code for requires grad
+    Expectation: success
+    """
+
+    # Cell object to be differentiated
+    x = Tensor([1], ms.float32)
+    net = CustomNet()
+    output = GradOperation(get_all=True, get_by_list=True)(net, [net.p1])(x)
+    assert (output[1][0].asnumpy() == np.array([0.0], dtype=np.float32)).all()
+    assert len(output[1]) == 1

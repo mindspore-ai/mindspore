@@ -2126,7 +2126,7 @@ bool AutoGrad::NeedGrad(const std::vector<ValuePtr> &input_values) {
       input_tensor = input_arg->cast<tensor::BaseTensorPtr>();
       auto auto_grad_meta_data = input_tensor->auto_grad_meta_data();
       MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
-      if (Common::IsParam(auto_grad_meta_data->input_type())) {
+      if (auto_grad_meta_data->input_type() == InputType::kParameter && Common::IsParamRequiresGrad(input_tensor)) {
         return true;
       }
       auto variable = auto_grad_meta_data->variable();

@@ -979,9 +979,11 @@ class MS_CORE_API BaseTensor : public MetaTensor {
 
   void set_need_pipeline_sync(bool need_pipeline_sync) { need_pipeline_sync_ = need_pipeline_sync; }
 
- protected:
+  /// \brief Execute lazy task.
+  ///
   void ExecuteLazyTask() const;
 
+ protected:
   bool is_forward_output_{false};
   bool need_pipeline_sync_{false};
   std::string id_{""};

@@ -240,7 +240,8 @@ AnfNodePtr IrBprop::MapParameter(const ValuePtr &value, const abstract::Abstract
       return param;
     }
     set_bprop_graph_run_by_single_op(auto_grad_meta_data->is_register_hook());
-    if (auto_grad_meta_data->input_type() == InputType::kParameter) {
+    if (auto_grad_meta_data->input_type() == InputType::kParameter &&
+        PyNativeAlgo::Common::IsParamRequiresGrad(tensor)) {
       return AddParameterNode(tensor, abs);
     }
     return PyNativeAlgo::Common::CreateValueNodeByValue(value, abs);
