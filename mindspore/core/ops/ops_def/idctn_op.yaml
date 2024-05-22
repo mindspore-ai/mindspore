@@ -1,17 +1,19 @@
-#operator dct
-dct:
+#operator idctn
+idctn:
   args:
     x:
       dtype: tensor
     type:
       dtype: int
       default: 2
-    n:
-      dtype: int
+    s:
+      dtype: tuple[int]
+      type_cast: list[int]
       default: None
-    axis:
-      dtype: int
-      default: -1
+    axes:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: None
     norm:
       dtype: int
       arg_handler: str_to_enum
@@ -20,7 +22,6 @@ dct:
     output:
       dtype: tensor
   class:
-    name: DCT
+    name: IDCTN
   function:
     disable: True
-

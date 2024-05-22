@@ -44,8 +44,8 @@ double GetNormalized(int64_t element_nums, NormMode norm_type, bool forward) {
 }
 
 bool IsForwardOp(const std::string &op_name) {
-  static const std::vector<std::string> forward_op_name = {"FFT",   "FFT2", "FFTN",  "RFFT", "RFFT2",
-                                                           "RFFTN", "HFFT", "HFFT2", "HFFTN"};
+  static const std::vector<std::string> forward_op_name = {"FFT",  "FFT2",  "FFTN",  "RFFT", "RFFT2", "RFFTN",
+                                                           "HFFT", "HFFT2", "HFFTN", "DCT",  "DCTN"};
   bool is_forward_op = std::any_of(forward_op_name.begin(), forward_op_name.end(),
                                    [&op_name](const std::string &forward_op) { return op_name == forward_op; });
   return is_forward_op;

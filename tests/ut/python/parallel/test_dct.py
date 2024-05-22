@@ -30,7 +30,7 @@ def setup_function():
 
 x_real = np.arange(4 * 4 * 4).reshape(4, 4, 4).astype(np.float32)
 x_imag = np.arange(4 * 4 * 4).reshape(4, 4, 4).astype(np.float32)
-x_ = Tensor(x_real + 1j*x_imag)
+x_ = Tensor(x_real + 1j * x_imag)
 
 grad_all = C.GradOperation(get_all=True)
 
@@ -56,18 +56,16 @@ class GradWrap(Cell):
 
 
 class Net(Cell):
-    def __init__(self, tp, n, axis, norm, forward, grad, strategy=None):
+    def __init__(self, func, tp, n, axis, norm, strategy=None):
         super(Net, self).__init__()
-        self.dct = P.DCT().shard(strategy)
+        self.func = func.shard(strategy)
         self.tp = tp
         self.n = n
         self.axis = axis
         self.norm = norm
-        self.forward = forward
-        self.grad = grad
 
     def construct(self, x):
-        return self.dct(x, self.tp, self.n, self.axis, self.norm, self.forward, self.grad)
+        return self.func(x, self.tp, self.n, self.axis, self.norm)
 
 
 def test_dct_auto_parallel():
@@ -78,7 +76,7 @@ def test_dct_auto_parallel():
     """
     context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=4,
                                       global_rank=0)
-    net = GradWrap(NetWithLoss(Net(tp=2, n=4, axis=-1, norm="BACKWARD", forward=True, grad=False)))
+    net = GradWrap(NetWithLoss(Net(P.DCT(), tp=2, n=4, axis=-1, norm="ortho")))
     net.set_train()
     _cell_graph_executor.compile(net, x_)
 
@@ -90,8 +88,7 @@ def test_dct_model_parallel():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=4, global_rank=0)
-    net = GradWrap(NetWithLoss(Net(tp=2, n=4, axis=-1, norm="BACKWARD",
-                                   forward=True, grad=False, strategy=((2, 2, 1),))))
+    net = GradWrap(NetWithLoss(Net(P.DCT(), tp=2, n=4, axis=-1, norm="ortho", strategy=((2, 2, 1),))))
     net.set_train()
     _cell_graph_executor.compile(net, x_)
 
@@ -103,8 +100,7 @@ def test_dct_strategy_error():
     Expectation: raise RuntimeError
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=4, global_rank=0)
-    net = GradWrap(NetWithLoss(Net(tp=2, n=4, axis=-1, norm="BACKWARD",
-                                   forward=True, grad=False, strategy=((1, 2, 2),))))
+    net = GradWrap(NetWithLoss(Net(P.DCT(), tp=2, n=4, axis=-1, norm="ortho", strategy=((1, 2, 2),))))
     net.set_train()
     with pytest.raises(RuntimeError):
         _cell_graph_executor.compile(net, x_)
@@ -118,7 +114,7 @@ def test_idct_auto_parallel():
     """
     context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=4,
                                       global_rank=0)
-    net = GradWrap(NetWithLoss(Net(tp=2, n=4, axis=-1, norm="BACKWARD", forward=False, grad=True)))
+    net = GradWrap(NetWithLoss(Net(P.IDCT(), tp=2, n=4, axis=-1, norm="ortho")))
     net.set_train()
     _cell_graph_executor.compile(net, x_)
 
@@ -130,8 +126,7 @@ def test_idct_model_parallel():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=4, global_rank=0)
-    net = GradWrap(NetWithLoss(Net(tp=2, n=4, axis=-1, norm="BACKWARD",
-                                   forward=False, grad=True, strategy=((2, 2, 1),))))
+    net = GradWrap(NetWithLoss(Net(P.IDCT(), tp=2, n=4, axis=-1, norm="ortho", strategy=((2, 2, 1),))))
     net.set_train()
     _cell_graph_executor.compile(net, x_)
 
@@ -143,8 +138,7 @@ def test_idct_strategy_error():
     Expectation: raise RuntimeError
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=4, global_rank=0)
-    net = GradWrap(NetWithLoss(Net(tp=2, n=4, axis=-1, norm="BACKWARD",
-                                   forward=False, grad=True, strategy=((1, 2, 2),))))
+    net = GradWrap(NetWithLoss(Net(P.IDCT(), tp=2, n=4, axis=-1, norm="ortho", strategy=((1, 2, 2),))))
     net.set_train()
     with pytest.raises(RuntimeError):
         _cell_graph_executor.compile(net, x_)
