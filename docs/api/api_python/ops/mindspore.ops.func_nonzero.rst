@@ -1,7 +1,7 @@
 mindspore.ops.nonzero
 =====================
 
-.. py:function:: mindspore.ops.nonzero(input, as_tuple)
+.. py:function:: mindspore.ops.nonzero(input, as_tuple=False)
 
     计算x中非零元素的下标。
 
