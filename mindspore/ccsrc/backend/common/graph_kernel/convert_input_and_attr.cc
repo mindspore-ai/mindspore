@@ -253,22 +253,12 @@ void ConvertGraphKernelToFrontEnd::AddAttrToInput(const CNodePtr &cnode, const s
                                                   const std::string &arg_handler, const PrimitivePtr &primitive,
                                                   size_t pos) {
   auto value = primitive->GetAttr(arg_name);
-  ValueNodePtr value_node;
   if (!arg_handler.empty()) {
     auto opp_arg_handler_func = GetOppArgHandlerFunc(arg_handler);
     MS_EXCEPTION_IF_NULL(opp_arg_handler_func);
     value = opp_arg_handler_func(value);
-    value_node = std::make_shared<ValueNode>(value);
-  } else if (value->isa<Int64Imm>()) {
-    auto tensor_ptr = std::make_shared<tensor::Tensor>(GetValue<int64_t>(value), kInt64);
-    value_node = std::make_shared<ValueNode>(tensor_ptr);
-  } else {
-    value_node = std::make_shared<ValueNode>(value);
   }
-  value_node->set_abstract(value->ToAbstract());
-  auto cb = Callback::Instance();
-  MS_EXCEPTION_IF_NULL(cb);
-  cb->SetEmptyKernelInfo(value_node);
+  auto value_node = opt::CreateValueNodeWithKernelInfo(cnode->func_graph(), value);
   auto inputs = cnode->inputs();
   inputs.insert(inputs.begin() + pos, value_node);
   cnode->set_inputs(inputs);

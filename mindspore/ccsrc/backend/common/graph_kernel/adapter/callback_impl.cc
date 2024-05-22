@@ -73,22 +73,6 @@ void GetTypeAndFormats(const device::KernelWithIndex &kernel_with_index, std::ve
   }
   (void)input_formats->emplace_back(kOpFormat_DEFAULT);
 }
-
-template <typename T>
-void UpdateToOriginalBuildInfo(const AnfNodePtr &node, std::vector<T> *cur_info, std::vector<T> *orig_info) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(cur_info);
-  MS_EXCEPTION_IF_NULL(orig_info);
-  for (size_t i = 0; i < std::min(cur_info->size(), orig_info->size()); ++i) {
-    auto &cur_value = (*cur_info)[i];
-    auto orig_value = (*orig_info)[i];
-    if (cur_value != orig_value) {
-      MS_LOG(INFO) << "Update node[" << node->fullname_with_scope() << "] input[" << i << "] " << cur_value << " --> "
-                   << orig_value;
-      cur_value = orig_value;
-    }
-  }
-}
 }  // namespace
 
 GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImpl);
@@ -285,15 +269,17 @@ void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node, const std::vect
     auto &inputs = cnode->inputs();
     std::vector<bool> visited(inputs.size(), false);
     std::for_each(indices.begin(), indices.end(), [&visited](size_t index) { visited[index] = true; });
+    opt::GenerateKernelObjectTypeForNewCNode(cnode, &input_obj_type, &output_obj_type);
     for (size_t i = 1; i < inputs.size(); ++i) {
       if (visited[i]) {
         CollectInputTypesAndFormats(inputs[i], &input_types, &input_formats, true);
       } else {
-        input_types.emplace_back(build_info->GetInputDeviceType(i - 1));
-        input_formats.emplace_back(build_info->GetInputFormat(i - 1));
+        auto input_idx = i - 1;
+        input_types.emplace_back(build_info->GetInputDeviceType(input_idx));
+        input_formats.emplace_back(build_info->GetInputFormat(input_idx));
+        input_obj_type[input_idx] = build_info->GetInputKernelObjectType(input_idx);
       }
     }
-    opt::GenerateKernelObjectTypeForNewCNode(cnode, &input_obj_type, &output_obj_type);
   }
   auto input_num = AnfUtils::GetInputTensorNum(cnode);
   if (input_formats.size() > input_num) {

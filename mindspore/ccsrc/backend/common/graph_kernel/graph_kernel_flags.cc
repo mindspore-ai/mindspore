@@ -381,6 +381,12 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   if (kernel_generator == "DVM" && !has_enable_dynamic_shape_fusion) {
     enable_dynamic_shape_fusion = true;
   }
+  if (is_ascend && enable_auto_tensor_inplace) {
+    MS_LOG(WARNING)
+      << "For Graph Kernel Fusion, the flag '--enable_auto_tensor_inplace' set in 'graph_kernel_flags' is "
+         "not supported on Ascend and will be turned off now";
+    enable_auto_tensor_inplace = false;
+  }
 }
 
 std::string GraphKernelFlags::DumpAllFlags() const {
