@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <map>
 #include <vector>
 #include <string>
 #include <utility>
@@ -31,6 +32,11 @@
 
 namespace mindspore {
 namespace kernel {
+static std::map<std::string, int> ms_op_key_to_internel_op_id = {{"SiLU", internal::OpId::Swish},
+                                                                 {"AddLayerNorm", internal::OpId::AddLayerNorm},
+                                                                 {"Cast", internal::OpId::Cast},
+                                                                 {"MatmulFfn", internal::OpId::MatmulQkv},
+                                                                 {"MatmulQkv", internal::OpId::MatmulQkv}};
 class InternalKernelMod : public KernelMod {
  public:
   explicit InternalKernelMod(std::string &&op_type) : op_type_(std::move(op_type)) {
@@ -51,6 +57,7 @@ class InternalKernelMod : public KernelMod {
  protected:
   virtual int Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   virtual void SetInOutIdx() = 0;
+  void SetInOutIdx(size_t in_count, size_t out_count);
   virtual internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                              const std::vector<KernelTensor *> &outputs) = 0;
   virtual uint64_t GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
