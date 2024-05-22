@@ -11,6 +11,7 @@ Array Operation
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.arange
     mindspore.mint.index_select
     mindspore.mint.topk
     mindspore.mint.broadcast_to

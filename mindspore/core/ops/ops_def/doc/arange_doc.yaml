@@ -4,12 +4,12 @@ arange:
         `step` up to but not including `end`.
 
         Args:
-            start (Union[number, Tensor]): The first number in the sequence.
-                Must have type: int32 ,int64, float32, float64 or Rank 0 Tensor.
-            end (Union[number, Tensor]): Upper end of the sequence, exclusive.
-                Must have type: int32 ,int64, float32, float64 or Rank 0 Tensor.
-            step (Union[number, Tensor]): Number that increments `start`.
-                Must have type: int32 ,int64, float32, float64 or Rank 0 Tensor.
+            start (number): The first number in the sequence.
+                Must have type: int32 ,int64, float32, or float64.
+            end (number): Upper end of the sequence, exclusive.
+                Must have type: int32 ,int64, float32, or float64.
+            step (number): Number that increments `start`.
+                Must have type: int32 ,int64, float32, or float64.
 
         Returns:
             A 1-D Tensor. If `start`, `end` and `step` are all integers, the Tensor dtype is int64.
@@ -25,10 +25,11 @@ arange:
             `Ascend`
 
         Examples:
-            >>> from mindspore import mint
+            >>> from mindspore import ops
             >>> start = 0
             >>> end = 10
             >>> step = 4
-            >>> output = mint.arange(start, end, step)
+            >>> net = ops.Arange()
+            >>> output = net(start, end, step)
             >>> print(output)
             [0 4 8]
