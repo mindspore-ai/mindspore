@@ -159,7 +159,13 @@ bool InternalKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
     InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
   }
   impl_->SetOutputs(outputs_);
-  auto ret = impl_->Launch();
+  int ret = 0;
+  if (ascend_profiler_->GetEnableFlag()) {
+    MS_LOG(INFO) << "The enable_profiler_flag is " << ascend_profiler_->GetEnableFlag();
+    ret = impl_->LaunchWithProfiling();
+  } else {
+    ret = impl_->Launch();
+  }
   return (ret == 0);
 }
 }  // namespace kernel
