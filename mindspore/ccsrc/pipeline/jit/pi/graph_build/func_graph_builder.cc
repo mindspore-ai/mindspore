@@ -101,11 +101,11 @@ bool TensorArgMutable(const py::object &obj, const ValuePtr &value) {
 }
 
 TypeId GetTypeIdFromClassName(const std::string &class_name) {
-  static HashMap<std::string, TypeId> class_name_to_type_ids = {{"Tensor", kObjectTypeTensorType},
-                                                                {"list", kObjectTypeList},
-                                                                {"tuple", kObjectTypeTuple},
-                                                                {"int", kNumberTypeInt},
-                                                                {"float", kNumberTypeFloat}};
+  static HashMap<std::string, TypeId> class_name_to_type_ids = {
+    {"Tensor", kObjectTypeTensorType},  {"list", kObjectTypeList},
+    {"tuple", kObjectTypeTuple},        {"int", kNumberTypeInt},
+    {"float", kNumberTypeFloat},        {"CellList", kObjectTypeList},
+    {"CellDict", kObjectTypeDictionary}};
   auto iter = class_name_to_type_ids.find(class_name);
   if (iter == class_name_to_type_ids.end()) {
     return kTypeUnknown;
@@ -838,4 +838,47 @@ void FuncGraphBuilder::SetGraphName(const std::string &name) {
 }
 
 void FuncGraphBuilder::AddPrevBuilder(const FuncGraphBuilderPtr &builder) { prev_builders_.push_back(builder.get()); }
+
+bool FuncGraphBuilder::ValidateCallableObject(const py::object &obj) {
+  if (obj.ptr() == nullptr) {
+    return false;
+  }
+  // Check if object is invalid method for CellList/CellDict, which should not be converted to graph.
+  if (CheckInvalidCellListDictMethod(obj)) {
+    MS_LOG(INFO) << "The object " << py::str(obj) << " is a invalid CellList/CellDict method, "
+                 << "can not convert to graph";
+    return false;
+  }
+  return true;
+}
+
+bool FuncGraphBuilder::CheckInvalidCellListDictMethod(const py::object &obj) {
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  py::tuple method_info = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_METHOD_INFO, obj);
+  constexpr size_t class_index = 0;
+  constexpr size_t method_index = 1;
+  py::object class_name_obj = method_info[class_index];
+  if (class_name_obj.ptr() == nullptr || py::isinstance<py::none>(class_name_obj)) {
+    return false;
+  }
+  auto class_name = class_name_obj.cast<std::string>();
+  MS_LOG(INFO) << "class name: " << class_name;
+  if (class_name != "CellList" && class_name != "CellDict") {
+    return false;
+  }
+  auto method_name_obj = method_info[method_index];
+  if (method_name_obj.ptr() == nullptr || py::isinstance<py::none>(method_name_obj)) {
+    return false;
+  }
+  auto method_name = method_name_obj.cast<std::string>();
+  static std::vector<std::string> inplace_method_name = {"clear", "update"};
+  if (std::any_of(inplace_method_name.begin(), inplace_method_name.end(),
+                  [&method_name](const std::string &name) { return name == method_name; })) {
+    MS_LOG(INFO) << "CellDict/CellList inplace function " << method_name << " found";
+    return true;
+  }
+  auto type_id = GetTypeIdFromClassName(class_name);
+  Any require = pipeline::Resource::GetMethodPtr(type_id, method_name);
+  return require.empty();
+}
 }  // namespace mindspore
