@@ -134,10 +134,19 @@ input_data_address = base_address + offset_address
 template <typename T1, typename T2>
 uint32_t ReduceProdCpuKernel::ReduceProdCompute(CpuKernelContext &ctx) {
   Tensor *input_data = ctx.Input(0);
+  auto input_data_shape = input_data->GetTensorShape();
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   const int64_t input_data_num = input_data->NumElements();
-  auto input_data_shape = input_data->GetTensorShape();
+  Tensor *output_data = ctx.Output(0);
+  auto output_data_shape = output_data->GetTensorShape();
+  auto output_data_addr = reinterpret_cast<T1 *>(output_data->GetData());
+  const int64_t output_data_num = output_data->NumElements();
+
   const int32_t input_data_dims = input_data_shape->GetDims();
+  if (input_data_dims == 0) {
+    output_data_addr[0] = input_data_addr[0];
+    return KERNEL_STATUS_OK;
+  }
   std::vector<int64_t> input_data_dimsize = input_data_shape->GetDimSizes();
   std::vector<int64_t> dims_addr(input_data_dims);
   dims_addr[input_data_dims - 1] = 1;
@@ -146,10 +155,6 @@ uint32_t ReduceProdCpuKernel::ReduceProdCompute(CpuKernelContext &ctx) {
     addr_tmp *= input_data_dimsize[i + 1];
     dims_addr[i] = addr_tmp;
   }
-  Tensor *output_data = ctx.Output(0);
-  auto output_data_shape = output_data->GetTensorShape();
-  auto output_data_addr = reinterpret_cast<T1 *>(output_data->GetData());
-  const int64_t output_data_num = output_data->NumElements();
   Tensor *axes_data = ctx.Input(1);
   auto axes_data_addr = reinterpret_cast<T2 *>(axes_data->GetData());
   int64_t axes_data_num = axes_data->NumElements();

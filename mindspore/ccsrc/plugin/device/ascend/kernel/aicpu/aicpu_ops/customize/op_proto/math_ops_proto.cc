@@ -265,7 +265,26 @@ IMPLEMT_COMMON_INFERFUNC(TypicalReduceInferShape) {
   return GRAPH_FAILED;
 }
 
+IMPLEMT_COMMON_INFERFUNC(ScalarReduceProdInferShape) {
+  OP_LOGD(TbeGetName(op), "Enter %s InferShape", TbeGetOpType(op).c_str());
+  if (op.GetInputDesc(0).GetShape().GetDimNum() == 0) {
+    auto output_desc = op.GetOutputDesc(0);
+    std::vector<int64_t> output_shape{1};
+    output_desc.SetShape(Shape(output_shape));
+    output_desc.SetDataType(op.GetInputDesc(0).GetDataType());
+    op.UpdateOutputDesc("y", output_desc);
+    return GRAPH_SUCCESS;
+  }
+  const int64_t input_x_idx = 0;
+  const int64_t output_y_idx = 0;
+  if (InferReduceShapeProcess(op, input_x_idx, output_y_idx, "axes")) {
+    return GRAPH_SUCCESS;
+  }
+  return GRAPH_FAILED;
+}
+
 COMMON_INFER_FUNC_REG(ReduceSum, TypicalReduceInferShape);
+COMMON_INFER_FUNC_REG(ReduceProd, ScalarReduceProdInferShape);
 // ----------------ReduceOp END-------------------
 
 // ----------------RaggedRange-------------------
