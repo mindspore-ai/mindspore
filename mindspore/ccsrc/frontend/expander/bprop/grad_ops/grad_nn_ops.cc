@@ -2700,5 +2700,17 @@ REG_BPROP_BUILDER("BinaryCrossEntropyWithLogits").SetBody((BODYFUNC(ib) {
   return {grad_dout, ib->OutZeros(target), ib->OutZeros(weight), ib->OutZeros(posweight), ib->OutZeros(reduction)};
 }));
 
+REG_BPROP_BUILDER("BinaryCrossEntropyExt").SetUnusedInputs({i4}).SetBody((BODYFUNC(ib) {
+  // input, target, weight, reduction, out, dout
+  auto grad_output = ib->GetInput(kIndex5);
+  auto input = ib->GetInput(kIndex0);
+  auto target = ib->GetInput(kIndex1);
+  auto weight = ib->GetInput(kIndex2);
+  auto reduction = ib->GetInput(kIndex3);
+
+  auto grad_dout = ib->Emit("BinaryCrossEntropyBackwardExt", {grad_output, input, target, weight, reduction});
+  return {grad_dout, ib->OutZeros(target), ib->OutZeros(weight), ib->OutZeros(reduction)};
+}));
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

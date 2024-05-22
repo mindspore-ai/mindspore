@@ -216,7 +216,7 @@ from mindspore.ops.function.math_func import tanh
 # 95
 
 # 96
-
+from mindspore.ops.auto_generate import binary_cross_entropy_ext as binary_cross_entropy
 # 97
 
 # 98
@@ -428,7 +428,7 @@ __all__ = [
     # 87
 
     # 88
-
+    'binary_cross_entropy',
     # 89
 
     # 90

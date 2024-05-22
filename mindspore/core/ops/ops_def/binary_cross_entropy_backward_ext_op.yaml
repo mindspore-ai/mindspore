@@ -1,0 +1,24 @@
+#operator binary_cross_entropy_backward_ext
+binary_cross_entropy_backward_ext:
+  args:
+    grad_output:
+      dtype: tensor
+    input:
+      dtype: tensor
+    target:
+      dtype: tensor
+    weight:
+      dtype: tensor
+      default: None
+    reduction:
+      dtype: int
+      default: "'mean'"
+      arg_handler: str_to_enum
+  returns:
+    out:
+      dtype: tensor
+  class:
+    name: BinaryCrossEntropyBackwardExt
+  dispatch:
+    enable: True
+    Ascend: BinaryCrossEntropyBackwardExtAscend
