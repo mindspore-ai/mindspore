@@ -590,6 +590,7 @@ static auto Analyze(const GraphBuilderPtr &g) {
 // return whether the code should be modified
 static void GraphCapture(JitCompileResults *jcr) {
   MS_EXCEPTION_IF_NULL(jcr->code);
+  AObjectSourceScope resource;
 
   GraphJitConfig &conf = *jcr->conf;
   GraphBuilderPtr g = TraceRun(jcr);
@@ -598,7 +599,6 @@ static void GraphCapture(JitCompileResults *jcr) {
   }
   if (g->GetGraph()->IsBreakAtLoop() && !g->GetGraph()->RestoreLoopStatus()) {
     jcr->stat = JitCompileResults::NEVER_COMPILE;
-    AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
     return;
   }
   Inline(jcr, g);
@@ -614,22 +614,22 @@ static void GraphCapture(JitCompileResults *jcr) {
   }
 
   py::object new_code = MakeCodeFromCodeGen(g, analyzer, jcr->origin_frame_->f_globals);
-  jcr->code->SetPythonCode(new_code);
-  jcr->stat = JitCompileResults::GRAPH_CALLABLE;
+  if (new_code.ptr() != nullptr) {
+    jcr->code->SetPythonCode(new_code);
+    jcr->stat = JitCompileResults::GRAPH_CALLABLE;
+  }
 
   if (conf.GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
     if (conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
       const auto &debug_str = analyzer->GetCaptureInfo().ToString();
       PY_PRINT_F("*** Dump One Stage ByteCode Collection After CodeGen *** \n%s", debug_str.c_str());
-    } else {
-      Utils::DisFuncObject(new_code.ptr());
     }
+    Utils::DisFuncObject(new_code.ptr());
     GRAPH_JIT_LOG_F("\n\n");
   }
 
   // collect stop trace reason to traceback
   jcr->tbs->PushStopTraceRes(g->GetGraph()->GetCodeName(), g->GetGraph()->GetStopTraceReason());
-  AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
 
   bool captured = !analyzer->NeedInterpret() && !conf.GetBoolConfig(GraphJitConfig::kInterpretCapturedCode);
   if (captured && !jcr->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {

@@ -202,10 +202,17 @@ class CodeBreakGenerator {
   // (chaiyouheng): collect nodes inputs and outputs at graph analyze
   void Init(const Graph *, const GraphAnalyzer &);
 
-  virtual py::object MakeCode(bool make_graph, Graph *graph);
+  // generate a code to call graph, unsupported operations, and untracked operations that will be compiled
+  py::object MakeDispatchCode(Graph *graph);
+
+  // used to replace origin code, extend attribute from origin code.
+  virtual py::object MakeCapturedCode() const;
+
   const CFG *GetCFG() const;
 
  protected:
+  void ExtendCodeInfo(CodeGenerator *cg, bool merge_kw_only) const;
+
   // rebuild parameters of graph, identify parameters that graph only support as constant
   void BuildGraphParameters(const std::unordered_map<ValueNode *, int> &locals, GraphParameterBuilder *);
 
@@ -275,16 +282,17 @@ class MindCodeBreakGenerator : public CodeBreakGenerator {
  public:
   MindCodeBreakGenerator(const GraphBuilderPtr &builder, PyCodeObject *co)
       : CodeBreakGenerator(co), builder_(builder) {}
-  py::object MakeCode(bool make_graph, Graph *graph) override;
+
   mindspore::FuncGraphBuilderPtr FGBuilder() const {
     return std::dynamic_pointer_cast<MindGraphBuilder>(builder_)->FGBuilder();
   }
 
   py::object MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&, int argc, unsigned code_flag) const override;
 
+  py::object MakeCapturedCode() const override;
+
  private:
-  py::object MakeCopyCode(const std::string &co_name, int co_argcount, int co_kwonlyargcount, int co_flags,
-                          bool make_graph = false) const;
+  void Compile(const std::string &name, int argc, int kw_only, int flags, const py::object &stub) const;
 
   GraphBuilderPtr builder_;
 };
