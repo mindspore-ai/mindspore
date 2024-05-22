@@ -94,7 +94,13 @@ KernelTensor::KernelTensor(void *device_ptr, size_t size, Format format, TypeId 
     : host_shape_(host_shape),
       user_data_(user_data),
       address_common_(
-        std::make_shared<AddressCommon>(device_ptr, size, host_shape, format, dtype_id, device_name, device_id)) {}
+        std::make_shared<AddressCommon>(device_ptr, size, host_shape, format, dtype_id, device_name, device_id)) {
+  if (dtype_id == kTypeUnknown) {
+    SetType(TypeIdToType(dtype_id));
+  } else {
+    SetType(std::make_shared<TensorType>(TypeIdToType(dtype_id)));
+  }
+}
 
 KernelTensor::KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value,
                            void *device_ptr, size_t size, const std::string &format, TypeId dtype_id,
