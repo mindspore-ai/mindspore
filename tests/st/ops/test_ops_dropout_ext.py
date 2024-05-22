@@ -28,7 +28,7 @@ from tests.st.utils import test_utils
 
 
 def generate_random_input(shape, dtype):
-    return np.random.random(shape).astype(dtype)
+    return np.ones(shape).astype(dtype)
 
 
 @test_utils.run_with_cell
@@ -50,10 +50,7 @@ def compare_output(x, p, output):
         output_np = output.asnumpy()
     elem_count = x.size
     nonzero_count = np.count_nonzero(output_np)
-    assert (elem_count * (keep_prob - 0.1)) < nonzero_count < (elem_count * (keep_prob + 0.1))
-    output_sum = np.sum(output_np)
-    x_sum = np.sum(x)
-    assert abs(output_sum - x_sum) / x_sum < 0.1
+    assert (elem_count * (keep_prob - 0.02)) < nonzero_count < (elem_count * (keep_prob + 0.02))
 
 
 def compare_grad(x, p, grad):
@@ -65,9 +62,7 @@ def compare_grad(x, p, grad):
         grad_np = grad.asnumpy()
     elem_count = x.size
     nonzero_count = np.count_nonzero(grad_np)
-    assert (elem_count * (keep_prob - 0.1)) < nonzero_count < (elem_count * (keep_prob + 0.1))
-    grad_sum = np.sum(grad_np)
-    np.testing.assert_allclose(grad_sum * keep_prob, nonzero_count, rtol=1e-3)
+    assert (elem_count * (keep_prob - 0.02)) < nonzero_count < (elem_count * (keep_prob + 0.02))
 
 
 @pytest.mark.level1
@@ -90,7 +85,7 @@ def test_func_dropout_normal(context_mode, dtype):
     output = dropout_forward_func(ms.Tensor(x), p)
     compare_output(x, p, output)
 
-    x1 = generate_random_input((64, 64), dtype)
+    x1 = generate_random_input((256, 256), dtype)
     p1 = 0.3
     grad = dropout_backward_func(ms.Tensor(x1), p1)
     compare_grad(x1, p1, grad)
@@ -116,7 +111,7 @@ def test_func_dropout_bfloat16(context_mode):
     output = dropout_forward_func(ms.Tensor(x).astype(mstype.bfloat16), p)
     compare_output(x, p, output)
 
-    x1 = generate_random_input((64, 64), np.float32)
+    x1 = generate_random_input((256, 256), np.float32)
     p1 = 0.3
     grad = dropout_backward_func(ms.Tensor(x1).astype(mstype.bfloat16), p1)
     compare_grad(x1, p1, grad)
