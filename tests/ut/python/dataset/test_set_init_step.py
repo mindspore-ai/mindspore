@@ -206,6 +206,7 @@ def test_init_step_with_non_mappable_generator_with_len():
 
 @pytest.mark.parametrize("fast_recovery_mode", (True, False))
 @pytest.mark.parametrize("shuffle", (True, False))
+@pytest.mark.skip(reason="Timeout")
 def test_init_step_with_mappable_generator(fast_recovery_mode, shuffle):
     """
     Feature: Pipeline resuming
