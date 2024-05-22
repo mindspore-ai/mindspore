@@ -67,6 +67,7 @@ from mindspore.ops.auto_generate.gen_ops_prim import scatter_add_ext_op
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
 arg_max_with_value_ = ArgMaxWithValue()
+arg_min_with_value_ = ArgMinWithValue()
 batch_to_space_nd_v2_ = P.BatchToSpaceNDV2()
 cast_ = P.Cast()
 diag_ = P.Diag()

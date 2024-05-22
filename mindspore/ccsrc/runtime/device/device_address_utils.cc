@@ -950,6 +950,7 @@ void DeviceAddressUtils::CreateKernelTensor(const device::DeviceAddressPtr &devi
 }
 
 void DeviceAddressUtils::CreateKernelTensor(const ValuePtr &input_value) {
+  MS_EXCEPTION_IF_NULL(input_value);
   if (input_value->isa<tensor::BaseTensor>()) {
     auto tensor = input_value->cast<tensor::BaseTensorPtr>();
     if (tensor->device_address() != nullptr) {
@@ -968,6 +969,7 @@ void DeviceAddressUtils::CreateKernelTensor(const device::DeviceAddressPtr &devi
   }
   const auto address_common = device_address->address_common();
   MS_EXCEPTION_IF_NULL(address_common);
+  MS_EXCEPTION_IF_NULL(abs);
   const auto &shape = abs->GetShape();
   const auto &type = abs->GetType();
   auto real_kernel_tensor =
