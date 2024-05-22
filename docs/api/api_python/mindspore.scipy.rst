@@ -53,3 +53,5 @@ mindspore.scipy.fft
 
     mindspore.scipy.fft.dct
     mindspore.scipy.fft.idct
+    mindspore.scipy.fft.dctn
+    mindspore.scipy.fft.idctn

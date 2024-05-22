@@ -13,37 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_KERNELS_NORMALIZED_DCT_H_
-#define AICPU_KERNELS_NORMALIZED_DCT_H_
+#ifndef AICPU_KERNELS_NORMALIZED_FFT_ORTHO_H_
+#define AICPU_KERNELS_NORMALIZED_FFT_ORTHO_H_
 
 #include <vector>
+#include <numeric>
+#include <complex>
 #include <securec.h>
 #include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
-const uint32_t kIndex0 = 0;
-const uint32_t kDCTTypeIndex = 1;
-const uint32_t kDCTNIndex = 2;
-const uint32_t kDCTDimIndex = 3;
-const uint32_t kDCTNormIndex = 4;
-class DCTCpuKernel : public CpuKernel {
+class FFTOrthoCpuKernel : public CpuKernel {
  public:
-  ~DCTCpuKernel() = default;
-
-  DataType input_type_;
-  DataType output_type_;
+  ~FFTOrthoCpuKernel() = default;
 
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
-  template <typename T_in, typename T_out>
-  static uint32_t DCTCompute(CpuKernelContext &ctx);
-
-  template <typename T_in, typename T_out>
-  static uint32_t DCTComputeComplex(CpuKernelContext &ctx);
-
  private:
-  uint32_t ParseKernelParam(CpuKernelContext &ctx);
+  template <typename T>
+  uint32_t FFTOrthoCompute(CpuKernelContext &ctx);
+
+  std::string op_name_;
 };
 }  // namespace aicpu
-#endif  //  AICPU_DCT_H
+#endif  //  AICPU_KERNELS_NORMALIZED_FFT_ORTHO_H_

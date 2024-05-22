@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DCT_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DCT_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FFT_ORTHO_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FFT_ORTHO_CPU_KERNEL_H_
 
 #include <vector>
 #include <complex>
@@ -26,14 +26,13 @@
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "unsupported/Eigen/CXX11/Tensor"
 
 namespace mindspore {
 namespace kernel {
-class DCTCpuKernelMod : public NativeCpuKernelMod {
+class FFTOrthoCpuKernelMod : public NativeCpuKernelMod {
  public:
-  DCTCpuKernelMod() = default;
-  ~DCTCpuKernelMod() override = default;
+  FFTOrthoCpuKernelMod() = default;
+  ~FFTOrthoCpuKernelMod() override = default;
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
@@ -46,36 +45,20 @@ class DCTCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void UpdateParam();
-
-  template <typename T_in, typename T_out>
+  template <typename T>
   bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                     const std::vector<kernel::KernelTensor *> &outputs);
 
-  template <typename T_in, typename T_out>
-  bool LaunchKernelComplex(const std::vector<kernel::KernelTensor *> &inputs,
-                           const std::vector<kernel::KernelTensor *> &outputs);
-
-  using DCTFunc =
-    std::function<bool(DCTCpuKernelMod *, const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
-  static std::vector<std::pair<KernelAttr, DCTFunc>> func_list_;
-
-  DCTFunc kernel_func_;
-
-  bool forward_;
-  int64_t x_rank_;
-  int64_t dct_type_;
-  int64_t dim_;
-  int64_t n_;
-  int64_t input_element_nums_;
-  int64_t calculate_element_nums_;
-  double norm_weight_;
-  mindspore::NormMode norm_;
-  bool is_ortho_;
+  using FFTOrthoFunc = std::function<bool(FFTOrthoCpuKernelMod *, const std::vector<KernelTensor *> &,
+                                          const std::vector<KernelTensor *> &)>;
+  static std::vector<std::pair<KernelAttr, FFTOrthoFunc>> func_list_;
+  FFTOrthoFunc kernel_func_;
 
   std::vector<int64_t> tensor_shape_;
-  std::vector<int64_t> calculate_shape_;
+  int64_t x_rank_;
+  std::vector<int64_t> dim_;
+  bool forward_;
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DCT_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FFT_ORTHO_CPU_KERNEL_H_

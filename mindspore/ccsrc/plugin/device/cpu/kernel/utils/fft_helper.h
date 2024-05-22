@@ -35,7 +35,7 @@ double GetNormalized(int64_t, NormMode, bool);
 bool IsForwardOp(const std::string &);
 
 template <typename S, typename T>
-void Cast(const S *in, T *out) {
+void Cast(const S *in, T *out, bool get_real = true) {
   if constexpr (std::is_same_v<S, T>) {
     *out = static_cast<T>(*in);
   } else if constexpr (std::is_same_v<S, bool> && std::is_same_v<T, std::complex<float>>) {
@@ -43,7 +43,11 @@ void Cast(const S *in, T *out) {
   } else if constexpr (std::is_same_v<S, bool> && std::is_same_v<T, std::complex<double>>) {
     *out = std::complex<double>(*in ? 1.0 : 0.0, 0.0);
   } else if constexpr ((std::is_same_v<S, std::complex<float>>) || (std::is_same_v<S, std::complex<double>>)) {
-    *out = static_cast<T>(std::real(*in));
+    if (get_real) {
+      *out = static_cast<T>(std::real(*in));
+    } else {
+      *out = static_cast<T>(std::imag(*in));
+    }
   } else if constexpr ((std::is_same_v<T, std::complex<float>>) || (std::is_same_v<T, std::complex<double>>)) {
     double realValue = static_cast<double>(*in);
     std::complex<double> complexValue(realValue, 0.0);
@@ -55,7 +59,7 @@ void Cast(const S *in, T *out) {
 
 template <typename T_in, typename T_out>
 void ShapeCopy(T_in *input, T_out *output, const std::vector<int64_t> input_shape,
-               const std::vector<int64_t> output_shape) {
+               const std::vector<int64_t> output_shape, bool get_real = true) {
   auto x_rank = input_shape.size();
   std::vector<int64_t> shape_min(x_rank, 0);
   std::vector<int64_t> input_pos(x_rank, 0);
@@ -78,7 +82,7 @@ void ShapeCopy(T_in *input, T_out *output, const std::vector<int64_t> input_shap
   int64_t input_index = 0;
   int64_t output_index = 0;
   for (int64_t i = 0; i < copy_num; ++i) {
-    Cast(&input[input_index], &output[output_index]);
+    Cast(&input[input_index], &output[output_index], get_real);
 
     size_t j = x_rank - 1;
     input_pos[j]++;
@@ -171,6 +175,27 @@ void PocketFFTC2C(std::complex<T> *calculate_input, std::complex<T> *output_ptr,
     (void)axes.push_back(static_cast<size_t>(dim[i]));
   }
   pocketfft::c2c(shape, stride_in, stride_out, axes, forward, calculate_input, output_ptr, fct);
+}
+
+template <typename T>
+void PocketFFTDCT(T *calculate_input, T *output_ptr, int dct_type, T fct, const std::vector<int64_t> &calculate_shape,
+                  const std::vector<int64_t> &dim, bool is_ortho) {
+  pocketfft::shape_t shape(calculate_shape.begin(), calculate_shape.end());
+  pocketfft::stride_t stride_in(shape.size());
+  pocketfft::stride_t stride_out(shape.size());
+  size_t tmp_in = sizeof(T);
+  size_t tmp_out = sizeof(T);
+  for (int i = shape.size() - 1; i >= 0; --i) {
+    stride_in[i] = tmp_in;
+    tmp_in *= shape[i];
+    stride_out[i] = tmp_out;
+    tmp_out *= shape[i];
+  }
+  pocketfft::shape_t axes;
+  for (size_t i = 0; i < dim.size(); i++) {
+    (void)axes.push_back(static_cast<size_t>(dim[i]));
+  }
+  pocketfft::dct(shape, stride_in, stride_out, axes, dct_type, calculate_input, output_ptr, fct, is_ortho);
 }
 }  // namespace kernel
 }  // namespace mindspore

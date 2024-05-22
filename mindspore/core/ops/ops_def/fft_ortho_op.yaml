@@ -1,0 +1,19 @@
+#operator fft_ortho
+fft_ortho:
+  args:
+    input:
+      dtype: tensor
+    axes:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: None
+    forward:
+      dtype: bool
+      default: True
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: FFTOrtho
+  function:
+    disable: True

@@ -16,47 +16,48 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-from mindspore import ops
-from mindspore.scipy.fft import idct, dct
+from mindspore import ops, nn, mutable
+from mindspore.scipy.fft import idct, dct, dctn, idctn
 from scipy.fft import idct as sp_idct
 from scipy.fft import dct as sp_dct
-
-import tests.st.utils.test_utils as test_utils
-
-ms.context.set_context(device_target="CPU")
+from scipy.fft import dctn as sp_dctn
+from scipy.fft import idctn as sp_idctn
 
 
 # idct functional api test cases
-def idct_generate_random_input(shape, dtype):
+
+class IDCTNet(nn.Cell):
+    def __init__(self):
+        super(IDCTNet, self).__init__()
+        self.idct = idct
+
+    def construct(self, x, dct_type, n, dim, norm):
+        return self.idct(x, dct_type, n, dim, norm)
+
+
+class IDCTGradNet(nn.Cell):
+    def __init__(self, net, dout):
+        super(IDCTGradNet, self).__init__()
+        self.net = net
+        self.dout = dout
+        self.grad = ops.GradOperation(sens_param=True)
+
+    def construct(self, x, dct_type, n, dim, norm):
+        gout = self.grad(self.net)(x, dct_type, n, dim, norm, self.dout)
+        return gout
+
+
+def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)
 
 
-def idct_generate_expect_forward_output(x):
-    return sp_idct(x, norm='ortho').astype(np.float32)
+def idct_generate_expect_forward_output(x, n, dim, norm):
+    return sp_idct(x, 2, n, dim, norm).astype(np.float32)
 
 
 def idct_generate_expect_backward_output(x):
-    # out = sp_dct(x, norm='ortho')
-    out = np.array([[1.73205081, 0., 0.], [1.73205081, 0., 0.]], dtype=np.float32)
+    out = sp_dct(x, norm='ortho')
     return out
-
-
-def idct_generate_expect_backward_output_3_4(x):
-    # out = sp_dct(x, norm='ortho')
-    out = np.array([[2., 0., 0., 0.],
-                    [2., 0., 0., 0.],
-                    [2., 0., 0., 0.]], dtype=np.float32)
-    return out
-
-
-@test_utils.run_with_cell
-def idct_forward_func(x):
-    return idct(x)
-
-
-@test_utils.run_with_cell
-def idct_backward_func(x):
-    return ops.grad(idct_forward_func, (0))(x)
 
 
 @pytest.mark.level0
@@ -73,9 +74,13 @@ def test_ops_idct_forward(mode):
     Expectation: success
     """
     ms.context.set_context(mode=mode)
-    x = idct_generate_random_input((2, 3), np.float32)
-    output = idct_forward_func(ms.Tensor(x))
-    expect = idct_generate_expect_forward_output(x)
+    x = generate_random_input((2, 3), np.float32)
+    n = 3
+    dim = 1
+    norm = "ortho"
+    net = IDCTNet()
+    output = net(ms.Tensor(x), 2, n, dim, norm)
+    expect = idct_generate_expect_forward_output(x, n, dim, norm)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
@@ -93,11 +98,17 @@ def test_ops_idct_backward(mode):
     Expectation: success
     """
     ms.context.set_context(mode=mode)
-    x = idct_generate_random_input((2, 3), np.float32)
-    output = idct_backward_func(ms.Tensor(x))
-    ones_grad = ms.Tensor(np.ones_like(x))
-    expect = idct_generate_expect_backward_output(ones_grad)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+    x = generate_random_input((2, 3), np.float32)
+    dout = np.ones_like(x)
+    n = 3
+    dim = 1
+    norm = "ortho"
+    net = IDCTNet()
+    grad_net = IDCTGradNet(net, ms.Tensor(dout))
+    grad_net.set_train()
+    grad = grad_net(ms.Tensor(x), 2, n, dim, norm)
+    expect = idct_generate_expect_backward_output(dout)
+    np.testing.assert_allclose(grad.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
 @pytest.mark.level0
@@ -114,19 +125,23 @@ def test_ops_idct_forward_dynamic_shape(mode):
     Expectation: success
     """
     ms.context.set_context(mode=mode)
-
+    n = 3
+    dim = -1
+    norm = "ortho"
     x_dyn = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(idct_forward_func)
-    test_cell.set_inputs(x_dyn)
+    n_dyn = mutable(n)
+    dim_dyn = mutable(dim)
+    net = IDCTNet()
+    net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
 
-    x1 = idct_generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = idct_generate_expect_forward_output(x1)
+    x1 = generate_random_input((2, 3, 4, 5), np.float32)
+    output = net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = idct_generate_expect_forward_output(x1, n, dim, norm)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
-    x2 = idct_generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = idct_generate_expect_forward_output(x2)
+    x2 = generate_random_input((3, 4, 5, 6), np.float32)
+    output = net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = idct_generate_expect_forward_output(x2, n, dim, norm)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
@@ -145,18 +160,23 @@ def test_ops_idct_forward_dynamic_rank(mode):
     """
     ms.context.set_context(mode=mode)
 
+    n = 3
+    dim = -1
+    norm = "ortho"
     x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(idct_forward_func)
-    test_cell.set_inputs(x_dyn)
+    n_dyn = mutable(n)
+    dim_dyn = mutable(dim)
+    net = IDCTNet()
+    net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
 
-    x1 = idct_generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = idct_generate_expect_forward_output(x1)
+    x1 = generate_random_input((2, 3, 4, 5), np.float32)
+    output = net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = idct_generate_expect_forward_output(x1, n, dim, norm)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
-    x2 = idct_generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = idct_generate_expect_forward_output(x2)
+    x2 = generate_random_input((3, 4, 5, 6), np.float32)
+    output = net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = idct_generate_expect_forward_output(x2, n, dim, norm)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
@@ -175,18 +195,33 @@ def test_ops_idct_backward_dynamic_shape(mode):
     """
     ms.context.set_context(mode=mode)
 
+    n = 3
+    dim = -1
+    norm = "ortho"
     x_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(idct_backward_func)
-    test_cell.set_inputs(x_dyn)
+    n_dyn = mutable(n)
+    dim_dyn = mutable(dim)
+    net = IDCTNet()
+    net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
 
-    x1 = idct_generate_random_input((2, 3), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = idct_generate_expect_backward_output(x1)
+    x1 = generate_random_input((2, 3), np.float32)
+    dout1 = np.ones_like(x1)
+    grad_net = IDCTGradNet(net, ms.Tensor(dout1))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = idct_generate_expect_backward_output(dout1)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
-    x2 = idct_generate_random_input((3, 4), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = idct_generate_expect_backward_output_3_4(x2)
+    x2 = generate_random_input((3, 4), np.float32)
+    n = 4
+    n_dyn = mutable(n)
+    dout2 = np.ones_like(x2)
+    grad_net = IDCTGradNet(net, ms.Tensor(dout2))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = idct_generate_expect_backward_output(dout2)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
@@ -200,55 +235,71 @@ def test_ops_idct_backward_dynamic_shape(mode):
 def test_ops_idct_backward_dynamic_rank(mode):
     """
     Feature: mindspore.scipy.fft.idct
-    Description: test function idct backward with dynamic rank.
+    Description: test function idct backward with dynamic shape.
     Expectation: success
     """
     ms.context.set_context(mode=mode)
 
+    n = 3
+    dim = -1
+    norm = "ortho"
     x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(idct_backward_func)
-    test_cell.set_inputs(x_dyn)
+    n_dyn = mutable(n)
+    dim_dyn = mutable(dim)
+    net = IDCTNet()
+    net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
 
-    x1 = idct_generate_random_input((2, 3), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = idct_generate_expect_backward_output(x1)
+    x1 = generate_random_input((2, 3), np.float32)
+    dout1 = np.ones_like(x1)
+    grad_net = IDCTGradNet(net, ms.Tensor(dout1))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = idct_generate_expect_backward_output(dout1)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
-    x2 = idct_generate_random_input((3, 4), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = idct_generate_expect_backward_output_3_4(x2)
+    x2 = generate_random_input((3, 4), np.float32)
+    dout2 = np.ones_like(x2)
+    grad_net = IDCTGradNet(net, ms.Tensor(dout2))
+    grad_net.set_train()
+    n = 4
+    n_dyn = mutable(n)
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = idct_generate_expect_backward_output(dout2)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
 # dct functional api test cases
-def dct_generate_random_input(shape, dtype):
-    return np.random.randn(*shape).astype(dtype)
+
+class DCTNet(nn.Cell):
+    def __init__(self):
+        super(DCTNet, self).__init__()
+        self.dct = dct
+
+    def construct(self, x, dct_type, n, dim, norm):
+        return self.dct(x, dct_type, n, dim, norm)
 
 
-def dct_generate_expect_forward_output(x):
-    return sp_dct(x).astype(np.float32)
+class DCTGradNet(nn.Cell):
+    def __init__(self, net, dout):
+        super(DCTGradNet, self).__init__()
+        self.net = net
+        self.dout = dout
+        self.grad = ops.GradOperation(sens_param=True)
+
+    def construct(self, x, dct_type, n, dim, norm):
+        gout = self.grad(self.net)(x, dct_type, n, dim, norm, self.dout)
+        return gout
+
+
+def dct_generate_expect_forward_output(x, n, dim, norm):
+    return sp_dct(x, 2, n, dim, norm).astype(np.float32)
 
 
 def dct_generate_expect_backward_output(x):
-    out = np.array([[4.732051, 0, 1.2679492], [4.732051, 0, 1.2679492]], dtype=np.float32)
+    out = sp_idct(x, norm='ortho')
     return out
-
-
-def dct_generate_expect_backward_output_3_4(x):
-    out = np.array([[6.0273395, -0.49660575, 1.6681787, 0.8010876],
-                    [6.0273395, -0.49660575, 1.6681787, 0.8010876],
-                    [6.0273395, -0.49660575, 1.6681787, 0.8010876]], dtype=np.float32)
-    return out
-
-
-@test_utils.run_with_cell
-def dct_forward_func(x):
-    return dct(x)
-
-
-@test_utils.run_with_cell
-def dct_backward_func(x):
-    return ops.grad(dct_forward_func, (0))(x)
 
 
 @pytest.mark.level0
@@ -265,9 +316,13 @@ def test_ops_dct_forward(mode):
     Expectation: success
     """
     ms.context.set_context(mode=mode)
-    x = dct_generate_random_input((2, 3), np.float32)
-    output = dct_forward_func(ms.Tensor(x))
-    expect = dct_generate_expect_forward_output(x)
+    x = generate_random_input((2, 3), np.float32)
+    n = 3
+    dim = 1
+    norm = "ortho"
+    net = DCTNet()
+    output = net(ms.Tensor(x), 2, n, dim, norm)
+    expect = dct_generate_expect_forward_output(x, n, dim, norm)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
@@ -285,11 +340,17 @@ def test_ops_dct_backward(mode):
     Expectation: success
     """
     ms.context.set_context(mode=mode)
-    x = dct_generate_random_input((2, 3), np.float32)
-    output = dct_backward_func(ms.Tensor(x))
-    ones_grad = ms.Tensor(np.ones_like(x))
-    expect = dct_generate_expect_backward_output(ones_grad)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+    x = generate_random_input((2, 3), np.float32)
+    dout = np.ones_like(x)
+    n = 3
+    dim = 1
+    norm = "ortho"
+    net = DCTNet()
+    grad_net = DCTGradNet(net, ms.Tensor(dout))
+    grad_net.set_train()
+    grad = grad_net(ms.Tensor(x), 2, n, dim, norm)
+    expect = dct_generate_expect_backward_output(dout)
+    np.testing.assert_allclose(grad.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
 @pytest.mark.level0
@@ -306,19 +367,23 @@ def test_ops_dct_forward_dynamic_shape(mode):
     Expectation: success
     """
     ms.context.set_context(mode=mode)
-
+    n = 3
+    dim = -1
+    norm = "ortho"
     x_dyn = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(dct_forward_func)
-    test_cell.set_inputs(x_dyn)
+    n_dyn = mutable(n)
+    dim_dyn = mutable(dim)
+    net = DCTNet()
+    net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
 
-    x1 = dct_generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = dct_generate_expect_forward_output(x1)
+    x1 = generate_random_input((2, 3, 4, 5), np.float32)
+    output = net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = dct_generate_expect_forward_output(x1, n, dim, norm)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
-    x2 = dct_generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = dct_generate_expect_forward_output(x2)
+    x2 = generate_random_input((3, 4, 5, 6), np.float32)
+    output = net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = dct_generate_expect_forward_output(x2, n, dim, norm)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
@@ -337,18 +402,23 @@ def test_ops_dct_forward_dynamic_rank(mode):
     """
     ms.context.set_context(mode=mode)
 
+    n = 3
+    dim = -1
+    norm = "ortho"
     x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(dct_forward_func)
-    test_cell.set_inputs(x_dyn)
+    n_dyn = mutable(n)
+    dim_dyn = mutable(dim)
+    net = DCTNet()
+    net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
 
-    x1 = dct_generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = dct_generate_expect_forward_output(x1)
+    x1 = generate_random_input((2, 3, 4, 5), np.float32)
+    output = net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = dct_generate_expect_forward_output(x1, n, dim, norm)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
-    x2 = dct_generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = dct_generate_expect_forward_output(x2)
+    x2 = generate_random_input((3, 4, 5, 6), np.float32)
+    output = net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = dct_generate_expect_forward_output(x2, n, dim, norm)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
@@ -367,18 +437,33 @@ def test_ops_dct_backward_dynamic_shape(mode):
     """
     ms.context.set_context(mode=mode)
 
+    n = 3
+    dim = -1
+    norm = "ortho"
     x_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(dct_backward_func)
-    test_cell.set_inputs(x_dyn)
+    n_dyn = mutable(n)
+    dim_dyn = mutable(dim)
+    net = DCTNet()
+    net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
 
-    x1 = dct_generate_random_input((2, 3), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = dct_generate_expect_backward_output(x1)
+    x1 = generate_random_input((2, 3), np.float32)
+    dout1 = np.ones_like(x1)
+    grad_net = DCTGradNet(net, ms.Tensor(dout1))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = dct_generate_expect_backward_output(dout1)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
-    x2 = dct_generate_random_input((3, 4), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = dct_generate_expect_backward_output_3_4(x2)
+    x2 = generate_random_input((3, 4), np.float32)
+    n = 4
+    n_dyn = mutable(n)
+    dout2 = np.ones_like(x2)
+    grad_net = DCTGradNet(net, ms.Tensor(dout2))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = dct_generate_expect_backward_output(dout2)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
@@ -392,21 +477,528 @@ def test_ops_dct_backward_dynamic_shape(mode):
 def test_ops_dct_backward_dynamic_rank(mode):
     """
     Feature: mindspore.scipy.fft.dct
+    Description: test function dct backward with dynamic shape.
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+
+    n = 3
+    dim = -1
+    norm = "ortho"
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    n_dyn = mutable(n)
+    dim_dyn = mutable(dim)
+    net = DCTNet()
+    net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+
+    x1 = generate_random_input((2, 3), np.float32)
+    dout1 = np.ones_like(x1)
+    grad_net = DCTGradNet(net, ms.Tensor(dout1))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = dct_generate_expect_backward_output(dout1)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+    x2 = generate_random_input((3, 4), np.float32)
+    dout2 = np.ones_like(x2)
+    grad_net = DCTGradNet(net, ms.Tensor(dout2))
+    grad_net.set_train()
+    n = 4
+    n_dyn = mutable(n)
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = dct_generate_expect_backward_output(dout2)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+# dctn functional api test cases
+
+
+class DCTNNet(nn.Cell):
+    def __init__(self):
+        super(DCTNNet, self).__init__()
+        self.dctn = dctn
+
+    def construct(self, x, dct_type, s, dim, norm):
+        return self.dctn(x, dct_type, s, dim, norm)
+
+
+class DCTNGradNet(nn.Cell):
+    def __init__(self, net, dout):
+        super(DCTNGradNet, self).__init__()
+        self.net = net
+        self.dout = dout
+        self.grad = ops.GradOperation(sens_param=True)
+
+    def construct(self, x, dct_type, s, dim, norm):
+        gout = self.grad(self.net)(x, dct_type, s, dim, norm, self.dout)
+        return gout
+
+
+def dctn_generate_expect_forward_output(x, s, dim, norm):
+    return sp_dctn(x, 2, s, dim, norm).astype(np.float32)
+
+
+def dctn_generate_expect_backward_output(x):
+    out = sp_idctn(x, norm='ortho')
+    return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_dctn_forward(mode):
+    """
+    Feature: mindspore.scipy.fft.dctn
+    Description: test function dct forward.
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+    x = generate_random_input((2, 3), np.float32)
+    s = (2, 3)
+    dim = (0, 1)
+    norm = "ortho"
+    net = DCTNNet()
+    output = net(ms.Tensor(x), 2, s, dim, norm)
+    expect = dctn_generate_expect_forward_output(x, s, dim, norm)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_dctn_backward(mode):
+    """
+    Feature: mindspore.scipy.fft.dctn
+    Description: test function dct backward.
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+    x = generate_random_input((2, 3), np.float32)
+    dout = np.ones_like(x)
+    s = (2, 3)
+    dim = (0, 1)
+    norm = "ortho"
+    net = DCTNNet()
+    grad_net = DCTNGradNet(net, ms.Tensor(dout))
+    grad_net.set_train()
+    grad = grad_net(ms.Tensor(x), 2, s, dim, norm)
+    expect = dctn_generate_expect_backward_output(dout)
+    np.testing.assert_allclose(grad.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_dctn_forward_dynamic_shape(mode):
+    """
+    Feature: mindspore.scipy.fft.dctn
+    Description: test function dct forward with dynamic shape.
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+
+    s = (2, 3)
+    dim = (0, 1)
+    norm = "ortho"
+    x_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
+    n_dyn = mutable(s)
+    dim_dyn = mutable(dim)
+    net = DCTNNet()
+    net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+
+    x1 = generate_random_input((2, 3), np.float32)
+    output = net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = dctn_generate_expect_forward_output(x1, s, dim, norm)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+    s = (3, 4)
+    n_dyn = mutable(s)
+    x2 = generate_random_input((3, 4), np.float32)
+    output = net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = dctn_generate_expect_forward_output(x2, s, dim, norm)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_dctn_forward_dynamic_rank(mode):
+    """
+    Feature: mindspore.scipy.fft.dctn
+    Description: test function dct forward with dynamic rank.
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+
+    s = (2, 3)
+    dim = (0, 1)
+    norm = "ortho"
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    n_dyn = mutable(s)
+    dim_dyn = mutable(dim)
+    net = DCTNNet()
+    net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+
+    x1 = generate_random_input((2, 3), np.float32)
+    output = net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = dctn_generate_expect_forward_output(x1, s, dim, norm)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+    s = (3, 4)
+    n_dyn = mutable(s)
+    x2 = generate_random_input((3, 4), np.float32)
+    output = net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = dctn_generate_expect_forward_output(x2, s, dim, norm)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_dctn_backward_dynamic_shape(mode):
+    """
+    Feature: mindspore.scipy.fft.dct
+    Description: test function dct backward with dynamic shape.
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+
+    net = DCTNNet()
+    s = (2, 3)
+    dim = (0, 1)
+    norm = "ortho"
+    x_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
+    n_dyn = mutable(s)
+    dim_dyn = mutable(dim)
+
+    x1 = generate_random_input((2, 3), np.float32)
+    dout1 = np.ones_like(x1)
+    grad_net = DCTNGradNet(net, ms.Tensor(dout1))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = dctn_generate_expect_backward_output(dout1)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+    s = (3, 4)
+    n_dyn = mutable(s)
+    x2 = generate_random_input((3, 4), np.float32)
+    dout2 = np.ones_like(x2)
+    grad_net = DCTNGradNet(net, ms.Tensor(dout2))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = dctn_generate_expect_backward_output(dout2)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_dctn_backward_dynamic_rank(mode):
+    """
+    Feature: mindspore.scipy.fft.dct
     Description: test function dct backward with dynamic rank.
     Expectation: success
     """
     ms.context.set_context(mode=mode)
 
+    net = DCTNNet()
+    s = (2, 3)
+    dim = (0, 1)
+    norm = "ortho"
     x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(dct_backward_func)
-    test_cell.set_inputs(x_dyn)
+    n_dyn = mutable(s)
+    dim_dyn = mutable(dim)
 
-    x1 = dct_generate_random_input((2, 3), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = dct_generate_expect_backward_output(x1)
+    x1 = generate_random_input((2, 3), np.float32)
+    dout1 = np.ones_like(x1)
+    grad_net = DCTNGradNet(net, ms.Tensor(dout1))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = dctn_generate_expect_backward_output(dout1)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
-    x2 = dct_generate_random_input((3, 4), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = dct_generate_expect_backward_output_3_4(x2)
+    s = (3, 4)
+    n_dyn = mutable(s)
+    x2 = generate_random_input((3, 4), np.float32)
+    dout2 = np.ones_like(x2)
+    grad_net = DCTNGradNet(net, ms.Tensor(dout2))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = dctn_generate_expect_backward_output(dout2)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+# idctn functional api test cases
+
+
+class IDCTNNet(nn.Cell):
+    def __init__(self):
+        super(IDCTNNet, self).__init__()
+        self.idctn = idctn
+
+    def construct(self, x, dct_type, s, dim, norm):
+        return self.idctn(x, dct_type, s, dim, norm)
+
+
+class IDCTNGradNet(nn.Cell):
+    def __init__(self, net, dout):
+        super(IDCTNGradNet, self).__init__()
+        self.net = net
+        self.dout = dout
+        self.grad = ops.GradOperation(sens_param=True)
+
+    def construct(self, x, dct_type, s, dim, norm):
+        gout = self.grad(self.net)(x, dct_type, s, dim, norm, self.dout)
+        return gout
+
+
+def idctn_generate_expect_forward_output(x, s, dim, norm):
+    return sp_idctn(x, 2, s, dim, norm).astype(np.float32)
+
+
+def idctn_generate_expect_backward_output(x):
+    out = sp_dctn(x, norm='ortho')
+    return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_idctn_forward(mode):
+    """
+    Feature: mindspore.scipy.fft.idctn
+    Description: test function dct forward.
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+    x = generate_random_input((2, 3), np.float32)
+    s = (2, 3)
+    dim = (0, 1)
+    norm = "ortho"
+    net = IDCTNNet()
+    output = net(ms.Tensor(x), 2, s, dim, norm)
+    expect = idctn_generate_expect_forward_output(x, s, dim, norm)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_idctn_backward(mode):
+    """
+    Feature: mindspore.scipy.fft.idctn
+    Description: test function dct backward.
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+    x = generate_random_input((2, 3), np.float32)
+    dout = np.ones_like(x)
+    s = (2, 3)
+    dim = (0, 1)
+    norm = "ortho"
+    net = IDCTNNet()
+    grad_net = IDCTNGradNet(net, ms.Tensor(dout))
+    grad_net.set_train()
+    grad = grad_net(ms.Tensor(x), 2, s, dim, norm)
+    expect = idctn_generate_expect_backward_output(dout)
+    np.testing.assert_allclose(grad.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_idctn_forward_dynamic_shape(mode):
+    """
+    Feature: mindspore.scipy.fft.idctn
+    Description: test function dct forward with dynamic shape.
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+
+    s = (2, 3)
+    dim = (0, 1)
+    norm = "ortho"
+    x_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
+    n_dyn = mutable(s)
+    dim_dyn = mutable(dim)
+    net = IDCTNNet()
+    net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+
+    x1 = generate_random_input((2, 3), np.float32)
+    output = net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = idctn_generate_expect_forward_output(x1, s, dim, norm)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+    s = (3, 4)
+    n_dyn = mutable(s)
+    x2 = generate_random_input((3, 4), np.float32)
+    output = net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = idctn_generate_expect_forward_output(x2, s, dim, norm)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_idctn_forward_dynamic_rank(mode):
+    """
+    Feature: mindspore.scipy.fft.idctn
+    Description: test function dct forward with dynamic rank.
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+
+    s = (2, 3)
+    dim = (0, 1)
+    norm = "ortho"
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    n_dyn = mutable(s)
+    dim_dyn = mutable(dim)
+    net = IDCTNNet()
+    net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+
+    x1 = generate_random_input((2, 3), np.float32)
+    output = net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = idctn_generate_expect_forward_output(x1, s, dim, norm)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+    s = (3, 4)
+    n_dyn = mutable(s)
+    x2 = generate_random_input((3, 4), np.float32)
+    output = net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = idctn_generate_expect_forward_output(x2, s, dim, norm)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_idctn_backward_dynamic_shape(mode):
+    """
+    Feature: mindspore.scipy.fft.dct
+    Description: test function dct backward with dynamic shape.
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+
+    net = IDCTNNet()
+    s = (2, 3)
+    dim = (0, 1)
+    norm = "ortho"
+    x_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
+    n_dyn = mutable(s)
+    dim_dyn = mutable(dim)
+
+    x1 = generate_random_input((2, 3), np.float32)
+    dout1 = np.ones_like(x1)
+    grad_net = IDCTNGradNet(net, ms.Tensor(dout1))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = idctn_generate_expect_backward_output(dout1)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+    s = (3, 4)
+    n_dyn = mutable(s)
+    x2 = generate_random_input((3, 4), np.float32)
+    dout2 = np.ones_like(x2)
+    grad_net = IDCTNGradNet(net, ms.Tensor(dout2))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = idctn_generate_expect_backward_output(dout2)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_idctn_backward_dynamic_rank(mode):
+    """
+    Feature: mindspore.scipy.fft.dct
+    Description: test function dct backward with dynamic rank.
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+
+    net = IDCTNNet()
+    s = (2, 3)
+    dim = (0, 1)
+    norm = "ortho"
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    n_dyn = mutable(s)
+    dim_dyn = mutable(dim)
+
+    x1 = generate_random_input((2, 3), np.float32)
+    dout1 = np.ones_like(x1)
+    grad_net = IDCTNGradNet(net, ms.Tensor(dout1))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x1), 2, n_dyn, dim_dyn, norm)
+    expect = idctn_generate_expect_backward_output(dout1)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
+
+    s = (3, 4)
+    n_dyn = mutable(s)
+    x2 = generate_random_input((3, 4), np.float32)
+    dout2 = np.ones_like(x2)
+    grad_net = IDCTNGradNet(net, ms.Tensor(dout2))
+    grad_net.set_train()
+    grad_net.set_inputs(x_dyn, 2, n_dyn, dim_dyn, norm)
+    output = grad_net(ms.Tensor(x2), 2, n_dyn, dim_dyn, norm)
+    expect = idctn_generate_expect_backward_output(dout2)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)

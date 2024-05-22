@@ -107,10 +107,10 @@ FFT_REGISTER(FFTNInfo, FFTTupleDim);
 FFT_REGISTER(IFFTNInfo, FFTTupleDim);
 FFT_REGISTER(RFFTInfo, FFTIntDim);
 FFT_REGISTER(IRFFTInfo, FFTIntDim);
-FFT_REGISTER(DCTInfo, FFTIntDim, kIndex3, kIndex7);
-FFT_REGISTER(IDCTInfo, FFTIntDim, kIndex3, kIndex7);
-FFT_REGISTER(DCTNInfo, FFTTupleDim, kIndex3, kIndex7);
-FFT_REGISTER(IDCTNInfo, FFTTupleDim, kIndex3, kIndex7);
+FFT_REGISTER(DCTInfo, FFTIntDim, kIndex3, kIndex5);
+FFT_REGISTER(IDCTInfo, FFTIntDim, kIndex3, kIndex5);
+FFT_REGISTER(DCTNInfo, FFTTupleDim, kIndex3, kIndex5);
+FFT_REGISTER(IDCTNInfo, FFTTupleDim, kIndex3, kIndex5);
 
 #undef FFT_REG_END
 #undef FFT_REG_INDEX_END
