@@ -26,12 +26,18 @@
 #include "./internal_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/ascend/kernel/internal/tiling_cache.h"
+#include "utils/ms_context.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace kernel {
 class InternalKernelMod : public KernelMod {
  public:
-  explicit InternalKernelMod(std::string &&op_type) : op_type_(std::move(op_type)) {}
+  explicit InternalKernelMod(std::string &&op_type) : op_type_(std::move(op_type)) {
+    auto ascend_profiler = profiler::Profiler::GetInstance(kAscendDevice);
+    MS_EXCEPTION_IF_NULL(ascend_profiler);
+    enable_profiler_flag_ = ascend_profiler->GetEnableFlag();
+  }
   virtual ~InternalKernelMod();
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
@@ -58,6 +64,7 @@ class InternalKernelMod : public KernelMod {
   std::vector<internal::Tensor *> outputs_;
   TilingInfo tiling_info_;
   std::string op_type_;
+  bool enable_profiler_flag_{False};
 };
 
 using InternalKernelModPtr = std::shared_ptr<InternalKernelMod>;
