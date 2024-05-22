@@ -120,6 +120,13 @@ class FuncGraphBuilder {
   /// \return Return true if the python object is a function which can be constantly folded.
   static bool CanConstantFoldFunc(const py::object &obj);
 
+  /// \brief Check if the python object is valid as the callable object in graph.
+  ///
+  /// \param[in] obj A python object.
+  ///
+  /// \return Return true if the python object is valid as the callable object in graph.
+  static bool ValidateCallableObject(const py::object &obj);
+
   /// \brief Set the final outputs and get the graph.
   ///
   /// \return The graph constructed.
@@ -171,6 +178,8 @@ class FuncGraphBuilder {
   static AbstractBasePtr GetAbstractOf(const AnfNodePtr &node);
 
   py::object TryToAddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj);
+
+  static bool CheckInvalidCellListDictMethod(const py::object &obj);
 
   FuncGraphPtr graph_{nullptr};
   bool has_set_output_{false};
