@@ -17,6 +17,7 @@ Array Operation
     mindspore.mint.cat
     mindspore.mint.flip
     mindspore.mint.index_select
+    mindspore.mint.scatter_add
     mindspore.mint.tile
     mindspore.mint.topk
     mindspore.mint.where
