@@ -114,7 +114,6 @@ INSTANTIATE_TEST_CASE_P(
 INSTANTIATE_TEST_CASE_P(
   TestMaskedSelectExtException, TestMaskedSelectExtException,
   testing::Values(MaskedSelectExtShapeParams{{4, 3}, kInt8, {4, 3}, kInt32},
-                  MaskedSelectExtShapeParams{{3, 4, 5}, kUInt32, {3, 4, 5}, kBool},
-                  MaskedSelectExtShapeParams{{2, 3, 4}, kUInt16, {2, 3, 4}, kBool}));
+                  MaskedSelectExtShapeParams{{3, 4, 5}, kUInt32, {3, 4, 5}, kInt32}));
 }  // namespace ops
 }  // namespace mindspore

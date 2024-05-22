@@ -28,16 +28,11 @@ constexpr int64_t kMaskedSelectInputNum = 2;
 TypePtr MaskedSelectExtInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[kIndex1]->GetType(), {kBool}, prim_name);
-  const std::set<TypePtr> valid_types = {kInt8,    kInt16,   kInt32,   kInt64, kUInt8,
-                                         kFloat16, kFloat32, kFloat64, kBool,  kBFloat16};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[kIndex0]->GetType(), valid_types, prim_name);
   return input_args[kIndex0]->GetType()->Clone();
 }
 
 BaseShapePtr MaskedSelectExtFrontendInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
-  auto op_name = primitive->name();
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMaskedSelectInputNum, op_name);
   return std::make_shared<abstract::TensorShape>(ShapeVector({abstract::Shape::kShapeDimAny}));
 }
 }  // namespace
