@@ -1653,7 +1653,7 @@ REG_BPROP_BUILDER("NormalExt").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody
 
 REG_BPROP_BUILDER("UniformExt").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(ReturnZeros);
 
-REG_BPROP_BUILDER("ScatterAddExt").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ScatterAddExt").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto axis = ib->GetInput(kIndex1);
   auto indices = ib->GetInput(kIndex2);

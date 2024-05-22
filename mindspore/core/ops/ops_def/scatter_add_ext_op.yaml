@@ -16,3 +16,5 @@ scatter_add_ext:
         disable: True
     dispatch:
         enable: True
+        Ascend: ScatterAddExtAscend
+

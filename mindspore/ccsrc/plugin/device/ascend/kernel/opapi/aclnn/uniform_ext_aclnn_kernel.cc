@@ -65,7 +65,7 @@ bool UniformExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const s
   auto status = CALL_ASCEND_API(aclrtMemcpyAsync, outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
                                 inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
   if (status != ACL_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "MaskedFillAscend Launch and call rtMemcpyAsync failed, ret = 0x" << status;
+    MS_LOG(EXCEPTION) << "UniformExtAscend Launch and call rtMemcpyAsync failed, ret = 0x" << status;
   }
   ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, outputs[kIndex0], a_, b_, seed_, offset_));
   RunOp(stream_ptr, workspace);
