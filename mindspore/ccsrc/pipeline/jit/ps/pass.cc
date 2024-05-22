@@ -61,6 +61,7 @@
 #include "frontend/parallel/pass/merge_cast_opt.h"
 #include "frontend/parallel/pass/remove_cast_before_assign_add.h"
 #include "frontend/parallel/pass/bias_add_comm_swap.h"
+#include "frontend/parallel/pass/matmul_add_comm_reduction.h"
 #include "frontend/parallel/pass/comp_comm_scheduling.h"
 #include "frontend/parallel/pass/overlap_opt_shard_in_pipeline.h"
 #include "frontend/parallel/pass/slice_activation_in_cell_share_recompute.h"
@@ -820,6 +821,12 @@ bool BiasAddCommSwap(const ResourcePtr &resource) {
   return true;
 }
 
+bool MatmulAddCommReduction(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::MatmulAddCommReduction(resource->func_graph());
+  return true;
+}
+
 bool ReorderSendRecvBetweenFpBpPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::ReorderSendRecvBetweenFpBp(resource->func_graph());
@@ -1209,6 +1216,7 @@ std::vector<PassItem> kVmPasses = {
   {"cse_after_recomputation", OptAfterRecomputeGroup},
   {"environ_conv", EnvironConversionPass},
   {"bias_add_comm_swap", BiasAddCommSwap},
+  {"matmul_add_comm_reduction", MatmulAddCommReduction},
   {"label_micro_interleaved_index", LabelMicroInterleavedIndexPass},
   {"label_fine_grained_interleaved_index", LabelFineGrainedInterleavedIndexPass},
   {"merge_cast_opt", MergeCastOpt},
