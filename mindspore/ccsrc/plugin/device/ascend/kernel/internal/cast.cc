@@ -18,6 +18,7 @@
 
 #include <memory>
 
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "param/cast_param.h"
 
@@ -33,8 +34,9 @@ internal::OpParamPtr InternalCast::CreateOpParam(const std::vector<KernelTensor 
 }
 
 void InternalCast::SetInOutIdx() {
-  inputsIdxMap_[kIndex0] = kIndex0;
-  outputsIdxMap_[kIndex0] = kIndex0;
+  const int kCastMSInputNum = 2;
+  const int kCastMSOutputNum = 1;
+  InternalKernelMod::SetInOutIdx(kCastMSInputNum, kCastMSOutputNum);
 }
 
 uint64_t InternalCast::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
@@ -44,6 +46,9 @@ uint64_t InternalCast::GenTilingCacheKey(const std::vector<KernelTensor *> &inpu
     kernel_name_, inputs[kIndex0]->GetShapeVector(), inputs[kIndex0]->dtype_id(), outputs[kIndex0]->GetShapeVector(),
     outputs[kIndex0]->dtype_id());
 }
+
 MS_INTERNAL_KERNEL_FACTORY_REG(Cast, InternalCast);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Cast, 1, 0);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Cast, 1, 0);
 }  // namespace kernel
 }  // namespace mindspore
