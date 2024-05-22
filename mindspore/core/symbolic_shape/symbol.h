@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include "base/base.h"
+#include "ir/value.h"
 
 namespace mindspore {
 namespace symshape {
@@ -77,6 +78,9 @@ class MS_CORE_API Symbol : public Base {
   /// \brief Get the raw data of symbol.
   virtual std::string ToRawString() const { return ToString(); }
 
+  /// \brief Convert the symbol to a ValuePtr
+  virtual ValuePtr ToValue() const { return kValueAny; }
+
   /// \brief Get the operation that built this symbol.
   inline OpPtr operation() const { return operation_.lock(); }
 
@@ -129,6 +133,7 @@ class MS_CORE_API DynamicSymbol : public Symbol {
   bool HasData() const override { return symbol_ != nullptr; }
   std::string ToString() const override { return symbol_ == nullptr ? "DYN-" + sid() : symbol_->ToString(); }
   std::string ToRawString() const override { return symbol_ == nullptr ? sid() : symbol_->ToRawString(); }
+  ValuePtr ToValue() const override { return symbol_ == nullptr ? Symbol::ToValue() : symbol_->ToValue(); }
   const SymbolPtr &symbol() const { return symbol_; }
 
  protected:
@@ -189,6 +194,7 @@ class MS_CORE_API BoolSymbol : public ScalarSymbol {
     return value_;
   }
   std::string ToRawString() const override;
+  ValuePtr ToValue() const override;
 
  protected:
   void SetValueByScalar(const Symbol *s) override { value_ = static_cast<const BoolSymbol *>(s)->value_; }
@@ -221,6 +227,7 @@ class MS_CORE_API FloatSymbol : public ScalarSymbol {
     return value_;
   }
   std::string ToRawString() const override;
+  ValuePtr ToValue() const override;
 
  protected:
   void SetValueByScalar(const Symbol *s) override { value_ = static_cast<const FloatSymbol *>(s)->value_; }
@@ -253,6 +260,7 @@ class MS_CORE_API StrSymbol : public ScalarSymbol {
     return value_;
   }
   std::string ToRawString() const override;
+  ValuePtr ToValue() const override;
 
  protected:
   void SetValueByScalar(const Symbol *s) override { value_ = static_cast<const StrSymbol *>(s)->value_; }
@@ -286,6 +294,7 @@ class MS_CORE_API ListSymbol : public Symbol {
   bool operator==(const Symbol &s) const override;
   std::string ToString() const override;
   std::string ToRawString() const override;
+  ValuePtr ToValue() const override;
 
   bool HasData() const override { return has_data_; }
   bool AllHaveData() const {

@@ -163,36 +163,6 @@ ShapeVector ToShape(const Symbol *symbol) {
   return shape;
 }
 
-ValuePtr SymbolToValue(const Symbol *symbol) {
-  if (!symbol->HasData()) {
-    return kValueAny;
-  }
-  if (symbol->is<IntSymbol>()) {
-    return MakeValue<int64_t>(symbol->as<IntSymbol>()->value());
-  }
-  if (symbol->is<BoolSymbol>()) {
-    return MakeValue<bool>(symbol->as<BoolSymbol>()->value());
-  }
-  if (symbol->is<FloatSymbol>()) {
-    return MakeValue<double>(symbol->as<FloatSymbol>()->value());
-  }
-  if (symbol->is<StrSymbol>()) {
-    return MakeValue<std::string>(symbol->as<StrSymbol>()->value());
-  }
-  if (symbol->is<ListSymbol>()) {
-    auto list_shape = symbol->as<ListSymbol>();
-    if (!list_shape->AllHaveData()) {
-      return kValueAny;
-    }
-    ValuePtrList res;
-    res.reserve(list_shape->size());
-    (void)std::transform(list_shape->symbols().cbegin(), list_shape->symbols().cend(), std::back_inserter(res),
-                         [](const SymbolPtr &s) { return SymbolToValue(s.get()); });
-    return std::make_shared<ValueTuple>(std::move(res));
-  }
-  return kValueAny;
-}
-
 SymbolPtr ShapeVector2Symbol(const ShapeVector &shape, const OpPtr &op) {
   if (IsDynamicRank(shape)) {
     return ListSymbol::Make(op);
@@ -279,7 +249,7 @@ ValuePtr QueryValue(const AbstractBasePtr &abs) {
     auto value = abs->GetValue();
     return value != nullptr ? value : kValueAny;
   }
-  return SymbolToValue(symbolic_value.get());
+  return symbolic_value->ToValue();
 }
 }  // namespace symshape
 }  // namespace mindspore

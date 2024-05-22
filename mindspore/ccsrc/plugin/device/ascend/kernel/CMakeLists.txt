@@ -16,6 +16,7 @@ file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "pyboost/call/*.cc"
         "pyboost/auto_generate/*.cc"
         "akg/*.cc"
+        "graph_kernel/*.cc"
         "bisheng/bisheng_kernel_mod.cc"
         "bisheng/bisheng_kernel_build.cc"
         "bisheng/custom_bisheng_kernel.cc"
@@ -47,6 +48,7 @@ file(GLOB_RECURSE SRC_IN_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "pyboost/auto_generate/*.cc"
         "rts/*.cc"
         "akg/*.cc"
+        "graph_kernel/*.cc"
         )
 file(GLOB_RECURSE INTERNAL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "internal/*.cc"

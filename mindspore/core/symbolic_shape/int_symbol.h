@@ -53,6 +53,8 @@ class MS_CORE_API IntSymbol : public ScalarSymbol {
 
   std::string ToRawString() const override;
   std::string ToString() const override;
+  ValuePtr ToValue() const override;
+
   bool operator==(const Symbol &s) const override;
   bool operator<(const IntSymbol &s) const;
   bool operator<=(const IntSymbol &s) const;

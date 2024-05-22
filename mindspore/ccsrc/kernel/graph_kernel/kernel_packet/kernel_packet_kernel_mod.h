@@ -29,39 +29,21 @@
 
 namespace mindspore {
 namespace kernel {
-using MemcpyAsyncFunc = std::function<bool(void *, const void *, size_t, void *)>;
-class KernelPacketInner;
-namespace kernelpacket {
-struct SimpleNode {
-  AbstractBasePtr abs;
-  std::string debug_info;
-};
-BACKEND_EXPORT bool Init(KernelPacketInner *kernel_packet, const CNodePtr &real_node);
-}  // namespace kernelpacket
-
-struct KernelPacketInner {
-  friend bool kernelpacket::Init(KernelPacketInner *kernel_packet, const CNodePtr &node);
-
- protected:
-  // Cache the inner_kernel's input KernelTensors
-  std::vector<KernelTensorPtr> inputs_cache_;
-  // Map inner_kernel's input index to outer input index
-  std::unordered_map<size_t, size_t> input_map_;
-  // Map inner_kernel's input node
-  std::unordered_map<size_t, kernelpacket::SimpleNode> input_node_map_;
-  // Map inner_kernel's input index to workspace index
-  std::unordered_map<size_t, size_t> input_workspace_map_;
-  // Cache the host data.
-  std::vector<std::vector<int8_t>> host_data_cache_;
-  std::vector<ValuePtr> host_value_cache_;
-  KernelModPtr real_kernel_mod_;
-  std::string real_node_name_;
-};
-
-/// \brief Kernel Mod of subgraph into which shape calc is clustered
-class BACKEND_EXPORT KernelPacketKernelMod : public KernelMod, public KernelPacketInner {
+class KernelPacketKernelMod;
+class KernelPacketInfer;
+class BACKEND_EXPORT KernelPacketInitializer {
  public:
-  explicit KernelPacketKernelMod(const MemcpyAsyncFunc &memcpy_async) : memcpy_async_(memcpy_async) {}
+  static bool InitKernel(const CNodePtr &real_node, const KernelModPtr &real_kernel_mod,
+                         KernelPacketKernelMod *packet_kernel_mod, KernelPacketInfer *infer);
+};
+
+/// \brief Kernel Mod of subgraph into which host ops are clustered
+class BACKEND_EXPORT KernelPacketKernelMod : public KernelMod {
+ public:
+  friend class KernelPacketInfer;
+  friend class KernelPacketInitializer;
+
+  KernelPacketKernelMod() = default;
   ~KernelPacketKernelMod() override = default;
 
   bool Init(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) override { return true; }
@@ -74,12 +56,23 @@ class BACKEND_EXPORT KernelPacketKernelMod : public KernelMod, public KernelPack
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
+  virtual bool CopyHostToDevice(void *dst, const void *src, size_t size, void *stream) = 0;
   void AllocWorkspace(size_t i, size_t data_size);
   using AddressArgs = std::tuple<std::vector<KernelTensor *>, std::vector<KernelTensor *>>;
   AddressArgs GetLaunchArgs(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspaces,
                             void *stream_ptr);
-  std::pair<int, bool> QuerySymbolicValue(size_t i, const AbstractBasePtr &abs);
-  MemcpyAsyncFunc memcpy_async_;
+
+  // Cache the inner_kernel's input KernelTensors
+  std::vector<KernelTensorPtr> inputs_cache_;
+  // Map inner_kernel's input index to outer input index
+  std::unordered_map<size_t, size_t> input_map_;
+  // Map inner_kernel's input index to workspace index
+  std::unordered_map<size_t, size_t> input_workspace_map_;
+  // Cache the host data.
+  std::vector<ValuePtr> host_value_cache_;
+  std::vector<const void *> host_data_cache_;
+  KernelModPtr real_kernel_mod_;
+  std::string real_node_debug_str_;
 };
 
 inline CNodePtr GetKernelPacketRealNode(const AnfNodePtr &kernelpacket) {

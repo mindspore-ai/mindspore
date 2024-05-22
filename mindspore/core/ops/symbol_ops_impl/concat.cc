@@ -31,7 +31,7 @@ SymbolPtr ConcatValue(OperationBuilder *b) {
     }
     result.reserve(inputs->size());
     for (auto &inp : inputs->symbols()) {
-      if (auto ilist = inp->as<ListSymbol>(); ilist != nullptr) {
+      if (auto ilist = inp->as<ListSymbol>(); ilist != nullptr && ilist->HasData()) {
         (void)result.insert(result.end(), ilist->symbols().begin(), ilist->symbols().end());
       } else if (inp->is<IntSymbol>()) {
         (void)result.emplace_back(inp);

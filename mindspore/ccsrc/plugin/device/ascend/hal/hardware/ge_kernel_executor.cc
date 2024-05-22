@@ -32,7 +32,8 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 #include "plugin/device/ascend/kernel/pyboost/customize/customize_copy.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_build.h"
-#include "kernel/graph_kernel/kernel_packet/kernel_packet_kernel_mod.h"
+#include "kernel/graph_kernel/kernel_packet/kernel_packet_infer_functor.h"
+#include "plugin/device/ascend/kernel/graph_kernel/kernel_packet_ascend_kernel_mod.h"
 #ifdef ENABLE_DVM
 #include "plugin/device/ascend/kernel/dvm/dvm_kernel_build.h"
 #endif
@@ -94,24 +95,27 @@ kernel::KernelModPtr CreateKernelPacketKernelMod(const CNodePtr &kernel) {
     MS_LOG(ERROR) << "Build " << real_kernel->DebugString() << " failed.";
     return nullptr;
   }
-  auto kernel_mod =
-    std::make_shared<kernel::KernelPacketKernelMod>([](void *dst, const void *src, size_t count, void *stream) -> bool {
-      aclError status = CALL_ASCEND_API(aclrtMemcpyAsync, dst, count, src, count, ACL_MEMCPY_HOST_TO_DEVICE, stream);
-      if (status != ACL_ERROR_NONE) {
-        MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status;
-        return false;
-      }
-      return true;
-    });
+  auto kp_kernelmod = std::make_shared<kernel::KernelPacketAscendKernelMod>();
   std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
   std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
-  if (!kernel_mod->KernelMod::Init(common::AnfAlgo::GetCNodePrimitive(kernel), input_kernel_tensors,
-                                   output_kernel_tensors) ||
-      !kernel::kernelpacket::Init(kernel_mod.get(), real_kernel)) {
+  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel);
+  MS_EXCEPTION_IF_NULL(prim);
+  // when the kernel is inlined, multiple kernels may share a Primitive, so clone an object.
+  prim = prim->Clone();
+  kernel->set_input(0, NewValueNode(prim));
+  auto name = GetValue<std::string>(prim->GetAttr("kernel_packet_node"));
+  auto infer_func = std::make_shared<kernel::KernelPacketInfer>(name, real_kernel->func_graph(), kp_kernelmod.get());
+  prim->set_attr("infer_shape_functor", infer_func);
+  auto real_kernel_info = dynamic_cast<device::KernelInfo *>(real_kernel->kernel_info());
+  MS_EXCEPTION_IF_NULL(real_kernel_info);
+  if (!kp_kernelmod->KernelMod::Init(prim, input_kernel_tensors, output_kernel_tensors) ||
+      !kernel::KernelPacketInitializer::InitKernel(real_kernel, real_kernel_info->GetKernelMod(), kp_kernelmod.get(),
+                                                   infer_func.get())) {
     MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize kernel op[" << real_kernel->fullname_with_scope()
                       << "] failed.";
   }
-  return kernel_mod;
+  real_kernel_info->set_kernel_mod(nullptr);
+  return kp_kernelmod;
 }
 
 kernel::KernelModPtr GenerateAkgKernelMod(const CNodePtr &kernel) {

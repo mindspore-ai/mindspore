@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_KERNEL_PACKET_H_
-#define MINDSPORE_CORE_OPS_KERNEL_PACKET_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_GRAPH_KERNEL_PACKET_KERNEL_MOD_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_GRAPH_KERNEL_PACKET_KERNEL_MOD_H_
 
 #include <vector>
-#include <memory>
-#include <utility>
-#include "ir/anf.h"
-#include "ir/func_graph.h"
-#include "ops/base_operator.h"
-#include "mindapi/base/macros.h"
+#include "kernel/graph_kernel/kernel_packet/kernel_packet_kernel_mod.h"
 
 namespace mindspore {
-namespace ops {
-class MIND_API KernelPacket : public BaseOperator {
+namespace kernel {
+class BACKEND_EXPORT KernelPacketAscendKernelMod : public KernelPacketKernelMod {
  public:
-  MIND_API_BASE_MEMBER(KernelPacket);
-  KernelPacket() : BaseOperator("KernelPacket") { InitIOName({"inputs"}, {"outputs"}); }
+  using KernelPacketKernelMod::KernelPacketKernelMod;
+  ~KernelPacketAscendKernelMod() = default;
+
+ protected:
+  bool CopyHostToDevice(void *dst, const void *src, size_t size, void *stream) override;
 };
-}  // namespace ops
+}  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_KERNEL_PACKET_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_GRAPH_KERNEL_PACKET_KERNEL_MOD_H_

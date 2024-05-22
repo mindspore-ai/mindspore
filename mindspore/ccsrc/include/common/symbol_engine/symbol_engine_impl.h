@@ -22,6 +22,7 @@
 #include <string>
 #include <memory>
 #include <set>
+#include <mutex>
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -59,6 +60,7 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
   /// \brief Build SymbolEngine, and set to the FuncGraph.
   static std::shared_ptr<symshape::SymbolEngineImpl> Build(const FuncGraphPtr &func_graph);
 
+  std::mutex *GetInferMutex() { return &infer_mutex_; }
   bool Infer(const AbstractBasePtrList &inputs) override;
   bool IsDependValue(const AnfNodePtr &node) override;
   bool IsDependShape(const AnfNodePtr &node) override;
@@ -102,6 +104,7 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
   std::map<AnfNodePtr, DependStatus> depend_status_map_;
   std::set<FuncGraph *> visited_graph_;
   std::map<AnfNodePtr, std::shared_ptr<SpecialCNodeHelper>> special_cnodes_;
+  std::mutex infer_mutex_;
 };
 
 using SymbolEngineImplPtr = std::shared_ptr<symshape::SymbolEngineImpl>;

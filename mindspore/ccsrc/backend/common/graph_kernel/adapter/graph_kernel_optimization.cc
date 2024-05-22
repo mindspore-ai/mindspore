@@ -302,11 +302,11 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   // Add the new tensors to the kernel_graph
   pm->Add(std::make_shared<BindValueToGraph>(), OptLevel_1);
 
-  // Default enable kernelpacket.
-  bool enable_kernel_packet = common::GetEnv("MS_DEV_ENABLE_KERNEL_PACKET") != "off";
+  // Default disable kernelpacket.
+  bool enable_kernel_packet = common::GetEnv("MS_DEV_ENABLE_KERNEL_PACKET") == "on";
   auto kernel_packet_lv = GetPassLevelByFlag(enable_kernel_packet);
-  pm->Add(std::make_shared<SymbolEngineBuilder>(true), kernel_packet_lv, is_gpu || is_dvm);
-  pm->Add(std::make_shared<SymbolEngineExtender>(), kernel_packet_lv, is_gpu || is_dvm);
+  pm->Add(std::make_shared<SymbolEngineBuilder>(true), kernel_packet_lv, is_dvm);
+  pm->Add(std::make_shared<SymbolEngineExtender>(), kernel_packet_lv, is_dvm);
 
   // In dynamic shape graph, the infer shape function only support Primitive node
   pm->Add(std::make_shared<ConvertCallToPrim>(), OptLevel_1);

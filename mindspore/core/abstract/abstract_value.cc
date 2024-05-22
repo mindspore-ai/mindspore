@@ -329,6 +329,8 @@ TypePtr AbstractScalar::BuildType() const { return GetTypeTrack(); }
 AbstractBasePtr AbstractScalar::Clone() const {
   auto abs = std::make_shared<AbstractScalar>(GetValueTrack(), GetTypeTrack()->Clone());
   abs->set_is_variable(is_variable_);
+  abs->SetSymbolicShape(this->GetSymbolicShape());
+  abs->SetSymbolicValue(this->GetSymbolicValue());
   return abs;
 }
 
@@ -1370,6 +1372,8 @@ AbstractBasePtr AbstractTuple::Clone() const {
   ret->dyn_len_arg_ = dyn_len_arg_;
   ret->set_dynamic_len(dynamic_len_);
   ret->set_dynamic_len_element_abs(dynamic_len_element_abs_);
+  ret->SetSymbolicShape(this->GetSymbolicShape());
+  ret->SetSymbolicValue(this->GetSymbolicValue());
   return ret;
 }
 
@@ -1464,6 +1468,8 @@ AbstractBasePtr AbstractList::Clone() const {
   ret->set_dynamic_len(dynamic_len_);
   ret->set_dynamic_len_element_abs(dynamic_len_element_abs_);
   ret->set_extra_info(extra_info_);
+  ret->SetSymbolicShape(this->GetSymbolicShape());
+  ret->SetSymbolicValue(this->GetSymbolicValue());
   return ret;
 }
 
@@ -1805,6 +1811,8 @@ AbstractBasePtr AbstractTensor::Clone() const {
   clone->set_shape(shp->Clone());
   clone->set_value(GetValueTrack());
   clone->set_is_adapter(is_adapter());
+  clone->SetSymbolicShape(this->GetSymbolicShape());
+  clone->SetSymbolicValue(this->GetSymbolicValue());
   return clone;
 }
 

@@ -33,7 +33,7 @@ class MS_CORE_API Transpose : public InferShapeOp {
     MS_EXCEPTION_IF_CHECK_FAIL(inp->size() == perm->size(), "size of input and perm should be equal.");
     SymbolPtrList result(inp->size());
     for (size_t i = 0; i < result.size(); i++) {
-      result[i] = inp->symbols()[LongToSize(NormAxis(AsInt(perm->item(i)), result.size()))];
+      result[i] = inp->item(LongToSize(NormAxis(AsInt(perm->item(i)), result.size())));
     }
     return result;
   }
@@ -47,7 +47,7 @@ SymbolPtr Transpose::Eval() {
     return GenList(GenResult(inp, perm));
   }
   // dynamic rank
-  if (!inp->HasData() && !perm->AllHaveData()) {
+  if (!inp->HasData() && !perm->HasData()) {
     return GenVList();
   }
   size_t rank = inp->HasData() ? inp->size() : perm->size();

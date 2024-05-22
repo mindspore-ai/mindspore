@@ -32,8 +32,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/graph_kernel/core/graph_builder.h"
 #include "symbolic_shape/symbol_engine.h"
-#include "include/common/symbol_engine/symbol_engine_impl.h"
-#include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
+#include "backend/common/graph_kernel/symbol_engine/kernel_packet_engine.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "utils/log_adapter.h"
@@ -260,7 +259,7 @@ bool ExtendNode(const AnfNodePtr &node, const SymbolEnginePtr &main_engine, cons
     cnode->AddAttr("real kernel", MakeValue<int32_t>(1));
     // Check if the symbol engine supports inferring for the graph, if not, skip cluster of this graph
     auto [fg, inputs, outputs] = BuildSingleGraphFromNodes(nodes, config);
-    auto symbol_engine = symshape::SymbolEngineImpl::Build(fg);
+    auto symbol_engine = symshape::KernelPacketEngine::Build(fg);
     if (!symbol_engine->SupportInfer()) {
       MS_LOG(INFO) << "symbol engine doesn't support infer shape of node: " << node->fullname_with_scope();
       return false;
