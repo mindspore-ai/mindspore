@@ -16,12 +16,21 @@
  */
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include <string>
+#include "plugin/device/ascend/kernel/internal/internal_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
 internal::TensorFormat InternalKernelUtils::ToInternalFormat(Format format) {
   // some op not support NCHW, NHWC, ... format, current return ND format
   return internal::TensorFormat::TENSOR_FORMAT_ND;
+}
+
+int InternalKernelUtils::ToInternalOpId(std::string name) {
+  if (ms_op_key_to_internel_op_id.find(name) != ms_op_key_to_internel_op_id.end()) {
+    return ms_op_key_to_internel_op_id[name];
+  }
+  return -1;
 }
 
 internal::TensorDType InternalKernelUtils::ToInternalDType(TypeId type) {
