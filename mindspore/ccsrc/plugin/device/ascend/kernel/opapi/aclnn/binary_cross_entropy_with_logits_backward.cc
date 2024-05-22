@@ -33,9 +33,9 @@ void BinaryCrossEntropyWithLogitsBackwardAclnnKernelMod::GetWorkSpaceInfo(const 
   if (iter == reduction_map.end()) {
     MS_LOG(EXCEPTION) << "For BinaryCrossEntropyWithLogits, the value of reduction is invalid.";
   }
-  auto reduction = iter->second;
+  reduction_ = iter->second;
 
-  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4], reduction,
+  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4], reduction_,
                         outputs[kIndex0]);
 }
 
@@ -44,19 +44,8 @@ bool BinaryCrossEntropyWithLogitsBackwardAclnnKernelMod::Launch(const std::vecto
                                                                 const std::vector<KernelTensor *> &outputs,
                                                                 void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-
-  auto reduction_imm = static_cast<Reduction>(transform::ConvertKernelTensor<int64_t>(inputs[kIndex5]));
-  // transform reduction enum value to corresponding value
-  std::unordered_map<Reduction, int64_t> reduction_map = {
-    {Reduction::REDUCTION_SUM, 2}, {Reduction::MEAN, 1}, {Reduction::NONE, 0}};
-  auto iter = reduction_map.find(reduction_imm);
-  if (iter == reduction_map.end()) {
-    MS_LOG(EXCEPTION) << "For BinaryCrossEntropyWithLogits, the value of reduction is invalid.";
-  }
-  auto reduction = iter->second;
-
   ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2],
-                                      inputs[kIndex3], inputs[kIndex4], reduction, outputs[kIndex0]));
+                                      inputs[kIndex3], inputs[kIndex4], reduction_, outputs[kIndex0]));
   RunOp(stream_ptr, workspace);
   return true;
 }
