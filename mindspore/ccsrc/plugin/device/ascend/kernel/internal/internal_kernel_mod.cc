@@ -151,7 +151,12 @@ bool InternalKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
     InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
   }
   impl_->SetOutputs(outputs_);
-  auto ret = impl_->Launch();
+  int ret = 0;
+  if (enable_profiler_flag_) {
+    ret = impl_->LaunchWithProfiling();
+  } else {
+    ret = impl_->Launch();
+  }
   return (ret == 0);
 }
 }  // namespace kernel
