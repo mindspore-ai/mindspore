@@ -209,6 +209,9 @@ def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data
         data = async_dump_dict
         data["common_dump_settings"]["input_output"] = 0
         data["common_dump_settings"]["file_format"] = "npy"
+    elif test_key == "stat_calc_mode":
+        data = e2e_dump_dict
+        data["e2e_dump_settings"]["stat_calc_mode"] = "device"
     else:
         raise ValueError(
             "Failed to generate statistic dump json file. The test name value " + test_key + " is invalid.")

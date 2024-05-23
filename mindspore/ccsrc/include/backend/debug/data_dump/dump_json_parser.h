@@ -81,6 +81,7 @@ class BACKEND_EXPORT DumpJsonParser {
   void GetCellDumpFlag(const session::KernelGraph &kernel_graph);
   void UpdateNeedDumpKernels(const session::KernelGraph &kernel_graph);
   bool IsDumpEnabled();
+  bool IsDeviceCalcStats() const;
   void PyNativeModeCheck();
   void CheckGEBackend();
   bool IsHCCLKernelInput(const std::string &kernel_name) const;
@@ -132,6 +133,7 @@ class BACKEND_EXPORT DumpJsonParser {
   uint32_t cur_dump_iter_{0};
   bool already_parsed_{false};
   std::string dump_layer_{""};
+  std::string stat_calc_mode_{""};
   nlohmann::json kernels_json_ = nlohmann::json::array();
 
   // Save graphs for dump.
@@ -154,9 +156,11 @@ class BACKEND_EXPORT DumpJsonParser {
   bool ParseEnable(const nlohmann::json &content) const;
   void ParseOpDebugMode(const nlohmann::json &content);
   void ParseFileFormat(const nlohmann::json &content);
+  void ParseStatCalcMode(const nlohmann::json &content);
 
   void JudgeDumpEnabled();
   void JsonConfigToString();
+  void CheckStatCalcModeVaild();
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DUMP_JSON_PARSER_H_
