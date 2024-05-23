@@ -395,6 +395,15 @@ bool OperatorInfo::IsDynamicRank() {
   return False;
 }
 
+bool OperatorInfo::IsSelfDefineShard() {
+  bool self_define_shard = false;
+  auto attr_iter = attrs_.find(parallel::SELF_DEFINE_SHARD);
+  if (attr_iter != attrs_.end()) {
+    self_define_shard = attr_iter->second->cast<BoolImmPtr>()->value();
+  }
+  return self_define_shard;
+}
+
 Status OperatorInfo::GetRepeatedNumInDevMatrixRight() {
   bool repeated_num_right = true;
   auto iter = attrs_.find(REPEATED_NUM_IN_DEV_MATRIX_RIGHT);
@@ -434,6 +443,7 @@ Status OperatorInfo::InferAttrs() {
     return FAILED;
   }
 
+  self_define_shard_ = IsSelfDefineShard();
   is_dynamic_shape_ = IsDynamicShape();
   is_dynamic_rank_ = IsDynamicRank();
   if (is_dynamic_rank_) {
@@ -1392,6 +1402,12 @@ Status OperatorInfo::CheckInputLayout() {
                 << " does not support config layout. Please check "
                    "https://www.mindspore.cn/docs/zh-CN/r2.3.0rc2/note/operator_list_parallel.html to get limitation "
                    "and more details";
+  // Check self_define_shard attribute
+  if (!self_define_shard_) {
+    MS_LOG(ERROR) << "Please set add_prim_attr('self_define_shard', True) to " << name_
+                  << " to config layout for this ops";
+    return FAILED;
+  }
   return FAILED;
 }
 

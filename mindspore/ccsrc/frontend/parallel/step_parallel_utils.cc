@@ -1219,7 +1219,13 @@ OperatorInfoPtr OperatorInstanceByName(const std::string &name, const PrimitiveA
 OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
                                  const std::vector<Shapes> &shape_list) {
   MS_EXCEPTION_IF_NULL(prim);
-  OperatorInfoPtr op_info = OperatorInstanceByName(prim->name(), attrs, shape_list);
+  OperatorInfoPtr op_info;
+  if (prim->HasAttr(SELF_DEFINE_SHARD) && GetValue<bool>(prim->GetAttr(SELF_DEFINE_SHARD))) {
+    op_info = OperatorInstanceByName(SELF_DEFINE_SHARD_OP, attrs, shape_list);
+    MS_LOG(INFO) << "Operator " << prim->name() << " has self_define_shard attribute. Create SelfDefineShardInfo";
+    return op_info;
+  }
+  op_info = OperatorInstanceByName(prim->name(), attrs, shape_list);
   if (op_info) {
     return op_info;
   }
