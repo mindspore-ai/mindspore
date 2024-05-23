@@ -231,8 +231,7 @@ def test_ops_flip_backward_dynamic_rank(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_flip_dynamic(mode):
+def test_flip_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test ops.flip dynamic shape feature.
@@ -240,4 +239,4 @@ def test_flip_dynamic(mode):
     """
     input_case1 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
     input_case2 = Tensor(np.random.rand(3, 4).astype(np.float32))
-    TEST_OP(flip_forward_func, [[input_case1, (0, -1)], [input_case2, (-1, 0)]], mode=mode, grad=True)
+    TEST_OP(flip_forward_func, [[input_case1, (0, -1)], [input_case2, (-1, 0)]], 'reverse_v2')

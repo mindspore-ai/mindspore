@@ -124,12 +124,11 @@ def test_gather_ext_static_shape(mode, input_dtype, index_dtype):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.platform_x86_gpu_training
-def test_gather_ext_dynamic_shape(jit_level):
+def test_gather_ext_dynamic_shape():
     """
     Feature: Test gather with dynamic shape in graph mode.
     Description: call ops.extend.gather with valid input and index.
@@ -142,7 +141,7 @@ def test_gather_ext_dynamic_shape(jit_level):
     ms_data2 = GenInputData(np.float32, (3, 7, 8, 3))
     ms_indices2 = Tensor(np.random.randint(8, size=(2, 6, 4, 3)))
     dim2 = 2
-    TEST_OP(call_gather, [[ms_data1, dim1, ms_indices1], [ms_data2, dim2, ms_indices2]], grad=True, jit_level=jit_level)
+    TEST_OP(call_gather, [[ms_data1, dim1, ms_indices1], [ms_data2, dim2, ms_indices2]], 'gather_d')
 
 
 @pytest.mark.level0

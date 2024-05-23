@@ -212,8 +212,7 @@ def test_ops_neg_backward_dynamic_rank(context_mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_neg(context_mode):
+def test_neg():
     """
     Feature: Test neg op.
     Description: Test neg dynamic shape.
@@ -221,4 +220,4 @@ def test_neg(context_mode):
     """
     input_case1 = ms.Tensor(generate_random_input((3, 4, 5, 6), np.float32))
     input_case2 = ms.Tensor(generate_random_input((3, 4), np.float32))
-    TEST_OP(neg_forward_func, [[input_case1], [input_case2]], mode=context_mode, grad=True)
+    TEST_OP(neg_forward_func, [[input_case1], [input_case2]], 'neg')

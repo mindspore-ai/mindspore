@@ -153,12 +153,11 @@ def test_greater_equal_op_dynamic_rank(mode):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.platform_x86_gpu_training
-def test_greater_equal_dynamic_shape(jit_level):
+def test_greater_equal_dynamic_shape():
     """
     Feature: Test greater equal with dynamic shape in graph mode.
     Description: call ops.greater_equal with valid input and index.
@@ -167,6 +166,6 @@ def test_greater_equal_dynamic_shape(jit_level):
     ms_data1 = GenInputData(np.float32, (3, 4, 5))
     ms_data2 = GenInputData(np.float32, (3, 4, 5))
 
-    ms_data3 = GenInputData(np.float32, (5, 5, 5))
-    ms_data4 = GenInputData(np.float32, (5, 5, 5))
-    TEST_OP(call_ge, [[ms_data1, ms_data2], [ms_data3, ms_data4]], grad=False, jit_level=jit_level)
+    ms_data3 = GenInputData(np.float32, (5, 5, 5, 5))
+    ms_data4 = GenInputData(np.float32, (5, 5, 5, 5))
+    TEST_OP(call_ge, [[ms_data1, ms_data2], [ms_data3, ms_data4]], 'greater_equal', disable_grad=True)

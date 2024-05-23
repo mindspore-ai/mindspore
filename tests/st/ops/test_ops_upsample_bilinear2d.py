@@ -90,8 +90,7 @@ def test_upsample_bilinear_2d(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_upsample_bilinear_2d_size_dynamic(mode):
+def test_upsample_bilinear_2d_size_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op UpsampleBilinear2D and UpsampleBilinear2DGrad.
@@ -108,6 +107,6 @@ def test_upsample_bilinear_2d_size_dynamic(mode):
             [input_case1, (100, 200), None, True],
             [input_case2, (40, 80), None, False],
         ],
-        mode=mode,
-        grad=True,
+        'upsample_bilinear2d',
+        disable_input_check=True
     )

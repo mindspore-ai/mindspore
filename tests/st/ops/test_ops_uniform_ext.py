@@ -93,16 +93,14 @@ def test_basic(context_mode):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-def test_op(jit_level):
+def test_op():
     """
     Feature: TEST_OP
     Description: TEST_OP
     Expectation: Success
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
     x1 = random_input((10, 10))
     x2 = random_input((10, 10, 10))
 
@@ -118,9 +116,7 @@ def test_op(jit_level):
     TEST_OP(UniformExtCell(), [
         [mindspore.Tensor(x1), from_, to, seed1, offset1],
         [mindspore.Tensor(x2), from_, to, seed2, offset2],
-    ], grad=False, jit_level=jit_level)
-
-    del os.environ['GRAPH_OP_RUN']
+    ], 'uniform_ext', disable_input_check=True, disable_mode=['GRAPH_MODE'], disable_grad=True)
 
 
 def random_input(shape):

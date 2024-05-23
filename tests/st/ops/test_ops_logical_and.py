@@ -139,8 +139,7 @@ def test_ops_logical_and_forward_dynamic_rank(context_mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_logical_and(context_mode):
+def test_logical_and():
     """
     Feature: Test logical_and op.
     Description: Test logical_and dynamic shape.
@@ -150,5 +149,5 @@ def test_logical_and(context_mode):
     input_case2 = ms.Tensor(generate_random_input((3, 4, 5, 6), np.float32))
     input_case3 = ms.Tensor(generate_random_input((3, 4), np.float32))
     input_case4 = ms.Tensor(generate_random_input((3, 4), np.float32))
-    TEST_OP(logical_and_forward_func, [[input_case1, input_case2], [input_case3, input_case4]],
-            mode=context_mode, grad=False)
+    TEST_OP(logical_and_forward_func, [[input_case1, input_case2], [input_case3, input_case4]], 'logical_and',
+            disable_grad=True)

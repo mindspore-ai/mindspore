@@ -267,10 +267,9 @@ def test_tanh_grad_backward_dynamic_rank(mode):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-def test_tanh_grad_dynamic_shape_testop(jit_level):
+def test_tanh_grad_dynamic_shape_testop():
     """
     Feature: Test tanh with dynamic shape in graph mode using TEST_OP.
     Description: call ops.tanh with valid input and index.
@@ -281,8 +280,7 @@ def test_tanh_grad_dynamic_shape_testop(jit_level):
     y2 = generate_random_input((3, 7, 8, 3), np.float32)
     dy2 = generate_random_input((3, 7, 8, 3), np.float32)
 
-    TEST_OP(tanh_grad_forward_func, [[ms.Tensor(y1), ms.Tensor(dy1)], [ms.Tensor(y2), ms.Tensor(dy2)]],
-            grad=True, jit_level=jit_level)
+    TEST_OP(tanh_grad_forward_func, [[ms.Tensor(y1), ms.Tensor(dy1)], [ms.Tensor(y2), ms.Tensor(dy2)]], 'tanh_grad')
 
 
 @pytest.mark.level1
