@@ -1646,7 +1646,7 @@ class _CellGraphExecutor:
             self._graph_executor.clear_compile_arguments_resource()
             return phase, False
 
-        full_function_name = obj.__class__.__name__ + str(obj.instance_count)
+        full_function_name = obj.__class__.__name__ + '.' + str(obj.instance_count) + '.' + str(id(type(obj)))
         echo_function_name = obj.__class__.__name__
         _check_recompile(obj, args, kwargs, full_function_name, obj.create_time, echo_function_name)
 
