@@ -188,6 +188,9 @@ class Parameter(Tensor_):
         parallel_optimizer (bool): It is used to filter the weight shard operation in `SEMI_AUTO_PARALLEL` or
             `AUTO_PARALLEL` mode. It works only when enable parallel optimizer in
             `mindspore.set_auto_parallel_context()`. Default: ``True`` .
+        storage_format (str): Only Ascend device target is supported. It is used to specify the format of the weight
+            loaded to the device. By default, the format is not changed. The optional values are ``"FRACTAL_NZ"`` ,
+            ``"NC1HWC0"`` , ``"FRACTAL_Z"`` , etc. Default: ``""`` .
 
     Examples:
         >>> import numpy as np
@@ -240,7 +243,8 @@ class Parameter(Tensor_):
         return (
             Parameter, (data, self.name, self.requires_grad, self.layerwise_parallel))
 
-    def __init__(self, default_input, name=None, requires_grad=True, layerwise_parallel=False, parallel_optimizer=True):
+    def __init__(self, default_input, name=None, requires_grad=True, layerwise_parallel=False, parallel_optimizer=True,
+                 storage_format=""):
         self.param_info = ParamInfo()
         self.init_in_server = False
         self.name = name
@@ -291,6 +295,7 @@ class Parameter(Tensor_):
             raise TypeError(f"The type of the argument 'default_input' must be in ['Tensor', 'int', 'float',"
                             f" 'numpy.ndarray', 'list']. But got type {type(default_input)}.")
         self.param_info.parameter_shape = self.shape
+        self.param_info.storage_format = storage_format
 
         import mindspore.ops.operations.other_ops as other_ops
         self.load = other_ops.Load()
