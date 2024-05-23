@@ -18,6 +18,7 @@
 #include "plugin/device/cpu/kernel/pyboost/auto_generate/cast.h"
 #include "plugin/device/cpu/kernel/pyboost/auto_generate/mean_ext.h"
 #include "kernel/pyboost/pyboost_utils.h"
+#include "kernel/pyboost/op_runner.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
@@ -64,7 +65,7 @@ void MeanExtCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPt
   }
 
   // Infer function has confirmed the actual dtype of output
-  TypeId out_dtype = op->output_abs()->GetType()->cast<TensorTypePtr>()->element()->type_id();
+  TypeId out_dtype = op->output_value_simple_info()->dtype_vector_[kIndex0]->type_id();
 
   BaseTensorPtr act_tensor = input_tensor;
   // Call Cast before Launch ReduceMean
@@ -77,25 +78,7 @@ void MeanExtCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPt
 
   // Set new input abstract for ReduceMean
   std::vector<AbstractBasePtr> new_input_abs{act_tensor->ToAbstract(), act_axis->ToAbstract(), keep_dims->ToAbstract()};
-
-  // Check if dtype is matched on ReduceMean kernel
-  auto kernel_attr_pair =
-    PyBoostUtils::SelectKernel(new_input_abs, op->output_abs(), op->device_context(), prim::kPrimReduceMean->name());
-  if (kernel_attr_pair.first) {
-    MeanExtCPUCall(op, act_tensor, act_axis, keep_dims, new_input_abs);
-  } else {
-    auto &select_kernel = kernel_attr_pair.second;
-    auto &device_name = op->device_context()->device_context_key_.device_name_;
-    const auto &real_input_tensor =
-      PyBoostUtils::CastTensor(act_tensor, select_kernel.input_type()[0].dtype, device_name);
-
-    const auto &mean_ext_op = CREATE_PYBOOST_OP(MeanExt, device_name);
-    mean_ext_op->set_primitive(prim::kPrimMeanExt);
-    const auto out_tensor = mean_ext_op->Call(real_input_tensor, axis, keep_dims, std::nullopt);
-
-    const auto &real_output_tensor = PyBoostUtils::CastTensor(out_tensor, out_dtype, device_name);
-    op->set_outputs({real_output_tensor});
-  }
+  MeanExtCPUCall(op, act_tensor, act_axis, keep_dims, new_input_abs);
 }
 }  // namespace pyboost
 }  // namespace kernel

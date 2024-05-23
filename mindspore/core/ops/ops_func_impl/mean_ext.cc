@@ -16,6 +16,7 @@
 #include "ops/ops_func_impl/mean_ext.h"
 #include <memory>
 #include "ops/ops_func_impl/reduce_arithmetic.h"
+#include "ops/ops_func_impl/simple_infer.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {
@@ -34,5 +35,22 @@ TypePtr MeanExtFuncImpl::InferType(const PrimitivePtr &primitive,
   MS_CHECK_VALUE(dtype_opt.has_value(), primitive->name() + " error: dtype input should has valid value.");
   return std::make_shared<TensorType>(TypeIdToType(static_cast<TypeId>(dtype_opt.value())));
 }
+
+ShapeArray MeanExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return ReduceExtandSimpleInferShape(primitive, input_values);
+}
+
+TypePtrList MeanExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  if (input_values[kIndex3] == mindspore::kNone) {
+    const auto &input = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+    MS_EXCEPTION_IF_NULL(input);
+    return {input->Dtype()};
+  } else {
+    const auto &dtype = input_values[kIndex3]->cast<Int64ImmPtr>();
+    MS_EXCEPTION_IF_NULL(dtype);
+    return {TypeIdToType(static_cast<TypeId>(dtype->value()))};
+  }
+}
+REGISTER_SIMPLE_INFER(kNameMeanExt, MeanExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

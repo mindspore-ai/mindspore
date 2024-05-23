@@ -16,6 +16,7 @@
 #include "ops/ops_func_impl/prod_ext.h"
 #include <set>
 #include "ops/ops_func_impl/reduce_arithmetic.h"
+#include "ops/ops_func_impl/simple_infer.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {
@@ -87,5 +88,46 @@ TypePtr ProdExtFuncImpl::InferType(const PrimitivePtr &primitive,
 
   return std::make_shared<TensorType>(TypeIdToType(type_id));
 }
+
+ShapeArray ProdExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &keep_dims = input_values[kIndex2]->cast<BoolImmPtr>();
+  MS_EXCEPTION_IF_NULL(keep_dims);
+
+  if (input_values[kIndex1] == mindspore::kNone) {
+    return keep_dims->value() ? ShapeArray{ShapeVector({1})} : ShapeArray{ShapeVector({})};
+  }
+
+  const auto &axis = input_values[kIndex1]->cast<Int64ImmPtr>();
+  MS_EXCEPTION_IF_NULL(axis);
+
+  const auto &input = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(input);
+  const auto &input_shape = input->shape();
+
+  std::vector<int64_t> real_axis_vector{CalRealAixs(axis->value(), input_shape.size(), primitive)};
+  auto out_shape = ReduceFuncCalShapeInferImpl(primitive, input_shape, real_axis_vector, keep_dims->value());
+  return ShapeArray{out_shape};
+}
+
+TypePtrList ProdExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  if (input_values[kIndex3] == mindspore::kNone) {
+    const auto &input = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+    MS_EXCEPTION_IF_NULL(input);
+    const auto &input_type = input->Dtype();
+    const auto &input_type_id = input->Dtype()->type_id();
+    static std::set<TypeId> intergral_set = {kNumberTypeBool, kNumberTypeUInt8, kNumberTypeInt8, kNumberTypeInt16,
+                                             kNumberTypeInt32};
+    if (intergral_set.find(input_type_id) != intergral_set.end()) {
+      return {kInt64};
+    } else {
+      return {input_type};
+    }
+  } else {
+    const auto &dtype = input_values[kIndex3]->cast<Int64ImmPtr>();
+    MS_EXCEPTION_IF_NULL(dtype);
+    return {TypeIdToType(static_cast<TypeId>(dtype->value()))};
+  }
+}
+REGISTER_SIMPLE_INFER(kNameProdExt, ProdExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

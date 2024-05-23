@@ -18,6 +18,8 @@
 #include <memory>
 #include <set>
 #include "ops/ops_frontend_func_impl.h"
+#include "ops/ops_func_impl/simple_infer.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -77,6 +79,19 @@ TypePtr LogFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<
   auto input_type_id = input_tensor_type->element()->type_id();
   return std::make_shared<TensorType>(TypeIdToType(GetOutputTypeId(input_type_id)));
 }
+
+ShapeArray LogFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+
+TypePtrList LogFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {TypeIdToType(GetOutputTypeId(x_tensor->Dtype()->type_id()))};
+}
+REGISTER_SIMPLE_INFER(kNameLog, LogFuncImpl)
 
 class LogFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
@@ -158,7 +173,6 @@ class LogFrontendFuncImpl : public OpFrontendFuncImpl {
     return result_tensor;
   }
 };
-
-REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("Log", LogFrontendFuncImpl);
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL(kNameLog, LogFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
