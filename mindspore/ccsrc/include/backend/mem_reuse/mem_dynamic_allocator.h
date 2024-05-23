@@ -113,6 +113,10 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   // Set the minimum memory unit size using for dynamic extend.
   void SetMemAllocUintSize(size_t common_size, size_t persist_size = kDynamicMemAllocUnitSize);
 
+  // Extract detailed block information
+  std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>> ExtractBlocksListInfo(
+    const MemStatusManagerPtr &mem_mng) const;
+
   // The statistics information.
   size_t TotalMemStatistics() const;
   size_t TotalUsedMemStatistics() const;
@@ -120,7 +124,16 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   size_t TotalIdleMemStatistics() const;
   size_t TotalEagerFreeMemStatistics() const;
   size_t UsedMemPeakStatistics() const;
+  size_t ReservedMemPeakStatistics() const;
   size_t ActualPeakStatistics() const;
+  std::unordered_map<std::string, std::size_t> BlockCountsStatistics() const;
+  std::unordered_map<std::string, std::size_t> BlockUnitSizeStatistics() const;
+  std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>> CommonMemBlocksInfoStatistics()
+    const;
+  std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>> PersistentMemBlocksInfoStatistics()
+    const;
+  void ResetMaxMemReserved() const;
+  void ResetMaxMemAllocated() const;
 
   // Display the brief state information of memory block and memory buf.
   void DumpDynamicMemPoolStateInfo();
@@ -341,6 +354,7 @@ struct DeviceState {
   // Update peak size.
   void UpdatePeakSize() {
     used_mem_peak_size_ = std::max(used_mem_peak_size_, total_used_mem_size_ + total_used_by_event_mem_size_);
+    reserved_mem_peak_size_ = std::max(reserved_mem_peak_size_, total_mem_size_);
   }
 
   // Memory allocated from device
@@ -355,6 +369,8 @@ struct DeviceState {
   size_t total_eager_free_mem_size_{0};
   // Maximum peak memory usage
   size_t used_mem_peak_size_{0};
+  // Maximum peak memory allocated from device
+  size_t reserved_mem_peak_size_{0};
 };
 
 struct MemStatusManager {

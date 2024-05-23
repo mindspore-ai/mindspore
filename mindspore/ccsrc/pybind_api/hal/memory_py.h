@@ -16,14 +16,19 @@
 
 #ifndef MINDSPORE_CCSRC_PYBIND_API_HAL_MEMORY_PY_H
 #define MINDSPORE_CCSRC_PYBIND_API_HAL_MEMORY_PY_H
+
 #include <string>
 #include <memory>
+#include <unordered_map>
 
 #include "include/common/pybind_api/api_register.h"
+#include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 
 namespace mindspore {
 namespace hal {
 py::dict MemoryStats(const std::string &device_target);
+void ResetMaxMemoryReserved(const std::string &device_target);
+void ResetMaxMemoryAllocated(const std::string &device_target);
 }  // namespace hal
 }  // namespace mindspore
 

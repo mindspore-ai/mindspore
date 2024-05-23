@@ -21,6 +21,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include "runtime/hardware/device_context.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/gpu/hal/hardware/gpu_deprecated_interface.h"
@@ -90,6 +91,22 @@ class GPUDeviceResManager : public DeviceResManager {
                        const std::vector<size_t> &keep_addr_sizes) const override;
 
   bool AllocateMemory(DeviceAddress *const &address, uint32_t stream_id = UINT32_MAX) const override;
+
+  // Relevant function to manage memory statistics
+  size_t GetTotalMemStatistics() const override;
+  size_t GetTotalUsedMemStatistics() const override;
+  size_t GetTotalIdleMemStatistics() const override;
+  size_t GetTotalEagerFreeMemStatistics() const override;
+  size_t GetUsedMemPeakStatistics() const override;
+  size_t GetReservedMemPeakStatistics() const override;
+  std::unordered_map<std::string, std::size_t> GetBlockCountsStatistics() const override;
+  std::unordered_map<std::string, std::size_t> GetBlockUnitSizeStatistics() const override;
+  std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>> GetCommonMemBlocksInfoStatistics()
+    const override;
+  std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
+  GetPersistentMemBlocksInfoStatistics() const override;
+  void ResetMaxMemoryReserved() const override;
+  void ResetMaxMemoryAllocated() const override;
 
  private:
   friend class GPUKernelExecutor;

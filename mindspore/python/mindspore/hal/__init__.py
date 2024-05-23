@@ -24,11 +24,17 @@ from mindspore.hal.device import is_initialized, is_available, device_count, get
 from mindspore.hal.stream import Stream, synchronize, set_cur_stream, current_stream, default_stream,\
                                  StreamCtx
 from mindspore.hal.event import Event
+from mindspore.hal.memory import memory_stats, memory_reserved, max_memory_reserved, empty_cache,\
+                                 reset_peak_memory_stats, memory_summary, memory_allocated,\
+                                 max_memory_allocated, reset_max_memory_reserved, reset_max_memory_allocated
 
 __all__ = [
     "is_initialized", "is_available", "device_count", "get_device_capability",
     "get_device_properties", "get_device_name", "get_arch_list",
-    "Event", "Stream", "synchronize", "set_cur_stream", "current_stream", "default_stream", "StreamCtx"
+    "Event", "Stream", "synchronize", "set_cur_stream", "current_stream", "default_stream", "StreamCtx",
+    "memory_stats", "memory_reserved", "max_memory_reserved", "empty_cache", "reset_peak_memory_stats",
+    "memory_summary", "memory_allocated", "max_memory_allocated", "reset_max_memory_reserved",
+    "reset_max_memory_allocated"
 ]
 
 __all__.sort()
