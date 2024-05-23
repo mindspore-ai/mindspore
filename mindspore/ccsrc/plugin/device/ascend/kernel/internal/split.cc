@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,17 +35,9 @@ internal::OpParamPtr InternalSplit::CreateOpParam(const std::vector<KernelTensor
   param_ptr->specificParam = split_param;
   return param_ptr;
 }
-void InternalSplit::SetInOutIdx() {
-  auto value_str = primitive_->GetAttr("size_splits");
-  MS_EXCEPTION_IF_NULL(value_str);
-  auto size_splits = GetValue<std::vector<int64_t>>(value_str);
-  size_t split_num = size_splits.size();
-  inputsIdxMap_[kIndex0] = kIndex0;
-  for (size_t i = 0; i < split_num; i++) {
-    outputsIdxMap_[i] = i;
-  }
-}
 
 MS_INTERNAL_KERNEL_FACTORY_REG(Split, InternalSplit);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Split, 1, 0);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Split, INTERNEL_KERNEL_IN_OUT_MUTABLE_LENGTH);
 }  // namespace kernel
 }  // namespace mindspore

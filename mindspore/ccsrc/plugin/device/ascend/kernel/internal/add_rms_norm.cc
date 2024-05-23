@@ -15,6 +15,7 @@
  */
 #include <memory>
 #include "plugin/device/ascend/kernel/internal/add_rms_norm.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 namespace mindspore {
 namespace kernel {
 constexpr size_t kIndex2 = 2;
@@ -33,15 +34,9 @@ internal::OpParamPtr InternalAddRmsNorm::CreateOpParam(const std::vector<KernelT
   param_ptr->opId = internal::OpId::AddRmsNorm;
   return param_ptr;
 }
-void InternalAddRmsNorm::SetInOutIdx() {
-  inputsIdxMap_[0] = 0;
-  inputsIdxMap_[1] = 1;
-  inputsIdxMap_[kIndex2] = kIndex2;
-  outputsIdxMap_[0] = 0;
-  outputsIdxMap_[1] = 1;
-  outputsIdxMap_[kIndex2] = kIndex2;
-}
 
 MS_INTERNAL_KERNEL_FACTORY_REG(AddRmsNorm, InternalAddRmsNorm);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(AddRmsNorm, 3, 0, 1, 2);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(AddRmsNorm, 3, 0, 1, 2);
 }  // namespace kernel
 }  // namespace mindspore

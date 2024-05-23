@@ -32,7 +32,6 @@ class InternalMatmulElemBase : public InternalKernelMod {
  protected:
   internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs);
-  virtual void SetInOutIdx() = 0;
   virtual uint64_t GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) = 0;
 };

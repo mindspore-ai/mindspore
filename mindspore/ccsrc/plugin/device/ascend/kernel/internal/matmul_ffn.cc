@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 #include "param/matmul_qkv_param.h"
 
 namespace mindspore {
@@ -34,14 +35,6 @@ internal::OpParamPtr InternalMatmulFfn::CreateOpParam(const std::vector<KernelTe
   return param_ptr;
 }
 
-void InternalMatmulFfn::SetInOutIdx() {
-  inputsIdxMap_[kIndex0] = kIndex0;
-  inputsIdxMap_[kIndex1] = kIndex1;
-  inputsIdxMap_[kIndex2] = kIndex2;
-  outputsIdxMap_[kIndex0] = kIndex0;
-  outputsIdxMap_[kIndex1] = kIndex1;
-}
-
 uint64_t InternalMatmulFfn::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
   // User defined CacheKey, the inputs should include all the factors which will affect tiling result.
@@ -51,5 +44,7 @@ uint64_t InternalMatmulFfn::GenTilingCacheKey(const std::vector<KernelTensor *> 
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(MatmulFfn, InternalMatmulFfn);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(MatmulFfn, 3, 0, 1, 2);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(MatmulFfn, 2, 0, 1);
 }  // namespace kernel
 }  // namespace mindspore

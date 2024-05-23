@@ -33,12 +33,6 @@ internal::OpParamPtr InternalCast::CreateOpParam(const std::vector<KernelTensor 
   return std::static_pointer_cast<internal::OpParam>(param_ptr);
 }
 
-void InternalCast::SetInOutIdx() {
-  const int kCastMSInputNum = 2;
-  const int kCastMSOutputNum = 1;
-  InternalKernelMod::SetInOutIdx(kCastMSInputNum, kCastMSOutputNum);
-}
-
 uint64_t InternalCast::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
   // User defined CacheKey, the inputs should include all the factors which will affect tiling result.

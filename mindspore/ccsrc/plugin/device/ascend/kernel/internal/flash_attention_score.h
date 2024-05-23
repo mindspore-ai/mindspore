@@ -32,7 +32,6 @@ class InternalFlashAttentionScore : public InternalKernelMod {
  protected:
   internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs);
-  void SetInOutIdx();
 
  private:
   bool enable_internal_fa_{false};

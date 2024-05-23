@@ -17,6 +17,7 @@
 
 #include <memory>
 
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 
 namespace mindspore {
@@ -42,12 +43,6 @@ internal::OpParamPtr InternalConcat::CreateOpParam(const std::vector<KernelTenso
   param_ptr->opId = internal::OpId::Concat;
   return param_ptr;
 }
-void InternalConcat::SetInOutIdx() {
-  // only support concat 2 tensor now
-  inputsIdxMap_[kIndex0] = kIndex0;
-  inputsIdxMap_[kIndex1] = kIndex1;
-  outputsIdxMap_[kIndex0] = kIndex0;
-}
 
 uint64_t InternalConcat::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
@@ -58,5 +53,7 @@ uint64_t InternalConcat::GenTilingCacheKey(const std::vector<KernelTensor *> &in
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(Concat, InternalConcat);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Concat, 2, 0, 1);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Concat, 1, 0);
 }  // namespace kernel
 }  // namespace mindspore

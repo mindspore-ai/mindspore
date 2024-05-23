@@ -41,20 +41,24 @@ int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const st
   internal::ValidateInfo info;
   info.input_num_ = inputsIdxMap_.size();
   info.output_num_ = outputsIdxMap_.size();
+  param->in_dtypes_.resize(info.input_num_);
+  param->out_dtypes_.resize(info.output_num_);
+
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
     info.input_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(inputs[iter->first]->dtype_id()));
     info.input_format_.emplace_back(InternalKernelUtils::ToInternalFormat(inputs[iter->first]->format()));
-    param->in_dtypes_.emplace_back(InternalKernelUtils::ToInternalDType(inputs[iter->first]->dtype_id()));
+    param->in_dtypes_[iter->second] = InternalKernelUtils::ToInternalDType(inputs[iter->first]->dtype_id());
   }
 
   for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
     info.output_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(outputs[iter->first]->dtype_id()));
     info.output_format_.emplace_back(InternalKernelUtils::ToInternalFormat(outputs[iter->first]->format()));
-    param->out_dtypes_.emplace_back(InternalKernelUtils::ToInternalDType(outputs[iter->first]->dtype_id()));
+    param->out_dtypes_[iter->second] = InternalKernelUtils::ToInternalDType(outputs[iter->first]->dtype_id());
   }
 
   impl_ = internal::CreateInternalKernelImpl(param);
   if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Internal Op '" << kernel_name_ << "' create FAILED.";
     return 1;
   }
 
@@ -92,7 +96,7 @@ void InternalKernelMod::SetTilingInfo(const uint64_t key) {
 
 void InternalKernelMod::SetInOutIdx(size_t in_count, size_t out_count) {
   bool input_mutable = false;
-  auto in_idx_list = InternalKernelModInOutMap::GetInstance()->GetKernelInMap(op_type_, &input_mutable);
+  auto in_idx_list = InternalKernelModInOutMap::GetInstance()->GetKernelInMap(kernel_name_, &input_mutable);
   if (input_mutable) {
     for (size_t i = 0; i < in_count; i++) {
       inputsIdxMap_[i] = i;
@@ -104,7 +108,7 @@ void InternalKernelMod::SetInOutIdx(size_t in_count, size_t out_count) {
   }
 
   bool output_mutable = false;
-  auto out_idx_list = InternalKernelModInOutMap::GetInstance()->GetKernelOutMap(op_type_, &output_mutable);
+  auto out_idx_list = InternalKernelModInOutMap::GetInstance()->GetKernelOutMap(kernel_name_, &output_mutable);
   if (output_mutable) {
     for (size_t i = 0; i < out_count; i++) {
       outputsIdxMap_[i] = i;
@@ -117,7 +121,7 @@ void InternalKernelMod::SetInOutIdx(size_t in_count, size_t out_count) {
 }
 
 bool InternalKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  SetInOutIdx();
+  SetInOutIdx(inputs.size(), outputs.size());
   inputs_.resize(inputsIdxMap_.size());
   std::generate(inputs_.begin(), inputs_.end(), []() { return new internal::Tensor(); });
 
