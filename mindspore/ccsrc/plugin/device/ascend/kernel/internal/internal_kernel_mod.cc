@@ -152,7 +152,8 @@ bool InternalKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
   }
   impl_->SetOutputs(outputs_);
   int ret = 0;
-  if (enable_profiler_flag_) {
+  if (ascend_profiler_->GetEnableFlag()) {
+    MS_LOG(INFO) << "The enable_profiler_flag is " << ascend_profiler_->GetEnableFlag();
     ret = impl_->LaunchWithProfiling();
   } else {
     ret = impl_->Launch();
