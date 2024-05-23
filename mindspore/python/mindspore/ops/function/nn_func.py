@@ -43,7 +43,7 @@ from mindspore.ops.operations.nn_ops import LayerNormExt
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
-from mindspore.ops.auto_generate.gen_ops_prim import GroupNorm
+from mindspore.ops.auto_generate import GroupNorm, batch_norm_ext_op
 from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op,
                                          replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
                                          constant_pad_nd_op, dropout_ext_op)
@@ -6172,6 +6172,71 @@ def group_norm(input, num_groups, weight=None, bias=None, eps=1e-5):
     group_norm_op = GroupNorm()
     return group_norm_op(input, num_groups, weight, bias, eps)[0]
 
+
+def batch_norm_ext(input, running_mean, running_var, weight=None, bias=None, training=False, momentum=0.1, eps=1e-5):
+    r"""
+    Batch Normalization for input data and updated parameters.
+
+    Batch Normalization is widely used in convolutional neural networks. This operation
+    applies Batch Normalization over inputs to avoid internal covariate shift as described
+    in the paper `Batch Normalization: Accelerating Deep Network Training by Reducing Internal
+    Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
+    features using a mini-batch of data and the learned parameters can be described
+    in the following formula,
+
+    .. math::
+
+        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
+
+    where :math:`\gamma` is `weight`, :math:`\beta` is `bias`, :math:`\epsilon` is `eps`, :math:`mean` is the
+    mean of :math:`x`, :math:`variance` is the variance of :math:`x`.
+
+    Args:
+        input (Tensor): Tensor of shape :math:`(N, C, *)`, with bfloat16, float16 or float32 data type.
+        running_mean (Tensor): The shape :math:`(C,)`, with bfloat, float16 or float32 data type.
+        running_var (Tensor): The shape :math:`(C,)`, with bfloat, float16 or float32 data type.
+        weight (Tensor, optional): The shape :math:`(C,)`, with bfloat, float16 or float32 data type, Default: ``None``.
+            Initialized to ``1`` when `weight` is None.
+        bias (Tensor, optional): The shape :math:`(C,)`, with bfloat, float16 or float32 data type. Default: ``None``.
+            Initialized to ``0`` when `weight` is None.
+        training (bool, optional): If `training` is `True`, `mean` and `variance` are computed during training.
+            If `training` is `False`, they're loaded from checkpoint during inference. Default: ``False`` .
+        momentum (float, optional): The hyper parameter to compute moving average for `running_mean` and `running_var`
+            (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
+            Default: ``0.1`` .
+        eps (float, optional): A small value added for numerical stability. Default: ``1e-5``.
+
+    Returns:
+        Tensor, has the same type and shape as `input`. The shape is :math:`(N, C, *)`.
+
+    Raises:
+        TypeError: If `training` is not a bool.
+        TypeError: If dtype of `eps` or `momentum` is not float.
+        TypeError: If `input`, `weight`, `bias`, `running_mean` or `running_var` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> input_x = Tensor([[1.0, 2.0], [3.0, 4.0]], mindspore.float32)
+        >>> running_mean = Tensor([0.5, 1.5], mindspore.float32)
+        >>> running_var = Tensor([0.1, 0.2], mindspore.float32)
+        >>> weight = Tensor([2.0, 2.0], mindspore.float32)
+        >>> bias = Tensor([-1.0, -1.0], mindspore.float32)
+        >>> output = ops.batch_norm_ext(input_x, running_mean, running_var, weight, bias)
+        >>> print(output)
+        [[ 2.1621194  1.2360122]
+         [14.810596  10.180061 ]]
+    """
+    if weight is None:
+        weight = ops.ones([input.shape[1]], dtype=input.dtype)
+    if bias is None:
+        bias = ops.zeros([input.shape[1]], dtype=input.dtype)
+    output = batch_norm_ext_op(input, weight, bias, running_mean, running_var, training, momentum, eps)
+    return output[0]
+
 def batch_norm(input_x, running_mean, running_var, weight, bias, training=False, momentum=0.1, eps=1e-5):
     r"""
     Batch Normalization for input data and updated parameters.
@@ -7968,6 +8033,7 @@ __all__ = [
     'avg_pool2d',
     'avg_pool3d',
     'batch_norm',
+    'batch_norm_ext',
     'bias_add',
     'bidense',
     'binary_cross_entropy',

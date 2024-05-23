@@ -30,6 +30,9 @@ class MIND_API BatchNormExtFuncImpl : public OpFuncImpl {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 
+  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+
  protected:
   virtual size_t GetAttrPosZero() const { return 5; }
 };
