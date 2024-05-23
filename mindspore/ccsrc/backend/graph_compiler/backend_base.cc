@@ -411,7 +411,7 @@ bool NeedCheckMultiTarget(const FuncGraphPtr &func_graph, int ms_execution_mode)
   return (run_in_dynamic && is_call_graph) || is_control_flow;
 }
 
-void UnifyIR(const CNodePtr &cnode) {
+void UnifyIR(const CNodePtr &cnode, bool enable_run_graph_by_single_op) {
   MS_EXCEPTION_IF_NULL(cnode);
   static const std::map<std::string, std::string> kOpListToTupleNames = {
     {mindspore::kMakeListNewOpName, mindspore::kMakeTupleOpName},
@@ -431,7 +431,8 @@ void UnifyIR(const CNodePtr &cnode) {
   }
 
   // TupleGetItem --> RealTupleGetItem.
-  if (op_name == mindspore::kTupleGetItemOpName && NeedConvertToRealTupleGetItem(cnode)) {
+  if (!enable_run_graph_by_single_op && op_name == mindspore::kTupleGetItemOpName &&
+      NeedConvertToRealTupleGetItem(cnode)) {
     common::AnfAlgo::SetNodeAttr(kAttrOpAdaptationProcessed, MakeValue(true), cnode);
     cnode->set_input(0, mindspore::NewValueNode(std::make_shared<Primitive>(mindspore::kRealTupleGetItemOpName)));
     // Reset full scope name.
@@ -621,6 +622,7 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
       }
     }
   }
+  bool enable_run_graph_by_single_op = root_graph->has_flag(kFlagEnableRunGraphBySingleOp);
   const auto &graphs = root_graph->manager()->func_graphs();
   for (const auto &graph : graphs) {
     MS_EXCEPTION_IF_NULL(graph);
@@ -639,7 +641,7 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
 
       const auto &cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      UnifyIR(cnode);
+      UnifyIR(cnode, enable_run_graph_by_single_op);
       for (auto &input : cnode->inputs()) {
         MS_EXCEPTION_IF_NULL(input);
         if (input->seen_ == seen || !input->isa<CNode>()) {
