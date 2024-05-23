@@ -242,6 +242,9 @@ from mindspore.ops.extend import baddbmm as baddbmm_ex
 # 157
 from mindspore.ops.function.array_func import scatter
 
+# 208
+from mindspore.ops.function.array_func import eye
+
 # 232
 from mindspore.ops.function.math_func import isclose
 
@@ -516,6 +519,8 @@ __all__ = [
     'baddbmm',
     # 157
     'scatter',
+    # 208
+    'eye',
     # 232
     'isclose',
     # 275

@@ -14,6 +14,16 @@ Array Operation
     mindspore.mint.sort
     mindspore.mint.stack
 
+Tensor Creation
+^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.eye
+
 Element-wise Operation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
