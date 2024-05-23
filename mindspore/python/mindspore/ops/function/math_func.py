@@ -45,7 +45,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
                                          log, log1p, neg, not_equal, pow, round, isfinite, argmax, mean, sum_ext_op,
                                          prod_ext_op, cross_ext, all, xlogy_scalar_other_op, xlogy_scalar_self_op,
-                                         xlogy_tensor_op)
+                                         xlogy_tensor_op, sign)
 from mindspore.ops.auto_generate import tanh
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
@@ -1264,49 +1264,6 @@ def logical_and(input, other):
         [True False]
     """
     return logical_and_(input, other)
-
-
-def sign(input):
-    r"""
-    Returns an element-wise indication of the sign of a number.
-
-    .. math::
-        \text{out}_{i} = \begin{cases}
-                          -1 & \text{input}_{i} < 0 \\
-                           0 & \text{input}_{i} = 0 \\
-                           1 & \text{input}_{i} > 0
-                         \end{cases}
-
-    Args:
-        input (Tensor): Input Tensor.
-
-    Returns:
-        Tensor, the sign of input.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore as ms
-        >>> import mindspore.ops as ops
-        >>> input = ms.Tensor([[-1, 0, 2, 4, 6], [2, 3, 5, -6, 0]])
-        >>> output = ops.sign(input)
-        >>> print(output)
-        [[-1  0  1  1  1]
-         [ 1  1  1 -1  0]]
-        >>> ms.set_context(device_target="CPU")
-        >>> x = ms.Tensor([[-1, 0, float('inf'), 4, float('nan')], [2, 3, float('-inf'), -6, 0]])
-        >>> output = ops.sign(x)
-        >>> print(output)
-        [[-1.  0.  1.  1.  0.]
-         [ 1.  1. -1. -1.  0.]]
-    """
-    if not isinstance(input, Tensor):
-        raise TypeError(f"For sign, the input must be a Tensor, but got {type(input)}")
-    return sign_(input)
 
 
 def signbit(input):

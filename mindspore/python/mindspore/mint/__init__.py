@@ -251,6 +251,9 @@ from mindspore.ops.function.math_func import remainder_ext as remainder
 # 285
 from mindspore.ops.function.array_func import scatter_add_ext as scatter_add
 
+# 289
+from mindspore.ops.auto_generate import sign
+
 
 def add(input, other, *, alpha=1):
     return add_ex(input, other, alpha)
@@ -522,6 +525,8 @@ __all__ = [
     'remainder',
     # 285
     'scatter_add',
+    # 289
+    'sign',
     # 304
     'tril',
     # 305

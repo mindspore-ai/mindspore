@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SIGN_H_
-#define MINDSPORE_CORE_OPS_SIGN_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SIGN_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SIGN_H_
 #include <memory>
 #include <vector>
 
-#include "ops/base_operator.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameSign = "Sign";
-class MIND_API Sign : public BaseOperator {
+class MIND_API SignFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(Sign);
-  Sign() : BaseOperator(kNameSign) { InitIOName({"x"}, {"y"}); }
+  SignFuncImpl() = default;
+  ~SignFuncImpl() = default;
+
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SIGN_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SIGN_H_
