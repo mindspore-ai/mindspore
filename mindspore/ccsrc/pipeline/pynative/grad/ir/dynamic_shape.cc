@@ -408,13 +408,17 @@ bool NodeDynamicDetect::CheckNodeDynamic(const TopCellInfoPtr &top_cell, const V
   }
 
   const size_t node_idx = top_cell->op_index();
-  bool use_dynamic_shape_process = top_cell->has_bprop_cut_op() || IsNodeDynamic(top_cell, inputs, node, node_idx);
+  bool node_is_dynamic = false;
+  bool use_dynamic_shape_process =
+    top_cell->has_bprop_cut_op() || (node_is_dynamic = IsNodeDynamic(top_cell, inputs, node, node_idx)) == true;
   top_cell->IncreaseOpIndex();
   if (use_dynamic_shape_process) {
     MS_LOG(INFO) << "Set use_dynamic_shape_process: " << use_dynamic_shape_process;
     top_cell->set_use_dynamic_shape_process(use_dynamic_shape_process);
     py::gil_scoped_acquire gil_acquire;
     (void)cell_id_with_dynamic_detect_nodes_.erase(top_cell->obj_id_with_grad_order());
+  }
+  if (node_is_dynamic) {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     if (context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {

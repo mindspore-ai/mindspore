@@ -192,11 +192,14 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
   }
   for (size_t i = 0; i < dtypes.size(); ++i) {
     // No need to implicit cast if no dtype.
-    if (dtypes.empty() || dtypes[i] == SignatureEnumDType::kDTypeEmptyDefaultValue) {
+    if (dtypes[i] == SignatureEnumDType::kDTypeEmptyDefaultValue) {
+      MS_LOG(DEBUG) << "Get kDTypeEmptyDefaultValue";
       continue;
     }
     auto it = dst_type.find(dtypes[i]);
     if (it == dst_type.end() || it->second.first == kTypeUnknown) {
+      MS_LOG(DEBUG) << "Can not find dtype " << (it == dst_type.end()) << ", or type is unknown "
+                    << (it->second.first == kTypeUnknown);
       continue;
     }
     const auto &v = input_args[i];
@@ -223,6 +226,7 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
                                              TypeIdToMsTypeStr(it->second.first), i);
     }
     if (is_same_type) {
+      MS_LOG(DEBUG) << "Get same dtype";
       continue;
     }
 
@@ -302,6 +306,7 @@ std::pair<std::vector<TypeId>, std::vector<bool>> GetTypeInfo(const FrontendOpRu
       MS_EXCEPTION_IF_NULL(type);
       args_type_id[i] = type->type_id();
     } else {
+      MS_LOG(DEBUG) << "Get input value " << input_value[i]->ToString();
       args_type_id[i] = kTypeUnknown;
     }
   }
@@ -320,6 +325,7 @@ void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
     if (!has_dtype_sig) {
       PrimSignature sig_value{has_dtype_sig, {}};
       implicit_cast_map_[prim->name()] = sig_value;
+      MS_LOG(DEBUG) << "Op " << prim->name() << " has no signature";
       return;
     }
     const auto &signature = op_run_info->signatures;

@@ -54,10 +54,8 @@ class COMMON_EXPORT StubNode : public Value {
   virtual void SetValue(const ValuePtr &val);
   virtual void SetException(const std::exception_ptr &e_ptr);
 
-  AbstractBasePtr WaitAbstract();
   ValuePtr WaitValue();
-  void WaitValueSimpleInfo();
-  bool SetValueSimpleInfo(const ValueSimpleInfoPtr &output_value_simple_info);
+  virtual bool SetValueSimpleInfo(const ValueSimpleInfoPtr &output_value_simple_info);
   void WaitPipeline();
 
   AbstractBasePtr ToAbstract() override;
@@ -91,6 +89,7 @@ class SequenceNode : public StubNode {
   py::object GetElements();
 
   bool SetAbstract(const AbstractBasePtr &abs) override;
+  bool SetValueSimpleInfo(const ValueSimpleInfoPtr &output_value_simple_info) override;
   void SetValue(const ValuePtr &val) override;
   void SetException(const std::exception_ptr &e_ptr) override;
 
