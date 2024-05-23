@@ -62,7 +62,21 @@ Array操作
     mindspore.mint.div
     mindspore.mint.divide
     mindspore.mint.floor
+    mindspore.mint.log
     mindspore.mint.sub
+
+
+Reduction运算
+^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.mean
+    mindspore.mint.prod
+    mindspore.mint.sum
 
 
 BLAS和LAPACK运算

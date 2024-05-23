@@ -15,6 +15,7 @@
  */
 
 #include "ops/ops_func_impl/reduce_arithmetic.h"
+#include "ops/ops_func_impl/simple_infer.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -248,5 +249,39 @@ ShapeArray ReduceInferShape(const PrimitivePtr &primitive, const ValuePtrList &i
   return {ReduceFuncCalShapeInferImpl(primitive, x_shape, real_axis_vec, keep_dims)};
 }
 
+ShapeArray ReduceExtandSimpleInferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) {
+  const auto &keep_dims = input_values[kIndex2]->cast<BoolImmPtr>();
+  MS_EXCEPTION_IF_NULL(keep_dims);
+
+  if (input_values[kIndex1] == mindspore::kNone) {
+    return keep_dims->value() ? ShapeArray{ShapeVector({1})} : ShapeArray{ShapeVector({})};
+  }
+
+  const auto &axis = input_values[kIndex1]->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(axis);
+
+  std::vector<int64_t> axis_vector;
+  for (const auto &value : axis->value()) {
+    const auto &axis_element = value->cast<Int64ImmPtr>();
+    MS_EXCEPTION_IF_NULL(axis_element);
+    axis_vector.emplace_back(axis_element->value());
+  }
+
+  if (axis_vector.empty()) {
+    return keep_dims->value() ? ShapeArray{ShapeVector({1})} : ShapeArray{ShapeVector({})};
+  }
+
+  const auto &input = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(input);
+  const auto &input_shape = input->shape();
+  const auto input_shape_size = input_shape.size();
+
+  std::vector<int64_t> real_axis_vector;
+  (void)std::transform(
+    axis_vector.begin(), axis_vector.end(), std::back_inserter(real_axis_vector),
+    [&input_shape_size, &primitive](const int64_t &axis) { return CalRealAixs(axis, input_shape_size, primitive); });
+  auto out_shape = ReduceFuncCalShapeInferImpl(primitive, input_shape, real_axis_vector, keep_dims->value());
+  return {out_shape};
+}
 }  // namespace ops
 }  // namespace mindspore

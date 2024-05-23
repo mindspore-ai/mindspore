@@ -63,7 +63,21 @@ Pointwise Operations
     mindspore.mint.div
     mindspore.mint.divide
     mindspore.mint.floor
+    mindspore.mint.log
     mindspore.mint.sub
+
+
+Reduction Operations
+^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.mean
+    mindspore.mint.prod
+    mindspore.mint.sum
 
 
 BLAS and LAPACK Operations

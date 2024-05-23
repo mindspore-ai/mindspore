@@ -26,6 +26,7 @@ namespace ops {
 BaseShapePtr ReduceInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 BaseShapePtr NormInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 BaseShapePtr ReduceExtandInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+ShapeArray ReduceExtandSimpleInferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values);
 int64_t CalRealAixs(const int64_t &axis, const size_t &x_shape_size, const PrimitivePtr &primitive);
 ShapeArray ReduceInferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values);
 }  // namespace ops
