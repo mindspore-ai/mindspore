@@ -34,6 +34,7 @@ Tensor创建
     :template: classtemplate.rst
 
     mindspore.mint.abs
+    mindspore.mint.isclose
     mindspore.mint.tanh
 
 mindspore.mint.nn
