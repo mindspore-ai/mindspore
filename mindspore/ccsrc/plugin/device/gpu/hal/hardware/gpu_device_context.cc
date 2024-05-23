@@ -326,6 +326,58 @@ std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vec
   return mem_manager_->MallocContinuousMemFromMemPool(align_size_list, stream_id);
 }
 
+// Relevant function to manage memory statistics
+size_t GPUDeviceResManager::GetTotalMemStatistics() const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  return mem_manager_->GetTotalMemStatistics();
+}
+size_t GPUDeviceResManager::GetTotalUsedMemStatistics() const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  return mem_manager_->GetTotalUsedMemStatistics();
+}
+size_t GPUDeviceResManager::GetTotalIdleMemStatistics() const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  return mem_manager_->GetTotalIdleMemStatistics();
+}
+size_t GPUDeviceResManager::GetTotalEagerFreeMemStatistics() const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  return mem_manager_->GetTotalEagerFreeMemStatistics();
+}
+size_t GPUDeviceResManager::GetUsedMemPeakStatistics() const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  return mem_manager_->GetUsedMemPeakStatistics();
+}
+size_t GPUDeviceResManager::GetReservedMemPeakStatistics() const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  return mem_manager_->GetReservedMemPeakStatistics();
+}
+std::unordered_map<std::string, std::size_t> GPUDeviceResManager::GetBlockCountsStatistics() const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  return mem_manager_->GetBlockCountsStatistics();
+}
+std::unordered_map<std::string, std::size_t> GPUDeviceResManager::GetBlockUnitSizeStatistics() const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  return mem_manager_->GetBlockUnitSizeStatistics();
+}
+std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
+GPUDeviceResManager::GetCommonMemBlocksInfoStatistics() const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  return mem_manager_->GetCommonMemBlocksInfoStatistics();
+}
+std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
+GPUDeviceResManager::GetPersistentMemBlocksInfoStatistics() const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  return mem_manager_->GetPersistentMemBlocksInfoStatistics();
+}
+void GPUDeviceResManager::ResetMaxMemoryReserved() const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  mem_manager_->ResetMaxMemoryReserved();
+}
+void GPUDeviceResManager::ResetMaxMemoryAllocated() const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  mem_manager_->ResetMaxMemoryAllocated();
+}
+
 namespace {
 // Create data in user data for device address.
 void SetUserData(DeviceAddress *device_address, const UserDataPtr &user_data) {

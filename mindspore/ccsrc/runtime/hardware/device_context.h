@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "include/backend/device_type.h"
 #include "include/backend/device_address.h"
@@ -178,6 +179,26 @@ class BACKEND_EXPORT DeviceResManager {
   virtual bool AllocateMemory(DeviceAddress *const &address, uint32_t stream_id = UINT32_MAX) const;
   virtual void FreeMemory(DeviceAddress *const &address) const;
   virtual size_t GetMaxUsedMemorySize() const { return 0; }
+
+  // Relevant function to manage memory statistics
+  virtual size_t GetTotalMemStatistics() const { return 0; }
+  virtual size_t GetTotalUsedMemStatistics() const { return 0; }
+  virtual size_t GetTotalIdleMemStatistics() const { return 0; }
+  virtual size_t GetTotalEagerFreeMemStatistics() const { return 0; }
+  virtual size_t GetUsedMemPeakStatistics() const { return 0; }
+  virtual size_t GetReservedMemPeakStatistics() const { return 0; }
+  virtual std::unordered_map<std::string, std::size_t> GetBlockCountsStatistics() const { return {}; }
+  virtual std::unordered_map<std::string, std::size_t> GetBlockUnitSizeStatistics() const { return {}; }
+  virtual std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
+  GetCommonMemBlocksInfoStatistics() const {
+    return {};
+  }
+  virtual std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
+  GetPersistentMemBlocksInfoStatistics() const {
+    return {};
+  }
+  virtual void ResetMaxMemoryReserved() const {};
+  virtual void ResetMaxMemoryAllocated() const {};
 
   // Allocate host memory with raii and ref count
   virtual std::shared_ptr<void> AllocateHostMemory(size_t size) const {
