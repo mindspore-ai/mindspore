@@ -19,6 +19,7 @@
 #include <memory>
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -27,6 +28,10 @@ BaseShapePtr BinaryOpFuncImpl::InferShape(const PrimitivePtr &primitive,
   for (auto &input_arg : input_args) {
     MS_EXCEPTION_IF_NULL(input_arg);
   }
+  const int64_t kInputsNum = 2;
+  auto rank = SizeToLong(input_args.size());
+  MS_CHECK_VALUE(rank >= kInputsNum, CheckAndConvertUtils::FormatCheckIntegerMsg("Input numbers", rank, kGreaterEqual,
+                                                                                 kInputsNum, primitive));
   auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
   auto x_shape = x_shape_ptr->GetShapeVector();
