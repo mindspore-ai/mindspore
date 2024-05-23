@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,14 +33,8 @@ internal::OpParamPtr ReshapeAndCache::CreateOpParam(const std::vector<KernelTens
   param_ptr->specificParam = mix_param;
   return param_ptr;
 }
-void ReshapeAndCache::SetInOutIdx() {
-  inputsIdxMap_[kIndex0] = kIndex0;
-  inputsIdxMap_[kIndex1] = kIndex1;
-  inputsIdxMap_[kIndex2] = kIndex2;
-  inputsIdxMap_[kIndex3] = kIndex3;
-  inputsIdxMap_[kIndex4] = kIndex4;
-}
 
 MS_INTERNAL_KERNEL_FACTORY_REG(ReshapeAndCache, ReshapeAndCache);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(ReshapeAndCache, 5, 0, 1, 2, 3, 4);
 }  // namespace kernel
 }  // namespace mindspore

@@ -32,11 +32,39 @@
 
 namespace mindspore {
 namespace kernel {
-static std::map<std::string, int> ms_op_key_to_internel_op_id = {{"SiLU", internal::OpId::Swish},
-                                                                 {"AddLayerNorm", internal::OpId::AddLayerNorm},
-                                                                 {"Cast", internal::OpId::Cast},
-                                                                 {"MatmulFfn", internal::OpId::MatmulQkv},
-                                                                 {"MatmulQkv", internal::OpId::MatmulQkv}};
+static std::map<std::string, int> ms_op_key_to_internel_op_id = {
+  {"SiLU", internal::OpId::Swish},
+  {"AddLayerNorm", internal::OpId::AddLayerNorm},
+  {"Cast", internal::OpId::Cast},
+  {"ReshapeAndCache", internal::OpId::ReshapeAndCache},
+  {"Gather", internal::OpId::Gather},
+  {"ApplyRotaryPosEmb", internal::OpId::ApplyRotaryPosEmb},
+  {"Add", internal::OpId::Add},
+  {"Sub", internal::OpId::Sub},
+  {"RealDiv", internal::OpId::RealDiv},
+  {"Mul", internal::OpId::Mul},
+  {"LessEqual", internal::OpId::LessEqual},
+  {"Less", internal::OpId::Less},
+  {"LogicalNot", internal::OpId::LogicalNot},
+  {"NotEqual", internal::OpId::NotEqual},
+  {"Equal", internal::OpId::Equal},
+  {"Transpose", internal::OpId::Transpose},
+  {"GeLU", internal::OpId::Gelu},
+  {"Softmax", internal::OpId::Softmax},
+  {"Split", internal::OpId::Split},
+  {"Concat", internal::OpId::Concat},
+  {"RmsNorm", internal::OpId::RmsNorm},
+  {"AddRmsNorm", internal::OpId::AddRmsNorm},
+  {"ReduceSum", internal::OpId::ReduceSum},
+  {"FlashAttentionScore", internal::OpId::FlashAttentionScore},
+  {"PagedAttentionMask", internal::OpId::PagedAttention},
+  {"PagedAttention", internal::OpId::PagedAttention},
+  {"FusedMatMulElemBinary", internal::OpId::MatMul},
+  {"FusedMatMulElemUnary", internal::OpId::MatMul},
+  {"MatMul", internal::OpId::MatMul},
+  {"MatmulFfn", internal::OpId::MatmulQkv},
+  {"MatmulQkv", internal::OpId::MatmulQkv}};
+
 class InternalKernelMod : public KernelMod {
  public:
   explicit InternalKernelMod(std::string &&op_type) : op_type_(std::move(op_type)) {
@@ -56,7 +84,6 @@ class InternalKernelMod : public KernelMod {
 
  protected:
   virtual int Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
-  virtual void SetInOutIdx() = 0;
   void SetInOutIdx(size_t in_count, size_t out_count);
   virtual internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                              const std::vector<KernelTensor *> &outputs) = 0;

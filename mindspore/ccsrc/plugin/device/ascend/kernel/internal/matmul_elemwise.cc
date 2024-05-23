@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 #include "param/matmul_ext_param.h"
 
 namespace mindspore {
@@ -91,13 +92,6 @@ class InternalMatmulElemBinary : public InternalMatmulElemBase {
   InternalMatmulElemBinary() : InternalMatmulElemBase("MatmulElemBinary") {}
   ~InternalMatmulElemBinary() = default;
 
-  void SetInOutIdx() override {
-    inputsIdxMap_[kIndex0] = kIndex0;
-    inputsIdxMap_[kIndex1] = kIndex1;
-    inputsIdxMap_[kIndex2] = kIndex2;
-    outputsIdxMap_[kIndex0] = kIndex0;
-  }
-
   uint64_t GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
                              const std::vector<KernelTensor *> &outputs) override {
     // User defined CacheKey, the inputs should include all the factors which will affect tiling result.
@@ -112,12 +106,6 @@ class InternalMatmulElemUnary : public InternalMatmulElemBase {
   InternalMatmulElemUnary() : InternalMatmulElemBase("MatmulElemUnary") {}
   ~InternalMatmulElemUnary() = default;
 
-  void SetInOutIdx() override {
-    inputsIdxMap_[kIndex0] = kIndex0;
-    inputsIdxMap_[kIndex1] = kIndex1;
-    outputsIdxMap_[kIndex0] = kIndex0;
-  }
-
   uint64_t GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
                              const std::vector<KernelTensor *> &outputs) override {
     // User defined CacheKey, the inputs should include all the factors which will affect tiling result.
@@ -128,6 +116,10 @@ class InternalMatmulElemUnary : public InternalMatmulElemBase {
 };
 
 MS_INTERNAL_KERNEL_FACTORY_REG(FusedMatMulElemBinary, InternalMatmulElemBinary);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(FusedMatMulElemBinary, 3, 0, 1, 2);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(FusedMatMulElemBinary, 1, 0);
 MS_INTERNAL_KERNEL_FACTORY_REG(FusedMatMulElemUnary, InternalMatmulElemUnary);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(FusedMatMulElemUnary, 2, 0, 1);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(FusedMatMulElemUnary, 1, 0);
 }  // namespace kernel
 }  // namespace mindspore

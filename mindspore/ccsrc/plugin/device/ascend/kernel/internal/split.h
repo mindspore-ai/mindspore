@@ -30,7 +30,6 @@ class InternalSplit : public InternalKernelMod {
  protected:
   internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs);
-  void SetInOutIdx();
 };
 }  // namespace kernel
 }  // namespace mindspore

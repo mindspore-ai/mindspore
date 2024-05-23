@@ -25,24 +25,25 @@
 
 namespace mindspore {
 namespace kernel {
+enum InternalKernelMapDtype : int { INTERNEL_KERNEL_MAP_INPUT = 0, INTERNEL_KERNEL_MAP_OUTPUT = 1 };
 class InternalKernelModInOutMap {
  public:
   InternalKernelModInOutMap() = default;
   ~InternalKernelModInOutMap() = default;
 
   static InternalKernelModInOutMap *GetInstance();
-  void SetKernelMap(const std::string op_name, int map_dtype, std::vector<int> map);
-  void SetMutableList(const std::string op_name, int map_dtype);
-  std::vector<int> GetKernelInMap(std::string op_name, bool *is_mutable);
-  std::vector<int> GetKernelOutMap(std::string op_name, bool *is_mutable);
-  std::vector<int64_t> MapInternelInputDtypes(std::string op_name, const std::vector<TypeId> &ms_dtypes);
-  std::vector<int64_t> MapInternelOutputDtypes(std::string op_name, const std::vector<TypeId> &ms_dtypes);
+  void AppendKernelMap(const std::string &op_name, InternalKernelMapDtype map_dtype, std::vector<int> map);
+  void AppendMutableList(const std::string &op_name, InternalKernelMapDtype map_dtype);
+  std::vector<int> GetKernelInMap(const std::string &op_name, bool *is_mutable);
+  std::vector<int> GetKernelOutMap(const std::string &op_name, bool *is_mutable);
+  std::vector<int64_t> MapInternelInputDtypes(const std::string &op_name, const std::vector<TypeId> &ms_dtypes);
+  std::vector<int64_t> MapInternelOutputDtypes(const std::string &op_name, const std::vector<TypeId> &ms_dtypes);
 
  private:
   std::map<std::string, std::vector<int>> input_idx_;  /* ms idx */
   std::map<std::string, std::vector<int>> output_idx_; /* ms idx */
-  std::vector<std::string> mutable_input_list_;
-  std::vector<std::string> mutable_output_list_;
+  std::set<std::string> mutable_input_list_;
+  std::set<std::string> mutable_output_list_;
 };
 
 class InternalKernelModInOutRegistrar {

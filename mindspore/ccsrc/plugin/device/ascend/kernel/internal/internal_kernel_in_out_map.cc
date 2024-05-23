@@ -21,14 +21,13 @@
 
 namespace mindspore {
 namespace kernel {
-#define INTERNEL_KERNEL_MAP_INPUT 0
-#define INTERNEL_KERNEL_MAP_OUTPUT 1
 InternalKernelModInOutMap *InternalKernelModInOutMap::GetInstance() {
   static InternalKernelModInOutMap instance;
   return &instance;
 }
 
-void InternalKernelModInOutMap::SetKernelMap(const std::string op_name, int map_dtype, std::vector<int> idx) {
+void InternalKernelModInOutMap::AppendKernelMap(const std::string &op_name, InternalKernelMapDtype map_dtype,
+                                                std::vector<int> idx) {
   if (map_dtype == INTERNEL_KERNEL_MAP_INPUT) {
     input_idx_[op_name] = idx;
   } else if (map_dtype == INTERNEL_KERNEL_MAP_OUTPUT) {
@@ -36,34 +35,46 @@ void InternalKernelModInOutMap::SetKernelMap(const std::string op_name, int map_
   }
 }
 
-void InternalKernelModInOutMap::SetMutableList(const std::string op_name, int map_dtype) {
+void InternalKernelModInOutMap::AppendMutableList(const std::string &op_name, InternalKernelMapDtype map_dtype) {
   if (map_dtype == INTERNEL_KERNEL_MAP_INPUT) {
-    mutable_input_list_.push_back(op_name);
+    mutable_input_list_.insert(op_name);
   } else if (map_dtype == INTERNEL_KERNEL_MAP_OUTPUT) {
-    mutable_output_list_.push_back(op_name);
+    mutable_output_list_.insert(op_name);
   }
 }
 
-std::vector<int> InternalKernelModInOutMap::GetKernelInMap(std::string op_name, bool *is_mutable) {
+std::vector<int> InternalKernelModInOutMap::GetKernelInMap(const std::string &op_name, bool *is_mutable) {
+  if (is_mutable == nullptr) {
+    return {};
+  }
+
   auto map_iter = input_idx_.find(op_name);
   if (map_iter != input_idx_.end()) {
+    *is_mutable = false;
     return map_iter->second;
   }
+
   *is_mutable = std::find(mutable_input_list_.begin(), mutable_input_list_.end(), op_name) != mutable_input_list_.end();
   return {};
 }
 
-std::vector<int> InternalKernelModInOutMap::GetKernelOutMap(std::string op_name, bool *is_mutable) {
+std::vector<int> InternalKernelModInOutMap::GetKernelOutMap(const std::string &op_name, bool *is_mutable) {
+  if (is_mutable == nullptr) {
+    return {};
+  }
+
   auto map_iter = output_idx_.find(op_name);
   if (map_iter != output_idx_.end()) {
+    *is_mutable = false;
     return map_iter->second;
   }
+
   *is_mutable =
     std::find(mutable_output_list_.begin(), mutable_output_list_.end(), op_name) != mutable_output_list_.end();
   return {};
 }
 
-std::vector<int64_t> InternalKernelModInOutMap::MapInternelInputDtypes(std::string op_name,
+std::vector<int64_t> InternalKernelModInOutMap::MapInternelInputDtypes(const std::string &op_name,
                                                                        const std::vector<TypeId> &ms_dtypes) {
   std::vector<int64_t> internel_dtypes;
   auto map_iter = input_idx_.find(op_name);
@@ -77,7 +88,7 @@ std::vector<int64_t> InternalKernelModInOutMap::MapInternelInputDtypes(std::stri
   return internel_dtypes;
 }
 
-std::vector<int64_t> InternalKernelModInOutMap::MapInternelOutputDtypes(std::string op_name,
+std::vector<int64_t> InternalKernelModInOutMap::MapInternelOutputDtypes(const std::string &op_name,
                                                                         const std::vector<TypeId> &ms_dtypes) {
   std::vector<int64_t> internel_dtypes;
   auto map_iter = output_idx_.find(op_name);
@@ -94,7 +105,7 @@ std::vector<int64_t> InternalKernelModInOutMap::MapInternelOutputDtypes(std::str
 InternalKernelModInOutRegistrar::InternalKernelModInOutRegistrar(const std::string op_name, const int map_type,
                                                                  int total_count, ...) {
   if (total_count == INTERNEL_KERNEL_IN_OUT_MUTABLE_LENGTH) {
-    InternalKernelModInOutMap::GetInstance()->SetMutableList(op_name, map_type);
+    InternalKernelModInOutMap::GetInstance()->AppendMutableList(op_name, (InternalKernelMapDtype)map_type);
     return;
   }
 
@@ -105,7 +116,7 @@ InternalKernelModInOutRegistrar::InternalKernelModInOutRegistrar(const std::stri
     idx_list.push_back(va_arg(ptr, int));
   }
   va_end(ptr);
-  InternalKernelModInOutMap::GetInstance()->SetKernelMap(op_name, map_type, idx_list);
+  InternalKernelModInOutMap::GetInstance()->AppendKernelMap(op_name, (InternalKernelMapDtype)map_type, idx_list);
 }
 }  // namespace kernel
 }  // namespace mindspore
