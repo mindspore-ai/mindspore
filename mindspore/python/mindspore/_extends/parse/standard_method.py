@@ -4379,6 +4379,13 @@ def amax(input, axis=None, keep_dims=False):
     return F.amax(input, axis, keep_dims)
 
 
+def uniform(input, from_=0., to=1., generator=None):
+    r"""
+    Generates random numbers in the half-open interval [from_, to).
+    """
+    return F.uniform_ext(input, from_, to, generator)
+
+
 def amin(input, axis=None, keep_dims=False):
     r"""
     For details, please refer to :func:`mindspore.ops.amin`.
