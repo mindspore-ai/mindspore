@@ -127,6 +127,49 @@ print(output)
 [[0.]]
 ```
 
+## Reduce
+
+![image](./images/reduce.png)
+
+`Reduce`操作会将每张卡的输入先进行指定的规约操作，再将输出结果分发到指定的卡上。以op=ReduceOp.SUM为例：先对每张卡的输入张量进行求和，然后按将结果分发到指定的卡上。如上图所示，每卡的输入均为1x4的Tensor。`ReduceScatter`先对输入求和得到[0, 4, 8, 12]的Tensor，然后结果发送到指定的卡上(例如：卡1)，卡1对应的输出结果为[0., 4., 8., 12.], 其余各卡输出结果为[0.]。
+
+示例代码如下：我们初始化每个进程中`Reduce`算子输入的数值，对于每张卡，我们申请了一个1x4大小，数值为[0, 1, 2, 3]的Tensor输入。然后调用`Reduce`算子，在通信域为`0-1-2-3`的卡(所有卡的通信范围即nccl_world_group)中进行通信，并且打印输出结果。
+
+```python
+import mindspore as ms
+from mindspore.communication import init
+import mindspore.nn as nn
+import mindspore.ops as ops
+import numpy as np
+
+ms.set_context(mode=ms.GRAPH_MODE)
+init()
+class Net(nn.Cell):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.reduce = ops.Reduce(ops.ReduceOp.SUM)
+
+    def construct(self, x):
+        return self.reduce(x)
+
+input_x = ms.Tensor(np.array([0, 1, 2, 3]).astype(np.float32))
+net = Net()
+output = net(input_x)
+print(output)
+```
+
+运行结果如下，卡1的输出日志路径为`log/1/rank.1`，输出结果为：
+
+```text
+[0., 4., 8., 12.]
+```
+
+其余卡的输出结果为：
+
+```text
+[0.]
+```
+
 ## Broadcast
 
 ![image](./images/broadcast.png)

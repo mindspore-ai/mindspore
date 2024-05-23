@@ -61,3 +61,33 @@ def test_hccl_barrier():
     """
     return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_barrier.py")
     assert return_code == 0
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+def test_hccl_allgather():
+    """
+    Feature: mpi run 8P case
+    Description: mpi run 8P case
+    Expectation: success
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_allgather.py")
+    assert return_code == 0
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+def test_hccl_get_process_group_ranks_func_8p():
+    """
+    Feature: mpi run 8P case
+    Description: mpi run 8P case
+    Expectation: success
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_get_process_group_ranks.py")
+    assert return_code == 0
