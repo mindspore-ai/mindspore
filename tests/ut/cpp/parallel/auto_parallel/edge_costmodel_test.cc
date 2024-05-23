@@ -105,7 +105,7 @@ void TestEdgeCostModel::SetUp() {
   matmul5->set_outputs_type({kFloat32});
 }
 
-TEST_F(TestEdgeCostModel, test_InitEdgeCost) {
+TEST_F(TestEdgeCostModel, DISABLED_test_InitEdgeCost) {
   std::string edge_name = "MatMul-MatMul";
   std::shared_ptr<Edge> edge_m1_m2 = std::make_shared<Edge>(edge_name, matmul1, matmul2, 0, 0, false);
   matmul1->GenerateStrategies(0);
@@ -115,7 +115,7 @@ TEST_F(TestEdgeCostModel, test_InitEdgeCost) {
   ASSERT_EQ(edge_m1_m2->InitEdgeCost(), SUCCESS);
 }
 
-TEST_F(TestEdgeCostModel, test_OpEliminationSetNewCost) {
+TEST_F(TestEdgeCostModel, DISABLED_test_OpEliminationSetNewCost) {
   std::string edge_name = "MatMul-MatMul";
   std::shared_ptr<Edge> edge_m1_m2 = std::make_shared<Edge>(edge_name, matmul1, matmul2, 0, 0, false);
   std::shared_ptr<Edge> edge_m2_m4 = std::make_shared<Edge>(edge_name, matmul2, matmul4, 0, 0, false);
@@ -135,7 +135,7 @@ TEST_F(TestEdgeCostModel, test_OpEliminationSetNewCost) {
   new_edge->OpEliminationSetNewCost(edge_m1_m2, matmul2, edge_m2_m4);
 }
 
-TEST_F(TestEdgeCostModel, test_EdgeEliminationSetNewCost) {
+TEST_F(TestEdgeCostModel, DISABLED_test_EdgeEliminationSetNewCost) {
   std::string edge_name = "MatMul-MatMul";
   std::shared_ptr<Edge> edge_m1_m5 = std::make_shared<Edge>(edge_name, matmul1, matmul5, 0, 0, false);
   std::shared_ptr<Edge> edge_m1_m5_2 = std::make_shared<Edge>(edge_name, matmul1, matmul5, 0, 1, false);

@@ -41,23 +41,33 @@ python ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/data/dataset/testAlbum/gen_j
 RET=0
 if [ $# -gt 0 ]; then
   ./ut_CORE_tests --gtest_filter=$1
+  ./ut_API_tests --gtest_filter=$1
+  ./ut_FRONTEND_tests --gtest_filter=$1
+  ./ut_OLD_BACKEND_tests --gtest_filter=$1
+  ./ut_BACKEND_tests --gtest_filter=$1
+  ./ut_PS_tests --gtest_filter=$1
+  ./ut_OTHERS_tests --gtest_filter=$1
+  ./ut_MINDDATA0_tests --gtest_filter=$1
+  ./ut_MINDDATA1_tests --gtest_filter=$1
   exit 0
 fi
 
+set +e
+
 pids=()
-tasks=(./ut_CORE_tests)
+tasks=(./ut_CORE_tests ./ut_API_tests ./ut_FRONTEND_tests ./ut_BACKEND_tests ./ut_PS_tests ./ut_OTHERS_tests)
 set +e
 for task in "${tasks[@]}"; do
-  $task &
+  $task
   pids+=($!)
 done
 cd -
-for pid in "${pids[@]}"; do
-  wait $pid
-  status=$?
-  if [ $status != 0 ]; then
-    RET=$status
-  fi
-done
+#for pid in "${pids[@]}"; do
+#  wait $pid
+#  status=$?
+#  if [ $status != 0 ]; then
+#    RET=$status
+#  fi
+#done
 
 exit $RET

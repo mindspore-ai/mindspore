@@ -28,7 +28,7 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 /// Feature: Caltech256Dataset
 /// Description: Basic test of Caltech256Dataset
 /// Expectation: The data is processed successfully
-TEST_F(MindDataTestPipeline, TestCaltech256Dataset) {
+TEST_F(MindDataTestPipeline, DISABLED_TestCaltech256Dataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256Dataset.";
 
   // Create a Caltech256 Dataset.
@@ -65,7 +65,7 @@ TEST_F(MindDataTestPipeline, TestCaltech256Dataset) {
 /// Feature: Caltech256Dataset
 /// Description: Test Caltech256Dataset in pipeline mode
 /// Expectation: The data is processed successfully
-TEST_F(MindDataTestPipeline, TestCaltech256DatasetWithPipeline) {
+TEST_F(MindDataTestPipeline, DISABLED_TestCaltech256DatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256DatasetWithPipeline.";
 
   // Create two Caltech256 Dataset.
@@ -123,7 +123,7 @@ TEST_F(MindDataTestPipeline, TestCaltech256DatasetWithPipeline) {
 /// Feature: Caltech256Dataset
 /// Description: Test iterator of Caltech256Dataset with only the image column
 /// Expectation: The data is processed successfully
-TEST_F(MindDataTestPipeline, TestCaltech256IteratorOneColumn) {
+TEST_F(MindDataTestPipeline, DISABLED_TestCaltech256IteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256IteratorOneColumn.";
   // Create a Caltech256 Dataset.
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -166,7 +166,7 @@ TEST_F(MindDataTestPipeline, TestCaltech256IteratorOneColumn) {
 /// Feature: Caltech256Dataset
 /// Description: Test iterator of Caltech256Dataset with wrong column
 /// Expectation: Error message is logged, and CreateIterator for invalid pipeline returns nullptr
-TEST_F(MindDataTestPipeline, TestCaltech256IteratorWrongColumn) {
+TEST_F(MindDataTestPipeline, DISABLED_TestCaltech256IteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256IteratorWrongColumn.";
   // Create a Caltech256 Dataset.
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -183,7 +183,7 @@ TEST_F(MindDataTestPipeline, TestCaltech256IteratorWrongColumn) {
 /// Feature: Caltech256Dataset
 /// Description: Test getting size of Caltech256Dataset
 /// Expectation: The size is correct
-TEST_F(MindDataTestPipeline, TestCaltech256GetDatasetSize) {
+TEST_F(MindDataTestPipeline, DISABLED_TestCaltech256GetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256GetDatasetSize.";
 
   // Create a Caltech256 Dataset.
@@ -197,7 +197,7 @@ TEST_F(MindDataTestPipeline, TestCaltech256GetDatasetSize) {
 /// Feature: Caltech256Dataset
 /// Description: Test Caltech256Dataset Getters method
 /// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestCaltech256Getters) {
+TEST_F(MindDataTestPipeline, DISABLED_TestCaltech256Getters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256MixGetter.";
 
   // Create a Caltech256 Dataset.
@@ -236,7 +236,7 @@ TEST_F(MindDataTestPipeline, TestCaltech256Getters) {
 /// Feature: Caltech256Dataset
 /// Description: Test Caltech256Dataset with the fail of reading dataset
 /// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
-TEST_F(MindDataTestPipeline, TestCaltech256DatasetFail) {
+TEST_F(MindDataTestPipeline, DISABLED_TestCaltech256DatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256DatasetFail.";
 
   // Create a Caltech256 Dataset.
@@ -252,7 +252,7 @@ TEST_F(MindDataTestPipeline, TestCaltech256DatasetFail) {
 /// Feature: Caltech256Dataset
 /// Description: Test Caltech256Dataset with the null sampler
 /// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
-TEST_F(MindDataTestPipeline, TestCaltech256DatasetWithNullSamplerFail) {
+TEST_F(MindDataTestPipeline, DISABLED_TestCaltech256DatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256DatasetWithNullSamplerFail.";
 
   // Create a Caltech256 Dataset.

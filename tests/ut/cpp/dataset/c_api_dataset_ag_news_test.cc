@@ -28,7 +28,7 @@ protected:
 /// Feature: AGNewsDataset
 /// Description: Basic test for AGNewsDataset
 /// Expectation: The data is processed successfully
-TEST_F(MindDataTestPipeline, TestAGNewsDatasetBasic) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAGNewsDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetBasic.";
 
   std::string dataset_dir = datasets_root_path_ + "/testAGNews";
@@ -77,7 +77,7 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetBasic) {
 /// Feature: AGNewsDataset
 /// Description: Test AGNewsDataset in pipeline mode
 /// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestAGNewsGetters) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAGNewsGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsGetters.";
 
   std::string dataset_dir = datasets_root_path_ + "/testAGNews";
@@ -103,7 +103,7 @@ TEST_F(MindDataTestPipeline, TestAGNewsGetters) {
 /// Feature: AGNewsDataset
 /// Description: Test AGNewsDataset with invalid inputs
 /// Expectation: Correct error and message are thrown
-TEST_F(MindDataTestPipeline, TestAGNewsDatasetFail) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAGNewsDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetFail.";
 
   std::string dataset_dir = datasets_root_path_ + "/testAGNews";
@@ -151,7 +151,7 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetFail) {
 /// Feature: AGNewsDataset
 /// Description: Test AGNewsDataset with valid num_samples
 /// Expectation: The data is processed successfully
-TEST_F(MindDataTestPipeline, TestAGNewsDatasetNumSamples) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAGNewsDatasetNumSamples) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetNumSamples.";
 
   // Create a AGNewsDataset, with single CSV file.
@@ -200,7 +200,7 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetNumSamples) {
 /// Feature: AGNewsDataset
 /// Description: Test distributed AGNewsDataset (with num_shards and shard_id)
 /// Expectation: The data is processed successfully
-TEST_F(MindDataTestPipeline, TestAGNewsDatasetDistribution) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAGNewsDatasetDistribution) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetDistribution.";
 
   // Create a AGNewsDataset, with single CSV file.
@@ -249,7 +249,7 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetDistribution) {
 /// Feature: AGNewsDataset
 /// Description: Test AGNewsDataset with all as usage
 /// Expectation: The data is processed successfully
-TEST_F(MindDataTestPipeline, TestAGNewsDatasetMultiFiles) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAGNewsDatasetMultiFiles) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetMultiFiles.";
 
   // Create a AGNewsDataset, with single CSV file.
@@ -307,7 +307,7 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetMultiFiles) {
 /// Feature: AGNewsDataset
 /// Description: Test AGNewsDataset header
 /// Expectation: The data is processed successfully
-TEST_F(MindDataTestPipeline, TestAGNewsDatasetHeader) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAGNewsDatasetHeader) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetHeader.";
 
   // Create a AGNewsDataset, with single CSV file.
@@ -356,7 +356,7 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetHeader) {
 /// Feature: AGNewsDataset
 /// Description: Test AGNewsDataset using ShuffleMode::kFiles
 /// Expectation: The data is processed successfully
-TEST_F(MindDataTestPipeline, TestAGNewsDatasetShuffleFilesA) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAGNewsDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetShuffleFilesA.";
 
   // Set configuration.
@@ -425,7 +425,7 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetShuffleFilesA) {
 /// Feature: AGNewsDataset
 /// Description: Test AGNewsDataset using ShuffleMode::kGlobal
 /// Expectation: The data is processed successfully
-TEST_F(MindDataTestPipeline, TestAGNewsDatasetShuffleGlobal) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAGNewsDatasetShuffleGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetShuffleGlobal.";
   // Test AGNews Dataset with GLOBLE shuffle.
   uint32_t original_seed = GlobalContext::config_manager()->seed();

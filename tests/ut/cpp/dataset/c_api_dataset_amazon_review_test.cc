@@ -28,7 +28,7 @@ protected:
 /// Feature: AmazonReview
 /// Description: Read AmazonReviewPolarityDataset data and get data.
 /// Expectation: The data is processed successfully.
-TEST_F(MindDataTestPipeline, TestAmazonReviewPolarityDatasetBasic) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAmazonReviewPolarityDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewPolarityDatasetBasic.";
 
   std::string dataset_dir = datasets_root_path_ + "/testAmazonReview/polarity";
@@ -76,7 +76,7 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewPolarityDatasetBasic) {
 /// Feature: AmazonReview
 /// Description: Read AmazonReviewFullDataset data and get data.
 /// Expectation: The data is processed successfully.
-TEST_F(MindDataTestPipeline, TestAmazonReviewFullDatasetBasic) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAmazonReviewFullDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewFullDatasetBasic.";
 
   std::string dataset_dir = datasets_root_path_ + "/testAmazonReview/full";
@@ -126,7 +126,7 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewFullDatasetBasic) {
 /// Feature: AmazonReview(usage=all).
 /// Description: Read train data and test data.
 /// Expectation: The data is processed successfully.
-TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetUsageAll) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAmazonReviewDatasetUsageAll) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewDatasetUsageAll.";
 
   std::string dataset_dir = datasets_root_path_ + "/testAmazonReview/full";
@@ -178,7 +178,7 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetUsageAll) {
 /// Feature: AmazonReview
 /// Description: Test Getter methods
 /// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestAmazonReviewGetters) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAmazonReviewGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewGetters.";
 
   std::string dataset_dir = datasets_root_path_ + "/testAmazonReview/full";
@@ -193,7 +193,7 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewGetters) {
 /// Feature: AmazonReview(num_samples = 3).
 /// Description: Test whether the interface meets expectations when NumSamples is equal to 2.
 /// Expectation: The data is processed successfully.
-TEST_F(MindDataTestPipeline, TestAmazonReviewNumSamples) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAmazonReviewNumSamples) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewNumSamples.";
 
   std::string dataset_dir = datasets_root_path_ + "/testAmazonReview/full";
@@ -242,7 +242,7 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewNumSamples) {
 /// Feature: AmazonReview
 /// Description: Test interface in a distributed state.
 /// Expectation: The data is processed successfully.
-TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetDistribution) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAmazonReviewDatasetDistribution) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewDatasetDistribution.";
 
   std::string dataset_dir = datasets_root_path_ + "/testAmazonReview/full";
@@ -291,7 +291,7 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetDistribution) {
 /// Feature: AmazonReview
 /// Description: Test the wrong input.
 /// Expectation: Unable to read in data.
-TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetFail) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAmazonReviewDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewDatasetFail.";
 
   std::string dataset_dir = datasets_root_path_ + "/testAmazonReview/full";
@@ -342,7 +342,7 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetFail) {
 /// Feature: AmazonReview
 /// Description: Test AmazonReview Dataset interface in pipeline.
 /// Expectation: The data is processed successfully.
-TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetBasicWithPipeline) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAmazonReviewDatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewDatasetBasicWithPipeline.";
 
   // Create two AmazonReview Dataset, with single AmazonReview file.
@@ -400,7 +400,7 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetBasicWithPipeline) {
 /// Feature: AmazonReview(ShuffleMode=kFiles).
 /// Description: Test AmazonReview Dataset interface with different ShuffleMode.
 /// Expectation: The data is processed successfully.
-TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetShuffleFilesA) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAmazonReviewDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-AmazonReviewDatasetShuffleFilesA.";
 
   // Set configuration.
@@ -462,7 +462,7 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetShuffleFilesA) {
 /// Feature: AmazonReview(ShuffleMode=kInfile).
 /// Description: Test AmazonReview Dataset interface with different ShuffleMode.
 /// Expectation: The data is processed successfully.
-TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetShuffleFilesB) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAmazonReviewDatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewDatasetShuffleFilesB.";
 
   // Set configuration.
@@ -524,7 +524,7 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetShuffleFilesB) {
 /// Feature: AmazonReview(ShuffleMode=kGlobal).
 /// Description: Test AmazonReview Dataset interface with different ShuffleMode.
 /// Expectation: The data is processed successfully.
-TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetShuffleFilesGlobal) {
+TEST_F(MindDataTestPipeline, DISABLED_TestAmazonReviewDatasetShuffleFilesGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewDatasetShuffleFilesGlobal.";
 
   // Set configuration

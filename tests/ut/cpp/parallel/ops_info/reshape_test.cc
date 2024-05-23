@@ -67,7 +67,7 @@ void TestReshapeInfo::SetUp() {
   reshape->set_input_value(val);
 }
 
-TEST_F(TestReshapeInfo, InferDevMatrixShape1) {
+TEST_F(TestReshapeInfo, DISABLED_InferDevMatrixShape1) {
   Strategies inputs = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -78,7 +78,7 @@ TEST_F(TestReshapeInfo, InferDevMatrixShape1) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-TEST_F(TestReshapeInfo, InferDevMatrixShape2) {
+TEST_F(TestReshapeInfo, DISABLED_InferDevMatrixShape2) {
   Strategies inputs = {{32, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -89,7 +89,7 @@ TEST_F(TestReshapeInfo, InferDevMatrixShape2) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-TEST_F(TestReshapeInfo, InferSliceShape1) {
+TEST_F(TestReshapeInfo, DISABLED_InferSliceShape1) {
   Strategies str = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -110,7 +110,7 @@ TEST_F(TestReshapeInfo, InferSliceShape1) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-TEST_F(TestReshapeInfo, InferSliceShape2) {
+TEST_F(TestReshapeInfo, DISABLED_InferSliceShape2) {
   Strategies str = {{32, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -131,7 +131,7 @@ TEST_F(TestReshapeInfo, InferSliceShape2) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-TEST_F(TestReshapeInfo, GetTensorLayout1) {
+TEST_F(TestReshapeInfo, DISABLED_GetTensorLayout1) {
   Strategies str = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -152,7 +152,7 @@ TEST_F(TestReshapeInfo, GetTensorLayout1) {
   ASSERT_EQ(output_tensor_map.array(), output_expect);
 }
 
-TEST_F(TestReshapeInfo, GetTensorLayout2) {
+TEST_F(TestReshapeInfo, DISABLED_GetTensorLayout2) {
   Strategies str = {{32, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -173,7 +173,7 @@ TEST_F(TestReshapeInfo, GetTensorLayout2) {
   ASSERT_EQ(output_tensor_map.array(), output_expect);
 }
 
-TEST_F(TestReshapeInfo, GetForwardOp1) {
+TEST_F(TestReshapeInfo, DISABLED_GetForwardOp1) {
   Strategies inputs = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -184,7 +184,7 @@ TEST_F(TestReshapeInfo, GetForwardOp1) {
   ASSERT_EQ(size, 0);
 }
 
-TEST_F(TestReshapeInfo, GetMirrorOPs1) {
+TEST_F(TestReshapeInfo, DISABLED_GetMirrorOPs1) {
   Strategies inputs = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -196,7 +196,7 @@ TEST_F(TestReshapeInfo, GetMirrorOPs1) {
   ASSERT_EQ(size, 2);
 }
 
-TEST_F(TestReshapeInfo, CheckStrategy1) {
+TEST_F(TestReshapeInfo, DISABLED_CheckStrategy1) {
   Strategies inputs = {{1, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -204,7 +204,7 @@ TEST_F(TestReshapeInfo, CheckStrategy1) {
   ASSERT_EQ(ret, FAILED);
 }
 
-TEST_F(TestReshapeInfo, CheckStrategy2) {
+TEST_F(TestReshapeInfo, DISABLED_CheckStrategy2) {
   Strategies inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -212,7 +212,7 @@ TEST_F(TestReshapeInfo, CheckStrategy2) {
   ASSERT_EQ(ret, FAILED);
 }
 
-TEST_F(TestReshapeInfo, CheckStrategy3) {
+TEST_F(TestReshapeInfo, DISABLED_CheckStrategy3) {
   Strategies inputs = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 

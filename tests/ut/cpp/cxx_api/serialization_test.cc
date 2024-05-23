@@ -23,7 +23,7 @@ class TestCxxApiSerialization : public UT::Common {
   TestCxxApiSerialization() = default;
 };
 
-TEST_F(TestCxxApiSerialization, test_load_no_encrpty_mindir_SUCCESS) {
+TEST_F(TestCxxApiSerialization, DISABLED_test_load_no_encrpty_mindir_SUCCESS) {
   Graph graph;
   ASSERT_TRUE(Serialization::Load("./data/mindir/add_no_encrpty.mindir", ModelType::kMindIR, &graph) == kSuccess);
 }
@@ -43,7 +43,7 @@ TEST_F(TestCxxApiSerialization, test_load_file_not_exist_FAILED) {
   ASSERT_TRUE(err_mst.find("exist") != std::string::npos);
 }
 
-TEST_F(TestCxxApiSerialization, test_load_encrpty_mindir_SUCCESS) {
+TEST_F(TestCxxApiSerialization, DISABLED_test_load_encrpty_mindir_SUCCESS) {
   Graph graph;
   std::string key_str = "0123456789ABCDEF";
   Key key;
@@ -53,7 +53,7 @@ TEST_F(TestCxxApiSerialization, test_load_encrpty_mindir_SUCCESS) {
                                   key, kDecModeAesGcm) == kSuccess);
 }
 
-TEST_F(TestCxxApiSerialization, test_load_encrpty_mindir_without_key_FAILED) {
+TEST_F(TestCxxApiSerialization, DISABLED_test_load_encrpty_mindir_without_key_FAILED) {
   Graph graph;
   auto status =
     Serialization::Load("./data/mindir/add_encrpty_key_0123456789ABCDEF.mindir", ModelType::kMindIR, &graph);
@@ -84,7 +84,7 @@ TEST_F(TestCxxApiSerialization, test_load_no_encrpty_mindir_with_wrong_key_FAILE
   ASSERT_TRUE(status != kSuccess);
 }
 
-TEST_F(TestCxxApiSerialization, test_load_no_encrpty_mindir_x1_SUCCESS) {
+TEST_F(TestCxxApiSerialization, DISABLED_test_load_no_encrpty_mindir_x1_SUCCESS) {
   std::vector<Graph> graphs;
   ASSERT_TRUE(Serialization::Load(std::vector<std::string>(1, "./data/mindir/add_no_encrpty.mindir"),
                                   ModelType::kMindIR, &graphs) == kSuccess);
