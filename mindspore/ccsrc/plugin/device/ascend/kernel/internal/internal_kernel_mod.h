@@ -34,9 +34,8 @@ namespace kernel {
 class InternalKernelMod : public KernelMod {
  public:
   explicit InternalKernelMod(std::string &&op_type) : op_type_(std::move(op_type)) {
-    auto ascend_profiler = profiler::Profiler::GetInstance(kAscendDevice);
-    MS_EXCEPTION_IF_NULL(ascend_profiler);
-    enable_profiler_flag_ = ascend_profiler->GetEnableFlag();
+    ascend_profiler_ = profiler::Profiler::GetInstance(kAscendDevice);
+    MS_EXCEPTION_IF_NULL(ascend_profiler_);
   }
   virtual ~InternalKernelMod();
 
@@ -64,7 +63,7 @@ class InternalKernelMod : public KernelMod {
   std::vector<internal::Tensor *> outputs_;
   TilingInfo tiling_info_;
   std::string op_type_;
-  bool enable_profiler_flag_{False};
+  std::shared_ptr<profiler::Profiler> ascend_profiler_{nullptr};
 };
 
 using InternalKernelModPtr = std::shared_ptr<InternalKernelMod>;
