@@ -25,8 +25,8 @@ TensorStorageInfoPtrList CopyWithSliceCalc(const PrimitivePtr &prim, const std::
   if (CheckInputsNull(inputs, kCopyInputsNum)) {
     MS_LOG(EXCEPTION) << "inputs num is invalid, num:" << inputs.size();
   }
-  auto self_tensor = inputs[0]->cast<tensor::TensorPtr>();
-  auto src_tensor = inputs[1]->cast<tensor::TensorPtr>();
+  auto self_tensor = inputs[0]->cast<tensor::BaseTensorPtr>();
+  auto src_tensor = inputs[1]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(self_tensor);
   MS_EXCEPTION_IF_NULL(src_tensor);
 

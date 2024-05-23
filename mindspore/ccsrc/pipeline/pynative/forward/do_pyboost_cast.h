@@ -64,8 +64,8 @@ class PyBoostCastOperation : public CastBaseOperation {
   void GetTypeIdInfo(const FrontendOpRunInfoPtr &op_run_info, std::vector<TypeId> *args_type_id,
                      std::vector<bool> *args_has_tensor, size_t i, const Item &v) {
     MS_EXCEPTION_IF_NULL(v);
-    if (v->template isa<tensor::Tensor>()) {
-      (*args_type_id)[i] = v->template cast<tensor::TensorPtr>()->data_type();
+    if (v->template isa<tensor::BaseTensor>()) {
+      (*args_type_id)[i] = v->template cast<tensor::BaseTensorPtr>()->data_type();
       // Indicate have do type cast
       if (op_run_info->source_type[i] == ops::OP_DTYPE::DT_BEGIN) {
         (*args_has_tensor)[i] = true;
@@ -118,6 +118,7 @@ class PyBoostCastOperation : public CastBaseOperation {
       if (!has_dtype_sig) {
         PrimSignature sig_value{has_dtype_sig, {}};
         implicit_cast_map_[op_run_info->base_op_run_info.op_name] = sig_value;
+        MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name << " has no signature";
         return input_args;
       }
       PrimSignature sig_value{has_dtype_sig, dtypes};
@@ -159,16 +160,19 @@ class PyBoostCastOperation : public CastBaseOperation {
     // No need to implicit cast if no dtype.
     const auto &signature = op_run_info->signatures;
     if (dtypes.empty() || index >= dtypes.size() || dtypes[index] == SignatureEnumDType::kDTypeEmptyDefaultValue) {
+      MS_LOG(DEBUG) << "Get kDTypeEmptyDefaultValue, or index " << index << " larger than dtype size " << dtypes.size();
       return t;
     }
     auto it = dst_type.find(dtypes[index]);
     if (it == dst_type.end() || it->second.first == kTypeUnknown) {
+      MS_LOG(DEBUG) << "Can not find dtype " << (it == dst_type.end()) << ", or type is unknown "
+                    << (it->second.first == kTypeUnknown);
       return t;
     }
 
     TypeId arg_type_id = kTypeUnknown;
-    if (t->template isa<tensor::Tensor>()) {
-      const auto &arg = t->template cast<tensor::TensorPtr>();
+    if (t->template isa<tensor::BaseTensor>()) {
+      const auto &arg = t->template cast<tensor::BaseTensorPtr>();
       arg_type_id = arg->data_type();
     }
     // Implicit cast
@@ -181,6 +185,7 @@ class PyBoostCastOperation : public CastBaseOperation {
                                              TypeIdToMsTypeStr(it->second.first), index);
     }
     if (is_same_type) {
+      MS_LOG(DEBUG) << "Get same dtype";
       return t;
     }
 
@@ -211,7 +216,7 @@ class PyBoostCastOperation : public CastBaseOperation {
   template <class Item>
   bool IsValueTypeInvalid(const Item &v) const {
     MS_EXCEPTION_IF_NULL(v);
-    return !v->template isa<tensor::Tensor>() && !v->template isa<tensor::CSRTensor>() &&
+    return !v->template isa<tensor::BaseTensor>() && !v->template isa<tensor::CSRTensor>() &&
            !v->template isa<IntegerImm>() && !v->template isa<FloatImm>() && !v->template isa<BoolImm>();
   }
 
@@ -229,14 +234,14 @@ class PyBoostCastOperation : public CastBaseOperation {
 
   ValuePtr DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const std::pair<TypeId, bool> &dst_type, size_t index,
                       const ValuePtr &v) const;
-  tensor::TensorPtr DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const std::pair<TypeId, bool> &dst_type,
-                               size_t index, const tensor::TensorPtr &t) const;
+  tensor::BaseTensorPtr DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const std::pair<TypeId, bool> &dst_type,
+                                   size_t index, const tensor::BaseTensorPtr &t) const;
   ValuePtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index) const;
-  tensor::TensorPtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &t,
-                                              size_t index) const;
-  std::optional<tensor::TensorPtr> SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
-                                                             const std::optional<tensor::TensorPtr> &t,
-                                                             size_t index) const;
+  tensor::BaseTensorPtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
+                                                  const tensor::BaseTensorPtr &t, size_t index) const;
+  std::optional<tensor::BaseTensorPtr> SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
+                                                                 const std::optional<tensor::BaseTensorPtr> &t,
+                                                                 size_t index) const;
   ValueTuplePtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const ValueTuplePtr &v_tuple,
                                           size_t index) const;
   ValueListPtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const ValueListPtr &v_list,

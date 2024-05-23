@@ -22,29 +22,50 @@
 #include <vector>
 #include <string>
 #include "pipeline/pynative/grad/top_cell.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace pynative {
 
 struct NodeInfo {
-  NodeInfo() = default;
-  explicit NodeInfo(const InputType &grad_type, size_t op_index = 0, ValuePtr value = nullptr)
-      : grad_type(grad_type), op_index(op_index), value(std::move(value)) {}
+  // Is parameter or input or op's output
   InputType grad_type;
-  size_t op_index{};
-  ValuePtr value;
+  // Just op output tensor has op_index
+  size_t op_index{0};
+  // For scalar compare
+  ValuePtr value{nullptr};
+  // For Input is tuple or list
+  std::vector<NodeInfo> seq_node;
+};
+
+struct AbsCompareInfo {
+  AbsCompareInfo() = default;
+  AbsCompareInfo(abstract::AbstractBasePtrList input_abs, abstract::AbstractBasePtr out_abs)
+      : input_abs(std::move(input_abs)), out_abs(std::move(out_abs)) {}
+  abstract::AbstractBasePtrList input_abs{};
+  abstract::AbstractBasePtr out_abs{nullptr};
+  std::vector<NodeInfo> inputs;
+};
+
+struct ValueCompareInfo {
+  // ValueSimpleInfo
+  ValueSimpleInfo input_value_simple_info;
+  std::vector<NodeInfo> inputs;
 };
 
 struct DynamicDetectNodeInfo {
+  explicit DynamicDetectNodeInfo(PrimitivePtr op_prim, bool is_value_compare = true)
+      : op_prim(std::move(op_prim)), is_value_compare(is_value_compare) {}
   DynamicDetectNodeInfo(PrimitivePtr op_prim, abstract::AbstractBasePtrList input_abs,
                         abstract::AbstractBasePtr out_abs)
-      : op_prim(std::move(op_prim)), input_abs(std::move(input_abs)), out_abs(std::move(out_abs)) {}
+      : op_prim(std::move(op_prim)), abs_compare_info(std::move(input_abs), std::move(out_abs)) {}
+
   PrimitivePtr op_prim{nullptr};
-  abstract::AbstractBasePtrList input_abs{};
-  abstract::AbstractBasePtr out_abs{nullptr};
+  bool is_value_compare{false};
   bool is_graph_node{false};
-  std::vector<std::pair<std::string, NodeInfo>> inputs;
   std::string graph_phase;
+  AbsCompareInfo abs_compare_info;
+  ValueCompareInfo value_compare_info;
 };
 using DynamicDetectNodeInfoPtr = std::shared_ptr<DynamicDetectNodeInfo>;
 using CellIdWithDynamicNodesMap =

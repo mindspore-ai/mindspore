@@ -40,8 +40,8 @@ void CastOperation::ClearRes() {
 
 bool CastOperation::IsValueTypeInvalid(const ValuePtr &v) const {
   MS_EXCEPTION_IF_NULL(v);
-  return !v->isa<tensor::Tensor>() && !v->isa<tensor::CSRTensor>() && !v->isa<IntegerImm>() && !v->isa<FloatImm>() &&
-         !v->isa<BoolImm>();
+  return !v->isa<tensor::BaseTensor>() && !v->isa<tensor::CSRTensor>() && !v->isa<IntegerImm>() &&
+         !v->isa<FloatImm>() && !v->isa<BoolImm>();
 }
 
 ValuePtr CastOperation::DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, const ValuePtr &v,
@@ -57,8 +57,8 @@ ValuePtr CastOperation::DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, 
     return dst_value;
   }
 
-  if (v->isa<tensor::Tensor>()) {
-    auto tensor = v->cast<tensor::TensorPtr>();
+  if (v->isa<tensor::BaseTensor>()) {
+    auto tensor = v->cast<tensor::BaseTensorPtr>();
     if (type_id == tensor->data_type()) {
       cast_run_info->real_out = v;
       return cast_run_info->real_out;
@@ -91,7 +91,7 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
     return dst_value;
   }
   MS_EXCEPTION_IF_NULL(op_run_info);
-  if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN && v->isa<tensor::Tensor>()) {
+  if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN && v->isa<tensor::BaseTensor>()) {
     MS_LOG(DEBUG) << "Source value: " << v->ToString();
     dst_value = TensorToDstDtypeValue(v, dst_type.first);
     MS_LOG(DEBUG) << "Cast to value: " << dst_value->ToString() << " without dispatching cast op";
@@ -137,7 +137,7 @@ ValuePtr CastOperation::DoParamMixPrecisionCast(const FrontendOpRunInfoPtr &op_r
     } else if (op_run_info->mix_type == kBF16) {
       dst_dtype = kBFloat16;
     }
-    const auto &tensor = v->cast<tensor::TensorPtr>();
+    const auto &tensor = v->cast<tensor::BaseTensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     auto source_dtype = tensor->Dtype();
     if (source_dtype != nullptr && (IsSubType(source_dtype, kFloat) || IsSubType(source_dtype, kBFloat)) &&
@@ -192,11 +192,14 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
   }
   for (size_t i = 0; i < dtypes.size(); ++i) {
     // No need to implicit cast if no dtype.
-    if (dtypes.empty() || dtypes[i] == SignatureEnumDType::kDTypeEmptyDefaultValue) {
+    if (dtypes[i] == SignatureEnumDType::kDTypeEmptyDefaultValue) {
+      MS_LOG(DEBUG) << "Get kDTypeEmptyDefaultValue";
       continue;
     }
     auto it = dst_type.find(dtypes[i]);
     if (it == dst_type.end() || it->second.first == kTypeUnknown) {
+      MS_LOG(DEBUG) << "Can not find dtype " << (it == dst_type.end()) << ", or type is unknown "
+                    << (it->second.first == kTypeUnknown);
       continue;
     }
     const auto &v = input_args[i];
@@ -223,6 +226,7 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
                                              TypeIdToMsTypeStr(it->second.first), i);
     }
     if (is_same_type) {
+      MS_LOG(DEBUG) << "Get same dtype";
       continue;
     }
 
@@ -292,8 +296,8 @@ std::pair<std::vector<TypeId>, std::vector<bool>> GetTypeInfo(const FrontendOpRu
 
   const auto &input_value = op_run_info->op_grad_info->input_value;
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    if (input_value[i]->isa<tensor::Tensor>()) {
-      args_type_id[i] = input_value[i]->cast<tensor::TensorPtr>()->data_type();
+    if (input_value[i]->isa<tensor::BaseTensor>()) {
+      args_type_id[i] = input_value[i]->cast<tensor::BaseTensorPtr>()->data_type();
       if (op_run_info->source_type[i] == ops::OP_DTYPE::DT_BEGIN) {
         args_has_tensor[i] = true;
       }
@@ -302,6 +306,7 @@ std::pair<std::vector<TypeId>, std::vector<bool>> GetTypeInfo(const FrontendOpRu
       MS_EXCEPTION_IF_NULL(type);
       args_type_id[i] = type->type_id();
     } else {
+      MS_LOG(DEBUG) << "Get input value " << input_value[i]->ToString();
       args_type_id[i] = kTypeUnknown;
     }
   }
@@ -320,6 +325,7 @@ void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
     if (!has_dtype_sig) {
       PrimSignature sig_value{has_dtype_sig, {}};
       implicit_cast_map_[prim->name()] = sig_value;
+      MS_LOG(DEBUG) << "Op " << prim->name() << " has no signature";
       return;
     }
     const auto &signature = op_run_info->signatures;

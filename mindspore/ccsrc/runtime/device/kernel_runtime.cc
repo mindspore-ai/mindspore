@@ -526,7 +526,7 @@ void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value
   if (pre_output_value == nullptr) {
     return;
   }
-  std::vector<tensor::TensorPtr> pre_output_tensors;
+  std::vector<tensor::BaseTensorPtr> pre_output_tensors;
   TensorValueToTensor(pre_output_value, &pre_output_tensors);
   auto output_nodes = graph.outputs();
   if (pre_output_tensors.size() != output_nodes.size()) {
@@ -1011,7 +1011,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  std::vector<tensor::TensorPtr> tensors;
+  std::vector<tensor::BaseTensorPtr> tensors;
   TensorValueToTensor(node_value, &tensors);
   // Graph id should be passed to record static memory if profiling is enabled.
   auto kernel_info = dynamic_cast<device::KernelInfo *>(value_node->kernel_info());
@@ -1063,8 +1063,12 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
     }
     AnfAlgo::SetOutputAddr(address, output_idx, value_node.get());
     size_t tensor_size = LongToSize(tensor->data().nbytes());
+    std::string format = "DefaultFormat";
+    if (tensor->isa<tensor::Tensor>()) {
+      format = std::dynamic_pointer_cast<tensor::Tensor>(tensor)->device_info().host_format_;
+    }
     if (!address->SyncHostToDevice(trans::GetRuntimePaddingShape(value_node, 0), tensor_size, tensor->data_type(),
-                                   tensor->device_info().host_format_, tensor->data_ptr())) {
+                                   format, tensor->data_ptr())) {
       MS_EXCEPTION(NotExistsError) << "ValueNode SyncHostToDevice fail!" << value_node->DebugString()
                                    << "node format is" << AnfAlgo::GetOutputFormat(value_node, output_idx)
                                    << "node dtype is "

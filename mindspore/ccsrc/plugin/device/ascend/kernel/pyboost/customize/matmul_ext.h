@@ -26,8 +26,8 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void MatMulExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                              const TensorPtr &mat2_tensor);
+void MatMulExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
+                              const BaseTensorPtr &mat2_tensor);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

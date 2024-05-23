@@ -25,7 +25,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore::kernel::pyboost {
-void TileAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_x_tensor,
+void TileAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_x_tensor,
                          const ValueTuplePtr &dims) {
   MS_EXCEPTION_IF_NULL(op);
   OpRunner::InferOpOutput(op, input_x_tensor, dims);

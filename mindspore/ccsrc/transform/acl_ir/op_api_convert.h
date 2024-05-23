@@ -208,7 +208,7 @@ inline aclTensor *ConvertType(const mindspore::kernel::KernelTensor *tensor) {
   }
 
   auto acl_data_type = AclConverter::ConvertType(tensor->dtype_id());
-  auto shape = tensor->GetShapeVector();
+  const auto &shape = tensor->GetShapeVector();
   const auto shape_size = shape.size();
   aclFormat format = ACL_FORMAT_ND;
   switch (shape_size) {
@@ -245,6 +245,58 @@ inline aclTensor *ConvertType(const mindspore::kernel::KernelTensor *tensor) {
     acl_tensor =
       aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), SizeToLong(storage_info->storage_offset),
                       format, storage_shape.data(), storage_shape.size(), tensor->device_ptr());
+  }
+
+  return acl_tensor;
+}
+
+inline aclTensor *ConvertType(const device::DeviceAddressPtr &device_address) {
+  static const auto aclCreateTensor = GET_OP_API_FUNC(aclCreateTensor);
+  if (aclCreateTensor == nullptr) {
+    return nullptr;
+  }
+  if (device_address == nullptr) {
+    return nullptr;
+  }
+
+  auto acl_data_type = AclConverter::ConvertType(device_address->type_id());
+  const auto &shape = device_address->GetShapeVector();
+  const auto shape_size = shape.size();
+  aclFormat format = ACL_FORMAT_ND;
+  switch (shape_size) {
+    case 3:
+      format = ACL_FORMAT_NCL;
+      break;
+    case 4:
+      format = ACL_FORMAT_NCHW;
+      break;
+    case 5:
+      format = ACL_FORMAT_NCDHW;
+      break;
+    default:
+      format = ACL_FORMAT_ND;
+  }
+
+  aclTensor *acl_tensor = nullptr;
+  const auto &storage_info = device_address->address_common()->tensor_storage_info_;
+  if (storage_info == nullptr) {
+    // Create strides.
+    auto strides = shape;
+    if (!strides.empty()) {
+      strides.erase(strides.begin());
+    }
+    strides.push_back(1);
+    for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
+      strides[i] = strides[i] * strides[i + 1];
+    }
+    acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
+                                 shape.size(), device_address->GetMutablePtr());
+  } else {
+    const auto &strides = storage_info->strides;
+    const auto &storage_shape = storage_info->ori_shape;
+    acl_tensor =
+      aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), SizeToLong(storage_info->storage_offset),
+                      format, storage_shape.data(), storage_shape.size(), device_address->GetMutablePtr());
   }
 
   return acl_tensor;
@@ -299,7 +351,7 @@ inline aclTensor *ConvertType(std::pair<mindspore::kernel::KernelTensor *, bool>
 }
 
 inline std::tuple<std::vector<int64_t>, std::vector<int64_t>, int64_t, std::vector<int64_t>> GetViewShapeAndStride(
-  const tensor::TensorPtr &tensor, const device::DeviceAddressPtr &device_address) {
+  const tensor::BaseTensorPtr &tensor, const device::DeviceAddressPtr &device_address) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(device_address);
 
@@ -335,7 +387,7 @@ inline std::tuple<std::vector<int64_t>, std::vector<int64_t>, int64_t, std::vect
   }
 }
 
-inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
+inline aclTensor *ConvertType(const tensor::BaseTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   static const auto aclCreateTensor = GET_OP_API_FUNC(aclCreateTensor);
   if (aclCreateTensor == nullptr) {
@@ -369,7 +421,7 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
   return acl_tensor;
 }
 
-inline aclTensor *ConvertType(const std::optional<tensor::TensorPtr> &value) {
+inline aclTensor *ConvertType(const std::optional<tensor::BaseTensorPtr> &value) {
   if (value.has_value()) {
     return ConvertType(value.value());
   }
@@ -398,6 +450,28 @@ inline aclBoolArray *ConvertType(const std::vector<uint8_t> &bool_array) {
   }
   static OpApiTensorConverter converter;
   return converter.CreateBoolArray(bool_array);
+}
+
+inline aclTensorList *ConvertType(const std::vector<tensor::BaseTensorPtr> &tensor_list) {
+  if (tensor_list.empty()) {
+    MS_LOG(ERROR) << "tensor list is empty!";
+  }
+  static const auto aclCreateTensorList = GET_OP_API_FUNC(aclCreateTensorList);
+  std::vector<aclTensor *> tmp;
+  std::transform(tensor_list.begin(), tensor_list.end(), std::back_inserter(tmp),
+                 [](const tensor::BaseTensorPtr &tensor) { return ConvertType(tensor); });
+  return aclCreateTensorList(tmp.data(), tmp.size());
+}
+
+inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
+  return ConvertType(tensor->cast<tensor::BaseTensorPtr>());
+}
+
+inline aclTensor *ConvertType(const std::optional<tensor::TensorPtr> &value) {
+  if (value.has_value()) {
+    return ConvertType(value.value());
+  }
+  return nullptr;
 }
 
 inline aclTensorList *ConvertType(const std::vector<tensor::TensorPtr> &tensor_list) {

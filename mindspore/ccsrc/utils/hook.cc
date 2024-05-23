@@ -46,7 +46,7 @@ void RunHook(std::map<int, py::function> *hook_map, py::tuple *arg) {
       MS_LOG(DEBUG) << "Hook id " << it->first << " have been delete by python";
       hook_map->erase(it++);
     } else {
-      MS_LOG(DEBUG) << "Run hook id " << it->first << " and its value " << py::str(it->second).cast<std::string>();
+      MS_LOG(DEBUG) << "Run hook id " << it->first << " and its value " << ConvertPyObjToString(it->second);
       // Flatten input
       auto res = (it->second)(*(*arg));
       if (py::isinstance<py::none>(res)) {

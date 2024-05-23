@@ -98,7 +98,7 @@ class GradExecutor {
   void SetHookChanged(const py::object &cell) const;
   py::object RunGrad(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                      const py::object &grad_position, const py::args &args);
-  py::object RunBackward(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
+  py::object RunBackward(const autograd::GradAttr &grad_attr, const std::vector<tensor::BaseTensorPtr> &w_args,
                          const std::vector<size_t> &p_args);
   py::object RunGradGraph();
   CNodePtr ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const;
@@ -206,12 +206,12 @@ class GradExecutor {
   void GetCustomBpropPrim(const py::object &obj, const py::args &args, const InputArgsInfoPtr &input_args_info);
   void DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id) const;
   void CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info);
-  void GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
+  void GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::BaseTensorPtr> &w_args,
                     const std::vector<size_t> &p_args);
-  FuncGraphPtr GetBpropGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
+  FuncGraphPtr GetBpropGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::BaseTensorPtr> &w_args,
                              const std::vector<size_t> &p_args);
-  std::vector<tensor::TensorPtr> GetWeightsArgs(const py::object &weights, bool *weight_param_is_tuple) const;
-  std::vector<tensor::TensorPtr> GetDefaultWeights() const;
+  std::vector<tensor::BaseTensorPtr> GetWeightsArgs(const py::object &weights, bool *weight_param_is_tuple) const;
+  std::vector<tensor::BaseTensorPtr> GetDefaultWeights() const;
   void CheckParamShapeAndType(const ParameterPtr &param_node, const abstract::AbstractBasePtr &input_abs,
                               const abstract::AbstractBasePtr &ir_abs) const;
   void UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph) const;
@@ -223,12 +223,15 @@ class GradExecutor {
                                     const std::pair<AnfNodePtr, std::vector<int64_t>> &out) const;
   void DispatchGradQueueTask(std::function<void(void)> &&task) const;
   void ClearBpropTask() const;
+
   bool init_{false};
   bool grad_flag_{false};
   bool enable_grad_{true};
-  size_t grad_is_running_{0};
   bool is_run_recompute_{false};
   bool save_graphs_{false};
+  bool forward_use_dynamic_shape_process_{false};
+
+  size_t grad_is_running_{0};
   uint32_t kernel_graph_id_for_control_flow_{UINT32_MAX};
   size_t custom_bprop_cell_count_{0};
   size_t obj_order_{0};
@@ -237,6 +240,7 @@ class GradExecutor {
   // Used for auto grad map reserve
   size_t op_num_in_bprop_graph_{kDefaultContainerSize};
   std::string grad_operation_;
+
   TopCellInfoPtr top_cell_{nullptr};
   InputArgsInfoPtr top_input_args_info_{nullptr};
   // Records every cell info for share, regardless of whether need construct grad graph
@@ -248,6 +252,9 @@ class GradExecutor {
   std::stack<TopCellInfoPtr> high_order_stack_;
   // Record all top cell which has been ran
   mindspore::OrderedMap<std::string, TopCellInfoPtr> already_run_top_cell_;
+  std::set<std::string> dynamic_inputs_cells_;
+  std::vector<TopCellInfoPtr> need_gc_top_cell_list_;
+
   // parent top cell for custom nested grad.
   TopCellInfoPtr parent_top_cell_;
   ForwardExecutorWeakPtr forward_executor_;
@@ -255,9 +262,6 @@ class GradExecutor {
   DynamicShapePtr dynamic_shape_{nullptr};
   runtime::AsyncHqueuePtr bprop_queue_;
   runtime::AsyncHqueuePtr assist_queue_;
-  std::set<std::string> dynamic_inputs_cells_;
-  std::vector<TopCellInfoPtr> need_gc_top_cell_list_;
-  bool forward_use_dynamic_shape_process_{false};
 };
 }  // namespace pynative
 }  // namespace mindspore

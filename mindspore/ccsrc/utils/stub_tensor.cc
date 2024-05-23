@@ -15,9 +15,11 @@
  */
 #include "utils/ms_exception.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "include/common/utils/convert_utils.h"
 #include "include/common/utils/stub_tensor.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/profiler.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace stub {
@@ -83,6 +85,12 @@ bool StubNode::SetAbstract(const AbstractBasePtr &abs) {
   return true;
 }
 
+bool StubNode::SetValueSimpleInfo(const ValueSimpleInfoPtr &output_value_simple_info) {
+  std::unique_lock<std::mutex> lock(mutex_);
+  output_value_simple_info_ = output_value_simple_info;
+  cond_var_.notify_all();
+  return true;
+}
 void StubNode::SetValue(const ValuePtr &val) {
   std::unique_lock<std::mutex> lock(mutex_);
   value_ = val;
@@ -94,20 +102,6 @@ void StubNode::SetException(const std::exception_ptr &e_ptr) {
   std::unique_lock<std::mutex> lock(mutex_);
   e_ptr_ = e_ptr;
   cond_var_.notify_all();
-}
-
-AbstractBasePtr StubNode::WaitAbstract() {
-  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
-  // cppcheck-suppress unreadVariable
-  GilReleaseWithCheck gil_release;
-  std::unique_lock<std::mutex> lock(mutex_);
-  cond_var_.wait(lock, [this] { return abstract_.get() != nullptr || e_ptr_ != nullptr; });
-  if (e_ptr_ != nullptr) {
-    // Need to clear exception in the instance.
-    MsException::Instance().CheckException();
-    std::rethrow_exception(e_ptr_);
-  }
-  return abstract_;
 }
 
 ValuePtr StubNode::WaitValue() {
@@ -124,23 +118,56 @@ ValuePtr StubNode::WaitValue() {
   return value_;
 }
 
+void StubNode::WaitPipeline() {
+  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
+  // cppcheck-suppress unreadVariable
+  GilReleaseWithCheck gil_release;
+  std::unique_lock<std::mutex> lock(mutex_);
+  cond_var_.wait(lock, [this] {
+    return abstract_.get() != nullptr || output_value_simple_info_.get() != nullptr || e_ptr_ != nullptr;
+  });
+  if (e_ptr_ != nullptr) {
+    // Need to clear exception in the instance.
+    MsException::Instance().CheckException();
+    std::rethrow_exception(e_ptr_);
+  }
+}
+
+AbstractBasePtr StubNode::ToAbstract() {
+  WaitPipeline();
+  if (output_value_simple_info_ == nullptr) {
+    MS_EXCEPTION_IF_NULL(abstract_);
+    return abstract_;
+  }
+  return TransformValueSimpleInfoToAbstract(*output_value_simple_info_);
+}
+
 py::object TensorNode::GetValue() {
   auto val = WaitValue();
   return ValueToPyData(val);
 }
 
 py::object TensorNode::GetShape() {
-  auto abs = WaitAbstract();
-  auto base = abs->BuildShape();
-  auto shape = base->cast<abstract::ShapePtr>();
+  WaitPipeline();
+  abstract::ShapePtr shape{nullptr};
   ShapeVector shape_vector;
-  if (shape && !shape->IsDynamic()) {
-    shape_vector = shape->shape();
+  if (output_value_simple_info_ == nullptr) {
+    MS_EXCEPTION_IF_NULL(abstract_);
+    auto base = abstract_->BuildShape();
+    shape = base->cast<abstract::ShapePtr>();
+    if (shape && !shape->IsDynamic()) {
+      shape_vector = shape->shape();
+    } else {
+      auto val = WaitValue();
+      auto tensor = val->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      shape_vector = tensor->shape();
+    }
   } else {
-    auto val = WaitValue();
-    auto tensor = val->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
-    shape_vector = tensor->shape();
+    if (output_value_simple_info_->size != kIndex1) {
+      MS_LOG(EXCEPTION) << "Simple infer size " << output_value_simple_info_->size << " is not equal to 1";
+    }
+    shape_vector = output_value_simple_info_->shape_vector_[kIndex0];
   }
   auto ret = py::tuple(shape_vector.size());
   for (size_t i = 0; i < shape_vector.size(); ++i) {
@@ -150,10 +177,19 @@ py::object TensorNode::GetShape() {
 }
 
 py::object TensorNode::GetDtype() {
-  auto abs = WaitAbstract();
-  auto base = abs->BuildType();
-  if (base->isa<TensorType>()) {
-    base = base->cast<TensorTypePtr>()->element();
+  WaitPipeline();
+  TypePtr base = nullptr;
+  if (output_value_simple_info_ == nullptr) {
+    MS_EXCEPTION_IF_NULL(abstract_);
+    base = abstract_->BuildType();
+    if (base->isa<TensorType>()) {
+      base = base->cast<TensorTypePtr>()->element();
+    }
+  } else {
+    if (output_value_simple_info_->size != kIndex1) {
+      MS_LOG(EXCEPTION) << "Simple infer size " << output_value_simple_info_->size << " is not equal to 1";
+    }
+    base = output_value_simple_info_->dtype_vector_[kIndex0];
   }
   return py::cast(base);
 }
@@ -169,7 +205,7 @@ bool TensorNode::SetAbstract(const AbstractBasePtr &abs) {
 
 py::object SequenceNode::GetElements() {
   if (!is_elements_build_.load()) {
-    (void)WaitAbstract();
+    (void)WaitPipeline();
   }
   py::tuple out(elements_.size());
   for (size_t i = 0; i < elements_.size(); ++i) {
@@ -185,7 +221,7 @@ bool SequenceNode::SetAbstract(const AbstractBasePtr &abs) {
   }
   auto children = seq_abs->elements();
   if (!is_elements_build_.load()) {
-    for (auto child : children) {
+    for (const auto &child : children) {
       (void)elements_.emplace_back(MakeStubNode(child->BuildType()));
     }
   }
@@ -199,6 +235,28 @@ bool SequenceNode::SetAbstract(const AbstractBasePtr &abs) {
     }
   }
   return StubNode::SetAbstract(abs);
+}
+
+bool SequenceNode::SetValueSimpleInfo(const mindspore::ValueSimpleInfoPtr &output_value_simple_info) {
+  MS_EXCEPTION_IF_NULL(output_value_simple_info);
+  if (!is_elements_build_.load()) {
+    for (size_t i = 0; i < output_value_simple_info->size; ++i) {
+      (void)elements_.emplace_back(
+        MakeStubNode(std::make_shared<TensorType>(output_value_simple_info->dtype_vector_[i])));
+    }
+  }
+  is_elements_build_ = true;
+  for (size_t i = 0; i < output_value_simple_info->size; ++i) {
+    auto elem_simple_info = std::make_shared<mindspore::ValueSimpleInfo>();
+    elem_simple_info->size = kIndex1;
+    (void)elem_simple_info->shape_vector_.emplace_back(output_value_simple_info->shape_vector_[i]);
+    (void)elem_simple_info->dtype_vector_.emplace_back(output_value_simple_info->dtype_vector_[i]);
+    MS_EXCEPTION_IF_NULL(elements_[i]);
+    if (!elements_[i]->SetValueSimpleInfo(elem_simple_info)) {
+      return false;
+    }
+  }
+  return StubNode::SetValueSimpleInfo(output_value_simple_info);
 }
 
 void SequenceNode::SetValue(const ValuePtr &val) {
@@ -230,7 +288,7 @@ void AnyTypeNode::SetValue(const ValuePtr &val) {
 }
 
 py::object AnyTypeNode::GetRealNode() {
-  (void)WaitAbstract();
+  (void)WaitPipeline();
   return py::cast(real_node_);
 }
 

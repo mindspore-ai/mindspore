@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <utility>
+#include <string>
 #include <vector>
 
 #include "pybind11/pybind11.h"
@@ -45,6 +46,7 @@ COMMON_EXPORT bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, c
 COMMON_EXPORT ValuePtr ShallowCopyTensorValue(const ValuePtr &value);
 COMMON_EXPORT void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePtr> *tensors);
 COMMON_EXPORT void ConvertCTensorToPyTensor(const py::tuple &input_args, py::tuple *convert_args);
+COMMON_EXPORT std::string ConvertPyObjToString(const py::object &obj);
 bool IsStubTensor(const py::handle &obj);
 tensor::TensorPtr ConvertStubTensor(const py::handle &obj);
 }  // namespace mindspore

@@ -33,6 +33,14 @@ struct SwapEvent {
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
 };
 using SwapEventPtr = std::shared_ptr<SwapEvent>;
+struct LoadableMember {
+  bool mem_offloaded_{false};
+  void *offload_ptr_{nullptr};
+  mutable SwapEvent swap_event_;
+  mutable StorageInfo storage_info_{nullptr};
+  bool swappable_{false};
+};
+using LoadableMemberPtr = std::unique_ptr<LoadableMember>;
 
 // LoadableDeviceAddress provide the ability to offload data on device to ddr or disk and load it back later.
 class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
@@ -47,13 +55,21 @@ class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
   LoadableDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                         const std::string &device_name, uint32_t device_id)
       : DeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
+  LoadableDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector, const Format &format, TypeId type_id,
+                        const std::string &device_name, uint32_t device_id, uint32_t stream_id)
+      : DeviceAddress(ptr, size, shape_vector, format, type_id, device_name, device_id, stream_id) {}
   LoadableDeviceAddress(void *ptr, size_t size, const std::string &device_name, uint32_t device_id)
       : DeviceAddress(ptr, size, device_name, device_id) {}
   LoadableDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                         const KernelWithIndex &node_index, const std::string &device_name, uint32_t device_id)
       : DeviceAddress(ptr, size, format, type_id, node_index, device_name, device_id) {}
 
-  bool mem_offloaded() const final { return mem_offloaded_; }
+  bool mem_offloaded() const final {
+    if (loadable_mem_ == nullptr) {
+      return false;
+    }
+    return loadable_mem_->mem_offloaded_;
+  }
 
   // Offload data from device to host and free device memory
   bool Offload(size_t stream_id) final;
@@ -90,9 +106,15 @@ class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
     return false;
   }
 
-  virtual void set_swappable(bool swappable) { swappable_ = swappable; }
-  virtual bool swappable() {
-    return swappable_ && !(status_ == DeviceAddressStatus::kInDevice && GetDevicePtr() == nullptr);
+  void set_swappable(bool swappable) override {
+    if (loadable_mem_ == nullptr) {
+      loadable_mem_ = std::make_unique<LoadableMember>();
+    }
+    loadable_mem_->swappable_ = swappable;
+  }
+  bool swappable() override {
+    auto swappable = loadable_mem_ == nullptr ? false : loadable_mem_->swappable_;
+    return swappable && !(status_ == DeviceAddressStatus::kInDevice && GetDevicePtr() == nullptr);
   }
 
  protected:
@@ -120,11 +142,7 @@ class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
   std::string GetSwapFileName() const;
   size_t GetFileAlignSize() const;
 
-  bool mem_offloaded_{false};
-  void *offload_ptr_{nullptr};
-  mutable SwapEvent swap_event_;
-  mutable StorageInfo storage_info_;
-  bool swappable_{false};
+  mutable LoadableMemberPtr loadable_mem_{nullptr};
 };
 }  // namespace device
 }  // namespace mindspore

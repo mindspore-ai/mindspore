@@ -19,18 +19,14 @@
 #include "plugin/device/cpu/kernel/copy_with_slice_cpu_kernel.h"
 
 namespace mindspore::device::cpu {
-kernel::KernelTensorPtr MallocMemoryForDeviceAddress(const device::DeviceAddressPtr &device_address,
-                                                     const device::DeviceContext *device_context) {
-  if (!device_address) {
-    return std::make_shared<kernel::KernelTensor>();
-  }
+void MallocMemoryForDeviceAddress(const device::DeviceAddressPtr &device_address,
+                                  const device::DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(device_address);
   if (device_address->GetPtr() == nullptr) {
     if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate device memory failed!";
     }
   }
-
-  return device_address->kernel_tensor();
 }
 
 bool CpuContiguousKernelTask::RunWithRet() {
@@ -45,12 +41,12 @@ bool CpuContiguousKernelTask::RunWithRet() {
                 << ", input_address size:" << input_address->GetSize()
                 << ", output_address size:" << output_address->GetSize();
 
-  auto input = MallocMemoryForDeviceAddress(input_address, device_context);
-  auto output = MallocMemoryForDeviceAddress(output_address, device_context);
+  MallocMemoryForDeviceAddress(input_address, device_context);
+  MallocMemoryForDeviceAddress(output_address, device_context);
 
   kernel::ContiguousCpuKernel contiguous_kernel;
-  auto ret = contiguous_kernel.LaunchContiguous(input_address->type_id(), input, input_storage_info,
-                                                output_address->type_id(), output);
+  auto ret = contiguous_kernel.LaunchContiguous(input_address->type_id(), input_address, input_storage_info,
+                                                output_address->type_id(), output_address);
   if (!ret) {
     MS_LOG(EXCEPTION) << "GpuContiguous failed";
   }
@@ -74,13 +70,13 @@ bool CpuCopyWithSliceKernelTask::RunWithRet() {
                 << ", src address size:" << src_device_address->GetSize()
                 << ", dst address size:" << dst_device_address->GetSize();
 
-  auto dst_addr = MallocMemoryForDeviceAddress(dst_device_address, device_context);
-  auto src_addr = MallocMemoryForDeviceAddress(src_device_address, device_context);
+  MallocMemoryForDeviceAddress(dst_device_address, device_context);
+  MallocMemoryForDeviceAddress(src_device_address, device_context);
 
   kernel::CopyWithSliceCpuKernel copy_kernel;
   MS_EXCEPTION_IF_NULL(dst_device_address);
-  auto ret = copy_kernel.LaunchCopyWithSlice(dst_device_address->type_id(), src_storage_info, src_addr,
-                                             dst_storage_info, dst_addr);
+  auto ret = copy_kernel.LaunchCopyWithSlice(dst_device_address->type_id(), src_storage_info, src_device_address,
+                                             dst_storage_info, dst_device_address);
   if (!ret) {
     MS_LOG(EXCEPTION) << "LaunchCopyWithSlice failed";
   }
