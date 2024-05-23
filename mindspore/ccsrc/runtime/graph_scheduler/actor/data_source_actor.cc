@@ -203,8 +203,8 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 }
 
 void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, data_kernel_, &mem_info_, output_kernel_tensors_,
-                            device_contexts_[0], context, &GetAID());
+  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, data_kernel_, &mem_info_, std::vector<KernelTensor *>(),
+                            output_kernel_tensors_, device_contexts_[0], context, &GetAID());
   OnDebugFinish(context);
 }
 

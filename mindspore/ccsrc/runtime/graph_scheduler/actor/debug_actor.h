@@ -17,17 +17,19 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_DEBUG_ACTOR_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_DEBUG_ACTOR_H_
 
-#include <vector>
 #include <map>
-#include <set>
+#include <memory>
 #include <mutex>
+#include <set>
 #include <string>
+#include <vector>
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"
 #ifdef ENABLE_DEBUGGER
 #include "include/backend/debug/data_dump/dump_utils.h"
 #endif
+#include "ir/dtype/tensor_type.h"
 
 namespace mindspore {
 namespace runtime {
@@ -48,6 +50,7 @@ class DebugActor : public ActorBase {
 
   // The debug of each node.
   void Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info,
+             const std::vector<KernelTensor *> &op_input_kernel_tensors,
              const std::vector<KernelTensor *> &op_output_kernel_tensors, const DeviceContext *device_context,
              OpContext<DeviceTensor> *const op_context, const AID *from_aid);
 

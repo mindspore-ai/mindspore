@@ -43,6 +43,9 @@ constexpr auto kSupportDevice = "support_device";
 constexpr auto kEnable = "enable";
 constexpr auto kOpDebugMode = "op_debug_mode";
 constexpr auto kTransFlag = "trans_flag";
+constexpr auto kStatCalcMode = "stat_calc_mode";
+constexpr auto kHost = "host";
+constexpr auto kDevice = "device";
 constexpr auto kStatisticDump = "statistic";
 constexpr auto kTensorDump = "tensor";
 constexpr auto kFullDump = "full";
@@ -172,6 +175,7 @@ void DumpJsonParser::Parse() {
   PyNativeModeCheck();
   CheckGEBackend();
   JudgeDumpEnabled();
+  CheckStatCalcModeVaild();
 }
 
 void WriteJsonFile(const std::string &file_path, const std::ifstream &json_file) {
@@ -430,6 +434,7 @@ void DumpJsonParser::ParseE2eDumpSetting(const nlohmann::json &content) {
     MS_LOG(WARNING) << "Deprecated: Synchronous dump mode is deprecated and will be removed in a future release";
   }
   trans_flag_ = ParseEnable(*trans_flag);
+  ParseStatCalcMode(*e2e_dump_setting);
 }
 
 void CheckJsonUnsignedType(const nlohmann::json &content, const std::string &key) {
@@ -654,6 +659,42 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
     }
   }
 }
+
+void DumpJsonParser::ParseStatCalcMode(const nlohmann::json &content) {
+  auto iter = content.find(kStatCalcMode);
+  stat_calc_mode_ = kHost;
+  if (iter == content.end()) {
+    MS_LOG(INFO) << "'stat_calc_mode' is not set, default is " << stat_calc_mode_;
+    return;
+  }
+  CheckJsonStringType(*iter, kStatCalcMode);
+  std::string calc_mode = *iter;
+  if (calc_mode != kHost && calc_mode != kDevice) {
+    MS_LOG(EXCEPTION) << "Dump Json parse failed, 'stat_calc_mode' only supports 'host' or 'device', but got: "
+                      << calc_mode << ". Please set 'stat_cal_mode' to 'host' or 'device'";
+  }
+  stat_calc_mode_ = calc_mode;
+}
+
+void DumpJsonParser::CheckStatCalcModeVaild() {
+  if (IsTensorDump() && stat_calc_mode_ == kDevice) {
+    MS_LOG(WARNING) << "When 'saved_data' is 'tensor' or 'full', the device cannot be used to calculate statistics and "
+                       "the 'stat_calc_mode' is forced to 'host'.";
+    stat_calc_mode_ = kHost;
+  }
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_target != kAscendDevice && stat_calc_mode_ == kDevice) {
+    MS_LOG(WARNING)
+      << "The 'device' option of 'stat_calc_mode' currently only supports the ascend platform. The current platform is "
+      << device_target << ", and the 'stat_calc_mode' option is forcibly set to 'host'.";
+    stat_calc_mode_ = kHost;
+  }
+  MS_LOG(INFO) << "stat_calc_mode is set to " << stat_calc_mode_;
+}
+
+bool DumpJsonParser::IsDeviceCalcStats() const { return stat_calc_mode_ == kDevice; }
 
 void DumpJsonParser::ParseSupportDevice(const nlohmann::json &content) {
   CheckJsonArrayType(content, kSupportDevice);

@@ -27,6 +27,7 @@
 #include "include/backend/debug/data_dump/e2e_dump.h"
 #include "include/common/utils/config_manager.h"
 #include "backend/common/session/session_basic.h"
+#include "debug/data_dump/tensor_statistic.h"
 
 constexpr int kFailure = 1;
 
@@ -212,7 +213,9 @@ bool GetTransFlag() {
  * Description: Load inputs and outputs of the given node if needed and dump them if dump is enabled, then it performs
  * PostExecuteNode function on the given node for GPU.
  */
-void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order,
+void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info,
+                     std::vector<KernelTensor *> input_kernel_tensors,
+                     std::vector<KernelTensor *> output_kernel_tensors, uint32_t exec_order,
                      const DeviceContext *device_context) {
   auto debugger = Debugger::GetInstance();
   if (!debugger) {
@@ -226,13 +229,25 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info,
   auto root_graph_id = kernel_graph->root_graph_id();
   bool trans_flag = GetTransFlag();
   if (debugger->debugger_enabled() || dump_json_parser.InputNeedDump()) {
-    LoadInputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag);
+    string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
+    if (DumpJsonParser::GetInstance().IsDeviceCalcStats() && dump_enabled) {
+      datadump::DumpKernelTensorStats(device_context, input_kernel_tensors, true, cnode->fullname_with_scope(),
+                                      kernel_name);
+    } else {
+      LoadInputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag);
+    }
   }
   if (debugger->debugger_enabled() || dump_json_parser.OutputNeedDump()) {
-    LoadOutputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag);
+    if (DumpJsonParser::GetInstance().IsDeviceCalcStats() && dump_enabled) {
+      string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
+      datadump::DumpKernelTensorStats(device_context, output_kernel_tensors, false, cnode->fullname_with_scope(),
+                                      kernel_name);
+    } else {
+      LoadOutputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag);
+    }
   }
   // Dump kernel
-  if (dump_enabled) {
+  if (dump_enabled && !DumpJsonParser::GetInstance().IsDeviceCalcStats()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
     auto graph_id = kernel_graph->graph_id();
     // for GPU, nodes are dumped in graph_id directory.

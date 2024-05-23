@@ -81,6 +81,7 @@ void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &
  * memory after the dump (for GPU and ascend kernel-by-kernel).
  */
 void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info,
+                       const std::vector<KernelTensor *> &op_input_kernel_tensors,
                        const std::vector<KernelTensor *> &op_output_kernel_tensors, const DeviceContext *device_context,
                        OpContext<DeviceTensor> *const op_context, const AID *) {
   MS_EXCEPTION_IF_NULL(node);
@@ -107,7 +108,8 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
           debugger->SetAscendKernelByKernelFlag(true);
           bool read_data = CheckReadData(cnode);
           if (read_data && DumpJsonParser::GetInstance().e2e_dump_enabled()) {
-            ReadDataAndDump(cnode, launch_info, exec_order_, device_context);
+            ReadDataAndDump(cnode, launch_info, op_input_kernel_tensors, op_output_kernel_tensors, exec_order_,
+                            device_context);
           }
         }
       } else {
@@ -117,7 +119,8 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
         debugger->SetAscendKernelByKernelFlag(true);
         bool read_data = CheckReadData(cnode);
         if (read_data && DumpJsonParser::GetInstance().e2e_dump_enabled()) {
-          ReadDataAndDump(cnode, launch_info, exec_order_, device_context);
+          ReadDataAndDump(cnode, launch_info, op_input_kernel_tensors, op_output_kernel_tensors, exec_order_,
+                          device_context);
         }
       }
     }
@@ -142,7 +145,8 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
       debugger->SetCurNode(kernel_name);
       bool read_data = CheckReadData(cnode);
       if (read_data) {
-        ReadDataAndDump(cnode, launch_info, exec_order_, device_context);
+        ReadDataAndDump(cnode, launch_info, op_input_kernel_tensors, op_output_kernel_tensors, exec_order_,
+                        device_context);
       }
     }
     exec_order_ += 1;
