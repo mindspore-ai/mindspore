@@ -114,6 +114,7 @@ using OpTimestampInfo = std::unordered_map<std::string, std::vector<StartDuratio
 using OpInfoMap = std::unordered_map<std::string, OpInfo>;
 using OpTypeInfos = std::unordered_map<std::string, OpType>;  // <op_full_name, Optype>
 using OpDetailInfos = std::vector<OpDetailInfo>;
+using MemoryInfoList = std::vector<MemoryPoolInfo>;
 
 class BACKEND_EXPORT DataSaver {
  public:
@@ -122,6 +123,8 @@ class BACKEND_EXPORT DataSaver {
   virtual ~DataSaver() = default;
 
   void ParseOpInfo(const OpInfoMap &op_info_maps);
+
+  void ParseMemoryInfo(const MemoryInfoList &memory_info_list);
 
   void WriteFrameWork(const std::string &base_dir, const std::vector<CurKernelInfo> &all_kernel_info_);
 
@@ -138,12 +141,15 @@ class BACKEND_EXPORT DataSaver {
 
   void WriteOpTimestamp(const std::string &saver_base_dir);
 
+  void WriteMemoryData(const std::string &saver_base_dir);
+
   void ChangeFileMode(const std::string &file_path) const;
 
   OpTypeInfos op_type_infos_;
   OpDetailInfos op_detail_infos_;
   std::string op_side_;
   std::string device_id_;
+  std::string memory_info_;
 };
 }  // namespace profiler
 }  // namespace mindspore
