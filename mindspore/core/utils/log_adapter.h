@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@
 #include <vector>
 #include <thread>
 #include <functional>
+#include <mutex>
+#include <shared_mutex>
 #include "mindapi/base/macros.h"
 #include "utils/os.h"
 #include "utils/overload.h"
@@ -160,6 +162,34 @@ class LogStream {
   std::shared_ptr<std::stringstream> sstream_;
 };
 
+class VLogStream {
+ public:
+  VLogStream() { sstream_ = std::make_shared<std::stringstream>(); }
+  ~VLogStream() = default;
+
+  template <typename T>
+  VLogStream &operator<<(const T &val) noexcept {
+    (*sstream_) << val;
+    return *this;
+  }
+
+  VLogStream &operator<<(std::ostream &func(std::ostream &os)) noexcept {
+    (*sstream_) << func;
+    return *this;
+  }
+
+  friend class LogWriter;
+
+ private:
+  std::shared_ptr<std::stringstream> sstream_;
+};
+
+constexpr int kVlogDefaultLevel = 100;
+
+enum MsVlogLevelRange : int { kVLogLevelMin = 101, kVLogLevelMax = 999, kVLogLevelRange = 999 - 101 + 1 };
+
+enum MsSpecifiedVlogLevel : int { kRuntime = static_cast<int>(MsVlogLevelRange::kVLogLevelMin), kBackend, kFrontend };
+
 enum MsLogLevel : int { kDebug = 0, kInfo, kWarning, kError, kException };
 
 enum SubModuleId : int {
@@ -213,6 +243,10 @@ MS_EXPORT const std::string GetSubModuleName(SubModuleId module_id);
 
 MS_CORE_API void InitSubModulesLogLevel();
 
+MS_CORE_API void InitSubModulesVLogLevel();
+
+MS_CORE_API void ChangeSubModulesVLogLevel();
+
 /// \brief Get current time as a string.
 ///
 /// \return The string presents current time.
@@ -220,6 +254,8 @@ MS_EXPORT std::string GetTimeString();
 
 /// \brief The log levels of mindspore sub-module.
 MS_EXPORT extern int g_ms_submodule_log_levels[];
+
+MS_EXPORT extern bool g_ms_submodule_vlog_levles_is_enbled[NUM_SUBMODUES][kVLogLevelRange];
 
 #if defined(_WIN32) || defined(_WIN64)
 /// \brief The max log level of current thread.
@@ -253,12 +289,26 @@ class MS_CORE_API LogWriter {
         submodule_(submodule),
         exception_type_(excp_type),
         is_internal_exception_(is_internal_exception) {}
+
+  // Overloaded constructors for vlog.
+  LogWriter(const LocationInfo &location, int vlog_level, SubModuleId submodule,
+            ExceptionType excp_type = NoExceptionType, bool is_internal_exception = false)
+      : location_(location),
+        vlog_level_(vlog_level),
+        submodule_(submodule),
+        exception_type_(excp_type),
+        is_internal_exception_(is_internal_exception) {}
   ~LogWriter() = default;
 
   /// \brief Output log message from the input log stream.
   ///
   /// \param[in] stream The input log stream.
   void operator<(const LogStream &stream) const noexcept;
+
+  /// \brief Output vlog message from the input vlog stream.
+  ///
+  /// \param[in] stream The input vlog stream.
+  void operator<(const VLogStream &stream) const noexcept;
 
   /// \brief Output log message from the input log stream and then throw exception.
   ///
@@ -297,6 +347,7 @@ class MS_CORE_API LogWriter {
 
  private:
   void OutputLog(const std::ostringstream &msg) const;
+  void OutputVLog(const std::ostringstream &msg) const;
   void RemoveLabelBeforeOutputLog(const std::ostringstream &msg) const;
   static ExceptionHandler &exception_handler();
   static MessageHandler &message_handler();
@@ -304,10 +355,90 @@ class MS_CORE_API LogWriter {
 
   LocationInfo location_;
   MsLogLevel log_level_;
+  int vlog_level_;
   SubModuleId submodule_;
   ExceptionType exception_type_;
   bool is_internal_exception_;
 };
+
+// FileReadWriteLock to protect file read and write.
+class MS_CORE_API FileReadWriteLock {
+ public:
+  static FileReadWriteLock &GetInstance() { return *instance; }
+
+  void LockWrite() { rw_mutex.lock(); }
+
+  void UnlockWrite() { rw_mutex.unlock(); }
+
+  void LockRead() { rw_mutex.lock_shared(); }
+
+  void UnlockRead() { rw_mutex.unlock_shared(); }
+
+ private:
+  std::shared_mutex rw_mutex;
+  static FileReadWriteLock *instance;
+  FileReadWriteLock() {}
+  FileReadWriteLock(const FileReadWriteLock &) = delete;
+  FileReadWriteLock &operator=(const FileReadWriteLock &) = delete;
+};
+
+// Use RAII to make sure lock is released when leaving scope.
+class MS_CORE_API ReadLockGuard {
+ public:
+  explicit ReadLockGuard(mindspore::FileReadWriteLock &rw_lock) : rw_lock_(rw_lock) { rw_lock_.LockRead(); }
+
+  ~ReadLockGuard() { rw_lock_.UnlockRead(); }
+
+  ReadLockGuard(const ReadLockGuard &) = delete;
+  ReadLockGuard &operator=(const ReadLockGuard &) = delete;
+
+ private:
+  mindspore::FileReadWriteLock &rw_lock_;
+};
+
+// Use RAII to make sure lock is released when leaving scope.
+class MS_CORE_API WriteLockGuard {
+ public:
+  explicit WriteLockGuard(mindspore::FileReadWriteLock &rw_lock) : rw_lock_(rw_lock) { rw_lock_.LockWrite(); }
+
+  ~WriteLockGuard() { rw_lock_.UnlockWrite(); }
+
+  WriteLockGuard(const WriteLockGuard &) = delete;
+  WriteLockGuard &operator=(const WriteLockGuard &) = delete;
+
+ private:
+  mindspore::FileReadWriteLock &rw_lock_;
+};
+
+#define MS_VLOG_IF(level, condition, excp_type)                                                                        \
+  !(condition) ? void(0)                                                                                               \
+               : mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), level, SUBMODULE_ID, \
+                                      excp_type) < mindspore::VLogStream()
+
+// Check if the verbose level is enabled.
+inline bool MS_VLOG_IS_ON(int verbose_level) {
+  ReadLockGuard lock_guard(mindspore::FileReadWriteLock::GetInstance());
+  if (verbose_level < mindspore::MsVlogLevelRange::kVLogLevelMin ||
+      verbose_level > mindspore::MsVlogLevelRange::kVLogLevelMax)
+    return false;
+  if (mindspore::g_ms_submodule_vlog_levles_is_enbled[SUBMODULE_ID][verbose_level -
+                                                                    mindspore::MsVlogLevelRange::kVLogLevelMin] == true)
+    return true;
+  return false;
+}
+
+#ifndef _MSC_VER
+#define MS_VLOG(verboselevel)                                                                 \
+  MS_VLOG_IF((static_cast<int>(verboselevel)), MS_VLOG_IS_ON(static_cast<int>(verboselevel)), \
+             mindspore::NoExceptionType)
+#else
+#define MS_VLOG(verboselevel) void(0)
+#endif
+
+inline bool IS_OUTPUT_ON(enum MsLogLevel level) noexcept(true) {
+  return (static_cast<int>(level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID] &&
+          static_cast<int>(level) <= static_cast<int>(mindspore::this_thread_max_log_level));
+}
 
 #define MSLOG_IF(level, condition, excp_type)                                                                          \
   !(condition) ? void(0)                                                                                               \
