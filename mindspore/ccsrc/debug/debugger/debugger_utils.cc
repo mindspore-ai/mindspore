@@ -101,18 +101,17 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint
     auto device_format =
       E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(input_kernel, kParameterOutputIndex);
 
-    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      addr->addr, addr->size, kernel::GetFormatFromStrToEnum(device_format), device_type, ShapeVector(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-    auto device_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     string input_tensor_name = input_kernel_name + ':' + "0";
-    ShapeVector int_shapes;
-    GetDumpIntShape(input_kernel, kParameterOutputIndex, NOT_NULL(&int_shapes), trans_flag);
+    const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(input_kernel, kParameterOutputIndex);
+    auto device_addr = AnfAlgo::GetMutableOutputAddr(input_kernel, kParameterOutputIndex, false);
+    auto int_shapes = kernel_tensor->GetShapeVector();
+    if (!trans_flag) {
+      int_shapes = AnfAlgo::GetOutputDeviceShape(input_kernel, kParameterOutputIndex);
+    }
     auto ret = device_addr->LoadMemToHost(input_tensor_name, UintToInt(exec_order), host_format, int_shapes, type, 0,
                                           true, root_graph_id, false, trans_flag);
     if (!ret) {
-      MS_LOG(WARNING) << "LoadMemToHost failed:"
-                      << ", tensor_name:" << input_tensor_name << ", host_format:" << host_format
+      MS_LOG(WARNING) << "LoadMemToHost failed: tensor_name:" << input_tensor_name << ", host_format:" << host_format
                       << ", device_format:" << device_format << ".";
     }
   }
@@ -132,7 +131,6 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uin
   auto node_name = common::AnfAlgo::GetCNodeName(cnode);
   std::string kernel_name = GetKernelNodeName(cnode);
   std::vector<size_t> real_outputs = CheckRealOutput(node_name, output_size);
-
   for (size_t j : real_outputs) {
     auto addr = kernel_outputs[j];
     auto device_type = AnfAlgo::GetOutputDeviceDataType(cnode, j);
@@ -146,18 +144,17 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uin
     auto host_format = kOpFormat_DEFAULT;
     auto device_format = E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(cnode, j);
 
-    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      addr->addr, addr->size, kernel::GetFormatFromStrToEnum(device_format), device_type, ShapeVector(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-    auto device_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     string tensor_name = kernel_name + ':' + std::to_string(j);
-    ShapeVector int_shapes;
-    GetDumpIntShape(cnode, j, NOT_NULL(&int_shapes), trans_flag);
+    const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(cnode, j);
+    auto device_addr = AnfAlgo::GetMutableOutputAddr(cnode, j, false);
+    auto int_shapes = kernel_tensor->GetShapeVector();
+    if (!trans_flag) {
+      int_shapes = AnfAlgo::GetOutputDeviceShape(cnode, j);
+    }
     auto ret = device_addr->LoadMemToHost(tensor_name, UintToInt(exec_order), host_format, int_shapes, type, j, false,
                                           root_graph_id, false, trans_flag);
     if (!ret) {
-      MS_LOG(WARNING) << "LoadMemToHost failed:"
-                      << ", tensor_name:" << tensor_name << ", host_format:" << host_format
+      MS_LOG(WARNING) << "LoadMemToHost failed: tensor_name:" << tensor_name << ", host_format:" << host_format
                       << ", device_format:" << device_format << ".!";
     }
   }
