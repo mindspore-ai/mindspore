@@ -381,6 +381,11 @@ endforeach()
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
 
+## link np_dtype to mindspore
+add_subdirectory(common/np_dtype)
+target_link_libraries(mindspore PUBLIC _mindspore_common_np_dtype_obj)
+add_dependencies(mindspore _mindspore_common_np_dtype_obj)
+
 set(COMMON_SUB_COMP
         utils
         common
@@ -400,6 +405,7 @@ foreach(_comp ${COMMON_SUB_COMP})
         endif()
     endif()
 endforeach()
+
 
 add_library(mindspore_common SHARED ${COMMON_SUB_OBJECTS_SRC})
 target_link_libraries(mindspore_common PRIVATE mindspore_core proto_input mindspore::protobuf)
