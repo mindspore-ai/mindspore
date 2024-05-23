@@ -631,10 +631,15 @@ For the CPU device, users need to write a dynamic cluster startup script, please
     mindspore.ops.AllGather
     mindspore.ops.AllReduce
     mindspore.ops.AlltoAll
+    mindspore.ops.Barrier
     mindspore.ops.Broadcast
+    mindspore.ops.CollectiveGather
+    mindspore.ops.CollectiveScatter
     mindspore.ops.NeighborExchangeV2
+    mindspore.ops.Receive
     mindspore.ops.ReduceOp
     mindspore.ops.ReduceScatter
+    mindspore.ops.Send
 
 Debugging Operator
 ------------------

@@ -16,9 +16,8 @@
 """
 Defines communication operators with functional form.
 """
-
 import mindspore.ops.operations as P
-from mindspore.communication import GlobalComm, get_group_rank_from_world_rank
+from mindspore.communication import GlobalComm, get_group_rank_from_world_rank, get_group_size
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops import ReduceOp
@@ -27,6 +26,12 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 __all__ = [
     'all_reduce',
     'all_gather_into_tensor',
+    'all_to_all_single',
+    'barrier',
+    'broadcast',
+    'gather_into_tensor',
+    'isend',
+    'irecv',
     'reduce_scatter_tensor',
     'reduce',
     'P2POp',
@@ -34,11 +39,46 @@ __all__ = [
 ]
 
 
-def comm_example():
+def _check_split_sizes_sequence(tensor, sequence):
+    if sequence == []:
+        raise TypeError(f"sequence can not be empty list.")
+    element0 = sequence[0]
+    for idx in range(1, len(sequence)):
+        if sequence[idx] != element0:
+            raise TypeError(f"sequence containing different elements is not supported yet. "
+                            f"Elements must be the same.")
+    if sum(sequence) != tensor.shape[0]:
+        raise TypeError(f" The sum of sequence should equal to tensor.shape[0].")
+
+
+def _check_compute_split_count(tensor, output_split_sizes, input_split_sizes, group):
     """
-    Reduces the tensor data across all devices in such a way that all devices will get the same final result.
+    Check the output_split_sizes and input_split_sizes by the rules in _check_split_sizes_sequence,
+        compute the split count and return it.
     """
-    print("This is just an example of comm_func.py", P.AllReduce)
+    group_size = get_group_size(group)
+    if output_split_sizes:
+        _check_split_sizes_sequence(tensor, output_split_sizes)
+        output_split_value = output_split_sizes[0]
+    else:
+        output_split_value = None
+    if input_split_sizes:
+        _check_split_sizes_sequence(tensor, input_split_sizes)
+        input_split_value = input_split_sizes[0]
+    else:
+        input_split_value = None
+    split_count = 0
+    if input_split_value and output_split_value is None:
+        split_count = tensor.shape[0] // input_split_value
+    elif input_split_value is None and output_split_value:
+        split_count = tensor.shape[0] // output_split_value
+    elif input_split_value and output_split_value:
+        if input_split_value != output_split_value:
+            raise TypeError(f"input_split_value should equal to output_split_value.")
+        split_count = tensor.shape[0] // input_split_value
+    else:
+        split_count = group_size
+    return split_count
 
 
 def all_reduce(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
@@ -462,3 +502,441 @@ def batch_isend_irecv(p2p_op_list):
                                              group)
     output = _op(send_tensors)
     return output
+
+
+def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
+    """
+    Scatter tensor evently across the processes in the specified communication group.
+
+    Note:
+        The interface behavior only support Tensor input and scatter evenly, which
+            is different from that of `pytoch.distributed.scatter`.
+        Only the tensor in process `src`(global rank) will do scatter.
+        Only support pynative mode, graph mode is not currently supported.
+
+    Args:
+        tensor (Tensor):  The input tensor to be scattered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        src (int, optional): Specifies the rank(global rank) of the process that send the tensor.
+            And only process `src` will send the tensor.
+        group (str, optional): The communication group to work on.
+            Default: "GlobalComm.WORLD_COMM_GROUP".
+
+    Returns:
+        Tensor, the shape of output is :math:`(x_1/src_rank, x_2, ..., x_R)`. The dimension 0 of data is equal to
+            the dimension of input tensor divided by `src`, and the other dimension keep the same.
+
+    Raise:
+        TypeError: If the type of the first input parameter is not Tensor, or any of `op` and `group` is not a str.
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 2 devices.
+        >>> import mindspore as ms
+        >>> from mindspore.communication import init
+        >>> from mindspore.communication.comm_func import scatter_tensor
+        >>> import numpy as np
+        >>> # Launch 2 processes.
+        >>>
+        >>> init()
+        >>> input = ms.Tensor(np.arange(8).reshape([4, 2]).astype(np.float32))
+        >>> out = scatter_tensor(tensor=data, src=0)
+        >>> print(out)
+        # rank_0
+        [[0. 1.]
+         [2. 3.]]
+        # rank_1
+        [[4. 5.]
+         [6. 7.]]
+    """
+    if not isinstance(tensor, (Tensor, Tensor_)):
+        raise TypeError("For scatter_tensor, the input tensor must be tensor")
+    if not isinstance(src, int):
+        raise TypeError("For scatter_tensor, the src must be int")
+    _src = get_group_rank_from_world_rank(src, group)
+    _op = _get_cache_prim(P.CollectiveScatter)(_src, group)
+    return _op(tensor)
+
+
+def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
+    """
+    Gathers tensors from the specified communication group. The operation will gather the tensor
+        from processes according to dimension 0.
+
+    Note:
+        Only the tensor in process `dst`(global rank) will keep the gathered tensor. The other process
+            will keep a tensor with shape [1], which has no mathematical meaning.
+        Only support pynative mode, graph mode is not currently supported.
+
+    Args:
+        tensor (Tensor): The tensor to be gathered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        dst(int, optional): Specifies the rank(global rank) of the process that receive the tensor.
+            And only process `dst` will receive the gathered tensor.
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+
+    Returns:
+        Tensor, the shape of output is :math:`(sum x_1, x_2, ..., x_R)`. The dimension 0 of data is equal to
+            sum of the dimension of input tensor, and the other dimension keep the same.
+
+    Raise:
+        TypeError: If the type of the first input parameter is not Tensor, or any of `op` and `group` is not a str.
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
+
+    Supported Platforms:
+        ``Ascend``  ``GPU``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 2 devices.
+
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>> from mindspore.communication.comm_func import gather_into_tensor
+        >>> # Launch 2 processes.
+        >>>
+        >>> init()
+        >>> input = Tensor(np.arange(4).reshape([2, 2]).astype(np.float32))
+        >>> output = gather_into_tensor(tensor=data, dst=0)
+        >>> print(output)
+        Process with rank 0: [[0. 1.],
+                              [2. 3.],
+                              [0. 1.],
+                              [2. 3.]]
+        Process with rank 1: [0]
+    """
+    if not isinstance(tensor, (Tensor, Tensor_)):
+        raise TypeError("For gather_into_tensor, the input tensor must be tensor")
+    if not isinstance(dst, int):
+        raise TypeError("For gather_into_tensor, the dst must be int")
+    _dst = get_group_rank_from_world_rank(dst, group)
+    _op = _get_cache_prim(P.CollectiveGather)(_dst, group)
+    return _op(tensor)
+
+
+def broadcast(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
+    """
+    Broadcasts the tensor to the whole group.
+
+    Note:
+        The tensors must have the same shape and format in all processes of the collection.
+        Only support pynative mode, graph mode is not currently supported.
+
+    Args:
+        tensor (Tensor): The tensor to be broadcasted. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        src (int, optional): Specifies the rank(global rank) of the process that broadcast the tensor.
+            And only process `src` will broadcast the tensor.
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+
+    Returns:
+        Tensor, tensor has the same shape as input tensor :math:`(x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If src is not an integer or group is not a string.
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 2 devices.
+
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor
+        >>> from mindspore.communication import init
+        >>> from mindspore.communication.comm_func import broadcast
+        >>> import numpy as np
+        >>> # Launch 2 processes.
+        >>>
+        >>> init()
+        >>> data = ms.Tensor(np.arange(8).reshape([2, 4]).astype(np.float32))
+        >>> out = broadcast(tensor=data, src=0)
+        [[0. 1. 2. 3.]
+         [4. 5. 6. 7.]]
+
+    Tutorial Examples:
+        - `Distributed Set Communication Primitives - Broadcast
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#broadcast>`_
+
+    """
+    if not isinstance(tensor, (Tensor, Tensor_)):
+        raise TypeError("For broadcast, the input tensor must be tensor")
+    if not isinstance(src, int):
+        raise TypeError("For broadcast, the src must be int")
+    _src = get_group_rank_from_world_rank(src, group)
+    _op = _get_cache_prim(P.Broadcast)(_src, group)
+    return _op((tensor,))[0]
+
+
+def barrier(group=GlobalComm.WORLD_COMM_GROUP):
+    """
+    Synchronizes all processes in the specified group. Once the process call this operation, it will be blocked until
+        all processes call this operation. After all processes finish calling the operations, the blocked processes
+        will be weaken and continue their task.
+
+    Args:
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+
+    Raises:
+        RuntimeError: If backend is invalid, or distributed initialization fails.
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 2 devices.
+        >>> from mindspore.communication import init
+        >>> from mindspore.communication.comm_func import barrier
+        >>> # Launch 2 processes.
+        >>> init()
+        >>> barrier()
+
+    Tutorial Examples:
+        - `Distributed Set Communication Primitives - Barrier
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#barrier>`_
+    """
+    _op = _get_cache_prim(P.Barrier)(group)
+    return _op()
+
+
+def all_to_all_single(tensor, output_split_sizes=None, input_split_sizes=None, group=GlobalComm.WORLD_COMM_GROUP):
+    r"""
+    Split and scatter tensor to all processes in the specified group.
+
+    all_to_all_single split the tensor evenly into blocks according to dimension 0, and scatter them in order.
+    It has three phases:
+    - The prepare phase: the operand check input_split_sizes, output_split_sizes, and use them to
+      compute the number of blocks(`split_count`).
+    - The scatter phase: On each process, the operand is split into `split_count` number of blocks along the
+      dimension 0, and the blocks are scattered to all processes, e.g., the ith block is send to the ith process.
+    - The gather phase: Each process concatenates the received blocks along the dimension 0.
+
+    This operation cannot support uneven scatter yet. The elements in input_split_sizes or output_split_sizes
+    should be all the same.
+
+    Note:
+        In the gather phase, tensors must have the same shape and format in all processes of the collection.
+        Only support pynative mode, graph mode is not currently supported.
+
+    Args:
+        tensor (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        output_split_sizes (Tuple[int], optional): Output split sizes for dim 0. This operation cannot support uneven
+            scatter yet, the elements should be all the same. Default: ``None``.
+        input_split_sizes (Tuple[int], optional): Input split sizes for dim 0. This operation cannot support uneven
+            scatter yet, the elements should be all the same. Default: ``None``.
+        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
+
+    Outputs:
+        Tensor. If the shape of input tensor is :math:`(x_1, x_2, ..., x_R)`, then the shape of output tensor is
+        :math:`(y_1, x_2, ..., x_R)`, where:
+
+    Raises:
+        TypeError: If group is not a string.
+        TypeError: Elements in `output_split_sizes` or `input_split_sizes` are not the same.
+        TypeError: The sum of `output_split_sizes` or `input_split_sizes` is not equal to tensor.shape[0]
+        ValueError: The `split_count` can not be divisible by `rank_size`.
+        RuntimeError: If backend is invalid, or distributed initialization fails.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 2 devices.
+
+        >>> import os
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor
+        >>> from mindspore.communication import init
+        >>> from mindspore.communication.comm_func import all_to_all_single
+        >>> import numpy as np
+
+        >>> init()
+        >>> net = Net()
+        >>> rank_id = int(os.getenv("RANK_ID"))
+        >>> data = ms.Tensor(np.arange(8).reshape([4, 2]).astype(np.float32)) + 8 * rank_id
+        # Launch 2 processes.
+        >>> out = all_to_all_single(tensor=data)
+        >>> print(out)
+        # Rank 0:
+        [[ 0.  1.]
+         [ 2.  3.]
+         [16. 17.]
+         [18. 19.]]
+
+        # Rank 1:
+        [[ 4.  5.]
+         [ 6.  7.]
+         [20. 21.]
+         [22. 23.]]
+
+        # Launch 4 processes.
+        >>> input_split_sizes = [1, 1, 1, 1]
+        >>> out = all_to_all_single(tensor=data, input_split_sizes=input_split_sizes)
+        >>> print(out)
+    """
+    _split_count = _check_compute_split_count(tensor, output_split_sizes, input_split_sizes, group)
+    _split_dim = 0
+    _concat_dim = 0
+    _op = _get_cache_prim(P.AlltoAll)(_split_count, _split_dim, _concat_dim)
+    return _op(tensor)
+
+
+def isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
+    """
+    Send tensors to the specified dest_rank.
+
+    Note:
+        Send and Receive must be used in combination and have same sr_tag.
+
+    Args:
+        tensor (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        dst (int): A required integer identifying the destination rank(global rank).
+        group (str): The communication group to work on. Default: "hccl_world_group/nccl_world_group".
+        tag (int): A required integer identifying the send/recv message tag. The message will
+            be received by the Receive op with the same "tag".
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 2 devices.
+        >>> import mindspore.ops as ops
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore.communication.comm_func import isend
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>>
+        >>> init()
+        >>> input_ = Tensor(np.ones([2, 8]).astype(np.float32))
+        >>> isend(input_, 0)
+    """
+    if not isinstance(tensor, (Tensor, Tensor_)):
+        raise TypeError("For isend, the input tensor must be tensor")
+    _dst = get_group_rank_from_world_rank(dst, group)
+    _op = _get_cache_prim(P.Send)(tag, _dst, group, group)
+    _depend = _get_cache_prim(P.Depend)()
+    return _depend(tensor, _op(tensor))
+
+
+def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
+    """
+    Receive tensors from src.
+
+    Note:
+        Send and Receive must be used in combination and have same sr_tag.
+        The shape and dtype of input `tensor` is used to receive tensor, but the value
+            of input `tensor` would not take effect.
+
+    Args:
+        tensor (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The shape and dtype of this
+            tensor is used to receive tensor, but the value of input `tensor` would not take effect.
+        src (int): A required integer identifying the source rank(global rank).
+        group (str, optional): The communication group to work on.
+            Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
+        tag (int): A required integer identifying the send/recv message tag. The message will
+                      will be send by the Send op with the same "tag".
+
+    Returns:
+        Tensor, the shape of output is :math:`(sum x_1, x_2, ..., x_R)`.
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 2 devices.
+        >>> import mindspore.ops as ops
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore.communication.comm_func import irecv
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>>
+        # Launch 2 processes.
+        Process 0 send the following array to Process 1
+        [[ 0.  1.]
+         [ 2.  3.]]
+        >>> init()
+        >>> x = ms.Tensor(np.zeros([2, 2]))
+        # Process 1 receive tensor from Process 0.
+        >>> out = irecv(x, src=0)
+        >>> print(out)
+        [[ 0.  1.]
+         [ 2.  3.]]
+    """
+    _src = get_group_rank_from_world_rank(src, group)
+    shape = tensor.shape
+    dtype = tensor.dtype
+    _op = _get_cache_prim(P.Receive)(tag, _src, shape, dtype, group, group)
+    return _op(tensor)

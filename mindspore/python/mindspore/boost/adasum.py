@@ -23,7 +23,7 @@ from mindspore.communication.management import create_group
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.ops.operations._inner_ops import Send, Receive
+from mindspore.ops import Send, Receive
 
 
 __all__ = ["AdaSum"]
