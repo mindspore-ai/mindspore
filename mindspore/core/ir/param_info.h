@@ -129,6 +129,9 @@ class ParamInfo {
   std::vector<int64_t> quant_shape() const { return quant_shape_; }
   void set_quant_shape(const std::vector<int64_t> &quant_shape) { quant_shape_ = quant_shape; }
 
+  bool ignore_device_addr() const { return ignore_device_addr_; }
+  void set_ignore_device_addr(bool ignore) { ignore_device_addr_ = ignore; }
+
  private:
   std::string name_{"Parameter"};
   bool requires_grad_{true};
@@ -162,6 +165,8 @@ class ParamInfo {
   // Used to identify parameters of quant int4 type
   bool is_quant_int4_{false};
   std::vector<int64_t> quant_shape_;
+  // Used to ignore unused param
+  bool ignore_device_addr_{false};
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_PARAM_INFO_H_

@@ -33,6 +33,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnorm_to_bninfer.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/histogram_fixed_width_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/multi_matmuls_split_fusion.h"
 #include "plugin/device/ascend/optimizer/mindir/renorm_split.h"
 #include "plugin/device/ascend/optimizer/mindir/optimizer_unify_output.h"
 #include "plugin/device/ascend/optimizer/mindir/space_batch_nd_attr_update.h"
@@ -139,8 +140,10 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AllGatherMatmulFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::CentralizationMindIR>());
 #ifdef ENABLE_INTERNAL_KERNELS
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::MultiWeightMatmulsFusion2>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MultiMatmulsFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MultiWeightMatmulsFusion>());
+
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddLayernormFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::ShapeReshapeFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddRmsNormFusion>());

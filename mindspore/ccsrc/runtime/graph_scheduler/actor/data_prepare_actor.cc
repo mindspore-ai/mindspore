@@ -1197,6 +1197,16 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   MS_EXCEPTION_IF_NULL(context);
+  auto param_node = backend_node->cast<ParameterPtr>();
+  if (param_node != nullptr) {
+    auto param_info = param_node->param_info();
+    bool used = !param_info->ignore_device_addr();
+    if (!used) {
+      MS_LOG(DEBUG) << backend_node->DebugString()
+                    << " the Parameter is never used by real kernel in graphs, skip to allocate.";
+      return;
+    }
+  }
   if (tensor == nullptr) {
     return;
   }
