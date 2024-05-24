@@ -30,18 +30,33 @@ internal::OpParamPtr InternalMatmulQkv::CreateOpParam(const std::vector<KernelTe
   param_ptr->opId = internal::OpId::MatmulQkv;
   bool transpose_a = false;
   bool transpose_b = true;
-  internal::MatmulQkvParam op_param = {transpose_a, transpose_b};
+  auto n_lens = primitive_->GetAttr("n_lens");
+  MS_EXCEPTION_IF_NULL(n_lens);
+  auto n_list = GetValue<std::vector<int64_t>>(n_lens);
+  const auto n_input_zero = 0;
+  const auto n_input_one = 1;
+  const auto n_input_two = 2;
+  internal::MatmulQkvParam op_param = {static_cast<uint32_t>(n_list[n_input_zero]),
+                                       static_cast<uint32_t>(n_list[n_input_one]),
+                                       static_cast<uint32_t>(n_list[n_input_two]), transpose_a, transpose_b};
   param_ptr->specificParam = op_param;
   return param_ptr;
+}
+
+void InternalMatmulQkv::SetInOutIdx() {
+  inputsIdxMap_[kIndex0] = kIndex0;
+  inputsIdxMap_[kIndex1] = kIndex1;
+  outputsIdxMap_[kIndex0] = kIndex0;
+  outputsIdxMap_[kIndex1] = kIndex1;
+  outputsIdxMap_[kIndex2] = kIndex2;
 }
 
 uint64_t InternalMatmulQkv::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
   // User defined CacheKey, the inputs should include all the factors which will affect tiling result.
-  return TilingCacheMgr::GetInstance().GenTilingCacheKey(
-    kernel_name_, inputs[kIndex0]->GetShapeVector(), inputs[kIndex0]->dtype_id(), inputs[kIndex1]->GetShapeVector(),
-    inputs[kIndex1]->dtype_id(), inputs[kIndex2]->GetShapeVector(), inputs[kIndex2]->dtype_id(),
-    inputs[kIndex3]->GetShapeVector(), inputs[kIndex3]->dtype_id());
+  return TilingCacheMgr::GetInstance().GenTilingCacheKey(kernel_name_, inputs[kIndex0]->GetShapeVector(),
+                                                         inputs[kIndex0]->dtype_id(), inputs[kIndex1]->GetShapeVector(),
+                                                         inputs[kIndex1]->dtype_id());
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(MatmulQkv, InternalMatmulQkv);
