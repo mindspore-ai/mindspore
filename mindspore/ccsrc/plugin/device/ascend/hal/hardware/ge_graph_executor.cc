@@ -982,7 +982,14 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
   }
   // create loop var
   RunInitGraph(run_options.name);
-  if (!graph->is_dynamic_shape()) {
+  if (graph->is_dynamic_shape()) {
+    // Release GIL before calling into (potentially long-running) C++ code
+    GilReleaseWithCheck gil_release;
+    auto ret = graph_runner->CompileGraph(run_options);
+    if (ret != transform::Status::SUCCESS) {
+      MS_LOG(EXCEPTION) << "Compile graph " << run_options.name << " failed.";
+    }
+  } else {
     ::ge::CompiledGraphSummaryPtr ge_graph_summary = nullptr;
     {
       // Release GIL before calling into (potentially long-running) C++ code
@@ -1203,6 +1210,28 @@ void SetOutput(GeDeviceResManager *res_manager, GeTensor *ge_output, const AnfNo
                << ", type: " << TypeIdToString(output_addr->type_id()) << ", format: " << output_addr->format();
 }
 
+void SetDynamicOutputs(const std::vector<KernelWithIndex> &graph_outputs, std::vector<GeTensor> *ge_outputs,
+                       GeDeviceResManager *res_manager) {
+  MS_EXCEPTION_IF_NULL(res_manager);
+  size_t ge_outputs_index = 0;
+  size_t ge_outputs_size = ge_outputs->size();
+  for (size_t i = 0; i < graph_outputs.size(); ++i) {
+    const auto &[output_node, idx] = common::AnfAlgo::FetchRealNodeSkipMonadControl(graph_outputs[i]);
+    MS_EXCEPTION_IF_NULL(output_node);
+    if (HasAbstractMonad(output_node)) {
+      continue;
+    }
+    if (common::AnfAlgo::IsNoOuputNode(output_node)) {
+      continue;
+    }
+    if (ge_outputs_index >= ge_outputs_size) {
+      MS_LOG(EXCEPTION) << "GE data access is out of bounds, which the current index value is " << ge_outputs_index
+                        << ", the total number of GE output is " << ge_outputs_size << ".";
+    }
+    SetOutput(res_manager, &((*ge_outputs)[ge_outputs_index++]), output_node, idx);
+  }
+}
+
 size_t GeGraphExecutor::GetGraphFeatureMemory(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
@@ -1296,6 +1325,8 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     }
   }
   if (is_dynamic_shape) {
+    auto graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
+    SetDynamicOutputs(graph_outputs, &ge_outputs, ResManager());
     auto sync_ret = ResManager()->SyncStream();
     if (!sync_ret) {
       MS_LOG(EXCEPTION) << "Sync stream failed";
@@ -1443,6 +1474,14 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
     MS_EXCEPTION_IF_NULL(input_node);
     auto output_addr = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
     MS_EXCEPTION_IF_NULL(output_addr);
+    bool is_dynamic_shape = kernel_graph->is_dynamic_shape();
+    if (is_dynamic_shape) {
+      auto ge_tensor_desc = transform::TransformUtil::GetGeTensorDesc(output_addr->kernel_tensor()->GetShapeVector(),
+                                                                      output_addr->type_id(), output_addr->format());
+      MS_EXCEPTION_IF_NULL(ge_tensor_desc);
+      ge_tensor_desc->SetPlacement(::ge::kPlacementDevice);
+      (void)ge_inputs[kv.second].SetTensorDesc(*ge_tensor_desc);
+    }
     if (output_addr->GetMutablePtr() == nullptr) {
       // alloc static memory for unused inputs
       // error in ge when set nullptr into ge tensor
