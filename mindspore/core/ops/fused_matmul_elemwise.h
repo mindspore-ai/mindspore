@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_OPS_FUSED_MATMUL_ELEMWISE_H_
 #include <memory>
 #include <string>
+#include <vector>
 #include "mindapi/base/types.h"
 #include "utils/ms_context.h"
 #include "ops/base_operator.h"
@@ -25,16 +26,18 @@
 
 namespace mindspore {
 namespace ops {
-/// \brief Multiplies matrix a and matrix b. Refer to Python API @ref mindspore.ops.FusedMatMulElemBinary for more details.
+/// \brief Multiplies matrix a and matrix b. Refer to Python API @ref mindspore.ops.FusedMatMulElemBinary for more
+/// details.
 class MIND_API FusedMatMulElemBinary : public MatMulFuncImpl {
  public:
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 
-/// \brief Multiplies matrix a and matrix b. Refer to Python API @ref mindspore.ops.FusedMatMulElemUnary for more details.
+/// \brief Multiplies matrix a and matrix b. Refer to Python API @ref mindspore.ops.FusedMatMulElemUnary for more
+/// details.
 class MIND_API FusedMatMulElemUnary : public MatMulFuncImpl {
  public:
- TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 
 }  // namespace ops

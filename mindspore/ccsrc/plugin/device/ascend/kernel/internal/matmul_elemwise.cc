@@ -17,7 +17,7 @@
 #include "plugin/device/ascend/kernel/internal/matmul_elemwise.h"
 
 #include <memory>
-
+#include <string>
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "param/matmul_ext_param.h"
 
@@ -51,7 +51,6 @@ internal::OpParamPtr InternalMatmulElemBase::CreateOpParam(const std::vector<Ker
   bool with_gelu = false;
   bool with_bias = false;
   bool with_bias_fastgelu = false;
-
 
   auto value_str = primitive_->GetAttr("ElemwiseType");
   MS_EXCEPTION_IF_NULL(value_str);
