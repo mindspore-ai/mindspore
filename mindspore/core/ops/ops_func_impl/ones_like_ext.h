@@ -25,6 +25,7 @@ namespace mindspore::ops {
 class MIND_API OnesLikeExtFuncImpl : public EltwiseOpFuncImpl {
  public:
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
 };
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_FUNC_IMPL_ONES_LIKE_EXT_H

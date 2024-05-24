@@ -18,6 +18,7 @@
 #include <memory>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -62,5 +63,35 @@ TypePtr OnesFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector
   auto output_type = TypeIdToType(static_cast<TypeId>(val));
   return std::make_shared<TensorType>(output_type);
 }
+
+ShapeArray OnesFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  auto shape_v = GetArrayValue<int64_t>(input_values[kInputIndex0]);
+  auto shape = shape_v.value();
+  for (size_t i = 0; i < shape_v->size(); i++) {
+    int64_t shape_i = shape[i];
+    MS_CHECK_VALUE(shape_i >= 0,
+                   CheckAndConvertUtils::FormatCheckIntegerMsg(
+                     "the " + std::to_string(i) + "th dimension of input shape", shape_i, kGreaterEqual, 0, primitive));
+  }
+  return {shape.ToVector()};
+}
+
+TypePtrList OnesFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  auto prim_name = primitive->name();
+  auto dtype = input_values[kIndex1];
+  if (dtype->isa<None>()) {
+    return {kFloat32};
+  }
+  if (!dtype->isa<Int64Imm>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', 'dtype' must be a TypeId, but got an invalid type: " << dtype->ToString() << ".";
+  }
+  const auto &dtype_scalar = dtype->cast<Int64ImmPtr>();
+  MS_EXCEPTION_IF_NULL(dtype_scalar);
+  auto type_id = static_cast<TypeId>(dtype_scalar->value());
+  return {TypeIdToType(type_id)};
+}
+
+REGISTER_SIMPLE_INFER(kNameOnes, OnesFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
