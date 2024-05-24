@@ -59,10 +59,6 @@ Status StandAloneInfo::InferTensorMap() {
 }
 
 Status StandAloneInfo::InferTensorInfo() {
-  if (inputs_shape_.empty() || outputs_shape_.empty() || inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
-    MS_LOG(ERROR) << name_ << ": Invalid args";
-    return FAILED;
-  }
   // infer input TensorInfo
   size_t temp = 0;
   for (size_t i = 0; i < input_value_.size(); ++i) {

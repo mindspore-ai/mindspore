@@ -31,18 +31,6 @@
 
 namespace mindspore {
 namespace parallel {
-Status BroadcastToInfo::GetAttrs() {
-  out_shape_.clear();
-  auto shape_opt = GetArrayValueFromInputsWithCheck<int64_t>(input_value_, name_, SHAPE);
-  out_shape_ = shape_opt.value();
-  if (out_shape_.empty()) {
-    MS_LOG(ERROR) << name_ << ": shape cannot be empty";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
-
 Status BroadcastToInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
   is_stand_alone_ = false;
@@ -62,16 +50,6 @@ Status BroadcastToInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   return SUCCESS;
-}
-
-Status BroadcastToInfo::CheckStrategyForDynamicShape(const StrategyPtr &) {
-  if (is_stand_alone_) {
-    return SUCCESS;
-  }
-  MS_LOG(ERROR) << name_
-                << ": it does not support dynamic shape now, the inputs's shape: " << ShapesToString(inputs_shape_)
-                << ", the outputs' shape: " << ShapesToString(outputs_shape_);
-  return FAILED;
 }
 
 Status BroadcastToInfo::InferDevMatrixShape() {
@@ -183,13 +161,22 @@ Status BroadcastToInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     return FAILED;
   }
 
-  Shape to_shape = outputs_tensor_info_[0].slice_shape();
-  auto new_broadcast_to =
-    gen_g.PushBack({gen_g.NewOpInst(BROADCAST_TO), gen_g.virtual_input_node(), CreateTuple(to_shape)});
-  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(new_broadcast_to, 1)};
-  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
-    std::make_pair(input_nodes, new_broadcast_to));
+  if (!is_dynamic_shape_) {  // static shape
+    Shape to_shape = outputs_tensor_info_[0].slice_shape();
+    auto new_broadcast_to =
+      gen_g.PushBack({gen_g.NewOpInst(BROADCAST_TO), gen_g.virtual_input_node(), CreateTuple(to_shape)});
+    std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(new_broadcast_to, 1)};
+    replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+      std::make_pair(input_nodes, new_broadcast_to));
+    return SUCCESS;
+  }
 
+  // dynamic shape
+  if (!IsPrimitiveCNode(cnode->input(DST_SHAPE_INDEX), prim::kPrimMakeTuple)) {
+    MS_LOG(EXCEPTION) << name_ << ": the dst shape is not make tuple";
+  }
+
+  ChangeMakeTupleConstant(cnode, DST_SHAPE_INDEX);
   return SUCCESS;
 }
 

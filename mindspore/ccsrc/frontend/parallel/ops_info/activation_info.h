@@ -96,6 +96,14 @@ class GeLUInfo : public ActivationOther {
   Status InferForwardCommunicationByLayout() override;
 };
 
+class ClampScalarInfo : public GeLUInfo {
+ public:
+  ClampScalarInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                  const PrimitiveAttrs &attrs)
+      : GeLUInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~ClampScalarInfo() override = default;
+};
+
 class FastGeLUInfo : public ActivationOther {
  public:
   FastGeLUInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,

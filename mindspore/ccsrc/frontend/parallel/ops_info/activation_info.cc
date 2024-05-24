@@ -876,6 +876,7 @@ Status GeLUInfo::InferForwardCommunicationByLayout() { return SUCCESS; }
 
 REGISTER(ActivationInfo);
 REGISTER(GeLUInfo);
+REGISTER(ClampScalarInfo);
 REGISTER(FastGeLUInfo);
 REGISTER(TanhInfo);
 REGISTER(SoftmaxInfo);

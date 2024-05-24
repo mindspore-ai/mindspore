@@ -712,3 +712,41 @@ def test_dynamic_broadcast_to():
     phase = compile_net(net, x, y)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs_has('GeLU-0', ['BroadcastTo-0'])
+
+
+def test_dynamic_broadcast_to_data_parallel():
+    """
+    Feature: test dynamic broadcast to
+    Description: no redistribution
+    Expectation: compile success
+    """
+
+    class DynamicMulNet(Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.mul = P.Mul().shard(strategy1)
+            self.relu = P.ReLU().shard(strategy2)
+            self.gelu = P.GeLU().shard(strategy2)
+            self.w = Parameter(Tensor(np.ones([1]), dtype=ms.float32), "w2")
+
+        def construct(self, x, y):
+            out = self.mul(x, self.w)
+            s = y.shape
+            out = self.relu(out).broadcast_to((16, s[1], s[2]))
+            out = self.gelu(out)
+            return out
+
+    strategy1 = ((1, 1, 1), (1,))
+    strategy2 = ((8, 1, 1),)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, gradients_mean=True, full_batch=True)
+
+    net = DynamicMulNet(strategy1, strategy2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(shape=[16, None, 1], dtype=ms.float32)
+    y = Tensor(shape=[None, None, None], dtype=ms.float32)
+
+    net.set_inputs(x, y)
+    phase = compile_net(net, x, y)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('GeLU-0', ['BroadcastTo-0'])

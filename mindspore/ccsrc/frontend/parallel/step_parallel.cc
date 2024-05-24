@@ -332,12 +332,17 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
   if (using_func_param_op_info) {
     next_inputs_tensor_info = next_distribute_operator->outputs_tensor_info();
   }
-  if (LongToSize(node_pair.second - 1) >= next_inputs_tensor_info.size()) {
-    MS_LOG(INFO) << "The index is out of range, the index is " << (node_pair.second - 1) << ", the vector size is "
-                 << next_inputs_tensor_info.size() << ", next node is " << next_cnode->DebugString();
-    return;
+  size_t out_layout_index = LongToSize(node_pair.second - 1);
+  if (out_layout_index >= next_inputs_tensor_info.size()) {
+    if (next_distribute_operator->name().find(INDEX_SELECT) != std::string::npos) {
+      out_layout_index = out_layout_index - 1;
+    } else {
+      MS_LOG(INFO) << "The index is out of range, the index is " << out_layout_index << ", the vector size is "
+                   << next_inputs_tensor_info.size() << ", next node is " << next_cnode->DebugString();
+      return;
+    }
   }
-  TensorInfo tensorinfo_out = next_inputs_tensor_info[LongToSize(node_pair.second - 1)];
+  TensorInfo tensorinfo_out = next_inputs_tensor_info[out_layout_index];
   TensorLayout tensorlayout_out = tensorinfo_out.tensor_layout();
   TensorLayout tensorlayout_in = GetTensorInLayout(pre_node, get_item_index);
   if (IsPrimitiveCNode(pre_node, prim::kPrimReceive)) {

@@ -366,6 +366,14 @@ class GatherInfo : public OperatorInfo {
   GatherUtilPtr gather_util_;
 };
 
+class IndexSelectInfo final : public GatherInfo {
+ public:
+  IndexSelectInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                  const PrimitiveAttrs &attrs, const std::string &replace_op_name = INDEX_SELECT)
+      : GatherInfo(name, inputs_shape, outputs_shape, attrs, replace_op_name) {}
+  ~IndexSelectInfo() override = default;
+};
+
 class SparseGatherV2Info final : public GatherInfo {
  public:
   SparseGatherV2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
