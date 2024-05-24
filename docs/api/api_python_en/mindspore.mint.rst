@@ -25,6 +25,16 @@ Tensor Creation
 
     mindspore.mint.eye
 
+Reduction Functions
+^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.cumsum
+
 Element-wise Operation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
