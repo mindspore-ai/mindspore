@@ -19,7 +19,7 @@
 #ifndef _MSC_VER
 #include <unistd.h>
 #include <sys/time.h>
-#include <signal.h>
+#include <csignal>
 #endif
 #include <map>
 #include <iomanip>
@@ -653,6 +653,7 @@ class LogConfigParser {
   // PIPELINE will output all logs with level >= 103.
   std::map<std::string, std::string> PraseModuleVLog() {
     std::map<std::string, std::string> vlog_levels;
+    bool two_breaks = false;
     bool flag_error = false;
     std::string text;
     auto tok = lexer.VLogGetNext(&text);
@@ -693,16 +694,18 @@ class LogConfigParser {
           if (!Expect(LogConfigToken::NUMBER, tok)) {
             val.clear();
             flag_error = true;
-            goto clean_up;
+            two_breaks = true;
           }
           vlog_levels[key] += ("#" + val);
           val.clear();
           tok = lexer.VLogGetNext(&text);
         } while (tok == LogConfigToken::DIVISION);
       }
+      if (two_breaks) {
+        break;
+      }
     } while (tok == LogConfigToken::COMMA);
 
-  clean_up:
     if (!flag_error && !Expect(LogConfigToken::RIGHT_BRACE, tok)) {
       flag_error = true;
     }
@@ -837,13 +840,14 @@ void InitSubModulesVLogLevel() {
       }
     }
     if (mod_idx < 0) {
-      {
-        MS_LOG(WARNING) << "Undefined module name " << cfg.first << ", ignore it";
-        continue;
-      }
-      bool *vlog_level_permodule = g_ms_submodule_vlog_levles_is_enbled[mod_idx];
-      ParseVLogLevelsAndSet(cfg.second, vlog_level_permodule);
+      MS_LOG(WARNING) << "Undefined module name " << cfg.first << ", ignore it";
+      continue;
     }
+    bool *vlog_level_permodule = g_ms_submodule_vlog_levles_is_enbled[mod_idx];
+    for (int i = 0; i < mindspore::MsVlogLevelRange::kVLogLevelRange; i++) {
+      vlog_level_permodule[i] = false;
+    }
+    ParseVLogLevelsAndSet(cfg.second, vlog_level_permodule);
   }
 }
 
@@ -922,6 +926,7 @@ const std::string GetSubModuleName(SubModuleId module_id) {
     "VM",                 // SM_VM
     "PROFILER",           // SM_PROFILER
     "PS",                 // SM_PS
+    "PI",                 // SM_PI
     "FL",                 // SM_FL
     "DISTRIBUTED",        // SM_DISTRIBUTED
     "LITE",               // SM_LITE
@@ -930,6 +935,7 @@ const std::string GetSubModuleName(SubModuleId module_id) {
     "RUNTIME_FRAMEWORK",  // SM_RUNTIME_FRAMEWORK
     "GE",                 // SM_GE
     "API",                // SM_API
+    "SYMBOLIC_SHAPE",     // SM_SYMBOLIC_SHAPE
   };
   return sub_module_names[IntToSize(module_id % NUM_SUBMODUES)];
 }

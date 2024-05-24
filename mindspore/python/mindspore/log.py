@@ -248,7 +248,7 @@ def _adapt_cfg(kwargs):
 
 def vlog(vlog_level_in, msg, *args, **vlog_kwargs):
     """
-    Log a message with severity 'INFO' on the MindSpore logger.
+    Log a message with severity vlog_level_in on the MindSpore vlogger.
 
     Examples:
         >>> from mindspore import log as logger
@@ -256,31 +256,27 @@ def vlog(vlog_level_in, msg, *args, **vlog_kwargs):
     """
     # Verify vlog_level_in [VLOGGER_LEVEL_MIN, VLOGGER_LEVEL_MAX].
     if vlog_level_in < int(VLOGGER_LEVEL_MIN) or vlog_level_in > int(VLOGGER_LEVEL_MAX):
-        warning(f'Incorrect vlog(vlog_level,msg), please check the configuration of vlog(vlog_level,msg), '
-                f'desired vlog(101,msg)-vlog(999,msg) But got vlog({vlog_level_in},msg).')
+        warnings.warn(f'Incorrect vlog(vlog_level,msg), please check the configuration of vlog(vlog_level,msg), '
+                      f'desired vlog(101,msg)-vlog(999,msg) But got vlog({vlog_level_in},msg).')
     # Get the kwargs in environment variables.
     kwargs = _get_env_config()
-    global STATIC_VERIFY_NUM
-    # Ensure that environment variables are validated only once.
-    if STATIC_VERIFY_NUM == 0:
-        _verify_config(kwargs)
-        STATIC_VERIFY_NUM = STATIC_VERIFY_NUM + 1
+    _verify_config(kwargs)
     # If the vlog_level is None, not to print vlog.
     if kwargs.get('vlog_level') is None:
         return
     # If the vlog_level is not None, verify its legitimacy.
     # When the length of 'vlog_level' is 3, it means that the user wants to enable range vlog levels, such as 101.
-    if(len(kwargs['vlog_level']) == 3 and vlog_level_in >= int(kwargs['vlog_level'])):
+    if(len(kwargs.get('vlog_level')) == 3 and vlog_level_in >= int(kwargs.get('vlog_level'))):
         # Append the LOG_LEVEL to the message header.
         extra = vlog_kwargs.pop('extra', {})
         extra['custom_text'] = 'VLOG' + str(vlog_level_in)
         vlog_kwargs['extra'] = extra
         _get_vlogger(kwargs).info(msg, *args, **vlog_kwargs)
     # When the length of 'vlog_level' > 3, it means that the user wants to enable single vlog level, such as 1.
-    elif len(kwargs['vlog_level']) > 3:
+    elif len(kwargs.get('vlog_level')) > 3:
         # Use regular expressions to match log levels matching #101#102 in 'vlog_level'.
         pattern = "#\\d+"
-        vlog_levels = re.findall(pattern, kwargs['vlog_level'])
+        vlog_levels = re.findall(pattern, kwargs.get('vlog_level'))
         # Make all vlog levels like #101 into a list of integers.
         vlog_levels_list = [int(vlog_level[1:]) for vlog_level in vlog_levels]
         # If the vlog_level_in in vlog_levels_list, print vlog.
@@ -338,11 +334,11 @@ def get_level():
 
     Examples:
         >>> import os
+        >>> os.environ['GLOG_v'] = '3'
         >>> import mindspore as ms
-        >>> os.environ['GLOG_v'] = '0'
         >>> level = ms.get_level()
         >>> print(level)
-        '0'
+        '3'
     """
     # level and glog level mapping dictionary
     level_to_glog_level = dict(zip(_name_to_level.values(), _gloglevel_to_name.keys()))
@@ -368,7 +364,7 @@ def get_vlog_level():
     _verify_config(kwargs)
     if kwargs.get('vlog_level') is None:
         return None
-    return kwargs['vlog_level']
+    return kwargs.get('vlog_level')
 
 
 
@@ -517,6 +513,12 @@ def _verify_vlog_level_static(vlog_level):
     Args:
         vlog_level (str): The vlog level.
     """
+    # Only verify the first time.
+    global STATIC_VERIFY_NUM
+    if STATIC_VERIFY_NUM == 0:
+        STATIC_VERIFY_NUM += 1
+    elif STATIC_VERIFY_NUM > 0:
+        return
     # When the length of 'vlog_level' is more than 3, it means that the user wants to enable specific vlog levels,
     # such as #102#103.
     if len(vlog_level) > 3 and (not vlog_level.isdigit()):
@@ -524,21 +526,21 @@ def _verify_vlog_level_static(vlog_level):
         pattern = "#\\d+"
         vlog_levels = re.findall(pattern, vlog_level)
         if vlog_levels == []:
-            warning(f'Incorrect vlog level, please check the configuration of VLOG_v, '
-                    f'desired vlog level: 101-999,#101-#999. But got {vlog_level}.')
+            warnings.warn(f'Incorrect vlog level, please check the configuration of VLOG_v, '
+                          f'desired vlog level: 101-999,#101-#999. But got {vlog_level}.')
         vlog_levels_list = [int(vlog_level[1:]) for vlog_level in vlog_levels]
         # Verify each vlog level in vlog_levels_list.
         for vlog_level_item in vlog_levels_list:
             if vlog_level_item < int(VLOGGER_LEVEL_MIN) or vlog_level_item > int(VLOGGER_LEVEL_MAX):
-                warning(f'Incorrect vlog level, please check the configuration of VLOG_v, '
-                        f'desired vlog level: 101-999,#101-#999. But got #{vlog_level_item}.')
+                warnings.warn(f'Incorrect vlog level, please check the configuration of VLOG_v, '
+                              f'desired vlog level: 101-999,#101-#999. But got #{vlog_level_item}.')
     # When the length of 'vlog_level' is 3, it means that the user wants to enable range vlog levels, such as 101.
     elif len(vlog_level) == 3 and vlog_level.isdigit() and \
          int(VLOGGER_LEVEL_MIN) <= int(vlog_level) <= int(VLOGGER_LEVEL_MAX):
         pass
     else:
-        warning(f'Incorrect vlog level, please check the configuration of VLOG_v, '
-                f'desired vlog level: 101-999,#101-#999. But got {vlog_level}.')
+        warnings.warn(f'Incorrect vlog level, please check the configuration of VLOG_v, '
+                      f'desired vlog level: 101-999,#101-#999. But got {vlog_level}.')
 
 
 def _verify_level(level):
@@ -701,11 +703,11 @@ def _create_vlogfile_dir(kwargs):
     Returns:
         Log_dir: Create subdirectory.
         Examples:
-        >>> /rank_0/vlogs
+        >>> /rank_0/logs
     """
     vlog_dir = os.path.realpath(kwargs.get('filepath'))
-    rank_id = _get_rank_id()
-    vlog_dir += '/rank_' + rank_id + '/logs'
+    rank_id = str(_get_rank_id())
+    vlog_dir = os.path.join(vlog_dir, 'rank_' + rank_id, 'logs')
     if not os.path.exists(vlog_dir):
         os.makedirs(vlog_dir, exist_ok=True)
     return vlog_dir
@@ -728,6 +730,7 @@ def _setup_logger(kwargs):
     Returns:
         Logger, well-configured logger.
     """
+
     # The name of Submodule
     sub_module = 'ME'
     # The name of Base log file
@@ -981,62 +984,23 @@ class _NonBlockingServer:
         Returns:
             socket.socket: A setup and bound Unix Domain Stream Socket.
         """
-        if os.path.exists(self.socket_file):
-            os.remove(self.socket_file)
-        server_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server_socket.bind(self.socket_file)
-        server_socket.listen(5)
-        server_socket.setblocking(False)
+        server_socket = None
+        try:
+            if os.path.exists(self.socket_file):
+                os.remove(self.socket_file)
+            server_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server_socket.bind(self.socket_file)
+            server_socket.listen(5)
+            server_socket.setblocking(False)
+        except OSError as ose:
+            # if an OS error occurred, close the socket.
+            warning(f"An OS error occurred: {ose}")
+        finally:
+            #If an error occurred, close the socket.
+            if server_socket and server_socket.fileno() == -1:
+                server_socket.close()
         return server_socket
-
-
-    def recv_all(self, sock, length):
-        """
-        Receives all expected data from a socket non-blockingly up to a certain length.
-
-        Args:
-            sock (socket.socket): The socket from which data is to be received.
-            length (int): The expected length of the data in bytes.
-
-        Returns:
-            str: The received data decoded from bytes to string.
-        """
-        data = b''
-        while len(data) < length:
-            more = sock.recv(length - len(data))
-            if not more:
-                warning('was expecting %d bytes but only received %d bytes before the socket closed' %
-                        (length, len(data)))
-            data += more
-        return data.decode()
-
-
-    def process_data(self, data):
-        """
-        Processes the data received from clients. Takes specific actions based on the content of the data.
-
-        Args:
-            data (str): The data received from the client.
-        """
-        # Python verify the VLOG_v.
-        if data[0] == '0':
-            if _is_vlog_valid(data[1:]):
-                _setenv_vlogger_lock.acquire()
-                os.environ['VLOG_v'] = data[1:]
-                pid = os.getpid()
-                signal_number = signal.SIGUSR1
-                os.kill(pid, signal_number)
-                _setenv_vlogger_lock.release()
-            else:
-                warning(f"Invalid VLOG_v: {data[1:]}")
-
-        # C++ will verify the MS_SUBMODULE_VLOG_V, Python don't need to use the MS_SUBMODULE_VLOG_V.
-        elif data[0] == '1':
-            os.environ['MS_SUBMODULE_VLOG_v'] = data[1:]
-            pid = os.getpid()
-            signal_number = signal.SIGUSR2
-            os.kill(pid, signal_number)
 
 
     def run(self):
@@ -1075,7 +1039,7 @@ class _NonBlockingServer:
         Args:
             fileno (int): File descriptor of the connection.
         """
-        connection = self.connections[fileno]
+        connection = self.connections.get(fileno)
         try:
             header = connection.recv(4)
             if header:
@@ -1101,6 +1065,55 @@ class _NonBlockingServer:
         """
         self.cleanup_connection(fileno)
 
+
+    @staticmethod
+    def recv_all(sock, length):
+        """
+        Receives all expected data from a socket non-blockingly up to a certain length.
+
+        Args:
+            sock (socket.socket): The socket from which data is to be received.
+            length (int): The expected length of the data in bytes.
+
+        Returns:
+            str: The received data decoded from bytes to string.
+        """
+        data = b''
+        while len(data) < length:
+            more = sock.recv(length - len(data))
+            if not more:
+                warning('was expecting %d bytes but only received %d bytes before the socket closed' %
+                        (length, len(data)))
+            data += more
+        return data.decode()
+
+
+    @staticmethod
+    def process_data(data):
+        """
+        Processes the data received from clients. Takes specific actions based on the content of the data.
+
+        Args:
+            data (str): The data received from the client.
+        """
+        # Python verify the VLOG_v.
+        if data[0] == '0':
+            if _is_vlog_valid(data[1:]):
+                _setenv_vlogger_lock.acquire()
+                os.environ['VLOG_v'] = data[1:]
+                pid = os.getpid()
+                os.kill(pid, signal.SIGUSR1)
+                _setenv_vlogger_lock.release()
+            else:
+                pass
+
+        # C++ will verify the MS_SUBMODULE_VLOG_V, Python don't need to use the MS_SUBMODULE_VLOG_V.
+        elif data[0] == '1':
+            os.environ['MS_SUBMODULE_VLOG_v'] = data[1:]
+            pid = os.getpid()
+            os.kill(pid, signal.SIGUSR2)
+
+
     # Shut down and remove the connection.
     def cleanup_connection(self, fileno):
         """
@@ -1110,7 +1123,7 @@ class _NonBlockingServer:
             fileno (int): File descriptor of the connection to be cleaned.
         """
         self.epoll.unregister(fileno)
-        self.connections[fileno].close()
+        self.connections.get(fileno).close()
         del self.connections[fileno], self.addresses[fileno]
         if fileno in self.data_recv:
             del self.data_recv[fileno]
@@ -1178,8 +1191,10 @@ class Client:
             s.connect(self.socket_file)
             return s
         except socket.timeout:
-            warning(f"Failed to connect to the server: {e}")
-            return None
+            pass
+        # In case of any exception close the socket and return None
+        s.close()
+        return None
 
 
     def send_data(self, model, message):
@@ -1193,7 +1208,6 @@ class Client:
             message (str): The message string that needs to be sent.
         """
         if self.socket is None:
-            warning("Failed to connect to the server: Socket is None")
             return
         data = str(model) + message
         data_encoded = data.encode('utf-8')
@@ -1248,11 +1262,11 @@ def set_vlog_level(model, vlog_level, script_name=None):
             if model == 'VLOG_v':
                 client.send_data(0, vlog_level)
                 pid = socket_file.split('_')[-1]
-                print(f"Set VLOG_v OK! PID: {pid}")
+                info(f"Set VLOG_v OK! PID: {pid}")
             elif model == 'MS_SUBMODULE_VLOG_v':
                 client.send_data(1, vlog_level)
                 pid = socket_file.split('_')[-1]
-                print(f"Set MS_SUBMODULE_VLOG_v OK! PID: {pid}")
+                info(f"Set MS_SUBMODULE_VLOG_v OK! PID: {pid}")
             else:
                 raise ValueError("Invalid environment variable, should be either 'VLOG_v' or 'MS_SUBMODULE_VLOG_v'")
         except ConnectionError:
