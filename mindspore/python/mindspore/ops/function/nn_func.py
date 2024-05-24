@@ -45,7 +45,7 @@ from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, f
 from mindspore.ops.auto_generate.gen_ops_prim import GroupNorm
 from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op,
                                          replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
-                                         constant_pad_nd_op, dropout_ext_op)
+                                         constant_pad_nd_op, dropout_ext_op, binary_cross_entropy_with_logits_op)
 from mindspore.ops.auto_generate.gen_ops_prim import embedding_op, Convolution
 from mindspore.nn.generator import default_generator
 
@@ -1304,6 +1304,101 @@ def binary_cross_entropy_with_logits(logits, label, weight=None, pos_weight=None
         pos_weight = ops.ones_like(logits)
     bce_with_logits_loss_op = _get_cache_prim(NN_OPS.BCEWithLogitsLoss)(reduction)
     return bce_with_logits_loss_op(logits, label, weight, pos_weight)
+
+
+def binary_cross_entropy_with_logits_ext(input, target, weight=None, reduction=None, pos_weight="mean"):
+    r"""
+    Adds sigmoid activation function to input `logits`, and uses the given logits to compute binary cross entropy
+    between the logits and the label.
+
+    Sets input logits as :math:`X`, input label as :math:`Y`, input weight as :math:`W`, output as :math:`L`. Then,
+
+    .. math::
+
+        \begin{array}{ll} \\
+            p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
+            L_{ij} = -[Y_{ij}log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
+        \end{array}
+
+    :math:`i` indicates the :math:`i^{th}` sample, :math:`j` indicates the category. Then,
+
+    .. math::
+        \ell(x, y) = \begin{cases}
+        L, & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        \end{cases}
+
+    :math:`\ell` indicates the method of calculating the loss. There are three methods:
+    the first method is to provide the loss value directly,
+    the second method is to calculate the average value of all losses,
+    and the third method is to calculate the sum of all losses.
+
+    This operator will multiply the output by the corresponding weight.
+    The tensor :math:`weight` assigns different weights to each piece of data in the batch,
+    and the tensor :math:`pos\_weight` adds corresponding weights to the positive examples of each category.
+
+    In addition, it can trade off recall and precision by adding weights to positive examples.
+    In the case of multi-label classification the loss can be described as:
+
+    .. math::
+        \begin{array}{ll} \\
+            p_{ij,c} = sigmoid(X_{ij,c}) = \frac{1}{1 + e^{-X_{ij,c}}} \\
+            L_{ij,c} = -[P_{c}Y_{ij,c} * log(p_{ij,c}) + (1 - Y_{ij,c})log(1 - p_{ij,c})]
+        \end{array}
+
+    where c is the class number (c>1 for multi-label binary classification, c=1 for single-label binary classification),
+    n is the number of the sample in the batch and :math:`P_c` is the weight of the positive answer for the class c.
+    :math:`P_c>1` increases the recall, :math:`P_c<1` increases the precision.
+
+    Args:
+        input (Tensor): Input logits. Data type must be float16, float32 or bfloat16(Only support on Atlas A2 training
+            series).
+        target (Tensor): Ground truth label, has the same shape as `logits`.
+            Data type must be float16, float32 or bfloat16(Only support on Atlas A2 training series).
+        weight (Tensor, optional): A rescaling weight applied to the loss of each batch element. It can be
+            broadcast to a tensor with shape of `logits`. Data type must be float16, float32 or bfloat16(Only support
+            on Atlas A2 training series).
+            Default: ``None``, `weight` is a Tensor whose value is ``1``.
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the output elements will be summed.
+        pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
+            number of classes. It can be broadcast to a tensor with shape of `logits`.
+            Data type must be float16, float32 or bfloat16(Only support on Atlas A2 training series).
+            Default: ``None``, `pos_weight` is a Tensor whose value is ``1``.
+
+    Returns:
+        Tensor, if `reduction` is ``'none'``, it's a tensor with the same shape and type as input `logits`.
+        Otherwise, the output shape is {1}.
+
+    Raises:
+        TypeError: If input `logits`, `label`, `weight`, `pos_weight` is not Tensor.
+        TypeError: If data type of input `logits`, `label`, `weight`, `pos_weight` is not float16, float32 and
+                   bfloat16(Only support on Atlas A2 training series).
+        TypeError: If data type of input `reduction` is not string.
+        ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `logits`.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> logits = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]), mindspore.float32)
+        >>> label = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]), mindspore.float32)
+        >>> weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
+        >>> pos_weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
+        >>> output = ops.binary_cross_entropy_with_logits_ext(logits, label, weight, pos_weight=pos_weight)
+        >>> print(output)
+        0.3463612
+    """
+    return binary_cross_entropy_with_logits_op(input, target, weight, pos_weight, reduction)
 
 
 @_function_forbid_reuse
@@ -7979,6 +8074,7 @@ __all__ = [
     'bidense',
     'binary_cross_entropy',
     'binary_cross_entropy_with_logits',
+    'binary_cross_entropy_with_logits_ext',
     'cosine_embedding_loss',
     'max_pool2d',
     'max_pool3d',

@@ -27,6 +27,7 @@
 #include "utils/check_convert_utils.h"
 #include "ops/auto_generate/gen_ops_name.h"
 #include "utils/ms_context.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore::expander::bprop {
 namespace {
@@ -2686,18 +2687,54 @@ REG_BPROP_BUILDER("AvgPool2DGrad").SetBody((BODYFUNC(ib) {
           ib->OutZeros(divisor_override)};
 }));
 
-REG_BPROP_BUILDER("BinaryCrossEntropyWithLogits").SetBody((BODYFUNC(ib) {
+REG_BPROP_BUILDER("BinaryCrossEntropyWithLogits").SetUnusedInputs({i5}).SetBody((BODYFUNC(ib) {
   // input, target, weight, posWeight, reduction, out, dout
-  auto grad_output = ib->GetInput(kIndex6);
+  auto dout = ib->GetInput(kIndex6);
   auto input = ib->GetInput(kIndex0);
   auto target = ib->GetInput(kIndex1);
   auto weight = ib->GetInput(kIndex2);
   auto posweight = ib->GetInput(kIndex3);
   auto reduction = ib->GetInput(kIndex4);
+  bool posweight_type_none = ib->GetDtype(posweight)->isa<TypeNone>();
+  bool weight_type_none = ib->GetDtype(weight)->isa<TypeNone>();
 
-  auto grad_dout =
-    ib->Emit("BinaryCrossEntropyWithLogitsBackward", {grad_output, input, target, weight, posweight, reduction});
-  return {grad_dout, ib->OutZeros(target), ib->OutZeros(weight), ib->OutZeros(posweight), ib->OutZeros(reduction)};
+  NodePtr grad_input = nullptr;
+  if (input->need_compute_grad_out()) {
+    grad_input = ib->Emit("BinaryCrossEntropyWithLogitsBackward", {dout, input, target, weight, posweight, reduction});
+  } else {
+    grad_input = ib->OutZeros(input);
+  }
+
+  NodePtr grad_target = nullptr;
+  if (target->need_compute_grad_out()) {
+    if (!posweight_type_none) {
+      auto sigmoid_input = ib->Emit("Sigmoid", {input});
+      grad_target = ib->Mul(ib->Sub(ib->Log(ib->Sub(ib->Tensor(1, ib->GetDtype(sigmoid_input)), sigmoid_input)),
+                                    ib->Mul(posweight, ib->Log(sigmoid_input))),
+                            dout);
+    } else {
+      grad_target = ib->Mul(input, ib->Emit("Neg", {dout}));
+    }
+
+    if (!weight_type_none) {
+      grad_target = ib->Mul(grad_target, weight);
+    }
+
+    auto reduction_value = reduction->BuildValue();
+    auto reduction_int_value = ops::GetScalarValue<int64_t>(reduction_value);
+    if (reduction_int_value == Reduction::MEAN) {
+      if (IsDynamic(ib->GetShape(grad_input))) {
+        auto res2 = ib->DynSize(target, ib->GetDtype(grad_target));
+        grad_target = ib->RealDiv(grad_target, res2);
+      } else {
+        grad_target = ib->RealDiv(grad_target, ib->Tensor(ib->GetSize(target), ib->GetDtype(grad_target)));
+      }
+    }
+  } else {
+    grad_target = ib->OutZeros(target);
+  }
+
+  return {grad_input, grad_target, ib->OutZeros(weight), ib->OutZeros(posweight), ib->OutZeros(reduction)};
 }));
 
 REG_BPROP_BUILDER("BinaryCrossEntropyExt").SetUnusedInputs({i4}).SetBody((BODYFUNC(ib) {

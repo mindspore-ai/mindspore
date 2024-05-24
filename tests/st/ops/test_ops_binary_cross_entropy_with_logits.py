@@ -81,7 +81,8 @@ def test_ops_binary_cross_entropy_with_logits_forward(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
-def test_ops_binary_cross_entropy_with_logits_backward(mode):
+@pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
+def test_ops_binary_cross_entropy_with_logits_backward(mode, reduction):
     """
     Feature: pyboost function.
     Description: test function binary_cross_entropy_with_logits backward.
@@ -92,32 +93,26 @@ def test_ops_binary_cross_entropy_with_logits_backward(mode):
     weight = ms.Tensor(np.array([1.0, 1.0, 1.0]), ms.float32)
     pos_weight = ms.Tensor(np.array([1.0, 1.0, 1.0]), ms.float32)
 
-
-    expect_sum = np.array([[0.0100254714, -0.031475246, -0.53181231], [1.07502079, 0.301312357, -1.53181231]])
-    expect_mean = np.array([[0.00167091191, -0.00524587464, -0.0886353850], [0.179170132, 0.0502187274, -0.255302072]])
-    expect_none = np.array([[0.010025471, -0.031475246, -0.53181231], [1.07502079, 0.3013123578, -1.53181231]])
+    if reduction == "sum":
+        expect = np.array([[0.0100254714, -0.031475246, -0.53181231], [1.07502079, 0.301312357, -1.53181231]])
+    elif reduction == "mean":
+        expect = np.array([[0.00167091191, -0.00524587464, -0.0886353850], [0.179170132, 0.0502187274, -0.255302072]])
+    else:
+        expect = np.array([[0.010025471, -0.031475246, -0.53181231], [1.07502079, 0.3013123578, -1.53181231]])
 
 
     if mode == "pynative":
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
-        out_mean = binary_cross_entropy_with_logits_backward_func(inputx, target, weight, pos_weight, "mean")
-        out_sum = binary_cross_entropy_with_logits_backward_func(inputx, target, weight, pos_weight, "sum")
-        out_none = binary_cross_entropy_with_logits_backward_func(inputx, target, weight, pos_weight, "none")
+        out = binary_cross_entropy_with_logits_backward_func(inputx, target, weight, pos_weight, reduction)
     elif mode == "KBK":
         ms.context.set_context(mode=ms.GRAPH_MODE)
         op = ms.jit(binary_cross_entropy_with_logits_backward_func, jit_config=ms.JitConfig(jit_level="O0"))
-        out_mean = op(inputx, target, weight, pos_weight, "mean")
-        out_sum = op(inputx, target, weight, pos_weight, "sum")
-        out_none = op(inputx, target, weight, pos_weight, "none")
+        out = op(inputx, target, weight, pos_weight, reduction)
     else:
         ms.context.set_context(mode=ms.GRAPH_MODE)
-        out_mean = binary_cross_entropy_with_logits_backward_func(inputx, target, weight, pos_weight, "mean")
-        out_sum = binary_cross_entropy_with_logits_backward_func(inputx, target, weight, pos_weight, "sum")
-        out_none = binary_cross_entropy_with_logits_backward_func(inputx, target, weight, pos_weight, "none")
+        out = binary_cross_entropy_with_logits_backward_func(inputx, target, weight, pos_weight, reduction)
 
-    np.testing.assert_allclose(out_mean[0].asnumpy(), expect_mean, rtol=1e-3)
-    np.testing.assert_allclose(out_sum[0].asnumpy(), expect_sum, rtol=1e-3)
-    np.testing.assert_allclose(out_none[0].asnumpy(), expect_none, rtol=1e-3)
+    np.testing.assert_allclose(out[0].asnumpy(), expect, rtol=1e-3)
 
 
 @pytest.mark.level1

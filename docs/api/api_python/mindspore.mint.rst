@@ -110,6 +110,12 @@ Dropout函数
 损失函数
 ^^^^^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.functional.binary_cross_entropy_with_logits
 
 
 

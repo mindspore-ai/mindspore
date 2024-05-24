@@ -224,9 +224,8 @@ from mindspore.ops.auto_generate import binary_cross_entropy_ext as binary_cross
 # 99
 
 # 100
-from mindspore.ops.auto_generate import binary_cross_entropy_with_logits as bce_with_logits
-def binary_cross_entropy_with_logits(input, target, weight, reduction, pos_weight):
-    return bce_with_logits(input, target, weight, pos_weight, reduction)
+from mindspore.ops.function import binary_cross_entropy_with_logits_ext as binary_cross_entropy_with_logits
+
 
 def batch_norm(input_x, running_mean, running_var, weight=None, bias=None, training=False, momentum=0.1, eps=1e-5):
     return batch_norm_ex(input_x, running_mean, running_var, weight, bias, training, momentum, eps)
