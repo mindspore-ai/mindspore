@@ -164,6 +164,12 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
         data["common_dump_settings"]["dump_mode"] = 2
         data["common_dump_settings"]["path"] = dump_path
         data["e2e_dump_settings"]["trans_flag"] = True
+    elif test_key == "test_kbk_e2e_dump_reg":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["dump_mode"] = 1
+        data["common_dump_settings"]["path"] = dump_path
+        data["common_dump_settings"]["kernels"] = ["name-regex(.+/Add[^/]*)"]
+        data["e2e_dump_settings"]["trans_flag"] = True
     else:
         raise ValueError(
             "Failed to generate dump json file. The test name value " + test_key + " is invalid.")

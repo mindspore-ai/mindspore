@@ -54,6 +54,7 @@ constexpr auto kDumpInputAndOutput = 0;
 constexpr auto kDumpInputOnly = 1;
 constexpr auto kDumpOutputOnly = 2;
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
+constexpr auto kBracketsOffset = 2;
 }  // namespace
 
 namespace mindspore {
@@ -641,18 +642,25 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
   for (const auto &kernel : content) {
     bool ret;
     auto kernel_str = kernel.dump();
-    kernel_str.erase(std::remove(kernel_str.begin(), kernel_str.end(), '\"'), kernel_str.end());
     MS_LOG(INFO) << "Need dump kernel:" << kernel_str;
-    if (static_cast<int>(kernel_str.rfind('/')) == -1 && static_cast<int>(kernel_str.rfind("-op")) == -1) {
-      if (backend == "ge") {
-        MS_LOG(WARNING) << "It is not supported to specify operator types on 1980B backend. " << kernel_str
-                        << " maybe not take effect.";
+    if (static_cast<int>(kernel_str.find("name-regex(")) == 1 &&
+        static_cast<int>(kernel_str.rfind(")")) == static_cast<int>(kernel_str.length()) - kBracketsOffset) {
+      std::string kernel_reg_exp = kernel_str.substr(12, static_cast<int>(kernel_str.length()) - 14);
+      ret = kernel_regs_.try_emplace(kernel_str, std::regex(kernel_reg_exp)).second;
+      dump_layer_ += kernel_str + " ";
+    } else {
+      kernel_str.erase(std::remove(kernel_str.begin(), kernel_str.end(), '\"'), kernel_str.end());
+      if (static_cast<int>(kernel_str.rfind('/')) == -1 && static_cast<int>(kernel_str.rfind("-op")) == -1) {
+        if (backend == "ge") {
+          MS_LOG(WARNING) << "It is not supported to specify operator types on 1980B backend. " << kernel_str
+                          << " maybe not take effect.";
+          dump_layer_ += kernel_str + " ";
+        }
+        ret = kernel_types_.try_emplace({kernel_str, 0}).second;
+      } else {
+        ret = kernels_.try_emplace({kernel_str, 0}).second;
         dump_layer_ += kernel_str + " ";
       }
-      ret = kernel_types_.try_emplace({kernel_str, 0}).second;
-    } else {
-      ret = kernels_.try_emplace({kernel_str, 0}).second;
-      dump_layer_ += kernel_str + " ";
     }
     if (!ret) {
       MS_LOG(WARNING) << "Duplicate dump kernel name:" << kernel_str;
@@ -818,6 +826,15 @@ bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
       need_dump = true;
       break;
     case DUMP_KERNEL:
+      for (const auto &iter : kernel_regs_) {
+        if (regex_match(op_full_name, iter.second)) {
+          need_dump = true;
+          break;
+        }
+      }
+      if (need_dump) {
+        break;
+      }
       if (kernels_.find(op_full_name) != kernels_.end()) {
         need_dump = true;
         break;
