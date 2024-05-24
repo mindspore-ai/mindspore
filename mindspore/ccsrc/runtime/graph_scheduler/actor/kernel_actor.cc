@@ -193,6 +193,9 @@ void KernelActor::InitOutputInfo() {
     }
     // The output taken over by soma does not need to allocate memory.
     if (kernel_info_->IsTensorEnableSomas(somas_outputs, i)) {
+      output_address->kernel_tensor()->set_managed_by_somas(true);
+      MS_LOG(INFO) << "Device address : " << output_address << ", kernel tensor : " << output_address->kernel_tensor()
+                   << " is managed by somas.";
       // Somas outputs use the info of kernelMod, and output address use the info of device address.
       if (somas_outputs[i].second < output_address->GetSize()) {
         MS_LOG(INFO) << GetAID().Name() << " check somas size warning, output index:" << i
@@ -941,7 +944,7 @@ void KernelActor::ProcessMultiStreamBeforeKernelLaunch(OpContext<DeviceTensor> *
   ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kProcessMultiStream, GetAID().Name());
   auto device_context = device_contexts_[0];
   auto stream_id = kernel_info_->stream_id();
-  MS_LOG(DEBUG) << "device context : " << device_context
+  MS_LOG(DEBUG) << "Device context : " << device_context
                 << ", name : " << device_context->device_context_key().device_name_ << ", stream id : " << stream_id
                 << ", actor name : " << GetAID().Name() << ".";
   // Update output_kernel_tensors_ with task id on stream.
@@ -964,7 +967,7 @@ void KernelActor::ProcessMultiStreamBeforeKernelLaunch(OpContext<DeviceTensor> *
     auto memory_stream_id = stream_id;
     if (stream_send_actor_ == nullptr) {
       // Gpu not add stream send/recv pair, nullptr is normal case.
-      MS_LOG(DEBUG) << "stream_send_actor_ is nullptr.";
+      MS_LOG(DEBUG) << "Stream_send_actor_ is nullptr.";
       return;
     }
     MS_LOG(DEBUG) << "Process wait stream start, memory_stream_id : " << memory_stream_id
@@ -987,12 +990,12 @@ void KernelActor::ProcessMultiStreamBeforeKernelLaunch(OpContext<DeviceTensor> *
       continue;
     }
     if (input_kernel_tensor->task_id_on_stream() == nullptr) {
-      MS_LOG(DEBUG) << "input_kernel_tensor : " << input_kernel_tensor
+      MS_LOG(DEBUG) << "Input_kernel_tensor : " << input_kernel_tensor
                     << " task id on stream is nullptr, will skip multi stream process.";
       continue;
     }
-    if (input_kernel_tensor->pointer_ref_count()->ref_count() == SIZE_MAX &&
-        input_kernel_tensor->pointer_ref_count()->dynamic_ref_count() == INT32_MAX) {
+    if (input_kernel_tensor->managed_by_somas()) {
+      MS_LOG(DEBUG) << "Input_kernel_tensor : " << input_kernel_tensor << " is managed by somas.";
       continue;
     }
     (void)cross_stream_addresses_.emplace_back(input_kernel_tensor->stream_id(), input_kernel_tensor->device_ptr());
@@ -1018,7 +1021,7 @@ void KernelActor::ProcessMultiStreamBeforeKernelLaunch(OpContext<DeviceTensor> *
       auto safe_task_id_on_stream =
         multi_stream_controller->QueryTaskIdOnStream(device_context, user_stream_id, memory_stream_id);
       if (safe_task_id_on_stream >= memory_task_id_on_stream) {
-        MS_LOG(DEBUG) << "safe_task_id_on_stream : " << safe_task_id_on_stream
+        MS_LOG(DEBUG) << "Safe_task_id_on_stream : " << safe_task_id_on_stream
                       << " is bigger than memory_task_id_on_stream : " << memory_task_id_on_stream << ".";
         continue;
       }

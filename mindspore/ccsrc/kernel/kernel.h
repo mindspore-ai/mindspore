@@ -276,6 +276,8 @@ struct KernelDeviceInfo {
 
   // The launch index on stream managed by framework.
   std::shared_ptr<int64_t> task_id_on_stream_{nullptr};
+
+  bool managed_by_somas_{false};
 };
 
 // Used to encapsulate host-side related data structures in KernelTensor.
@@ -592,6 +594,10 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   void set_task_id_on_stream(const std::shared_ptr<int64_t> &task_id_on_stream) {
     device_info_->task_id_on_stream_ = task_id_on_stream;
   }
+
+  bool managed_by_somas() const { return device_info_->managed_by_somas_; }
+
+  void set_managed_by_somas(bool managed_by_somas) { device_info_->managed_by_somas_ = managed_by_somas; }
 
   // Get user data maintained by the KernelTensor.
   const UserDataPtr &user_data() const { return user_data_; }

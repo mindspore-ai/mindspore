@@ -88,6 +88,7 @@ KernelDeviceInfo::KernelDeviceInfo(const KernelDeviceInfo &other) {
   device_id_ = other.device_id_;
   stream_id_ = other.stream_id_;
   task_id_on_stream_ = other.task_id_on_stream_;
+  managed_by_somas_ = other.managed_by_somas_;
 }
 
 KernelHostInfo::KernelHostInfo(const KernelHostInfo &other) {
