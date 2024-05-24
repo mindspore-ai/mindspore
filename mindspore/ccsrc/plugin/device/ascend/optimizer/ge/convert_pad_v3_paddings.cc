@@ -306,11 +306,11 @@ const AnfNodePtr ConvertBasePaddings::Process(const FuncGraphPtr &graph, const A
     auto node_prim = GetCNodePrimitive(node);
     MS_EXCEPTION_IF_NULL(node_prim);
     node_prim->AddAttr("is_dyn_paddings", MakeValue(true));
-    manager->SetEdge(cnode, kIndex2, concat_node);
+    common::AnfAlgo::SetNodeInput(cnode, concat_node, kIndex1);
   } else {
     auto paddings_value_node = CreateConstPaddingsNode(graph, cnode);
     MS_EXCEPTION_IF_NULL(paddings_value_node);
-    manager->SetEdge(cnode, kIndex2, paddings_value_node);
+    common::AnfAlgo::SetNodeInput(cnode, paddings_value_node, kIndex1);
   }
   // Not verified: for PadV3Grad, if the input tensor rand < 4, the input should be expanded to 4.
   auto is_expand = ExpandInputXDims(graph, cnode);
@@ -349,9 +349,7 @@ bool ConvertPadV3GradPaddings::ExpandInputXDims(const FuncGraphPtr &graph, const
   MS_EXCEPTION_IF_NULL(input_x_node);
   auto reshape_node = CreateReshapeNode(graph, input_x_node, new_shape);
   MS_EXCEPTION_IF_NULL(reshape_node);
-  auto manager = graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  manager->SetEdge(node, kIndex1, reshape_node);
+  common::AnfAlgo::SetNodeInput(node, reshape_node, kIndex0);
   return true;
 }
 
