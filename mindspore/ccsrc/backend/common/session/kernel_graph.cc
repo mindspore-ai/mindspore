@@ -1182,7 +1182,7 @@ kernel::KernelObjectType GetTupleGetItemOutputKernelObjectType(const AnfNodePtr 
   MS_EXCEPTION_IF_NULL(input_node);
   auto output_idx = kernel_with_index.second;
   auto kernel_info = dynamic_cast<device::KernelInfo *>(input_node->kernel_info());
-  MS_LOG(DEBUG) << "GetItem node:" << node->DebugString(2) << " real node:" << input_node->DebugString(2)
+  MS_LOG(DEBUG) << "GetItem node:" << node->DebugString() << " real node:" << input_node->DebugString()
                 << " index:" << output_idx << " kernel info:" << kernel_info;
   if (kernel_info != nullptr && kernel_info->has_build_info()) {
     auto build_info = kernel_info->select_kernel_build_info();

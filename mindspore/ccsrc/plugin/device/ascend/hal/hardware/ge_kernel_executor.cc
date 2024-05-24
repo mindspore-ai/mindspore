@@ -856,7 +856,7 @@ void AddTensorMoveForMonad(const KernelGraphPtr &graph) {
       tensor_move->set_abstract(value_node->abstract());
       SelectKernelInfo(graph, tensor_move);
       update_state->set_input(i, tensor_move);
-      MS_LOG(DEBUG) << "Update update state node:" << update_state->DebugString(3);
+      MS_LOG(DEBUG) << "Update update state node:" << update_state->DebugString();
     }
   }
 }

@@ -1932,7 +1932,7 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
       if (common::AnfAlgo::CheckPrimitiveType(from_node_with_index.first, prim::kPrimTupleGetItem) &&
           (!from_node_with_index.first->cast<CNodePtr>()->HasAttr(kAttrReplaceRealKernelInBackend)) &&
           (!common::AnfAlgo::IsTupleOutput(from_node_with_index.first))) {
-        MS_LOG(WARNING) << "Input node:" << from_node_with_index.first->DebugString(2)
+        MS_LOG(WARNING) << "Input node:" << from_node_with_index.first->DebugString()
                         << " for graph:" << graph->ToString() << " is a tuple get item";
         from_node_with_index = FetchRealNodeByGetItem(from_node_with_index);
       }

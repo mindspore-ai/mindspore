@@ -651,7 +651,7 @@ std::pair<bool, std::pair<std::string, ExceptionType>> GetSelectKernelObjectType
       }
     }
 
-    MS_LOG(DEBUG) << "Set kernel object type build info for node:" << kernel_node->DebugString(2)
+    MS_LOG(DEBUG) << "Set kernel object type build info for node:" << kernel_node->DebugString()
                   << " output type:" << output_object_types << " output element type:" << output_element_object_types;
     kernel::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types,
                                          output_element_object_types);
