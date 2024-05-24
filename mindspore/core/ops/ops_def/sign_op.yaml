@@ -1,0 +1,12 @@
+#sign operator
+sign:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+  class:
+    name: Sign
