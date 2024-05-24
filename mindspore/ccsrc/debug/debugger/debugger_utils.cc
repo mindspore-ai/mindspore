@@ -67,7 +67,8 @@ std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &
  * Description: Get kernel inputs from launch_info and load the inputs from device to host.
  */
 void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order, uint32_t root_graph_id,
-                const DeviceContext *device_context, const bool trans_flag) {
+                const DeviceContext *device_context, const bool trans_flag, const uint32_t sample_mode,
+                const uint32_t sample_num) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(launch_info);
   MS_EXCEPTION_IF_NULL(device_context);
@@ -104,9 +105,18 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint
     string input_tensor_name = input_kernel_name + ':' + "0";
     const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(input_kernel, kParameterOutputIndex);
     auto device_addr = AnfAlgo::GetMutableOutputAddr(input_kernel, kParameterOutputIndex, false);
-    auto int_shapes = kernel_tensor->GetShapeVector();
+    auto origin_shape = kernel_tensor->GetShapeVector();
     if (!trans_flag) {
-      int_shapes = AnfAlgo::GetOutputDeviceShape(input_kernel, kParameterOutputIndex);
+      origin_shape = AnfAlgo::GetOutputDeviceShape(input_kernel, kParameterOutputIndex);
+    }
+    ShapeVector int_shapes;
+    if (sample_mode == DumpJsonParser::DUMP_HEAD_AND_TAIL && SizeOf(origin_shape) > sample_num) {
+      int_shapes.push_back(sample_num);
+    } else {
+      int_shapes = kernel_tensor->GetShapeVector();
+      if (!trans_flag) {
+        int_shapes = AnfAlgo::GetOutputDeviceShape(input_kernel, kParameterOutputIndex);
+      }
     }
     auto ret = device_addr->LoadMemToHost(input_tensor_name, UintToInt(exec_order), host_format, int_shapes, type, 0,
                                           true, root_graph_id, false, trans_flag);
@@ -124,7 +134,8 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint
  * Description: Get kernel outputs from launch_info and load the inputs from device to host.
  */
 void LoadOutputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order,
-                 uint32_t root_graph_id, const DeviceContext *device_context, const bool trans_flag) {
+                 uint32_t root_graph_id, const DeviceContext *device_context, const bool trans_flag,
+                 const uint32_t sample_mode, const uint32_t sample_num) {
   // get outputs
   auto kernel_outputs = launch_info->outputs_;
   auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
@@ -147,9 +158,18 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uin
     string tensor_name = kernel_name + ':' + std::to_string(j);
     const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(cnode, j);
     auto device_addr = AnfAlgo::GetMutableOutputAddr(cnode, j, false);
-    auto int_shapes = kernel_tensor->GetShapeVector();
+    auto origin_shape = kernel_tensor->GetShapeVector();
     if (!trans_flag) {
-      int_shapes = AnfAlgo::GetOutputDeviceShape(cnode, j);
+      origin_shape = AnfAlgo::GetOutputDeviceShape(cnode, j);
+    }
+    ShapeVector int_shapes;
+    if (sample_mode == DumpJsonParser::DUMP_HEAD_AND_TAIL && SizeOf(origin_shape) > sample_num) {
+      int_shapes.push_back(sample_num);
+    } else {
+      int_shapes = kernel_tensor->GetShapeVector();
+      if (!trans_flag) {
+        int_shapes = AnfAlgo::GetOutputDeviceShape(cnode, j);
+      }
     }
     auto ret = device_addr->LoadMemToHost(tensor_name, UintToInt(exec_order), host_format, int_shapes, type, j, false,
                                           root_graph_id, false, trans_flag);
@@ -203,6 +223,24 @@ bool GetTransFlag() {
   return DumpJsonParser::GetInstance().trans_flag();
 }
 
+uint32_t GetSampleMode() {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  if (debugger->debugger_enabled() || IsDeviceTargetGPU()) {
+    return 0;
+  }
+  return DumpJsonParser::GetInstance().sample_mode();
+}
+
+uint32_t GetSampleNum() {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  if (debugger->debugger_enabled() || IsDeviceTargetGPU()) {
+    return 0;
+  }
+  return DumpJsonParser::GetInstance().sample_num();
+}
+
 /*
  * Feature group: Dump, Online debugger.
  * Target device group: Ascend, GPU.
@@ -225,13 +263,15 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info,
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto root_graph_id = kernel_graph->root_graph_id();
   bool trans_flag = GetTransFlag();
+  uint32_t sample_mode = GetSampleMode();
+  uint32_t sample_num = GetSampleNum();
   if (debugger->debugger_enabled() || dump_json_parser.InputNeedDump()) {
     string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
     if (DumpJsonParser::GetInstance().IsDeviceCalcStats() && dump_enabled) {
       datadump::DumpKernelTensorStats(device_context, input_kernel_tensors, true, cnode->fullname_with_scope(),
                                       kernel_name);
     } else {
-      LoadInputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag);
+      LoadInputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag, sample_mode, sample_num);
     }
   }
   if (debugger->debugger_enabled() || dump_json_parser.OutputNeedDump()) {
@@ -240,7 +280,7 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info,
       datadump::DumpKernelTensorStats(device_context, output_kernel_tensors, false, cnode->fullname_with_scope(),
                                       kernel_name);
     } else {
-      LoadOutputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag);
+      LoadOutputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag, sample_mode, sample_num);
     }
   }
   // Dump kernel
