@@ -1212,7 +1212,7 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "ConstructOutputByTupleTensor", "", "");
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "ConstructOutputByTupleTensor",
                                                    device::tracker::MemType::kOther, split_device_tensor->GetSize(),
-                                                   split_device_tensor->kernel_tensor().get());
+                                                   split_device_tensor.get());
     if (!device_context->device_res_manager_->AllocateMemory(split_device_tensor.get())) {
       MS_LOG(EXCEPTION) << "#umsg#Memory not enough:#umsg#Device(id:" << device_context->device_context_key().device_id_
                         << ") memory isn't enough and alloc failed, kernel name: Split tuple outputs, alloc size: "

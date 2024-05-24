@@ -15,6 +15,7 @@
  */
 
 #include "runtime/graph_scheduler/actor/control_flow/condition_gather_actor.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 
 namespace mindspore {
 namespace runtime {
@@ -179,6 +180,9 @@ void ConditionGatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
 
 void ConditionGatherActor::Run(OpContext<DeviceTensor> *const context) {
   try {
+    MS_EXCEPTION_IF_NULL(kernel_);
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), kernel_->fullname_with_scope(),
+                                                   kernel_->func_graph()->ToString());
     FetchInput(context);
     if (memory_free_list_.size() > 0) {
       SendMemoryFreeReq(context);

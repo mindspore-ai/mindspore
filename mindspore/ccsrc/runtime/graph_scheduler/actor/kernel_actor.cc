@@ -442,12 +442,11 @@ void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) const {
       }
       MS_LOG(DEBUG) << "Set ptr:" << device_ptr << " to device address:" << output_device_tensors_[i]
                     << " in actor:" << GetAID();
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
-        AddMemInfo, GetAID().Name(), device::tracker::MemType::kInSideSomas, output_device_tensors_[i]->GetSize(),
-        output_device_tensors_[i]->kernel_tensor().get());
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(),
+                                                     device::tracker::MemType::kInSideSomas,
+                                                     output_device_tensors_[i]->GetSize(), output_device_tensors_[i]);
       output_device_tensors_[i]->set_ptr(device_ptr);
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, output_device_tensors_[i]->kernel_tensor().get(),
-                                                     device_ptr);
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, output_device_tensors_[i], device_ptr);
     }
   }
 
@@ -460,10 +459,9 @@ void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) const {
       // In order to perform performance, the pointer validity is not checked here.
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
         AddMemInfo, GetAID().Name(), device::tracker::MemType::kInSideSomas, workspace_device_tensors_[i]->GetSize(),
-        workspace_device_tensors_[i]->kernel_tensor().get());
+        workspace_device_tensors_[i]);
       workspace_device_tensors_[i]->set_ptr(device_ptr);
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, workspace_device_tensors_[i]->kernel_tensor().get(),
-                                                     device_ptr);
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, workspace_device_tensors_[i], device_ptr);
     }
   }
 }
@@ -649,8 +647,7 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
                                                      input_data_index);
   if (new_device_tensor->GetPtr() == nullptr) {
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(), device::tracker::MemType::kOther,
-                                                   new_device_tensor->GetSize(),
-                                                   new_device_tensor->kernel_tensor().get());
+                                                   new_device_tensor->GetSize(), new_device_tensor.get());
     if (!device_contexts_[0]->device_res_manager_->AllocateMemory(new_device_tensor.get(), kDefaultStreamIndex)) {
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy_, *context, *(device_contexts_[0]), GetAID().Name(),
                                                   new_device_tensor->GetSize());
@@ -792,25 +789,11 @@ void KernelActor::ExecuteResizeKernelModTask(OpContext<DeviceTensor> *const cont
   Async(kernel_async_launch_aid_, &KernelAsyncLaunchActor::LaunchKernel, context, this);
 }
 
-namespace {
-void TrackInputMemory(const std::vector<DeviceTensor *> &input_device_tensors, const std::string &actor_name) {
-  if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
-    for (auto &device_addr : input_device_tensors) {
-      if (device_addr == nullptr || !device_addr->IsPtrValid()) {
-        continue;
-      }
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(UseMemBlock, actor_name, device_addr->GetPtr());
-    }
-  }
-}
-}  // namespace
-
 void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context) {
   if (IsRunningFailed(context)) {
     MS_LOG(INFO) << "Run failed and early stop launch kernel: " << kernel_->fullname_with_scope();
     return;
   }
-  TrackInputMemory(input_device_tensors_, GetAID().Name());
   // 1. Allocate memory.
   if (!memory_alloc_list_.empty()) {
     SendMemoryAllocReq(context);
@@ -935,8 +918,21 @@ void KernelActor::ResizeKernelMod() {
     MS_LOG(EXCEPTION) << "Resize failed for kernel: " << kernel_->fullname_with_scope();
   }
 }
+namespace {
+void TrackInputMemory(const std::vector<DeviceTensor *> &input_device_tensors, const std::string &actor_name) {
+  if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
+    for (auto &device_addr : input_device_tensors) {
+      if (device_addr == nullptr || !device_addr->IsPtrValid()) {
+        continue;
+      }
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(UseMemBlock, actor_name, device_addr->GetPtr());
+    }
+  }
+}
+}  // namespace
 
 bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
+  TrackInputMemory(input_device_tensors_, GetAID().Name());
   if (skip_launch_shape_related_op_) {
     MS_LOG(DEBUG) << "Skip launch real make tuple kernel: " << kernel_->fullname_with_scope()
                   << " input kernel tensor: " << input_kernel_tensors_;

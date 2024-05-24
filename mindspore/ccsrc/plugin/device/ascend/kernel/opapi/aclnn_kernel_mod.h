@@ -27,6 +27,7 @@
 #include "kernel/kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "include/common/utils/utils.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "transform/acl_ir/acl_convert.h"
 #include "transform/acl_ir/op_api_exec.h"
@@ -65,6 +66,8 @@ using AclUtil = transform::AclUtil;
     } else {                                                                                                         \
       if (is_dynamic_) {                                                                                             \
         void *device_addr = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(workspace_size_list_[0]); \
+        device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(                                                              \
+          UpdateDevicePtrInfo, device_addr, device::tracker::MemType::kWorkSpace, "AclnnWorkspace_" + op_type_);     \
         RUN_OP_API_ASYNC(op_type_, device_addr, workspace_size_list_[0], executor_, stream_ptr, release_func_);      \
         device::ascend::AscendMemoryPool::GetInstance().FreeTensorMem(device_addr);                                  \
       } else {                                                                                                       \
@@ -88,6 +91,8 @@ using AclUtil = transform::AclUtil;
     } else {                                                                                                         \
       if (is_dynamic_) {                                                                                             \
         void *device_addr = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(workspace_size_list_[0]); \
+        device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(                                                              \
+          UpdateDevicePtrInfo, device_addr, device::tracker::MemType::kWorkSpace, "AclnnWorkspace_" + op_type_);     \
         RUN_OP_API_SYNC(op_type_, device_addr, workspace_size_list_[0], executor_, stream_ptr);                      \
         device::ascend::AscendMemoryPool::GetInstance().FreeTensorMem(device_addr);                                  \
       } else {                                                                                                       \
@@ -294,6 +299,8 @@ using AclnnKernelModPtrList = std::vector<AclnnKernelModPtr>;
       } else {                                                                                                         \
         if (is_dynamic_) {                                                                                             \
           void *device_addr = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(workspace_size_list_[0]); \
+          device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(                                                              \
+            UpdateDevicePtrInfo, device_addr, device::tracker::MemType::kWorkSpace, "AclnnWorkspace_" + op_type_);     \
           RUN_OP_API_ASYNC(op_type_, device_addr, workspace_size_list_[0], executor_, stream_ptr, release_func_);      \
           device::ascend::AscendMemoryPool::GetInstance().FreeTensorMem(device_addr);                                  \
         } else {                                                                                                       \

@@ -121,11 +121,12 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
                     << ", device address addr: " << device_addr << ", size: " << size
                     << ", from persistent mem: " << from_persistent_mem << ", need recycle: " << need_recycle;
   }
-  device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, size, GetMemoryPoolType(), ActualPeakStatistics(),
-                                       stream_id);
-
-  if (IsMemoryPoolRecycle()) {
-    (void)mem_bufs_.insert(device_addr);
+  if (device_addr != nullptr) {
+    device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, size, GetMemoryPoolType(), ActualPeakStatistics(),
+                                         stream_id);
+    if (IsMemoryPoolRecycle()) {
+      (void)mem_bufs_.insert(device_addr);
+    }
   }
   MS_LOG(DEBUG) << "Alloc memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
                 << ", persistent_mem:" << from_persistent_mem << ", stream id: " << stream_id
@@ -1126,27 +1127,18 @@ size_t DynamicMemPoolBestFit::UsedMemPeakStatistics() const {
   return common_mem_->mps_.used_mem_peak_size_ + persistent_mem_->mps_.used_mem_peak_size_;
 }
 size_t DynamicMemPoolBestFit::ActualPeakStatistics() const {
-  if (IsMemoryPoolRecycle()) {
-    // not need to calculate the actual peak in GE sub graph mode.
-    return 0;
-  } else {
-    return common_mem_->CalActualPeak() + persistent_mem_->CalActualPeak();
-  }
+  return common_mem_->CalActualPeak() + persistent_mem_->CalActualPeak();
 }
 
 size_t MemStatusManager::CalActualPeak() {
   if (mem_block_insertion_order_.empty()) {
     return 0;
   }
-  size_t actual_peak = 0;
-  for (auto it = mem_block_insertion_order_.begin(); it != mem_block_insertion_order_.end(); ++it) {
-    MS_EXCEPTION_IF_NULL(*it);
-    if (it == mem_block_insertion_order_.end() - 1) {
-      actual_peak += (*it)->get_actual_peak();
-    } else {
-      actual_peak += (*it)->size();
-    }
-  }
+  size_t actual_peak = total_block_size_;
+  auto end_block = mem_block_insertion_order_.back();
+  MS_EXCEPTION_IF_NULL(end_block);
+  actual_peak -= end_block->size();
+  actual_peak += end_block->get_actual_peak();
   return actual_peak;
 }
 
@@ -1227,6 +1219,7 @@ void MemStatusManager::AddMemBlock(const DynamicMemBlockPtr &mem_block, uint32_t
 
   DoAddMemBlock(mem_block, &mem_block_list_);
   mem_block_insertion_order_.emplace_back(mem_block);
+  total_block_size_ += mem_block->size();
 }
 
 void MemStatusManager::DoAddMemBlock(const DynamicMemBlockPtr &mem_block,

@@ -283,7 +283,7 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
     if (input_address->GetPtr() == nullptr) {
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "", "");
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeOutput,
-                                                     input_address->GetSize(), input_address->kernel_tensor().get());
+                                                     input_address->GetSize(), input_address.get());
       if (!device_context->device_res_manager_->AllocateMemory(input_address.get())) {
         return false;
       }
@@ -327,7 +327,7 @@ bool MallocForKernelOutput(const std::shared_ptr<OpRuntimeInfo> &runtime_info, c
     if (device_address->GetPtr() == nullptr) {
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "", "");
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeOutput,
-                                                     device_address->GetSize(), device_address->kernel_tensor().get());
+                                                     device_address->GetSize(), device_address.get());
       if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
         MS_LOG(ERROR) << "Allocate output memory failed, node:" << node->fullname_with_scope();
         return false;

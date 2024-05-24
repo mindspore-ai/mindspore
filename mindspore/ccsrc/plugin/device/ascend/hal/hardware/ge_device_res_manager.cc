@@ -145,7 +145,7 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address, uint32_t 
 
   address->set_ptr(device_ptr);
   address->set_from_mem_pool(true);
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, address->kernel_tensor().get(), device_ptr);
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, address, device_ptr);
   return true;
 }
 

@@ -102,7 +102,7 @@ void UpdateTracker(const std::string &task_name, const AnfNodePtr &node, const s
                    device::tracker::MemType mem_type, const DeviceTensorPtr &device_tensor) {
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, task_name, node->fullname_with_scope(), graph_str);
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, task_name, mem_type, device_tensor->GetSize(),
-                                                 device_tensor->kernel_tensor().get());
+                                                 device_tensor.get());
 }
 
 void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_tensor, const AnfNodePtr &node,

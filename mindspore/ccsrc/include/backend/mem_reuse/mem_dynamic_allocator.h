@@ -389,6 +389,7 @@ struct MemStatusManager {
 
   std::vector<DynamicMemBlockPtr> mem_block_list_;
   std::vector<DynamicMemBlockPtr> mem_block_insertion_order_;
+  size_t total_block_size_ = 0;
   std::unordered_map<uint32_t, std::vector<DynamicMemBlockPtr>> mem_blocks_;
   std::unordered_map<std::pair<uint32_t, DynamicMemBufStatus>, SizeMapMemBuf, pair_hash> mem_bufs_;
 };

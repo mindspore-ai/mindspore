@@ -20,34 +20,13 @@
 #include "utils/ms_context.h"
 #include "include/common/debug/common.h"
 #include "include/common/utils/comm_manager.h"
+#include "include/backend/device_type.h"
 
 namespace mindspore {
 namespace device {
 namespace tracker {
 namespace {
-std::string GetWorldGroup() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  std::string world_group;
-  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (backend == kAscendDevice) {
-    world_group = parallel::HCCL_WORLD_GROUP;
-  } else if (backend == kGPUDevice) {
-    world_group = parallel::NCCL_WORLD_GROUP;
-  } else {
-    MS_LOG(EXCEPTION) << "Invalid backend: " << backend;
-  }
-  return world_group;
-}
-
-std::string GetRankID() {
-  auto world_group = GetWorldGroup();
-  uint32_t rank_id = 0;
-  if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
-    MS_LOG(INFO) << "Failed to get rank id.";
-  }
-  return std::to_string(rank_id);
-}
+std::string GetRankID() { return std::to_string(CommManager::GetInstance().GetRank()); }
 }  // namespace
 
 void MemoryTrackerEnabled::SetPath() {
@@ -73,7 +52,7 @@ void MemoryTrackerEnabled::SetPath() {
 
 void MemoryTrackerEnabled::AddTask(const std::string &task_name, const std::string &node_name,
                                    const std::string &graph_name, const std::string &file_name, size_t line_num) {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::lock_guard lock(mutex_);
   SetPath();
   time_stamp_++;
   auto task_info = std::make_shared<TaskInfo>();
@@ -89,8 +68,13 @@ void MemoryTrackerEnabled::AddTask(const std::string &task_name, const std::stri
 }
 
 void MemoryTrackerEnabled::AddMemInfo(const std::string &task_name, MemType type, size_t size,
-                                      KernelTensorPtr kernel_tensor, const std::string &file_name, size_t line_num) {
-  std::lock_guard<std::mutex> lock(mutex_);
+                                      const DeviceAddress *device_address, const std::string &file_name,
+                                      size_t line_num) {
+  std::lock_guard lock(mutex_);
+  if (device_address->GetDeviceType() == DeviceType::kCPU) {
+    return;
+  }
+  auto kernel_tensor = device_address->kernel_tensor().get();
   auto mem_info = std::make_shared<MemInfo>();
   MS_EXCEPTION_IF_NULL(mem_info);
   mem_info->type = type;
@@ -109,9 +93,13 @@ void MemoryTrackerEnabled::AddMemInfo(const std::string &task_name, MemType type
   kernel_tensor_mem_map[kernel_tensor] = mem_info;
 }
 
-void MemoryTrackerEnabled::UpdateMemInfo(KernelTensorPtr kernel_tensor, MemType mem_type, const std::string &file_name,
-                                         size_t line_num) {
-  std::lock_guard<std::mutex> lock(mutex_);
+void MemoryTrackerEnabled::UpdateMemInfo(const DeviceAddress *device_address, MemType mem_type,
+                                         const std::string &file_name, size_t line_num) {
+  std::lock_guard lock(mutex_);
+  if (device_address->GetDeviceType() == DeviceType::kCPU) {
+    return;
+  }
+  auto kernel_tensor = device_address->kernel_tensor().get();
   auto iter = kernel_tensor_mem_map.find(kernel_tensor);
   if (iter == kernel_tensor_mem_map.end()) {
     MS_LOG(ERROR) << "MemoryTracker UpdateMemInfoMemType failed, kernel_tensor:" << kernel_tensor << " not found";
@@ -124,7 +112,7 @@ void MemoryTrackerEnabled::UpdateMemInfo(KernelTensorPtr kernel_tensor, MemType 
 
 void MemoryTrackerEnabled::AddCompileTimeMemInfo(const std::string &task_name, size_t size, DeviceMemPtr device_ptr,
                                                  MemType mem_type, const std::string &file_name, size_t line_num) {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::lock_guard lock(mutex_);
   auto mem_info = std::make_shared<MemInfo>();
   MS_EXCEPTION_IF_NULL(mem_info);
   mem_info->type = mem_type;
@@ -150,9 +138,13 @@ void MemoryTrackerEnabled::AddCompileTimeMemInfo(const std::string &task_name, s
   mem_info_list_.push_back(mem_info);
 }
 
-void MemoryTrackerEnabled::BindDevicePtr(KernelTensorPtr kernel_tensor, DeviceMemPtr device_ptr,
+void MemoryTrackerEnabled::BindDevicePtr(const DeviceAddress *device_address, DeviceMemPtr device_ptr,
                                          const std::string &file_name, size_t line_num) {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::lock_guard lock(mutex_);
+  if (device_address->GetDeviceType() == DeviceType::kCPU) {
+    return;
+  }
+  auto kernel_tensor = device_address->kernel_tensor().get();
   auto iter = kernel_tensor_mem_map.find(kernel_tensor);
   if (iter == kernel_tensor_mem_map.end()) {
     MS_LOG(ERROR) << "MemoryTracker BindDevicePtr failed, kernel_tensor:" << kernel_tensor << " not found, "
@@ -184,9 +176,33 @@ void MemoryTrackerEnabled::BindDevicePtr(KernelTensorPtr kernel_tensor, DeviceMe
   iter->second->mem_block->mem_info = iter->second;
 }
 
+void MemoryTrackerEnabled::UpdateDevicePtrInfo(DeviceMemPtr device_ptr, MemType mem_type, const std::string &task_name,
+                                               const std::string &file_name, size_t line_num) {
+  std::lock_guard lock(mutex_);
+  auto mem_block_iter = device_mem_block_map.find(device_ptr);
+  if (mem_block_iter == device_mem_block_map.end()) {
+    MS_LOG(ERROR) << "MemoryTracker AddCompileTimeMemInfo failed, device_ptr:" << device_ptr << " not found, "
+                  << file_name << ":" << line_num;
+    return;
+  }
+  auto mem_info = std::make_shared<MemInfo>();
+  MS_EXCEPTION_IF_NULL(mem_info);
+  auto task_info = std::make_shared<TaskInfo>();
+  MS_EXCEPTION_IF_NULL(task_info);
+  task_info->task_name = task_name;
+  mem_info->producer_task = task_info;
+  mem_info->file_name = file_name;
+  mem_info->line_num = line_num;
+  mem_info->type = mem_type;
+  mem_info->mem_block = mem_block_iter->second;
+  mem_info->mem_block->is_bind = true;
+  mem_info->mem_block->mem_info = mem_info;
+  mem_info_list_.push_back(mem_info);
+}
+
 void MemoryTrackerEnabled::AllocMemBlock(DeviceMemPtr device_addr, size_t size, const std::string &pool_name,
                                          size_t actual_peak_memory, uint32_t stream_id) {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::lock_guard lock(mutex_);
   time_stamp_++;
   auto mem_block = std::make_shared<MemBlockInfo>();
   MS_EXCEPTION_IF_NULL(mem_block);
@@ -202,7 +218,7 @@ void MemoryTrackerEnabled::AllocMemBlock(DeviceMemPtr device_addr, size_t size, 
 }
 
 void MemoryTrackerEnabled::FreeMemBlock(DeviceMemPtr device_addr) {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::lock_guard lock(mutex_);
   time_stamp_++;
   auto iter = real_device_mem_block_map.find(device_addr);
   if (iter == real_device_mem_block_map.end()) {
@@ -214,11 +230,14 @@ void MemoryTrackerEnabled::FreeMemBlock(DeviceMemPtr device_addr) {
 
 void MemoryTrackerEnabled::UseMemBlock(const std::string &task_name, DeviceMemPtr device_addr,
                                        const std::string &file_name, size_t line_num) {
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::lock_guard lock(mutex_);
   auto iter = device_mem_block_map.find(device_addr);
   if (iter == device_mem_block_map.end()) {
     MS_LOG(ERROR) << "MemoryTracker UseMemBlock failed, device_addr:" << device_addr << " not found, " << file_name
                   << ":" << line_num;
+    return;
+  }
+  if (iter->second->pool_name == "CPU") {
     return;
   }
   auto task_iter = task_map_.find(task_name);
@@ -369,6 +388,9 @@ void MemoryTrackerEnabled::Dump() {
   }
   block_file << "\n";
   for (auto &mem_block : mem_block_list_) {
+    if (mem_block->pool_name == "CPU") {
+      continue;
+    }
     for (const auto &csv : block_csv) {
       csv.second(mem_block, block_file);
       block_file << ",";
