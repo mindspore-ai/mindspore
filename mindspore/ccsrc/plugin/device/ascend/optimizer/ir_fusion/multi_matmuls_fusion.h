@@ -28,6 +28,7 @@
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 
 namespace mindspore {
 namespace opt {
