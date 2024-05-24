@@ -59,4 +59,6 @@ https://mindspore.cn/search/en?inputValue=Index%20values
 
 https://mindspore.cn*/r2.3.q1/*
 https://www.mindspore.cn*/r2.3.q1/*
+https://mindspore.cn*/r2.3.0rc2/*
+https://www.mindspore.cn*/r2.3.0rc2/*
 http://sox.sourceforge.net/sox.html

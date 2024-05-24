@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "resource.h"
+#include <mutex>
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_MATMUL_ALLREDUCE_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_MATMUL_ALLREDUCE_H_
+namespace UT {
+std::shared_ptr<UTResourceManager> UTResourceManager::inst_resource_manager_ = nullptr;
 
-#include "ops/ops_func_impl/matmul.h"
-
-namespace mindspore {
-namespace ops {
-class MIND_API MatMulAllReduceFuncImpl : public MatMulFuncImpl {};
-}  // namespace ops
-}  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_MATMUL_ALLREDUCE_H_
+std::shared_ptr<UTResourceManager> UTResourceManager::GetInstance() {
+  static std::once_flag init_flag_ = {};
+  std::call_once(init_flag_, [&]() {
+    if (inst_resource_manager_ == nullptr) {
+      inst_resource_manager_ = std::make_shared<UTResourceManager>();
+    }
+  });
+  MS_EXCEPTION_IF_NULL(inst_resource_manager_);
+  return inst_resource_manager_;
+}
+}  // namespace UT

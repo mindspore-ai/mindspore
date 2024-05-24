@@ -2588,8 +2588,9 @@ def interpolate(input,
                 "For 'interpolate', it is incorrect to set 'recompute_scale_factor' to True"
                 " after specifying an explicit 'size'.")
         if F.isconstant(shape) and F.isconstant(scale_factor):
-            size = tuple([floor(shape[i + 2] * scale_factor[i]) for i in
-                          range(min(len(shape) - 2), len(scale_factor))])
+            tuple_len = min(len(shape) - 2, len(scale_factor))
+            size = tuple([floor(shape[i + 2] * scale_factor[i])
+                          for i in range(tuple_len)])
         else:
             size = _interpolate_scale_factor_convert_size(shape, scale_factor)
         scale_factor = None
@@ -2639,8 +2640,9 @@ def _interpolate_ext_scale_factor_convert_size(input, scale_factor):
     shape = F.shape(input)
     size = None
     if F.isconstant(shape) and F.isconstant(scale_factor):
-        size = tuple([floor(shape[i + 2] * scale_factor[i]) for i in
-                      range(min(len(shape) - 2), len(scale_factor))])
+        tuple_len = min(len(shape) - 2, len(scale_factor))
+        size = tuple([floor(shape[i + 2] * scale_factor[i])
+                      for i in range(tuple_len)])
     else:
         x = tuple_to_tensor_(shape[2:], mstype.int64)
         y = tuple_to_tensor_(scale_factor, mstype.float32)

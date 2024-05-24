@@ -33,6 +33,7 @@
 #include "pipeline/static_analysis/helper.h"
 #include "utils/log_adapter.h"
 #include "include/common/debug/anf_ir_dump.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace abstract {
@@ -421,17 +422,12 @@ class TestEvalCNode : public UT::Common {
  public:
   TestEvalCNode() : getPyFun_("gtest_input.pipeline.infer.infer_test", true, true), engine_(nullptr) {}
   void SetUp();
-  void TearDown();
 
   UT::PyFuncGraphFetcher getPyFun_;
   AnalysisEnginePtr engine_;
 };
 
 void TestEvalCNode::SetUp() { engine_ = SetupAnalysisEngineStub(); }
-
-void TestEvalCNode::TearDown() {
-  // destroy resource
-}
 
 abstract::AbstractBasePtr EvalFunction(const ValuePtr &value, const abstract::AbstractBasePtrList &args_abs) {
   return pipeline::AbstractAnalyze(value, args_abs).eval_result->abstract();

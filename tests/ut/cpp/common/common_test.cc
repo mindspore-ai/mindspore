@@ -15,6 +15,7 @@
  */
 #include "common/common_test.h"
 #include "utils/log_adapter.h"
+#include "resource.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -30,7 +31,11 @@ void Common::TearDownTestCase() {}
 
 void Common::SetUp() {}
 
-void Common::TearDown() {}
+void Common::TearDown() {
+  const char *suite_name = testing::UnitTest::GetInstance()->current_test_suite()->name();
+  const char *test_name = testing::UnitTest::GetInstance()->current_test_info()->name();
+  UT::UTResourceManager::GetInstance()->DropFuncGraph(UTKeyInfo{suite_name, test_name});
+}
 
 }  // namespace UT
 

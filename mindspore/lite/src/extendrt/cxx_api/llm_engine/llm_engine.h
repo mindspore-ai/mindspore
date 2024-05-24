@@ -30,6 +30,7 @@ struct LLMReq {
   uint64_t prompt_cluster_id = 0;
   uint64_t decoder_cluster_id = 0;
   uint64_t prefix_id = UINT64_MAX;
+  uint64_t sequence_length = 0;
 };
 
 struct LLMIpInfo {
@@ -46,6 +47,9 @@ struct LLMClusterInfo {
 
 struct LLMEngineStatus {
   uint64_t empty_max_prompt_kv = 0;
+  int32_t num_free_blocks = 0;
+  int32_t num_total_blocks = 0;
+  int32_t block_size = 0;
 };
 
 enum LLMRole {

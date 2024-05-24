@@ -17,6 +17,7 @@
 #include "runtime/graph_scheduler/actor/control_flow/control_actor.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "include/backend/mem_reuse/mem_tracker.h"
+#include "ops/framework_ops.h"
 #include "utils/profile.h"
 
 namespace mindspore {
@@ -104,6 +105,14 @@ void ControlActor::IncreaseDynamicRefCount(const OpRealParameterWithBranchID &op
 size_t ControlActor::FetchNodePosition(const KernelWithIndex &node) const {
   const auto &iter = find(formal_parameters_.begin(), formal_parameters_.end(), node);
   if (iter == formal_parameters_.end()) {
+    const auto &load_iter =
+      std::find_if(formal_parameters_.begin(), formal_parameters_.end(), [&node](const KernelWithIndex &pair) {
+        return pair.first != nullptr && common::AnfAlgo::CheckPrimitiveType(pair.first, prim::kPrimLoad) &&
+               pair.first->cast<CNodePtr>()->input(1) == node.first && node.second == 0;
+      });
+    if (load_iter != formal_parameters_.end()) {
+      return load_iter - formal_parameters_.begin();
+    }
     MS_LOG(EXCEPTION) << "Invalid formal parameter:" << (node.first != nullptr ? node.first->DebugString() : "")
                       << " index:" << node.second << " for actor:" << GetAID();
   }

@@ -23,6 +23,7 @@
 #include "pipeline/jit/ps/static_analysis/prim.h"
 #include "frontend/operator/ops.h"
 #include "abstract/utils.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace abstract {

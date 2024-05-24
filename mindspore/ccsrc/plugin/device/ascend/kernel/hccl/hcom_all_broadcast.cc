@@ -20,6 +20,21 @@
 
 namespace mindspore {
 namespace kernel {
+bool HcomAllBroadCastKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  bool ret = HcclKernel::Init(inputs, outputs);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Failed to init HcomAllBroadCastKernel";
+  }
+#ifdef ENABLE_INTERNAL_KERNELS
+  if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {
+    lccl_broadcast_func_ = DlsymFuncObj(Broadcast, lowlatency_comm_lib_handle_);
+    MS_EXCEPTION_IF_NULL(lccl_broadcast_func_);
+  }
+#endif
+  return true;
+}
+
 bool HcomAllBroadCastKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                     const std::vector<KernelTensor *> &, void *stream_ptr) {
   MS_LOG(DEBUG) << "HcomAllBroadCast launch";
@@ -32,8 +47,8 @@ bool HcomAllBroadCastKernel::Launch(const std::vector<KernelTensor *> &inputs, c
 
 #ifdef ENABLE_INTERNAL_KERNELS
   if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {
-    auto lccl_result =
-      lccl_comm_->Broadcast(inputs[0]->device_ptr(), hccl_count_, hccl_data_type_list_[0], root_id_, stream_ptr);
+    auto lccl_result = lccl_broadcast_func_(lccl_ptr_, inputs[0]->device_ptr(), hccl_count_, hccl_data_type_list_[0],
+                                            root_id_, stream_ptr);
     if (lccl_result != Lcal::LCAL_SUCCESS) {
       MS_LOG(EXCEPTION) << "LCCL Broadcast failed.";
     }

@@ -102,8 +102,8 @@ const AnfNodePtr AddLayernormFusion::Process(const FuncGraphPtr &graph, const An
     return nullptr;
   }
 
-  std::string fusion_op_name = "AddLayerNorm";
-  std::vector<std::string> enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
+  const std::string fusion_op_name = "AddLayerNorm";
+  auto &enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
   bool enable_add_layernorm =
     (std::find(enable_op_list.begin(), enable_op_list.end(), fusion_op_name) != enable_op_list.end());
   if (!enable_add_layernorm) {

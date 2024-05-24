@@ -247,9 +247,8 @@ OUTPUT_MAP(MatrixDiagV3) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatrixDiagV3, kNameMatrixDiagV3, ADPT_DESC(MatrixDiagV3))
 
 // Tril
-INPUT_MAP(Tril) = {{kIndex1, INPUT_DESC(x)}};
-ATTR_MAP(Tril) = EMPTY_ATTR_MAP;
-INPUT_ATTR_MAP(Tril) = {{kIndex2, ATTR_DESC(diagonal, AnyTraits<int64_t>())}};
+INPUT_MAP(Tril) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Tril) = {{"diagonal", ATTR_DESC(diagonal, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Tril) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Tril, kNameTril, ADPT_DESC(Tril))
 

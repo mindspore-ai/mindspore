@@ -19,6 +19,21 @@
 
 namespace mindspore {
 namespace kernel {
+bool HcomAllReduceScatterKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  bool ret = HcclKernel::Init(inputs, outputs);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Failed to init HcomAllBroadCastKernel";
+  }
+#ifdef ENABLE_INTERNAL_KERNELS
+  if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {
+    lccl_reduce_scatter_func_ = DlsymFuncObj(ReduceScatter, lowlatency_comm_lib_handle_);
+    MS_EXCEPTION_IF_NULL(lccl_reduce_scatter_func_);
+  }
+#endif
+  return true;
+}
+
 bool HcomAllReduceScatterKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_LOG(DEBUG) << "HcomAllReduceScatter launch";
@@ -33,8 +48,8 @@ bool HcomAllReduceScatterKernel::Launch(const std::vector<KernelTensor *> &input
 
 #ifdef ENABLE_INTERNAL_KERNELS
   if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {
-    auto lccl_result = lccl_comm_->ReduceScatter(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
-                                                 hccl_data_type_list_[0], op_type_, stream_ptr);
+    auto lccl_result = lccl_reduce_scatter_func_(lccl_ptr_, inputs[0]->device_ptr(), outputs[0]->device_ptr(),
+                                                 hccl_count_, hccl_data_type_list_[0], op_type_, stream_ptr);
     if (lccl_result != Lcal::LCAL_SUCCESS) {
       MS_LOG(EXCEPTION) << "LCCL ReduceScatter failed.";
     }

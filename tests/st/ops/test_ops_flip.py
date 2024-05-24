@@ -236,7 +236,7 @@ def test_flip_dynamic(mode):
     """
     Feature: test dynamic by TEST_OP.
     Description: test ops.flip dynamic shape feature.
-    Expectation: expect correct result.
+    Expectation: expect correct result.o
     """
     input_case1 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
     input_case2 = Tensor(np.random.rand(3, 4).astype(np.float32))

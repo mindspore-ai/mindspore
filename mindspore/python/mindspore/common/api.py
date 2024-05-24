@@ -178,6 +178,7 @@ def _handle_func_args(func, *args, **kwargs):
 
 sys_path = list(sys.path)
 # Get the entry script path.
+entry_script_path = None
 if sys.argv and sys.argv[0] != '':
     entry_script_path = os.path.realpath(sys.argv[0])
     entry_script_path_dir = os.path.split(entry_script_path)[0]

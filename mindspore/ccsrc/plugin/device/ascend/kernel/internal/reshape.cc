@@ -52,9 +52,7 @@ int InternalReshape::Resize(const std::vector<KernelTensor *> &inputs, const std
   return KRET_OK;
 }
 
-std::vector<size_t> InternalReshape::GetLaunchIgnoredInputAddressIdx() const {
-  return {kIndex1};
-}
+std::vector<size_t> InternalReshape::GetLaunchIgnoredInputAddressIdx() const { return {kIndex1}; }
 
 bool InternalReshape::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
@@ -75,6 +73,5 @@ bool InternalReshape::Launch(const std::vector<KernelTensor *> &inputs, const st
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(Reshape, InternalReshape);
-MS_INTERNAL_KERNEL_FACTORY_REG(ReshapeExt, InternalReshape);
 }  // namespace kernel
 }  // namespace mindspore

@@ -184,7 +184,8 @@ def test_padv3_constant_shape_4d(x_data_type, mode, ms_mode):
 @pytest.mark.parametrize('x_data_type', [np.int16, np.float32])
 @pytest.mark.parametrize('mode', ["constant", "edge"])
 @pytest.mark.parametrize('ms_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_padv3_constant_shape_5d(x_data_type, mode, ms_mode):
+@pytest.mark.parametrize('is_dyn_paddings', [True, False])
+def test_padv3_constant_shape_5d(x_data_type, mode, ms_mode, is_dyn_paddings):
     """
     Feature: test padv3 x and const shape paddings
     Description: test padv3 with const shape paddings
@@ -193,6 +194,8 @@ def test_padv3_constant_shape_5d(x_data_type, mode, ms_mode):
     context.set_context(mode=ms_mode, device_target="Ascend")
     x = Tensor(np.arange(18).reshape(1, 1, 2, 3, 3).astype(x_data_type))
     paddings = (1, 2, 1, 1, 0, 1)
+    if is_dyn_paddings:
+        paddings = Tensor(paddings, dtype=ms.int64)
     value = None
     if mode == "constant":
         value = 99 if x_data_type == np.int16 else 99.0

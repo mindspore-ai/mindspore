@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_MASKED_FILL_ACLNN_KERNEL_MOD_H_
 #include <vector>
 #include <utility>
+#include <string>
 #include "ops/base_operator.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
 #include "transform/acl_ir/acl_convert.h"
@@ -34,6 +35,33 @@ class MaskedFillAscend : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+
+  void SetWorkspaceForInplaceCopy(const KernelTensor *output, const KernelTensor *input) {
+    copy_hash_id_ = transform::CalcOpApiHash(inplace_copy_str_, input);
+    if (cache_hash_.count(copy_hash_id_) == 0) {
+      const bool use_huge_pages = false;
+      auto return_value = GEN_EXECUTOR_CUST(inplace_copy_str_, use_huge_pages, output, input);
+      UpdateInplacemWorkspace(std::get<kWsSizeIndex>(return_value), false);
+    } else {
+      auto return_value = GEN_EXECUTOR_BOOST(inplace_copy_str_, copy_hash_id_, output, input);
+      UpdateInplacemWorkspace(std::get<kWsSizeIndex>(return_value), true, std::get<kHashIdIndex>(return_value));
+    }
+  }
+
+  inline void UpdateInplacemWorkspace(uint64_t ws_size, bool boost, uint64_t new_hash_id = 0) {
+    copy_ws_size_ = ws_size;
+    if (copy_ws_size_ != 0) {
+      workspace_size_list_.emplace_back(ws_size);
+    }
+
+    if (boost) {
+      copy_hash_id_ = new_hash_id;
+    }
+  }
+
+  const std::string inplace_copy_str_{"aclnnInplaceCopy"};
+  bool copy_ws_size_{0};
+  uint64_t copy_hash_id_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

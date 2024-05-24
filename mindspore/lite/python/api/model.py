@@ -127,6 +127,7 @@ class Model(BaseModel):
     def __init__(self):
         super(Model, self).__init__(_c_lite_wrapper.ModelBind())
         self.model_path_ = ""
+        self.lora_name_map = {}
 
     def __str__(self):
         res = f"model_path: {self.model_path_}."
@@ -235,8 +236,9 @@ class Model(BaseModel):
             if not ret.IsOk():
                 raise RuntimeError(
                     f"load configuration failed! Error is {ret.ToString()}")
-            update_names = _parse_update_weight_config_name(config_path)
-            if update_names is not None:
+            parse_res = _parse_update_weight_config_name(config_path)
+            if parse_res is not None and len(parse_res) >= 2:
+                update_names, self.lora_name_map = parse_res[0], parse_res[1]
                 if config_dict is None:
                     config_dict = {"ascend_context": {"variable_weights_list": update_names}}
                 else:
@@ -306,7 +308,10 @@ class Model(BaseModel):
         """
         for weight in weights:
             for tensor in weight:
-                name = _rename_variable_weight(tensor.name)
+                if tensor.name in self.lora_name_map:
+                    name = self.lora_name_map[tensor.name]
+                else:
+                    name = _rename_variable_weight(tensor.name)
                 tensor.name = name
         return super(Model, self).update_weights(weights)
 
@@ -391,7 +396,7 @@ class Model(BaseModel):
                 "inputs must be list or tuple, but got {}.".format(type(inputs)))
         model_input_tensors = self.get_inputs()
         if len(model_input_tensors) != len(inputs):
-            raise RuntimeError(f"inputs size is wrong.")
+            raise RuntimeError(f"model input len:{len(model_input_tensors)} not equal input len:{len(inputs)}!")
         inputs_tensor = []
         for i, in_tensor in enumerate(inputs):
             if isinstance(in_tensor, np.ndarray):

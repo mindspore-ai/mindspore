@@ -13,23 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_TRIL_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_TRIL_H_
 
+#ifndef MINDSPORE_CORE_OPS_MATMUL_ALLREDUCE_H_
+#define MINDSPORE_CORE_OPS_MATMUL_ALLREDUCE_H_
+#include <memory>
+#include <string>
 #include <vector>
-#include "ops/ops_func_impl/op_func_impl.h"
+#include <set>
+#include <map>
+
+#include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API TrilFuncImpl : public OpFuncImpl {
+constexpr auto kNameMatMulAllReduce = "MatMulAllReduce";
+class MIND_API MatMulAllReduce : public BaseOperator {
  public:
-  TrilFuncImpl() = default;
-  ~TrilFuncImpl() = default;
-
-  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  MIND_API_BASE_MEMBER(MatMulAllReduce);
+  /// \brief Constructor.
+  MatMulAllReduce() : BaseOperator(kNameMatMulAllReduce) { InitIOName({"x1", "x2"}, {"output"}); }
+  explicit MatMulAllReduce(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "x2"}, {"output"}); }
 };
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_TRIL_H_
+#endif  // MINDSPORE_CORE_OPS_MATMUL_ALLREDUCE_H_

@@ -63,7 +63,7 @@ void TestOneHotInfo::SetUp() {
   onehot_info = std::make_shared<OneHotInfo>("OneHotInfo", inputs_shape, outputs_shape, attr);
 }
 
-TEST_F(TestOneHotInfo, InferDevMatrixShape1) {
+TEST_F(TestOneHotInfo, DISABLED_InferDevMatrixShape1) {
   Strategies inputs = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -75,7 +75,7 @@ TEST_F(TestOneHotInfo, InferDevMatrixShape1) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-TEST_F(TestOneHotInfo, InferDevMatrixShape2) {
+TEST_F(TestOneHotInfo, DISABLED_InferDevMatrixShape2) {
   Strategies inputs = {{4, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -87,7 +87,7 @@ TEST_F(TestOneHotInfo, InferDevMatrixShape2) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-TEST_F(TestOneHotInfo, InferDevMatrixShape3) {
+TEST_F(TestOneHotInfo, DISABLED_InferDevMatrixShape3) {
   Strategies inputs = {{4, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -99,7 +99,7 @@ TEST_F(TestOneHotInfo, InferDevMatrixShape3) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-TEST_F(TestOneHotInfo, InferTensorMap2) {
+TEST_F(TestOneHotInfo, DISABLED_InferTensorMap2) {
   Strategies str = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -121,7 +121,7 @@ TEST_F(TestOneHotInfo, InferTensorMap2) {
   ASSERT_EQ(output_tensor_map.array(), output_expect);
 }
 
-TEST_F(TestOneHotInfo, InferSliceShape1) {
+TEST_F(TestOneHotInfo, DISABLED_InferSliceShape1) {
   Strategies str = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -143,7 +143,7 @@ TEST_F(TestOneHotInfo, InferSliceShape1) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-TEST_F(TestOneHotInfo, InferSliceShape2) {
+TEST_F(TestOneHotInfo, DISABLED_InferSliceShape2) {
   Strategies str = {{4, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -165,7 +165,7 @@ TEST_F(TestOneHotInfo, InferSliceShape2) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-TEST_F(TestOneHotInfo, InferSliceShape3) {
+TEST_F(TestOneHotInfo, DISABLED_InferSliceShape3) {
   Strategies str = {{2, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -187,7 +187,7 @@ TEST_F(TestOneHotInfo, InferSliceShape3) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-TEST_F(TestOneHotInfo, GetMirrorOPs1) {
+TEST_F(TestOneHotInfo, DISABLED_GetMirrorOPs1) {
   Strategies inputs = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 

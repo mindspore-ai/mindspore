@@ -410,7 +410,8 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
     dst_layout_map = _extract_layout_map(dst_strategy_file)
     pipeline_stage_num = _extract_pipeline_stage_num(src_strategy_file)
     if src_layout_map:
-        src_param_keys = {param_name for param_name in src_layout_map if not param_name.startswith("accu_grads")}
+        src_param_keys = {param_name for param_name in src_layout_map if
+                          not param_name.startswith(("accu_grads", "adam_v", "adam_m"))}
     if dst_layout_map:
         dst_param_keys = {param_name for param_name in dst_layout_map if not param_name.startswith("accu_grads")}
     if src_layout_map and dst_layout_map and pipeline_stage_num == 1 \
@@ -419,9 +420,11 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
         if dst_stage_num > 1:
             raise NotImplementedError("When using unmerged src strategy, dst strategy doesn't \
                                        support strategy with pipeline parallel.")
+        ms.log.info("Transform checkpoint by every pipeline stage.")
         _transform_checkpoint_by_stage(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
                                        src_strategy_file, dst_strategy_file)
     else:
+        ms.log.info("Transform checkpoints by all pipeline stage.")
         _transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
                                src_strategy_file, dst_strategy_file)
 

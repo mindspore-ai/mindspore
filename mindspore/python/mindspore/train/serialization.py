@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1364,7 +1364,11 @@ def _whether_load_param(specify_prefix, filter_prefix, param_name):
 
 def _init_parameter_data_in_parallel_mode(net, parameter_dict):
     """In parallel mode, only init the paraemters in ckpt."""
+    is_train_phase = net.phase.startswith('train')
     for _, param in net.parameters_and_names():
+        if param.name in parameter_dict and param.from_ckpt and not is_train_phase:
+            param.shape = tuple(parameter_dict[param.name].shape)
+            continue
         if param.name in parameter_dict and param.has_init:
             logger.warning("{} is not init while load ckpt.".format(param.name))
             new_tensor = param.init_data()
@@ -1428,6 +1432,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
 
     strict_load = Validator.check_bool(strict_load)
     logger.info("Execute the process of loading parameters into net.")
+    for _, param in net.parameters_and_names():
+        param.from_ckpt = True
     if not _is_in_auto_parallel_mode():
         net.init_parameters_data()
     else:
@@ -1442,7 +1448,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
             # Add has attr protection when load server checkpoint file on worker.
             if not hasattr(parameter_dict[param.name], "data"):
                 continue
-            new_param = copy.deepcopy(parameter_dict[param.name])
+            new_param = parameter_dict[param.name]
             _update_param(param, new_param, strict_load)
             ckpt_not_load.remove(param.name)
         else:

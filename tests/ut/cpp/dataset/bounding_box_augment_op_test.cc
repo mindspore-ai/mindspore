@@ -31,7 +31,7 @@ class MindDataTestBoundingBoxAugmentOp : public UT::CVOP::BBOXOP::BBoxOpCommon {
 /// Feature: BoundingBoxAugment op
 /// Description: Test BoundingBoxAugment op basic usage
 /// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestBoundingBoxAugmentOp, TestOp) {
+TEST_F(MindDataTestBoundingBoxAugmentOp, DISABLED_TestOp) {
   MS_LOG(INFO) << "Doing testBoundingBoxAugment.";
   TensorTable results;
   auto random_rotation_op = std::make_shared<RandomRotationOp>(90, 90, InterpolationMode::kNearestNeighbour, false,

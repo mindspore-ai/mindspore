@@ -342,7 +342,7 @@ bool FuncGrad::KPynativeOp(const GradParamPtr &grad_param) {
     fn = BuildHookBackwardNode(prim, flatten_inputs, grad_param->op_grad_info);
   }
   auto variable = std::make_shared<FuncVariable>(fn, false);
-  if (typeid(fn) == typeid(FakeBackwardNode)) {
+  if (isa<FakeBackwardNode>(fn)) {
     variable->set_is_fake_bprop(true);
     variable->set_fake_prim_name(prim->name());
   }
@@ -540,7 +540,7 @@ BackwardNodePtr FuncGrad::BuildCustomBackwardNode(const PrimitivePtr &prim, cons
     auto prim_py = prim->cast<PrimitivePyPtr>();
     if (prim_py == nullptr) {
       MS_LOG(DEBUG) << "Prim is not PrimitivePy, can not find python bprop";
-      return std::make_shared<FakeBackwardNode>(prim->name());
+      return BuildFakeBackwardNode(prim, flatten_inputs, op_grad_info);
     }
     py::function fn = prim_py->GetBpropFunction();
     if (py::isinstance<py::none>(fn)) {
@@ -548,7 +548,7 @@ BackwardNodePtr FuncGrad::BuildCustomBackwardNode(const PrimitivePtr &prim, cons
     }
     if (!fn || py::isinstance<py::none>(fn)) {
       MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << py::str(fn);
-      return std::make_shared<FakeBackwardNode>(prim->name());
+      return BuildFakeBackwardNode(prim, flatten_inputs, op_grad_info);
     }
     (void)prim_py->AddBackwardHookFn(0, fn);
     (void)prim_py->AddAttr("custom_op_bprop", MakeValue(true));
@@ -564,6 +564,14 @@ BackwardNodePtr FuncGrad::BuildHookBackwardNode(const PrimitivePtr &prim, const 
     GeneratePythonArgs(op_grad_info->input_value, op_grad_info->out_value, op_grad_info->is_need_recompute);
   auto fn = std::make_shared<HookBackwardNode>(prim->name(), bprop_cut, std::move(args), op_grad_info->output_size,
                                                op_grad_info->out_abs);
+  fn->UpdateNextEdges(flatten_inputs);
+  return fn;
+}
+
+BackwardNodePtr FuncGrad::BuildFakeBackwardNode(const PrimitivePtr &prim, const ValuePtrList &flatten_inputs,
+                                                const OpGradInfoPtr &op_grad_info) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto fn = std::make_shared<FakeBackwardNode>(prim->name());
   fn->UpdateNextEdges(flatten_inputs);
   return fn;
 }

@@ -9,29 +9,29 @@
 #### AutoParallel
 
 - [STABLE] Transpose/Sub/Add/Mul/Div/ReLU/Softmax/Sigmoid supports layout configuration.
-- [STABLE] The collective communication precision will affect network convergence. The configuration item force_fp32_communication is provided in the interface mindspore.set_auto_parallel_context. When set to True, the communication type of the reduce communication operator can be forced to be converted to float32.
+- [STABLE] The collective communication precision will affect network convergence. The configuration item [force_fp32_communication](https://www.mindspore.cn/docs/en/r2.3.0rc2/api_python/mindspore/mindspore.set_auto_parallel_context.html) is provided in the interface mindspore.set_auto_parallel_context. When set to True, the communication type of the reduce communication operator can be forced to be converted to float32.
 - [BETA] Pipeline parallel support Interleave. Optimize the performance when micro batch is limited.
 - [BETA] Optimize checkpoint transformation speed when using pipeline parallel, support single stage transform.
-- [BETA] Pynative mode supports long sequence parallel of RingAttention. Optimizes long sequence training performance.
 
 #### PyNative
 
-- [STABLE] Support recompute on PyNative mode
-- [STABLE] Support register_hook on PyNative mode
+- [BETA] Support [recompute](https://www.mindspore.cn/docs/en/r2.3.0rc2/api_python/mindspore/mindspore.recompute.html) on PyNative mode.
+- [STABLE] Support [register_hook](https://www.mindspore.cn/docs/en/r2.3.0rc2/api_python/mindspore/Tensor/mindspore.Tensor.register_hook.html#mindspore.Tensor.register_hook) on PyNative mode.
 
 ### API Change
 
-Add timeout environment variables in dynamic networking scenarios:
+Add timeout environment variables in [dynamic networking](https://www.mindspore.cn/tutorials/experts/en/r2.3.0rc2/parallel/dynamic_cluster.html) scenarios:
 
-- MS_TOPO_TIMEOUT: Cluster networking phase timeout time in seconds.
-- MS_NODE_TIMEOUT: Node heartbeat timeout in seconds.
-- MS_RECEIVE_MSG_TIMEOUT: Node timeout for receiving messages in seconds.
+- `MS_TOPO_TIMEOUT`: Cluster networking phase timeout time in seconds.
+- `MS_NODE_TIMEOUT`: Node heartbeat timeout in seconds.
+- `MS_RECEIVE_MSG_TIMEOUT`: Node timeout for receiving messages in seconds.
 
-Added new environment variable MS_ENABLE_LCCL to support the use of LCCL communication library.
+Added new environment variable `MS_ENABLE_LCCL` to support the use of LCCL communication library.
 
 ### Bug Fixes
 
-- [#I9CR96] Fix the issue of insufficient timeout time causing failure for dynamic networking startup in large-scale clusters.
+- [#I9CR96](https://gitee.com/mindspore/mindspore/issues/I9CR96) Fix the issue of insufficient timeout time causing failure for dynamic networking startup in large-scale clusters.
+- [#I94AQQ](https://gitee.com/mindspore/mindspore/issues/I94AQQ) Fixed the problem of incorrect output shape of ops.Addcdiv operator in graph mode.
 
 ### Contributors
 

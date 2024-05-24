@@ -2188,11 +2188,11 @@ REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i1, i4}).SetBody(B
   return {dx, ib->OutZeros(grad_in_size), ib->OutZeros(align_corners), ib->OutZeros(half_pixel_centers)};
 });
 
-REG_BPROP_BUILDER("Tril").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
-  auto diagonal = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit("Tril", {dout, diagonal});
-  return {dx, ib->OutZeros(diagonal)};
+REG_BPROP_BUILDER("Tril").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+  auto diagonal = GetValue<int64_t>(ib->GetAttr("diagonal"));
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Emit("Tril", {dout}, {{"diagonal", MakeValue(diagonal)}});
+  return {dx};
 });
 
 REG_BPROP_BUILDER("SegmentSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
@@ -2568,13 +2568,15 @@ REG_BPROP_BUILDER("CountNonZero").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZe
 REG_BPROP_BUILDER("ParameterizedTruncatedNormal").SetUnusedInputs({i0, i1, i2, i3, i4, i5, i6}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("Ones").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
-  auto dims = ib->GetInput(0);
-  return {ib->OutZeros(dims)};
+  auto dims = ib->GetInput(kIndex0);
+  auto type = ib->GetInput(kIndex1);
+  return {ib->OutZeros(dims), ib->OutZeros(type)};
 });
 
 REG_BPROP_BUILDER("Zeros").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
-  auto dims = ib->GetInput(0);
-  return {ib->OutZeros(dims)};
+  auto dims = ib->GetInput(kIndex0);
+  auto type = ib->GetInput(kIndex1);
+  return {ib->OutZeros(dims), ib->OutZeros(type)};
 });
 
 REG_BPROP_BUILDER("Im2Col").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
