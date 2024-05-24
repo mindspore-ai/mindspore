@@ -21,23 +21,21 @@
 #include <vector>
 #include <utility>
 #include "pipeline/jit/pi/graph_capture/node.h"
-#include "pipeline/jit/pi/graph_guard/trace.h"
+#include "pipeline/jit/pi/graph_capture/graph_build.h"
 
 namespace mindspore {
 namespace pijit {
 
-using InferFunc = bool (*)(CallNode *);
+using InferFunc = bool (*)(CallNode *, GraphBuilder *);
 InferFunc FindInferFunc(const py::object &callable, bool trace_flag = false);
 
 void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param);
 bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guard_depth);
-bool JustCallAndSetRes(CallNode *call_node);
+bool JustCallAndSetRes(CallNode *call_node, GraphBuilder *g = nullptr);
 
 bool CheckJitConstexpr(const py::object &func);
 bool CheckMSConstexpr(const py::object &func);
 bool CheckBuiltinFuncOrMethod(const py::object &func);
-bool InferBuiltinFuncOrMethod(CallNode *call_node);
-bool InferListAppend(CallNode *call_node);
 
 }  // namespace pijit
 }  // namespace mindspore

@@ -174,7 +174,8 @@ class Graph {
   void SetParent(Graph *parent) { parent_ = parent; }
   Graph *GetParent() const { return parent_; }
 
-  const auto &GetSideEffect() const { return sideEffect_; }
+  const std::shared_ptr<SideEffect> &GetSideEffect() const;
+  void SetSideEffect(const std::shared_ptr<SideEffect> &handler);
 
   // collect alive node, output bitmap
   std::vector<ValueNode *> CollectAliveNode(int bci, std::vector<int> * = nullptr, BitMap * = nullptr) const;
@@ -216,7 +217,7 @@ class Graph {
   std::shared_ptr<OptCode> guard_;
   int prune_branch_count_;
   Graph *parent_{nullptr};
-  std::unique_ptr<SideEffect> sideEffect_;
+  std::shared_ptr<SideEffect> side_effect_;
 };
 }  // namespace pijit
 }  // namespace mindspore

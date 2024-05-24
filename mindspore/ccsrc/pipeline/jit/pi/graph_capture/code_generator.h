@@ -24,6 +24,7 @@
 #include <memory>
 #include "pipeline/jit/pi/graph_capture/graph_analyzer.h"
 #include "pipeline/jit/pi/graph_capture/graph_build.h"
+#include "pipeline/jit/pi/graph_capture/side_effect.h"
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
 #include "utils/convert_utils_base.h"
 
@@ -32,8 +33,6 @@ namespace pijit {
 
 namespace py = pybind11;
 
-class ValueNode;
-class CodeExtra;
 class GraphParameterBuilder;
 
 struct NodeSet {
@@ -98,6 +97,7 @@ class CodeGenerator {
   void MarkAlive();
   void NewInstr(int op, int arg = 0, int line = -1);
   void AddInstrs(std::vector<std::unique_ptr<Instr>> &&list);
+  void AddInstr(std::unique_ptr<Instr> &&instr);
   void EraseUnusedInstr();
 
   // initialize local map of parameters
@@ -199,11 +199,11 @@ class CodeBreakGenerator {
   void SetGlobals(const py::dict &dict) { globals_ = dict; }
   const py::dict &GetGlobals() const { return globals_; }
 
-  // (chaiyouheng): collect nodes inputs and outputs at graph analyze
+  // collect nodes inputs and outputs at graph analyze
   void Init(const Graph *, const GraphAnalyzer &);
 
   // generate a code to call graph, unsupported operations, and untracked operations that will be compiled
-  py::object MakeDispatchCode(Graph *graph);
+  py::object MakeDispatchCode();
 
   // used to replace origin code, extend attribute from origin code.
   virtual py::object MakeCapturedCode() const;
@@ -270,6 +270,8 @@ class CodeBreakGenerator {
 
   // break bci alive locals
   std::vector<int> alive_locals_;
+
+  std::shared_ptr<SideEffect> side_effect_handler_;
 
   // break bci
   int break_bci_;

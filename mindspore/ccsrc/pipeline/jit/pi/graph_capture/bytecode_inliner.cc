@@ -183,11 +183,6 @@ void BytecodeInliner::CollectTracedNodes(Graph *graph) {
     std::copy(call_node->GetParams().begin(), call_node->GetParams().end(), std::back_inserter(traced_nodes_));
     CollectTracedNodes(call_node->GetSubGraph());
   }
-  if (graph != graph_) {
-    if (graph->GetSideEffect() != nullptr) {
-      graph_->GetSideEffect()->Merge(graph->GetSideEffect());
-    }
-  }
 }
 
 void BytecodeInliner::ProcessGraph(Graph *graph, int local_off) {
@@ -261,7 +256,7 @@ static bool CanIninePartial(Graph *top_graph, Graph *sub_graph) {
   }
   for (auto i : sub_graph->GetTracedNodes()) {
     int op = i->GetOpcode();
-    if (op == MAKE_FUNCTION || op == STORE_GLOBAL || op == DELETE_GLOBAL) {
+    if (op == MAKE_FUNCTION) {
       return false;
     }
   }
@@ -413,7 +408,7 @@ static bool IsEliminate(ValueNode *v) {
            t != AObject::kTypeNNCellList;
   }
   if (op.IsCall()) {
-    py::object callable = v->GetVobj()->GetPyObject();
+    py::object callable = v->input(0)->GetVobj()->GetPyObject();
     if (callable.ptr() == nullptr) {
       return false;
     }

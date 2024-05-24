@@ -535,6 +535,8 @@ void CodeGenerator::NewInstr(int op, int arg, int line) {
   code_.co_code.emplace_back(std::make_unique<Instr>(op, arg, -1, line));
 }
 
+void CodeGenerator::AddInstr(std::unique_ptr<Instr> &&instr) { code_.co_code.emplace_back(std::move(instr)); }
+
 void CodeGenerator::AddInstrs(std::vector<std::unique_ptr<Instr>> &&l) {
   code_.co_code.insert(code_.co_code.end(), std::make_move_iterator(l.begin()), std::make_move_iterator(l.end()));
 }
@@ -979,7 +981,7 @@ void CodeBreakGenerator::CallUntrackedCode(CodeGenerator *code_gen) {
   code_gen->NewInstr(RETURN_VALUE);
 }
 
-py::object CodeBreakGenerator::MakeDispatchCode(Graph *graph) {
+py::object CodeBreakGenerator::MakeDispatchCode() {
   auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co_), false);
 
   CodeGenerator code_gen(&interpret_);
@@ -993,10 +995,8 @@ py::object CodeBreakGenerator::MakeDispatchCode(Graph *graph) {
   CallCapturedCode(&code_gen);
   FixInterpretOuput(&code_gen);
 
-  // ... handle side effects
-  graph->GetSideEffect()->RestoreSideEffect(&code_gen);
-  auto vec = graph->GetSideEffect()->CollectSideEffectAliveNodes();
-  interpret_.outputs.resize(interpret_.outputs.size() - vec.size());
+  side_effect_handler_->Restore(&code_gen);
+  interpret_.outputs.resize(interpret_.outputs.size() - side_effect_handler_->GetRequiredNodes().size());
 
   CallUntrackedCode(&code_gen);
   MakeReturn(&code_gen);
@@ -1100,6 +1100,18 @@ void CodeBreakGenerator::Init(const Graph *graph, const GraphAnalyzer &analyzer)
   graph_inputs_info_.vargs = info.graph_inputs_.vargs;
   graph_inputs_info_.kwargs = info.graph_inputs_.kwargs;
   graph_inputs_info_.globals = info.graph_inputs_.globals;
+  side_effect_handler_ = graph->GetSideEffect();
+
+  size_t alive_count;
+  if (break_bci_ != -1) {
+    size_t stack_count = graph->GetFrame(break_bci_).GetStacks().size();
+    size_t alive_locals_count = alive_locals_.size();
+    size_t side_effect_required = side_effect_handler_->GetRequiredNodes().size();
+    alive_count = stack_count + alive_locals_count + side_effect_required;
+  } else {
+    alive_count = 1 + side_effect_handler_->GetRequiredNodes().size();
+  }
+  MS_EXCEPTION_IF_CHECK_FAIL(alive_count == interpret_.outputs.size(), "error alive count");
 
   if (analyzer.NeedInterpret()) {
     return;
@@ -1381,7 +1393,7 @@ py::object MakeCodeFromCodeGen(const GraphBuilderPtr &builder, const GraphAnalyz
   auto cg = CodeBreakGenerator::Creator(builder, graph->GetCodeObj());
   cg->Init(graph, *analyzer);
   cg->SetGlobals(py::cast<py::dict>(globals));
-  py::object code = analyzer->NeedInterpret() ? cg->MakeDispatchCode(graph) : cg->MakeCapturedCode();
+  py::object code = analyzer->NeedInterpret() ? cg->MakeDispatchCode() : cg->MakeCapturedCode();
   return code;
 }
 
