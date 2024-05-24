@@ -23,6 +23,7 @@
 #include <mutex>
 #include <vector>
 #include <memory>
+#include <regex>
 #include "nlohmann/json.hpp"
 #include "utils/ms_utils.h"
 #include "include/backend/kernel_graph.h"
@@ -124,6 +125,7 @@ class BACKEND_EXPORT DumpJsonParser {
   uint32_t input_output_{0};
   std::map<std::string, uint32_t> kernels_;
   std::map<std::string, uint32_t> kernel_types_;
+  std::map<std::string, std::regex> kernel_regs_;
   std::vector<std::string> cell_dump_kernels_;
   std::set<std::string> hccl_input_kernels_;
   std::set<uint32_t> support_devices_;

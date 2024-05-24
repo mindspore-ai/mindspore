@@ -81,7 +81,8 @@ def run_e2e_dump(test_key="test_e2e_dump"):
         for _ in range(3):
             if not os.path.exists(dump_file_path):
                 time.sleep(2)
-        if test_key == "test_kbk_e2e_set_dump":
+        if test_key == "test_kbk_e2e_set_dump" or \
+           test_key == "test_kbk_e2e_dump_reg":
             check_dump_structure(dump_path, dump_config_path, 1, 1, 1, execution_history=False)
         else:
             check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
@@ -147,6 +148,23 @@ def test_kbk_e2e_set_dump():
     os.environ["GRAPH_OP_RUN"] = "1"
     run_e2e_dump(test_key="test_kbk_e2e_set_dump")
     del os.environ["GRAPH_OP_RUN"]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_kbk_e2e_dump_reg():
+    """
+    Feature: test_kbk_e2e_dump_reg
+    Description: test_kbk_e2e_dump_reg
+    Expectation: Targets are dumped
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    os.environ["GRAPH_OP_RUN"] = "1"
+    run_e2e_dump(test_key="test_kbk_e2e_dump_reg")
+    del os.environ['GRAPH_OP_RUN']
 
 
 class ReluReduceMeanDenseRelu(Cell):
