@@ -87,6 +87,7 @@ void InternalKernelMod::SetTilingInfo(const uint64_t key) {
     return ret;
   };
   if (tiling_info_.need_free_device_buf_) {
+    free(tiling_info_.host_buf_.addr_);
     device::ascend::AscendMemoryPool::GetInstance().FreeTensorMem(tiling_info_.device_buf_.addr_);
   }
   tiling_info_ = TilingCacheMgr::GetInstance().GetOrCreateTilingInfo(key, tiling_func, tiling_size);
