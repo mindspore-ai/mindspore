@@ -28,7 +28,6 @@ class NetAssign0002(Cell):
         x[1] = y
         return x
 
-tmp = 1
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -150,6 +149,7 @@ def test_store_global_side_effect_6():
     context.set_context(mode=context.PYNATIVE_MODE)
     assert jcr["break_count_"] == 0
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -157,7 +157,7 @@ def test_del_global_side_effect_7():
     """
     Feature: DEL GLOBAL side effect
     Description: wipe out graph_break in dict pop no args
-    Expectation: no exception
+    Expectation: NameError
     """
     def func():
         global tmp
@@ -165,10 +165,12 @@ def test_del_global_side_effect_7():
         tmp *= 2
         del tmp
         return tmp
-    jit(fn=func, mode="PIJit")
-    jcr = get_code_extra(func)
+
+    with pytest.raises(NameError, match="name 'tmp' is not defined"):
+        jit(fn=func, mode="PIJit")()
+
     context.set_context(mode=context.PYNATIVE_MODE)
-    assert jcr["break_count_"] == 0
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -179,15 +181,15 @@ def test_fix_bug_store_subscr_side_effect_1():
     Description: wipe out graph_break in store subscr has args
     Expectation: no exception
     """
-    def func():
-        net = NetAssign0002()
+    def func(net):
         x = [Tensor([1, 2]), Tensor([2, 3])]
         y = Tensor([5, 6])
-        out = net(x, y)
-        print(out)
+        net(x, y)
         return x
 
-    jit(fn=func, mode="PIJit")
+    net = NetAssign0002()
+    result = jit(fn=func, mode="PIJit")(net)
     jcr = get_code_extra(func)
 
     assert jcr["break_count_"] == 0
+    assert (result[1] == Tensor([5, 6])).all()

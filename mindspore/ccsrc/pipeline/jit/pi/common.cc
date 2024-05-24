@@ -479,19 +479,15 @@ static void MarkBreak(Graph *g) {
     return;
   }
   PyCodeObject *code;
-  if (g->GetTracedNodes().empty()) {
+  const auto &nodes = g->GetTracedNodes();
+  if (nodes.empty()) {
     code = g->GetCodeObj();
   } else {
-    auto iter = g->GetTracedNodes().begin();
-    for (; iter != g->GetTracedNodes().end(); ++iter) {
-      if ((*iter)->bci() >= break_bci) {
-        break;
-      }
+    auto iter = std::find_if(nodes.begin(), nodes.end(), [&break_bci](ValueNode *i) { return i->bci() >= break_bci; });
+    iter -= iter == nodes.end();
+    for (code = (*iter)->GetGraph()->GetCodeObj(); code == nullptr && iter != nodes.begin(); --iter) {
+      code = (*iter)->GetGraph()->GetCodeObj();
     }
-    if (iter == g->GetTracedNodes().end()) {
-      --iter;
-    }
-    code = (*iter)->GetGraph()->GetCodeObj();
   }
   MS_EXCEPTION_IF_NULL(code);
   auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(code), false);

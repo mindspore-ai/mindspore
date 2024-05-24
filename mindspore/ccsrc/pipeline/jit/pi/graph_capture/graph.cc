@@ -60,11 +60,14 @@ Graph::Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf)
     LoopFinder loop_finder(this);
     loop_finder.FormSimpleLoopInfo();
   }
-  sideEffect_ = std::make_unique<SideEffect>();
 }
+
+const std::shared_ptr<SideEffect> &Graph::GetSideEffect() const { return side_effect_; }
+void Graph::SetSideEffect(const std::shared_ptr<SideEffect> &handler) { side_effect_ = handler; }
 
 ValueNode *Graph::NewValueNode(AObject *obj_info, int op, int arg, const std::vector<ValueNode *> &inputs,
                                const std::string &name) {
+  // when got a new object, check it's side-effect replaced node ......
   MS_EXCEPTION_IF_CHECK_FAIL(!Opcode(op).IsCall(), "must not be call function opcode");
   ValueNode *node = this->allocator().NewNode<ValueNode>(obj_info, op, arg, inputs);
   node->SetName(name);
@@ -74,6 +77,10 @@ ValueNode *Graph::NewValueNode(AObject *obj_info, int op, int arg, const std::ve
     node->SetOpcode(LOAD_CONST);
     node->SetOparg(-1);
     node->ClearInputs();
+  }
+  auto new_object = obj_info ? obj_info->GetPyObject().ptr() : nullptr;
+  if (new_object != nullptr && !CheckConstPyObject(new_object)) {  // literal not need track
+    this->side_effect_->data()->Track(new_object, node);
   }
   return node;
 }
@@ -273,17 +280,22 @@ TracePtr Graph::TraceValueNode(ValueNode *node, int max_trace_depth) {
 }
 
 std::vector<ValueNode *> Graph::CollectAliveNode(int bci, std::vector<int> *ids, BitMap *map) const {
+  std::vector<ValueNode *> result;
   if (bci == -1) {
-    return {this->GetRetVal()};
+    result = {this->GetRetVal()};
+  } else {
+    BitMap alive = this->GetCFG()->GetLiveness()->CollectAlive(bci);
+    result = CollectAliveNode(this->GetFrame(bci), &alive, ids);
+    if (map != nullptr) {
+      *map = std::move(alive);
+    }
   }
-  BitMap alive = this->GetCFG()->GetLiveness()->CollectAlive(bci);
-  std::vector<ValueNode *> result = CollectAliveNode(this->GetFrame(bci), &alive, ids);
-  if (map != nullptr) {
-    *map = std::move(alive);
+  if (GetSideEffect()->IsEmpty()) {
+    return result;
   }
-
-  auto vec = GetSideEffect()->CollectSideEffectAliveNodes();
-  result.insert(result.end(), vec.begin(), vec.end());
+  // alive locals must be original node
+  result.insert(result.end(), side_effect_->GetRequiredNodes().begin(), side_effect_->GetRequiredNodes().end());
+  std::transform(result.begin(), result.end(), result.begin(), [this](auto i) { return side_effect_->GetSource(i); });
   return result;
 }
 
