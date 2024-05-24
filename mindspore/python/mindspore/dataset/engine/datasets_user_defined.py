@@ -245,7 +245,7 @@ class SamplerFn:
             self.workers.append(worker)
         self._launch_cleanup_worker(multi_process=multi_process)
 
-    def _interval_log(self, start_time, wait_count):
+    def _interval_log(self, i, start_time, wait_count):
         cost_time = int(time.time()) - start_time
         if cost_time / self.check_interval >= wait_count:
             wait_count += 1
@@ -295,7 +295,7 @@ class SamplerFn:
                         self._stop_subprocess()
                         return
                     time.sleep(0.1)
-                    wait_count = self._interval_log(start_time, wait_count)
+                    wait_count = self._interval_log(i, start_time, wait_count)
                 result = self.workers[i % self.num_worker].get()
                 # Because there is no need to copy when creating Tensors in the C++layer, it reduces the time
                 # from np.ndarray to C++Tensor creation. However, when using shared memory in multiple processes,
