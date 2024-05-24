@@ -930,10 +930,7 @@ const std::string GetSubModuleName(SubModuleId module_id) {
     "RUNTIME_FRAMEWORK",  // SM_RUNTIME_FRAMEWORK
     "GE",                 // SM_GE
     "API",                // SM_API
-<<<<<<< HEAD
     "SYMBOLIC_SHAPE",     // SM_SYMBOLIC_SHAPE
-=======
->>>>>>> 19303d28bd2 (support for vlog)
   };
   return sub_module_names[IntToSize(module_id % NUM_SUBMODUES)];
 }
