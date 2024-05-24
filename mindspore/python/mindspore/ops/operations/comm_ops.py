@@ -1378,3 +1378,123 @@ class _GetTensorSlice(PrimitiveWithInfer):
         if tensor_slice.shape != slice_shape:
             tensor_slice = tensor_slice.reshape(slice_shape)
         return Tensor(tensor_slice, x.dtype)
+
+class BatchISendIRecv(PrimitiveWithInfer):
+    """
+    Batch send and recv tensors asynchronously.
+
+    Note:
+        - The ``isend`` and ``irecv`` in ``op_types`` between ranks need to match each other.
+        - ``isend`` and ``irecv`` in a batch can only be used in the same communication group.
+
+    Args:
+        op_types(Union[tuple[str], list[str]]): "isend" or "irecv" to indicate the order and number of communication.
+        remote_ranks(Union[tuple[int], list[int]]): src or dst rank that matches the op_types.
+        receive_shapes(Union[tuple[int], list[int]]): receive tensor shapes that matches "irecv" in op_types.
+        receive_types(Union[tuple[mindspore.dtype], list[mindspore.dtype]]): receive tensor dtype
+          that matches "irecv" in op_types.
+        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``, which
+          means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
+
+    Inputs:
+        - **input_x** (Union[tuple[Tensor], list[Tensor], tuple(None)]) -
+          The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        tuple(Tensor). Output tensors is corresponding to ``op_types``:
+        At ``"isend"`` position, output tensor is a fake tensor with scalar, which has no meaning.
+        At ``"irecv"`` position, output tensor is a tensor received from remote end.
+
+
+    Raises:
+        TypeError: If ``group`` is not a str.
+        TypeError: If ``op_types``, ``receive_shapes``, ``receive_dtypes``, ``remote_ranks`` are not tuple or list.
+        ValueError: If the length of ``receive_shapes`` and ``receive_dtypes`` are not the same.
+        ValueError: If the length of ``op_types`` and ``remote_ranks`` are not the same.
+        RuntimeError: If the length of input tensors and ``"isend"`` count are not the same.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+
+            Please see the `msrun start up
+            <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/msrun_launcher.html>`_
+            for more details.
+
+            This example should be run with 2 devices.
+
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init, get_rank
+        >>> from mindspore import Tensor
+        >>>
+        >>> init()
+        >>> rank = get_rank()
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         if rank == 0:
+        ...             remote_rank = [1, 1]
+        ...         else:
+        ...             remote_rank = [0, 0]
+        ...         self.batchisendirecv = ops.BatchISendIRecv(("isend", "irecv"), remote_rank, [()], (ms.float32,))
+        ...
+        ...     def construct(self, x):
+        ...         if isinstance(x, Tensor):
+        ...             x = (x,)
+        ...         return self.batchisendirecv(x)
+        ...
+        >>> send_x = Tensor(rank + 1).astype(ms.float32)
+        >>> net = Net()
+        >>> output = net(send_x)
+        >>> print(output)
+        rank 0:
+        (Tensor(shape=[], dtype=Float32, value= 0), Tensor(shape=[], dtype=Float32, value= 2))
+        rank 1:
+        (Tensor(shape=[], dtype=Float32, value= 0), Tensor(shape=[], dtype=Float32, value= 1))
+
+    Tutorial Examples:
+        - `Distributed Set Communication Primitives - BatchISendIRecv
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#allgather>`_
+
+    """
+    @prim_attr_register
+    def __init__(self, op_types, remote_ranks, receive_shapes=None,
+                 receive_dtypes=None, group=GlobalComm.WORLD_COMM_GROUP):
+        if receive_shapes is None:
+            receive_shapes = ()
+        else:
+            validator.check_value_type("op_types", op_types, [tuple, list], self.name)
+
+        if receive_dtypes is None:
+            receive_dtypes = ()
+        else:
+            validator.check_value_type("receive_dtypes", receive_dtypes, [tuple, list], self.name)
+
+        validator.check_value_type("op_types", op_types, [tuple, list], self.name)
+        validator.check_value_type("remote_ranks", remote_ranks, [tuple, list], self.name)
+
+        if len(receive_shapes) != len(receive_dtypes):
+            raise ValueError("length of receive_shapes and receive_shapes must be the same, "
+                             f"but got receive_shapes: {len(receive_shapes)} "
+                             f" and receive_shapes: {receive_dtypes}")
+
+        if len(op_types) != len(remote_ranks):
+            raise ValueError("length of op_types and remote_ranks must be the same.")
+
+        if group is None:
+            group = GlobalComm.WORLD_COMM_GROUP
+        self.add_prim_attr('group', group)
+        self.add_prim_attr('op_types', op_types)
+        self.add_prim_attr('remote_ranks', remote_ranks)
+        self.add_prim_attr('receive_shapes', receive_shapes)
+        self.add_prim_attr('receive_dtypes', receive_dtypes)
+        self.add_prim_attr('no_eliminate', True)

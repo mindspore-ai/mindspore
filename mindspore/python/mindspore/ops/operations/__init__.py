@@ -51,7 +51,7 @@ from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchT
                         UniqueConsecutive, UnravelIndex, FillV2, CountNonZero, TensorScatterElements, IndexPut,
                         MaskedScatter)
 from .comm_ops import (AllGather, AllReduce, Reduce, NeighborExchange, NeighborExchangeV2, AlltoAll, _AllSwap, ReduceScatter,
-                       Broadcast,
+                       Broadcast, BatchISendIRecv,
                        _MirrorOperator, _MirrorMiniStepOperator, _MiniStepAllGather, ReduceOp, _VirtualDataset,
                        _VirtualOutput, _VirtualDiv, _GetTensorSlice, _VirtualAdd, _VirtualAssignAdd, _VirtualAccuGrad,
                        _HostAllGather, _HostReduceScatter, _MirrorMicroStepOperator, _MicroStepAllGather,
@@ -395,6 +395,7 @@ __all__ = [
     "_AllSwap",
     "ReduceScatter",
     "Broadcast",
+    "BatchISendIRecv",
     "ReduceOp",
     'ScalarCast',
     'GetNext',

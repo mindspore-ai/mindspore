@@ -355,6 +355,7 @@ constexpr char MICRO_STEP_ALL_GATHER[] = "_MicroStepAllGather";
 constexpr char REDUCE_SCATTER[] = "ReduceScatter";
 constexpr char COLLECTIVE_SCATTER[] = "CollectiveScatter";
 constexpr char COLLECTIVE_GATHER[] = "CollectiveGather";
+constexpr char BATCHISENDIRECV[] = "BatchISendIRecv";
 constexpr char HOST_REDUCE_SCATTER[] = "_HostReduceScatter";
 constexpr char FAKE_QUANT_PER_LAYER[] = "FakeQuantPerLayer";
 constexpr char FAKE_QUANT_PER_CHANNEL[] = "FakeQuantPerChannel";
