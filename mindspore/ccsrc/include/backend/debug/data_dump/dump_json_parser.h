@@ -67,6 +67,8 @@ class BACKEND_EXPORT DumpJsonParser {
   std::string net_name() const { return net_name_; }
   uint32_t op_debug_mode() const { return op_debug_mode_; }
   bool trans_flag() const { return trans_flag_; }
+  uint32_t sample_mode() const { return sample_mode_; }
+  uint32_t sample_num() const { return sample_num_; }
   uint32_t cur_dump_iter() const { return cur_dump_iter_; }
   uint32_t input_output() const { return input_output_; }
   void UpdateDumpIter() { ++cur_dump_iter_; }
@@ -102,6 +104,7 @@ class BACKEND_EXPORT DumpJsonParser {
     DUMP_BOTH_OVERFLOW = 3,
     DUMP_LITE_EXCEPTION = 4
   };
+  enum JosonSampleMode { DUMP_NORMAL = 0, DUMP_HEAD_AND_TAIL = 1 };
   static bool IsAclDump();
   nlohmann::json GetKernelsJson() { return kernels_json_; }
 
@@ -132,6 +135,8 @@ class BACKEND_EXPORT DumpJsonParser {
   uint32_t op_debug_mode_{0};
   JsonFileFormat file_format_{FORMAT_BIN};
   bool trans_flag_{false};
+  uint32_t sample_mode_{0};
+  uint32_t sample_num_{100};
   uint32_t cur_dump_iter_{0};
   bool already_parsed_{false};
   std::string dump_layer_{""};
@@ -145,7 +150,7 @@ class BACKEND_EXPORT DumpJsonParser {
   void ParseE2eDumpSetting(const nlohmann::json &content);
 
   static auto CheckJsonKeyExist(const nlohmann::json &content, const std::string &key);
-  static auto CheckOpDumpExist(const nlohmann::json &content, const std::string &key);
+  static auto CheckSelectableKeyExist(const nlohmann::json &content, const std::string &key);
 
   void ParseDumpMode(const nlohmann::json &content);
   void ParseDumpPath(const nlohmann::json &content);
@@ -156,6 +161,8 @@ class BACKEND_EXPORT DumpJsonParser {
   void ParseKernels(const nlohmann::json &content);
   void ParseSupportDevice(const nlohmann::json &content);
   bool ParseEnable(const nlohmann::json &content) const;
+  void ParseSampleMode(const nlohmann::json &content);
+  void ParseSampleNum(const nlohmann::json &content);
   void ParseOpDebugMode(const nlohmann::json &content);
   void ParseFileFormat(const nlohmann::json &content);
   void ParseStatCalcMode(const nlohmann::json &content);

@@ -43,6 +43,8 @@ constexpr auto kSupportDevice = "support_device";
 constexpr auto kEnable = "enable";
 constexpr auto kOpDebugMode = "op_debug_mode";
 constexpr auto kTransFlag = "trans_flag";
+constexpr auto kSampleMode = "sample_mode";
+constexpr auto kSampleNum = "sample_num";
 constexpr auto kStatCalcMode = "stat_calc_mode";
 constexpr auto kHost = "host";
 constexpr auto kDevice = "device";
@@ -66,7 +68,7 @@ auto DumpJsonParser::CheckJsonKeyExist(const nlohmann::json &content, const std:
   return iter;
 }
 
-auto DumpJsonParser::CheckOpDumpExist(const nlohmann::json &content, const std::string &key) {
+auto DumpJsonParser::CheckSelectableKeyExist(const nlohmann::json &content, const std::string &key) {
   nlohmann::json::const_iterator iter = content.find(key);
   if (iter == content.end()) {
     return false;
@@ -380,6 +382,8 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   } else if (!e2e_dump_enabled_) {
     e2e_dump_enabled_ = true;
     trans_flag_ = true;
+    sample_mode_ = 0;
+    sample_num_ = 100;
   }
 
   auto common_dump_settings = CheckJsonKeyExist(content, kCommonDumpSettings);
@@ -394,7 +398,7 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   if (!e2e_dump_enabled_) {
     op_debug_mode = CheckJsonKeyExist(*common_dump_settings, kOpDebugMode);
   } else {
-    if (CheckOpDumpExist(*common_dump_settings, kOpDebugMode)) {
+    if (CheckSelectableKeyExist(*common_dump_settings, kOpDebugMode)) {
       op_debug_mode = CheckJsonKeyExist(*common_dump_settings, kOpDebugMode);
     }
   }
@@ -411,7 +415,7 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
     ParseFileFormat(
       *common_dump_settings);  // Pass in the whole json string to parse because file_format field is optional.
   } else {
-    if (CheckOpDumpExist(*common_dump_settings, kOpDebugMode)) {
+    if (CheckSelectableKeyExist(*common_dump_settings, kOpDebugMode)) {
       ParseOpDebugMode(*op_debug_mode);
     }
   }
@@ -436,6 +440,14 @@ void DumpJsonParser::ParseE2eDumpSetting(const nlohmann::json &content) {
   }
   trans_flag_ = ParseEnable(*trans_flag);
   ParseStatCalcMode(*e2e_dump_setting);
+  if (CheckSelectableKeyExist(*e2e_dump_setting, kSampleMode)) {
+    auto sample_mode = CheckJsonKeyExist(*e2e_dump_setting, kSampleMode);
+    ParseSampleMode(*sample_mode);
+    if (CheckSelectableKeyExist(*e2e_dump_setting, kSampleNum)) {
+      auto sample_num = CheckJsonKeyExist(*e2e_dump_setting, kSampleNum);
+      ParseSampleNum(*sample_num);
+    }
+  }
 }
 
 void CheckJsonUnsignedType(const nlohmann::json &content, const std::string &key) {
@@ -721,6 +733,24 @@ bool DumpJsonParser::ParseEnable(const nlohmann::json &content) const {
     MS_LOG(EXCEPTION) << "Dump Json Parse Failed. 'enable' should be boolean type";
   }
   return content;
+}
+
+void DumpJsonParser::ParseSampleMode(const nlohmann::json &content) {
+  CheckJsonUnsignedType(content, kSampleMode);
+  sample_mode_ = content;
+  const uint32_t max_inout_num = 1;
+  if (sample_mode_ > max_inout_num) {
+    MS_LOG(EXCEPTION) << "Dump Json Parse Failed. sample_mode should be 0, 1";
+  }
+}
+
+void DumpJsonParser::ParseSampleNum(const nlohmann::json &content) {
+  CheckJsonUnsignedType(content, kSampleMode);
+  sample_num_ = content;
+  const uint32_t min_inout_num = 1;
+  if (sample_num_ < min_inout_num) {
+    MS_LOG(EXCEPTION) << "Dump Json Parse Failed. sample_num should be greater than 0";
+  }
 }
 
 void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {

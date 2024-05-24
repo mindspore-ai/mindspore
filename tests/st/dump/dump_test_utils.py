@@ -90,6 +90,25 @@ e2e_dump_dict_2 = {
     }
 }
 
+e2e_dump_dict_3 = {
+    "common_dump_settings": {
+        "dump_mode": 0,
+        "path": "",
+        "net_name": "Net",
+        "iteration": "all",
+        "input_output": 0,
+        "kernels": ["Default/Conv-op12"],
+        "support_device": [0, 1, 2, 3, 4, 5, 6, 7],
+        "op_debug_mode": 0
+    },
+    "e2e_dump_settings": {
+        "enable": True,
+        "trans_flag": False,
+        "slice_flag": 1,
+        "slice_num": 20
+    }
+}
+
 async_dump_dict_3 = {
     "common_dump_settings": {
         "dump_mode": 0,
@@ -152,6 +171,10 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
         data = async_dump_dict_2
         data["common_dump_settings"]["path"] = dump_path
         data["common_dump_settings"]["file_format"] = "npy"
+    elif test_key == "test_e2e_dump_sample_debug_mode":
+        data = e2e_dump_dict_3
+        data["common_dump_settings"]["path"] = dump_path
+        data["e2e_dump_settings"]["trans_flag"] = True
     elif test_key == "test_acl_dump":
         data = async_dump_dict_acl
         data["common_dump_settings"]["path"] = dump_path
