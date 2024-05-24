@@ -42,8 +42,8 @@
 namespace mindspore {
 namespace ops {
 
-
-TypePtr FusedMatMulElemBinary::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+TypePtr FusedMatMulElemBinary::InferType(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) const {
   constexpr auto kMatMulInputNum = 2;
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual,
@@ -87,8 +87,8 @@ TypePtr FusedMatMulElemBinary::InferType(const PrimitivePtr &primitive, const st
   return x_type;
 }
 
-
-TypePtr FusedMatMulElemUnary::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+TypePtr FusedMatMulElemUnary::InferType(const PrimitivePtr &primitive,
+                                        const std::vector<AbstractBasePtr> &input_args) const {
   constexpr auto kMatMulInputNum = 2;
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual,

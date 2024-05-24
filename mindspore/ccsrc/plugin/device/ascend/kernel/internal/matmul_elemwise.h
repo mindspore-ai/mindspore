@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_MATMUL_ELEMWISE_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_MATMUL_ELEMWISE_H_
 
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_mod.h"
@@ -24,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 class InternalMatmulElemBase : public InternalKernelMod {
  public:
-  InternalMatmulElemBase(std::string &&op_type) : InternalKernelMod(std::move(op_type)) {}
+  explicit InternalMatmulElemBase(std::string &&op_type) : InternalKernelMod(std::move(op_type)) {}
   ~InternalMatmulElemBase() = default;
 
  protected:
@@ -32,7 +34,7 @@ class InternalMatmulElemBase : public InternalKernelMod {
                                      const std::vector<KernelTensor *> &outputs);
   virtual void SetInOutIdx() = 0;
   virtual uint64_t GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
-                             const std::vector<KernelTensor *> &outputs) = 0;
+                                     const std::vector<KernelTensor *> &outputs) = 0;
 };
 }  // namespace kernel
 }  // namespace mindspore

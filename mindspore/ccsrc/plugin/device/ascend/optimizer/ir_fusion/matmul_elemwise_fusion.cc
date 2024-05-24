@@ -58,7 +58,7 @@ const AnfNodePtr MatmulElemFusionBase::Process(const FuncGraphPtr &func_graph, c
     return nullptr;
   }
 
-  if (elewise_input_num_ != 1 && elewise_input_num_ != 2) {
+  if (elewise_input_num_ != kUnaryInputNum && elewise_input_num_ != kBinaryInputNum) {
     MS_LOG(EXCEPTION) << "Only support elewise unary and binary inputs";
   }
 
@@ -74,9 +74,9 @@ const AnfNodePtr MatmulElemFusionBase::Process(const FuncGraphPtr &func_graph, c
 
   // create op
   PrimitivePtr matmul_elemwise_prim = nullptr;
-  if (elewise_input_num_ == 1) {
+  if (elewise_input_num_ == kUnaryInputNum) {
     matmul_elemwise_prim = prim::kPrimFusedMatMulElemUnary->Clone();
-  } else if (elewise_input_num_ == 2) {
+  } else if (elewise_input_num_ == kBinaryInputNum) {
     matmul_elemwise_prim = prim::kPrimFusedMatMulElemBinary->Clone();
   }
   MS_CHECK_TRUE_RET(matmul_elemwise_prim, {});
@@ -84,11 +84,8 @@ const AnfNodePtr MatmulElemFusionBase::Process(const FuncGraphPtr &func_graph, c
   std::string elemwise_type = GetElemwiseType();
   matmul_elemwise_prim->AddAttr("ElemwiseType", MakeValue(elemwise_type));
 
-  auto matmul_prim = GetCNodePrimitive(matmul_cnode);
   auto input_trans_a = matmul_cnode->input(kIndex3)->cast<ValueNodePtr>();
-  ;
   auto input_trans_b = matmul_cnode->input(kIndex4)->cast<ValueNodePtr>();
-  ;
   matmul_elemwise_prim->AddAttr(kAttrIsTransA, input_trans_a->value());
   matmul_elemwise_prim->AddAttr(kAttrIsTransB, input_trans_b->value());
 
@@ -96,9 +93,9 @@ const AnfNodePtr MatmulElemFusionBase::Process(const FuncGraphPtr &func_graph, c
   auto input_w = matmul_cnode->input(kIndex2);
 
   CNodePtr matmul_elemwise_cnode = nullptr;
-  if (elewise_input_num_ == 1) {
+  if (elewise_input_num_ == kUnaryInputNum) {
     matmul_elemwise_cnode = func_graph->NewCNode({NewValueNode(matmul_elemwise_prim), input_x, input_w});
-  } else if (elewise_input_num_ == 2) {
+  } else if (elewise_input_num_ == kBinaryInputNum) {
     auto input_e = elemwise_node->input(kIndex2);
     matmul_elemwise_cnode = func_graph->NewCNode({NewValueNode(matmul_elemwise_prim), input_x, input_w, input_e});
   }
