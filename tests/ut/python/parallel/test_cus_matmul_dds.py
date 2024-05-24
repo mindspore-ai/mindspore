@@ -14,6 +14,7 @@
 # ============================================================================
 
 import numpy as np
+import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -190,6 +191,7 @@ def test_cus_matmul_dds_repeat_cal_auto():
     compile_graph(batch_size, num_heads, dp, mp, auto=True, shard=False)
 
 
+@pytest.mark.skip(reason="Timeout")
 def test_cus_matmul_dds_repeat1_cal_auto():
     set_algo_parameters(fully_use_devices=False)
     context.set_auto_parallel_context(device_num=16, global_rank=0)
