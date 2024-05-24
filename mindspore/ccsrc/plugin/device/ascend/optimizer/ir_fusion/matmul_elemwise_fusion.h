@@ -23,10 +23,12 @@
 
 namespace mindspore {
 namespace opt {
+constexpr auto kUnaryInputNum = 1;
+constexpr auto kBinaryInputNum = 2;
 class MatmulElemFusionBase : public PatternProcessPass {
  public:
-  explicit MatmulElemFusionBase(bool multigraph = true, const string &pass_name = "",
-      int64_t elewise_input_num = 0) : PatternProcessPass(pass_name, multigraph) {
+  explicit MatmulElemFusionBase(bool multigraph = true, const string &pass_name = "", int64_t elewise_input_num = 0)
+      : PatternProcessPass(pass_name, multigraph) {
     elewise_input_num_ = elewise_input_num;
   }
   ~MatmulElemFusionBase() override = default;
@@ -37,13 +39,14 @@ class MatmulElemFusionBase : public PatternProcessPass {
   virtual const VectorRef DefineMatmulFusionPattern(const VectorRef &predecessor) const = 0;
   virtual const std::string GetElemwiseType() const = 0;
   int64_t elewise_input_num_{0};
-  
 };
 
 class MatmulElemBiasaddFusion : public MatmulElemFusionBase {
  public:
-  explicit MatmulElemBiasaddFusion(bool multigraph = true) : MatmulElemFusionBase(multigraph, "matmul_elem_biasadd_fusion", 2) {}
+  explicit MatmulElemBiasaddFusion(bool multigraph = true)
+      : MatmulElemFusionBase(multigraph, "matmul_elem_biasadd_fusion", kBinaryInputNum) {}
   ~MatmulElemBiasaddFusion() override = default;
+
  protected:
   const VectorRef DefineMatmulFusionPattern(const VectorRef &predecessor) const override;
   const std::string GetElemwiseType() const override { return "bias_add"; };
@@ -51,8 +54,10 @@ class MatmulElemBiasaddFusion : public MatmulElemFusionBase {
 
 class MatmulElemReluFusion : public MatmulElemFusionBase {
  public:
-  explicit MatmulElemReluFusion(bool multigraph = true) : MatmulElemFusionBase(multigraph, "matmul_elem_relu_fusion", 1) {}
+  explicit MatmulElemReluFusion(bool multigraph = true)
+      : MatmulElemFusionBase(multigraph, "matmul_elem_relu_fusion", kUnaryInputNum) {}
   ~MatmulElemReluFusion() override = default;
+
  protected:
   const VectorRef DefineMatmulFusionPattern(const VectorRef &predecessor) const override;
   const std::string GetElemwiseType() const override { return "relu"; }
@@ -60,8 +65,10 @@ class MatmulElemReluFusion : public MatmulElemFusionBase {
 
 class MatmulElemGeluFusion : public MatmulElemFusionBase {
  public:
-  explicit MatmulElemGeluFusion(bool multigraph = true) : MatmulElemFusionBase(multigraph, "matmul_elem_gelu_fusion", 1) {}
+  explicit MatmulElemGeluFusion(bool multigraph = true)
+      : MatmulElemFusionBase(multigraph, "matmul_elem_gelu_fusion", kUnaryInputNum) {}
   ~MatmulElemGeluFusion() override = default;
+
  protected:
   const VectorRef DefineMatmulFusionPattern(const VectorRef &predecessor) const override;
   const std::string GetElemwiseType() const override { return "gelu"; }
