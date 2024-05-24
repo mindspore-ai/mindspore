@@ -34,6 +34,7 @@ __all__ = [
     'irecv',
     'reduce_scatter_tensor',
     'reduce',
+    'scatter_tensor',
     'P2POp',
     'batch_isend_irecv',
 ]
@@ -176,22 +177,22 @@ def all_gather_into_tensor(tensor, group=GlobalComm.WORLD_COMM_GROUP):
 
             This example should be run with 2 devices.
 
-    >>> import numpy as np
-    >>> import mindspore as ms
-    >>> import mindspore.ops as ops
-    >>> from mindspore.communication import init
-    >>> from mindspore.communication.comm_func import all_gather_into_tensor
-    >>> from mindspore import Tensor
-    >>>
-    >>> ms.set_context(mode=ms.GRAPH_MODE)
-    >>> init()
-    >>> input_tensor = Tensor(np.ones([2, 8]).astype(np.float32))
-    >>> output = all_gather_into_tensor(input_tensor)
-    >>> print(output)
-    [[1. 1. 1. 1. 1. 1. 1. 1.]
-     [1. 1. 1. 1. 1. 1. 1. 1.]
-     [1. 1. 1. 1. 1. 1. 1. 1.]
-     [1. 1. 1. 1. 1. 1. 1. 1.]]
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> from mindspore.communication import init
+        >>> from mindspore.communication.comm_func import all_gather_into_tensor
+        >>> from mindspore import Tensor
+        >>>
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
+        >>> init()
+        >>> input_tensor = Tensor(np.ones([2, 8]).astype(np.float32))
+        >>> output = all_gather_into_tensor(input_tensor)
+        >>> print(output)
+        [[1. 1. 1. 1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1. 1. 1. 1.]]
 
     """
 
@@ -272,7 +273,7 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
 
     Note:
         Only process with destination rank receives the reduced output.
-        Only support Pynative mode, Graph mode is not currently supported.
+        Only support PyNative mode, Graph mode is not currently supported.
         Other processes only get a tensor with shape [1], which has no mathematical meaning.
 
     Args:
@@ -292,7 +293,7 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend``
 
     Examples:
         .. note::
@@ -403,7 +404,7 @@ def batch_isend_irecv(p2p_op_list):
         - The ``isend`` and ``irecv`` of ``P2POp`` in ``p2p_op_list`` between ranks need to match each other.
         - ``P2POp`` in ``p2p_op_list`` can only use the same communication group.
         - ``tag`` of ``P2POp`` in ``p2p_op_list`` is not support yet.
-        - Only support pynative mode, graph mode is not currently supported.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         p2p_op_list(P2POp): list contains P2POps.
@@ -430,6 +431,7 @@ def batch_isend_irecv(p2p_op_list):
             for more details.
 
             This example should be run with 2 devices.
+
         >>> import numpy as np
         >>> import mindspore
         >>> from mindspore.communication import init, get_rank, get_group_size
@@ -510,9 +512,9 @@ def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
 
     Note:
         The interface behavior only support Tensor input and scatter evenly, which
-            is different from that of `pytoch.distributed.scatter`.
+        is different from that of `pytoch.distributed.scatter`.
         Only the tensor in process `src`(global rank) will do scatter.
-        Only support pynative mode, graph mode is not currently supported.
+        Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         tensor (Tensor):  The input tensor to be scattered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -523,7 +525,7 @@ def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
 
     Returns:
         Tensor, the shape of output is :math:`(x_1/src_rank, x_2, ..., x_R)`. The dimension 0 of data is equal to
-            the dimension of input tensor divided by `src`, and the other dimension keep the same.
+        the dimension of input tensor divided by `src`, and the other dimension keep the same.
 
     Raise:
         TypeError: If the type of the first input parameter is not Tensor, or any of `op` and `group` is not a str.
@@ -545,6 +547,7 @@ def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
             This example should be run with 2 devices.
+
         >>> import mindspore as ms
         >>> from mindspore.communication import init
         >>> from mindspore.communication.comm_func import scatter_tensor
@@ -574,12 +577,12 @@ def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
 def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
     """
     Gathers tensors from the specified communication group. The operation will gather the tensor
-        from processes according to dimension 0.
+    from processes according to dimension 0.
 
     Note:
         Only the tensor in process `dst`(global rank) will keep the gathered tensor. The other process
-            will keep a tensor with shape [1], which has no mathematical meaning.
-        Only support pynative mode, graph mode is not currently supported.
+        will keep a tensor with shape [1], which has no mathematical meaning.
+        Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): The tensor to be gathered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -589,14 +592,14 @@ def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
 
     Returns:
         Tensor, the shape of output is :math:`(sum x_1, x_2, ..., x_R)`. The dimension 0 of data is equal to
-            sum of the dimension of input tensor, and the other dimension keep the same.
+        sum of the dimension of input tensor, and the other dimension keep the same.
 
     Raise:
         TypeError: If the type of the first input parameter is not Tensor, or any of `op` and `group` is not a str.
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
-        ``Ascend``  ``GPU``
+        ``Ascend``
 
     Examples:
         .. note::
@@ -645,7 +648,7 @@ def broadcast(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
 
     Note:
         The tensors must have the same shape and format in all processes of the collection.
-        Only support pynative mode, graph mode is not currently supported.
+        Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): The tensor to be broadcasted. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -707,14 +710,17 @@ def broadcast(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
 def barrier(group=GlobalComm.WORLD_COMM_GROUP):
     """
     Synchronizes all processes in the specified group. Once the process call this operation, it will be blocked until
-        all processes call this operation. After all processes finish calling the operations, the blocked processes
-        will be weaken and continue their task.
+    all processes call this operation. After all processes finish calling the operations, the blocked processes
+    will be woken and continue their task.
 
     Args:
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
     Raises:
         RuntimeError: If backend is invalid, or distributed initialization fails.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         .. note::
@@ -729,6 +735,7 @@ def barrier(group=GlobalComm.WORLD_COMM_GROUP):
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
             This example should be run with 2 devices.
+
         >>> from mindspore.communication import init
         >>> from mindspore.communication.comm_func import barrier
         >>> # Launch 2 processes.
@@ -749,6 +756,7 @@ def all_to_all_single(tensor, output_split_sizes=None, input_split_sizes=None, g
 
     all_to_all_single split the tensor evenly into blocks according to dimension 0, and scatter them in order.
     It has three phases:
+
     - The prepare phase: the operand check input_split_sizes, output_split_sizes, and use them to
       compute the number of blocks(`split_count`).
     - The scatter phase: On each process, the operand is split into `split_count` number of blocks along the
@@ -760,7 +768,7 @@ def all_to_all_single(tensor, output_split_sizes=None, input_split_sizes=None, g
 
     Note:
         In the gather phase, tensors must have the same shape and format in all processes of the collection.
-        Only support pynative mode, graph mode is not currently supported.
+        Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -772,7 +780,7 @@ def all_to_all_single(tensor, output_split_sizes=None, input_split_sizes=None, g
 
     Outputs:
         Tensor. If the shape of input tensor is :math:`(x_1, x_2, ..., x_R)`, then the shape of output tensor is
-        :math:`(y_1, x_2, ..., x_R)`, where:
+        :math:`(y_1, x_2, ..., x_R)`
 
     Raises:
         TypeError: If group is not a string.
@@ -782,7 +790,7 @@ def all_to_all_single(tensor, output_split_sizes=None, input_split_sizes=None, g
         RuntimeError: If backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend``
 
     Examples:
         .. note::
@@ -841,14 +849,22 @@ def isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     Send tensors to the specified dest_rank.
 
     Note:
-        Send and Receive must be used in combination and have same sr_tag.
+        Send and Receive must be used in combination and have same tag.
 
     Args:
         tensor (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         dst (int): A required integer identifying the destination rank(global rank).
-        group (str): The communication group to work on. Default: "hccl_world_group/nccl_world_group".
+        group (str, optional): The communication group to work on.
+            Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
         tag (int): A required integer identifying the send/recv message tag. The message will
             be received by the Receive op with the same "tag".
+
+    Raises:
+        TypeError: `dst` is not an int or `group` is not a str。
+        ValueError: If the rank ID of the process is greater than the rank size of the communication group.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         .. note::
@@ -863,6 +879,7 @@ def isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
             This example should be run with 2 devices.
+
         >>> import mindspore.ops as ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
@@ -887,9 +904,10 @@ def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     Receive tensors from src.
 
     Note:
-        Send and Receive must be used in combination and have same sr_tag.
+        Send and Receive must be used in combination and have same tag.
         The shape and dtype of input `tensor` is used to receive tensor, but the value
-            of input `tensor` would not take effect.
+        of input `tensor` would not take effect.
+        Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The shape and dtype of this
@@ -898,10 +916,17 @@ def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
         group (str, optional): The communication group to work on.
             Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
         tag (int): A required integer identifying the send/recv message tag. The message will
-                      will be send by the Send op with the same "tag".
+            be received by the Send op with the same "tag".
 
     Returns:
         Tensor, the shape of output is :math:`(sum x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `src` is not an int or `group` is not a str.
+        ValueError: If the rank ID of the process is greater than the rank size of the communication group.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         .. note::
@@ -916,6 +941,7 @@ def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
             This example should be run with 2 devices.
+
         >>> import mindspore.ops as ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
