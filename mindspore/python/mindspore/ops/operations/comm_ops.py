@@ -203,7 +203,7 @@ class Reduce(PrimitiveWithInfer):
 
     Note:
         Only process with destination rank receives the reduced output.
-        Support Pynative mode and Graph mode, but Graph mode only supports scenes with a graph compilation level of O0.
+        Support PyNative mode and Graph mode, but Graph mode only supports scenes with a graph compilation level of O0.
         Other processes only get a tensor with shape [1], which has no mathematical meaning.
 
     Args:
@@ -226,7 +226,7 @@ class Reduce(PrimitiveWithInfer):
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
-    ``Ascend`` ``GPU``
+    ``Ascend``
 
     Examples:
         .. note::
@@ -899,7 +899,7 @@ class AlltoAll(PrimitiveWithInfer):
         TypeError: If group is not a string.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend``
 
     Examples:
         .. note::
@@ -1219,7 +1219,7 @@ class CollectiveGather(Primitive):
                     is larger than the group's rank size.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend``
 
     Examples:
         .. note::
@@ -1293,7 +1293,7 @@ class Barrier(PrimitiveWithInfer):
                     is larger than the group's rank size.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend``
 
     Examples:
         .. note::

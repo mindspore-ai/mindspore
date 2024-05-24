@@ -7,7 +7,7 @@ mindspore.ops.CollectiveGather
 
     .. note::
         只有目标为dest_rank的进程(全局的进程编号)才会收到聚合操作后的输出。其他进程只得到一个形状为[1]的张量，且该张量没有数学意义。
-        当前支持pynative模式，不支持graph模式。
+        当前支持PyNative模式，不支持Graph模式。
         
 
     参数：
