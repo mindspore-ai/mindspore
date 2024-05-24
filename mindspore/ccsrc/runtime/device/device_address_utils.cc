@@ -285,13 +285,13 @@ device::DeviceAddressPtrList DeviceAddressUtils::CreateDeviceAddressForTensorVal
   if (node_value->isa<tensor::BaseTensor>()) {
     auto tensor = node_value->cast<tensor::BaseTensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
-    auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+    auto output_address = std::static_pointer_cast<device::DeviceAddress>(tensor->device_address());
     if (output_address != nullptr) {
       if (output_address->GetDeviceType() == device_context->GetDeviceType()) {
         // We need to set tensor->device_address to ValueNode even if the tensor is a forward_output tensor
         // in PyNative Bprop graph. ValueNode device_address is necessary for GraphSchedule::Transform.
         UpdateDeviceAddressHostInfoByNode(output_address, value_node, output_idx);
-        AnfAlgo::SetOutputAddr(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx++,
+        AnfAlgo::SetOutputAddr(std::static_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx++,
                                value_node.get());
         (void)address_list.emplace_back(output_address);
         return address_list;
@@ -847,7 +847,7 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
 
   auto addr = tensor->device_address();
   if (addr != nullptr) {
-    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(addr);
+    auto device_address = std::static_pointer_cast<device::DeviceAddress>(addr);
     if (device_address->GetDeviceType() != device::DeviceType::kAscend) {
       // CPU or GPU View CreateDeviceAddress without KernelTensor
       CreateKernelTensor(device_address, tensor);
@@ -887,7 +887,7 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
     return;
   }
 
-  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
+  auto device_address = std::static_pointer_cast<device::DeviceAddress>(device_sync);
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "", "");
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeInput,
                                                  device_address->GetSize(), device_address.get());
@@ -954,7 +954,7 @@ void DeviceAddressUtils::CreateKernelTensor(const ValuePtr &input_value) {
   if (input_value->isa<tensor::BaseTensor>()) {
     auto tensor = input_value->cast<tensor::BaseTensorPtr>();
     if (tensor->device_address() != nullptr) {
-      auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+      auto device_address = std::static_pointer_cast<device::DeviceAddress>(tensor->device_address());
       MS_EXCEPTION_IF_NULL(device_address);
       CreateKernelTensor(device_address, tensor);
     }
@@ -1176,7 +1176,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateDeviceAddress(const DeviceCon
 void DeviceAddressUtils::MallocForOutputs(const DeviceContext *device_context,
                                           const std::vector<tensor::BaseTensorPtr> &outputs) {
   for (const auto &output : outputs) {
-    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(output->device_address());
+    auto device_address = std::static_pointer_cast<device::DeviceAddress>(output->device_address());
     if (device_address->GetPtr() != nullptr) {
       // ref output
       continue;
@@ -1193,13 +1193,9 @@ void DeviceAddressUtils::MallocForOutputs(const DeviceContext *device_context,
 device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddress(const DeviceContext *device_context,
                                                                     size_t stream_id, const size_t &workspace_size) {
   MS_EXCEPTION_IF_NULL(device_context);
-
-  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    nullptr, workspace_size, Format::DEFAULT_FORMAT, kTypeUnknown, ShapeVector(),
-    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-  kernel_tensor->set_stream_id(stream_id);
-
-  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
+    nullptr, workspace_size, ShapeVector(), Format::DEFAULT_FORMAT, kTypeUnknown,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_, stream_id);
   MS_EXCEPTION_IF_NULL(device_address);
   if (device_address->GetPtr() == nullptr &&
       !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
@@ -1216,7 +1212,7 @@ void DeviceAddressUtils::ConvertContiguousTensorSync(const tensor::BaseTensorPtr
 
   MS_LOG(DEBUG) << "Tensor storage_info is not nullptr, need to contiguous, id:" << tensor->id();
   const auto &new_device_address = ConvertContiguousDeviceAddress(
-    nullptr, std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), true);
+    nullptr, std::static_pointer_cast<device::DeviceAddress>(tensor->device_address()), true);
   MS_EXCEPTION_IF_NULL(new_device_address);
   tensor->set_device_address(new_device_address);
 }
@@ -1279,7 +1275,7 @@ void DeviceAddressUtils::GetCrossStreamAddressInfoFromInput(
     return;
   }
 
-  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  auto device_address = std::static_pointer_cast<device::DeviceAddress>(tensor->device_address());
   MS_EXCEPTION_IF_NULL(device_address);
   if (op_stream_id != device_address->stream_id()) {
     // Device address is cross stream.
