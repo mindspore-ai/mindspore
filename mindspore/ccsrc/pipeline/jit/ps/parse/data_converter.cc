@@ -1521,7 +1521,7 @@ ValuePtr ConvertTensorToNumber(const py::object &obj) {
     return nullptr;
   }
   if (tensor->DataSize() != 1) {
-    MS_LOG(ERROR) << "Can only convert tensor with one element to number, but got " << tensor->ToString();
+    MS_EXCEPTION(ValueError) << "Can only convert tensor with one element to number, but got " << tensor->ToString();
     return nullptr;
   }
 
@@ -1537,7 +1537,7 @@ ValuePtr ConvertTensorToNumber(const py::object &obj) {
     case kNumberTypeFloat32:
       return ConvertPythonFloatToScalarValue(static_cast<float *>(GetTensorDataPtr(tensor))[0]);
     default:
-      MS_LOG(ERROR) << "Can not convert " << tensor->ToString() << " to number";
+      MS_EXCEPTION(TypeError) << "Can not convert " << tensor->ToString() << " to number";
       return nullptr;
   }
 }

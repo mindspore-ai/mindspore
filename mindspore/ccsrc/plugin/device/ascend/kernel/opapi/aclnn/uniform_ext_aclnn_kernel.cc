@@ -30,10 +30,29 @@
 
 namespace mindspore {
 namespace kernel {
+double GetDoubleFromTensor(KernelTensor *tensor) {
+  auto dtype_id = tensor->dtype_id();
+  switch (dtype_id) {
+    case kNumberTypeBool:
+      return static_cast<double>(tensor->GetValueWithCheck<bool>());
+    case kNumberTypeInt32:
+      return static_cast<double>(tensor->GetValueWithCheck<int32_t>());
+    case kNumberTypeInt64:
+      return static_cast<double>(tensor->GetValueWithCheck<int64_t>());
+    case kNumberTypeFloat32:
+      return static_cast<double>(tensor->GetValueWithCheck<float>());
+    case kNumberTypeFloat64:
+      return static_cast<double>(tensor->GetValueWithCheck<double>());
+    default:
+      MS_EXCEPTION(TypeError) << "Unsupported dtype_id: " << dtype_id;
+  }
+}
+
 void UniformExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {
-  a_ = static_cast<double>(transform::ConvertKernelTensor<float>(inputs[kIndex1]));
-  b_ = static_cast<double>(transform::ConvertKernelTensor<float>(inputs[kIndex2]));
+  a_ = GetDoubleFromTensor(inputs[kIndex1]);
+  b_ = GetDoubleFromTensor(inputs[kIndex2]);
+
   seed_ = static_cast<uint64_t>(transform::ConvertKernelTensor<int64_t>(inputs[kIndex3]));
   offset_ = static_cast<uint64_t>(transform::ConvertKernelTensor<int64_t>(inputs[kIndex4]));
 

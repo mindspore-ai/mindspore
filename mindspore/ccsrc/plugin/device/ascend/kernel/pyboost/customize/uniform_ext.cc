@@ -24,8 +24,24 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+double GetScalarValue(const std::shared_ptr<Scalar> &scalar) {
+  if (scalar->isa<BoolImm>()) {
+    return GetValue<bool>(scalar);
+  } else if (scalar->isa<Int32Imm>()) {
+    return GetValue<int32_t>(scalar);
+  } else if (scalar->isa<Int64Imm>()) {
+    return GetValue<int64_t>(scalar);
+  } else if (scalar->isa<FP32Imm>()) {
+    return GetValue<float>(scalar);
+  } else if (scalar->isa<FP64Imm>()) {
+    return GetValue<double>(scalar);
+  } else {
+    MS_EXCEPTION(TypeError) << "Unsupported type: " << scalar->type_name();
+  }
+}
+
 tensor::BaseTensorPtr UniformExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &tensor_tensor,
-                                                const FP32ImmPtr &a, const FP32ImmPtr &b, const Int64ImmPtr &seed,
+                                                const ScalarPtr &a, const ScalarPtr &b, const Int64ImmPtr &seed,
                                                 const Int64ImmPtr &offset) {
   MS_LOG(DEBUG) << "UniformExt call start";
   OpRunner::InferOpOutput(op, tensor_tensor, a, b, seed, offset);
@@ -33,8 +49,9 @@ tensor::BaseTensorPtr UniformExtAscendCustomize(const std::shared_ptr<OpRunner> 
 
   // Convert ValuePtr to c++ scalar
   // Convert ValuePtr to c++ scalar
-  auto a_imm = static_cast<double>(GetValue<float>(a));
-  auto b_imm = static_cast<double>(GetValue<float>(b));
+  double a_imm = GetScalarValue(a);
+  double b_imm = GetScalarValue(b);
+
   auto seed_imm = static_cast<uint64_t>(GetValue<int64_t>(seed));
   auto offset_imm = static_cast<uint64_t>(GetValue<int64_t>(offset));
 
