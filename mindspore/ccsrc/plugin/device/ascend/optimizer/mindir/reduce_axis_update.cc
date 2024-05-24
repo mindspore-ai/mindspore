@@ -234,9 +234,13 @@ AnfNodePtr BuildAxis(const PatternMap &m) {
 AnfNodePtr BuildReduce(const PatternMap &m, const AnfNodePtr &) {
   auto anf = m.Get(m_reduce);
   MS_EXCEPTION_IF_NULL(anf);
+  auto graph = anf->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   auto cnode = anf->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  cnode->set_input(kAxisInputIndex, m.Get(v_axis));
+  manager->SetEdge(cnode, kAxisInputIndex, m.Get(v_axis));
   return cnode;
 }
 
