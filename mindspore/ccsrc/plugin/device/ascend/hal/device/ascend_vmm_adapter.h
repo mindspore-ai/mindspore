@@ -45,7 +45,7 @@ class AscendVmmAdapter {
   AscendVmmAdapter() {
     auto align_size = common::GetEnv("MS_DEV_ASCEND_VMM_ALIGN_SIZE");
     if (align_size.empty()) {
-      kVmmAlignSize = 2 * kMB;
+      kVmmAlignSize = kDefaultAlignSize;
     } else {
       kVmmAlignSize = StringToMB(align_size) * kMB;
     }
@@ -74,6 +74,7 @@ class AscendVmmAdapter {
   std::vector<DeviceMemPtr> all_reserve_mems_;
   std::queue<aclrtDrvMemHandle> handle_queue_;
   static constexpr uint64_t kMB = 1024 * 1024;
+  static constexpr uint64_t kDefaultAlignSize = 2 * kMB;
   static int StringToMB(const std::string &str) {
     std::stringstream ss(str);
     int num;
