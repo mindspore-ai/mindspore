@@ -1,0 +1,44 @@
+rms_norm:
+  description: |
+    The RmsNorm(Root Mean Square Layer Normalization) operator is a normalization operation. Compared to
+    LayerNorm, it retains scaling invariance and removes translation invariance. Its formula is:
+
+    .. math::
+        y=\frac{x_i}{\sqrt{\frac{1}{n}}\sum_{i=1}^{n}{ x_i^2}+\varepsilon  }\gamma_i
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
+        - **x** (Tensor) - Input data of RmsNorm. Support data type: float16, float32, bfloat16.
+        - **gamma** (Tensor) - Learnable parameter :math:`\gamma` . Support data type: float16, float32, bfloat16.
+        - **epsilon** (float) - prevent division by 0, default value is `1e-6`
+
+    Returns:
+        - **y** (Tensor) - The normalized input, has the same type and shape as `x`.
+        - **rstd** (Tensor) - The reciprocal of the input standard deviation, as the same type as `x`,
+          used by gradient calculation.
+
+    Raises:
+        TypeError: If data type of `x` is not one of the following: float16, float32, bfloat16.
+        TypeError: If data type of `gamma` is not one of the following: float16, float32, bfloat16.
+        TypeError: If data type of "x" is not the same with the data type of "gamma".
+        ValueError: If `epsilon` is not a float between 0 and 1.
+        ValueError: If the rank of `gamma` is lagger than the rank of `x`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([[1, 2, 3], [1, 2, 3]]), mindspore.float32)
+        >>> gamma = Tensor(np.ones([3]), mindspore.float32)
+        >>> y, rstd = ops.rms_norm(x, gamma, beta)
+        >>> print(y)
+        [[-0.2247448  1.         2.2247448]
+         [-0.2247448  1.         2.2247448]]
+        >>> print(rstd)
+        [[2.]
+         [2.]]

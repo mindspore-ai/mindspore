@@ -28,16 +28,18 @@ from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.communication.management import GlobalComm
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
-from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad, AsinGrad, AsinhGrad, ReciprocalGrad, RsqrtGrad,
-                             DropoutGrad, SqrtGrad, BatchNormGrad, BatchNormGradGrad, BiasAddGrad, GeLUGrad,
-                             FastGeLUGrad, AvgPoolGrad, MinimumGrad, LogSoftmaxGrad, PReLUGrad, ReluGrad, ReLU6Grad,
-                             EluGrad, GatherDGradV2, ResizeBilinearGrad, ResizeLinear1DGrad,
-                             ResizeNearestNeighborV2Grad, SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad,
-                             GridSampler3DGrad, GridSampler2DGrad, ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad,
+from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad,
+                             AsinGrad, AsinhGrad, ReciprocalGrad, RsqrtGrad, DropoutGrad,
+                             SqrtGrad, BatchNormGrad, BatchNormGradGrad,
+                             BiasAddGrad, GeLUGrad, FastGeLUGrad, AvgPoolGrad,
+                             MinimumGrad, LogSoftmaxGrad, PReLUGrad, ReluGrad,
+                             ReLU6Grad, EluGrad, GatherDGradV2, ResizeBilinearGrad,
+                             ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
+                             SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad,
+                             GridSampler2DGrad, ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad,
                              ResizeNearestNeighborGrad, LayerNormGrad, HShrinkGrad, LayerNormGradGrad, SiLUGrad,
                              FlashAttentionScoreGrad, MaximumGrad, MaximumGradGrad,
-                             UpsampleTrilinear3DGrad, UpsampleNearest3DGrad)
-
+                             UpsampleTrilinear3DGrad, UpsampleNearest3DGrad, RmsNormGrad)
 
 class SparseFillEmptyRowsGrad(Primitive):
     """Performs grad of SparseFillEmptyRows operation."""
@@ -3032,20 +3034,3 @@ class WKVGrad(Primitive):
         """Initialize WKVGrad."""
         self.init_prim_io_names(inputs=["time_first", "time_decay", "key", "value", "gy"],
                                 outputs=["gw", "gu", "gk", "gv"])
-
-
-class RmsNormGrad(Primitive):
-    r"""
-    Calculates the gradient of RmsNorm operation.
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Supported Platforms:
-        ``Ascend``
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize RmsNormGrad."""
-        self.init_prim_io_names(inputs=["dy", "x", "rstd", "gamma"],
-                                outputs=["dx", "dgamma"])

@@ -43,6 +43,7 @@ Neural Network
     mindspore.ops.fractional_max_pool3d
     mindspore.ops.group_norm
     mindspore.ops.layer_norm
+    mindspore.ops.rms_norm
     mindspore.ops.lp_pool1d
     mindspore.ops.lp_pool2d
     mindspore.ops.lrn
