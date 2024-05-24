@@ -25,6 +25,16 @@ Tensor创建
 
     mindspore.mint.eye
 
+Reduction函数
+^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.cumsum
+
 逐元素运算
 ^^^^^^^^^^^^^^^^
 
