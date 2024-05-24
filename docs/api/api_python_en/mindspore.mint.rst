@@ -35,6 +35,7 @@ Element-wise Operation
 
     mindspore.mint.abs
     mindspore.mint.isclose
+    mindspore.mint.sign
     mindspore.mint.tanh
 
 mindspore.mint.nn

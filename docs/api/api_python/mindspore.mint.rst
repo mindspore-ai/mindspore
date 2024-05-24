@@ -35,6 +35,7 @@ Tensor创建
 
     mindspore.mint.abs
     mindspore.mint.isclose
+    mindspore.mint.sign
     mindspore.mint.tanh
 
 mindspore.mint.nn
