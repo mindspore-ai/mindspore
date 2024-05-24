@@ -256,6 +256,9 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
   if (IsNonLocalValue(v)) {
     return true;
   }
+  if (graph_->GetSideEffect()->IsRecord(v)) {
+    return true;
+  }
   bool is_side_effect = IsSideEffect(v);
   if (!is_side_effect && AddToCaptured(v)) {
     return true;
@@ -357,7 +360,31 @@ void GraphAnalyzer::UseDefAnalyze() {
   }
 }
 
+void GraphAnalyzer::OptimizeSideEffectRecord() const {
+  if (graph_->GetSideEffect()->IsEmpty()) {
+    return;
+  }
+  auto alive = graph_->CollectAliveNode(graph_->GetStopTraceBci());
+  auto side_effect_required_size = graph_->GetSideEffect()->GetRequiredNodes().size();
+  auto size = alive.size() - side_effect_required_size;
+  graph_->GetSideEffect()->Optimize({alive.begin(), alive.begin() + size});
+}
+
+void GraphAnalyzer::ResetSideEffectRecord() const {
+  // if break point is changed, rollback graph nodes(only reset break bci) and side-effect record
+  int break_bci = graph_->GetStopTraceBci();
+  if (break_bci == -1 || graph_->GetSideEffect()->IsEmpty()) {
+    return;
+  }
+  const auto &nodes = graph_->GetTracedNodes();
+  auto iter = std::find_if(nodes.begin(), nodes.end(), [&break_bci](ValueNode *i) { return i->bci() > break_bci; });
+  graph_->GetSideEffect()->ResetRecord({nodes.begin(), iter});
+  OptimizeSideEffectRecord();  // after reset record, rollback side-effect record status
+}
+
 void GraphAnalyzer::Analyze() {
+  OptimizeSideEffectRecord();  // first optimize, remove dead local side-effects and it's required nodes
+
   const FrameStates &enter_frame = graph_->GetFrame(0);
   GetCaptureInfo().interpret_.values.insert(enter_frame.GetLocals().begin(), enter_frame.GetLocals().end());
   AnalyzeRecursive(graph_);
@@ -365,9 +392,8 @@ void GraphAnalyzer::Analyze() {
     CleanCapturedValue();
   }
   UseDefAnalyze();
-  if (graph_->GetStopTraceBci() != -1) {
-    graph_->GetSideEffect()->CleanSideEffects(graph_->GetStopTraceBci());
-  }
+  ResetSideEffectRecord();  // if rollback nodes, rollback side-effects
+
   CollectCapturedAndInterpret();
   CollectGraphInputs();
 
@@ -389,12 +415,7 @@ void GraphAnalyzer::Analyze() {
   if (iter == end) {
     need_interpret_ = false;
   }
-  if (!graph_->GetSideEffect()->GetSideEffectNodes().empty()) {
-    need_interpret_ = true;
-  }
-  if (!graph_->GetSideEffect()->GetGlobalList().empty()) {
-    need_interpret_ = true;
-  }
+  need_interpret_ |= !graph_->GetSideEffect()->IsEmpty();
 }
 
 FrameStates buildLastFrame(Graph *g) { return g->GetFrame(g->GetStopTraceBci()); }
@@ -606,8 +627,6 @@ void GraphAnalyzer::CollectCapturedAndInterpret() {
   GetCaptureInfo().captured_.outputs = CollectGraphOutputs(GetCaptureInfo().interpret_.values, alive_nodes);
   GetCaptureInfo().interpret_.inputs = graph_->GetFrame(0).GetLocals();
   GetCaptureInfo().interpret_.outputs = std::move(alive_nodes);
-  auto vec = graph_->GetSideEffect()->CollectSideEffectAliveNodes();
-  GetCaptureInfo().interpret_.outputs.insert(GetCaptureInfo().interpret_.outputs.end(), vec.begin(), vec.end());
 }
 
 void GraphAnalyzer::CollectGraphInputs() {
@@ -783,17 +802,10 @@ void MindGraphAnalyzer::UpdateCapturedOrder() {
 void MindGraphAnalyzer::CollectCapturedAndInterpret() {
   CollectCapturedInputs();
   int break_bci = graph_->GetStopTraceBci();
-  std::vector<ValueNode *> alive_nodes;
-  if (break_bci != -1) {
-    alive_nodes = graph_->CollectAliveNode(break_bci, &alive_locals_);
-  } else {
-    alive_nodes = {graph_->GetRetVal()};
-  }
+  std::vector<ValueNode *> alive_nodes = graph_->CollectAliveNode(break_bci, &alive_locals_);
 
   GetCaptureInfo().interpret_.inputs = graph_->GetFrame(0).GetLocals();
   GetCaptureInfo().interpret_.outputs = std::move(alive_nodes);
-  auto vec = graph_->GetSideEffect()->CollectSideEffectAliveNodes();
-  GetCaptureInfo().interpret_.outputs.insert(GetCaptureInfo().interpret_.outputs.end(), vec.begin(), vec.end());
 }
 
 void MindGraphAnalyzer::UseDefAnalyze() {

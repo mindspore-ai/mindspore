@@ -46,13 +46,13 @@ constexpr const size_t kDictPopParamsNum = 2;
 static bool CheckConstexpr(const py::object &func);
 
 template <AObject::Type type>
-static bool SetCallResType(CallNode *call_node) {
+static bool SetCallResType(CallNode *call_node, GraphBuilder *unused = nullptr) {
   call_node->SetVobj(AObject::MakeAObject(type));
   call_node->SetSubGraph(nullptr);
   return false;
 }
 
-bool JustCallAndSetRes(CallNode *call_node) {
+bool JustCallAndSetRes(CallNode *call_node, GraphBuilder *unused) {
   py::object func = call_node->input(0)->GetVobj()->GetPyObject();
   if (func.ptr() == nullptr) {
     return SetCallResType<AObject::kTypeAnyValue>(call_node);
@@ -134,7 +134,7 @@ bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guar
   return true;
 }
 
-static bool InferConvertMap(CallNode *call_node) {
+static bool InferConvertMap(CallNode *call_node, GraphBuilder *unused = nullptr) {
   AObject *func_info = call_node->input(0)->GetVobj();
   func_info->SetMsFlag(AObject::kMsFlagStandardFunc);
   py::object func = func_info->GetPyObject();
@@ -183,7 +183,7 @@ static bool InferConvertMap(CallNode *call_node) {
   return false;
 }
 
-static bool InferGetCachePrim(CallNode *n) {
+static bool InferGetCachePrim(CallNode *n, GraphBuilder *unused = nullptr) {
   // just return the first parameter of _get_cache_prim
   Graph *g = n->GetSubGraph();
   n->SetVobj(n->input(1)->GetVobj());
@@ -191,7 +191,7 @@ static bool InferGetCachePrim(CallNode *n) {
   return true;
 }
 
-static bool InferRegistryGet(CallNode *call_node) {
+static bool InferRegistryGet(CallNode *call_node, GraphBuilder *unused = nullptr) {
   Graph *g = call_node->GetSubGraph();
   JustCallAndSetRes(call_node);
 
@@ -202,7 +202,7 @@ static bool InferRegistryGet(CallNode *call_node) {
   return false;
 }
 
-static bool InferPrimitive(CallNode *call_node) {
+static bool InferPrimitive(CallNode *call_node, GraphBuilder *unused = nullptr) {
   static const std::unordered_map<std::string, AObject::Type> not_ret_tensor_prim = {
     {"Prim[_get_grad_op]<constexpr_prim=True>", AObject::kTypeMetaFuncGraph},
     {"Prim[DType]", AObject::kTypeAnyValue},
@@ -291,7 +291,7 @@ static bool InferGradOperation(CallNode *call_node, AObject::MindsporeFlag f) {
   return false;
 }
 
-static bool InferMetaFunc(CallNode *call_node) {
+static bool InferMetaFunc(CallNode *call_node, GraphBuilder *unused = nullptr) {
   call_node->SetSubGraph(nullptr);
   const auto &vo = call_node->input(0)->GetVobj();
   MS_EXCEPTION_IF_CHECK_FAIL(vo->GetType() != AObject::kTypeType, "class call is before ");
@@ -458,7 +458,7 @@ static void HandleGradFunc(CallNode *call_node, const py::object &after_grad, Tr
   HandleGradFuncCall(call_node, AObject::Convert(decorated_func), sens_param);
 }
 
-static bool InferGradFunc(CallNode *call_node) {
+static bool InferGradFunc(CallNode *call_node, GraphBuilder *unused = nullptr) {
   AObject *vo = call_node->input(0)->GetVobj();
   vo->SetMsFlag(AObject::kMsFlagGradFunc);
   py::object after_grad = vo->GetPyObject();
@@ -472,7 +472,7 @@ static bool InferGradFunc(CallNode *call_node) {
   return false;
 }
 
-static bool InferMSConstexpr(CallNode *call_node) {
+static bool InferMSConstexpr(CallNode *call_node, GraphBuilder *unused = nullptr) {
   Graph *g = call_node->GetSubGraph();
   JustCallAndSetRes(call_node);
 
@@ -487,7 +487,7 @@ static bool InferMSConstexpr(CallNode *call_node) {
   return false;
 }
 
-static bool GuardBuiltinFunc(CallNode *call_node) {
+static bool GuardBuiltinFunc(CallNode *call_node, GraphBuilder *unused = nullptr) {
   Graph *graph = call_node->GetGraph();
   for (auto i : call_node->getInputs()) {
     if (i->GetVobj() && i->GetVobj()->GetType() == AObject::kTypeTensor) {
@@ -511,7 +511,7 @@ static bool GuardIsInstance(CallNode *call_node) {
   return graph->GuardValueNode(call_node);
 }
 
-bool InferBuiltinFuncOrMethod(CallNode *call_node) {
+bool InferBuiltinFuncOrMethod(CallNode *call_node, GraphBuilder *unused = nullptr) {
   Graph *sub_graph = call_node->GetSubGraph();
   (void)JustCallAndSetRes(call_node);
   ConstantInfo::CollectBuiltinFuncConstantInfo(call_node);
@@ -535,7 +535,7 @@ bool InferBuiltinFuncOrMethod(CallNode *call_node) {
   return false;
 }
 
-static bool InferTensorAsType(CallNode *call_node) {
+static bool InferTensorAsType(CallNode *call_node, GraphBuilder *unused = nullptr) {
   ValueNode *self_node = GetBoundSelf(call_node);
   bool is_not_method = call_node->input(0)->GetVobj()->GetType() != AObject::kTypeBoundMethod;
   ValueNode *dtype_node = call_node->input(1 + is_not_method);
@@ -565,81 +565,116 @@ static bool InferTensorAsType(CallNode *call_node) {
   return true;
 }
 
-bool InferListAppend(CallNode *call_node) {
-  Graph *sub_graph = call_node->GetSubGraph();
+static void RecordSideEffectCallNode(Graph *graph, CallNode *call_node, SideEffect::Type type) {
+  const auto &side_effect = graph->GetSideEffect();
+  auto side_effect_node = graph->NewCallNode(call_node->GetOpcode(), call_node->GetOparg(), call_node->getInputs());
+  side_effect_node->SetVobj(AObject::MakeAObject(AObject::kTypeAnyValue));
+  graph->GetTracedNodes().push_back(side_effect_node);
+  side_effect->Record(side_effect_node, type);
+}
+
+static bool InferListAppend(CallNode *call_node, GraphBuilder *parent) {
+  auto builder = GraphBuilder::Creator(parent->root(), parent, nullptr, nullptr, parent->trace_flag());
+  Graph *sub_graph = builder->GetGraph();
   call_node->SetSubGraph(nullptr);
 
-  ValueNode *method_node = call_node->input(0);
-  if (method_node->GetOpcode() != LOAD_ATTR) {
+  bool is_method_descriptor = false;
+  ValueNode *self = GetSelfFromListAppendCall(call_node, &is_method_descriptor);
+  if (self == nullptr) {
     return false;
   }
-  ValueNode *self = method_node->input(0);
-  if (self->GetOpcode() != BUILD_LIST) {
-    // guard old_list length, transform to "new_list = [old_list[0], old_list[1], ... , new_element]".
+  ValueNode *new_element = call_node->input(1 + is_method_descriptor);
+  // transform to "new_list = [old_list[0], old_list[1]..., new_element]"
+  if (!builder->UnpackElements(self)) {
     return false;
   }
-  std::vector<ValueNode *> inputs = self->getInputs();
-  inputs.push_back(call_node->input(1));
-
-  std::vector<AObject *> tmp;
-  std::transform(inputs.begin(), inputs.end(), std::back_inserter(tmp), [](ValueNode *n) { return n->GetVobj(); });
-  AObject *list_info = AObject::BuildOperations(tmp, BUILD_LIST);
-  ValueNode *ret_node = sub_graph->NewValueNode(list_info, BUILD_LIST, inputs.size(), inputs);
-
-  sub_graph->GetTracedNodes().push_back(ret_node);
-  sub_graph->SetRetVal(ret_node);
+  builder->push(new_element);
+  builder->DoBuildOp({BUILD_LIST, static_cast<int>(builder->frame().GetStacks().size())});
+  auto new_node = builder->pop();
+  auto old_node = self;
+  builder->DoLoadConst({LOAD_CONST, 0, py::object(py::none())});
+  builder->DoReturn({RETURN_VALUE, 0});
 
   call_node->SetSubGraph(sub_graph);
-  call_node->SetVobj(ret_node->GetVobj());
+  call_node->SetVobj(sub_graph->GetRetVal()->GetVobj());
   call_node->SetInlineReason(InlineReason::kInline);
+
+  // update frame status
+  bool is_referenced = false;
+  parent->ReplaceAll(old_node, new_node, &is_referenced);
+  const auto &replace_map = parent->GetGraph()->GetSideEffect()->data()->modified_and_replaced_map();
+  bool is_new_var = self->GetOpcode() == BUILD_LIST && replace_map.find(self) == replace_map.end();
+  if (!is_new_var || is_referenced || self == new_element) {
+    parent->GetGraph()->GetSideEffect()->data()->RecordModifiedAndReplacedNode(old_node, new_node);
+    RecordSideEffectCallNode(parent->GetGraph(), call_node, SideEffect::kListAppend);
+  }
   return true;
 }
 
-static bool InferPopAsGet(CallNode *call_node) {
-  Graph *sub_graph = call_node->GetSubGraph();
+static bool InferDictPop(CallNode *call_node, GraphBuilder *parent) {
+  auto builder = GraphBuilder::Creator(parent->root(), parent, nullptr, nullptr, parent->trace_flag());
+  Graph *sub_graph = builder->GetGraph();
   call_node->SetSubGraph(nullptr);
 
-  // only support dict.pop from load_attr and check dict.pop call
-  ValueNode *method_node = call_node->input(0);
-  if (method_node->GetOpcode() != LOAD_ATTR || call_node->getInputs().size() < kDictPopParamsNum) {
+  bool is_method_descriptor = false;
+  ValueNode *self = GetSelfFromListAppendCall(call_node, &is_method_descriptor);
+  if (self == nullptr) {
     return false;
   }
-  ValueNode *dict_node = method_node->input(0);
-  ValueNode *key_node = call_node->input(1);
-  ValueNode *default_node =
-    call_node->getInputs().size() > kDictPopParamsNum ? call_node->input(kDictPopParamsNum) : nullptr;
+  // guard dict key and convert to constant key map
+  if (!sub_graph->GuardValueNode(self)) {
+    return false;
+  }
 
+  ValueNode *dict_node = self;
+  ValueNode *key_node = call_node->input(1 + is_method_descriptor);
+  ValueNode *default_node = call_node->getInputs().size() > (kDictPopParamsNum + is_method_descriptor)
+                              ? call_node->input(kDictPopParamsNum + is_method_descriptor)
+                              : nullptr;
   // get key from dict
   py::object dict = dict_node->GetVobj()->GetPyObject();
   py::object key = key_node->GetVobj()->GetPyObject();
-  MS_EXCEPTION_IF_CHECK_FAIL(PyDict_Check(dict.ptr()), "input must be dict");
+  MS_EXCEPTION_IF_CHECK_FAIL(PyDict_Check(dict.ptr()), "for dict.pop, first parameter must be a dict");
   py::object value = py::reinterpret_borrow<py::object>(PyDict_GetItem(dict.ptr(), key.ptr()));
-  if (value == nullptr && default_node != nullptr) {
+  if (value.ptr() == nullptr) {
+    if (default_node == nullptr) {
+      return false;  // key error
+    }
     value = default_node->GetVobj()->GetPyObject();
   }
+  // constant fold
+  builder->DoLoadConst({LOAD_CONST, 0, value});
+  builder->DoReturn({RETURN_VALUE, 0});
 
-  ValueNode *item_node =
-    sub_graph->NewValueNode(AObject::Convert(value.ptr()), BINARY_SUBSCR, 0, {dict_node, key_node});
-  sub_graph->GetTracedNodes().push_back(item_node);
-  sub_graph->SetRetVal(item_node);
+  // transform to "new_map = {key:old_map[key]...}"
+  ValueNode *old_node = dict_node;
+  ValueNode *new_node = parent->TransformDictSetItem(dict_node, key_node, nullptr, default_node != nullptr);
+  MS_EXCEPTION_IF_NULL(new_node);
 
   call_node->SetSubGraph(sub_graph);
-  call_node->SetVobj(item_node->GetVobj());
+  call_node->SetVobj(sub_graph->GetRetVal()->GetVobj());
   call_node->SetInlineReason(InlineReason::kInline);
 
-  // record side-effect
-  call_node->GetGraph()->GetSideEffect()->SetSideEffectNode(call_node);
+  // update frame status
+  bool is_referenced = false;
+  parent->ReplaceAll(old_node, new_node, &is_referenced);
+  const auto &replace_map = parent->GetGraph()->GetSideEffect()->data()->modified_and_replaced_map();
+  bool is_new_var = self->GetOpcode() == BUILD_MAP && replace_map.find(self) == replace_map.end();
+  if (!is_new_var || is_referenced) {
+    parent->GetGraph()->GetSideEffect()->data()->RecordModifiedAndReplacedNode(old_node, new_node);
+    RecordSideEffectCallNode(parent->GetGraph(), call_node, SideEffect::kDictPop);
+  }
   return true;
 }
 
-static bool SetForbiddenFuncInfo(CallNode *call_node) {
+static bool SetForbiddenFuncInfo(CallNode *call_node, GraphBuilder *unused = nullptr) {
   SetCallResType<AObject::kTypeAnyValue>(call_node);
   call_node->SetInlineReason(InlineReason::kInlineFunc_Type_Unsupported);
   return false;
 }
 
 template <bool force_ms_api>
-bool InferMsApiFunc(CallNode *call_node) {
+bool InferMsApiFunc(CallNode *call_node, GraphBuilder *unused = nullptr) {
   Graph *sub_graph = call_node->GetSubGraph();
   SetCallResType<AObject::kTypeAnyValue>(call_node);
   if (call_node->input(0)->GetVobj() == nullptr || call_node->input(0)->GetVobj()->GetPyObject().ptr() == nullptr) {
@@ -679,7 +714,7 @@ bool InferMsApiFunc(CallNode *call_node) {
   return false;
 }
 
-bool InferMappingGet(CallNode *call_node) {
+bool InferMappingGet(CallNode *call_node, GraphBuilder *unused = nullptr) {
   if (call_node->getInputs().size() == 2 &&
       call_node->input(0)->GetVobj()->GetType() == AbstractObjectBase::kTypeBoundMethod) {
     auto func_node = call_node->input(0);
@@ -725,7 +760,7 @@ static const std::unordered_map<FuncKey, InferFunc> infer_func_map = {
   {FUNC_KEY_PIJIT_FORBIDDEN, SetForbiddenFuncInfo},
   {FUNC_KEY_BUILTIN_FUNC, InferBuiltinFuncOrMethod},
   {FUNC_KEY_LIST_APPEND, InferListAppend},
-  {FUNC_KEY_DICT_POP, InferPopAsGet},
+  {FUNC_KEY_DICT_POP, InferDictPop},
   {FUNC_KEY_PRIMITIVE, InferPrimitive},
   {FUNC_KEY_META_FUNCG_RAPH, InferMetaFunc},
   {FUNC_KEY_PSJIT_CODE, InferMsApiFunc<true>},

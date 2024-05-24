@@ -17,12 +17,11 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_SIDE_EFFECT_H_
 #define MINDSPORE_CCSRC_PIPELINE_GRAPH_JIT_GRAPH_CAPTURE_SIDE_EFFECT_H_
 
-#include <set>
-#include <map>
 #include <memory>
-#include <string>
 #include <vector>
-#include <unordered_map>
+#include <map>
+#include <set>
+#include <string>
 #include "pipeline/jit/pi/graph_capture/node.h"
 
 namespace mindspore {
@@ -30,55 +29,150 @@ namespace pijit {
 
 class CodeGenerator;
 
-class GlobalSideEffectNode {
+// an unique data in the whole compilation
+class SideEffectData {
  public:
-  explicit GlobalSideEffectNode(std::string node_name, ValueNode *node, const char *module_name)
-      : node_name_(node_name), node_(node), module_name_(module_name) {}
-  virtual ~GlobalSideEffectNode() {}
-  void setName(std::string node_name) { node_name_ = node_name; }
-  void setNode(ValueNode *node) { node_ = node; }
-  void setModule(const char *module_name) { module_name_ = module_name; }
+  struct AttrCache {
+    // a map of the modified object and it's modified attrs
+    using AttrMap = std::map<std::string, ValueNode *>;
+    std::map<ValueNode *, AttrMap> modified_attrs_;
+  };
 
-  std::string getName() const { return node_name_; }
-  ValueNode *getNode() const { return node_; }
-  const char *getModule() { return module_name_; }
+  struct GlobalCache {
+    // a map of module and modified global dict
+    using NameMap = std::map<std::string, ValueNode *>;
+    std::map<std::string, NameMap> modified_globals_;
+  };
+
+  const auto &attr_cache() const { return attr_cache_; }
+  const auto &global_cache() const { return global_cache_; }
+  const auto &id_map() const { return id_map_; }
+  const auto &modified_and_replaced_map() const { return modified_and_replaced_map_; }
+
+  // track object and nodes
+  void Track(PyObject *ptr, ValueNode *node) { (ptr ? (void)id_map_[ptr].insert(node) : (void)0); }
+  void UnTrack(PyObject *ptr, ValueNode *node) { (ptr ? (void)id_map_[ptr].erase(node) : (void)0); }
+
+  // record replaced node
+  void RecordModifiedAndReplacedNode(ValueNode *src_node, ValueNode *new_node);
+
+  // merge attr modify operations
+  void AddAttrData(const std::string &name, ValueNode *src, ValueNode *new_attr);
+
+  // merge global modify operations
+  void AddGlobalData(const std::string &module_name, const std::string &name, ValueNode *value);
+
+  void ClearCache();
 
  private:
-  std::string node_name_;
-  ValueNode *node_;
-  const char *module_name_;
+  // an unique map that record python object and nodes in the whole compilation
+  // used to resolve object consistency
+  std::map<PyObject *, std::set<ValueNode *>> id_map_;
+
+  // an unique map of new value(key) and old_value(value)
+  std::map<ValueNode *, ValueNode *> modified_and_replaced_map_;
+
+  // optimization cache, record modified object
+  // if record is reset, clean cache
+  AttrCache attr_cache_;
+  GlobalCache global_cache_;
 };
 
 class SideEffect {
  public:
-  void SetSideEffectNode(ValueNode *node) { side_effect_nodes.push_back(node); }
-  std::vector<ValueNode *> &GetSideEffectNodes() { return side_effect_nodes; }
-  std::vector<ValueNode *> const &GetSideEffectNodes() const { return side_effect_nodes; }
+  enum Type {
+    kDefault,
+    kSetAttr,
+    kSetGlobal,
+    kListSetItem,
+    kDictSetItem,
+    kListAppend,
+    kDictPop,
+  };
 
-  void SetReplaceMap(ValueNode *newNode, ValueNode *oldNode) { replace_map.insert({newNode, oldNode}); }
-  std::map<ValueNode *, ValueNode *> &GetReplaceMap() { return replace_map; }
-  std::map<ValueNode *, ValueNode *> const &GetReplaceMap() const { return replace_map; }
+  struct CacheResult {
+    ValueNode *cache_value_;
+    bool is_deleted_value_;
+  };
 
-  void ConvertReplaceList();
-  void SetReplaceList(ValueNode *node) { replace_list.push_back(node); }
-  std::vector<ValueNode *> &GetReplaceList() { return replace_list; }
-  std::vector<ValueNode *> const &GetReplaceList() const { return replace_list; }
+  // find attribute from id_map and attr cache
+  CacheResult LoadAttr(ValueNode *src, const std::string &name) const;
 
-  void SetGlobalList(GlobalSideEffectNode global_side_effect) { global_list.push_back(global_side_effect); }
-  std::vector<GlobalSideEffectNode> &GetGlobalList() { return global_list; }
-  std::vector<GlobalSideEffectNode> const &GetGlobalList() const { return global_list; }
+  // find global from global cache
+  CacheResult LoadGlobal(const std::string &module_name, const std::string &name) const;
 
-  std::vector<ValueNode *> CollectSideEffectAliveNodes() const;
-  void CleanSideEffects(int new_bci);
-  void RestoreSideEffect(CodeGenerator *) const;
-  void Merge(const std::unique_ptr<SideEffect> &sub_side_effect);
+ public:
+  SideEffect() = default;
+
+  const auto &data() const { return data_; }
+  void set_data(const std::shared_ptr<SideEffectData> &data) { data_ = data; }
+
+  // check the node is a side-effect record
+  bool IsRecord(ValueNode *node) const { return nodes_.empty() ? false : nodes_.find(node) != nodes_.end(); }
+
+  // check record is empty
+  bool IsEmpty() const { return nodes_.empty(); }
+
+  // return false if unsupported the side-effect
+  bool Record(ValueNode *side_effect_node, Type type = Type::kDefault);
+
+  // generate the code to restore side-effect
+  void Restore(CodeGenerator *cg) const;
+
+  // reset the record if record not find in final nodes set
+  void ResetRecord(const std::set<ValueNode *> &traced_nodes);
+
+  // return the original node(source) if it's replaced, else return the node
+  ValueNode *GetSource(ValueNode *node) const;
+
+  // optimize the side-effect data, remove modify operations of dead local variable
+  void Optimize(const std::vector<ValueNode *> &alive_locals);
+
+  // return the side-effect handler required nodes
+  const std::set<ValueNode *> &GetRequiredNodes() const;
 
  private:
-  std::vector<ValueNode *> side_effect_nodes;
-  std::map<ValueNode *, ValueNode *> replace_map;
-  std::vector<ValueNode *> replace_list;
-  std::vector<GlobalSideEffectNode> global_list;
+  // add nodes to required
+  void AddKeepAlive(const std::vector<ValueNode *> &inputs) { keep_alive_.insert(inputs.begin(), inputs.end()); }
+
+  // get required node of the side-effect node
+  std::vector<ValueNode *> GetKeepAlive(ValueNode *node, Type type) const;
+
+  // if side-effect is function call, check it's supported
+  bool RecordFuncCall(ValueNode *node, Type type);
+
+  // restore a side-effect node
+  void RestoreEntry(CodeGenerator *cg, ValueNode *node, Type type) const;
+
+  // restore attribute
+  void RestoreAttrs(CodeGenerator *cg) const;
+
+  // restore global
+  void RestoreGlobal(CodeGenerator *cg) const;
+
+  // restore list, dict, or other specialized object function call
+  void RestoreSpecializeEntry(CodeGenerator *cg, ValueNode *node, Type type) const;
+
+  struct Entry {
+    Type type_;
+    size_t order_;
+  };
+
+  // shared from other side-effect recorder
+  std::shared_ptr<SideEffectData> data_;
+
+  // record operations, check side-effect order
+  std::map<ValueNode *, Entry> nodes_;
+
+  // side-effect handler required nodes
+  std::set<ValueNode *> keep_alive_;
+
+  // mark the side-effect data must be reset
+  bool is_reset_;
 };
+
+// return the self node, if return nullptr, unsupported to handle side-effect
+ValueNode *GetSelfFromListAppendCall(ValueNode *call_node, bool *is_method_descriptor = nullptr);
 
 }  // namespace pijit
 }  // namespace mindspore
