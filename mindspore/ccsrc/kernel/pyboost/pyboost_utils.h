@@ -72,7 +72,14 @@ class BACKEND_EXPORT PyBoostUtils {
   static void MallocOpInputs(const DeviceContext *device_context, const T &... args) {
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostMallocInput,
                                        runtime::ProfilerRecorder::kNoName, false);
-    (runtime::DeviceAddressUtils::MallocForInput(device_context, args), ...);
+    (runtime::DeviceAddressUtils::MallocForInput(device_context, args, false), ...);
+  }
+
+  template <typename... T>
+  static void MallocOpInputsForView(const DeviceContext *device_context, const T &... args) {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostMallocInput,
+                                       runtime::ProfilerRecorder::kNoName, false);
+    (runtime::DeviceAddressUtils::MallocForInput(device_context, args, true), ...);
   }
 
   template <typename... T, std::size_t... Index>

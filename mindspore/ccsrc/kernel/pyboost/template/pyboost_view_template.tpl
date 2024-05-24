@@ -13,7 +13,7 @@
         [op, ${call_tensors}](){
           MS_LOG(DEBUG) << "View device task ${op_name} start";
           auto device_context = op->device_context();
-          PyBoostUtils::MallocOpInputs(device_context, ${call_tensors});
+          PyBoostUtils::MallocOpInputsForView(device_context, ${call_tensors});
           MS_LOG(DEBUG) << "View device task ${op_name} end";
         }
       )

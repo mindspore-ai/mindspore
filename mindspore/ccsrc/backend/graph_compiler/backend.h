@@ -84,7 +84,8 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run_info, const runtime::KernelTaskType &task_type,
                          bool enable_async);
 
-  void RunAllocMemTask(DeviceContext *device_context, const tensor::BaseTensorPtr &tensor, bool enable_async);
+  void RunAllocMemTask(DeviceContext *device_context, const tensor::BaseTensorPtr &tensor, bool enable_async,
+                       bool is_cpu_address_exist);
   // Sync default stream in PyNative mode.
   void SyncStream();
 
