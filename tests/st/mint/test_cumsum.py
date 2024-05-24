@@ -141,5 +141,5 @@ def test_cumsum_dynamic_shape(mode):
     dim2 = 1
     ms_data2, _ = generate_random_input((3, 4, 5, 6), dim2)
     TEST_OP(cumsum_forward_func, [[ms.Tensor(ms_data1), dim1], [ms.Tensor(ms_data2), dim2]],
-            nontensor_dynamic_type='None', grad=True, mode=mode)
+            grad=True, mode=mode)
     del os.environ['GRAPH_OP_RUN']

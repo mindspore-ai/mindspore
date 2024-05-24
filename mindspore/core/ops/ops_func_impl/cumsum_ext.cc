@@ -33,14 +33,16 @@ BaseShapePtr CumsumExtFuncImpl::InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
   auto rank = SizeToLong(x_shape_vec.size());
-  (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", rank, kGreaterThan, 0, primitive->name());
+  if (rank <= 0) {
+    rank = 1;
+  }
   auto axis = input_args[kIndex1]->GetValue();
   auto axis_opt = GetScalarValue<int64_t>(axis);
   if (axis_opt.has_value()) {
     auto axis_value = axis_opt.value();
     MS_CHECK_VALUE(
-      axis_value >= -rank && axis_value < rank,
-      CheckAndConvertUtils::FormatCheckInRangeMsg("axis", axis_value, kIncludeLeft, {-rank, rank}, primitive));
+      axis_value >= -rank && axis_value <= rank - 1,
+      CheckAndConvertUtils::FormatCheckInRangeMsg("dim", axis_value, kIncludeBoth, {-rank, rank - 1}, primitive));
   }
   return std::make_shared<abstract::TensorShape>(x_shape_vec);
 }
