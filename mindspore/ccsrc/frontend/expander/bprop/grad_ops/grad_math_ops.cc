@@ -1252,16 +1252,17 @@ REG_BPROP_BUILDER("CumsumExt").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   int64_t dim_value;
   if (dim_opt.has_value()) {
     dim_value = dim_opt.value();
-  } else {
-    MS_LOG_EXCEPTION << "For Cumsum, got an invalid 'dim'.";
+    if (!IsDynamic(x_shape) && (x_shape[dim_value] == 1)) {
+      return {dout, ib->OutZeros(dim), ib->OutZeros(dtype)};
+    }
   }
-  if (!IsDynamic(x_shape) && (num_elements <= 1 || x_shape[dim_value] == 1)) {
+  if (!IsDynamic(x_shape) && (num_elements <= 1)) {
     return {dout, ib->OutZeros(dim), ib->OutZeros(dtype)};
   }
 
-  auto flip = ib->Emit("ReverseV2", {dout, ib->Value<ShapeVector>(ShapeVector{dim_value})});
+  auto flip = ib->Emit("ReverseV2", {dout, ib->MakeTuple({dim})});
   auto cumsum = ib->Emit("CumsumExt", {flip, dim, dtype});
-  auto ret = ib->Emit("ReverseV2", {cumsum, ib->Value<ShapeVector>(ShapeVector{dim_value})});
+  auto ret = ib->Emit("ReverseV2", {cumsum, ib->MakeTuple({dim})});
   return {ret, ib->OutZeros(dim), ib->OutZeros(dtype)};
 });
 
