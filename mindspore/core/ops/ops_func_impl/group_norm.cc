@@ -63,6 +63,10 @@ BaseShapePtr GroupNormFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
   const int64_t N = x_shape[0];
   const int64_t channel = x_shape[1];
+  if (!IsDynamic(x_shape) && (channel % num_groups != 0)) {
+    MS_EXCEPTION(ValueError) << "For " << primitive->name() << ", the 'num_channels' must be divided by 'num_groups', "
+                             << "but got 'num_channels': " << channel << " ,'num_groups': " << num_groups;
+  }
   if (!IsDynamic(x_shape) && !IsDynamic(weight_shape) && MS_UNLIKELY(weight_shape[kInputIndex0] != channel)) {
     MS_EXCEPTION(ValueError) << "For " << primitive->name()
                              << ", shape of weight and bias should be equal to input_x's channel dimension: " << channel
@@ -78,9 +82,18 @@ BaseShapePtr GroupNormFuncImpl::InferShape(const PrimitivePtr &primitive,
 TypePtr GroupNormFuncImpl::InferType(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  auto x_type = input_args[kInputIndex0]->GetType();
-  MS_EXCEPTION_IF_NULL(x_type);
+  const auto &prim_name = primitive->name();
+  std::map<std::string, TypePtr> types;
+  const auto &x_type = input_args[kInputIndex0]->GetType();
+  const auto &weight_type = input_args[kInputIndex2]->GetType();
+  const auto &bias_type = input_args[kInputIndex3]->GetType();
+  (void)types.emplace("input", x_type);
+  (void)types.emplace("weight", weight_type);
+  (void)types.emplace("bias", bias_type);
+
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kBFloat16};
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
+
   std::vector<TypePtr> types_list;
   types_list = {x_type, x_type, x_type};
   return std::make_shared<Tuple>(types_list);
