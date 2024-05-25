@@ -17,7 +17,7 @@ from mindspore.communication import init, get_rank
 import mindspore as ms
 import mindspore.nn as nn
 import mindspore.ops as ops
-from mindspore import context
+from mindspore import context, JitConfig
 
 
 context.set_context(mode=ms.GRAPH_MODE)
@@ -35,4 +35,5 @@ class Net(nn.Cell):
 value = get_rank()
 input_x = ms.Tensor(np.array([[value]]).astype(np.float32))
 net = Net()
+net.set_jit_config(JitConfig(jit_level="O2"))
 output = net(input_x)

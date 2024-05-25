@@ -39,6 +39,7 @@ class GraphNet(nn.Cell):
 
 def aoe_online():
     context.set_context(mode=context.GRAPH_MODE, aoe_tune_mode="online", aoe_config={"job_type": "2"})
+    context.set_context(jit_config={"jit_level": "O2"})
     net = GraphNet()
     x = Tensor(3, mstype.int32)
     out0, out1 = net(x)

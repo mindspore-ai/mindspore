@@ -45,6 +45,23 @@ def run_with_cell(fn):
     return wrapper
 
 
+def run_with_cell_ext(jit_config=None):
+    def cell_wrap_fn(fn):
+        if fn is None:
+            raise ValueError("fn cannot be none!")
+
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            cell_obj = Net(fn)
+            if jit_config:
+                cell_obj.set_jit_config(jit_config)
+            return cell_obj(*args, **kwargs)
+
+        return wrapper
+
+    return cell_wrap_fn
+
+
 def run_with_mode(fn):
     if fn is None:
         raise ValueError("fn cannot be none!")

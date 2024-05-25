@@ -323,6 +323,7 @@ constexpr auto kAttrWithRelu = "with_relu";
 constexpr auto kAttrNeedGradFlagOfInputs = "need_grad_flag_of_inputs";
 constexpr auto kAttrIsCNodeNeedGrad = "is_cnode_need_grad";
 constexpr auto kAttrJitLevel = "jit_level";
+constexpr auto kAttrJitLevelO0 = "O0";
 constexpr auto kAttrJitLevelO1 = "O1";
 constexpr auto kAttrJitLevelO2 = "O2";
 constexpr auto kAttrCellJitConfigDict = "_jit_config_dict";

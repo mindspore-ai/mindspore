@@ -22,7 +22,7 @@ import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as C
-from mindspore import context
+from mindspore import context, JitConfig
 from mindspore import log as logger
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
@@ -187,6 +187,7 @@ def test_bert_precision(enable_graph_kernel=False):
     version = os.getenv('VERSION', 'large')
     config = get_config(version=version)
     netwithloss = BertNetworkWithLoss(config, True)
+    netwithloss.set_jit_config(JitConfig(jit_level="O2"))
     lr = BertLearningRate(decay_steps=data_set.get_dataset_size() * new_repeat_count,
                           learning_rate=5e-5, end_learning_rate=1e-9,
                           power=10.0, warmup_steps=0)

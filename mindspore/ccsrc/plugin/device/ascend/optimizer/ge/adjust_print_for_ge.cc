@@ -71,6 +71,23 @@ const BaseRef AdjustPrintForGe::DefinePattern() const {
   return VectorRef({V, Xs});
 }
 
+void AdjustPrintForGe::UnfoldMakeTuple(const AnfNodePtr &input, int64_t *ptr_num_inputs,
+                                       std::vector<AnfNodePtr> *ptr_new_inputs) const {
+  if (!IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
+    ptr_new_inputs->push_back(input);
+    (*ptr_num_inputs)++;
+    return;
+  }
+
+  auto input_cnode = input->cast<CNodePtr>();
+  std::vector<AnfNodePtr> tuple_inputs = input_cnode->inputs();
+  for (size_t tuple_inputs_index = 1; tuple_inputs_index < tuple_inputs.size(); ++tuple_inputs_index) {
+    auto &tuple_input_node = tuple_inputs[tuple_inputs_index];
+    MS_EXCEPTION_IF_NULL(tuple_input_node);
+    UnfoldMakeTuple(tuple_input_node, ptr_num_inputs, ptr_new_inputs);
+  }
+}
+
 // replace print(i1, i2, U) with print(dummy_input, i1, i2, U) and set attributes of print
 const AnfNodePtr AdjustPrintForGe::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                            const EquivPtr &) const {
@@ -100,19 +117,7 @@ const AnfNodePtr AdjustPrintForGe::Process(const FuncGraphPtr &func_graph, const
     if (IsValueNode<UMonad>(input) || IsValueNode<IOMonad>(input) || HasAbstractMonad(input)) {
       continue;
     }
-    auto input_cnode = input->cast<CNodePtr>();
-    if (IsPrimitiveCNode(input_cnode, prim::kPrimMakeTuple)) {
-      std::vector<AnfNodePtr> tuple_inputs = input_cnode->inputs();
-      for (size_t tuple_inputs_index = 1; tuple_inputs_index < tuple_inputs.size(); ++tuple_inputs_index) {
-        auto &tuple_input_node = tuple_inputs[tuple_inputs_index];
-        MS_EXCEPTION_IF_NULL(tuple_input_node);
-        new_inputs.push_back(tuple_input_node);
-        num_inputs++;
-      }
-    } else {
-      new_inputs.push_back(input);
-      num_inputs++;
-    }
+    UnfoldMakeTuple(input, &num_inputs, &new_inputs);
   }
   new_inputs.push_back(node_inputs.back());
   auto new_print_node = func_graph->NewCNode(new_inputs);

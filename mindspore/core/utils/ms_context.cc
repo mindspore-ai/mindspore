@@ -475,9 +475,9 @@ bool MsContext::IsKByKExecutorMode() const {
     if (!global_jit_level.empty()) {
       jit_level = global_jit_level;
     } else if (mode == kGraphMode && device_target == kAscendDevice) {
-      jit_level = kAttrJitLevelO2;
+      jit_level = (this->ascend_soc_version() == "ascend910" ? kAttrJitLevelO2 : kAttrJitLevelO0);
     } else {
-      jit_level = kAttrJitLevelO1;
+      jit_level = kAttrJitLevelO0;
     }
   }
   if (jit_level_log != jit_level) {
@@ -490,7 +490,7 @@ bool MsContext::IsKByKExecutorMode() const {
   }
 
   if (mode == kPynativeMode) {
-    if (jit_level == "O2") {
+    if (jit_level == kAttrJitLevelO2) {
       PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable graph_sink executor in the PYNATIVE mode.");
       return false;
     }
@@ -499,7 +499,7 @@ bool MsContext::IsKByKExecutorMode() const {
   }
 
   if (mode == kGraphMode) {
-    if (common::GetEnv("GRAPH_OP_RUN") == "1" || jit_level == "O0" || jit_level == "O1") {
+    if (jit_level == kAttrJitLevelO0 || jit_level == kAttrJitLevelO1) {
       PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable kernelbykernel executor in the GRAPH mode.");
       return true;
     }

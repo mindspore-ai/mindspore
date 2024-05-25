@@ -24,7 +24,7 @@ import csv
 
 import mindspore
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, JitConfig
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
 from mindspore.nn import Dense
@@ -113,6 +113,7 @@ def check_ge_dump_structure_acl(dump_path, num_iteration, device_num=1, check_ov
 
 def run_ge_dump(test_name):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(jit_config={"jit_level": "O2"})
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'ge_dump')
         dump_config_path = os.path.join(tmp_dir, 'ge_dump.json')
@@ -121,6 +122,7 @@ def run_ge_dump(test_name):
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
         add = Net()
+        add.set_jit_config(JitConfig(jit_level="O2"))
         output = add(Tensor(x), Tensor(y))
         check_ge_dump_structure(dump_path, 1, 1)
         if test_name == "test_ge_dump_npy":
@@ -188,6 +190,7 @@ def run_ge_dump_acl(test_name):
             shutil.rmtree(dump_path)
         os.mkdir(dump_path)
         add = Net()
+        add.set_jit_config(JitConfig(jit_level="O2"))
         add(Tensor(x), Tensor(y))
         check_ge_dump_structure_acl(dump_path, 0, 1)
         del os.environ['MINDSPORE_DUMP_CONFIG']
@@ -324,6 +327,7 @@ def run_overflow_dump():
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
         add = Net()
+        add.set_jit_config(JitConfig(jit_level="O2"))
         output = add(Tensor(overflow_x), Tensor(overflow_x))
         output_np = output.asnumpy()
         print("output_np: ", output_np)
@@ -386,6 +390,7 @@ def test_ge_statistic_dump_bfloat16():
     """
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(jit_config={"jit_level": "O2"})
     run_saved_data_dump_test_bf16('test_ge_dump', 'full')
 
 
@@ -401,11 +406,13 @@ def test_ge_overflow_dump():
     Expectation: Overflow is occurred, and overflow dump file is in correct format
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+    context.set_context(jit_config={"jit_level": "O2"})
     run_overflow_dump()
 
 
 def run_train():
     context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(jit_config={"jit_level": "O2"})
     add = Net()
     add(Tensor(x), Tensor(y))
 
