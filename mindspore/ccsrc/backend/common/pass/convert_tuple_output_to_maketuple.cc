@@ -96,7 +96,8 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
   if (IsPrimitiveCNode(cnode, prim::kPrimUpdateState) || IsPrimitiveCNode(cnode, prim::kPrimBpropCut)) {
     return nullptr;
   }
-
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   bool cnode_input_changed = false;
   for (size_t i = kIndex1; i < cnode->size(); ++i) {
     const auto &input = cnode->inputs()[i];
@@ -104,7 +105,7 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
       MS_LOG(INFO) << "Convert tuple input to make tuple for node:" << node->fullname_with_scope()
                    << ", input node:" << input->fullname_with_scope();
       auto new_input = ConvertTupleInputToMakeTuple(func_graph, input);
-      cnode->set_input(i, new_input);
+      manager->SetEdge(cnode, i, new_input);
       cnode_input_changed = true;
     }
   }

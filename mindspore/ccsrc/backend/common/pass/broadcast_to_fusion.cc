@@ -76,7 +76,9 @@ const AnfNodePtr BroadcastToFusion::Process(const FuncGraphPtr &graph, const Anf
     }
   }
   auto new_input = opt::CreateValueNodeWithKernelInfo(graph, MakeValue(input_x));
-  cnode->set_input(kIndex2, new_input);
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  manager->SetEdge(cnode, kIndex2, new_input);
   return cnode;
 }
 }  // namespace opt
