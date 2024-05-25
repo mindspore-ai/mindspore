@@ -50,6 +50,23 @@ class TopKInfo : public OperatorInfo {
   Status InferAsLossDivisor() override;
 };
 
+class TopkExtInfo : public TopKInfo {
+ public:
+  TopkExtInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+              const PrimitiveAttrs &attrs)
+      : TopKInfo(operator_name, inputs_shape, outputs_shape, attrs) {}
+  ~TopkExtInfo() override = default;
+
+  std::shared_ptr<Strategies> GenerateBatchStrategies() override;
+
+ protected:
+  Status GetAttrs() override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+
+  size_t dim_ = 0;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id);
+};
+
 using TopKInfoPtr = std::shared_ptr<TopKInfo>;
 }  // namespace parallel
 }  // namespace mindspore
