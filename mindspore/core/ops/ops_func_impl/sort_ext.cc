@@ -30,7 +30,7 @@ TypePtr SortExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                    const std::vector<abstract::AbstractBasePtr> &input_args) const {
   auto prim_name = primitive->name();
   auto output0_type = input_args[kInputIndex0]->GetType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kInt8, kInt16, kInt32, kInt64};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kUInt8, kInt8, kInt16, kInt32, kInt64, kBFloat16};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", output0_type, valid_types, prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{output0_type, kInt64});
 }

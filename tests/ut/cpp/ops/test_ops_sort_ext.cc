@@ -104,7 +104,6 @@ auto SortExtOpShapeTestCases = testing::ValuesIn({
 auto SortExtOpTypeTestCases = testing::ValuesIn({
   SortExtType{kFloat16, kInt64, kBool, kBool, kFloat16, kInt64},
   SortExtType{kFloat32, kInt64, kBool, kBool, kFloat32, kInt64},
-  SortExtType{kFloat64, kInt64, kBool, kBool, kFloat64, kInt64},
 });
 
 INSTANTIATE_TEST_CASE_P(TestSortExt, TestSortExt, testing::Combine(SortExtOpShapeTestCases, SortExtOpTypeTestCases));
