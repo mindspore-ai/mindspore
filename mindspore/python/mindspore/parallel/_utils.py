@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -93,7 +93,13 @@ def _need_to_full():
 def _slice_parameter(parameter, phase, layout):
     """Slice python parameter obj according to the layout."""
     is_train_phase = phase.startswith('train')
+    is_prefill_phase = phase.startswith('prefill')
     if layout is not None and parameter.from_ckpt and not is_train_phase:
+        if not parameter.sliced and is_prefill_phase:
+            rank = get_rank()
+            new_tensor = _load_tensor_by_layout(parameter, layout, rank)
+            parameter.set_data(new_tensor, True)
+            return
         layout_shape = layout[2]
         parameter.shape = tuple(layout_shape)
         return
