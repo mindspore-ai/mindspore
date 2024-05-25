@@ -71,6 +71,7 @@
 #include "backend/common/graph_kernel/convert_bfloat16.h"
 #include "backend/common/graph_kernel/deal_with_side_effect.h"
 #include "backend/common/graph_kernel/fold_updatestate.h"
+#include "backend/common/graph_kernel/proactive_fallback_expander.h"
 #ifdef ENABLE_AKG
 #include "backend/common/graph_kernel/graph_kernel_build.h"
 #endif
@@ -97,6 +98,12 @@ void GraphKernelOptimizer::Init() const {
 
 PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   auto pm = std::make_shared<GraphKernelPassManager>(0, "preprocess");
+  // Remove redundant TupleGetItem to enable cluster ops before and after TupleGetItem
+  pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
+
+  // Fallback some operations for further expanding or fusing
+  pm->Add(std::make_shared<ProactiveFallbackExpander>(), OptLevel_1, is_dvm);
+
   // convert input to attr adapter for dyn-shape
   pm->Add(std::make_shared<ConvertFrontEndToGraphKernel>(), OptLevel_1);
 
@@ -120,10 +127,6 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Recognize ops that will be fused by GE
   pm->Add(std::make_shared<RecognizeSoftmaxGradExt>(), OptLevel_1, is_ge);
-
-  // Remove redundant TupleGetItem to enable cluster ops before and after TupleGetItem
-  pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
-
   return pm;
 }
 
