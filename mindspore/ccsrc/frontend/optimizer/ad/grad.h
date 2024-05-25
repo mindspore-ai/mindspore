@@ -23,7 +23,18 @@
 
 namespace mindspore {
 namespace ad {
-FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer, bool is_top = true);
+// We pass the bprop_auto_monad level to the ad::Grad, and then keep the order between forward and backward in the later
+// pass 'add_forward_monad_depend'.
+enum BpropAutoMonadLevel : int {
+  // When setting to None level, it will not keep the order for all side effect nodes between forward and backward.
+  kLevelNone = 0,
+  // When setting to Top level, ir will keep the order for all side effect nodes between forward inputs and backward.
+  kLevelTop,
+  // When setting to Whole level, it will keep the order for all side effect nodes between forward and backward.
+  kLevelWhole,
+};
+FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer, bool is_top = true,
+                  BpropAutoMonadLevel level = kLevelNone);
 FuncGraphVector GradMultiFuncGraph(const FuncGraphVector &func_graphs, const opt::OptimizerPtr &optimizer,
                                    bool is_top = true);
 FuncGraphPtr Kprim(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);
