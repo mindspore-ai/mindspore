@@ -100,7 +100,6 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   // convert input to attr adapter for dyn-shape
   pm->Add(std::make_shared<ConvertFrontEndToGraphKernel>(), OptLevel_1);
 
-  pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
   // Do DependElimination all passes of graphkernel
   pm->Add(std::make_shared<DependElimination>(), OptLevel_1);
 
