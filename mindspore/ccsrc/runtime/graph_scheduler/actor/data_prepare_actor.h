@@ -49,7 +49,8 @@ class DataPrepareActor : public DebugAwareActor {
         real_strategy_(GraphExecutionStrategy::kPipeline),
         host_data_source_actor_(host_data_source_actor),
         host_tensor_queue_(host_tensor_queue),
-        first_step_(true) {}
+        first_step_(true),
+        has_parameter_input_(false) {}
   ~DataPrepareActor() override = default;
 
   // The process entry of data prepare.
@@ -154,6 +155,7 @@ class DataPrepareActor : public DebugAwareActor {
   std::set<AnfNode *> address_modified_input_nodes_;
   bool first_step_;
   std::vector<ShapeVector> host_tensors_;
+  bool has_parameter_input_;
 
   // The tensor of parameter(weight) maybe update host value by Python phase and need re-prepare to sync new host value
   // to device side. 'tensors_need_reprepare_' records all tensors whose host value has updated, this HashSet will be
