@@ -52,7 +52,6 @@ from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore.common.auto_dynamic_shape import get_auto_dynamic_shape_args, update_auto_dynamic_shape_phase, \
     get_auto_dynamic_shape_args_with_check_input_signature, update_auto_dynamic_shape_phase_with_check_input_signature
 
-
 # Store ms_function class compiled pipeline cache.
 ms_compile_cache = set()
 # Store cell compiled pipeline cache.
@@ -62,6 +61,54 @@ function_phases = dict()
 
 BROADCAST_PHASE = "_broadcast_"
 _PYNATIVE_PARALLEL_FUNC_NAME = "after_shard"
+
+
+def _check_recompile_args(compile_args, kwargs):
+    """Check recompile of graph"""
+    def _check_constant_tensor_arg(arg):
+        if hasattr(arg, "__ms_mutable__"):
+            return False
+        if isinstance(arg, (list, tuple)):
+            return any(_check_constant_tensor_arg(x) for x in arg)
+        return isinstance(arg, Tensor)
+
+    for v in kwargs.values():
+        compile_args += (v,)
+    for arg in compile_args:
+        if not isinstance(arg, tuple) and not isinstance(arg, list):
+            continue
+        if _check_constant_tensor_arg(arg):
+            logger.warning(f"Constant value tensor are detected in tuple or list, which might cause recompiling "
+                           f"when tensor value changes. You can use mutable(Tensor) or mutable(tuple(Tensor)) "
+                           f"to set tensor's value as variable to to avoid recompiling. The tuple or list arg "
+                           f"is: {arg} .")
+            return
+
+
+def _check_recompile(obj, compile_args, kwargs, full_function_name, create_time, echo_function_name):
+    """Warning when the function has been compiled."""
+    ignore_dirs = ["mindspore/ops", "mindspore/nn"]
+    if any((lambda x: x in full_function_name)(x) for x in ignore_dirs):
+        return
+
+    if full_function_name in function_phases:
+        warning_times = 1
+        if len(function_phases[full_function_name]) >= warning_times \
+                and create_time not in function_phases[full_function_name]:
+            if isinstance(obj, ms.nn.Cell):
+                tips = f"Please try to create {echo_function_name} instance only once to avoid recompiling. "
+            else:
+                tips = "Try to decorate the function with @jit(hash_args=...) " \
+                       "or @jit(compile_once=True) to reduce the compile time. " \
+                       "For more details, get instructions about `jit` at " \
+                       "https://www.mindspore.cn/search?inputValue=jit."
+            logger.warning(f"The {echo_function_name} has been compiled again. "
+                           f"{tips} ")
+        else:
+            _check_recompile_args(compile_args, kwargs)
+    else:
+        function_phases[full_function_name] = set()
+    function_phases[full_function_name].add(create_time)
 
 
 def _ms_adapter_tensor_as_parameter_output(data):
@@ -365,6 +412,7 @@ class _MindsporeFunctionExecutor:
     Returns:
         The result of pipeline running in graph mode.
     """
+
     def __init__(self, fn, ms_create_time, input_signature=None, obj=None, jit_config=None):
         init_pipeline()
         if not isinstance(fn, (types.FunctionType, types.MethodType)):
@@ -381,7 +429,6 @@ class _MindsporeFunctionExecutor:
         self._create_time = ms_create_time
         self._compile_args = None
         self.jit_config_dict = jit_config.jit_config_dict if jit_config else None
-
 
     @_wrap_func
     def __call__(self, *args, **kwargs):
@@ -409,7 +456,6 @@ class _MindsporeFunctionExecutor:
             output = _pynative_executor.grad_jit(output, *new_inputs)
 
         return output
-
 
     def compile(self, method_name, *args, **kwargs):
         """Returns pipeline for the given args."""
@@ -471,7 +517,7 @@ class _MindsporeFunctionExecutor:
             self._graph_executor.clear_compile_arguments_resource()
             return phase
 
-        self._check_recompile(full_function_name, create_time, echo_function_name)
+        _check_recompile(self.obj, compile_args, kwargs, full_function_name, create_time, echo_function_name)
 
         # If enable compile cache, get the dependency files list and set to graph executor.
         self._set_compile_cache_dep_files()
@@ -503,31 +549,6 @@ class _MindsporeFunctionExecutor:
 
         return phase
 
-
-    @staticmethod
-    def _check_recompile(full_function_name, create_time, echo_function_name):
-        """Warning when the function has been compiled."""
-        ignore_dirs = ["mindspore/ops", "mindspore/nn"]
-        if any((lambda x: x in full_function_name)(x) for x in ignore_dirs):
-            return
-
-        if full_function_name in function_phases:
-            warning_times = 1
-            if len(function_phases[full_function_name]) >= warning_times \
-                    and create_time not in function_phases[full_function_name]:
-                tips = "Try to decorate the function with @jit(hash_args=...) " \
-                       "or @jit(compile_once=True) to reduce the compile time. " \
-                       "For more details, get instructions about `jit` at " \
-                       "https://www.mindspore.cn/search?inputValue=jit."
-
-                logger.warning(f"The {echo_function_name} has been compiled again. "
-                               f"{tips} ")
-        else:
-            function_phases[full_function_name] = set()
-
-        function_phases[full_function_name].add(create_time)
-
-
     @staticmethod
     def _optimizer_state_init(opt_states):
         """set data for all optimizer states in case it is executed in graph mode"""
@@ -537,7 +558,6 @@ class _MindsporeFunctionExecutor:
             prefix = opt_param.name[:opt_param.name.find(".")]
             if opt_param.has_init and (prefix in prefix_list or opt_param.name == "global_step"):
                 opt_param.init_data()
-
 
     def _get_key_id(self):
         """get key id."""
@@ -549,7 +569,6 @@ class _MindsporeFunctionExecutor:
         if _pynative_executor.grad_flag():
             key_id = key_id + ".grad"
         return key_id
-
 
     def _get_generate_name(self):
         """get generate name."""
@@ -563,7 +582,6 @@ class _MindsporeFunctionExecutor:
             generate_name = generate_name[:generate_name.rfind(str(id(self.fn)))] + str(id(self.shard_parent_obj))
         return generate_name, echo_function_name
 
-
     def _set_compile_cache_dep_files(self):
         # If enable compile cache, get the dependency files list
         enable_compile_cache = context.get_context("enable_compile_cache")
@@ -571,7 +589,6 @@ class _MindsporeFunctionExecutor:
             enable_compile_cache = os.getenv('MS_COMPILER_CACHE_ENABLE')
         if enable_compile_cache is True or enable_compile_cache == "1":
             self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
-
 
     def _generate_compile_args(self, args_list):
         """Chose dynamic shape tensors or actual input tensors as compile args."""
@@ -1628,6 +1645,10 @@ class _CellGraphExecutor:
             # generated in generate_arguments_key.
             self._graph_executor.clear_compile_arguments_resource()
             return phase, False
+
+        full_function_name = obj.__class__.__name__ + '.' + str(obj.instance_count) + '.' + str(id(type(obj)))
+        echo_function_name = obj.__class__.__name__
+        _check_recompile(obj, args, kwargs, full_function_name, obj.create_time, echo_function_name)
 
         obj.check_names()
         _check_full_batch()

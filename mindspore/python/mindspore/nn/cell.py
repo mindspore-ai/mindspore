@@ -104,9 +104,12 @@ class Cell(Cell_):
                    '_forward_pre_hook', '_forward_hook', '_enable_forward_pre_hook', '_enable_forward_hook',
                    '_bprop_debug', '_enable_backward_hook', '_cell_backward_hook', '_is_run', '_param_prefix',
                    '_attr_synced', 'pynative', 'requires_grad', 'cell_type']
+    total_instance_count = 0
 
     def __init__(self, auto_prefix=True, flags=None):
         Cell_.__init__(self, self._cell_tag)
+        Cell.total_instance_count += 1
+        self.instance_count = Cell.total_instance_count
         self._params = OrderedDict()
         self._cells = OrderedDict()
         self._params_list = OrderedDict()
@@ -397,6 +400,7 @@ class Cell(Cell_):
             cells_compile_cache.pop(id(self), None)
         if hasattr(self, "compile_cache") and self.compile_cache:
             _cell_graph_executor.del_net_res(self, self.compile_cache)
+        Cell.total_instance_count -= 1
 
     def __delattr__(self, name):
         if name in self._params:
