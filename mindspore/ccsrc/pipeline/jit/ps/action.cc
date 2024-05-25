@@ -1288,8 +1288,10 @@ void SetRunMode(const ResourcePtr &resource) {
          "because 'MS_HCCL_CM_INIT' means running in sink mode, but 'GRAPH_OP_RUN' means running kernel by kernel. "
          "Please unset either of them and rerun the task.";
   }
-  if ((!is_task_sink || common::AnfAlgo::IsDynamicGraph(resource->func_graph())) && mode == kGraphMode && enable_hccl &&
-      (!common::UseHostCollective() || using_cm) && common::GetEnv(kSimulationLevel).empty()) {
+  if ((!is_task_sink ||
+       (context_ptr->IsKByKExecutorMode() && common::AnfAlgo::IsDynamicGraph(resource->func_graph()))) &&
+      mode == kGraphMode && enable_hccl && (!common::UseHostCollective() || using_cm) &&
+      common::GetEnv(kSimulationLevel).empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Current execution mode is 'kernelbykernel', reason: " << kbk_reason
                                << ", but you're launching job using 'ranktable', which "
                                   "does not support 'kernelbykernel' mode.\n Please refer to link: "
