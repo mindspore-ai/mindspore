@@ -94,7 +94,7 @@ BaseShapePtr ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 ShapeArray ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
-  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::TensorPtr>();
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
   const auto x_shape = x_tensor->shape();
   if (MS_UNLIKELY(IsDynamicRank(x_shape))) {
@@ -156,7 +156,7 @@ TypePtr ArgMaxWithValueFuncImpl::InferType(const PrimitivePtr &primitive,
 }
 
 TypePtrList ArgMaxWithValueFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
-  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::TensorPtr>();
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
   const auto &input_x_type = x_tensor->Dtype();
   TypePtrList type_ptr_list{kInt64, input_x_type};

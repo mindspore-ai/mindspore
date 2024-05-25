@@ -630,7 +630,7 @@ void AbstractConvertFunc::CacheAbstract(const AbstractBasePtr &abstract) { kAbst
 AbstractBasePtr AbstractConvertFunc::ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
 
 // Tensor is held by Abstract, may lead to memory leak.
-AbstractBasePtr AbstractConvertFunc::ConvertAbstract(const TensorPtr &t) {
+AbstractBasePtr AbstractConvertFunc::ConvertAbstract(const BaseTensorPtr &t) {
   auto abs = t->ToAbstract();
   abs->set_value(kValueAny);
   t->set_abstract(abs);
@@ -643,9 +643,9 @@ AbstractBasePtr AbstractConvertFunc::ConvertAbstract(const ValueTuplePtr &t) {
   for (size_t i = 0; i < t->value().size(); ++i) {
     auto &val = t->value()[i];
     auto abs = val->ToAbstract();
-    if (val->isa<tensor::Tensor>()) {
+    if (val->isa<tensor::BaseTensor>()) {
       abs->set_value(kValueAny);
-      auto tensor = val->cast<tensor::TensorPtr>();
+      auto tensor = val->cast<tensor::BaseTensorPtr>();
       tensor->set_abstract(abs);
       kAbstractCache.Push(abs);
     }

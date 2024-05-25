@@ -562,8 +562,8 @@ ShapeVector Common::GetShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
 
 std::pair<TypePtr, TypeId> Common::GetTypeFromValue(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
-  if (v->isa<tensor::Tensor>()) {
-    return std::make_pair(v->cast<tensor::TensorPtr>()->Dtype(), kObjectTypeTensorType);
+  if (v->isa<tensor::BaseTensor>()) {
+    return std::make_pair(v->cast<tensor::BaseTensorPtr>()->Dtype(), kObjectTypeTensorType);
   } else if (v->isa<ValueTuple>()) {
     return std::make_pair(v->type(), kObjectTypeTuple);
   } else if (v->isa<ValueList>()) {
@@ -577,8 +577,8 @@ std::pair<TypePtr, TypeId> Common::GetTypeFromValue(const ValuePtr &v) {
 
 ShapeVector Common::GetShapeFromValue(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
-  if (v->isa<tensor::Tensor>()) {
-    return v->cast<tensor::TensorPtr>()->shape_c();
+  if (v->isa<tensor::BaseTensor>()) {
+    return v->cast<tensor::BaseTensorPtr>()->shape_c();
   } else if (v->isa<ValueSequence>()) {
     const auto &v_seq = v->cast<ValueSequencePtr>()->value();
     ShapeVector plant_shape_vector;
@@ -1101,8 +1101,8 @@ void Common::CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBase
   MS_EXCEPTION_IF_NULL(v);
   MS_EXCEPTION_IF_NULL(abs);
 
-  if (v->isa<tensor::Tensor>()) {
-    auto tensor = v->cast<tensor::TensorPtr>();
+  if (v->isa<tensor::BaseTensor>()) {
+    auto tensor = v->cast<tensor::BaseTensorPtr>();
     tensor->set_abstract(abs);
     kernel::pyboost::AbstractConvertFunc::CacheAbstract(abs);
   } else if (v->isa<ValueSequence>()) {
