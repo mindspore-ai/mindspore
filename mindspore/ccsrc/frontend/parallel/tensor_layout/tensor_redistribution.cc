@@ -25,19 +25,18 @@
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"
+#include "frontend/parallel/step_parallel_utils.h"
 
 namespace mindspore {
 namespace parallel {
-constexpr int64_t DYNAMIC_DIM_VAL = -1;
-
 Status TensorRedistribution::Init(const TensorLayout &from, const TensorLayout &to, const RankList &dev_list) {
   from_origin_ = from;
   to_origin_ = to;
-  auto func = [](const Shape &shape) -> bool {
-    return std::find(shape.begin(), shape.end(), DYNAMIC_DIM_VAL) != shape.end();
-  };
-  if (!func(from_origin_.tensor_shape().array()) && !func(to_origin_.tensor_shape().array()) &&
-      from_origin_.tensor_shape().size() != to_origin_.tensor_shape().size()) {
+  const Shape from_origin_shape = from_origin_.tensor_shape().array();
+  const Shape to_origin_shape = to_origin_.tensor_shape().array();
+  bool is_from_dyn = std::find(from_origin_shape.begin(), from_origin_shape.end(), -1) != from_origin_shape.end();
+  bool is_to_dyn = std::find(to_origin_shape.begin(), to_origin_shape.end(), -1) != to_origin_shape.end();
+  if (!is_from_dyn && !is_to_dyn && from_origin_.tensor_shape().size() != to_origin_.tensor_shape().size()) {
     MS_LOG(ERROR) << "from shape size must be equal to to shape size! from shape size is "
                   << from_origin_.tensor_shape().size() << ", to shape size is " << to_origin_.tensor_shape().size();
     MS_LOG(ERROR) << "reshape from_origin_ " << from_origin_.ToString();
@@ -45,8 +44,14 @@ Status TensorRedistribution::Init(const TensorLayout &from, const TensorLayout &
     return Status::FAILED;
   }
   dev_list_ = dev_list;
-  from_ = from_origin_.SqueezeShape();
-  to_ = to_origin_.SqueezeShape();
+  size_t cnt = std::count(to_origin_shape.begin(), to_origin_shape.end(), -1);
+  if ((is_from_dyn || is_to_dyn) && cnt >= SIZE_TWO) {
+    from_ = from_origin_;
+    to_ = to_origin_;
+  } else {
+    from_ = from_origin_.SqueezeShape();
+    to_ = to_origin_.SqueezeShape();
+  }
   this->is_inited_ = true;
   return Status::SUCCESS;
 }
@@ -220,9 +225,10 @@ void TensorRedistribution::CreateAssembledDynamicMapping(const CNodePtr &cur_cno
       shape_root = shape_input;
     }
   }
-  if (pre_cnode->isa<CNode>() && IsPrimitiveCNode(pre_cnode, std::make_shared<Primitive>(ARGMAXWITHVALUE))) {
+  const std::set<std::string> multi_output_op = {ARGMAXWITHVALUE, LAYER_NORM};
+  if (pre_cnode->isa<CNode>() && IsSomePrimitiveList(pre_cnode->cast<CNodePtr>(), multi_output_op)) {
     shape_root = cur_cnode->input(redistribution_index);
-    MS_LOG(INFO) << "change shape_root to " << shape_root->fullname_with_scope();
+    MS_LOG(INFO) << "Change shape_root to " << shape_root->fullname_with_scope();
   }
   MS_LOG(INFO) << "Start to create assembled dynamic shape mapping: " << pre_cnode->fullname_with_scope() << "->"
                << cur_cnode->fullname_with_scope() << ", shape_root=" << shape_root->fullname_with_scope();
@@ -306,7 +312,7 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
 }
 
 RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorList(bool is_cost_model) {
-  MS_LOG(DEBUG) << "Start to infer tensor redistribution.";
+  MS_LOG(INFO) << "Start to infer tensor redistribution.";
   if (this->pre_cnode_ != nullptr && this->next_cnode_ != nullptr) {
     MS_LOG(DEBUG) << this->PrintRedistribution();
   }
@@ -386,6 +392,21 @@ bool IsSameShape(const Shape &src, const Shape &tgt) {
   return true;
 }
 
+Shape AlignToLayoutShape(const Shape &to_origin_shape, const Shape &to_layout_shape) {
+  Shape target_shape(to_origin_shape);
+  size_t cnt = std::count(target_shape.begin(), target_shape.end(), -1);
+  if (cnt < SIZE_TWO || to_layout_shape[0] != 1 || to_layout_shape.size() - 1 != target_shape.size()) {
+    return target_shape;
+  }
+  for (size_t i = 0; i < target_shape.size(); ++i) {
+    if (target_shape[i] != -1) {
+      continue;
+    }
+    target_shape[i] = to_layout_shape[i + 1];
+  }
+  return target_shape;
+}
+
 Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const TensorLayout &to_layout,
                                           OperatorVector *const operator_vector,
                                           OutPutInfoVector *const output_info_vector) {
@@ -450,12 +471,14 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     reshape_flag_ = true;
     constructor.UpdateTensorShape(to_layout.slice_shape().array());
     // If to_origin_ is all -1, it can not be reshape.
-    Arrangement shape = to_origin_.slice_shape();
+    Shape target_shape = to_origin_.slice_shape().array();
+    if (this->IsAssembledStaticShape()) {
+      target_shape = AlignToLayoutShape(to_origin_.slice_shape().array(), to_layout.slice_shape().array());
+    }
     MS_LOG(INFO) << "to_origin_.slice_shape is not same with to_layout.slice_shape: "
                  << "to_origin_.slice_shape=" << to_origin_.slice_shape().array()
-                 << ", to_layout.slice_shape=" << to_layout.slice_shape().array() << ", reshape to "
-                 << shape.ToString();
-    if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
+                 << ", to_layout.slice_shape=" << to_layout.slice_shape().array() << ", reshape to " << target_shape;
+    if (constructor.ReshapeOP(target_shape) == Status::FAILED) {
       return Status::FAILED;
     } else {
       (void)operator_vector->insert(operator_vector->cend(), constructor.GetOperator());

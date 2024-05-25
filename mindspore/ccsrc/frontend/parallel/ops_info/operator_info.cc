@@ -28,6 +28,8 @@
 #include "frontend/parallel/auto_parallel/edge_costmodel.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/graph_util/graph_utils.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "ir/tensor.h"
@@ -1041,6 +1043,59 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
                  << " in strategy ckpt";
   }
   return SUCCESS;
+}
+
+static void InsertDivOpToNodeInput(const CNodePtr &node, int64_t div_num, size_t index, const string &instance_name) {
+  MS_EXCEPTION_IF_NULL(node);
+  FuncGraphPtr func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  // instance the div operator
+  Operator div_op = CreateScalarFloorDivOp(div_num);
+
+  // Insert it as the input of the node
+  AnfNodePtr input = node->input(index);
+  MS_EXCEPTION_IF_NULL(input);
+  InsertNode(div_op, node, index, node->input(index), func_graph, instance_name);
+}
+
+void OperatorInfo::ChangeMakeTupleConstant(const CNodePtr &cnode, size_t make_tuple_index) {
+  if (!IsPrimitiveCNode(cnode->input(make_tuple_index), prim::kPrimMakeTuple)) {
+    MS_LOG(EXCEPTION) << name_ << ": the dst shape is not make tuple";
+  }
+  size_t input_dim = inputs_shape_[0].size();
+  auto shard_size = strategy_->GetInputDim()[0];
+  if (input_dim != shard_size.size()) {
+    MS_LOG(EXCEPTION) << name_ << ": the input dim is " << input_dim << ", but the size of strategy is "
+                      << shard_size.size();
+  }
+
+  auto make_tuple = cnode->input(make_tuple_index);
+  auto make_tuple_cnode = make_tuple->cast<CNodePtr>();
+  for (size_t i = 0; i < input_dim; ++i) {
+    if (shard_size[i] <= 1) {
+      continue;
+    }
+    auto value_node = GetValueNode(make_tuple_cnode->input(i + 1));
+    if (value_node == nullptr) {
+      std::string instance_name = name_ + "div";
+      InsertDivOpToNodeInput(make_tuple_cnode, shard_size[i], i + 1, instance_name);
+    } else if (value_node->isa<Int64Imm>()) {
+      MS_EXCEPTION_IF_ZERO("shard_size", shard_size[i]);
+      auto origin_value = GetValue<int64_t>(value_node);
+      if (origin_value < 0 || origin_value % shard_size[i] != 0) {
+        MS_LOG(EXCEPTION) << name_ << ": the origin value is " << origin_value << ", can not be div by shard size "
+                          << shard_size[i] << ", the make tuple index of this op is " << make_tuple_index
+                          << ", the input index of make_tuple is " << i + 1;
+      }
+      int64_t replace_value = GetValue<int64_t>(value_node) / shard_size[i];
+      auto replace_value_ptr = MakeValue(replace_value);
+      auto replace_value_node = std::make_shared<ValueNode>(replace_value_ptr);
+      auto manager = make_tuple->func_graph()->manager();
+      manager->SetEdge(make_tuple, i + 1, replace_value_node);
+    } else {
+      MS_LOG(EXCEPTION) << name_ << ": the input of make_tuple is value node but not int64, the index is " << (i + 1);
+    }
+  }
 }
 
 Status OperatorInfo::CreateGroupByDim(size_t axis, std::vector<Group> *group) {

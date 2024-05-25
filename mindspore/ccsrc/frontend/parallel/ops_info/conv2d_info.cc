@@ -745,7 +745,7 @@ Status Conv2DInfo::InferTensorMap() {
 // Conv2DBackpropInputInfo: dev_matrix is (n, o, h, w, i), if out channel is split, it need to insert all reduce
 Status Conv2DInfo::InferForwardCommunication() {
   forward_op_.clear();
-  size_t relevant_dim_index = IN_CHANNEL_INDEX;
+  size_t relevant_dim_index = CONV_IN_CHANNEL_INDEX;
   if (repeated_calc_num_ > 1 && !repeated_num_in_dev_matrix_right_) {
     // if repeated calculation and repeated num in the left of dev matrix, the index of relevant dimension should add 1
     relevant_dim_index += 1;
@@ -1571,8 +1571,46 @@ void Conv2DBackpropInputInfo::InferNewPadList() {
 
 void Conv2DBackpropInputInfo::ReplaceNodeInputOrAttrs() { UpdateOutShape(); }
 
+Status ConvolutionInfo::CheckStrategy(const StrategyPtr &strategy) {
+  w_dim_need_exchange_overlap_ = false;
+  h_dim_need_exchange_overlap_ = false;
+  if (CheckStrategyBase(strategy) != SUCCESS) {
+    return FAILED;
+  }
+
+  std::vector<Dimensions> stra = strategy->GetInputDim();
+  Dimensions input_strategy = stra[0];
+  Dimensions weight_strategy = stra[1];
+  if (input_strategy.size() != 4 || weight_strategy.size() != 4) {
+    MS_LOG(ERROR) << name_
+                  << ": The size of input strategy or weight strategy must be 4, but the size of input strategy is "
+                  << input_strategy.size() << ", the size of weight strategy is " << weight_strategy.size();
+    return FAILED;
+  }
+
+  if (input_strategy[1] != weight_strategy[0]) {
+    MS_LOG(ERROR) << name_ << ": The shard num of c-out for input strategy is " << input_strategy[1]
+                  << ", but the shard num of c-out for weight strategy is " << weight_strategy[0];
+    return FAILED;
+  }
+
+  if (weight_strategy[2] != 1 || weight_strategy[3] != 1) {
+    MS_LOG(ERROR) << name_ << ": The kernel size can not be split, but the strategy for kernel size is ("
+                  << weight_strategy[2] << ", " << weight_strategy[3] << ")";
+    return FAILED;
+  }
+
+  if (input_strategy[2] != 1 || input_strategy[3] != 1) {
+    MS_LOG(ERROR) << name_ << ": Do not support split H or W dimension.";
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
+
 REGISTER(Conv2DInfo);
 REGISTER(Conv2DBackpropInputInfo);
 REGISTER(Conv2DTransposeInfo);
+REGISTER(ConvolutionInfo);
 }  // namespace parallel
 }  // namespace mindspore

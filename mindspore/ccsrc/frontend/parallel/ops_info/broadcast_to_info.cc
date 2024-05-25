@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <functional>
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
@@ -30,33 +31,25 @@
 
 namespace mindspore {
 namespace parallel {
-Status BroadcastToInfo::GetAttrs() {
-  out_shape_.clear();
-  auto shape_opt = GetArrayValueFromInputsWithCheck<int64_t>(input_value_, name_, SHAPE);
-  out_shape_ = shape_opt.value();
-  if (out_shape_.empty()) {
-    MS_LOG(ERROR) << name_ << ": shape cannot be empty";
-    return FAILED;
-  }
-
-  return SUCCESS;
-}
-
 Status BroadcastToInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
+  is_stand_alone_ = false;
+  Shapes stra = strategy->GetInputDim();
+  if (stra.empty()) {
+    MS_LOG(ERROR) << name_ << ": the strategy is empty";
+    return FAILED;
+  }
+  int64_t shard_num = std::accumulate(stra[0].begin(), stra[0].end(), 1, std::multiplies<int64_t>());
+  is_stand_alone_ = (shard_num == 1);
+  if (is_stand_alone_) {
+    return SUCCESS;
+  }
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy";
+    MS_LOG(ERROR) << name_ << ": Invalid strategy " << stra;
     return FAILED;
   }
 
   return SUCCESS;
-}
-
-Status BroadcastToInfo::CheckStrategyForDynamicShape(const StrategyPtr &) {
-  MS_LOG(ERROR) << name_
-                << ": it does not support dynamic shape now, the inputs's shape: " << ShapesToString(inputs_shape_)
-                << ", the outputs' shape: " << ShapesToString(outputs_shape_);
-  return FAILED;
 }
 
 Status BroadcastToInfo::InferDevMatrixShape() {
@@ -92,6 +85,32 @@ Status BroadcastToInfo::InferTensorMap() {
   }
   (void)std::copy(in_tensor_map.begin(), in_tensor_map.end(), std::back_inserter(out_tensor_map));
   outputs_tensor_map_.push_back(out_tensor_map);
+  return SUCCESS;
+}
+
+Status BroadcastToInfo::InferMirrorOps() {
+  mirror_ops_.clear();
+
+  if (inputs_tensor_map_.empty()) {
+    MS_LOG(ERROR) << name_ << ": the inputs tensor map is empty";
+    return FAILED;
+  }
+
+  std::vector<Group> group;
+  if (CreateGroupByTensorMap(inputs_tensor_map_[0], &group) != SUCCESS) {
+    ReportError(name_ + ": Create group failed");
+    mirror_ops_.clear();
+    return FAILED;
+  }
+
+  OperatorVector mirror_op;
+  if (group.empty()) {
+    return SUCCESS;
+  }
+
+  mirror_op = CreateMirrorOps(group[0].name(), group[0].GetDevNum());
+  mirror_ops_.push_back(mirror_op);
+
   return SUCCESS;
 }
 
@@ -142,17 +161,29 @@ Status BroadcastToInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     return FAILED;
   }
 
-  Shape to_shape = outputs_tensor_info_[0].slice_shape();
-  auto new_broadcast_to =
-    gen_g.PushBack({gen_g.NewOpInst(BROADCAST_TO), gen_g.virtual_input_node(), CreateTuple(to_shape)});
-  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(new_broadcast_to, 1)};
-  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
-    std::make_pair(input_nodes, new_broadcast_to));
+  if (!is_dynamic_shape_) {  // static shape
+    Shape to_shape = outputs_tensor_info_[0].slice_shape();
+    auto new_broadcast_to =
+      gen_g.PushBack({gen_g.NewOpInst(BROADCAST_TO), gen_g.virtual_input_node(), CreateTuple(to_shape)});
+    std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(new_broadcast_to, 1)};
+    replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+      std::make_pair(input_nodes, new_broadcast_to));
+    return SUCCESS;
+  }
 
+  // dynamic shape
+  if (!IsPrimitiveCNode(cnode->input(DST_SHAPE_INDEX), prim::kPrimMakeTuple)) {
+    MS_LOG(EXCEPTION) << name_ << ": the dst shape is not make tuple";
+  }
+
+  ChangeMakeTupleConstant(cnode, DST_SHAPE_INDEX);
   return SUCCESS;
 }
 
 ReplaceGraphPtr BroadcastToInfo::replace_graph(const CNodePtr &cnode) {
+  if (is_stand_alone_) {
+    return nullptr;
+  }
   if (ComputeReplaceGraph(cnode) != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": ComputeReplaceGraph failed.";
   }

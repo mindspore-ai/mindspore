@@ -122,6 +122,10 @@ Status GatherInfo::GetManualSplitAttr() {
 }
 
 void GatherInfo::GetBatchDims() noexcept {
+  if (name_.find(INDEX_SELECT) != std::string::npos) {
+    batch_dims_ = 0;
+    return;
+  }
   auto batch_dims_opt = GetScalarValueFromInputs<int64_t>(input_value_, name_, BATCH_DIMS);
   if (batch_dims_opt.has_value()) {
     batch_dims_ = batch_dims_opt.value();
@@ -152,8 +156,13 @@ Status GatherInfo::GetAttrs() {
     return FAILED;
   }
 
-  MS_EXCEPTION_IF_NULL(input_value_[2]);
-  auto value = GetValue<int64_t>(input_value_[2]);
+  size_t axis_index = 2;
+  if (name_.find(INDEX_SELECT) != std::string::npos) {
+    axis_index = 1;
+  }
+
+  MS_EXCEPTION_IF_NULL(input_value_[axis_index]);
+  auto value = GetValue<int64_t>(input_value_[axis_index]);
 
   // get axis, the third input is the axis, is a ValueNode, embeddinglookup doesn't have axis, and its offset.
   if (target_ != CPU) {
@@ -556,10 +565,17 @@ Status ManualImpl::InferReplaceGraph(const CNodePtr &cnode) {
 
   auto sub_node = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(index_offset_)});
   AnfNodePtr gather_v2_node = nullptr;
-  gather_v2_node =
-    gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub_node, CreatInt64Imm(axis_)});
-  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub_node, 2),
-                                                             std::make_pair(gather_v2_node, 1)};
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes;
+  if (name_.find(INDEX_SELECT) != std::string::npos) {
+    gather_v2_node =
+      gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), CreatInt64Imm(axis_), sub_node});
+    input_nodes = {std::make_pair(sub_node, 3), std::make_pair(gather_v2_node, 1)};
+  } else {
+    gather_v2_node =
+      gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub_node, CreatInt64Imm(axis_)});
+    input_nodes = {std::make_pair(sub_node, 2), std::make_pair(gather_v2_node, 1)};
+  }
+
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
     std::make_pair(input_nodes, gather_v2_node));
   return SUCCESS;
@@ -583,11 +599,18 @@ Status GatherManualImpl::InferReplaceGraph(const CNodePtr &cnode) {
 
   auto sub_node = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(index_offset_)});
   AnfNodePtr gather_v2_node = nullptr;
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes;
   // Gather processing.
-  gather_v2_node = gen_g.PushBack(
-    {gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub_node, CreatInt64Imm(axis_), CreatInt64Imm(0)});
-  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub_node, 2),
-                                                             std::make_pair(gather_v2_node, 1)};
+  if (name_.find(INDEX_SELECT) != std::string::npos) {
+    gather_v2_node =
+      gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), CreatInt64Imm(axis_), sub_node});
+    input_nodes = {std::make_pair(sub_node, 3), std::make_pair(gather_v2_node, 1)};
+  } else {
+    gather_v2_node = gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub_node,
+                                     CreatInt64Imm(axis_), CreatInt64Imm(0)});
+    input_nodes = {std::make_pair(sub_node, 2), std::make_pair(gather_v2_node, 1)};
+  }
+
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
     std::make_pair(input_nodes, gather_v2_node));
   return SUCCESS;
@@ -997,7 +1020,10 @@ Status ShardAxisImpl::InferReplaceGraph(const CNodePtr &cnode) {
 
   AnfNodePtr gather_v2{nullptr};
   auto replace_op_name = GetPrimNameFromInfoName(replace_op_name_);
-  if (replace_op_name == GATHERV2) {
+  if (replace_op_name == INDEX_SELECT) {
+    gather_v2 =
+      gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), CreatInt64Imm(axis_), minimum});
+  } else if (replace_op_name == GATHERV2) {
     gather_v2 = gen_g.PushBack(
       {gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), minimum, CreatInt64Imm(axis_), CreatInt64Imm(0)});
   } else {
@@ -1029,6 +1055,9 @@ Status ShardAxisImpl::InferReplaceGraph(const CNodePtr &cnode) {
     reduce_op = gen_g.PushBack({gen_g.NewOpInst(REDUCE_SCATTER, attrs), mul});
   }
   std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub, 2), std::make_pair(gather_v2, 1)};
+  if (replace_op_name == INDEX_SELECT) {
+    input_nodes = {std::make_pair(sub, 3), std::make_pair(gather_v2, 1)};
+  }
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
     std::make_pair(input_nodes, reduce_op));
 
@@ -1423,6 +1452,7 @@ std::shared_ptr<Strategies> GatherInfo::GenerateBatchStrategies() {
 }
 
 REGISTER(GatherInfo);
+REGISTER(IndexSelectInfo);
 REGISTER(SparseGatherV2Info);
 REGISTER(EmbeddingLookupInfo);
 }  // namespace parallel

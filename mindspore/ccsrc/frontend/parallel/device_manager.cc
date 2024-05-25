@@ -409,7 +409,7 @@ std::string DeviceManager::GenerateGroupNameByRanks(RankList ranks) {
     if (group_to_rank_.find(group_name) == group_to_rank_.end()) {
       rank_to_group_[rank_list_name] = group_name;
       group_to_rank_[group_name] = rank_list_name;
-      MS_LOG(INFO) << "The rank list name is " << rank_list_name << "nd group name is " << group_name;
+      MS_LOG(INFO) << "The rank list name is " << rank_list_name << " and group name is " << group_name;
     } else {
       MS_LOG(EXCEPTION) << "Hash collision, the current rank list: " << rank_list_name
                         << "the old rank list:" << group_to_rank_.find(group_name)->second

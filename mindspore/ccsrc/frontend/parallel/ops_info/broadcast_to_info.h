@@ -29,6 +29,7 @@
 
 namespace mindspore {
 namespace parallel {
+constexpr size_t DST_SHAPE_INDEX = 2;
 /*
  * Limitation: Dimensions with size 1 can't be splited.
  */
@@ -44,16 +45,16 @@ class BroadcastToInfo : public OperatorInfo {
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
-  Status GetAttrs() override;
+  Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status ComputeReplaceGraph(const CNodePtr &cnode);
-  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
+  Status InferMirrorOps() override;
 
  private:
-  Shape out_shape_;
+  bool is_stand_alone_ = false;
 };
 }  // namespace parallel
 }  // namespace mindspore

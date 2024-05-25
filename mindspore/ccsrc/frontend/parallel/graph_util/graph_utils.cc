@@ -947,6 +947,10 @@ Status UpdateShapeNode(const CNodePtr &cnode, const FuncGraphPtr &func_graph) {
       MS_LOG(WARNING) << "Won't supply shape for Reshape.";
       continue;
     }
+
+    if (IsTargetOp(shape_user, ZEROS)) {
+      continue;
+    }
     MS_EXCEPTION_IF_CHECK_FAIL(IsTupleGetItem(shape_user),
                                "Only support TupleGetItem here, but got " + GetPrimName(shape_user));
     int64_t index = GetTupleGetItemIndex(shape_user);

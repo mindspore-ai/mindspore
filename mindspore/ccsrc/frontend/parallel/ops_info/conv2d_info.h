@@ -195,7 +195,18 @@ class Conv2DTransposeInfo : public Conv2DBackpropInputInfo {
   ~Conv2DTransposeInfo() override = default;
 };
 
-constexpr size_t IN_CHANNEL_INDEX = 1;
+class ConvolutionInfo : public Conv2DInfo {
+ public:
+  ConvolutionInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                  const PrimitiveAttrs &attrs)
+      : Conv2DInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~ConvolutionInfo() override = default;
+
+ protected:
+  Status GetAttrs() override { return SUCCESS; }
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+};
+
 using Conv2DBackpropInputInfoPtr = std::shared_ptr<Conv2DBackpropInputInfo>;
 }  // namespace parallel
 }  // namespace mindspore
