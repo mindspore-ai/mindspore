@@ -485,7 +485,7 @@ class ReducePatternTree : public PatternTree {
     MS_EXCEPTION_IF_NULL(para_to_ref);
     inner::GraphBuilder gb("");
     // Because an empty Tensor cannot be generated, the second input for the reshape function needs to be a Tuple.
-    auto shape_node = gb.Tuple(origin_root->shape);
+    auto shape_node = gb.Tensor(origin_root->shape);
     (*para_to_ref)['C'] = shape_node;
     (void)para_to_ref->erase('B');
     return para_to_ref;
@@ -662,7 +662,7 @@ class Transpose2PatternTree : public PatternTree {
         return false;
       }
       perm[i] = perm[i] < 0 ? (perm[i] + rank) : perm[i];
-      if (input_shape[perm[i]] > 1) {
+      if (input_shape[perm[i]] != 1) {
         if (perm[i] < prev_non_one_axis) {
           MS_LOG(DEBUG) << "perm[" << i << "] is axis " << perm[i]
                         << ", which is greater than the previous non-one axis " << prev_non_one_axis
@@ -813,6 +813,70 @@ class StridedSlicePatternTree : public PatternTree {
   }
 };
 
+// Transpose(Transpose(A,B),C)=Transpose(A,D)
+class TransposeCombinePatternTree : public PatternTree {
+ public:
+  explicit TransposeCombinePatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~TransposeCombinePatternTree() override = default;
+
+  std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
+                                            const std::shared_ptr<ParaMap> &para_to_ref) const override {
+    /* %0 = Transpose(p, (1, 0, 2))
+     * %1 = Transpose(%0, (0, 2, 1))
+     * --->
+     * %0 = Transpose(p, (1, 2, 0))
+     */
+    MS_EXCEPTION_IF_NULL(para_to_ref);
+    auto perm1_node = (*para_to_ref)['B']->As<inner::ConstTensorNode>();
+    MS_EXCEPTION_IF_NULL(perm1_node);
+    auto perm2_node = (*para_to_ref)['C']->As<inner::ConstTensorNode>();
+    MS_EXCEPTION_IF_NULL(perm1_node);
+    auto perm1 = CheckAndConvertUtils::CheckTensorIntValue("permutation", perm1_node->data(), "Transpose");
+    auto perm2 = CheckAndConvertUtils::CheckTensorIntValue("permutation", perm2_node->data(), "Transpose");
+    auto rank = SizeToLong(origin_root->shape.size());
+    (void)std::for_each(perm1.begin(), perm1.end(), [rank](auto &axis) { axis = axis < 0 ? axis + rank : axis; });
+    (void)std::for_each(perm2.begin(), perm2.end(), [rank](auto &axis) { axis = axis < 0 ? axis + rank : axis; });
+    ShapeVector new_perm(perm2.size());
+    for (size_t i = 0; i < perm2.size(); ++i) {
+      new_perm[i] = perm1[LongToSize(perm2[i])];
+    }
+    inner::GraphBuilder gb("");
+    (*para_to_ref)['D'] = gb.Tensor(new_perm);
+    (void)para_to_ref->erase('B');
+    (void)para_to_ref->erase('C');
+    return para_to_ref;
+  }
+
+ protected:
+  bool CheckInputsAndAttrs(const inner::NodePtr &origin_root) const override {
+    auto perm2 = origin_root->input(1);
+    MS_EXCEPTION_IF_NULL(perm2);
+    auto trans1 = origin_root->input(0);
+    MS_EXCEPTION_IF_NULL(trans1);
+    auto perm1 = trans1->input(1);
+    MS_EXCEPTION_IF_NULL(perm1);
+    auto perm2_tensor = perm2->As<inner::ConstTensorNode>();
+    MS_EXCEPTION_IF_NULL(perm2_tensor);
+    auto perm1_tensor = perm1->As<inner::ConstTensorNode>();
+    MS_EXCEPTION_IF_NULL(perm1_tensor);
+    auto perm1_value = CheckAndConvertUtils::CheckTensorIntValue("permutation", perm2_tensor->data(), "Transpose");
+    auto perm2_value = CheckAndConvertUtils::CheckTensorIntValue("permutation", perm1_tensor->data(), "Transpose");
+    auto shape = origin_root->shape;
+    if (perm2_value.size() != shape.size() || perm1_value.size() != shape.size()) {
+      MS_LOG(DEBUG) << "perm1, perm2 and shape have different size. perm1: " << perm2_value << " perm2: " << perm1_value
+                    << " node shape: " << shape;
+      return false;
+    }
+    return true;
+  }
+
+  mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
+    auto attrs_map = PatternTree::SetAttributes(origin_root);
+    attrs_map[this->rhs_root()] = {{kAttrDstFormat, MakeValue(origin_root->format)}};
+    return attrs_map;
+  }
+};
+
 class FloatCheckPatternTree : public PatternTree {
  public:
   explicit FloatCheckPatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
@@ -953,7 +1017,10 @@ static std::vector<Expression> expressions = {
   {76, "ReduceSum(A,B)=Reshape(A,C)", EXPR_PATTERN(ReducePatternTree)},
   {77, "ReduceMin(A,B)=Reshape(A,C)", EXPR_PATTERN(ReducePatternTree)},
   {78, "ReduceMax(A,B)=Reshape(A,C)", EXPR_PATTERN(ReducePatternTree)},
-  {79, "Cast(A,B)=A", EXPR_PATTERN(CastPatternTree)}};
+  {79, "Cast(A,B)=A", EXPR_PATTERN(CastPatternTree)},
+  // transpose
+  {80, "Transpose(Transpose(A,B),C)=Transpose(A,D)", EXPR_PATTERN(TransposeCombinePatternTree)},
+};
 
 mindspore::HashMap<std::string, std::vector<PatternTreePtr>> GetExpressions() {
   const auto &flags = GraphKernelFlags::GetInstance();
@@ -1062,11 +1129,12 @@ bool ResetOutputs(const inner::LiteGraphPtr &litegraph) {
       auto op_ptr = gb.BroadcastTo(outputs[i], output_shape);
       litegraph->SetOutput(i, op_ptr);
     } else if (outputs[i]->NodeType() == inner::NType::Parameter) {
-      if (IsDynamic(out_shape)) {
+      if (IsDynamicRank(out_shape) ||
+          std::count_if(out_shape.begin(), out_shape.end(), [](int64_t sh) { return sh < 0; }) > 1) {
         return false;
       }
       inner::GraphBuilder gb;
-      auto op_ptr = gb.Reshape(outputs[i], outputs[i]->shape);
+      auto op_ptr = gb.Reshape(outputs[i], out_shape);
       litegraph->SetOutput(i, op_ptr);
     }
   }
@@ -1091,11 +1159,17 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
       inner::LiteGraphPtr lg = GkUtils::AnfGraph2LiteGraph(sub_graph);
       bool find_pattern = true;
       bool change_anf_graph = false;
-      while (find_pattern) {
-        find_pattern = false;
-        find_pattern = DoConstantFold(lg) || find_pattern;
-        find_pattern = DoArithmeticTrans(lg) || find_pattern;
-        change_anf_graph = change_anf_graph || find_pattern;
+      try {
+        while (find_pattern) {
+          find_pattern = false;
+          find_pattern = DoConstantFold(lg) || find_pattern;
+          find_pattern = DoArithmeticTrans(lg) || find_pattern;
+          change_anf_graph = change_anf_graph || find_pattern;
+        }
+      } catch (const std::exception &e) {
+        MS_LOG(INFO) << "During arithmetic simplify for node [" << node->fullname_with_scope()
+                     << "], an error occurs: " << e.what();
+        continue;
       }
       AnfNodePtrList input_nodes{inputs.begin() + 1, inputs.end()};
       if (!change_anf_graph) {

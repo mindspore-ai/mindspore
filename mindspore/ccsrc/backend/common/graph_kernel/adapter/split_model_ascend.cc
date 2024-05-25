@@ -165,7 +165,7 @@ class FuseReduceFwd : public FusePattern {
         continue;
       }
       if (a->pattern() <= NodePattern::BROADCAST) {
-        if (r != EdgeRelation::INJECTIVE && a->user_num() != 1) {
+        if (r != EdgeRelation::INJECTIVE && (a->user_num() != 1 || a->is_output())) {
           continue;
         }
         if (fuse_type_ == FuseType::kWidth && HasCircle(a, dom)) {
@@ -218,7 +218,7 @@ AreaMode SplitModelAscend::GetDefaultAreaMode(const PrimOpPtr &node) const {
     if (node_name == kReshapeOpName || node_name == kAssignOpName) {
       return AreaMode::BASIC;
     }
-    if (node_name == kTransposeOpName && is_dvm_) {
+    if (is_dvm_ && (node_name == kTransposeOpName || node_name == kCastOpName)) {
       return AreaMode::BASIC;
     }
   }

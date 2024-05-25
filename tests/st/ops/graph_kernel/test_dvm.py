@@ -17,10 +17,11 @@ import numpy as np
 import os
 import pytest
 import mindspore.context as context
-from mindspore import Tensor, nn
+from mindspore import Tensor, nn, JitConfig
 import mindspore as ms
 import mindspore.ops as ops
 import mindspore.ops.operations as P
+from tests.st.ops.graph_kernel.gk_utils import AssertGKEnable
 
 ascend_grad_overflow = P.IsFinite()
 
@@ -59,10 +60,11 @@ class ComplexNet(nn.Cell):
 
 def get_output(net, args, args_dyn=None, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
-    net_obj = net()
-    if args_dyn:
-        net_obj.set_inputs(*args_dyn)
-    output = net_obj(*args)
+    with AssertGKEnable(enable_graph_kernel):
+        net_obj = net()
+        if args_dyn:
+            net_obj.set_inputs(*args_dyn)
+        output = net_obj(*args)
     return output
 
 
@@ -85,7 +87,7 @@ def fuse(shape1, shape2, dtype):
     np.testing.assert_allclose(expects[2], outputs[2], 0, 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("shape1, shape2", [((32, 1024), (32, 1024)), ((44, 1, 47, 1), (1, 34, 1, 91))])
@@ -123,7 +125,6 @@ def test_dvm_dynamic_shape():
     Description: test dvm dynamic shape
     Expectation: the result match with expect
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
     np.random.seed(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     x0 = np.random.normal(0, 1, (8, 32)).astype(np.float16)
@@ -136,4 +137,83 @@ def test_dvm_dynamic_shape():
     expect = get_output(Net, args, args_dyn, enable_graph_kernel=False)
     output = get_output(Net, args, args_dyn, enable_graph_kernel=True)
     assert np.allclose(expect[0].asnumpy(), output[0].asnumpy(), 1e-3, 1e-3)
-    del os.environ["GRAPH_OP_RUN"]
+
+
+class NetD(nn.Cell):
+    def __init__(self):
+        super(NetD, self).__init__()
+        self.reshape = ops.Reshape()
+        self.add = ops.Add()
+
+    def construct(self, x0, x1):
+        y0 = self.reshape(x0, (-1, 1))
+        y1 = self.add(y0, x1)
+        return y1
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_dvm_multiple_run():
+    """
+    Feature: dynamic shape test case
+    Description: test dvm dynamic shape with different input shapes
+    Expectation: the result match with expect
+    """
+    np.random.seed(1)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(enable_graph_kernel=True,
+                        graph_kernel_flags="--enable_cluster_ops=Reshape")
+    x0_dyn = Tensor(shape=(None,), dtype=ms.float16)
+    x1_dyn = Tensor(shape=(None,), dtype=ms.float16)
+    x0 = np.random.normal(0, 1, (4,)).astype(np.float16)
+    x1 = np.random.normal(0, 1, (8,)).astype(x0.dtype)
+    x2 = np.random.normal(0, 1, (6,)).astype(np.float16)
+    x3 = np.random.normal(0, 1, (2,)).astype(x2.dtype)
+    with AssertGKEnable(True):
+        net = NetD()
+        net.set_inputs(x0_dyn, x1_dyn)
+        output1 = net(Tensor(x0), Tensor(x1))
+        output1 = output1.asnumpy()
+        output2 = net(Tensor(x2), Tensor(x3))
+        output2 = output2.asnumpy()
+    expect1 = x0.reshape((-1, 1)) + x1
+    expect2 = x2.reshape((-1, 1)) + x3
+    assert np.allclose(expect1, output1, 1e-3, 1e-3)
+    assert np.allclose(expect2, output2, 1e-3, 1e-3)
+
+
+class NetT(nn.Cell):
+    def __init__(self, trans):
+        super(NetT, self).__init__()
+        self.trans = trans
+
+    def construct(self, x0):
+        y0 = ops.Transpose()(x0, self.trans[0])
+        y1 = ops.Transpose()(y0, self.trans[1])
+        return y1
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_dvm_transpose():
+    """
+    Feature: Transpose test case
+    Description: test dvm Transpose optimize
+    Expectation: the result match with expect
+    """
+    np.random.seed(1)
+    enable_graph_kernel = True
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(enable_graph_kernel=enable_graph_kernel,
+                        graph_kernel_flags="--enable_cluster_ops=Transpose")
+    x0 = np.random.normal(0, 1, (16, 32, 16)).astype(np.float16)
+    trans = [(1, 0, 2), (0, 2, 1)]
+    with AssertGKEnable(enable_graph_kernel):
+        net = NetT(trans)
+        net.set_jit_config(JitConfig(jit_level="O1"))
+        output = net(Tensor(x0))
+        output = output.asnumpy()
+    expect = np.transpose(np.transpose(x0, trans[0]), trans[1])
+    assert np.allclose(expect, output, 1e-3, 1e-3)

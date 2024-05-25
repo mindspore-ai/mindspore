@@ -30,7 +30,8 @@ class FloatStatus : public OpDesc {
     if (processor_ == "aicore") {
       auto res1 = gb.Emit("IsFinite", {input_x});
       auto res2 = gb.Emit("LogicalNot", {res1});
-      auto res4 = gb.Emit("ElemAny", {res2}, {{"dst_type", kFloat32}});
+      auto res4 = gb.Emit("ElemAny", {res2},
+                          {{"dst_type", kFloat32}, {"empty_shape", MakeValue(outputs_info_[0].shape.empty())}});
       return {res4};
     }
     auto res1 = gb.IsInf(input_x);

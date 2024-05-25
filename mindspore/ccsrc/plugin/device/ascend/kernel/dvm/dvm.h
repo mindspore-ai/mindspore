@@ -69,8 +69,9 @@ enum KernelType {
   kStaticShape = 0,
   kDynShape,
   kStaticParallel,
+  kStaticMix,
   kEager,
-  kKernelTmplEnd,
+  kKernelTypelEnd,
 };
 
 class NDObject;
@@ -129,10 +130,14 @@ class Kernel {
 
   NDObject *ElemAny(NDObject *input);
 
+  NDObject *MatMul(NDObject *lhs, NDObject *rhs, bool trans_a, bool trans_b);
+
   uint64_t CodeGen();
-  int Launch(void *stream);
-  int Launch(const RelocTable &reloc_table, void **inputs, void **outputs, void *stream);
+  int Launch(void *workspace, void *stream);
+  int Launch(const RelocTable &reloc_table, void **inputs, void **outputs, void *workspace, void *stream);
   int Launch(NDObject **op, int size, void *stream);
+  int MsProfLaunch(const char *op_name, const char *op_fullname, const RelocTable &reloc_table, void **inputs,
+                   void **outputs, void *workspace, void *stream);
 
   ShapeRef *GetShape(NDObject *op) const;
   DType GetDType(NDObject *op) const;

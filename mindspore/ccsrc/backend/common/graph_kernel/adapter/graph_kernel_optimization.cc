@@ -59,7 +59,6 @@
 #include "backend/common/graph_kernel/tensor_inplace.h"
 #include "backend/common/graph_kernel/floatstatus_fusion.h"
 #include "backend/common/graph_kernel/floatstatus_addn_fusion.h"
-#include "backend/common/graph_kernel/parallel_optimizer.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/compact_tensor_liveness.h"
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
@@ -101,6 +100,7 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   // convert input to attr adapter for dyn-shape
   pm->Add(std::make_shared<ConvertFrontEndToGraphKernel>(), OptLevel_1);
 
+  pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
   // Do DependElimination all passes of graphkernel
   pm->Add(std::make_shared<DependElimination>(), OptLevel_1);
 
@@ -116,14 +116,14 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   // Spread the MakeTuple input of UpdateState
   pm->Add(std::make_shared<SpreadUpdateState>(), OptLevel_1);
 
-  // Parallel optimizer by UpdateState reorganization
-  pm->Add(std::make_shared<ParallelOptimizer>(PARALLEL_OPS_LIMIT), OptLevel_2);
-
   // Eliminate the common nodes that generated in SpreadUpdateState
   pm->Add(std::make_shared<GraphKernelCSE>(), OptLevel_1);
 
   // Recognize ops that will be fused by GE
   pm->Add(std::make_shared<RecognizeSoftmaxGradExt>(), OptLevel_1, is_ge);
+
+  // Remove redundant TupleGetItem to enable cluster ops before and after TupleGetItem
+  pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
 
   return pm;
 }
@@ -192,6 +192,8 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
   pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape};
   pm->Add(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
+  // Use symbol to calculate a more precise edge relation between nodes
+  pm->Add(std::make_shared<SymbolEngineBuilder>(false), OptLevel_1);
   // Split kernel according to costmodel
   pm->Add(std::make_shared<GraphKernelSplitterWithPy>(false), OptLevel_1);
   // After Simplify and Splitter, a lot of redundant getitem/maketuple

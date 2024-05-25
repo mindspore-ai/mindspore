@@ -135,6 +135,12 @@ bool DvmSupported(const AnfNodePtr &node) {
                   [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
     return DvmSliceSupported(node, node_output_type);
   }
+  // matmul op
+  static std::vector<PrimitivePtr> matmul_ops{prim::kPrimMatMul, prim::kPrimBatchMatMul};
+  if (std::any_of(matmul_ops.begin(), matmul_ops.end(),
+                  [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
+    return node_output_type == kNumberTypeFloat16 || node_output_type == kNumberTypeBFloat16;
+  }
   // other op
   return dvm_float_types.find(node_output_type) != dvm_float_types.end();
 }
@@ -264,7 +270,7 @@ const std::vector<OpWithLevel> clusterable_ops_with_level_dvm = {
   {kAscendDevice, OpLevel_0, prim::kPrimLogicalOr},    {kAscendDevice, OpLevel_0, prim::kPrimLogicalNot},
   {kAscendDevice, OpLevel_0, prim::kPrimSelect},       {kAscendDevice, OpLevel_0, prim::kPrimAssign},
   {kAscendDevice, OpLevel_0, prim::kPrimReduceSum},    {kAscendDevice, OpLevel_0, prim::kPrimIsFinite},
-  {kAscendDevice, OpLevel_1, prim::kPrimReshape},
+  {kAscendDevice, OpLevel_1, prim::kPrimReshape},      {kAscendDevice, OpLevel_0, prim::kPrimTranspose},
 };
 }  // namespace
 

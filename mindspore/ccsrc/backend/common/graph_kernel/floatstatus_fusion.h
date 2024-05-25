@@ -17,12 +17,21 @@
 #define MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_FLOATSTATUS_FUSION__H_
 
 #include <memory>
+#include <string>
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore::graphkernel {
 /**
  * @brief Fuse IsFinite and its user to FloatStatus
  * @example
+ *  main_graph {
+ *     %1 = IsFinite(%0)
+ *     %2 = ReduceAll(%1)
+ *     %3 = Cast(%2)
+ *     %4 = Sub(1, %3)
+ *     return %4
+ *   }
+ *  or
  *   main_graph {
  *     %1 = IsFinite(%0)
  *     %2 = ReduceAll(%1)
@@ -37,27 +46,82 @@ namespace mindspore::graphkernel {
  *     return %1
  *   }
  */
-class FloatStatusFusion : public opt::PatternProcessPass {
+class FloatStatusBaseFusion : public opt::PatternProcessPass {
  public:
-  explicit FloatStatusFusion(bool multigraph = true)
-      : PatternProcessPass("floatstatus_fusion", multigraph),
+  explicit FloatStatusBaseFusion(const std::string &pass_name, bool multigraph = true)
+      : PatternProcessPass(pass_name, multigraph),
         input_{std::make_shared<Var>()},
         axis_{std::make_shared<Var>()},
         keep_dims_{std::make_shared<Var>()},
         type_{std::make_shared<Var>()},
-        s_{std::make_shared<Var>()},
-        to_shape_{std::make_shared<Var>()} {}
-  ~FloatStatusFusion() override = default;
+        s_{std::make_shared<Var>()} {}
+  ~FloatStatusBaseFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
 
- private:
+ protected:
   VarPtr input_;
   VarPtr axis_;
   VarPtr keep_dims_;
   VarPtr type_;
   VarPtr s_;
+};
+
+class FloatStatusReshapeFusion : public FloatStatusBaseFusion {
+ public:
+  explicit FloatStatusReshapeFusion(const std::string &pass_name, bool multigraph = true)
+      : FloatStatusBaseFusion(pass_name, multigraph), to_shape_{std::make_shared<Var>()} {}
+  ~FloatStatusReshapeFusion() override = default;
+  const BaseRef DefinePattern() const override;
+
+ private:
   VarPtr to_shape_;
+};
+
+class CastFloatStatusBaseFusion : public FloatStatusBaseFusion {
+ public:
+  explicit CastFloatStatusBaseFusion(const std::string &pass_name, bool multigraph = true)
+      : FloatStatusBaseFusion(pass_name, multigraph), type_fp32_{std::make_shared<Var>()} {}
+  ~CastFloatStatusBaseFusion() override = default;
+  const BaseRef DefinePattern() const override;
+
+ private:
+  VarPtr type_fp32_;
+};
+
+class CastFloatStatusReshapeFusion : public CastFloatStatusBaseFusion {
+ public:
+  explicit CastFloatStatusReshapeFusion(const std::string &pass_name, bool multigraph = true)
+      : CastFloatStatusBaseFusion(pass_name, multigraph), to_shape_{std::make_shared<Var>()} {}
+  ~CastFloatStatusReshapeFusion() override = default;
+  const BaseRef DefinePattern() const override;
+
+ private:
+  VarPtr to_shape_;
+};
+
+class FloatStatusFusion : public opt::Pass {
+ public:
+  FloatStatusFusion() : Pass("floatstatus_fusion") {
+    cast_floatstatus_reshape_ = std::make_shared<CastFloatStatusReshapeFusion>("cast_floatstatus_reshape_fusion");
+    cast_floatstatus_base_ = std::make_shared<CastFloatStatusBaseFusion>("cast_floatstatus_base_fusion");
+    floatstatus_reshape_ = std::make_shared<FloatStatusReshapeFusion>("floatstatus_reshape_fusion");
+    floatstatus_base_ = std::make_shared<FloatStatusBaseFusion>("floatstatus_base_fusion");
+  }
+  ~FloatStatusFusion() override = default;
+  bool Run(const FuncGraphPtr &func_graph) override {
+    cast_floatstatus_reshape_->Run(func_graph);
+    cast_floatstatus_base_->Run(func_graph);
+    floatstatus_reshape_->Run(func_graph);
+    floatstatus_base_->Run(func_graph);
+    return true;
+  }
+
+ private:
+  opt::PassPtr cast_floatstatus_reshape_;
+  opt::PassPtr cast_floatstatus_base_;
+  opt::PassPtr floatstatus_reshape_;
+  opt::PassPtr floatstatus_base_;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_FLOATSTATUS_FUSION__H_

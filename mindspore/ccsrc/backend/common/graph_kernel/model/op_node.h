@@ -204,7 +204,13 @@ class ElemAnyOp : public OpaqueOp {
   ~ElemAnyOp() = default;
 
  protected:
-  std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &) override { return {{1}}; }
+  std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &attrs) override {
+    auto iter = attrs.find("empty_shape");
+    if (iter != attrs.end() && GetValue<bool>(iter->second) == true) {
+      return {{}};
+    }
+    return {{1}};
+  }
   std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) override { return {TypeId::kNumberTypeFloat32}; }
 };
 

@@ -28,6 +28,7 @@
 #include "utils/shape_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/visible.h"
+#include "mindspore/core/symbolic_shape/symbol.h"
 
 namespace mindspore::graphkernel::inner {
 enum class NType {
@@ -48,6 +49,7 @@ struct BACKEND_EXPORT NodeBase {
   DShape shape;
   TypeId type;
   DFormat format;
+  ListSymbolPtr symbolic_shape{nullptr};
 };
 using NodeBaseList = std::vector<NodeBase>;
 

@@ -84,6 +84,7 @@ class Area : public std::enable_shared_from_this<Area> {
   const std::vector<PrimOpPtr> &ops() const { return ops_; }
   bool is_output() const { return is_output_; }
   int64_t compute_size() const;
+  bool ComputeSizeEqual(const AreaPtr &other) const;
 
   // check whether the area is alive(true) or is fused(false)
   bool IsAlive() const { return !ops_.empty(); }

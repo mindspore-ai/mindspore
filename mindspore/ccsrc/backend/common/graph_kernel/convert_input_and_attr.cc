@@ -215,7 +215,7 @@ bool ConvertFrontEndToGraphKernel::Process(const CNodePtr &cnode, const ops::OpD
     cnode->set_inputs(new_inputs);
     auto cb = Callback::Instance();
     MS_EXCEPTION_IF_NULL(cb);
-    cb->ResetKernelInfoInputs(cnode, false);
+    cb->ResetKernelInfoInputs(cnode, {});
   }
   return changed;
 }
@@ -253,22 +253,12 @@ void ConvertGraphKernelToFrontEnd::AddAttrToInput(const CNodePtr &cnode, const s
                                                   const std::string &arg_handler, const PrimitivePtr &primitive,
                                                   size_t pos) {
   auto value = primitive->GetAttr(arg_name);
-  ValueNodePtr value_node;
   if (!arg_handler.empty()) {
     auto opp_arg_handler_func = GetOppArgHandlerFunc(arg_handler);
     MS_EXCEPTION_IF_NULL(opp_arg_handler_func);
     value = opp_arg_handler_func(value);
-    value_node = std::make_shared<ValueNode>(value);
-  } else if (value->isa<Int64Imm>()) {
-    auto tensor_ptr = std::make_shared<tensor::Tensor>(GetValue<int64_t>(value), kInt64);
-    value_node = std::make_shared<ValueNode>(tensor_ptr);
-  } else {
-    value_node = std::make_shared<ValueNode>(value);
   }
-  value_node->set_abstract(value->ToAbstract());
-  auto cb = Callback::Instance();
-  MS_EXCEPTION_IF_NULL(cb);
-  cb->SetEmptyKernelInfo(value_node);
+  auto value_node = opt::CreateValueNodeWithKernelInfo(cnode->func_graph(), value);
   auto inputs = cnode->inputs();
   inputs.insert(inputs.begin() + pos, value_node);
   cnode->set_inputs(inputs);
@@ -313,7 +303,6 @@ bool ConvertGraphKernelToFrontEnd::Process(const AnfNodePtr &node) {
     return false;
   }
   const auto &op_def_args = op_def->args_;
-  bool changed = false;
 
   // 1. Convert attr to input.
   auto cnode = node->cast<CNodePtr>();
@@ -324,6 +313,7 @@ bool ConvertGraphKernelToFrontEnd::Process(const AnfNodePtr &node) {
                  << "op_def_args.size():" << op_def_args.size();
   }
 
+  std::vector<size_t> update_indices;
   for (auto i = ori_input_size; i < op_def_args.size(); i++) {
     // as_init_arg_ == 1 indicate the arg need convert
     if (op_def_args[i].as_init_arg_ != 1) {
@@ -333,7 +323,7 @@ bool ConvertGraphKernelToFrontEnd::Process(const AnfNodePtr &node) {
     MS_LOG(DEBUG) << cnode->DebugString() << " convert attr [" << op_def_args[i].arg_name_ << "] to input: " << i;
     ConvertGraphKernelToFrontEnd::AddAttrToInput(cnode, op_def_args[i].arg_name_, op_def_args[i].arg_handler_,
                                                  primitive, i + 1);
-    changed = true;
+    (void)update_indices.emplace_back(i + 1);
   }
 
   // 2. Convert inputs type.
@@ -342,15 +332,15 @@ bool ConvertGraphKernelToFrontEnd::Process(const AnfNodePtr &node) {
     auto indices = obj_map_iter->second;
     for (auto idx : indices) {
       if (ConvertGraphKernelToFrontEnd::ConvertInputsType(cnode, idx, op_def_args[idx - 1].arg_dtype_)) {
-        changed = true;
+        (void)update_indices.emplace_back(idx);
       }
     }
   }
-
+  bool changed = !update_indices.empty();
   if (changed) {
     auto cb = Callback::Instance();
     MS_EXCEPTION_IF_NULL(cb);
-    cb->ResetKernelInfoInputs(cnode, false);
+    cb->ResetKernelInfoInputs(cnode, update_indices);
   }
   return changed;
 }

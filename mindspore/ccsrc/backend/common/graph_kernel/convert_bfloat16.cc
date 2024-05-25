@@ -120,6 +120,15 @@ AnfNodePtr NewCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_n
   }
   return cast_node;
 }
+
+// {prim_name, {inputs_keep_index}}
+const HashMap<std::string, std::vector<size_t>> kNeedKeepBF16Ops = {
+  {ops::kNameAssign, {kIndex2}}, {ops::kNameMatMul, {kIndex1, kIndex2}}, {ops::kNameBatchMatMul, {kIndex1, kIndex2}}};
+
+inline bool NeedKeepBF16(const CNodePtr &cnode) {
+  const auto &prim = GetCNodePrimitive(cnode);
+  return prim != nullptr && kNeedKeepBF16Ops.find(prim->name()) != kNeedKeepBF16Ops.end();
+}
 }  // namespace
 
 AnfNodePtr ConvertBFloat16::GetCastedInput(const AnfNodePtr &input_node, TypeId dst_type,
@@ -193,16 +202,20 @@ void ConvertBFloat16::CastInput(const CNodePtr &cnode, size_t input_idx, const F
   }
 }
 
-void ConvertBFloat16::CacheOutputs(const FuncGraphPtr &func_graph) {
-  output_nodes_.clear();
+void ConvertBFloat16::GetKeepBF16Nodes(const FuncGraphPtr &func_graph) {
+  keep_bf16_nodes_.clear();
   auto nodes = TopoSort(func_graph->get_return());
   for (auto node : nodes) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode == nullptr) {
       continue;
     }
-    if (IsPrimitiveCNode(node, prim::kPrimAssign)) {
-      output_nodes_[cnode->input(kIndex2)] = std::make_pair(cnode, kIndex2);
+    if (NeedKeepBF16(cnode)) {
+      // As NeedKeepBF16(cnode), value of GetCNodePrimitive(cnode) is not a nullptr
+      auto prim_name = GetCNodePrimitive(cnode)->name();
+      for (const auto &input_index : kNeedKeepBF16Ops.at(prim_name)) {
+        keep_bf16_nodes_[cnode->input(input_index)] = std::make_pair(cnode, input_index);
+      }
     } else if (IsPrimitiveCNode(node, prim::kPrimReturn)) {
       auto ret_input = cnode->input(1);
       MS_EXCEPTION_IF_NULL(ret_input);
@@ -211,12 +224,12 @@ void ConvertBFloat16::CacheOutputs(const FuncGraphPtr &func_graph) {
         last_node_ = ret_input->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(last_node_);
         for (size_t i = 1; i < last_node_->size(); ++i) {
-          output_nodes_[last_node_->input(i)] = std::make_pair(last_node_, i);
+          keep_bf16_nodes_[last_node_->input(i)] = std::make_pair(last_node_, i);
         }
       } else {
         // single output
         last_node_ = cnode;
-        output_nodes_[ret_input] = std::make_pair(last_node_, 1);
+        keep_bf16_nodes_[ret_input] = std::make_pair(last_node_, 1);
       }
     }
   }
@@ -224,7 +237,7 @@ void ConvertBFloat16::CacheOutputs(const FuncGraphPtr &func_graph) {
 
 bool ConvertBFloat16::Process(const FuncGraphPtr &func_graph) {
   cast_nodes_.clear();
-  CacheOutputs(func_graph);
+  GetKeepBF16Nodes(func_graph);
   auto mng = func_graph->manager();
   if (mng == nullptr) {
     mng = Manage(func_graph, true);
@@ -236,7 +249,7 @@ bool ConvertBFloat16::Process(const FuncGraphPtr &func_graph) {
   auto nodes = TopoSort(func_graph->get_return());
   for (auto node : nodes) {
     auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr || IsPrimitiveCNode(node, prim::kPrimAssign)) {
+    if (cnode == nullptr || NeedKeepBF16(cnode)) {
       continue;
     }
     if (cnode == last_node_) {
@@ -274,8 +287,8 @@ bool ConvertBFloat16::Process(const FuncGraphPtr &func_graph) {
     UpdateBuildInfoOutputDataType(node, kNumberTypeBFloat16, kNumberTypeFloat32);
     // add cast for current node if it is output node
     auto cur_output_type = cb->GetOutputType(node, 0);
-    auto iter = output_nodes_.find(node);
-    if (iter != output_nodes_.end() && cur_output_type != orig_output_type) {
+    auto iter = keep_bf16_nodes_.find(node);
+    if (iter != keep_bf16_nodes_.end() && cur_output_type != orig_output_type) {
       auto new_cast_node = NewCastNode(func_graph, node, orig_output_type);
       auto user_node = iter->second.first;
       user_node->set_input(iter->second.second, new_cast_node);

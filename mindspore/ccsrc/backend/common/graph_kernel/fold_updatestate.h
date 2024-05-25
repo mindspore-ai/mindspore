@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_PARALLELIZE_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_PARALLELIZE_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_FOLD_UPDATESTATES_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_FOLD_UPDATESTATES_H_
 #include "include/backend/optimizer/pass.h"
 
 namespace mindspore::graphkernel {
@@ -34,9 +34,9 @@ namespace mindspore::graphkernel {
  */
 class FoldUpdateState : public opt::Pass {
  public:
-  FoldUpdateState() : Pass("graph_kernel_parallelize") {}
+  FoldUpdateState() : Pass("fold_updatestates") {}
   ~FoldUpdateState() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_PARALLELIZE_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_FOLD_UPDATESTATES_H_

@@ -37,6 +37,7 @@ void Node::SetBaseInfo(const NodeBaseList &baseinfo) {
   this->shape = baseinfo[0].shape;
   this->type = baseinfo[0].type;
   this->format = baseinfo[0].format;
+  this->symbolic_shape = baseinfo[0].symbolic_shape;
   if (baseinfo.size() > 1) {
     outputs_ = baseinfo;
   }

@@ -24,23 +24,38 @@
 #include "mindspore/core/ops/math_ops.h"
 
 namespace mindspore::graphkernel {
-const BaseRef FloatStatusFusion::DefinePattern() const {
+const BaseRef FloatStatusBaseFusion::DefinePattern() const {
   VectorRef is_finite = VectorRef({prim::kPrimIsFinite, input_});
   VectorRef reduce = VectorRef({prim::kPrimReduceAll, is_finite, axis_, keep_dims_});
   VectorRef cast = VectorRef({prim::kPrimCast, reduce, type_});
   VectorRef sub = VectorRef({prim::kPrimSub, s_, cast});
-  return VectorRef({prim::kPrimReshape, sub, to_shape_});
+  return sub;
 }
 
-const AnfNodePtr FloatStatusFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                            const EquivPtr &equiv) const {
-  auto shape_node = opt::GetAnfNodeByVar(equiv, to_shape_);
+const BaseRef FloatStatusReshapeFusion::DefinePattern() const {
+  return VectorRef({prim::kPrimReshape, FloatStatusBaseFusion::DefinePattern(), to_shape_});
+}
+
+const BaseRef CastFloatStatusBaseFusion::DefinePattern() const {
+  VectorRef cast_tmp = VectorRef({prim::kPrimCast, input_, type_fp32_});
+  VectorRef is_finite = VectorRef({prim::kPrimIsFinite, cast_tmp});
+  VectorRef reduce = VectorRef({prim::kPrimReduceAll, is_finite, axis_, keep_dims_});
+  VectorRef cast = VectorRef({prim::kPrimCast, reduce, type_});
+  VectorRef sub = VectorRef({prim::kPrimSub, s_, cast});
+  return sub;
+}
+
+const BaseRef CastFloatStatusReshapeFusion::DefinePattern() const {
+  return VectorRef({prim::kPrimReshape, CastFloatStatusBaseFusion::DefinePattern(), to_shape_});
+}
+
+const AnfNodePtr FloatStatusBaseFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                const EquivPtr &equiv) const {
   auto input_node = opt::GetAnfNodeByVar(equiv, input_);
   auto axis_node = opt::GetAnfNodeByVar(equiv, axis_);
-  if (!shape_node->isa<ValueNode>() || !axis_node->isa<ValueNode>()) {
+  if (!axis_node->isa<ValueNode>()) {
     return nullptr;
   }
-  auto shape_vector = GetValue<ShapeVector>(shape_node->cast<ValueNodePtr>()->value());
   auto axis_value = axis_node->cast<ValueNodePtr>()->value();
   ShapeVector axis_vector;
   if (axis_value->isa<tensor::Tensor>()) {
@@ -56,9 +71,6 @@ const AnfNodePtr FloatStatusFusion::Process(const FuncGraphPtr &func_graph, cons
       return nullptr;
     }
   }
-  if (shape_vector != ShapeVector({1})) {
-    return nullptr;
-  }
   auto input_type = AnfAlgo::GetOutputDeviceDataType(input_node, 0);
   auto output_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
   if (input_type != output_type || output_type != kNumberTypeFloat32) {
@@ -68,7 +80,9 @@ const AnfNodePtr FloatStatusFusion::Process(const FuncGraphPtr &func_graph, cons
   if (!s_node->isa<ValueNode>()) {
     return nullptr;
   }
-  auto s_value = TensorValueToVector<float>(s_node->cast<ValueNodePtr>()->value()->cast<tensor::TensorPtr>())[0];
+  auto value = s_node->cast<ValueNodePtr>()->value();
+  MS_EXCEPTION_IF_NULL(value);
+  auto s_value = TensorValueToVector<float>(value->cast<tensor::TensorPtr>())[0];
   if (s_value != 1) {
     return nullptr;
   }

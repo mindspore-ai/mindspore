@@ -73,22 +73,6 @@ void GetTypeAndFormats(const device::KernelWithIndex &kernel_with_index, std::ve
   }
   (void)input_formats->emplace_back(kOpFormat_DEFAULT);
 }
-
-template <typename T>
-void UpdateToOriginalBuildInfo(const AnfNodePtr &node, std::vector<T> *cur_info, std::vector<T> *orig_info) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(cur_info);
-  MS_EXCEPTION_IF_NULL(orig_info);
-  for (size_t i = 0; i < std::min(cur_info->size(), orig_info->size()); ++i) {
-    auto &cur_value = (*cur_info)[i];
-    auto orig_value = (*orig_info)[i];
-    if (cur_value != orig_value) {
-      MS_LOG(INFO) << "Update node[" << node->fullname_with_scope() << "] input[" << i << "] " << cur_value << " --> "
-                   << orig_value;
-      cur_value = orig_value;
-    }
-  }
-}
 }  // namespace
 
 GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImpl);
@@ -263,7 +247,7 @@ void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vec
   AnfAlgo::SetSelectKernelBuildInfo(selected_info, node.get());
 }
 
-void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node, bool overwrite) {
+void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node, const std::vector<size_t> &indices) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   if (kernel_info == nullptr) {
@@ -281,19 +265,20 @@ void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node, bool overwrite)
   std::vector<kernel::KernelObjectType> input_obj_type;
   std::vector<kernel::KernelObjectType> output_obj_type;
   auto cnode = node->cast<CNodePtr>();
-  if (cnode != nullptr) {
+  if (cnode) {
     auto &inputs = cnode->inputs();
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      CollectInputTypesAndFormats(inputs[i], &input_types, &input_formats, true);
-    }
+    std::vector<bool> visited(inputs.size(), false);
+    std::for_each(indices.begin(), indices.end(), [&visited](size_t index) { visited[index] = true; });
     opt::GenerateKernelObjectTypeForNewCNode(cnode, &input_obj_type, &output_obj_type);
-    if (!overwrite) {
-      auto orig_input_formats = build_info->GetAllInputFormats();
-      auto orig_input_types = build_info->GetAllInputDeviceTypes();
-      auto orig_input_obj_type = build_info->GetAllInputKernelObjectTypes();
-      UpdateToOriginalBuildInfo(node, &input_formats, &orig_input_formats);
-      UpdateToOriginalBuildInfo(node, &input_types, &orig_input_types);
-      UpdateToOriginalBuildInfo(node, &input_obj_type, &orig_input_obj_type);
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      if (visited[i]) {
+        CollectInputTypesAndFormats(inputs[i], &input_types, &input_formats, true);
+      } else {
+        auto input_idx = i - 1;
+        input_types.emplace_back(build_info->GetInputDeviceType(input_idx));
+        input_formats.emplace_back(build_info->GetInputFormat(input_idx));
+        input_obj_type[input_idx] = build_info->GetInputKernelObjectType(input_idx);
+      }
     }
   }
   auto input_num = AnfUtils::GetInputTensorNum(cnode);
@@ -369,7 +354,9 @@ void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
   }
   if (need_convert) {
     ori_cnode->set_kernel_info(cnode->kernel_info_ptr());
-    ResetKernelInfoInputs(ori_cnode, true);
+    std::vector<size_t> indices(ori_cnode->inputs().size());
+    std::iota(indices.begin(), indices.end(), kIndex0);
+    ResetKernelInfoInputs(ori_cnode, indices);
   }
 }
 
