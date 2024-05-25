@@ -464,6 +464,7 @@ from .nn_func import (
     max_pool2d,
     max_pool3d,
     batch_norm,
+    batch_norm_ext,
     rms_norm,
     bidense,
     celu,

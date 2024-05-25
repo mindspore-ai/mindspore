@@ -1675,6 +1675,35 @@ REG_BPROP_BUILDER("InstanceNorm").SetUnusedInputs({i2, i3, i4}).SetBody(BODYFUNC
   return {dx, dgamma, dbeta, ib->OutZeros(mean), ib->OutZeros(variance)};
 });
 
+REG_BPROP_BUILDER("BatchNormExt").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto weight = ib->GetInput(kIndex1);
+  auto bias = ib->GetInput(kIndex2);
+  auto running_mean = ib->GetInput(kIndex3);
+  auto running_var = ib->GetInput(kIndex4);
+  auto training = ib->GetInput(kIndex5);
+  auto momentum = ib->GetInput(kIndex6);
+  auto eps = ib->GetInput(kIndex7);
+  auto out = ib->GetInput(kIndex8);
+  auto dout = ib->GetInput(kIndex9);
+  auto is_training_value_ptr = training->BuildValue();
+  auto result = ib->Emit("BatchNormGradExt",
+                         {ib->TupleGetItem(dout, 0), x, weight, running_mean, running_var, ib->TupleGetItem(out, 1),
+                          ib->TupleGetItem(out, 2), training, eps},
+                         {});
+  auto d_x = x->need_compute_grad_out() ? ib->TupleGetItem(result, 0) : ib->OutZeros(x);
+  auto d_weight = weight->need_compute_grad_out() ? ib->TupleGetItem(result, 1) : ib->OutZeros(weight);
+  auto d_bias = bias->need_compute_grad_out() ? ib->TupleGetItem(result, 2) : ib->OutZeros(bias);
+  return {d_x,
+          d_weight,
+          d_bias,
+          ib->OutZeros(running_mean),
+          ib->OutZeros(running_var),
+          ib->OutZeros(training),
+          ib->OutZeros(momentum),
+          ib->OutZeros(eps)};
+});
+
 REG_BPROP_BUILDER("BatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto scale = ib->GetInput(kIndex1);
@@ -1691,9 +1720,9 @@ REG_BPROP_BUILDER("BatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   NodePtr saved_mean{nullptr};
   NodePtr saved_variance{nullptr};
   auto is_training_value_ptr = is_training->BuildValue();
-  if (!is_training_value_ptr->isa<ValueAny>()) {
-    auto is_traing_value = GetValue<bool>(is_training_value_ptr);
-    if (is_traing_value) {
+  auto training_value_opt = ops::GetScalarValue<bool>(is_training_value_ptr);
+  if (training_value_opt.has_value()) {
+    if (training_value_opt.value()) {
       saved_mean = ib->TupleGetItem(out, 3);
       saved_variance = ib->TupleGetItem(out, 4);
     } else {
@@ -1729,6 +1758,61 @@ REG_BPROP_BUILDER("BatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
           ib->OutZeros(epsilon),
           ib->OutZeros(momentum),
           ib->OutZeros(data_format)};
+});
+
+REG_BPROP_BUILDER("BatchNormGradExt").SetUnusedInputs({i3, i4, i9}).SetBody(BODYFUNC(ib) {
+  auto dy = ib->GetInput(kIndex0);
+  auto x = ib->GetInput(kIndex1);
+  auto weight = ib->GetInput(kIndex2);
+  auto running_mean = ib->GetInput(kIndex3);
+  auto running_var = ib->GetInput(kIndex4);
+  auto saved_mean = ib->GetInput(kIndex5);
+  auto saved_rstd = ib->GetInput(kIndex6);
+  auto training = ib->GetInput(kIndex7);
+  auto eps = ib->GetInput(kIndex8);
+  auto dout = ib->GetInput(kIndex10);
+  auto format = ib->EmitValue(MakeValue<int64_t>(Format::NCHW));
+
+  NodePtr mean{nullptr};
+  NodePtr var{nullptr};
+  auto training_value_ptr = training->BuildValue();
+  auto training_value_opt = ops::GetScalarValue<bool>(training_value_ptr);
+  if (training_value_opt.has_value()) {
+    if (training_value_opt.value()) {
+      mean = saved_mean;
+      var = saved_rstd;
+    } else {
+      mean = running_mean;
+      var = running_var;
+    }
+  } else {
+    auto cond_out = ib->Conditional(
+      training,
+      [&saved_mean, &saved_rstd](Emitter *e) -> NodePtrList {
+        return {saved_mean, saved_rstd};
+      },
+      [&running_mean, &running_var](Emitter *e) -> NodePtrList {
+        return {running_mean, running_var};
+      });
+    mean = ib->TupleGetItem(cond_out, 0);
+    var = ib->TupleGetItem(cond_out, 1);
+  }
+
+  auto tmp =
+    ib->Emit("BatchNormGradGrad", {x, dy, weight, mean, var, ib->TupleGetItem(dout, 0), ib->TupleGetItem(dout, 1),
+                                   ib->TupleGetItem(dout, 2), training, eps, format});
+  auto dx = ib->TupleGetItem(tmp, 0);
+  auto ddy = ib->TupleGetItem(tmp, 1);
+  auto dweight = ib->TupleGetItem(tmp, 2);
+  return {ddy,
+          dx,
+          dweight,
+          ib->OutZeros(running_mean),
+          ib->OutZeros(running_var),
+          ib->OutZeros(saved_mean),
+          ib->OutZeros(saved_rstd),
+          ib->OutZeros(training),
+          ib->OutZeros(eps)};
 });
 
 REG_BPROP_BUILDER("BatchNormGrad").SetUnusedInputs({i5, i9}).SetBody(BODYFUNC(ib) {
