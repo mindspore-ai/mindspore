@@ -120,8 +120,16 @@ SymbolPtr ConstValueToSymbol(const ValuePtr &v) {
     if (type_ptr->type_id() == kObjectTypeString) {
       return StrSymbol::Make(ops::GetScalarValue<std::string>(v).value());
     }
-    auto value = CheckAndConvertUtils::CheckTensorIntValue(v->ToString(), v, "ConstSymbolicValue", type_ptr);
-    return IntValues2Symbol(value);
+    if (type_ptr->type_id() == kNumberTypeInt64) {
+      return IntSymbol::Make(ops::GetScalarValue<int64_t>(v).value());
+    }
+    if (type_ptr->type_id() == kNumberTypeInt32) {
+      return IntSymbol::Make(static_cast<int64_t>(ops::GetScalarValue<int32_t>(v).value()));
+    }
+    auto value_opt = ops::GetArrayValue<int64_t>(v);
+    if (value_opt.has_value()) {
+      return IntValues2Symbol(value_opt.value().ToVector());
+    }
   }
   MS_LOG(EXCEPTION)
     << "Value should be one of {ValueSequence, Tensor, IntegerImm, BoolImm, FloatImm, StringImm}, but got "
@@ -153,36 +161,6 @@ ShapeVector ToShape(const Symbol *symbol) {
     return int_smbl->value();
   });
   return shape;
-}
-
-ValuePtr SymbolToValue(const Symbol *symbol) {
-  if (!symbol->HasData()) {
-    return kValueAny;
-  }
-  if (symbol->is<IntSymbol>()) {
-    return MakeValue<int64_t>(symbol->as<IntSymbol>()->value());
-  }
-  if (symbol->is<BoolSymbol>()) {
-    return MakeValue<bool>(symbol->as<BoolSymbol>()->value());
-  }
-  if (symbol->is<FloatSymbol>()) {
-    return MakeValue<double>(symbol->as<FloatSymbol>()->value());
-  }
-  if (symbol->is<StrSymbol>()) {
-    return MakeValue<std::string>(symbol->as<StrSymbol>()->value());
-  }
-  if (symbol->is<ListSymbol>()) {
-    auto list_shape = symbol->as<ListSymbol>();
-    if (!list_shape->AllHaveData()) {
-      return kValueAny;
-    }
-    ValuePtrList res;
-    res.reserve(list_shape->size());
-    (void)std::transform(list_shape->symbols().cbegin(), list_shape->symbols().cend(), std::back_inserter(res),
-                         [](const SymbolPtr &s) { return SymbolToValue(s.get()); });
-    return std::make_shared<ValueTuple>(std::move(res));
-  }
-  return kValueAny;
 }
 
 SymbolPtr ShapeVector2Symbol(const ShapeVector &shape, const OpPtr &op) {
@@ -271,7 +249,7 @@ ValuePtr QueryValue(const AbstractBasePtr &abs) {
     auto value = abs->GetValue();
     return value != nullptr ? value : kValueAny;
   }
-  return SymbolToValue(symbolic_value.get());
+  return symbolic_value->ToValue();
 }
 }  // namespace symshape
 }  // namespace mindspore

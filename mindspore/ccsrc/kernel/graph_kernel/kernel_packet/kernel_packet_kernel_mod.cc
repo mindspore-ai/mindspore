@@ -29,222 +29,136 @@
 #include "mindspore/core/symbolic_shape/utils.h"
 #include "mindspore/core/symbolic_shape/symbol_engine.h"
 #include "abstract/abstract_value.h"
+#include "kernel/graph_kernel/kernel_packet/kernel_packet_infer_functor.h"
 
 namespace mindspore::kernel {
-constexpr size_t kShapeTypeSize = sizeof(int64_t);
-
-bool kernelpacket::Init(KernelPacketInner *kernel_packet, const CNodePtr &real_node) {
+bool KernelPacketInitializer::InitKernel(const CNodePtr &real_node, const KernelModPtr &real_kernel_mod,
+                                         KernelPacketKernelMod *packet_kernel_mod, KernelPacketInfer *infer) {
   MS_EXCEPTION_IF_NULL(real_node);
-  kernel_packet->real_node_name_ = real_node->DebugString();
+  packet_kernel_mod->real_node_debug_str_ = real_node->DebugString();
   FuncGraphPtr func_graph = real_node->func_graph();
   if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Empty func_graph of " << kernel_packet->real_node_name_;
+    MS_LOG(ERROR) << "Empty func_graph of " << packet_kernel_mod->real_node_debug_str_;
     return false;
   }
   auto symbol_engine = func_graph->symbol_engine();
   if (symbol_engine == nullptr) {
-    MS_LOG(ERROR) << "Empty symbol engine of func_graph of " << kernel_packet->real_node_name_;
+    MS_LOG(ERROR) << "Empty symbol engine of func_graph of " << packet_kernel_mod->real_node_debug_str_;
     return false;
   }
-  auto kernel_inputs = AnfAlgo::GetOrCreateAllInputKernelTensors(real_node);
-  kernel_packet->inputs_cache_.reserve(kernel_inputs.size());
-  for (auto kernel_input : kernel_inputs) {
-    auto input = std::make_shared<KernelTensor>(*kernel_input);
-    kernel_packet->inputs_cache_.push_back(std::move(input));
-  }
-  kernel_packet->input_shape_map_.clear();
-  auto outer_inputs = func_graph->parameters();
-  // initialize input index and workspace index
-  for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(real_node); ++i) {
-    MS_LOG(DEBUG) << "Input " << i << " :";
-    auto [prev_node, prev_out_idx] = common::AnfAlgo::GetPrevNodeOutput(real_node, i);
-    MS_LOG(DEBUG) << prev_out_idx << "th output of " << prev_node->DebugString();
+  size_t input_tensor_num = common::AnfAlgo::GetInputTensorNum(real_node);
+  packet_kernel_mod->inputs_cache_.reserve(input_tensor_num);
+  infer->SetInnerInputNum(input_tensor_num);
+  packet_kernel_mod->host_value_cache_.clear();
+  packet_kernel_mod->host_value_cache_.resize(input_tensor_num);
+  auto &outer_inputs = func_graph->parameters();
+  for (size_t i = 0; i < input_tensor_num; i++) {
+    auto prev_node = real_node->input(i + 1);
+    auto abs = prev_node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    MS_LOG(DEBUG) << "The realnode " << real_node->DebugString() << " input[" << i << "] is "
+                  << prev_node->DebugString();
+    auto value = abs->GetValue();
     auto iter = std::find(outer_inputs.begin(), outer_inputs.end(), prev_node);
     if (iter != outer_inputs.end()) {
-      kernel_packet->input_map_[i] = static_cast<size_t>(iter - outer_inputs.begin());
+      packet_kernel_mod->input_map_[i] = static_cast<size_t>(iter - outer_inputs.begin());
+    } else if (value == nullptr || value->isa<ValueAny>()) {
+      infer->SetInnerInput(i, prev_node->abstract());
     } else {
-      // Skip value node
-      if (!symbol_engine->IsDependValue(prev_node)) {
-        auto value_node = prev_node->cast<ValueNodePtr>();
-        if (value_node == nullptr) {
-          MS_LOG(ERROR) << "The " << i << "th input of " << kernel_packet->real_node_name_
-                        << " is not one of [outer input, depend on value, value node]";
-          return false;
-        }
-        if (value_node->value()->isa<ValueAny>()) {
-          MS_LOG(ERROR) << "Value any in " << i << "th input of " << kernel_packet->real_node_name_;
-          return false;
-        }
-        continue;
-      }
-      auto abs = prev_node->abstract();
-      if (abs == nullptr) {
-        MS_LOG(ERROR) << "Node has no abstract, node: " << prev_node->fullname_with_scope();
-        return false;
-      }
-      SimpleNodeWithIndex a{abs, prev_out_idx, prev_node->DebugString()};
-      kernel_packet->input_shape_map_.insert({i, a});
+      MS_LOG(DEBUG) << "The input " << i << " is a const value: " << value->ToString();
     }
+    auto kernel_tensor = std::make_shared<KernelTensor>(abs->GetShape(), abs->GetType(), value);
+    (void)packet_kernel_mod->inputs_cache_.emplace_back(std::move(kernel_tensor));
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(real_node->kernel_info());
-  if (kernel_info == nullptr) {
-    MS_LOG(ERROR) << "Real node: " << kernel_packet->real_node_name_ << " has no kernel info";
-    return false;
-  }
-  kernel_packet->real_kernel_mod_ = kernel_info->GetKernelMod();
+  packet_kernel_mod->real_kernel_mod_ = real_kernel_mod;
   return true;
 }
 
-/// \brief convert int value or int array value to shape array
-/// \return if success
-static bool ValueToShape(const ValuePtr &value, ShapeArray *shape) {
-  if (value->isa<Int32Imm>() || value->isa<Int64Imm>()) {
-    auto v = AnfUtils::GetIntValue(value);
-    shape->push_back({v});
-  } else if (value->isa<ValueSequence>()) {
-    auto vec = value->cast<ValueSequencePtr>()->value();
-    if (vec.empty()) {
-      shape->emplace_back();
-    } else if (vec[0]->isa<Int32Imm>() || vec[0]->isa<Int64Imm>()) {
-      ShapeVector shape_vec;
-      shape_vec.reserve(vec.size());
-      for (auto v : vec) {
-        auto v1 = AnfUtils::GetIntValue(v);
-        shape_vec.push_back(v1);
-      }
-      shape->push_back(std::move(shape_vec));
-    } else if (vec[0]->isa<ValueSequence>()) {
-      for (auto &sub_value : vec) {
-        ValueToShape(sub_value, shape);
-      }
-    } else {
-      return false;
-    }
-  } else if (value->isa<tensor::Tensor>()) {
-    auto raw_value_vec = CheckAndConvertUtils::CheckTensorIntValue("value", value, "KernelPacket");
-    shape->push_back(std::move(raw_value_vec));
-  } else {
-    return false;
+void KernelPacketKernelMod::AllocWorkspace(size_t i, size_t data_size) {
+  MS_LOG(DEBUG) << "Allocate " << data_size << " bytes workspace for input " << i;
+  if (data_size == 0) {
+    data_size = 1;
   }
-  return true;
+  input_workspace_map_[i] = workspace_size_list_.size();
+  workspace_size_list_.push_back(data_size);
 }
 
 int KernelPacketKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
-  MS_LOG(DEBUG) << "=========================Start to resize: " << kernel_name_ << "=========================";
+  MS_LOG(DEBUG) << "Resize begin: " << kernel_name_;
   auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
   input_workspace_map_.clear();
-  shape_cache_.clear();
   auto inner_input_num = inputs_cache_.size();
   std::vector<KernelTensor *> inner_inputs(inner_input_num, nullptr);
-  // Hold pointer to temp host data, to free them after kernel resize
-  std::vector<std::unique_ptr<int64_t[]>> temp_host_datas;
   for (size_t i = 0; i < inner_input_num; ++i) {
     if (auto iter = input_map_.find(i); iter != input_map_.end()) {
-      MS_LOG(DEBUG) << "Inner input " << i << " -> "
-                    << "outer input " << iter->second;
+      MS_LOG(DEBUG) << "Inner input " << i << " use outer input " << iter->second;
       inner_inputs[i] = inputs[iter->second];
-    } else if (auto iter = input_shape_map_.find(i); iter != input_shape_map_.end()) {
-      // Put shape into Input Kerneltensor
-      MS_LOG(DEBUG) << "Inner input " << i << "-> " << iter->second.idx << "th cnode: " << iter->second.debug_info;
-      inner_inputs[i] = inputs_cache_[i].get();
-
-      ShapeArray shape_values;
-      auto value = symshape::QueryValue(iter->second.abs);
-      if (value == nullptr || value == kValueAny) {
-        MS_LOG(ERROR) << "Symbol engine query value failed, node: " << iter->second.debug_info;
-        return KRET_RESIZE_FAILED;
-      }
-      MS_LOG(DEBUG) << "Result of QueryValue: " << value->DumpText();
-      if (!ValueToShape(value, &shape_values)) {
-        // Case when value is bool
-        inner_inputs[i]->SetValue(value);
-        continue;
-      }
-
-      auto idx_in_output = iter->second.idx;
-      if (idx_in_output >= shape_values.size()) {
-        MS_LOG(ERROR) << "The " << i << "th input of inner kernel are " << idx_in_output
-                      << "th of output of prev node, but that output's size is only " << shape_values.size();
-        return KRET_RESIZE_FAILED;
-      }
-      ShapeVector shape_vector = {SizeToLong(shape_values[idx_in_output].size())};
-      auto type_id = inner_inputs[i]->type_id();
-      if (type_id == kObjectTypeTensorType) {
-        inner_inputs[i]->SetShapeVector(shape_vector);
-      } else if (type_id == kObjectTypeTuple || type_id == kObjectTypeList) {
-        // Case when value is tuple of int
-        abstract::BaseShapePtrList shapes(shape_vector[0], std::make_shared<abstract::NoShape>());
-        auto tuple_shape = std::make_shared<abstract::TupleShape>(std::move(shapes));
-        inner_inputs[i]->SetShape(tuple_shape);
-      }
-      // SetHostData, in case some operations use shape data when resize.
-      size_t data_size = kShapeTypeSize * static_cast<size_t>(shape_vector[0]);
-      auto data_p = std::make_unique<int64_t[]>(shape_vector[0]);
-      int64_t *raw_p = data_p.get();
-      (void)memcpy_s(raw_p, data_size, shape_values[idx_in_output].data(), data_size);
-      temp_host_datas.push_back(std::move(data_p));
-      auto shape_address = std::make_shared<Address>(raw_p, data_size);
-      inner_inputs[i]->SetHostData(shape_address);
-      inner_inputs[i]->SetValue(MakeValue(shape_values[idx_in_output]));
-
-      // Alloc intermediate shape space
-      auto input_idx = iter->first;
-      shape_cache_[input_idx] = shape_values[idx_in_output];
-      MS_LOG(DEBUG) << "Shape size: " << data_size;
-      input_workspace_map_[input_idx] = workspace_size_list_.size();
-      workspace_size_list_.push_back(data_size);
-    } else {
-      MS_LOG(ERROR) << "The " << i
-                    << "th input of inner kernel is neither from outer input nor from shape of other inner nodes ";
-      return KRET_RESIZE_FAILED;
+      continue;
     }
+    if (host_value_cache_[i] != nullptr) {
+      auto ori = inputs_cache_[i];
+      BaseShapePtr shape = ori->GetShape();
+      if (shape->IsDynamic()) {
+        shape = host_value_cache_[i]->ToAbstract()->GetShape();
+      }
+      MS_LOG(DEBUG) << "Inner input " << i << " is host value: " << host_value_cache_[i]->ToString()
+                    << ". Its shape is " << shape->ToString() << ", the type is " << ori->GetType();
+      inputs_cache_[i] = std::make_shared<KernelTensor>(shape, ori->GetType(), host_value_cache_[i]);
+      inner_inputs[i] = inputs_cache_[i].get();
+    } else {
+      inner_inputs[i] = inputs_cache_[i].get();
+      MS_LOG(DEBUG) << "Inner input " << i << " of " << real_node_debug_str_ << " is const value.";
+    }
+    AllocWorkspace(i, inner_inputs[i]->size());
   }
 
   auto res = real_kernel_mod_->Resize(inner_inputs, outputs);
-  MS_LOG(DEBUG) << "Inner kernel resize finished: " << real_node_name_;
+  MS_LOG(DEBUG) << "Inner kernel resize finished: " << real_node_debug_str_;
   if (res != KRET_OK) {
     return res;
   }
   const auto &workspace = real_kernel_mod_->GetWorkspaceSizeList();
-  MS_LOG(DEBUG) << "Inner kernel workspaces size: " << workspace.size();
-  workspace_size_list_.reserve(workspace.size() + inner_input_num);
-  // Inner kernel's workspace is behind shape workspace
-  (void)workspace_size_list_.insert(workspace_size_list_.end(), workspace.begin(), workspace.end());
-  MS_LOG(DEBUG) << "=========================finish resize: " << kernel_name_ << "=========================";
+  if (!workspace.empty()) {
+    MS_LOG(DEBUG) << "Inner kernel workspaces size: " << workspace.size();
+    workspace_size_list_.reserve(workspace.size() + workspace_size_list_.size());
+    // Inner kernel's workspace is behind shape workspace
+    (void)workspace_size_list_.insert(workspace_size_list_.end(), workspace.begin(), workspace.end());
+  }
+
+  // first call for KernelTensor::GetValuePtr  will convert the ValuePtr to void*.
+  // call this interface in Resize can reduce the launch time
+  host_data_cache_.clear();
+  host_data_cache_.resize(inner_input_num, nullptr);
+  std::vector<size_t> ignore_idx = real_kernel_mod_->GetLaunchIgnoredInputAddressIdx();
+  for (size_t i = 0; i < inner_input_num; i++) {
+    if (input_map_.count(i) != 0) {
+      continue;
+    }
+    if (inner_inputs[i]->size() > 0 && std::find(ignore_idx.begin(), ignore_idx.end(), i) == ignore_idx.end()) {
+      host_data_cache_[i] = inner_inputs[i]->GetValuePtr();
+    }
+  }
+
+  MS_LOG(DEBUG) << "Resize end: " << kernel_name_;
   return KRET_OK;
 }
 
 bool KernelPacketKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &workspaces,
                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
-  MS_LOG(DEBUG) << "=========================start to launch: " << kernel_name_ << "=========================";
-  // Put shapes to workspace
-  for (auto [input_idx, workspace_idx] : input_workspace_map_) {
-    if (workspaces.size() <= workspace_idx) {
-      MS_LOG(ERROR) << "Worksapce_idx " << workspace_idx << " is greater than worksapces size " << workspaces.size();
-      return false;
-    }
-    auto res = memcpy_async_(workspaces[workspace_idx]->device_ptr(), shape_cache_[input_idx].data(),
-                             workspaces[workspace_idx]->size(), stream_ptr);
-    if (!res) {
-      MS_LOG(ERROR) << "Launch " << real_node_name_ << "failed!";
-      return false;
-    }
-  }
-  MS_LOG(DEBUG) << "Memcpy finished";
-
-  auto [inner_inputs, inner_workspaces, inner_outputs] = GetLaunchArgs(inputs, workspaces, outputs);
-  auto res = real_kernel_mod_->Launch(inner_inputs, inner_workspaces, inner_outputs, stream_ptr);
-  MS_LOG(DEBUG) << "Finish inner kernel launch: " << real_node_name_;
+  MS_LOG(DEBUG) << "Launch begin: " << kernel_name_;
+  auto [inner_inputs, inner_workspaces] = GetLaunchArgs(inputs, workspaces, stream_ptr);
+  auto res = real_kernel_mod_->Launch(inner_inputs, inner_workspaces, outputs, stream_ptr);
+  MS_LOG(DEBUG) << "Finish inner kernel launch: " << real_node_debug_str_;
   if (!res) {
-    MS_LOG(ERROR) << "Launch kernel: " << real_node_name_ << " failed!!!!!";
+    MS_LOG(ERROR) << "Launch kernel: " << real_node_debug_str_ << " failed.";
     return false;
   }
-  MS_LOG(DEBUG) << "=========================finish launch: " << kernel_name_ << "=========================";
+  MS_LOG(DEBUG) << "Launch end: " << kernel_name_;
   return true;
 }
 
@@ -255,23 +169,33 @@ std::vector<KernelAttr> KernelPacketKernelMod::GetOpSupport() {
 
 KernelPacketKernelMod::AddressArgs KernelPacketKernelMod::GetLaunchArgs(const std::vector<KernelTensor *> &inputs,
                                                                         const std::vector<KernelTensor *> &workspaces,
-                                                                        const std::vector<KernelTensor *> &outputs) {
+                                                                        void *stream_ptr) {
   std::vector<KernelTensor *> res_inputs;
   res_inputs.resize(inputs_cache_.size(), nullptr);
-  for (auto [i, j] : input_map_) {
-    MS_LOG(DEBUG) << "Inner input -> outer input: " << i << " -> " << j;
-    res_inputs[i] = inputs[j];
+  for (size_t i = 0; i < inputs_cache_.size(); i++) {
+    if (auto iter = input_map_.find(i); iter != input_map_.end()) {
+      auto j = iter->second;
+      MS_LOG(DEBUG) << "Inner input " << i << " -> outer input " << j;
+      res_inputs[i] = inputs[j];
+    } else if (auto iter = input_workspace_map_.find(i); iter != input_workspace_map_.end()) {
+      auto j = iter->second;
+      MS_LOG(DEBUG) << "Inner input " << i << " -> workspace " << j;
+      res_inputs[i] = inputs_cache_[i].get();
+      // set the device_ptr of workspaces to res_input
+      res_inputs[i]->set_pointer_ref_count(workspaces[j]->pointer_ref_count());
+      // copy host data to device
+      if (host_data_cache_[i] != nullptr) {
+        MS_LOG(DEBUG) << "Copy input " << i << " from host to device.";
+        CopyHostToDevice(res_inputs[i]->device_ptr(), host_data_cache_[i], res_inputs[i]->size(), stream_ptr);
+      }
+    } else {
+      MS_LOG(DEBUG) << "Inner input " << i << " is not found in input_map and input_workspace_map.";
+      res_inputs[i] = inputs_cache_[i].get();
+    }
   }
-  for (auto [i, j] : input_workspace_map_) {
-    MS_LOG(DEBUG) << "Inner input -> workspace: " << i << " -> " << j;
-    res_inputs[i] = workspaces[j];
-  }
-
-  std::vector<KernelTensor *> res_workspace;
   MS_LOG(DEBUG) << "Worspaces size: " << workspaces.size();
-  MS_LOG(DEBUG) << "shape_cache size: " << shape_cache_.size();
-  (void)res_workspace.insert(res_workspace.end(), workspaces.begin() + shape_cache_.size(), workspaces.end());
-
-  return {res_inputs, res_workspace, outputs};
+  MS_LOG(DEBUG) << "input_workspace_map_ size: " << input_workspace_map_.size();
+  std::vector<KernelTensor *> res_workspace(workspaces.begin() + input_workspace_map_.size(), workspaces.end());
+  return {res_inputs, res_workspace};
 }
 }  // namespace mindspore::kernel

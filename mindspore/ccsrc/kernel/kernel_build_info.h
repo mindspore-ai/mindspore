@@ -212,6 +212,7 @@ class BACKEND_EXPORT KernelBuildInfo::KernelBuildInfoBuilder {
       (void)kernel_build_info_->output_reshape_type_.emplace_back(kernel_build_info->GetOutputReshapeType(index));
     }
     kernel_build_info_->outputs_kernel_object_type_ = kernel_build_info->GetAllOutputKernelObjectTypes();
+    SetValid(kernel_build_info->valid());
   }
 
   ~KernelBuildInfoBuilder() = default;

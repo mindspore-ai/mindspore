@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/core/symbolic_shape/operation_builder.h"
+#include "mindspore/core/ops/symbol_ops_impl/common.h"
 
 namespace mindspore {
 namespace symshape {
 namespace ops {
 // 3 inputs' shape should be same
-REG_SYMBOL_OP_BUILDER("Select").SetShapeDepend({DependOn::kShape, DependOn::kNone, DependOn::kNone});
+REG_SYMBOL_OP_BUILDER("Select")
+  .SetShapeDepend({DependOn::kShape, DependOn::kNone, DependOn::kNone})
+  .SetShapeFunc(TransparentInput);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

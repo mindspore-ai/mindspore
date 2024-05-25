@@ -55,7 +55,7 @@ void ScalarSub::UpdateMathInfo() {
   }
 }
 
-REG_SYMBOL_OP_BUILDER("ScalarSub").SetValueFunc(DefaultBuilder<ScalarSub, 2>);
+REG_SYMBOL_OP_BUILDER("ScalarSub").SetValueFunc(DefaultBuilder<ScalarSub>);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/core/symbolic_shape/operation_builder.h"
+
+#include "plugin/device/ascend/kernel/graph_kernel/kernel_packet_ascend_kernel_mod.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
-namespace symshape {
-namespace ops {
-REG_SYMBOL_OP_BUILDER("list_setitem").SetValueFunc([](OperationBuilder *b) -> SymbolPtr {
-  auto list = b->GetInputValue(kIndex0)->as_sptr<ListSymbol>();
-  if (!list->HasData()) {
-    return nullptr;
+namespace kernel {
+bool KernelPacketAscendKernelMod::CopyHostToDevice(void *dst, const void *src, size_t size, void *stream) {
+  aclError status = CALL_ASCEND_API(aclrtMemcpyAsync, dst, size, src, size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
+  if (status != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status;
+    return false;
   }
-  SymbolPtrList result = list->symbols();
-  int64_t index = GetValue<int64_t>(b->GetInput(kIndex1)->GetValue());
-  int64_t value = GetValue<int64_t>(b->GetInput(kIndex2)->GetValue());
-  result[index] = IntSymbol::Make(value);
-  return ListSymbol::Make(std::move(result));
-});
-}  // namespace ops
-}  // namespace symshape
+  return true;
+}
+}  // namespace kernel
 }  // namespace mindspore

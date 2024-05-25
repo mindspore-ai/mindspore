@@ -76,7 +76,7 @@ void ScalarMul::UpdateMathInfo() {
   }
 }
 
-REG_SYMBOL_OP_BUILDER("ScalarMul").SetValueFunc(DefaultBuilder<ScalarMul, 2>);
+REG_SYMBOL_OP_BUILDER("ScalarMul").SetValueFunc(DefaultBuilder<ScalarMul>);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

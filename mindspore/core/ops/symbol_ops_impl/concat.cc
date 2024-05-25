@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/core/symbolic_shape/operation_builder.h"
+#include "utils/check_convert_utils.h"
+#include "mindspore/core/ops/symbol_ops_impl/common.h"
+#include "mindspore/core/ops/symbol_ops_impl/scalar_add.h"
 
 namespace mindspore {
 namespace symshape {
@@ -29,7 +31,7 @@ SymbolPtr ConcatValue(OperationBuilder *b) {
     }
     result.reserve(inputs->size());
     for (auto &inp : inputs->symbols()) {
-      if (auto ilist = inp->as<ListSymbol>(); ilist != nullptr) {
+      if (auto ilist = inp->as<ListSymbol>(); ilist != nullptr && ilist->HasData()) {
         (void)result.insert(result.end(), ilist->symbols().begin(), ilist->symbols().end());
       } else if (inp->is<IntSymbol>()) {
         (void)result.emplace_back(inp);
@@ -53,7 +55,77 @@ SymbolPtr ConcatValue(OperationBuilder *b) {
   return ListSymbol::Make(std::move(result));
 }
 
-REG_SYMBOL_OP_BUILDER("Concat").SetValueFunc(ConcatValue);
+class MS_CORE_API Concat : public InferShapeOp {
+ public:
+  using InferShapeOp::InferShapeOp;
+  ~Concat() override = default;
+  MS_DECLARE_PARENT(Concat, InferShapeOp)
+
+ protected:
+  SymbolPtr Eval() override;
+  std::pair<SymbolPtrList, bool> FindOutputShape(const ListSymbol *inputs) const;
+};
+
+std::pair<SymbolPtrList, bool> Concat::FindOutputShape(const ListSymbol *inputs) const {
+  SymbolPtrList out_shape;
+  bool has_dynrank = false;
+  for (size_t i = 0; i < inputs->size(); i++) {
+    if (!inputs->item(i)->HasData()) {
+      has_dynrank = true;
+    } else if (out_shape.empty()) {
+      out_shape = inputs->item_as<ListSymbol>(i)->symbols();
+    }
+  }
+  return std::make_pair(out_shape, has_dynrank);
+}
+
+SymbolPtr Concat::Eval() {
+  auto inputs = input_as<ListSymbol>(kIndex0);
+  auto axis = input_as<IntSymbol>(kIndex1);
+  if (!inputs->HasData() || !axis->HasData()) {
+    return out_abstract()->GetShape()->BuildSymbolicShape();
+  }
+  auto [out_shape, has_dynrank] = FindOutputShape(inputs);
+  if (out_shape.empty()) {
+    return GenVList();
+  }
+  auto axis_v = LongToSize(NormAxis(axis->value(), out_shape.size()));
+  if (has_dynrank) {
+    out_shape[axis_v] = GenVInt();
+    return GenList(std::move(out_shape));
+  }
+  DoNotEvalOnRun();
+  SymbolPtrList concat_dims;
+  concat_dims.reserve(inputs->size());
+  for (size_t i = 0; i < inputs->size(); i++) {
+    concat_dims.emplace_back(inputs->item_as<ListSymbol>(i)->item(axis_v));
+  }
+  out_shape[axis_v] = Accumulate<ScalarAdd>(concat_dims, emitter());
+  return GenList(std::move(out_shape));
+}
+
+SymbolPtr ConcatShape(OperationBuilder *b) {
+  if (!CheckAndConvertUtils::IsTensor(b->GetInput(kIndex0))) {
+    return b->Emit(std::make_shared<Concat>(SymbolPtrList{b->GetInputShape(kIndex0), b->GetInputValue(kIndex1)}));
+  } else {
+    SymbolPtrList inputs;
+    inputs.reserve(b->input_num() - 1);
+    for (size_t i = 0; i + 1 < b->input_num(); i++) {
+      (void)inputs.emplace_back(b->GetInputShape(i));
+    }
+    SymbolPtr data = ListSymbol::Make(std::move(inputs));
+    return b->Emit(std::make_shared<Concat>(SymbolPtrList{data, b->GetInputValue(b->input_num() - 1)}));
+  }
+}
+
+REG_SYMBOL_OP_BUILDER("Concat")
+  .SetShapeDepend([](const PrimitivePtr &, size_t input_num) {
+    std::vector<DependOn> depends(input_num, DependOn::kShape);
+    depends.back() = DependOn::kValue;
+    return depends;
+  })
+  .SetShapeFunc(ConcatShape)
+  .SetValueFunc(ConcatValue);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

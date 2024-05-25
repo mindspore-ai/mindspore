@@ -271,7 +271,7 @@ void SymbolEngineImpl::PreBuildQueryDependStatus(const AnfNodePtrList &cnodes) {
     }
     auto prim = GetCNodePrimitive(cnode);
     auto set_prev_node_func = [this, &cnode, info](const PrimitivePtr &prim, bool depend_value) {
-      auto depends = info->GetDepends(prim, depend_value);
+      auto depends = info->GetDepends(prim, cnode->size() - 1, depend_value);
       for (size_t i = 0; i + 1 < cnode->size(); i++) {
         DependOn input_depend;
         if (depends.empty()) {
@@ -343,7 +343,7 @@ bool SymbolEngineImpl::Infer(const AbstractBasePtrList &inputs) {
       MS_LOG(DEBUG) << "Update shape for input[" << i << "]: " << cur_shape->ToRawString();
       shape->Update(cur_shape);
     }
-    if (auto value = params[i]->abstract()->GetSymbolicValue(); value != nullptr) {
+    if (auto value = params[i]->abstract()->GetSymbolicValue(); value != nullptr && value->CanUpdate()) {
       auto cur_value = BuildSymbolicValue(inputs[i]);
       MS_EXCEPTION_IF_NULL(cur_value);
       MS_LOG(DEBUG) << "Update value for input[" << i << "]: " << cur_value->ToRawString();
@@ -423,10 +423,17 @@ void SymbolEngineImpl::BuildSubgraphImpl(const CNodePtr &cnode, const FuncGraphP
   auto param_num = sub_fg->parameters().size();
   MS_EXCEPTION_IF_CHECK_FAIL(param_num + begin_input_index == cnode->size(), "cnode and parameter size mismatch");
   for (size_t i = 0; i < param_num; i++) {
+    auto inp = cnode->input(i + begin_input_index);
+    auto input_abs = inp->abstract();
+    MS_EXCEPTION_IF_NULL(input_abs);
+    if (IsDependShape(inp) && input_abs->GetSymbolicShape() == nullptr) {
+      input_abs->SetSymbolicShape(input_abs->GetShape()->BuildSymbolicShape());
+    }
+    if (IsDependValue(inp) && input_abs->GetSymbolicValue() == nullptr) {
+      input_abs->SetSymbolicValue(BuildSymbolicValue(input_abs));
+    }
     auto param_abs = CloneAbstractIfSymbolExists(sub_fg->parameters()[i]);
     MS_EXCEPTION_IF_NULL(param_abs);
-    auto input_abs = cnode->input(i + begin_input_index)->abstract();
-    MS_EXCEPTION_IF_NULL(input_abs);
     param_abs->SetSymbolicShape(input_abs->GetSymbolicShape());
     param_abs->SetSymbolicValue(input_abs->GetSymbolicValue());
   }

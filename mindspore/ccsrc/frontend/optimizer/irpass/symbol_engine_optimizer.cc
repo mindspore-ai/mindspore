@@ -145,7 +145,7 @@ bool ElimShapeCalcOnBroadcastArgsGrad::Check(const OptimizerPtr &opt, const AnfN
 
 bool ElimShapeCalcOnBroadcastArgsGrad::CheckSymbolEqual(const ListSymbolPtr &input_shape,
                                                         const ListSymbolPtr &output_shape, size_t shift) {
-  if (input_shape == nullptr && output_shape == nullptr) {
+  if (input_shape == nullptr || output_shape == nullptr) {
     return false;
   }
   if (input_shape->size() < output_shape->size()) {
