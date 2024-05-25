@@ -21,6 +21,7 @@
 #include "backend/common/graph_kernel/model/node.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "include/backend/kernel_info.h"
 
 namespace mindspore::graphkernel::expander {
 void InferByDeviceInfo::InferOp(const NodePtr &node, const PrimitivePtr &prim, const NodePtrList &args) {
@@ -110,5 +111,7 @@ void InferByHostInfo::InferOp(const NodePtr &node, const PrimitivePtr &prim, con
     MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
   }
   cnode->set_abstract(infered_abs_opt.value());
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  cnode->set_kernel_info(kernel_info);
 }
 }  // namespace mindspore::graphkernel::expander

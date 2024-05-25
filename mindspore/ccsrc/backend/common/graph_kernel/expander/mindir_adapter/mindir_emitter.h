@@ -70,7 +70,6 @@ class MindirEmitter : public Emitter {
   // put 'args' in inputs and put 'kargs' in attrs
   NodePtr DefaultEmitFunc(const std::string &op_name, const NodePtrList &args, const NodePtrDict &kargs);
   NodePtr ReduceEmitFunc(const std::string &op_name, const NodePtrList &args, const NodePtrDict &kargs);
-  NodePtr CastEmitFunc(const std::string &op_name, const NodePtrList &args, const NodePtrDict &kargs);
 
   inline static EmitFunc emit_functions[static_cast<int>(MetaOp::MetaOpNum)] = {
     &MindirEmitter::DefaultEmitFunc,  // MetaOp::Abs
