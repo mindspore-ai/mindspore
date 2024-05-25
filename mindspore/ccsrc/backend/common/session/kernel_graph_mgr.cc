@@ -793,7 +793,7 @@ bool NeedConvertValueNodeToParameter(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->backend_policy() != "ge") {
+  if (ms_context->backend_policy() != "ge" || ms_context->IsKByKExecutorMode()) {
     return false;
   }
   if (!node->isa<ValueNode>()) {
@@ -1068,7 +1068,8 @@ ParameterPtr KernelGraphMgr::CreateNewParameterFromParameter(const AnfNodePtr &a
   }
   // if parameter's python parameter has been exist a backend parameter, reuse the exist parameter
   if (!is_pynative_bprop_kernel_graph) {
-    if (param_value != nullptr) {
+    auto context = MsContext::GetInstance();
+    if (!context->IsKByKExecutorMode() && param_value != nullptr) {
       new_parameter = param_value->parameter();
     }
     if (new_parameter == nullptr) {
@@ -1243,6 +1244,7 @@ CNodePtr KernelGraphMgr::CreateNewCNode(const CNodePtr &cnode, KernelGraph *grap
     if (need_backend_inline) {
       new_cnode->AddPrimalAttr(kAttrNeedInline, MakeValue(true));
     }
+    MS_LOG(DEBUG) << "Create new call node:" << new_cnode->DebugString() << " by front node:" << cnode->DebugString();
     return new_cnode;
   }
   // get primitive of old node
@@ -1811,6 +1813,9 @@ bool KernelGraphMgr::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGrap
     new_cnode->set_fullname_with_scope(fullname);
   }
   new_cnode->set_scope(cnode->scope());
+  if (!graph->is_dynamic_shape() && common::AnfAlgo::IsDynamicShape(new_cnode)) {
+    graph->SetGraphDynamicAttr(true);
+  }
   graph->FrontBackendMapAdd(node, new_cnode);
   SetReturnNode(new_cnode, graph);
   FlattenTuple(new_cnode);
@@ -1977,15 +1982,13 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
     }
     // record map relations between anf from ME and new anf node used in backend
     graph->FrontBackendMapAdd(node, new_cnode);
+    if (!graph->is_dynamic_shape() && common::AnfAlgo::IsDynamicShape(new_cnode)) {
+      graph->SetGraphDynamicAttr(true);
+    }
   }
   // add a make_tuple at the end of graph as output
   graph->set_child_graph_order(child_graph_order);
   graph->set_output(ConstructOutput(outputs, graph));
-  FuncGraphManagerPtr manager = MakeManager({graph}, false);
-  if (manager) {
-    manager->AddFuncGraph(graph);
-    graph->set_manager(manager);
-  }
   graph->SetExecOrderByDefault();
 
 #ifndef ENABLE_SECURITY
@@ -1995,6 +1998,11 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
 #endif
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+    FuncGraphManagerPtr manager = MakeManager({graph}, false);
+    if (manager) {
+      manager->AddFuncGraph(graph);
+      graph->set_manager(manager);
+    }
     UnifyMindIR(graph);
     graph->UpdateGraphAquireGilAttr();
     if (common_opt) {
@@ -2839,6 +2847,13 @@ void UpdateConditionNodePair(const KernelGraphPtr &kernel_graph, const KernelGra
       MS_LOG(INFO) << "Add condition node pair:" << gather_iter->second->fullname_with_scope()
                    << " and:" << switch_iter->second->fullname_with_scope()
                    << " for graph:" << target_kernel_graph->ToString();
+      const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(pair.second);
+      if (front_node == nullptr) {
+        MS_LOG(WARNING) << "Failed to get front node by backend node:" << pair.second->DebugString()
+                        << " in graph:" << kernel_graph->ToString();
+        continue;
+      }
+      target_kernel_graph->FrontBackendMapAdd(front_node, switch_iter->second);
     }
   }
 }

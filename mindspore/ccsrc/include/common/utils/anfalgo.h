@@ -55,7 +55,7 @@ class COMMON_EXPORT AnfAlgo {
   static KernelWithIndex VisitKernelWithReturnType(
     const AnfNodePtr &anf_node, size_t index, bool skip_nop_node = false,
     const std::vector<PrimitivePtr> &return_types = {prim::kPrimMakeTuple},
-    abstract::AbstractBasePtr *abstract = nullptr);
+    abstract::AbstractBasePtr *abstract = nullptr, bool is_index_valid = false);
 
   // Skip the monad node to get the real node.
   static KernelWithIndex FetchRealNodeSkipMonadControl(const KernelWithIndex &node_with_index);

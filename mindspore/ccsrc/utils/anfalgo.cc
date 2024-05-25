@@ -193,7 +193,7 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node,
     // Maybe this scene: tupleGetItem + depend + makeTuple, can be done correctly in VisitKernelWithReturnType.
     // The output may be updataState/load node for connecting dependencies between subgraphs.
     auto output_with_index = AnfAlgo::VisitKernelWithReturnType(
-      node, i, false, {prim::kPrimMakeTuple, prim::kPrimUpdateState, prim::kPrimLoad});
+      node, i, false, {prim::kPrimMakeTuple, prim::kPrimUpdateState, prim::kPrimLoad}, nullptr, true);
     MS_EXCEPTION_IF_NULL(output_with_index.first);
 
     // The MakeTuple/MakeSparse node need recurse.
@@ -275,9 +275,89 @@ KernelWithIndex AnfAlgo::VisitKernel(const AnfNodePtr &anf_node, size_t index) {
   return AnfUtils::VisitKernel(anf_node, index);
 }
 
+namespace {
+KernelWithIndex VisitKernelWithReturnTypeForTupleGetItem(const AnfNodePtr &anf_node, size_t index, bool skip_nop_node,
+                                                         const std::vector<PrimitivePtr> &return_types,
+                                                         abstract::AbstractBasePtr *abstract, bool is_index_valid) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  if (!common::AnfAlgo::CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem)) {
+    MS_LOG(EXCEPTION) << "Invalid tuple get item node:" << anf_node->DebugString();
+  }
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->HasAttr(kAttrReplaceRealKernelInBackend)) {
+    MS_LOG(INFO) << "cnode:" << cnode->DebugString() << " has replace flag";
+    return KernelWithIndex(anf_node, index);
+  }
+  abstract::AbstractBasePtr abs = nullptr;
+  auto item_with_index_tmp = common::AnfAlgo::VisitKernelWithReturnType(
+    common::AnfAlgo::GetTupleGetItemRealInput(cnode), common::AnfAlgo::GetTupleGetItemOutIndex(cnode), skip_nop_node,
+    return_types, &abs, true);
+  if (IsOneOfPrimitiveCNode(item_with_index_tmp.first, expand_prims)) {
+    MS_EXCEPTION_IF_NULL(item_with_index_tmp.first);
+    auto make_tuple = item_with_index_tmp.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tuple);
+    const std::vector<AnfNodePtr> &make_tuple_inputs = make_tuple->inputs();
+    size_t make_tuple_input_index = item_with_index_tmp.second + 1;
+    if (make_tuple_input_index >= make_tuple_inputs.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Index[" << make_tuple_input_index << "] out of range[" << make_tuple_inputs.size()
+                                 << "].\nPlease check node: " << cnode->DebugString()
+                                 << ".\nLine: " << trace::GetDebugInfoStr(cnode->debug_info())
+                                 << ".\nAnd check node: " << make_tuple->DebugString()
+                                 << ".\nLine: " << trace::GetDebugInfoStr(make_tuple->debug_info()) << ".";
+    }
+    return common::AnfAlgo::VisitKernelWithReturnType(make_tuple_inputs[make_tuple_input_index], index, skip_nop_node,
+                                                      return_types);
+  }
+  if (common::AnfAlgo::IsCallNode(item_with_index_tmp.first) || item_with_index_tmp.first->isa<Parameter>()) {
+    size_t real_index = item_with_index_tmp.second;
+    if (abs == nullptr) {
+      abs = item_with_index_tmp.first->abstract();
+      real_index = 0;
+    }
+    MS_EXCEPTION_IF_NULL(abs);
+    if (abs->isa<abstract::AbstractSequence>()) {
+      auto tuple_abstract = abs->cast<abstract::AbstractSequencePtr>();
+      MS_EXCEPTION_IF_NULL(tuple_abstract);
+      if (tuple_abstract->dynamic_len()) {
+        return item_with_index_tmp;
+      }
+      auto sub_abstracts = tuple_abstract->elements();
+      if (sub_abstracts.size() <= common::AnfAlgo::GetTupleGetItemOutIndex(cnode)) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Invalid index:" << common::AnfAlgo::GetTupleGetItemOutIndex(cnode)
+                                   << " for abstract:" << abs->ToString();
+      }
+      for (size_t i = 0; i < common::AnfAlgo::GetTupleGetItemOutIndex(cnode); ++i) {
+        MS_EXCEPTION_IF_NULL(sub_abstracts[i]);
+        real_index += AnfAlgo::GetOutputNumByAbstract(sub_abstracts[i]);
+      }
+      if (abstract != nullptr) {
+        (*abstract) = sub_abstracts[common::AnfAlgo::GetTupleGetItemOutIndex(cnode)];
+        MS_EXCEPTION_IF_NULL((*abstract));
+      } else {
+        // In recursion of getitem node, the index of the first input of its real node is returned.
+        // When the recursion ends, the outermost index needs to be accumulated.
+        real_index += index;
+      }
+      return {item_with_index_tmp.first, real_index};
+    }
+  }
+  if (is_index_valid) {
+    if (anf_node->abstract() != nullptr && anf_node->abstract()->isa<abstract::AbstractSequence>()) {
+      const auto &seq_abs = anf_node->abstract()->cast<abstract::AbstractSequencePtr>();
+      MS_EXCEPTION_IF_NULL(seq_abs);
+      if (!seq_abs->dynamic_len()) {
+        return {anf_node, index};
+      }
+    }
+  }
+  return item_with_index_tmp;
+}
+}  // namespace
+
 KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, size_t index, bool skip_nop_node,
                                                    const std::vector<PrimitivePtr> &return_types,
-                                                   abstract::AbstractBasePtr *abstract) {
+                                                   abstract::AbstractBasePtr *abstract, bool is_index_valid) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (std::any_of(return_types.begin(), return_types.end(), [&anf_node](const PrimitivePtr &prim_type) -> bool {
         return CheckPrimitiveType(anf_node, prim_type);
@@ -291,62 +371,8 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
   MS_EXCEPTION_IF_NULL(cnode);
   // TupleGetItem and SparseGetAttr needs to find real input
   if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
-    if (cnode->HasAttr(kAttrReplaceRealKernelInBackend)) {
-      MS_LOG(INFO) << "cnode:" << cnode->DebugString() << " has replace flag";
-      return KernelWithIndex(anf_node, index);
-    }
-    abstract::AbstractBasePtr abs = nullptr;
-    auto item_with_index_tmp = VisitKernelWithReturnType(
-      GetTupleGetItemRealInput(cnode), GetTupleGetItemOutIndex(cnode), skip_nop_node, return_types, &abs);
-    if (IsOneOfPrimitiveCNode(item_with_index_tmp.first, expand_prims)) {
-      MS_EXCEPTION_IF_NULL(item_with_index_tmp.first);
-      auto make_tuple = item_with_index_tmp.first->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(make_tuple);
-      const std::vector<AnfNodePtr> &make_tuple_inputs = make_tuple->inputs();
-      size_t make_tuple_input_index = item_with_index_tmp.second + 1;
-      if (make_tuple_input_index >= make_tuple_inputs.size()) {
-        MS_LOG(INTERNAL_EXCEPTION) << "Index[" << make_tuple_input_index << "] out of range["
-                                   << make_tuple_inputs.size() << "].\nPlease check node: " << cnode->DebugString()
-                                   << ".\nLine: " << trace::GetDebugInfoStr(cnode->debug_info())
-                                   << ".\nAnd check node: " << make_tuple->DebugString()
-                                   << ".\nLine: " << trace::GetDebugInfoStr(make_tuple->debug_info()) << ".";
-      }
-      return VisitKernelWithReturnType(make_tuple_inputs[make_tuple_input_index], index, skip_nop_node, return_types);
-    }
-    if (IsCallNode(item_with_index_tmp.first) || item_with_index_tmp.first->isa<Parameter>()) {
-      size_t real_index = item_with_index_tmp.second;
-      if (abs == nullptr) {
-        abs = item_with_index_tmp.first->abstract();
-        real_index = 0;
-      }
-      MS_EXCEPTION_IF_NULL(abs);
-      if (abs->isa<abstract::AbstractSequence>()) {
-        auto tuple_abstract = abs->cast<abstract::AbstractSequencePtr>();
-        MS_EXCEPTION_IF_NULL(tuple_abstract);
-        if (tuple_abstract->dynamic_len()) {
-          return item_with_index_tmp;
-        }
-        auto sub_abstracts = tuple_abstract->elements();
-        if (sub_abstracts.size() <= GetTupleGetItemOutIndex(cnode)) {
-          MS_LOG(INTERNAL_EXCEPTION) << "Invalid index:" << GetTupleGetItemOutIndex(cnode)
-                                     << " for abstract:" << abs->ToString();
-        }
-        for (size_t i = 0; i < GetTupleGetItemOutIndex(cnode); ++i) {
-          MS_EXCEPTION_IF_NULL(sub_abstracts[i]);
-          real_index += AnfAlgo::GetOutputNumByAbstract(sub_abstracts[i]);
-        }
-        if (abstract != nullptr) {
-          (*abstract) = sub_abstracts[GetTupleGetItemOutIndex(cnode)];
-          MS_EXCEPTION_IF_NULL((*abstract));
-        } else {
-          // In recursion of getitem node, the index of the first input of its real node is returned.
-          // When the recursion ends, the outermost index needs to be accumulated.
-          real_index += index;
-        }
-        return {item_with_index_tmp.first, real_index};
-      }
-    }
-    return item_with_index_tmp;
+    return VisitKernelWithReturnTypeForTupleGetItem(anf_node, index, skip_nop_node, return_types, abstract,
+                                                    is_index_valid);
   }
   if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimUpdateState)) {
     return VisitKernelWithReturnType(cnode->input(kUpdateStateStateInput), index, skip_nop_node, return_types);

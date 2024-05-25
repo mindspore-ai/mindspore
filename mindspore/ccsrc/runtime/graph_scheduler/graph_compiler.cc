@@ -158,18 +158,23 @@ void OptimizeNopNode(KernelGraph *graph) {
   }
 
   const auto &output_node = graph->output();
+  const auto &ref_map = graph->GetRefMap();
+  std::set<std::pair<AnfNodePtr, size_t>> ref_out_value;
+  for (const auto &iter : ref_map) {
+    ref_out_value.insert(iter.second);
+  }
   MS_EXCEPTION_IF_NULL(output_node);
   const auto &graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(output_node);
   // Collect all the nopnodes that can be eliminated.
   for (const auto &cnode : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(cnode);
-    if ((!common::AnfAlgo::IsNopNode(cnode)) || graph->IsInRefOutputMap({cnode, 0}) ||
-        graph->IsRefOutputMapValue({cnode, 0}) ||
-        (std::find_if(graph_outputs.begin(), graph_outputs.end(),
-                      [&cnode](const KernelWithIndex &output) {
-                        const auto &real_output = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
-                        return real_output == KernelWithIndex(cnode, 0);
-                      }) != graph_outputs.end()) ||
+    if ((!common::AnfAlgo::IsNopNode(cnode)) || ref_map.count({cnode, 0}) != 0 ||
+        ref_out_value.count({cnode, 0}) != 0 ||
+        std::find_if(graph_outputs.begin(), graph_outputs.end(),
+                     [&cnode](const KernelWithIndex &output) {
+                       const auto &real_output = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
+                       return real_output == KernelWithIndex(cnode, 0);
+                     }) != graph_outputs.end() ||
         std::find_if(cnode->inputs().begin(), cnode->inputs().end(), [](const auto &input) {
           return common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimConditionGather) ||
                  common::AnfAlgo::CheckPrimitiveType(common::AnfAlgo::VisitKernelWithReturnType(input, 0).first,
@@ -447,6 +452,11 @@ GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
   kernel_graph->erase_flag(kFlagPyNativeRunInGraph);
   SetRunGraphBySingleOpFlag(kernel_graph);
   kernel_graph->UpdateGraphAquireGilAttr();
+  auto manager = MakeManager({kernel_graph});
+  if (manager) {
+    manager->AddFuncGraph(kernel_graph);
+    kernel_graph->set_manager(manager);
+  }
   opt::OptimizationWithoutBackend(kernel_graph);
   // Unify the MindIR, must be before of the kernel_graph optimization.
   auto kernel_executor = device_context->GetKernelExecutor(false);
@@ -454,11 +464,6 @@ GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
     kernel_executor->AddMindIRPass(kernel_graph);
   }
   kernel_graph->SetInputNodes();
-  auto manager = MakeManager({kernel_graph});
-  if (manager) {
-    manager->AddFuncGraph(kernel_graph);
-    kernel_graph->set_manager(manager);
-  }
   auto context_ptr = MsContext::GetInstance();
   session_->SetInputNodeUsage(kernel_graph, manager);
   MS_EXCEPTION_IF_NULL(context_ptr);

@@ -16,13 +16,14 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ACLNN_KERNEL_BUILD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ACLNN_KERNEL_BUILD_H_
 #include <memory>
+#include <string>
 #include "kernel/kernel.h"
 
 namespace mindspore {
 namespace kernel {
 KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node);
-bool IsRegisteredAclnnOp(const AnfNodePtr &anf_node);
-bool IsEnabledAclnnDispatch(const AnfNodePtr &anf_node);
+bool IsRegisteredAclnnOp(const std::string &op_name);
+bool IsEnabledAclnnDispatch(const std::string &op_name);
 }  // namespace kernel
 }  // namespace mindspore
 

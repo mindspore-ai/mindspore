@@ -59,13 +59,15 @@ AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNode
 
 bool IsKerenlGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   const auto &outputs = common::AnfAlgo::GetAllOutputIndexByReturnTypes(func_graph->output());
-  return std::find_if(outputs.begin(), outputs.end(), [&node](const auto &output) { return output.first == node; }) !=
-         outputs.end();
+  return std::find_if(outputs.begin(), outputs.end(), [&node](const auto &output) {
+           const auto &real_pair = common::AnfAlgo::VisitKernelWithReturnType(node, 0);
+           return output.first == node || (real_pair.first == output.first && real_pair.second == output.second);
+         }) != outputs.end();
 }
 
 bool IsNeedConvert(const FuncGraphPtr &func_graph, const AnfNodePtr &input) {
   MS_EXCEPTION_IF_NULL(input);
-  return (input->Type() != nullptr && AnfUtils::IsRealKernel(input) && common::AnfAlgo::IsTupleOutput(input) &&
+  return (input->Type() != nullptr && common::AnfAlgo::IsTupleOutput(input) &&
           !common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall) &&
           (input->isa<Parameter>() || (input->isa<ValueNode>() && !AnfAlgo::IsSequenceOutputOfScalar(input)) ||
            IsKerenlGraphOutput(func_graph, input)) &&

@@ -28,8 +28,13 @@ FuncGraphPtr GraphOptimizer::Optimize(const FuncGraphPtr &func_graph, bool run_o
   run_only_once_ = (pass_managers_.size() == 1) ? true : run_only_once;
   MS_EXCEPTION_IF_NULL(func_graph);
   // cppcheck-suppress *
-  auto manager = Manage(func_graph, true);
-  MS_EXCEPTION_IF_NULL(manager);
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(func_graph, true);
+    MS_EXCEPTION_IF_NULL(manager);
+    manager->AddFuncGraph(func_graph);
+    func_graph->set_manager(manager);
+  }
 
   bool changed = true;
   while (changed) {

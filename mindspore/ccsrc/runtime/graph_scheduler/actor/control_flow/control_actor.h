@@ -140,6 +140,7 @@ class ControlActor : public MemoryAwareActor {
   // The exit actor needs to create a new device address and take out the ptr from the device tensor come from
   // the kernel actor. These new created device tensors are stored in the created device tensors.
   std::vector<DeviceTensorPtr> created_device_tensors_;
+  std::vector<DeviceTensorPtr> last_step_created_device_tensors_;
   // In control flow, when the argument is not a dynamic len tuple but the parameter is, need create a new
   // real make tuple node for it.
   std::vector<FuncGraphPtr> created_new_graphs_;

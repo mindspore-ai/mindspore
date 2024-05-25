@@ -401,6 +401,7 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
     }
 
     std::vector<bool> is_need_copy_device_tensors;
+    std::vector<bool> is_need_dynamic_checks;
     std::vector<bool> is_dynamic_shapes;
     std::vector<KernelWithIndex> formal_parameters;
     std::vector<const DeviceContext *> device_contexts;
@@ -416,18 +417,27 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
       MS_EXCEPTION_IF_NULL(backend_node);
       (void)is_need_copy_device_tensors.emplace_back(
         is_need_copy_device_tensor(backend_node, node_with_context.second.first.second));
+      (void)is_need_dynamic_checks.emplace_back(
+        common::AnfAlgo::CheckPrimitiveType(backend_node, prim::kPrimConditionGather));
       auto is_dynamic_shape =
         common::AnfAlgo::IsDynamicShape(backend_node) || common::AnfAlgo::IsDynamicSequence(backend_node);
       (void)is_dynamic_shapes.emplace_back(is_dynamic_shape);
       (void)device_contexts.emplace_back(node_with_context.second.second);
     }
-
     const auto &actor_name = kernel_graph_group_info->group_name_ + kExitActorNameSuffix;
     const auto &exit_actor = std::make_shared<ExitActor>(actor_name, memory_manager_aid_, formal_parameters, nullptr);
     MS_EXCEPTION_IF_NULL(exit_actor);
     exit_actor->is_need_copy_device_tensors_.swap(is_need_copy_device_tensors);
+    exit_actor->is_need_dynamic_checks_.swap(is_need_dynamic_checks);
     exit_actor->is_dynamic_shapes_.swap(is_dynamic_shapes);
     exit_actor->device_contexts_.swap(device_contexts);
+    for (const auto &graph : kernel_graph_group_info->graphs_) {
+      MS_EXCEPTION_IF_NULL(graph);
+      std::for_each(graph->GetRefMap().begin(), graph->GetRefMap().end(),
+                    [&exit_actor, &graph](const std::pair<KernelWithIndex, KernelWithIndex> &pair) {
+                      exit_actor->ref_out_in_map_[pair.first] = graph->GetRefNodeRecursive(pair.first);
+                    });
+    }
     (void)exit_actors.emplace_back(exit_actor);
     InsertActor(exit_actor.get());
   }
@@ -828,9 +838,107 @@ void ControlNodeScheduler::ClearActorData(const ControlActorSet *control_actor_s
   for (auto &exit_actor : control_actor_set->exit_actors_) {
     MS_EXCEPTION_IF_NULL(exit_actor);
     exit_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
-    exit_actor->created_device_tensors_.clear();
+    exit_actor->last_step_created_device_tensors_.swap(exit_actor->created_device_tensors_);
     exit_actor->created_new_graphs_.clear();
     exit_actor->created_new_nodes_.clear();
+  }
+}
+
+namespace {
+FuncGraphPtr GetLazyInlineFuncGraph(const StackActorPtr &stack_actor) {
+  MS_EXCEPTION_IF_NULL(stack_actor);
+  for (const auto &input_pair : stack_actor->input_data_arrow_aids()) {
+    if (input_pair.second == nullptr) {
+      continue;
+    }
+    const auto &data_arrow = input_pair.second;
+    if (IntToSize(data_arrow->to_input_index_) < stack_actor->input_stack_data_num()) {
+      continue;
+    }
+    std::string actor_name = input_pair.first.Name();
+    if (actor_name.empty()) {
+      continue;
+    }
+    const auto &actor = FetchActor(actor_name);
+    if (actor == nullptr) {
+      MS_LOG(WARNING) << "Failed to get actor by aid:" << actor_name << " for stack actor:" << stack_actor->GetAID();
+      continue;
+    }
+    if (actor->type() != KernelTransformType::kExitActor) {
+      continue;
+    }
+    const auto &exit_actor = dynamic_cast<ExitActor *>(actor);
+    MS_EXCEPTION_IF_NULL(exit_actor);
+    if (exit_actor->node() == nullptr) {
+      continue;
+    }
+    return exit_actor->node()->func_graph();
+  }
+  return nullptr;
+}
+}  // namespace
+
+void ControlNodeScheduler::Optimize(const ActorSetPtr &actor_set, const GraphCompilerInfo &graph_compiler_info) const {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  if (actor_set->control_actors_ == nullptr || graph_compiler_info.control_node_parser_ == nullptr) {
+    return;
+  }
+  const auto &parser = graph_compiler_info.control_node_parser_;
+
+  for (const auto &entrance_actor : actor_set->control_actors_->entrance_actors_) {
+    MS_EXCEPTION_IF_NULL(entrance_actor);
+    std::stable_partition(entrance_actor->output_data_arrows_.begin(), entrance_actor->output_data_arrows_.end(),
+                          [](const DataArrowPtr &arrow) {
+                            MS_EXCEPTION_IF_NULL(arrow);
+                            const auto &actor = FetchActor(arrow->to_op_id_.Name());
+                            return actor != nullptr && (actor->type() == KernelTransformType::kKernelActor ||
+                                                        actor->type() == KernelTransformType::kSuperKernelActor ||
+                                                        actor->type() == KernelTransformType::kCopyActor);
+                          });
+  }
+
+  for (const auto &stack_actor : actor_set->control_actors_->stack_actors_) {
+    MS_EXCEPTION_IF_NULL(stack_actor);
+    if (stack_actor->formal_parameters_.size() !=
+        stack_actor->input_data_arrow_aids_.size() + stack_actor->device_tensor_store_keys_.size()) {
+      continue;
+    }
+    if (stack_actor->input_stack_data_num_ == 0 ||
+        stack_actor->input_stack_data_num_ >= stack_actor->device_tensor_store_keys_.size() +
+                                                stack_actor->local_device_tensors_.size() +
+                                                stack_actor->input_data_arrow_aids_.size()) {
+      continue;
+    }
+    const auto &func_graph = GetLazyInlineFuncGraph(stack_actor);
+    if (func_graph == nullptr) {
+      continue;
+    }
+    if (!func_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
+      continue;
+    }
+    const auto &iter = parser->func_graph_to_call_nodes_.find(func_graph);
+    if (iter != parser->func_graph_to_call_nodes_.end() && (!iter->second.empty())) {
+      continue;
+    }
+    for (const auto &input_aid : stack_actor->input_branch_id_arrow_aids_) {
+      const auto &actor = FetchActor(input_aid.Name());
+      if (actor == nullptr || actor->type() != KernelTransformType::kEntranceActor) {
+        MS_LOG(WARNING) << "Invalid input branch id aid:" << input_aid;
+        continue;
+      }
+      const auto &entrance_actor = dynamic_cast<EntranceActor *>(actor);
+      MS_EXCEPTION_IF_NULL(entrance_actor);
+      const auto &branch_id_iter = std::find(entrance_actor->output_branch_id_arrows_.begin(),
+                                             entrance_actor->output_branch_id_arrows_.end(), stack_actor->GetAID());
+      if (branch_id_iter != entrance_actor->output_branch_id_arrows_.end()) {
+        stack_actor->is_branch_id_enable_ = false;
+        entrance_actor->output_branch_id_arrows_.erase(branch_id_iter);
+        MS_LOG(DEBUG) << "Disable branch id from entrance actor:" << entrance_actor->GetAID()
+                      << " to stack actor:" << stack_actor->GetAID()
+                      << " for cell reuse funcgraph:" << func_graph->ToString();
+        break;
+      }
+    }
   }
 }
 
@@ -1822,7 +1930,8 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
       auto from_node_with_index = GetFrontNodeByKernelGraph(input, graph.get());
       MS_EXCEPTION_IF_NULL(from_node_with_index.first);
       if (common::AnfAlgo::CheckPrimitiveType(from_node_with_index.first, prim::kPrimTupleGetItem) &&
-          (!from_node_with_index.first->cast<CNodePtr>()->HasAttr(kAttrReplaceRealKernelInBackend))) {
+          (!from_node_with_index.first->cast<CNodePtr>()->HasAttr(kAttrReplaceRealKernelInBackend)) &&
+          (!common::AnfAlgo::IsTupleOutput(from_node_with_index.first))) {
         MS_LOG(WARNING) << "Input node:" << from_node_with_index.first->DebugString()
                         << " for graph:" << graph->ToString() << " is a tuple get item";
         from_node_with_index = FetchRealNodeByGetItem(from_node_with_index);
