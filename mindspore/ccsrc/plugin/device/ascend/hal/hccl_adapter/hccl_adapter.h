@@ -87,6 +87,8 @@ class HcclAdapter {
   HcclResult HcclAllToAll(void *send_buf, void *recv_buf, hccl::HcclAllToAllVParams params, HcclDataType dataType,
                           const aclrtStream stream, HcclComm comm) const;
   HcclResult HcclBarrier(const aclrtStream stream, HcclComm comm) const;
+  HcclResult HcclBatchISendIRecv(HcclSendRecvItem *sendRecvInfo, uint32_t itemNum, HcclComm comm,
+                                 aclrtStream stream) const;
 
   // for enqueue op
   HcclResult HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const;
@@ -141,6 +143,7 @@ class HcclAdapter {
   HcclGetRankIdFunObj single_op_hccl_get_rank_id_ = nullptr;
   HcclGetRankSizeFunObj single_op_hccl_get_rank_size_ = nullptr;
   HcclAlltoAllVFunObj launch_hccl_all_to_allv_ = nullptr;
+  HcclBatchSendRecvFunObj launch_hccl_batch_isend_irecv_ = nullptr;
 
   HcomCreateGroupFunObj hccl_create_group_ = nullptr;
   HcomDestroyGroupFunObj hccl_destroy_group_ = nullptr;

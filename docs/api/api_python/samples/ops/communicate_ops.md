@@ -127,6 +127,49 @@ print(output)
 [[0.]]
 ```
 
+## Reduce
+
+![image](./images/reduce.png)
+
+`Reduce`操作会将每张卡的输入先进行指定的规约操作，再将输出结果分发到指定的卡上。以op=ReduceOp.SUM为例：先对每张卡的输入张量进行求和，然后按将结果分发到指定的卡上。如上图所示，每卡的输入均为1x4的Tensor。`ReduceScatter`先对输入求和得到[0, 4, 8, 12]的Tensor，然后结果发送到指定的卡上(例如：卡1)，卡1对应的输出结果为[0., 4., 8., 12.], 其余各卡输出结果为[0.]。
+
+示例代码如下：我们初始化每个进程中`Reduce`算子输入的数值，对于每张卡，我们申请了一个1x4大小，数值为[0, 1, 2, 3]的Tensor输入。然后调用`Reduce`算子，在通信域为`0-1-2-3`的卡(所有卡的通信范围即nccl_world_group)中进行通信，并且打印输出结果。
+
+```python
+import mindspore as ms
+from mindspore.communication import init
+import mindspore.nn as nn
+import mindspore.ops as ops
+import numpy as np
+
+ms.set_context(mode=ms.GRAPH_MODE)
+init()
+class Net(nn.Cell):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.reduce = ops.Reduce(ops.ReduceOp.SUM)
+
+    def construct(self, x):
+        return self.reduce(x)
+
+input_x = ms.Tensor(np.array([0, 1, 2, 3]).astype(np.float32))
+net = Net()
+output = net(input_x)
+print(output)
+```
+
+运行结果如下，卡1的输出日志路径为`log/1/rank.1`，输出结果为：
+
+```text
+[0., 4., 8., 12.]
+```
+
+其余卡的输出结果为：
+
+```text
+[0.]
+```
+
 ## Broadcast
 
 ![image](./images/broadcast.png)
@@ -339,11 +382,11 @@ rank 1结果为：
 
 ```python
 import os
+import numpy as np
 import mindspore as ms
 from mindspore.communication import init
 import mindspore.nn as nn
 import mindspore.ops as ops
-import numpy as np
 
 class Net(nn.Cell):
     def __init__(self):
@@ -385,6 +428,194 @@ rank0~rank7的结果为：
 
 ```text
 [[[[0. 1. 2. 3. 4. 5. 6. 7.]]]]
+```
+
+## CollectiveScatter
+
+![image](./images/collectscatter.png)
+
+`CollectiveScatter`操作是对输入数据的数据进行均匀散射到通信域的卡上。例如上图中，将0卡大小为4x2的Tensor进行均匀切分后转发到两张卡上，最终输出为：
+
+```text
+Rank 0:
+[[1,2],
+ [3,4]]
+
+Rank 1:
+[[5,6],
+ [7,8]]
+```
+
+示例代码如下：我们将`CollectiveScatter`算子的根节点设置为0号卡，表示将从0号卡散射数据到其他卡上。
+
+```python
+import numpy as np
+import mindspore as ms
+from mindspore.communication import init
+import mindspore.nn as nn
+import mindspore.ops as ops
+
+ms.set_context(mode=ms.GRAPH_MODE)
+init()
+class CollectiveScatterNet(nn.Cell):
+    def __init__(self):
+        super(CollectiveScatterNet, self).__init__()
+        self.collective_scatter = ops.CollectiveScatter(src_rank=0)
+
+    def construct(self, x):
+        return self.collective_scatter(x)
+
+input = ms.Tensor(np.arange(8).reshape([4, 2]).astype(np.float32))
+net = CollectiveScatterNet()
+output = net(input)
+print(output)
+```
+
+rank_0的结果为：
+
+```text
+[[0. 1.]
+ [2. 3.]]
+```
+
+rank_1的结果为：
+
+```text
+[[4. 5.]
+ [6. 7.]]
+```
+
+## CollectiveGather
+
+![image](./images/collectgather.png)
+
+`CollectiveGather`操作是对通信组的输入张量进行聚合。操作会将每张卡的输入Tensor的第0维度上进行聚合，发送到对应卡上。例如上图中，将0,1卡大小为2x2的Tensor进行汇聚后发送到卡0上，最终输出为：
+
+```text
+Rank 0:
+[[0. 1.],
+ [2. 3.],
+ [0. 1.],
+ [2. 3.]]
+
+Rank 1:
+[0.]
+```
+
+示例代码如下：我们将`CollectiveGather`算子的根节点设置为0号卡，表示将从0号卡接受数据。
+
+```python
+import numpy as np
+import mindspore as ms
+from mindspore.communication import init
+import mindspore.nn as nn
+import mindspore.ops as ops
+
+ms.set_context(mode=ms.GRAPH_MODE)
+init()
+class CollectiveGatherNet(nn.Cell):
+    def __init__(self):
+        super(CollectiveGatherNet, self).__init__()
+        self.collective_scatter = ops.CollectiveGather(dest_rank=0)
+
+    def construct(self, x):
+        return self.collective_scatter(x)
+
+input = ms.Tensor(np.arange(4).reshape([2, 2]).astype(np.float32))
+net = CollectiveGatherNet()
+output = net(input)
+print(output)
+```
+
+rank_0的结果为：
+
+```text
+[[0. 1.],
+ [2. 3.],
+ [0. 1.],
+ [2. 3.]]
+```
+
+rank_1的结果为：
+
+```text
+[0.]
+```
+
+## Barrier
+
+`Barrier`操作是同步通信域内的多个进程。进程调用到该算子后进入阻塞状态，直到通信域内所有进程调用到该算子，进程被唤醒并继续执行。
+
+```python
+import numpy as np
+import mindspore as ms
+from mindspore.communication import init
+import mindspore.ops as ops
+
+ms.set_context(mode=ms.GRAPH_MODE)
+init()
+class BarrierNet(nn.Cell):
+  def __init__(self):
+​    super(BarrierNet, self).__init__()
+​    self.barrier = ops.Barrier()
+  def construct(self):
+​    self.barrier()
+
+net = BarrierNet()
+net()
+```
+
+## Send
+
+`Send`发送张量到指定线程。
+
+```python
+import numpy as np
+import mindspore.ops as ops
+import mindspore.nn as nn
+from mindspore.communication import init
+from mindspore import Tensor
+
+init()
+class SendNet(nn.Cell):
+    def __init__(self):
+        super(SendNet, self).__init__()
+        self.depend = ops.Depend()
+        self.send = ops.Send(st_tag=0, dest_rank=8, group="hccl_world_group")
+
+    def construct(self, x):
+        out = self.depend(x, self.send(x))
+        return out
+
+input_ = Tensor(np.ones([2, 8]).astype(np.float32))
+net = Net()
+output = net(input_)
+```
+
+## Receive
+
+`Send`发送张量到指定线程。
+
+```python
+import numpy as np
+import mindspore.ops as ops
+import mindspore.nn as nn
+from mindspore.communication import init
+from mindspore import Tensor
+
+init()
+class ReceiveNet(nn.Cell):
+    def __init__(self):
+        super(ReceiveNet, self).__init__()
+        self.recv = ops.Receive(sr_tag=0, src_rank=0, shape=[2, 8], dtype=ms.float32,
+                              group="hccl_world_group")
+
+    def construct(self):
+        out = self.recv()
+        return out
+
+net = Net()
+output = net()
 ```
 
 ## 注意事项

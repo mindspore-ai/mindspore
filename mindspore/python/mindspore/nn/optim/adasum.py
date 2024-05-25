@@ -29,7 +29,7 @@ from mindspore.parallel._utils import _get_global_rank, _get_stage_device_num
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.ops.operations._inner_ops import Send, Receive
+from mindspore.ops import Send, Receive
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.communication.management import create_group

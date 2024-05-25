@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.communication.management import init, get_rank
-from mindspore.ops.operations import _inner_ops as inner_p
+from mindspore.ops.operations import comm_ops
 
 np.random.seed(1)
 init()
@@ -28,7 +28,7 @@ dest_rank = 0
 class CollectiveGatherNet(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.collective_gather = inner_p.CollectiveGather(dest_rank=dest_rank)
+        self.collective_gather = comm_ops.CollectiveGather(dest_rank=dest_rank)
 
     def construct(self, x):
         out = self.collective_gather(x)

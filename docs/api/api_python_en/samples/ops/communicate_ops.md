@@ -337,11 +337,11 @@ The sample code is as follows: we use `AlltoAll` operator to exchange the data o
 
 ```python
 import os
+import numpy as np
 import mindspore as ms
 from mindspore.communication import init
 import mindspore.nn as nn
 import mindspore.ops as ops
-import numpy as np
 
 class Net(nn.Cell):
     def __init__(self):
@@ -383,6 +383,194 @@ The results of rank0 to rank7 are:
 
 ```text
 [[[[0. 1. 2. 3. 4. 5. 6. 7.]]]]
+```
+
+## CollectiveScatter
+
+![image](./images/collectscatter.png)
+
+`CollectiveScatter` operation scatters tensor evently across the processes in the specified communication group. For example，scatter a 2x2 Tensor on device 0 evenly to the two devices, and get the output Tensor:
+
+```text
+rank_0 result:
+[[1,2],
+ [3,4]]
+
+rank_1 result:
+[[5,6],
+ [7,8]]
+```
+
+In the following example, set `src_rank` as 0, and the operation will scatter the Tensor on device 0 to other devices.
+
+```python
+import numpy as np
+import mindspore as ms
+from mindspore.communication import init
+import mindspore.nn as nn
+import mindspore.ops as ops
+
+ms.set_context(mode=ms.GRAPH_MODE)
+init()
+class CollectiveScatterNet(nn.Cell):
+    def __init__(self):
+        super(CollectiveScatterNet, self).__init__()
+        self.collective_scatter = ops.CollectiveScatter(src_rank=0)
+
+    def construct(self, x):
+        return self.collective_scatter(x)
+
+input = ms.Tensor(np.arange(8).reshape([4, 2]).astype(np.float32))
+net = CollectiveScatterNet()
+output = net(input)
+print(output)
+```
+
+rank_0 result:
+
+```text
+[[0. 1.]
+ [2. 3.]]
+```
+
+rank_1 result:
+
+```text
+[[4. 5.]
+ [6. 7.]]
+```
+
+## CollectiveGather
+
+![image](./images/collectgather.png)
+
+`CollectiveGather` operation gathers tensors from the specified communication group. The operation will gather the tensor from processes according to dimension 0. For example，gather a 2x2 Tensor on device 0, and get the output Tensor:
+
+```text
+rank_0 result:
+[[0. 1.],
+ [2. 3.],
+ [0. 1.],
+ [2. 3.]]
+
+rank_1 result:
+[0.]
+```
+
+In the following example, set `dest_rank` as 0, and the operation will scatter the Tensor on device 0 to other devices.
+
+```python
+import numpy as np
+import mindspore as ms
+from mindspore.communication import init
+import mindspore.nn as nn
+import mindspore.ops as ops
+
+ms.set_context(mode=ms.GRAPH_MODE)
+init()
+class CollectiveGatherNet(nn.Cell):
+    def __init__(self):
+        super(CollectiveGatherNet, self).__init__()
+        self.collective_scatter = ops.CollectiveGather(dest_rank=0)
+
+    def construct(self, x):
+        return self.collective_scatter(x)
+
+input = ms.Tensor(np.arange(4).reshape([2, 2]).astype(np.float32))
+net = CollectiveGatherNet()
+output = net(input)
+print(output)
+```
+
+rank_0 result:
+
+```text
+[[0. 1.],
+ [2. 3.],
+ [0. 1.],
+ [2. 3.]]
+```
+
+rank_1 result:
+
+```text
+[0.]
+```
+
+## Barrier
+
+`Barrier` operation synchronizes all processes in the specified group. Once the process call this operation, it will be blocked until all processes call this operation. After all processes finish calling the operations, the blocked processes will be weaken and continue their task.
+
+```python
+import numpy as np
+import mindspore as ms
+from mindspore.communication import init
+import mindspore.ops as ops
+
+ms.set_context(mode=ms.GRAPH_MODE)
+init()
+class BarrierNet(nn.Cell):
+  def __init__(self):
+​    super(BarrierNet, self).__init__()
+​    self.barrier = ops.Barrier()
+  def construct(self):
+​    self.barrier()
+
+net = BarrierNet()
+net()
+```
+
+## Send
+
+`Send` operation sends tensors to the specified dest_rank.
+
+```python
+import numpy as np
+import mindspore.ops as ops
+import mindspore.nn as nn
+from mindspore.communication import init
+from mindspore import Tensor
+
+init()
+class SendNet(nn.Cell):
+    def __init__(self):
+        super(SendNet, self).__init__()
+        self.depend = ops.Depend()
+        self.send = ops.Send(st_tag=0, dest_rank=8, group="hccl_world_group")
+
+    def construct(self, x):
+        out = self.depend(x, self.send(x))
+        return out
+
+input_ = Tensor(np.ones([2, 8]).astype(np.float32))
+net = Net()
+output = net(input_)
+```
+
+## Receive
+
+`Receive` operation receives tensors from src_rank.
+
+```python
+import numpy as np
+import mindspore.ops as ops
+import mindspore.nn as nn
+from mindspore.communication import init
+from mindspore import Tensor
+
+init()
+class ReceiveNet(nn.Cell):
+    def __init__(self):
+        super(ReceiveNet, self).__init__()
+        self.recv = ops.Receive(sr_tag=0, src_rank=0, shape=[2, 8], dtype=ms.float32,
+                              group="hccl_world_group")
+
+    def construct(self):
+        out = self.recv()
+        return out
+
+net = Net()
+output = net()
 ```
 
 ## Notes

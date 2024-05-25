@@ -57,6 +57,7 @@ ORIGIN_METHOD(HcclRecv, HcclResult, void *, uint64_t, HcclDataType, uint32_t, Hc
 ORIGIN_METHOD(HcclAlltoAllV, HcclResult, const void *, const void *, const void *, HcclDataType, const void *,
               const void *, const void *, HcclDataType, HcclComm, aclrtStream);
 ORIGIN_METHOD(HcclBarrier, HcclResult, HcclComm, aclrtStream);
+ORIGIN_METHOD(HcclBatchSendRecv, HcclResult, HcclSendRecvItem *, uint32_t, HcclComm, aclrtStream);
 
 ORIGIN_METHOD(HcclCommInitClusterInfo, HcclResult, const char *, uint32_t, HcclComm *);
 ORIGIN_METHOD(HcclCommDestroy, HcclResult, HcclComm);

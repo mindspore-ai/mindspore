@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-"""test hccl allreduce with 8p"""
+"""test hccl AllReduce and all_reduce with 8p"""
 
 import os
 import numpy as np
@@ -22,11 +22,16 @@ from mindspore import Tensor
 from mindspore import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.communication.management import init
+from mindspore.communication.comm_func import all_reduce
+from mindspore import context
+from mindspore.ops import ReduceOp
 
 np.random.seed(1)
 os.environ['GRAPH_OP_RUN'] = str(1)
 os.environ['HCCL_WHITELIST_DISABLE'] = str(1)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 init()
+
 
 class AllReduceNet(nn.Cell):
     def __init__(self):
@@ -47,9 +52,49 @@ class AllReduceNet(nn.Cell):
         out = self.mul(out, 2)
         return out
 
+
+class AllReduceFuncNet(nn.Cell):
+    def __init__(self, op=ReduceOp.SUM):
+        super(AllReduceFuncNet, self).__init__()
+        self.op = op
+
+    def construct(self, x):
+        return all_reduce(x)
+
+
 def test_hccl_allreduce_8p():
+    """
+    Feature: test 'AllReduce' communication operation.
+    Description: test 'AllReduce' communication operation.
+    Expectation: expect correct result.
+    """
     net = AllReduceNet()
     input_x = np.ones([3, 4]).astype(np.float32)
     expect_output = [[256, 256, 256, 256], [256, 256, 256, 256], [256, 256, 256, 256]]
     output = net(Tensor(input_x, mstype.float32))
+    assert np.allclose(output.asnumpy(), expect_output)
+
+
+def test_hccl_allreduce_func_net_8p():
+    """
+    Feature: test 'all_reduce' communication function in cell.
+    Description: test 'all_reduce' communication function in cell.
+    Expectation: expect correct result.
+    """
+    net = AllReduceFuncNet()
+    input_x = np.ones([3, 4]).astype(np.float32)
+    expect_output = [[8, 8, 8, 8], [8, 8, 8, 8], [8, 8, 8, 8]]
+    output = net(Tensor(input_x, mstype.float32))
+    assert np.allclose(output.asnumpy(), expect_output)
+
+
+def test_hccl_allreduce_func_8p():
+    """
+    Feature: test 'all_reduce' communication function.
+    Description: test 'all_reduce' communication function.
+    Expectation: expect correct result.
+    """
+    x = np.ones([3, 4]).astype(np.float32)
+    expect_output = [[8, 8, 8, 8], [8, 8, 8, 8], [8, 8, 8, 8]]
+    output = all_reduce(Tensor(x, mstype.float32))
     assert np.allclose(output.asnumpy(), expect_output)

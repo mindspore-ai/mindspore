@@ -4,12 +4,7 @@ mindspore.communication
 
 注意，集合通信接口需要先配置好通信环境变量。
 
-针对Ascend设备，用户需要准备rank表，设置rank_id和device_id，详见 `rank table启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/rank_table.html>`_ 。
-
-针对GPU设备，用户需要准备host文件和mpi，详见 `mpirun启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/mpirun.html>`_ 。
-
-针对CPU设备，用户需要编写动态组网启动脚本，详见 `动态组网启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/dynamic_cluster.html>`_ 。
-
+针对Ascend/GPU/CPU设备，推荐使用msrun启动方式，无第三方以及配置文件依赖。详见 `msrun启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/msrun_launcher.html>`_ 。
 
 .. py:class:: mindspore.communication.GlobalComm
 
@@ -247,6 +242,27 @@ mindspore.communication
 
     .. note::
         .. include:: ops/mindspore.ops.comm_note.rst
+
+.. py:function:: mindspore.communication.get_process_group_ranks(group=GlobalComm.WORLD_COMM_GROUP)
+
+    获取指定通信组中的进程，并将通信组中的进程编号以列表方式返回。
+
+    参数：
+        - **group** (str，可选) - 工作的通信组。默认值：``GlobalComm.WORLD_COMM_GROUP`` （即Ascend平台为 ``"hccl_world_group"`` ，GPU平台为 ``"nccl_world_group"`` ）。
+
+    返回：
+        List (List[int]) - 指定通信组中的进程编号列表。
+
+    异常：
+        - **TypeError** - `group` 不是字符串。
+        - **RuntimeError** - 如果目标设备无效，或者后端无效，或者分布式初始化失败。
+
+    样例：
+
+    .. note::
+        .. include:: ops/mindspore.ops.comm_note.rst
+
+        该样例需要在4卡环境下运行。
 
 .. py:data:: mindspore.communication.HCCL_WORLD_COMM_GROUP
 

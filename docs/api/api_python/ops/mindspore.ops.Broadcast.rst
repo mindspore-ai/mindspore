@@ -9,7 +9,7 @@
         集合中的所有进程的Tensor的shape和数据格式相同。
 
     参数：
-        - **root_rank** (int) - 表示发送源的进程编号。除发送数据的进程外，存在于所有进程中。
+        - **root_rank** (int) - 表示发送源的进程编号。只有该进程会广播张量。
         - **group** (str，可选) - 表示通信域。默认值： ``GlobalComm.WORLD_COMM_GROUP`` 。
 
     输入：
