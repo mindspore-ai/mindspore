@@ -52,16 +52,7 @@ class AscendCommManager : public CommManager {
 
   uint32_t GetRank() override {
     uint32_t rank_id = 0;
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    auto parallel_context = parallel::ParallelContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(parallel_context);
-    if (parallel_context->parallel_mode() != parallel::kStandalone) {
-      // Check HCCL inited.
-      if (!hccl::HcclAdapter::GetInstance().Inited()) {
-        MS_LOG(DEBUG) << "HCCL not inited, return rank_id = 0";
-        return rank_id;
-      }
+    if (distributed::collective::CollectiveManager::instance()->initialized()) {
       if (!GetRankID(kHcclWorldGroup, &rank_id)) {
         MS_LOG(EXCEPTION) << "Get rank id failed.";
       }
