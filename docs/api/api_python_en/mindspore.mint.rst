@@ -11,14 +11,14 @@ Array Operation
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.mint.ones
-    mindspore.mint.zeros
-    mindspore.mint.ones_like
-    mindspore.mint.zeros_like
     mindspore.mint.index_select
+    mindspore.mint.ones
+    mindspore.mint.ones_like
     mindspore.mint.scatter_add
     mindspore.mint.sort
     mindspore.mint.stack
+    mindspore.mint.zeros
+    mindspore.mint.zeros_like
 
 Tensor Creation
 ^^^^^^^^^^^^^^^

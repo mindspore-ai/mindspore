@@ -1,9 +1,6 @@
 ones:
     description: |
-        Creates a tensor filled with value ones.
-
-        Creates a tensor with shape described by the first argument and fills it with value ones in type of the second
-        argument.
+        Creates a tensor filled with value ones, whose shape and type are described by the first argument `size` and second argument `dtype` respectively.
 
         .. warning::
             For argument `shape`, Tensor type input will be deprecated in the future version.
