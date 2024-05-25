@@ -16,6 +16,12 @@ Array Operation
 Element-wise Operation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.erf
 
 mindspore.mint.nn
 ------------------

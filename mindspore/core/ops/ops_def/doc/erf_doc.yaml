@@ -1,38 +1,36 @@
 erf:
-  description: |
-    Computes the Gauss error function of `input` element-wise.
+    description: |
+        Computes the Gauss error function of `input` element-wise.
 
-    .. math::
+        .. math::
 
-        erf(x)=\frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
+            erf(x)=\frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
-    Args:
-        input (Tensor): The input tensor of Gaussian error function. :math:`x` in the following formula.
-            Supported dtypes: 
+        Args:
+            input (Tensor): The input tensor of Gaussian error function. :math:`x` in the following formula.
+                Supported dtypes: 
 
-            - Ascend: float16, float32, int64, bool.
-            - GPU/CPU: float16, float32, float64.
+                - GPU/CPU: float16, float32, float64.
+                - Ascend: float16, float32, float64, int64, bool.
 
-    Returns:
-        Tensor. If the input is int64 or bool, the return value type is float32.
-        Otherwise, the return value type is the same as the input type.
+        Returns:
+            Tensor, has the same shape as the `input`. 
+            The dtype of output is float32 when dtype of `input` is in
+            [bool, int64]. Otherwise output has the same dtype as the `input`.
 
+        :raise TypeError: If `input` is not a Tensor.
+        :raise TypeError:
+                * GPU/CPU: If dtype of `input` is not float16, float32, float64.
+                * Ascend: If dtype of `input` is not float16, float32, float64, int64, bool.
 
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not as follows
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-            - Ascend: float16, float32, int64, bool.
-            - GPU/CPU: float16, float32, float64.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
-        >>> output = ops.erf(input)
-        >>> print(output)
-        [-0.8427168   0.          0.8427168   0.99530876  0.99997765]
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
+            >>> output = ops.erf(input)
+            >>> print(output)
+            [-0.8427168   0.          0.8427168   0.99530876  0.99997765]

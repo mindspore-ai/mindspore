@@ -16,6 +16,12 @@ Array操作
 逐元素运算
 ^^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.erf
 
 mindspore.mint.nn
 ------------------
