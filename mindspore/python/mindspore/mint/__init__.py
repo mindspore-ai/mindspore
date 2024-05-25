@@ -188,7 +188,7 @@ from mindspore.ops.function import arange_ext as arange
 # 80
 
 # 81
-
+from mindspore.ops.function.array_func import index_select_ext as index_select
 # 82
 
 # 83
@@ -405,7 +405,7 @@ __all__ = [
     # 80
 
     # 81
-
+    'index_select',
     # 82
 
     # 83
