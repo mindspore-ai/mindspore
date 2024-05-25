@@ -451,7 +451,7 @@ def _sync_params(name, param, layout):
             self.is_send = is_send
             self.ret = ms.Tensor([0])
 
-            from mindspore.ops.operations._inner_ops import Send, Receive
+            from mindspore.ops import Send, Receive
             if self.is_send:
                 self.send = Send(sr_tag=sr_tag, dest_rank=peer_rank)
             else:

@@ -652,12 +652,12 @@ class Broadcast(PrimitiveWithInfer):
         The tensors must have the same shape and format in all processes of the collection.
 
     Args:
-        root_rank (int): Source rank. Required in all processes except the one
-                   that is sending the data.
+        root_rank (int): Specifies the rank(global rank) of the process that broadcast the tensor.
+            And only process `root_rank` will broadcast the tensor.
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Inputs:
-        - **input_x** (tuple[Tensor]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
         tuple[Tensor], Tensor has the same shape of the input, i.e., :math:`(x_1, x_2, ..., x_R)`.
@@ -680,9 +680,6 @@ class Broadcast(PrimitiveWithInfer):
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
-
-            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with multiple devices.
 
@@ -902,7 +899,7 @@ class AlltoAll(PrimitiveWithInfer):
         TypeError: If group is not a string.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         .. note::
@@ -915,9 +912,6 @@ class AlltoAll(PrimitiveWithInfer):
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
-
-            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with 8 devices.
 
@@ -980,9 +974,6 @@ class AlltoAll(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         check_collective_target_dtype('x', x_dtype, self.name)
         return x_dtype
-
-    def __call__(self, tensor):
-        raise NotImplementedError
 
 
 class NeighborExchangeV2(Primitive):
@@ -1119,6 +1110,386 @@ class NeighborExchangeV2(Primitive):
 
     def __call__(self, tensor):
         raise NotImplementedError
+
+
+class CollectiveScatter(Primitive):
+    """
+    Scatter tensor evently across the processes in the specified communication group.
+
+    Note:
+        Only the tensor in process `src`(global rank) will do scatter.
+
+    Args:
+        src_rank (int, optional): Specifies the rank of the process that send the tensor.
+            And only process `src_rank` will send the tensor.
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor to be scattered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, the shape of output is :math:`(x_1/src_rank, x_2, ..., x_R)`. The dimension 0 of data is equal to
+            the dimension of input tensor divided by `src`, and the other dimension keep the same.
+
+    Raises:
+        TypeError: If `group` is not a str.
+        ValueError: If the local rank id of the calling process in the group
+                    is larger than the group's rank size.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 2 devices.
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> from mindspore.communication.management import init, get_rank
+        >>> from mindspore.ops as ops
+        >>> # Launch 2 processes.
+        >>> init()
+        >>> class CollectiveScatterNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(CollectiveScatter, self).__init__()
+        >>>         self.collective_scatter = ops.CollectiveScatter(src_rank=0)
+        >>>
+        >>>     def construct(self, x):
+        >>>         return self.collective_scatter(x)
+        >>>
+        >>> input = Tensor(np.arange(8).reshape([4, 2]).astype(np.float32))
+        >>> net = CollectiveScatterNet()
+        >>> output = net(input)
+        >>> print(output)
+        Process with rank 0: [[0. 1.],
+                              [2. 3.]]
+        Process with rank 1: [[4. 5.],
+                              [6. 7.]]
+    Tutorial Examples:
+        - `Distributed Set Communication Primitives - CollectiveScatter
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#reducescatter>`_
+
+    """
+
+    @prim_attr_register
+    def __init__(self, src_rank=0, group=GlobalComm.WORLD_COMM_GROUP):
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
+        self.rank_size = get_group_size(_get_group(group))
+        self.src_rank = src_rank
+
+        self.add_prim_attr('src_rank', self.src_rank)
+        self.add_prim_attr('rank_size', self.rank_size)
+        self.add_prim_attr('group', _get_group(group))
+
+
+class CollectiveGather(Primitive):
+    """
+    Gathers tensors from the specified communication group. The operation will gather the tensor
+        from processes according to dimension 0.
+
+    Note:
+        Only the tensor in process `dst`(global rank) will keep the gathered tensor. The other process
+            will keep a tensor with shape [1], which has no mathematical meaning.
+
+    Args:
+        dest_rank(int): Specifies the rank of the process that receive the tensor.
+            And only process `dest_rank` will receive the gathered tensor.
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+
+    Inputs:
+        - **input_x** (Tensor) - The tensor to be gathered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+       Tensor, the shape of output is :math:`(sum x_1, x_2, ..., x_R)`. The dimension 0 of data is equal to
+            sum of the dimension of input tensor, and the other dimension keep the same.
+
+    Raises:
+        TypeError: If `group` is not a str.
+        ValueError: If the local rank id of the calling process in the group
+                    is larger than the group's rank size.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 4 devices.
+
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops as ops
+        >>> # Launch 2 processes.
+        >>>
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
+        >>> init()
+        >>> class CollectiveGatherNet(nn.Cell):
+        ...     def __init__(self):
+        ...         super(CollectiveGatherNet, self).__init__()
+        ...         self.collective_gather = ops.CollectiveGather(dest_rank=0)
+        ...
+        ...     def construct(self, x):
+        ...         return self.collective_gather(x)
+        ...
+        >>> input = Tensor(np.arange(4).reshape([2, 2]).astype(np.float32))
+        >>> net = CollectiveGatherNet()
+        >>> output = net(input)
+        >>> print(output)
+        Process with rank 0: [[0. 1.],
+                              [2. 3.],
+                              [0. 1.],
+                              [2. 3.]]
+        Process with rank 1: [0.]
+    """
+
+    @prim_attr_register
+    def __init__(self, dest_rank, group=GlobalComm.WORLD_COMM_GROUP):
+        """Initialize Gather."""
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
+        self.rank_id = get_rank(_get_group(group))
+        self.dest_rank = dest_rank
+        self.rank_size = get_group_size(_get_group(group))
+        validator.check('rank', self.rank_id, 'rank_size', self.rank_size, validator.LT, self.name)
+        self.add_prim_attr('rank_size', self.rank_size)
+        self.add_prim_attr('group', _get_group(group))
+        self.add_prim_attr('dest_rank', self.dest_rank)
+        self.add_prim_attr('rank_id', self.rank_id)
+
+
+class Barrier(PrimitiveWithInfer):
+    """
+    Synchronizes all processes in the specified group. Once the process call this operation, it will be blocked until
+        all processes call this operation. After all processes finish calling the operations, the blocked processes
+        will be weaken and continue their task.
+
+    Args:
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+
+    Raises:
+        TypeError: If `group` is not a str.
+        ValueError: If the local rank id of the calling process in the group
+                    is larger than the group's rank size.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 2 devices.
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>> # Launch 4 processes.
+        >>> init()
+        >>> class BarrierNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(BarrierNet, self).__init__()
+        >>>         self.barrier = ops.Barrier()
+        >>>
+        >>>     def construct(self):
+        >>>         self.barrier()
+        >>> net = BarrierNet()
+        >>> net()
+    """
+
+    @prim_attr_register
+    def __init__(self, group=GlobalComm.WORLD_COMM_GROUP):
+        self.group = group
+        self.add_prim_attr("side_effect_mem", True)
+
+    def infer_shape(self):
+        return [1]
+
+    def infer_dtype(self):
+        return mstype.float32
+
+
+class Send(PrimitiveWithInfer):
+    """
+    Send tensors to the specified dest_rank.
+
+    Note:
+        Send and Receive must be used in combination and have same sr_tag.
+
+    Args:
+        sr_tag (int): The tag to identify the send/recv message. The message will
+                      be received by the Receive op with the same "sr_tag".
+        dest_rank (int): A required integer identifying the destination rank.
+        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `group` is not a str.
+        ValueError: If the local rank id of the calling process in the group
+                    is larger than the group's rank size.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 2 devices.
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>>
+        >>> init()
+        >>> class SendNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(SendNet, self).__init__()
+        >>>         self.depend = ops.Depend()
+        >>>         self.send = ops.Send(st_tag=0, dest_rank=8, group="hccl_world_group")
+        >>>
+        >>>     def construct(self, x):
+        >>>         out = self.depend(x, self.send(x))
+        >>>         return out
+        >>>
+        >>> input_ = Tensor(np.ones([2, 8]).astype(np.float32))
+        >>> net = Net()
+        >>> output = net(input_)
+    """
+
+    @prim_attr_register
+    def __init__(self, sr_tag, dest_rank, group=GlobalComm.WORLD_COMM_GROUP, group_back=GlobalComm.WORLD_COMM_GROUP):
+        self.rank = dest_rank
+        self.sr_tag = sr_tag
+        self.group = group
+        self.add_prim_attr("no_eliminate", True)
+
+    def infer_shape(self, x_shape):
+        self.add_prim_attr("shape", x_shape)
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        return x_dtype
+
+
+class Receive(PrimitiveWithInfer):
+    """
+    Receive tensors from src_rank.
+
+    Note:
+        Send and Receive must be used in combination and have same sr_tag.
+
+    Args:
+        sr_tag (int): A required integer identifying the send/recv message tag. The message will
+                      will be send by the Send op with the same "sr_tag".
+        src_rank (int): A required integer identifying the source rank.
+        shape (list[int]): A required list identifying the shape of the tensor to be received.
+        dtype (Type): A required Type identifying the type of the tensor to be received. The supported types:
+                       int8, int16, int32, float16, float32.
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+
+    Raises:
+        TypeError: If `group` is not a str.
+        ValueError: If the local rank id of the calling process in the group
+                    is larger than the group's rank size.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 2 devices.
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>>
+        >>> init()
+        >>> class ReceiveNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(ReceiveNet, self).__init__()
+        >>>         self.recv = ops.Receive(sr_tag=0, src_rank=0, shape=[2, 8], dtype=ms.float32,
+        >>>                               group="hccl_world_group")
+        >>>
+        >>>     def construct(self):
+        >>>         out = self.recv()
+        >>>         return out
+        >>>
+        >>> net = Net()
+        >>> output = net()
+    """
+
+    @prim_attr_register
+    def __init__(self, sr_tag, src_rank, shape, dtype, group=GlobalComm.WORLD_COMM_GROUP,
+                 group_back=GlobalComm.WORLD_COMM_GROUP):
+        self.rank = src_rank
+        self.tag = sr_tag
+        self.shape = shape
+        self.dtype = dtype
+        self.group = group
+        self.add_prim_attr("no_eliminate", True)
+        valid_type = [mstype.float16, mstype.float32, mstype.float64, mstype.bfloat16,
+                      mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+                      mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64]
+        args = {"dtype": dtype}
+        validator.check_scalar_or_tensor_types_same(args, valid_type, self.name)
+
+    def infer_shape(self, x_shape=None):
+        return self.get_attr_dict()['shape']
+
+    def infer_dtype(self, x_dtype=None):
+        return self.get_attr_dict()['dtype']
 
 
 class _MirrorOperator(PrimitiveWithInfer):

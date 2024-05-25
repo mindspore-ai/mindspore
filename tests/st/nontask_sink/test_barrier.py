@@ -19,7 +19,8 @@ import os
 import time
 import numpy as np
 import mindspore.nn as nn
-from mindspore.ops.operations import _inner_ops as inner_p
+from mindspore.ops.operations import comm_ops
+from mindspore.communication.comm_func import barrier
 from mindspore.communication.management import init, get_rank
 
 # 'Barrier' operator only supports KernelByKernel mode by now. So we set 'GRAPH_OP_RUN' to 1.
@@ -31,10 +32,14 @@ rank = get_rank()
 class BarrierNet(nn.Cell):
     def __init__(self):
         super(BarrierNet, self).__init__()
-        self.barrier = inner_p.Barrier()
+        self.barrier = comm_ops.Barrier()
 
     def construct(self):
         self.barrier()
+
+class BarrierFuncNet(nn.Cell):
+    def construct(self):
+        barrier()
 
 def test_hccl_barrier_8p():
     """
@@ -43,6 +48,21 @@ def test_hccl_barrier_8p():
     Expectation: all processes in the group synchronize in this operator.
     """
     net = BarrierNet()
+    if rank == 3:
+        time.sleep(3)
+    if rank == 4:
+        time.sleep(6)
+    print("Process {} start time: {}".format(rank, time.strftime('%Y-%m-%d-%H:%M:%S', time.localtime(time.time()))))
+    net()
+    print("Process {} end time: {}".format(rank, time.strftime('%Y-%m-%d-%H:%M:%S', time.localtime(time.time()))))
+
+def test_hccl_barrier_func_8p():
+    """
+    Feature: test 'Barrier' collective communication operator.
+    Description: test 'Barrier' collective communication operator.
+    Expectation: all processes in the group synchronize in this operator.
+    """
+    net = BarrierFuncNet()
     if rank == 3:
         time.sleep(3)
     if rank == 4:

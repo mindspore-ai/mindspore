@@ -630,10 +630,15 @@ Parameter操作算子
     mindspore.ops.AllGather
     mindspore.ops.AllReduce
     mindspore.ops.AlltoAll
+    mindspore.ops.Barrier
     mindspore.ops.Broadcast
+    mindspore.ops.CollectiveGather
+    mindspore.ops.CollectiveScatter
     mindspore.ops.NeighborExchangeV2
+    mindspore.ops.Receive
     mindspore.ops.ReduceOp
     mindspore.ops.ReduceScatter
+    mindspore.ops.Send
 
 调试算子
 ----------------
