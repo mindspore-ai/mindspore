@@ -45,6 +45,7 @@ constexpr auto kNameFlashAttentionPatternForBaiChuan = "FlashAttentionPatternFor
 constexpr auto kNameFlashAttentionPatternForMsSDPseShift = "FlashAttentionPatternForMsSDPseShift";
 constexpr auto kNameFlashAttentionPatternForSDEinsum = "FlashAttentionPatternForSDEinsum";
 constexpr auto kNamePadNodeSuffix = "_fa_pad";
+constexpr auto kSocVersionAscend310P = "Ascend310P3";
 constexpr size_t high_inner_precise = 0;
 constexpr size_t high_performance = 1;
 constexpr size_t kNumIndex0 = 0;
@@ -290,6 +291,8 @@ bool GetParamForIpAdapterPattern(const CNodePtr &q_trans_BNSD, const CNodePtr &k
   return true;
 }
 }  // namespace
+
+std::string FlashAttentionFusion::soc_version_;
 
 std::unordered_map<std::string, VectorRef> FlashAttentionFusion::DefinePatterns() const {
   MS_LOG(INFO) << "start define flash attention fusion patterns.";
@@ -2588,6 +2591,10 @@ std::shared_ptr<FlashAttentionParm> FlashAttentionFusion::ParseFAParam() const {
           return nullptr;
         }
       } else if (attr.first == "inner_precise") {
+        if (FlashAttentionFusion::GetSocVersion() == kSocVersionAscend310P) {
+          MS_LOG(WARNING) << "FA inner_precise is not supported on Ascend310P.";
+          return nullptr;
+        }
         int inner_precise = std::atoi(attr_value.c_str());
         if (std::to_string(inner_precise) == attr_value && (inner_precise == 0 || inner_precise == 1)) {
           MS_LOG(INFO) << "Use user config, FA inner_precise is: " << attr_value;
@@ -2597,6 +2604,11 @@ std::shared_ptr<FlashAttentionParm> FlashAttentionFusion::ParseFAParam() const {
           return nullptr;
         }
       } else if (attr.first == "sparse_mode") {
+        if (FlashAttentionFusion::GetSocVersion() != kSocVersionAscend310P) {
+          MS_LOG(WARNING) << "FA sparse_mode is only supported on Ascend310P, but get env "
+                          << FlashAttentionFusion::GetSocVersion();
+          return nullptr;
+        }
         int sparse_mode = std::atoi(attr_value.c_str());
         if (std::to_string(sparse_mode) == attr_value && (sparse_mode == 0 || sparse_mode == 10)) {
           MS_LOG(INFO) << "Use user config, FA sparse_mode is: " << attr_value;

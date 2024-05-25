@@ -60,6 +60,10 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
 
   AnfNodePtr Process(const std::string &, const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
+  static void SetSocVersion(const std::string &soc_version) { soc_version_ = soc_version; }
+
+  static std::string GetSocVersion() { return soc_version_; }
+
  private:
   std::map<std::string, std::map<std::string, std::string>> op_attrs_map_;
 
@@ -193,6 +197,9 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   const VectorRef DefineFlashAttentionPatternForSDEinsum() const;
 
   std::shared_ptr<FlashAttentionParm> ParseFAParam() const;
+
+ private:
+  static std::string soc_version_;
 };
 }  // namespace opt
 }  // namespace mindspore
