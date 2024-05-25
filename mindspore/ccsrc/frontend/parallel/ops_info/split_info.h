@@ -69,6 +69,7 @@ class SplitWithSizeInfo : public SplitInfo {
                     const PrimitiveAttrs &attrs)
       : SplitInfo(operator_name, inputs_shape, outputs_shape, attrs) {}
   ~SplitWithSizeInfo() override = default;
+  void ReplaceNodeInputOrAttrs() override;
 };
 class SplitTensorInfo : public SplitInfo {
  public:

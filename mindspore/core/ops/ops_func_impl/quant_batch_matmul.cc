@@ -101,13 +101,15 @@ TypePtr QuantBatchMatmulFuncImpl::InferType(const PrimitivePtr &primitive,
   if (!input_args[kQbmmInputBias]->GetType()->isa<TypeNone>()) {
     types.clear();
     (void)types.emplace("bias", input_args[kQbmmInputBias]->GetType());
-    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, {kInt32}, primitive->name());
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, {kInt32, kBFloat16}, primitive->name());
   }
 
   ValuePtr dtype_ptr = input_args[kQbmmInputDtype]->GetValue();
   auto dtype = GetValue<int64_t>(dtype_ptr);
   if (dtype == TypeId::kNumberTypeInt8) {
     return kInt8;
+  } else if (dtype == TypeId::kNumberTypeBFloat16) {
+    return kBFloat16;
   } else {
     return kFloat16;
   }

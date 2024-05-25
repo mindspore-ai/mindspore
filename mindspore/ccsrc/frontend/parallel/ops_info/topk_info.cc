@@ -50,6 +50,55 @@ Status TopKInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+Status TopkExtInfo::GetAttrs() {
+  auto dim_opt = GetScalarValueFromInputs<int64_t>(input_value_, name_, DIM);
+  if (!dim_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << ": Cannot get dim value.";
+    return FAILED;
+  }
+  auto dim = dim_opt.value();
+
+  if (inputs_shape_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
+    return FAILED;
+  }
+  size_t rank = inputs_shape_[0].size();
+  if (dim < 0) {
+    dim = dim + rank;
+  }
+  dim_ = dim;
+
+  inputs_shape_ = Shapes{inputs_shape_[0]};
+
+  return SUCCESS;
+}
+
+Status TopkExtInfo::CheckStrategy(const StrategyPtr &strategy) {
+  MS_EXCEPTION_IF_NULL(strategy);
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Invalid strategy";
+    return FAILED;
+  }
+
+  std::vector<Dimensions> stra = strategy->GetInputDim();
+  if (stra.empty()) {
+    MS_LOG(ERROR) << name_ << ": The strategy is empty";
+    return FAILED;
+  }
+
+  if (dim_ >= stra[0].size()) {
+    MS_LOG(ERROR) << name_ << ": The dim is out of range, the dim is " << dim_;
+    return FAILED;
+  }
+
+  if (stra[0][dim_] != 1) {
+    MS_LOG(ERROR) << name_ << ": The dim can not be split";
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
+
 Status TopKInfo::InferDevMatrixShape() {
   MS_EXCEPTION_IF_NULL(strategy_);
   std::vector<Dimensions> stra = strategy_->GetInputDim();
@@ -166,6 +215,46 @@ std::vector<StrategyPtr> TopKInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
+std::vector<StrategyPtr> TopkExtInfo::GenerateOpStrategies(int64_t stage_id) {
+  Shape split_flag;
+  for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
+    if (i == dim_) {
+      split_flag.push_back(0);
+    } else {
+      split_flag.push_back(1);
+    }
+  }
+
+  Shapes splittable_input = {split_flag};
+  Shapes tmp_inputs_shape = {inputs_shape_[0]};
+
+  std::vector<StrategyPtr> sp_vector;
+  if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_input, &sp_vector) != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": Generate strategies failed";
+  }
+  if (sp_vector.empty()) {
+    MS_LOG(EXCEPTION) << name_ << ": No available strategy";
+  }
+
+  return sp_vector;
+}
+
+std::shared_ptr<Strategies> TopkExtInfo::GenerateBatchStrategies() {
+  if (GetAttrs() != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": Get attr failed";
+  }
+  Dimensions input_strategy(inputs_shape_[0].size(), 1);
+  // dim can't split
+  if (inputs_shape_[0].size() > 1) {
+    if (dim_ != 0) {
+      input_strategy[0] = stage_device_size_;
+    }
+  }
+  Strategies strategy_v = {input_strategy};
+  return std::make_shared<Strategies>(strategy_v);
+}
+
 REGISTER(TopKInfo);
+REGISTER(TopkExtInfo);
 }  // namespace parallel
 }  // namespace mindspore
