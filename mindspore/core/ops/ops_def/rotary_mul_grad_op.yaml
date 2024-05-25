@@ -1,0 +1,23 @@
+#operator rotary_mul_grad
+rotary_mul_grad:
+    args:
+        x:
+            dtype: tensor
+        r1:
+            dtype: tensor
+        r2:
+            dtype: tensor
+        dy:
+            dtype: tensor
+        need_backward:
+            dtype: bool
+            default: True
+    returns:
+        dx:
+            dtype: tensor
+        dr1:
+            dtype: tensor
+        dr2:
+            dtype: tensor
+    function:
+        disable: True
