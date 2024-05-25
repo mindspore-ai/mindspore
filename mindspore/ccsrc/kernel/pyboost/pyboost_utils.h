@@ -43,7 +43,7 @@ class BACKEND_EXPORT AbstractConvertFunc {
   static void CacheAbstract(const AbstractBasePtr &abstract);
   static AbstractBasePtr ConvertAbstract(const ValuePtr &t);
   // Tensor is held by Abstract, may lead to memory leak.
-  static AbstractBasePtr ConvertAbstract(const TensorPtr &t);
+  static AbstractBasePtr ConvertAbstract(const BaseTensorPtr &t);
   static AbstractBasePtr ConvertAbstract(const ValueTuplePtr &t);
 
   template <typename T>

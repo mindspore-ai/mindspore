@@ -152,7 +152,7 @@ ValuePtrList CallBackwardHooks(const ValuePtr &value, ValuePtrList *grad_in) {
     return *grad_in;
   }
   MS_EXCEPTION_IF_NULL(grad_in);
-  auto tensor = value->cast<tensor::TensorPtr>();
+  auto tensor = value->cast<tensor::BaseTensorPtr>();
   if (tensor == nullptr) {
     MS_LOG(DEBUG) << "Hook just work on tensor, not support value " << value->ToString();
     return *grad_in;
