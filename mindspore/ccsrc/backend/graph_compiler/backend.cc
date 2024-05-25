@@ -944,7 +944,7 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
   MS_EXCEPTION_IF_NULL(graph);
 
   runtime::OpRunner::UpdateDeviceAddress(graph, runtime::OpRunner::GetTensorWithoutValueMask(op_run_info),
-                                         op_compiler_info->device_context_);
+                                         op_compiler_info->device_context_, false);
   // Create output tensor
   UpdateOutput(op_compiler_info->graph_output_nodes_, outputs);
 
@@ -1012,7 +1012,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
     CompileSingleOpGraph(op_compiler_info, device_context);
   }
   const auto &tensors_without_value_mask = runtime::OpRunner::GetTensorWithoutValueMask(op_run_info);
-  runtime::OpRunner::UpdateDeviceAddress(graph, tensors_without_value_mask, device_context);
+  runtime::OpRunner::UpdateDeviceAddress(graph, tensors_without_value_mask, device_context, true);
 
   runtime::OpRunner::RunSingleOpGraph(op_run_info, op_compiler_info, tensors_without_value_mask);
 

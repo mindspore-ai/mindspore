@@ -39,7 +39,7 @@ class OpRunner {
   // Update Tensor or input node DeviceAddress before PyNative async running.
   static void UpdateDeviceAddress(const KernelGraphPtr &graph,
                                   const std::vector<tensor::BaseTensorPtr> &tensors_without_value_mask,
-                                  const device::DeviceContext *device_context);
+                                  const device::DeviceContext *device_context, bool is_sync);
 
   static void RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_run_info,
                                const OpCompilerInfoPtr &op_compiler_info,
