@@ -31,6 +31,7 @@ class ConstructGraph {
   ParameterPtr NewTensorInput(const std::string &name, const TypePtr &type, const ShapeVector &shape);
   ParameterPtr NewTupleInput(const std::string &name, const std::vector<std::pair<TypePtr, ShapeVector>> &pairs);
   ParameterPtr NewListInput(const std::string &name, const std::vector<std::pair<TypePtr, ShapeVector>> &pairs);
+  ValueNodePtr NewValueNode(const ValuePtr &value);
 
   CNodePtr NewCNode(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
                     const mindspore::HashMap<std::string, ValuePtr> &attrs);

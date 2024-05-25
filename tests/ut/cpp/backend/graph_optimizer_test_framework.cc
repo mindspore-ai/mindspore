@@ -82,6 +82,12 @@ ParameterPtr ConstructGraph::NewListInput(const std::string &name,
   return NewInput(name, abs);
 }
 
+ValueNodePtr ConstructGraph::NewValueNode(const ValuePtr &value) {
+  auto node = mindspore::NewValueNode(value);
+  node->set_abstract(value->ToAbstract());
+  return node;
+}
+
 CNodePtr ConstructGraph::NewCNode(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
                                   const mindspore::HashMap<std::string, ValuePtr> &attrs) {
   MS_EXCEPTION_IF_NULL(graph_);
@@ -94,7 +100,8 @@ CNodePtr ConstructGraph::NewCNode(const std::string &prim_name, const std::vecto
   AbstractBasePtrList args;
   std::transform(inputs.begin(), inputs.end(), std::back_inserter(args),
                  [](const AnfNodePtr &node) -> abstract::AbstractBasePtr { return node->abstract(); });
-  opt::CppInferShape(prim, args, cnode);
+  auto out_abs = opt::CppInferShapeAndType(prim, args);
+  cnode->set_abstract(out_abs);
   return cnode;
 }
 
