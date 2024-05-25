@@ -180,6 +180,18 @@ bool GraphWithNoRealKernel(const KernelGraphPtr &kernel_graph) {
   return true;
 }
 
+void SetAclDebugKernel() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto op_debug_option = ms_context->get_param<std::string>(MS_CTX_OP_DEBUG_OPTION);
+  if (!op_debug_option.empty()) {
+    auto ret = CALL_ASCEND_API(aclrtCtxSetSysParamOpt, aclSysParamOpt::ACL_OPT_ENABLE_DEBUG_KERNEL, 1);
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Acl enable debug kernel failed! Error flag is " << ret;
+    }
+  }
+}
+
 void SetAclOpPrecisionMode() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -850,6 +862,7 @@ void GeKernelExecutor::Initialize() {
   res_manager_ = device_context_->device_res_manager_.get();
   MS_EXCEPTION_IF_NULL(res_manager_);
   graph_executor_ = dynamic_cast<GeGraphExecutor *>(device_context_->graph_executor_.get());
+  SetAclDebugKernel();
   // not check graph executor, may use in ascend device context
   SetAclOpPrecisionMode();
   transform::AclUtil::SetDeterministic();

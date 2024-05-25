@@ -144,7 +144,8 @@ void RegMsContext(const py::module *m) {
     .value("need_ckpt", MsCtxParam::MS_CTX_NEED_CKPT)
     .value("save_checkpoint_steps", MsCtxParam::MS_CTX_SAVE_CKPT_STEPS)
     .value("last_triggered_step", MsCtxParam::MS_CTX_LAST_TRIGGERED_STEP)
-    .value("enable_flash_attention_load_balance", MsCtxParam::MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE);
+    .value("enable_flash_attention_load_balance", MsCtxParam::MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE)
+    .value("op_debug_option", MsCtxParam::MS_CTX_OP_DEBUG_OPTION);
   (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(*m, "MSContext")
     .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")
     .def("get_param", &mindspore::MsCtxGetParameter, "Get value of specified parameter.")
