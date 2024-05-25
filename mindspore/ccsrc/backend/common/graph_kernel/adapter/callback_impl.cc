@@ -266,6 +266,7 @@ void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node, const std::vect
   std::vector<kernel::KernelObjectType> output_obj_type;
   auto cnode = node->cast<CNodePtr>();
   if (cnode) {
+    auto orig_input_num = build_info->GetAllInputFormats().size();
     auto &inputs = cnode->inputs();
     std::vector<bool> visited(inputs.size(), false);
     std::for_each(indices.begin(), indices.end(), [&visited](size_t index) { visited[index] = true; });
@@ -275,6 +276,12 @@ void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node, const std::vect
         CollectInputTypesAndFormats(inputs[i], &input_types, &input_formats, true);
       } else {
         auto input_idx = i - 1;
+        if (input_idx >= orig_input_num) {
+          MS_LOG(DEBUG) << "skip inputs[" << i << "] for node [" << node->fullname_with_scope() << "] "
+                        << node->DebugString();
+          continue;
+        }
+        // reuse build info
         input_types.emplace_back(build_info->GetInputDeviceType(input_idx));
         input_formats.emplace_back(build_info->GetInputFormat(input_idx));
         input_obj_type[input_idx] = build_info->GetInputKernelObjectType(input_idx);
