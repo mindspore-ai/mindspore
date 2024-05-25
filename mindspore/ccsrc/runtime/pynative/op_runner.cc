@@ -100,7 +100,8 @@ void UpdateParameterShapeFromInputTensor(const AnfNodePtr &input_node, const ten
                                               input_node.get());
 }
 
-void SetDeviceAddress(const AnfNodePtr &input_node, const tensor::BaseTensorPtr &input_tensor) {
+void SetDeviceAddress(const AnfNodePtr &input_node, const tensor::BaseTensorPtr &input_tensor,
+                      const device::DeviceContext *device_context, bool is_sync) {
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
   auto node_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
@@ -118,12 +119,18 @@ void SetDeviceAddress(const AnfNodePtr &input_node, const tensor::BaseTensorPtr 
 
   // The DeviceType and format of DeviceAddress is always the same after UpdateInputTensor
   if (tensor_address != nullptr && tensor_address != node_address) {
-    AnfAlgo::SetOutputAddr(tensor_address, 0, input_node.get());
+    auto address = tensor_address;
+    if (tensor_address->GetTensorStorageInfo() != nullptr) {
+      address = DeviceAddressUtils::ConvertContiguousDeviceAddress(device_context, tensor_address, is_sync);
+      input_tensor->set_device_address(address);
+    }
+    AnfAlgo::SetOutputAddr(address, 0, input_node.get());
   }
 }
 
 void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
-                                  const std::vector<tensor::BaseTensorPtr> &input_tensors) {
+                                  const std::vector<tensor::BaseTensorPtr> &input_tensors,
+                                  const device::DeviceContext *device_context, bool is_sync) {
   MS_LOG(DEBUG) << "Start";
   auto input_size = input_nodes.size();
   auto tensor_size = input_tensors.size();
@@ -137,12 +144,12 @@ void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
     if (input_tensor->isa<tensor::MapTensor>()) {
       auto map_tensor = input_tensor->cast<tensor::MapTensorPtr>();
       MS_EXCEPTION_IF_NULL(map_tensor);
-      SetDeviceAddress(input_node, map_tensor);
-      SetDeviceAddress(input_node, map_tensor->key_tensor());
-      SetDeviceAddress(input_node, map_tensor->value_tensor());
-      SetDeviceAddress(input_node, map_tensor->status_tensor());
+      SetDeviceAddress(input_node, map_tensor, device_context, is_sync);
+      SetDeviceAddress(input_node, map_tensor->key_tensor(), device_context, is_sync);
+      SetDeviceAddress(input_node, map_tensor->value_tensor(), device_context, is_sync);
+      SetDeviceAddress(input_node, map_tensor->status_tensor(), device_context, is_sync);
     } else {
-      SetDeviceAddress(input_node, input_tensor);
+      SetDeviceAddress(input_node, input_tensor, device_context, is_sync);
     }
   }
   MS_LOG(DEBUG) << "End";
@@ -768,12 +775,12 @@ std::vector<tensor::BaseTensorPtr> OpRunner::GetTensorWithoutValueMask(
 // Determine the address of the graph and do not change the address in subsequent executions
 void OpRunner::UpdateDeviceAddress(const KernelGraphPtr &graph,
                                    const std::vector<tensor::BaseTensorPtr> &tensors_without_value_mask,
-                                   const device::DeviceContext *device_context) {
+                                   const device::DeviceContext *device_context, bool is_sync) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(DEBUG) << "Start";
   const auto &input_nodes = graph->input_nodes();
   UpdateInputTensorFromDevice(input_nodes, tensors_without_value_mask, device_context);
-  UpdateInputNodeDeviceAddress(input_nodes, tensors_without_value_mask);
+  UpdateInputNodeDeviceAddress(input_nodes, tensors_without_value_mask, device_context, is_sync);
   pynative::OpCompiler::UpdateRefNodeOutputDeviceAddress(graph);
   MS_LOG(DEBUG) << "End";
 }
