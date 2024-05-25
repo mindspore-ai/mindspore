@@ -44,14 +44,19 @@ int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const st
   internal::ValidateInfo info;
   info.input_num_ = inputsIdxMap_.size();
   info.output_num_ = outputsIdxMap_.size();
+  info.input_dtype_.resize(info.input_num_);
+  info.input_format_.resize(info.input_num_);
+  info.output_dtype_.resize(info.output_num_);
+  info.output_format_.resize(info.output_num_);
+
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
-    info.input_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(inputs[iter->first]->dtype_id()));
-    info.input_format_.emplace_back(InternalKernelUtils::ToInternalFormat(inputs[iter->first]->format()));
+    info.input_dtype_[iter->second] = InternalKernelUtils::ToInternalDType(inputs[iter->first]->dtype_id());
+    info.input_format_[iter->second] = InternalKernelUtils::ToInternalFormat(inputs[iter->first]->format());
   }
 
   for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
-    info.output_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(outputs[iter->first]->dtype_id()));
-    info.output_format_.emplace_back(InternalKernelUtils::ToInternalFormat(outputs[iter->first]->format()));
+    info.output_dtype_[iter->second] = InternalKernelUtils::ToInternalDType(outputs[iter->first]->dtype_id());
+    info.output_format_[iter->second] = InternalKernelUtils::ToInternalFormat(outputs[iter->first]->format());
   }
   if (!impl_->Init(info)) {
     MS_LOG(ERROR) << "Internal Op '" << kernel_name_ << "' is initialized FAILED.";
@@ -89,10 +94,8 @@ bool InternalKernelMod::Init(const std::vector<KernelTensor *> &inputs, const st
   SetInOutIdx();
   inputs_.resize(inputsIdxMap_.size());
   std::generate(inputs_.begin(), inputs_.end(), []() { return new internal::Tensor(); });
-
   outputs_.resize(outputsIdxMap_.size());
   std::generate(outputs_.begin(), outputs_.end(), []() { return new internal::Tensor(); });
-
   tiling_info_.device_buf_.size_ = 0;
   tiling_info_.device_buf_.addr_ = nullptr;
   return true;
@@ -117,12 +120,10 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
     input_shapes[iter->second] = inputs_[iter->second]->desc.dims;
   }
   impl_->SetInputs(inputs_);
-
   for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
     InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
   }
   impl_->SetOutputs(outputs_);
-
   auto key = GenTilingCacheKey(inputs, outputs);
   SetTilingInfo(key);
   // update workspace_size list
