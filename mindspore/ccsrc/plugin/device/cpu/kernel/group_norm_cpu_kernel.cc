@@ -51,11 +51,6 @@ int GroupNormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
 
   auto x_shape = inputs[kIndex0]->GetShapeVector();
-  if (x_shape.size() < kNumberTwo) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dims of input tesnor must be not less than 2 "
-                      << "but got: " << x_shape.size();
-  }
-
   auto batch = x_shape[0];
   auto num_groups = inputs[kIndex1]->GetValueWithCheck<int64_t>();
 
@@ -66,12 +61,6 @@ int GroupNormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   eps_ = inputs[kIndex4]->GetValueWithCheck<float_t>();
   inner_size_ = LongToSize(num_channel_ * HxW_ / num_groups);
   outter_size_ = LongToSize(batch * num_groups);
-
-  if (num_channel_ % num_groups != 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'num_channels' must be divided by 'num_groups', "
-                      << "but got 'num_channels': " << num_channel_ << " ,'num_groups': " << num_groups;
-  }
-
   return ret;
 }
 
@@ -87,11 +76,6 @@ bool GroupNormCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &in
 template <typename T>
 void GroupNormCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  size_t f_size = sizeof(T);
-  if (inputs[kIndex2]->size() != f_size * LongToUlong(num_channel_) ||
-      inputs[kIndex3]->size() != f_size * LongToUlong(num_channel_)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the product of gamma and beta's shape must be " << num_channel_;
-  }
   auto x = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   auto gamma = reinterpret_cast<T *>(inputs[kIndex2]->device_ptr());
   auto beta = reinterpret_cast<T *>(inputs[kIndex3]->device_ptr());
@@ -116,7 +100,7 @@ void GroupNormCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
       double mean_val = sum / inner_size_;
       double rstd_val = std::sqrt(1 / ((sum_square / inner_size_ - mean_val * mean_val) + static_cast<double>(eps_)));
       for (size_t j = i * inner_size_; j < (i + 1) * inner_size_; ++j) {
-        auto param_index = (j / LongToSize(HxW_)) % LongToSize(num_channel_);
+        auto param_index = (j / HxW_) % num_channel_;
         y[j] = (x[j] - static_cast<T>(mean_val)) * static_cast<T>(rstd_val) * gamma[param_index] + beta[param_index];
       }
       mean[i] = static_cast<T>(mean_val);

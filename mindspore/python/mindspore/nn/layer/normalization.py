@@ -1152,7 +1152,7 @@ class GroupNorm(Cell):
 
     def _cal_output(self, x):
         """calculate groupnorm output"""
-        return group_norm(x, self.num_groups, self.gamma, self.beta, self.eps)
+        return group_norm(x, self.num_groups, self.gamma.to(x.dtype), self.beta.to(x.dtype), self.eps)
 
     @staticmethod
     @_primexpr
