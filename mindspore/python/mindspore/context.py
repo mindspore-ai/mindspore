@@ -289,6 +289,9 @@ class _Context:
                 - jit_compile (bool): ``False`` and ``True``.
                 - atomic_clean_policy (int): ``0`` and ``1``. Default: ``1`` .
                 - op_precision_mode (str): precision mode config file path.
+                - op_debug_option (str): Enable debugging options for Ascend operators,
+                  default not enabled, only supports ``"oom"`` currently.
+                  ``"oom"``: Detect memory out of bounds.
                 - ge_options (dict): Global or session CANN options.
                 - exception_dump (str): Enable exception dump for Ascend operators. ``"0"`` , ``"1"`` and ``"2"``.
                   Default: ``"2"`` .
@@ -313,7 +316,8 @@ class _Context:
             'save_checkpoint_steps': (int,),
             'need_ckpt': (bool,),
             'last_triggered_step': (int,),
-            'topo_order': (dict,)
+            'topo_order': (dict,),
+            'op_debug_option': (str, None),
         }
         ascend_cfg_setters = {
             'precision_mode': self._get_ascend_config_setter('precision_mode'),
@@ -322,6 +326,7 @@ class _Context:
             'matmul_allow_hf32': self._get_ascend_config_setter('matmul_allow_hf32', lambda v: "1" if v else "0"),
             'conv_allow_hf32': self._get_ascend_config_setter('conv_allow_hf32', lambda v: "1" if v else "0"),
             'exception_dump': self._get_ascend_config_setter('exception_dump'),
+            'op_debug_option': self._set_op_debug_option,
             'op_precision_mode': self._set_op_precision_mode,
             'ge_options': self._set_ge_options,
             'parallel_speed_up_json_path': self._set_speedup_config_path,
@@ -672,6 +677,16 @@ class _Context:
         if trans_fn is None:
             trans_fn = lambda x: x
         return _config_setter
+
+    def _set_op_debug_option(self, option_value):
+        valid_order = {'oom'}
+        if not isinstance(option_value, str):
+            raise TypeError(f"For 'ascend_config', the type of 'op_debug_option' must be str, "
+                            f"but got {type(option_value)}.")
+        if option_value not in valid_order:
+            raise ValueError(f"For 'ascend_config', the 'op_debug_option' supports being set to 'oom' currently, "
+                             f"but got {option_value}.")
+        self.set_param(ms_ctx_param.op_debug_option, option_value)
 
     def _set_op_precision_mode(self, ascend_value):
         op_precision_path = ascend_value
@@ -1516,6 +1531,12 @@ def set_context(**kwargs):
               for ``"2"``, inputs will be dumped for AICore exception operators. Default: ``"2"`` .
             - op_precision_mode (str): Path to config file of op precision mode. For detailed information, please refer
               to `Ascend community <https://www.hiascend.com/>`_ .
+            - op_debug_option (str): Enable debugging options for Ascend operators, default not enabled.
+              The value currently only supports being set to ``"oom"``.
+
+              - ``"oom"``: When there is a memory out of bounds during the execution of an operator,
+                AscendCL will return an error code of ``EZ9999``.
+
             - ge_options (dict): Set options for CANN. The options are divided into two categories: global and session.
               This is an experimental prototype that is subject to change and/or deletion.
               For detailed information, please refer to `Ascend community <https://www.hiascend.com/document/detail/zh/canncommercial/70RC1/inferapplicationdev/graphdevg/atlasgeapi_07_0119.html>`_ .
@@ -1697,6 +1718,7 @@ def set_context(**kwargs):
         >>> ms.set_context(deterministic='ON')
         >>> ms.set_context(ascend_config={"precision_mode": "force_fp16", "jit_compile": True,
         ...                "atomic_clean_policy": 1, "op_precision_mode": "./op_precision_config_file",
+        ...                "op_debug_option": "oom",
         ...                "ge_options": {"global": {"ge.opSelectImplmode": "high_precision"},
         ...                               "session": {"ge.exec.atomicCleanPolicy": "0"}}})
         >>> ms.set_context(jit_syntax_level=ms.STRICT)
@@ -1722,7 +1744,7 @@ def set_context(**kwargs):
                            "For details, please see the interface parameter API comments")
             continue
         if key in ('precision_mode', 'jit_compile', 'atomic_clean_policy', 'matmul_allow_hf32', 'conv_allow_hf32',
-                   'op_precision_mode', 'host_scheduling_max_threshold', 'ge_options'):
+                   'op_precision_mode', 'host_scheduling_max_threshold', 'ge_options', 'op_debug_option'):
             raise ValueError(f"Please set '{key}' through parameter ascend_config")
         if key == 'save_graphs':
             if value is True:
