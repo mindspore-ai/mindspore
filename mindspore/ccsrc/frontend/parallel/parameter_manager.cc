@@ -1552,6 +1552,21 @@ static std::shared_ptr<TensorLayout> GenerateTensorLayoutForParamReshapeWithStra
   return std::make_shared<TensorLayout>(param_layout);
 }
 
+static AnfNodePtr FindParameterByCallNode(const CNodePtr &call, int64_t index) {
+  MS_EXCEPTION_IF_NULL(call);
+  AnfNodePtr graph_value_node = call->input(0);
+  if (!IsValueNode<FuncGraph>(graph_value_node)) {
+    return nullptr;
+  }
+  auto graph_sub = GetValueNode<FuncGraphPtr>(graph_value_node);
+  auto parameters = graph_sub->parameters();
+  if (LongToSize(index - 1) >= parameters.size()) {
+    MS_LOG(EXCEPTION) << "The index is out of range, index is: " << (index - 1) << ", vector size is "
+                      << parameters.size();
+  }
+  return parameters[LongToSize(index - 1)];
+}
+
 static std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node, size_t curr_depth) {
   if (curr_depth > MAX_RECURSIVE_DEPTH) {
     MS_LOG(WARNING) << "When finding the next tensor layout for the parameter, exceeded the maximum recursion depth: "
@@ -1570,7 +1585,21 @@ static std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &n
       return layout_param;
     }
     CNodePtr use_apply = node_pair.first->cast<CNodePtr>();
-    if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
+    if (use_apply == nullptr) {
+      continue;
+    }
+    auto op = use_apply->input(0);
+    MS_EXCEPTION_IF_NULL(op);
+    if (IsValueNode<FuncGraph>(op)) {
+      auto fg = GetValueNode<FuncGraphPtr>(op);
+      auto para = FindParameterByCallNode(use_apply, node_pair.second);
+      auto layout_param = FindParameterNextLayout(para, ++curr_depth);
+      if (!layout_param) {
+        continue;
+      }
+      return layout_param;
+    }
+    if (!IsValueNode<Primitive>(use_apply->input(0))) {
       continue;
     }
     ValueNodePtr prim_anf_node = use_apply->input(0)->cast<ValueNodePtr>();
