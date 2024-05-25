@@ -283,6 +283,38 @@ def mean(input, dim=None, keepdim=False, *, dtype=None):
 
 
 def ones(size, *, dtype=None):
+    r"""
+    Creates a tensor filled with value ones.
+
+    Creates a tensor with shape described by the first argument and fills it with value ones in type of the second
+    argument.
+
+    Args:
+        size (Union[tuple[int], list[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
+            tuple or Tensor containing positive integers are allowed. If it is a Tensor,
+            it must be a 0-D or 1-D Tensor with int32 or int64 dtypes.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`): The specified type of output tensor. If `dtype` is ``None`` ,
+            `mindspore.float32` will be used. Default: ``None`` .
+
+    Returns:
+        Tensor, whose dtype and size are defined by input.
+
+    Raises:
+        TypeError: If `size` is neither an int nor an tuple/list/Tensor of int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import mint
+        >>> output = mint.ones((2, 2), mindspore.float32)
+        >>> print(output)
+        [[1. 1.]
+         [1. 1.]]
+    """
     return ones_ex(size, dtype)
 
 
@@ -299,6 +331,35 @@ def sub(input, other, *, alpha=1):
 
 
 def zeros(size, *, dtype=None):
+    """
+    Creates a tensor filled with 0 with shape described by `size` and fills it with value 0 in type of `dtype`.
+
+    Args:
+        size (Union[tuple[int], list[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
+            tuple or Tensor containing positive integers are allowed. If it is a Tensor,
+            it must be a 0-D or 1-D Tensor with int32 or int64 dtypes.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is ``None`` ,
+            mindspore.float32 will be used. Default: ``None`` .
+
+    Returns:
+        Tensor, whose dtype and size are defined by input.
+
+    Raises:
+        TypeError: If `size` is neither an int nor an tuple/list/Tensor of int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import mint
+        >>> output = mint.zeros((2, 2), mindspore.float32)
+        >>> print(output)
+        [[0. 0.]
+         [0. 0.]]
+    """
     return zeros_ex(size, dtype)
 
 

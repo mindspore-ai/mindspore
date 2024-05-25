@@ -3,7 +3,9 @@ mindspore.mint.ones_like
 
 .. py:function:: mindspore.mint.ones_like(input, *, dtype=None)
 
-    返回值为1的Tensor，shape与输入相同。
+    创建一个数值全为0的Tensor，shape和 `input` 相同，dtype由 `dtype` 决定。
+
+    如果 `dtype = None`, 输出Tensor的数据类型会和 `input` 一致。
 
     参数：
         - **input** (Tensor) - 任意维度的Tensor。

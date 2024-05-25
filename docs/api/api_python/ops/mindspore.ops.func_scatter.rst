@@ -10,8 +10,8 @@
         - **input** (Tensor) - 输入Tensor。 `input` 的秩必须至少为1。
         - **axis** (int) - 要进行更新操作的轴。取值范围是[-r, r)，其中r是 `input` 的秩。
         - **index** (Tensor) - 输入Tensor的索引，数据类型为int32或int64的。其rank必须和 `input` 一致。取值范围是[-s, s)，这里的s是 `input` 在 `axis` 指定轴的size。
-        - **src** (Tensor, float) - 指定与 `input` 进行更新操作的Tensor，其数据类型与输入 `input` 的数据类型相同y, 此时`src` 的shape必须等于 `index` 的shape。
-          `input` 也可以是个float类型的标量。
+        - **src** (Tensor, float) - 指定对 `input` 进行更新操作的数据。可以为Tensor，此时其数据类型必须与输入 `input` 的数据类型相同，shape必须与 `index` 相同。
+          也可以是个float类型的标量。
 
     返回：
         Tensor，shape和数据类型与输入 `input` 相同。
