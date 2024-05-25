@@ -30,6 +30,37 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+namespace {
+void SetForSwitchInline(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &send_cnode,
+                        const CNodePtr &recv_cnode, const AnfNodePtr &pre_node, const AnfNodePtr &next_node) {
+  if (pre_node == nullptr || next_node == nullptr) {
+    return;
+  }
+  std::string branch_name = "";
+  const auto &node_before_iter = kernel_graph->inline_sub_graph_kernels().find(pre_node);
+  if (node_before_iter != kernel_graph->inline_sub_graph_kernels().end()) {
+    branch_name = node_before_iter->second;
+  } else {
+    const auto &node_after_iter = kernel_graph->inline_sub_graph_kernels().find(next_node);
+    if (node_after_iter != kernel_graph->inline_sub_graph_kernels().end()) {
+      branch_name = node_after_iter->second;
+    }
+  }
+  if (branch_name == "") {
+    return;
+  }
+  kernel_graph->AddInlineSubgraphKernel(send_cnode, branch_name);
+  MS_LOG(DEBUG) << "Add inline subgraph send kernel:" << send_cnode->fullname_with_scope()
+                << " by before send node:" << pre_node->fullname_with_scope() << " branch name:" << branch_name
+                << " for kernel graph:" << kernel_graph->ToString();
+
+  kernel_graph->AddInlineSubgraphKernel(recv_cnode, branch_name);
+  MS_LOG(DEBUG) << "Add inline subgraph recv kernel:" << recv_cnode->fullname_with_scope()
+                << " by after receive node:" << next_node->fullname_with_scope() << " branch name:" << branch_name
+                << " for kernel graph:" << kernel_graph->ToString();
+}
+}  // namespace
+
 void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) {
   auto kernels = kernel_graph->execution_order();
   if (kernels.empty()) {
@@ -135,7 +166,8 @@ void AclStreamAssign::GenKernelIoExecInfoMap(
 }
 
 void AclStreamAssign::AddBoundarySendRecvKernel(const NotNull<KernelGraphPtr> &kernel_graph, uint32_t record_stream_id,
-                                                uint32_t wait_stream_id, std::vector<CNodePtr> *exec_order) {
+                                                uint32_t wait_stream_id, std::vector<CNodePtr> *exec_order,
+                                                CNodePtr pre_cnode, CNodePtr next_cnode) {
   auto &resource_manager = AscendStreamMng::GetInstance();
   uint32_t event_id = resource_manager.ApplyNewEvent();
   auto event = resource_manager.ApplyRtEvent();
@@ -146,12 +178,14 @@ void AclStreamAssign::AddBoundarySendRecvKernel(const NotNull<KernelGraphPtr> &k
   common::AnfAlgo::SetNodeAttr(kAttrWaitEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), recv_node);
   exec_order->push_back(send_node);
   exec_order->push_back(recv_node);
+  SetForSwitchInline(kernel_graph, send_node, recv_node, pre_cnode, next_cnode);
 }
 
 void AclStreamAssign::UpdateEventsToExecutionOrder(
   const NotNull<KernelGraphPtr> &kernel_graph,
   const mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> &send_after_node,
-  const mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> &recv_before_node) {
+  const mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> &recv_before_node,
+  const mindspore::HashMap<AnfNodePtr, std::set<size_t>> &producer_streams) {
   MS_LOG(DEBUG) << "Start UpdateEventsToExecutionOrder...";
   auto exec_kernels = kernel_graph->execution_order();
   std::vector<CNodePtr> new_exec_orders;
@@ -165,12 +199,29 @@ void AclStreamAssign::UpdateEventsToExecutionOrder(
   for (const auto &stream : streams_set) {
     AddBoundarySendRecvKernel(kernel_graph, kDefaultStreamIndex, stream, &new_exec_orders);
   }
+  CNodePtr last_kernel = nullptr;
   for (auto &kernel : exec_kernels) {
     auto before_iter = recv_before_node.find(kernel);
     if (before_iter != recv_before_node.end()) {
       (void)std::copy(before_iter->second.begin(), before_iter->second.end(), std::back_inserter(new_exec_orders));
     }
+    auto process_stream_id = AnfAlgo::GetStreamId(kernel);
+    if (process_stream_id != kDefaultStreamIndex) {
+      AddBoundarySendRecvKernel(kernel_graph, kDefaultStreamIndex, process_stream_id, &new_exec_orders, last_kernel,
+                                kernel);
+      auto it = producer_streams.find(kernel);
+      if (it != producer_streams.end()) {
+        for (auto record_stream_id : it->second) {
+          if (record_stream_id == kDefaultStreamIndex) {
+            continue;
+          }
+          AddBoundarySendRecvKernel(kernel_graph, record_stream_id, process_stream_id, &new_exec_orders, last_kernel,
+                                    kernel);
+        }
+      }
+    }
     new_exec_orders.push_back(kernel);
+    last_kernel = kernel;
     auto after_iter = send_after_node.find(kernel);
     if (after_iter != send_after_node.end()) {
       (void)std::copy(after_iter->second.begin(), after_iter->second.end(), std::back_inserter(new_exec_orders));
@@ -190,10 +241,11 @@ void AclStreamAssign::UpdateEventsToExecutionOrder(
   MS_LOG(DEBUG) << "Finish UpdateEventsToExecutionOrder.";
 }
 
-void AclStreamAssign::InsertEventsForInputs(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &kernel,
-                                            const NodeIoExecInfoPtr &io_exec_info,
-                                            mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
-                                            mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv) {
+void AclStreamAssign::ProcessStreamForInputs(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &kernel,
+                                             const NodeIoExecInfoPtr &io_exec_info,
+                                             mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
+                                             mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv,
+                                             mindspore::HashMap<AnfNodePtr, std::set<size_t>> *producer_streams) {
   MS_EXCEPTION_IF_NULL(io_exec_info);
   auto process_stream_id = AnfAlgo::GetStreamId(kernel);
   auto input_exec_info_list = io_exec_info->inputs;
@@ -218,7 +270,7 @@ void AclStreamAssign::InsertEventsForInputs(const NotNull<KernelGraphPtr> &kerne
     if (input_exec.second->stream_id == process_stream_id) {
       continue;
     }
-    InsertEvents(kernel_graph, kernel, input_exec.second->node, kernel_send, kernel_recv, kernel);
+    (*producer_streams)[kernel].insert(input_exec.second->stream_id);
   }
 }
 
@@ -313,34 +365,13 @@ void AclStreamAssign::InsertEvents(const NotNull<KernelGraphPtr> &kernel_graph, 
   } else {
     process_iter->second.push_back(recv_cnode);
   }
-
-  std::string branch_name = "";
-  const auto &node_before_iter = kernel_graph->inline_sub_graph_kernels().find(node_before_send);
-  if (node_before_iter != kernel_graph->inline_sub_graph_kernels().end()) {
-    branch_name = node_before_iter->second;
-  } else {
-    const auto &node_after_iter = kernel_graph->inline_sub_graph_kernels().find(node_after_recv);
-    if (node_after_iter != kernel_graph->inline_sub_graph_kernels().end()) {
-      branch_name = node_after_iter->second;
-    }
-  }
-  if (branch_name == "") {
-    return;
-  }
-  kernel_graph->AddInlineSubgraphKernel(send_cnode, branch_name);
-  MS_LOG(DEBUG) << "Add inline subgraph send kernel:" << send_cnode->fullname_with_scope()
-                << " by before send node:" << node_before_send->fullname_with_scope() << " branch name:" << branch_name
-                << " for kernel graph:" << kernel_graph->ToString();
-
-  kernel_graph->AddInlineSubgraphKernel(recv_cnode, branch_name);
-  MS_LOG(DEBUG) << "Add inline subgraph recv kernel:" << recv_cnode->fullname_with_scope()
-                << " by after receive node:" << node_after_recv->fullname_with_scope() << " branch name:" << branch_name
-                << " for kernel graph:" << kernel_graph->ToString();
+  SetForSwitchInline(kernel_graph, send_cnode, recv_cnode, node_before_send, node_after_recv);
 }
 
 void AclStreamAssign::GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kernel_graph,
                                              mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
-                                             mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv) {
+                                             mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv,
+                                             mindspore::HashMap<AnfNodePtr, std::set<size_t>> *producer_streams) {
   MS_LOG(DEBUG) << "Start GenEventsForParallelOp...";
   auto exec_kernels = kernel_graph->execution_order();
   mindspore::HashMap<CNodePtr, NodeIoExecInfoPtr> kernel_io_exec_info_map;
@@ -361,7 +392,8 @@ void AclStreamAssign::GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kern
       continue;
     }
     auto process_io_exec_info = process_iter->second;
-    InsertEventsForInputs(kernel_graph, process_kernel, process_io_exec_info, kernel_send, kernel_recv);
+    ProcessStreamForInputs(kernel_graph, process_kernel, process_io_exec_info, kernel_send, kernel_recv,
+                           producer_streams);
     InsertEventsForOutputs(kernel_graph, process_kernel, process_io_exec_info, kernel_send, kernel_recv);
   }
   MS_LOG(DEBUG) << "Finish GenEventsForParallelOp.";
@@ -370,9 +402,10 @@ void AclStreamAssign::GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kern
 void AclStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph) {
   mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> kernel_send;
   mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> kernel_recv;
+  mindspore::HashMap<AnfNodePtr, std::set<size_t>> producer_streams;
   AnfAlgo::SetStreamId(kDefaultStreamIndex, kernel_graph->output().get());
-  GenEventsForParallelOp(kernel_graph, &kernel_send, &kernel_recv);
-  UpdateEventsToExecutionOrder(kernel_graph, kernel_send, kernel_recv);
+  GenEventsForParallelOp(kernel_graph, &kernel_send, &kernel_recv, &producer_streams);
+  UpdateEventsToExecutionOrder(kernel_graph, kernel_send, kernel_recv, producer_streams);
 }
 }  // namespace ascend
 }  // namespace device

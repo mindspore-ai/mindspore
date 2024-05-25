@@ -415,9 +415,8 @@ void OutputActor::UpdateOutputDeviceAddress() {
     if (IsOutputAddressPersisted(device_tensor, output_nodes_[i])) {
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther);
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(), device::tracker::MemType::kOther,
-                                                     tensor_device_address->GetSize(),
-                                                     tensor_device_address->kernel_tensor().get());
-      if (!device_context->device_res_manager_->AllocateMemory(tensor_device_address.get())) {
+                                                     tensor_device_address->GetSize(), tensor_device_address.get());
+      if (!device_context->device_res_manager_->AllocateMemory(tensor_device_address.get(), kDefaultStreamIndex)) {
         MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
                           << ") memory isn't enough and alloc failed in output actor, kernel name: "
                           << output_node->fullname_with_scope() << ", alloc size: " << tensor_device_address->GetSize()

@@ -120,7 +120,7 @@ bool CopyTensorData(const tensor::TensorPtr &tensor, const device::DeviceAddress
   if (device_address->GetPtr() == nullptr) {
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "CopyTensorData", "", "");
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "CopyTensorData", device::tracker::MemType::kOther,
-                                                   device_address->GetSize(), device_address->kernel_tensor().get());
+                                                   device_address->GetSize(), device_address.get());
     if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(ERROR) << "Allocate memory failed, allocate size " << device_address->GetSize();
       return false;

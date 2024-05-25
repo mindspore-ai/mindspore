@@ -206,5 +206,19 @@ ACL_FUNC_VISIBILITY aclError aclrtStreamQuery(aclrtStream stream, aclrtStreamSta
 ACL_FUNC_VISIBILITY aclError aclrtQueryEventStatus(aclrtEvent event, aclrtEventRecordedStatus *status) {
   return ACL_SUCCESS;
 }
-
+ACL_FUNC_VISIBILITY aclError aclrtUnmapMem(void *virPtr) { return ACL_SUCCESS; }
+ACL_FUNC_VISIBILITY aclError aclrtReserveMemAddress(void **virPtr, size_t size, size_t alignment, void *expectPtr,
+                                                    uint64_t flags) {
+  return ACL_SUCCESS;
+}
+ACL_FUNC_VISIBILITY aclError aclrtMallocPhysical(aclrtDrvMemHandle *handle, size_t size,
+                                                 const aclrtPhysicalMemProp *prop, uint64_t flags) {
+  return ACL_SUCCESS;
+}
+ACL_FUNC_VISIBILITY aclError aclrtMapMem(void *virPtr, size_t size, size_t offset, aclrtDrvMemHandle handle,
+                                         uint64_t flags) {
+  return ACL_SUCCESS;
+}
+ACL_FUNC_VISIBILITY aclError aclrtFreePhysical(aclrtDrvMemHandle handle) { return ACL_SUCCESS; }
+ACL_FUNC_VISIBILITY aclError aclrtReleaseMemAddress(void *virPtr) { return ACL_SUCCESS; }
 ACL_FUNC_VISIBILITY const char *aclrtGetSocName() { return "910"; }

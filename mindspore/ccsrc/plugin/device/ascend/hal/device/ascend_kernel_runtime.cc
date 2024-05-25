@@ -619,10 +619,12 @@ bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size,
   }
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream);
-  if (ACL_ERROR_NONE !=
-      CALL_ASCEND_API(aclrtMemcpyAsync, dst, size, src, size, static_cast<aclrtMemcpyKind>(kind), stream)) {
-    MS_LOG(ERROR) << "Call runtime rtMemcpyAsync error.";
-    return false;
+  if (!common::IsNeedProfileMemory()) {
+    if (ACL_ERROR_NONE !=
+        CALL_ASCEND_API(aclrtMemcpyAsync, dst, size, src, size, static_cast<aclrtMemcpyKind>(kind), stream)) {
+      MS_LOG(ERROR) << "Call runtime rtMemcpyAsync error.";
+      return false;
+    }
   }
   return true;
 }

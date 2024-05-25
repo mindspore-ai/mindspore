@@ -83,7 +83,7 @@ class GPUDeviceResManager : public DeviceResManager {
   void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
                        const std::vector<size_t> &keep_addr_sizes) const override;
 
-  bool AllocateMemory(DeviceAddress *const &address) const override;
+  bool AllocateMemory(DeviceAddress *const &address, uint32_t stream_id = UINT32_MAX) const override;
 
  private:
   friend class GPUKernelExecutor;

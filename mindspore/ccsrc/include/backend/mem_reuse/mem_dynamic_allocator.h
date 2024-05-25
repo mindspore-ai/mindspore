@@ -158,9 +158,11 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   std::set<DeviceMemPtr> mem_bufs_;
   // The related interface of device memory eager free.
   virtual const bool IsEnableEagerFree() const { return false; }
+  virtual const bool IsEnableVmm() const { return false; }
   virtual const bool SyncAllStreams() { return false; }
   virtual size_t AllocDeviceMemByEagerFree(size_t size, DeviceMemPtr *addr) { return 0; }
   virtual size_t FreeDeviceMemByEagerFree(const DeviceMemPtr addr, const size_t size) { return 0; }
+  virtual size_t MmapDeviceMem(size_t size, DeviceMemPtr addr) { return 0; }
   const size_t FreeIdleMemsByEagerFree();
 #ifdef WITH_BACKEND
 
@@ -387,6 +389,7 @@ struct MemStatusManager {
 
   std::vector<DynamicMemBlockPtr> mem_block_list_;
   std::vector<DynamicMemBlockPtr> mem_block_insertion_order_;
+  size_t total_block_size_ = 0;
   std::unordered_map<uint32_t, std::vector<DynamicMemBlockPtr>> mem_blocks_;
   std::unordered_map<std::pair<uint32_t, DynamicMemBufStatus>, SizeMapMemBuf, pair_hash> mem_bufs_;
 };

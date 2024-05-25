@@ -66,6 +66,17 @@ void KernelActor::Init() {
   is_dynamic_type_ = common::AnfAlgo::IsAnyTypeOutput(kernel_);
   has_dynamic_ = is_dynamic_shape_ || is_dynamic_type_ || is_dynamic_value_;
 
+  if (is_dynamic_value_ && (is_dynamic_shape_ || is_dynamic_type_)) {
+    static const bool is_dry_run_mode = (common::GetEnv(kSimulationLevel) == kSimulationLevelCompileKernel);
+    if (is_dry_run_mode) {
+      MS_LOG(EXCEPTION) << "The dry run mode can not support dynamic shape graph which contains value depend kernel:"
+                        << kernel_->fullname_with_scope()
+                        << ", launch kernel is skipped for dry run mode, which leads to fail to GetValue for infer "
+                           "shape of these value depend kernel. You can only simulate compile graph and not do "
+                           "InferShape and Resize by `export MS_SIMULATION_LEVEL=0` instead.";
+    }
+  }
+
   // Check whether the kernel has input node which is a computed depend kernel.
   launch_ignored_inputs_ = kernel_mod_->GetLaunchIgnoredInputAddressIdx();
 
@@ -277,12 +288,6 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), kernel_->fullname_with_scope(),
                                                    kernel_->func_graph()->ToString());
     FetchInputDeviceTensor(context);
-    for (auto &device_addr : input_device_tensors_) {
-      if (device_addr == nullptr || !device_addr->IsPtrValid()) {
-        continue;
-      }
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(UseMemBlock, GetAID().Name(), device_addr->GetPtr());
-    }
 
     if (ActorDispatcher::enable_runtime_multi_pipeline()) {
       RunWithMultiPipeline(context);
@@ -437,12 +442,11 @@ void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) const {
       }
       MS_LOG(DEBUG) << "Set ptr:" << device_ptr << " to device address:" << output_device_tensors_[i]
                     << " in actor:" << GetAID();
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
-        AddMemInfo, GetAID().Name(), device::tracker::MemType::kInSideSomas, output_device_tensors_[i]->GetSize(),
-        output_device_tensors_[i]->kernel_tensor().get());
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(),
+                                                     device::tracker::MemType::kInSideSomas,
+                                                     output_device_tensors_[i]->GetSize(), output_device_tensors_[i]);
       output_device_tensors_[i]->set_ptr(device_ptr);
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, output_device_tensors_[i]->kernel_tensor().get(),
-                                                     device_ptr);
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, output_device_tensors_[i], device_ptr);
     }
   }
 
@@ -455,10 +459,9 @@ void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) const {
       // In order to perform performance, the pointer validity is not checked here.
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
         AddMemInfo, GetAID().Name(), device::tracker::MemType::kInSideSomas, workspace_device_tensors_[i]->GetSize(),
-        workspace_device_tensors_[i]->kernel_tensor().get());
+        workspace_device_tensors_[i]);
       workspace_device_tensors_[i]->set_ptr(device_ptr);
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, workspace_device_tensors_[i]->kernel_tensor().get(),
-                                                     device_ptr);
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, workspace_device_tensors_[i], device_ptr);
     }
   }
 }
@@ -574,6 +577,9 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
     MS_LOG(DEBUG) << GetAID().Name() << " ignore the input address for input index: " << input_data_index;
     return;
   }
+  if (skip_launch_shape_related_op_) {
+    return;
+  }
   if (input_data_index >= real_input_data_infos_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, "The input index is of range.");
   }
@@ -641,9 +647,8 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
                                                      input_data_index);
   if (new_device_tensor->GetPtr() == nullptr) {
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(), device::tracker::MemType::kOther,
-                                                   new_device_tensor->GetSize(),
-                                                   new_device_tensor->kernel_tensor().get());
-    if (!device_contexts_[0]->device_res_manager_->AllocateMemory(new_device_tensor.get())) {
+                                                   new_device_tensor->GetSize(), new_device_tensor.get());
+    if (!device_contexts_[0]->device_res_manager_->AllocateMemory(new_device_tensor.get(), kDefaultStreamIndex)) {
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy_, *context, *(device_contexts_[0]), GetAID().Name(),
                                                   new_device_tensor->GetSize());
     }
@@ -810,6 +815,20 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
     MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope()
                       << trace::DumpSourceLines(kernel_);
   }
+
+  if (debug_aid_ != nullptr || recorder_aid_ != nullptr) {
+    SetMemInfoForDebugAndRdr();
+
+    if (debug_aid_ != nullptr) {
+      ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &mem_info_, device_contexts_[0], context,
+                                &GetAID());
+    }
+    if (recorder_aid_ != nullptr) {
+      ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &mem_info_,
+                            device_contexts_[0], context);
+    }
+  }
+
   if (is_dynamic_shape_ && kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
     kernel_mod_->UpdateOutputShapeAndSize(input_kernel_tensors_, output_kernel_tensors_);
   }
@@ -899,8 +918,26 @@ void KernelActor::ResizeKernelMod() {
     MS_LOG(EXCEPTION) << "Resize failed for kernel: " << kernel_->fullname_with_scope();
   }
 }
+namespace {
+void TrackInputMemory(const std::vector<DeviceTensor *> &input_device_tensors, const std::string &actor_name) {
+  if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
+    for (auto &device_addr : input_device_tensors) {
+      if (device_addr == nullptr || !device_addr->IsPtrValid()) {
+        continue;
+      }
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(UseMemBlock, actor_name, device_addr->GetPtr());
+    }
+  }
+}
+}  // namespace
 
 bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
+  TrackInputMemory(input_device_tensors_, GetAID().Name());
+  if (skip_launch_shape_related_op_) {
+    MS_LOG(DEBUG) << "Skip launch real make tuple kernel: " << kernel_->fullname_with_scope()
+                  << " input kernel tensor: " << input_kernel_tensors_;
+    return true;
+  }
   // Check the skipped launch condition.
   if (is_launch_skipped_) {
     MS_EXCEPTION_IF_CHECK_FAIL((input_device_tensors_.size() >= 1), "The inputs size is wrong.");
@@ -947,12 +984,12 @@ void KernelActor::ProcessMultiStreamBeforeKernelLaunch(OpContext<DeviceTensor> *
   ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kProcessMultiStream, GetAID().Name());
   auto device_context = device_contexts_[0];
   auto stream_id = kernel_info_->stream_id();
-  MS_LOG(DEBUG) << "Device context : " << device_context
-                << ", name : " << device_context->device_context_key().device_name_ << ", stream id : " << stream_id
-                << ", actor name : " << GetAID().Name() << ".";
   // Update output_kernel_tensors_ with task id on stream.
   auto multi_stream_controller = device::MultiStreamController::GetInstance();
   auto task_id_on_stream = multi_stream_controller->LaunchTaskIdOnStream(device_context, stream_id);
+  MS_LOG(DEBUG) << "device context : " << device_context
+                << ", name : " << device_context->device_context_key().device_name_ << ", stream id : " << stream_id
+                << ", actor name : " << GetAID().Name() << ", task_id_on_stream : " << task_id_on_stream << ".";
   if (INT64_MAX == task_id_on_stream) {
     // Cpu kernel task id on stream is meanless.
     *task_id_on_stream_ = 0;
@@ -981,12 +1018,14 @@ void KernelActor::ProcessMultiStreamBeforeKernelLaunch(OpContext<DeviceTensor> *
     return;
   }
 
+  // Reset cross stream addresses.
+  cross_stream_addresses_.clear();
+
   // Process inputs.
   if (input_kernel_tensors_.empty()) {
     return;
   }
 
-  cross_stream_addresses_.clear();
   std::vector<KernelTensor *> cross_stream_kernel_tensors;
   for (const auto &input_kernel_tensor : input_kernel_tensors_) {
     if (input_kernel_tensor->stream_id() == stream_id) {
@@ -1044,13 +1083,19 @@ void KernelActor::ProcessMultiStreamBeforeKernelLaunch(OpContext<DeviceTensor> *
 }
 
 void KernelActor::ProcessMultiStreamAfterKernelLaunch(OpContext<DeviceTensor> *const context) {
+  auto stream_id = kernel_info_->stream_id();
+  if (stream_id != kDefaultStreamIndex) {
+    for (const auto &output_kernel_tensor : output_kernel_tensors_) {
+      cross_stream_addresses_.emplace_back(kDefaultStreamIndex, output_kernel_tensor->device_ptr());
+    }
+  }
+
   // Record event.
   if (!cross_stream_addresses_.empty()) {
     MS_LOG(DEBUG) << "Record event for kernel : " << kernel_->fullname_with_scope()
                   << ", addresses size : " << cross_stream_addresses_.size() << ".";
     // Record event on stream.
     auto device_context = device_contexts_[0];
-    auto stream_id = kernel_info_->stream_id();
     auto multi_stream_controller = device::MultiStreamController::GetInstance();
     multi_stream_controller->RecordEvent(device_context, *task_id_on_stream_, stream_id, cross_stream_addresses_);
   }

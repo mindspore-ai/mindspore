@@ -211,11 +211,13 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
     return;
   }
   FetchInputDeviceTensor(context);
-  for (auto &device_addr : input_device_tensors_) {
-    if (device_addr == nullptr || !device_addr->IsPtrValid()) {
-      continue;
+  if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
+    for (auto &device_addr : input_device_tensors_) {
+      if (device_addr == nullptr || !device_addr->IsPtrValid()) {
+        continue;
+      }
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(UseMemBlock, GetAID().Name(), device_addr->GetPtr());
     }
-    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(UseMemBlock, GetAID().Name(), device_addr->GetPtr());
   }
   if (memory_alloc_list_.size() > 0) {
     for (auto &device_tensor : memory_alloc_list_) {
@@ -230,9 +232,8 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
                         << ", kernel graph: " << graph_->ToString() << ", node: " << info.node_full_name
                         << ", device address class ptr: " << output_address << ", device address size: " << info.size;
       }
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(),
-                                                     device::tracker::MemType::kGraphOutput, device_tensor->GetSize(),
-                                                     device_tensor->kernel_tensor().get());
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
+        AddMemInfo, GetAID().Name(), device::tracker::MemType::kGraphOutput, device_tensor->GetSize(), device_tensor);
     }
     SendMemoryAllocReq(context);
   } else {

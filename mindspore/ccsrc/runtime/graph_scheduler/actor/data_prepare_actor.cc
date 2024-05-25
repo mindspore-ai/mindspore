@@ -102,7 +102,7 @@ void UpdateTracker(const std::string &task_name, const AnfNodePtr &node, const s
                    device::tracker::MemType mem_type, const DeviceTensorPtr &device_tensor) {
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, task_name, node->fullname_with_scope(), graph_str);
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, task_name, mem_type, device_tensor->GetSize(),
-                                                 device_tensor->kernel_tensor().get());
+                                                 device_tensor.get());
 }
 
 void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_tensor, const AnfNodePtr &node,
@@ -122,7 +122,7 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
   auto mem_type = node->isa<ValueNode>() ? device::tracker::MemType::kConstantValue : device::tracker::MemType::kWeight;
   if (need_alloc_memory) {
     UpdateTracker("SyncTensorData", node, graph_str, mem_type, device_tensor);
-    if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
+    if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), kDefaultStreamIndex)) {
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy, *context, *device_context, node->fullname_with_scope(),
                                                   device_tensor->GetSize());
     }
@@ -381,7 +381,7 @@ void DataPrepareActor::Init() {
       FetchContinuousMemoryInfo(cnode, &addr_list, &size_list, &total_size, true);
       (void)continuous_memory_alloc_list_list_.emplace_back(addr_list);
       (void)size_list_list_.emplace_back(size_list);
-      (void)stream_id_list_.emplace_back(AnfAlgo::GetStreamId(cnode));
+      (void)stream_id_list_.emplace_back(kDefaultStreamIndex);
       (void)total_size_list_.emplace_back(total_size);
       (void)continuous_memory_device_contexts_.emplace_back(iter.first.second);
     }
@@ -392,7 +392,7 @@ void DataPrepareActor::Init() {
       FetchContinuousMemoryInfo(cnode, &addr_list, &size_list, &total_size, false);
       (void)continuous_memory_alloc_list_list_.emplace_back(addr_list);
       (void)size_list_list_.emplace_back(size_list);
-      (void)stream_id_list_.emplace_back(AnfAlgo::GetStreamId(cnode));
+      (void)stream_id_list_.emplace_back(kDefaultStreamIndex);
       (void)total_size_list_.emplace_back(total_size);
       (void)continuous_memory_device_contexts_.emplace_back(iter.first.second);
     }
@@ -982,7 +982,7 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
   auto graph_str = (node->func_graph() == nullptr) ? "" : node->func_graph()->ToString();
   UpdateTracker("PrepareDataForControlValueNode", node, graph_str, device::tracker::MemType::kConstantValue,
                 device_tensor);
-  if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
+  if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), kDefaultStreamIndex)) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context, node->fullname_with_scope(),
                                                 device_tensor->GetSize());
   }
@@ -1034,7 +1034,7 @@ void DataPrepareActor::PrepareDataForStringValue(const ValueNodePtr &node, size_
                                                      0);
   auto graph_str = (node->func_graph() == nullptr) ? "" : node->func_graph()->ToString();
   UpdateTracker("PrepareDataForStringValue", node, graph_str, device::tracker::MemType::kConstantValue, device_tensor);
-  if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
+  if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), kDefaultStreamIndex)) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context, node->fullname_with_scope(),
                                                 device_tensor->GetSize());
   }
@@ -1097,7 +1097,7 @@ void DataPrepareActor::PrepareDataForSequenceAndScalarValue(const ValueNodePtr &
   auto graph_str = (node->func_graph() == nullptr) ? "" : node->func_graph()->ToString();
   UpdateTracker("PrepareDataForSequenceAndScalarValue", node, graph_str, device::tracker::MemType::kConstantValue,
                 device_tensor);
-  if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
+  if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), kDefaultStreamIndex)) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context, node->fullname_with_scope(),
                                                 device_tensor->GetSize());
   }
@@ -1172,8 +1172,8 @@ void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_nod
         backend_node->isa<ValueNode>() ? device::tracker::MemType::kConstantValue : device::tracker::MemType::kWeight;
       UpdateTracker("CopyDataFromDeviceTensorStore", backend_node, graph_str, mem_type, another_device_tensor);
     }
-    if (need_alloc_memory &&
-        (!another_device_context->device_res_manager_->AllocateMemory(another_device_tensor.get()))) {
+    if (need_alloc_memory && (!another_device_context->device_res_manager_->AllocateMemory(another_device_tensor.get(),
+                                                                                           kDefaultStreamIndex))) {
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *another_device_context,
                                                   backend_node->fullname_with_scope(),
                                                   another_device_tensor->GetSize());
@@ -1262,7 +1262,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
       if (device_tensor->is_ptr_persisted() ||
           !AnfAlgo::IsEquivalentFormat(host_tensor_address->format(), device_tensor->format())) {
         if ((device_tensor->GetPtr() == nullptr) &&
-            (!device_context->device_res_manager_->AllocateMemory(device_tensor.get()))) {
+            (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), kDefaultStreamIndex))) {
           SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context,
                                                       backend_node->fullname_with_scope(), device_tensor->GetSize());
         }

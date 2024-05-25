@@ -23,14 +23,17 @@ void *DeviceResManager::AllocateOffloadMemory(size_t size) const { return offloa
 
 void DeviceResManager::FreeOffloadMemory(void *ptr) const { offloaded_mem_pool_->FreeHost(ptr); }
 
-bool DeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
+bool DeviceResManager::AllocateMemory(DeviceAddress *const &address, uint32_t stream_id) const {
   MS_EXCEPTION_IF_NULL(address);
   if (address->GetPtr() != nullptr) {
     MS_LOG(ERROR) << "Memory leak detected!";
     return false;
   }
 
-  auto device_ptr = AllocateMemory(address->GetSize(), address->stream_id());
+  if (stream_id == UINT32_MAX) {
+    stream_id = address->stream_id();
+  }
+  auto device_ptr = AllocateMemory(address->GetSize(), stream_id);
   if (!device_ptr) {
     MS_LOG(WARNING) << "Allocate memory failed for size: " << address->GetSize();
     return false;

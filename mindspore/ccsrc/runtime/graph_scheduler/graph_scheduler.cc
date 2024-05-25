@@ -38,6 +38,7 @@
 #include "mindrt/include/async/async.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/parallel_context.h"
 #include "include/backend/optimizer/helper.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/config_manager.h"
@@ -464,6 +465,16 @@ void GraphScheduler::Initialize() {
   common::SetOMPThreadNum();
   MS_LOG(INFO) << "The actor thread number: " << actor_thread_num
                << ", the kernel thread number: " << (actor_and_kernel_thread_num - actor_thread_num);
+
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (default_actor_thread_num_ <= kAsyncLaunchThreadNum && EnableRuntimePipeline() &&
+      context_ptr->get_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS) == static_cast<uint32_t>(1)) {
+    MS_LOG(WARNING)
+      << "The number of actor threads is only: " << default_actor_thread_num_
+      << ", and pipelined runtime optimization is not enabled, the performance may not reach the optimal level. Please "
+         "increase the value of `runtime_num_threads` in context or not set `runtime_num_threads`.";
+  }
 
 #ifdef ENABLE_RPC_ACTOR
   // Create and initialize RpcNodeScheduler.
@@ -2145,8 +2156,11 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
   if (checked_nodes != nullptr) {
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
-    if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0 &&
-        context_ptr->CellReuseLevel() == CellReuseLevel::kLazyInline && context_ptr->IsKByKExecutorMode()) {
+    auto parallel_context = parallel::ParallelContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(parallel_context);
+    auto stages = parallel_context->pipeline_stage_split_num();
+    if (stages > 1 && context_ptr->CellReuseLevel() == CellReuseLevel::kLazyInline &&
+        context_ptr->IsKByKExecutorMode()) {
       return;
     }
     if (checked_nodes->find(input_cnode) != checked_nodes->end()) {
@@ -3218,10 +3232,6 @@ bool GraphScheduler::EnableRuntimePipeline() {
   }
 
   if (distributed::recovery::RecoveryContext::GetInstance()->enable_recovery()) {
-    return false;
-  }
-
-  if (debug_aid_ != nullptr) {
     return false;
   }
 

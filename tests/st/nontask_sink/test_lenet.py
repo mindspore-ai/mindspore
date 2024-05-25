@@ -167,6 +167,7 @@ def test_ascend_lenet1():
     assert loss_output.asnumpy() < 0.004
     assert loss_output.asnumpy() > 0.003
 
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -191,6 +192,43 @@ def test_ascend_lenet3():
     """
     os.environ['GRAPH_OP_RUN'] = str(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", memory_optimize_level='O1')
+    loss_output = test_ascend_lenet()
+    assert loss_output.asnumpy() < 0.004
+    assert loss_output.asnumpy() > 0.003
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_ascend_lenet4():
+    """
+    Feature: Ascend kernel by kernel and Ascend VMM.
+    Description: LeNet with Ascend kernel by kernel and VMM.
+    Expectation: No exception.
+    """
+    os.environ['GRAPH_OP_RUN'] = str(1)
+    os.environ['MS_DEV_ENABLE_ASCEND_VMM'] = str(1)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    loss_output = test_ascend_lenet()
+    assert loss_output.asnumpy() < 0.004
+    assert loss_output.asnumpy() > 0.003
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_ascend_lenet5():
+    """
+    Feature: Ascend kernel by kernel and Ascend VMM.
+    Description: LeNet with Ascend kernel by kernel and VMM.
+    Expectation: No exception.
+    """
+    os.environ['GRAPH_OP_RUN'] = str(1)
+    os.environ['MS_DEV_ENABLE_ASCEND_VMM'] = str(1)
+    os.environ['MS_DEV_ASCEND_VMM_ALIGN_SIZE'] = "20MB"
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     loss_output = test_ascend_lenet()
     assert loss_output.asnumpy() < 0.004
     assert loss_output.asnumpy() > 0.003

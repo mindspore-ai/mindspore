@@ -107,7 +107,7 @@ void GeDeviceResManager::Destroy() {
   }
 }
 
-bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
+bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address, uint32_t stream_id) const {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
@@ -128,11 +128,15 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
     address->type_id() == kObjectTypeString ? address->GetSize() + sizeof(ge::StringHead) : address->GetSize();
   void *device_ptr = nullptr;
 
+  if (stream_id == UINT32_MAX) {
+    stream_id = address->stream_id();
+  }
+
   if (swap_manager_ != nullptr) {
-    device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize(), address->stream_id());
+    device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize(), stream_id);
   } else {
-    device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem(), address->need_recycle(),
-                                                    address->stream_id());
+    device_ptr =
+      mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem(), address->need_recycle(), stream_id);
   }
 
   if (!device_ptr) {
@@ -141,7 +145,7 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
 
   address->set_ptr(device_ptr);
   address->set_from_mem_pool(true);
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, address->kernel_tensor().get(), device_ptr);
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, address, device_ptr);
   return true;
 }
 

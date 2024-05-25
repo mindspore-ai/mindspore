@@ -18,6 +18,7 @@
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 
 namespace mindspore {
 namespace runtime {
@@ -47,6 +48,7 @@ void CopyActor::Init() {
 
 void CopyActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "", "");
   FetchDeviceTensor(context);
   SendMemoryAllocReq(context);
 }

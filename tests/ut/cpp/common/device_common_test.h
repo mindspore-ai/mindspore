@@ -85,7 +85,7 @@ class TestDeviceResManager : public device::DeviceResManager {
   TestDeviceResManager() = default;
   ~TestDeviceResManager() override = default;
 
-  virtual bool AllocateMemory(DeviceAddress *const &address) const { return true; }
+  virtual bool AllocateMemory(DeviceAddress *const &address, uint32_t stream_id = UINT32_MAX) const { return true; }
   virtual void FreeMemory(DeviceAddress *const &address) const {}
   virtual void *AllocateMemory(size_t size, const uint32_t stream_id = UINT32_MAX) const { return nullptr; }
   virtual void FreeMemory(void *const ptr) const {}

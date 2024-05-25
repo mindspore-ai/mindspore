@@ -24,6 +24,7 @@
 #include "utils/ms_utils.h"
 #include "utils/log_adapter.h"
 #include "include/backend/visible.h"
+#include "include/backend/device_address.h"
 
 namespace mindspore {
 namespace device {
@@ -124,20 +125,23 @@ class BACKEND_EXPORT MemTracker {
  public:
   virtual void AddTask(const std::string &task_name, const std::string &node_name, const std::string &graph_name,
                        const std::string &file_name, size_t line_num) = 0;
-  virtual void AddMemInfo(const std::string &task_name, MemType type, size_t size, KernelTensorPtr kernel_tensor,
+  virtual void AddMemInfo(const std::string &task_name, MemType type, size_t size, const DeviceAddress *device_address,
                           const std::string &file_name, size_t line_num) = 0;
   virtual void AddCompileTimeMemInfo(const std::string &task_name, size_t size, DeviceMemPtr device_ptr,
                                      MemType mem_type, const std::string &file_name, size_t line_num) = 0;
-  virtual void UpdateMemInfo(KernelTensorPtr kernel_tensor, MemType mem_type, const std::string &file_name,
+  virtual void UpdateMemInfo(const DeviceAddress *device_address, MemType mem_type, const std::string &file_name,
                              size_t line_num) = 0;
   virtual void AllocMemBlock(DeviceMemPtr device_addr, size_t size, const std::string &pool_name,
                              size_t actual_peak_memory, uint32_t stream_id) = 0;
   virtual void FreeMemBlock(DeviceMemPtr device_addr) = 0;
   virtual void UseMemBlock(const std::string &task_name, DeviceMemPtr device_addr, const std::string &file_name,
                            size_t line_num) = 0;
-  virtual void BindDevicePtr(KernelTensorPtr kernel_tensor, DeviceMemPtr device_ptr, const std::string &file_name,
+  virtual void BindDevicePtr(const DeviceAddress *kernel_tensor, DeviceMemPtr device_ptr, const std::string &file_name,
                              size_t line_num) = 0;
+  virtual void UpdateDevicePtrInfo(DeviceMemPtr device_ptr, MemType mem_type, const std::string &task_name,
+                                   const std::string &file_name, size_t line_num) = 0;
   virtual void Dump() = 0;
+  virtual bool IsEnabled() = 0;
   virtual ~MemTracker() = default;
 };
 
@@ -147,20 +151,23 @@ class BACKEND_EXPORT MemoryTrackerEnabled : public MemTracker {
  public:
   void AddTask(const std::string &task_name, const std::string &node_name, const std::string &graph_name,
                const std::string &file_name, size_t line_num) override;
-  void AddMemInfo(const std::string &task_name, MemType type, size_t size, KernelTensorPtr kernel_tensor,
+  void AddMemInfo(const std::string &task_name, MemType type, size_t size, const DeviceAddress *device_address,
                   const std::string &file_name, size_t line_num) override;
   void AddCompileTimeMemInfo(const std::string &task_name, size_t size, DeviceMemPtr device_ptr, MemType mem_type,
                              const std::string &file_name, size_t line_num) override;
-  void UpdateMemInfo(KernelTensorPtr kernel_tensor, MemType mem_type, const std::string &file_name,
+  void UpdateMemInfo(const DeviceAddress *device_address, MemType mem_type, const std::string &file_name,
                      size_t line_num) override;
   void AllocMemBlock(DeviceMemPtr device_addr, size_t size, const std::string &pool_name, size_t actual_peak_memory,
                      uint32_t stream_id) override;
   void FreeMemBlock(DeviceMemPtr device_addr) override;
   void UseMemBlock(const std::string &task_name, DeviceMemPtr device_addr, const std::string &file_name,
                    size_t line_num) override;
-  void BindDevicePtr(KernelTensorPtr kernel_tensor, DeviceMemPtr device_ptr, const std::string &file_name,
+  void BindDevicePtr(const DeviceAddress *kernel_tensor, DeviceMemPtr device_ptr, const std::string &file_name,
                      size_t line_num) override;
+  void UpdateDevicePtrInfo(DeviceMemPtr device_ptr, MemType mem_type, const std::string &task_name,
+                           const std::string &file_name, size_t line_num) override;
   void Dump() override;
+  bool IsEnabled() override { return true; }
   void SetPath();
   MemoryTrackerEnabled(const MemoryTrackerEnabled &) = delete;
   MemoryTrackerEnabled &operator=(const MemoryTrackerEnabled &) = delete;
@@ -198,20 +205,23 @@ class BACKEND_EXPORT MemoryTrackerDisabled : public MemTracker {
   // mock
   void AddTask(const std::string &task_name, const std::string &node_name, const std::string &graph_name,
                const std::string &file_name, size_t line_num) override {}
-  void AddMemInfo(const std::string &task_name, MemType type, size_t size, KernelTensorPtr kernel_tensor,
+  void AddMemInfo(const std::string &task_name, MemType type, size_t size, const DeviceAddress *device_address,
                   const std::string &file_name, const size_t line_num) override {}
   void AddCompileTimeMemInfo(const std::string &task_name, size_t size, DeviceMemPtr device_ptr, MemType mem_type,
                              const std::string &file_name, size_t line_num) override {}
-  void UpdateMemInfo(KernelTensorPtr kernel_tensor, MemType mem_type, const std::string &file_name,
+  void UpdateMemInfo(const DeviceAddress *device_address, MemType mem_type, const std::string &file_name,
                      size_t line_num) override {}
   void AllocMemBlock(DeviceMemPtr device_addr, size_t size, const std::string &pool_name, size_t actual_peak_memory,
                      uint32_t stream_id) override {}
   void FreeMemBlock(DeviceMemPtr device_addr) override {}
   void UseMemBlock(const std::string &task_name, DeviceMemPtr device_addr, const std::string &file_name,
                    size_t line_num) override {}
-  void BindDevicePtr(KernelTensorPtr kernel_tensor, DeviceMemPtr device_ptr, const std::string &file_name,
+  void BindDevicePtr(const DeviceAddress *device_address, DeviceMemPtr device_ptr, const std::string &file_name,
                      size_t line_num) override {}
+  void UpdateDevicePtrInfo(DeviceMemPtr device_ptr, MemType mem_type, const std::string &task_name,
+                           const std::string &file_name, size_t line_num) override {}
   void Dump() override {}
+  bool IsEnabled() override { return false; }
   MemoryTrackerDisabled(const MemoryTrackerDisabled &) = delete;
   MemoryTrackerDisabled &operator=(const MemoryTrackerDisabled &) = delete;
 

@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
+#include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
 #include <algorithm>
 #include <utility>
-#include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
+#include "plugin/device/ascend/hal/device/ascend_vmm_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
@@ -168,14 +169,32 @@ const bool AscendMemoryPool::IsEnableEagerFree() const {
   return AscendGmemAdapter::GetInstance().is_eager_free_enabled();
 }
 
+const bool AscendMemoryPool::IsEnableVmm() const { return AscendVmmAdapter::GetInstance().IsEnabled(); }
+
 const bool AscendMemoryPool::SyncAllStreams() { return AscendStreamMng::GetInstance().SyncAllStreams(); }
 
 size_t AscendMemoryPool::AllocDeviceMemByEagerFree(size_t size, DeviceMemPtr *addr) {
-  return AscendGmemAdapter::GetInstance().AllocDeviceMem(size, addr);
+  if (IsEnableVmm()) {
+    return AscendVmmAdapter::GetInstance().AllocDeviceMem(size, addr);
+  } else if (IsEnableEagerFree()) {
+    return AscendGmemAdapter::GetInstance().AllocDeviceMem(size, addr);
+  } else {
+    MS_LOG(EXCEPTION) << "Eager free and VMM are both disabled.";
+  }
 }
 
 size_t AscendMemoryPool::FreeDeviceMemByEagerFree(const DeviceMemPtr addr, const size_t size) {
-  return AscendGmemAdapter::GetInstance().EagerFreeDeviceMem(addr, size);
+  if (IsEnableVmm()) {
+    return AscendVmmAdapter::GetInstance().EagerFreeDeviceMem(addr, size);
+  } else if (IsEnableEagerFree()) {
+    return AscendGmemAdapter::GetInstance().EagerFreeDeviceMem(addr, size);
+  } else {
+    MS_LOG(EXCEPTION) << "Eager free and VMM are both disabled.";
+  }
+}
+
+size_t AscendMemoryPool::MmapDeviceMem(const size_t size, const DeviceMemPtr addr) {
+  return AscendVmmAdapter::GetInstance().MmapDeviceMem(size, addr);
 }
 
 bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {
@@ -216,7 +235,14 @@ void AscendMemoryPool::ResetIdleMemBuf() const {
 
 size_t AscendMemoryPool::free_mem_size() { return AscendMemAdapter::GetInstance().FreeDevMemSize(); }
 
-uint64_t AscendMemoryPool::total_mem_size() const { return AscendMemAdapter::GetInstance().MaxHbmSizeForMs(); }
+uint64_t AscendMemoryPool::total_mem_size() const {
+  static constexpr uint64_t kMaxHbmSize = 1LL << 40;
+  if (common::IsNeedProfileMemory()) {
+    return kMaxHbmSize;
+  } else {
+    return AscendMemAdapter::GetInstance().MaxHbmSizeForMs();
+  }
+}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
