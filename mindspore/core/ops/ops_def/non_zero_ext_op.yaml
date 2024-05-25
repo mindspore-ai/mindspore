@@ -8,6 +8,8 @@ non_zero_ext:
             dtype: tuple[tensor]
     class:
         name: NonZeroExt
+    function:
+        disable: True
     dispatch:
         enable: True
         Ascend: NonZeroExtAscend
