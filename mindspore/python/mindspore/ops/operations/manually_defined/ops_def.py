@@ -1182,6 +1182,12 @@ class Cast(Primitive):
         return _convert_stub(pyboost_cast(self, [input_x, dtype_to_type_id('Cast', 'dtype', dtype)]))
 
 
+def to_sequence(val):
+    if isinstance(val, (tuple, list)):
+        return val
+    return (val,)
+
+
 class EmbeddingTableExport(Primitive):
     """
     .. code-block::
@@ -1246,6 +1252,252 @@ class EmbeddingComputeVarExport(Primitive):
     def __init__(self, table_name=()):
         """Initialize EmbeddingComputeVarExport"""
         self.add_prim_attr("_process_node_engine_id", "PS")
+
+
+class InitEmbeddingHashmap(Primitive):
+    """
+    InitEmbeddingHashmap
+    """
+    @prim_attr_register
+    def __init__(self, value_total_len, embedding_dim, _table_id,
+                 bucket_size=0, dtype=mstype.float32, initializer_mode="",
+                 constant_valu=0., min=-2., max=2., mu=0., sigma=1., seed=0,
+                 seed2=0, filter_mode="no_filter", optimizer_mode="",
+                 optimizer_params=()):
+        self.add_prim_attr("_process_node_engine_id", "PS")
+
+
+def init_embedding_hashmap(table_id, value_total_len, embedding_dim, _table_id,
+                           bucket_size=0, dtype=mstype.float32, initializer_mode='',
+                           constant_value=0.0, min=-2.0, max=2.0, mu=0.0, sigma=1.0,
+                           seed=0, seed2=0, filter_mode='no_filter',
+                           optimizer_mode='', optimizer_params=()):
+    """
+    init_embedding_hashmap
+    """
+    op = _get_cache_prim(InitEmbeddingHashmap)(value_total_len, embedding_dim, _table_id,
+                                               bucket_size, dtype, initializer_mode,
+                                               constant_value, min, max, mu, sigma, seed,
+                                               seed2, filter_mode, optimizer_mode, optimizer_params)
+    return op(table_id)
+
+
+class InitPartitionMap(Primitive):
+    """
+    InitPartitionMap
+    """
+    @prim_attr_register
+    def __init__(self, _embedding_dim, _max_key_num,
+                 _ps_num=1, partition_num=65537):
+        self.add_prim_attr("_process_node_engine_id", "PS")
+
+
+def init_partition_map(ps_num, ps_ids, _embedding_dim, _max_key_num,
+                       _ps_num=1, partition_num=65537):
+    """
+    init_partition_map
+    """
+    op = _get_cache_prim(InitPartitionMap)(_embedding_dim, _max_key_num, _ps_num, partition_num)
+    return op(ps_num, ps_ids)
+
+
+class EmbeddingApplyAdam(Primitive):
+    """
+    EmbeddingApplyAdam
+    """
+    @prim_attr_register
+    def __init__(self, embedding_dim, _max_key_num, mask_zero=(0,),
+                 padding_key=(0,), padding_key_mask=(1,),
+                 completion_key=(0,), completion_key_mask=(1,)):
+        self.add_prim_attr("_process_node_engine_id", "PS")
+
+
+class EmbeddingApplyAdamW(Primitive):
+    """
+    EmbeddingApplyAdam
+    """
+    @prim_attr_register
+    def __init__(self, embedding_dim, _max_key_num, amsgrad=(0,),
+                 maximize=(0,), mask_zero=(0,), padding_key=(0,),
+                 padding_key_mask=(1,), completion_key=(0,), completion_key_mask=(1,)):
+        self.add_prim_attr("_process_node_engine_id", "PS")
+
+
+class EmbeddingApplyAdaGrad(Primitive):
+    """
+    EmbeddingApplyAdaGrad
+    """
+    @prim_attr_register
+    def __init__(self, embedding_dim, _max_key_num, mask_zero=(0,),
+                 padding_key=(0,), padding_key_mask=(1,),
+                 completion_key=(0,), completion_key_mask=(1,)):
+        self.add_prim_attr("_process_node_engine_id", "PS")
+
+
+class EmbeddingApplyFtrl(Primitive):
+    """
+    EmbeddingApplyFtrl
+    """
+    @prim_attr_register
+    def __init__(self, embedding_dim, _max_key_num, mask_zero=(0,),
+                 padding_key=(0,), padding_key_mask=(1,),
+                 completion_key=(0,), completion_key_mask=(1,)):
+        self.add_prim_attr("_process_node_engine_id", "PS")
+
+
+class EmbeddingTableFind(Primitive):
+    """
+    EmbeddingTableFind
+    """
+    @prim_attr_register
+    def __init__(self, embedding_dim, _embedding_dim, _max_key_num,
+                 _table_id, default_value=(-1.), _use_counter_filter=0):
+        self.add_prim_attr("_process_node_engine_id", "PS")
+        self.add_prim_attr("_execute_times", 2)
+
+
+def embedding_table_find(table_id, keys, embedding_dim, _max_key_num,
+                         _table_id, default_value=(-1.0,), _use_counter_filter=0):
+    r"""
+    embedding_table_find
+    """
+    _embedding_dim = embedding_dim if isinstance(embedding_dim, int) else embedding_dim[_table_id]
+    op = _get_cache_prim(EmbeddingTableFind)(to_sequence(embedding_dim), _embedding_dim,
+                                             _max_key_num, _table_id,
+                                             to_sequence(default_value),
+                                             _use_counter_filter)
+    return op(table_id, keys)
+
+
+class EmbeddingTableFindAndInit(Primitive):
+    """
+    EmbeddingTableFindAndInit
+    """
+    @prim_attr_register
+    def __init__(self, embedding_dim, value_total_len, _embedding_dim, _table_id,
+                 _max_key_num, initializer_mode=("random_uniform",),
+                 constant_value=(0.,), min=(-2.,), max=(2.,), mu=(0.,),
+                 sigma=(1.,), seed=(0,), seed2=(0,),
+                 filter_mode=("no_filter",), filter_freq=(0,),
+                 default_key_or_value=(0,), default_key=(0,),
+                 default_value=(0.,), completion_key=(0,),
+                 completion_key_mask=(1,), optimizer_mode=(),
+                 optimizer_params=(), _use_counter_filter=0,
+                 backward_mode="adam",
+                 backward_int_params=((0,), (0,), (0,), (1,)),
+                 backward_float_params=(0.9, 0.99, 0.001, 0.9, 0.999, 1e-08)):
+        self.add_prim_attr("_process_node_engine_id", "PS")
+        self.add_prim_attr("_execute_times", 2)
+
+
+def embedding_table_find_and_init(table_id, keys, max_grad_norm, parameter, embedding_dim,
+                                  value_total_len, _table_id, _max_key_num,
+                                  initializer_mode=('random_uniform',), constant_value=(0.,),
+                                  min=(-2.,), max=(2.,), mu=(0.,), sigma=(1.,), seed=(0,),
+                                  seed2=(0,), filter_mode=("no_filter",),
+                                  filter_freq=(0,), default_key_or_value=(0,),
+                                  default_key=(0,), default_value=(0.,),
+                                  completion_key=(0,), completion_key_mask=(1,),
+                                  optimizer_mode=(), optimizer_params=(), _use_counter_filter=0,
+                                  backward_mode="adam", backward_int_params=((0,), (0,), (0,), (1,)),
+                                  backward_float_params=(0.9, 0.99, 0.001, 0.9, 0.999, 1e-08)):
+    """
+    embedding_table_find_and_init
+
+    backward_int_params (Union[tuple[tuple[int]], list[list[int]]]):
+        - when the backward_mode is 'adam', 'ftrl' or 'adagrad',
+          it means [[global_step], mask_zero, padding_key, padding_key_mask]
+        - when the backward_mode is 'adamw', it means:
+          [[global_step], amsgrad, maximize, mask_zero, padding_key, padding_key_mask]
+    backward_float_params (Union[tuple[float], list[float]]):
+        - when the backward_mode is 'adam', it means:
+          [beta1_power, beta2_power, lr, beta1, beta2, epsilon]
+        - when the backward_mode is 'ftrl', it means:
+          [lr, lr_power, lambda1, lambda2]
+        - when the backward_mode is 'adamw', it means:
+          [beta1_power, beta2_power, lr, weight_decay, beta1, beta2, epsilon]
+        - when the backward_mode is 'adagrad', it means [lr,]
+    """
+    _embedding_dim = embedding_dim if isinstance(embedding_dim, int) else embedding_dim[_table_id]
+    op = _get_cache_prim(EmbeddingTableFindAndInit)(to_sequence(embedding_dim), to_sequence(value_total_len),
+                                                    _embedding_dim, _table_id, _max_key_num,
+                                                    to_sequence(initializer_mode),
+                                                    to_sequence(constant_value), to_sequence(min),
+                                                    to_sequence(max), to_sequence(mu),
+                                                    to_sequence(sigma), to_sequence(seed),
+                                                    to_sequence(seed2), to_sequence(filter_mode),
+                                                    to_sequence(filter_freq), to_sequence(default_key_or_value),
+                                                    to_sequence(default_key), to_sequence(default_value),
+                                                    to_sequence(completion_key), to_sequence(completion_key_mask),
+                                                    to_sequence(optimizer_mode), to_sequence(optimizer_params),
+                                                    _use_counter_filter,
+                                                    backward_mode, backward_int_params, backward_float_params)
+    return op(table_id, keys, max_grad_norm, parameter)
+
+
+class FakeRemoteLookupUniqued(Primitive):
+
+    """
+    FakeRemoteLookupUniqued
+    """
+    @prim_attr_register
+    def __init__(self, embedding_dim, value_total_len, _embedding_dim, _table_id,
+                 _max_key_num, initializer_mode=('random_uniform',), constant_value=(0.,),
+                 min=(-2.,), max=(2.,), mu=(0.,), sigma=(1.,), seed=(0,), seed2=(0,),
+                 filter_mode=("no_filter",), filter_freq=(0,),
+                 default_key_or_value=(0,), default_key=(0,), default_value=(0.,),
+                 completion_key=(0,), completion_key_mask=(1,),
+                 optimizer_mode=(), optimizer_params=(), _use_counter_filter=0,
+                 backward_mode="adam", backward_int_params=((0,), (0,), (0,), (1,)),
+                 backward_float_params=(0.9, 0.99, 0.001, 0.9, 0.999, 1e-08)):
+        self.add_prim_attr("_process_node_engine_id", "PS")
+        self.add_prim_attr("_execute_times", 2)
+
+
+def fake_remote_lookup_uniqued(table_id, keys, actual_keys_num, unique_indices,
+                               key_count, max_grad_norm, parameter,
+                               embedding_dim, value_total_len, _table_id, _max_key_num,
+                               initializer_mode=('random_uniform',), constant_value=(0.,),
+                               min=(-2.,), max=(2.,), mu=(0.,), sigma=(1.,), seed=(0,),
+                               seed2=(0,), filter_mode=("no_filter",),
+                               filter_freq=(0,), default_key_or_value=(0,),
+                               default_key=(0,), default_value=(0.,),
+                               completion_key=(0,), completion_key_mask=(1,),
+                               optimizer_mode=(), optimizer_params=(), _use_counter_filter=0,
+                               backward_mode='adam', backward_int_params=((0,), (0,), (0,), (1,)),
+                               backward_float_params=(0.9, 0.99, 0.001, 0.9, 0.999, 1e-08)):
+    """
+    fake_remote_lookup_uniqued
+
+    backward_mode (str): determine the optimizer used by backpropagation,
+        valid values are ["adam", "adamw", "adagrad", "ftrl"]
+    backward_int_params (Union[tuple[tuple[int]], list[list[int]]]):
+        - when the backward_mode is 'adam', 'ftrl' or 'adagrad',
+          it means [[global_step], mask_zero, padding_key, padding_key_mask]
+        - when the backward_mode is 'adamw', it means:
+          [[global_step], amsgrad, maximize, mask_zero, padding_key, padding_key_mask]
+    backward_float_params (Union[tuple[float], list[float]]):
+        - when the backward_mode is 'adam', it means:
+          [beta1_power, beta2_power, lr, beta1, beta2, epsilon]
+        - when the backward_mode is 'ftrl', it means:
+          [lr, lr_power, lambda1, lambda2]
+        - when the backward_mode is 'adamw', it means:
+          [beta1_power, beta2_power, lr, weight_decay, beta1, beta2, epsilon]
+        - when the backward_mode is 'adagrad', it means [lr,]
+    """
+    _embedding_dim = embedding_dim if isinstance(embedding_dim, int) else embedding_dim[_table_id]
+    op = _get_cache_prim(FakeRemoteLookupUniqued)(to_sequence(embedding_dim), to_sequence(value_total_len),
+                                                  _embedding_dim, _table_id, _max_key_num,
+                                                  to_sequence(initializer_mode), to_sequence(constant_value),
+                                                  to_sequence(min), to_sequence(max), to_sequence(mu),
+                                                  to_sequence(sigma), to_sequence(seed), to_sequence(seed2),
+                                                  to_sequence(filter_mode), to_sequence(filter_freq),
+                                                  to_sequence(default_key_or_value), to_sequence(default_key),
+                                                  to_sequence(default_value), to_sequence(completion_key),
+                                                  to_sequence(completion_key_mask), to_sequence(optimizer_mode),
+                                                  to_sequence(optimizer_params), _use_counter_filter,
+                                                  backward_mode, backward_int_params, backward_float_params)
+    return op(table_id, keys, actual_keys_num, unique_indices, key_count, max_grad_norm, parameter)
 
 
 # Following is Python Infer Value.

@@ -286,42 +286,6 @@ class GECoordinateTransformMode {
   }
 };
 
-class GEInitializerMode {
- public:
-  static std::string ConvertEnumToString(int64_t id) {
-    static const std::vector<std::string> initializer_mods = {"", "truncated_normal", "constant", "random_uniform"};
-    if (id < 0 || id >= static_cast<int64_t>(initializer_mods.size())) {
-      MS_LOG(EXCEPTION) << "Invalid initializer mod " << id;
-      return "";
-    }
-    return initializer_mods[id];
-  }
-};
-
-class GEFilterMode {
- public:
-  static std::string ConvertEnumToString(int64_t id) {
-    static const std::vector<std::string> filter_mods = {"no_filter", "counter"};
-    if (id < 0 || id >= static_cast<int64_t>(filter_mods.size())) {
-      MS_LOG(EXCEPTION) << "Invalid filter mod " << id;
-      return "";
-    }
-    return filter_mods[id];
-  }
-};
-
-class GEOptimizerMode {
- public:
-  static std::string ConvertEnumToString(int64_t id) {
-    static const std::vector<std::string> optimizer_mods = {"", "adam", "adamw", "adagrad"};
-    if (id < 0 || id >= static_cast<int64_t>(optimizer_mods.size())) {
-      MS_LOG(EXCEPTION) << "Invalid optimizer mod " << id;
-      return "";
-    }
-    return optimizer_mods[id];
-  }  // namespace transform
-};   // namespace mindspore
-
 // declare Any type
 template <typename T>
 struct AnyTraits {

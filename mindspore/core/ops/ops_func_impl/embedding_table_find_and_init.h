@@ -18,52 +18,11 @@
 #define MINDSPORE_CORE_OPS_FUNC_IMPL_EMBEDDING_TABLE_FIND_AND_INIT_H_
 
 #include <vector>
-#include "ops/ops_func_impl/op_func_impl.h"
+#include "ops/ops_func_impl/embedding_table_find.h"
 
 namespace mindspore {
 namespace ops {
-struct EmbeddingTableFindAndInitIndexes {
-  size_t table_id{0};
-  size_t keys{1};
-  size_t max_grad_norm{2};
-  size_t embedding_dim{3};
-  size_t value_total_len{4};
-  size_t initializer_mode{5};
-  size_t constant_value{6};
-  size_t min{7};
-  size_t max{8};
-  size_t mu{9};
-  size_t sigma{10};
-  size_t seed{11};
-  size_t seed2{12};
-  size_t filter_mode{13};
-  size_t filter_freq{14};
-  size_t default_key_or_value{15};
-  size_t default_key{16};
-  size_t default_value{17};
-  size_t optimizer_mode{18};
-  size_t optimizer_params{19};
-  size_t _embedding_dim{20};
-  size_t _max_key_num{21};
-  size_t _use_counter_filter{22};
-  size_t backward_mode{23};
-  size_t backward_int_params{24};
-  size_t backward_float_params{25};
-  size_t backward_bool_params{26};
-  size_t parameter{27};
-};
-
-class MIND_API EmbeddingTableFindAndInitFuncImpl final : public OpFuncImpl {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-
-  int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-
- private:
-  EmbeddingTableFindAndInitIndexes indexes_;
-};
+class MIND_API EmbeddingTableFindAndInitFuncImpl final : public EmbeddingTableFindFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

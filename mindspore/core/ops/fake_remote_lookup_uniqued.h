@@ -14,16 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_FUNC_IMPL_FAKE_REMOTE_LOOKUP_UNIQUED_H_
-#define MINDSPORE_CORE_OPS_FUNC_IMPL_FAKE_REMOTE_LOOKUP_UNIQUED_H_
+#ifndef MINDSPORE_CORE_OPS_FAKE_REMOTE_LOOKUP_UNIQUED_H
+#define MINDSPORE_CORE_OPS_FAKE_REMOTE_LOOKUP_UNIQUED_H
 
+#include <memory>
 #include <vector>
-#include "ops/ops_func_impl/embedding_table_find.h"
+#include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API FakeRemoteLookupUniquedFuncImpl final : public EmbeddingTableFindFuncImpl {};
+constexpr auto kNameFakeRemoteLookupUniqued = "FakeRemoteLookupUniqued";
+class MIND_API FakeRemoteLookupUniqued : public BaseOperator {
+ public:
+  MIND_API_BASE_MEMBER(FakeRemoteLookupUniqued);
+  FakeRemoteLookupUniqued() : BaseOperator(kNameFakeRemoteLookupUniqued) {
+    InitIOName({"table_id", "keys", "actual_keys_num", "unique_indices", "key_count", "max_grad_norm", "parameter"},
+               {"values"});
+  }
+};
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_FUNC_IMPL_FAKE_REMOTE_LOOKUP_UNIQUED_H_
+#endif  // MINDSPORE_CORE_OPS_FAKE_REMOTE_LOOKUP_UNIQUED_H

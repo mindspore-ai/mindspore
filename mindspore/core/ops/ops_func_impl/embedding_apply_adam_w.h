@@ -28,8 +28,6 @@ class MIND_API EmbeddingApplyAdamWFuncImpl final : public OpFuncImpl {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 
-  int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-
  private:
   void CheckInputShapes(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const;
 

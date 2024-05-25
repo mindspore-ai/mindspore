@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/ge/add_noop_to_es_grad.h"
 #include <vector>
 #include <memory>
+#include "ops/nn_ops.h"
 #include "ops/array_ops.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
 #include "include/backend/anf_runtime_algorithm.h"

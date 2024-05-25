@@ -20,89 +20,92 @@
 namespace mindspore::transform {
 // InitPartitionMap
 INPUT_MAP(InitPartitionMap) = {{1, INPUT_DESC(ps_num)}, {2, INPUT_DESC(ps_ids)}};
-INPUT_ATTR_MAP(InitPartitionMap) = {{3, ATTR_DESC(partition_num, AnyTraits<int64_t>())},
-                                    {4, ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
-                                    {5, ATTR_DESC(_max_key_num, AnyTraits<int64_t>())},
-                                    {6, ATTR_DESC(_ps_num, AnyTraits<int64_t>())}};
-ATTR_MAP(InitPartitionMap) = {
-  {"_process_node_engine_id", ATTR_DESC(_process_node_engine_id, AnyTraits<std::string>())},
-};
+ATTR_MAP(InitPartitionMap) = {{"_process_node_engine_id", ATTR_DESC(_process_node_engine_id, AnyTraits<std::string>())},
+                              {"partition_num", ATTR_DESC(partition_num, AnyTraits<int64_t>())},
+                              {"_embedding_dim", ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
+                              {"_max_key_num", ATTR_DESC(_max_key_num, AnyTraits<int64_t>())},
+                              {"_ps_num", ATTR_DESC(_ps_num, AnyTraits<int64_t>())}};
 OUTPUT_MAP(InitPartitionMap) = EMPTY_OUTPUT_MAP;
 REG_ADPT_DESC(InitPartitionMap, kNameInitPartitionMap, ADPT_DESC(InitPartitionMap))
 
 // InitEmbeddingHashmap
 INPUT_MAP(InitEmbeddingHashmap) = {{1, INPUT_DESC(table_id)}};
-INPUT_ATTR_MAP(InitEmbeddingHashmap) = {{2, ATTR_DESC(value_total_len, AnyTraits<int64_t>())},
-                                        {3, ATTR_DESC(embedding_dim, AnyTraits<int64_t>())},
-                                        {4, ATTR_DESC(bucket_size, AnyTraits<int64_t>())},
-                                        {5, ATTR_DESC(dtype, AnyTraits<GEType>())},
-                                        {6, ATTR_DESC(initializer_mode, AnyTraits<std::string>())},
-                                        {7, ATTR_DESC(constant_value, AnyTraits<float>())},
-                                        {8, ATTR_DESC(min, AnyTraits<float>())},
-                                        {9, ATTR_DESC(max, AnyTraits<float>())},
-                                        {10, ATTR_DESC(mu, AnyTraits<float>())},
-                                        {11, ATTR_DESC(sigma, AnyTraits<float>())},
-                                        {12, ATTR_DESC(seed, AnyTraits<int64_t>())},
-                                        {13, ATTR_DESC(seed2, AnyTraits<int64_t>())},
-                                        {14, ATTR_DESC(filter_mode, AnyTraits<std::string>())},
-                                        {15, ATTR_DESC(optimizer_mode, AnyTraits<std::string>())},
-                                        {16, ATTR_DESC(optimizer_params, AnyTraits<std::vector<float>>())},
-                                        {17, ATTR_DESC(_table_id, AnyTraits<int64_t>())}};
 ATTR_MAP(InitEmbeddingHashmap) = {
-  {"_process_node_engine_id", ATTR_DESC(_process_node_engine_id, AnyTraits<std::string>())}};
+  {"_process_node_engine_id", ATTR_DESC(_process_node_engine_id, AnyTraits<std::string>())},
+  {"value_total_len", ATTR_DESC(value_total_len, AnyTraits<int64_t>())},
+  {"embedding_dim", ATTR_DESC(embedding_dim, AnyTraits<int64_t>())},
+  {"bucket_size", ATTR_DESC(bucket_size, AnyTraits<int64_t>())},
+  {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())},
+  {"initializer_mode", ATTR_DESC(initializer_mode, AnyTraits<std::string>())},
+  {"constant_value", ATTR_DESC(constant_value, AnyTraits<float>())},
+  {"min", ATTR_DESC(min, AnyTraits<float>())},
+  {"max", ATTR_DESC(max, AnyTraits<float>())},
+  {"mu", ATTR_DESC(mu, AnyTraits<float>())},
+  {"sigma", ATTR_DESC(sigma, AnyTraits<float>())},
+  {"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+  {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())},
+  {"filter_mode", ATTR_DESC(filter_mode, AnyTraits<std::string>())},
+  {"optimizer_mode", ATTR_DESC(optimizer_mode, AnyTraits<std::string>())},
+  {"optimizer_params", ATTR_DESC(optimizer_params, AnyTraits<std::vector<float>>())},
+  {"_table_id", ATTR_DESC(_table_id, AnyTraits<int64_t>())}};
 OUTPUT_MAP(InitEmbeddingHashmap) = EMPTY_OUTPUT_MAP;
 REG_ADPT_DESC(InitEmbeddingHashmap, kNameInitEmbeddingHashmap, ADPT_DESC(InitEmbeddingHashmap))
 
 // EmbeddingTableFind
 INPUT_MAP(EmbeddingTableFind) = {{1, INPUT_DESC(table_id)}, {2, INPUT_DESC(keys)}};
-INPUT_ATTR_MAP(EmbeddingTableFind) = {
-  {3, ATTR_DESC(embedding_dim, AnyTraits<int64_t>())},       {4, ATTR_DESC(default_value, AnyTraits<float>())},
-  {5, ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},      {6, ATTR_DESC(_max_key_num, AnyTraits<int64_t>())},
-  {7, ATTR_DESC(_use_counter_filter, AnyTraits<int64_t>())},
-};
 ATTR_MAP(EmbeddingTableFind) = {
-  {"_process_node_engine_id", ATTR_DESC(_process_node_engine_id, AnyTraits<std::string>())},
-  {"_execute_times", ATTR_DESC(_execute_times, AnyTraits<int64_t>())}};
+  {"embedding_dim", ATTR_DESC(embedding_dim, AnyTraits<std::vector<int64_t>>())},
+  {"default_value", ATTR_DESC(default_value, AnyTraits<std::vector<float>>())},
+  {"_embedding_dim", ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
+  {"_max_key_num", ATTR_DESC(_max_key_num, AnyTraits<int64_t>())},
+  {"_use_counter_filter", ATTR_DESC(_use_counter_filter, AnyTraits<int64_t>())},
+  {"_process_node_engine_id", ATTR_DESC(_process_node_engine_id, AnyTraits<std::string>())}};
 OUTPUT_MAP(EmbeddingTableFind) = {{0, OUTPUT_DESC(values)}};
 REG_ADPT_DESC(EmbeddingTableFind, kNameEmbeddingTableFind, ADPT_DESC(EmbeddingTableFind))
 
 // EmbeddingTableFindAndInit
 INPUT_MAP(EmbeddingTableFindAndInit) = {{1, INPUT_DESC(table_id)}, {2, INPUT_DESC(keys)}};
-INPUT_ATTR_MAP(EmbeddingTableFindAndInit) = {{4, ATTR_DESC(embedding_dim, AnyTraits<int64_t>())},
-                                             {5, ATTR_DESC(value_total_len, AnyTraits<int64_t>())},
-                                             {6, ATTR_DESC(initializer_mode, AnyTraits<GEInitializerMode>())},
-                                             {7, ATTR_DESC(constant_value, AnyTraits<float>())},
-                                             {8, ATTR_DESC(min, AnyTraits<float>())},
-                                             {9, ATTR_DESC(max, AnyTraits<float>())},
-                                             {10, ATTR_DESC(mu, AnyTraits<float>())},
-                                             {11, ATTR_DESC(sigma, AnyTraits<float>())},
-                                             {12, ATTR_DESC(seed, AnyTraits<int64_t>())},
-                                             {13, ATTR_DESC(seed2, AnyTraits<int64_t>())},
-                                             {14, ATTR_DESC(filter_mode, AnyTraits<GEFilterMode>())},
-                                             {15, ATTR_DESC(filter_freq, AnyTraits<int64_t>())},
-                                             {16, ATTR_DESC(default_key_or_value, AnyTraits<bool>())},
-                                             {17, ATTR_DESC(default_key, AnyTraits<int64_t>())},
-                                             {18, ATTR_DESC(default_value, AnyTraits<float>())},
-                                             {19, ATTR_DESC(optimizer_mode, AnyTraits<GEOptimizerMode>())},
-                                             {20, ATTR_DESC(optimizer_params, AnyTraits<std::vector<float>>())},
-                                             {21, ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
-                                             {22, ATTR_DESC(_max_key_num, AnyTraits<int64_t>())},
-                                             {23, ATTR_DESC(_use_counter_filter, AnyTraits<int64_t>())}};
 ATTR_MAP(EmbeddingTableFindAndInit) = {
+  {"embedding_dim", ATTR_DESC(embedding_dim, AnyTraits<std::vector<int64_t>>())},
+  {"value_total_len", ATTR_DESC(value_total_len, AnyTraits<std::vector<int64_t>>())},
+  {"initializer_mode", ATTR_DESC(initializer_mode, AnyTraits<std::vector<std::string>>())},
+  {"constant_value", ATTR_DESC(constant_value, AnyTraits<std::vector<float>>())},
+  {"min", ATTR_DESC(min, AnyTraits<std::vector<float>>())},
+  {"max", ATTR_DESC(max, AnyTraits<std::vector<float>>())},
+  {"mu", ATTR_DESC(mu, AnyTraits<std::vector<float>>())},
+  {"sigma", ATTR_DESC(sigma, AnyTraits<std::vector<float>>())},
+  {"seed", ATTR_DESC(seed, AnyTraits<std::vector<int64_t>>())},
+  {"seed2", ATTR_DESC(seed2, AnyTraits<std::vector<int64_t>>())},
+  {"filter_mode", ATTR_DESC(filter_mode, AnyTraits<std::vector<std::string>>())},
+  {"filter_freq", ATTR_DESC(filter_freq, AnyTraits<std::vector<int64_t>>())},
+  {"default_key_or_value", ATTR_DESC(default_key_or_value, AnyTraits<std::vector<int64_t>>())},
+  {"default_key", ATTR_DESC(default_key, AnyTraits<std::vector<int64_t>>())},
+  {"default_value", ATTR_DESC(default_value, AnyTraits<std::vector<float>>())},
+  {"completion_key", ATTR_DESC(completion_key, AnyTraits<std::vector<int64_t>>())},
+  {"completion_key_mask", ATTR_DESC(completion_key_mask, AnyTraits<std::vector<int64_t>>())},
+  {"optimizer_mode", ATTR_DESC(optimizer_mode, AnyTraits<std::vector<std::string>>())},
+  {"optimizer_params", ATTR_DESC(optimizer_params, AnyTraits<std::vector<float>>())},
+  {"_embedding_dim", ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
+  {"_max_key_num", ATTR_DESC(_max_key_num, AnyTraits<int64_t>())},
+  {"_use_counter_filter", ATTR_DESC(_use_counter_filter, AnyTraits<int64_t>())},
   {"_process_node_engine_id", ATTR_DESC(_process_node_engine_id, AnyTraits<std::string>())},
   {"_execute_times", ATTR_DESC(_execute_times, AnyTraits<int64_t>())}};
 OUTPUT_MAP(EmbeddingTableFindAndInit) = {{0, OUTPUT_DESC(values)}};
 REG_ADPT_DESC(EmbeddingTableFindAndInit, kNameEmbeddingTableFindAndInit, ADPT_DESC(EmbeddingTableFindAndInit))
 
 // EmbeddingApplyFtrl
-INPUT_MAP(EmbeddingApplyFtrl) = {{1, INPUT_DESC(var_handle)}, {2, INPUT_DESC(lr)},      {3, INPUT_DESC(lr_power)},
-                                 {4, INPUT_DESC(lambda1)},    {5, INPUT_DESC(lambda2)}, {6, INPUT_DESC(grad)},
-                                 {7, INPUT_DESC(keys)}};
-INPUT_ATTR_MAP(EmbeddingApplyFtrl) = {{8, ATTR_DESC(embedding_dim, AnyTraits<int64_t>())},
-                                      {9, ATTR_DESC(mask_zero, AnyTraits<bool>())},
-                                      {10, ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
-                                      {11, ATTR_DESC(_max_key_num, AnyTraits<int64_t>())}};
+INPUT_MAP(EmbeddingApplyFtrl) = {{1, INPUT_DESC(var_handle)}, {2, INPUT_DESC(lr)},         {3, INPUT_DESC(lr_power)},
+                                 {4, INPUT_DESC(lambda1)},    {5, INPUT_DESC(lambda2)},    {6, INPUT_DESC(grad)},
+                                 {7, INPUT_DESC(keys)},       {8, INPUT_DESC(global_step)}};
 ATTR_MAP(EmbeddingApplyFtrl) = {
+  {"embedding_dim", ATTR_DESC(embedding_dim, AnyTraits<std::vector<int64_t>>())},
+  {"mask_zero", ATTR_DESC(mask_zero, AnyTraits<std::vector<int64_t>>())},
+  {"padding_key", ATTR_DESC(padding_key, AnyTraits<std::vector<int64_t>>())},
+  {"padding_key_mask", ATTR_DESC(padding_key_mask, AnyTraits<std::vector<int64_t>>())},
+  {"completion_key", ATTR_DESC(completion_key, AnyTraits<std::vector<int64_t>>())},
+  {"completion_key_mask", ATTR_DESC(completion_key_mask, AnyTraits<std::vector<int64_t>>())},
+  {"_embedding_dim", ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
+  {"_max_key_num", ATTR_DESC(_max_key_num, AnyTraits<int64_t>())},
   {"_process_node_engine_id", ATTR_DESC(_process_node_engine_id, AnyTraits<std::string>())},
 };
 OUTPUT_MAP(EmbeddingApplyFtrl) = {{0, OUTPUT_DESC(var_handle)}};
@@ -113,26 +116,36 @@ INPUT_MAP(EmbeddingApplyAdam) = {
   {1, INPUT_DESC(var_handle)}, {2, INPUT_DESC(beta1_power)}, {3, INPUT_DESC(beta2_power)}, {4, INPUT_DESC(lr)},
   {5, INPUT_DESC(beta1)},      {6, INPUT_DESC(beta2)},       {7, INPUT_DESC(epsilon)},     {8, INPUT_DESC(grad)},
   {9, INPUT_DESC(keys)},       {10, INPUT_DESC(global_step)}};
-INPUT_ATTR_MAP(EmbeddingApplyAdam) = {{11, ATTR_DESC(embedding_dim, AnyTraits<int64_t>())},
-                                      {12, ATTR_DESC(mask_zero, AnyTraits<bool>())},
-                                      {13, ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
-                                      {14, ATTR_DESC(_max_key_num, AnyTraits<int64_t>())}};
 ATTR_MAP(EmbeddingApplyAdam) = {
-  {"_process_node_engine_id", ATTR_DESC(_process_node_engine_id, AnyTraits<std::string>())},
-};
+  {"embedding_dim", ATTR_DESC(embedding_dim, AnyTraits<std::vector<int64_t>>())},
+  {"mask_zero", ATTR_DESC(mask_zero, AnyTraits<std::vector<int64_t>>())},
+  {"padding_key", ATTR_DESC(padding_key, AnyTraits<std::vector<int64_t>>())},
+  {"padding_key_mask", ATTR_DESC(padding_key_mask, AnyTraits<std::vector<int64_t>>())},
+  {"completion_key", ATTR_DESC(completion_key, AnyTraits<std::vector<int64_t>>())},
+  {"completion_key_mask", ATTR_DESC(completion_key_mask, AnyTraits<std::vector<int64_t>>())},
+  {"_embedding_dim", ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
+  {"_max_key_num", ATTR_DESC(_max_key_num, AnyTraits<int64_t>())},
+  {"_process_node_engine_id", ATTR_DESC(_process_node_engine_id, AnyTraits<std::string>())}};
 OUTPUT_MAP(EmbeddingApplyAdam) = {{0, OUTPUT_DESC(var_handle)}};
 REG_ADPT_DESC(EmbeddingApplyAdam, kNameEmbeddingApplyAdam, ADPT_DESC(EmbeddingApplyAdam))
 
 // EmbeddingApplyAdamW
 INPUT_MAP(EmbeddingApplyAdamW) = {
-  {1, INPUT_DESC(var_handle)},   {2, INPUT_DESC(beta1_power)}, {3, INPUT_DESC(beta2_power)},   {4, INPUT_DESC(lr)},
-  {5, INPUT_DESC(weight_decay)}, {6, INPUT_DESC(beta1)},       {7, INPUT_DESC(beta2)},         {8, INPUT_DESC(epsilon)},
-  {9, INPUT_DESC(grad)},         {10, INPUT_DESC(keys)},       {11, INPUT_DESC(max_grad_norm)}};
-INPUT_ATTR_MAP(EmbeddingApplyAdamW) = {
-  {12, ATTR_DESC(embedding_dim, AnyTraits<int64_t>())},  {13, ATTR_DESC(amsgrad, AnyTraits<bool>())},
-  {14, ATTR_DESC(maximize, AnyTraits<bool>())},          {15, ATTR_DESC(mask_zero, AnyTraits<bool>())},
-  {16, ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())}, {17, ATTR_DESC(_max_key_num, AnyTraits<int64_t>())}};
+  {1, INPUT_DESC(var_handle)}, {2, INPUT_DESC(beta1_power)},    {3, INPUT_DESC(beta2_power)},
+  {4, INPUT_DESC(lr)},         {5, INPUT_DESC(weight_decay)},   {6, INPUT_DESC(beta1)},
+  {7, INPUT_DESC(beta2)},      {8, INPUT_DESC(epsilon)},        {9, INPUT_DESC(grad)},
+  {10, INPUT_DESC(keys)},      {11, INPUT_DESC(max_grad_norm)}, {12, INPUT_DESC(global_step)}};
 ATTR_MAP(EmbeddingApplyAdamW) = {
+  {"embedding_dim", ATTR_DESC(embedding_dim, AnyTraits<std::vector<int64_t>>())},
+  {"amsgrad", ATTR_DESC(amsgrad, AnyTraits<std::vector<int64_t>>())},
+  {"maximize", ATTR_DESC(maximize, AnyTraits<std::vector<int64_t>>())},
+  {"mask_zero", ATTR_DESC(mask_zero, AnyTraits<std::vector<int64_t>>())},
+  {"padding_key", ATTR_DESC(padding_key, AnyTraits<std::vector<int64_t>>())},
+  {"padding_key_mask", ATTR_DESC(padding_key_mask, AnyTraits<std::vector<int64_t>>())},
+  {"completion_key", ATTR_DESC(completion_key, AnyTraits<std::vector<int64_t>>())},
+  {"completion_key_mask", ATTR_DESC(completion_key_mask, AnyTraits<std::vector<int64_t>>())},
+  {"_embedding_dim", ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
+  {"_max_key_num", ATTR_DESC(_max_key_num, AnyTraits<int64_t>())},
   {"_process_node_engine_id", ATTR_DESC(_process_node_engine_id, AnyTraits<std::string>())}};
 OUTPUT_MAP(EmbeddingApplyAdamW) = {{0, OUTPUT_DESC(var_handle)}};
 REG_ADPT_DESC(EmbeddingApplyAdamW, kNameEmbeddingApplyAdamW, ADPT_DESC(EmbeddingApplyAdamW))
@@ -142,11 +155,15 @@ INPUT_MAP(EmbeddingApplyAdaGrad) = {
   {1, INPUT_DESC(var_handle)}, {2, INPUT_DESC(lr)},          {3, INPUT_DESC(grad)},
   {4, INPUT_DESC(keys)},       {5, INPUT_DESC(global_step)},
 };
-INPUT_ATTR_MAP(EmbeddingApplyAdaGrad) = {{6, ATTR_DESC(embedding_dim, AnyTraits<int64_t>())},
-                                         {7, ATTR_DESC(mask_zero, AnyTraits<bool>())},
-                                         {8, ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
-                                         {9, ATTR_DESC(_max_key_num, AnyTraits<int64_t>())}};
 ATTR_MAP(EmbeddingApplyAdaGrad) = {
+  {"embedding_dim", ATTR_DESC(embedding_dim, AnyTraits<std::vector<int64_t>>())},
+  {"mask_zero", ATTR_DESC(mask_zero, AnyTraits<std::vector<int64_t>>())},
+  {"padding_key", ATTR_DESC(padding_key, AnyTraits<std::vector<int64_t>>())},
+  {"padding_key_mask", ATTR_DESC(padding_key_mask, AnyTraits<std::vector<int64_t>>())},
+  {"completion_key", ATTR_DESC(completion_key, AnyTraits<std::vector<int64_t>>())},
+  {"completion_key_mask", ATTR_DESC(completion_key_mask, AnyTraits<std::vector<int64_t>>())},
+  {"_embedding_dim", ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
+  {"_max_key_num", ATTR_DESC(_max_key_num, AnyTraits<int64_t>())},
   {"_process_node_engine_id", ATTR_DESC(_process_node_engine_id, AnyTraits<std::string>())}};
 OUTPUT_MAP(EmbeddingApplyAdaGrad) = {{0, OUTPUT_DESC(var_handle)}};
 REG_ADPT_DESC(EmbeddingApplyAdaGrad, kNameEmbeddingApplyAdaGrad, ADPT_DESC(EmbeddingApplyAdaGrad))
@@ -213,27 +230,29 @@ INPUT_MAP(FakeRemoteLookupUniqued) = {{1, INPUT_DESC(table_id)},
                                       {3, INPUT_DESC(actual_keys_num)},
                                       {4, INPUT_DESC(unique_indices)},
                                       {5, INPUT_DESC(key_count)}};
-INPUT_ATTR_MAP(FakeRemoteLookupUniqued) = {{7, ATTR_DESC(embedding_dim, AnyTraits<int64_t>())},
-                                           {8, ATTR_DESC(value_total_len, AnyTraits<int64_t>())},
-                                           {9, ATTR_DESC(initializer_mode, AnyTraits<GEInitializerMode>())},
-                                           {10, ATTR_DESC(constant_value, AnyTraits<float>())},
-                                           {11, ATTR_DESC(min, AnyTraits<float>())},
-                                           {12, ATTR_DESC(max, AnyTraits<float>())},
-                                           {13, ATTR_DESC(mu, AnyTraits<float>())},
-                                           {14, ATTR_DESC(sigma, AnyTraits<float>())},
-                                           {15, ATTR_DESC(seed, AnyTraits<int64_t>())},
-                                           {16, ATTR_DESC(seed2, AnyTraits<int64_t>())},
-                                           {17, ATTR_DESC(filter_mode, AnyTraits<GEFilterMode>())},
-                                           {18, ATTR_DESC(filter_freq, AnyTraits<int64_t>())},
-                                           {19, ATTR_DESC(default_key_or_value, AnyTraits<bool>())},
-                                           {20, ATTR_DESC(default_key, AnyTraits<int64_t>())},
-                                           {21, ATTR_DESC(default_value, AnyTraits<float>())},
-                                           {22, ATTR_DESC(optimizer_mode, AnyTraits<GEOptimizerMode>())},
-                                           {23, ATTR_DESC(optimizer_params, AnyTraits<std::vector<float>>())},
-                                           {24, ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
-                                           {25, ATTR_DESC(_max_key_num, AnyTraits<int64_t>())},
-                                           {26, ATTR_DESC(_use_counter_filter, AnyTraits<int64_t>())}};
 ATTR_MAP(FakeRemoteLookupUniqued) = {
+  {"embedding_dim", ATTR_DESC(embedding_dim, AnyTraits<std::vector<int64_t>>())},
+  {"value_total_len", ATTR_DESC(value_total_len, AnyTraits<std::vector<int64_t>>())},
+  {"initializer_mode", ATTR_DESC(initializer_mode, AnyTraits<std::vector<std::string>>())},
+  {"constant_value", ATTR_DESC(constant_value, AnyTraits<std::vector<float>>())},
+  {"min", ATTR_DESC(min, AnyTraits<std::vector<float>>())},
+  {"max", ATTR_DESC(max, AnyTraits<std::vector<float>>())},
+  {"mu", ATTR_DESC(mu, AnyTraits<std::vector<float>>())},
+  {"sigma", ATTR_DESC(sigma, AnyTraits<std::vector<float>>())},
+  {"seed", ATTR_DESC(seed, AnyTraits<std::vector<int64_t>>())},
+  {"seed2", ATTR_DESC(seed2, AnyTraits<std::vector<int64_t>>())},
+  {"filter_mode", ATTR_DESC(filter_mode, AnyTraits<std::vector<std::string>>())},
+  {"filter_freq", ATTR_DESC(filter_freq, AnyTraits<std::vector<int64_t>>())},
+  {"default_key_or_value", ATTR_DESC(default_key_or_value, AnyTraits<std::vector<int64_t>>())},
+  {"default_key", ATTR_DESC(default_key, AnyTraits<std::vector<int64_t>>())},
+  {"default_value", ATTR_DESC(default_value, AnyTraits<std::vector<float>>())},
+  {"completion_key", ATTR_DESC(completion_key, AnyTraits<std::vector<int64_t>>())},
+  {"completion_key_mask", ATTR_DESC(completion_key_mask, AnyTraits<std::vector<int64_t>>())},
+  {"optimizer_mode", ATTR_DESC(optimizer_mode, AnyTraits<std::vector<std::string>>())},
+  {"optimizer_params", ATTR_DESC(optimizer_params, AnyTraits<std::vector<float>>())},
+  {"_embedding_dim", ATTR_DESC(_embedding_dim, AnyTraits<int64_t>())},
+  {"_max_key_num", ATTR_DESC(_max_key_num, AnyTraits<int64_t>())},
+  {"_use_counter_filter", ATTR_DESC(_use_counter_filter, AnyTraits<int64_t>())},
   {"_process_node_engine_id", ATTR_DESC(_process_node_engine_id, AnyTraits<std::string>())},
   {"_execute_times", ATTR_DESC(_execute_times, AnyTraits<int64_t>())}};
 OUTPUT_MAP(FakeRemoteLookupUniqued) = {{0, OUTPUT_DESC(values)}};
