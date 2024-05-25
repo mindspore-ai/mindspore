@@ -765,6 +765,7 @@ void FuncGrad::PruningInput(const GradAttr &grad_attr, const std::vector<size_t>
         cell_inputs_[i].second->set_is_need_grad(false);
       }
     }
+    return;
   }
 
   // Pruning first input in grad graph

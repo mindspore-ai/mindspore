@@ -20,6 +20,7 @@ from mindspore import log as logger
 from mindspore.nn.cell import Cell
 from mindspore import context
 from mindspore.common.tensor import Tensor
+from mindspore import ops
 from mindspore.ops.composite import GradOperation
 from mindspore.common._register_for_recompute import recompute_registry
 from mindspore.common.api import _pynative_executor
@@ -85,6 +86,8 @@ class _RecomputeCell(Cell):
         self.kwargs.pop()
         if kwargs:
             input_args = list(input_args) + list(kwargs.values())
+        # To detach inputs to avoid erasing auto grad meta info of origin inputs.
+        input_args = _detach_input(input_args)
         try:
             pre_rng_state = get_rng_state()
             set_rng_state(*self.cpu_rng_state)
@@ -161,6 +164,17 @@ def _padding_input_grads(args, input_grads):
     if len(args) != len(input_grads):
         raise ValueError("For recompute cell, the input grads size should be same as input args size: {}, "
                          "but got {}".format(len(args), len(input_grads)))
+
+
+def _detach_input(input_arg):
+    if isinstance(input_arg, Tensor):
+        return ops.stop_gradient(input_arg)
+    if isinstance(input_arg, (list, tuple)):
+        detach_inputs = []
+        for arg in input_arg:
+            detach_inputs.append(_detach_input(arg))
+        return detach_inputs if isinstance(input_arg, list) else tuple(detach_inputs)
+    return input_arg
 
 
 def _check_validation(block):
