@@ -264,7 +264,7 @@ void SideEffect::RestoreGlobal(CodeGenerator *cg) const {
   for (const auto &map : data()->global_cache().modified_globals_) {
     const auto &module_name = map.first;
     if (module_name != cur_module_name) {
-      py::object module_object = py::module_::import(module_name.c_str());
+      py::object module_object = py::reinterpret_steal<py::object>(PyImport_ImportModule(module_name.c_str()));
       for (const auto &pair : map.second) {
         MakeModuleAttrModify(cg, pair.first, module_object, GetSource(pair.second));
       }
