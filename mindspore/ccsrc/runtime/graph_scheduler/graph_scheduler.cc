@@ -862,6 +862,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
     (void)thread_blocker.wait_for(locker, std::chrono::seconds(kTimeToWait));
     ActorDispatcher::set_enable_async_launch_kernel(false);
     ActorDispatcher::set_enable_runtime_multi_pipeline(false);
+    ResetTraceMemoryStatus();
     // May set exception in the wait time, need throw the exception to avoid affecting the next execution.
     MsException::Instance().CheckException();
     MS_LOG(EXCEPTION) << op_context.error_info_;
@@ -869,6 +870,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
 
   ActorDispatcher::set_enable_async_launch_kernel(false);
   ActorDispatcher::set_enable_runtime_multi_pipeline(false);
+  ResetTraceMemoryStatus();
   MsException::Instance().CheckException();
   double end_time = GetTime();
   const size_t kSecondsToMilliseconds = 1000;

@@ -159,6 +159,10 @@ class KernelActor : public DebugAwareActor {
   // Update input_device_tensors by input op data.
   void UpdateInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context);
 
+  // Record the output and workspace memory pointer and size to optimize memory allocate/free performance in next step.
+  // Note: only use in inference case.
+  void TraceDynamicMemory();
+
   // The info of kernel.
   CNodePtr kernel_;
   bool is_dynamic_shape_;
@@ -281,6 +285,9 @@ class KernelActor : public DebugAwareActor {
   // RealMakeTuple --> ShapeCalc pattern: if ShapeCalc is not value depend for one input RealMakeTuple op, we can skip
   // launch this RealMakeTuple.
   bool skip_launch_shape_related_op_{false};
+
+  bool is_output_kernel_{false};
+  std::set<size_t> graph_output_indexes_{};
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;

@@ -880,7 +880,12 @@ void DataPrepareActor::PrepareDataForHostTensorQueueNew(const VectorRef &args, O
     }
   }
 
-  ActorDispatcher::set_enable_static_shape(!isDyn);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  static const bool enable_infer_boost = ms_context->IsEnableInferBoost();
+  if (enable_infer_boost && EnableKbkSubGraphExecute()) {
+    ActorDispatcher::set_enable_static_shape(!isDyn);
+  }
   host_tensor_queue_->Push(host_tensors);
 }
 
