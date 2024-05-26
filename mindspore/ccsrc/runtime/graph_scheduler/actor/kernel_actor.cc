@@ -17,6 +17,7 @@
 #include "runtime/graph_scheduler/actor/kernel_actor.h"
 
 #include <mutex>
+#include <algorithm>
 
 #include "runtime/device/multi_stream_controller.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
@@ -491,6 +492,38 @@ void *KernelActor::GetSomasDevicePtr(size_t offset) const {
   return AddressOffset(real_base_address, real_offset);
 }
 
+void KernelActor::TraceDynamicMemory() {
+  if (is_output_kernel_) {
+    for (size_t i = 0; i < output_kernel_tensors_.size(); i++) {
+      if (graph_output_indexes_.count(i) > 0) {
+        // Not trace graph output memory.
+        continue;
+      }
+      const auto &kernel_tensor = output_kernel_tensors_[i];
+      MemoryTraceManager::GetInstance().AddKernelMemoryTraceBlock(
+        std::make_shared<KernelMemoryTraceBlock>(kernel_, kernel_tensor->device_ptr(), kernel_tensor->size(),
+                                                 kOutputMem, i),
+        device_contexts_[0]);
+    }
+  } else {
+    for (size_t i = 0; i < output_kernel_tensors_.size(); i++) {
+      const auto &kernel_tensor = output_kernel_tensors_[i];
+      MemoryTraceManager::GetInstance().AddKernelMemoryTraceBlock(
+        std::make_shared<KernelMemoryTraceBlock>(kernel_, kernel_tensor->device_ptr(), kernel_tensor->size(),
+                                                 kOutputMem, i),
+        device_contexts_[0]);
+    }
+  }
+
+  for (size_t i = 0; i < workspace_kernel_tensors_.size(); i++) {
+    const auto &kernel_tensor = workspace_kernel_tensors_[i];
+    MemoryTraceManager::GetInstance().AddKernelMemoryTraceBlock(
+      std::make_shared<KernelMemoryTraceBlock>(kernel_, kernel_tensor->device_ptr(), kernel_tensor->size(),
+                                               kWorkspaceMem, i),
+      device_contexts_[0]);
+  }
+}
+
 void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   if (device_contexts_[0]->device_res_manager_->swap_manager() != nullptr) {
     device_contexts_[0]->device_res_manager_->swap_manager()->SetSwappableBeforeMemAllocate(input_device_tensors_,
@@ -512,6 +545,10 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   }
 
   MemoryManagerActor::GetInstance()->AllocateMemory(&memory_alloc_list_, device_contexts_[0], context, GetAID());
+
+  if (ActorDispatcher::enable_trace_dynamic_memory()) {
+    TraceDynamicMemory();
+  }
 }
 
 void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
@@ -803,8 +840,18 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
     return;
   }
   // 1. Allocate memory.
-  if (!memory_alloc_list_.empty()) {
-    SendMemoryAllocReq(context);
+  if (!ActorDispatcher::enable_use_trace_memory()) {
+    if (!memory_alloc_list_.empty()) {
+      SendMemoryAllocReq(context);
+    }
+  } else if (is_output_kernel_) {
+    // Allocate dynamic memory for graph output.
+    std::vector<DeviceTensor *> graph_output_device_tensors;
+    std::transform(graph_output_indexes_.begin(), graph_output_indexes_.end(),
+                   std::back_inserter(graph_output_device_tensors),
+                   [&](size_t index) { return output_device_tensors_[index]; });
+    MemoryManagerActor::GetInstance()->AllocateMemory(&graph_output_device_tensors, device_contexts_[0], context,
+                                                      GetAID());
   }
 
   if (IsRunningFailed(context)) {
@@ -857,8 +904,10 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
   }
 
   // 3. Free memory.
-  if (memory_free_list_.size() > 0) {
-    SendMemoryFreeReq(context);
+  if (!ActorDispatcher::enable_use_trace_memory()) {
+    if (memory_free_list_.size() > 0) {
+      SendMemoryFreeReq(context);
+    }
   }
 }
 

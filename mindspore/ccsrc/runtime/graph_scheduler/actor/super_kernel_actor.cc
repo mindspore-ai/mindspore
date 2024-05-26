@@ -23,6 +23,7 @@
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "mindrt/include/async/async.h"
+#include "utils/phase.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -262,12 +263,78 @@ void SuperKernelActor::FetchPersistentDeviceTensor() {
   }
 }
 
+void SuperKernelActor::UpdateMemoryTraceMangerStatus(OpContext<DeviceTensor> *const context) {
+  MemoryTraceManager::GetInstance().PickMemoryTrackInfoForGraph(graph_->graph_id());
+  if (!ActorDispatcher::enable_static_shape()) {
+    ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kMemoryAlloc, GetAID().Name());
+    // First step for dynamic shape, need to record memory trace.
+    ActorDispatcher::set_enable_trace_dynamic_memory(true);
+    MemoryTraceManager::GetInstance().Clear();
+    static const size_t memory_block_size = 3000;
+    MemoryTraceManager::GetInstance().ReserveKernelMemoryBlocks(memory_block_size, device_contexts_[0]);
+  } else {
+    // Not first step for dynamic shape, use record trace memory.
+    ActorDispatcher::set_enable_use_trace_memory(true);
+    // Allocate block memory for static memory step.
+    ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kMemoryAlloc, GetAID().Name());
+    const auto &merge_blocks_with_device_context = MemoryTraceManager::GetInstance().GetMergeBlocks();
+    MS_EXCEPTION_IF_NULL(merge_blocks_with_device_context);
+    for (auto &item : *merge_blocks_with_device_context) {
+      const auto &device_context = item.first;
+      MS_EXCEPTION_IF_NULL(device_context);
+      const auto &merge_blocks = item.second;
+      for (auto &block : merge_blocks) {
+        MS_EXCEPTION_IF_NULL(block);
+        void *block_addr = device_context->device_res_manager_->AllocateMemory(block->size_);
+        if (block_addr == nullptr) {
+          SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context,
+                                                      *(device_contexts_[0]), GetAID().Name(), block->size_);
+        }
+        block->start_ = reinterpret_cast<uint8_t *>(block_addr);
+      }
+    }
+  }
+}
+
+void SuperKernelActor::SetTraceMemoryForKernel(const KernelActorPtr &kernel_actor) {
+  const auto &kernel = kernel_actor->kernel();
+  MS_EXCEPTION_IF_NULL(kernel);
+
+  // Allocate trace memory for static memory step.
+  const std::shared_ptr<mindspore::HashMap<CNodePtr, std::vector<KernelMemoryTraceBlockPtr>>> &all_kernel_block_info =
+    MemoryTraceManager::GetInstance().GetAllKernelBlocksnfo();
+  MS_EXCEPTION_IF_NULL(all_kernel_block_info);
+  const auto &iter = all_kernel_block_info->find(kernel);
+  if (iter == all_kernel_block_info->end()) {
+    MS_LOG(DEBUG) << "Not found kernel block info for kernel: " << kernel->fullname_with_scope()
+                  << ", is output kernel: " << kernel_actor->is_output_kernel_;
+  } else {
+    const auto &kernel_mem_block = iter->second;
+    const auto &merge_blocks_with_device_context = MemoryTraceManager::GetInstance().GetMergeBlocks();
+    MS_EXCEPTION_IF_NULL(merge_blocks_with_device_context);
+    const auto &merge_blocks = merge_blocks_with_device_context->at(kernel_actor->device_contexts_[0]);
+    for (auto &block : kernel_mem_block) {
+      MS_EXCEPTION_IF_NULL(block);
+      void *ptr = merge_blocks.at(block->in_memory_trace_block_index_)->start_ + block->offset_in_memory_trace_block_;
+      MS_EXCEPTION_IF_NULL(ptr);
+      if (block->mem_type_ == kOutputMem) {
+        kernel_actor->output_kernel_tensors_.at(block->index_)->set_device_ptr(ptr);
+      } else {
+        kernel_actor->workspace_kernel_tensors_.at(block->index_)->set_device_ptr(ptr);
+      }
+    }
+  }
+}
+
 void SuperKernelActor::RunGraphKernelByKernel(OpContext<DeviceTensor> *const context) {
   if (!ActorDispatcher::enable_async_launch_kernel()) {
     std::string error_info =
       "Runtime pipeline optimization is disabled, failed to execute graph kernel by kernel mode.";
     MS_LOG(ERROR) << "Run graph failed, graph id: " << std::to_string(graph_->graph_id()) << ". " << error_info;
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+  }
+  if (!graph_->is_dynamic_shape()) {
+    ActorDispatcher::set_enable_static_shape(false);
   }
 
   // 1. Fetch input data
@@ -280,6 +347,13 @@ void SuperKernelActor::RunGraphKernelByKernel(OpContext<DeviceTensor> *const con
   // 2. Allocate somas memory for graph
   if ((somas_info_ != nullptr) && (somas_info_->whole_block_size_ != 0)) {
     MemoryManagerActor::GetInstance()->AllocateSomasMemory(somas_info_, device_contexts_[0], context, GetAID());
+  }
+  const auto &phase = PhaseManager::GetInstance().phase();
+  bool is_increment_graph = (phase.find("increment") != std::string::npos);
+  if (enable_trace_memory_ && graph_->is_dynamic_shape() && is_increment_graph) {
+    MS_LOG(DEBUG) << "Enable trace memory for increment inference graph: " << graph_->graph_id()
+                  << ", phase: " << phase;
+    UpdateMemoryTraceMangerStatus(context);
   }
 
   // 3. Launch all kernels
@@ -302,6 +376,10 @@ void SuperKernelActor::RunGraphKernelByKernel(OpContext<DeviceTensor> *const con
 
     // 3.2 Allocate somas memory for this kernel
     kernel_actor->SetSomasMemory(context);
+
+    if (ActorDispatcher::enable_use_trace_memory()) {
+      SetTraceMemoryForKernel(kernel_actor);
+    }
 
     // Async Run Infer or Launch
     if (ActorDispatcher::enable_runtime_multi_pipeline() && !ActorDispatcher::enable_static_shape()) {
@@ -340,6 +418,27 @@ void SuperKernelActor::RunGraphKernelByKernel(OpContext<DeviceTensor> *const con
   // 4. Free somas memory for graph
   if ((somas_info_ != nullptr) && (somas_info_->whole_block_size_ != 0)) {
     MemoryManagerActor::GetInstance()->FreeSomasMemory(somas_info_, device_contexts_[0], context, GetAID());
+  }
+
+  if (ActorDispatcher::enable_trace_dynamic_memory()) {
+    // Record and analyse the memory trace of this step, use to optimize the memory manage performance.
+    ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kMemoryFree, GetAID().Name());
+    MemoryTraceManager::GetInstance().MergeBlocks();
+  }
+  if (ActorDispatcher::enable_use_trace_memory()) {
+    // Free block memory for static memory step.
+    ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kMemoryFree, GetAID().Name());
+    const auto &merge_blocks_with_device_context = MemoryTraceManager::GetInstance().GetMergeBlocks();
+    MS_EXCEPTION_IF_NULL(merge_blocks_with_device_context);
+    for (auto &item : *merge_blocks_with_device_context) {
+      const auto &device_context = item.first;
+      MS_EXCEPTION_IF_NULL(device_context);
+      const auto &merge_blocks = item.second;
+      for (auto &block : merge_blocks) {
+        MS_EXCEPTION_IF_NULL(block);
+        device_context->device_res_manager_->FreeMemory(block->start_);
+      }
+    }
   }
 
   // Free input data.
@@ -708,6 +807,8 @@ void SuperKernelActor::BuildKernelActors() {
     }
     const auto &output_actor = iter->second;
     MS_EXCEPTION_IF_NULL(output_actor);
+    output_actor->is_output_kernel_ = true;
+    output_actor->graph_output_indexes_.insert(output_index);
     SchedulerHelper::AddSomasInfoForGraphOutput(output_actor, output_kernel, output_index, graph_->graph_id());
   }
 
