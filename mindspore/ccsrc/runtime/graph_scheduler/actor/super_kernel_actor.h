@@ -52,6 +52,7 @@ class SuperKernelActor : public DebugAwareActor {
     (void)device_contexts_.emplace_back(device_context);
     input_device_tensors_.resize(graph->input_nodes().size());
     enable_kbk_sub_graph_execute_ = EnableKbkSubGraphExecute();
+    enable_trace_memory_ = EnableTraceMemory();
     kernel_async_infer_aid_ = KernelAsyncInferActor::GetInstance()->GetAID();
     kernel_async_resize_aid_ = KernelAsyncResizeActor::GetInstance()->GetAID();
     kernel_async_launch_aid_ = KernelAsyncLaunchActor::GetInstance()->GetAID();
@@ -91,6 +92,9 @@ class SuperKernelActor : public DebugAwareActor {
                                     const DeviceTensorPtr &node_device_tensor, size_t i);
   void RunGraphKernelByKernel(OpContext<DeviceTensor> *const context);
 
+  void UpdateMemoryTraceMangerStatus(OpContext<DeviceTensor> *const context);
+  void SetTraceMemoryForKernel(const KernelActorPtr &kernel_actor);
+
   void FetchPersistentDeviceTensor();
 
   friend class GraphScheduler;
@@ -126,6 +130,8 @@ class SuperKernelActor : public DebugAwareActor {
   AID kernel_async_infer_aid_;
   AID kernel_async_resize_aid_;
   AID kernel_async_launch_aid_;
+
+  bool enable_trace_memory_;
 };
 
 using SuperKernelActorPtr = std::shared_ptr<SuperKernelActor>;

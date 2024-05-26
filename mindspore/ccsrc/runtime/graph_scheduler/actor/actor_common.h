@@ -166,6 +166,85 @@ enum class KernelTransformType {
     return;                                                                                                        \
   } while (0);
 
+enum MemoryType {
+  kOutputMem = 0,
+  kWorkspaceMem = 1,
+};
+
+struct KernelMemoryTraceBlock {
+  KernelMemoryTraceBlock(const CNodePtr &kernel, void *start, size_t size, MemoryType mem_type, size_t index)
+      : kernel_(kernel),
+        start_(reinterpret_cast<uint8_t *>(start)),
+        end_(reinterpret_cast<uint8_t *>(start) + size),
+        size_(size),
+        mem_type_(mem_type),
+        index_(index),
+        in_memory_trace_block_index_(0),
+        offset_in_memory_trace_block_(0) {}
+
+  CNodePtr kernel_;
+  uint8_t *start_;
+  uint8_t *end_;
+  size_t size_;
+  MemoryType mem_type_;
+  size_t index_;
+
+  size_t in_memory_trace_block_index_;
+  size_t offset_in_memory_trace_block_;
+};
+
+struct MemoryTraceBlock {
+  MemoryTraceBlock(uint8_t *start, size_t size) : start_(start), end_(start + size), size_(size) {}
+
+  uint8_t *start_;
+  uint8_t *end_;
+  size_t size_;
+};
+
+using KernelMemoryTraceBlockPtr = std::shared_ptr<KernelMemoryTraceBlock>;
+using MemoryTraceBlockPtr = std::shared_ptr<MemoryTraceBlock>;
+
+class MemoryTraceManager {
+ public:
+  static MemoryTraceManager &GetInstance() {
+    static MemoryTraceManager instance;
+    return instance;
+  }
+
+  void ReserveKernelMemoryBlocks(size_t size, const DeviceContext *device_context);
+
+  void PickMemoryTrackInfoForGraph(uint32_t graph_id);
+
+  void AddKernelMemoryTraceBlock(const KernelMemoryTraceBlockPtr &block, const DeviceContext *device_context);
+
+  const std::shared_ptr<std::map<const DeviceContext *, std::vector<MemoryTraceBlockPtr>>> &GetMergeBlocks();
+
+  const std::shared_ptr<mindspore::HashMap<CNodePtr, std::vector<KernelMemoryTraceBlockPtr>>> &GetAllKernelBlocksnfo();
+
+  void MergeBlocks();
+
+  void Clear();
+
+ private:
+  MemoryTraceManager() = default;
+  ~MemoryTraceManager() = default;
+  DISABLE_COPY_AND_ASSIGN(MemoryTraceManager);
+
+  void MergeBlocksForSameDeviceContext(std::vector<KernelMemoryTraceBlockPtr> *kernel_memory_trace_blocks,
+                                       std::vector<MemoryTraceBlockPtr> *merged_memory_trace_blocks);
+
+  std::shared_ptr<std::map<const DeviceContext *, std::vector<KernelMemoryTraceBlockPtr>>> kernel_memory_trace_blocks_;
+  std::shared_ptr<std::map<const DeviceContext *, std::vector<MemoryTraceBlockPtr>>> merged_memory_trace_blocks_;
+  std::shared_ptr<mindspore::HashMap<CNodePtr, std::vector<KernelMemoryTraceBlockPtr>>> kernel_to_block_;
+
+  std::map<uint32_t, std::shared_ptr<std::map<const DeviceContext *, std::vector<KernelMemoryTraceBlockPtr>>>>
+    graph_to_kernel_memory_trace_blocks_;
+  std::map<uint32_t, std::shared_ptr<std::map<const DeviceContext *, std::vector<MemoryTraceBlockPtr>>>>
+    graph_to_merged_memory_trace_blocks_;
+  std::map<uint32_t, std::shared_ptr<mindspore::HashMap<CNodePtr, std::vector<KernelMemoryTraceBlockPtr>>>>
+    graph_to_kernel_blocks_;
+};
+
 // Encapsulate the actor APIs associated with execution.
 class ActorDispatcher {
  public:
@@ -264,9 +343,19 @@ class ActorDispatcher {
   }
   static bool disable_kbk_sub_graph_execute() { return disable_kbk_sub_graph_execute_; }
 
-  // The first five executions are for warm-up, the next five executions are statistics of multi thread execution time,
-  // and the next next five executions are statistics of single thread execution time. The first 30 step which do search
-  // if there are cpu kernels.
+  static void set_enable_trace_dynamic_memory(bool enable_trace_dynamic_memory) {
+    enable_trace_dynamic_memory_ = enable_trace_dynamic_memory;
+  }
+  static bool enable_trace_dynamic_memory() { return enable_trace_dynamic_memory_; }
+
+  static void set_enable_use_trace_memory(bool enable_use_trace_memory) {
+    enable_use_trace_memory_ = enable_use_trace_memory;
+  }
+  static bool enable_use_trace_memory() { return enable_use_trace_memory_; }
+
+  // The first five executions are for warm-up, the next five executions are statistics of multi thread execution
+  // time, and the next next five executions are statistics of single thread execution time. The first 30 step which
+  // do search if there are cpu kernels.
   static constexpr size_t kMultiThreadExecutionCountBegin{31};
   static constexpr size_t kMultiThreadExecutionCountEnd{40};
   static constexpr size_t kSingleThreadExecutionCountBegin{41};
@@ -299,6 +388,8 @@ class ActorDispatcher {
   static bool enable_static_shape_;
   static bool enable_async_launch_kernel_;
   static bool disable_kbk_sub_graph_execute_;
+  static bool enable_trace_dynamic_memory_;
+  static bool enable_use_trace_memory_;
 };
 
 bool IsRunningFailed(const OpContext<DeviceTensor> *context);
@@ -342,8 +433,12 @@ bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph)
 // Whether enable asynchronously infer shape and resize kernel mod by KernelInferActor and KernelResizeActor.
 bool EnableAsyncInfer();
 
-// Kernel by kernel sub graph execute mode need not send actor message by kernel actor, just launch all kernels in super
-// kernel actor directly.
+bool EnableTraceMemory();
+
+void ResetTraceMemoryStatus();
+
+// Kernel by kernel sub graph execute mode need not send actor message by kernel actor, just launch all kernels in
+// super kernel actor directly.
 bool EnableKbkSubGraphExecute();
 
 // If enable async launch kernel, wait all kernels launch task finish.
