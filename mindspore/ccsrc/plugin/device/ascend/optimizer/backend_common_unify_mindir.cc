@@ -140,8 +140,8 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AllGatherMatmulFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::CentralizationMindIR>());
 #ifdef ENABLE_INTERNAL_KERNELS
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::MultiWeightMatmulsFusion2>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::MultiMatmulsFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::InferenceMultiMatmulWithSplitFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::InferenceMultiMatmulFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MultiWeightMatmulsFusion>());
 
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddLayernormFusion>());

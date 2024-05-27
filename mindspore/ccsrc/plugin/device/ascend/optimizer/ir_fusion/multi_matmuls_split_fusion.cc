@@ -124,16 +124,16 @@ std::shared_ptr<ValueNode> CreateWeightTensor(TypeId type_id, const std::vector<
 }
 }  // namespace
 
-bool MultiWeightMatmulsFusion2::Run(const FuncGraphPtr &graph) {
+bool InferenceMultiMatmulWithSplitFusion::Run(const FuncGraphPtr &graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (!ms_context->IsEnableInferBoost()) {
     return false;
   }
-
+  constexpr auto kInferenceMultiMatmulWithSplitOpName = "InferenceMultiMatmulWithSplit";
   auto enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
   bool enable_opt =
-    (std::find(enable_op_list.begin(), enable_op_list.end(), kMultiWeightMatmulV2OpName) != enable_op_list.end());
+    (std::find(enable_op_list.begin(), enable_op_list.end(), kInferenceMultiMatmulWithSplitOpName) != enable_op_list.end());
   if (!enable_opt) {
     return false;
   }
@@ -143,7 +143,8 @@ bool MultiWeightMatmulsFusion2::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(mng);
   const auto &node_users_map = mng->node_users();
   auto node_list = TopoSort(graph->output());
-  constexpr size_t kMatMulQkvNum = 3;
+  constexpr size_t weight_num_three = 3;
+  constexpr size_t weight_num_two = 3;
 
   int64_t k_len = -1;
   for (const auto &node : node_list) {
@@ -158,7 +159,7 @@ bool MultiWeightMatmulsFusion2::Run(const FuncGraphPtr &graph) {
         user_matmuls.push_back(user_pair.first);
       }
     }
-    if (user_matmuls.size() != kMatMulQkvNum || !can_process) {
+    if ((user_matmuls.size() != weight_num_three && user_matmuls.size() != weight_num_two) || !can_process) {
       continue;
     }
     AnfNodePtrList getitems;
@@ -173,8 +174,8 @@ bool MultiWeightMatmulsFusion2::Run(const FuncGraphPtr &graph) {
   return changed;
 }
 
-void MultiWeightMatmulsFusion2::Process(const std::string &name, const AnfNodePtr &node, const AnfNodePtrList &users,
-                                        AnfNodePtrList *getitems) const {
+void InferenceMultiMatmulWithSplitFusion::Process(const std::string &name, const AnfNodePtr &node,
+                                                  const AnfNodePtrList &users, AnfNodePtrList *getitems) const {
   auto kernel_graph = node->func_graph()->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   AnfNodePtrList fused_inputs = {NewValueNode(std::make_shared<Primitive>(name)), node};

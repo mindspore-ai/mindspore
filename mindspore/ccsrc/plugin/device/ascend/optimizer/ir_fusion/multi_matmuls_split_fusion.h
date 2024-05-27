@@ -31,10 +31,10 @@
 
 namespace mindspore {
 namespace opt {
-class MultiWeightMatmulsFusion2 : public Pass {
+class InferenceMultiMatmulWithSplitFusion : public Pass {
  public:
-  MultiWeightMatmulsFusion2() : Pass("multi_weight_matmuls_fusion2") {}
-  ~MultiWeightMatmulsFusion2() override = default;
+  InferenceMultiMatmulWithSplitFusion() : Pass("inference_multi_matmul_with_split_fusion") {}
+  ~InferenceMultiMatmulWithSplitFusion() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 
  protected:
