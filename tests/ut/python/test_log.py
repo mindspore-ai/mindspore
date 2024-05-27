@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -99,6 +99,7 @@ def test_log_file():
     assert match_obj
     # Clean up _global_logger to avoid affecting for next usecase
     _clear_logger(logger)
+
 
 def test_log_backup_count():
     """
@@ -241,6 +242,7 @@ def test_log_repeated_print():
 
 def test_log_getconfig():
     _rm_env_config()
+    os.environ['VLOG_v'] = '101'
     os.environ['GLOG_v'] = '3'
     os.environ['GLOG_logtostderr'] = '0'
     os.environ['GLOG_log_dir'] = '/tmp/log/'
@@ -250,7 +252,7 @@ def test_log_getconfig():
     _clear_logger(logger)
     logger.info("test log message info test")
     configdict = logger.get_log_config()
-    targetdict = {'GLOG_v': '3', 'GLOG_log_dir': '/tmp/log/rank_0/logs',
+    targetdict = {'GLOG_v': '3', 'VLOG_v': '101', 'GLOG_log_dir': '/tmp/log/rank_0/logs',
                   'GLOG_logtostderr': '0', 'logger_maxBytes': 1000,
                   'logger_backupCount': 10, 'GLOG_stderrthreshold': '2'}
     assert configdict == targetdict
@@ -313,15 +315,141 @@ def test_log_ms_import():
     assert configdict == targetdict and level == '2'
 
 
+def test_vlog_file():
+    """
+    Feature: test the vlog content written in vlog file
+    Description: test the vlog content written in vlog file
+    Expectation: success
+    """
+    if sys.platform.startswith('win'):
+        assert True
+        return
+    _rm_env_config()
+    file_path = '/tmp/log/mindspore_test'
+    os.environ['VLOG_v'] = '101'
+    os.environ['GLOG_logtostderr'] = '0'
+    os.environ['GLOG_log_dir'] = file_path
+    if os.path.exists(file_path):
+        shutil.rmtree(file_path)
+    filename = ''
+    os.makedirs(file_path, exist_ok=True)
+    from mindspore import log as logger
+    _clear_logger(logger)
+    logger.vlog(101, "test vlog101 message")
+    file_path += '/rank_0/logs'
+    f_list = os.listdir(file_path)
+    # print f_list
+    for file_name in f_list:
+        if file_name.startswith('mindspore.vlog'):
+            filename = f'{file_path}/{file_name}'
+    cmd = f'cat {filename}'
+    result = os.popen(cmd).read()
+    # pylint: disable=anomalous-backslash-in-string
+
+    pattern = "\[VLOG101\] ME\(.*[0-9]:.*[0-9]\,.*[a-zA-Z0-9]\):.* " \
+              "\[.*:.*[0-9]\] test vlog101 message"
+    match_obj = re.match(pattern, result)
+    # Clear test file
+    if os.path.exists(file_path):
+        shutil.rmtree(file_path)
+
+    assert match_obj
+    # Clean up _global_logger to avoid affecting for next usecase
+    _clear_logger(logger)
+
+
+def test_vlog_backup_count():
+    """
+    Feature: test backup count
+    Description: test backup count
+    Expectation: success
+    """
+    if sys.platform.startswith('win'):
+        assert True
+        return
+    _rm_env_config()
+    file_path = '/tmp/log/mindspore_test'
+    os.environ['VLOG_v'] = '101'
+    os.environ['GLOG_logtostderr'] = '0'
+    os.environ['GLOG_log_dir'] = file_path
+    os.environ['logger_maxBytes'] = '1000'
+    os.environ['logger_backupCount'] = '10'
+
+    if os.path.exists(file_path):
+        shutil.rmtree(file_path)
+    os.makedirs(file_path, exist_ok=True)
+    from mindspore import log as logger
+    _clear_logger(logger)
+
+    log_count = 100
+    for i in range(0, log_count, 1):
+        logger.vlog(i+101, "test vlog%r message", i)
+
+    file_path += '/rank_0/logs'
+    cmd = f'cd {file_path};ls -l | grep \'mindspore.vlog.*\'|wc -l'
+    backup_count = '11'
+    file_count = os.popen(cmd).read().strip()
+
+    if os.path.exists(file_path):
+        shutil.rmtree(file_path)
+    assert file_count == backup_count
+    # Clean up _global_logger to avoid affecting for next usecase
+    _clear_logger(logger)
+
+
+def test_static_vlog_default():
+    """
+    Feature: test static vlog default
+    Description: test static vlog default from environment
+    Expectation: success
+    """
+    if sys.platform.startswith('win'):
+        assert True
+        return
+    _rm_env_config()
+    from mindspore import log as logger
+    vlog_level = logger.get_vlog_level()
+    assert vlog_level is None
+    # Clean up _global_logger to avoid affecting for next usecase
+    _clear_logger(logger)
+
+
+def test_static_vlog_setlevel():
+    """
+    Feature: test static vlog set level
+    Description: test static vlog set level
+    Expectation: success
+    """
+    if sys.platform.startswith('win'):
+        assert True
+        return
+    _rm_env_config()
+    os.environ['VLOG_v'] = '101'
+    from mindspore import log as logger
+    # logger_instance = logger._get_vlogger()
+    # del vlogger_instance
+    _clear_logger(logger)
+    vlog_level = logger.get_vlog_level()
+    log_str = 'print vlog101 informations'
+    logger.vlog(101, "test vlog101 message:%s", log_str)
+    assert vlog_level == '101'
+    # Clean up _global_logger to avoid affecting for next usecase
+    _clear_logger(logger)
+
+
 def _clear_logger(logger):
     if logger.GLOBAL_LOGGER:
         for handler in logger.GLOBAL_LOGGER.handlers:
             logger.GLOBAL_LOGGER.removeHandler(handler)
         logger.GLOBAL_LOGGER = None
+    if logger.VERBOSE_LOGGER:
+        for handler in logger.VERBOSE_LOGGER.handlers:
+            logger.VERBOSE_LOGGER.removeHandler(handler)
+        logger.VERBOSE_LOGGER = None
 
 
 def _rm_env_config():
-    envlist = ['GLOG_v', 'GLOG_logtostderr', 'GLOG_log_dir', 'logger_maxBytes', 'logger_backupCount']
+    envlist = ['GLOG_v', 'VLOG_v', 'GLOG_logtostderr', 'GLOG_log_dir', 'logger_maxBytes', 'logger_backupCount']
     for env in envlist:
         if os.environ.get(env):
             del os.environ[env]

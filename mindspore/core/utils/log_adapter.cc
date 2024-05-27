@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,15 @@
 #ifndef _MSC_VER
 #include <unistd.h>
 #include <sys/time.h>
+#include <csignal>
 #endif
 #include <map>
 #include <iomanip>
 #include <regex>
 #include <thread>
 #include <vector>
+#include <mutex>
+#include <shared_mutex>
 #include "utils/convert_utils_base.h"
 
 // namespace to support utils module definition
@@ -35,6 +38,13 @@ constexpr auto kSplitLine = "\n-------------------------------------------------
 constexpr auto kFrameworkErrorTitle = "Framework Error Message:";
 // set default log level to WARNING for all sub modules
 int g_ms_submodule_log_levels[NUM_SUBMODUES] = {MsLogLevel::kWarning};
+
+// set default vlog level of all sub modules to false.
+bool g_ms_submodule_vlog_levles_is_enbled[NUM_SUBMODUES][kVLogLevelRange] = {{false}};
+
+// Initialize the FileReadWriteLock instance.
+mindspore::FileReadWriteLock *mindspore::FileReadWriteLock::instance = new mindspore::FileReadWriteLock();
+
 #if defined(_WIN32) || defined(_WIN64)
 enum MsLogLevel this_thread_max_log_level = MsLogLevel::kException;
 #else
@@ -348,11 +358,37 @@ void LogWriter::OutputLog(const std::ostringstream &msg) const {
 #endif
 }
 
+void LogWriter::OutputVLog(const std::ostringstream &msg) const {
+#ifdef USE_GLOG
+#define google mindspore_private
+  auto submodule_name = GetSubModuleName(submodule_);
+  google::LogMessage("", 0, GetGlogLevel(MsLogLevel::kInfo)).stream()
+#ifdef _MSC_VER
+    << "["
+    << "VLOG" << this->vlog_level_ << "] " << submodule_name << "("
+    << "," << std::hex
+#else
+    << "["
+    << "VLOG" << this->vlog_level_ << "] " << submodule_name << "(" << getpid() << "," << std::hex
+#endif
+    << std::this_thread::get_id() << std::dec << "," << GetProcName() << "):" << GetTimeString() << " "
+    << "[" << location_.file_ << ":" << location_.line_ << "] " << location_.func_ << "] " << msg.str() << std::endl;
+#undef google
+#endif
+}
+
 void LogWriter::operator<(const LogStream &stream) const noexcept {
   std::ostringstream msg;
   msg << stream.sstream_->rdbuf();
   OutputLog(msg);
 }
+
+void LogWriter::operator<(const VLogStream &stream) const noexcept {
+  std::ostringstream msg;
+  msg << stream.sstream_->rdbuf();
+  OutputVLog(msg);
+}
+
 void LogWriter::operator^(const LogStream &stream) const {
   std::ostringstream msg;
   msg << stream.sstream_->rdbuf();
@@ -407,6 +443,7 @@ enum class LogConfigToken : size_t {
   COMMA,        // ','
   COLON,        // ':'
   EOS,          // End Of String, '\0'
+  DIVISION,     // '#'
   NUM_LOG_CFG_TOKENS
 };
 
@@ -418,6 +455,7 @@ static const char *g_tok_names[static_cast<size_t>(LogConfigToken::NUM_LOG_CFG_T
   "number",         // [0-9]+
   ",",              // ','
   ":",              // ':'
+  "#",              // '#'
   "end-of-string",  // End Of String, '\0'
 };
 
@@ -470,6 +508,44 @@ class LogConfigLexer {
     auto iter = single_char_map.find(ch);
     if (iter != single_char_map.end()) {
       if (ptr != nullptr) {
+        *ptr = std::string(1, ch);
+      }
+      ++cur_idx_;
+      return iter->second;
+    } else if (IsAlpha(ch)) {
+      std::ostringstream oss;
+      do {
+        oss << ch;
+        ch = buffer_[++cur_idx_];
+      } while (cur_idx_ < buffer_.size() && (IsAlpha(ch) || IsDigit(ch) || ch == '_'));
+      if (ptr != nullptr) {
+        *ptr = std::string(oss.str());
+      }
+      return LogConfigToken::VARIABLE;
+    } else if (IsDigit(ch)) {
+      std::ostringstream oss;
+      do {
+        oss << ch;
+        ch = buffer_[++cur_idx_];
+      } while (cur_idx_ < buffer_.size() && IsDigit(ch));
+      if (ptr != nullptr) {
+        *ptr = std::string(oss.str());
+      }
+      return LogConfigToken::NUMBER;
+    }
+    return LogConfigToken::INVALID;
+  }
+
+  LogConfigToken VLogGetNext(std::string *const ptr) {
+    char ch = SkipWhiteSpace();
+    static const std::map<char, LogConfigToken> single_char_vlog_map = {
+      {'{', LogConfigToken::LEFT_BRACE}, {'}', LogConfigToken::RIGHT_BRACE}, {',', LogConfigToken::COMMA},
+      {':', LogConfigToken::COLON},      {'#', LogConfigToken::DIVISION},    {'\0', LogConfigToken::EOS},
+    };
+    auto iter = single_char_vlog_map.find(ch);
+    if (iter != single_char_vlog_map.end()) {
+      if (ptr != nullptr) {
+        // Get a character, which is not a number, letter, or # or, or : or \0
         *ptr = std::string(1, ch);
       }
       ++cur_idx_;
@@ -570,6 +646,75 @@ class LogConfigParser {
     return log_levels;
   }
 
+  // The text of config MS_SUBMODULE_VLOG_v is in the form {submodule1:vlog_level1,submodule2:vlog_level2,...}.
+  // Valid values of log levels are: [101,999] or #101#102#103#...
+  // e.g. MS_SUBMODULE_LOG_v={PARSER:101, ANALYZER:#102#103, PIPELINE:103}
+  // PARSER will output all logs with level >= 101, ANALYZER will output all logs with level == 102 and level == 103,
+  // PIPELINE will output all logs with level >= 103.
+  std::map<std::string, std::string> PraseModuleVLog() {
+    std::map<std::string, std::string> vlog_levels;
+    bool two_breaks = false;
+    bool flag_error = false;
+    std::string text;
+    auto tok = lexer.VLogGetNext(&text);
+    if (tok == LogConfigToken::EOS) {
+      return vlog_levels;
+    }
+    if (!Expect(LogConfigToken::LEFT_BRACE, tok)) {
+      return vlog_levels;
+    }
+    do {
+      std::string key, val;
+      tok = lexer.VLogGetNext(&key);
+      if (!Expect(LogConfigToken::VARIABLE, tok)) {
+        flag_error = true;
+        break;
+      }
+
+      tok = lexer.VLogGetNext(&text);
+      if (!Expect(LogConfigToken::COLON, tok)) {
+        flag_error = true;
+        break;
+      }
+
+      tok = lexer.VLogGetNext(&text);
+      if (!Expect(LogConfigToken::DIVISION, tok) && !Expect(LogConfigToken::NUMBER, tok)) {
+        flag_error = true;
+        break;
+      }
+
+      if (LogConfigToken::NUMBER == tok) {
+        val = text;
+        vlog_levels[key] += val;
+        val.clear();
+        tok = lexer.VLogGetNext(&text);
+      } else if (LogConfigToken::DIVISION == tok) {
+        do {
+          tok = lexer.VLogGetNext(&val);
+          if (!Expect(LogConfigToken::NUMBER, tok)) {
+            val.clear();
+            flag_error = true;
+            two_breaks = true;
+          }
+          vlog_levels[key] += ("#" + val);
+          val.clear();
+          tok = lexer.VLogGetNext(&text);
+        } while (tok == LogConfigToken::DIVISION);
+      }
+      if (two_breaks) {
+        break;
+      }
+    } while (tok == LogConfigToken::COMMA);
+
+    if (!flag_error && !Expect(LogConfigToken::RIGHT_BRACE, tok)) {
+      flag_error = true;
+    }
+    if (flag_error) {
+      vlog_levels.clear();
+    }
+    return vlog_levels;
+  }
+
  private:
   LogConfigLexer lexer;
 };
@@ -639,6 +784,121 @@ void InitSubModulesLogLevel() {
     g_ms_submodule_log_levels[mod_idx] = static_cast<int>(submodule_log_level);
   }
 }
+
+#if !(defined(_WIN32) || defined(_WIN64))
+void ParseVLogLevelsAndSet(const std::string &str_vlog_level_permodule, bool *vlog_level_permodule) {
+  // When str_vlog_level_permodule.size() == 3, it means that the user wants to enable range vlog levels, such as 101.
+  if (str_vlog_level_permodule.size() == 3) {
+    for (size_t index = 0; index < str_vlog_level_permodule.size(); ++index) {
+      if (IsDigit(str_vlog_level_permodule[index]) == false) return;
+    }
+    constexpr char number_start = '0';
+    int ch1 = str_vlog_level_permodule[0];
+    int ch2 = str_vlog_level_permodule[1];
+    int ch3 = str_vlog_level_permodule[2];
+    ch1 = ch1 - number_start;
+    ch2 = ch2 - number_start;
+    ch3 = ch3 - number_start;
+    int num_vlog_level_permodule_min = ch1 * 100 + ch2 * 10 + ch3;
+    for (size_t index = num_vlog_level_permodule_min; index <= mindspore::MsVlogLevelRange::kVLogLevelMax; ++index) {
+      vlog_level_permodule[index - mindspore::MsVlogLevelRange::kVLogLevelMin] = true;
+    }
+    // When str_vlog_level_permodule.size() > 3, it means that the user wants to enable specific vlog levels,such as
+    // #102#103.
+  } else if (str_vlog_level_permodule.size() > 3) {
+    // Use regular expressions to match eg: #102#103.
+    std::regex pattern("#\\d+");
+    std::sregex_iterator begin(str_vlog_level_permodule.begin(), str_vlog_level_permodule.end(), pattern);
+    std::sregex_iterator end;
+    for (std::sregex_iterator i = begin; i != end; ++i) {
+      std::smatch match_specified_vlog_level = *i;
+      std::string str_match_specified_vlog_level = match_specified_vlog_level.str();
+      int num_vlog_level_permodule_is_enabled = std::stoi(str_match_specified_vlog_level.substr(1));
+      if (num_vlog_level_permodule_is_enabled >= mindspore::MsVlogLevelRange::kVLogLevelMin &&
+          num_vlog_level_permodule_is_enabled <= mindspore::MsVlogLevelRange::kVLogLevelMax) {
+        vlog_level_permodule[num_vlog_level_permodule_is_enabled - mindspore::MsVlogLevelRange::kVLogLevelMin] = true;
+      }
+    }
+  }
+}
+
+// statically nitialize submodule's vlog level from environment variable VLOG_v and MS_SUBMODULE_VLOG_v.
+void InitSubModulesVLogLevel() {
+  auto str_vlog_level = GetEnv("VLOG_v");
+  for (int i = 0; i < mindspore::SubModuleId::NUM_SUBMODUES; ++i) {
+    ParseVLogLevelsAndSet(str_vlog_level, g_ms_submodule_vlog_levles_is_enbled[i]);
+  }
+  auto submodule = GetEnv("MS_SUBMODULE_VLOG_v");
+  LogConfigParser parser(submodule);
+  auto configs = parser.PraseModuleVLog();
+  for (const auto &cfg : configs) {
+    int mod_idx = -1;
+    for (int i = 0; i < static_cast<int>(NUM_SUBMODUES); ++i) {
+      if (cfg.first == GetSubModuleName(static_cast<SubModuleId>(i))) {
+        mod_idx = i;
+        break;
+      }
+    }
+    if (mod_idx < 0) {
+      MS_LOG(WARNING) << "Undefined module name " << cfg.first << ", ignore it";
+      continue;
+    }
+    bool *vlog_level_permodule = g_ms_submodule_vlog_levles_is_enbled[mod_idx];
+    for (int i = 0; i < mindspore::MsVlogLevelRange::kVLogLevelRange; i++) {
+      vlog_level_permodule[i] = false;
+    }
+    ParseVLogLevelsAndSet(cfg.second, vlog_level_permodule);
+  }
+}
+
+// Dynamically change submodule's vlog level by signal handler.
+// When receive SIGUSR1, change all vlog levels to VLOG_v.
+// When receive SIGUSR2, change specific vlog levels according to the MS_SUBMODULE_VLOG_v.
+void ChangeSubModulesVLogLevelSignalHandler(int signum) {
+  if (signum == SIGUSR1) {
+    auto str_vlog_level = GetEnv("VLOG_v");
+    // Get the write lock before changing the vlog levels.
+    mindspore::WriteLockGuard lock_guard(mindspore::FileReadWriteLock::GetInstance());
+    for (int i = 0; i < mindspore::SubModuleId::NUM_SUBMODUES; ++i) {
+      for (int j = 0; j < mindspore::MsVlogLevelRange::kVLogLevelRange; j++) {
+        g_ms_submodule_vlog_levles_is_enbled[i][j] = false;
+      }
+    }
+    for (int i = 0; i < mindspore::SubModuleId::NUM_SUBMODUES; ++i) {
+      ParseVLogLevelsAndSet(str_vlog_level, g_ms_submodule_vlog_levles_is_enbled[i]);
+    }
+  } else if (signum == SIGUSR2) {
+    auto submodule = GetEnv("MS_SUBMODULE_VLOG_v");
+    LogConfigParser parser(submodule);
+    auto configs = parser.PraseModuleVLog();
+    for (const auto &cfg : configs) {
+      int mod_idx = -1;
+      for (int i = 0; i < static_cast<int>(NUM_SUBMODUES); ++i) {
+        if (cfg.first == GetSubModuleName(static_cast<SubModuleId>(i))) {
+          mod_idx = i;
+          break;
+        }
+      }
+      if (mod_idx < 0) {
+        MS_LOG(WARNING) << "Undefined module name " << cfg.first << ", ignore it";
+        continue;
+      }
+      bool *vlog_level_permodule = g_ms_submodule_vlog_levles_is_enbled[mod_idx];
+      mindspore::WriteLockGuard lock_guard(mindspore::FileReadWriteLock::GetInstance());
+      for (int i = 0; i < mindspore::MsVlogLevelRange::kVLogLevelRange; i++) {
+        vlog_level_permodule[i] = false;
+      }
+      ParseVLogLevelsAndSet(cfg.second, vlog_level_permodule);
+    }
+  }
+}
+
+// Register signal handler to the function of dynamically changing vlog levels.
+void ChangeSubModulesVLogLevel() {
+  signal(SIGUSR1, ChangeSubModulesVLogLevelSignalHandler);
+  signal(SIGUSR2, ChangeSubModulesVLogLevelSignalHandler);
+}
+#endif
 
 const std::string GetSubModuleName(SubModuleId module_id) {
   static const char sub_module_names[NUM_SUBMODUES][kNameMaxLength] = {
@@ -772,6 +1032,10 @@ MS_CORE_API void common_log_init(void) {
 
 #endif
   mindspore::InitSubModulesLogLevel();
+#if !(defined(_WIN32) || defined(_WIN64))
+  mindspore::InitSubModulesVLogLevel();
+  mindspore::ChangeSubModulesVLogLevel();
+#endif
 }
 
 // shared lib init hook
