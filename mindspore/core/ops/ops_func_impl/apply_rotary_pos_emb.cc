@@ -40,22 +40,50 @@ BaseShapePtr ApplyRotaryPosEmbFuncImpl::InferShape(const PrimitivePtr &primitive
 
 TypePtr ApplyRotaryPosEmbFuncImpl::InferType(const PrimitivePtr &prim,
                                              const std::vector<AbstractBasePtr> &input_args) const {
-  const std::set valid_types = {kFloat16, kFloat32, kBFloat16};
   auto op_name = prim->name();
-  std::map<std::string, TypePtr> types;
+  auto query_type = input_args[kApplyRotaryPosEmbQueryIndex]->GetType();
+  auto key_type = input_args[kApplyRotaryPosEmbKeyIndex]->GetType();
+  auto cos_type = input_args[kApplyRotaryPosEmbCosIndex]->GetType();
+  auto sin_type = input_args[kApplyRotaryPosEmbSinIndex]->GetType();
 
-  (void)types.emplace("query", input_args[kApplyRotaryPosEmbQueryIndex]->GetType());
-  (void)types.emplace("key", input_args[kApplyRotaryPosEmbKeyIndex]->GetType());
-  (void)types.emplace("cos", input_args[kApplyRotaryPosEmbCosIndex]->GetType());
-  (void)types.emplace("sin", input_args[kApplyRotaryPosEmbSinIndex]->GetType());
-  auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
+  auto cos_element_type = kNumberTypeBegin;
+  if (cos_type->isa<TensorType>()) {
+    auto tensor_type = cos_type->cast<TensorTypePtr>();
+    auto element = tensor_type->element();
+    cos_element_type = element->type_id();
+  }
+  if (cos_element_type == kNumberTypeFloat16 || cos_element_type == kNumberTypeBFloat16) {
+    const std::set qk_valid_types = {kFloat16, kBFloat16};
+    std::map<std::string, TypePtr> input_types;
+    (void)input_types.emplace("query", query_type);
+    (void)input_types.emplace("key", key_type);
+    (void)input_types.emplace("cos", cos_type);
+    (void)input_types.emplace("sin", sin_type);
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(input_types, qk_valid_types, op_name);
+  } else if (cos_element_type == kNumberTypeFloat32) {
+    const std::set cs_valid_types = {kFloat32};
+    const std::set qk_valid_types = {kFloat16};
+    std::map<std::string, TypePtr> cs_types;
+    std::map<std::string, TypePtr> qk_types;
+    (void)qk_types.emplace("query", query_type);
+    (void)qk_types.emplace("key", key_type);
+    (void)cs_types.emplace("cos", cos_type);
+    (void)cs_types.emplace("sin", sin_type);
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(qk_types, qk_valid_types, op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(cs_types, cs_valid_types, op_name);
+  } else {
+    MS_EXCEPTION(TypeError) << "The primitive[" << op_name
+                            << "]'s input arguments[query, key, cos, sin], invalid type list: {"
+                            << query_type->ToString() << "," << key_type->ToString() << "," << cos_type->ToString()
+                            << "," << sin_type->ToString() << "}";
+  }
   auto position_ids_type = input_args[kApplyRotaryPosEmbPositionIdsIndex]->GetType();
   const std::set<TypePtr> valid_position_ids_types = {kInt32, kInt64, kUInt32, kUInt64};
   (void)CheckAndConvertUtils::CheckTypeValid("position_ids", position_ids_type, valid_position_ids_types, op_name);
 
   TypePtrList output_type_ptr_list(kFApplyRotaryPosEmbOutputsNum);
-  output_type_ptr_list[kApplyRotaryPosEmbQueryEmbedIndex] = type;
-  output_type_ptr_list[kApplyRotaryPosEmbKeyEmbedIndex] = type;
+  output_type_ptr_list[kApplyRotaryPosEmbQueryEmbedIndex] = query_type;
+  output_type_ptr_list[kApplyRotaryPosEmbKeyEmbedIndex] = key_type;
   return std::make_shared<Tuple>(output_type_ptr_list);
 }
 }  // namespace ops
