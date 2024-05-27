@@ -987,6 +987,59 @@ bool AscendDeviceAddress::CopyHostToDevice(void *dst, const void *src, const siz
   return true;
 }
 
+bool AscendDeviceAddress::AsyncDeviceToHost(size_t size, void *host_ptr) const {
+  MS_EXCEPTION_IF_NULL(host_ptr);
+  if (GetDevicePtr() == host_ptr) {
+    MS_LOG(INFO) << "Dst addr is same with src addr, no need copy data.";
+    return true;
+  }
+  BindDevice();
+  MS_EXCEPTION_IF_NULL(GetDevicePtr());
+  auto device_context = GetDeviceContext();
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
+  auto stream = device_context->device_res_manager_->GetStream(stream_id);
+  if (stream == nullptr) {
+    stream = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
+  }
+  MS_ERROR_IF_NULL(stream);
+  auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, host_ptr, size, GetDevicePtr(), size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclrtMemcpyAsync host to device failed, the error num[" << ret << "]";
+    return false;
+  }
+  return true;
+}
+
+bool AscendDeviceAddress::AsyncHostToDevice(size_t size, const void *host_ptr) const {
+  MS_EXCEPTION_IF_NULL(host_ptr);
+  if (GetDevicePtr() == host_ptr) {
+    MS_LOG(INFO) << "Dst addr is same with src addr, no need copy data.";
+    return true;
+  }
+  BindDevice();
+  auto device_context = GetDeviceContext();
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
+  auto stream = device_context->device_res_manager_->GetStream(stream_id);
+  if (stream == nullptr) {
+    stream = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
+    stream_id = kDefaultStreamIndex;
+  }
+  MS_ERROR_IF_NULL(stream);
+  if (GetDevicePtr() == nullptr) {
+    auto ptr = device_context->device_res_manager_->AllocateMemory(size, stream_id);
+    MS_EXCEPTION_IF_NULL(ptr);
+    SetDevicePtr(ptr);
+  }
+  auto device_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  runtime_instance->SetContext();
+  SyncHostMemoryToDeviceWithCopySrc(GetDevicePtr(), host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, runtime_instance);
+  return true;
+}
+
 AscendDeviceAddress::~AscendDeviceAddress() {
   try {
     // Only release offload memory, release device memory when `kernel_tensor_` in base class destroyed, because maybe
