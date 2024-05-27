@@ -47,10 +47,10 @@ namespace opt {
  * z = tuple_getitem(t, 2)
  * ...
  */
-class MultiMatmulsFusion : public Pass {
+class InferenceMultiMatmulFusion : public Pass {
  public:
-  MultiMatmulsFusion() : Pass("multi_matmuls_fusion") {}
-  ~MultiMatmulsFusion() override = default;
+  InferenceMultiMatmulFusion() : Pass("inference_multi_matmul_fusion") {}
+  ~InferenceMultiMatmulFusion() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 
  protected:
