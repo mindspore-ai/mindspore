@@ -243,6 +243,8 @@ py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad,
 }
 
 void PyNativeExecutor::NewGraph(const py::object &obj, const py::args &args) const {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeNewGraph,
+                                     runtime::ProfilerRecorder::kNoName, false);
   forward_executor()->ProcessBeforeNewGraph(obj, args);
 
   if (!grad_executor()->RequiresGrad()) {
@@ -254,6 +256,8 @@ void PyNativeExecutor::NewGraph(const py::object &obj, const py::args &args) con
 }
 
 void PyNativeExecutor::EndGraph(const py::object &obj, const py::object &out, const py::args &args) const {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeEndGraph,
+                                     runtime::ProfilerRecorder::kNoName, false);
   bool is_cell = py::isinstance<Cell>(obj);
   forward_executor()->ProcessBeforeEndGraph(obj, is_cell);
 
