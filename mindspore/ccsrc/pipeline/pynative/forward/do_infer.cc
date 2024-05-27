@@ -20,7 +20,6 @@
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/profiler.h"
 #include "ops/nn_op_name.h"
-#include "ops/framework_op_name.h"
 #include "ops/ops_frontend_func_impl.h"
 
 namespace mindspore {

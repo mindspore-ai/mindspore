@@ -690,7 +690,7 @@ void DeviceAddressUtils::UpdateDeviceAddressForInplaceNode(const KernelGraphPtr 
     (void)inplace_groups[group_id].emplace_back(kernel);
   }
 
-  const size_t kMinInplaceGroupSize = 2;
+  constexpr size_t kMinInplaceGroupSize = 2;
   for (const auto &inplace_group : inplace_groups) {
     auto &group_nodes = inplace_group.second;
     if (group_nodes.size() < kMinInplaceGroupSize) {
@@ -1108,7 +1108,7 @@ void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_c
                                                    const std::vector<tensor::BaseTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(device_context);
   for (size_t i = 0; i < outputs.size(); ++i) {
-    auto tensor = outputs[i];
+    const auto &tensor = outputs[i];
     MS_EXCEPTION_IF_NULL(tensor);
     auto tensor_size = LongToSize(tensor->data().nbytes());
     const auto &format = GetFormatByTensorShape(device_context, tensor->shape());

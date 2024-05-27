@@ -30,11 +30,9 @@
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/jit/ps/action.h"
-#include "pipeline/jit/ps/pass.h"
 #include "pipeline/pynative/grad/jit/jit_call_graph.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "utils/info.h"
-#include "utils/anf_utils.h"
 #include "utils/profile.h"
 
 namespace mindspore {
@@ -143,7 +141,8 @@ AnfNodePtr IrFunctionNode::HyperAdd(const AnfNodePtr &left_node, const AnfNodePt
     auto add_result = tape_->FuncGraph::NewCNode({NewValueNode(prim::kPrimAdd), left_node, right_node});
     add_result->set_abstract(right_node->abstract());
     return add_result;
-  } else if (IsPrimitiveCNode(left_node, prim::kPrimMakeTuple) && IsPrimitiveCNode(right_node, prim::kPrimMakeTuple)) {
+  }
+  if (IsPrimitiveCNode(left_node, prim::kPrimMakeTuple) && IsPrimitiveCNode(right_node, prim::kPrimMakeTuple)) {
     auto left_cnode = left_node->cast<CNodePtr>();
     auto right_cnode = right_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(right_cnode);
@@ -157,9 +156,8 @@ AnfNodePtr IrFunctionNode::HyperAdd(const AnfNodePtr &left_node, const AnfNodePt
     auto add_tuple = tape_->FuncGraph::NewCNode(inputs);
     add_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abs));
     return add_tuple;
-  } else {
-    MS_LOG(EXCEPTION) << "Unknown cnode type" << left_node->DebugString();
   }
+  MS_LOG(EXCEPTION) << "Unknown cnode type" << left_node->DebugString();
 }
 
 void IrFunctionNode::AddNextEdge(const VariablePtr &next_variable, const AnfNodePtr &din) {

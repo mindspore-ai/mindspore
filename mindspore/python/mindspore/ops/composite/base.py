@@ -416,7 +416,6 @@ class GradOperation(GradOperation_):
             if not _pynative_executor.check_run(grad, fn, weights, None, *args, **new_kwargs):
                 fn.set_grad()
                 fn(*args, **new_kwargs)
-                fn.set_grad(False)
 
 
 class _TaylorOperation(TaylorOperation_):
@@ -656,7 +655,6 @@ class _Grad(GradOperation_):
             if not _pynative_executor.check_run(grad, fn, weights, self.grad_position, *args, **new_kwargs):
                 fn.set_grad()
                 outputs = fn(*args, **new_kwargs)
-                fn.set_grad(False)
                 return outputs
         if (self.get_value or self.has_aux) and not outputs:
             outputs = fn(*args, **new_kwargs)

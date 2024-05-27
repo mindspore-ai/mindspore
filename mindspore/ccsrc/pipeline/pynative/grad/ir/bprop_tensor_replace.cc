@@ -18,6 +18,8 @@
 #include <memory>
 #include "pipeline/pynative/pynative_utils.h"
 #include "include/backend/device_address.h"
+#include "runtime/pipeline/pipeline.h"
+#include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
 namespace pynative {
@@ -47,6 +49,7 @@ void SaveForwardTensorForReplace(const ValuePtr &value, const TensorIdWithOpInfo
     }
   }
 }
+
 void SaveForwardTensorForReplace(const ValueNodePtr &value_node, const TensorIdWithOpInfo &id_with_op_info,
                                  bool need_save_tensor_info, OpInfoWithTensorObject *op_info_with_tensor_object) {
   MS_EXCEPTION_IF_NULL(value_node);
@@ -102,10 +105,12 @@ void UpdatePreTensorInfo(const tensor::BaseTensorPtr &new_tensor, const tensor::
     old_tensor->set_device_address(device_address);
     return;
   }
-  for (const auto &item : forward->mindrt_backend()) {
-    MS_EXCEPTION_IF_NULL(item.second);
-    item.second->WaitTaskFinish();
+
+  {
+    GilReleaseWithCheck gil_release;
+    runtime::Pipeline::Get().backend_stage()->Wait();
   }
+
   // Replace data in device address when run in CPU device.
   if (old_tensor->device_address() != nullptr) {
     // If tensor is dynamic shape, Just replace device address.
@@ -160,8 +165,8 @@ void SetIdWithOpInfo(const ValuePtr &v, const std::string &op_info, size_t out_i
   }
 }
 
-void UpdateForwardOutputTensorInfo(const std::string &op_info, const ValuePtr &v, const TensorReplaceInfo &replace_info,
-                                   const size_t &stream_id) {
+void UpdateForwardOutputTensorInfo(const std::string &op_info, const ValuePtr &v,
+                                   const TensorReplaceInfo &replace_info) {
   const auto it = replace_info.op_info_with_tensor_object.find(op_info);
   if (it == replace_info.op_info_with_tensor_object.end()) {
     return;
@@ -170,6 +175,31 @@ void UpdateForwardOutputTensorInfo(const std::string &op_info, const ValuePtr &v
     const auto &new_tensor = GetTensorFromOutValue(elem.first, v);
     UpdatePreTensorInfo(new_tensor, elem.second);
   }
+}
+
+void UpdatePipelineTopCellFowardTensor(const TensorReplaceInfo &ir_replace_info,
+                                       const TensorReplaceInfo &cur_replace_info) {
+  // Do update for ir top cell, and set it for actor running
+  size_t replace_num = 0;
+  for (const auto &[op_info, forward_output] : cur_replace_info.op_info_with_forward_output) {
+    UpdateForwardOutputTensorInfo(op_info, forward_output, ir_replace_info);
+    ++replace_num;
+  }
+  if (replace_num != ir_replace_info.need_replace_size) {
+    MS_LOG(EXCEPTION) << "Get replace forward output num " << replace_num << ", but need replace num is "
+                      << ir_replace_info.need_replace_size;
+  }
+}
+
+void StoreForwardOutputWithOpInfo(const OpInfoWithTensorObject &op_info_with_tensor_object, const std::string &op_info,
+                                  const ValuePtr &v, TensorReplaceInfo *replace_info) {
+  // Use first ir top cell do opinfo replace
+  const auto it = op_info_with_tensor_object.find(op_info);
+  if (it == op_info_with_tensor_object.end()) {
+    MS_LOG(DEBUG) << "Can not find op info " << op_info << " in ir top cell, no need do replace";
+    return;
+  }
+  replace_info->op_info_with_forward_output[op_info] = v;
 }
 
 void SaveForwardOutputTensorInfo(const FuncGraphPtr &func_graph, bool need_save_tensor_info,
@@ -184,6 +214,7 @@ void SaveForwardOutputTensorInfo(const FuncGraphPtr &func_graph, bool need_save_
     SaveForwardTensorForReplace(value_node, replace_info->id_with_op_info, need_save_tensor_info,
                                 &(replace_info->op_info_with_tensor_object));
   }
+  replace_info->need_replace_size = replace_info->op_info_with_tensor_object.size();
 }
 }  // namespace pynative
 }  // namespace mindspore
