@@ -22,6 +22,7 @@
 #include <string>
 #include <functional>
 #include <algorithm>
+#include <utility>
 #include "mindspore/core/ops/ops_func_impl/grid_sampler_2d_grad.h"
 #include "mindspore/core/ops/ops_func_impl/grid_sampler_3d_grad.h"
 #include "mindspore/core/ops/op_enum.h"
@@ -31,17 +32,20 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class GridSampler2DGradKernelMod : public NativeGpuKernelMod {
  public:
   GridSampler2DGradKernelMod() { ResetResource(); }
   ~GridSampler2DGradKernelMod() override = default;
 
-  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
-              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
+  template <typename T>
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
+                    void *stream_ptr) {
     if (is_null_input_) {
       return true;
     }
+    interpolation_mode_ = static_cast<GridSamplerInterpolationMode>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
+    padding_mode_ = static_cast<GridSamplerPaddingMode>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
+    align_corners_ = inputs[kIndex5]->GetValueWithCheck<bool>();
     T *grad_addr = GetDeviceAddress<T>(inputs, kIndex0);
     T *input_addr = GetDeviceAddress<T>(inputs, kIndex1);
     T *grid_addr = GetDeviceAddress<T>(inputs, kIndex2);
@@ -56,12 +60,24 @@ class GridSampler2DGradKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGridSamplerGradInputNum, kernel_name_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGridSamplerGradOutputNum, kernel_name_);
+    kernel_func_(this, inputs, outputs, stream_ptr);
+    return true;
+  }
+
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGridSamplerGradInputNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGridSamplerGradOutputNum, kernel_name_);
-    interpolation_mode_ = static_cast<GridSamplerInterpolationMode>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
-    padding_mode_ = static_cast<GridSamplerPaddingMode>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
-    align_corners_ = inputs[kIndex5]->GetValueWithCheck<bool>();
+    auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+    if (!is_match) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+      return false;
+    }
+    kernel_func_ = func_list_[index].second;
     return true;
   }
 
@@ -152,7 +168,13 @@ class GridSampler2DGradKernelMod : public NativeGpuKernelMod {
     workspace_size_list_.clear();
   }
 
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
+  using KernelFunc = std::function<void(GridSampler2DGradKernelMod *, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &, void *)>;
+  KernelFunc kernel_func_{};
+  static std::vector<std::pair<KernelAttr, KernelFunc>> func_list_;
   std::vector<size_t> grad_shape_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> grid_shape_;
@@ -172,14 +194,14 @@ class GridSampler2DGradKernelMod : public NativeGpuKernelMod {
   size_t dgrid_size_;
 };
 
-template <typename T>
 class GridSampler3DGradKernelMod : public NativeGpuKernelMod {
  public:
   GridSampler3DGradKernelMod() { ResetResource(); }
   ~GridSampler3DGradKernelMod() override = default;
 
-  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
-              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
+  template <typename T>
+  bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
+                    void *stream_ptr) {
     if (is_null_input_) {
       return true;
     }
@@ -188,6 +210,9 @@ class GridSampler3DGradKernelMod : public NativeGpuKernelMod {
     T *grid_addr = GetDeviceAddress<T>(inputs, kIndex2);
     T *dinput_addr = GetDeviceAddress<T>(outputs, kIndex0);
     T *dgrid_addr = GetDeviceAddress<T>(outputs, kIndex1);
+    interpolation_mode_ = static_cast<GridSamplerInterpolationMode>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
+    padding_mode_ = static_cast<GridSamplerPaddingMode>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
+    align_corners_ = inputs[kIndex5]->GetValueWithCheck<bool>();
     auto status = GridSampler3DGrad(
       size_, dinput_size_, dgrid_size_, grad_addr, input_addr, grid_addr, dinput_addr, dgrid_addr, grad_shape_,
       input_shape_, grid_shape_, dinput_shape_, dgrid_shape_, grad_stride_, input_stride_, grid_stride_, dinput_stride_,
@@ -196,12 +221,24 @@ class GridSampler3DGradKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGridSamplerGradInputNum, kernel_name_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGridSamplerGradOutputNum, kernel_name_);
+    kernel_func_(this, inputs, outputs, stream_ptr);
+    return true;
+  }
+
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGridSamplerGradInputNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGridSamplerGradOutputNum, kernel_name_);
-    interpolation_mode_ = static_cast<GridSamplerInterpolationMode>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
-    padding_mode_ = static_cast<GridSamplerPaddingMode>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
-    align_corners_ = inputs[kIndex5]->GetValueWithCheck<bool>();
+    auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+    if (!is_match) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+      return false;
+    }
+    kernel_func_ = func_list_[index].second;
     return true;
   }
 
@@ -293,7 +330,13 @@ class GridSampler3DGradKernelMod : public NativeGpuKernelMod {
     workspace_size_list_.clear();
   }
 
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
+  using KernelFunc = std::function<void(GridSampler3DGradKernelMod *, const std::vector<KernelTensor *> &,
+                                        const std::vector<KernelTensor *> &, void *)>;
+  KernelFunc kernel_func_{};
+  static std::vector<std::pair<KernelAttr, KernelFunc>> func_list_;
   std::vector<size_t> grad_shape_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> grid_shape_;
