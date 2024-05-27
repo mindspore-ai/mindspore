@@ -2873,13 +2873,16 @@ def sort_ext(input, *, dim=-1, descending=False, stable=False):
     r"""
     Sorts the elements of the input tensor along the given dimension in the specified order.
 
+    .. warning::
+        Currently, the data types of float16, uint8, int8, int16, int32, int64 are well supported.
+        If use float32, it may cause loss of accuracy.
+
     Args:
         input(Tensor): The input tensor to sort.
             The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Keyword Args:
         dim (int, optional): The dimension to sort along. Default: ``-1``, means the last dimension.
-            The Ascend backend only supports sorting the last dimension.
         descending (bool, optional): Controls the sort order. If `descending` is True, the elements
             are sorted in descending order, or else sorted in ascending order. Default: ``False`` .
         stable (bool, optional): Controls the sort order. If stable is True then the sorting routine
@@ -2911,7 +2914,7 @@ def sort_ext(input, *, dim=-1, descending=False, stable=False):
         (Tensor(shape=[3, 3], dtype=Float16, value=
         [[ 1.0000e+00,  2.0000e+00,  8.0000e+00],
         [ 3.0000e+00,  5.0000e+00,  9.0000e+00],
-        [ 4.0000e+00,  6.0000e+00,  7.0000e+00]]), Tensor(shape=[3, 3], dtype=Int32, value=
+        [ 4.0000e+00,  6.0000e+00,  7.0000e+00]]), Tensor(shape=[3, 3], dtype=Int64, value=
         [[2, 1, 0],
         [2, 0, 1],
         [0, 1, 2]]))
