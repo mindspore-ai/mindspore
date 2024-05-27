@@ -99,6 +99,23 @@ def test_max_device_memory_size():
         context.set_context(max_device_memory="3.5G")
     context.set_context.__wrapped__(max_device_memory="3GB")
 
+def test_jit_config():
+    """"
+    Feature: test jit_config function
+    Description: Test case for simplest jit_config
+    Expectation: The results are as expected
+    """
+    context.set_context(jit_config={"jit_level": "O0"})
+    global_jit_config = context.get_jit_config()
+    assert global_jit_config["jit_level"] == "O0"
+    context.set_context(jit_config={"jit_level": "O1"})
+    global_jit_config = context.get_jit_config()
+    assert global_jit_config["jit_level"] == "O1"
+    context.set_context(jit_config={"jit_level": "O2"})
+    global_jit_config = context.get_jit_config()
+    assert global_jit_config["jit_level"] == "O2"
+    with pytest.raises(ValueError):
+        context.set_context(jit_config={"jit_level": ""})
 
 def test_ascend_config():
     """"
