@@ -131,7 +131,7 @@ def parameter_broadcast(net, layout, cur_rank=0, initial_rank=0):
                 param_redundancy_reversed.setdefault(item, []).append(key)
     if not param_redundancy_reversed:
         return
-    if not cur_rank not in single_params:
+    if cur_rank not in single_params:
         return
     net_param_dict = net.parameters_dict()
     ms.set_auto_parallel_context(parallel_mode="hybrid_parallel")
@@ -140,7 +140,7 @@ def parameter_broadcast(net, layout, cur_rank=0, initial_rank=0):
         allreduce_input = []
         for param in params:
             if param not in net_param_dict:
-                raise ValueError("For parameter broadcast, the param: {param} can not be found.")
+                raise ValueError(f"For parameter broadcast, the param: {param} can not be found.")
             real_param = net_param_dict[param]
             if param not in single_params[cur_rank]:
                 real_param.set_data(Tensor(np.zeros(real_param.shape), dtype=real_param.dtype))
