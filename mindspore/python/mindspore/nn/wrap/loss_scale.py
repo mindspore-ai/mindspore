@@ -372,8 +372,10 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         self.ascend_910bc_target = (MSContext.get_instance().get_ascend_soc_version() in ['ascend910b', 'ascend910c'])
         self.loss_scaling_manager = None
         self._ascend_check_overflow_mode = os.environ.get('MS_ASCEND_CHECK_OVERFLOW_MODE')
-        jit_kernel = "jit_level" in network.jit_config_dict and network.jit_config_dict["jit_level"] == "O0"
-        self.kernel_mode = jit_kernel
+        self.kernel_mode = False
+        global_jit_config = context.get_jit_config()
+        if global_jit_config:
+            self.kernel_mode = global_jit_config["jit_level"] == "O0"
 
 
         if isinstance(scale_sense, Cell):
