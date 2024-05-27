@@ -54,7 +54,13 @@ mindspore.mint.nn.functional
 非线性激活函数
 ^^^^^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.sigmoid
+    mindspore.mint.nn.functional.silu
 
 
 
