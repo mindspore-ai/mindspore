@@ -3717,5 +3717,24 @@ bool MindGraphBuilder::UnpackCallExDict(std::vector<ValueNode *> *params, CallNo
   params->push_back(const_keys);
   return true;
 }
+
+bool MindGraphBuilder::DoItemAccess(const Instr &instr) {
+  bool res = true;
+  int opcode = instr.op();
+  if (opcode == BINARY_SUBSCR) {
+    res = DoGetItem(instr);
+  } else if (opcode == STORE_SUBSCR) {
+    // STORE_SUBSCR: k->index v->item m-> container
+    auto k = pop();
+    auto m = pop();
+    auto v = pop();
+    res = DoSetItem(m, k, v);
+  } else if (opcode == DELETE_SUBSCR) {
+    res = false;
+  } else {
+    MS_LOG(INTERNAL_EXCEPTION) << "parser got an error instruction " << instr.ToString();
+  }
+  return res;
+}
 }  // namespace pijit
 }  // namespace mindspore

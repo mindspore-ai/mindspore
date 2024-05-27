@@ -258,7 +258,7 @@ class GraphBuilder {
   bool DoAttrAccess(const Instr &instr);
   virtual ValueNode *HandleGetattr(ValueNode *target_node, const Instr &instr);
   virtual bool DoGetItem(const Instr &instr);
-  bool DoItemAccess(const Instr &instr);
+  virtual bool DoItemAccess(const Instr &instr);
   bool DoStackOp(const Instr &instr);
   bool DoLoadConst(const Instr &instr);
   bool DoListToTuple(const Instr &instr);
@@ -317,6 +317,7 @@ class MindGraphBuilder : public GraphBuilder {
 
  protected:
   bool DoGetItem(const Instr &instr) override;
+  bool DoItemAccess(const Instr &instr) override;
   bool DoUnary(const Instr &instr) override;
   bool DoBinary(const Instr &instr) override;
   bool DoIsOp(const Instr &instr) override;
