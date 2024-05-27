@@ -1,7 +1,7 @@
 mindspore.mint.scatter_add
 ==========================
 
-.. py:function:: mindspore.ops.scatter_add(input, dim, index, src)
+.. py:function:: mindspore.mint.scatter_add(input, dim, index, src)
 
     将 `src` 中所有的元素添加到 `input` 中 `index` 指定的索引处。
     其中 `dim` 控制scatter_add操作的轴。

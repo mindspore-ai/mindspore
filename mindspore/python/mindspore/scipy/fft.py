@@ -44,7 +44,7 @@ def dct(x, type=2, n=None, axis=-1, norm=None):
             x is truncated. If n > x.shape[axis], x is zero-padded. Default: ``n = x.shape[axis]`` .
             Note that for Ascend backend parameter `n` is required.
         axis (int, optional): Axis along which the dct is computed. Default: ``-1`` .
-        norm (string, optional): Normalization mode. Only "ortho" is supported currently.
+        norm (str, optional): Normalization mode. Only "ortho" is supported currently.
             Default: ``None`` that means ``"ortho"`` .
 
     Returns:
@@ -101,7 +101,7 @@ def idct(x, type=2, n=None, axis=-1, norm=None):
             x is truncated. If :math:`n > x.shape[axis]`, x is zero-padded. Default: ``n = x.shape[axis]`` .
             Note that for Ascend backend parameter `n` is required.
         axis (int, optional): Axis along which the idct is computed. Default: ``-1`` .
-        norm (string, optional): Normalization mode. Only "ortho" is supported currently.
+        norm (str, optional): Normalization mode. Only "ortho" is supported currently.
             Default: ``None`` that means ``"ortho"`` .
 
     Returns:
@@ -163,8 +163,15 @@ def dctn(x, type=2, s=None, axes=None, norm=None):
             Default: ``None`` , which means transform the all dimension of `x`,
             or the last `len(s)` dimensions if s is given.
             Note that for Ascend backend parameter `axes` is required.
-        norm (string, optional): Normalization mode. Only "ortho" is supported currently.
+        norm (str, optional): Normalization mode. Only "ortho" is supported currently.
             Default: ``None`` that means ``"ortho"`` .
+
+    Returns:
+        Tensor, The result of `dctn()` function. The default is the same shape as `x`.
+        If `s` is given, the size of the `axes[i]` axis is changed to `s[i]`.
+        When the `x` is int16, int32, int64, float16, float32, the return value type is float32.
+        When the `x` is float64, the return value type is float64.
+        When the `x` is complex64/128, the return value type is complex64/128.
 
     Raises:
         TypeError: If the `x` type is not Tensor.
@@ -176,13 +183,6 @@ def dctn(x, type=2, s=None, axes=None, norm=None):
         ValueError: If `s` is less than 1.
         ValueError: If `s` and `axes` are given but have different shapes.
         ValueError: If `norm` is not ``"ortho"`` .
-
-    Returns:
-        Tensor, The result of `dctn()` function. The default is the same shape as `x`.
-        If `s` is given, the size of the `axes[i]` axis is changed to `s[i]`.
-        When the `x` is int16, int32, int64, float16, float32, the return value type is float32.
-        When the `x` is float64, the return value type is float64.
-        When the `x` is complex64/128, the return value type is complex64/128.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -227,8 +227,15 @@ def idctn(x, type=2, s=None, axes=None, norm=None):
             Default: ``None`` , which means transform the all dimension of `x`,
             or the last `len(s)` dimensions if s is given.
             Note that for Ascend backend parameter `axes` is required.
-        norm (string, optional): Normalization mode. Only "ortho" is supported currently.
+        norm (str, optional): Normalization mode. Only "ortho" is supported currently.
             Default: ``None`` that means ``"ortho"`` .
+
+    Returns:
+        Tensor, The result of `idctn()` function. The default is the same shape as `x`.
+        If `s` is given, the size of the `axes[i]` axis is changed to `s[i]`.
+        When the `x` is int16, int32, int64, float16, float32, the return value type is float32.
+        When the `x` is float64, the return value type is float64.
+        When the `x` is complex64/128, the return value type is complex64/128.
 
     Raises:
         TypeError: If the `x` type is not Tensor.
@@ -240,13 +247,6 @@ def idctn(x, type=2, s=None, axes=None, norm=None):
         ValueError: If `s` is less than 1.
         ValueError: If `s` and `axes` are given but have different shapes.
         ValueError: If `norm` is not ``"ortho"`` .
-
-    Returns:
-        Tensor, The result of `idctn()` function. The default is the same shape as `x`.
-        If `s` is given, the size of the `axes[i]` axis is changed to `s[i]`.
-        When the `x` is int16, int32, int64, float16, float32, the return value type is float32.
-        When the `x` is float64, the return value type is float64.
-        When the `x` is complex64/128, the return value type is complex64/128.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

@@ -10,9 +10,9 @@ rms_norm:
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        - **x** (Tensor) - Input data of RmsNorm. Support data type: float16, float32, bfloat16.
-        - **gamma** (Tensor) - Learnable parameter :math:`\gamma` . Support data type: float16, float32, bfloat16.
-        - **epsilon** (float) - prevent division by 0, default value is `1e-6`
+        x (Tensor): Input data of RmsNorm. Support data type: float16, float32, bfloat16.
+        gamma (Tensor): Learnable parameter :math:`\gamma` . Support data type: float16, float32, bfloat16.
+        epsilon (float): prevent division by 0, default value is `1e-6` .
 
     Returns:
         - **y** (Tensor) - The normalized input, has the same type and shape as `x`.
