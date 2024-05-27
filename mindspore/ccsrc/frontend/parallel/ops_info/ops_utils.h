@@ -203,6 +203,7 @@ constexpr char SEED2[] = "seed2";
 constexpr char RANGE_MAX[] = "range_max";
 constexpr char REMOVE_ACCIDENTAL_HITS[] = "remove_accidental_hits";
 constexpr char UNIQUE_STRING[] = "unique";
+constexpr char DIM[] = "dim";
 constexpr char AXIS[] = "axis";
 constexpr char BS[] = "bs";
 constexpr char HEADS[] = "heads";
