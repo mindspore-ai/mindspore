@@ -43,9 +43,14 @@ class StridedSliceInfo : public OperatorInfo {
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   std::shared_ptr<Strategies> GenerateBatchStrategies() override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
+  std::vector<int64_t> begin() const { return begin_; }
+  std::vector<int64_t> strides() const { return strides_; }
+  std::vector<bool> new_axis_mask_bitmap() const { return new_axis_mask_bitmap_; }
+  std::vector<bool> fully_fetch_flag() const { return fully_fetch_flag_; }
+  bool skip_redistribution() const { return skip_redistribution_; }
+  Status GetAttrs() override;
 
  protected:
-  Status GetAttrs() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override { return SUCCESS; }

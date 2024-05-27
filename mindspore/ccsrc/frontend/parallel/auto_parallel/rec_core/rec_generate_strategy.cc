@@ -26,12 +26,17 @@
 
 #include "frontend/parallel/auto_parallel/rec_core/rec_parse_graph.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_partition.h"
+#include "frontend/parallel/ops_info/flash_attention_score_info.h"
 #include "frontend/parallel/ops_info/operator_info.h"
+#include "frontend/parallel/ops_info/strided_slice_info.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/strategy.h"
+#include "include/common/utils/utils.h"
 #include "ir/value.h"
+#include "mindspore/core/ops/ops_func_impl/flash_attention_score.h"
+#include "ops/op_enum.h"
 
 namespace mindspore {
 namespace parallel {
@@ -213,6 +218,126 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
   } else {
     propagator.GenerateStrategyV1();
   }
+}
+
+void FillFlashLayoutIndexes(const std::shared_ptr<FlashAttentionScoreInfo> &flashOp, size_t *batch_split_idx,
+                            size_t *n_split_idx, size_t *s_split_idx) {
+  MS_EXCEPTION_IF_NULL(flashOp);
+  MS_EXCEPTION_IF_NULL(batch_split_idx);
+  MS_EXCEPTION_IF_NULL(n_split_idx);
+  MS_EXCEPTION_IF_NULL(s_split_idx);
+
+  size_t tmp_batch_split_idx;
+  size_t tmp_n_split_idx;
+  size_t tmp_s_split_idx;
+
+  using mindspore::ops::FASInputLayoutMode;
+  switch (flashOp->input_layout()) {
+    case FASInputLayoutMode::BSH:
+    case FASInputLayoutMode::BSND:
+      tmp_batch_split_idx = kIndex0;
+      tmp_s_split_idx = kIndex1;
+      tmp_n_split_idx = kIndex2;
+      break;
+    case FASInputLayoutMode::BNSD:
+      tmp_batch_split_idx = kIndex0;
+      tmp_n_split_idx = kIndex1;
+      tmp_s_split_idx = kIndex2;
+      break;
+    case FASInputLayoutMode::SBH:
+      tmp_s_split_idx = kIndex0;
+      tmp_batch_split_idx = kIndex1;
+      tmp_n_split_idx = kIndex2;
+      break;
+    default:
+      MS_LOG(EXCEPTION) << flashOp->name() << "unknown input_layout: " << flashOp->input_layout();
+  }
+
+  *batch_split_idx = tmp_batch_split_idx;
+  *n_split_idx = tmp_n_split_idx;
+  *s_split_idx = tmp_s_split_idx;
+}
+
+Strategies PrepareFlashAttentionScore(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra,
+                                      bool dyn_shape_tmp_fix) {
+  std::shared_ptr<FlashAttentionScoreInfo> flashOp = std::static_pointer_cast<FlashAttentionScoreInfo>(op);
+
+  if (flashOp->InitAttrs() != SUCCESS) {
+    MS_LOG(EXCEPTION) << flashOp->name() << " : InitAttrs failed.";
+  }
+
+  Strategies expect_strategies = Strategies(ops::kFlashAttentionScoreInputsNum);
+  auto is_input_passed = flashOp->is_input_passed();
+
+  size_t batch_idx;
+  size_t n_split_idx;
+  size_t s_split_idx;
+
+  FillFlashLayoutIndexes(flashOp, &batch_idx, &n_split_idx, &s_split_idx);
+
+  int64_t batch_split_num = basic_stra[batch_idx];
+  int64_t s1_split_num = basic_stra[s_split_idx];
+  int64_t n1_split_num = basic_stra[n_split_idx];
+  int64_t n2_split_num = flashOp->kv_split() ? n1_split_num : 1;
+
+  Dimensions q_stra(op->inputs_shape()[ops::kFlashAttentionScoreInputQueryIndex].size(), 1);
+  q_stra[batch_idx] = batch_split_num;
+  q_stra[s_split_idx] = s1_split_num;
+  q_stra[n_split_idx] = n1_split_num;
+
+  Dimensions kv_stra(op->inputs_shape()[ops::kFlashAttentionScoreInputKeyIndex].size(), 1);
+  kv_stra[batch_idx] = batch_split_num;
+  kv_stra[n_split_idx] = n2_split_num;
+
+  expect_strategies[ops::kFlashAttentionScoreInputQueryIndex] = q_stra;
+  expect_strategies[ops::kFlashAttentionScoreInputKeyIndex] = kv_stra;
+  expect_strategies[ops::kFlashAttentionScoreInputValueIndex] = kv_stra;
+
+  if (is_input_passed[ops::kFlashAttentionScoreInputRealShiftIndex]) {
+    int64_t real_shift_s1_split_num = flashOp->real_shift_have_s1_dim() ? s1_split_num : 1;
+    int64_t real_shift_batch_split_num = flashOp->real_shift_have_batch_dim() ? batch_split_num : 1;
+    expect_strategies[ops::kFlashAttentionScoreInputRealShiftIndex] = {real_shift_batch_split_num, n1_split_num,
+                                                                       real_shift_s1_split_num, 1};
+  }
+
+  if (is_input_passed[ops::kFlashAttentionScoreInputDropMaskIndex]) {
+    expect_strategies[ops::kFlashAttentionScoreInputDropMaskIndex] = {batch_split_num, n1_split_num, s1_split_num, 1};
+  }
+
+  if (is_input_passed[ops::kFlashAttentionScoreInputPaddingMaskIndex]) {
+    expect_strategies[ops::kFlashAttentionScoreInputPaddingMaskIndex] = {};
+  }
+
+  if (is_input_passed[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
+    auto attn_mask_shape =
+      flashOp->inputs_shape().at(flashOp->GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
+    int64_t s1_split_num_attn_mask = flashOp->is_attn_mask_compressed() ? 1 : s1_split_num;
+    if (attn_mask_shape.size() == kSizeTwo) {
+      // attn_mask_shape: (S1, S2)
+      expect_strategies[ops::kFlashAttentionScoreInputAttnMaskIndex] = {s1_split_num_attn_mask, 1};
+    } else if (attn_mask_shape.size() == kSizeFour) {
+      // attn_mask_shape: (B, N1, S1, S2) or (B, 1, S1, S2)
+      auto attn_mask_n1_split_num = flashOp->attn_mask_have_n1_dim() ? n1_split_num : 1;
+      auto attn_batch_split_num = flashOp->attn_mask_have_batch_dim() ? batch_split_num : 1;
+      expect_strategies[ops::kFlashAttentionScoreInputAttnMaskIndex] = {attn_batch_split_num, attn_mask_n1_split_num,
+                                                                        s1_split_num_attn_mask, 1};
+    }
+  }
+
+  if (is_input_passed[ops::kFlashAttentionScoreInputPrefixIndex]) {
+    expect_strategies[ops::kFlashAttentionScoreInputPrefixIndex] = {batch_split_num};
+  }
+
+  if (is_input_passed[ops::kFlashAttentionScoreInputActualSeqQlenIndex]) {
+    expect_strategies[ops::kFlashAttentionScoreInputActualSeqQlenIndex] = {NO_SPLIT_STRATEGY};
+  }
+  if (is_input_passed[ops::kFlashAttentionScoreInputActualSeqKVlenIndex]) {
+    expect_strategies[ops::kFlashAttentionScoreInputActualSeqKVlenIndex] = {NO_SPLIT_STRATEGY};
+  }
+
+  expect_strategies.erase(std::remove(expect_strategies.begin(), expect_strategies.end(), Shape{}),
+                          expect_strategies.end());
+  return expect_strategies;
 }
 
 Strategies PrepareFillV2(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra, bool dyn_shape_tmp_fix) {
@@ -426,24 +551,46 @@ Strategies PrepareStridedSlice(const std::shared_ptr<OperatorInfo> &op, Dimensio
     return strategies;
   }
 
-  auto begin = GetValue<std::vector<int64_t>>(op->input_value().at(1));
-  auto end = GetValue<std::vector<int64_t>>(op->input_value().at(2));
-  auto strides = GetValue<std::vector<int64_t>>(op->input_value().at(3));
+  auto strided_slice = std::static_pointer_cast<StridedSliceInfo>(op);
+  strided_slice->GetAttrs();
+  auto begin = strided_slice->begin();
+  auto strides = strided_slice->strides();
+  auto new_axis_mask_bitmap = strided_slice->new_axis_mask_bitmap();
+  auto fully_fetch_flag = strided_slice->fully_fetch_flag();
+  auto skip_redistribution = strided_slice->skip_redistribution();
 
-  for (size_t i = 0; i < strides.size(); ++i) {
-    if ((strides[i] != 1) && (basic_stra[i] > 1)) {
-      basic_stra[i] = 1;
+  Shape strategy_in_process = Shape(basic_stra.size(), 0);
+  for (size_t i = 0; i < new_axis_mask_bitmap.size() && i < begin.size() && i < basic_stra.size(); ++i) {
+    if (new_axis_mask_bitmap[i]) {
+      strategy_in_process[i] = 1;
     }
   }
 
-  for (size_t i = 0; i < begin.size(); ++i) {
-    bool no_fully_fetch = ((begin[i] != 0) || (end[i] < op->inputs_shape()[0][i]));
-    if (no_fully_fetch && (basic_stra[i] != 1)) {
-      basic_stra[i] = 1;
+  size_t count = 0;
+  for (auto &ele : strategy_in_process) {
+    if (ele != 0) {
+      continue;
+    }
+    ele = basic_stra[count];
+    count++;
+  }
+
+  (void)strategy_in_process.insert(strategy_in_process.end(), basic_stra.begin() + count, basic_stra.end());
+  MS_LOG(INFO) << op->name() << ": The strategy in process is " << strategy_in_process;
+
+  for (size_t j = 0; j < strides.size(); ++j) {
+    if ((strides[j] != 1) && (strategy_in_process[j] > 1)) {
+      strategy_in_process[j] = 1;
     }
   }
 
-  strategies.push_back(basic_stra);
+  for (size_t k = 0; k < begin.size(); ++k) {
+    if (!fully_fetch_flag[k] && (strategy_in_process[k] != 1) && !skip_redistribution) {
+      strategy_in_process[k] = 1;
+    }
+  }
+
+  strategies.push_back(strategy_in_process);
   return strategies;
 }
 
@@ -548,6 +695,31 @@ Strategies PrepareLayerNorm(const std::shared_ptr<OperatorInfo> &op, Dimensions 
   Dimensions d = {1};
   strategies.push_back(d);
   strategies.push_back(d);
+  return strategies;
+}
+
+Strategies PrepareRmsNorm(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra, bool dyn_shape_tmp_fix) {
+  Strategies strategies;
+  auto inputs = op->inputs_shape();
+  auto input = inputs[0];
+  Shape strategy_in_process = Shape(input.size(), 1);
+
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() == 0) {
+    MS_LOG(EXCEPTION) << "divisors cannot be 0!";
+  }
+  int64_t max_cut =
+    g_device_manager->DeviceNum() / parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+  strategy_in_process[0] = input[0] < max_cut ? input[0] : max_cut;
+
+  auto gamma = inputs[1];
+  size_t gamma_diff = input.size() - gamma.size();
+  Dimensions gamma_strategy;
+  for (size_t j = 0; j < gamma.size(); ++j) {
+    gamma_strategy.push_back(strategy_in_process[gamma_diff + j]);
+  }
+
+  strategies.push_back(strategy_in_process);
+  strategies.push_back(gamma_strategy);
   return strategies;
 }
 
@@ -669,16 +841,24 @@ Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions str
 
   strategy.clear();
   if (axis == 0) {
-    strategy.push_back(1);
-    for (size_t i = 1; i < op->inputs_shape()[0].size(); i++) {
-      strategy.push_back(strategie[op->inputs_shape()[1].size() - 1 + i]);
+    Shape param_strategy = Shape(op->inputs_shape()[0].size(), 1);
+    Shape indices_strategy = Shape(op->inputs_shape()[1].size(), 1);
+    strategies.push_back(param_strategy);
+    strategies.push_back(indices_strategy);
+    size_t num_device = LongToSize(g_device_manager->stage_device_num());
+    size_t cut = 1;
+    int gather_inputs_num = SizeToInt(op->inputs_shape().size());
+    for (int i = gather_inputs_num - 1; i >= 0; --i) {
+      auto tensor_shape = op->inputs_shape()[i];
+      while (tensor_shape[0] % SIZE_TWO == 0 && tensor_shape[0] > 0 && cut < num_device) {
+        tensor_shape[0] /= SIZE_TWO;
+        cut *= SIZE_TWO;
+        strategies[i][0] *= SIZE_TWO;  // We apply 2-parts partitioning for Gather.
+      }
+      if (cut == num_device) {
+        break;
+      }
     }
-    strategies.push_back(strategy);
-    strategy.clear();
-    for (size_t i = 0; i < op->inputs_shape()[1].size(); i++) {
-      strategy.push_back(strategie[i]);
-    }
-    strategies.push_back(strategy);
   } else if (axis == 1) {
     strategy.push_back(strategie[0]);
     strategy.push_back(1);
@@ -1560,23 +1740,26 @@ Strategies CheckBroadcast(const std::shared_ptr<OperatorInfo> &op, Dimensions st
 
 void InitializeStrategyMap() {
   if (g_prepare_stra_map.empty()) {
-    g_prepare_stra_map = std::map<std::string, PrepareStraFuncPtr>{{FILLV2, &PrepareFillV2},
-                                                                   {BIAS_ADD, &PrepareBiasAdd},
-                                                                   {STRIDED_SLICE, &PrepareStridedSlice},
-                                                                   {GATHERV2, &PrepareGather},
-                                                                   {ONEHOT, &PrepareOneHot},
-                                                                   {L2_NORMALIZE, &PrepareL2Normalize},
-                                                                   {ADD, &CheckBroadcast},
-                                                                   {SUB, &CheckBroadcast},
-                                                                   {MUL, &CheckBroadcast},
-                                                                   {DIV, &CheckBroadcast},
-                                                                   {SOFTMAX, &PrepareSoftMax},
-                                                                   {LOG_SOFTMAX, &PrepareSoftMax},
-                                                                   {FLATTEN, &PrepareDataParallel},
-                                                                   {GATHERD, &PrepareDataParallel},
-                                                                   {LAYER_NORM, &PrepareLayerNorm},
-                                                                   {BATCH_MATMUL, &PreparePropagateBatchMatMul},
-                                                                   {DROPOUT_DO_MASK, &PrepareDropoutDoMask}};
+    g_prepare_stra_map =
+      std::map<std::string, PrepareStraFuncPtr>{{FILLV2, &PrepareFillV2},
+                                                {BIAS_ADD, &PrepareBiasAdd},
+                                                {STRIDED_SLICE, &PrepareStridedSlice},
+                                                {GATHERV2, &PrepareGather},
+                                                {ONEHOT, &PrepareOneHot},
+                                                {L2_NORMALIZE, &PrepareL2Normalize},
+                                                {ADD, &CheckBroadcast},
+                                                {SUB, &CheckBroadcast},
+                                                {MUL, &CheckBroadcast},
+                                                {DIV, &CheckBroadcast},
+                                                {SOFTMAX, &PrepareSoftMax},
+                                                {LOG_SOFTMAX, &PrepareSoftMax},
+                                                {FLATTEN, &PrepareDataParallel},
+                                                {GATHERD, &PrepareDataParallel},
+                                                {LAYER_NORM, &PrepareLayerNorm},
+                                                {RMS_NORM, &PrepareRmsNorm},
+                                                {BATCH_MATMUL, &PreparePropagateBatchMatMul},
+                                                {DROPOUT_DO_MASK, &PrepareDropoutDoMask},
+                                                {FLASH_ATTENTION_SCORE, &PrepareFlashAttentionScore}};
   }
 }
 
@@ -1590,14 +1773,14 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
 
   Strategies strategies;
   if (basic_stra.size() == 0) {
-    for (size_t iter_op_inputs = 0; iter_op_inputs < (size_t)ops[iter_ops]->inputs_shape().size(); iter_op_inputs++) {
+    for (size_t iter_op_inputs = 0; iter_op_inputs < static_cast<size_t>(ops[iter_ops]->inputs_shape().size());
+         iter_op_inputs++) {
       strategies.push_back(basic_stra);
     }
     return strategies;
   }
   InitializeStrategyMap();
   auto type = ops[iter_ops]->type();
-
   auto iter_stra_func = g_prepare_stra_map.find(type);
   if (iter_stra_func != g_prepare_stra_map.end()) {
     auto stra = iter_stra_func->second(ops[iter_ops], basic_stra, dyn_shape_tmp_fix);
@@ -1714,7 +1897,7 @@ Dimensions PrepareExpandDimsInputStrategy(const std::vector<std::shared_ptr<Oper
 }
 
 Dimensions PrepareReshapeInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t i_ops,
-                                       size_t outgoing_op_index, bool dyn_shape_tmp_fix) {
+                                       size_t outgoing_op_index, size_t iter_op_inputs, bool dyn_shape_tmp_fix) {
   if (dyn_shape_tmp_fix) {
     Dimensions empty_strategy;
     return empty_strategy;
@@ -1723,7 +1906,7 @@ Dimensions PrepareReshapeInputStrategy(const std::vector<std::shared_ptr<Operato
   auto input_shape = ops[i_ops]->inputs_shape()[0];
   auto strategy = ops[outgoing_op_index]->selected_strategy();
 
-  return PrepareReshape(output_shape, input_shape, strategy->GetInputDim()[0]);
+  return PrepareReshape(output_shape, input_shape, strategy->GetInputDim()[iter_op_inputs]);
 }
 
 Dimensions PrepareGatherV2InputStrategy(const std::shared_ptr<OperatorInfo> &op, size_t i_input) {
@@ -1777,13 +1960,13 @@ Dimensions PrepareReduceInputStrategy(const std::vector<std::shared_ptr<Operator
 }
 
 Dimensions PrepareTransposeInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t i_ops,
-                                         size_t outgoing_op_index) {
+                                         size_t outgoing_op_index, size_t iter_op_inputs) {
   Dimensions strategy;
   auto permutation = GetValue<std::vector<int64_t>>(ops[i_ops]->input_value().at(1));
   auto op_strategy = ops[outgoing_op_index]->selected_strategy();
   // The strategies are assigned according to the order in permutation (user defined).
   for (size_t i = 0; i < permutation.size(); i++) {
-    strategy.push_back(op_strategy->GetInputDim()[0][LongToSize(permutation[i])]);
+    strategy.push_back(op_strategy->GetInputDim()[iter_op_inputs][LongToSize(permutation[i])]);
   }
   return strategy;
 }
@@ -1806,7 +1989,7 @@ Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<O
     if (type == EXPAND_DIMS) {
       strategy = PrepareExpandDimsInputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs);
     } else if (type == RESHAPE) {
-      strategy = PrepareReshapeInputStrategy(ops, iter_ops, outgoing_op_index, dyn_shape_tmp_fix);
+      strategy = PrepareReshapeInputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs, dyn_shape_tmp_fix);
       return strategy;
     } else if (type == GATHERV2) {
       strategy = PrepareGatherV2InputStrategy(ops[outgoing_op_index], iter_op_inputs);
@@ -1814,7 +1997,7 @@ Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<O
     } else if (type == REDUCE_MEAN || type == REDUCE_MAX || type == REDUCE_MIN || type == REDUCE_SUM) {
       strategy = PrepareReduceInputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs);
     } else if (type == TRANSPOSE) {
-      strategy = PrepareTransposeInputStrategy(ops, iter_ops, outgoing_op_index);
+      strategy = PrepareTransposeInputStrategy(ops, iter_ops, outgoing_op_index, iter_op_inputs);
       return strategy;
     } else {
       for (size_t k = 0; k < ops[iter_ops]->outputs_shape()[0].size(); ++k) {

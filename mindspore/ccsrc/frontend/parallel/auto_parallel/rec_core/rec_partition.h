@@ -48,7 +48,7 @@ StrategyRec PartitionNode(Graph::NodeType node,
                           const std::shared_ptr<Graph> &graph, const bool isTraining);
 
 Status PartitionForAllDevices(size_t num_device, double device_memory, const std::shared_ptr<Graph> &graph,
-                              bool isTraining);
+                              bool isTraining, const FuncGraphPtr &root);
 
 Graph::NodeType ApplyStrToTensor(Graph::NodeType Node);
 

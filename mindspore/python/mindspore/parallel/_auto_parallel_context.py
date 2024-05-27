@@ -242,6 +242,19 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_pipeline_stage_split_num()
 
+    def set_auto_pipeline(self, auto_pipeline):
+        """Set the pipeline stage number to automatic"""
+        if not isinstance(auto_pipeline, bool):
+            raise TypeError("For 'set_auto_parallel_context', the argument 'auto_pipeline' "
+                            "must be bool, but got the type : {}.".format(type(auto_pipeline)))
+        self.check_context_handle()
+        self._context_handle.set_auto_pipeline(auto_pipeline)
+
+    def get_auto_pipeline(self):
+        """Get whether the pipeline stage number is automatic"""
+        self.check_context_handle()
+        return self._context_handle.get_auto_pipeline()
+
     def set_pipeline_result_broadcast(self, pipeline_result_broadcast):
         """
         Set the value of enabling pipeline result broadcast. Default: ``False``.
@@ -1229,6 +1242,7 @@ _set_auto_parallel_context_func_map = {
     "gradient_fp32_sync": auto_parallel_context().set_gradient_fp32_sync,
     "loss_repeated_mean": auto_parallel_context().set_loss_repeated_mean,
     "pipeline_stages": auto_parallel_context().set_pipeline_stages,
+    "auto_pipeline": auto_parallel_context().set_auto_pipeline,
     "pipeline_result_broadcast": auto_parallel_context().set_pipeline_result_broadcast,
     "pipeline_segments": auto_parallel_context().set_pipeline_segments,
     "parallel_mode": auto_parallel_context().set_parallel_mode,
@@ -1261,6 +1275,7 @@ _get_auto_parallel_context_func_map = {
     "gradient_fp32_sync": auto_parallel_context().get_gradient_fp32_sync,
     "loss_repeated_mean": auto_parallel_context().get_loss_repeated_mean,
     "pipeline_stages": auto_parallel_context().get_pipeline_stages,
+    "auto_pipeline": auto_parallel_context().get_auto_pipeline,
     "pipeline_result_broadcast": auto_parallel_context().get_pipeline_result_broadcast,
     "pipeline_interleave": auto_parallel_context().get_pipeline_interleave,
     "pipeline_scheduler": auto_parallel_context().get_pipeline_scheduler,
@@ -1349,6 +1364,9 @@ def _set_auto_parallel_context(**kwargs):
                         the devices are distributed alone the pipeline. The total devices will be divided into
                         'pipeline_stags' stages. This currently could only be used when
                         parallel mode semi_auto_parallel is enabled. Default: 0
+        auto_pipeline (bool): Set the pipeline stage number to automatic. Its value will be selected between 1 and the
+                        parameter `pipeline_stages`. This option requires the `parallel_mode` to be ``auto_parallel``
+                        and the `search_mode` to be ``recursive_programming``. Default: ``False`` .
         pipeline_result_broadcast (bool): A switch that broadcast the last stage result to all other stage in pipeline
                         parallel inference. Default: ``False`` .
         communi_parallel_mode (str): There are tree kinds of communication parallel modes, "all_group_parallel",
@@ -1439,6 +1457,7 @@ def _reset_auto_parallel_context():
     - auto_parallel_search_mode: 'recursive_programming
     - sharding_propagation: False
     - pipeline_stages: 0
+    - auto_pipeline: False
     - pipeline_result_broadcast: False
     - gradient_accumulation_shard: True
     - fusion_threshold: 64

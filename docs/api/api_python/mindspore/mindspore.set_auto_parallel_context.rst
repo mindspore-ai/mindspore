@@ -27,6 +27,7 @@ mindspore.set_auto_parallel_context
                \                 comm_fusion
                \                 strategy_ckpt_config
                \                 group_ckpt_save_file
+               \                 auto_pipeline
     =========================  =========================
 
     参数：
@@ -61,6 +62,7 @@ mindspore.set_auto_parallel_context
         - **all_reduce_fusion_config** (list) - 通过参数索引设置 AllReduce 融合策略。仅支持ReduceOp.SUM和HCCL_WORLD_GROUP/NCCL_WORLD_GROUP。没有默认值。如果不设置，则关闭算子融合。
         - **pipeline_stages** (int) - 设置pipeline并行的阶段信息。这表明了设备如何单独分布在pipeline上。所有的设备将被划分为pipeline_stags个阶段。默认值： ``1`` 。
         - **pipeline_result_broadcast** (bool) - 表示pipeline并行推理时，最后一个stage的结果是否广播给其余stage。默认值： ``False`` 。
+        - **auto_pipeline** (bool) - 自动设置流水线阶段数。其值将在1和输入的 `pipeline_stages` 之间选择。本功能需要将 `parallel_mode` 设置成自动并行 ``auto_parallel`` 并将 `search_mode` 设置成双递归算法 ``recursive_programming``。默认值： ``False`` 。
         - **pipeline_config**  (dict) - 用于设置开启pipeline并行后的行为配置。目前，它支持关键字如下的关键字：
 
           - pipeline_interleave(bool)：表示是否开启interleave。

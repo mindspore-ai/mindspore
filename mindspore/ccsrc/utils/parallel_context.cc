@@ -86,6 +86,7 @@ void ParallelContext::Reset() {
   stra_file_only_trainable_params_ = true;
   pipeline_interleave_ = false;
   pipeline_scheduler_ = kPipeline1F1B;
+  auto_pipeline_ = false;
 }
 
 void ParallelContext::set_device_num(int64_t device_num) {
@@ -311,6 +312,8 @@ void ParallelContext::set_enable_fine_grained_micro_interleaved(const bool enabl
 void ParallelContext::set_pipeline_micro_size(const size_t pipeline_micro_size) {
   pipeline_micro_size_ = pipeline_micro_size;
 }
+
+void ParallelContext::set_auto_pipeline(const bool auto_pipeline) { auto_pipeline_ = auto_pipeline; }
 
 void ParallelContext::set_do_transform(const bool do_transform) { do_transform_ = do_transform; }
 

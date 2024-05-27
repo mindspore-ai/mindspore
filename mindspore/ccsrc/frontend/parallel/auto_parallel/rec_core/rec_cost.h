@@ -46,7 +46,6 @@ constexpr float FL_TWO = 2.0;
 
 bool SameShape(const Shape4D &shape1, const Shape4D &shape2);
 
-double minSize(const double &cost_if_cut_i, const double &cost_if_cut_j, const double &cost_if_cut_k);
 double costOfDistributing(const TensorParam &t);
 double minNodeSize(const Graph::NodeType &node);
 
@@ -89,7 +88,8 @@ class CostMatMul {
   }
 
   double StrRecom(const double &cost_if_cut_i, const double &cost_if_cut_j, const double &cost_if_cut_k) {
-    double min_size = minSize(cost_if_cut_i, cost_if_cut_j, cost_if_cut_k);
+    double min_size = cost_if_cut_i < cost_if_cut_j ? (cost_if_cut_i < cost_if_cut_k ? cost_if_cut_i : cost_if_cut_k)
+                                                    : (cost_if_cut_j < cost_if_cut_k ? cost_if_cut_j : cost_if_cut_k);
     cost_in_r_ = min_size * min_size / REPLICATE_BELOW;
 
     return cost_in_r_;

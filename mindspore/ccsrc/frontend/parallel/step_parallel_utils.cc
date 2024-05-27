@@ -2478,5 +2478,37 @@ std::string GetSerialNumberString(size_t number) {
   oss << number << suffix;
   return oss.str();
 }
+
+// Get single device capacity in Go
+size_t GetDeviceCapacity() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  size_t size_from_context;
+  auto max_device_memory = context->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
+  float total_device_memory = 32.0f;
+  if (context->ascend_soc_version() == kAscendVersion910b || context->ascend_soc_version() == kAscendVersion910c) {
+    total_device_memory = 64.0f;
+  }
+  if (max_device_memory <= total_device_memory) {
+    MS_LOG(DEBUG) << "context max_device_memory:" << max_device_memory;
+    size_from_context = FloatToSize(max_device_memory * kGBToByte);
+  } else {
+    auto variable_memory_max_size = context->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE);
+    if (variable_memory_max_size == "0") {
+      return 0;
+    }
+    MS_LOG(DEBUG) << "context variable_memory_max_size:" << variable_memory_max_size;
+    auto pos = variable_memory_max_size.find('*');
+    if (pos == std::string::npos) {
+      MS_LOG(EXCEPTION) << "Invalid variable_memory_max_size";
+    }
+    auto gb_str = variable_memory_max_size.substr(0, pos);
+    auto gb_var = std::stoull(gb_str);
+    MS_LOG(DEBUG) << "variable_memory_max_size(GB):" << gb_var;
+    size_from_context = gb_var * kGBToByte;
+  }
+
+  return size_from_context;
+}
 }  // namespace parallel
 }  // namespace mindspore

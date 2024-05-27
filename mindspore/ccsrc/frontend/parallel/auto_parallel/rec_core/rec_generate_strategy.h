@@ -153,7 +153,7 @@ Strategies CheckDivisible(const std::shared_ptr<OperatorInfo> &op, const Dimensi
 Dimensions ModifyStrategyIfSqueezeOutgoing(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                            Dimensions strategy);
 Dimensions PrepareTransposeInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t i_ops,
-                                         size_t outgoing_op_index);
+                                         size_t outgoing_op_index, size_t iter_op_inputs);
 Dimensions CopyOutgoingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops,
                                              size_t outgoing_op_index, size_t iter_op_inputs, bool dyn_shape_tmp_fix);
 }  // namespace parallel
