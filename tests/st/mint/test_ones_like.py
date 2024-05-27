@@ -83,8 +83,7 @@ def test_ones_like_backward(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
-def test_ones_like_dynamic_shape(jit_level):
+def test_ones_like_dynamic_shape():
     """
     Feature: Test ones_like with dynamic shape in graph mode.
     Description: call ops.extend.ones_like with valid input and index.
@@ -94,5 +93,4 @@ def test_ones_like_dynamic_shape(jit_level):
 
     tensor_2 = Tensor(np.arange(24).reshape(2, 3, 4), dtype=mstype.float32)
 
-    TEST_OP(ones_like_forward_func, [[tensor_1], [tensor_2]], grad=False, jit_level=jit_level)
-    TEST_OP(ones_like_forward_func, [[tensor_1], [tensor_2]], grad=True, jit_level=jit_level)
+    TEST_OP(ones_like_forward_func, [[tensor_1], [tensor_2]], '', disable_yaml_check=True)

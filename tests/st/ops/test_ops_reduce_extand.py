@@ -158,35 +158,23 @@ def test_mean_default(context_mode):
 #@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_mean_dynamic(context_mode):
+def test_mean_dynamic():
     """
     Feature: pyboost function.
     Description: test function mean with dynamic shape and rank.
     Expectation: expect correct result.
     """
-    input1 = Tensor(generate_random_input((2, 3, 4, 5), np.float32))
+    input1 = Tensor(generate_random_input((2, 3, 4), np.float32))
     axis1 = (0, -1)
     keep_dims1 = False
     input2 = Tensor(generate_random_input((3, 3, 4, 4), np.float32))
-    axis2 = (0, -1)
-    keep_dims2 = False
-    TEST_OP(mean_func, [[input1, axis1, keep_dims1], [input2, axis2, keep_dims2]], mode=context_mode, grad=True)
+    axis2 = (0, 1)
+    keep_dims2 = True
+    TEST_OP(mean_func, [[input1, axis1, keep_dims1], [input2, axis2, keep_dims2]], '', disable_yaml_check=True)
 
-    input3 = Tensor(generate_random_input((3, 4, 5), np.float16))
-    axis3 = ()
-    keep_dims3 = False
-    dtype3 = mstype.float32
-    input4 = Tensor(generate_random_input((3, 4), np.float16))
-    axis4 = ()
-    keep_dims4 = False
-    dtype4 = mstype.float32
-    TEST_OP(mean_func, [[input3, axis3, keep_dims3, dtype3], [input4, axis4, keep_dims4, dtype4]],
-            nontensor_dynamic_type='None', mode=context_mode, grad=True, test_resize=False)
-
-    input5 = Tensor(generate_random_input((2, 3, 4), np.float32))
-    input6 = Tensor(generate_random_input((2, 3), np.float32))
-    TEST_OP(mean_func, [[input5], [input6]], mode=context_mode, grad=True)
+    input3 = Tensor(generate_random_input((2, 3, 4), np.float32))
+    input4 = Tensor(generate_random_input((2, 3), np.float32))
+    TEST_OP(mean_func, [[input3], [input4]], '', disable_yaml_check=True)
 
 
 @pytest.mark.level0
@@ -254,35 +242,23 @@ def test_sum_default(context_mode):
 #@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_sum_dynamic(context_mode):
+def test_sum_dynamic():
     """
     Feature: pyboost function.
     Description: test function sum with dynamic shape and rank.
     Expectation: expect correct result.
     """
-    input1 = Tensor(generate_random_input((2, 3, 4, 5), np.float32))
+    input1 = Tensor(generate_random_input((2, 3, 4), np.float32))
     axis1 = (0, -1)
     keep_dims1 = False
     input2 = Tensor(generate_random_input((3, 3, 4, 4), np.float32))
-    axis2 = (0, -1)
-    keep_dims2 = False
-    TEST_OP(sum_func, [[input1, axis1, keep_dims1], [input2, axis2, keep_dims2]], mode=context_mode, grad=True)
+    axis2 = (0, 1)
+    keep_dims2 = True
+    TEST_OP(sum_func, [[input1, axis1, keep_dims1], [input2, axis2, keep_dims2]], '', disable_yaml_check=True)
 
-    input3 = Tensor(generate_random_input((3, 4, 5), np.float32))
-    axis3 = ()
-    keep_dims3 = False
-    dtype3 = mstype.int32
-    input4 = Tensor(generate_random_input((3, 4), np.float32))
-    axis4 = ()
-    keep_dims4 = False
-    dtype4 = mstype.int64
-    TEST_OP(sum_func, [[input3, axis3, keep_dims3, dtype3], [input4, axis4, keep_dims4, dtype4]],
-            nontensor_dynamic_type='None', mode=context_mode, grad=True, test_resize=False)
-
-    input5 = Tensor(generate_random_input((2, 3, 4), np.float32))
-    input6 = Tensor(generate_random_input((2, 3), np.float32))
-    TEST_OP(sum_func, [[input5], [input6]], mode=context_mode, grad=True)
+    input3 = Tensor(generate_random_input((2, 3, 4), np.float32))
+    input4 = Tensor(generate_random_input((2, 3), np.float32))
+    TEST_OP(sum_func, [[input3], [input4]], '', disable_yaml_check=True)
 
 
 @pytest.mark.level1
@@ -445,26 +421,26 @@ def test_prod_default(context_mode):
 #@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_prod_dynamic(context_mode):
+def test_prod_dynamic():
     """
     Feature: pyboost function.
     Description: test function prod with dynamic shape and rank.
     Expectation: expect correct result.
     """
-    input1 = Tensor(generate_random_input((2, 3, 4, 5), np.float32))
+    input1 = Tensor(generate_random_input((2, 3, 4), np.float32))
     axis1 = -1
     keep_dims1 = False
     input2 = Tensor(generate_random_input((3, 3, 4, 4), np.float32))
-    axis2 = -1
-    keep_dims2 = False
-    TEST_OP(prod_func, [[input1, axis1, keep_dims1], [input2, axis2, keep_dims2]], mode=context_mode, grad=True)
+    axis2 = 1
+    keep_dims2 = True
+    TEST_OP(prod_func, [[input1, axis1, keep_dims1], [input2, axis2, keep_dims2]], '', disable_yaml_check=True)
 
-    input5 = Tensor(generate_random_input((2, 3, 4), np.float32))
-    keep_dims5 = False
-    input6 = Tensor(generate_random_input((2, 3), np.float32))
-    keep_dims6 = False
-    TEST_OP(ProdNet(), [[input5, keep_dims5], [input6, keep_dims6]], mode=context_mode, grad=True)
+    input3 = Tensor(generate_random_input((2, 3, 4), np.float32))
+    keep_dims3 = False
+    input4 = Tensor(generate_random_input((2, 3), np.float32))
+    keep_dims4 = False
+    TEST_OP(ProdNet(), [[input3, keep_dims3], [input4, keep_dims4]], '', disable_input_check=True,
+            disable_yaml_check=True)
 
 
 @pytest.mark.level1

@@ -253,10 +253,9 @@ def test_ops_onehot_backward_dynamic_rank(mode):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-def test_onehot_dynamic_shape_testop(jit_level):
+def test_onehot_dynamic_shape_testop():
     """
     Feature: Test onehot with dynamic shape in graph mode using TEST_OP.
     Description: call ops.onehot with valid input and index.
@@ -265,7 +264,8 @@ def test_onehot_dynamic_shape_testop(jit_level):
     x1 = generate_random_input(2)
     x2 = generate_random_input(2)
 
-    TEST_OP(onehot_forward_func, [[ms.Tensor(x1), 3], [ms.Tensor(x2), 3]], grad=False, jit_level=jit_level)
+    TEST_OP(onehot_forward_func, [[ms.Tensor(x1), 3], [ms.Tensor(x2), 3]], '', disable_input_check=True,
+            disable_yaml_check=True, disable_grad=True)
 
 
 @pytest.mark.level0

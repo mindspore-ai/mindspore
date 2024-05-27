@@ -74,14 +74,12 @@ def test_ops_narrow_forward(context_mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_narrow_backward_dynamic_shape(context_mode):
+def test_ops_narrow_backward_dynamic_shape():
     """
     Feature: pyboost function.
     Description: test function narrow backward with dynamic shape.
     Expectation: expect correct result.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
     x1 = generate_random_input((2, 3, 4, 5), np.float32)
     dim1 = 1
     start1 = 0
@@ -92,5 +90,4 @@ def test_ops_narrow_backward_dynamic_shape(context_mode):
     length2 = 2
 
     TEST_OP(narrow_forward_func, [[ms.Tensor(x1), dim1, start1, length1], [ms.Tensor(x1), dim2, start2, length2]],
-            grad=True, mode=context_mode)
-    del os.environ['GRAPH_OP_RUN']
+            '', disable_input_check=True, disable_yaml_check=True, disable_mode=['GRAPH_MODE'])

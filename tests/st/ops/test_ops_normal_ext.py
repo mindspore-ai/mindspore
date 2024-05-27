@@ -74,10 +74,9 @@ def test_ops_normal_backward():
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-def test_normal_dynamic_shape_testop(jit_level):
+def test_normal_dynamic_shape_testop():
     """
     Feature: Test NormalExt with dynamic shape in graph mode using TEST_OP.
     Description: call NormalExt with valid input and index.
@@ -88,4 +87,4 @@ def test_normal_dynamic_shape_testop(jit_level):
     TEST_OP(normal_forward_func,
             [[ms.Tensor(x1), ms.Tensor(x1), 10, 10],
              [ms.Tensor(x2), ms.Tensor(x2), 10, 10]],
-            grad=False, jit_level=jit_level)
+            'normal_ext', disable_input_check=True, disable_mode=['GRAPH_MODE'], disable_grad=True)

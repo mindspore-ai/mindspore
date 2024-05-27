@@ -1,0 +1,7347 @@
+#operator acos_grad
+a_cos_grad:
+  args:
+    x:
+      dtype: tensor
+    dout:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator abs_grad
+abs_grad:
+  args:
+    x:
+      dtype: tensor
+    dout:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator abs
+abs:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: Abs
+    dispatch:
+        enable: True
+
+#operator acos
+acos:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class :
+        name : ACos
+
+#operator acosh_grad
+acosh_grad:
+  args:
+    out:
+      dtype: tensor
+    dout:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator acosh
+acosh:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+
+#operator adam_weight_decay_ext
+adam_weight_decay_ext:
+  args:
+    var:
+      dtype: tensor
+    m:
+      dtype: tensor
+    v:
+      dtype: tensor
+    max_v:
+      dtype: tensor
+    gradient:
+      dtype: tensor
+    step:
+      dtype: tensor
+    lr:
+      dtype: float
+      type_cast: tensor
+    beta1:
+      dtype: float
+      type_cast: tensor
+    beta2:
+      dtype: float
+      type_cast: tensor
+    decay:
+      dtype: float
+      type_cast: tensor
+    eps:
+      dtype: float
+      type_cast: tensor
+    amsgrad:
+      dtype: bool
+      default: False
+    maximize:
+      dtype: bool
+      default: False
+  args_signature:
+    rw_write: var, m, v
+    dtype_group: (m, v, max_v), (lr, beta1, beta2, eps, decay), (var, gradient)
+  labels:
+    side_effect_mem: True
+  function:
+    disable: True
+  returns:
+    var:
+      dtype: tensor
+    m:
+      dtype: tensor
+    v:
+      dtype: tensor
+  class:
+    name: AdamWeightDecayExt
+  dispatch:
+    enable: True
+    Ascend: AdamWeightDecayExtAscend
+
+#operator adam_weight_decay
+adam_weight_decay:
+  args:
+    var:
+      dtype: tensor
+    m:
+      dtype: tensor
+    v:
+      dtype: tensor
+    lr:
+      dtype: tensor
+      type_cast: float
+    beta1:
+      dtype: tensor
+      type_cast: float
+    beta2:
+      dtype: tensor
+      type_cast: float
+    epsilon:
+      dtype: tensor
+      type_cast: float
+    decay:
+      dtype: tensor
+      type_cast: float
+    gradient:
+      dtype: tensor
+    use_locking:
+      dtype: bool
+      default: False
+      prim_init: True
+  args_signature:
+    rw_write: var, m, v
+    dtype_group: (m, v), (lr, beta1, beta2, epsilon, decay), (var, gradient)
+  labels:
+    side_effect_mem: True
+  returns:
+    var:
+      dtype: tensor
+    m:
+      dtype: tensor
+    v:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator add_ext
+add_ext:
+  args:
+    input:
+      dtype: tensor
+      type_cast: number
+    other:
+      dtype: tensor
+      type_cast: number
+    alpha:
+      dtype: number
+      default: 1
+  args_signature:
+    dtype_group: (input, other),(alpha)
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: AddExt
+  dispatch:
+    enable: True
+
+#operator add
+add:
+  args:
+    input:
+      dtype: tensor
+      type_cast: number
+    other:
+      dtype: tensor
+      type_cast: number
+  args_signature:
+    dtype_group: (input, other)
+  returns:
+    output:
+      dtype: tensor
+
+#operator addcdiv
+addcdiv:
+    args:
+        input: 
+            dtype: tensor
+        tensor1: 
+            dtype: tensor
+        tensor2: 
+            dtype: tensor
+        value: 
+            dtype: tensor
+    returns:
+        y: 
+            dtype: tensor
+    function:
+        disable: True
+
+#operator addcmul
+addcmul:
+    args:
+        input: 
+            dtype: tensor
+        tensor1: 
+            dtype: tensor
+        tensor2: 
+            dtype: tensor
+        value: 
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    function:
+        disable: True
+
+#operator addn
+addn:
+    args:
+        x:
+            dtype: tuple[tensor]
+            type_cast: list[tensor]
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: AddN
+
+#operator angle
+angle:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+
+#operator apply_came_part1
+apply_came_part1:
+    args:
+        grad:
+            dtype: tensor
+        eps:
+            dtype: float
+    returns:
+        sum_grad_r:
+            dtype: tensor
+        sum_grad_c:
+            dtype: tensor
+        sum_grad_rc:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator apply_came_part2
+apply_came_part2:
+    args:
+        grad:
+            dtype: tensor
+        sum_grad_r:
+            dtype: tensor
+        sum_grad_c:
+            dtype: tensor
+        sum_grad_rc:
+            dtype: tensor
+        r:
+            dtype: tensor
+        c:
+            dtype: tensor
+        beta2:
+            dtype: float
+        sum_r:
+            dtype: tensor
+            default: None
+        global_shape:
+            dtype: tuple[int]
+            default: None
+    returns:
+        r:
+            dtype: tensor
+        c:
+            dtype: tensor
+        u:
+            dtype: tensor
+        sum_square_u:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator apply_came_part3
+apply_came_part3:
+    args:
+        u:
+            dtype: tensor
+        m:
+            dtype: tensor
+        eps:
+            dtype: float
+        beta1:
+            dtype: float
+        clip_threshold:
+            dtype: float
+        sum_square_u:
+            dtype: tensor
+        global_shape:
+            dtype: tuple[int]
+            default: None
+        use_first_moment:
+            dtype: bool
+            default: False
+    returns:
+        m:
+            dtype: tensor
+        sum_u_r:
+            dtype: tensor
+        sum_u_c:
+            dtype: tensor
+        sum_u_rc:
+            dtype: tensor
+    function:
+        disable: True
+#operator apply_came_part4
+apply_came_part4:
+    args:
+        param:
+            dtype: tensor
+        m:
+            dtype: tensor
+        r:
+            dtype: tensor
+        c:
+            dtype: tensor
+        weight_decay:
+            dtype: tensor
+        lr:
+            dtype: tensor
+        beta3:
+            dtype: float
+        sum_r:
+            dtype: tensor
+        sum_u_r:
+            dtype: tensor
+        sum_u_c:
+            dtype: tensor
+        sum_u_rc:
+            dtype: tensor
+        global_shape:
+            dtype: tuple[int]
+            default: None
+    returns:
+        param:
+            dtype: tensor
+        r:
+            dtype: tensor
+        c:
+            dtype: tensor
+    function:
+        disable: True
+#operator apply_rotary_pos_emb
+apply_rotary_pos_emb:
+    args:
+        query:
+            dtype: tensor
+        key:
+            dtype: tensor
+        cos:
+            dtype: tensor
+        sin:
+            dtype: tensor
+        position_ids:
+            dtype: tensor
+        cos_format:
+            dtype: int
+            default: 0
+            prim_init: True
+    returns:
+        query_embed:
+            dtype: tensor
+        key_embed:
+            dtype: tensor
+    class:
+        name: ApplyRotaryPosEmb
+    function:
+        name: apply_rotary_pos_emb_
+
+#operator arange
+arange:
+    args:
+        start:
+            dtype: number
+            type_cast: tensor
+        end:
+            dtype: number
+            type_cast: tensor
+        step:
+            dtype: number
+            type_cast: tensor
+    args_signature:
+        dtype_group: (start, end, step)
+    returns:
+        output:
+            dtype: tensor
+    function:
+      disable: True
+    dispatch:
+      enable: True
+#operator argmax
+argmax_ext:
+  args:
+    input:
+      dtype: tensor
+    dim:
+      dtype: int
+      default: None
+    keepdim:
+      dtype: bool
+      default: False
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ArgMaxExt
+  function:
+    name: argmax
+  dispatch:
+    enable: True
+    Ascend: ArgMaxAscend
+
+#operator argmax
+argmax:
+  args:
+    input_x:
+      dtype: tensor
+    axis:
+      dtype: int
+      default: -1
+      prim_init: True
+    output_type:
+      dtype: TypeId
+      default: mstype.int32
+      prim_init: True
+      arg_handler: dtype_to_type_id
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator argmax_with_value
+argmax_with_value:
+  args:
+    input:
+      dtype: tensor
+    axis:
+      dtype: int
+      default: 0
+      prim_init: True
+    keep_dims:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    index:
+      dtype: tensor
+    values:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ArgMaxWithValue
+  dispatch:
+    enable: True
+    Ascend: ArgMaxWithValueAscend
+
+#operator argmin
+argmin:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: int
+      default: -1
+      prim_init: True
+    output_type:
+      dtype: TypeId
+      default: mstype.int32
+      prim_init: True
+      arg_handler: dtype_to_type_id
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator argmin_with_value
+argmin_with_value:
+  args:
+    input:
+      dtype: tensor
+    axis:
+      dtype: int
+      default: 0
+      prim_init: True
+    keep_dims:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    index:
+      dtype: tensor
+    values:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ArgMinWithValue
+  dispatch:
+    enable: True
+    Ascend: ArgMinWithValueAscend
+
+#operator asin_grad
+asin_grad:
+  args:
+    x:
+      dtype: tensor
+    dout:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator asin
+asin:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+
+#operator asinh_grad
+asinh_grad:
+  args:
+    out:
+      dtype: tensor
+    dout:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+  function:
+    disable: True
+
+
+#operator asinh
+asinh:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+
+#operator assign_add
+assign_add:
+    args:
+        variable:
+            dtype: tensor
+        value:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        rw_write: variable
+        dtype_group: (variable, value)
+    labels:
+        side_effect_mem: True
+    returns:
+        output:
+            dtype: tensor
+
+#operator assign
+assign:
+    args:
+        variable:
+            dtype: tensor
+        value:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        rw_write: variable
+        dtype_group: (variable, value)
+    labels:
+        side_effect_mem: True
+    returns:
+        output:
+            dtype: tensor
+
+#operator atan2
+atan2:
+  args:
+    input:
+      dtype: tensor
+      type_cast: number
+    other:
+      dtype: tensor
+      type_cast: number
+  args_signature:
+    dtype_group: (input, other)
+  returns:
+    output:
+      dtype: tensor
+
+#operator atan_grad
+atan_grad:
+  args:
+    x:
+      dtype: tensor
+    dout:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+  function:
+      disable: True
+
+#operator atan
+atan:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+
+#operator atanh
+atanh:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+
+#operator avg_pool2d_grad
+avg_pool2d_grad:
+    args:
+        grad:
+            dtype: tensor
+        image:
+            dtype: tensor
+        kernel_size:
+            dtype: tuple[int]
+            type_cast: int, list[int]
+        stride:
+            dtype: tuple[int]
+            type_cast: int, list[int]
+        padding:
+            dtype: tuple[int]
+            default: 0
+            type_cast: int, list[int]
+        ceil_mode:
+            dtype: bool
+            default: False
+        count_include_pad:
+            dtype: bool
+            default: True
+        divisor_override:
+            dtype: int
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: AvgPool2DGrad
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: AvgPool2DGradAscend
+
+#operator avg_pool2d
+avg_pool2d:
+    args:
+        input:
+            dtype: tensor
+        kernel_size:
+            dtype: tuple[int]
+            type_cast: int, list[int]
+        stride:
+            dtype: tuple[int]
+            type_cast: int, list[int]
+        padding:
+            dtype: tuple[int]
+            default: 0
+            type_cast: int, list[int]
+        ceil_mode:
+            dtype: bool
+            default: False
+        count_include_pad:
+            dtype: bool
+            default: True
+        divisor_override:
+            dtype: int
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: AvgPool2D
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: AvgPool2DAscend
+
+#operator avg_pool_grad
+avg_pool_grad:
+    args:
+        x:
+            dtype: tensor
+        out:
+            dtype: tensor
+        dout:
+            dtype: tensor
+        kernel_size:
+            dtype: tuple[int]
+            default: 1
+            prim_init: True
+            arg_handler: to_kernel_size
+        strides:
+            dtype: tuple[int]
+            default: 1
+            prim_init: True
+            arg_handler: to_strides
+        pad_mode:
+            dtype: int
+            default: "'VALID'"
+            prim_init: True
+            arg_handler: str_to_enum
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator avg_pool
+avg_pool:
+  args:
+    x:
+      dtype: tensor
+    kernel_size:
+      dtype: tuple[int]
+      default: 1
+      prim_init: True
+      arg_handler: to_kernel_size
+    strides:
+      dtype: tuple[int]
+      default: 1
+      prim_init: True
+      arg_handler: to_strides
+    pad_mode:
+      dtype: int
+      default: "'VALID'"
+      prim_init: True
+      arg_handler: str_to_enum
+    data_format:
+      dtype: int
+      default: "'NCHW'"
+      prim_init: True
+      arg_handler: str_to_enum
+  returns:
+    output:
+      dtype: tensor
+  function:
+      disable: True
+
+#operator batch_matmul
+batch_mat_mul:
+  args:
+    x:
+      dtype: tensor
+    y:
+      dtype: tensor
+    transpose_a:
+      dtype: bool
+      default: False
+      prim_init: True
+    transpose_b:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: BatchMatMulAscend
+
+#operator batch_norm_ext
+batch_norm_ext:
+    args:
+        input:
+            dtype: tensor
+        weight:
+            dtype: tensor
+        bias:
+            dtype: tensor
+        running_mean:
+            dtype: tensor
+        runnning_var:
+            dtype: tensor
+        training:
+            dtype: bool
+            default: False
+        momentum:
+            dtype: float
+            default: 0.1
+        epsilon:
+            dtype: float
+            default: 1e-5
+    returns:
+        output:
+            dtype: tensor
+        saved_mean:
+            dtype: tensor
+        saved_variance:
+            dtype: tensor
+    class:
+        name: BatchNormExt
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: BatchNormExtAscend
+
+#operator batch_norm_grad_ext
+batch_norm_grad_ext:
+  args:
+    dout:
+      dtype: tensor
+    input:
+      dtype: tensor
+    weight:
+      dtype: tensor
+    running_mean:
+      dtype: tensor
+    running_var:
+      dtype: tensor
+    saved_mean:
+      dtype: tensor
+    saved_rstd:
+      dtype: tensor
+    training:
+      dtype: bool
+      default: False
+      prim_init: True
+    eps:
+      dtype: float
+      default: 1e-5
+      prim_init: True
+  returns:
+    dx:
+      dtype: tensor
+    dweight:
+      dtype: tensor
+    dbias:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: BatchNormGradExtAscend
+
+batch_norm_grad_grad:
+    args:
+        x:
+            dtype: tensor
+        dy:
+            dtype: tensor
+        scale:
+            dtype: tensor
+        saved_mean:
+            dtype: tensor
+        saved_variance:
+            dtype: tensor
+        dout_dx:
+            dtype: tensor
+        dout_dscale:
+            dtype: tensor
+        dout_dbias:
+            dtype: tensor
+        is_training:
+            dtype: bool
+            default: False
+            prim_init: True
+        epsilon:
+            dtype: float
+            default: 1e-5
+            prim_init: True
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    returns:
+        dx:
+            dtype: tensor
+        ddy:
+            dtype: tensor
+        dscale:
+            dtype: tensor
+    function:
+        disable: True
+
+batch_norm_grad:
+    args:
+        dout:
+            dtype: tensor
+        x:
+            dtype: tensor
+        scale:
+            dtype: tensor
+        saved_mean:
+            dtype: tensor
+        saved_variance:
+            dtype: tensor
+        reserve:
+            dtype: tensor
+        is_training:
+            dtype: bool
+            default: False
+            prim_init: True
+        epsilon:
+            dtype: float
+            default: 1e-5
+            prim_init: True
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    returns:
+        dx:
+            dtype: tensor
+        dscale:
+            dtype: tensor
+        dbias:
+            dtype: tensor
+    function:
+        disable: True
+
+batch_norm_grad_with_activation:
+    args:
+        dy:
+            dtype: tensor
+        x:
+            dtype: tensor
+        scale:
+            dtype: tensor
+        saved_mean:
+            dtype: tensor
+        saved_variance:
+            dtype: tensor
+        reserve:
+            dtype: tensor
+        bias:
+            dtype: tensor
+        y:
+            dtype: tensor
+        is_training:
+            dtype: bool
+            default: False
+            prim_init: True
+        epsilon:
+            dtype: float
+            default: 1e-5
+            prim_init: True
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    returns:
+        dx:
+            dtype: tensor
+        dscale:
+            dtype: tensor
+        dbias:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        disable: True
+
+batch_norm_grad_with_activation:
+    args:
+        dy:
+            dtype: tensor
+        x:
+            dtype: tensor
+        scale:
+            dtype: tensor
+        saved_mean:
+            dtype: tensor
+        saved_variance:
+            dtype: tensor
+        reserve:
+            dtype: tensor
+        bias:
+            dtype: tensor
+        y:
+            dtype: tensor
+        is_training:
+            dtype: bool
+            default: False
+            prim_init: True
+        epsilon:
+            dtype: float
+            default: 1e-5
+            prim_init: True
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    returns:
+        dx:
+            dtype: tensor
+        dscale:
+            dtype: tensor
+        dbias:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        disable: True
+
+#operator batch_norm
+batch_norm:
+    args:
+        input_x:
+            dtype: tensor
+        scale:
+            dtype: tensor
+        bias:
+            dtype: tensor
+        mean:
+            dtype: tensor
+        variance:
+            dtype: tensor
+        is_training:
+            dtype: bool
+            default: False
+            prim_init: True
+        epsilon:
+            dtype: float
+            default: 1e-5
+            prim_init: True
+        momentum:
+            dtype: float
+            default: 0.1
+            prim_init: True
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    returns:
+        output_x:
+            dtype: tensor
+        batch_mean:
+            dtype: tensor
+        batch_variance:
+            dtype: tensor
+        reserve_space_1:
+            dtype: tensor
+        reserve_space_2:
+            dtype: tensor
+    class:
+        disable: True
+    function:
+        disable: True
+
+batch_norm_with_activation:
+    args:
+        x:
+            dtype: tensor
+        scale:
+            dtype: tensor
+        bias:
+            dtype: tensor
+        mean:
+            dtype: tensor
+        var:
+            dtype: tensor
+        is_training:
+            dtype: bool
+            default: False
+            prim_init: True
+        epsilon:
+            dtype: float
+            default: 1e-5
+            prim_init: True
+        momentum:
+            dtype: float
+            default: 0.1
+            prim_init: True
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    returns:
+        output_x:
+            dtype: tensor
+        batch_mean:
+            dtype: tensor
+        batch_variance:
+            dtype: tensor
+        reserve_space_1:
+            dtype: tensor
+        reserve_space_2:
+            dtype: tensor
+    class:
+        disable: True
+    function:
+        disable: True
+
+batch_norm_with_add_and_activation:
+    args:
+        x:
+            dtype: tensor
+        scale:
+            dtype: tensor
+        bias:
+            dtype: tensor
+        mean:
+            dtype: tensor
+        var:
+            dtype: tensor
+        z:
+            dtype: tensor
+        is_training:
+            dtype: bool
+            default: False
+            prim_init: True
+        epsilon:
+            dtype: float
+            default: 1e-5
+            prim_init: True
+        momentum:
+            dtype: float
+            default: 0.1
+            prim_init: True
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    returns:
+        output_x:
+            dtype: tensor
+        batch_mean:
+            dtype: tensor
+        batch_variance:
+            dtype: tensor
+        reserve_space_1:
+            dtype: tensor
+        reserve_space_2:
+            dtype: tensor
+    class:
+        disable: True
+    function:
+        disable: True
+
+#operator betainc
+betainc:
+    args:
+        a:
+            dtype: tensor
+        b:
+            dtype: tensor
+        x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator bias_add_grad
+bias_add_grad:
+    args:
+        dout:
+            dtype: tensor
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator bias_add
+bias_add:
+    args:
+        input_x:
+            dtype: tensor
+        bias:
+            dtype: tensor
+        data_format:
+            dtype: int
+            default: "'NCHW'"
+            prim_init: True
+            arg_handler: str_to_enum
+    function:
+        disable: True
+    returns:
+        output:
+            dtype: tensor
+
+#operator bmm_ext
+bmm_ext:
+  args:
+    input:
+      dtype: tensor
+    mat2:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: BatchMatMulExt
+  dispatch:
+    enable: True
+    Ascend: BatchMatMulExtAscend
+
+#operator bool_not
+bool_not:
+  args:
+    x:
+      dtype: number
+  returns:
+    output:
+      dtype: number
+  function:
+    disable: True
+
+#operator broadcast_to
+broadcast_to:
+  args:
+    input:
+      dtype: tensor
+    shape:
+      dtype: tuple[int]
+      prim_init: True
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  view: True
+  dispatch:
+    enable: True
+#operator cast
+cast:
+    args:
+        input_x:
+            dtype: tensor
+            type_cast: number
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+    class:
+        disable: True
+
+#operator ceil
+ceil:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+
+#operator celu
+celu:
+  args:
+    x:
+      dtype: tensor
+    alpha:
+      dtype: float
+      default: 1.0
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: CeLU
+
+#operator cholesky_grad
+cholesky_grad:
+  args:
+    x:
+      dtype: tensor
+    grad:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator cholesky_inverse
+cholesky_inverse:
+  args:
+    input_x:
+      dtype: tensor
+    upper:
+      dtype: bool
+      default: false
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator cholesky
+cholesky:
+  args:
+    input_x:
+      dtype: tensor
+    upper:
+      dtype: bool
+      default: false
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator chunk
+chunk:
+    args:
+        input:
+            dtype: tensor
+        chunks:
+            dtype: int
+        dim:
+            dtype: int
+            default: 0
+    returns:
+        y:
+            dtype: tuple[tensor]
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: ChunkAscend
+
+#operator clamp
+clamp_scalar:
+    args:
+        input:
+            dtype: tensor
+        min:
+            dtype: number
+            default: None
+        max:
+            dtype: number
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: ClampScalar
+    dispatch:
+        enable: True
+        CPU: ClampScalarCPU
+        GPU: ClampScalarGPU
+
+#operator clamp
+clamp_tensor:
+    args:
+        input:
+            dtype: tensor
+        min:
+            dtype: tensor
+            default: None
+        max:
+            dtype: tensor
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: ClampTensor
+    dispatch:
+        enable: True
+        CPU: ClampTensorCPU
+        GPU: ClampTensorGPU
+
+#operator complex
+complex:
+  args:
+    real:
+      dtype: tensor
+    imag:
+      dtype: tensor    
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator concat
+concat:
+    args:
+        tensors:
+            dtype: tuple[tensor]
+            type_cast: list[tensor]
+        axis:
+            dtype: int
+            default: 0
+            prim_init: True
+    returns:
+        out:
+            dtype: tensor
+    function:
+        name: cat
+    dispatch:
+        enable: True
+        CPU: ConcatCpu
+
+#operator conj
+conj:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+
+#operator constant_pad_nd
+constant_pad_nd:
+  args:
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+    value:
+      dtype: number
+      default: 0.0
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ConstantPadND
+  dispatch:
+    enable: True
+
+#operator contiguous
+contiguous:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  view: True
+  dispatch:
+    enable: True
+    Ascend: ContiguousAscend
+    GPU: ContiguousGPU
+    CPU: ContiguousCPU
+
+#operator convolution_grad
+convolution_grad:
+  args:
+    dout:
+      dtype: tensor
+    input:
+      dtype: tensor
+    weight:
+      dtype: tensor
+    bias:
+      dtype: tensor
+      default: None
+    stride:
+      dtype: tuple[int]
+      default: 1
+      prim_init: True
+      arg_handler: to_strides
+    padding:
+      dtype: tuple[int]
+      default: 0
+      prim_init: True
+      arg_handler: to_2d_paddings
+    dilation:
+      dtype: tuple[int]
+      default: 1
+      prim_init: True
+      arg_handler: to_dilations
+    transposed:
+      dtype: bool
+      default: False
+      prim_init: True
+    output_padding:
+      dtype: tuple[int]
+      default: 0
+      prim_init: True
+      arg_handler: to_output_padding
+    groups:
+      dtype: int
+      default: 1
+      prim_init: True
+    output_mask:
+      dtype: tuple[int]
+      default: ()
+      prim_init: True
+  returns:
+    dx:
+      dtype: tensor
+    dw:
+      dtype: tensor
+    dbias:
+      dtype: tensor
+  class:
+      name: ConvolutionGrad
+  function:
+      disable: True
+  dispatch:
+    enable: True
+    Ascend: ConvolutionGradAscend
+
+#operator convolution
+convolution:
+  args:
+    input:
+      dtype: tensor
+    weight:
+      dtype: tensor
+    bias:
+      dtype: tensor
+      default: None
+    stride:
+      dtype: tuple[int]
+      default: 1
+      prim_init: True
+      arg_handler: to_strides
+    padding:
+      dtype: tuple[int]
+      default: 0
+      prim_init: True
+      arg_handler: to_2d_paddings
+    dilation:
+      dtype: tuple[int]
+      default: 1
+      prim_init: True
+      arg_handler: to_dilations
+    transposed:
+      dtype: bool
+      default: False
+      prim_init: True
+    output_padding:
+      dtype: tuple[int]
+      default: 0
+      prim_init: True
+      arg_handler: to_output_padding
+    groups:
+      dtype: int
+      default: 1
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  class:
+      name: Convolution
+  function:
+      disable: True
+  dispatch:
+    enable: True
+    Ascend: ConvolutionAscend
+
+#operator copy
+copy:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  view: True
+  dispatch:
+    enable: True
+    Ascend: CopyAscend
+    GPU: CopyGPU
+    CPU: CopyCPU
+
+#operator correlate
+correlate:
+  args:
+    a:
+      dtype: tensor
+    v:
+      dtype: tensor
+    mode:
+      dtype: int
+      arg_handler: str_to_enum
+      default: "'valid'"
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+
+#operator cos
+cos:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+
+#operator cosh
+cosh:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+
+#operator cum_prod
+cum_prod:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: int
+    exclusive:
+      dtype: bool
+      default: False
+      prim_init: True
+    reverse:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator cum_sum
+cum_sum:
+  args:
+    input:
+      dtype: tensor
+    axis:
+      dtype: int
+    exclusive:
+      dtype: bool
+      default: False
+      prim_init: True
+    reverse:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator cummax
+cummax:
+  args:
+    input:
+      dtype: tensor
+    axis:
+      dtype: int
+      prim_init: True
+  returns:
+    values:
+      dtype: tensor
+    indices:
+      dtype: tensor
+
+#operator cummin
+cummin:
+  args:
+    input:
+      dtype: tensor
+    axis:
+      dtype: int
+      prim_init: True
+  returns:
+    values:
+      dtype: tensor
+    indices:
+      dtype: tensor
+  function:
+      disable: True
+
+#operator dct
+dct:
+  args:
+    x:
+      dtype: tensor
+    type:
+      dtype: int
+    n:
+      dtype: int
+    axis:
+      dtype: int
+      default: -1
+    norm:
+      dtype: int
+      default: "'BACKWARD'"
+      arg_handler: str_to_enum
+    forward:
+      dtype: bool
+      default: True
+    grad:
+      dtype: bool
+      default: False
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: DCT
+  function:
+    disable: True
+
+
+#operator decoder_k_v_cache
+decoder_k_v_cache:
+  args:
+    cache:
+      dtype: tensor
+    update:
+      dtype: tensor
+    valid_seq_len:
+      dtype: tensor
+    batch_index:
+      dtype: tensor
+    seq_len_axis:
+      dtype: tensor
+    new_max_seq_len:
+      dtype: tensor
+    cur_max_seq_len:
+      dtype: tensor
+  labels:
+    side_effect_mem: True
+  returns:
+    out:
+      dtype: tensor
+#operator dense
+dense:
+  args:
+    input:
+      dtype: tensor
+    weight:
+      dtype: tensor
+    bias:
+      dtype: tensor
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: DenseAscend
+    GPU: DenseGPU
+    CPU: DenseCPU
+
+#operator diag
+diag:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+
+#operator diagonal
+diagonal:
+  args:
+    input:
+      dtype: tensor
+    offset:
+      dtype: int
+      default: 0
+      prim_init: True
+    dim1:
+      dtype: int
+      default: 0
+      prim_init: True
+    dim2:
+      dtype: int
+      default: 1
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+
+#operator div
+div:
+    args:
+        x:
+            dtype: tensor
+            type_cast: number
+        y:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (x, y)
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+
+#operator divmod
+divmod:
+    args:
+        x:
+            dtype: tensor
+            type_cast: number
+        y:
+            dtype: tensor
+            type_cast: number
+        rounding_mode:
+            dtype: int
+            default: None
+            arg_handler: str_to_enum
+    args_signature:
+        dtype_group: (x, y), (rounding_mode)
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: DivMod
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: DivModAscend
+        GPU: DivModGPU
+        CPU: DivModCPU
+
+#operator dot
+dot:
+  args:
+    input:
+      dtype: tensor
+    other:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+
+#operator dropout_do_mask_ext
+dropout_do_mask_ext:
+    args:
+        input:
+            dtype: tensor
+        mask:
+            dtype: tensor
+        p:
+            dtype: float
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: DropoutDoMaskExtAscend
+    function:
+        disable: True
+
+#operator dropout_ext
+dropout_ext:
+    args:
+        input:
+            dtype: tensor
+        p:
+            dtype: float
+            default: 0.5
+        seed:
+            dtype: int
+            type_cast: tensor
+            default: 0
+        offset:
+            dtype: int
+            type_cast: tensor
+            default: 0
+    labels:
+        side_effect_hidden: True
+    returns:
+        output:
+            dtype: tensor
+        mask:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: DropoutExtAscend
+    function:
+        disable: True
+
+#operator dropout_gen_mask_ext
+dropout_gen_mask_ext:
+    args:
+        shape:
+            dtype: tuple[int]
+        p:
+            dtype: float
+        seed:
+            dtype: int
+            type_cast: tensor
+        offset:
+            dtype: int
+            type_cast: tensor
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+    labels:
+        side_effect_hidden: True
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: DropoutGenMaskExtAscend
+    function:
+        disable: True
+
+#operator dropout_grad_ext
+dropout_grad_ext:
+    args:
+        x:
+            dtype: tensor
+        mask:
+            dtype: tensor
+        p:
+            dtype: float
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: DropoutGradExtAscend
+    function:
+        disable: True
+
+#operator dropout
+dropout:
+  args:
+    x:
+      dtype: tensor
+    keep_prob:
+      dtype: float
+      default: 0.5
+      prim_init: True
+    Seed0:
+      dtype: int
+      default: 0
+      prim_init: True
+    Seed1:
+      dtype: int
+      default: 0
+      prim_init: True
+  labels:
+    side_effect_hidden: True
+  returns:
+    output:
+      dtype: tensor
+    mask:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator eig
+eig:
+  args:
+    x:
+      dtype: tensor
+    compute_v:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    eigen_values:
+      dtype: tensor
+    eigen_vectors:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator elu_grad
+elu_grad:
+  args:
+    dout:
+      dtype: tensor
+    out:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator elu
+elu:
+  args:
+    input_x:
+      dtype: tensor
+    alpha:
+      dtype: float
+      default: 1.0
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: False
+#EmbeddingDensebackward
+embedding_dense_backward:
+    args:
+        grad:
+            dtype: tensor
+        indices:
+            dtype: tensor
+        num_weights:
+            dtype: int
+        padding_idx:
+            dtype: int
+            default: None
+        scale_grad_by_freq:
+            dtype: bool
+            default: False
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: EmbeddingDenseBackwardAscend
+#Embedding
+embedding:
+    args:
+        input:
+            dtype: tensor
+        weight:
+            dtype: tensor
+        padding_idx:
+            dtype: int
+            default: None
+        max_norm:
+            dtype: float
+            default: None
+        norm_type:
+            dtype: float
+            default: 2.0
+        scale_grad_by_freq:
+            dtype: bool
+            default: False
+    args_signature:
+        rw_write: weight
+    labels:
+        side_effect_mem: True
+    returns:
+        output1:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: EmbeddingAscend
+    function:
+        disable: True
+#operator equal
+equal:
+  args:
+    input:
+      dtype: tensor
+      type_cast: number
+    other:
+      dtype: tensor
+      type_cast: number
+  args_signature:
+    dtype_group: (input, other)
+  returns:
+    output:
+      dtype: tensor
+  dispatch: 
+    enable: True
+
+#operator erf
+erf:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+#operator erfc
+erfc:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+
+#operator erfinv
+erfinv:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+
+#operator exp
+exp:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+
+#operator expand_dims
+expand_dims:
+  args:
+    input_x:
+      dtype: tensor
+    axis:
+      dtype: int
+      type_cast: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: False
+#operator expm1
+expm1:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+
+#operator extract_image_patches
+extract_image_patches:
+  args:
+    input_x:
+      dtype: tensor
+    ksizes:
+      dtype: tuple[int]
+      type_cast: list[int]
+      prim_init: True
+      arg_handler: to_kernel_size
+    strides:
+      dtype: tuple[int]
+      type_cast: list[int]
+      prim_init: True
+      arg_handler: to_strides
+    rates:
+      dtype: tuple[int]
+      type_cast: list[int]
+      prim_init: True
+      arg_handler: to_rates
+    padding:
+      dtype: int
+      default: "'VALID'"
+      prim_init: True
+      arg_handler: str_to_enum
+  returns:
+    output:
+      dtype: tensor
+
+#operator eye
+eye:
+  args:
+    n:
+      dtype: int
+    m:
+      dtype: int
+    dtype:
+      dtype: TypeId
+      arg_handler: dtype_to_type_id
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator fast_gelu_grad
+fast_gelu_grad:
+    args:
+        dy:
+            dtype: tensor
+        x:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: FastGeLUGrad
+    function:
+        disable: True
+
+#operator fast_gelu
+fast_gelu:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: FastGeLU
+
+#operator ffn_ext
+ffn_ext:
+    args:
+        x:
+            dtype: tensor
+        weight1:
+            dtype: tensor
+        weight2:
+            dtype: tensor
+        expertTokens:
+            dtype: tuple[int]
+            type_cast: tensor
+            default: None
+        bias1:
+            dtype: tensor
+            default: None
+        bias2:
+            dtype: tensor
+            default: None
+        scale:
+            dtype: tensor
+            default: None
+        offset:
+            dtype: tensor
+            default: None
+        deqScale1:
+            dtype: tensor
+            default: None
+        deqScale2:
+            dtype: tensor
+            default: None
+        antiquant_scale1:
+            dtype: tensor
+            default: None
+        antiquant_scale2:
+            dtype: tensor
+            default: None
+        antiquant_offset1:
+            dtype: tensor
+            default: None
+        antiquant_offset2:
+            dtype: tensor
+            default: None
+        activation:
+            dtype: int
+            default: "'fastgelu'"
+            prim_init: True
+            arg_handler: str_to_enum
+        inner_precise:
+            dtype: int
+            default: 0
+            prim_init: True
+    returns:
+        y:
+            dtype: tensor
+    class:
+        name: FFNExt
+    dispatch:
+        Ascend: FFNExtAscend
+        enable: True
+
+#operator fft2
+fft2:
+  args:
+    input:
+      dtype: tensor
+    s:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: None
+    dim:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: (-2, -1)
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: FFT2
+
+#operator fft
+fft:
+  args:
+    input:
+      dtype: tensor
+    n:
+      dtype: int
+      default: None
+    dim:
+      dtype: int
+      default: -1
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: FFT
+
+#operator fft_shapecopy
+fft_shapecopy:
+  args:
+    dout:
+      dtype: tensor
+    shape:
+      dtype: tuple[int]
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: FFTShapeCopy
+  function:
+    disable: True
+
+#operator fft_with_size
+fft_with_size:
+  args:
+    x:
+      dtype: tensor
+    signal_ndim:
+      dtype: int
+      prim_init: True
+    inverse:
+      dtype: bool
+      prim_init: True
+    real:
+      dtype: bool
+      prim_init: True
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: "'backward'"
+      prim_init: True
+    onesided:
+      dtype: bool
+      default: True
+      prim_init: True
+    signal_sizes:
+      dtype: tuple[int]
+      default: ()
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: FFTWithSize
+  function:
+    disable: True
+
+#operator fftn
+fftn:
+  args:
+    input:
+      dtype: tensor
+    s:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: None
+    dim:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: None
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: FFTN
+
+#operator fftshift
+fftshift:
+  args:
+    input:
+      dtype: tensor
+    dim:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: FFTShift
+
+#operator fill_scalar
+fill_scalar:
+    args:
+        size:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+        fill_value:
+            dtype: number
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: FillScalarAscend
+
+#operator fill_tensor
+fill_tensor:
+    args:
+        size:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+        fill_value:
+            dtype: tensor
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: FillTensorAscend
+#operator flash_attention_score_grad
+flash_attention_score_grad:
+  args:
+    query:
+      dtype: tensor
+    key:
+      dtype: tensor
+    value:
+      dtype: tensor
+    dy:
+      dtype: tensor
+    pse_shift:
+      dtype: tensor
+      default: None
+    drop_mask:
+      dtype: tensor
+      default: None
+    padding_mask:
+      dtype: tensor
+      default: None
+    atten_mask:
+      dtype: tensor
+      default: None
+    softmax_max:
+      dtype: tensor
+      default: None
+    softmax_sum:
+      dtype: tensor
+      default: None
+    softmax_in:
+      dtype: tensor
+      default: None
+    attention_in:
+      dtype: tensor
+      default: None
+    prefix:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int], tensor
+    actual_seq_qlen:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int], tensor
+    actual_seq_kvlen:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int], tensor
+    head_num:
+      dtype: int
+      prim_init: True
+    keep_prob:
+      dtype: float
+      default: 1.0
+      prim_init: True
+    scale_value:
+      dtype: float
+      default: 1.0
+      prim_init: True
+    pre_tokens:
+      dtype: int
+      default: 65536
+      prim_init: True
+    next_tokens:
+      dtype: int
+      default: 65536
+      prim_init: True
+    inner_precise:
+      dtype: int
+      default: 1
+      prim_init: True
+    input_layout:
+      dtype: int
+      default: "'BSH'"
+      prim_init: True
+      arg_handler: str_to_enum
+    sparse_mode:
+      dtype: int
+      default: 0
+      prim_init: True
+  returns:
+    dq:
+      dtype: tensor
+    dk:
+      dtype: tensor
+    dv:
+      dtype: tensor
+    dpse:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: FlashAttentionScoreGradAscend
+
+#operator flash_attention_score
+flash_attention_score:
+  args:
+    query:
+      dtype: tensor
+    key:
+      dtype: tensor
+    value:
+      dtype: tensor
+    real_shift:
+      dtype: tensor
+      default: None
+    drop_mask:
+      dtype: tensor
+      default: None
+    padding_mask:
+      dtype: tensor
+      default: None
+    attn_mask:
+      dtype: tensor
+      default: None
+    prefix:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int], tensor
+    actual_seq_qlen:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int], tensor
+    actual_seq_kvlen:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int], tensor
+    head_num:
+      dtype: int
+      prim_init: True
+    keep_prob:
+      dtype: float
+      default: 1.0
+      prim_init: True
+    scale_value:
+      dtype: float
+      default: 1.0
+      prim_init: True
+    pre_tokens:
+      dtype: int
+      default: 2147483647
+      prim_init: True
+    next_tokens:
+      dtype: int
+      default: 2147483647
+      prim_init: True
+    inner_precise:
+      dtype: int
+      default: 0
+      prim_init: True
+    input_layout:
+      dtype: int
+      default: "'BSH'"
+      prim_init: True
+      arg_handler: str_to_enum
+    sparse_mode:
+      dtype: int
+      default: 0
+      prim_init: True
+  returns:
+    softmax_max:
+      dtype: tensor
+    softmax_sum:
+      dtype: tensor
+    softmax_out:
+      dtype: tensor
+    attention_out:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: FlashAttentionScoreAscend
+
+#operator flatten_ext
+flatten_ext:
+  args:
+    input:
+      dtype: tensor
+    start_dim:
+      dtype: int
+      default: 0
+    end_dim:
+      dtype: int
+      default: -1
+  returns:
+    output:
+      dtype: tensor
+  dispatch: 
+    enable: True
+    Ascend: FlattenExtAscend
+
+#operator flatten
+flatten:
+  args:
+    input_x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator floor_div
+floor_div:
+    args:
+        input:
+            dtype: tensor
+            type_cast: number
+        other:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (input, other)
+    returns:
+        output:
+            dtype: tensor
+    function:
+        name: floor_divide
+
+#operator floor_mod
+floor_mod:
+    args:
+        x:
+            dtype: tensor
+            type_cast: number
+        y:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (x, y)
+    returns:
+        output:
+            dtype: tensor
+
+#operator floor
+floor:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+
+#operator gather_d_grad_v2
+gather_d_grad_v2:
+    args:
+        x:
+            dtype: tensor
+        dim:
+            dtype: int
+        index:
+            dtype: tensor
+        dout:
+            dtype: tensor
+    returns:
+        dx:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: GatherDGradAscend
+
+#operator gather_d
+gather_d:
+  args:
+    x:
+      dtype: tensor
+    dim:
+      dtype: int
+      type_cast: tensor
+    index:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+      enable: True
+#operator gather_nd
+gather_nd:
+  args:
+    input_x:
+      dtype: tensor
+    indices:
+      dtype: tensor
+  returns:
+    y:
+      dtype: tensor
+
+#operator gather
+gather:
+  args:
+    input_params:
+      dtype: tensor
+    input_indices:
+      dtype: tensor
+    axis:
+      dtype: int
+      type_cast: tensor
+    batch_dims:
+      dtype: int
+      default: 0
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+
+#operator gcd
+gcd:
+    args:
+        input:
+            dtype: tensor
+        other:
+            dtype: tensor
+    args_signature:
+        dtype_group: (input, other)
+    returns:
+        output: 
+            dtype: tensor
+
+#operator gelu_grad
+gelu_grad:
+    args:
+        dy:
+            dtype: tensor
+        x:
+            dtype: tensor
+        y:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: GeLUGrad
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: GeLUGradAscend
+
+#operator gelu
+gelu:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: GeLU
+    function:
+        disable: True
+    dispatch:
+        enable: True
+
+#operator geqrf
+geqrf: 
+    args:
+        input:
+            dtype: tensor
+    returns:
+        y:
+            dtype: tensor
+        tau: 
+            dtype: tensor
+
+#operator greater_equal
+greater_equal:
+    args:
+        input:
+            dtype: tensor
+            type_cast: number
+        other:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (input, other)
+    returns:
+        output: 
+            dtype: tensor
+            type_cast: bool
+    dispatch:
+        enable: True
+
+#operator greater
+greater:
+    args:
+        input:
+            dtype: tensor
+            type_cast: number
+        other:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (input, other)
+    returns:
+        output:
+            dtype: tensor
+            type_cast: bool
+    dispatch:
+        enable: True
+
+#operator grid_sampler_2d_grad
+grid_sampler_2d_grad:
+    args:
+        grad:
+            dtype: tensor
+        input_x:
+            dtype: tensor
+        grid:
+            dtype: tensor
+        interpolation_mode:
+            dtype: int
+            default: "'bilinear'"
+            prim_init: True
+            arg_handler: str_to_enum
+        padding_mode:
+            dtype: int
+            default: "'zeros'"
+            prim_init: True
+            arg_handler: str_to_enum
+        align_corners:
+            dtype: bool
+            default: False
+            prim_init: True
+    returns:
+        dx: 
+            dtype: tensor
+        dgrid: 
+            dtype: tensor
+    class:
+        name: GridSampler2DGrad
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: GridSampler2DGradAscend
+#operator grid_sampler_2d
+grid_sampler_2d:
+    args:
+        input_x:
+            dtype: tensor
+        grid:
+            dtype: tensor
+        interpolation_mode:
+            dtype: int
+            default: "'bilinear'"
+            prim_init: True
+            arg_handler: str_to_enum
+        padding_mode:
+            dtype: int
+            default: "'zeros'"
+            prim_init: True
+            arg_handler: str_to_enum
+        align_corners:
+            dtype: bool
+            default: False
+            prim_init: True
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: GridSampler2D
+    function:
+        disable: True
+    dispatch:
+        enable: True
+
+#operator grid_sampler_3d_grad
+grid_sampler_3d_grad:
+    args:
+        grad:
+            dtype: tensor
+        input_x:
+            dtype: tensor
+        grid:
+            dtype: tensor
+        interpolation_mode:
+            dtype: int
+            default: "'bilinear'"
+            prim_init: True
+            arg_handler: str_to_enum
+        padding_mode:
+            dtype: int
+            default: "'zeros'"
+            prim_init: True
+            arg_handler: str_to_enum
+        align_corners:
+            dtype: bool
+            default: False
+            prim_init: True
+    returns:
+        dx: 
+            dtype: tensor
+        dgrid: 
+            dtype: tensor
+    class:
+        name: GridSampler3DGrad
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: GridSampler3DGradAscend
+#operator grid_sampler_3d
+grid_sampler_3d:
+    args:
+        input_x:
+            dtype: tensor
+        grid:
+            dtype: tensor
+        interpolation_mode:
+            dtype: int
+            default: "'bilinear'"
+            prim_init: True
+            arg_handler: str_to_enum
+        padding_mode:
+            dtype: int
+            default: "'zeros'"
+            prim_init: True
+            arg_handler: str_to_enum
+        align_corners:
+            dtype: bool
+            default: False
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: GridSampler3D
+    function:
+        disable: True
+    dispatch:
+        enable: True
+
+#operator group_norm_grad
+group_norm_grad:
+  args:
+    dy:
+      dtype: tensor
+    x:
+      dtype: tensor
+    mean:
+      dtype: tensor
+    rstd:
+      dtype: tensor
+    gamma_opt:
+      dtype: tensor
+    num_groups:
+      dtype: int
+    dx_is_require:
+      dtype: bool
+      default: True
+    dgamma_is_require:
+      dtype: bool
+      default: True
+    dbeta_is_require:
+      dtype: bool
+      default: True
+  returns:
+    pd_x:
+      dtype: tensor
+    pd_gamma:
+      dtype: tensor
+    pd_beta:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: GroupNormGradAscend
+
+#operator group_norm
+group_norm:
+  args:
+    input:
+      dtype: tensor
+    num_groups:
+      dtype: int
+    weight:
+      dtype: tensor
+      default: None
+    bias:
+      dtype: tensor
+      default: None
+    eps:
+      dtype: float
+      default: 1e-5
+  returns:
+    out:
+      dtype: tensor
+    meanOut:
+      dtype: tensor
+    rstdOut:
+      dtype: tensor
+  class:
+    name: GroupNorm
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: GroupNormAscend
+    CPU: GroupNormCPU
+#operator hshrink_grad
+hshrink_grad:
+    args:
+        gradients:
+            dtype: tensor
+        features:
+            dtype: tensor
+        lambd:
+            dtype: float
+            default: 0.5
+            prim_init: True
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: HShrinkGrad
+    function:
+        disable: True
+#operator hshrink
+hshrink:
+    args:
+        x:
+            dtype: tensor
+        lambd:
+            dtype: float
+            default: 0.5
+            prim_init: True
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: HShrink
+    function:
+        disable: True
+
+#operator hsigmoid_grad
+hsigmoid_grad:
+    args:
+        grads:
+            dtype: tensor
+        input_x:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: HSigmoidGrad
+    function:
+        disable: True
+
+#operator hsigmoid
+hsigmoid:
+    args:
+        input_x:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: HSigmoid
+    function:
+        disable: True
+
+#operator hswish_grad
+hswish_grad:
+    args:
+        y_grad:
+            dtype: tensor
+        x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: HSwishGrad
+    function:
+        disable: True
+
+#operator hswish
+hswish:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: HSwish
+    function:
+        disable: True
+
+#operator identity
+identity:
+  args:
+    input_x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    name: deepcopy
+  dispatch:
+    enable: False
+    Ascend: IdentityAscend
+    CPU: IdentityCPU
+    GPU: IdentityGPU
+#operator ifft2
+ifft2:
+  args:
+    input:
+      dtype: tensor
+    s:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: None
+    dim:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: (-2, -1)
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: IFFT2
+
+#operator ifft
+ifft:
+  args:
+    input:
+      dtype: tensor
+    n:
+      dtype: int
+      default: None
+    dim:
+      dtype: int
+      default: -1
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: IFFT
+
+#operator ifftn
+ifftn:
+  args:
+    input:
+      dtype: tensor
+    s:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: None
+    dim:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: None
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: IFFTN
+
+#operator ifftshift
+ifftshift:
+  args:
+    input:
+      dtype: tensor
+    dim:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: IFFTShift
+
+#operator index_add_ext
+index_add_ext:
+    args:
+        input:
+            dtype: tensor
+        index:
+            dtype: tensor
+        source:
+            dtype: tensor
+        axis:
+            dtype: int
+        alpha:
+            dtype: number
+            default: 1
+    args_signature:
+        rw_write: input
+        dtype_group: (input, source)
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: IndexAddExtAscend
+    function:
+        disable: True
+
+#operator index_select_ext
+index_select_ext:
+    args:
+        input:
+            dtype: tensor
+        dim:
+            dtype: int
+        index:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+
+#operator irfft_grad
+irfft_grad:
+  args:
+    input1:
+      dtype: tensor
+    input2:
+      dtype: tensor
+    n:
+      dtype: int
+      default: None
+    dim:
+      dtype: int
+      default: -1
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: IRFFTGrad
+  function:
+    disable: True
+#operator irfft
+irfft:
+  args:
+    input:
+      dtype: tensor
+    n:
+      dtype: int
+      default: None
+    dim:
+      dtype: int
+      default: -1
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: IRFFT
+  function:
+    name: irfft
+
+#operator isfinite
+isfinite:
+  args:
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: IsFinite
+  dispatch:
+    enable: True
+
+#operator layer_norm_ext
+layer_norm_ext:
+  args:
+    input:
+      dtype: tensor
+    normalized_shape:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+    weight:
+      dtype: tensor
+      default: None
+    bias:
+      dtype: tensor
+      default: None
+    eps:
+      dtype: float
+      default: 1e-5
+  returns:
+    output_x:
+      dtype: tensor
+    mean:
+      dtype: tensor
+    rstd:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: LayerNormExt
+  dispatch:
+    enable: True
+    Ascend: LayerNormExtAscend
+    CPU: LayerNormExtCPU
+#operator layer_norm_grad_ext
+layer_norm_grad_ext:
+  args:
+    dy:
+      dtype: tensor
+    x:
+      dtype: tensor
+    normalized_shape:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+    mean:
+      dtype: tensor
+    variance:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+    beta:
+      dtype: tensor
+  returns:
+    pd_x:
+      dtype: tensor
+    pd_gamma:
+      dtype: tensor
+    pd_beta:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: LayerNormGradExtAscend
+#operator layer_norm_grad_grad
+layer_norm_grad_grad:
+  args:
+    x:
+      dtype: tensor
+    dy:
+      dtype: tensor
+    variance:
+      dtype: tensor
+    mean:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+    d_dx:
+      dtype: tensor
+    d_dg:
+     dtype: tensor
+    d_db:
+     dtype: tensor
+    begin_norm_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+    begin_params_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+  returns:
+    sopd_x:
+      dtype: tensor
+    sopd_dy:
+      dtype: tensor
+    sopd_gamma:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator layer_norm_grad
+layer_norm_grad:
+  args:
+    x:
+      dtype: tensor
+    dy:
+      dtype: tensor
+    variance:
+      dtype: tensor
+    mean:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+    begin_norm_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+    begin_params_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+  returns:
+    pd_x:
+      dtype: tensor
+    pd_gamma:
+      dtype: tensor
+    pd_beta:
+      dtype: tensor
+  function:
+    disable: True
+#operator layer_norm_grad_v3
+layer_norm_grad_v3:
+  args:
+    x:
+      dtype: tensor
+    dy:
+      dtype: tensor
+    variance:
+      dtype: tensor
+    mean:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+    begin_norm_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+    begin_params_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+  returns:
+    pd_x:
+      dtype: tensor
+    pd_gamma:
+      dtype: tensor
+    pd_beta:
+      dtype: tensor
+  function:
+    disable: True
+#operator layer_norm
+layer_norm:
+  args:
+    input_x:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+    beta:
+      dtype: tensor
+    begin_norm_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+    begin_params_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+    epsilon:
+      dtype: float
+      default: 1e-7
+      prim_init: True
+  returns:
+    output_x:
+      dtype: tensor
+    mean:
+      dtype: tensor
+    variance:
+      dtype: tensor
+  function:
+    disable: True
+#operator layer_norm_v3
+layer_norm_v3:
+  args:
+    input_x:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+    beta:
+      dtype: tensor
+    begin_norm_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+    begin_params_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+    epsilon:
+      dtype: float
+      default: 1e-7
+      prim_init: True
+  returns:
+    output_x:
+      dtype: tensor
+    mean:
+      dtype: tensor
+    variance:
+      dtype: tensor
+  function:
+    disable: True
+#operator leaky_relu_ext
+leaky_relu_ext:
+    args:
+        input:
+            dtype: tensor
+        negative_slope:
+            dtype: number
+            default: 0.01
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: LeakyReLUExt
+    dispatch:
+        enable: True
+
+#operator leaky_relu_grad_ext
+leaky_relu_grad_ext:
+    args:
+        dy:
+            dtype: tensor
+        input:
+            dtype: tensor
+        negative_slope:
+            dtype: number
+            default: 0.01
+        is_result:
+            dtype: bool
+            default: False
+    returns:
+        dx:
+            dtype: tensor
+    class:
+        name: LeakyReLUGradExt
+    function:
+        disable: True
+    dispatch:
+        enable: True
+
+#operator less_equal
+less_equal:
+  args:
+    input:
+      dtype: tensor
+      type_cast: number, bool
+    other:
+      dtype: tensor
+      type_cast: number, bool
+  args_signature:
+      dtype_group: (input, other)
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+
+#operator less
+less:
+  args:
+    input:
+      dtype: tensor
+      type_cast: number, bool
+    other:
+      dtype: tensor
+      type_cast: number, bool
+  args_signature:
+      dtype_group: (input, other)
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+
+#operator lin_space_ext
+lin_space_ext:
+  args:
+    start:
+      dtype: number
+      type_cast: tensor
+    end:
+      dtype: number
+      type_cast: tensor
+    steps:
+      dtype: int
+      type_cast: tensor
+    dtype:
+      dtype: TypeId
+      arg_handler: dtype_to_type_id
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: LinSpaceExtAscend
+
+#operator lin_space
+lin_space:
+  args:
+    start:
+      dtype: tensor
+    stop:
+      dtype: tensor
+    num:
+      dtype: int
+      type_cast: tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator list_to_tuple
+list_to_tuple:
+  args:
+    x:
+      dtype: list[any]
+  returns:
+    output:
+      dtype: tuple[any]
+  class:
+      disable: True
+  function:
+      disable: True
+
+#operator log1p
+log1p:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+
+#operator log_matrix_determinant
+log_matrix_determinant:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        sign:
+            dtype: tensor
+        output:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator log
+log:
+    args:
+        input:
+            dtype: tensor
+    labels:
+        cust_aicpu: "'Log'"
+        base: -1.0
+        scale: 1.0
+        shift: 0.0
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+
+#operator log_softmax_grad
+log_softmax_grad:
+    args:
+        logits:
+            dtype: tensor
+        grad:
+            dtype: tensor
+        axis:
+            dtype: int
+            default: -1
+            prim_init: True
+    returns:
+        logits_grad:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator log_softmax
+log_softmax:
+    args:
+        logits:
+            dtype: tensor
+        axis:
+            dtype: int
+            default: -1
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor
+
+#operator logical_and
+logical_and:
+    args:
+        x:
+            dtype: tensor
+            type_cast: bool
+        y:
+            dtype: tensor
+            type_cast: bool
+    args_signature:
+        dtype_group: (x, y)
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+
+#operator logical_not
+logical_not:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+
+#operator logical_or
+logical_or:
+    args:
+        x:
+            dtype: tensor
+            type_cast: bool
+        y:
+            dtype: tensor
+            type_cast: bool
+    args_signature:
+        dtype_group: (x, y)
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+
+#operator logical_xor
+logical_xor:
+    args:
+        input:
+            dtype: tensor
+            type_cast: bool
+        other:
+            dtype: tensor
+            type_cast: bool
+    args_signature:
+        dtype_group: (input, other)
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator logit_grad
+logit_grad:
+    args:
+        grad:
+            dtype: tensor
+        input:
+            dtype: tensor
+        eps:
+            dtype: float
+            default: -1.0
+            prim_init: True
+    returns:
+        input_grad:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator logit
+logit:
+    args:
+        input:
+            dtype: tensor
+        eps:
+            dtype: float
+            default: -1.0
+            prim_init: True
+    function:
+        disable: True
+    returns:
+        output:
+            dtype: tensor
+
+#operator masked_fill
+masked_fill:
+    args:
+        input_x:
+            dtype: tensor
+        mask:
+            dtype: tensor
+        value:
+            dtype: tensor
+            type_cast: number
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: MaskedFillAscend
+
+#operator matmul_ext
+matmul_ext:
+  args:
+    input:
+      dtype: tensor
+    mat2:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: MatMulExt
+  dispatch:
+    enable: True
+    Ascend: MatMulExtAscend
+    GPU: MatMulExtGPU
+    CPU: MatMulExtCPU
+
+#operator matmul
+matmul:
+  args:
+    input:
+      dtype: tensor
+    mat2:
+      dtype: tensor
+    transpose_a:
+      dtype: bool
+      default: False
+      prim_init: True
+    transpose_b:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: MatMul
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: MatMulAscend
+
+#operator matrix_determinant
+matrix_determinant:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator matrix_exp
+matrix_exp:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+
+#operator max
+max:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    out:
+      dtype: tensor
+  function:
+    name: max_
+  dispatch:
+    enable: True
+    CPU: MaxCPU
+    GPU: MaxGPU
+
+#operator max_pool_grad_with_indices
+max_pool_grad_with_indices:
+  args:
+    x:
+      dtype: tensor
+    grad:
+      dtype: tensor
+    argmax:
+      dtype: tensor
+    kernel_size:
+      dtype: tuple[int]
+      prim_init: True
+      arg_handler: to_kernel_size
+    strides:
+      dtype: tuple[int]
+      default: None
+      prim_init: True
+      arg_handler: to_strides
+    pads:
+      dtype: tuple[int]
+      default: 0
+      prim_init: True
+      arg_handler: to_output_padding
+    dilation:
+      dtype: tuple[int]
+      default: (1, 1)
+      prim_init: True
+      arg_handler: to_dilations
+    ceil_mode:
+      dtype: bool
+      default: False
+      prim_init: True
+    argmax_type:
+      dtype: TypeId
+      default: mstype.int64
+      prim_init: True
+      arg_handler: dtype_to_type_id
+  returns:
+    y:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: MaxPoolGradWithIndicesAscend
+
+#operator max_pool_grad_with_mask
+max_pool_grad_with_mask:
+  args:
+    x:
+      dtype: tensor
+    grad:
+      dtype: tensor
+    mask:
+      dtype: tensor
+    kernel_size:
+      dtype: tuple[int]
+      prim_init: True
+      arg_handler: to_kernel_size
+    strides:
+      dtype: tuple[int]
+      default: None
+      prim_init: True
+      arg_handler: to_strides
+    pads:
+      dtype: tuple[int]
+      default: 0
+      prim_init: True
+      arg_handler: to_output_padding
+    dilation:
+      dtype: tuple[int]
+      default: (1, 1)
+      prim_init: True
+      arg_handler: to_dilations
+    ceil_mode:
+      dtype: bool
+      default: False
+      prim_init: True
+    argmax_type:
+      dtype: TypeId
+      default: mstype.int64
+      prim_init: True
+      arg_handler: dtype_to_type_id
+  returns:
+    y:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: MaxPoolGradWithMaskAscend
+
+#operator max_pool_with_indices
+max_pool_with_indices:
+  args:
+    x:
+      dtype: tensor
+    kernel_size:
+      dtype: tuple[int]
+      prim_init: True
+      arg_handler: to_kernel_size
+    strides:
+      dtype: tuple[int]
+      default: None
+      prim_init: True
+      arg_handler: to_strides
+    pads:
+      dtype: tuple[int]
+      default: 0
+      prim_init: True
+      arg_handler: to_output_padding
+    dilation:
+      dtype: tuple[int]
+      default: (1, 1)
+      prim_init: True
+      arg_handler: to_dilations
+    ceil_mode:
+      dtype: bool
+      default: False
+      prim_init: True
+    argmax_type:
+      dtype: TypeId
+      default: mstype.int64
+      prim_init: True
+      arg_handler: dtype_to_type_id
+  returns:
+    output:
+      dtype: tensor
+    argmax:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: MaxPoolWithIndicesAscend
+
+#operator max_pool_with_mask
+max_pool_with_mask:
+  args:
+    x:
+      dtype: tensor
+    kernel_size:
+      dtype: tuple[int]
+      prim_init: True
+      arg_handler: to_kernel_size
+    strides:
+      dtype: tuple[int]
+      default: None
+      prim_init: True
+      arg_handler: to_strides
+    pads:
+      dtype: tuple[int]
+      default: 0
+      prim_init: True
+      arg_handler: to_output_padding
+    dilation:
+      dtype: tuple[int]
+      default: (1, 1)
+      prim_init: True
+      arg_handler: to_dilations
+    ceil_mode:
+      dtype: bool
+      default: False
+      prim_init: True
+    argmax_type:
+      dtype: TypeId
+      default: mstype.int64
+      prim_init: True
+      arg_handler: dtype_to_type_id
+  returns:
+    output:
+      dtype: tensor
+    mask:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: MaxPoolWithMaskAscend
+
+#operator maximum_grad_grad
+maximum_grad_grad:
+    args:
+        x:
+            dtype: tensor
+            type_cast: number
+        y:
+            dtype: tensor
+            type_cast: number
+        dx:
+            dtype: tensor
+        dy:
+            dtype: tensor
+        grad_x:
+            dtype: bool
+            default: True
+            prim_init: True
+        grad_y:
+            dtype: bool
+            default: True
+            prim_init: True
+    returns:
+        sopd_x:
+            dtype: tensor
+        sopd_y:
+            dtype: tensor
+        sopd_grad:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator maximum_grad
+maximum_grad:
+    args:
+        x:
+            dtype: tensor
+            type_cast: number
+        y:
+            dtype: tensor
+            type_cast: number
+        grads:
+            dtype: tensor
+        grad_x:
+            dtype: bool
+            default: True
+            prim_init: True
+        grad_y:
+            dtype: bool
+            default: True
+            prim_init: True
+    returns:
+        dx:
+            dtype: tensor
+        dy:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator maximum
+maximum:
+    args:
+        input:
+            dtype: tensor
+            type_cast: number
+        other:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (input, other)
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+
+#operator mean_ext
+mean_ext:
+    args:
+        input:
+            dtype: tensor
+        axis:
+            dtype: tuple[int]
+            type_cast: int, list[int], tensor
+            default: None
+        keep_dims:
+            dtype: bool
+            default: False
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: MeanExtAscend
+        CPU: MeanExtCPU
+        GPU: MeanExtGPU
+    function:
+        name: mean_ext
+
+#operator min
+min:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    out:
+      dtype: tensor
+  function:
+    name: min_
+  dispatch:
+    enable: True
+    CPU: MinCPU
+    GPU: MinGPU
+
+#operator minimum_grad
+minimum_grad:
+    args:
+        x1:
+            dtype: tensor
+            type_cast: number
+        x2:
+            dtype: tensor
+            type_cast: number
+        grads:
+            dtype: tensor
+        grad_x:
+            dtype: bool
+            default: True
+            prim_init: True
+        grad_y:
+            dtype: bool
+            default: True
+            prim_init: True
+    returns:
+        y1: 
+            dtype: tensor
+        y2: 
+            dtype: tensor
+    function:
+        disable: True
+
+#operator minimum
+minimum:
+    args:
+        input:
+            dtype: tensor
+            type_cast: number
+        other:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (input, other)
+    returns:
+        output: 
+            dtype: tensor
+    dispatch:
+        enable: True
+
+#operator moe_finalize_routing
+moe_finalize_routing:
+  args:
+    expanded_x:
+      dtype: tensor
+    x1:
+      dtype: tensor
+    x2:
+      dtype: tensor
+      default: None
+    bias:
+      dtype: tensor
+      default: None
+    scales:
+      dtype: tensor
+      default: None
+    expanded_row_idx:
+      dtype: tensor
+      default: None
+    expanded_expert_idx:
+      dtype: tensor
+      default: None
+  returns:
+    y:
+      dtype: tensor
+
+#operator mul
+mul:
+    args:
+        input:
+            dtype: tensor
+            type_cast: number
+        other:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        rw_read: input, other
+        dtype_group: (input, other)
+    returns:
+        output: 
+            dtype: tensor
+    dispatch:
+        enable: True
+
+
+
+#operator mv
+mv:
+  args:
+    input:
+      dtype: tensor
+    vec:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: MvAscend
+
+#operator nan_to_num
+nan_to_num:
+    args:
+        x:
+            dtype: tensor
+        nan:
+            dtype: float
+            default: None
+            prim_init: True
+        posinf:
+            dtype: float
+            default: None
+            prim_init: True
+        neginf:
+            dtype: float
+            default: None
+            prim_init: True
+    returns:
+        output: 
+            dtype: tensor
+    function:
+        disable: True
+
+#operator next_after
+neg:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+
+#operator next_after
+next_after:
+    args:
+        input:
+            dtype: tensor
+        other:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    function:
+        name: nextafter
+#operator nllloss_grad
+nllloss_grad:
+    args:
+        logits:
+            dtype: tensor
+        loss_grad:
+            dtype: tensor
+        labels:
+            dtype: tensor
+        weight:
+            dtype: tensor
+        total_weight:
+            dtype: tensor
+        reduction:
+            dtype: int
+            default: "'mean'"
+            prim_init: True
+            arg_handler: str_to_enum
+        ignore_index:
+            dtype: int
+            default: -100
+            prim_init: True
+    returns:
+        logits_grad:
+            dtype: tensor
+    class:
+        name: NLLLossGrad
+    function:
+        disable: True
+
+
+#operator nllloss
+nllloss:
+    args:
+        logits:
+            dtype: tensor
+        labels:
+            dtype: tensor
+        weight:
+            dtype: tensor
+        reduction:
+            dtype: int
+            default: "'mean'"
+            prim_init: True
+            arg_handler: str_to_enum
+        ignore_index:
+            dtype: int
+            default: -100
+            prim_init: True
+    returns:
+        loss: 
+            dtype: tensor
+        total_weight:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: NLLLoss
+
+#operator non_zero
+non_zero:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        name: nonzero
+
+#operator norm
+norm:
+  args:
+    input_x:
+      dtype: tensor
+    ord:
+      dtype: number
+      type_cast: tensor
+      default: None
+    dim:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+      default: None
+    keepdim:
+      dtype: bool
+      default: False
+    dtype:
+      dtype: TypeId
+      arg_handler: dtype_to_type_id
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: NormAscend
+#operator normal_ext
+normal_ext:
+    args:
+        mean:
+            dtype: tensor
+        std:
+            dtype: tensor
+        seed:
+            dtype: int
+            type_cast: tensor
+        offset:
+            dtype: int
+            type_cast: tensor
+    returns:
+        output: 
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        Ascend: NormalExtAscend
+        enable: True
+
+#operator not_equal
+not_equal:
+    args:
+        input:
+            dtype: tensor
+            type_cast: number
+        other:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (input, other)
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+
+#operator npu_clear_float_status_v2
+npu_clear_float_status_v2:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: NPUClearFloatStatusV2
+    function:
+        disable: True    
+    
+#operator npu_get_float_status_v2
+npu_get_float_status_v2:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: NPUGetFloatStatusV2
+    function:
+        disable: True
+         
+#operator one_hot_ext
+one_hot_ext:
+    args:
+        tensor:
+            dtype: tensor
+        num_classes:
+            dtype: int
+        on_value:
+            dtype: tensor
+        off_value:
+            dtype: tensor
+        axis:
+            dtype: int
+            default: -1
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        Ascend: OneHotExtAscend
+        enable: True
+
+#operator one_hot
+one_hot:
+    args:
+        indices:
+            dtype: tensor
+        depth:
+            dtype: int
+            type_cast: tensor
+        on_value:
+            dtype: tensor
+        off_value:
+            dtype: tensor
+        axis:
+            dtype: int
+            default: -1
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator ones_like_ext
+ones_like_ext:
+    args:
+        input:
+            dtype: tensor
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: OnesLikeExtAscend
+
+#operator ones_like
+ones_like:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+#operator ones
+ones:
+    args:
+        shape:
+            dtype: tuple[int]
+            type_cast: int, list[int], tensor
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        y:
+            dtype: tensor
+    class:
+        disable: true
+    dispatch:
+        enable: True
+        Ascend: OnesAscend
+
+#operator paged_attention_mask
+paged_attention_mask:
+  args:
+    query:
+      dtype: tensor
+    key_cache:
+      dtype: tensor
+    value_cache:
+      dtype: tensor
+    block_tables:
+      dtype: tensor
+    context_lens:
+      dtype: tensor
+    alibi_mask:
+      dtype: tensor
+    head_num:
+      dtype: int
+      prim_init: True
+    scale_value:
+      dtype: float
+      prim_init: True
+    kv_head_num:
+      dtype: int
+      prim_init: True
+
+  returns:
+    attention_out:
+      dtype: tensor
+
+#operator paged_attention
+paged_attention:
+  args:
+    query:
+      dtype: tensor
+    key_cache:
+      dtype: tensor
+    value_cache:
+      dtype: tensor
+    block_tables:
+      dtype: tensor
+    context_lens:
+      dtype: tensor
+    head_num:
+      dtype: int
+      prim_init: True
+    scale_value:
+      dtype: float
+      prim_init: True
+    kv_head_num:
+      dtype: int
+      prim_init: True
+
+  returns:
+    attention_out:
+      dtype: tensor
+
+#operator pow
+pow:
+    args:
+        input:
+            dtype: tensor
+            type_cast: number
+        exponent:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (input, exponent)
+    returns:
+        y:
+            dtype: tensor
+    dispatch:
+        enable: True
+
+
+
+#operator prelu_grad
+prelu_grad:
+    args:
+        dy:
+            dtype: tensor
+        x:
+            dtype: tensor
+        weight:
+            dtype: tensor
+    returns:
+        dx:
+            dtype: tensor
+        dw:
+            dtype: tensor
+    class:
+        name: PReLUGrad
+    function:
+        disable: True
+
+#operator prelu
+prelu:
+    args:
+        x:
+            dtype: tensor
+        weight:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: PReLU
+
+#operator prod_ext
+prod_ext:
+    args:
+        input:
+            dtype: tensor
+        axis:
+            dtype: int
+            default: None
+        keep_dims:
+            dtype: bool
+            default: False
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: ProdExtAscend
+        CPU: ProdExtCPU
+        GPU: ProdExtGPU
+    function:
+        disable: True
+
+#operator prompt_k_v_cache
+prompt_k_v_cache:
+  args:
+    cache:
+      dtype: tensor
+    update:
+      dtype: tensor
+    valid_seq_len:
+      dtype: tensor
+    batch_index:
+      dtype: tensor
+    seq_len_axis:
+      dtype: tensor
+    new_max_seq_len:
+      dtype: tensor
+    cur_max_seq_len:
+      dtype: tensor
+    align_mode:
+      dtype: int
+      default: "'LEFT'"
+      prim_init: True
+      arg_handler: str_to_enum
+  labels:
+    side_effect_mem: True
+  returns:
+    out:
+      dtype: tensor
+
+#operator qr
+qr:
+    args:
+        x:
+            dtype: tensor
+        full_matrices:
+            dtype: bool
+            default: False
+            prim_init: True
+    returns:
+        q:
+            dtype: tensor
+        r:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator quant_batch_matmul
+quant_batch_matmul:
+  args:
+    x1:
+      dtype: tensor
+    x2:
+      dtype: tensor
+    scale:
+      dtype: tensor
+    offset:
+      dtype: tensor
+      default: None
+    bias:
+      dtype: tensor
+      default: None
+    transpose_x1:
+      dtype: bool
+      default: false
+      prim_init: True
+    transpose_x2:
+      dtype: bool
+      default: false
+      prim_init: True
+    dtype:
+      dtype: TypeId
+      default: mstype.float16
+      prim_init: True
+      arg_handler: dtype_to_type_id
+  args_signature:
+        dtype_group: (x1, x2)
+  returns:
+    y:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: QuantMatmulV3Ascend
+
+#operator randperm_v2
+randperm_v2:
+    args:
+        n:
+            dtype: int
+            type_cast: tensor
+        seed:
+            dtype: int
+            type_cast: tensor
+            default: 0
+            prim_init: True
+        offset:
+            dtype: int
+            type_cast: tensor
+            default: 0
+            prim_init: True
+        dtype:
+            dtype: TypeId
+            default: mstype.int64
+            prim_init: True
+            arg_handler: dtype_to_type_id
+    returns:
+        output:
+            dtype: tensor
+    function:
+        name: randperm
+#operator range
+range:
+    args:
+        start:
+            dtype: number
+            type_cast: tensor
+        end:
+            dtype: number
+            type_cast: tensor
+        step:
+            dtype: number
+            type_cast: tensor
+        maxlen:
+            dtype: int
+            default: 1000000
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor
+
+#operator rank
+rank:
+    args:
+        input_x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: int
+    class:
+        disable: true
+    function:
+        disable: True
+
+#operator real_div
+real_div:
+    args:
+        x:
+            dtype: tensor
+            type_cast: number
+        y:
+            dtype: tensor
+            type_cast: number
+    args_signature:
+        dtype_group: (x, y)
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator real
+real:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+
+#operator reciprocal_grad
+reciprocal_grad:
+    args:
+        y:
+            dtype: tensor
+        dy:
+            dtype: tensor
+    returns:
+        z:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator reciprocal
+reciprocal:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+
+#operator reduce_all
+reduce_all:
+  args:
+    input:
+      dtype: tensor
+    axis:
+      dtype: tuple[int]
+      type_cast: int, list[int], tensor
+      default: None
+    keep_dims:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    name: all
+  dispatch:
+    enable: True
+    Ascend: ReduceAllAscend
+#operator reduce_any
+reduce_any:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: tuple[int]
+      type_cast: int, list[int], tensor
+      default: ()
+    keep_dims:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+
+#operator reduce_max
+reduce_max:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: tuple[int]
+      type_cast: int, list[int], tensor
+      default: ()
+    keep_dims:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator reduce_mean
+reduce_mean:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: tuple[int]
+      type_cast: int, list[int], tensor
+      default: ()
+    keep_dims:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator reduce_min
+reduce_min:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: tuple[int]
+      type_cast: int, list[int], tensor
+      default: ()
+    keep_dims:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator reduce_prod
+reduce_prod:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: tuple[int]
+      type_cast: int, list[int], tensor
+      default: ()
+    keep_dims:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator reduce_std
+reduce_std:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: tuple[int]
+      default: []
+      prim_init: True
+      type_cast: int, list[int], tensor
+    unbiased:
+      dtype: bool
+      default: True
+      prim_init: True
+    keep_dims:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output_std:
+      dtype: tensor
+    output_mean:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator reduce_sum
+reduce_sum:
+  args:
+    x:
+      dtype: tensor
+    axis:
+      dtype: tuple[int]
+      type_cast: int, list[int], tensor
+      default: ()
+    keep_dims:
+      dtype: bool
+      default: False
+      prim_init: True
+    skip_mode:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator reflection_pad_1d_backward
+reflection_pad_1d_grad:
+  args:
+    grad_output:
+      dtype: tensor
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReflectionPad1DGrad
+  dispatch:
+    enable: True
+
+#operator reflection_pad_1d
+reflection_pad_1d:
+  args:
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReflectionPad1D
+  dispatch:
+    enable: True
+
+#operator reflection_pad_2d_backward
+reflection_pad_2d_grad:
+  args:
+    grad_output:
+      dtype: tensor
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReflectionPad2DGrad
+  dispatch:
+    enable: True
+
+#operator reflection_pad_2d
+reflection_pad_2d:
+  args:
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReflectionPad2D
+  dispatch:
+    enable: True
+
+#operator reflection_pad_3d_backward
+reflection_pad_3d_grad:
+  args:
+    grad_output:
+      dtype: tensor
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReflectionPad3DGrad
+  dispatch:
+    enable: True
+
+#operator reflection_pad_3d
+reflection_pad_3d:
+  args:
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReflectionPad3D
+  dispatch:
+    enable: True
+
+#operator relu6_grad
+relu6_grad:
+  args:
+    y_backprop:
+      dtype: tensor
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ReLU6Grad
+  function:
+    disable: True
+
+#operator relu6
+relu6:
+  args:
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ReLU6
+#operator relu_grad
+relu_grad:
+    args:
+        y_backprop:
+            dtype: tensor
+        x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: ReluGradAscend
+
+#operator relu
+relu:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ReLU
+  dispatch:
+    enable: True
+
+#operator repeat_interleave
+repeat_interleave:
+  args:
+    input:
+      dtype: tensor
+    repeats:
+      dtype: tensor
+      type_cast: int, list[int], tuple[int]
+    axis:
+      dtype: int
+      default: None
+    output_size:
+      dtype: int
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: RepeatInterleaveAscend
+#operator replication_pad_1d_backward
+replication_pad_1d_grad:
+  args:
+    grad_output:
+      dtype: tensor
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReplicationPad1DGrad
+  dispatch:
+    enable: True
+
+#operator replication_pad_1d
+replication_pad_1d:
+  args:
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReplicationPad1D
+  dispatch:
+    enable: True
+
+#operator replication_pad_2d_backward
+replication_pad_2d_grad:
+  args:
+    grad_output:
+      dtype: tensor
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReplicationPad2DGrad
+  dispatch:
+    enable: True
+
+#operator replication_pad_2d
+replication_pad_2d:
+  args:
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReplicationPad2D
+  dispatch:
+    enable: True
+
+#operator replication_pad_3d_backward
+replication_pad_3d_grad:
+  args:
+    grad_output:
+      dtype: tensor
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReplicationPad3DGrad
+  dispatch:
+    enable: True
+
+#operator replication_pad_3d
+replication_pad_3d:
+  args:
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: ReplicationPad3D
+  dispatch:
+    enable: True
+
+#operator reshape_and_cache
+reshape_and_cache:
+  args:
+    key:
+      dtype: tensor
+    value:
+      dtype: tensor
+    key_cache:
+      dtype: tensor
+    value_cache:
+      dtype: tensor
+    slot_mapping:
+      dtype: tensor
+  args_signature:
+    rw_write: key_cache, value_cache
+    dtype_group: (key, value, key_cache, value_cache)
+  labels:
+    side_effect_mem: True
+  returns:
+    out:
+      dtype: tensor
+
+#operator reshape
+reshape:
+  args:
+    input:
+      dtype: tensor
+    shape:
+      dtype: tuple[int]
+      type_cast: tensor, list[int]
+  returns:
+    output:
+      dtype: tensor
+  view: True
+  dispatch:
+    enable: False
+    Ascend: ReshapeAscend
+
+#operator resize_bicubic_grad
+resize_bicubic_grad:
+  args:
+    grads:
+      dtype: tensor
+    image:
+      dtype: tensor
+    align_corners:
+      dtype: bool
+      default: False
+      prim_init: True
+    half_pixel_centers:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator resize_bicubic
+resize_bicubic:
+  args:
+    image:
+      dtype: tensor
+    size:
+      dtype: tuple[int]
+      type_cast: tensor, list[int]
+    align_corners:
+      dtype: bool
+      default: False
+      prim_init: True
+    half_pixel_centers:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator resize_bilinear_grad
+resize_bilinear_grad:
+  args:
+    grads:
+      dtype: tensor
+    image:
+      dtype: tensor
+    align_corners:
+      dtype: bool
+      default: False
+      prim_init: True
+    half_pixel_centers:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator resize_bilinear_v2
+resize_bilinear_v2:
+  args:
+    image:
+      dtype: tensor
+    size:
+      dtype: tuple[int]
+      type_cast: list[int], tensor
+    align_corners:
+      dtype: bool
+      default: False
+      prim_init: True
+    half_pixel_centers:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator resize_d
+resize_d:
+    args:
+        x:
+            dtype: tensor
+        sizes:
+            dtype: tuple[int]
+            type_cast: list[int]
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+        coordinate_transformation_mode:
+            dtype: int
+            default: "'align_corners'"
+            arg_handler: str_to_enum
+    labels:
+        mode: "'linear'"
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        disable: True
+
+#operator resize_linear_1d_grad
+resize_linear_1d_grad:
+  args:
+    grads:
+      dtype: tensor
+    x:
+      dtype: tensor
+    coordinate_transformation_mode:
+      dtype: int
+      default: "'align_corners'"
+      prim_init: True
+      arg_handler: str_to_enum
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ResizeLinear1DGrad
+  function:
+    disable: True
+
+#operator resize_linear_1d
+resize_linear_1d:
+  args:
+    x:
+      dtype: tensor
+    size:
+      dtype: tuple[int]
+      type_cast: list[int], tensor
+    coordinate_transformation_mode:
+      dtype: int
+      default: "'align_corners'"
+      prim_init: True
+      arg_handler: str_to_enum
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ResizeLinear1D
+  function:
+    disable: True
+
+#operator resize_nearest_neighbor_grad
+resize_nearest_neighbor_grad:
+    args:
+        grads:
+            dtype: tensor
+        size:
+            dtype: tuple[int]
+            type_cast: list[int]
+        align_corners:
+            dtype: bool
+            default: False
+            prim_init: True
+        half_pixel_centers:
+          dtype: bool
+          default: False
+          prim_init: True
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable:
+            True
+
+#operator resize_nearest_neighbor
+resize_nearest_neighbor:
+    args:
+        input_x:
+            dtype: tensor
+        size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            prim_init: True
+        align_corners:
+            dtype: bool
+            default: False
+            prim_init: True
+        half_pixel_centers:
+            dtype: bool
+            default: False
+            prim_init: True
+    returns:
+        image_out:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator resize_nearest_neighbor_v2_grad
+resize_nearest_neighbor_v2_grad:
+  args:
+    grads:
+      dtype: tensor
+    size:
+      dtype: tuple[int]
+      type_cast: tensor
+    align_corners:
+      dtype: bool
+      default: False
+      prim_init: True
+    half_pixel_centers:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator resize_nearest_neighbor_v2
+resize_nearest_neighbor_v2:
+  args:
+    image:
+      dtype: tensor
+    size:
+      dtype: tuple[int]
+      type_cast: tensor, list[int]
+    align_corners:
+      dtype: bool
+      default: False
+      prim_init: True
+    half_pixel_centers:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator reverse_v2
+reverse_v2:
+  args:
+    input:
+      dtype: tensor
+    axis:
+      dtype: tuple[int]
+      prim_init: True
+      type_cast: list[int]
+  returns:
+    output:
+      dtype: tensor
+  function:
+    name: flip
+  class:
+    name: ReverseV2
+  dispatch:
+    enable: True
+
+#operator rfft_grad
+rfft_grad:
+  args:
+    input1:
+      dtype: tensor
+    input2:
+      dtype: tensor
+    n:
+      dtype: int
+      default: None
+    dim:
+      dtype: int
+      default: -1
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: RFFTGrad
+  function:
+    disable: True
+#operator rfft
+rfft:
+  args:
+    input:
+      dtype: tensor
+    n:
+      dtype: int
+      default: None
+    dim:
+      dtype: int
+      default: -1
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: RFFT
+  function:
+    name: rfft
+#operator right_shift
+right_shift:
+  args:
+    input_x:
+      dtype: tensor
+    input_y:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator roll
+roll:
+  args:
+    input:
+      dtype: tensor
+    shift:
+      dtype: tuple[int]
+      prim_init: True
+      type_cast:  int, list[int]
+    axis:
+      dtype: tuple[int]
+      prim_init: True
+      type_cast: int, list[int]
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator round
+round:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+
+#operator rsqrt_grad
+rsqrt_grad:
+  args:
+    y_backprop:
+      dtype: tensor
+    x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+
+#operator rsqrt
+rsqrt:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+
+#operator scalar_add
+scalar_add:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scalar_bool
+scalar_bool:
+    args:
+        x:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+
+# operator ScalarCast
+scalar_cast:
+  args:
+    input_x:
+      dtype: number
+    input_y:
+      dtype: TypeId
+      arg_handler: dtype_to_type_id
+  returns:
+    output_data:
+      dtype: number
+#operator scalar_div
+scalar_div:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scalar_eq
+scalar_eq:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scalar_floor_div
+scalar_floor_div:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+#operator scalar_ge
+scalar_ge:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scalar_gt
+scalar_gt:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scalar_le
+scalar_le:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scalar_log
+scalar_log:
+    args:
+        x:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scalar_lt
+scalar_lt:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scalar_mod
+scalar_mod:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scalar_mul
+scalar_mul:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scalar_pow
+scalar_pow:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scalar_sub
+scalar_sub:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scalar_to_tensor
+scalar_to_tensor:
+    args:
+        input_x:
+            dtype: number
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    class:
+        disable: True
+
+#operator scalar_uadd
+scalar_uadd:
+    args:
+        x:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scalar_usub
+scalar_usub:
+    args:
+        x:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator scatter_add_ext
+scatter_add_ext:
+    args:
+        input:
+            dtype: tensor
+        dim:
+            dtype: int
+        index:
+            dtype: tensor
+        src:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+
+#operator scatter_nd
+scatter_nd:
+    args:
+        indices:
+            dtype: tensor
+        updates:
+            dtype: tensor
+        shape:
+            dtype: tuple[int]
+    returns:
+        output:
+            dtype: tensor
+
+# operator: Scatter
+scatter:
+    args:
+        input:
+            dtype: tensor
+        dim:
+            dtype: int
+        index:
+            dtype: tensor
+        src:
+            dtype: tensor
+        reduce:
+            dtype: int
+    returns:
+        out:
+            dtype: tensor
+    dispatch:
+        enable: True
+    function:
+        disable: True
+
+#operator select/where
+select:
+    args:
+        condition:
+            dtype: tensor
+        input:
+            dtype: tensor
+            type_cast: number
+        other:
+            dtype: tensor
+            type_cast: number
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+
+#operator sequence_concat
+sequence_concat:
+    args:
+        x:
+            dtype: tuple[tensor]
+            type_cast: list[tensor]
+        axis:
+            dtype: int
+            default: 0
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor
+
+# operator shape
+shape:
+    args:
+        input_x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tuple[int]
+    class:
+        disable: true
+    function:
+        disable: true
+
+#operator sigmoid_grad
+sigmoid_grad:
+    args:
+        y:
+            dtype: tensor
+        dy:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: SigmoidGradAscend
+
+#sigmoid operator
+sigmoid:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+
+#operator silu_grad
+silu_grad:
+    args:
+        dout:
+            dtype: tensor
+        x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: SiLUGrad
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        CPU: SiLUGradCPU
+
+#SiLU operator
+silu:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: SiLU
+    dispatch:
+        enable: True
+        CPU: SiLUCPU
+
+#operator sin
+sin:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+
+#operator sinc
+sinc:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+
+#operator sinh
+sinh:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+
+#operator slice_ext
+slice_ext:
+    args:
+        input:
+            dtype: tensor
+        dim:
+            dtype: int
+        start:
+            dtype: int
+        end:
+            dtype: int
+        step:
+            dtype: int
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: SliceExt
+    dispatch:
+        enable: True
+        Ascend: SliceExtAscend
+
+#operator softmax_backward
+softmax_backward:
+    args:
+        dout:
+            dtype: tensor
+        out:
+            dtype: tensor
+        dim:
+            dtype: int
+            default: -1
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+
+#operator softmax
+softmax:
+    args:
+        input:
+            dtype: tensor
+        axis:
+            dtype: tuple[int]
+            default: -1
+            prim_init: True
+            type_cast: int
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: SoftmaxAscend
+
+#operator softplus_ext
+softplus_ext:
+    args:
+        input:
+            dtype: tensor
+        beta:
+            dtype: number
+            type_cast: tensor
+            default: 1
+        threshold:
+            dtype: number
+            type_cast: tensor
+            default: 20
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+
+#operator softplus_grad_ext
+softplus_grad_ext:
+    args:
+        dout:
+            dtype: tensor
+        x:
+            dtype: tensor
+        beta:
+            dtype: number
+            type_cast: tensor
+            default: 1
+        threshold:
+            dtype: number
+            type_cast: tensor
+            default: 20
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+
+#operator solve_triangular
+solve_triangular:
+    args:
+        a:
+            dtype: tensor
+        b:
+            dtype: tensor
+        trans:
+            dtype: int
+            default: 0
+        lower:
+            dtype: bool
+            default: False
+        unit_diagonal:
+            dtype: bool
+            default: False
+    returns:
+        output:
+            dtype: tensor
+
+#operator split
+split:
+  args:
+    input_x:
+      dtype: tensor
+    axis:
+      dtype: int
+      default: 0
+      prim_init: True
+    output_num:
+      dtype: int
+      default: 1
+      prim_init: True
+  returns:
+    output:
+      dtype: tuple[tensor]
+  function:
+    disable: True
+
+#operator split_tensor
+split_tensor:
+  args:
+    input_x:
+      dtype: tensor
+    split_int:
+      dtype: int
+    axis:
+      dtype: int
+      default: 0
+  returns:
+    output:
+      dtype: tuple[tensor]
+  view: True
+  dispatch:
+    enable: True
+  function:
+    disable: True
+    
+#operator split_with_size
+split_with_size:
+  args:
+    input_x:
+      dtype: tensor
+    split_sections:
+      dtype: tuple[int]
+      type_cast: list[int]
+    axis:
+      dtype: int
+      default: 0
+  returns:
+    output:
+      dtype: tuple[tensor]
+  view: True
+  dispatch:
+    enable: True
+  function:
+    disable: True
+
+#operator sqrt_grad
+sqrt_grad:
+    args:
+        dy: 
+            dtype: tensor
+        y:
+            dtype: tensor
+    returns:
+        z: 
+            dtype: tensor
+    function:
+        disable: True
+#operator sqrt
+sqrt:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    dispatch:
+        enable: True
+
+
+
+#operator square
+square:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: SquareAscend
+
+
+#operator stack_ext
+stack_ext:
+    args:
+        tensors:
+            dtype: tuple[tensor]
+            type_cast: list[tensor]
+        dim:
+            dtype: int
+            default: 0
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+
+#operator strided_slice
+strided_slice:
+    args:
+        input_x:
+            dtype: tensor
+        begin:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+        end:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+        strides:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+        begin_mask:
+            dtype: int
+            default: 0
+            prim_init: True
+        end_mask:
+            dtype: int
+            default: 0
+            prim_init: True
+        ellipsis_mask:
+            dtype: int
+            default: 0
+            prim_init: True
+        new_axis_mask:
+            dtype: int
+            default: 0
+            prim_init: True
+        shrink_axis_mask:
+            dtype: int
+            default: 0
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor
+
+#operator sub_ext
+sub_ext:
+  args:
+    input:
+      dtype: tensor
+      type_cast: number
+    other:
+      dtype: tensor
+      type_cast: number
+    alpha:
+      dtype: number
+      default: 1
+  args_signature:
+    dtype_group: (input, other),(alpha)
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: SubExt
+  dispatch:
+    enable: True
+
+#operator sub
+sub:
+  args:
+    input:
+      dtype: tensor
+      type_cast: number
+    other:
+      dtype: tensor
+      type_cast: number
+  args_signature:
+    dtype_group: (input, other)
+  returns:
+    output:
+      dtype: tensor
+
+#operator sum_ext
+sum_ext:
+    args:
+        input:
+            dtype: tensor
+        dim:
+            dtype: tuple[int]
+            type_cast: int, list[int], tensor
+            default: None
+        keepdim:
+            dtype: bool
+            default: False
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: SumExtAscend
+        CPU: SumExtCPU
+        GPU: SumExtGPU
+    function:
+        disable: True
+
+#operator tanh_grad
+tanh_grad:
+  args:
+    y:
+      dtype: tensor
+    dy:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+  function:
+      disable: True
+  dispatch:
+    enable: True
+    Ascend: TanhGradAscend
+
+#operator tanh
+tanh:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+
+#operator tensor_copy_slices
+tensor_copy_slices:
+    args:
+        x:
+            dtype: tensor
+        value:
+            dtype: tensor
+        begin:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+        end:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+        strides:
+            dtype: tuple[int]
+            type_cast: list[int], tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator tensor_shape
+tensor_shape:
+    args:
+        input_x:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator tile
+tile:
+    args:
+        input:
+            dtype: tensor
+        dims:
+            dtype: tuple[int]
+            type_cast: tensor
+    returns:
+        output:
+            dtype: tensor
+    class:
+        disable: True
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: TileAscend
+
+#operator topk_ext
+topk_ext:
+  args:
+    input:
+      dtype: tensor
+    k:
+      dtype: int
+    dim:
+      dtype: int
+      default: -1
+    largest:
+      dtype: bool
+      default: True
+    sorted:
+      dtype: bool
+      default: True
+  returns:
+    values:
+      dtype: tensor
+    indices:
+      dtype: tensor
+  class:
+    name: TopkExt
+  dispatch:
+    enable: True
+
+#operator trace
+trace:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+
+#operator transpose
+transpose:
+  args:
+    input:
+      dtype: tensor
+    input_perm:
+      dtype: tuple[int]
+  returns:
+    output:
+      dtype: tensor
+  view: True
+  dispatch:
+    enable: True
+
+
+
+#operator triu
+triu:
+  args:
+    input:
+      dtype: tensor
+    diagonal:
+      dtype: int
+      prim_init: True
+      default: 0
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+
+#operator tuple_to_list
+tuple_to_list:
+  args:
+    x:
+      dtype: tuple[any]
+  returns:
+    output:
+      dtype: list[any]
+  class:
+      disable: True
+  function:
+      disable: True
+
+#operator tuple_to_tensor
+tuple_to_tensor:
+    args:
+        input_tuple:
+            dtype: tuple[number]
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        output:
+            dtype: tensor
+
+#operator uniform_ext
+uniform_ext:
+    args:
+        tensor:
+            dtype: tensor
+        a:
+            dtype: float
+        b:
+            dtype: float
+        seed:
+            dtype: int
+            type_cast: tensor
+        offset:
+            dtype: int
+            type_cast: tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: UniformExtAscend
+#operator unsorted_segment_sum
+unsorted_segment_sum:
+  args:
+    input_x:
+      dtype: tensor
+    segment_ids:
+      dtype: tensor
+    num_segments:
+      dtype: int
+      type_cast: tensor
+  returns:
+    y:
+      dtype: tensor
+
+#operator upsample_bilinear2d_grad
+upsample_bilinear2d_grad:
+    args:
+        dy:
+            dtype: tensor
+        input_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+        align_corners:
+            dtype: bool
+            default: False
+    returns:
+        dx:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleBilinear2DGrad
+    dispatch:
+        enable: True
+        Ascend: UpsampleBilinear2DGradAscend
+
+#operator upsample_bilinear2d
+upsample_bilinear2d:
+    args:
+        x:
+            dtype: tensor
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+        align_corners:
+            dtype: bool
+            default: False
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleBilinear2D
+    dispatch:
+        enable: True
+        Ascend: UpsampleBilinear2DAscend
+
+#operator upsample_linear1d_grad
+upsample_linear1d_grad:
+    args:
+        dy:
+            dtype: tensor
+        input_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+        align_corners:
+            dtype: bool
+            default: False
+    returns:
+        dx:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleLinear1DGrad
+    dispatch:
+        enable: True
+        Ascend: UpsampleLinear1DGradAscend
+
+#operator upsample_linear1d
+upsample_linear1d:
+    args:
+        x:
+            dtype: tensor
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+        align_corners:
+            dtype: bool
+            default: False
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleLinear1D
+    dispatch:
+        enable: True
+        Ascend: UpsampleLinear1DAscend
+
+#operator upsample_nearest1d_grad
+upsample_nearest1d_grad:
+    args:
+        dy:
+            dtype: tensor
+        input_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+    returns:
+        dx:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleNearest1DGrad
+    dispatch:
+        enable: True
+        Ascend: UpsampleNearest1DGradAscend
+
+#operator upsample_nearest1d
+upsample_nearest1d:
+    args:
+        x:
+            dtype: tensor
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleNearest1D
+    dispatch:
+        enable: True
+        Ascend: UpsampleNearest1DAscend
+
+#operator upsample_nearest2d_grad
+upsample_nearest2d_grad:
+    args:
+        dy:
+            dtype: tensor
+        input_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+    returns:
+        dx:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleNearest2DGrad
+    dispatch:
+        enable: True
+        Ascend: UpsampleNearest2DGradAscend
+
+#operator upsample_nearest2d
+upsample_nearest2d:
+    args:
+        x:
+            dtype: tensor
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleNearest2D
+    dispatch:
+        enable: True
+        Ascend: UpsampleNearest2DAscend
+
+#operator upsample_nearest3d_grad
+upsample_nearest3d_grad:
+    args:
+        dy:
+            dtype: tensor
+        input_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+    returns:
+        dx:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleNearest3DGrad
+    dispatch:
+        enable: True
+        Ascend: UpsampleNearest3DGradAscend
+
+#operator upsample_nearest3d
+upsample_nearest3d:
+    args:
+        x:
+            dtype: tensor
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleNearest3D
+    dispatch:
+        enable: True
+        Ascend: UpsampleNearest3DAscend
+
+#operator upsample_trilinear3d_grad
+upsample_trilinear3d_grad:
+    args:
+        dy:
+            dtype: tensor
+        input_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+        align_corners:
+            dtype: bool
+            default: False
+            prim_init: True
+    returns:
+        dx:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleTrilinear3DGrad
+    dispatch:
+        enable: True
+        Ascend: UpsampleTrilinear3DGradAscend
+
+#operator upsample_trilinear3d
+upsample_trilinear3d:
+    args:
+        x:
+            dtype: tensor
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            default: None
+        scales:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: None
+        align_corners:
+            dtype: bool
+            default: False
+            prim_init: True
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: UpsampleTrilinear3D
+    dispatch:
+        enable: True
+        Ascend: UpsampleTrilinear3DAscend
+
+#operator view
+view:
+  args:
+    input:
+      dtype: tensor
+    shape:
+      dtype: tuple[int]
+  returns:
+    output:
+      dtype: tensor
+  view: True
+  dispatch:
+    enable: False
+
+#operator weight_quant_batch_matmul
+weight_quant_batch_matmul:
+  args:
+    x:
+      dtype: tensor
+    weight:
+      dtype: tensor
+    antiquant_scale:
+      dtype: tensor
+    antiquant_offset:
+      dtype: tensor
+      default: None
+    quant_scale:
+      dtype: tensor
+      default: None
+    quant_offset:
+      dtype: tensor
+      default: None
+    bias:
+      dtype: tensor
+      default: None
+    transpose_x:
+      dtype: bool
+      default: false
+      prim_init: True
+    transpose_weight:
+      dtype: bool
+      default: false
+      prim_init: True
+    antiquant_group_size:
+      dtype: int
+      default: 0
+      prim_init: True
+  returns:
+    y:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: WeightQuantBatchMatmulV2Ascend
+#operator zeros_like_ext
+zeros_like_ext:
+    args:
+        input:
+            dtype: tensor
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: ZerosLikeExtAscend
+
+#operator zeros_like
+zeros_like:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+
+#operator zeros
+zeros:
+    args:
+        size:
+            dtype: tuple[int]
+            type_cast: int, list[int], tensor
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        y:
+            dtype: tensor
+    class:
+        disable: true
+    dispatch:
+        enable: True
+        Ascend: ZerosAscend
+

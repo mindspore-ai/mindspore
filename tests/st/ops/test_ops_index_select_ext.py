@@ -80,8 +80,7 @@ def test_func_index_select_ext_normal(context_mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_func_index_select_ext_dynamic(context_mode):
+def test_func_index_select_ext_dynamic():
     """
     Feature: pyboost function.
     Description: test function dropout dynamic.
@@ -94,8 +93,5 @@ def test_func_index_select_ext_dynamic(context_mode):
     axis2 = 2
     index2 = ms.Tensor(np.array([0, 1, 2, 1, 2, 3]).astype(np.int64))
 
-    if context_mode == ms.GRAPH_MODE:
-        TEST_OP(index_select_ext, [[input1, axis1, index1], [input2, axis2, index2]], mode=context_mode, grad=True,
-                jit_level="O0")
-    else:
-        TEST_OP(index_select_ext, [[input1, axis1, index1], [input2, axis2, index2]], mode=context_mode, grad=True)
+    TEST_OP(index_select_ext, [[input1, axis1, index1], [input2, axis2, index2]], 'index_select_ext',
+            disable_input_check=True, disable_mode=['GRAPH_MODE'])

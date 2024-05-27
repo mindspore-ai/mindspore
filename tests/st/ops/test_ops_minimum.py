@@ -64,14 +64,14 @@ def minimum_maximum_case_vmap(op_func):
     compare(output_vmap, expect)
 
 
-def minimum_maximum_case_all_dyn(op_func, mode):
+def minimum_maximum_case_all_dyn(op_func):
     t1_x = Tensor(np.array([[1, 20], [67, 8]], dtype=np.float32))
     t1_y = Tensor(np.array([[2, 10], [67, 9]], dtype=np.float32))
     input_case1 = [t1_x, t1_y]
     t2_x = Tensor(np.array([[[1, 20, 5], [67, 8, 9]], [[130, 24, 15], [16, 64, 32]]], dtype=np.float32))
     t2_y = Tensor(np.array([[[0, 20, 6], [69, 10, 9]], [[120, 20, 14], [16, 64, 36]]], dtype=np.float32))
     input_case2 = [t2_x, t2_y]
-    TEST_OP(op_func, [input_case1, input_case2], mode=mode)
+    TEST_OP(op_func, [input_case1, input_case2], '', disable_yaml_check=True)
 
 
 def np_minimum(input_x, input_y):
@@ -115,11 +115,10 @@ def test_minimum_vmap(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_minimum_all_dynamic(mode):
+def test_minimum_all_dynamic():
     """
     Feature: Test minimum op.
     Description: Test minimum with both input and axis are dynamic.
     Expectation: the result match with expected result.
     """
-    minimum_maximum_case_all_dyn(minimum, mode)
+    minimum_maximum_case_all_dyn(minimum)
