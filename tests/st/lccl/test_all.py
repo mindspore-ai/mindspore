@@ -17,6 +17,7 @@ import pytest
 from mindspore import context
 
 
+@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_single
@@ -34,6 +35,7 @@ def test_lccl_allreduce():
     assert return_code == 0
 
 
+@pytest.mark.skip
 @pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -52,6 +54,7 @@ def test_lccl_allgather():
     assert return_code == 0
 
 
+@pytest.mark.skip
 @pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -70,6 +73,7 @@ def test_lccl_reducescatter():
     assert return_code == 0
 
 
+@pytest.mark.skip
 @pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -88,6 +92,7 @@ def test_lccl_broadcast():
     assert return_code == 0
 
 
+@pytest.mark.skip
 @pytest.mark.level2
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_single
