@@ -54,7 +54,13 @@ Attention Mechanisms
 Non-linear activation functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.sigmoid
+    mindspore.mint.nn.functional.silu
 
 
 
