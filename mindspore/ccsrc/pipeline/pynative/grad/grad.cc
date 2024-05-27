@@ -54,6 +54,7 @@ const size_t kContainerRatio = 2;
 void ParsePyArgsToInputArgsInfo(const InputArgsInfoPtr &input_args_info, const py::object &obj, const py::args &args) {
   MS_EXCEPTION_IF_NULL(input_args_info);
   input_args_info->has_custom_bprop = py::hasattr(obj, parse::CUSTOM_BPROP_NAME);
+  MS_LOG(DEBUG) << "Cell has custom bprop " << input_args_info->has_custom_bprop;
   bool is_top_cell = input_args_info->is_grad_topest_cell || input_args_info->is_high_order_top_cell;
   if (is_top_cell || input_args_info->grad_is_running) {
     pipeline::CheckArgsValid(obj, args);
@@ -122,6 +123,7 @@ ValuePtr ConvertOutputValueToTensor(const ValuePtr &v, bool dict_convert_to_tupl
     // All value are tensor
     if (std::all_of(v_seq->value().begin(), v_seq->value().end(),
                     [](const ValuePtr &e) { return PyNativeAlgo::Common::IsTensor(e, true); })) {
+      MS_LOG(DEBUG) << "All output value is tensor";
       return v;
     }
     MS_LOG(DEBUG) << "Output is value sequence, but have tensor and other type mixed. Its value is " << v->ToString();
@@ -135,6 +137,7 @@ ValuePtr ConvertOutputValueToTensor(const ValuePtr &v, bool dict_convert_to_tupl
     int64_t input = v->cast<Int64ImmPtr>()->value();
     return std::make_shared<tensor::Tensor>(input, kInt64);
   } else if (v->isa<ValueDictionary>() && dict_convert_to_tuple) {
+    MS_LOG(DEBUG) << "Get dict value";
     return PyNativeAlgo::DataConvert::ConvertValueDictToValueTuple(v);
   } else {
     MS_LOG(DEBUG) << "Output is " << v->ToString() << ", abstract "
@@ -166,7 +169,7 @@ void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::R
   const auto &graph_params = graph->parameters();
   if (graph_params.size() < graph_param_size) {
     MS_LOG(EXCEPTION) << "Get initial bprop graph param size " << graph_param_size << " less than current param size "
-                      << graph_params.size();
+                      << graph_params.size() << ". Graph parameters maybe update by kernel graph compile stage";
   }
   std::vector<ValuePtr> input_arg_list;
   if (sens_type == SensType::kNormal) {
@@ -205,7 +208,7 @@ void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::R
       if (!param_ptr->has_default()) {
         MS_LOG(EXCEPTION) << "Parameter[" << i << "] has no default param, " << param_ptr->DebugString();
       }
-      if (!param_ptr->default_param()->isa<tensor::Tensor>()) {
+      if (!param_ptr->default_param()->isa<tensor::BaseTensor>()) {
         MS_LOG(EXCEPTION) << "Parameter[" << param_ptr->DebugString()
                           << "] is not initialized, need to call `.init_data()`";
       }
@@ -229,14 +232,14 @@ void SetSensValue(const prim::GradOperationPtr &grad, const InputArgsInfoPtr &in
   if (!grad->sens_param()) {
     return;
   }
-  MS_LOG(DEBUG) << "Get sens param";
   size_t forward_args_size = args.size() - 1;
   auto sens_v = PyNativeAlgo::DataConvert::PyObjToValue(args[forward_args_size]);
+  MS_LOG(DEBUG) << "Get sens param " << sens_v->ToString();
   const auto &sens_tensor = ConvertOutputValueToTensor(sens_v, dict_convert_to_tuple);
   if (sens_tensor == nullptr) {
     MS_LOG(EXCEPTION) << "sens convert tensor is nullptr";
   }
-  // Sens have already exist, which may be need update
+  // Sens have already existed, which may be need update
   MS_EXCEPTION_IF_NULL(input_args_info);
   if (input_args_info->input_arg_value_vec.size() == args.size()) {
     input_args_info->input_arg_value_vec.pop_back();
@@ -252,10 +255,10 @@ void SetSensValue(const prim::GradOperationPtr &grad, const InputArgsInfoPtr &in
 std::string GetWeightsObjIdsByWeights(const py::object &weights) {
   auto is_require_grad = [](const ValuePtr &value) {
     MS_EXCEPTION_IF_NULL(value);
-    if (!value->isa<tensor::Tensor>()) {
+    if (!value->isa<tensor::BaseTensor>()) {
       return false;
     }
-    auto t = value->cast<tensor::TensorPtr>();
+    auto t = value->cast<tensor::BaseTensorPtr>();
     MS_EXCEPTION_IF_NULL(t);
     if (t->is_parameter() && t->param_info() != nullptr && t->param_info()->requires_grad()) {
       return true;
@@ -321,14 +324,14 @@ void FreeSpecialOpValue(const std::string &op_name, const FrontendOpRunInfoPtr &
     //    so if y is a valuenode, the dy is useless, we can free x in ahead.
     bool x_is_const_value = PyNativeAlgo::Common::IsConstant(op_run_info->op_grad_info->input_value_grad_type[kIndex0]);
     bool y_is_const_value = PyNativeAlgo::Common::IsConstant(op_run_info->op_grad_info->input_value_grad_type[kIndex1]);
-    if (x_is_const_value && op_run_info->base_op_run_info.expanded_input_values[kIndex1]->isa<tensor::Tensor>()) {
-      op_run_info->op_grad_info->input_value[kIndex1] = PyNativeAlgo::Common::CreateFakeTensorWithoutDeviceAddress(
-        op_run_info->base_op_run_info.expanded_input_values[kIndex1]->cast<tensor::TensorPtr>());
+    if (x_is_const_value && op_run_info->base_op_run_info.expanded_input_values[kIndex1]->isa<tensor::BaseTensor>()) {
+      op_run_info->op_grad_info->input_value[kIndex1] = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(
+        op_run_info->base_op_run_info.expanded_input_values[kIndex1]);
       MS_LOG(DEBUG) << "Clear device address for inputs[1] of " << op_name;
     }
-    if (y_is_const_value && op_run_info->base_op_run_info.expanded_input_values[kIndex0]->isa<tensor::Tensor>()) {
-      op_run_info->op_grad_info->input_value[kIndex0] = PyNativeAlgo::Common::CreateFakeTensorWithoutDeviceAddress(
-        op_run_info->base_op_run_info.expanded_input_values[kIndex0]->cast<tensor::TensorPtr>());
+    if (y_is_const_value && op_run_info->base_op_run_info.expanded_input_values[kIndex0]->isa<tensor::BaseTensor>()) {
+      op_run_info->op_grad_info->input_value[kIndex0] = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(
+        op_run_info->base_op_run_info.expanded_input_values[kIndex0]);
       MS_LOG(DEBUG) << "Clear device address for inputs[0] of " << op_name;
     }
   } else if (kDivOp.find(op_name) != kDivOp.end()) {
@@ -748,6 +751,7 @@ void GradExecutor::EndGraphInner(const py::object &obj, const py::object &out, c
     if (input_args_info->is_need_recompute) {
       input_args_info->out_value = ConvertOutputValueToTensor(input_args_info->out_value, false);
     }
+    MS_LOG(DEBUG) << "Get cell output value " << input_args_info->out_value->ToString();
     EndGraphImpl(input_args_info);
   }
   PopInputArgsInfoStack();
@@ -1074,7 +1078,7 @@ void GradExecutor::GetPreRunTopCell(const prim::GradOperationPtr &grad, const py
   top_input_args_info_ = top_cell_->input_args_info();
 }
 
-void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
+void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::BaseTensorPtr> &w_args,
                                 const std::vector<size_t> &p_args) {
   // Get bprop graph of top cell
   auto bprop_graph = GetBpropGraph(grad_attr, w_args, p_args);
@@ -1109,15 +1113,15 @@ void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::
   resource->Clean();
 }
 
-std::vector<tensor::TensorPtr> GradExecutor::GetWeightsArgs(const py::object &weights,
-                                                            bool *weight_param_is_tuple) const {
-  std::vector<tensor::TensorPtr> w_args;
+std::vector<tensor::BaseTensorPtr> GradExecutor::GetWeightsArgs(const py::object &weights,
+                                                                bool *weight_param_is_tuple) const {
+  std::vector<tensor::BaseTensorPtr> w_args;
   if (py::hasattr(weights, "__parameter_tuple__")) {
     const auto &weights_tuple = weights.cast<py::tuple>();
     MS_LOG(DEBUG) << "Get weights tuple size " << weights_tuple.size();
     for (size_t i = 0; i < weights_tuple.size(); ++i) {
       const auto value = PyNativeAlgo::DataConvert::PyObjToValue(weights_tuple[i]);
-      auto tensor = value->cast<tensor::TensorPtr>();
+      auto tensor = value->cast<tensor::BaseTensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
       (void)w_args.emplace_back(tensor);
     }
@@ -1127,14 +1131,14 @@ std::vector<tensor::TensorPtr> GradExecutor::GetWeightsArgs(const py::object &we
       auto weights_tuple = py::cast<py::tuple>(weights);
       for (size_t i = 0; i < weights_tuple.size(); ++i) {
         const auto value = PyNativeAlgo::DataConvert::PyObjToValue(weights_tuple[i]);
-        auto tensor = value->cast<tensor::TensorPtr>();
+        auto tensor = value->cast<tensor::BaseTensorPtr>();
         MS_EXCEPTION_IF_NULL(tensor);
         (void)w_args.emplace_back(tensor);
       }
     } else if (!py::isinstance<py::none>(weights)) {
       // Single input
       const auto value = PyNativeAlgo::DataConvert::PyObjToValue(weights);
-      auto tensor = value->cast<tensor::TensorPtr>();
+      auto tensor = value->cast<tensor::BaseTensorPtr>();
       (void)w_args.emplace_back(tensor);
       MS_EXCEPTION_IF_NULL(tensor);
       *weight_param_is_tuple = false;
@@ -1145,8 +1149,8 @@ std::vector<tensor::TensorPtr> GradExecutor::GetWeightsArgs(const py::object &we
   return w_args;
 }
 
-std::vector<tensor::TensorPtr> GradExecutor::GetDefaultWeights() const {
-  std::vector<tensor::TensorPtr> w_args;
+std::vector<tensor::BaseTensorPtr> GradExecutor::GetDefaultWeights() const {
+  std::vector<tensor::BaseTensorPtr> w_args;
   for (const auto &params : top_cell()->param_grad_info()) {
     const auto &tensor = params.first;
     if (tensor->is_parameter()) {
@@ -1225,7 +1229,7 @@ void GradExecutor::UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args,
 }
 
 FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
-                                         const std::vector<tensor::TensorPtr> &w_args,
+                                         const std::vector<tensor::BaseTensorPtr> &w_args,
                                          const std::vector<size_t> &p_args) {
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
   const auto &auto_grad_cell = std::dynamic_pointer_cast<autograd::IrGrad>(top_cell()->auto_grad_cell_ptr());
@@ -1351,7 +1355,8 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
   return BaseRefToPyData(forward_run);
 }
 
-py::object GradExecutor::RunBackward(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
+py::object GradExecutor::RunBackward(const autograd::GradAttr &grad_attr,
+                                     const std::vector<tensor::BaseTensorPtr> &w_args,
                                      const std::vector<size_t> &p_args) {
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
   ValuePtr sens = nullptr;
@@ -1574,21 +1579,31 @@ void GradExecutor::ClearGradRes() {
 void GradExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear grad res";
   WaitBpropTask();
+  init_ = false;
   grad_flag_ = false;
+  enable_grad_ = true;
+  is_run_recompute_ = false;
+  save_graphs_ = false;
+  forward_use_dynamic_shape_process_ = false;
+
   grad_is_running_ = 0;
+  kernel_graph_id_for_control_flow_ = UINT32_MAX;
   custom_bprop_cell_count_ = 0;
+  obj_order_ = 0;
   grad_order_ = 0;
+  op_num_in_bprop_graph_ = kDefaultContainerSize;
+  grad_operation_.clear();
+
   top_cell_ = nullptr;
   top_input_args_info_ = nullptr;
   bprop_cell_list_.clear();
-  grad_operation_.clear();
   already_run_top_cell_.clear();
+  dynamic_inputs_cells_.clear();
   need_gc_top_cell_list_.clear();
-  dynamic_shape()->Clear();
   std::stack<InputArgsInfoPtr>().swap(input_args_info_stack_);
   std::stack<std::pair<std::string, bool>>().swap(bprop_grad_stack_);
   std::stack<TopCellInfoPtr>().swap(high_order_stack_);
-  forward_use_dynamic_shape_process_ = false;
+  dynamic_shape()->Clear();
 }
 
 void GradExecutor::AsyncClearTopCell() {
@@ -1656,14 +1671,14 @@ AnfNodePtr GradExecutor::GetParamInput(const ValuePtr &v, const std::string &id)
 
   // Get weight param input
   MS_EXCEPTION_IF_NULL(v);
-  if (v->isa<tensor::Tensor>() && v->cast<tensor::TensorPtr>()->is_parameter()) {
+  if (v->isa<tensor::BaseTensor>() && v->cast<tensor::BaseTensorPtr>()->is_parameter()) {
     const auto item_by_id = graph_info->weight_params.find(id);
     if (item_by_id != graph_info->weight_params.end()) {
       MS_LOG(DEBUG) << "Get weight param " << id;
       return item_by_id->second;
     }
     MS_LOG(DEBUG) << "Add new weight param " << id;
-    const auto &tensor = v->cast<tensor::TensorPtr>();
+    auto tensor = v->cast<tensor::BaseTensorPtr>();
     const auto &param_info = tensor->param_info();
     MS_EXCEPTION_IF_NULL(param_info);
     const auto &param_name = param_info->name();
@@ -1821,8 +1836,13 @@ void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) co
   top_cell()->GetOpInfo(op_run_info, false);
   UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out,
                                              op_run_info->base_op_run_info.stream_id);
-  auto node_info = std::make_shared<DynamicDetectNodeInfo>(
-    op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_abs, op_run_info->op_grad_info->out_abs);
+  DynamicDetectNodeInfoPtr node_info;
+  if (op_run_info->op_grad_info->output_value_simple_info != nullptr) {
+    node_info = std::make_shared<DynamicDetectNodeInfo>(op_run_info->op_grad_info->op_prim);
+  } else {
+    node_info = std::make_shared<DynamicDetectNodeInfo>(
+      op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_abs, op_run_info->op_grad_info->out_abs);
+  }
   CheckBpropCutNode(top_cell(), op_run_info->op_grad_info->op_prim);
   (void)dynamic_shape()->CheckNodeDynamic(top_cell(), op_run_info->op_grad_info->input_value, node_info);
 }
@@ -1955,7 +1975,12 @@ void GradExecutor::RecordForwardGraph(const FrontendOpRunInfoPtr &op_run_info) c
     }
     const auto &cnode = ConstructForwardGraph(op_run_info);
     MS_EXCEPTION_IF_NULL(cnode);
-    cnode->set_abstract(op_run_info->base_op_run_info.abstract);
+    // By simple infer, abstract is nullptr
+    if (op_run_info->base_op_run_info.abstract == nullptr) {
+      cnode->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_run_info->real_out->ToAbstract()));
+    } else {
+      cnode->set_abstract(op_run_info->base_op_run_info.abstract);
+    }
     SaveOutputNodeMap(op_run_info->out_value_id, op_run_info, cnode);
   }
 }
@@ -2005,8 +2030,8 @@ void GradExecutor::SaveInputTensorGradInfo(const InputArgsInfoPtr &input_args_in
 
 void GradExecutor::BackupInputTensorGradInfo(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>()) {
-    auto tensor_value = value->cast<tensor::TensorPtr>();
+  if (value->isa<tensor::BaseTensor>()) {
+    auto tensor_value = value->cast<tensor::BaseTensorPtr>();
     auto auto_grad_meta_data = tensor_value->auto_grad_meta_data();
     if (auto_grad_meta_data != nullptr) {
       top_cell()->AddParamGradInfo(tensor_value, auto_grad_meta_data);

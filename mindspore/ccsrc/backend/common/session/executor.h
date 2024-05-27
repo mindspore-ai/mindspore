@@ -92,8 +92,6 @@ class RunGraphTask : public Task {
   ~RunGraphTask() override = default;
   void Run() override;
   std::vector<tensor::TensorPtr> input_tensors_;
-  std::vector<tensor::TensorPtr> input_need_wait_tensors_;
-  std::vector<tensor::TensorPtr> input_need_lock_tensors_;
   VectorRef outputs_;
   GraphId graph_id_{0};
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node_;

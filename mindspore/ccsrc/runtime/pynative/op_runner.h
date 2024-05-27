@@ -31,20 +31,21 @@ struct OpRunnerInfo {
   const abstract::AbstractBasePtrList &inputs_abs;
   const std::vector<InputType> &inputs_mask;
   abstract::AbstractBasePtr output_abs;
+  ValueSimpleInfoPtr output_value_simple_info{nullptr};
 };
 
 class OpRunner {
  public:
   // Update Tensor or input node DeviceAddress before PyNative async running.
   static void UpdateDeviceAddress(const KernelGraphPtr &graph,
-                                  const std::vector<tensor::TensorPtr> &tensors_without_value_mask,
+                                  const std::vector<tensor::BaseTensorPtr> &tensors_without_value_mask,
                                   const device::DeviceContext *device_context);
 
   static void RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_run_info,
                                const OpCompilerInfoPtr &op_compiler_info,
-                               const std::vector<tensor::TensorPtr> &input_tensors);
+                               const std::vector<tensor::BaseTensorPtr> &input_tensors);
 
-  static std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const session::BackendOpRunInfoPtr &op_run_info);
+  static std::vector<tensor::BaseTensorPtr> GetTensorWithoutValueMask(const session::BackendOpRunInfoPtr &op_run_info);
   static void LaunchKernelTask(const runtime::KernelTaskType &task_type, DeviceContext *device_context,
                                const device::DeviceAddressPtrList &input_addr_list,
                                const device::DeviceAddressPtrList &output_addr_list, size_t stream_id);
@@ -55,12 +56,12 @@ class OpRunner {
 class DynamicOpRunner {
  public:
   static void UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compiler_info,
-                                       const std::vector<tensor::TensorPtr> &input_tensors, bool is_sync);
+                                       const std::vector<tensor::BaseTensorPtr> &input_tensors, bool is_sync);
   static void RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_run_info,
                                const OpCompilerInfoPtr &op_compiler_info,
-                               const std::vector<tensor::TensorPtr> &input_tensors);
+                               const std::vector<tensor::BaseTensorPtr> &input_tensors);
   static void CopyHostToDevice(const OpCompilerInfoPtr &op_compiler_info,
-                               const std::vector<tensor::TensorPtr> &input_tensors);
+                               const std::vector<tensor::BaseTensorPtr> &input_tensors);
 };
 }  // namespace mindspore::runtime
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_RUN_OP_RUN_OP_HELPER_H_

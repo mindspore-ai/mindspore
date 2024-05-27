@@ -56,7 +56,7 @@ std::array<DeviceContext *, kContextSize> kDeviceContexts = {nullptr, nullptr, n
 // 1. Device type is different in heterogeneous scenes.
 // 2. The device address format is different.
 void UpdateInputTensorFromDevice(const std::vector<AnfNodePtr> &input_nodes,
-                                 const std::vector<tensor::TensorPtr> &input_tensors,
+                                 const std::vector<tensor::BaseTensorPtr> &input_tensors,
                                  const device::DeviceContext *device_context) {
   MS_LOG(DEBUG) << "Start";
   auto input_size = input_nodes.size();
@@ -82,7 +82,7 @@ void UpdateInputTensorFromDevice(const std::vector<AnfNodePtr> &input_nodes,
   MS_LOG(DEBUG) << "End";
 }
 
-void UpdateParameterShapeFromInputTensor(const AnfNodePtr &input_node, const tensor::TensorPtr &input_tensor) {
+void UpdateParameterShapeFromInputTensor(const AnfNodePtr &input_node, const tensor::BaseTensorPtr &input_tensor) {
   MS_EXCEPTION_IF_NULL(input_node);
   if (input_tensor == nullptr || !input_node->isa<Parameter>()) {
     return;
@@ -100,7 +100,7 @@ void UpdateParameterShapeFromInputTensor(const AnfNodePtr &input_node, const ten
                                               input_node.get());
 }
 
-void SetDeviceAddress(const AnfNodePtr &input_node, const tensor::TensorPtr &input_tensor) {
+void SetDeviceAddress(const AnfNodePtr &input_node, const tensor::BaseTensorPtr &input_tensor) {
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
   auto node_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
@@ -123,7 +123,7 @@ void SetDeviceAddress(const AnfNodePtr &input_node, const tensor::TensorPtr &inp
 }
 
 void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
-                                  const std::vector<tensor::TensorPtr> &input_tensors) {
+                                  const std::vector<tensor::BaseTensorPtr> &input_tensors) {
   MS_LOG(DEBUG) << "Start";
   auto input_size = input_nodes.size();
   auto tensor_size = input_tensors.size();
@@ -148,7 +148,7 @@ void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
   MS_LOG(DEBUG) << "End";
 }
 
-void CopyTensorDataToDevice(const tensor::TensorPtr &tensor, const AnfNodePtr &node,
+void CopyTensorDataToDevice(const tensor::BaseTensorPtr &tensor, const AnfNodePtr &node,
                             const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(device_context);
@@ -170,7 +170,7 @@ void CopyTensorDataToDevice(const tensor::TensorPtr &tensor, const AnfNodePtr &n
   auto tensor_type = tensor->data_type();
   MS_LOG(DEBUG) << "Copy to device, node:" << common::AnfAlgo::GetNodeDebugString(node);
   if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), tensor_size, tensor_type,
-                                        tensor->device_info().host_format_, tensor->data_ptr())) {
+                                        "DefaultFormat", tensor->data_ptr())) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
 }
@@ -183,7 +183,7 @@ void CopyValueNodeDataToDevice(const KernelGraphPtr &graph, const device::Device
     MS_EXCEPTION_IF_NULL(value_node);
     const auto &node_value = value_node->value();
     MS_EXCEPTION_IF_NULL(node_value);
-    if (!node_value->isa<tensor::Tensor>() && !node_value->isa<ValueTuple>() && !node_value->isa<Scalar>() &&
+    if (!node_value->isa<tensor::BaseTensor>() && !node_value->isa<ValueTuple>() && !node_value->isa<Scalar>() &&
         !node_value->isa<StringImm>()) {
       MS_LOG(INFO) << "Unknown value node type:" << value_node->DebugString();
       continue;
@@ -201,7 +201,7 @@ void CopyValueNodeDataToDevice(const KernelGraphPtr &graph, const device::Device
   MS_LOG(DEBUG) << "End";
 }
 
-void UpdateAddressSizeForDynamicShapeTensor(const tensor::TensorPtr &input_tensor) {
+void UpdateAddressSizeForDynamicShapeTensor(const tensor::BaseTensorPtr &input_tensor) {
   MS_EXCEPTION_IF_NULL(input_tensor);
   if (input_tensor->base_shape_ptr() != nullptr) {
     auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
@@ -234,7 +234,7 @@ void CopyMapTensorDataToDevice(const tensor::MapTensorPtr &map_tensor, const Anf
 }
 
 void CopyParameterDataToDevice(const std::vector<AnfNodePtr> &input_nodes,
-                               const std::vector<tensor::TensorPtr> &input_tensors,
+                               const std::vector<tensor::BaseTensorPtr> &input_tensors,
                                const device::DeviceContext *device_context) {
   MS_LOG(DEBUG) << "Start";
   auto input_size = input_nodes.size();
@@ -482,7 +482,7 @@ std::vector<kernel::KernelTensor *> GetOutputKernelTensors(const std::shared_ptr
 }
 
 // Host to Device or Device to Host
-void CopyDataToDevice(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &input_tensors,
+void CopyDataToDevice(const KernelGraphPtr &graph, const std::vector<tensor::BaseTensorPtr> &input_tensors,
                       const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
   CopyValueNodeDataToDevice(graph, device_context);
@@ -557,29 +557,12 @@ void UpdateOutputShape(const std::vector<EdgePtr> &output_edges) {
   }
 }
 
-void FillHostInfoForInputTensor(const std::vector<tensor::TensorPtr> &input_tensors) {
-  MS_LOG(DEBUG) << "Start";
-
-  for (const auto &tensor : input_tensors) {
-    MS_EXCEPTION_IF_NULL(tensor);
-    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-    if (!device_address->kernel_tensor()->host_info_exist()) {
-      // The tensor from PyBoost output.
-      device_address->kernel_tensor()->SetHostInfo(std::make_shared<abstract::TensorShape>(tensor->shape()),
-                                                   std::make_shared<TensorType>(tensor->Dtype()), nullptr);
-    }
-  }
-}
-
 void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *device_context,
                    const session::BackendOpRunInfoPtr &op_run_info,
-                   const std::vector<tensor::TensorPtr> &input_tensors) {
+                   const std::vector<tensor::BaseTensorPtr> &input_tensors) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(DEBUG) << "Start";
-
-  // If node is dynamic, need to fill host info for kernel tensor.
-  bool need_refresh_host_info = true;
 
   // Get device address from OpRuntimeInfo
   const auto &execution_order = graph->execution_order();
@@ -594,12 +577,6 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
 
     if (!MallocForKernelInput(runtime_info, device_context, node)) {
       MS_LOG(EXCEPTION) << "Malloc for kernel input failed, Memory isn't enough, node:" << node->fullname_with_scope();
-    }
-
-    if (need_refresh_host_info && (is_dynamic_shape || is_dynamic_value)) {
-      // Host info is need when resize.
-      FillHostInfoForInputTensor(input_tensors);
-      need_refresh_host_info = false;
     }
 
     auto inputs = GetInputKernelTensors(runtime_info, node);
@@ -673,13 +650,12 @@ void UpdateOutputDeviceInfo(const std::vector<EdgePtr> &edges, const CNodePtr &k
     MS_EXCEPTION_IF_NULL(device_address);
     const auto &kernel_tensor = device_address->kernel_tensor();
     MS_EXCEPTION_IF_NULL(kernel_tensor);
-    device_address->set_host_shape(kernel_tensor->host_info_exist() ? kernel_tensor->GetShapeVector()
-                                                                    : kernel_tensor->host_shape());
+    device_address->set_host_shape(kernel_tensor->GetShapeVector());
     device_address->SetSize(output_size_list[i]);
   }
 }
 
-void UpdateInputTensorForHeterogeneous(const DeviceContext *device_context, const TensorPtr &input_tensor,
+void UpdateInputTensorForHeterogeneous(const DeviceContext *device_context, const tensor::BaseTensorPtr &input_tensor,
                                        const device::DeviceAddressPtr &cached_device_address) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(cached_device_address);
@@ -699,7 +675,7 @@ void UpdateInputTensorForHeterogeneous(const DeviceContext *device_context, cons
   }
 }
 
-void UpdateAddressInfoByInputTensor(const OpCompilerInfoPtr &op_compiler_info, const tensor::TensorPtr &tensor,
+void UpdateAddressInfoByInputTensor(const OpCompilerInfoPtr &op_compiler_info, const tensor::BaseTensorPtr &tensor,
                                     const EdgePtr &edge, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(node);
@@ -718,10 +694,6 @@ void UpdateAddressInfoByInputTensor(const OpCompilerInfoPtr &op_compiler_info, c
   MS_EXCEPTION_IF_NULL(kernel_tensor);
   auto new_kernel_tensor = kernel_tensor->CloneKernelTensor();
   MS_EXCEPTION_IF_NULL(new_kernel_tensor);
-  if (!new_kernel_tensor->host_info_exist()) {
-    new_kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(tensor->shape()),
-                                   std::make_shared<TensorType>(tensor->Dtype()), nullptr);
-  }
 
   new_kernel_tensor->SetShapeVector(shape);
   new_kernel_tensor->set_device_ptr(nullptr);
@@ -770,9 +742,10 @@ std::vector<kernel::KernelTensor *> GetOutputKernelTensors(const std::vector<Edg
 }
 }  // namespace
 
-std::vector<tensor::TensorPtr> OpRunner::GetTensorWithoutValueMask(const session::BackendOpRunInfoPtr &op_run_info) {
+std::vector<tensor::BaseTensorPtr> OpRunner::GetTensorWithoutValueMask(
+  const session::BackendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  std::vector<tensor::TensorPtr> tensors_without_value_node;
+  std::vector<tensor::BaseTensorPtr> tensors_without_value_node;
   const auto &input_values = op_run_info->base_op_run_info.expanded_input_values;
   const auto &input_masks = op_run_info->base_op_run_info.input_types;
   if (input_values.size() != input_masks.size()) {
@@ -780,12 +753,13 @@ std::vector<tensor::TensorPtr> OpRunner::GetTensorWithoutValueMask(const session
                       << input_masks.size();
   }
   for (size_t index = 0; index < input_masks.size(); ++index) {
+    runtime::DeviceAddressUtils::CreateKernelTensor(input_values[index]);
     if (input_masks.at(index) != InputType::kConstant) {
-      if (!input_values[index]->isa<tensor::Tensor>()) {
+      if (!input_values[index]->isa<tensor::BaseTensor>()) {
         MS_LOG(EXCEPTION) << "The " << index << "' input shoulde be a Tensor, but got "
                           << input_values[index]->ToString();
       }
-      (void)tensors_without_value_node.emplace_back(input_values.at(index)->cast<tensor::TensorPtr>());
+      (void)tensors_without_value_node.emplace_back(input_values.at(index)->cast<tensor::BaseTensorPtr>());
     }
   }
   return tensors_without_value_node;
@@ -793,7 +767,7 @@ std::vector<tensor::TensorPtr> OpRunner::GetTensorWithoutValueMask(const session
 
 // Determine the address of the graph and do not change the address in subsequent executions
 void OpRunner::UpdateDeviceAddress(const KernelGraphPtr &graph,
-                                   const std::vector<tensor::TensorPtr> &tensors_without_value_mask,
+                                   const std::vector<tensor::BaseTensorPtr> &tensors_without_value_mask,
                                    const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(DEBUG) << "Start";
@@ -806,7 +780,7 @@ void OpRunner::UpdateDeviceAddress(const KernelGraphPtr &graph,
 
 void OpRunner::RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_run_info,
                                 const OpCompilerInfoPtr &op_compiler_info,
-                                const std::vector<tensor::TensorPtr> &input_tensors) {
+                                const std::vector<tensor::BaseTensorPtr> &input_tensors) {
   CopyDataToDevice(op_compiler_info->graph_, input_tensors, op_compiler_info->device_context_);
   LaunchKernels(op_compiler_info->graph_, op_compiler_info->device_context_, op_run_info, input_tensors);
 }
@@ -858,7 +832,7 @@ void OpRunner::ChildAfterFork() {
 
 void DynamicOpRunner::RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_run_info,
                                        const OpCompilerInfoPtr &op_compiler_info,
-                                       const std::vector<tensor::TensorPtr> &input_tensors) {
+                                       const std::vector<tensor::BaseTensorPtr> &input_tensors) {
   DynamicOpRunner::CopyHostToDevice(op_compiler_info, input_tensors);
   MallocForConstValue(op_compiler_info);
 
@@ -935,7 +909,7 @@ void DynamicOpRunner::RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_ru
 }
 
 void DynamicOpRunner::UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compiler_info,
-                                               const std::vector<tensor::TensorPtr> &input_tensors, bool is_sync) {
+                                               const std::vector<tensor::BaseTensorPtr> &input_tensors, bool is_sync) {
   MS_LOG(DEBUG) << "Start update input device address for " << op_compiler_info->graph_info_;
   const auto &simple_graph = op_compiler_info->simple_graph_;
   auto input_tensors_num = input_tensors.size();
@@ -958,13 +932,6 @@ void DynamicOpRunner::UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compi
     const auto &input_node = input_edge->node_with_index_.first;
     common::AnfAlgo::SetOutputInferTypeAndShape({input_tensor->data_type()}, {input_tensor->shape()}, input_node.get());
     if (device_address != nullptr) {
-      const auto &kernel_tensor = device_address->kernel_tensor();
-      if (!kernel_tensor->host_info_exist()) {
-        // The tensor from PyBoost output.
-        kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(input_tensor->shape()),
-                                   std::make_shared<TensorType>(input_tensor->Dtype()), nullptr);
-      }
-
       if (device_address->GetTensorStorageInfo() != nullptr) {
         auto new_device_address =
           DeviceAddressUtils::ConvertContiguousDeviceAddress(device_context, device_address, is_sync);
@@ -988,7 +955,7 @@ void DynamicOpRunner::UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compi
 }
 
 void DynamicOpRunner::CopyHostToDevice(const OpCompilerInfoPtr &op_compiler_info,
-                                       const std::vector<tensor::TensorPtr> &input_tensors) {
+                                       const std::vector<tensor::BaseTensorPtr> &input_tensors) {
   const auto &input_edges = op_compiler_info->simple_graph_->inputs_;
   auto input_tensors_num = input_tensors.size();
   auto input_edge_num = input_edges.size();
@@ -1028,8 +995,7 @@ void DynamicOpRunner::CopyHostToDevice(const OpCompilerInfoPtr &op_compiler_info
                         << ", alloc size: " << device_address->GetSize() << "B.";
     }
     if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(input_node, 0), device_address->GetSize(),
-                                          device_address->type_id(), input_tensor->device_info().host_format_,
-                                          input_tensor->data_ptr())) {
+                                          device_address->type_id(), "DefaultFormat", input_tensor->data_ptr())) {
       MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
     }
     MS_LOG(DEBUG) << "Copy host tensor to device for op " << op_compiler_info->graph_info_ << " input " << i;

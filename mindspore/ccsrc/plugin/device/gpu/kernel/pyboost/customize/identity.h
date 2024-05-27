@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr IdentityGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor);
+tensor::BaseTensorPtr IdentityGPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

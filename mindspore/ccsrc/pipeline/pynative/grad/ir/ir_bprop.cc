@@ -89,8 +89,8 @@ bool ProcessMonadNode(const PrimitivePtr &prim, const CNodePtr &cnode, const Gra
 }
 
 void ClearGradMetaData(const ValuePtr &value) {
-  if (value->isa<tensor::Tensor>()) {
-    auto tensor = value->cast<tensor::TensorPtr>();
+  if (value->isa<tensor::BaseTensor>()) {
+    auto tensor = value->cast<tensor::BaseTensorPtr>();
     tensor->set_auto_grad_meta_data(nullptr);
   } else if (value->isa<ValueSequence>()) {
     auto value_sequence = value->cast<ValueSequencePtr>();
@@ -108,7 +108,7 @@ void ClearGradMetaData(const ValuePtr &value) {
 // din: CNodePtr with gradient of input.
 // tape: Funcgraph witch input and din belong to.
 // return: New din with inserted real op if necessarily.
-AnfNodePtr HandleRealToComplex(const tensor::TensorPtr &input, const AbstractBasePtr &abs, const AnfNodePtr &din,
+AnfNodePtr HandleRealToComplex(const tensor::BaseTensorPtr &input, const AbstractBasePtr &abs, const AnfNodePtr &din,
                                const KernelGraphPtr &tape) {
   MS_EXCEPTION_IF_NULL(din);
   TypePtr din_type = din->Type();
@@ -185,7 +185,7 @@ void IrBprop::BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &p
       fn = GetBpropFunction(prim->name());
     }
     if (!fn || py::isinstance<py::none>(fn)) {
-      MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << py::str(fn);
+      MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << ConvertPyObjToString(fn);
       return;
     }
     (void)prim_py->AddBackwardHookFn(0, fn);
@@ -230,8 +230,8 @@ void IrBprop::BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim
 }
 
 AnfNodePtr IrBprop::MapParameter(const ValuePtr &value, const abstract::AbstractBasePtr &abs) {
-  if (value->isa<tensor::Tensor>()) {
-    const auto &tensor = value->cast<tensor::TensorPtr>();
+  if (value->isa<tensor::BaseTensor>()) {
+    const auto &tensor = value->cast<tensor::BaseTensorPtr>();
     const auto &auto_grad_meta_data = tensor->auto_grad_meta_data();
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
     const auto &param = auto_grad_meta_data->parameter();
@@ -276,7 +276,7 @@ AnfNodePtr IrBprop::MapParameter(const ValuePtr &value, const abstract::Abstract
   }
 }
 
-ParameterPtr IrBprop::AddParameterNode(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs) {
+ParameterPtr IrBprop::AddParameterNode(const tensor::BaseTensorPtr &tensor, const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(tensor);
   auto param = CreateTapeParameter(tensor, abs);
   auto zeros_like_dout = PyNativeAlgo::AutoGrad::BuildSpecialNode(
@@ -291,7 +291,7 @@ ParameterPtr IrBprop::AddParameterNode(const tensor::TensorPtr &tensor, const ab
   return param;
 }
 
-ParameterPtr IrBprop::CreateTapeParameter(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs) {
+ParameterPtr IrBprop::CreateTapeParameter(const tensor::BaseTensorPtr &tensor, const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(abs);
   auto param = ad_param_->fg_->add_parameter();
@@ -347,6 +347,7 @@ void IrBprop::BackPropagate() {
   UpdateLazyUser();
   const auto &last_node_reverse_iter = GetLastNodeReverseIter();
   SeenNum seen = NewSeenGeneration();
+  MS_LOG(DEBUG) << "Is running recompute grad " << is_run_recompute_;
   for (auto iter = last_node_reverse_iter; iter != ad_param_->variable_adjoint_set_.rend(); ++iter) {
     const auto &variable = *iter;
     if (!variable->is_need_propagate() || !variable->is_need_grad()) {
@@ -400,8 +401,8 @@ AbstractBasePtr IrBprop::BuildForwardLastNode() {
                                                                   SpecialType::kZerosLikeType);
   auto fn = std::make_shared<IrFunctionNode>(ad_param_->tape_, zeros_like_node);
   auto sens_variable = std::make_shared<IrVariable>(fn, ad_param_->sens_value_);
-  if (ad_param_->sens_value_->isa<tensor::Tensor>()) {
-    const auto &sens_tensor = ad_param_->sens_value_->cast<tensor::TensorPtr>();
+  if (ad_param_->sens_value_->isa<tensor::BaseTensor>()) {
+    const auto &sens_tensor = ad_param_->sens_value_->cast<tensor::BaseTensorPtr>();
     const auto &auto_grad_meta_data = sens_tensor->auto_grad_meta_data();
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
     if (PyNativeAlgo::Common::IsConstant(auto_grad_meta_data->input_type())) {
@@ -668,8 +669,8 @@ ValuePtrList IrBprop::GetInputArgs(const CNodePtr &cnode, AnfNodePtrList *cnode_
     if (input_node->isa<ValueNode>()) {
       auto v_node = input_node->cast<ValueNodePtr>();
       auto v = v_node->value();
-      if (v != nullptr && v->isa<tensor::Tensor>()) {
-        const auto &t = v->cast<tensor::TensorPtr>();
+      if (v != nullptr && v->isa<tensor::BaseTensor>()) {
+        const auto &t = v->cast<tensor::BaseTensorPtr>();
         const auto &grad_meta = t->auto_grad_meta_data();
         // Jit forward graph has no parameters(input is tuple or constant), so input used in graph as valuenode, but it
         // is used by tape_ as parameter also
@@ -931,8 +932,9 @@ void IrBprop::UpdateNextEdge(const IrFunctionNodePtr &fn, const AnfNodePtr &din,
                              const AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(din);
   MS_EXCEPTION_IF_NULL(input_arg);
-  if (input_arg->isa<tensor::Tensor>()) {
-    const auto &input_tensor = input_arg->cast<tensor::TensorPtr>();
+  if (input_arg->isa<tensor::BaseTensor>()) {
+    tensor::BaseTensorPtr input_tensor = nullptr;
+    input_tensor = input_arg->cast<tensor::BaseTensorPtr>();
     auto auto_grad_meta_data = input_tensor->auto_grad_meta_data();
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
     auto variable = auto_grad_meta_data->variable();
@@ -978,7 +980,7 @@ void IrBprop::UpdateNextEdge(const IrFunctionNodePtr &fn, const AnfNodePtr &din,
 }
 
 AnfNodePtr IrBprop::TraceInput(const IrFunctionNodePtr &fn, const ValuePtr &out_value,
-                               const abstract::AbstractBasePtr &out_abs, const TensorPtr &input_tensor,
+                               const abstract::AbstractBasePtr &out_abs, const tensor::BaseTensorPtr &input_tensor,
                                const AnfNodePtr &din) {
   MS_EXCEPTION_IF_NULL(out_value);
   MS_EXCEPTION_IF_NULL(out_abs);
@@ -986,9 +988,9 @@ AnfNodePtr IrBprop::TraceInput(const IrFunctionNodePtr &fn, const ValuePtr &out_
   MS_EXCEPTION_IF_NULL(din);
 
   // The node corresponding output tensor is the same as the currently used tensor
-  if (out_value->isa<tensor::Tensor>()) {
+  if (out_value->isa<tensor::BaseTensor>()) {
     // out_value is be used, may be it is one of multiple output
-    auto out_tensor = out_value->cast<tensor::TensorPtr>();
+    auto out_tensor = out_value->cast<tensor::BaseTensorPtr>();
     if (input_tensor->id() == out_tensor->id()) {
       return din;
     }
@@ -1028,8 +1030,8 @@ AnfNodePtr IrBprop::TraceInput(const IrFunctionNodePtr &fn, const ValuePtr &out_
 }
 
 AnfNodePtr IrBprop::TraceInputForDict(const IrFunctionNodePtr &fn, const ValuePtr &out_value,
-                                      const abstract::AbstractBasePtr &out_abs, const tensor::TensorPtr &input_tensor,
-                                      const AnfNodePtr &din) {
+                                      const abstract::AbstractBasePtr &out_abs,
+                                      const tensor::BaseTensorPtr &input_tensor, const AnfNodePtr &din) {
   // The corresponding output of node is ValueDictionary, but used one of it
   AnfNodePtrList key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   AnfNodePtrList value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
