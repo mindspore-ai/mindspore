@@ -80,9 +80,8 @@ void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &
  * Description: Load and read data for the given node if needed. Dump the node if dump is enabled and free the loaded
  * memory after the dump (for GPU and ascend kernel-by-kernel).
  */
-void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info,
-                       const std::vector<KernelTensor *> &op_input_kernel_tensors,
-                       const std::vector<KernelTensor *> &op_output_kernel_tensors, const DeviceContext *device_context,
+void DebugActor::Debug(const AnfNodePtr &node, const std::vector<DeviceTensor *> &input_device_tensors,
+                       const std::vector<DeviceTensor *> &output_device_tensors, const DeviceContext *device_context,
                        OpContext<DeviceTensor> *const op_context, const AID *) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
@@ -96,7 +95,9 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(DEBUG) << "kernel by kernel debug for node: " << cnode->fullname_with_scope() << ".";
   if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
-    AscendKbkDump(cnode, launch_info, op_input_kernel_tensors, op_output_kernel_tensors, device_context);
+#ifdef ENABLE_DEBUGGER
+    AscendKbkDump(cnode, input_device_tensors, output_device_tensors, device_context);
+#endif
   } else if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
 #ifndef ENABLE_SECURITY
     if (DumpJsonParser::GetInstance().op_debug_mode() == DumpJsonParser::DUMP_LITE_EXCEPTION) {
@@ -124,8 +125,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
       debugger->SetCurNode(kernel_name);
       bool read_data = CheckReadData(cnode);
       if (read_data) {
-        ReadDataAndDump(cnode, launch_info, op_input_kernel_tensors, op_output_kernel_tensors, exec_order_,
-                        device_context);
+        ReadDataAndDump(cnode, input_device_tensors, output_device_tensors, exec_order_, device_context);
       }
     }
     exec_order_ += 1;
@@ -140,11 +140,10 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
  * Description: Dump data for the given node if needed. It can be normal dump and overflow dump and exception dump
  * (ascend kernel-by-kernel e2e dump).
  */
-void DebugActor::AscendKbkDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info,
-                               const std::vector<KernelTensor *> &input_kernel_tensors,
-                               const std::vector<KernelTensor *> &output_kernel_tensors,
-                               const DeviceContext *device_context) {
 #ifdef ENABLE_DEBUGGER
+void DebugActor::AscendKbkDump(const CNodePtr &cnode, const std::vector<DeviceTensor *> &input_device_tensors,
+                               const std::vector<DeviceTensor *> &output_device_tensors,
+                               const DeviceContext *device_context) {
   auto debugger = Debugger::GetInstance();
   if (debugger != nullptr) {
     auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
@@ -163,7 +162,7 @@ void DebugActor::AscendKbkDump(const CNodePtr &cnode, const KernelLaunchAddr *la
         MS_LOG(ERROR) << "Sync stream error! The node input will be dumped";
       }
     } else if (dump_json_parser.op_debug_mode() == DumpJsonParser::DUMP_BOTH_OVERFLOW) {
-      auto is_overflow = CheckOverflow(device_context, output_kernel_tensors);
+      auto is_overflow = CheckOverflow(device_context, output_device_tensors);
       if (is_overflow) {
         read_data = CheckReadData(cnode);
       }
@@ -171,16 +170,15 @@ void DebugActor::AscendKbkDump(const CNodePtr &cnode, const KernelLaunchAddr *la
       read_data = CheckReadData(cnode);
     }
     if ((read_data && dump_json_parser.e2e_dump_enabled()) || !sync_ok) {
-      ReadDataAndDump(cnode, launch_info, input_kernel_tensors, output_kernel_tensors, exec_order_, device_context,
-                      abnormal_dump);
+      ReadDataAndDump(cnode, input_device_tensors, output_device_tensors, exec_order_, device_context, abnormal_dump);
       if (!sync_ok) {
         MS_LOG(EXCEPTION) << "Sync stream error!";
       }
     }
   }
   exec_order_ += 1;
-#endif
 }
+#endif
 /*
  * Feature group: Dump, Online debugger.
  * Target device group: Ascend, GPU.
@@ -309,13 +307,14 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
 #endif
 }
 
-bool DebugActor::CheckOverflow(const DeviceContext *device_context, const std::vector<KernelTensor *> &inputs) {
+bool DebugActor::CheckOverflow(const DeviceContext *device_context, const std::vector<DeviceTensor *> &inputs) {
   std::vector<KernelTensor *> check_kernel_tensors;
   for (size_t i = 0; i < inputs.size(); i++) {
-    auto types = inputs[i]->dtype_id();
-    if (types == mindspore::kNumberTypeFloat16 || types == mindspore::kNumberTypeFloat32 ||
-        types == mindspore::kNumberTypeBFloat16) {
-      check_kernel_tensors.push_back(inputs[i]);
+    auto input = inputs[i]->kernel_tensor().get();
+    auto type = input->dtype_id();
+    if (type == mindspore::kNumberTypeFloat16 || type == mindspore::kNumberTypeFloat32 ||
+        type == mindspore::kNumberTypeBFloat16) {
+      check_kernel_tensors.emplace_back(input);
     }
   }
   if (check_kernel_tensors.empty()) {

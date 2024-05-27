@@ -78,6 +78,8 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static std::string GetPrevNodeOutputReshapeType(const AnfNodePtr &node, size_t input_idx);
   // get output shapes which will built and run in device
   static std::vector<int64_t> GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx);
+  // get output shapes which will built and run in device when dynamic shape
+  static std::vector<int64_t> GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx, ShapeVector real_shape);
   // get input shapes which will built and run in device
   static std::vector<int64_t> GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx);
   // get output shapes for tbe build
