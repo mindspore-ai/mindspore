@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_UTILS_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_UTILS_H_
 
+#include <string>
 #include "kernel/kernel.h"
 #include "./internal_kernel.h"
 
@@ -25,6 +26,7 @@ class InternalKernelUtils {
  public:
   static internal::TensorFormat ToInternalFormat(Format format);
   static internal::TensorDType ToInternalDType(TypeId type);
+  static int ToInternalOpId(std::string);
   static void ToInternalTensor(internal::Tensor *internal_tensor, const KernelTensor *kernel_tensor);
 
   static internal::DeviceRawBuf ToDeviceRawBuf(const KernelTensor *kernel_tensor);

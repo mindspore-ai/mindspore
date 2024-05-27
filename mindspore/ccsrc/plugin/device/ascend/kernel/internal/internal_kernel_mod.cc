@@ -18,6 +18,7 @@
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 #include "acl/acl_rt.h"
 
 namespace mindspore {
@@ -36,18 +37,6 @@ InternalKernelMod::~InternalKernelMod() {
 int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto param = CreateOpParam(inputs, outputs);
 
-  for (size_t i = 0; i < inputs.size(); i++) {
-    param->in_dtypes_.push_back(InternalKernelUtils::ToInternalDType(inputs[i]->dtype_id()));
-  }
-  for (size_t i = 0; i < outputs.size(); i++) {
-    param->out_dtypes_.push_back(InternalKernelUtils::ToInternalDType(outputs[i]->dtype_id()));
-  }
-
-  impl_ = internal::CreateInternalKernelImpl(param);
-  if (impl_ == nullptr) {
-    return 1;
-  }
-
   // abstract validation info from inputs
   internal::ValidateInfo info;
   info.input_num_ = inputsIdxMap_.size();
@@ -55,12 +44,20 @@ int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const st
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
     info.input_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(inputs[iter->first]->dtype_id()));
     info.input_format_.emplace_back(InternalKernelUtils::ToInternalFormat(inputs[iter->first]->format()));
+    param->out_dtypes_.emplace_back(InternalKernelUtils::ToInternalDType(inputs[iter->first]->dtype_id()));
   }
 
   for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
     info.output_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(outputs[iter->first]->dtype_id()));
     info.output_format_.emplace_back(InternalKernelUtils::ToInternalFormat(outputs[iter->first]->format()));
+    param->in_dtypes_.emplace_back(InternalKernelUtils::ToInternalDType(outputs[iter->first]->dtype_id()));
   }
+
+  impl_ = internal::CreateInternalKernelImpl(param);
+  if (impl_ == nullptr) {
+    return 1;
+  }
+
   if (!impl_->Init(info)) {
     MS_LOG(ERROR) << "Internal Op '" << kernel_name_ << "' is initialized FAILED.";
     return 1;
@@ -91,6 +88,32 @@ void InternalKernelMod::SetTilingInfo(const uint64_t key) {
   tiling_info_ = TilingCacheMgr::GetInstance().GetOrCreateTilingInfo(key, tiling_func, tiling_size);
   impl_->SetCacheInfo(tiling_info_.cache_info_);
   impl_->SetDeviceTilingBuf(tiling_info_.device_buf_);
+}
+
+void InternalKernelMod::SetInOutIdx(size_t in_count, size_t out_count) {
+  bool input_mutable = false;
+  auto in_idx_list = InternalKernelModInOutMap::GetInstance()->GetKernelInMap(op_type_, &input_mutable);
+  if (input_mutable) {
+    for (size_t i = 0; i < in_count; i++) {
+      inputsIdxMap_[i] = i;
+    }
+  } else {
+    for (size_t i = 0; i < in_idx_list.size(); i++) {
+      inputsIdxMap_[in_idx_list.at(i)] = i;
+    }
+  }
+
+  bool output_mutable = false;
+  auto out_idx_list = InternalKernelModInOutMap::GetInstance()->GetKernelOutMap(op_type_, &output_mutable);
+  if (output_mutable) {
+    for (size_t i = 0; i < out_count; i++) {
+      outputsIdxMap_[i] = i;
+    }
+  } else {
+    for (size_t i = 0; i < out_idx_list.size(); i++) {
+      outputsIdxMap_[out_idx_list.at(i)] = i;
+    }
+  }
 }
 
 bool InternalKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
