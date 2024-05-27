@@ -116,6 +116,12 @@ class GraphAnalyzer {
   std::vector<int> alive_locals_;
 
  private:
+  // optimize
+  void OptimizeSideEffectRecord() const;
+
+  // rollback
+  void ResetSideEffectRecord() const;
+
   bool AnalyzeRecursive(Graph *g);
   bool AnalyzeCall(CallNode *);
   bool TryToCapture(AbstractNode *value);
