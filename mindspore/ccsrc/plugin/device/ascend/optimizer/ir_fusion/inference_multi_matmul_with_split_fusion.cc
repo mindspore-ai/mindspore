@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/ir_fusion/multi_matmuls_split_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/inference_multi_matmul_with_split_fusion.h"
 #include <vector>
 #include "kernel/kernel_build_info.h"
 #include "include/common/utils/utils.h"
