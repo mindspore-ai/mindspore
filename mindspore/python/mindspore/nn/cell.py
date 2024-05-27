@@ -1946,11 +1946,11 @@ class Cell(Cell_):
         Note:
             - The `register_forward_pre_hook(hook_fn)` does not work in graph mode or functions decorated with 'jit'.
             - 'hook_fn' must be defined as the following code.
-              `cell_id` is the information of registered Cell object, including name and ID. `inputs` is the forward
+              `cell` is the object of registered Cell. `inputs` is the forward
               input objects passed to the Cell. The 'hook_fn' can modify the forward input objects by returning new
               forward input objects.
             - It should have the following signature:
-              hook_fn(cell_id, inputs) -> new input objects or none.
+              hook_fn(cell, inputs) -> new input objects or none.
             - In order to prevent running failed when switching to graph mode, it is not recommended to write it in the
               `construct` function of Cell object. In the pynative mode, if the `register_forward_pre_hook` function is
               called in the `construct` function of the Cell object, a hook function will be added at each run time of
@@ -1974,7 +1974,7 @@ class Cell(Cell_):
             >>> import mindspore as ms
             >>> from mindspore import Tensor, nn, ops
             >>> ms.set_context(mode=ms.PYNATIVE_MODE)
-            >>> def forward_pre_hook_fn(cell_id, inputs):
+            >>> def forward_pre_hook_fn(cell, inputs):
             ...     print("forward inputs: ", inputs)
             ...
             >>> class Net(nn.Cell):
@@ -2020,9 +2020,8 @@ class Cell(Cell_):
         Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
         """
-        cell_id = self.cls_name + "(" + str(id(self)) + ")"
         for fn in self._forward_pre_hook.values():
-            ret = fn(cell_id, inputs)
+            ret = fn(self, inputs)
             if ret is not None:
                 if not isinstance(ret, tuple):
                     inputs = (ret,)
@@ -2037,11 +2036,11 @@ class Cell(Cell_):
         Note:
             - The `register_forward_hook(hook_fn)` does not work in graph mode or functions decorated with 'jit'.
             - 'hook_fn' must be defined as the following code.
-              `cell_id` is the information of registered Cell object, including name and ID. `inputs` is the forward
+              `cell` is the object of registered Cell. `inputs` is the forward
               input objects passed to the Cell. `output` is the forward output object of the Cell. The 'hook_fn' can
               modify the forward output object by returning new forward output object.
             - It should have the following signature:
-              hook_fn(cell_id, inputs, output) -> new output object or none.
+              hook_fn(cell, inputs, output) -> new output object or none.
             - In order to prevent running failed when switching to graph mode, it is not recommended to write it in the
               `construct` function of Cell object. In the pynative mode, if the `register_forward_hook` function is
               called in the `construct` function of the Cell object, a hook function will be added at each run time of
@@ -2065,7 +2064,7 @@ class Cell(Cell_):
             >>> import mindspore as ms
             >>> from mindspore import Tensor, nn, ops
             >>> ms.set_context(mode=ms.PYNATIVE_MODE)
-            >>> def forward_hook_fn(cell_id, inputs, output):
+            >>> def forward_hook_fn(cell, inputs, output):
             ...     print("forward inputs: ", inputs)
             ...     print("forward output: ", output)
             ...
@@ -2114,9 +2113,8 @@ class Cell(Cell_):
         Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
         """
-        cell_id = self.cls_name + "(" + str(id(self)) + ")"
         for fn in self._forward_hook.values():
-            ret = fn(cell_id, inputs, output)
+            ret = fn(self, inputs, output)
             if ret is not None:
                 output = ret
         return output

@@ -53,8 +53,6 @@ std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr> GridSampler2DGradAscend
     std::make_shared<runtime::PyBoostDeviceTask>([op, grad_tensor, input_x_tensor, grid_tensor, interpolation_mode_imm,
                                                   padding_mode_imm, align_corners_imm, op_name]() {
       MS_LOG(DEBUG) << "Run device task " << op_name << " end";
-      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
-                                         op_name, false);
       auto device_context = op->device_context();
       // Malloc for input tensors
       PyBoostUtils::MallocOpInputs(device_context, grad_tensor, input_x_tensor, grid_tensor);

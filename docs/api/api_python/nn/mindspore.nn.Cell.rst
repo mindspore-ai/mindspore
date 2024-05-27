@@ -374,8 +374,8 @@
 
         .. note::
             - `register_forward_hook(hook_fn)` 在图模式下，或者在PyNative模式下使用 `jit` 装饰器功能时不起作用。
-            - hook_fn必须有如下代码定义。 `cell_id` 是已注册Cell对象的信息，包括名称和ID。 `inputs` 是网络正向传播时Cell对象的输入数据。 `outputs` 是网络正向传播时Cell对象的输出数据。用户可以在hook_fn中打印数据或者返回新的输出数据。
-            - hook_fn返回新的输出数据或者None：hook_fn(cell_id, inputs, outputs) -> New outputs or None。
+            - hook_fn必须有如下代码定义。 `cell` 是已注册Cell对象。 `inputs` 是网络正向传播时Cell对象的输入数据。 `outputs` 是网络正向传播时Cell对象的输出数据。用户可以在hook_fn中打印数据或者返回新的输出数据。
+            - hook_fn返回新的输出数据或者None：hook_fn(cell, inputs, outputs) -> New outputs or None。
             - 为了避免脚本在切换到图模式时运行失败，不建议在Cell对象的 `construct` 函数中调用 `register_forward_hook(hook_fn)` 。
             - PyNative模式下，如果在Cell对象的 `construct` 函数中调用 `register_forward_hook(hook_fn)` ，那么Cell对象每次运行都将增加一个 `hook_fn` 。
 
@@ -394,8 +394,8 @@
 
         .. note::
             - `register_forward_pre_hook(hook_fn)` 在图模式下，或者在PyNative模式下使用 `jit` 装饰器功能时不起作用。
-            - hook_fn必须有如下代码定义。 `cell_id` 是已注册Cell对象的信息，包括名称和ID。 `inputs` 是网络正向传播时Cell对象的输入数据。用户可以在hook_fn中打印输入数据或者返回新的输入数据。
-            - hook_fn返回新的输入数据或者None：hook_fn(cell_id, inputs) -> New inputs or None。
+            - hook_fn必须有如下代码定义。 `cell` 是已注册Cell对象。 `inputs` 是网络正向传播时Cell对象的输入数据。用户可以在hook_fn中打印输入数据或者返回新的输入数据。
+            - hook_fn返回新的输入数据或者None：hook_fn(cell, inputs) -> New inputs or None。
             - 为了避免脚本在切换到图模式时运行失败，不建议在Cell对象的 `construct` 函数中调用 `register_forward_pre_hook(hook_fn)` 。
             - PyNative模式下，如果在Cell对象的 `construct` 函数中调用 `register_forward_pre_hook(hook_fn)` ，那么Cell对象每次运行都将增加一个 `hook_fn` 。
 
