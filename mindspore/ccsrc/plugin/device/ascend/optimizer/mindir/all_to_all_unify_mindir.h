@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,32 @@ class NeighborExchangeUnifyMindIR : public PatternProcessPass {
   std::vector<std::string> MustExistPrimitiveName() const override;
 };
 
+/* AllToAllUnifyMindIR
+ * let rank size is 4, for ge:
+ *                        Input
+ *                          |
+ *     Input         [Split(split_dim)]
+ *       |               / | | \
+ *   [AlltoAll]  ->     [AllToAllv]
+ *       |               \  |  |  /
+ *     Output        [Concat(concat_dim)]
+ *                           |
+ *                         Output
+ * for kbk:
+ *                        Input
+ *                          |
+ *                   [Split(split_dim)]
+ *                       / | | \
+ *     Input          [Concat(dim 0)]
+ *       |                  |
+ *   [AlltoAll]  ->     [AllToAll]
+ *       |                  |
+ *     Output          [Split(dim 0)]
+ *                       \  |  |  /
+ *                   [Concat(concat_dim)]
+ *                           |
+ *                         Output
+ */
 class AllToAllUnifyMindIR : public PatternProcessPass {
  public:
   explicit AllToAllUnifyMindIR(bool multigraph = true) : PatternProcessPass("all_to_all_unify_mindir", multigraph) {}
@@ -43,9 +69,19 @@ class AllToAllUnifyMindIR : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all) const;
-  CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all, const CNodePtr &split) const;
-  CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all, const CNodePtr &all_to_all_v) const;
+  CNodePtr CreateSplitNode(const KernelGraphPtr &graph, const CNodePtr &all_to_all, const AnfNodePtr &input_node,
+                           int64_t split_count, int64_t split_dim) const;
+  CNodePtr CreateSplitNodeWithSplitDim(const KernelGraphPtr &graph, const CNodePtr &all_to_all) const;
+  CNodePtr CreateSplitNodeWithDim0(const KernelGraphPtr &graph, const CNodePtr &all_to_all,
+                                   const CNodePtr &input_node) const;
+  CNodePtr CreateAllToAllvNode(const KernelGraphPtr &graph, const CNodePtr &all_to_all, const CNodePtr &split) const;
+  CNodePtr CreateAllToAllNode(const KernelGraphPtr &graph, const CNodePtr &all_to_all, const CNodePtr &concat) const;
+  CNodePtr CreateConcatNode(const KernelGraphPtr &graph, const CNodePtr &all_to_all, const CNodePtr &input_node,
+                            int64_t split_count, int64_t concat_dim) const;
+  CNodePtr CreateConcatNodeWithConcatDim(const KernelGraphPtr &graph, const CNodePtr &all_to_all,
+                                         const CNodePtr &input_node) const;
+  CNodePtr CreateConcatNodeWithDim0(const KernelGraphPtr &graph, const CNodePtr &all_to_all,
+                                    const CNodePtr &input_node) const;
   std::vector<std::string> MustExistPrimitiveName() const override;
 };
 }  // namespace opt

@@ -60,7 +60,11 @@ HcclResult HcclAdapter::HcclRecv(void *, uint64_t, HcclDataType, uint32_t, aclrt
 HcclResult HcclAdapter::HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const {
   return HCCL_SUCCESS;
 }
-HcclResult HcclAdapter::HcclAllToAll(void *, void *, hccl::HcclAllToAllVParams, HcclDataType, aclrtStream,
+HcclResult HcclAdapter::HcclAllToAllv(void *, void *, hccl::HcclAllToAllVParams, HcclDataType, aclrtStream,
+                                      HcclComm) const {
+  return HCCL_SUCCESS;
+}
+HcclResult HcclAdapter::HcclAllToAll(void *, void *, hccl::HcclAllToAllParams, HcclDataType, aclrtStream,
                                      HcclComm) const {
   return HCCL_SUCCESS;
 }
@@ -69,8 +73,6 @@ bool HcclAdapter::UseHcclCM() const { return false; }
 
 bool HcclAdapter::IsSameServer(const std::vector<uint32_t> &rank_ids) const { return false; }
 
-std::string HcclAdapter::GetHcomGroup(const CNodePtr &) const {
-  return "";
-}
+std::string HcclAdapter::GetHcomGroup(const CNodePtr &) const { return ""; }
 }  // namespace hccl
 }  // namespace mindspore

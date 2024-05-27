@@ -23,6 +23,23 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel.h"
 
 namespace mindspore::kernel {
+class HcomAllToAllvKernel : public HcclKernel {
+ public:
+  HcomAllToAllvKernel() = default;
+  ~HcomAllToAllvKernel() override = default;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+
+ protected:
+  HcclDataType GetHcclDataType() const override { return data_type_; }
+
+ private:
+  HcclDataType data_type_ = {};
+  bool need_drop_input_ = false;
+  hccl::HcclAllToAllVParams params_ = {};
+};
+
 class HcomAllToAllKernel : public HcclKernel {
  public:
   HcomAllToAllKernel() = default;
@@ -36,8 +53,8 @@ class HcomAllToAllKernel : public HcclKernel {
 
  private:
   HcclDataType data_type_ = {};
-  bool need_drop_input_ = false;
-  hccl::HcclAllToAllVParams params_ = {};
+  hccl::HcclAllToAllParams params_ = {};
+  uint32_t rank_size_ = 0;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_HCCL_HCOM_ALL_TO_ALL_H_
