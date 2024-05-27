@@ -85,7 +85,12 @@ Convolution functions
 Pooling functions
 ^^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.max_pool2d
 
 
 
@@ -109,6 +114,8 @@ Non-linear activation functions
     :template: classtemplate.rst
 
     mindspore.mint.nn.functional.leaky_relu
+    mindspore.mint.nn.functional.sigmoid
+    mindspore.mint.nn.functional.silu
 
 
 
