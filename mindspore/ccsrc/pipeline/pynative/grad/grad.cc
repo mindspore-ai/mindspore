@@ -351,21 +351,19 @@ void FreeUselessValue(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfo
     return;
   }
 
-  // Free bprop not used input
-  for (size_t i = 0; i < op_run_info->input_size; i++) {
-    if (!op_run_info->input_unused_in_bprop[i]) {
-      continue;
+  const auto &unused_inputs = BpropExpander::GetUnusedInputs(op_run_info->op_grad_info->op_prim->name());
+  for (const auto i : unused_inputs) {
+    if (i < op_run_info->input_size) {
+      // Free bprop not used input
+      op_run_info->op_grad_info->input_value[i] =
+        PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->input_value[i]);
+    } else if (i == op_run_info->input_size) {
+      // Process output, free bprop not used output
+      op_run_info->op_grad_info->out_value =
+        PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->out_value);
     }
-    op_run_info->op_grad_info->input_value[i] =
-      PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->input_value[i]);
   }
 
-  // Free bprop not used output
-  if (op_run_info->input_unused_in_bprop[op_run_info->input_size]) {
-    // Process output
-    op_run_info->op_grad_info->out_value =
-      PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->out_value);
-  }
   // Free special op memory
   FreeSpecialOpValue(op_run_info->op_grad_info->op_prim->name(), op_run_info, &op_run_info->op_grad_info->out_value);
 }
@@ -873,7 +871,6 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
   }
   op_run_info->op_grad_info->output_size = PyNativeAlgo::Common::GetValueSize(op_run_info->real_out);
   (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, nullptr, InputType::kOpOutput);
-  PyNativeAlgo::PyParser::PrepareOpGradInfo(op_run_info);
   DoOpGrad(op_run_info);
   top_cell()->GetOpInfo(op_run_info, false);
   UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out,
@@ -1606,8 +1603,6 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   op_run_info->requires_grad = true;
   op_run_info->op_grad_info->input_value = forward_args;
   op_run_info->input_size = forward_args.size();
-  op_run_info->op_grad_info->input_value_grad_type.resize(op_run_info->input_size);
-  op_run_info->input_unused_in_bprop.resize(op_run_info->input_size, false);
   auto out_value = PyNativeAlgo::DataConvert::BaseRefToValue(out, true, true);
   // Get output values
   if (has_custom_bprop && !out_value->isa<ValueSequence>()) {
@@ -2052,9 +2047,6 @@ void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) co
     return;
   }
   DoOpGrad(op_run_info);
-  if (op_run_info->stub_output != nullptr) {
-    op_run_info->stub_output->SetValue(op_run_info->real_out);
-  }
   top_cell()->GetOpInfo(op_run_info, false);
   UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out,
                                              op_run_info->base_op_run_info.stream_id);

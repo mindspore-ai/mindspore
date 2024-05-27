@@ -134,7 +134,6 @@ struct FrontendOpRunInfo {
   std::string op_info;
   std::string out_value_id;
   std::string cell_obj_id;
-  std::vector<bool> input_unused_in_bprop{};
   // Hold tensorGradType
   std::vector<std::string> input_value_id{};
   stub::StubNodePtr stub_output{nullptr};

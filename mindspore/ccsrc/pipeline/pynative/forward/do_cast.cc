@@ -74,7 +74,7 @@ ValuePtr CastOperation::DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, 
   (void)cast_run_info->op_grad_info->input_value.emplace_back(v);
   (void)cast_run_info->op_grad_info->input_value.emplace_back(type_id64);
   cast_run_info->input_size = input_size;
-  PyNativeAlgo::PyParser::PrepareOpGradInfo(cast_run_info);
+  cast_run_info->op_grad_info->input_value_grad_type.resize(input_size);
   PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpFrontend(cast_run_info);
   return cast_run_info->real_out;
 }
@@ -119,8 +119,8 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   (void)cast_run_info->op_grad_info->input_value.emplace_back(v);
   (void)cast_run_info->op_grad_info->input_value.emplace_back(type_id64);
   cast_run_info->input_size = input_size;
+  cast_run_info->op_grad_info->input_value_grad_type.resize(input_size);
   cast_run_info->op_grad_info->op_prim = cast_prim;
-  PyNativeAlgo::PyParser::PrepareOpGradInfo(cast_run_info);
   PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpFrontend(cast_run_info);
   return cast_run_info->real_out;
 }

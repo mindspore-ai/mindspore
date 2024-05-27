@@ -46,7 +46,6 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, c
   op_run_info->base_op_run_info.op_name = graph_phase;
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args);
   // Set input abs
-  op_run_info->op_grad_info->input_abs.resize(op_run_info->input_size);
   const auto &original_params = jit_forward_graph->parameters();
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
     op_run_info->op_grad_info->input_abs[i] = original_params[i]->abstract();

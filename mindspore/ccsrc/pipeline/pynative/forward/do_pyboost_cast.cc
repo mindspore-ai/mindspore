@@ -53,13 +53,13 @@ tensor::BaseTensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPt
     PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(cast_prim);
   auto cast_op = CREATE_PYBOOST_OP(Cast, cast_run_info->base_op_run_info.device_target);
   (void)cast_op->Call(t, type_id64);
+  cast_run_info->requires_grad = op_run_info->requires_grad;
   PyNativeAlgo::PyBoost::UpdateOpRunInfo(cast_op, cast_run_info);
   if (op_run_info->requires_grad) {
     constexpr auto input_size = 2;
     cast_run_info->input_size = input_size;
     cast_run_info->base_op_run_info.op_name = kCast;
     cast_run_info->op_grad_info->op_prim = cast_prim;
-    cast_run_info->requires_grad = op_run_info->requires_grad;
     PyNativeAlgo::PyBoost::DoGrad(cast_op, cast_run_info, {t, type_id64});
   }
   return cast_run_info->real_out->cast<tensor::BaseTensorPtr>();
