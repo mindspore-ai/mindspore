@@ -180,6 +180,8 @@ class KVCacheImpl(TilingHelper):
             bs_idx = core_idx * self.each_core_bs_num + each_core_bs_idx
             # because we fused bs * num_head, we need get the real bs_idx
             valid_idx.set_as(index_ub[bs_idx // self.num_head])
+            with self.tik_inst.if_scope(valid_idx >= self.seq_length):
+                self.tik_inst.tik_continue()
             with self.tik_inst.if_scope(valid_idx >= 0):
                 dst_offset = bs_idx * dst_bs_stride + valid_idx * self.size_per_head
                 src_offset = each_core_bs_idx * src_bs_stride
