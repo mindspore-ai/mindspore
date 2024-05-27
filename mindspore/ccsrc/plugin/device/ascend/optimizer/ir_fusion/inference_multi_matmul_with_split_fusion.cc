@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/optimizer/ir_fusion/inference_multi_matmul_with_split_fusion.h"
+
 #include <vector>
 #include "kernel/kernel_build_info.h"
 #include "include/common/utils/utils.h"
@@ -132,9 +133,9 @@ bool InferenceMultiMatmulWithSplitFusion::Run(const FuncGraphPtr &graph) {
   }
   constexpr auto kInferenceMultiMatmulWithSplitOpName = "InferenceMultiMatmulWithSplit";
   auto enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
-  bool enable_opt =
-    (std::find(enable_op_list.begin(), enable_op_list.end(), kInferenceMultiMatmulWithSplitOpName) != enable_op_list.end());
-  if (!enable_opt) {
+  bool enable = (std::find(enable_op_list.begin(), enable_op_list.end(), kInferenceMultiMatmulWithSplitOpName) !=
+                 enable_op_list.end());
+  if (!enable) {
     return false;
   }
   bool changed = false;
