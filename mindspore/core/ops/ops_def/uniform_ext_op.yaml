@@ -4,9 +4,11 @@ uniform_ext:
         tensor:
             dtype: tensor
         a:
-            dtype: float
+            dtype: number
+            type_cast: tensor
         b:
-            dtype: float
+            dtype: number
+            type_cast: tensor
         seed:
             dtype: int
             type_cast: tensor
