@@ -34,12 +34,12 @@ struct RegisterHook {
   /// \brief Register a backward hook
   ///
   /// \ void
-  static int RegisterTensorBackwardHook(const Tensor &tensor, const py::function &hook);
+  static uint64_t RegisterTensorBackwardHook(const Tensor &tensor, const py::function &hook);
 
   /// \brief Remove a backward hook
   ///
   /// \ void
-  static void RemoveTensorBackwardHook(int id);
+  static void RemoveTensorBackwardHook(uint64_t id);
 
   /// \brief Update weight meta
   ///
@@ -49,7 +49,7 @@ struct RegisterHook {
   static void ClearHookMap() { hook_meta_fn_map_.clear(); }
 
   // For store hook
-  static std::map<int, std::pair<AutoGradMetaDataWeakPtr, TensorBackwardHookPtr>> hook_meta_fn_map_;
+  static std::map<uint64_t, std::pair<AutoGradMetaDataWeakPtr, TensorBackwardHookPtr>> hook_meta_fn_map_;
 };
 
 }  // namespace tensor
