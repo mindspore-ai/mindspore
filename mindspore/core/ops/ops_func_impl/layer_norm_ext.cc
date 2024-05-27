@@ -27,6 +27,7 @@
 #include "ops/op_utils.h"
 #include "utils/ms_context.h"
 #include "utils/shape_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -68,23 +69,17 @@ BaseShapePtr LayerNormExtFuncImpl::InferShape(const PrimitivePtr &primitive,
                      "For 'LayerNorm', gamma or beta shape must match input shape, but got input shape: ", x_shape,
                      ", gamma shape: ", gamma_shape, ", beta shape: ", beta_shape, "."));
   }
-  const int64_t m = std::accumulate(x_shape.cbegin(), x_shape.cbegin() + begin_axis, 1LL, std::multiplies<int64_t>());
 
-  ShapeVector mean_out_shape, rstd_out_shape;
-  if (m <= 0) {
-    mean_out_shape = {m};
-    rstd_out_shape = {m};
-  } else {
-    ShapeVector mean_shape;
-    for (size_t i = 0; i < begin_axis; ++i) {
-      (void)mean_shape.emplace_back(x_shape[i]);
-    }
-    for (size_t i = begin_axis; i < input_dim; ++i) {
-      (void)mean_shape.emplace_back(1);
-    }
-    mean_out_shape = mean_shape;
-    rstd_out_shape = mean_shape;
+  ShapeVector mean_shape;
+  for (size_t i = 0; i < begin_axis; ++i) {
+    (void)mean_shape.emplace_back(x_shape[i]);
   }
+  for (size_t i = begin_axis; i < input_dim; ++i) {
+    (void)mean_shape.emplace_back(1);
+  }
+  ShapeVector mean_out_shape = mean_shape;
+  ShapeVector rstd_out_shape = mean_shape;
+
   std::vector<BaseShapePtr> shapes_list = {x_shape_ptr};
   (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(mean_out_shape));
   (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(rstd_out_shape));
@@ -106,5 +101,37 @@ TypePtr LayerNormExtFuncImpl::InferType(const PrimitivePtr &primitive,
   types_list = {input_type, input_type, input_type};
   return std::make_shared<Tuple>(types_list);
 }
+
+TypePtrList LayerNormExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->Dtype(), x_tensor->Dtype(), x_tensor->Dtype()};
+}
+
+ShapeArray LayerNormExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &gamma_tensor = input_values[kInputIndex2]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &x_shape = x_tensor->shape();
+  const auto &gamma_shape = gamma_tensor->shape();
+
+  const auto norm_dim = gamma_shape.size();
+  const auto input_dim = x_shape.size();
+  const auto begin_axis = input_dim - norm_dim;
+
+  ShapeVector mean_shape;
+  for (size_t i = 0; i < begin_axis; ++i) {
+    (void)mean_shape.emplace_back(x_shape[i]);
+  }
+  for (size_t i = begin_axis; i < input_dim; ++i) {
+    (void)mean_shape.emplace_back(1);
+  }
+  ShapeVector mean_out_shape = mean_shape;
+  ShapeVector rstd_out_shape = mean_shape;
+
+  return {x_shape, mean_out_shape, rstd_out_shape};
+}
+
+REGISTER_SIMPLE_INFER(kNameLayerNormExt, LayerNormExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

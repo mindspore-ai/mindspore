@@ -39,11 +39,10 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, Fra
 from mindspore.ops.operations.nn_ops import PadV3
 from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
-from mindspore.ops.operations.nn_ops import LayerNormExt
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
-from mindspore.ops.auto_generate import GroupNorm, batch_norm_ext_op
+from mindspore.ops.auto_generate import group_norm_op, layer_norm_ext_op, batch_norm_ext_op
 from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op,
                                          replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
                                          constant_pad_nd_op, dropout_ext_op, reverse_v2_impl)
@@ -6113,7 +6112,6 @@ def layer_norm(input, normalized_shape, weight=None, bias=None, eps=1e-5):
         weight = ops.ones(normalized_shape, dtype=input.dtype)
     if bias is None:
         bias = ops.zeros(normalized_shape, dtype=input.dtype)
-    layer_norm_ext_op = LayerNormExt()
     return layer_norm_ext_op(input, normalized_shape, weight, bias, eps)[0]
 
 
@@ -6169,7 +6167,10 @@ def group_norm(input, num_groups, weight=None, bias=None, eps=1e-5):
            [0. 0. 0. 0.]
            [0. 0. 0. 0.]]]]
     """
-    group_norm_op = GroupNorm()
+    if weight is None:
+        weight = ops.ones([input.shape[1]], dtype=input.dtype)
+    if bias is None:
+        bias = ops.zeros([input.shape[1]], dtype=input.dtype)
     return group_norm_op(input, num_groups, weight, bias, eps)[0]
 
 
