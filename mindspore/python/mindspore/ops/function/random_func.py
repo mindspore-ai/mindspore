@@ -40,6 +40,7 @@ shape_ = P.Shape()
 top_k_ = P.TopK()
 uniform_ = UniformExt()
 
+
 @constexpr
 def _set_prim_op_user_data(prim, key, value):
     prim.add_prim_attr(key, value)
@@ -87,7 +88,8 @@ def random_gamma(shape, alpha, seed=None):
     """
     seed1, seed2 = _get_seed(seed, "random_gamma")
     random_gamma_op = P.RandomGamma(seed1, seed2)
-    random_gamma_op = _set_prim_op_user_data(random_gamma_op, "random_cache", False)
+    random_gamma_op = _set_prim_op_user_data(
+        random_gamma_op, "random_cache", False)
     output = random_gamma_op(shape, alpha)
     return output
 
@@ -134,7 +136,8 @@ def standard_laplace(shape, seed=None):
     """
     seed1, seed2 = _get_seed(seed, "standard_laplace")
     standard_laplace_op = P.StandardLaplace(seed=seed1, seed2=seed2)
-    standard_laplace_op = _set_prim_op_user_data(standard_laplace_op, "random_cache", False)
+    standard_laplace_op = _set_prim_op_user_data(
+        standard_laplace_op, "random_cache", False)
     return standard_laplace_op(shape)
 
 
@@ -173,7 +176,8 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
         (10, 8)
     """
     random_categorical_ = P.RandomCategorical(dtype)
-    random_categorical_ = _set_prim_op_user_data(random_categorical_, "random_cache", False)
+    random_categorical_ = _set_prim_op_user_data(
+        random_categorical_, "random_cache", False)
     return random_categorical_(logits, num_sample, seed)
 
 
@@ -233,7 +237,8 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
         offset = Tensor(offset, dtype=mstype.int64)
     multinomial_with_replacement_ = P.MultinomialWithReplacement(numsamples=numsamples,
                                                                  replacement=replacement)
-    multinomial_with_replacement_ = _set_prim_op_user_data(multinomial_with_replacement_, "random_cache", False)
+    multinomial_with_replacement_ = _set_prim_op_user_data(
+        multinomial_with_replacement_, "random_cache", False)
     return multinomial_with_replacement_(x, seed, offset)
 
 
@@ -326,21 +331,25 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         (3, 2, 2)
     """
     if not isinstance(minval, Tensor) or not isinstance(maxval, Tensor):
-        raise TypeError(f"For functional operator[uniform], the input[minval] and input[maxval] must be a Tensor.")
+        raise TypeError(
+            f"For functional operator[uniform], the input[minval] and input[maxval] must be a Tensor.")
 
     minval_dtype = F.dtype(minval)
     maxval_dtype = F.dtype(maxval)
-    const_utils.check_type_valid(dtype, [mstype.int32, mstype.float32], 'uniform')
+    const_utils.check_type_valid(
+        dtype, [mstype.int32, mstype.float32], 'uniform')
     const_utils.check_tensors_dtype_same(minval_dtype, dtype, "uniform")
     const_utils.check_tensors_dtype_same(maxval_dtype, dtype, "uniform")
     seed1, seed2 = _get_seed(seed, "uniform")
     if const_utils.is_same_type(dtype, mstype.int32):
         random_uniform = P.UniformInt(seed1, seed2)
-        random_uniform = _set_prim_op_user_data(random_uniform, "random_cache", False)
+        random_uniform = _set_prim_op_user_data(
+            random_uniform, "random_cache", False)
         value = random_uniform(shape, minval, maxval)
     else:
         uniform_real = P.UniformReal(seed1, seed2)
-        uniform_real = _set_prim_op_user_data(uniform_real, "random_cache", False)
+        uniform_real = _set_prim_op_user_data(
+            uniform_real, "random_cache", False)
         uniform_real = uniform_real(shape)
         value = uniform_real * (maxval - minval) + minval
     return value
@@ -383,7 +392,8 @@ def standard_normal(shape, seed=None):
     """
     seed1, seed2 = _get_seed(seed, "standard_normal")
     standard_normal_op = P.StandardNormal(seed=seed1, seed2=seed2)
-    standard_normal_op = _set_prim_op_user_data(standard_normal_op, "random_cache", False)
+    standard_normal_op = _set_prim_op_user_data(
+        standard_normal_op, "random_cache", False)
     return standard_normal_op(shape)
 
 
@@ -450,7 +460,8 @@ def uniform_candidate_sampler(true_classes,
                                            seed=seed,
                                            remove_accidental_hits=remove_accidental_hits)
     sampler_op = _set_prim_op_user_data(sampler_op, "random_cache", False)
-    sampled_candidates, true_expected_count, sampled_expected_count = sampler_op(true_classes)
+    sampled_candidates, true_expected_count, sampled_expected_count = sampler_op(
+        true_classes)
     return sampled_candidates, true_expected_count, sampled_expected_count
 
 
@@ -514,7 +525,8 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
     """
     seed1, seed2 = _get_seed(seed, "random_poisson")
     prim_random_poisson = P.RandomPoisson(seed1, seed2, dtype)
-    prim_random_poisson = _set_prim_op_user_data(prim_random_poisson, "random_cache", False)
+    prim_random_poisson = _set_prim_op_user_data(
+        prim_random_poisson, "random_cache", False)
     value = prim_random_poisson(shape, rate)
     return value
 
@@ -549,7 +561,8 @@ def shuffle(x, seed=None):
     """
     seed, seed2 = _get_seed(seed, "shuffle")
     random_shuffle_ = RandomShuffle(seed=seed, seed2=seed2)
-    random_shuffle_ = _set_prim_op_user_data(random_shuffle_, "random_cache", False)
+    random_shuffle_ = _set_prim_op_user_data(
+        random_shuffle_, "random_cache", False)
     output = random_shuffle_(x)
     return output
 
@@ -603,7 +616,8 @@ def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, uniqu
 
     """
 
-    sampler = P.LogUniformCandidateSampler(num_true, num_sampled, unique, range_max, seed)
+    sampler = P.LogUniformCandidateSampler(
+        num_true, num_sampled, unique, range_max, seed)
     sampler = _set_prim_op_user_data(sampler, "random_cache", False)
     return sampler(true_classes)
 
@@ -652,8 +666,10 @@ def choice_with_mask(input_x, count=256, seed=None):
         (256,)
     """
     seed1, seed2 = _get_seed(seed, "choice_with_mask")
-    choice_with_mask_ = RandomChoiceWithMask(count=count, seed=seed1, seed2=seed2)
-    choice_with_mask_ = _set_prim_op_user_data(choice_with_mask_, "random_cache", False)
+    choice_with_mask_ = RandomChoiceWithMask(
+        count=count, seed=seed1, seed2=seed2)
+    choice_with_mask_ = _set_prim_op_user_data(
+        choice_with_mask_, "random_cache", False)
     output = choice_with_mask_(input_x)
     return output
 
@@ -802,7 +818,8 @@ def laplace(shape, mean, lambda_param, seed=None):
     mean_dtype = F.dtype(mean)
     lambda_param_dtype = F.dtype(lambda_param)
     const_utils.check_tensors_dtype_same(mean_dtype, mstype.float32, "laplace")
-    const_utils.check_tensors_dtype_same(lambda_param_dtype, mstype.float32, "laplace")
+    const_utils.check_tensors_dtype_same(
+        lambda_param_dtype, mstype.float32, "laplace")
     seed1, seed2 = _get_seed(seed, "laplace")
     stdlaplace = P.StandardLaplace(seed1, seed2)
     stdlaplace = _set_prim_op_user_data(stdlaplace, "random_cache", False)
@@ -948,7 +965,8 @@ def rand(*size, dtype=None, seed=None):
     if dtype is None:
         dtype = mstype.float32
     elif dtype not in mstype.float_type:
-        raise ValueError(f"For 'rand', the 'dtype' must be a float type, but got {dtype}.")
+        raise ValueError(
+            f"For 'rand', the 'dtype' must be a float type, but got {dtype}.")
     shape = _generate_shapes(size)
     seed1, seed2 = _get_seed(seed, 'rand')
     rand_op = P.UniformReal(seed1, seed2)
@@ -991,11 +1009,13 @@ def rand_like(input, seed=None, *, dtype=None):
          [9.3255734e-01 1.1438108e-04 1.2812445e-01]]
     """
     if not isinstance(input, Tensor):
-        raise TypeError(f"For 'rand_like', the 'input' must be a Tensor, but got {type(input)}")
+        raise TypeError(
+            f"For 'rand_like', the 'input' must be a Tensor, but got {type(input)}")
     if dtype is None:
         dtype = input.dtype
     if dtype not in mstype.float_type:
-        raise ValueError(f"For 'rand_like', the 'dtype' must be a float type, but got {dtype}.")
+        raise ValueError(
+            f"For 'rand_like', the 'dtype' must be a float type, but got {dtype}.")
     shape = input.shape
     seed1, seed2 = _get_seed(seed, 'rand_like')
     rand_op = P.UniformReal(seed1, seed2)
@@ -1039,7 +1059,8 @@ def randn(*size, dtype=None, seed=None):
     if dtype is None:
         dtype = mstype.float32
     elif dtype not in mstype.float_type:
-        raise ValueError(f"For 'randn', the 'dtype' must be a float type, but got {dtype}.")
+        raise ValueError(
+            f"For 'randn', the 'dtype' must be a float type, but got {dtype}.")
     shape = _generate_shapes(size)
     seed1, seed2 = _get_seed(seed, 'randn')
     rand_op = P.StandardNormal(seed1, seed2)
@@ -1082,11 +1103,13 @@ def randn_like(input, seed=None, *, dtype=None):
          [-0.4287376   1.3054721   0.64747655]]
     """
     if not isinstance(input, Tensor):
-        raise TypeError(f"For 'randn_like', the 'input' must be a Tensor, but got {type(input)}")
+        raise TypeError(
+            f"For 'randn_like', the 'input' must be a Tensor, but got {type(input)}")
     if dtype is None:
         dtype = mstype.float32
     if dtype not in mstype.float_type:
-        raise ValueError(f"For 'randn_like', the 'dtype' must be a float type, but got {dtype}.")
+        raise ValueError(
+            f"For 'randn_like', the 'dtype' must be a float type, but got {dtype}.")
     shape = input.shape
     seed1, seed2 = _get_seed(seed, 'randn_like')
     rand_op = P.StandardNormal(seed1, seed2)
@@ -1133,13 +1156,17 @@ def randint(low, high, size, seed=None, *, dtype=None):
     if dtype is None:
         dtype = mstype.int64
     elif dtype not in mstype.int_type:
-        raise ValueError(f"For 'randint', the 'dtype' must be an int type, but got {dtype}.")
+        raise ValueError(
+            f"For 'randint', the 'dtype' must be an int type, but got {dtype}.")
     if not isinstance(size, tuple):
-        raise ValueError(f"For 'randint', the input 'size' must be a tuple, but got {size}.")
+        raise ValueError(
+            f"For 'randint', the input 'size' must be a tuple, but got {size}.")
     if not isinstance(low, int) or isinstance(low, bool):
-        raise TypeError(f"For 'randint_like', 'low' must be an int, but got {type(low)}.")
+        raise TypeError(
+            f"For 'randint_like', 'low' must be an int, but got {type(low)}.")
     if not isinstance(high, int) or isinstance(high, bool):
-        raise TypeError(f"For 'randint_like', 'high' must be an int, but got {type(high)}.")
+        raise TypeError(
+            f"For 'randint_like', 'high' must be an int, but got {type(high)}.")
     seed1, seed2 = _get_seed(seed, 'randint')
     rand_op = P.UniformInt(seed1, seed2)
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
@@ -1185,15 +1212,19 @@ def randint_like(input, low, high, seed=None, *, dtype=None):
         [9 1 2]]
     """
     if not isinstance(input, Tensor):
-        raise TypeError(f"For 'randint_like', the 'input' must be a Tensor, but got {type(input)}")
+        raise TypeError(
+            f"For 'randint_like', the 'input' must be a Tensor, but got {type(input)}")
     if dtype is None:
         dtype = input.dtype
     if dtype not in mstype.int_type:
-        raise ValueError(f"For 'randint_like', the 'dtype' must be an int type, but got {dtype}.")
+        raise ValueError(
+            f"For 'randint_like', the 'dtype' must be an int type, but got {dtype}.")
     if not isinstance(low, int) or isinstance(low, bool):
-        raise TypeError(f"For 'randint_like', 'low' must be an int, but got {type(low)}.")
+        raise TypeError(
+            f"For 'randint_like', 'low' must be an int, but got {type(low)}.")
     if not isinstance(high, int) or isinstance(high, bool):
-        raise TypeError(f"For 'randint_like', 'high' must be an int, but got {type(high)}.")
+        raise TypeError(
+            f"For 'randint_like', 'high' must be an int, but got {type(high)}.")
     size = input.shape
     seed1, seed2 = _get_seed(seed, 'randint_like')
     rand_op = P.UniformInt(seed1, seed2)
@@ -1254,7 +1285,8 @@ def poisson(shape, mean, seed=None):
     """
     seed1, seed2 = _get_seed(seed, "poisson")
     random_poisson_op = P.Poisson(seed1, seed2)
-    random_poisson_op = _set_prim_op_user_data(random_poisson_op, "random_cache", False)
+    random_poisson_op = _set_prim_op_user_data(
+        random_poisson_op, "random_cache", False)
     value = random_poisson_op(shape, mean)
     return value
 
@@ -1351,7 +1383,8 @@ def multinomial(input, num_samples, replacement=True, seed=None):
     """
     def _check_valid_dim(dim, name):
         if dim not in (1, 2):
-            raise ValueError(f"For '{name}', the dimension of inputs must be 1d or 2d, but got {dim}.")
+            raise ValueError(
+                f"For '{name}', the dimension of inputs must be 1d or 2d, but got {dim}.")
 
     _check_valid_dim(len(shape_(input)), "multinomial")
     seed1, seed2 = _get_seed(seed, "multinomial")
@@ -1365,29 +1398,34 @@ def multinomial(input, num_samples, replacement=True, seed=None):
         if len(shape_(input)) > 1:
             n_dist = shape_(input)[-2]
         random_uniform_real = P.UniformReal(seed1, seed2)
-        random_cache_op = _set_prim_op_user_data(random_uniform_real, "random_cache", False)
+        random_cache_op = _set_prim_op_user_data(
+            random_uniform_real, "random_cache", False)
         random_uniform = random_cache_op((n_dist * shape_(input)[-1],))
         if n_dist != 1:
-            random_uniform = reshape_(random_uniform, (n_dist, shape_(input)[-1]))
-
+            random_uniform = reshape_(
+                random_uniform, (n_dist, shape_(input)[-1]))
 
         vals = real_div_(log_(random_uniform), input + 1e-6)
         _, indices = top_k_(vals, num_samples)
         return indices
     random_nomial = P.Multinomial(seed1, seed2)
-    random_nomial = _set_prim_op_user_data(random_nomial, "random_cache", False)
+    random_nomial = _set_prim_op_user_data(
+        random_nomial, "random_cache", False)
     return random_nomial(input, num_samples)
 
 
 def _check_shape(input_shape):
     """Check 'shape' value."""
     if not isinstance(input_shape, tuple):
-        const_utils.raise_type_error(f"Type of 'shape' must be tuple, but got: {type(input_shape)}")
+        const_utils.raise_type_error(
+            f"Type of 'shape' must be tuple, but got: {type(input_shape)}")
     for item in input_shape:
         if not isinstance(item, int):
-            const_utils.raise_type_error(f"Elements of 'shape' must be int, but got: {type(item)}")
+            const_utils.raise_type_error(
+                f"Elements of 'shape' must be int, but got: {type(item)}")
         if item < 1:
-            const_utils.raise_value_error(f"Elements of 'shape' must be positive int, but got: {item}")
+            const_utils.raise_value_error(
+                f"Elements of 'shape' must be positive int, but got: {item}")
     return True
 
 

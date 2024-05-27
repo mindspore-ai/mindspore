@@ -396,15 +396,15 @@ CUST_INFER_FUNC_REG(RandomChoiceWithMask, RandomChoiceWithMaskInfer);
 
 // ----------------RandomUniformInt-------------------
 CUST_IMPLEMT_INFERFUNC(RandomUniformInt, RandomUniformIntInfer) {
-  Shape shape;
+  const vector<string> depend_names = {"shape"};
+  PREPARE_DYNAMIC_SHAPE(depend_names);
+  Shape shape{ge::UNKNOWN_RANK};
   Tensor shape_tensor;
-  if (op.GetInputConstData("shape", shape_tensor) != GRAPH_SUCCESS) {
-    OP_LOGE(TbeGetName(op).c_str(), "Get shape_tensor error.");
-    return GRAPH_FAILED;
-  }
-  if (MakeShapeFromShapeTensor(shape_tensor, shape, op) != GRAPH_SUCCESS) {
-    OP_LOGE(TbeGetName(op).c_str(), "Get shape error.");
-    return GRAPH_FAILED;
+  if (op.GetInputConstData("shape", shape_tensor) == GRAPH_SUCCESS) {
+    if (MakeShapeFromShapeTensor(shape_tensor, shape, op) != GRAPH_SUCCESS) {
+      OP_LOGE(TbeGetName(op).c_str(), "Get shape error.");
+      return GRAPH_FAILED;
+    }
   }
 
   TensorDesc outputDesc = op.GetOutputDescByName("y");
