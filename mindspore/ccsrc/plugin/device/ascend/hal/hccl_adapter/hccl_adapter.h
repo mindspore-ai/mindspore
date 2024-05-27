@@ -49,6 +49,11 @@ struct HcclAllToAllVParams {
   std::vector<uint64_t> rdispls;
 };
 
+struct HcclAllToAllParams {
+  uint64_t sendcount;
+  uint64_t recvcount;
+};
+
 enum HcclMode { kGraph, kPynative, kKernelByKernel };
 
 class HcclAdapter {
@@ -84,7 +89,9 @@ class HcclAdapter {
                       const aclrtStream stream, HcclComm comm) const;
   HcclResult HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank, const aclrtStream stream,
                       HcclComm comm) const;
-  HcclResult HcclAllToAll(void *send_buf, void *recv_buf, hccl::HcclAllToAllVParams params, HcclDataType dataType,
+  HcclResult HcclAllToAllv(void *send_buf, void *recv_buf, hccl::HcclAllToAllVParams params, HcclDataType dataType,
+                           const aclrtStream stream, HcclComm comm) const;
+  HcclResult HcclAllToAll(void *send_buf, void *recv_buf, hccl::HcclAllToAllParams params, HcclDataType dataType,
                           const aclrtStream stream, HcclComm comm) const;
   HcclResult HcclBarrier(const aclrtStream stream, HcclComm comm) const;
   HcclResult HcclBatchISendIRecv(HcclSendRecvItem *sendRecvInfo, uint32_t itemNum, HcclComm comm,
@@ -143,6 +150,7 @@ class HcclAdapter {
   HcclGetRankIdFunObj single_op_hccl_get_rank_id_ = nullptr;
   HcclGetRankSizeFunObj single_op_hccl_get_rank_size_ = nullptr;
   HcclAlltoAllVFunObj launch_hccl_all_to_allv_ = nullptr;
+  HcclAlltoAllFunObj launch_hccl_all_to_all_ = nullptr;
   HcclBatchSendRecvFunObj launch_hccl_batch_isend_irecv_ = nullptr;
 
   HcomCreateGroupFunObj hccl_create_group_ = nullptr;

@@ -55,7 +55,7 @@ CNodePtr FindFrontAlltoall(const CNodePtr &marked_node, std::vector<CNodePtr> *v
   while (!node_queue.empty()) {
     auto cnode = node_queue.front();
     node_queue.pop();
-    if (IsPrimitiveCNode(cnode, prim::kPrimAllToAll)) {
+    if (IsPrimitiveCNode(cnode, prim::kPrimAlltoAll)) {
       alltoall_node = cnode;
       break;
     }
@@ -95,7 +95,7 @@ CNodePtr FindBackAlltoall(const FuncGraphManagerPtr &manager, const CNodePtr &ma
   while (!node_queue.empty()) {
     auto cnode = node_queue.front();
     node_queue.pop();
-    if (IsPrimitiveCNode(cnode, prim::kPrimAllToAll)) {
+    if (IsPrimitiveCNode(cnode, prim::kPrimAlltoAll)) {
       alltoall_node = cnode;
       break;
     }
