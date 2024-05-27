@@ -59,6 +59,9 @@ from mindspore.ops.functional import flip
 from mindspore.ops.auto_generate import flatten_ext as flatten
 # 16
 from mindspore.ops.functional import matmul
+from mindspore.ops.auto_generate import bmm_ext as bmm
+from mindspore.ops.auto_generate import add_ext as add
+from mindspore.ops.auto_generate import sub_ext as sub
 # 17
 
 # 18

@@ -46,6 +46,7 @@ Tensor创建
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.add
     mindspore.mint.ceil
     mindspore.mint.clamp
     mindspore.mint.cos
@@ -57,6 +58,7 @@ Tensor创建
     mindspore.mint.atan2
     mindspore.mint.arctan2
     mindspore.mint.square
+    mindspore.mint.sub
 
 Reduction函数
 ^^^^^^^^^^^^^
@@ -94,6 +96,23 @@ Reduction函数
 
     mindspore.mint.abs
 
+
+
+
+线性函数
+^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.bmm
+    mindspore.mint.matmul
+
+
+
+
 mindspore.mint.nn
 ------------------
 
@@ -113,6 +132,7 @@ mindspore.mint.nn.functional
     mindspore.mint.nn.functional.grid_sample
     mindspore.mint.nn.functional.group_norm
     mindspore.mint.nn.functional.layer_norm
+    mindspore.mint.nn.functional.linear
 
 
 卷积函数
@@ -151,6 +171,7 @@ mindspore.mint.nn.functional
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.gelu
     mindspore.mint.nn.functional.relu
     mindspore.mint.nn.functional.leaky_relu
     mindspore.mint.nn.functional.sigmoid
