@@ -168,11 +168,8 @@ void SetIdWithOpInfo(const ValuePtr &v, const std::string &op_info, size_t out_i
 
 void UpdateForwardOutputTensorInfo(const std::string &op_info, const ValuePtr &v,
                                    const TensorReplaceInfo &replace_info) {
-  const auto it = replace_info.op_info_with_tensor_object.find(op_info);
-  if (it == replace_info.op_info_with_tensor_object.end()) {
-    return;
-  }
-  for (const auto &elem : it->second) {
+  const auto &v_vec = replace_info.op_info_with_tensor_object.at(op_info);
+  for (const auto &elem : v_vec) {
     const auto &new_tensor = GetTensorFromOutValue(elem.first, v);
     UpdatePreTensorInfo(new_tensor, elem.second);
   }

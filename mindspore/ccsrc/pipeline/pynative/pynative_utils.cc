@@ -854,11 +854,10 @@ void Common::GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string 
     opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(op_name, device_target, is_dynamic_shape);
   if (reg_info == nullptr) {
     return;
-  } else {
-    MS_EXCEPTION_IF_NULL(input_to_attr_index);
-    for (auto &iter : reg_info->input_attr_map()) {
-      (void)input_to_attr_index->insert(iter.first);
-    }
+  }
+  MS_EXCEPTION_IF_NULL(input_to_attr_index);
+  for (auto &iter : reg_info->input_attr_map()) {
+    (void)input_to_attr_index->insert(iter.first);
   }
 }
 
@@ -891,35 +890,65 @@ void Common::ClearDeviceAddress(const ValuePtr &value) {
   }
 }
 
+void Common::SetOutputUsedInBpropGraph(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::BaseTensor>()) {
+    const auto &v_t = value->cast<tensor::BaseTensorPtr>();
+    v_t->set_used_in_bprop_graph(true);
+  }
+  if (value->isa<ValueSequence>()) {
+    const auto &value_seq = value->cast<ValueSequencePtr>();
+    for (const auto &v : value_seq->value()) {
+      SetOutputUsedInBpropGraph(v);
+    }
+  }
+  if (value->isa<stub::StubNode>()) {
+    const auto &stub_node = value->cast<stub::StubNodePtr>();
+    return SetOutputUsedInBpropGraph(stub_node->WaitValue());
+  }
+  if (value->isa<ValueDictionary>()) {
+    auto dic_v = value->cast<ValueDictionaryPtr>();
+    for (const auto &v : dic_v->value()) {
+      SetOutputUsedInBpropGraph(v.second);
+    }
+  }
+}
+
 ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::BaseTensor>()) {
     const auto &v_t = value->cast<tensor::BaseTensorPtr>();
+    // If the tensor used in bprop graph, no need create fake value
+    if (v_t->used_in_bprop_graph()) {
+      return value;
+    }
     auto t = std::make_shared<tensor::Tensor>(*v_t);
     if (v_t->is_parameter()) {
       t->set_param_info(v_t->param_info());
     }
     t->set_device_address(nullptr);
     return t;
-  } else if (value->isa<ValueSequence>()) {
+  }
+  if (value->isa<ValueSequence>()) {
     const auto &value_seq = value->cast<ValueSequencePtr>();
     ValuePtrList value_list;
     (void)std::transform(value_seq->value().begin(), value_seq->value().end(), std::back_inserter(value_list),
                          [](const ValuePtr &elem) { return CreateFakeValueWithoutDeviceAddress(elem); });
     return std::make_shared<ValueTuple>(value_list);
-  } else if (value->isa<stub::StubNode>()) {
+  }
+  if (value->isa<stub::StubNode>()) {
     const auto &stub_node = value->cast<stub::StubNodePtr>();
     return CreateFakeValueWithoutDeviceAddress(stub_node->WaitValue());
-  } else if (value->isa<ValueDictionary>()) {
+  }
+  if (value->isa<ValueDictionary>()) {
     auto dic_v = value->cast<ValueDictionaryPtr>();
     std::vector<std::pair<ValuePtr, ValuePtr>> key_values;
     for (const auto &v : dic_v->value()) {
       (void)key_values.emplace_back(v.first, CreateFakeValueWithoutDeviceAddress(v.second));
     }
     return std::make_shared<ValueDictionary>(key_values);
-  } else {
-    return value;
   }
+  return value;
 }
 
 InputType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell, InputType grad_type) {
@@ -2492,18 +2521,62 @@ PrimitivePyPtr AutoGrad::BuildBpropCutPrim(const PrimitivePtr &prim, bool is_nee
 }
 
 void AutoGrad::CheckRecomputeInputs(const GradParamPtr &grad_param) {
-  if (grad_param->op_grad_info->is_need_recompute) {
-    for (const auto &input : grad_param->op_grad_info->input_value) {
-      if (input->isa<ValueSequence>()) {
-        const auto &seq = input->cast<ValueSequencePtr>();
-        const auto val = seq->value();
-        if (AutoGrad::NeedGrad(val)) {
-          MS_LOG(EXCEPTION) << "For recompute cell, now we do not support calculate tensor's gradient from tuple. "
-                               "You need check your inputs of construct function from recompute cell, and not put "
-                               "tensors in tuple which need grad!";
-        }
-      }
+  if (!grad_param->op_grad_info->is_need_recompute) {
+    return;
+  }
+  for (const auto &input : grad_param->op_grad_info->input_value) {
+    if (!input->isa<ValueSequence>()) {
+      continue;
     }
+    const auto &seq = input->cast<ValueSequencePtr>();
+    const auto val = seq->value();
+    if (NeedGrad(val)) {
+      MS_LOG(EXCEPTION) << "For recompute cell, now we do not support calculate tensor's gradient from tuple. "
+                           "You need check your inputs of construct function from recompute cell, and not put "
+                           "tensors in tuple which need grad!";
+    }
+  }
+}
+
+TopCellInfoPtr AutoGrad::FindPreTopcell(const GradExecutor *grad_executor, const OpGradInfoPtr &op_grad_info,
+                                        const std::string &op_info, const ValuePtr &value) {
+  const auto &cur_top_cell = grad_executor->top_cell();
+  auto pre_top_cell = grad_executor->GetAlreadyRunTopCell(cur_top_cell->already_run_cell_id());
+  if (pre_top_cell == nullptr || cur_top_cell->use_dynamic_shape_process()) {
+    pre_top_cell = grad_executor->GetPipelineRunTopCell(cur_top_cell->already_run_cell_id());
+    if (pre_top_cell == nullptr) {
+      // First run top cell, save op output info for replacement
+      cur_top_cell->SaveTensorIdWithOpInfo(op_info, value);
+      cur_top_cell->use_dynamic_shape_process()
+        ? MS_LOG(DEBUG) << "Current top cell is in dynamic process"
+        : MS_LOG(DEBUG) << "Top cell " << cur_top_cell->already_run_cell_id() << " run firstly, op info " << op_info;
+    }
+  }
+
+  // First step or in dynamic process, no need forward output replaces
+  if (pre_top_cell == nullptr || grad_executor->top_cell()->use_dynamic_shape_process()) {
+    op_grad_info->need_do_forward_output_replace = false;
+  } else {
+    // Not first step and top cell is not dynamic shape
+    const auto &op_info_with_tensor_object = pre_top_cell->replace_info().op_info_with_tensor_object;
+    op_grad_info->used_in_bprop_graph =
+      op_info_with_tensor_object.find(op_grad_info->op_info) != op_info_with_tensor_object.end();
+  }
+  return pre_top_cell;
+}
+
+void AutoGrad::UpdateGradOpInfo(const GradExecutor *grad_executor, const OpGradInfoPtr &op_grad_info,
+                                const TopCellInfoPtr &pre_top_cell, bool is_jit_graph) {
+  MS_EXCEPTION_IF_NULL(op_grad_info);
+  MS_EXCEPTION_IF_NULL(grad_executor);
+  const auto &top_cell = grad_executor->top_cell();
+  if (!is_jit_graph) {
+    grad_executor->dynamic_shape()->CheckNodeDynamic(top_cell, op_grad_info);
+  }
+  if (op_grad_info->need_do_forward_output_replace && op_grad_info->used_in_bprop_graph) {
+    MS_EXCEPTION_IF_NULL(pre_top_cell);
+    top_cell->UpdateTopCellForwardTensorInfoInBpropGraph(op_grad_info->op_info, op_grad_info->out_value,
+                                                         pre_top_cell.get());
   }
 }
 

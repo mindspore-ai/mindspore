@@ -29,12 +29,13 @@ void TopCellInfo::RecordCellBackwardHookOp(const std::string &cell_id, const Anf
 
 void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info, bool is_jit_graph) const {
   // Dynamic shape no need do value node replace
-  if (use_dynamic_shape_process() && !is_jit_graph) {
+  if (use_dynamic_shape_process_ && !is_jit_graph) {
     return;
   }
   MS_EXCEPTION_IF_NULL(op_run_info);
-  op_run_info->op_info.clear();
-  op_run_info->op_info += op_run_info->base_op_run_info.op_name + "-" + std::to_string(op_index_);
+  op_run_info->op_grad_info->op_info.clear();
+  op_run_info->op_grad_info->op_info += op_run_info->base_op_run_info.op_name + "-" + std::to_string(op_index_);
+  ++op_index_;
 }
 
 void TopCellInfo::UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compile) {
@@ -255,6 +256,39 @@ void TopCellInfo::SetUnpackOutputToGraphInfoMap(const std::string &id, const Anf
   auto &graph_info = graph_info_map().at(fg());
   MS_EXCEPTION_IF_NULL(graph_info);
   graph_info->node_map[id] = std::make_pair(node, index);
+}
+
+void TopCellInfo::CheckBpropCutNode(const PrimitivePtr &op_prim) {
+  if (op_prim == nullptr || has_bprop_cut_op_) {
+    return;
+  }
+  if (op_prim->name() == kHookBackwardName || op_prim->name() == kCellBackwardHookName) {
+    has_bprop_cut_op_ = true;
+  }
+}
+
+void TopCellInfo::UpdateTopCellForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v,
+                                                             TopCellInfo *pre_top_cell) {
+  // top cell is pipeline top cell
+  MS_EXCEPTION_IF_NULL(pre_top_cell);
+  if (is_pipeline_top_cell_) {
+    if (pre_top_cell->is_finish_backward()) {
+      // Not first run top cell, do update; Save op_info -> tensor
+      if (!pre_top_cell->is_ir_grad()) {
+        MS_LOG(EXCEPTION) << "Forward repalce top cell must be ir grad";
+      }
+      MS_LOG(DEBUG) << "Store pipeline top cell " << already_run_cell_id_ << " with input args id " << input_args_id_
+                    << ", op info " << op_info;
+      StoreForwardOutputWithOpInfo(pre_top_cell->replace_info().op_info_with_tensor_object, op_info, v, &replace_info_);
+    } else {
+      // The first ir grad is not run before, indicate this is a first step, top cell will run func grad independently
+      MS_LOG(DEBUG) << "Current top cell is pipeline top cell and run firstly, op info " << op_info;
+    }
+  } else {
+    // Not first run top cell, do update
+    MS_LOG(DEBUG) << "Update top cell forward output tensor info " << op_info;
+    UpdateForwardOutputTensorInfo(op_info, v, pre_top_cell->replace_info());
+  }
 }
 
 void TopCellInfo::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph) {

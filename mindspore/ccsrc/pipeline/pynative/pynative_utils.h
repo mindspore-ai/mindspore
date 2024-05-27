@@ -70,6 +70,7 @@ struct Common {
                                   const std::string &device_target, bool is_dynamic_shape,
                                   mindspore::HashSet<size_t> *input_to_attr_index);
   static ValueNodePtr CreateValueNodeByValue(const ValuePtr &v, const abstract::AbstractBasePtr &abs = nullptr);
+  static void SetOutputUsedInBpropGraph(const ValuePtr &value);
   static ValuePtr CreateFakeValueWithoutDeviceAddress(const ValuePtr &value);
   static tensor::TensorPtr CreateFakeTensorWithoutDeviceAddress(const tensor::TensorPtr &tensor);
   static inline bool IsParam(InputType grad_type) {
@@ -238,6 +239,10 @@ struct AutoGrad {
                                         const GraphCallCondition &graph_call_condition);
   static PrimitivePyPtr BuildBpropCutPrim(const PrimitivePtr &prim, bool is_need_recompute = false);
   static void CheckRecomputeInputs(const GradParamPtr &grad_param);
+  static TopCellInfoPtr FindPreTopcell(const GradExecutor *grad_executor, const OpGradInfoPtr &op_grad_info,
+                                       const std::string &op_info, const ValuePtr &value);
+  static void UpdateGradOpInfo(const GradExecutor *grad_executor, const OpGradInfoPtr &op_grad_info,
+                               const TopCellInfoPtr &pre_top_cell, bool is_jit_graph);
   static void ClearAutoGradStaticCache();
   static void CheckAndSetAbstract(const OpGradInfoPtr &op_grad_info);
   static void CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs);

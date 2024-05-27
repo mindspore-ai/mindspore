@@ -67,14 +67,25 @@ struct AsyncStatus {
 };
 
 struct OpGradInfo {
+  bool is_need_recompute{false};
+
+  // Mark op output value whether used in bprop graph
+  bool used_in_bprop_graph{false};
+  // If op output value used in bprop grad and not in first step or dynamic process, need to do output value replace in
+  // bprop graph
+  bool need_do_forward_output_replace{true};
+
+  size_t output_size;
+  std::string op_info;
+
   PrimitivePtr op_prim{nullptr};
   abstract::AbstractBasePtrList input_abs{};
   abstract::AbstractBasePtr out_abs{nullptr};
+
   std::vector<ValuePtr> input_value{};
   ValuePtr out_value{nullptr};
+
   std::vector<InputType> input_value_grad_type{};
-  size_t output_size;
-  bool is_need_recompute{false};
   ValueSimpleInfoPtr output_value_simple_info{nullptr};
 };
 using OpGradInfoPtr = std::shared_ptr<OpGradInfo>;
@@ -91,7 +102,7 @@ struct GradParam {
   bool use_dynamic_shape_process{false};
 
   // For other used
-  bool out_used_in_bporp_graph{false};
+  bool out_used_in_bporp_graph{true};
   bool is_control_flow{false};
   bool is_func_grad{false};
   size_t input_size{0};
@@ -131,7 +142,6 @@ struct FrontendOpRunInfo {
   size_t none_init_inputs_num = 0;
   // real_out return to python; out_value in OpGradInfo may be fake value;
   ValuePtr real_out{nullptr};
-  std::string op_info;
   std::string out_value_id;
   // Hold tensorGradType
   std::vector<std::string> input_value_id{};

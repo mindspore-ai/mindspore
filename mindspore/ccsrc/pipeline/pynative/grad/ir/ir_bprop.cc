@@ -710,7 +710,8 @@ void IrBprop::GradCNode(const PrimitivePtr &prim, const CNodePtr &cnode, const G
   if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
     (void)BuildKNodeForMakeTuple(cnode);
     return;
-  } else if (IsPrimitiveEquals(prim, prim::kPrimTupleGetItem)) {
+  }
+  if (IsPrimitiveEquals(prim, prim::kPrimTupleGetItem)) {
     (void)BuildKNodeForTupleGetItem(cnode);
     return;
   }

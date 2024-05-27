@@ -42,8 +42,8 @@ bool IsDynamicDetectPrimChange(const PrimitivePtr &old_prim, const PrimitivePtr 
   if (old_prim == nullptr && new_prim == nullptr) {
     return false;
   }
-  // Use kernel graph will add kIsFeatureMapOutput adn kIsFeatureMapOutput attr,
-  // but check must be remove them
+  // Use kernel graph will add kIsFeatureMapOutput and kIsFeatureMapOutput attr.
+  // After run first step, prim may be changed. So, prim check exclude them.
   if (old_prim != nullptr && old_prim->HasAttr(kIsFeatureMapOutput)) {
     old_prim->EraseAttr(kIsFeatureMapOutput);
     old_prim->EraseAttr(kIsFeatureMapInputList);
@@ -405,20 +405,12 @@ void DynamicShape::SaveUnknownShapeAbsFromJit(const ValuePtr &v, const AbstractB
   }
 }
 
-bool NodeDynamicDetect::CheckNodeDynamic(const TopCellInfoPtr &top_cell, const ValuePtrList &inputs,
+void NodeDynamicDetect::CheckNodeDynamic(const TopCellInfoPtr &top_cell, const ValuePtrList &inputs,
                                          const DynamicDetectNodeInfoPtr &node) {
-  std::unique_lock<std::mutex> lock(async_mutex_);
-  MS_EXCEPTION_IF_NULL(top_cell);
-  if (top_cell->use_dynamic_shape_process()) {
-    top_cell->IncreaseOpIndex();
-    return true;
-  }
-
   const size_t node_idx = top_cell->op_index();
   bool node_is_dynamic = false;
   bool use_dynamic_shape_process =
     top_cell->has_bprop_cut_op() || (node_is_dynamic = IsNodeDynamic(top_cell, inputs, node, node_idx)) == true;
-  top_cell->IncreaseOpIndex();
   if (use_dynamic_shape_process) {
     MS_LOG(INFO) << "Set use_dynamic_shape_process: " << use_dynamic_shape_process;
     top_cell->set_use_dynamic_shape_process(use_dynamic_shape_process);
@@ -437,7 +429,6 @@ bool NodeDynamicDetect::CheckNodeDynamic(const TopCellInfoPtr &top_cell, const V
                   )");
     }
   }
-  return use_dynamic_shape_process;
 }
 
 bool NodeDynamicDetect::IsNodeDynamic(const TopCellInfoPtr &top_cell, const ValuePtrList &inputs,
@@ -450,7 +441,7 @@ bool NodeDynamicDetect::IsNodeDynamic(const TopCellInfoPtr &top_cell, const Valu
   }
 
   MS_LOG(DEBUG) << "Check node " << (node->op_prim != nullptr ? node->op_prim->name() : "") << " node_idx: " << node_idx
-                << ", is_jit_node: " << node->is_graph_node << ", graph_phase: " << node->graph_phase
+                << ", graph_phase: " << node->graph_phase
                 << ", obj_id_with_grad_order: " << top_cell->obj_id_with_grad_order()
                 << ", cell id: " << top_cell->cell_id();
   const auto &dynamic_nodes =
@@ -463,14 +454,10 @@ bool NodeDynamicDetect::IsNodeDynamic(const TopCellInfoPtr &top_cell, const Valu
 
   // 1.Detect jit phase
   const DynamicDetectNodeInfoPtr &old_node_info = dynamic_nodes[node_idx];
-  if (node->is_graph_node) {
-    if (!old_node_info->is_graph_node || node->graph_phase != old_node_info->graph_phase) {
-      MS_LOG(DEBUG) << "Graph is dynamic, old is_graph_node: " << old_node_info->is_graph_node
-                    << ", new is_graph_node: " << node->is_graph_node << ", old graph_phase "
-                    << old_node_info->is_graph_node << ", new graph_phase: " << node->graph_phase;
-      return true;
-    }
-    return false;
+  if (node->graph_phase != old_node_info->graph_phase) {
+    MS_LOG(DEBUG) << "Graph is dynamic, old graph_phase " << old_node_info->graph_phase
+                  << ", new graph_phase: " << node->graph_phase;
+    return true;
   }
 
   // 2.Detect prim
@@ -504,8 +491,7 @@ void NodeDynamicDetect::SaveDynamicDetectNodeInfoInFirstTime(const TopCellInfoPt
   }
   (void)cell_id_with_dynamic_detect_nodes_[top_cell->obj_id_with_grad_order()][top_cell->cell_id()].emplace_back(node);
   MS_LOG(DEBUG) << "Save node " << (node->op_prim != nullptr ? node->op_prim->name() : "")
-                << " firstly, node_idx: " << node_idx << ", is_jit_node: " << node->is_graph_node
-                << ", graph_phase: " << node->graph_phase
+                << " firstly, node_idx: " << node_idx << ", graph_phase: " << node->graph_phase
                 << ", obj_id_with_grad_order: " << top_cell->obj_id_with_grad_order()
                 << ", cell id: " << top_cell->cell_id();
 }

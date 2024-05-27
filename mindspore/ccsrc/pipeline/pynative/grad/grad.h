@@ -118,8 +118,6 @@ class GradExecutor {
   void ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   AnfNodePtr GetInput(const ValuePtr &v, const string &obj_id) const;
   AnfNodePtr GetParamInput(const ValuePtr &v, const std::string &id) const;
-  void UpdateTopCellForwardTensorInfoInBpropGraph(const string &op_info, const ValuePtr &v,
-                                                  const size_t &stream_id) const;
   void ClearRes();
   void AsyncClearTopCell();
   void AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell);

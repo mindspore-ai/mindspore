@@ -879,6 +879,16 @@ class MS_CORE_API BaseTensor : public MetaTensor {
   /// \param[in] is_forward_output Whether this BaseTensor is forward output.
   void set_is_forward_output(bool is_forward_output) { is_forward_output_ = is_forward_output; }
 
+  /// \brief Check if this BaseTensor is used in bprop graph.
+  ///
+  /// \return Whether this BaseTensor is used in bprop graph.
+  bool used_in_bprop_graph() const { return used_in_bprop_graph_; }
+
+  /// \brief Set used in bprop graph flag of this BaseTensor.
+  ///
+  /// \param[in] used_in_bprop_graph Whether this BaseTensor is forward output.
+  void set_used_in_bprop_graph(bool used_in_bprop_graph) { used_in_bprop_graph_ = used_in_bprop_graph; }
+
   /// \brief Get the device address.
   ///
   /// \return The device address.
@@ -991,6 +1001,7 @@ class MS_CORE_API BaseTensor : public MetaTensor {
 
  protected:
   bool is_forward_output_{false};
+  bool used_in_bprop_graph_{false};
   bool need_pipeline_sync_{false};
   std::string id_{""};
   mutable DeviceSyncPtr device_sync_{nullptr};

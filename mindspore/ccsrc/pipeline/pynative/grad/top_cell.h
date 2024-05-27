@@ -130,7 +130,6 @@ class TopCellInfo {
     auto_grad_cell_ptr_ = std::move(auto_grad_cell_ptr);
   }
   inline size_t op_index() const { return op_index_; }
-  inline void IncreaseOpIndex() { ++op_index_; }
   inline size_t initial_graph_param_size() const { return initial_graph_param_size_; }
   TensorReplaceInfo &replace_info() { return replace_info_; }
   inline InputArgsInfoPtr input_args_info() { return input_args_info_; }
@@ -176,6 +175,8 @@ class TopCellInfo {
   void SaveTensorIdWithOpInfo(const std::string &op_info, const ValuePtr &v) {
     SetIdWithOpInfo(v, op_info, kIndex0, &(replace_info_.id_with_op_info));
   }
+  void CheckBpropCutNode(const PrimitivePtr &op_prim);
+  void UpdateTopCellForwardTensorInfoInBpropGraph(const string &op_info, const ValuePtr &v, TopCellInfo *pre_top_cell);
   void SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph);
   void SetLastOutputValueForwardOutputFlag(const ValuePtr &v);
   void ChangeTopCellInfo(const std::vector<BaseShapePtr> &args_new_shape);
@@ -230,7 +231,7 @@ class TopCellInfo {
   TopCellInfo *shadow_top_cell_{};
 
   size_t grad_order_{0};
-  size_t op_index_{0};
+  mutable size_t op_index_{0};
 
   // If the bprop graph has control flow, bprop graph parameters size may be change(to large size)
   size_t initial_graph_param_size_{0};
