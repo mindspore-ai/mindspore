@@ -1,7 +1,7 @@
-mindspore.ops.sign
+mindspore.mint.sign
 ===================
 
-.. py:function:: mindspore.ops.sign(input)
+.. py:function:: mindspore.mint.sign(input)
 
     按sign公式逐元素计算输入Tensor。
 

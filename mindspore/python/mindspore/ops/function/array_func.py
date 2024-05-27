@@ -6127,9 +6127,9 @@ def nonzero(input, as_tuple=False):
 
     Args:
         input (Tensor): The input Tensor, its rank should be greater than or eaqual to 1.
-        as_tuple (Bool):
+        as_tuple (bool):
             If ``False`` , return Tensor. Default: ``False`` .
-            If ``True`` , return Tuple of Tensor, Only support``Ascend``.
+            If ``True`` , return Tuple of Tensor, Only support ``Ascend``.
 
 
     Returns:

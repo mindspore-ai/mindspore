@@ -1,9 +1,9 @@
 mindspore.mint.nn.functional.binary_cross_entropy_with_logits
 =============================================================
 
-.. py:function:: mindspore.mint.binary_cross_entropy_with_logits(input, target, weight, reduction, pos_weight)
+.. py:function:: mindspore.mint.nn.functional.binary_cross_entropy_with_logits(input, target, weight, reduction, pos_weight)
 
-    输入经过sigmoid激活函数后作为预测值，`binary_cross_entropy_with_logits` 计算预测值和目标值之间的二值交叉熵损失。与`mindspore.ops.binary_cross_entropy_with_logits`功能一致。
+    输入经过sigmoid激活函数后作为预测值，`binary_cross_entropy_with_logits` 计算预测值和目标值之间的二值交叉熵损失。与 `mindspore.ops.binary_cross_entropy_with_logits` 功能一致。
 
     将输入 `input` 设置为 :math:`X` ，输入 `target` 设置为 :math:`Y` ，输入 `weight` 设置为 :math:`W` ，输出设置为 :math:`L` 。则，
 
