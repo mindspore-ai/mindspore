@@ -328,4 +328,31 @@ size_t GetSystemFreeDiskSize(const std::string &path) {
 #endif
 }
 
+bool SkipOrResetCopyAction(bool need_reset) {
+  static bool copy_action = false;
+  if (need_reset) {
+    MS_LOG(INFO) << "Step end, reset copy action flag";
+    copy_action = false;
+    return true;
+  }
+  if (!copy_action) {
+    copy_action = true;
+    return true;
+  }
+  return false;
+}
+
+bool SkipOrResetSyncAction(bool need_reset) {
+  static bool sync_action = false;
+  if (need_reset) {
+    MS_LOG(INFO) << "Step end, reset sync action flag";
+    sync_action = false;
+    return true;
+  }
+  if (!sync_action) {
+    sync_action = true;
+    return true;
+  }
+  return false;
+}
 }  // namespace mindspore

@@ -864,6 +864,8 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
   double end_time = GetTime();
   const size_t kSecondsToMilliseconds = 1000;
   SetActorExecutionStrategy(actor_set, strategy, (end_time - start_time) * kSecondsToMilliseconds);
+  (void)SkipOrResetCopyAction(true);
+  (void)SkipOrResetSyncAction(true);
 
 #if defined(__linux__) && defined(WITH_BACKEND)
   DoDisasterRecovery(actor_set->name_);
@@ -1362,6 +1364,7 @@ void ProcessStreamSendRecvEventPair(
 
 std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompilerInfo &graph_compiler_info) {
   std::vector<KernelActorPtr> kernel_actors;
+  auto root_weights = GatherAllParams(graph_compiler_info);
 
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info.graphs_[i];
@@ -1378,6 +1381,7 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
     if (strategy == GraphExecutionStrategy::kStep) {
       strategy = (is_single_op_graph ? strategy : GraphExecutionStrategy::kPipeline);
     }
+    graph->CacheRootWeight(root_weights);
 
     // Stream recv node need task id on stream from send node. Here pass stream send actor to stream recv actor.
     mindspore::HashMap<uint32_t, std::pair<KernelActorPtr, KernelActorPtr>> send_recv_nodes;
@@ -1427,8 +1431,20 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
   return kernel_actors;
 }
 
+std::vector<AnfNodePtr> GraphScheduler::GatherAllParams(const GraphCompilerInfo &graph_compiler_info) {
+  std::vector<AnfNodePtr> root_weights;
+  for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
+    const auto &graph = graph_compiler_info.graphs_[i];
+    MS_EXCEPTION_IF_NULL(graph);
+    const auto &params = graph->parameters();
+    (void)root_weights.insert(root_weights.end(), params.begin(), params.end());
+  }
+  return root_weights;
+}
+
 std::vector<SuperKernelActorPtr> GraphScheduler::BuildSuperKernelActor(const GraphCompilerInfo &graph_compiler_info) {
   std::vector<SuperKernelActorPtr> super_kernel_actors;
+  auto root_weights = GatherAllParams(graph_compiler_info);
 
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info.graphs_[i];
@@ -1442,7 +1458,7 @@ std::vector<SuperKernelActorPtr> GraphScheduler::BuildSuperKernelActor(const Gra
       MS_LOG(INFO) << "The graph " << graph->graph_id() << " is an empty graph and skips building.";
       continue;
     }
-
+    graph->CacheRootWeight(root_weights);
     auto actor_name = graph->ToString() + kSuperKernelActorNameSuffix;
     auto super_kernel_actor =
       std::make_shared<SuperKernelActor>(actor_name, graph, device_context, memory_manager_aid_, debug_aid_, nullptr);

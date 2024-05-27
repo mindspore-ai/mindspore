@@ -561,6 +561,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void set_has_kernel_need_user_data(bool has_kernel_need_user_data) {
     has_kernel_need_user_data_ = has_kernel_need_user_data;
   }
+  void CacheRootWeight(const std::vector<AnfNodePtr> &weights);
+  std::vector<AnfNodePtr> GetRootWeights() { return root_weights_; }
 
  private:
   AnfNodePtr MakeValueNode(const AnfNodePtr &node) const;
@@ -690,6 +692,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   bool enable_multi_stream_{false};
   // Whether this graph contains kernel which need user data.
   bool has_kernel_need_user_data_{false};
+  std::vector<AnfNodePtr> root_weights_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

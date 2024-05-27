@@ -121,6 +121,7 @@ class BACKEND_EXPORT KernelRuntime {
   virtual std::shared_ptr<DeviceEvent> CreateDeviceTimeEvent() { return nullptr; }
   virtual DeviceType GetTargetDeviceType() const = 0;
   virtual void *compute_stream() const { return nullptr; }
+  virtual void *copy_data_stream() const { return nullptr; }
   virtual void *communication_stream() const { return nullptr; }
   void UpdateRefNodeOutputMem(const session::KernelGraph &graph) const;
   void UpdateSingleRefNodeMem(const CNodePtr &kernel, const session::KernelGraph &graph, bool reverse) const;
@@ -212,6 +213,7 @@ class BACKEND_EXPORT KernelRuntime {
 #endif
   void *stream_{nullptr};
   void *communication_stream_{nullptr};
+  void *copy_data_stream_{nullptr};
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
   std::map<uint32_t, std::pair<std::map<AnfNodePtr, std::vector<std::function<void()>>>,
                                std::map<AnfNodePtr, std::vector<std::function<void()>>>>>

@@ -601,6 +601,16 @@ class ModelCheckpoint(Callback):
         """Return the latest checkpoint path and file name."""
         return self._latest_ckpt_file_name
 
+    @property
+    def get_save_checkpoint_steps(self):
+        """Return save ckpt steps"""
+        return self._config.save_checkpoint_steps
+
+    @property
+    def get_last_trigger_step(self):
+        """Return last triggered steps"""
+        return self._last_triggered_step
+
 
 class CheckpointManager:
     """Manage checkpoint files according to train_config of checkpoint."""

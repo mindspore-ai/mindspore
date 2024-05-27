@@ -131,6 +131,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_ENABLE_BEGIN_END_INLINE_OPT,
   MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT,
   MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE,
+  MS_CTX_NEED_CKPT,
   MS_CTX_TYPE_BOOL_END,
 
   // parameter of type int
@@ -139,6 +140,9 @@ enum MsCtxParam : unsigned {
   MS_CTX_MEMORY_OPTIMIZE_LEVEL,
   MS_CTX_SAVE_GRAPHS_FLAG,
   MS_CTX_JIT_SYNTAX_LEVEL,
+  MS_CTX_CUR_STEP_NUM,
+  MS_CTX_SAVE_CKPT_STEPS,
+  MS_CTX_LAST_TRIGGERED_STEP,
   MS_CTX_COMPUTE_COMMUNICATE_FUSION_LEVEL,
   MS_CTX_DEBUG_LEVEL,
   MS_CTX_TYPE_INT_END,
@@ -302,6 +306,9 @@ class MS_CORE_API MsContext {
   void CheckReadStatus(MsCtxParam param, const T &value) const;
   bool CheckWriteStatus(MsCtxParam param) const;
   void SetAscendConfig();
+  void InitBoolTypeDefaultValue();
+  void InitStringTypeDefaultValue();
+  void InitDigitalTypeDefaultValue();
 
   static DeviceSeter seter_;
   static std::shared_ptr<MsContext> inst_context_;
