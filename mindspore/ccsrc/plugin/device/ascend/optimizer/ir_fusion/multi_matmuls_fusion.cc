@@ -123,7 +123,7 @@ std::shared_ptr<ValueNode> CreateWeightTensor(TypeId type_id, const std::vector<
 }
 }  // namespace
 
-bool MultiMatmulsFusion::Run(const FuncGraphPtr &graph) {
+bool InferenceMultiMatmulFusion::Run(const FuncGraphPtr &graph) {
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   bool changed = false;
@@ -134,12 +134,11 @@ bool MultiMatmulsFusion::Run(const FuncGraphPtr &graph) {
     return false;
   }
 
+  constexpr auto kInferenceMultiMatmulOpName = "InferenceMultiMatmul";
   auto enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
-  bool enable_matmul_qkv =
-    (std::find(enable_op_list.begin(), enable_op_list.end(), kMatmulQkvOpName) != enable_op_list.end());
-  bool enable_matmul_ffn =
-    (std::find(enable_op_list.begin(), enable_op_list.end(), kMatmulFfnOpName) != enable_op_list.end());
-  if (!(enable_matmul_qkv || enable_matmul_ffn)) {
+  bool enable_opt =
+    (std::find(enable_op_list.begin(), enable_op_list.end(), kInferenceMultiMatmulOpName) != enable_op_list.end());
+  if (!enable_opt) {
     return false;
   }
 
@@ -183,8 +182,8 @@ bool MultiMatmulsFusion::Run(const FuncGraphPtr &graph) {
   return changed;
 }
 
-void MultiMatmulsFusion::Process(const std::string &name, const AnfNodePtr &node, const AnfNodePtrList &users,
-                                 AnfNodePtrList *getitems) const {
+void InferenceMultiMatmulFusion::Process(const std::string &name, const AnfNodePtr &node, const AnfNodePtrList &users,
+                                         AnfNodePtrList *getitems) const {
   auto kernel_graph = node->func_graph()->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   AnfNodePtrList fused_inputs = {NewValueNode(std::make_shared<Primitive>(name)), node};
