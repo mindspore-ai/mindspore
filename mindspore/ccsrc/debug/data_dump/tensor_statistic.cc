@@ -77,11 +77,11 @@ TensorStat GetKernelTensorStats(const DumpTensorInfo &tensor_info) {
                   data_size, data_type, shape, max_value, min_value, mean_value, data_count);
   return stat;
 }
-
-void DumpKernelTensorStats(const DeviceContext *device_context, vector<KernelTensor *> tensors, bool is_input,
+void DumpKernelTensorStats(const DeviceContext *device_context, vector<device::DeviceAddress *> tensors, bool is_input,
                            const string &op_name, const string &op_type) {
   for (size_t i = 0; i < tensors.size(); ++i) {
-    DumpTensorInfo tensor_info(device_context, tensors[i], is_input, i, op_name, op_type);
+    auto tensor = tensors[i]->kernel_tensor().get();
+    DumpTensorInfo tensor_info(device_context, tensor, is_input, i, op_name, op_type);
     auto stat = GetKernelTensorStats(tensor_info);
     uint32_t rank_id = GetRankId();
     string filename = GenerateDumpPath(0, rank_id) + "/" + kCsvFileName;

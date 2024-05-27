@@ -546,8 +546,8 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
 
   // Debug actor is blocked, must wait debug actor callback message to process continue.
   if (debug_aid_ != nullptr) {
-    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &mem_info_, input_kernel_tensors_,
-                              output_kernel_tensors_, device_contexts_[0], context, &GetAID());
+    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, input_device_tensors_, output_device_tensors_,
+                              device_contexts_[0], context, &GetAID());
   }
 
   PostLaunchKernel(context);
@@ -820,8 +820,8 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
     SetMemInfoForDebugAndRdr();
 
     if (debug_aid_ != nullptr) {
-      ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &mem_info_, input_kernel_tensors_,
-                                output_kernel_tensors_, device_contexts_[0], context, &GetAID());
+      ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, input_device_tensors_, output_device_tensors_,
+                                device_contexts_[0], context, &GetAID());
     }
     if (recorder_aid_ != nullptr) {
       ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &mem_info_,

@@ -49,15 +49,13 @@ class DebugActor : public ActorBase {
   void ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &graphs, bool is_kbyk);
 
   // The debug of each node.
-  void Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info,
-             const std::vector<KernelTensor *> &op_input_kernel_tensors,
-             const std::vector<KernelTensor *> &op_output_kernel_tensors, const DeviceContext *device_context,
+  void Debug(const AnfNodePtr &node, const std::vector<DeviceTensor *> &op_input_kernel_tensors,
+             const std::vector<DeviceTensor *> &op_output_kernel_tensors, const DeviceContext *device_context,
              OpContext<DeviceTensor> *const op_context, const AID *from_aid);
-
-  void AscendKbkDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info,
-                     const std::vector<KernelTensor *> &input_kernel_tensors,
-                     const std::vector<KernelTensor *> &output_kernel_tensors, const DeviceContext *device_context);
-
+#ifdef ENABLE_DEBUGGER
+  void AscendKbkDump(const CNodePtr &cnode, const std::vector<DeviceTensor *> &input_kernel_tensors,
+                     const std::vector<DeviceTensor *> &output_kernel_tensors, const DeviceContext *device_context);
+#endif
   void AscendStepStart(const std::vector<KernelGraphPtr> &graphs, std::vector<DeviceContext *> device_contexts);
 
   void AscendStepEnd();
@@ -74,7 +72,7 @@ class DebugActor : public ActorBase {
 
  private:
   // Check kernel output is finite or not synchronously.
-  bool CheckOverflow(const DeviceContext *device_context, const std::vector<KernelTensor *> &inputs);
+  bool CheckOverflow(const DeviceContext *device_context, const std::vector<DeviceTensor *> &inputs);
   // Release device memory for AllFinite kernel.
   void Finalize() override;
 
