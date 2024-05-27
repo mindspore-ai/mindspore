@@ -34,6 +34,7 @@ constexpr size_t kInputBias = 6;
 constexpr size_t kInputTransposeX = 7;
 constexpr size_t kInputTransposeWeight = 8;
 constexpr size_t kInputGroupSize = 9;
+constexpr int kInt4ShapeMul = 2;
 
 BaseShapePtr WeightQuantBatchMatmulFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                         const std::vector<AbstractBasePtr> &input_args) const {
@@ -85,7 +86,7 @@ BaseShapePtr WeightQuantBatchMatmulFuncImpl::InferShape(const PrimitivePtr &prim
   ShapeVector ret_shape;
   BatchMatMulMakeShape(&ret_shape, x_shp, weight_shp, transpose_x, transpose_weight, kMatSize);
   if (input_type->type_id() == TypeId::kNumberTypeInt4 && !transpose_weight) {
-    ret_shape[ret_shape.size() - 1] *= 2;
+    ret_shape[ret_shape.size() - 1] *= kInt4ShapeMul;
   }
   return std::make_shared<abstract::Shape>(ret_shape);
 }

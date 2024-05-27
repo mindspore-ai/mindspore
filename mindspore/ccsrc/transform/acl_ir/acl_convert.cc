@@ -53,7 +53,7 @@ namespace {
   _(kNumberTypeComplex, ACL_DT_UNDEFINED)              \
   _(kNumberTypeComplex64, ACL_COMPLEX64)               \
   _(kNumberTypeComplex128, ACL_COMPLEX128)             \
-  _(kNumberTypeInt4, ACL_DT_UNDEFINED)                 \
+  _(kNumberTypeInt4, ACL_INT4)                         \
   _(kNumberTypeGLUInt, ACL_DT_UNDEFINED)
 
 static const std::map<std::string, aclFormat> kMsFormatToAclFormat = {{kOpFormat_NCHW, ACL_FORMAT_NCHW},
