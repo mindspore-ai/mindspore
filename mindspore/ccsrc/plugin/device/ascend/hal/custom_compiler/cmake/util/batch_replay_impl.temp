@@ -1,0 +1,117 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <iostream>
+#include <thread>
+#include <stdlib.h>
+#include "replay_def.h"
+#include "code_gen.h"
+#include "replay_fun.h"
+#include "register/op_check.h"
+#define __ASCENDC_REPLAY_CODE__
+#include <time.h>
+
+using namespace std;
+using namespace optiling;
+using namespace AscendCReplay;
+
+extern "C" void __KERNEL_FUN__ (__ARGS_DEF__, const char *);
+extern "C" int elf_batch_append(char *elf, uint32_t elfSize, char *jit, int kernum, char *atext[], int alen[],
+    int atlen, const char* kernelname[]);
+
+#define KERNEL_N 1
+#define ARG_N (__ARG_NUM__)
+#define MAX_L (1024 * 1024 * 100)
+#define MAX_E (1024 * 1024)
+
+int __KERNEL_FUN___replay___OPS_PRODUCT__(ReplayFuncParam& param, const int core_type)
+{
+    // gen type 1 : direct call codes 0: load .o file
+    if (param.gentype < 0 || param.gentype > 1) {
+        printf("Error: call replay gen type is %d, should only be 1 or 0\n", param.gentype);
+        return 0;
+    } else if (param.gentype == 1 && param.objptr == nullptr) {
+        printf("Error: call replay with direct call mode, but code obj addr is null\n");
+        return 0;
+    } else if (param.gentype == 0 && param.output_kernel_file == nullptr) {
+        printf("Error: call replay with object file mode, but object file path is null\n");
+        return 0;
+    }
+    // core_type 0:MIX 1:CUBE 2:VEC
+    if (core_type < 0 || core_type > 2) {
+        printf("Error: call replay core type is %d !\n", core_type);
+        return 0;
+    }
+    g_coreType = __CORE_TYPE__;
+    g_taskRation = param.task_ration;
+    g_tilingKey = param.tiling_key;
+
+    unsigned char *buf, *jit;
+    char *kernel[KERNEL_N];
+    int len[KERNEL_N];
+    block_idx = 0;
+    block_num = param.block_dim;
+    g_ubBase = block_num;
+    uint8_t *code = (uint8_t *)malloc(MAX_L);
+    uint8_t *pos = code;
+    struct timespec tp1, tp2;
+
+    clock_gettime(CLOCK_MONOTONIC, &tp1);
+    if (block_num > 32) {
+        printf("Error: block_num > 32\n");
+        return 0;
+    }
+    //__OP_FOPEN__
+    for (int i = 0; i < KERNEL_N; i++) {
+        //__OP_SET_KERNEL__
+        for (int j = 0; j < ARG_N; j++)
+            AddArg(j, ARG_STEP * (j + 1));
+#ifdef FP_CEILING
+        SetCtrlFloatEnable();
+#else
+        SetCtrlFloatDisable();
+#endif
+        CodeInit(pos, true);
+        __KERNEL_FUN__(__KERNEL_ARGS__, param.tiling_data);
+        CodeEnd();
+        kernel[i] = (char *)pos;
+        len[i] = CodeLen();
+        pos += len[i];
+    }
+    //__OP_FCLOSE__
+    clock_gettime(CLOCK_MONOTONIC, &tp2);
+    buf = (unsigned char *)malloc(MAX_E);
+    int fd = open(param.entry_file, O_RDONLY);
+    if (fd < 0) {
+        printf("[error]: cannot find entry.o : %s\n", param.entry_file);
+        return 0;
+    }
+    uint32_t bufSize = read(fd, buf, MAX_E);
+    if (bufSize <= 0) {
+        printf("[error]: entry.o : %s is too small ! \n", param.entry_file);
+    }
+    close(fd);
+    jit = (unsigned char *)malloc(MAX_L);
+    printf("total code generated %ld\n", pos - code);
+    int sz = elf_batch_append((char *)buf, bufSize, (char *)jit, KERNEL_N, kernel, len, pos - code, &param.kernel_name);
+    if (tp1.tv_sec != tp2.tv_sec) {
+        printf("%ld NS\n", tp2.tv_nsec + 1000000000 - tp1.tv_nsec);
+    } else {
+        printf("%ld NS\n", tp2.tv_nsec - tp1.tv_nsec);
+    }
+    printf("new elf size %d\n", sz);
+    if (param.gentype == 0) {
+        fd = open(param.output_kernel_file, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+        (void)write(fd, jit, sz);
+        close(fd);
+        free(jit);
+    } else if (param.gentype == 1) {
+        *param.objptr = (char*)jit;
+    }
+    free(buf);
+    free(code);
+    return sz;
+}
+
+REG_REPLAY_FUNC(__OPTYPE__, __OPS_PRODUCT__, __KERNEL_FUN___replay___OPS_PRODUCT__);
