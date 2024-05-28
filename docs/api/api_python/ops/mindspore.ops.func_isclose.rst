@@ -11,8 +11,8 @@ mindspore.ops.isclose
     参数：
         - **input** (Tensor) - 对比的第一个输入，支持的类型有float16、float32、float64、int8、int16、int32、int64、uint8，Ascend平台额外支持bfloat16和bool类型。
         - **other** (Tensor) - 对比的第二个输入，数据类型必须与 `input` 相同。
-        - **rtol** (float, 可选) - 相对容忍度。默认值： ``1e-05``，支持输入int或bool类型推导。
-        - **atol** (float, 可选) - 绝对容忍度。默认值： ``1e-08``，支持输入int或bool类型推导。
+        - **rtol** (Union[float, int, bool], 可选) - 相对容忍度。默认值： ``1e-05``。
+        - **atol** (Union[float, int, bool], 可选) - 绝对容忍度。默认值： ``1e-08``。
         - **equal_nan** (bool, 可选) - 若为True，则两个NaN被视为相同。默认值： ``False`` 。
 
     返回：
