@@ -1655,21 +1655,19 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
 
 static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
   std::vector<ActionItem> actions;
-  // Resolve the python func
-  static const bool greed_parse = common::GetCompileConfig("GREED_PARSE") == "1";
-  static const bool boost_infer = common::GetEnv("MS_DEV_BOOST_INFER") == "1";
-  static const bool enable_resolve_action = !greed_parse && !boost_infer;
-
+  static const bool disable_boost_infer = common::GetCompileConfig("BOOST_INFER") == "0";
+  static const bool use_bootstrap = common::GetCompileConfig("BOOTSTRAP") == "1";
   if (!trace_flag) {
-    static const bool use_bootstrap = common::GetCompileConfig("BOOTSTRAP") == "1";
-    if (!use_bootstrap) {
+    if (use_bootstrap) {
+      // Bootstrap for JIT.
+      (void)actions.emplace_back(std::make_pair(kBootstrap, BootstrapAction));
+    } else {
       // Parse the python ast to ANF graph
       (void)actions.emplace_back(std::make_pair(kParse, ParseAction));
-
+    }
+    if (disable_boost_infer) {
       // Resolve the python func
-      if (enable_resolve_action) {
-        (void)actions.emplace_back(std::make_pair(kSymbolResolve, SymbolResolveAction));
-      }
+      (void)actions.emplace_back(std::make_pair(kSymbolResolve, SymbolResolveAction));
 
       // Notice: Temporary solution, to be implemented using Python Rewriter in the future.
       // Set mixed Precision flag in subgraph.
@@ -1690,22 +1688,19 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
       }
 
       // Make the reusable cell to be the reusable function graph
-      if (enable_resolve_action) {
-        (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
-      }
+      (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
 
       // Pre-Lift the func graphs.
       (void)actions.emplace_back(std::make_pair(kPreCConv, PreCConvAction));
-    } else {
-      // Bootstrap for JIT.
-      (void)actions.emplace_back(std::make_pair(kBootstrap, BootstrapAction));
     }
   }
   // Evaluate type and shape, and specialize.
   (void)actions.emplace_back(std::make_pair(kTypeInference, TypeInferenceAction));
-  if (!enable_resolve_action) {
+
+  if (!disable_boost_infer) {
     (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
   }
+
   // Auto-monad for side-effects handling.
   (void)actions.emplace_back(std::make_pair(kAutoMonad, AutoMonadAction));
   // Do data structure simplifications and inline.
