@@ -370,6 +370,7 @@ bool DebugActor::CheckOverflow(const DeviceContext *device_context, const std::v
 }
 
 void DebugActor::Finalize() {
+  DumpJsonParser::GetInstance().PrintUnusedKernel();
   for (const auto &item : finite_output_device_addresses_) {
     auto &stream_id_to_output_device_address_map = item.second;
     auto *device_context = item.first;
