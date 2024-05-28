@@ -12,6 +12,7 @@ Array Operation
     :template: classtemplate.rst
 
     mindspore.mint.index_select
+    mindspore.mint.topk
 
 Element-wise Operation
 ^^^^^^^^^^^^^^^^^^^^^^^^^

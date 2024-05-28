@@ -12,6 +12,7 @@ Array操作
     :template: classtemplate.rst
 
     mindspore.mint.index_select
+    mindspore.mint.topk
 
 逐元素运算
 ^^^^^^^^^^^^^^^^
