@@ -163,15 +163,31 @@ std::string GetPyObjId(const py::object &obj) {
   return out.cast<std::string>();
 }
 
-void BroadenCNodeAbstract(const FuncGraphPtr &func_graph) {
-  std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
-  for (const AnfNodePtr &node : nodes) {
-    if (!node->isa<CNode>()) {
+void ClearCNodeAbstract(const FuncGraphPtr &func_graph) {
+  std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple, AlwaysInclude);
+  static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
+  for (const auto &node : nodes) {
+    if (node == nullptr || node->isa<Parameter>()) {
       continue;
     }
-    auto abstract = node->abstract();
-    if (abstract != nullptr) {
-      node->set_abstract(abstract->Broaden());
+    auto primitive = GetCNodePrimitive(node);
+    if (primitive != nullptr) {
+      auto is_load = primitive->GetAttr("is_load");
+      if (abstract::GetPrimEvaluator(primitive, nullptr) == nullptr && is_load != nullptr && GetValue<bool>(is_load)) {
+        MS_LOG(INFO) << "The primitive is not defined in front end. Primitive: " << primitive->ToString();
+        continue;
+      }
+    }
+    auto prev_inferred = node->abstract();
+    // Keep previous inferred value for ValueNode if the inferred value is not AbstractFunction.
+    if (!node->isa<ValueNode>() || (prev_inferred != nullptr && prev_inferred->isa<abstract::AbstractFunction>())) {
+      // Reset tuple/list abstract use flags.
+      if (enable_eliminate_unused_element && prev_inferred != nullptr &&
+          prev_inferred->isa<abstract::AbstractSequence>()) {
+        SetSequenceNodeElementsUseFlags(node, nullptr);
+      }
+      node->set_abstract(nullptr);
+      MS_LOG(DEBUG) << "Abstract of node " << node->DebugString() << " is set to nullptr";
     }
   }
 }
@@ -209,7 +225,7 @@ void ConvertLoadedGraph(const FuncGraphPtr &func_graph, const ValuePtr &value) {
     resolved_graph->DropNode(param_ptr);
   }
   resolved_graph->set_parameters(input_params);
-  BroadenCNodeAbstract(resolved_graph);
+  ClearCNodeAbstract(resolved_graph);
 }
 
 bool HasConstArgAttr(const py::object &obj) {
@@ -552,7 +568,7 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
   }
   MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString()
                 << ", loc: " << trace::GetDebugInfoStr(node->debug_info());
-  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
+  TraceGuard trace_guard(std::make_shared<TraceResolve>(trace::GetSourceCodeDebugInfo(node->debug_info())));
   auto obj = GetSymbolObject(name_space, symbol, node);
   AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
   if (IsValueNode<NameSpace>(resolved_node) && !py::isinstance<py::none>(name_space->module_obj())) {

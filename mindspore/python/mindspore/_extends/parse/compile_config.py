@@ -221,6 +221,14 @@ Value Range:
 """
 DUMP_IR_DDE_DETAIL = ''
 
+"""
+Name: ENABLE_BOOST_INFER
+Function: Whether to do infer first in the compile pipeline.
+Value Range:
+    0: Do not do infer first.
+    Default: Do infer first.
+"""
+BOOST_INFER = ''
 
 __all__ = [
     "BOOTSTRAP",
@@ -246,4 +254,5 @@ __all__ = [
     "RECORD_MEMORY",
     "TRACE_LABEL_WITH_UNIQUE_ID",
     "DUMP_IR_DDE_DETAIL",
+    "BOOST_INFER",
 ]
