@@ -251,6 +251,7 @@ void ReshapeInfo::ChangeDynamicDstShapeForSkipRedistribution(const AnfNodePtr &s
   auto make_tuple_cnode = shape_input_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(make_tuple_cnode);
   Shape out_strategy = output_layout_.shard_strategy();
+  Shape in_strategy = input_layout_.shard_strategy();
 
   // two consecutive reshape: op1---reshape1---reshape2---op2,
   // the in_layout and out_layout of reshape1 are the layout of op1's output,
@@ -294,9 +295,15 @@ void ReshapeInfo::ChangeDynamicDstShapeForSkipRedistribution(const AnfNodePtr &s
                       << ", the out strategy is " << out_strategy;
   }
 
+  auto enable_multi_dyn_reshape = common::GetEnv("MS_DEV_REDISTRIBUTION_VOCAB_MIN_SIZE");
+  int64_t vocab_size = 25600;
+  if (!enable_multi_dyn_reshape.empty()) {
+    vocab_size = std::stol(enable_multi_dyn_reshape.c_str());
+    MS_LOG(INFO) << "MS_DEV_REDISTRIBUTION_VOCAB_SIZE=" << vocab_size;
+  }
   // common reshape, handle the constant part of the dst shape, div by the corresponding out_strategy
   for (size_t i = 1; i < make_tuple_cnode->size(); ++i) {
-    if (out_strategy[i - 1] <= 1) {
+    if (out_strategy[i - 1] < 1) {
       continue;
     }
     auto input_node = make_tuple_cnode->input(i);
@@ -309,9 +316,16 @@ void ReshapeInfo::ChangeDynamicDstShapeForSkipRedistribution(const AnfNodePtr &s
           MS_LOG(EXCEPTION) << name_ << ": the origin shape is " << origin_shape_ele
                             << ", can not be div by shard size " << out_strategy[i - 1];
         }
+        if (out_strategy[i - 1] == 1 && origin_shape_ele < vocab_size) {
+          continue;
+        }
         int64_t replace_shape = origin_shape_ele / out_strategy[i - 1];
+        if (out_strategy[i - 1] == 1 && origin_shape_ele > vocab_size) {
+          replace_shape = origin_shape_ele / 2;
+        }
         auto replace_value_ptr = MakeValue(replace_shape);
         auto replace_value_node = std::make_shared<ValueNode>(replace_value_ptr);
+        MS_LOG(INFO) << "Change " << origin_shape_ele << " to " << replace_shape;
         make_tuple_cnode->set_input(i, replace_value_node);
       }
     }
@@ -346,11 +360,9 @@ Status ReshapeInfo::ComputeReplaceOp() {
     }
     auto output_shape = output_layout_.tensor_shape_origin().array();
     if (std::count(output_shape.cbegin(), output_shape.cend(), DYNAMIC_DIM_VAL) > 1) {
-      replace_op_.clear();
-      replace_op_info_.clear();
       // handle dynamic shape, now the dynamic dimension can not be split, only static shape will be split.
       ChangeDynamicDstShapeForSkipRedistribution(cnode_->input(2));
-      return SUCCESS;
+      MS_LOG(WARNING) << "Reshape " << this->cnode_->fullname_with_scope() << " has more than one dynamic axis.";
     }
     auto reshape_input = this->cnode_->input(1);
     if (reshape_input == nullptr) {
@@ -361,6 +373,16 @@ Status ReshapeInfo::ComputeReplaceOp() {
     TensorRedistributionPtr tensor_redistribution =
       this->CreateReshapeTensorRedistribution(!is_generating_costs_, true);
     tensor_redistribution->SetPreAndNextCNode(reshape_input, this->cnode_);
+    if (IsPrimitiveCNode(cnode_->input(2), prim::kPrimMakeTuple)) {
+      auto tuple_cnode = cnode_->input(2)->cast<CNodePtr>();  // MakeTuple
+      tensor_redistribution->reshape_target_shape_input = tuple_cnode;
+      MS_LOG(INFO) << "Shape of reshape " << this->cnode_->fullname_with_scope() << " has "
+                   << tuple_cnode->inputs().size() << " inputs.";
+      for (size_t i = 1; i < tuple_cnode->inputs().size(); ++i) {
+        tensor_redistribution->reshape_target_shape_inputs.emplace_back(tuple_cnode->input(i));
+      }
+    }
+    tensor_redistribution->dynamic_axis_cnt = std::count(output_shape.cbegin(), output_shape.cend(), -1);
     if (tensor_redistribution->Init(input_layout_, output_layout_, dev_list) == FAILED) {
       if (is_generating_costs_) {
         MS_LOG(DEBUG) << name_ << ": tensor_redistribution init failed.";

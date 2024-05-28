@@ -1140,3 +1140,85 @@ def test_pangu_multi_batch_qkv_reshape_scene_with_constant_folding():
     assert validator.check_node_inputs_has('Reshape-0', ['Add-0', '(8, -1, 15, 128)'])
     assert validator.check_node_inputs_has('Transpose-0', ['Reshape-0', '(0, 2, 1, 3)'])
     assert validator.check_node_inputs_has('ReLU-0', ['Transpose-0'])
+
+
+def test_llama_matmul_reshape():
+    """
+    Feature: Test tensor redistribution in dynamic shape.
+    Description: Test PanGu multi-batch qkv reshape.
+    Expectation: Compile success and assertion passed.
+    """
+
+    class MatMulReshapeNet(nn.Cell):
+        def __init__(self):
+            super(MatMulReshapeNet, self).__init__()
+            self.weight = Parameter(np.full((32000, 5120), 0.5, dtype=np.float32), name="weight")
+            self.matmul = P.MatMul(transpose_b=True).shard(((1, 1), (2, 1)))
+            self.reshape = P.Reshape()
+            self.shape = P.Shape()
+            self.relu = P.ReLU().shard(((1, 1, 1),))
+
+        def construct(self, x):  # -1,-1,5120
+            shape = self.shape(x)
+            x = self.reshape(x, (-1, 5120))
+            x = self.matmul(x, self.weight)
+            x = self.reshape(x, (shape[0], shape[1], 32000))
+            x = self.relu(x)
+            return x
+
+    dump_ir_path = "./test_llama_matmul_reshape"
+    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
+    dataset_shard = (1, 1, 1)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                      global_rank=0, device_num=2,
+                                      dataset_strategy=(dataset_shard,))
+    model = MatMulReshapeNet()
+    model = _VirtualDatasetCell(model)
+    model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+    s0 = Symbol(divisor=8)
+    x = Tensor(shape=(s0, s0, 5120), dtype=mstype.float32)
+    model.set_inputs(x)
+    phase = compile_net(model, x)
+    _ = ParallelValidator(model, phase)
+
+
+def test_parallel_dynamic_shape_with_features_010():
+    """
+    Feature: Test tensor redistribution in dynamic shape.
+    Description: Corresponding test case is test_parallel_dynamic_shape_with_features_010.
+    Expectation: Compile success and assertion passed.
+    """
+
+    class ReShapeNet(nn.Cell):
+        def __init__(self):
+            super(ReShapeNet, self).__init__()
+            self.weight = Parameter(np.full((1, 1, 1, 1), 0.5, dtype=np.float16), name="weight")
+            self.add = P.Add().shard(((2, 2, 2, 1), (1, 1, 1, 1)))
+            self.relu = P.ReLU().shard(((4, 1),))
+            self.shape = P.Shape()
+            self.reshape = P.Reshape()
+
+        def construct(self, inputs):
+            x = self.add(inputs, self.weight)  # shard: (2, 2, 2, 1)
+            x_shape = self.shape(x)
+            # in this scene, tensor redistribution should get reshape info
+            x = self.reshape(x, (x_shape[0] * x_shape[1], x_shape[2] * x_shape[3]))
+            x = self.relu(x)  # shard: (4, 1)
+            return x
+
+    dump_ir_path = "./test_parallel_dynamic_shape_with_features_010"
+    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
+    dataset_shard = (1, 1, 1, 1)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                      global_rank=0, device_num=8, full_batch=True,
+                                      dataset_strategy=(dataset_shard,))
+    model = ReShapeNet()
+    model = _VirtualDatasetCell(model)
+    model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+    # 4,32,16,16
+    s0 = Symbol(divisor=8)
+    s1 = Symbol(divisor=4)
+    x = Tensor(shape=[s0, 32, s1, 16], dtype=mstype.float16)
+    model.set_inputs(x)
+    phase = compile_net(model, x)
+    _ = ParallelValidator(model, phase)
