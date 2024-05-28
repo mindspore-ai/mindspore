@@ -44,6 +44,7 @@
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 #include "ir/func_graph.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -152,6 +153,49 @@ TypePtr EltwiseGradInferType(const PrimitivePtr &primitive, const std::vector<Ab
                      << " and x_type: " << x_type->ToString();
   }
   return grad_type->Clone();
+}
+
+ShapeArray EltwiseGradSimpleInferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const auto &prim_name = primitive->name();
+  const auto &dout_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(dout_tensor);
+  const auto &y_tensor = input_values[kIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(y_tensor);
+
+  const auto &dout_shape = dout_tensor->shape();
+  const auto &y_shape = y_tensor->shape();
+
+  if (dout_shape.size() != y_shape.size()) {
+    MS_EXCEPTION(ValueError) << "Rank of x(" << y_shape.size() << ") and dout(" << dout_shape.size()
+                             << ") not equal, primitive name: " << prim_name << ".";
+  }
+
+  for (size_t i = 0; i < y_shape.size(); i++) {
+    if (y_shape[i] != dout_shape[i]) {
+      MS_EXCEPTION(ValueError) << "The " << i << "th dim of x(" << y_shape[i] << ") and dout(" << dout_shape[i]
+                               << ") not equal, primitive name: " << prim_name << ".";
+    }
+  }
+  return {dout_shape};
+}
+
+TypePtrList EltwiseGradSimpleInferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const auto &dout_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(dout_tensor);
+  const auto &y_tensor = input_values[kIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(y_tensor);
+
+  const auto &dout_type = dout_tensor->Dtype();
+  const auto &y_type = y_tensor->Dtype();
+
+  if (dout_type->type_id() != y_type->type_id()) {
+    MS_LOG_EXCEPTION << "For " << primitive->name()
+                     << ", the grad type must be same as input type, but got grad_type: " << dout_type->ToString()
+                     << " and x_type: " << y_type->ToString();
+  }
+  return {dout_type};
 }
 
 void ReduceFuncCheckAxisInferImpl(const PrimitivePtr &prim, std::vector<int64_t> *axis, const size_t dim) {
