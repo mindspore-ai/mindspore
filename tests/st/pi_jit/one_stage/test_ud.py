@@ -253,7 +253,7 @@ def test_ud_collect_capture_output():
     assert not a4
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_while_after_for_in_if_4():
