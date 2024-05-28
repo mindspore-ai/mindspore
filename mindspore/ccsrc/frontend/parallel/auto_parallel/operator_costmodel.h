@@ -250,6 +250,7 @@ using HSigmoidCost = SqrtCost;
 using MishCost = SqrtCost;
 using SeLUCost = SqrtCost;
 using SoftShrinkCost = SqrtCost;
+using RotaryMulCost = SqrtCost;
 
 class ReLU6Cost : public CastCost {
  public:
