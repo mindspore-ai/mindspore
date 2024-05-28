@@ -3502,8 +3502,8 @@ def isclose(input, other, rtol=1e-05, atol=1e-08, equal_nan=False):
             Support dtype: float16, float32, float64, int8, int16, int32, int64 and uint8.
             On Ascned, more dtypes are support: bool and bfloat16.
         other (Tensor): Second tensor to compare. Dtype must be same as `input`.
-        rtol (float, optional): Relative tolerance. Default: ``1e-05`` . Dtype also support bool and int.
-        atol (float, optional): Absolute tolerance. Default: ``1e-08`` . Dtype also support bool and int.
+        rtol (Union[float, int, bool], optional): Relative tolerance. Default: ``1e-05`` .
+        atol (Union[float, int, bool], optional): Absolute tolerance. Default: ``1e-08`` .
         equal_nan (bool, optional): If ``True`` , then two NaNs will be considered equal. Default: ``False``.
 
     Returns:
