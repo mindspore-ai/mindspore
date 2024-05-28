@@ -33,7 +33,7 @@ def test_os_env_mapping_get():
     def func():
         device_id = os.environ.get("DEVICE_ID")
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=func, mode="PIJit")()
+    jit(fn=func, mode="PIJit", jit_config={"compile_by_trace": False})()
     jcr = get_code_extra(func)
     assert jcr["break_count_"] == 0
 
