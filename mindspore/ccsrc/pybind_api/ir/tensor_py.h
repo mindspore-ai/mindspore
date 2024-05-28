@@ -136,6 +136,8 @@ class TensorPy {
   static void FlushFromCache(const Tensor &tensor);
 
   static void Offload(const Tensor &tensor);
+  // move tensor from device to host, or host to device asynchronously
+  static TensorPtr MoveTo(const Tensor &self, const std::string &to, bool blocking = True);
 };
 
 // CSRTensor python wrapper and adapter class.

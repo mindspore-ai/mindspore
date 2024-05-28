@@ -75,6 +75,11 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
                         const std::string &format) const override;
   bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const std::string &format,
                         const tensor::TensorDataPtr &tensor_data) const override;
+
+  bool AsyncHostToDevice(size_t size, const void *host_ptr) const override;
+
+  bool AsyncDeviceToHost(size_t size, void *host_ptr) const override;
+
   bool AsyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
                            const std::string &format) const override;
   bool SyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,

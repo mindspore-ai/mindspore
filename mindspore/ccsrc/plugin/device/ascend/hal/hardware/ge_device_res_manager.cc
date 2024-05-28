@@ -36,6 +36,7 @@
 #include "transform/acl_ir/op_api_util.h"
 #include "include/backend/mem_reuse/mem_tracker.h"
 #include "graph/def_types.h"
+#include "runtime/device/move_to.h"
 
 namespace mindspore {
 namespace device {
@@ -462,6 +463,11 @@ DeviceEventPtr GeDeviceResManager::CreateEventWithFlag(bool enable_timing, bool 
   MS_EXCEPTION_IF_NULL(event);
   device_events_.push_back(event);
   return event;
+}
+
+void GeDeviceResManager::MoveTo(const tensor::TensorPtr &src_tensor, const tensor::TensorPtr &dst_tensor,
+                                const std::string &to, bool blocking, bool *return_self) {
+  device::MoveTo(src_tensor, dst_tensor, to, blocking, return_self);
 }
 }  // namespace ascend
 }  // namespace device

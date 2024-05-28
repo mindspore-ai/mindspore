@@ -4694,7 +4694,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get('masked_scatter')()(self, mask, x)
 
-
     def index_put(self, indices, values, accumulate=False):
         r"""
         Returns a Tensor. According to the index number of `indices` ,
@@ -4747,6 +4746,34 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         _index_put = tensor_operator_registry.get('index_put')(0 if accumulate is False else 1)
         return _index_put(self, values, indices)
 
+    def move_to(self, to, blocking=True):
+        r"""
+        Copy tensor between host and device synchronously if blocking=True otherwise asynchronously.
+        if the arg `to`=`CPU`, means D2H copy; if the arg `to`=`GPU` or `to`=`ASCEND`, means H2D copy.
+
+        Args:
+            to (str): A string, "CPU" or "ASCEND" or "GPU".
+            blocking(bool): A bool type value, Default: ``True`` .
+
+        Returns:
+            Tensor, storged on CPU or DEVICE which with the same type and shape as the "self Tensor".
+
+        Supported Platforms:
+            ``Ascend`` ``GPU``
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> x = ms.Tensor([1, 2, 3], ms.int64)
+            >>> x.move_to("CPU")
+        """
+        if not isinstance(blocking, bool):
+            raise ValueError(f"The type of 'blocking' must be bool, but got {blocking}")
+        if to not in ("Ascend", "GPU", "CPU"):
+            raise ValueError(f"The value of 'to' must be one of ['Ascend', 'GPU', 'CPU'], but got {to}")
+        mode = context.get_context("mode")
+        if mode != context.PYNATIVE_MODE:
+            raise ValueError(f"The method of 'move_to' only supported in pynative mode, but got: {mode}.")
+        return Tensor(Tensor_.move_to(self, to, blocking))
 
     def _offload(self):
         r"""

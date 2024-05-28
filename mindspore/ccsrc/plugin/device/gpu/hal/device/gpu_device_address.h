@@ -83,6 +83,11 @@ class GPUDeviceAddress : public LoadableDeviceAddress {
 
   // Asynchronously copy device memory to host side.
   bool AsyncDeviceToHost(const ShapeVector &, size_t size, TypeId, void *host_ptr, size_t stream_id) const override;
+
+  bool AsyncHostToDevice(size_t size, const void *host_ptr) const override;
+
+  bool AsyncDeviceToHost(size_t size, void *host_ptr) const override;
+
   void ClearUserData() override;
 
  protected:
