@@ -1087,7 +1087,10 @@ void FetchOutputInfo(AbstractActor *actor, std::vector<BaseShapePtr> *output_sha
       MS_EXCEPTION_IF_NULL(output_pair.first);
       const auto &node_index = common::AnfAlgo::VisitKernelWithReturnType(output_pair.first, output_pair.second, false);
       MS_EXCEPTION_IF_NULL(node_index.first);
-      auto device_address = AnfAlgo::GetMutableOutputAddr(node_index.first, node_index.second, false);
+      device::DeviceAddressPtr device_address = nullptr;
+      if (AnfAlgo::OutputAddrExist(node_index.first, node_index.second, false)) {
+        device_address = AnfAlgo::GetMutableOutputAddr(node_index.first, node_index.second, false);
+      }
       if (device_address == nullptr || device_address->kernel_tensor() == nullptr) {
         MS_LOG(INFO) << "For actor:" << actor->GetAID() << " output node:" << node_index.first->fullname_with_scope()
                      << " has invalid device address:" << device_address;
