@@ -24,6 +24,7 @@ Element-wise Operation
     :template: classtemplate.rst
 
     mindspore.mint.erf
+    mindspore.mint.log
 
 mindspore.mint.nn
 ------------------
@@ -44,6 +45,9 @@ Reduction Functions
     :template: classtemplate.rst
 
     mindspore.mint.any
+    mindspore.mint.mean
+    mindspore.mint.prod
+    mindspore.mint.sum
 
 
 Comparison Functions
