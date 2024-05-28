@@ -38,7 +38,9 @@ AnfNodePtr MakeListPass::ConvertMakeListToMakeTuple(const CNodePtr &node) {
   (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   // Inputs of node should be [make_list, item1, item2, ...], so offset by 1 to get items;
   (void)inputs.insert(inputs.cend(), node->inputs().cbegin() + 1, node->inputs().cend());
-  return node->func_graph()->NewCNode(std::move(inputs));
+  auto tuple_cnode = node->func_graph()->NewCNode(std::move(inputs));
+  tuple_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_MakeTuple");
+  return tuple_cnode;
 }
 
 // From:
