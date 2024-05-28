@@ -53,13 +53,13 @@ class AutoGradMetaData {
   void set_op_index(size_t op_index) { op_index_ = op_index; }
   [[nodiscard]] size_t output_index() const { return output_index_; }
   void set_output_index(size_t output_index) { output_index_ = output_index; }
-  void AddBackwardHook(int id, TensorBackwardHookPtr hook) {
+  void AddBackwardHook(uint64_t id, TensorBackwardHookPtr hook) {
     (void)backward_hooks_.emplace(id, std::move(hook));
     is_register_hook_ = true;
   }
-  void RemoveBackwardHook(int id) { (void)backward_hooks_.erase(id); }
+  void RemoveBackwardHook(uint64_t id) { (void)backward_hooks_.erase(id); }
   bool is_register_hook() const { return is_register_hook_; }
-  const std::map<int, TensorBackwardHookPtr> &backward_hooks() { return backward_hooks_; }
+  const std::map<uint64_t, TensorBackwardHookPtr> &backward_hooks() { return backward_hooks_; }
   void ClearBackwardHooks() { backward_hooks_.clear(); }
 
  private:
@@ -77,7 +77,7 @@ class AutoGradMetaData {
   size_t output_index_{0};
   bool is_register_hook_{false};
   // Tensor hooks
-  std::map<int, TensorBackwardHookPtr> backward_hooks_;
+  std::map<uint64_t, TensorBackwardHookPtr> backward_hooks_;
 };
 using AutoGradMetaDataPtr = std::shared_ptr<AutoGradMetaData>;
 }  // namespace mindspore
