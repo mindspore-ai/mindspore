@@ -155,6 +155,10 @@ class KernelActor : public DebugAwareActor {
   // Update input_device_tensors by input op data.
   void UpdateInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context);
 
+  // Record the output and workspace memory pointer and size to optimize memory allocate/free performance in next step.
+  // Note: only use in inference case.
+  void TraceDynamicMemory();
+
   // The info of kernel.
   CNodePtr kernel_;
   bool is_dynamic_shape_;
@@ -272,6 +276,9 @@ class KernelActor : public DebugAwareActor {
 
   bool is_multi_stream_process_skipped_{false};
   std::vector<std::pair<uint32_t, void *>> cross_stream_addresses_;
+
+  bool is_output_kernel_{false};
+  std::set<size_t> graph_output_indexes_{};
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;
