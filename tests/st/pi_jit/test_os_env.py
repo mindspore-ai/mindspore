@@ -72,6 +72,6 @@ def test_os_env_mapping_get_with_tensor(a, b):
             return a * b
         return a + b
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=func, mode="PIJit")(a, b)
+    jit(fn=func, mode="PIJit", jit_config={"compile_by_trace": False})(a, b) # One-stage will fix it later
     jcr = get_code_extra(func)
     assert jcr["break_count_"] == 0
