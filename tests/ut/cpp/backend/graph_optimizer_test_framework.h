@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,9 @@ class ConstructGraph {
   ParameterPtr NewTupleInput(const std::string &name, const std::vector<std::pair<TypePtr, ShapeVector>> &pairs);
   ParameterPtr NewListInput(const std::string &name, const std::vector<std::pair<TypePtr, ShapeVector>> &pairs);
 
+  ValueNodePtr NewValueNode(const ValuePtr &value);
+  CNodePtr NewCNodeWithoutInfer(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
+                                const mindspore::HashMap<std::string, ValuePtr> &attrs);
   CNodePtr NewCNode(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
                     const mindspore::HashMap<std::string, ValuePtr> &attrs);
   void SetOutput(const AnfNodePtr &node);
