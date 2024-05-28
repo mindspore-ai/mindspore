@@ -47,8 +47,16 @@ class MemoryFreeActor : public MemoryAwareActor {
   void Run(OpContext<DeviceTensor> *const context) override {
     if (!WaitRuntimePipelineFinish(context)) {
       MS_LOG(INFO) << "Run graph failed and please check error log.";
+      return;
     }
-    PostRun(context);
+
+    try {
+      PostRun(context);
+    } catch (const std::exception &e) {
+      MsException::Instance().SetException();
+      MS_LOG(ERROR) << "Failed to execute memory free actor, and catch exception: " << e.what();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, e.what());
+    }
   }
 
  private:
