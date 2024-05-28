@@ -49,7 +49,7 @@ class BACKEND_EXPORT DumpJsonParser {
   void CopyDumpJsonToDir(uint32_t rank_id);
   void CopyHcclJsonToDir(uint32_t rank_id);
   void CopyMSCfgJsonToDir(uint32_t rank_id);
-  bool NeedDump(const std::string &op_full_name) const;
+  bool NeedDump(const std::string &op_full_name);
   void MatchKernel(const std::string &kernel_name);
   void PrintUnusedKernel();
   bool IsStatisticDump() const;
@@ -126,6 +126,7 @@ class BACKEND_EXPORT DumpJsonParser {
   std::map<std::string, uint32_t> kernels_;
   std::map<std::string, uint32_t> kernel_types_;
   std::map<std::string, std::regex> kernel_regs_;
+  std::map<std::string, uint32_t> kernel_strings_;
   std::vector<std::string> cell_dump_kernels_;
   std::set<std::string> hccl_input_kernels_;
   std::set<uint32_t> support_devices_;

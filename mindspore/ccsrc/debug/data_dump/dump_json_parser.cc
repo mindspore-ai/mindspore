@@ -56,7 +56,7 @@ constexpr auto kDumpInputAndOutput = 0;
 constexpr auto kDumpInputOnly = 1;
 constexpr auto kDumpOutputOnly = 2;
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
-constexpr auto kBracketsOffset = 2;
+constexpr auto kBracketsOffset = 1;
 }  // namespace
 
 namespace mindspore {
@@ -654,13 +654,12 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
     bool ret;
     auto kernel_str = kernel.dump();
     MS_LOG(INFO) << "Need dump kernel:" << kernel_str;
-    if (static_cast<int>(kernel_str.find("name-regex(")) == 1 &&
+    kernel_str.erase(std::remove(kernel_str.begin(), kernel_str.end(), '\"'), kernel_str.end());
+    if (static_cast<int>(kernel_str.find("name-regex(")) == 0 &&
         static_cast<int>(kernel_str.rfind(")")) == static_cast<int>(kernel_str.length()) - kBracketsOffset) {
-      std::string kernel_reg_exp = kernel_str.substr(12, static_cast<int>(kernel_str.length()) - 14);
+      std::string kernel_reg_exp = kernel_str.substr(11, static_cast<int>(kernel_str.length()) - 12);
       ret = kernel_regs_.try_emplace(kernel_str, std::regex(kernel_reg_exp)).second;
-      dump_layer_ += kernel_str + " ";
     } else {
-      kernel_str.erase(std::remove(kernel_str.begin(), kernel_str.end(), '\"'), kernel_str.end());
       if (static_cast<int>(kernel_str.rfind('/')) == -1 && static_cast<int>(kernel_str.rfind("-op")) == -1) {
         if (backend == "ge") {
           MS_LOG(WARNING) << "It is not supported to specify operator types on 1980B backend. " << kernel_str
@@ -673,6 +672,7 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
         dump_layer_ += kernel_str + " ";
       }
     }
+    kernel_strings_.try_emplace({kernel_str, 0});
     if (!ret) {
       MS_LOG(WARNING) << "Duplicate dump kernel name:" << kernel_str;
     }
@@ -861,7 +861,7 @@ void DumpJsonParser::JudgeDumpEnabled() {
  * Runtime category: Old runtime, MindRT.
  * Description: Check if the given op needs to be dumped based the configuration option.
  */
-bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
+bool DumpJsonParser::NeedDump(const std::string &op_full_name) {
   bool need_dump = false;
 
   switch (dump_mode_) {
@@ -872,6 +872,7 @@ bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
       for (const auto &iter : kernel_regs_) {
         if (regex_match(op_full_name, iter.second)) {
           need_dump = true;
+          MatchKernel(iter.first);
           break;
         }
       }
@@ -880,6 +881,7 @@ bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
       }
       if (kernels_.find(op_full_name) != kernels_.end()) {
         need_dump = true;
+        MatchKernel(op_full_name);
         break;
       }
       for (const auto &iter : kernel_types_) {
@@ -894,6 +896,7 @@ bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
         transform(kernel_type.begin(), kernel_type.end(), kernel_type.begin(), ::tolower);
         if (op_name.find(kernel_type) != std::string::npos) {
           need_dump = true;
+          MatchKernel(kernel_type);
           break;
         }
       }
@@ -916,8 +919,8 @@ bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
  * Description: Increment the count of dumping for given kernel.
  */
 void DumpJsonParser::MatchKernel(const std::string &kernel_name) {
-  auto iter = kernels_.find(kernel_name);
-  if (iter == kernels_.end()) {
+  auto iter = kernel_strings_.find(kernel_name);
+  if (iter == kernel_strings_.end()) {
     return;
   }
   iter->second = iter->second + 1;
@@ -928,9 +931,9 @@ void DumpJsonParser::PrintUnusedKernel() {
   if ((!e2e_dump_enabled_ && !async_dump_enabled_) || dump_mode_ != static_cast<uint32_t>(DUMP_KERNEL)) {
     return;
   }
-  for (const auto &iter : kernels_) {
+  for (const auto &iter : kernel_strings_) {
     if (iter.second == 0) {
-      MS_LOG(WARNING) << "[DataDump] Unused Kernel in json:" << iter.first;
+      MS_LOG(WARNING) << "[DataDump] Unused Kernel in json: " << iter.first;
     }
   }
 }
