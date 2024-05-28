@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+import os
+
 import numpy as np
 import pytest
 
@@ -189,7 +191,7 @@ def test_matmul_dtypes():
     x_np.shape = m, k
     y_np.shape = k, n
     matmul = MatMulNet()
-    valid_dtypes = (mstype.int32, mstype.float16, mstype.float32, mstype.float64, mstype.complex64, mstype.complex128)
+    valid_dtypes = (mstype.float16, mstype.float32, mstype.float64, mstype.complex64, mstype.complex128)
     all_dtypes = mstype.all_types
     for dtype in all_dtypes:
         # bfloat16 is not supported yet
@@ -197,12 +199,14 @@ def test_matmul_dtypes():
             continue
         x_ms = Tensor(x_np).astype(dtype)
         y_ms = Tensor(y_np).astype(dtype)
+        os.environ['MS_DISABLE_KERNEL_BACKOFF'] = '1'
         if dtype in valid_dtypes:
             out = matmul(x_ms, y_ms)
             assert out.dtype == x_ms.dtype
         else:
             with pytest.raises(TypeError):
                 matmul(x_ms, y_ms)
+        del os.environ['MS_DISABLE_KERNEL_BACKOFF']
 
 
 @pytest.mark.level0

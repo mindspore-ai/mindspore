@@ -96,20 +96,7 @@ TypePtr BatchMatMulExtFuncImpl::InferType(const PrimitivePtr &prim,
   (void)types.emplace("x", input_args[0]->GetType());
   (void)types.emplace("w", input_args[1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  TypePtr x_type = input_args[0]->GetType();
-  if (x_type->type_id() == TypeId::kNumberTypeInt8 || x_type->ToString() == "Tensor[Int8]") {
-    x_type = std::make_shared<TensorType>(kInt32);
-  }
-  if (prim->HasAttr("cast_type")) {
-    auto out_type = prim->GetAttr("cast_type");
-    MS_EXCEPTION_IF_NULL(out_type);
-    if (!out_type->isa<Type>()) {
-      MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', MatMul cast_type must be a 'Type', but got: '"
-                               << out_type << "'.";
-    }
-    x_type = std::make_shared<TensorType>(out_type->cast<TypePtr>());
-  }
-  return x_type;
+  return input_args[0]->GetType();
 }
 }  // namespace ops
 }  // namespace mindspore
