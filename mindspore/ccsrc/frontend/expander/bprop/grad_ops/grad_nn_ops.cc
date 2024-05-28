@@ -2232,5 +2232,22 @@ REG_BPROP_BUILDER("RmsNorm").SetBody((BODYFUNC(ib) {
   return {dx, dgamma};
 }));
 
+REG_BPROP_BUILDER("RotaryMul").SetUnusedInputs({i3}).SetBody((BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto r1 = ib->GetInput(kIndex1);
+  auto r2 = ib->GetInput(kIndex2);
+  auto dy = ib->GetInput(kIndex4);
+
+  auto need_backward =
+    (r1->need_compute_grad_out() && r2->need_compute_grad_out()) ? ib->Value<bool>(true) : ib->Value<bool>(false);
+
+  auto out_temp = ib->Emit("RotaryMulGrad", {x, r1, r2, dy, need_backward});
+  auto dx = ib->TupleGetItem(out_temp, kIndex0);
+  auto dr1 = ib->TupleGetItem(out_temp, kIndex1);
+  auto dr2 = ib->TupleGetItem(out_temp, kIndex2);
+
+  return {dx, dr1, dr2};
+}));
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

@@ -1,0 +1,12 @@
+#operator rotary_mul
+rotary_mul:
+    args:
+        x:
+            dtype: tensor
+        r1:
+            dtype: tensor
+        r2:
+            dtype: tensor
+    returns:
+        y:
+            dtype: tensor
