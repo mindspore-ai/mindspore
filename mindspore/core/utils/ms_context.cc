@@ -131,6 +131,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<std::string>(MS_CTX_CONV_WGRAD_ALGO, "normal");
   set_param<bool>(MS_CTX_CONV_ALLOW_TF32, true);
   set_param<bool>(MS_CTX_MATMUL_ALLOW_TF32, false);
+  set_param<std::string>(MS_CTX_JIT_LEVEL, "");
   set_param<int>(MS_CTX_COMPUTE_COMMUNICATE_FUSION_LEVEL, 0);
   set_param<int>(MS_CTX_DEBUG_LEVEL, kLevelRelease);
   set_param<bool>(MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE, false);
@@ -566,7 +567,7 @@ bool MsContext::IsKByKExecutorMode() const {
   if (mode == kGraphMode) {
     if (common::GetEnv("GRAPH_OP_RUN") == "1" || jit_level == "O0" || jit_level == "O1") {
       if (is_jit_level_changed) {
-        MS_LOG(INFO) << "The graph mode enable kbyk executor mode by GRAPH_OP_RUN or JitLevelO0.";
+        MS_LOG(INFO) << "The graph mode enable kbyk executor mode by JitConfig.";
       }
       return true;
     }

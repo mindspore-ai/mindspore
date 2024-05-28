@@ -126,8 +126,8 @@ RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (IsDynamicShapeFuncGraph(func_graph)) {
-    if (common::GetEnv("GRAPH_OP_RUN") == "0") {
-      MS_LOG(INFO) << "dynamic shape default RunMode::kGraphMode";
+    if (context->get_param<std::string>(MS_CTX_JIT_LEVEL) == "O2") {
+      MS_LOG(INFO) << "set dynamic shape RunMode::kGraphMode";
       return RunMode::kGraphMode;
     }
     MS_LOG(INFO) << "dynamic shape default RunMode::kKernelMode";

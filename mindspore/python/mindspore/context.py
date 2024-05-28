@@ -166,6 +166,7 @@ class _Context:
         self._context_handle = MSContext.get_instance()
         self._support_binary = False
         self._mode = PYNATIVE_MODE
+        self._jit_config = {}
 
     def __getattribute__(self, attr):
         value = object.__getattribute__(self, attr)
@@ -182,6 +183,10 @@ class _Context:
     def get_mode(self):
         """Get current mode."""
         return self._mode
+
+    def get_jit_config(self):
+        """Get current jit_config."""
+        return self._jit_config
 
     def set_mode(self, mode):
         """
@@ -374,6 +379,27 @@ class _Context:
             if gpu_key == 'matmul_allow_tf32':
                 self.set_param(ms_ctx_param.matmul_allow_tf32, gpu_config[gpu_key])
 
+    def set_jit_config(self, jit_config):
+        """
+        Enable jit config.
+
+        Args:
+            jit_config (dict):
+
+                - jit_level (str): "O0", "O1" or "O2" to control the compilation optimization level.
+        """
+        jit_cfgs = {'jit_level': ["O0", "O1", "O2"]}
+        for jit_key in jit_config:
+            if jit_key not in jit_cfgs:
+                raise ValueError(f"For 'context.set_context', the key of argument 'jit_config' must be one of "
+                                 f"{jit_cfgs}, but got {jit_key}.")
+            supported_value = jit_cfgs.get(jit_key)
+            if jit_config[jit_key] not in supported_value:
+                raise ValueError(f"For 'jit_cfgs', the value of argument {jit_key} must be one of "
+                                 f"{supported_value}, but got {jit_config[jit_key]}.")
+            self._jit_config = jit_config
+            self.set_param(ms_ctx_param.jit_level, jit_config[jit_key])
+
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
         if not success:
@@ -495,10 +521,13 @@ class _Context:
 
     def set_mempool_block_size(self, mempool_block_size):
         """Set the block size of memory pool."""
-        is_force_kbk = os.getenv("GRAPH_OP_RUN")
-        if _get_mode() == GRAPH_MODE and is_force_kbk != "1":
+        global_jit_config = get_jit_config()
+        is_force_kbk = False
+        if global_jit_config:
+            is_force_kbk = global_jit_config['jit_level'] == "O0" or global_jit_config['jit_level'] == "O1"
+        if _get_mode() == GRAPH_MODE and not is_force_kbk:
             logger.warning("Graph mode doesn't support to set parameter 'mempool_block_size' of context currently, "
-                           "you can use context.set_context to set pynative mode or set env GRAPH_OP_RUN=1.")
+                           "you can use context.set_context to set pynative mode or set jit_level=O0/O1.")
             return
         if not Validator.check_str_by_regular(mempool_block_size, _RE_PATTERN):
             raise ValueError("For 'context.set_context', the argument 'mempool_block_size' should be in "
@@ -587,6 +616,7 @@ class _Context:
         'debug_level': set_debug_level,
         'gpu_config': set_gpu_config,
         'aoe_config': set_aoe_config,
+        'jit_config': set_jit_config,
     }
 
     @property
@@ -1112,7 +1142,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
                  grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
                  op_timeout=int, deterministic=str, ascend_config=dict, jit_syntax_level=int, debug_level=int,
-                 jit_enable_inplace_ops=bool, gpu_config=dict)
+                 jit_enable_inplace_ops=bool, gpu_config=dict, jit_config=dict)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -1203,6 +1233,8 @@ def set_context(**kwargs):
     |                         |  jit_syntax_level            |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  gpu_config                  |  GPU                       |
+    |                         +------------------------------+----------------------------+
+    |                         |  jit_config                  |  CPU/GPU/Ascend            |
     +-------------------------+------------------------------+----------------------------+
 
     Args:
@@ -1215,9 +1247,9 @@ def set_context(**kwargs):
             and max_device_memory. 'max_device_memory' should be set before the program runs.
         variable_memory_max_size (str): This parameter is deprecated, and will be removed in a future version.
             Please use parameter 'max_device_memory' instead.
-        mempool_block_size (str): Set the size of the memory pool block in PyNative mode or GRAPH_OP_RUN=1 for devices.
-            The format is "xxGB". Default: ``"1GB"`` . Minimum size is "1G". The actual used memory block size is the
-            minimum of the available memory of the device and mempool_block_size.
+        mempool_block_size (str): Set the size of the memory pool block in PyNative mode or jit level is 'O0'/'O1'
+            for devices. The format is "xxGB". Default: ``"1GB"`` . Minimum size is "1G". The actual used memory block
+            size is the minimum of the available memory of the device and mempool_block_size.
         op_timeout (int): Set the maximum duration of executing an operator in seconds.
             If the execution time exceeds this value, system will terminate the task.
             0 means endless wait. The defaults for AI Core and AICPU operators vary on different hardware.
@@ -1566,6 +1598,20 @@ def set_context(**kwargs):
             - matmul_allow_tf32 (bool): The flag below controls to allow Tensor core TF32 computation on CUBLAS and the
               default value is ``False``.
 
+        jit_config (dict): Set the global jit config for compile, take effect in network defined in Cell or jit
+            decorators. It is not set by default.
+            The setting in context is the global jit config, while JitConfig is the local network's jit config.
+            When both exist simultaneously, the global jit config will not overwrite the local network's jit config.
+
+            - jit_level (str): Used to control the compilation optimization level. Default: ``""`` , The framework
+              automatically selects the execution method. The value range is as follows:
+
+              - ``"O0"``: Except for optimizations that may affect functionality, all other optimizations are turned
+                off, adopt KernelByKernel execution mode.
+              - ``"O1"``: Using commonly used optimizations and automatic operator fusion optimizations,
+                adopt KernelByKernel execution mode.
+              - ``"O2"``: Ultimate performance optimization, adopt Sink execution mode.
+
     Raises:
         ValueError: If input key is not an attribute in context.
 
@@ -1606,6 +1652,7 @@ def set_context(**kwargs):
         >>> ms.set_context(debug_level=ms.DEBUG)
         >>> ms.set_context(gpu_config={"conv_fprop_algo": "performance", "conv_allow_tf32": True,
         ...                "matmul_allow_tf32": True})
+        >>> ms.set_context(jit_config={"jit_level": "O0"})
     """
     ctx = _context()
     # set device target first
@@ -1692,6 +1739,17 @@ def _get_mode():
     """
     ctx = _context()
     return ctx.get_mode()
+
+
+def get_jit_config():
+    """
+    Get global jit config.
+
+    Returns:
+        Object: The Value of jit config.
+    """
+    ctx = _context()
+    return ctx.get_jit_config()
 
 
 class ParallelMode:
