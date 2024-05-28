@@ -3,6 +3,7 @@ mindspore.mint
 
 mindspore.mint
 ---------------
+
 Array Operation
 ^^^^^^^^^^^^^^^
 
@@ -64,7 +65,7 @@ Neural Network Layer Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatwarnautosummary::
-    :toctree: mint.nn.functional
+    :toctree: mint
     :nosignatures:
     :template: classtemplate.rst
 
