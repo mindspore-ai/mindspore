@@ -474,6 +474,8 @@ Status SingleOpInferSession::OnNewInputShapes(const std::vector<ShapeVector> &ne
       input_changed = true;
       MS_CHECK_TRUE_RET(kernel_args_.inputs[i] != nullptr, kLiteError);
       kernel_args_.inputs[i]->SetShapeVector(new_shapes[i]);
+      MS_LOG(INFO) << "Set kernel args shape: " << kernel_args_.inputs[i]->GetShapeVector() << ", "
+                   << inputs_[i]->Shape();
     }
   }
   if (!input_changed) {
@@ -483,6 +485,9 @@ Status SingleOpInferSession::OnNewInputShapes(const std::vector<ShapeVector> &ne
 
   if (kernel_mod_->Resize(kernel_args_.inputs, kernel_args_.outputs) != kSuccess) {
     MS_LOG(ERROR) << "Failed to resize custom ascend kernel";
+    for (size_t i = 0; i < inputs_.size(); i++) {
+      kernel_args_.inputs[i]->SetShapeVector(inputs_[i]->Shape());
+    }
     return kLiteError;
   }
   // shapes of inputs and outputs should be updated in CustomAscendKernelMod::Resize
