@@ -1,0 +1,13 @@
+#operator generator
+generator:
+    args:
+        cmd:
+            dtype: int
+        inputs:
+            dtype: tuple[tensor]
+            arg_handler: generator_handler
+    returns:
+        outputs: 
+            dtype: tuple[tensor]
+    function:
+        disable: True

@@ -37,6 +37,7 @@ void RegValues(const py::module *m);
 void RegMsContext(const py::module *m);
 void RegSecurity(py::module *m);
 void RegForkUtils(py::module *m);
+void RegRandomSeededGenerator(py::module *m);
 
 namespace hal {
 void RegStream(py::module *m);

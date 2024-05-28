@@ -19,7 +19,7 @@ import pytest
 
 import mindspore
 from mindspore.nn import Cell
-from mindspore.nn.generator import Generator
+from mindspore.common.generator import Generator
 
 rtol = 1e-3
 
