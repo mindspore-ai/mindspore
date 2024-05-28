@@ -20,6 +20,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/external_libs/eigen.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/json.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/dependency_securec.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/protobuf.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/external_libs/pocketfft.cmake)
 
 if(MS_BUILD_GRPC)
     # build dependencies of gRPC
