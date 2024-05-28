@@ -48,35 +48,29 @@ abstract::TupleShapePtr MatmulQkvInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
-  auto wq_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
-  auto wk_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
-  auto wv_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   // (todo) check dynamic rank and dynamic shape
-  if (IsDynamicRank(x_shape) || IsDynamicRank(wq_shape) || IsDynamicRank(wk_shape) || IsDynamicRank(wv_shape)) {
+  if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {
     MS_LOG(EXCEPTION) << "For " << op_name << ", dynamic rank is not supported";
   }
   const size_t x_rank = x_shape.size();
-  const size_t wq_rank = wq_shape.size();
-  const size_t wk_rank = wk_shape.size();
-  const size_t wv_rank = wv_shape.size();
-  MS_CHECK_VALUE(x_rank != 0 && x_rank == wq_rank && x_rank == wk_rank && x_rank == wv_rank,
+  const size_t w_rank = w_shape.size();
+  MS_CHECK_VALUE(x_rank != 0 && x_rank == w_rank,
                  CheckAndConvertUtils::FormatCommMsg("For 'MatmulQkv', all inputs must have the same rank."));
 
   auto m = x_shape[0];
   auto k = x_shape[1];
-  auto n0 = wq_shape[0];
-  auto k0 = wq_shape[1];
-  auto n1 = wk_shape[0];
-  auto k1 = wk_shape[1];
-  auto n2 = wv_shape[0];
-  auto k2 = wv_shape[1];
-  MS_CHECK_VALUE(
-    k == k0 && k == k1 && k == k2,
-    CheckAndConvertUtils::FormatCommMsg("For 'MatmulQkv', the K axis of all inputs must have the same length."));
+  auto k0 = w_shape[1];
+  MS_CHECK_VALUE(k == k0, CheckAndConvertUtils::FormatCommMsg(
+                            "For 'MatmulQkv', the K axis of all inputs must have the same length."));
 
-  ShapeVector output_q_shape = {m, n0};
-  ShapeVector output_k_shape = {m, n1};
-  ShapeVector output_v_shape = {m, n2};
+  MS_CHECK_VALUE(primitive->HasAttr("n_lens"),
+                 CheckAndConvertUtils::FormatCommMsg("For 'MatmulQkv', op must have attr 'n_lens'."));
+  std::vector<int64_t> n_len_list = GetValue<std::vector<int64_t>>(primitive->GetAttr("n_lens"));
+
+  ShapeVector output_q_shape = {m, n_len_list[0]};
+  ShapeVector output_k_shape = {m, n_len_list[1]};
+  ShapeVector output_v_shape = {m, n_len_list[2]};
   std::vector<BaseShapePtr> shape_lists;
   (void)shape_lists.emplace_back(std::make_shared<abstract::TensorShape>(output_q_shape));
   (void)shape_lists.emplace_back(std::make_shared<abstract::TensorShape>(output_k_shape));
@@ -94,8 +88,22 @@ TuplePtr MatmulQkvInferType(const PrimitivePtr &primitive, const std::vector<Abs
 AbstractBasePtr MatmulQkvInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputsNum = 4;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  MS_CHECK_VALUE(primitive->HasAttr("is_fixed_weight"),
+                 CheckAndConvertUtils::FormatCommMsg("For 'MatmulQkv', op must have attr 'is_fixed_weight'."));
+  auto is_fixed_weight = GetValue<bool>(primitive->GetAttr("is_fixed_weight"));
+  if (is_fixed_weight) {
+    const auto input_num = 2;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  } else {
+    // two cases: 1 input with 2 weights or 3 weights
+    const auto qkv_num = 4;
+    const auto ffn_num = 3;
+    MS_CHECK_VALUE(input_args.size() == ffn_num || input_args.size() == qkv_num,
+                   CheckAndConvertUtils::FormatCommMsg(
+                     "For 'MatmulQkv' in multi weight mode, number of weights must be 2 or 3, but got " +
+                     std::to_string(static_cast<int>(input_args.size() - 1)) + "."));
+  }
+
   auto infer_type = MatmulQkvInferType(primitive, input_args);
   auto infer_shape = MatmulQkvInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

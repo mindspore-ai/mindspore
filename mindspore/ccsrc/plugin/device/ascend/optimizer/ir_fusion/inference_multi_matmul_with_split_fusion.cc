@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/ir_fusion/multi_weight_matmuls_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/inference_multi_matmul_with_split_fusion.h"
+
 #include <vector>
 #include "kernel/kernel_build_info.h"
 #include "include/common/utils/utils.h"
@@ -26,7 +27,6 @@
 #include "include/api/data_type.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/utils/ms_context.h"
-#include "ops/nn_op_name.h"
 
 namespace mindspore {
 namespace opt {
@@ -56,8 +56,8 @@ tensor::TensorPtr GetParamFromLoad(const CNodePtr &load, bool unused = false) {
 
 bool CheckFusionValid(const CNodePtr &matmul, int64_t *k) {
   auto inputs = matmul->inputs();
-  auto trans_a_node = GetValueNode(inputs[inputs.size() - 3]);
-  auto trans_b_node = GetValueNode(inputs[inputs.size() - 2]);
+  auto trans_a_node = GetValueNode(inputs[inputs.size() - 2]);
+  auto trans_b_node = GetValueNode(inputs[inputs.size() - 1]);
   MS_EXCEPTION_IF_NULL(trans_a_node);
   MS_EXCEPTION_IF_NULL(trans_b_node);
   bool trans_a = GetValue<bool>(trans_a_node);
@@ -66,10 +66,7 @@ bool CheckFusionValid(const CNodePtr &matmul, int64_t *k) {
   if (trans_b != true) return false;
   auto weight_node = inputs[kIndex2]->cast<CNodePtr>();
   auto w_param = GetParamFromLoad(weight_node, false);
-  MS_EXCEPTION_IF_NULL(w_param);
-  auto w_type_id = static_cast<TypeId>(w_param->data_type_c());
-  if (w_type_id != TypeId::kNumberTypeInt8) {
-    MS_LOG(INFO) << matmul->fullname_with_scope() << TypeIdToString(w_type_id) << " != TypeId::kNumberTypeInt8.";
+  if (!w_param) {
     return false;
   }
   std::vector<int64_t> shape = w_param->shape();
@@ -102,8 +99,8 @@ std::shared_ptr<ValueNode> CreateWeightTensor(TypeId type_id, const std::vector<
                                               const std::shared_ptr<Type> &w_dtype, bool need_rank_offset) {
   tensor::TensorPtr assist_tensor = std::make_shared<tensor::Tensor>(type_id, weight_shape);
   auto data_ptr = assist_tensor->data_c();
-  if (type_id == TypeId::kNumberTypeInt8) {
-    ConcatWeightsToNewTensor<int8_t>(data_ptr, data_c_list, k_len, n_len_list, need_rank_offset);
+  if (type_id == TypeId::kNumberTypeBFloat16) {
+    ConcatWeightsToNewTensor<bfloat16>(data_ptr, data_c_list, k_len, n_len_list, need_rank_offset);
   } else if (type_id == TypeId::kNumberTypeFloat16) {
     ConcatWeightsToNewTensor<float16>(data_ptr, data_c_list, k_len, n_len_list, need_rank_offset);
   } else {
@@ -128,28 +125,27 @@ std::shared_ptr<ValueNode> CreateWeightTensor(TypeId type_id, const std::vector<
 }
 }  // namespace
 
-bool MultiWeightMatmulsFusion::Run(const FuncGraphPtr &graph) {
-  bool changed = false;
-
+bool InferenceMultiMatmulWithSplitFusion::Run(const FuncGraphPtr &graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  static auto matmul_fusion_list = common::GetEnv("ENABLE_WEIGHT_MATMUL_FUSION");
-  if (!ms_context->IsEnableInferBoost() || matmul_fusion_list.empty()) {
-    return changed;
-  }
-
-  bool enable_matmul_qkv = matmul_fusion_list.find(kWeightQuantMatmulQkvOpName) != std::string::npos;
-  bool enable_matmul_ffn = matmul_fusion_list.find(kWeightQuantMatmulFfnOpName) != std::string::npos;
-  if (!(enable_matmul_qkv || enable_matmul_ffn)) {
+  if (!ms_context->IsEnableInferBoost()) {
     return false;
   }
+  constexpr auto kInferenceMultiMatmulWithSplitOpName = "InferenceMultiMatmulWithSplit";
+  auto enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
+  bool enable = (std::find(enable_op_list.begin(), enable_op_list.end(), kInferenceMultiMatmulWithSplitOpName) !=
+                 enable_op_list.end());
+  if (!enable) {
+    return false;
+  }
+  bool changed = false;
 
   auto mng = graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   const auto &node_users_map = mng->node_users();
   auto node_list = TopoSort(graph->output());
-  constexpr size_t kMatMulQkvNum = 3;
-  constexpr size_t kMatMulFfnNum = 2;
+  constexpr size_t weight_num_three = 3;
+  constexpr size_t weight_num_two = 3;
 
   int64_t k_len = -1;
   for (const auto &node : node_list) {
@@ -157,25 +153,18 @@ bool MultiWeightMatmulsFusion::Run(const FuncGraphPtr &graph) {
     if (node_users_map.find(node) == node_users_map.end()) continue;
     bool can_process = true;
     for (const auto &user_pair : node_users_map.at(node)) {
-      if (IsPrimitiveCNode(user_pair.first, prim::kPrimWeightQuantBatchMatmul) && user_pair.second == 1) {
+      if (IsPrimitiveCNode(user_pair.first, prim::kPrimMatMul) && user_pair.second == 1) {
         auto curr_matmul = user_pair.first->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(curr_matmul);
         can_process &= CheckFusionValid(curr_matmul, &k_len);
         user_matmuls.push_back(user_pair.first);
       }
     }
-
-    if (!can_process) {
+    if ((user_matmuls.size() != weight_num_three && user_matmuls.size() != weight_num_two) || !can_process) {
       continue;
     }
     AnfNodePtrList getitems;
-    if (enable_matmul_ffn && user_matmuls.size() == kMatMulFfnNum) {
-      Process("WeightQuantBatchMatmul", node, user_matmuls, &getitems);
-    } else if (enable_matmul_qkv && user_matmuls.size() == kMatMulQkvNum) {
-      Process("WeightQuantBatchMatmul", node, user_matmuls, &getitems);
-    } else {
-      MS_LOG(INFO) << "user_matmuls.size() == " << user_matmuls.size();
-    }
+    Process("MatMul", node, user_matmuls, &getitems);
     if (!getitems.empty()) {
       for (size_t i = 0; i < getitems.size(); i++) {
         (void)mng->Replace(user_matmuls[i], getitems[i]);
@@ -186,38 +175,29 @@ bool MultiWeightMatmulsFusion::Run(const FuncGraphPtr &graph) {
   return changed;
 }
 
-void MultiWeightMatmulsFusion::Process(const std::string &name, const AnfNodePtr &node, const AnfNodePtrList &users,
-                                       AnfNodePtrList *getitems) const {
+void InferenceMultiMatmulWithSplitFusion::Process(const std::string &name, const AnfNodePtr &node,
+                                                  const AnfNodePtrList &users, AnfNodePtrList *getitems) const {
   auto kernel_graph = node->func_graph()->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   AnfNodePtrList fused_inputs = {NewValueNode(std::make_shared<Primitive>(name)), node};
   abstract::AbstractBasePtrList new_abs;
 
   std::vector<void *> data_c_list;
-  std::vector<void *> anti_scale_list;
-  std::vector<void *> anti_offset_list;
   int64_t k_len = 0;
   int64_t n_len = 0;
   int64_t m_len = 0;
   std::vector<int64_t> n_len_list;
   bool need_rank_offset = false;
+  TypeId w_type_id = kTypeUnknown;
 
   for (auto &user : users) {
     auto matmul = user->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(matmul);
     auto weight_node = matmul->inputs()[2];
-    auto anti_scale_node = matmul->inputs()[3];
-    auto anti_offset_node = matmul->inputs()[4];
 
     auto w_param = GetParamFromLoad(weight_node->cast<CNodePtr>(), true);
     MS_EXCEPTION_IF_NULL(w_param);
     data_c_list.push_back(reinterpret_cast<void *>(w_param->data_c()));
-    auto anti_scale_param = GetParamFromLoad(anti_scale_node->cast<CNodePtr>(), true);
-    MS_EXCEPTION_IF_NULL(anti_scale_param);
-    anti_scale_list.push_back(reinterpret_cast<void *>(anti_scale_param->data_c()));
-    auto anti_offset_param = GetParamFromLoad(anti_offset_node->cast<CNodePtr>(), true);
-    MS_EXCEPTION_IF_NULL(anti_offset_param);
-    anti_offset_list.push_back(reinterpret_cast<void *>(anti_offset_param->data_c()));
     auto origin_shape = w_param->shape();
     auto shape = common::AnfAlgo::GetOutputInferShape(weight_node, kIndex0);
     if (origin_shape[0] != shape[0]) {
@@ -226,13 +206,14 @@ void MultiWeightMatmulsFusion::Process(const std::string &name, const AnfNodePtr
     k_len = shape[1];
     n_len += shape[0];
     n_len_list.push_back(shape[0]);
+    w_type_id = static_cast<TypeId>(w_param->data_type_c());
     new_abs.push_back(user->abstract());
   }
 
-  const auto w_dtype = kInt8;
-  TypeId w_type_id = kNumberTypeInt8;
-  const auto anti_quant_dtype = kFloat16;
-  TypeId anti_quant_type_id = kNumberTypeFloat16;
+  TypePtr w_dtype = kFloat16;
+  if (w_type_id == TypeId::kNumberTypeBFloat16) {
+    w_dtype = kBFloat16;
+  }
 
   // Create a new weight tensor concat all of weights
   std::vector<int64_t> new_weight_shape = {n_len, k_len};
@@ -240,26 +221,15 @@ void MultiWeightMatmulsFusion::Process(const std::string &name, const AnfNodePtr
     CreateWeightTensor(w_type_id, new_weight_shape, data_c_list, n_len_list, k_len, w_dtype, need_rank_offset);
   fused_inputs.push_back(weight_value_node);
   kernel_graph->AddValueNodeToGraph(weight_value_node);
-  std::vector<int64_t> anti_scale_shape = {n_len};
-  std::shared_ptr<ValueNode> anti_scale_node = CreateWeightTensor(anti_quant_type_id, anti_scale_shape, anti_scale_list,
-                                                                  n_len_list, 1, anti_quant_dtype, need_rank_offset);
-  fused_inputs.push_back(anti_scale_node);
-  kernel_graph->AddValueNodeToGraph(anti_scale_node);
-  std::vector<int64_t> anti_offset_shape = {n_len};
-  std::shared_ptr<ValueNode> anti_offset_node = CreateWeightTensor(
-    anti_quant_type_id, anti_offset_shape, anti_offset_list, n_len_list, 1, anti_quant_dtype, need_rank_offset);
-  fused_inputs.push_back(anti_offset_node);
-  kernel_graph->AddValueNodeToGraph(anti_offset_node);
   auto first_matmul = users[0]->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(first_matmul);
-  fused_inputs.insert(fused_inputs.end(), first_matmul->inputs().begin() + kIndex5, first_matmul->inputs().end());
+  fused_inputs.insert(fused_inputs.end(), first_matmul->inputs().begin() + kIndex3, first_matmul->inputs().end());
   auto fused_matmul = node->func_graph()->NewCNode(fused_inputs);
 
   m_len = common::AnfAlgo::GetOutputInferShape(users[kIndex0], kIndex0)[kIndex0];
   ShapeVector out_shape = {m_len, n_len};
   auto abs_shape_ptr = std::make_shared<abstract::Shape>(abstract::Shape(out_shape));
-  fused_matmul->set_abstract(
-    std::make_shared<abstract::AbstractTensor>(TypeIdToType(TypeId::kNumberTypeFloat16), abs_shape_ptr));
+  fused_matmul->set_abstract(std::make_shared<abstract::AbstractTensor>(TypeIdToType(w_type_id), abs_shape_ptr));
   AnfNodePtrList split_inputs = {NewValueNode(std::make_shared<Primitive>("SplitWithSize")), fused_matmul};
   auto new_input = opt::CreateValueNodeWithKernelInfo(node->func_graph(), MakeValue<std::vector<int64_t>>(n_len_list));
   auto new_input2 = opt::CreateValueNodeWithKernelInfo(node->func_graph(), MakeValue<int64_t>(1));
