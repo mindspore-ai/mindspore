@@ -15,6 +15,8 @@
  */
 
 #include "ops/ops_func_impl/floor.h"
+#include "ops/ops_func_impl/simple_infer.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -22,8 +24,22 @@ BaseShapePtr FloorFuncImpl::InferShape(const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) const {
   return input_args[0]->GetShape()->Clone();
 }
+
 TypePtr FloorFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   return input_args[0]->GetType()->Clone();
 }
+
+TypePtrList FloorFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->Dtype()};
+}
+
+ShapeArray FloorFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameFloor, FloorFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

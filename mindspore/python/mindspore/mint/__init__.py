@@ -227,6 +227,8 @@ from mindspore.ops.function.math_func import tanh
 
 # 100
 
+# 210
+from mindspore.ops.auto_generate import floor
 # 285
 from mindspore.ops.function.array_func import scatter_add_ext as scatter_add
 
@@ -444,6 +446,8 @@ __all__ = [
 
     # 100
 
+    # 210
+    'floor',
     # 285
     'scatter_add',
     # 304
