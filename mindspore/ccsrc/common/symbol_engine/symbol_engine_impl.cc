@@ -510,7 +510,18 @@ AbstractBasePtrList SymbolEngineImpl::ExtractInputsAbstract(const CNodePtr &cnod
   (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(abs_list),
                        [](const AnfNodePtr &node) {
                          MS_EXCEPTION_IF_NULL(node);
-                         return node->abstract();
+                         auto abs = node->abstract();
+                         if (abs == nullptr) {
+                           if (node->isa<ValueNode>()) {
+                             abs = node->cast_ptr<ValueNode>()->value()->ToAbstract();
+                             node->set_abstract(abs);
+                             MS_LOG(DEBUG) << "Set new abstract for input node " << node->DebugString();
+                           } else {
+                             // Do not raise exception here, this input may not be used by operation.
+                             MS_LOG(INFO) << "The input " << node->DebugString() << " has null abstract.";
+                           }
+                         }
+                         return abs;
                        });
   return abs_list;
 }
