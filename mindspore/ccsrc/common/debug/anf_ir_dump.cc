@@ -1071,6 +1071,7 @@ void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePt
     if (!node->isa<Parameter>()) {
       if (node->isa<CNode>()) {
         // Print and record output of operator if it is not 'Return'
+        gsub->cnode_num++;
         DumpCNode(node->cast<CNodePtr>(), sub_graph, *para_map, gsub, dump_full_name, dump_location);
       } else if (AnfUtils::IsCustomActorNode(node)) {
         continue;
@@ -1267,6 +1268,19 @@ void GetEnvDumpIrLineLevel(LocDumpMode *dump_location) {
   }
 }
 
+void DumpNodeCounting(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> *sub_graphs,
+                      std::ostringstream &oss, const std::vector<AnfNodePtr> &nodes) {
+  oss << "node counting information:" << std::endl;
+  oss << "total number of nodes: " << nodes.size() << std::endl;
+  auto total_cnode =
+    std::accumulate((*sub_graphs).cbegin(), (*sub_graphs).cend(), 0,
+                    [](const int32_t previous, const std::pair<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> &pair) {
+                      return previous + pair.second->cnode_num;
+                    });
+  oss << "total number of cnodes: " << total_cnode << std::endl;
+  oss << std::endl;
+}
+
 void SaveIRFile(const std::string &filename, const std::string &str, const std::string &target_file) {
   std::string path;
   if (!target_file.empty()) {
@@ -1453,6 +1467,10 @@ void DumpIR(std::ostringstream &out_oss, const FuncGraphPtr &graph, bool dump_fu
     out_oss << param_oss.str();
   }
 
+  // Add counting information for nodes
+  out_oss << std::endl;
+  DumpNodeCounting(&sub_graphs, out_oss, nodes);
+
   // Output each sub graph
   DumpSubgraph(&sub_graphs, graph, &para_map, out_oss);
 }
@@ -1488,6 +1506,9 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
   GetEnvDumpIrLineLevel(&dump_location);
   // Dump ir in each sub graph
   DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
+  // Add counting information for nodes
+  buffer << std::endl;
+  DumpNodeCounting(&sub_graphs, buffer, nodes);
   // Dump global info
   DumpGlobalInfoEntry(graph, buffer, sub_graphs.size());
   // Output global info
