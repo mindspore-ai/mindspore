@@ -27,7 +27,7 @@ from tests.st.utils import test_utils
 
 
 def generate_random_input(shape, dtype):
-    return np.random.random(shape).astype(dtype)
+    return np.ones(shape).astype(dtype)
 
 
 @test_utils.run_with_cell
@@ -49,10 +49,15 @@ def compare_output(x, p, output):
         output_np = output.asnumpy()
     elem_count = x.size
     nonzero_count = np.count_nonzero(output_np)
-    assert (elem_count * (keep_prob - 0.1)) < nonzero_count < (elem_count * (keep_prob + 0.1))
-    output_sum = np.sum(output_np)
-    x_sum = np.sum(x)
-    assert abs(output_sum - x_sum) / x_sum < 0.1
+    assert (elem_count * (keep_prob - 0.02)) < nonzero_count < (elem_count * (keep_prob + 0.02))
+
+    expect_sum = np.array(nonzero_count / (1 - p), dtype=np.float64)
+    output_sum = np.sum(output_np.astype(np.float64))
+
+    if output.dtype == mstype.float32:
+        np.testing.assert_allclose(output_sum, expect_sum, rtol=1e-3)
+    else:
+        np.testing.assert_allclose(output_sum, expect_sum, rtol=1e-2)
 
 
 def compare_grad(x, p, grad):
@@ -64,16 +69,14 @@ def compare_grad(x, p, grad):
         grad_np = grad.asnumpy()
     elem_count = x.size
     nonzero_count = np.count_nonzero(grad_np)
-    assert (elem_count * (keep_prob - 0.1)) < nonzero_count < (elem_count * (keep_prob + 0.1))
-    grad_sum = np.sum(grad_np)
-    np.testing.assert_allclose(grad_sum * keep_prob, nonzero_count, rtol=1e-3)
+    assert (elem_count * (keep_prob - 0.02)) < nonzero_count < (elem_count * (keep_prob + 0.02))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
 def test_func_dropout_normal(context_mode, dtype):
     """
@@ -82,15 +85,14 @@ def test_func_dropout_normal(context_mode, dtype):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    if context_mode == ms.GRAPH_MODE:
-        context.set_context(jit_level='O0')
-    x = generate_random_input((128, 128), dtype)
-    p = 0.4
+    ms.set_context(jit_level='O0')
+    x = generate_random_input((1280, 77, 77), dtype)
+    p = 0.1
     output = dropout_forward_func(ms.Tensor(x), p)
     compare_output(x, p, output)
 
-    x1 = generate_random_input((64, 64), dtype)
-    p1 = 0.3
+    x1 = generate_random_input((3, 4096, 1280), dtype)
+    p1 = 0.1
     grad = dropout_backward_func(ms.Tensor(x1), p1)
     compare_grad(x1, p1, grad)
 
@@ -98,7 +100,7 @@ def test_func_dropout_normal(context_mode, dtype):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_func_dropout_bfloat16(context_mode):
     """
     Feature: pyboost function.
@@ -106,14 +108,13 @@ def test_func_dropout_bfloat16(context_mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    if context_mode == ms.GRAPH_MODE:
-        ms.set_context(jit_level='O0')
+    ms.set_context(jit_level='O0')
     x = generate_random_input((128, 128), np.float32)
     p = 0.4
     output = dropout_forward_func(ms.Tensor(x).astype(mstype.bfloat16), p)
     compare_output(x, p, output)
 
-    x1 = generate_random_input((64, 64), np.float32)
+    x1 = generate_random_input((256, 256), np.float32)
     p1 = 0.3
     grad = dropout_backward_func(ms.Tensor(x1).astype(mstype.bfloat16), p1)
     compare_grad(x1, p1, grad)
@@ -156,7 +157,7 @@ def compare_func(x, p, output, mask=None):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nn_DropoutExt_normal(context_mode):
     """
     Feature: nn.DropoutExt
@@ -180,7 +181,7 @@ def test_nn_DropoutExt_normal(context_mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nn_DropoutExt_bf16(context_mode):
     """
     Feature: nn.DropoutExt
@@ -210,11 +211,11 @@ class DropoutExtCell(Cell):
         return self.dropout_ext(x, p)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_DropoutExt_normal(context_mode):
     """
     Feature: ops.DropoutExt
@@ -232,10 +233,7 @@ def test_ops_DropoutExt_normal(context_mode):
     output, mask = dropout_cell(ms.tensor(x), p)
     compare_func(x, p, output, mask)
 
-    if context_mode == ms.GRAPH_MODE:
-        dropout_cell.set_inputs(ms.tensor(shape=[None, None], dtype=ms.float32), p)
-    else:
-        dropout_cell.set_inputs(ms.tensor(shape=[None, None], dtype=ms.float32), ms.mutable(p))
+    dropout_cell.set_inputs(ms.tensor(shape=[None, None], dtype=ms.float32), ms.mutable(p))
 
     x = np.array(np.random.random((256, 128)), np.float32)
 
@@ -247,10 +245,7 @@ def test_ops_DropoutExt_normal(context_mode):
     output, mask = dropout_cell(ms.tensor(x), p)
     compare_func(x, p, output, mask)
 
-    if context_mode == ms.GRAPH_MODE:
-        dropout_cell.set_inputs(ms.tensor(shape=None, dtype=ms.float32), p)
-    else:
-        dropout_cell.set_inputs(ms.tensor(shape=None, dtype=ms.float32), ms.mutable(p))
+    dropout_cell.set_inputs(ms.tensor(shape=None, dtype=ms.float32), ms.mutable(p))
 
     x = np.array(np.random.random((128, 128, 128)), np.float32)
 

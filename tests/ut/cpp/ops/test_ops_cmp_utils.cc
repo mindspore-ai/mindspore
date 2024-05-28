@@ -76,9 +76,8 @@ void TestOpFuncImplWithMultiInputOpParams(const OpFuncImplPtr &infer_impl, const
                                           const MultiInputOpParams &param) {
   auto primitive = std::make_shared<Primitive>(prim_name);
   ASSERT_NE(primitive, nullptr);
-  ASSERT_TRUE(!param.in_shape_array.empty());
-  ASSERT_TRUE(!param.in_type_list.empty());
   ASSERT_TRUE(param.in_shape_array.size() == param.in_type_list.size());
+  ASSERT_TRUE(!(param.in_shape_array.empty() && param.in_type_list.empty() && param.attr_list.empty()));
   std::vector<abstract::AbstractBasePtr> input_args;
   for (size_t idx = 0; idx < param.in_shape_array.size(); ++idx) {
     auto input = std::make_shared<abstract::AbstractTensor>(param.in_type_list[idx], param.in_shape_array[idx]);

@@ -221,20 +221,20 @@ class DropoutExt(Cell):
 
     Note:
         - Each channel will be zeroed out independently on every construct call.
-          Parameter `p` means the probability of the element of the input tensor to be zeroed.
+        - Parameter `p` means the probability of the element of the input tensor to be zeroed.
 
     Args:
-        p (float): The dropout rate, greater than or equal to 0 and less than 1.
-            E.g. rate=0.9, dropping out 90% of input neurons. Default: ``0.5`` .
+        p (float): The dropout rate of input neurons, E.g. `p` =0.9, dropping out 90% of input neurons.
+            Default: ``0.5`` .
 
     Inputs:
-        - **x** (Tensor) - The input of Dropout with data type of float16 or float32.
+        - **x** (Tensor) - The input of Dropout.
 
     Outputs:
         Tensor, output tensor with the same shape as the `x`.
 
     Raises:
-        ValueError: If `p` is not in range [0, 1).
+        TypeError: If the dtype of `p` is not float.
         ValueError: If length of shape of `x` is less than 1.
 
     Supported Platforms:
@@ -255,7 +255,6 @@ class DropoutExt(Cell):
     def __init__(self, p=0.5):
         """Initialize DropoutExt."""
         super(DropoutExt, self).__init__()
-        self.dropout = dropout_ext_op
         self.p = p
 
     def construct(self, x):
@@ -263,7 +262,7 @@ class DropoutExt(Cell):
             return x
 
         seed, offset = default_generator._step(1)  # pylint: disable=protected-access
-        out, _ = self.dropout(x, self.p, seed, offset)
+        out, _ = dropout_ext_op(x, self.p, seed, offset)
         return out
 
 

@@ -1365,27 +1365,25 @@ def dropout(input, p=0.5, training=True, seed=None):
 
 
 @_function_forbid_reuse
-def dropout_ext(input, p=0.5, training=True, seed=None):
+def dropout_ext(input, p=0.5, training=True):
     r"""
     During training, randomly zeroes some of the elements of the input tensor
     with probability `p` from a Bernoulli distribution. It plays the role of reducing neuron correlation and
     avoid overfitting. And the return will be multiplied by :math:`\frac{1}{1-p}` during training.
-    During the reasoning, this operation returns the same Tensor as the `x`.
+    During the reasoning, this operation returns the same Tensor as the `input`.
 
     Args:
-        input (Tensor): The input Tensor of shape :math:`(*, N)`, with data type of float16, float32 or float64.
-        p (float, optional): The dropping rate, between 0 and 1, e.g. p = 0.1,
-            means dropping out 10% of input units. Default: ``0.5`` .
-        training (bool): Apply dropout_ext if is True. Default: ``True``.
-        seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
-            Default: ``None`` , which will be treated as ``0`` .
+        input (Tensor): The input Tensor of shape :math:`(*, N)`.
+        p (float): The dropping rate of input neurons, between 0 and 1, e.g. `p` = 0.1,
+            means dropping out 10% of input neurons. Default: ``0.5`` .
+        training (bool): Apply dropout if it is ``True`` , if it is ``False`` , the input is returned directly,
+            and `p` is invalid. Default: ``True``.
 
     Returns:
         - **output** (Tensor) - Zeroed tensor, with the same shape and data type as `input`.
 
     Raises:
         TypeError: If `p` is not a float.
-        TypeError: If dtype of `input` is not float16, float32 or float64.
         TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
