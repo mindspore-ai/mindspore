@@ -206,6 +206,12 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
      "transpose_weight",
      "antiquant_group_size",
    }},
+  {"QuantBatchMatmul",
+   {
+     "transpose_x1",
+     "transpose_x2",
+     "dtype",
+   }},
 };
 
 constexpr size_t kMatMulInputSizeWithBias = 6;  // primitive, x1, x2, bias, transpose_a, transpose_b
