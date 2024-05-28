@@ -36,6 +36,7 @@
 #include "kernel/kernel_build_info.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "transform/acl_ir/op_api_util.h"
+#include "transform/acl_ir/op_api_exec.h"
 #include "transform/acl_ir/ge_adapter_info.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
@@ -51,10 +52,12 @@ namespace device {
 namespace ascend {
 namespace {
 constexpr uint32_t kFirstItem = 0;
+constexpr size_t kOpTypeNumber = 6;
 constexpr size_t kAclnnOpSelect = 0;
 constexpr size_t kAclOpSelect = 1;
 constexpr size_t kHcclOpSelect = 2;
 constexpr size_t kHostOpSelect = 3;
+constexpr size_t kInternalOpSelect = 4;
 
 std::string KernelSelectDebugString(const kernel::KernelBuildInfo *build_info,
                                     const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
@@ -539,32 +542,15 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
                                                                      const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  static std::vector<std::set<std::string>> op_selected_type(4);
-  static std::set<std::string> kInternalKernelSelectedSet;
+  static std::vector<std::set<std::string>> op_selected_type(kOpTypeNumber);
   transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
   std::tuple<bool, std::string, ExceptionType> result = std::make_tuple(true, "", NoExceptionType);
-  auto enable_internal = false;
-  if (context_ptr->IsEnableInferBoost()) {
-    enable_internal = true;
-  }
-
   std::string op_name = common::AnfAlgo::GetCNodeName(node);
-  if (op_name == "ReshapeExt") {
-    enable_internal = true;
-  }
-  std::string disable_name_list = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
-  std::vector<std::string> op_name_vec = SplitString(disable_name_list, ',');
-  if (enable_internal && std::any_of(op_name_vec.begin(), op_name_vec.end(),
-                                     [&op_name](const std::string &name) { return name == op_name; })) {
-    enable_internal = false;
-  }
 
-  if (enable_internal && kernel::IsRegisteredInternalKernel(node)) {
+  if (IsEnableInternalNode(node)) {
     GenerateKernelBuildInfo(node, KernelType::INTERNAL_KERNEL);
-    if (kInternalKernelSelectedSet.count(op_name) == 0) {
-      (void)kInternalKernelSelectedSet.insert(op_name);
+    if (op_selected_type[kInternalOpSelect].count(op_name) == 0) {
+      (void)op_selected_type[kInternalOpSelect].insert(op_name);
       MS_LOG(INFO) << op_name << " select internal kernel.";
     }
     return result;
@@ -631,6 +617,17 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
 bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(node);
+
+  if (IsPrimitiveCNode(node, prim::kPrimCustom)) {
+    auto primitive = GetCNodePrimitive(node);
+    auto op_type = GetValue<std::string>(primitive->GetAttr("reg_op_name"));
+    auto op_api_func = transform::GetOpApiFunc(op_type.c_str());
+    if (op_api_func != nullptr) {
+      MS_LOG(INFO) << "Kernel of custom op " << node->fullname_with_scope() << "is selected AclNN.";
+      return true;
+    }
+  }
+
   if (kernel_graph->is_from_single_op()) {
     return false;
   }
@@ -658,6 +655,30 @@ bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
   bool ret = ReadAclnnEnableEnv(op_name);
   kIsEnableAclnnMap.insert({op_name, ret});
   return ret;
+}
+
+bool IsEnableInternalNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto enable_internal = false;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->IsEnableInferBoost()) {
+    enable_internal = true;
+  }
+
+  std::string op_name = common::AnfAlgo::GetCNodeName(node);
+  if (op_name == "ReshapeExt") {
+    enable_internal = true;
+  }
+
+  std::string disable_name_list = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
+  std::vector<std::string> op_name_vec = SplitString(disable_name_list, ',');
+  if (std::any_of(op_name_vec.begin(), op_name_vec.end(),
+                  [&op_name](const std::string &name) { return name == op_name; })) {
+    enable_internal = false;
+  }
+
+  return enable_internal && kernel::IsRegisteredInternalKernel(node);
 }
 
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
