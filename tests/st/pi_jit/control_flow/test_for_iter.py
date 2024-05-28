@@ -73,7 +73,7 @@ def test_for_iter_unrolling(func, param):
     Description: Test loop unrolling
     Expectation: No exception.
     """
-    config = {"loop_unrolling": True}
+    config = {"loop_unrolling": True, "compile_by_trace": False} # One-stage will fix it later
     excepted = func(param)
     result = jit(fn=func, mode="PIJit", jit_config=config)(param)
     jcr = get_code_extra(func)

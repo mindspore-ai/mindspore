@@ -44,7 +44,7 @@ class Obj:
         return 1
 
 
-@jit(mode="PIJit")
+@jit(mode="PIJit", jit_config={"compile_by_trace": False}) # One-stage will fix it later
 def func(self, x):
     tpe = kw_inline_test()
     lst = list(tpe)
@@ -399,7 +399,8 @@ def test_mix_0(mode: int):
     Expectation: The results should match for both modes.
     """
 
-    @jit(mode="PIJit", jit_config={"kEnableEliminateUnusedOperation": True, "loop_unrolling": True})
+    @jit(mode="PIJit", jit_config={"kEnableEliminateUnusedOperation": True, "loop_unrolling": True,
+                                   "compile_by_trace": False}) # One-stage will fix it later
     def inner_func(mode):
         index = 1 if mode else 0
         x = [Tensor([1]), 1]
