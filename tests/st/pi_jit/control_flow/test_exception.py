@@ -9,6 +9,8 @@ SYS_VER = (sys.version_info.major, sys.version_info.minor)
 if SYS_VER != (3, 7) and SYS_VER != (3, 9):
     pytest.skip(reason="not implement for python" + str(SYS_VER), allow_module_level=True)
 
+cfg = {'compile_by_trace': False} # One-stage will fix it later
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -32,7 +34,7 @@ def test_exception_case_1():
         return val
 
     expected = func(5)
-    res = jit(fn=func, mode="PIJit")(5)
+    res = jit(fn=func, mode="PIJit", jit_config=cfg)(5) # One-stage will fix it later
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
     assert jcr["compile_count_"] == 1
@@ -64,7 +66,7 @@ def test_exception_case_2():
         return val
 
     expected = func(5)
-    res = jit(fn=func, mode="PIJit")(5)
+    res = jit(fn=func, mode="PIJit", jit_config=cfg)(5) # One-stage will fix it later
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
     assert jcr["compile_count_"] == 1
@@ -198,7 +200,7 @@ def test_exception_case_6():
         return val
 
     expected = func(5)
-    res = jit(fn=func, mode="PIJit")(5)
+    res = jit(fn=func, mode="PIJit", jit_config=cfg)(5) # One-stage will fix it later
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
     assert jcr["compile_count_"] == 1
@@ -399,7 +401,7 @@ def test_exception_case_11():
         return val
 
     expected = func(5)
-    res = jit(fn=func, mode="PIJit")(5)
+    res = jit(fn=func, mode="PIJit", jit_config=cfg)(5) # One-stage will fix it later
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
     assert jcr["compile_count_"] == 1
@@ -515,7 +517,7 @@ def test_exception_case_14():
         return val
 
     expected = func(5)
-    res = jit(fn=func, mode="PIJit")(5)
+    res = jit(fn=func, mode="PIJit", jit_config=cfg)(5) # One-stage will fix it later
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
     assert jcr["compile_count_"] == 1
