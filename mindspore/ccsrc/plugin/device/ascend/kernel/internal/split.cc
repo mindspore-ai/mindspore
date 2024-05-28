@@ -44,7 +44,5 @@ void InternalSplit::SetInOutIdx() {
     outputsIdxMap_[i] = i;
   }
 }
-
-MS_INTERNAL_KERNEL_FACTORY_REG(Split, InternalSplit);
 }  // namespace kernel
 }  // namespace mindspore
