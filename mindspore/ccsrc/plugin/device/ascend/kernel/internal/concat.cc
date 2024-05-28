@@ -56,7 +56,5 @@ uint64_t InternalConcat::GenTilingCacheKey(const std::vector<KernelTensor *> &in
     kernel_name_, inputs[kIndex0]->GetShapeVector(), inputs[kIndex0]->dtype_id(), inputs[kIndex1]->GetShapeVector(),
     inputs[kIndex1]->dtype_id(), concatDim_, outputs[kIndex0]->GetShapeVector(), outputs[kIndex0]->dtype_id());
 }
-
-MS_INTERNAL_KERNEL_FACTORY_REG(Concat, InternalConcat);
 }  // namespace kernel
 }  // namespace mindspore
