@@ -28,9 +28,9 @@ class IRFFTNet(nn.Cell):
         return self.irfft(x, n, dim)
 
 
-class RFFTGradNet(nn.Cell):
+class IRFFTGradNet(nn.Cell):
     def __init__(self, net, dout):
-        super(RFFTGradNet, self).__init__()
+        super(IRFFTGradNet, self).__init__()
         self.net = net
         self.dout = dout
         self.grad = ops.GradOperation(sens_param=True)
@@ -100,7 +100,7 @@ def test_ops_irfft_backward(mode):
     x = generate_random_input((2, 3), np.float32)
     dout = np.ones((2, 3)).astype(np.float32)
     net = IRFFTNet()
-    grad_net = RFFTGradNet(net, ms.Tensor(dout))
+    grad_net = IRFFTGradNet(net, ms.Tensor(dout))
     grad_net.set_train()
     grad = grad_net(ms.Tensor(x), n, dim)
     expect = generate_expect_backward_output_2_3(dout, n, dim)
@@ -197,7 +197,7 @@ def test_ops_irfft_backward_dynamic_shape(mode):
 
     x1 = generate_random_input((2, 3), np.float32)
     dout1 = np.ones((2, 3)).astype(np.float32)
-    grad_net = RFFTGradNet(net, ms.Tensor(dout1))
+    grad_net = IRFFTGradNet(net, ms.Tensor(dout1))
     grad_net.set_train()
     grad_net.set_inputs(x_dyn, n_dyn, dim_dyn)
     output = grad_net(ms.Tensor(x1), n_dyn, dim_dyn)
@@ -206,7 +206,7 @@ def test_ops_irfft_backward_dynamic_shape(mode):
 
     x2 = generate_random_input((2, 4), np.float32)
     dout2 = np.ones((2, 4)).astype(np.float32)
-    grad_net = RFFTGradNet(net, ms.Tensor(dout2))
+    grad_net = IRFFTGradNet(net, ms.Tensor(dout2))
     grad_net.set_train()
     grad_net.set_inputs(x_dyn, n_dyn, dim_dyn)
     output = grad_net(ms.Tensor(x2), n_dyn, dim_dyn)
@@ -237,7 +237,7 @@ def test_ops_irfft_backward_dynamic_rank(mode):
 
     x1 = generate_random_input((2, 3), np.float32)
     dout1 = np.ones((2, 3)).astype(np.float32)
-    grad_net = RFFTGradNet(net, ms.Tensor(dout1))
+    grad_net = IRFFTGradNet(net, ms.Tensor(dout1))
     grad_net.set_train()
     grad_net.set_inputs(x_dyn, n_dyn, dim_dyn)
     output = grad_net(ms.Tensor(x1), n_dyn, dim_dyn)
@@ -246,7 +246,7 @@ def test_ops_irfft_backward_dynamic_rank(mode):
 
     x2 = generate_random_input((2, 4), np.float32)
     dout2 = np.ones((2, 4)).astype(np.float32)
-    grad_net = RFFTGradNet(net, ms.Tensor(dout2))
+    grad_net = IRFFTGradNet(net, ms.Tensor(dout2))
     grad_net.set_train()
     grad_net.set_inputs(x_dyn, n_dyn, dim_dyn)
     output = grad_net(ms.Tensor(x2), n_dyn, dim_dyn)
