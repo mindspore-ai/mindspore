@@ -1,10 +1,10 @@
 approvers:
 - zhaizhiqiang
-- zhanghaibo5
 - zhang_xue_tong #
 - jpc_chenjianping
 - wang_shaocong
 - yeyunpeng2020
+- YeFeng_24
 
 options:
   no_parent_owners: true

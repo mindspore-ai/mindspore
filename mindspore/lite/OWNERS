@@ -10,8 +10,6 @@ approvers:
 reviewers:
 - xu_anyue
 - ling_qiao_min
-- greatpanc
-- gengdongjie
 
 options:
   no_parent_owners: true

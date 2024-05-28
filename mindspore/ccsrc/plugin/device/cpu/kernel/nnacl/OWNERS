@@ -5,7 +5,6 @@ approvers:
 - yangruoqi713
 - ling_qiao_min
 - xu_anyue
-- greatpanc
 
 options:
   no_parent_owners: true
