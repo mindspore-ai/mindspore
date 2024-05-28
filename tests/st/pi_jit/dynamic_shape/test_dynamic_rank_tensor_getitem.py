@@ -38,7 +38,8 @@ class IndexFactory:
         ps_grads = grad_net(*inputs)
 
         context.set_context(mode=context.PYNATIVE_MODE)
-        jit(fn=self.pi_net.construct, mode="PIJit")(*inputs)
+        cfg = {"compile_by_trace": False} # One-stage will fix it later
+        jit(fn=self.pi_net.construct, mode="PIJit", jit_config=cfg)(*inputs)
         pi_out = self.pi_net(*inputs)
         grad_net = GradOfAllInputs(self.pi_net, False)
         pi_grads = grad_net(*inputs)

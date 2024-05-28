@@ -89,7 +89,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kAutoJitCell - kBoolConf] = false;
   bool_conf[kAutoGrad - kBoolConf] = false;
   bool_conf[kPrintAfterAll - kBoolConf] = false;
-  bool_conf[kTraceFlag - kBoolConf] = false;
+  bool_conf[kTraceFlag - kBoolConf] = true;
   bool_conf[kPrintTraceback - kBoolConf] = false;
   bool_conf[kPrintBB - kBoolConf] = false;
   bool_conf[kPrintCFG - kBoolConf] = false;
