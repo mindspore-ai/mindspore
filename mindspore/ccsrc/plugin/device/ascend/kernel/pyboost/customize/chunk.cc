@@ -43,7 +43,10 @@ std::vector<tensor::BaseTensorPtr> ChunkAscendCustomize(const std::shared_ptr<Op
     dim_imm = GetValue<int64_t>(dim.value());
   }
   auto dim_ptr = std::make_shared<Int64Imm>(dim_imm);
-  auto input_shape = input_tensor->shape();
+  const auto &input_shape = input_tensor->shape();
+  if (dim_imm < 0) {
+    dim_imm += SizeToLong(input_shape.size());
+  }
   int64_t dim_size = input_shape[dim_imm];
   int64_t split_size = (dim_size + chunks_imm - 1) / chunks_imm;
   MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
