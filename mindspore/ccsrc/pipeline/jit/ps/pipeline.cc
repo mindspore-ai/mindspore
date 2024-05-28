@@ -1415,9 +1415,9 @@ void RecordIR(const size_t action_index, const size_t action_size, const std::st
       ExportIR(base_name + ".ir", graph);
     } else {
       if (action_index == action_size - 1) {
-        DumpIR(base_name + ".ir", graph, false, kWholeStack);
+        DumpIR(base_name + ".ir", graph, true, kWholeStack);
       } else {
-        DumpIR(base_name + ".ir", graph, false, kTopStack);
+        DumpIR(base_name + ".ir", graph, true, kTopStack);
       }
     }
     if (context->CanDump(kFully)) {
