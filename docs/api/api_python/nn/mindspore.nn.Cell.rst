@@ -479,13 +479,22 @@
         返回：
             Cell类型，Cell本身。
 
-    .. py:method:: set_inputs(*inputs)
+    .. py:method:: set_inputs(*inputs, **kwargs)
 
         设置编译计算图所需的输入。输入数量需与数据集数量一致。若使用Model接口，请确保所有传入Model的网络和损失函数都配置了set_inputs。
-        输入可以为动态或静态的Tensor。
+        输入Tensor的shape可以为动态或静态。
+
+        .. note::
+            有两种配置模式：
+
+            - 全量配置模式：输入将被用作图编译时的完整编译参数。
+            - 增量配置模式：输入被配置到Cell的部分输入上，这些输入将替换图编译对应位置上的参数。
+
+            只能传入inputs和kwargs的其中一个。inputs用于全量配置模式，kwargs用于增量配置模式。
 
         参数：
-            - **inputs** (tuple) - Cell的输入。
+            - **inputs** (tuple) - 全量配置模式的参数。
+            - **kwargs** (dict) - 增量配置模式的参数。可设置的key值为 `self.construct` 中定义的参数名。
 
         .. warning::
             这是一个实验性API，后续可能修改或删除。
