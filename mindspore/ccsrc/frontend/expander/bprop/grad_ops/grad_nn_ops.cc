@@ -819,13 +819,14 @@ REG_BPROP_BUILDER("DropoutExt").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(p), ib->OutZeros(seed), ib->OutZeros(offset)};
 });
 
-REG_BPROP_BUILDER("BinaryCrossEntropy").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("BinaryCrossEntropy").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto weight = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex4);
-  auto dx = ib->Emit("BinaryCrossEntropyGrad", {x, y, dout, weight}, {{"reduction", ib->GetAttr("reduction")}});
-  return {dx, ib->OutZeros(y), ib->OutZeros(weight)};
+  auto reduction = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = ib->Emit("BinaryCrossEntropyGrad", {x, y, dout, weight, reduction});
+  return {dx, ib->OutZeros(y), ib->OutZeros(weight), ib->OutZeros(reduction)};
 });
 
 REG_BPROP_BUILDER("DropoutGrad").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {

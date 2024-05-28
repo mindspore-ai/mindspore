@@ -16,18 +16,16 @@
 
 #include "plugin/device/cpu/kernel/binary_cross_entropy_cpu_kernel.h"
 #include <map>
-#include "mindspore/core/ops/binary_cross_entropy.h"
-#include "ops/binary_cross_entropy.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kBceInputsNumWithWeight = 3;
+constexpr size_t kBceInputsNumWithWeight = 4;
 constexpr size_t kBceOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void BinaryCrossEntropyCpuKernelMod::LaunchToScalar(const int &input_size, const ReductionType &reduction, T *loss,
+void BinaryCrossEntropyCpuKernelMod::LaunchToScalar(const int &input_size, const Reduction &reduction, T *loss,
                                                     T *tmp_loss) const {
   if (input_size % 2 == 1) {
     tmp_loss[0] += tmp_loss[input_size - 1];
@@ -43,7 +41,7 @@ void BinaryCrossEntropyCpuKernelMod::LaunchToScalar(const int &input_size, const
   }
 
   loss[0] = tmp_loss[0];
-  if (reduction == kMean) {
+  if (reduction == Reduction::MEAN) {
     loss[0] /= static_cast<T>(input_size);
   }
 }
@@ -70,7 +68,7 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor
   auto one = static_cast<T>(1);
 
   std::function<void(size_t, size_t)> func;
-  if (reduction_ == kNone) {
+  if (reduction_ == Reduction::NONE) {
     if (weight != nullptr) {
       func = [&](size_t start, size_t end) -> void {
         for (size_t i = start; i < end; i++) {
@@ -113,7 +111,7 @@ void BinaryCrossEntropyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor
   }
   ParallelLaunchAutoSearch(func, input_size_, this, &parallel_search_info_);
 
-  if (reduction_ != kNone && input_size_ > 0) {
+  if (reduction_ != Reduction::NONE && input_size_ > 0) {
     LaunchToScalar<T>(input_size_, reduction_, loss, tmp_loss.data());
   }
 }
@@ -124,6 +122,8 @@ bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<KernelTensor *> &i
   const size_t expect_inputs_num = kBceInputsNumWithWeight;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), expect_inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBceOutputsNum, kernel_name_);
+  auto reduction = inputs[kIndex3]->GetValueWithCheck<int64_t>();
+  reduction_ = static_cast<Reduction>(reduction);
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat16) {
@@ -138,14 +138,6 @@ bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<KernelTensor *> &i
 bool BinaryCrossEntropyCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[kIndex0]->dtype_id();
-  const auto reduction = ops::BinaryCrossEntropy::get_reduction(primitive_->GetAttr(ops::kReduction));
-  if (reduction == Reduction::NONE) {
-    reduction_ = kNone;
-  } else if (reduction == Reduction::MEAN) {
-    reduction_ = kMean;
-  } else {
-    reduction_ = kSum;
-  }
   return true;
 }
 
@@ -168,11 +160,13 @@ std::vector<KernelAttr> BinaryCrossEntropyCpuKernelMod::GetOpSupport() {
                                                        .AddInputAttr(kNumberTypeFloat16)
                                                        .AddInputAttr(kNumberTypeFloat16)
                                                        .AddOptionalInputAttr(kNumberTypeFloat16)
+                                                       .AddInputAttr(kNumberTypeInt64)
                                                        .AddOutputAttr(kNumberTypeFloat16),
                                                      KernelAttr()
                                                        .AddInputAttr(kNumberTypeFloat32)
                                                        .AddInputAttr(kNumberTypeFloat32)
                                                        .AddOptionalInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeInt64)
                                                        .AddOutputAttr(kNumberTypeFloat32)};
 
   return kernel_attr_list;
