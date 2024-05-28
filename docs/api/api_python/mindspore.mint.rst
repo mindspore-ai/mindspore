@@ -36,6 +36,12 @@ mindspore.mint.nn.functional
 池化函数
 ^^^^^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.functional.max_pool2d
 
 
 
