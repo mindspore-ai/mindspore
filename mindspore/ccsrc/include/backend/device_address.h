@@ -497,6 +497,25 @@ class DeviceAddress : public mindspore::DeviceSync {
   friend class mindspore::RuntimeUtils;
 };
 
+class MbufDeviceAddress : public device::DeviceAddress {
+ public:
+  MbufDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
+  void SetData(void *data) { set_ptr(data); }
+
+  bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override {
+    return false;
+  }
+  bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
+                        const std::string &format) const override {
+    return false;
+  }
+  bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const override {
+    return SyncHostToDevice(shape, size, type, host_ptr, "DefaultFormat");
+  }
+  void ClearDeviceMemory() override {}
+  device::DeviceType GetDeviceType() const { return DeviceType::kAscend; }
+};
+
 using DeviceAddressPtr = std::shared_ptr<DeviceAddress>;
 using DeviceAddressPtrList = std::vector<DeviceAddressPtr>;
 }  // namespace device
