@@ -943,8 +943,8 @@ void MindRTBackendBase::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef
 
 void MindRTBackendBase::ContiguousArgs(const VectorRef &args, const GraphCompilerInfo &graph_compiler_info) {
   for (const auto &arg : args) {
-    if (utils::isa<tensor::TensorPtr>(arg)) {
-      auto value = utils::cast<tensor::TensorPtr>(arg);
+    if (utils::isa<tensor::BaseTensorPtr>(arg)) {
+      auto value = utils::cast<tensor::BaseTensorPtr>(arg);
       runtime::DeviceAddressUtils::ConvertContiguousTensorSync(value);
     } else if (utils::isa<ValuePtr>(arg)) {
       auto value = utils::cast<ValuePtr>(arg);
@@ -956,10 +956,10 @@ void MindRTBackendBase::ContiguousArgs(const VectorRef &args, const GraphCompile
       MS_EXCEPTION_IF_NULL(value_tuple);
       auto tuple_value = value_tuple->value();
       for (const auto &v : tuple_value) {
-        if (!v->isa<tensor::Tensor>()) {
+        if (!v->isa<tensor::BaseTensor>()) {
           continue;
         }
-        auto t = v->cast<tensor::TensorPtr>();
+        auto t = v->cast<tensor::BaseTensorPtr>();
         runtime::DeviceAddressUtils::ConvertContiguousTensorSync(t);
       }
     }
