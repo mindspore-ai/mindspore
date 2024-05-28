@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import mindspore as ms
 from mindspore.nn import Cell, GraphCell
 from mindspore import ops, nn
 from mindspore import Tensor, export, load, Parameter, dtype, context
@@ -44,7 +45,7 @@ def test_export_control_flow():
 
             return x + y
 
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, jit_syntax_level=ms.STRICT)
     x = np.array([3], np.float32)
     y = np.array([0], np.float32)
     net = Net()
@@ -70,6 +71,7 @@ def test_mindir_export_none():
         def construct(self, x):
             return self.relu(x), None, None
 
+    context.set_context(mode=context.GRAPH_MODE, jit_syntax_level=ms.STRICT)
     input_tensor = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]))
     net = TestCell()
     export(net, input_tensor, file_name="none_net", file_format='MINDIR')
@@ -97,7 +99,7 @@ def test_mindir_export_parameter_as_tensor():
             x = x * self.x
             return x
 
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, jit_syntax_level=ms.STRICT)
     net = Net()
     out_net = net(input_np_x_param)
     export(net, input_np_x_param, file_name="test", file_format="MINDIR")
@@ -122,7 +124,7 @@ def test_mindir_export_bfloat16():
             x = self.add(x, self.val)
             return x
 
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, jit_syntax_level=ms.STRICT)
     input_x = Tensor(np.ones((2, 2)), dtype=dtype.bfloat16)
     net = Net()
     export(net, input_x, file_name="test", file_format="MINDIR")
