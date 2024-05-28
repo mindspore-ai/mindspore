@@ -13,6 +13,7 @@ Array操作
 
     mindspore.mint.index_select
     mindspore.mint.topk
+    mindspore.mint.broadcast_to
 
 逐元素运算
 ^^^^^^^^^^^^^^^^
@@ -29,10 +30,24 @@ mindspore.mint.nn.functional
 ^^^^^^^^^^
 
 
+Reduction函数
+^^^^^^^^^^^^^
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
+    mindspore.mint.any
 
+比较函数
+^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
+    mindspore.mint.greater_equal
 
 池化函数
 ^^^^^^^^^^^^^^^^^^^
@@ -72,7 +87,15 @@ mindspore.mint.nn.functional
 
 
 
+Tensor创建
+^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.one_hot
 
 
 

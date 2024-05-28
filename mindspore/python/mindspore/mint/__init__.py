@@ -97,11 +97,11 @@ from mindspore.ops.function.array_func import split_ext as split
 # 35
 from mindspore.ops.functional import erfinv
 # 36
-
+from mindspore.ops.function.math_func import any
 # 37
-
+from mindspore.ops.function.math_func import greater_equal
 # 38
-
+from mindspore.ops.extend import one_hot
 # 39
 
 # 40
@@ -311,11 +311,11 @@ __all__ = [
     # 35
     'erfinv',
     # 36
-
+    'any',
     # 37
-
+    'greater_equal',
     # 38
-
+    'one_hot',
     # 39
 
     # 40

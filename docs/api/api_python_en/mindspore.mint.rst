@@ -13,6 +13,7 @@ Array Operation
 
     mindspore.mint.index_select
     mindspore.mint.topk
+    mindspore.mint.broadcast_to
 
 Element-wise Operation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -28,11 +29,26 @@ mindspore.mint.nn.functional
 Convolution functions
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+Reduction Functions
+^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.any
 
 
+Comparison Functions
+^^^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
-
+    mindspore.mint.greater_equal
 
 Pooling functions
 ^^^^^^^^^^^^^^^^^^^
@@ -71,7 +87,15 @@ Linear functions
 ^^^^^^^^^^^^^^^^^^^
 
 
+Tensor Creation
+^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.one_hot
 
 
 
