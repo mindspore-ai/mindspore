@@ -71,6 +71,7 @@ MeTensorPtr ConvertGeTensor(const GeTensorPtr ge_tensor, const ShapeVector &requ
 MeTensorPtr ConvertGeTensor(const GeTensorPtr &ge_tensor) { return nullptr; }
 MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor, const TypeId &me_type) { return nullptr; }
 OpAdapterPtr FindAdapter(const std::string &op_name, bool train) { return nullptr; }
+OpAdapterPtr FindAdapter(const AnfNodePtr node, bool train) { return nullptr; }
 
 OperatorPtr OpAdapterImpl::GenerateCustomOp(const AnfNodePtr anf) { return nullptr; }
 int OpAdapterImpl::setAttr(const OperatorPtr &op, const std::string &attr_key, const ValuePtr &attr_value) { return 0; }
