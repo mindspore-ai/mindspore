@@ -13,3 +13,6 @@ mindspore.mint.normal
 
     返回：
         Tensor，输出tensor的shape和mean的shape相同，或者在mean和std为常量时，shape为size。
+
+    异常：
+        - **TypeError** - 如果 `mean` 或 `std` 不是Union[float, Tensor]。

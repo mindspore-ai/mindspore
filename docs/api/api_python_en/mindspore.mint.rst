@@ -16,6 +16,7 @@ Creation Operations
     mindspore.mint.eye
     mindspore.mint.ones
     mindspore.mint.ones_like
+    mindspore.mint.one_hot
     mindspore.mint.zeros
     mindspore.mint.zeros_like
 
@@ -28,6 +29,7 @@ Indexing, Slicing, Joining, Mutating Operations
     :template: classtemplate.rst
 
     mindspore.mint.arange
+    mindspore.mint.broadcast_to
     mindspore.mint.cat
     mindspore.mint.index_select
     mindspore.mint.scatter_add
@@ -108,6 +110,7 @@ Reduction Operations
     :template: classtemplate.rst
 
     mindspore.mint.all
+    mindspore.mint.any
     mindspore.mint.mean
     mindspore.mint.prod
     mindspore.mint.sum
@@ -123,6 +126,7 @@ Comparison Operations
     mindspore.mint.eq
     mindspore.mint.greater
     mindspore.mint.gt
+    mindspore.mint.greater_equal
     mindspore.mint.le
     mindspore.mint.less
     mindspore.mint.less_equal

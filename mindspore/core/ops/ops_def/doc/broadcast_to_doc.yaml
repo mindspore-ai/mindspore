@@ -64,10 +64,10 @@ broadcast_to:
             >>> output = ops.broadcast_to(x, shape)
             >>> print(output)
             [[1. 2. 3.]
-            [1. 2. 3.]]
+             [1. 2. 3.]]
             >>> shape = (-1, 2)
             >>> x = Tensor(np.array([[1], [2]]).astype(np.float32))
             >>> output = ops.broadcast_to(x, shape)
             >>> print(output)
             [[1. 1.]
-            [2. 2.]]
+             [2. 2.]]

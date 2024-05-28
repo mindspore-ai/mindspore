@@ -30,6 +30,6 @@ one_hot_ext:
             >>> num_classes = 3
             >>> output = ops.extend.one_hot(tensor, num_classes)
             >>> print(output)
-            [[1. 0. 0.]
-             [0. 1. 0.]
-             [0. 0. 1.]]
+            [[1 0 0]
+             [0 1 0]
+             [0 0 1]]

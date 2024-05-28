@@ -325,6 +325,40 @@ def binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean
 
 
 def one_hot(tensor, num_classes=-1):
+    r"""
+    Computes a one-hot tensor.
+
+    The locations represented by tensor in `tensor` take value `1`, while all
+    other locations take value `0`.
+
+    Args:
+        tensor (Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
+            Data type must be int32 or int64.
+        num_classes (int): A scalar defining the depth of the one-hot dimension.
+
+    Returns:
+        Tensor, one-hot tensor.
+
+    Raises:
+        TypeError: If `num_classes` is not an int.
+        TypeError: If dtype of `tensor` is not int32 or int64.
+        ValueError: If `num_classes` is less than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, mint
+        >>> tensor = Tensor(np.array([0, 1, 2]), mindspore.int32)
+        >>> num_classes = 3
+        >>> output = mint.one_hot(tensor, num_classes)
+        >>> print(output)
+        [[1 0 0]
+         [0 1 0]
+         [0 0 1]]
+    """
     return one_hot_ext(tensor, num_classes)
 
 
