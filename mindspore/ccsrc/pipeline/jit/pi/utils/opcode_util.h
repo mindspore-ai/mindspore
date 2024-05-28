@@ -16,43 +16,94 @@
 #ifndef MINDSPORE_PI_JIT_OPCODE_UTIL_H
 #define MINDSPORE_PI_JIT_OPCODE_UTIL_H
 
-#include <string>
-
 namespace mindspore {
 namespace pijit {
-namespace code {
-enum OpcodeFlag {
-  kNamed = 1 << 0,        // has co_names
-  kJRel = 1 << 1,         // is jump relative
-  kJAbs = 1 << 2,         // is jump absolute
-  kCall = 1 << 3,         // call function opcode
-  kCellAccess = 1 << 4,   // cell and free access operations
-  kLocalAccess = 1 << 5,  // local variable access operations
-  kNoFall = 1 << 6,       // jump or return or raise operation
-  /**
-   * Generally or literally, no object is modified, only return new object.
-   * But it maybe changed because of user-defined function
-   * this flag used to optimize local variable
-   */
-  kGeneralNoSideEffect = 1 << 7,
-  // can't modify any object
-  kNoSideEffect = 1 << 8,
-  kLoad = 1 << 9,
-  kMsUnsupported = 1 << 10,  // mindspore support operation
-  kBinaryMath = 1 << 11,     //+,-,*,**,/,//,@,&,|,^,<<,>>
-};
 
-struct Opcode {
-  std::string name_ = "unknown opcode";
-  int flag_ = 0;
-  int code_ = 0;
-  bool operator==(const Opcode &o) { return code_ == o.code_; }
-  bool operator!=(const Opcode &o) { return code_ != o.code_; }
+class Opcode {
+ public:
+  static const Opcode k_ILLEGAL_OPCODE;
+  static const Opcode &Map(int op) { return Map()[op > 0 && op < kMaxCode ? op : 0]; }
+
+ private:
+  static const Opcode *Map();
+
+  static constexpr auto kMaxCode = 256;
+  static Opcode opmap[kMaxCode];
+
+ public:
+  // opcode class
+  enum Class : unsigned char {
+    kStack = 0,       // stack operations
+    kLocal,           // local access
+    kGlobal,          // global access
+    kCell,            // cell (types.CellType) access
+    kItem,            // __getitem__, __setitem__, __delitem__
+    kAttr,            // __getattr__, __setattr__, __delattr__
+    kUnaryMath,       // +,-,not,~
+    kBinaryMath,      // +,-,*,**,/,//,@,&,|,^,<<,>>,<,<=,>,>=,==,!=
+    kContainerBuild,  // (),[],{a:b},{a},[:], build a new object
+    kContainerMerge,  // with container modify
+    kCall,            // with object call
+    kControl,         // has jump
+    kUnpack,          // a,b=c; a,b,*=c;
+    kNop,             // generally, no operations
+    kException,       // exception raise and handler, with syntax, try syntax
+    kOther,
+    kCount,
+  };
+
+  Opcode();
+  Opcode(const char *name, int op, Class cls, int flag) : name_(name), code_(op), class_(cls), flag_(flag) {}
+  explicit Opcode(int op) { *this = Map(op); }
+  Opcode &operator=(int &&op) {
+    *this = Map(op);
+    return *this;
+  }
+  Opcode &operator=(const Opcode &) = default;
+  bool operator==(int op) const { return code_ == op; }
+  bool operator!=(int op) const { return code_ != op; }
+  bool operator==(const Opcode &o) const { return code_ == o.code_; }
+  bool operator!=(const Opcode &o) const { return code_ != o.code_; }
+  const char *name() const { return name_; }
+  int flag() const { return flag_; }
+
+  bool IsJRel() const;
+  bool IsJAbs() const;
+  bool IsNotFall() const;
+  bool HasName() const;
+  bool HasFree() const;
+  bool HasConst() const;
+  bool CanDelete(int oparg = 0) const;
+  bool MayDelete(int oparg = 0) const;
+
+  bool IsCall() const { return class_ == Class::kCall; }
+  bool IsBinaryMath() const { return class_ == Class::kBinaryMath; }
+  bool IsUnaryMath() const { return class_ == Class::kUnaryMath; }
+  bool IsCellAccess() const { return class_ == Class::kCell; }
+  bool IsLocalAccess() const { return class_ == Class::kLocal; }
+
+  // python3.9 explicit IS_OP from COMPARE_OP
+  bool CheckIsOp(int oparg, bool *invert = nullptr) const;
+  // python3.9 explicit CONTAINS_OP from COMPARE_OP
+  bool CheckContainsOp(int oparg, bool *invert = nullptr) const;
+  // python3.11 merge binary math opcode to BINARY_OP
+  // CheckInplaceBinaryOp...
+
+  Class GetClass() const { return class_; }
+
+  bool HasArg() const;
+  int JumpTarget(int pc, int off) const;
+  int JumpOffset(int pc, int tar) const;
+
   constexpr operator int() const { return code_; }
+
+ private:
+  const char *name_;
+  unsigned char code_;
+  Class class_;
+  int flag_;
 };
 
-const Opcode &GetOpcodeInfo(int opcode);
-}  // namespace code
 }  // namespace pijit
 }  // namespace mindspore
 

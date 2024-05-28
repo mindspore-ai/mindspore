@@ -30,7 +30,7 @@ constexpr const int PY_BCSIZE = sizeof(_Py_CODEUNIT);
 
 std::string Instr::ToString() const {
   std::stringstream s;
-  s << bci_ << ' ' << Utils::GetOpName(op_) << ' ' << arg_;
+  s << bci_ << ' ' << Opcode(op_).name() << ' ' << arg_;
   if (!name().empty()) {
     s << "  " << name();
   }
@@ -45,7 +45,7 @@ std::string Instr::ToString() const {
 
 std::string Instr::Dump(const std::string &prefix) const {
   std::stringstream os;
-  os << prefix << " " << bci_ << ' ' << Utils::GetOpName(op_) << ' ' << arg_;
+  os << prefix << " " << bci_ << ' ' << Opcode(op_).name() << ' ' << arg_;
   return os.str();
 }
 
@@ -190,7 +190,7 @@ Instr *CFG::NewInstrNode(int bci, int op, int arg, int line) {
   if (op == LOAD_CONST) {
     i->set_cnst(PyTuple_GET_ITEM(pycode_->co_consts, arg));
   }
-  if (Utils::IsNameRelated(op)) {
+  if (Opcode(op).HasName()) {
     i->set_name(PyUnicode_AsUTF8(PyTuple_GET_ITEM(pycode_->co_names, arg)));
   }
   return i;
@@ -224,12 +224,13 @@ void CFG::GenerateCFG() {
 }
 
 void CFG::BuildInst() {
-  const _Py_CODEUNIT *bytecode_ = reinterpret_cast<_Py_CODEUNIT *>(PyBytes_AsString(pycode_->co_code));
-  int size = (PyBytes_GET_SIZE(pycode_->co_code)) / PY_BCSIZE;
+  PyObject *bytes = pycode_->co_code;
+  const _Py_CODEUNIT *bytecode_ = reinterpret_cast<_Py_CODEUNIT *>(PyBytes_AsString(bytes));
+  int size = (PyBytes_GET_SIZE(bytes)) / PY_BCSIZE;
   int exarg = 0;
   std::map<int, std::vector<Instr *>> succ_jump;
   for (int bci = 0; bci < size; ++bci) {
-    int opcode = _Py_OPCODE(bytecode_[bci]);
+    Opcode opcode(_Py_OPCODE(bytecode_[bci]));
     int oparg = (exarg << 8) | _Py_OPARG(bytecode_[bci]);
     exarg = (opcode == EXTENDED_ARG) ? oparg : 0;
     int line = PyCode_Addr2Line(pycode_, PY_BCSIZE * bci);
@@ -239,10 +240,10 @@ void CFG::BuildInst() {
       opcode = CALL_FUNCTION;
     }
     Instr *instr = NewInstrNode(bci, opcode, oparg, line);
-    instr->set_is_fall(!Utils::IsNonFall(opcode));
+    instr->set_is_fall(!opcode.IsNotFall());
     // link instr jump relation
-    if (Utils::IsRelativeJump(opcode) || Utils::IsAbsoluteJump(opcode)) {
-      int dest = Utils::GetBranchDestIndex(opcode, oparg, bci);
+    if (opcode.IsJRel() || opcode.IsJAbs()) {
+      int dest = opcode.JumpTarget(bci, oparg);
       if (dest < bci) {
         Instr *succ = instr_pool()[dest].get();
         succ->AddExtraPred(instr);

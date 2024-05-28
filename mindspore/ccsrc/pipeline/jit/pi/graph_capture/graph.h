@@ -26,7 +26,9 @@
 #include "pipeline/jit/pi/graph_capture/node.h"
 #include "pipeline/jit/pi/utils/allocator.h"
 #include "pipeline/jit/pi/graph_guard/trace.h"
+#include "pipeline/jit/pi/graph_guard/guard.h"
 #include "pipeline/jit/pi/graph_capture/side_effect.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {
@@ -147,7 +149,7 @@ class Graph {
     return Utils::GetPyName(c->co_name);
   }
 
-  bool GuardValueNode(ValueNode *);
+  bool GuardValueNode(ValueNode *, GuardLevel level = GuardLevel::GEqual);
   bool GuardType(ValueNode *);
   bool GuardSequenceNodeLength(ValueNode *, Py_ssize_t);
   bool GuardInlinedFunc(CallNode *call_node);
@@ -172,7 +174,8 @@ class Graph {
   void SetParent(Graph *parent) { parent_ = parent; }
   Graph *GetParent() const { return parent_; }
 
-  const auto &GetSideEffect() const { return sideEffect_; }
+  const std::shared_ptr<SideEffect> &GetSideEffect() const;
+  void SetSideEffect(const std::shared_ptr<SideEffect> &handler);
 
   // collect alive node, output bitmap
   std::vector<ValueNode *> CollectAliveNode(int bci, std::vector<int> * = nullptr, BitMap * = nullptr) const;
@@ -214,7 +217,7 @@ class Graph {
   std::shared_ptr<OptCode> guard_;
   int prune_branch_count_;
   Graph *parent_{nullptr};
-  std::unique_ptr<SideEffect> sideEffect_;
+  std::shared_ptr<SideEffect> side_effect_;
 };
 }  // namespace pijit
 }  // namespace mindspore

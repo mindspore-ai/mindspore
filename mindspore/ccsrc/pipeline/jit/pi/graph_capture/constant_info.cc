@@ -66,7 +66,8 @@ bool IsConstantValue(int op, const std::vector<ValueNode *> &inputs) {
     BINARY_SUBSCR, COMPARE_OP, IS_OP,     CONTAINS_OP, LOAD_ATTR,           LIST_TO_TUPLE,
     BUILD_TUPLE,   BUILD_LIST, BUILD_MAP, BUILD_SLICE, BUILD_CONST_KEY_MAP,
   };
-  if (op == LOAD_CONST) {
+  Opcode code_info(op);
+  if (code_info.HasConst()) {
     return true;
   }
   auto iter = std::find_if_not(inputs.begin(), inputs.end(), [](ValueNode *i) { return i->IsConstantValue(); });
@@ -76,7 +77,7 @@ bool IsConstantValue(int op, const std::vector<ValueNode *> &inputs) {
   if (support_constant_op.find(op) != support_constant_op.end()) {
     return true;
   }
-  if (Utils::IsBinaryMathOp(op) && Utils::IsGeneralNoSideEffectOp(op)) {
+  if (code_info.IsBinaryMath() && code_info.MayDelete()) {
     return true;
   }
   return false;
@@ -230,7 +231,7 @@ static void MakeSpecializeConstantValue(ValueNode *node) {
   if (node->IsConstantValue()) {
     return;
   }
-  if (Utils::IsBinaryMathOp(node->GetOpcode())) {
+  if (Opcode(node->GetOpcode()).IsBinaryMath()) {
     MakeConstantBinary(node);
   }
   static const std::map<int, bool (*)(ValueNode *)> specialize = {
@@ -248,10 +249,37 @@ static void MakeSpecializeConstantValue(ValueNode *node) {
   node->SetConstantValue(true);
 }
 
+static void MakeSpecificConstantInfo(ValueNode *node) {
+  if (!node) {
+    return;
+  }
+  // os.environ
+  if (node->GetOpcode() == LOAD_ATTR && node->input(0)->GetVobj() &&
+      node->input(0)->GetVobj()->GetType() == AObject::kTypeModule && node->input(0)->GetVobj()->GetPyObject().ptr()) {
+    auto module_obj = node->input(0)->GetVobj()->GetPyObject().ptr();
+    const std::string &name = node->GetName();
+    const char *module_name = PyModule_GetName(module_obj);
+    if (module_name == nullptr) {
+      PyErr_Clear();
+      return;
+    }
+    if (strncmp(module_name, "os", 2) == 0 && name == "environ") {
+      auto env_obj = PyObject_GetAttrString(module_obj, "environ");
+      node->SetConstantValue(true);
+      node->MakeConstantInfo()->set_value(env_obj);
+      node->SetOpcode(LOAD_CONST);
+      node->SetOparg(-1);
+      node->ClearInputs();
+      return;
+    }
+  }
+}
+
 void ConstantInfo::CollectConstantInfo(ValueNode *node) {
   MakeConstantFold(node);
   MakeCodeConstantInfo(node);
   MakeSpecializeConstantValue(node);
+  MakeSpecificConstantInfo(node);
 }
 
 void MakeConstantInfoOfPrimScalarToTensor(ValueNode *node) {
@@ -340,7 +368,6 @@ static void MakePrimitiveConstantInfoCommon(ValueNode *node) {
 }
 
 void ConstantInfo::CollectPrimitiveConstantInfo(CallNode *node) {
-  MS_EXCEPTION_IF_CHECK_FAIL(node->input(0)->GetVobj()->GetType() == AObject::kTypePrimitive, "must be primitive");
   MakePrimitiveConstantInfoCommon(node);
 
   std::string prim_key = node->input(0)->GetVobj()->GetPyObject().attr("name").cast<std::string>();

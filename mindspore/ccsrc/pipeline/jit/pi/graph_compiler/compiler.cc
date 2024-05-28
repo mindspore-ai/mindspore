@@ -17,6 +17,7 @@
 #include "pipeline/jit/pi/graph_compiler/compiler.h"
 #include <memory>
 #include <string>
+#include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "ir/func_graph.h"
 #include "pipeline/jit/pi/graph_compiler/func_graph_builder.h"
@@ -33,13 +34,18 @@ namespace {
 // 1.Constant Tensor, reason : constant folding
 // 2.Constant Scalar(exclude those will be broaden), reason : constant folding
 // 3.None, reason : reason : constant folding or not use
-// 4.Other(Graph Not Support)
+// 4.Empty constant length container(tuple/list/dict): constant folding or not use
+// 5.Other(Graph Not Support)
 bool IsValidRunArg(const py::object &obj, bool enable_tuple_broaden) {
   if (GraphUtils::IsTensor(obj)) {
     if (GraphUtils::HasInit(obj)) {
       (void)python_adapter::CallPyObjMethod(obj, "init_data");
     }
     return !GraphUtils::IsConst(obj);
+  }
+  // If the container input is empty and not variable length, graph treat it as constant, it should be erased in inputs.
+  if (!GraphUtils::IsDynamicLength(obj) && GraphUtils::IsEmptyContainer(obj)) {
+    return false;
   }
   return GraphUtils::IsMutable(obj) || GraphUtils::IsGradForScalar(obj) ||
          (enable_tuple_broaden && GraphUtils::IsTupleCanBroaden(obj));
@@ -102,7 +108,7 @@ py::tuple EliminateInvalidArgs(const py::tuple &args, int co_flags, bool enable_
   py::list new_args;
   for (size_t idx = 0; idx < args.size(); idx++) {
     if (IsValidRunArg(args[idx], enable_tuple_broaden)) {
-      if ((idx < (args.size() - 1) || ((unsigned)co_flags & CO_VARKEYWORDS) == 0) &&
+      if ((idx < (args.size() - 1) || (IntToSize(co_flags) & CO_VARKEYWORDS) == 0) &&
           py::isinstance<py::dict>(args[idx])) {
         new_args.append(py::reinterpret_steal<py::tuple>(PyDict_Values(args[idx].ptr())));
       } else {
@@ -114,7 +120,7 @@ py::tuple EliminateInvalidArgs(const py::tuple &args, int co_flags, bool enable_
 }
 
 py::tuple ExpandVariableArgs(const py::tuple &args, int co_flags, int co_argcount) {
-  if (((unsigned)co_flags & CO_VARARGS) == 0x0) {
+  if ((IntToSize(co_flags) & CO_VARARGS) == 0x0) {
     return args;
   }
   py::tuple var_args = py::cast<py::tuple>(args[co_argcount]);
@@ -137,6 +143,7 @@ PyObject *RunGraph(const std::string &phase, const py::tuple &args, const std::s
   args_tuple = EliminateStubTensor(args_tuple);
   MarkArgmentMutable(args_tuple);
   args_tuple = EliminateInvalidArgs(args_tuple, co_flags, enable_tuple_broaden);
+  MS_LOG(INFO) << "Args for run: " << std::string(py::str(args_tuple));
   auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
   MS_EXCEPTION_IF_NULL(graph_executor);
   py::object ret = graph_executor->Run(args_tuple, py::str(phase));
@@ -181,13 +188,13 @@ CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObjec
   }
 
   int arg_cnt = code->co_argcount + code->co_kwonlyargcount;
-  if ((unsigned)code->co_flags & CO_VARARGS) {
+  if (IntToSize(code->co_flags) & CO_VARARGS) {
     arg_cnt++;
   }
   py::list locals = py::reinterpret_steal<py::list>(PyDict_Values(frame.f_locals));
   py::tuple args = py::reinterpret_steal<py::tuple>(PyList_AsTuple(PyList_GetSlice(locals.ptr(), 0, arg_cnt)));
   py::dict kwargs =
-    ((unsigned)code->co_flags & CO_VARKEYWORDS) == 0x0 ? py::dict() : py::cast<py::dict>(locals[arg_cnt]);
+    (IntToSize(code->co_flags) & CO_VARKEYWORDS) == 0x0 ? py::dict() : py::cast<py::dict>(locals[arg_cnt]);
   args = EliminateStubTensor(args);
   auto byteCodeParser = std::make_shared<ByteCodeParser>(func);
   ir::FunctionNodePtr func_node = byteCodeParser->Parse();
@@ -250,6 +257,10 @@ CallableGraph MindCompiler::Compile(const FuncGraphPtr &func_graph, const py::tu
   py::tuple new_arg = EliminateStubTensor(args);
   new_arg = EliminateSelf(new_arg, compile_info.co_name_);
   MarkArgmentMutable(new_arg);
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    DumpIR("graph_before_compile.ir", func_graph);
+  }
+  MS_LOG(INFO) << "Args for compile: " << std::string(py::str(new_arg));
   (void)graph_executor->CompileInner(func_graph, new_arg, kwargs, phase, true, true);
 
   return callable;

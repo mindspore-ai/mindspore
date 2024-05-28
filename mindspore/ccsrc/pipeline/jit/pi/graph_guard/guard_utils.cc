@@ -137,8 +137,8 @@ class ItemData {
     if (tp_ == ItemType::PyNull) {
       return "(null)";
     } else {
-      return std::string("(type:") + std::to_string(static_cast<int>(tp_)) +
-             ",specialize:" + std::to_string(specialized_) + ",recurse:" + std::to_string(recurseDepth_) + ")";
+      return std::string("(type:") + std::to_string(SizeToInt(tp_)) + ",specialize:" + std::to_string(specialized_) +
+             ",recurse:" + std::to_string(recurseDepth_) + ")";
     }
   }
 
@@ -200,8 +200,7 @@ class FloatData : public ItemData {
   }
 
   bool operator==(const ItemData &obj) const override {
-    return ItemData::operator==(obj) &&
-           (!specialized_ || ((static_cast<const FloatData &>(obj)).floatVar_ == floatVar_));
+    return ItemData::operator==(obj) && (!specialized_ || (static_cast<const FloatData &>(obj)).floatVar_ == floatVar_);
   }
 
   std::string ToString() override { return DESC_STRING(floatVar_) + DESC_END; }
@@ -310,11 +309,10 @@ class ListData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const ListData &list = (const ListData &)obj;
+      const ListData &list = static_cast<const ListData &>(obj);
       if (list.listVar_.size() == listVar_.size()) {
         return CompareList(list);
       }
-      return true;
     }
     return false;
   }
@@ -511,13 +509,13 @@ class DictData : public ItemData {
       : ItemData(ItemType::PyDict, needSpecialize, recurseDepth) {
     if (PyDictKeys_Check(obj)) {
       dt_ = DictType::DtKeys;
-      obj = PyObject_CallOneArg(reinterpret_cast<PyObject *>(&PyList_Type), obj);
+      obj = PyObject_Vectorcall(reinterpret_cast<PyObject *>(&PyList_Type), &obj, 1, nullptr);
     } else if (PyDictValues_Check(obj)) {
       dt_ = DictType::DtValues;
-      obj = PyObject_CallOneArg(reinterpret_cast<PyObject *>(&PyList_Type), obj);
+      obj = PyObject_Vectorcall(reinterpret_cast<PyObject *>(&PyList_Type), &obj, 1, nullptr);
     } else if (PyDictItems_Check(obj)) {
       dt_ = DictType::DtItems;
-      obj = PyObject_CallOneArg(reinterpret_cast<PyObject *>(&PyDict_Type), obj);
+      obj = PyObject_Vectorcall(reinterpret_cast<PyObject *>(&PyDict_Type), &obj, 1, nullptr);
     } else {
       dt_ = DictType::DtDict;
     }
@@ -2156,14 +2154,21 @@ class ReprGuard : public GuardItem {
     }
     PyObject *repr_flag = GetAttrReprCacheStr();
     PyObject *repr;
+    bool from_cache = false;
     if (PyObject_HasAttr(obj, repr_flag)) {
+      from_cache = true;
       repr = PyObject_GetAttr(obj, repr_flag);
     } else {
       repr = PyObject_Repr(obj);
       PyObject_SetAttr(obj, repr_flag, repr);
     }
     if (PyUnicode_Compare(repr, refRepr_)) {
-      ret = false;
+      // Inplace operation may change the object without clearing the cache of guard.
+      if (from_cache && !PyUnicode_Compare(PyObject_Repr(obj), refRepr_)) {
+        ret = true;
+      } else {
+        ret = false;
+      }
     } else {
       ret = true;
     }

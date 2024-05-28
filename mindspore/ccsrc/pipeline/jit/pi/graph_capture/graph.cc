@@ -60,12 +60,15 @@ Graph::Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf)
     LoopFinder loop_finder(this);
     loop_finder.FormSimpleLoopInfo();
   }
-  sideEffect_ = std::make_unique<SideEffect>();
 }
+
+const std::shared_ptr<SideEffect> &Graph::GetSideEffect() const { return side_effect_; }
+void Graph::SetSideEffect(const std::shared_ptr<SideEffect> &handler) { side_effect_ = handler; }
 
 ValueNode *Graph::NewValueNode(AObject *obj_info, int op, int arg, const std::vector<ValueNode *> &inputs,
                                const std::string &name) {
-  MS_EXCEPTION_IF_CHECK_FAIL(!Utils::IsCallOp(op), "must not be call function opcode");
+  // when got a new object, check it's side-effect replaced node ......
+  MS_EXCEPTION_IF_CHECK_FAIL(!Opcode(op).IsCall(), "must not be call function opcode");
   ValueNode *node = this->allocator().NewNode<ValueNode>(obj_info, op, arg, inputs);
   node->SetName(name);
   node->SetGraph(this);
@@ -75,11 +78,15 @@ ValueNode *Graph::NewValueNode(AObject *obj_info, int op, int arg, const std::ve
     node->SetOparg(-1);
     node->ClearInputs();
   }
+  auto new_object = obj_info ? obj_info->GetPyObject().ptr() : nullptr;
+  if (new_object != nullptr && !CheckConstPyObject(new_object)) {  // literal not need track
+    this->side_effect_->data()->Track(new_object, node);
+  }
   return node;
 }
 
 CallNode *Graph::NewCallNode(int op, int arg, const std::vector<ValueNode *> &inputs) {
-  MS_EXCEPTION_IF_CHECK_FAIL(Utils::IsCallOp(op), "must be call function opcode");
+  MS_EXCEPTION_IF_CHECK_FAIL(Opcode(op).IsCall(), "must be call function opcode");
   CallNode *node = this->allocator().NewNode<CallNode>(op, arg, inputs);
   node->SetGraph(this);
   return node;
@@ -98,7 +105,7 @@ bool Graph::IsBreakAtLoop() const {
   const auto &instr = this->cfg_->instr_pool();
   // find the last backward edge overlapping this break point
   int res = break_bci;
-  for (int i = break_bci; i < static_cast<int>(instr.size()); ++i) {
+  for (int i = break_bci; i < SizeToInt(instr.size()); ++i) {
     MS_EXCEPTION_IF_CHECK_FAIL(i == instr[i]->bci(), "!!!");
     if (instr[i]->extra_jump() != nullptr) {
       res = std::min(instr[i]->extra_jump()->bci(), res);
@@ -154,6 +161,9 @@ static bool PrepareTraceParam(ValueNode *node, TraceVector *tv, int depth, int m
   for (auto it : inputs) {
     auto t = GetTrace(it, strict, print, depth + 1, max_depth);
     if (t == nullptr) {
+      if (it->GetTrace() != nullptr) {
+        tv->push_back(it->GetTrace());
+      }
       return false;
     } else if (t->GetTraceType() == TraceType::Unsupported) {
       *has_unsupported = true;
@@ -242,7 +252,7 @@ TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_d
   return CacheTrace(node, ret, strict, tv, opcode, oparg, obj);
 }
 
-bool Graph::GuardValueNode(ValueNode *node) {
+bool Graph::GuardValueNode(ValueNode *node, GuardLevel level) {
   if (node->IsConstantValue()) {
     return true;
   }
@@ -250,8 +260,10 @@ bool Graph::GuardValueNode(ValueNode *node) {
   if (tr == nullptr) {
     return false;
   }
-  bool ret = guard_->GetGuard()->GuardOn(tr, mindspore::pijit::GuardLevel::GEqual);
-  node->SetConstantValue(ret);
+  bool ret = guard_->GetGuard()->GuardOn(tr, level);
+  if (level == GuardLevel::GEqual || level == GuardLevel::GId) {
+    node->SetConstantValue(ret);
+  }
   return ret;
 }
 
@@ -268,17 +280,22 @@ TracePtr Graph::TraceValueNode(ValueNode *node, int max_trace_depth) {
 }
 
 std::vector<ValueNode *> Graph::CollectAliveNode(int bci, std::vector<int> *ids, BitMap *map) const {
+  std::vector<ValueNode *> result;
   if (bci == -1) {
-    return {this->GetRetVal()};
+    result = {this->GetRetVal()};
+  } else {
+    BitMap alive = this->GetCFG()->GetLiveness()->CollectAlive(bci);
+    result = CollectAliveNode(this->GetFrame(bci), &alive, ids);
+    if (map != nullptr) {
+      *map = std::move(alive);
+    }
   }
-  BitMap alive = this->GetCFG()->GetLiveness()->CollectAlive(bci);
-  std::vector<ValueNode *> result = CollectAliveNode(this->GetFrame(bci), &alive, ids);
-  if (map != nullptr) {
-    *map = std::move(alive);
+  if (GetSideEffect()->IsEmpty()) {
+    return result;
   }
-
-  auto vec = GetSideEffect()->CollectSideEffectAliveNodes();
-  result.insert(result.end(), vec.begin(), vec.end());
+  // alive locals must be original node
+  result.insert(result.end(), side_effect_->GetRequiredNodes().begin(), side_effect_->GetRequiredNodes().end());
+  std::transform(result.begin(), result.end(), result.begin(), [this](auto i) { return side_effect_->GetSource(i); });
   return result;
 }
 
@@ -388,14 +405,15 @@ bool Graph::GuardInlinedFunc(CallNode *call_node) {
   return true;
 }
 
-static std::string TraceInferFailed(ValueNode *node) {
+static std::string TraceInferFailed(ValueNode *node, int depth = 0) {
+  std::string prefix(depth << 1, ' ');
   std::stringstream s;
-  s << node << " ";
+  s << prefix << node << " ";
   switch (node->GetType()) {
     case AbstractNode::Call:
     case AbstractNode::Value: {
-      s << "bci " << node->bci() << " " << Utils::GetOpName(node->GetOpcode()) << " " << node->GetOparg();
-      if (Utils::IsNameRelated(node->GetOpcode())) {
+      s << "bci " << node->bci() << " " << Opcode(node->GetOpcode()).name() << " " << node->GetOparg();
+      if (Opcode(node->GetOpcode()).HasName()) {
         s << " " << node->GetName();
       }
       break;
@@ -423,12 +441,10 @@ static std::string TraceInferFailed(ValueNode *node) {
     s << AObject::ToString(op);
     return s.str();
   }
-  s << "<NULL>:\n";
+  s << "<NULL>:" << std::endl;
   for (size_t i = 0; i < node->getInputs().size(); ++i) {
-    s << " " << std::regex_replace(TraceInferFailed(node->input(i)), std::regex("\n"), "\n  ") << "\n";
+    s << prefix << " " << TraceInferFailed(node->input(i), depth + 1) << std::endl;
   }
-  s.seekp(-1, s.cur);
-  s << " ";
   return s.str();
 }
 
@@ -476,11 +492,11 @@ std::string Graph::ToString(int depth) const {
   return s.str();
 }
 
-void DumpUnsupportedByteCodeInfo(std::stringstream &s, int op, int arg) {
+void DumpUnsupportedByteCodeInfo(std::stringstream &s, Opcode op, int arg) {
   if (op == SETUP_WITH || op == SETUP_FINALLY) {
-    s << Utils::GetOpName(op) << " " << arg << " is skipped in break_graph or a exception happened.\n";
+    s << op.name() << " " << arg << " is skipped in break_graph or a exception happened.\n";
   } else {
-    s << Utils::GetOpName(op) << " " << arg << " is not support.\n";
+    s << op.name() << " " << arg << " is not support.\n";
   }
 }
 
@@ -498,41 +514,28 @@ std::string Graph::DumpBreakInfo() const {
   std::vector<ValueNode *> parameters;
   if (nodes.size() == 0 || nodes.back()->bci() < break_bci) {
     // break at unsupported bytecode
-    int op = instrs[break_bci]->op();
+    Opcode op(instrs[break_bci]->op());
     int arg = instrs[break_bci]->arg();
     DumpUnsupportedByteCodeInfo(s, op, arg);
-    switch (op) {
-      case POP_JUMP_IF_FALSE:
-      case POP_JUMP_IF_TRUE:
-      case JUMP_IF_FALSE_OR_POP:
-      case JUMP_IF_TRUE_OR_POP:
-      case FOR_ITER:
-      case UNPACK_SEQUENCE:
-      case UNPACK_EX: {
-        parameters.push_back(f.Peek(0));
-        break;
-      }
-      case CALL_FUNCTION_EX: {
-        arg = (arg & 0x01);
-      }
-      case CALL_FUNCTION_KW: {
-        arg++;
-      }
-      case CALL_METHOD:
-      case CALL_FUNCTION: {
-        for (int i = arg; i >= 0; --i) {
-          parameters.push_back(f.Peek(i));
-          AObject *v = f.Peek(i)->GetVobj();
-          // just print the first infer failed value
-          if (v == nullptr || v->GetPyObject().ptr() == nullptr) {
-            parameters = {f.Peek(i)};
-            break;
-          }
+    if (op == POP_JUMP_IF_FALSE || op == POP_JUMP_IF_TRUE || op == JUMP_IF_FALSE_OR_POP || op == JUMP_IF_TRUE_OR_POP ||
+        op == FOR_ITER || op == UNPACK_SEQUENCE || op == UNPACK_EX) {
+      parameters.push_back(f.Peek(0));
+    } else if (op == CALL_FUNCTION_EX) {
+      arg = (arg & 0x01) + 1;
+    } else if (op == CALL_FUNCTION_KW) {
+      arg++;
+    } else {
+      return s.str();
+    }
+    if (op.IsCall()) {
+      for (int i = arg; i >= 0; --i) {
+        parameters.push_back(f.Peek(i));
+        AObject *v = f.Peek(i)->GetVobj();
+        // just print the first infer failed value
+        if (v == nullptr || v->GetPyObject().ptr() == nullptr) {
+          parameters = {f.Peek(i)};
+          break;
         }
-        break;
-      }
-      default: {
-        return s.str();
       }
     }
   } else {

@@ -24,22 +24,28 @@
 #include <memory>
 #include "pipeline/jit/pi/graph_capture/graph_analyzer.h"
 #include "pipeline/jit/pi/graph_capture/graph_build.h"
+#include "pipeline/jit/pi/graph_capture/side_effect.h"
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {
 
 namespace py = pybind11;
 
-class ValueNode;
-class FrameStates;
-class CodeExtra;
 class GraphParameterBuilder;
 
 struct NodeSet {
   std::vector<ValueNode *> inputs;  // index is parameters index
   std::vector<ValueNode *> outputs;
   std::vector<ValueNode *> operations;
+};
+
+struct GraphInputInfo {
+  std::vector<ValueNode *> args;
+  std::vector<ValueNode *> globals;
+  ValueNode *vargs = nullptr;
+  ValueNode *kwargs = nullptr;
 };
 
 class CodeGenerator {
@@ -91,6 +97,7 @@ class CodeGenerator {
   void MarkAlive();
   void NewInstr(int op, int arg = 0, int line = -1);
   void AddInstrs(std::vector<std::unique_ptr<Instr>> &&list);
+  void AddInstr(std::unique_ptr<Instr> &&instr);
   void EraseUnusedInstr();
 
   // initialize local map of parameters
@@ -192,13 +199,20 @@ class CodeBreakGenerator {
   void SetGlobals(const py::dict &dict) { globals_ = dict; }
   const py::dict &GetGlobals() const { return globals_; }
 
-  // (chaiyouheng): collect nodes inputs and outputs at graph analyze
-  void Init(const Graph *, const GraphAnalyzer::CapturedInfo *);
+  // collect nodes inputs and outputs at graph analyze
+  void Init(const Graph *, const GraphAnalyzer &);
 
-  virtual py::object MakeCode(bool make_graph, Graph *graph);
+  // generate a code to call graph, unsupported operations, and untracked operations that will be compiled
+  py::object MakeDispatchCode();
+
+  // used to replace origin code, extend attribute from origin code.
+  virtual py::object MakeCapturedCode() const;
+
   const CFG *GetCFG() const;
 
  protected:
+  void ExtendCodeInfo(CodeGenerator *cg, bool merge_kw_only) const;
+
   // rebuild parameters of graph, identify parameters that graph only support as constant
   void BuildGraphParameters(const std::unordered_map<ValueNode *, int> &locals, GraphParameterBuilder *);
 
@@ -252,8 +266,12 @@ class CodeBreakGenerator {
   // followed interpret execute node
   NodeSet captured_;
 
+  GraphInputInfo graph_inputs_info_;
+
   // break bci alive locals
   std::vector<int> alive_locals_;
+
+  std::shared_ptr<SideEffect> side_effect_handler_;
 
   // break bci
   int break_bci_;
@@ -266,16 +284,17 @@ class MindCodeBreakGenerator : public CodeBreakGenerator {
  public:
   MindCodeBreakGenerator(const GraphBuilderPtr &builder, PyCodeObject *co)
       : CodeBreakGenerator(co), builder_(builder) {}
-  py::object MakeCode(bool make_graph, Graph *graph) override;
+
   mindspore::FuncGraphBuilderPtr FGBuilder() const {
     return std::dynamic_pointer_cast<MindGraphBuilder>(builder_)->FGBuilder();
   }
 
   py::object MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&, int argc, unsigned code_flag) const override;
 
+  py::object MakeCapturedCode() const override;
+
  private:
-  py::object MakeCopyCode(const std::string &co_name, int co_argcount, int co_kwonlyargcount, int co_flags,
-                          bool make_graph = false) const;
+  void Compile(const std::string &name, int argc, int kw_only, int flags, const py::object &stub) const;
 
   GraphBuilderPtr builder_;
 };

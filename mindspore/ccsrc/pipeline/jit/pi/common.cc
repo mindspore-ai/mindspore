@@ -55,9 +55,42 @@ void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach);
 static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach);
 static void CollectTraceBack(JitCompileResults *c, PyCodeObject *code, bool is_graph_mode);
 
-std::map<TimeRecorder::RecorderType, TimeRecorder::PerfData> TimeRecorder::data_;
-static std::map<uint64_t, size_t> code_size_execute_python;  // execute count, code size
-static std::map<uint64_t, size_t> code_size_execute_graph;   // execute count, code size
+class ByteCodeRunStatistic {
+ public:
+  ~ByteCodeRunStatistic() {
+    if (py_.empty() && graph_.empty()) {
+      return;
+    }
+    std::cout << ToString() << std::endl;
+  }
+
+  void Count(PyObject *code, bool graph_preferred) {
+    if (graph_preferred) {
+      graph_[PyBytes_GET_SIZE(code)]++;
+    } else {
+      py_[PyBytes_GET_SIZE(code)]++;
+    }
+  }
+
+  std::string ToString() {
+    const auto SumFunc = [](size_t sum, const std::pair<uint64_t, size_t> &i) { return sum + (i.first * i.second); };
+    size_t sum_py = std::accumulate(py_.begin(), py_.end(), 0, SumFunc);
+    size_t sum_graph = std::accumulate(graph_.begin(), graph_.end(), 0, SumFunc);
+    double ratio = static_cast<double>(sum_graph) / (sum_graph + sum_py);
+    return "execute code ratio (graph / (graph + python)): " + std::to_string(ratio);
+  }
+
+  static ByteCodeRunStatistic *GetInstance() {
+    static ByteCodeRunStatistic instance;
+    return &instance;
+  }
+
+ private:
+  ByteCodeRunStatistic() = default;
+  std::map<uint64_t, size_t> py_;
+  std::map<uint64_t, size_t> graph_;
+};
+
 static void PrintGuardPerf() {
   std::map<std::string, std::pair<size_t, size_t>> guard_info;
   std::map<std::string, std::pair<size_t, size_t>> guard_freq_info;
@@ -101,27 +134,9 @@ static void ensureInitialize() {
     PyThread_tss_create(tss);
   }
   std::atexit([]() {
-    if (!kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf)) {
-      return;
-    }
-    for (const auto &i : TimeRecorder::data_) {
-      std::cout << i.first << " " << i.second.count << " times, " << (i.second.nano / TimeRecorder::scale) << " seconds"
-                << std::endl;
-    }
-
     if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogGuardPerf)) {
       PrintGuardPerf();
     }
-
-    size_t sum_code_py =
-      std::accumulate(code_size_execute_python.begin(), code_size_execute_python.end(), 0,
-                      [](size_t sum, const std::pair<uint64_t, size_t> &i) { return sum + (i.first * i.second); });
-    size_t sum_code_graph =
-      std::accumulate(code_size_execute_graph.begin(), code_size_execute_graph.end(), 0,
-                      [](size_t sum, const std::pair<uint64_t, size_t> &i) { return sum + (i.first * i.second); });
-
-    std::cout << "execute code ratio (graph / (graph + python)): "
-              << (sum_code_graph / static_cast<double>(sum_code_graph + sum_code_py)) << std::endl;
   });
 }
 
@@ -274,8 +289,8 @@ std::string Tracebackes::DumpSummary() const {
 int Tracebackes::FindMaxNameLength(const std::list<Tracebacke> &tbs) const {
   int max_length = 15;
   for (const auto &tb : tbs) {
-    int len1 = static_cast<int>(tb.func_name_.length());
-    int len2 = static_cast<int>(tb.changed_func_.length());
+    int len1 = SizeToInt(tb.func_name_.length());
+    int len2 = SizeToInt(tb.changed_func_.length());
     max_length = std::max(max_length, std::max(len1, len2)) + 2;
   }
   max_length = std::min(max_length, 35);
@@ -464,19 +479,15 @@ static void MarkBreak(Graph *g) {
     return;
   }
   PyCodeObject *code;
-  if (g->GetTracedNodes().empty()) {
+  const auto &nodes = g->GetTracedNodes();
+  if (nodes.empty()) {
     code = g->GetCodeObj();
   } else {
-    auto iter = g->GetTracedNodes().begin();
-    for (; iter != g->GetTracedNodes().end(); ++iter) {
-      if ((*iter)->bci() >= break_bci) {
-        break;
-      }
+    auto iter = std::find_if(nodes.begin(), nodes.end(), [&break_bci](ValueNode *i) { return i->bci() >= break_bci; });
+    iter -= iter == nodes.end();
+    for (code = (*iter)->GetGraph()->GetCodeObj(); code == nullptr && iter != nodes.begin(); --iter) {
+      code = (*iter)->GetGraph()->GetCodeObj();
     }
-    if (iter == g->GetTracedNodes().end()) {
-      --iter;
-    }
-    code = (*iter)->GetGraph()->GetCodeObj();
   }
   MS_EXCEPTION_IF_NULL(code);
   auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(code), false);
@@ -500,63 +511,12 @@ std::vector<py::object> GetAllArgs(JitCompileResults *jcr) {
   return args.cast<std::vector<py::object>>();
 }
 
-// preprocess before compile, split bytecode to sub-function
-// return whether the code should be modified
-static bool GraphCapture(JitCompileResults *jcr) {
-  MS_EXCEPTION_IF_NULL(jcr->code);
-
-  GraphJitConfig &conf = *jcr->conf;
-
-  auto g = GraphBuilder::Creator(jcr->origin_frame_, conf.GetBoolConfig(GraphJitConfig::kTraceFlag));
-
-  if (conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
-    auto mg = std::dynamic_pointer_cast<MindGraphBuilder>(g);
-    mg->FGAddInputs(GetAllArgs(jcr));
-  }
-  (void)g->TraceRun();
-
-  if (g->StackSize() > 0) {
-    auto block = g->PeekStack(0);
-    auto type = block.type;
-    if (type == SETUP_WITH || type == SETUP_FINALLY
-#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
-        || type == SETUP_EXCEPT
-#endif
-    ) {
-      // something happened in with syntax
-      jcr->code->SetGuard(std::make_shared<OptGuard>());
-      AddConfigToGuard(*jcr->conf, jcr->code->GetGuard());
-      jcr->conf->SetBool<GraphJitConfig::kSkipException>(Py_True);
-      bool code_change = GraphCapture(jcr);
-      g->GetTryBlockStacks().clear();
-      jcr->conf->SetBool<GraphJitConfig::kSkipException>(Py_False);
-      return code_change;
-    }
-  }
-
-  if (g->GetGraph()->IsBreakAtLoop() && !g->GetGraph()->RestoreLoopStatus()) {
-    jcr->stat = JitCompileResults::NEVER_COMPILE;
-    AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
-    return false;
-  }
-
-  // One stage should skip inline process.
-  if (!conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
-    BytecodeInliner inliner(g->GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
-    inliner.Run();
-  }
-
-  auto analyzer = GraphAnalyzer::Creator(g);
-  analyzer->Analyze();
-
-  MarkBreak(g->GetGraph());
-
+static void GraphCapture(JitCompileResults *jcr);
+static auto HandleBreakAtLoop(JitCompileResults *jcr, const GraphBuilderPtr &g) {
   // one stage need adapter
   if (g->GetGraph()->IsBreakAtLoopAfterUnrolling()) {
-    if (conf.GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
-      std::string repr = std::regex_replace(g->GetGraph()->ToString(), std::regex("\nbreak bci: [^-]"),
-                                            "\ngraph break after loop unrolling");
-      GRAPH_JIT_LOG_F("%s\n", repr.c_str());
+    if (jcr->conf->GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
+      GRAPH_JIT_LOG_F("===> graph break after loop unrolling\n%s\n", g->GetGraph()->ToString(1).c_str());
     }
     // reset guard
     jcr->code->SetGuard(std::make_shared<OptGuard>());
@@ -564,11 +524,85 @@ static bool GraphCapture(JitCompileResults *jcr) {
     // disable loop unroll
     jcr->conf->SetBool<GraphJitConfig::kLoopUnrolling>(Py_False);
     // restart captured
-    bool code_change = GraphCapture(jcr);
+    GraphCapture(jcr);
     // reset config
     jcr->conf->SetBool<GraphJitConfig::kLoopUnrolling>(Py_True);
-    return code_change;
+    return true;
   }
+  return false;
+}
+
+static auto HandleUnsupportedSyntax(JitCompileResults *jcr, const GraphBuilderPtr &g) {
+  if (g->StackSize() > 0) {
+    auto block = g->PeekStack(0);
+    auto type = block.type;
+    if (type == SETUP_WITH || type == SETUP_FINALLY || type == SETUP_EXCEPT) {
+      // something happened in with syntax
+      jcr->code->SetGuard(std::make_shared<OptGuard>());
+      AddConfigToGuard(*jcr->conf, jcr->code->GetGuard());
+      jcr->conf->SetBool<GraphJitConfig::kSkipException>(Py_True);
+      GraphCapture(jcr);
+      g->GetTryBlockStacks().clear();
+      jcr->conf->SetBool<GraphJitConfig::kSkipException>(Py_False);
+      return true;
+    }
+  }
+  return false;
+}
+
+static auto TraceRun(JitCompileResults *jcr) {
+  TimeRecorder recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+
+  GraphJitConfig &conf = *jcr->conf;
+  GraphBuilderPtr g = GraphBuilder::Creator(jcr->origin_frame_, conf.GetBoolConfig(GraphJitConfig::kTraceFlag));
+
+  if (conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+    AObject::trace_flag_ = true;
+    auto mg = std::dynamic_pointer_cast<MindGraphBuilder>(g);
+    mg->FGAddInputs(GetAllArgs(jcr));
+  }
+  (void)g->TraceRun();
+  return g;
+}
+
+static void Inline(JitCompileResults *jcr, const GraphBuilderPtr &g) {
+  GraphJitConfig &conf = *jcr->conf;
+  // One stage should skip inline process.
+  if (!conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+    BytecodeInliner inliner(g->GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
+    inliner.Run();
+  }
+}
+
+static auto Analyze(const GraphBuilderPtr &g) {
+  TimeRecorder recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+
+  auto analyzer = GraphAnalyzer::Creator(g);
+  analyzer->Analyze();
+  return analyzer;
+}
+
+// preprocess before compile, split bytecode to sub-function
+// return whether the code should be modified
+static void GraphCapture(JitCompileResults *jcr) {
+  MS_EXCEPTION_IF_NULL(jcr->code);
+  AObjectSourceScope resource;
+
+  GraphJitConfig &conf = *jcr->conf;
+  GraphBuilderPtr g = TraceRun(jcr);
+  if (HandleUnsupportedSyntax(jcr, g)) {
+    return;
+  }
+  if (g->GetGraph()->IsBreakAtLoop() && !g->GetGraph()->RestoreLoopStatus()) {
+    jcr->stat = JitCompileResults::NEVER_COMPILE;
+    return;
+  }
+  Inline(jcr, g);
+  GraphAnalyzerPtr analyzer = Analyze(g);
+  if (HandleBreakAtLoop(jcr, g)) {
+    return;
+  }
+  MarkBreak(g->GetGraph());
 
   // dump DFG
   if (conf.GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
@@ -576,23 +610,27 @@ static bool GraphCapture(JitCompileResults *jcr) {
   }
 
   py::object new_code = MakeCodeFromCodeGen(g, analyzer, jcr->origin_frame_->f_globals);
-  jcr->code->SetPythonCode(new_code);
-  jcr->stat = JitCompileResults::GRAPH_CALLABLE;
+  if (new_code.ptr() != nullptr) {
+    jcr->code->SetPythonCode(new_code);
+    jcr->stat = JitCompileResults::GRAPH_CALLABLE;
+  }
 
   if (conf.GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
+    if (conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+      const auto &debug_str = analyzer->GetCaptureInfo().ToString();
+      PY_PRINT_F("*** Dump One Stage ByteCode Collection After CodeGen *** \n%s", debug_str.c_str());
+    }
     Utils::DisFuncObject(new_code.ptr());
     GRAPH_JIT_LOG_F("\n\n");
   }
 
   // collect stop trace reason to traceback
   jcr->tbs->PushStopTraceRes(g->GetGraph()->GetCodeName(), g->GetGraph()->GetStopTraceReason());
-  AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
 
   bool captured = !analyzer->NeedInterpret() && !conf.GetBoolConfig(GraphJitConfig::kInterpretCapturedCode);
   if (captured && !jcr->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
     jcr->stat = JitCompileResults::GRAPH_CAPTURED;
   }
-  return new_code.ptr() != reinterpret_cast<PyObject *>(jcr->origin_frame_->f_code);
 }
 
 static void CollectTraceBack(JitCompileResults *c, PyCodeObject *code, bool is_graph_mode) {
@@ -601,7 +639,7 @@ static void CollectTraceBack(JitCompileResults *c, PyCodeObject *code, bool is_g
   }
   std::string name = Utils::GetPyName(c->origin_frame_->f_code->co_name);
   std::string changed_name = Utils::GetPyName(code->co_name);
-  int code_size = static_cast<int>((PyBytes_GET_SIZE(code->co_code)) / sizeof(_Py_CODEUNIT));
+  int code_size = SizeToInt((PyBytes_GET_SIZE(code->co_code)) / sizeof(_Py_CODEUNIT));
   c->tbs->PushTbs({name, changed_name, code_size, is_graph_mode});
 }
 
@@ -634,13 +672,13 @@ void AddConfigToGuard(const GraphJitConfig &c, OptGuardPtr guard) {
 
 void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
   int argc = f->f_code->co_argcount + f->f_code->co_kwonlyargcount;
-  PyTupleObject *vargs = NULL;
-  PyDictObject *kwargs = NULL;
+  PyObject *vargs = NULL;
+  PyObject *kwargs = NULL;
   if (static_cast<unsigned int>(f->f_code->co_flags) & CO_VARARGS) {
-    vargs = _PyTuple_CAST(f->f_localsplus[argc]);
+    vargs = f->f_localsplus[argc];
   }
   if (static_cast<unsigned int>(f->f_code->co_flags) & CO_VARKEYWORDS) {
-    kwargs = reinterpret_cast<PyDictObject *>(f->f_localsplus[argc + (vargs ? 1 : 0)]);
+    kwargs = f->f_localsplus[argc + (vargs ? 1 : 0)];
   }
   for (int i = 0; i < argc; ++i) {
     if (f->f_localsplus[i] == nullptr) {
@@ -692,7 +730,7 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
 void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
   PyCodeObject *co = f->f_code;
   const _Py_CODEUNIT *bytecodes = reinterpret_cast<_Py_CODEUNIT *>(PyBytes_AsString(co->co_code));
-  int size = (PyBytes_GET_SIZE(co->co_code)) / static_cast<int>(sizeof(_Py_CODEUNIT));
+  int size = (PyBytes_GET_SIZE(co->co_code)) / SizeToInt(sizeof(_Py_CODEUNIT));
   unsigned int exarg = 0;
   for (int bci = 0; bci < size; ++bci) {
     int opcode = _Py_OPCODE(bytecodes[bci]);
@@ -868,16 +906,14 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   // new guard code
   c->code = c->codehub->AddOptTarget(OptOption::CreateOptionByPoint(c));
   AddConfigToGuard(*c->conf, c->code->GetGuard());
-  bool code_changed = false;
 
   py::object frame = py::reinterpret_borrow<py::object>(reinterpret_cast<PyObject *>(c->origin_frame_));
   if (c->stat == JitCompileResults::GRAPH_CANDIDATE) {
-    TimeRecorder _time_recorder(TimeRecorder::kTimeCompileCapture,
-                                kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+    TimeRecorder time_recorder("kTimeCompileCapture", kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureProcess,
                                        "PIJitCapture");
     c->stat = JitCompileResults::GRAPH_BUILDING;
-    code_changed = GraphCapture(c);
+    GraphCapture(c);
     if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
       PyFrameObject *f = PrepareCallCompiledCallable(tstate, c->origin_frame_, c);
       frame = py::reinterpret_steal<py::object>(reinterpret_cast<PyObject *>(f));
@@ -890,8 +926,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   }
 
   if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
-    TimeRecorder _time_recorder(TimeRecorder::kTimeCompileGraph,
-                                kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+    TimeRecorder time_recorder("kTimeCompileGraph", kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureCompile,
                                        "PIJitCompile");
     c->stat = JitCompileResults::GRAPH_BUILDING;
@@ -910,7 +945,6 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   if (c->conf->GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
     GRAPH_JIT_LOG_F("%s\n", c->tbs->Dump().c_str());
 
-    GRAPH_JIT_LOG_F("code changed %d\n", code_changed);
     GRAPH_JIT_LOG_F("generated guard at %s\n", code_str.c_str());
     GRAPH_JIT_LOG_F("%s\n", c->code->GetGuard()->ToString().c_str());
   }
@@ -1002,8 +1036,6 @@ static py::object CallCompiledCallable(PyThreadState *tstate, PyFrameObject *f, 
   } else {
     res = _PyEval_EvalFrameDefault(tstate, new_f, 0);
   }
-
-  code_size_execute_python[PyBytes_GET_SIZE(new_f->f_code->co_code)]++;
 
   bci = new_f->f_lasti;
   Py_DECREF(new_f);
@@ -1165,8 +1197,9 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
   py::object res = graph_preferred ? CallGraph(c, args, kwvargs) : CallCompiledCallable(tstate, f, c);
   c->code->Inc();
 
-  if (graph_preferred) {
-    code_size_execute_graph[PyBytes_GET_SIZE(f->f_code->co_code)]++;
+  if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf)) {
+    PyObject *new_code = c->code->GetPythonCode() ? c->code->GetPythonCode()->co_code : f->f_code->co_code;
+    ByteCodeRunStatistic::GetInstance()->Count(graph_preferred ? f->f_code->co_code : new_code, graph_preferred);
   }
 
   // dump traceback
@@ -1181,7 +1214,8 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
 }
 
 static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
-  TimeRecorder _time_recorder(TimeRecorder::kTimeGuard, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+  TimeRecorder time_recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureGuard,
                                      "PIJitGuard");
   c->code = nullptr;
@@ -1230,7 +1264,7 @@ class JitSyntaxLevelScope {
 };
 
 static bool JitCompileWithTry(PyThreadState *tstate, JitCompileResults *c) {
-  TimeRecorder _time_recorder(TimeRecorder::kTimeCompile, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+  TimeRecorder time_recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
 
   JitSyntaxLevelScope jit_syntax_level_scope(c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag));
 
@@ -1467,12 +1501,13 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
 
 namespace mindspore {
 
-#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 9 || PY_MINOR_VERSION == 7)
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION >= 7) && (PY_MINOR_VERSION <= 10)
 
 py::bool_ pi_jit_enable() {
   PyInterpreterState *inter = PyInterpreterState_Main();
   _PyFrameEvalFunction prev = _PyInterpreterState_GetEvalFrameFunc(inter);
-  if (prev != _PyEval_EvalFrameDefault) {
+  _PyFrameEvalFunction def = _PyEval_EvalFrameDefault;
+  if (prev != def) {
     return false;
   }
   mindspore::pijit::ensureInitialize();
@@ -1483,10 +1518,11 @@ py::bool_ pi_jit_enable() {
 py::bool_ pi_jit_disable() {
   PyInterpreterState *inter = PyInterpreterState_Main();
   _PyFrameEvalFunction prev = _PyInterpreterState_GetEvalFrameFunc(inter);
+  _PyFrameEvalFunction def = _PyEval_EvalFrameDefault;
   if (prev != mindspore::pijit::EvalFrame) {
     return false;
   }
-  _PyInterpreterState_SetEvalFrameFunc(inter, _PyEval_EvalFrameDefault);
+  _PyInterpreterState_SetEvalFrameFunc(inter, def);
   return true;
 }
 
@@ -1507,8 +1543,15 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
   if (c == nullptr) {
     return false;
   }
+  auto new_config = mindspore::pijit::GraphJitConfig(tag);
+  // When switching between one-stage and two-stage, reset the config.
+  if (c->conf->GetBoolConfig(pijit::GraphJitConfig::kTraceFlag) !=
+      new_config.GetBoolConfig(pijit::GraphJitConfig::kTraceFlag)) {
+    c->code = nullptr;
+    c->codehub = std::make_shared<pijit::OptCodeHub>();
+  }
   if (c->stat != mindspore::pijit::JitCompileResults::NEVER_COMPILE) {
-    *c->conf = mindspore::pijit::GraphJitConfig(tag);
+    *c->conf = new_config;
     return true;
   }
 
@@ -1525,7 +1568,7 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
   }
 
   c->stat = mindspore::pijit::JitCompileResults::GRAPH_CANDIDATE;
-  *c->conf = mindspore::pijit::GraphJitConfig(tag);
+  *c->conf = new_config;
   *c->tbs = mindspore::pijit::Tracebackes(raw_func_name, raw_func_info_name, raw_code_size);
   return true;
 }
@@ -1533,7 +1576,7 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
 
 py::bool_ pi_jit_enable() {
   MS_LOG(ERROR) << "PiJit not support this python version " << PY_MAJOR_VERSION << '.' << PY_MINOR_VERSION
-                << " only support on python3.9 or python3.7";
+                << " only support on python3.7, python3.8, python3.9, python3.10";
   return py::bool_(false);
 }
 py::bool_ pi_jit_disable() { return py::bool_(false); }
@@ -1588,6 +1631,39 @@ py::object get_code_extra(const py::object &func) {
   PyDict_SetItemString(result.ptr(), "compile_count_", py::int_(c->compile_count_).ptr());
   PyDict_SetItemString(result.ptr(), "break_count_", py::int_(c->break_count_).ptr());
   return result;
+}
+
+size_t FunctionId(const py::object &callable) {
+  PyObject *op = callable.ptr();
+  if (PyMethod_Check(op)) {
+    op = PyMethod_GET_FUNCTION(op);
+  }
+  if (PyInstanceMethod_Check(op)) {
+    op = PyInstanceMethod_GET_FUNCTION(op);
+  }
+  void *result = op;
+  if (PyCFunction_Check(op)) {
+    // types.BuiltinFunctionType = type(len) same as types.BuiltinMethodType = type(list().append)
+    PyCFunction func = PyCFunction_GET_FUNCTION(op);
+    result = reinterpret_cast<void *>(func);
+  } else if (Py_IS_TYPE(op, &PyMethodDescr_Type)) {
+    // types.MethodDescriptorType = type(list.append)
+    PyCFunction func = reinterpret_cast<PyMethodDescrObject *>(op)->d_method->ml_meth;
+    result = reinterpret_cast<void *>(func);
+  } else if (Py_IS_TYPE(op, &PyWrapperDescr_Type)) {
+    // types.WrapperDescriptorType = type(object.__init__)
+    result = reinterpret_cast<PyWrapperDescrObject *>(op)->d_wrapped;
+  } else if (Py_IS_TYPE(op, &_PyMethodWrapper_Type)) {
+    // types.WrapperDescriptorType = type(object().__str__)
+    PyObject *self = PyObject_GetAttrString(op, "__self__");
+    PyObject *attr = PyObject_GetAttrString(op, "__name__");
+    PyObject *descr = PyObject_GetAttr(reinterpret_cast<PyObject *>(Py_TYPE(self)), attr);
+    result = reinterpret_cast<PyWrapperDescrObject *>(descr)->d_wrapped;
+    Py_DECREF(self);
+    Py_DECREF(attr);
+    Py_DECREF(descr);
+  }
+  return reinterpret_cast<size_t>(result);
 }
 
 }  // namespace mindspore

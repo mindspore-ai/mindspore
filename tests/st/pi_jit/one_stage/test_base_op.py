@@ -16,7 +16,7 @@
 import pytest
 import numpy as np
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common.api import jit
 
@@ -122,6 +122,81 @@ def test_return_add_result_list():
     jit(net.construct, mode="PIJit", jit_config=cfg)
     ret = net(a, b)
     assert ret == [1, 2, 3, 4, 5, 6]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_empty_tuple_input():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.a = Parameter(Tensor([1, 2, 3]))
+            self.b = Parameter(Tensor([1, 1, 1]))
+
+        @jit(mode="PIJit", jit_config=cfg)
+        def construct(self, x):
+            return self.a + self.b
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    ret = net(())
+    assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_empty_list_input():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.a = Parameter(Tensor([1, 2, 3]))
+            self.b = Parameter(Tensor([1, 1, 1]))
+
+        @jit(mode="PIJit", jit_config=cfg)
+        def construct(self, x):
+            return self.a + self.b
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    ret = net([])
+    assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_empty_dict_input():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.a = Parameter(Tensor([1, 2, 3]))
+            self.b = Parameter(Tensor([1, 1, 1]))
+
+        @jit(mode="PIJit", jit_config=cfg)
+        def construct(self, x):
+            return self.a + self.b
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    ret = net({})
+    assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
 
 
 @pytest.mark.level0
@@ -446,3 +521,174 @@ def test_handle_mutable_kwargs_args_2():
     jit(net.construct, mode="PIJit", jit_config=cfg)
     ret = net(1, 10, 100, s=1000)
     assert ret == 12
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_use_free_variable():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            mod = 2
+            return any(i % mod == 0 for i in x)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    jit(net.construct, mode="PIJit", jit_config={"loop_unrolling": True, "compile_by_trace": True})
+    input1 = (1, 2, 3, 4)
+    assert net(input1)
+    input2 = (1, 1, 1, 1, 1)
+    assert not net(input2)
+
+
+@pytest.mark.skip(reason="When disable loop_unrolling, check guard failed.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_use_free_variable_2():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            mod = 2
+            return any(i % mod == 0 for i in x)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    jit(net.construct, mode="PIJit", jit_config={"compile_by_trace": True})
+    input1 = (1, 2, 3, 4)
+    assert net(input1)
+    input2 = (1, 1, 1, 1, 1)
+    assert not net(input2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_guard_for_getattr():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.a = 1
+
+        def construct(self, x):
+            return self.a + x
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret1 = net(1)
+    net.a = 2
+    ret2 = net(2)
+    assert ret1 == 2
+    assert ret2 == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_guard_for_getattr_2():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.a = 1
+
+        def construct(self, x):
+            return self.a + x
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret1 = net(1)
+    net.a = 2
+    ret2 = net(1)
+    assert ret1 == 2
+    assert ret2 == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cycle_container_structure():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            return x
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    a = [1, 2]
+    a += [a]
+    ret = net(a)
+    assert ret == a
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cycle_container_structure_2():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            return x
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    a = {"1": 1}
+    a["2"] = a
+    ret = net(a)
+    assert ret == a
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cycle_container_structure_3():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            return x
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    a = [1, 2, 3]
+    b = [4, 5, 6]
+    a[0] = b
+    b[0] = a
+    ret1 = net(a)
+    assert ret1 == a
+    ret2 = net(b)
+    assert ret2 == b
