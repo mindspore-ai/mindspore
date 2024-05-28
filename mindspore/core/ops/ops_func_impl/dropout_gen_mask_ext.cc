@@ -47,7 +47,7 @@ BaseShapePtr DropoutGenMaskExtFuncImpl::InferShape(const PrimitivePtr &primitive
 
 TypePtr DropoutGenMaskExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) const {
-  return kUInt8;
+  return std::make_shared<TensorType>(kUInt8);
 }
 
 int32_t DropoutGenMaskExtFuncImpl::CheckValidation(const PrimitivePtr &primitive,

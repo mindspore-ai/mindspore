@@ -118,6 +118,15 @@ Reduction函数
 mindspore.mint.nn
 ------------------
 
+Dropout层
+^^^^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.Dropout
 
 mindspore.mint.nn.functional
 -----------------------------
@@ -131,6 +140,7 @@ mindspore.mint.nn.functional
     :template: classtemplate.rst
 
     mindspore.mint.nn.functional.batch_norm
+    mindspore.mint.nn.functional.dropout
     mindspore.mint.nn.functional.grid_sample
     mindspore.mint.nn.functional.group_norm
     mindspore.mint.nn.functional.layer_norm
