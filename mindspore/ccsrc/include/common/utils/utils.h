@@ -136,6 +136,7 @@ constexpr auto kAttrLabelForInsertStreamActive = "label_for_insert_stream_active
 constexpr auto kAttrFpBpEnd = "fpbp_end";
 constexpr auto kAttrFusion = "fusion";
 constexpr auto kAttrCommInputDepend = "comm_input_depend";
+constexpr auto kAttrRecomputeCommDepend = "recompute_comm_depend";
 constexpr auto kAttrNotDelayFusion = "not_delay_fusion";
 constexpr auto kAttrGroup = "group";
 constexpr auto kAttrRankList = "rank_list";

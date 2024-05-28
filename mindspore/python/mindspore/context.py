@@ -730,6 +730,8 @@ class _Context:
                             "matmul_grad_comm_overlap": (ms_ctx_param.matmul_grad_comm_overlap, bool),
                             "enable_task_opt": (ms_ctx_param.enable_task_opt, bool),
                             "enable_grad_comm_opt": (ms_ctx_param.enable_grad_comm_opt, bool),
+                            "recompute_allgather_overlap_fagrad":
+                                (ms_ctx_param.recompute_allgather_overlap_fagrad, bool),
                             "interleaved_matmul_comm": (ms_ctx_param.interleaved_matmul_comm, bool),
                             "bias_add_comm_swap": (ms_ctx_param.bias_add_comm_swap, bool),
                             "enable_opt_shard_comm_opt": (ms_ctx_param.enable_opt_shard_comm_opt, bool),
@@ -1486,6 +1488,8 @@ def set_context(**kwargs):
                 Default: False.
               - matmul_grad_comm_overlap (bool): Enable overlap between dw matmul and
                 tensor parallel communication ops if True. Default: False.
+              - recompute_allgather_overlap_fagrad (bool): Enable overlap between duplicated allgather by recomputing
+                in sequence parallel and flashattentionscoregrad ops if True. Default: False.
               - enable_task_opt (bool): Enable the optimization of the number of tasks for each communication if True.
                 Default: False.
               - enable_grad_comm_opt (bool): Enable overlap between dx ops and data parallel communication ops if True.
