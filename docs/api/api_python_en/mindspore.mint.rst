@@ -24,6 +24,7 @@ Array Operation
     mindspore.mint.tile
     mindspore.mint.topk
     mindspore.mint.stack
+    mindspore.mint.unique
     mindspore.mint.where
     mindspore.mint.zeros_like
 
