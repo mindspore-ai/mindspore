@@ -114,13 +114,13 @@ def test_hccl_batch_isend_irecv():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
 @test_utils.run_test_with_On
-def test_hccl_all_to_all_single():
+def test_hccl_all_to_all_single_with_output_shape():
     """
-    Feature: mpi run 2P case of 'all_to_all_single' communication operator.
-    Description: mpi run 2P case of 'all_to_all_single' communication operator.
+    Feature: mpi run 2P case of 'all_to_all_single_with_output_shape' communication operator.
+    Description: mpi run 2P case of 'all_to_all_single_with_output_shape' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_all_to_all_single.py")
+    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_all_to_all_single_with_output_shape.py")
     assert return_code == 0
 
 
@@ -181,4 +181,18 @@ def test_hccl_send_receive():
     Expectation: success
     """
     return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_send_receive.py")
+    assert return_code == 0
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+@test_utils.run_test_with_On
+def test_hccl_all_to_all_v():
+    """
+    Feature: mpi run 8P case of 'alltoallv' communication operator.
+    Description: mpi run 8P case of 'alltoallv' communication operator.
+    Expectation: success
+    """
+    return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_all_to_all_v.py")
     assert return_code == 0

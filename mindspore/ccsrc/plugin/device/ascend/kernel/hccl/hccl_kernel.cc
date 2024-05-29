@@ -45,7 +45,9 @@ static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
   {mindspore::kReceiveOpName, mindspore::kHcomOpTypeReceive},
   {mindspore::kReduceScatterOpName, mindspore::kHcomOpTypeReduceScatter},
   {mindspore::kBarrierOpName, mindspore::kHcomOpTypeBarrier},
-  {mindspore::kBatchISendIRecvOpName, mindspore::kHcomOpTypeBatchSendRecv}};
+  {mindspore::kBatchISendIRecvOpName, mindspore::kHcomOpTypeBatchSendRecv},
+  {mindspore::kAlltoAllVOpName, mindspore::kHcomOpTypeAlltoAllV},
+};
 std::string MsOpNameToHcomOpType(const std::string &ms_op_type) {
   auto iter = kMsOpNameToHcomHcclType.find(ms_op_type);
   if (iter == kMsOpNameToHcomHcclType.end()) {

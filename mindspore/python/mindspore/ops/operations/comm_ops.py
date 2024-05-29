@@ -1893,13 +1893,14 @@ class BatchISendIRecv(PrimitiveWithInfer):
           <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#allgather>`_
 
     """
+
     @prim_attr_register
     def __init__(self, op_types, remote_ranks, receive_shapes=None,
                  receive_dtypes=None, group=GlobalComm.WORLD_COMM_GROUP):
         if receive_shapes is None:
             receive_shapes = ()
         else:
-            validator.check_value_type("op_types", op_types, [tuple, list], self.name)
+            validator.check_value_type("receive_shapes", receive_shapes, [tuple, list], self.name)
 
         if receive_dtypes is None:
             receive_dtypes = ()
@@ -1925,3 +1926,88 @@ class BatchISendIRecv(PrimitiveWithInfer):
         self.add_prim_attr('receive_shapes', receive_shapes)
         self.add_prim_attr('receive_dtypes', receive_dtypes)
         self.add_prim_attr('no_eliminate', True)
+
+
+class AlltoAllV(PrimitiveWithInfer):
+    """
+    AllToAll which support uneven split.
+
+    Note:
+        - Only support flatten tensor as input. input tensor should be flattened and
+          concatenated before call this primitive.
+
+    Args:
+        send_numel_list(Union[tuple[int], list[int]]): split numel to scatter to different remote rank.
+        recv_numel_list(Union[tuple[int], list[int]]): split numel to gather from different remote rank.
+        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``, which
+          means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
+
+    Inputs:
+        - **input_x** (Tensor) - flatten tensor to scatter. The shape of tensor is :math:`(x_1)`.
+
+    Outputs:
+        Tensor. flattened and concatenated tensor gather from remote ranks.
+        If gather result is empty, it will return a Tensor with value 0, which has no actual meaning.
+
+    Raises:
+        TypeError: If ``send_numel_list``  or ``recv_numel_list`` is not type of tuple and list.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+
+            Please see the `msrun start up
+            <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/msrun_launcher.html>`_
+            for more details.
+
+            This example should be run with 2 devices.
+
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init, get_rank
+        >>> from mindspore import Tensor
+        >>>
+        >>> init()
+        >>> rank = get_rank()
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         if rank == 0:
+        ...             self.all_to_all = ops.AlltoAllV([1, 2], [1, 2])
+        ...         else:
+        ...             self.all_to_all = ops.AlltoAllV([2, 1], [2, 1])
+        ...
+        ...     def construct(self, x):
+        ...         return self.all_to_all(x)
+        ...
+        >>> if rank == 0:
+        >>>    send_tensor = Tensor([0, 1, 2.])
+        >>> elif rank == 1:
+        >>>    send_tensor = Tensor([3, 4, 5.])
+        >>> net = Net()
+        >>> output = net(send_tensor)
+        >>> print(output)
+        rank 0:
+        [0. 3. 4]
+        rank 1:
+        [1. 2. 5]
+
+    """
+
+    @prim_attr_register
+    def __init__(self, send_numel_list, recv_numel_list, group=None):
+        validator.check_value_type("send_numel_list", send_numel_list, [tuple, list], self.name)
+        validator.check_value_type("recv_numel_list", recv_numel_list, [tuple, list], self.name)
+        if group is None:
+            group = GlobalComm.WORLD_COMM_GROUP
+        self.add_prim_attr('group', group)
+        self.add_prim_attr('send_numel_list', send_numel_list)
+        self.add_prim_attr('recv_numel_list', recv_numel_list)

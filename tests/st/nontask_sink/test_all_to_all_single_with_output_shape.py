@@ -19,30 +19,31 @@ import numpy as np
 import mindspore as ms
 from mindspore import nn
 from mindspore.communication import init
-from mindspore.communication.comm_func import all_to_all_single
+from mindspore.communication.comm_func import all_to_all_single_with_output_shape
 from mindspore.communication.management import get_rank
 
-# 'all_to_all_single' function only supports KernelByKernel mode by now. So we set 'GRAPH_OP_RUN' to 1.
+# 'all_to_all_single_with_output_shape' function only supports KernelByKernel mode by now. So we set 'GRAPH_OP_RUN' to 1.
 np.random.seed(1)
 os.environ['GRAPH_OP_RUN'] = str(1)
 ms.context.set_context(mode=ms.context.PYNATIVE_MODE, device_target="Ascend")
 init()
 
 class AllToAllSingleNet(nn.Cell):
-    def construct(self, tensor):
-        out = all_to_all_single(tensor)
+    def construct(self, output_shape, tensor):
+        out = all_to_all_single_with_output_shape(output_shape, tensor)
         return out
 
-def test_hccl_all_to_all_single_func_in_cell_2p():
+def test_hccl_all_to_all_single_with_output_shape_func_in_cell_2p():
     """
-    Feature: test 'all_to_all_single' communication function in cell.
-    Description: test 'all_to_all_single' communication function in cell.
+    Feature: test 'all_to_all_single_with_output_shape' communication function in cell.
+    Description: test 'all_to_all_single_with_output_shape' communication function in cell.
     Expectation: expect correct result.
     """
     rank = get_rank()
     data = ms.Tensor(np.arange(8).reshape([2, 4]).astype(np.float32))
+    output_shape = (2, 4)
     net = AllToAllSingleNet()
-    out = net(data)
+    out = net(output_shape, data)
 
     if rank == 0:
         gt_rank0 = np.arange(0, 4).reshape([1, 4]).astype(np.float32)
@@ -55,15 +56,16 @@ def test_hccl_all_to_all_single_func_in_cell_2p():
         rst = np.allclose(gt_rank1, out.asnumpy())
         assert rst
 
-def test_hccl_all_to_all_single_func_2p():
+def test_hccl_all_to_all_single_with_output_shape_func_2p():
     """
-    Feature: test 'all_to_all_single' communication function.
-    Description: test 'all_to_all_single' communication function.
+    Feature: test 'all_to_all_single_with_output_shape' communication function.
+    Description: test 'all_to_all_single_with_output_shape' communication function.
     Expectation: expect correct result.
     """
     rank = get_rank()
     data = ms.Tensor(np.arange(8).reshape([2, 4]).astype(np.float32))
-    out = all_to_all_single(data)
+    output_shape = (2, 4)
+    out = all_to_all_single_with_output_shape(output_shape, data)
 
     if rank == 0:
         gt_rank0 = np.arange(0, 4).reshape([1, 4]).astype(np.float32)
@@ -77,4 +79,4 @@ def test_hccl_all_to_all_single_func_2p():
         assert rst
 
 
-test_hccl_all_to_all_single_func_2p()
+test_hccl_all_to_all_single_with_output_shape_func_2p()

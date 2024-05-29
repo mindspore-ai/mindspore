@@ -51,9 +51,9 @@ static const std::set<std::string> kDefaultOutputNode = {
   kAffineGridOpName, kRangeOpName, kBernoulliOpName};
 
 static const std::set<std::string> kHcomOps = {
-  kHcomOpTypeAllReduce, kHcomOpTypeReduce,  kHcomOpTypeAllGather,     kHcomOpTypeBroadcast,
-  kHcomOpTypeSend,      kHcomOpTypeReceive, kHcomOpTypeReduceScatter, kHcomOpTypeAllToAllV,
-  kHcomOpTypeBarrier,   kHcomOpTypeScatter, kHcomOpTypeGather,        kHcomOpTypeBatchSendRecv};
+  kHcomOpTypeAllReduce, kHcomOpTypeReduce,        kHcomOpTypeAllGather, kHcomOpTypeBroadcast, kHcomOpTypeSend,
+  kHcomOpTypeReceive,   kHcomOpTypeReduceScatter, kHcomOpTypeAllToAllV, kHcomOpTypeBarrier,   kHcomOpTypeScatter,
+  kHcomOpTypeGather,    kHcomOpTypeBatchSendRecv, kHcomOpTypeAlltoAllV};
 
 static const HashMap<GeDataType, TypeId> kGeTypeToMsType = {{GeDataType::DT_BOOL, kNumberTypeBool},
                                                             {GeDataType::DT_INT8, kNumberTypeInt8},
