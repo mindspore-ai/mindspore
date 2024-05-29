@@ -1187,7 +1187,11 @@ bool GraphBuilder::DoBinary(const Instr &instr) {
 }
 
 static bool CheckTupleListMul(ValueNode *left, ValueNode *right) {
-  bool special = left->GetOpcode() == BUILD_LIST || left->GetOpcode() == BUILD_TUPLE || left->IsConstantValue();
+  bool special = left->GetOpcode() == BUILD_LIST || left->GetOpcode() == BUILD_TUPLE;
+  if (!special && left->IsConstantValue()) {
+    AObject::Type l_type = left->GetVobj()->GetType();
+    special = l_type == AObject::kTypeTuple || l_type == AObject::kTypeList;
+  }
   if (special && right->IsConstantValue()) {
     PyObject *mul = right->GetVobj()->GetPyObject().ptr();
     const int max = 2;
@@ -1770,10 +1774,6 @@ bool CheckSupportCreateInstance(CallNode *call_node) {
      *    z = list(zip(list(x), list(y)))
      *    z = list(enumerate(x))
      */
-    PyTypeObject *iterable_type = first_param->GetTypeObject();
-    if (iterable_type != &PyZip_Type && iterable_type != &PyEnum_Type) {
-      return false;
-    }
     // this case, zip object and enumerate object is dead variable
   }
   return limit_create_instance_type.find(tp) != limit_create_instance_type.end();

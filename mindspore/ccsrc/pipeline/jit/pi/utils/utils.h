@@ -158,6 +158,10 @@ bool IsMsClass(PyObject *obj);
 bool IsNumpyObject(PyObject *obj);
 const char *GetFuncName(const py::object &handle);
 
+bool CheckAdapterTensor(const py::object &tensor);
+py::object ConvertToMsTensor(const py::object &tensor);
+py::object ConvertToAdapterTensor(const py::object &tensor);
+
 std::string GetTopModule(const py::object &o);
 py::object GetPyCodeObject(const py::object &any, bool exact_func = false);
 size_t DeviceAvailableMemSize();
