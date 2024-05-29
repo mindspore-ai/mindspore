@@ -121,21 +121,14 @@ std::shared_ptr<ValueNode> CreateWeightTensor(TypeId type_id, const std::vector<
   return assist_const;
 }
 
-void SortWeightNodeList(const AnfNodePtrList &node_list) {
-  std::sort(node_list.begin(), node_list.end(), [](const AnfNodePtr &a, const AnfNodePtr &b) {
+void SortWeightNodeList(AnfNodePtrList &node_list) {
+  std::sort(node_list.begin(), node_list.end(), [](AnfNodePtr &a, AnfNodePtr &b) {
     auto para_a =
       common::AnfAlgo::GetInputNode(a->cast<CNodePtr>()->inputs()[2]->cast<CNodePtr>(), kIndex0)->cast<ParameterPtr>();
     auto para_b =
       common::AnfAlgo::GetInputNode(b->cast<CNodePtr>()->inputs()[2]->cast<CNodePtr>(), kIndex0)->cast<ParameterPtr>();
     return para_a->name() < para_b->name();
   });
-}
-
-void PrintWeightNodeList(const AnfNodePtrList &node_list) {
-  for (const auto &node : node_list) {
-    auto para_a = common::AnfAlgo::GetInputNode(node->cast<CNodePtr>()->inputs()[2]->cast<CNodePtr>(), kIndex0)
-                    ->cast<ParameterPtr>();
-  }
 }
 
 }  // namespace opt
