@@ -169,6 +169,8 @@ from .array_func import (
     zeros_like_ext,
     ones_like_ext,
     full_ext,
+    unfold_ext,
+    fold_ext,
 )
 from .parameter_func import (
     assign,
@@ -551,6 +553,8 @@ from .nn_func import (
     hardsigmoid,
     group_norm,
     dropout_ext,
+    softmax_ext,
+    avg_pool2d_ext,
 )
 from .linalg_func import (
     cond,

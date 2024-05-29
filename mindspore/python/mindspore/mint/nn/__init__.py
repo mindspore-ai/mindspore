@@ -32,9 +32,9 @@ from mindspore.nn.extend import MaxPool2d
 # 5
 
 # 6
-
+from mindspore.nn.layer.basic import UnfoldExt as Unfold
 # 7
-
+from mindspore.nn.layer.basic import Fold
 # 8
 from mindspore.nn.extend.layer import normalization
 from mindspore.nn.extend.layer.normalization import *
@@ -235,9 +235,9 @@ __all__ = [
     # 5
 
     # 6
-
+    'Fold',
     # 7
-
+    'Unfold',
     # 8
 
     # 9

@@ -81,7 +81,7 @@ WeightQuantBatchMatmul: 'aclnnWeightQuantBatchMatmulV2'
 # 6
 
 # 7
-
+Col2ImGrad: 'aclnnIm2col'
 # 8
 
 # 9
@@ -129,7 +129,8 @@ WeightQuantBatchMatmul: 'aclnnWeightQuantBatchMatmulV2'
 # 30
 
 # 31
-
+Im2ColExt: 'aclnnIm2col'
+Col2ImExt: 'aclnnIm2colBackward'
 # 32
 
 # 33
@@ -268,4 +269,3 @@ LeakyReLUGradExt: 'aclnnLeakyReluBackward'
 # 99
 
 # 100
-
