@@ -41,6 +41,7 @@ from mindspore.ops.auto_generate import stack_ext as stack
 # 7
 
 # 8
+from mindspore.ops.auto_generate import cat
 
 # 9
 
@@ -259,6 +260,7 @@ __all__ = [
     # 7
 
     # 8
+    'cat',
 
     # 9
 
