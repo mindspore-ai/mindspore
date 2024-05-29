@@ -40,6 +40,7 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ir_fusion/adaptive_max_pool2d_fusion.cc"
         "./ir_fusion/flash_attention_fusion.cc"
         "./ir_fusion/mc2_fusion.cc"
+        "./ir_fusion/inference_weight_preprocess_utils.cc"
         "./ir_fusion/inference_multi_matmul_fusion.cc"
         "./ir_fusion/inference_multi_matmul_with_split_fusion.cc"
         "./ir_fusion/multi_weight_matmuls_fusion.cc"

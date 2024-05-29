@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 
+#include "plugin/device/ascend/optimizer/ir_fusion/inference_weight_preprocess_utils.h"
 #include "include/backend/optimizer/pass.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
