@@ -712,6 +712,9 @@ def TEST_OP(op, inputs_seq, yaml_name, *, disable_input_check=False, disable_yam
         >>> TEST_OP(reducesum_func, [[in1, tuple_in1], [in2, tuple_in2]], "reduce_sum")
         ...
     """
+    if getattr(op, "__wrapped_with_mode__", False):
+        op = getattr(op, "__wrapped__")
+
     check_args(inputs_seq, yaml_name, disable_input_check, disable_yaml_check, disable_tensor_dynamic_type,
                disable_nontensor_dynamic_type, disable_mode, disable_grad, disable_resize, dump_ir, custom_flag,
                ignore_output_index, debug_info)

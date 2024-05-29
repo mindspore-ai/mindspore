@@ -17,12 +17,14 @@
 #include "ops/ops_func_impl/grid_sampler_2d.h"
 
 #include <algorithm>
+#include <string>
 #include "abstract/dshape.h"
 #include "ops/op_name.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -89,6 +91,12 @@ TypePtr GridSampler2DFuncImpl::InferType(const PrimitivePtr &prim,
     MS_EXCEPTION(TypeError) << "Input grid must have the same data type with input x! input[x] data type = "
                             << input_x_type->ToString()
                             << " but input[grid] data type = " << input_grid_type->ToString();
+  }
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (is_ascend && input_x_type->type_id() == kNumberTypeFloat16) {
+    MS_EXCEPTION(TypeError) << "GridSampler2D doesn't support float16 on ascend.";
   }
   return input_x_type->Clone();
 }
