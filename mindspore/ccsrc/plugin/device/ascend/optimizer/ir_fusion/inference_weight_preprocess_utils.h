@@ -49,7 +49,7 @@ std::shared_ptr<ValueNode> CreateWeightTensor(TypeId type_id, const std::vector<
                                               const std::shared_ptr<Type> &w_dtype, const bool &need_rank_offset,
                                               const uint32_t &global_rank_id);
 
-void SortWeightNodeList(AnfNodePtrList &node_list);
+void SortWeightNodeList(AnfNodePtrList *node_list);
 
 }  // namespace opt
 }  // namespace mindspore
