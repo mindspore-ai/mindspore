@@ -26,6 +26,7 @@ Array操作
     mindspore.mint.ceil
     mindspore.mint.cos
     mindspore.mint.erf
+    mindspore.mint.log
 
 mindspore.mint.nn
 ------------------
@@ -58,6 +59,9 @@ Reduction函数
     :template: classtemplate.rst
 
     mindspore.mint.any
+    mindspore.mint.mean
+    mindspore.mint.prod
+    mindspore.mint.sum
 
 比较函数
 ^^^^^^^^^^^^^
