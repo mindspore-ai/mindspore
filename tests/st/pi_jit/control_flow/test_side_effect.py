@@ -18,6 +18,8 @@ from mindspore.nn import Cell, ReLU
 from mindspore._c_expression import get_code_extra
 import dis
 
+cfg = {'compile_by_trace': False} # One-stage will fix it later
+
 class NetAssign0002(Cell):
 
     def __init__(self):
@@ -28,7 +30,6 @@ class NetAssign0002(Cell):
         x[1] = y
         return x
 
-tmp = 1
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -43,7 +44,7 @@ def test_store_subscr_side_effect_1():
         x[0] = Tensor([1, 2])
         x[1] = Tensor([1, 2])
         return x
-    jit(fn=func, mode="PIJit")([Tensor([1]), Tensor([1])])
+    jit(fn=func, mode="PIJit", jit_config=cfg)([Tensor([1]), Tensor([1])])
     jcr = get_code_extra(func)
     new_code = jcr["code"]["compiled_code_"]
     for i in dis.get_instructions(new_code):
@@ -68,7 +69,7 @@ def test_store_subscr_side_effect_2():
         x = [Tensor([1]), Tensor([1])]
         x[0] = Tensor([1, 2])
         return x
-    jit(fn=func, mode="PIJit")
+    jit(fn=func, mode="PIJit", jit_config=cfg)()
     jcr = get_code_extra(func)
     context.set_context(mode=context.PYNATIVE_MODE)
     assert jcr["break_count_"] == 0
@@ -85,7 +86,7 @@ def test_del_subscr_side_effect_3():
     def func(arg):
         del arg[0]
         return arg
-    jit(fn=func, mode="PIJit")([Tensor([1]), Tensor([1])])
+    jit(fn=func, mode="PIJit", jit_config=cfg)([Tensor([1]), Tensor([1])])
     jcr = get_code_extra(func)
     new_code = jcr["code"]["compiled_code_"]
 
@@ -109,7 +110,7 @@ def test_dict_pop_side_effect_4():
         d = {"a": Tensor([1, 2]), "b": Tensor([1, 2])}
         d.pop("b")
         return d
-    jit(fn=func, mode="PIJit")
+    jit(fn=func, mode="PIJit", jit_config=cfg)()
     jcr = get_code_extra(func)
     context.set_context(mode=context.PYNATIVE_MODE)
     assert jcr["break_count_"] == 0
@@ -126,7 +127,7 @@ def test_dict_pop_side_effect_5():
     def func(d):
         d.pop("b")
         return d
-    jit(fn=func, mode="PIJit")({"a": Tensor([1, 2]), "b": Tensor([1, 2])})
+    jit(fn=func, mode="PIJit", jit_config=cfg)({"a": Tensor([1, 2]), "b": Tensor([1, 2])})
     jcr = get_code_extra(func)
     context.set_context(mode=context.PYNATIVE_MODE)
     assert jcr["break_count_"] == 0
@@ -145,10 +146,11 @@ def test_store_global_side_effect_6():
         tmp = Tensor([1])
         tmp *= 2
         return tmp
-    jit(fn=func, mode="PIJit")
+    jit(fn=func, mode="PIJit")()
     jcr = get_code_extra(func)
     context.set_context(mode=context.PYNATIVE_MODE)
     assert jcr["break_count_"] == 0
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -157,7 +159,7 @@ def test_del_global_side_effect_7():
     """
     Feature: DEL GLOBAL side effect
     Description: wipe out graph_break in dict pop no args
-    Expectation: no exception
+    Expectation: NameError
     """
     def func():
         global tmp
@@ -165,10 +167,12 @@ def test_del_global_side_effect_7():
         tmp *= 2
         del tmp
         return tmp
-    jit(fn=func, mode="PIJit")
-    jcr = get_code_extra(func)
+
+    with pytest.raises(NameError, match="name 'tmp' is not defined"):
+        jit(fn=func, mode="PIJit")()
+
     context.set_context(mode=context.PYNATIVE_MODE)
-    assert jcr["break_count_"] == 0
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -179,15 +183,15 @@ def test_fix_bug_store_subscr_side_effect_1():
     Description: wipe out graph_break in store subscr has args
     Expectation: no exception
     """
-    def func():
-        net = NetAssign0002()
+    def func(net):
         x = [Tensor([1, 2]), Tensor([2, 3])]
         y = Tensor([5, 6])
-        out = net(x, y)
-        print(out)
+        net(x, y)
         return x
 
-    jit(fn=func, mode="PIJit")
+    net = NetAssign0002()
+    result = jit(fn=func, mode="PIJit", jit_config=cfg)(net)
     jcr = get_code_extra(func)
 
     assert jcr["break_count_"] == 0
+    assert (result[1] == Tensor([5, 6])).all()

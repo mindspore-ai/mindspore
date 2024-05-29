@@ -100,7 +100,7 @@ class ValueNode : public InstrNode {
   static ValueNode kUnboundLocal;
 
   ValueNode(AObject *vobj, int opcode, int oparg, const std::vector<ValueNode *> &inputs = {})
-      : InstrNode(Value, opcode, oparg), vobj_(vobj), inputs_(inputs), attr_(false), subscr_(false) {}
+      : InstrNode(Value, opcode, oparg), vobj_(vobj), inputs_(inputs) {}
   virtual ~ValueNode() {}
 
   std::vector<ValueNode *> &getInputs() { return inputs_; }
@@ -109,17 +109,11 @@ class ValueNode : public InstrNode {
   void AddInput(ValueNode *v) { inputs_.push_back(v); }
   void ClearInputs() { inputs_.clear(); }
 
-  void SetVobj(AObject *vobj) { vobj_ = vobj; }
+  void SetVobj(AObject *vobj);
   const auto &GetVobj() const { return vobj_; }
 
-  std::map<std::string, ValueNode *> &GetAttrs() { return attrs_; }
-
-  void store_attr(const std::string &nam, ValueNode *v);
-  void del_attr(const std::string &nam) {}
   AObject *get_attr(const std::string &nam);
 
-  void store_subscr(ValueNode *sub, ValueNode *v);
-  void del_subscr(ValueNode *sub) {}
   AObject *binary_subscr(ValueNode *sub);
 
   std::string ToString() const override;
@@ -136,7 +130,7 @@ class ValueNode : public InstrNode {
 
  protected:
   ValueNode(Type type, AObject *vobj, int opcode, int oparg, const std::vector<ValueNode *> &inputs = {})
-      : InstrNode(type, opcode, oparg), vobj_(vobj), inputs_(inputs), attr_(false), subscr_(false) {}
+      : InstrNode(type, opcode, oparg), vobj_(vobj), inputs_(inputs) {}
 
  private:
   // value info
@@ -147,15 +141,6 @@ class ValueNode : public InstrNode {
 
   // which nodes are used, ordered parameter
   std::vector<ValueNode *> inputs_;
-
-  // store attrs
-  std::map<std::string, ValueNode *> attrs_;
-
-  // track store attr not implement, marked as modified
-  bool attr_;
-
-  // track store subscr not implement, marked as modified
-  bool subscr_;
 
   // recode relationship between local and CallNode
   std::optional<ValueNode *> parent_;
@@ -189,7 +174,13 @@ class ParamNode : public ValueNode {
  public:
   ParamNode(AObject *o, int index) : ValueNode(Param, o, 0, index, {}) {}
   std::string ToString() const override;
+  bool IsMixedPrecisionType() { return mixedPrecisionType_ != nullptr; }
+  PyObject *GetMixedPrecisionType() { return mixedPrecisionType_; }
+  void SetMixedPrecisionType(PyObject *type) { mixedPrecisionType_ = type; }
   virtual ~ParamNode() {}
+
+ protected:
+  PyObject *mixedPrecisionType_{nullptr};
 };
 
 class CallNode : public ValueNode {

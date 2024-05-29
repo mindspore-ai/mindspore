@@ -373,11 +373,11 @@ void ByteCodeParser::ParseInstructions(const py::list &instrs) {
     MS_LOG(DEBUG) << "Start parse instruction : " << instr->ToString();
     int op_code = instr->GetOpCode();
     if (op_code == EXTENDED_ARG) {
-      extended_arg = (unsigned)instr->GetArg();
+      extended_arg = IntToSize(instr->GetArg());
       continue;
     }
     if (extended_arg != 0) {
-      instr->SetArg(extended_arg << bits_per_byte | (unsigned)instr->GetArg());
+      instr->SetArg(extended_arg << bits_per_byte | IntToSize(instr->GetArg()));
       extended_arg = 0;
     }
     if (instr_method_map_.find(op_code) == instr_method_map_.end()) {
@@ -469,7 +469,7 @@ void ByteCodeParser::GeneratePostionalParameters() {
 }
 
 void ByteCodeParser::GenerateVariableParameter() {
-  if (((unsigned)code_.co_flags & CO_VARARGS) == 0x0) {
+  if ((IntToSize(code_.co_flags) & CO_VARARGS) == 0x0) {
     return;
   }
   MS_LOG(DEBUG) << "Generate function variable parameter ...";
@@ -503,7 +503,7 @@ void ByteCodeParser::GenerateKeywordOnlyParameters() {
 }
 
 void ByteCodeParser::GenerateKeywordParameter() {
-  if (((unsigned)code_.co_flags & CO_VARKEYWORDS) == 0x0) {
+  if ((IntToSize(code_.co_flags) & CO_VARKEYWORDS) == 0x0) {
     return;
   }
   MS_LOG(DEBUG) << "Generate function keyword parameter ...";
@@ -732,19 +732,19 @@ void ByteCodeParser::ParseMakeFunction(const InstrPtr &instr) {
   args.push_back(PopStack());
   int flag = instr->GetArg();
   // closure
-  if ((unsigned)flag & 0x08) {
+  if (IntToSize(flag) & 0x08) {
     args.push_back(PopStack());
   }
   // annotations
-  if ((unsigned)flag & 0x04) {
+  if (IntToSize(flag) & 0x04) {
     args.push_back(PopStack());
   }
   // kwdefaults
-  if ((unsigned)flag & 0x02) {
+  if (IntToSize(flag) & 0x02) {
     args.push_back(PopStack());
   }
   // defaults
-  if ((unsigned)flag & 0x01) {
+  if (IntToSize(flag) & 0x01) {
     args.push_back(PopStack());
   }
   std::reverse(args.begin(), args.end());
@@ -879,7 +879,7 @@ void ByteCodeParser::ParseCallFunction(const InstrPtr &instr) {
     // the number of parameters is 2 when flag is 1
     // Otherwise, the number of parameters is 1
     MS_EXCEPTION_IF_CHECK_FAIL((size == 0 || size == 1), "The flag of CALL_FUNCTION_EX must be 0 or 1.");
-    size = ((unsigned)size & 0x1) ? 2 : 1;
+    size = (IntToSize(size) & 0x1) ? 2 : 1;
   }
   // The tuple of keys occupies a position
   if (instr->GetOpCode() == CALL_FUNCTION_KW) {
@@ -939,7 +939,7 @@ void ByteCodeParser::ParseSetupWith(const InstrPtr &instr) {
 void ByteCodeParser::ParseFormatValue(const InstrPtr &instr) {
   ir::NodePtrList opnds;
   opnds.push_back(PopStack());
-  if (((unsigned)instr->GetArg() & 0x04) == 0x04) {
+  if ((IntToSize(instr->GetArg()) & 0x04) == 0x04) {
     opnds.push_back(PopStack());
   }
   ir::NodePtr node = std::make_shared<ir::FormatNode>(opnds, instr->GetArg());

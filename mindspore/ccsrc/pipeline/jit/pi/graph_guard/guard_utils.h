@@ -25,6 +25,7 @@
 #include "pipeline/jit/pi/pydef.h"
 #include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/pi/graph_guard/trace.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {

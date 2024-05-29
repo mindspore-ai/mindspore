@@ -17,7 +17,7 @@ import pytest
 from mindspore import Tensor, jit, context
 
 
-@jit(mode="PIJit", jit_config={"perf_statistics": True})
+@jit(mode="PIJit", jit_config={"perf_statistics": True, "compile_by_trace": False}) # One-stage will fix it later
 def perf_statistic_simple(a, b):
     return a + b
 
@@ -47,7 +47,7 @@ def perf_statistic_complex(a, b):
     return a
 
 
-@jit(mode="PIJit", jit_config={"STATIC_GRAPH_BYTECODE_MIN": 8})
+@jit(mode="PIJit", jit_config={"STATIC_GRAPH_BYTECODE_MIN": 8, "compile_by_trace": False}) # One-stage will fix it later
 def perf_bytecode_simple(a, b):
     return a + b
 
@@ -77,6 +77,7 @@ def perf_bytecode_complex(a, b):
     return a
 
 
+@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu

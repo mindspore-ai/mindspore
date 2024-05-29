@@ -21,7 +21,6 @@
 #include <string>
 #include <unordered_map>
 #include "pybind11/pybind11.h"
-#include "pybind_api/ir/primitive_py.h"
 
 namespace mindspore {
 namespace pijit {
@@ -30,8 +29,7 @@ class InferEngine : public std::enable_shared_from_this<InferEngine> {
  public:
   static std::shared_ptr<InferEngine> GetInstance();
   PyObject *InferPrimitive(PyObject *primitive, const std::vector<PyObject *> &args, bool *is_abstract);
-  PyObject *InferSpecialPrimitive(PyObject *primitive, const std::vector<PyObject *> &arglist,
-                                  const PrimitivePyPtr &prim);
+  PyObject *InferSpecialPrimitive(PyObject *primitive, const std::vector<PyObject *> &arglist);
   bool SupportInfer(PyObject *primitive);
   bool Init();
   bool Deinit();
@@ -77,6 +75,8 @@ bool IsCellType(PyTypeObject *tp);
 template <bool sub>
 bool IsPrimitiveType(PyTypeObject *tp);
 template <bool sub>
+bool IsPrimitiveFunctionType(PyTypeObject *tp);
+template <bool sub>
 bool IsMetaFuncGraphType(PyTypeObject *tp);
 template <bool sub>
 bool IsMSDTypeType(PyTypeObject *tp);
@@ -84,6 +84,7 @@ bool IsMSDTypeType(PyTypeObject *tp);
 bool FindTensorName(const std::string &name);
 
 bool CheckTensorDataInitialized(const py::object &tensor);
+py::object EvalMSAPIValue(const py::object &ms_api, const py::object &args, const py::object &key_words);
 
 using SpecialPrimitiveInferFuncMap =
   std::unordered_map<std::string, PyObject *(*)(PyObject *, const std::vector<PyObject *> &)>;

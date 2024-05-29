@@ -19,9 +19,11 @@
 #include <set>
 #include <vector>
 #include <memory>
+#include <string>
 #include "pipeline/jit/pi/graph_capture/cfg.h"
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
 #include "pipeline/jit/pi/graph_capture/graph_build.h"
+#include "utils/convert_utils_base.h"
 namespace mindspore {
 namespace pijit {
 
@@ -38,14 +40,52 @@ class GraphAnalyzer {
  public:
   // escaped_locals and captured.values do not intersect
   struct CapturedInfo {
-    struct {
-      mindspore::CompactSet<ValueNode *> inputs;
-      std::set<ValueNode *> values;
-      std::vector<ValueNode *> order;
-    } captured_locals;
-    std::set<ValueNode *> escaped_locals;
-    std::vector<ValueNode *> ordered_escaped_locals;
+    struct Info {
+      // contains inputs and operations, used to find
+      mindspore::CompactSet<ValueNode *> values;
+      // the inputs of operations
+      std::vector<ValueNode *> inputs;
+      // bytecode operations
+      std::vector<ValueNode *> operations;
+      // ordered outputs, used to restore stack and locals
+      std::vector<ValueNode *> outputs;
+
+      void clear();
+      std::string ToString();
+    };
+
+    struct GraphInputs {
+      std::vector<ValueNode *> args;
+      std::vector<ValueNode *> globals;
+      ValueNode *vargs = nullptr;
+      ValueNode *kwargs = nullptr;
+
+      void clear();
+      std::string ToString();
+    };
+
+    /**
+     * for captured inputs, it's parameters, maybe unordered.
+     * for captured outputs, it's ordered by stack values and alive locals.
+     */
+    Info captured_;
+
+    /**
+     * for interpret inputs, it's ordered and same as original function.
+     * if not break graph, outputs is return value, else outputs is ordered by stack values and alive locals.
+     */
+    Info interpret_;
+
+    /**
+     * Store all collected graph inputs.
+     * If no graph is generated, graph_inputs_ should be empty.
+     */
+    GraphInputs graph_inputs_;
+
     bool has_grad_ = false;
+
+    void clear();
+    std::string ToString();
   };
 
   explicit GraphAnalyzer(Graph *g) : graph_(g) {}
@@ -59,18 +99,29 @@ class GraphAnalyzer {
   bool HasTensorOperation() const;
   virtual bool NeedInterpret() const { return need_interpret_; }
 
+  const auto &alive_locals() const { return alive_locals_; }
+
  protected:
   void AddToEscaped(ValueNode *value);
   // UD analyze
   virtual void UseDefAnalyze();
   std::vector<ValueNode *> GetAliveLocals(Graph *g);
   virtual bool AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes);
-  virtual void CollectInputs();
+  virtual void CollectCapturedInputs();
+  virtual void CollectCapturedAndInterpret();
+  virtual void CollectGraphInputs();
   bool need_interpret_;
   Graph *graph_;
   CapturedInfo info_;
+  std::vector<int> alive_locals_;
 
  private:
+  // optimize
+  void OptimizeSideEffectRecord() const;
+
+  // rollback
+  void ResetSideEffectRecord() const;
+
   bool AnalyzeRecursive(Graph *g);
   bool AnalyzeCall(CallNode *);
   bool TryToCapture(AbstractNode *value);
@@ -79,7 +130,6 @@ class GraphAnalyzer {
   bool HandleCallableToGraph(AObject *f);
   bool ProduceInterpretValue(ValueNode *v);
   void CleanCapturedValue();
-  void ClearCapturedInfo();
 };
 
 class MindGraphAnalyzer : public GraphAnalyzer {
@@ -90,14 +140,13 @@ class MindGraphAnalyzer : public GraphAnalyzer {
  protected:
   // UD analyze
   void UseDefAnalyze() override;
-  void CollectInputs() override;
+  void CollectCapturedInputs() override;
+  void CollectGraphInputs() override;
   void UpdateCapturedOrder();
+  void CollectCapturedAndInterpret() override;
   bool AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) override;
   GraphBuilderPtr graph_builder_ = nullptr;
 };
-
-bool ValidateGraphParameters(ValueNode *i);
-
 }  // namespace pijit
 }  // namespace mindspore
 

@@ -23,6 +23,7 @@
 #include <string>
 #include "pipeline/jit/pi/graph_capture/graph.h"
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {
@@ -78,23 +79,12 @@ class GraphBuilder {
   static py::object FindPyFunc(AObject *vobj);
   static py::object GetFuncInfo(ValueNode *func_node);
 
-  static bool IsByteCodeImplemented(int bytecode);
-
   // TryBlockStack operation
   TryBlock &PeekStack(int p);
   void PushStack(TryBlock tb) { tryBlockStacks_.push_back(tb); }
   int StackSize() { return tryBlockStacks_.size(); }
   std::vector<TryBlock> &GetTryBlockStacks() { return tryBlockStacks_; }
   TryBlock &PopStack();
-
- protected:
-  GraphBuilder *root_;
-  GraphBuilder *parent_;
-  Graph *graph_;
-  FrameStates frame_;
-  Block *current_block_;
-  int cur_bci_;
-  std::vector<TryBlock> tryBlockStacks_{};
 
   // loop analyze
   void HandleLoop();
@@ -147,9 +137,9 @@ class GraphBuilder {
    * \param[out] has_kw this call has key-word arguments
    * \return false if can't generate unpack operations
    */
-  bool UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, bool *has_kw, CallNode *call_node);
+  virtual bool UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, bool *has_kw, CallNode *call_node);
 
-  bool UnpackCallExDict(std::vector<ValueNode *> *params, CallNode *call_node);
+  virtual bool UnpackCallExDict(std::vector<ValueNode *> *params, CallNode *call_node);
 
   bool UnpackDynamicLengthDictByBytecode(std::vector<ValueNode *> *params, CallNode *call_node, ValueNode *dict_node);
   // generate the general unpack operations of dict, return operations
@@ -163,7 +153,7 @@ class GraphBuilder {
    * \param[out] extra_oper the move operations to move parameters to locals
    * \return false if parameters is illegal
    */
-  bool HandleKWParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame);
+  virtual bool HandleKWParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame);
 
   /**
    * Pack key-word parameters to dict, unpack the position arguments by key from the dict.
@@ -178,21 +168,12 @@ class GraphBuilder {
   bool PackKwParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame,
                     std::vector<ValueNode *> *kwvargs);
 
-  /**
-   * handle store subscr side effect
-   * Set parameters to frame
-   * \param[in] instr The function of call target
-   * \param[in] p This calling stack
-   * \return false if parameters is illegal
-   */
-  bool DoSideEffect(const Instr &instr, const std::vector<ValueNode *> &p);
-
   bool CheckAndSetDefaultParams(const py::object &func, FrameStates *frame, int pargc);
 
   /**
    * Use the call stack without key-word arguments to fill the frame locals
    */
-  bool HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame);
+  virtual bool HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame);
 
   // build subgraph, return stop trace reason
   virtual StopTraceReason BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
@@ -220,6 +201,12 @@ class GraphBuilder {
 
   bool DoSetItem(ValueNode *map, ValueNode *key, ValueNode *val);
 
+  // transform dict set item to make a new dict
+  ValueNode *TransformDictSetItem(ValueNode *map, ValueNode *key, ValueNode *val, bool ignore_key_error);
+
+  // transform list set item to make a new list
+  ValueNode *TransformListSetItem(ValueNode *list, ValueNode *key, ValueNode *val);
+
   ValueNode *ReplaceMergeOp(int opcode, const std::vector<ValueNode *> &inputs);
 
   bool ClassInstantiationFold(CallNode *, AObject::Type);
@@ -239,7 +226,7 @@ class GraphBuilder {
   ValueNode *NewValueNode(AObject *o, const Instr &, const std::vector<ValueNode *> &p = {});
   Graph *NewGraph(PyCodeObject *co, PyObject *f_globals);
 
-  bool ReplaceAll(ValueNode *old_node, ValueNode *new_node);
+  bool ReplaceAll(ValueNode *old_node, ValueNode *new_node, bool *referenced = nullptr);
 
   bool TraceRunForIterSequence(int jump_bci);
   bool TraceRunForIterEnumerate(int jump_bci);
@@ -256,8 +243,9 @@ class GraphBuilder {
   bool DoCellAccess(const Instr &instr);
   bool DoGlobalAccess(const Instr &instr);
   bool DoAttrAccess(const Instr &instr);
+  virtual ValueNode *HandleGetattr(ValueNode *target_node, const Instr &instr);
   virtual bool DoGetItem(const Instr &instr);
-  bool DoItemAccess(const Instr &instr);
+  virtual bool DoItemAccess(const Instr &instr);
   bool DoStackOp(const Instr &instr);
   bool DoLoadConst(const Instr &instr);
   bool DoListToTuple(const Instr &instr);
@@ -279,17 +267,26 @@ class GraphBuilder {
   bool DoYieldValue(const Instr &instr);
   bool DoException(const Instr &instr);
   bool DoWith(const Instr &instr);
+  bool DoOtherBytecode(const Instr &instr);
   bool NotImplementBytecode(const Instr &instr);
+
+  const auto &root() const { return root_; }
+  const auto &frame() const { return frame_; }
+
+ protected:
+  GraphBuilder *root_;
+  GraphBuilder *parent_;
+  Graph *graph_;
+  FrameStates frame_;
+  Block *current_block_;
+  int cur_bci_;
+  std::vector<TryBlock> tryBlockStacks_{};
+
   static const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> bytecode_meth_map_;
 
-  // check the function is special function that mindspore support and not inline,
-  // the return values or type can be infer
-  // set key for handler
-  bool IsFuncInWhiteList(const py::object &f, std::string *special_func_key, bool bInferPrimitive);
-
-  // infer the return value of special function and generate subgraph, or clear subgraph
-  // return true if special function has subgraph
-  virtual bool HandleFuncInWhiteList(const std::string &key, CallNode *n);
+  ValueNode *GetCallFunctionNode(ValueNode *node, PyObject *dst_dtype);
+  bool DoMixedPrecisionLocalAccess(const Instr &instr, ValueNode *node);
+  ValueNode *DoMixedPrecisionAttrAccess(const Instr &instr, ValueNode *node, ValueNode *attr);
 };
 
 class MindGraphBuilder : public GraphBuilder {
@@ -305,10 +302,10 @@ class MindGraphBuilder : public GraphBuilder {
   }
   bool trace_flag() { return true; }
   mindspore::FuncGraphBuilderPtr FGBuilder() const { return fg_builder_; }
-  void FGAddInputs(const std::vector<py::object> &args);
+  bool FGAddInputs(const std::vector<py::object> &args);
   py::object FGAddNode(CallNode *call_node, const py::object &callable_info, const std::vector<py::object> &args,
                        StopTraceReason *stop_reason);
-  void FGAddOutput();
+  void FGAddOutput(bool is_top_graph);
   StopTraceReason BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
                                 const GraphBuilderPtr &subgraph) override;
   py::object ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) override;
@@ -318,20 +315,24 @@ class MindGraphBuilder : public GraphBuilder {
 
  protected:
   bool DoGetItem(const Instr &instr) override;
+  bool DoItemAccess(const Instr &instr) override;
   bool DoUnary(const Instr &instr) override;
   bool DoBinary(const Instr &instr) override;
   bool DoIsOp(const Instr &instr) override;
   bool DoBinaryMul(const Instr &instr) override;
   bool DoCompare(const Instr &instr) override;
   bool DoBuildOp(const Instr &instr) override;
+  ValueNode *HandleGetattr(ValueNode *target_node, const Instr &instr) override;
+  bool HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame) override;
+  bool UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, bool *has_kw,
+                          CallNode *call_node) override;
+  bool HandleKWParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame) override;
+  bool UnpackCallExDict(std::vector<ValueNode *> *params, CallNode *call_node) override;
 
  private:
   std::vector<py::object> GetNewArgs(CallNode *call_node, AObject *vobj = nullptr);
-  bool IsFuncInWhiteList(const py::object &f, std::string *special_func_key);
-  bool HandleFuncInWhiteList(const std::string &key, CallNode *n) override;
   bool AllConstantArgs(const std::vector<py::object> &args, const py::object &callable_info, CallNode *call_node);
 
- private:
   mindspore::FuncGraphBuilderPtr fg_builder_{nullptr};
   std::string co_name_;
   AObject *HandleMultiOp(const Instr &instr, const std::vector<ValueNode *> &p, bool is_compare);

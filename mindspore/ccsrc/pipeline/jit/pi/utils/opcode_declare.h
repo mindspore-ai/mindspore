@@ -1,0 +1,547 @@
+/**
+ * Copyright 2024 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef MINDSPORE_PI_JIT_OPCODE_DECLARE_H
+#define MINDSPORE_PI_JIT_OPCODE_DECLARE_H
+
+#include "pipeline/jit/pi/utils/opcode_util.h"
+#include <opcode.h>
+
+namespace mindspore {
+namespace pijit {
+
+#define ILLEGAL_OPCODE 0
+
+#ifndef ASYNC_GEN_WRAP
+#define ASYNC_GEN_WRAP ILLEGAL_OPCODE
+#endif
+#ifndef BEFORE_ASYNC_WITH
+#define BEFORE_ASYNC_WITH ILLEGAL_OPCODE
+#endif
+#ifndef BEFORE_WITH
+#define BEFORE_WITH ILLEGAL_OPCODE
+#endif
+#ifndef BEGIN_FINALLY
+#define BEGIN_FINALLY ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_ADD
+#define BINARY_ADD ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_AND
+#define BINARY_AND ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_FLOOR_DIVIDE
+#define BINARY_FLOOR_DIVIDE ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_LSHIFT
+#define BINARY_LSHIFT ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_MATRIX_MULTIPLY
+#define BINARY_MATRIX_MULTIPLY ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_MODULO
+#define BINARY_MODULO ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_MULTIPLY
+#define BINARY_MULTIPLY ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_OP
+#define BINARY_OP ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_OR
+#define BINARY_OR ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_POWER
+#define BINARY_POWER ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_RSHIFT
+#define BINARY_RSHIFT ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_SUBSCR
+#define BINARY_SUBSCR ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_SUBTRACT
+#define BINARY_SUBTRACT ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_TRUE_DIVIDE
+#define BINARY_TRUE_DIVIDE ILLEGAL_OPCODE
+#endif
+#ifndef BINARY_XOR
+#define BINARY_XOR ILLEGAL_OPCODE
+#endif
+#ifndef BREAK_LOOP
+#define BREAK_LOOP ILLEGAL_OPCODE
+#endif
+#ifndef BUILD_CONST_KEY_MAP
+#define BUILD_CONST_KEY_MAP ILLEGAL_OPCODE
+#endif
+#ifndef BUILD_LIST
+#define BUILD_LIST ILLEGAL_OPCODE
+#endif
+#ifndef BUILD_LIST_UNPACK
+#define BUILD_LIST_UNPACK ILLEGAL_OPCODE
+#endif
+#ifndef BUILD_MAP
+#define BUILD_MAP ILLEGAL_OPCODE
+#endif
+#ifndef BUILD_MAP_UNPACK
+#define BUILD_MAP_UNPACK ILLEGAL_OPCODE
+#endif
+#ifndef BUILD_MAP_UNPACK_WITH_CALL
+#define BUILD_MAP_UNPACK_WITH_CALL ILLEGAL_OPCODE
+#endif
+#ifndef BUILD_SET
+#define BUILD_SET ILLEGAL_OPCODE
+#endif
+#ifndef BUILD_SET_UNPACK
+#define BUILD_SET_UNPACK ILLEGAL_OPCODE
+#endif
+#ifndef BUILD_SLICE
+#define BUILD_SLICE ILLEGAL_OPCODE
+#endif
+#ifndef BUILD_STRING
+#define BUILD_STRING ILLEGAL_OPCODE
+#endif
+#ifndef BUILD_TUPLE
+#define BUILD_TUPLE ILLEGAL_OPCODE
+#endif
+#ifndef BUILD_TUPLE_UNPACK
+#define BUILD_TUPLE_UNPACK ILLEGAL_OPCODE
+#endif
+#ifndef BUILD_TUPLE_UNPACK_WITH_CALL
+#define BUILD_TUPLE_UNPACK_WITH_CALL ILLEGAL_OPCODE
+#endif
+#ifndef CACHE
+#define CACHE ILLEGAL_OPCODE
+#endif
+#ifndef CALL
+#define CALL ILLEGAL_OPCODE
+#endif
+#ifndef CALL_FINALLY
+#define CALL_FINALLY ILLEGAL_OPCODE
+#endif
+#ifndef CALL_FUNCTION
+#define CALL_FUNCTION ILLEGAL_OPCODE
+#endif
+#ifndef CALL_FUNCTION_EX
+#define CALL_FUNCTION_EX ILLEGAL_OPCODE
+#endif
+#ifndef CALL_FUNCTION_KW
+#define CALL_FUNCTION_KW ILLEGAL_OPCODE
+#endif
+#ifndef CALL_METHOD
+#define CALL_METHOD ILLEGAL_OPCODE
+#endif
+#ifndef CHECK_EG_MATCH
+#define CHECK_EG_MATCH ILLEGAL_OPCODE
+#endif
+#ifndef CHECK_EXC_MATCH
+#define CHECK_EXC_MATCH ILLEGAL_OPCODE
+#endif
+#ifndef COMPARE_OP
+#define COMPARE_OP ILLEGAL_OPCODE
+#endif
+#ifndef CONTAINS_OP
+#define CONTAINS_OP ILLEGAL_OPCODE
+#endif
+#ifndef CONTINUE_LOOP
+#define CONTINUE_LOOP ILLEGAL_OPCODE
+#endif
+#ifndef COPY
+#define COPY ILLEGAL_OPCODE
+#endif
+#ifndef COPY_DICT_WITHOUT_KEYS
+#define COPY_DICT_WITHOUT_KEYS ILLEGAL_OPCODE
+#endif
+#ifndef COPY_FREE_VARS
+#define COPY_FREE_VARS ILLEGAL_OPCODE
+#endif
+#ifndef DELETE_ATTR
+#define DELETE_ATTR ILLEGAL_OPCODE
+#endif
+#ifndef DELETE_DEREF
+#define DELETE_DEREF ILLEGAL_OPCODE
+#endif
+#ifndef DELETE_FAST
+#define DELETE_FAST ILLEGAL_OPCODE
+#endif
+#ifndef DELETE_GLOBAL
+#define DELETE_GLOBAL ILLEGAL_OPCODE
+#endif
+#ifndef DELETE_NAME
+#define DELETE_NAME ILLEGAL_OPCODE
+#endif
+#ifndef DELETE_SUBSCR
+#define DELETE_SUBSCR ILLEGAL_OPCODE
+#endif
+#ifndef DICT_MERGE
+#define DICT_MERGE ILLEGAL_OPCODE
+#endif
+#ifndef DICT_UPDATE
+#define DICT_UPDATE ILLEGAL_OPCODE
+#endif
+#ifndef DUP_TOP
+#define DUP_TOP ILLEGAL_OPCODE
+#endif
+#ifndef DUP_TOP_TWO
+#define DUP_TOP_TWO ILLEGAL_OPCODE
+#endif
+#ifndef END_ASYNC_FOR
+#define END_ASYNC_FOR ILLEGAL_OPCODE
+#endif
+#ifndef END_FINALLY
+#define END_FINALLY ILLEGAL_OPCODE
+#endif
+#ifndef EXTENDED_ARG
+#define EXTENDED_ARG ILLEGAL_OPCODE
+#endif
+#ifndef FOR_ITER
+#define FOR_ITER ILLEGAL_OPCODE
+#endif
+#ifndef FORMAT_VALUE
+#define FORMAT_VALUE ILLEGAL_OPCODE
+#endif
+#ifndef GEN_START
+#define GEN_START ILLEGAL_OPCODE
+#endif
+#ifndef GET_AITER
+#define GET_AITER ILLEGAL_OPCODE
+#endif
+#ifndef GET_ANEXT
+#define GET_ANEXT ILLEGAL_OPCODE
+#endif
+#ifndef GET_AWAITABLE
+#define GET_AWAITABLE ILLEGAL_OPCODE
+#endif
+#ifndef GET_ITER
+#define GET_ITER ILLEGAL_OPCODE
+#endif
+#ifndef GET_LEN
+#define GET_LEN ILLEGAL_OPCODE
+#endif
+#ifndef GET_YIELD_FROM_ITER
+#define GET_YIELD_FROM_ITER ILLEGAL_OPCODE
+#endif
+#ifndef IMPORT_FROM
+#define IMPORT_FROM ILLEGAL_OPCODE
+#endif
+#ifndef IMPORT_NAME
+#define IMPORT_NAME ILLEGAL_OPCODE
+#endif
+#ifndef IMPORT_STAR
+#define IMPORT_STAR ILLEGAL_OPCODE
+#endif
+#ifndef INPLACE_ADD
+#define INPLACE_ADD ILLEGAL_OPCODE
+#endif
+#ifndef INPLACE_AND
+#define INPLACE_AND ILLEGAL_OPCODE
+#endif
+#ifndef INPLACE_FLOOR_DIVIDE
+#define INPLACE_FLOOR_DIVIDE ILLEGAL_OPCODE
+#endif
+#ifndef INPLACE_LSHIFT
+#define INPLACE_LSHIFT ILLEGAL_OPCODE
+#endif
+#ifndef INPLACE_MATRIX_MULTIPLY
+#define INPLACE_MATRIX_MULTIPLY ILLEGAL_OPCODE
+#endif
+#ifndef INPLACE_MODULO
+#define INPLACE_MODULO ILLEGAL_OPCODE
+#endif
+#ifndef INPLACE_MULTIPLY
+#define INPLACE_MULTIPLY ILLEGAL_OPCODE
+#endif
+#ifndef INPLACE_OR
+#define INPLACE_OR ILLEGAL_OPCODE
+#endif
+#ifndef INPLACE_POWER
+#define INPLACE_POWER ILLEGAL_OPCODE
+#endif
+#ifndef INPLACE_RSHIFT
+#define INPLACE_RSHIFT ILLEGAL_OPCODE
+#endif
+#ifndef INPLACE_SUBTRACT
+#define INPLACE_SUBTRACT ILLEGAL_OPCODE
+#endif
+#ifndef INPLACE_TRUE_DIVIDE
+#define INPLACE_TRUE_DIVIDE ILLEGAL_OPCODE
+#endif
+#ifndef INPLACE_XOR
+#define INPLACE_XOR ILLEGAL_OPCODE
+#endif
+#ifndef IS_OP
+#define IS_OP ILLEGAL_OPCODE
+#endif
+#ifndef JUMP_ABSOLUTE
+#define JUMP_ABSOLUTE ILLEGAL_OPCODE
+#endif
+#ifndef JUMP_BACKWARD
+#define JUMP_BACKWARD ILLEGAL_OPCODE
+#endif
+#ifndef JUMP_BACKWARD_NO_INTERRUPT
+#define JUMP_BACKWARD_NO_INTERRUPT ILLEGAL_OPCODE
+#endif
+#ifndef JUMP_FORWARD
+#define JUMP_FORWARD ILLEGAL_OPCODE
+#endif
+#ifndef JUMP_IF_FALSE_OR_POP
+#define JUMP_IF_FALSE_OR_POP ILLEGAL_OPCODE
+#endif
+#ifndef JUMP_IF_NOT_EXC_MATCH
+#define JUMP_IF_NOT_EXC_MATCH ILLEGAL_OPCODE
+#endif
+#ifndef JUMP_IF_TRUE_OR_POP
+#define JUMP_IF_TRUE_OR_POP ILLEGAL_OPCODE
+#endif
+#ifndef KW_NAMES
+#define KW_NAMES ILLEGAL_OPCODE
+#endif
+#ifndef LIST_APPEND
+#define LIST_APPEND ILLEGAL_OPCODE
+#endif
+#ifndef LIST_EXTEND
+#define LIST_EXTEND ILLEGAL_OPCODE
+#endif
+#ifndef LIST_TO_TUPLE
+#define LIST_TO_TUPLE ILLEGAL_OPCODE
+#endif
+#ifndef LOAD_ASSERTION_ERROR
+#define LOAD_ASSERTION_ERROR ILLEGAL_OPCODE
+#endif
+#ifndef LOAD_ATTR
+#define LOAD_ATTR ILLEGAL_OPCODE
+#endif
+#ifndef LOAD_BUILD_CLASS
+#define LOAD_BUILD_CLASS ILLEGAL_OPCODE
+#endif
+#ifndef LOAD_CLASSDEREF
+#define LOAD_CLASSDEREF ILLEGAL_OPCODE
+#endif
+#ifndef LOAD_CLOSURE
+#define LOAD_CLOSURE ILLEGAL_OPCODE
+#endif
+#ifndef LOAD_CONST
+#define LOAD_CONST ILLEGAL_OPCODE
+#endif
+#ifndef LOAD_DEREF
+#define LOAD_DEREF ILLEGAL_OPCODE
+#endif
+#ifndef LOAD_FAST
+#define LOAD_FAST ILLEGAL_OPCODE
+#endif
+#ifndef LOAD_GLOBAL
+#define LOAD_GLOBAL ILLEGAL_OPCODE
+#endif
+#ifndef LOAD_METHOD
+#define LOAD_METHOD ILLEGAL_OPCODE
+#endif
+#ifndef LOAD_NAME
+#define LOAD_NAME ILLEGAL_OPCODE
+#endif
+#ifndef MAKE_CELL
+#define MAKE_CELL ILLEGAL_OPCODE
+#endif
+#ifndef MAKE_FUNCTION
+#define MAKE_FUNCTION ILLEGAL_OPCODE
+#endif
+#ifndef MAP_ADD
+#define MAP_ADD ILLEGAL_OPCODE
+#endif
+#ifndef MATCH_CLASS
+#define MATCH_CLASS ILLEGAL_OPCODE
+#endif
+#ifndef MATCH_KEYS
+#define MATCH_KEYS ILLEGAL_OPCODE
+#endif
+#ifndef MATCH_MAPPING
+#define MATCH_MAPPING ILLEGAL_OPCODE
+#endif
+#ifndef MATCH_SEQUENCE
+#define MATCH_SEQUENCE ILLEGAL_OPCODE
+#endif
+#ifndef NOP
+#define NOP ILLEGAL_OPCODE
+#endif
+#ifndef POP_BLOCK
+#define POP_BLOCK ILLEGAL_OPCODE
+#endif
+#ifndef POP_EXCEPT
+#define POP_EXCEPT ILLEGAL_OPCODE
+#endif
+#ifndef POP_FINALLY
+#define POP_FINALLY ILLEGAL_OPCODE
+#endif
+#ifndef POP_JUMP_BACKWARD_IF_FALSE
+#define POP_JUMP_BACKWARD_IF_FALSE ILLEGAL_OPCODE
+#endif
+#ifndef POP_JUMP_BACKWARD_IF_NONE
+#define POP_JUMP_BACKWARD_IF_NONE ILLEGAL_OPCODE
+#endif
+#ifndef POP_JUMP_BACKWARD_IF_NOT_NONE
+#define POP_JUMP_BACKWARD_IF_NOT_NONE ILLEGAL_OPCODE
+#endif
+#ifndef POP_JUMP_BACKWARD_IF_TRUE
+#define POP_JUMP_BACKWARD_IF_TRUE ILLEGAL_OPCODE
+#endif
+#ifndef POP_JUMP_FORWARD_IF_FALSE
+#define POP_JUMP_FORWARD_IF_FALSE ILLEGAL_OPCODE
+#endif
+#ifndef POP_JUMP_FORWARD_IF_NONE
+#define POP_JUMP_FORWARD_IF_NONE ILLEGAL_OPCODE
+#endif
+#ifndef POP_JUMP_FORWARD_IF_NOT_NONE
+#define POP_JUMP_FORWARD_IF_NOT_NONE ILLEGAL_OPCODE
+#endif
+#ifndef POP_JUMP_FORWARD_IF_TRUE
+#define POP_JUMP_FORWARD_IF_TRUE ILLEGAL_OPCODE
+#endif
+#ifndef POP_JUMP_IF_FALSE
+#define POP_JUMP_IF_FALSE ILLEGAL_OPCODE
+#endif
+#ifndef POP_JUMP_IF_TRUE
+#define POP_JUMP_IF_TRUE ILLEGAL_OPCODE
+#endif
+#ifndef POP_TOP
+#define POP_TOP ILLEGAL_OPCODE
+#endif
+#ifndef PRECALL
+#define PRECALL ILLEGAL_OPCODE
+#endif
+#ifndef PREP_RERAISE_STAR
+#define PREP_RERAISE_STAR ILLEGAL_OPCODE
+#endif
+#ifndef PRINT_EXPR
+#define PRINT_EXPR ILLEGAL_OPCODE
+#endif
+#ifndef PUSH_EXC_INFO
+#define PUSH_EXC_INFO ILLEGAL_OPCODE
+#endif
+#ifndef PUSH_NULL
+#define PUSH_NULL ILLEGAL_OPCODE
+#endif
+#ifndef RAISE_VARARGS
+#define RAISE_VARARGS ILLEGAL_OPCODE
+#endif
+#ifndef RERAISE
+#define RERAISE ILLEGAL_OPCODE
+#endif
+#ifndef RESUME
+#define RESUME ILLEGAL_OPCODE
+#endif
+#ifndef RETURN_GENERATOR
+#define RETURN_GENERATOR ILLEGAL_OPCODE
+#endif
+#ifndef RETURN_VALUE
+#define RETURN_VALUE ILLEGAL_OPCODE
+#endif
+#ifndef ROT_FOUR
+#define ROT_FOUR ILLEGAL_OPCODE
+#endif
+#ifndef ROT_N
+#define ROT_N ILLEGAL_OPCODE
+#endif
+#ifndef ROT_THREE
+#define ROT_THREE ILLEGAL_OPCODE
+#endif
+#ifndef ROT_TWO
+#define ROT_TWO ILLEGAL_OPCODE
+#endif
+#ifndef SEND
+#define SEND ILLEGAL_OPCODE
+#endif
+#ifndef SET_ADD
+#define SET_ADD ILLEGAL_OPCODE
+#endif
+#ifndef SETUP_ANNOTATIONS
+#define SETUP_ANNOTATIONS ILLEGAL_OPCODE
+#endif
+#ifndef SETUP_ASYNC_WITH
+#define SETUP_ASYNC_WITH ILLEGAL_OPCODE
+#endif
+#ifndef SET_UPDATE
+#define SET_UPDATE ILLEGAL_OPCODE
+#endif
+#ifndef SETUP_EXCEPT
+#define SETUP_EXCEPT ILLEGAL_OPCODE
+#endif
+#ifndef SETUP_FINALLY
+#define SETUP_FINALLY ILLEGAL_OPCODE
+#endif
+#ifndef SETUP_LOOP
+#define SETUP_LOOP ILLEGAL_OPCODE
+#endif
+#ifndef SETUP_WITH
+#define SETUP_WITH ILLEGAL_OPCODE
+#endif
+#ifndef STORE_ATTR
+#define STORE_ATTR ILLEGAL_OPCODE
+#endif
+#ifndef STORE_DEREF
+#define STORE_DEREF ILLEGAL_OPCODE
+#endif
+#ifndef STORE_FAST
+#define STORE_FAST ILLEGAL_OPCODE
+#endif
+#ifndef STORE_GLOBAL
+#define STORE_GLOBAL ILLEGAL_OPCODE
+#endif
+#ifndef STORE_NAME
+#define STORE_NAME ILLEGAL_OPCODE
+#endif
+#ifndef STORE_SUBSCR
+#define STORE_SUBSCR ILLEGAL_OPCODE
+#endif
+#ifndef SWAP
+#define SWAP ILLEGAL_OPCODE
+#endif
+#ifndef UNARY_INVERT
+#define UNARY_INVERT ILLEGAL_OPCODE
+#endif
+#ifndef UNARY_NEGATIVE
+#define UNARY_NEGATIVE ILLEGAL_OPCODE
+#endif
+#ifndef UNARY_NOT
+#define UNARY_NOT ILLEGAL_OPCODE
+#endif
+#ifndef UNARY_POSITIVE
+#define UNARY_POSITIVE ILLEGAL_OPCODE
+#endif
+#ifndef UNPACK_EX
+#define UNPACK_EX ILLEGAL_OPCODE
+#endif
+#ifndef UNPACK_SEQUENCE
+#define UNPACK_SEQUENCE ILLEGAL_OPCODE
+#endif
+#ifndef WITH_CLEANUP_FINISH
+#define WITH_CLEANUP_FINISH ILLEGAL_OPCODE
+#endif
+#ifndef WITH_CLEANUP_START
+#define WITH_CLEANUP_START ILLEGAL_OPCODE
+#endif
+#ifndef WITH_EXCEPT_START
+#define WITH_EXCEPT_START ILLEGAL_OPCODE
+#endif
+#ifndef YIELD_FROM
+#define YIELD_FROM ILLEGAL_OPCODE
+#endif
+#ifndef YIELD_VALUE
+#define YIELD_VALUE ILLEGAL_OPCODE
+#endif
+
+}  // namespace pijit
+}  // namespace mindspore
+
+#endif  // MINDSPORE_PI_JIT_OPCODE_DECLARE_H

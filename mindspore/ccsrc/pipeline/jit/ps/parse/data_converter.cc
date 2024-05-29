@@ -281,6 +281,7 @@ ValuePtr ConvertStubTuple(const py::object &obj, bool use_signature) {
 
 ValuePtr ConvertList(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python list";
+  PyRecursionScope scope(obj);
 
   auto list = obj.cast<py::list>();
   std::vector<ValuePtr> value_list;
@@ -298,6 +299,7 @@ ValuePtr ConvertList(const py::object &obj, bool use_signature) {
 
 ValuePtr ConvertStubList(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python list";
+  PyRecursionScope scope(obj);
 
   auto list = obj.cast<py::list>();
   std::vector<ValuePtr> value_list;
@@ -314,6 +316,8 @@ ValuePtr ConvertStubList(const py::object &obj, bool use_signature) {
 
 ValuePtr ConvertCellList(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting cell list";
+  PyRecursionScope scope(obj);
+
   py::sequence list = obj;
   std::vector<ValuePtr> value_list;
 
@@ -340,6 +344,8 @@ ValuePtr ConvertCellList(const py::object &obj, bool use_signature) {
 
 ValuePtr ConvertDict(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python dict";
+  PyRecursionScope scope(obj);
+
   auto dict_values = obj.cast<py::dict>();
   std::vector<std::pair<ValuePtr, ValuePtr>> key_values;
   for (auto item : dict_values) {
@@ -735,6 +741,7 @@ static const std::vector<DataConvertFuncPtr> &GetDataConvertFuncs() {
     std::make_shared<ByFuncDataConvertFunc>(IsStubTensor, ConvertStubTensor),
     std::make_shared<ByFuncDataConvertFunc>(IsNamedTuple, ConvertNamedTuple),
     std::make_shared<ByTypeDataConvertFunc<Tensor>>(ObjCast<TensorPtr>),
+    std::make_shared<ByAttrDataConvertFunc>(ConvertMsClass, PYTHON_MS_CLASS),
     std::make_shared<ByTypeDataConvertFunc<BaseTensor>>(ObjCast<BaseTensorPtr>),
     std::make_shared<ByTypeDataConvertFunc<py::tuple>>(ConvertTuple),
     std::make_shared<ByTypeDataConvertFunc<py::list>>(ConvertList),
@@ -749,7 +756,6 @@ static const std::vector<DataConvertFuncPtr> &GetDataConvertFuncs() {
     std::make_shared<ByTypeDataConvertFunc<MapTensor>>(ObjCast<MapTensorPtr>),
     std::make_shared<ByTypeDataConvertFunc<py::ellipsis>>(kEllipsis),
     std::make_shared<ByTypeDataConvertFunc<py::module>>(ConvertModuleNameSpace),
-    std::make_shared<ByAttrDataConvertFunc>(ConvertMsClass, PYTHON_MS_CLASS),
     std::make_shared<ByTypeDataConvertFunc<Type>>(ObjCast<TypePtr>),
     std::make_shared<ByTypeDataConvertFunc<UMonad>>(ObjCast<UMonadPtr>),
     std::make_shared<ByTypeDataConvertFunc<IOMonad>>(ObjCast<IOMonadPtr>),

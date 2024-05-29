@@ -103,6 +103,13 @@ bool GraphUtils::IsTensor(const py::object &obj) {
          py::isinstance<mindspore::tensor::COOTensor>(obj) || py::isinstance<mindspore::tensor::RowTensor>(obj);
 }
 
+bool GraphUtils::IsEmptyContainer(const py::object &obj) {
+  if (!py::isinstance<py::tuple>(obj) && !py::isinstance<py::list>(obj) && !py::isinstance<py::dict>(obj)) {
+    return false;
+  }
+  return py::len(obj) == 0;
+}
+
 AbstractBasePtr GraphUtils::ArgsToAbstract(const py::object &arg, const ValuePtr &value, bool enable_tuple_broaden) {
   auto ret = abstract::ToAbstract(value, nullptr, nullptr);
   if (EnableArgBroaden(arg, value, enable_tuple_broaden)) {

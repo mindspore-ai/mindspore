@@ -15,6 +15,7 @@
  */
 #include "pipeline/jit/pi/utils/utils.h"
 #include <unordered_set>
+#include <iomanip>
 #include "ir/tensor.h"
 #include "ir/map_tensor.h"
 #include "pipeline/jit/pi/pydef.h"
@@ -71,45 +72,6 @@ std::string Utils::GetPyName(PyObject *obj) {
   return str != nullptr ? std::string(str) : "";
 }
 
-int Utils::GetBranchDestIndex(int op, int arg, int ci) {
-  if (Utils::IsRelativeJump(op)) {
-    return ci + 1 + arg / sizeof(_Py_CODEUNIT);
-  }
-  if (Utils::IsAbsoluteJump(op)) {
-    return arg / sizeof(_Py_CODEUNIT);
-  }
-  return -1;
-}
-
-int Utils::GetBranchDestArg(int op, int jump_bci, int curr_bci) {
-  if (Utils::IsRelativeJump(op)) {
-    MS_EXCEPTION_IF_CHECK_FAIL(jump_bci > curr_bci, "invalid jump bci: " + std::to_string(jump_bci) +
-                                                      " current bci: " + std::to_string(curr_bci));
-    return (jump_bci - curr_bci - 1) * sizeof(_Py_CODEUNIT);
-  }
-  if (Utils::IsAbsoluteJump(op)) {
-    return jump_bci * sizeof(_Py_CODEUNIT);
-  }
-  MS_EXCEPTION_IF_CHECK_FAIL(false, "undefined branch opcode: " + GetOpName(op));
-  return -1;
-}
-
-bool Utils::IsRelativeJump(int op) { return code::GetOpcodeInfo(op).flag_ & code::kJRel; }
-bool Utils::IsAbsoluteJump(int op) { return code::GetOpcodeInfo(op).flag_ & code::kJAbs; }
-bool Utils::IsNameRelated(int op) { return code::GetOpcodeInfo(op).flag_ & code::kNamed; }
-bool Utils::IsCallOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kCall; }
-bool Utils::IsNonFall(int op) { return code::GetOpcodeInfo(op).flag_ & code::kNoFall; }
-bool Utils::IsIfJump(int op) { return (code::GetOpcodeInfo(op).flag_ & (code::kJAbs | code::kNoFall)) == code::kJAbs; }
-bool Utils::IsLocalAccessOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kLocalAccess; }
-// it is PyCellObject access op, only used for cell/free/closure
-bool Utils::IsCellAccessOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kCellAccess; }
-bool Utils::IsGeneralNoSideEffectOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kGeneralNoSideEffect; }
-bool Utils::IsNoSideEffectOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kNoSideEffect; }
-bool Utils::IsLoadOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kLoad; }
-bool Utils::IsMsUnsupported(int op) { return code::GetOpcodeInfo(op).flag_ & code::kMsUnsupported; }
-bool Utils::IsBinaryMathOp(int op) { return code::GetOpcodeInfo(op).flag_ & code::kBinaryMath; }
-const std::string &Utils::GetOpName(int op) { return code::GetOpcodeInfo(op).name_; }
-
 void Utils::PyBuiltinPrint(PyObject *str) {
   static _PyCFunctionFastWithKeywords pyprint = nullptr;
   if (!pyprint) {
@@ -149,14 +111,25 @@ py::object Utils::GetModuleAttr(const std::string &mod_name, const std::string &
     attr = PyObject_GetAttrString(mod, attr_name.c_str());
     Py_DECREF(mod);
   }
-  if (attr == nullptr) {
-    if (_throw) {
-      throw py::error_already_set();
-    }
-    Utils::ReportPythonException();
-    PyErr_Clear();
+  if (attr != nullptr) {
+    return py::reinterpret_steal<py::object>(attr);
   }
-  return py::reinterpret_steal<py::object>(attr);
+  if (!_throw) {
+    PyErr_Clear();
+    return py::object();
+  }
+  if (!PyErr_Occurred()) {
+    if (mod == nullptr) {
+      if (_import) {
+        PyErr_Format(PyExc_ModuleNotFoundError, "No module named %s", mod_name.c_str());
+      } else {
+        PyErr_Format(PyExc_KeyError, "sys.modules[%s]", mod_name.c_str());
+      }
+    } else if (attr == nullptr) {
+      PyErr_Format(PyExc_AttributeError, "%S no attribute %s", mod, attr_name.c_str());
+    }
+  }
+  throw py::error_already_set();
 }
 
 std::string Utils::ReportPythonException() {
@@ -202,9 +175,9 @@ static std::pair<py::object, py::object> PackExArgs(const std::vector<py::object
       PyObject *vals = PyDict_Values(kwargs.ptr());
       PyObject *keys = PyDict_Keys(kwargs.ptr());
       PyObject *new_args = PySequence_Concat(pargs.ptr(), vals);
-      pargs = py::reinterpret_steal<py::object>(new_args);
-      kwargs = py::reinterpret_steal<py::object>(keys);
       Py_DECREF(vals);
+      pargs = py::reinterpret_steal<py::tuple>(new_args);
+      kwargs = py::reinterpret_steal<py::tuple>(keys);
     }
   } while (0);
   return {pargs, kwargs};
@@ -221,8 +194,8 @@ std::pair<py::object, py::object> Utils::PackCallStackArgs(const std::vector<py:
   Py_ssize_t kwsize = 0;
   py::object pargs;
   py::object kwargs;
-  switch (callop) {
-    case CALL_FUNCTION_KW: {
+  if (callop == CALL_FUNCTION_KW || callop == CALL_FUNCTION || callop == CALL_METHOD) {
+    if (callop == CALL_FUNCTION_KW) {
       py::object keys = args.back();
       if (!PyTuple_Check(keys.ptr())) {
         return failed;
@@ -241,20 +214,15 @@ std::pair<py::object, py::object> Utils::PackCallStackArgs(const std::vector<py:
           PyDict_SetItem(kwargs.ptr(), PyTuple_GET_ITEM(keys.ptr(), i), args[psize + i].ptr());
         }
       }
-      // handle tuple
     }
-    /* fall-through */
-    case CALL_FUNCTION:
-    case CALL_METHOD:
-      pargs = py::tuple(psize);
-      for (Py_ssize_t i = 0; i < psize; ++i) {
-        PyTuple_SET_ITEM(pargs.ptr(), i, args[i].inc_ref().ptr());
-      }
-      break;
-    case CALL_FUNCTION_EX:
-      return PackExArgs(args, ret_vector_args);
-    default:
-      return failed;
+    pargs = py::tuple(psize);
+    for (Py_ssize_t i = 0; i < psize; ++i) {
+      PyTuple_SET_ITEM(pargs.ptr(), i, args[i].inc_ref().ptr());
+    }
+  } else if (callop == CALL_FUNCTION_EX) {
+    return PackExArgs(args, ret_vector_args);
+  } else {
+    return failed;
   }
   return {pargs, kwargs};
 }
@@ -272,9 +240,6 @@ PyObject *RetFrame(PyThreadState *, PyFrameObject *f, int) {
 #endif
 
 PyFrameObject *Utils::PrepareFrame(PyObject *callable, PyObject *args, PyObject *kwargs) {
-#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 8)
-  return nullptr;
-#else
   if (callable == nullptr || args == nullptr) {
     return nullptr;
   }
@@ -289,7 +254,20 @@ PyFrameObject *Utils::PrepareFrame(PyObject *callable, PyObject *args, PyObject 
   MS_LOG(DEBUG) << "prepare frame for " << std::string(py::str(callable)) << " failed because "
                 << Utils::ReportPythonException();
   return nullptr;
-#endif
+}
+
+PyObject *Utils::MixedPrecisionTypeToDType(MixedPrecisionType mixed_type) {
+  auto ms_dtype_obj = Utils::GetModuleAttr("mindspore", "dtype");
+  auto dtype_fp16_obj = ms_dtype_obj.attr("float16").ptr();
+  auto dtype_fp32_obj = ms_dtype_obj.attr("float32").ptr();
+  auto dtype_bf16_obj = ms_dtype_obj.attr("bfloat16").ptr();
+  auto dst_dtype = dtype_fp16_obj;
+  if (mixed_type == MixedPrecisionType::kFP32) {
+    dst_dtype = dtype_fp32_obj;
+  } else if (mixed_type == MixedPrecisionType::kBF16) {
+    dst_dtype = dtype_bf16_obj;
+  }
+  return dst_dtype;
 }
 
 bool HasMutableOrConstAttr(PyObject *obj) {
@@ -401,6 +379,29 @@ py::object GetPyCodeObject(const py::object &any, bool exact_func) {
   return GetPyCodeObject(py::reinterpret_steal<py::object>(call), true);
 }
 
+const char *GetFuncName(const py::object &f) {
+  PyObject *func = f.ptr();
+  if (func == nullptr) {
+    return "";
+  }
+  if (PyMethod_Check(func)) {
+    func = PyMethod_GET_FUNCTION(func);
+  }
+  if (PyCFunction_Check(func)) {
+    return reinterpret_cast<PyCFunctionObject *>(func)->m_ml->ml_name;
+  }
+  PyCodeObject *co = nullptr;
+  if (PyFunction_Check(func)) {
+    co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func));
+  }
+  if (co) {
+    return PyUnicode_AsUTF8(co->co_name);
+  }
+  PyTypeObject *tp = PyType_Check(func) ? reinterpret_cast<PyTypeObject *>(func) : Py_TYPE(func);
+  const char *res = strrchr(tp->tp_name, '.');
+  return res ? res + 1 : tp->tp_name;
+}
+
 bool CheckConstPyObject(PyObject *cnst) {
   static const std::unordered_set<PyTypeObject *> cnst_types = {
     Py_TYPE(Py_None), Py_TYPE(Py_Ellipsis), Py_TYPE(Py_True), &PyCode_Type,  &PyFloat_Type,
@@ -479,6 +480,55 @@ RefTracker::~RefTracker() {
 }
 
 RefTracker::RefTracker() : mdef_({"ref_untrack", &RefTracker::UnTrack, METH_O, PyDoc_STR("")}) {}
+
+TimeRecorder::TimeRecorder(const RecorderType &descr, bool record) : descr_(descr), record_(record) {
+  if (record_) {
+    start_ = std::chrono::steady_clock::now();
+  }
+}
+
+TimeRecorder::~TimeRecorder() {
+  if (record_) {
+    uint64_t clk = (std::chrono::steady_clock::now() - start_).count();
+    auto &data = TimeRecorder::Data()->data_[descr_];
+    data.count++;
+    data.nano += clk;
+  }
+}
+
+TimeRecorder::TimeData *TimeRecorder::Data() {
+  static TimeData data;
+  return &data;
+}
+
+TimeRecorder::TimeData::~TimeData() {
+  if (!data_.empty()) {
+    std::cout << ToString() << std::endl;
+  }
+}
+
+std::string TimeRecorder::TimeData::ToString() {
+  if (data_.empty()) {
+    return std::string();
+  }
+
+  const auto Fmt = [](std::ostream &s) -> std::ostream & {
+    const int w = 20;
+    s << std::setw(w) << std::left;
+    return s;
+  };
+
+  std::stringstream s;
+  s.precision(6);
+  s.setf(std::ios::fixed);
+  s << "============= TimeRecorder =============" << std::endl;
+  s << Fmt << "type" << Fmt << "times" << Fmt << "seconds" << std::endl;
+  for (const auto &i : data_) {
+    s << Fmt << i.first << Fmt << i.second.count << Fmt << (i.second.nano / TimeRecorder::scale) << std::endl;
+  }
+  s << "========================================" << std::endl;
+  return s.str();
+}
 
 }  // namespace pijit
 }  // namespace mindspore

@@ -21,27 +21,22 @@
 #include <vector>
 #include <utility>
 #include "pipeline/jit/pi/graph_capture/node.h"
-#include "pipeline/jit/pi/graph_guard/trace.h"
+#include "pipeline/jit/pi/graph_capture/graph_build.h"
 
 namespace mindspore {
 namespace pijit {
-using CheckFunc = bool (*)(const py::object &);
-using InferFunc = bool (*)(CallNode *);
-struct SpecialAction {
-  CheckFunc check;
-  InferFunc infer;
-};
 
-const char *GetFuncName(const py::object &f);
-bool CheckPrimitive(const py::object &func);
+using InferFunc = bool (*)(CallNode *, GraphBuilder *);
+InferFunc FindInferFunc(const py::object &callable, bool trace_flag = false);
+
 void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param);
 bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guard_depth);
-bool JustCallAndSetRes(CallNode *call_node);
-const std::unordered_map<std::string, SpecialAction> &GetFuncWhiteListMap(bool trace_flag = false);
-const std::vector<std::pair<CheckFunc, std::string>> &GetFuncWhiteListFuzzyMatcher(bool trace_flag = false);
-const std::string GetMindsporeNamePrimitive();
+bool JustCallAndSetRes(CallNode *call_node, GraphBuilder *g = nullptr);
 
-bool InferListAppend(CallNode *call_node);
+bool CheckJitConstexpr(const py::object &func);
+bool CheckMSConstexpr(const py::object &func);
+bool CheckBuiltinFuncOrMethod(const py::object &func);
+
 }  // namespace pijit
 }  // namespace mindspore
 

@@ -28,12 +28,14 @@ GraphJitConfig kPIJitConfigDefault;
 
 constexpr int kDefaultMaxTraceDepth = 16;
 
+constexpr const char *kModuleName = "mindspore._extends.pijit.pijit_func_white_list";
+constexpr const char *kFuncMapName = "_func_map";
+constexpr const char *kGuardFuncMapName = "guard_func_map";
+
 static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *)> key_map = {
   {"auto_jit_func_filter", &GraphJitConfig::SetAutoJitFilter},
   {"auto_jit_cell", &GraphJitConfig::SetBool<GraphJitConfig::kAutoJitCell>},
   {"auto_grad", &GraphJitConfig::SetBool<GraphJitConfig::kAutoGrad>},
-  // remove this config if 'strict_mode_cells' works well, and default inline all construct
-  {"replace_nncell_by_construct", &GraphJitConfig::SetBool<GraphJitConfig::kReplaceNNCellByConstruct>},
   {"compile_by_trace", &GraphJitConfig::SetBool<GraphJitConfig::kTraceFlag>},
   {"print_after_all", &GraphJitConfig::SetBool<GraphJitConfig::kPrintAfterAll>},
   {"print_tb", &GraphJitConfig::SetBool<GraphJitConfig::kPrintTraceback>},
@@ -78,7 +80,6 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"limit_graph_count", &GraphJitConfig::SetInt<GraphJitConfig::kLimitGraphCount>},
   {"relax_guard_count", &GraphJitConfig::SetInt<GraphJitConfig::kGuardRelaxCount>},
   {"allowed_inline_modules", &GraphJitConfig::AddAllowedInlineModules},
-  {"strict_mode_cells", &GraphJitConfig::AddPSJitStrictCells},
   {"pijit_forbidden", &GraphJitConfig::AddJitForbidden},
   {"pijit_constexpr", &GraphJitConfig::AddJitConstexpr},
   {"relax_guard_func", &GraphJitConfig::AddJitRelaxGuard},
@@ -87,9 +88,8 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
 GraphJitConfig::GraphJitConfig() {
   bool_conf[kAutoJitCell - kBoolConf] = false;
   bool_conf[kAutoGrad - kBoolConf] = false;
-  bool_conf[kReplaceNNCellByConstruct - kBoolConf] = true;
   bool_conf[kPrintAfterAll - kBoolConf] = false;
-  bool_conf[kTraceFlag - kBoolConf] = false;
+  bool_conf[kTraceFlag - kBoolConf] = true;
   bool_conf[kPrintTraceback - kBoolConf] = false;
   bool_conf[kPrintBB - kBoolConf] = false;
   bool_conf[kPrintCFG - kBoolConf] = false;
@@ -107,7 +107,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kPruneCase - kBoolConf] = true;
   bool_conf[kLoopUnrolling - kBoolConf] = false;
   bool_conf[kSkipException - kBoolConf] = false;
-  bool_conf[kInferOnly - kBoolConf] = false;
+  bool_conf[kInferOnly - kBoolConf] = true;
   bool_conf[kInferPrimitive - kBoolConf] = true;
   bool_conf[kStrictTrace - kBoolConf] = true;
   bool_conf[kPerfStatistics - kBoolConf] = false;
@@ -117,6 +117,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kTestGraphIR - kBoolConf] = false;
   bool_conf[kEnableGeneratorExpressionToTuple - kBoolConf] = true;
   bool_conf[kEnableDynamicShape - kBoolConf] = false;
+  bool_conf[kEnableMsApiInfer - kBoolConf] = false;
 
   /*'EnableOptimizeForAttrItem' options must be ensure that multiple calls of the
    *__getattr__, __getitem__ function of the user-defined object do not affect the correctness.
@@ -138,8 +139,7 @@ GraphJitConfig::GraphJitConfig() {
   int_conf[kLimitGraphCount - kIntConf] = 0;
   int_conf[kGuardRelaxCount - kIntConf] = 0;
 
-  set_conf[kAllowedInlineModules - kStrListConf] = {"mindspore"};
-  set_conf[kPSJitStrictCells - kStrListConf] = {};
+  allowed_inline_modules_.insert("mindspore");
 }
 
 static py::object GetObjectsMap() {
@@ -168,6 +168,31 @@ static py::object GetObjectsMap() {
   return py::reinterpret_steal<py::object>(registry);
 }
 
+static bool AddToFuncMap(PyObject *list, const std::string &map_name, const std::string &key) {
+  py::object func_map = Utils::GetModuleAttr(kModuleName, map_name, true, true);
+  py::object key_object = Utils::GetModuleAttr(kModuleName, key, true, true);
+  for (const py::handle &i : py::iter(list)) {
+    if (!PyCallable_Check(i.ptr())) {
+      return false;
+    }
+    py::int_ id = FunctionId(py::reinterpret_borrow<py::object>(i));
+    PyDict_SetItem(func_map.ptr(), id.ptr(), key_object.ptr());
+  }
+  return true;
+}
+
+bool GraphJitConfig::AddJitForbidden(PyObject *list) {
+  return AddToFuncMap(list, kFuncMapName, "FUNC_KEY_PIJIT_FORBIDDEN");
+}
+
+bool GraphJitConfig::AddJitConstexpr(PyObject *list) {
+  return AddToFuncMap(list, kFuncMapName, "FUNC_KEY_PIJIT_CONSTEXPR");
+}
+
+bool GraphJitConfig::AddJitRelaxGuard(PyObject *list) {
+  return AddToFuncMap(list, kGuardFuncMapName, "GUARD_KEY_RELAX_FUNC");
+}
+
 bool GraphJitConfig::AddAllowedInlineModules(PyObject *list) {
   py::object l = py::reinterpret_borrow<py::object>(list);
   for (const auto &i : py::iter(l)) {
@@ -189,29 +214,7 @@ bool GraphJitConfig::AddAllowedInlineModules(PyObject *list) {
 }
 
 void GraphJitConfig::AddAllowedInlineModules(const std::string &module_name) {
-  set_conf[kAllowedInlineModules - kStrListConf].insert(module_name);
-}
-
-void GraphJitConfig::AddPSJitStrictCells(const std::string &type_str) {
-  set_conf[kPSJitStrictCells - kStrListConf].insert(type_str);
-}
-
-bool GraphJitConfig::AddPSJitStrictCells(PyObject *list) {
-  py::object l = py::reinterpret_borrow<py::object>(list);
-  py::object func = Utils::GetModuleAttr("mindspore.nn", "Cell", false, false);
-  for (const auto &i : py::iter(l)) {
-    if (py::isinstance(i, func)) {
-      AddPSJitStrictCells(std::string(py::str(reinterpret_cast<PyObject *>(Py_TYPE(i.ptr())))));
-      continue;
-    }
-    if (PyObject_IsSubclass(i.ptr(), func.ptr()) == true) {
-      AddPSJitStrictCells(std::string(py::str(i.ptr())));
-      continue;
-    }
-    MS_LOG(WARNING) << "for config option 'strict_mode_cells' all elements must be subclass of mindspore.nn.Cell";
-    return false;
-  }
-  return true;
+  allowed_inline_modules_.insert(module_name);
 }
 
 bool GraphJitConfig::SetAutoJitFilter(PyObject *callable) {
@@ -254,117 +257,6 @@ bool GraphJitConfig::ShouldAutoJit(PyFrameObject *f) {
   }
   Py_DECREF(res);
   return res == Py_True;
-}
-
-static std::string GetCodeKey(PyCodeObject *co) {
-  std::stringstream s;
-  s << co << PyUnicode_AsUTF8(co->co_name);
-  return s.str();
-}
-
-bool GraphJitConfig::AddJitForbidden(PyObject *list) {
-  for (const py::handle &i : py::iter(list)) {
-    py::object code = GetPyCodeObject(py::cast<py::object>(i));
-    PyCodeObject *co = reinterpret_cast<PyCodeObject *>(code.ptr());
-    if (co == nullptr) {
-      MS_LOG(WARNING) << "config options 'jit_forbidden', can't find the code of " << std::string(py::str(i));
-      return false;
-    }
-    set_conf[kJitForbidden - kStrListConf].insert(GetCodeKey(co));
-  }
-  return true;
-}
-
-bool GraphJitConfig::CheckJitForbidden(const py::object &code) {
-  py::object h = GetPyCodeObject(code);
-  PyCodeObject *co = reinterpret_cast<PyCodeObject *>(h.ptr());
-  if (co == nullptr) {
-    return false;
-  }
-  const auto &s = set_conf[kJitForbidden - kStrListConf];
-  return s.find(GetCodeKey(co)) != s.end();
-}
-
-bool GraphJitConfig::AddJitConstexpr(PyObject *list) {
-  py::set constexpr_callable;
-  for (const py::handle &i : py::iter(list)) {
-    if (!PyCallable_Check(i.ptr())) {
-      MS_LOG(WARNING) << "config pijit_constexpr, all values must be function";
-      return false;
-    }
-    constexpr_callable.add(i);
-  }
-  py::object map = GetObjectsMap();
-  if (map.ptr() == nullptr) {
-    return false;
-  }
-  PyDict_SetItemString(map.ptr(), "<constexpr>", constexpr_callable.ptr());
-  return true;
-}
-
-bool GraphJitConfig::CheckJitConstexpr(const py::object &code) {
-  if (code.ptr() == nullptr || !PyCallable_Check(code.ptr())) {
-    return false;
-  }
-  PyTypeObject *tp = Py_TYPE(code.ptr());
-  if (tp->tp_hash == nullptr || tp->tp_hash == PyObject_HashNotImplemented) {
-    return false;
-  }
-  py::object map = GetObjectsMap();
-  if (map.ptr() == nullptr) {
-    return false;
-  }
-  PyObject *set = PyDict_GetItemString(map.ptr(), "<constexpr>");
-  if (set == nullptr) {
-    return false;
-  }
-  int res = PySet_Contains(set, code.ptr());
-  if (res < 0) {
-    PyErr_Clear();
-    return false;
-  }
-  return res;
-}
-
-bool GraphJitConfig::AddJitRelaxGuard(PyObject *list) {
-  py::set relax_guard_callable;
-  for (const py::handle &i : py::iter(list)) {
-    if (!PyCallable_Check(i.ptr())) {
-      MS_LOG(WARNING) << "config pijit_constexpr, all values must be function";
-      return false;
-    }
-    relax_guard_callable.add(i);
-  }
-  py::object map = GetObjectsMap();
-  if (map.ptr() == nullptr) {
-    return false;
-  }
-  PyDict_SetItemString(map.ptr(), "<relax guard func>", relax_guard_callable.ptr());
-  return true;
-}
-
-bool GraphJitConfig::CheckJitRelaxGuard(const py::object &code) {
-  if (code.ptr() == nullptr || !PyCallable_Check(code.ptr())) {
-    return false;
-  }
-  PyTypeObject *tp = Py_TYPE(code.ptr());
-  if (tp->tp_hash == nullptr || tp->tp_hash == PyObject_HashNotImplemented) {
-    return false;
-  }
-  py::object map = GetObjectsMap();
-  if (map.ptr() == nullptr) {
-    return false;
-  }
-  PyObject *set = PyDict_GetItemString(map.ptr(), "<relax guard func>");
-  if (set == nullptr) {
-    return false;
-  }
-  int res = PySet_Contains(set, code.ptr());
-  if (res < 0) {
-    PyErr_Clear();
-    return false;
-  }
-  return res;
 }
 
 GraphJitConfig::GraphJitConfig(const py::object &c) {

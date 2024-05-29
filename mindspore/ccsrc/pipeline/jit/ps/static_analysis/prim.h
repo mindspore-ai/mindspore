@@ -311,6 +311,16 @@ void ClearPrimEvaluatorMap();
 py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_convert_value = false);
 py::tuple PreparePyInputs(const AbstractBasePtrList &args);
 AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dict &output);
+
+// Get the __init__() arguments of the PrimitivePy object.
+AnfNodePtrList GetPrimitiveInitArgs(const PrimitivePyPtr &prim_py, const ops::OpDef *op_def);
+
+// Process the primitive's arguments (such as dtype auto-cast, add argument with default-value...),
+// then generate the primitive CNode and add it to graph.
+// (The returned CNode is without abstract, need to evaluate its abstract manually).
+CNodePtr GeneratePrimitiveCNode(const PrimitivePtr &primitive, const ops::OpDef *op_def, const FuncGraphPtr &graph,
+                                const AnfNodePtrList &init_args_nodes, const AnfNodePtrList &call_args_nodes,
+                                const std::function<AbstractBasePtr(const AnfNodePtr &)> &eval_func);
 }  // namespace abstract
 }  // namespace mindspore
 

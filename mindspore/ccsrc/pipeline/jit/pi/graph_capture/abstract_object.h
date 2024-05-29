@@ -22,6 +22,7 @@
 #include <vector>
 #include "pybind11/pybind11.h"
 #include "pipeline/jit/pi/utils/mempool.h"
+#include "utils/convert_utils_base.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -29,6 +30,12 @@ namespace pijit {
 
 class AbstractObjectBase;
 using AObject = AbstractObjectBase;
+
+class AObjectSourceScope {
+ public:
+  AObjectSourceScope();
+  ~AObjectSourceScope();
+};
 
 class AbstractObjectBase {
  public:
@@ -55,6 +62,8 @@ class AbstractObjectBase {
   using RecMap = std::unordered_map<PyObject *, AObject *>;
 
   static MemPool<AbstractObjectBase> aobject_mem_pool_;
+
+  static bool trace_flag_;
 
   explicit AbstractObjectBase(Type type) : type_object_(nullptr), type_(type), ms_flag_(0) {}
   virtual ~AbstractObjectBase() {}
@@ -106,6 +115,10 @@ class AbstractObjectBase {
    * \return container if success, else a empty AbstractObject
    **/
   static AObject *MergeOperations(AObject *container, std::vector<AObject *> args, int opcode);
+
+  static int BinaryContains(AObject *l, AObject *r);
+  static int BinaryIs(AObject *l, AObject *r);
+
   static const char *GetTypeDesc(AObject::Type type);
   static std::string ToString(PyObject *);
 
@@ -309,21 +322,6 @@ class AbstractTensor : public AbstractObject {
  private:
   bool is_stub_;
 };
-
-class AbstractTraceNode : public AbstractObject {
- public:
-  explicit AbstractTraceNode(Type type, const py::object &o) : AbstractObject(type, o) {}
-  virtual ~AbstractTraceNode() {}
-  static AObject *MakeAObject(const py::object &o) {
-    if (o.ptr() == nullptr) {
-      return AObject::MakeAObject(AObject::kTypeAnyValue);
-    }
-    auto node = aobject_mem_pool_.New<AbstractObject>(kTypeTraceNode, o);
-    node->SetTypeObject(Py_TYPE(o.ptr()));
-    return node;
-  }
-};
-
 }  // namespace pijit
 }  // namespace mindspore
 

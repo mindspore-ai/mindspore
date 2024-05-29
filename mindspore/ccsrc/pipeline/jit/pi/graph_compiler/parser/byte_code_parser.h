@@ -26,6 +26,7 @@
 #include "pipeline/jit/pi/graph_compiler/pi_ir/custom_nodes.h"
 #include "pipeline/jit/pi/graph_compiler/pi_ir/debug_info.h"
 #include "pipeline/jit/pi/graph_compiler/pi_ir/value.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {

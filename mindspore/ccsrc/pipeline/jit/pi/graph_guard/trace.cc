@@ -32,6 +32,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
 #include "pipeline/jit/pi/pi_jit_config.h"
+#include "pipeline/jit/pi/external.h"
 
 namespace mindspore {
 namespace pijit {
@@ -65,7 +66,10 @@ static const char kMindTorchFlag[] = "mindtorch";
 static const char kTrainingFlag[] = "training";
 static const char kMindSporePackPrefix[] = "mindspore.";
 static const char kMindtorchPackPrefix[] = "mindtorch.";
-extern bool check_builtin_cfunc(const py::object &func);
+
+constexpr const char *kFuncWhiteListModuleName = "mindspore._extends.pijit.pijit_func_white_list";
+constexpr const char *kGuardFuncMapName = "_guard_func_map";
+
 static PyObject *RichCompare(PyObject *left, PyObject *right, int oparg);
 
 static bool IsCastFunc(std::string name) {
@@ -278,13 +282,17 @@ int Trace::GetDepth() const { return depth_; }
 
 TracePtr Trace::Optimize() { return nullptr; }
 
+std::string Trace::FormatString(std::map<Trace *, size_t> *cache) {
+  cache->insert(std::make_pair(this, cache->size()));
+  return "%" + std::to_string(cache->find(this)->second) + " = " + this->ToString();
+}
+
 RootTrace::RootTrace(PyObject *pObj, TraceType tt, int index, std::string name, std::string module_name)
     : Trace(pObj, nullptr), idx_(index), name_(name), module_name_(module_name) {
   depth_ = 1;
   originType_ = tt;
   curType_ = tt;
-  const auto &k = *kPIJitConfigDefault.getSetConfig(GraphJitConfig::kAllowedInlineModules);
-  for (auto n : k) {
+  for (auto n : kPIJitConfigDefault.allowed_inline_modules()) {
     if (module_name.find(n) == 0) {
       is_const_ = true;
       break;
@@ -293,6 +301,9 @@ RootTrace::RootTrace(PyObject *pObj, TraceType tt, int index, std::string name, 
   if (!is_const_ && (module_name.find(kMindSporePackPrefix) == 0 || module_name.find(kMindtorchPackPrefix) == 0 ||
                      name.find(kCastToAdapterTensor) == 0 || name.find(kCastToMSTensor) == 0)) {
     is_const_ = true;
+  }
+  if (curType_ == TraceType::Deref) {
+    is_const_ = false;
   }
   if (pObj == nullptr) {
     return;
@@ -1015,39 +1026,27 @@ void TypeTrace::Detach() {
 bool TypeTrace::Support(TraceType tt) { return tt == TraceType::Type; }
 
 static PyObject *RichCompare(PyObject *left, PyObject *right, int oparg) {
-#if (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 9)
-  int stat;
-  PyObject *ret;
-  switch (oparg) {
-    case PyCmp_IS:
-      ret = left == right ? Py_True : Py_False;
-      Py_INCREF(ret);
-      return ret;
-    case PyCmp_IS_NOT:
-      ret = left != right ? Py_True : Py_False;
-      Py_INCREF(ret);
-      return ret;
-    case PyCmp_IN:
-    case PyCmp_NOT_IN:
-      stat = PySequence_Contains(right, left);
-      if (stat < 0) {
-        return nullptr;
-      }
-      stat = oparg == PyCmp_IN ? stat : !stat;
-      ret = (stat) ? Py_True : Py_False;
-      Py_INCREF(ret);
-      return ret;
-    case PyCmp_EXC_MATCH:
+  bool invert;
+  if (oparg >= Py_LT && oparg <= Py_GE) {
+    return PyObject_RichCompare(left, right, oparg);
+  } else if (Opcode(COMPARE_OP).CheckIsOp(oparg, &invert)) {
+    auto ret = ((left == right) ^ invert) ? Py_True : Py_False;
+    Py_INCREF(ret);
+    return ret;
+  } else if (Opcode(COMPARE_OP).CheckContainsOp(oparg, &invert)) {
+    auto stat = PySequence_Contains(right, left);
+    if (stat < 0) {
       return nullptr;
-    default:
-      break;
+    }
+    auto ret = (stat ^ invert) ? Py_True : Py_False;
+    Py_INCREF(ret);
+    return ret;
   }
-#endif
-  return PyObject_RichCompare(left, right, oparg);
+  return nullptr;
 }
 
 static bool support_infer_primitive(PyObject *obj) {
-  if (py::isinstance<mindspore::PrimitivePyAdapter>(obj)) {
+  if (py::isinstance<mindspore::PrimitivePyAdapter>(obj) || py::isinstance<mindspore::PrimitiveFunctionAdapter>(obj)) {
     auto inst = mindspore::pijit::InferEngine::GetInstance();
     return inst->SupportInfer(obj);
   } else {
@@ -1107,7 +1106,7 @@ static bool SupportCall(PyObject *func, const std::string &name) {
 }
 
 static PyObject *DoCall(const std::vector<PyObject *> &params, int op, const std::string &name) {
-  if (!Utils::IsCallOp(op) || params.size() < 1) {
+  if (!Opcode(op).IsCall() || params.size() < 1) {
     return nullptr;
   }
   if (support_infer_primitive(params[0])) {
@@ -1115,21 +1114,25 @@ static PyObject *DoCall(const std::vector<PyObject *> &params, int op, const std
     auto inst = mindspore::pijit::InferEngine::GetInstance();
     list.insert(list.begin(), params.begin() + 1, params.end());
     bool is_abstract = false;
-    return inst->InferPrimitive(params[0], list, &is_abstract);
+    try {
+      return inst->InferPrimitive(params[0], list, &is_abstract);
+    } catch (py::error_already_set &e) {
+      MS_LOG(ERROR) << "InferPrimitive failed " << std::endl << e.what();
+    } catch (py::builtin_exception &e) {
+      MS_LOG(ERROR) << "InferPrimitive failed " << std::endl << e.what();
+    }
+    return nullptr;
   }
 
   size_t nargs = (params.size() - 1);
-  size_t kw_cnt = 0;
-  switch (op) {
-    case CALL_FUNCTION:
-      return PyObject_Vectorcall(params[0], params.data() + 1, nargs, NULL);
-    case CALL_FUNCTION_KW:
-      kw_cnt = PyTuple_GET_SIZE(params.back());
-      return PyObject_Vectorcall(params[0], params.data() + 1, nargs - 1 - kw_cnt, params.back());
-    case CALL_FUNCTION_EX:
-      return PyObject_Call(params[0], params[1], params.size() > 2 ? params[2] : nullptr);
-    default:
-      break;
+  size_t kw_cnt;
+  if (op == CALL_FUNCTION) {
+    return PyObject_Vectorcall(params[0], params.data() + 1, nargs, NULL);
+  } else if (op == CALL_FUNCTION_KW) {
+    kw_cnt = PyTuple_GET_SIZE(params.back());
+    return PyObject_Vectorcall(params[0], params.data() + 1, nargs - 1 - kw_cnt, params.back());
+  } else if (op == CALL_FUNCTION_EX) {
+    return PyObject_Call(params[0], params[1], params.size() > 2 ? params[2] : nullptr);
   }
   return nullptr;
 }
@@ -1515,7 +1518,6 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
   {YIELD_VALUE, {ByteCodeUnsupported, nullptr}},
   {POP_BLOCK, {ByteCodeUnsupported, nullptr}},
   {POP_EXCEPT, {ByteCodeUnsupported, nullptr}},
-  {HAVE_ARGUMENT, {ByteCodeUnsupported, nullptr}},
   {STORE_NAME, {ByteCodeUnsupported, nullptr}},
   {DELETE_NAME, {ByteCodeUnsupported, nullptr}},
   {UNPACK_SEQUENCE, {ByteCodeUnsupported, nullptr}},
@@ -1575,11 +1577,6 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
   {LOAD_ATTR, {ByteCodeSupported, nullptr}},
   {COMPARE_OP,
    {[](int opargs, const PyObjectArray &objs) {
-#if (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 9)
-      if (opargs == PyCmp_EXC_MATCH) {
-        return false;
-      }
-#endif
       return OptStrategy::MakeCalcStrategyByInputs(COMPARE_OP, opargs, objs) != OptStrategy::CalcKind::kCalcUnsupported;
     },
     [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject * {
@@ -1680,7 +1677,6 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
                                                                    }}},
   {LOAD_METHOD, {ByteCodeUnsupported, nullptr}},
   {CALL_METHOD, {ByteCodeUnsupported, nullptr}},
-#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 9)
   {ROT_FOUR, {ByteCodeUnsupported, nullptr}},
   {RERAISE, {ByteCodeUnsupported, nullptr}},
   {WITH_EXCEPT_START, {ByteCodeUnsupported, nullptr}},
@@ -1743,8 +1739,6 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
                                                                      PyDict_Update(objs[0], objs[1]);
                                                                      return objs[0];
                                                                    }}},
-#endif
-#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
   {BREAK_LOOP, {ByteCodeUnsupported, nullptr}},
   {WITH_CLEANUP_START, {ByteCodeUnsupported, nullptr}},
   {WITH_CLEANUP_FINISH, {ByteCodeUnsupported, nullptr}},
@@ -1825,8 +1819,6 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
                                                                      Py_DECREF(sum);
                                                                      return ret;
                                                                    }}},
-  {EXCEPT_HANDLER, {ByteCodeUnsupported, nullptr}},
-#endif
 };
 
 OpTrace::OpTrace(PyObject *obj, int opcode, int opargs, TraceVector params, std::string name)
@@ -1896,21 +1888,11 @@ PyObject *OpTrace::Retrieve(PTraceContext context, bool perf) {
   if (kBytecodeExecuter.find(opcode_) != kBytecodeExecuter.end() && kBytecodeExecuter[opcode_].first(opargs_, params) &&
       kBytecodeExecuter[opcode_].second != nullptr) {
     ret = kBytecodeExecuter[opcode_].second(opargs_, params, context);
-  } else {
-    switch (opcode_) {
-      case LOAD_ATTR:
-        MS_EXCEPTION_IF_CHECK_FAIL(name_.size(), "check trace");
-        ret = PyObject_GetAttrString(params[0], name_.c_str());
-        break;
-      case CALL_FUNCTION:
-      case CALL_FUNCTION_EX:
-      case CALL_FUNCTION_KW:
-        ret = DoCall(params, opcode_, name_);
-        break;
-      /* fall-through */
-      default:
-        break;
-    }
+  } else if (opcode_ == LOAD_ATTR) {
+    MS_EXCEPTION_IF_CHECK_FAIL(name_.size(), "check trace");
+    ret = PyObject_GetAttrString(params[0], name_.c_str());
+  } else if (opcode_ == CALL_FUNCTION || opcode_ == CALL_FUNCTION_EX || opcode_ == CALL_FUNCTION_KW) {
+    ret = DoCall(params, opcode_, name_);
   }
   for (auto p : params) {
     Py_DECREF(p);
@@ -1927,7 +1909,8 @@ std::string OpTrace::ToString(bool include_param) {
     return strTrace_;
   }
   std::string ret = "operation ";
-  ret += Utils::GetOpName(opcode_) + "(arg:";
+  ret += Opcode(opcode_).name();
+  ret += "(arg:";
   ret += std::to_string(opargs_);
   if (name_.size() != 0 || params_.size() > 0) {
     ret += ",";
@@ -1951,18 +1934,24 @@ std::string OpTrace::ToString(bool include_param) {
   return ret;
 }
 
-std::string OpTrace::FormatString() {
+std::string OpTrace::FormatString(std::map<Trace *, size_t> *cache) {
   std::stringstream s;
-  s << "operation" << Utils::GetOpName(opcode_) << " " << opargs_;
-  if (!name_.empty()) {
-    s << ",name: " << name_;
-  }
-  s << ":\n";
+  std::stringstream params_str;
+  params_str << "(";
   for (auto i : params_) {
-    s << "| " << std::regex_replace(i->FormatString(), std::regex("\n"), "\n| ") << "\n";
+    if (cache->find(i.get()) == cache->end()) {
+      s << i->FormatString(cache) << std::endl;
+    }
+    params_str << "%" << (cache->find(i.get())->second) << ", ";
   }
-  s.seekp(-1, s.cur);
-  s << " ";
+  params_str << ")";
+
+  cache->insert(std::make_pair(this, cache->size()));
+  s << "%" << cache->find(this)->second << " = operation " << Opcode(opcode_).name() << " " << opargs_;
+  if (!name_.empty()) {
+    s << ", name: " << name_;
+  }
+  s << ": " << params_str.str();
   return s.str();
 }
 
@@ -2290,11 +2279,42 @@ void OpTrace::JudgeSubScrRandPass() {
   }
 }
 
+static const std::unordered_map<size_t, size_t> &GetGuardFuncKeyMap() {
+  static std::unordered_map<size_t, size_t> map = {};
+  static bool init = false;
+  if (init) {
+    return map;
+  }
+  init = true;
+  py::object func_map = Utils::GetModuleAttr(kFuncWhiteListModuleName, kGuardFuncMapName, true, true);
+  MS_EXCEPTION_IF_CHECK_FAIL(PyDict_CheckExact(func_map.ptr()), "white list func map must be 'dict[int, int]'");
+  PyObject *key;
+  PyObject *value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(func_map.ptr(), &pos, &key, &value)) {
+    MS_EXCEPTION_IF_CHECK_FAIL(PyLong_CheckExact(key), "white list func map key must be 'int'");
+    MS_EXCEPTION_IF_CHECK_FAIL(PyLong_CheckExact(value), "white list func map value must be 'int'");
+    map[PyLong_AsSize_t(key)] = PyLong_AsSize_t(value);
+  }
+  return map;
+}
+
+static bool CheckRelaxGuardFunc(const py::object &callable) {
+  static size_t guard_key_relax_func = 0;
+  if (guard_key_relax_func == 0) {
+    py::object key_object = Utils::GetModuleAttr(kFuncWhiteListModuleName, "GUARD_KEY_RELAX_FUNC", true, true);
+    guard_key_relax_func = py::cast<size_t>(key_object);
+  }
+
+  auto iter = GetGuardFuncKeyMap().find(FunctionId(callable));
+  return iter != GetGuardFuncKeyMap().end() && iter->second == guard_key_relax_func;
+}
+
 void OpTrace::JudgeRelaxGuardFuncPass() {
   if (opcode_ != CALL_FUNCTION || params_.size() < kParamCountOne) {
     return;
   }
-  if (kPIJitConfigDefault.CheckJitRelaxGuard(py::cast<py::object>(params_[kParamIndexOne]->GetObject()))) {
+  if (CheckRelaxGuardFunc(py::cast<py::object>(params_[0]->GetObject()))) {
     EnableRelax();
   }
 }
@@ -2307,29 +2327,25 @@ void OpTrace::CheckSpecialize() {
       break;
     }
   }
-  switch (opcode_) {
-    case CALL_FUNCTION:
-      if ((name_ == kShape_Name || name_ == kCastToAdapterTensor || name_ == kCastToMSTensor) &&
-          !any_params_specialized) {
-        is_specialized_ = true;
-      } else if (params_.size() > kParamCountOne &&
-                 py::isinstance<mindspore::PrimitivePyAdapter>(params_[kParamIndexOne]->GetObject())) {
-        std::string prim_name =
-          py::cast<mindspore::PrimitivePyAdapterPtr>(params_[kParamIndexOne]->GetObject())->name();
-        if (prim_name == kCastPrimName) {
-          is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
-        } else if (prim_name == kLayerNormPrimName) {
-          is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
-        } else if (prim_name == kReshapePrimName) {
-          is_specialized_ = any_params_specialized || !params_[kParamIndexThree]->IsConst();
-        } else if (prim_name == kShapePrimName) {
-          is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
-        }
-      }
-      break;
-    default:
+  if (opcode_ == CALL_FUNCTION) {
+    if ((name_ == kShape_Name || name_ == kCastToAdapterTensor || name_ == kCastToMSTensor) &&
+        !any_params_specialized) {
       is_specialized_ = true;
-      break;
+    } else if (params_.size() > kParamCountOne &&
+               py::isinstance<mindspore::PrimitivePyAdapter>(params_[kParamIndexOne]->GetObject())) {
+      std::string prim_name = py::cast<mindspore::PrimitivePyAdapterPtr>(params_[kParamIndexOne]->GetObject())->name();
+      if (prim_name == kCastPrimName) {
+        is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
+      } else if (prim_name == kLayerNormPrimName) {
+        is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
+      } else if (prim_name == kReshapePrimName) {
+        is_specialized_ = any_params_specialized || !params_[kParamIndexThree]->IsConst();
+      } else if (prim_name == kShapePrimName) {
+        is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
+      }
+    }
+  } else {
+    is_specialized_ = true;
   }
 }
 
@@ -2426,27 +2442,23 @@ static std::map<int, TraceType> kMapBytecodeToTraceType = {
 
 TracePtr CreateOpTraceByBytecode(PyObject *obj, int opcode, int opargs, TraceVector params, std::string module_name,
                                  std::string name, bool strict) {
-  switch (opcode) {
-    case LOAD_CLOSURE:
-    case LOAD_DEREF:
-    case LOAD_GLOBAL:
-    case LOAD_NAME:
-    case LOAD_CLASSDEREF:
-      return std::make_shared<RootTrace>(obj, kMapBytecodeToTraceType[opcode], opargs, name, module_name);
-    case LOAD_CONST:
-      return std::make_shared<ConstTrace>(obj, -1);
-    case CALL_FUNCTION:
-    case CALL_FUNCTION_EX:
-    case CALL_FUNCTION_KW:
-      if (params.size() < 1 || !SupportCall(params[0]->GetObject(), name)) {
-        if (strict) {
-          return nullptr;
-        } else {
-          return std::make_shared<UnsupportedTrace>(obj, params, opcode, opargs);
-        }
+  static const std::set<int> root_op = {
+    LOAD_CLOSURE, LOAD_DEREF, LOAD_GLOBAL, LOAD_NAME, LOAD_CLASSDEREF,
+  };
+  if (root_op.find(opcode) != root_op.end()) {
+    return std::make_shared<RootTrace>(obj, kMapBytecodeToTraceType[opcode], opargs, name, module_name);
+  }
+  if (opcode == LOAD_CONST) {
+    return std::make_shared<ConstTrace>(obj, -1);
+  }
+  if (Opcode(opcode).IsCall()) {
+    if (params.size() < 1 || !SupportCall(params[0]->GetObject(), name)) {
+      if (strict) {
+        return nullptr;
+      } else {
+        return std::make_shared<UnsupportedTrace>(obj, params, opcode, opargs);
       }
-    default:
-      break;
+    }
   }
   return std::make_shared<OpTrace>(obj, opcode, opargs, params, name);
 }
@@ -2578,7 +2590,8 @@ std::string UnsupportedTrace::ToString(bool include_param) {
     return strTrace_;
   }
   std::string ret = "unsupported ";
-  ret += Utils::GetOpName(op_) + "(arg:";
+  ret += Opcode(op_).name();
+  ret += "(arg:";
   ret += std::to_string(arg_);
   if (include_param && params_.size() > 0) {
     ret += ",";
@@ -2594,14 +2607,25 @@ std::string UnsupportedTrace::ToString(bool include_param) {
   return ret;
 }
 
-std::string UnsupportedTrace::FormatString() {
+std::string UnsupportedTrace::FormatString(std::map<Trace *, size_t> *cache) {
   std::stringstream s;
-  s << "unsupported " << Utils::GetOpName(op_) << " " << arg_ << ":\n";
+  std::stringstream params_str;
+  params_str << "(";
   for (auto i : params_) {
-    s << "| " << std::regex_replace(i->FormatString(), std::regex("\n"), "\n| ") << "\n";
+    if (cache->find(i.get()) == cache->end()) {
+      s << i->FormatString(cache) << std::endl;
+    }
+    params_str << "%" << (cache->find(i.get())->second) << ", ";
+    if (i->GetTraceType() == TraceType::Unsupported) {
+      params_str << "...";
+      break;
+    }
   }
-  s.seekp(-1, s.cur);
-  s << " ";
+  params_str << ")";
+
+  cache->insert(std::make_pair(this, cache->size()));
+  s << "%" << cache->find(this)->second << " = unsupported " << Opcode(op_).name() << " " << arg_ << ": "
+    << params_str.str();
   return s.str();
 }
 
