@@ -223,6 +223,7 @@ const AnfNodePtr ShapeReshapeFusion::Process(const FuncGraphPtr &func_graph, con
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), utils::cast<AnfNodePtr>((*equiv)[reshape_input_])};
   size_t index = kIndex2;
   std::vector<size_t> shape_index;
+  std::vector<bool> only_depend_shape = {false};
   for (const auto &shape_node : scalar_graph_holder->GetInputShapeNodes()) {
     if (!IsPrimitiveCNode(shape_node, prim::kPrimShape)) {
       MS_LOG(INFO) << "The subgraph input nodes is not Shape. There is no change in ShapeReshapeFusion.";
@@ -231,6 +232,7 @@ const AnfNodePtr ShapeReshapeFusion::Process(const FuncGraphPtr &func_graph, con
     inputs.push_back(shape_node->cast<CNodePtr>()->inputs().at(kIndex1));
     shape_index.push_back(index);
     index++;
+    only_depend_shape.push_back(true);
   }
   scalar_graph_holder->SetShapeIndex(shape_index);
   prim->AddAttr("graph", MakeValue(scalar_graph_holder));
@@ -238,6 +240,7 @@ const AnfNodePtr ShapeReshapeFusion::Process(const FuncGraphPtr &func_graph, con
   auto new_node = NewCNode(inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_abstract(node->abstract());
+  common::AnfAlgo::SetNodeAttr(kAttrOnlyDependShape, MakeValue(only_depend_shape), new_node);
   return new_node;
 }
 
@@ -271,6 +274,7 @@ const AnfNodePtr ShapeReshapeDirectFusion::Process(const FuncGraphPtr &func_grap
   auto new_node = NewCNode(inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_abstract(node->abstract());
+  common::AnfAlgo::SetNodeAttr(kAttrOnlyDependShape, MakeValue(std::vector<bool>{false, true}), new_node);
   return new_node;
 }
 }  // namespace opt

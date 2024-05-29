@@ -50,9 +50,9 @@ AddAttrToNodeImplRegistry::AddAttrToNodeImplRegistry() {
   Register(prim::kPrimSplit->name(), SplitFusionProcess);
   Register(prim::kPrimStandardNormal->name(), StandardNormalFusionProcess);
   Register(prim::kPrimUniformReal->name(), UniformRealDtypeGe);
-  Register(prim::kPrimShape->name(), TensorShapeAddDtype);
-  Register(prim::kPrimTensorShape->name(), TensorShapeAddDtype);
-  Register(prim::kPrimDynamicShape->name(), TensorShapeAddDtype);
+  Register(prim::kPrimShape->name(), TensorShapeProcess);
+  Register(prim::kPrimTensorShape->name(), TensorShapeProcess);
+  Register(prim::kPrimDynamicShape->name(), TensorShapeProcess);
   Register(prim::kPrimHShrink->name(), HShrinkModifyLambd);
   Register(prim::kPrimHShrinkGrad->name(), HShrinkModifyLambd);
   Register(prim::kPrimExtractVolumePatches->name(), ExtractVolumePatchesFormatTranspose);

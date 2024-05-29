@@ -51,6 +51,8 @@ const AnfNodePtr SplitFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr StandardNormalFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr UniformRealDtypeGe(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr TensorShapeAddDtype(const FuncGraphPtr &, const AnfNodePtr &);
+const AnfNodePtr AddOnlyDependShapeAttr(const FuncGraphPtr &, const AnfNodePtr &);
+const AnfNodePtr TensorShapeProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr HShrinkModifyLambd(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr ExtractVolumePatchesFormatTranspose(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr ImagFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
