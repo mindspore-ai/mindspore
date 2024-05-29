@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ void Adjoint::AccumulateDout(const AnfNodePtr &dout_factor) {
     MS_LOG(DEBUG) << "Update dout " << dout_->ToString() << " with dout_factor " << dout_factor->ToString();
     ScopeGuard scope_guard(std::make_shared<Scope>("Gradients/" + primal()->scope()->name()));
     auto add = prim::GetPythonOps("hyper_add");
-    dout_ = caller_->NewCNode({NewValueNode(add), dout_, dout_factor});
+    dout_ = caller_->NewCNodeInOrder({NewValueNode(add), dout_, dout_factor});
     return;
   }
   dout_ = dout_factor;

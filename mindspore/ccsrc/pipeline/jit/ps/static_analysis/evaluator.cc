@@ -881,14 +881,7 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
   auto current_node = out_conf->node();
   MS_EXCEPTION_IF_NULL(current_node);
   if (current_node->isa<CNode>()) {
-    auto current_cnode = current_node->cast<CNodePtr>();
-    auto effect_info = current_cnode->GetEffectInfo();
-    if (current_cnode->IsEffectHandled() && effect_info.back_mem) {
-      AbstractBasePtrList bprop_inputs{SensitivityTransform(result->abstract()), kUMonad->ToAbstract()};
-      bprop = std::make_shared<VirtualAbstractClosure>(bprop_inputs, bparams_final);
-    } else {
-      bprop = std::make_shared<VirtualAbstractClosure>(SensitivityTransform(result->abstract()), bparams_final);
-    }
+    bprop = std::make_shared<VirtualAbstractClosure>(SensitivityTransform(result->abstract()), bparams_final);
   } else {
     bprop = std::make_shared<VirtualAbstractClosure>(SensitivityTransform(result->abstract()), bparams_final);
   }
