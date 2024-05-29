@@ -2800,11 +2800,10 @@ bool GraphBuilder::TraceRunForIterSequence(int jump_bci, bool is_range_type) {
 
   py::object index_object = py::int_(index);
   ValueNode *index_node = NewValueNode(AObject::Convert(index_object), LOAD_CONST, -1, {});
-  ValueNode *item_node = TupleDictGetItem(seq_node, index_node);
-  if (item_node == nullptr) {
-    item_node = NewValueNode(AObject::Convert(item), BINARY_SUBSCR, 0, {seq_node, index_node});
-    graph_->GetTracedNodes().push_back(item_node);
-  }
+  push(seq_node);
+  push(index_node);
+  DoItemAccess({BINARY_SUBSCR, 0});
+  ValueNode *item_node = pop();
   Py_DECREF(item);
 
   index++;
