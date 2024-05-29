@@ -3,6 +3,7 @@ mindspore.mint
 
 mindspore.mint
 ---------------
+
 Array操作
 ^^^^^^^^^^^^^^^^
 
@@ -64,7 +65,7 @@ mindspore.mint.nn.functional
 ^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
-    :toctree: ops
+    :toctree: mint
     :nosignatures:
     :template: classtemplate.rst
 
