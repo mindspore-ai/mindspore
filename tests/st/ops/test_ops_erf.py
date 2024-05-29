@@ -41,7 +41,7 @@ def erf_backward_func(x):
 
 
 @test_utils.run_with_cell
-def erfinv_vmap_func(x):
+def erf_vmap_func(x):
     return ops.vmap(erf_forward_func)(x)
 
 
@@ -117,15 +117,15 @@ def test_ops_erf_backward(context_mode, dtype, tol):
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.0e-3), (np.float32, 1.0e-4)])
 @pytest.mark.parametrize('shape', [(2, 3, 4, 5), (1, 256, 2048), (1, 256, 5120)])
 @test_utils.run_test_with_On
-def test_ops_erfinv_vmap(context_mode, shape, dtype, tol):
+def test_ops_erf_vmap(context_mode, shape, dtype, tol):
     """
     Feature: pyboost function.
-    Description: test function erfinv vmap feature.
+    Description: test function erf vmap feature.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
     x = generate_random_input(shape, dtype)
-    output = erfinv_vmap_func(ms.Tensor(x))
+    output = erf_vmap_func(ms.Tensor(x))
     expect = generate_expect_forward_output(x)
     diff = output.asnumpy() - expect
     error = np.ones(shape=expect.shape) * tol
