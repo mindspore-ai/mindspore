@@ -49,9 +49,12 @@ class DebugActor : public ActorBase {
   void ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &graphs, bool is_kbyk);
 
   // The debug of each node.
-  void Debug(const AnfNodePtr &node, const std::vector<DeviceTensor *> &op_input_kernel_tensors,
-             const std::vector<DeviceTensor *> &op_output_kernel_tensors, const DeviceContext *device_context,
-             OpContext<DeviceTensor> *const op_context, const AID *from_aid);
+  void DebugPreLaunch(const AnfNodePtr &node, const std::vector<DeviceTensor *> &op_input_kernel_tensors,
+                      const std::vector<DeviceTensor *> &op_output_kernel_tensors, const DeviceContext *device_context,
+                      OpContext<DeviceTensor> *const op_context, const AID *from_aid);
+  void DebugPostLaunch(const AnfNodePtr &node, const std::vector<DeviceTensor *> &op_input_kernel_tensors,
+                       const std::vector<DeviceTensor *> &op_output_kernel_tensors, const DeviceContext *device_context,
+                       OpContext<DeviceTensor> *const op_context, const AID *from_aid);
 #ifdef ENABLE_DEBUGGER
   void AscendKbkDump(const CNodePtr &cnode, const std::vector<DeviceTensor *> &input_kernel_tensors,
                      const std::vector<DeviceTensor *> &output_kernel_tensors, const DeviceContext *device_context);

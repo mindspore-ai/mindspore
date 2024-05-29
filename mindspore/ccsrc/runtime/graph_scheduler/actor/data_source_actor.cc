@@ -176,6 +176,11 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
     }
   }
 
+  if (debug_aid_ != nullptr) {
+    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugPreLaunch, data_kernel_, std::vector<DeviceTensor *>(),
+                              device_tensors, device_contexts_[0], context, &GetAID());
+  }
+
   // Copy data from device queue by data kernel launching.
   MS_EXCEPTION_IF_NULL(kernel_info_);
   try {
@@ -205,7 +210,7 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 }
 
 void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, data_kernel_, std::vector<DeviceTensor *>(),
+  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugPostLaunch, data_kernel_, std::vector<DeviceTensor *>(),
                             buffers_.back(), device_contexts_[0], context, &GetAID());
   OnDebugFinish(context);
 }
