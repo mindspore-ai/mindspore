@@ -17,7 +17,8 @@ for more details.
 
     mindspore.communication.comm_func.all_gather_into_tensor
     mindspore.communication.comm_func.all_reduce
-    mindspore.communication.comm_func.all_to_all_single
+    mindspore.communication.comm_func.all_to_all_single_with_output_shape
+    mindspore.communication.comm_func.all_to_all_with_output_shape
     mindspore.communication.comm_func.barrier
     mindspore.communication.comm_func.broadcast
     mindspore.communication.comm_func.gather_into_tensor

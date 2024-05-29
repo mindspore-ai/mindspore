@@ -77,6 +77,7 @@ GVAR_DEF(PrimitivePtr, kPrimVirtualPipelineEnd, std::make_shared<Primitive>("_Vi
 GVAR_DEF(PrimitivePtr, kPrimMirrorMicroStep, std::make_shared<Primitive>("_MirrorMicroStepOperator"));
 GVAR_DEF(PrimitivePtr, kPrimVirtualConverterBegin, std::make_shared<Primitive>("_VirtualConverterBegin"));
 GVAR_DEF(PrimitivePtr, kPrimVirtualConverterEnd, std::make_shared<Primitive>("_VirtualConverterEnd"));
+GVAR_DEF(PrimitivePtr, kPrimAlltoAllV, std::make_shared<Primitive>("AlltoAllV"));
 
 // Quant ops
 GVAR_DEF(PrimitivePtr, kPrimBatchNormFold, std::make_shared<Primitive>("BatchNormFold"));

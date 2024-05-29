@@ -149,6 +149,7 @@ constexpr auto kHcomOpTypeReceive = "HcomReceive";
 constexpr auto kHcomOpTypeReduceScatter = "HcomReduceScatter";
 constexpr auto kHcomOpTypeBarrier = "HcomBarrier";
 constexpr auto kHcomOpTypeBatchSendRecv = "HcomBatchSendRecv";
+constexpr auto kHcomOpTypeAlltoAllV = "HcomAllToAllV";
 
 constexpr auto kEndGraph = "EndGraph";
 constexpr auto kEndOfSequence = "EndOfSequence";

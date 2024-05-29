@@ -56,8 +56,8 @@ int HcomBatchISendIRecvKernel::Resize(const std::vector<KernelTensor *> &inputs,
 bool HcomBatchISendIRecvKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (inputs.empty() || outputs.empty() || hccl_data_type_list_.empty()) {
-    MS_LOG(ERROR) << "Invalid hccl Reduce input, output or data type size (" << inputs.size() << ", " << outputs.size()
-                  << ", " << hccl_data_type_list_.size() << ").";
+    MS_LOG(ERROR) << "Invalid hccl BatchISendIRecv input, output or data type size (" << inputs.size() << ", "
+                  << outputs.size() << ", " << hccl_data_type_list_.size() << ").";
     return false;
   }
 

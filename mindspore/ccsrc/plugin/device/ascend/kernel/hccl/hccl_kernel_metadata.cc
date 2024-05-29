@@ -40,13 +40,14 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   auto parallel_context_instance = parallel::ParallelContext::GetInstance();
+  static const std::set<std::string> kCommOpName = {kReceiveOpName,         kSendOpName,       kAllToAllvOpName,
+                                                    kAllToAllOpName,        kMuxReceiveOpName, kBarrierOpName,
+                                                    kBatchISendIRecvOpName, kAlltoAllVOpName};
   MS_EXCEPTION_IF_NULL(parallel_context_instance);
   if (parallel_context_instance->enable_parallel_optimizer() && op_name == kBroadcastOpName) {
     return kOpFormat_DEFAULT;
   }
-  if (op_name == kReceiveOpName || op_name == kSendOpName || op_name == kAllToAllvOpName ||
-      op_name == kAllToAllOpName || op_name == kMuxReceiveOpName || op_name == kBarrierOpName ||
-      op_name == kBatchISendIRecvOpName) {
+  if (kCommOpName.find(op_name) != kCommOpName.end()) {
     return kOpFormat_DEFAULT;
   }
   auto format = AnfAlgo::GetPrevNodeOutputFormat(kernel_node, index);
