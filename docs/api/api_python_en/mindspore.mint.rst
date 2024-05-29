@@ -108,7 +108,7 @@ Non-linear activation functions
 
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
-
+    mindspore.mint.nn.functional.softmax
 
 
 
@@ -160,8 +160,13 @@ Loss functions
 Vision functions
 ^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
-
+    mint.nn.functional.unfold
+    mint.nn.functional.fold
 
 
 

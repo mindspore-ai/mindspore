@@ -107,6 +107,7 @@ Reduction函数
 
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
+    mindspore.mint.nn.functional.softmax
 
 
 
@@ -159,8 +160,13 @@ Dropout函数
 视觉函数
 ^^^^^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
-
+    mint.nn.functional.unfold
+    mint.nn.functional.fold
 
 
 
