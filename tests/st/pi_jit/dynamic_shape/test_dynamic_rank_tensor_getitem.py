@@ -30,7 +30,7 @@ class IndexFactory:
         grad_net(*inputs)
 
 
-    def compare_forward_grad(self, *inputs):
+    def compare_forward_grad(self, *inputs, one_stage=True):
         context.set_context(mode=context.GRAPH_MODE)
         jit(fn=self.ps_net.construct, mode="PSJit")(*inputs)
         ps_out = self.ps_net(*inputs)
@@ -38,7 +38,7 @@ class IndexFactory:
         ps_grads = grad_net(*inputs)
 
         context.set_context(mode=context.PYNATIVE_MODE)
-        cfg = {"compile_by_trace": False} # One-stage will fix it later
+        cfg = {"compile_by_trace": one_stage}
         jit(fn=self.pi_net.construct, mode="PIJit", jit_config=cfg)(*inputs)
         pi_out = self.pi_net(*inputs)
         grad_net = GradOfAllInputs(self.pi_net, False)
@@ -425,7 +425,7 @@ def test_dynamic_rank_getitem_empty_tuple():
     ps_net.set_inputs(d)
     pi_net.set_inputs(d)
     fact = IndexFactory(ps_net, pi_net)
-    fact.compare_forward_grad(x)
+    fact.compare_forward_grad(x, one_stage=False) # One-stage will fix it later
 
 
 class Net17(Cell):
