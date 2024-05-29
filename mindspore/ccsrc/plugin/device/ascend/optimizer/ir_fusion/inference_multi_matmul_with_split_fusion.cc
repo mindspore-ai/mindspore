@@ -75,7 +75,6 @@ bool InferenceMultiMatmulWithSplitFusion::Run(const FuncGraphPtr &graph) {
       continue;
     }
     SortWeightNodeList(user_matmuls);
-    PrintWeightNodeList(user_matmuls);
     AnfNodePtrList getitems;
     Process("MatMul", node, user_matmuls, &getitems);
     if (!getitems.empty()) {
