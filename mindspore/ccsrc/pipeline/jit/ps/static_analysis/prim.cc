@@ -2724,6 +2724,15 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
   constexpr size_t index_data = 1;
   auto op_node = cnode->input(index_op);
   AnfNodePtr new_node = nullptr;
+  parse::SymbolPtr symbol_node = nullptr;
+  if (op_node->isa<CNode>()) {
+    auto inner_op_node = op_node->cast<CNodePtr>()->input(index_op);
+    if (IsPrimitiveCNode(inner_op_node, prim::kPrimResolve)) {
+      auto resolve_node = inner_op_node->cast<CNodePtr>();
+      constexpr size_t index_symbol = 2;
+      symbol_node = GetValueNode<parse::SymbolPtr>(resolve_node->input(index_symbol));
+    }
+  }
   if (IsPrimitiveCNode(op_node, prim::kPrimPartial)) {
     // The input may be a Partial node, such as {{prim::kPrimPartial, prim::kPrimRank, x}} -> {prim::kPrimRank, x}.
     AnfNodeWeakPtrList partial_inputs;
@@ -2734,7 +2743,8 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
                     std::back_inserter(partial_inputs));
     new_node = ConvertArgsToInputs(prim_, partial_inputs, fg, engine, out_conf);
   } else if (IsPrimitiveCNode(op_node, prim::kPrimGetAttr) ||
-             IsPrimitiveCNodeWithoutDoSignature(op_node, prim::kPrimGetAttr)) {
+             IsPrimitiveCNodeWithoutDoSignature(op_node, prim::kPrimGetAttr) ||
+             (symbol_node != nullptr && symbol_node->symbol() == "getattr")) {
     // The input may be a GetAttr node, such as x.abs(): {{prim::kPrimGetAttr, x, abs}} -> {prim::kPrimAbs, x}
     auto op_cnode = op_node->cast<CNodePtr>();
     AnfNodeWeakPtrList getattr_inputs;

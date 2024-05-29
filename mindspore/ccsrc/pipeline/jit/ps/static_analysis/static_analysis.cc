@@ -236,7 +236,8 @@ void BuildPossibleSpecs(const AbstractBasePtr &first_result,
   }
 }
 
-EvalResultPtr ConvertToPyInterpretCall(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
+EvalResultPtr ConvertToPyInterpretCall(const CNodePtr &cnode, const AnfNodeConfigPtr &conf,
+                                       const AnfNodePtr &func_node = nullptr) {
   auto fg = cnode->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
   auto out_node = conf->node();
@@ -250,7 +251,11 @@ EvalResultPtr ConvertToPyInterpretCall(const CNodePtr &cnode, const AnfNodeConfi
   constexpr size_t call_func_index = 0;
   script_buffer << call_func_str << "(";
   (void)local_key_inputs.emplace_back(NewValueNode(call_func_str));
-  (void)local_value_inputs.emplace_back(cnode->input(call_func_index));
+  if (func_node == nullptr) {
+    (void)local_value_inputs.emplace_back(cnode->input(call_func_index));
+  } else {
+    (void)local_value_inputs.emplace_back(func_node);
+  }
 
   // Handle inputs.
   const std::string call_prefix = "__input_";
@@ -796,8 +801,8 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
   MS_LOG(DEBUG) << "Current CNode: " << cnode->DebugString(recursive_level)
                 << ", func_node: " << func_node->DebugString(recursive_level);
   auto prim = GetCNodePrimitiveWithoutDoSignature(func_node);
-  if (!IsPrimitiveEquals(prim, prim::kPrimGetAttr) && !IsPrimitiveEquals(prim, prim::kPrimPyExecute) &&
-      !IsPrimitiveEquals(prim, prim::kPrimPyInterpret)) {
+  if (!IsPrimitiveEquals(prim, prim::kPrimResolve) && !IsPrimitiveEquals(prim, prim::kPrimGetAttr) &&
+      !IsPrimitiveEquals(prim, prim::kPrimPyExecute) && !IsPrimitiveEquals(prim, prim::kPrimPyInterpret)) {
     // Optimize the performance.
     return nullptr;
   }
@@ -809,6 +814,9 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
     return nullptr;
   }
 
+  if (IsPrimitiveEquals(prim, prim::kPrimResolve)) {
+    return ConvertToPyInterpretCall(cnode, conf, forwarded_conf->node());
+  }
   // Forward getattr CNode call to PyInterpreted CNode.
   return ConvertToPyInterpretCall(cnode, conf);
 }

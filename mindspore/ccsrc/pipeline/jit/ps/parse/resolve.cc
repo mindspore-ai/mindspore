@@ -33,6 +33,7 @@
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "pipeline/jit/ps/parse/parse.h"
 #include "include/common/utils/python_adapter.h"
+#include "include/common/utils/parallel_context.h"
 #include "utils/any.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/opt.h"
@@ -940,6 +941,12 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
     param_obj_ids[param_name] = obj_id;
     MS_LOG(DEBUG) << "Created a new weight parameter for " << func_graph->ToString()
                   << ", param: " << para_node->DebugString() << ", top_func_graph: " << top_func_graph->ToString();
+    auto context = parallel::ParallelContext::GetInstance();
+    if (context != nullptr && para_node->has_default()) {
+      auto param_abs = pipeline::GetDefaultValueAbstract(para_node);
+      context->ParallelParameterContextRestoreShape(func_graph, para_node, param_abs);
+      para_node->set_abstract(param_abs);
+    }
   }
   func_graph->add_parameter_obj_node(para_node);
   return para_node;
