@@ -151,4 +151,12 @@ INPUT_MAP(MoeFinalizeRouting) = {{1, INPUT_DESC(expanded_x)},
 ATTR_MAP(MoeFinalizeRouting) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MoeFinalizeRouting) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MoeFinalizeRouting, kNameMoeFinalizeRouting, ADPT_DESC(MoeFinalizeRouting))
+
+// GeGluV2
+INPUT_MAP(GeGluV2) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(GeGluV2) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())},
+                     {"approximate", ATTR_DESC(approximate, AnyTraits<int64_t>())},
+                     {"activate_left", ATTR_DESC(activate_left, AnyTraits<bool>())}};
+OUTPUT_MAP(GeGluV2) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(gelu)}};
+REG_ADPT_DESC(GeGluV2, "GeGluV2", ADPT_DESC(GeGluV2))
 }  // namespace mindspore::transform
