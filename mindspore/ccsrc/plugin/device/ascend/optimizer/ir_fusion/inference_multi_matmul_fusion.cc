@@ -80,7 +80,6 @@ bool InferenceMultiMatmulFusion::Run(const FuncGraphPtr &graph) {
       continue;
     }
     SortWeightNodeList(user_matmuls);
-    PrintWeightNodeList(user_matmuls);
     AnfNodePtrList getitems;
     if (user_matmuls.size() == weight_num_two) {
       Process("MatmulFfn", node, user_matmuls, &getitems);
