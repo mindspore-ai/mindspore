@@ -33,11 +33,36 @@ int64_t SplitWithSizeAscend::GetDimValue(KernelTensor *axis_ptr) const noexcept 
   return dim;
 }
 
+bool SplitWithSizeAscend::IsTuple(const KernelTensor *tensor) {
+  if (tensor == nullptr) {
+    return false;
+  }
+  bool is_tuple = tensor->type_id() == kObjectTypeTuple;
+  return is_tuple;
+}
+
+std::vector<KernelTensor *> SplitWithSizeAscend::GetSplitRealOutputs(const std::vector<KernelTensor *> &outputs) {
+  if (outputs.empty()) {
+    MS_LOG(EXCEPTION) << "The outputs of 'Split' should not be empty.";
+  }
+  std::vector<KernelTensor *> split_results;
+  for (auto &output : outputs) {
+    if (IsTuple(output)) {
+      auto converted_output = transform::ConvertKernelTensor<std::vector<KernelTensor *>>(output);
+      split_results.insert(split_results.end(), converted_output.begin(), converted_output.end());
+    } else {
+      split_results.push_back(output);
+    }
+  }
+  return split_results;
+}
+
 void SplitWithSizeAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
   auto axis = GetDimValue(inputs[kIndex2]);
   dims_ = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex1]);
-  GetWorkspaceForResize(inputs[kIndex0], dims_, axis, outputs);
+  std::vector<KernelTensor *> split_outputs = GetSplitRealOutputs(outputs);
+  GetWorkspaceForResize(inputs[kIndex0], dims_, axis, split_outputs);
 }
 
 bool SplitWithSizeAscend::Launch(const std::vector<KernelTensor *> &inputs,
@@ -46,7 +71,8 @@ bool SplitWithSizeAscend::Launch(const std::vector<KernelTensor *> &inputs,
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto axis = GetDimValue(inputs[kIndex2]);
   dims_ = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex1]);
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], dims_, axis, outputs));
+  std::vector<KernelTensor *> split_outputs = GetSplitRealOutputs(outputs);
+  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], dims_, axis, split_outputs));
   RunOp(stream_ptr, workspace);
   return true;
 }

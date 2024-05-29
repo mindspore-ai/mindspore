@@ -22,12 +22,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-int64_t CaculateAxis(const AbstractBasePtr &input_abs) {
-  auto axis_value = input_abs->GetValue();
-  auto axis = GetScalarValue<int64_t>(axis_value).value();
-  return axis;
-}
-
 std::vector<int64_t> CaculateSplitSize(const AbstractBasePtr &input_abs) {
   std::vector<int64_t> split_size = GetArrayValue<int64_t>(input_abs).value().ToVector();
   return split_size;
@@ -38,7 +32,11 @@ BaseShapePtr SplitWithSizeFuncImpl::InferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto input_shape_ptr = input_args[kIndex0]->GetShape();
   auto input_shape = input_shape_ptr->GetShapeVector();
-  auto axis = CaculateAxis(input_args[kIndex2]);
+  auto axis_value = GetScalarValue<int64_t>(input_args[kIndex2]->GetValue());
+  if (MS_UNLIKELY(!axis_value.has_value())) {
+    MS_LOG(EXCEPTION) << "axis's value is valueany";
+  }
+  auto axis = axis_value.value();
   std::vector<abstract::BaseShapePtr> output_list;
 
   auto rank = SizeToLong(input_shape.size());
@@ -71,8 +69,8 @@ TypePtr SplitWithSizeFuncImpl::InferType(const PrimitivePtr &primitive,
   auto split_size = CaculateSplitSize(input_args[kIndex1]);
   auto infer_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(infer_type);
-  static const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,     kUInt32,
-                                                kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool};
+  static const std::set<TypePtr> valid_types = {kInt8,    kInt16,   kInt32,     kInt64,      kFloat16,
+                                                kFloat32, kFloat64, kComplex64, kComplex128, kBool};
   auto type = CheckAndConvertUtils::CheckTensorTypeValid("input", infer_type, valid_types, prim_name);
   std::vector<TypePtr> type_tuple;
   for (size_t i = 0; i < split_size.size(); i++) {

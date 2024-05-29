@@ -103,6 +103,11 @@ const std::vector<std::pair<KernelAttr, SequenceGetItemCpuKernelMod::KernelRunFu
   &SequenceGetItemCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, SequenceGetItemCpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr()
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &SequenceGetItemCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr()
        .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeFloat32),
@@ -122,6 +127,11 @@ const std::vector<std::pair<KernelAttr, SequenceGetItemCpuKernelMod::KernelRunFu
        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeInt64),
      &SequenceGetItemCpuKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kObjectTypeNumber, kNumberTypeFloat16),
+     &SequenceGetItemCpuKernelMod::LaunchKernel<float>},
     {KernelAttr()
        .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
