@@ -8,14 +8,16 @@ file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/output)
 
 # cpack variables
 string(TOLOWER linux_${CMAKE_HOST_SYSTEM_PROCESSOR} PLATFORM_NAME)
-if(PYTHON_VERSION MATCHES "3.9")
+if(PYTHON_VERSION MATCHES "3.10")
+    set(CPACK_PACKAGE_FILE_NAME mindspore.py310)
+elseif(PYTHON_VERSION MATCHES "3.9")
     set(CPACK_PACKAGE_FILE_NAME mindspore.py39)
 elseif(PYTHON_VERSION MATCHES "3.8")
     set(CPACK_PACKAGE_FILE_NAME mindspore.py38)
 elseif(PYTHON_VERSION MATCHES "3.7")
     set(CPACK_PACKAGE_FILE_NAME mindspore.py37)
 else()
-    message("Could not find 'Python 3.9' OR 'Python 3.8' or 'Python 3.7'")
+    message("Could not find Python versions 3.7 - 3.10")
     return()
 endif()
 
