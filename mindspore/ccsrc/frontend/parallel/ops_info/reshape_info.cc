@@ -359,10 +359,16 @@ Status ReshapeInfo::ComputeReplaceOp() {
       return SUCCESS;
     }
     auto output_shape = output_layout_.tensor_shape_origin().array();
+    auto enable_multi_dyn_reshape = common::GetEnv("MS_DEV_REDISTRIBUTION_FOR_MULTI_DYN_RESHAPE");
     if (std::count(output_shape.cbegin(), output_shape.cend(), DYNAMIC_DIM_VAL) > 1) {
+      replace_op_.clear();
+      replace_op_info_.clear();
       // handle dynamic shape, now the dynamic dimension can not be split, only static shape will be split.
       ChangeDynamicDstShapeForSkipRedistribution(cnode_->input(2));
       MS_LOG(WARNING) << "Reshape " << this->cnode_->fullname_with_scope() << " has more than one dynamic axis.";
+      if (enable_multi_dyn_reshape.empty()) {
+        return SUCCESS;
+      }
     }
     auto reshape_input = this->cnode_->input(1);
     if (reshape_input == nullptr) {
@@ -373,7 +379,8 @@ Status ReshapeInfo::ComputeReplaceOp() {
     TensorRedistributionPtr tensor_redistribution =
       this->CreateReshapeTensorRedistribution(!is_generating_costs_, true);
     tensor_redistribution->SetPreAndNextCNode(reshape_input, this->cnode_);
-    if (IsPrimitiveCNode(cnode_->input(2), prim::kPrimMakeTuple)) {
+    if (std::count(output_shape.cbegin(), output_shape.cend(), -1) > 1 && !enable_multi_dyn_reshape.empty() &&
+        IsPrimitiveCNode(cnode_->input(2), prim::kPrimMakeTuple)) {
       auto tuple_cnode = cnode_->input(2)->cast<CNodePtr>();  // MakeTuple
       tensor_redistribution->reshape_target_shape_input = tuple_cnode;
       MS_LOG(INFO) << "Shape of reshape " << this->cnode_->fullname_with_scope() << " has "
@@ -381,8 +388,8 @@ Status ReshapeInfo::ComputeReplaceOp() {
       for (size_t i = 1; i < tuple_cnode->inputs().size(); ++i) {
         tensor_redistribution->reshape_target_shape_inputs.emplace_back(tuple_cnode->input(i));
       }
+      tensor_redistribution->dynamic_axis_cnt = std::count(output_shape.cbegin(), output_shape.cend(), -1);
     }
-    tensor_redistribution->dynamic_axis_cnt = std::count(output_shape.cbegin(), output_shape.cend(), -1);
     if (tensor_redistribution->Init(input_layout_, output_layout_, dev_list) == FAILED) {
       if (is_generating_costs_) {
         MS_LOG(DEBUG) << name_ << ": tensor_redistribution init failed.";
