@@ -2080,6 +2080,7 @@ MindGraphBuilder::MindGraphBuilder(const PyFrameObject *f) : GraphBuilder(f) {
   std::vector<std::string> comments;
   auto location = std::make_shared<Location>(py::cast<std::string>(f->f_code->co_filename), f->f_code->co_firstlineno,
                                              0, f->f_code->co_firstlineno, 0, "", std::move(comments));
+  MS_EXCEPTION_IF_NULL(location);
   TraceGuard trace_guard(location);
   fg_builder_ = std::make_shared<FuncGraphBuilder>(true);
   fg_builder_->SetGraphName(py::cast<std::string>(f->f_code->co_name) + "_" +

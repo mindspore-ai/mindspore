@@ -24,17 +24,17 @@ Status SharedMemory::Create(uint64_t memory_size) {
   auto access_mode = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP;
   shm_id_ = shmget(IPC_PRIVATE, memory_size, IPC_CREAT | IPC_EXCL | access_mode);
   if (shm_id_ == -1) {
-    MS_LOG_ERROR << "Shared memory creation failed. Errno " + std::to_string(errno);
+    MS_LOG(ERROR) << "Shared memory creation failed. Errno " + std::to_string(errno);
     return kMCFailed;
   }
-  MS_LOG_INFO << "shmget success, shm id " << shm_id_;
+  MS_LOG(INFO) << "shmget success, shm id " << shm_id_;
   return kSuccess;
 }
 
 Status SharedMemory::Attach() {
   void *shmat_addr = shmat(shm_id_, nullptr, 0);
   if (shmat_addr == reinterpret_cast<void *>(-1)) {
-    MS_LOG_ERROR << "Shared memory attach failed. Errno " + std::to_string(errno);
+    MS_LOG(ERROR) << "Shared memory attach failed. Errno " + std::to_string(errno);
     return kMCFailed;
   }
   shmat_addr_ = reinterpret_cast<uint8_t *>(shmat_addr);
@@ -45,7 +45,7 @@ void SharedMemory::Detach() {
   if (shmat_addr_ != nullptr) {
     auto err = shmdt(shmat_addr_);
     if (err == -1) {
-      MS_LOG_ERROR << "Shared memory detach failed. Errno " + std::to_string(errno);
+      MS_LOG(ERROR) << "Shared memory detach failed. Errno " + std::to_string(errno);
       return;
     }
   }
@@ -59,7 +59,7 @@ void SharedMemory::Destroy() const {
     std::string errMsg = "Unable to remove shared memory with id " + std::to_string(shm_id_);
     errMsg += ". Errno :" + std::to_string(errno);
     errMsg += "\nPlesae remove it manually using ipcrm -m command";
-    MS_LOG_ERROR << errMsg;
+    MS_LOG(ERROR) << errMsg;
   }
 }
 }  // namespace mindspore

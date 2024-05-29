@@ -31,7 +31,7 @@ constexpr auto kSectionPrefix = " - ";
 
 MS_CORE_API DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr &info);
 MS_CORE_API std::string GetDebugInfoStr(const DebugInfoPtr &info, const std::string &prefix = std::string(""),
-                                        SourceLineTip tip = kSourceLineTipNextLine);
+                                        SourceLineTip tip = kSourceLineTipNextLine, bool is_debug = false);
 // Generate the call stack of python source code with relevant trace info
 MS_CORE_API std::string GetTracedDebugInfoStr(const DebugInfoPtr &debug_info, bool is_debug = false);
 // Generate the call stack of python source code to a string

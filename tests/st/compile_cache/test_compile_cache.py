@@ -113,8 +113,12 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     assert os.path.exists(log_file_name_second)
     with open(log_file_name_second, "r") as f_second:
         data_second = f_second.read()
-    assert "Use the compilation cache and execute the backend actions only. Be aware of correctness risks." in \
-           data_second
+
+    has_log = "Use the compilation cache and execute the backend actions only. Be aware of correctness risks." in \
+              data_second
+    if not has_log:
+        print(f'{data_second}')
+    assert has_log
 
     # Take out the result of the second run
     match_output_second = re.findall(match_output, data_second)
@@ -166,8 +170,13 @@ def run_compile_cache_mp(file_name, cache_path, log_file_name_first, log_file_na
     assert os.path.exists(log_fullname)
     with open(log_fullname, "r") as f_second:
         data_second = f_second.read()
-    assert "Use the compilation cache and execute the backend actions only. Be aware of correctness risks." in \
-           data_second
+
+    has_log = "Use the compilation cache and execute the backend actions only. Be aware of correctness risks." in \
+              data_second
+    if not has_log:
+        print(f'{data_second}')
+    assert has_log
+
     assert "loss is" in data_second
 
     # Clean files

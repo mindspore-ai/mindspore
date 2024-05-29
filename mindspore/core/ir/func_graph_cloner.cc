@@ -122,12 +122,18 @@ void Cloner::CloneCNodeWithoutInputs(const AnfNodePtr &node, const FuncGraphPtr 
     debug_info = node->debug_info();
   }
 
-  if (inline_call_node_debug_info_ != nullptr) {
-    MS_LOG(DEBUG) << "Start move inlined node:" << node->DebugString();
-    debug_info = DebugInfo::UpdateInlineCNodeDebugInfo(inline_call_node_debug_info_, debug_info);
-  }
   auto cloned_debug_info = CloneNodeDebugInfo(debug_info, relation_);
   CNodePtr new_node = std::make_shared<CNode>(std::move(inputs), target, std::move(cloned_debug_info));
+  if (inline_call_node_ != nullptr) {
+    MS_LOG(DEBUG) << "inline_call_node_: " << inline_call_node_ << "/" << inline_call_node_->DebugString()
+                  << ", new_node: " << new_node << "/" << new_node->DebugString();
+    UpdateInlineCNodeDebugInfo(inline_call_node_, new_node);
+  } else {
+    // Synchronize callers' shadow debug infos.
+    auto &new_shadow_debug_infos = new_node->debug_info()->shadow_debug_infos_map();
+    const auto &old_shadow_debug_infos = debug_info->shadow_debug_infos_map();
+    new_shadow_debug_infos.insert(old_shadow_debug_infos.cbegin(), old_shadow_debug_infos.cend());
+  }
   new_node->CloneCNodeInfo(old_node);
   // Copy to target graph
   if (new_node->forward().first != nullptr) {
@@ -970,15 +976,18 @@ FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes, 
 }
 
 AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
-                       const AnfNodePtrList &func_graph_args, const ScopePtr &scope,
-                       const NodeDebugInfoPtr &call_debug_info) {
+                       const AnfNodePtrList &func_graph_args, const AnfNodePtr &call_node) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(target_func_graph);
   Cloner cloner({}, false);
-  if (scope != nullptr) {
-    cloner.set_scope(scope);
+  if (call_node != nullptr) {
+    auto call_cnode = dyn_cast<CNode>(call_node);
+    MS_EXCEPTION_IF_NULL(call_cnode);
+    if (call_cnode->input(0)->scope() != nullptr) {
+      cloner.set_scope(call_cnode->input(0)->scope());
+    }
   }
-  cloner.set_inline_call_node_debug_info(call_debug_info);
+  cloner.set_inline_call_node(call_node);
   cloner.AddClone(func_graph, target_func_graph, func_graph_args, kInline);
   if (func_graph->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
     target_func_graph->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);

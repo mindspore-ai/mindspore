@@ -341,7 +341,7 @@ bool PoolingGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTenso
   auto cpy_ret =
     memcpy_s(dst_work_addr, workspace[0]->size(), inputs[grad_index_]->device_ptr(), inputs[grad_index_]->size());
   if (cpy_ret != EOK) {
-    MS_LOG_ERROR << "For '" << kernel_name_ << "', input memcpy to workspace error!";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input memcpy to workspace error!";
     return false;
   }
   SetArgumentHandle(DNNL_ARG_DIFF_DST, dst_work_addr);

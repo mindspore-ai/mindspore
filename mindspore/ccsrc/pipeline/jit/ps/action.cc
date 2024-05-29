@@ -587,7 +587,7 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
     }
     auto &cloned_nodes = cloner.cloned_nodes();
     for (auto &fv : fg->parameter_obj_nodes()) {
-      TraceGuard guard(std::make_shared<TraceCombileLikeGraphs>(fv->debug_info()));
+      TraceGuard guard(std::make_shared<TraceCombileLikeGraphs>(fg->output()->debug_info()));
       auto param = base_graph->add_parameter();
       MS_EXCEPTION_IF_NULL(resource->manager());
       auto &node_users = resource->manager()->node_users()[fv];
@@ -605,6 +605,7 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
     MS_LOG(DEBUG) << "Fg0 parameter_obj_nodes size :" << fg->parameter_obj_nodes().size();
 
     for (auto &g : graphs) {
+      TraceGuard guard(std::make_shared<TraceCopy>(fg->output()->debug_info()));
       auto &fvs = g->parameter_obj_nodes();
       std::vector<AnfNodePtr> new_node_inputs;
       new_node_inputs.push_back(NewValueNode(base_graph));

@@ -19,7 +19,7 @@
 namespace mindspore::infer::helper {
 void *FileExternalTensorHelper::GetExternalTensorData(const mindspore::schema::ExternalData *external_info) {
   if (external_info == nullptr) {
-    MS_LOG_ERROR << "external_info is nullptr.";
+    MS_LOG(ERROR) << "external_info is nullptr.";
     return nullptr;
   }
   return mindspore::lite::ReadFileSegment(base_path_ + external_info->location()->str(), external_info->offset(),
@@ -27,6 +27,6 @@ void *FileExternalTensorHelper::GetExternalTensorData(const mindspore::schema::E
 }
 
 void FileExternalTensorHelper::SetExternalTensorData(const mindspore::schema::ExternalData *external_info, void *data) {
-  MS_LOG_WARNING << "FileExternalTensorManager not support SetExternalTensorData";
+  MS_LOG(WARNING) << "FileExternalTensorManager not support SetExternalTensorData";
 }
 }  // namespace mindspore::infer::helper

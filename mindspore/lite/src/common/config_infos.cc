@@ -33,20 +33,20 @@ bool ProfileParser::ParseRangeStr(const std::string &range_str, int64_t *min_ptr
   constexpr size_t min_max_range_count = 2;
   if (min_and_max.size() == number_range_count) {
     if (!lite::ConvertStrToInt(min_and_max[0], &min)) {
-      MS_LOG_ERROR << "Invalid dynamic dim value range, dim value range or format is invalid: " << range_str
-                   << ". It should be 'min~max' or a number.";
+      MS_LOG(ERROR) << "Invalid dynamic dim value range, dim value range or format is invalid: " << range_str
+                    << ". It should be 'min~max' or a number.";
       return false;
     }
     max = min;
   } else if (min_and_max.size() == min_max_range_count) {
     if (!lite::ConvertStrToInt(min_and_max[0], &min) || !lite::ConvertStrToInt(min_and_max[1], &max)) {
-      MS_LOG_ERROR << "Invalid dynamic dim value range, dim value range or format is invalid: " << range_str
-                   << ". It should be 'min~max' or a number.";
+      MS_LOG(ERROR) << "Invalid dynamic dim value range, dim value range or format is invalid: " << range_str
+                    << ". It should be 'min~max' or a number.";
       return false;
     }
   } else {
-    MS_LOG_ERROR << "Invalid dynamic dim value range, dim value range or format is invalid: " << range_str
-                 << ". It should be 'min~max' or a number.";
+    MS_LOG(ERROR) << "Invalid dynamic dim value range, dim value range or format is invalid: " << range_str
+                  << ". It should be 'min~max' or a number.";
     return false;
   }
   if (min > max || min <= 0) {
@@ -64,8 +64,8 @@ bool ProfileParser::ParseOptDimStr(const std::string &opt_dim_str, int64_t *opt_
   }
   int opt = 0;
   if (!lite::ConvertStrToInt(opt_dim_str, &opt)) {
-    MS_LOG_ERROR << "Invalid opt dim value range, dim value range or format is invalid: " << opt_dim_str
-                 << ". It should be a number.";
+    MS_LOG(ERROR) << "Invalid opt dim value range, dim value range or format is invalid: " << opt_dim_str
+                  << ". It should be a number.";
     return false;
   }
   if (opt <= 0) {
@@ -290,8 +290,8 @@ bool ProfileParser::Parse(const std::map<std::string, std::string> &context, boo
 
 bool ProfileParser::ReorderByInputNames(const std::vector<std::string> &input_names, ProfileConfigs *profile_configs) {
   if (input_names.size() != profile_configs->input_infos.size()) {
-    MS_LOG_ERROR << "Input name size " << input_names.size() << " != profile config input size "
-                 << profile_configs->input_infos.size();
+    MS_LOG(ERROR) << "Input name size " << input_names.size() << " != profile config input size "
+                  << profile_configs->input_infos.size();
     return false;
   }
   ProfileConfigs new_profile_configs = *profile_configs;
@@ -311,7 +311,7 @@ bool ProfileParser::ReorderByInputNames(const std::vector<std::string> &input_na
       }
     }
     if (i >= input_infos.size()) {
-      MS_LOG_ERROR << "Cannot find input " << input_name << " in profile '" << lite::kInputShapeKey << "' config";
+      MS_LOG(ERROR) << "Cannot find input " << input_name << " in profile '" << lite::kInputShapeKey << "' config";
       return false;
     }
   }

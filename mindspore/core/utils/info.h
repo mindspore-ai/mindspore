@@ -171,23 +171,12 @@ class MS_CORE_API DebugInfo {
   /// \brief Construct DebugInfo with the given name.
   ///
   /// \param[in] name The DebugInfo name.
-  explicit DebugInfo(const std::string &name) : unique_id_(gen_unique_id()), name_(name) {
-    auto top = TraceManager::CurrentContextInfo();
-    if (top != nullptr) {
-      trace_info_ = top->trace_info();
-      location_ = top->location();
-    }
-  }
+  explicit DebugInfo(const std::string &name);
 
   /// \brief Construct DebugInfo with the given location.
   ///
   /// \param[in] loc The location for DebugInfo.
-  explicit DebugInfo(const LocationPtr &loc) : unique_id_(gen_unique_id()), location_(loc) {
-    auto top = TraceManager::CurrentContextInfo();
-    if (top != nullptr) {
-      trace_info_ = top->trace_info();
-    }
-  }
+  explicit DebugInfo(const LocationPtr &loc);
 
   /// \brief Construct DebugInfo with the given trace info.
   ///
@@ -252,9 +241,7 @@ class MS_CORE_API DebugInfo {
   /// \param[in] debug_name The name to be set.
   void set_debug_name(const std::string &debug_name) { debug_name_ = debug_name; }
 
-  virtual DebugInfoPtr Copy() const;
-
-  bool inlined() const { return inlined_; }
+  HashMap<DebugInfoPtr, DebugInfoPtr> &shadow_debug_infos_map() { return shadow_debug_infos_map_; }
 
   static DebugInfoPtr UpdateInlineCNodeDebugInfo(const DebugInfoPtr &call_debug_info, const DebugInfoPtr &debug_info);
 
@@ -271,7 +258,7 @@ class MS_CORE_API DebugInfo {
   LocationPtr location_;
   std::string name_;
   std::string debug_name_;
-  bool inlined_{false};
+  HashMap<DebugInfoPtr, DebugInfoPtr> shadow_debug_infos_map_;
 };
 
 /// \brief NodeDebugInfo defines debug information for a node.
@@ -299,8 +286,6 @@ class MS_CORE_API NodeDebugInfo : public DebugInfo {
   ///
   /// \param[in] type_name The node type name to be set.
   void set_type_name(const std::string &type_name) { type_name_ = type_name; }
-
-  DebugInfoPtr Copy() const override;
 
  private:
   std::string type_name_;
@@ -344,28 +329,17 @@ inline TraceContext::TraceContext(const LocationPtr &loc) : location_(loc) {
   }
 }
 
-inline TraceContext::TraceContext(const TraceInfoPtr &trace_info) : trace_info_(trace_info) {
-  if (trace_info->debug_info() != nullptr && trace_info->debug_info()->location() != nullptr &&
-      !trace_info->debug_info()->location()->invalid()) {
-    location_ = trace_info->debug_info()->location();
-  } else {
-    auto top = TraceManager::CurrentContextInfo();
-    if (top != nullptr) {
-      location_ = top->location();
-    }
-  }
-  if (location_ != nullptr) {
-    MS_LOG(DEBUG) << "location_: " << location_->DebugString();
-  } else {
-    MS_LOG(DEBUG) << "location_ is null";
-  }
-}
+inline TraceContext::TraceContext(const TraceInfoPtr &trace_info) : trace_info_(trace_info) {}
 
 struct MS_CORE_API DebugInfoCompare {
   bool operator()(const DebugInfoPtr &left, const DebugInfoPtr &right) const;
 };
 
 MS_CORE_API void UpdateDebugInfo(const FuncGraphPtr &func_graph, const ScopePtr &scope, const DebugInfoPtr &debug_info);
+MS_CORE_API void UpdateInlineCNodeDebugInfo(const AnfNodePtr &caller, const AnfNodePtr &callee);
+
+MS_CORE_API std::vector<DebugInfoPtr> GetDebugInfoList(const DebugInfoPtr &debug_info);
+
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_INFO_H_

@@ -34,18 +34,18 @@ std::vector<DebugInfoPtr> GetSourceCodeDebugInfoVec(DebugInfoPtr debug_info, boo
       int i = 0;
       for (const auto &info : debug_with_loc_vec) {
         auto loc = info->location();
-        MS_LOG(ERROR) << "[" << std::to_string(i) << "]:" << info.get()
-                      << ", loc:" << (loc == nullptr ? "null" : loc->ToString());
+        MS_LOG(ERROR) << "[" << std::to_string(i) << "]: " << info.get()
+                      << ", loc: " << (loc == nullptr ? "null" : loc->ToString());
         ++i;
       }
       auto loc = debug_info->location();
       MS_LOG(INTERNAL_EXCEPTION) << "Find loop debug info: " << debug_info.get()
-                                 << ", loc:" << (loc == nullptr ? "null" : loc->ToString()) << ".\n"
+                                 << ", loc: " << (loc == nullptr ? "null" : loc->ToString()) << ".\n"
                                  << "Please set 'compile_config.ENABLE_FIX_CODE_LINE=0' to avoid this problem.";
     }
     auto loc = debug_info->location();
     MS_LOG(DEBUG) << "Visited Insert debug info: " << debug_info.get()
-                  << ", loc:" << (loc == nullptr ? "null" : loc->ToString());
+                  << ", loc: " << (loc == nullptr ? "null" : loc->ToString());
     (void)visited.insert(debug_info);
     if (is_debug || debug_info->location() != nullptr) {
       debug_with_loc_vec.push_back(debug_info);
@@ -88,28 +88,49 @@ void ReplaceLinefeed(std::string *txt) {
 }  // namespace
 
 DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr &info) {
-  auto debug_with_loc_vec = GetSourceCodeDebugInfoVec(info);
-  if (!debug_with_loc_vec.empty()) {
-    return debug_with_loc_vec[0];
-  } else {
-    return info;
+  DebugInfoPtr debug_info = info;
+  while (debug_info != nullptr) {
+    auto loc = debug_info->location();
+    if (debug_info->location() != nullptr) {
+      MS_LOG(DEBUG) << "debug loc: " << debug_info->location()->DebugString();
+      return debug_info;
+    }
+    if (debug_info->trace_info() == nullptr) {
+      break;
+    }
+    MS_LOG(DEBUG) << "trace: " << debug_info->trace_info()->name();
+    debug_info = debug_info->trace_info()->debug_info();
   }
+  return info;
 }
 
-std::string GetDebugInfoStr(const DebugInfoPtr &info, const std::string &prefix, SourceLineTip tip) {
+std::string GetDebugInfoStr(const DebugInfoPtr &info, const std::string &prefix, SourceLineTip tip, bool is_debug) {
   if (info == nullptr) {
     return "";
   }
-  const auto &src_info = GetSourceCodeDebugInfo(info);
-  if (src_info->location() == nullptr) {
+  DebugInfoPtr debug_info;
+  if (!is_debug) {
+    debug_info = GetSourceCodeDebugInfo(info);
+  } else {
+    debug_info = info;
+  }
+  bool has_shadow = false;
+  if (!debug_info->shadow_debug_infos_map().empty()) {
+    has_shadow = true;
+  }
+
+  if (debug_info->location() == nullptr) {
     return "";
   }
-  auto line_str = src_info->location()->ToString(tip);
+  auto line_str = debug_info->location()->ToString(tip);
   if (tip == kSourceLineTipDiscard) {
     ReplaceLinefeed(&line_str);
   }
   std::stringstream ss;
   ss << prefix << line_str;
+  if (has_shadow) {
+    ss << "\n[shadow]";
+  }
   return ss.str();
 }
 
