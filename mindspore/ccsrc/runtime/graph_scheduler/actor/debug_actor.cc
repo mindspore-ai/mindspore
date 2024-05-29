@@ -34,6 +34,7 @@
 #include "include/common/debug/common.h"
 #include "utils/file_utils.h"
 #include "include/backend/debug/profiler/profiling.h"
+#include "ops/nn_op_name.h"
 
 namespace mindspore {
 namespace runtime {
@@ -79,7 +80,8 @@ void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &
  * Description: Load and read data for the given node if needed. Dump the node if dump is enabled and free the loaded
  * memory after the dump (for GPU and ascend kernel-by-kernel).
  */
-void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info, const DeviceContext *device_context,
+void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info,
+                       const std::vector<KernelTensor *> &op_output_kernel_tensors, const DeviceContext *device_context,
                        OpContext<DeviceTensor> *const op_context, const AID *) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
@@ -137,7 +139,8 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
  * Feature group: Dump, Online debugger.
  * Target device group: Ascend, GPU.
  * Runtime category: MindRT.
- * Description: Checks dataset_sink_mode and generates the related error if any exist and calls PreExecuteGraphDebugger.
+ * Description: Checks dataset_sink_mode and generates the related error if any exist and calls
+ * PreExecuteGraphDebugger.
  */
 void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
                                   const std::vector<AnfNodePtr> &origin_parameters_order,
@@ -258,6 +261,72 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
   MS_LOG(INFO) << "UpdateDumpIter: " << step_count;
 #endif
 #endif
+}
+
+bool DebugActor::CheckFinite(const DeviceContext *device_context, const std::vector<KernelTensor *> &inputs) {
+  if (inputs.empty()) {
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+
+  // 1. Get AllFinite kernel mod.
+  const auto &kernel_mod_iter = finite_kernel_mods_.find(device_context);
+  kernel::KernelModPtr finite_kernel_mod = nullptr;
+  if (kernel_mod_iter == finite_kernel_mods_.end()) {
+    const auto &new_finite_kernel_mod = device_context->GetKernelExecutor(false)->CreateKernelMod(kAllFiniteOpName);
+    MS_EXCEPTION_IF_NULL(new_finite_kernel_mod);
+    finite_kernel_mods_.emplace(device_context, new_finite_kernel_mod);
+    finite_kernel_mod = new_finite_kernel_mod;
+  } else {
+    finite_kernel_mod = kernel_mod_iter->second;
+  }
+  MS_EXCEPTION_IF_NULL(finite_kernel_mod);
+
+  // 2. Get output kernel tensor for AllFinite kernel.
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  const auto &stream_id = inputs[0]->stream_id();
+  auto &stream_id_to_output_device_address = finite_output_device_addresses_[device_context];
+  if (stream_id_to_output_device_address.find(stream_id) == stream_id_to_output_device_address.end()) {
+    auto finite_output_addr = device_context->device_res_manager_->AllocateMemory(1, stream_id);
+    MS_EXCEPTION_IF_NULL(finite_output_addr);
+
+    ShapeVector shape_vec = {1};
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      finite_output_addr, 1, Format::DEFAULT_FORMAT, kNumberTypeBool, shape_vec,
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    kernel_tensor->set_stream_id(stream_id);
+    kernel_tensor->SetType(std::make_shared<TensorType>(kBool));
+    kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(shape_vec));
+    auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+    MS_EXCEPTION_IF_NULL(device_address);
+    stream_id_to_output_device_address.emplace(stream_id, device_address);
+  }
+  auto &output_device_address = stream_id_to_output_device_address[stream_id];
+  MS_EXCEPTION_IF_NULL(output_device_address);
+  const auto &output_kernel_tensor = output_device_address->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(output_kernel_tensor);
+
+  void *stream_ptr = device_context->device_res_manager_->GetStream(stream_id);
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+  bool ret = finite_kernel_mod->Launch(inputs, {}, {output_kernel_tensor.get()}, stream_ptr);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Launch AllFinite kernel failed.";
+  }
+  return output_kernel_tensor->GetValueWithCheck<bool>();
+}
+
+void DebugActor::Finalize() {
+  for (const auto &item : finite_output_device_addresses_) {
+    auto &stream_id_to_output_device_address_map = item.second;
+    auto *device_context = item.first;
+    for (const auto &device_address_item : stream_id_to_output_device_address_map) {
+      const auto &device_address = device_address_item.second;
+      if (device_address && device_context) {
+        device_context->device_res_manager_->FreeMemory(device_address->GetMutablePtr());
+      }
+    }
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore

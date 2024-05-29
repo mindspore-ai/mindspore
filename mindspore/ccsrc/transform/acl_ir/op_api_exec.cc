@@ -25,7 +25,7 @@ using ReleaseHugeMemCast = void (*)(void *, bool);
 
 static std::mutex init_mutex;
 static bool aclnn_init = false;
-HashMap<void *, std::string> opapi_lib_handle;
+std::vector<std::pair<void *, std::string>> opapi_lib_handle;
 
 OpApiDefaultResource &OpApiDefaultResource::GetInstance() {
   static OpApiDefaultResource instance;
@@ -111,7 +111,7 @@ void LoadOpApiLib() {
     auto cust_handler = GetOpApiLibHandler(cust_lib_path);
     if (cust_handler != nullptr) {
       MS_LOG(DEBUG) << "Load cust open api lib " << cust_lib_path << " success";
-      opapi_lib_handle[cust_handler] = cust_lib_path;
+      (void)opapi_lib_handle.emplace_back(std::make_pair(cust_handler, cust_lib_path));
     }
   }
 
@@ -125,7 +125,7 @@ void LoadOpApiLib() {
   auto handle = GetOpApiLibHandler(lib_path);
   if (handle != nullptr) {
     MS_LOG(DEBUG) << "Load open api lib " << lib_path << " success";
-    opapi_lib_handle[handle] = lib_path;
+    (void)opapi_lib_handle.emplace_back(std::make_pair(handle, lib_path));
   }
   MS_LOG(DEBUG) << "Load all open api lib success";
 }

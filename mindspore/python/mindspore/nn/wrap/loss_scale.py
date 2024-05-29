@@ -29,6 +29,7 @@ from mindspore.ops.operations.math_ops import NPUGetFloatStatusV2, NPUClearFloat
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops.operations.nn_ops import AllFinite
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit
 from mindspore._c_expression import MSContext
@@ -371,6 +372,10 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         self.ascend_910bc_target = (MSContext.get_instance().get_ascend_soc_version() in ['ascend910b', 'ascend910c'])
         self.loss_scaling_manager = None
         self._ascend_check_overflow_mode = os.environ.get('MS_ASCEND_CHECK_OVERFLOW_MODE')
+        self.kernel_mode = False
+        global_jit_config = context.get_jit_config()
+        if global_jit_config:
+            self.kernel_mode = global_jit_config["jit_level"] == "O0"
 
 
         if isinstance(scale_sense, Cell):
@@ -478,6 +483,15 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
             overflow = self.less_equal(self.base, flag_sum)
         return overflow
 
+    def _get_distributed_overflow_status_on_infnan_kernel_mode(self, compute_output):
+        """check overflow status on infnan kernel mode."""
+        overflow = AllFinite()(compute_output)
+
+        if self.is_distributed:
+            overflow = P.Cast()(overflow, mstype.int8)
+            overflow = P.Cast()(self.allreduce(overflow), mstype.bool_)
+        return overflow
+
     def _get_gpu_overflow_status(self, compute_output):
         """get overflow status of gpu."""
         overflow = self._get_distributed_overflow_status_on_infnan_mode(_grad_overflow, compute_output)
@@ -485,7 +499,11 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
 
     def _get_ascend_overflow_status_on_infnan_mode(self, compute_output):
         """get overflow status of ascend on infnan mode."""
-        overflow = self._get_distributed_overflow_status_on_infnan_mode(_ascend_grad_overflow, compute_output)
+        overflow = False
+        if self.kernel_mode:
+            overflow = self._get_distributed_overflow_status_on_infnan_kernel_mode(compute_output)
+        else:
+            overflow = self._get_distributed_overflow_status_on_infnan_mode(_ascend_grad_overflow, compute_output)
         return overflow
 
     def _get_ascend_overflow_status_on_saturation_mode(self, status, compute_output):

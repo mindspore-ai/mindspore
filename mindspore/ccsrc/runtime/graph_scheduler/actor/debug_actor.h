@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_DEBUG_ACTOR_H_
 
 #include <vector>
+#include <map>
 #include <set>
 #include <mutex>
 #include <string>
@@ -30,6 +31,9 @@
 
 namespace mindspore {
 namespace runtime {
+using device::DeviceAddressPtr;
+using kernel::KernelTensor;
+using kernel::KernelTensorPtr;
 using mindspore::device::DeviceContext;
 using mindspore::kernel::KernelLaunchAddr;
 
@@ -43,7 +47,8 @@ class DebugActor : public ActorBase {
   void ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &graphs, bool is_kbyk);
 
   // The debug of each node.
-  void Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info, const DeviceContext *device_context,
+  void Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info,
+             const std::vector<KernelTensor *> &op_output_kernel_tensors, const DeviceContext *device_context,
              OpContext<DeviceTensor> *const op_context, const AID *from_aid);
 
   void AscendStepStart(const std::vector<KernelGraphPtr> &graphs, std::vector<DeviceContext *> device_contexts);
@@ -61,6 +66,14 @@ class DebugActor : public ActorBase {
   static inline uint64_t current_step{1};
 
  private:
+  // Check kernel output is finite or not synchronously.
+  bool CheckFinite(const DeviceContext *device_context, const std::vector<KernelTensor *> &inputs);
+  // Release device memory for AllFinite kernel.
+  void Finalize() override;
+
+  std::map<const DeviceContext *, kernel::KernelModPtr> finite_kernel_mods_;
+  std::map<const DeviceContext *, std::map<uint32_t, DeviceAddressPtr>> finite_output_device_addresses_;
+
   // class members
   uint32_t exec_order_ = 0;
   int step_count = 0;

@@ -532,6 +532,7 @@ constexpr const char kNameAllGatherMatmul[] = "AllGatherMatmul";
 constexpr const char kNameMoeFinalizeRouting[] = "MoeFinalizeRouting";
 constexpr const char kSilentCheck[] = "SilentCheck";
 constexpr const char kNameUniformCandidateSampler[] = "UniformCandidateSampler";
+constexpr const char kNameAllFinite[] = "AllFinite";
 
 class OpAdapterDesc;
 
