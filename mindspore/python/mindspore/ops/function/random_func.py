@@ -1004,6 +1004,90 @@ def rand_like(input, seed=None, *, dtype=None):
 
 
 @_function_forbid_reuse
+def rand_ext(*size, dtype=None, generator=None):
+    r"""
+    Returns a new tensor that fills numbers from the uniform distribution over an interval :math:`[0, 1)`
+    based on the given shape and dtype.
+
+    Args:
+        size (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g. :math:`(2, 3)` or :math:`2`.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
+            `mindspore.float32` will be applied. Default: ``None`` .
+        generator (:class:`mindspore.Generator`, optional): a pseudorandom number generator. Default: ``None`` .
+
+    Returns:
+        Tensor, with the designated shape and dtype, filled with random numbers from the uniform distribution on
+        the interval :math:`[0, 1)`.
+
+    Raises:
+        TypeError: `seed` is not a non-negative integer.
+        ValueError: If `dtype` is not a `mstype.float_type` type.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.ops as ops
+        >>> print(ops.rand_ext((2,3)))
+        [[4.1702199e-01 9.9718481e-01 7.2032452e-01]
+         [9.3255734e-01 1.1438108e-04 1.2812445e-01]]
+    """
+    if dtype is None:
+        dtype = mstype.float32
+    elif dtype not in mstype.float_type:
+        raise ValueError(
+            f"For 'rand', the 'dtype' must be a float type, but got {dtype}.")
+    stub_tensor = F.zeros(size, dtype)
+    return uniform_ext(stub_tensor, 0., 1., generator)
+
+
+@_function_forbid_reuse
+def rand_like_ext(input, *, dtype=None):
+    r"""
+    Returns a new tensor that fills numbers from the uniform distribution over an interval :math:`[0, 1)`
+    based on the given shape and dtype.
+
+    Args:
+        input (Tensor): Input Tensor to specify the output shape and its default dtype.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
+            the same dtype of `input` will be applied. Default: ``None`` .
+
+    Returns:
+        Tensor, with the designated shape and dtype, filled with random numbers from the uniform distribution on
+        the interval :math:`[0, 1)`.
+
+    Raises:
+        TypeError: If `seed` is not a non-negative integer.
+        ValueError: If `dtype` is not a `mstype.float_type` type.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor, ops
+        >>> a = Tensor([[2, 3, 4], [1, 2, 3]])
+        >>> print(ops.rand_like_ext(a, dtype=ms.float32))
+        [[4.1702199e-01 9.9718481e-01 7.2032452e-01]
+         [9.3255734e-01 1.1438108e-04 1.2812445e-01]]
+    """
+    if not isinstance(input, Tensor):
+        raise TypeError(
+            f"For 'rand_like', the 'input' must be a Tensor, but got {type(input)}")
+    if dtype is None:
+        dtype = input.dtype
+    if dtype not in mstype.float_type:
+        raise ValueError(
+            f"For 'rand_like', the 'dtype' must be a float type, but got {dtype}.")
+    stub_tensor = F.zeros_like_ext(input, dtype=dtype)
+    return uniform_ext(stub_tensor, 0., 1.)
+
+
+@_function_forbid_reuse
 def randn(*size, dtype=None, seed=None):
     r"""
     Returns a new Tensor with given shape and dtype, filled with a sample (or samples)
@@ -1401,7 +1485,8 @@ def _check_param(op_name, param_name, param_value):
 __all__ = [
     'standard_laplace', 'random_categorical', 'uniform', 'uniform_ext', 'standard_normal', 'random_gamma',
     'uniform_candidate_sampler', 'random_poisson', 'log_uniform_candidate_sampler', 'shuffle', 'choice_with_mask',
-    'normal_ext', 'normal', 'laplace', 'gamma', 'poisson', 'multinomial', 'rand', 'rand_like', 'randn', 'randn_like',
+    'normal_ext', 'normal', 'laplace', 'gamma', 'poisson', 'multinomial', 'rand', 'rand_like',
+    'rand_ext', 'rand_like_ext', 'randn', 'randn_like',
     'randint', 'randint_like', 'multinomial_with_replacement', 'randperm'
 ]
 __all__.sort()
