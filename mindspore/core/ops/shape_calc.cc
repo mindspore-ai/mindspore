@@ -137,7 +137,6 @@ ShapeCalcBaseFunctorPtr ShapeCalc::get_functor() const {
   return attr->cast<ShapeCalcBaseFunctorPtr>();
 }
 
-std::vector<bool> ShapeCalc::get_value_depend() const { return GetValue<std::vector<bool>>(GetAttr(kAttrValueDepend)); }
 ShapeArray ShapeCalc::get_calc_result() const { return GetValue<ShapeArray>(GetAttr(kAttrCalcResult)); }
 
 class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
@@ -145,7 +144,7 @@ class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
-    auto value_depend = GetValue<std::vector<bool>>(primitive->GetAttr(kAttrValueDepend));
+    auto only_depend_shape = GetValue<std::vector<bool>>(primitive->GetAttr(kAttrOnlyDependShape));
     ShapeArray args;
     HashSet<size_t> unknown_inputs;
     bool is_any_dynamic_shape = false;
@@ -155,7 +154,7 @@ class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
     for (size_t i = 0; i < input_args.size(); ++i) {
       const auto &abs = input_args[i];
       MS_EXCEPTION_IF_NULL(abs);
-      if (!value_depend[i]) {
+      if (only_depend_shape[i]) {
         // If it is not value depend, use shape as arg.
         size_t offset_base = args.size();
         if (!TryGetShapeArg(abs, &args, &pos_idx)) {

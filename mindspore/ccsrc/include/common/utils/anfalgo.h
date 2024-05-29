@@ -72,6 +72,11 @@ class COMMON_EXPORT AnfAlgo {
   static AnfNodePtr GetCNodePrimitiveNode(const CNodePtr &node);
   static void SetNodeInput(const CNodePtr &node, const AnfNodePtr &input_node, size_t index);
   static PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node);
+  // Get cnode primitive attr.
+  static ValuePtr GetCNodePrimitiveAttr(const AnfNodePtr &node, const std::string &key) {
+    const auto &primitive = GetCNodePrimitive(node);
+    return primitive != nullptr ? primitive->GetAttr(key) : nullptr;
+  }
   // check whether anf node is a node of 'primitive_type',such as make_tuple is a cnode of kPrimMakeTuple
   static bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type);
   // get cnode primitive

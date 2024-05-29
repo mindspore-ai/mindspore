@@ -35,6 +35,22 @@ bool InputDataNoNeedCopy(DeviceTensor *input_device_tensor, DeviceTensorPtr node
   }
   return false;
 }
+
+void UpdateRefCountWithOnlyDependShape(const CNodePtr &kernel, const AnfNodePtr &node, size_t index) {
+  // Shape depend kernel should not increase ref count.
+  const auto &only_depend_shape_attr = common::AnfAlgo::GetCNodePrimitiveAttr(kernel, kAttrOnlyDependShape);
+  if (only_depend_shape_attr != nullptr) {
+    const auto &only_depend_shape = GetValue<std::vector<bool>>(only_depend_shape_attr);
+    if (index < only_depend_shape.size() && only_depend_shape[index]) {
+      // Only depend shape no need to increase ref count, and update flag.
+      auto device_tensor = AnfAlgo::GetMutableOutputAddr(node, index, false);
+      MS_EXCEPTION_IF_NULL(device_tensor);
+      device_tensor->UpdateFlag(device::kDeviceAddressFlagNullptr);
+      return;
+    }
+  }
+  UpdateRefCount(node, index, false);
+}
 }  // namespace
 void SuperKernelActor::Init() {
   MS_EXCEPTION_IF_NULL(graph_);
@@ -787,9 +803,9 @@ void SuperKernelActor::CalcRefCount() {
         if (IsSkippedKernelActor(input_node_with_idx.first)) {
           const auto &real_input_node_with_idx =
             common::AnfAlgo::GetPrevNodeOutput(input_node_with_idx.first, 0, false);
-          UpdateRefCount(real_input_node_with_idx.first, real_input_node_with_idx.second, false);
+          UpdateRefCountWithOnlyDependShape(kernel, real_input_node_with_idx.first, real_input_node_with_idx.second);
         } else {
-          UpdateRefCount(input_node_with_idx.first, input_node_with_idx.second, false);
+          UpdateRefCountWithOnlyDependShape(kernel, input_node_with_idx.first, input_node_with_idx.second);
         }
       } else if (IsPersistentDeviceTensor(input_node_with_idx.first)) {
         UpdateRefCount(input_node_with_idx.first, input_node_with_idx.second, true);

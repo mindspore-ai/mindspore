@@ -113,11 +113,15 @@ void KernelActor::Init() {
   if (cnode == nullptr) {
     return;
   }
+
+  InitShapeDependInfo();
+
   auto input0 = cnode->input(kAnfPrimitiveIndex);
   if (IsValueNode<FuncGraph>(input0)) {
     MS_LOG(INFO) << "cnode is not a func graph value node : " << kernel_->DebugString() << ".";
     return;
   }
+
   auto device_context = device_contexts_[0];
   // cpu kernel does not need multi stream process, and gpu kernel has not adapt it currently.
   if (device_context->GetDeviceType() == device::DeviceType::kCPU ||
@@ -281,6 +285,21 @@ void KernelActor::InitWorkspaceInfo() {
   if (IsSomasEnable(somas_info_)) {
     MS_EXCEPTION_IF_CHECK_FAIL((workspace_device_tensors_.size() >= somas_workspace.size()),
                                "The output num is wrong.");
+  }
+}
+
+void KernelActor::InitShapeDependInfo() {
+  // Shape kernel no need to decrease ref count.
+  const auto &only_depend_shape_attr = common::AnfAlgo::GetCNodePrimitiveAttr(kernel_, kAttrOnlyDependShape);
+  if (only_depend_shape_attr != nullptr) {
+    auto only_depend_shape = GetValue<std::vector<bool>>(only_depend_shape_attr);
+    MS_LOG(INFO) << "Init shape depend info, real_input_num_ : " << real_input_num_
+                 << ", only_depend_shape size : " << only_depend_shape.size() << ".";
+    for (size_t i = 0; i < only_depend_shape.size(); i++) {
+      // shape depend, no need free this device tensor.
+      MS_LOG(INFO) << "only_shape_depend[" << i << "] : " << only_depend_shape[i] << ".";
+      depend_shape_input_list_.emplace_back(only_depend_shape[i]);
+    }
   }
 }
 
@@ -519,7 +538,23 @@ void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
     device_contexts_[0]->device_res_manager_->swap_manager()->SetSwappableBeforeMemFree(
       input_device_tensors_, output_device_tensors_, kernel_info_);
   }
-  MemoryManagerActor::GetInstance()->FreeMemory(&memory_free_list_, device_contexts_[0], context, GetAID());
+  if (depend_shape_input_list_.empty()) {
+    MemoryManagerActor::GetInstance()->FreeMemory(&memory_free_list_, device_contexts_[0], context, GetAID());
+  } else {
+    MS_LOG(DEBUG) << "depend_shape_input_list size : " << depend_shape_input_list_.size() << ".";
+    std::vector<DeviceTensor *> free_list;
+    for (size_t i = 0; i < memory_free_list_.size(); i++) {
+      const auto device_tensor = memory_free_list_[i];
+      if (device_tensor->dynamic_ref_count() == INT32_MAX && device_tensor->ref_count() != SIZE_MAX &&
+          i < depend_shape_input_list_.size() && depend_shape_input_list_[i]) {
+        MS_LOG(DEBUG) << "Skip memory free for kernel actor : " << kernel_->fullname_with_scope() << " index : " << i
+                      << ", device address : " << memory_free_list_[i] << ".";
+        continue;
+      }
+      free_list.emplace_back(memory_free_list_[i]);
+    }
+    MemoryManagerActor::GetInstance()->FreeMemory(&free_list, device_contexts_[0], context, GetAID());
+  }
 
   // Free the address that is the temp store for kernel input copy.
   for (auto &copy_input_device_tensor : copy_input_device_tensors_) {
@@ -933,9 +968,15 @@ void KernelActor::ResizeKernelMod() {
   }
 }
 namespace {
-void TrackInputMemory(const std::vector<DeviceTensor *> &input_device_tensors, const std::string &actor_name) {
+void TrackInputMemory(const std::vector<DeviceTensor *> &input_device_tensors, const std::string &actor_name,
+                      const std::vector<bool> &depend_shape_input_list) {
   if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
-    for (auto &device_addr : input_device_tensors) {
+    for (size_t i = 0, end = input_device_tensors.size(); i < end; i++) {
+      // Skip shape depend inputs.
+      if (i < depend_shape_input_list.size() && depend_shape_input_list[i]) {
+        continue;
+      }
+      auto device_addr = input_device_tensors[i];
       if (device_addr == nullptr || !device_addr->IsPtrValid()) {
         continue;
       }
@@ -946,7 +987,7 @@ void TrackInputMemory(const std::vector<DeviceTensor *> &input_device_tensors, c
 }  // namespace
 
 bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
-  TrackInputMemory(input_device_tensors_, GetAID().Name());
+  TrackInputMemory(input_device_tensors_, GetAID().Name(), depend_shape_input_list_);
   if (skip_launch_shape_related_op_) {
     MS_LOG(DEBUG) << "Skip launch real make tuple kernel: " << kernel_->fullname_with_scope()
                   << " input kernel tensor: " << input_kernel_tensors_;

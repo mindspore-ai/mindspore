@@ -98,6 +98,8 @@ constexpr size_t kDeviceAddressFlagRefNode = 1;
 constexpr size_t kDeviceAddressFlagNotUsed = 2;
 // Indicates that it is the device address of node has init arg and do not need device address.
 constexpr size_t kDeviceAddressFlagIgnoreDevicePtr = 4;
+// Indicates that it is the ptr of device address is nullptr.
+constexpr size_t kDeviceAddressFlagNullptr = 8;
 
 class DeviceAddress : public mindspore::DeviceSync {
  public:

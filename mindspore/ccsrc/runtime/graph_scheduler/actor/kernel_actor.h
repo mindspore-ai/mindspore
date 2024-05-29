@@ -196,6 +196,8 @@ class KernelActor : public DebugAwareActor {
   std::vector<DeviceTensor *> memory_alloc_list_;
   // input + output + workspace
   std::vector<DeviceTensor *> memory_free_list_;
+  // depend shape input list
+  std::vector<bool> depend_shape_input_list_;
   // The device tensor of external reference is not the real data of this kernel, but need add to the
   // memory_free_list_.
   std::vector<DeviceTensor *> external_reference_tensors_;
@@ -227,6 +229,7 @@ class KernelActor : public DebugAwareActor {
   void InitInputInfo();
   void InitOutputInfo();
   void InitWorkspaceInfo();
+  void InitShapeDependInfo();
 
   // Fetch the device tensor for launch.
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *const context);
