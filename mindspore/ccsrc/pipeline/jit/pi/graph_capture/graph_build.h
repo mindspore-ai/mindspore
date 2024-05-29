@@ -182,7 +182,7 @@ class GraphBuilder {
   bool ReplaceCall(CallNode *call_node, const py::object &func);
 
   // build abstract instance of python class
-  bool HandleCallClass(CallNode *call_node);
+  virtual bool HandleCallClass(CallNode *call_node);
 
   // return false if has unsupported bytecode
   bool DoByteCode(const Instr &instr);
@@ -328,6 +328,7 @@ class MindGraphBuilder : public GraphBuilder {
                           CallNode *call_node) override;
   bool HandleKWParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame) override;
   bool UnpackCallExDict(std::vector<ValueNode *> *params, CallNode *call_node) override;
+  bool HandleCallClass(CallNode *call_node) override;
 
  private:
   std::vector<py::object> GetNewArgs(CallNode *call_node, AObject *vobj = nullptr);
