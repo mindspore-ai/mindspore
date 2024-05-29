@@ -580,6 +580,7 @@ void GradExecutor::ResetMetaGradInfoForNewTopCell(const InputArgsInfoPtr &input_
   // We need to clear last top cell's parameters grad info to avoid influencing construct bprop graph of current top
   // cell.
   if (top_cell_ != nullptr) {
+    MS_LOG(DEBUG) << "Reset meta grad info for top cell " << top_cell_;
     top_cell_->ResetMetaGradInfo();
   }
 
@@ -607,9 +608,6 @@ void GradExecutor::NewGraphInner(const py::object &obj, const py::args &args) {
   // Make top graph and init resource
   if (input_args_info->is_grad_topest_cell || input_args_info->is_high_order_top_cell ||
       is_bprop_need_get_forward_graph) {
-    // If grad order is different, new grad comes in, so make new top cell is needed, and The priority of
-    // is_bprop_need_get_forward_graph needs to be lowered
-    is_bprop_need_get_forward_graph = is_bprop_need_get_forward_graph && top_cell_->grad_order() == grad_order_;
     InitResourceAndDfBuilder(input_args_info, is_bprop_need_get_forward_graph);
   }
 }
@@ -701,6 +699,8 @@ void GradExecutor::MakeNewTopCell(const InputArgsInfoPtr &input_args_info) {
                                                     top_input_args_info_->input_arg_base_shape_vec, true);
   }
   top_cell_->set_has_bprop_cut_op(input_args_info->has_custom_bprop);
+  top_cell_->set_grad_first(grad_first_);
+  grad_first_ = false;
   MS_LOG(DEBUG) << "New top graph, fg ptr " << fg.get() << ", top cell ptr " << top_cell_.get()
                 << " with input args id " << top_cell_->input_args_id();
 
@@ -727,12 +727,30 @@ bool GradExecutor::NewTopCellIsPipelineTopCell(const InputArgsInfoPtr &input_arg
   if (it != pipeline_top_cell_map_.end()) {
     // First pipeline top cell
     MS_EXCEPTION_IF_CHECK_FAIL(!it->second.empty(), "Pipeline top cel map is empty");
+
+    // net.set_grad
+    // grad(net)(input1) -> this will generate a element in already_run_top_cell_ and do a complete grad operation;
+    // Then, run another net(input1) -> this will think it do upgrade op info because a complete grad operation have
+    // done before; But then run another net(input1) -> this will get pipeline top cell and which should be have 2
+    // elements, and they are need compile ir graph because this is the first step for running pipeline top cell.
+    // Then, run grad(net)(input1) -> this will find the matched top cell in already_run_top_cell_ because
+    // already_run_cell_id is matched, but this is not correct because current process is in pipeline top cell now. So,
+    // this will meet a error of auto grad meta.
+    // Erase top cell info from already_run_top_cell_ is need.
+    auto iter = already_run_top_cell_.find(input_args_info->already_run_cell_id);
+    if (iter != already_run_top_cell_.end()) {
+      MS_LOG(DEBUG) << "Erase top cell from already run top cell";
+      // Need use ir top cell, current top cell in pipeline_top_cell_map_ is func grad. So, need exchange.
+      it->second.front() = iter->second;
+      it->second.front()->set_need_compile_graph(true);
+      already_run_top_cell_.erase(iter);
+    }
     it->second.front()->set_is_pipeline_top_cell(true);
     return true;
   }
   // net.set_grad.
   // 1. grad(net)(input), top cell id will include grad_operation_;
-  // 2. net(input1), grad(net)(input1), net(input2), grad(net)(input2),..., top cell id not include grad_operation_.
+  // 2. net(input1), grad(net)(input1), net(input2), grad(net)(input2), ..., top cell id not include grad_operation_.
   // In second step, grad(net)(input) should be pipeline cell too.
   auto iter = std::find_if(pipeline_top_cell_map_.begin(), pipeline_top_cell_map_.end(),
                            [&input_args_info](const auto &iter_pipe) {
@@ -816,12 +834,14 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
     input_args_info->out_value = out_tensor;
   }
 
+  // If network runs twice, and one of the runs is an empty network, the following judgment will take effect
+  ValuePtrList inputs{input_args_info->out_value};
+  AbstractBasePtrList abs{PyNativeAlgo::Common::SetAbstractValueToAnyValue(input_args_info->out_value->ToAbstract())};
+  auto node_info = std::make_shared<DynamicDetectNodeInfo>(nullptr, abs, nullptr);
+  (void)dynamic_shape()->CheckNodeDynamic(top_cell(), inputs, node_info);
+
   // Just only dump the last forward graph or bprop forward graph
   if (save_graphs_ || top_cell_->is_bprop_need_get_forward_graph()) {
-    ValuePtrList inputs{input_args_info->out_value};
-    AbstractBasePtrList abs{PyNativeAlgo::Common::SetAbstractValueToAnyValue(input_args_info->out_value->ToAbstract())};
-    auto node_info = std::make_shared<DynamicDetectNodeInfo>(nullptr, abs, nullptr);
-    (void)dynamic_shape()->CheckNodeDynamic(top_cell(), inputs, node_info);
     auto output_node =
       GetInput(input_args_info->out_value, PyNativeAlgo::Common::GetIdByValue(input_args_info->out_value));
     curr_g()->set_output(output_node);
@@ -843,6 +863,9 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
   top_cell()->CheckSubCellHookChanged();
   // Checkout whether you need to compile graph when each top cell has run finished
   CheckNeedCompileGraph(input_args_info);
+  if (!top_cell_->grad_first()) {
+    DecreaseGradOrder();
+  }
   top_input_args_info_ = input_args_info;
 }
 
@@ -1165,10 +1188,24 @@ std::string GradExecutor::GetAlreadyRunCellId(const std::string &obj_id) const {
 
 void GradExecutor::GetTopCellWithInputArgsRespectTo(const prim::GradOperationPtr &grad, const py::object &obj,
                                                     const py::args &args) {
-  if (finded_top_cell_ != nullptr) {
+  auto reset_flag = [this]() {
     if (finded_top_cell_->is_pipeline_top_cell()) {
       top_cell_ = finded_top_cell_;
+    } else if (top_cell_ != nullptr &&
+               finded_top_cell_->already_run_cell_id().find(top_cell_->already_run_cell_id()) == std::string::npos) {
+      // NetA.set_grad, NetB.set_grad
+      // then, run NetA(input), NetB(input) for get loss, and then run grad(NetA)(input), grad(NetB)(input).
+      // But, when run grad(NetA)(input), finded_top_cell_ is grad of NetA, but top cell is grad(NetB)(input), which is
+      // not matched, so need to do exchange.
+      // Need do meta grad info reset for NetB because NetB run after NetA and NetB not do this operation in
+      // MakeNewTopCell. If have same inputs or weight parameters, auto grad meta maybe meet nullptr.
+      top_cell_->ResetMetaGradInfo();
+      top_cell_ = finded_top_cell_;
     }
+  };
+
+  if (finded_top_cell_ != nullptr) {
+    reset_flag();
     return;
   }
   MS_EXCEPTION_IF_NULL(grad);
@@ -1196,9 +1233,7 @@ void GradExecutor::GetTopCellWithInputArgsRespectTo(const prim::GradOperationPtr
                 << ", input args id " << input_args_id;
   finded_top_cell_ = GetTopCell(already_run_cell_id, input_args_id);
   MS_EXCEPTION_IF_NULL(finded_top_cell_);
-  if (finded_top_cell_->is_pipeline_top_cell()) {
-    top_cell_ = finded_top_cell_;
-  }
+  reset_flag();
 }
 
 bool GradExecutor::ReplacePipelineTopCellForwardOutput() {
@@ -1435,14 +1470,16 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
   return bprop_graph;
 }
 
-void GradExecutor::SetGradOrder(const std::string &obj_id) {
+bool GradExecutor::NeedIncreaseGradOrder(const std::string &obj_id) {
   // top_cell_ == nullptr means call by grad first
   // top_cell_->obj_id_with_grad_order() include obj_id and grad_order
   // If top_cell_->obj_id_with_grad_order().find(obj_id) == std::string::npos, means current cell is not top cell,
   // another cell or function needs to get grad, so high-order comes up
   if (top_cell_ == nullptr || top_cell_->obj_id_with_grad_order().find(obj_id + "_") == std::string::npos) {
     IncreaseGradOrder();
+    return true;
   }
+  return false;
 }
 
 py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj,
@@ -1450,8 +1487,17 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
                                          const py::args &args) {
   const auto &obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
 
-  // Check current cell grad order and erase it if in current top cell list
-  SetGradOrder(obj_id);
+  // The rule of grad order is:
+  // scenarios 1. net.set_grad, net(input) calls first, increase 1 before MakeNewTopCell, and decrease 1 when running to
+  // EndGraphImpl, indicating that a complete bprop graph construction is completed; Then call grad(net)(input) is won't
+  // be affected and get forward_run is true.
+  // scenarios 2. If grad(net)(input) calls first, then increase 1 before MakeNewTopCell and decrease 1 in Rungrad. The
+  // reason for this design is that if grad(net)(input) calls first and decrease 1 in EndGraphImpl, it will cause
+  // matching problems during RunGrad due to the presence of Gradopration information in already_run_cell_id is not the
+  // same. Gradopration information include grad order for distinguish high-order.
+  // Use flag: grad_first_ for distinguish this two scenarios. If scenarios 1 is taked, grad_first_ will not take
+  // effect, otherwise, it works.
+  bool neee_increase_grad_order = NeedIncreaseGradOrder(obj_id);
   // Include weight param size and required grad flag
   std::string grad_hash_id_str;
   if (!py::isinstance<py::none>(grad_hash_id)) {
@@ -1490,9 +1536,17 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
         top_cell_->ResetMetaGradInfo();
       }
       if (forward_run) {
+        // If neee_increase_grad_order is true means grad order increased and prepare to do grad;
+        // But forward run is true now, means no need do forward again, so grad order need be decrease.
+        if (neee_increase_grad_order) {
+          DecreaseGradOrder();
+        }
         finded_top_cell_ = find_top_cell;
       }
     }
+  }
+  if (!forward_run) {
+    grad_first_ = true;
   }
   forward_run ? MS_LOG(DEBUG) << "Top cell have already ran with input args id " << input_args_id
               : MS_LOG(DEBUG) << "Top cell no run before with input args id " << input_args_id;
@@ -1772,7 +1826,9 @@ void GradExecutor::ClearPipelineTopCellRes() {
     // from the map.
     ErasePipelineTopCell(top_cell_->already_run_cell_id(), top_cell_->input_args_id(), true);
   }
-  DecreaseGradOrder();
+  if (top_cell_->grad_first()) {
+    DecreaseGradOrder();
+  }
   grad_operation_.clear();
 }
 

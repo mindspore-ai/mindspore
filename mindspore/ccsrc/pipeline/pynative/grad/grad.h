@@ -168,7 +168,7 @@ class GradExecutor {
     top_cell_stack_.push(top_cell);
     MS_LOG(DEBUG) << "Push top cell " << top_cell << " on top cell stack";
   }
-  void SetGradOrder(const std::string &obj_id);
+  bool NeedIncreaseGradOrder(const std::string &obj_id);
   void SaveOutputNodeMap(const std::string &obj_id, const FrontendOpRunInfoPtr &op_run_info,
                          const CNodePtr &cnode) const;
   void DoOpGrad(const FrontendOpRunInfoPtr &op_run_info) const;
@@ -253,6 +253,8 @@ class GradExecutor {
 
   // If grad_order=1, indicate first derivative; grad_order=2, indicate second derivative; ...
   size_t grad_order_{0};
+  // if call grad not set_grad first, grad first is true.
+  bool grad_first_{false};
 
   // Used for auto grad map reserve
   size_t op_num_in_bprop_graph_{kDefaultContainerSize};
