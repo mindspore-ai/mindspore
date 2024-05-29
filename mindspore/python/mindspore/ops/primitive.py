@@ -21,7 +21,8 @@ import numpy as np
 from mindspore.common.api import _wrap_func
 from mindspore.log import _LogActionOnce
 from mindspore import context, log as logger
-from mindspore.parallel._utils import _is_in_auto_parallel_mode, _is_in_data_parallel_mode, _is_in_hybrid_parallel_mode
+from mindspore.parallel._utils import _is_in_auto_parallel_mode, _is_in_data_parallel_mode, _is_in_hybrid_parallel_mode, \
+    SUPPORTED_TUPLE_IN_TUPLE_STRATEGY
 from mindspore.parallel._ps_context import _is_ps_mode, _is_role_sched
 from mindspore.parallel.shard import Layout
 from mindspore.common.api import _pynative_executor
@@ -167,7 +168,7 @@ class Primitive(Primitive_):
                 raise TypeError(f'The element of strategy must be tuple/Layout type, but got:{type(in_ele)}')
             if isinstance(in_ele, tuple):
                 for in_value in in_ele:
-                    if not isinstance(in_value, int):
+                    if not isinstance(in_value, int) and self.name not in SUPPORTED_TUPLE_IN_TUPLE_STRATEGY:
                         raise TypeError(f'The {log_info}: {strategy} of {self.name} is not valid,'
                                         f' the value of strategy must be int type, but got:{type(in_value)}')
                 is_layout.append(False)

@@ -537,7 +537,52 @@ Status OperatorInfo::InferMirrorOpsByLayout() {
   return SUCCESS;
 }
 
+TensorInfoBasePtr CreateTensorInfo(const Shape &device_matrix, const ShapeBasePtr &inputs_shape,
+                                   const ShapeBasePtr &inputs_tensor_map) {
+  TensorInfoBasePtr out_tensor_info;
+  if (inputs_shape->is_list()) {
+    std::vector<TensorInfoBasePtr> tensor_info_list;
+    for (int64_t i = 0; i < SizeToLong(inputs_shape->size()); ++i) {
+      auto tensor_map = inputs_tensor_map->GetElement(i);
+      auto shape = inputs_shape->GetElement(i);
+      auto input_tensor_info = CreateTensorInfo(device_matrix, shape, tensor_map);
+      tensor_info_list.emplace_back(input_tensor_info);
+    }
+    out_tensor_info = std::make_shared<TensorInfoList>(tensor_info_list);
+  } else {
+    TensorLayout input_layout;
+    input_layout.InitFromVector(device_matrix, inputs_tensor_map->GetValue(), inputs_shape->GetValue());
+    TensorInfo input_tensor_info(input_layout);
+    out_tensor_info = std::make_shared<TensorInfoValue>(input_tensor_info);
+  }
+  return out_tensor_info;
+}
+
+Status OperatorInfo::InferTensorInfoNew() {
+  size_t real_input_index = 0;
+  for (size_t i = 0; i < inputs_tensor_map_new_.size(); ++i) {
+    // Insert placeholder TensorInfo for optional input
+    while (real_input_index < input_value_.size() && input_value_[real_input_index] != nullptr &&
+           input_value_[real_input_index]->isa<None>()) {
+      (void)inputs_tensor_info_new_.emplace_back(std::make_shared<TensorInfoValue>(TensorInfo()));
+      ++real_input_index;
+    }
+    auto input_tensor_info = CreateTensorInfo(dev_matrix_shape_, inputs_shape_new_[i], inputs_tensor_map_new_[i]);
+    inputs_tensor_info_new_.emplace_back(input_tensor_info);
+    ++real_input_index;
+  }
+
+  for (size_t i = 0; i < outputs_tensor_map_new_.size(); ++i) {
+    auto output_tensor_info = CreateTensorInfo(dev_matrix_shape_, outputs_shape_new_[i], outputs_tensor_map_new_[i]);
+    outputs_tensor_info_new_.emplace_back(output_tensor_info);
+  }
+  return SUCCESS;
+}
+
 Status OperatorInfo::InferTensorInfo() {
+  if (!inputs_shape_new_.empty()) {
+    return InferTensorInfoNew();
+  }
   if (inputs_shape_.empty() || outputs_shape_.empty() || inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
     MS_LOG(ERROR) << name_ << ": Invalid args";
     return FAILED;
@@ -2290,7 +2335,10 @@ Status OperatorInfo::InferAsLossDivisor() {
     as_loss_divisor_ = 1;
     return SUCCESS;
   }
-
+  if (!inputs_shape_new_.empty()) {
+    MS_LOG(ERROR) << name_ << ": For Tuple input ops, please override this function";
+    return FAILED;
+  }
   if (outputs_tensor_map_.empty()) {
     MS_LOG(ERROR) << name_ << ": The outputs tensor map is empty.";
     return FAILED;

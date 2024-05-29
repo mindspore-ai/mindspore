@@ -1623,7 +1623,7 @@ static std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &n
       return param_layout;
     }
     if (IsParallelCareNode(use_apply) && use_apply->has_user_data<OperatorInfo>()) {
-      auto layout = GetInputLayoutFromCNode(node_pair);
+      auto layout = GetInputLayoutFromCNode(node_pair, -1);
       return std::make_shared<TensorLayout>(layout);
     }
   }
