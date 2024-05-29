@@ -125,6 +125,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     endif()
 
     include(${LITE_DIR}/cmake/ccsrc_extendrt.cmake)
+    include(${TOP_DIR}/cmake/external_libs/pocketfft.cmake)
 
     add_library(mindspore-extendrt SHARED ${MSLITE_EXTEND_RUNTIME_SRC} ${MSLITE_EXTEND_CPU_RUNTIME_SRC})
     add_dependencies(mindspore-extendrt lite_src_common_mid)
