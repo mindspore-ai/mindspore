@@ -95,7 +95,8 @@ def _slice_parameter(parameter, phase, layout):
     is_train_phase = phase.startswith('train')
     is_prefill_phase = phase.startswith('prefill')
     if layout is not None and parameter.from_ckpt and not is_train_phase:
-        if not parameter.sliced and is_prefill_phase:
+        is_opt_shard_group = layout[5]
+        if not parameter.sliced and is_prefill_phase and is_opt_shard_group:
             rank = get_rank()
             new_tensor = _load_tensor_by_layout(parameter, layout, rank)
             parameter.set_data(new_tensor, True)
