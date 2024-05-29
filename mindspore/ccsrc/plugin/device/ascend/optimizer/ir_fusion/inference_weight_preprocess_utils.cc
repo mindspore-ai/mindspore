@@ -121,8 +121,8 @@ std::shared_ptr<ValueNode> CreateWeightTensor(TypeId type_id, const std::vector<
   return assist_const;
 }
 
-void SortWeightNodeList(AnfNodePtrList &node_list) {
-  std::sort(node_list.begin(), node_list.end(), [](AnfNodePtr &a, AnfNodePtr &b) {
+void SortWeightNodeList(AnfNodePtrList *node_list) {
+  std::sort(node_list->begin(), node_list->end(), [](const AnfNodePtr &a, const AnfNodePtr &b) {
     auto para_a =
       common::AnfAlgo::GetInputNode(a->cast<CNodePtr>()->inputs()[2]->cast<CNodePtr>(), kIndex0)->cast<ParameterPtr>();
     auto para_b =

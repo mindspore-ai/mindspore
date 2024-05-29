@@ -79,7 +79,7 @@ bool MultiWeightMatmulsFusion::Run(const FuncGraphPtr &graph) {
     if (!can_process) {
       continue;
     }
-    SortWeightNodeList(user_matmuls);
+    SortWeightNodeList(&user_matmuls);
     AnfNodePtrList getitems;
     if (enable_matmul_ffn && user_matmuls.size() == kMatMulFfnNum) {
       Process("WeightQuantBatchMatmul", node, user_matmuls, &getitems);
