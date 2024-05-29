@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,7 +155,8 @@ bool IrExportBuilder::BuildPrimitives() {
   for (auto it = primitive_name_map_.begin(); it != primitive_name_map_.end(); ++it) {
     auto prim = it->first;
     if (prim->name() == prim::kPrimPyExecute->name()) {
-      MS_LOG(EXCEPTION) << "Cannot export a PyExecute CNode in MindIR.";
+      MS_LOG(EXCEPTION) << "Cannot export a PyExecute CNode in MindIR. "
+                           "Please use the export of MindIR in strict mode, and set the jit_syntax_level to STRICT.";
     }
     auto prim_proto = model_->add_primitives();
 

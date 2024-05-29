@@ -1757,8 +1757,9 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         - `Saving and Loading the Model - Saving and Loading MindIR
           <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-mindir>`_
     """
-    old_ms_jit_value = context.get_context("jit_syntax_level")
-    context.set_context(jit_syntax_level=mindspore.STRICT)
+    ms_jit_value = context.get_context("jit_syntax_level")
+    if ms_jit_value != mindspore.STRICT:
+        logger.warning(f"For 'export', the 'jit_syntax_level' must be STRICT, but got {ms_jit_value}.")
 
     supported_formats = ['AIR', 'ONNX', 'MINDIR']
     if file_format not in supported_formats:
@@ -1790,8 +1791,6 @@ def export(net, *inputs, file_name, file_format, **kwargs):
     if 'enc_key' in kwargs.keys():
         kwargs['enc_key'], kwargs['enc_mode'] = _check_key_mode_type(file_format, **kwargs)
     _export(net, file_name, file_format, *inputs, **kwargs)
-
-    context.set_context(jit_syntax_level=old_ms_jit_value)
 
 
 def _get_funcgraph(net, *inputs):
