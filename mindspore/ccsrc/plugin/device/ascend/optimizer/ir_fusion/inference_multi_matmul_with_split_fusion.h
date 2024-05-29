@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_INFERENCE_MULTI_MATMUL_WITH_SPLIT_FUSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_INFERENCE_MULTI_MATMUL_WITH_SPLIT_FUSION_H_
 
+#include "plugin/device/ascend/optimizer/ir_fusion/inference_weight_preprocess_utils.h"
+
 #include <string>
 #include <memory>
 

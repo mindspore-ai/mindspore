@@ -19,7 +19,6 @@
 
 #include <string>
 #include <memory>
-
 #include "include/backend/optimizer/pass.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
@@ -28,6 +27,7 @@
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/inference_weight_preprocess_utils.h"
 
 namespace mindspore {
 namespace opt {
