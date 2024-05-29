@@ -15,6 +15,16 @@ Array操作
     mindspore.mint.topk
     mindspore.mint.broadcast_to
 
+Tensor创建
+^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.eye
+
 逐元素运算
 ^^^^^^^^^^^^^^^^
 
