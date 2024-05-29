@@ -132,6 +132,7 @@ constexpr const char kNameTensorScatterMin[] = "TensorScatterMin";
 constexpr const char kNameTensorScatterMax[] = "TensorScatterMax";
 constexpr const char kNameTriu[] = "Triu";
 constexpr const char kNameScatterElements[] = "ScatterElements";
+constexpr const char kNameKVCacheScatterUpdate[] = "KVCacheScatterUpdate";
 constexpr const char kNameNonZero[] = "NonZero";
 constexpr const char kNameNonZeroWithValue[] = "NonZeroWithValue";
 constexpr const char kNameNonZeroWithValueShape[] = "NonZeroWithValueShape";

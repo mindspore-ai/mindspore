@@ -1,0 +1,20 @@
+# operator: kv_cache_scatter_update
+kv_cache_scatter_update:
+    args:
+        var:
+            dtype: tensor
+        indices:
+            dtype: tensor
+        updates:
+            dtype: tensor
+        axis:
+            dtype: int
+        reduce:
+            dtype: int
+            default: "'none'"
+            arg_handler: str_to_enum
+    returns:
+        out:
+            dtype: tensor
+    class:
+        name: KVCacheScatterUpdate

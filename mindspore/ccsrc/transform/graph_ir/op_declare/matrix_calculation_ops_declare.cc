@@ -190,6 +190,14 @@ OUTPUT_MAP(ScatterElements) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(TensorScatterElements, kNameTensorScatterElements, ADPT_DESC(ScatterElements))
 REG_ADPT_DESC(ScatterElements, kNameScatterElements, ADPT_DESC(ScatterElements))
 
+// Scatter
+INPUT_MAP(Scatter) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
+ATTR_MAP(Scatter) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Scatter) = {{4, ATTR_DESC(axis, AnyTraits<int64_t>())},
+                           {5, ATTR_DESC(reduce, AnyTraits<ScatterReduceMode>())}};
+OUTPUT_MAP(Scatter) = {{0, OUTPUT_DESC(var)}};
+REG_ADPT_DESC(Scatter, kNameKVCacheScatterUpdate, ADPT_DESC(Scatter))
+
 // FullyConnection
 INPUT_MAP(FullyConnection) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(w)}, {3, INPUT_DESC(b)}, {4, INPUT_DESC(offset_w)}};
 
