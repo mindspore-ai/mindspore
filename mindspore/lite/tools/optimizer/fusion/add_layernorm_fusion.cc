@@ -35,22 +35,25 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
 constexpr int kAxis = -1;
 constexpr float kPow = 2.0;
 constexpr float kEps = 1e-5;
 constexpr float kDiffThreshold = 1e-6;
-constexpr auto kAddLayerNormPattern = "AddLayerNormFusion";
-constexpr auto kLayerNormV3Pattern = "LayerNormV3Fusion";
+constexpr auto kLayerNormV3Pattern1 = "LayerNormV3Fusion1";
+constexpr auto kLayerNormV3Pattern2 = "LayerNormV3Fusionf2";
 constexpr int kReduceAxisNum = -1;
 constexpr int kInputIndex1 = 1;
 constexpr int kInputIndex2 = 2;
 constexpr int kInvalidDim = -1;
 constexpr int kAdditionalOutIdx = 3;
+constexpr int kStructureNum = 2;
+}  // namespace
 
 bool LayerNormFusionInferShape(const AnfNodePtr &layernorm_node, const AnfNodePtr &layernorm_input) {
   auto node_prim = std::make_shared<ops::LayerNormFusion>()->GetPrim();
   if (!IsPrimitiveCNode(layernorm_node, node_prim)) {
-    MS_LOG(WARNING) << "AddLayerNormFusion pass can only infer LayerNormFusion op, but got " << node_prim->ToString();
+    MS_LOG(WARNING) << "This func can only infer LayerNormFusion op, but got " << node_prim->ToString();
     return true;
   }
   auto cnode = layernorm_node->cast<CNodePtr>();
@@ -70,8 +73,8 @@ bool LayerNormFusionInferShape(const AnfNodePtr &layernorm_node, const AnfNodePt
   return true;
 }
 
-AnfNodePtr AddLayerNormFusion::CreateLayerNormV3Node(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                     const EquivPtr &equiv) const {
+AnfNodePtr LayerNormV3Fusion::CreateLayerNormV3Node(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                    const EquivPtr &equiv) const {
   MS_ASSERT(func_graph != nullptr && node != nullptr && equiv != nullptr);
   auto lnfusion_prim = std::make_shared<ops::LayerNormFusion>();
   MS_CHECK_TRUE_RET(lnfusion_prim != nullptr, nullptr);
@@ -82,11 +85,11 @@ AnfNodePtr AddLayerNormFusion::CreateLayerNormV3Node(const FuncGraphPtr &func_gr
   auto lnfusion_prim_c = lnfusion_prim->GetPrim();
   MS_CHECK_TRUE_RET(lnfusion_prim_c != nullptr, nullptr);
 
-  auto x = utils::cast<AnfNodePtr>((*equiv)[reduce_1_x_]);
+  auto x = utils::cast<AnfNodePtr>((*equiv)[reduce_1_x_[index_]]);
   MS_CHECK_TRUE_RET(x != nullptr, nullptr);
-  auto gamma = utils::cast<AnfNodePtr>((*equiv)[mul_b_]);
+  auto gamma = utils::cast<AnfNodePtr>((*equiv)[mul_b_[index_]]);
   MS_CHECK_TRUE_RET(gamma != nullptr, nullptr);
-  auto beta = utils::cast<AnfNodePtr>((*equiv)[add_3_b_]);
+  auto beta = utils::cast<AnfNodePtr>((*equiv)[add_3_b_[index_]]);
   MS_CHECK_TRUE_RET(beta != nullptr, nullptr);
 
   auto ln_cnode = func_graph->NewCNode(lnfusion_prim_c, {x, gamma, beta});
@@ -118,60 +121,56 @@ AnfNodePtr AddLayerNormFusion::CreateLayerNormV3Node(const FuncGraphPtr &func_gr
   return get_item_result;
 }
 
-bool AddLayerNormFusion::Init() const {
-  add_1_a_ = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(add_1_a_ != nullptr, false);
+bool LayerNormV3Fusion::Init() const {
+  reduce_1_x_.resize(kStructureNum);
+  reduce_1_axis_.resize(kStructureNum);
+  sub_a_.resize(kStructureNum);
+  pow_y_.resize(kStructureNum);
+  reduce_2_axis_.resize(kStructureNum);
+  add_2_b_.resize(kStructureNum);
+  mul_b_.resize(kStructureNum);
+  add_3_b_.resize(kStructureNum);
+  cast_to_.resize(kStructureNum);
+  for (int i = 0; i < kStructureNum; ++i) {
+    reduce_1_x_[i] = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(reduce_1_x_[i] != nullptr, false);
+    reduce_1_axis_[i] = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(reduce_1_axis_[i] != nullptr, false);
+    sub_a_[i] = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(sub_a_[i] != nullptr, false);
+    pow_y_[i] = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(pow_y_[i] != nullptr, false);
+    reduce_2_axis_[i] = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(reduce_2_axis_[i] != nullptr, false);
+    add_2_b_[i] = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(add_2_b_[i] != nullptr, false);
+    mul_b_[i] = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(mul_b_[i] != nullptr, false);
+    add_3_b_[i] = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(add_3_b_[i] != nullptr, false);
+    cast_to_[i] = std::make_shared<Var>();
+    MS_CHECK_TRUE_RET(cast_to_[i] != nullptr, false);
+  }
 
-  add_1_b_ = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(add_1_b_ != nullptr, false);
-
-  reduce_1_x_ = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(reduce_1_x_ != nullptr, false);
-
-  sub_a_ = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(sub_a_ != nullptr, false);
-
-  reduce_1_axis_ = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(reduce_1_axis_ != nullptr, false);
-
-  pow_y_ = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(pow_y_ != nullptr, false);
-
-  reduce_2_axis_ = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(reduce_2_axis_ != nullptr, false);
-
-  add_2_b_ = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(add_2_b_ != nullptr, false);
-
-  mul_b_ = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(mul_b_ != nullptr, false);
-
-  add_3_b_ = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(add_3_b_ != nullptr, false);
   return true;
 }
 
-const VectorRef AddLayerNormFusion::DefineLayerNormV3Pattern() const {
-  MS_LOG(INFO) << "start define LayerNormV3 fusion patterns.";
-  if (!Init()) {
-    MS_LOG(ERROR) << "LayerNormV3 pattern Init Failed.";
-    return {};
-  }
-
+const VectorRef LayerNormV3Fusion::DefineLayerNormV3Pattern1() const {
+  const int index = 0;
   auto is_reduce_1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReduceFusion>);
-  VectorRef reduce_1_ref({is_reduce_1, reduce_1_x_, reduce_1_axis_});
+  VectorRef reduce_1_ref({is_reduce_1, reduce_1_x_[index], reduce_1_axis_[index]});
 
   auto is_sub = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSubFusion>);
-  VectorRef sub_ref({is_sub, reduce_1_x_, reduce_1_ref});
+  VectorRef sub_ref({is_sub, reduce_1_x_[index], reduce_1_ref});
 
   auto is_pow = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimPowFusion>);
-  VectorRef pow_ref({is_pow, sub_ref, pow_y_});
+  VectorRef pow_ref({is_pow, sub_ref, pow_y_[index]});
 
   auto is_reduce_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReduceFusion>);
-  VectorRef reduce_2_ref({is_reduce_2, pow_ref, reduce_2_axis_});
+  VectorRef reduce_2_ref({is_reduce_2, pow_ref, reduce_2_axis_[index]});
 
   auto is_add_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
-  VectorRef add_2_ref({is_add_2, reduce_2_ref, add_2_b_});
+  VectorRef add_2_ref({is_add_2, reduce_2_ref, add_2_b_[index]});
 
   auto is_sqrt = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSqrt>);
   VectorRef sqrt_ref({is_sqrt, add_2_ref});
@@ -180,34 +179,68 @@ const VectorRef AddLayerNormFusion::DefineLayerNormV3Pattern() const {
   VectorRef div_ref({is_div, sub_ref, sqrt_ref});
 
   auto is_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
-  VectorRef mul_ref({is_mul, div_ref, mul_b_});
+  VectorRef mul_ref({is_mul, div_ref, mul_b_[index]});
 
   auto is_add_3 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
-  VectorRef add_3_ref({is_add_3, mul_ref, add_3_b_});
+  VectorRef add_3_ref({is_add_3, mul_ref, add_3_b_[index]});
   return add_3_ref;
 }
 
-bool AddLayerNormFusion::CheckPattern(const EquivPtr &equiv) const {
+const VectorRef LayerNormV3Fusion::DefineLayerNormV3Pattern2() const {
+  const int index = 1;
+  auto is_reduce_1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReduceFusion>);
+  VectorRef reduce_1_ref({is_reduce_1, reduce_1_x_[index], reduce_1_axis_[index]});
+
+  auto is_sub = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSubFusion>);
+  VectorRef sub_ref({is_sub, reduce_1_x_[index], reduce_1_ref});
+
+  auto is_pow = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimPowFusion>);
+  VectorRef pow_ref({is_pow, sub_ref, pow_y_[index]});
+
+  auto is_reduce_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReduceFusion>);
+  VectorRef reduce_2_ref({is_reduce_2, pow_ref, reduce_2_axis_[index]});
+
+  auto is_add_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
+  VectorRef add_2_ref({is_add_2, reduce_2_ref, add_2_b_[index]});
+
+  auto is_sqrt = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSqrt>);
+  VectorRef sqrt_ref({is_sqrt, add_2_ref});
+
+  auto is_div = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimDivFusion>);
+  VectorRef div_ref({is_div, sub_ref, sqrt_ref});
+
+  auto is_cast = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimCast>);
+  VectorRef cast_ref({is_cast, div_ref, cast_to_[index]});
+
+  auto is_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  VectorRef mul_ref({is_mul, mul_b_[index], cast_ref});
+
+  auto is_add_3 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
+  VectorRef add_3_ref({is_add_3, mul_ref, add_3_b_[index]});
+  return add_3_ref;
+}
+
+bool LayerNormV3Fusion::CheckPattern(const EquivPtr &equiv) const {
   MS_ASSERT(equiv != nullptr);
-  int reduce_1_axis = GetIntParameterValue(equiv, reduce_1_axis_);
+  int reduce_1_axis = GetIntParameterValue(equiv, reduce_1_axis_[index_]);
   if (reduce_1_axis == INT_MIN) {
     MS_LOG(INFO) << "not supported axis: " << reduce_1_axis;
     return false;
   }
 
-  float pow_y = GetFloatParameterValue(equiv, pow_y_);
+  float pow_y = GetFloatParameterValue(equiv, pow_y_[index_]);
   if (pow_y <= 0 || fabs(pow_y - kPow) > kDiffThreshold) {
     MS_LOG(INFO) << "not supported pow: " << pow_y;
     return false;
   }
 
-  int reduce_2_axis = GetIntParameterValue(equiv, reduce_2_axis_);
+  int reduce_2_axis = GetIntParameterValue(equiv, reduce_2_axis_[index_]);
   if (reduce_2_axis == INT_MIN) {
     MS_LOG(INFO) << "not supported axis: " << reduce_2_axis;
     return false;
   }
 
-  float add_2_b = GetFloatParameterValue(equiv, add_2_b_);
+  float add_2_b = GetFloatParameterValue(equiv, add_2_b_[index_]);
   if (add_2_b <= 0 || fabs(add_2_b - kEps) > kDiffThreshold) {
     MS_LOG(INFO) << "not supported bias: " << add_2_b;
     return false;
@@ -215,15 +248,21 @@ bool AddLayerNormFusion::CheckPattern(const EquivPtr &equiv) const {
   return true;
 }
 
-std::unordered_map<std::string, VectorRef> AddLayerNormFusion::DefinePatterns() const {
+std::unordered_map<std::string, VectorRef> LayerNormV3Fusion::DefinePatterns() const {
+  MS_LOG(INFO) << "start define LayerNormV3 fusion patterns.";
+  if (!Init()) {
+    MS_LOG(ERROR) << "LayerNormV3 pattern Init Failed.";
+    return {};
+  }
   MS_LOG(INFO) << "start define add layernorm fusion patterns.";
   std::unordered_map<std::string, VectorRef> patterns;
-  patterns[kLayerNormV3Pattern] = DefineLayerNormV3Pattern();
+  patterns[kLayerNormV3Pattern1] = DefineLayerNormV3Pattern1();
+  patterns[kLayerNormV3Pattern2] = DefineLayerNormV3Pattern2();
   return patterns;
 }
 
-AnfNodePtr AddLayerNormFusion::Process(const std::string &pattern_name, const mindspore::FuncGraphPtr &func_graph,
-                                       const mindspore::AnfNodePtr &node, const mindspore::EquivPtr &equiv) const {
+AnfNodePtr LayerNormV3Fusion::Process(const std::string &pattern_name, const mindspore::FuncGraphPtr &func_graph,
+                                      const mindspore::AnfNodePtr &node, const mindspore::EquivPtr &equiv) const {
   MS_LOG(INFO) << "do fusion, pattern name: " << pattern_name;
   if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
     return nullptr;
@@ -234,17 +273,18 @@ AnfNodePtr AddLayerNormFusion::Process(const std::string &pattern_name, const mi
   if (IsMarkedTrainOp(utils::cast<CNodePtr>(node))) {
     return nullptr;
   }
+  std::unordered_map<std::string, int> pattern2index = {{kLayerNormV3Pattern1, 0}, {kLayerNormV3Pattern2, 1}};
+  if (pattern2index.find(pattern_name) == pattern2index.end()) {
+    MS_LOG(WARNING) << "Current pattern doesn't support.";
+    return nullptr;
+  }
+  index_ = pattern2index[pattern_name];
   if (!CheckPattern(equiv)) {
     return nullptr;
   }
 
   AnfNodePtr cnode = nullptr;
-  if (pattern_name == kLayerNormV3Pattern) {
-    MS_LOG(INFO) << "start create layernormv3 fusion";
-    cnode = CreateLayerNormV3Node(func_graph, node, equiv);
-  } else {
-    MS_LOG(WARNING) << "not supported pattern: " << pattern_name;
-  }
+  cnode = CreateLayerNormV3Node(func_graph, node, equiv);
 
   if (cnode == nullptr) {
     MS_LOG(INFO) << "new fusion node failed under " << pattern_name;
