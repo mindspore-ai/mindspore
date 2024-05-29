@@ -21,7 +21,12 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
 from mindspore.common.api import _pynative_executor
+from tests.st.utils import test_utils
 
+
+@test_utils.run_with_cell
+def broadcast_to_forward_func(x, shape):
+    return ms.ops.auto_generate.broadcast_to(x, shape)
 
 @pytest.mark.level0
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -238,3 +243,24 @@ def test_broadcast_exception(context_mode):
         assert "ValueError: For 'BroadcastTo', each dimension pair, input_x shape and target shape must be equal or \
         input dimension is 1 or target dimension is -1. But got input_x shape: [const vector][], target shape: \
         [const vector][0]." in str(info.value)
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_with_On
+def test_broadcast_to_forward(mode):
+    """
+    Feature: Ops.
+    Description: test broadcast_to.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    shape = (128, 1, 77, 77)
+    x_np = np.arange(128).reshape((128, 1, 1, 1)).astype(np.float32)
+    x = Tensor(x_np)
+    out = broadcast_to_forward_func(x, shape)
+    expect = np.broadcast_to(x_np, shape)
+    assert np.allclose(out.asnumpy(), expect)
