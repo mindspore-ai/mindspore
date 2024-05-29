@@ -1,0 +1,20 @@
+#operator unstack_ext
+unstack_ext:
+    args:
+        input_x:
+            dtype: tensor
+        axis:
+            dtype: int
+            default: 0
+            prim_init: True
+    returns:
+        output:
+            dtype: tuple[tensor]
+    class:
+        disable: True
+    function:
+        disable: True
+    view: True
+    dispatch:
+        enable: False
+        Ascend: UnstackExtAscend

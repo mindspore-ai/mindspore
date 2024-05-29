@@ -15,6 +15,7 @@ Array Operation
     mindspore.mint.index_select
     mindspore.mint.ones
     mindspore.mint.ones_like
+    mindspore.mint.nonzero
     mindspore.mint.scatter_add
     mindspore.mint.sort
     mindspore.mint.stack

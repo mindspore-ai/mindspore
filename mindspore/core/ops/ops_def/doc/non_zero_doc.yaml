@@ -2,46 +2,27 @@ non_zero:
     description: |
         Return a Tensor of the positions of all non-zero values.
 
-        Args:
-            input (Tensor): The input Tensor, its rank should be greater than or eaqual to 1.
-            as_tuple (bool, optional): Whether the output is in tuple format.
-                If ``False`` , return Tensor. Default: ``False`` .
-                If ``True`` , return Tuple of Tensor, only support ``Ascend``.
-    
-        Returns:
-            If `as_tuple` is ``False``, return the Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
-            
-            If `as_tuple` is ``True``, return the Tuple of Tensor and data type is int64. The Tuple length is the dimension of the input tensor, and each element is the 1D tensor of the subscript of all non-zero elements of the input tensor in that dimension.
-    
+        Inputs:
+            - **input** (Tensor) - The input Tensor, its rank should be greater than or eaqual to 1.
+
+        Outputs:
+            Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
+
         Raises:
             TypeError: If `input` is not Tensor.
-            TypeError: If `as_tuple` is not bool.
             ValueError: If dim of `input` equals to 0.
-    
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-    
+
         Examples:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor
             >>> import mindspore.ops as ops
-            >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
-            >>> output = ops.nonzero(x)
-            >>> print(output)
-            [[0 0 0]
-             [0 1 0]]
-            >>> x = Tensor(np.array([1, 0, 2, 0, 3]), mindspore.int32)
-            >>> output = ops.nonzero(x, False)
+            >>> input = Tensor(np.array([1, 0, 2, 0, 3]), mindspore.int32)
+            >>> output = ops.NonZero()(input)
             >>> print(output)
             [[0]
              [2]
              [4]]
-            >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
-            >>> output = ops.nonzero(x, True)
-            >>> print(output)
-            (Tensor(shape=[2], dtype=Int64, value= [0, 0]), Tensor(shape=[2], dtype=Int64, value= [0, 1]), Tensor(shape=[2], dtype=Int64, value= [0, 0]))
-            >>> x = Tensor(np.array([1, 0, 2, 0, 3]), mindspore.int32)
-            >>> output = ops.nonzero(x, True)
-            >>> print(output)
-            (Tensor(shape=[3], dtype=Int64, value= [0, 2, 4]),)

@@ -31,7 +31,7 @@ from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._sequence_ops import TensorToList
 from mindspore.ops.auto_generate import OnesLikeExt, ZerosLikeExt, FillScalar, FillTensor, Arange, Chunk, Scatter,\
-    ScatterValue, UniqueDim, Unique2, SortExt
+    ScatterValue, UniqueDim, Unique2, SortExt, NonZero, NonZeroExt
 from mindspore.ops.auto_generate.gen_ops_prim import SplitTensor
 from mindspore.ops.auto_generate.gen_ops_prim import SplitWithSize, RepeatInterleave
 from mindspore.ops.operations.array_ops import (
@@ -61,8 +61,8 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
-    non_zero, flip, transpose, tril, triu, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, \
-    broadcast_to, strided_slice, ones, zeros, max_, min_, select, non_zero_ext, index_select_ext
+    flip, transpose, tril, triu, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, \
+    broadcast_to, strided_slice, ones, zeros, max_, min_, select, index_select_ext
 from mindspore.ops.auto_generate.gen_ops_prim import scatter_add_ext_op
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
@@ -136,6 +136,8 @@ repeat_interleave_ = RepeatInterleave()
 unique_dim_ = UniqueDim()
 unique2_ = Unique2()
 sort_ext_ = SortExt()
+non_zero_ = NonZero()
+non_zero_ext_ = NonZeroExt()
 
 
 def get_x_shape(x_shape):
@@ -6127,18 +6129,18 @@ def nonzero(input, as_tuple=False):
 
     Args:
         input (Tensor): The input Tensor, its rank should be greater than or eaqual to 1.
-        as_tuple (bool):
+        as_tuple (Bool, optional): Whether the output is tuple.
             If ``False`` , return Tensor. Default: ``False`` .
             If ``True`` , return Tuple of Tensor, Only support ``Ascend``.
 
 
     Returns:
-        If `as_tuple` is ``False``, return the Tensor, a 2-D Tensor whose data type is int64,
-                                    containing the positions of all non-zero values of the input.
-        If `as_tuple` is ``True``, return the Tuple of Tensor and data type is int64.
-                                    The Tuple length is the dimension of the input tensor,
-                                    and each element is the 1D tensor of the subscript of all non-zero elements of
-                                    the input tensor in that dimension.
+        - If `as_tuple` is ``False``, return the Tensor, a 2-D Tensor whose data type is int64,
+          containing the positions of all non-zero values of the input.
+        - If `as_tuple` is ``True``, return the Tuple of Tensor and data type is int64.
+          The Tuple length is the dimension of the input tensor,
+          and each element is the 1D tensor of the subscript of all non-zero elements of
+          the input tensor in that dimension.
 
     Raises:
         TypeError: If `input` is not Tensor.
@@ -6176,8 +6178,8 @@ def nonzero(input, as_tuple=False):
         (Tensor(shape=[3], dtype=Int64, value=[0, 2, 4]), )
     """
     if as_tuple:
-        return non_zero_ext(input)
-    return non_zero(input)
+        return non_zero_ext_(input)
+    return non_zero_(input)
 
 
 def argwhere(input):
