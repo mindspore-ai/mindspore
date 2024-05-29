@@ -154,6 +154,8 @@ class FuncGraphBuilder {
 
   AnfNodePtr ReadLocalVariable(const py::object &obj);
 
+  bool AddLocalVariable(const py::object &obj);
+
  private:
   static bool CheckCallable(const ValuePtr &value, const AbstractBasePtr &abs);
 

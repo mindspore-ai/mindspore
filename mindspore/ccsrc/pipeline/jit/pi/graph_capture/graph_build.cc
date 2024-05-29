@@ -3430,6 +3430,17 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
   return callable_info;
 }
 
+bool MindGraphBuilder::HandleCallClass(CallNode *call_node) {
+  bool succ = GraphBuilder::HandleCallClass(call_node);
+  if (!succ) {
+    MS_LOG(INFO) << "Failed to handle call class";
+    return false;
+  } else if (call_node->GetVobj() != nullptr && call_node->GetVobj()->GetPyObject().ptr() != nullptr) {
+    return FGBuilder()->AddLocalVariable(call_node->GetVobj()->GetPyObject());
+  }
+  return false;
+}
+
 ValueNode *MindGraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &instr) {
   auto attr_node = NewValueNode(target_node->get_attr(instr.name()), instr, {target_node});
   MS_EXCEPTION_IF_NULL(attr_node);

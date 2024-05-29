@@ -286,6 +286,30 @@ bool FuncGraphBuilder::CheckGraphOutput(const AbstractBasePtr &abs) {
          abs->isa<abstract::AbstractMapTensor>();
 }
 
+bool FuncGraphBuilder::AddLocalVariable(const py::object &obj) {
+  if (obj.ptr() == nullptr) {
+    MS_LOG(INFO) << "Failed to add local variable, py object is null";
+    return false;
+  }
+
+  auto iter = py_obj_to_node_.find(obj.ptr());
+  if (iter != py_obj_to_node_.end()) {
+    MS_LOG(INFO) << "Py object already in map, no need to add. Associated node: "
+                 << ((iter->second != nullptr) ? iter->second->DebugString() : "NULL");
+    return true;
+  }
+
+  auto node = ConvertObjToNode(obj);
+  if (node == nullptr) {
+    MS_LOG(INFO) << "Failed to add local variable, convert python object to anf node failed";
+    return false;
+  }
+
+  node->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(obj));
+  (void)py_obj_to_node_.emplace(obj.ptr(), node);
+  return true;
+}
+
 AnfNodePtr FuncGraphBuilder::ReadLocalVariable(const py::object &obj) {
   auto iter = py_obj_to_node_.find(obj.ptr());
   if (iter == py_obj_to_node_.end()) {
