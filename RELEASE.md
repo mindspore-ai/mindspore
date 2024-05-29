@@ -2,6 +2,21 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.2.15 Release Notes
+
+### Bug Fixes
+
+- [[#I9EYXX](https://gitee.com/mindspore/mindspore/issues/I9EYXX)] Fixed that the compilation cache was disabled in msrun distributed parallel startup mode.
+- [[#I86Z01](https://gitee.com/mindspore/mindspore/issues/I86Z01)] Fixed an error returned by ops.interpolate interface in PyNative mode.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+xiaoyao, tianxiaodong
+
+Contributions of any kind are welcome!
+
 ## MindSpore 2.2.14 Release Notes
 
 ### Major Features and Improvements

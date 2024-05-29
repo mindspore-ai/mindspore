@@ -2,6 +2,21 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.2.15 Release Notes
+
+### 问题修复
+
+- [[#I9EYXX](https://gitee.com/mindspore/mindspore/issues/I9EYXX)] 修复编译缓存在msrun分布式并行启动方式下不使能的问题。
+- [[#I86Z01](https://gitee.com/mindspore/mindspore/issues/I86Z01)] 修复ops.interpolate接口在PyNative模式下反向报错问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+xiaoyao, tianxiaodong
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 2.2.14 Release Notes
 
 ### 主要特性及增强
