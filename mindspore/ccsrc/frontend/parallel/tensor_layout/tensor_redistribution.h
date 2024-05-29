@@ -90,6 +90,9 @@ class TensorRedistribution {
   AssembledDynamicDimsMapping GetDynamicDimsMapping() const { return this->dynamic_dim_mapping_; }
   void CreateAssembledDynamicMapping(const CNodePtr &cur_cnode, const AnfNodePtr &pre_cnode,
                                      const FuncGraphPtr &func_graph, int64_t redistribution_index);
+  std::vector<AnfNodePtr> reshape_target_shape_inputs;
+  CNodePtr reshape_target_shape_input;
+  int64_t dynamic_axis_cnt = 0;
 
  private:
   void GetAssembledOriginLayout(TensorLayout *from_origin, TensorLayout *to_origin);

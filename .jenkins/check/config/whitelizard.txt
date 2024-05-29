@@ -451,3 +451,4 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/nn_norm_ops_proto.cc:ge::CUST_IMPLEMT_INFERFUNC
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/cast.cc:aicpu::CastKernel::Compute
 mindspore/mindspore/ccsrc/frontend/parallel/step_parallel.cc:mindspore::parallel::StepParallel
+mindspore/mindspore/ccsrc/frontend/parallel/ops_info/reshape_info.cc:mindspore::parallel::ReshapeInfo::ChangeDynamicDstShapeForSkipRedistribution

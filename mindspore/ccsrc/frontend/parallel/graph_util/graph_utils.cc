@@ -491,8 +491,18 @@ Status ConvertReshapeInputs(const OperatorParams &params,
     Shape shape_vec = GetValue<Shape>(param.first.second);
     MS_LOG(INFO) << "shape param = " << shape_vec;
     size_t dynamic_axis_cnt = std::count(shape_vec.begin(), shape_vec.end(), -1);
-    if (shape_vec.size() > 1 && dynamic_axis_cnt >= SIZE_TWO) {
-      MS_LOG(EXCEPTION) << "The shape of Reshape op has more than one -1, cannot be supported for now.";
+    if (shape_vec.size() > 1 &&
+        (dynamic_axis_cnt >= SIZE_TWO || LongToSize(tensor_redistribution_from_cnode->dynamic_axis_cnt) >= SIZE_TWO)) {
+      if (!tensor_redistribution_from_cnode->reshape_target_shape_inputs.empty() &&
+          tensor_redistribution_from_cnode->reshape_target_shape_inputs.size() == shape_vec.size()) {
+        MS_LOG(WARNING) << "The shape of Reshape op has more than one -1, "
+                           "use origin target shape "
+                        << tensor_redistribution_from_cnode->reshape_target_shape_input->fullname_with_scope();
+        new_node_input->emplace_back(tensor_redistribution_from_cnode->reshape_target_shape_input);  // MakeTuple
+        return SUCCESS;
+      } else {
+        MS_LOG(WARNING) << "The shape of Reshape op has more than one -1, cannot be supported for now.";
+      }
     }
     if (!WhetherMatchingIsNeededForReshape(shape_vec, tensor_redistribution_from_cnode)) {
       MS_LOG(INFO) << "No need to matching for " << shape_vec;
