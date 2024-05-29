@@ -1019,6 +1019,9 @@ class Tile(Primitive):
         return (False, None)
 
 
+tile_op = Tile()
+
+
 def tile(input, dims):
     r"""
     Creates a new tensor by replicating `input` `dims` times. The i'th dimension of
@@ -1082,7 +1085,6 @@ def tile(input, dims):
           [1. 2. 1. 2.]
           [3. 4. 3. 4.]]]
     """
-    tile_op = _get_cache_prim(Tile)()
     return tile_op(input, dims)
 
 

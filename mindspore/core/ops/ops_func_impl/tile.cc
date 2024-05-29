@@ -18,10 +18,14 @@
 
 #include <algorithm>
 #include <memory>
+#include "ir/anf.h"
+#include "ir/base_tensor.h"
 #include "ir/functor.h"
 #include "mindapi/base/shape_vector.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/op_utils.h"
 #include "ops/op_name.h"
+#include "ops/ops_func_impl/simple_infer.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -122,4 +126,28 @@ TypePtr TileFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector
   auto input_type = input_args[kInputIndex0]->GetType();
   return input_type->Clone();
 }
+
+ShapeArray TileFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  auto x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  auto x_shape = x_tensor->shape();
+  auto dims = GetValue<std::vector<int64_t>>(input_values[kInputIndex1]);
+  AdaptShapeAndMultipies(&x_shape, &dims);
+
+  auto adapted_rank = x_shape.size();
+  ShapeVector inferred_shape;
+  inferred_shape.reserve(adapted_rank);
+  for (size_t i = 0; i < adapted_rank; ++i) {
+    inferred_shape.push_back(dims[i] * x_shape[i]);
+  }
+  return {inferred_shape};
+}
+
+TypePtrList TileFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  auto x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->Dtype()};
+}
+
+REGISTER_SIMPLE_INFER(kNameTile, TileFuncImpl)
 }  // namespace mindspore::ops

@@ -16,12 +16,16 @@
 
 #include "ops/ops_func_impl/concat.h"
 
+#include <algorithm>
 #include <limits>
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 #include <memory>
 #include <optional>
+#include <sstream>
+#include "base/base.h"
 #include "ops/op_name.h"
 #include "utils/shape_utils.h"
 #include "utils/log_adapter.h"
@@ -29,6 +33,7 @@
 #include "abstract/dshape.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore::ops {
 namespace {
@@ -206,4 +211,75 @@ TypePtr ConcatFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
   MS_EXCEPTION_IF_NULL(elements[0]);
   return elements[0]->Clone();
 }
+
+ShapeArray ConcatFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  auto tuple_x = input_values[kInputIndex0]->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_x);
+  ShapeArray shapes;
+  shapes.reserve(tuple_x->size());
+  for (const auto &item : tuple_x->value()) {
+    MS_EXCEPTION_IF_NULL(item);
+    auto tensor = item->cast<tensor::BaseTensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    shapes.push_back(tensor->shape());
+  }
+
+  auto axis = GetValue<int64_t>(input_values[kInputIndex1]);
+  auto output_shape = CheckAndCalOutputShapeInTupleCase(shapes, axis, primitive);
+  return {output_shape};
+}
+
+TypePtrList ConcatFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  auto tuple_x = input_values[kInputIndex0]->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_x);
+  MS_CHECK_VALUE(tuple_x->size() > 0, CheckAndConvertUtils::FormatCheckIntegerMsg("elements size", tuple_x->size(),
+                                                                                  kGreaterThan, 0, primitive));
+  TypePtrList elements;
+  elements.reserve(tuple_x->size());
+  for (const auto &item : tuple_x->value()) {
+    MS_EXCEPTION_IF_NULL(item);
+    auto tensor = item->cast<tensor::BaseTensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    elements.push_back(tensor->Dtype());
+  }
+
+  auto out_type = elements[0];
+  MS_EXCEPTION_IF_NULL(out_type);
+
+  // Check all element' types is valid:
+  // 1. all same
+  // 2. is one of the common_valid_types_with_complex_and_bool.
+  if (MS_UNLIKELY(std::any_of(elements.cbegin(), elements.cend(),
+                              [&out_type](const TypePtr &type) { return type != out_type; }))) {
+    std::ostringstream buffer;
+    buffer << "The primitive[" << primitive->name() << "]'s input arguments must be same, but got ";
+    for (size_t i = 0; i < elements.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(elements[i]);
+      buffer << "element[" << i << "]:" << elements[i]->ToString();
+      if (i != (elements.size() - 1)) {
+        buffer << ", ";
+      }
+    }
+    buffer << ".";
+    MS_LOG(EXCEPTION) << buffer.str();
+  }
+  if (MS_UNLIKELY(std::all_of(common_valid_types_with_complex_and_bool.cbegin(),
+                              common_valid_types_with_complex_and_bool.cend(),
+                              [&out_type](const TypePtr &type) { return out_type != type; }))) {
+    std::ostringstream buffer;
+    buffer << "The primitive[" << primitive->name() << "]'s valid type list: {";
+    for (const auto &type : common_valid_types_with_complex_and_bool) {
+      buffer << type->ToString();
+      if (type != *(--common_valid_types_with_complex_and_bool.end())) {
+        buffer << ", ";
+      }
+    }
+    buffer << "}, but got " << out_type->ToString();
+    MS_LOG(EXCEPTION) << buffer.str();
+  }
+
+  return {out_type};
+}
+
+REGISTER_SIMPLE_INFER(kNameConcat, ConcatFuncImpl)
 }  // namespace mindspore::ops
