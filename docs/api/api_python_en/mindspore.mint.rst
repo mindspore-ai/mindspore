@@ -78,7 +78,12 @@ Comparison Functions
 Pooling functions
 ^^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.max_pool2d
 
 
 

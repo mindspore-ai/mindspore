@@ -76,6 +76,12 @@ Reduction函数
 池化函数
 ^^^^^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.functional.max_pool2d
 
 
 
