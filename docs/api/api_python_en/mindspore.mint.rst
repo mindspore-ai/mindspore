@@ -23,6 +23,8 @@ Element-wise Operation
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.ceil
+    mindspore.mint.cos
     mindspore.mint.erf
 
 mindspore.mint.nn
@@ -31,6 +33,19 @@ mindspore.mint.nn
 
 mindspore.mint.nn.functional
 -----------------------------
+
+Neural Network Layer Functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.functional.group_norm
+    mindspore.mint.nn.functional.layer_norm
+
+
 
 Convolution functions
 ^^^^^^^^^^^^^^^^^^^^^^^

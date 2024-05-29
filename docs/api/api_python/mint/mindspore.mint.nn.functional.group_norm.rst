@@ -1,7 +1,7 @@
-mindspore.ops.group_norm
-=========================
+mindspore.mint.nn.functional.group_norm
+=======================================
 
-.. py:function:: mindspore.ops.group_norm(input, num_groups, weight=None, bias=None, eps=1e-5)
+.. py:function:: mindspore.mint.nn.functional.group_norm(input, num_groups, weight=None, bias=None, eps=1e-5)
 
     在mini-batch输入上进行组归一化。
 

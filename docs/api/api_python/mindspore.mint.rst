@@ -23,6 +23,8 @@ Array操作
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.ceil
+    mindspore.mint.cos
     mindspore.mint.erf
 
 mindspore.mint.nn
@@ -31,6 +33,18 @@ mindspore.mint.nn
 
 mindspore.mint.nn.functional
 -----------------------------
+
+神经网络层函数
+^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.functional.group_norm
+    mindspore.mint.nn.functional.layer_norm
+
 
 卷积函数
 ^^^^^^^^^^
