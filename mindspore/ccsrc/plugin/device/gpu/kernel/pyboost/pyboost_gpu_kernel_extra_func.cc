@@ -19,12 +19,17 @@
 #include "plugin/device/gpu/hal/profiler/gpu_profiling.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "kernel/pyboost/pyboost_utils.h"
+#include "plugin/device/gpu/kernel/pyboost/pyboost_gpu_custom_kernel_register.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 bool PyboostGPUKernelExtraFunc::IsKernelModRegistered(const std::string &op_name) {
   return kernel::Factory<kernel::NativeGpuKernelMod>::Instance().IsRegistered(op_name);
+}
+
+bool PyboostGPUKernelExtraFunc::IsPyBoostCustomRegistered(const std::string &op_name) {
+  return PyBoostGpuCustomKernel::GetInstance().IsPyBoostCustomRegistered(op_name);
 }
 
 bool PyboostGPUKernelExtraFunc::IsEnableProfiler() {
