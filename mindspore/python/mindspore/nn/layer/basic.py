@@ -535,7 +535,8 @@ class Flatten(Cell):
         TypeError: If `x` is not a Tensor.
         TypeError: If `start_dim` or `end_dim` is not int.
         ValueError: If `start_dim` is greater than `end_dim` after canonicalized.
-        ValueError: If `start_dim` or `end_dim` is not in range of [-x.dim, x.dim-1].
+        ValueError: If `start_dim` or `end_dim` is not in range of [-x.dim, x.dim-1]. For example, the default values
+                    are used for the args and the input is a 0-dimensional or 1-dimensional Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
