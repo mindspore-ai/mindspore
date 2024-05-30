@@ -1,0 +1,17 @@
+{
+    "server_count": "1",
+    "server_list": [
+        {
+            "device": [
+                {
+                    "device_id": "0",
+                    "device_ip": "192.168.100.101",
+                    "rank_id": "0"
+                }
+            ],
+            "server_id": "10.155.170.21"
+        }
+    ],
+    "status": "completed",
+    "version": "1.0"
+}

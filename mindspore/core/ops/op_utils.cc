@@ -1174,5 +1174,19 @@ template MS_CORE_API std::optional<ArrayValue<bool>> GetArrayValue(const Abstrac
 template MS_CORE_API std::optional<ArrayValue<std::string>> GetArrayValue(const AbstractBasePtr &abs_base);
 template MS_CORE_API std::optional<ArrayValue<float16>> GetArrayValue(const AbstractBasePtr &abs_base);
 template MS_CORE_API std::optional<ArrayValue<bfloat16>> GetArrayValue(const AbstractBasePtr &abs_base);
+
+void CheckTensorScalarRank(const PrimitivePtr &primitive, const AbstractBasePtr input_arg,
+                           const std::string &arg_name) {
+  MS_EXCEPTION_IF_NULL(input_arg);
+  auto shape_ptr = input_arg->GetShape();
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  const auto &input_shape = shape_ptr->GetShapeVector();
+  const int64_t kDimZero = 0;
+  if (MS_LIKELY(!IsDynamic(input_shape))) {
+    MS_CHECK_VALUE(input_shape.size() == LongToSize(kDimZero),
+                   CheckAndConvertUtils::FormatCheckIntegerMsg("rank of " + arg_name, SizeToLong(input_shape.size()),
+                                                               kEqual, kDimZero, primitive));
+  }
+}
 }  // namespace ops
 }  // namespace mindspore

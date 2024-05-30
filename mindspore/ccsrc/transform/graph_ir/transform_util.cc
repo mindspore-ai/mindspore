@@ -251,7 +251,7 @@ GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &fo
   }
   GeTensorPtr tensor_ptr = nullptr;
   auto data_buff_size = tensor->data().nbytes();
-
+  py::gil_scoped_acquire gil;
   auto py_array = python_adapter::PyAdapterCallback::TensorToNumpy(*tensor);
   auto buf = py_array.request();
   auto data_ptr = static_cast<char *>(tensor->data().data());

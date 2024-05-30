@@ -25,6 +25,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <list>
+#include <set>
 
 #include "pybind11/pybind11.h"
 
@@ -183,6 +184,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   py::dict weights_;
   std::map<PyObject *, std::pair<ValuePtr, AbstractBasePtr>> cur_convert_input_;
   bool executor_running_{false};
+  std::set<std::string> phase_cache_;
 };
 using GraphExecutorPyPtr = std::shared_ptr<GraphExecutorPy>;
 

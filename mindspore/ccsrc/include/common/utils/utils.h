@@ -401,6 +401,7 @@ constexpr char kInlineSubGraphName[] = "inline_sub_graph_name";
 constexpr char kAttrBpropAutoMonadLevel[] = "bprop_auto_monad_level";
 constexpr char kAttrSideEffectBpropAppPropagate[] = "side_effect_bprop_app_propagate";
 constexpr char kAttrSideEffectBpropApp[] = "side_effect_bprop_app";
+constexpr char kAttrNotRemove[] = "not_remove";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";

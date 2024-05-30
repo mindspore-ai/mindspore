@@ -51,6 +51,7 @@
 #include "plugin/device/ascend/optimizer/ge/add_cast_for_ge.h"
 #include "plugin/device/ascend/optimizer/ge/scalar_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/tuple_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/ge/add_noop_to_es.h"
 #include "plugin/device/ascend/optimizer/ir_fission/seed_adapter.h"
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 #include "plugin/device/ascend/optimizer/backend_common_unify_mindir.h"
@@ -98,6 +99,11 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::UnfoldNestedOutput>("unfold_nested_output"));
   opt_ge_pm->AddPass(std::make_shared<opt::UnfoldMaketuple>("unfold_nested_maketuple"));
   opt_ge_pm->AddPass(std::make_shared<opt::BroadCastForSelect>());
+  opt_ge_pm->AddPass(std::make_shared<opt::AddNoOpToAdam>());
+  opt_ge_pm->AddPass(std::make_shared<opt::AddNoOpToAdamW>());
+  opt_ge_pm->AddPass(std::make_shared<opt::AddNoOpToAdaGrad>());
+  opt_ge_pm->AddPass(std::make_shared<opt::AddNoOpToFtrl>());
+
   optimizer->AddPassManager(opt_ge_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

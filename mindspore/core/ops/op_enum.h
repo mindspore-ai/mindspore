@@ -49,6 +49,14 @@ enum GridSamplerPaddingMode : int64_t { ZEROS = 0, BORDER = 1, REFLECTION = 2 };
 enum KVCacheAlignMode : int64_t { RIGHT = 0, LEFT = 1 };
 
 enum FASInputLayoutMode : int64_t { BSH = 0, BNSD = 1, SBH = 2, BSND = 3, TND = 4 };
+
+enum InitializerMode : int64_t { DEFAULT_MODE = 0, TRUNCATED_NORMAL = 1, CONSTANT = 2, RANDOM_UNIFORM = 3 };
+
+enum FilterMode : int64_t { NO_FILTER = 0, COUNTER = 1 };
+
+enum OptimizerMode : int64_t { DEFAULT = 0, ADAM = 1, ADAMW = 2, ADAGRAD = 3 };
+
+enum BackwardMode : int64_t { APPLYA_ADAM = 0, APPLYA_ADAMW = 1, APPLY_ADA_GRAD = 2, APPLY_FTRL = 3 };
 }  // namespace ops
 }  // namespace mindspore
 #endif  //  MINDSPORE_CORE_OPS_ENUM_H_

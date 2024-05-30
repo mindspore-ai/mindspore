@@ -397,5 +397,6 @@ static inline TypePtr PromoteType(TypePtr a, TypePtr b, const std::string &op_na
   return std::make_shared<TensorType>(typeid_typeptr[return_type_id]);
 }
 
+void CheckTensorScalarRank(const PrimitivePtr &primitive, const AbstractBasePtr input_arg, const std::string &arg_name);
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_UTILS_H
