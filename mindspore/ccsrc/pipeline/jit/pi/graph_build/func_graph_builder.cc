@@ -142,7 +142,15 @@ ValuePtr MaybeMakeEmptyTensor(const AbstractBasePtr &abs) {
     auto abs_tensor = abs->cast<abstract::AbstractTensorPtr>();
     TypePtr tensor_type_ptr = abs_tensor->element()->BuildType();
     ShapeVector tensor_shape = abs_tensor->shape()->shape();
-    return std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
+    auto tensor = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
+    if (abs->isa<abstract::AbstractRefTensor>()) {
+      auto abs_ref_tensor = abs->cast<abstract::AbstractRefPtr>();
+      // We only need the parameter name, it was used to find the python Parameter object later
+      auto param_info = std::make_shared<ParamInfo>();
+      param_info->set_name(abs_ref_tensor->ref_key_value()->ToString());
+      tensor->set_param_info(param_info);
+    }
+    return tensor;
   }
   return build_value;
 }
@@ -155,33 +163,49 @@ bool FunctionShouldBeParseInAst(const py::object &obj) {
   return func_names.find(py::cast<std::string>(obj.attr("__name__"))) != func_names.end();
 }
 
-py::object ConvertToPythonTensor(const py::object &obj) {
+py::object ConvertToPythonTensor(const py::object &obj,
+                                 const FuncGraphBuilder::PyTensorConverter &tensor_convert_func) {
   constexpr auto ms_class_attr = "__ms_class__";
   if (py::hasattr(obj, ms_class_attr) && py::cast<bool>(py::getattr(obj, ms_class_attr))) {
     return obj;
   }
   if (py::isinstance<tensor::Tensor>(obj)) {
-    bool is_adapter_tensor = py::hasattr(obj, kAdapterFlag) && py::cast<bool>(py::getattr(obj, kAdapterFlag));
-    py::module mod = python_adapter::GetPyModule(kTensorModule);
-    auto py_tensor = python_adapter::CallPyModFn(mod, "Tensor", obj, py::none(), py::none(), py::none(), true);
-    if (is_adapter_tensor) {
-      mod = python_adapter::GetPyModule(kInnerOpsModule);
-      py_tensor = python_adapter::CallPyModFn(mod, "convert_to_adapter_tensor", py_tensor);
-    }
-    return py_tensor;
+    return tensor_convert_func(obj);
   }
   if (py::isinstance<py::list>(obj) || py::isinstance<py::tuple>(obj)) {
     auto obj_tuple = py::cast<py::tuple>(obj);
     py::tuple ret(obj_tuple.size());
     for (size_t i = 0; i < obj_tuple.size(); ++i) {
-      ret[i] = ConvertToPythonTensor(obj_tuple[i]);
+      ret[i] = ConvertToPythonTensor(obj_tuple[i], tensor_convert_func);
     }
     if (py::isinstance<py::list>(obj)) {
       return ret.cast<py::list>();
     }
     return ret;
   }
+  if (py::isinstance<py::dict>(obj)) {
+    auto obj_dict = py::cast<py::dict>(obj);
+    for (auto item : obj_dict) {
+      obj_dict[item.first] = ConvertToPythonTensor(py::cast<py::object>(item.second), tensor_convert_func);
+    }
+    return obj_dict;
+  }
   return obj;
+}
+
+py::object ConvertCppTensorToPyTensor(const py::object &cpp_tensor) {
+  if (cpp_tensor.ptr() == nullptr || !py::isinstance<tensor::Tensor>(cpp_tensor)) {
+    return py::object();
+  }
+  bool is_adapter_tensor =
+    py::hasattr(cpp_tensor, kAdapterFlag) && py::cast<bool>(py::getattr(cpp_tensor, kAdapterFlag));
+  py::module mod = python_adapter::GetPyModule(kTensorModule);
+  auto py_tensor = python_adapter::CallPyModFn(mod, "Tensor", cpp_tensor, py::none(), py::none(), py::none(), true);
+  if (is_adapter_tensor) {
+    mod = python_adapter::GetPyModule(kInnerOpsModule);
+    py_tensor = python_adapter::CallPyModFn(mod, "convert_to_adapter_tensor", py_tensor);
+  }
+  return py_tensor;
 }
 }  // namespace
 
@@ -202,6 +226,11 @@ ValuePtr FuncGraphBuilder::ConvertPyObjToValue(const py::object &obj) {
 }
 
 py::object FuncGraphBuilder::ConvertToPyObj(const AbstractBasePtr &abs) {
+  static auto convert_func = [](const py::object &tensor) { return ConvertCppTensorToPyTensor(tensor); };
+  return FuncGraphBuilder::ConvertToPyObj(abs, convert_func);
+}
+
+py::object FuncGraphBuilder::ConvertToPyObj(const AbstractBasePtr &abs, const PyTensorConverter &tensor_convert_func) {
   if (abs->isa<abstract::AbstractNone>()) {
     return py::none();
   }
@@ -214,7 +243,7 @@ py::object FuncGraphBuilder::ConvertToPyObj(const AbstractBasePtr &abs) {
   }
 
   if (pijit::kPIJitConfigDefault.GetBoolConfig(pijit::GraphJitConfig::kTraceFlag)) {
-    return ConvertToPythonTensor(py_obj);
+    return ConvertToPythonTensor(py_obj, tensor_convert_func);
   }
 
   return py_obj;
@@ -601,12 +630,12 @@ py::object FuncGraphBuilder::TryToAddNode(const ValuePtr &callable_value, const 
     }
     output_py_obj = obj->cast_ptr<parse::PyObjectWrapper>()->obj();
   } else {
-    output_py_obj = ConvertToPyObj(abs);
+    auto convert_func = [this](const py::object &tensor) { return ConvertToPyTensorOrParameter(tensor); };
+    output_py_obj = ConvertToPyObj(abs, convert_func);
     if (output_py_obj.ptr() == nullptr) {
-      MS_LOG(DEBUG) << "Convert abs " << abs->ToString() << " to python object failed.";
+      MS_LOG(INFO) << "Convert abs " << abs->ToString() << " to python object failed.";
       return py::object();
     }
-    output_py_obj = ConvertToPythonTensor(output_py_obj);
   }
 
   new_node->set_abstract(abs);
@@ -614,6 +643,32 @@ py::object FuncGraphBuilder::TryToAddNode(const ValuePtr &callable_value, const 
   (void)py_obj_to_node_.emplace(output_py_obj.ptr(), new_node);
   new_node->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(output_py_obj));
   return output_py_obj;
+}
+
+py::object FuncGraphBuilder::ConvertToPyTensorOrParameter(const py::object &cpp_tensor) {
+  if (cpp_tensor.ptr() == nullptr || !py::isinstance<tensor::Tensor>(cpp_tensor)) {
+    return py::object();
+  }
+  auto tensor = py::cast<tensor::TensorPtr>(cpp_tensor);
+  if (tensor->is_parameter()) {
+    const std::string &name = tensor->param_info()->name();
+    for (auto &it : py_obj_to_node_) {
+      if (it.second == nullptr) {
+        continue;
+      }
+      const AbstractBasePtr &abs = it.second->abstract();
+      if (abs != nullptr && abs->isa<abstract::AbstractRefTensor>()) {
+        auto abs_ref_tensor = abs->cast<abstract::AbstractRefPtr>();
+        if (abs_ref_tensor->ref_key_value()->ToString() == name) {
+          return py::reinterpret_borrow<py::object>(it.first);
+        }
+      }
+    }
+    MS_LOG(INFO) << "Python Parameter not found: " << name;
+    return py::object();
+  }
+
+  return ConvertCppTensorToPyTensor(cpp_tensor);
 }
 
 py::object FuncGraphBuilder::AddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj) {

@@ -229,9 +229,7 @@ def test_control_flow_for_2elif_return_in_if():
     x = Tensor([-3], ms.int32)
     context.set_context(mode=context.PYNATIVE_MODE)
     pi_net = CtrlFor2ElifReturnInIf(t1, t2)
-
-    cfg = {'compile_by_trace': False} # One-stage will fix it later
-    jit(fn=CtrlFor2ElifReturnInIf.construct, mode="PIJit", jit_config=cfg)(pi_net, x)
+    jit(fn=CtrlFor2ElifReturnInIf.construct, mode="PIJit")(pi_net, x)
     pi_net(x)
 
 
