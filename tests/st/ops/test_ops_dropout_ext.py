@@ -65,7 +65,7 @@ def compare_grad(x, p, grad):
     assert (elem_count * (keep_prob - 0.02)) < nonzero_count < (elem_count * (keep_prob + 0.02))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
@@ -80,13 +80,13 @@ def test_func_dropout_normal(context_mode, dtype):
     ms.context.set_context(mode=context_mode)
     if context_mode == ms.GRAPH_MODE:
         os.environ['GRAPH_OP_RUN'] = "1"
-    x = generate_random_input((128, 128), dtype)
-    p = 0.4
+    x = generate_random_input((1280, 77, 77), dtype)
+    p = 0.1
     output = dropout_forward_func(ms.Tensor(x), p)
     compare_output(x, p, output)
 
-    x1 = generate_random_input((256, 256), dtype)
-    p1 = 0.3
+    x1 = generate_random_input((3, 4096, 1280), dtype)
+    p1 = 0.1
     grad = dropout_backward_func(ms.Tensor(x1), p1)
     compare_grad(x1, p1, grad)
     if context_mode == ms.GRAPH_MODE:
@@ -212,7 +212,7 @@ class DropoutExtCell(Cell):
         return self.dropout_ext(x, p)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
