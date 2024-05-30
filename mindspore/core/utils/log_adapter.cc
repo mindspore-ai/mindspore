@@ -15,6 +15,10 @@
  */
 
 #include "utils/log_adapter.h"
+#include <cstddef>
+#include <sstream>
+#include <string>
+#include "utils/info.h"
 
 #ifndef _MSC_VER
 #include <unistd.h>
@@ -25,6 +29,7 @@
 #include <regex>
 #include <thread>
 #include <vector>
+#include <limits>
 #include "utils/convert_utils_base.h"
 
 // namespace to support utils module definition
@@ -35,6 +40,9 @@ constexpr auto kSplitLine = "\n-------------------------------------------------
 constexpr auto kFrameworkErrorTitle = "Framework Error Message:";
 // set default log level to WARNING for all sub modules
 int g_ms_submodule_log_levels[NUM_SUBMODUES] = {MsLogLevel::kWarning};
+// set default vlog level to 0
+int g_ms_vlog_level_from = 0;
+int g_ms_vlog_level_to = 0;
 #if defined(_WIN32) || defined(_WIN64)
 enum MsLogLevel this_thread_max_log_level = MsLogLevel::kException;
 #else
@@ -354,13 +362,14 @@ const std::string LogWriter::GetNodeDebugInfoStr() const {
 void LogWriter::OutputLog(const std::ostringstream &msg) const {
 #ifdef USE_GLOG
 #define google mindspore_private
-  auto submodule_name = GetSubModuleName(submodule_);
+  std::string submodule_name = GetSubModuleName(submodule_);
   google::LogMessage("", 0, GetGlogLevel(log_level_)).stream()
 #ifdef _MSC_VER
     << "[" << GetLogLevel(log_level_) << "] " << submodule_name << "("
     << "," << std::hex
 #else
-    << "[" << GetLogLevel(log_level_) << "] " << submodule_name << "(" << getpid() << "," << std::hex
+    << "[" << (vlog_level_ > 0 ? "V" + std::to_string(vlog_level_) : GetLogLevel(log_level_)) << "] " << submodule_name
+    << "(" << getpid() << "," << std::hex
 #endif
     << std::this_thread::get_id() << std::dec << "," << GetProcName() << "):" << GetTimeString() << " "
     << "[" << location_.file_ << ":" << location_.line_ << "] " << location_.func_ << "] " << msg.str() << std::endl;
@@ -668,6 +677,125 @@ void InitSubModulesLogLevel() {
   }
 }
 
+bool ParsePositiveInt(const std::string &str, const size_t beg, const size_t end, int *ptr_val) {
+  int64_t val = 0;
+  size_t idx = beg;
+  while (idx < end && IsDigit(str[idx])) {
+    val = val * 10 + (str[idx] - '0');
+    if (val > std::numeric_limits<int>::max()) {
+      return false;
+    }
+    ++idx;
+  }
+  if (val == 0) {
+    return False;
+  }
+  if (ptr_val != nullptr) {
+    *ptr_val = static_cast<int>(val);
+  }
+  return idx == end;
+}
+
+bool GetKeyworkIndices(const std::string &str, size_t *ptr_idx_lparen, size_t *ptr_idx_rparen, size_t *ptr_idx_comma) {
+  size_t idx_lparen = std::string::npos;  // index of '('
+  size_t idx_rparen = std::string::npos;  // index of ')'
+  size_t idx_comma = std::string::npos;   // index of ','
+
+  for (size_t i = 0; i < str.size(); ++i) {
+    char ch = str[i];
+    if (ch == '(') {
+      if (idx_lparen != std::string::npos) {
+        return false;
+      }
+      idx_lparen = i;
+    } else if (ch == ')') {
+      if (idx_rparen != std::string::npos) {
+        return false;
+      }
+      idx_rparen = i;
+    } else if (ch == ',') {
+      if (idx_comma != std::string::npos) {
+        return false;
+      }
+      idx_comma = i;
+    } else if (!IsDigit(ch)) {
+      return false;
+    }
+  }
+
+  *ptr_idx_lparen = idx_lparen;
+  *ptr_idx_rparen = idx_rparen;
+  *ptr_idx_comma = idx_comma;
+
+  return true;
+}
+
+// the valid values of VLOG_v can be in format: num, (num1,num2), (num1,) or (,num2)
+bool ParseVerboseLogLevel(const std::string &str, int *from, int *to) {
+  if (str.empty()) {
+    return true;
+  }
+
+  size_t idx_lparen = std::string::npos;  // index of '('
+  size_t idx_rparen = std::string::npos;  // index of ')'
+  size_t idx_comma = std::string::npos;   // index of ','
+  if (!GetKeyworkIndices(str, &idx_lparen, &idx_rparen, &idx_comma)) {
+    return false;
+  }
+
+  if (idx_lparen == std::string::npos && idx_rparen == std::string::npos && idx_comma == std::string::npos) {
+    int val = 0;
+    if (!ParsePositiveInt(str, 0, str.size(), &val)) {
+      return false;
+    }
+    *from = *to = val;
+    return true;
+  } else if (idx_lparen == 0 && idx_rparen == str.size() - 1 && idx_comma > idx_lparen && idx_comma < idx_rparen &&
+             str.size() > 3) {
+    // VLOG_v in format (,number)
+    if (idx_comma == 1) {
+      *from = 1;
+    } else if (!ParsePositiveInt(str, 1, idx_comma, from)) {
+      return false;
+    }
+    // VLOG_v in format (number,)
+    if (idx_comma + 1 == idx_rparen) {
+      *to = std::numeric_limits<int>::max();
+    } else if (!ParsePositiveInt(str, idx_comma + 1, idx_rparen, to)) {
+      return false;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+void InitVerboseLogLevel() {
+  auto var_vlog = mindspore::GetEnv("VLOG_v");
+  if (var_vlog.empty()) {
+    return;
+  }
+
+  int level_from = 0, level_to = 0;
+  if (ParseVerboseLogLevel(var_vlog, &level_from, &level_to)) {
+    g_ms_vlog_level_from = level_from;
+    g_ms_vlog_level_to = level_to;
+    MS_LOG(INFO) << "vlog_level_from=" << g_ms_vlog_level_from << ", vlog_level_to=" << g_ms_vlog_level_to;
+    return;
+  }
+
+  MS_LOG(WARNING) << "Value of environment var VLOG_v is invalid: " << var_vlog;
+}
+
+void DispVerboseLogTags() {
+  MS_VLOG(VL_DISP_VLOG_TAGS) << VL_FLOW << ": start of end to end flow related log level";
+  MS_VLOG(VL_DISP_VLOG_TAGS) << VL_CORE << ": start of submodule log level";
+  MS_VLOG(VL_DISP_VLOG_TAGS) << VL_USER_CUSTOM << ": start of user defined log level";
+
+  MS_VLOG(VL_DISP_VLOG_TAGS) << VL_ASCEND_KERNEL_SELECT << ": ascend kernel select tag";
+  MS_VLOG(VL_DISP_VLOG_TAGS) << VL_DISP_VLOG_TAGS << ": log level for printing vlog tags already been used";
+}
+
 const std::string GetSubModuleName(SubModuleId module_id) {
   static const char sub_module_names[NUM_SUBMODUES][kNameMaxLength] = {
     "UNKNOWN",            // SM_UNKNOWN
@@ -801,6 +929,8 @@ MS_CORE_API void common_log_init(void) {
 
 #endif
   mindspore::InitSubModulesLogLevel();
+  mindspore::InitVerboseLogLevel();
+  mindspore::DispVerboseLogTags();
 }
 
 // shared lib init hook
