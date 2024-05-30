@@ -42,7 +42,7 @@ uint64_t InternalCast::GenTilingCacheKey(const std::vector<KernelTensor *> &inpu
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(Cast, InternalCast);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Cast, 1, 0);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Cast, 1, 0);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Cast, INPUT_NUM_1, INDEX_0);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Cast, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

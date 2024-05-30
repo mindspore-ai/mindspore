@@ -34,7 +34,6 @@ class InternalStridedSlice : public InternalKernelMod {
   bool CheckMasks(const std::vector<KernelTensor *> &inputs);
   internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs);
-  void SetInOutIdx();
 };
 }  // namespace kernel
 }  // namespace mindspore

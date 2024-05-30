@@ -116,10 +116,10 @@ class InternalMatmulElemUnary : public InternalMatmulElemBase {
 };
 
 MS_INTERNAL_KERNEL_FACTORY_REG(FusedMatMulElemBinary, InternalMatmulElemBinary);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(FusedMatMulElemBinary, 3, 0, 1, 2);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(FusedMatMulElemBinary, 1, 0);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(FusedMatMulElemBinary, INPUT_NUM_3, INDEX_0, INDEX_1, INDEX_2);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(FusedMatMulElemBinary, OUTPUT_NUM_1, INDEX_0);
 MS_INTERNAL_KERNEL_FACTORY_REG(FusedMatMulElemUnary, InternalMatmulElemUnary);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(FusedMatMulElemUnary, 2, 0, 1);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(FusedMatMulElemUnary, 1, 0);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(FusedMatMulElemUnary, INPUT_NUM_2, INDEX_0, INDEX_1);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(FusedMatMulElemUnary, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

@@ -25,6 +25,32 @@
 
 namespace mindspore {
 namespace kernel {
+#define INPUT_NUM_1 1
+#define INPUT_NUM_2 2
+#define INPUT_NUM_3 3
+#define INPUT_NUM_4 4
+#define INPUT_NUM_5 5
+#define INPUT_NUM_6 6
+#define INPUT_NUM_7 7
+#define INPUT_NUM_8 8
+#define INPUT_NUM_9 9
+#define INPUT_NUM_10 10
+#define OUTPUT_NUM_1 1
+#define OUTPUT_NUM_2 2
+#define OUTPUT_NUM_3 3
+#define OUTPUT_NUM_4 4
+#define OUTPUT_NUM_5 5
+#define OUTPUT_NUM_6 6
+#define INDEX_0 0
+#define INDEX_1 1
+#define INDEX_2 2
+#define INDEX_3 3
+#define INDEX_4 4
+#define INDEX_5 5
+#define INDEX_6 6
+#define INDEX_7 7
+#define INDEX_8 8
+#define INDEX_9 9
 enum InternalKernelMapDtype : int { INTERNEL_KERNEL_MAP_INPUT = 0, INTERNEL_KERNEL_MAP_OUTPUT = 1 };
 class InternalKernelModInOutMap {
  public:

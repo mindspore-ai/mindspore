@@ -37,7 +37,7 @@ internal::OpParamPtr InternalSplit::CreateOpParam(const std::vector<KernelTensor
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(Split, InternalSplit);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Split, 1, 0);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Split, INPUT_NUM_1, INDEX_0);
 REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Split, INTERNEL_KERNEL_IN_OUT_MUTABLE_LENGTH);
 }  // namespace kernel
 }  // namespace mindspore
