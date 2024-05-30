@@ -776,7 +776,12 @@ EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
     }
     res = std::make_shared<EvalResult>(any_abstract, std::make_shared<AttrValueMap>());
   } else {
-    res = EvalPrim(engine, args_abs_list);
+    try {
+      res = EvalPrim(engine, args_abs_list);
+    } catch (std::exception &e) {
+      MS_LOG(ERROR) << "Primitive: <" << ToString() << "> infer failed, failed info: " << e.what();
+      std::rethrow_exception(std::current_exception());
+    }
   }
   MS_EXCEPTION_IF_NULL(res);
   // Update the input abstract for inplace primitive.

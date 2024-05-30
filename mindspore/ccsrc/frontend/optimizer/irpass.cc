@@ -70,6 +70,7 @@
 #include "frontend/optimizer/irpass/grad_partial_transform.h"
 #include "frontend/optimizer/irpass/symbol_engine_optimizer.h"
 #include "frontend/optimizer/irpass/const_output_eliminate.h"
+#include "frontend/optimizer/irpass/slice_to_tuple.h"
 
 namespace mindspore {
 namespace opt {
@@ -120,6 +121,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     {prim::kPrimTupleGetItem, prim::kPrimTupleSetItem, prim::kPrimListGetItem, prim::kPrimListSetItem});
   make_slice_get_slice_eliminator_ = MakeSubstitution(std::make_shared<MakeSliceSliceGetItemEliminator>(),
                                                       "make_slice_get_slice_eliminator", {prim::kPrimSliceGetItem});
+  slice_to_tuple_ = MakeSubstitution(std::make_shared<SliceToTuple>(), "make_slice_get_slice_eliminator",
+                                     {prim::kPrimSliceGetItem, prim::kPrimMakeSlice});
   dict_get_item_eliminator_ =
     MakeSubstitution(std::make_shared<DictGetitemEliminator>(), "dict_get_item_eliminator", prim::kPrimDictGetItem);
   dict_get_item_const_eliminator_ = MakeSubstitution(std::make_shared<DictGetitemConstEliminator>(),
