@@ -46,6 +46,7 @@ Tensor
     mindspore.mint.topk
     mindspore.mint.sort
     mindspore.mint.stack
+    mindspore.mint.where
 
 随机采样
 -----------------
@@ -93,6 +94,7 @@ Tensor
     mindspore.mint.erfinv
     mindspore.mint.exp
     mindspore.mint.floor
+    mindspore.mint.isfinite
     mindspore.mint.log
     mindspore.mint.logical_and
     mindspore.mint.logical_not
@@ -105,6 +107,7 @@ Tensor
     mindspore.mint.rsqrt
     mindspore.mint.sin
     mindspore.mint.sqrt
+    mindspore.mint.square
     mindspore.mint.sub
     mindspore.mint.tanh
 

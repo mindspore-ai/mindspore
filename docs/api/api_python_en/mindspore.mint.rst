@@ -47,6 +47,7 @@ Indexing, Slicing, Joining, Mutating Operations
     mindspore.mint.topk
     mindspore.mint.sort
     mindspore.mint.stack
+    mindspore.mint.where
 
 
 Random Sampling
@@ -96,6 +97,7 @@ Pointwise Operations
     mindspore.mint.erfinv
     mindspore.mint.exp
     mindspore.mint.floor
+    mindspore.mint.isfinite
     mindspore.mint.log
     mindspore.mint.logical_and
     mindspore.mint.logical_not
@@ -108,6 +110,7 @@ Pointwise Operations
     mindspore.mint.rsqrt
     mindspore.mint.sin
     mindspore.mint.sqrt
+    mindspore.mint.square
     mindspore.mint.sub
 
     mindspore.mint.tanh
