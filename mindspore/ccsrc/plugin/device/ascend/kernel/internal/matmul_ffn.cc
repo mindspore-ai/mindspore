@@ -39,13 +39,6 @@ internal::OpParamPtr InternalMatmulFfn::CreateOpParam(const std::vector<KernelTe
   return param_ptr;
 }
 
-void InternalMatmulFfn::SetInOutIdx() {
-  inputsIdxMap_[kIndex0] = kIndex0;
-  inputsIdxMap_[kIndex1] = kIndex1;
-  outputsIdxMap_[kIndex0] = kIndex0;
-  outputsIdxMap_[kIndex1] = kIndex1;
-}
-
 uint64_t InternalMatmulFfn::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
   // User defined CacheKey, the inputs should include all the factors which will affect tiling result.
