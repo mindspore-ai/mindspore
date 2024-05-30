@@ -20,7 +20,7 @@ mindspore.mint.scatter_add
     参数：
         - **input** (Tensor) - 输入Tensor。rank必须大于等于1。
         - **dim** (int) - `input` 执行scatter_add操作的轴。取值范围是[-r, r)，其中r是 `input` 的rank。默认值: ``0`` 。
-        - **index** (Tensor) - `input` 要进行scatter_add操作的目标索引。数据类型为int32或int64，rank必须和 `input` 一致，取值范围是[-s, s)，s是 `input` 在 `dim` 指定轴的size。
+        - **index** (Tensor) - `input` 要进行scatter_add操作的目标索引。数据类型为int32或int64，rank必须和 `input` 一致。除了 `dim` 指定的维度， `index` 的每一维的size都需要小于等于 `input` 对应维度的size。
         - **src** (Tensor) - 指定与 `input` 进行scatter_add操作的Tensor，其数据类型与 `input` 类型相同，shape与 `index` 相同。
 
     返回：

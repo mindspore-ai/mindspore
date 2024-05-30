@@ -18,7 +18,9 @@ scatter_add_ext:
             input (Tensor): The target tensor. The rank must be at least 1.
             dim (int): Which dim to scatter. Accepted range is [-r, r) where r = rank(input). Default: ``0``.
             index (Tensor): The index of `input` to do scatter operation whose data type must be mindspore.int32 or
-                mindspore.int64. Same rank as  `input`. And accepted range is [-s, s) where s is the size along dim.
+                mindspore.int64. Same rank as `input`. Apart from the dimension specified by `dim`,
+                the size of each dimension of index must be less than or equal to the size of
+                the corresponding dimension of input.
             src (Tensor): The tensor doing the scatter operation with `input`, has the same type as `input` and
                 the same shape as `index`.
 
@@ -37,16 +39,15 @@ scatter_add_ext:
         Examples:
             >>> import mindspore
             >>> from mindspore import Tensor, ops
-            >>> from mindspore import Parameter
             >>> import numpy as np
-            >>> input_x = Parameter(Tensor(np.array([[1, 2, 3, 4, 5]]), mindspore.int32), name="x")
+            >>> input_x = Tensor(np.array([[1, 2, 3, 4, 5]]), mindspore.int32)
             >>> index = Tensor(np.array([[2, 4]]), mindspore.int32)
             >>> src = Tensor(np.array([[8, 8]]), mindspore.int32)
             >>> dim = 1
             >>> output = ops.scatter_add_ext(input_x, dim, index, src)
             >>> print(output)
             [[1 2 8 4 8]]
-            >>> input_x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.int32), name="x")
+            >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.int32)
             >>> index = Tensor(np.array([[1, -1, 2], [0, 2, 1]]), mindspore.int32)
             >>> src = Tensor(np.array([[1, 2, 2], [4, 5, 8]]), mindspore.int32)
             >>> dim = 0
