@@ -207,6 +207,9 @@ add:
   returns:
     output:
       dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: AddAscend
 
 #operator addcdiv
 addcdiv:
@@ -416,13 +419,10 @@ arange:
     args:
         start:
             dtype: number
-            type_cast: tensor
         end:
             dtype: number
-            type_cast: tensor
         step:
             dtype: number
-            type_cast: tensor
     args_signature:
         dtype_group: (start, end, step)
     returns:
@@ -1448,6 +1448,78 @@ clamp_tensor:
         CPU: ClampTensorCPU
         GPU: ClampTensorGPU
 
+#operator col2im_ext
+col2im_ext:
+    args:
+        input:
+            dtype: tensor
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+        kernel_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+        dilation:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+            default: 1
+        padding:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+            default: 0
+        stride:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+            default: 1
+    returns:
+        output:
+            dtype: tensor
+    function:
+        name: fold_ext
+    class:
+        name: Col2ImExt
+    dispatch:
+        enable: True
+
+#operator col2im_grad
+col2im_grad:
+    args:
+        input:
+            dtype: tensor
+        kernel_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+        dilation:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+            default: 1
+        padding:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+            default: 0
+        stride:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+            default: 1
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: Col2ImGrad
+    dispatch:
+        enable: True
+
 #operator complex
 complex:
   args:
@@ -2099,6 +2171,161 @@ elu:
       dtype: tensor
   dispatch:
     enable: False
+#operator EmbeddingApplyAdaGrad
+embedding_apply_ada_grad:
+    args:
+        var_handle:
+            dtype: tensor
+        lr:
+            dtype: tensor
+        grad:
+            dtype: tensor
+        keys:
+            dtype: tensor
+        global_step:
+            dtype: tensor
+        embedding_dim:
+            dtype: int
+        mask_zero:
+            dtype: bool
+            default: False
+        _embedding_dim:
+            dtype: int
+            default: 1
+        _max_key_num:
+            dtype: int
+            default: 1
+    labels:
+        _process_node_engine_id: "'PS'"
+    returns:
+        var_handle:
+            dtype: tensor
+
+#operator EmbeddingApplyAdam
+embedding_apply_adam:
+    args:
+        var_handle:
+            dtype: tensor
+        beta1_power:
+            dtype: tensor
+        beta2_power:
+            dtype: tensor
+        lr:
+            dtype: tensor
+        beta1:
+            dtype: tensor
+        beta2:
+            dtype: tensor
+        epsilon:
+            dtype: tensor
+        grad:
+            dtype: tensor
+        keys:
+            dtype: tensor
+        global_step:
+            dtype: tensor
+        embedding_dim:
+            dtype: int
+            default: 1
+        mask_zero:
+            dtype: bool
+            default: False
+        _embedding_dim:
+            dtype: int
+            default: 1
+        _max_key_num:
+            dtype: int
+            default: 1
+    labels:
+        _process_node_engine_id: "'PS'"
+    returns:
+        var_handle:
+            dtype: tensor
+
+#operator EmbeddingApplyAdamW
+embedding_apply_adam_w:
+    args:
+        var_handle:
+            dtype: tensor
+        beta1_power:
+            dtype: tensor
+        beta2_power:
+            dtype: tensor
+        lr:
+            dtype: tensor
+        weight_decay:
+            dtype: tensor
+        beta1:
+            dtype: tensor
+        beta2:
+            dtype: tensor
+        epsilon:
+            dtype: tensor
+        grad:
+            dtype: tensor
+        keys:
+            dtype: tensor
+        max_grad_norm:
+            dtype: tensor
+            default: None
+        embedding_dim:
+            dtype: int
+            default: 1
+        amsgrad:
+            dtype: bool
+            default: False
+        maximize:
+            dtype: bool
+            default: False
+        mask_zero:
+            dtype: bool
+            default: False
+        _embedding_dim:
+            dtype: int
+            default: 1
+        _max_key_num:
+            dtype: int
+            default: 1
+    labels:
+        _process_node_engine_id: "'PS'"
+    returns:
+        var_handle:
+            dtype: tensor
+
+#operator EmbeddingApplyFtrl
+embedding_apply_ftrl:
+    args:
+        var_handle:
+            dtype: tensor
+        lr:
+            dtype: tensor
+        lr_power:
+            dtype: tensor
+        lambda1:
+            dtype: tensor
+        lambda2:
+            dtype: tensor
+        grad:
+            dtype: tensor
+        keys:
+            dtype: tensor
+        embedding_dim:
+            dtype: int
+        mask_zero:
+            dtype: bool
+            default: False
+        _embedding_dim:
+            dtype: int
+            default: 1
+        _max_key_num:
+            dtype: int
+            default: 1
+    labels:
+        _process_node_engine_id: "'PS'"
+    returns:
+        var_handle:
+            dtype: tensor
+
 #EmbeddingDensebackward
 embedding_dense_backward:
     args:
@@ -2153,6 +2380,132 @@ embedding:
         Ascend: EmbeddingAscend
     function:
         disable: True
+#operator EmbeddingTableFindAndInit
+embedding_table_find_and_init:
+    args:
+        table_id:
+            dtype: tensor
+        keys:
+            dtype: tensor
+        max_grad_norm:
+            dtype: tensor
+        embedding_dim:
+            dtype: int
+        value_total_len:
+            dtype: int
+        initializer_mode:
+            dtype: int
+            default: "'random_uniform'"
+            arg_handler: str_to_enum
+        constant_value:
+            dtype: float
+            default: 0.0
+        min:
+            dtype: float
+            default: -2.0
+        max:
+            dtype: float
+            default: 2.0
+        mu:
+            dtype: float
+            default: 0.0
+        sigma:
+            dtype: float
+            default: 1.0
+        seed:
+            dtype: int
+            default: 1
+        seed2:
+            dtype: int
+            default: 2
+        filter_mode:
+            dtype: int
+            default: "'no_filter'"
+            arg_handler: str_to_enum
+        filter_freq:
+            dtype: int
+            default: 0
+        default_key_or_value:
+            dtype: bool
+            default: False
+        default_key:
+            dtype: int
+            default: 0
+        default_value:
+            dtype: float
+            default: 0.0
+        optimizer_mode:
+            dtype: int
+            default: "''"
+            arg_handler: str_to_enum
+        optimizer_params:
+            dtype: tuple[float]
+            default: []
+            type_cast: list[float]
+        _embedding_dim:
+            dtype: int
+            default: 0
+        _max_key_num:
+            dtype: int
+            default: 0
+        _use_counter_filter:
+            dtype: int
+            default: 0
+        backward_mode:
+            dtype: int
+            default: "'adam'"
+            arg_handler: str_to_enum
+        backward_int_params:
+            dtype: tuple[int]
+            default: (1,)
+            type_cast: list[int]
+        backward_float_params:
+            dtype: tuple[float]
+            default: [0.9, 0.99, 0.001, 0.9, 0.999, 0.00000001]
+            type_cast: list[float]
+        backward_bool_params:
+            dtype: tuple[bool]
+            default: [False]
+            type_cast: list[bool]
+        parameter:
+            dtype: tensor
+            default: 0.0
+            type_cast: float
+    labels:
+        _process_node_engine_id: "'PS'"
+        _execute_times: 2
+    returns:
+        values:
+            dtype: tensor
+
+#operator EmbeddingTableFind
+embedding_table_find:
+    args:
+        table_id:
+            dtype: tensor
+        keys:
+            dtype: tensor
+        embedding_dim:
+            dtype: int
+        default_value:
+            dtype: float
+            default: -1.0
+        _embedding_dim:
+            dtype: int
+            default: 0
+        _max_key_num:
+            dtype: int
+            default: 0
+        _use_counter_filter:
+            dtype: int
+            default: 0
+    labels:
+        _process_node_engine_id: "'PS'"
+        _execute_times: 2
+    returns:
+        values:
+            dtype: tensor
+
 #operator equal
 equal:
   args:
@@ -2277,6 +2630,115 @@ eye:
       dtype: tensor
   function:
     disable: True
+  dispatch:
+    enable: True
+    Ascend: EyeAscend
+
+#operator FakeRemoteLookupUniqued
+fake_remote_lookup_uniqued:
+    args:
+        table_id:
+            dtype: tensor
+        keys:
+            dtype: tensor
+        actual_keys_num:
+            dtype: tensor
+        unique_indices:
+            dtype: tensor
+        key_count:
+            dtype: tensor
+        max_grad_norm:
+            dtype: tensor
+        embedding_dim:
+            dtype: int
+            default: 0
+        value_total_len:
+            dtype: int
+            default: 0
+        initializer_mode:
+            dtype: int
+            default: "'random_uniform'"
+            arg_handler: str_to_enum
+        constant_value:
+            dtype: float
+            default: 0.0
+        min:
+            dtype: float
+            default: -2.0
+        max:
+            dtype: float
+            default: 2.0
+        mu:
+            dtype: float
+            default: 0.0
+        sigma:
+            dtype: float
+            default: 1.0
+        seed:
+            dtype: int
+            default: 0
+        seed2:
+            dtype: int
+            default: 0
+        filter_mode:
+            dtype: int
+            default: "'no_filter'"
+            arg_handler: str_to_enum
+        filter_freq:
+            dtype: int
+            default: 0
+        default_key_or_value:
+            dtype: bool
+            default: False
+        default_key:
+            dtype: int
+            default: 0
+        default_value:
+            dtype: float
+            default: 0.0
+        optimizer_mode:
+            dtype: int
+            default: "''"
+            arg_handler: str_to_enum
+        optimizer_params:
+            dtype: tuple[float]
+            default: []
+            type_cast: list[float]
+        _embedding_dim:
+            dtype: int
+            default: 0
+        _max_key_num:
+            dtype: int
+            default: 0
+        _use_counter_filter:
+            dtype: int
+            default: 0
+        backward_mode:
+            dtype: int
+            default: "'adam'"
+            arg_handler: str_to_enum
+        backward_int_params:
+            dtype: tuple[int]
+            default: (1,)
+            type_cast: list[int]
+        backward_float_params:
+            dtype: tuple[float]
+            default: [0.9, 0.99, 0.001, 0.9, 0.999, 0.00000001]
+            type_cast: list[float]
+        backward_bool_params:
+            dtype: tuple[bool]
+            default: [False]
+            type_cast: list[bool]
+        parameter:
+            dtype: tensor
+            default: 0.0
+            type_cast: float
+    labels:
+        _process_node_engine_id: "'PS'"
+        _execute_times: 2
+    returns:
+        values:
+            dtype: tensor
 
 #operator fast_gelu_grad
 fast_gelu_grad:
@@ -2781,6 +3243,8 @@ floor:
   returns:
     output:
       dtype: tensor
+  dispatch:
+    enable: True
 
 #operator gather_d_grad_v2
 gather_d_grad_v2:
@@ -3343,6 +3807,40 @@ ifftshift:
   class:
     name: IFFTShift
 
+#operator im2col_ext
+im2col_ext:
+    args:
+        input:
+            dtype: tensor
+        kernel_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+        dilation:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+            default: 1
+        padding:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+            default: 0
+        stride:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+            default: 1
+    returns:
+        output:
+            dtype: tensor
+    function:
+        name: unfold_ext
+    class:
+        name: Im2ColExt
+    dispatch:
+        enable: True
+
 #operator index_add_ext
 index_add_ext:
     args:
@@ -3369,8 +3867,8 @@ index_add_ext:
     function:
         disable: True
 
-#operator index_select_ext
-index_select_ext:
+#operator index_select
+index_select:
     args:
         input:
             dtype: tensor
@@ -3383,6 +3881,92 @@ index_select_ext:
             dtype: tensor
     dispatch:
         enable: True
+    function:
+        name: index_select_ext
+
+#operator InitEmbeddingHashmap
+init_embedding_hashmap:
+    args:
+        table_id:
+            dtype: tensor
+        value_total_len:
+            dtype: int
+        embedding_dim:
+            dtype: int
+        bucket_size:
+            dtype: int
+            default: 0
+        dtype:
+            dtype: TypeId
+            default: mstype.float32
+            arg_handler: dtype_to_type_id
+        initializer_mode:
+            dtype: str
+            default: "''"
+        constant_value:
+            dtype: float
+            default: 0.0
+        min:
+            dtype: float
+            default: -2.0
+        max:
+            dtype: float
+            default: 2.0
+        mu:
+            dtype: float
+            default: 0.0
+        sigma:
+            dtype: float
+            default: 1.0
+        seed:
+            dtype: int
+            default: 0
+        seed2:
+            dtype: int
+            default: 0
+        filter_mode:
+            dtype: str
+            default: "'no_filter'"
+        optimizer_mode:
+            dtype: str
+            default: "''"
+        optimizer_params:
+            dtype: tuple[float]
+            type_cast: list[float]
+            default: ()
+        _table_id:
+            dtype: int
+            default: None
+    labels:
+        _process_node_engine_id: "'PS'"
+    returns:
+        fake_output:
+            dtype: tensor
+
+#operator InitPartitionMap
+init_partition_map:
+    args:
+        ps_num:
+            dtype: tensor
+        ps_ids:
+            dtype: tensor
+        partition_num:
+            dtype: int
+            default: 65537
+        _embedding_dim:
+            dtype: int
+            default: None
+        _max_key_num:
+            dtype: int
+            default: None
+        _ps_num:
+            dtype: int
+            default: 1
+    labels:
+        _process_node_engine_id: "'PS'"
+    returns:
+        fake_output:
+            dtype: tensor
 
 #operator irfft_grad
 irfft_grad:
@@ -6714,6 +7298,9 @@ sub:
   returns:
     output:
       dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: SubAscend
 
 #operator sum_ext
 sum_ext:
@@ -7378,4 +7965,25 @@ zeros:
     dispatch:
         enable: True
         Ascend: ZerosAscend
+
+# operator: kv_cache_scatter_update
+kv_cache_scatter_update:
+    args:
+        var:
+            dtype: tensor
+        indices:
+            dtype: tensor
+        updates:
+            dtype: tensor
+        axis:
+            dtype: int
+        reduce:
+            dtype: int
+            default: "'none'"
+            arg_handler: str_to_enum
+    returns:
+        out:
+            dtype: tensor
+    class:
+        name: KVCacheScatterUpdate
 
