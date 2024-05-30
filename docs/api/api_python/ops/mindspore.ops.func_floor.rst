@@ -10,6 +10,7 @@ mindspore.ops.floor
 
     参数：
         - **input** (Tensor) - 输入Tensor。支持的数据类型: 
+        
           - Ascend: float16、float32、float64、bfloat16、int8、int16、int32、int64、uint8、uint16、uint32、uint64。
           - GPU/CPU: float16、float32、float64。
 

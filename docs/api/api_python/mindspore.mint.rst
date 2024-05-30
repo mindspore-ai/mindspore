@@ -37,6 +37,7 @@ Tensor创建
     mindspore.mint.ceil
     mindspore.mint.cos
     mindspore.mint.erf
+    mindspore.mint.floor
     mindspore.mint.log
 
 mindspore.mint.nn
