@@ -117,9 +117,6 @@ const VectorRef MatmulElemBiasaddFusion::DefineMatmulFusionPattern(const VectorR
 
   auto is_biasadd = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimBiasAdd>);
   MS_CHECK_TRUE_RET(is_biasadd != nullptr, {});
-  if (is_biasadd == nullptr) {
-    MS_LOG(WARNING) << "is_biasadd == nullptr";
-  }
   auto biasadd_matmul_bias = VectorRef({is_biasadd, predecessor, bias, format});
 
   return biasadd_matmul_bias;
