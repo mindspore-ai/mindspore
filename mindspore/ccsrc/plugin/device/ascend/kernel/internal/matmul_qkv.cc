@@ -43,13 +43,6 @@ internal::OpParamPtr InternalMatmulQkv::CreateOpParam(const std::vector<KernelTe
   return param_ptr;
 }
 
-void InternalMatmulQkv::SetInOutIdx() {
-  inputsIdxMap_[kIndex0] = kIndex0;
-  inputsIdxMap_[kIndex1] = kIndex1;
-  outputsIdxMap_[kIndex0] = kIndex0;
-  outputsIdxMap_[kIndex1] = kIndex1;
-  outputsIdxMap_[kIndex2] = kIndex2;
-}
 
 uint64_t InternalMatmulQkv::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
