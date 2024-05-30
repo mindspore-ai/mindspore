@@ -167,6 +167,7 @@ void AclStreamAssign::GenKernelIoExecInfoMap(
 
 void AclStreamAssign::AddBoundarySendRecvKernel(const NotNull<KernelGraphPtr> &kernel_graph, uint32_t record_stream_id,
                                                 uint32_t wait_stream_id, std::vector<CNodePtr> *exec_order,
+                                                std::map<size_t, std::set<size_t>> *no_event_streams,
                                                 CNodePtr pre_cnode, CNodePtr next_cnode) {
   auto &resource_manager = AscendStreamMng::GetInstance();
   uint32_t event_id = resource_manager.ApplyNewEvent();
@@ -178,7 +179,54 @@ void AclStreamAssign::AddBoundarySendRecvKernel(const NotNull<KernelGraphPtr> &k
   common::AnfAlgo::SetNodeAttr(kAttrWaitEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), recv_node);
   exec_order->push_back(send_node);
   exec_order->push_back(recv_node);
+  (*no_event_streams)[wait_stream_id].erase(record_stream_id);
   SetForSwitchInline(kernel_graph, send_node, recv_node, pre_cnode, next_cnode);
+}
+
+void AclStreamAssign::ProcessSideEffect(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr kernel,
+                                        size_t process_stream_id, const CNodePtr last_kernel,
+                                        std::vector<AnfNodePtr> *real_inputs,
+                                        std::map<AnfNodePtr, std::set<size_t>> *side_effect_map,
+                                        std::map<size_t, std::set<size_t>> *no_event_streams,
+                                        std::vector<CNodePtr> *new_exec_orders) {
+  bool has_side_effect = false;
+  auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel);
+  for (size_t i = 0; i < input_tensor_num; i++) {
+    auto input_node = kernel->input(i + 1);
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (HasAbstractMonad(input_node)) {
+      has_side_effect = true;
+      continue;
+    }
+    auto kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
+    auto real_input = kernel_with_index.first;
+    real_inputs->push_back(real_input);
+  }
+  auto prim = GetValueNode<PrimitivePtr>(kernel->input(0));
+  if (prim != nullptr &&
+      (GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_MEM) || GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_IO))) {
+    has_side_effect = true;
+  }
+
+  if (has_side_effect) {
+    for (auto real_input : (*real_inputs)) {
+      auto &stream_set = (*side_effect_map)[real_input];
+      for (auto stream_id : stream_set) {
+        if (stream_id == process_stream_id) {
+          continue;
+        }
+        auto &no_event_stream_set = (*no_event_streams)[process_stream_id];
+        auto no_event_iter = no_event_stream_set.find(stream_id);
+        if (no_event_iter == no_event_stream_set.end()) {
+          continue;
+        }
+        MS_LOG(INFO) << "Add side effect event " << stream_id << " to " << process_stream_id << " for kernel "
+                     << kernel->fullname_with_scope();
+        AddBoundarySendRecvKernel(kernel_graph, stream_id, process_stream_id, new_exec_orders, no_event_streams,
+                                  last_kernel, kernel);
+      }
+    }
+  }
 }
 
 void AclStreamAssign::UpdateEventsToExecutionOrder(
@@ -187,6 +235,8 @@ void AclStreamAssign::UpdateEventsToExecutionOrder(
   const mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> &recv_before_node,
   const mindspore::HashMap<AnfNodePtr, std::set<size_t>> &producer_streams) {
   MS_LOG(DEBUG) << "Start UpdateEventsToExecutionOrder...";
+  std::map<AnfNodePtr, std::set<size_t>> side_effect_map;
+  std::map<size_t, std::set<size_t>> no_event_streams;  // wait_stream -> record_stream
   auto exec_kernels = kernel_graph->execution_order();
   std::vector<CNodePtr> new_exec_orders;
   std::set<size_t> streams_set;
@@ -195,9 +245,10 @@ void AclStreamAssign::UpdateEventsToExecutionOrder(
     if (process_stream_id != kDefaultStreamIndex) {
       streams_set.insert(process_stream_id);
     }
+    no_event_streams[process_stream_id] = {};
   }
   for (const auto &stream : streams_set) {
-    AddBoundarySendRecvKernel(kernel_graph, kDefaultStreamIndex, stream, &new_exec_orders);
+    AddBoundarySendRecvKernel(kernel_graph, kDefaultStreamIndex, stream, &new_exec_orders, &no_event_streams);
   }
   CNodePtr last_kernel = nullptr;
   for (auto &kernel : exec_kernels) {
@@ -207,17 +258,29 @@ void AclStreamAssign::UpdateEventsToExecutionOrder(
     }
     auto process_stream_id = AnfAlgo::GetStreamId(kernel);
     if (process_stream_id != kDefaultStreamIndex) {
-      AddBoundarySendRecvKernel(kernel_graph, kDefaultStreamIndex, process_stream_id, &new_exec_orders, last_kernel,
-                                kernel);
+      AddBoundarySendRecvKernel(kernel_graph, kDefaultStreamIndex, process_stream_id, &new_exec_orders,
+                                &no_event_streams, last_kernel, kernel);
       auto it = producer_streams.find(kernel);
       if (it != producer_streams.end()) {
         for (auto record_stream_id : it->second) {
           if (record_stream_id == kDefaultStreamIndex) {
             continue;
           }
-          AddBoundarySendRecvKernel(kernel_graph, record_stream_id, process_stream_id, &new_exec_orders, last_kernel,
-                                    kernel);
+          AddBoundarySendRecvKernel(kernel_graph, record_stream_id, process_stream_id, &new_exec_orders,
+                                    &no_event_streams, last_kernel, kernel);
         }
+      }
+    }
+    std::vector<AnfNodePtr> real_inputs;
+    ProcessSideEffect(kernel_graph, kernel, process_stream_id, last_kernel, &real_inputs, &side_effect_map,
+                      &no_event_streams, &new_exec_orders);
+
+    for (auto real_input : real_inputs) {
+      side_effect_map[real_input].insert(process_stream_id);
+    }
+    for (auto &kv : no_event_streams) {
+      if (kv.first != process_stream_id) {
+        kv.second.insert(process_stream_id);
       }
     }
     new_exec_orders.push_back(kernel);
@@ -234,7 +297,7 @@ void AclStreamAssign::UpdateEventsToExecutionOrder(
                     std::back_inserter(new_exec_orders));
   }
   for (const auto &stream : streams_set) {
-    AddBoundarySendRecvKernel(kernel_graph, stream, kDefaultStreamIndex, &new_exec_orders);
+    AddBoundarySendRecvKernel(kernel_graph, stream, kDefaultStreamIndex, &new_exec_orders, &no_event_streams);
   }
 
   kernel_graph->set_execution_order(new_exec_orders);

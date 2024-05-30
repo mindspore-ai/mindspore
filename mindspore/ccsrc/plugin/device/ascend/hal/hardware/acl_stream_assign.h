@@ -101,7 +101,12 @@ class AclStreamAssign {
                                  uint32_t stream_id, uint32_t event_generate_id);
   void AddBoundarySendRecvKernel(const NotNull<KernelGraphPtr> &kernel_graph, uint32_t record_stream_id,
                                  uint32_t wait_stream_id, std::vector<CNodePtr> *exec_order,
-                                 CNodePtr pre_cnode = nullptr, CNodePtr next_cnode = nullptr);
+                                 std::map<size_t, std::set<size_t>> *no_event_streams, CNodePtr pre_cnode = nullptr,
+                                 CNodePtr next_cnode = nullptr);
+  void ProcessSideEffect(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr kernel, size_t process_stream_id,
+                         const CNodePtr last_kernel, std::vector<AnfNodePtr> *real_inputs,
+                         std::map<AnfNodePtr, std::set<size_t>> *side_effect_map,
+                         std::map<size_t, std::set<size_t>> *no_event_streams, std::vector<CNodePtr> *new_exec_orders);
   std::atomic<uint32_t> event_generate_id_ = 0;
 };
 }  // namespace ascend
