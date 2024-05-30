@@ -122,6 +122,40 @@ OUTPUT_MAP(FlashAttentionScoreGrad) = {
   {kIndex0, OUTPUT_DESC(dq)}, {kIndex1, OUTPUT_DESC(dk)}, {kIndex2, OUTPUT_DESC(dv)}, {kIndex3, OUTPUT_DESC(dpse)}};
 REG_ADPT_DESC(FlashAttentionScoreGrad, kNameFlashAttentionScoreGrad, ADPT_DESC(FlashAttentionScoreGrad))
 
+// FusedInferAttentionScore
+INPUT_MAP(FusedInferAttentionScore) = {{kIndex1, INPUT_DESC(query)},
+                                       {kIndex4, INPUT_DESC(pse_shift)},
+                                       {kIndex5, INPUT_DESC(atten_mask)},
+                                       {kIndex6, INPUT_DESC(actual_seq_lengths)},
+                                       {kIndex7, INPUT_DESC(actual_seq_lengths_kv)},
+                                       {kIndex8, INPUT_DESC(dequant_scale1)},
+                                       {kIndex9, INPUT_DESC(quant_scale1)},
+                                       {kIndex10, INPUT_DESC(dequant_scale2)},
+                                       {kIndex11, INPUT_DESC(quant_scale2)},
+                                       {kIndex12, INPUT_DESC(quant_offset2)},
+                                       {kIndex13, INPUT_DESC(antiquant_scale)},
+                                       {kIndex14, INPUT_DESC(antiquant_offset)},
+                                       {kIndex15, INPUT_DESC(block_table)},
+                                       {kIndex16, INPUT_DESC(query_padding_size)},
+                                       {kIndex17, INPUT_DESC(kv_padding_size)}};
+DYN_INPUT_MAP(FusedInferAttentionScore) = {{kIndex2, DYN_INPUT_DESC(key)}, {kIndex3, DYN_INPUT_DESC(value)}};
+ATTR_MAP(FusedInferAttentionScore) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(FusedInferAttentionScore) = {
+  {kIndex18, ATTR_DESC(num_heads, AnyTraits<int64_t>())},
+  {kIndex19, ATTR_DESC(scale, AnyTraits<float>())},
+  {kIndex20, ATTR_DESC(pre_tokens, AnyTraits<int64_t>())},
+  {kIndex21, ATTR_DESC(next_tokens, AnyTraits<int64_t>())},
+  {kIndex22, ATTR_DESC(input_layout, AnyTraits<FASInputLayoutMode>())},
+  {kIndex23, ATTR_DESC(num_key_value_heads, AnyTraits<int64_t>())},
+  {kIndex24, ATTR_DESC(sparse_mode, AnyTraits<int64_t>())},
+  {kIndex25, ATTR_DESC(inner_precise, AnyTraits<int64_t>())},
+  {kIndex26, ATTR_DESC(block_size, AnyTraits<int64_t>())},
+  {kIndex27, ATTR_DESC(antiquant_mode, AnyTraits<int64_t>())},
+  {kIndex28, ATTR_DESC(softmax_lse_flag, AnyTraits<bool>())},
+};
+OUTPUT_MAP(FusedInferAttentionScore) = {{kIndex0, OUTPUT_DESC(attention_out)}, {kIndex1, OUTPUT_DESC(softmax_lse)}};
+REG_ADPT_DESC(FusedInferAttentionScore, "FusedInferAttentionScore", ADPT_DESC(FusedInferAttentionScore))
+
 // MatmulReduceScatter
 INPUT_MAP(MatmulReduceScatter) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
 ATTR_MAP(MatmulReduceScatter) = {{"reduce_op", ATTR_DESC(reduce_op, AnyTraits<std::string>())},
