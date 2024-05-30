@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/graph_kernel/add_ref_pair.h"
+#include "backend/common/graph_kernel/deal_with_side_effect.h"
 
 #include <utility>
 #include "ir/anf.h"
@@ -24,7 +24,25 @@
 #include "include/backend/kernel_graph.h"
 
 namespace mindspore::graphkernel {
-bool AddRefPair::Run(const FuncGraphPtr &func_graph) {
+void DealWithSideEffect::MarkSideEffect(const FuncGraphPtr &sub_graph) {
+  MS_EXCEPTION_IF_NULL(sub_graph);
+  bool has_side_effect_mem = false;
+  auto nodes = TopoSort(sub_graph->get_return());
+  for (auto node : nodes) {
+    if (node == nullptr) {
+      continue;
+    }
+    if (IsPrimitiveCNode(node, prim::kPrimAssign)) {
+      has_side_effect_mem = true;
+      break;
+    }
+  }
+  if (has_side_effect_mem) {
+    sub_graph->set_attr(GRAPH_FLAG_SIDE_EFFECT_MEM, MakeValue(int64_t(1)));
+  }
+}
+
+bool DealWithSideEffect::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   bool changed = false;
 
@@ -37,7 +55,8 @@ bool AddRefPair::Run(const FuncGraphPtr &func_graph) {
     }
     auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
     MS_EXCEPTION_IF_NULL(sub_graph);
-
+    // add side effect attr
+    MarkSideEffect(sub_graph);
     AnfNodePtrList output_list;
     kernel::GetFuncGraphOutputNodes(sub_graph, &output_list);
     auto graph_inputs = sub_graph->parameters();

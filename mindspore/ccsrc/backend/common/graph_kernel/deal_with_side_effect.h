@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADD_REF_PAIR_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADD_REF_PAIR_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_DEAL_WITH_SIDE_EFFECT_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_DEAL_WITH_SIDE_EFFECT_H_
 
 #include "include/backend/optimizer/pass.h"
 #include "ir/func_graph.h"
@@ -23,11 +23,14 @@ namespace mindspore::graphkernel {
 /**
  * @brief add ref pair to kernel graph
  */
-class AddRefPair : public opt::Pass {
+class DealWithSideEffect : public opt::Pass {
  public:
-  AddRefPair() : Pass("add_ref_pair") {}
-  ~AddRefPair() override = default;
+  DealWithSideEffect() : Pass("deal_with_side_effect") {}
+  ~DealWithSideEffect() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
+
+ private:
+  void MarkSideEffect(const FuncGraphPtr &sub_graph);
 };
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADD_REF_PAIR_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_DEAL_WITH_SIDE_EFFECT_H_

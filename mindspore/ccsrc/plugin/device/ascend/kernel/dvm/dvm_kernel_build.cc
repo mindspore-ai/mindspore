@@ -517,6 +517,17 @@ size_t GetSubGraphNums(FuncGraphPtr graph_kernel) {
   auto info = GetValue<std::vector<size_t>>(value);
   return info[0] + 1;
 }
+
+FuncGraphPtr GetNodeFuncGraph(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto func_graph = common::AnfAlgo::GetNodeAttr<FuncGraphPtr>(node, kAttrFuncGraph);
+  if (func_graph == nullptr) {
+    MS_LOG(EXCEPTION) << "Can not get dvm func graph from node[" << node->fullname_with_scope() << "] "
+                      << node->DebugString();
+  }
+  return func_graph;
+}
+
 class DvmKernelBuilder {
  public:
   DvmKernelBuilder(const AnfNodePtr &node, bool is_dynamic) : node_(node), is_dynamic_(is_dynamic) {}
@@ -551,7 +562,7 @@ class DvmKernelBuilder {
     auto scope = cnode->fullname_with_scope();
     MS_LOG(INFO) << "Start creating kernel module for node: " << scope;
     // FuncGraph --> Dvm Kernel
-    auto func_graph = GetCNodeFuncGraph(cnode);
+    auto func_graph = GetNodeFuncGraph(cnode);
     Construct(func_graph);
     if (kernel_mod_->EnableDump()) {
       kernel_mod_->DumpBuffer() << "===================== func_graph =====================\n";
@@ -760,10 +771,7 @@ class ParallelDvmKernelBuilder : public DvmKernelBuilder {
 
 KernelModPtr DvmOpBuild(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto func_graph = GetCNodeFuncGraph(cnode);
-  MS_EXCEPTION_IF_NULL(func_graph);
+  auto func_graph = GetNodeFuncGraph(anf_node);
   std::shared_ptr<DvmKernelBuilder> kernel_builder{nullptr};
   auto is_dynamic = common::AnfAlgo::IsDynamicShape(anf_node);
   if (func_graph->has_attr(kAttrCompositeType) &&
