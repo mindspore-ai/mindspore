@@ -19,7 +19,7 @@
 #include <algorithm>
 #include "abstract/dshape.h"
 #include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 #include "ops/ops_func_impl/arange.h"
@@ -28,15 +28,13 @@ namespace mindspore::ops {
 #define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->ContainsValueAny()))
 
 template <typename T>
-BaseShapePtr CalculateShapeSize(const ValuePtr start_ptr, const ValuePtr end_ptr, const ValuePtr step_ptr) {
-  ShapeVector out_shape = {};
+int64_t ComputeShape(const ValuePtr start_ptr, const ValuePtr end_ptr, const ValuePtr step_ptr) {
   auto start_opt = GetScalarValue<T>(start_ptr);
   auto end_opt = GetScalarValue<T>(end_ptr);
   auto step_opt = GetScalarValue<T>(step_ptr);
 
   if (MS_UNLIKELY(!start_opt.has_value()) || MS_UNLIKELY(!end_opt.has_value()) || MS_UNLIKELY(!step_opt.has_value())) {
-    (void)out_shape.emplace_back(abstract::Shape::kShapeDimAny);
-    return std::make_shared<abstract::Shape>(out_shape);
+    return static_cast<int64_t>(-1);
   }
 
   auto start = start_opt.value();
@@ -44,13 +42,13 @@ BaseShapePtr CalculateShapeSize(const ValuePtr start_ptr, const ValuePtr end_ptr
   auto step = step_opt.value();
 
   if (step == T(0)) {
-    MS_EXCEPTION(ValueError) << "For Arange, step cannot be equal to zero.";
+    MS_EXCEPTION(ValueError) << "For Arange, step should not be zero.";
   }
-  if (step > 0 && start > end) {
-    MS_EXCEPTION(ValueError) << "For Arange, step cannot be positive when end < start.";
+  if (step > 0 && start >= end) {
+    MS_EXCEPTION(ValueError) << "For Arange, start should be less than end when step > 0.";
   }
-  if (step < 0 && start < end) {
-    MS_EXCEPTION(ValueError) << "For Arange, step cannot be negative when end > start.";
+  if (step < 0 && start <= end) {
+    MS_EXCEPTION(ValueError) << "For Arange, start should be greater than end when step < 0.";
   }
 
   int64_t shape_size = 0;
@@ -64,8 +62,7 @@ BaseShapePtr CalculateShapeSize(const ValuePtr start_ptr, const ValuePtr end_ptr
     MS_EXCEPTION(ValueError) << "For Arange, infer shape error, shape_size [" << shape_size << "] is negative.";
   }
 
-  (void)out_shape.emplace_back(shape_size);
-  return std::make_shared<abstract::TensorShape>(out_shape);
+  return shape_size;
 }
 
 BaseShapePtr ArangeFuncImpl::InferShape(const PrimitivePtr &primitive,
@@ -78,7 +75,7 @@ BaseShapePtr ArangeFuncImpl::InferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(end_value);
   MS_EXCEPTION_IF_NULL(step_value);
 
-  BaseShapePtr shape_ptr = nullptr;
+  int64_t shape_size = 0;
   bool is_compile = (IsNoneOrAnyValue(start_value) || IsNoneOrAnyValue(end_value) || IsNoneOrAnyValue(step_value));
   if (is_compile) {
     (void)out_shape.emplace_back(abstract::Shape::kShapeDimAny);
@@ -87,20 +84,26 @@ BaseShapePtr ArangeFuncImpl::InferShape(const PrimitivePtr &primitive,
     // not in compile, need inferShape
     auto dtype = input_args[kInputIndex0]->GetType();
     if ((*dtype == *kInt) || (*dtype == *kInt32)) {
-      shape_ptr = CalculateShapeSize<int32_t>(start_value, end_value, step_value);
+      shape_size = ComputeShape<int32_t>(start_value, end_value, step_value);
     } else if (*dtype == *kInt64) {
-      shape_ptr = CalculateShapeSize<int64_t>(start_value, end_value, step_value);
+      shape_size = ComputeShape<int64_t>(start_value, end_value, step_value);
     } else if ((*dtype == *kFloat) || (*dtype == *kFloat32)) {
-      shape_ptr = CalculateShapeSize<float>(start_value, end_value, step_value);
+      shape_size = ComputeShape<float>(start_value, end_value, step_value);
     } else if (*dtype == *kFloat64) {
-      shape_ptr = CalculateShapeSize<double>(start_value, end_value, step_value);
+      shape_size = ComputeShape<double>(start_value, end_value, step_value);
     } else {
       MS_EXCEPTION(TypeError) << "For Arange, the dtype of input must be int32, int64, float32, float64, but got "
                               << TypeIdToString(dtype->type_id()) << ".";
     }
   }
 
-  return shape_ptr;
+  if (shape_size < 0) {
+    (void)out_shape.emplace_back(abstract::Shape::kShapeDimAny);
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+
+  (void)out_shape.emplace_back(shape_size);
+  return std::make_shared<abstract::TensorShape>(out_shape);
 }
 
 TypePtr ArangeFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
@@ -108,4 +111,38 @@ TypePtr ArangeFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
   MS_EXCEPTION_IF_NULL(start_type);
   return start_type->Clone();
 }
+
+// simple infer
+TypePtrList ArangeFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &start = input_values[kInputIndex0];
+  MS_EXCEPTION_IF_NULL(start);
+  return {start->type()};
+}
+
+ShapeArray ArangeFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &start_value = input_values[kInputIndex0];
+  const auto &end_value = input_values[kInputIndex1];
+  const auto &step_value = input_values[kInputIndex2];
+  MS_EXCEPTION_IF_NULL(start_value);
+  MS_EXCEPTION_IF_NULL(end_value);
+  MS_EXCEPTION_IF_NULL(step_value);
+
+  int64_t shape_size = 0;
+  auto dtype = start_value->type();
+  if ((*dtype == *kInt) || (*dtype == *kInt32)) {
+    shape_size = ComputeShape<int32_t>(start_value, end_value, step_value);
+  } else if (*dtype == *kInt64) {
+    shape_size = ComputeShape<int64_t>(start_value, end_value, step_value);
+  } else if ((*dtype == *kFloat) || (*dtype == *kFloat32)) {
+    shape_size = ComputeShape<float>(start_value, end_value, step_value);
+  } else if (*dtype == *kFloat64) {
+    shape_size = ComputeShape<double>(start_value, end_value, step_value);
+  } else {
+    MS_EXCEPTION(TypeError) << "For Arange, the dtype of input must be int32, int64, float32, float64, but got "
+                            << TypeIdToString(dtype->type_id()) << ".";
+  }
+  ShapeVector output_shape = {shape_size};
+  return {output_shape};
+}
+REGISTER_SIMPLE_INFER(kNameArange, ArangeFuncImpl)
 }  // namespace mindspore::ops
