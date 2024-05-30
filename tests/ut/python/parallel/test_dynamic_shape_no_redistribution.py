@@ -176,7 +176,6 @@ def test_padv3_dynamic():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1), (1, 1, 1))
     strategy2 = ((1, 1, 1),)
-    context.set_context(save_graphs=True)
     input_x = Tensor(shape=[32, 16, None], dtype=ms.int32)
     weight = Tensor(np.ones([32, 16, 1]), dtype=ms.float32)
     net = PadV3Net(weight, strategy1, strategy2)
@@ -194,7 +193,6 @@ def test_padv3_paddings_concat_scalar_to_tensor_dynamic():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    context.set_context(save_graphs=True)
     strategy1 = ((1, 1, 1), (1, 1, 1))
     strategy2 = ((1, 1, 1),)
     input_x = Tensor(shape=[32, 16, None], dtype=ms.int32)
@@ -214,7 +212,6 @@ def test_padv3_concat_tensor_shape_dynamic():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    context.set_context(save_graphs=True)
     strategy1 = ((1, 1, 1), (1, 1, 1))
     strategy2 = ((1, 1, 1),)
     input_x = Tensor(shape=[32, 16, None], dtype=ms.int32)
@@ -325,7 +322,6 @@ def test_attention_reshape():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    context.set_context(save_graphs=True)
     strategy1 = ((1, 1), (1, 8))
     strategy2 = ((1, 8), (8,))
     strategy3 = ((1, 1, 8, 1),)
@@ -428,7 +424,6 @@ def test_modify_inputs_of_stridedslice_and_reshape():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0, full_batch=False)
-    context.set_context(save_graphs=True)
     strategy1 = ((8, 1),)
     strategy2 = ((1, 1), (8, 1))
     strategy3 = ((8, 1), (8, 1))
@@ -505,7 +500,6 @@ def test_concat_is_the_input_of_padv3():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
                                       dataset_strategy=((1, 8, 1, 1),))
-    context.set_context(save_graphs=True)
     strategy1 = ((1,), (1,))
     strategy2 = ((1, 8, 1, 1), (1,), ())
     net = ConcatPadV3Net(strategy1, strategy2)
@@ -550,7 +544,6 @@ def test_dynamic_fillv2():
     strategy3 = ((1, 8), (1, 8))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
                                       dataset_strategy=strategy2)
-    context.set_context(save_graphs=True)
 
     x = Tensor(shape=[None, 2], dtype=ms.float32)
     net = DynamicFillNet(strategy1, strategy2, strategy3)
@@ -584,7 +577,6 @@ def test_dynamic_tile():
     strategy1 = ((1, 8, 1, 1, 1),)
     strategy2 = ((1, 1, 1, 1, 1),)
     context.set_auto_parallel_context(device_num=8, global_rank=0, gradients_mean=True, dataset_strategy=strategy2)
-    context.set_context(save_graphs=True)
 
     net = DynamicTileNet(strategy1, strategy2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -617,7 +609,6 @@ def test_dynamic_mul_broadcast():
     strategy1 = ((1, 8, 1, 1), (1, 1, 1, 1))
     strategy2 = ((1, 8, 1, 1),)
     context.set_auto_parallel_context(device_num=8, global_rank=0, gradients_mean=True, dataset_strategy=strategy1)
-    context.set_context(save_graphs=True)
 
     net = DynamicMulNet(strategy1, strategy2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -652,7 +643,6 @@ def test_dynamic_mul_broadcast_strategy_error():
     strategy1 = ((1, 8, 1, 1), (1, 1, 1, 1))
     strategy2 = ((1, 2, 4, 1),)
     context.set_auto_parallel_context(device_num=8, global_rank=0, gradients_mean=True, dataset_strategy=strategy1)
-    context.set_context(save_graphs=True)
 
     net = DynamicMulNet(strategy1, strategy2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")

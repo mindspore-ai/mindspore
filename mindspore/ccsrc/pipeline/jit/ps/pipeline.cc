@@ -44,6 +44,7 @@
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/parallel/pass/handle_group_info.h"
 #include "frontend/parallel/step_assigned_parallel.h"
@@ -970,6 +971,14 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   ad::DFunctor::Clear();
   ReclaimOptimizer();
   resource->Clean();
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  if (parallel_context->hccl_test_available()) {
+    parallel::g_device_manager = nullptr;
+  }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  ms_context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
   FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphs();
   (void)profiler::CollectHostInfo(kCompiler, kPipelineClean, kPipelineClean, 0, 0, 1);
   ProcessStatus::GetInstance().RecordEnd();

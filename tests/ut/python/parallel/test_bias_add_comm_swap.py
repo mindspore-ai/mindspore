@@ -79,7 +79,7 @@ def test_bias_add_comm_swap():
 
     context.set_auto_parallel_context(
         device_num=8, global_rank=0)
-    context.set_context(save_graphs=True)
+    context.set_context(save_graphs=True, save_graphs_path="./")
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     if os.path.exists("./speed_up.json"):
         os.remove("./speed_up.json")
@@ -112,6 +112,15 @@ def test_bias_add_comm_swap():
     assert out == "1"
     if os.path.exists("./rank_0"):
         shutil.rmtree("./rank_0")
+    if os.path.exists("./speed_up.json"):
+        os.remove("./speed_up.json")
+
+    # clean env
+    a = {"bias_add_comm_swap": False}
+    f = open("speed_up.json", "w")
+    f.write(json.dumps(a))
+    f.close()
+    context.set_context(ascend_config={"parallel_speed_up_json_path": "speed_up.json"})
     if os.path.exists("./speed_up.json"):
         os.remove("./speed_up.json")
     context.set_context(save_graphs=False)

@@ -50,7 +50,6 @@ def test_no_need_to_accomplish():
             out = self.relu(out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_no_need_to_accomplish")
     dataset_shard = (1, 1, 1, 1)
     from_shard = (2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -91,7 +90,6 @@ def test_no_need_to_accomplish_static():
             out = self.relu(out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_no_need_to_accomplish_static")
     dataset_shard = (1, 1, 1, 1)
     from_shard = (2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -128,7 +126,6 @@ def test_shape_used_by_one_rank0():
             out = self.relu(out)  # 2,2,2
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_shape_used_by_one_rank0")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -186,7 +183,6 @@ def test_shape_used_by_one_rank6():
             out = self.relu(out)  # 2,2,2
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_shape_used_by_one_rank6")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -244,7 +240,6 @@ def test_shape_used_by_one_static():
             out = self.relu(out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_shape_used_by_one_static")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -285,7 +280,6 @@ def test_shape_used_by_two():
             out = self.matmul(out, self.w)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_shape_used_by_two")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -361,7 +355,6 @@ def test_shape_used_by_two_static():
             out = self.matmul(out, self.w)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_shape_used_by_two_static")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -402,7 +395,6 @@ def test_two_dynamic_dims_used_by_two():
             out = self.matmul(out, self.w)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_two_dynamic_dims_used_by_two")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -485,7 +477,6 @@ def test_two_dynamic_dims_used_by_two_static():
             out = self.matmul(out, self.w)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_two_dynamic_dims_used_by_two_static")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -523,7 +514,6 @@ def test_not_equal_cast_mul_need_allgather_static():
             out = self.mul(out, out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_not_equal_cast_mul_need_allgather_static")
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -560,7 +550,6 @@ def test_not_equal_cast_mul_need_allgather_dyn():
             out = self.mul(out, out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_not_equal_cast_mul_need_allgather_dyn")
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -612,7 +601,6 @@ def test_not_equal_cast_mul_no_need_allgather_static():
             out = self.mul(out, out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_not_equal_cast_mul_no_need_allgather_static")
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -649,7 +637,6 @@ def test_not_equal_cast_mul_no_need_allgather_dyn():
             out = self.mul(out, out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_not_equal_cast_mul_no_need_allgather_dyn")
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -694,7 +681,6 @@ def test_reshape_shape_overflow():
             out = self.matmul(out, self.w)  # shard: ((2, 1), (4, 1))
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_reshape_shape_overflow")
     dataset_shard = (1, 1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -737,8 +723,6 @@ def test_dataset_shard_is_same_with_first_op():
             x = self.arg_max_with_value(x)[1]  # shard: (4, 1)
             x = self.mul2(x, self.mul2_weight)
             return x
-
-    context.set_context(save_graphs=True, save_graphs_path="./test_dataset_shard_is_same_with_first_op")
 
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -800,8 +784,6 @@ def test_dataset_shard_is_not_same_with_first_op():
             x = self.mul2(x, self.mul2_weight)
             return x
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_dataset_shard_is_not_same_with_first_op")
-
     dataset_shard = (8, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -861,7 +843,6 @@ def test_greater_equal_op_with_two_dynamic_axis():
             x = self.div(x, self.flat(inputs))
             return x
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_greater_equal_op")
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -912,7 +893,6 @@ def test_two_matmul_with_different_layout():
             x = self.relu(x)
             return x
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_two_matmul_with_different_layout")
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -983,7 +963,6 @@ def test_shrink_four_dims_into_two_dims():
             x = self.relu(x)
             return x
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_shrink_four_dims_into_two_dims")
     dataset_shard = (1, 1, 1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -1048,8 +1027,6 @@ def test_pangu_multi_batch_qkv_reshape_scene_without_constant_folding():
             x = self.relu(x)
             return x
 
-    dump_ir_path = "./test_pangu_multi_batch_qkv_reshape_scene_without_constant_folding"
-    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -1098,8 +1075,6 @@ def test_pangu_multi_batch_qkv_reshape_scene_with_constant_folding():
             x = self.relu(x)
             return x
 
-    dump_ir_path = "./test_pangu_multi_batch_qkv_reshape_scene_with_constant_folding"
-    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,

@@ -84,7 +84,6 @@ def test_rec_shared_param_strmodif():
     Expectation: Get expected strategies by check key op
     '''
     context.reset_auto_parallel_context()
-    context.set_context(save_graphs=True)
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8,
                                       search_mode="recursive_programming", full_batch=False)
     set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)

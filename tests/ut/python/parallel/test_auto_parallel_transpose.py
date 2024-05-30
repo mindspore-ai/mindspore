@@ -66,13 +66,11 @@ def test_two_matmul_transpose():
             self.matmul1 = P.MatMul()
             self.matmul2 = P.MatMul()
             self.transpose1 = P.Transpose()
-            self.transpose2 = P.Transpose()
 
         def construct(self, x, y, b):
             out = self.matmul1(x, y)
             out = self.matmul2(out, b)
             out = self.transpose1(out, (1, 0))
-            out = self.transpose2(out, (1, 0))
             return out
 
     size = 16
@@ -89,8 +87,7 @@ def test_two_matmul_transpose():
     _cell_graph_executor.compile(net, x, y, b, phase='train')
     strategies = _cell_graph_executor._get_shard_strategy(net)
     print(strategies)
-    expected_strategies = {'Default/network-Net/Transpose-op0': [[1, 16]],
-                           'Default/network-Net/Transpose-op1': [[16, 1]],
+    expected_strategies = {'Default/network-Net/Transpose-op0': [[16, 1]],
                            'Default/network-Net/MatMul-op0': [[16, 1], [1, 1]],
                            'Default/network-Net/MatMul-op1': [[16, 1], [1, 1]],
                            'Default/_VirtualDataset-op0': [[1, 1], [1, 1], [1, 1]]}

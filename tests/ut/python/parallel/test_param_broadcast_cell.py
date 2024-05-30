@@ -19,6 +19,7 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore.nn.wrap.cell_wrapper import _BroadCastCell
 from mindspore.common.api import _cell_graph_executor
+from mindspore.communication._comm_helper import _ExistingGroup
 
 
 def setup_function():
@@ -31,6 +32,7 @@ def test_param_broadcast_cell():
     Description: parallel mode is semi_auto_parallel, but the _BroadCastCell skip the auto parallel compile
     Expectation: compile success
     """
+    _ExistingGroup.ITEMS = {}
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     broadcast_params = []
     broadcast_params.append(Tensor(np.ones([8, 32]), dtype=ms.float32))
@@ -38,3 +40,4 @@ def test_param_broadcast_cell():
     _cell_graph_executor.compile(net)
     assert "skip_auto_parallel_compile" in net.get_flags()
     context.reset_auto_parallel_context()
+    _ExistingGroup.ITEMS = {}

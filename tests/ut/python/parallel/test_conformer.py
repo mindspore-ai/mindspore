@@ -14,7 +14,6 @@
 """UT test example for conformer."""
 import math
 import numpy as np
-import pytest
 
 import mindspore
 import mindspore.nn as nn
@@ -24,16 +23,11 @@ from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 from mindspore.ops import functional as F
 from mindspore.common.initializer import TruncatedNormal, HeNormal
-from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
 from mindspore.nn.loss.loss import LossBase
 
 
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
-
-
-mindspore.set_seed(0)
-np.random.seed(0)
 
 
 def flatten(input_tensor, start_dim):

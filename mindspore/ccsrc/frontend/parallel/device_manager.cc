@@ -241,6 +241,9 @@ Status DeviceManager::Init(const RankList &devices, int64_t global_device_rank, 
     return FAILED;
   }
 
+  devices_.clear();
+  stage_devices_.clear();
+
   for (auto &dev : devices) {
     std::shared_ptr<Device> one = std::make_shared<Device>(dev);
     devices_.push_back(one);

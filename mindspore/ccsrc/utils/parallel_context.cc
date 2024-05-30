@@ -83,6 +83,15 @@ void ParallelContext::Reset() {
   reducescatter_fusion_threshold_mb_ = kFusionThreshold;
   fusion_threshold_is_set_ = true;
   fusion_mode_ = kFusionAuto;
+  group_ckpt_save_file_ = "";
+  pipeline_micro_size_ = 1;
+  dataset_repeat_dim_right_ = false;
+  hccl_test_available_ = false;
+  enable_micro_interleaved_ = false;
+  enable_fine_grained_micro_interleaved_ = false;
+  do_transform_ = false;
+  direct_split_ = false;
+  pipeline_result_broadcast_ = false;
   stra_file_only_trainable_params_ = true;
   pipeline_interleave_ = false;
   pipeline_scheduler_ = kPipeline1F1B;

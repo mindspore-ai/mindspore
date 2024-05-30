@@ -85,7 +85,6 @@ def test_dynamic_stridedslice_handle_begin_end():
     Expectation: No raise RuntimeError
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    context.set_context(save_graphs=True)
     strategy = (((1, 8),))
     net = Net(_w1, strategy)
 
