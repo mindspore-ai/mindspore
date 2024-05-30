@@ -284,6 +284,18 @@ def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data
     with open(json_file_name, 'w') as f:
         json.dump(data, f)
 
+def generate_dump_json(dump_path, json_file_name, base_dump_json_name, extra_settings_func=None):
+    data = {}
+    if base_dump_json_name == "e2e_dump_settings":
+        data = e2e_dump_dict
+    data["common_dump_settings"]["path"] = dump_path
+    data["common_dump_settings"]["saved_data"] = "tensor"
+    data["common_dump_settings"]["net_name"] = "Net"
+    if extra_settings_func is not None:
+        extra_settings_func(data)
+    with open(json_file_name, 'w') as f:
+        json.dump(data, f)
+
 
 def generate_cell_dump_json(dump_path, json_file_name, test_key, dump_mode):
     """
