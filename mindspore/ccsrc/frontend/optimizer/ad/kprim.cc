@@ -54,7 +54,7 @@ FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr 
   // Set a child scope named "grad'PrimitiveName'" for the bprop function,
   // and add "Gradients" to the front.
   static const std::string gradients_scope = "Gradients/";
-  static const std::string grad_op_child_scope_prefix = "/grad";
+  static const std::string grad_op_child_scope_prefix = "/Grad_";
   MS_EXCEPTION_IF_NULL(prim);
   const auto &prim_name = prim->name();
   auto scope = std::make_shared<Scope>(gradients_scope + ScopeManager::GetInstance().GetCurrentScope()->name() +

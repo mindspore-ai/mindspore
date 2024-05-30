@@ -177,7 +177,7 @@ def test_avgpool_grad():
         x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
         net(x)
 
-    patterns = ["Gradients/Default/net-Net/gradAvgPool-expand/AvgPoolGrad-op"]
+    patterns = ["Gradients/Default/net-Net/Grad_AvgPool/AvgPoolGrad-op"]
     cap.check_output(patterns)
 
 
@@ -286,9 +286,9 @@ def test_cdistgrad_fission():
         input_x = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
         net(input_x)
 
-    patterns = ["Gradients/Default/net-Net/gradReLU-expand/ExpandDims-op",
-                "Gradients/Default/net-Net/gradReLU-expand/BroadcastTo-op",
-                "Gradients/Default/net-Net/gradCdist-expand/CdistGrad-op"]
+    patterns = ["Gradients/Default/net-Net/Grad_ReLU/ExpandDims-op",
+                "Gradients/Default/net-Net/Grad_ReLU/BroadcastTo-op",
+                "Gradients/Default/net-Net/Grad_Cdist/CdistGrad-op"]
     cap.check_output(patterns)
 
 
@@ -388,7 +388,7 @@ def test_dropout_grad():
         x = Tensor(np.ones([1, 2, 3, 4, 5]), ms.float32)
         net(x)
 
-    patterns = ["Gradients/Default/net-Net/gradDropout-expand/DropoutDoMask-op"]
+    patterns = ["Gradients/Default/net-Net/Grad_Dropout/DropoutDoMask-op"]
     cap.check_output(patterns)
 
 
@@ -423,7 +423,7 @@ def test_batchnorm_grad():
 
         net(input_x)
 
-    patterns = ["Gradients/Default/net-Net/gradBatchNorm-expand/BatchNormGrad-op"]
+    patterns = ["Gradients/Default/net-Net/Grad_BatchNorm/BatchNormGrad-op"]
     cap.check_output(patterns)
 
 
@@ -458,5 +458,5 @@ def test_bn_grad2bninfer_grad():
 
         net(input_x)
 
-    patterns = ["Gradients/Default/net-Net/gradBatchNorm-expand/BNInferGrad-op"]
+    patterns = ["Gradients/Default/net-Net/Grad_BatchNorm/BNInferGrad-op"]
     cap.check_output(patterns)

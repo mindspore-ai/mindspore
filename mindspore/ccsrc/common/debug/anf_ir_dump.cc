@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/structure_ops.h"
 #include "utils/label.h"
 #include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "utils/symbolic.h"
 #include "utils/compile_config.h"
 #include "ir/primitive.h"
@@ -798,6 +799,7 @@ void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::share
   auto dump_debug_info = debug_info;
   std::list<DebugInfoPtr> need_dump_debug_infos;
   const auto &shadow_debug_infos_map = debug_info->shadow_debug_infos_map();
+  HashSet<DebugInfoPtr> all_shadowed_debug_infos;
   while (dump_debug_info != nullptr) {
     need_dump_debug_infos.push_front(dump_debug_info);
     auto iter = shadow_debug_infos_map.find(dump_debug_info);
@@ -815,6 +817,7 @@ void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::share
                     << (shadowed_debug_info->trace_info() != nullptr ? shadowed_debug_info->trace_info()->name()
                                                                      : "none");
       need_dump_debug_infos.push_front(shadow_debug_info);
+      all_shadowed_debug_infos.emplace(shadowed_debug_info);
     }
     if (dump_debug_info->trace_info() == nullptr) {
       break;
@@ -827,7 +830,13 @@ void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::share
       auto debug_info_str = trace::GetDebugInfoStr(cur_debug_info, "", kSourceLineTipDiscard);
       if (visited_locations.find(debug_info_str) == visited_locations.cend()) {
         constexpr auto prefix = "      # ";
-        gsub->buffer << prefix << debug_info_str << "\n";
+        gsub->buffer << prefix << debug_info_str;
+        if (all_shadowed_debug_infos.count(cur_debug_info) != 0) {
+          constexpr auto shared_code_line_hint =
+            "<~~This line of code can be shared by multiple nodes, and may be duplicated./";
+          gsub->buffer << shared_code_line_hint;
+        }
+        gsub->buffer << "\n";
         (void)visited_locations.insert(debug_info_str);
       }
     }
