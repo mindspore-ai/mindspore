@@ -22,8 +22,10 @@ import logging
 from abc import ABCMeta
 from multiprocessing import Process, Queue
 
+
 class AscendEnvChecker(metaclass=ABCMeta):
     """Ascend version and env check"""
+
     def __init__(self):
         # Note: This list contains the compatible Ascend versions for current MSLite version,
         # It MUST be updated when the MSLite Ascend version is upgraded!
@@ -191,7 +193,22 @@ class AscendEnvChecker(metaclass=ABCMeta):
         q = Queue()
         p = Process(target=self.do_check_python_deps, args=(q,))
         p.start()
-        ret = q.get() # this will block to wait return value.
+        ret = q.get()  # this will block to wait return value.
         p.join()
 
         return ret
+
+
+def ascend_env(func):
+    ascend_checker = AscendEnvChecker()
+    ascend_checker.check_env()
+
+    def wrapper():
+        func()
+
+    return wrapper
+
+
+@ascend_env
+def check_ascend_env():
+    pass
