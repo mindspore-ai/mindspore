@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,12 @@ const AnfNodePtr ShapeUnifyMindIR::Process(const FuncGraphPtr &graph, const AnfN
       for (auto &tuple_get_user : tuple_get_users) {
         auto post_cnode = tuple_get_user.first->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(post_cnode);
-        manager->SetEdge(post_cnode, GetInputNodeIndex(user_cnode, post_cnode) + kSizeOne, tensor_to_scalar);
+        if (common::AnfAlgo::CheckPrimitiveType(post_cnode, prim::kPrimScalarToTensor)) {
+          // Eliminate TensorToScalar and ScalarToTensor.
+          manager->Replace(post_cnode, strided_slice_node);
+        } else {
+          manager->SetEdge(post_cnode, GetInputNodeIndex(user_cnode, post_cnode) + kSizeOne, tensor_to_scalar);
+        }
       }
     } else if (common::AnfAlgo::CheckPrimitiveType(user_cnode, prim::kPrimReturn)) {
       auto tensor_to_tuple_cnode = CreateTensorToTuple(graph, tensor_shape_node);

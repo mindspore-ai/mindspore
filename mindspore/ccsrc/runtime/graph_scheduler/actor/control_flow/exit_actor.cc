@@ -283,6 +283,21 @@ bool ExitActor::IsNeedCopyDeviceAddress(DeviceTensor *const input_device_tensor,
   return true;
 }
 
+void ExitActor::UpdateDeviceOutputData() {
+  for (size_t i = 0; i < output_data_by_output_index_.size(); ++i) {
+    if (output_data_by_output_index_[i].empty()) {
+      continue;
+    }
+
+    const auto &device_tensor = input_device_tensors_[i];
+    MS_EXCEPTION_IF_NULL(device_tensor);
+    for (auto &output_data : output_data_by_output_index_[i]) {
+      MS_EXCEPTION_IF_NULL(output_data);
+      output_data->data_ = device_tensor;
+    }
+  }
+}
+
 void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   // If node is not empty, it is the exit of funcgraph, no need to create device address.
@@ -372,7 +387,9 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     } else {
       // Move the device ptr from input_device_tensor to new_device_tensor.
       input_device_tensor->Swap(new_device_tensor.get());
-      new_device_tensor->set_from_mem_pool(true);
+      if (new_device_tensor->deleter() == nullptr) {
+        new_device_tensor->set_from_mem_pool(true);
+      }
     }
     MS_LOG(DEBUG) << GetAID().Name() << " creates the dynamic ref device address:" << new_device_tensor.get()
                   << ", ptr:" << new_device_tensor->GetPtr()
@@ -380,19 +397,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
                   << " with index:" << node_with_index.second;
   }
   input_device_tensors_.swap(new_device_tensors);
-
-  for (size_t i = 0; i < output_data_by_output_index_.size(); ++i) {
-    if (output_data_by_output_index_[i].empty()) {
-      continue;
-    }
-
-    const auto &device_tensor = input_device_tensors_[i];
-    MS_EXCEPTION_IF_NULL(device_tensor);
-    for (auto &output_data : output_data_by_output_index_[i]) {
-      MS_EXCEPTION_IF_NULL(output_data);
-      output_data->data_ = device_tensor;
-    }
-  }
+  UpdateDeviceOutputData();
 }
 }  // namespace runtime
 }  // namespace mindspore
