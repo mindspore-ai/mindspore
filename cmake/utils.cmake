@@ -325,9 +325,24 @@ function(mindspore_add_pkg pkg_name)
 
     foreach(_PATCH_FILE ${PKG_PATCHES})
         get_filename_component(_PATCH_FILE_NAME ${_PATCH_FILE} NAME)
+
+        # convert line-endings of patch file to UNIX LF
         set(_LF_PATCH_FILE ${CMAKE_BINARY_DIR}/_ms_patch/${_PATCH_FILE_NAME})
         configure_file(${_PATCH_FILE} ${_LF_PATCH_FILE} NEWLINE_STYLE LF @ONLY)
 
+        # convert line-endings of source file to be patched to UNIX LF
+        file(READ ${_LF_PATCH_FILE} _LF_PATCH_CONTENT)
+        string(REGEX MATCHALL "diff --git a/[/A-Za-z0-9\.\-_]*" _PATCH_SOURCE_LIST "${_LF_PATCH_CONTENT}")
+        list(TRANSFORM _PATCH_SOURCE_LIST REPLACE "diff --git a/" "") # strip prefix of file path
+
+        foreach(_PATCH_SOURCE ${_PATCH_SOURCE_LIST})
+            if(EXISTS ${${pkg_name}_SOURCE_DIR}/${_PATCH_SOURCE})
+                execute_process(COMMAND bash -c "sed -i \'s@\\r@@g\' ${${pkg_name}_SOURCE_DIR}/${_PATCH_SOURCE}"
+                COMMAND_ECHO STDOUT)
+            endif()
+        endforeach()
+
+        # apply patch
         message("patching ${${pkg_name}_SOURCE_DIR} -p1 < ${_LF_PATCH_FILE}")
         execute_process(COMMAND ${Patch_EXECUTABLE} -p1 INPUT_FILE ${_LF_PATCH_FILE}
                 WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}

@@ -81,6 +81,7 @@ endif()
 
 if(ENABLE_TESTCASES OR ENABLE_CPP_ST)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/gtest.cmake)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/mockcpp.cmake)
 endif()
 
 set(CMAKE_CXX_FLAGS ${_ms_tmp_CMAKE_CXX_FLAGS_F})
