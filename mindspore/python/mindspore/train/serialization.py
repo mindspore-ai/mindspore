@@ -52,6 +52,7 @@ from mindspore.common.parameter import Parameter, _offload_if_config
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.common._utils import is_shape_unknown
+from mindspore.common.file_system import FileSystem, _register_basic_file_system, _register_mindio_file_system
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore.experimental import MapParameter
 from mindspore.ops import Cast
@@ -96,6 +97,19 @@ ENCRYPT_BLOCK_SIZE = 64 * 1024
 INT_64_MAX = 9223372036854775807
 
 cpu_cast = Cast().set_device("CPU")
+
+_ckpt_fs = FileSystem()
+
+
+def init_ckpt_file_system(fs: FileSystem):
+    """Initialize checkpoint file system"""
+    if _register_mindio_file_system(fs):
+        return
+    _register_basic_file_system(fs)
+
+
+# Initialize checkpoint file system
+init_ckpt_file_system(_ckpt_fs)
 
 
 class ParamDictFuture:
@@ -241,7 +255,7 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_
             if os.path.exists(ckpt_file_name):
                 os.chmod(ckpt_file_name, stat.S_IWUSR)
                 os.remove(ckpt_file_name)
-            with open(ckpt_file_name, "ab") as f:
+            with _ckpt_fs.create(ckpt_file_name, *_ckpt_fs.create_args) as f:
                 plain_data = None
                 if enc_key is not None:
                     plain_data = BytesIO()
@@ -279,7 +293,7 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_
                         f.write(_encrypt(block_data, len(block_data), enc_key, len(enc_key), enc_mode))
                         block_data = plain_data.read(max_block_size)
 
-                os.chmod(ckpt_file_name, stat.S_IRUSR)
+            os.chmod(ckpt_file_name, stat.S_IRUSR)
 
     except BaseException as e:
         logger.critical("Failed to save the checkpoint file %s. Maybe don't have the permission to write files, "
@@ -1329,7 +1343,7 @@ def _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode):
     checkpoint_list = Checkpoint()
     try:
         if dec_key is None:
-            with open(ckpt_file_name, "rb") as f:
+            with _ckpt_fs.open(ckpt_file_name, *_ckpt_fs.open_args) as f:
                 pb_content = f.read()
         else:
             pb_content = _decrypt(ckpt_file_name, dec_key, len(dec_key), dec_mode)
