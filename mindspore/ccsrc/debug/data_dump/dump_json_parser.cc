@@ -28,6 +28,7 @@
 #include "include/common/debug/anf_dump_utils.h"
 #include "include/common/utils/comm_manager.h"
 #include "mindspore/core/utils/file_utils.h"
+#include "mindspore/core/utils/ms_utils.h"
 
 namespace {
 constexpr auto kCommonDumpSettings = "common_dump_settings";
@@ -351,6 +352,9 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
   const std::string file_path_str = file_path.value();
   MS_LOG(INFO) << "Dump path is " << file_path_str;
   ChangeFileMode(file_path_str, S_IWUSR);
+
+  MSLogTime msTime;
+  msTime.Start();
   std::ofstream fd(file_path_str, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!fd.is_open()) {
     MS_LOG(EXCEPTION) << "Open file " << file_path_str << " failed." << ErrnoToString(errno);
@@ -364,6 +368,9 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
       << " failed. This error may be caused by insufficient disk space. Please check the available disk space.";
   }
   fd.close();
+  msTime.End();
+  MS_LOG(DEBUG) << "Dump file costs time : " << " microseconds.";
+  
   ChangeFileMode(file_path_str, S_IRUSR);
   return true;
 }

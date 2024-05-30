@@ -83,6 +83,20 @@ class VarianceAndMeanCalculator {
   double m2;
 };
 
+class L2Calculator {
+public:
+  L2Calculator(): squre_sum_div_max_(0.0), max_value_(0.0) {}
+  ~L2Calculator() = default;
+  void ProcessElement(double value);
+  void ProcessElement(const L2Calculator& other);
+  double GetL2Value() const;
+private:
+  // save (x^2 + y^2)/y^2, when y > x, to avoid itermidiate value overflow
+  // the true l2 value should be sqrt(squre_sum_div_max_ * max_value_^2)
+  double squre_sum_div_max_;
+  double max_value_;
+};
+
 class ITensorSummary {
  public:
   enum WatchpointPos { eHitPos = 0, eErrorCodePos = 1, eParamListPos = 2 };
@@ -103,6 +117,8 @@ class ITensorSummary {
   virtual const double max_value() const = 0;
   virtual const double min_value() const = 0;
   virtual const double avg_value() const = 0;
+  virtual const double l2_value() const = 0;
+
   virtual const uint64_t count() const = 0;
   virtual const uint64_t neg_zero_count() const = 0;
   virtual const uint64_t pos_zero_count() const = 0;
@@ -135,7 +151,7 @@ class TensorSummary : public ITensorSummary {
   const uint64_t neg_inf_count() const override { return neg_inf_count_; }
   const uint64_t pos_inf_count() const override { return pos_inf_count_; }
   const uint64_t zero_count() const override { return zero_count_; }
-
+  const double l2_value() const override { return l2_calc_.GetL2Value(); }
  private:
   const T *current_tensor_ptr_;
   const T *prev_tensor_ptr_;
@@ -155,6 +171,7 @@ class TensorSummary : public ITensorSummary {
   double epsilon_;
   bool mean_sd_cal_enabled_;
   VarianceAndMeanCalculator current_mean_variance_;
+  L2Calculator l2_calc_;
   mindspore::HashMap<std::string, std::unique_ptr<MeanCalculator>> means_;
   mindspore::HashMap<uint32_t, std::unique_ptr<AllCloseCalculator>> all_close_;
   mindspore::HashMap<uint32_t, std::unique_ptr<RangeCountCalculator>> range_counts_;
