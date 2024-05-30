@@ -266,14 +266,46 @@ void SuperKernelActor::UpdateMemoryTraceMangerStatus(OpContext<DeviceTensor> *co
   MemoryTraceManager::GetInstance().PickMemoryTrackInfoForGraph(graph_->graph_id());
   if (!ActorDispatcher::enable_static_shape()) {
     ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kMemoryAlloc, GetAID().Name());
+
+    const std::shared_ptr<mindspore::HashMap<CNodePtr, std::vector<KernelMemoryTraceBlockPtr>>> &all_kernel_block_info =
+      MemoryTraceManager::GetInstance().GetAllKernelBlocksnfo();
+    MS_EXCEPTION_IF_NULL(all_kernel_block_info);
+
+    if (!all_kernel_block_info->empty()) {
+      size_t kernel_num = kernel_actors_.size();
+      for (size_t i = 0; i < kernel_num; i++) {
+        const auto &kernel_actor = kernel_actors_[i];
+        if (kernel_actor == nullptr) {
+          continue;
+        }
+
+        const auto &kernel = kernel_actor->kernel_;
+        MS_EXCEPTION_IF_NULL(kernel);
+
+        const auto &iter = all_kernel_block_info->find(kernel);
+        if (iter == all_kernel_block_info->end()) {
+          MS_LOG(DEBUG) << "Not found kernel block info for kernel: " << kernel->fullname_with_scope()
+                        << ", is output kernel: " << kernel_actor->is_output_kernel_;
+        } else {
+          const auto &kernel_mem_block = iter->second;
+          for (auto &block : kernel_mem_block) {
+            MS_EXCEPTION_IF_NULL(block);
+            if (block->mem_type_ == kOutputMem) {
+              kernel_actor->output_kernel_tensors_.at(block->index_)->set_device_ptr(nullptr);
+            } else {
+              kernel_actor->workspace_kernel_tensors_.at(block->index_)->set_device_ptr(nullptr);
+            }
+          }
+        }
+      }
+    }
+
     // First step for dynamic shape, need to record memory trace.
-    ActorDispatcher::set_enable_trace_dynamic_memory(true);
     MemoryTraceManager::GetInstance().Clear();
     static const size_t memory_block_size = 3000;
     MemoryTraceManager::GetInstance().ReserveKernelMemoryBlocks(memory_block_size, device_contexts_[0]);
   } else {
     // Not first step for dynamic shape, use record trace memory.
-    ActorDispatcher::set_enable_use_trace_memory(true);
     // Allocate block memory for static memory step.
     ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kMemoryAlloc, GetAID().Name());
     const auto &merge_blocks_with_device_context = MemoryTraceManager::GetInstance().GetMergeBlocks();
@@ -284,7 +316,8 @@ void SuperKernelActor::UpdateMemoryTraceMangerStatus(OpContext<DeviceTensor> *co
       const auto &merge_blocks = item.second;
       for (auto &block : merge_blocks) {
         MS_EXCEPTION_IF_NULL(block);
-        void *block_addr = device_context->device_res_manager_->AllocateMemory(block->size_);
+        static const size_t kMemoryAlignSize = 1024;
+        void *block_addr = device_context->device_res_manager_->AllocateMemory(block->size_ + kMemoryAlignSize);
         if (block_addr == nullptr) {
           SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context,
                                                       *(device_contexts_[0]), GetAID().Name(), block->size_);
@@ -353,6 +386,12 @@ void SuperKernelActor::RunGraphKernelByKernel(OpContext<DeviceTensor> *const con
     MS_LOG(DEBUG) << "Enable trace memory for increment inference graph: " << graph_->graph_id()
                   << ", phase: " << phase;
     UpdateMemoryTraceMangerStatus(context);
+
+    if (IsRunningFailed(context)) {
+      // Maybe allocate memory failed, early stop to run graph.
+      MS_LOG(INFO) << "Run failed and early stop to run graph: " << graph_->graph_id();
+      return;
+    }
   }
 
   // 3. Launch all kernels
@@ -793,7 +832,6 @@ void SuperKernelActor::BuildKernelActors() {
     const auto &output_actor = iter->second;
     MS_EXCEPTION_IF_NULL(output_actor);
     output_actor->is_output_kernel_ = true;
-    output_actor->graph_output_indexes_.insert(output_index);
     SchedulerHelper::AddSomasInfoForGraphOutput(output_actor, output_kernel, output_index, graph_->graph_id());
   }
 
