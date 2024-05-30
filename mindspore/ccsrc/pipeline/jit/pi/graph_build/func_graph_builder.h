@@ -144,7 +144,9 @@ class FuncGraphBuilder {
 
   static AbstractBasePtr EvalValue(const ValuePtr &value, const AbstractBasePtrList &inputs_abs_list);
 
+  using PyTensorConverter = std::function<py::object(const py::object &)>;
   static py::object ConvertToPyObj(const AbstractBasePtr &abs);
+  static py::object ConvertToPyObj(const AbstractBasePtr &abs, const PyTensorConverter &tensor_convert_func);
 
   void AddPrevBuilder(const FuncGraphBuilderPtr &builder);
 
@@ -178,6 +180,8 @@ class FuncGraphBuilder {
   static AbstractBasePtr GetAbstractOf(const AnfNodePtr &node);
 
   py::object TryToAddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj);
+
+  py::object ConvertToPyTensorOrParameter(const py::object &cpp_tensor);
 
   static bool CheckInvalidCellListDictMethod(const py::object &obj);
 
