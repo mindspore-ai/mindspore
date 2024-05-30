@@ -3,6 +3,7 @@ mindspore.mint
 
 mindspore.mint
 ---------------
+
 Array Operation
 ^^^^^^^^^^^^^^^
 
@@ -177,8 +178,8 @@ Vision functions
     :nosignatures:
     :template: classtemplate.rst
 
-    mint.nn.functional.unfold
-    mint.nn.functional.fold
+    mindspore.mint.nn.functional.unfold
+    mindspore.mint.nn.functional.fold
 
 
 
