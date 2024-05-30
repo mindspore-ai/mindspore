@@ -71,7 +71,7 @@ uint64_t InternalMatMul::GenTilingCacheKey(const std::vector<KernelTensor *> &in
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(MatMul, InternalMatMul);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(MatMul, 2, 0, 1);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(MatMul, 1, 0);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(MatMul, INPUT_NUM_2, INDEX_0, INDEX_1);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(MatMul, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

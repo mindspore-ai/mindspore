@@ -60,7 +60,7 @@ uint64_t InternalMatmulQkv::GenTilingCacheKey(const std::vector<KernelTensor *> 
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(MatmulQkv, InternalMatmulQkv);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(MatmulQkv, 4, 0, 1, 2, 3);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(MatmulQkv, 3, 0, 1, 2);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(MatmulQkv, INPUT_NUM_4, INDEX_0, INDEX_1, INDEX_2, INDEX_3);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(MatmulQkv, OUTPUT_NUM_3, INDEX_0, INDEX_1, INDEX_2);
 }  // namespace kernel
 }  // namespace mindspore

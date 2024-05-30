@@ -35,6 +35,6 @@ internal::OpParamPtr ReshapeAndCache::CreateOpParam(const std::vector<KernelTens
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(ReshapeAndCache, ReshapeAndCache);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(ReshapeAndCache, 5, 0, 1, 2, 3, 4);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(ReshapeAndCache, INPUT_NUM_5, INDEX_0, INDEX_1, INDEX_2, INDEX_3, INDEX_4);
 }  // namespace kernel
 }  // namespace mindspore

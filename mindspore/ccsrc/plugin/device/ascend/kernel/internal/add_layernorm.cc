@@ -43,7 +43,7 @@ internal::OpParamPtr InternalAddLayerNorm::CreateOpParam(const std::vector<Kerne
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(AddLayerNorm, InternalAddLayerNorm);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(AddLayerNorm, 4, 0, 1, 2, 3);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(AddLayerNorm, 4, 0, 1, 2, 3);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(AddLayerNorm, INPUT_NUM_4, INDEX_0, INDEX_1, INDEX_2, INDEX_3);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(AddLayerNorm, OUTPUT_NUM_4, INDEX_0, INDEX_1, INDEX_2, INDEX_3);
 }  // namespace kernel
 }  // namespace mindspore

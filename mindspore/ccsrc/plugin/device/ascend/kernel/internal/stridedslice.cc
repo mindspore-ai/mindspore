@@ -20,6 +20,7 @@
 #include <algorithm>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 
 namespace mindspore {
 namespace kernel {
@@ -85,14 +86,12 @@ internal::OpParamPtr InternalStridedSlice::CreateOpParam(const std::vector<Kerne
   param_ptr->specificParam = slice_param;
   return param_ptr;
 }
-void InternalStridedSlice::SetInOutIdx() {
-  inputsIdxMap_[kIndex0] = kIndex0;
-  outputsIdxMap_[kIndex0] = kIndex0;
-}
 
 std::vector<size_t> InternalStridedSlice::GetLaunchIgnoredInputAddressIdx() const {
   return {kIndex1, kIndex2, kIndex3};
 }
 
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Slice, INPUT_NUM_1, INDEX_0);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Slice, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

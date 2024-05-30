@@ -39,7 +39,6 @@ class InternalReshape : public InternalKernelMod {
                                      const std::vector<KernelTensor *> &outputs) {
     return nullptr;
   }
-  void SetInOutIdx() { return; }
 };
 }  // namespace kernel
 }  // namespace mindspore
