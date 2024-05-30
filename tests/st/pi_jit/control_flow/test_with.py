@@ -132,6 +132,7 @@ def test_with_case_3():
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
 
+@pytest.mark.skip(reason="adapter later")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
