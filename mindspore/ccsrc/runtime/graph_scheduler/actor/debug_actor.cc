@@ -338,7 +338,8 @@ bool DebugActor::CheckOverflow(const DeviceContext *device_context, const std::v
 
   // 2. Get output kernel tensor for AllFinite kernel.
   MS_EXCEPTION_IF_NULL(check_kernel_tensors[0]);
-  const auto &stream_id = check_kernel_tensors[0]->stream_id();
+  const auto &stream_id =
+    check_kernel_tensors[0]->managed_by_somas() ? kDefaultStreamIndex : check_kernel_tensors[0]->stream_id();
   auto &stream_id_to_output_device_address = finite_output_device_addresses_[device_context];
   if (stream_id_to_output_device_address.find(stream_id) == stream_id_to_output_device_address.end()) {
     auto finite_output_addr = device_context->device_res_manager_->AllocateMemory(1, stream_id);

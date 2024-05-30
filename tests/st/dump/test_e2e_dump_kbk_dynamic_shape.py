@@ -16,25 +16,39 @@
 import os
 import sys
 import tempfile
-import glob
 import shutil
-import pytest
+import glob
 import numpy as np
-import mindspore
+import pytest
 import mindspore.context as context
-import mindspore.ops as ops
+
+import mindspore
 import mindspore.nn as nn
 from mindspore import Tensor
-from tests.security_utils import security_off_wrap
+from mindspore.ops import operations as P
+from mindspore import dataset as ds
+from mindspore.train import Model
 from dump_test_utils import generate_dump_json, check_dump_structure
+from tests.security_utils import security_off_wrap
 
-class ConvNet(nn.Cell):
+
+def dataset_generator():
+    for i in range(1, 10):
+        yield np.ones((32, 2 * i), dtype=np.float32), np.ones((32, 2 * i), dtype=np.float32)
+
+
+class Net(nn.Cell):
     def __init__(self):
-        super(ConvNet, self).__init__()
-        self.conv2 = ops.Conv2D(out_channel=3, kernel_size=1)
+        super(Net, self).__init__()
+        self.add = P.Add()
+        self.shape = P.Shape()
+        self.reshape = P.Reshape()
 
-    def construct(self, x, weight):
-        return self.conv2(x, weight)
+    def construct(self, x_, y_):
+        val = self.add(x_, y_)
+        size = self.shape(val)
+        res = self.reshape(val, size)
+        return res
 
 
 def run_trans_flag(test_name):
@@ -47,41 +61,37 @@ def run_trans_flag(test_name):
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
-        if test_name == "test_e2e_dump_trans_true_op_debug_mode":
-            tensor = Tensor(np.full((1, 3, 3, 3), 65504, dtype=np.float16), mindspore.float16)
-            weight = Tensor(np.full((3, 3, 1, 1), 65504, dtype=np.float16), mindspore.float16)
-        net = ConvNet()
-        net(tensor, weight)
-        if test_name == "test_e2e_dump_trans_true_op_debug_mode":
-            check_dump_structure(dump_path, dump_config_path, 1, 0, 1)
-        dump_data_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
+        network = Net()
+        dataset = ds.GeneratorDataset(dataset_generator, ['data1', 'data2'])
+        t0 = Tensor(dtype=mindspore.float32, shape=[32, None])
+        t1 = Tensor(dtype=mindspore.float32, shape=[32, None])
+        network.set_inputs(t0, t1)
+        model = Model(network)
+        model.train(10, dataset, dataset_sink_mode=True)
+        check_dump_structure(dump_path, dump_config_path, 1, 0, 1)
+        dump_data_path = os.path.join(dump_path, 'rank_0', 'Net', '1', '0')
         assert os.path.exists(dump_data_path)
-        if test_name == "test_e2e_dump_trans_true_op_debug_mode":
-            # tensor data in host format.
-            output_name = "Conv2D.Default_Conv2D-op*.output.0.DefaultFormat.npy"
+        if test_name == "test_e2e_dump_dynamic_shape":
+            output_name = "Add.Default_network-Net_Add-op1.0.0.*.output.0.DefaultFormat.npy"
             output_path = glob.glob(os.path.join(dump_data_path, output_name))[0]
             real_path = os.path.realpath(output_path)
             output = np.load(real_path)
-            assert output.shape == (20,)
+            assert output.shape == (32, 2)
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
-def test_ascend_kernel_by_kernel_dump_sample():
+def test_ascend_kernel_by_kernel_dynamic_shape():
     """
-    Feature: Ascend kernel by kernel dump.
+    Feature: Ascend kernel by kernel dump with dynamic shape model.
     Description: Test kernel by kernel dump in Ascend with trans_flag is configured to true.
     Expectation: Dump files has tensor data in host format (4 dimensions).
     """
     os.environ['GRAPH_OP_RUN'] = "1"
-    os.environ['INF_NAN_MODE_ENABLE'] = "1"
-    os.environ['MS_ASCEND_CHECK_OVERFLOW_MODE'] = "INFNAN_MODE"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    run_trans_flag("test_e2e_dump_sample_debug_mode")
+    run_trans_flag("test_e2e_dump_dynamic_shape")
     del os.environ['GRAPH_OP_RUN']
-    del os.environ['INF_NAN_MODE_ENABLE']
-    del os.environ['MS_ASCEND_CHECK_OVERFLOW_MODE']
