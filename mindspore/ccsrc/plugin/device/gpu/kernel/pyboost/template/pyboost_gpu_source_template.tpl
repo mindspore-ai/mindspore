@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/pyboost/auto_generate/${operator_name}.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
+#include "plugin/device/gpu/kernel/pyboost/pyboost_gpu_custom_kernel_register.h"
 ${customize_include}
 
 namespace mindspore {
@@ -26,6 +27,7 @@ ${return_type} ${op_name}GPU::Call(${call_args_with_type}) {
   ${call_impl}
 }
 MS_REG_PYBOOST_OP(GPU, ${op_name});
+${register_custom_kernel}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -32,6 +32,7 @@ class BACKEND_EXPORT PyboostCPUKernelExtraFunc : public PyboostKernelExtraFunc {
  public:
   void SetThreadPool(const kernel::KernelModPtr &kernel) override;
   bool IsKernelModRegistered(const std::string &op_name) override;
+  bool IsPyBoostCustomRegistered(const std::string &op_name) override;
   bool IsEnableProfiler() override;
   void LaunchKernelWithProfiler(const std::string &op_name, const device::DeviceContext *device_context,
                                 const std::vector<BaseShapePtr> &base_shape,

@@ -31,6 +31,7 @@ namespace pyboost {
 class BACKEND_EXPORT PyboostGPUKernelExtraFunc : public PyboostKernelExtraFunc {
  public:
   bool IsKernelModRegistered(const std::string &op_name) override;
+  bool IsPyBoostCustomRegistered(const std::string &op_name) override;
   bool IsEnableProfiler() override;
   void LaunchKernelWithProfiler(const std::string &op_name, const device::DeviceContext *device_context,
                                 const std::vector<BaseShapePtr> &base_shape,

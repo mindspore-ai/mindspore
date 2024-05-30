@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/pyboost/auto_generate/${operator_name}.h"
-#include "runtime/hardware/device_context_manager.h"
-#include "plugin/device/cpu/kernel/pyboost/pyboost_cpu_custom_kernel_register.h"
-${customize_include}
+#include "plugin/device/gpu/kernel/pyboost/pyboost_gpu_custom_kernel_register.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-${return_type} ${op_name}CPU::Call(${call_args_with_type}) {
-  ${call_impl}
+
+PyBoostGpuCustomKernel &PyBoostGpuCustomKernel::GetInstance() {
+  static PyBoostGpuCustomKernel instance;
+  return instance;
 }
-MS_REG_PYBOOST_OP(CPU, ${op_name});
-${register_custom_kernel}
+
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

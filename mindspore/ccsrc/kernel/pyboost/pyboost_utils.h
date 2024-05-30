@@ -198,6 +198,7 @@ class BACKEND_EXPORT PyBoostUtils {
 
   // Check kernel mod is reg
   static bool IsKernelModRegistered(const std::string &device_name, const std::string &op_name);
+  static bool IsPyBoostCustomRegistered(const std::string &device_name, const std::string &op_name);
 
   static kernel::KernelModPtr CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
                                               const DeviceContext *device_context,
@@ -277,6 +278,14 @@ class BACKEND_EXPORT PyboostKernelExtraFuncFactory {
       return true;
     }
     return iter->second->IsKernelModRegistered(op_name);
+  }
+
+  bool IsPyBoostCustomRegistered(const std::string &device_name, const std::string &op_name) {
+    auto iter = kernel_func_map_.find(device_name);
+    if (iter == kernel_func_map_.end()) {
+      return true;
+    }
+    return iter->second->IsPyBoostCustomRegistered(op_name);
   }
 
   bool IsEnableProfiler(const std::string &device_name) {

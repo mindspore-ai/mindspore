@@ -18,6 +18,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
 #include "kernel/pyboost/pyboost_utils.h"
+#include "plugin/device/cpu/kernel/pyboost/pyboost_cpu_custom_kernel_register.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,6 +34,10 @@ void PyboostCPUKernelExtraFunc::SetThreadPool(const kernel::KernelModPtr &kernel
 
 bool PyboostCPUKernelExtraFunc::IsKernelModRegistered(const std::string &op_name) {
   return kernel::Factory<kernel::NativeCpuKernelMod>::Instance().IsRegistered(op_name);
+}
+
+bool PyboostCPUKernelExtraFunc::IsPyBoostCustomRegistered(const std::string &op_name) {
+  return PyBoostCpuCustomKernel::GetInstance().IsPyBoostCustomRegistered(op_name);
 }
 
 bool PyboostCPUKernelExtraFunc::IsEnableProfiler() {
