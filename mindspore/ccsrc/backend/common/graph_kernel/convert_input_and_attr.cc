@@ -26,6 +26,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/api/format.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
 #include "ops/array_ops.h"
 #include "ops/op_def.h"
@@ -69,10 +70,12 @@ ValuePtr EnumToFormat(const ValuePtr &value) {
     MS_LOG(EXCEPTION) << value->ToString() << " is not Int64Imm.";
   }
   auto val = GetValue<int64_t>(value);
-  if (val == 0) {
+  if (val == Format::NCHW) {
     return MakeValue("NCHW");
-  } else if (val == 1) {
+  } else if (val == Format::NHWC) {
     return MakeValue("NHWC");
+  } else if (val == Format::NCDHW) {
+    return MakeValue("NCDHW");
   } else {
     MS_LOG(EXCEPTION) << value->ToString() << " is unexpected.";
   }
@@ -81,9 +84,11 @@ ValuePtr EnumToFormat(const ValuePtr &value) {
 ValuePtr FormatToEnum(const ValuePtr &value) {
   auto format = GetValue<std::string>(value);
   if (format == "NCHW") {
-    return MakeValue<int64_t>(0);
+    return MakeValue<int64_t>(Format::NCHW);
   } else if (format == "NHWC") {
-    return MakeValue<int64_t>(1);
+    return MakeValue<int64_t>(Format::NHWC);
+  } else if (format == "NCDHW") {
+    return MakeValue<int64_t>(Format::NCDHW);
   } else {
     MS_LOG(EXCEPTION) << value->ToString() << " value:" << format << " is unexpected.";
   }
