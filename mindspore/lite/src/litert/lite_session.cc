@@ -641,7 +641,7 @@ int LiteSession::CompileGraph(Model *model) {
   MarkSharedWeight(kernels_);
   FreePackOpWeight(kernels_);
 
-  ret = RuntimeAllocatorInit();
+  ret = InitRuntimeAllocator();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Runtime allocator init failed.";
     is_running_.store(false);
@@ -941,7 +941,7 @@ int LiteSession::InitSharedThreadPool() {
   return RET_OK;
 }
 
-int LiteSession::ContextInit(const std::shared_ptr<InnerContext> &context) {
+int LiteSession::InitContext(const std::shared_ptr<InnerContext> &context) {
   if (context == nullptr) {
     MS_LOG(ERROR) << "context is nullptr";
     return RET_NULL_PTR;
@@ -976,7 +976,7 @@ int LiteSession::ContextInit(const std::shared_ptr<InnerContext> &context) {
   return RET_OK;
 }
 
-int LiteSession::AscendInit(const std::shared_ptr<InnerContext> &context) {
+int LiteSession::InitAscend(const std::shared_ptr<InnerContext> &context) {
 #ifndef __ANDROID__
   if (!context->IsDeviceTypeEnabled(DT_ASCEND)) {
     MS_LOG(INFO) << "There is no Ascend device type.";
@@ -1098,7 +1098,7 @@ int LiteSession::CreateCoreMLDelegate() {
   return RET_OK;
 }
 
-int LiteSession::DelegateInit() {
+int LiteSession::InitDelegate() {
 #ifndef DELEGATE_CLIP
   int ret = RET_OK;
   if (context_->delegate != nullptr) {
@@ -1163,21 +1163,21 @@ int LiteSession::Init(const std::shared_ptr<InnerContext> &context) {
     is_running_.store(false);
     return status;
   }
-  auto ret = ContextInit(context);
+  auto ret = InitContext(context);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init Context failed";
     is_running_.store(false);
     return ret;
   }
 
-  ret = AscendInit(context);
+  ret = InitAscend(context);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Open Ascend kernel plugin failed";
     is_running_.store(false);
     return ret;
   }
 
-  ret = DelegateInit();
+  ret = InitDelegate();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init delegate failed.";
     is_running_.store(false);
@@ -1504,7 +1504,7 @@ int LiteSession::Resize(const std::vector<mindspore::lite::Tensor *> &inputs,
     return ret;
   }
 
-  if (RuntimeAllocatorInit() != RET_OK) {
+  if (InitRuntimeAllocator() != RET_OK) {
     MS_LOG(ERROR) << "Runtime allocator in resize failed.";
     is_running_.store(false);
     return RET_ERROR;
@@ -1729,7 +1729,7 @@ void LiteSession::RuntimeAllocatorInitSubgraph() {
   return;
 }
 
-int LiteSession::RuntimeAllocatorInit() {
+int LiteSession::InitRuntimeAllocator() {
   if (RuntimeAllocatorValid() != RET_OK) {
     return RET_OK;
   }

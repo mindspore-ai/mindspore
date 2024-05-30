@@ -51,6 +51,7 @@ class MS_API LiteSession {
   virtual ~LiteSession();
   static LiteSession *CreateSession(const std::shared_ptr<InnerContext> &context);
   static LiteSession *CreateSession(const char *model_buf, size_t size, const std::shared_ptr<InnerContext> &context);
+
 #ifdef ENABLE_LITE_HELPER
   int LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type, const size_t &buf_size,
                                mindspore::infer::helper::InferHelpers *infer_helpers = nullptr);
@@ -62,8 +63,10 @@ class MS_API LiteSession {
                                        mindspore::ModelType model_type);
   const char *LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size, bool use_mmap);
   virtual int Init(const std::shared_ptr<InnerContext> &context);
-  virtual void BindThread(bool if_bind);
   virtual int CompileGraph(Model *model);
+  virtual int Resize(const std::vector<mindspore::lite::Tensor *> &inputs, const std::vector<std::vector<int>> &dims);
+
+  virtual void BindThread(bool if_bind);
   virtual std::vector<mindspore::lite::Tensor *> GetInputs() const;
   virtual mindspore::lite::Tensor *GetInputsByTensorName(const std::string &name) const;
   virtual int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
@@ -73,7 +76,6 @@ class MS_API LiteSession {
   virtual std::unordered_map<std::string, mindspore::lite::Tensor *> GetOutputs() const;
   virtual int BindGLTexture2DMemory(const std::map<std::string, unsigned int> &inputGLTexture,
                                     std::map<std::string, unsigned int> *outputGLTexture);
-  virtual int Resize(const std::vector<mindspore::lite::Tensor *> &inputs, const std::vector<std::vector<int>> &dims);
   void InitExecutionConfig(std::map<std::string, TypeId> *config) { execution_plan_ = config; }
   void set_model(Model *model) { this->model_ = model; }
   const std::vector<kernel::KernelExec *> &get_kernels() const { return this->kernels_; }
@@ -173,12 +175,12 @@ class MS_API LiteSession {
   int PreCheck(Model *model);
   int InitExecutor();
   void ResetInputsShape(const std::vector<std::vector<int>> &dims);
-  int ContextInit(const std::shared_ptr<InnerContext> &context);
+  int InitContext(const std::shared_ptr<InnerContext> &context);
   int CreateTensorRTDelegate();
   int CreateNPUDelegate();
   int CreateNNAPIDelegate();
   int CreateCoreMLDelegate();
-  int DelegateInit();
+  int InitDelegate();
   int InitGPURuntime();
   int InitSharedThreadPool();
   int ReshapeWeightTensor(lite::Tensor *orig_tensor, lite::Tensor *new_tensor);
@@ -193,7 +195,7 @@ class MS_API LiteSession {
   std::unordered_map<Tensor *, Tensor *> isolate_input_map_;        /* <calculate-tensor,  src-subgraph-input-tensor> */
 
  private:
-  int RuntimeAllocatorInit();
+  int InitRuntimeAllocator();
   int RuntimeAllocatorSetData();
   void RuntimeAllocatorInitGraphOutput();
   void RuntimeAllocatorInitSubgraph();
@@ -201,7 +203,7 @@ class MS_API LiteSession {
   RuntimeAllocatorPtr runtime_allocator_ = nullptr;
 
  private:
-  int AscendInit(const std::shared_ptr<InnerContext> &context);
+  int InitAscend(const std::shared_ptr<InnerContext> &context);
 
  protected:
   std::shared_ptr<InnerContext> context_ = nullptr;
