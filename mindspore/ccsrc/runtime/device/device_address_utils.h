@@ -130,6 +130,10 @@ class BACKEND_EXPORT DeviceAddressUtils {
 
   static void MallocForOutputs(const DeviceContext *device_context, const std::vector<tensor::BaseTensorPtr> &outputs);
 
+  static device::DeviceAddressPtr CreateWorkspaceAddressWithoutKernelTensor(const DeviceContext *device_context,
+                                                                            size_t stream_id,
+                                                                            const size_t &workspace_size);
+
   static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context, size_t stream_id,
                                                          const size_t &workspace_size);
 
