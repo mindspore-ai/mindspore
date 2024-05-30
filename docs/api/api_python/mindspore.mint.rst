@@ -3,6 +3,7 @@ mindspore.mint
 
 mindspore.mint
 ---------------
+
 Array操作
 ^^^^^^^^^^^^^^^^
 
@@ -65,6 +66,7 @@ mindspore.mint.nn.functional
 
 Reduction函数
 ^^^^^^^^^^^^^
+
 .. mscnplatwarnautosummary::
     :toctree: mint
     :nosignatures:
@@ -177,8 +179,8 @@ Dropout函数
     :nosignatures:
     :template: classtemplate.rst
 
-    mint.nn.functional.unfold
-    mint.nn.functional.fold
+    mindspore.mint.nn.functional.unfold
+    mindspore.mint.nn.functional.fold
 
 
 

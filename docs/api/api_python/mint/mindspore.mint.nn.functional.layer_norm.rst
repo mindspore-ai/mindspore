@@ -1,7 +1,7 @@
-mindspore.nn.functional.layer_norm
-==================================
+mindspore.mint.nn.functional.layer_norm
+=========================================
 
-.. py:function:: mindspore.nn.functional.layer_norm(input, normalized_shape, weight=None, bias=None, eps=1e-5)
+.. py:function:: mindspore.mint.nn.functional.layer_norm(input, normalized_shape, weight=None, bias=None, eps=1e-5)
 
     在mini-batch输入上应用层归一化（Layer Normalization）。
 
