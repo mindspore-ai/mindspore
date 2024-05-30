@@ -1,0 +1,109 @@
+#operator fused_infer_attention_score
+fused_infer_attention_score:
+  args:
+    query:
+      dtype: tensor
+    key:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+    value:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+    pse_shift:
+      dtype: tensor
+      default: None
+    attn_mask:
+      dtype: tensor
+      default: None
+    actual_seq_lengths:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int]
+    actual_seq_lengths_kv:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int]
+    dequant_scale1:
+      dtype: tensor
+      default: None
+    quant_scale1:
+      dtype: tensor
+      default: None
+    dequant_scale2:
+      dtype: tensor
+      default: None
+    quant_scale2:
+      dtype: tensor
+      default: None
+    quant_offset2:
+      dtype: tensor
+      default: None
+    antiquant_scale:
+      dtype: tensor
+      default: None
+    antiquant_offset:
+      dtype: tensor
+      default: None
+    block_table:
+      dtype: tensor
+      default: None
+    query_padding_size:
+      dtype: tensor
+      default: None
+    kv_padding_size:
+      dtype: tensor
+      default: None
+    num_heads:
+      dtype: int
+      prim_init: True
+    scale_value:
+      dtype: float
+      default: 1.0
+      prim_init: True
+    pre_tokens:
+      dtype: int
+      default: 2147483647
+      prim_init: True
+    next_tokens:
+      dtype: int
+      default: 2147483647
+      prim_init: True
+    input_layout:
+      dtype: int
+      default: "'BSH'"
+      prim_init: True
+      arg_handler: str_to_enum
+    num_key_value_heads:
+      dtype: int
+      default: 0
+      prim_init: True
+    sparse_mode:
+      dtype: int
+      default: 0
+      prim_init: True
+    inner_precise:
+      dtype: int
+      default: 1
+      prim_init: True
+    block_size:
+      dtype: int
+      default: 0
+      prim_init: True
+    antiquant_mode:
+      dtype: int
+      default: 0
+      prim_init: True
+    softmax_lse_flag:
+      dtype: bool
+      default: False
+      prim_init: True
+  returns:
+    attention_out:
+      dtype: tensor
+    softmax_lse:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: FusedInferAttentionScoreAscend
