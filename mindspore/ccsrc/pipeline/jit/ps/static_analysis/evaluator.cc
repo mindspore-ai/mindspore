@@ -671,9 +671,7 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
     debug_info = this->bound_node()->debug_info();
   }
   if (meta_func_graph_->isa<expander::bprop::BpropMetaFuncGraph>()) {
-    auto method = "-expand";
-    auto new_scope = std::make_shared<Scope>(scope_->name() + method);
-    cloned_func_graph = GetCloneBpropGraph(meta_func_graph_, generated_func_graph_, this->bound_node(), new_scope);
+    cloned_func_graph = GetCloneBpropGraph(meta_func_graph_, generated_func_graph_, this->bound_node(), scope_);
   } else {
     cloned_func_graph = BasicClone(generated_func_graph_, false, std::make_shared<UpdateInfo>(scope_, debug_info));
   }
