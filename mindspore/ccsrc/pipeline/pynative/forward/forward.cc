@@ -236,7 +236,7 @@ void EmplaceSliceInputs(const FrontendOpRunInfoPtr &op_run_info, const std::vect
   }
 
   op_run_info->input_size = op_run_info->op_grad_info->input_value.size();
-  PyNativeAlgo::PyParser::PrepareOpGradInfo(op_run_info);
+  op_run_info->op_grad_info->input_value_grad_type.resize(op_run_info->input_size);
 }
 
 #ifndef ENABLE_TEST
@@ -336,11 +336,6 @@ void ForwardExecutor::DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_in
 }
 
 void ForwardExecutor::ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info) const {
-  if (!op_run_info->requires_grad) {
-    MS_LOG(DEBUG) << "Grad flag is false";
-    return;
-  }
-  // 4. Do op grad and record op info
   // If jit is compiled in first step, op info will not be find in second training step
   MS_LOG(DEBUG) << "Current custom bprop cell count " << op_run_info->async_status.custom_bprop_cell_count;
   if (!op_run_info->async_status.is_jit_compiling && op_run_info->async_status.custom_bprop_cell_count <= 0) {
@@ -449,7 +444,9 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
   // Gil might be release  by ACL, so release here to reduce conflict
   GilReleaseWithCheck release_gil;
   ForwardRunViewKernelTask(op_run_info, task_type, false);
-  ForwardOpGradImpl(op_run_info);
+  if (op_run_info->requires_grad) {
+    ForwardOpGradImpl(op_run_info);
+  }
   MS_LOG(DEBUG) << "End";
   return true;
 }
@@ -577,7 +574,7 @@ void ForwardExecutor::RunOpBackendSync(const FrontendOpRunInfoPtr &op_run_info) 
     UpdateStubTensor(op_run_info);
     return;
   }
-  // 4. Do op grad and record op info
+  // Do op grad and record op info
   ForwardOpGradImpl(op_run_info);
   // output is dynamic shape. Need to update abstract and value.
   UpdateStubTensor(op_run_info);

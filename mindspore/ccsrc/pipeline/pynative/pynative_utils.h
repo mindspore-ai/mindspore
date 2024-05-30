@@ -121,7 +121,6 @@ struct PyParser {
   static void SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object &prim_arg);
   static void ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs,
                                       bool stub = false);
-  static void PrepareOpGradInfo(const FrontendOpRunInfoPtr &op_run_info);
   static std::string BuilidPyInputTypeString(const py::object &obj);
 
   static inline bool IsSupportTensorCast(const std::vector<ops::OP_DTYPE> &cast_types) {
@@ -227,6 +226,7 @@ struct AutoGrad {
   static void SetGradMetaData(const ValuePtr &value, const VariablePtr &variable, const ParameterPtr &param = nullptr);
   static void SetGradInfoForInputs(const ValuePtr &value, const VariablePtr &variable,
                                    const ParameterPtr &param = nullptr);
+
   // Create fake bprop
   static void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs);
   static CallBackFn CreateGraphCallBack(const FuncGraphPtr &call_graph, const std::string &cache_key,
