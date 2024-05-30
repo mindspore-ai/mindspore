@@ -47,10 +47,15 @@ class FFTNBaseCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   void ResetResource();
+  void FFTNGetAttr();
 
-  template <typename T_in, typename T_mid, typename T_out>
+  template <typename T_in, typename T_out>
   bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                     const std::vector<kernel::KernelTensor *> &outputs);
+
+  template <typename T_in, typename T_out>
+  bool LaunchKernelC2C(const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs);
 
   using FFTNBaseFunc = std::function<bool(FFTNBaseCpuKernelMod *, const std::vector<KernelTensor *> &,
                                           const std::vector<KernelTensor *> &)>;
@@ -58,9 +63,12 @@ class FFTNBaseCpuKernelMod : public NativeCpuKernelMod {
   FFTNBaseFunc kernel_func_;
 
   bool forward_;
+  bool s_is_none_{false};
+  bool dim_is_none_{false};
   int64_t x_rank_;
   int64_t input_element_nums_;
   int64_t calculate_element_nums_;
+  int64_t fft_nums_;
   double norm_weight_;
   mindspore::NormMode norm_;
 

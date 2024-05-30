@@ -46,24 +46,43 @@ class FFTBaseCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T_in, typename T_mid, typename T_out>
+  void ResetResource();
+
+  void UpdateParam();
+
+  template <typename T_in, typename T_out>
   bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                     const std::vector<kernel::KernelTensor *> &outputs);
+
+  template <typename T_in, typename T_out>
+  bool LaunchKernelC2C(const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs);
+
+  template <typename T_in, typename T_out>
+  bool LaunchKernelR2C(const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs);
+
+  template <typename T_in, typename T_out>
+  bool LaunchKernelC2R(const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs);
 
   using FFTBaseFunc = std::function<bool(FFTBaseCpuKernelMod *, const std::vector<KernelTensor *> &,
                                          const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, FFTBaseFunc>> func_list_;
+
   FFTBaseFunc kernel_func_;
 
-  std::vector<int64_t> tensor_shape_;
+  bool forward_;
   int64_t x_rank_;
   int64_t dim_;
   int64_t n_;
   int64_t input_element_nums_;
+  int64_t calculate_element_nums_;
   double norm_weight_;
   mindspore::NormMode norm_;
-  bool forward_;
-  bool rfft_slice_;
+
+  std::vector<int64_t> tensor_shape_;
+  std::vector<int64_t> calculate_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

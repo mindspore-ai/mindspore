@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IRFFT_GRAD_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IRFFT_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IRFFT_DOUBLE_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IRFFT_DOUBLE_H_
 
 #include <vector>
 #include <map>
@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace ops {
-class MIND_API IRFFTGradFuncImpl : public OpFuncImpl {
+class MIND_API IRFFTDoubleFuncImpl : public OpFuncImpl {
  public:
-  IRFFTGradFuncImpl() = default;
-  ~IRFFTGradFuncImpl() = default;
+  IRFFTDoubleFuncImpl() = default;
+  ~IRFFTDoubleFuncImpl() = default;
 
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
@@ -34,4 +34,4 @@ class MIND_API IRFFTGradFuncImpl : public OpFuncImpl {
 };
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IRFFT_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IRFFT_DOUBLE_H_
