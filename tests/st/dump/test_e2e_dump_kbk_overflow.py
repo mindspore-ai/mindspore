@@ -51,7 +51,7 @@ def run_trans_flag(test_name):
             tensor = Tensor(np.full((1, 3, 3, 3), 65504, dtype=np.float16), mindspore.float16)
             weight = Tensor(np.full((3, 3, 1, 1), 65504, dtype=np.float16), mindspore.float16)
         net = ConvNet()
-        net(tensor, weight)
+        expect = net(tensor, weight)
         if test_name == "test_e2e_dump_trans_true_op_debug_mode":
             check_dump_structure(dump_path, dump_config_path, 1, 0, 1)
         dump_data_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
@@ -62,18 +62,17 @@ def run_trans_flag(test_name):
             output_path = glob.glob(os.path.join(dump_data_path, output_name))[0]
             real_path = os.path.realpath(output_path)
             output = np.load(real_path)
-            assert output.shape == (20,)
+            assert output.shape == (1, 3, 3, 3)
+            assert np.array_equal(output, expect)
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @security_off_wrap
-def test_ascend_kernel_by_kernel_dump_sample():
+def test_ascend_kernel_by_kernel_trans_true_op_debug_mode():
     """
-    Feature: Ascend kernel by kernel dump.
+    Feature: Ascend kernel by kernel dump with overflow.
     Description: Test kernel by kernel dump in Ascend with trans_flag is configured to true.
     Expectation: Dump files has tensor data in host format (4 dimensions).
     """
@@ -81,7 +80,7 @@ def test_ascend_kernel_by_kernel_dump_sample():
     os.environ['INF_NAN_MODE_ENABLE'] = "1"
     os.environ['MS_ASCEND_CHECK_OVERFLOW_MODE'] = "INFNAN_MODE"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    run_trans_flag("test_e2e_dump_sample_debug_mode")
+    run_trans_flag("test_e2e_dump_trans_true_op_debug_mode")
     del os.environ['GRAPH_OP_RUN']
     del os.environ['INF_NAN_MODE_ENABLE']
     del os.environ['MS_ASCEND_CHECK_OVERFLOW_MODE']
