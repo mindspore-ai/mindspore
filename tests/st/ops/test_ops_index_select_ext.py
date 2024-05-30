@@ -93,5 +93,5 @@ def test_func_index_select_ext_dynamic():
     axis2 = 2
     index2 = ms.Tensor(np.array([0, 1, 2, 1, 2, 3]).astype(np.int64))
 
-    TEST_OP(index_select_ext, [[input1, axis1, index1], [input2, axis2, index2]], 'index_select_ext',
+    TEST_OP(index_select_ext, [[input1, axis1, index1], [input2, axis2, index2]], 'index_select',
             disable_input_check=True, disable_mode=['GRAPH_MODE'])
