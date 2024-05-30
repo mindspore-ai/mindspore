@@ -30,7 +30,7 @@ class TimeMonitor(Callback):
             if the program get `batch_num` during training, `data_size` will be set to `batch_num`,
             otherwise `data_size` will be used. Default: ``None`` .
 
-        data_time (bool): Whether to sow the average time of fetching data in Host.
+        data_time (bool): Whether to show the average time of fetching data in Host.
             Note that data fetch and network compute are processed sequentially in non dataset sink mode, while
             they are asynchronous in dataset sink mode. Default: ``False`` .
 
