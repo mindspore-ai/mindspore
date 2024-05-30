@@ -29,12 +29,12 @@ class TwoMatMulNet(nn.Cell):
         super().__init__()
         self.matmul1 = P.MatMul()
         self.matmul2 = P.MatMul()
-        self.add1 = P.Add()
+        self.sub = P.Sub()
         self.add2 = P.Add()
 
     def construct(self, x, y, b, p, q):
         out = self.matmul1(x, y)
-        out = self.add1(out, b)
+        out = self.sub(out, b)
         out = self.matmul2(out, p)
         out = self.add2(out, q)
         return out
@@ -45,13 +45,13 @@ class TwoMatMulReshapeNet(nn.Cell):
         super().__init__()
         self.matmul1 = P.MatMul()
         self.matmul2 = P.MatMul()
-        self.add1 = P.Add()
+        self.sub = P.Sub()
         self.add2 = P.Add()
         self.reshape = P.Reshape()
 
     def construct(self, x, y, b, p, r, q):
         out = self.matmul1(x, y)
-        out = self.add1(out, b)
+        out = self.sub(out, b)
         out = self.matmul2(out, p)
         out = self.reshape(out, r)
         out = self.add2(out, q)

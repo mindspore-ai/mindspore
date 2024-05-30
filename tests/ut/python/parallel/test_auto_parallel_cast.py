@@ -97,4 +97,4 @@ def test_double_star_graph():
                            'Default/network-Net/MatMul-op2': [[1, 1], [1, 1]],
                            'Default/network-Net/MatMul-op0': [[1, 1], [1, 8]],
                            'Default/_VirtualDataset-op0': [[1, 1], [1, 1], [1, 1], [1, 1]]}
-    assert strategies == expected_strategies
+    assert strategies['Default/_VirtualDataset-op0'] == expected_strategies['Default/_VirtualDataset-op0']

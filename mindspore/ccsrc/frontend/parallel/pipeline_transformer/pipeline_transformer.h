@@ -121,13 +121,13 @@ class PipelineTransformer {
   void UpdateParameterSharedInfo(const AnfNodePtr &node, const AnfNodePtr &communcate_op, bool is_send);
   void FillParameterStage(const CNodePtr &node, std::set<int64_t> *const parameter_stage);
   FuncGraphManagerPtr manager_;
-  int64_t stage_;
+  int64_t stage_ = 0;
   FuncGraphPtr root_;
   FuncGraphPtr main_graph_;
   FuncGraphPtr shared_cell_;
   AnfNodePtr virtual_dataset_;
-  int64_t global_rank_;
-  int64_t per_stage_rank_num_;
+  int64_t global_rank_ = 0;
+  int64_t per_stage_rank_num_ = 1;
   TypePtr type_ptr_;
   ValueListPtr shape_;
   AnfNodePtr virtual_param_;

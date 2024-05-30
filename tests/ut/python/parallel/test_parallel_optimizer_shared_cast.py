@@ -94,7 +94,7 @@ def auto_parallel_compile_net(mode, dev_num, net, strategy1=None, strategy2=None
 class TestSharedParameterCast:
     def setup_method(self):
         self.output_path = './graphs' + self.__str__()
-        context.set_context(save_graphs=3,
+        context.set_context(save_graphs=True,
                             save_graphs_path=self.output_path)
 
     def teardown_method(self):

@@ -201,7 +201,6 @@ def test_neg_data_parallel_data_sink():
     Expectation: compile success
     '''
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    context.set_context(save_graphs=True)
     strategy1 = ((8, 1), (1,))
     strategy2 = ((8, 1),)
     net = Net(_w1, strategy1, strategy2)
@@ -217,7 +216,6 @@ def test_neg_data_parallel_data_sink_set_dataset_strategy():
     s = ((8, 1), (8, 1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
                                       dataset_strategy=s)
-    context.set_context(save_graphs=True)
     strategy1 = ((8, 1), (1,))
     strategy2 = ((8, 1),)
     net = Net(_w1, strategy1, strategy2)
@@ -233,7 +231,6 @@ def test_neg_data_parallel_data_sink_set_dataset_strategy_static_shape():
     s = ((8, 1), (8, 1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
                                       dataset_strategy=s)
-    context.set_context(save_graphs=True)
     strategy1 = ((8, 1), (1,))
     strategy2 = ((8, 1),)
     net = Net(_w1, strategy1, strategy2)
@@ -249,7 +246,6 @@ def test_neg_data_parallel_data_sink_set_dataset_strategy_symbol_and_none():
     s = ((8, 1), (8, 1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
                                       dataset_strategy=s)
-    context.set_context(save_graphs=True)
     strategy1 = ((8, 1), (1,))
     strategy2 = ((8, 1),)
     net = Net(_w1, strategy1, strategy2)
@@ -265,7 +261,6 @@ def test_check_inputs_for_symbol():
     s = ((8, 1), (8, 1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
                                       dataset_strategy=s)
-    context.set_context(save_graphs=True)
     strategy1 = ((8, 1), (1,))
     strategy2 = ((8, 1),)
     net = Net(_w1, strategy1, strategy2)

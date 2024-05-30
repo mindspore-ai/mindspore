@@ -15,7 +15,6 @@
 import numpy as np
 
 import mindspore as ms
-import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
@@ -66,12 +65,10 @@ def test_two_matmul():
             self.matmul1 = P.MatMul().shard(strategy1)
             self.matmul2 = P.MatMul().shard(strategy2)
             self.matmul3 = P.MatMul().shard(strategy3)
-            self.diag = P.Diag()
-            self.fillv2 = P.FillV2()
-            self.diag_value = self.fillv2((128,), Tensor(1.0, mstype.float32))
+            self.v = Tensor(np.ones([128, 128]), dtype=ms.float32)
 
         def construct(self, x, y):
-            fill = self.diag(self.diag_value)
+            fill = self.v
             out1 = self.matmul1(fill, x)
             out2 = self.matmul2(y, fill)
             out = self.matmul3(out1, out2)
@@ -121,12 +118,10 @@ def test_two_matmul1():
             self.matmul1 = P.MatMul().shard(strategy1)
             self.matmul2 = P.MatMul().shard(strategy2)
             self.matmul3 = P.MatMul().shard(strategy3)
-            self.diag = P.Diag()
-            self.fillv2 = P.FillV2()
-            self.diag_value = self.fillv2((128,), Tensor(1.0, mstype.float32))
+            self.v = Tensor(np.ones([128, 128]), dtype=ms.float32)
 
         def construct(self, x, y):
-            fill = self.diag(self.diag_value)
+            fill = self.v
             out1 = self.matmul1(fill, x)
             out2 = self.matmul2(fill, y)
             out = self.matmul3(out1, out2)

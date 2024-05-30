@@ -39,15 +39,6 @@ class NetMul(nn.Cell):
         return self.mul(x, y)
 
 
-class NetMatMul(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.matmul = ops.MatMul()
-
-    def construct(self, x, y):
-        return self.matmul(x, y)
-
-
 class NetMatMulWithParameter(nn.Cell):
     def __init__(self):
         super().__init__()
@@ -58,21 +49,9 @@ class NetMatMulWithParameter(nn.Cell):
         return self.matmul(x, self.param)
 
 
-class Net(nn.Cell):
-    def __init__(self, in_strategy, out_strategy=None):
-        super().__init__()
-        self.mul_net = NetMul()
-        self.matmul_net = NetMatMul()
-        self.mul_net.shard(in_strategy=in_strategy, out_strategy=out_strategy)
-
-    def construct(self, x, y):
-        out1 = self.matmul_net(x, y)
-        out2 = self.matmul_net(x, y)
-        return self.mul_net(out1, out2)
-
-
 def cell_shard_execution(in_strategy, out_strategy, error_log):
-    net = Net(in_strategy, out_strategy)
+    net = NetMul()
+    net.shard(in_strategy=in_strategy, out_strategy=out_strategy)
     x = Tensor(np.ones([128, 128]), dtype=ms.float32)
     y = Tensor(np.ones([128, 128]), dtype=ms.float32)
 
