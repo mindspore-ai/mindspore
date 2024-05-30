@@ -270,3 +270,6 @@ LeakyReLUGradExt: 'aclnnLeakyReluBackward'
 # 99
 
 # 100
+
+# 176
+Atan2Ext: 'aclnnAtan2'

@@ -1,0 +1,18 @@
+#operator atan2_ext
+atan2_ext:
+  args:
+    input:
+      dtype: tensor
+      type_cast: number
+    other:
+      dtype: tensor
+      type_cast: number
+  args_signature:
+    dtype_group: (input, other)
+  class:
+    name: Atan2Ext
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True

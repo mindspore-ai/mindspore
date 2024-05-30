@@ -44,7 +44,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
                                          log, log1p, neg, not_equal, pow, round, isfinite, argmax, mean_ext_op,
-                                         sum_ext_op, prod_ext_op, all)
+                                         sum_ext_op, prod_ext_op, all, atan2_ext)
 from mindspore.ops.auto_generate import tanh
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
@@ -1753,6 +1753,25 @@ def arctan2(input, other):
         [0.        0.7853982]
     """
     return atan2_(input, other)
+
+def arctan2_ext(input, other):
+    r"""
+    Alias for :func:`mindspore.ops.atan2_ext`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
+        >>> x = Tensor(np.array([0, 1]), mindspore.float32)
+        >>> y = Tensor(np.array([1, 1]), mindspore.float32)
+        >>> output = ops.arctan2_ext(x, y)
+        >>> print(output)
+        [0.        0.7853982]
+    """
+    return atan2_ext(input, other)
 
 
 def polar(abs, angle):  # pylint: disable=redefined-outer-name
