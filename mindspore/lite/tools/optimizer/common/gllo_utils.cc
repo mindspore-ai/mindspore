@@ -1543,7 +1543,7 @@ bool CheckAndGetCnodeIndex(const CNodePtr &cnode, size_t *index, const Primitive
 
 void PrintFuncGraph(const FuncGraphPtr &func_graph, const std::string &output_file) {
   if (func_graph == nullptr) {
-    MS_LOG_WARNING << "input func_graph is nullptr";
+    MS_LOG(WARNING) << "input func_graph is nullptr";
     return;
   }
   static int index = 0;

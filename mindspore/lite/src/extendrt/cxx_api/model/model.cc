@@ -81,7 +81,7 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
     }
     return kSuccess;
   } catch (const std::exception &exe) {
-    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    MS_LOG(ERROR) << "Catch exception: " << exe.what();
     return kCoreFailed;
   }
 }
@@ -99,7 +99,7 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
     }
     return kSuccess;
   } catch (const std::exception &exe) {
-    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    MS_LOG(ERROR) << "Catch exception: " << exe.what();
     return kCoreFailed;
   }
 }
@@ -139,7 +139,7 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
       return kSuccess;
     } catch (const std::exception &exe) {
       delete[] model_buf;
-      MS_LOG_ERROR << "Catch exception: " << exe.what();
+      MS_LOG(ERROR) << "Catch exception: " << exe.what();
       return kCoreFailed;
     }
   } else {
@@ -150,7 +150,7 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
       }
       return kSuccess;
     } catch (const std::exception &exe) {
-      MS_LOG_ERROR << "Catch exception: " << exe.what();
+      MS_LOG(ERROR) << "Catch exception: " << exe.what();
       return kCoreFailed;
     }
   }
@@ -185,7 +185,7 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
       }
       return kSuccess;
     } catch (const std::exception &exe) {
-      MS_LOG_ERROR << "Catch exception: " << exe.what();
+      MS_LOG(ERROR) << "Catch exception: " << exe.what();
       return kCoreFailed;
     }
   } else {
@@ -196,7 +196,7 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
       }
       return kSuccess;
     } catch (const std::exception &exe) {
-      MS_LOG_ERROR << "Catch exception: " << exe.what();
+      MS_LOG(ERROR) << "Catch exception: " << exe.what();
       return kCoreFailed;
     }
   }
@@ -226,7 +226,7 @@ Status Model::Resize(const std::vector<MSTensor> &inputs, const std::vector<std:
   try {
     return impl_->Resize(inputs, dims);
   } catch (const std::exception &exe) {
-    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    MS_LOG(ERROR) << "Catch exception: " << exe.what();
     return kCoreFailed;
   }
 }
@@ -250,7 +250,7 @@ Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
   try {
     return impl_->Predict(inputs, outputs, before, after);
   } catch (const std::exception &exe) {
-    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    MS_LOG(ERROR) << "Catch exception: " << exe.what();
     return kCoreFailed;
   }
 }
@@ -284,7 +284,7 @@ std::vector<MSTensor> Model::GetInputs() {
   try {
     return impl_->GetInputs();
   } catch (const std::exception &exe) {
-    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    MS_LOG(ERROR) << "Catch exception: " << exe.what();
     return {};
   }
 }
@@ -297,7 +297,7 @@ std::vector<MSTensor> Model::GetOutputs() {
   try {
     return impl_->GetOutputs();
   } catch (const std::exception &exe) {
-    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    MS_LOG(ERROR) << "Catch exception: " << exe.what();
     return {};
   }
 }
@@ -310,7 +310,7 @@ MSTensor Model::GetInputByTensorName(const std::vector<char> &name) {
   try {
     return impl_->GetInputByTensorName(CharToString(name));
   } catch (const std::exception &exe) {
-    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    MS_LOG(ERROR) << "Catch exception: " << exe.what();
     return {};
   }
 }

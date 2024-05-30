@@ -37,7 +37,7 @@ class DummyCommunicationGroup : public CommunicationGroup {
 
   bool Initialize(void *root_info) override {
     if (root_info == nullptr) {
-      MS_LOG_WARNING << "Initialize group with empty root info.";
+      MS_LOG(WARNING) << "Initialize group with empty root info.";
     }
     return true;
   }

@@ -148,7 +148,7 @@ TensorRow VecToRow(const MSTensorVec &v) {
     std::shared_ptr<Tensor> rt;
     Status rc = Tensor::CreateFromMSTensor(t, &rt);
     if (rc.IsError()) {
-      MS_LOG_ERROR << "Convert from MSTensor to DETensor failed:" << rc.ToString() << ".";
+      MS_LOG(ERROR) << "Convert from MSTensor to DETensor failed:" << rc.ToString() << ".";
       return {};
     }
     row.emplace_back(rt);
@@ -445,7 +445,7 @@ BucketBatchByLengthDataset::BucketBatchByLengthDataset(
     Status rc = Tensor::CreateFromMemory(TensorShape(t.Shape()), MSTypeToDEType(static_cast<TypeId>(t.DataType())),
                                          (const uchar *)(t.Data().get()), t.DataSize(), &rt);
     if (rc.IsError()) {
-      MS_LOG_ERROR << "Fail to create DETensor from MSTensor for pad_info: " << rc.ToString() << ".";
+      MS_LOG(ERROR) << "Fail to create DETensor from MSTensor for pad_info: " << rc.ToString() << ".";
       map.clear();
       break;
     }

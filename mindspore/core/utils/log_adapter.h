@@ -240,20 +240,25 @@ class TryCatchGuard {
 };
 #define MS_LOG_TRY_CATCH_SCOPE mindspore::TryCatchGuard mindspore_log_try_catch_guard
 
+class AnfNode;
+using AnfNodePtr = std::shared_ptr<AnfNode>;
 /// \brief LogWriter defines interface to write log.
 class MS_CORE_API LogWriter {
  public:
   using ExceptionHandler = void (*)(ExceptionType, const std::string &);
   using MessageHandler = void (*)(std::ostringstream *oss);
-  using TraceProvider = std::function<void(std::ostringstream &oss, bool add_title)>;
+  using TraceProvider = std::function<void(std::ostringstream &, bool)>;
+  using GetTraceStrProvider = std::string (*)(const AnfNodePtr &, bool);
 
   LogWriter(const LocationInfo &location, MsLogLevel log_level, SubModuleId submodule,
-            ExceptionType excp_type = NoExceptionType, bool is_internal_exception = false)
+            ExceptionType excp_type = NoExceptionType, bool is_internal_exception = false,
+            const AnfNodePtr &node = nullptr)
       : location_(location),
         log_level_(log_level),
         submodule_(submodule),
         exception_type_(excp_type),
-        is_internal_exception_(is_internal_exception) {}
+        is_internal_exception_(is_internal_exception),
+        node_(node) {}
   ~LogWriter() = default;
 
   /// \brief Output log message from the input log stream.
@@ -293,31 +298,39 @@ class MS_CORE_API LogWriter {
 
   /// \brief Set the function pointer of printing trace stacks.
   ///
-  /// \param[in] A function pointer of  printing trace stacks.
+  /// \param[in] A function pointer of printing trace stacks.
   static void SetTraceProvider(const TraceProvider &new_trace_provider);
 
+  /// \brief Set the function pointer of getting node trace string.
+  ///
+  /// \param[in] A function pointer of getting trace string.
+  static void SetGetTraceStrProvider(const LogWriter::GetTraceStrProvider &provider);
+
  private:
+  const std::string GetNodeDebugInfoStr() const;
   void OutputLog(const std::ostringstream &msg) const;
   void RemoveLabelBeforeOutputLog(const std::ostringstream &msg) const;
   static ExceptionHandler &exception_handler();
   static MessageHandler &message_handler();
   static TraceProvider &trace_provider();
+  static GetTraceStrProvider &get_trace_str_provider();
 
   LocationInfo location_;
   MsLogLevel log_level_;
   SubModuleId submodule_;
   ExceptionType exception_type_;
   bool is_internal_exception_;
+  AnfNodePtr node_;
 };
 
-#define MSLOG_IF(level, condition, excp_type)                                                                          \
+#define MSLOG_IF(level, condition, excp_type, node)                                                                    \
   !(condition) ? void(0)                                                                                               \
                : mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), level, SUBMODULE_ID, \
-                                      excp_type) < mindspore::LogStream()
+                                      excp_type, false, node) < mindspore::LogStream()
 
-#define MSLOG_THROW(excp_type, is_internal_exception)                                                     \
+#define MSLOG_THROW(excp_type, is_internal_exception, node)                                               \
   mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::kException, \
-                       SUBMODULE_ID, excp_type, is_internal_exception) ^                                  \
+                       SUBMODULE_ID, excp_type, is_internal_exception, node) ^                            \
     mindspore::LogStream()
 
 #define MATCH_LEVEL(level)                                                         \
@@ -326,24 +339,23 @@ class MS_CORE_API LogWriter {
 
 #define IS_OUTPUT_ON(level) (MATCH_LEVEL(level))
 
-#define MS_LOG(level) MS_LOG_##level
+#define __MS_LOG_DEBUG(node) \
+  MSLOG_IF(mindspore::kDebug, IS_OUTPUT_ON(mindspore::kDebug), mindspore::NoExceptionType, node)
+#define __MS_LOG_INFO(node) MSLOG_IF(mindspore::kInfo, IS_OUTPUT_ON(mindspore::kInfo), mindspore::NoExceptionType, node)
+#define __MS_LOG_WARNING(node) \
+  MSLOG_IF(mindspore::kWarning, IS_OUTPUT_ON(mindspore::kWarning), mindspore::NoExceptionType, node)
+#define __MS_LOG_ERROR(node) \
+  MSLOG_IF(mindspore::kError, IS_OUTPUT_ON(mindspore::kError), mindspore::NoExceptionType, node)
+#define __MS_LOG_EXCEPTION(node) MSLOG_THROW(mindspore::NoExceptionType, false, node)
+#define __MS_LOG_INTERNAL_EXCEPTION(node) MSLOG_THROW(mindspore::NoExceptionType, true, node)
 
-#define MS_LOG_DEBUG MSLOG_IF(mindspore::kDebug, IS_OUTPUT_ON(mindspore::kDebug), mindspore::NoExceptionType)
-#define MS_LOG_INFO MSLOG_IF(mindspore::kInfo, IS_OUTPUT_ON(mindspore::kInfo), mindspore::NoExceptionType)
-#define MS_LOG_WARNING MSLOG_IF(mindspore::kWarning, IS_OUTPUT_ON(mindspore::kWarning), mindspore::NoExceptionType)
-#define MS_LOG_ERROR MSLOG_IF(mindspore::kError, IS_OUTPUT_ON(mindspore::kError), mindspore::NoExceptionType)
+#define MS_LOG(level) __MS_LOG_##level(nullptr)
+#define MS_LOG_WITH_NODE(level, node) __MS_LOG_##level(node)
 
-#define MS_LOG_EXCEPTION MSLOG_THROW(mindspore::NoExceptionType, false)
-#define MS_EXCEPTION(type) MSLOG_THROW(type, false)
-
-// Below exceptions indicate that the exception is caused by BUG.
-// Internal exception info will guide user to seek help from community.
-// Here are 3 ways to make an internal exception:
-//     1) MS_INTERNAL_EXCEPTION(ErrorType) << exception_str;
-//     2) MS_LOG_INTERNAL_EXCEPTION << exception_str;
-//     3) MS_LOG(INTERNAL_EXCEPTION) << exception_str;
-#define MS_INTERNAL_EXCEPTION(type) MSLOG_THROW(type, true)
-#define MS_LOG_INTERNAL_EXCEPTION MSLOG_THROW(mindspore::NoExceptionType, true)
+#define MS_LOG_EXCEPTION __MS_LOG_EXCEPTION(nullptr)
+#define MS_INTERNAL_EXCEPTION(type) MSLOG_THROW(type, true, nullptr)
+#define MS_EXCEPTION(type) MSLOG_THROW(type, false, nullptr)
+#define MS_EXCEPTION_WITH_NODE(type, node) MSLOG_THROW(type, false, node)
 }  // namespace mindspore
 
 #define MS_EXCEPTION_IF_NULL(ptr)                                           \

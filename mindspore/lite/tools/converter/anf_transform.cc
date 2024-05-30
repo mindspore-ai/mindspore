@@ -176,7 +176,7 @@ std::map<std::string, std::vector<int64_t>> TransStringToInputShapes(const std::
   for (auto &kv_str : shapes_pairs) {
     auto pos = kv_str.rfind(':');
     if (pos == std::string::npos || pos + 1 == kv_str.size()) {
-      MS_LOG_ERROR << "Invalid input shapes string: " << shapes_str;
+      MS_LOG(ERROR) << "Invalid input shapes string: " << shapes_str;
       return {};
     }
     auto name = kv_str.substr(0, pos);
@@ -187,7 +187,7 @@ std::map<std::string, std::vector<int64_t>> TransStringToInputShapes(const std::
     for (auto &dim_str : shape_dims_str) {
       int dim = 0;
       if (!lite::ConvertIntNum(dim_str, &dim)) {
-        MS_LOG_ERROR << "Invalid input shapes string: " << shapes_str;
+        MS_LOG(ERROR) << "Invalid input shapes string: " << shapes_str;
         return {};
       }
       shape.push_back(dim);

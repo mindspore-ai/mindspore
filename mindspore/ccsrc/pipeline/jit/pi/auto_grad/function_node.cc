@@ -142,7 +142,7 @@ FunctionNodePtr GetOrCreateFunctionNode(const py::object &tensor, const py::obje
 FunctionNodePtr FunctionNode::CreateFunctionNode(const py::object &tensor, const py::object &prim,
                                                  const py::object &out, const py::list &inputs) {
   auto func_node = std::make_shared<FunctionNode>(tensor, prim, out);
-  MS_LOG_DEBUG << "Create a function node(" << func_node.get() << ") for " << tensor.ptr();
+  MS_LOG(DEBUG) << "Create a function node(" << func_node.get() << ") for " << tensor.ptr();
   func_node->SetInputs(inputs);
   std::for_each(inputs.begin(), inputs.end(), [func_node, &inputs](const auto &obj) {
     if (!FunctionNode::IsRequiresGradient(obj) && !FunctionNode::HasGradFunc(obj)) {
@@ -156,7 +156,7 @@ FunctionNodePtr FunctionNode::CreateFunctionNode(const py::object &tensor, const
 }
 
 void FunctionNode::RecordPrimitive(const py::object &prim, const py::object &out, const py::list &inputs) {
-  MS_LOG_DEBUG << "Record " << out.ptr() << " for auto gradient.";
+  MS_LOG(DEBUG) << "Record " << out.ptr() << " for auto gradient.";
   if (!py::isinstance<py::tuple>(out)) {
     (void)GetOrCreateFunctionNode(out, prim, out, inputs);
   } else {
@@ -208,7 +208,7 @@ void FunctionNode::ApplyNative() {
 /// \brief Generate the bprop function.
 void FunctionNode::GenerateBropFunction() {
   auto generate_task = std::make_shared<RunGenerateBpropTask>([this]() {
-    MS_LOG_DEBUG << "Generate brop function for node " << tensor_.ptr() << ", tensor is " << tensor_.ptr();
+    MS_LOG(DEBUG) << "Generate brop function for node " << tensor_.ptr() << ", tensor is " << tensor_.ptr();
     auto output = GetOutput();
     auto executor = GradExecutor::GetInstance();
     {
@@ -227,8 +227,8 @@ void FunctionNode::GenerateBropFunction() {
       py::gil_scoped_acquire gil_acquire;
       grad_fn_ = executor->GetBpropGraph(NewValueNode(func), GetInputs(), output, output);
     } catch (const std::exception &e) {
-      MS_LOG_ERROR << "Prim : " << func->ToString() << " Output : " << output->ToString();
-      MS_LOG_ERROR << e.what();
+      MS_LOG(ERROR) << "Prim : " << func->ToString() << " Output : " << output->ToString();
+      MS_LOG(ERROR) << e.what();
     }
   });
   GradExecutor::GetInstance()->DispatchGenerateTask(generate_task);
@@ -284,8 +284,8 @@ void FunctionNode::Apply(const py::object &grad) {
 }
 
 void FunctionNode::ApplyInner(const ValuePtr &dout) {
-  MS_LOG_DEBUG << "Start run apply() of " << tensor_.ptr() << ", tensor is " << tensor_.ptr();
-  MS_LOG_DEBUG << "Prim is " << GetFunction()->ToString() << ", dout is " << dout->ToString();
+  MS_LOG(DEBUG) << "Start run apply() of " << tensor_.ptr() << ", tensor is " << tensor_.ptr();
+  MS_LOG(DEBUG) << "Prim is " << GetFunction()->ToString() << ", dout is " << dout->ToString();
   auto run_task = std::make_shared<RunBpropTask>(
     [this](const ValuePtr &dout) {
       AccumulateGradient(dout, index_);

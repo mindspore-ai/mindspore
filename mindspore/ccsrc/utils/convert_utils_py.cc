@@ -716,7 +716,7 @@ py::object MakeCSRTensor(const ValuePtr &value) {
     auto csr_tensor_ptr = std::make_shared<CSRTensor>(indptr, indices, values, shape);
     return CSRTensorToPyData(csr_tensor_ptr);
   }
-  MS_LOG_WARNING << "value is not ValueSequence, but got " << value->ToString();
+  MS_LOG(WARNING) << "value is not ValueSequence, but got " << value->ToString();
   return ret;
 }
 
@@ -793,7 +793,7 @@ py::object MakeCOOTensor(const ValuePtr &value) {
     ShapeVector shape = ConvertShapeTupleToShapeVector(shape_ptr);
     ret[0] = std::make_shared<tensor::COOTensor>(indices, values, shape);
   }
-  MS_LOG_WARNING << "value is not ValueSequence, but got " << value->ToString();
+  MS_LOG(WARNING) << "value is not ValueSequence, but got " << value->ToString();
   return ret[0];
 }
 

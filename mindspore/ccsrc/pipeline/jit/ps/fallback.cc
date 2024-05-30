@@ -803,7 +803,7 @@ py::object GetPyObjForFuncGraphAbstractClosure(const AbstractBasePtr &abs) {
   bool end_with_lambda_suffix =
     (fg_name.size() >= lambda_suffix.size() && fg_name.substr(fg_name.size() - lambda_suffix.size()) == lambda_suffix);
   if (end_with_lambda_suffix) {
-    auto location = fg_debug_info->location();
+    auto location = trace::GetSourceCodeDebugInfo(fg_debug_info)->location();
     MS_EXCEPTION_IF_NULL(location);
     const auto &lambda_script = location->expr_src();
     py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);

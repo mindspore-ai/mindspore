@@ -54,8 +54,10 @@ def test_jit():
     context.set_context(save_graphs=3, save_graphs_path="ir_dump_path")
     input1 = np.random.randn(5, 5)
     add(Tensor(input1, ms.float32))
-    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py:51/        return x + 1/")
-    assert result == '2'
+    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py:51, 15~20/        return x + 1/")
+    assert result == '1'
+    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py:51, 8~20/        return x + 1/")
+    assert result == '1'
     remove_path("./ir_dump_path/")
     context.set_context(save_graphs=False)
 
@@ -78,7 +80,7 @@ def test_cell_jit():
     input1 = np.random.randn(5, 5)
     net = Net()
     net(Tensor(input1, ms.float32))
-    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py:74/            return x/")
+    result = find_files("./ir_dump_path/*validate*.ir", "test_debug_info.py:76, 12~20/            return x/")
     assert result == '1'
     remove_path("./ir_dump_path/")
     context.set_context(save_graphs=False)
