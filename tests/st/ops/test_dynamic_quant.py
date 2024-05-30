@@ -32,7 +32,7 @@ def get_expect(x, smooth_scales):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', ['GE', 'KBK'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_dynamic_quant_f16(mode):
     """
     Feature:ops.DynamicQuantExt
@@ -45,7 +45,7 @@ def test_dynamic_quant_f16(mode):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', ['GE', 'KBK'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_dynamic_quant_bf16(mode):
     """
     Feature:ops.DynamicQuantExt
