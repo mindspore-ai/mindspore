@@ -16,8 +16,16 @@ set(DATASET_CORE_SRC_FILES
         ascend_resource.cc
         )
 
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND ENABLE_PYTHON AND NOT WIN32 AND NOT WIN64)
+    set(DATASET_CORE_SRC_FILES
+        ${DATASET_CORE_SRC_FILES}
+        shared_memory_queue.cc
+        message_queue.cc
+        )
+endif()
+
 if(NOT BUILD_LITE AND ENABLE_D)
-set(DATASET_CORE_SRC_FILES
+    set(DATASET_CORE_SRC_FILES
         ${DATASET_CORE_SRC_FILES}
         # ascend910b
         device_tensor_ascend910b.cc
