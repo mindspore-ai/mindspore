@@ -227,6 +227,9 @@ from mindspore.ops.function.math_func import tanh
 
 # 100
 
+# 208
+from mindspore.ops.function.array_func import eye
+
 # 210
 from mindspore.ops.auto_generate import floor
 # 285
@@ -445,6 +448,9 @@ __all__ = [
     # 99
 
     # 100
+
+    # 208
+    'eye',
 
     # 210
     'floor',

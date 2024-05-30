@@ -15,6 +15,16 @@ Array Operation
     mindspore.mint.topk
     mindspore.mint.broadcast_to
 
+Tensor Creation
+^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.eye
+
 Element-wise Operation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
