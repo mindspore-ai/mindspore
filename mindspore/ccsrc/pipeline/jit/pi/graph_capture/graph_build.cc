@@ -3305,7 +3305,7 @@ bool MindGraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py:
 bool MindGraphBuilder::FGAddInputs(const std::vector<py::object> &args) {
   // Add function graph inputs.
   for (size_t i = 0; i < args.size(); ++i) {
-    auto obj = FGBuilder()->AddInput(args[i]);
+    auto obj = FGBuilder()->AddSubGraphInput(args[i]);
     if (obj.ptr() == nullptr) {
       MS_LOG(INFO) << "Add input fail for input: " << std::string(py::str(args[i]));
       return false;
