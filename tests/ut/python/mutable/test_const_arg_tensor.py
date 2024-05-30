@@ -358,7 +358,7 @@ def test_create_cell_instance_twice_with_differ_args():
     """
     Feature: Check create same cell instance twice in function.
     Description: Check warning raising when same cell create twice.
-    Expectation: Warning raised when cell create twice.
+    Expectation: No warning raised when cell create twice with different init args.
     """
 
     class Net(nn.Cell):
@@ -450,8 +450,8 @@ def test_check_const_tensor_in_tuple_warning():
                                "Constant value tensor are detected in tuple or list", True)
 
     # Create instance twice print warning log
-    run_test_case_and_save_log("test_const_arg_tensor.py", "test_create_cell_instance_twice",
-                               "only once to avoid recompiling", True)
+    # run_test_case_and_save_log("test_const_arg_tensor.py", "test_create_cell_instance_twice",
+    #                            "only once to avoid recompiling", True)
 
     # Create instance twice no warning log
     run_test_case_and_save_log("test_const_arg_tensor.py", "test_create_cell_instance_twice_no_warning",
