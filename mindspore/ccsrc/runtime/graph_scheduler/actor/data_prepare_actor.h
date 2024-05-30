@@ -161,6 +161,8 @@ class DataPrepareActor : public DebugAwareActor {
   // to device side. 'tensors_need_reprepare_' records all tensors whose host value has updated, this HashSet will be
   // update by update value callback of tensors.
   static mindspore::HashSet<const tensor::Tensor *> tensors_need_reprepare_;
+
+  bool has_dynamic_shape_{false};
 };  // namespace runtime
 
 using DataPrepareActorPtr = std::shared_ptr<DataPrepareActor>;

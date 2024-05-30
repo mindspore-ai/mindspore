@@ -182,6 +182,8 @@ class KernelActor : public DebugAwareActor {
   std::vector<DeviceTensor *> output_device_tensors_;
   std::vector<DeviceTensor *> workspace_device_tensors_;
 
+  std::vector<DeviceTensor *> max_ref_cnt_output_list_;
+
   // The input kernel tensors for infer shape.
   std::vector<abstract::AbstractBasePtr> input_kernel_tensors_for_infer_;
   // The kernel tensors for resize and launch.
@@ -287,7 +289,6 @@ class KernelActor : public DebugAwareActor {
   bool skip_launch_shape_related_op_{false};
 
   bool is_output_kernel_{false};
-  std::set<size_t> graph_output_indexes_{};
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;
