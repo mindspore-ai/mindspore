@@ -959,7 +959,7 @@ Status MatMul::ComputeReplaceGraphForInterleaved(const CNodePtr &cnode) {
 
 // PCL matmul
 ReplaceGraphPtr MatMul::replace_graph(const CNodePtr &cnode) {
-  if (!inputs_tensor_info_[kIndex0].tensor_layout().device_arrangement_interleaved().array().empty()) {
+  if (inputs_tensor_info_[kIndex0].tensor_layout().IsInterleavedParallel()) {
     if (ComputeReplaceGraphForInterleaved(cnode) != SUCCESS) {
       MS_LOG(EXCEPTION) << name_ << " splitting micro interleaved failed.";
     }

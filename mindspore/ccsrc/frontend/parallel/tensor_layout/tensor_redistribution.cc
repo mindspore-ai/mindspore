@@ -46,7 +46,7 @@ Status TensorRedistribution::MakeFromToLayout(const TensorLayout &from, const Te
     return SUCCESS;
   }
   if (from.GetVirtualRank().size() == 1) {
-    auto device_matrix = from_layout.device_arrangement().array();
+    auto device_matrix = from_layout.device_arrangement_origin().array();
     device_matrix.push_back(to.GetVirtualRank().size());
     virtual_rank_list_ = to.GetVirtualRank();
     to_origin_ = to_layout;
@@ -62,13 +62,13 @@ Status TensorRedistribution::MakeFromToLayout(const TensorLayout &from, const Te
       return from_origin_.InitFromExtendVector(device_matrix, new_tensor_map, from_layout.tensor_shape_before().array(),
                                                false, false);
     }
-    auto new_map = from_layout.tensor_map().array();
+    auto new_map = from_layout.origin_tensor_map().array();
     std::transform(new_map.begin(), new_map.end(), new_map.begin(),
                    [](const auto &val) { return val >= 0 ? val + 1 : val; });
     return from_origin_.InitFromVector(device_matrix, new_map, from_layout.tensor_shape().array());
   }
   if (to.GetVirtualRank().size() == 1) {
-    auto device_matrix = to_layout.device_arrangement().array();
+    auto device_matrix = to_layout.device_arrangement_origin().array();
     device_matrix.push_back(from.GetVirtualRank().size());
     virtual_rank_list_ = from.GetVirtualRank();
     from_origin_ = from_layout;
@@ -84,7 +84,7 @@ Status TensorRedistribution::MakeFromToLayout(const TensorLayout &from, const Te
       return to_origin_.InitFromExtendVector(device_matrix, new_tensor_map, to_layout.tensor_shape_before().array(),
                                              false, false);
     }
-    auto new_map = to_layout.tensor_map().array();
+    auto new_map = to_layout.origin_tensor_map().array();
     std::transform(new_map.begin(), new_map.end(), new_map.begin(),
                    [](const auto &val) { return val >= 0 ? val + 1 : val; });
     return to_origin_.InitFromVector(device_matrix, new_map, to_layout.tensor_shape().array());
