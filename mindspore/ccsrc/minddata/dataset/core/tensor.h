@@ -863,6 +863,7 @@ class DATASET_API Tensor {
 #ifdef ENABLE_PYTHON
   /// Store python dictionary wrapper
   py::object python_dict_;
+  std::string python_dict_as_str_;
 
   /// Hold the np.ndarray which is from python layer without memcpy cost
   py::buffer python_array_;

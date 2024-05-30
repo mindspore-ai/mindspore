@@ -16,6 +16,11 @@
 
 #include "minddata/dataset/engine/tree_adapter.h"
 
+#if !defined(__APPLE__) && !defined(BUILD_LITE) && !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && \
+  !defined(ANDROID)
+#include <sys/prctl.h>
+#endif
+
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/ir/datasetops/root_node.h"
 #ifndef ENABLE_ANDROID
@@ -39,6 +44,14 @@
 #include "minddata/dataset/engine/opt/pre/node_removal_pass.h"
 #include "minddata/dataset/engine/opt/pre/skip_pushdown_pass.h"
 #include "minddata/dataset/engine/perf/info_collector.h"
+#if !defined(__APPLE__) && !defined(BUILD_LITE) && !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && \
+  !defined(ANDROID)
+#include "minddata/dataset/engine/datasetops/send_bridge_op.h"
+#include "minddata/dataset/engine/datasetops/receive_bridge_op.h"
+#include "minddata/dataset/core/shared_memory_queue.h"
+#include "minddata/dataset/core/message_queue.h"
+#include "minddata/dataset/util/ftok_key.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -167,6 +180,138 @@ Status TreeAdapter::BuildExecutionTreeRecur(const std::shared_ptr<DatasetNode> &
   return Status::OK();
 }
 
+#if !defined(__APPLE__) && !defined(BUILD_LITE) && !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && \
+  !defined(ANDROID)
+Status TreeAdapter::InsertSendReceiveOp() {
+  RETURN_UNEXPECTED_IF_NULL(tree_);
+
+  // get the key
+  key_t key = -1;
+  RETURN_IF_NOT_OK(GetKey(&key));
+
+  // create shared memory queue
+  SharedMemoryQueue send_queue(key);
+  send_queue.SetReleaseFlag(false);
+  MS_LOG(INFO) << "Create shared memory queue by key: " << key;
+
+  // create message queue id first
+  int msg_queue_id = msgget(key, IPC_CREAT | 0600);
+  if (msg_queue_id < 0) {
+    RETURN_STATUS_UNEXPECTED("Create send message by key: " + std::to_string(key) +
+                             " failed. Errno: " + std::to_string(errno));
+  }
+
+  // create message queue
+  MessageQueue msg_queue(key, msg_queue_id);
+  msg_queue.SetReleaseFlag(false);
+  MS_LOG(INFO) << "Create send message queue id: " << std::to_string(msg_queue_id) << " by key: " << std::to_string(key)
+               << " success.";
+
+  std::shared_ptr<DatasetOp> data_queue_op = nullptr;
+  std::shared_ptr<DatasetOp> data_queue_op_next = nullptr;
+  // the tree is reversed by begin iterator, get the data_queue_op and its next op
+  for (auto itr = tree_->begin(); itr != tree_->end(); ++itr) {
+    if (itr->Name() == kDeviceQueueOp) {
+      data_queue_op = itr.get();
+      data_queue_op_next = (--itr).get();
+      break;
+    }
+  }
+
+  if (data_queue_op != nullptr) {
+    // dataset sink mode, the tree will be converted
+    // from:
+    // xxDataset -> map -> batch -> data_queue
+    // to:
+    // xxDataset -> map -> batch -> send -> receive -> data_queue
+    CHECK_FAIL_RETURN_UNEXPECTED(data_queue_op_next != nullptr, "The next op of DataQueueOp is nullptr.");
+    auto send_bridge_op = std::make_shared<SendBridgeOp>(3, send_queue, msg_queue);
+    RETURN_IF_NOT_OK(tree_->AssociateNode(send_bridge_op));
+    RETURN_IF_NOT_OK(send_bridge_op->AddChild(data_queue_op_next));
+    RETURN_IF_NOT_OK(tree_->AssignRoot(send_bridge_op));
+
+    auto receive_bridge_op = std::make_shared<ReceiveBridgeOp>(3, send_queue, msg_queue);
+    RETURN_IF_NOT_OK(tree_->AssociateNode(receive_bridge_op));
+    RETURN_IF_NOT_OK(receive_bridge_op->AddChild(tree_->root()));
+    RETURN_IF_NOT_OK(tree_->AssignRoot(receive_bridge_op));
+
+    RETURN_IF_NOT_OK(data_queue_op->RemoveChildren());
+    RETURN_IF_NOT_OK(data_queue_op->AddChild(tree_->root()));
+    RETURN_IF_NOT_OK(tree_->AssignRoot(data_queue_op));
+  } else {
+    // dataset feed mode, the tree will be converted
+    // from:
+    // xxDataset -> map -> ... -> batch
+    // to:
+    // xxDataset -> map -> ... -> batch -> send -> receive
+    auto send_bridge_op = std::make_shared<SendBridgeOp>(3, send_queue, msg_queue);
+    RETURN_IF_NOT_OK(tree_->AssociateNode(send_bridge_op));
+    RETURN_IF_NOT_OK(send_bridge_op->AddChild(tree_->root()));
+    RETURN_IF_NOT_OK(tree_->AssignRoot(send_bridge_op));
+
+    auto receive_bridge_op = std::make_shared<ReceiveBridgeOp>(3, send_queue, msg_queue);
+    RETURN_IF_NOT_OK(tree_->AssociateNode(receive_bridge_op));
+    RETURN_IF_NOT_OK(receive_bridge_op->AddChild(tree_->root()));
+    RETURN_IF_NOT_OK(tree_->AssignRoot(receive_bridge_op));
+  }
+
+  return Status::OK();
+}
+
+Status TreeAdapter::SplitBySendReceiveOp() {
+  // split the tree_ to two part
+  // part1. xxDataset -> map -> ... -> batch -> send
+  // part2. receive -> iter / data_queue
+  receive_tree_ = std::make_unique<ExecutionTree>();
+  send_tree_ = std::make_unique<ExecutionTree>();
+  bool receive_tree_flag = true;
+
+  // dis-assign the root from tree_ and assign the root to the receive tree
+  std::shared_ptr<DatasetOp> op = tree_->root();
+  RETURN_IF_NOT_OK(tree_->root()->Remove());
+  RETURN_IF_NOT_OK(receive_tree_->AssociateNode(op));
+  RETURN_IF_NOT_OK(receive_tree_->AssignRoot(op));
+
+  // current op
+  std::shared_ptr<DatasetOp> receive_op = receive_tree_->root();
+  std::shared_ptr<DatasetOp> send_op = nullptr;
+
+  while (tree_ != nullptr && tree_->root() && tree_->root()->Children().size() != 0) {
+    if (tree_->root()->Name() == kSendBridgeOp) {
+      receive_tree_flag = false;  // change to the send tree
+      op = tree_->root();
+      RETURN_IF_NOT_OK(tree_->root()->Remove());
+      RETURN_IF_NOT_OK(send_tree_->AssociateNode(op));
+      RETURN_IF_NOT_OK(send_tree_->AssignRoot(op));
+      send_op = send_tree_->root();
+      continue;
+    }
+
+    op = tree_->root();
+    RETURN_IF_NOT_OK(tree_->root()->Remove());
+    if (receive_tree_flag) {
+      // continue add the op to the receive tree
+      RETURN_IF_NOT_OK(receive_tree_->AssociateNode(op));
+      RETURN_IF_NOT_OK(receive_op->AddChild(op));
+      receive_op = op;
+    } else {
+      // continue add the op to the send tree
+      RETURN_IF_NOT_OK(send_tree_->AssociateNode(op));
+      RETURN_IF_NOT_OK(send_op->AddChild(op));
+      send_op = op;
+    }
+  }
+
+  // add the last op to the send tree
+  op = tree_->root();
+  RETURN_IF_NOT_OK(tree_->root()->Remove());
+  RETURN_IF_NOT_OK(send_tree_->AssociateNode(op));
+  RETURN_IF_NOT_OK(send_op->AddChild(op));
+
+  return Status::OK();
+}
+#endif
+
 Status TreeAdapter::Build(const std::shared_ptr<DatasetNode> &root_ir, int64_t init_epoch) {
   RETURN_UNEXPECTED_IF_NULL(root_ir);
   RETURN_IF_NOT_OK(CollectPipelineInfoStart("Pipeline", "Build"));
@@ -182,11 +327,55 @@ Status TreeAdapter::Build(const std::shared_ptr<DatasetNode> &root_ir, int64_t i
     RETURN_IF_NOT_OK(AdjustReset(init_epoch));
   }
 
+#if !defined(__APPLE__) && !defined(BUILD_LITE) && !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && \
+  !defined(ANDROID)
+  std::string env_independent_dataset = common::GetEnv("MS_INDEPENDENT_DATASET");
+  transform(env_independent_dataset.begin(), env_independent_dataset.end(), env_independent_dataset.begin(), ::tolower);
+  bool independent_dataset = false;
+  if (env_independent_dataset == "true") {
+    independent_dataset = true;
+    MS_LOG(INFO) << "Environment MS_INDEPENDENT_DATASET is true, dataset will be ran in subprocess.";
+  } else if (env_independent_dataset == "false" || env_independent_dataset == "") {
+    independent_dataset = false;
+    MS_LOG(INFO) << "Environment MS_INDEPENDENT_DATASET is false, dataset will be ran in main process.";
+  } else {
+    MS_LOG(WARNING) << "Environment MS_INDEPENDENT_DATASET: " << env_independent_dataset
+                    << " is configured wrong, dataset will be ran in main process.";
+  }
+  if (independent_dataset) {
+    MS_LOG(INFO) << "The original execution tree: " << *tree_;
+
+    // add the SendBridgeOp and ReceiveBridgeOp to the tree
+    RETURN_IF_NOT_OK(InsertSendReceiveOp());
+
+    MS_LOG(INFO) << "After add SendBridgeOp and ReceiveBridgeOp, the execution tree: " << *tree_;
+
+    // split the tree to send_tree_ and receive_tree_
+    RETURN_IF_NOT_OK(SplitBySendReceiveOp());
+
+    MS_LOG(INFO) << "After split the execution tree, the send tree: " << *send_tree_;
+    MS_LOG(INFO) << "After split the execution tree, the receive tree: " << *receive_tree_;
+
+    // Prepare the tree
+    RETURN_IF_NOT_OK(send_tree_->Prepare());
+    RETURN_IF_NOT_OK(receive_tree_->Prepare());
+
+    // After the tree is prepared, the col_name_id_map can safely be obtained
+    column_name_map_ = receive_tree_->root()->column_name_id_map();
+  } else {
+    // Prepare the tree
+    RETURN_IF_NOT_OK(tree_->Prepare());
+
+    // After the tree is prepared, the col_name_id_map can safely be obtained
+    column_name_map_ = tree_->root()->column_name_id_map();
+  }
+#else
   // Prepare the tree
   RETURN_IF_NOT_OK(tree_->Prepare());
 
   // After the tree is prepared, the col_name_id_map can safely be obtained
   column_name_map_ = tree_->root()->column_name_id_map();
+#endif
   RETURN_IF_NOT_OK(CollectPipelineInfoEnd("Pipeline", "Build"));
   return Status::OK();
 }
@@ -306,6 +495,85 @@ Status TreeAdapter::GetNext(TensorRow *row) {
 
 Status TreeAdapter::Launch() {
   CHECK_FAIL_RETURN_UNEXPECTED(tree_ != nullptr, "Tree is a nullptr.");
+
+#if !defined(__APPLE__) && !defined(BUILD_LITE) && !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && \
+  !defined(ANDROID)
+  std::string env_independent_dataset = common::GetEnv("MS_INDEPENDENT_DATASET");
+  transform(env_independent_dataset.begin(), env_independent_dataset.end(), env_independent_dataset.begin(), ::tolower);
+  bool independent_dataset = false;
+  if (env_independent_dataset == "true") {
+    independent_dataset = true;
+    MS_LOG(INFO) << "Environment MS_INDEPENDENT_DATASET is true, dataset will be ran in subprocess.";
+  } else if (env_independent_dataset == "false" || env_independent_dataset == "") {
+    independent_dataset = false;
+    MS_LOG(INFO) << "Environment MS_INDEPENDENT_DATASET is false, dataset will be ran in main process.";
+  }
+  if (independent_dataset) {
+    // move the send_tree_ to tree_ and launch it
+    tree_ = std::move(send_tree_);
+
+    // launch the sub-process to detach dataset with send
+    pid_t fpid = fork();
+    if (fpid < 0) {  // fork sub-process failed
+      RETURN_STATUS_UNEXPECTED("Create an independent dataset process failed.");
+    } else if (fpid == 0) {              // in sub-process
+      prctl(PR_SET_PDEATHSIG, SIGKILL);  // if the main process exit, the subprocess will exit too.
+
+      auto pid = getpid();
+      auto ppid = getppid();
+      auto tid = std::this_thread::get_id();
+
+      // execute the detached dataset in the sub-process
+      MS_LOG(INFO) << "[Independent Dataset Process] Process pid: " << std::to_string(pid)
+                   << ", parent pid: " << std::to_string(ppid) << ", thread id: " << tid << " is started successfully.";
+
+      auto ret = tree_->Launch();
+      if (ret != Status::OK()) {
+        // here should prompt error because it's in subprocess
+        MS_LOG(ERROR) << "[Independent Dataset Process] Process pid: " << std::to_string(pid) << ", launch failed.";
+      }
+      launched_ = true;
+
+      // The the subprocess should be alive
+      const int main_thread_log_interval = 10;
+      while (true && !tree_->isFinished()) {
+        sleep(main_thread_log_interval);
+        MS_LOG(INFO) << "[Independent Dataset Process] Process pid: " << std::to_string(pid)
+                     << ", parent pid: " << std::to_string(ppid) << ", thread id: " << tid
+                     << " is alive. Its status is normal.";
+      }
+      MS_LOG(INFO) << "[Independent Dataset Process] Process pid: " << std::to_string(pid)
+                   << ", parent pid: " << std::to_string(ppid) << ", thread id: " << tid << " exit.";
+      exit(0);
+    }
+    // In the main thread
+    MS_LOG(INFO) << "[Main Dataset Process] Process pid: " << std::to_string(getpid())
+                 << ", sub-process pid: " << std::to_string(fpid);
+
+    // move the receive_tree_ to tree_ and launch it
+    tree_ = std::move(receive_tree_);
+
+    // get the receive_bridge_op and set the subprocess id to it
+    for (auto itr = tree_->begin(); itr != tree_->end(); ++itr) {
+      if (itr->Name() == kReceiveBridgeOp) {
+        auto receive_bridge_op = dynamic_cast<ReceiveBridgeOp *>(itr.get().get());
+        receive_bridge_op->SetSubprocessID(fpid);
+        break;
+      }
+    }
+  }
+#endif
+
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && !defined(ENABLE_ANDROID)
+  int32_t thread_num = get_nprocs();
+  if (thread_num == 0) {
+    std::string err_msg = "Invalid thread number, got 0.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  constexpr int32_t max_cv_threads_cnt = 8;
+  cv::setNumThreads(thread_num > max_cv_threads_cnt ? max_cv_threads_cnt : thread_num);
+#endif
+
   RETURN_IF_NOT_OK(tree_->Launch());
   launched_ = true;
   return Status::OK();

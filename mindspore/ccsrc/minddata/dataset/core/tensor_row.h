@@ -251,7 +251,7 @@ class TensorRow {
     return static_cast<bool>(static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagError));
   }
 
-  const TensorRowFlags Flags() { return tensor_row_flag_; }
+  TensorRowFlags Flags() const { return tensor_row_flag_; }
 
   std::string FlagName() const {
     switch (tensor_row_flag_) {

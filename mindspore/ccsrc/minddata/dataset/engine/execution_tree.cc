@@ -39,14 +39,13 @@ ExecutionTree::ExecutionTree(std::shared_ptr<ConfigManager> cfg)
       numa_enable_(cfg->numa_enable()),
       handle_(nullptr),
       id_count_(0),
-      tree_state_(kDeTStateInit),
-      prepare_flags_(0) {
+      tree_state_(kDeTStateInit) {
   tg_ = std::make_unique<TaskGroup>();
   root_ = nullptr;
   unique_id_ = Services::GetUniqueID();
 }
 #else
-ExecutionTree::ExecutionTree() : id_count_(0), tree_state_(kDeTStateInit), prepare_flags_(0) {
+ExecutionTree::ExecutionTree() : id_count_(0), tree_state_(kDeTStateInit) {
   tg_ = std::make_unique<TaskGroup>();
   root_ = nullptr;
   unique_id_ = Services::GetUniqueID();
@@ -175,13 +174,6 @@ Status ExecutionTree::Launch() {
     MS_LOG(INFO) << "Numa bind memory and cpu successful.";
   }
 #endif
-  int32_t thread_num = get_nprocs();
-  if (thread_num == 0) {
-    std::string err_msg = "Invalid thread number, got 0.";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  constexpr int32_t max_cv_threads_cnt = 8;
-  cv::setNumThreads(thread_num > max_cv_threads_cnt ? max_cv_threads_cnt : thread_num);
 #endif
 
   // Tree must be built and prepared before it can be launched!
@@ -194,7 +186,7 @@ Status ExecutionTree::Launch() {
 
   std::ostringstream ss;
   ss << *this;
-  MS_LOG(DEBUG) << "Printing the tree before launch tasks:\n" << ss.str();
+  MS_LOG(INFO) << "Printing the tree before launch tasks:\n" << ss.str();
   for (auto itr = this->begin(); itr != this->end(); ++itr) {
     // An inlined operator is one that has an output connector size of 0, and it does not
     // require a thread to execute.  Instead, the work of this operator is executed inlined

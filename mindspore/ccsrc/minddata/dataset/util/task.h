@@ -117,7 +117,8 @@ class Task : public IntrpResource {
   mutable std::mutex mux_;
   std::string my_name_;
   int32_t operator_id_;
-  pid_t thread_id_;
+  pid_t process_id_;  // process id (like: 11418), which can be queried by command "ps -ef | grep pid"
+  pid_t thread_id_;   // linux thread id (like: 11534), which can be queried by command "top -H"
   Status rc_;
   WaitPost wp_;
   // Task need to provide definition for this function.  It
@@ -126,7 +127,7 @@ class Task : public IntrpResource {
   // Misc fields used by TaskManager.
   TaskGroup *task_group_;
   std::future<void> thrd_;
-  std::thread::id id_;
+  std::thread::id id_;  // thread id (like: 140299045656320) of type std::thread::id uniquely identifying the thread
   bool is_master_;
   volatile bool running_;
   volatile bool caught_severe_exception_;
