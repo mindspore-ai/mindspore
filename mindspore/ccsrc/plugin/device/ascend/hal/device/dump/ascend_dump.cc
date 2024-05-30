@@ -60,7 +60,8 @@ const std::map<ProtoFormat, std::string> kFormatToStringMap = {
   {ProtoFormat::FORMAT_FRACTAL_Z_3D, kOpFormat_FRACTAL_Z_3D},
   {ProtoFormat::FORMAT_C1HWNCoC0, kOpFormat_C1HWNCoC0},
   {ProtoFormat::FORMAT_FRACTAL_NZ, kOpFormat_FRAC_NZ},
-  {ProtoFormat::FORMAT_FRACTAL_ZN_LSTM, kOpFormat_FRACTAL_ZN_LSTM}};
+  {ProtoFormat::FORMAT_FRACTAL_ZN_LSTM, kOpFormat_FRACTAL_ZN_LSTM},
+  {ProtoFormat::FORMAT_NCL, kOpFormat_NCL}};
 
 const std::map<ProtoDataType, mindspore::TypeId> kDataTypetoMSTypeMap = {
   {ProtoDataType::DT_UNDEFINED, mindspore::TypeId::kTypeUnknown},

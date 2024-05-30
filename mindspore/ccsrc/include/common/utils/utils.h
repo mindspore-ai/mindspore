@@ -585,6 +585,7 @@ constexpr auto kOpFormat_FRACTAL_Z_3D = "FRACTAL_Z_3D";
 constexpr auto kOpFormat_FRACTAL_ZN_LSTM = "FRACTAL_ZN_LSTM";
 constexpr auto kOpFormat_FRACTAL_ZN_RNN = "FRACTAL_ZN_RNN";
 constexpr auto kOpFormat_ND_RNN_BIAS = "ND_RNN_BIAS";
+constexpr auto kOpFormat_NCL = "NCL";
 constexpr auto kSliceStart = "start";
 constexpr auto kSliceStop = "stop";
 constexpr auto kSliceStep = "step";
