@@ -825,7 +825,7 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
      false},
     {"GroupNormSiluFusion", std::make_shared<opt::GroupNormSiluFusion>(), false},
     {"GeGluV2Fusion", std::make_shared<opt::GeGluV2Fusion>(), false},
-    {"AddLayerNormFusion", std::make_shared<opt::AddLayerNormFusion>(), false},
+    {"LayerNormV3Fusion", std::make_shared<opt::LayerNormV3Fusion>(), false},
     {"FFNFusion", std::make_shared<opt::FFNFusion>(), false},
     {"FuseAddAndLayernorm", std::make_shared<opt::FuseAddAndLayernorm>(), false},
   };

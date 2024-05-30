@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/common/multiple_pattern_process_pass.h"
@@ -28,12 +29,12 @@
 
 namespace mindspore {
 namespace opt {
-class AddLayerNormFusion : public MultiplePatternProcessPass {
+class LayerNormV3Fusion : public MultiplePatternProcessPass {
  public:
-  explicit AddLayerNormFusion(const std::string &name = "AddLayerNormFusion", bool multigraph = true)
+  explicit LayerNormV3Fusion(const std::string &name = "LayerNormV3Fusion", bool multigraph = true)
       : MultiplePatternProcessPass(name, multigraph) {}
 
-  ~AddLayerNormFusion() override = default;
+  ~LayerNormV3Fusion() override = default;
 
   std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
 
@@ -46,21 +47,20 @@ class AddLayerNormFusion : public MultiplePatternProcessPass {
 
   AnfNodePtr CreateLayerNormV3Node(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
 
-  const VectorRef DefineLayerNormV3Pattern() const;
-
-  // Add
-  mutable VarPtr add_1_a_{nullptr};  // input 1
-  mutable VarPtr add_1_b_{nullptr};  // input 2
+  const VectorRef DefineLayerNormV3Pattern1() const;
+  const VectorRef DefineLayerNormV3Pattern2() const;
 
   // LayerNormV3
-  mutable VarPtr reduce_1_x_{nullptr};
-  mutable VarPtr reduce_1_axis_{nullptr};  // -1
-  mutable VarPtr sub_a_{nullptr};
-  mutable VarPtr pow_y_{nullptr};
-  mutable VarPtr reduce_2_axis_{nullptr};  // -1
-  mutable VarPtr add_2_b_{nullptr};        // -0.00001
-  mutable VarPtr mul_b_{nullptr};
-  mutable VarPtr add_3_b_{nullptr};
+  mutable std::vector<VarPtr> reduce_1_x_;
+  mutable std::vector<VarPtr> reduce_1_axis_;  // -1
+  mutable std::vector<VarPtr> sub_a_;
+  mutable std::vector<VarPtr> pow_y_;
+  mutable std::vector<VarPtr> reduce_2_axis_;  // -1
+  mutable std::vector<VarPtr> add_2_b_;        // -0.00001
+  mutable std::vector<VarPtr> mul_b_;
+  mutable std::vector<VarPtr> add_3_b_;
+  mutable std::vector<VarPtr> cast_to_;
+  mutable int index_{0};
 };
 
 class FuseAddAndLayernorm : public opt::LitePatternProcessPass {
