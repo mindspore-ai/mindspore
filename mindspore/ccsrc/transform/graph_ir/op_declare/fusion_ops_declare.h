@@ -33,6 +33,11 @@ DECLARE_OP_USE_OUTPUT(FlashAttentionScore)
 DECLARE_OP_ADAPTER(FlashAttentionScoreGrad)
 DECLARE_OP_USE_OUTPUT(FlashAttentionScoreGrad)
 
+// FusedInferAttentionScore
+DECLARE_OP_ADAPTER(FusedInferAttentionScore)
+DECLARE_OP_USE_DYN_INPUT(FusedInferAttentionScore)
+DECLARE_OP_USE_OUTPUT(FusedInferAttentionScore)
+
 DECLARE_OP_ADAPTER(MatmulReduceScatter)
 DECLARE_OP_USE_OUTPUT(MatmulReduceScatter)
 
