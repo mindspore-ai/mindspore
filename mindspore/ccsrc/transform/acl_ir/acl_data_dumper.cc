@@ -15,6 +15,8 @@
  */
 
 #include <mutex>
+#include <regex>
+#include "nlohmann/json.hpp"
 #include "debug/data_dump/data_dumper.h"
 #include "utils/ms_utils.h"
 #include "include/backend/debug/data_dump/acl_dump_json_writer.h"
@@ -55,13 +57,29 @@ class AclDataDumper : public DataDumper {
       MS_LOG(INFO) << "Call aclmdlInitDump failed, acl data dump function will be unusable.";
     }
   }
-  void EnableDump(uint32_t device_id, uint32_t step_id, bool is_init) override {
+  void EnableDump(uint32_t device_id, uint32_t step_id, bool is_init,
+                  const std::vector<std::string> &all_kernel_names) override {
     auto &dump_parser = DumpJsonParser::GetInstance();
     dump_parser.Parse();
+
+    // select target kernel names specified by user config
+    nlohmann::json target_kernel_names = nlohmann::json::array();
+    auto kernel_regs = dump_parser.GetKernelRegs();
+    if (!kernel_regs.empty()) {
+      for (auto iter = kernel_regs.begin(); iter != kernel_regs.end(); iter++) {
+        auto kernel_reg = iter->second;
+        for (const auto &s : all_kernel_names) {
+          if (std::regex_search(s, kernel_reg)) {
+            target_kernel_names.emplace_back(s);
+          }
+        }
+      }
+    }
+
     if (dump_parser.async_dump_enabled()) {
       auto &acl_json_writer = AclDumpJsonWriter::GetInstance();
       acl_json_writer.Parse();
-      acl_json_writer.WriteToFile(device_id, step_id, is_init);
+      acl_json_writer.WriteToFile(device_id, step_id, is_init, target_kernel_names);
       auto acl_dump_file_path = acl_json_writer.GetAclDumpJsonPath();
       std::string json_file_name = acl_dump_file_path + +"/acl_dump_" + std::to_string(device_id) + ".json";
       if (CALL_ASCEND_API(aclmdlSetDump, json_file_name.c_str()) != ACL_ERROR_NONE) {

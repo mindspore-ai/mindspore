@@ -41,6 +41,14 @@ namespace runtime {
 void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &graphs, bool is_kbyk) {
   std::string env_enable_str = common::GetEnv("MS_ACL_DUMP_CFG_PATH");
   std::string dump_enable_str = common::GetEnv("MINDSPORE_DUMP_CONFIG");
+
+  std::vector<std::string> all_kernel_names;
+  for (const auto &graph : graphs) {
+    auto all_kernels = graph->execution_order();
+    std::for_each(all_kernels.begin(), all_kernels.end(),
+                  [&](const auto &k) { all_kernel_names.push_back(k->fullname_with_scope()); });
+  }
+
   auto step_count_num = 0;
   step_count_num = step_count;
   if (step_count == 1 && is_dataset_sink == 1) {
@@ -69,7 +77,7 @@ void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &
     auto registered_dumper = datadump::DataDumperRegister::Instance().GetDumperForBackend(device::DeviceType::kAscend);
     if (registered_dumper != nullptr) {
       registered_dumper->Initialize();
-      registered_dumper->EnableDump(device_id, step_count_num, is_init);
+      registered_dumper->EnableDump(device_id, step_count_num, is_init, all_kernel_names);
     }
   }
 }
