@@ -46,6 +46,7 @@ namespace kernel {
 KernelModPtr InternalKernelBuild(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
 
+  std::string op_fullname = anf_node->fullname_with_scope();
   std::string opname = common::AnfAlgo::GetCNodeName(anf_node);
   // Easy to compare accuracy and performance, later changed to debug
   MS_LOG(INFO) << "internal op [" << opname << "]";
@@ -54,6 +55,7 @@ KernelModPtr InternalKernelBuild(const AnfNodePtr &anf_node) {
     MS_LOG(ERROR) << "internal can't find Kernel[" << opname << "]";
     return nullptr;
   }
+  kernel_ptr->set_fullname(op_fullname);
   std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
   std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(anf_node);
 
