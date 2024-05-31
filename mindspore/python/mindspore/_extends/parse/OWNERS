@@ -2,6 +2,7 @@ approvers:
 - zh_qh #
 - ginfung
 - chenfei52
+- liangzhibo
 
 reviewers:
 - lanzhineng
@@ -24,3 +25,4 @@ files:
     - zh_qh
     - ginfung
     - chenfei52
+    - liangzhibo
