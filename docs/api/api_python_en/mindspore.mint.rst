@@ -19,6 +19,7 @@ Array Operation
     mindspore.mint.index_select
     mindspore.mint.tile
     mindspore.mint.topk
+    mindspore.mint.where
 
 Tensor Creation
 ^^^^^^^^^^^^^^^
@@ -42,9 +43,11 @@ Element-wise Operation
     mindspore.mint.cos
     mindspore.mint.erf
     mindspore.mint.floor
+    mindspore.mint.isfinite
     mindspore.mint.log
     mindspore.mint.atan2
     mindspore.mint.arctan2
+    mindspore.mint.square
 
 mindspore.mint.nn
 ------------------

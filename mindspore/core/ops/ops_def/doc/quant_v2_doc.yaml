@@ -38,9 +38,12 @@ quant_v2:
             ``Ascend``
         
         Examples:
-            >>> x = Tensor([100.0, 150.0], mstype.float32)
-            >>> scale = Tensor([80.0, 40.0], mstype.float32)
-            >>> offset = Tensor([0.0, 2.0], mstype.float32)
-            >>> quant = ops.operations._infer_ops.QuantV2(False, "Round", mstype.int8)
+            >>> import mindspore
+            >>> import mindspore.ops.operations._infer_ops as infer_ops
+            >>> from mindspore import Tensor
+            >>> x = Tensor([1.0, 1.5])
+            >>> scale = Tensor([4.0, 3.0])
+            >>> offset = Tensor([0.0, 2.0])
+            >>> quant = infer_ops.QuantV2()
             >>> y = quant(x, scale, offset)
-            [127 127]
+            [4 7]
