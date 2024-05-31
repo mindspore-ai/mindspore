@@ -189,7 +189,7 @@ def test_ms_int4_weight_quant_1p(mode):
     np.testing.assert_allclose(fact, expect, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
