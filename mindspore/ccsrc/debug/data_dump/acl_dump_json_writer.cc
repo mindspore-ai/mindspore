@@ -75,8 +75,15 @@ void AclDumpJsonWriter::Parse() {
   }
 }
 
-bool AclDumpJsonWriter::WriteToFile(uint32_t device_id, uint32_t step_id, bool is_init) {
+bool AclDumpJsonWriter::WriteToFile(uint32_t device_id, uint32_t step_id, bool is_init,
+                                    nlohmann::json target_kernel_names) {
   nlohmann::json dump_list;
+
+  if (!target_kernel_names.empty()) {
+    for (const auto &s : target_kernel_names) {
+      layer_.emplace_back(s);
+    }
+  }
   if (!layer_.empty()) {
     dump_list.push_back({{"layer", layer_}});
   }

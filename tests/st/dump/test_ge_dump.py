@@ -188,6 +188,20 @@ def test_ge_dump_acl():
     run_ge_dump_acl("test_acl_dump")
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ge_dump_acl_assign_ops_by_regex():
+    """
+    Feature: async dump on Ascend on GE backend.
+    Description: test async dump with default file_format value ("bin")
+    Expectation: dump data are generated as protobuf file format (suffix with timestamp)
+    """
+    run_ge_dump_acl("test_acl_dump_assign_ops_by_regex")
+
+
 class ReluReduceMeanDenseRelu(Cell):
     def __init__(self, kernel, bias, in_channel, num_class):
         super().__init__()
