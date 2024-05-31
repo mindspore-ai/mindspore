@@ -100,7 +100,7 @@ class AsyncMoveTo(nn.Cell):
         return add_out.asnumpy()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
@@ -129,7 +129,7 @@ def test_tensor_offload_d2h(mode):
     assert np.allclose(sync_out, async_out, 1e-05, 1e-05)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
@@ -159,7 +159,7 @@ def test_tensor_offload_h2d(mode):
     assert np.allclose(async_out, normal_out, 1e-05, 1e-05)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
@@ -175,7 +175,7 @@ def test_abnormal_case1(mode):
     assert np.allclose(x.asnumpy(), y.asnumpy(), 1e-05, 1e-05)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
@@ -192,7 +192,7 @@ def test_abnormal_case2(mode):
         y.move_to(to="Ascend")
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
@@ -209,7 +209,7 @@ def test_abnormal_case3(mode):
         y.move_to(to="gpu")
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
