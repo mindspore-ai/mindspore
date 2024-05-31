@@ -111,6 +111,7 @@ class BACKEND_EXPORT GraphScheduler {
   ActorSetPtr Build(const GraphCompilerInfo &graph_compiler_info);
   // Link actors to DAG through the edge connection of graph and graph execution strategy.
   void Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info);
+  std::vector<AnfNodePtr> GatherAllParams(const GraphCompilerInfo &graph_compiler_info);
   // Optimize the actor DAG. For example, erase invalid data arrow, etc.
   void Optimize(const ActorSetPtr &actor_set, const GraphCompilerInfo &graph_compiler_info) const;
 

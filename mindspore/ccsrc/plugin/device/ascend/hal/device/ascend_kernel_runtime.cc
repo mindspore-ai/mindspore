@@ -661,6 +661,13 @@ void AscendKernelRuntime::CreateDefaultStream() {
   MS_LOG(INFO) << "Create ascend communication stream, stream id: " << communication_stream_id;
   communication_stream_ = AscendStreamMng::GetInstance().GetStream(communication_stream_id);
   MS_EXCEPTION_IF_NULL(communication_stream_);
+
+  size_t copy_stream_id;
+  AscendStreamMng::GetInstance().CreateStream(&copy_stream_id);
+  MS_LOG(INFO) << "Create ascend copy data stream, stream id: " << copy_stream_id;
+  copy_data_stream_ = AscendStreamMng::GetInstance().GetStream(copy_stream_id);
+  AscendStreamMng::GetInstance().SetCopyStream(copy_data_stream_);
+  MS_EXCEPTION_IF_NULL(copy_data_stream_);
 }
 
 bool AscendKernelRuntime::InitDevice() {

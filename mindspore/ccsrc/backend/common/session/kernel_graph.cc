@@ -1518,5 +1518,7 @@ void KernelGraph::InferType() {
     cnode->set_abstract(abstract);
   }
 }
+
+void KernelGraph::CacheRootWeight(const std::vector<AnfNodePtr> &weights) { root_weights_ = weights; }
 }  // namespace session
 }  // namespace mindspore

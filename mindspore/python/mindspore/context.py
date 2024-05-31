@@ -308,6 +308,10 @@ class _Context:
             'ge_options': (dict,),
             'parallel_speed_up_json_path': (str, None),
             'host_scheduling_max_threshold': (int,),
+            'cur_step_num': (int,),
+            'save_checkpoint_steps': (int,),
+            'need_ckpt': (bool,),
+            'last_triggered_step': (int,),
             'topo_order': (dict,)
         }
         ascend_cfg_setters = {
@@ -321,6 +325,10 @@ class _Context:
             'ge_options': self._set_ge_options,
             'parallel_speed_up_json_path': self._set_speedup_config_path,
             'host_scheduling_max_threshold': self._get_ascend_config_setter('host_scheduling_max_threshold', str),
+            'cur_step_num': self._set_cur_step_num,
+            'save_checkpoint_steps': self._set_save_checkpoint_steps,
+            'need_ckpt': self._set_need_ckpt,
+            'last_triggered_step': self._set_last_triggered_step,
             'topo_order': self._set_topo_order
         }
         ascend_cfg_set = tuple(ascend_cfg_modes.keys())
@@ -715,6 +723,30 @@ class _Context:
 
         options_str = json.dumps(topo_order)
         self.set_param(ms_ctx_param.topo_order, options_str)
+
+    def _set_need_ckpt(self, need_ckpt):
+        """Set need ckpt flag"""
+        if not isinstance(need_ckpt, bool):
+            raise TypeError(f"For step num, the value type should be int, but got {type(need_ckpt)}, {need_ckpt}")
+        self.set_param(ms_ctx_param.need_ckpt, need_ckpt)
+
+    def _set_cur_step_num(self, step_num):
+        """set current step num at every step begin"""
+        if not isinstance(step_num, int):
+            raise TypeError(f"For step num, the value type should be int, but got {type(step_num)}, {step_num}")
+        self.set_param(ms_ctx_param.cur_step_num, step_num)
+
+    def _set_save_checkpoint_steps(self, steps):
+        """set save checkpoint steps before run"""
+        if not isinstance(steps, int):
+            raise TypeError(f"For step num, the value type should be int, but got {type(steps)}, {steps}")
+        self.set_param(ms_ctx_param.save_checkpoint_steps, steps)
+
+    def _set_last_triggered_step(self, step):
+        """set last triggered save ckpt steps before run"""
+        if not isinstance(step, int):
+            raise TypeError(f"For step num, the value type should be int, but got {type(step)}, {step}")
+        self.set_param(ms_ctx_param.last_triggered_step, step)
 
     def _set_speedup_config_path(self, speedup_config_path):
         """"Check and set speedup config for auto parallel."""

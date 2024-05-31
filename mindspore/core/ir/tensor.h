@@ -537,6 +537,10 @@ class MS_CORE_API Tensor : public BaseTensor {
   void SetDeviceInfo(const std::string &format, const TypePtr &data_type,
                      const std::string &host_format = "DefaultFormat");
 
+  void set_copy_done_flag(bool flag) { copy_done_flag_ = flag; }
+  bool get_copy_done_flag() const { return copy_done_flag_; }
+  bool copy_done_flag_{false};
+
  private:
   // Really execute callback function when host value is updated of Tensor.
   void ExecuteUpdateValueCallback() const;
