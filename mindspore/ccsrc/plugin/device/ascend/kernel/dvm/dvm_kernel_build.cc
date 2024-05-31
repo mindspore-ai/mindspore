@@ -560,7 +560,6 @@ class DvmKernelBuilder {
     auto cnode = node_->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto scope = cnode->fullname_with_scope();
-    MS_LOG(INFO) << "Start creating kernel module for node: " << scope;
     // FuncGraph --> Dvm Kernel
     auto func_graph = GetNodeFuncGraph(cnode);
     Construct(func_graph);
@@ -587,7 +586,6 @@ class DvmKernelBuilder {
         MS_LOG(EXCEPTION) << "Initialize kernel module failed for node: " << scope;
       }
     }
-    MS_LOG(INFO) << "End creating kernel module for node: " << scope;
     return kernel_mod_;
   }
 
@@ -771,6 +769,8 @@ class ParallelDvmKernelBuilder : public DvmKernelBuilder {
 
 KernelModPtr DvmOpBuild(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
+  auto scope = anf_node->fullname_with_scope();
+  MS_LOG(INFO) << "Start creating dvm kernel module for node: " << scope;
   auto func_graph = GetNodeFuncGraph(anf_node);
   std::shared_ptr<DvmKernelBuilder> kernel_builder{nullptr};
   auto is_dynamic = common::AnfAlgo::IsDynamicShape(anf_node);
@@ -782,7 +782,9 @@ KernelModPtr DvmOpBuild(const AnfNodePtr &anf_node) {
   } else {
     kernel_builder = std::make_shared<SingleDvmKernelBuilder>(anf_node, is_dynamic);
   }
-  return kernel_builder->Create();
+  auto kernel = kernel_builder->Create();
+  MS_LOG(INFO) << "End creating dvm kernel module for node: " << scope;
+  return kernel;
 }
 }  // namespace kernel
 }  // namespace mindspore

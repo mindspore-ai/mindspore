@@ -320,12 +320,13 @@ bool ConvertCallToPrim::Run(const FuncGraphPtr &func_graph) {
     }
     auto sub_fg = GetCNodeFuncGraph(node);
     if (sub_fg != nullptr) {
-      std::string prim_name = cnode->HasAttr(kAttrToPrim) ? GetValue<std::string>(cnode->GetAttr(kAttrToPrim))
-                                                          : prim::kPrimGraphKernel->name();
+      bool has_attr_to_prim = cnode->HasAttr(kAttrToPrim);
+      std::string prim_name =
+        has_attr_to_prim ? GetValue<std::string>(cnode->GetAttr(kAttrToPrim)) : common::AnfAlgo::GetCNodeName(node);
       auto new_prim = std::make_shared<Primitive>(prim_name, sub_fg->attrs());
       new_prim->AddAttr(kAttrFuncGraph, sub_fg);
       auto prim_input = NewValueNode(new_prim);
-      if (is_dvm) {
+      if (!has_attr_to_prim) {
         // do not create a new node, otherwise the ref pair saved in kernel graph is invalid
         cnode->set_input(0, prim_input);
         changed = true;
