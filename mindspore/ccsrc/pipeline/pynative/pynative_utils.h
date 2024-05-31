@@ -86,8 +86,6 @@ struct Common {
   static ValuePtr ConvertToContiguousValue(const ValuePtr &v, bool requires_grad);
   static size_t GetValueSize(const ValuePtr &v);
   static ValuePtr CreateTensorByConstantValue(const ValuePtr &value);
-  static void CheckAndSetAbstract(const OpGradInfoPtr &op_grad_info);
-  static void CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs);
 
   template <typename T>
   static std::string PrintDebugInfo(std::vector<T> items, const std::string &info_header = "",
@@ -235,6 +233,8 @@ struct AutoGrad {
   static PrimitivePyPtr BuildBpropCutPrim(const PrimitivePtr &prim, bool is_need_recompute = false);
   static void CheckRecomputeInputs(const GradParamPtr &grad_param);
   static void ClearAutoGradStaticCache();
+  static void CheckAndSetAbstract(const OpGradInfoPtr &op_grad_info);
+  static void CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs);
 };
 
 // Some common functions used in both jit and PackFunc grad

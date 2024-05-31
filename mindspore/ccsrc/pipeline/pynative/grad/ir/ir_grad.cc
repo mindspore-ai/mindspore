@@ -239,7 +239,7 @@ bool IrGrad::KPynativeOp(const GradParamPtr &grad_param) {
     PyNativeAlgo::Common::ClearDeviceAddress(cloned_value);
   }
 
-  PyNativeAlgo::Common::CheckAndSetAbstract(grad_param->op_grad_info);
+  PyNativeAlgo::AutoGrad::CheckAndSetAbstract(grad_param->op_grad_info);
   // construct zeroslike placeholder, if need use in bprop, we replace it in backprogate.
   AnfNodePtr dout =
     PyNativeAlgo::AutoGrad::BuildSpecialNode(ad_param()->tape_, PyNativeAlgo::AutoGrad::GetFakeZeroTensor(),

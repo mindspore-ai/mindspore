@@ -37,7 +37,6 @@ using BaseTensorPtr = tensor::BaseTensorPtr;
 }
 namespace kernel {
 namespace pyboost {
-
 using BaseTensorPtr = tensor::BaseTensorPtr;
 // OpRunner is a base class for operators.
 // OpRunner records the operator's input abstract,
@@ -75,13 +74,13 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   }
 
   // For view op used
-  void SetOutputAbstract() { output_abs_ = AbstractConvertFunc::ConvertAbstract(output(kIndex0)); }
+  void SetOutputAbstract() { output_abs_ = kAbstractConverter.ConvertAbstract(output(kIndex0)); }
 
   // For view op used
   void SetOutputTupleAbstract() {
     AbstractBasePtrList abs_list;
     for (const auto &output : outputs_) {
-      const auto &abs = AbstractConvertFunc::ConvertAbstract(output);
+      const auto &abs = kAbstractConverter.ConvertAbstract(output);
       (void)abs_list.emplace_back(abs);
     }
     output_abs_ = std::make_shared<abstract::AbstractTuple>(abs_list);
@@ -99,12 +98,12 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
       return;
     }
 
-    (input_abs_.emplace_back(AbstractConvertFunc::ConvertAbstract(args)), ...);
+    (input_abs_.emplace_back(kAbstractConverter.ConvertAbstract(args)), ...);
     output_abs_ = PyBoostUtils::InferByOpDef(primitive_, input_abs_);
     MS_EXCEPTION_IF_NULL(output_abs_);
     MS_LOG(DEBUG) << "PyBoost infer by abstract, get output " << output_abs_->ToString();
     PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_);
-    AbstractConvertFunc::CacheAbstract(output_abs_);
+    kAbstractConverter.CacheAbstract(output_abs_);
   }
 
   // A static function used for the "customize" operator to generate the operator's output Tensor.
