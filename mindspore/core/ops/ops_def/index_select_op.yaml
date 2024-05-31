@@ -1,5 +1,5 @@
-#operator index_select_ext
-index_select_ext:
+#operator index_select
+index_select:
     args:
         input:
             dtype: tensor
@@ -12,3 +12,5 @@ index_select_ext:
             dtype: tensor
     dispatch:
         enable: True
+    function:
+        name: index_select_ext

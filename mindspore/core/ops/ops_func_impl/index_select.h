@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_INDEX_SELECT_EXT_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_INDEX_SELECT_EXT_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_INDEX_SELECT_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_INDEX_SELECT_H_
 
 #include <memory>
 #include <vector>
@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class MIND_API IndexSelectExtFuncImpl : public OpFuncImpl {
+class MIND_API IndexSelectFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
@@ -32,4 +32,4 @@ class MIND_API IndexSelectExtFuncImpl : public OpFuncImpl {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_INDEX_SELECT_EXT_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_INDEX_SELECT_H_
