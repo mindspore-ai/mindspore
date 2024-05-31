@@ -67,22 +67,27 @@ BaseShapePtr UniformIntInferShape(const PrimitivePtr &primitive,
                              << maxval_shape->ToString();
   }
 
-  ShapeVector shape;
-  abstract::ShapePtr output_shape;
-
-  auto shape_abs = input_args[kInputIndex0];
-  auto shape_value = shape_abs->GetValue();
-  if (IsValueKnown(shape_value)) {
-    shape = CheckAndConvertUtils::IsTensor(shape_abs)
-              ? CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, op_name, shape_abs->GetType())
-              : CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, op_name);
-    output_shape = std::make_shared<abstract::Shape>(shape);
-  } else {
-    // ToSupport Dynamic
-    shape = {-2};  // unknown dimension.
-    output_shape = std::make_shared<abstract::Shape>(shape);
+  auto shape_v = GetArrayValue<int64_t>(input_args[kInputIndex0]);
+  if (!shape_v.has_value()) {
+    ShapeVector dyn_output{abstract::TensorShape::kShapeRankAny};
+    return std::make_shared<abstract::TensorShape>(dyn_output);
   }
-  return output_shape;
+
+  auto shape = shape_v.value();
+  ShapeVector output_shape;
+  for (size_t i = 0; i < shape_v->size(); i++) {
+    if (shape.IsValueUnknown(i)) {
+      output_shape.push_back(abstract::TensorShape::kShapeDimAny);
+    } else {
+      int64_t shape_i = shape[i];
+      MS_CHECK_VALUE(shape_i >= 0, CheckAndConvertUtils::FormatCheckIntegerMsg(
+                                     "the " + std::to_string(i) + "th dimension of input shape", shape_i, kGreaterEqual,
+                                     0, primitive));
+      output_shape.push_back(shape_i);
+    }
+  }
+
+  return std::make_shared<abstract::TensorShape>(output_shape);
 }
 
 class MIND_API UniformIntInfer : public abstract::OpInferBase {
