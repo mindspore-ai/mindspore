@@ -661,16 +661,24 @@ static void SplitTensor(const AnfNodePtr &node, const CNodePtr &next_node, int64
   MS_LOG(INFO) << "Split tensor for " << op_info->name() << ": The shape of tensor is " << shape_str;
 
   // extract tensor layout
-  if (LongToSize(index - 1) >= op_info->inputs_tensor_info().size()) {
+  TensorLayout tensor_layout;
+  auto inputs_info_size = op_info->inputs_tensor_info_new().empty() ? op_info->inputs_tensor_info().size()
+                                                                    : op_info->inputs_tensor_info_new().size();
+  if (LongToSize(index - 1) >= inputs_info_size) {
     if (IsIgnoreSplitTensor(next_node, index - 1)) {
       MS_LOG(INFO) << op_info->name() << ": no need to split tensor for index " << (index - 1);
       return;
     }
     MS_LOG(EXCEPTION) << op_info->name() << ": The index is out of range, index is  " << (index - 1)
-                      << ", vector size is  " << op_info->inputs_tensor_info().size();
+                      << ", vector size is  " << inputs_info_size;
   }
-  TensorInfo tensor_info = op_info->inputs_tensor_info()[LongToSize(index - 1)];
-  TensorLayout tensor_layout = tensor_info.tensor_layout();
+  if (op_info->inputs_tensor_info_new().empty()) {
+    TensorInfo tensor_info = op_info->inputs_tensor_info()[LongToSize(index - 1)];
+    tensor_layout = tensor_info.tensor_layout();
+  } else {
+    auto tensor_info = op_info->inputs_tensor_info_new()[LongToSize(index - 1)];
+    tensor_layout = tensor_info->GetValue().tensor_layout();
+  }
 
   // Use _GetTensorSlice operator to split the tensor
   FuncGraphPtr func_graph = next_node->func_graph();  // only cnode can get the graph
