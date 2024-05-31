@@ -32,8 +32,9 @@ def test_os_env_mapping_get():
     """
     def func():
         device_id = os.environ.get("DEVICE_ID")
+    os.environ["DEVICE_ID"] = "3"
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=func, mode="PIJit", jit_config={"compile_by_trace": False})()
+    jit(fn=func, mode="PIJit")()
     jcr = get_code_extra(func)
     assert jcr["break_count_"] == 0
 
@@ -72,6 +73,7 @@ def test_os_env_mapping_get_with_tensor(a, b):
             return a * b
         return a + b
     context.set_context(mode=context.PYNATIVE_MODE)
-    jit(fn=func, mode="PIJit", jit_config={"compile_by_trace": False})(a, b) # One-stage will fix it later
+    os.environ["DEVICE_ID"] = "3"
+    jit(fn=func, mode="PIJit")(a, b)
     jcr = get_code_extra(func)
     assert jcr["break_count_"] == 0

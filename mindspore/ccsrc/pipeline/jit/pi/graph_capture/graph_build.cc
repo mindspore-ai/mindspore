@@ -1187,7 +1187,11 @@ bool GraphBuilder::DoBinary(const Instr &instr) {
 }
 
 static bool CheckTupleListMul(ValueNode *left, ValueNode *right) {
-  bool special = left->GetOpcode() == BUILD_LIST || left->GetOpcode() == BUILD_TUPLE || left->IsConstantValue();
+  bool special = left->GetOpcode() == BUILD_LIST || left->GetOpcode() == BUILD_TUPLE;
+  if (!special && left->IsConstantValue()) {
+    AObject::Type l_type = left->GetVobj()->GetType();
+    special = l_type == AObject::kTypeTuple || l_type == AObject::kTypeList;
+  }
   if (special && right->IsConstantValue()) {
     PyObject *mul = right->GetVobj()->GetPyObject().ptr();
     const int max = 2;
@@ -1770,10 +1774,6 @@ bool CheckSupportCreateInstance(CallNode *call_node) {
      *    z = list(zip(list(x), list(y)))
      *    z = list(enumerate(x))
      */
-    PyTypeObject *iterable_type = first_param->GetTypeObject();
-    if (iterable_type != &PyZip_Type && iterable_type != &PyEnum_Type) {
-      return false;
-    }
     // this case, zip object and enumerate object is dead variable
   }
   return limit_create_instance_type.find(tp) != limit_create_instance_type.end();
@@ -2736,7 +2736,35 @@ static bool GuardLoopSequence(Graph *graph, ValueNode *seq_node, Py_ssize_t seq_
   return true;
 }
 
-bool GraphBuilder::TraceRunForIterSequence(int jump_bci) {
+bool GuardIterInputs(Graph *graph, ValueNode *seq_node, Py_ssize_t seq_size = -1) {
+  PyObject *seq = seq_node->GetVobj()->GetPyObject().ptr();
+  if (seq != nullptr && seq_size == -1) {
+    seq_size = PySequence_Size(seq);
+  }
+  if (seq == nullptr || seq_size == -1) {
+    PyErr_Clear();
+    return false;
+  }
+  if (!graph->GuardSequenceNodeLength(seq_node, seq_size)) {
+    return false;
+  }
+  auto input_nodes = seq_node->getInputs();
+  for (size_t i = 1; i < input_nodes.size(); ++i) {
+    ValueNode *input_node = input_nodes[i];
+    if (input_node == nullptr) {
+      return false;
+    }
+    TracePtr tr = graph->TraceValueNode(input_node);
+    if (!(graph->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GEqual))) {
+      MS_LOG(INFO) << "Iterator guard fail: " << seq_node->ToString();
+      return false;
+    }
+  }
+  MS_LOG(INFO) << "Iterator guard success: " << seq_node->ToString();
+  return true;
+}
+
+bool GraphBuilder::TraceRunForIterSequence(int jump_bci, bool is_range_type) {
   // check for iter
   ValueNode *iter_node = seek(0);
   ValueNode *seq_node = iter_node->input(0);
@@ -2752,7 +2780,8 @@ bool GraphBuilder::TraceRunForIterSequence(int jump_bci) {
   }
 
   int &index = iter_node->marker_;
-  if (index == 0 && !GuardLoopSequence(graph_, seq_node)) {
+  if (index == 0 && ((is_range_type && !GuardIterInputs(graph_, seq_node)) ||
+                     (!is_range_type && !GuardLoopSequence(graph_, seq_node)))) {
     // loop start.
     return false;
   }
@@ -2772,11 +2801,10 @@ bool GraphBuilder::TraceRunForIterSequence(int jump_bci) {
 
   py::object index_object = py::int_(index);
   ValueNode *index_node = NewValueNode(AObject::Convert(index_object), LOAD_CONST, -1, {});
-  ValueNode *item_node = TupleDictGetItem(seq_node, index_node);
-  if (item_node == nullptr) {
-    item_node = NewValueNode(AObject::Convert(item), BINARY_SUBSCR, 0, {seq_node, index_node});
-    graph_->GetTracedNodes().push_back(item_node);
-  }
+  push(seq_node);
+  push(index_node);
+  DoItemAccess({BINARY_SUBSCR, 0});
+  ValueNode *item_node = pop();
   Py_DECREF(item);
 
   index++;
@@ -2916,6 +2944,18 @@ bool GraphBuilder::TraceRunForIterZip(int jump_bci) {
   return true;
 }
 
+bool IsRangeType(ValueNode *iter_node) {
+  if (iter_node->input(0)->GetOpcode() != CALL_FUNCTION) {
+    return false;
+  }
+  auto vobj = iter_node->input(0)->input(0)->GetVobj();
+  if (vobj == nullptr) {
+    return false;
+  }
+  PyTypeObject *type = reinterpret_cast<PyTypeObject *>(static_cast<AbstractType *>(vobj)->GetPyObject().ptr());
+  return type == &PyRange_Type;
+}
+
 bool GraphBuilder::TraceRunForIter(const Instr &instr) {
   MS_EXCEPTION_IF_NULL(instr.extra_jump());
 
@@ -2933,7 +2973,7 @@ bool GraphBuilder::TraceRunForIter(const Instr &instr) {
   } else if (iterable->GetTypeObject() == &PyZip_Type) {
     succ = TraceRunForIterZip(instr.extra_jump()->bci());
   } else {
-    succ = TraceRunForIterSequence(instr.extra_jump()->bci());
+    succ = TraceRunForIterSequence(instr.extra_jump()->bci(), IsRangeType(iter_node));
   }
   if (!succ) {
     graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceLoop_Unsupported);
@@ -3429,6 +3469,17 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
     *stop_reason = StopTraceReason::kStopTraceFunc_Type_Unsupported;
   }
   return callable_info;
+}
+
+bool MindGraphBuilder::HandleCallClass(CallNode *call_node) {
+  bool succ = GraphBuilder::HandleCallClass(call_node);
+  if (!succ) {
+    MS_LOG(INFO) << "Failed to handle call class";
+    return false;
+  } else if (call_node->GetVobj() != nullptr && call_node->GetVobj()->GetPyObject().ptr() != nullptr) {
+    return FGBuilder()->AddLocalVariable(call_node->GetVobj()->GetPyObject());
+  }
+  return false;
 }
 
 ValueNode *MindGraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &instr) {

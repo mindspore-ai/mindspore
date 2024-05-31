@@ -419,6 +419,39 @@ bool CheckConstPyObject(PyObject *cnst) {
   return cnst_types.find(Py_TYPE(cnst)) != cnst_types.end();
 }
 
+static py::object GetAdapterTensorType() {
+  py::object registry = Utils::GetModuleAttr("mindspore.common._register_for_adapter", "ms_adapter_registry");
+  return registry.ptr() == nullptr ? py::object() : py::getattr(registry, "tensor", nullptr);
+}
+
+bool CheckAdapterTensor(const py::object &tensor) {
+  PyTypeObject *tp = reinterpret_cast<PyTypeObject *>(GetAdapterTensorType().ptr());
+  return Py_TYPE(tensor.ptr()) == tp;
+}
+
+py::object ConvertToAdapterTensor(const py::object &tensor) {
+  py::object adapter_tensor_type = GetAdapterTensorType();
+  PyTypeObject *tp = reinterpret_cast<PyTypeObject *>(adapter_tensor_type.ptr());
+  if (Py_TYPE(tensor.ptr()) == tp) {
+    return tensor;
+  }
+  MS_EXCEPTION_IF_NULL(adapter_tensor_type.ptr());
+  PyObject *args[] = {tensor.ptr(), Py_True, nullptr};
+  py::tuple kw(1);
+  kw[0] = py::str("cast_tensor");
+  PyObject *adapter_tensor = PyObject_Vectorcall(adapter_tensor_type.ptr(), args, 1, kw.ptr());
+  if (!PyErr_Occurred()) {
+    return py::reinterpret_steal<py::object>(adapter_tensor);
+  }
+  throw py::error_already_set();
+}
+
+py::object ConvertToMsTensor(const py::object &tensor) {
+  py::object common_tensor_type = Utils::GetModuleAttr("mindspore", "Tensor", false, true);
+  PyTypeObject *tp = reinterpret_cast<PyTypeObject *>(common_tensor_type.ptr());
+  return Py_TYPE(tensor.ptr()) == tp ? tensor : common_tensor_type(tensor);
+}
+
 size_t DeviceAvailableMemSize() {
   const auto &context = MsContext::GetInstance();
   uint32_t device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
