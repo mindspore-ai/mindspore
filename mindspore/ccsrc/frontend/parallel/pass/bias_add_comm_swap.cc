@@ -62,17 +62,26 @@ bool IsAddNodeValid(const CNodePtr &add_node, const AnfNodePtr &comm_node) {
 AnfNodePtr FindMatMulNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto matmul_node = GetInputNodeWithFilter(node, [&](const CNodePtr &cnode) {
-    bool filter = !IsPrimitiveCNode(cnode, prim::kPrimMatMul);
+    auto prim = GetCNodePrimitive(cnode);
+    if (prim == nullptr) {
+      return std::make_pair(false, 0);
+    }
+    bool filter = (ALLREDUCE_PULL_DOWN_WHITE_LIST.find(prim->name()) != ALLREDUCE_PULL_DOWN_WHITE_LIST.end()) ||
+                  (IsPrimitiveCNode(cnode, prim::kPrimAllReduce) || IsPrimitiveCNode(cnode, prim::kPrimReduceScatter));
     return std::make_pair(filter, 1);
   });
   return matmul_node;
 }
 
-// find allreduce/reduce_scatter node
+// find valid allreduce/reduce_scatter node
 AnfNodePtr FindValidCommNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto comm_node = GetInputNodeWithFilter(node, [&](const AnfNodePtr &anode) {
-    bool filter = !IsPrimitiveCNode(anode, prim::kPrimAllReduce) && !IsPrimitiveCNode(anode, prim::kPrimReduceScatter);
+    auto prim = GetCNodePrimitive(anode);
+    if (prim == nullptr) {
+      return std::make_pair(false, 0);
+    }
+    bool filter = ALLREDUCE_PULL_DOWN_WHITE_LIST.find(prim->name()) != ALLREDUCE_PULL_DOWN_WHITE_LIST.end();
     return std::make_pair(filter, 1);
   });
   if (comm_node == nullptr ||
@@ -81,6 +90,8 @@ AnfNodePtr FindValidCommNode(const AnfNodePtr &node) {
   }
   auto matmul_node = FindMatMulNode(comm_node);
   if (matmul_node == nullptr || !IsPrimitiveCNode(matmul_node, prim::kPrimMatMul)) {
+    MS_LOG(ERROR) << "For bias_add_comm_swap, cannot find matmul node from comm node, comm node is: "
+                  << comm_node->DebugString();
     return nullptr;
   }
   return comm_node;
@@ -91,19 +102,17 @@ void FindAllValidAddNode(const FuncGraphPtr &graph, HashMap<CNodePtr, AnfNodePtr
   std::vector<CNodePtr> origin_nodes_topological(graph_orders.cbegin(), graph_orders.cend());
   for (const auto &node : origin_nodes_topological) {
     if (!IsPrimitiveCNode(node, prim::kPrimAdd)) {
-      MS_LOG(INFO) << "For cur node, it must be node add and its strategy must be all ones, but got "
-                   << node->DebugString();
       continue;
     }
 
-    auto comm_node = FindValidCommNode(node->cast<AnfNodePtr>());
+    auto comm_node = FindValidCommNode(node);
     if (comm_node == nullptr) {
-      MS_LOG(INFO) << "For cur node, cannot find valid comm node, cur node is " << node->DebugString();
+      MS_LOG(WARNING) << "For bias_add_comm_swap, cannot find valid comm node, cur node is " << node->DebugString();
       continue;
     }
     if (!IsAddNodeValid(node, comm_node)) {
-      MS_LOG(INFO) << "For cur node, its strategy not equal to comm node, cur node is " << node->DebugString()
-                   << " comm node is " << comm_node->DebugString();
+      MS_LOG(WARNING) << "For bias_add_comm_swap, strategy of add node and comm node are not equal, cur node is "
+                      << node->DebugString() << " comm node is " << comm_node->DebugString();
       continue;
     }
     (*add_node_map)[node] = comm_node;
@@ -116,18 +125,41 @@ void HandleNodePullUp(const AnfNodePtr &comm_node, const CNodePtr &add_node) {
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   // handle matmul node, connect it to next node of reduce_scatter/allreduce
-  auto comm_node_input = comm_node->cast<CNodePtr>()->input(1);
+  auto comm_cnode = comm_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(comm_cnode);
+  auto comm_node_input = comm_cnode->input(1);
+  MS_EXCEPTION_IF_NULL(comm_node_input);
   (void)manager->Replace(comm_node, comm_node_input);
 }
 
 void HandleNodeBiasAdd(const AnfNodePtr &comm_node, const CNodePtr &add_node) {
   auto comm_prim = GetCNodePrimitive(comm_node);
-  if (!comm_prim->HasAttr(kAttrRankSize)) {
-    MS_LOG(ERROR) << "cur prim has not attr " << kAttrRankSize << ", cur node is " << comm_node->DebugString();
+  MS_EXCEPTION_IF_NULL(comm_prim);
+  if (!comm_prim->HasAttr(GROUP)) {
+    MS_LOG(WARNING) << "For matmul comm reduction, cur prim has not attr " << GROUP
+                    << ", skip it, node is: " << comm_node->DebugString();
     return;
   }
-  auto rank_size = GetValue<int64_t>(comm_prim->GetAttr(kAttrRankSize));
-  auto bias_node = add_node->input(2);
+  auto comm_group = GetValue<std::string>(comm_prim->GetAttr(GROUP));
+  MS_EXCEPTION_IF_NULL(g_device_manager);
+  auto comm_rank_list = g_device_manager->FindRankListByHashName(comm_group);
+  int64_t rank_size = SizeToLong(comm_rank_list.size());
+
+  auto bias_side_start_node = add_node->input(2);
+  MS_EXCEPTION_IF_NULL(bias_side_start_node);
+  auto bias_node = GetInputNodeWithFilter(bias_side_start_node, [&](const AnfNodePtr &anode) {
+    auto prim = GetCNodePrimitive(anode);
+    if (prim == nullptr) {
+      return std::make_pair(false, 0);
+    }
+    bool filter = ALLREDUCE_PULL_DOWN_WHITE_LIST.find(prim->name()) != ALLREDUCE_PULL_DOWN_WHITE_LIST.end();
+    return std::make_pair(filter, 1);
+  });
+  if (bias_node == nullptr || !IsPrimitiveCNode(bias_node, prim::kPrimLoad)) {
+    MS_LOG(WARNING) << "From cur add node, cannot find Load op for bias parameter, please check whether it exists,"
+                    << "  cur node is: " << add_node->DebugString();
+    return;
+  }
   const auto bias_dtype = bias_node->abstract()->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(bias_dtype);
   mindspore::tensor::TensorPtr tensor_ptr =
@@ -144,6 +176,7 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node, const CNodePtr &add_node) {
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   (void)manager->Replace(bias_node, div_node);
+  MS_LOG(INFO) << "For bias add comm swap, insert div node after bias parameter, node is: " << bias_node->DebugString();
 }
 
 void HandleNodePullDown(const AnfNodePtr &comm_node, const CNodePtr &add_node) {
@@ -175,7 +208,7 @@ void HandleAddNode(HashMap<CNodePtr, AnfNodePtr> *add_node_map) {
 void BiasAddCommSwap(const FuncGraphPtr &graph) {
   if (parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kSemiAutoParallel &&
       parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
-    MS_LOG(INFO) << "BiasAddCommSwap is only support under [semi_]auto_parallel, skip it.";
+    MS_LOG(WARNING) << "BiasAddCommSwap is only support under [semi_]auto_parallel, skip it.";
     return;
   }
   auto ms_context = MsContext::GetInstance();
