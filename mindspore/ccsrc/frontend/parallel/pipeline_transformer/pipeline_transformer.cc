@@ -1223,6 +1223,9 @@ void PipelineTransformer::CutBorderForNode(const FuncGraphPtr &graph, const AnfN
     if (node_stage < user_node_stage) {
       if (node_stage == stage_) {
         if (IsParameterGraph(node)) {
+          if (!is_train_ && !enable_share_cell_) {
+            continue;
+          }
           auto send_depend = HandleParameterGraph(node, user_node, node_stage, user_node_stage, micro,
                                                   IntToSize(user_pair.second), *send_ops);
           if (!send_depend) {
@@ -1242,6 +1245,9 @@ void PipelineTransformer::CutBorderForNode(const FuncGraphPtr &graph, const AnfN
       } else {
         if (!receive) {
           if (IsParameterGraph(node)) {
+            if (!is_train_ && !enable_share_cell_) {
+              continue;
+            }
             receive = HandleParameterGraph(node, user_node, node_stage, user_node_stage, micro,
                                            IntToSize(user_pair.second), *receive_ops);
             if (!receive) {
@@ -1785,7 +1791,9 @@ void PipelineTransformer::CutGraph() {
   MS_EXCEPTION_IF_NULL(graph);
   auto send_recv_cut_border = CutBorder(graph);
   std::vector<AnfNodePtr> send_ops;
-  (void)(send_ops.insert(send_ops.end(), send_recv_shared_param.first.begin(), send_recv_shared_param.first.end()));
+  if (is_train_ || enable_share_cell_) {
+    (void)(send_ops.insert(send_ops.end(), send_recv_shared_param.first.begin(), send_recv_shared_param.first.end()));
+  }
   (void)(send_ops.insert(send_ops.end(), send_recv_cut_border.first.begin(), send_recv_cut_border.first.end()));
   if (IsLastStage() && !enable_share_cell_) {
     return;
@@ -1806,7 +1814,9 @@ void PipelineTransformer::CutGraph() {
     HandleGraphOutputs(send_ops);
   }
   std::vector<AnfNodePtr> recv_ops;
-  (void)(recv_ops.insert(recv_ops.end(), send_recv_shared_param.second.begin(), send_recv_shared_param.second.end()));
+  if (is_train_ || enable_share_cell_) {
+    (void)(recv_ops.insert(recv_ops.end(), send_recv_shared_param.second.begin(), send_recv_shared_param.second.end()));
+  }
   (void)(recv_ops.insert(recv_ops.end(), send_recv_cut_border.second.begin(), send_recv_cut_border.second.end()));
   HandleGraphInputs(recv_ops);
 }

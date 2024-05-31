@@ -70,6 +70,34 @@ class Net(nn.Cell):
         return x, y
 
 
+class NoLazyNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        shape = (8, 8)
+        self.word_embedding = WordEmbedding(shape)
+        self.decoder1 = FC(shape)
+        self.decoder2 = FC(shape)
+        self.lm_head = LMHead(shape)
+
+        self.word_embedding.matmul.shard(((1, 1), (1, 1)))
+        self.decoder1.matmul.shard(((1, 1), (1, 1)))
+        self.decoder2.matmul.shard(((1, 1), (1, 1)))
+        self.lm_head.matmul1.shard(((1, 1), (1, 1)))
+        self.lm_head.matmul2.shard(((1, 1), (1, 1)))
+
+        self.word_embedding.pipeline_stage = 0
+        self.decoder1.pipeline_stage = 1
+        self.decoder2.pipeline_stage = 2
+        self.lm_head.pipeline_stage = 3
+
+    def construct(self, x):
+        x, w = self.word_embedding(x)
+        x = self.decoder1(x)
+        x = self.decoder2(x)
+        x, y = self.lm_head(x, w)
+        return x, y
+
+
 class PipelineCellInference(nn.Cell):
     def __init__(self, network, micro_batch_num):
         super().__init__()
@@ -112,6 +140,29 @@ def test_pipeline_inference_basic():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", full_batch=True,
                                       pipeline_stages=pipeline_stages)
     net = PipelineCellInference(Net(), micro_batch_num=2)
+    net.set_train(False)
+
+    shape = (8, 8)
+    x = Tensor(np.ones(shape), mindspore.float32)
+    ret = net(x)
+
+    expect = [[np.zeros(shape, np.float32), np.zeros(shape, np.float32)],
+              [np.ones(shape, np.float32) * pow(8, 5), np.ones(shape, np.float32) * pow(8, 4) * 2]]
+    is_last_stage = get_stage_id() == pipeline_stages - 1
+    assert np.allclose(ret[0].asnumpy(), expect[is_last_stage][0])
+    assert np.allclose(ret[1].asnumpy(), expect[is_last_stage][1])
+
+
+def test_pipeline_inference_no_lazy_inline_basic():
+    """
+    Feature: Pipeline parallel inference with no lazy inline
+    Description: Micro batch split
+    Expectation: success
+    """
+    D.init()
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", full_batch=True,
+                                      pipeline_stages=pipeline_stages)
+    net = PipelineCellInference(NoLazyNet(), micro_batch_num=2)
     net.set_train(False)
 
     shape = (8, 8)
