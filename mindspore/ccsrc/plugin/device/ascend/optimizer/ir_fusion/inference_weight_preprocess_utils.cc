@@ -59,15 +59,26 @@ bool CheckFusionValid(const CNodePtr &matmul, int64_t *k, const int trans_a_pos,
   auto weight_node = inputs[kIndex2]->cast<CNodePtr>();
   auto w_param = GetParamFromLoad(weight_node, false);
   if (!w_param) return false;
-  std::vector<int64_t> shape = w_param->shape();
   auto w_type_id = static_cast<TypeId>(w_param->data_type_c());
   if (std::find(valid_dtypes.begin(), valid_dtypes.end(), w_type_id) == valid_dtypes.end()) {
     return false;
   }
-  if (shape.size() != 2) return false;
+  std::vector<int64_t> origin_shape = w_param->shape();
+  auto parallel_shape = common::AnfAlgo::GetOutputInferShape(weight_node, kIndex0);
+  // when param is not parallel tiled, it is not safe to use and concat, skip this pass
+  if (parallel_shape.size() != origin_shape.size()) {
+    return false;
+  }
+  for (int i = 0; i < static_cast<int>(parallel_shape.size()); i++) {
+    if (parallel_shape[i] != origin_shape[i]) {
+      return false;
+    }
+  }
+  const int shape_num_two = 2;
+  if (origin_shape.size() != shape_num_two) return false;
   if (*k == -1) {
-    *k = shape[1];
-  } else if (*k != shape[1]) {
+    *k = origin_shape[1];
+  } else if (*k != origin_shape[1]) {
     return false;
   }
   return true;
