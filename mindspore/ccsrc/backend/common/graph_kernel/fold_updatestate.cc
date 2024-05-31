@@ -202,13 +202,18 @@ bool RemoveRedundantDepends(const FuncGraphPtr &func_graph, const FuncGraphManag
       const auto &assigned_params = FindAssignedParams(gk_node);
       HashSet<AnfNodePtr> used_params;
       std::stack<CNodePtr> st;
+      HashSet<AnfNodePtr> visited;
       st.push(attach_cnode);
+      visited.insert(attach_cnode);
       while (!st.empty()) {
         auto n = st.top();
         st.pop();
-        for (auto input : n->inputs()) {
-          if (input->isa<CNode>()) {
+        size_t size = n->size();
+        for (size_t i = 1; i < size; i++) {
+          auto input = n->input(i);
+          if (input->isa<CNode>() && visited.find(input) == visited.end()) {
             st.push(input->cast<CNodePtr>());
+            visited.insert(input);
           } else if (input->isa<Parameter>()) {
             used_params.insert(input);
           }
