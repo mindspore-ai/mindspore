@@ -13,10 +13,12 @@ Array Operation
     :template: classtemplate.rst
 
     mindspore.mint.arange
+    mindspore.mint.broadcast_to
+    mindspore.mint.cat
     mindspore.mint.flip
     mindspore.mint.index_select
+    mindspore.mint.tile
     mindspore.mint.topk
-    mindspore.mint.broadcast_to
 
 Tensor Creation
 ^^^^^^^^^^^^^^^
