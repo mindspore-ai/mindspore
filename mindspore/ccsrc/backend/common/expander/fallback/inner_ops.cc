@@ -15,8 +15,12 @@
  */
 
 #include <vector>
+#include <string>
 #include "backend/common/expander/fallback/fallback_irbuilder.h"
 #include "include/common/utils/utils.h"
+#include "utils/shape_utils.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace expander {
@@ -42,6 +46,48 @@ REG_FALLBACK_BUILDER("VmapStackAssign").SetBody(BODYFUNC(ib) {
   // the VmapStackAssign's output shape is always [1], and dtype is kInt32.
   auto result = ib->Depend(ib->Tensor(std::vector<int>{0}, kInt32), assigned_param);
   return {result};
+});
+
+std::string FFNExtConvertEnumToString(int64_t id) {
+  static const std::vector<std::string> activation_mode = {
+    "no_activation", "relu", "sigmoid", "relu6",   "elu",      "leaky_relu",    "abs",    "relu1",     "softsign",
+    "softplus",      "tanh", "selu",    "hswish",  "hsigmoid", "thresholdrelu", "linear", "hard_tanh", "sign",
+    "swish",         "gelu", "glu",     "unknown", "fastgelu", "silu",          "geglu",  "swiglu",    "reglu"};
+  if (id < 0 || id >= static_cast<int64_t>(activation_mode.size())) {
+    MS_LOG(EXCEPTION) << "Invalid moe ffn activation " << id;
+    return "";
+  }
+  return activation_mode[id];
+}
+
+REG_FALLBACK_BUILDER("FFNExt").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto weight1 = ib->GetInput(kIndex1);
+  auto weight2 = ib->GetInput(kIndex2);
+  auto expert_tokens = ib->GetInput(kIndex3);
+  auto bias1 = ib->GetInput(kIndex4);
+  auto bias2 = ib->GetInput(kIndex5);
+  auto scale = ib->GetInput(kIndex6);
+  auto offset = ib->GetInput(kIndex7);
+  auto deq_scale1 = ib->GetInput(kIndex8);
+  auto deq_scale2 = ib->GetInput(kIndex9);
+  auto antiquant_scale1 = ib->GetInput(kIndex10);
+  auto antiquant_scale2 = ib->GetInput(kIndex11);
+  auto antiquant_offset1 = ib->GetInput(kIndex12);
+  auto antiquant_offset2 = ib->GetInput(kIndex13);
+  auto activation = ib->GetInput(kIndex14);
+  auto activation_ptr = activation->BuildValue();
+  auto activation_val = ops::GetValueWithCheck<int64_t>(activation_ptr);
+  auto activation_string = FFNExtConvertEnumToString(activation_val);
+  auto inner_precise = ib->GetInput(kIndex15);
+  auto inner_precise_ptr = inner_precise->BuildValue();
+  auto inner_precise_val = ops::GetValueWithCheck<int64_t>(inner_precise_ptr);
+  auto out = ib->Emit(
+    "FFN",
+    {x, weight1, weight2, expert_tokens, bias1, bias2, scale, offset, deq_scale1, deq_scale2, antiquant_scale1,
+     antiquant_scale2, antiquant_offset1, antiquant_offset2},
+    {{"activation", MakeValue<string>(activation_string)}, {"inner_precise", MakeValue<int64_t>(inner_precise_val)}});
+  return {out};
 });
 
 REG_FALLBACK_BUILDER("VmapUnstackAssign").SetBody(BODYFUNC(ib) {
