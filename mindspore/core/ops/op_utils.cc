@@ -110,6 +110,19 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
   return std::make_shared<abstract::Shape>(broadcast_shape);
 }
 
+ShapeVector BroadCastInferShape(const std::string &op_name, const ValuePtrList &input_values) {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &y_tensor = input_values[kIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+
+  auto x_shape = x_tensor->shape();
+  auto y_shape = y_tensor->shape();
+
+  auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name);
+  return broadcast_shape;
+}
+
 BaseShapePtr EltwiseGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[1]);

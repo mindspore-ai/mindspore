@@ -41,6 +41,8 @@ Element-wise Operation
     mindspore.mint.erf
     mindspore.mint.floor
     mindspore.mint.log
+    mindspore.mint.atan2
+    mindspore.mint.arctan2
 
 mindspore.mint.nn
 ------------------
