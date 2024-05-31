@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import os
+import glob
 import shutil
 import numpy as np
 import mindspore
@@ -179,3 +180,44 @@ def test_save_graphs3():
     assert dot > 15
     remove_path("./test_save_graphs3")
     context.set_context(save_graphs=False)
+
+
+class WhileSubGraphParam2(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.update = mindspore.Parameter(Tensor(1, mindspore.float32), "update")
+
+    def construct(self, x, y, z):
+        out1 = z
+        i = self.update
+        while x < y:
+            i = i + 1
+            out1 = out1 + 1
+            x = x + 1
+        return out1, self.update
+
+
+def test_save_graphs_with_fullname():
+    """
+    Feature: format of ir graph
+    Description: Every cnode in ir of actions should contain fullname.
+    Expectation: No exception.
+    """
+    x = Tensor(0, mindspore.float32)
+    y = Tensor(10, mindspore.float32)
+    z = Tensor(100, mindspore.float32)
+    context.set_context(save_graphs=1, save_graphs_path="./test_save_graphs4")
+    net = WhileSubGraphParam2()
+    net(x, y, z)
+    ir_files = glob.glob(os.path.join("test_save_graphs4", '*_validate*.ir'))
+    node_counting_appear = False
+    appear_count = 0
+    with open(ir_files[0], 'r') as fp:
+        for line in fp:
+            if '# Fullname with scope' in line:
+                appear_count += 1
+            if 'node counting information:' in line:
+                node_counting_appear = True
+    remove_path("./test_save_graphs4")
+    assert appear_count == 29
+    assert node_counting_appear
