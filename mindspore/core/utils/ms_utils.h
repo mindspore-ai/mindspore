@@ -75,6 +75,15 @@ static inline std::string GetEnv(const std::string &envvar) {
   return std::string(value);
 }
 
+static inline bool IsEnableRuntimeConfig(const std::string &runtime_config) {
+  static std::string items = GetEnv("MS_RUNTIME_CONF");
+  if (items.empty()) {
+    return false;
+  }
+  auto found = items.find(runtime_config, 0);
+  return found != std::string::npos;
+}
+
 static inline int SetEnv(const char *envname, const char *envvar, int overwrite = 1) {
 #if defined(_WIN32)
   return 0;

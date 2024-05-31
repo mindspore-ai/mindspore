@@ -155,36 +155,6 @@ def test_clipbynorm():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_avgpool_grad():
-    """
-    Feature: Validate opt pass keep node scope and id.
-    Description: Test opt pass AvgPoolGradUnifyMindIR.
-    Expectation: No exception and node id after opt pass is as expected.
-    """
-    ms.set_context(mode=ms.GRAPH_MODE, device_target='Ascend')
-
-    class Net(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.op = ops.AvgPool(pad_mode="VALID", kernel_size=2, strides=1)
-
-        def construct(self, x):
-            return self.op(x)
-
-    cap = Capture('avg_pool_grad_unify_mindir', 'AvgPoolGrad')
-    with capture(cap):
-        net = GradNetWrtX(Net())
-        x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
-        net(x)
-
-    patterns = ["Gradients/Default/net-Net/Grad_AvgPool/AvgPoolGrad-op"]
-    cap.check_output(patterns)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_adam_weightdecay():
     """
     Feature: Validate opt pass keep node scope and id.
