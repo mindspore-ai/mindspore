@@ -70,6 +70,7 @@ enum KernelType {
   kDynShape,
   kStaticParallel,
   kStaticMix,
+  kStaticStages,
   kEager,
   kKernelTypelEnd,
 };
@@ -109,6 +110,7 @@ class Kernel {
   NDObject *SliceLoad(void *addr, ShapeRef *shape, ShapeRef *start, ShapeRef *size, DType type);
   NDObject *StridedSliceLoad(void *addr, ShapeRef *shape, ShapeRef *start, ShapeRef *end, ShapeRef *step, DType type);
   NDObject *Store(void *addr, NDObject *input);
+  NDObject *PadStore(void *addr, NDObject *input, ShapeRef *pad_shape);
 
   NDObject *Unary(int op_type, NDObject *input);
   NDObject *Binary(int op_type, NDObject *lhs, NDObject *rhs);
@@ -131,6 +133,11 @@ class Kernel {
   NDObject *ElemAny(NDObject *input);
 
   NDObject *MatMul(NDObject *lhs, NDObject *rhs, bool trans_a, bool trans_b);
+
+  void StageSwitch(KernelType type);
+  NDObject *StageLoad(NDObject *stage_store);
+  NDObject *StageStore(NDObject *input);
+  NDObject *StagePadStore(NDObject *input, ShapeRef *pad_shape);
 
   uint64_t CodeGen();
   int Launch(void *workspace, void *stream);
