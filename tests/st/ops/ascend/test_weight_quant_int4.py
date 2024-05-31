@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell, GraphCell
-from mindspore.ops.auto_generate import WeightQuantBatchMatmul
+from mindspore.ops.operations._infer_ops import WeightQuantBatchMatmul
 
 import mindspore as ms
 from mindspore import Parameter, Tensor, export, JitConfig

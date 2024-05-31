@@ -224,6 +224,15 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<FFNActivationM
   return FFNActivationMode::ConvertEnumToString(activation_id);
 }
 
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<AscendQuantRoundMode>) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  }
+  int64_t round_mode_id = GetCastIntegralValue<int64_t>(value);
+  return AscendQuantRoundMode::ConvertEnumToString(round_mode_id);
+}
+
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<ScatterReduceMode>) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<StringImm>()) {

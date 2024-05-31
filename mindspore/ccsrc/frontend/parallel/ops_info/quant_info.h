@@ -132,6 +132,14 @@ class QuantInfo : public QuantInfoBase {
   ~QuantInfo() override = default;
 };
 
+class QuantV2Info : public AntiQuantInfo {
+ public:
+  QuantV2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+              const PrimitiveAttrs &attrs)
+      : AntiQuantInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~QuantV2Info() override = default;
+};
+
 class DequantInfo : public ArithmeticBase {
  public:
   DequantInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,

@@ -82,7 +82,10 @@ inline std::unordered_map<std::string, int64_t> GetStringToFormatMap() {
 REG_STRING_TO_ENUM_COMMON(format, GetStringToFormatMap())
 
 // RoundingMode
-StrToEnumMap StrToRoundingModeMap = {{"FLOOR", RoundingMode::FLOOR}, {"TRUNC", RoundingMode::TRUNC}};
+StrToEnumMap StrToRoundingModeMap = {{"ROUND", RoundingMode::ROUND},
+                                     {"TRUNC", RoundingMode::TRUNC},
+                                     {"FLOOR", RoundingMode::FLOOR},
+                                     {"CEIL", RoundingMode::CEIL}};
 REG_STRING_TO_ENUM_COMMON(rounding_mode, StrToRoundingModeMap)
 
 // PadMode

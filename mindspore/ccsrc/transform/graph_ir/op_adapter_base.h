@@ -250,6 +250,18 @@ class FFNActivationMode {
   }
 };
 
+class AscendQuantRoundMode {
+ public:
+  static std::string ConvertEnumToString(int64_t id) {
+    static const std::vector<std::string> round_mode = {"round", "trunc", "floor", "ceil"};
+    if (id < 0 || id >= static_cast<int64_t>(round_mode.size())) {
+      MS_LOG(EXCEPTION) << "Invalid AscendQuant round mode " << id;
+      return "";
+    }
+    return round_mode[id];
+  }
+};
+
 class ScatterReduceMode {
  public:
   static std::string ConvertEnumToString(int64_t id) {
