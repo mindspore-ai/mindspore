@@ -27,33 +27,17 @@
 #include "runtime/device/device_address_utils.h"
 #include "kernel/pyboost/pyboost_kernel_extra_func.h"
 #include "mindspore/core/utils/simple_info.h"
-#include "kernel/pyboost/ring_buffer.h"
+#include "include/common/pynative/abstract_converter.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+using AbstractConverter = pynative::AbstractConverter;
+static AbstractConverter kAbstractConverter;
 using AddressInfoPair = std::pair<std::vector<kernel::KernelTensor *>, device::DeviceAddressPtrList>;
 using BaseTensor = tensor::BaseTensor;
 using BaseTensorPtr = tensor::BaseTensorPtr;
 AbstractBasePtr BACKEND_EXPORT ToAbstractNoValue(const BaseTensorPtr &tensor);
-
-// For get abstract from value and cache abstract
-class BACKEND_EXPORT AbstractConvertFunc {
- public:
-  static void CacheAbstract(const AbstractBasePtr &abstract);
-  static AbstractBasePtr ConvertAbstract(const ValuePtr &t);
-  // Tensor is held by Abstract, may lead to memory leak.
-  static AbstractBasePtr ConvertAbstract(const BaseTensorPtr &t);
-  static AbstractBasePtr ConvertAbstract(const ValueTuplePtr &t);
-
-  template <typename T>
-  static AbstractBasePtr ConvertAbstract(const std::optional<T> &t) {
-    if (!t.has_value()) {
-      return kNone->ToAbstract();
-    }
-    return ConvertAbstract(t.value());
-  }
-};
 
 class BACKEND_EXPORT PyBoostUtils {
  public:
@@ -223,7 +207,7 @@ class BACKEND_EXPORT PyBoostUtils {
                                                   const T &... args) {
     // Get inputs abstract
     std::vector<AbstractBasePtr> input_abs;
-    ((void)input_abs.emplace_back(AbstractConvertFunc::ConvertAbstract(args)), ...);
+    ((void)input_abs.emplace_back(kAbstractConverter.ConvertAbstract(args)), ...);
 
     // Get output abstract
     auto output_abs = TransformValueSimpleInfoToAbstract(*output_value_simple_info);

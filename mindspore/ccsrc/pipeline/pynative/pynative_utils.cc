@@ -43,6 +43,7 @@
 #include "kernel/pyboost/auto_generate/contiguous.h"
 #include "runtime/pipeline/pipeline.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
+#include "include/common/pynative/abstract_converter.h"
 
 namespace mindspore {
 namespace pynative {
@@ -55,6 +56,8 @@ std::string GetObjIdFromPython(const py::handle &obj) {
   }
   return out.cast<std::string>();
 }
+// for simply infer (simple infer will push abs in bprop queue)
+static AbstractConverter kGradAbstractConverter;
 
 std::string GetIdForPyTupleOrList(const py::handle &obj) {
   auto p_list = py::cast<py::tuple>(obj);
@@ -1106,14 +1109,14 @@ ValuePtr Common::CreateTensorByConstantValue(const ValuePtr &value) {
   return tensor_ptr;
 }
 
-void Common::CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs) {
+void AutoGrad::CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(v);
   MS_EXCEPTION_IF_NULL(abs);
 
   if (v->isa<tensor::BaseTensor>()) {
     auto tensor = v->cast<tensor::BaseTensorPtr>();
     tensor->set_abstract(abs);
-    kernel::pyboost::AbstractConvertFunc::CacheAbstract(abs);
+    kGradAbstractConverter.CacheAbstract(abs);
   } else if (v->isa<ValueSequence>()) {
     const auto &value_seq = v->cast<ValueSequencePtr>();
     const auto &abs_seq = abs->cast<abstract::AbstractSequencePtr>();
@@ -1135,7 +1138,7 @@ void ConvertSimpleInferInfoToAbstract(const OpGradInfoPtr &op_grad_info) {
   MS_EXCEPTION_IF_NULL(op_grad_info);
   // Get inputs abstract
   for (const auto &v : op_grad_info->input_value) {
-    op_grad_info->input_abs.emplace_back(kernel::pyboost::AbstractConvertFunc::ConvertAbstract(v));
+    op_grad_info->input_abs.emplace_back(kGradAbstractConverter.ConvertAbstract(v));
   }
 
   // Get output abstract
@@ -1143,12 +1146,11 @@ void ConvertSimpleInferInfoToAbstract(const OpGradInfoPtr &op_grad_info) {
   op_grad_info->out_abs = TransformValueSimpleInfoToAbstract(*op_grad_info->output_value_simple_info);
 
   // Set abstract to tensor
-  Common::CacheOutputAbstract(op_grad_info->out_value, op_grad_info->out_abs);
+  AutoGrad::CacheOutputAbstract(op_grad_info->out_value, op_grad_info->out_abs);
   MS_LOG(DEBUG) << "Get output abstract " << op_grad_info->out_abs->ToString();
 }
 }  // namespace
-
-void Common::CheckAndSetAbstract(const OpGradInfoPtr &op_grad_info) {
+void AutoGrad::CheckAndSetAbstract(const OpGradInfoPtr &op_grad_info) {
   MS_EXCEPTION_IF_NULL(op_grad_info);
   if (op_grad_info->output_value_simple_info != nullptr) {
     MS_LOG(DEBUG) << "Convert op " << op_grad_info->op_prim->name() << " simple infer info to abstract";
@@ -1162,7 +1164,7 @@ void Common::CheckAndSetAbstract(const OpGradInfoPtr &op_grad_info) {
     MS_LOG(DEBUG) << "Op " << op_grad_info->op_prim->name() << " inputs abstract not set, set it now";
     for (const auto &v : op_grad_info->input_value) {
       // For use abstract cache on tensor
-      op_grad_info->input_abs.emplace_back(kernel::pyboost::AbstractConvertFunc::ConvertAbstract(v));
+      op_grad_info->input_abs.emplace_back(kGradAbstractConverter.ConvertAbstract(v));
     }
   }
   if (op_grad_info->out_abs == nullptr) {

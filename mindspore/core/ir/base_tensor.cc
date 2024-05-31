@@ -329,7 +329,7 @@ BaseTensor &BaseTensor::AssignValue(const BaseTensor &tensor) {
 }
 
 abstract::AbstractBasePtr BaseTensor::ToAbstract() {
-  auto tens = shared_from_base<Tensor>();
+  auto tens = shared_from_base<BaseTensor>();
   auto dtype = tens->Dtype();
   if (!IsSubType(dtype, kNumber) && !IsSubType(dtype, kString) && !IsSubType(dtype, kTensorType)) {
     MS_LOG(EXCEPTION) << "Expect tensor type kNumber or kString or kTensor but got: " << dtype->ToString() << ".";

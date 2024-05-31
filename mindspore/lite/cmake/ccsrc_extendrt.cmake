@@ -87,6 +87,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
             ${CCSRC_DIR}/backend/common/mem_reuse/mem_tracker.cc
             ${CCSRC_DIR}/common/thread_pool.cc
             ${CCSRC_DIR}/common/profiler.cc
+            ${CCSRC_DIR}/common/pynative/abstract_converter.cc
             ${CCSRC_DIR}/utils/scoped_long_running.cc
             ${CCSRC_DIR}/utils/cse.cc
             ${CCSRC_DIR}/utils/comm_manager.cc
