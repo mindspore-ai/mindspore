@@ -18,6 +18,7 @@
 #include <map>
 #include <string>
 #include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -30,26 +31,36 @@ BaseShapePtr ScatterAddExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   if (input_shape->IsDynamic() || index_shape->IsDynamic() || src_shape->IsDynamic()) {
     return input_shape->cast<abstract::ShapePtr>();
   }
-
+  auto dim_opt = GetScalarValue<int64_t>(input_args[kIndex1]->GetValue());
+  if (MS_UNLIKELY(!dim_opt.has_value())) {
+    return input_shape->Clone();
+  }
+  auto dim = dim_opt.value();
   auto input_shape_vec = input_shape->GetShapeVector();
   auto index_shape_vec = index_shape->GetShapeVector();
   auto src_shape_vec = src_shape->GetShapeVector();
+  auto input_rank = SizeToLong(input_shape_vec.size());
+  MS_CHECK_VALUE(
+    dim >= -input_rank && dim < input_rank,
+    CheckAndConvertUtils::FormatCheckInRangeMsg("dim", dim, kIncludeLeft, {-input_rank, input_rank}, primitive));
   if (input_shape_vec.size() < 1 || index_shape_vec.size() < 1 || src_shape_vec.size() < 1) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", dimension size of 'input', 'index' and "
                              << "'src' must be greater than or equal to 1. But got input_shape: " << input_shape_vec
                              << ", index_shape: " << index_shape_vec << ", src_shape: " << src_shape_vec << ".";
   }
-  if (input_shape_vec.size() != index_shape_vec.size()) {
+  if (input_shape_vec.size() != index_shape_vec.size() || input_shape_vec.size() != src_shape_vec.size()) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the dimension of 'input', 'index' and 'src' should be same, but got "
                              << "'input' dims: " << input_shape_vec.size() << "; "
                              << "'index' dims: " << index_shape_vec.size() << "; "
                              << "'src' dims: " << src_shape_vec.size() << ".";
   }
-  if (src_shape_vec != index_shape_vec) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", "
-                             << "'src' and 'index' must have the same shape, but got index_shape: " << index_shape_vec
-                             << ", src_shape: " << src_shape_vec << ".";
+  for (size_t d = 0; d < input_shape_vec.size(); d++) {
+    if (d != LongToSize(dim) && index_shape_vec[d] > input_shape_vec[d]) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", "
+                               << "'src' and 'index' must have the same shape, but got index_shape: " << index_shape_vec
+                               << ", src_shape: " << src_shape_vec << ".";
+    }
   }
   return input_shape->cast<abstract::ShapePtr>();
 }
@@ -62,6 +73,7 @@ TypePtr ScatterAddExtFuncImpl::InferType(const PrimitivePtr &primitive,
   (void)types.emplace("input", input_type);
   (void)types.emplace("src", src_type);
   (void)CheckAndConvertUtils::CheckTypeSame(types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTypeValid("input", input_type, common_valid_types_with_bool, primitive->name());
   return input_args[kIndex0]->GetType()->Clone();
 }
 }  // namespace ops
