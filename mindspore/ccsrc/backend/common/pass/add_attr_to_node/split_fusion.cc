@@ -40,13 +40,24 @@ const AnfNodePtr SplitFusionProcess(const FuncGraphPtr &graph, const AnfNodePtr 
   if (!utils::isa<ValueNodePtr>(axis_node) || !utils::isa<ValueNodePtr>(out_num_node)) {
     return cnode;
   }
-  auto axis_v = ops::GetScalarValue<int64_t>(axis_node->cast<ValueNodePtr>()->value());
+
+  int64_t axis;
+  auto axis_value = axis_node->cast<ValueNodePtr>()->value();
+  MS_EXCEPTION_IF_NULL(axis_value);
+  if (axis_value->isa<tensor::Tensor>()) {
+    axis = *(static_cast<int32_t *>(axis_value->cast<tensor::TensorPtr>()->data_c()));
+  } else {
+    auto axis_v = ops::GetScalarValue<int64_t>(axis_node->cast<ValueNodePtr>()->value());
+    if (!axis_v.has_value()) {
+      return cnode;
+    }
+    axis = axis_v.value();
+  }
   auto out_num_v = ops::GetScalarValue<int64_t>(out_num_node->cast<ValueNodePtr>()->value());
-  if (!out_num_v.has_value() || !axis_v.has_value()) {
+  if (!out_num_v.has_value()) {
     return cnode;
   }
 
-  int64_t axis = axis_v.value();
   int64_t output_num_value = out_num_v.value();
   auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, kIndex0);
   if (IsDynamicRank(x_shape)) {
