@@ -618,41 +618,6 @@ std::vector<tensor::BaseTensorPtr> PyBoostUtils::CastTensor(const std::vector<te
   }
   return output_tensors;
 }
-
-namespace {
-constexpr size_t kAbstractCacheSize = 8192;
-using AbstractCache = RingBuffer<AbstractBasePtr, kAbstractCacheSize>;
-AbstractCache kAbstractCache;
-}  // namespace
-
-void AbstractConvertFunc::CacheAbstract(const AbstractBasePtr &abstract) { kAbstractCache.Push(abstract); }
-
-AbstractBasePtr AbstractConvertFunc::ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
-
-// Tensor is held by Abstract, may lead to memory leak.
-AbstractBasePtr AbstractConvertFunc::ConvertAbstract(const BaseTensorPtr &t) {
-  auto abs = t->ToAbstract();
-  abs->set_value(kValueAny);
-  t->set_abstract(abs);
-  kAbstractCache.Push(abs);
-  return abs;
-}
-
-AbstractBasePtr AbstractConvertFunc::ConvertAbstract(const ValueTuplePtr &t) {
-  AbstractBasePtrList abs_list(t->value().size());
-  for (size_t i = 0; i < t->value().size(); ++i) {
-    auto &val = t->value()[i];
-    auto abs = val->ToAbstract();
-    if (val->isa<tensor::BaseTensor>()) {
-      abs->set_value(kValueAny);
-      auto tensor = val->cast<tensor::BaseTensorPtr>();
-      tensor->set_abstract(abs);
-      kAbstractCache.Push(abs);
-    }
-    abs_list[i] = abs;
-  }
-  return std::make_shared<abstract::AbstractTuple>(abs_list);
-}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -29,6 +29,7 @@ if(MSLITE_ENABLE_CONVERTER)
                 ${CCSRC_DIR}/ps/ps_context.cc
                 ${CCSRC_DIR}/common/thread_pool.cc
                 ${CCSRC_DIR}/common/profiler.cc
+                ${CCSRC_DIR}/common/pynative/abstract_converter.cc
                 ${CCSRC_DIR}/plugin/device/cpu/kernel/cpu_kernel.cc
                 ${CCSRC_DIR}/distributed/cluster/dummy_cluster_context.cc
                 ${CCSRC_DIR}/kernel/ops_utils.cc
