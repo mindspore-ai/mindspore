@@ -210,6 +210,9 @@ void KernelActor::InitOutputInfo() {
       output_need_somas = true;
     } else {
       (void)memory_alloc_list_.emplace_back(output_address.get());
+      if (output_address->original_ref_count() == SIZE_MAX) {
+        max_ref_cnt_output_list_.emplace_back(output_address.get());
+      }
       (void)memory_free_list_.emplace_back(output_address.get());
     }
   }
@@ -483,20 +486,8 @@ void *KernelActor::GetSomasDevicePtr(size_t offset) const {
 }
 
 void KernelActor::TraceDynamicMemory() {
-  if (is_output_kernel_) {
-    for (size_t i = 0; i < output_kernel_tensors_.size(); i++) {
-      if (graph_output_indexes_.count(i) > 0) {
-        // Not trace graph output memory.
-        continue;
-      }
-      const auto &kernel_tensor = output_kernel_tensors_[i];
-      MemoryTraceManager::GetInstance().AddKernelMemoryTraceBlock(
-        std::make_shared<KernelMemoryTraceBlock>(kernel_, kernel_tensor->device_ptr(), kernel_tensor->size(),
-                                                 kOutputMem, i),
-        device_contexts_[0]);
-    }
-  } else {
-    for (size_t i = 0; i < output_kernel_tensors_.size(); i++) {
+  for (size_t i = 0; i < output_kernel_tensors_.size(); i++) {
+    if (output_device_tensors_[i]->original_ref_count() != SIZE_MAX) {
       const auto &kernel_tensor = output_kernel_tensors_[i];
       MemoryTraceManager::GetInstance().AddKernelMemoryTraceBlock(
         std::make_shared<KernelMemoryTraceBlock>(kernel_, kernel_tensor->device_ptr(), kernel_tensor->size(),
@@ -537,6 +528,9 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   MemoryManagerActor::GetInstance()->AllocateMemory(&memory_alloc_list_, device_contexts_[0], context, GetAID());
 
   if (ActorDispatcher::enable_trace_dynamic_memory()) {
+    if (IsRunningFailed(context)) {
+      return;
+    }
     TraceDynamicMemory();
   }
 }
@@ -827,13 +821,9 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
     if (!memory_alloc_list_.empty()) {
       SendMemoryAllocReq(context);
     }
-  } else if (is_output_kernel_) {
+  } else if (!max_ref_cnt_output_list_.empty()) {
     // Allocate dynamic memory for graph output.
-    std::vector<DeviceTensor *> graph_output_device_tensors;
-    std::transform(graph_output_indexes_.begin(), graph_output_indexes_.end(),
-                   std::back_inserter(graph_output_device_tensors),
-                   [&](size_t index) { return output_device_tensors_[index]; });
-    MemoryManagerActor::GetInstance()->AllocateMemory(&graph_output_device_tensors, device_contexts_[0], context,
+    MemoryManagerActor::GetInstance()->AllocateMemory(&max_ref_cnt_output_list_, device_contexts_[0], context,
                                                       GetAID());
   }
 

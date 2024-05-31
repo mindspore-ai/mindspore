@@ -27,6 +27,7 @@
 #include "runtime/device/device_address_utils.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
+#include "utils/phase.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/backend/mem_reuse/mem_tracker.h"
@@ -363,6 +364,14 @@ void DataPrepareActor::Init() {
     MS_LOG(EXCEPTION) << "The number of graphs is not equal to the number of device contexts.";
   }
 
+  for (const auto &graph : graph_compiler_info_->graphs_) {
+    MS_EXCEPTION_IF_NULL(graph);
+    if (graph->is_dynamic_shape()) {
+      has_dynamic_shape_ = true;
+      break;
+    }
+  }
+
   for (auto &iter : continuous_memory_nodes_) {
     size_t total_size = 0;
     std::vector<size_t> size_list;
@@ -589,9 +598,11 @@ void DataPrepareActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
 void DataPrepareActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   // Allocate continuous memory in the begin of the step running.
   if (ActorDispatcher::is_memory_allocation_sync()) {
-    ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory,
-                              &continuous_memory_alloc_list_list_, &size_list_list_, &stream_id_list_,
-                              &total_size_list_, &continuous_memory_device_contexts_, context, GetAID());
+    if (!ActorDispatcher::enable_use_trace_memory()) {
+      ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory,
+                                &continuous_memory_alloc_list_list_, &size_list_list_, &stream_id_list_,
+                                &total_size_list_, &continuous_memory_device_contexts_, context, GetAID());
+    }
     OnMemoryAllocFinish(context);
   } else {
     ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory,
@@ -874,8 +885,22 @@ void DataPrepareActor::PrepareDataForHostTensorQueueNew(const VectorRef &args, O
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   static const bool enable_infer_boost = ms_context->IsEnableInferBoost();
-  if (enable_infer_boost && EnableKbkSubGraphExecute()) {
+  if (enable_infer_boost && has_dynamic_shape_ && EnableKbkSubGraphExecute()) {
     ActorDispatcher::set_enable_static_shape(!isDyn);
+
+    const auto &phase = PhaseManager::GetInstance().phase();
+    bool is_increment_graph = (phase.find("increment") != std::string::npos);
+    if (EnableTraceMemory() && is_increment_graph) {
+      if (continuous_memory_alloc_list_list_.size() > 0) {
+        MS_LOG(EXCEPTION)
+          << "Can not support continuous memory allocate in dynamic shape graph when enable trace memory.";
+      }
+      if (!ActorDispatcher::enable_static_shape()) {
+        ActorDispatcher::set_enable_trace_dynamic_memory(true);
+      } else {
+        ActorDispatcher::set_enable_use_trace_memory(true);
+      }
+    }
   }
   host_tensor_queue_->Push(host_tensors);
 }
