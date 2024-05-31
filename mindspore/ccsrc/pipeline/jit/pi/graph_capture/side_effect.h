@@ -166,9 +166,6 @@ class SideEffect {
 
   // side-effect handler required nodes
   std::set<ValueNode *> keep_alive_;
-
-  // mark the side-effect data must be reset
-  bool is_reset_;
 };
 
 // return the self node, if return nullptr, unsupported to handle side-effect

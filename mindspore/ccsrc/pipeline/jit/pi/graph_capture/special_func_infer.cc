@@ -565,33 +565,44 @@ static bool InferTensorAsType(CallNode *call_node, GraphBuilder *unused = nullpt
   return true;
 }
 
-static void RecordSideEffectCallNode(Graph *graph, CallNode *call_node, SideEffect::Type type) {
+static void RecordSideEffectCallNode(Graph *graph, CallNode *call_node, SideEffect::Type type, bool trace_flag) {
   const auto &side_effect = graph->GetSideEffect();
-  auto side_effect_node = graph->NewCallNode(call_node->GetOpcode(), call_node->GetOparg(), call_node->getInputs());
-  side_effect_node->SetVobj(AObject::MakeAObject(AObject::kTypeAnyValue));
-  graph->GetTracedNodes().push_back(side_effect_node);
+  ValueNode *side_effect_node;
+  if (trace_flag) {
+    side_effect_node = call_node;
+  } else {
+    side_effect_node = graph->NewCallNode(call_node->GetOpcode(), call_node->GetOparg(), call_node->getInputs());
+    side_effect_node->SetVobj(AObject::MakeAObject(AObject::kTypeAnyValue));
+    graph->GetTracedNodes().push_back(side_effect_node);
+  }
   side_effect->Record(side_effect_node, type);
 }
 
 static bool InferListAppend(CallNode *call_node, GraphBuilder *parent) {
-  auto builder = GraphBuilder::Creator(parent->root(), parent, nullptr, nullptr, parent->trace_flag());
-  Graph *sub_graph = builder->GetGraph();
   call_node->SetSubGraph(nullptr);
 
+  // check is supported type and get arguments
   bool is_method_descriptor = false;
   ValueNode *self = GetSelfFromListAppendCall(call_node, &is_method_descriptor);
   if (self == nullptr) {
     return false;
   }
   ValueNode *new_element = call_node->input(1 + is_method_descriptor);
+
   // transform to "new_list = [old_list[0], old_list[1]..., new_element]"
-  if (!builder->UnpackElements(self)) {
+  int size = parent->frame().GetStacks().size();
+  if (!parent->UnpackElements(self)) {
     return false;
   }
-  builder->push(new_element);
-  builder->DoBuildOp({BUILD_LIST, static_cast<int>(builder->frame().GetStacks().size())});
-  auto new_node = builder->pop();
+  parent->push(new_element);
+  size = parent->frame().GetStacks().size() - size;
+  parent->DoBuildOp({BUILD_LIST, size});
+  auto new_node = parent->pop();
   auto old_node = self;
+
+  // constant fold and set node info
+  auto builder = GraphBuilder::Creator(parent->root(), parent, nullptr, nullptr, parent->trace_flag());
+  Graph *sub_graph = builder->GetGraph();
   builder->DoLoadConst({LOAD_CONST, 0, py::object(py::none())});
   builder->DoReturn({RETURN_VALUE, 0});
 
@@ -599,21 +610,19 @@ static bool InferListAppend(CallNode *call_node, GraphBuilder *parent) {
   call_node->SetVobj(sub_graph->GetRetVal()->GetVobj());
   call_node->SetInlineReason(InlineReason::kInline);
 
-  // update frame status
+  // update frame status and record side-effect
   bool is_referenced = false;
   parent->ReplaceAll(old_node, new_node, &is_referenced);
   const auto &replace_map = parent->GetGraph()->GetSideEffect()->data()->modified_and_replaced_map();
   bool is_new_var = self->GetOpcode() == BUILD_LIST && replace_map.find(self) == replace_map.end();
   if (!is_new_var || is_referenced || self == new_element) {
     parent->GetGraph()->GetSideEffect()->data()->RecordModifiedAndReplacedNode(old_node, new_node);
-    RecordSideEffectCallNode(parent->GetGraph(), call_node, SideEffect::kListAppend);
+    RecordSideEffectCallNode(parent->GetGraph(), call_node, SideEffect::kListAppend, parent->trace_flag());
   }
   return true;
 }
 
 static bool InferDictPop(CallNode *call_node, GraphBuilder *parent) {
-  auto builder = GraphBuilder::Creator(parent->root(), parent, nullptr, nullptr, parent->trace_flag());
-  Graph *sub_graph = builder->GetGraph();
   call_node->SetSubGraph(nullptr);
 
   bool is_method_descriptor = false;
@@ -622,7 +631,7 @@ static bool InferDictPop(CallNode *call_node, GraphBuilder *parent) {
     return false;
   }
   // guard dict key and convert to constant key map
-  if (!sub_graph->GuardValueNode(self)) {
+  if (!parent->GetGraph()->GuardValueNode(self)) {
     return false;
   }
 
@@ -642,27 +651,32 @@ static bool InferDictPop(CallNode *call_node, GraphBuilder *parent) {
     }
     value = default_node->GetVobj()->GetPyObject();
   }
-  // constant fold
-  builder->DoLoadConst({LOAD_CONST, 0, value});
-  builder->DoReturn({RETURN_VALUE, 0});
 
   // transform to "new_map = {key:old_map[key]...}"
   ValueNode *old_node = dict_node;
   ValueNode *new_node = parent->TransformDictSetItem(dict_node, key_node, nullptr, default_node != nullptr);
-  MS_EXCEPTION_IF_NULL(new_node);
+  if (new_node == nullptr) {
+    return false;
+  }
+
+  // constant fold and set node info
+  auto builder = GraphBuilder::Creator(parent->root(), parent, nullptr, nullptr, parent->trace_flag());
+  Graph *sub_graph = builder->GetGraph();
+  builder->DoLoadConst({LOAD_CONST, 0, value});
+  builder->DoReturn({RETURN_VALUE, 0});
 
   call_node->SetSubGraph(sub_graph);
   call_node->SetVobj(sub_graph->GetRetVal()->GetVobj());
   call_node->SetInlineReason(InlineReason::kInline);
 
-  // update frame status
+  // update frame status and record side-effect
   bool is_referenced = false;
   parent->ReplaceAll(old_node, new_node, &is_referenced);
   const auto &replace_map = parent->GetGraph()->GetSideEffect()->data()->modified_and_replaced_map();
   bool is_new_var = self->GetOpcode() == BUILD_MAP && replace_map.find(self) == replace_map.end();
   if (!is_new_var || is_referenced) {
     parent->GetGraph()->GetSideEffect()->data()->RecordModifiedAndReplacedNode(old_node, new_node);
-    RecordSideEffectCallNode(parent->GetGraph(), call_node, SideEffect::kDictPop);
+    RecordSideEffectCallNode(parent->GetGraph(), call_node, SideEffect::kDictPop, parent->trace_flag());
   }
   return true;
 }
@@ -778,6 +792,7 @@ static const std::unordered_map<FuncKey, InferFunc> infer_func_map = {
 
 static const std::unordered_map<FuncKey, InferFunc> mind_infer_func_map = {
   {FUNC_KEY_PIJIT_CONSTEXPR, JustCallAndSetRes},     {FUNC_KEY_PIJIT_FORBIDDEN, SetForbiddenFuncInfo},
+  {FUNC_KEY_LIST_APPEND, InferListAppend},           {FUNC_KEY_DICT_POP, InferDictPop},
   {FUNC_KEY_BUILTIN_FUNC, InferBuiltinFuncOrMethod}, {FUNC_KEY_PSJIT_CODE, SetCallResType<AObject::kTypeTensor>},
   {FUNC_KEY_GET_CACHE_PRIM, InferGetCachePrim},      {FUNC_KEY_REGISTRY_GET, InferRegistryGet},
 };
