@@ -53,7 +53,7 @@ AnfNodePtr CreateTypeFloat(int64_t nbits);
 AnfNodePtr CreatInt64Imm(int64_t value);
 AnfNodePtr CreateFP32Imm(float value);
 AnfNodePtr CreateBoolImm(bool value);
-AnfNodePtr CreateInt32Tensor(int64_t value);
+AnfNodePtr CreateInt32Tensor(int64_t value, bool int64_type = false);
 AnfNodePtr CreateFP32Tensor(float value);
 AnfNodePtr CreateStringImm(std::string value);
 AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr);
@@ -61,6 +61,8 @@ AnfNodePtr CreateTuple(const std::vector<int64_t> &tuple);
 std::string HashInstanceName(const std::string &name);
 void InsertVirtualPipelineEndNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager, size_t index,
                                   std::string end_flag = "pipeline_end");
+CNodePtr CreateVirtualConverterBeginNode(const CNodePtr &input_cnode, size_t output_nums);
+CNodePtr CreateVirtualConverterEndNode(const FuncGraphPtr &graph, const std::vector<CNodePtr> &input_cnodes);
 
 class GenerateGraph {
  public:

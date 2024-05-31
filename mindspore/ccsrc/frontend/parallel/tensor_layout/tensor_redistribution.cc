@@ -20,6 +20,7 @@
 #include <memory>
 #include <set>
 #include <utility>
+#include <algorithm>
 #include <string>
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
@@ -29,9 +30,75 @@
 
 namespace mindspore {
 namespace parallel {
+Status TensorRedistribution::MakeFromToLayout(const TensorLayout &from, const TensorLayout &to) {
+  auto from_layout = from.LayoutForRedistribution();
+  auto to_layout = to.LayoutForRedistribution();
+  if (virtual_rank_ >= 0) {
+    from_origin_ = from_layout;
+    to_origin_ = to_layout;
+    virtual_rank_list_ = {virtual_rank_};
+    return SUCCESS;
+  }
+  if (from.GetVirtualRank().size() == to.GetVirtualRank().size()) {
+    from_origin_ = from_layout;
+    to_origin_ = to_layout;
+    virtual_rank_list_ = from.GetVirtualRank();
+    return SUCCESS;
+  }
+  if (from.GetVirtualRank().size() == 1) {
+    auto device_matrix = from_layout.device_arrangement_origin().array();
+    device_matrix.push_back(to.GetVirtualRank().size());
+    virtual_rank_list_ = to.GetVirtualRank();
+    to_origin_ = to_layout;
+    if (!from_layout.tensor_map_before().empty()) {
+      auto new_tensor_map = from_layout.tensor_map_before();
+      std::for_each(new_tensor_map.begin(), new_tensor_map.end(), [](auto &inner_vec) {
+        std::for_each(inner_vec.begin(), inner_vec.end(), [](auto &val) {
+          if (val >= 0) {
+            val++;
+          }
+        });
+      });
+      return from_origin_.InitFromExtendVector(device_matrix, new_tensor_map, from_layout.tensor_shape_before().array(),
+                                               false, false);
+    }
+    auto new_map = from_layout.origin_tensor_map().array();
+    std::transform(new_map.begin(), new_map.end(), new_map.begin(),
+                   [](const auto &val) { return val >= 0 ? val + 1 : val; });
+    return from_origin_.InitFromVector(device_matrix, new_map, from_layout.tensor_shape().array());
+  }
+  if (to.GetVirtualRank().size() == 1) {
+    auto device_matrix = to_layout.device_arrangement_origin().array();
+    device_matrix.push_back(from.GetVirtualRank().size());
+    virtual_rank_list_ = from.GetVirtualRank();
+    from_origin_ = from_layout;
+    if (!to_layout.tensor_map_before().empty()) {
+      auto new_tensor_map = to_layout.tensor_map_before();
+      std::for_each(new_tensor_map.begin(), new_tensor_map.end(), [](auto &inner_vec) {
+        std::for_each(inner_vec.begin(), inner_vec.end(), [](auto &val) {
+          if (val >= 0) {
+            val++;
+          }
+        });
+      });
+      return to_origin_.InitFromExtendVector(device_matrix, new_tensor_map, to_layout.tensor_shape_before().array(),
+                                             false, false);
+    }
+    auto new_map = to_layout.origin_tensor_map().array();
+    std::transform(new_map.begin(), new_map.end(), new_map.begin(),
+                   [](const auto &val) { return val >= 0 ? val + 1 : val; });
+    return to_origin_.InitFromVector(device_matrix, new_map, to_layout.tensor_shape().array());
+  }
+  MS_LOG(ERROR) << "The from layout sharding micro interleaved num:" << from.GetVirtualRank().size()
+                << " dose not match the to layout sharding micro interleaved num:" << to.GetVirtualRank().size();
+  return FAILED;
+}
+
 Status TensorRedistribution::Init(const TensorLayout &from, const TensorLayout &to, const RankList &dev_list) {
-  from_origin_ = from;
-  to_origin_ = to;
+  if (MakeFromToLayout(from, to) != SUCCESS) {
+    MS_LOG(ERROR) << "Make from_layout and to_layout failed.";
+    return FAILED;
+  }
   const Shape from_origin_shape = from_origin_.tensor_shape().array();
   const Shape to_origin_shape = to_origin_.tensor_shape().array();
   bool is_from_dyn = std::find(from_origin_shape.begin(), from_origin_shape.end(), -1) != from_origin_shape.end();
@@ -43,7 +110,17 @@ Status TensorRedistribution::Init(const TensorLayout &from, const TensorLayout &
     MS_LOG(ERROR) << "reshape to_origin_ " << to_origin_.ToString();
     return Status::FAILED;
   }
-  dev_list_ = dev_list;
+
+  if (virtual_rank_list_.size() == 1) {
+    dev_list_ = dev_list;
+  } else {
+    for (const auto &rank : dev_list) {
+      for (size_t i = 0; i < virtual_rank_list_.size(); ++i) {
+        dev_list_.push_back(int64_t(rank * virtual_rank_list_.size() + i));
+      }
+    }
+  }
+
   size_t cnt = std::count(to_origin_shape.begin(), to_origin_shape.end(), -1);
   if ((is_from_dyn || is_to_dyn) && cnt >= SIZE_TWO) {
     from_ = from_origin_;
@@ -52,6 +129,7 @@ Status TensorRedistribution::Init(const TensorLayout &from, const TensorLayout &
     from_ = from_origin_.SqueezeShape();
     to_ = to_origin_.SqueezeShape();
   }
+
   this->is_inited_ = true;
   return Status::SUCCESS;
 }
@@ -377,6 +455,20 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
     std::make_pair(operator_vector, output_info_vector));
 }
 
+std::vector<RedistributionOpListPtr> TensorRedistribution::InferTensorRedistributionOperatorVirtualGraphs() {
+  std::vector<RedistributionOpListPtr> redis_list_vector;
+  for (const auto &virtual_rank : virtual_rank_list_) {
+    this->SetVirtualRank(virtual_rank);
+    auto redis_list = this->InferTensorRedistributionOperatorList();
+    if (!redis_list) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Infer tensor redistribution failed. from_layout:" << from_origin_.ToString()
+                                 << ", to_layout:" << to_origin_.ToString();
+    }
+    redis_list_vector.push_back(redis_list);
+  }
+  return redis_list_vector;
+}
+
 bool IsSameShape(const Shape &src, const Shape &tgt) {
   if (src.size() != tgt.size()) {
     return false;
@@ -511,6 +603,9 @@ Status TensorRedistribution::InferRedistribution(const TensorLayout &from_layout
   MS_EXCEPTION_IF_NULL(output_info_vector);
   MS_LOG(DEBUG) << "Start to infer redistribution.";
   RedistributionOperatorInfer operator_infer(construct_op_flag_);
+  if (virtual_rank_ >= 0) {
+    operator_infer.SetVirtualRank(virtual_rank_);
+  }
   if (operator_infer.Init(from_layout, to_layout.tensor_map(), dev_list_, is_cost_model,
                           this->IsAssembledStaticShape()) == Status::FAILED) {
     MS_LOG(ERROR) << "Init operatorInfer failed";
