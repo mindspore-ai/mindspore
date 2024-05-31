@@ -22,7 +22,7 @@ namespace kernel {
 
 void AddAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
-  MAKE_SCALAR(1, inputs[0]->dtype_id(), one_);
+  MAKE_SCALAR(1, kNumberTypeInt64, one_);
   GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], one_, outputs[kIndex0]);
 }
 
