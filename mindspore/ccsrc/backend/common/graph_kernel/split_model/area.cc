@@ -40,8 +40,7 @@ bool ShapeEqual(const NodePtr &a, const NodePtr &b, bool skip_leading_one = true
   }
   // check leading one
   for (size_t i = 0; i < diff; ++i) {
-    if (l_shape[i] == 1 ||
-        (l_shape[i] < 0 && l_symbol_shape != nullptr && l_symbol_shape->symbols().at(i)->EqualsTo(symshape::kSym1))) {
+    if (l_shape[i] == 1 || (l_shape[i] < 0 && l_symbol_shape != nullptr && l_symbol_shape->item(i)->EqualsTo(kSym1))) {
       continue;
     }
     return false;
@@ -50,7 +49,7 @@ bool ShapeEqual(const NodePtr &a, const NodePtr &b, bool skip_leading_one = true
   for (size_t i = 0; i < s_shape.size(); ++i) {
     auto il = i + diff;
     if (l_shape[il] < 0 || s_shape[i] < 0) {
-      if (use_symbol && l_symbol_shape->symbols().at(il)->EqualsTo(s_symbol_shape->symbols().at(i))) {
+      if (use_symbol && l_symbol_shape->item(il)->EqualsTo(s_symbol_shape->item(i))) {
         continue;
       }
       return false;

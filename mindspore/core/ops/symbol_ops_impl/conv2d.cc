@@ -15,10 +15,7 @@
  */
 #include "mindspore/core/ops/symbol_ops_impl/common.h"
 #include "mindspore/core/ops/conv2d.h"
-#include "mindspore/core/ops/symbol_ops_impl/scalar_add.h"
-#include "mindspore/core/ops/symbol_ops_impl/scalar_sub.h"
-#include "mindspore/core/ops/symbol_ops_impl/scalar_mul.h"
-#include "mindspore/core/ops/symbol_ops_impl/scalar_div.h"
+#include "mindspore/core/ops/symbol_ops_impl/operator_scope.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
@@ -50,7 +47,7 @@ class MS_CORE_API Conv2D : public InferShapeOp {
   SymbolPtr CalcForPadSame(const SymbolPtr &x, const SymbolPtr &stride) {
     return Emit(std::make_shared<ScalarCeilDiv>(x, stride));
   }
-  SymbolPtr CalcForPadding(const SymbolPtr &x, const SymbolPtr &kernel, const SymbolPtr &padding,
+  SymbolPtr CalcForPadding(const SymbolPtr &x_shape, const SymbolPtr &kernel, const SymbolPtr &padding,
                            const SymbolPtr &stride, const SymbolPtr &dilation);
 
   ListSymbolPtr ProcessAttr(const SymbolPtr &attr, size_t begin_idx, size_t num) {
@@ -69,27 +66,20 @@ class MS_CORE_API Conv2D : public InferShapeOp {
 
 SymbolPtr Conv2D::CalcForPadValid(const SymbolPtr &x, const SymbolPtr &kernel, const SymbolPtr &stride,
                                   const SymbolPtr &dilation) {
-  // `x - (dilation * (kernel - 1))) / stride`, to ceil
-  auto t1 = Emit(std::make_shared<ScalarSub>(kernel, GenInt(1)));
-  auto t2 = Emit(std::make_shared<ScalarMul>(dilation, t1));
-  auto t3 = Emit(std::make_shared<ScalarSub>(x, t2));
-  auto t4 = Emit(std::make_shared<ScalarCeilDiv>(t3, stride));
-  return t4;
+  // `(x - (kernel - 1) * dilation)) / stride`, to ceil
+  OperatorScope h(emitter(), OperatorScope::DivType::CEIL_DIV);
+  auto v1 = h(kSym1);
+  return (x - (kernel - v1) * dilation) / stride;
 }
 
-SymbolPtr Conv2D::CalcForPadding(const SymbolPtr &x, const SymbolPtr &kernel, const SymbolPtr &padding,
+SymbolPtr Conv2D::CalcForPadding(const SymbolPtr &x_shape, const SymbolPtr &kernel, const SymbolPtr &padding,
                                  const SymbolPtr &stride, const SymbolPtr &dilation) {
   //    `[(x + padding - kernel - (kernel - 1) * (dilation - 1)) / stride] + 1`, [] is to floor.
   // => `[(x + padding - kernel * (dilation - 1) - 1) / stride] + 1`.
-  auto const_1 = GenInt(1);
-  auto t1 = Emit(std::make_shared<ScalarSub>(dilation, const_1));
-  auto t2 = Emit(std::make_shared<ScalarMul>(kernel, t1));
-  auto t3 = Emit(std::make_shared<ScalarAdd>(x, padding));
-  auto t4 = Emit(std::make_shared<ScalarSub>(t3, t2));
-  auto t5 = Emit(std::make_shared<ScalarSub>(t4, const_1));
-  auto t6 = Emit(std::make_shared<ScalarFloorDiv>(t5, stride));
-  auto t7 = Emit(std::make_shared<ScalarAdd>(t6, const_1));
-  return t7;
+  OperatorScope h(emitter(), OperatorScope::DivType::FLOOR_DIV);
+  auto v1 = h(kSym1);
+  auto x = h(x_shape);
+  return ((x + padding - kernel * (dilation - v1) - v1) / stride) + v1;
 }
 
 SymbolPtr Conv2D::Eval() {

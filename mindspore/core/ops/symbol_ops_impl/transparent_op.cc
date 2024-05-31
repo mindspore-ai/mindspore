@@ -20,19 +20,30 @@ namespace symshape {
 namespace ops {
 // infer symbolic shape. please add ops in lexicographical order.
 REG_SYMBOL_OP_BUILDER("Abs").SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("AllReduce").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Assign").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("BiasAdd").SetShapeDepend({DependOn::kShape, DependOn::kNone}).SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("BroadcastTo")
+  .SetShapeDepend({DependOn::kNone, DependOn::kValue})
+  .SetShapeFunc(TransValueToShape);
 REG_SYMBOL_OP_BUILDER("Cast").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("ClampScalar")
   .SetShapeDepend({DependOn::kShape, DependOn::kNone, DependOn::kNone})
   .SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Conv2DBackpropInput")
   .SetShapeDepend({DependOn::kNone, DependOn::kNone, DependOn::kValue})
-  .SetShapeFunc(TransparentInput);
+  .SetShapeFunc(TransValueToShape);
+REG_SYMBOL_OP_BUILDER("CudnnUniformReal").SetShapeDepend({DependOn::kValue}).SetShapeFunc(TransValueToShape);
 REG_SYMBOL_OP_BUILDER("DropoutGrad").SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("DynamicBroadcastTo")
+  .SetShapeDepend({DependOn::kNone, DependOn::kValue})
+  .SetShapeFunc(TransValueToShape);
 REG_SYMBOL_OP_BUILDER("Erf").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Exp").SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("FastGeLU").SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("FillV2").SetShapeDepend({DependOn::kValue, DependOn::kNone}).SetShapeFunc(TransValueToShape);
 REG_SYMBOL_OP_BUILDER("GeLU").SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("IsFinite").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("LogicalNot").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Log").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("LogSoftmaxGrad")
@@ -41,7 +52,7 @@ REG_SYMBOL_OP_BUILDER("LogSoftmaxGrad")
 REG_SYMBOL_OP_BUILDER("LogSoftmax").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("mutable").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Neg").SetShapeFunc(TransparentInput);
-REG_SYMBOL_OP_BUILDER("Ones").SetShapeDepend({DependOn::kValue}).SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("Ones").SetShapeDepend({DependOn::kValue}).SetShapeFunc(TransValueToShape);
 REG_SYMBOL_OP_BUILDER("OnesLike").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("PagedAttention").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Reciprocal").SetShapeFunc(TransparentInput);
@@ -54,6 +65,7 @@ REG_SYMBOL_OP_BUILDER("Sigmoid").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("SigmoidGrad").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("SiLU").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("SiLUGrad").SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("Sin").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Softmax").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("SoftmaxBackward")
   .SetShapeDepend({DependOn::kNone, DependOn::kShape})
@@ -61,8 +73,15 @@ REG_SYMBOL_OP_BUILDER("SoftmaxBackward")
 REG_SYMBOL_OP_BUILDER("SoftmaxGrad").SetShapeDepend({DependOn::kNone, DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Sqrt").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Square").SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("StandardNormal").SetShapeDepend({DependOn::kValue}).SetShapeFunc(TransValueToShape);
 REG_SYMBOL_OP_BUILDER("StopGradient").SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("StridedSliceGrad")
+  .SetShapeDepend({DependOn::kNone, DependOn::kValue})
+  .SetShapeFunc(TransValueToShape);
 REG_SYMBOL_OP_BUILDER("Tril").SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("UniformExt").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("Zeros").SetShapeDepend({DependOn::kValue}).SetShapeFunc(TransValueToShape);
+REG_SYMBOL_OP_BUILDER("ZerosLike").SetShapeFunc(TransparentInput);
 
 // infer symbolic value.
 REG_SYMBOL_OP_BUILDER("Shape").SetValueDepend({DependOn::kShape}).SetValueFunc(TransparentInput);

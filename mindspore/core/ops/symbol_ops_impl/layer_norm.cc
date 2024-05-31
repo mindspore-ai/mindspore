@@ -31,10 +31,12 @@ class MS_CORE_API LayerNorm : public InferShapeOp {
 
 SymbolPtr LayerNorm::Eval() {
   auto x = input_as<ListSymbol>(0);
-  auto begin_axis = input_as<IntSymbol>(1)->value();
-  if (begin_axis < -1) {
-    MS_LOG(INTERNAL_EXCEPTION) << "The begin_norm_axis should be in range [-1, x_rank), but got " << begin_axis;
+  auto begin_axis_sym = input_as<IntSymbol>(1);
+  if (!begin_axis_sym->HasData()) {
+    auto mean_var = x->HasData() ? GenVIntList(x->size()) : GenVList();
+    return GenList({input(0), mean_var, mean_var});
   }
+  int64_t begin_axis = begin_axis_sym->value();
   if (!x->HasData() && begin_axis > 0) {
     auto mean_var = GenVList();
     return GenList({input(0), mean_var, mean_var});
@@ -54,14 +56,40 @@ SymbolPtr LayerNorm::Eval() {
   return GenList({input(0), mean_var, mean_var});
 }
 
+class LayerNormExt : public InferShapeOp {
+ public:
+  using InferShapeOp::InferShapeOp;
+  ~LayerNormExt() override = default;
+  MS_DECLARE_PARENT(LayerNormExt, InferShapeOp)
+ protected:
+  SymbolPtr Eval() override;
+};
+
+SymbolPtr LayerNormExt::Eval() {
+  auto x = input_as_sptr<ListSymbol>(kIndex0);
+  auto norm_shape = input_as<ListSymbol>(kIndex1);
+  if (!x->HasData() || !norm_shape->HasData()) {
+    return GenVList();
+  }
+  DoNotEvalOnRun();
+  return Emit(std::make_shared<LayerNorm>(x, GenInt(SizeToLong(x->size() - norm_shape->size()))));
+}
+
 REG_SYMBOL_OP_BUILDER("LayerNorm")
   .SetShapeDepend({DependOn::kShape, DependOn::kNone, DependOn::kNone, DependOn::kValue})
   .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
     auto x = b->GetInputShape(kIndex0);
-    auto begin_axis = b->GetInputOrAttr(kIndex3, kAttrBeginNormAxis);  // todo, change to DefaultBuilder
+    auto begin_axis = b->GetInputOrAttr(kIndex3, kAttrBeginNormAxis);
     MS_EXCEPTION_IF_NULL(begin_axis);
     return b->Emit(std::make_shared<LayerNorm>(x, begin_axis));
   });
+REG_SYMBOL_OP_BUILDER("LayerNormV3")
+  .SetShapeDepend({DependOn::kShape, DependOn::kNone, DependOn::kNone, DependOn::kValue})
+  .SetShapeFunc(DefaultBuilder<LayerNorm>);
+
+REG_SYMBOL_OP_BUILDER("LayerNormExt")
+  .SetShapeDepend({DependOn::kShape, DependOn::kValue})
+  .SetShapeFunc(DefaultBuilder<LayerNormExt>);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

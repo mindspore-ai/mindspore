@@ -32,10 +32,15 @@ class MS_CORE_API OneHot : public InferShapeOp {
 SymbolPtr OneHot::Eval() {
   auto indices = input_as<ListSymbol>(kIndex0);
   auto depth = input(kIndex1);
-  auto axis = input_as<IntSymbol>(kIndex2)->value();
   if (!indices->HasData()) {
     return GenVList();
   }
+  auto axis_sym = input_as<IntSymbol>(kIndex2);
+  if (!axis_sym->HasData()) {
+    return GenVIntList(indices->size() + 1);
+  }
+  DoNotEvalOnRun();
+  int64_t axis = axis_sym->value();
   SymbolPtrList result = indices->symbols();
   if (axis >= 0) {
     MS_EXCEPTION_IF_CHECK_FAIL(static_cast<size_t>(axis) <= result.size(), "axis out of range of input size");
@@ -46,15 +51,20 @@ SymbolPtr OneHot::Eval() {
   return ResultIntList(std::move(result));
 }
 
+SymbolPtr OneHotShapeBuilder(OperationBuilder *b) {
+  auto indices = b->GetInputShape(kIndex0);
+  auto depth = b->GetInputValue(kIndex1);
+  auto axis = b->GetInputOrAttr(kIndex4, kAttrAxis);
+  MS_EXCEPTION_IF_NULL(axis);
+  return b->Emit(std::make_shared<OneHot>(indices, depth, axis));
+}
+
 REG_SYMBOL_OP_BUILDER("OneHot")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kNone, DependOn::kNone, DependOn::kValue})
-  .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
-    auto indices = b->GetInputShape(kIndex0);
-    auto depth = b->GetInputValue(kIndex1);
-    auto axis = b->GetInputOrAttr(kIndex4, kAttrAxis);  // todo, change to DefaultBuilder
-    MS_EXCEPTION_IF_NULL(axis);
-    return b->Emit(std::make_shared<OneHot>(indices, depth, axis));
-  });
+  .SetShapeFunc(OneHotShapeBuilder);
+REG_SYMBOL_OP_BUILDER("OneHotExt")
+  .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kNone, DependOn::kNone, DependOn::kValue})
+  .SetShapeFunc(OneHotShapeBuilder);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore
