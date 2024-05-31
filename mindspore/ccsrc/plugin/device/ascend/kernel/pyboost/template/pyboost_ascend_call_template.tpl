@@ -10,6 +10,7 @@ ${create_input_address}
 ${inplace_process}
 
 PyBoostUtils::PrepareOpOutputs(device_context_, op->stream_id(), outputs_);
+ProfileMemoryInfo();
 
 // Async
 PyBoostUtils::DispatchRun(

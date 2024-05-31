@@ -73,6 +73,7 @@
 #include "runtime/device/device_address_utils.h"
 #include "runtime/pipeline/task/kernel_task.h"
 #include "runtime/device/move_to.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 
 namespace mindspore {
 namespace device {
@@ -305,6 +306,7 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address, uint32_t
 
   address->set_ptr(device_ptr);
   address->set_from_mem_pool(true);
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, address, device_ptr);
   return true;
 }
 

@@ -6,6 +6,7 @@
     PyBoostUtils::PrepareOpInputs(device_context_, op->stream_id(), ${call_tensors});
     PyBoostUtils::CreateOutputTensor(device_context_, ${input}, storage_info_list, &outputs_);
 
+    ProfileMemoryInfo();
     // Async
     PyBoostUtils::DispatchRun(
       std::make_shared<runtime::PyBoostDeviceTask>(

@@ -168,6 +168,10 @@ void CopyTensorDataToDevice(const tensor::BaseTensorPtr &tensor, const AnfNodePt
                   << " has flag ignore device address, so skip copy tensor to device";
     return;
   }
+
+  auto mem_type = tensor->is_parameter() ? device::tracker::MemType::kWeight : device::tracker::MemType::kConstantValue;
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", mem_type, device_address->GetSize(),
+                                                 device_address.get());
   if ((device_address->GetPtr() == nullptr) &&
       (!device_context->device_res_manager_->AllocateMemory(device_address.get()))) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
@@ -288,7 +292,6 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
       continue;
     }
     if (input_address->GetPtr() == nullptr) {
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "", "");
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeOutput,
                                                      input_address->GetSize(), input_address.get());
       if (!device_context->device_res_manager_->AllocateMemory(input_address.get())) {
@@ -332,7 +335,6 @@ bool MallocForKernelOutput(const std::shared_ptr<OpRuntimeInfo> &runtime_info, c
       device_address->SetSize(kernel_out_size_list[i]);
     }
     if (device_address->GetPtr() == nullptr) {
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "", "");
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeOutput,
                                                      device_address->GetSize(), device_address.get());
       if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
@@ -380,6 +382,8 @@ std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const std::shared_
   for (size_t i = 0; i < workspace_size && i < workspace_sizes; ++i) {
     auto device_address = runtime_info->GetWorkspaceDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kWorkSpace,
+                                                   device_address->GetSize(), device_address.get());
     if (device_address->GetPtr() == nullptr &&
         !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
@@ -434,6 +438,8 @@ std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const std::shared_
   for (size_t i = workspace_size; i < workspace_sizes.size(); ++i) {
     auto device_address = add_workspaces[i];
     MS_EXCEPTION_IF_NULL(device_address);
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kWorkSpace,
+                                                   device_address->GetSize(), device_address.get());
     if (device_address->GetPtr() == nullptr &&
         !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
@@ -462,6 +468,8 @@ std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensorsDynamic(
       device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
     auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(device_address);
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kWorkSpace,
+                                                   device_address->GetSize(), device_address.get());
     if (device_address->GetPtr() == nullptr &&
         !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate dynamic workspace memory failed";
@@ -631,6 +639,8 @@ void AllocateOutputMemory(const std::vector<EdgePtr> &output_edges, const device
       if (edge->is_grad_) {
         device_address->set_from_persistent_mem(true);
       }
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeOutput,
+                                                     device_address->GetSize(), device_address.get());
       MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
       if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
         MS_LOG(EXCEPTION) << "Allocate device memory failed!";
@@ -788,6 +798,8 @@ void OpRunner::UpdateDeviceAddress(const KernelGraphPtr &graph,
 void OpRunner::RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_run_info,
                                 const OpCompilerInfoPtr &op_compiler_info,
                                 const std::vector<tensor::BaseTensorPtr> &input_tensors) {
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", op_run_info->base_op_run_info.op_name,
+                                                 op_compiler_info->graph_->ToString());
   CopyDataToDevice(op_compiler_info->graph_, input_tensors, op_compiler_info->device_context_);
   LaunchKernels(op_compiler_info->graph_, op_compiler_info->device_context_, op_run_info, input_tensors);
 }
@@ -840,6 +852,8 @@ void OpRunner::ChildAfterFork() {
 void DynamicOpRunner::RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_run_info,
                                        const OpCompilerInfoPtr &op_compiler_info,
                                        const std::vector<tensor::BaseTensorPtr> &input_tensors) {
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", op_run_info->base_op_run_info.op_name,
+                                                 op_compiler_info->graph_->ToString());
   DynamicOpRunner::CopyHostToDevice(op_compiler_info, input_tensors);
   MallocForConstValue(op_compiler_info);
 
@@ -996,6 +1010,10 @@ void DynamicOpRunner::CopyHostToDevice(const OpCompilerInfoPtr &op_compiler_info
       continue;
     }
 
+    auto mem_type =
+      input_tensor->is_parameter() ? device::tracker::MemType::kWeight : device::tracker::MemType::kConstantValue;
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", mem_type, device_address->GetSize(),
+                                                   device_address.get());
     if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
                         << ") memory isn't enough and alloc failed, kernel name: " << input_node->DebugString()

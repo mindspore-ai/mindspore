@@ -196,6 +196,10 @@ void AllocateMemForTensor(const tensor::BaseTensorPtr &tensor, DeviceContext *de
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   MS_EXCEPTION_IF_NULL(device_address);
 
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "ContiguousAllocMem", "");
+  auto mem_type = tensor->is_parameter() ? device::tracker::MemType::kWeight : device::tracker::MemType::kConstantValue;
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", mem_type, device_address->GetSize(),
+                                                 device_address.get());
   if ((device_address->GetPtr() == nullptr) &&
       (!device_context->device_res_manager_->AllocateMemory(device_address.get()))) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";

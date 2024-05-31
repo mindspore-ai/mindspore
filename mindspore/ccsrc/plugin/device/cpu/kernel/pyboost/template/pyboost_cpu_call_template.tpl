@@ -17,6 +17,8 @@ if (kernel_attr_pair.first || op_name() == "Cast") {
   ${inplace_process}
   // Create device address for output tensors
   PyBoostUtils::PrepareOpOutputs(device_context_, 0, outputs_);
+  
+  ProfileMemoryInfo();
 
   // Async
   PyBoostUtils::DispatchRun(

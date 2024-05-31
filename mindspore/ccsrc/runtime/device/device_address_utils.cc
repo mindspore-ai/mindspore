@@ -119,6 +119,8 @@ void DeviceAddressUtils::CopyNoneTensorDataToDevice(const device::DeviceContext 
     return;
   }
 
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kConstantValue,
+                                                 device_address->GetSize(), device_address.get());
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   if ((device_address->GetPtr() == nullptr) &&
@@ -888,7 +890,6 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
   }
 
   auto device_address = std::static_pointer_cast<device::DeviceAddress>(device_sync);
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "", "");
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeInput,
                                                  device_address->GetSize(), device_address.get());
   if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
@@ -1024,6 +1025,9 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceCont
   device_address->set_from_persistent_mem(tensor->is_parameter());
   tensor->set_device_address(device_address);
 
+  auto mem_type = tensor->is_parameter() ? device::tracker::MemType::kWeight : device::tracker::MemType::kConstantValue;
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", mem_type, device_address->GetSize(),
+                                                 device_address.get());
   if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
@@ -1190,7 +1194,6 @@ void DeviceAddressUtils::MallocForOutputs(const DeviceContext *device_context,
       // ref output
       continue;
     }
-    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "", "");
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeOutput,
                                                    device_address->GetSize(), device_address.get());
     if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
@@ -1206,6 +1209,8 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddressWithoutKernel
     nullptr, workspace_size, ShapeVector(), Format::DEFAULT_FORMAT, kTypeUnknown,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_, stream_id);
   MS_EXCEPTION_IF_NULL(device_address);
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kWorkSpace,
+                                                 device_address->GetSize(), device_address.get());
   if (device_address->GetPtr() == nullptr &&
       !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
     MS_LOG(EXCEPTION) << "Allocate dynamic workspace memory failed";

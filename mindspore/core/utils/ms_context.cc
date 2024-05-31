@@ -552,6 +552,7 @@ void MsContext::InitBoolTypeDefaultValue() {
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE, true);
   set_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD, false);
+  set_param<bool>(MS_CTX_ENABLE_PROF_MEM, false);
   set_param<bool>(MS_CTX_ENABLE_RECOVERY, false);
   set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, false);
   set_param<bool>(MS_CTX_DISABLE_FORMAT_TRANSFORM, false);
@@ -594,6 +595,7 @@ void MsContext::InitStringTypeDefaultValue() {
   set_param<std::string>(MS_CTX_CONV_DGRAD_ALGO, "normal");
   set_param<std::string>(MS_CTX_CONV_WGRAD_ALGO, "normal");
   set_param<std::string>(MS_CTX_JIT_LEVEL, "");
+  set_param<std::string>(MS_CTX_PROF_MEM_OUTPUT_PATH, "");
 }
 
 void MsContext::InitDigitalTypeDefaultValue() {
