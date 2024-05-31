@@ -650,7 +650,7 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   const bool enable_ge = context->backend_policy() == "ge";
-  const bool force_no_inline = common::GetEnv("MS_FORCE_NO_INLINE") == "1";
+  const bool force_no_inline = common::IsEnableRuntimeConfig("disable_inline");
   context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
 
   MS_LOG(INFO) << "Cell reuse(@lazy_inline) actually takes effect.";

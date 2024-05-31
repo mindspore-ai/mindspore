@@ -494,6 +494,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
 
   // Current only ascend do need do checkout in PartitionGraph
   bool all_support = device_context->PartitionGraph(func_graph);
+  PROF_START(CompileSubGraph);
   if (all_support) {
     auto run_mode = device_context->GetRunMode(func_graph);
     if (run_mode == device::RunMode::kGraphMode && pynative::GraphAdapter::PyNativeEnableTaskSink(func_graph)) {
@@ -508,6 +509,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
     }
     CompileSubGraph(func_graph);
   }
+  PROF_END(CompileSubGraph);
 
   // Construct the graph compiler info.
   auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph);
@@ -516,10 +518,12 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
        (ms_execution_mode_ == kPynativeMode && pynative::GraphAdapter::IsPynativeGeGraphSink(root_graph_))) &&
       ((!graph_compiler_info->graphs_.empty()) || graph_compiler_info->control_nodes_.size() > 1)) {
     MS_LOG(DEBUG) << "Start transform";
+    PROF_START(GraphScheduler);
     // Transform graph to actor DAG, and schedule the actor DAG.
     ParseControlNodes(*graph_compiler_info);
     const auto &actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);
     runtime::GraphScheduler::GetInstance().Schedule(actor_set);
+    PROF_END(GraphScheduler);
   }
   const ActorInfo &actor_info = graph_compiler_info->name_;
   (void)actor_to_graph_compiler_info_.emplace(graph_compiler_info->name_, std::move(graph_compiler_info));

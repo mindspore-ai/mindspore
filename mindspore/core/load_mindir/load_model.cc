@@ -2035,7 +2035,7 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &output_graph, const mi
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  const bool force_no_inline = common::GetEnv("MS_FORCE_NO_INLINE") == "1";
+  const bool force_no_inline = common::IsEnableRuntimeConfig("disable_inline");
   if (output_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
     const bool enable_ge = context->backend_policy() == "ge";
     auto cell_reuse_level =
