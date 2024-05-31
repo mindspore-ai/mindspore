@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,8 @@ class SuperKernelActor : public DebugAwareActor {
   // The input may come from the control actor, so need free the input memory by the dynamic ref count.
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
   bool CopyInputData(const OpContext<DeviceTensor> *context, const KernelGraphPtr &graph);
+  void UpdateShape(const AnfNodePtr &input_node, const DeviceTensorPtr &node_device_tensor,
+                   DeviceTensor *input_device_tensor);
 
   const KernelGraphPtr &graph() const { return graph_; }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -503,6 +503,22 @@ bool SuperKernelActor::CopyInputDataPersistedHandle(const DeviceContext *device_
   return false;
 }
 
+void SuperKernelActor::UpdateShape(const AnfNodePtr &input_node, const DeviceTensorPtr &node_device_tensor,
+                                   DeviceTensor *input_device_tensor) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  const auto &node_device_kernel_tensor = node_device_tensor->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(input_device_tensor);
+  const auto &input_kernel_tensor = input_device_tensor->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(node_device_kernel_tensor);
+  MS_EXCEPTION_IF_NULL(input_kernel_tensor);
+  if (type_ != KernelTransformType::kSuperKernelActor || input_node->cast<ParameterPtr>()->has_dynamic_shape()) {
+    // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
+    node_device_tensor->SetSize(input_device_tensor->GetSize());
+    // Update Shape.
+    node_device_kernel_tensor->SetShape(input_kernel_tensor->GetShape()->Clone());
+  }
+}
+
 bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph);
@@ -527,6 +543,10 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
         MS_LOG(DEBUG) << "Actor:" << GetAID() << " input device tensor " << i << ":" << input_device_tensor
                       << " no need copy.";
       }
+      if (input_device_tensor != nullptr && node_device_tensor != nullptr &&
+          (input_device_tensor->GetPtr() == node_device_tensor->GetPtr())) {
+        UpdateShape(input_nodes[i], node_device_tensor, input_device_tensor);
+      }
       continue;
     }
     MS_EXCEPTION_IF_NULL(input_nodes[i]);
@@ -535,13 +555,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
     const auto &input_kernel_tensor = input_device_tensor->kernel_tensor();
     MS_EXCEPTION_IF_NULL(node_device_kernel_tensor);
     MS_EXCEPTION_IF_NULL(input_kernel_tensor);
-    if (type_ != KernelTransformType::kSuperKernelActor || input_nodes[i]->cast<ParameterPtr>()->has_dynamic_shape()) {
-      // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
-      node_device_tensor->SetSize(input_device_tensor->GetSize());
-      // Update Shape.
-      node_device_kernel_tensor->SetShape(input_kernel_tensor->GetShape()->Clone());
-    }
-
+    UpdateShape(input_nodes[i], node_device_tensor, input_device_tensor);
     node_device_tensor->set_user_data(input_device_tensor->user_data());
     node_device_tensor->set_need_sync_user_data(input_device_tensor->need_sync_user_data());
     if (type_ != KernelTransformType::kSuperKernelActor) {
