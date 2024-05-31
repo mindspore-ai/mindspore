@@ -15,7 +15,9 @@
 """Fast Fourier Transform operations, the function docs are adapted from Numpy API."""
 from __future__ import absolute_import
 __all__ = ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn',
-           'rfft', 'irfft', 'fftshift', 'ifftshift']
+           'rfft', 'irfft', 'rfft2', 'irfft2', 'rfftn', 'irfftn',
+           'hfft', 'ihfft', 'hfft2', 'ihfft2', 'hfftn', 'ihfftn',
+           'fftshift', 'ifftshift']
 from mindspore import ops
 
 
@@ -225,8 +227,8 @@ def irfft(a, n=None, axis=-1, norm=None):
         norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
             Three modes are defined as,
 
-            - ``"backward"`` (no normalization).
-            - ``"forward"`` (normalize by :math:`1/n`).
+            - ``"backward"`` (normalize by :math:`1/n`).
+            - ``"forward"`` (no normalization).
             - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
 
     Returns:
@@ -265,7 +267,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
         axes (tuple[int], optional): The dimension along which to take the one dimensional `fft2`.
             Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
         norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
-            Three modes are defined as, :math: `n = prod(s)`
+            Three modes are defined as, where :math: `n = prod(s)`
 
             - ``"backward"`` (no normalization).
             - ``"forward"`` (normalize by :math:`1/n`).
@@ -434,3 +436,483 @@ def ifftn(a, s=None, axes=None, norm=None):
           [0.+0.j 0.+0.j]]]
     """
     return ops.ifftn(a, s, axes, norm)
+
+
+def rfft2(a, s=None, axes=(-2, -1), norm=None):
+    r"""
+    Calculates the two dimensional discrete Fourier transform for real input `a`.
+
+    Refer to :func:`mindspore.ops.rfft2` for more details.
+    The difference is that `a` corresponds to `input` and `axes` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64.
+
+        s (tuple[int], optional): Length of the transformed `axes` of the result.
+            If given, the size of the `axes[i]` axis will be zero-padded or truncated to `s[i]`
+            before calculating `rfft2`.
+            Default: ``None`` , which does not need to process `a`.
+        axes (tuple[int], optional): The dimension along which to take the one dimensional `rfft2`.
+            Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+            Three modes are defined as, where :math: `n = prod(s)`
+
+            - ``"backward"`` (no normalization).
+            - ``"forward"`` (normalize by :math:`1/n`).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, the result of `rfft2()` function, dtype of the result is complex64/128.
+        If `s` is given, result.shape[axes[i]] is :math:`s[i]`, while result.shape[axes[-1]] is :math:`s[-1] // 2 + 1`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore import numpy as mnp
+        >>> a = mnp.ones((2, 2))
+        >>> mnp.fft.rfft2(a, s=(2, 2), axes=(0, 1), norm="backward")
+        Tensor(shape=[2, 2], dtype=Complex64, value=
+        [[4+0j, 0+0j],
+         [0+0j, 0+0j]])
+    """
+    return ops.rfft2(a, s, axes, norm)
+
+
+def irfft2(a, s=None, axes=(-2, -1), norm=None):
+    r"""
+    Calculates the inverse of `rfft2()`.
+
+    Refer to :func:`mindspore.ops.irfft2` for more details.
+    The difference is that `a` corresponds to `input` and `axes` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
+
+        s (tuple[int], optional): Length of the transformed `axes` of the result.
+            If given, the input will either be zero-padded or trimmed to this length before computing `irfft2`.
+            Default: ``None`` , the axes[-1] of the `a` will be zero-padded to :math:`2*(a.shape[axes[-1]]-1)`.
+        axes (tuple[int], optional): The dimension along which to take the one dimensional `irfft2`.
+            Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+            Three modes are defined as, where :math: `n = prod(s)`
+
+            - ``"backward"`` (normalize by :math:`1/n`).
+            - ``"forward"`` (no normalization).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, The result of `irfft2()` function, result.shape[axes[i]] is s[i].
+        When the `a` is int16, int32, int64, float16, float32, complex64, the return value type is float32.
+        When the `a` is float64 or complex128, the return value type is float64.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore import numpy as mnp
+        >>> a = mnp.ones((4, 4))
+        >>> mnp.fft.irfft2(a, s=(4, 4), axes=(0, 1), norm="backward")
+        Tensor(shape=[4, 4], dtype=Float32, value=
+        [[ 1.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+         [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+         [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+         [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00]])
+    """
+    return ops.irfft2(a, s, axes, norm)
+
+
+def rfftn(a, s=None, axes=None, norm=None):
+    r"""
+    Calculates the N dimensional discrete Fourier transform for real input `a`.
+
+    Refer to :func:`mindspore.ops.rfftn` for more details.
+    The difference is that `a` corresponds to `input` and `axes` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64.
+
+        s (tuple[int], optional): Length of the transformed `axes` of the result.
+            If given, the input will either be zero-padded or trimmed to this length before computing `rfftn`.
+            Default: ``None`` , which does not need to process `a`.
+        axes (tuple[int], optional): The dimension along which to take the one dimensional `rfftn`.
+            Default: ``None`` , which means transform the all dimension of `a`,
+            or the last `len(s)` dimensions if s is given.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+            Three modes are defined as, where :math: `n = prod(s)`
+
+            - ``"backward"`` (no normalization).
+            - ``"forward"`` (normalize by :math:`1/n`).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, the result of `rfftn()` function, dtype of the result is complex64/128.
+        If `s` is given, result.shape[axes[i]] is :math:`s[i]`, while result.shape[axes[-1]] is :math:`s[-1] // 2 + 1`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore import numpy as mnp
+        >>> a = mnp.ones((2, 2, 2))
+        >>> mnp.fft.rfftn(a, s=(2, 2, 2), axes=(0, 1, 2), norm="backward")
+        Tensor(shape=[2, 2, 2], dtype=Complex64, value=
+        [[[8+0j, 0+0j],
+          [0+0j, 0+0j]],
+         [[0+0j, 0+0j],
+          [0+0j, 0+0j]]])
+    """
+    return ops.rfftn(a, s, axes, norm)
+
+
+def irfftn(a, s=None, axes=None, norm=None):
+    r"""
+    Calculates the inverse of `rfftn()`.
+
+    Refer to :func:`mindspore.ops.irfftn` for more details.
+    The difference is that `a` corresponds to `input` and `axes` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
+
+        s (tuple[int], optional): Length of the transformed `axes` of the result.
+            If given, the input will either be zero-padded or trimmed to this length before computing `irfftn`.
+            Default: ``None`` , the axes[-1] of the `a` will be zero-padded to :math:`2*(a.shape[axes[-1]]-1)`.
+        axes (tuple[int], optional): The dimension along which to take the one dimensional `irfftn`.
+            Default: ``None`` , which means transform the all dimension of `a`,
+            or the last `len(s)` dimensions if s is given.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+            Three modes are defined as, where :math: `n = prod(s)`
+
+            - ``"backward"`` (normalize by :math:`1/n`).
+            - ``"forward"`` (no normalization).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, The result of `irfft2()` function, result.shape[axes[i]] is s[i].
+        When the `a` is int16, int32, int64, float16, float32, complex64, the return value type is float32.
+        When the `a` is float64 or complex128, the return value type is float64.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore import numpy as mnp
+        >>> a = mnp.ones((2, 2, 2))
+        >>> mnp.fft.irfftn(a, s=(2, 2, 2), axes=(0, 1, 2), norm="backward")
+        Tensor(shape=[2, 2, 2], dtype=Float32, value=
+        [[[ 1.00000000e+00,  0.00000000e+00],
+          [ 0.00000000e+00,  0.00000000e+00]],
+         [[ 0.00000000e+00,  0.00000000e+00],
+          [ 0.00000000e+00,  0.00000000e+00]]])
+    """
+    return ops.irfftn(a, s, axes, norm)
+
+
+def hfft(a, n=None, axis=-1, norm=None):
+    r"""
+    Calculates the one dimensional discrete Fourier transform of of a Hermitian symmetric `a` signal.
+
+    Refer to :func:`mindspore.ops.hfft` for more details.
+    The difference is that `a` corresponds to `input` and `axis` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
+
+        n (int, optional): Length of the transformed `axis` of the result.
+            If given, the size of the `axis` axis will be zero-padded or truncated to `n` before calculating `hfft`.
+            Default: ``None`` , which does not need to process `a`.
+        axis (int, optional): The dimension along which to take the one dimensional `hfft`.
+            Default: ``-1`` , which means transform the last dimension of `a`.
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+            Three modes are defined as,
+
+            - ``"backward"`` (no normalization).
+            - ``"forward"`` (normalize by :math:`1/n`).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, The result of `hfft()` function.
+        If `n` is given, result.shape[axis] is :math:`(n - 1) * 2`, otherwise math:`(a.shape[axis] - 1) * 2`.
+        When the `a` is int16, int32, int64, float16, float32, complex64, the return value type is float32.
+        When the `a` is float64 or complex128, the return value type is float64.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore import numpy as np
+        >>> a = np.array([ 1.6243454, -0.6117564, -0.5281718, -1.0729686])
+        >>> out = np.fft.hfft(a, n=4, axis=-1, norm="backward")
+        >>> print(out)
+        [-0.12733912  2.1525173   2.3196864   2.1525173 ]
+    """
+    return ops.hfft(a, n, axis, norm)
+
+
+def ihfft(a, n=None, axis=-1, norm=None):
+    r"""
+    Calculates the inverse of `hfft()`.
+
+    Refer to :func:`mindspore.ops.ihfft` for more details.
+    The difference is that `a` corresponds to `input` and `axis` corresponds to `dim`.
+
+    Note:
+        - `ihfft` is currently only used in `mindscience` scientific computing scenarios and
+        dose not support other usage scenarios.
+        - `ihfft` is not supported on Windows platform yet.
+
+    Args:
+        a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64.
+
+        n (int, optional): Length of the transformed `axis` of the result.
+            If given, the size of the `axis` will be zero-padded or truncated to `n` before calculating `ihfft`.
+            Default: ``None`` , which does not need to process `a`.
+        axis (int, optional): The dimension along which to take the one dimensional `ihfft`.
+            Default: ``-1`` , which means transform the last dimension of `a`.
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+            Three modes are defined as,
+
+            - ``"backward"`` (normalize by :math:`1/n`).
+            - ``"forward"`` (no normalization).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, The result of `ihfft()` function.
+        If `n` is given, result.shape[axis] is :math:`n // 2 + 1`, otherwise math:`a.shape[axis] // 2 + 1`.
+        When the `a` is int16, int32, int64, float16, float32, the return value type is complex64.
+        When the `a` is float64, the return value type is complex128.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore import numpy as np
+        >>> a = np.array([ 1.6243454, -0.6117564, -0.5281718, -1.0729686])
+        >>> out = np.fft.ihfft(a, n=4, axis=-1, norm="backward")
+        >>> print(out)
+        [-0.14713785-0.j          0.5381293 +0.11530305j  0.69522464-0.j        ]
+    """
+    return ops.ihfft(a, n, axis, norm)
+
+
+def hfft2(a, s=None, axes=(-2, -1), norm=None):
+    r"""
+    Calculates the two dimensional discrete Fourier transform of of a Hermitian symmetric `a` signal.
+
+    Refer to :func:`mindspore.ops.hfft2` for more details.
+    The difference is that `a` corresponds to `input` and `axes` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
+
+        s (tuple[int], optional): Length of the transformed `axes` of the result.
+            If given, the `a.shape[axes[i]]` will be zero-padded or truncated to `s[i]` before calculating `hfft2`.
+            Default: ``None`` , which does not need to process `a`.
+        axes (tuple[int], optional): The dimension along which to take the one dimensional `hfft2`.
+            Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+            Three modes are defined as, where :math: `n = prod(s)`
+
+            - ``"backward"`` (no normalization).
+            - ``"forward"`` (normalize by :math:`1/n`).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, The result of `hfft2()` function.
+        If `s` is given, result.shape[axes[i]] is s[i], and for the last transformed axes,
+        result.shape[axes[-1]] is :math:`(s[-1] - 1) * 2`, otherwise :math:`(a.shape[axes[-1]] - 1) * 2`.
+        When the `a` is int16, int32, int64, float16, float32, complex64, the return value type is complex64.
+        When the `a` is float64 or complex128, the return value type is complex128.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = np.ones((4, 4))
+        >>> out = np.fft.hfft2(a, s=(4, 4), axes=(0, 1), norm="backward")
+        >>> print(out)
+        [[16.  0.  0.  0.]
+         [ 0.  0.  0.  0.]
+         [ 0.  0.  0.  0.]
+         [ 0.  0.  0.  0.]]
+    """
+    return ops.hfft2(a, s, axes, norm)
+
+
+def ihfft2(a, s=None, axes=(-2, -1), norm=None):
+    r"""
+    Computes the two dimensional inverse discrete Fourier transform of real `a`.
+
+    Refer to :func:`mindspore.ops.ihfft2` for more details.
+    The difference is that `a` corresponds to `input` and `axes` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64.
+
+        s (tuple[int], optional): Length of the transformed `axes` of the result.
+            If given, the `a.shape[axes[i]]` will be zero-padded or truncated to `s[i]` before calculating `ihfft2`.
+            Default: ``None`` , which does not need to process `a`.
+        axes (tuple[int], optional): The dimension along which to take the one dimensional `ihfft2`.
+            Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+            Three modes are defined as, where :math: `n = prod(s)`
+
+            - ``"backward"`` (normalize by :math:`1/n`).
+            - ``"forward"`` (no normalization).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, The result of `ihfft2()` function.
+        If `s` is given, result.shape[axes[i]] is s[i], and for the last transformed `axes`,
+        result.shape[axes[-1]] is :math:`s[-1] // 2 + 1`, otherwise :math:`a.shape[axes[-1]] // 2 + 1`.
+        When the `a` is int16, int32, int64, float16, float32, the return value type is complex64.
+        When the `a` is float64, the return value type is complex128.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = np.ones((4, 4))
+        >>> out = np.fft.ihfft2(a, s=(4, 4), axes=(0, 1), norm="backward")
+        >>> print(out)
+        [[1.-0.j 0.-0.j 0.-0.j]
+         [0.-0.j 0.-0.j 0.-0.j]
+         [0.-0.j 0.-0.j 0.-0.j]
+         [0.-0.j 0.-0.j 0.-0.j]]
+    """
+    return ops.ihfft2(a, s, axes, norm)
+
+
+def hfftn(a, s=None, axes=None, norm=None):
+    r"""
+    Calculates the N dimensional discrete Fourier transform of of a Hermitian symmetric `a`.
+
+    Refer to :func:`mindspore.ops.hfftn` for more details.
+    The difference is that `a` corresponds to `input` and `axes` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
+
+        s (tuple[int], optional): Length of the transformed `axes` of the result.
+            If given, the `a.shape[axes[i]]` will be zero-padded or truncated to `s[i]` before calculating `hfftn`.
+            Default: ``None`` , which does not need to process `a`.
+        axes (tuple[int], optional): The dimension along which to take the one dimensional `hfftn`.
+            Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+            Three modes are defined as, where :math: `n = prod(s)`
+
+            - ``"backward"`` (no normalization).
+            - ``"forward"`` (normalize by :math:`1/n`).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, The result of `hfftn()` function.
+        If `s` is given, result.shape[axes[i]] is s[i], and for the last transformed `axes`,
+        result.shape[axes[-1]] is :math:`(s[-1] - 1) * 2`, otherwise :math:`(a.shape[axes[-1]] - 1) * 2`.
+        When the `a` is int16, int32, int64, float16, float32, complex64, the return value type is complex64.
+        When the `a` is float64 or complex128, the return value type is complex128.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = np.ones((4, 4))
+        >>> out = np.fft.hfftn(a, s=(4, 4), axes=(0, 1), norm="backward")
+        >>> print(out)
+        [[16.  0.  0.  0.]
+         [ 0.  0.  0.  0.]
+         [ 0.  0.  0.  0.]
+         [ 0.  0.  0.  0.]]
+    """
+    return ops.hfftn(a, s, axes, norm)
+
+
+def ihfftn(a, s=None, axes=None, norm=None):
+    r"""
+    Computes the N dimensional inverse discrete Fourier transform of real `a`.
+
+    Refer to :func:`mindspore.ops.ihfftn` for more details.
+    The difference is that `a` corresponds to `input` and `axes` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64.
+
+        s (tuple[int], optional): Length of the transformed `axes` of the result.
+            If given, the `a.shape[axes[i]]` will be zero-padded or truncated to `s[i]` before calculating `ihfftn`.
+            Default: ``None`` , which does not need to process `a`.
+        axes (tuple[int], optional): The dimension along which to take the one dimensional `ihfftn`.
+            Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+            Three modes are defined as, where :math: `n = prod(s)`
+
+            - ``"backward"`` (normalize by :math:`1/n`).
+            - ``"forward"`` (no normalization).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, The result of `ihfftn()` function.
+        If `s` is given, result.shape[axes[i]] is s[i], and for the last transformed `axes`,
+        result.shape[axes[-1]] is :math:`s[-1] // 2 + 1`, otherwise :math:`a.shape[axes[-1]] // 2 + 1`.
+        When the `a` is int16, int32, int64, float16, float32, the return value type is complex64.
+        When the `a` is float64, the return value type is complex128.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = np.ones((4, 4))
+        >>> out = np.fft.ihfftn(a, s=(4, 4), axes=(0, 1), norm="backward")
+        >>> print(out)
+        [[16.  0.  0.  0.]
+         [ 0.  0.  0.  0.]
+         [ 0.  0.  0.  0.]
+         [ 0.  0.  0.  0.]]
+    """
+    return ops.hfftn(a, s, axes, norm)

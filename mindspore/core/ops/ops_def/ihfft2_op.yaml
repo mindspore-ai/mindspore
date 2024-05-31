@@ -1,0 +1,22 @@
+#operator ihfft2
+ihfft2:
+  args:
+    input:
+      dtype: tensor
+    s:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: None
+    dim:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: (-2, -1)
+    norm:
+      dtype: int
+      arg_handler: str_to_enum
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: IHFFT2

@@ -66,9 +66,11 @@ int FFTBaseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   auto n_opt = inputs[kIndex1]->GetOptionalValueWithCheck<int64_t>();
   if (n_opt.has_value()) {
     n_ = n_opt.value();
+  } else if (kernel_name_ == prim::kPrimHFFT->name()) {
+    n_ = (tensor_shape_[dim_] - 1) * 2;
   } else {
     n_ = tensor_shape_[dim_];
-    if (kernel_name_ == prim::kPrimIRFFT->name()) {
+    if (kernel_name_ == prim::kPrimIRFFT->name() || kernel_name_ == prim::kPrimHFFT->name()) {
       n_ = kOnesideDivisor * (tensor_shape_[dim_] - 1);
     }
   }
@@ -137,8 +139,13 @@ bool FFTBaseCpuKernelMod::LaunchKernelR2C(const std::vector<kernel::KernelTensor
 
   // Run FFT according to parameters
   std::vector<int64_t> dim(1, dim_);
+  forward_ = kernel_name_ == prim::kPrimIHFFT->name() ? !forward_ : forward_;
   PocketFFTR2C<T_out>(calculate_input, output_ptr, forward_, fct, calculate_shape_, dim);
 
+  if (kernel_name_ == prim::kPrimIHFFT->name()) {
+    std::transform(output_ptr, output_ptr + outputs[kIndex0]->size() / sizeof(std::complex<T_out>), output_ptr,
+                   [](std::complex<T_out> x) { return std::conj(x); });
+  }
   // Release temporary memory
   free(calculate_input);
   calculate_input = nullptr;
@@ -164,6 +171,11 @@ bool FFTBaseCpuKernelMod::LaunchKernelC2R(const std::vector<kernel::KernelTensor
   }
   ShapeCopy<T_in, std::complex<T_out>>(input_ptr, calculate_input, tensor_shape_, calculate_shape_);
 
+  if (kernel_name_ == prim::kPrimHFFT->name()) {
+    std::transform(calculate_input, calculate_input + calculate_element_nums_, calculate_input,
+                   [](std::complex<T_out> x) { return std::conj(x); });
+    forward_ = !forward_;
+  }
   // Run FFT according to parameters
   std::vector<int64_t> dim(1, dim_);
   PocketFFTC2R<T_out>(calculate_input, output_ptr, forward_, fct, calculate_shape_, dim);
@@ -180,10 +192,10 @@ bool FFTBaseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *>
   if (kernel_name_ == prim::kPrimFFT->name() || kernel_name_ == prim::kPrimIFFT->name()) {
     LaunchKernelC2C<T_in, T_out>(inputs, outputs);
   }
-  if (kernel_name_ == prim::kPrimRFFT->name()) {
+  if (kernel_name_ == prim::kPrimRFFT->name() || kernel_name_ == prim::kPrimIHFFT->name()) {
     LaunchKernelR2C<T_in, T_out>(inputs, outputs);
   }
-  if (kernel_name_ == prim::kPrimIRFFT->name()) {
+  if (kernel_name_ == prim::kPrimIRFFT->name() || kernel_name_ == prim::kPrimHFFT->name()) {
     LaunchKernelC2R<T_in, T_out>(inputs, outputs);
   }
   return true;
@@ -301,7 +313,21 @@ std::vector<std::pair<KernelAttr, FFTBaseCpuKernelMod::FFTBaseFunc>> FFTBaseCpuK
      .AddInputAttr(kNumberTypeInt64)
      .AddOptionalInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat64),
-   &FFTBaseCpuKernelMod::LaunchKernel<double, double>}};
+   &FFTBaseCpuKernelMod::LaunchKernel<double, double>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &FFTBaseCpuKernelMod::LaunchKernelC2R<complex64, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &FFTBaseCpuKernelMod::LaunchKernelC2R<complex128, double>}};
 
 std::vector<KernelAttr> FFTBaseCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
@@ -314,5 +340,7 @@ MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, FFT, FFTBaseCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IFFT, FFTBaseCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RFFT, FFTBaseCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IRFFT, FFTBaseCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, HFFT, FFTBaseCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IHFFT, FFTBaseCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

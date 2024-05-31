@@ -1,0 +1,57 @@
+hfft2:
+    description: |
+      Calculates the two dimensional discrete Fourier transform of of a Hermitian symmetric `input`.
+
+      Note:
+          - `hfft2` is currently only used in `mindscience` scientific computing scenarios and
+            dose not support other usage scenarios.
+          - `hfft2` is not supported on Windows platform yet.
+
+      Args:
+          input (Tensor): The input tensor.
+              Supported dtypes:
+
+              - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
+
+          s (tuple[int], optional): Length of the transformed `dim` of the result.
+              If given, the size of the `dim[i]` axis will be zero-padded or truncated to `s[i]` before calculating `hfft2`.
+              Default: ``None`` , which does not need to process `input`.
+          dim (tuple[int], optional): The dimension along which to take the one dimensional `hfft2`.
+              Default: ``(-2, -1)`` , which means transform the last two dimension of `input`.
+          norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+              Three modes are defined as, where :math: `n = prod(s)`
+
+              - ``"backward"`` (no normalization).
+              - ``"forward"`` (normalize by :math:`1/n`).
+              - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+      Returns:
+          Tensor, The result of `hfft2()` function.
+          If `s` is given, result.shape[dim[i]] is s[i], and for the last transformed dim, 
+          result.shape[dim[-1]] is :math:`(s[-1] - 1) * 2`, otherwise :math:`(input.shape[dim[-1]] - 1) * 2`.
+          When the input is int16, int32, int64, float16, float32, complex64, the return value type is complex64.
+          When the input is float64 or complex128, the return value type is complex128.
+
+      Raises:
+          TypeError: If the `input` type is not Tensor.
+          TypeError: If the `input` data type is not one of: int32, int64, float32, float64, complex64, complex128.
+          TypeError: If the type/dtype of `s` and `dim` is not int.
+          ValueError: If `dim` is not in the range of "[ `-input.ndim` , `input.ndim` )".
+          ValueError: If `dim` has duplicate values.
+          ValueError: If `s` is less than 1.
+          ValueError: If `s` and `dim` are given but have different shapes.
+          ValueError: If `norm` is none of ``"backward"`` , ``"forward"`` or ``"ortho"`` .
+
+      Supported Platforms:
+          ``Ascend`` ``CPU``
+
+      Examples:
+          >>> import mindspore
+          >>> from mindspore import Tensor, ops
+          >>> input = ops.ones((4, 4))
+          >>> out = ops.hfft2(input, s=(4, 4), dim=(0, 1), norm="backward")
+          >>> print(out)
+          [[16.  0.  0.  0.]
+           [ 0.  0.  0.  0.]
+           [ 0.  0.  0.  0.]
+           [ 0.  0.  0.  0.]]
