@@ -69,7 +69,7 @@
 #include "backend/common/graph_kernel/convert_custom_for_ge.h"
 #include "backend/common/graph_kernel/convert_input_and_attr.h"
 #include "backend/common/graph_kernel/convert_bfloat16.h"
-#include "backend/common/graph_kernel/add_ref_pair.h"
+#include "backend/common/graph_kernel/deal_with_side_effect.h"
 #include "backend/common/graph_kernel/fold_updatestate.h"
 #ifdef ENABLE_AKG
 #include "backend/common/graph_kernel/graph_kernel_build.h"
@@ -269,7 +269,6 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   // Reduce fake output memory.
   auto only_static_shape_fusion = GetPassLevelByFlag(!GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
   pm->Add(std::make_shared<ReduceFakeOutMem>(), only_static_shape_fusion, !is_dvm);
-  pm->Add(std::make_shared<AddRefPair>(), OptLevel_1, is_dvm);
   // Compile graph kernel nodes, and inline nodes if compile failed.
   auto enable_dyn_level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
   pm->Add(std::make_shared<DynamicShapeCluster>(), enable_dyn_level, is_cpu || is_gpu);
@@ -279,7 +278,7 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1, !is_ge && !is_dvm);
 #endif
   pm->Add(std::make_shared<ConvertCustomForGE>(), OptLevel_1, is_ge);
-  pm->Add(std::make_shared<GeneratedDependElimination>(), OptLevel_2, is_gpu || (is_ascend && !is_ge));
+  pm->Add(std::make_shared<GeneratedDependElimination>(), OptLevel_2, is_gpu || (is_ascend && !is_ge && !is_dvm));
   pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
   pm->Add(std::make_shared<MergeOutputForUpdateState>(), OptLevel_1);
   return pm;
@@ -310,7 +309,10 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   pm->Add(std::make_shared<SymbolEngineBuilder>(true), kernel_packet_lv, is_dvm);
   pm->Add(std::make_shared<SymbolEngineExtender>(), kernel_packet_lv, is_dvm);
 
-  // In dynamic shape graph, the infer shape function only support Primitive node
+  // Update side effect attr, update kernel graph ref pair(used in device address allocation)
+  pm->Add(std::make_shared<DealWithSideEffect>(), OptLevel_1, is_dvm);
+
+  // Convert graph kernel call node to primitive node
   pm->Add(std::make_shared<ConvertCallToPrim>(), OptLevel_1);
   return pm;
 }

@@ -34,6 +34,7 @@
 #include "symbolic_shape/symbol_engine.h"
 #include "backend/common/graph_kernel/symbol_engine/kernel_packet_engine.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "utils/log_adapter.h"
 
@@ -311,17 +312,28 @@ bool ConvertCallToPrim::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(mng);
   bool changed = false;
   auto todos = TopoSort(func_graph->output());
+  bool is_dvm = (GraphKernelFlags::GetInstance().kernel_generator == "DVM");
   for (auto node : todos) {
     auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr || !cnode->HasAttr(kAttrToPrim)) {
+    if (cnode == nullptr || (!cnode->HasAttr(kAttrToPrim) && !is_dvm)) {
       continue;
     }
     auto sub_fg = GetCNodeFuncGraph(node);
     if (sub_fg != nullptr) {
-      AnfNodePtrList new_inputs = node->cast<CNodePtr>()->inputs();
-      auto new_prim = std::make_shared<Primitive>(GetValue<std::string>(cnode->GetAttr(kAttrToPrim)), sub_fg->attrs());
-      new_inputs[0] = NewValueNode(new_prim);
+      bool has_attr_to_prim = cnode->HasAttr(kAttrToPrim);
+      std::string prim_name =
+        has_attr_to_prim ? GetValue<std::string>(cnode->GetAttr(kAttrToPrim)) : common::AnfAlgo::GetCNodeName(node);
+      auto new_prim = std::make_shared<Primitive>(prim_name, sub_fg->attrs());
       new_prim->AddAttr(kAttrFuncGraph, sub_fg);
+      auto prim_input = NewValueNode(new_prim);
+      if (!has_attr_to_prim) {
+        // do not create a new node, otherwise the ref pair saved in kernel graph is invalid
+        cnode->set_input(0, prim_input);
+        changed = true;
+        continue;
+      }
+      AnfNodePtrList new_inputs = node->cast<CNodePtr>()->inputs();
+      new_inputs[0] = prim_input;
       auto newnode = func_graph->NewCNode(new_inputs);
       newnode->CloneCNodeInfo(cnode);
       auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
