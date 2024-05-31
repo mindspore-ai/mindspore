@@ -436,6 +436,8 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
                << simulation_level << "], env_rank_id[" << env_rank_id << "], env_device_id[" << env_device_id
                << "], enable_hccl[" << enable_hccl << "], UseDynamicCluster[" << common::UseDynamicCluster() << "].";
 
+  auto escluster_config_path = common::GetEnv("ESCLUSTER_CONFIG_PATH");
+
   if (enable_hccl &&
       (!(env_table_file.empty() || env_rank_id.empty()) || !(env_cluster_info.empty() || env_rank_id.empty()) ||
        hccl::HcclAdapter::GetInstance().UseHcclCM()) &&
@@ -452,6 +454,10 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
     (*ge_options)["ge.exec.deviceId"] = env_device_id;
     (*ge_options)["ge.exec.rankId"] = env_rank_id;
     (*ge_options)["ge.exec.podName"] = env_rank_id;
+  } else if (!escluster_config_path.empty()) {
+    (*ge_options)["ge.exec.deviceId"] = env_device_id;
+    (*ge_options)["ge.exec.rankTableFile"] = env_table_file;
+    (*ge_options)["ge.exec.rankId"] = env_rank_id;
   } else {
     // device id is still needed for non-distribute case
     (*ge_options)["ge.exec.deviceId"] = env_device_id;
