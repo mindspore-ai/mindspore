@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,8 +54,8 @@ from . import transforms
 from . import utils
 from .transforms import AdjustBrightness, AdjustContrast, AdjustGamma, AdjustHue, AdjustSaturation, AdjustSharpness, \
     Affine, AutoAugment, AutoContrast, BoundingBoxAugment, CenterCrop, ConvertColor, Crop, CutMixBatch, CutOut, \
-    Decode, Equalize, Erase, FiveCrop, GaussianBlur, Grayscale, HorizontalFlip, HsvToRgb, HWC2CHW, Invert, \
-    LinearTransformation, MixUp, MixUpBatch, Normalize, NormalizePad, Pad, PadToSize, Perspective, Posterize, \
+    Decode, DecodeVideo, Equalize, Erase, FiveCrop, GaussianBlur, Grayscale, HorizontalFlip, HsvToRgb, HWC2CHW, \
+    Invert, LinearTransformation, MixUp, MixUpBatch, Normalize, NormalizePad, Pad, PadToSize, Perspective, Posterize, \
     RandAugment, RandomAdjustSharpness, RandomAffine, RandomAutoContrast, RandomColor, RandomColorAdjust, RandomCrop, \
     RandomCropDecodeResize, RandomCropWithBBox, RandomEqualize, RandomErasing, RandomGrayscale, RandomHorizontalFlip, \
     RandomHorizontalFlipWithBBox, RandomInvert, RandomLighting, RandomPerspective, RandomPosterize, RandomResizedCrop, \
@@ -64,5 +64,5 @@ from .transforms import AdjustBrightness, AdjustContrast, AdjustGamma, AdjustHue
     ResizeWithBBox, RgbToHsv, Rotate, SlicePatches, Solarize, TenCrop, ToNumpy, ToPIL, ToTensor, ToType, \
     TrivialAugmentWide, UniformAugment, VerticalFlip, not_random
 from .utils import AutoAugmentPolicy, Border, ConvertMode, ImageBatchFormat, ImageReadMode, Inter, SliceMode, \
-    encode_jpeg, encode_png, get_image_num_channels, get_image_size, read_file, read_image, write_file, write_jpeg, \
-    write_png
+    encode_jpeg, encode_png, get_image_num_channels, get_image_size, read_file, read_image, read_video, \
+    read_video_timestamps, write_file, write_jpeg, write_png

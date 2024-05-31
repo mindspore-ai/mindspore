@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@
 #include "minddata/dataset/kernels/ir/vision/cutmix_batch_ir.h"
 #include "minddata/dataset/kernels/ir/vision/cutout_ir.h"
 #include "minddata/dataset/kernels/ir/vision/decode_ir.h"
+#include "minddata/dataset/kernels/ir/vision/decode_video_ir.h"
 #include "minddata/dataset/kernels/ir/vision/equalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/erase_ir.h"
 #include "minddata/dataset/kernels/ir/vision/gaussian_blur_ir.h"
@@ -98,6 +99,7 @@
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
+#include "minddata/dataset/kernels/image/video_utils.h"
 #endif
 #include "minddata/dataset/kernels/ir/validators.h"
 
@@ -380,6 +382,14 @@ std::shared_ptr<TensorOperation> Decode::Parse(const MapTargetDevice &env) {
   MS_LOG(ERROR) << "Unsupported MapTargetDevice, only supported kCpu and kAscend310.";
   return nullptr;
 }
+
+#ifndef ENABLE_ANDROID
+// DecodeVideo Transform Operation.
+DecodeVideo::DecodeVideo() {}
+
+std::shared_ptr<TensorOperation> DecodeVideo::Parse() { return std::make_shared<DecodeVideoOperation>(); }
+#endif  // not ENABLE_ANDROID
+
 #if defined(WITH_BACKEND) || defined(ENABLE_ACL) || defined(ENABLE_DVPP)
 // DvppDecodeVideo Transform Operation.
 struct DvppDecodeVideo::Data {
@@ -1187,6 +1197,50 @@ Status ReadImage(const std::string &filename, mindspore::MSTensor *output, Image
   CHECK_FAIL_RETURN_UNEXPECTED(de_tensor->HasData(),
                                "ReadImage: get an empty tensor with shape " + de_tensor->shape().ToString());
   *output = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
+  return Status::OK();
+}
+
+// ReadVideo Function.
+Status ReadVideo(const std::string &filename, mindspore::MSTensor *video_output, mindspore::MSTensor *audio_output,
+                 std::map<std::string, std::string> *metadata_output, float start_pts, float end_pts,
+                 const std::string &pts_unit) {
+  RETURN_UNEXPECTED_IF_NULL(video_output);
+  RETURN_UNEXPECTED_IF_NULL(audio_output);
+  RETURN_UNEXPECTED_IF_NULL(metadata_output);
+
+  std::shared_ptr<Tensor> de_video_output;
+  std::shared_ptr<Tensor> de_audio_output;
+  RETURN_IF_NOT_OK(mindspore::dataset::ReadVideo(filename, &de_video_output, &de_audio_output, metadata_output,
+                                                 start_pts, end_pts, pts_unit));
+  *video_output = mindspore::MSTensor(std::make_shared<DETensor>(de_video_output));
+  *audio_output = mindspore::MSTensor(std::make_shared<DETensor>(de_audio_output));
+  return Status::OK();
+}
+
+// ReadVideoTimestamps.
+Status ReadVideoTimestamps(const std::string &filename, std::tuple<std::vector<float>, float> *output,
+                           const std::string &pts_unit) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  std::vector<int64_t> pts_int64_vector;
+  float video_fps;
+  float time_base;
+
+  RETURN_IF_NOT_OK(
+    mindspore::dataset::ReadVideoTimestamps(filename, &pts_int64_vector, &video_fps, &time_base, pts_unit));
+
+  std::vector<float> pts_float_vector;
+
+  if (pts_unit == "pts") {
+    for (int64_t pts_int64 : pts_int64_vector) {
+      pts_float_vector.push_back(static_cast<float>(pts_int64));
+    }
+  }
+  if (pts_unit == "sec") {
+    for (int64_t pts_int64 : pts_int64_vector) {
+      pts_float_vector.push_back(static_cast<float>(pts_int64 * time_base));
+    }
+  }
+  *output = std::make_tuple(pts_float_vector, video_fps);
   return Status::OK();
 }
 #endif  // not ENABLE_ANDROID

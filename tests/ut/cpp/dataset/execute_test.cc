@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3291,4 +3291,189 @@ TEST_F(MindDataTestExecute, TestPitchShiftWrongArgs1) {
   mindspore::dataset::Execute trans6({PitchShift_op});
   status = trans6(input_ms, &input_ms);
   EXPECT_TRUE(status.IsError());
+}
+
+/// Feature: Execute DecodeVideo op
+/// Description: Test executing DecodeVideo op with AVI video
+/// Expectation: Output is equal to the expected output and status is okay
+TEST_F(MindDataTestExecute, TestDecodeVideoAVI) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoAVI.";
+
+  // Read video file into tensor
+  mindspore::MSTensor video;
+  ASSERT_OK(mindspore::dataset::vision::ReadFile("data/dataset/video/campus.avi", &video));
+
+  std::vector<mindspore::MSTensor> input_tensor;
+  std::vector<mindspore::MSTensor> output_tensor;
+  input_tensor.push_back(video);
+
+  auto decode_video = vision::DecodeVideo();
+  auto transform = Execute(decode_video);
+  Status rc = transform(input_tensor, &output_tensor);
+  EXPECT_EQ(rc, Status::OK());
+  EXPECT_EQ(output_tensor[0].Shape()[0], 5);
+  EXPECT_EQ(output_tensor[0].Shape()[1], 160);
+  EXPECT_EQ(output_tensor[0].Shape()[2], 240);
+  EXPECT_EQ(output_tensor[0].Shape()[3], 3);
+  EXPECT_EQ(output_tensor[1].Shape()[0], 2);
+  EXPECT_EQ(output_tensor[1].Shape()[1], 9216);
+}
+
+/// Feature: Execute DecodeVideo op
+/// Description: Test executing DecodeVideo op with H264 video
+/// Expectation: Output is equal to the expected output and status is okay
+TEST_F(MindDataTestExecute, TestDecodeVideoH264) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoH264.";
+
+  // Read video file into tensor
+  mindspore::MSTensor video;
+  ASSERT_OK(mindspore::dataset::vision::ReadFile("data/dataset/video/campus.h264", &video));
+
+  std::vector<mindspore::MSTensor> input_tensor;
+  std::vector<mindspore::MSTensor> output_tensor;
+  input_tensor.push_back(video);
+
+  auto decode_video = vision::DecodeVideo();
+  auto transform = Execute(decode_video);
+  Status rc = transform(input_tensor, &output_tensor);
+  EXPECT_EQ(rc, Status::OK());
+  EXPECT_EQ(output_tensor[0].Shape()[0], 19);
+  EXPECT_EQ(output_tensor[0].Shape()[1], 480);
+  EXPECT_EQ(output_tensor[0].Shape()[2], 270);
+  EXPECT_EQ(output_tensor[0].Shape()[3], 3);
+  EXPECT_EQ(output_tensor[1].Shape()[0], 2);
+  EXPECT_EQ(output_tensor[1].Shape()[1], 15360);
+}
+
+/// Feature: Execute DecodeVideo op
+/// Description: Test executing DecodeVideo op with H265 video
+/// Expectation: Output is equal to the expected output and status is okay
+TEST_F(MindDataTestExecute, TestDecodeVideoH265) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoH265.";
+
+  // Read video file into tensor
+  mindspore::MSTensor video;
+  ASSERT_OK(mindspore::dataset::vision::ReadFile("data/dataset/video/campus.h265", &video));
+
+  std::vector<mindspore::MSTensor> input_tensor;
+  std::vector<mindspore::MSTensor> output_tensor;
+  input_tensor.push_back(video);
+
+  auto decode_video = vision::DecodeVideo();
+  auto transform = Execute(decode_video);
+  Status rc = transform(input_tensor, &output_tensor);
+  EXPECT_EQ(rc, Status::OK());
+  EXPECT_EQ(output_tensor[0].Shape()[0], 1);
+  EXPECT_EQ(output_tensor[0].Shape()[1], 576);
+  EXPECT_EQ(output_tensor[0].Shape()[2], 720);
+  EXPECT_EQ(output_tensor[0].Shape()[3], 3);
+  EXPECT_EQ(output_tensor[1].Shape()[0], 2);
+  EXPECT_EQ(output_tensor[1].Shape()[1], 4608);
+}
+
+/// Feature: Execute DecodeVideo op
+/// Description: Test executing DecodeVideo op with MOV video
+/// Expectation: Output is equal to the expected output and status is okay
+TEST_F(MindDataTestExecute, TestDecodeVideoMOV) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoMOV.";
+
+  // Read video file into tensor
+  mindspore::MSTensor video;
+  ASSERT_OK(mindspore::dataset::vision::ReadFile("data/dataset/video/campus.mov", &video));
+
+  std::vector<mindspore::MSTensor> input_tensor;
+  std::vector<mindspore::MSTensor> output_tensor;
+  input_tensor.push_back(video);
+
+  auto decode_video = vision::DecodeVideo();
+  auto transform = Execute(decode_video);
+  Status rc = transform(input_tensor, &output_tensor);
+  EXPECT_EQ(rc, Status::OK());
+  EXPECT_EQ(output_tensor[0].Shape()[0], 5);
+  EXPECT_EQ(output_tensor[0].Shape()[1], 160);
+  EXPECT_EQ(output_tensor[0].Shape()[2], 240);
+  EXPECT_EQ(output_tensor[0].Shape()[3], 3);
+  EXPECT_EQ(output_tensor[1].Shape()[0], 1);
+  EXPECT_EQ(output_tensor[1].Shape()[1], 9216);
+}
+
+/// Feature: Execute DecodeVideo op
+/// Description: Test executing DecodeVideo op with MP4 video
+/// Expectation: Output is equal to the expected output and status is okay
+TEST_F(MindDataTestExecute, TestDecodeVideoMP4) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoMP4.";
+
+  // Read video file into tensor
+  mindspore::MSTensor video;
+  ASSERT_OK(mindspore::dataset::vision::ReadFile("data/dataset/video/campus.mp4", &video));
+
+  std::vector<mindspore::MSTensor> input_tensor;
+  std::vector<mindspore::MSTensor> output_tensor;
+  input_tensor.push_back(video);
+
+  auto decode_video = vision::DecodeVideo();
+  auto transform = Execute(decode_video);
+  Status rc = transform(input_tensor, &output_tensor);
+  EXPECT_EQ(rc, Status::OK());
+  EXPECT_EQ(output_tensor[0].Shape()[0], 5);
+  EXPECT_EQ(output_tensor[0].Shape()[1], 160);
+  EXPECT_EQ(output_tensor[0].Shape()[2], 240);
+  EXPECT_EQ(output_tensor[0].Shape()[3], 3);
+  EXPECT_EQ(output_tensor[1].Shape()[0], 1);
+  EXPECT_EQ(output_tensor[1].Shape()[1], 9216);
+}
+
+/// Feature: Execute DecodeVideo op
+/// Description: Test executing DecodeVideo op with WMV video
+/// Expectation: Output is equal to the expected output and status is okay
+TEST_F(MindDataTestExecute, TestDecodeVideoWMV) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoWMV.";
+
+  // Read video file into tensor
+  mindspore::MSTensor video;
+  ASSERT_OK(mindspore::dataset::vision::ReadFile("data/dataset/video/campus.wmv", &video));
+
+  std::vector<mindspore::MSTensor> input_tensor;
+  std::vector<mindspore::MSTensor> output_tensor;
+  input_tensor.push_back(video);
+
+  auto decode_video = vision::DecodeVideo();
+  auto transform = Execute(decode_video);
+  Status rc = transform(input_tensor, &output_tensor);
+  EXPECT_EQ(rc, Status::OK());
+  EXPECT_EQ(output_tensor[0].Shape()[0], 4);
+  EXPECT_EQ(output_tensor[0].Shape()[1], 576);
+  EXPECT_EQ(output_tensor[0].Shape()[2], 720);
+  EXPECT_EQ(output_tensor[0].Shape()[3], 3);
+  EXPECT_EQ(output_tensor[1].Shape()[0], 2);
+  EXPECT_EQ(output_tensor[1].Shape()[1], 10240);
+}
+
+/// Feature: Execute DecodeVideo op
+/// Description: Test executing DecodeVideo op with invalid parameter
+/// Expectation: Error is caught when the parameter is invalid
+TEST_F(MindDataTestExecute, TestDecodeVideoException) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoException.";
+
+  std::shared_ptr<Tensor> input;
+  std::vector<mindspore::MSTensor> input_tensor;
+  std::vector<mindspore::MSTensor> output_tensor;
+
+  auto decode_video = vision::DecodeVideo();
+  auto transform = Execute(decode_video);
+
+  // Decode a 2D tensor
+  TensorShape tensor_shape = TensorShape({100, 200});
+  DataType data_type = DataType(DataType::DE_UINT8);
+  Tensor::CreateEmpty(tensor_shape, data_type, &input);
+  input_tensor.push_back(mindspore::MSTensor(std::make_shared<DETensor>(input)));
+  ASSERT_ERROR(transform(input_tensor, &output_tensor));
+
+  // Decode a tensor with float32 elements
+  tensor_shape = TensorShape({100});
+  data_type = DataType(DataType::DE_FLOAT32);
+  Tensor::CreateEmpty(tensor_shape, data_type, &input);
+  input_tensor.clear();
+  input_tensor.push_back(mindspore::MSTensor(std::make_shared<DETensor>(input)));
+  ASSERT_ERROR(transform(input_tensor, &output_tensor));
 }

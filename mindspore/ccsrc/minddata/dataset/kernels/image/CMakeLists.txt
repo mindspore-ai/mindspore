@@ -18,6 +18,7 @@ add_library(kernels-image OBJECT
     cut_out_op.cc
     cutmix_batch_op.cc
     decode_op.cc
+    decode_video_op.cc
     equalize_op.cc
     erase_op.cc
     gaussian_blur_op.cc
@@ -77,6 +78,7 @@ add_library(kernels-image OBJECT
     resize_cubic_op.cc
     trivial_augment_wide_op.cc
     vertical_flip_op.cc
+    video_utils.cc
     to_tensor_op.cc
     )
 
