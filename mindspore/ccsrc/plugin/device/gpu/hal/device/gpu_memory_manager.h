@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_MEMORY_MANAGER_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_MEMORY_MANAGER_H_
 #include <vector>
+#include <string>
+#include <unordered_map>
 #include "runtime/device/memory_manager.h"
 namespace mindspore {
 namespace device {
@@ -37,6 +39,22 @@ class GPUMemoryManager : public MemoryManager {
   bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
                                       std::vector<size_t> size_list, uint32_t stream_id = kDefaultStreamIndex) override;
   size_t GetAvailableMemSize() override;
+
+  // Relevant function to manage memory statistics
+  size_t GetTotalMemStatistics() const override;
+  size_t GetTotalUsedMemStatistics() const override;
+  size_t GetTotalIdleMemStatistics() const override;
+  size_t GetTotalEagerFreeMemStatistics() const override;
+  size_t GetUsedMemPeakStatistics() const override;
+  size_t GetReservedMemPeakStatistics() const override;
+  std::unordered_map<std::string, std::size_t> GetBlockCountsStatistics() const override;
+  std::unordered_map<std::string, std::size_t> GetBlockUnitSizeStatistics() const override;
+  std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>> GetCommonMemBlocksInfoStatistics()
+    const override;
+  std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
+  GetPersistentMemBlocksInfoStatistics() const override;
+  void ResetMaxMemoryReserved() const override;
+  void ResetMaxMemoryAllocated() const override;
 
  protected:
   uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id) override;

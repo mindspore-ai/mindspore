@@ -37,6 +37,11 @@ const size_t kMinimumAllocMem = 10 << 20;
 
 thread_local AllocatorDebugInfo DynamicMemAllocatorDebugInfo::debug_info_;
 
+const char kBlockMemorySize[] = "block_memory_size";
+const char kBlockStreamId[] = "block_stream_id";
+const char kCommonMemPoolType[] = "common_mem_pool";
+const char kPersistentMemPoolType[] = "persistent_mem_pool";
+
 static const std::map<DynamicMemBufStatus, std::string> kBufStatusString = {
   {DynamicMemBufStatus::kMemBufIdle, "idle"},
   {DynamicMemBufStatus::kMemBufUsed, "used"},
@@ -1107,6 +1112,18 @@ bool DynamicMemPoolBestFit::SyncAllEventsInner() {
   return true;
 }
 
+std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
+DynamicMemPoolBestFit::ExtractBlocksListInfo(const MemStatusManagerPtr &mem_mng) const {
+  std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>> blocks_list_info;
+  std::unordered_map<std::string, size_t> block_info;
+  for (auto iter = mem_mng->mem_block_list_.begin(); iter != mem_mng->mem_block_list_.end(); ++iter) {
+    block_info[kBlockMemorySize] = (*iter)->size();
+    block_info[kBlockStreamId] = (*iter)->stream_id_;
+    blocks_list_info[(std::string *)(*iter)->device_addr()] = block_info;
+  }
+  return blocks_list_info;
+}
+
 // The statistics information.
 size_t DynamicMemPoolBestFit::TotalMemStatistics() const {
   return common_mem_->mps_.total_mem_size_ + persistent_mem_->mps_.total_mem_size_;
@@ -1126,8 +1143,43 @@ size_t DynamicMemPoolBestFit::TotalEagerFreeMemStatistics() const {
 size_t DynamicMemPoolBestFit::UsedMemPeakStatistics() const {
   return common_mem_->mps_.used_mem_peak_size_ + persistent_mem_->mps_.used_mem_peak_size_;
 }
+size_t DynamicMemPoolBestFit::ReservedMemPeakStatistics() const {
+  return common_mem_->mps_.reserved_mem_peak_size_ + persistent_mem_->mps_.reserved_mem_peak_size_;
+}
 size_t DynamicMemPoolBestFit::ActualPeakStatistics() const {
   return common_mem_->CalActualPeak() + persistent_mem_->CalActualPeak();
+}
+std::unordered_map<std::string, std::size_t> DynamicMemPoolBestFit::BlockCountsStatistics() const {
+  size_t common_mem_block_counts = common_mem_->mem_block_list_.size();
+  size_t persistent_mem_block_counts = persistent_mem_->mem_block_list_.size();
+  std::unordered_map<std::string, std::size_t> block_count_stats;
+  block_count_stats[kCommonMemPoolType] = common_mem_block_counts;
+  block_count_stats[kPersistentMemPoolType] = persistent_mem_block_counts;
+  return block_count_stats;
+}
+std::unordered_map<std::string, std::size_t> DynamicMemPoolBestFit::BlockUnitSizeStatistics() const {
+  size_t common_mem_block_unit_size = common_mem_->unit_size_;
+  size_t persistent_mem_block_unit_size = persistent_mem_->unit_size_;
+  std::unordered_map<std::string, std::size_t> block_unit_size_stats;
+  block_unit_size_stats[kCommonMemPoolType] = common_mem_block_unit_size;
+  block_unit_size_stats[kPersistentMemPoolType] = persistent_mem_block_unit_size;
+  return block_unit_size_stats;
+}
+std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
+DynamicMemPoolBestFit::CommonMemBlocksInfoStatistics() const {
+  return ExtractBlocksListInfo(common_mem_);
+}
+std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
+DynamicMemPoolBestFit::PersistentMemBlocksInfoStatistics() const {
+  return ExtractBlocksListInfo(persistent_mem_);
+}
+void DynamicMemPoolBestFit::ResetMaxMemReserved() const {
+  common_mem_->mps_.reserved_mem_peak_size_ = 0;
+  persistent_mem_->mps_.reserved_mem_peak_size_ = 0;
+}
+void DynamicMemPoolBestFit::ResetMaxMemAllocated() const {
+  common_mem_->mps_.used_mem_peak_size_ = 0;
+  persistent_mem_->mps_.used_mem_peak_size_ = 0;
 }
 
 size_t MemStatusManager::CalActualPeak() {

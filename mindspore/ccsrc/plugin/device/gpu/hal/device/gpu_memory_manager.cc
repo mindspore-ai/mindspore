@@ -43,6 +43,42 @@ size_t GPUMemoryManager::GetAvailableMemSize() {
   return available_mem_size;
 }
 
+// Relevant function to manage memory statistics
+size_t GPUMemoryManager::GetTotalMemStatistics() const {
+  return GPUMemoryAllocator::GetInstance().TotalMemStatistics();
+}
+size_t GPUMemoryManager::GetTotalUsedMemStatistics() const {
+  return GPUMemoryAllocator::GetInstance().TotalUsedMemStatistics();
+}
+size_t GPUMemoryManager::GetTotalIdleMemStatistics() const {
+  return GPUMemoryAllocator::GetInstance().TotalIdleMemStatistics();
+}
+size_t GPUMemoryManager::GetTotalEagerFreeMemStatistics() const {
+  return GPUMemoryAllocator::GetInstance().TotalEagerFreeMemStatistics();
+}
+size_t GPUMemoryManager::GetUsedMemPeakStatistics() const {
+  return GPUMemoryAllocator::GetInstance().UsedMemPeakStatistics();
+}
+size_t GPUMemoryManager::GetReservedMemPeakStatistics() const {
+  return GPUMemoryAllocator::GetInstance().ReservedMemPeakStatistics();
+}
+std::unordered_map<std::string, std::size_t> GPUMemoryManager::GetBlockCountsStatistics() const {
+  return GPUMemoryAllocator::GetInstance().BlockCountsStatistics();
+}
+std::unordered_map<std::string, std::size_t> GPUMemoryManager::GetBlockUnitSizeStatistics() const {
+  return GPUMemoryAllocator::GetInstance().BlockUnitSizeStatistics();
+}
+std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
+GPUMemoryManager::GetCommonMemBlocksInfoStatistics() const {
+  return GPUMemoryAllocator::GetInstance().CommonMemBlocksInfoStatistics();
+}
+std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
+GPUMemoryManager::GetPersistentMemBlocksInfoStatistics() const {
+  return GPUMemoryAllocator::GetInstance().PersistentMemBlocksInfoStatistics();
+}
+void GPUMemoryManager::ResetMaxMemoryReserved() const { GPUMemoryAllocator::GetInstance().ResetMaxMemReserved(); }
+void GPUMemoryManager::ResetMaxMemoryAllocated() const { GPUMemoryAllocator::GetInstance().ResetMaxMemAllocated(); }
+
 bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
                                                       std::vector<size_t> size_list, uint32_t steam_id) {
   auto device_ptr_list = MallocContinuousMemFromMemPool(size_list, steam_id);
