@@ -320,8 +320,8 @@ void ReshapeInfo::ChangeDynamicDstShapeForSkipRedistribution(const AnfNodePtr &s
           continue;
         }
         int64_t replace_shape = origin_shape_ele / out_strategy[i - 1];
-        if (out_strategy[i - 1] == 1 && origin_shape_ele > vocab_size) {
-          replace_shape = origin_shape_ele / 2;
+        if (out_strategy[i - 1] == 1 && origin_shape_ele > vocab_size && i == make_tuple_cnode->size() - 1) {
+          replace_shape = origin_shape_ele / in_strategy[in_strategy.size() - 1];
         }
         auto replace_value_ptr = MakeValue(replace_shape);
         auto replace_value_node = std::make_shared<ValueNode>(replace_value_ptr);
