@@ -62,7 +62,7 @@ TypePtr ApplyRotaryPosEmbFuncImpl::InferType(const PrimitivePtr &prim,
     (void)CheckAndConvertUtils::CheckTensorTypeSame(input_types, qk_valid_types, op_name);
   } else if (cos_element_type == kNumberTypeFloat32) {
     const std::set cs_valid_types = {kFloat32};
-    const std::set qk_valid_types = {kFloat16};
+    const std::set qk_valid_types = {kFloat16, kBFloat16};
     std::map<std::string, TypePtr> cs_types;
     std::map<std::string, TypePtr> qk_types;
     (void)qk_types.emplace("query", query_type);
