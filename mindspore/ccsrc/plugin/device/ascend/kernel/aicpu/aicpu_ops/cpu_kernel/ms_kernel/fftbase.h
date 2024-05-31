@@ -29,16 +29,26 @@ class FFTBaseCpuKernel : public CpuKernel {
  public:
   ~FFTBaseCpuKernel() = default;
 
+  DataType input_type_;
+  DataType output_type_;
+
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
- private:
-  template <typename T_in, typename T_mid, typename T_out>
-  uint32_t FFTBaseCompute(CpuKernelContext &ctx);
+  template <typename T_in, typename T_out>
+  static uint32_t FFTBaseCompute(CpuKernelContext &ctx);
 
-  std::string op_name_;
-  std::size_t dim_index_ = kFftDimIndex;
-  std::size_t norm_index_ = kFftNormIndex;
+  template <typename T_in, typename T_out>
+  static uint32_t FFTBaseComputeC2C(CpuKernelContext &ctx);
+
+  template <typename T_in, typename T_out>
+  static uint32_t FFTBaseComputeR2C(CpuKernelContext &ctx);
+
+  template <typename T_in, typename T_out>
+  static uint32_t FFTBaseComputeC2R(CpuKernelContext &ctx);
+
+ private:
+  uint32_t ParseKernelParam(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  //  AICPU_FFTBASE_H

@@ -1,0 +1,17 @@
+#operator irfft_double
+irfft_double:
+  args:
+    input:
+      dtype: tensor
+    n:
+      dtype: int
+    dim:
+      dtype: int
+      default: -1
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: IRFFTDouble
+  function:
+    disable: True

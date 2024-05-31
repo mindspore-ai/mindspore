@@ -122,13 +122,21 @@ bool FFTShiftCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *
     &FFTShiftCpuKernelMod::LaunchKernel<T2>
 
 std::vector<std::pair<KernelAttr, FFTShiftCpuKernelMod::FFTShiftFunc>> FFTShiftCpuKernelMod::func_list_ = {
-  {FFTSHIFT_CPU_REG(kNumberTypeUInt8, uint8_t)},         {FFTSHIFT_CPU_REG(kNumberTypeUInt16, uint16_t)},
-  {FFTSHIFT_CPU_REG(kNumberTypeUInt32, uint32_t)},       {FFTSHIFT_CPU_REG(kNumberTypeUInt64, uint64_t)},
-  {FFTSHIFT_CPU_REG(kNumberTypeInt8, int8_t)},           {FFTSHIFT_CPU_REG(kNumberTypeInt16, int16_t)},
-  {FFTSHIFT_CPU_REG(kNumberTypeInt32, int32_t)},         {FFTSHIFT_CPU_REG(kNumberTypeInt64, int64_t)},
-  {FFTSHIFT_CPU_REG(kNumberTypeFloat16, float16)},       {FFTSHIFT_CPU_REG(kNumberTypeFloat32, float)},
-  {FFTSHIFT_CPU_REG(kNumberTypeFloat64, double)},        {FFTSHIFT_CPU_REG(kNumberTypeComplex64, complex64)},
-  {FFTSHIFT_CPU_REG(kNumberTypeComplex128, complex128)}, {FFTSHIFT_CPU_REG(kNumberTypeBool, bool)}};
+  {FFTSHIFT_CPU_REG(kNumberTypeUInt8, uint8_t)},
+  {FFTSHIFT_CPU_REG(kNumberTypeUInt16, uint16_t)},
+  {FFTSHIFT_CPU_REG(kNumberTypeUInt32, uint32_t)},
+  {FFTSHIFT_CPU_REG(kNumberTypeUInt64, uint64_t)},
+  {FFTSHIFT_CPU_REG(kNumberTypeInt8, int8_t)},
+  {FFTSHIFT_CPU_REG(kNumberTypeInt16, int16_t)},
+  {FFTSHIFT_CPU_REG(kNumberTypeInt32, int32_t)},
+  {FFTSHIFT_CPU_REG(kNumberTypeInt64, int64_t)},
+  {FFTSHIFT_CPU_REG(kNumberTypeBFloat16, bfloat16)},
+  {FFTSHIFT_CPU_REG(kNumberTypeFloat16, float16)},
+  {FFTSHIFT_CPU_REG(kNumberTypeFloat32, float)},
+  {FFTSHIFT_CPU_REG(kNumberTypeFloat64, double)},
+  {FFTSHIFT_CPU_REG(kNumberTypeComplex64, complex64)},
+  {FFTSHIFT_CPU_REG(kNumberTypeComplex128, complex128)},
+  {FFTSHIFT_CPU_REG(kNumberTypeBool, bool)}};
 
 std::vector<KernelAttr> FFTShiftCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

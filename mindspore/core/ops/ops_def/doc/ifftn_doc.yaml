@@ -19,11 +19,11 @@ ifftn:
           dim (tuple[int], optional): The dimension along which to take the one dimensional `ifftn`.
               Default: ``None`` , which means transform the all dimension of `input`, or the last `len(s)` dimensions if s is given.
           norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
-              Three modes are defined as,
+              Three modes are defined as, where :math: `n = prod(s)`
 
-              - ``"backward"`` (no normalization).
-              - ``"forward"`` (normalize by :math:`1*n`).
-              - ``"ortho"`` (normalize by :math:`1*\sqrt{n}`).
+              - ``"backward"`` (normalize by :math:`1/n`).
+              - ``"forward"`` (no normalization).
+              - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
 
       Returns:
           Tensor, The result of `ifftn()` function. The default is the same shape as `input`.
@@ -48,9 +48,9 @@ ifftn:
           >>> import mindspore
           >>> from mindspore import Tensor, ops
           >>> input = ops.ones((2, 2, 2))
-          >>> ops.ifftn(input, s=(2, 2, 2), dim=(0, 1, 2), norm="backward")
-          Tensor(shape=[2, 2, 2], dtype=Complex64, value=
-          [[[1+0j, 0+0j],
-           [0+0j, 0+0j]],
-           [[0+0j, 0+0j],
-           [0+0j, 0+0j]]])
+          >>> out = ops.ifftn(input, s=(2, 2, 2), dim=(0, 1, 2), norm="backward")
+          >>> print(out)
+          [[[1.+0.j 0.+0.j]
+            [0.+0.j 0.+0.j]]
+            [[0.+0.j 0.+0.j]
+            [0.+0.j 0.+0.j]]]

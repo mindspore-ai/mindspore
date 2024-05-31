@@ -128,6 +128,8 @@ std::string FmtToStr(const T &t) {
 
 std::string FormatToSerialString(CpuKernelContext &ctx, Format format);
 
+std::string GetOpName(CpuKernelContext &ctx);
+
 /**
  * Get primary-format from format,
  * in bits field:

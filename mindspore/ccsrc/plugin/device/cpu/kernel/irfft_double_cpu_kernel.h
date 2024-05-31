@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RFFT_GRAD_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RFFT_GRAD_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IRFFT_DOUBLE_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IRFFT_DOUBLE_CPU_KERNEL_H_
 
 #include <vector>
 #include <complex>
@@ -26,14 +26,13 @@
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "unsupported/Eigen/CXX11/Tensor"
 
 namespace mindspore {
 namespace kernel {
-class RFFTGradCpuKernelMod : public NativeCpuKernelMod {
+class IRFFTDoubleCpuKernelMod : public NativeCpuKernelMod {
  public:
-  RFFTGradCpuKernelMod() = default;
-  ~RFFTGradCpuKernelMod() override = default;
+  IRFFTDoubleCpuKernelMod() = default;
+  ~IRFFTDoubleCpuKernelMod() override = default;
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
@@ -46,24 +45,20 @@ class RFFTGradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T_in, typename T_mid, typename T_out>
+  template <typename T>
   bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                     const std::vector<kernel::KernelTensor *> &outputs);
 
-  using RFFTGradFunc = std::function<bool(RFFTGradCpuKernelMod *, const std::vector<KernelTensor *> &,
-                                          const std::vector<KernelTensor *> &)>;
-  static std::vector<std::pair<KernelAttr, RFFTGradFunc>> func_list_;
-  RFFTGradFunc kernel_func_;
+  using IRFFTDoubleFunc = std::function<bool(IRFFTDoubleCpuKernelMod *, const std::vector<KernelTensor *> &,
+                                             const std::vector<KernelTensor *> &)>;
+  static std::vector<std::pair<KernelAttr, IRFFTDoubleFunc>> func_list_;
+  IRFFTDoubleFunc kernel_func_;
 
   std::vector<int64_t> tensor_shape_;
   int64_t x_rank_;
-  std::vector<int64_t> tensor2_shape_;
-  int64_t x2_rank_;
-  int64_t dim;
-  int64_t n;
-  int64_t input_element_nums_;
-  mindspore::NormMode norm;
+  int64_t dim_;
+  int64_t n_;
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RFFT_GRAD_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IRFFT_DOUBLE_CPU_KERNEL_H_

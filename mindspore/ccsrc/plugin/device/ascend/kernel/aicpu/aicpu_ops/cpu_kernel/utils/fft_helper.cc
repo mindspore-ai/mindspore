@@ -19,16 +19,9 @@
 #include <numeric>
 
 namespace aicpu {
-
-std::string GetOpName(std::string op_name) {
-  if (!op_name.compare(0, op_prefix.size(), op_prefix) && op_name.find(fft_prefix) != std::string::npos) {
-    op_name.erase(op_name.begin(), op_name.begin() + op_prefix.size());
-  }
-  return op_name;
-}
-
 bool IsForwardOp(const std::string &op_name) {
-  static const std::vector<std::string> forward_op_name = {"FFT", "FFT2", "FFTN", "RFFT"};
+  static const std::vector<std::string> forward_op_name = {"FFT",   "FFT2", "FFTN",  "RFFT", "RFFT2",
+                                                           "RFFTN", "HFFT", "HFFT2", "HFFTN"};
   bool is_forward_op = std::any_of(forward_op_name.begin(), forward_op_name.end(),
                                    [&op_name](const std::string &forward_op) { return op_name == forward_op; });
   return is_forward_op;
@@ -45,18 +38,14 @@ int64_t GetCalculateElementNum(std::vector<int64_t> tensor_shape, std::vector<in
 
 double GetNormalized(int64_t element_nums, NormMode norm_type, bool forward) {
   double result = 1.0;
-  if (forward) {
-    if (norm_type == NormMode::FORWARD) {
-      result = 1.0 / element_nums;
-    } else if (norm_type == NormMode::ORTHO) {
-      result = 1.0 / sqrt(static_cast<double>(element_nums));
-    }
-  } else {
-    if (norm_type == NormMode::FORWARD) {
-      result = 1.0 * element_nums;
-    } else if (norm_type == NormMode::ORTHO) {
-      result = 1.0 * sqrt(static_cast<double>(element_nums));
-    }
+  if (norm_type == NormMode::ORTHO) {
+    result = 1.0 / sqrt(static_cast<double>(element_nums));
+  }
+  if (forward && norm_type == NormMode::FORWARD) {
+    result = 1.0 / element_nums;
+  }
+  if (!forward && norm_type == NormMode::BACKWARD) {
+    result = 1.0 / element_nums;
   }
   return result;
 }

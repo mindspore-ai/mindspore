@@ -46,5 +46,7 @@ fft:
           >>> import mindspore
           >>> from mindspore import Tensor, ops
           >>> input = Tensor([ 1.6243454, -0.6117564, -0.5281718, -1.0729686])
-          >>> ops.fft(input)
-          Tensor(shape=[4], dtype=Complex64, value= [-0.588551+0j, 2.15252-0.461212j, 2.7809+0j, 2.15252+0.461212j])
+          >>> out = ops.fft(input, n=4, dim=-1, norm="backward")
+          >>> print(out)
+          [-0.5885514+0.j          2.1525173-0.46121222j  2.7808986+0.j
+            2.1525173+0.46121222j]

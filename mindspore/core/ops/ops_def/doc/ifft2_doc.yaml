@@ -19,11 +19,11 @@ ifft2:
           dim (tuple[int], optional): The dimension along which to take the one dimensional `ifft2`.
               Default: ``(-2, -1)`` , which means transform the last two dimension of `input`.
           norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
-              Three modes are defined as,
+              Three modes are defined as, where :math: `n = prod(s)`
 
-              - ``"backward"`` (no normalization).
-              - ``"forward"`` (normalize by :math:`1*n`).
-              - ``"ortho"`` (normalize by :math:`1*\sqrt{n}`).
+              - ``"backward"`` (normalize by :math:`1/n`).
+              - ``"forward"`` (no normalization).
+              - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
 
       Returns:
           Tensor, The result of `ifft2()` function. The default is the same shape as `input`.
@@ -38,6 +38,7 @@ ifft2:
           ValueError: If `dim` is not in the range of "[ `-input.ndim` , `input.ndim` )".
           ValueError: If `dim` has duplicate values.
           ValueError: If `s` is less than 1.
+          ValueError: If `s` and `dim` are given but have different shapes.
           ValueError: If `norm` is none of ``"backward"`` , ``"forward"`` or ``"ortho"`` .
 
       Supported Platforms:
@@ -47,9 +48,9 @@ ifft2:
           >>> import mindspore
           >>> from mindspore import Tensor, ops
           >>> input = ops.ones((4, 4))
-          >>> ops.ifft2(input, s=(4, 4), dim=(0, 1), norm="backward")
-          Tensor(shape=[4, 4], dtype=Complex64, value=
-          [[1+0j, 0+0j, 0+0j, 0+0j],
-           [0+0j, 0+0j, 0+0j, 0+0j],
-           [0+0j, 0+0j, 0+0j, 0+0j],
-           [0+0j, 0+0j, 0+0j, 0+0j]])
+          >>> out = ops.ifft2(input, s=(4, 4), dim=(0, 1), norm="backward")
+          >>> print(out)
+          [[1.+0.j 0.+0.j 0.+0.j 0.+0.j]
+           [0.+0.j 0.+0.j 0.+0.j 0.+0.j]
+           [0.+0.j 0.+0.j 0.+0.j 0.+0.j]
+           [0.+0.j 0.+0.j 0.+0.j 0.+0.j]]

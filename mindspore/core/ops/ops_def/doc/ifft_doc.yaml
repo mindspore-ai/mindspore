@@ -21,12 +21,15 @@ ifft:
           norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
               Three modes are defined as,
 
-              - ``"backward"`` (no normalization).
-              - ``"forward"`` (normalize by :math:`1*n`).
-              - ``"ortho"`` (normalize by :math:`1*\sqrt{n}`).
+              - ``"backward"`` (normalize by :math:`1/n`).
+              - ``"forward"`` (no normalization).
+              - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
 
       Returns:
-          Tensor, The result of `ifft()` function.
+          Tensor, The result of `ifft()` function. The default is the same shape as `input`.
+          If `n` is given, the size of the `dim` axis is changed to `n`.
+          When the input is int16, int32, int64, float16, float32, complex64, the return value type is complex64.
+          When the input is float64 or complex128, the return value type is complex128.
 
       Raises:
           TypeError: If the `input` type is not Tensor.
@@ -43,5 +46,7 @@ ifft:
           >>> import mindspore
           >>> from mindspore import Tensor, ops
           >>> input = Tensor([ 1.6243454, -0.6117564, -0.5281718, -1.0729686])
-          >>> ops.ifft(input)
-          Tensor(shape=[4], dtype=Complex64, value= [-0.147138+0j, 0.538129+0.115303j, 0.695225+0j, 0.538129-0.115303j])
+          >>> out = ops.ifft(input, n=4, dim=-1, norm="backward")
+          >>> print(out)
+          [-0.14713785+0.j          0.5381293 +0.11530305j  0.69522464+0.j
+            0.5381293 -0.11530305j]

@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_KERNELS_NORMALIZED_RFFT_GRAD_H_
-#define AICPU_KERNELS_NORMALIZED_RFFT_GRAD_H_
+#ifndef AICPU_KERNELS_NORMALIZED_IRFFT_DOUBLE_H_
+#define AICPU_KERNELS_NORMALIZED_IRFFT_DOUBLE_H_
 
 #include <vector>
+#include <numeric>
+#include <complex>
+#include <securec.h>
 #include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
-class RFFTGradCpuKernel : public CpuKernel {
+class IRFFTDoubleCpuKernel : public CpuKernel {
  public:
-  ~RFFTGradCpuKernel() = default;
+  ~IRFFTDoubleCpuKernel() = default;
 
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  template <typename T_in, typename T_mid, typename T_out>
-  uint32_t RFFTGradCompute(CpuKernelContext &ctx);
+  template <typename T>
+  uint32_t IRFFTDoubleCompute(CpuKernelContext &ctx);
 
-  std::string op_name;
+  std::string op_name_;
 };
 }  // namespace aicpu
-#endif  //  AICPU_RFFT_GRAD_H
+#endif  //  AICPU_KERNELS_NORMALIZED_IRFFT_DOUBLE_H_
