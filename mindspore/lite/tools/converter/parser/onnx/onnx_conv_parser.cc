@@ -22,6 +22,7 @@
 #include "ops/fusion/conv2d_fusion.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
+#include "mindspore/core/ops/conv3d.h"
 
 namespace mindspore::lite {
 STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, int64_t group,
@@ -117,31 +118,51 @@ STATUS OnnxConvParser::ParseOnnxAttr(const onnx::NodeProto &onnx_node, int64_t *
 }
 
 PrimitiveCPtr OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  int conv_dims = 0;
+  std::vector<int64_t> kernels;
+  std::vector<int64_t> strides;
+  std::vector<int64_t> dilation;
+  std::vector<int64_t> pads;
+  if (ParseVecAttr(onnx_node, &kernels, &strides, &dilation, &pads, &conv_dims) != RET_OK) {
+    MS_LOG(ERROR) << "ParseVecAttr error!";
+    return nullptr;
+  }
+  int64_t group = 1;
+  mindspore::Format format = mindspore::Format::NCHW;
+  mindspore::PadMode pad_mode = mindspore::PadMode::PAD;
+  auto status = ParseOnnxAttr(onnx_node, &group, &format, &pad_mode);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Parse onnx attribute failed!";
+    return nullptr;
+  }
+  if (conv_dims == CONV3D_DIM) {
+    auto prim_3d = std::make_unique<ops::Conv3D>();
+    if (!dilation.empty()) {
+      prim_3d->set_dilation(dilation);
+    }
+    if (!pads.empty()) {
+      prim_3d->set_pad(pads);
+    }
+    if (!kernels.empty()) {
+      prim_3d->set_kernel_size(kernels);
+    }
+    if (!strides.empty()) {
+      prim_3d->set_stride(strides);
+    }
+    prim_3d->set_group(group);
+    return prim_3d->GetPrim();
+  }
   auto prim = std::make_unique<ops::Conv2DFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto prim_c = prim->GetPrim();
   MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   prim->set_pad({0, 0, 0, 0});
-  mindspore::Format format = mindspore::Format::NCHW;
-  mindspore::PadMode pad_mode = mindspore::PadMode::PAD;
   int64_t channel_out = 1;
   int64_t channel_in = 1;
-  int64_t group = 1;
-  std::vector<int64_t> kernels, strides, dilation, pads;
-  auto status = ParseOnnxAttr(onnx_node, &group, &format, &pad_mode);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Parse onnx attribute failed.";
-    return nullptr;
-  }
   (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
   prim->set_pad_mode(pad_mode);
   prim->set_group(group);
-
-  bool conv1d = false;
-  if (ParseVecAttr(onnx_node, &kernels, &strides, &dilation, &pads, &conv1d) != RET_OK) {
-    return nullptr;
-  }
-  if (conv1d) {
+  if (conv_dims == CONV1D_DIM) {
     (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(NCW));
   }
   prim->set_dilation({1, 1});
