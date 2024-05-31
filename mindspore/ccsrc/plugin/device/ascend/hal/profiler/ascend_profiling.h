@@ -60,6 +60,7 @@ class AscendProfiler : public Profiler {
   aclprofConfig *acl_config_{nullptr};
   aclprofStepInfo *acl_prof_step_info_{nullptr};
   aclrtStream acl_stream_{nullptr};
+  bool enable_prof_mem_{false};
 };
 }  // namespace ascend
 }  // namespace profiler

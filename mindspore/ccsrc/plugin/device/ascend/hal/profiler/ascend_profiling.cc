@@ -19,7 +19,9 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 #include "utils/log_adapter.h"
+#include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
@@ -103,6 +105,13 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
     }
   }
 
+  if (options["profile_memory"] == "on") {
+    MS_LOG(INFO) << "profile_memory is on, profile_data_path:" << profile_data_path_;
+    enable_prof_mem_ = true;
+    auto ms_context = MsContext::GetInstance();
+    ms_context->set_param<std::string>(MS_CTX_PROF_MEM_OUTPUT_PATH, profile_data_path_);
+  }
+
   if (options["pcie"] == "on") {
     const char *pcieFreq = "50";
     aclError pcieRet = aclprofSetConfig(ACL_PROF_SYS_INTERCONNECTION_FREQ, pcieFreq, strlen(pcieFreq));
@@ -183,6 +192,11 @@ void AscendProfiler::Start() {
   }
 
   MemoryProfiling::GetInstance().StartMemoryProfiling();
+  if (enable_prof_mem_) {
+    auto ms_context = MsContext::GetInstance();
+    MS_LOG(INFO) << "Enable profiling memory.";
+    ms_context->set_param<bool>(MS_CTX_ENABLE_PROF_MEM, true);
+  }
 
   profiler::ascend::ParallelStrategy::GetInstance()->SaveParallelStrategyToFile();
   std::string op_range_dir = profile_data_path_ + "/FRAMEWORK";
@@ -218,6 +232,16 @@ void AscendProfiler::Stop() {
   }
 
   MemoryProfiling::GetInstance().StopMemoryProfiling();
+
+  if (enable_prof_mem_) {
+    std::string csvPrefix = "operator_memory";
+    device::tracker::MemTrackerManager::GetInstance().DumpProfilingMemInfo(profile_data_path_, csvPrefix);
+    device::tracker::MemTrackerManager::GetInstance().Dump();
+
+    MS_LOG(INFO) << "Disable profiling memory.";
+    auto ms_context = MsContext::GetInstance();
+    ms_context->set_param<bool>(MS_CTX_ENABLE_PROF_MEM, false);
+  }
 
   StepProfilingEnable(false);
 }
