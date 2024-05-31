@@ -696,7 +696,7 @@ void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, 
     }
     context.set_init_compile_cache(true);
     compile_cache_manager_->InitCompileCacheHash(compile_cache_dep_files);
-    *compile_cache_consistent = compile_cache_manager_->CheckDepFilesHashConsistency();
+    *compile_cache_consistent = compile_cache_manager_->CanLoadCache();
     if (!*compile_cache_consistent) {
       MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
       return;

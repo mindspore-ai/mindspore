@@ -41,9 +41,9 @@ class CompileCacheManager {
   // Get the hash of dependent files when compiling graph.
   void InitCompileCacheHash(const py::list &compile_cache_dep_files);
   // Init group checkpoint file path for parallel mode.
-  static void InitParallelGroupCkptSaveFile();
+  void InitParallelGroupCkptSaveFile();
   // Compare the dependency files hash.
-  bool CheckDepFilesHashConsistency();
+  bool CanLoadCache();
   // Load the cached func_graph from mindir file.
   FuncGraphPtr GetCachedFuncGraph(const FuncGraphManagerPtr &manager, const py::dict &weights,
                                   const std::string &queue_name);

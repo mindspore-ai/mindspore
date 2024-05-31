@@ -328,13 +328,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   (*ge_options)["ge.exec.jobId"] = "0";
   MS_LOG(INFO) << "Set ge.exec.jobId to default value 0";
 
-  if (CompileCacheEnable()) {
-    auto ge_cache_path = Common::GetCompilerCachePath() + kGeCache;
-    (void)FileUtils::CreateNotExistDirs(ge_cache_path, true);
-    (*ge_options)[kGeGraphCompilerCacheDir] = ge_cache_path;
-    MS_LOG(INFO) << "Use GE graph compile cache, GE graph compile cache dir:" << ge_cache_path;
-  }
-
   auto proto_lib_path = common::GetEnv("OPTION_PROTO_LIB_PATH");
   if (!proto_lib_path.empty()) {
     char real_path[PATH_MAX] = {0};
