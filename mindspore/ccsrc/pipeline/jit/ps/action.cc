@@ -415,7 +415,7 @@ void UpdateTopGraphDebugInfo(const FuncGraphPtr &func_graph, const py::object &i
   func_graph->debug_info()->set_name(function_name);
 }
 
-void BuildTopGraph(const FuncGraphPtr &func_graph, const py::object &input) {
+void BuildTopGraph(const FuncGraphPtr &func_graph, const py::object &input, const ValuePtrList &args) {
   // Make Resolve for user top graph 'input'.
   auto function_name = GetFunctionName(input);
   parse::NameSpacePtr name_space =
@@ -424,7 +424,9 @@ void BuildTopGraph(const FuncGraphPtr &func_graph, const py::object &input) {
   MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
   ValueNodePtr module_node = NewValueNode(name_space);
   ValueNodePtr symbol_node = NewValueNode(symbol);
-  auto resolve_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node});
+  ValueNodePtr args_node = NewValueNode<ValuePtrList>(args);
+  auto resolve_node =
+    func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node, args_node});
   // Call user top graph in top graph.
   AnfNodePtrList inputs = {resolve_node};
   std::copy(func_graph->parameters().cbegin(), func_graph->parameters().cend(), std::back_inserter(inputs));
@@ -461,7 +463,7 @@ bool BootstrapAction(const ResourcePtr &resource) {
   for (size_t i = 0; i < resource->arguments().size(); ++i) {
     top_graph->add_parameter()->set_is_top_graph_param(true);
   }
-  BuildTopGraph(top_graph, input);
+  BuildTopGraph(top_graph, input, resource->arguments());
   // Set the top graph.
   parse::Parser::UpdateTopFuncGraph(top_graph);
   resource->set_func_graph(top_graph);
@@ -487,13 +489,10 @@ bool ParseAction(const ResourcePtr &resource) {
   python_adapter::set_python_env_flag(true);
   python_adapter::SetPythonPath(dir);
 
-  ValuePtrList args_value_list;
-  (void)std::transform(resource->args_abs().begin(), resource->args_abs().end(), std::back_inserter(args_value_list),
-                       [](const AbstractBasePtr &abs) { return abs->BuildValue(); });
-  parse::DataConverter data_converter(args_value_list, true);
+  parse::DataConverter data_converter(resource->arguments(), true);
   auto converted_ret = data_converter.ConvertData(input);
   if (converted_ret == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Attribute convert error with type:" << std::string(py::str(input));
+    MS_LOG(INTERNAL_EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(input));
   }
 
   auto top_graph = converted_ret->cast<FuncGraphPtr>();
@@ -932,7 +931,7 @@ abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
 }
 }  // namespace
 
-bool AbstractSpecializeAction(const ResourcePtr &resource) {
+bool TypeInferenceAction(const ResourcePtr &resource) {
   EventMessage::PrintCompileStatusMessage("Start performing static analysis and type inference.");
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->func_graph() == nullptr) {
@@ -946,14 +945,21 @@ bool AbstractSpecializeAction(const ResourcePtr &resource) {
   // Check isolated side-effect nodes.
   engine->set_check_side_effect(true);
   // Analyze
-  (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kAbstractAnalyze, 0, 0, 0);
-  AnalysisResult result =
-    AbstractAnalyze(resource->engine(), resource->func_graph(), GetArgsAbs(resource), resource->is_load());
-  (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kAbstractAnalyze, 0, 0, 1);
+  (void)profiler::CollectHostInfo(kCompiler, kTypeInference, kAbstractAnalyze, 0, 0, 0);
+  AnalysisResult result;
+  {
+    MsProfileStatGuard stat_guard("type_inference.infer");
+    result = AbstractAnalyze(resource->engine(), resource->func_graph(), GetArgsAbs(resource), resource->is_load());
+  }
+  (void)profiler::CollectHostInfo(kCompiler, kTypeInference, kAbstractAnalyze, 0, 0, 1);
   // Specialize
-  (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kProgramSpecialize, 0, 0, 0);
-  FuncGraphPtr new_fg = ProgramSpecialize(resource->engine(), result.context->func_graph(), result.context);
-  (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kProgramSpecialize, 0, 0, 1);
+  (void)profiler::CollectHostInfo(kCompiler, kTypeInference, kProgramSpecialize, 0, 0, 0);
+  FuncGraphPtr new_fg;
+  {
+    MsProfileStatGuard stat_guard("type_inference.specialize");
+    new_fg = ProgramSpecialize(resource->engine(), result.context->func_graph(), result.context);
+  }
+  (void)profiler::CollectHostInfo(kCompiler, kTypeInference, kProgramSpecialize, 0, 0, 1);
   // Update the top func graph with the specialized graph.
   parse::Parser::UpdateTopFuncGraph(new_fg);
   resource->set_func_graph(new_fg);
@@ -1695,8 +1701,7 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
     }
   }
   // Evaluate type and shape, and specialize.
-  (void)actions.emplace_back(std::make_pair(kAbstractSpecialize, AbstractSpecializeAction));
-
+  (void)actions.emplace_back(std::make_pair(kTypeInference, TypeInferenceAction));
   if (!enable_resolve_action) {
     (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
   }

@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/structure_ops.h"
 #include "utils/label.h"
 #include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "utils/symbolic.h"
 #include "utils/compile_config.h"
 #include "ir/primitive.h"
@@ -256,26 +257,42 @@ void PrintTupleNodeUsedFlags(std::ostringstream &buffer, const abstract::Abstrac
   if (sequence_abs == nullptr || sequence_abs->sequence_nodes() == nullptr || sequence_abs->sequence_nodes()->empty()) {
     return;
   }
-
-  buffer << ", sequence_nodes={";
-  for (size_t i = 0; i < sequence_abs->sequence_nodes()->size(); ++i) {
-    auto node = (*sequence_abs->sequence_nodes())[i].lock();
-    if (node == nullptr) {
-      MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
-      buffer << "node={<freed node>}";
-    } else {
-      buffer << "node={" << node->DebugString();
+  static const bool dump_dde_detail = (common::GetCompileConfig("DUMP_IR_DDE_DETAIL") == "1");
+  if (dump_dde_detail) {
+    buffer << ", sequence_nodes={";
+    for (size_t i = 0; i < sequence_abs->sequence_nodes()->size(); ++i) {
+      auto node = (*sequence_abs->sequence_nodes())[i].lock();
+      if (node == nullptr) {
+        MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
+        buffer << "node={<freed node>}";
+      } else {
+        buffer << "node={" << node << "/" << node->DebugString();
+        auto flags = GetSequenceNodeElementsUseFlags(node);
+        if (flags != nullptr) {
+          buffer << ", elements_use_flags: {ptr: " << flags << ", value: " << (*flags) << "}";
+        }
+        buffer << "}";
+      }
+      if (i != sequence_abs->sequence_nodes()->size() - 1) {
+        buffer << ", ";
+      }
+    }
+    buffer << "}";
+  } else {
+    buffer << ", elements_use_flags={";
+    for (size_t i = 0; i < sequence_abs->sequence_nodes()->size(); ++i) {
+      auto node = (*sequence_abs->sequence_nodes())[i].lock();
+      if (node == nullptr) {
+        continue;
+      }
       auto flags = GetSequenceNodeElementsUseFlags(node);
       if (flags != nullptr) {
-        buffer << ", elements_use_flags: {ptr: " << flags << ", value: " << (*flags) << "}";
+        buffer << (*flags);
+        break;
       }
-      buffer << "}";
     }
-    if (i != sequence_abs->sequence_nodes()->size() - 1) {
-      buffer << ", ";
-    }
+    buffer << "}";
   }
-  buffer << "}";
 }
 
 void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
@@ -782,6 +799,7 @@ void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::share
   auto dump_debug_info = debug_info;
   std::list<DebugInfoPtr> need_dump_debug_infos;
   const auto &shadow_debug_infos_map = debug_info->shadow_debug_infos_map();
+  HashSet<DebugInfoPtr> all_shadowed_debug_infos;
   while (dump_debug_info != nullptr) {
     need_dump_debug_infos.push_front(dump_debug_info);
     auto iter = shadow_debug_infos_map.find(dump_debug_info);
@@ -799,6 +817,7 @@ void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::share
                     << (shadowed_debug_info->trace_info() != nullptr ? shadowed_debug_info->trace_info()->name()
                                                                      : "none");
       need_dump_debug_infos.push_front(shadow_debug_info);
+      all_shadowed_debug_infos.emplace(shadowed_debug_info);
     }
     if (dump_debug_info->trace_info() == nullptr) {
       break;
@@ -811,7 +830,13 @@ void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::share
       auto debug_info_str = trace::GetDebugInfoStr(cur_debug_info, "", kSourceLineTipDiscard);
       if (visited_locations.find(debug_info_str) == visited_locations.cend()) {
         constexpr auto prefix = "      # ";
-        gsub->buffer << prefix << debug_info_str << "\n";
+        gsub->buffer << prefix << debug_info_str;
+        if (all_shadowed_debug_infos.count(cur_debug_info) != 0) {
+          constexpr auto shared_code_line_hint =
+            "<~~This line of code can be shared by multiple nodes, and may be duplicated./";
+          gsub->buffer << shared_code_line_hint;
+        }
+        gsub->buffer << "\n";
         (void)visited_locations.insert(debug_info_str);
       }
     }
