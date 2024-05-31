@@ -29,48 +29,19 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr ReplicationPad1DFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) const {
-  const size_t kRank2DNum = 2;
-  const size_t kRank3DNum = 3;
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto x_base_shape = input_args[kInputIndex0]->GetShape();
-  auto x_shape = x_base_shape->GetShapeVector();
-  // input x dynamic rank
-  MS_EXCEPTION_IF_NULL(x_base_shape);
-  if (x_base_shape->IsDimUnknown()) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
-  }
-  // input x dynamic shape
-  auto x_rank = x_shape.size();
-  if (x_rank != kRank2DNum && x_rank != kRank3DNum) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input should be 2D or 3D, but got " << x_rank;
-  }
-  // padding
-  auto paddings_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
-  if (!paddings_opt.has_value()) {
-    ShapeVector out_shape = x_shape;
-    out_shape[x_rank - 1] = abstract::Shape::kShapeDimAny;
-    return std::make_shared<abstract::Shape>(std::move(out_shape));
-  }
-
-  auto padding_type = input_args[kInputIndex1]->GetType();
-  if (!padding_type->isa<Tuple>()) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', type of 'padding' should be tuple of int, but got"
-                            << padding_type;
-  }
-  auto paddings = paddings_opt.value();
-  const size_t kExpectedPaddingLength = 2;
-  if (paddings.size() != kExpectedPaddingLength) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The padding length should be 2, but got "
-                             << paddings.size();
-  }
-  auto out_shape = SetPadShape(x_shape, paddings);
-  return out_shape;
+  constexpr size_t kReplicationPad1DDim = 1;
+  return PadInferShapeBase(primitive, input_args, kReplicationPad1DDim);
 }
 
 TypePtr ReplicationPad1DFuncImpl::InferType(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  auto padding_type = input_args[kInputIndex1]->GetType();
+  if (!padding_type->isa<Tuple>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', type of 'padding' should be tuple of int, but got"
+                            << padding_type;
+  }
   return CheckAndConvertUtils::CheckSubClass("input_x", input_args[kInputIndex0]->GetType(), {kTensorType}, prim_name);
 }
 }  // namespace ops
