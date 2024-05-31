@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_VIEW_UNSTACK_STRIDES_CALC_H_
-#define MINDSPORE_CORE_OPS_VIEW_UNSTACK_STRIDES_CALC_H_
+
+#ifndef MINDSPORE_CORE_OPS_OP_FUNC_IMPL_UNSTACK_EXT_H
+#define MINDSPORE_CORE_OPS_OP_FUNC_IMPL_UNSTACK_EXT_H
 
 #include <vector>
-#include "ops/view/view_strides_calculator.h"
+#include "ops/ops_func_impl/op_func_impl.h"
+#include "mindapi/base/macros.h"
 
 namespace mindspore {
 namespace ops {
-MS_CORE_API TensorStorageInfoPtrList UnstackCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs);
+class MIND_API UnstackExtFuncImpl : public OpFuncImpl {
+ public:
+  UnstackExtFuncImpl() = default;
+  ~UnstackExtFuncImpl() = default;
 
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_VIEW_UNSTACK_STRIDES_CALC_H_
+
+#endif  // MINDSPORE_CORE_OPS_OP_FUNC_IMPL_UNSTACK_EXT_H

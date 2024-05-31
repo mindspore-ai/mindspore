@@ -71,11 +71,10 @@ TEST_P(TestNonZero, non_zero_dyn_shape) {
 }
 
 INSTANTIATE_TEST_CASE_P(TestNonZeroGroup, TestNonZero,
-                        testing::Values(
-                          NonZeroOpParams{{2, 3}, kFloat, {6, 2}, kInt64, false},
-                          NonZeroOpParams{{2, 2, 3}, kFloat, {12, 3}, kInt64, false},
-                          NonZeroOpParams{{3, 4}, kFloat, {-1, 2}, kInt64, true},
-                          NonZeroOpParams{{-1, -1, -1}, kFloat, {-1, 3}, kInt64, true},
-                          NonZeroOpParams{{-2}, kFloat, {-1, -1}, kInt64, true}));
+                        testing::Values(NonZeroOpParams{{2, 3}, kFloat, {6, 2}, kInt64, false},
+                                        NonZeroOpParams{{2, 2, 3}, kFloat, {12, 3}, kInt64, false},
+                                        NonZeroOpParams{{3, 4}, kFloat, {-1, 2}, kInt64, true},
+                                        NonZeroOpParams{{-1, -1, -1}, kFloat, {-1, 3}, kInt64, true},
+                                        NonZeroOpParams{{-2}, kFloat, {-1, -1}, kInt64, true}));
 }  // namespace ops
 }  // namespace mindspore

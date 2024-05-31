@@ -28,6 +28,7 @@ Array Operation
     mindspore.mint.unique
     mindspore.mint.where
     mindspore.mint.zeros_like
+    mindspore.mint.nonzero
 
 Tensor Creation
 ^^^^^^^^^^^^^^^

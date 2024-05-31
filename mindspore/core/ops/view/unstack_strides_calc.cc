@@ -23,7 +23,7 @@
 
 namespace mindspore::ops {
 constexpr size_t kUnstackCalcInputsNum = 1;
-TensorStorageInfoPtrList UnstackCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
+MS_CORE_API TensorStorageInfoPtrList UnstackCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
   if (CheckInputsNull(inputs, kUnstackCalcInputsNum) || !inputs[0]->isa<tensor::BaseTensor>()) {
     return {};
   }
