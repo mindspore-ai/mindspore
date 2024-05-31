@@ -36,6 +36,7 @@ InternalKernelMod::~InternalKernelMod() {
 
 int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto param = CreateOpParam(inputs, outputs);
+  param->op_fullname_ = fullname_;
 
   // abstract validation info from inputs
   internal::ValidateInfo info;
