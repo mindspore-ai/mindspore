@@ -704,12 +704,16 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     MS_EXCEPTION_IF_NULL(device_context->GetKernelExecutor(false));
     // Execute optimization pass.
     (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimizeGraph, 1, 0, 0);
+    PROF_START(OptimizeGraph);
     device_context->GetKernelExecutor(false)->OptimizeGraph(graph);
+    PROF_END(OptimizeGraph);
     (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimizeGraph, 1, 0, 1);
     // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
     // 'KernelMod' is real executive object of kernel.
     (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 0);
+    PROF_START(CreateKernel);
     device_context->GetKernelExecutor(false)->CreateKernel(graph->execution_order());
+    PROF_END(CreateKernel);
     (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 1);
 
     // Kernels that are not supported by other device can be backed off and rebuilt on the CPU.
@@ -761,7 +765,9 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     session_->CacheKernelGraph(graph);
   }
   // Adjust kernel graph before run graph.
+  PROF_START(PreprocessBeforeRun);
   device_context->GetKernelExecutor(false)->PreprocessBeforeRun(graph);
+  PROF_END(PreprocessBeforeRun);
   graph->UpdateInternalParameter();
   // Set device target for parameter affinity.
   AnfAlgo::SetParameterDeviceTarget(graph);
