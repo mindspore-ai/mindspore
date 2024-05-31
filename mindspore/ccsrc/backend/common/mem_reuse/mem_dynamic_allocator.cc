@@ -25,6 +25,9 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
+#ifdef ENABLE_DEBUGGER
+#include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
+#endif
 
 namespace mindspore {
 namespace device {
@@ -118,6 +121,13 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   if (!device_addr) {
     DumpDynamicMemPoolStateInfo();
   }
+
+// report memory data to profiler
+#ifdef ENABLE_DEBUGGER
+  auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+  profiler_inst->RecordMemoryPoolInfo(TotalUsedMemStatistics(), TotalMemStatistics(), TotalUsedByEventMemStatistics());
+#endif
 
   if (common::IsNeedProfileMemory()) {
     MS_LOG(WARNING) << "Need Profile Memory, Memory pool alloc, total mem: " << TotalMemStatistics()
@@ -611,6 +621,14 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block,
                                           DynamicMemBufStatus origin_status, DynamicMemBufStatus target_status) {
   const auto &mem_buf = iter->second;
   MS_LOG(DEBUG) << "Combine mem buf release mem buf, device_addr : " << mem_buf->device_addr_ << ".";
+
+// report memory data to profiler
+#ifdef ENABLE_DEBUGGER
+  auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+  profiler_inst->RecordMemoryPoolInfo(TotalUsedMemStatistics(), TotalMemStatistics(), TotalUsedByEventMemStatistics());
+#endif
+
   if (common::IsNeedProfileMemory()) {
     MS_LOG(WARNING) << "Need Profile Memory, Memory pool free, total mem: " << TotalMemStatistics()
                     << ", peak mem: " << UsedMemPeakStatistics() << ", in use mem: " << TotalUsedMemStatistics()
