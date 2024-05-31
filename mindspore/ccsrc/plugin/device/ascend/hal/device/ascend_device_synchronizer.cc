@@ -42,10 +42,12 @@ bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, const void *devi
     MS_LOG(WARNING) << "Bind device to current thread failed.";
   }
 
-  auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, host_ptr, size, device_ptr, size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
-  if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
-    return false;
+  if (!common::IsNeedProfileMemory()) {
+    auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, host_ptr, size, device_ptr, size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
+      return false;
+    }
   }
 
   if (!AscendStreamMng::GetInstance().SyncStream(stream)) {

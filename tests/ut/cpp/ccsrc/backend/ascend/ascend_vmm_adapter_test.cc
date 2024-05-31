@@ -57,20 +57,20 @@ TEST_F(TestAscendVmmAdapter, test_basic_allocation) {
 /// Description: test set align size.
 /// Expectation: can set align size.
 TEST_F(TestAscendVmmAdapter, test_set_align_size) {
-  common::SetEnv("MS_DEV_ASCEND_VMM_ALIGN_SIZE", "20MB");
+  common::SetEnv("MS_ALLOC_CONF", "vmm_align_size:20MB");
   size_t mb = 1024 * 1024;
   AscendVmmAdapter test_vmm_adapter;
   EXPECT_EQ(test_vmm_adapter.kVmmAlignSize, 20 * mb);
-  common::SetEnv("MS_DEV_ASCEND_VMM_ALIGN_SIZE", "");
+  common::SetEnv("MS_ALLOC_CONF", "");
 }
 
 /// Feature: test ascend vmm adapter.
 /// Description: test set align size throw.
 /// Expectation: can throw exception.
 TEST_F(TestAscendVmmAdapter, test_set_align_size_throw) {
-  common::SetEnv("MS_DEV_ASCEND_VMM_ALIGN_SIZE", "balabala");
+  common::SetEnv("MS_ALLOC_CONF", "vmm_align_size:balabala");
   EXPECT_ANY_THROW(AscendVmmAdapter test_vmm_adapter);
-  common::SetEnv("MS_DEV_ASCEND_VMM_ALIGN_SIZE", "");
+  common::SetEnv("MS_ALLOC_CONF", "");
 }
 
 /// Feature: test ascend vmm adapter.
@@ -87,13 +87,13 @@ TEST_F(TestAscendVmmAdapter, test_round_up) {
 /// Description: test round up.
 /// Expectation: can round up.
 TEST_F(TestAscendVmmAdapter, test_round_up_1) {
-  common::SetEnv("MS_DEV_ASCEND_VMM_ALIGN_SIZE", "20MB");
+  common::SetEnv("MS_ALLOC_CONF", "vmm_align_size:20MB");
   AscendVmmAdapter test_vmm_adapter;
   size_t block = test_vmm_adapter.kVmmAlignSize;
   size_t size = block + 33;
   size_t ret = test_vmm_adapter.GetRoundUpAlignSize(size);
   EXPECT_EQ(ret, block * 2);
-  common::SetEnv("MS_DEV_ASCEND_VMM_ALIGN_SIZE", "");
+  common::SetEnv("MS_ALLOC_CONF", "");
 }
 
 /// Feature: test ascend vmm adapter.
@@ -110,13 +110,13 @@ TEST_F(TestAscendVmmAdapter, test_round_down) {
 /// Description: test round down.
 /// Expectation: can round down.
 TEST_F(TestAscendVmmAdapter, test_round_down_1) {
-  common::SetEnv("MS_DEV_ASCEND_VMM_ALIGN_SIZE", "20MB");
+  common::SetEnv("MS_ALLOC_CONF", "vmm_align_size:20MB");
   AscendVmmAdapter test_vmm_adapter;
   size_t block = test_vmm_adapter.kVmmAlignSize;
   size_t size = block + 33;
   size_t ret = test_vmm_adapter.GetRoundDownAlignSize(size);
   EXPECT_EQ(ret, block);
-  common::SetEnv("MS_DEV_ASCEND_VMM_ALIGN_SIZE", "");
+  common::SetEnv("MS_ALLOC_CONF", "");
 }
 
 /// Feature: test ascend vmm adapter.
