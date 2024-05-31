@@ -66,6 +66,7 @@ class ExitActor : public ControlActor {
   friend class SchedulerHelper;
 
   void CopyDeviceAddress(OpContext<DeviceTensor> *const context);
+  void UpdateDeviceOutputData();
   void MergeDynamiclenDeviceAddress(OpContext<DeviceTensor> *const context);
 
   // Exit actor will send to different actors according to different callers, so the output data, control,
