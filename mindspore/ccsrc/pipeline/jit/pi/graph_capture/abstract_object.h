@@ -69,6 +69,7 @@ class AbstractObjectBase {
   virtual ~AbstractObjectBase() {}
 
   void SetTypeObject(PyTypeObject *tp) { type_object_ = tp; }
+  static void SetTraceFlag(bool trace_flag) { trace_flag_ = trace_flag; }
   PyTypeObject *GetTypeObject() const { return type_object_; }
   Type GetType() const { return type_; }
 
