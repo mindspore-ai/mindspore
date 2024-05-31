@@ -22,6 +22,10 @@ from mindspore.ops import masked_fill
 from tests.st.utils import test_utils
 
 
+def np_masked_fill_forward_func(input_x, mask, value):
+    input_x = np.ma.array(input_x, mask=mask, fill_value=value)
+    return input_x.filled()
+
 @test_utils.run_with_cell
 def masked_fill_forward_func(input_x, mask, value):
     return masked_fill(input_x, mask, value)
@@ -50,10 +54,12 @@ def test_ops_masked_fill_forward(context_mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    input_x = ms.Tensor(np.array([1., 2., 3., 4.]).astype(np.float32))
-    mask = ms.Tensor(np.array([True, True, False, True]).astype(np.bool_))
-    output = masked_fill_forward_func(input_x, mask, 0.5)
-    expect_output = np.asarray([0.5, 0.5, 3., 0.5]).astype(np.float32)
+    input_shape = (77, 77)
+    input_x = np.random.randn(*input_shape).astype(np.float32)
+    mask_arry = np.random.choice([True, False], size=[77, 77])
+    mask = ms.Tensor(mask_arry, dtype=ms.bool_)
+    output = masked_fill_forward_func(ms.Tensor(input_x), mask, 0.0)
+    expect_output = np_masked_fill_forward_func(input_x, mask_arry, 0.0)
     np.testing.assert_allclose(output.asnumpy(), expect_output, rtol=1e-3)
 
 
