@@ -120,7 +120,7 @@ def _save_final_ckpt(func):
 
 def _append_ccae(callbacks):
     """Add cluster monitoring when CCAE is enabled."""
-    perf_config = os.getenv("PERF_CONFIG")
+    perf_config = os.getenv("PERF_DUMP_CONFIG")
     if perf_config is None:
         return callbacks
     pairs = perf_config.split(',')
