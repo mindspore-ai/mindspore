@@ -534,19 +534,21 @@ static auto HandleBreakAtLoop(JitCompileResults *jcr, const GraphBuilderPtr &g) 
 }
 
 static auto HandleUnsupportedSyntax(JitCompileResults *jcr, const GraphBuilderPtr &g) {
-  if (g->StackSize() > 0) {
-    auto block = g->PeekStack(0);
-    auto type = block.type;
-    if (type == SETUP_WITH || type == SETUP_FINALLY || type == SETUP_EXCEPT) {
-      // something happened in with syntax
-      jcr->code->SetGuard(std::make_shared<OptGuard>());
-      AddConfigToGuard(*jcr->conf, jcr->code->GetGuard());
-      jcr->conf->SetBool<GraphJitConfig::kSkipException>(Py_True);
-      GraphCapture(jcr);
-      g->GetTryBlockStacks().clear();
-      jcr->conf->SetBool<GraphJitConfig::kSkipException>(Py_False);
-      return true;
-    }
+  int break_bci = g->GetGraph()->GetStopTraceBci();
+  if (break_bci == -1) {
+    return false;
+  }
+  int break_op = g->GetGraph()->GetCFG()->instr_pool()[break_bci]->op();
+  bool unsupported = break_op == WITH_CLEANUP_START || break_op == WITH_CLEANUP_FINISH || break_op == END_FINALLY;
+  if (g->StackSize() > 0 || unsupported) {
+    // something happened in with syntax
+    jcr->code->SetGuard(std::make_shared<OptGuard>());
+    AddConfigToGuard(*jcr->conf, jcr->code->GetGuard());
+    jcr->conf->SetBool<GraphJitConfig::kSkipException>(Py_True);
+    GraphCapture(jcr);
+    g->GetTryBlockStacks().clear();
+    jcr->conf->SetBool<GraphJitConfig::kSkipException>(Py_False);
+    return true;
   }
   return false;
 }
