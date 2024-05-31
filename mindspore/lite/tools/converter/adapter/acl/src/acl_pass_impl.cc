@@ -54,6 +54,7 @@
 #include "tools/optimizer/graph/remove_load_pass.h"
 #include "tools/optimizer/fusion/transpose_fusion.h"
 #include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"
+#include "tools/optimizer/fusion/flash_attention_fusion.h"
 #include "tools/optimizer/fusion/groupnormsilu_fusion.h"
 #include "tools/converter/quantizer/quantization_optimizer.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
@@ -109,8 +110,8 @@ constexpr auto kOpsTransPose = "Transpose";
 /* 1. For compatibility reasons (on MindIRs with old primitives), ResizeBilinear op still needs to be processed.
    2. ResizeBilinear in core/ops is deprecated, avoid using name string defined in core/ops. */
 constexpr auto kNameResizeBilinear = "ResizeBilinear";
-const std::set<std::string> kSocVersionForAscendCFA = {"Ascend910B1", "Ascend910B2", "Ascend910B2C", "Ascend910B3",
-                                                       "Ascend910B4"};
+const std::set<std::string> kSocVersionForAscendCFA = {"Ascend910B1", "Ascend910B2", "Ascend910B2C",
+                                                       "Ascend910B3", "Ascend910B4", "Ascend310P3"};
 
 STATUS ModifyCNodeFormat(const FuncGraphPtr &func_graph, Format format) {
   MS_ASSERT(func_graph != nullptr);
@@ -639,6 +640,7 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
       MS_LOG(INFO) << "soc_version: " << soc_version;
       MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusion;
       if (kSocVersionForAscendCFA.find(soc_version) != kSocVersionForAscendCFA.end()) {
+        FlashAttentionFusion::SetSocVersion(soc_version);
         if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusion})) {
           MS_LOG(ERROR) << kCustomOpFlashAttentionFusion << " op pass failed.";
           return lite::RET_ERROR;

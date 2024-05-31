@@ -29,7 +29,8 @@ namespace opt {
 struct FlashAttentionParm {
   bool format_bsh = false;
   int64_t seq_threshold = 0;
-  size_t inner_precise = 1;
+  int inner_precise = 1;
+  int sparse_mode = 0;
 };
 /*
  *
@@ -59,25 +60,31 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
 
   AnfNodePtr Process(const std::string &, const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
+  static void SetSocVersion(const std::string &soc_version) { soc_version_ = soc_version; }
+
+  static std::string GetSocVersion() { return soc_version_; }
+
  private:
   std::map<std::string, std::map<std::string, std::string>> op_attrs_map_;
 
   CNodePtr CreatePromptFlashAttentionCnodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                   const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
                                                   const AnfNodePtr &atten_mask, int64_t num_heads, int64_t next_token,
-                                                  float scale_value, int64_t num_key_value_heads = 1,
-                                                  int64_t inner_precise = 1) const;
+                                                  float scale_value, const std::shared_ptr<FlashAttentionParm> &fa_parm,
+                                                  int64_t num_key_value_heads = 1) const;
 
   CNodePtr CreatePromptFlashAttentionCnodeForBNSDWithPse(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                          const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
                                                          const AnfNodePtr &atten_mask, const AnfNodePtr &pse,
                                                          int64_t num_heads, int64_t next_token, float scale_value,
+                                                         const std::shared_ptr<FlashAttentionParm> &fa_parm,
                                                          int64_t num_key_value_heads = 1) const;
 
   CNodePtr CreatePromptFlashAttentionCnodeForBSH(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                  const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
                                                  const AnfNodePtr &atten_mask, int64_t num_heads, int64_t next_token,
-                                                 float scale_value) const;
+                                                 float scale_value,
+                                                 const std::shared_ptr<FlashAttentionParm> &fa_parm) const;
 
   CNodePtr CreateIncreFlashAttentionCnodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                  const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
@@ -105,13 +112,17 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
                                                     const AnfNodePtr &node, const EquivPtr &equiv,
                                                     const std::shared_ptr<FlashAttentionParm> &fa_parm) const;
   CNodePtr CreateFlashAttentionNodeForPanGu(const std::string &pattern_name, const FuncGraphPtr &func_graph,
-                                            const AnfNodePtr &node, const EquivPtr &equiv) const;
+                                            const AnfNodePtr &node, const EquivPtr &equiv,
+                                            const std::shared_ptr<FlashAttentionParm> &fa_parm) const;
   CNodePtr CreateFlashAttentionNodeForLLAMAPatternV1(const std::string &pattern_name, const FuncGraphPtr &func_graph,
-                                                     const AnfNodePtr &node, const EquivPtr &equiv) const;
+                                                     const AnfNodePtr &node, const EquivPtr &equiv,
+                                                     const std::shared_ptr<FlashAttentionParm> &fa_parm) const;
   CNodePtr CreateFlashAttentionNodeForLLAMAPatternV2(const std::string &pattern_name, const FuncGraphPtr &func_graph,
-                                                     const AnfNodePtr &node, const EquivPtr &equiv) const;
+                                                     const AnfNodePtr &node, const EquivPtr &equiv,
+                                                     const std::shared_ptr<FlashAttentionParm> &fa_parm) const;
   CNodePtr CreateFlashAttentionNodeForBaiChuanPattern(const std::string &pattern_name, const FuncGraphPtr &func_graph,
-                                                      const AnfNodePtr &node, const EquivPtr &equiv) const;
+                                                      const AnfNodePtr &node, const EquivPtr &equiv,
+                                                      const std::shared_ptr<FlashAttentionParm> &fa_parm) const;
   CNodePtr CreateFlashAttentionNodeForSDEinsum(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                                const AnfNodePtr &node, const EquivPtr &equiv,
                                                const std::shared_ptr<FlashAttentionParm> &fa_parm) const;
@@ -123,19 +134,23 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   float GetScaleValueForDynamicShape(const AnfNodePtr &mul_const_input) const;
   CNodePtr CreateFAForSD15(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const AnfNodePtr &q_trans,
                            const AnfNodePtr &k_trans, const AnfNodePtr &v_trans, int64_t num_head, int64_t next_token,
-                           float scale_value, int64_t inner_precise = 1) const;
+                           float scale_value, const std::shared_ptr<FlashAttentionParm> &fa_parm) const;
   CNodePtr CreateFAWithPadAndPse(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const AnfNodePtr &q_trans,
                                  const AnfNodePtr &k_trans, const AnfNodePtr &v_trans, const AnfNodePtr &pse,
-                                 int64_t num_head, int64_t next_token, float scale_value) const;
+                                 int64_t num_head, int64_t next_token, float scale_value,
+                                 const std::shared_ptr<FlashAttentionParm> &fa_parm) const;
   CNodePtr CreateGQACNodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const CNodePtr &matmul_1,
-                                 const CNodePtr &matmul_2, const CNodePtr &attention_mask_mul) const;
+                                 const CNodePtr &matmul_2, const CNodePtr &attention_mask_mul,
+                                 const std::shared_ptr<FlashAttentionParm> &fa_parm) const;
   CNodePtr CreateFAForBNSDWithAttenMask(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const CNodePtr &qk_matmul, const CNodePtr &v_matmul,
-                                        const CNodePtr &attention_mask_mul) const;
+                                        const CNodePtr &attention_mask_mul,
+                                        const std::shared_ptr<FlashAttentionParm> &fa_parm) const;
 
   CNodePtr CreateFACNodeWithoutAttenMask(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                          const CNodePtr &qk_matmul, const CNodePtr &v_matmul,
-                                         const CNodePtr &attention_mask_mul) const;
+                                         const CNodePtr &attention_mask_mul,
+                                         const std::shared_ptr<FlashAttentionParm> &fa_parm) const;
 
   const VectorRef DefineFlashAttentionPatternForMsSD21() const;
 
@@ -182,6 +197,9 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   const VectorRef DefineFlashAttentionPatternForSDEinsum() const;
 
   std::shared_ptr<FlashAttentionParm> ParseFAParam() const;
+
+ private:
+  static std::string soc_version_;
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -119,6 +119,7 @@
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/ascendc/op_host/decoder_kv_cache.cpp"        "runtime/references"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/ascendc/op_host/platform_ascendc.h"          "runtime/references"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/ascendc/op_host/prompt_kv_cache.cpp"         "runtime/references"
+"mindspore/mindspore/lite/tools/optimizer/fusion/flash_attention_fusion.cc"                        "runtime/string"
 
 # ascend samples
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/aicpu/sample/"                                "build/include_subdir"
