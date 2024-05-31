@@ -1,0 +1,37 @@
+anti_quant:
+  description: |
+    Returns the antiquantized value of x.
+
+    If `sqrt_mode` is False:
+
+    .. math::
+        y = scale * (x + offset)
+
+    If `sqrt_mode` is True:
+
+    .. math::
+        y = scale * scale * (x + offset)
+
+    Args:
+        sqrt_mode (bool) : Specifies whether to perform square root on `scale`. Default: ``False``.
+        dtype (:class:`mindspore.dtype`): The desired data type of returned Tensor. It only supports
+            ``mindspore.float16`` or ``mindspore.bfloat16``, Default: ``mindspore.float16`` .
+
+    Inputs:
+        - **x** (Tensor) : Input tensor. Must be mindspore.int8.
+        - **scale** (Tensor) : Specifies the scaling ratio. Must be mindspore.float16`` or ``mindspore.bfloat16.
+        - **offset** (Tensor, optional) : Specifies the offset. Must be mindspore.float16`` or ``mindspore.bfloat16.
+            Default: ``None``.
+    Outputs:
+        - Tensor: The antiquantized output tensor of type `dtype`.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore.ops.auto_generate import AntiQuant
+        >>> antiquant = AntiQuant(False)
+        >>> x = Tensor([50.0, 20.0], ms.int8)
+        >>> scale = Tensor([2.0], ms.float32)
+        >>> offset = Tensor([1.0], ms.float32)
+        >>> y = antiquant(x, scale, offset)
+        >>> print(y)
+        [102. 42.]
