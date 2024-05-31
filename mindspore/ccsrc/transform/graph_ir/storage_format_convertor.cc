@@ -161,6 +161,20 @@ bool StorageFormatConvertor::SetupStorageFormat(const AnfGraphPtr &anf_graph, co
     MS_LOG(INFO) << "Enable format mode or disable ref mode, no need to set storage format";
     return true;
   }
+
+  auto param_ptr = param->cast<ParameterPtr>();
+  if (param_ptr != nullptr && param_ptr->param_info() != nullptr &&
+      !param_ptr->param_info()->storage_format().empty()) {
+    std::string store_fmt = param_ptr->param_info()->storage_format();
+    MS_LOG(INFO) << "Update desc format from set format: graph: " << anf_graph->ToString()
+                 << ", storage format: " << store_fmt << ", pre param: " << param->DebugString()
+                 << ", full name: " << param->ToString();
+    auto format = GetGeFormat(param, store_fmt, desc->GetOriginShape().GetDimNum());
+    UpdateTensorDesc(desc, format);
+    UpdateParameterKernelInfo(param, store_fmt);
+    return true;
+  }
+
   std::string set_format;
   if (!InitParameterKernelInfo(param, &set_format)) {
     MS_LOG(INFO) << "Please attention: init Param kernel info failed.";
