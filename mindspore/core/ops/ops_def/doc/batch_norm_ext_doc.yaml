@@ -1,0 +1,65 @@
+batch_norm:
+  description: |
+    Batch Normalization for input data and updated parameters.
+
+    Batch Normalization is widely used in convolutional neural networks. This operation
+    applies Batch Normalization over inputs to avoid internal covariate shift as described
+    in the paper `Batch Normalization: Accelerating Deep Network Training by Reducing Internal
+    Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
+    features using a mini-batch of data and the learned parameters can be described
+    in the following formula,
+
+    .. math::
+
+        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
+
+    where :math:`\gamma` is weight, :math:`\beta` is bias, :math:`\epsilon` is epsilon,
+    :math:`mean` is the mean of :math:`x`,
+    :math:`variance` is the variance of :math:`x`.
+
+    Inputs:
+        - **input** (Tensor) - Tensor of shape :math:`(N, C, *)`, where :math:`*` means, any number of additional
+            dimensions. with float16 or float32 data type. with bfloat16, float16 or float32 data type.
+        - **weight** (Tensor) - Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
+        - **bias** (Tensor) - Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
+        - **running_mean** (Tensor) - Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
+        - **running_var** (Tensor) - Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
+        - **training** (bool, optional) - If `training` is ``True`` , `mean` and `variance` are computed during
+            training. If `training` is ``False`` , they're loaded from checkpoint during inference. Default: ``False`` .
+        - **momentum** (float, optional) - The hyper parameter to compute moving average for running_mean and
+            running_var (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
+            Default: ``0.1`` 
+        - **epsilon** (float, optional) - A small value added for numerical stability. Default: ``1e-5``.
+
+    Outputs:
+        Tuple of 3 Tensors, the normalized inputs and the updated parameters.
+
+        - **output_x** (Tensor) - The same type and shape as the input. The shape is :math:`(N, C, *)`.
+        - **saved_mean** (Tensor) - The mean calculated per-dimension over the mini-batches,
+          shape is :math:`(C,)`.
+        - **saved_variance** (Tensor) - The variance calculated per-dimension over the mini-batches,
+          shape is :math:`(C,)`.
+
+    Raises:
+        TypeError: If `training` is not a bool.
+        TypeError: If dtype of `epsilon` or `momentum` is not float.
+        TypeError: If `input`, `weight`, `bias`, `running_mean` or `running_var` is not a Tensor.
+        TypeError: If dtype of `input`, `weight` is not bfloat16, float16 or float32.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
+        >>> scale = Tensor(np.ones([2]), mindspore.float32)
+        >>> bias = Tensor(np.ones([2]), mindspore.float32)
+        >>> mean = Tensor(np.ones([2]), mindspore.float32)
+        >>> variance = Tensor(np.ones([2]), mindspore.float32)
+        >>> batch_norm = ops.BatchNormExt()
+        >>> output = batch_norm(input_x, scale, bias, mean, variance)
+        >>> print(output[0])
+        [[1. 1.]
+         [1. 1.]]

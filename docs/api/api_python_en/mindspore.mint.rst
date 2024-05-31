@@ -59,6 +59,7 @@ Neural Network Layer Functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.batch_norm
     mindspore.mint.nn.functional.group_norm
     mindspore.mint.nn.functional.layer_norm
 

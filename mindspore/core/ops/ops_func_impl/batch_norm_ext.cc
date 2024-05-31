@@ -23,6 +23,7 @@
 #include "ops/op_def.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
@@ -116,5 +117,22 @@ TypePtr BatchNormExtFuncImpl::InferType(const PrimitivePtr &primitive,
   return std::make_shared<Tuple>(types_list);
 }
 
+ShapeArray BatchNormExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &weight_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(weight_tensor);
+  return {x_tensor->shape(), weight_tensor->shape(), weight_tensor->shape()};
+}
+
+TypePtrList BatchNormExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &weight_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(weight_tensor);
+  return {x_tensor->Dtype(), weight_tensor->Dtype(), weight_tensor->Dtype()};
+}
+
+REGISTER_SIMPLE_INFER(kNameBatchNormExt, BatchNormExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

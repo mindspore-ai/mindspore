@@ -87,7 +87,7 @@ from mindspore.ops.functional import softmax_ext as softmax
 # 33
 
 # 34
-
+from mindspore.ops.function.nn_func import batch_norm_ext as batch_norm
 # 35
 
 # 36
@@ -297,7 +297,7 @@ __all__ = [
     # 33
 
     # 34
-
+    'batch_norm',
     # 35
 
     # 36
