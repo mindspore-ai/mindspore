@@ -1190,12 +1190,31 @@ void DeviceAddressUtils::MallocForOutputs(const DeviceContext *device_context,
   }
 }
 
-device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddress(const DeviceContext *device_context,
-                                                                    size_t stream_id, const size_t &workspace_size) {
+device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddressWithoutKernelTensor(
+  const DeviceContext *device_context, size_t stream_id, const size_t &workspace_size) {
   MS_EXCEPTION_IF_NULL(device_context);
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
     nullptr, workspace_size, ShapeVector(), Format::DEFAULT_FORMAT, kTypeUnknown,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_, stream_id);
+  MS_EXCEPTION_IF_NULL(device_address);
+  if (device_address->GetPtr() == nullptr &&
+      !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+    MS_LOG(EXCEPTION) << "Allocate dynamic workspace memory failed";
+  }
+  MS_LOG(DEBUG) << "Create workspace device address:" << device_address;
+  return device_address;
+}
+
+device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddress(const DeviceContext *device_context,
+                                                                    size_t stream_id, const size_t &workspace_size) {
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, workspace_size, Format::DEFAULT_FORMAT, kTypeUnknown, ShapeVector(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  kernel_tensor->set_stream_id(stream_id);
+
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_EXCEPTION_IF_NULL(device_address);
   if (device_address->GetPtr() == nullptr &&
       !device_context->device_res_manager_->AllocateMemory(device_address.get())) {

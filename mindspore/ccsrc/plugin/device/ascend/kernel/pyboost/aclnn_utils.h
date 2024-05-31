@@ -17,36 +17,36 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_ACLNN_UTILS_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_ACLNN_UTILS_H_
 #include <algorithm>
-#include <string>
 #include <functional>
+#include <string>
 #include <vector>
-#include "transform/acl_ir/op_api_exec.h"
 #include "runtime/device/device_address_utils.h"
 #include "runtime/pynative/op_executor.h"
+#include "transform/acl_ir/op_api_exec.h"
 
-#define LAUNCH_ACLNN(aclnn_api, device_context, stream_id, ...)                                                    \
-  do {                                                                                                             \
-    static const std::string aclnn_name = #aclnn_api;                                                              \
-    runtime::ProfilerRecorder aclnn_profiler(runtime::ProfilerModule::kPynative,                                   \
-                                             runtime::ProfilerEvent::kPyBoostLaunchAclnn, aclnn_name, false);      \
-    auto stream_ptr = device_context->device_res_manager_->GetStream(stream_id);                                   \
-    auto [ws_size, executor_handle, release_function] = GEN_EXECUTOR(aclnn_name, __VA_ARGS__);                     \
-    if (ws_size == 0) {                                                                                            \
-      DispatchLaunchKernel(device_context, aclnn_name, nullptr, 0, executor_handle, stream_ptr, release_function); \
-    } else {                                                                                                       \
-      auto workspace_device_address =                                                                              \
-        runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, stream_id, ws_size);                   \
-      DispatchLaunchKernel(device_context, aclnn_name, workspace_device_address->GetMutablePtr(), ws_size,         \
-                           executor_handle, stream_ptr, release_function);                                         \
-    }                                                                                                              \
-    static auto sync = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);              \
-    if (sync) {                                                                                                    \
-      if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {                                      \
-        MS_LOG(EXCEPTION) << "SyncStream failed for op " << aclnn_name;                                            \
-      }                                                                                                            \
-    } else {                                                                                                       \
-      runtime::DeviceAddressUtils::ProcessCrossStreamAddress(aclnn_name, device_context, stream_id, __VA_ARGS__);  \
-    }                                                                                                              \
+#define LAUNCH_ACLNN(aclnn_api, device_context, stream_id, ...)                                                     \
+  do {                                                                                                              \
+    static const std::string aclnn_name = #aclnn_api;                                                               \
+    runtime::ProfilerRecorder aclnn_profiler(runtime::ProfilerModule::kPynative,                                    \
+                                             runtime::ProfilerEvent::kPyBoostLaunchAclnn, aclnn_name, false);       \
+    auto stream_ptr = device_context->device_res_manager_->GetStream(stream_id);                                    \
+    auto [ws_size, executor_handle, release_function] = GEN_EXECUTOR(aclnn_name, __VA_ARGS__);                      \
+    if (ws_size == 0) {                                                                                             \
+      DispatchLaunchKernel(device_context, aclnn_name, nullptr, 0, executor_handle, stream_ptr, release_function);  \
+    } else {                                                                                                        \
+      auto workspace_device_address =                                                                               \
+        runtime::DeviceAddressUtils::CreateWorkspaceAddressWithoutKernelTensor(device_context, stream_id, ws_size); \
+      DispatchLaunchKernel(device_context, aclnn_name, workspace_device_address->GetMutablePtr(), ws_size,          \
+                           executor_handle, stream_ptr, release_function);                                          \
+    }                                                                                                               \
+    static auto sync = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);               \
+    if (sync) {                                                                                                     \
+      if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {                                       \
+        MS_LOG(EXCEPTION) << "SyncStream failed for op " << aclnn_name;                                             \
+      }                                                                                                             \
+    } else {                                                                                                        \
+      runtime::DeviceAddressUtils::ProcessCrossStreamAddress(aclnn_name, device_context, stream_id, __VA_ARGS__);   \
+    }                                                                                                               \
   } while (false)
 
 #define LAUNCH_ACLNN_SYNC(aclnn_api, device_context, stream_id, ...)                                                \
@@ -63,8 +63,8 @@
     if (ws_size == 0) {                                                                                             \
       RUN_OP_API_SYNC(aclnn_name, nullptr, 0, executor_handle, stream_ptr);                                         \
     } else {                                                                                                        \
-      auto workspace_device_address =                                                                               \
-        runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, real_stream_id, ws_size);               \
+      auto workspace_device_address = runtime::DeviceAddressUtils::CreateWorkspaceAddressWithoutKernelTensor(       \
+        device_context, real_stream_id, ws_size);                                                                   \
       RUN_OP_API_SYNC(aclnn_name, workspace_device_address->GetMutablePtr(), ws_size, executor_handle, stream_ptr); \
     }                                                                                                               \
     if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {                                         \

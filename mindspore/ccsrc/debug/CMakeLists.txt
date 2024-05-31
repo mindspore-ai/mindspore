@@ -55,6 +55,8 @@ if(NOT ENABLE_SECURITY)
     if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
         list(APPEND _DEBUG_SRC_LIST
             "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/e2e_dump.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/statistic_kernel.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/tensor_statistic.cc"
             )
     endif()
 endif()

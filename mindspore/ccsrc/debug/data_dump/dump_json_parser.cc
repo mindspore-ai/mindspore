@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,11 @@ constexpr auto kSupportDevice = "support_device";
 constexpr auto kEnable = "enable";
 constexpr auto kOpDebugMode = "op_debug_mode";
 constexpr auto kTransFlag = "trans_flag";
+constexpr auto kSampleMode = "sample_mode";
+constexpr auto kSampleNum = "sample_num";
+constexpr auto kStatCalcMode = "stat_calc_mode";
+constexpr auto kHost = "host";
+constexpr auto kDevice = "device";
 constexpr auto kStatisticDump = "statistic";
 constexpr auto kTensorDump = "tensor";
 constexpr auto kFullDump = "full";
@@ -51,6 +56,7 @@ constexpr auto kDumpInputAndOutput = 0;
 constexpr auto kDumpInputOnly = 1;
 constexpr auto kDumpOutputOnly = 2;
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
+constexpr auto kBracketsOffset = 1;
 }  // namespace
 
 namespace mindspore {
@@ -60,6 +66,14 @@ auto DumpJsonParser::CheckJsonKeyExist(const nlohmann::json &content, const std:
     MS_LOG(EXCEPTION) << "Check dump json failed, " << key << " not found";
   }
   return iter;
+}
+
+auto DumpJsonParser::CheckSelectableKeyExist(const nlohmann::json &content, const std::string &key) {
+  nlohmann::json::const_iterator iter = content.find(key);
+  if (iter == content.end()) {
+    return false;
+  }
+  return true;
 }
 
 std::string GetIfstreamString(const std::ifstream &ifstream) {
@@ -113,9 +127,6 @@ void DumpJsonParser::CheckGEBackend() {
     if (e2e_dump_enabled()) {
       MS_LOG(WARNING) << "E2e dump only support kernel by kernel mode on Ascend platform.";
     }
-    if (dump_mode_ == static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
-      MS_LOG(EXCEPTION) << "Cell dump is not supported on 1980B. Please set dump_mode to 0 or 1.";
-    }
   }
 }
 
@@ -142,8 +153,7 @@ void DumpJsonParser::Parse() {
 
   std::ifstream json_file(dump_config_file.value());
   if (!json_file.is_open()) {
-    MS_LOG(EXCEPTION) << "Dump file:" << dump_config_file.value() << " open failed."
-                      << " Errno:" << errno;
+    MS_LOG(EXCEPTION) << "Dump file:" << dump_config_file.value() << " open failed. Errno:" << errno;
   }
 
   nlohmann::json j;
@@ -167,6 +177,7 @@ void DumpJsonParser::Parse() {
   PyNativeModeCheck();
   CheckGEBackend();
   JudgeDumpEnabled();
+  CheckStatCalcModeVaild();
 }
 
 void WriteJsonFile(const std::string &file_path, const std::ifstream &json_file) {
@@ -370,6 +381,8 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   } else if (!e2e_dump_enabled_) {
     e2e_dump_enabled_ = true;
     trans_flag_ = true;
+    sample_mode_ = 0;
+    sample_num_ = 100;
   }
 
   auto common_dump_settings = CheckJsonKeyExist(content, kCommonDumpSettings);
@@ -383,6 +396,10 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   nlohmann::detail::iter_impl<const nlohmann::json> op_debug_mode;
   if (!e2e_dump_enabled_) {
     op_debug_mode = CheckJsonKeyExist(*common_dump_settings, kOpDebugMode);
+  } else {
+    if (CheckSelectableKeyExist(*common_dump_settings, kOpDebugMode)) {
+      op_debug_mode = CheckJsonKeyExist(*common_dump_settings, kOpDebugMode);
+    }
   }
 
   ParseDumpMode(*dump_mode);
@@ -396,6 +413,10 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
     ParseOpDebugMode(*op_debug_mode);
     ParseFileFormat(
       *common_dump_settings);  // Pass in the whole json string to parse because file_format field is optional.
+  } else {
+    if (CheckSelectableKeyExist(*common_dump_settings, kOpDebugMode)) {
+      ParseOpDebugMode(*op_debug_mode);
+    }
   }
   ParseSavedData(*common_dump_settings);  // saved data optional
 }
@@ -417,6 +438,15 @@ void DumpJsonParser::ParseE2eDumpSetting(const nlohmann::json &content) {
     MS_LOG(WARNING) << "Deprecated: Synchronous dump mode is deprecated and will be removed in a future release";
   }
   trans_flag_ = ParseEnable(*trans_flag);
+  ParseStatCalcMode(*e2e_dump_setting);
+  if (CheckSelectableKeyExist(*e2e_dump_setting, kSampleMode)) {
+    auto sample_mode = CheckJsonKeyExist(*e2e_dump_setting, kSampleMode);
+    ParseSampleMode(*sample_mode);
+    if (CheckSelectableKeyExist(*e2e_dump_setting, kSampleNum)) {
+      auto sample_num = CheckJsonKeyExist(*e2e_dump_setting, kSampleNum);
+      ParseSampleNum(*sample_num);
+    }
+  }
 }
 
 void CheckJsonUnsignedType(const nlohmann::json &content, const std::string &key) {
@@ -446,7 +476,7 @@ void DumpJsonParser::ParseDumpMode(const nlohmann::json &content) {
     MS_LOG(EXCEPTION) << "Dump config parse failed, dump_mode should be 0, 1 or 2, but got " << dump_mode_;
   }
   if (dump_mode_ == static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
-    if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice || e2e_dump_enabled_) {
+    if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
       MS_LOG(EXCEPTION) << "Cell dump is only supported in Ascend async dump. Please set dump_mode to 0 or 1.";
     }
   }
@@ -623,24 +653,67 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
   for (const auto &kernel : content) {
     bool ret;
     auto kernel_str = kernel.dump();
-    kernel_str.erase(std::remove(kernel_str.begin(), kernel_str.end(), '\"'), kernel_str.end());
     MS_LOG(INFO) << "Need dump kernel:" << kernel_str;
-    if (static_cast<int>(kernel_str.rfind('/')) == -1 && static_cast<int>(kernel_str.rfind("-op")) == -1) {
-      if (backend == "ge") {
-        MS_LOG(WARNING) << "It is not supported to specify operator types on 1980B backend. " << kernel_str
-                        << " maybe not take effect.";
+    kernel_str.erase(std::remove(kernel_str.begin(), kernel_str.end(), '\"'), kernel_str.end());
+    if (static_cast<int>(kernel_str.find("name-regex(")) == 0 &&
+        static_cast<int>(kernel_str.rfind(")")) == static_cast<int>(kernel_str.length()) - kBracketsOffset) {
+      std::string kernel_reg_exp = kernel_str.substr(11, static_cast<int>(kernel_str.length()) - 12);
+      ret = kernel_regs_.try_emplace(kernel_str, std::regex(kernel_reg_exp)).second;
+    } else {
+      if (static_cast<int>(kernel_str.rfind('/')) == -1 && static_cast<int>(kernel_str.rfind("-op")) == -1) {
+        if (backend == "ge") {
+          MS_LOG(WARNING) << "It is not supported to specify operator types on 1980B backend. " << kernel_str
+                          << " maybe not take effect.";
+          dump_layer_ += kernel_str + " ";
+        }
+        ret = kernel_types_.try_emplace({kernel_str, 0}).second;
+      } else {
+        ret = kernels_.try_emplace({kernel_str, 0}).second;
         dump_layer_ += kernel_str + " ";
       }
-      ret = kernel_types_.try_emplace({kernel_str, 0}).second;
-    } else {
-      ret = kernels_.try_emplace({kernel_str, 0}).second;
-      dump_layer_ += kernel_str + " ";
     }
+    kernel_strings_.try_emplace({kernel_str, 0});
     if (!ret) {
       MS_LOG(WARNING) << "Duplicate dump kernel name:" << kernel_str;
     }
   }
 }
+
+void DumpJsonParser::ParseStatCalcMode(const nlohmann::json &content) {
+  auto iter = content.find(kStatCalcMode);
+  stat_calc_mode_ = kHost;
+  if (iter == content.end()) {
+    MS_LOG(INFO) << "'stat_calc_mode' is not set, default is " << stat_calc_mode_;
+    return;
+  }
+  CheckJsonStringType(*iter, kStatCalcMode);
+  std::string calc_mode = *iter;
+  if (calc_mode != kHost && calc_mode != kDevice) {
+    MS_LOG(EXCEPTION) << "Dump Json parse failed, 'stat_calc_mode' only supports 'host' or 'device', but got: "
+                      << calc_mode << ". Please set 'stat_cal_mode' to 'host' or 'device'";
+  }
+  stat_calc_mode_ = calc_mode;
+}
+
+void DumpJsonParser::CheckStatCalcModeVaild() {
+  if (IsTensorDump() && stat_calc_mode_ == kDevice) {
+    MS_LOG(WARNING) << "When 'saved_data' is 'tensor' or 'full', the device cannot be used to calculate statistics and "
+                       "the 'stat_calc_mode' is forced to 'host'.";
+    stat_calc_mode_ = kHost;
+  }
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_target != kAscendDevice && stat_calc_mode_ == kDevice) {
+    MS_LOG(WARNING)
+      << "The 'device' option of 'stat_calc_mode' currently only supports the ascend platform. The current platform is "
+      << device_target << ", and the 'stat_calc_mode' option is forcibly set to 'host'.";
+    stat_calc_mode_ = kHost;
+  }
+  MS_LOG(INFO) << "stat_calc_mode is set to " << stat_calc_mode_;
+}
+
+bool DumpJsonParser::IsDeviceCalcStats() const { return stat_calc_mode_ == kDevice; }
 
 void DumpJsonParser::ParseSupportDevice(const nlohmann::json &content) {
   CheckJsonArrayType(content, kSupportDevice);
@@ -661,6 +734,24 @@ bool DumpJsonParser::ParseEnable(const nlohmann::json &content) const {
   return content;
 }
 
+void DumpJsonParser::ParseSampleMode(const nlohmann::json &content) {
+  CheckJsonUnsignedType(content, kSampleMode);
+  sample_mode_ = content;
+  const uint32_t max_inout_num = 1;
+  if (sample_mode_ > max_inout_num) {
+    MS_LOG(EXCEPTION) << "Dump Json Parse Failed. sample_mode should be 0, 1";
+  }
+}
+
+void DumpJsonParser::ParseSampleNum(const nlohmann::json &content) {
+  CheckJsonUnsignedType(content, kSampleMode);
+  sample_num_ = content;
+  const uint32_t min_inout_num = 1;
+  if (sample_num_ < min_inout_num) {
+    MS_LOG(EXCEPTION) << "Dump Json Parse Failed. sample_num should be greater than 0";
+  }
+}
+
 void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
   CheckJsonUnsignedType(content, kOpDebugMode);
   op_debug_mode_ = content;
@@ -669,17 +760,31 @@ void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
       break;
     case static_cast<uint32_t>(DUMP_AICORE_OVERFLOW):
     case static_cast<uint32_t>(DUMP_ATOMIC_OVERFLOW):
+      if (e2e_dump_enabled_) {
+        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 3, 4";
+      }
+      break;
     case static_cast<uint32_t>(DUMP_BOTH_OVERFLOW):
       break;
-    case static_cast<uint32_t>(DUMP_LITE_EXCEPTION):
-      if (IsAclDump()) {
+    case static_cast<uint32_t>(DUMP_LITE_EXCEPTION): {
+      auto context = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(context);
+      auto device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+      if (device_target == "CPU" || device_target == "GPU") {
+        MS_LOG(WARNING) << "Abnormal dump is not supported on " << device_target
+                        << " backend, and none operator data would be saved when abnormal dump is enabled. ";
+      }
+      if (IsAclDump() || e2e_dump_enabled_) {
         break;
       } else {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
       }
+    }
     default:
       if (IsAclDump()) {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3, 4";
+      } else if (e2e_dump_enabled_) {
+        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 3, 4";
       } else {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
       }
@@ -756,7 +861,7 @@ void DumpJsonParser::JudgeDumpEnabled() {
  * Runtime category: Old runtime, MindRT.
  * Description: Check if the given op needs to be dumped based the configuration option.
  */
-bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
+bool DumpJsonParser::NeedDump(const std::string &op_full_name) {
   bool need_dump = false;
 
   switch (dump_mode_) {
@@ -764,8 +869,19 @@ bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
       need_dump = true;
       break;
     case DUMP_KERNEL:
+      for (const auto &iter : kernel_regs_) {
+        if (regex_match(op_full_name, iter.second)) {
+          need_dump = true;
+          MatchKernel(iter.first);
+          break;
+        }
+      }
+      if (need_dump) {
+        break;
+      }
       if (kernels_.find(op_full_name) != kernels_.end()) {
         need_dump = true;
+        MatchKernel(op_full_name);
         break;
       }
       for (const auto &iter : kernel_types_) {
@@ -780,6 +896,7 @@ bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
         transform(kernel_type.begin(), kernel_type.end(), kernel_type.begin(), ::tolower);
         if (op_name.find(kernel_type) != std::string::npos) {
           need_dump = true;
+          MatchKernel(kernel_type);
           break;
         }
       }
@@ -802,8 +919,8 @@ bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
  * Description: Increment the count of dumping for given kernel.
  */
 void DumpJsonParser::MatchKernel(const std::string &kernel_name) {
-  auto iter = kernels_.find(kernel_name);
-  if (iter == kernels_.end()) {
+  auto iter = kernel_strings_.find(kernel_name);
+  if (iter == kernel_strings_.end()) {
     return;
   }
   iter->second = iter->second + 1;
@@ -814,9 +931,9 @@ void DumpJsonParser::PrintUnusedKernel() {
   if ((!e2e_dump_enabled_ && !async_dump_enabled_) || dump_mode_ != static_cast<uint32_t>(DUMP_KERNEL)) {
     return;
   }
-  for (const auto &iter : kernels_) {
+  for (const auto &iter : kernel_strings_) {
     if (iter.second == 0) {
-      MS_LOG(WARNING) << "[DataDump] Unused Kernel in json:" << iter.first;
+      MS_LOG(WARNING) << "[DataDump] Unused Kernel in json: " << iter.first;
     }
   }
 }
@@ -885,12 +1002,12 @@ void DumpJsonParser::GetCellDumpFlag(const session::KernelGraph &kernel_graph) {
 }
 
 void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_graph) {
+  MS_LOG(INFO) << "Get kernel dump flag";
+  GetCellDumpFlag(kernel_graph);
+
   if (!async_dump_enabled_) {
     return;
   }
-
-  MS_LOG(INFO) << "Get async kernel dump flag";
-  GetCellDumpFlag(kernel_graph);
 
   MS_LOG(INFO) << "Update async dump kernel list for hccl";
   for (const auto &kernel : kernel_graph.execution_order()) {

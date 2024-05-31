@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,29 +17,34 @@
 #define MINDSPORE_CCSRC_DEBUG_DEBUGGER_DEBUGGER_UTILS_H_
 
 #include <iostream>
-#include <vector>
 #include <string>
+#include <vector>
 #include "include/backend/debug/debugger/debugger.h"
 #include "kernel/kernel.h"
-#include "runtime/hardware/device_context.h"
 #include "proto/debug_grpc.grpc.pb.h"
+#include "runtime/hardware/device_context.h"
 
 using mindspore::device::DeviceContext;
 using mindspore::kernel::KernelLaunchAddr;
+using mindspore::kernel::KernelTensor;
 
 namespace mindspore {
 std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &output_size);
 
-void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order, uint32_t root_graph_id,
-                const DeviceContext *device_context, const bool trans_flag);
+// when used in abnormal dump, the async_copy should set to false
+void LoadInputs(const CNodePtr &cnode, std::vector<device::DeviceAddress *> device_tensors, uint32_t exec_order,
+                uint32_t root_graph_id, const DeviceContext *device_context, const bool trans_flag,
+                const uint32_t sample_mode, const uint32_t sample_num, const bool async_copy = true);
 
-void LoadOutputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order,
-                 uint32_t root_graph_id, const DeviceContext *device_context, const bool trans_flag);
+void LoadOutputs(const CNodePtr &cnode, std::vector<device::DeviceAddress *> device_tensors, uint32_t exec_order,
+                 uint32_t root_graph_id, const DeviceContext *device_context, const bool trans_flag,
+                 const uint32_t sample_mode, const uint32_t sample_num);
 
 bool CheckReadData(const CNodePtr &cnode);
 
-void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order,
-                     const DeviceContext *device_context);
+void ReadDataAndDump(const CNodePtr &cnode, std::vector<device::DeviceAddress *> input_kernel_tensors,
+                     std::vector<device::DeviceAddress *> output_kernel_tensors, uint32_t exec_order,
+                     const DeviceContext *device_context, const bool abnormal_dump = false);
 
 std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr);
 

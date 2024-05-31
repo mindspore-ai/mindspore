@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 #include "include/backend/debug/data_dump/e2e_dump.h"
 #include "include/common/utils/config_manager.h"
 #include "backend/common/session/session_basic.h"
+#include "debug/data_dump/tensor_statistic.h"
 
 constexpr int kFailure = 1;
 
@@ -63,12 +64,12 @@ std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &
  * Feature group: Dump, Online debugger.
  * Target device group: GPU, Ascend.
  * Runtime category: MindRT.
- * Description: Get kernel inputs from launch_info and load the inputs from device to host.
+ * Description: Get kernel inputs from device_tensors and load the inputs from device to host.
  */
-void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order, uint32_t root_graph_id,
-                const DeviceContext *device_context, const bool trans_flag) {
+void LoadInputs(const CNodePtr &cnode, std::vector<device::DeviceAddress *> device_tensors, uint32_t exec_order,
+                uint32_t root_graph_id, const DeviceContext *device_context, const bool trans_flag,
+                const uint32_t sample_mode, const uint32_t sample_num, const bool async_copy) {
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(launch_info);
   MS_EXCEPTION_IF_NULL(device_context);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   std::vector<size_t> ignored_address;
@@ -76,12 +77,8 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint
     ignored_address = kernel_mod->GetLaunchIgnoredInputAddressIdx();
   }
 
-  // get inputs
-  auto kernel_inputs = launch_info->inputs_;
-  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
+  auto input_size = device_tensors.size();
   for (size_t j = 0; j < input_size; ++j) {
-    auto addr = kernel_inputs[j];
-    MS_EXCEPTION_IF_NULL(addr);
     // Ignore the input address that is not used in the kernel launch.
     if (std::find(ignored_address.begin(), ignored_address.end(), j) != ignored_address.end()) {
       MS_LOG(INFO) << "Ignore dump input data for kernel:" << cnode->fullname_with_scope() << " with input index:" << j;
@@ -100,18 +97,20 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint
     auto device_format =
       E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(input_kernel, kParameterOutputIndex);
 
-    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      addr->addr, addr->size, kernel::GetFormatFromStrToEnum(device_format), device_type, ShapeVector(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-    auto device_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     string input_tensor_name = input_kernel_name + ':' + "0";
-    ShapeVector int_shapes;
-    GetDumpIntShape(input_kernel, kParameterOutputIndex, NOT_NULL(&int_shapes), trans_flag);
-    auto ret = device_addr->LoadMemToHost(input_tensor_name, UintToInt(exec_order), host_format, int_shapes, type, 0,
-                                          true, root_graph_id, false, trans_flag);
+    auto device_addr = device_tensors[j];
+
+    auto dump_shape = device_addr->kernel_tensor()->GetShapeVector();  // host shape
+    if (!trans_flag) {
+      dump_shape = AnfAlgo::GetOutputDeviceShape(input_kernel, kParameterOutputIndex, dump_shape);  // device_shape
+    }
+    if (sample_mode == DumpJsonParser::DUMP_HEAD_AND_TAIL && SizeOf(dump_shape) > sample_num) {
+      dump_shape = {sample_num};
+    }
+    auto ret = device_addr->LoadMemToHost(input_tensor_name, UintToInt(exec_order), host_format, dump_shape, type, 0,
+                                          true, root_graph_id, false, trans_flag, async_copy);
     if (!ret) {
-      MS_LOG(WARNING) << "LoadMemToHost failed:"
-                      << ", tensor_name:" << input_tensor_name << ", host_format:" << host_format
+      MS_LOG(WARNING) << "LoadMemToHost failed: tensor_name:" << input_tensor_name << ", host_format:" << host_format
                       << ", device_format:" << device_format << ".";
     }
   }
@@ -121,19 +120,16 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint
  * Feature group: Dump, Online debugger.
  * Target device group: GPU, Ascend.
  * Runtime category: MindRT.
- * Description: Get kernel outputs from launch_info and load the inputs from device to host.
+ * Description: Get kernel outputs from device_tensors and load the inputs from device to host.
  */
-void LoadOutputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order,
-                 uint32_t root_graph_id, const DeviceContext *device_context, const bool trans_flag) {
-  // get outputs
-  auto kernel_outputs = launch_info->outputs_;
+void LoadOutputs(const CNodePtr &cnode, std::vector<device::DeviceAddress *> device_tensors, uint32_t exec_order,
+                 uint32_t root_graph_id, const DeviceContext *device_context, const bool trans_flag,
+                 const uint32_t sample_mode, const uint32_t sample_num) {
   auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
   auto node_name = common::AnfAlgo::GetCNodeName(cnode);
   std::string kernel_name = GetKernelNodeName(cnode);
   std::vector<size_t> real_outputs = CheckRealOutput(node_name, output_size);
-
   for (size_t j : real_outputs) {
-    auto addr = kernel_outputs[j];
     auto device_type = AnfAlgo::GetOutputDeviceDataType(cnode, j);
     auto host_type = common::AnfAlgo::GetOutputInferDataType(cnode, j);
     auto type = trans_flag ? host_type : device_type;
@@ -145,18 +141,19 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uin
     auto host_format = kOpFormat_DEFAULT;
     auto device_format = E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(cnode, j);
 
-    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      addr->addr, addr->size, kernel::GetFormatFromStrToEnum(device_format), device_type, ShapeVector(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-    auto device_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     string tensor_name = kernel_name + ':' + std::to_string(j);
-    ShapeVector int_shapes;
-    GetDumpIntShape(cnode, j, NOT_NULL(&int_shapes), trans_flag);
-    auto ret = device_addr->LoadMemToHost(tensor_name, UintToInt(exec_order), host_format, int_shapes, type, j, false,
+    auto device_addr = device_tensors[j];
+    auto dump_shape = device_addr->kernel_tensor()->GetShapeVector();
+    if (!trans_flag) {
+      dump_shape = AnfAlgo::GetOutputDeviceShape(cnode, j, dump_shape);
+    }
+    if (sample_mode == DumpJsonParser::DUMP_HEAD_AND_TAIL && SizeOf(dump_shape) > sample_num) {
+      dump_shape = {sample_num};
+    }
+    auto ret = device_addr->LoadMemToHost(tensor_name, UintToInt(exec_order), host_format, dump_shape, type, j, false,
                                           root_graph_id, false, trans_flag);
     if (!ret) {
-      MS_LOG(WARNING) << "LoadMemToHost failed:"
-                      << ", tensor_name:" << tensor_name << ", host_format:" << host_format
+      MS_LOG(WARNING) << "LoadMemToHost failed: tensor_name:" << tensor_name << ", host_format:" << host_format
                       << ", device_format:" << device_format << ".!";
     }
   }
@@ -205,6 +202,24 @@ bool GetTransFlag() {
   return DumpJsonParser::GetInstance().trans_flag();
 }
 
+uint32_t GetSampleMode() {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  if (debugger->debugger_enabled() || IsDeviceTargetGPU()) {
+    return 0;
+  }
+  return DumpJsonParser::GetInstance().sample_mode();
+}
+
+uint32_t GetSampleNum() {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  if (debugger->debugger_enabled() || IsDeviceTargetGPU()) {
+    return 0;
+  }
+  return DumpJsonParser::GetInstance().sample_num();
+}
+
 /*
  * Feature group: Dump, Online debugger.
  * Target device group: Ascend, GPU.
@@ -212,8 +227,9 @@ bool GetTransFlag() {
  * Description: Load inputs and outputs of the given node if needed and dump them if dump is enabled, then it performs
  * PostExecuteNode function on the given node for GPU.
  */
-void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order,
-                     const DeviceContext *device_context) {
+void ReadDataAndDump(const CNodePtr &cnode, std::vector<device::DeviceAddress *> input_device_tensors,
+                     std::vector<device::DeviceAddress *> output_device_tensors, uint32_t exec_order,
+                     const DeviceContext *device_context, const bool abnormal_dump) {
   auto debugger = Debugger::GetInstance();
   if (!debugger) {
     return;
@@ -225,14 +241,31 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info,
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto root_graph_id = kernel_graph->root_graph_id();
   bool trans_flag = GetTransFlag();
+  uint32_t sample_mode = GetSampleMode();
+  uint32_t sample_num = GetSampleNum();
   if (debugger->debugger_enabled() || dump_json_parser.InputNeedDump()) {
-    LoadInputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag);
+    string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
+    if (DumpJsonParser::GetInstance().IsDeviceCalcStats() && dump_enabled) {
+      datadump::DumpKernelTensorStats(device_context, input_device_tensors, true, cnode->fullname_with_scope(),
+                                      kernel_name);
+    } else {
+      bool async_copy = !abnormal_dump;
+      LoadInputs(cnode, input_device_tensors, exec_order, root_graph_id, device_context, trans_flag, sample_mode,
+                 sample_num, async_copy);
+    }
   }
   if (debugger->debugger_enabled() || dump_json_parser.OutputNeedDump()) {
-    LoadOutputs(cnode, launch_info, exec_order, root_graph_id, device_context, trans_flag);
+    if (DumpJsonParser::GetInstance().IsDeviceCalcStats() && dump_enabled) {
+      string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
+      datadump::DumpKernelTensorStats(device_context, output_device_tensors, false, cnode->fullname_with_scope(),
+                                      kernel_name);
+    } else if (!abnormal_dump) {
+      LoadOutputs(cnode, output_device_tensors, exec_order, root_graph_id, device_context, trans_flag, sample_mode,
+                  sample_num);
+    }
   }
   // Dump kernel
-  if (dump_enabled) {
+  if (dump_enabled && !DumpJsonParser::GetInstance().IsDeviceCalcStats()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
     auto graph_id = kernel_graph->graph_id();
     // for GPU, nodes are dumped in graph_id directory.
