@@ -5,8 +5,17 @@ elu_grad:
       dtype: tensor
     out:
       dtype: tensor
+    alpha:
+      dtype: float
+      default: 1.0
+    is_result:
+      dtype: bool
+      default: True
   returns:
     dx:
       dtype: tensor
   function:
     disable: True
+  dispatch:
+    enable: True
+    Ascend: EluGradAscend

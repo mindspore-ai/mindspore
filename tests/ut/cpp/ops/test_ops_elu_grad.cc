@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <vector>
 #include <memory>
 #include "common/common_test.h"
 #include "ops/ops_func_impl/elu_grad.h"
+#include "ops/auto_generate/gen_ops_name.h"
+#include "ir/primitive.h"
+#include "abstract/abstract_value.h"
 #include "ops/test_ops.h"
+#include "ops/test_ops_dyn_cases.h"
 #include "ops/test_ops_cmp_utils.h"
+#include "ops/test_value_utils.h"
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(EluGrad, EltwiseOpParams);
-OP_FUNC_IMPL_TEST_CASES(EluGrad, testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
-                                                 EltwiseOpParams{{2, -1}, kFloat32, {2, -1}, kFloat32},
-                                                 EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
-                                                 EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));
+
+class TestEluGrad : public TestOps,
+                    public testing::WithParamInterface<std::tuple<EltwiseGradOpShapeParams, EltwiseGradOpTypeParams>> {
+};
+
+TEST_P(TestEluGrad, dyn_shape) {
+  const auto &shape_param = std::get<0>(GetParam());
+  const auto &dtype_param = std::get<1>(GetParam());
+  auto dy = std::make_shared<abstract::AbstractTensor>(dtype_param.grad_type, shape_param.grad_shape);
+  ASSERT_NE(dy, nullptr);
+  auto y = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
+  ASSERT_NE(y, nullptr);
+  auto expect_shape = std::make_shared<abstract::Shape>(shape_param.out_shape);
+  auto expect_type = std::make_shared<TensorType>(dtype_param.out_type);
+
+  auto alpha = CreateScalar(1.f)->ToAbstract();
+  auto is_result = CreateScalar(true)->ToAbstract();
+  DoFuncImplInferAndCompare<EluGradFuncImpl>("EluGrad", {dy, y, alpha, is_result}, expect_shape, expect_type);
+}
+
+namespace {
+auto EluGradOpTypeCases = testing::ValuesIn({
+  EltwiseGradOpTypeParams{kFloat16, kFloat16, kFloat16},
+  EltwiseGradOpTypeParams{kFloat32, kFloat32, kFloat32},
+  EltwiseGradOpTypeParams{kBFloat16, kBFloat16, kBFloat16},
+});
+}
+
+INSTANTIATE_TEST_CASE_P(TestEluGradGroup, TestEluGrad,
+                        testing::Combine(EltwiseGradDynShapeTestCases, EluGradOpTypeCases));
 }  // namespace ops
 }  // namespace mindspore
