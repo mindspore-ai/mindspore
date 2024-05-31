@@ -295,7 +295,14 @@ std::vector<ValueNode *> Graph::CollectAliveNode(int bci, std::vector<int> *ids,
   }
   // alive locals must be original node
   result.insert(result.end(), side_effect_->GetRequiredNodes().begin(), side_effect_->GetRequiredNodes().end());
-  std::transform(result.begin(), result.end(), result.begin(), [this](auto i) { return side_effect_->GetSource(i); });
+  for (auto &node : result) {
+    auto new_node = this->GetSideEffect()->GetSource(node);
+    if (new_node->GetOpcode() == LOAD_ATTR) {  // transform the alive attribute source
+      auto &attr_source = new_node->getInputs()[0];
+      attr_source = this->GetSideEffect()->GetSource(attr_source);
+    }
+    node = new_node;
+  }
   return result;
 }
 

@@ -295,8 +295,9 @@ class MindGraphBuilder : public GraphBuilder {
   MindGraphBuilder(GraphBuilder *r, GraphBuilder *p, PyCodeObject *co, PyObject *globals)
       : GraphBuilder(r, p, co, globals) {
     std::vector<std::string> comments;
-    auto location = std::make_shared<Location>(py::cast<std::string>(co->co_filename), co->co_firstlineno, 0,
-                                               co->co_firstlineno, 0, "", std::move(comments));
+    auto location = co ? std::make_shared<Location>(py::cast<std::string>(co->co_filename), co->co_firstlineno, 0,
+                                                    co->co_firstlineno, 0, "", std::move(comments))
+                       : std::make_shared<Location>("anonymous", 0, 0, 0, 0, "", std::move(comments));
     TraceGuard trace_guard(location);
     fg_builder_ = std::make_shared<FuncGraphBuilder>();
   }

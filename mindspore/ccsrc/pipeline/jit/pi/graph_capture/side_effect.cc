@@ -182,7 +182,21 @@ void SideEffect::ResetRecord(const std::set<ValueNode *> &nodes_set) {
   for (auto iter = nodes_.begin(), end = nodes_.end(); iter != end;) {
     iter = nodes_set.find(iter->first) == nodes_set.end() ? nodes_.erase(iter) : (++iter);
   }
-  is_reset_ |= size != nodes_.size();
+  if (size == nodes_.size()) {
+    return;
+  }
+  // sort
+  std::map<int, std::pair<ValueNode *, Type>> ordered_nodes;
+  for (const auto &i : nodes_) {
+    ordered_nodes[i.second.order_] = {i.first, i.second.type_};
+  }
+  // rollback
+  keep_alive_.clear();
+  nodes_.clear();
+  data_->ClearCache();
+  for (const auto &i : ordered_nodes) {
+    this->Record(i.second.first, i.second.second);
+  }
 }
 
 void SideEffect::Restore(CodeGenerator *cg) const {
@@ -316,24 +330,6 @@ void SideEffect::Optimize(const std::vector<ValueNode *> &alive_locals) {
   // not implement
   // merge dict, list modify operations
   // not implement
-
-  if (!is_reset_) {
-    return;
-  }
-  // if rollback
-  is_reset_ = false;
-  // sort
-  std::map<int, std::pair<ValueNode *, Type>> ordered_nodes;
-  for (const auto &i : nodes_) {
-    ordered_nodes[i.second.order_] = {i.first, i.second.type_};
-  }
-  // rollback
-  keep_alive_.clear();
-  nodes_.clear();
-  data_->ClearCache();
-  for (const auto &i : ordered_nodes) {
-    this->Record(i.second.first, i.second.second);
-  }
 }
 
 }  // namespace pijit
