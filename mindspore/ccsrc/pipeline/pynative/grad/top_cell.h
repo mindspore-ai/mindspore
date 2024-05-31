@@ -164,6 +164,8 @@ class TopCellInfo {
   bool is_ir_grad() const { return is_ir_grad_; }
   inline void set_grad_is_running(bool grad_is_running) { grad_is_running_ = grad_is_running; }
   bool grad_is_running() const { return grad_is_running_; }
+  inline void set_grad_first(bool grad_first) { grad_first_ = grad_first; }
+  bool grad_first() const { return grad_first_; }
   inline void set_is_bprop_need_get_forward_graph(bool is_bprop_need_get_forward_graph) {
     is_bprop_need_get_forward_graph_ = is_bprop_need_get_forward_graph;
   }
@@ -209,6 +211,8 @@ class TopCellInfo {
 
   // Top cell is running backward
   bool grad_is_running_{false};
+  // if call grad not set_grad first, grad first is true
+  bool grad_first_{false};
 
   // Topcell used for get forward graph
   bool is_bprop_need_get_forward_graph_{false};
