@@ -39,6 +39,10 @@ class SymbolEngineImplTestHelper {
   ListSymbolPtr BuildSymbolicShape(const CNodePtr &cnode);
   SymbolPtr BuildSymbolicValue(const CNodePtr &cnode);
   bool SupportInfer() { return symbol_engine_->SupportInfer(); }
+  bool Infer(const AbstractBasePtrList &inputs) { return symbol_engine_->Infer(inputs); }
+
+  // check symbolic_shape == digital_shape.
+  bool CheckSymbolicShapeMatchesDigitalShape(const AnfNodePtr &node);
 
   BaseShapePtr ConvertSymbolToShape(const AnfNodePtr &node);
   ValuePtr ConvertSymbolToValue(const AnfNodePtr &node);

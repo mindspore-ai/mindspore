@@ -44,7 +44,7 @@ TEST_P(TestElemwiseBinOp, dynshape) {
   auto shape2 = b->abstract()->GetSymbolicShape();
   UT_CHECK_NULL(shape2);
   ASSERT_EQ(out_shape->size(), param.out_status.size());
-  ASSERT_TRUE(*helper_->ConvertSymbolToShape(node) == *node->abstract()->GetShape());
+  ASSERT_TRUE(helper_->CheckSymbolicShapeMatchesDigitalShape(node));
   auto n = param.out_status.size();
   for (size_t i = n; i > 0; i--) {
     auto out = out_shape->item_as<IntSymbol>(n - i);

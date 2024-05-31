@@ -15,9 +15,7 @@
  */
 
 #include "symbol_engine/ops/symbolic_shape_test_utils.h"
-#include "include/common/debug/anf_ir_dump.h"
 #include "backend/graph_optimizer_test_framework.h"
-#include "pipeline/jit/ps/action.h"
 
 namespace mindspore::symshape::test {
 /// Feature: Symbolic shape for Conv2D
@@ -42,7 +40,7 @@ TEST_F(TestSymbolEngine, conv2d_samepad_1) {
   auto out_shape = helper_->BuildSymbolicShape(node);
   UT_CHECK_NULL(out_shape);
   ASSERT_TRUE(helper_->SupportInfer());
-  ASSERT_EQ(*helper_->ConvertSymbolToShape(node), *node->abstract()->GetShape());
+  ASSERT_TRUE(helper_->CheckSymbolicShapeMatchesDigitalShape(node));
 }
 
 /// Feature: Symbolic shape for Conv2D
@@ -74,7 +72,7 @@ TEST_F(TestSymbolEngine, conv2d_validpad_1) {
   auto out_shape = helper_->BuildSymbolicShape(node);
   UT_CHECK_NULL(out_shape);
   ASSERT_TRUE(helper_->SupportInfer());
-  ASSERT_EQ(*helper_->ConvertSymbolToShape(node), *node->abstract()->GetShape());
+  ASSERT_TRUE(helper_->CheckSymbolicShapeMatchesDigitalShape(node));
   auto out_h = out_shape->item_as<IntSymbol>(2);
   auto out_w = out_shape->item_as<IntSymbol>(3);
   EXPECT_TRUE(out_h->is_divisible_by(32));

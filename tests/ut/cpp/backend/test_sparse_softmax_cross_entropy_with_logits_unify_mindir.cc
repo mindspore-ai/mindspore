@@ -35,7 +35,7 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR : public UT::Common {
 TEST_F(SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR,
        DISABLED_test_sparse_softmax_cross_entropy_with_logits_is_grad_is_false) {
   test::ConstructGraph c;
-  auto logits = c.NewTensorInput("logits", kFloat, {2, 3});
+  auto logits = c.NewTensorInput("logits", kFloat32, {2, 3});
   auto labels = c.NewTensorInput("labels", kInt32, {2});
   auto node = c.NewCNode("SparseSoftmaxCrossEntropyWithLogits", {logits, labels}, {{"is_grad", MakeValue(false)}});
   c.SetOutput(node);

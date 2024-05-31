@@ -63,6 +63,15 @@ SymbolPtr SymbolEngineImplTestHelper::BuildSymbolicValue(const CNodePtr &cnode) 
   return cnode->abstract()->GetSymbolicValue();
 }
 
+bool SymbolEngineImplTestHelper::CheckSymbolicShapeMatchesDigitalShape(const AnfNodePtr &node) {
+  bool ret = (*ConvertSymbolToShape(node) == *node->abstract()->GetShape());
+  if (!ret) {
+    MS_LOG(ERROR) << "The digital shape is " << node->abstract()->GetShape()->ToString();
+    MS_LOG(ERROR) << "The symbolic shape is " << node->abstract()->GetSymbolicShape()->ToString();
+  }
+  return ret;
+}
+
 BaseShapePtr SymbolEngineImplTestHelper::ConvertSymbolToShape(const AnfNodePtr &node) {
   return mindspore::symshape::QueryShape(node->abstract());
 }
