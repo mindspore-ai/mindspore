@@ -13,6 +13,7 @@ Array Operation
     :template: classtemplate.rst
 
     mindspore.mint.arange
+    mindspore.mint.flip
     mindspore.mint.index_select
     mindspore.mint.topk
     mindspore.mint.broadcast_to
@@ -119,6 +120,7 @@ Non-linear activation functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.relu
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
     mindspore.mint.nn.functional.softmax
