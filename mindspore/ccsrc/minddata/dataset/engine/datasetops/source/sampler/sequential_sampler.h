@@ -68,9 +68,9 @@ class SequentialSamplerRT : public SamplerRT {
   Status to_json(nlohmann::json *out_json) override;
 
  protected:
-  int64_t current_id_;   // The id sequencer.  Each new id increments from this
-  int64_t start_index_;  // The starting id.  current_id_ begins from here.
-  int64_t id_count_;     // An internal counter that tracks how many ids have been produced
+  int64_t current_index_;   // The id sequencer. Each new id increments from this
+  int64_t start_index_;     // The starting id. current_id_ begins from here.
+  int64_t index_produced_;  // An internal counter that tracks how many ids have been produced
 };
 }  // namespace dataset
 }  // namespace mindspore
