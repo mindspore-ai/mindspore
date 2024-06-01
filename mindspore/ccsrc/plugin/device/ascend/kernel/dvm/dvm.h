@@ -70,6 +70,7 @@ enum KernelType {
   kDynShape,
   kStaticParallel,
   kStaticMix,
+  kStaticStages,
   kEager,
   kKernelTypelEnd,
 };
@@ -131,6 +132,10 @@ class Kernel {
   NDObject *ElemAny(NDObject *input);
 
   NDObject *MatMul(NDObject *lhs, NDObject *rhs, bool trans_a, bool trans_b);
+
+  void StageSwitch(KernelType type);
+  NDObject *StageLoad(NDObject *stage_store);
+  NDObject *StageStore(NDObject *input);
 
   uint64_t CodeGen();
   int Launch(void *workspace, void *stream);
