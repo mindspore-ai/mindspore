@@ -33,7 +33,6 @@ mindspore
     :toctree: mindspore
 
     mindspore.dtype
-    mindspore.np_dtype
     mindspore.dtype_to_nptype
     mindspore.dtype_to_pytype
     mindspore.pytype_to_dtype

@@ -1912,9 +1912,12 @@ class Stack(PrimitiveWithInfer):
         dtype = x_type[0]
         if tuple_value is not None and None not in tuple_value:
             for item in tuple_value:
-                npy_item = item.asnumpy()
+                npy_item = item.asnumpy() if item.dtype != mstype.bfloat16 else item.float().asnumpy()
                 input_array.append(npy_item)
-            infered_value = Tensor(np.stack(input_array, axis=self.axis))
+            if dtype == mstype.TensorType(mstype.bfloat16):
+                infered_value = Tensor(np.stack(input_array, axis=self.axis), mstype.bfloat16)
+            else:
+                infered_value = Tensor(np.stack(input_array, axis=self.axis))
 
         shape = all_shape.get('shape') if isinstance(all_shape, dict) else all_shape
         out = {'shape': shape,

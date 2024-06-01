@@ -99,7 +99,7 @@ const mindspore::HashMap<TypeId, DtypeDescr> type_desc_map = {
   {kNumberTypeUInt16, DtypeDescr{'<', 'u', 2}},   {kNumberTypeUInt32, DtypeDescr{'<', 'u', 4}},
   {kNumberTypeUInt64, DtypeDescr{'<', 'u', 8}},   {kNumberTypeFloat16, DtypeDescr{'<', 'f', 2}},
   {kNumberTypeFloat32, DtypeDescr{'<', 'f', 4}},  {kNumberTypeFloat64, DtypeDescr{'<', 'f', 8}},
-  {kNumberTypeBFloat16, DtypeDescr{'<', 'T', 2}},
+  {kNumberTypeBFloat16, DtypeDescr{'<', 'h', 2}},
 };
 }  // namespace
 
