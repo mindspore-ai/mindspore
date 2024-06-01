@@ -545,10 +545,6 @@ bool FuncGraphBuilder::AddTopGraphInputs(std::vector<py::object> packed_inputs) 
 
 py::object FuncGraphBuilder::AddSubGraphInput(const py::object &obj) {
   MS_LOG(INFO) << "Try add sub graph parameter for object: " << std::string(py::str(obj)) << "  " << obj.ptr();
-  if (prev_builders_.empty()) {
-    MS_LOG(INFO) << "Sub graph builder has no previous builder.";
-    return py::object();
-  }
   AbstractBasePtr abs = nullptr;
   auto node = GetNodeByObject(obj);
   if (node != nullptr) {
