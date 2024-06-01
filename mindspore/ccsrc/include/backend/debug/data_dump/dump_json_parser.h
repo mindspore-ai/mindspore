@@ -67,6 +67,7 @@ class BACKEND_EXPORT DumpJsonParser {
   std::string net_name() const { return net_name_; }
   uint32_t op_debug_mode() const { return op_debug_mode_; }
   bool trans_flag() const { return trans_flag_; }
+  bool save_args_flag() const { return save_args_flag_; }
   uint32_t sample_mode() const { return sample_mode_; }
   uint32_t sample_num() const { return sample_num_; }
   uint32_t cur_dump_iter() const { return cur_dump_iter_; }
@@ -133,6 +134,7 @@ class BACKEND_EXPORT DumpJsonParser {
   uint32_t op_debug_mode_{0};
   JsonFileFormat file_format_{FORMAT_BIN};
   bool trans_flag_{false};
+  bool save_args_flag_{false};
   uint32_t sample_mode_{0};
   uint32_t sample_num_{100};
   uint32_t cur_dump_iter_{0};
