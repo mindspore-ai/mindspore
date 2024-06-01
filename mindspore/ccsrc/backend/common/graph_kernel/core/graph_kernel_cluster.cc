@@ -310,7 +310,7 @@ void GraphKernelCluster::DumpToFile() {
     return;
   }
   std::optional<std::string> whole_path = "";
-  std::optional<std::string> file_name = "graph_kernel_cluster.txt";
+  std::optional<std::string> file_name = "graph_kernel_cluster_" + std::to_string(getpid()) + ".txt";
   FileUtils::ConcatDirAndFileName(&dir_path, &file_name, &whole_path);
   if (!whole_path.has_value()) {
     MS_LOG(WARNING) << "Failed to get real path of file: " << file_name.value();
