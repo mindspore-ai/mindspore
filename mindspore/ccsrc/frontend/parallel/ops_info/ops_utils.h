@@ -631,6 +631,7 @@ constexpr char FFN[] = "FFN";
 constexpr char FLASH_ATTENTION_SCORE[] = "FlashAttentionScore";
 constexpr char FUSED_INFER_ATTENTION_SCORE[] = "FusedInferAttentionScore";
 constexpr char KV_CACHE_MGR[] = "KVCacheMgr";
+constexpr char GROUPED_MATMUL[] = "GroupedMatmul";
 constexpr char TUPLE_GETITEM_OP[] = "TupleGetItem";
 constexpr char CONVOLUTION[] = "Convolution";
 
