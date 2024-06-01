@@ -583,7 +583,7 @@ bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
     context->SetCellReuseLevel(CellReuseLevel::kNoInline);
   }
 
-  static const auto is_disable_switch_inline = (common::GetEnv("MS_DISABLE_SWITCH_INLINE") != "0");
+  static const auto is_disable_switch_inline = common::IsDisableRuntimeConfig(common::kRuntimeSwitchInline);
   if (is_disable_switch_inline) {
     MS_LOG(INFO) << "Disable switch inline by runtime config.";
     return false;

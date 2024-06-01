@@ -745,7 +745,7 @@ static inline double GetCurrentUSec() {
     std::ostringstream oss;                                                                                    \
     oss << "[PROF]" << #stage << " costs " << (end_usec_##stage - start_usec_##stage) / kBasicTimeTransferUnit \
         << " msec.";                                                                                           \
-    if (common::IsEnableRuntimeConfig("compile_statistics")) {                                                 \
+    if (common::IsEnableRuntimeConfig(common::kRuntimeCompileStat)) {                                          \
       std::cout << oss.str() << std::endl;                                                                     \
     }                                                                                                          \
     MS_LOG(INFO) << oss.str();                                                                                 \
