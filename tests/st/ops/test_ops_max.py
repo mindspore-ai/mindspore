@@ -26,7 +26,7 @@ def np_max(input_x):
     return np.max(input_x)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -100,7 +100,7 @@ def test_min_tensor(mode, data_dtype):
     Expectation: the result match with expected result.
     """
     context.set_context(mode=mode)
-    x_np = np.array([[3, 20, 5], [67, 8, 130], [3, 15, 130]], data_dtype)
+    x_np = np.random.randn(64, 77).astype(data_dtype)
     x = Tensor(x_np)
     output = x.max()
     expect = np_max(x_np)
