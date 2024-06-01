@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_ADDN_H_
+#define MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_ADDN_H_
+
 #include "mindspore/core/symbolic_shape/operation_builder.h"
-#include "mindspore/core/ops/symbol_ops_impl/common.h"
 
 namespace mindspore {
 namespace symshape {
 namespace ops {
-REG_SYMBOL_OP_BUILDER("CudnnUniformReal").SetShapeDepend({DependOn::kValue}).SetShapeFunc([](OperationBuilder *b) {
-  auto s = b->GetInputValue(0);
-  auto symbolic_shape = s->as<ListSymbol>();
-  MS_EXCEPTION_IF_NULL(symbolic_shape);
-  InferShapeOp::SetPositive(symbolic_shape);
-  return s;
-});
-
-REG_SYMBOL_OP_BUILDER("StandardNormal").SetShapeDepend({DependOn::kValue}).SetShapeFunc([](OperationBuilder *b) {
-  auto s = b->GetInputValue(0);
-  auto symbolic_shape = s->as<ListSymbol>();
-  MS_EXCEPTION_IF_NULL(symbolic_shape);
-  InferShapeOp::SetPositive(symbolic_shape);
-  return s;
-});
+SymbolPtr AddnBuildShape(OperationBuilder *b, const SymbolPtrList &symbols);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore
+#endif  // MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_ADDN_H_

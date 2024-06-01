@@ -26,7 +26,6 @@ class MS_CORE_API MatMul : public InferShapeOp {
       : InferShapeOp({a, b, transpose_a, transpose_b}), has_batch_(has_batch) {}
   ~MatMul() override = default;
   MS_DECLARE_PARENT(MatMul, InferShapeOp)
-  std::string name() const override { return has_batch_ ? "BatchMatMul" : "MatMul"; }
 
  protected:
   SymbolPtr Eval() override;
@@ -54,6 +53,10 @@ SymbolPtr MatMul::Eval() {
     }
     return GenVIntList(kMatMulRank);
   }
+  // for MatMulExt, the inputs a and b support 1D tensor.
+  // when a is 2D shape (m,k1), and b is 1D shape (k2,). the output shape is (m,)
+  // when a is 1D shape (k1,), and b is 2D shape (k2,n). the output shape is (n,)
+  // when both a and b are 1D shape, the output is a scalar.
   DoNotEvalOnRun();
   SymbolPtrList result;
   result.reserve(std::max(a->size(), b->size()) + kMatMulRank);
@@ -61,25 +64,35 @@ SymbolPtr MatMul::Eval() {
     result = ElemwiseBinop::Process(a->symbols(), b->symbols(), emitter(), kMatMulRank);
   }
   // shape of a is "m * k1" (not transposed) or "k1 * n" (transposed)
-  auto m = *(++a->symbols().rbegin());
-  auto k1 = a->symbols().back();
-  if (trans_a) {
-    std::swap(m, k1);
+  SymbolPtr k1;
+  if (a->size() >= kMatMulRank) {
+    auto m = *(++a->symbols().rbegin());
+    k1 = a->symbols().back();
+    if (trans_a) {
+      std::swap(m, k1);
+    }
+    (void)result.emplace_back(std::move(m));
+  } else {
+    k1 = a->item(kIndex0);
   }
   // shape of b is "k2 * n" (not transposed) or "n * k2" (transposed)
-  auto k2 = *(++b->symbols().rbegin());
-  auto n = b->symbols().back();
-  if (trans_b) {
-    std::swap(n, k2);
+  SymbolPtr k2;
+  if (b->size() >= kMatMulRank) {
+    k2 = *(++b->symbols().rbegin());
+    auto n = b->symbols().back();
+    if (trans_b) {
+      std::swap(n, k2);
+    }
+    (void)result.emplace_back(std::move(n));
+  } else {
+    k2 = b->item(kIndex0);
   }
   // k1 should be equal to k2
-  if (!k1->HasData() && !k2->HasData()) {
+  if (is_building()) {
     auto k = k1->as<IntSymbol>();
     MS_EXCEPTION_IF_NULL(k);
     k->SetEqual(k2->as_sptr<IntSymbol>());
   }
-  (void)result.emplace_back(std::move(m));
-  (void)result.emplace_back(std::move(n));
   return ResultIntList(std::move(result));
 }
 
@@ -98,13 +111,18 @@ REG_SYMBOL_OP_BUILDER("MatMul")
 REG_SYMBOL_OP_BUILDER("BatchMatMul")
   .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kValue, DependOn::kValue})
   .SetShapeFunc(MatMulShapeBuilder<true>);
+
+SymbolPtr MatMulExtShapeBuilder(OperationBuilder *b) {
+  auto x = b->GetInputShape(kIndex0);
+  auto y = b->GetInputShape(kIndex1);
+  return b->Emit(std::make_shared<MatMul>(true, x, y, BoolSymbol::Make(false), BoolSymbol::Make(false)));
+}
 REG_SYMBOL_OP_BUILDER("MatMulExt")
   .SetShapeDepend({DependOn::kShape, DependOn::kShape})
-  .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
-    auto x = b->GetInputShape(kIndex0);
-    auto y = b->GetInputShape(kIndex1);
-    return b->Emit(std::make_shared<MatMul>(true, x, y, BoolSymbol::Make(false), BoolSymbol::Make(false)));
-  });
+  .SetShapeFunc(MatMulExtShapeBuilder);
+REG_SYMBOL_OP_BUILDER("BatchMatMulExt")
+  .SetShapeDepend({DependOn::kShape, DependOn::kShape})
+  .SetShapeFunc(MatMulExtShapeBuilder);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

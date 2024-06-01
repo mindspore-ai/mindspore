@@ -102,7 +102,8 @@ CNodePtr ConstructGraph::NewCNode(const std::string &prim_name, const std::vecto
   AbstractBasePtrList args;
   std::transform(inputs.begin(), inputs.end(), std::back_inserter(args),
                  [](const AnfNodePtr &node) -> abstract::AbstractBasePtr { return node->abstract(); });
-  opt::CppInferShape(GetCNodePrimitive(cnode), args, cnode);
+  auto out_abs = opt::CppInferShapeAndType(GetCNodePrimitive(cnode), args);
+  cnode->set_abstract(out_abs);
   return cnode;
 }
 

@@ -54,6 +54,17 @@ SymbolPtr TransparentInput(OperationBuilder *b) {
   return (*iter1 == DependOn::kShape) ? b->GetInputShape(idx) : b->GetInputValue(idx);
 }
 
+SymbolPtr TransValueToShape(OperationBuilder *b) {
+  auto ret = TransparentInput(b);
+  if (ret == nullptr) {
+    return nullptr;
+  }
+  auto ret_shape = ret->as<ListSymbol>();
+  MS_EXCEPTION_IF_NULL(ret_shape);
+  InferShapeOp::SetPositive(ret_shape);
+  return ret;
+}
+
 template <typename OP>
 SymbolPtr Accumulate(const SymbolPtrList &symbols, const OperationEmitter &e) {
   SymbolPtr vars = nullptr;

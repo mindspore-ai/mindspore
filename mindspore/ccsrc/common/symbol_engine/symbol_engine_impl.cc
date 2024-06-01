@@ -454,7 +454,7 @@ SymbolPtr SymbolEngineImpl::BuildCNodeSymbolicShape(OperationBuilder *builder, c
                                                     const CNodePtr &cnode) {
   auto digital_shape = abstract->GetShape();
   MS_EXCEPTION_IF_NULL(digital_shape);
-  if (!digital_shape->IsDynamic()) {
+  if (common::GetEnv("MS_DEV_FORCE_BUILD_SYMBOL") != "on" && !digital_shape->IsDynamic()) {
     auto static_shape = digital_shape->BuildSymbolicShape();
     MS_LOG(DEBUG) << "Node " << cnode->fullname_with_scope() << " is static shape: " << digital_shape->ToString();
     return static_shape;
@@ -469,7 +469,8 @@ SymbolPtr SymbolEngineImpl::BuildCNodeSymbolicShape(OperationBuilder *builder, c
     MS_LOG_TRY_CATCH_SCOPE;
     s = builder->BuildShape(prim, inputs, abstract);
   } catch (std::exception &e) {
-    MS_LOG(DEBUG) << "Failed to build shape for " << cnode->fullname_with_scope() << ": " << e.what();
+    MS_LOG(INFO) << "Failed to build symbolic shape for " << cnode->fullname_with_scope() << " with inputs: " << inputs
+                 << ". error msg: " << e.what();
     s = nullptr;
   }
   if (s == nullptr) {
@@ -493,7 +494,8 @@ SymbolPtr SymbolEngineImpl::BuildCNodeSymbolicValue(OperationBuilder *builder, c
     MS_LOG_TRY_CATCH_SCOPE;
     s = builder->BuildValue(prim, inputs, abstract);
   } catch (std::exception &e) {
-    MS_LOG(DEBUG) << "Failed to build value for " << cnode->fullname_with_scope() << ": " << e.what();
+    MS_LOG(INFO) << "Failed to build symbolic value for " << cnode->fullname_with_scope() << " with inputs: " << inputs
+                 << ". error msg: " << e.what();
     s = nullptr;
   }
   if (s == nullptr) {
@@ -510,7 +512,18 @@ AbstractBasePtrList SymbolEngineImpl::ExtractInputsAbstract(const CNodePtr &cnod
   (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(abs_list),
                        [](const AnfNodePtr &node) {
                          MS_EXCEPTION_IF_NULL(node);
-                         return node->abstract();
+                         auto abs = node->abstract();
+                         if (abs == nullptr) {
+                           if (node->isa<ValueNode>()) {
+                             abs = node->cast_ptr<ValueNode>()->value()->ToAbstract();
+                             node->set_abstract(abs);
+                             MS_LOG(DEBUG) << "Set new abstract for input node " << node->DebugString();
+                           } else {
+                             // Do not raise exception here, this input may not be used by operation.
+                             MS_LOG(INFO) << "The input " << node->DebugString() << " has null abstract.";
+                           }
+                         }
+                         return abs;
                        });
   return abs_list;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/core/ops/symbol_ops_impl/addn.h"
+#include "mindspore/core/symbolic_shape/operation_builder.h"
+#include "mindspore/core/ops/symbol_ops_impl/common.h"
 
 namespace mindspore {
 namespace symshape {
 namespace ops {
-REG_SYMBOL_OP_BUILDER("Select")
+SymbolPtr AdamWeigtDecayShapeBuilder(OperationBuilder *b) {
+  // var, m, v
+  return ListSymbol::Make({b->GetInputShape(kIndex0), b->GetInputShape(kIndex1), b->GetInputShape(kIndex2)});
+}
+
+REG_SYMBOL_OP_BUILDER("AdamWeightDecay")
   .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kShape})
-  .SetShapeFunc([](OperationBuilder *b) {
-    return AddnBuildShape(b, {b->GetInputShape(kIndex0), b->GetInputShape(kIndex1), b->GetInputShape(kIndex2)});
-  });
+  .SetShapeFunc(AdamWeigtDecayShapeBuilder);
+REG_SYMBOL_OP_BUILDER("AdamWeightDecayExt")
+  .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kShape})
+  .SetShapeFunc(AdamWeigtDecayShapeBuilder);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

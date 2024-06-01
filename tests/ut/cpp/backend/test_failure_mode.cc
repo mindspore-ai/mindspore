@@ -56,7 +56,7 @@ TEST_F(TestFailureMode, test_lamb_fission_ge_with_wrong_input_number) {
 /// Expectation: After pass, got wrong pattern, expect DropoutGenMask and DropoutDoMask, but got nochanged
 TEST_F(TestFailureMode, test_dropout_unify_mindir_0) {
   test::ConstructGraph c;
-  auto input = c.NewTensorInput("input", kFloat, {2, 16384});
+  auto input = c.NewTensorInput("input", kFloat32, {2, 16384});
   auto index = c.NewValueNode(MakeValue((int64_t)0));
   auto dropout = c.NewCNode("Dropout", {input}, {{"keep_prob", MakeValue(true)}});
   auto getitem = c.NewCNodeWithoutInfer("TupleGetItem", {dropout, index}, {});
@@ -87,8 +87,8 @@ TEST_F(TestFailureMode, test_convert_no_exist_op) {
 /// Expectation: Got nullptr exception
 TEST_F(TestFailureMode, test_kernel_info_nullptr) {
   test::ConstructGraph c;
-  auto x1 = c.NewTensorInput("x1", kFloat, {2, 3});
-  auto x2 = c.NewTensorInput("x2", kFloat, {2, 3});
+  auto x1 = c.NewTensorInput("x1", kFloat32, {2, 3});
+  auto x2 = c.NewTensorInput("x2", kFloat32, {2, 3});
   auto node = c.NewCNode("Add", {x1, x2}, {});
   try {
     auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(node);

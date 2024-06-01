@@ -53,7 +53,12 @@ class MS_CORE_API OperationBuilder {
   SymbolPtr Emit(const OpPtr &op) const;
   SymbolPtr GetShape(const AbstractBasePtr &abs) const;
   SymbolPtr GetValue(const AbstractBasePtr &abs) const;
-  const AbstractBasePtr &GetInput(size_t i) const { return input_args_->at(i); }
+  const AbstractBasePtr &GetInput(size_t i) const {
+    if (input_args_->at(i) == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The pointer[input_args_->at(" << i << ")] is null.";
+    }
+    return (*input_args_)[i];
+  }
   SymbolPtr GetInputShape(size_t i) const { return GetShape(GetInput(i)); }
   SymbolPtr GetInputValue(size_t i) const { return GetValue(GetInput(i)); }
   SymbolPtr GetAttr(const std::string &attr_name) const;
