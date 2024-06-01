@@ -184,11 +184,7 @@ SymbolPtr IntValues2Symbol(const std::vector<int64_t> &shape, const OpPtr &op) {
   return ListSymbol::Make(std::move(result), op);
 }
 
-int64_t AsInt(const Symbol *s) {
-  auto v = s->as<IntSymbol>();
-  MS_EXCEPTION_IF_NULL(v);
-  return v->value();
-}
+int64_t AsInt(const Symbol *s) { return s->as<IntSymbol>()->value(); }
 
 std::set<int64_t> NormAxis(const ListSymbol *axis, size_t rank) {
   std::set<int64_t> result;
@@ -233,12 +229,9 @@ BaseShapePtr QueryShape(const AbstractBasePtr &abs) {
   }
   abstract::BaseShapePtrList shape_arr;
   shape_arr.reserve(symbolic_shape->size());
-  (void)std::transform(symbolic_shape->symbols().begin(), symbolic_shape->symbols().end(),
-                       std::back_inserter(shape_arr), [](const SymbolPtr &s) {
-                         auto shape = s->as<ListSymbol>();
-                         MS_EXCEPTION_IF_NULL(shape);
-                         return std::make_shared<abstract::TensorShape>(ToShape(shape));
-                       });
+  (void)std::transform(
+    symbolic_shape->symbols().begin(), symbolic_shape->symbols().end(), std::back_inserter(shape_arr),
+    [](const SymbolPtr &s) { return std::make_shared<abstract::TensorShape>(ToShape(s->as<ListSymbol>())); });
   return std::make_shared<abstract::TupleShape>(std::move(shape_arr));
 }
 

@@ -24,6 +24,22 @@
 #include "base/base.h"
 #include "ir/value.h"
 
+#ifndef MS_UNLIKELY
+#ifdef _MSC_VER
+#define MS_UNLIKELY(x) (x)
+#else
+#define MS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#endif
+#endif
+
+#ifndef MS_LIKELY
+#ifdef _MSC_VER
+#define MS_LIKELY(x) (x)
+#else
+#define MS_LIKELY(x) __builtin_expect(!!(x), 1)
+#endif
+#endif
+
 namespace mindspore {
 namespace symshape {
 class Symbol;
@@ -55,7 +71,7 @@ class MS_CORE_API Symbol : public Base {
 
   /// \brief Update the symbol data in runtime. Only variable symbol can be updated.
   inline void Update(const SymbolPtr &s) {
-    if (s != nullptr && s.get() != this) {
+    if (MS_LIKELY(s != nullptr && s.get() != this)) {
       UpdateImpl(s);
     }
   }
@@ -84,25 +100,62 @@ class MS_CORE_API Symbol : public Base {
   /// \brief Get the operation that built this symbol.
   inline OpPtr operation() const { return operation_.lock(); }
 
+  /// \brief Judge whether this object is an instance of a given class which is derived from Symbol.
   template <typename T>
   inline bool is() const {
     auto *s = const_cast<Symbol *>(this)->real_symbol();
     return s != nullptr && s->isa<T>();
   }
+
+  /// \brief Cast to a raw pointer of the given class, if the object type doesn't match, an exception will be thrown.
   template <typename T>
   inline T *as() {
-    auto s = real_symbol();
-    return s == nullptr ? nullptr : s->cast_ptr<T>();
+    auto ret = as_noexcept<T>();
+    if (MS_UNLIKELY(ret == nullptr)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Failed to cast the symbol " << ToString() << " to " << typeid(T).name();
+    }
+    return ret;
   }
+
+  /// \brief Cast to a raw pointer of the given class, if the object type doesn't match, an exception will be thrown.
   template <typename T>
   inline const T *as() const {
-    auto *s = const_cast<Symbol *>(this)->real_symbol();
-    return s == nullptr ? nullptr : s->cast_ptr<T>();
+    auto ret = as_noexcept<T>();
+    if (MS_UNLIKELY(ret == nullptr)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Failed to cast the symbol " << ToString() << " to " << typeid(T).name();
+    }
+    return ret;
   }
+
+  /// \brief Cast to a shared_ptr of the given class, if the object type doesn't match, an exception will be thrown.
   template <typename T>
   inline std::shared_ptr<T> as_sptr() {
+    auto ret = as_sptr_noexcept<T>();
+    if (MS_UNLIKELY(ret == nullptr)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Failed to cast the symbol " << ToString() << " to " << typeid(T).name();
+    }
+    return ret;
+  }
+
+  /// \brief Cast to a raw pointer of the given class, if the object type doesn't match, a nullptr will be returned.
+  template <typename T>
+  inline T *as_noexcept() {
     auto s = real_symbol();
-    return s == nullptr ? nullptr : s->cast<std::shared_ptr<T>>();
+    return MS_UNLIKELY(s == nullptr) ? nullptr : s->cast_ptr<T>();
+  }
+
+  /// \brief Cast to a raw pointer of the given class, if the object type doesn't match, a nullptr will be returned.
+  template <typename T>
+  inline const T *as_noexcept() const {
+    auto *s = const_cast<Symbol *>(this)->real_symbol();
+    return MS_UNLIKELY(s == nullptr) ? nullptr : s->cast_ptr<T>();
+  }
+
+  /// \brief Cast to a shared_ptr of the given class, if the object type doesn't match, a nullptr will be returned.
+  template <typename T>
+  inline std::shared_ptr<T> as_sptr_noexcept() {
+    auto s = real_symbol();
+    return MS_UNLIKELY(s == nullptr) ? nullptr : s->cast<std::shared_ptr<T>>();
   }
 
  protected:
@@ -299,7 +352,7 @@ class MS_CORE_API ListSymbol : public Symbol {
   bool HasData() const override { return has_data_; }
   bool AllHaveData() const {
     return has_data_ && std::all_of(symbols_.cbegin(), symbols_.cend(), [](const SymbolPtr &s) {
-             return s->is<ListSymbol>() ? s->as<ListSymbol>()->AllHaveData() : s->HasData();
+             return s->is<ListSymbol>() ? s->as_noexcept<ListSymbol>()->AllHaveData() : s->HasData();
            });
   }
   bool CanUpdate() const override {
@@ -317,16 +370,16 @@ class MS_CORE_API ListSymbol : public Symbol {
   const SymbolPtr &item(size_t i) const;
   template <typename T>
   const T *item_as(size_t i) const {
-    auto ret = item(i)->as<T>();
-    if (ret == nullptr) {
+    auto ret = item(i)->as_noexcept<T>();
+    if (MS_UNLIKELY(ret == nullptr)) {
       MS_LOG(INTERNAL_EXCEPTION) << "Convert failed for item " << i << " of " << ToString();
     }
     return ret;
   }
   template <typename T>
   std::shared_ptr<T> item_as_sptr(size_t i) const {
-    auto ret = item(i)->as_sptr<T>();
-    if (ret == nullptr) {
+    auto ret = item(i)->as_sptr_noexcept<T>();
+    if (MS_UNLIKELY(ret == nullptr)) {
       MS_LOG(INTERNAL_EXCEPTION) << "Convert failed for item " << i << " of " << ToString();
     }
     return ret;

@@ -49,7 +49,7 @@ SymbolPtr ExpandDims::Eval() {
     }
     (void)result.insert(result.begin() + LongToSize(NormAxis(axis_val, rank + 1)), const1);
   };
-  auto axis_list = axis->as<ListSymbol>();
+  auto axis_list = axis->as_noexcept<ListSymbol>();
   if (axis_list == nullptr) {
     expand_dims(AsInt(axis));
   } else {

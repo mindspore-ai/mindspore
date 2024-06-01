@@ -44,14 +44,10 @@ void IntSymbol::UpdateImpl(const SymbolPtr &s) {
   if (is_const_) {
     MS_LOG(EXCEPTION) << "Const symbol '" << ToString() << "' cannot be updated, other: " << s->ToString();
   }
-  auto other = s->as<IntSymbol>();
-  if (other == nullptr) {
-    MS_LOG(EXCEPTION) << "Symbol " << s->ToString() << " is not a IntSymbol.";
-  }
-  if (!other->has_data_) {
+  if (!s->HasData()) {
     MS_LOG(EXCEPTION) << "Symbol " << s->ToString() << " has no data.";
   }
-  value_ = other->value_;
+  value_ = s->as<IntSymbol>()->value_;
   has_data_ = true;
 }
 
@@ -59,7 +55,7 @@ bool IntSymbol::operator==(const Symbol &s) const {
   if (this == &s) {
     return true;
   }
-  auto other = s.as<IntSymbol>();
+  auto other = s.as_noexcept<IntSymbol>();
   if (other == nullptr) {
     return false;
   }

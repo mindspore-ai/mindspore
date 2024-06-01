@@ -46,7 +46,7 @@ SymbolPtr ControlFlowJoin::ShapeJoin(const SymbolPtr &tb, const SymbolPtr &fb) {
     return DynamicSymbol::Make(shared_from_this());
   }
 
-  if (auto tb_list = tb->as<ListSymbol>(); tb_list != nullptr) {
+  if (auto tb_list = tb->as_noexcept<ListSymbol>(); tb_list != nullptr) {
     auto fb_list = fb->as<ListSymbol>();
     MS_EXCEPTION_IF_NULL(fb_list);
     if (tb_list->size() != fb_list->size()) {

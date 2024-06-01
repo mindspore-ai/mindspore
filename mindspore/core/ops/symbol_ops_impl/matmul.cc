@@ -89,9 +89,7 @@ SymbolPtr MatMul::Eval() {
   }
   // k1 should be equal to k2
   if (is_building()) {
-    auto k = k1->as<IntSymbol>();
-    MS_EXCEPTION_IF_NULL(k);
-    k->SetEqual(k2->as_sptr<IntSymbol>());
+    k1->as<IntSymbol>()->SetEqual(k2->as_sptr<IntSymbol>());
   }
   return ResultIntList(std::move(result));
 }

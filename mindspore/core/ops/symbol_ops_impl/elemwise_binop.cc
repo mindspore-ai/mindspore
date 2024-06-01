@@ -53,8 +53,6 @@ SymbolPtrList ElemwiseBinop::Process(const SymbolPtrList &lhs, const SymbolPtrLi
     // rule 3: s1 & n  -> n  (n != 1)
     auto a = lhs[lhs.size() - i]->as_sptr<IntSymbol>();
     auto b = rhs[rhs.size() - i]->as_sptr<IntSymbol>();
-    MS_EXCEPTION_IF_NULL(a);
-    MS_EXCEPTION_IF_NULL(b);
     if (a->EqualsTo(b)) {
       (void)result.emplace_back(std::move(a));
       continue;

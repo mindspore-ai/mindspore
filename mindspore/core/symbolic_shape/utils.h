@@ -44,11 +44,7 @@ MS_CORE_API int64_t AsInt(const Symbol *s);
 inline int64_t AsInt(const SymbolPtr &s) { return AsInt(s.get()); }
 
 // get bool value from symbol
-inline bool AsBool(const Symbol *s) {
-  auto v = s->as<BoolSymbol>();
-  MS_EXCEPTION_IF_NULL(v);
-  return v->value();
-}
+inline bool AsBool(const Symbol *s) { return s->as<BoolSymbol>()->value(); }
 inline bool AsBool(const SymbolPtr &s) { return AsBool(s.get()); }
 
 inline int64_t NormAxis(int64_t axis, size_t rank) { return axis >= 0 ? axis : axis + static_cast<int64_t>(rank); }

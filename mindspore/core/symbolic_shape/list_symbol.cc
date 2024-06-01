@@ -28,8 +28,8 @@ bool ListSymbol::operator==(const Symbol &s) const {
   if (!has_data_ || !s.HasData()) {
     return false;
   }
-  auto *list = s.as<ListSymbol>();
-  if (size() != list->size()) {
+  auto *list = s.as_noexcept<ListSymbol>();
+  if (list == nullptr || size() != list->size()) {
     return false;
   }
   for (size_t i = 0; i < symbols_.size(); i++) {
@@ -77,16 +77,10 @@ ValuePtr ListSymbol::ToValue() const {
   return std::make_shared<ValueTuple>(values);
 }
 
-void ListSymbol::UpdateImpl(const SymbolPtr &s) {
-  ListSymbol *other = s->as<ListSymbol>();
-  if (other == nullptr) {
-    MS_LOG(EXCEPTION) << "Symbol " << s->ToString() << " is not a ListSymbol";
-  }
-  UpdateList(other->symbols());
-}
+void ListSymbol::UpdateImpl(const SymbolPtr &s) { UpdateList(s->as<ListSymbol>()->symbols()); }
 
 const SymbolPtr &ListSymbol::item(size_t i) const {
-  if (i >= symbols_.size()) {
+  if (MS_UNLIKELY(i >= symbols_.size())) {
     MS_LOG(INTERNAL_EXCEPTION) << "Index " << i << " out of range of symbols size " << symbols_.size();
   }
   return symbols_[i];

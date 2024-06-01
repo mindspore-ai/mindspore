@@ -235,12 +235,12 @@ SymbolPtr StridedSliceShapeBuilder(OperationBuilder *b) {
 
 // BuildValue of StridedSlice only support getting a single item.
 SymbolPtr StridedSliceValueBuilder(OperationBuilder *b) {
-  auto data = b->GetInputValue(kIndex0)->as_sptr<ListSymbol>();
+  auto data = b->GetInputValue(kIndex0)->as_sptr_noexcept<ListSymbol>();
   if (data == nullptr || !data->HasData()) {
     return nullptr;
   }
   auto begin = b->GetInputValue(kIndex1);
-  auto begin_list = begin->as<ListSymbol>();
+  auto begin_list = begin->as_noexcept<ListSymbol>();
   int64_t idx = 0;
   if (begin_list != nullptr) {
     if (begin_list->size() != 1 || !begin_list->AllHaveData()) {
@@ -248,7 +248,7 @@ SymbolPtr StridedSliceValueBuilder(OperationBuilder *b) {
     }
     idx = AsInt(begin_list->item(0));
   } else {
-    auto begin_int = begin->as<IntSymbol>();
+    auto begin_int = begin->as_noexcept<IntSymbol>();
     if (begin_int == nullptr || !begin_int->HasData()) {
       return nullptr;
     }

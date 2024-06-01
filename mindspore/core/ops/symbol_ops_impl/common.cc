@@ -22,11 +22,11 @@ namespace symshape {
 namespace ops {
 void InferShapeOp::SetPositive(const ListSymbol *list) {
   for (auto &s : list->symbols()) {
-    auto list_s = s->as<ListSymbol>();
+    auto list_s = s->as_noexcept<ListSymbol>();
     if (list_s != nullptr) {
       SetPositive(list_s);
     } else {
-      auto int_s = s->as<IntSymbol>();
+      auto int_s = s->as_noexcept<IntSymbol>();
       MS_EXCEPTION_IF_NULL(int_s);
       if (!int_s->is_positive()) {
         int_s->SetRangeMin(1);
@@ -59,7 +59,7 @@ SymbolPtr TransValueToShape(OperationBuilder *b) {
   if (ret == nullptr) {
     return nullptr;
   }
-  auto ret_shape = ret->as<ListSymbol>();
+  auto ret_shape = ret->as_noexcept<ListSymbol>();
   MS_EXCEPTION_IF_NULL(ret_shape);
   InferShapeOp::SetPositive(ret_shape);
   return ret;

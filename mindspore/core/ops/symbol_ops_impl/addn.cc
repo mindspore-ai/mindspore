@@ -43,7 +43,6 @@ REG_SYMBOL_OP_BUILDER("AddN").SetShapeFunc([](OperationBuilder *b) {
   }
 
   auto inputs = b->GetInputShape(kIndex0)->as_sptr<ListSymbol>();
-  MS_EXCEPTION_IF_NULL(inputs);
   return AddnBuildShape(b, inputs->symbols());
 });
 }  // namespace ops

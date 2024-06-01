@@ -25,7 +25,6 @@ using mindspore::ops::FASInputLayoutMode;
 constexpr int64_t kFASLastDim = 8;
 SymbolPtr FlashAttentionScoreShapeBuilder(OperationBuilder *b) {
   auto query_shape = b->GetInputShape(mindspore::ops::kFlashAttentionScoreInputQueryIndex)->as_sptr<ListSymbol>();
-  MS_EXCEPTION_IF_NULL(query_shape);
   if (!query_shape->HasData()) {
     // does not support dynamic rank.
     return nullptr;
@@ -44,7 +43,6 @@ SymbolPtr FlashAttentionScoreShapeBuilder(OperationBuilder *b) {
 
   // For TND layout, the output softmax shape is 3D. otherwise, the output shape is 4D.
   auto input_layout = b->GetInputValue(mindspore::ops::kFlashAttentionScoreInputLayoutIndex)->as_sptr<IntSymbol>();
-  MS_EXCEPTION_IF_NULL(input_layout);
   if (!input_layout->HasData()) {
     return nullptr;
   }

@@ -25,13 +25,13 @@ SymbolPtr ConcatValue(OperationBuilder *b) {
   SymbolPtrList result;
   if (b->input_num() == kDim2) {
     // inputs of Concat is a tuple.
-    auto inputs = b->GetInputValue(kIndex0)->as_sptr<ListSymbol>();
+    auto inputs = b->GetInputValue(kIndex0)->as_sptr_noexcept<ListSymbol>();
     if (inputs == nullptr) {
       return nullptr;
     }
     result.reserve(inputs->size());
     for (auto &inp : inputs->symbols()) {
-      if (auto ilist = inp->as<ListSymbol>(); ilist != nullptr && ilist->HasData()) {
+      if (auto ilist = inp->as_noexcept<ListSymbol>(); ilist != nullptr && ilist->HasData()) {
         (void)result.insert(result.end(), ilist->symbols().begin(), ilist->symbols().end());
       } else if (inp->is<IntSymbol>()) {
         (void)result.emplace_back(inp);
@@ -44,7 +44,7 @@ SymbolPtr ConcatValue(OperationBuilder *b) {
     // todo, remove this branch
     result.reserve(b->input_num());
     for (size_t i = 0; i + 1 < b->input_num(); i++) {
-      auto v = b->GetInputValue(i)->as_sptr<ListSymbol>();
+      auto v = b->GetInputValue(i)->as_sptr_noexcept<ListSymbol>();
       if (v != nullptr) {
         (void)result.insert(result.end(), v->symbols().begin(), v->symbols().end());
       } else {
