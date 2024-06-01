@@ -1156,7 +1156,6 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
   std::string default_group_name = "";
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
-
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
     if (graph->execution_order().empty()) {
@@ -1792,6 +1791,30 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
   }
 }
 
+namespace {
+bool IsNeedLinkControlArrowByMonad(const KernelGraphPtr &graph) {
+  // Collect communication ops.
+  if (EnableKbkSubGraphExecute() || graph->is_graph_run_mode() || graph->is_any_type_input() ||
+      graph->execution_order().empty()) {
+    return false;
+  }
+
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
+    return false;
+  }
+
+  for (const auto &kernel : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (common::AnfAlgo::IsCommunicationOp(kernel) && common::AnfAlgo::GetCNodeName(kernel) != kMatMulAllReduceOpName) {
+      return false;
+    }
+  }
+  return true;
+}
+}  // namespace
+
 void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
                                                 const GraphCompilerInfo &graph_compiler_info,
                                                 std::vector<AbstractActor *> *const auto_monad_actors,
@@ -1800,19 +1823,18 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
   MS_EXCEPTION_IF_NULL(auto_monad_actors);
   MS_EXCEPTION_IF_NULL(communication_nodes);
 
-  // Collect all the depend updatestate nodes of the kernels for linking control arrow.
-  mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> cnode_to_monad_inputs;
-  MS_LOG(INFO) << "Get all monad input of cnode in graph:" << graph->ToString() << " start.";
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO0) {
-    GetAllCNodeUInputByGraph(graph, &cnode_to_monad_inputs);
-  }
-  MS_LOG(INFO) << "Get all monad input of cnode in graph:" << graph->ToString() << " end.";
-
   if (EnableKbkSubGraphExecute()) {
     return;
   }
+
+  // Collect all the depend updatestate nodes of the kernels for linking control arrow.
+  mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> cnode_to_monad_inputs;
+  MS_LOG(INFO) << "Get all monad input of cnode in graph:" << graph->ToString() << " start.";
+  bool is_need_auto_monad_link = IsNeedLinkControlArrowByMonad(graph);
+  if (is_need_auto_monad_link) {
+    GetAllCNodeUInputByGraph(graph, &cnode_to_monad_inputs);
+  }
+  MS_LOG(INFO) << "Get all monad input of cnode in graph:" << graph->ToString() << " end.";
 
   auto &execution_order = graph->execution_order();
   // Foreach the execution order to link the actors.
@@ -1833,7 +1855,7 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
     for (size_t i = 0; i < common::AnfAlgo::GetInputNum(kernel); ++i) {
       auto input_node = common::AnfAlgo::GetInputNode(kernel, i);
       // Link the control arrows of kernel actor by the auto monad, the inputs include monad node.
-      if (SchedulerHelper::HasMonadControl(input_node, graph)) {
+      if (is_need_auto_monad_link && SchedulerHelper::HasMonadControl(input_node, graph)) {
         std::set<AnfNodePtr> checked_nodes;
         LinkControlArrowByAutoMonad(kernel_actor, input_node, graph, graph_compiler_info.control_node_parser_,
                                     cnode_to_monad_inputs, &checked_nodes);
