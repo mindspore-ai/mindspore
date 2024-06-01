@@ -43,6 +43,7 @@ Tensor创建
     mindspore.mint.cos
     mindspore.mint.erf
     mindspore.mint.floor
+    mindspore.mint.isclose
     mindspore.mint.isfinite
     mindspore.mint.log
     mindspore.mint.atan2
