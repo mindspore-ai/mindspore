@@ -17,6 +17,8 @@ Array Operation
     mindspore.mint.cat
     mindspore.mint.flip
     mindspore.mint.index_select
+    mindspore.mint.max
+    mindspore.mint.min
     mindspore.mint.scatter_add
     mindspore.mint.tile
     mindspore.mint.topk
@@ -101,6 +103,8 @@ Comparison Functions
     :template: classtemplate.rst
 
     mindspore.mint.greater_equal
+    mindspore.mint.maximum
+    mindspore.mint.minimum
 
 Pooling functions
 ^^^^^^^^^^^^^^^^^^^
