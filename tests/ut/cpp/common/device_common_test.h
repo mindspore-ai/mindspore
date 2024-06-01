@@ -53,6 +53,7 @@ using session::KernelGraph;
 
 class TestDeviceAddress : public DeviceAddress {
  public:
+  TestDeviceAddress(const KernelTensorPtr &kernel_tensor) : DeviceAddress(kernel_tensor) {}
   TestDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
   TestDeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const std::string &device_name,
                     uint32_t device_id)
@@ -95,6 +96,15 @@ class TestDeviceResManager : public device::DeviceResManager {
                                                TypeId type_id, const ShapeVector &shape,
                                                const UserDataPtr &user_data = nullptr) const {
     return std::make_shared<TestDeviceAddress>(device_ptr, device_size, format, type_id, "CPU", 0);
+  }
+
+  DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    if (kernel_tensor->device_name().empty()) {
+      kernel_tensor->set_device_name(device_context_->device_context_key().device_name_);
+      kernel_tensor->set_device_id(device_context_->device_context_key().device_id_);
+    }
+    return std::make_shared<TestDeviceAddress>(kernel_tensor);
   }
 };
 

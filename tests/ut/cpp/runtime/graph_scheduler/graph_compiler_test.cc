@@ -81,7 +81,7 @@ TEST_F(GraphCompilerTest, CompileGraph) {
   auto graph_id = compiler->CompileGraph(segment, std::make_pair(inputs, outputs), device_context.get(),
                                          device::RunMode::kKernelMode, false);
   const auto &kernel_graph = compiler->Fetch(graph_id);
-  ASSERT_EQ(2, kernel_graph->execution_order().size());
+  ASSERT_EQ(3, kernel_graph->execution_order().size());
 }
 }  // namespace runtime
 }  // namespace mindspore
