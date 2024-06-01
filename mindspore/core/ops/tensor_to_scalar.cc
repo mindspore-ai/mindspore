@@ -52,7 +52,7 @@ class TensorToScalarInfer : public abstract::OpInferBase {
     auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 0);
     MS_EXCEPTION_IF_NULL(shape_ptr);
     auto x_shape = shape_ptr->shape();
-    if (!x_shape.empty() && !IsDynamic(x_shape) && x_shape.size() != 1) {
+    if (!x_shape.empty() && !IsDynamic(x_shape) && !(x_shape.size() == 1 && x_shape[0] == 1)) {
       MS_EXCEPTION(ValueError) << "For Primitive[" << op_name << "], the input shape must be empty, but got " << x_shape
                                << ".";
     }

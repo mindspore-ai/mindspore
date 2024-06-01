@@ -382,10 +382,6 @@ def tensor_itemset_by_number_with_number(data, int_index, number_value):
 
 
 def tensor_itemset_by_tuple_with_number(data, tuple_index, nubmer_value):
-    if len(tuple_index) != data.ndim:
-        exp_msg = const_utils.gen_exception_msg(
-            "Tuple index len({}) is not same to tensor dimension({})", len(tuple_index), data.ndim)
-        const_utils.raise_index_error(exp_msg)
     nubmer_value = F.cast(nubmer_value, F.dtype(data))
     return tensor_itemset_by_tuple_with_tensor(data, tuple_index, nubmer_value)
 
@@ -408,20 +404,12 @@ def _transform_ellipsis_to_slice(data, tuple_index, op_name):
     Check if the tuple index len is longer than the data's dims and transform ellipsis in the indices
     to several slice.
     """
-    data_shape = F.shape(data)
     indexes_types = hyper_map(toptypeof, tuple_index)
     slice_positions, ellipsis_positions, _, int_positions, _, tensor_positions, sequence_positions = \
         const_utils.get_pos_of_indexes_types(indexes_types, op_name)
 
     ellipsis_occupy_dims = data.ndim - (len(slice_positions) + len(int_positions) +
                                         len(tensor_positions) + len(sequence_positions))
-    ellipsis_cnt = len(ellipsis_positions)
-
-    if ellipsis_occupy_dims < 0:
-        if ellipsis_cnt >= 0:
-            exp_msg = const_utils.gen_exception_msg(
-                "Tuple index {} out rang of tensor shape {}.", tuple_index, data_shape)
-            const_utils.raise_index_error(exp_msg)
 
     tuple_index_new = ()
     for i, index in enumerate(tuple_index):

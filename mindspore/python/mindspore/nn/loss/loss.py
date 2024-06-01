@@ -2668,7 +2668,6 @@ class CTCLoss(LossBase):
         _check_is_tensor('log_probs', log_probs, self.cls_name)
         _check_is_tensor('targets', targets, self.cls_name)
         if log_probs.ndim == 2:
-            _check_ctcloss_targets_shape(targets)
             if targets.ndim == 1:
                 targets = targets.expand_dims(0)
             log_probs = log_probs.expand_dims(-2)

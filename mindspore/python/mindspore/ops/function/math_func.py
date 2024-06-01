@@ -411,14 +411,12 @@ def bincount(input, weights=None, minlength=0):
         raise TypeError(f"For math function 'bincount', 'weights' must be Tensor, but got {type(weights)}.")
     if not isinstance(minlength, int) or isinstance(minlength, bool):
         raise TypeError(f"For math function 'bincount', 'minlength' must be int but got {type(minlength)}.")
-    if rank_(input) != 1:
-        raise ValueError(f"For math function 'bincount', 'input' should be one-dimensional tensor.")
     if input.shape[0] == 0:
-        return Tensor_([])
+        return Tensor_([], dtype=mstype.float32)
     if minlength < 0:
         raise ValueError(f"For 'bincount', 'minlength' should be >= 0 but got {minlength}.")
-    if max(input.astype(mstype.float32)) > minlength - 1:
-        length = (max(input.astype(mstype.float32)) + 1).astype(mstype.int32)
+    if input.astype(mstype.float32).max() > minlength - 1:
+        length = (input.astype(mstype.float32).max() + 1).astype(mstype.int32)
     else:
         length = cast_(minlength, mstype.int32)
     idx = F.arange(length).expand_dims(-1)
@@ -1527,8 +1525,6 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
         [[10.146146 -3.47241 ]
          [-3.47241   4.716825]]
     """
-    if input.ndim > 2:
-        raise ValueError(f"For cov, the input must have two or fewer dimensions, but got {input.ndim} dimensions.")
     if input.dtype == mstype.bool_:
         raise TypeError(f"For cov, the input dtype can not be bool.")
 
@@ -5536,19 +5532,23 @@ def block_diag(*inputs):
             raise TypeError(
                 f"For 'block_diag', each element of 'inputs' must be a tensor, but got {type(ary)}"
             )
-        if ary.ndim == 0:
+        ndim = ary.ndim
+        if not ops.isconstant(ndim):
+            raise ValueError("For 'block_diag', dynamic rank is not support now.")
+        if ndim == 0:
             return ops.expand_dims(ops.expand_dims(ary, 0), 0)
-        if ary.ndim == 1:
+        if ndim == 1:
             return ops.expand_dims(ary, 0)
-        if ary.ndim == 2:
+        if ndim == 2:
             return ary
         raise ValueError(
             "For 'block_diag', the dimension of each elements in 'inputs' must be 0, 1, or 2, but got "
-            f"{ary.ndim}"
+            f"{ndim}"
         )
 
     if not inputs:
         raise RuntimeError("For 'block_diag', the input is empty.")
+
     arys = [to_2d(ary) for ary in inputs]
     matrix = [ops.concat(to_col_block(arys, idx, ary)) for idx, ary in enumerate(arys)]
     return ops.concat(matrix, 1)
@@ -5713,10 +5713,6 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
     """
     if not isinstance(x, Tensor):
         raise TypeError(f"For 'diff', 'x' must be a tensor, but got {type(x)}")
-    if x.ndim < 1:
-        raise TypeError(f"For 'diff', the dimension 'x' must be at least 1, but got {x.ndim}")
-    if 0 in x.shape:
-        raise ValueError(f"For 'diff', 'x' can not be an empty Tensor.")
     _check_is_int(n, 'n', 'diff')
     if n != 1:
         raise RuntimeError(f"For 'diff', 'n' must be 1, but got {n}")
@@ -6174,8 +6170,6 @@ def combinations(input, r=2, with_replacement=False):
 
     if not isinstance(input, Tensor):
         raise TypeError(f"For 'combinations', 'x' must be a tensor, but got {type(input)}")
-    if input.ndim != 1:
-        raise ValueError(f"For 'combinations', the dimension 'x' must be 1, but got {input.ndim}")
     if not isinstance(r, int):
         raise TypeError(f"For 'combinations', 'r' must be an integer, but got {type(r)}")
     comb_func = _combinations_with_replacement if with_replacement else _combinations
@@ -6259,13 +6253,6 @@ def copysign(x, other):
         [[-0.3  0.7]
          [ 0.5 -0.5]]
     """
-
-    def _broadcast_to_shape(x, shape):
-        """Broadcasts x from current shape to shape"""
-        ndim_to = len(shape)
-        x = _expand(x, ndim_to)
-        return _broadcast_to(x, shape_(x), shape, ndim_to)
-
     if not isinstance(x, Tensor):
         raise TypeError("Tensor is expected, but got " + f"{type(x)}")
     if not isinstance(other, (int, float, Tensor)):
@@ -6275,7 +6262,6 @@ def copysign(x, other):
 
     if not isinstance(other, Tensor):
         other = _type_convert(Tensor, other)
-    other = _broadcast_to_shape(other, shape_(x))
 
     if _check_same_type(dtype_(x), mstype.bool_):
         raise TypeError("copysign does not accept dtype bool.")
@@ -7762,7 +7748,6 @@ def gumbel_softmax(logits, tau=1.0, hard=False, dim=-1):
         (2, 3)
     """
     _check_logits_tensor(logits)
-    _check_logits_shape(logits)
     logits_dtype = dtype_(logits)
     _check_input_dtype("logits", logits_dtype, [mstype.float16, mstype.float32], "gumbel_softmax")
     _check_attr_dtype("tau", tau, [float], "gumbel_softmax")
@@ -8171,11 +8156,6 @@ def inner(input, other):
         output = input * other
         return output
 
-    x_shape = input.shape
-    other_shape = other.shape
-    if x_shape[-1] != other_shape[-1]:
-        raise ValueError(f"For 'inner', the last dimension of 'input' and 'other' must be the same, \
-                         but got input.shape: {x_shape} and other.shape: {other_shape}.")
     return ops.tensor_dot(input, other, axes=(-1, -1))
 
 
@@ -8446,13 +8426,6 @@ def log2(input):
     return output
 
 
-def arrange(x):
-    lists = []
-    for i in range(0, x):
-        lists.append(i)
-    return lists
-
-
 def rot90(input, k, dims):
     """
     Rotate a n-D tensor by 90 degrees in the plane specified by dims axis.
@@ -8502,12 +8475,6 @@ def rot90(input, k, dims):
 
     if total_rot_dims != 2:
         raise ValueError(f"For `rot90`, total rotation dims must be 2, but get {total_rot_dims}.")
-    if dims[0] == dims[1] or (dims[0] - dims[1]) == total_dims or (dims[1] - dims[0]) == total_dims:
-        raise RuntimeError(f"For `rot90`, rotation dims must be different, but get dim0={dims[0]}, dim1={dims[1]}.")
-    if dims[0] >= total_dims or dims[0] < -total_dims:
-        raise ValueError(f"For `rot90`, rotation dim0 is out of range, dim0={dims[0]}.")
-    if dims[1] >= total_dims or dims[1] < -total_dims:
-        raise ValueError(f"For `rot90`, rotation dim1 is out of range, dim1={dims[1]}.")
 
     k = (4 + (k % 4)) % 4
 
@@ -8521,7 +8488,7 @@ def rot90(input, k, dims):
         out = op2(output)
         return out
 
-    axes_list = arrange(total_dims)
+    axes_list = list(range(total_dims))
     (axes_list[dims[0]], axes_list[dims[1]]) = (axes_list[dims[1]],
                                                 axes_list[dims[0]])
 
@@ -8968,13 +8935,11 @@ def _tuple_setitem(tup, idx, value):
 
 @_primexpr
 def _check_dim_in_range(dim, ndim):
-    def _check(dim, ndim):
+    def _check(dim):
         if not isinstance(dim, int):
             raise TypeError(f'axes should be integers, not {type(dim)}')
-        if -ndim > dim or dim >= ndim:
-            raise ValueError(f'dim {dim} is out of bounds for array of dimension {ndim}')
 
-    _check(dim, ndim)
+    _check(dim)
     return dim % ndim
 
 
@@ -8986,9 +8951,9 @@ def dotrapezoid(y, dx, dim):
 
 
 def dotrapezoid_tensor(y, dx, dim):
-    y_start_dim_left = [0 for _ in range(dim)]
+    y_start_dim_left = [0] *dim
     y_start_dim_left = tuple(y_start_dim_left)
-    y_start_dim_right = [0 for _ in range(y.ndim - dim - 1)]
+    y_start_dim_right = [0] * (y.ndim - dim - 1)
     y_start_dim_right = tuple(y_start_dim_right)
     y_slice_size = _tuple_setitem(shape_(y), dim, shape_(y)[dim] - 1)
     y_slice_left = slice_(y, y_start_dim_left + (0,) + y_start_dim_right, y_slice_size)
@@ -9000,7 +8965,7 @@ def add_padding_to_shape(curr_shape, target_n_dim):
     curr_size = len(curr_shape)
     if curr_size >= target_n_dim:
         target_n_dim = curr_size
-    new_shape = [1 for _ in range(target_n_dim)]
+    new_shape = [1] * target_n_dim
     for i in range(curr_size):
         new_shape[target_n_dim - i - 1] = curr_shape[curr_size - i - 1]
     return new_shape
@@ -9021,9 +8986,9 @@ def trapezoid_tensor(y, x, dim):
     if y.shape[dim] == 0:
         return zeros_like_except(y, dim)
     if x.ndim < y.ndim and x.ndim != 1:
-        x_start_dim_left = [0 for _ in range(dim)]
+        x_start_dim_left = [0] * dim
         x_start_dim_left = tuple(x_start_dim_left)
-        x_start_dim_right = [0 for _ in range(x.ndim - dim - 1)]
+        x_start_dim_right = [0] * (x.ndim - dim - 1)
         x_start_dim_right = tuple(x_start_dim_right)
         x_slice_size = _tuple_setitem(x.shape, dim, x.shape[dim] - 1)
         x_left = slice_(x, x_start_dim_left + (0,) + x_start_dim_right, x_slice_size)
@@ -9033,16 +8998,14 @@ def trapezoid_tensor(y, x, dim):
         dx = dx.view(tuple(new_sizes))
         return dotrapezoid_tensor(y, dx, dim)
     if x.ndim == 1:
-        if x.shape[0] != y.shape[dim]:
-            raise RuntimeError("There must be one `x` value for each sample point")
-        new_sizes = [1 for _ in range(y.ndim)]
+        new_sizes = [1] * y.ndim
         new_sizes[dim] = x.shape[0]
         x_viewed = x.view(tuple(new_sizes))
     else:
         x_viewed = x
-    x_start_dim_left = [0 for _ in range(dim)]
+    x_start_dim_left = [0] * dim
     x_start_dim_left = tuple(x_start_dim_left)
-    x_start_dim_right = [0 for _ in range(x_viewed.ndim - dim - 1)]
+    x_start_dim_right = [0] * (x_viewed.ndim - dim - 1)
     x_start_dim_right = tuple(x_start_dim_right)
     x_slice_size = _tuple_setitem(x_viewed.shape, dim, x_viewed.shape[dim] - 1)
     x_left = slice_(x_viewed, x_start_dim_left + (0,) + x_start_dim_right, x_slice_size)
@@ -11144,6 +11107,10 @@ def tensor_dot(x1, x2, axes):
          [2. 2. 2]
          [2. 2. 2]]
     """
+    x1_dim = x1.ndim
+    x2_dim = x2.ndim
+    if not ops.isconstant(x1_dim) or not ops.isconstant(x2_dim):
+        raise ValueError("For 'tensor_dot', dynamic rank is not support now.")
     matmul_op = _get_cache_prim(P.MatMul)(False, False)
     # input validity checks
     x1_shape = shape_(x1)
@@ -11151,7 +11118,6 @@ def tensor_dot(x1, x2, axes):
     axes = _check_axes(axes, 'tensor_dot')
     # input compatibility check & axes format update
     axes = _axes_int_check(x1_shape, x2_shape, axes, 'tensor_dot')
-    _validate_axes(x1_shape, x2_shape, axes, 'tensor_dot')
     x1_reshape_fwd, x1_transpose_fwd, x1_ret = _calc_new_shape(x1_shape, axes, 0)
     x2_reshape_fwd, x2_transpose_fwd, x2_ret = _calc_new_shape(x2_shape, axes, 1)
     output_shape = x1_ret + x2_ret  # combine free axes from both inputs

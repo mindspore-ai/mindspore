@@ -3405,10 +3405,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         if len(size) == 1 and isinstance(size[0], tuple):
             size = size[0]
         shape_x = x.shape
-        if len(size) > x.ndim:
-            raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_x}.")
         if len(size) < x.ndim:
-            pre_axis = tuple([axis for axis in range(x.ndim - len(size))])
+            pre_axis = tuple(range(x.ndim - len(size)))
             x = x.sum(pre_axis)
         axes = []
         for i, element in enumerate(size):
@@ -3491,7 +3489,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             axis = 0
         if axis is not None and not isinstance(axis, int):
             raise TypeError(f"For 'Tensor.repeat', the argument 'axis' should be int, but got {type(axis)}.")
-        validator.check_axis_in_range(axis, input_x.ndim)
         axis = axis + input_x.ndim if axis < 0 else axis
 
         if len(repeats) == 1:

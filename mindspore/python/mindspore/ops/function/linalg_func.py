@@ -303,11 +303,6 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     """
     if not isinstance(x, (Tensor, Tensor_)):
         raise TypeError("The input x must be tensor")
-    if x.shape == ():
-        raise TypeError("For pinv, the 0-D input is not supported")
-    x_shape = F.shape(x)
-    if len(x_shape) < 2:
-        raise ValueError("input x should have 2 or more dimensions, " f"but got {len(x_shape)}.")
     x_dtype = dtype_(x)
     _check_input_dtype("x", x_dtype, [mstype.float32, mstype.float64], "pinv")
     _check_attr_dtype("hermitian", hermitian, [bool], "pinv")
