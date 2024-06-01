@@ -22,5 +22,7 @@ correspondence, cluster, etc data analysis.
 """
 from mindspore.profiler.profiling import Profiler
 from mindspore.profiler.envprofiling import EnvProfiler
+from mindspore.profiler.profiling import ProfilerLevel
 
-__all__ = ["Profiler", "EnvProfiler"]
+
+__all__ = ["Profiler", "EnvProfiler", "ProfilerLevel"]
