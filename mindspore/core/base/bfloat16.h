@@ -58,17 +58,13 @@ class BFloat16 {
 
   uint16_t int_value() const { return value_; }
 
+  template <typename T>
+  explicit operator T() const {
+    return static_cast<T>(ToFloat32(*this));
+  }
+
   explicit operator bool() const { return (value_ & value_mask) != 0; }
   explicit operator float() const { return ToFloat32(*this); }
-  explicit operator double() const { return static_cast<double>(ToFloat32(*this)); }
-  explicit operator int8_t() const { return static_cast<int8_t>(ToFloat32(*this)); }
-  explicit operator uint8_t() const { return static_cast<uint8_t>(ToFloat32(*this)); }
-  explicit operator int16_t() const { return static_cast<int16_t>(ToFloat32(*this)); }
-  explicit operator uint16_t() const { return static_cast<uint16_t>(ToFloat32(*this)); }
-  explicit operator int32_t() const { return static_cast<int32_t>(ToFloat32(*this)); }
-  explicit operator uint32_t() const { return static_cast<uint32_t>(ToFloat32(*this)); }
-  explicit operator int64_t() const { return static_cast<int64_t>(ToFloat32(*this)); }
-  explicit operator uint64_t() const { return static_cast<uint64_t>(ToFloat32(*this)); }
 
   BFloat16 &operator+=(const BFloat16 &b) {
     value_ = FromFloat32(ToFloat32(*this) + ToFloat32(b));
@@ -169,7 +165,7 @@ using bfloat16 = mindspore::BFloat16;
 namespace std {
 template <>
 struct hash<bfloat16> {
-  std::size_t operator()(const bfloat16 &f16) const noexcept { return static_cast<std::size_t>(f16.int_value()); }
+  std::size_t operator()(const bfloat16 &bf16) const noexcept { return static_cast<std::size_t>(bf16.int_value()); }
 };
 
 template <>

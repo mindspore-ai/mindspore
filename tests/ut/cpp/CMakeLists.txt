@@ -96,6 +96,14 @@ set(ALL_UT_COMPS CORE MINDDATA0 MINDDATA1 API FRONTEND OLD_BACKEND BACKEND PS CC
 set(REPEATED_DEFINED_FILE stub/ps/ps_core_stub.cc)
 list(REMOVE_ITEM UT_SRCS ${REPEATED_DEFINED_FILE})
 
+find_package(Python3 COMPONENTS Interpreter Development)
+if(Python3_FOUND)
+    find_package(Python3 COMPONENTS NumPy Development)
+    if(Python3_NumPy_FOUND)
+        include_directories(${Python3_NumPy_INCLUDE_DIRS})
+    endif()
+endif()
+
 file(GLOB_RECURSE EXTEND_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         # dont remove the 4 lines above
         "../../../mindspore/ccsrc/pybind_api/*.cc"
@@ -204,6 +212,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/common/expander/*.cc"
         "../../../mindspore/ccsrc/common/pynative/*.cc"
         "../../../mindspore/ccsrc/common/symbol_engine/*.cc"
+        "../../../mindspore/ccsrc/common/np_dtype/*.cc"
         "../../../mindspore/ccsrc/backend/common/session/anf_runtime_algorithm.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_session.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_auto_monad.cc"
