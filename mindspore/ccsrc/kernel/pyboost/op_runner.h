@@ -30,6 +30,7 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "kernel/pyboost/pyboost_utils.h"
 #include "ops/ops_func_impl/simple_infer.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 
 namespace mindspore {
 namespace tensor {
@@ -110,6 +111,16 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   template <typename... T>
   static void InferOpOutput(const std::shared_ptr<OpRunner> &op, T &... args) {
     op->InferOutput(args...);
+  }
+
+  void ProfileMemoryInfo() {
+    if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PROF_MEM)) {
+      return;
+    }
+
+    PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([primitive = primitive_]() {
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", primitive->name(), "");
+    }));
   }
 
  protected:

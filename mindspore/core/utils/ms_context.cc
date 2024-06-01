@@ -530,6 +530,7 @@ void MsContext::InitBoolTypeDefaultValue() {
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_HOOK, false);
   set_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL, true);
   set_param<bool>(MS_CTX_ENABLE_PROFILING, false);
+  set_param<bool>(MS_CTX_ENABLE_PROF_MEM, false);
   set_param<bool>(MS_CTX_CHECK_BPROP_FLAG, false);
   set_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL, false);
   set_param<bool>(MS_CTX_ENABLE_PARALLEL_SPLIT, false);
@@ -577,6 +578,7 @@ void MsContext::InitStringTypeDefaultValue() {
   set_param<std::string>(MS_CTX_CONV_DGRAD_ALGO, "normal");
   set_param<std::string>(MS_CTX_CONV_WGRAD_ALGO, "normal");
   set_param<std::string>(MS_CTX_JIT_LEVEL, "");
+  set_param<std::string>(MS_CTX_PROF_MEM_OUTPUT_PATH, "");
   set_param<std::string>(MS_CTX_GRAPH_MEMORY_MAX_SIZE, "0");
   set_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE, "0");
 }

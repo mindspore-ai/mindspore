@@ -45,9 +45,9 @@ namespace device {
 // The status of memory buf.
 enum class DynamicMemBufStatus : int { kMemBufIdle, kMemBufUsed, kMemBufEagerFree, kMemBufUsedByEvent };
 // Memory allocator type is used to record the memory classification statistics information.
-enum class AllocatorType : int { kWeight, kConstantValue, kKernelOutput, kGraphOutput, kOther };
+enum class AllocatorType : int { kWeight, kConstantValue, kKernelOutput, kGraphOutput, kWorkspace, kOther };
 constexpr int kShiftOffset = 2;
-constexpr int kAllocatorTypeNum = 5;
+constexpr int kAllocatorTypeNum = 6;
 // Alloc memory aligned according to 512 bytes.
 constexpr size_t kDynamicMemAlignSize = 512;
 // The minimum unit size (1G) of memory block used for dynamic extend.

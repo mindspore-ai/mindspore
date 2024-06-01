@@ -16,17 +16,106 @@
 
 #include "include/backend/mem_reuse/mem_tracker.h"
 #include <fstream>
+#include <tuple>
 #include "frontend/parallel/group_manager.h"
 #include "utils/ms_context.h"
 #include "include/common/debug/common.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/backend/device_type.h"
+#include "include/backend/mem_reuse/mem_dynamic_allocator.h"
+#include "include/common/utils/utils.h"
+#include "include/backend/distributed/collective/collective_manager.h"
+
+#if !defined(BUILD_LITE)
+#include "pybind11/pybind11.h"
+namespace py = pybind11;
+#endif
 
 namespace mindspore {
 namespace device {
 namespace tracker {
 namespace {
-std::string GetRankID() { return std::to_string(CommManager::GetInstance().GetRank()); }
+std::string GetRankID() {
+  uint32_t rank_id = 0;
+#if !defined(BUILD_LITE)
+  if (distributed::collective::CollectiveManager::instance()->initialized()) {
+    rank_id = CommManager::GetInstance().GetRank();
+  } else {
+    rank_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  }
+#endif
+  return std::to_string(rank_id);
+}
+
+AllocatorType GetAllocatorType(MemType mem_type) {
+  static std::map<MemType, device::AllocatorType> mem_allocator_type_map = {
+    {MemType::kWeight, AllocatorType::kWeight},
+    {MemType::kConstantValue, AllocatorType::kConstantValue},
+    {MemType::kKernel, AllocatorType::kConstantValue},
+    {MemType::kGraphOutput, AllocatorType::kGraphOutput},
+    {MemType::kSomas, AllocatorType::kConstantValue},
+    {MemType::kInSideSomas, AllocatorType::kConstantValue},
+    {MemType::kSomasOutput, AllocatorType::kKernelOutput},
+    {MemType::kGeConst, AllocatorType::kConstantValue},
+    {MemType::kBatchMemory, AllocatorType::kConstantValue},
+    {MemType::kContinuousMemory, AllocatorType::kConstantValue},
+    {MemType::kPyNativeInput, AllocatorType::kConstantValue},
+    {MemType::kPyNativeOutput, AllocatorType::kKernelOutput},
+    {MemType::kGeFeatureMemory, AllocatorType::kConstantValue},
+    {MemType::kWorkSpace, AllocatorType::kWorkspace},
+    {MemType::kOther, AllocatorType::kOther}};
+
+  auto iter = mem_allocator_type_map.find(mem_type);
+  if (iter == mem_allocator_type_map.end()) {
+    MS_LOG(WARNING) << "Not found mem_type:" << mem_type << " in mem_allocator_type_map.";
+    return AllocatorType::kOther;
+  }
+  return iter->second;
+}
+
+std::vector<std::tuple<std::string, int, std::string>> GetPythonStack() {
+  std::vector<std::tuple<std::string, int, std::string>> all_stacks;
+#if !defined(BUILD_LITE)
+  try {
+    const size_t func_name_index = 2;
+    const size_t min_frame_info_size = 3;
+    py::gil_scoped_acquire gil_acquire;
+    py::module traceback_module = py::module::import("traceback");
+    py::list extracted_stack = traceback_module.attr("extract_stack")();
+
+    for (size_t i = 0; i < extracted_stack.size(); ++i) {
+      py::tuple frame_info = extracted_stack[i].cast<py::tuple>();
+
+      if (frame_info.size() < min_frame_info_size) {
+        MS_LOG(ERROR) << "frame_info size is invalid, frame_info size:" << frame_info.size();
+        continue;
+      }
+
+      // frame_info: (filename, line number, function name, code_context)
+      std::string file_name = frame_info[0].cast<std::string>();
+      int line_number = frame_info[1].cast<int>();
+      std::string func_name = frame_info[func_name_index].cast<std::string>();
+      (void)all_stacks.emplace_back(std::tuple(file_name, line_number, func_name));
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Error while accessing Python stack: " << e.what();
+  }
+#endif
+
+  return all_stacks;
+}
+
+std::string GetPythonStackStr() {
+  const auto &stacks = GetPythonStack();
+  const size_t func_name_index = 2;
+
+  std::stringstream ss;
+  for (const auto &stack_info : stacks) {
+    ss << "File:" << std::get<0>(stack_info) << ";Line:" << std::get<1>(stack_info)
+       << ";Function:" << std::get<func_name_index>(stack_info) << '|';
+  }
+  return ss.str();
+}
 }  // namespace
 
 void MemoryTrackerEnabled::SetPath() {
@@ -38,8 +127,7 @@ void MemoryTrackerEnabled::SetPath() {
   if (has_set_path) {
     return;
   }
-  static const char kMemoryTracePath[] = "MS_MEMORY_TRACE_PATH";
-  auto trace_path = common::GetEnv(kMemoryTracePath);
+  auto trace_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_PROF_MEM_OUTPUT_PATH);
   if (trace_path.empty()) {
     trace_path = "./";
   }
@@ -52,6 +140,11 @@ void MemoryTrackerEnabled::SetPath() {
 
 void MemoryTrackerEnabled::AddTask(const std::string &task_name, const std::string &node_name,
                                    const std::string &graph_name, const std::string &file_name, size_t line_num) {
+  std::string python_stack;
+  if (WithPythonStack()) {
+    python_stack = GetPythonStackStr();
+  }
+
   std::lock_guard lock(mutex_);
   SetPath();
   time_stamp_++;
@@ -63,18 +156,14 @@ void MemoryTrackerEnabled::AddTask(const std::string &task_name, const std::stri
   task_info->file_name = file_name;
   task_info->line_num = line_num;
   task_info->time_stamp = time_stamp_;
+  task_info->python_stack = python_stack;
   task_map_[task_name] = task_info;
   task_list_.push_back(task_info);
 }
 
-void MemoryTrackerEnabled::AddMemInfo(const std::string &task_name, MemType type, size_t size,
-                                      const DeviceAddress *device_address, const std::string &file_name,
-                                      size_t line_num) {
-  std::lock_guard lock(mutex_);
-  if (device_address->GetDeviceType() == DeviceType::kCPU) {
-    return;
-  }
-  auto kernel_tensor = device_address->kernel_tensor().get();
+MemInfoPtr MemoryTrackerEnabled::NewMemInfo(const std::string &task_name, MemType type, size_t size,
+                                            KernelTensorPtr kernel_tensor, const std::string &file_name,
+                                            size_t line_num) {
   auto mem_info = std::make_shared<MemInfo>();
   MS_EXCEPTION_IF_NULL(mem_info);
   mem_info->type = type;
@@ -86,11 +175,40 @@ void MemoryTrackerEnabled::AddMemInfo(const std::string &task_name, MemType type
   if (iter == task_map_.end()) {
     MS_LOG(ERROR) << "MemoryTracker AddMemInfo failed, task_name:" << task_name << " not found, " << file_name << ":"
                   << line_num;
-    return;
+    return nullptr;
   }
+
+  const auto &node_name = iter->second->node_name;
+  DynamicMemAllocatorDebugInfo::SetDebugInfo(node_name, GetAllocatorType(type));
+
   mem_info->producer_task = iter->second;
   mem_info_list_.push_back(mem_info);
-  kernel_tensor_mem_map[kernel_tensor] = mem_info;
+  return mem_info;
+}
+
+void MemoryTrackerEnabled::AddMemInfoForKernelTensor(const std::string &task_name, MemType type, size_t size,
+                                                     KernelTensorPtr kernel_tensor, const std::string &file_name,
+                                                     size_t line_num) {
+  auto mem_info = NewMemInfo(task_name, type, size, kernel_tensor, file_name, line_num);
+  if (mem_info != nullptr) {
+    kernel_tensor_mem_map[kernel_tensor] = mem_info;
+  }
+}
+
+void MemoryTrackerEnabled::AddMemInfo(const std::string &task_name, MemType type, size_t size,
+                                      DeviceAddress *device_address, const std::string &file_name, size_t line_num) {
+  MS_EXCEPTION_IF_NULL(device_address);
+  if (device_address->GetDeviceType() == DeviceType::kCPU) {
+    return;
+  }
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  if (device_address->kernel_tensor() == nullptr) {
+    auto mem_info = NewMemInfo(task_name, type, size, nullptr, file_name, line_num);
+    device_address_mem_map[device_address] = mem_info;
+  } else {
+    AddMemInfoForKernelTensor(task_name, type, size, device_address->kernel_tensor().get(), file_name, line_num);
+  }
 }
 
 void MemoryTrackerEnabled::UpdateMemInfo(const DeviceAddress *device_address, MemType mem_type,
@@ -138,33 +256,44 @@ void MemoryTrackerEnabled::AddCompileTimeMemInfo(const std::string &task_name, s
   mem_info_list_.push_back(mem_info);
 }
 
-void MemoryTrackerEnabled::BindDevicePtr(const DeviceAddress *device_address, DeviceMemPtr device_ptr,
+void MemoryTrackerEnabled::BindDevicePtr(DeviceAddress *device_address, DeviceMemPtr device_ptr,
                                          const std::string &file_name, size_t line_num) {
-  MS_EXCEPTION_IF_NULL(device_address);
-  if (device_address->kernel_tensor() == nullptr) {
+  if (device_address == nullptr) {
     return;
   }
-  std::lock_guard lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   if (device_address->GetDeviceType() == DeviceType::kCPU) {
     return;
   }
-  auto kernel_tensor = device_address->kernel_tensor().get();
-  auto iter = kernel_tensor_mem_map.find(kernel_tensor);
-  if (iter == kernel_tensor_mem_map.end()) {
-    MS_LOG(ERROR) << "MemoryTracker BindDevicePtr failed, kernel_tensor:" << kernel_tensor << " not found, "
-                  << file_name << ":" << line_num;
-    return;
+  MemInfoPtr mem_info{nullptr};
+  if (device_address->kernel_tensor() == nullptr) {
+    auto iter = device_address_mem_map.find(device_address);
+    if (iter == device_address_mem_map.end()) {
+      MS_LOG(ERROR) << "MemoryTracker BindDevicePtr failed, device_address:" << device_address << " not found, "
+                    << file_name << ":" << line_num;
+      return;
+    }
+    mem_info = iter->second;
+  } else {
+    auto iter = kernel_tensor_mem_map.find(device_address->kernel_tensor().get());
+    if (iter == kernel_tensor_mem_map.end()) {
+      MS_LOG(ERROR) << "MemoryTracker BindDevicePtr failed, kernel_tensor:" << device_address->kernel_tensor().get()
+                    << " not found, " << file_name << ":" << line_num;
+      return;
+    }
+    mem_info = iter->second;
   }
-  if (iter->second->type == MemType::kInSideSomas) {
+
+  if (mem_info->type == MemType::kInSideSomas) {
     auto mem_block_info = std::make_shared<MemBlockInfo>();
     MS_EXCEPTION_IF_NULL(mem_block_info);
     mem_block_info->device_addr = device_ptr;
-    mem_block_info->size = iter->second->size;
+    mem_block_info->size = mem_info->size;
     mem_block_info->start_time_stamp = -1;
     mem_block_info->end_time_stamp = -1;
     mem_block_info->is_bind = true;
-    mem_block_info->mem_info = iter->second;
-    iter->second->mem_block = mem_block_info;
+    mem_block_info->mem_info = mem_info;
+    mem_info->mem_block = mem_block_info;
     device_mem_block_map[device_ptr] = mem_block_info;
     mem_block_list_.push_back(mem_block_info);
     return;
@@ -175,9 +304,9 @@ void MemoryTrackerEnabled::BindDevicePtr(const DeviceAddress *device_address, De
                   << ":" << line_num;
     return;
   }
-  iter->second->mem_block = mem_block_iter->second;
-  iter->second->mem_block->is_bind = true;
-  iter->second->mem_block->mem_info = iter->second;
+  mem_info->mem_block = mem_block_iter->second;
+  mem_info->mem_block->is_bind = true;
+  mem_info->mem_block->mem_info = mem_info;
 }
 
 void MemoryTrackerEnabled::UpdateDevicePtrInfo(DeviceMemPtr device_ptr, MemType mem_type, const std::string &task_name,
@@ -205,7 +334,8 @@ void MemoryTrackerEnabled::UpdateDevicePtrInfo(DeviceMemPtr device_ptr, MemType 
 }
 
 void MemoryTrackerEnabled::AllocMemBlock(DeviceMemPtr device_addr, size_t size, const std::string &pool_name,
-                                         size_t actual_peak_memory, uint32_t stream_id) {
+                                         size_t actual_peak_memory, size_t in_used_size, size_t total_size,
+                                         uint32_t stream_id) {
   std::lock_guard lock(mutex_);
   time_stamp_++;
   auto mem_block = std::make_shared<MemBlockInfo>();
@@ -216,12 +346,15 @@ void MemoryTrackerEnabled::AllocMemBlock(DeviceMemPtr device_addr, size_t size, 
   mem_block->size = size;
   mem_block->pool_name = pool_name;
   mem_block->stream_id = stream_id;
+  mem_block->real_start_time = GetCurrentUSec();
+  mem_block->alloc_in_used_size = in_used_size;
+  mem_block->alloc_total_size = total_size;
   device_mem_block_map[device_addr] = mem_block;
   real_device_mem_block_map[device_addr] = mem_block;
   mem_block_list_.emplace_back(mem_block);
 }
 
-void MemoryTrackerEnabled::FreeMemBlock(DeviceMemPtr device_addr) {
+void MemoryTrackerEnabled::FreeMemBlock(DeviceMemPtr device_addr, size_t in_used_size, size_t total_size) {
   std::lock_guard lock(mutex_);
   time_stamp_++;
   auto iter = real_device_mem_block_map.find(device_addr);
@@ -230,6 +363,9 @@ void MemoryTrackerEnabled::FreeMemBlock(DeviceMemPtr device_addr) {
     return;
   }
   iter->second->end_time_stamp = time_stamp_;
+  iter->second->real_end_time = GetCurrentUSec();
+  iter->second->release_in_used_size = in_used_size;
+  iter->second->release_total_size = total_size;
 }
 
 void MemoryTrackerEnabled::UseMemBlock(const std::string &task_name, DeviceMemPtr device_addr,
@@ -259,6 +395,9 @@ void MemoryTrackerEnabled::UseMemBlock(const std::string &task_name, DeviceMemPt
 }
 
 namespace {
+constexpr size_t kKBToByte = 1024;
+static const int kPrecisionDigits = 1;
+
 auto task_list_to_str = [](const std::vector<TaskInfoPtr> &task_list) -> std::string {
   std::stringstream ss;
   ss << "{";
@@ -339,6 +478,14 @@ const std::vector<std::pair<std::string, std::function<void(const MemBlockInfoPt
        oss << task_list_to_str(mem_info->user_tasks);
      }
    }},
+  {"python_stack",
+   [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) {
+     auto mem_info = mem_block->mem_info.lock();
+     if (mem_info) {
+       MS_EXCEPTION_IF_NULL(mem_info->producer_task);
+       oss << mem_info->producer_task->python_stack;
+     }
+   }},
 };
 
 const std::vector<std::pair<std::string, std::function<void(const TaskInfoPtr &, std::ofstream &)>>> task_csv = {
@@ -348,6 +495,44 @@ const std::vector<std::pair<std::string, std::function<void(const TaskInfoPtr &,
   {"graph_name", [](const TaskInfoPtr &task, std::ofstream &oss) { oss << task->graph_name; }},
   {"file_name", [](const TaskInfoPtr &task, std::ofstream &oss) { oss << task->file_name; }},
   {"line_num", [](const TaskInfoPtr &task, std::ofstream &oss) { oss << task->line_num; }},
+};
+
+const std::vector<std::pair<std::string, std::function<void(const MemBlockInfoPtr &, std::ofstream &)>>> prof_csv = {
+  {"Name",
+   [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) {
+     auto mem_info = mem_block->mem_info.lock();
+     if (mem_info) {
+       MS_EXCEPTION_IF_NULL(mem_info->producer_task);
+       oss << mem_info->producer_task->node_name;
+     }
+   }},
+  {"Size(KB)", [](const MemBlockInfoPtr &mem_block,
+                  std::ofstream &oss) { oss << (static_cast<float>(mem_block->size) / kKBToByte); }},
+  {"Allocation Time(us)",
+   [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) { oss << mem_block->real_start_time; }},
+  {"Duration(us)",
+   [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) {
+     if (mem_block->real_end_time > 0) {
+       oss << (mem_block->real_end_time - mem_block->real_start_time);
+     }
+   }},
+  {"Allocation Total Allocated(KB)",
+   [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) {
+     oss << (static_cast<float>(mem_block->alloc_in_used_size) / kKBToByte);
+   }},
+  {"Allocation Total Reserved(KB)",
+   [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) {
+     oss << (static_cast<float>(mem_block->alloc_total_size) / kKBToByte);
+   }},
+  {"Release Total Allocated(KB)",
+   [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) {
+     oss << (static_cast<float>(mem_block->release_in_used_size) / kKBToByte);
+   }},
+  {"Release Total Reserved(KB)",
+   [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) {
+     oss << (static_cast<float>(mem_block->release_total_size) / kKBToByte);
+   }},
+  {"Device", [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) { oss << mem_block->pool_name; }},
 };
 }  // namespace
 
@@ -360,8 +545,7 @@ void MemoryTrackerEnabled::Dump() {
 
   if (block_csv_path.empty() || task_csv_path.empty()) {
     // for single rank
-    static const char kMemoryTracePath[] = "MS_MEMORY_TRACE_PATH";
-    auto trace_path = common::GetEnv(kMemoryTracePath);
+    auto trace_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_PROF_MEM_OUTPUT_PATH);
     if (trace_path.empty()) {
       trace_path = "./";
     }
@@ -425,6 +609,43 @@ void MemoryTrackerEnabled::Dump() {
   task_file.close();
   MS_LOG(INFO) << "Not bind size, " << not_bind_size;
   MS_LOG(INFO) << "MemoryTracker Dump end";
+}
+
+void MemoryTrackerEnabled::DumpProfilingMemInfo(const std::string &path, const std::string &file_name) {
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  auto csv_path = path + "/" + file_name + "_" + GetRankID() + ".csv";
+  Common::CreatePrefixPath(csv_path);
+  MS_LOG(INFO) << "MemoryTracker DumpProfilingMemInfo start, last_profiling_time_stamp:" << last_profiling_time_stamp_;
+
+  std::ofstream block_file(csv_path);
+  block_file << std::fixed << std::setprecision(kPrecisionDigits);
+  for (const auto &csv : prof_csv) {
+    block_file << csv.first << ",";
+  }
+
+  block_file << "\n";
+  for (auto &mem_block : mem_block_list_) {
+    if (mem_block->pool_name == "CPU") {
+      continue;
+    }
+
+    if (mem_block->start_time_stamp <= last_profiling_time_stamp_) {
+      continue;
+    }
+    for (const auto &csv : prof_csv) {
+      csv.second(mem_block, block_file);
+      block_file << ",";
+    }
+    block_file << "\n";
+  }
+  block_file.close();
+
+  // record the last time stamp
+  if (!mem_block_list_.empty()) {
+    last_profiling_time_stamp_ = mem_block_list_.back()->start_time_stamp;
+  }
+  MS_LOG(INFO) << "MemoryTracker DumpProfilingMemInfo end, last_profiling_time_stamp:" << last_profiling_time_stamp_;
 }
 
 }  // namespace tracker
