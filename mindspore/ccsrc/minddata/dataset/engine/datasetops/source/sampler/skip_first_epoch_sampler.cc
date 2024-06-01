@@ -24,48 +24,67 @@ namespace mindspore {
 namespace dataset {
 Status SkipFirstEpochSamplerRT::GetNextSample(TensorRow *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
-  if (id_count_ > num_samples_) {
+  if (index_produced_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED(
       "[Internal ERROR] Sampler index must be less than or equal to num_samples(total rows in dataset), but got:" +
-      std::to_string(id_count_) + ", num_samples_: " + std::to_string(num_samples_));
-  } else if (id_count_ == num_samples_) {
+      std::to_string(index_produced_) + ", num_samples_: " + std::to_string(num_samples_));
+  } else if (index_produced_ == num_samples_) {
     (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {
+    // only at the first epoch, the current index is equal to the starting index
+    int64_t sample_need_to_skip = current_index_ == start_index_ ? start_index_ : 0;
+    int64_t num_index_fetched = num_rows_;
     if (HasChildSampler()) {
       RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
+      CHECK_FAIL_RETURN_UNEXPECTED(!child_ids_.empty(),
+                                   "SkipFirstEpochSampler: got empty output index from child sampler.");
+      num_index_fetched = child_ids_[0]->Size();
+      while (sample_need_to_skip >= num_index_fetched) {
+        sample_need_to_skip -= num_index_fetched;
+        current_index_ += num_index_fetched;
+        RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
+        CHECK_FAIL_RETURN_UNEXPECTED(!child_ids_.empty(),
+                                     "SkipFirstEpochSampler: got empty output index from child sampler.");
+        num_index_fetched = child_ids_[0]->Size();
+      }
     }
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      child_ids_[0]->type().value() == DataType::Type::DE_INT64,
+      "SkipFirstEpochSampler: output index from child sampler must be of int64 type, but got: " +
+        child_ids_[0]->type().ToString());
 
-    std::shared_ptr<Tensor> sampleIds;
-
-    // Compute how many ids are left to pack, and pack this amount into a new Tensor.  Respect the setting for
-    // samples per Tensor though.
-    int64_t remaining_ids = num_samples_ - id_count_;
+    // Compute how many ids are left to pack, and pack this amount into a new Tensor.
+    // Respect the setting for samples per Tensor though.
+    int64_t remaining_ids = num_index_fetched - sample_need_to_skip;
     int64_t num_elements = std::min(remaining_ids, samples_per_tensor_);
 
+    std::shared_ptr<Tensor> sampleIds;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIds, num_elements));
 
     if (HasChildSampler()) {
       std::string err_msg = "Failed to copy full sample ids into child sampler.";
       int64_t copy_data_length = num_elements * sizeof(int64_t);
       if (copy_data_length < SECUREC_MEM_MAX_LEN) {
-        int ret_code = memcpy_s(sampleIds->GetMutableBuffer(), copy_data_length,
-                                child_ids_[0]->GetMutableBuffer() + current_id_ * sizeof(int64_t), copy_data_length);
-        CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, err_msg);
+        int ret_code =
+          memcpy_s(sampleIds->GetMutableBuffer(), copy_data_length,
+                   child_ids_[0]->GetMutableBuffer() + sample_need_to_skip * sizeof(int64_t), copy_data_length);
+        CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, err_msg + " errno: " + std::to_string(ret_code));
       } else {
-        auto dest = std::memcpy(sampleIds->GetMutableBuffer(),
-                                child_ids_[0]->GetMutableBuffer() + current_id_ * sizeof(int64_t), copy_data_length);
+        auto dest =
+          std::memcpy(sampleIds->GetMutableBuffer(),
+                      child_ids_[0]->GetMutableBuffer() + sample_need_to_skip * sizeof(int64_t), copy_data_length);
         CHECK_FAIL_RETURN_UNEXPECTED(dest == sampleIds->GetMutableBuffer(), err_msg);
       }
-      current_id_ += num_elements;
+      current_index_ += num_elements;
     } else {
       auto idPtr = sampleIds->begin<int64_t>();
       for (int64_t i = 0; i < num_elements; i++) {
-        *idPtr = current_id_;
-        current_id_++;  // Move the current id to the next one in the sequence
+        *idPtr = current_index_;
+        current_index_++;  // Move the current id to the next one in the sequence
         ++idPtr;
       }
     }
-    id_count_ += num_elements;  // Count the packed ids towards our overall sample count
+    index_produced_ += num_elements;  // Count the packed ids towards our overall sample count
     (*out) = {sampleIds};
   }
   return Status::OK();
@@ -75,15 +94,15 @@ Status SkipFirstEpochSamplerRT::ResetSampler(const bool failover_reset) {
   // This is a special sampler for Failover Reset, its internal state should
   // not reset when failover_reset is set to true.
   if (!failover_reset) {
-    if (id_count_ != num_samples_) {
+    if (index_produced_ != num_samples_) {
       std::string err_msg =
-        "[Internal ERROR] ResetSampler() called early or late. id_count_: " + std::to_string(id_count_) +
+        "[Internal ERROR] ResetSampler() called early or late. index_produced_: " + std::to_string(index_produced_) +
         " num_samples_: " + std::to_string(num_samples_);
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
-    current_id_ = 0;
-    id_count_ = 0;
+    current_index_ = 0;
+    index_produced_ = 0;
 
     if (!first_epoch_done_) {
       num_samples_ += start_index_;
@@ -110,8 +129,8 @@ void SkipFirstEpochSamplerRT::SamplerPrint(std::ostream &out, bool show_all) con
     // Then add our own info
     out << "\nStart index: " << start_index_;
     out << "\nFirst epoch done: " << first_epoch_done_;
-    out << "\nCurrent id: " << current_id_;
-    out << "\nid count:" << id_count_;
+    out << "\nCurrent index: " << current_index_;
+    out << "\nIndex produced:" << index_produced_;
   }
 }
 

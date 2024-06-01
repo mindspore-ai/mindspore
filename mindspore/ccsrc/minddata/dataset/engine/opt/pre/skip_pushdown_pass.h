@@ -110,14 +110,6 @@ class SkipPushdownPass : public IRTreePass {
     Status Visit(std::shared_ptr<GeneratorNode> node, bool *const modified) override;
 #endif
 
-#ifndef ENABLE_ANDROID
-    /// \brief Perform skip node pushdown check on a MindDataNode
-    /// \param[in] node The node being visited
-    /// \param[in, out] modified Indicator if the node was changed at all
-    /// \return Status The status code returned
-    Status Visit(std::shared_ptr<MindDataNode> node, bool *const modified) override;
-#endif
-
     /// \brief Perform skip node pushdown check on a DatasetNode
     /// \param[in] node The node being visited
     /// \param[in, out] modified Indicator if the node was changed at all
