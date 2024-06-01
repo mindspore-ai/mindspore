@@ -244,10 +244,8 @@ void ReadDataAndDump(const CNodePtr &cnode, std::vector<device::DeviceAddress *>
   uint32_t sample_mode = GetSampleMode();
   uint32_t sample_num = GetSampleNum();
   if (debugger->debugger_enabled() || dump_json_parser.InputNeedDump()) {
-    string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
     if (DumpJsonParser::GetInstance().IsDeviceCalcStats() && dump_enabled) {
-      datadump::DumpKernelTensorStats(device_context, input_device_tensors, true, cnode->fullname_with_scope(),
-                                      kernel_name);
+      datadump::DumpKernelTensorStats(device_context, input_device_tensors, true, cnode, root_graph_id);
     } else {
       bool async_copy = !abnormal_dump;
       LoadInputs(cnode, input_device_tensors, exec_order, root_graph_id, device_context, trans_flag, sample_mode,
@@ -256,9 +254,7 @@ void ReadDataAndDump(const CNodePtr &cnode, std::vector<device::DeviceAddress *>
   }
   if (debugger->debugger_enabled() || dump_json_parser.OutputNeedDump()) {
     if (DumpJsonParser::GetInstance().IsDeviceCalcStats() && dump_enabled) {
-      string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
-      datadump::DumpKernelTensorStats(device_context, output_device_tensors, false, cnode->fullname_with_scope(),
-                                      kernel_name);
+      datadump::DumpKernelTensorStats(device_context, output_device_tensors, false, cnode, root_graph_id);
     } else if (!abnormal_dump) {
       LoadOutputs(cnode, output_device_tensors, exec_order, root_graph_id, device_context, trans_flag, sample_mode,
                   sample_num);
