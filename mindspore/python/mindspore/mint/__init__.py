@@ -231,11 +231,16 @@ from mindspore.ops.function.math_func import tanh
 # 176
 from mindspore.ops.function.math_func import atan2_ext as atan2
 from mindspore.ops.function.math_func import arctan2_ext as arctan2
+
+# 178
+from mindspore.ops import rand_ext as rand
+from mindspore.ops import rand_like_ext as rand_like
 # 208
 from mindspore.ops.function.array_func import eye
 
 # 210
 from mindspore.ops.auto_generate import floor
+
 # 285
 from mindspore.ops.function.array_func import scatter_add_ext as scatter_add
 
@@ -462,6 +467,9 @@ __all__ = [
 
     # 210
     'floor',
+    # 158
+    'rand',
+    'rand_like',
     # 285
     'scatter_add',
     # 304

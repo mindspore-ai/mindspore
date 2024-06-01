@@ -622,6 +622,8 @@ from .random_func import (
     multinomial,
     rand,
     rand_like,
+    rand_ext,
+    rand_like_ext,
     randn,
     randn_like,
     randint,

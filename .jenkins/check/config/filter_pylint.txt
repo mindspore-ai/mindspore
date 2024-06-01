@@ -6,6 +6,7 @@
 "mindspore/model_zoo/"                                                                                  "import-self"
 "mindspore/tests/"                                                                                      "missing-docstring"
 "mindspore/tests/"                                                                                      "import-self"
+"mindspore/tests/st/ops"                                                                                "unexpected-keyword-arg" 
 "mindspore/"                                                                                            "consider-using-in"
 
 # Mindspore
