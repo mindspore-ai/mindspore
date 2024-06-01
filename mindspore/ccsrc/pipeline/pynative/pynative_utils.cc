@@ -1728,6 +1728,14 @@ py::object PyBoost::RunPyFunction(const PrimitivePtr &prim, const py::list &args
   return pynative_executor->RunOpStub(wrap_args);
 }
 
+void PyBoost::SetAnyValueForAbstract(const kernel::pyboost::OpPtr &op) {
+  const auto &input_abs = op->input_abs();
+  for (const auto &abs : input_abs) {
+    Common::SetAbstractValueToAnyValue(abs);
+  }
+  Common::SetAbstractValueToAnyValue(op->output_abs());
+}
+
 void PyBoost::DoGrad(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPtr &op_run_info,
                      ValuePtrList &&op_inputs) {
   MS_EXCEPTION_IF_NULL(op);
@@ -1741,6 +1749,11 @@ void PyBoost::DoGrad(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPt
   if (op->output_value_simple_info() != nullptr) {
     op_run_info->op_grad_info->output_value_simple_info = op->output_value_simple_info();
   } else {
+    if (op->input_abs().size() != op_run_info->input_size) {
+      MS_LOG(EXCEPTION) << "Op " << op_run_info->base_op_run_info.op_name << " input size is "
+                        << op_run_info->input_size << " but got input abstract size " << op->input_abs().size();
+    }
+    SetAnyValueForAbstract(op);
     op_run_info->op_grad_info->input_abs = op->input_abs();
     op_run_info->base_op_run_info.abstract = op->output_abs();
   }
