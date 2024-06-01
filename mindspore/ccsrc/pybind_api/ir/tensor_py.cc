@@ -603,6 +603,37 @@ void TensorPy::Offload(const Tensor &tensor) {
   const_cast<Tensor &>(tensor).set_device_address(nullptr);
 }
 
+void TensorPy::SetDeviceAddress(const Tensor &tensor, uintptr_t addr, const ShapeVector &shape,
+                                const TypePtr type_ptr) {
+  if (type_ptr == nullptr) {
+    MS_LOG(EXCEPTION) << "Dtype to be set is nullptr.";
+  }
+  TypeId data_type = type_ptr->type_id();
+
+  if (data_type != tensor.data_type()) {
+    MS_LOG(EXCEPTION) << "Dtype to be set is not euqal with the tensor's, then tensor's dtype is" << tensor.data_type();
+  }
+
+  if (shape != tensor.shape()) {
+    MS_LOG(EXCEPTION) << "Shape to be set is not euqal with the tensor's, then tensor's shape is" << tensor.shape();
+  }
+
+  void *data = reinterpret_cast<void *>(addr);
+  ssize_t elem_num = 1;
+  for (size_t i = 0; i < shape.size(); ++i) {
+    elem_num *= shape[i];
+  }
+  auto data_size = elem_num * GetDataTypeSize(data_type);
+  auto device_sync_ = tensor.device_address();
+  if (device_sync_ == nullptr) {
+    auto device_address = std::make_shared<device::MbufDeviceAddress>(data, data_size);
+    const_cast<Tensor &>(tensor).set_device_address(device_address);
+  } else {
+    auto device_address = std::dynamic_pointer_cast<device::MbufDeviceAddress>(device_sync_);
+    device_address->SetData(data);
+  }
+}
+
 TensorPtr TensorPy::MoveTo(const Tensor &self, const std::string &to, bool blocking) {
   py::gil_scoped_release gil_release;
   MS_LOG(INFO) << "Try move tensor to " << to;
@@ -984,6 +1015,7 @@ void RegMetaTensor(const py::module *m) {
     .def("__str__", &Tensor::ToString)
     .def("__repr__", &Tensor::ToStringRepr)
     .def("_offload", &TensorPy::Offload)
+    .def("set_device_address", &TensorPy::SetDeviceAddress, py::arg("addr"), py::arg("shape"), py::arg("dtype"))
     .def(py::pickle(
       [](const Tensor &t) {  // __getstate__
         /* Return a tuple that fully encodes the state of the object */
