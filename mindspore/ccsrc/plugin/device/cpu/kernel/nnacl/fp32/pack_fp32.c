@@ -1729,7 +1729,7 @@ void TransposeFp32(const void *src, void *dst, int batches, int channel, int pla
 #else
       for (int tr = 0; tr < C8NUM; tr++) {
         for (int tc = 0; tc < C8NUM; tc++) {
-          to[tc * plane + tr] = from[tr * channel + tc];
+          to[tc * channel + tr] = from[tr * plane + tc];
         }
       }
 #endif
