@@ -33,6 +33,8 @@ class Layout():
     Args:
         device_matrix (tuple): Describe the shape of devices arrangement, its element type is int.
         alias_name (tuple): The alias name for each axis of device_matrix, its length shoits element type is string.
+                            When using "interleaved_parallel" as an alias name, the tensor would be split into multiple
+                            copies on the corresponding partition dimension on a single card.
 
     Raises:
         TypeError: `device_matrix` is not a tuple type.
@@ -50,6 +52,9 @@ class Layout():
         >>> layout0 = layout("dp", "mp")
         >>> print(layout0.to_dict())
         {"device_matrix": (2, 2, 2), "tensor_map": (2, 0)}
+        >>> # Total device num is 4, but split the tensor in local device into two copies.
+        >>> layout = Layout((2, 2, 2), ("dp", "sp", "interleaved_parallel"))
+        >>> layout1 = layout(("dp", "interleaved_parallel"), "mp")
     """
 
     def __init__(self, device_matrix, alias_name):
