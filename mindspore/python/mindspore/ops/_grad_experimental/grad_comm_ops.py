@@ -31,7 +31,7 @@ from mindspore.ops.operations.comm_ops import (AllGather, _MiniStepAllGather, _H
                                                _GetTensorSlice, _MirrorOperator, _MirrorMiniStepOperator, ReduceOp,
                                                ReduceScatter, _HostReduceScatter, _VirtualDiv, _VirtualAdd, _AllSwap,
                                                _VirtualAssignAdd, _VirtualAccuGrad, _MirrorMicroStepOperator,
-                                               _MicroStepAllGather)
+                                               _MicroStepAllGather, Reduce, CollectiveGather, CollectiveScatter)
 from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops.operations import _grad_ops as G
 
@@ -376,6 +376,66 @@ def get_bprop_reduce_scatter(self):
 
     def bprop(x, out, dout):
         dx = reduce_scatter_grad(dout)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(Reduce)
+def get_bprop_reduce(self):
+    """Generate bprop for Reduce"""
+    dest_rank = self.get_attr_dict()["dest_rank"]
+    group = self.get_attr_dict()["group"]
+    reduce_grad = Broadcast(dest_rank, group)
+    if hasattr(self, "instance_name") and self.instance_name:
+        instance_name = "grad" + self.instance_name
+        reduce_grad.set_prim_instance_name(instance_name)
+
+    def bprop(x, out, dout):
+        dx = reduce_grad((dout,))
+        return (dx[0],)
+
+    return bprop
+
+
+@bprop_getters.register(CollectiveGather)
+def get_bprop_collective_gather(self):
+    """Generate bprop for CollectiveGather"""
+    group = self.get_attr_dict()["group"]
+    dest_rank = self.get_attr_dict()["dest_rank"]
+    collective_gather_grad = Broadcast(dest_rank, group)
+    rank = get_rank(group)
+    dev_num = self.rank_size
+    split = P.Split(output_num=dev_num)
+    if hasattr(self, "instance_name") and self.instance_name:
+        instance_name = "grad" + self.instance_name
+        collective_gather_grad.set_prim_instance_name(instance_name)
+
+    def bprop(x, out, dout):
+        grad = collective_gather_grad((dout,))
+        dx = split(grad[0])[rank]
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(CollectiveScatter)
+def get_bprop_collective_scatter(self):
+    """Generate bprop for CollectiveScatter"""
+    group = self.get_attr_dict()["group"]
+    dest_rank = self.get_attr_dict()["src_rank"]
+    rank = get_rank(group)
+    collective_scatter_grad = CollectiveGather(dest_rank, group)
+    if hasattr(self, "instance_name") and self.instance_name:
+        instance_name = "grad" + self.instance_name
+        collective_scatter_grad.set_prim_instance_name(instance_name)
+
+    def bprop(x, out, dout):
+        dx_out = collective_scatter_grad(dout)
+        if rank == dest_rank:
+            dx = dx_out
+        else:
+            dx = F.depend(F.zeros_like(x), dx_out)
         return (dx,)
 
     return bprop
