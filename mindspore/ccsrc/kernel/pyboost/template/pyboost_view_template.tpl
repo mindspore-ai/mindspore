@@ -19,6 +19,7 @@
       )
     );
 
+    GenerateInputAbstract(${call_args});
     // Stub tensor need output abstract
     ${set_output_abs}
   } else {

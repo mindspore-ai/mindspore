@@ -87,6 +87,12 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
     output_abs_ = std::make_shared<abstract::AbstractTuple>(abs_list);
   }
 
+  template <typename... T>
+  void GenerateInputAbstract(T &... args) {
+    input_abs_.clear();
+    (input_abs_.emplace_back(kAbstractConverter.ConvertAbstract(args)), ...);
+  }
+
   // Member function for Infer and creating output tensors.
   template <typename... T>
   void InferOutput(T &... args) {
@@ -99,7 +105,7 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
       return;
     }
 
-    (input_abs_.emplace_back(kAbstractConverter.ConvertAbstract(args)), ...);
+    GenerateInputAbstract(args...);
     output_abs_ = PyBoostUtils::InferByOpDef(primitive_, input_abs_);
     MS_EXCEPTION_IF_NULL(output_abs_);
     MS_LOG(DEBUG) << "PyBoost infer by abstract, get output " << output_abs_->ToString();
