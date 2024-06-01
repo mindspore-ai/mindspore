@@ -25,6 +25,7 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
+#include "utils/ms_utils.h"
 #ifdef ENABLE_DEBUGGER
 #include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
 #endif
@@ -888,7 +889,7 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
 
 void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
   size_t total_used_size_list[kAllocatorTypeNum] = {0};
-  bool is_enable_memory_statistics = common::IsEnableRuntimeConfig("memory_statistics");
+  bool is_enable_memory_statistics = common::IsEnableRuntimeConfig(common::kRuntimeMemoryStat);
   auto fn = [&](const MemStatusManagerPtr &mem_mng, const std::string &mem_type) {
     MS_EXCEPTION_IF_NULL(mem_mng);
     if (mem_mng->Empty()) {

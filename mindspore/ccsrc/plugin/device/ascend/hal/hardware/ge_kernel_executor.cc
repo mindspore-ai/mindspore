@@ -999,7 +999,7 @@ void GeKernelExecutor::DoStreamAssign(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(ms_context);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // stream assign
-  if (common::GetEnv("MS_FORCE_SINGLE_STREAM") == "1") {
+  if (common::IsDisableRuntimeConfig(common::kRuntimeMultiStream)) {
     MS_LOG(INFO) << "Force single stream.";
   } else {
     AclStreamAssign::GetInstance().AssignStream(NOT_NULL(kernel_graph));
