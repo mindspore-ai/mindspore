@@ -52,6 +52,7 @@ def tsoftmax(x):
     ans = y / x_sum
     return ans, x_max, x_sum
 
+
 def tsoftmax_grad(dp, softmax_res):
     muls = dp * softmax_res
     muls_r = np.sum(muls, axis=-1, keepdims=True)
@@ -72,6 +73,7 @@ def fas_forward(q, k, v, drop_mask, atten_mask, pse, scale, keep_prob):
         drop_res = softmax_res * drop_mask * (1.0 / (keep_prob))
     y = np.matmul(drop_res, v)
     return y, softmax_res, x_max, x_sum
+
 
 def fas_backward(dx, q, k, v, softmax_res, drop_mask, pse, scale, keep_prob):
     dp = np.matmul(dx, v.transpose(0, 1, 3, 2))
@@ -296,3 +298,110 @@ def test_ops_flash_attention_score_dynamic(input_layout):
             [[query1, key1, value1, head_num1, actual_seq_qlen1, actual_seq_kvlen1, input_layout], \
              [query2, key2, value2, head_num2, actual_seq_qlen2, actual_seq_kvlen2, input_layout]], \
              '', disable_input_check=True, disable_yaml_check=True, disable_mode=['GRAPH_MODE'], ignore_output_index=2)
+
+
+def generate_unpad_full_attn_mask(batch, seq_len, actual_seq_qlen, actual_seq_kvlen):
+    attn_mask = np.ones([batch, 1, seq_len, seq_len], np.uint8)
+    pre_query_index, pre_key_index = 0, 0
+    for cur_query_index, cur_key_index in zip(actual_seq_qlen, actual_seq_kvlen):
+        sub_query_len = cur_query_index - pre_query_index
+        sub_key_len = cur_key_index - pre_key_index
+        if sub_query_len > sub_key_len:
+            raise ValueError(f"For each sample, the length of query must be greater than key, "
+                             f"but got {sub_query_len} and {sub_key_len}")
+        diff_len = sub_key_len - sub_query_len
+        attn_mask[:, :, pre_query_index: cur_query_index, pre_key_index: pre_key_index + diff_len] = 0
+        attn_mask[:, :, pre_query_index: cur_query_index, pre_key_index + diff_len: cur_key_index] = \
+            np.triu(np.ones((sub_query_len, sub_query_len), np.uint8), 1)
+        pre_query_index = cur_query_index
+        pre_key_index = cur_key_index
+    return Tensor(attn_mask)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+@pytest.mark.parametrize('dtype', [mstype.float16, mstype.bfloat16])
+def test_ops_flash_attention_score_tnd(mode, dtype):
+    """
+    Feature: Test the precision for TND.
+    Description: Test function flash attention score forward and backward.
+    Expectation: The result of TND and BSH is equal.
+    """
+    B, N, S, D = 1, 8, 1024, 128
+    T = B * S
+    H = N * D
+    sample_num = 4
+    query, key, value, _, _, _ = generate_inputs(B, N, N, S, S, D, "BSH", dtype, return_tensor=False)
+    actual_seq_qlen = tuple(range(S // sample_num, S + 1, S // sample_num))
+    actual_seq_kvlen = tuple(range(S // sample_num, S + 1, S // sample_num))
+    full_attn_mask_tensor = generate_unpad_full_attn_mask(B, S, actual_seq_qlen, actual_seq_kvlen)
+    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(mode=mode)
+    input_layout = "BSH"
+    head_num = N
+    padding_mask = None
+    scale_value = 1.0
+    keep_prob = 1.0
+    pre_tokens = 65536
+    next_tokens = 0
+    inner_precise = 0
+    sparse_mode = 0
+
+    dx = np.random.uniform(-1, 1, [B, S, N * D])
+    real_shift = None
+    prefix = None
+    drop_mask = None
+
+    bsh_ms_query = Tensor(query, dtype=dtype)
+    bsh_ms_key = Tensor(key, dtype=dtype)
+    bsh_ms_value = Tensor(value, dtype=dtype)
+    bsh_ms_dx = Tensor(dx, dtype=dtype)
+
+    bsh_output_tensor = flash_attention_score_forward_func(bsh_ms_query, bsh_ms_key, bsh_ms_value, head_num, real_shift,
+                                                           drop_mask, padding_mask, full_attn_mask_tensor, prefix, None,
+                                                           None, keep_prob, input_layout, pre_tokens, next_tokens,
+                                                           scale_value, inner_precise, sparse_mode)
+
+    flash_attention_score_backward = Grad(flash_attention_score_forward_func)
+    bsh_grad_out = flash_attention_score_backward(bsh_ms_query, bsh_ms_key, bsh_ms_value, head_num, real_shift,
+                                                  drop_mask, padding_mask, full_attn_mask_tensor, prefix, None, None,
+                                                  keep_prob, input_layout, pre_tokens, next_tokens, scale_value,
+                                                  inner_precise, sparse_mode, bsh_ms_dx)
+    bsh_dq_tensor, bsh_dk_tensor, bsh_dv_tensor = bsh_grad_out[0], bsh_grad_out[1], bsh_grad_out[2]
+
+    T = B * S
+    tnd_ms_query = Tensor(query.reshape((T, N, D)), dtype=dtype)
+    tnd_ms_key = Tensor(key.reshape((T, N, D)), dtype=dtype)
+    tnd_ms_value = Tensor(value.reshape((T, N, D)), dtype=dtype)
+    tnd_ms_dx = Tensor(dx.reshape((T, N, D)), dtype=dtype)
+    attn_mask = Tensor(np.triu(np.ones((2048, 2048), np.uint8), 1))
+    tnd_output_tensor = flash_attention_score_forward_func(tnd_ms_query, tnd_ms_key, tnd_ms_value, head_num, real_shift,
+                                                           drop_mask, padding_mask, attn_mask, prefix, actual_seq_qlen,
+                                                           actual_seq_kvlen, keep_prob, "TND", pre_tokens, next_tokens,
+                                                           scale_value, inner_precise, 3)
+
+    flash_attention_score_backward = Grad(flash_attention_score_forward_func)
+    tnd_grad_out = flash_attention_score_backward(tnd_ms_query, tnd_ms_key, tnd_ms_value, head_num, real_shift,
+                                                  drop_mask, padding_mask, attn_mask, prefix, actual_seq_qlen,
+                                                  actual_seq_kvlen, keep_prob, "TND", pre_tokens, next_tokens,
+                                                  scale_value, inner_precise, 3, tnd_ms_dx)
+    tnd_dq_tensor, tnd_dk_tensor, tnd_dv_tensor = tnd_grad_out[0], tnd_grad_out[1], tnd_grad_out[2]
+
+    bsh_output, bsh_dq, bsh_dk, bsh_dv = \
+        bsh_output_tensor.astype(mstype.float32).asnumpy(), \
+        bsh_dq_tensor.astype(mstype.float32).asnumpy(), \
+        bsh_dk_tensor.astype(mstype.float32).asnumpy(), \
+        bsh_dv_tensor.astype(mstype.float32).asnumpy()
+    tnd_output, tnd_dq, tnd_dk, tnd_dv = \
+        tnd_output_tensor.astype(mstype.float32).asnumpy(), \
+        tnd_dq_tensor.astype(mstype.float32).asnumpy(), \
+        tnd_dk_tensor.astype(mstype.float32).asnumpy(), \
+        tnd_dv_tensor.astype(mstype.float32).asnumpy()
+
+    rtol, atol = 1e-2, 1e-2
+    assert np.allclose(bsh_output, tnd_output.reshape((B, S, H)), rtol, atol)
+    assert np.allclose(bsh_dq, tnd_dq.reshape((B, S, H)), rtol, atol)
+    assert np.allclose(bsh_dk, tnd_dk.reshape((B, S, H)), rtol, atol)
+    assert np.allclose(bsh_dv, tnd_dv.reshape((B, S, H)), rtol, atol)

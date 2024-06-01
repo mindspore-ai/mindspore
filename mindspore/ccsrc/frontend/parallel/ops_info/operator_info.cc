@@ -1389,9 +1389,17 @@ Status OperatorInfo::InitWithTensorLayout(const std::vector<std::shared_ptr<Tens
     return FAILED;
   }
 
+  size_t real_input_index = 0;
   for (const auto &input_layout : in_tensor_layouts) {
+    // Insert placeholder TensorInfo for optional input
+    while (real_input_index < input_value_.size() && input_value_[real_input_index] != nullptr &&
+           input_value_[real_input_index]->isa<None>()) {
+      (void)inputs_tensor_info_.emplace_back(TensorInfo());
+      ++real_input_index;
+    }
     TensorInfo input_tensor_info(*input_layout);
     inputs_tensor_info_.push_back(input_tensor_info);
+    ++real_input_index;
   }
   if (CheckInputLayout() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": CheckInputLayout failed.";
