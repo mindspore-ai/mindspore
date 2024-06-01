@@ -3262,8 +3262,7 @@ bool GraphScheduler::HaveRpcActors(const ActorSet *actor_set) const {
 #endif
 
 bool GraphScheduler::EnableRuntimePipeline() {
-  static const std::string kDisableRuntimePipeline = "disable_pipeline";
-  static bool disable = common::IsEnableRuntimeConfig(kDisableRuntimePipeline);
+  static bool disable = common::IsDisableRuntimeConfig(common::kRuntimePipeline);
   if (disable) {
     return false;
   }

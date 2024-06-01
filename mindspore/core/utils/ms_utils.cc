@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 #include "utils/ms_utils.h"
+#include <map>
+#include <string>
+#include <sstream>
 
 namespace mindspore {
 namespace common {
@@ -30,5 +33,43 @@ const char *SafeCStr(const std::string &&str) {
   return STR_HOLDER[cur_index].c_str();
 }
 
+std::string GetRuntimeConfigValue(const std::string &runtime_config) {
+  static std::map<std::string, std::string> runtime_configs;
+  static bool first_get_runtime_config_value = true;
+  // Parse runtime config.
+  if (first_get_runtime_config_value) {
+    first_get_runtime_config_value = false;
+    std::string env_value = GetEnv("MS_DEV_RUNTIME_CONF");
+    if (env_value.empty()) {
+      return "";
+    }
+
+    std::stringstream ss(env_value);
+    std::string item;
+    while (std::getline(ss, item, ',')) {
+      std::size_t delimiterPos = item.find(':');
+      if (delimiterPos != std::string::npos) {
+        std::string key = item.substr(0, delimiterPos);
+        std::string value = item.substr(delimiterPos + 1);
+        runtime_configs[key] = value;
+      }
+    }
+  }
+
+  if (runtime_configs.count(runtime_config) == 0) {
+    return "";
+  }
+  return runtime_configs.at(runtime_config);
+}
+
+bool IsEnableRuntimeConfig(const std::string &runtime_config) {
+  const auto &value = GetRuntimeConfigValue(runtime_config);
+  return ((value == "True") || (value == "true"));
+}
+
+bool IsDisableRuntimeConfig(const std::string &runtime_config) {
+  const auto &value = GetRuntimeConfigValue(runtime_config);
+  return ((value == "False") || (value == "false"));
+}
 }  // namespace common
 }  // namespace mindspore

@@ -562,8 +562,7 @@ void DoUnifyMindIRPass(const FuncGraphPtr &graph, const std::shared_ptr<opt::Gra
 #endif
 }
 bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
-  static bool is_disable_switch_inline = common::IsEnableRuntimeConfig("disable_switch_inline");
-  if (is_disable_switch_inline) {
+  if (common::IsDisableRuntimeConfig(common::kRuntimeSwitchInline)) {
     return false;
   }
 
