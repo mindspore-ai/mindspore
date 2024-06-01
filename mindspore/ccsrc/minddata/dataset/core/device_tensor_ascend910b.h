@@ -40,12 +40,13 @@ class DATASET_API DeviceTensorAscend910B {
   // create device_tensor by empty
   static Status CreateDeviceTensor(const TensorShape &shape, const DataType &type,
                                    device::DeviceContext *device_context, const size_t &stream_id,
-                                   std::shared_ptr<DeviceTensorAscend910B> *out, bool is_hwc = true);
+                                   std::shared_ptr<DeviceTensorAscend910B> *out, bool is_hwc = true,
+                                   std::vector<int> channels = {1, 3});
 
   // create device_tensor by host tensor
   static Status CreateDeviceTensor(std::shared_ptr<Tensor> tensor, device::DeviceContext *device_context,
                                    const size_t &stream_id, std::shared_ptr<DeviceTensorAscend910B> *out,
-                                   bool is_hwc = true);
+                                   bool is_hwc = true, std::vector<int> channels = {1, 3});
 
   ~DeviceTensorAscend910B();
 

@@ -330,6 +330,17 @@ APP_ERROR PluginDvppAdjustSaturation(const std::shared_ptr<mindspore::dataset::D
   return DvppAdjustSaturation(input, output, factor);
 }
 
+APP_ERROR PluginDvppAdjustSharpness(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                                    std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, float factor) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppAdjustSaturation(input, output, factor);
+}
+
 APP_ERROR PluginDvppAffine(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                            std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
                            const std::vector<float> &matrix, uint32_t interpolation_mode, uint32_t padding_mode,
@@ -341,6 +352,30 @@ APP_ERROR PluginDvppAffine(const std::shared_ptr<mindspore::dataset::DeviceTenso
     return APP_ERR_ACL_FAILURE;
   }
   return DvppAffine(input, output, matrix, interpolation_mode, padding_mode, fill);
+}
+
+APP_ERROR PluginDvppAutoContrast(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
+                                 const std::vector<float> &cutoff, const std::vector<uint32_t> &ignore) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppAutoContrast(input, output, cutoff, ignore);
+}
+
+APP_ERROR PluginDvppConvertColor(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
+                                 mindspore::dataset::ConvertMode convertMode) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppConvertColor(input, output, convertMode);
 }
 
 APP_ERROR PluginDvppCrop(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
@@ -366,6 +401,29 @@ APP_ERROR PluginDvppDecode(const std::shared_ptr<mindspore::dataset::DeviceTenso
   return DvppDecode(input, output);
 }
 
+APP_ERROR PluginDvppEqualize(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                             std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppEqualize(input, output);
+}
+
+APP_ERROR PluginDvppErase(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                          std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, uint32_t top,
+                          uint32_t left, uint32_t height, uint32_t width, const std::vector<float> &value) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppErase(input, output, top, left, height, width, value);
+}
+
 APP_ERROR PluginDvppGaussianBlur(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                                  std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
                                  const std::vector<int64_t> &kernel_size, const std::vector<float> &sigma,
@@ -388,6 +446,17 @@ APP_ERROR PluginDvppHorizontalFlip(const std::shared_ptr<mindspore::dataset::Dev
     return APP_ERR_ACL_FAILURE;
   }
   return DvppHorizontalFlip(input, output);
+}
+
+APP_ERROR PluginDvppInvert(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                           std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppInvert(input, output);
 }
 
 APP_ERROR PluginDvppNormalize(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
@@ -428,6 +497,17 @@ APP_ERROR PluginDvppPerspective(const std::shared_ptr<mindspore::dataset::Device
   return DvppPerspective(input, output, start_points, end_points, interpolation);
 }
 
+APP_ERROR PluginDvppPosterize(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                              std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, uint8_t bits) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppPosterize(input, output, bits);
+}
+
 APP_ERROR PluginDvppResize(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
                            std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, int32_t output_height,
                            int32_t output_width, double fx, double fy, mindspore::dataset::InterpolationMode mode) {
@@ -451,6 +531,31 @@ APP_ERROR PluginDvppResizedCrop(const std::shared_ptr<mindspore::dataset::Device
     return APP_ERR_ACL_FAILURE;
   }
   return DvppResizedCrop(input, output, top, left, height, width, output_height, output_width, mode);
+}
+
+APP_ERROR PluginDvppRotate(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                           std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output, float degrees,
+                           mindspore::dataset::InterpolationMode mode, bool expand, const std::vector<float> &center,
+                           const std::vector<float> &fill) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppRotate(input, output, degrees, mode, expand, center, fill);
+}
+
+APP_ERROR PluginDvppSolarize(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,
+                             std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> *output,
+                             const std::vector<float> &threshold) {
+  if (input == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  if (output == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return DvppSolarize(input, output, threshold);
 }
 
 APP_ERROR PluginDvppVerticalFlip(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,

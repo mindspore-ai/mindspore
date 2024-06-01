@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,10 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/auto_contrast_op.h"
 #endif
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_auto_contrast_op.h"
+#endif
+#include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -28,8 +32,9 @@ namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
 // AutoContrastOperation
-AutoContrastOperation::AutoContrastOperation(float cutoff, const std::vector<uint32_t> &ignore)
-    : cutoff_(cutoff), ignore_(ignore) {}
+AutoContrastOperation::AutoContrastOperation(float cutoff, const std::vector<uint32_t> &ignore,
+                                             const std::string &device_target)
+    : cutoff_(cutoff), ignore_(ignore), device_target_(device_target) {}
 
 AutoContrastOperation::~AutoContrastOperation() = default;
 
@@ -50,12 +55,28 @@ Status AutoContrastOperation::ValidateParams() {
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
+  // device target
+  if (device_target_ != "CPU" && device_target_ != "Ascend") {
+    std::string err_msg = "AutoContrast: Invalid device target. It's not CPU or Ascend.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   return Status::OK();
 }
 
 std::shared_ptr<TensorOp> AutoContrastOperation::Build() {
-  std::shared_ptr<AutoContrastOp> tensor_op = std::make_shared<AutoContrastOp>(cutoff_, ignore_);
-  return tensor_op;
+  if (device_target_ == "CPU") {
+    std::shared_ptr<AutoContrastOp> tensor_op = std::make_shared<AutoContrastOp>(cutoff_, ignore_);
+    return tensor_op;
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  } else if (device_target_ == "Ascend") {
+    std::vector<float> dvpp_cutoff = {cutoff_, cutoff_};
+    std::shared_ptr<DvppAutoContrastOp> dvpp_tensor_op = std::make_shared<DvppAutoContrastOp>(dvpp_cutoff, ignore_);
+    return dvpp_tensor_op;
+#endif
+  } else {
+    MS_LOG(ERROR) << "AutoContrast: Invalid device target. It's not CPU or Ascend.";
+    return nullptr;
+  }
 }
 
 Status AutoContrastOperation::to_json(nlohmann::json *out_json) {
@@ -63,6 +84,7 @@ Status AutoContrastOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["cutoff"] = cutoff_;
   args["ignore"] = ignore_;
+  args["device_target"] = device_target_;
   *out_json = args;
   return Status::OK();
 }
@@ -71,10 +93,23 @@ Status AutoContrastOperation::from_json(nlohmann::json op_params, std::shared_pt
   RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "cutoff", kAutoContrastOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "ignore", kAutoContrastOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "device_target", kAutoContrastOperation));
   float cutoff = op_params["cutoff"];
   std::vector<uint32_t> ignore = op_params["ignore"];
-  *operation = std::make_shared<vision::AutoContrastOperation>(cutoff, ignore);
+  std::string device_target = op_params["device_target"];
+  *operation = std::make_shared<vision::AutoContrastOperation>(cutoff, ignore, device_target);
   return Status::OK();
+}
+
+MapTargetDevice AutoContrastOperation::Type() {
+  if (device_target_ == "CPU") {
+    return MapTargetDevice::kCpu;
+  } else if (device_target_ == "Ascend") {
+    return MapTargetDevice::kAscend910B;
+  } else {
+    MS_LOG(ERROR) << "AutoContrast: Invalid device target. It's not CPU or Ascend.";
+  }
+  return MapTargetDevice::kInvalid;
 }
 #endif
 }  // namespace vision

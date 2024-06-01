@@ -283,7 +283,7 @@ class AutoContrast(ImageTensorOperation):
         self.ignore = ignore
 
     def parse(self):
-        return cde.AutoContrastOperation(self.cutoff, self.ignore)
+        return cde.AutoContrastOperation(self.cutoff, self.ignore, "CPU")
 
 
 class BoundingBoxAugment(ImageTensorOperation):
@@ -442,7 +442,7 @@ class ConvertColor(ImageTensorOperation):
         self.convert_mode = convert_mode
 
     def parse(self):
-        return cde.ConvertColorOperation(DE_C_CONVERT_COLOR_MODE.get(self.convert_mode))
+        return cde.ConvertColorOperation(DE_C_CONVERT_COLOR_MODE.get(self.convert_mode), "CPU")
 
 
 class Crop(ImageTensorOperation):
@@ -635,7 +635,7 @@ class Equalize(ImageTensorOperation):
         super().__init__()
 
     def parse(self):
-        return cde.EqualizeOperation()
+        return cde.EqualizeOperation("CPU")
 
 
 class GaussianBlur(ImageTensorOperation):
@@ -760,7 +760,7 @@ class Invert(ImageTensorOperation):
         super().__init__()
 
     def parse(self):
-        return cde.InvertOperation()
+        return cde.InvertOperation("CPU")
 
 
 class MixUpBatch(ImageTensorOperation):
@@ -2422,7 +2422,7 @@ class Rotate(ImageTensorOperation):
 
     def parse(self):
         return cde.RotateOperation(self.degrees, DE_C_INTER_MODE.get(self.resample), self.expand, self.center,
-                                   self.fill_value)
+                                   self.fill_value, "CPU")
 
 
 class SlicePatches(ImageTensorOperation):

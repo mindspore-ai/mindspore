@@ -138,6 +138,7 @@
 "mindspore/mindspore/python/mindspore/dataset/engine/datasets_user_defined.py"                                           "bad-super-call"
 "mindspore/mindspore/python/mindspore/dataset/engine/graphdata.py"                                                       "super-init-not-called"
 "mindspore/mindspore/python/mindspore/dataset/transforms/py_transforms_util.py"                                          "broad-except"
+"mindspore/mindspore/python/mindspore/dataset/vision/transforms.py"                                                      "trailing-whitespace"
 
 # Tests
 "mindspore/tests/vm_impl/array_ops_vm_impl.py"                                                          "unused-variable"

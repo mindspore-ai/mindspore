@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace dataset {
 // constructor
-EraseOp::EraseOp(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<uint8_t> &value,
+EraseOp::EraseOp(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<float> &value,
                  bool inplace)
     : top_(top), left_(left), height_(height), width_(width), value_(value), inplace_(inplace) {}
 

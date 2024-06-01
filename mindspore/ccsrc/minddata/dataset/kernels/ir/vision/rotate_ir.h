@@ -37,7 +37,7 @@ class RotateOperation : public TensorOperation {
   explicit RotateOperation(FixRotationAngle angle);
 
   RotateOperation(float degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
-                  const std::vector<uint8_t> &fill_value);
+                  const std::vector<uint8_t> &fill_value, const std::string &device_target = "CPU");
 
   ~RotateOperation() override;
 
@@ -53,6 +53,8 @@ class RotateOperation : public TensorOperation {
 
   void setAngle(uint64_t angle_id);
 
+  MapTargetDevice Type() override;
+
  private:
   uint64_t angle_id_;
   float degrees_;
@@ -61,6 +63,7 @@ class RotateOperation : public TensorOperation {
   std::vector<float> center_;
   std::vector<uint8_t> fill_value_;
   std::shared_ptr<TensorOp> rotate_op_;
+  std::string device_target_;
 };
 }  // namespace vision
 }  // namespace dataset

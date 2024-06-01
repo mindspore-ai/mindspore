@@ -36,8 +36,8 @@ constexpr char kEraseOperation[] = "Erase";
 
 class EraseOperation : public TensorOperation {
  public:
-  EraseOperation(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<uint8_t> &value,
-                 bool inplace);
+  EraseOperation(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<float> &value,
+                 bool inplace, const std::string &device_target = "CPU");
 
   ~EraseOperation() override;
 
@@ -51,13 +51,16 @@ class EraseOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   int32_t top_;
   int32_t left_;
   int32_t height_;
   int32_t width_;
-  std::vector<uint8_t> value_;
+  std::vector<float> value_;
   bool inplace_;
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset

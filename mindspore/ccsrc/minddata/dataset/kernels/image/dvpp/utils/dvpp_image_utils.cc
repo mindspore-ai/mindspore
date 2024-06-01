@@ -41,19 +41,30 @@
 #include "minddata/dataset/kernels/image/sharpness_op.h"
 #include "minddata/dataset/kernels/image/solarize_op.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
+#include "transform/symbol/symbol_utils.h"
+#include "transform/symbol/acl_symbol.h"
 
 #include "acldvppop/acldvpp_adjust_brightness.h"
 #include "acldvppop/acldvpp_adjust_contrast.h"
 #include "acldvppop/acldvpp_adjust_hue.h"
 #include "acldvppop/acldvpp_adjust_saturation.h"
+#include "acldvppop/acldvpp_auto_contrast.h"
+#include "acldvppop/acldvpp_adjust_sharpness.h"
+#include "acldvppop/acldvpp_convert_color.h"
 #include "acldvppop/acldvpp_crop.h"
 #include "acldvppop/acldvpp_crop_and_resize.h"
 #include "acldvppop/acldvpp_decode_jpeg.h"
+#include "acldvppop/acldvpp_equalize.h"
+#include "acldvppop/acldvpp_erase.h"
 #include "acldvppop/acldvpp_gaussian_blur.h"
 #include "acldvppop/acldvpp_horizontal_flip.h"
+#include "acldvppop/acldvpp_invert.h"
 #include "acldvppop/acldvpp_normalize.h"
 #include "acldvppop/acldvpp_pad.h"
+#include "acldvppop/acldvpp_posterize.h"
 #include "acldvppop/acldvpp_resize.h"
+#include "acldvppop/acldvpp_rotate.h"
+#include "acldvppop/acldvpp_solarize.h"
 #include "acldvppop/acldvpp_vertical_flip.h"
 #include "acldvppop/acldvpp_warp_affine.h"
 #include "acldvppop/acldvpp_warp_perspective.h"
@@ -422,6 +433,97 @@ APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &in
   return APP_ERR_OK;
 }
 
+APP_ERROR DvppAdjustSharpness(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                              std::shared_ptr<DeviceTensorAscend910B> *output, float factor) {
+  MS_LOG(WARNING) << "Begin execute adjust sharpness.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_ADJUST_SHARPNESS_FAIL;
+  }
+
+  // the input should be 1HWC or 1CHW
+  if (input->GetShape().Rank() != kNHWCImageRank) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_ADJUST_SHARPNESS_FAIL;
+  }
+
+  // the channel should be equal to 3 or 1
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != kChannelIndexNHWC &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != kMinImageChannel) {
+    MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";
+    return APP_ERR_DVPP_ADJUST_SHARPNESS_FAIL;
+  }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC or 1CHW.";  // N == 1
+    return APP_ERR_DVPP_ADJUST_SHARPNESS_FAIL;
+  }
+
+  // the type is uint8 / float
+  if (input->GetType() != DataType::DE_UINT8 && input->GetType() != DataType::DE_FLOAT32) {
+    MS_LOG(ERROR) << "The input data is not uint8 or float32";
+    return APP_ERR_DVPP_ADJUST_SHARPNESS_FAIL;
+  }
+
+  // create the output shape and type, it's 1HWC or 1CHW
+  TensorShape shape = input->GetShape();
+  DataType type = input->GetType();
+
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor, true) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_ADJUST_SHARPNESS_FAIL;
+  }
+
+  // call DVPP step1
+  uint64_t workspace_size = 0;
+  aclOpExecutor *executor;
+  auto ret = acldvppAdjustSharpnessGetWorkspaceSize(reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), factor,
+                                                    reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()),
+                                                    &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppAdjustSharpnessGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_ADJUST_SHARPNESS_FAIL;
+  }
+
+  // call DVPP step2
+  void *workspace_addr = nullptr;
+  if (workspace_size > 0) {
+    // create new device address for data copy
+    workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
+    if (workspace_addr == nullptr) {
+      MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+      return APP_ERR_DVPP_ADJUST_SHARPNESS_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppAdjustSharpness(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
+      return APP_ERR_DVPP_ADJUST_SHARPNESS_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppAdjustSharpness(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+  }
+
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppAdjustSharpness failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_ADJUST_SHARPNESS_FAIL;
+  }
+
+  *output = std::move(device_tensor);  // currently the data is still in device
+  return APP_ERR_OK;
+}
+
 APP_ERROR DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &input,
                      std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &matrix,
                      uint32_t interpolation_mode, uint32_t padding_mode, const std::vector<float> &fill) {
@@ -539,6 +641,302 @@ APP_ERROR DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &input,
   return APP_ERR_OK;
 }
 
+APP_ERROR DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                           std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &cutoff,
+                           const std::vector<uint32_t> &ignore) {
+  MS_LOG(DEBUG) << "Begin execute dvpp autocontrast.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+  }
+
+  // the input should be 1HWC or 1CHW
+  if (input->GetShape().Rank() != kNHWCImageRank) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+  }
+
+  // the channel should be equal to 3 or 1
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != kChannelIndexNHWC &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != kMinImageChannel) {
+    MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";
+    return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+  }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC or 1CHW.";  // N == 1
+    return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+  }
+
+  // the type is uint8 / float
+  if (input->GetType() != DataType::DE_UINT8 && input->GetType() != DataType::DE_FLOAT32) {
+    MS_LOG(ERROR) << "The input data is not uint8 or float32";
+    return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+  }
+
+  // create the output shape and type
+  TensorShape shape = input->GetShape();
+  DataType type = input->GetType();
+
+  // create ignore vector
+  std::vector<int64_t> ignore_cast{ignore.begin(), ignore.end()};
+  aclIntArray *acl_ignore = aclCreateIntArray(ignore_cast.data(), ignore_cast.size());
+  if (acl_ignore == nullptr) {
+    MS_LOG(ERROR) << "Call aclCreateIntArray failed.";
+    return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+  }
+
+  // create cutoff vector
+  aclFloatArray *acl_cutoff = aclCreateFloatArray(cutoff.data(), cutoff.size());
+  if (acl_cutoff == nullptr) {
+    MS_LOG(ERROR) << "Call aclCreateFloatArray failed.";
+    return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+  }
+
+  // the memory will be released when the map / executor is finished
+  if (!input->AddMaintenIntArrayMemory(reinterpret_cast<void *>(acl_ignore))) {
+    MS_LOG(ERROR) << "Add int array [acl_ignore] to the input failed";
+    return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+  }
+
+  if (!input->AddMaintenFloatArrayMemory(reinterpret_cast<void *>(acl_cutoff))) {
+    MS_LOG(ERROR) << "Add float array [acl_cutoff] to the input failed";
+    return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+  }
+
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor, true) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+  }
+
+  // call DVPP step1
+  uint64_t workspace_size = 0;
+  aclOpExecutor *executor;
+  // decode output C is 3
+  // don't recovery truncate
+  auto ret = acldvppAutoContrastGetWorkspaceSize(
+    reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), acl_cutoff, acl_ignore,
+    reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()), &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppAutoContrastGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+  }
+
+  // call DVPP step2
+  void *workspace_addr = nullptr;
+  if (workspace_size > 0) {
+    // create new device address for data copy
+    workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
+    if (workspace_addr == nullptr) {
+      MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+      return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppAutoContrast(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
+      return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppAutoContrast(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+  }
+
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppAutoContrast failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+  }
+
+  *output = std::move(device_tensor);  // currently the data is still in device
+  return APP_ERR_OK;
+}
+
+APP_ERROR GetDVPPConvertMode(ConvertMode convertMode, acldvppConvertMode *dvpp_mode) {
+  switch (convertMode) {
+    case ConvertMode::COLOR_BGR2BGRA:                   // COLOR_BGR2BGRA=COLOR_RGB2RGBA
+      *dvpp_mode = acldvppConvertMode::COLOR_BGR2BGRA;  // dvpp alpah channel COLOR_BGR2BGRA/COLOR_RGB2RGBA
+      break;
+    case ConvertMode::COLOR_BGRA2BGR:                   // COLOR_BGRA2BGR=COLOR_RGBA2RGB
+      *dvpp_mode = acldvppConvertMode::COLOR_BGRA2BGR;  // dvpp alpah channel COLOR_BGRA2BGR/COLOR_RGBA2RGB
+      break;
+    case ConvertMode::COLOR_BGR2RGBA:                   // COLOR_BGR2RGBA=COLOR_RGB2BGRA
+      *dvpp_mode = acldvppConvertMode::COLOR_BGR2RGBA;  // dvpp COLOR_BGR2RGBA/COLOR_RGB2BGRA
+      break;
+    case ConvertMode::COLOR_RGBA2BGR:                   // COLOR_RGBA2BGR=COLOR_BGRA2RGB
+      *dvpp_mode = acldvppConvertMode::COLOR_RGBA2BGR;  // dvpp COLOR_RGBA2BGR/COLOR_BGRA2RGB
+      break;
+    case ConvertMode::COLOR_BGR2RGB:                   // COLOR_BGR2RGB=COLOR_RGB2BGR
+      *dvpp_mode = acldvppConvertMode::COLOR_BGR2RGB;  // dvpp COLOR_BGR2RGB/COLOR_RGB2BGR
+      break;
+    case ConvertMode::COLOR_BGRA2RGBA:                   // COLOR_BGRA2RGBA=COLOR_RGBA2BGRA
+      *dvpp_mode = acldvppConvertMode::COLOR_BGRA2RGBA;  // dvpp COLOR_BGRA2RGBA/COLOR_RGBA2BGRA
+      break;
+    case ConvertMode::COLOR_BGR2GRAY:
+      *dvpp_mode = acldvppConvertMode::COLOR_BGR2GRAY;  // dvpp COLOR_BGR2GRAY
+      break;
+    case ConvertMode::COLOR_RGB2GRAY:
+      *dvpp_mode = acldvppConvertMode::COLOR_RGB2GRAY;  // dvpp COLOR_RGB2GRAY
+      break;
+    case ConvertMode::COLOR_GRAY2BGR:                   // COLOR_GRAY2BGR=COLOR_GRAY2RGB
+      *dvpp_mode = acldvppConvertMode::COLOR_GRAY2BGR;  // dvpp COLOR_GRAY2BGR/COLOR_GRAY2RGB
+      break;
+    case ConvertMode::COLOR_GRAY2BGRA:                   // COLOR_GRAY2BGRA=COLOR_GRAY2RGBA
+      *dvpp_mode = acldvppConvertMode::COLOR_GRAY2BGRA;  // dvpp COLOR_GRAY2BGRA/COLOR_GRAY2RGBA
+      break;
+    case ConvertMode::COLOR_BGRA2GRAY:
+      *dvpp_mode = acldvppConvertMode::COLOR_BGRA2GRAY;  // dvpp COLOR_BGRA2GRAY
+      break;
+    case ConvertMode::COLOR_RGBA2GRAY:
+      *dvpp_mode = acldvppConvertMode::COLOR_RGBA2GRAY;  // dvpp COLOR_RGBA2GRAY
+      break;
+    default:
+      MS_LOG(ERROR) << "The current ConvertMode is not supported by DVPP. It is " +
+                         std::to_string(static_cast<int>(convertMode));
+      return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+  return APP_ERR_OK;
+}
+
+APP_ERROR DvppConvertColor(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                           std::shared_ptr<DeviceTensorAscend910B> *output, ConvertMode convertMode) {
+  MS_LOG(DEBUG) << "Begin execute dvpp convertcolor.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+
+  // the input should be NHWC
+  if (input->GetShape().Rank() != kNHWCImageRank) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != 1 &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != kDefaultImageChannel &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != kMaxImageChannel) {
+    MS_LOG(ERROR) << "The input data's channel is not 1 or 3 or 4.";  // C == 1 or 3 or 4
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC.";  // N == 1
+    return APP_ERR_DVPP_AUTO_CONTRAST_FAIL;
+  }
+
+  // the type is uint8 / float
+  if (input->GetType() != DataType::DE_UINT8 && input->GetType() != DataType::DE_FLOAT32) {
+    MS_LOG(ERROR) << "The input data is not uint8 or float32";
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+
+  // create the output shape and type
+  std::vector<dsize_t> node;
+  std::vector<ConvertMode> one_channels = {ConvertMode::COLOR_BGR2GRAY, ConvertMode::COLOR_RGB2GRAY,
+                                           ConvertMode::COLOR_BGRA2GRAY, ConvertMode::COLOR_RGBA2GRAY};
+  std::vector<ConvertMode> three_channels = {
+    ConvertMode::COLOR_BGRA2BGR, ConvertMode::COLOR_RGBA2RGB, ConvertMode::COLOR_RGBA2BGR, ConvertMode::COLOR_BGRA2RGB,
+    ConvertMode::COLOR_BGR2RGB,  ConvertMode::COLOR_RGB2BGR,  ConvertMode::COLOR_GRAY2BGR, ConvertMode::COLOR_GRAY2RGB};
+  std::vector<ConvertMode> four_channels = {ConvertMode::COLOR_BGR2BGRA,  ConvertMode::COLOR_RGB2RGBA,
+                                            ConvertMode::COLOR_BGR2RGBA,  ConvertMode::COLOR_RGB2BGRA,
+                                            ConvertMode::COLOR_BGRA2RGBA, ConvertMode::COLOR_RGBA2BGRA,
+                                            ConvertMode::COLOR_GRAY2BGRA, ConvertMode::COLOR_GRAY2RGBA};
+  if (std::find(three_channels.begin(), three_channels.end(), convertMode) != three_channels.end()) {
+    node = {input->GetShape().AsVector()[0], input->GetShape().AsVector()[kHeightIndexNHWC],
+            input->GetShape().AsVector()[kWidthIndexNHWC], kDefaultImageChannel};
+  } else if (std::find(four_channels.begin(), four_channels.end(), convertMode) != four_channels.end()) {
+    node = {input->GetShape().AsVector()[0], input->GetShape().AsVector()[kHeightIndexNHWC],
+            input->GetShape().AsVector()[kWidthIndexNHWC], kMaxImageChannel};
+  } else if (std::find(one_channels.begin(), one_channels.end(), convertMode) != one_channels.end()) {
+    node = {input->GetShape().AsVector()[0], input->GetShape().AsVector()[kHeightIndexNHWC],
+            input->GetShape().AsVector()[kWidthIndexNHWC], input->GetShape().AsVector()[kChannelIndexNHWC]};
+  } else {
+    MS_LOG(ERROR) << "The mode of image channel conversion must be in ConvertMode, which mainly includes "
+                     "conversion between RGB, BGR, GRAY, RGBA etc.";
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+  TensorShape shape = TensorShape(node);
+  DataType type = input->GetType();
+
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  std::vector<int> channels = {1, 3, 4};
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor, true, channels) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+
+  if (input->GetType() != DataType::DE_UINT8 &&
+      (convertMode == ConvertMode::COLOR_BGR2BGRA && convertMode == ConvertMode::COLOR_BGRA2BGR &&
+       convertMode == ConvertMode::COLOR_BGR2RGBA && convertMode == ConvertMode::COLOR_RGBA2BGR)) {
+    std::string err_msg =
+      "The conversion mode of alpha channel [COLOR_BGR2BGRA, COLOR_RGB2RGBA, COLOR_BGRA2BGR, COLOR_RGBA2RGB, "
+      "COLOR_BGR2RGBA, COLOR_RGB2BGRA, COLOR_RGBA2BGR, COLOR_BGRA2RGB] only "
+      "supports uint8 type input";
+    MS_LOG(ERROR) << err_msg;
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+
+  // convert ConvertMode mode to DVPP mode
+  acldvppConvertMode dvpp_convert_mode;
+  GetDVPPConvertMode(convertMode, &dvpp_convert_mode);
+
+  // call DVPP step1
+  uint64_t workspace_size = 0;
+  aclOpExecutor *executor;
+  auto ret = acldvppConvertColorGetWorkspaceSize(
+    reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), dvpp_convert_mode,
+    reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()), &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppAdjustGammaGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+
+  // call DVPP step2
+  void *workspace_addr = nullptr;
+  if (workspace_size > 0) {
+    // create new device address for data copy
+    workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
+    if (workspace_addr == nullptr) {
+      MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+      return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppConvertColor(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
+      return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppConvertColor(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+  }
+
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppConvertColor failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
+  }
+
+  *output = std::move(device_tensor);  // currently the data is still in device
+  return APP_ERR_OK;
+}
+
 APP_ERROR DvppCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
                    std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left, uint32_t height,
                    uint32_t width) {
@@ -634,6 +1032,119 @@ APP_ERROR DvppCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
   return APP_ERR_OK;
 }
 
+APP_ERROR DvppErase(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                    std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left, uint32_t height,
+                    uint32_t width, const std::vector<float> &value) {
+  MS_LOG(DEBUG) << "Begin execute dvpp erase.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_ERASE_FAIL;
+  }
+
+  // the input should be 1HWC or 1CHW
+  if (input->GetShape().Rank() != kNHWCImageRank) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_ERASE_FAIL;
+  }
+
+  // the channel should be equal to 3 or 1
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != kDefaultImageChannel &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != kMinImageChannel) {
+    MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";
+    return APP_ERR_DVPP_ERASE_FAIL;
+  }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC or 1CHW.";  // N == 1
+    return APP_ERR_DVPP_ERASE_FAIL;
+  }
+
+  // the type is uint8 / float
+  if (input->GetType() != DataType::DE_UINT8 && input->GetType() != DataType::DE_FLOAT32) {
+    MS_LOG(ERROR) << "The input data is not uint8 or float32";
+    return APP_ERR_DVPP_ERASE_FAIL;
+  }
+
+  // create the output shape and type, it's 1HWC or 1CHW
+  TensorShape shape = input->GetShape();
+  DataType type = input->GetType();
+
+  // create fill vector
+  std::vector<float> value_one;
+  aclFloatArray *acl_value;
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] == 1) {
+    value_one = {value[0]};
+    acl_value = aclCreateFloatArray(value_one.data(), value_one.size());
+  } else {
+    acl_value = aclCreateFloatArray(value.data(), value.size());
+  }
+  if (acl_value == nullptr) {
+    MS_LOG(ERROR) << "Call aclCreateFloatArray failed.";
+    return APP_ERR_DVPP_ERASE_FAIL;
+  }
+
+  if (!input->AddMaintenFloatArrayMemory(reinterpret_cast<void *>(acl_value))) {
+    MS_LOG(ERROR) << "Add float array [acl_value] to the input failed";
+    return APP_ERR_DVPP_ERASE_FAIL;
+  }
+
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor, true) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_ERASE_FAIL;
+  }
+
+  // call DVPP step1
+  uint64_t workspace_size = 0;
+  aclOpExecutor *executor;
+  // decode output C is 3
+  // don't recovery truncate
+  auto ret = acldvppEraseGetWorkspaceSize(
+    reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), top, left, height, width, acl_value,
+    reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()), &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppEraseGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_ERASE_FAIL;
+  }
+
+  // call DVPP step2
+  void *workspace_addr = nullptr;
+  if (workspace_size > 0) {
+    // create new device address for data copy
+    workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
+    if (workspace_addr == nullptr) {
+      MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+      return APP_ERR_DVPP_ERASE_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppErase(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
+      return APP_ERR_DVPP_ERASE_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppErase(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+  }
+
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppErase failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_ERASE_FAIL;
+  }
+
+  *output = std::move(device_tensor);  // currently the data is still in device
+  return APP_ERR_OK;
+}
+
 APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
                      std::shared_ptr<DeviceTensorAscend910B> *output) {
   MS_LOG(DEBUG) << "Begin execute dvpp decode.";
@@ -689,6 +1200,99 @@ APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
   if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Call acldvppDecodeJpeg failed, error code: " + std::to_string(ret) + ".";
     return APP_ERR_DVPP_JPEG_DECODE_FAIL;
+  }
+
+  *output = std::move(device_tensor);  // currently the data is still in device
+  return APP_ERR_OK;
+}
+
+APP_ERROR DvppEqualize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output) {
+  MS_LOG(DEBUG) << "Begin execute dvpp equalize.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  // the input should be 1HWC or 1CHW
+  if (input->GetShape().Rank() != kNHWCImageRank) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  // the channel should be equal to 3 or 1
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != kChannelIndexNHWC &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != kMinImageChannel) {
+    MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC or 1CHW.";  // N == 1
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  // the type is uint8
+  if (input->GetType() != DataType::DE_UINT8) {
+    MS_LOG(ERROR) << "The input data is not uint8";
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  // create the output shape and type
+  TensorShape shape = input->GetShape();
+  DataType type = input->GetType();
+
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor, true) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  // call DVPP step1
+  uint64_t workspace_size = 0;
+  aclOpExecutor *executor;
+  // decode output C is 3
+  // don't recovery truncate
+  auto ret = acldvppEqualizeGetWorkspaceSize(reinterpret_cast<aclTensor *>(input->GetDeviceTensor()),
+                                             reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()),
+                                             &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppEqualizeGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
+  }
+
+  // call DVPP step2
+  void *workspace_addr = nullptr;
+  if (workspace_size > 0) {
+    // create new device address for data copy
+    workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
+    if (workspace_addr == nullptr) {
+      MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+      return APP_ERR_DVPP_EQUALIZE_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppEqualize(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
+      return APP_ERR_DVPP_EQUALIZE_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppEqualize(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+  }
+
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppEqualize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_EQUALIZE_FAIL;
   }
 
   *output = std::move(device_tensor);  // currently the data is still in device
@@ -899,6 +1503,97 @@ APP_ERROR DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscend910B> &inpu
   if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Call acldvppHorizontalFlip failed, error code: " + std::to_string(ret) + ".";
     return APP_ERR_DVPP_HORIZONTAL_FLIP_FAIL;
+  }
+
+  *output = std::move(device_tensor);  // currently the data is still in device
+  return APP_ERR_OK;
+}
+
+APP_ERROR DvppInvert(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                     std::shared_ptr<DeviceTensorAscend910B> *output) {
+  MS_LOG(DEBUG) << "Begin execute dvpp invert.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_INVERT_FAIL;
+  }
+
+  // the input should be 1HWC or 1CHW
+  if (input->GetShape().Rank() != kNHWCImageRank) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_INVERT_FAIL;
+  }
+
+  // the channel should be equal to 3 or 1
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != kDefaultImageChannel &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != kMinImageChannel) {
+    MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";
+    return APP_ERR_DVPP_INVERT_FAIL;
+  }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC or 1CHW.";  // N == 1
+    return APP_ERR_DVPP_INVERT_FAIL;
+  }
+
+  // the type is uint8 / float
+  if (input->GetType() != DataType::DE_UINT8) {
+    MS_LOG(ERROR) << "The input data is not uint8";
+    return APP_ERR_DVPP_INVERT_FAIL;
+  }
+
+  // create the output shape and type, it's 1HWC or 1CHW
+  TensorShape shape = input->GetShape();
+  DataType type = input->GetType();
+
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor, true) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_INVERT_FAIL;
+  }
+
+  // call DVPP step1
+  uint64_t workspace_size = 0;
+  aclOpExecutor *executor;
+  auto ret = acldvppInvertGetWorkspaceSize(reinterpret_cast<aclTensor *>(input->GetDeviceTensor()),
+                                           reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()),
+                                           &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppInvertGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_INVERT_FAIL;
+  }
+
+  // call DVPP step2
+  void *workspace_addr = nullptr;
+  if (workspace_size > 0) {
+    // create new device address for data copy
+    workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
+    if (workspace_addr == nullptr) {
+      MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+      return APP_ERR_DVPP_INVERT_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppInvert(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
+      return APP_ERR_DVPP_INVERT_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppInvert(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+  }
+
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppInvert failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_INVERT_FAIL;
   }
 
   *output = std::move(device_tensor);  // currently the data is still in device
@@ -1313,6 +2008,96 @@ APP_ERROR DvppPerspective(const std::shared_ptr<DeviceTensorAscend910B> &input,
   return APP_ERR_OK;
 }
 
+APP_ERROR DvppPosterize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                        std::shared_ptr<DeviceTensorAscend910B> *output, uint8_t bits) {
+  MS_LOG(DEBUG) << "Begin execute dvpp posterize flip.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_POSTERIZE_FAIL;
+  }
+
+  // the input should be 1HWC or 1CHW
+  if (input->GetShape().Rank() != 4) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_POSTERIZE_FAIL;
+  }
+
+  // the channel should be equal to 3 or 1
+  if (input->GetShape().AsVector()[3] != 3 && input->GetShape().AsVector()[3] != 1) {
+    MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";
+    return APP_ERR_DVPP_POSTERIZE_FAIL;
+  }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC or 1CHW.";  // N == 1
+    return APP_ERR_DVPP_POSTERIZE_FAIL;
+  }
+
+  // the type is uint8 / float
+  if (input->GetType() != DataType::DE_UINT8 && input->GetType() != DataType::DE_FLOAT32) {
+    MS_LOG(ERROR) << "The input data is not uint8 or float32";
+    return APP_ERR_DVPP_POSTERIZE_FAIL;
+  }
+
+  // create the output shape and type, it's 1HWC or 1CHW
+  TensorShape shape = input->GetShape();
+  DataType type = input->GetType();
+
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor, true) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_POSTERIZE_FAIL;
+  }
+
+  // call DVPP step1
+  uint64_t workspace_size = 0;
+  aclOpExecutor *executor;
+  auto ret = acldvppPosterizeGetWorkspaceSize(
+    reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), static_cast<int32_t>(bits),
+    reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()), &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppPosterizeGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_POSTERIZE_FAIL;
+  }
+
+  // call DVPP step2
+  void *workspace_addr = nullptr;
+  if (workspace_size > 0) {
+    // create new device address for data copy
+    workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
+    if (workspace_addr == nullptr) {
+      MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+      return APP_ERR_DVPP_POSTERIZE_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppPosterize(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
+      return APP_ERR_DVPP_POSTERIZE_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppPosterize(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+  }
+
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppPosterize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_POSTERIZE_FAIL;
+  }
+
+  *output = std::move(device_tensor);  // currently the data is still in device
+  return APP_ERR_OK;
+}
+
 APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
                      std::shared_ptr<DeviceTensorAscend910B> *output, int32_t output_height, int32_t output_width,
                      double fx, double fy, InterpolationMode mode) {
@@ -1538,6 +2323,100 @@ APP_ERROR DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
   return APP_ERR_OK;
 }
 
+APP_ERROR DvppSolarize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &threshold) {
+  MS_LOG(DEBUG) << "Begin execute solarize.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_SOLARIZE_FAIL;
+  }
+
+  // the input should be 1HWC or 1CHW
+  if (input->GetShape().Rank() != kNHWCImageRank) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_SOLARIZE_FAIL;
+  }
+
+  // the channel should be equal to 3 or 1
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != kDefaultImageChannel &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != 1) {
+    MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";
+    return APP_ERR_DVPP_SOLARIZE_FAIL;
+  }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC or 1CHW.";  // N == 1
+    return APP_ERR_DVPP_SOLARIZE_FAIL;
+  }
+
+  // the type is uint8 / float
+  if (input->GetType() != DataType::DE_UINT8) {
+    MS_LOG(ERROR) << "The input data is not uint8";
+    return APP_ERR_DVPP_SOLARIZE_FAIL;
+  }
+
+  // create the output shape and type, it's 1HWC or 1CHW
+  TensorShape shape = input->GetShape();
+  DataType type = input->GetType();
+
+  // create float array
+  aclFloatArray *dvpp_threshold = aclCreateFloatArray(threshold.data(), threshold.size());
+
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor, true) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_SOLARIZE_FAIL;
+  }
+
+  // call DVPP step1
+  uint64_t workspace_size = 0;
+  aclOpExecutor *executor;
+  auto ret = acldvppSolarizeGetWorkspaceSize(reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), dvpp_threshold,
+                                             reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()),
+                                             &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppSolarizeGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_SOLARIZE_FAIL;
+  }
+
+  // call DVPP step2
+  void *workspace_addr = nullptr;
+  if (workspace_size > 0) {
+    // create new device address for data copy
+    workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
+    if (workspace_addr == nullptr) {
+      MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+      return APP_ERR_DVPP_SOLARIZE_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppSolarize(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
+      return APP_ERR_DVPP_SOLARIZE_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppSolarize(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+  }
+
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppSolarize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_SOLARIZE_FAIL;
+  }
+
+  *output = std::move(device_tensor);  // currently the data is still in device
+  return APP_ERR_OK;
+}
+
 APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
                            std::shared_ptr<DeviceTensorAscend910B> *output) {
   MS_LOG(DEBUG) << "Begin execute dvpp vertical flip.";
@@ -1624,6 +2503,189 @@ APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
   if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Call acldvppVerticalFlip failed, error code: " + std::to_string(ret) + ".";
     return APP_ERR_DVPP_VERTICAL_FLIP_FAIL;
+  }
+
+  *output = std::move(device_tensor);  // currently the data is still in device
+  return APP_ERR_OK;
+}
+
+APP_ERROR DvppRotate(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                     std::shared_ptr<DeviceTensorAscend910B> *output, float degrees, InterpolationMode mode,
+                     bool expand, const std::vector<float> &center, const std::vector<float> &fill) {
+  MS_LOG(DEBUG) << "Begin execute dvpp rotate.";
+  if (input == nullptr || output == nullptr) {
+    MS_LOG(ERROR) << "The input or output is nullptr.";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // the input should be 1HWC or 1CHW
+  if (input->GetShape().Rank() != 4) {
+    MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // the channel should be equal to 3 or 1
+  if (input->GetShape().AsVector()[3] != 3 && input->GetShape().AsVector()[3] != 1) {
+    MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  if (input->GetShape().AsVector()[0] != 1) {
+    MS_LOG(ERROR) << "The input data is not 1HWC or 1CHW.";  // N == 1
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // the type is uint8 / float
+  if (input->GetType() != DataType::DE_UINT8 && input->GetType() != DataType::DE_FLOAT32) {
+    MS_LOG(ERROR) << "The input data is not uint8 or float32";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  std::vector<int64_t> center_data;
+  if (center.empty()) {
+    constexpr float kHalf = 0.5;
+    auto input_h = (static_cast<float>(input->GetShape().AsVector()[kHeightIndexNHWC]) - 1.0F) * kHalf;
+    auto input_w = (static_cast<float>(input->GetShape().AsVector()[kWidthIndexNHWC]) - 1.0F) * kHalf;
+    center_data = {static_cast<int64_t>(input_w), static_cast<int64_t>(input_h)};
+  } else {
+    center_data = {static_cast<int64_t>(center[0]), static_cast<int64_t>(center[1])};
+  }
+
+  // create the output shape and type, it's 1HWC or 1CHW
+  TensorShape shape = input->GetShape();
+  if (expand) {
+    double radian = degrees * M_PI / 180.0;
+    double precision = std::pow(10, 15);  // 10的15次用于保留15位小数
+    std::vector<double> matrix = {
+      std::round(std::cos(radian) * precision) / precision,  std::round(std::sin(radian) * precision) / precision, 0.0,
+      std::round(-std::sin(radian) * precision) / precision, std::round(std::cos(radian) * precision) / precision, 0.0,
+    };
+    std::pair<double, double> rotnCenter = {
+      input->GetShape().AsVector()[kWidthIndexNHWC] / 2.0,
+      input->GetShape().AsVector()[kHeightIndexNHWC] / 2.0  // 除2，求中心点
+    };
+    auto tmp = std::make_pair(
+      matrix[0] * (-rotnCenter.first) + matrix[1] * (-rotnCenter.second) + matrix[2],  // 0, 1, 2代表2x3矩阵的第一行元素
+      matrix[3] * (-rotnCenter.first) + matrix[4] * (-rotnCenter.second) +
+        matrix[5]);          // 3, 4, 5代表2x3矩阵的第二行元素
+    matrix[2] = tmp.first;   // 下标2是x轴的平移量
+    matrix[5] = tmp.second;  // 下标5是y轴的平移量
+
+    matrix[2] += rotnCenter.first;   // 下标2是x轴的平移量
+    matrix[5] += rotnCenter.second;  // 下标5是y轴的平移量
+
+    std::vector<std::pair<double, double>> points = {
+      {0, 0},
+      {input->GetShape().AsVector()[kWidthIndexNHWC], 0},
+      {input->GetShape().AsVector()[kWidthIndexNHWC], input->GetShape().AsVector()[kHeightIndexNHWC]},
+      {0, input->GetShape().AsVector()[kHeightIndexNHWC]},
+    };
+    auto f = [&matrix](std::pair<double, double> &p) {
+      p = std::make_pair(matrix[0] * (p.first) + matrix[1] * (p.second) + matrix[2],  // 0, 1, 2代表2x3矩阵的第一行元素
+                         matrix[3] * (p.first) + matrix[4] * (p.second) + matrix[5]);  // 3, 4, 5代表2x3矩阵的第二行元素
+      return p;
+    };
+    std::transform(points.begin(), points.end(), points.begin(), f);
+
+    auto xComp = [](auto &p0, auto &p1) { return p0.first < p1.first; };
+    auto xMax = std::max_element(points.cbegin(), points.cend(), xComp);
+    auto xMin = std::min_element(points.cbegin(), points.cend(), xComp);
+
+    auto yComp = [](auto &p0, auto &p1) { return p0.second < p1.second; };
+    auto yMax = std::max_element(points.cbegin(), points.cend(), yComp);
+    auto yMin = std::min_element(points.cbegin(), points.cend(), yComp);
+
+    auto weight_out = std::ceil(xMax->first) - std::floor(xMin->first);
+    auto height_out = std::ceil(yMax->second) - std::floor(yMin->second);
+    shape = TensorShape({input->GetShape().AsVector()[0], static_cast<int64_t>(height_out),
+                         static_cast<int64_t>(weight_out), input->GetShape().AsVector()[kChannelIndexNHWC]});
+  }
+  DataType type = input->GetType();
+
+  // convert InterpolationMode mode to DVPP mode
+  auto dvpp_interpolation_mode = GetDVPPRotateMode(mode);
+  if (dvpp_interpolation_mode == kInvalidRotateMode) {
+    std::string err_msg =
+      "The current InterpolationMode is not supported by DVPP. It is " + std::to_string(static_cast<int>(mode));
+    MS_LOG(ERROR) << err_msg;
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // convert to the dvpp type
+  aclIntArray *dvpp_center = aclCreateIntArray(center_data.data(), center_data.size());
+  aclFloatArray *dvpp_fill = aclCreateFloatArray(fill.data(), fill.size());
+
+  if (dvpp_center == nullptr) {
+    MS_LOG(ERROR) << "Call aclCreateIntArray failed.";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+  if (dvpp_fill == nullptr) {
+    MS_LOG(ERROR) << "Call aclCreateFloatArray failed.";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // the memory will be released when the map / executor is finished
+  if (!input->AddMaintenIntArrayMemory(reinterpret_cast<void *>(dvpp_center))) {
+    MS_LOG(ERROR) << "Add int array [dvpp_center] to the input failed";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  if (!input->AddMaintenFloatArrayMemory(reinterpret_cast<void *>(dvpp_fill))) {
+    MS_LOG(ERROR) << "Add float array [dvpp_fill] to the input failed";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // create output DeviceTensorAscend910B
+  std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
+  if (DeviceTensorAscend910B::CreateDeviceTensor(shape, type, input->GetDeviceContext(), input->GetStreamID(),
+                                                 &device_tensor, true) != Status::OK()) {
+    MS_LOG(ERROR) << "Create output device tensor failed.";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // call DVPP step1
+  uint64_t workspace_size = 0;
+  uint32_t paddingMode = 0;
+  aclOpExecutor *executor;
+  auto ret = acldvppRotateGetWorkspaceSize(reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), degrees,
+                                           dvpp_interpolation_mode, expand, dvpp_center, paddingMode, dvpp_fill,
+                                           reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()),
+                                           &workspace_size, &executor);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppRotateGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_ROTATE_FAIL;
+  }
+
+  // call DVPP step2
+  void *workspace_addr = nullptr;
+  if (workspace_size > 0) {
+    // create new device address for data copy
+    workspace_addr = input->GetDeviceContext()->device_res_manager_->AllocateMemory(workspace_size);
+    if (workspace_addr == nullptr) {
+      MS_LOG(ERROR) << "Allocate dynamic workspace memory failed";
+      return APP_ERR_DVPP_ROTATE_FAIL;
+    }
+
+    // call DVPP step3
+    ret = acldvppRotate(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+
+    // use the input to hold the workspace and release it when the executor / npu_map_job finish
+    if (!input->AddWorkSpace(workspace_addr)) {
+      MS_LOG(ERROR) << "Add workspace to the input failed";
+      return APP_ERR_DVPP_ROTATE_FAIL;
+    }
+  } else {
+    // call DVPP step3
+    ret = acldvppRotate(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
+  }
+
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "Call acldvppRotate failed, error code: " + std::to_string(ret) + ".";
+    return APP_ERR_DVPP_ROTATE_FAIL;
   }
 
   *output = std::move(device_tensor);  // currently the data is still in device

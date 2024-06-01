@@ -30,7 +30,7 @@ namespace mindspore {
 namespace dataset {
 class EraseOp : public TensorOp {
  public:
-  EraseOp(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<uint8_t> &value,
+  EraseOp(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<float> &value,
           bool inplace = false);
 
   ~EraseOp() override = default;
@@ -44,7 +44,7 @@ class EraseOp : public TensorOp {
   int32_t left_;
   int32_t height_;
   int32_t width_;
-  std::vector<uint8_t> value_;
+  std::vector<float> value_;
   bool inplace_;
 };
 }  // namespace dataset

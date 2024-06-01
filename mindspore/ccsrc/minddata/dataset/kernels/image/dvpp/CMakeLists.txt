@@ -23,16 +23,25 @@ set(DVPP_IMAGE_SOURCE
         ascend910b/dvpp_adjust_contrast_op.cc
         ascend910b/dvpp_adjust_hue_op.cc
         ascend910b/dvpp_adjust_saturation_op.cc
+        ascend910b/dvpp_adjust_sharpness_op.cc
         ascend910b/dvpp_affine_op.cc
+        ascend910b/dvpp_auto_contrast_op.cc
         ascend910b/dvpp_crop_op.cc
+        ascend910b/dvpp_convert_color_op.cc
         ascend910b/dvpp_decode_op.cc
+        ascend910b/dvpp_equalize_op.cc
+        ascend910b/dvpp_erase_op.cc
         ascend910b/dvpp_gaussian_blur_op.cc
         ascend910b/dvpp_horizontal_flip_op.cc
+        ascend910b/dvpp_invert_op.cc
         ascend910b/dvpp_normalize_v2_op.cc
         ascend910b/dvpp_pad_op.cc
         ascend910b/dvpp_perspective_op.cc
+        ascend910b/dvpp_posterize_op.cc
         ascend910b/dvpp_resize_op.cc
         ascend910b/dvpp_resized_crop_op.cc
+        ascend910b/dvpp_rotate_op.cc
+        ascend910b/dvpp_solarize_op.cc
         ascend910b/dvpp_vertical_flip_op.cc
         )
 endif()

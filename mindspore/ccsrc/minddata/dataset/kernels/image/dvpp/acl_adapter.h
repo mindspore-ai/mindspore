@@ -95,9 +95,18 @@ class AclAdapter {
   APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                  std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
 
+  APP_ERROR DvppAdjustSharpness(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
   APP_ERROR DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &input,
                        std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &matrix,
                        uint32_t interpolation_mode, uint32_t padding_mode, const std::vector<float> &fill);
+
+  APP_ERROR DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                             std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &cutoff,
+                             const std::vector<uint32_t> &ignore);
+  APP_ERROR DvppConvertColor(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                             std::shared_ptr<DeviceTensorAscend910B> *output, ConvertMode convertMode);
 
   APP_ERROR DvppCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
                      std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left, uint32_t height,
@@ -106,12 +115,22 @@ class AclAdapter {
   APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
                        std::shared_ptr<DeviceTensorAscend910B> *output);
 
+  APP_ERROR DvppEqualize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                         std::shared_ptr<DeviceTensorAscend910B> *output);
+
+  APP_ERROR DvppErase(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                      std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left, uint32_t height,
+                      uint32_t width, const std::vector<float> &value);
+
   APP_ERROR DvppGaussianBlur(const std::shared_ptr<DeviceTensorAscend910B> &input,
                              std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<int64_t> &kernel_size,
                              const std::vector<float> &sigma, uint32_t padding_mode);
 
   APP_ERROR DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                std::shared_ptr<DeviceTensorAscend910B> *output);
+
+  APP_ERROR DvppInvert(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output);
 
   APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
                           std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
@@ -126,6 +145,9 @@ class AclAdapter {
                             const std::vector<std::vector<int32_t>> &start_points,
                             const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation);
 
+  APP_ERROR DvppPosterize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                          std::shared_ptr<DeviceTensorAscend910B> *output, uint8_t bits);
+
   APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
                        std::shared_ptr<DeviceTensorAscend910B> *output, int32_t output_height, int32_t output_width,
                        double fx, double fy, InterpolationMode mode);
@@ -134,6 +156,12 @@ class AclAdapter {
                             std::shared_ptr<DeviceTensorAscend910B> *output, int32_t top, int32_t left, int32_t height,
                             int32_t width, int32_t output_height, int32_t output_width,
                             InterpolationMode interpolation);
+
+  APP_ERROR DvppRotate(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output, float degrees, InterpolationMode mode,
+                       bool expand, const std::vector<float> &center, const std::vector<float> &fill);
+  APP_ERROR DvppSolarize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                         std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &threshold);
 
   APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
                              std::shared_ptr<DeviceTensorAscend910B> *output);
@@ -206,16 +234,25 @@ class AclAdapter {
   DvppAdjustContrastFunObj dvpp_contrast_fun_obj_;
   DvppAdjustHueFunObj dvpp_hue_fun_obj_;
   DvppAdjustSaturationFunObj dvpp_saturation_fun_obj_;
+  DvppAdjustSharpnessFunObj dvpp_sharpness_fun_obj_;
   DvppAffineFunObj dvpp_affine_fun_obj_;
+  DvppAutoContrastFunObj dvpp_auto_contrast_fun_obj_;
+  DvppConvertColorFunObj dvpp_convert_color_fun_obj_;
   DvppCropFunObj dvpp_crop_fun_obj_;
   DvppDecodeFunObj dvpp_decode_fun_obj_;
+  DvppEqualizeFunObj dvpp_equalize_fun_obj_;
+  DvppEraseFunObj dvpp_erase_fun_obj_;
   DvppGaussianBlurFunObj dvpp_gaussian_blur_fun_obj_;
   DvppHorizontalFlipFunObj dvpp_horizontal_flip_fun_obj_;
+  DvppInvertFunObj dvpp_invert_fun_obj_;
   DvppNormalizeFunObj dvpp_normalize_fun_obj_;
   DvppPadFunObj dvpp_pad_fun_obj_;
   DvppPerspectiveFunObj dvpp_perspective_fun_obj_;
+  DvppPosterizeFunObj dvpp_posterize_fun_obj_;
   DvppResizeFunObj dvpp_resize_fun_obj_;
   DvppResizedCropFunObj dvpp_resized_crop_fun_obj_;
+  DvppRotateFunObj dvpp_rotate_fun_obj_;
+  DvppSolarizeFunObj dvpp_solarize_fun_obj_;
   DvppVerticalFlipFunObj dvpp_vertical_flip_fun_obj_;
 
   // acl interface
