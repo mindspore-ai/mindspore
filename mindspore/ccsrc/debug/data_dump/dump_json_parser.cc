@@ -57,6 +57,7 @@ constexpr auto kDumpInputOnly = 1;
 constexpr auto kDumpOutputOnly = 2;
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 constexpr auto kBracketsOffset = 1;
+constexpr auto kRegexPrefixLength = 11;
 }  // namespace
 
 namespace mindspore {
@@ -657,8 +658,10 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
     kernel_str.erase(std::remove(kernel_str.begin(), kernel_str.end(), '\"'), kernel_str.end());
     if (static_cast<int>(kernel_str.find("name-regex(")) == 0 &&
         static_cast<int>(kernel_str.rfind(")")) == static_cast<int>(kernel_str.length()) - kBracketsOffset) {
-      std::string kernel_reg_exp = kernel_str.substr(11, static_cast<int>(kernel_str.length()) - 12);
+      std::string kernel_reg_exp = kernel_str.substr(
+        kRegexPrefixLength, static_cast<int>(kernel_str.length()) - kRegexPrefixLength - kBracketsOffset);
       ret = kernel_regs_.try_emplace(kernel_str, std::regex(kernel_reg_exp)).second;
+      dump_layer_ += kernel_str + " ";
     } else {
       if (static_cast<int>(kernel_str.rfind('/')) == -1 && static_cast<int>(kernel_str.rfind("-op")) == -1) {
         if (backend == "ge") {
