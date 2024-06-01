@@ -115,7 +115,7 @@ def test_all_gather_matmul_forward():
     net = AllGatherMatmulNet(seq_len, hidden_size, dp, mp)
     expect_out = net(x).asnumpy()
 
-    context.set_context(ascend_config={"parallel_speed_up_json_path": "./parallel_speed_up.json"})
+    context.set_context(ascend_config={"parallel_speed_up_json_path": "./parallel_speed_up_for_mc2.json"})
     mc2_net = AllGatherMatmulNet(seq_len, hidden_size, dp, mp)
     mc2_out = mc2_net(x).asnumpy()
 
@@ -138,7 +138,7 @@ def test_matmul_reduce_scatter_forward():
     net = MatmulReduceScatterNet(seq_len, hidden_size, dp, mp)
     expect_out = net(x).asnumpy()
 
-    context.set_context(ascend_config={"parallel_speed_up_json_path": "./parallel_speed_up.json"})
+    context.set_context(ascend_config={"parallel_speed_up_json_path": "./parallel_speed_up_for_mc2.json"})
     mc2_net = MatmulReduceScatterNet(seq_len, hidden_size, dp, mp)
     mc2_out = mc2_net(x).asnumpy()
 
@@ -153,7 +153,7 @@ def test_mc2_fusion_forward_backward():
     '''
     context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", dataset_strategy="full_batch")
-    context.set_context(ascend_config={"parallel_speed_up_json_path": "./parallel_speed_up.json"})
+    context.set_context(ascend_config={"parallel_speed_up_json_path": "./parallel_speed_up_for_mc2.json"})
     D.init()
     seq_len, hidden_size = 4096, 12288
     dp, mp = 1, 8
