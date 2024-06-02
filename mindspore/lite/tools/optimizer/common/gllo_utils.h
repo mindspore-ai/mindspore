@@ -108,15 +108,21 @@ AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index);
 STATUS TransFilterFormat(const tensor::TensorPtr &tensor, schema::Format src_format, schema::Format dst_format);
 
 ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const tensor::TensorPtr &tensor_info,
-                                const std::string &node_name);
+                                const std::string &node_name, bool keep_origin_dtype = false);
 
 ParameterPtr BuildIntValueParameterNode(const FuncGraphPtr &func_graph, const int32_t &data,
                                         const std::string &node_name, bool empty_shape = false);
+
+ParameterPtr BuildInt64ValueParameterNode(const FuncGraphPtr &func_graph, const int64_t &data,
+                                          const std::string &node_name, bool empty_shape = false);
 
 ValueNodePtr BuildIntVecValueNode(const FuncGraphPtr &func_graph, const std::vector<int32_t> &data);
 
 ParameterPtr BuildIntVecParameterNode(const FuncGraphPtr &func_graph, const std::vector<int32_t> &data,
                                       const std::string &node_name);
+
+ParameterPtr BuildInt64VecParameterNode(const FuncGraphPtr &func_graph, const std::vector<int64_t> &data,
+                                        const std::string &node_name);
 
 ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const std::vector<std::vector<int32_t>> &data,
                                         const std::string &node_name);

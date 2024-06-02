@@ -26,6 +26,7 @@
 #include "ops/op_utils.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/lp_norm.h"
+#include "tools/lite_exporter/fetch_content.h"
 
 namespace mindspore {
 namespace lite {
@@ -111,6 +112,49 @@ STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
   return RET_OK;
 }
 
+STATUS GetAxes(const CNodePtr &cnode, int64_t mode, std::vector<int64_t> *axes, ParameterPtr axes_param,
+               DataInfo data_info) {
+  int data_len = 0;
+  std::vector<int> data_int;
+  std::vector<int64_t> data_int64;
+  if (data_info.data_type_ == kNumberTypeInt64) {
+    data_int64 = acl::GetInt64ParameterData(axes_param);
+    data_len = data_int64.size();
+  } else {
+    data_int = acl::GetIntParameterData(axes_param);
+    data_len = data_int.size();
+  }
+  if (cnode->size() == kNameReduceInputNum && mode == static_cast<int64_t>(ReduceMode::Reduce_Max) && data_len == 0) {
+    auto abstract = opt::GetCNodeInputAbstract(cnode, 1);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "GetCNodeInputAbstract in reduce_fusion!";
+      return lite::RET_ERROR;
+    }
+    std::vector<int64_t> shape = {};
+    if (opt::FetchShapeFromAbstract(abstract, &shape) != lite::RET_OK) {
+      MS_LOG(ERROR) << "FetchShapeFromAbstract failed!";
+      return lite::RET_ERROR;
+    }
+    int rank = shape.size();
+    if (data_info.data_type_ == kNumberTypeInt64) {
+      for (int dim = 0; dim < rank; dim++) {
+        data_int.push_back(dim);
+      }
+    } else {
+      for (int dim = 0; dim < rank; dim++) {
+        data_int64.push_back(dim);
+      }
+    }
+  }
+  if (data_info.data_type_ == kNumberTypeInt64) {
+    *axes = data_int64;
+  } else {
+    std::transform(data_int.begin(), data_int.end(), std::back_inserter(*axes),
+                   [](int32_t n) -> int64_t { return static_cast<int64_t>(n); });
+  }
+  return lite::RET_OK;
+}
+
 STATUS ReduceFusionMapper::AdjustInput(const CNodePtr &cnode, const PrimitivePtr &prim) {
   MS_ASSERT(cnode != nullptr && prim != nullptr);
   auto attr_val = prim->GetAttr(ops::kMode);
@@ -148,27 +192,18 @@ STATUS ReduceFusionMapper::AdjustInput(const CNodePtr &cnode, const PrimitivePtr
   }
   ParameterPtr axes_param = axes_input->cast<ParameterPtr>();
   CHECK_NULL_RETURN(axes_param);
-  auto data = acl::GetIntParameterData(axes_param);
-  if (cnode->size() == kNameReduceInputNum && mode == static_cast<int64_t>(ReduceMode::Reduce_Max) &&
-      data.size() == 0) {
-    auto abstract = opt::GetCNodeInputAbstract(cnode, 1);
-    if (abstract == nullptr) {
-      MS_LOG(ERROR) << "GetCNodeInputAbstract in reduce_fusion!";
-      return lite::RET_ERROR;
-    }
-    std::vector<int64_t> shape = {};
-    if (opt::FetchShapeFromAbstract(abstract, &shape) != lite::RET_OK) {
-      MS_LOG(ERROR) << "FetchShapeFromAbstract failed!";
-      return lite::RET_ERROR;
-    }
-    int rank = shape.size();
-    for (int dim = 0; dim < rank; dim++) {
-      data.push_back(dim);
-    }
+  DataInfo data_info;
+  if (FetchFromDefaultParam(axes_param, converter::kFmkTypeMs, &data_info, true) != RET_OK) {
+    MS_LOG(ERROR) << "fetch information from default param failed!";
+    return lite::RET_ERROR;
   }
+
   std::vector<int64_t> axes;
-  std::transform(data.begin(), data.end(), std::back_inserter(axes),
-                 [](int32_t n) -> int64_t { return static_cast<int64_t>(n); });
+  auto ret = GetAxes(cnode, mode, &axes, axes_param, data_info);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Get axes failed! ret:" << ret << "!";
+    return ret;
+  }
   ValueNodePtr value_node = NewValueNode<std::vector<int64_t>>(axes);
   std::vector<int64_t> shape_vec_shape = {};
   auto abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec_shape);
