@@ -23,6 +23,7 @@
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/op_utils.h"
 #include "nnacl/op_base.h"
+#include "tools/lite_exporter/fetch_content.h"
 
 namespace mindspore {
 namespace lite {
@@ -43,10 +44,20 @@ STATUS TileFusionMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(WARNING) << "The repeats node is not parameter.";
     ParameterPtr repeats_param = repeats_input->cast<ParameterPtr>();
     MS_CHECK_TRUE_RET(repeats_param != nullptr, RET_ERROR);
-    auto data = acl::GetIntParameterData(repeats_param);
+    DataInfo data_info;
+    if (FetchFromDefaultParam(repeats_param, converter::kFmkTypeMs, &data_info, true) != RET_OK) {
+      MS_LOG(ERROR) << "fetch information from default param failed!";
+      return lite::RET_ERROR;
+    }
     std::vector<int64_t> multiples;
-    std::transform(data.begin(), data.end(), std::back_inserter(multiples),
-                   [](int32_t x) -> int64_t { return static_cast<int64_t>(x); });
+    if (data_info.data_type_ == kNumberTypeInt64) {
+      auto data = acl::GetInt64ParameterData(repeats_param);
+      multiples = data;
+    } else {
+      auto data = acl::GetIntParameterData(repeats_param);
+      std::transform(data.begin(), data.end(), std::back_inserter(multiples),
+                     [](int32_t x) -> int64_t { return static_cast<int64_t>(x); });
+    }
     ValueNodePtr value_node = NewValueNode<std::vector<int64_t>>(multiples);
     MS_CHECK_TRUE_RET(value_node != nullptr, RET_ERROR);
     std::vector<int64_t> shape_vec_shape = {static_cast<int64_t>(multiples.size())};

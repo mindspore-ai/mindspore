@@ -29,9 +29,6 @@ PrimitiveCPtr OnnxCastParser::Parse(const onnx::GraphProto &onnx_graph, const on
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "to") {
       auto dst_type = GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(onnx_node_attr.i()));
-      if (dst_type == kNumberTypeInt64) {
-        dst_type = kNumberTypeInt32;
-      }
       if (dst_type == kNumberTypeFloat64) {
         dst_type = kNumberTypeFloat32;
       }
