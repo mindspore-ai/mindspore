@@ -28,6 +28,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -98,5 +99,58 @@ TypePtr BatchMatMulExtFuncImpl::InferType(const PrimitivePtr &prim,
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   return input_args[0]->GetType();
 }
+
+TypePtrList BatchMatMulExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &y_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+  TypePtr ret_type = x_tensor->Dtype();
+  const auto x_dtype_id = x_tensor->data_type();
+  const auto y_dtype_id = y_tensor->data_type();
+  if (x_dtype_id != y_dtype_id) {
+    MS_EXCEPTION(ValueError) << "For MatMul, the dtype of 'input' and 'other' should be the same, but got 'input' with "
+                             << "dtype: " << x_dtype_id << " and 'other' with dtype: " << y_dtype_id << ".";
+  }
+  return {ret_type};
+}
+
+ShapeArray BatchMatMulExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &y_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+
+  const auto &x_shp = x_tensor->shape();
+  const auto &y_shp = y_tensor->shape();
+
+  if (x_shp.size() != kDim3) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', the input 'x' must be a 3D dimensional Tensor, but got " << x_shp.size()
+                             << "D shape " << x_shp;
+  }
+  if (y_shp.size() != kDim3) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', the input 'y' must be a 3D dimensional Tensor, but got " << y_shp.size()
+                             << "D shape " << y_shp;
+  }
+  int64_t x_col = x_shp[2];
+  int64_t y_row = y_shp[1];
+  if (x_col != y_row) {
+    MS_EXCEPTION(ValueError) << "For " << primitive->name()
+                             << ", the row of the input 'y' should be same as the col of the input 'x', with x shape "
+                             << x_shp << ", y shape " << y_shp;
+  }
+  if (x_shp[0] != y_shp[0]) {
+    MS_EXCEPTION(ValueError)
+      << "For " << primitive->name()
+      << ", one of the input's batch dim must be equal to another input's peer batch dim, but got " << x_shp[0]
+      << " and " << y_shp[0] << ", with x shape " << x_shp << ", y shape " << y_shp;
+  }
+
+  ShapeVector ret_shape = {x_shp[0], x_shp[1], y_shp[2]};
+  return {ret_shape};
+}
+REGISTER_SIMPLE_INFER(kNameBatchMatMulExt, BatchMatMulExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

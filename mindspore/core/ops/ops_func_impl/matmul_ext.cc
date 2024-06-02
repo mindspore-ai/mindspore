@@ -21,6 +21,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <utility>
 #include "ops/op_name.h"
 #include "utils/shape_utils.h"
 #include "abstract/dshape.h"
@@ -28,6 +29,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -142,22 +144,22 @@ BaseShapePtr MatMulExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto constexpr kMatMulExtInputNum = 2;
   (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(input_args.size()), kEqual, kMatMulExtInputNum,
                                            primitive->name());
-  auto shape1_orig = input_args[kInputIndex0]->GetShape()->GetShapeVector();
-  auto shape2_orig = input_args[kInputIndex1]->GetShape()->GetShapeVector();
-  if (IsDynamicRank(shape1_orig) || IsDynamicRank(shape2_orig)) {
+  auto x_shp = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+  auto y_shp = input_args[kInputIndex1]->GetShape()->GetShapeVector();
+  if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
 
-  bool dynamic_shape = IsDynamic(shape1_orig) || IsDynamic(shape2_orig);
+  bool dynamic_shape = IsDynamic(x_shp) || IsDynamic(y_shp);
   if (!dynamic_shape) {
-    bool transpose_b = shape2_orig.size() == 1;
-    ShapeVector shape_backbone = CheckMatMulShapes(shape1_orig, shape2_orig);
-    ShapeVector ret_shape = InferShapeRem(shape_backbone, shape1_orig, shape2_orig, transpose_b);
+    bool transpose_b = y_shp.size() == 1;
+    ShapeVector shape_backbone = CheckMatMulShapes(x_shp, y_shp);
+    ShapeVector ret_shape = InferShapeRem(shape_backbone, x_shp, y_shp, transpose_b);
     return std::make_shared<abstract::Shape>(std::move(ret_shape));
   }
 
   ShapeVector ret_shape;
-  MatMulMakeShape(&ret_shape, shape1_orig, shape2_orig);
+  MatMulMakeShape(&ret_shape, x_shp, y_shp);
   return std::make_shared<abstract::Shape>(std::move(ret_shape));
 }
 
@@ -173,5 +175,35 @@ TypePtr MatMulExtFuncImpl::InferType(const PrimitivePtr &prim, const std::vector
   return x_type;
 }
 
+TypePtrList MatMulExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &y_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+  TypePtr ret_type = x_tensor->Dtype();
+  const auto x_dtype_id = x_tensor->data_type();
+  const auto y_dtype_id = y_tensor->data_type();
+  if (x_dtype_id != y_dtype_id) {
+    MS_EXCEPTION(ValueError) << "For MatMul, the dtype of 'input' and 'other' should be the same, but got 'input' with "
+                             << "dtype: " << x_dtype_id << " and 'other' with dtype: " << y_dtype_id << ".";
+  }
+  return {ret_type};
+}
+
+ShapeArray MatMulExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &y_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+
+  const auto &x_shp = x_tensor->shape();
+  const auto &y_shp = y_tensor->shape();
+
+  bool transpose_b = y_shp.size() == 1;
+  ShapeVector shape_backbone = CheckMatMulShapes(x_shp, y_shp);
+  ShapeVector ret_shape = InferShapeRem(shape_backbone, x_shp, y_shp, transpose_b);
+  return {ret_shape};
+}
+REGISTER_SIMPLE_INFER(kNameMatMulExt, MatMulExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

@@ -20,6 +20,7 @@
 #include "ir/dtype.h"
 #include "ops/op_name.h"
 #include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -41,5 +42,18 @@ TypePtr UniformExtFuncImpl::InferType(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
   return x_type;
 }
+
+TypePtrList UniformExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->Dtype()};
+}
+
+ShapeArray UniformExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameUniformExt, UniformExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

@@ -19,11 +19,9 @@
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 #include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/ascend/kernel/pyboost/auto_generate/transpose.h"
-#include "plugin/device/ascend/kernel/pyboost/auto_generate/contiguous.h"
 #include "plugin/device/ascend/kernel/pyboost/auto_generate/matmul_ext.h"
-#include "plugin/device/ascend/kernel/pyboost/auto_generate/add_ext.h"
-#include "plugin/device/ascend/kernel/pyboost/auto_generate/dot.h"
-#include "plugin/device/ascend/kernel/pyboost/auto_generate/mv.h"
+#include "plugin/device/ascend/kernel/pyboost/auto_generate/addmm.h"
+#include "plugin/device/ascend/kernel/pyboost/auto_generate/add.h"
 
 namespace mindspore {
 namespace kernel {
@@ -51,53 +49,42 @@ void DenseAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorP
                           const BaseTensorPtr &weight_tensor, const std::optional<BaseTensorPtr> &bias_tensor) {
   MS_LOG(DEBUG) << "Dense Launch start";
   OpRunner::InferOpOutput(op, input_tensor, weight_tensor, bias_tensor);
-
   auto device_context = op->device_context();
   const auto &device_name = device_context->device_context_key_.device_name_;
-  auto transpose_op = CREATE_PYBOOST_OP(Transpose, device_name);
-  auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_name);
 
-  auto bias_abstract = bias_tensor.has_value() ? ToAbstractNoValue(bias_tensor.value()) : kNone->ToAbstract();
-  op->set_input_abs({ToAbstractNoValue(input_tensor), ToAbstractNoValue(weight_tensor), bias_abstract});
   auto perm = GetTransposePerm(weight_tensor);
+  auto transpose_op = CREATE_PYBOOST_OP(Transpose, device_name);
+  auto weight_transposed = transpose_op->Call(weight_tensor, perm);
 
-  tensor::BaseTensorPtr output;
-  if (input_tensor->shape().size() == kDim1 && weight_tensor->shape().size() == kDim1) {
-    auto dot_op = CREATE_PYBOOST_OP(Dot, device_name);
-    output = dot_op->Call(input_tensor, weight_tensor);
-    if (bias_tensor.has_value()) {
-      auto alpha = std::make_shared<FP32Imm>(1.0);
-      auto add_op = CREATE_PYBOOST_OP(AddExt, device_name);
-      output = add_op->Call(output, bias_tensor.value(), alpha);
-      op->set_output_abs(add_op->output_abs());
-    } else {
-      op->set_output_abs(dot_op->output_abs());
-    }
-  } else if (input_tensor->shape().size() == kDim2 && weight_tensor->shape().size() == kDim1) {
-    auto mv_op = CREATE_PYBOOST_OP(Mv, device_name);
-    output = mv_op->Call(input_tensor, weight_tensor);
-    if (bias_tensor.has_value()) {
-      auto alpha = std::make_shared<FP32Imm>(1.0);
-      auto add_op = CREATE_PYBOOST_OP(AddExt, device_name);
-      output = add_op->Call(output, bias_tensor.value(), alpha);
-      op->set_output_abs(add_op->output_abs());
-    } else {
-      op->set_output_abs(mv_op->output_abs());
-    }
+  auto input_tensor_rank = input_tensor->shape().size();
+
+  if (input_tensor_rank == kDim2 && bias_tensor.has_value()) {
+    auto bias_tensor_ = bias_tensor.value();
+    auto addmm_op = CREATE_PYBOOST_OP(Addmm, device_name);
+    const auto beta = std::make_shared<Int64Imm>(1);
+    const auto alpha = std::make_shared<Int64Imm>(1);
+    auto addmm_out = addmm_op->Call(bias_tensor_, input_tensor, weight_transposed, beta, alpha);
+    op->set_output_abs(addmm_op->output_abs());
+    op->set_outputs({addmm_out});
+    MS_LOG(DEBUG) << "Dense Launch end";
+    return;
   } else {
     auto matmul_op = CREATE_PYBOOST_OP(MatMulExt, device_name);
-    output = matmul_op->Call(input_tensor, contiguous_op->Call(transpose_op->Call(weight_tensor, perm)));
+    auto matmul_out = matmul_op->Call(input_tensor, weight_transposed);
     if (bias_tensor.has_value()) {
-      auto alpha = std::make_shared<FP32Imm>(1.0);
-      auto add_op = CREATE_PYBOOST_OP(AddExt, device_name);
-      output = add_op->Call(output, bias_tensor.value(), alpha);
+      auto bias_tensor_ = bias_tensor.value();
+      auto add_op = CREATE_PYBOOST_OP(Add, device_name);
+      auto add_out = add_op->Call(matmul_out, bias_tensor_);
       op->set_output_abs(add_op->output_abs());
-    } else {
-      op->set_output_abs(matmul_op->output_abs());
+      op->set_outputs({add_out});
+      MS_LOG(DEBUG) << "Dense Launch end";
+      return;
     }
+    op->set_output_abs(matmul_op->output_abs());
+    op->set_outputs({matmul_out});
+    MS_LOG(DEBUG) << "Dense Launch end";
+    return;
   }
-  op->set_outputs({output});
-  MS_LOG(DEBUG) << "Dense Launch end";
 }  // namespace pyboost
 }  // namespace pyboost
 }  // namespace kernel
