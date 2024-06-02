@@ -98,7 +98,7 @@ def gather_ext_backward_func(x, dim, indices):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 @pytest.mark.parametrize('input_dtype', [np.float32])
 @pytest.mark.parametrize('index_dtype', [np.int64])
 def test_gather_ext_static_shape(mode, input_dtype, index_dtype):
@@ -263,7 +263,7 @@ def _test_gather_ext_vmap_perf(batch):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize("mode", ['pynative', 'GE', 'KBK'])
+@pytest.mark.parametrize("mode", ['GE', 'KBK', 'pynative'])
 def test_gather_ext_grad(mode):
     """
     Feature: Test gather with backward.

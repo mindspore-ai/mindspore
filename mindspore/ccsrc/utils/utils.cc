@@ -269,7 +269,7 @@ bool IsEnableRefMode() {
 bool IsMemoryPoolRecycle() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool optimize_mem = context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0;
+  bool optimize_mem = !common::IsDisableRuntimeConfig("optimize_mem");
   bool enable_ref_mode = IsEnableRefMode();
   auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);

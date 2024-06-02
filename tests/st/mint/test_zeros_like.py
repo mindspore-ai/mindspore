@@ -59,7 +59,7 @@ def test_zeros_like_forward(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_zeros_like_backward(mode):
     """
     Feature: Ops.

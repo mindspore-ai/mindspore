@@ -38,6 +38,28 @@ std::map<std::string, MsBackendPolicy> kPolicyMap = {{"ge", kMsBackendGePrior}, 
                                                      {"ge_only", kMsBackendGeOnly}, {"vm_prior", kMsBackendVmPrior}};
 
 constexpr auto kDeviceTargetSize2 = 2;
+
+bool DisableVMM() {
+  std::string alloc_conf = common::GetEnv("MS_ALLOC_CONF");
+  if (alloc_conf.empty()) {
+    return false;
+  }
+
+  std::stringstream ss(alloc_conf);
+  std::string item;
+  while (std::getline(ss, item, ',')) {
+    std::size_t delimiterPos = item.find(':');
+    if (delimiterPos != std::string::npos) {
+      std::string key = item.substr(0, delimiterPos);
+      if (key != "enable_vmm") {
+        continue;
+      }
+      std::string value = item.substr(delimiterPos + 1);
+      return value == "False" || value == "false";
+    }
+  }
+  return false;
+}
 }  // namespace
 std::atomic<bool> thread_1_must_end(false);
 
@@ -302,11 +324,8 @@ void MsContext::SetDeviceTargetFromInner(const std::string &device_target) {
     MS_LOG(INFO) << "ms set context device target:" << device_target;
     seter_(device_target);
   }
-  if (device_target == "Ascend" && !CheckWriteStatus(MS_CTX_MEMORY_OPTIMIZE_LEVEL)) {
-    MS_LOG(INFO) << "Set memory_optimize_level to O1 as default on ascend";
-    int_params_[MS_CTX_MEMORY_OPTIMIZE_LEVEL - MS_CTX_TYPE_INT_BEGIN] = kOptimizeO1;
-  } else if (!CheckWriteStatus(MS_CTX_MEMORY_OPTIMIZE_LEVEL)) {
-    MS_LOG(INFO) << "Set memory_optimize_level to O0 as default on other device";
+  if (!CheckWriteStatus(MS_CTX_MEMORY_OPTIMIZE_LEVEL)) {
+    MS_LOG(INFO) << "Set memory_optimize_level to O0 as default.";
     int_params_[MS_CTX_MEMORY_OPTIMIZE_LEVEL - MS_CTX_TYPE_INT_BEGIN] = kOptimizeO0;
   }
   string_params_[MS_CTX_DEVICE_TARGET - MS_CTX_TYPE_STRING_BEGIN] = device_target;
@@ -467,7 +486,6 @@ bool MsContext::IsKByKExecutorMode() const {
   if (iter != jit_config.end()) {
     jit_level = iter->second;
   }
-
   auto global_jit_level = get_param<std::string>(MS_CTX_JIT_LEVEL);
   auto mode = get_param<int>(MS_CTX_EXECUTION_MODE);
   auto device_target = get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -480,10 +498,18 @@ bool MsContext::IsKByKExecutorMode() const {
       jit_level = kAttrJitLevelO0;
     }
   }
+
+  static bool disable_vmm = DisableVMM();
+  static std::string first_jit_level = jit_level;
+  if (!global_jit_level.empty() && device_target == kAscendDevice && !disable_vmm &&
+      first_jit_level != kAttrJitLevelO2 && jit_level == kAttrJitLevelO2) {
+    MS_LOG(EXCEPTION) << "Cannot change jit_level from O0/O1 to O2 because the device virtual memory enable.";
+  }
   if (jit_level_log != jit_level) {
     is_jit_level_changed = true;
     jit_level_log = jit_level;
   }
+
   if (get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD)) {
     PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable kernelbykernel executor by mem offload.");
     return true;

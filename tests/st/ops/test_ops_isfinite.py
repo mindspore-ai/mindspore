@@ -54,7 +54,7 @@ def isfinite_vmap_func(x, in_axes=0):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
+@pytest.mark.parametrize('mode', ['GE', 'pynative', 'KBK'])
 def test_isfinite_forward(mode):
     """
     Feature: Test isfinite with static shape in graph and pynative mode.
@@ -79,7 +79,7 @@ def test_isfinite_forward(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
+@pytest.mark.parametrize("mode", ['GE', 'pynative', 'KBK'])
 def test_isfinite_backward(mode):
     """
     Feature: Test isfinite backward with static shape in graph and pynative mode.
