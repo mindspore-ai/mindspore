@@ -140,8 +140,9 @@ bool AscendMemAdapter::DeInitialize() {
     if (common::IsNeedProfileMemory() || common::IsNeedMemoryStatistic()) {
       MS_LOG(WARNING) << oss_buf.str();
     }
-    if (common::IsEnableRuntimeConfig(common::kRuntimeMemoryStat)) {
-      std::cout << oss_buf.str() << std::endl;
+    if (common::IsEnableRuntimeConfig(common::kRuntimeMemoryStat) ||
+        common::IsEnableRuntimeConfig(common::kRuntimeMemoryTrack)) {
+      std::cout << "[MS_RUNTIME_PROF]" << oss_buf.str() << std::endl;
     }
 
     device_hbm_total_size_ = 0;

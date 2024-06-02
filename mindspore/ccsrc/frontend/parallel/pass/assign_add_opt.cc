@@ -349,16 +349,29 @@ bool SkipConcatEliminate(const std::vector<CNodePtr> &matmul_dw_nodes, const Anf
   sort(bg_concat_input_index->begin(), bg_concat_input_index->end(), std::greater<size_t>());
   return bg_concat_input_index->size() != matmul_dw_nodes.size();
 }
+
+bool IsNeedOptimizeAssignAdd(bool is_kbyk_mode) {
+  if (parallel::g_device_manager == nullptr) {
+    MS_LOG(INFO) << "parallel::g_device_manager is not initialized.";
+    return false;
+  }
+
+  if (is_kbyk_mode && !common::IsEnableRuntimeConfig(common::kRuntimeParalletAssignAddOpt)) {
+    MS_LOG(INFO) << "KBK mode disable the assginadd opt.";
+    return false;
+  }
+  return true;
+}
 }  // namespace
 
 void AssignAddOpt(const FuncGraphPtr &graph) {
-  if (parallel::g_device_manager == nullptr) {
-    MS_LOG(INFO) << "parallel::g_device_manager is not initialized.";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!IsNeedOptimizeAssignAdd(ms_context->IsKByKExecutorMode())) {
     return;
   }
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  auto ms_context = MsContext::GetInstance();
   auto is_enable_concat_eliminate = ms_context->get_param<bool>(MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT);
   MS_LOG(INFO) << "Merge multi matmul assign add begin and concat eliminate enable flag is:"
                << is_enable_concat_eliminate;

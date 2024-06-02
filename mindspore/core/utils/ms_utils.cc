@@ -17,6 +17,8 @@
 #include <map>
 #include <string>
 #include <sstream>
+#include <ostream>
+#include <iostream>
 
 namespace mindspore {
 namespace common {
@@ -44,6 +46,8 @@ std::string GetRuntimeConfigValue(const std::string &runtime_config) {
       return "";
     }
 
+    std::ostringstream oss_buf;
+    oss_buf << "[MS_RUNTIME_PROF]Runtime config:";
     std::stringstream ss(env_value);
     std::string item;
     while (std::getline(ss, item, ',')) {
@@ -52,8 +56,10 @@ std::string GetRuntimeConfigValue(const std::string &runtime_config) {
         std::string key = item.substr(0, delimiterPos);
         std::string value = item.substr(delimiterPos + 1);
         runtime_configs[key] = value;
+        oss_buf << "  " << key << ":" << value;
       }
     }
+    std::cout << oss_buf.str() << std::endl;
   }
 
   if (runtime_configs.count(runtime_config) == 0) {

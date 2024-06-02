@@ -372,11 +372,16 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         self.ascend_910bc_target = (MSContext.get_instance().get_ascend_soc_version() in ['ascend910b', 'ascend910c'])
         self.loss_scaling_manager = None
         self._ascend_check_overflow_mode = os.environ.get('MS_ASCEND_CHECK_OVERFLOW_MODE')
-        self.kernel_mode = False
-        global_jit_config = context.get_jit_config()
-        if global_jit_config:
-            self.kernel_mode = global_jit_config["jit_level"] == "O0"
 
+        self.enable_allfinite = False
+        runtime_conf = os.environ.get('MS_DEV_RUNTIME_CONF')
+        global_jit_config = context.get_jit_config()
+        if runtime_conf is not None and ("all_finite:True" in runtime_conf or "all_finite:true" in runtime_conf):
+            self.enable_allfinite = True
+        elif runtime_conf is not None and ("all_finite:False" in runtime_conf or "all_finite:false" in runtime_conf):
+            self.enable_allfinite = False
+        elif global_jit_config:
+            self.enable_allfinite = global_jit_config["jit_level"] == "O0"
 
         if isinstance(scale_sense, Cell):
             self.loss_scaling_manager = scale_sense
@@ -483,7 +488,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
             overflow = self.less_equal(self.base, flag_sum)
         return overflow
 
-    def _get_distributed_overflow_status_on_infnan_kernel_mode(self, compute_output):
+    def _get_distributed_overflow_status_on_infnan_enable_allfinite(self, compute_output):
         """check overflow status on infnan kernel mode."""
         overflow = AllFinite()(compute_output)
 
@@ -500,8 +505,8 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
     def _get_ascend_overflow_status_on_infnan_mode(self, compute_output):
         """get overflow status of ascend on infnan mode."""
         overflow = False
-        if self.kernel_mode:
-            overflow = self._get_distributed_overflow_status_on_infnan_kernel_mode(compute_output)
+        if self.enable_allfinite:
+            overflow = self._get_distributed_overflow_status_on_infnan_enable_allfinite(compute_output)
         else:
             overflow = self._get_distributed_overflow_status_on_infnan_mode(_ascend_grad_overflow, compute_output)
         return overflow
