@@ -332,7 +332,7 @@ ScalarPtr Converter::ToScalar(const py::list &python_args, size_t i) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    auto convert_value = ConvertByCastDtype(obj, op_arg, i)->cast<ScalarPtr>();
+    auto convert_value = ConvertByCastDtype(obj, op_arg, i);
     if (convert_value != nullptr && convert_value->isa<Scalar>()) {
       return convert_value->cast<ScalarPtr>();
     }

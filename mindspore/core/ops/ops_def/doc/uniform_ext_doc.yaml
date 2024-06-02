@@ -4,8 +4,8 @@ uniform_ext:
     
       Inputs:
           - **tensor** (Tensor) - The tensor of random tensor to be generated.
-          - **a** (float) - Lower bound of the random numbers. Default: 0.0.
-          - **b** (float) - Upper bound of the random numbers. Default: 0.0.
+          - **a** (number) - Lower bound of the random numbers. Default: 0.0.
+          - **b** (number) - Upper bound of the random numbers. Default: 0.0.
           - **seed** (int) - Seed for random number generation. Default: 0.
           - **offset** (int) - Positional offset in the tensor to start filling with random numbers. Default: 0.
     
