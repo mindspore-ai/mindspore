@@ -527,6 +527,10 @@ void DumpJsonParser::ParseSavedData(const nlohmann::json &content) {
     CheckJsonStringType(*json_iter, kSavedData);
     saved_data_ = *json_iter;
   }
+  if (e2e_dump_enabled_ && op_debug_mode_ == static_cast<uint32_t>(DUMP_LITE_EXCEPTION) && saved_data_ != kTensorDump) {
+    MS_LOG(WARNING) << "E2e exception dump only support save tensor, saved_data is set to tensor";
+    saved_data_ = kTensorDump;
+  }
   if (saved_data_ != kStatisticDump && saved_data_ != kTensorDump && saved_data_ != kFullDump) {
     MS_LOG(EXCEPTION) << "Dump Json parse failed, saved_data only supports statistic, tensor, or full, but got: "
                       << saved_data_ << ". Please set saved_data to either statistic, tensor, or full";
@@ -775,6 +779,10 @@ void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
                         << " backend, and none operator data would be saved when abnormal dump is enabled. ";
       }
       if (IsAclDump() || e2e_dump_enabled_) {
+        if (e2e_dump_enabled_ && iteration_ != "all") {
+          MS_LOG(WARNING) << "For e2e exception dump, it is not support to specify iteration, set iteration to all.";
+          iteration_ = "all";
+        }
         break;
       } else {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
