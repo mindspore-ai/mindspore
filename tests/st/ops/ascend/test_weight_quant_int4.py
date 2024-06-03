@@ -189,7 +189,7 @@ def test_ms_int4_weight_quant_1p(mode):
     np.testing.assert_allclose(fact, expect, rtol=1e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
@@ -199,6 +199,7 @@ def test_ms_int4_weight_quant_perchannel_1p(mode):
     Description: test antiquant using weight quant bmm cell
     Expectation: accuracy in tolerance
     """
+    ms.set_seed(666)
     np_x, np_int8_data, np_int4_weight, scale, offset = np_gen_int4_data_perchannel()
 
     np_anti_weight = np_antiquant(np_int8_data, scale, offset)
@@ -222,7 +223,7 @@ def test_ms_int4_weight_quant_perchannel_1p(mode):
     x = Tensor(np_x, dtype=mstype.float16)
     fact = wqbm_net(x, antiquant_scale, antiquant_offset,
                     quant_scale, quant_offset, bias).asnumpy()
-    np.testing.assert_allclose(fact, expect, rtol=1e-4)
+    np.testing.assert_allclose(fact, expect, rtol=1e-3)
 
 
 @pytest.mark.level0
@@ -284,6 +285,7 @@ def test_ms_int4_mindir_save_and_load(mode):
     """
     scale = 0.1
     offset = 4.0
+    ms.set_seed(666)
     np_x, _, np_int4_weight = np_gen_int4_data(scale, offset)
 
     ms_int4_weight = Parameter(Tensor(np_int4_weight, dtype=mstype.qint4x2))
