@@ -8951,7 +8951,7 @@ def dotrapezoid(y, dx, dim):
 
 
 def dotrapezoid_tensor(y, dx, dim):
-    y_start_dim_left = [0] *dim
+    y_start_dim_left = [0] * dim
     y_start_dim_left = tuple(y_start_dim_left)
     y_start_dim_right = [0] * (y.ndim - dim - 1)
     y_start_dim_right = tuple(y_start_dim_right)
