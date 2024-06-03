@@ -83,16 +83,8 @@ void GetFileKernelName(NotNull<std::string *> kernel_name) {
 void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *> const int_shapes, bool trans_flag) {
   if (trans_flag) {
     MS_EXCEPTION_IF_NULL(node);
-    if (node->isa<ValueNode>()) {
-      auto value_node = node->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(value_node);
-      auto node_value = value_node->value();
-      MS_EXCEPTION_IF_NULL(node_value);
-      auto tensor = node_value->cast<tensor::TensorPtr>();
-      if (tensor == nullptr) {
-        MS_LOG(WARNING) << " The node[ " << node->DebugString() << "]'s cannot convert, skip to GetDumpIntShape.";
-        return;
-      }
+    if (IsValueNode<None>(node)) {
+      return;
     }
     *int_shapes = trans::GetRuntimePaddingShape(node, index);
   } else {

@@ -144,8 +144,6 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
     auto addr = AnfAlgo::GetOutputAddr(node, j);
     std::string node_name = GetKernelNodeName(node);
     MS_EXCEPTION_IF_NULL(addr);
-    ShapeVector int_shapes;
-    GetDumpIntShape(node, j, NOT_NULL(&int_shapes), trans_flag);
     auto type = common::AnfAlgo::GetOutputInferDataType(node, j);
     std::string op_type = common::AnfAlgo::GetCNodeName(node);
     std::string op_name = *kernel_name;
@@ -166,6 +164,8 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
       if (IsMindRTKernelByKernel()) {
         DumpMemFromTensorLoaderToFile(debugger, file_path, node_name, j);
       } else {
+        ShapeVector int_shapes;
+        GetDumpIntShape(node, j, NOT_NULL(&int_shapes), trans_flag);
         DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
       }
     }
@@ -250,8 +250,6 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
       node_name = input_kernel_name;
       slot = 0;
     }
-    ShapeVector int_shapes;
-    GetDumpIntShape(input, index, NOT_NULL(&int_shapes), trans_flag);
     auto type = common::AnfAlgo::GetOutputInferDataType(input, index);
     std::string op_type = common::AnfAlgo::GetCNodeName(node);
     std::string op_name = *kernel_name;
@@ -273,6 +271,8 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
       if (IsMindRTKernelByKernel()) {
         DumpMemFromTensorLoaderToFile(debugger, file_path, node_name, slot);
       } else {
+        ShapeVector int_shapes;
+        GetDumpIntShape(input, index, NOT_NULL(&int_shapes), trans_flag);
         DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
       }
     }
