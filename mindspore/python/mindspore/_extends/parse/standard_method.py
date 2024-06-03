@@ -2100,6 +2100,8 @@ def _count_axes(size, input_shape, shape_input):
         element = size[i]
         if element != input_shape[i] and element == 1:
             axes.append(i)
+        elif element != input_shape[i]:
+            raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_input}.")
     return axes
 
 
@@ -2107,9 +2109,12 @@ def sum_to_size(input, *size):
     """
     Sum `input` to the `size`. `size` must be expandable to the Tensor size.
     """
+    if not F.isconstant(input.ndim) or not F.isconstant(input.shape):
+        raise ValueError("For `sum_to_size`, dynamic shape or dynamic rank is not support now.")
     if len(size) == 1 and isinstance(size[0], tuple):
         size = size[0]
     shape_input = input.shape
+    _check_sum_to_size(size, input.ndim, shape_input)
     if len(size) < input.ndim:
         pre_axis = tuple(range(input.ndim - len(size)))
         input = input.sum(pre_axis)

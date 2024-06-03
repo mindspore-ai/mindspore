@@ -8472,9 +8472,16 @@ def rot90(input, k, dims):
 
     total_dims = input.ndim
     total_rot_dims = len(dims)
-
+    if not ops.isconstant(total_dims):
+        raise ValueError("For `rot90`, dynamic rank is not support now.")
     if total_rot_dims != 2:
         raise ValueError(f"For `rot90`, total rotation dims must be 2, but get {total_rot_dims}.")
+    if dims[0] == dims[1] or (dims[0] - dims[1]) == total_dims or (dims[1] - dims[0]) == total_dims:
+        raise RuntimeError(f"For `rot90`, rotation dims must be different, but get dim0={dims[0]}, dim1={dims[1]}.")
+    if dims[0] >= total_dims or dims[0] < -total_dims:
+        raise ValueError(f"For `rot90`, rotation dim0 is out of range, dim0={dims[0]}.")
+    if dims[1] >= total_dims or dims[1] < -total_dims:
+        raise ValueError(f"For `rot90`, rotation dim1 is out of range, dim1={dims[1]}.")
 
     k = (4 + (k % 4)) % 4
 
