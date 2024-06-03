@@ -76,8 +76,8 @@ T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Arg
 void SetCallbackForInputTensor(const std::vector<ValuePtr> &input_values) {
   for (auto &input : input_values) {
     MS_EXCEPTION_IF_NULL(input);
-    if (input->isa<tensor::Tensor>()) {
-      auto tensor = input->cast<tensor::TensorPtr>();
+    if (input->isa<tensor::BaseTensor>()) {
+      auto tensor = input->cast<tensor::BaseTensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
       tensor->set_need_pipeline_sync(true);
     }

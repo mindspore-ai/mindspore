@@ -33,7 +33,7 @@ ValuePtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_inf
   if (!v->isa<tensor::BaseTensor>()) {
     return v;
   }
-  return DoAutoCast(op_run_info, dst_type, index, v->cast<tensor::TensorPtr>());
+  return DoAutoCast(op_run_info, dst_type, index, v->cast<tensor::BaseTensorPtr>());
 }
 
 tensor::BaseTensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info,
