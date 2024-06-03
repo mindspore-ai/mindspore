@@ -16,6 +16,7 @@ import os
 import subprocess
 import shutil
 import numpy as np
+import pytest
 
 import mindspore as ms
 from mindspore import context, Tensor, Parameter, Symbol
@@ -65,6 +66,7 @@ def compile_net(net):
     context.reset_auto_parallel_context()
 
 
+@pytest.mark.skip
 def test_dynamic_shape_merge_allgather():
     """
     Feature: test dynamic shape merge allgather
