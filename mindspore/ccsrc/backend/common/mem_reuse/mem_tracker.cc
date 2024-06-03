@@ -16,7 +16,6 @@
 
 #include "include/backend/mem_reuse/mem_tracker.h"
 #include <fstream>
-#include <tuple>
 #include "frontend/parallel/group_manager.h"
 #include "utils/ms_context.h"
 #include "include/common/debug/common.h"
@@ -25,11 +24,6 @@
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/distributed/collective/collective_manager.h"
-
-#if !defined(BUILD_LITE)
-#include "pybind11/pybind11.h"
-namespace py = pybind11;
-#endif
 
 namespace mindspore {
 namespace device {
@@ -71,50 +65,6 @@ AllocatorType GetAllocatorType(MemType mem_type) {
     return AllocatorType::kOther;
   }
   return iter->second;
-}
-
-std::vector<std::tuple<std::string, int, std::string>> GetPythonStack() {
-  std::vector<std::tuple<std::string, int, std::string>> all_stacks;
-#if !defined(BUILD_LITE)
-  try {
-    const size_t func_name_index = 2;
-    const size_t min_frame_info_size = 3;
-    py::gil_scoped_acquire gil_acquire;
-    py::module traceback_module = py::module::import("traceback");
-    py::list extracted_stack = traceback_module.attr("extract_stack")();
-
-    for (size_t i = 0; i < extracted_stack.size(); ++i) {
-      py::tuple frame_info = extracted_stack[i].cast<py::tuple>();
-
-      if (frame_info.size() < min_frame_info_size) {
-        MS_LOG(ERROR) << "frame_info size is invalid, frame_info size:" << frame_info.size();
-        continue;
-      }
-
-      // frame_info: (filename, line number, function name, code_context)
-      std::string file_name = frame_info[0].cast<std::string>();
-      int line_number = frame_info[1].cast<int>();
-      std::string func_name = frame_info[func_name_index].cast<std::string>();
-      (void)all_stacks.emplace_back(std::tuple(file_name, line_number, func_name));
-    }
-  } catch (const std::exception &e) {
-    MS_LOG(ERROR) << "Error while accessing Python stack: " << e.what();
-  }
-#endif
-
-  return all_stacks;
-}
-
-std::string GetPythonStackStr() {
-  const auto &stacks = GetPythonStack();
-  const size_t func_name_index = 2;
-
-  std::stringstream ss;
-  for (const auto &stack_info : stacks) {
-    ss << "File:" << std::get<0>(stack_info) << ";Line:" << std::get<1>(stack_info)
-       << ";Function:" << std::get<func_name_index>(stack_info) << '|';
-  }
-  return ss.str();
 }
 }  // namespace
 
@@ -643,6 +593,7 @@ void MemoryTrackerEnabled::DumpProfilingMemInfo(const std::string &path, const s
 
   // record the last time stamp
   if (!mem_block_list_.empty()) {
+    MS_EXCEPTION_IF_NULL(mem_block_list_.back());
     last_profiling_time_stamp_ = mem_block_list_.back()->start_time_stamp;
   }
   MS_LOG(INFO) << "MemoryTracker DumpProfilingMemInfo end, last_profiling_time_stamp:" << last_profiling_time_stamp_;
