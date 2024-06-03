@@ -28,7 +28,8 @@ im2col_ext:
         how the sliding blocks are retrieved.
 
         .. warning::
-            Currently, batched(4D) image-like tensors are supported.
+            - Currently, batched(4D) image-like tensors are supported.
+            - For Ascend, it is only supported on platforms above Atlas A2.
 
         Args:
             input (Tensor): 4-D Tensor.
@@ -45,9 +46,8 @@ im2col_ext:
             A Tensor, with same type as `input` .
 
         Shape:
-            - Input: :math:`(N, C, *)` or :math:`(C, *)`
-            - Output: :math:`(N, C \times \prod(\text{kernel_size}), L)` or
-              :math:`(C \times \prod(\text{kernel_size}), L)`
+            - Input: :math:`(N, C, *)`
+            - Output: :math:`(N, C \times \prod(\text{kernel_size}), L)`
 
         Raises:
             TypeError: If any data type of `kernel_size`, `stride`, `dilation`, `padding` is not int, tuple or list.
@@ -62,7 +62,7 @@ im2col_ext:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> x = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float64)
+            >>> x = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float32)
             >>> output = ops.unfold_ext(x, kernel_size=3, dilation=1, stride=1)
             >>> print(output.shape)
             (4, 36, 900)

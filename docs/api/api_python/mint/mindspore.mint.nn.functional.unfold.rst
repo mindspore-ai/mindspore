@@ -23,6 +23,7 @@ mindspore.mint.nn.functional.unfold
 
     .. warning::
         - 目前，只支持4-D（包含批维度）的类图像Tensor。
+        - 对于Ascend，仅Atlas A2以上平台支持。
 
     参数：
         - **input** (Tensor) - 四维Tensor。
@@ -35,8 +36,8 @@ mindspore.mint.nn.functional.unfold
         Tensor，数据类型与 `input` 相同。
 
     Shape:
-        - **input** - :math:`(N, C, *)` 或 :math:`(C, *)`
-        - **output** - :math:`(N, C \times \prod(\text{kernel_size}), L)` 或 :math:`(C \times \prod(\text{kernel_size}), L)`
+        - **input** - :math:`(N, C, *)`
+        - **output** - :math:`(N, C \times \prod(\text{kernel_size}), L)`
 
     异常：
         - **TypeError** - 如果 `kernel_size` 、 `stride` 、 `dilation` 、 `padding` 的数据类型不是int、tuple或者list。
