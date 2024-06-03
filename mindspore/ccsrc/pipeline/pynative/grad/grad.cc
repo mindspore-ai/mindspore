@@ -827,6 +827,7 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
     auto output_node =
       GetInput(input_args_info->out_value, PyNativeAlgo::Common::GetIdByValue(input_args_info->out_value));
     curr_g()->set_output(output_node);
+    PyNativeAlgo::Common::DumpGraphIR("fg.ir", curr_g());
     MS_LOG(DEBUG) << "Save forward graph";
   }
   if (top_cell_->is_bprop_need_get_forward_graph()) {
