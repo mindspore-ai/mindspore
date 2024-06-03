@@ -50,6 +50,20 @@ Tensor创建
     mindspore.mint.arctan2
     mindspore.mint.square
 
+Reduction函数
+^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.any
+    mindspore.mint.argmax
+    mindspore.mint.mean
+    mindspore.mint.prod
+    mindspore.mint.sum
+
 mindspore.mint.nn
 ------------------
 
@@ -73,19 +87,6 @@ mindspore.mint.nn.functional
 卷积函数
 ^^^^^^^^^^
 
-
-Reduction函数
-^^^^^^^^^^^^^
-
-.. mscnplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.any
-    mindspore.mint.mean
-    mindspore.mint.prod
-    mindspore.mint.sum
 
 比较函数
 ^^^^^^^^^^^^^

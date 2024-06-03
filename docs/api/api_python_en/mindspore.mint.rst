@@ -50,6 +50,21 @@ Element-wise Operation
     mindspore.mint.arctan2
     mindspore.mint.square
 
+Reduction Functions
+^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.any
+    mindspore.mint.argmax
+    mindspore.mint.mean
+    mindspore.mint.prod
+    mindspore.mint.sum
+
+
 mindspore.mint.nn
 ------------------
 
@@ -74,18 +89,6 @@ Neural Network Layer Functions
 Convolution functions
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Reduction Functions
-^^^^^^^^^^^^^^^^^^^
-
-.. msplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.any
-    mindspore.mint.mean
-    mindspore.mint.prod
-    mindspore.mint.sum
 
 
 Comparison Functions
