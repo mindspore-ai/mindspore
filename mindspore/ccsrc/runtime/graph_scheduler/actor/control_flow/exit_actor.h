@@ -67,6 +67,7 @@ class ExitActor : public ControlActor {
   friend class SchedulerHelper;
 
   void CopyDeviceAddress(OpContext<DeviceTensor> *const context);
+  void UpdateDeviceOutputData();
   void MergeDynamiclenDeviceAddress(OpContext<DeviceTensor> *const context);
   bool IsNeedCopyDeviceAddress(DeviceTensor *const input_device_tensor, size_t index);
 
