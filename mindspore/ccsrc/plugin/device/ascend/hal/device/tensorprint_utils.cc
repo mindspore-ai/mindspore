@@ -56,6 +56,13 @@ TensorPrintUtils::TensorPrintUtils() {
   if (print_file_path_.empty()) {
     return;
   }
+  std::optional<std::string> parent_path;
+  std::optional<std::string> file_name;
+  FileUtils::SplitDirAndFileName(print_file_path_, &parent_path, &file_name);
+  if (!parent_path.has_value()) {
+    parent_path = ".";
+  }
+  (void)FileUtils::CreateNotExistDirs(parent_path.value());
   ChangeFileMode(print_file_path_, S_IWUSR);
   pb_file_stream_ =
     std::make_shared<std::fstream>(print_file_path_, std::ios::out | std::ios::trunc | std::ios::binary);

@@ -17,6 +17,8 @@ import pytest
 import numpy as np
 import os
 import sys
+import random
+import string
 import time
 import tempfile
 from contextlib import contextmanager
@@ -288,3 +290,38 @@ def test_print_none(mode):
     patterns = ['y is', 'None',
                 'y:', 'None']
     check_output(cap.output, patterns)
+
+
+@security_off_wrap
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_print_to_file():
+    """
+    Feature: Print data to file
+    Description: Test print data to file
+    Expectation: No exception and print data file was created
+    """
+    ms.set_context(mode=ms.GRAPH_MODE)
+    print_path = './' + ''.join(random.sample(string.ascii_letters + string.digits, 32))
+    print_file = f'{print_path}/print.data'
+    ms.set_context(print_file_path=print_file)
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.print = P.Print()
+
+        def construct(self, x):
+            self.print("x:", x)
+            return x
+
+    cap = Capture()
+    with capture(cap):
+        net = Net()
+        x = Tensor(np.ones([2, 2], dtype=np.float32))
+        net(x)
+        time.sleep(0.1)
+
+    assert os.path.exists(print_file)
+    os.system(f'rm -rf {print_path}')
