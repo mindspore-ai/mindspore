@@ -584,7 +584,8 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
     auto top_fg = node->func_graph();
     MS_EXCEPTION_IF_NULL(top_fg);
     top_fg->set_debug_info(user_top_fg->debug_info());
-    MS_LOG(DEBUG) << "Update top graph's debug info with user's top graph. top_fg: " << top_fg->ToString()
+    top_fg->return_node()->set_debug_info(user_top_fg->return_node()->debug_info());
+    MS_LOG(DEBUG) << "Update top graph's and node's debug infos with user top graph's. top_fg: " << top_fg->ToString()
                   << ", user_top_fg: " << user_top_fg->ToString();
   }
   return resolved_node;
