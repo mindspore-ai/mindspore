@@ -1115,13 +1115,13 @@ void GeKernelExecutor::DoAsyncCkpt(const CNodePtr &kernel) const {
   MS_EXCEPTION_IF_NULL(ms_context);
   auto env = common::GetEnv("MS_ENABLE_CKPT_D2H_ASYNC");
   int execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
-  if (!env.empty() && ms_context->get_param<bool>(MS_CTX_NEED_CKPT) && (execution_mode != kPynativeMode)) {
+  if (env == "1" && ms_context->get_param<bool>(MS_CTX_NEED_CKPT) && (execution_mode != kPynativeMode)) {
     auto kg = std::dynamic_pointer_cast<session::KernelGraph>(kernel->func_graph());
     auto cur_step = ms_context->get_param<int>(MS_CTX_CUR_STEP_NUM);
     auto save_steps = ms_context->get_param<int>(MS_CTX_SAVE_CKPT_STEPS);
     auto last_triggered_step = ms_context->get_param<int>(MS_CTX_LAST_TRIGGERED_STEP);
-    MS_LOG(INFO) << "cur_step:" << cur_step << ", save_steps: " << save_steps
-                 << ", last_triggered_step:" << last_triggered_step;
+    MS_LOG(DEBUG) << "cur_step:" << cur_step << ", save_steps: " << save_steps
+                  << ", last_triggered_step:" << last_triggered_step;
     if (cur_step >= (last_triggered_step + save_steps) && kg != nullptr) {
       if (SkipOrResetCopyAction()) {
         MS_LOG(INFO) << "Enable async d2h copy";
