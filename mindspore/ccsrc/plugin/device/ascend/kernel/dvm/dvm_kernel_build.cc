@@ -530,7 +530,11 @@ FuncGraphPtr GetNodeFuncGraph(const AnfNodePtr &node) {
 
 class DvmKernelBuilder {
  public:
-  DvmKernelBuilder(const AnfNodePtr &node, bool is_dynamic) : node_(node), is_dynamic_(is_dynamic) {}
+  DvmKernelBuilder(const AnfNodePtr &node, bool is_dynamic) : node_(node), is_dynamic_(is_dynamic) {
+    MS_EXCEPTION_IF_NULL(node_);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(node_);
+    kernel_full_name_ = node_->fullname_with_scope();
+  }
   ~DvmKernelBuilder() = default;
 
   virtual void BuildKernel(const FuncGraphPtr &graph, const CNodePtr &out_node,
@@ -564,8 +568,9 @@ class DvmKernelBuilder {
     auto func_graph = GetNodeFuncGraph(cnode);
     Construct(func_graph);
     if (kernel_mod_->EnableDump()) {
-      kernel_mod_->DumpBuffer() << "===================== func_graph =====================\n";
+      kernel_mod_->DumpBuffer() << "[func graph] " << kernel_name_ << " " << kernel_full_name_ << "\n";
       DumpIR(kernel_mod_->DumpBuffer(), func_graph, false);
+      kernel_mod_->DumpToFile();
     }
     if (!is_dynamic_) {
       // Static shape need codegen
@@ -591,6 +596,8 @@ class DvmKernelBuilder {
 
  protected:
   const AnfNodePtr node_;
+  std::string kernel_name_;
+  std::string kernel_full_name_;
   bool is_dynamic_;
   DvmKernelModPtr kernel_mod_;
 };
@@ -608,8 +615,7 @@ class SingleDvmKernelBuilder : public DvmKernelBuilder {
       nodes.pop_back();  // exclude maketuple
     }
     auto kernel_type = GetKernelType(nodes);
-    kernel_mod_ = std::make_shared<SingleDvmKernelMod>(kernel_type, common::AnfAlgo::GetCNodeName(node_),
-                                                       node_->fullname_with_scope());
+    kernel_mod_ = std::make_shared<SingleDvmKernelMod>(kernel_type, kernel_name_, kernel_full_name_);
     auto inputs_type = AnfAlgo::GetAllInputDeviceTypes(node_);
     auto outputs_type = AnfAlgo::GetAllOutputDeviceTypes(node_);
     kernel_mod_->Initialize(inputs_type, outputs_type);
@@ -672,9 +678,8 @@ class ParallelDvmKernelBuilder : public DvmKernelBuilder {
   void BuildKernel(const FuncGraphPtr &graph, const CNodePtr &out_node,
                    const std::vector<AnfNodePtr> &outputs) override {
     // Create kernel mod
-    kernel_mod_ =
-      std::make_shared<ParallelDvmKernelMod>(dvm::KernelType::kStaticParallel, common::AnfAlgo::GetCNodeName(node_),
-                                             node_->fullname_with_scope(), sub_graph_count_);
+    kernel_mod_ = std::make_shared<ParallelDvmKernelMod>(dvm::KernelType::kStaticParallel, kernel_name_,
+                                                         kernel_full_name_, sub_graph_count_);
     auto inputs_type = AnfAlgo::GetAllInputDeviceTypes(node_);
     auto outputs_type = AnfAlgo::GetAllOutputDeviceTypes(node_);
     kernel_mod_->Initialize(inputs_type, outputs_type);
