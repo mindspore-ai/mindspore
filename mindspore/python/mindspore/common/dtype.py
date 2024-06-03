@@ -22,6 +22,9 @@ from inspect import isfunction
 import numpy as np
 from mindspore._c_expression import typing
 from mindspore._c_expression.typing import Type
+from mindspore._c_expression.np_dtypes import np_version_valid
+if np_version_valid(False):
+    from mindspore._c_expression.np_dtypes import bfloat16 as np_bfloat16
 
 __dtype__ = [
     "int8", "byte",
@@ -260,8 +263,7 @@ def dtype_to_nptype(type_):
         >>> ms.dtype_to_nptype(ms.int8)
         <class 'numpy.int8'>
     """
-
-    return {
+    _dtype_nptype_dict = {
         bool_: np.bool_,
         int8: np.int8,
         int16: np.int16,
@@ -276,8 +278,10 @@ def dtype_to_nptype(type_):
         float64: np.float64,
         complex64: np.complex64,
         complex128: np.complex128,
-        bfloat16: np.float32,
-    }[type_]
+    }
+    if np_version_valid(False):
+        _dtype_nptype_dict.update({bfloat16: np_bfloat16})
+    return _dtype_nptype_dict[type_]
 
 
 def dtype_to_pytype(type_):

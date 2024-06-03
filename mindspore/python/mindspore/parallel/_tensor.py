@@ -19,7 +19,6 @@ from __future__ import absolute_import
 import copy
 import numpy as np
 from mindspore.common.tensor import Tensor
-from mindspore.common import dtype as mstype
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore._c_expression import TensorTransform
 
@@ -224,10 +223,6 @@ def _load_tensor(tensor, dev_mat, tensor_map, full_shape=None, rank_id=-1):
         rank = rank_id
     tensor_strategy = _get_tensor_strategy(dev_mat, tensor_map)
     tensor_slice_index = _get_tensor_slice_index(dev_mat, tensor_strategy, tensor_map, rank)
-    if tensor.dtype == mstype.bfloat16:
-        from mindspore.ops.operations import Cast
-        cpu_cast = Cast().set_device("CPU")
-        tensor = cpu_cast(tensor, mstype.float32)
     np_tensor = tensor.asnumpy()
     if full_shape:
         np_tensor = np_tensor.reshape(full_shape)

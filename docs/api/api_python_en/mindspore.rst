@@ -91,6 +91,25 @@ DataType
     ``env_type``                    Used to store the gradient of the free variable of a function, where the key is the ``symbolic_key`` of the free variable's node and the value is the gradient.
     ============================   =================
 
+.. class:: mindspore.np_dtype
+
+  ``np_dtype`` expands Numpy's data types.
+
+  The actual path of ``np_dtype`` is ``/mindspore/common/np_dtype.py``.
+  Run the following command to import the package:
+
+  .. code-block::
+
+      from mindspore import np_dtype
+
+  * **Numeric Type**
+
+    ============================   =================
+    Type                            Description
+    ============================   =================
+    ``bfloat16``                   The ``bfloat16`` data type under NumPy. This type is only used to construct Tensor of type ``bfloat16``, and does not guarantee the full computing power under Numpy. Takes effect only if the version of Numpy at runtime is not less than the version of Numpy at compilation.
+    ============================   =================
+
 
 .. autosummary::
     :toctree: mindspore
