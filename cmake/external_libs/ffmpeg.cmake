@@ -44,8 +44,8 @@ else()
     if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
         add_custom_target(
                 link_ffmpeg ALL
-                COMMAND echo hhhhhhhhhhhhhhhhhhhhhhh
-                COMMENT "install tool name"
+                COMMAND echo "modify ffmpeg install name"
+                COMMENT "modify ffmpeg install name"
         )
 
         # rename self

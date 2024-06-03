@@ -12,81 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import av
-import cv2
 import numpy as np
 import pytest
 
-from mindspore import log as logger
 from mindspore.dataset import vision
 
 
-def check_mindspore_opencv_data(mindspore_data, opencv_data, error_rate_limit=0.0002):
+filename = "/home/workspace/mindspore_dataset/video_file/final_output.avi"
+read_video_video_path = "/home/workspace/mindspore_dataset/video_file/read_video_video_output.npy"
+read_video_audio_path = "/home/workspace/mindspore_dataset/video_file/read_video_audio_output.npy"
+decode_video_video_path = "/home/workspace/mindspore_dataset/video_file/decode_video_video_output.npy"
+decode_video_audio_path = "/home/workspace/mindspore_dataset/video_file/decode_video_audio_output.npy"
+
+
+def check_mindspore_opencv_data(mindspore_data, video_path, audio_path, error_rate_limit=0.0002):
     """check_mindspore_opencv_data"""
-    assert mindspore_data[0].shape == tuple(opencv_data[0].shape)
-    assert mindspore_data[1].shape == tuple(opencv_data[1].shape)
-    assert np.allclose(mindspore_data[0], opencv_data[0], error_rate_limit, error_rate_limit)
-    assert np.allclose(mindspore_data[1], opencv_data[1], error_rate_limit, error_rate_limit)
-
-
-def read_audio_pyav(filename: str):
-    """read_audio_pyav"""
-    av_container = av.open(filename, metadata_errors="ignore")
-    total_audio_array = None
-    audio_stream = av_container.streams.audio[0]
-    if audio_stream is not None:
-        for packet in av_container.demux(audio_stream):
-            for audio_frame in packet.decode():
-                audio_array = audio_frame.to_ndarray()
-                if total_audio_array is None:
-                    total_audio_array = audio_array
-                else:
-                    total_audio_array = np.concatenate((total_audio_array, audio_array), axis=1)
-    av_container.close()
-    return total_audio_array
-
-
-def read_visual_opencv(filename: str):
-    """read_visual_opencv"""
-    video_capture = cv2.VideoCapture(filename, cv2.CAP_FFMPEG)
-    if not video_capture.isOpened():
-        logger.info("Can not open this file")
-    else:
-        frame_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        frame_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-        frame_list = []
-        status, frame = video_capture.read()
-        i = 0
-        while status:
-            rgb_frame = np.empty(shape=(frame_height, frame_width, 3), dtype=np.uint8)
-            rgb_frame[::, ::, 0] = frame[::, ::, 2]
-            rgb_frame[::, ::, 1] = frame[::, ::, 1]
-            rgb_frame[::, ::, 2] = frame[::, ::, 0]
-            frame_list.append(rgb_frame)
-            i += 1
-            status, frame = video_capture.read()
-    video_capture.release()
-    return np.asarray(frame_list)
-
-
-def read_visual_pyav(filename: str):
-    """read_visual_pyav"""
-    av_container = av.open(filename, metadata_errors="ignore")
-    frame_list = []
-    video_stream = av_container.streams.audio[0]
-    if video_stream is not None:
-        for packet in av_container.demux(video_stream):
-            for video_frame in packet.decode():
-                video_array = video_frame.to_ndarray(format="rgb24")
-                frame_list.append(video_array)
-    av_container.close()
-    total_video_array = np.asarray(frame_list)
-    av_container.close()
-    return total_video_array
+    cv_video_output = np.load(video_path)
+    cv_audio_output = np.load(audio_path)
+    assert np.allclose(mindspore_data[0], cv_video_output, error_rate_limit, error_rate_limit)
+    assert np.allclose(mindspore_data[1], cv_audio_output, error_rate_limit, error_rate_limit)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_acc_read_video():
     """
@@ -94,15 +42,12 @@ def test_acc_read_video():
     Description: Read an AVI file by "pts" as the pts_unit
     Expectation: The Output is equal to the expected output
     """
-    filename = "../../ut/python/data/dataset/video/campus.avi"
-
     mindspore_output = vision.read_video(filename, pts_unit="pts")
-    cv_video_output_, cv_audio_output = read_visual_opencv(filename), read_audio_pyav(filename)
-    check_mindspore_opencv_data(mindspore_output, [cv_video_output_, cv_audio_output])
+    check_mindspore_opencv_data(mindspore_output, read_video_video_path, read_video_audio_path)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_acc_decode_video():
     """
@@ -110,8 +55,6 @@ def test_acc_decode_video():
     Description: Decode an AVI numpy.ndarray
     Expectation: The Output is equal to the expected output
     """
-    filename = "../../ut/python/data/dataset/video/campus.avi"
     raw_ndarray = np.fromfile(filename, np.uint8)
     mindspore_output = vision.DecodeVideo()(raw_ndarray)
-    cv_video_output_, cv_audio_output = read_visual_pyav(filename), read_audio_pyav(filename)
-    check_mindspore_opencv_data(mindspore_output, [cv_video_output_, cv_audio_output])
+    check_mindspore_opencv_data(mindspore_output, decode_video_video_path, decode_video_audio_path)
