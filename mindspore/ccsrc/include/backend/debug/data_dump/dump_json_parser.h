@@ -30,6 +30,10 @@
 #include "include/backend/visible.h"
 
 namespace mindspore {
+void CheckJsonUnsignedType(const nlohmann::json &content, const std::string &key);
+void CheckJsonStringType(const nlohmann::json &content, const std::string &key);
+void CheckJsonArrayType(const nlohmann::json &content, const std::string &key);
+
 class BACKEND_EXPORT DumpJsonParser {
  public:
   static DumpJsonParser &GetInstance() {
@@ -60,6 +64,7 @@ class BACKEND_EXPORT DumpJsonParser {
   std::string dump_layer() const { return dump_layer_; }
   bool async_dump_enabled() const { return async_dump_enabled_; }
   bool e2e_dump_enabled() const { return e2e_dump_enabled_; }
+  std::set<std::string> statistic_category() const { return statistic_category_; }
   uint32_t dump_mode() const { return dump_mode_; }
   std::string path() const { return path_; }
   std::string saved_data() const { return saved_data_; }
@@ -141,8 +146,9 @@ class BACKEND_EXPORT DumpJsonParser {
   uint32_t cur_dump_iter_{0};
   bool already_parsed_{false};
   std::string dump_layer_{""};
-  std::string stat_calc_mode_{""};
+  std::string stat_calc_mode_{"host"};
   nlohmann::json kernels_json_ = nlohmann::json::array();
+  std::set<std::string> statistic_category_;
 
   // Save graphs for dump.
   std::vector<session::KernelGraph *> graphs_;
@@ -151,7 +157,7 @@ class BACKEND_EXPORT DumpJsonParser {
   void ParseE2eDumpSetting(const nlohmann::json &content);
 
   static auto CheckJsonKeyExist(const nlohmann::json &content, const std::string &key);
-  static auto CheckSelectableKeyExist(const nlohmann::json &content, const std::string &key);
+  static bool CheckSelectableKeyExist(const nlohmann::json &content, const std::string &key);
 
   void ParseDumpMode(const nlohmann::json &content);
   void ParseDumpPath(const nlohmann::json &content);
@@ -171,6 +177,7 @@ class BACKEND_EXPORT DumpJsonParser {
   void JudgeDumpEnabled();
   void JsonConfigToString();
   void CheckStatCalcModeVaild();
+  void ParseStatisticCategory(const nlohmann::json &content);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DUMP_JSON_PARSER_H_
