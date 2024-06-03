@@ -6280,13 +6280,12 @@ def batch_norm_ext(input, running_mean, running_var, weight=None, bias=None, tra
         eps (float, optional): A small value added for numerical stability. Default: ``1e-5``.
 
     Returns:
-        output (Tensor) - The same type and shape as the `input`. The shape is :math:`(N, C, *)`.
+        Tensor, has the same type and shape as `input`. The shape is :math:`(N, C, *)`.
 
     Raises:
         TypeError: If `training` is not a bool.
         TypeError: If dtype of `eps` or `momentum` is not float.
         TypeError: If `input`, `weight`, `bias`, `running_mean` or `running_var` is not a Tensor.
-        TypeError: If dtype of `input`, `weight` is not bfloat16, float16 or float32.
 
     Supported Platforms:
         ``Ascend``

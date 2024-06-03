@@ -29,4 +29,4 @@ mindspore.mint.nn.functional.batch_norm
     异常：
         - **TypeError** - `training` 不是bool。
         - **TypeError** - `eps` 或 `momentum` 的数据类型不是float。
-        - **TypeError** - `input`、`weight`、`bias`、`running_mean` 或  `running_var` 不是Tensor。
+        - **TypeError** - `input`、`weight`、`bias`、`running_mean` 或 `running_var` 不是Tensor。
