@@ -27,6 +27,7 @@
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 
 namespace mindspore {
@@ -40,6 +41,10 @@ static const std::set<std::string> CANDIDATE_DYNAMIC_VALUE_OPS = {RESHAPE, STRID
 static const std::set<std::string> SPLIT_TENSOR_ONLY_FOR_FIRST_INPUT_OPS = {PAD_V3};
 // the input is tuple or list
 static const std::set<std::string> INPUT_IS_TUPLE_OR_LIST_OPS = {CONCAT, STACK, ADDN, INCRE_FLASH_ATTENTION};
+// op list for allreduce pull down
+static const std::set<std::string> ALLREDUCE_PULL_DOWN_WHITE_LIST = {
+  STRIDED_SLICE, TUPLE_GETITEM_OP, RESHAPE, TRANSPOSE, MIRROR_OPERATOR, ADD, MUL, DIV, GATHERV2, PRELU, RELU, SILU,
+  GELU,          FAST_GELU};
 
 const int64_t TWO_INPUT_SIZE = 2;
 
