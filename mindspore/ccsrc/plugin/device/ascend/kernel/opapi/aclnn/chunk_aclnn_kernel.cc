@@ -32,6 +32,9 @@ void ChunkAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
   const auto &input_shape = inputs[kIndex0]->GetShape()->GetShapeVector();
   auto chunks = transform::ConvertKernelTensor<int64_t>(inputs[kIndex1]);
   dims_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex2]);
+  if (dims_ < 0) {
+    dims_ += SizeToLong(input_shape.size());
+  }
   int64_t dim_size = input_shape[dims_];
   split_size_ = (dim_size + chunks - 1) / chunks;
   if (split_size_ == 0 && dim_size == 0) {

@@ -42,19 +42,50 @@ def test_chunk_forward(mode):
     """
     np_x = np.array(np.arange(10).reshape((5, 2)), dtype=np.float32)
     x = ms.Tensor(np_x, dtype=ms.float32)
+    dims = 0
     chunks = 3
     expect = [np.array(np.arange(4).reshape((2, 2)), dtype=np.float32),
               np.array(np.arange(4, 8).reshape((2, 2)), dtype=np.float32),
               np.array(np.arange(8, 10).reshape((1, 2)), dtype=np.float32)]
     if mode == 'pynative':
         context.set_context(mode=ms.PYNATIVE_MODE)
-        out = chunk_forward_func(x, chunks, 0)
+        out = chunk_forward_func(x, chunks, dims)
     elif mode == 'KBK':
         context.set_context(mode=ms.GRAPH_MODE)
-        out = (jit(chunk_forward_func, jit_config=JitConfig(jit_level="O0")))(x, chunks, 0)
+        out = (jit(chunk_forward_func, jit_config=JitConfig(jit_level="O0")))(x, chunks, dims)
     else:
         context.set_context(mode=ms.GRAPH_MODE)
-        out = chunk_forward_func(x, chunks, 0)
+        out = chunk_forward_func(x, chunks, dims)
+    for res, exp in zip(out, expect):
+        assert np.allclose(res.asnumpy(), exp)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize("mode", ['GE', 'pynative', 'KBK'])
+def test_chunk_forward_with_minus_dim(mode):
+    """
+    Feature: Chunk
+    Description: test op Chunk
+    Expectation: expect correct result.
+    """
+    np_x = np.array(np.arange(10).reshape((5, 2)), dtype=np.float32)
+    x = ms.Tensor(np_x, dtype=ms.float32)
+    dims = -1
+    chunks = 2
+    expect = [np.array([[0], [2], [4], [6], [8]], dtype=np.float32),
+              np.array([[1], [3], [5], [7], [9]], dtype=np.float32)]
+    if mode == 'pynative':
+        context.set_context(mode=ms.PYNATIVE_MODE)
+        out = chunk_forward_func(x, chunks, dims)
+    elif mode == 'KBK':
+        context.set_context(mode=ms.GRAPH_MODE)
+        out = (jit(chunk_forward_func, jit_config=JitConfig(jit_level="O0")))(x, chunks, dims)
+    else:
+        context.set_context(mode=ms.GRAPH_MODE)
+        out = chunk_forward_func(x, chunks, dims)
     for res, exp in zip(out, expect):
         assert np.allclose(res.asnumpy(), exp)
 
