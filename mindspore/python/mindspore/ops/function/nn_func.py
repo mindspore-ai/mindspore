@@ -3720,11 +3720,10 @@ def pad_ext(input, pad, mode='constant', value=None):
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
-        >>> from mindspore.mint.nn.functional import pad
+        >>> from mindspore import ops
         >>> import numpy as np
         >>> x = ms.Tensor(np.arange(1 * 2 * 2 * 2).reshape((1, 2, 2, 2)), dtype=ms.float64)
-        >>> output = pad(x, [1, 0, 0, 1], mode='constant', value=6.0)
+        >>> output = ops.pad_ext(x, [1, 0, 0, 1], mode='constant', value=6.0)
         >>> print(output)
         [[[[6. 0. 1.]
            [6. 2. 3.]

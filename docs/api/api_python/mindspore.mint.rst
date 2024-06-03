@@ -192,6 +192,7 @@ Dropout函数
 
     mindspore.mint.nn.functional.unfold
     mindspore.mint.nn.functional.fold
+    mindspore.mint.nn.functional.pad
 
 
 
