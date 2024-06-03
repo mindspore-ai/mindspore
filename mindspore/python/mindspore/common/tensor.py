@@ -50,7 +50,8 @@ def _check_input_data_type(input_data):
     valid_dtypes = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64,
                     np.float16, np.float32, np.float64, np.bool_, np.str_, np.complex64, np.complex128)
     if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes and \
-            input_data.dtype.kind != 'U' and input_data.dtype.kind != 'S':  # Support dtype np.str_
+            input_data.dtype.kind != 'U' and input_data.dtype.kind != 'S' and \
+            input_data.dtype.kind != 'T':  # Support dtype np.str_ and npy_bfloat16
         new_line = '\n'
         for index, x in np.ndenumerate(input_data):
             if np.array(x).dtype not in valid_dtypes:
@@ -343,10 +344,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         return out
 
     def __bool__(self):
-        if self.dtype == mstype.bfloat16:
-            data = self.float().asnumpy()
-        else:
-            data = self.asnumpy()
+        data = self.asnumpy()
         if data.shape == ():
             return bool(data)
         if data.shape == (1,):
@@ -362,24 +360,15 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         raise ValueError(message)
 
     def __int__(self):
-        if self.dtype == mstype.bfloat16:
-            data = self.float().asnumpy()
-        else:
-            data = self.asnumpy()
+        data = self.asnumpy()
         return self._convert_scalar_(data, int, "Only one element tensors can be converted to Python scalars")
 
     def __float__(self):
-        if self.dtype == mstype.bfloat16:
-            data = self.float().asnumpy()
-        else:
-            data = self.asnumpy()
+        data = self.asnumpy()
         return self._convert_scalar_(data, float, "Only one element tensors can be converted to Python scalars")
 
     def __index__(self):
-        if self.dtype == mstype.bfloat16:
-            data = self.float().asnumpy()
-        else:
-            data = self.asnumpy()
+        data = self.asnumpy()
         if data.dtype not in ["int8", "int16", "int32", "int64", "bool"]:
             raise ValueError("Only integer tensors of a single element can be converted to an index.")
         return self._convert_scalar_(data, int,
@@ -516,8 +505,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def __str__(self):
         if self.dtype == mstype.type_none:
             return "Unknown Tensor type!"
-        if self.dtype == mstype.bfloat16:
-            return str(self.float().asnumpy())
         return str(self.asnumpy())
 
     def __getstate__(self):
@@ -2854,12 +2841,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         if slice_num_of_persistent_data > 1:
             self.assign_value(Tensor_.persistent_data_from_numpy(data, slice_num_of_persistent_data))
         else:
-            if self.dtype == mstype.bfloat16:
-                # The dtype of data is np.float32 when mstype is bfloat16,
-                # so we create tensor_ by init func instead of asnumpy
-                self.assign_value(Tensor_(data, self.dtype))
-            else:
-                self.assign_value(Tensor_.from_numpy(data))
+            self.assign_value(Tensor_.from_numpy(data))
         return self
 
     def resize(self, *new_shape):

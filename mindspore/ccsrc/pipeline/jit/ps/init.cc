@@ -161,6 +161,7 @@ void RegModule(py::module *m) {
   RegMsContext(m);
   RegSecurity(m);
   RegForkUtils(m);
+  RegNumpyTypes(m);
   mindspore::hal::RegStream(m);
   mindspore::hal::RegEvent(m);
   mindspore::hal::RegMemory(m);
