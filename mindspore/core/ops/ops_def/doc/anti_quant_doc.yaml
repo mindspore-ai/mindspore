@@ -18,12 +18,12 @@ anti_quant:
             ``mindspore.float16`` or ``mindspore.bfloat16``, Default: ``mindspore.float16`` .
 
     Inputs:
-        - **x** (Tensor) : Input tensor. Must be mindspore.int8.
-        - **scale** (Tensor) : Specifies the scaling ratio. Must be mindspore.float16`` or ``mindspore.bfloat16.
-        - **offset** (Tensor, optional) : Specifies the offset. Must be mindspore.float16`` or ``mindspore.bfloat16.
+        - **x** (Tensor) : Input tensor. Must be ``mindspore.int8``.
+        - **scale** (Tensor) : Specifies the scaling ratio. Must be ``mindspore.float16`` or ``mindspore.bfloat16``.
+        - **offset** (Tensor, optional) : Specifies the offset. Must be ``mindspore.float16`` or ``mindspore.bfloat16``.
             Default: ``None``.
     Outputs:
-        - Tensor: The antiquantized output tensor of type `dtype`.
+        Tensor. The antiquantized output tensor of type `dtype`, has the same shape as `x`.
 
     Examples:
         >>> import mindspore as ms
