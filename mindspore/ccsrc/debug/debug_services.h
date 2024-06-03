@@ -272,6 +272,21 @@ class DebugServices {
     uint64_t zero_count = 0;
     double l2_value = 0.0;
     std::string md5 = "";
+    std::map<std::string, std::string> header_item_map;
+    void UpdateHeaderItemMap() {
+      header_item_map = {{"max", std::to_string(max_value)},
+                         {"min", std::to_string(min_value)},
+                         {"avg", std::to_string(avg_value)},
+                         {"count", std::to_string(count)},
+                         {"negative zero count", std::to_string(neg_zero_count)},
+                         {"positive zero count", std::to_string(pos_zero_count)},
+                         {"nan count", std::to_string(nan_count)},
+                         {"negative inf count", std::to_string(neg_inf_count)},
+                         {"positive inf count", std::to_string(pos_inf_count)},
+                         {"zero count", std::to_string(zero_count)},
+                         {"l2norm", std::to_string(l2_value)},
+                         {"md5", md5}};
+    }
   };
 
   struct ChunkData {

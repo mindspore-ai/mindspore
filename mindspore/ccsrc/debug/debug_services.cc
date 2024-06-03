@@ -244,28 +244,36 @@ DebugServices::TensorStat DebugServices::GetTensorStatistics(const std::shared_p
   std::string md5 = "";
   MSLogTime msTime;
 #ifndef OFFLINE_DBG_MODE
-  msTime.Start();
-  char md5str[33];
-  auto ret = memset_s(md5str, sizeof(md5str), '\0', sizeof(md5str));
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "Failed to call memset_s, skip record MD5.";
-  } else {
-    openssl_md5(const_cast<char *>(tensor->GetDataPtr()), md5str, tensor->GetByteSize());
-    md5 = std::string(md5str);
+  bool need_md5 = false;
+  auto statistic_category = DumpJsonParser::GetInstance().statistic_category();
+  auto find_md5 = statistic_category.find("md5");
+  if (find_md5 != statistic_category.end()) {
+    need_md5 = true;
   }
-  msTime.End();
-  MS_LOG(DEBUG) << "Calc md5 costs time : " << msTime.GetRunTimeUS() << " microseconds.";
+  if (need_md5) {
+    msTime.Start();
+    char md5str[33];
+    auto ret = memset_s(md5str, sizeof(md5str), '\0', sizeof(md5str));
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "Failed to call memset_s, skip record MD5.";
+    } else {
+      openssl_md5(const_cast<char *>(tensor->GetDataPtr()), md5str, tensor->GetByteSize());
+      md5 = std::string(md5str);
+    }
+    msTime.End();
+    MS_LOG(DEBUG) << "Calc md5 costs time : " << msTime.GetRunTimeUS() << " microseconds.";
+  }
 #endif
   msTime.Start();
   base_summary_ptr->TensorStatistics(tensor->GetType());
   msTime.End();
   MS_LOG(DEBUG) << "Calc statistic costs time : " << msTime.GetRunTimeUS() << " microseconds.";
-  TensorStat tensor_stat_data(tensor->GetByteSize(), tensor->GetType(), tensor->GetShape(), base_summary_ptr->is_bool(),
-                              base_summary_ptr->max_value(), base_summary_ptr->min_value(),
-                              base_summary_ptr->avg_value(), base_summary_ptr->count(),
-                              base_summary_ptr->neg_zero_count(), base_summary_ptr->pos_zero_count(),
-                              base_summary_ptr->nan_count(), base_summary_ptr->neg_inf_count(),
-                              base_summary_ptr->pos_inf_count(), base_summary_ptr->zero_count(), base_summary_ptr->l2_value(), md5);
+  TensorStat tensor_stat_data(
+    tensor->GetByteSize(), tensor->GetType(), tensor->GetShape(), base_summary_ptr->is_bool(),
+    base_summary_ptr->max_value(), base_summary_ptr->min_value(), base_summary_ptr->avg_value(),
+    base_summary_ptr->count(), base_summary_ptr->neg_zero_count(), base_summary_ptr->pos_zero_count(),
+    base_summary_ptr->nan_count(), base_summary_ptr->neg_inf_count(), base_summary_ptr->pos_inf_count(),
+    base_summary_ptr->zero_count(), base_summary_ptr->l2_value(), md5);
 
   return tensor_stat_data;
 }

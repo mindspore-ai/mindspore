@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 #include "include/backend/debug/data_dump/dump_json_parser.h"
-#include <fstream>
 #include <algorithm>
-#include "utils/log_adapter.h"
-#include "include/common/debug/common.h"
-#include "debug/utils.h"
-#include "ops/ascend_op_name.h"
-#include "utils/ms_context.h"
-#include "utils/convert_utils_base.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include <fstream>
 #include "debug/data_dump/npy_header.h"
+#include "debug/utils.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/debug/anf_dump_utils.h"
+#include "include/common/debug/common.h"
+#include "include/common/utils/anfalgo.h"
 #include "include/common/utils/comm_manager.h"
 #include "mindspore/core/utils/file_utils.h"
 #include "mindspore/core/utils/ms_utils.h"
+#include "ops/ascend_op_name.h"
+#include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
+#include "utils/ms_context.h"
 
 namespace {
 constexpr auto kCommonDumpSettings = "common_dump_settings";
@@ -53,12 +53,27 @@ constexpr auto kStatisticDump = "statistic";
 constexpr auto kTensorDump = "tensor";
 constexpr auto kFullDump = "full";
 constexpr auto kFileFormat = "file_format";
+constexpr auto kStatisticCategory = "statistic_category";
 constexpr auto kDumpInputAndOutput = 0;
 constexpr auto kDumpInputOnly = 1;
 constexpr auto kDumpOutputOnly = 2;
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 constexpr auto kBracketsOffset = 1;
 constexpr auto kRegexPrefixLength = 11;
+const std::set<std::string> kDefaultStatisticCategory = {"max", "min", "l2norm"};
+const std::set<std::string> kDeviceStatisticCategory = {"max", "min", "avg", "l2norm"};
+const std::set<std::string> kHostStatisticCategory = {"max",
+                                                      "min",
+                                                      "avg",
+                                                      "count",
+                                                      "negative zero count",
+                                                      "positive zero count",
+                                                      "nan count",
+                                                      "negative inf count",
+                                                      "positive inf count",
+                                                      "zero count",
+                                                      "md5",
+                                                      "l2norm"};
 }  // namespace
 
 namespace mindspore {
@@ -70,7 +85,7 @@ auto DumpJsonParser::CheckJsonKeyExist(const nlohmann::json &content, const std:
   return iter;
 }
 
-auto DumpJsonParser::CheckSelectableKeyExist(const nlohmann::json &content, const std::string &key) {
+bool DumpJsonParser::CheckSelectableKeyExist(const nlohmann::json &content, const std::string &key) {
   nlohmann::json::const_iterator iter = content.find(key);
   if (iter == content.end()) {
     return false;
@@ -175,6 +190,52 @@ void DumpJsonParser::Parse() {
   PyNativeModeCheck();
   CheckE2eSetting();
   JudgeDumpEnabled();
+  CheckStatCalcModeVaild();
+  ParseStatisticCategory(j);
+}
+
+void DumpJsonParser::ParseStatisticCategory(const nlohmann::json &content) {
+  if (!IsStatisticDump()) {
+    return;
+  }
+  auto common_dump_settings = CheckJsonKeyExist(content, kCommonDumpSettings);
+  auto set_statistic_category = CheckSelectableKeyExist(*common_dump_settings, kStatisticCategory);
+  if (set_statistic_category) {
+    auto user_statistics = CheckJsonKeyExist(*common_dump_settings, kStatisticCategory);
+    CheckJsonArrayType(*user_statistics, kStatisticCategory);
+    if (IsDeviceCalcStats()) {
+      for (const auto &statistic_item : *user_statistics) {
+        auto rt_find = kDeviceStatisticCategory.find(statistic_item);
+        if (rt_find == kDeviceStatisticCategory.end()) {
+          MS_LOG(EXCEPTION) << "The item: " << statistic_item
+                            << " is not a valid statistic category on device statistic.";
+        } else {
+          std::string statistic_item_str = statistic_item;
+          statistic_category_.insert(statistic_item_str);
+          MS_LOG(INFO) << "The item: " << statistic_item_str
+                       << " is a valid statistic category, it will be computed on device.";
+        }
+      }
+    } else {
+      for (const auto &statistic_item : *user_statistics) {
+        auto rt_find = kHostStatisticCategory.find(statistic_item);
+        if (rt_find == kHostStatisticCategory.end()) {
+          MS_LOG(EXCEPTION) << "The item: " << statistic_item << " is not a valid statistic category, ignore it.";
+        } else {
+          std::string statistic_item_str = statistic_item;
+          statistic_category_.insert(statistic_item_str);
+          MS_LOG(INFO) << "The item: " << statistic_item_str
+                       << " is a valid statistic category, it will be computed on host.";
+        }
+      }
+    }
+  } else {
+    statistic_category_ = kDefaultStatisticCategory;
+    MS_LOG(INFO) << "Statistic category is not set, use the default items as follows:";
+    for (auto &itm : kDefaultStatisticCategory) {
+      MS_LOG(INFO) << itm;
+    }
+  }
 }
 
 void WriteJsonFile(const std::string &file_path, const std::ifstream &json_file) {
@@ -369,8 +430,8 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
   }
   fd.close();
   msTime.End();
-  MS_LOG(DEBUG) << "Dump file costs time : " << " microseconds.";
-  
+  MS_LOG(DEBUG) << "Dump file costs time : " << msTime.GetRunTimeUS() << " microseconds.";
+
   ChangeFileMode(file_path_str, S_IRUSR);
   return true;
 }
