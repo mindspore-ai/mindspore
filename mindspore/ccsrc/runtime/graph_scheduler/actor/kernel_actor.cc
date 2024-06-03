@@ -119,8 +119,11 @@ void KernelActor::Init() {
     return;
   }
   auto device_context = device_contexts_[0];
-  if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
-    MS_LOG(DEBUG) << "kernel : " << cnode->DebugString() << " is cpu kernel, will skip multi stream process.";
+  // cpu kernel does not need multi stream process, and gpu kernel has not adapt it currently.
+  if (device_context->GetDeviceType() == device::DeviceType::kCPU ||
+      device_context->GetDeviceType() == device::DeviceType::kGPU) {
+    MS_LOG(DEBUG) << "kernel : " << cnode->DebugString() << " device type is " << device_context->GetDeviceType()
+                  << ", will skip multi stream process.";
     is_multi_stream_process_skipped_ = true;
     return;
   }
