@@ -58,12 +58,12 @@ bool DummyAscendCollectiveCommLib::CreateCommunicationGroup(const std::string &g
   auto group = std::make_shared<ascend::AscendCommunicationGroup>(group_name, group_ranks, GetRankId(group_name),
                                                                   local_group_rank, local_group_size);
   groups_[group_name] = group;
-  std::vector<unsigned int> dummy_ranks = {0};
-  if (hccl::HcclAdapter::GetInstance().HcclCreateGroup(group_name, UlongToUint(1),
-                                                       std::vector<unsigned int>(dummy_ranks).data()) != 0) {
-    MS_LOG(ERROR) << "create communicate group" << group_name << "failed";
-    return false;
-  }
+  // std::vector<unsigned int> dummy_ranks = {0};
+  // if (hccl::HcclAdapter::GetInstance().HcclCreateGroup(group_name, UlongToUint(1),
+  //                                                      std::vector<unsigned int>(dummy_ranks).data()) != 0) {
+  //   MS_LOG(ERROR) << "create communicate group" << group_name << "failed";
+  //   return false;
+  // }
 
   return true;
 }
