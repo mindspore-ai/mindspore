@@ -17,6 +17,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
 #include "ops/op_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -31,5 +32,16 @@ TypePtr LeakyReLUGradExtFuncImpl::InferType(const PrimitivePtr &primitive,
   auto input_type = input_args[kIndex1]->GetType();
   return input_type;
 }
+TypePtrList LeakyReLUGradExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->Dtype()};
+}
+ShapeArray LeakyReLUGradExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameLeakyReLUGradExt, LeakyReLUGradExtFuncImpl);
 }  // namespace ops
 }  // namespace mindspore

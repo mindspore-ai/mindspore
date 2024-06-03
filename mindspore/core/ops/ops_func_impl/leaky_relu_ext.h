@@ -28,6 +28,9 @@ class MIND_API LeakyReLUExtFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  // simply infer
+  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
 };
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LEAKY_RELU_EXT_H_
