@@ -44,7 +44,7 @@ const AnfNodePtr SplitFusionProcess(const FuncGraphPtr &graph, const AnfNodePtr 
   int64_t axis;
   auto axis_value = axis_node->cast<ValueNodePtr>()->value();
   MS_EXCEPTION_IF_NULL(axis_value);
-  if (axis_value->isa<tensor::Tensor>) {
+  if (axis_value->isa<tensor::Tensor>()) {
     axis = *(static_cast<int32_t *>(axis_value->cast<tensor::TensorPtr>()->data_c()));
   } else {
     auto axis_v = ops::GetScalarValue<int64_t>(axis_node->cast<ValueNodePtr>()->value());
