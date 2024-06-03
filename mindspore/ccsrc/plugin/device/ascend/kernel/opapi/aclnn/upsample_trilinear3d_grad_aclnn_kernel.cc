@@ -57,27 +57,20 @@ UpsampleTrilinear3DGradGenerate(const std::vector<KernelTensor *> &inputs, const
 void UpsampleTrilinear3DGradAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                      const std::vector<KernelTensor *> &outputs) {
   auto params = UpsampleTrilinear3DGradGenerate(inputs, outputs);
-  const auto &input_size = std::get<0>(params);
-  const auto &output_size = std::get<1>(params);
-  auto [scales_d, scales_h, scales_w] = std::get<2>(params);
-  auto align_corners = std::get<3>(params);
-  GetWorkspaceForResize(inputs[0], output_size, input_size, align_corners, scales_d, scales_h, scales_w, outputs[0]);
+  input_size_ = std::get<0>(params);
+  output_size_ = std::get<1>(params);
+  std::tie(scales_d_, scales_h_, scales_w_) = std::get<2>(params);
+  align_corners_ = std::get<3>(params);
+  GetWorkspaceForResize(inputs[0], output_size_, input_size_, align_corners_, scales_d_, scales_h_, scales_w_,
+                        outputs[0]);
 }
 
 bool UpsampleTrilinear3DGradAscend::Launch(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &workspace,
                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-
-  auto params = UpsampleTrilinear3DGradGenerate(inputs, outputs);
-  const auto &input_size = std::get<0>(params);
-  const auto &output_size = std::get<1>(params);
-  auto [scales_d, scales_h, scales_w] = std::get<2>(params);
-  auto align_corners = std::get<3>(params);
-
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[0], output_size, input_size, align_corners, scales_d,
-                                      scales_h, scales_w, outputs[0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[0], output_size_, input_size_, align_corners_, scales_d_, scales_h_, scales_w_,
+        outputs[0]);
   return true;
 }
 

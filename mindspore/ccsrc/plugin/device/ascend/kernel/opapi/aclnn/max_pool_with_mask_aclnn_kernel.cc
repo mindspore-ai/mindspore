@@ -29,15 +29,15 @@ namespace kernel {
 
 void MaxPoolWithMaskAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                              const std::vector<KernelTensor *> &outputs) {
-  auto kernel_size = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
-  std::vector<int64_t> strides = kernel_size;
+  kernel_size_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  strides_ = kernel_size_;
   if (inputs[kIndex2]->type_id() != kMetaTypeNone) {
-    strides = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
+    strides_ = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
   }
-  auto pads = inputs[kIndex3]->GetValueWithCheck<std::vector<int64_t>>();
-  auto dilation = inputs[kIndex4]->GetValueWithCheck<std::vector<int64_t>>();
-  auto ceil_mode = inputs[kIndex5]->GetValueWithCheck<bool>();
-  GetWorkspaceForResize(inputs[kIndex0], kernel_size, strides, pads, dilation, ceil_mode, outputs[kIndex0],
+  pads_ = inputs[kIndex3]->GetValueWithCheck<std::vector<int64_t>>();
+  dilation_ = inputs[kIndex4]->GetValueWithCheck<std::vector<int64_t>>();
+  ceil_mode_ = inputs[kIndex5]->GetValueWithCheck<bool>();
+  GetWorkspaceForResize(inputs[kIndex0], kernel_size_, strides_, pads_, dilation_, ceil_mode_, outputs[kIndex0],
                         outputs[kIndex1]);
 }
 
@@ -45,17 +45,8 @@ bool MaxPoolWithMaskAscend::Launch(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &workspace,
                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto kernel_size = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
-  std::vector<int64_t> strides = kernel_size;
-  if (inputs[kIndex2]->type_id() != kMetaTypeNone) {
-    strides = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
-  }
-  auto pads = inputs[kIndex3]->GetValueWithCheck<std::vector<int64_t>>();
-  auto dilation = inputs[kIndex4]->GetValueWithCheck<std::vector<int64_t>>();
-  auto ceil_mode = inputs[kIndex5]->GetValueWithCheck<bool>();
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], kernel_size, strides, pads, dilation,
-                                      ceil_mode, outputs[kIndex0], outputs[kIndex1]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], kernel_size_, strides_, pads_, dilation_, ceil_mode_, outputs[kIndex0],
+        outputs[kIndex1]);
   return true;
 }
 

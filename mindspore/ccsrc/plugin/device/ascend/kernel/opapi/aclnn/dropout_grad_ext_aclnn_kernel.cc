@@ -23,9 +23,6 @@ void DropoutGradExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &i
                                             const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(primitive_);
   p_value_ = static_cast<double>(inputs[kIndex2]->GetValueWithCheck<float>());
-
-  MS_LOG(DEBUG) << primitive_->name() << " got a (" + TypeIdToString(inputs[kIndex2]->dtype_id()) + ")p = " << p_value_;
-
   GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], p_value_, outputs[kIndex0]);
 }
 
@@ -33,9 +30,7 @@ bool DropoutGradExtAscend::Launch(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &workspace,
                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(dropout_do_mask_, do_mask_hash_id_, inputs[kIndex0], inputs[kIndex1], p_value_,
-                                      outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], p_value_, outputs[kIndex0]);
   return true;
 }
 

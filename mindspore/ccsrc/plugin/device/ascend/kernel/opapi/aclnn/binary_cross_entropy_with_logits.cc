@@ -53,9 +53,8 @@ bool BinaryCrossEntropyWithLogitsAclnnKernelMod::Launch(const std::vector<Kernel
   }
   auto reduction = iter->second;
 
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2],
-                                      inputs[kIndex3], reduction, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], reduction,
+        outputs[kIndex0]);
   return true;
 }
 

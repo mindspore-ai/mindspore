@@ -61,6 +61,12 @@ using _aclDestroyIntArray = int (*)(const aclIntArray *array);
 using _aclDestroyFloatArray = int (*)(const aclFloatArray *array);
 using _aclDestroyBoolArray = int (*)(const aclBoolArray *array);
 using _aclDestroyTensorList = int (*)(const aclTensorList *array);
+using _aclDestroyAclOpExecutor = int (*)(aclOpExecutor *executor);
+// Update operator.
+using _aclSetAclOpExecutorRepeatable = int (*)(aclOpExecutor *executor);
+using _aclSetTensorAddr = int (*)(aclOpExecutor *executor, const size_t index, aclTensor *tensor, void *addr);
+using _aclSetDynamicTensorAddr = int (*)(aclOpExecutor *executor, const size_t index, const size_t relativeIndex,
+                                         aclTensorList *tensors, void *addr);
 
 extern std::vector<std::pair<void *, std::string>> opapi_lib_handle;
 extern void LoadOpApiLib();
@@ -561,6 +567,51 @@ constexpr auto ConvertTypes(const Ts &... args) {
   return std::make_tuple(ConvertType(args)...);
 }
 
+inline std::vector<void *> GetAddr(const std::vector<KernelTensor *> tensor_list) {
+  std::vector<void *> addr_list;
+  for (const auto &tensor : tensor_list) {
+    MS_EXCEPTION_IF_NULL(tensor);
+    (void)addr_list.emplace_back(tensor->device_ptr());
+  }
+  return addr_list;
+}
+
+inline std::vector<void *> GetAddr(KernelTensor *tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  return {tensor->device_ptr()};
+}
+
+inline std::vector<void *> GetAddr(const std::pair<KernelTensor *, bool> &tensor_pair) {
+  MS_EXCEPTION_IF_NULL(tensor_pair.first);
+  return {tensor_pair.first->device_ptr()};
+}
+
+template <typename T>
+std::vector<void *> GetAddr(T) {
+  return {};
+}
+
+inline void FillAddress(std::vector<std::vector<void *>> *) {}
+
+template <typename T, typename... Ts>
+void FillAddress(std::vector<std::vector<void *>> *address_list, const T &arg, const Ts &... args) {
+  // Current only input/output support nullptr.
+  if constexpr (std::is_same_v<T, std::nullptr_t>) {
+    std::vector<void *> empty_addr = {nullptr};
+    (void)address_list->emplace_back(std::move(empty_addr));
+  } else {
+    (void)address_list->emplace_back(GetAddr(arg));
+  }
+  FillAddress(address_list, args...);
+}
+
+template <typename... Ts>
+std::vector<std::vector<void *>> GetTensorAddress(const Ts &... args) {
+  std::vector<std::vector<void *>> address_list;
+  FillAddress(&address_list, args...);
+  return address_list;
+}
+
 template <typename T>
 T ConvertKernelTensor(mindspore::kernel::KernelTensor *tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
@@ -721,6 +772,15 @@ inline void Release(aclTensorList *p) {
   aclDestroyTensorList(p);
 }
 
+inline void Release(aclOpExecutor *p) {
+  static const auto aclDestroyAclOpExecutor = GET_OP_API_FUNC(aclDestroyAclOpExecutor);
+  if (aclDestroyAclOpExecutor == nullptr) {
+    return;
+  }
+
+  aclDestroyAclOpExecutor(p);
+}
+
 template <typename T>
 void Release(T value) {
   (void)value;
@@ -735,6 +795,58 @@ template <typename Tuple>
 void ReleaseConvertTypes(const Tuple &t) {
   static constexpr auto size = std::tuple_size<Tuple>::value;
   CallRelease(t, std::make_index_sequence<size>{});
+}
+
+inline void UpdateAddress(aclOpExecutor *executor, aclTensor *tensor, const std::vector<void *> &address, size_t *idx) {
+  MS_EXCEPTION_IF_NULL(executor);
+  static const auto aclSetTensorAddr = GET_OP_API_FUNC(aclSetTensorAddr);
+  if (aclSetTensorAddr == nullptr) {
+    MS_LOG(EXCEPTION) << "aclSetTensorAddr is nullptr";
+    return;
+  }
+  if (address[0] == nullptr) {
+    MS_LOG(DEBUG) << "Optional input's address of index " << idx;
+    (*idx)++;
+    return;
+  }
+  aclSetTensorAddr(executor, *idx, tensor, address[0]);
+  (*idx)++;
+}
+
+inline void UpdateAddress(aclOpExecutor *executor, aclTensorList *tensors, const std::vector<void *> &address,
+                          size_t *idx) {
+  MS_EXCEPTION_IF_NULL(executor);
+  MS_EXCEPTION_IF_NULL(tensors);
+  static const auto aclSetDynamicTensorAddr = GET_OP_API_FUNC(aclSetDynamicTensorAddr);
+  if (aclSetDynamicTensorAddr == nullptr) {
+    MS_LOG(EXCEPTION) << "aclSetDynamicTensorAddr is nullptr";
+    return;
+  }
+  for (size_t i = 0; i < address.size(); ++i) {
+    aclSetDynamicTensorAddr(executor, *idx, i, tensors, address[i]);
+  }
+  (*idx)++;
+}
+
+template <typename T>
+void UpdateAddress(aclOpExecutor *, T, const std::vector<void *> &c, size_t *idx) {
+  if (!c.empty()) {
+    (*idx)++;
+  }
+}
+
+template <typename Tuple, size_t... I>
+void CallUpdate(aclOpExecutor *executor, const std::vector<std::vector<void *>> &address_list, Tuple t,
+                std::index_sequence<I...>) {
+  size_t valid_index = 0;
+  (void)std::initializer_list<int>{(UpdateAddress(executor, std::get<I>(t), address_list[I], &valid_index), 0)...};
+}
+
+template <typename Tuple>
+void UpdateAddressForTensor(aclOpExecutor *executor, const std::vector<std::vector<void *>> &address_list,
+                            const Tuple &t) {
+  static constexpr auto size = std::tuple_size<Tuple>::value;
+  CallUpdate(executor, address_list, t, std::make_index_sequence<size>{});
 }
 
 // return a Scalar with the input type

@@ -34,7 +34,12 @@ class GroupNormAscend : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+
+  int64_t num_groups_;
   double eps_;
+  int64_t n_;
+  int64_t c_;
+  int64_t hw_;
 };
 }  // namespace kernel
 }  // namespace mindspore

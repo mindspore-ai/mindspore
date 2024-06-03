@@ -41,16 +41,15 @@ std::pair<std::vector<KernelTensor *>, int64_t> GetStackRealInputs(const std::ve
 }  // namespace
 void StackExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
-  auto [tensor, axis] = GetStackRealInputs(inputs);
-  GetWorkspaceForResize(tensor, axis, outputs[kIndex0]);
+  std::tie(tensor_, axis_) = GetStackRealInputs(inputs);
+  GetWorkspaceForResize(tensor_, axis_, outputs[kIndex0]);
 }
 
 bool StackExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto [tensor, axis] = GetStackRealInputs(inputs);
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, tensor, axis, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  std::tie(tensor_, axis_) = GetStackRealInputs(inputs);
+  RunOp(stream_ptr, workspace, tensor_, axis_, outputs[kIndex0]);
   return true;
 }
 

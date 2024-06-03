@@ -41,16 +41,15 @@ std::pair<std::vector<KernelTensor *>, int64_t> GetConcatRealInputs(const std::v
 }  // namespace
 void ConcatAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
-  auto [tensor, axis] = GetConcatRealInputs(inputs);
-  GetWorkspaceForResize(tensor, axis, outputs[kIndex0]);
+  std::tie(tensors_, axis_) = GetConcatRealInputs(inputs);
+  GetWorkspaceForResize(tensors_, axis_, outputs[kIndex0]);
 }
 
 bool ConcatAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto [tensor, axis] = GetConcatRealInputs(inputs);
-  ParseGenExecutor(GEN_EXECUTOR(op_type_, tensor, axis, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  std::tie(tensors_, axis_) = GetConcatRealInputs(inputs);
+  RunOp(stream_ptr, workspace, tensors_, axis_, outputs[kIndex0]);
   return true;
 }
 

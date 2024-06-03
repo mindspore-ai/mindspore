@@ -119,9 +119,8 @@ bool GroupedMatmulAscend::Launch(const std::vector<KernelTensor *> &inputs,
   MS_EXCEPTION_IF_NULL(group_type_tensor);
   int64_t group_type = group_type_tensor->GetValueWithCheck<int64_t>();
 
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, x, weight, bias, scale, offset, antiquant_scale,
-                                      antiquant_offset, group_list_tensor, split_item, group_type, outputs));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, x, weight, bias, scale, offset, antiquant_scale, antiquant_offset, group_list_tensor,
+        split_item, group_type, outputs);
   return true;
 }
 

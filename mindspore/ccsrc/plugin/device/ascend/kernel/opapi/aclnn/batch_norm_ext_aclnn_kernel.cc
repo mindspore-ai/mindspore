@@ -46,11 +46,8 @@ bool BatchNormExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const
                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto training = transform::ConvertKernelTensor<bool>(inputs[kIndex5]);
-
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2],
-                                      inputs[kIndex3], inputs[kIndex4], training, momentum_, eps_, outputs[kIndex0],
-                                      outputs[kIndex1], outputs[kIndex2]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
+        training, momentum_, eps_, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]);
   return true;
 }
 

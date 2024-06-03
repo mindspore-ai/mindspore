@@ -45,9 +45,7 @@ bool ScatterAddExtAscend::Launch(const std::vector<KernelTensor *> &inputs,
   if (status != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "ScatterAddExtAscend Launch and call rtMemcpyAsync failed, ret = 0x" << status;
   }
-  ParseGenExecutor(
-    GEN_EXECUTOR_BOOST(op_type_, hash_id_, outputs[kIndex0], dim_, inputs[kIndex2], inputs[kIndex3], outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, outputs[kIndex0], dim_, inputs[kIndex2], inputs[kIndex3], outputs[kIndex0]);
   return true;
 }
 

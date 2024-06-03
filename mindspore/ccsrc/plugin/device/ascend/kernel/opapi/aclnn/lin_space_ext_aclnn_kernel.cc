@@ -28,19 +28,16 @@ namespace mindspore {
 namespace kernel {
 void LinSpaceExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  auto start = transform::ConvertKernelTensor<ScalarPtr>(inputs[kIndex0]);
-  auto end = transform::ConvertKernelTensor<ScalarPtr>(inputs[kIndex1]);
+  start_ = transform::ConvertKernelTensor<ScalarPtr>(inputs[kIndex0]);
+  end_ = transform::ConvertKernelTensor<ScalarPtr>(inputs[kIndex1]);
   steps_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex2]);
-  GetWorkspaceForResize(start, end, steps_, outputs[kIndex0]);
+  GetWorkspaceForResize(start_, end_, steps_, outputs[kIndex0]);
 }
 
 bool LinSpaceExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
-  auto start = transform::ConvertKernelTensor<ScalarPtr>(inputs[kIndex0]);
-  auto end = transform::ConvertKernelTensor<ScalarPtr>(inputs[kIndex1]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, start, end, steps_, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, start_, end_, steps_, outputs[kIndex0]);
   return true;
 }
 

@@ -13,31 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_OPAPI_ACLNN_DROPOUT_GRAD_EXT_ACLNN_KERNEL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_OPAPI_ACLNN_DROPOUT_GRAD_EXT_ACLNN_KERNEL_H_
-#include <string>
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_REDUCE_SUM_ACLNN_KERNEL_MOD_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_REDUCE_SUM_ACLNN_KERNEL_MOD_H_
 #include <vector>
 #include <utility>
+#include <string>
 #include "ops/base_operator.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
 #include "transform/acl_ir/acl_convert.h"
 
 namespace mindspore {
 namespace kernel {
+using TensorParams = transform::TensorParams;
 
-class DropoutGradExtAscend : public AclnnKernelMod {
+class ReduceSumAclnnKernelMod : public AclnnKernelMod {
  public:
-  DropoutGradExtAscend() : AclnnKernelMod(std::move("aclnnDropoutDoMask")) {}
-  ~DropoutGradExtAscend() = default;
+  ReduceSumAclnnKernelMod() : AclnnKernelMod("aclnnReduceSum") {}
+  void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
-  void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
+  TypeId dtype_;
+  bool need_skip_execute_{false};
+
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
-  double p_value_;
+
+ protected:
+  std::vector<int64_t> dims_{};
+  bool keep_dim_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_OPAPI_ACLNN_DROPOUT_GRAD_EXT_ACLNN_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_REDUCE_ACLNN_KERNEL_MOD_H_

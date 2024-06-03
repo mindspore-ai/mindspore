@@ -65,6 +65,7 @@ class GatherDGradAscend : public AclnnKernelMod {
   const std::string inplace_zero_str_{"aclnnInplaceZero"};
   bool zero_ws_size_{0};
   uint64_t zero_hash_id_{0};
+  int64_t dim_;
 };
 }  // namespace kernel
 }  // namespace mindspore

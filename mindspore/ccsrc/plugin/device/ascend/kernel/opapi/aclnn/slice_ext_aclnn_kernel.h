@@ -37,6 +37,10 @@ class SliceExtAscend : public AclnnKernelMod {
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
   std::vector<int64_t> shape_;
+  int64_t dim_;
+  int64_t start_;
+  int64_t end_;
+  int64_t step_;
 };
 }  // namespace kernel
 }  // namespace mindspore

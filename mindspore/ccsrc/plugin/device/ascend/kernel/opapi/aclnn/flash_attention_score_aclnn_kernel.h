@@ -50,7 +50,8 @@ class FlashAttentionScoreAscend : public AclnnKernelMod {
  protected:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
 
-  auto FAGenerate(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  void FAGenerate(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     auto prefix = inputs[kIndex7];
     MS_EXCEPTION_IF_NULL(prefix);
     std::vector<int64_t> prefix_array;
@@ -106,20 +107,18 @@ class FlashAttentionScoreAscend : public AclnnKernelMod {
           << "For actual_seq_qlen and actual_seq_kvlen, must be increasing array and the last number is equal to T.";
       }
       op_type_ = "aclnnFlashAttentionVarLenScore";
-      auto return_value = GEN_EXECUTOR_BOOST(
-        op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
-        inputs[kIndex5], inputs[kIndex6], prefix_array, actual_seq_qlen_array, actual_seq_kvlen_array,
-        scale_value_value, keep_prob_value, pre_tokens_value, next_tokens_value, head_num_value, input_layout_string,
-        inner_precise_value, sparse_mode_value, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]);
-      return return_value;
+      RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
+            inputs[kIndex5], inputs[kIndex6], prefix_array, actual_seq_qlen_array, actual_seq_kvlen_array,
+            scale_value_value, keep_prob_value, pre_tokens_value, next_tokens_value, head_num_value,
+            input_layout_string, inner_precise_value, sparse_mode_value, outputs[kIndex0], outputs[kIndex1],
+            outputs[kIndex2], outputs[kIndex3]);
+      return;
     }
     op_type_ = "aclnnFlashAttentionScore";
-    auto return_value = GEN_EXECUTOR_BOOST(
-      op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
-      inputs[kIndex5], inputs[kIndex6], prefix_array, scale_value_value, keep_prob_value, pre_tokens_value,
-      next_tokens_value, head_num_value, input_layout_string, inner_precise_value, sparse_mode_value, outputs[kIndex0],
-      outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]);
-    return return_value;
+    RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
+          inputs[kIndex5], inputs[kIndex6], prefix_array, scale_value_value, keep_prob_value, pre_tokens_value,
+          next_tokens_value, head_num_value, input_layout_string, inner_precise_value, sparse_mode_value,
+          outputs[kIndex0], outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]);
   }
 
   bool CheckSeqList(const std::vector<int64_t> &seq_list, const ShapeVector &t_shape) {

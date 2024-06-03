@@ -121,6 +121,13 @@ enum class ProfilerEvent {
   kCaptureProcess,
   kCaptureCompile,
   kCaptureGuard,
+  // AclNN
+  kAclnnHitCacheStage1,
+  kAclnnHitCacheStage2,
+  kAclnnMissCacheStage1,
+  kAclnnMissCacheStage2,
+  kAclnnUpdateAddress,
+  kAclnnRunOp,
 };
 
 static const std::map<ProfilerStage, std::string> kProfilerStageString = {
@@ -202,7 +209,14 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kCaptureRunGraph, "CaptureRunGraph"},
   {ProfilerEvent::kCaptureProcess, "CaptureProcess"},
   {ProfilerEvent::kCaptureCompile, "CaptureCompile"},
-  {ProfilerEvent::kCaptureGuard, "CaptureGuard"}};
+  {ProfilerEvent::kCaptureGuard, "CaptureGuard"},
+  // AclNN
+  {ProfilerEvent::kAclnnHitCacheStage1, "AclnnHitCacheStage1"},
+  {ProfilerEvent::kAclnnHitCacheStage2, "AclnnHitCacheStage2"},
+  {ProfilerEvent::kAclnnMissCacheStage1, "AclnnMissCacheStage1"},
+  {ProfilerEvent::kAclnnMissCacheStage2, "AclnnMissCacheStage2"},
+  {ProfilerEvent::kAclnnUpdateAddress, "AclnnUpdateAddress"},
+  {ProfilerEvent::kAclnnRunOp, "AclnnRunOp"}};
 
 #define PROFILER_START(start_time)                                          \
   do {                                                                      \

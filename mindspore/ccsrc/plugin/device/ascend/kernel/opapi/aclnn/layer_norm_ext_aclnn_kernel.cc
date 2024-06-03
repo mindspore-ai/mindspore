@@ -28,24 +28,19 @@ namespace kernel {
 
 void LayerNormExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &outputs) {
-  auto normalized_shape = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex1]);
-  auto eps_dtype_id = inputs[kIndex4]->dtype_id();
-
-  eps_ = (eps_dtype_id == kNumberTypeFloat32) ? static_cast<double>(inputs[kIndex4]->GetValueWithCheck<float>())
-                                              : inputs[kIndex4]->GetValueWithCheck<double>();
-
-  GetWorkspaceForResize(inputs[kIndex0], normalized_shape, inputs[kIndex2], inputs[kIndex3], eps_, outputs[kIndex0],
+  normalized_shape_ = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex1]);
+  eps_dtype_id_ = inputs[kIndex4]->dtype_id();
+  eps_ = (eps_dtype_id_ == kNumberTypeFloat32) ? static_cast<double>(inputs[kIndex4]->GetValueWithCheck<float>())
+                                               : inputs[kIndex4]->GetValueWithCheck<double>();
+  GetWorkspaceForResize(inputs[kIndex0], normalized_shape_, inputs[kIndex2], inputs[kIndex3], eps_, outputs[kIndex0],
                         outputs[kIndex1], outputs[kIndex2]);
 }
 
 bool LayerNormExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                                 const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto normalized_shape = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex1]);
-
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], normalized_shape, inputs[kIndex2],
-                                      inputs[kIndex3], eps_, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], normalized_shape_, inputs[kIndex2], inputs[kIndex3], eps_,
+        outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]);
   return true;
 }
 

@@ -35,6 +35,8 @@ class LayerNormExtAscend : public AclnnKernelMod {
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
 
+  std::vector<int64_t> normalized_shape_;
+  TypeId eps_dtype_id_;
   double eps_ = 1e-5;
 };
 }  // namespace kernel

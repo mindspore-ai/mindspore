@@ -35,6 +35,8 @@ class UpsampleNearest1DAscend final : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+
+  std::vector<int64_t> output_size_;
 };
 }  // namespace kernel
 }  // namespace mindspore

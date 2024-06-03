@@ -26,8 +26,7 @@ void SquareAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
 bool SquareAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex0], outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex0], outputs[kIndex0]);
   return true;
 }
 

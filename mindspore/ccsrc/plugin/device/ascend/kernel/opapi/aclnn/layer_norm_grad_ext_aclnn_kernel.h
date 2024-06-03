@@ -34,6 +34,9 @@ class LayerNormGradExtAscend : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+
+  std::vector<int64_t> normalized_shape_;
+  std::vector<uint8_t> output_mask_{1, 1, 1};
 };
 }  // namespace kernel
 }  // namespace mindspore

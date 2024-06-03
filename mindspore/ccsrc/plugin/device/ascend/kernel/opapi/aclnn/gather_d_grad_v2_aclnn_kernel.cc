@@ -29,8 +29,8 @@ namespace kernel {
 
 void GatherDGradAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  auto dim = transform::ConvertKernelTensor<int64_t>(inputs[kIndex1]);
-  GetWorkspaceForResize(inputs[kIndex0], dim, inputs[kIndex2], inputs[kIndex3], outputs[kIndex0]);
+  dim_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex1]);
+  GetWorkspaceForResize(inputs[kIndex0], dim_, inputs[kIndex2], inputs[kIndex3], outputs[kIndex0]);
   SetWorkspaceForInplaceZero(outputs[kIndex0]);
 }
 
@@ -46,9 +46,7 @@ bool GatherDGradAscend::Launch(const std::vector<KernelTensor *> &inputs, const 
     GEN_EXECUTOR_BOOST(inplace_zero_str_, zero_hash_id_, outputs[kIndex0]);
   RUN_OP_API_ASYNC(inplace_zero_str_, ws_addr, zero_ws_size_, executor, stream_ptr, release_func);
 
-  ParseGenExecutor(
-    GEN_EXECUTOR_BOOST(op_type_, hash_id_, outputs[kIndex0], dim, inputs[kIndex2], inputs[kIndex3], outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, outputs[kIndex0], dim, inputs[kIndex2], inputs[kIndex3], outputs[kIndex0]);
   return true;
 }
 

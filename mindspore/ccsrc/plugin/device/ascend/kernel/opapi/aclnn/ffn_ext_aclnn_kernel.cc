@@ -42,11 +42,9 @@ bool FFNExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::
   std::string activation_string = "fastgelu";
   auto activation_imm = transform::ConvertKernelTensor<int64_t>(inputs[kIndex14]);
   activation_string = FFNActivationMode::ConvertEnumToString(activation_imm);
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(
-    op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], expertTokens_array, inputs[kIndex4],
-    inputs[kIndex5], inputs[kIndex6], inputs[kIndex7], inputs[kIndex8], inputs[kIndex9], inputs[kIndex10],
-    inputs[kIndex11], inputs[kIndex12], inputs[kIndex13], activation_string, innerPrecise_, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], expertTokens_array, inputs[kIndex4],
+        inputs[kIndex5], inputs[kIndex6], inputs[kIndex7], inputs[kIndex8], inputs[kIndex9], inputs[kIndex10],
+        inputs[kIndex11], inputs[kIndex12], inputs[kIndex13], activation_string, innerPrecise_, outputs[kIndex0]);
   return true;
 }
 

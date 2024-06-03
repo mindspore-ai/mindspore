@@ -52,9 +52,8 @@ bool QuantV2Ascend::Launch(const std::vector<KernelTensor *> &inputs, const std:
   // Infer function has confirmed the actual dtype of output
   TypeId out_type = outputs[kIndex0]->dtype_id();
 
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], sqrt_mode,
-                                      rounding_mode_str, out_type, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], sqrt_mode, rounding_mode_str,
+        out_type, outputs[kIndex0]);
   return true;
 }
 

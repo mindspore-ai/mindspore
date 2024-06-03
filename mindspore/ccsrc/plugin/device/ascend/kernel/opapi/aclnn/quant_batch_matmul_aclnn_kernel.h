@@ -34,6 +34,9 @@ class QuantMatmulV3Ascend : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+
+  bool transpose_x1_;
+  bool transpose_x2_;
 };
 }  // namespace kernel
 }  // namespace mindspore

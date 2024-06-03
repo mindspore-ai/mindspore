@@ -52,9 +52,7 @@ bool SearchsortedAscend::Launch(const std::vector<KernelTensor *> &inputs, const
 
   auto right = transform::ConvertKernelTensor<bool>(inputs[kIndex4]);
 
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], out_int32, right,
-                                      inputs[kIndex2], outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], out_int32, right, inputs[kIndex2], outputs[kIndex0]);
   return true;
 }
 

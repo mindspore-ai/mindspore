@@ -54,10 +54,8 @@ bool WeightQuantBatchMatmulV2Ascend::Launch(const std::vector<KernelTensor *> &i
   auto antiquant_group_size = transform::ConvertKernelTensor<int64_t>(inputs[kIndex9]);
   input_x_.first = inputs[kIndex0];
   input_weight_.first = inputs[kIndex1];
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, input_x_, input_weight_, inputs[kIndex2], inputs[kIndex3],
-                                      inputs[kIndex4], inputs[kIndex5], inputs[kIndex6], antiquant_group_size,
-                                      outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, input_x_, input_weight_, inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
+        inputs[kIndex5], inputs[kIndex6], antiquant_group_size, outputs[kIndex0]);
   return true;
 }
 MS_ACLNN_KERNEL_FACTORY_REG(WeightQuantBatchMatmul, WeightQuantBatchMatmulV2Ascend);

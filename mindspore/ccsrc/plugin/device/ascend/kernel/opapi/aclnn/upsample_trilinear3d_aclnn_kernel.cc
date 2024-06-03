@@ -53,26 +53,18 @@ std::tuple<std::vector<int64_t>, std::tuple<double, double, double>, bool> Upsam
 
 void UpsampleTrilinear3DAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                  const std::vector<KernelTensor *> &outputs) {
-  auto params = UpsampleTrilinear3DGenerate(inputs, outputs);
-  const auto &output_size = std::get<0>(params);
-  auto [scales_d, scales_h, scales_w] = std::get<1>(params);
-  auto align_corners = std::get<2>(params);
-  GetWorkspaceForResize(inputs[0], output_size, align_corners, scales_d, scales_h, scales_w, outputs[0]);
+  const auto &params = UpsampleTrilinear3DGenerate(inputs, outputs);
+  output_size_ = std::get<0>(params);
+  std::tie(scales_d_, scales_h_, scales_w_) = std::get<1>(params);
+  align_corners_ = std::get<2>(params);
+  GetWorkspaceForResize(inputs[0], output_size_, align_corners_, scales_d_, scales_h_, scales_w_, outputs[0]);
 }
 
 bool UpsampleTrilinear3DAscend::Launch(const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &workspace,
                                        const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-
-  auto params = UpsampleTrilinear3DGenerate(inputs, outputs);
-  const auto &output_size = std::get<0>(params);
-  auto [scales_d, scales_h, scales_w] = std::get<1>(params);
-  auto align_corners = std::get<2>(params);
-
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[0], output_size, align_corners, scales_d, scales_h,
-                                      scales_w, outputs[0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[0], output_size_, align_corners_, scales_d_, scales_h_, scales_w_, outputs[0]);
   return true;
 }
 

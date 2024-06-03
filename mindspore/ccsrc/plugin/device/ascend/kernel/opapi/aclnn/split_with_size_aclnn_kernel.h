@@ -45,6 +45,7 @@ class SplitWithSizeAscend : public AclnnKernelMod {
 
  protected:
   std::vector<int64_t> dims_{};
+  int64_t axis_;
 };
 }  // namespace kernel
 }  // namespace mindspore

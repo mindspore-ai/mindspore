@@ -44,11 +44,9 @@ bool BatchNormGradExtAscend::Launch(const std::vector<KernelTensor *> &inputs,
   auto training = transform::ConvertKernelTensor<bool>(inputs[kIndex7]);
   auto eps = static_cast<double>(transform::ConvertKernelTensor<float>(inputs[kIndex8]));
   std::vector<uint8_t> output_mask{1, 1, 1};
-
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2],
-                                      inputs[kIndex3], inputs[kIndex4], inputs[kIndex5], inputs[kIndex6], training, eps,
-                                      output_mask, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
+        inputs[kIndex5], inputs[kIndex6], training, eps, output_mask, outputs[kIndex0], outputs[kIndex1],
+        outputs[kIndex2]);
   return true;
 }
 

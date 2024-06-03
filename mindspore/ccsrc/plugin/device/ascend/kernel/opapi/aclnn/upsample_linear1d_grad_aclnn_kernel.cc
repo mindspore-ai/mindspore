@@ -57,27 +57,18 @@ std::tuple<std::vector<int64_t>, std::vector<int64_t>, double, bool> UpsampleLin
 void UpsampleLinear1DGradAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                   const std::vector<KernelTensor *> &outputs) {
   auto params = UpsampleLinear1DGradGenerate(inputs, outputs);
-  const auto &input_size = std::get<0>(params);
-  const auto &output_size = std::get<1>(params);
-  auto scales_l = std::get<2>(params);
-  auto align_corners = std::get<3>(params);
-  GetWorkspaceForResize(inputs[0], output_size, input_size, align_corners, scales_l, outputs[0]);
+  input_size_ = std::get<0>(params);
+  output_size_ = std::get<1>(params);
+  scales_l_ = std::get<2>(params);
+  align_corners_ = std::get<3>(params);
+  GetWorkspaceForResize(inputs[0], output_size_, input_size_, align_corners_, scales_l_, outputs[0]);
 }
 
 bool UpsampleLinear1DGradAscend::Launch(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &workspace,
                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-
-  auto params = UpsampleLinear1DGradGenerate(inputs, outputs);
-  const auto &input_size = std::get<0>(params);
-  const auto &output_size = std::get<1>(params);
-  auto scales_l = std::get<2>(params);
-  auto align_corners = std::get<3>(params);
-
-  ParseGenExecutor(
-    GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[0], output_size, input_size, align_corners, scales_l, outputs[0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[0], output_size_, input_size_, align_corners_, scales_l_, outputs[0]);
   return true;
 }
 

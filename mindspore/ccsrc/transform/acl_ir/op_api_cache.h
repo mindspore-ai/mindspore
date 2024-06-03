@@ -25,6 +25,7 @@
 namespace mindspore::transform {
 typedef aclOpExecutor *(*GetExecCache)(uint64_t, uint64_t *);
 typedef void (*InitCacheThreadLocal)();
+typedef void (*UnInitCacheThreadLocal)();
 typedef void (*SetHashKey)(uint64_t);
 typedef bool (*CanUseCache)(const char *);
 
@@ -48,6 +49,7 @@ inline void MemcpyToBuf(const void *data_expression, size_t size_expression) {
   g_hash_offset += size_expression;
 }
 
+// Old cache hash.
 void GatherInfo(mindspore::kernel::KernelTensor *);
 void GatherInfo(const std::pair<mindspore::kernel::KernelTensor *, bool> &);
 void GatherInfo(const std::vector<mindspore::kernel::KernelTensor *> &);
@@ -98,6 +100,8 @@ void GatherInfo(const T &arg, const Args &... args) {
 
 void RefreshAddr(mindspore::kernel::KernelTensor *);
 void RefreshAddr(const std::pair<mindspore::kernel::KernelTensor *, bool> &);
+void RefreshAddr(const device::DeviceAddressPtr &device_address);
+void RefreshAddr(const mindspore::tensor::TensorPtr &tensor);
 inline void RefreshAddr(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
   for (auto tensor : tensor_list) {
     RefreshAddr(tensor);
@@ -139,6 +143,10 @@ bool HitCache(const char *aclnn_api, aclOpExecutor **executor, uint64_t *workspa
   uint64_t hash_id = calc_hash_id();
   set_hash_key_func(hash_id);
   *executor = get_exec_cache_func(hash_id, workspace_size);
+  static const auto uninit_cache_thread_local = transform::GetOpApiFunc("UnInitPTACacheThreadLocal");
+  UnInitCacheThreadLocal uninit_cache_thread_local_func =
+    reinterpret_cast<UnInitCacheThreadLocal>(uninit_cache_thread_local);
+  uninit_cache_thread_local_func();
   if (*executor == nullptr) {
     return false;
   }
@@ -184,6 +192,36 @@ bool HitCacheSingle(const char *aclnn_api, aclOpExecutor **executor, uint64_t *w
     return false;
   }
   return true;
+}
+
+// New cache hash.
+void GatherHash(mindspore::kernel::KernelTensor *);
+void GatherHash(const std::pair<mindspore::kernel::KernelTensor *, bool> &);
+void GatherHash(const std::vector<mindspore::kernel::KernelTensor *> &);
+void GatherHash(const device::DeviceAddressPtr &);
+
+void GatherHash(const mindspore::tensor::TensorPtr &);
+void GatherHash(const std::optional<tensor::TensorPtr> &);
+void GatherHash(const std::vector<tensor::TensorPtr> &);
+
+template <typename T>
+void GatherHash(const T &value) {
+  GatherInfo(value);
+}
+
+void GatherHash();
+
+template <typename T, typename... Args>
+void GatherHash(const T &arg, const Args &... args) {
+  GatherHash(arg);
+  GatherHash(args...);
+}
+
+template <typename... Args>
+uint64_t AclnnHash(const std::string &arg, const Args &... args) {
+  g_hash_offset = 0;
+  GatherHash(arg, args...);
+  return calc_hash_id();
 }
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_ACL_IR_OP_API_CACHE_H_

@@ -42,7 +42,7 @@ def generate_expect_forward_output(input_np, axis, index_np):
     return input_np[(slice(None),) * axis + (index_np,)]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
@@ -72,7 +72,7 @@ def test_func_index_select_ext_normal(context_mode):
     np.testing.assert_allclose(grad.asnumpy(), expect1, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training

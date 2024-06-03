@@ -39,9 +39,7 @@ bool NormalTensorTensorAscend::Launch(const std::vector<KernelTensor *> &inputs,
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto seed = transform::ConvertKernelTensor<int64_t>(inputs[kIndex2]);
   auto offset = transform::ConvertKernelTensor<int64_t>(inputs[kIndex3]);
-  ParseGenExecutor(
-    GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], seed, offset, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], seed, offset, outputs[kIndex0]);
   return true;
 }
 

@@ -24,11 +24,7 @@ static constexpr size_t kAlignSize = 512;
 }  // namespace
 
 void AllFiniteAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
-                                       const std::vector<KernelTensor *> &outputs) {
-  for (auto input : inputs) {
-    GetWorkspaceForResize(input, outputs[kIndex0]);
-  }
-}
+                                       const std::vector<KernelTensor *> &outputs) {}
 
 bool AllFiniteAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {

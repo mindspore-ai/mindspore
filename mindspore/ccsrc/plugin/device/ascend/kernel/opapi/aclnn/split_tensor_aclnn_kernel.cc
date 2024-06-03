@@ -72,8 +72,7 @@ bool SplitTensorAscend::Launch(const std::vector<KernelTensor *> &inputs, const 
   auto split_int = GetDimValue(inputs[kIndex1]);
   auto axis = GetDimValue(inputs[kIndex2]);
   std::vector<KernelTensor *> split_outputs = GetSplitRealOutputs(outputs);
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], split_int, axis, split_outputs));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], split_int, axis, split_outputs);
   return true;
 }
 

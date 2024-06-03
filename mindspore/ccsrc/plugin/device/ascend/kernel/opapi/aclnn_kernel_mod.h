@@ -21,13 +21,15 @@
 #include <string>
 #include <tuple>
 #include <unordered_set>
+#include <unordered_map>
+#include <list>
 #include <utility>
 #include "ops/base_operator.h"
 #include "ops/op_def.h"
 #include "kernel/kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "include/common/utils/utils.h"
-#include "include/backend/mem_reuse/mem_tracker.h"
+#include "include/common/profiler.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "transform/acl_ir/acl_convert.h"
 #include "transform/acl_ir/op_api_exec.h"
@@ -41,72 +43,179 @@ using aclOpExecutor = transform::aclOpExecutor;
 using CallBackFunc = std::function<void()>;
 using OpApiUtil = transform::OpApiUtil;
 using AclUtil = transform::AclUtil;
+using ProcessCache = transform::ProcessCache;
+using CacheTuple = std::tuple<uint64_t, aclOpExecutor *, ProcessCache, size_t>;
 
-#define DEFINE_GET_WORKSPACE_FOR_RESIZE()                                                                            \
-  template <typename... Args>                                                                                        \
-  void GetWorkspaceForResize(const Args &... args) {                                                                 \
-    if (AclnnKernelMod::is_dynamic_) {                                                                               \
-      hash_id_ = 0;                                                                                                  \
-      return;                                                                                                        \
-    }                                                                                                                \
-    hash_id_ = transform::CalcOpApiHash(op_type_, args...);                                                          \
-    if (cache_hash_.count(hash_id_) == 0) {                                                                          \
-      const bool use_huge_pages = false;                                                                             \
-      auto return_value = GEN_EXECUTOR_CUST(op_type_, use_huge_pages, args...);                                      \
-      UpdateWorkspace(return_value);                                                                                 \
-    } else {                                                                                                         \
-      auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, args...);                                           \
-      UpdateWorkspace(return_value);                                                                                 \
-    }                                                                                                                \
-  }                                                                                                                  \
-                                                                                                                     \
-  void RunOp(void *stream_ptr, const std::vector<KernelTensor *> &workspace) {                                       \
-    if (workspace_size_list_.empty()) {                                                                              \
-      RUN_OP_API_ASYNC(op_type_, nullptr, 0, executor_, stream_ptr, release_func_);                                  \
-    } else {                                                                                                         \
-      if (is_dynamic_) {                                                                                             \
-        void *device_addr = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(workspace_size_list_[0]); \
-        device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(                                                              \
-          UpdateDevicePtrInfo, device_addr, device::tracker::MemType::kWorkSpace, "AclnnWorkspace_" + op_type_);     \
-        RUN_OP_API_ASYNC(op_type_, device_addr, workspace_size_list_[0], executor_, stream_ptr, release_func_);      \
-        device::ascend::AscendMemoryPool::GetInstance().FreeTensorMem(device_addr);                                  \
-      } else {                                                                                                       \
-        if (workspace.empty()) {                                                                                     \
-          MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";                                               \
-        }                                                                                                            \
-        auto workspace_tensor = workspace[0];                                                                        \
-        if (workspace_tensor->size() != workspace_size_list_[0]) {                                                   \
-          MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"       \
-                            << workspace_size_list_[0] << ", but get " << workspace_tensor->size();                  \
-        }                                                                                                            \
-        RUN_OP_API_ASYNC(op_type_, workspace_tensor->device_ptr(), workspace_size_list_[0], executor_, stream_ptr,   \
-                         release_func_);                                                                             \
-      }                                                                                                              \
-    }                                                                                                                \
-  }                                                                                                                  \
-                                                                                                                     \
-  void RunOpSync(void *stream_ptr, const std::vector<KernelTensor *> &workspace) {                                   \
-    if (workspace_size_list_.empty()) {                                                                              \
-      RUN_OP_API_SYNC(op_type_, nullptr, 0, executor_, stream_ptr);                                                  \
-    } else {                                                                                                         \
-      if (is_dynamic_) {                                                                                             \
-        void *device_addr = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(workspace_size_list_[0]); \
-        device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(                                                              \
-          UpdateDevicePtrInfo, device_addr, device::tracker::MemType::kWorkSpace, "AclnnWorkspace_" + op_type_);     \
-        RUN_OP_API_SYNC(op_type_, device_addr, workspace_size_list_[0], executor_, stream_ptr);                      \
-        device::ascend::AscendMemoryPool::GetInstance().FreeTensorMem(device_addr);                                  \
-      } else {                                                                                                       \
-        if (workspace.empty()) {                                                                                     \
-          MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";                                               \
-        }                                                                                                            \
-        auto workspace_tensor = workspace[0];                                                                        \
-        if (workspace_tensor->size() != workspace_size_list_[0]) {                                                   \
-          MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"       \
-                            << workspace_size_list_[0] << ", but get " << workspace_tensor->size();                  \
-        }                                                                                                            \
-        RUN_OP_API_SYNC(op_type_, workspace_tensor->device_ptr(), workspace_size_list_[0], executor_, stream_ptr);   \
-      }                                                                                                              \
-    }                                                                                                                \
+#define DEFINE_GET_WORKSPACE_FOR_OPS(OP_TYPE, FUNC_NAME)                                                              \
+  std::string op_type_##FUNC_NAME##_ = #OP_TYPE;                                                                      \
+  template <typename... Args>                                                                                         \
+  void GetWorkspaceForResize##FUNC_NAME(const Args &... args) {                                                       \
+    hash_id_ = transform::AclnnHash(op_type_##FUNC_NAME##_, args...);                                                 \
+    size_t cur_workspace = 0;                                                                                         \
+    if (hash_map_.count(hash_id_)) {                                                                                  \
+      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel,                                            \
+                                         runtime::ProfilerEvent::kAclnnHitCacheStage1, op_type_##FUNC_NAME##_);       \
+      hash_cache_.splice(hash_cache_.begin(), hash_cache_, hash_map_[hash_id_]);                                      \
+      cur_workspace = std::get<3>(hash_cache_.front());                                                               \
+    } else {                                                                                                          \
+      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel,                                            \
+                                         runtime::ProfilerEvent::kAclnnMissCacheStage1, op_type_##FUNC_NAME##_);      \
+      auto [workspace, executor, cache, fail_cache] = GEN_EXECUTOR_FOR_RESIZE(op_type_##FUNC_NAME##_, args...);       \
+      cur_workspace = workspace;                                                                                      \
+      if (!fail_cache) {                                                                                              \
+        hash_cache_.emplace_front(hash_id_, executor, cache, workspace);                                              \
+        hash_map_[hash_id_] = hash_cache_.begin();                                                                    \
+      } else {                                                                                                        \
+        hash_id_ = 0;                                                                                                 \
+        cache(true, {});                                                                                              \
+      }                                                                                                               \
+    }                                                                                                                 \
+    if (hash_cache_.size() > capacity_) {                                                                             \
+      hash_map_.erase(std::get<0>(hash_cache_.back()));                                                               \
+      auto release_func = std::get<2>(hash_cache_.back());                                                            \
+      release_func(true, {});                                                                                         \
+      hash_cache_.pop_back();                                                                                         \
+    }                                                                                                                 \
+                                                                                                                      \
+    if (cur_workspace != 0) {                                                                                         \
+      std::vector<size_t> workspace_size_list = {cur_workspace};                                                      \
+      SetWorkspaceSizeList(workspace_size_list);                                                                      \
+    }                                                                                                                 \
+  }                                                                                                                   \
+                                                                                                                      \
+  template <typename... Args>                                                                                         \
+  std::pair<aclOpExecutor *, std::function<void()>> GetExecutor##FUNC_NAME(const Args &... args) {                    \
+    if (hash_id_ == 0 || !hash_map_.count(hash_id_)) {                                                                \
+      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel,                                            \
+                                         runtime::ProfilerEvent::kAclnnMissCacheStage2, op_type_##FUNC_NAME##_);      \
+      aclOpExecutor *executor;                                                                                        \
+      std::function<void()> release_func;                                                                             \
+      std::tie(std::ignore, executor, release_func) = GEN_EXECUTOR(op_type_##FUNC_NAME##_, args...);                  \
+      return std::make_pair(executor, release_func);                                                                  \
+    }                                                                                                                 \
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kAclnnUpdateAddress, \
+                                       op_type_##FUNC_NAME##_);                                                       \
+    auto cur_run = *hash_map_[hash_id_];                                                                              \
+    UPDATE_TENSOR_FOR_LAUNCH(std::get<2>(cur_run), args...);                                                          \
+    auto executor = std::get<1>(cur_run);                                                                             \
+    return std::make_pair(executor, nullptr);                                                                         \
+  }                                                                                                                   \
+                                                                                                                      \
+  template <typename... Args>                                                                                         \
+  void RunOp##FUNC_NAME(void *stream_ptr, const std::vector<KernelTensor *> &workspace, const Args &... args) {       \
+    auto [executor, release_func] = GetExecutor(args...);                                                             \
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kAclnnRunOp,         \
+                                       op_type_##FUNC_NAME##_);                                                       \
+    if (workspace_size_list_.empty()) {                                                                               \
+      RUN_OP_API_ASYNC(op_type_##FUNC_NAME##_, nullptr, 0, executor, stream_ptr, release_func);                       \
+    } else {                                                                                                          \
+      if (workspace.empty()) {                                                                                        \
+        MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";                                                  \
+      }                                                                                                               \
+      auto workspace_tensor = workspace[0];                                                                           \
+      if (workspace_tensor->size() != workspace_size_list_[0]) {                                                      \
+        MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"          \
+                          << workspace_size_list_[0] << ", but get " << workspace_tensor->size();                     \
+      }                                                                                                               \
+      RUN_OP_API_ASYNC(op_type_##FUNC_NAME##_, workspace_tensor->device_ptr(), workspace_size_list_[0], executor,     \
+                       stream_ptr, release_func);                                                                     \
+    }                                                                                                                 \
+  }
+
+#define DEFINE_GET_WORKSPACE_FOR_RESIZE()                                                                             \
+  template <typename... Args>                                                                                         \
+  void GetWorkspaceForResize(const Args &... args) {                                                                  \
+    hash_id_ = transform::AclnnHash(op_type_, args...);                                                               \
+    size_t cur_workspace = 0;                                                                                         \
+    if (hash_map_.count(hash_id_)) {                                                                                  \
+      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel,                                            \
+                                         runtime::ProfilerEvent::kAclnnHitCacheStage1, op_type_);                     \
+      hash_cache_.splice(hash_cache_.begin(), hash_cache_, hash_map_[hash_id_]);                                      \
+      cur_workspace = std::get<3>(hash_cache_.front());                                                               \
+    } else {                                                                                                          \
+      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel,                                            \
+                                         runtime::ProfilerEvent::kAclnnMissCacheStage1, op_type_);                    \
+      auto [workspace, executor, cache, fail_cache] = GEN_EXECUTOR_FOR_RESIZE(op_type_, args...);                     \
+      cur_workspace = workspace;                                                                                      \
+      if (!fail_cache) {                                                                                              \
+        hash_cache_.emplace_front(hash_id_, executor, cache, workspace);                                              \
+        hash_map_[hash_id_] = hash_cache_.begin();                                                                    \
+      } else {                                                                                                        \
+        hash_id_ = 0;                                                                                                 \
+        cache(true, {});                                                                                              \
+      }                                                                                                               \
+    }                                                                                                                 \
+    if (hash_cache_.size() > capacity_) {                                                                             \
+      hash_map_.erase(std::get<0>(hash_cache_.back()));                                                               \
+      auto release_func = std::get<2>(hash_cache_.back());                                                            \
+      release_func(true, {});                                                                                         \
+      hash_cache_.pop_back();                                                                                         \
+    }                                                                                                                 \
+                                                                                                                      \
+    if (cur_workspace != 0) {                                                                                         \
+      std::vector<size_t> workspace_size_list = {cur_workspace};                                                      \
+      SetWorkspaceSizeList(workspace_size_list);                                                                      \
+    }                                                                                                                 \
+  }                                                                                                                   \
+                                                                                                                      \
+  template <typename... Args>                                                                                         \
+  std::pair<aclOpExecutor *, std::function<void()>> GetExecutor(const Args &... args) {                               \
+    if (hash_id_ == 0 || !hash_map_.count(hash_id_)) {                                                                \
+      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel,                                            \
+                                         runtime::ProfilerEvent::kAclnnMissCacheStage2, op_type_);                    \
+      aclOpExecutor *executor;                                                                                        \
+      std::function<void()> release_func;                                                                             \
+      std::tie(std::ignore, executor, release_func) = GEN_EXECUTOR(op_type_, args...);                                \
+      return std::make_pair(executor, release_func);                                                                  \
+    }                                                                                                                 \
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kAclnnUpdateAddress, \
+                                       op_type_);                                                                     \
+    auto cur_run = *hash_map_[hash_id_];                                                                              \
+    UPDATE_TENSOR_FOR_LAUNCH(std::get<2>(cur_run), args...);                                                          \
+    auto executor = std::get<1>(cur_run);                                                                             \
+    return std::make_pair(executor, nullptr);                                                                         \
+  }                                                                                                                   \
+                                                                                                                      \
+  template <typename... Args>                                                                                         \
+  void RunOp(void *stream_ptr, const std::vector<KernelTensor *> &workspace, const Args &... args) {                  \
+    auto [executor, release_func] = GetExecutor(args...);                                                             \
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kAclnnRunOp,         \
+                                       op_type_);                                                                     \
+    if (workspace_size_list_.empty()) {                                                                               \
+      RUN_OP_API_ASYNC(op_type_, nullptr, 0, executor, stream_ptr, release_func);                                     \
+    } else {                                                                                                          \
+      if (workspace.empty()) {                                                                                        \
+        MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";                                                  \
+      }                                                                                                               \
+      auto workspace_tensor = workspace[0];                                                                           \
+      if (workspace_tensor->size() != workspace_size_list_[0]) {                                                      \
+        MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"          \
+                          << workspace_size_list_[0] << ", but get " << workspace_tensor->size();                     \
+      }                                                                                                               \
+      RUN_OP_API_ASYNC(op_type_, workspace_tensor->device_ptr(), workspace_size_list_[0], executor, stream_ptr,       \
+                       release_func);                                                                                 \
+    }                                                                                                                 \
+  }                                                                                                                   \
+                                                                                                                      \
+  template <typename... Args>                                                                                         \
+  void RunOpSync(void *stream_ptr, const std::vector<KernelTensor *> &workspace, const Args &... args) {              \
+    aclOpExecutor *executor = executor_;                                                                              \
+    if (executor == nullptr) {                                                                                        \
+      std::tie(executor, std::ignore) = GetExecutor(args...);                                                         \
+    }                                                                                                                 \
+    if (workspace_size_list_.empty()) {                                                                               \
+      RUN_OP_API_SYNC(op_type_, nullptr, 0, executor, stream_ptr);                                                    \
+    } else {                                                                                                          \
+      if (workspace.empty()) {                                                                                        \
+        MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";                                                  \
+      }                                                                                                               \
+      auto workspace_tensor = workspace[0];                                                                           \
+      if (workspace_tensor->size() != workspace_size_list_[0]) {                                                      \
+        MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"          \
+                          << workspace_size_list_[0] << ", but get " << workspace_tensor->size();                     \
+      }                                                                                                               \
+      RUN_OP_API_SYNC(op_type_, workspace_tensor->device_ptr(), workspace_size_list_[0], executor, stream_ptr);       \
+    }                                                                                                                 \
   }
 
 class EmptyKernelTensor {
@@ -239,6 +348,9 @@ class AclnnKernelMod : public KernelMod {
   std::unordered_set<uint64_t> cache_hash_;
   static bool is_dynamic_;
   std::mutex mtx_;
+  std::unordered_map<uint64_t, std::list<CacheTuple>::iterator> hash_map_;
+  std::list<CacheTuple> hash_cache_;
+  size_t capacity_{128};
 
   static constexpr size_t kWsSizeIndex = 0;
   static constexpr size_t kHashIdIndex = 3;
@@ -247,76 +359,33 @@ class AclnnKernelMod : public KernelMod {
 using AclnnKernelModPtr = std::shared_ptr<AclnnKernelMod>;
 using AclnnKernelModPtrList = std::vector<AclnnKernelModPtr>;
 
-#define REGISTER_ACLNN_CLASS(TYPE)                                                                                     \
-  template <size_t N>                                                                                                  \
-  class Aclnn##TYPE##KernelMod : public AclnnKernelMod {                                                               \
-   public:                                                                                                             \
-    explicit Aclnn##TYPE##KernelMod(std::string &&op_type) : AclnnKernelMod(std::move(op_type)) {}                     \
-    ~Aclnn##TYPE##KernelMod() = default;                                                                               \
-    void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,                                                   \
-                          const std::vector<KernelTensor *> &outputs) override {                                       \
-      const auto &res_tuple = this->GetKernelTuple<N>(inputs, outputs);                                                \
-      std::apply(                                                                                                      \
-        [this](const auto &... args) {                                                                                 \
-          if (AclnnKernelMod::is_dynamic_) {                                                                           \
-            hash_id_ = 0;                                                                                              \
-            return;                                                                                                    \
-          }                                                                                                            \
-          hash_id_ = transform::CalcOpApiHash(op_type_, args...);                                                      \
-          if (cache_hash_.count(hash_id_) == 0) {                                                                      \
-            const bool use_huge_pages = false;                                                                         \
-            auto return_value = GEN_EXECUTOR_CUST(op_type_, use_huge_pages, args...);                                  \
-            UpdateWorkspace(return_value);                                                                             \
-          } else {                                                                                                     \
-            auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, args...);                                       \
-            UpdateWorkspace(return_value);                                                                             \
-          }                                                                                                            \
-        },                                                                                                             \
-        res_tuple);                                                                                                    \
-    }                                                                                                                  \
-    bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,               \
-                const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {                               \
-      this->ParseGenExecutor(GenExecutor(inputs, outputs));                                                            \
-      RunOp(stream_ptr, workspace);                                                                                    \
-      return true;                                                                                                     \
-    }                                                                                                                  \
-                                                                                                                       \
-   private:                                                                                                            \
-    template <typename... Ts>                                                                                          \
-    auto GenExecutor(const std::vector<Ts> &... vecs) {                                                                \
-      const auto &op_type = this->op_type_;                                                                            \
-      const auto &hash_id = this->hash_id_;                                                                            \
-      const auto &res_tuple = this->GetKernelTuple<N>(vecs...);                                                        \
-      auto executor_info = std::apply(                                                                                 \
-        [&op_type, &hash_id](const auto &... args) { return GEN_EXECUTOR_BOOST(op_type, hash_id, args...); },          \
-        res_tuple);                                                                                                    \
-      return executor_info;                                                                                            \
-    }                                                                                                                  \
-                                                                                                                       \
-    void RunOp(void *stream_ptr, const std::vector<KernelTensor *> &workspace) {                                       \
-      if (workspace_size_list_.empty()) {                                                                              \
-        RUN_OP_API_ASYNC(op_type_, nullptr, 0, executor_, stream_ptr, release_func_);                                  \
-      } else {                                                                                                         \
-        if (is_dynamic_) {                                                                                             \
-          void *device_addr = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(workspace_size_list_[0]); \
-          device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(                                                              \
-            UpdateDevicePtrInfo, device_addr, device::tracker::MemType::kWorkSpace, "AclnnWorkspace_" + op_type_);     \
-          RUN_OP_API_ASYNC(op_type_, device_addr, workspace_size_list_[0], executor_, stream_ptr, release_func_);      \
-          device::ascend::AscendMemoryPool::GetInstance().FreeTensorMem(device_addr);                                  \
-        } else {                                                                                                       \
-          if (workspace.empty()) {                                                                                     \
-            MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";                                               \
-          }                                                                                                            \
-          auto workspace_tensor = workspace[0];                                                                        \
-          if (workspace_tensor->size() != workspace_size_list_[0]) {                                                   \
-            MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"       \
-                              << workspace_size_list_[0] << ", but get " << workspace_tensor->size();                  \
-          }                                                                                                            \
-          RUN_OP_API_ASYNC(op_type_, workspace_tensor->device_ptr(), workspace_size_list_[0], executor_, stream_ptr,   \
-                           release_func_);                                                                             \
-        }                                                                                                              \
-      }                                                                                                                \
-    }                                                                                                                  \
+#define REGISTER_ACLNN_CLASS(TYPE)                                                                                    \
+  template <size_t N>                                                                                                 \
+  class Aclnn##TYPE##KernelMod : public AclnnKernelMod {                                                              \
+   public:                                                                                                            \
+    explicit Aclnn##TYPE##KernelMod(std::string &&op_type) : AclnnKernelMod(std::move(op_type)) {}                    \
+    ~Aclnn##TYPE##KernelMod() = default;                                                                              \
+    void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,                                                  \
+                          const std::vector<KernelTensor *> &outputs) override {                                      \
+      const auto &res_tuple = this->GetKernelTuple<N>(inputs, outputs);                                               \
+      std::apply([this](const auto &... args) { GetWorkspaceForResize(args...); }, res_tuple);                        \
+    }                                                                                                                 \
+    bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,              \
+                const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {                              \
+      CallRun(stream_ptr, workspace, inputs, outputs);                                                                \
+      return true;                                                                                                    \
+    }                                                                                                                 \
+                                                                                                                      \
+   private:                                                                                                           \
+    template <typename... Ts>                                                                                         \
+    void CallRun(void *stream_ptr, const std::vector<KernelTensor *> &workspace, const std::vector<Ts> &... vecs) {   \
+      const auto &res_tuple = this->GetKernelTuple<N>(vecs...);                                                       \
+      std::apply(                                                                                                     \
+        [this, stream_ptr, &workspace](const auto &... args) { return this->RunOp(stream_ptr, workspace, args...); }, \
+        res_tuple);                                                                                                   \
+    }                                                                                                                 \
+                                                                                                                      \
+    DEFINE_GET_WORKSPACE_FOR_RESIZE()                                                                                 \
   };
 
 #define MS_ACLNN_KERNEL_FACTORY_REG(NAME, DERIVE_CLASS) MS_KERNEL_FACTORY_REG(AclnnKernelMod, NAME, DERIVE_CLASS)

@@ -135,8 +135,7 @@ bool {kernelmod_name}::Launch(const std::vector<KernelTensor *> &inputs, const s
                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {{
   MS_EXCEPTION_IF_NULL(stream_ptr);
   {input_templete}
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, {inputs}));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, {inputs});
   return true;
 }}
 """

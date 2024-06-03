@@ -35,6 +35,12 @@ class UpsampleTrilinear3DAscend final : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+
+  std::vector<int64_t> output_size_;
+  bool align_corners_;
+  double scales_d_;
+  double scales_h_;
+  double scales_w_;
 };
 }  // namespace kernel
 }  // namespace mindspore

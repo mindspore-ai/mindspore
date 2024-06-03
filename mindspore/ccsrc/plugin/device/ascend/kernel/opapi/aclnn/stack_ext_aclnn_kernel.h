@@ -32,6 +32,9 @@ class StackExtAscend : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+
+  std::vector<KernelTensor *> tensor_;
+  int64_t axis_;
 };
 }  // namespace kernel
 }  // namespace mindspore
