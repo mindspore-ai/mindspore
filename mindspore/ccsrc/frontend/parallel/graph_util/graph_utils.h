@@ -46,5 +46,6 @@ CNodePtr CreateSplit(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
                      const std::string &inst_name = "");
 bool IsToBeInsertedSplitOp(const Operator &op);
 Status MergeEntireShapeForDynamic(const FuncGraphPtr &func_graph);
+int64_t GetPrimeFactor(int64_t value);
 }  // namespace mindspore::parallel
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_GRAPH_UTILS_H_
