@@ -361,10 +361,14 @@ void UpdateInlineCNodeDebugInfo(const AnfNodePtr &caller, const AnfNodePtr &call
   }
   int64_t pos = -1;
   for (size_t i = 0; i < caller_debug_infos.size() && i < callee_debug_infos.size(); ++i) {
-    const auto &caller_locaton = caller_debug_infos[caller_debug_infos.size() - i - 1]->location();
-    const auto &callee_locaton = callee_debug_infos[callee_debug_infos.size() - i - 1]->location();
+    const auto &cur_caller_debug_info = caller_debug_infos[caller_debug_infos.size() - i - 1];
+    const auto &cur_callee_debug_info = callee_debug_infos[callee_debug_infos.size() - i - 1];
+    if (cur_caller_debug_info == cur_callee_debug_info) {
+      continue;
+    }
+    const auto &caller_locaton = cur_caller_debug_info->location();
+    const auto &callee_locaton = cur_callee_debug_info->location();
     if (caller_locaton == nullptr || callee_locaton == nullptr) {
-      MS_LOG(DEBUG) << "i: " << i << ", caller_locaton: " << caller_locaton << ", callee_locaton: " << callee_locaton;
       SyncShadowDebugInfo(caller_debug_info, callee_debug_info);
       return;
     }
