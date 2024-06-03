@@ -88,7 +88,9 @@ void DvmKernelMod::CodeGen(const std::vector<ShapeVector> &inputs_shape,
   }
   kernel_.CodeGen();
   if (dump_kernel_) {
-    dump_kernel_ = false;
+    dump_buf_ << "[dvm kernel] " << op_name_ << " " << op_fullname_ << "\n";
+    dump_buf_ << kernel_.Dump() << "\n";
+    dump_buf_ << kernel_.Das() << "\n";
     DumpToFile();
   }
 }
@@ -107,13 +109,23 @@ BaseShapePtr DvmKernelMod::InferShape(const AbstractBasePtrList &inputs_abs) {
       input_size_list_[i] *= LongToSize(sh);
     }
   }
+  if (dump_kernel_) {
+    dump_buf_ << "[inputs shape list] " << op_name_ << " " << op_fullname_ << "\n";
+    dump_buf_ << ShapesStr(inputs_shape_) << "\n";
+    DumpToFile();
+  }
+
   // re-codegen by new input shape
   kernel_.CodeGen();
   // update output shape
   UpdateOutputShapes();
 
   if (dump_kernel_) {
-    dump_kernel_ = false;
+    dump_buf_ << "[outputs shape list] " << op_name_ << " " << op_fullname_ << "\n";
+    dump_buf_ << ShapesStr(outputs_shape_) << "\n";
+    dump_buf_ << "[dvm kernel] " << op_name_ << " " << op_fullname_ << "\n";
+    dump_buf_ << kernel_.Dump() << "\n";
+    dump_buf_ << kernel_.Das() << "\n";
     DumpToFile();
   }
 
@@ -133,11 +145,6 @@ BaseShapePtr DvmKernelMod::InferShape(const AbstractBasePtrList &inputs_abs) {
 void DvmKernelMod::UpdateInputShapeRef(size_t input_idx, dvm::ShapeRef *ref) { inputs_shape_ref_[input_idx] = ref; }
 
 void DvmKernelMod::DumpToFile() {
-  dump_buf_ << "inputs shape list: " << ShapesStr(inputs_shape_) << "\n";
-  dump_buf_ << "outputs shape list: " << ShapesStr(outputs_shape_) << "\n";
-  dump_buf_ << "===================== kernel =====================\n";
-  dump_buf_ << kernel_.Dump() << "\n";
-  dump_buf_ << kernel_.Das() << "\n";
   std::lock_guard<std::mutex> lock(lock_);
   const std::string dump_dir = "./graph_kernel_dump";
   auto dir_path = FileUtils::CreateNotExistDirs(dump_dir);
