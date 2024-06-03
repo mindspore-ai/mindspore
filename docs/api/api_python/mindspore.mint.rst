@@ -36,6 +36,7 @@ Tensor创建
     :template: classtemplate.rst
 
     mindspore.mint.eye
+    mindspore.mint.one_hot
 
 逐元素运算
 ^^^^^^^^^^^^^^^^
@@ -71,6 +72,18 @@ Reduction函数
     mindspore.mint.prod
     mindspore.mint.sum
 
+比较函数
+^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.greater_equal
+    mindspore.mint.maximum
+    mindspore.mint.minimum
+
 逐元素运算
 ^^^^^^^^^^^^^^^^
 
@@ -105,18 +118,6 @@ mindspore.mint.nn.functional
 卷积函数
 ^^^^^^^^^^
 
-
-比较函数
-^^^^^^^^^^^^^
-
-.. mscnplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.greater_equal
-    mindspore.mint.maximum
-    mindspore.mint.minimum
 
 池化函数
 ^^^^^^^^^^^^^^^^^^^
@@ -165,16 +166,6 @@ mindspore.mint.nn.functional
 ^^^^^^^^^^^^^^^^^^^
 
 
-
-Tensor创建
-^^^^^^^^^^^^^
-
-.. mscnplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.one_hot
 
 
 
