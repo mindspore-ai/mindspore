@@ -60,11 +60,18 @@ def _gpu_target():
 
 
 @constexpr
-def _kbk_mode():
+def _enable_all_finite():
+    """check whether enable all finite"""
+    runtime_conf = os.environ.get('MS_DEV_RUNTIME_CONF')
     global_jit_config = context.get_jit_config()
+    if runtime_conf is not None and ("all_finite:True" in runtime_conf or "all_finite:true" in runtime_conf):
+        return True
+
+    if runtime_conf is not None and ("all_finite:False" in runtime_conf or "all_finite:false" in runtime_conf):
+        return False
+
     if global_jit_config:
-        global_jit_level = global_jit_config['jit_level']
-        return global_jit_level == "O0" or global_jit_level == "O1"
+        return global_jit_config["jit_level"] == "O0"
     return False
 
 
@@ -94,7 +101,7 @@ def _overflow(inputs):
 
 
 @jit
-def _all_finite(inputs, check_overflow_mode, kernel_mode):
+def _all_finite(inputs, check_overflow_mode, enable_allfinite):
     """all finite check"""
     if _ascend_target():
         if (_ascend_910a_target()) or \
@@ -109,7 +116,7 @@ def _all_finite(inputs, check_overflow_mode, kernel_mode):
             return status_finite
 
     status_finite = False
-    if kernel_mode:
+    if enable_allfinite:
         status_finite = ~AllFinite()(inputs)  # pylint: disable=invalid-unary-operand-type
     else:
         outputs = _hypermap(_partial(_overflow), inputs)
@@ -150,7 +157,7 @@ def all_finite(inputs):
     """
     inputs = mutable(inputs)
     _check_overflow_mode = os.environ.get('MS_ASCEND_CHECK_OVERFLOW_MODE')
-    return _all_finite(inputs, _check_overflow_mode, _kbk_mode())
+    return _all_finite(inputs, _check_overflow_mode, _enable_all_finite())
 
 
 @jit_class

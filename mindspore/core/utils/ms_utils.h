@@ -71,7 +71,12 @@ const char kRuntimeSwitchInline[] = "switch_inline";
 const char kRuntimeMultiStream[] = "multi_stream";
 const char kRuntimePipeline[] = "pipeline";
 const char kRuntimeView[] = "view";
+const char kRuntimeInsertTensorMove[] = "insert_tensormove";
+const char kRuntimeAllfinite[] = "all_finite";
+const char kRuntimeParalletAssignAddOpt[] = "parallel_assignadd_opt";
+// Runtime debug config.
 const char kRuntimeSynchronize[] = "synchronize";
+const char kRuntimeMemoryTrack[] = "memory_track";
 const char kRuntimeMemoryStat[] = "memory_statistics";
 const char kRuntimeCompileStat[] = "compile_statistics";
 const char kRuntimePerformanceStat[] = "performance_statistics";

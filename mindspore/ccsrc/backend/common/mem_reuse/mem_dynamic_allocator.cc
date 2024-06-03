@@ -889,7 +889,8 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
 
 void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
   size_t total_used_size_list[kAllocatorTypeNum] = {0};
-  bool is_enable_memory_statistics = common::IsEnableRuntimeConfig(common::kRuntimeMemoryStat);
+  bool is_enable_memory_statistics = common::IsEnableRuntimeConfig(common::kRuntimeMemoryStat) ||
+                                     common::IsEnableRuntimeConfig(common::kRuntimeMemoryTrack);
   auto fn = [&](const MemStatusManagerPtr &mem_mng, const std::string &mem_type) {
     MS_EXCEPTION_IF_NULL(mem_mng);
     if (mem_mng->Empty()) {
@@ -924,7 +925,7 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
             << "M. Block unit size:" << mem_mng->unit_size_ / kMBToByte
             << "M, block counts:" << mem_mng->mem_block_list_.size() << buf.str();
     if (is_enable_memory_statistics) {
-      std::cout << oss_buf.str() << std::endl;
+      std::cout << "[MS_RUNTIME_PROF]" << oss_buf.str() << std::endl;
     }
     MS_LOG(INFO) << oss_buf.str();
   };
@@ -946,7 +947,7 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
           << total_used_size_list[static_cast<int>(AllocatorType::kKernelOutput)] / kMBToByte
           << "M, other used size:" << total_used_size_list[static_cast<int>(AllocatorType::kOther)] / kMBToByte << "M.";
   if (is_enable_memory_statistics) {
-    std::cout << oss_mem.str() << std::endl;
+    std::cout << "[MS_RUNTIME_PROF]" << oss_mem.str() << std::endl;
   }
   MS_LOG(INFO) << oss_mem.str();
 }

@@ -133,7 +133,12 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto opt_acl_pm = std::make_shared<PassManager>("opt_acl_pm");
   opt_acl_pm->AddPass(std::make_shared<SeedAdapter>());
-  opt_acl_pm->AddPass(std::make_shared<InsertTensorMoveForCommunication>());
+
+  if (common::IsEnableRuntimeConfig(common::kRuntimeInsertTensorMove)) {
+    opt_acl_pm->AddPass(std::make_shared<opt::InsertTensorMoveForHcclOpGe>());
+  } else {
+    opt_acl_pm->AddPass(std::make_shared<InsertTensorMoveForCommunication>());
+  }
   opt_acl_pm->AddPass(std::make_shared<opt::TransDependValueToInt32>());
   opt_acl_pm->AddPass(std::make_shared<opt::ProcessCallInline>());
   opt_acl_pm->AddPass(std::make_shared<opt::ProcessPartialInline>());
