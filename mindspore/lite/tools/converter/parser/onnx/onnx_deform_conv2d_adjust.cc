@@ -94,55 +94,68 @@ bool OnnxDeformConv2dAdjust::Adjust(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << "create shape node failed.";
       return false;
     }
+    MS_CHECK_TRUE_MSG(cnode->abstract() != nullptr, false, "CNode->abstract() return nullptr!");
+    shape_node->set_abstract(cnode->abstract()->Clone());
 
     auto gather_0 =
       opt::GenGatherNode(func_graph, shape_node, {0}, shape_node->fullname_with_scope() + "_gather_0", {0});
     MS_CHECK_TRUE_MSG(gather_0 != nullptr, false, "create gather cnode return nullptr");
+    gather_0->set_abstract(cnode->abstract()->Clone());
     auto gather_1 =
       opt::GenGatherNode(func_graph, shape_node, {2, 3}, shape_node->fullname_with_scope() + "_gather_1", {0});
     MS_CHECK_TRUE_MSG(gather_1 != nullptr, false, "create gather cnode return nullptr");
+    gather_1->set_abstract(cnode->abstract()->Clone());
     auto param_0 =
       opt::BuildIntValueParameterNode(func_graph, -1, shape_node->fullname_with_scope() + "_const_0", false);
     MS_CHECK_TRUE_MSG(param_0 != nullptr, false, "create parameter return nullptr");
+    param_0->set_abstract(cnode->abstract()->Clone());
     auto param_1 =
       opt::BuildIntValueParameterNode(func_graph, 2, shape_node->fullname_with_scope() + "_const_1", false);
     MS_CHECK_TRUE_MSG(param_1 != nullptr, false, "create parameter return nullptr");
+    param_1->set_abstract(cnode->abstract()->Clone());
     auto concat_shape = opt::GenConcatNode(func_graph, {gather_0, param_0, param_1, gather_1},
                                            shape_node->fullname_with_scope() + "_concat", 0);
     MS_CHECK_TRUE_MSG(concat_shape != nullptr, false, "create concat return nullptr");
+    concat_shape->set_abstract(cnode->abstract()->Clone());
 
     auto reshape = NewReshapeOpNode(func_graph, offset_input, concat_shape);
     if (reshape == nullptr) {
       MS_LOG(ERROR) << "create reshape failed.";
       return false;
     }
+    reshape->set_abstract(cnode->abstract()->Clone());
     std::vector<int> perm = {0, 2, 1, 3, 4};
     auto transpose = opt::GenTransposeNode(func_graph, reshape, perm, reshape->fullname_with_scope() + "_transpose");
     if (transpose == nullptr) {
       MS_LOG(ERROR) << "create transpose failed.";
       return false;
     }
+    transpose->set_abstract(cnode->abstract()->Clone());
     auto gather_y = opt::GenGatherNode(func_graph, transpose, {0}, transpose->fullname_with_scope() + "_gather_y", {1});
     if (gather_y == nullptr) {
       MS_LOG(ERROR) << "create gather failed.";
       return false;
     }
+    gather_y->set_abstract(cnode->abstract()->Clone());
     auto gather_x = opt::GenGatherNode(func_graph, transpose, {1}, transpose->fullname_with_scope() + "_gather_x", {1});
     if (gather_x == nullptr) {
       MS_LOG(ERROR) << "create gather failed.";
       return false;
     }
+    gather_x->set_abstract(cnode->abstract()->Clone());
 
     auto concat = opt::GenConcatNode(func_graph, {gather_x, gather_y}, gather_x->fullname_with_scope() + "_concat", 1);
     if (concat == nullptr) {
       MS_LOG(ERROR) << "create concat failed.";
       return false;
     }
+    concat->set_abstract(cnode->abstract()->Clone());
     auto reshape_last = NewReshapeOpNode(func_graph, concat, shape_node);
     if (reshape_last == nullptr) {
       MS_LOG(ERROR) << "create reshape failed.";
       return false;
     }
+    reshape_last->set_abstract(cnode->abstract()->Clone());
 
     auto concat_offset = opt::GenConcatNode(func_graph, {reshape_last, cnode->input(opt::kInputIndexThree)},
                                             offset_input->fullname_with_scope() + "_mask", 1);
@@ -150,6 +163,7 @@ bool OnnxDeformConv2dAdjust::Adjust(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << "create concat failed.";
       return false;
     }
+    concat_offset->set_abstract(cnode->abstract()->Clone());
     // features, filter, offsets, bias(optional)
     std::vector<AnfNodePtr> new_input = {cnode->input(0), cnode->input(1), cnode->input(opt::kInputIndexFour),
                                          concat_offset};
