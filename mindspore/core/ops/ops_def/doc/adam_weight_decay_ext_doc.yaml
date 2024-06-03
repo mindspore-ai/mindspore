@@ -47,16 +47,16 @@ adam_weight_decay_ext:
                 - **max_v** (Parameter) - The 2nd moment vector in the updating formula,
                   it should have the same shape as `m`.
                 - **gradient** (Tensor) - Gradient, has the same shape as `var`
-                - **step** (float, int) - step
+                - **step** (Tensor) - step
                 - **lr** (float) - :math:`lr` in the updating formula. The paper suggested value is :math:`10^{-8}`,
-                  the data type should be float32.
+                  the data type should be float.
                 - **beta1** (float) - The exponential decay rate for the 1st moment estimations,
-                  the data type should be float32. The paper suggested value is :math:`0.9`
+                  the data type should be float. The paper suggested value is :math:`0.9`
                 - **beta2** (float) - The exponential decay rate for the 2nd moment estimations,
-                  the data type should be float32. The paper suggested value is :math:`0.999`
-                - **decay** (float) - weight decay (L2 penalty), must be a scalar tensor with float32 data type.
+                  the data type should be float. The paper suggested value is :math:`0.999`
+                - **decay** (float) - weight decay (L2 penalty), must be a scalar tensor with float data type.
                 - **eps** (float) - Term added to the denominator to improve numerical stability,
-                  the data type should be float32.
+                  the data type should be float.
                 - **amsgrad** (bool) - whether to use the AMSGrad algorithm. Default: ``False``.
                 - **maximize** (bool) - maximize the params based on the objective, instead of minimizing.
                   Default: ``False``.
