@@ -86,7 +86,7 @@ class DumpTensorInfo {
 
 TensorStat GetKernelTensorStats(const DumpTensorInfo &);
 void DumpKernelTensorStats(const DeviceContext *device_context, vector<device::DeviceAddress *> tensors, bool is_input,
-                           const string &, const string &);
+                           const CNodePtr &node, uint32_t graph_id);
 
 }  // namespace datadump
 
