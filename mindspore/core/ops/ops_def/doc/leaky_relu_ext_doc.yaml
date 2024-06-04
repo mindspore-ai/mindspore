@@ -31,13 +31,13 @@ leaky_relu_ext:
             TypeError: If `negative_slope` is not a float or an int.
     
         Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+            ``Ascend``
     
         Examples:
             >>> import mindspore
             >>> import numpy as np
-            >>> from mindspore import Tensor, ops
+            >>> from mindspore import Tensor, mint
             >>> input = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-            >>> print(mint.leaky_relu(input, negative_slope=0.2))
+            >>> print(mint.nn.functional.leaky_relu(input, negative_slope=0.2))
             [[-0.2  4.  -1.6]
              [ 2.  -1.   9. ]]
