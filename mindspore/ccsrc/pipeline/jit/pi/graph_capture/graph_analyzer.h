@@ -102,6 +102,12 @@ class GraphAnalyzer {
   const auto &alive_locals() const { return alive_locals_; }
 
  protected:
+  // optimize
+  void OptimizeSideEffectRecord() const;
+
+  // rollback
+  void ResetSideEffectRecord() const;
+
   void AddToEscaped(ValueNode *value);
   // UD analyze
   virtual void UseDefAnalyze();
@@ -116,12 +122,6 @@ class GraphAnalyzer {
   std::vector<int> alive_locals_;
 
  private:
-  // optimize
-  void OptimizeSideEffectRecord() const;
-
-  // rollback
-  void ResetSideEffectRecord() const;
-
   bool AnalyzeRecursive(Graph *g);
   bool AnalyzeCall(CallNode *);
   bool TryToCapture(AbstractNode *value);

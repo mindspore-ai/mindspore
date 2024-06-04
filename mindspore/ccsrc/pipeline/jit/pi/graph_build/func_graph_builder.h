@@ -43,7 +43,14 @@ class FuncGraphBuilder {
   /// \param[in] obj The input python object.
   ///
   /// \return If the input is a tensor, return a fake tensor python object, else return the origin python object.
-  py::object AddInput(const py::object &obj);
+  py::object AddSubGraphInput(const py::object &obj);
+
+  /// \brief Add an input parameter to the top graph.
+  ///
+  /// \param[in] packed_inputs The input python object for top graph.
+  ///
+  /// \return True if add top graph success, otherwise false.
+  bool AddTopGraphInputs(std::vector<py::object> packed_inputs);
 
   /// \brief Add a cnode to the graph.
   ///
@@ -186,6 +193,12 @@ class FuncGraphBuilder {
   py::object ConvertToPyTensorOrParameter(const py::object &cpp_tensor);
 
   static bool CheckInvalidCellListDictMethod(const py::object &obj);
+
+  bool AddTopGraphArgsInputs(const py::object &object);
+
+  bool AddTopGraphVargsInputs(const py::object &vargs);
+
+  bool AddTopGraphKwargsInputs(const py::object &vargs);
 
   FuncGraphPtr graph_{nullptr};
   bool has_set_output_{false};

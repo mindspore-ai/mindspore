@@ -47,10 +47,10 @@ class TestFuncGraphBuilder : public UT::Common {
 TEST_F(TestFuncGraphBuilder, TestAddInputAddOutput) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddInput(int_v1);
+  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
   ASSERT_NE(input1.ptr(), nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder.AddInput(int_v2);
+  auto input2 = func_graph_builder.AddSubGraphInput(int_v2);
   ASSERT_NE(input2.ptr(), nullptr);
   ASSERT_TRUE(func_graph_builder.AddOutput(input2));
   auto graph = func_graph_builder.graph();
@@ -65,10 +65,10 @@ TEST_F(TestFuncGraphBuilder, TestAddInputAddOutput) {
 TEST_F(TestFuncGraphBuilder, DISABLED_TestAddNodeAndSingleOutput) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddInput(int_v1);
+  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
   ASSERT_NE(input1.ptr(), nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder.AddInput(int_v2);
+  auto input2 = func_graph_builder.AddSubGraphInput(int_v2);
   ASSERT_NE(input2.ptr(), nullptr);
   auto mod = python_adapter::GetPyModule("mindspore.ops.operations._scalar_ops");
   ASSERT_FALSE(py::isinstance<py::none>(mod));
@@ -90,10 +90,10 @@ TEST_F(TestFuncGraphBuilder, DISABLED_TestAddNodeAndSingleOutput) {
 TEST_F(TestFuncGraphBuilder, DISABLED_TestAddNodeAndMultiOutput) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddInput(int_v1);
+  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
   ASSERT_NE(input1.ptr(), nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder.AddInput(int_v2);
+  auto input2 = func_graph_builder.AddSubGraphInput(int_v2);
   ASSERT_NE(input2.ptr(), nullptr);
   auto mod = python_adapter::GetPyModule("mindspore.ops.operations._scalar_ops");
   ASSERT_FALSE(py::isinstance<py::none>(mod));
@@ -116,13 +116,13 @@ TEST_F(TestFuncGraphBuilder, DISABLED_TestAddNodeAndMultiOutput) {
 TEST_F(TestFuncGraphBuilder, DISABLED_TestRemoveOutput) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddInput(int_v1);
+  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
   ASSERT_NE(input1.ptr(), nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder.AddInput(int_v2);
+  auto input2 = func_graph_builder.AddSubGraphInput(int_v2);
   ASSERT_NE(input2.ptr(), nullptr);
   py::int_ int_v3 = 3;
-  auto input3 = func_graph_builder.AddInput(int_v3);
+  auto input3 = func_graph_builder.AddSubGraphInput(int_v3);
   ASSERT_NE(input3.ptr(), nullptr);
 
   auto mod = python_adapter::GetPyModule("mindspore.ops.operations._scalar_ops");
@@ -153,7 +153,7 @@ TEST_F(TestFuncGraphBuilder, DISABLED_TestRemoveOutput) {
 TEST_F(TestFuncGraphBuilder, DISABLED_TestAddNodeConstantInput) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddInput(int_v1);
+  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
   ASSERT_NE(input1.ptr(), nullptr);
   py::int_ int_v2 = 2;
   auto obj = func_graph_builder.AddNode(prim::kPrimScalarAdd, {input1, int_v2});
@@ -171,10 +171,10 @@ TEST_F(TestFuncGraphBuilder, DISABLED_TestAddNodeConstantInput) {
 TEST_F(TestFuncGraphBuilder, TestAddNodeUnCallable) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddInput(int_v1);
+  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
   ASSERT_NE(input1.ptr(), nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder.AddInput(int_v2);
+  auto input2 = func_graph_builder.AddSubGraphInput(int_v2);
   ASSERT_NE(input2.ptr(), nullptr);
   auto mod = python_adapter::GetPyModule("mindspore.ops.operations._scalar_ops");
   ASSERT_FALSE(py::isinstance<py::none>(mod));
@@ -190,10 +190,10 @@ TEST_F(TestFuncGraphBuilder, TestAddNodeUnCallable) {
 TEST_F(TestFuncGraphBuilder, DISABLED_TestAddMultiNode) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddInput(int_v1);
+  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
   ASSERT_NE(input1.ptr(), nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder.AddInput(int_v2);
+  auto input2 = func_graph_builder.AddSubGraphInput(int_v2);
   ASSERT_NE(input2.ptr(), nullptr);
   auto add_obj = func_graph_builder.AddMultiNode("add", {input1, input2});
   ASSERT_TRUE(func_graph_builder.AddOutput(add_obj));
@@ -209,10 +209,10 @@ TEST_F(TestFuncGraphBuilder, DISABLED_TestAddMultiNode) {
 TEST_F(TestFuncGraphBuilder, DISABLED_TestAddFgCallNodeSingleOutput) {
   FuncGraphBuilder func_graph_builder1;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder1.AddInput(int_v1);
+  auto input1 = func_graph_builder1.AddSubGraphInput(int_v1);
   ASSERT_NE(input1.ptr(), nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder1.AddInput(int_v2);
+  auto input2 = func_graph_builder1.AddSubGraphInput(int_v2);
   ASSERT_NE(input2.ptr(), nullptr);
   auto mod = python_adapter::GetPyModule("mindspore.ops.operations._scalar_ops");
   ASSERT_FALSE(py::isinstance<py::none>(mod));
@@ -226,9 +226,9 @@ TEST_F(TestFuncGraphBuilder, DISABLED_TestAddFgCallNodeSingleOutput) {
   ASSERT_NE(graph1, nullptr);
 
   FuncGraphBuilder func_graph_builder2;
-  input1 = func_graph_builder2.AddInput(int_v1);
+  input1 = func_graph_builder2.AddSubGraphInput(int_v1);
   ASSERT_NE(input1.ptr(), nullptr);
-  input2 = func_graph_builder2.AddInput(int_v2);
+  input2 = func_graph_builder2.AddSubGraphInput(int_v2);
   ASSERT_NE(input2.ptr(), nullptr);
   auto call_node_obj = func_graph_builder2.AddNode(graph1, {input1, input2});
   ASSERT_NE(call_node_obj.ptr(), nullptr);
@@ -246,10 +246,10 @@ TEST_F(TestFuncGraphBuilder, DISABLED_TestAddFgCallNodeSingleOutput) {
 TEST_F(TestFuncGraphBuilder, DISABLED_TestAddFgCallNodeMultiOutput) {
   FuncGraphBuilder func_graph_builder1;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder1.AddInput(int_v1);
+  auto input1 = func_graph_builder1.AddSubGraphInput(int_v1);
   ASSERT_NE(input1.ptr(), nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder1.AddInput(int_v2);
+  auto input2 = func_graph_builder1.AddSubGraphInput(int_v2);
   ASSERT_NE(input2.ptr(), nullptr);
   auto mod = python_adapter::GetPyModule("mindspore.ops.operations._scalar_ops");
   ASSERT_FALSE(py::isinstance<py::none>(mod));
@@ -266,9 +266,9 @@ TEST_F(TestFuncGraphBuilder, DISABLED_TestAddFgCallNodeMultiOutput) {
   ASSERT_NE(graph1, nullptr);
 
   FuncGraphBuilder func_graph_builder2;
-  input1 = func_graph_builder2.AddInput(int_v1);
+  input1 = func_graph_builder2.AddSubGraphInput(int_v1);
   ASSERT_NE(input1.ptr(), nullptr);
-  input2 = func_graph_builder2.AddInput(int_v2);
+  input2 = func_graph_builder2.AddSubGraphInput(int_v2);
   ASSERT_NE(input2.ptr(), nullptr);
   auto call_node_obj = func_graph_builder2.AddNode(graph1, {input1, input2});
   ASSERT_NE(call_node_obj.ptr(), nullptr);

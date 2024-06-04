@@ -119,7 +119,7 @@ def test_while_after_for_in_if_4():
     Expectation: No exception.
     """
 
-    @jit(mode="PIJit", jit_config={"compile_by_trace": False}) # One-stage will fix it later
+    @jit(mode="PIJit")
     def func2304():
         x = [3, 2]
         y = [1, 2, 3, 4]

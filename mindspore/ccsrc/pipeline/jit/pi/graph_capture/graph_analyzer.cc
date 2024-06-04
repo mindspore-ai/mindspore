@@ -692,6 +692,8 @@ void MindGraphAnalyzer::CollectCapturedInputs() {
 }
 
 void MindGraphAnalyzer::Analyze() {
+  OptimizeSideEffectRecord();
+
   auto origin_stop_bci = graph_->GetStopTraceBci();
   UseDefAnalyze();
 
@@ -712,11 +714,15 @@ void MindGraphAnalyzer::Analyze() {
       AddToEscaped(traced_node);
     }
     graph_->StopTraceAt(origin_stop_bci, StopTraceReason::kStopTraceDataDependsOnGraphOut);
+    ResetSideEffectRecord();
+
     need_interpret_ = true;
     GetCaptureInfo().captured_.clear();
     CollectCapturedAndInterpret();
     return;
   }
+  ResetSideEffectRecord();
+
   CollectCapturedAndInterpret();
   CollectGraphInputs();
 
@@ -728,7 +734,7 @@ void MindGraphAnalyzer::Analyze() {
   if (!support_ret) {
     return;
   }
-  need_interpret_ = false;
+  need_interpret_ = !graph_->GetSideEffect()->IsEmpty();
 }
 
 bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) {
@@ -806,6 +812,13 @@ void MindGraphAnalyzer::CollectCapturedAndInterpret() {
 
   GetCaptureInfo().interpret_.inputs = graph_->GetFrame(0).GetLocals();
   GetCaptureInfo().interpret_.outputs = std::move(alive_nodes);
+
+  // remove side-effect node
+  auto is_remove = [this](ValueNode *node) { return this->graph_->GetSideEffect()->IsRecord(node); };
+  auto *ops = &GetCaptureInfo().captured_.operations;
+  ops->erase(std::remove_if(ops->begin(), ops->end(), is_remove), ops->end());
+  ops = &GetCaptureInfo().interpret_.operations;
+  ops->erase(std::remove_if(ops->begin(), ops->end(), is_remove), ops->end());
 }
 
 void MindGraphAnalyzer::UseDefAnalyze() {

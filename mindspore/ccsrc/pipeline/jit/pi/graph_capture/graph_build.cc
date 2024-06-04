@@ -3305,7 +3305,7 @@ bool MindGraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py:
 bool MindGraphBuilder::FGAddInputs(const std::vector<py::object> &args) {
   // Add function graph inputs.
   for (size_t i = 0; i < args.size(); ++i) {
-    auto obj = FGBuilder()->AddInput(args[i]);
+    auto obj = FGBuilder()->AddSubGraphInput(args[i]);
     if (obj.ptr() == nullptr) {
       MS_LOG(INFO) << "Add input fail for input: " << std::string(py::str(args[i]));
       return false;
@@ -3401,6 +3401,7 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
     return callable_info;
   }
   callable_info = callable->GetPyObject();
+  py::object original_callable = callable_info;
   if (callable_info.ptr() == nullptr) {
     return py::object();
   }
@@ -3435,40 +3436,16 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
     return FGAddNode(call_node, callable_info, args, stop_reason);
   }
 
-  if (callable_info.ptr() == nullptr) {
-    callable_info = py::cast<py::object>(reinterpret_cast<PyObject *>(callable->GetTypeObject()));
+  py::object result = this->GraphBuilder::ResolveCallable(call_node, stop_reason);
+  bool pijit_specialized = original_callable == callable_info             // not converted
+                           || call_node->GetSubGraph() != nullptr         // pijit sub graph
+                           || callable->GetType() == AObject::kTypeType;  // pijit class instantiation
+  if (pijit_specialized) {
+    return result;
   }
-
-  AObject::Type callable_type = callable->GetType();
-  if (callable_info.ptr() == nullptr) {
-    if (callable->TestMsFlag(AObject::kMsFlagGradFunc | AObject::kMsFlagShardFunc | AObject::kMsFlagVmapFunc)) {
-      SetGradFuncInfo(call_node);
-      *stop_reason = StopTraceReason::kNonStopTrace;
-    }
-    return py::object();
-  }
-
-  *stop_reason = StopTraceReason::kNonStopTrace;
-  if (callable_type == AObject::kTypeType) {
-    call_node->SetInlineReason(InlineReason::kInlineFunc_ArgType_IsClass);
-    HandleCallClass(call_node);
-    if (static_cast<AbstractType *>(callable)->GetTypeType() == AObject::kTypeCell) {
-      *stop_reason = StopTraceReason::kStopTraceInfer_Fail;
-    }
-    return py::object();
-  }
-
-  if (WhiteListFuncCheckAndInfer(call_node, callable_info)) {
-    return py::object();
-  }
-
-  // find code object
-  auto vobj = AObject::Convert(callable_info.ptr());
-  callable_info = (vobj->GetType() == AObject::kTypeCFunction) ? py::object() : FindPyFunc(vobj);
-  if (callable_info.ptr() == nullptr) {
-    *stop_reason = StopTraceReason::kStopTraceFunc_Type_Unsupported;
-  }
-  return callable_info;
+  MS_LOG(DEBUG) << "convert " << std::string(py::str(original_callable)) << " -> "
+                << std::string(py::str(callable_info));
+  return FindPyFunc(AObject::Convert(callable_info));
 }
 
 bool MindGraphBuilder::HandleCallClass(CallNode *call_node) {
@@ -3805,18 +3782,21 @@ bool MindGraphBuilder::UnpackCallExDict(std::vector<ValueNode *> *params, CallNo
 }
 
 bool MindGraphBuilder::DoItemAccess(const Instr &instr) {
-  bool res = true;
   int opcode = instr.op();
+  bool res = false;
   if (opcode == BINARY_SUBSCR) {
     res = DoGetItem(instr);
   } else if (opcode == STORE_SUBSCR) {
-    // STORE_SUBSCR: k->index v->item m-> container
-    auto k = pop();
-    auto m = pop();
-    auto v = pop();
-    res = DoSetItem(m, k, v);
+    auto key = pop();
+    auto map = pop();
+    auto value = pop();
+    NewValueNode(nullptr, instr, {value, map, key});
+    res = DoSetItem(map, key, value);
   } else if (opcode == DELETE_SUBSCR) {
-    res = false;
+    auto key = pop();
+    auto map = pop();
+    NewValueNode(nullptr, instr, {map, key});
+    res = DoSetItem(map, key, nullptr);
   } else {
     MS_LOG(INTERNAL_EXCEPTION) << "parser got an error instruction " << instr.ToString();
   }

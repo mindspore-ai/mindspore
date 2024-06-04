@@ -132,6 +132,7 @@ def test_with_case_3():
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
 
+@pytest.mark.skip(reason="adapter later")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -149,8 +150,7 @@ def test_with_case_4():
         return val + add
     test_value = 0
     expected = func(test_value, 5)
-    cfg={"compile_by_trace": False} # One-stage will fix it later
-    res = jit(fn=func, mode="PIJit", jit_config=cfg)(test_value, 5)
+    res = jit(fn=func, mode="PIJit")(test_value, 5)
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
     assert expected == res

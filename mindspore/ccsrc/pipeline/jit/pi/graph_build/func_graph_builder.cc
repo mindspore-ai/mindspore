@@ -100,6 +100,10 @@ bool TensorArgMutable(const py::object &obj, const ValuePtr &value) {
   return !py::hasattr(obj, const_arg_attr) || !py::cast<bool>(py::getattr(obj, const_arg_attr));
 }
 
+bool NeedBroaden(const py::object &obj, const ValuePtr &value) {
+  return TensorArgMutable(obj, value) || Mutable(obj, value) || value->isa<tensor::MetaSparseTensor>();
+}
+
 TypeId GetTypeIdFromClassName(const std::string &class_name) {
   static HashMap<std::string, TypeId> class_name_to_type_ids = {
     {"Tensor", kObjectTypeTensorType},  {"list", kObjectTypeList},
@@ -372,31 +376,185 @@ AnfNodePtr FuncGraphBuilder::GetNodeByObject(const py::object &obj) {
   return nullptr;
 }
 
-py::object FuncGraphBuilder::AddInput(const py::object &obj) {
-  bool is_top = prev_builders_.empty();
+bool FuncGraphBuilder::AddTopGraphArgsInputs(const py::object &object) {
+  // args object should always be list object.
+  if (object.ptr() == nullptr || !py::isinstance<py::list>(object)) {
+    MS_LOG(INFO) << "Get top graph args failed.";
+    return false;
+  }
+  auto args = object.cast<py::list>();
+  for (size_t i = 0; i < args.size(); ++i) {
+    auto arg = args[i].cast<py::object>();
+    if (arg.ptr() == nullptr) {
+      return false;
+    }
+    auto value = ConvertPyObjToValue(arg);
+    if (value == nullptr) {
+      return false;
+    }
+    bool broaden = NeedBroaden(arg, value);
+    AbstractBasePtr abs = abstract::ToAbstract(value, nullptr, nullptr);
+    if (broaden) {
+      abs = AbstractBroaden(abs);
+    }
+    if (abs == nullptr) {
+      MS_LOG(INFO) << "Failed to add input for python object: " << std::string(py::str(arg)) << "  " << arg.ptr();
+      return false;
+    }
+    auto para = graph_->add_parameter();
+    para->set_abstract(abs);
+    para->set_is_top_graph_param(true);
+    MS_LOG(INFO) << "Add top arg input success, python object: " << py::str(arg) << ", node: " << para->DebugString()
+                 << ", abstract: " << abs->ToString();
+    (void)py_obj_to_node_.emplace(arg.ptr(), para);
+    para->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(arg));
+  }
+  return true;
+}
+
+bool FuncGraphBuilder::AddTopGraphVargsInputs(const py::object &vargs) {
+  if (vargs.ptr() == nullptr) {
+    MS_LOG(INFO) << "Top graph has no vargs input.";
+    return true;
+  }
+  auto vargs_tuple = vargs.cast<py::tuple>();
+  if (vargs_tuple.ptr() == nullptr) {
+    MS_LOG(INFO) << "Vargs object should be tuple but got: " << py::str(vargs) << ", add top graph vargs failed.";
+    return false;
+  }
+  auto value = ConvertPyObjToValue(vargs);
+  if (value == nullptr || !value->isa<ValueTuple>()) {
+    MS_LOG(INFO) << "Convert vargs to value failed, vargs: " << py::str(vargs);
+    return false;
+  }
+  auto value_tuple = value->cast<ValueTuplePtr>();
+  const auto &elements = value_tuple->value();
+  if (elements.size() != vargs_tuple.size()) {
+    MS_LOG(INFO) << "For top graph vargs, converted value element size is " << elements.size()
+                 << ", python tuple element size is " << vargs_tuple.size() << ". Size not matched.";
+    return false;
+  }
+  std::vector<AbstractBasePtr> new_elements;
+  for (size_t i = 0; i < elements.size(); ++i) {
+    auto cur_obj = vargs_tuple[i].cast<py::object>();
+    auto cur_val = elements[i];
+    bool broaden = NeedBroaden(cur_obj, cur_val);
+    auto cur_abs = abstract::ToAbstract(cur_val, nullptr, nullptr);
+    if (broaden) {
+      cur_abs = AbstractBroaden(cur_abs);
+    }
+    if (cur_abs == nullptr) {
+      MS_LOG(INFO) << "Fail to convert args element " << cur_val->ToString();
+      return false;
+    }
+    new_elements.push_back(cur_abs);
+  }
+  auto new_vargs_abs = std::make_shared<abstract::AbstractTuple>(new_elements);
+  auto para = graph_->add_parameter();
+  para->set_abstract(new_vargs_abs);
+  para->set_is_top_graph_param(true);
+  MS_LOG(INFO) << "Add top vargs input success, python object: " << py::str(vargs) << ", node: " << para->DebugString()
+               << ", abstract: " << new_vargs_abs->ToString();
+  (void)py_obj_to_node_.emplace(vargs.ptr(), para);
+  para->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(vargs));
+  return true;
+}
+
+bool FuncGraphBuilder::AddTopGraphKwargsInputs(const py::object &kwargs) {
+  if (kwargs.ptr() == nullptr) {
+    MS_LOG(INFO) << "Top graph has no kwargs input.";
+    return true;
+  }
+  auto kwargs_dict = kwargs.cast<py::dict>();
+  if (kwargs_dict.ptr() == nullptr) {
+    MS_LOG(INFO) << "Kwargs object should be tuple but got: " << py::str(kwargs) << ", add top graph kwargs failed.";
+    return false;
+  }
+  auto value = ConvertPyObjToValue(kwargs);
+  if (value == nullptr || !value->isa<ValueDictionary>()) {
+    MS_LOG(INFO) << "Convert kwargs to value failed, kwargs: " << py::str(kwargs);
+    return false;
+  }
+  auto value_dict = value->cast<ValueDictionaryPtr>();
+  const auto &elements = value_dict->value();
+  if (elements.size() != kwargs_dict.size()) {
+    MS_LOG(INFO) << "Kwargs dict size is " << kwargs_dict.size() << " and corresponding value dict size is "
+                 << elements.size() << ". Size not matched.";
+  }
+  std::vector<abstract::AbstractElementPair> new_key_values;
+  for (size_t i = 0; i < elements.size(); ++i) {
+    auto cur_key_val = elements[i].first;
+    auto cur_val = elements[i].second;
+    auto cur_key_obj = ValueToPyData(cur_key_val);
+    if (!kwargs_dict.contains(cur_key_obj)) {
+      return false;
+    }
+    auto cur_val_obj = kwargs_dict[cur_key_obj];
+    auto cur_value_abs = abstract::ToAbstract(cur_val, nullptr, nullptr);
+    bool broaden = NeedBroaden(cur_val_obj, cur_val);
+    if (broaden) {
+      cur_value_abs = AbstractBroaden(cur_value_abs);
+    }
+    if (cur_value_abs == nullptr) {
+      MS_LOG(INFO) << "Fail to convert kwargs value element " << cur_val->ToString();
+      return false;
+    }
+    auto cur_key_abs = abstract::ToAbstract(cur_key_val, nullptr, nullptr);
+    new_key_values.push_back(abstract::AbstractElementPair{cur_key_abs, cur_value_abs});
+  }
+  auto new_kwargs_abs = std::make_shared<abstract::AbstractDictionary>(new_key_values);
+  auto para = graph_->add_parameter();
+  para->set_abstract(new_kwargs_abs);
+  para->set_is_top_graph_param(true);
+  MS_LOG(INFO) << "Add top kwargs input success, python object: " << py::str(kwargs)
+               << ", node: " << para->DebugString() << ", abstract: " << new_kwargs_abs->ToString();
+  (void)py_obj_to_node_.emplace(kwargs.ptr(), para);
+  para->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(kwargs));
+  return true;
+}
+
+bool FuncGraphBuilder::AddTopGraphInputs(std::vector<py::object> packed_inputs) {
+  constexpr size_t args_index = 0;
+  constexpr size_t vargs_index = 1;
+  constexpr size_t kwargs_index = 2;
+  constexpr size_t packed_inputs_size = 3;
+  if (!prev_builders_.empty()) {
+    MS_LOG(INFO) << "Current builder has prev builder, add top graph parameter failed.";
+    return false;
+  }
+  if (packed_inputs.size() != packed_inputs_size) {
+    MS_LOG(INFO) << "Top graph packed inputs size is not three but " << packed_inputs.size()
+                 << ", add top graph parameter failed.";
+    return false;
+  }
+  if (!AddTopGraphArgsInputs(packed_inputs[args_index])) {
+    MS_LOG(INFO) << "Add top graph args inputs failed.";
+    return false;
+  }
+  if (!AddTopGraphVargsInputs(packed_inputs[vargs_index])) {
+    MS_LOG(INFO) << "Add top graph vargs inputs failed";
+    return false;
+  }
+  if (!AddTopGraphKwargsInputs(packed_inputs[kwargs_index])) {
+    MS_LOG(INFO) << "Add top graph kwargs inputs failed";
+    return false;
+  }
+  MS_LOG(INFO) << "Add top graph inputs success.";
+  return true;
+}
+
+py::object FuncGraphBuilder::AddSubGraphInput(const py::object &obj) {
+  MS_LOG(INFO) << "Try add sub graph parameter for object: " << std::string(py::str(obj)) << "  " << obj.ptr();
   AbstractBasePtr abs = nullptr;
-  if (!is_top) {
-    MS_LOG(INFO) << "Try add sub graph parameter for object: " << std::string(py::str(obj)) << "  " << obj.ptr();
-    auto node = GetNodeByObject(obj);
-    if (node != nullptr) {
-      abs = node->abstract();
-    }
-    // Handle constant subgraph input.
-    if (abs == nullptr && IsConstant(obj)) {
-      auto value = ConvertPyObjToValue(obj);
-      if (value != nullptr) {
-        abs = abstract::ToAbstract(value, nullptr, nullptr);
-      }
-    }
-  } else {
-    MS_LOG(INFO) << "Try add top graph parameter for object: " << std::string(py::str(obj));
+  auto node = GetNodeByObject(obj);
+  if (node != nullptr) {
+    abs = node->abstract();
+  }
+  // Handle constant subgraph input.
+  if (abs == nullptr && IsConstant(obj)) {
     auto value = ConvertPyObjToValue(obj);
     if (value != nullptr) {
-      bool broaden = TensorArgMutable(obj, value) || Mutable(obj, value) || value->isa<tensor::MetaSparseTensor>();
       abs = abstract::ToAbstract(value, nullptr, nullptr);
-      if (broaden) {
-        abs = AbstractBroaden(abs);
-      }
     }
   }
   if (abs == nullptr) {
@@ -405,7 +563,7 @@ py::object FuncGraphBuilder::AddInput(const py::object &obj) {
   }
   auto para = graph_->add_parameter();
   para->set_abstract(abs);
-  para->set_is_top_graph_param(is_top);
+  para->set_is_top_graph_param(false);
   MS_LOG(INFO) << "Add input success, node: " << para->DebugString() << " obj: " << py::str(obj) << "  " << obj.ptr();
   (void)py_obj_to_node_.emplace(obj.ptr(), para);
   para->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(obj));
