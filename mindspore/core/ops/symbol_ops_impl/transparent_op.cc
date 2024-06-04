@@ -78,6 +78,7 @@ REG_SYMBOL_OP_BUILDER("StopGradient").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("StridedSliceGrad")
   .SetShapeDepend({DependOn::kNone, DependOn::kValue})
   .SetShapeFunc(TransValueToShape);
+REG_SYMBOL_OP_BUILDER("TensorScatterUpdate").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Tril").SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("UniformExt").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Zeros").SetShapeDepend({DependOn::kValue}).SetShapeFunc(TransValueToShape);
