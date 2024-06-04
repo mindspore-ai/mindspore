@@ -1710,12 +1710,6 @@ bool ApplyInlinePolicy(CallNode *call_node) {
     // if inline, guard free variable
     return nfrees == 1 && std::string("__class__") == PyUnicode_AsUTF8(PyTuple_GET_ITEM(co->co_freevars, 0));
   }
-
-  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co), false);
-  if (jcr != nullptr && jcr->break_count_ > 0) {
-    return false;
-  }
-
   if (g->GetRetVal()->GetOpcode() == MAKE_FUNCTION) {
     return false;
   }
