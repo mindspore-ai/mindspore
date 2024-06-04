@@ -261,7 +261,7 @@ class TensorLoader {
       auto type_string = node->GetTypeString();
       if (type_string == "bfloat16") {
         std::shared_ptr<tensor::Tensor> bfloat16_tensor = std::make_shared<tensor::Tensor>(
-          TypeId::kNumberTypeFloat16, node->GetShape(), static_cast<void *>(const_cast<char *>(node->GetDataPtr())),
+          TypeId::kNumberTypeBFloat16, node->GetShape(), static_cast<void *>(const_cast<char *>(node->GetDataPtr())),
           node->GetByteSize());
         std::shared_ptr<tensor::Tensor> float32_tensor =
           std::make_shared<tensor::Tensor>(*bfloat16_tensor, TypeId::kNumberTypeFloat32);
