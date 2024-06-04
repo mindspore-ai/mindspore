@@ -96,6 +96,8 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
   void BuildNodesSymbol(const FuncGraphPtr &fg, const AnfNodePtrList &cnodes);
   void BuildCNodeSymbol(const CNodePtr &cnode);
 
+  bool HasAbstractAny(const AbstractBasePtrList &inputs, const AbstractBasePtr &output);
+
   std::string name_;
   AnfNodePtrList cnodes_;
   OpPtrList ops_;
