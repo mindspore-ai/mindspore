@@ -54,10 +54,10 @@ def exp_vmap_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_exp_forward(context_mode):
+def test_ops_exp_normal(context_mode):
     """
     Feature: pyboost function.
-    Description: test function exp forward.
+    Description: test function exp forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -65,6 +65,10 @@ def test_ops_exp_forward(context_mode):
     output = exp_forward_func(ms.Tensor(x))
     expect = generate_expect_forward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+    output2 = exp_backward_func(ms.Tensor(x))
+    expect2 = generate_expect_backward_output(x)
+    np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-3)
 
 
 @pytest.mark.level1
@@ -76,32 +80,13 @@ def test_ops_exp_forward(context_mode):
 def test_ops_exp_forward_case01(context_mode):
     """
     Feature: pyboost function.
-    Description: test function exp forward.
+    Description: test function exp forward add cases.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
     x = generate_random_input((112,), np.float32)
     output = exp_forward_func(ms.Tensor(x))
     expect = generate_expect_forward_output(x)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_exp_backward(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function exp backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
-    output = exp_backward_func(ms.Tensor(x))
-    expect = generate_expect_backward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
@@ -133,7 +118,7 @@ def test_ops_exp_vmap(context_mode):
 def test_ops_exp_dynamic_shape():
     """
     Feature: pyboost function.
-    Description: test function exp with dynamic shape in graph mode.
+    Description: test function exp with dynamic shape and dynamic rank.
     Expectation: return the correct value.
     """
     x = generate_random_input((2, 3, 4, 5), np.float32)

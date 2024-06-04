@@ -51,11 +51,11 @@ def greater_vmap_func(x, y):
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_greater_op_forward(mode):
+def test_greater_op_normal(mode):
     """
-    Feature: test notequal op
-    Description: test notequal run by pyboost
-    Expectation: expect correct forward result.
+    Feature: pyboost function.
+    Description: test function greater run forward and backward.
+    Expectation: expect correct result.
     """
     ms.set_context(mode=mode)
     x = generate_random_input((1, 2, 3, 4), np.float32)
@@ -63,6 +63,12 @@ def test_greater_op_forward(mode):
     output = greater_forward_func(ms.Tensor(x), ms.Tensor(y))
     expect = generate_expect_forward_output(x, y)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+    x2 = Tensor(np.array([1, 2]).astype(np.float32))
+    y2 = Tensor(np.array([2, 1]).astype(np.float32))
+    output2 = greater_backward_func(ms.Tensor(x2), ms.Tensor(y2))
+    expect2 = np.array([0., 0., 0.]).astype(np.float32)
+    assert np.allclose(output2[0].asnumpy(), expect2, rtol=1e-4)
 
 
 @pytest.mark.level1
@@ -74,36 +80,15 @@ def test_greater_op_forward(mode):
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_greater_op_forward_case01(mode):
     """
-    Feature: test notequal op
-    Description: test notequal run by pyboost
-    Expectation: expect correct forward result.
+    Feature: pyboost function.
+    Description: test function greater run forward add cases.
+    Expectation: expect correct result.
     """
     ms.set_context(mode=mode)
     x = Tensor(np.array([24]).astype(np.float32))
     y = Tensor(np.array([1]).astype(np.float32))
     output = greater_forward_func(x, y)
     assert np.allclose(output.asnumpy(), [True])
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_greater_op_backward(mode):
-    """
-    Feature: test notequal op
-    Description: test notequal run by pyboost
-    Expectation: expect correct forward result.
-    """
-    ms.set_context(mode=mode)
-    x = Tensor(np.array([1, 2]).astype(np.float32))
-    y = Tensor(np.array([2, 1]).astype(np.float32))
-    output = greater_backward_func(ms.Tensor(x), ms.Tensor(y))
-    expect_out = np.array([0., 0., 0.]).astype(np.float32)
-    assert np.allclose(output[0].asnumpy(), expect_out, rtol=1e-4)
 
 
 @pytest.mark.level1
@@ -115,9 +100,9 @@ def test_greater_op_backward(mode):
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_greater_op_vmap(mode):
     """
-    Feature: test notequal op
-    Description: test notequal run by pyboost
-    Expectation: expect correct forward result.
+    Feature: pyboost function.
+    Description: test greater run vamp.
+    Expectation: expect correct result.
     """
     ms.set_context(mode=mode)
     x = generate_random_input((2, 3, 4, 5), np.float32)
@@ -134,9 +119,9 @@ def test_greater_op_vmap(mode):
 @pytest.mark.platform_arm_ascend_training
 def test_greater_op_dynamic_shape():
     """
-    Feature: pyboost function.
-    Description: test function greater with dynamic shape in graph mode.
-    Expectation: return the correct value.
+    Feature: pyboost function..
+    Description: test function greater with dynamic shape and dynamic rank.
+    Expectation: expect correct result.
     """
     x1 = generate_random_input((2, 3, 4, 5), np.float32)
     y1 = generate_random_input((2, 3, 4, 5), np.float32)

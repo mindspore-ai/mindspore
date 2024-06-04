@@ -55,10 +55,10 @@ def mul_vmap_func(x, y):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_mul_forward(context_mode):
+def test_ops_mul_normal(context_mode):
     """
     Feature: pyboost function.
-    Description: test function mul forward.
+    Description: test function mul forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -67,6 +67,13 @@ def test_ops_mul_forward(context_mode):
     output = mul_forward_func(ms.Tensor(x), ms.Tensor(y))
     expect_out = generate_expect_forward_output(x, y)
     np.testing.assert_allclose(output.asnumpy(), expect_out, rtol=1e-3)
+
+    x2 = generate_random_input((2, 3, 4), np.float32)
+    y2 = generate_random_input((2, 3, 4), np.float32)
+    output2 = mul_backward_func(ms.Tensor(x2), ms.Tensor(y2))
+    expect_out2 = generate_expect_backward_output(x2, y2)
+    np.testing.assert_allclose(output2[0].asnumpy(), expect_out2[0], rtol=1e-3)
+    np.testing.assert_allclose(output2[1].asnumpy(), expect_out2[1], rtol=1e-3)
 
 
 @pytest.mark.level1
@@ -107,27 +114,6 @@ def test_ops_mul_forward_case02(context_mode):
     np.testing.assert_allclose(output.float().asnumpy(), expect_out, rtol=4e-3, atol=4e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_mul_backward(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function mul backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = generate_random_input((2, 3, 4), np.float32)
-    y = generate_random_input((2, 3, 4), np.float32)
-    output = mul_backward_func(ms.Tensor(x), ms.Tensor(y))
-    expect_out = generate_expect_backward_output(x, y)
-    np.testing.assert_allclose(output[0].asnumpy(), expect_out[0], rtol=1e-3)
-    np.testing.assert_allclose(output[1].asnumpy(), expect_out[1], rtol=1e-3)
-
-
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
@@ -156,7 +142,7 @@ def test_ops_mul_vmap(context_mode):
 def test_ops_mul_dynamic_shape():
     """
     Feature: pyboost function.
-    Description: test function mul with dynamic shape in graph mode.
+    Description: test function mul with dynamic shape and dynamic rank.
     Expectation: return the correct value.
     """
     x1 = generate_random_input((2, 3, 4, 5), np.float32)
