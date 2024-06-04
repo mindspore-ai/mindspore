@@ -122,7 +122,7 @@ ValuePtr CreateNonTensorByAbstract(const abstract::AbstractBasePtr &abs) {
     return MakeValue("");
   }
   if (type_id >= kNumberTypeInt && type_id <= kNumberTypeUInt64) {
-    MakeValue(static_cast<int64_t>(0));
+    return MakeValue(static_cast<int64_t>(0));
   }
   if (type_id >= kNumberTypeFloat && type_id <= kNumberTypeFloat64) {
     return MakeValue(static_cast<float>(0));
@@ -494,7 +494,8 @@ ValuePtr Common::FilterSensValues(const ValuePtr &value, bool dict_convert_to_tu
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::BaseTensor>() || value->isa<tensor::COOTensor>() || value->isa<tensor::CSRTensor>()) {
     return value;
-  } else if (value->isa<ValueSequence>()) {
+  }
+  if (value->isa<ValueSequence>()) {
     std::vector<ValuePtr> value_list;
     auto value_seq = value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(value_seq);
@@ -504,15 +505,15 @@ ValuePtr Common::FilterSensValues(const ValuePtr &value, bool dict_convert_to_tu
       }
     }
     return std::make_shared<ValueTuple>(value_list);
-  } else if (value->isa<ValueDictionary>()) {
+  }
+  if (value->isa<ValueDictionary>()) {
     if (dict_convert_to_tuple) {
       return FilterSensValues(DataConvert::ConvertValueDictToValueTuple(value), dict_convert_to_tuple);
     }
     return value;
-  } else {
-    MS_LOG(DEBUG) << "Value type: " << value->ToString();
-    return nullptr;
   }
+  MS_LOG(DEBUG) << "Value type: " << value->ToString();
+  return nullptr;
 }
 
 tensor::BaseTensorPtr Common::GetTensorFromParam(const AnfNodePtr &param_node) {
