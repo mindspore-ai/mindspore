@@ -219,6 +219,7 @@ ValuePtr FuncGraphBuilder::ConvertPyObjToValue(const py::object &obj) {
   }
   ValuePtr ret = nullptr;
   try {
+    MS_LOG_TRY_CATCH_SCOPE;
     if (!parse::ConvertData(obj, &ret)) {
       return nullptr;
     }
@@ -274,6 +275,7 @@ AbstractBasePtr FuncGraphBuilder::EvalValue(const ValuePtr &value, const Abstrac
     return nullptr;
   }
   try {
+    MS_LOG_TRY_CATCH_SCOPE;
     if (value->isa<Primitive>()) {
       auto prim = value->cast<PrimitivePtr>();
       auto eval_res = abstract::EvalOnePrim(prim, inputs_abs_list);
@@ -648,6 +650,7 @@ CNodePtr FuncGraphBuilder::DoPrimitiveInferAndCheck(const PrimitivePtr &primitiv
                                                     const AnfNodePtrList &input_node_list,
                                                     const AbstractBasePtrList &args_abs_list) {
   try {
+    MS_LOG_TRY_CATCH_SCOPE;
     const CNodePtr &new_node = AddPrimitiveCNode(primitive, input_node_list, args_abs_list);
     if (new_node == nullptr) {
       MS_LOG(INFO) << "Failed to add CNode for Primitive: " << primitive->name();
