@@ -301,7 +301,7 @@ void GraphJitConfig::ApplyAutoJitCell() {
     PyObject *construct = PyObject_GetAttrString(self, "construct");
     py::object handle = py::reinterpret_steal<py::object>(construct);
     if (construct != nullptr) {
-      (void)pi_jit_should_compile(handle, py::dict());
+      (void)pi_jit_should_compile(handle, py::dict(), py::none());
     } else {
       PyErr_Clear();
     }

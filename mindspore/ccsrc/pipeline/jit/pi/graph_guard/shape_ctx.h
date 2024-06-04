@@ -13,20 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_PI_JIT_EXTERNAL_H
-#define MINDSPORE_PI_JIT_EXTERNAL_H
+#ifndef MINDSPORE_PI_JIT_SHAPE_CTX_H
+#define MINDSPORE_PI_JIT_SHAPE_CTX_H
 
+#include <memory>
+#include <vector>
 #include "pybind11/pybind11.h"
-#include "include/api/visible.h"
 
-namespace py = pybind11;
 namespace mindspore {
-py::bool_ pi_jit_enable();
-py::bool_ pi_jit_disable();
-py::bool_ pi_jit_should_compile(const py::object &func, const py::object &tag, const py::object &signature);
-py::object get_code_extra(const py::object &);
-void update_pijit_default_config(const py::kwargs &conf);
-size_t FunctionId(const py::object &callable);
+namespace pijit {
+
+/// \brief shape context
+class ShapeContext {
+ public:
+  ShapeContext(PyFrameObject *f, PyObject *signature);
+  virtual ~ShapeContext();
+
+ protected:
+  virtual bool CheckValid();
+  virtual void ApplySignature();
+  virtual void RevertSignature();
+  PyFrameObject *frame_;
+  PyObject *signature_;
+  std::vector<PyObject *> origin_;
+  bool is_method_;
+  bool applied_;
+};
+using ShapeContextPtr = std::shared_ptr<ShapeContext>;
+
+}  // namespace pijit
 }  // namespace mindspore
 
-#endif  // MINDSPORE_PI_JIT_EXTERNAL_H
+#endif  // MINDSPORE_PI_JIT_SHAPE_CTX_H

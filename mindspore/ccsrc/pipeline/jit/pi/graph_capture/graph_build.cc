@@ -1987,7 +1987,7 @@ py::object GetPIJitCopiedFunc(const py::object &func) {
   PyErr_Clear();
   py::object copy = CopyPyFunc(func);
   PyObject_SetAttrString(func.ptr(), kPIJitCopyFuncKey, copy.ptr());
-  (void)pi_jit_should_compile(copy, py::dict());
+  (void)pi_jit_should_compile(copy, py::dict(), py::none());
   return copy;
 }
 
