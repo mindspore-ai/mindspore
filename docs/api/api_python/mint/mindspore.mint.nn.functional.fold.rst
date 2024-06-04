@@ -41,5 +41,5 @@ mindspore.mint.nn.functional.fold
         - **TypeError** - 如果 `output_size`、 `kernel_size` 、 `stride` 、 `dilation` 、 `padding` 的数据类型不是int、tuple或者list。
         - **ValueError** - 如果 `output_size` 、 `kernel_size`, `dilation`, `stride` 包含元素的值小于等于0或者元素个数不合法。
         - **ValueError** - 如果 `padding` 包含元素的值小于零或者元素个数不合法。
-        - **ValueError** - 如果 `input.shape[1] != kernel_size[0] * kernel_size[1]` 。
-        - **ValueError** - 如果 `input.shape[2]` 与计算出的滑块数量不匹配。
+        - **ValueError** - 如果 `input.shape[-2]` 无法被 `kernel_size` 的乘积整除。
+        - **ValueError** - 如果 `input.shape[-1]` 不等于计算出的滑块数量 `L` 。
