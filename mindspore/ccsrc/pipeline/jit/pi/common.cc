@@ -1249,6 +1249,13 @@ static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
     Py_XDECREF(item.second);
   }
   MS_LOG(DEBUG) << __FUNCTION__ << (c->code != nullptr ? " success !" : " failed !");
+
+  const size_t profiling_limit = std::max(3, c->conf->getIntConfig(GraphJitConfig::kLimitGraphCount));
+  if (c->code == nullptr && set.size() > profiling_limit) {
+    MS_LOG(INFO) << "skip code because of guard failed too many times (> " << profiling_limit << ") for code "
+                 << f->f_code;
+    c->stat = JitCompileResults::NEVER_COMPILE;
+  }
   return c->code != nullptr;
 }
 
@@ -1378,6 +1385,9 @@ static py::object CodeHook(PyThreadState *tstate, JitCompileResults *c, PyFrameO
       if (CheckGuard(c, frame)) {
         c->origin_frame_ = nullptr;
         return CallCompiledResults(tstate, frame, c);
+      }
+      if (c->stat == JitCompileResults::NEVER_COMPILE) {
+        break;
       }
       if (!just_compiled) {
         c->stat = JitCompileResults::GRAPH_CANDIDATE;
