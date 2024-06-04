@@ -36,17 +36,21 @@ class KVCacheScatterUpdateInfo : public OperatorInfo {
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<ActivationInfoCost>()) {}
   ~KVCacheScatterUpdateInfo() override = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-  void ReComputeBatchSplitFlagList() override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override { return {}; }
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
 
  protected:
   Status GetAttrs() override { return SUCCESS; }
-  Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status InferMirrorOps() override { return SUCCESS; }  // the scatter_update only use in eval/predict
-  Status InferForwardCommunication() override { return SUCCESS; }
-  Status InferDevMatrixShape() override;
+  Status InferForwardCommunication() { return SUCCESS; }
   Status InferTensorMap() override;
+  Status InferDevMatrixShape() override;
+  Status SetDims(const StrategyPtr &strategy);
+  Status CheckStrategy3Dims(const Dimensions &strategy_cache, const Dimensions &strategy_update);
+  Status CheckStrategy4Dims(const Dimensions &strategy_cache, const Dimensions &strategy_update);
+
+ private:
+  bool is_input_dims_4_ = true;
 };
 using KVCacheScatterUpdateInfoInfoPtr = std::shared_ptr<KVCacheScatterUpdateInfo>;
 
