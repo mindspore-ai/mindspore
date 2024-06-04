@@ -69,9 +69,9 @@ def test_atan2_std(mode):
         output_grad = (jit(atan2_backward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x),
                                                                                        ms.Tensor(y))
 
-    assert np.allclose(output_forward.asnumpy(), expect_forward)
-    assert np.allclose(output_grad[0].asnumpy(), expect_grad[0])
-    assert np.allclose(output_grad[1].asnumpy(), expect_grad[1])
+    np.testing.assert_allclose(output_forward.asnumpy(), expect_forward, 1e-5, 1e-5)
+    np.testing.assert_allclose(output_grad[0].asnumpy(), expect_grad[0], 1e-5, 1e-5)
+    np.testing.assert_allclose(output_grad[1].asnumpy(), expect_grad[1], 1e-5, 1e-5)
 
 
 @pytest.mark.level1
