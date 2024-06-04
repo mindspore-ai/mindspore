@@ -127,6 +127,10 @@ void DumpJsonParser::CheckGEBackend() {
   if (backend == "ge") {
     if (e2e_dump_enabled()) {
       MS_LOG(WARNING) << "E2e dump only support kernel by kernel mode on Ascend platform.";
+      return;
+    }
+    if (dump_mode_ == static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
+      MS_LOG(EXCEPTION) << "Cell dump only support e2e dump mode. Please set dump_mode to 0 or 1.";
     }
   }
 }
