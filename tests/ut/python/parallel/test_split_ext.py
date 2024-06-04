@@ -29,9 +29,9 @@ def setup_function():
 
 
 class NetSplitWithSize(nn.Cell):
-    def __init__(self, axis=0, out_nums=1, strategy=None):
+    def __init__(self, axis=0, size_splits=None, strategy=None):
         super(NetSplitWithSize, self).__init__()
-        self.size_splits = [target_shape[axis] // out_nums] * out_nums
+        self.size_splits = size_splits
         self.axis = axis
         self.split = ms.ops.auto_generate.SplitWithSize()
         if strategy is not None:
@@ -84,7 +84,7 @@ def test_splitwith_size_shard_auto():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
-    net = NetSplitWithSize(axis=1, out_nums=2)
+    net = NetSplitWithSize(axis=1, size_splits=[6, 2])
     compile_net(net)
 
 
@@ -95,7 +95,7 @@ def test_splitwith_size_shard_success():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    net = NetSplitWithSize(axis=0, out_nums=2, strategy=strategy_ok)
+    net = NetSplitWithSize(axis=0, size_splits=[6, 2], strategy=strategy_ok)
     compile_net(net)
 
 
@@ -106,9 +106,23 @@ def test_splitwith_size_shard_fail():
     Expectation: raise RuntimeError
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    net = NetSplitWithSize(axis=0, out_nums=2, strategy=strategy_fail)
+    net = NetSplitWithSize(axis=0, size_splits=[6, 2], strategy=strategy_fail)
     with pytest.raises(RuntimeError):
         compile_net(net)
+
+
+def test_splitwith_size_strategy_skip_redistribution():
+    """
+    Feature: test SplitWithSize parallel skip_redistribution
+    Description: model parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    # [6, 2] / strategy_fail[0] ->  [3, 1]
+    net = NetSplitWithSize(0, [6, 2], strategy_fail)
+    net.split.add_prim_attr("skip_redistribution", True)
+    compile_net(net)
+    context.reset_auto_parallel_context()
 
 
 def test_split_tensor_shard_auto():
