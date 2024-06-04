@@ -481,7 +481,7 @@ FuncArgSpec GetFuncArgSpec(const FuncGraphPtr &func_graph, const py::object &inp
       (void)arg_spec.kwonlyargs_.emplace_back(para);
       MakeDefaultValue(defaults, arg_name, &namelist_for_default_value, &default_values);
     }
-    func_graph->set_kwonlyargs_count(arg_spec.kwonlyargs_.size());
+    func_graph->set_kwonlyargs_count(SizeToInt(arg_spec.kwonlyargs_.size()));
   }
 
   if (py::hasattr(full_arg_spec, "varkw")) {
