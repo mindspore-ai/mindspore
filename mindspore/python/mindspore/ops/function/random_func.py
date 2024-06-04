@@ -1023,7 +1023,6 @@ def rand_ext(*size, dtype=None, generator=None):
         the interval :math:`[0, 1)`.
 
     Raises:
-        TypeError: `seed` is not a non-negative integer.
         ValueError: If `dtype` is not a `mstype.float_type` type.
 
     Supported Platforms:
@@ -1048,7 +1047,7 @@ def rand_ext(*size, dtype=None, generator=None):
 def rand_like_ext(input, *, dtype=None):
     r"""
     Returns a new tensor that fills numbers from the uniform distribution over an interval :math:`[0, 1)`
-    based on the given shape and dtype.
+    with shape of the input tensor and the given dtype.
 
     Args:
         input (Tensor): Input Tensor to specify the output shape and its default dtype.
@@ -1062,7 +1061,6 @@ def rand_like_ext(input, *, dtype=None):
         the interval :math:`[0, 1)`.
 
     Raises:
-        TypeError: If `seed` is not a non-negative integer.
         ValueError: If `dtype` is not a `mstype.float_type` type.
 
     Supported Platforms:

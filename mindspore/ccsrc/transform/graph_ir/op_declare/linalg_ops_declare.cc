@@ -64,12 +64,6 @@ ATTR_MAP(CholeskyGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(CholeskyGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CholeskyGrad, prim::kPrimCholeskyGrad->name(), ADPT_DESC(CholeskyGrad));
 
-// Cholesky
-INPUT_MAP(Cholesky) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Cholesky) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(Cholesky) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Cholesky, prim::kPrimCholesky->name(), ADPT_DESC(Cholesky));
-
 // Geqrf
 CUST_INPUT_MAP(Geqrf) = {{1, INPUT_DESC(x)}};
 CUST_ATTR_MAP(Geqrf) = EMPTY_ATTR_MAP;
