@@ -1771,17 +1771,17 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
 
 static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
   std::vector<ActionItem> actions;
-  const bool disable_boost_infer = common::GetCompileConfig("BOOST_INFER") == "0";
-  const bool use_bootstrap = common::GetCompileConfig("BOOTSTRAP") == "1";
+  const bool enable_boost_infer = common::GetCompileConfig("BOOST_INFER") != "0";
+  const bool enable_bootstrap = common::GetCompileConfig("BOOTSTRAP") != "0";
   if (!trace_flag) {
-    if (use_bootstrap) {
+    if (enable_bootstrap) {
       // Bootstrap for JIT.
       (void)actions.emplace_back(std::make_pair(kBootstrap, BootstrapAction));
     } else {
       // Parse the python ast to ANF graph
       (void)actions.emplace_back(std::make_pair(kParse, ParseAction));
     }
-    if (disable_boost_infer) {
+    if (!enable_boost_infer) {
       // Resolve the python func
       (void)actions.emplace_back(std::make_pair(kSymbolResolve, SymbolResolveAction));
 
@@ -1813,7 +1813,7 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
   // Evaluate type and shape, and specialize.
   (void)actions.emplace_back(std::make_pair(kTypeInference, TypeInferenceAction));
 
-  if (!disable_boost_infer) {
+  if (enable_boost_infer) {
     (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
   }
 
