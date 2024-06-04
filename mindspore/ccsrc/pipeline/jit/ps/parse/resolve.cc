@@ -597,7 +597,7 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
       MS_LOG(WARNING) << "Top graph's parameter size: " << top_arg_size
                       << " does not match the user top func_graph's parameter size: " << user_arg_size;
     } else {
-      for (size_t i = 0; i < top_arg_size; i++) {
+      for (int i = 0; i < top_arg_size; i++) {
         auto param_ptr = top_params[i]->cast<ParameterPtr>();
         MS_EXCEPTION_IF_NULL(param_ptr);
         auto user_param_ptr = resolve_params[i]->cast<ParameterPtr>();
