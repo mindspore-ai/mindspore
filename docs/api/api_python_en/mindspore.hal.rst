@@ -1,7 +1,7 @@
 mindspore.hal
 =============
 
-Hal encapsulates interfaces for device, stream, and event. MindSpore abstracts the corresponding modules from different backends, allowing users to schedule hardware resources at the Python layer.
+Hal encapsulates interfaces for device, stream, event, and memory. MindSpore abstracts the corresponding modules from different backends, allowing users to schedule hardware resources at the Python layer.
 
 Device
 -----------
@@ -43,3 +43,22 @@ Event
     :template: classtemplate.rst
 
     mindspore.hal.Event
+
+Memory
+------------
+
+.. mscnplatformautosummary::
+    :toctree: hal
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.hal.max_memory_allocated
+    mindspore.hal.max_memory_reserved
+    mindspore.hal.memory_allocated
+    mindspore.hal.memory_reserved
+    mindspore.hal.memory_stats
+    mindspore.hal.memory_summary
+    mindspore.hal.reset_max_memory_reserved
+    mindspore.hal.reset_max_memory_allocated
+    mindspore.hal.reset_peak_memory_stats
+    mindspore.hal.empty_cache
