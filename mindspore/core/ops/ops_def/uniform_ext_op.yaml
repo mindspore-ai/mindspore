@@ -5,10 +5,8 @@ uniform_ext:
             dtype: tensor
         a:
             dtype: number
-            type_cast: tensor
         b:
             dtype: number
-            type_cast: tensor
         seed:
             dtype: int
             type_cast: tensor

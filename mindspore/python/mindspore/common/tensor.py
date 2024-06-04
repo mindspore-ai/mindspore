@@ -3248,8 +3248,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Generates random numbers in the half-open interval [from_, to).
 
         Args:
-            from_ (float): The lower bound of the interval.
-            to (float): The upper bound of the interval.
+            from_ (number): The lower bound of the interval.
+            to (number): The upper bound of the interval.
             generator (Generator, optional): The random seed. Default: None.
 
         Raises:
@@ -3258,10 +3258,15 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Returns:
             Tensor, with the same shape as tensor.
 
+        Supported Platforms:
+            ``Ascend``
+
         Examples:
             >>> import mindspore
-            >>> x = mindspore.ops.ones(4, 2)
-            >>> output = x.uniform(1., 2.)
+            >>> x = mindspore.ops.ones((4, 2))
+            >>> generator = mindspore.Generator()
+            >>> generator.manual_seed(100)
+            >>> output = x.uniform(1., 2., generator)
             >>> print(output.shape)
             (4, 2)
         """

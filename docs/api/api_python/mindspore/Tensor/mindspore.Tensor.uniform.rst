@@ -6,8 +6,8 @@ mindspore.Tensor.uniform
     在半开区间 [from\_, to) 内生成随机数。
 
     参数：
-        - **from_** (float) - 区间的下界。
-        - **to** (float) - 区间的上界。
+        - **from_** (number) - 区间的下界。
+        - **to** (number) - 区间的上界。
         - **generator** (Generator，可选) - 随机种子。默认值：None。
 
     返回：
