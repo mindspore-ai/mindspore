@@ -38,6 +38,7 @@
 #include "pipeline/jit/pi/utils/utils.h"
 #include "pipeline/jit/pi/graph_guard/guard.h"
 #include "pipeline/jit/pi/graph_guard/strategy.h"
+#include "pipeline/jit/pi/graph_guard/shape_ctx.h"
 #include "pipeline/jit/ps/pipeline.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "runtime/pynative/op_executor.h"
@@ -329,6 +330,7 @@ static JitCompileResults *allocJitCompileResults() {
   c->codehub = std::make_shared<OptCodeHub>();
   c->conf = std::make_shared<GraphJitConfig>();
   c->break_count_ = 0;
+  c->signature_ = nullptr;
   return c;
 }
 
@@ -906,6 +908,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
     return false;
   }
 
+  ShapeContext sc(c->origin_frame_, c->signature_);
   std::string code_str = py::str(reinterpret_cast<PyObject *>(c->origin_frame_->f_code));
   MS_LOG(DEBUG) << "---start compile " << code_str << "---";
 
@@ -1410,7 +1413,7 @@ static void ApplyAutoJit(PyFrameObject *f) {
   if (!kPIJitConfigDefault.ShouldAutoJit(f)) {
     return;
   }
-  (void)pi_jit_should_compile(py::cast<py::object>(code), py::dict());
+  (void)pi_jit_should_compile(py::cast<py::object>(code), py::dict(), py::none());
 }
 
 py::list CollectGradientArguments(const PyFrameObject &frame) {
@@ -1532,7 +1535,7 @@ py::bool_ pi_jit_disable() {
   return true;
 }
 
-py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &tag) {
+py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &tag, const py::object &signature) {
   PyObject *func = funcHandle.ptr();
   PyObject *code = NULL;
   if (PyFunction_Check(func)) {
@@ -1548,6 +1551,11 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
   mindspore::pijit::JitCompileResults *c = mindspore::pijit::getJitCompileResults(code);
   if (c == nullptr) {
     return false;
+  }
+  PyObject *sig = signature.ptr();
+  if (sig != nullptr && sig != Py_None) {
+    c->signature_ = sig;
+    Py_INCREF(sig);
   }
   auto new_config = mindspore::pijit::GraphJitConfig(tag);
   // When switching between one-stage and two-stage, reset the config.
@@ -1586,7 +1594,9 @@ py::bool_ pi_jit_enable() {
   return py::bool_(false);
 }
 py::bool_ pi_jit_disable() { return py::bool_(false); }
-py::bool_ pi_jit_should_compile(const py::object &func, const py::object &tag) { return py::bool_(false); }
+py::bool_ pi_jit_should_compile(const py::object &func, const py::object &tag, const py::object &signature) {
+  return py::bool_(false);
+}
 
 #endif
 
