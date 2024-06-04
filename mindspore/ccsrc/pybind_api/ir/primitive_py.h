@@ -100,6 +100,7 @@ class PrimitivePyAdapter {
   PrimitivePyAdapter(const PrimitivePyAdapter &adapter);
   PrimitivePyAdapter &operator=(const PrimitivePyAdapter &other);
   ~PrimitivePyAdapter() = default;
+  const mindspore::HashMap<std::string, ValuePtr> &attrs() const { return attrs_; }
   void AddPyAttr(const py::str &name, const py::object &obj);
   void DelPyAttr(const py::str &name);
   py::dict GetAttrDict();

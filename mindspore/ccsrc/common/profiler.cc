@@ -112,6 +112,9 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kPyBoostMallocInput, "MallocInput"},
   {ProfilerEvent::kPyBoostMallocOutput, "MallocOutput"},
   {ProfilerEvent::kPyBoostLaunchAclnn, "LaunchAclnn"},
+  // pybind api
+  {ProfilerEvent::kPyNativeNewGraph, "new_graph"},
+  {ProfilerEvent::kPyNativeEndGraph, "end_graph"},
   // python events
   {ProfilerEvent::kPythonObserved, "PythonObserved"},
   // Capture events

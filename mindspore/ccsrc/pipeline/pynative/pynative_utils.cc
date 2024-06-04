@@ -1699,6 +1699,9 @@ void PyBoost::DataSyncForGraph(const kernel::pyboost::OpPtr &op, ValuePtrList &&
 PrimitivePtr PyBoost::ConvertPrimitive(const py::object &obj) {
   const auto &adapter = obj.cast<PrimitivePyAdapterPtr>();
   MS_EXCEPTION_IF_NULL(adapter);
+#ifndef ENABLE_TEST
+  return std::make_shared<Primitive>(adapter->name(), adapter->attrs());
+#else
   auto prim = adapter->attached_primitive();
   if (prim == nullptr) {
     prim = std::make_shared<PrimitivePy>(obj);
@@ -1709,6 +1712,7 @@ PrimitivePtr PyBoost::ConvertPrimitive(const py::object &obj) {
   }
   prim->EnableSharedMutex();
   return prim;
+#endif
 }
 
 py::object PyBoost::RunPyFunction(const PrimitivePtr &prim, const py::list &args) {
@@ -1738,6 +1742,9 @@ void PyBoost::SetAnyValueForAbstract(const kernel::pyboost::OpPtr &op) {
 
 void PyBoost::DoGrad(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPtr &op_run_info,
                      ValuePtrList &&op_inputs) {
+  static const std::string kDoGradName = "DoGrad";
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
+                                     kDoGradName, false);
   MS_EXCEPTION_IF_NULL(op);
   // Update op grad info
   op_run_info->op_grad_info->input_value = std::move(op_inputs);

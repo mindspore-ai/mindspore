@@ -106,6 +106,9 @@ enum class ProfilerEvent {
   kPyBoostMallocInput,
   kPyBoostMallocOutput,
   kPyBoostLaunchAclnn,
+  // pybind api
+  kPyNativeNewGraph,
+  kPyNativeEndGraph,
   // Python
   kPythonObserved,
   // Capture Event

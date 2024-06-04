@@ -30,6 +30,7 @@
 #include "include/common/utils/primitive_utils.h"
 #include "utils/check_convert_utils.h"
 #include "pipeline/pynative/pynative_execute.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace {
@@ -167,6 +168,8 @@ PrimitivePy::PrimitivePy(const py::object &python_obj)
 }
 
 PrimitivePy::~PrimitivePy() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kDefault, name(),
+                                     false);
   py::gil_scoped_acquire acquire_gil;
   python_obj_ = py::none();
   backward_hook_fn_.clear();
