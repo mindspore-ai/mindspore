@@ -2151,25 +2151,16 @@ elu_grad:
       dtype: tensor
     out:
       dtype: tensor
-    alpha:
-      dtype: float
-      default: 1.0
-    is_result:
-      dtype: bool
-      default: True
   returns:
     dx:
       dtype: tensor
   function:
     disable: True
-  dispatch:
-    enable: True
-    Ascend: EluGradAscend
 
 #operator elu
 elu:
   args:
-    input:
+    input_x:
       dtype: tensor
     alpha:
       dtype: float
@@ -2179,9 +2170,7 @@ elu:
     output:
       dtype: tensor
   dispatch:
-    enable: True
-    Ascend: EluAscend
-
+    enable: False
 #operator EmbeddingApplyAdaGrad
 embedding_apply_ada_grad:
     args:

@@ -81,12 +81,6 @@ bool ActivationFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   mode_ = mode_iter->second;
 
   dtype_ = inputs[kIndex0]->dtype_id();
-
-  if (kernel_name_ == ops::kNameElu) {
-    auto alpha = inputs[kIndex1]->GetValueWithCheck<float>();
-    MS_EXCEPTION_IF_CHECK_FAIL(alpha == 1.f, "Only support alpha = 1.0");
-  }
-
   return true;
 }
 
