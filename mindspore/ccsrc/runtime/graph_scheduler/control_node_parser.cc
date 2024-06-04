@@ -997,7 +997,7 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
     MS_LOG(DEBUG) << "Control node parser is not inited.";
     return;
   }
-  MS_LOG(DEBUG) << "Control node parse start.";
+  MS_LOG(INFO) << "Control node parse start.";
 
   // Fetch default device context.
   auto context_ptr = MsContext::GetInstance();
@@ -1073,7 +1073,7 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
   ParseFirstControlNodeAndKernelGraphForFuncGraph(control_nodes);
 
   ParseDynamicLenFormalParameter(control_nodes);
-  MS_LOG(DEBUG) << "Control node parse end.";
+  MS_LOG(INFO) << "Control node parse end.";
 }
 
 namespace {
