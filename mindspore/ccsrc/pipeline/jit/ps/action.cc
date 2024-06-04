@@ -415,6 +415,90 @@ void UpdateTopGraphDebugInfo(const FuncGraphPtr &func_graph, const py::object &i
   func_graph->debug_info()->set_name(function_name);
 }
 
+struct FuncArgSpec {
+  AnfNodePtrList args_;
+  ParameterPtr varargs_{nullptr};
+  AnfNodePtrList kwonlyargs_;
+  ParameterPtr varkw_{nullptr};
+};
+
+void MakeDefaultValue(const py::dict &defaults, const std::string &arg_name,
+                      std::vector<std::string> *namelist_for_default_value, std::vector<AnfNodePtr> *default_values) {
+  (void)namelist_for_default_value->emplace_back(arg_name);
+  if (defaults.contains(arg_name)) {
+    AnfNodePtr arg_node = NewValueNode(parse::data_converter::PyDataToValue(defaults[py::str(arg_name)]));
+    (void)default_values->emplace_back(arg_node);
+  } else {
+    (void)default_values->emplace_back(NewValueNode(kNull));
+  }
+}
+
+FuncArgSpec GetFuncArgSpec(const FuncGraphPtr &func_graph, const py::object &input) {
+  auto func = input;
+  if (py::hasattr(input, parse::PYTHON_PARSE_METHOD)) {
+    auto func_name = py::cast<std::string>(input.attr(parse::PYTHON_PARSE_METHOD));
+    func = input.attr(func_name.c_str());
+  }
+  py::tuple obj_tuple =
+    python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, "get_arg_spec_and_default_values", func);
+  auto full_arg_spec = obj_tuple[0];
+  py::dict defaults = obj_tuple[1];
+  std::vector<std::string> namelist_for_default_value;
+  std::vector<AnfNodePtr> default_values;
+  FuncArgSpec arg_spec;
+  if (py::hasattr(full_arg_spec, "args")) {
+    for (const auto &arg : full_arg_spec.attr("args")) {
+      auto arg_name = py::cast<std::string>(arg);
+      if (arg_name == "self") {
+        continue;
+      }
+      auto para = func_graph->add_parameter();
+      para->set_is_top_graph_param(true);
+      para->set_name(arg_name);
+      (void)arg_spec.args_.emplace_back(para);
+      MakeDefaultValue(defaults, arg_name, &namelist_for_default_value, &default_values);
+    }
+  }
+
+  if (py::hasattr(full_arg_spec, "varargs")) {
+    auto varargs = full_arg_spec.attr("varargs");
+    if (!py::isinstance<py::none>(varargs)) {
+      arg_spec.varargs_ = func_graph->add_parameter();
+      arg_spec.varargs_->set_is_top_graph_param(true);
+      auto arg_name = py::cast<std::string>(varargs);
+      arg_spec.varargs_->set_name(arg_name);
+      func_graph->set_has_vararg(true);
+      MakeDefaultValue(defaults, arg_name, &namelist_for_default_value, &default_values);
+    }
+  }
+
+  if (py::hasattr(full_arg_spec, "kwonlyargs")) {
+    for (const auto &arg : full_arg_spec.attr("kwonlyargs")) {
+      auto para = func_graph->add_parameter();
+      para->set_is_top_graph_param(true);
+      auto arg_name = py::cast<std::string>(arg);
+      para->set_name(arg_name);
+      (void)arg_spec.kwonlyargs_.emplace_back(para);
+      MakeDefaultValue(defaults, arg_name, &namelist_for_default_value, &default_values);
+    }
+    func_graph->set_kwonlyargs_count(arg_spec.kwonlyargs_.size());
+  }
+
+  if (py::hasattr(full_arg_spec, "varkw")) {
+    auto varkw = full_arg_spec.attr("varkw");
+    if (!py::isinstance<py::none>(varkw)) {
+      arg_spec.varkw_ = func_graph->add_parameter();
+      arg_spec.varkw_->set_is_top_graph_param(true);
+      auto arg_name = py::cast<std::string>(varkw);
+      arg_spec.varkw_->set_name(arg_name);
+      func_graph->set_has_kwarg(true);
+      MakeDefaultValue(defaults, arg_name, &namelist_for_default_value, &default_values);
+    }
+  }
+  func_graph->SetDefaultValues(namelist_for_default_value, default_values);
+  return arg_spec;
+}
+
 void BuildTopGraph(const FuncGraphPtr &func_graph, const py::object &input, const ValuePtrList &args) {
   // Make Resolve for user top graph 'input'.
   auto function_name = GetFunctionName(input);
@@ -427,9 +511,44 @@ void BuildTopGraph(const FuncGraphPtr &func_graph, const py::object &input, cons
   ValueNodePtr args_node = NewValueNode<ValuePtrList>(args);
   auto resolve_node =
     func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node, args_node});
+
+  auto arg_spec = GetFuncArgSpec(func_graph, input);
+  bool need_unpack = false;
+  if (func_graph->has_vararg() || func_graph->has_kwarg() || func_graph->kwonlyargs_count() > 0) {
+    need_unpack = true;
+  }
   // Call user top graph in top graph.
-  AnfNodePtrList inputs = {resolve_node};
-  std::copy(func_graph->parameters().cbegin(), func_graph->parameters().cend(), std::back_inserter(inputs));
+  AnfNodePtrList inputs;
+  if (!need_unpack) {
+    (void)inputs.emplace_back(resolve_node);
+    std::copy(func_graph->parameters().cbegin(), func_graph->parameters().cend(), std::back_inserter(inputs));
+  } else {
+    (void)inputs.emplace_back(NewValueNode(std::make_shared<prim::UnpackCall>(parse::NAMED_METAGRAPH_UNPACKCALL)));
+    (void)inputs.emplace_back(resolve_node);
+    if (!arg_spec.args_.empty()) {
+      AnfNodePtrList args_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+      std::copy(arg_spec.args_.cbegin(), arg_spec.args_.cend(), std::back_inserter(args_inputs));
+      (void)inputs.emplace_back(func_graph->NewCNodeInOrder(args_inputs));
+    }
+    if (arg_spec.varargs_ != nullptr) {
+      (void)inputs.emplace_back(arg_spec.varargs_);
+    }
+    if (arg_spec.varkw_ != nullptr) {
+      (void)inputs.emplace_back(arg_spec.varkw_);
+    }
+    if (!arg_spec.kwonlyargs_.empty()) {
+      AnfNodePtrList key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+      AnfNodePtrList value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+      for (const auto &kwonlyarg : arg_spec.kwonlyargs_) {
+        (void)key_inputs.emplace_back(NewValueNode(kwonlyarg->cast<ParameterPtr>()->name()));
+        (void)value_inputs.emplace_back(kwonlyarg);
+      }
+      auto make_dict =
+        func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimMakeDict), func_graph->NewCNodeInOrder(key_inputs),
+                                     func_graph->NewCNodeInOrder(value_inputs)});
+      (void)inputs.emplace_back(make_dict);
+    }
+  }
   auto output = func_graph->NewCNodeInOrder(inputs);
   constexpr auto recursive_level = 2;
   MS_LOG(DEBUG) << "output: " << output->DebugString(recursive_level);
@@ -460,9 +579,6 @@ bool BootstrapAction(const ResourcePtr &resource) {
   }
   UpdateTopGraphDebugInfo(top_graph, input);
   // Call the user top graph with its arguments.
-  for (size_t i = 0; i < resource->arguments().size(); ++i) {
-    top_graph->add_parameter()->set_is_top_graph_param(true);
-  }
   BuildTopGraph(top_graph, input, resource->arguments());
   // Set the top graph.
   parse::Parser::UpdateTopFuncGraph(top_graph);
