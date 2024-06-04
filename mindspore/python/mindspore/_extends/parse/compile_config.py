@@ -16,8 +16,8 @@
 Name: BOOTSTRAP
 Function: Whether to use bootstrap action.
 Value Range:
-    1: Enable.
-    Default: Disable.
+    0: Disable.
+    Default: Enable.
 """
 BOOTSTRAP = ''
 
