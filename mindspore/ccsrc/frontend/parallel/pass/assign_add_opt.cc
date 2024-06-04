@@ -225,8 +225,8 @@ void MergeMultiMatmulAssignAdd(const FuncGraphManagerPtr &manager, const FuncGra
     }
   }
   auto assign_add_cnode = each_graph->NewCNode(assign_add_inputs);
-  assign_add_cnode->set_abstract(merged_matmul->abstract()->Clone());
   for (const auto &assgin_add_origin_node : pair.second) {
+    assign_add_cnode->set_abstract(assgin_add_origin_node->abstract()->Clone());
     manager->Replace(assgin_add_origin_node, assign_add_cnode);
   }
 }
