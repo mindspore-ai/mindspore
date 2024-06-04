@@ -1195,7 +1195,8 @@ def tensor_setitem_by_ellipsis_with_tensor(data, value):
 
     if len(value_shape) > len(data_shape):
         source_shape = data_shape
-    source_shape = value_shape
+    else:
+        source_shape = value_shape
     value = F.reshape(value, source_shape)
     data = F.broadcast_to(value, data_shape)
     return data
@@ -1222,7 +1223,8 @@ def tensor_setitem_by_bool(data, index, value):
         value_shape = F.shape(value)
         if len(value_shape) > len(data_shape):
             source_shape = data_shape
-        source_shape = value_shape
+        else:
+            source_shape = value_shape
         value = F.reshape(value, source_shape)
         data = F.broadcast_to(value, data_shape)
     return data
