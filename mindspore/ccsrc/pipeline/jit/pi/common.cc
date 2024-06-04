@@ -1272,10 +1272,21 @@ class JitSyntaxLevelScope {
   bool enable_;
 };
 
+static void InitCompileConfig() {
+  static bool initialized = false;
+  if (!initialized) {
+    MS_LOG(INFO) << "Init compile config";
+    CompileConfigManager::GetInstance().CollectCompileConfig();
+    initialized = true;
+  }
+}
+
 static bool JitCompileWithTry(PyThreadState *tstate, JitCompileResults *c) {
   TimeRecorder time_recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
 
   JitSyntaxLevelScope jit_syntax_level_scope(c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag));
+
+  InitCompileConfig();
 
   if (!c->conf->GetBoolConfig(GraphJitConfig::kCompileWithTry)) {
     return JitCompile(tstate, c);
