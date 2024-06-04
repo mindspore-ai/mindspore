@@ -587,10 +587,9 @@ ValuePtr FuncGrad::GetGrads(const tensor::BaseTensorPtrList &weights, const std:
   if (inputs_grad != nullptr && weights_grad != nullptr) {
     if (IsOutputBothEmpty(inputs_grad, weights_grad)) {
       return GenerateEmptyTupleValue();
-    } else {
-      ValuePtrList gradients{inputs_grad, weights_grad};
-      return std::make_shared<ValueTuple>(gradients);
     }
+    ValuePtrList gradients{inputs_grad, weights_grad};
+    return std::make_shared<ValueTuple>(gradients);
   }
   // Gradients wrt inputs.
   if (inputs_grad != nullptr) {
@@ -603,20 +602,17 @@ ValuePtr FuncGrad::GetGrads(const tensor::BaseTensorPtrList &weights, const std:
   // grad_all_inputs, grad_weights and get_by_position are all false.
   if (cell_inputs_.empty()) {
     // If no input nodes, return empty tuple.
-    ValuePtrList empty_tuple;
-    return std::make_shared<ValueTuple>(empty_tuple);
-  } else {
-    // If there are input nodes, return gradient of first input node.
-    // Tuple, List, scalar will be ignore
-    if (IsValidTensorInput(cell_inputs_[kIndex0].first)) {
-      return PyNativeAlgo::AutoGrad::BuildSpecialValueGrad(cell_inputs_[kIndex0].first,
-                                                           cell_inputs_[kIndex0].second->grad(), func_impl_.get(),
-                                                           SpecialType::kZerosLikeType);
-    } else {
-      MS_LOG(DEBUG) << "Get first input node is not tensor " << cell_inputs_[0].first->ToString();
-      return kNull;
-    }
+    return std::make_shared<ValueTuple>(ValuePtrList{});
   }
+
+  // If there are input nodes, return gradient of first input node.
+  // Tuple, List, scalar will be ignore
+  if (IsValidTensorInput(cell_inputs_[kIndex0].first)) {
+    return PyNativeAlgo::AutoGrad::BuildSpecialValueGrad(
+      cell_inputs_[kIndex0].first, cell_inputs_[kIndex0].second->grad(), func_impl_.get(), SpecialType::kZerosLikeType);
+  }
+  MS_LOG(DEBUG) << "Get first input node is not tensor " << cell_inputs_[0].first->ToString();
+  return std::make_shared<ValueTuple>(ValuePtrList{});
 }
 
 ValuePtr FuncGrad::GetInputGrads(bool grad_all_inputs, bool get_by_position, const std::vector<size_t> &grad_position) {
@@ -665,9 +661,8 @@ ValuePtr FuncGrad::GetWeightGrads(bool grad_weights, const tensor::BaseTensorPtr
       (void)weight_grads.emplace_back(GetWeightGrad(weight));
     }
     return std::make_shared<ValueTuple>(weight_grads);
-  } else {
-    return GetWeightGrad(weights[0]);
   }
+  return GetWeightGrad(weights[0]);
 }
 
 ValuePtr FuncGrad::GetWeightGrad(const tensor::BaseTensorPtr &weight) {

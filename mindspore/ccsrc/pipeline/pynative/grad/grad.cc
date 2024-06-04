@@ -129,22 +129,25 @@ ValuePtr ConvertOutputValueToTensor(const ValuePtr &v, bool dict_convert_to_tupl
     }
     MS_LOG(DEBUG) << "Output is value sequence, but have tensor and other type mixed. Its value is " << v->ToString();
     return PyNativeAlgo::Common::FilterSensValues(v, dict_convert_to_tuple);
-  } else if (v->isa<FloatImm>()) {
+  }
+  if (v->isa<FloatImm>()) {
     double input_value = v->cast<FP32ImmPtr>()->value();
     return std::make_shared<tensor::Tensor>(input_value, kFloat32);
-  } else if (v->isa<BoolImm>()) {
+  }
+  if (v->isa<BoolImm>()) {
     return std::make_shared<tensor::Tensor>(v->cast<BoolImmPtr>()->value(), kBool);
-  } else if (v->isa<IntegerImm>()) {
+  }
+  if (v->isa<IntegerImm>()) {
     int64_t input = v->cast<Int64ImmPtr>()->value();
     return std::make_shared<tensor::Tensor>(input, kInt64);
-  } else if (v->isa<ValueDictionary>() && dict_convert_to_tuple) {
+  }
+  if (v->isa<ValueDictionary>() && dict_convert_to_tuple) {
     MS_LOG(DEBUG) << "Get dict value";
     return PyNativeAlgo::DataConvert::ConvertValueDictToValueTuple(v);
-  } else {
-    MS_LOG(DEBUG) << "Output is " << v->ToString() << ", abstract "
-                  << PyNativeAlgo::Common::SetAbstractValueToAnyValue(v->ToAbstract());
-    return v;
   }
+  MS_LOG(DEBUG) << "Output is " << v->ToString() << ", abstract "
+                << PyNativeAlgo::Common::SetAbstractValueToAnyValue(v->ToAbstract());
+  return v;
 }
 
 FuncGraphPtr BpropGraphFinalOpt(const FuncGraphPtr &bprop_graph, bool has_control_flow) {
