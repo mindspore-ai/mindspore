@@ -163,10 +163,23 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
         data = async_dump_dict
         data["common_dump_settings"]["path"] = dump_path
         data["common_dump_settings"]["file_format"] = "bin"
-    elif test_key == "test_e2e_dump_trans_true":
+    elif test_key in ["test_e2e_dump_trans_true", "test_e2e_dump_lenet", "test_e2e_dump_dynamic_shape"]:
         data = e2e_dump_dict
         data["common_dump_settings"]["path"] = dump_path
         data["e2e_dump_settings"]["trans_flag"] = True
+    elif test_key == "test_e2e_dump_trans_true_op_debug_mode":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["path"] = dump_path
+        data["e2e_dump_settings"]["trans_flag"] = True
+        data["common_dump_settings"]["op_debug_mode"] = 3
+    elif test_key == "test_e2e_dump_save_kernel_args_true":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["path"] = dump_path
+        data["e2e_dump_settings"]["save_kernel_args"] = True
+    elif test_key == "test_e2e_dump_save_kernel_args_true":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["path"] = dump_path
+        data["e2e_dump_settings"]["save_kernel_args"] = True
     elif test_key == "test_async_dump_net_multi_layer_mode1_npy":
         data = async_dump_dict_2
         data["common_dump_settings"]["path"] = dump_path
