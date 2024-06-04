@@ -17,7 +17,7 @@ import os
 import pytest
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_single
 def test_all_gather_matmul_forward():
@@ -30,7 +30,7 @@ def test_all_gather_matmul_forward():
     assert ret == 0
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_single
 def test_matmul_reduce_scatter_forward():
