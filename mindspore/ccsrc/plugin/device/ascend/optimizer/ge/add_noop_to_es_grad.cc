@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/optimizer/ge/add_noop_to_es.h"
+#include "plugin/device/ascend/optimizer/ge/add_noop_to_es_grad.h"
 #include <vector>
 #include <memory>
 #include "ops/array_ops.h"
@@ -25,6 +25,20 @@
 namespace mindspore {
 namespace opt {
 namespace {
+bool IsESGradOps(const BaseRef &ref) {
+  if (utils::isa<AnfNodePtr>(ref)) {
+    auto node = utils::cast<AnfNodePtr>(ref);
+    MS_EXCEPTION_IF_NULL(node);
+    const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> es_grad_prims = {
+      prim::kPrimEmbeddingApplyAdam, prim::kPrimEmbeddingApplyAdamW, prim::kPrimEmbeddingApplyAdaGrad,
+      prim::kPrimEmbeddingApplyFtrl};
+    if (IsOneOfPrimitiveCNode(node, es_grad_prims)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 AnfNodePtr GetRealInput(const CNodePtr &node, const AnfNodePtr &input) {
   if (input == nullptr || node == nullptr) {
     return nullptr;
@@ -130,69 +144,14 @@ AnfNodePtr InsertNoOpForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr 
 }
 }  // namespace
 
-const BaseRef AddNoOpToAdam::DefinePattern() const {
-  VarPtr Xs = std::make_shared<SeqVar>();
+const BaseRef AddNoOpToESGrad::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();
-  VectorRef adam = VectorRef({prim::kPrimEmbeddingApplyAdam, Xs});
-  return VectorRef({prim::kPrimCast, adam, X});
+  VarPtr is_es_grad_node = std::make_shared<CondVar>(IsESGradOps);
+  return VectorRef({prim::kPrimCast, is_es_grad_node, X});
 }
 
-const AnfNodePtr AddNoOpToAdam::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                        const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(node);
-  CNodePtr cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (InsertNoOpForOutput(func_graph, node) == nullptr) {
-    MS_LOG(EXCEPTION) << "Insert NoOp for node: " << node->fullname_with_scope() << " failed.";
-  }
-  return node;
-}
-
-const BaseRef AddNoOpToAdamW::DefinePattern() const {
-  VarPtr Xs = std::make_shared<SeqVar>();
-  VarPtr X = std::make_shared<Var>();
-  VectorRef adam = VectorRef({prim::kPrimEmbeddingApplyAdamW, Xs});
-  return VectorRef({prim::kPrimCast, adam, X});
-}
-
-const AnfNodePtr AddNoOpToAdamW::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                         const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(node);
-  CNodePtr cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (InsertNoOpForOutput(func_graph, node) == nullptr) {
-    MS_LOG(EXCEPTION) << "Insert NoOp for node: " << node->fullname_with_scope() << " failed.";
-  }
-  return node;
-}
-
-const BaseRef AddNoOpToAdaGrad::DefinePattern() const {
-  VarPtr Xs = std::make_shared<SeqVar>();
-  VarPtr X = std::make_shared<Var>();
-  VectorRef adam = VectorRef({prim::kPrimEmbeddingApplyAdaGrad, Xs});
-  return VectorRef({prim::kPrimCast, adam, X});
-}
-
-const AnfNodePtr AddNoOpToAdaGrad::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                           const EquivPtr &) const {
-  MS_EXCEPTION_IF_NULL(node);
-  CNodePtr cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (InsertNoOpForOutput(func_graph, node) == nullptr) {
-    MS_LOG(EXCEPTION) << "Insert NoOp for node: " << node->fullname_with_scope() << " failed.";
-  }
-  return node;
-}
-
-const BaseRef AddNoOpToFtrl::DefinePattern() const {
-  VarPtr Xs = std::make_shared<SeqVar>();
-  VarPtr X = std::make_shared<Var>();
-  VectorRef adam = VectorRef({prim::kPrimEmbeddingApplyFtrl, Xs});
-  return VectorRef({prim::kPrimCast, adam, X});
-}
-
-const AnfNodePtr AddNoOpToFtrl::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                        const EquivPtr &) const {
+const AnfNodePtr AddNoOpToESGrad::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                          const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(node);
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
