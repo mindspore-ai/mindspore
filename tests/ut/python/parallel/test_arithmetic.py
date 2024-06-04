@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Parameter, Tensor, context
+from mindspore import Parameter, Tensor, context, ops, Symbol
 from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -48,6 +49,18 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, y, b):
         return grad_all(self.network)(x, y, b)
+
+
+class DivNet(nn.Cell):
+    def __init__(self, strategy1, rounding_mode="None"):
+        super().__init__()
+        self.matmul = P.MatMul().shard(strategy1)
+        self.rounding_mode = rounding_mode
+
+    def construct(self, x, y, b):
+        out = self.matmul(x, y)
+        out = ops.div(out, b, rounding_mode=self.rounding_mode)
+        return out
 
 
 def compile_net(net, x, y, b):
@@ -85,6 +98,63 @@ def test_matmul_sub():
     compile_net(net, x, y, b)
 
 
+def test_matmul_subext():
+    """
+    Feature: distribute operator sub in auto parallel.
+    Description: matmul-sub net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self, strategy1):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = ops.extend.sub(out, b, 1.0)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_subext_dynamic():
+    """
+    Feature: distribute operator sub in auto parallel.
+    Description: matmul-sub net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self, strategy1):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = ops.extend.sub(out, b, 1.0)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    s1 = Symbol(divisor=8)
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(shape=[s1, 64], dtype=ms.float32)
+    net = GradWrap(NetWithLoss(Net(strategy1)))
+    net.set_inputs(x, y, b)
+    compile_net(net, x, y, b)
+
+
 def test_matmul_add():
     """
     Feature: distribute operator sub in auto parallel.
@@ -112,6 +182,63 @@ def test_matmul_add():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_addext():
+    """
+    Feature: distribute operator sub in auto parallel.
+    Description: matmul-add net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self, strategy1):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = ops.extend.add(out, b, 1.0)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    net = GradWrap(NetWithLoss(Net(strategy1)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+def test_matmul_addext_dynamic():
+    """
+    Feature: distribute operator sub in auto parallel.
+    Description: matmul-sub net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self, strategy1):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy1)
+
+        def construct(self, x, y, b):
+            out = self.matmul(x, y)
+            out = ops.extend.add(out, b, 1.0)
+            return out
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    s1 = Symbol(divisor=8)
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(shape=[s1, 64], dtype=ms.float32)
+    net = GradWrap(NetWithLoss(Net(strategy1)))
+    net.set_inputs(x, y, b)
     compile_net(net, x, y, b)
 
 
@@ -362,6 +489,45 @@ def test_matmul_div():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+@pytest.mark.parametrize('rounding_mode', ['trunc', 'floor'])
+def test_matmul_div_base(rounding_mode):
+    """
+    Feature: distribute operator sub in auto parallel.
+    Description: matmul-div net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    net = GradWrap(NetWithLoss(DivNet(strategy1, rounding_mode)))
+
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    compile_net(net, x, y, b)
+
+
+@pytest.mark.parametrize('rounding_mode', ['trunc', 'floor'])
+def test_matmul_div_base_dynamic(rounding_mode):
+    """
+    Feature: distribute operator sub in auto parallel.
+    Description: matmul-div net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    strategy1 = ((2, 2), (2, 2))
+    s1 = Symbol(divisor=8)
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    b = Tensor(shape=[s1, 64], dtype=ms.float32)
+    net = GradWrap(NetWithLoss(DivNet(strategy1, rounding_mode)))
+    net.set_inputs(x, y, b)
     compile_net(net, x, y, b)
 
 
@@ -786,7 +952,7 @@ def test_assign_sub():
             self.network = network
 
         def construct(self, x):
-            predict = self.network(x, )
+            predict = self.network(x,)
             return self.loss(predict)
 
     class SubGradWrap(nn.Cell):
@@ -839,7 +1005,7 @@ def test_assign_add():
             self.network = network
 
         def construct(self, x):
-            predict = self.network(x, )
+            predict = self.network(x,)
             return self.loss(predict)
 
     class SubGradWrap(nn.Cell):
@@ -892,7 +1058,7 @@ def test_assign():
             self.network = network
 
         def construct(self, x):
-            predict = self.network(x, )
+            predict = self.network(x,)
             return self.loss(predict)
 
     class SubGradWrap(nn.Cell):

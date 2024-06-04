@@ -67,6 +67,14 @@ class SubInfo : public ArithmeticBase {
   ~SubInfo() override = default;
 };
 
+class SubExtInfo : public ArithmeticBase {
+ public:
+  SubExtInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<SubCost>()) {}
+  ~SubExtInfo() override = default;
+};
+
 class AddInfo : public ArithmeticBase {
  public:
   AddInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
@@ -75,6 +83,14 @@ class AddInfo : public ArithmeticBase {
 
  protected:
   Status InferForwardCommunicationByLayout() override { return SUCCESS; }
+};
+
+class AddExtInfo : public ArithmeticBase {
+ public:
+  AddExtInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<TensorAddCost>()) {}
+  ~AddExtInfo() override = default;
 };
 
 class MulInfo : public ArithmeticBase {
@@ -96,6 +112,14 @@ class ModInfo : public ArithmeticBase {
   ModInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
       : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ModCost>()) {}
   ~ModInfo() override = default;
+};
+
+class DivModInfo : public ArithmeticBase {
+ public:
+  DivModInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ModCost>()) {}
+  ~DivModInfo() override = default;
 };
 
 class RealDivInfo : public ArithmeticBase {
