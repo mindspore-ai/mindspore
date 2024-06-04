@@ -32,7 +32,6 @@ class NetAssign0002(Cell):
         return x
 
 
-@pytest.mark.skip(reason="getitem node add failed, fix later")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

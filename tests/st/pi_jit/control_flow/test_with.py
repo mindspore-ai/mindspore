@@ -28,6 +28,7 @@ class TestWithContext:
         test_value = self.val - 3
         test_value += 1
 
+
 class TestWithContext_1:
     def __init__(self, val):
         self.val = val
@@ -43,6 +44,7 @@ class TestWithContext_1:
         test_value = self.val - 3
         test_value += 1
 
+
 class TestWithContext_2:
     def __init__(self, val):
         self.val = val
@@ -57,6 +59,7 @@ class TestWithContext_2:
         next(GEN)
         test_value = self.val - 3
         test_value += 1
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -132,7 +135,7 @@ def test_with_case_3():
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
 
-@pytest.mark.skip(reason="adapter later")
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -154,6 +157,7 @@ def test_with_case_4():
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -210,6 +214,7 @@ def test_with_case_6():
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -268,6 +273,7 @@ def test_with_case_8():
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -300,6 +306,7 @@ def test_with_case_9():
             flag = True
     assert flag
     assert expected == res
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
