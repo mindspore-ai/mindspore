@@ -181,6 +181,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
         get_cube_math_type = ''
         real_output = ', ' + converter.op_outputs
         proto_operator_name = op_proto.operator_name
+        register_custom_kernel = ''
         if is_ascend and op_proto.ascend != 'default':
             call_impl = cus_tpl.replace(call_args=converter.call_args,
                                         return_values=converter.call_func_outputs,
@@ -195,6 +196,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
                                         )
             customize_include = "#include \"plugin/device/cpu/kernel/pyboost/customize/{}.h\"".format(
                 operator_name.lower())
+            register_custom_kernel = "MS_REG_PYBOOST_CPU_CUSTOM_KERNEL({});".format(op_name_str)
         elif is_gpu and op_proto.gpu != 'default':
             call_impl = cus_tpl.replace(call_args=converter.call_args,
                                         return_values=converter.call_func_outputs,
@@ -202,6 +204,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
                                         )
             customize_include = "#include \"plugin/device/gpu/kernel/pyboost/customize/{}.h\"".format(
                 operator_name.lower())
+            register_custom_kernel = "MS_REG_PYBOOST_GPU_CUSTOM_KERNEL({});".format(op_name_str)
         elif op_proto.is_view:
             set_output_abs = "SetOutputAbstract();"
             if converter.call_func_outputs == "outputs_":
@@ -251,7 +254,8 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
                                                 call_args_with_type=converter.call_args_with_types,
                                                 return_type=converter.cpp_func_return,
                                                 customize_include=customize_include,
-                                                call_impl=call_impl)
+                                                call_impl=call_impl,
+                                                register_custom_kernel=register_custom_kernel)
         op_header_dir_path = os.path.join(work_path, gen_path)
         tmp_op_source_file_path = os.path.join(op_header_dir_path, "tmp_" + operator_name.lower() + ".cc")
         dst_op_source_file_path = os.path.join(op_header_dir_path, operator_name.lower() + ".cc")

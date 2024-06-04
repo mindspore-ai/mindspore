@@ -141,6 +141,10 @@ bool PyBoostUtils::IsKernelModRegistered(const std::string &device_name, const s
   return PyboostKernelExtraFuncFactory::GetInstance().IsKernelModRegistered(device_name, op_name);
 }
 
+bool PyBoostUtils::IsPyBoostCustomRegistered(const std::string &device_name, const std::string &op_name) {
+  return PyboostKernelExtraFuncFactory::GetInstance().IsPyBoostCustomRegistered(device_name, op_name);
+}
+
 kernel::KernelModPtr PyBoostUtils::CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
                                                    const DeviceContext *device_context,
                                                    const std::vector<KernelTensor *> &inputs,

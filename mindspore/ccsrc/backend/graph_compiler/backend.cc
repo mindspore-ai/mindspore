@@ -818,7 +818,8 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         const auto &primitive = common::AnfAlgo::GetCNodePrimitive(kernel);
         MS_EXCEPTION_IF_NULL(primitive);
         if (runtime::PyBoostOpExecute::GetInstance().IsPyBoostOpRegistered(primitive->name()) &&
-            kernel::pyboost::PyBoostUtils::IsKernelModRegistered(device_target, primitive->name())) {
+            (kernel::pyboost::PyBoostUtils::IsKernelModRegistered(device_target, primitive->name()) ||
+             kernel::pyboost::PyBoostUtils::IsPyBoostCustomRegistered(device_target, primitive->name()))) {
           MS_LOG(DEBUG) << "Run " << primitive->name() << " by pyboost";
           graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index], true,
                                                    &input_info);
