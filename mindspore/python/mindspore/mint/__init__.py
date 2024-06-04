@@ -197,7 +197,7 @@ from mindspore.ops.extend import narrow
 # 84
 
 # 85
-
+from mindspore.mint import nn, optim
 # 86
 
 # 87
@@ -481,3 +481,5 @@ __all__.extend(array_func.__all__)
 __all__.extend(math_func.__all__)
 __all__.extend(nn_func.__all__)
 __all__.extend(functional.__all__)
+__all__.extend(nn.__all__)
+__all__.extend(optim.__all__)
