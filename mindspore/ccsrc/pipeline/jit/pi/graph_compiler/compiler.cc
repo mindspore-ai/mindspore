@@ -205,6 +205,11 @@ CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObjec
   args = ExpandVariableArgs(args, code->co_flags, code->co_argcount);
   args = EliminateSelf(args, name);
   MarkArgmentMutable(args);
+  // Two-stages can't run in boost-infer or bootstrap mode, disable them manually
+  // Since these configs were not changed back, these two features were permanently disabled is this process
+  common::SetCompileConfig("BOOST_INFER", "0");
+  common::SetCompileConfig("BOOTSTRAP", "0");
+
   (void)graph_executor->CompileInner(graph, args, kwargs, phase, true);
 
   return callable;

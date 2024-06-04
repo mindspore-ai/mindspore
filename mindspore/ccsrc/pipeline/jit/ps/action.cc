@@ -1655,8 +1655,8 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
 
 static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
   std::vector<ActionItem> actions;
-  static const bool disable_boost_infer = common::GetCompileConfig("BOOST_INFER") == "0";
-  static const bool use_bootstrap = common::GetCompileConfig("BOOTSTRAP") == "1";
+  const bool disable_boost_infer = common::GetCompileConfig("BOOST_INFER") == "0";
+  const bool use_bootstrap = common::GetCompileConfig("BOOTSTRAP") == "1";
   if (!trace_flag) {
     if (use_bootstrap) {
       // Bootstrap for JIT.
