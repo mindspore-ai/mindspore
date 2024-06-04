@@ -588,6 +588,25 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
     MS_LOG(DEBUG) << "Update top graph's and node's debug infos with user top graph's. top_fg: " << top_fg->ToString()
                   << ", user_top_fg: " << user_top_fg->ToString();
     top_fg->set_attrs(user_top_fg->attrs());
+    // Update top graph parameters' name
+    auto top_params = top_fg->parameters();
+    auto resolve_params = user_top_fg->parameters();
+    auto top_arg_size = top_fg->GetPositionalArgsCount();
+    auto user_arg_size = user_top_fg->GetPositionalArgsCount();
+    if (top_arg_size != user_arg_size) {
+      MS_LOG(WARNING) << "Top graph's parameter size: " << top_arg_size
+                      << " does not match the user top func_graph's parameter size: " << user_arg_size;
+    } else {
+      for (size_t i = 0; i < top_arg_size; i++) {
+        auto param_ptr = top_params[i]->cast<ParameterPtr>();
+        MS_EXCEPTION_IF_NULL(param_ptr);
+        auto user_param_ptr = resolve_params[i]->cast<ParameterPtr>();
+        MS_EXCEPTION_IF_NULL(user_param_ptr);
+        param_ptr->set_debug_info(user_param_ptr->debug_info());
+        param_ptr->set_name(user_param_ptr->name());
+      }
+      MS_LOG(DEBUG) << "Update top graph's parameters debug info with user top graph's parameters";
+    }
   }
   return resolved_node;
 }
