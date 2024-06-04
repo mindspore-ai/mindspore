@@ -31,14 +31,14 @@ class ScattercNet(Cell):
     def construct(self, var, indices, update, axis=-1, reduce="update"):
         return self.scatter(var, indices, update, axis, reduce)
 
-def test_scatter_net():
+def test_scatter_4d():
     """
     Feature: test KVCacheScatterUpdate auto parallel
     Description: auto parallel
     Expectation: shape is as expected.
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    strategy = ((1, 2, 4, 1), (1,), (1, 2, 4, 1))
+    strategy = ((1, 8, 1, 1), (1,), (1, 8, 1, 1))
     net = ScattercNet(strategy)
     var_shape = [1, 64, 128, 128]
     var = Parameter(Tensor(np.random.uniform(low=1, high=10, size=var_shape).astype(np.float32)), "var")
@@ -51,4 +51,27 @@ def test_scatter_net():
 
     phase = compile_net(net, var, indices, updates)
     validator = ParallelValidator(net, phase)
-    assert validator.check_parameter_shape('var', [1, 32, 32, 128])
+    assert validator.check_parameter_shape('var', [1, 8, 128, 128])
+
+
+def test_scatter_3d():
+    """
+    Feature: test KVCacheScatterUpdate auto parallel
+    Description: auto parallel
+    Expectation: shape is as expected.
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy = ((1, 1, 8), (1,), (1, 1, 8))
+    net = ScattercNet(strategy)
+    var_shape = [1, 128, 128]
+    var = Parameter(Tensor(np.random.uniform(low=1, high=10, size=var_shape).astype(np.float32)), "var")
+    indices_shape = [1]
+    indices = Tensor(np.random.randint(low=1, high=10, size=indices_shape).astype(np.int64))
+    updates_shape = [1, 128, 128]
+    updates = Tensor(np.random.uniform(low=1, high=10, size=updates_shape).astype(np.float32))
+
+    net.set_inputs(var, indices, updates)
+
+    phase = compile_net(net, var, indices, updates)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_parameter_shape('var', [1, 128, 16])

@@ -95,7 +95,7 @@ StrToEnumMap StrToReductionMap = {{"SUM", Reduction::REDUCTION_SUM},
                                   {"MEAN", Reduction::MEAN},
                                   {"NONE", Reduction::NONE},
                                   {"UPDATE", Reduction::UPDATE}};
-REG_STRING_TO_ENUM(reduction, StrToReductionMap)
+REG_STRING_TO_ENUM_COMMON(reduction, StrToReductionMap)
 
 // Activation
 StrToEnumMap StrToActivationMap = {{"NO_ACTIVATION", ActivationType::NO_ACTIVATION},
