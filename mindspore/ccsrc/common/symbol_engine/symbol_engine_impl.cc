@@ -528,6 +528,12 @@ AbstractBasePtrList SymbolEngineImpl::ExtractInputsAbstract(const CNodePtr &cnod
   return abs_list;
 }
 
+bool SymbolEngineImpl::HasAbstractAny(const AbstractBasePtrList &inputs, const AbstractBasePtr &output) {
+  return output->isa<abstract::AbstractAny>() ||
+         std::any_of(inputs.begin(), inputs.end(),
+                     [](const AbstractBasePtr &abs) { return abs->isa<abstract::AbstractAny>(); });
+}
+
 void SymbolEngineImpl::BuildCNodeSymbol(const CNodePtr &cnode) {
   PrimitivePtr prim;
   AbstractBasePtrList inputs;
@@ -547,10 +553,15 @@ void SymbolEngineImpl::BuildCNodeSymbol(const CNodePtr &cnode) {
     }
     inputs = ExtractInputsAbstract(cnode);
   }
-  auto builder = OperationBuilderInfoRegistry::GetBuilder(prim->name(), emitter_.get());
   auto abstract = CloneAbstractIfSymbolExists(cnode);
   MS_EXCEPTION_IF_NULL(abstract);
+  if (HasAbstractAny(inputs, abstract)) {
+    MS_LOG(DEBUG) << "The input or output of " << cnode->fullname_with_scope()
+                  << " has AbstractAny, which is not supported by symbol engine. node: " << cnode->DebugString();
+    return;
+  }
 
+  auto builder = OperationBuilderInfoRegistry::GetBuilder(prim->name(), emitter_.get());
   // theoretically, it's possible that both shape and value are required for a same node.
   const auto &depend_status = depend_status_map_[cnode];
   if (depend_status.value) {
