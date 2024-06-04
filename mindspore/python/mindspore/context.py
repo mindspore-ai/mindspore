@@ -1322,6 +1322,8 @@ def set_context(**kwargs):
             If the saved file already exists, the timestamp suffix will be added to the file. Saving data to a file
             solves the problem of data loss in screen printing when a large amount of data is generated.
             If it is not set, an error will be reported: prompt to set the upper absolute path.
+            When print data to file, the total output bytes of single print must be less then 2GB(limited by
+            protobuf).
         env_config_path (str): Config path for DFX.
             Through mindspore.set_context(env_config_path="./mindspore_config.json")
 
