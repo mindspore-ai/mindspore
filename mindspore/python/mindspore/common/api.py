@@ -62,6 +62,9 @@ function_phases = dict()
 BROADCAST_PHASE = "_broadcast_"
 _PYNATIVE_PARALLEL_FUNC_NAME = "after_shard"
 
+ARG_SPECIFIED = "arg_specified_infos"
+TOTAL_ARG_LEN = "total_arg_length"
+
 
 def _check_recompile_args(compile_args, kwargs):
     """Check recompile of graph"""
@@ -434,6 +437,9 @@ def process_dyn_args(fn, dyn_args):
         # nothing should be done for None.
         return None
 
+    if isinstance(dyn_args, dict) and ARG_SPECIFIED in dyn_args:
+        return dyn_args
+
     args_sig = inspect.signature(fn)
     if _is_dyn_args_fullmode(dyn_args):
         if not isinstance(dyn_args, (list, tuple)):
@@ -458,7 +464,8 @@ def process_dyn_args(fn, dyn_args):
 
     # The dyn_args is not fullmode, a real compilation arguments should be assembled by latter procession...
     arg_names = []
-    for arg_p in args_sig.parameters.values():
+    args_sig_parameters = list(args_sig.parameters.values())
+    for arg_p in args_sig_parameters:
         if arg_p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD):
             arg_names.append(arg_p.name)
         else:
@@ -483,7 +490,7 @@ def process_dyn_args(fn, dyn_args):
             arg_handler_infos.append([cur_id, v])
         else:
             raise ValueError("For dict mode, valid key is %s, but got %s!" % (arg_names, k))
-    return {"arg_specified_infos": arg_handler_infos}
+    return {ARG_SPECIFIED: arg_handler_infos, TOTAL_ARG_LEN: len(args_sig_parameters)}
 
 
 def generate_dyn_compile_args(compile_args, dyn_args):
@@ -494,9 +501,10 @@ def generate_dyn_compile_args(compile_args, dyn_args):
         if not isinstance(dyn_args, (list, tuple)):
             return _process_sequence((dyn_args,))
         return _process_sequence(dyn_args)
-    arg_specified_infos = dyn_args.get("arg_specified_infos", None)
+    arg_specified_infos = dyn_args.get(ARG_SPECIFIED, None)
     if arg_specified_infos is None:
-        raise RuntimeError("For dict mode, a key with \"arg_specified_infos\" should exist, but got %s!" % dyn_args)
+        raise RuntimeError("For dict mode, a key with \"%s\" should exist, but got %s!" %
+                           (ARG_SPECIFIED, str(dyn_args)))
     new_compile_args = list(compile_args)
     for index, arg in arg_specified_infos:
         new_compile_args[index] = arg

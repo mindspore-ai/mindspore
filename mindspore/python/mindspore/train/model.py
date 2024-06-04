@@ -49,7 +49,7 @@ from mindspore.boost import AutoBoost
 from mindspore.context import ParallelMode
 from mindspore.parallel._recovery_context import _set_recovery_context, _get_recovery_context
 from mindspore.train.dataset_helper import DatasetHelper, connect_network_with_dataset
-from mindspore.common.api import _pynative_executor
+from mindspore.common.api import _pynative_executor, ARG_SPECIFIED, TOTAL_ARG_LEN
 from mindspore.dataset.core.config import get_debug_mode
 from mindspore.dataset.engine.datasets import _set_training_dataset, _reset_training_dataset
 from mindspore.train import amp
@@ -76,6 +76,7 @@ class _FrameworkProfilerCallback(Callback):
     """
     Profiler callback of framework for training.
     """
+
     def step_begin(self, run_context):
         _framework_profiler_step_start()
 
@@ -142,6 +143,114 @@ def _append_ccae(callbacks):
         else:
             callbacks = [callbacks, ClusterMonitor()]
     return callbacks
+
+
+def _get_arg_infos(inputs):
+    """Get compile argument information from inputs.
+
+    Args:
+        inputs (Union[list, tuple, dict]): Argument got from cell which is set by `set_inputs`.
+
+    Raises:
+        RuntimeError: inputs is not a list, tuple or dict.
+        RuntimeError: inputs is a dict without necessary keys and values.
+
+    Returns:
+        _type_: _description_
+    """
+    if isinstance(inputs, (list, tuple)):
+        arg_specified = [[idx, arg] for idx, arg in enumerate(inputs)]
+        arg_len = len(inputs)
+    elif isinstance(inputs, dict):
+        arg_specified = inputs.get(ARG_SPECIFIED, None)
+        arg_len = inputs.get(TOTAL_ARG_LEN, None)
+        if arg_specified is None or arg_len is None:
+            raise RuntimeError(
+                "The incremental inputs should be processed(with \"%s\" and \"%s\"), but got %s." %
+                (ARG_SPECIFIED, TOTAL_ARG_LEN, str(inputs)))
+    else:
+        raise RuntimeError("inputs should be a list/tuple or a dict, but got %s!" % str(inputs))
+
+    return arg_len, arg_specified
+
+
+def _merge_inputs(inputs1, inputs2):
+    """Merge two processed inputs to a new inputs for latter setting cell's inputs."""
+    is_fullmode1 = isinstance(inputs1, (list, tuple))
+    is_fullmode2 = isinstance(inputs2, (list, tuple))
+
+    if is_fullmode1 and is_fullmode2:
+        return [*inputs1, *inputs2]
+
+    arg_len1, arg_specified1 = _get_arg_infos(inputs1)
+    arg_len2, arg_specified2 = _get_arg_infos(inputs2)
+
+    res_arg_len = arg_len1 + arg_len2
+    res_arg_specified = []
+    res_arg_specified.extend(arg_specified1)
+    # The second inputs should add offset before merging.
+    for idx, arg in arg_specified2:
+        res_arg_specified.append([idx + arg_len1, arg])
+
+    return {ARG_SPECIFIED: res_arg_specified, TOTAL_ARG_LEN: res_arg_len}
+
+
+def _process_loss_inputs(loss_inputs):
+    """Process loss's inputs whose first input should be dropped for train or eval.
+
+    Args:
+        loss_inputs (Union[list, tuple, dict]): Arguments save by `set_inputs` or `jit`.
+
+    Raises:
+        RuntimeError: inputs is not a list, tuple or dict.
+        RuntimeError: inputs is a dict without necessary keys and values.
+
+    Returns:
+        list, tuple or dict: Arguments for latter setting.
+    """
+    # For train or eval, the first input of loss is the inner-tensor, so drop it.
+    res = None
+    if isinstance(loss_inputs, (list, tuple)):
+        res = [*loss_inputs]
+        res.pop(0)
+    elif isinstance(loss_inputs, dict):
+        loss_arg_specified = loss_inputs.get(ARG_SPECIFIED, None)
+        loss_arg_len = loss_inputs.get(TOTAL_ARG_LEN, None)
+        if loss_arg_specified is None or loss_arg_len is None:
+            raise RuntimeError(
+                "The loss incremental inputs should be processed(with \"%s\" and \"%s\"), but got %s." %
+                (ARG_SPECIFIED, TOTAL_ARG_LEN, str(loss_inputs)))
+        res_loss_arg_specified = []
+        for idx, arg in loss_arg_specified:
+            if idx == 0:
+                continue
+            res_loss_arg_specified.append([idx, arg])
+        res = {ARG_SPECIFIED: res_loss_arg_specified, TOTAL_ARG_LEN: loss_arg_len - 1}
+    else:
+        raise RuntimeError("loss_inputs should be a list/tuple or a dict, but got %s!" % str(loss_inputs))
+
+    return res
+
+
+def _set_with_processed_inputs(network, inputs):
+    """Save set inputs for computation graph with processed inputs.
+
+    Args:
+        network (nn.Cell): Target cell.
+        inputs (Union[list, tuple, dict]): Inputs argument got from other cell.
+
+    Raises:
+        RuntimeError: network is not a nn.Cell.
+        RuntimeError: inputs is not a list, tuple or dict.
+    """
+    Validator.check_value_type('network', network, nn.Cell)
+    if isinstance(inputs, (list, tuple)):
+        network.set_inputs(*inputs)
+    elif isinstance(inputs, dict):
+        network.set_inputs(**inputs)
+    else:
+        raise RuntimeError(
+            "Reset inputs from a process inputs, should be a list/tuple or a dict, but got %s!" % str(inputs))
 
 
 class Model:
@@ -269,7 +378,6 @@ class Model:
         self._lite_infer = True  # if backend lite infer fails, set False
         self._mindspore_lite_model_group_id = id(self) & 0xFFFF
 
-
     def _check_for_graph_cell(self, kwargs):
         """Check for graph cell"""
         if not isinstance(self._network, nn.GraphCell):
@@ -340,13 +448,10 @@ class Model:
             raise ValueError("The argument 'optimizer' can not be None when set 'loss_scale_manager'.")
 
         net_inputs = network.get_inputs()
-        loss_inputs = [None]
         if self._loss_fn:
-            if self._loss_fn.get_inputs():
-                loss_inputs = [*self._loss_fn.get_inputs()]
-            loss_inputs.pop(0)
-            if net_inputs:
-                net_inputs = [*net_inputs, *loss_inputs]
+            if self._loss_fn.get_inputs() and net_inputs:
+                loss_inputs = _process_loss_inputs(self._loss_fn.get_inputs())
+                net_inputs = _merge_inputs(net_inputs, loss_inputs)
         if self._optimizer:
             amp_config = {}
             if self._loss_scale_manager_set:
@@ -364,7 +469,7 @@ class Model:
         # If need to check if loss_fn is not None, but optimizer is None
 
         if net_inputs is not None:
-            network.set_inputs(*net_inputs)
+            _set_with_processed_inputs(network, net_inputs)
         return network
 
     def _build_eval_network(self, metrics, eval_network, eval_indexes):
@@ -392,15 +497,12 @@ class Model:
                                  f" `loss_fn`.")
 
             net_inputs = self._network.get_inputs()
-            loss_inputs = [None]
-            if self._loss_fn.get_inputs():
-                loss_inputs = [*self._loss_fn.get_inputs()]
-            loss_inputs.pop(0)
-            if net_inputs:
-                net_inputs = [*net_inputs, *loss_inputs]
+            if self._loss_fn.get_inputs() and net_inputs:
+                loss_inputs = _process_loss_inputs(self._loss_fn.get_inputs())
+                net_inputs = _merge_inputs(net_inputs, loss_inputs)
             self._eval_network = nn.WithEvalCell(self._network, self._loss_fn, self._amp_level in ["O2", "O3", "auto"])
             if net_inputs is not None:
-                self._eval_network.set_inputs(*net_inputs)
+                _set_with_processed_inputs(self._eval_network, net_inputs)
             self._eval_indexes = [0, 1, 2]
 
     def _build_predict_network(self):
@@ -472,7 +574,6 @@ class Model:
 
         if _get_recovery_context("enable_recovery") and is_train:
             _set_training_dataset(dataset_helper)
-
 
         network.set_train(is_train)
         network.phase = phase
@@ -1169,7 +1270,7 @@ class Model:
             callbacks = [callbacks]
         for cb in callbacks:
             cb_name = cb.__class__.__name__
-            if  cb_name not in internal_cb_names:
+            if cb_name not in internal_cb_names:
                 cb_methods_names = set(cb.__class__.__dict__.keys())
                 invalid_methods_names = cb_methods_names & old_version_methods_names
                 if invalid_methods_names:
@@ -1890,7 +1991,6 @@ class Model:
             break
         train_dataset.__model_hash__ = hash(self)
         return train_network.parameter_layout_dict
-
 
     def infer_predict_layout(self, *predict_data, skip_backend_compile=False):
         """
