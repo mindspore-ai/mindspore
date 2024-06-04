@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,11 +65,6 @@ DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBas
   tape_->set_segment(primal_graph->segment());
 
   dout_ = tape_->add_parameter();
-  const auto &info = primal_graph->GetEffectInfo();
-  if (is_top_ && info.back_mem) {
-    // Add Umonad arg for top graph.
-    (void)tape_->add_parameter();
-  }
 }
 
 void DFunctor::Init(bool is_top) {
@@ -197,16 +192,6 @@ static bool HasSideEffectBackProp(const CNodePtr &cnode) {
   return false;
 }
 
-static bool HasSideEffectBackPropMem(const CNodePtr &cnode) {
-  if (IsPrimitiveCNode(cnode)) {
-    const auto &prim = GetCNodePrimitive(cnode);
-    MS_EXCEPTION_IF_NULL(prim);
-    auto bprop_flag = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_BACKPROP_MEM);
-    return bprop_flag;
-  }
-  return false;
-}
-
 static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (IsPrimitiveCNode(node, prim::kPrimHookBackward) || IsPrimitiveCNode(node, prim::kPrimCellBackwardHook)) {
@@ -304,14 +289,12 @@ void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app,
     // as MapMorphism is called recursively, so the order of bprop_app should reversed as visited order.
     bprop_app = tape_->NewCNodeInFront({bprop, node_adjoint->dout()});
     tape_->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
+    bprop_app->AddAttr(kAttrSideEffectBpropApp, MakeValue(true));
+    k_graph_->set_flag(kAttrSideEffectBpropAppPropagate, true);
   } else {
     bprop_app = tape_->NewCNode({bprop, node_adjoint->dout()});
   }
 
-  if (HasSideEffectBackPropMem(cnode_morph)) {
-    bprop_app->AddAttr(kAttrSideEffectBpropApp, MakeValue(true));
-    k_graph_->set_flag(kAttrSideEffectBpropAppPropagate, true);
-  }
   if (side_effect_bprop_app_propagate) {
     bprop_app->AddAttr(kAttrSideEffectBpropAppPropagate, MakeValue(true));
     k_graph_->set_flag(kAttrSideEffectBpropAppPropagate, true);

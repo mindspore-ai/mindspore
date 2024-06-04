@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ struct EffectInfo {
   bool memory = false;     // memory side effects, e.g., access global variable.
   bool io = false;         // IO side effects, e.g., print message.
   bool load = false;       // load value from global variable, e.g. add(self.para, x).
-  bool back_mem = false;
 
   void Merge(const EffectInfo &info) {
     if (info.state != EffectInfo::kDetected) {
@@ -39,16 +38,14 @@ struct EffectInfo {
     memory = memory || info.memory;
     io = io || info.io;
     load = load || info.load;
-    back_mem = back_mem || info.back_mem;
   }
 
-  bool HasEffect() const { return state == kDetected && (memory || io || load || back_mem); }
+  bool HasEffect() const { return state == kDetected && (memory || io || load); }
 
   std::string ToString() const {
     std::stringstream ss;
     if (HasEffect()) {
-      ss << "SideEffect: { " << (memory ? "memory " : "") << (io ? "io " : "") << (load ? "load " : "")
-         << (back_mem ? "back_mem " : "") << "}";
+      ss << "SideEffect: { " << (memory ? "memory " : "") << (io ? "io " : "") << (load ? "load " : "") << "}";
     } else if (state == kDetected) {
       ss << "SideEffect: <None>";
     } else {
