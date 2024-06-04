@@ -376,37 +376,6 @@ During the training process, the optimizer takes result[current step] as current
     mindspore.nn.polynomial_decay_lr
     mindspore.nn.warmup_lr
 
-Random Number Generator
------------------------
-
-Generator Class
-^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.Generator
-
-Default Generator Function
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The random state management in this module consists of functions used to manage the default generator.
-When the user does not specify a generator, random operators invoke the default generator to produce random numbers.
-
-.. msplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.default_generator
-    mindspore.nn.get_rng_state
-    mindspore.nn.initial_seed
-    mindspore.nn.manual_seed
-    mindspore.nn.seed
-    mindspore.nn.set_rng_state
-
 Image Processing Layer
 ----------------------
 

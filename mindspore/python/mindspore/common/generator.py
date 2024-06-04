@@ -67,7 +67,7 @@ class Generator:
 
     Examples:
         >>> import mindspore as ms
-        >>> from mindspore.common import Generator
+        >>> from mindspore import Generator
         >>> generator = Generator()
         >>> generator.manual_seed(5)
         >>> print(generator.initial_seed())
@@ -114,7 +114,7 @@ class Generator:
         Seed generator with random number.
 
         Returns:
-            Tensor, randomly generated seeds.
+            Randomly generated seeds, the type is int.
         """
         current_seed = self._generator(
             SEED, (self._seed, self._offset))[0]
@@ -166,14 +166,14 @@ def seed():  # pylint: disable=redefined-outer-name
     Seed the default generator with random number.
 
     Returns:
-        Randomly generated seeds.
+        Randomly generated seeds, the type is int.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore.common import seed
+        >>> from mindspore import seed
         >>> print(seed())
         1663920602
     """
@@ -194,7 +194,7 @@ def manual_seed(seed):  # pylint: disable=redefined-outer-name
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.common import manual_seed, initial_seed
+        >>> from mindspore import manual_seed, initial_seed
         >>> manual_seed(13)
         >>> print(initial_seed())
         13
@@ -213,7 +213,7 @@ def initial_seed():
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.common import manual_seed, initial_seed
+        >>> from mindspore import manual_seed, initial_seed
         >>> manual_seed(14)
         >>> print(initial_seed())
         14
@@ -233,7 +233,7 @@ def get_rng_state():
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore.nn import get_rng_state
+        >>> from mindspore import get_rng_state
         >>> state = get_rng_state()
     """
     return default_generator.get_state()
@@ -250,7 +250,7 @@ def set_rng_state(state):  # pylint: disable=redefined-outer-name
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.nn import set_rng_state, get_rng_state
+        >>> from mindspore import set_rng_state, get_rng_state
         >>> state = get_rng_state()
         >>> set_rng_state(state)
     """
