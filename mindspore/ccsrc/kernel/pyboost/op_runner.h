@@ -143,6 +143,7 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   // Op stream id
   size_t stream_id_{kDefaultStreamIndex};
   ValueSimpleInfoPtr output_value_simple_info_;
+  inline static pynative::AbstractConverter kAbstractConverter;
 };
 using OpPtr = std::shared_ptr<OpRunner>;
 }  // namespace pyboost

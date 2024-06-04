@@ -33,7 +33,6 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 using AbstractConverter = pynative::AbstractConverter;
-static AbstractConverter kAbstractConverter;
 using AddressInfoPair = std::pair<std::vector<kernel::KernelTensor *>, device::DeviceAddressPtrList>;
 using BaseTensor = tensor::BaseTensor;
 using BaseTensorPtr = tensor::BaseTensorPtr;
@@ -203,12 +202,13 @@ class BACKEND_EXPORT PyBoostUtils {
   static std::vector<tensor::BaseTensorPtr> CastTensor(const std::vector<tensor::BaseTensorPtr> &tensors,
                                                        TypeId type_id, const std::string &device_target);
   template <typename... T>
-  static std::pair<bool, KernelAttr> SelectKernel(const DeviceContext *device_context, const std::string &op_name,
+  static std::pair<bool, KernelAttr> SelectKernel(AbstractConverter *converter, const DeviceContext *device_context,
+                                                  const std::string &op_name,
                                                   const ValueSimpleInfoPtr &output_value_simple_info,
                                                   const T &... args) {
     // Get inputs abstract
     std::vector<AbstractBasePtr> input_abs;
-    ((void)input_abs.emplace_back(kAbstractConverter.ConvertAbstract(args)), ...);
+    ((void)input_abs.emplace_back(converter->ConvertAbstract(args)), ...);
 
     // Get output abstract
     auto output_abs = TransformValueSimpleInfoToAbstract(*output_value_simple_info);

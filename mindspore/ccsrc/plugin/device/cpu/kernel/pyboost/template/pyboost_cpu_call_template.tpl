@@ -7,7 +7,8 @@ std::pair<bool, KernelAttr> kernel_attr_pair;
 if (output_value_simple_info_ == nullptr) {
   kernel_attr_pair = PyBoostUtils::SelectKernel(input_abs_, output_abs_, device_context_, primitive_->name());
 } else {
-  kernel_attr_pair = PyBoostUtils::SelectKernel(device_context_, primitive_->name(), output_value_simple_info_, ${call_args});
+  AbstractConverter *abs_converter = &kAbstractConverter;
+  kernel_attr_pair = PyBoostUtils::SelectKernel(abs_converter, device_context_, primitive_->name(), output_value_simple_info_, ${call_args});
 }
 if (kernel_attr_pair.first || op_name() == "Cast") {
   // Create device address for input tensors
