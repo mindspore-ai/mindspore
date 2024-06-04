@@ -161,7 +161,8 @@ void DebugActor::AscendKbkDump(const CNodePtr &cnode, const std::vector<DeviceTe
       if (!sync_ok) {
         MS_LOG(ERROR) << "Sync stream error! The node input will be dumped";
       }
-    } else if (dump_json_parser.op_debug_mode() == DumpJsonParser::DUMP_BOTH_OVERFLOW) {
+    } else if (dump_json_parser.e2e_dump_enabled() &&
+               dump_json_parser.op_debug_mode() == DumpJsonParser::DUMP_BOTH_OVERFLOW) {
       auto is_overflow = CheckOverflow(device_context, output_device_tensors);
       if (is_overflow) {
         read_data = CheckReadData(cnode);
