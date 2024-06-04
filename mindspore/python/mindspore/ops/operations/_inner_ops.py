@@ -25,7 +25,6 @@ from mindspore.common._stub_tensor import StubTensor
 from mindspore.ops import composite as C
 from mindspore.ops.operations.array_ops import Cast
 from mindspore.ops.operations._scalar_ops import bit_or, bit_and
-from mindspore.ops.operations.comm_ops import ReduceOp
 from mindspore.ops import signature as sig
 from mindspore.ops.operations.math_ops import _infer_shape_reduce
 from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive, \
@@ -318,66 +317,6 @@ class MatrixDiagPart(PrimitiveWithInfer):
         else:
             out_shape = assist_shape[:-2] + assist_shape[-1:]
         return out_shape
-
-
-class Reduce(PrimitiveWithInfer):
-    """
-    Reduces tensor across the processes in the specified communication group.
-
-    Note:
-        Only process with destination rank receives the reduced output.
-        Other processes only get a tensor with shape [1], which has no mathematical meaning.
-
-    Args:
-        dest_rank (int): Specifies the rank of the process that receives the reduced output.
-        op (str, optional): Specifies an operation used for element-wise reductions, like sum, prod, max, and min.
-                On the CPU, only 'sum' is supported. Default: ``ReduceOp.SUM`` .
-        group (str, optional): The communication group to work on.
-            Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-
-    Examples:
-        >>> import mindspore.ops as ops
-        >>> import mindspore.nn as nn
-        >>> from mindspore.communication import init
-        >>> from mindspore import Tensor
-        >>> import numpy as np
-        >>> # Launch 4 processes.
-        >>> init()
-        >>> class ReduceNet(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.reduce = ops.Reduce(dest_rank=1)
-        >>>
-        >>>     def construct(self, x):
-        >>>         out = self.reduce(x)
-        >>>         return out
-        >>> input = Tensor(np.ones([2, 8]).astype(np.float32))
-        >>> net = ReduceNet()
-        >>> output = net(input)
-        >>> print(output)
-        Process with rank 1: [[4. 4. 4. 4. 4. 4. 4. 4.]
-                             [4. 4. 4. 4. 4. 4. 4. 4.]],
-        Other proesses: [0.].
-    """
-
-    @prim_attr_register
-    def __init__(self, dest_rank, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
-        self.dest_rank = dest_rank
-        self.op = op
-        self.group = group
-
-    def infer_shape(self, x_shape):
-        # The process with dest_rank returns the reduced output.
-        # Other processes only gets a tensor with shape [1], which has no mathematical meaning.
-        if self.dest_rank == get_rank():
-            return x_shape
-        return [1]
-
-    def infer_dtype(self, x_dtype):
-        return x_dtype
 
 
 class MatrixSetDiag(PrimitiveWithInfer):
