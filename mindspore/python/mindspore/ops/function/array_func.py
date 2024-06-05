@@ -5371,8 +5371,12 @@ def narrow(input, axis, start, length):
          [ 5 6]
          [ 8 9]]
     """
+    if not ops.isconstant(input.ndim) or not ops.isconstant(input.shape):
+        return ms.mint.narrow(input, axis, start, length)
     validator.check_value_type("input", input, Tensor, "narrow")
-
+    validator.check_axis_in_range(axis, input.ndim)
+    validator.check_int_range(start, 0, input.shape[axis], validator.INC_LEFT)
+    validator.check_int_range(length, 1, input.shape[axis] - start, validator.INC_BOTH)
     begins = [0] * input.ndim
     begins[axis] = start
     sizes = list(input.shape)
@@ -6154,13 +6158,6 @@ def _check_swapaxes_axis(axes, ndim):
     return validator.check_swapaxes_axis(axes, ndim)
 
 
-def _cal_swapaxes_axis(axes, ndim):
-    tmp = ()
-    for x in axes:
-        tmp = tmp + ((x + ndim) % ndim,)
-    return tmp
-
-
 def swapaxes(input, axis0, axis1):
     '''
     Interchange two axes of a tensor.
@@ -6193,7 +6190,9 @@ def swapaxes(input, axis0, axis1):
     if not isinstance(input, Tensor):
         raise TypeError(f'For ops.swapaxes, parameter `input` must be Tensor, but got {type(input)}')
 
-    axis0, axis1 = _cal_swapaxes_axis((axis0, axis1), input.ndim)
+    if not ops.isconstant(input.ndim):
+        raise ValueError("For swapaxes, dynamic rank is not support now.")
+    axis0, axis1 = _check_swapaxes_axis((axis0, axis1), input.ndim)
 
     if axis0 == axis1:
         return input

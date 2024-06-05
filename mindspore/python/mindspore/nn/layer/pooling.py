@@ -1183,6 +1183,9 @@ class AvgPool1d(_PoolNd):
             x = self.avg_pool(x)
             x = x.squeeze(3).squeeze(2)
         else:
+            if not ops.isconstant(x.ndim):
+                raise ValueError("For AvgPool1d, dynamic rank is not support now.")
+            _shape_check(self.shape(x), self.cls_name)
             batch, channel, width = self.shape(x)
             if width == self.kernel_size[1]:
                 x = self.reduce_mean(x, 2)
