@@ -1699,20 +1699,21 @@ void PyBoost::DataSyncForGraph(const kernel::pyboost::OpPtr &op, ValuePtrList &&
 PrimitivePtr PyBoost::ConvertPrimitive(const py::object &obj) {
   const auto &adapter = obj.cast<PrimitivePyAdapterPtr>();
   MS_EXCEPTION_IF_NULL(adapter);
-#ifndef ENABLE_TEST
-  return std::make_shared<Primitive>(adapter->name(), adapter->attrs());
-#else
+
   auto prim = adapter->attached_primitive();
   if (prim == nullptr) {
+#ifndef ENABLE_TEST
+    return std::make_shared<Primitive>(adapter->name(), adapter->attrs());
+#else
     prim = std::make_shared<PrimitivePy>(obj);
     adapter->set_attached_primitive(prim);
+#endif
   }
   if (!prim->HasPyObj()) {
     MS_LOG(EXCEPTION) << "Pyobj is empty";
   }
   prim->EnableSharedMutex();
   return prim;
-#endif
 }
 
 py::object PyBoost::RunPyFunction(const PrimitivePtr &prim, const py::list &args) {
