@@ -122,8 +122,8 @@ AnfNodePtr GetAccuGrad(const std::vector<AnfNodePtr> &parameters, const std::str
 
     auto param_ptr = param->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param_ptr);
-    if (param_ptr->name().find(weight_name) != std::string::npos &&
-        param_ptr->name().find(ACCU_GRADS) != std::string::npos) {
+    auto accu_grads_name = std::string(ACCU_GRADS) + "." + weight_name;
+    if (param_ptr->name() == accu_grads_name) {
       MS_LOG(INFO) << "Find the accumulation grad node: " << param_ptr->name();
       return param;
     }
