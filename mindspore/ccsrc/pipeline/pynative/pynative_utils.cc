@@ -1711,7 +1711,8 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const FrontendOp
 void PyBoost::DataSyncForGraph(const kernel::pyboost::OpPtr &op, ValuePtrList &&op_inputs) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
+      !runtime::OpExecutor::GetInstance().async_for_graph()) {
     // If execution mode is Graph Mode in MsContext, the tensor will be the input of graph which will execute in Graph
     // Mode, if the graph contain no CNode after optimization, the tensor need sync to host.
     for (const auto &output : op->outputs()) {
@@ -2543,7 +2544,7 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
 
 void DispatchOp(const std::shared_ptr<runtime::AsyncTask> &task) {
   static bool need_sync = runtime::OpExecutor::NeedSync();
-  if (need_sync) {
+  if (need_sync && !runtime::OpExecutor::GetInstance().async_for_graph()) {
     MS_LOG(INFO) << "PyBoost sync run frontend task";
     runtime::OpExecutor::GetInstance().WaitAll();
     task->Run();

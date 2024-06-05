@@ -339,6 +339,10 @@ void PyNativeExecutor::ChildAfterFork() {
   MS_LOG(DEBUG) << "PyNativeExecutor reinitialize after fork done.";
 }
 
+void PyNativeExecutor::SetAsyncForGraph(bool flag) const {
+  runtime::OpExecutor::GetInstance().set_async_for_graph(flag);
+}
+
 void RegPyNativeExecutor(const py::module *m) {
   stub::RegStubNodes(m);
 
@@ -368,6 +372,8 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("set_jit_compile_status", &PyNativeExecutor::SetJitCompileStatus, "set jit compile status.")
     .def("set_is_run_recompute", &PyNativeExecutor::SetIsRunRecompute, "set grad is in recompile status.")
     .def("run_op_async", &PyNativeExecutor::RunOpStub, "run op asynchronously")
+    .def("set_async_for_graph", &PyNativeExecutor::SetAsyncForGraph, py::arg("flag") = py::bool_(false),
+         "Executor set async flag.")
     .def("constant_folding", &PyNativeExecutor::CallConstantFolding, "Call Constant Folding Primitive");
 }
 }  // namespace mindspore::pynative

@@ -271,7 +271,7 @@ AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::
 
 void PyBoostUtils::DispatchRun(const std::shared_ptr<runtime::PyBoostDeviceTask> &task) {
   static auto need_sync = runtime::OpExecutor::NeedSync();
-  if (need_sync) {
+  if (need_sync && !runtime::OpExecutor::GetInstance().async_for_graph()) {
     MS_LOG(INFO) << "PyBoost sync run device task";
     runtime::OpExecutor::GetInstance().WaitAll();
     task->Run();

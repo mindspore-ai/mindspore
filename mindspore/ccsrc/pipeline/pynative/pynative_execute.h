@@ -58,6 +58,7 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   // Generate stub tensor and dispatch async task.
   py::object RunOpStub(const py::args &args) const;
   py::object RealRunOp(const py::args &args) const;
+  void SetAsyncForGraph(bool flag) const;
   py::object CallConstantFolding(const py::args &args) const;
   bool grad_flag() const;
   void set_grad_flag(bool flag) const;
