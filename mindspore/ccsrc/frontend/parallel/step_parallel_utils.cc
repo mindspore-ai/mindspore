@@ -185,8 +185,8 @@ std::pair<AnfNodePtr, int64_t> GetRealKernelNode(const AnfNodePtr &node, int64_t
   if (!IsRealKernelNode(node)) {
     return GetRealKernelNode(node->cast<CNodePtr>()->input(1), get_item_index, call_node, ignore_get_item);
   }
-  if ((IsPrimitiveCNode(node, prim::kPrimTupleGetItem) ||
-      IsPrimitiveCNode(node, prim::kPrimInsertGradientOf)) && ignore_get_item) {
+  if ((IsPrimitiveCNode(node, prim::kPrimTupleGetItem) || IsPrimitiveCNode(node, prim::kPrimInsertGradientOf)) &&
+      ignore_get_item) {
     auto cnode = node->cast<CNodePtr>();
     auto cur_get_item_index = LongToInt(GetTupleGetItemIndex(cnode));
     auto tuple_getitem_input = cnode->input(1);
