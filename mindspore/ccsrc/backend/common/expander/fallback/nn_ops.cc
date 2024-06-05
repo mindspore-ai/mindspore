@@ -620,8 +620,6 @@ REG_FALLBACK_BUILDER("ResizeLinear1DGrad").SetBody(BODYFUNC(ib) {
   return {real_dx};
 });
 
-// It is just a temporary modification. If the attributes of the `TensorScatterElements`
-// operator are changed to input, the `Scatter` operator can be directly replaced with `TensorScatterElements`.
 REG_FALLBACK_BUILDER("Scatter").SetBody(BODYFUNC(ib) {
   auto input = ib->GetInput(kIndex0);
   auto dim = ib->GetInput(kIndex1);
