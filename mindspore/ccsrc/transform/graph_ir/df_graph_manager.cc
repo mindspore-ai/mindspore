@@ -16,6 +16,7 @@
 
 #include <sstream>
 #include <set>
+#include "mindspore/core/utils/file_utils.h"
 #include "transform/graph_ir/df_graph_manager.h"
 #include "transform/graph_ir/aoe_util.h"
 #include "utils/ms_context.h"
@@ -25,23 +26,7 @@
 #include "include/common/utils/python_adapter.h"
 #endif
 #include "include/common/utils/compile_cache_context.h"
-
-namespace {
-// normalize name for ge regex check
-std::string NormalizeString(const std::string &name) {
-  std::string norm_str;
-  std::for_each(name.begin(), name.end(), [&norm_str](const auto &a) {
-    if (isalpha(a) || isalnum(a) || a == '_' || a == '-') {
-      norm_str += a;
-    }
-  });
-  const size_t limit_len = 128;
-  if (norm_str.size() > limit_len) {
-    norm_str = norm_str.substr(norm_str.size() - limit_len);
-  }
-  return norm_str;
-}
-};  // namespace
+#include "include/common/debug/common.h"
 
 namespace mindspore {
 namespace transform {
@@ -123,6 +108,11 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
     }
     ge_graph_key = NormalizeString(ge_graph_key);
     new_options.insert_or_assign(kGeGraphKey, ge_graph_key);
+    auto ge_cache_path = Common::GetCompilerCachePath() + kGeCache;
+    (void)mindspore::FileUtils::CreateNotExistDirs(ge_cache_path, true);
+    new_options.insert_or_assign(kGeGraphCompilerCacheDir, ge_cache_path);
+    MS_LOG(INFO) << "Use GE graph compile cache, GE graph compile cache dir: " << ge_cache_path
+                 << ", the ge.graph_key is " << ge_graph_key;
   }
 
   DfGraphWrapperPtr wrap_ptr = std::make_shared<DfGraphWrapper>(name, id, graph_ptr, new_options);
