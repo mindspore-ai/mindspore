@@ -30,7 +30,8 @@ using TensorPtr = tensor::TensorPtr;
 constexpr auto kInput = "input";
 constexpr auto kOutput = "output";
 constexpr auto kCsvHeader =
-  "Op Type,Op Name,Task ID,Stream ID,Timestamp,IO,Slot,Data Size,Data Type,Shape,Max Value,Min Value,Avg Value,"
+  "Op Type,Op Name,Task ID,Stream ID,Timestamp,IO,Slot,Data Size,Data Type,Shape,Max Value,Min Value,Avg Value,L2Norm "
+  "Value,"
   "Count\n";
 constexpr auto kCsvFileName = "statistic.csv";
 string ShapeToString(const ShapeVector &shape) {
@@ -59,12 +60,6 @@ TensorStat GetKernelTensorStats(const DumpTensorInfo &tensor_info) {
     return TensorStat();
   }
   uint64_t timestamp = Common::GetTimeStamp();
-  std::string max_value =
-    TensorToString(StatisticKernelManager::GetInstance().CalMax(tensor_info.device_context, tensor));
-  std::string min_value =
-    TensorToString(StatisticKernelManager::GetInstance().CalMin(tensor_info.device_context, tensor));
-  std::string mean_value =
-    TensorToString(StatisticKernelManager::GetInstance().CalMean(tensor_info.device_context, tensor));
   const auto &shape_vec = tensor->GetShapeVector();
   size_t task_id = 0;  // Under the kbyk, there is no concept of task_id. The default setting is 0.
   string shape = ShapeToString(shape_vec);
@@ -74,8 +69,14 @@ TensorStat GetKernelTensorStats(const DumpTensorInfo &tensor_info) {
   string data_type = TypeIdToString(tensor->dtype_id(), true);
   string io = (tensor_info.is_input ? kInput : kOutput);
   size_t data_count = SizeOf(shape_vec);
+  MS_LOG(DEBUG) << "Tensor shape is " << shape << ", size is " << data_size << ", type is " << data_type;
+  std::string max_value = TensorToString(CalStatistic("max", tensor_info.device_context, tensor));
+  std::string min_value = TensorToString(CalStatistic("min", tensor_info.device_context, tensor));
+  std::string mean_value = TensorToString(CalStatistic("mean", tensor_info.device_context, tensor));
+  std::string norm_value = TensorToString(CalStatistic("l2norm", tensor_info.device_context, tensor));
+
   TensorStat stat(tensor_info.op_type, tensor_info.op_name, task_id, stream_id, timestamp, io, tensor_info.slot,
-                  data_size, data_type, shape, max_value, min_value, mean_value, data_count);
+                  data_size, data_type, shape, max_value, min_value, mean_value, norm_value, data_count);
   return stat;
 }
 
@@ -84,6 +85,7 @@ void DumpKernelTensorStats(const DeviceContext *device_context, vector<device::D
   string node_name = GetKernelNodeName(node);
   GetFileKernelName(NOT_NULL(&node_name));
   string node_type = common::AnfAlgo::GetCNodeName(node);
+  MS_LOG(DEBUG) << "Start calc " << node_name << " node statistics.";
   for (size_t i = 0; i < tensors.size(); ++i) {
     auto tensor = tensors[i]->kernel_tensor().get();
     DumpTensorInfo tensor_info(device_context, tensor, is_input, i, node_name, node_type);
@@ -109,6 +111,7 @@ void DumpKernelTensorStats(const DeviceContext *device_context, vector<device::D
     csv.WriteToCsv(stat.max_value_);
     csv.WriteToCsv(stat.min_value_);
     csv.WriteToCsv(stat.avg_value_);
+    csv.WriteToCsv(stat.norm_value_);
     csv.WriteToCsv(stat.count_, true);
     csv.CloseFile();
   }
