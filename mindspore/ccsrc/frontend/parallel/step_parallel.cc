@@ -1864,37 +1864,6 @@ static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &pr
   if (!param_names.empty()) {
     strategy_key_name = prim->name() + "_" + param_names[0].first;
   }
-  bool load_strategy_from_ckpt =
-    StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map.find(strategy_key_name) != stra_map.end();
-  if (!prim->HasAttr(STAND_ALONE)) {
-    if (((!StrategyFound(attrs) && !load_strategy_from_ckpt) && !cnode->HasPrimalAttr(IN_STRATEGY)) ||
-        prim->HasAttr(BATCH_PARALLEL)) {
-      MS_LOG(INFO) << "ExtractInformation: the strategy of node " << cnode->ToString() << " prim " << prim->name()
-                   << " is empty, using batch parallel";
-      in_strategy = GenerateBatchParallelStrategy(op_info, prim);
-    } else if (cnode->HasPrimalAttr(IN_STRATEGY)) {
-      in_strategy = ExtractStrategy(cnode->GetPrimalAttr(IN_STRATEGY));
-      out_strategy = ExtractStrategy(cnode->GetPrimalAttr(OUT_STRATEGY));
-    } else if (StrategyFound(attrs)) {
-      in_strategy = ExtractStrategy(attrs[IN_STRATEGY]);
-      out_strategy = ExtractStrategy(attrs[OUT_STRATEGY]);
-    } else {
-      in_strategy = stra_map[strategy_key_name];
-    }
-  } else {
-    if (op_info->inputs_shape_new().empty()) {
-      in_strategy = GenerateStandAloneStrategy(op_info->inputs_shape());
-    } else {
-      in_strategy = GenerateStandAloneStrategyForNewShapes(op_info->inputs_shape_new());
-    }
-  }
-  auto has_tuple_stra = in_strategy->HasTupleInTupleStrategy();
-  auto has_new_shape = !op_info->inputs_shape_new().empty();
-  if (has_tuple_stra != has_new_shape) {
-    MS_LOG(EXCEPTION)
-      << "One of the strategy or input shape have tuple in tuple input, but the other does not; in_strategy is "
-      << has_tuple_stra << ", input shape is " << has_new_shape;
-  }
   std::vector<std::shared_ptr<TensorLayout>> in_tensor_layouts;
   std::vector<std::shared_ptr<TensorLayout>> out_tensor_layouts;
   if (ExtractUserConfigLayout(attrs, op_info->inputs_shape(), op_info->outputs_shape(), &in_tensor_layouts,
@@ -1902,7 +1871,40 @@ static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &pr
     MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " extract configured layout failed"
                       << trace::DumpSourceLines(cnode);
   }
-  MS_EXCEPTION_IF_NULL(in_strategy);
+  if (in_tensor_layouts.empty() && out_tensor_layouts.empty()) {
+    bool load_strategy_from_ckpt =
+      StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map.find(strategy_key_name) != stra_map.end();
+    if (!prim->HasAttr(STAND_ALONE)) {
+      if (((!StrategyFound(attrs) && !load_strategy_from_ckpt) && !cnode->HasPrimalAttr(IN_STRATEGY)) ||
+          prim->HasAttr(BATCH_PARALLEL)) {
+        MS_LOG(INFO) << "ExtractInformation: the strategy of node " << cnode->ToString() << " prim " << prim->name()
+                     << " is empty, using batch parallel";
+        in_strategy = GenerateBatchParallelStrategy(op_info, prim);
+      } else if (cnode->HasPrimalAttr(IN_STRATEGY)) {
+        in_strategy = ExtractStrategy(cnode->GetPrimalAttr(IN_STRATEGY));
+        out_strategy = ExtractStrategy(cnode->GetPrimalAttr(OUT_STRATEGY));
+      } else if (StrategyFound(attrs)) {
+        in_strategy = ExtractStrategy(attrs[IN_STRATEGY]);
+        out_strategy = ExtractStrategy(attrs[OUT_STRATEGY]);
+      } else {
+        in_strategy = stra_map[strategy_key_name];
+      }
+    } else {
+      if (op_info->inputs_shape_new().empty()) {
+        in_strategy = GenerateStandAloneStrategy(op_info->inputs_shape());
+      } else {
+        in_strategy = GenerateStandAloneStrategyForNewShapes(op_info->inputs_shape_new());
+      }
+    }
+    auto has_tuple_stra = in_strategy->HasTupleInTupleStrategy();
+    auto has_new_shape = !op_info->inputs_shape_new().empty();
+    if (has_tuple_stra != has_new_shape) {
+      MS_LOG(EXCEPTION)
+        << "One of the strategy or input shape have tuple in tuple input, but the other does not; in_strategy is "
+        << has_tuple_stra << ", input shape is " << has_new_shape;
+    }
+    MS_EXCEPTION_IF_NULL(in_strategy);
+  }
   if (op_info->Init(in_strategy, out_strategy, in_tensor_layouts, out_tensor_layouts) == FAILED) {
     MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " init failed" << trace::DumpSourceLines(cnode);
   }
