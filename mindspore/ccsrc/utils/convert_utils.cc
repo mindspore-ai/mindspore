@@ -710,6 +710,8 @@ static const std::map<size_t, TypeId> tensor_tensor_convert_map = {
   {GetHashId(kNumberTypeBool, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {GetHashId(kNumberTypeBool, kNumberTypeFloat32), kNumberTypeFloat32},
   {GetHashId(kNumberTypeBool, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeBool, kNumberTypeComplex64), kNumberTypeComplex64},
+  {GetHashId(kNumberTypeBool, kNumberTypeComplex128), kNumberTypeComplex128},
   // Int8
   {GetHashId(kNumberTypeInt8, kNumberTypeInt8), kNumberTypeInt8},
   {GetHashId(kNumberTypeInt8, kNumberTypeInt16), kNumberTypeInt16},
@@ -720,6 +722,8 @@ static const std::map<size_t, TypeId> tensor_tensor_convert_map = {
   {GetHashId(kNumberTypeInt8, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {GetHashId(kNumberTypeInt8, kNumberTypeFloat32), kNumberTypeFloat32},
   {GetHashId(kNumberTypeInt8, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeInt8, kNumberTypeComplex64), kNumberTypeComplex64},
+  {GetHashId(kNumberTypeInt8, kNumberTypeComplex128), kNumberTypeComplex128},
   // Int16
   {GetHashId(kNumberTypeInt16, kNumberTypeInt16), kNumberTypeInt16},
   {GetHashId(kNumberTypeInt16, kNumberTypeInt32), kNumberTypeInt32},
@@ -729,6 +733,8 @@ static const std::map<size_t, TypeId> tensor_tensor_convert_map = {
   {GetHashId(kNumberTypeInt16, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {GetHashId(kNumberTypeInt16, kNumberTypeFloat32), kNumberTypeFloat32},
   {GetHashId(kNumberTypeInt16, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeInt16, kNumberTypeComplex64), kNumberTypeComplex64},
+  {GetHashId(kNumberTypeInt16, kNumberTypeComplex128), kNumberTypeComplex128},
   // Int32
   {GetHashId(kNumberTypeInt32, kNumberTypeInt32), kNumberTypeInt32},
   {GetHashId(kNumberTypeInt32, kNumberTypeInt64), kNumberTypeInt64},
@@ -737,6 +743,8 @@ static const std::map<size_t, TypeId> tensor_tensor_convert_map = {
   {GetHashId(kNumberTypeInt32, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {GetHashId(kNumberTypeInt32, kNumberTypeFloat32), kNumberTypeFloat32},
   {GetHashId(kNumberTypeInt32, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeInt32, kNumberTypeComplex64), kNumberTypeComplex64},
+  {GetHashId(kNumberTypeInt32, kNumberTypeComplex128), kNumberTypeComplex128},
   // Int64
   {GetHashId(kNumberTypeInt64, kNumberTypeInt64), kNumberTypeInt64},
   {GetHashId(kNumberTypeInt64, kNumberTypeUInt8), kNumberTypeInt64},
@@ -744,12 +752,16 @@ static const std::map<size_t, TypeId> tensor_tensor_convert_map = {
   {GetHashId(kNumberTypeInt64, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {GetHashId(kNumberTypeInt64, kNumberTypeFloat32), kNumberTypeFloat32},
   {GetHashId(kNumberTypeInt64, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeInt64, kNumberTypeComplex64), kNumberTypeComplex64},
+  {GetHashId(kNumberTypeInt64, kNumberTypeComplex128), kNumberTypeComplex128},
   // UInt8
   {GetHashId(kNumberTypeUInt8, kNumberTypeUInt8), kNumberTypeUInt8},
   {GetHashId(kNumberTypeUInt8, kNumberTypeFloat16), kNumberTypeFloat16},
   {GetHashId(kNumberTypeUInt8, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {GetHashId(kNumberTypeUInt8, kNumberTypeFloat32), kNumberTypeFloat32},
   {GetHashId(kNumberTypeUInt8, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeUInt8, kNumberTypeComplex64), kNumberTypeComplex64},
+  {GetHashId(kNumberTypeUInt8, kNumberTypeComplex128), kNumberTypeComplex128},
   // UInt16
   {GetHashId(kNumberTypeUInt16, kNumberTypeUInt16), kNumberTypeUInt16},
   // UInt32
@@ -761,15 +773,28 @@ static const std::map<size_t, TypeId> tensor_tensor_convert_map = {
   {GetHashId(kNumberTypeFloat16, kNumberTypeBFloat16), kNumberTypeFloat32},
   {GetHashId(kNumberTypeFloat16, kNumberTypeFloat32), kNumberTypeFloat32},
   {GetHashId(kNumberTypeFloat16, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeFloat16, kNumberTypeComplex64), kNumberTypeComplex64},
+  {GetHashId(kNumberTypeFloat16, kNumberTypeComplex128), kNumberTypeComplex128},
   // BFloat16
   {GetHashId(kNumberTypeBFloat16, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {GetHashId(kNumberTypeBFloat16, kNumberTypeFloat32), kNumberTypeFloat32},
   {GetHashId(kNumberTypeBFloat16, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeBFloat16, kNumberTypeComplex64), kNumberTypeComplex64},
+  {GetHashId(kNumberTypeBFloat16, kNumberTypeComplex128), kNumberTypeComplex128},
   // Float32
   {GetHashId(kNumberTypeFloat32, kNumberTypeFloat32), kNumberTypeFloat32},
   {GetHashId(kNumberTypeFloat32, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeComplex64), kNumberTypeComplex64},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeComplex128), kNumberTypeComplex128},
   // Float64
   {GetHashId(kNumberTypeFloat64, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeFloat64, kNumberTypeComplex64), kNumberTypeComplex128},
+  {GetHashId(kNumberTypeFloat64, kNumberTypeComplex128), kNumberTypeComplex128},
+  // Complex64
+  {GetHashId(kNumberTypeComplex64, kNumberTypeComplex64), kNumberTypeComplex64},
+  {GetHashId(kNumberTypeComplex64, kNumberTypeComplex128), kNumberTypeComplex128},
+  // Complex128
+  {GetHashId(kNumberTypeComplex128, kNumberTypeComplex128), kNumberTypeComplex128},
 };
 
 static const std::map<size_t, TypeId> scalar_tensor_convert_map = {
@@ -787,6 +812,8 @@ static const std::map<size_t, TypeId> scalar_tensor_convert_map = {
   {GetHashId(kNumberTypeBool, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {GetHashId(kNumberTypeBool, kNumberTypeFloat32), kNumberTypeFloat32},
   {GetHashId(kNumberTypeBool, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeBool, kNumberTypeComplex64), kNumberTypeComplex64},
+  {GetHashId(kNumberTypeBool, kNumberTypeComplex128), kNumberTypeComplex128},
   // Scalar is int.
   {GetHashId(kNumberTypeInt64, kNumberTypeBool), kNumberTypeInt64},
   {GetHashId(kNumberTypeInt64, kNumberTypeInt8), kNumberTypeInt8},
@@ -798,6 +825,8 @@ static const std::map<size_t, TypeId> scalar_tensor_convert_map = {
   {GetHashId(kNumberTypeInt64, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {GetHashId(kNumberTypeInt64, kNumberTypeFloat32), kNumberTypeFloat32},
   {GetHashId(kNumberTypeInt64, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeInt64, kNumberTypeComplex64), kNumberTypeComplex64},
+  {GetHashId(kNumberTypeInt64, kNumberTypeComplex128), kNumberTypeComplex128},
   // Scalar is float.
   {GetHashId(kNumberTypeFloat32, kNumberTypeBool), kNumberTypeFloat32},
   {GetHashId(kNumberTypeFloat32, kNumberTypeInt8), kNumberTypeFloat32},
@@ -809,6 +838,8 @@ static const std::map<size_t, TypeId> scalar_tensor_convert_map = {
   {GetHashId(kNumberTypeFloat32, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {GetHashId(kNumberTypeFloat32, kNumberTypeFloat32), kNumberTypeFloat32},
   {GetHashId(kNumberTypeFloat32, kNumberTypeFloat64), kNumberTypeFloat64},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeComplex64), kNumberTypeComplex64},
+  {GetHashId(kNumberTypeFloat32, kNumberTypeComplex128), kNumberTypeComplex128},
 };
 
 TypeId ConvertTypeForTensorsOrScalars(const TypeId &current, const TypeId &other, const size_t hash_id) {
@@ -834,45 +865,33 @@ TypeId GetConversionType(const TypeId &current, bool current_arg_is_tensor, bool
                          const std::pair<TypeId, bool> &sig_type, const TypeId &ref_type_id) {
   TypeId saved_type_id = sig_type.first;
   bool saved_has_tensor = sig_type.second;
-  static std::set<int> black_types{kTypeUnknown, kNumberTypeComplex64, kNumberTypeComplex128};
-  static auto hash_fp16_bf16 = GetHashId(kNumberTypeFloat16, kNumberTypeBFloat16);
   if (current == saved_type_id) {
     return current;
   }
 
-  bool cur_is_in_black = black_types.find(current) != black_types.end();
-  bool saved_is_in_black = black_types.find(saved_type_id) != black_types.end();
-  if (!cur_is_in_black && !saved_is_in_black) {
-    // Tensor + Scalar, Scalar + Tensor
+  if (current != kTypeUnknown && saved_type_id != kTypeUnknown) {
     auto hash_id = GetHashId(current, saved_type_id);
-    // BFloat16 + Float16
-    if (hash_id == hash_fp16_bf16 && (is_parameter || saved_type_id == ref_type_id)) {
-      // If Parameter exists, its type_id should be equal to the saved_type_id,
-      // otherwise it means that the wrong type cast will be performed on Parameter.
-      static int count_warning = 0;
-      if (count_warning == 0) {
-        MS_LOG(WARNING) << "For operators with side effects, there is an implicit type conversion between "
-                        << TypeIdToString(current) << " and " << TypeIdToString(saved_type_id)
-                        << ", which may result in loss of precision. It is recommended to use Float32.";
-        ++count_warning;
-      }
-      return is_parameter ? current : saved_type_id;
-    }
+    // Tensor + Scalar, Scalar + Tensor
     if (MS_UNLIKELY(current_arg_is_tensor ^ saved_has_tensor)) {
       return ConvertTypeBetweenTensorAndScalar(current, saved_type_id, hash_id);
     }
     // Tensor + Tensor, Scalar + Scalar
+    if ((is_parameter || saved_type_id == ref_type_id) &&
+        hash_id == GetHashId(kNumberTypeFloat16, kNumberTypeBFloat16)) {
+      // "saved_type_id == ref_type_id": if Parameter exists, its type_id should be equal to the saved_type_id,
+      // otherwise it means that the wrong type cast will be performed on the Parameter.
+      static bool already_printed = false;
+      if (!already_printed) {
+        already_printed = true;
+        MS_LOG(WARNING) << "For operators with side effects, there is an implicit type conversion between "
+                        << TypeIdToString(current) << " and " << TypeIdToString(saved_type_id)
+                        << ", which may result in loss of precision. It is recommended to use Float32.";
+      }
+      return is_parameter ? current : saved_type_id;
+    }
     return ConvertTypeForTensorsOrScalars(current, saved_type_id, hash_id);
-  } else if (cur_is_in_black && !saved_is_in_black) {
-    // Current is in black, but saved is not in block
-    return saved_type_id;
-  } else if (!cur_is_in_black) {
-    // Current is not in black, but saved is in block
-    return current;
-  } else {
-    // All in black, git higher
-    return current > saved_type_id ? current : saved_type_id;
   }
+  return current != kTypeUnknown ? current : saved_type_id;
 }
 }  // namespace
 

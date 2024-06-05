@@ -112,6 +112,30 @@ def test_tensor_add_scalar_compare(mode):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_tensor_mul_tensor_complex(mode):
+    """
+    Feature: Implicit type conversion.
+    Description: Prioritize matching torch.
+    Expectation: No exception.
+    """
+    class Net(ms.nn.Cell):
+        def construct(self, x, y):
+            return x * y
+
+    ms.context.set_context(mode=mode)
+    ms_x = torch.tensor(1, dtype=torch.complex64)
+    out_ms = Net()(ms_x, 1.0)
+    dtype_ms = get_dtype(out_ms)
+    torch_x = ms.Tensor(1, dtype=ms.complex64)
+    out_torch = torch_x * 1.0
+    dtype_torch = get_dtype(out_torch)
+    assert dtype_ms == dtype_torch, f"complex64 * float = {dtype_ms}, expect {dtype_torch}"
+
+
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
