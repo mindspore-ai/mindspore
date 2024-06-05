@@ -30,7 +30,7 @@ from mindspore.ops.primitive import Primitive
 from mindspore.ops.primitive import PrimitiveWithInfer
 from mindspore.ops.primitive import PrimitiveWithCheck
 from mindspore.ops.primitive import prim_attr_register
-from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6, Dense,
+from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6, Dense, Tanh,
                              Elu, Sigmoid, Softmax, SoftplusExt, HSwish, HSigmoid, AvgPool, BiasAdd,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU, FusedInferAttentionScore,
                              GridSampler3D, GridSampler2D, LayerNorm, LayerNormExt, HShrink, AdamWeightDecay, Dropout,
@@ -568,36 +568,6 @@ class SeLU(Primitive):
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 
-class Tanh(Primitive):
-    r"""
-    Computes hyperbolic tangent of input element-wise.
-
-    Refer to :func:`mindspore.ops.tanh` for more details.
-
-    Inputs:
-        - **input_x** (Tensor) - Input Tensor of any dimension.
-
-    Outputs:
-        Tensor, with the same type and shape as the `input_x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU``  ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-        >>> tanh = ops.Tanh()
-        >>> output = tanh(input_x)
-        >>> print(output)
-        [0.7615941 0.9640276 0.9950547 0.9993293 0.9999092]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Tanh"""
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
 class FusedBatchNorm(Primitive):
