@@ -1,7 +1,7 @@
 mindspore.mint.nn.functional.max_pool2d
 ========================================
 
-.. py:function:: mindspore.mint.nn.functional.max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, *, ceil_mode=False, return_indices=False)
+.. py:function:: mindspore.mint.nn.functional.max_pool2d(input, kernel_size, stride=None, padding=0, dilation=1, *, ceil_mode=False, return_indices=False)
 
     二维最大值池化。
 
@@ -13,8 +13,11 @@ mindspore.mint.nn.functional.max_pool2d
         \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
+    .. warning::
+        只支持 `Atlas A2` 训练系列产品。
+
     参数：
-        - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` 的Tensor。在Ascend上，数据类型仅支持float32。
+        - **input** (Tensor) - shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` 的Tensor。在Ascend上，数据类型仅支持float32。
         - **kernel_size** (Union[int, tuple[int]]) - 池化核尺寸大小。可以是一个整数表示池化核的高度和宽度，或者包含两个整数的tuple，分别表示池化核的高度和宽度。
         - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长。可以是一个整数表示在高度和宽度方向的移动步长，或者包含两个整数的tuple，分别表示在高度和宽度方向的移动步长。默认值： ``None`` ，表示移动步长为 `kernel_size` 。
         - **padding** (Union[int, tuple[int]]) - 池化填充长度。可以是一个整数表示在高度和宽度方向的填充长度，或者包含两个整数的tuple，分别表示在高度和宽度方向的填充长度。默认为 ``0``。
@@ -25,7 +28,7 @@ mindspore.mint.nn.functional.max_pool2d
     返回：
         当 `return_indices` 是 ``False`` 时，输出单个 `output` 张量，否则输出一个包含 `output` 张量和 `argmax` 张量的元组。
 
-        - **output** (Tensor) - 输出的池化后的最大值，shape为 :math:`(N_{out}, C_{out}, H_{out}, W_{out})` 。其数据类型与 `x` 相同。
+        - **output** (Tensor) - 输出的池化后的最大值，shape为 :math:`(N_{out}, C_{out}, H_{out}, W_{out})` 。其数据类型与 `input` 相同。
 
           .. math::
               H_{out} = \left\lfloor\frac{H_{in} + 2 * \text{padding[0]} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) - 1}{\text{stride[0]}} + 1\right\rfloor
@@ -36,8 +39,8 @@ mindspore.mint.nn.functional.max_pool2d
         - **argmax** (Tensor) - 输出的最大值对应的索引，在Ascend上，数据类型为int32。仅当 `return_indices` 为True的时候才返回该值。
 
     异常：
-        - **TypeError** - `x` 不是Tensor。
-        - **ValueError** - `x` 的维度不是4D。
+        - **TypeError** - `input` 不是Tensor。
+        - **ValueError** - `input` 的维度不是4D。
         - **TypeError** - `kernel_size` 、`stride` 、`padding` 、`dilation` 不是int或者tuple。
         - **ValueError** - `kernel_size`、`stride` 或者 `dilation` 的元素值小于1。
         - **ValueError** - `padding` 的元素值小于0。

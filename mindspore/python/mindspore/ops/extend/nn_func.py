@@ -232,7 +232,7 @@ def max_pool2d(input, kernel_size, stride=None, padding=0, dilation=1, *, ceil_m
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
     .. warning::
-        Only support on Atlas training series.
+        Only support on Atlas A2 training series.
 
     Args:
         input (Tensor): Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of float32
