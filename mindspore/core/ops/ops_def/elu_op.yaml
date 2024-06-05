@@ -1,7 +1,7 @@
 #operator elu
 elu:
   args:
-    input:
+    input_x:
       dtype: tensor
     alpha:
       dtype: float
@@ -11,5 +11,4 @@ elu:
     output:
       dtype: tensor
   dispatch:
-    enable: True
-    Ascend: EluAscend
+    enable: False
