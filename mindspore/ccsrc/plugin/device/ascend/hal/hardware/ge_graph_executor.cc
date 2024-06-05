@@ -1352,13 +1352,12 @@ void GeGraphExecutor::DoAsyncCkpt(const FuncGraphPtr &graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto env = common::GetEnv("MS_ENABLE_CKPT_D2H_ASYNC");
-  if (!env.empty() && ms_context->get_param<bool>(MS_CTX_NEED_CKPT) && kg != nullptr) {
+  if (env == "1" && ms_context->get_param<bool>(MS_CTX_NEED_CKPT) && kg != nullptr) {
     auto cur_step = ms_context->get_param<int>(MS_CTX_CUR_STEP_NUM);
     auto save_steps = ms_context->get_param<int>(MS_CTX_SAVE_CKPT_STEPS);
     auto last_triggered_step = ms_context->get_param<int>(MS_CTX_LAST_TRIGGERED_STEP);
-    MS_LOG(INFO) << "cur_step:" << cur_step;
-    MS_LOG(INFO) << "save_steps: " << save_steps;
-    MS_LOG(INFO) << "last_triggered_step:" << last_triggered_step;
+    MS_LOG(DEBUG) << "cur_step:" << cur_step << ", save_steps: " << save_steps
+                  << ", last_triggered_step:" << last_triggered_step;
     if (cur_step >= (last_triggered_step + save_steps)) {
       if (SkipOrResetCopyAction()) {
         MS_LOG(INFO) << "Enable async d2h copy";

@@ -562,7 +562,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     has_kernel_need_user_data_ = has_kernel_need_user_data;
   }
   void CacheRootWeight(const std::vector<AnfNodePtr> &weights);
-  std::vector<AnfNodePtr> GetRootWeights() { return root_weights_; }
+  const std::vector<AnfNodePtr> &GetRootWeights() const { return root_weights_; }
 
  private:
   AnfNodePtr MakeValueNode(const AnfNodePtr &node) const;

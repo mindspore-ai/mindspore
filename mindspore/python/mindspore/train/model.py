@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from collections.abc import Iterable
 from functools import wraps
 
+import sys
 import os
 import math
 import copy
@@ -497,7 +498,8 @@ class Model:
         for cb in callbacks:
             if isinstance(cb, ModelCheckpoint):
                 need_ckpt = True
-                save_checkpoint_steps = cb.get_save_checkpoint_steps
+                cfg_size = cb.get_save_checkpoint_steps
+                save_checkpoint_steps = save_checkpoint_steps if cfg_size >= sys.maxsize else cfg_size
                 last_triggered_step = cb.get_last_trigger_step
                 break
         return need_ckpt, save_checkpoint_steps, last_triggered_step
