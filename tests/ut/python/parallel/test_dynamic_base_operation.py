@@ -62,7 +62,6 @@ def test_shape_ir_static():
     Description: Test generate ir with static shape.
     Expectation: Compile success.
     """
-    context.set_context(save_graphs=True, save_graphs_path="./shape_ir_static")
     model = TestTensorShape().to_float(mstype.float16)
     input_ids = Tensor(np.random.rand(4, 768, 2, 2), dtype=mstype.float16)
     model.set_inputs(input_ids)
@@ -75,7 +74,6 @@ def test_shape_ir_dyn():
     Description: Test generate ir with dynamic shape.
     Expectation: Compile success.
     """
-    context.set_context(save_graphs=True, save_graphs_path="./shape_ir_dyn")
     model = TestTensorShape().to_float(mstype.float16)
     input_ids = Tensor(shape=[4, None, 2, 2], dtype=mstype.float16)
     model.set_inputs(input_ids)
@@ -107,7 +105,6 @@ def test_all2all_static():
     from_shard = (1, 2, 1, 1)
     to_shard = (1, 1, 2, 1)
 
-    context.set_context(save_graphs=True, save_graphs_path="./alltoall_ir_static")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
     model = TestRedistribution(from_shard, to_shard).to_float(mstype.float16)
@@ -155,7 +152,6 @@ def test_all2all_dyn():
     from_shard = (1, 2, 1, 1)
     to_shard = (1, 1, 2, 1)
 
-    context.set_context(save_graphs=True, save_graphs_path="./alltoall_ir_dyn")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
     # _VirtualDataset，一定要做数据数据并行？(8,1,1,1)
@@ -189,7 +185,6 @@ def test_allconcat_static():
     from_shard = (1, 2, 1, 1)
     to_shard = (1, 1, 1, 1)
 
-    context.set_context(save_graphs=True, save_graphs_path="./allconcat_ir_static")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
     model = TestRedistribution(from_shard, to_shard).to_float(mstype.float16)
@@ -212,7 +207,6 @@ def test_allconcat_dyn():
     from_shard = (1, 2, 1, 1)
     to_shard = (1, 1, 1, 1)
 
-    context.set_context(save_graphs=True, save_graphs_path="./allconcat_ir_dyn")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
     model = TestRedistribution(from_shard, to_shard).to_float(mstype.float16)
@@ -235,7 +229,6 @@ def test_allsplit_static():
     from_shard = (1, 1, 1, 1)
     to_shard = (1, 2, 1, 1)
 
-    context.set_context(save_graphs=True, save_graphs_path="./allsplit_ir_static")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
     model = TestRedistribution(from_shard, to_shard).to_float(mstype.float16)
@@ -263,7 +256,6 @@ def test_allsplit_dyn():
     from_shard = (1, 1, 1, 1)
     to_shard = (1, 2, 1, 1)
 
-    context.set_context(save_graphs=True, save_graphs_path="./allsplit_ir_dyn")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
     model = TestRedistribution(from_shard, to_shard).to_float(mstype.float16)
@@ -290,7 +282,6 @@ def test_allsplit_parallel_on_dynamic_dim():
     from_shard = (1, 1, 1, 1)
     to_shard = (2, 1, 1, 1)
 
-    context.set_context(save_graphs=True, save_graphs_path="./allsplit_parallel_on_dyn_dim_ir")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
@@ -320,7 +311,6 @@ def test_allsplit_parallel_on_static_batch_dim():
     from_shard = (1, 1, 1, 1)
     to_shard = (2, 1, 1, 1)
 
-    context.set_context(save_graphs=True, save_graphs_path="./allsplit_parallel_on_static_batch_dim_ir")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
@@ -347,7 +337,6 @@ def test_allconcat_parallel_on_dynamic_seq_dim():
     from_shard = (1, 4, 1, 1)
     to_shard = (1, 1, 1, 1)
 
-    context.set_context(save_graphs=True, save_graphs_path="./allconcat_parallel_on_dyn_seq_dim_ir")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
@@ -372,7 +361,6 @@ def test_allconcat_parallel_on_static_seq_dim():
     from_shard = (1, 4, 1, 1)
     to_shard = (1, 1, 1, 1)
 
-    context.set_context(save_graphs=True, save_graphs_path="./allconcat_parallel_on_static_seq_dim_ir")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
@@ -396,7 +384,6 @@ def test_all2all_parallel_on_dynamic_seq_dim():
     from_shard = (1, 2, 1, 1)
     to_shard = (1, 1, 2, 1)
 
-    context.set_context(save_graphs=True, save_graphs_path="./all2all_parallel_on_dyn_seq_dim_ir")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
@@ -430,7 +417,6 @@ def test_all2all_parallel_on_static_seq_dim():
     from_shard = (1, 2, 1, 1)
     to_shard = (1, 1, 2, 1)
 
-    context.set_context(save_graphs=True, save_graphs_path="./all2all_parallel_on_static_seq_dim_ir")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
@@ -465,7 +451,6 @@ def test_allsplit_parallel_on_multi_dynamic_dims():
     from_shard = (1, 1, 1, 1)
     to_shard = (1, 2, 2, 2)
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_allsplit_parallel_on_multi_dynamic_dim_ir")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
@@ -490,7 +475,6 @@ def test_mixed_parallel_on_dynamic_shape_dim():
     from_shard = (1, 2, 4, 1)
     to_shard = (1, 4, 1, 2)
 
-    context.set_context(save_graphs=True, save_graphs_path="./alltoall_alltoall_ir_dyn")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8, dataset_strategy=(dataset_shard,))
     model = TestRedistribution(from_shard, to_shard).to_float(mstype.float16)

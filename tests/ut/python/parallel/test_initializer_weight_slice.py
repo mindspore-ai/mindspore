@@ -107,6 +107,7 @@ def test_initializer_weight_slice():
         check_initializer_weight_slice(init_name)
     for init_name in initializers:
         check_initializer_weight_slice(init_name, using_seed=True)
+        set_seed(0)
 
 
 def test_wrong_order_set_parallel_mode_with_initializer():

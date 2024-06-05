@@ -20,6 +20,7 @@ from mindspore.parallel.algo_parameter_config import reset_algo_parameters
 from mindspore.communication._comm_helper import GlobalComm
 
 def setup_module():
+    context.reset_auto_parallel_context()
     auto_parallel_context().set_enable_all_reduce_fusion(enable_all_reduce_fusion=True)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     GlobalComm.INITED = True
@@ -30,6 +31,7 @@ def setup_module():
 
 def teardown_module():
     context.reset_auto_parallel_context()
+    context.set_context(save_graphs=False)
     GlobalComm.INITED = False
     reset_cost_model_context()
     reset_algo_parameters()

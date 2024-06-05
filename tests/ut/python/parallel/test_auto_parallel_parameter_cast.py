@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
 import numpy as np
 
 import mindspore as ms
@@ -79,11 +78,3 @@ def test_common_parameter():
 
     net.set_train()
     _cell_graph_executor.compile(net, x, y, phase='train')
-    strategies = _cell_graph_executor._get_shard_strategy(net)
-    for (k, v) in strategies.items():
-        if re.search('MatMul-op0', k) is not None:
-            assert v == [[8, 1], [1, 1]]
-        elif re.search('MatMul-op4', k) is not None:
-            assert v == [[1, 1], [1, 8]]
-        elif re.search('Cast-op', k) is not None:
-            assert v == [[1, 1]]

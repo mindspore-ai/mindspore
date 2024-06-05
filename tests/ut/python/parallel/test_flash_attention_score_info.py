@@ -363,6 +363,11 @@ def test_flash_attention_with_load_balance(input_layout, use_mqa, with_real_shif
     net = Net(N, input_layout=input_layout, use_mqa=use_mqa, with_real_shift=with_real_shift,
               dp=dp, mp=mp, sp=sp)
     compile_net(net, query, key, value, real_shift, attn_mask)
+    config = {"enable_flash_attention_load_balance": False,}
+    with open("./parallel_speed_up_for_fa.json", "w") as file:
+        json.dump(config, file, indent=4, separators=(',', ': '))
+    context.set_context(
+        ascend_config={"parallel_speed_up_json_path": "./parallel_speed_up_for_fa.json"})
 
 
 @pytest.mark.parametrize('input_layout', ["BSH", "SBH", "BNSD", "BSND"])
@@ -390,6 +395,11 @@ def test_flash_attention_compressed_mask_with_load_balance(input_layout, sparse_
     net = Net(N, input_layout=input_layout, sparse_mode=sparse_mode,
               dp=dp, mp=mp, sp=sp)
     compile_net(net, query, key, value, real_shift, attn_mask)
+    config = {"enable_flash_attention_load_balance": False,}
+    with open("./parallel_speed_up_for_fa.json", "w") as file:
+        json.dump(config, file, indent=4, separators=(',', ': '))
+    context.set_context(
+        ascend_config={"parallel_speed_up_json_path": "./parallel_speed_up_for_fa.json"})
 
 
 def generate_dynamic_inputs(B, N, S, D):

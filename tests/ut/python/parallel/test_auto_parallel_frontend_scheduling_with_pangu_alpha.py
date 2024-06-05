@@ -719,3 +719,4 @@ def test_pangu_alpha_frontend_scheduling():
     model = Model(net)
     model.train(1, dataset, dataset_sink_mode=False)
     context.reset_auto_parallel_context()
+    del os.environ["MS_ENABLE_FRONTEND_SCHEDULING_OPTIMIZATION"]
