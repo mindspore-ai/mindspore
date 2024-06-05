@@ -128,6 +128,12 @@ py::object CSRTensorToPyData(const tensor::CSRTensorPtr &csr_tensor) {
   return ref[0];
 }
 
+py::object COOTensorToPyData(const tensor::COOTensorPtr &coo_tensor) {
+  auto ref = py::tuple(1);
+  ref[0] = coo_tensor;
+  return ref[0];
+}
+
 py::object TensorToPyData(const tensor::BaseTensorPtr &tensor, const AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(tensor);
   auto scalar_obj = CheckAndConvertToScalar(tensor, abs);
@@ -315,6 +321,12 @@ static ValueNameToConverterVector value_name_to_converter = {
    [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
      auto csr_tensor_ptr = value->cast<tensor::CSRTensorPtr>();
      return CSRTensorToPyData(csr_tensor_ptr);
+   }},
+  // COOTensor
+  {tensor::COOTensor::kTypeId,
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
+     auto coo_tensor_ptr = value->cast<tensor::COOTensorPtr>();
+     return COOTensorToPyData(coo_tensor_ptr);
    }},
   // RefKey
   {RefKey::kTypeId,
