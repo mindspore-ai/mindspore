@@ -161,19 +161,23 @@ void DebugActor::AscendKbkDump(const CNodePtr &cnode, const std::vector<DeviceTe
     MS_EXCEPTION_IF_NULL(kernel_graph);
     debugger->InsertExecutedGraph(kernel_graph);
     debugger->SetAscendKernelByKernelFlag(true);
+    auto &dump_json_parser = DumpJsonParser::GetInstance();
+    bool e2e_dump_enabled = dump_json_parser.e2e_dump_enabled();
+    int op_debug_mode = dump_json_parser.op_debug_mode();
+    bool abnormal_dump = false;
     bool sync_ok = true;
     bool read_data = false;
-    bool abnormal_dump = false;
-    auto &dump_json_parser = DumpJsonParser::GetInstance();
-    if (dump_json_parser.e2e_dump_enabled() &&
-        dump_json_parser.op_debug_mode() == DumpJsonParser::DUMP_LITE_EXCEPTION) {
+    if (!e2e_dump_enabled) {
+      exec_order_ += 1;
+      return;
+    }
+    if (op_debug_mode == DumpJsonParser::DUMP_LITE_EXCEPTION) {
       abnormal_dump = true;
       sync_ok = device_ctx_->device_res_manager_->SyncAllStreams();
       if (!sync_ok) {
         MS_LOG(ERROR) << "Sync stream error! The node input will be dumped";
       }
-    } else if (dump_json_parser.e2e_dump_enabled() &&
-               dump_json_parser.op_debug_mode() == DumpJsonParser::DUMP_BOTH_OVERFLOW) {
+    } else if (op_debug_mode == DumpJsonParser::DUMP_BOTH_OVERFLOW && dump_json_parser.DumpEnabledForIter()) {
       auto is_overflow = CheckOverflow(device_context, output_device_tensors);
       if (is_overflow) {
         read_data = CheckReadData(cnode);
@@ -181,7 +185,7 @@ void DebugActor::AscendKbkDump(const CNodePtr &cnode, const std::vector<DeviceTe
     } else {
       read_data = CheckReadData(cnode);
     }
-    if ((read_data && dump_json_parser.e2e_dump_enabled()) || !sync_ok) {
+    if ((read_data && e2e_dump_enabled) || !sync_ok) {
       ReadDataAndDump(cnode, input_device_tensors, output_device_tensors, exec_order_, device_context, abnormal_dump);
       if (!sync_ok) {
         MS_LOG(EXCEPTION) << "Sync stream error!";
