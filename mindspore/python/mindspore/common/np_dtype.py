@@ -17,10 +17,9 @@
 """Numpy data type for MindSpore."""
 
 from mindspore._c_expression.np_dtypes import np_version_valid
-if np_version_valid():
-    # The numpy bfloat16 data type is supported in Numpy version 1.20.x or later.
+if np_version_valid(True):
     from mindspore._c_expression.np_dtypes import bfloat16 # pylint: disable=unused-import
 
 __all__ = []
-if np_version_valid():
+if np_version_valid(False):
     __all__.extend(["bfloat16"])

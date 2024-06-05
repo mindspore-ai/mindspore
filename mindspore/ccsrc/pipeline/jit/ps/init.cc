@@ -55,6 +55,7 @@
 #include "include/common/profiler.h"
 
 #include "pipeline/jit/pi/external.h"
+#include "include/common/np_dtype/np_dtypes.h"
 
 namespace py = pybind11;
 using GraphExecutorPy = mindspore::pipeline::GraphExecutorPy;

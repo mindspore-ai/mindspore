@@ -6,7 +6,7 @@ file(GLOB_RECURSE _NP_DTYPE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 set_property(SOURCE ${_NP_DTYPE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
   SUBMODULE_ID=mindspore::SubModuleId::SM_COMMON)
 
-add_library(_mindspore_common_np_dtype_obj OBJECT ${_NP_DTYPE_SRC_LIST})
+add_library(mindspore_np_dtype SHARED ${_NP_DTYPE_SRC_LIST})
 
 find_package(Python3 COMPONENTS Interpreter Development)
 if(Python3_FOUND)

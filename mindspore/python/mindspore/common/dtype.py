@@ -20,9 +20,11 @@ from __future__ import absolute_import
 import enum
 from inspect import isfunction
 import numpy as np
-from mindspore.common import np_dtype
 from mindspore._c_expression import typing
 from mindspore._c_expression.typing import Type
+from mindspore._c_expression.np_dtypes import np_version_valid
+if np_version_valid(False):
+    from mindspore._c_expression.np_dtypes import bfloat16 as np_bfloat16
 
 __dtype__ = [
     "int8", "byte",
@@ -277,8 +279,8 @@ def dtype_to_nptype(type_):
         complex64: np.complex64,
         complex128: np.complex128,
     }
-    if np_dtype.np_version_valid():
-        _dtype_nptype_dict.update({bfloat16: np_dtype.bfloat16})
+    if np_version_valid(False):
+        _dtype_nptype_dict.update({bfloat16: np_bfloat16})
     return _dtype_nptype_dict[type_]
 
 

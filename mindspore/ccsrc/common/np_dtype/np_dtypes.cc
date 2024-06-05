@@ -16,15 +16,15 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include "include/common/np_dtype/np_dtypes.h"
 #include <algorithm>
+#include <string>
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "base/float16.h"
 #include "base/bfloat16.h"
 #include "utils/log_adapter.h"
-#include "include/common/pybind_api/api_register.h"
 
-#if NPY_API_VERSION < 0x0000000e
-#error Current Numpy version is too low, the required version is not less than 1.20.0.
+#if NPY_API_VERSION < 0x0000000d
+#error Current Numpy version is too low, the required version is not less than 1.19.3.
 #elif NPY_API_VERSION > 0x00000011
 #error Numpy version 2.0 or later is not supported yet.
 #endif
@@ -1469,6 +1469,8 @@ std::string GetNumpyVersion() {
 
 std::string GetMinimumSupportedNumpyVersion() {
   switch (NPY_API_VERSION) {
+    case 0x0000000d:  // 1.19.3+
+      return "1.19.3";
     case 0x0000000e:  // 1.20 & 1.21
       return "1.20.0";
     case 0x0000000f:  // 1.22
@@ -1527,7 +1529,19 @@ void RegisterNumpyTypes() {
 
 int GetBFloat16NpDType() { return np_dtypes::NpTypeDescr<bfloat16>::Dtype(); }
 
-bool IsNumpyVersionValid() { return np_dtypes::NumpyVersionValid(np_dtypes::GetNumpyVersion()); }
+bool IsNumpyVersionValid(bool show_warning = false) {
+  std::string numpy_version = np_dtypes::GetNumpyVersion();
+  std::string minimum_numpy_version = np_dtypes::GetMinimumSupportedNumpyVersion();
+  if (!np_dtypes::NumpyVersionValid(numpy_version)) {
+    if (show_warning) {
+      MS_LOG(WARNING) << "For asnumpy, the numpy bfloat16 data type is supported in Numpy versions "
+                      << minimum_numpy_version << " to 1.26, but got " << numpy_version
+                      << ", please upgrade numpy version.";
+    }
+    return false;
+  }
+  return true;
+}
 
 void RegNumpyTypes(py::module *m) {
   np_dtypes::RegisterNumpyTypes();
