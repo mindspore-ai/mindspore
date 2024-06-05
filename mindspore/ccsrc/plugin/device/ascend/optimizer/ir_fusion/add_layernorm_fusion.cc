@@ -86,6 +86,18 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
   builder.SetOutputsFormat(outputs_format);
   return builder.Build();
 }
+
+std::vector<std::string> SplitString(const std::string &str, char delim) {
+  std::stringstream ss(str);
+  std::string item;
+  std::vector<std::string> elems;
+  while (std::getline(ss, item, delim)) {
+    if (!item.empty()) {
+      elems.emplace_back(item);
+    }
+  }
+  return elems;
+}
 }  // namespace
 
 const BaseRef AddLayernormFusion::DefinePattern() const {
@@ -109,6 +121,9 @@ const AnfNodePtr AddLayernormFusion::Process(const FuncGraphPtr &graph, const An
   if (!enable_add_layernorm) {
     return nullptr;
   }
+  std::vector<std::string> disable_kernel_list = SplitString(common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST"), ',');
+  bool enable_aclnn_kernel = std::any_of(disable_kernel_list.begin(), disable_kernel_list.end(),
+                                         [&fusion_op_name](const std::string &name) { return name == fusion_op_name; });
 
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
@@ -137,9 +152,19 @@ const AnfNodePtr AddLayernormFusion::Process(const FuncGraphPtr &graph, const An
   add_result_types.push_back(common::AnfAlgo::GetOutputInferDataType(tensor_add, 0));
   add_result_shapes.push_back(AnfAlgo::GetOutputDetailShape(tensor_add, 0));
 
-  auto prim = std::make_shared<Primitive>("AddLayerNorm");
-  MS_EXCEPTION_IF_NULL(prim);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x1, x2, gamma, beta, begin_norm_axis, begin_params_axis, eps};
+  std::vector<AnfNodePtr> inputs;
+  if (enable_aclnn_kernel) {
+    auto prim = std::make_shared<Primitive>("AddLayerNormV2");
+    auto additional_output = CreateValueNodeWithKernelInfo(graph, MakeValue<bool>(false));
+    MS_EXCEPTION_IF_NULL(prim);
+    MS_EXCEPTION_IF_NULL(additional_output);
+    inputs = {NewValueNode(prim), x1, x2, gamma, beta, eps, additional_output};
+  } else {
+    auto prim = std::make_shared<Primitive>("AddLayerNorm");
+    MS_EXCEPTION_IF_NULL(prim);
+    inputs = {NewValueNode(prim), x1, x2, gamma, beta, begin_norm_axis, begin_params_axis, eps};
+  }
+
   auto add_layernorm = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add_layernorm);
 
@@ -149,6 +174,10 @@ const AnfNodePtr AddLayernormFusion::Process(const FuncGraphPtr &graph, const An
   for (size_t i = 0; i < output_num; i++) {
     types.push_back(common::AnfAlgo::GetOutputInferDataType(node, i));
     shapes.push_back(AnfAlgo::GetOutputDetailShape(node, i));
+  }
+  if (enable_aclnn_kernel) {
+    types[kIndex1] = kNumberTypeFloat32;
+    types[kIndex2] = kNumberTypeFloat32;
   }
 
   types.push_back(add_result_types[0]);
