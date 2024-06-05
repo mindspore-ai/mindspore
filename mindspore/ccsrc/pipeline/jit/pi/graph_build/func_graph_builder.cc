@@ -881,6 +881,12 @@ FuncGraphPtr FuncGraphBuilder::graph() {
     MS_LOG(DEBUG) << "The graph " << graph_->ToString() << " has not been set output.";
     return nullptr;
   }
+  bool all_value_node = std::any_of(output_nodes_.begin(), output_nodes_.end(),
+                                    [](const AnfNodePtr &node) { return node->isa<ValueNode>(); });
+  if (all_value_node) {
+    MS_LOG(INFO) << "All graph output is value node, no need to run graph.";
+    return nullptr;
+  }
   // Single output case.
   if (output_nodes_.size() == 1) {
     // Use the python obj of the output node as the python obj of the func_graph output.
