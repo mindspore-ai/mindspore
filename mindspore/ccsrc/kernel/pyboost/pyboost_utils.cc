@@ -521,6 +521,9 @@ std::pair<bool, KernelAttr> GetKernelAttr(
   const std::pair<std::vector<TypeId>, std::vector<TypeId>> &outputs_types_dtypes) {
   const auto &support_list = kernel_mod->GetOpSupport();
   for (auto &cur_kernel_attr : support_list) {
+    if (cur_kernel_attr.GetSkipCheck()) {
+      return {true, cur_kernel_attr};
+    }
     auto data_pair = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
     const auto &[input_data_types, output_data_types] = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
     if (IsObjectStrictlyMatched(inputs_types_dtypes.first, inputs_types_dtypes.second, input_data_types) &&

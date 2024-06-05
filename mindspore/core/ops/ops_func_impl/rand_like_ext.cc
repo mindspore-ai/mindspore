@@ -24,10 +24,10 @@ namespace ops {
 TypePtr RandLikeExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) const {
   auto prim_name = primitive->name();
-  auto dtype_type = input_args[kInputIndex1]->GetType();
+  auto dtype_type = input_args[kInputIndex3]->GetType();
   TypePtr output_type;
   if (!dtype_type->isa<TypeNone>()) {
-    auto dtype_ptr = input_args[kInputIndex1]->GetValue();
+    auto dtype_ptr = input_args[kInputIndex3]->GetValue();
     if (!dtype_ptr->isa<Int64Imm>()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name
                               << "', 'dtype' must be a TypeId, but got an invalid type: " << dtype_ptr->ToString()

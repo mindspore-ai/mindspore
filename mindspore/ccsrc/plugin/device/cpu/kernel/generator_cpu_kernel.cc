@@ -30,6 +30,10 @@ namespace kernel {
 using namespace ops::generator;
 namespace {
 constexpr char kGenerator[] = "Generator";
+constexpr size_t kOutputSeedIdx = 0;
+constexpr size_t kOutputOffsetIdx = 1;
+constexpr size_t kOutputStateIdx = 2;
+constexpr size_t kOutputNum = 3;
 
 using ComputeFunc =
   std::function<bool(const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
@@ -47,167 +51,158 @@ void GeneratorCheck(const std::vector<kernel::KernelTensor *> &inputs,
   }
 }
 
+bool PrepareOutput(param_type seed, param_type offset, const std::vector<kernel::KernelTensor *> &outputs) {
+  *GetDeviceAddress<param_type>(outputs, kOutputSeedIdx) = seed;
+  *GetDeviceAddress<param_type>(outputs, kOutputOffsetIdx) = offset;
+  // Calculate State
+  auto state_addr = GetDeviceAddress<state_type>(outputs, kOutputStateIdx);
+  const auto param_size = sizeof(param_type);
+  const auto output_size = param_size * 2 / sizeof(state_type);
+  auto ret = memcpy_s(static_cast<void *>(state_addr), output_size, static_cast<void *>(&seed), param_size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For " << kGenerator << ", memcpy failed.";
+  }
+  ret = memcpy_s(static_cast<void *>(state_addr + param_size), output_size - param_size, static_cast<void *>(&offset),
+                 param_size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For " << kGenerator << ", memcpy failed.";
+  }
+  return true;
+}
+
 /*
   Input: cmd, seed_param, offset_param, step_size
-  Output: seed, offset
   Update offset parameter and return the old offset value.
 */
 bool StepCompute(const std::vector<kernel::KernelTensor *> &inputs,
                  const std::vector<kernel::KernelTensor *> &outputs) {
   constexpr size_t kInputNum = 4;
-  constexpr size_t kOutputNum = 2;
   constexpr size_t kSeedParamIdx = 1;
   constexpr size_t kOffsetParamIdx = 2;
   constexpr size_t kStepSizeIdx = 3;
-  constexpr size_t kOutputSeedIdx = 0;
-  constexpr size_t kOutputOffsetIdx = 1;
   GeneratorCheck(inputs, outputs, kInputNum, kOutputNum, "step");
 
-  auto seed_param = reinterpret_cast<param_type *>(inputs[kSeedParamIdx]->device_ptr());
-  auto offset_param = reinterpret_cast<param_type *>(inputs[kOffsetParamIdx]->device_ptr());
-  auto step_size = *reinterpret_cast<param_type *>(inputs[kStepSizeIdx]->device_ptr());
-  auto seed_output = reinterpret_cast<param_type *>(outputs[kOutputSeedIdx]->device_ptr());
-  auto offset_output = reinterpret_cast<param_type *>(outputs[kOutputOffsetIdx]->device_ptr());
-  *seed_output = *seed_param;
+  auto seed_param = GetDeviceAddress<param_type>(inputs, kSeedParamIdx);
+  auto offset_param = GetDeviceAddress<param_type>(inputs, kOffsetParamIdx);
+  auto step_size = *GetDeviceAddress<param_type>(inputs, kStepSizeIdx);
+
   auto old_offset = *offset_param;
-  *offset_output = old_offset;
   *offset_param = old_offset + step_size;
-  return true;
+  return PrepareOutput(*seed_param, old_offset, outputs);
 }
 
 /*
   Input: cmd, seed, offset
-  Output: seed
   Generate random number as new seed. Reset offset.
 */
 bool SeedCompute(const std::vector<kernel::KernelTensor *> &inputs,
                  const std::vector<kernel::KernelTensor *> &outputs) {
   constexpr size_t kInputNum = 3;
-  constexpr size_t kOutputNum = 1;
   constexpr size_t kSeedIdx = 1;
   constexpr size_t kOffsetIdx = 2;
   GeneratorCheck(inputs, outputs, kInputNum, kOutputNum, "seed");
 
-  auto seed = reinterpret_cast<param_type *>(inputs[kSeedIdx]->device_ptr());
-  auto offset = reinterpret_cast<param_type *>(inputs[kOffsetIdx]->device_ptr());
-  auto output = reinterpret_cast<param_type *>(outputs.front()->device_ptr());
+  auto seed_param = GetDeviceAddress<param_type>(inputs, kSeedIdx);
+  auto offset_param = GetDeviceAddress<param_type>(inputs, kOffsetIdx);
   auto rd = static_cast<param_type>(std::random_device()());
-  *seed = rd;
-  *output = rd;
-  *offset = 0;
-  return true;
+  *seed_param = rd;
+  *offset_param = 0;
+  return PrepareOutput(rd, 0, outputs);
 }
 
 /*
   Input: cmd, seed, offset
-  Output: state tensor
   Return a tensor representing the generator state.
 */
 bool GetStateCompute(const std::vector<kernel::KernelTensor *> &inputs,
                      const std::vector<kernel::KernelTensor *> &outputs) {
   constexpr size_t kInputNum = 3;
-  constexpr size_t kOutputNum = 1;
   constexpr size_t kSeedIdx = 1;
   constexpr size_t kOffsetIdx = 2;
   GeneratorCheck(inputs, outputs, kInputNum, kOutputNum, "get_state");
 
-  auto seed = reinterpret_cast<void *>(inputs[kSeedIdx]->device_ptr());
-  auto offset = reinterpret_cast<void *>(inputs[kOffsetIdx]->device_ptr());
-  auto output = reinterpret_cast<uint8_t *>(outputs.front()->device_ptr());
-  auto output_size = outputs.front()->GetShapeVector().front() * sizeof(state_type);
-  auto param_size = sizeof(param_type);
-  auto ret = memcpy_s(static_cast<void *>(output), output_size, seed, param_size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For " << kGenerator << ", memcpy failed.";
-  }
-  ret = memcpy_s(static_cast<void *>(output + param_size), output_size - param_size, offset, param_size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For " << kGenerator << ", memcpy failed.";
-  }
-  return true;
+  auto seed = *GetDeviceAddress<param_type>(inputs, kSeedIdx);
+  auto offset = *GetDeviceAddress<param_type>(inputs, kOffsetIdx);
+  return PrepareOutput(seed, offset, outputs);
 }
 
 /*
-  Input: cmd, state
-  Output: seed, offset
-  Unpack state to seed and offset
-*/
-bool UnpackStateCompute(const std::vector<kernel::KernelTensor *> &inputs,
-                        const std::vector<kernel::KernelTensor *> &outputs) {
-  constexpr size_t kInputNum = 2;
-  constexpr size_t kOutputNum = 2;
-  constexpr size_t kStateIdx = 1;
-  constexpr size_t kSeedIdx = 0;
-  constexpr size_t kOffsetIdx = 1;
-  GeneratorCheck(inputs, outputs, kInputNum, kOutputNum, "unpack_state");
-
-  auto state = reinterpret_cast<state_type *>(inputs[kStateIdx]->device_ptr());
-  auto seed = reinterpret_cast<void *>(outputs[kSeedIdx]->device_ptr());
-  auto offset = reinterpret_cast<void *>(outputs[kOffsetIdx]->device_ptr());
-  auto param_size = sizeof(param_type);
-  auto ret = memcpy_s(seed, param_size, static_cast<void *>(state), param_size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For " << kGenerator << ", memcpy failed.";
-  }
-  ret = memcpy_s(offset, param_size, static_cast<void *>(state + param_size), param_size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For " << kGenerator << ", memcpy failed.";
-  }
-  return true;
-}
-
-/*
-  Input: cmd, seed_param, offset_param, seed, offset,
-  Output: None
-  Update seed and offset parameters with seed and offset tensors.
+  Input: cmd, seed_param, offset_param, state
+  Restore seed and offset from state
 */
 bool SetStateCompute(const std::vector<kernel::KernelTensor *> &inputs,
                      const std::vector<kernel::KernelTensor *> &outputs) {
-  constexpr size_t kInputNum = 5;
-  constexpr size_t kOutputNum = 1;
-  constexpr size_t kSeedParamIdx = 1;
-  constexpr size_t kOffsetParamIdx = 2;
-  constexpr size_t kSeedIdx = 3;
-  constexpr size_t kOffsetIdx = 4;
+  constexpr size_t kInputNum = 4;
+  constexpr size_t kSeedIdx = 1;
+  constexpr size_t kOffsetIdx = 2;
+  constexpr size_t kStateIdx = 3;
   GeneratorCheck(inputs, outputs, kInputNum, kOutputNum, "set_state");
 
-  auto seed = reinterpret_cast<param_type *>(inputs[kSeedIdx]->device_ptr());
-  auto offset = reinterpret_cast<param_type *>(inputs[kOffsetIdx]->device_ptr());
-  auto seed_param = reinterpret_cast<param_type *>(inputs[kSeedParamIdx]->device_ptr());
-  auto offset_param = reinterpret_cast<param_type *>(inputs[kOffsetParamIdx]->device_ptr());
-  *seed_param = *seed;
-  *offset_param = *offset;
-  return true;
+  auto state = GetDeviceAddress<state_type>(inputs, kStateIdx);
+  auto seed_param = GetDeviceAddress<param_type>(inputs, kSeedIdx);
+  auto offset_param = GetDeviceAddress<param_type>(inputs, kOffsetIdx);
+  param_type seed;
+  param_type offset;
+  const auto param_size = sizeof(param_type);
+  auto ret = memcpy_s(static_cast<void *>(&seed), param_size, static_cast<void *>(state), param_size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For " << kGenerator << ", memcpy failed.";
+  }
+  ret = memcpy_s(static_cast<void *>(&offset), param_size, static_cast<void *>(state + param_size), param_size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For " << kGenerator << ", memcpy failed.";
+  }
+  *seed_param = seed;
+  *offset_param = offset;
+  return PrepareOutput(seed, offset, outputs);
 }
 
 /*
-  Input: cmd, seed_param
-  Output: None
+  Input: cmd, seed_param, offset_param, new_seed
+  Update seed, reset offset.
+*/
+bool ManualSeedCompute(const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs) {
+  constexpr size_t kInputNum = 4;
+  constexpr size_t kSeedParamIdx = 1;
+  constexpr size_t kOffsetParamIdx = 2;
+  constexpr size_t kSeedIdx = 3;
+  GeneratorCheck(inputs, outputs, kInputNum, kOutputNum, "manual_seed");
+
+  auto new_seed = *GetDeviceAddress<param_type>(inputs, kSeedIdx);
+  auto seed_param = GetDeviceAddress<param_type>(inputs, kSeedParamIdx);
+  auto offset_param = GetDeviceAddress<param_type>(inputs, kOffsetParamIdx);
+  *seed_param = new_seed;
+  *offset_param = 0;
+  return PrepareOutput(new_seed, 0, outputs);
+}
+
+/*
+  Input: cmd, seed_param, offset_param
   Return current seed
 */
 bool InitialSeedCompute(const std::vector<kernel::KernelTensor *> &inputs,
                         const std::vector<kernel::KernelTensor *> &outputs) {
-  constexpr size_t kInputNum = 2;
-  constexpr size_t kOutputNum = 1;
+  constexpr size_t kInputNum = 3;
   constexpr size_t kSeedParamIdx = 1;
+  constexpr size_t kOffsetParamIdx = 2;
   GeneratorCheck(inputs, outputs, kInputNum, kOutputNum, "initial_seed");
 
-  auto seed_param = reinterpret_cast<param_type *>(inputs[kSeedParamIdx]->device_ptr());
-  auto output = reinterpret_cast<param_type *>(outputs.front()->device_ptr());
-  *output = *seed_param;
-  return true;
+  auto seed = *GetDeviceAddress<param_type>(inputs, kSeedParamIdx);
+  auto offset = *GetDeviceAddress<param_type>(inputs, kOffsetParamIdx);
+  return PrepareOutput(seed, offset, outputs);
 }
 }  // namespace
 
 bool GeneratorCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
                                    const std::vector<kernel::KernelTensor *> &,
                                    const std::vector<kernel::KernelTensor *> &outputs) {
-  auto cmd = *reinterpret_cast<int64_t *>(inputs[kCmdIndex]->device_ptr());
+  auto cmd = *GetDeviceAddress<int64_t>(inputs, kCmdIndex);
   static const std::unordered_map<int64_t, ComputeFunc> compute_map{{STEP, StepCompute},
                                                                     {SEED, SeedCompute},
                                                                     {GET_STATE, GetStateCompute},
                                                                     {SET_STATE, SetStateCompute},
-                                                                    {UNPACK_STATE, UnpackStateCompute},
+                                                                    {MANUAL_SEED, ManualSeedCompute},
                                                                     {INITIAL_SEED, InitialSeedCompute}};
   auto iter = compute_map.find(cmd);
   if (iter == compute_map.end()) {

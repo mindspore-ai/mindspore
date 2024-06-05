@@ -5,11 +5,16 @@ generator:
             dtype: int
         inputs:
             dtype: tuple[tensor]
-            arg_handler: generator_handler
     returns:
-        outputs: 
-            dtype: tuple[tensor]
+        seed: 
+            dtype: tensor
+        offset: 
+            dtype: tensor
+        state: 
+            dtype: tensor
     labels:
         side_effect_mem: True
     function:
         disable: True
+    dispatch:
+        enable: True

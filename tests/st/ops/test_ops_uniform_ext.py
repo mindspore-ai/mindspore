@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 
 import mindspore
+from mindspore import Tensor
 from mindspore.ops.operations.random_ops import UniformExt
 from mindspore.nn import Cell
 
@@ -56,16 +57,23 @@ def test_basic(context_mode):
     from_ = 90.0
     to = 100.0
 
-    seed1 = 41
-    offset1 = 0
+    seed1 = Tensor(41, dtype=mindspore.int64)
+    offset1 = Tensor(0, dtype=mindspore.int64)
+    # seed1 and offset1 would be modified in pyboost, so a copy is needed
+    seed1_2 = Tensor(41, dtype=mindspore.int64)
+    offset1_2 = Tensor(0, dtype=mindspore.int64)
 
-    seed2 = 42
-    offset2 = 3
+    seed2 = Tensor(42, dtype=mindspore.int64)
+    offset2 = Tensor(3, dtype=mindspore.int64)
+    seed2_2 = Tensor(42, dtype=mindspore.int64)
+    offset2_2 = Tensor(3, dtype=mindspore.int64)
 
     output1 = uniform_cell(mindspore.tensor(x), from_, to, seed1, offset1).numpy()
-    expect1 = uniform_cell(mindspore.tensor(x), from_, to, seed1, offset1).numpy()
+    expect1 = uniform_cell(mindspore.tensor(x), from_,
+                           to, seed1_2, offset1_2).numpy()
     output2 = uniform_cell(mindspore.tensor(x), from_, to, seed2, offset2).numpy()
-    expect2 = uniform_cell(mindspore.tensor(x), from_, to, seed2, offset2).numpy()
+    expect2 = uniform_cell(mindspore.tensor(x), from_,
+                           to, seed2_2, offset2_2).numpy()
     np.testing.assert_allclose(output1, expect1, rtol=rtol)
 
     mean1 = output1.mean()
@@ -105,11 +113,11 @@ def test_op():
     from_ = 90.0
     to = 100.0
 
-    seed1 = 41
-    offset1 = 0
+    seed1 = Tensor(41, dtype=mindspore.int64)
+    offset1 = Tensor(0, dtype=mindspore.int64)
 
-    seed2 = 42
-    offset2 = 3
+    seed2 = Tensor(42, dtype=mindspore.int64)
+    offset2 = Tensor(3, dtype=mindspore.int64)
 
     TEST_OP(UniformExtCell(), [
         [mindspore.Tensor(x1), from_, to, seed1, offset1],

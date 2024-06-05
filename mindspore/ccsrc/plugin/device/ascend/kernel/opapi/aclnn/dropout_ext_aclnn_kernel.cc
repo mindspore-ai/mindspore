@@ -23,8 +23,8 @@ void DropoutExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &input
                                         const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(primitive_);
   p_value_ = static_cast<double>(inputs[kIndex1]->GetValueWithCheck<float>());
-  seed_value_ = inputs[kIndex2]->GetValueWithCheck<int64_t>();
-  offset_value_ = inputs[kIndex3]->GetValueWithCheck<int64_t>();
+  seed_value_ = 0;
+  offset_value_ = 0;
   dtype_value_ = inputs[kIndex0]->dtype_id();
 
   MS_LOG(DEBUG) << primitive_->name() << " got a (" + TypeIdToString(inputs[kIndex1]->dtype_id()) + ")p = " << p_value_;
@@ -36,6 +36,8 @@ void DropoutExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &input
 bool DropoutExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
+  seed_value_ = inputs[kIndex2]->GetValueWithCheck<int64_t>();
+  offset_value_ = inputs[kIndex3]->GetValueWithCheck<int64_t>();
   ParseGenExecutor(GEN_EXECUTOR_BOOST(dropout_gen_mask_, gen_mask_hash_id_, inputs[kIndex0]->GetShapeVector(), p_value_,
                                       seed_value_, offset_value_, dtype_value_, outputs[kIndex1]));
   RunOp(stream_ptr, workspace);

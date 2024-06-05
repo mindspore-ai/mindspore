@@ -257,12 +257,13 @@ class DropoutExt(Cell):
         """Initialize DropoutExt."""
         super(DropoutExt, self).__init__()
         self.p = p
+        self.generator_step = Tensor(1, mstype.int64)
 
     def construct(self, x):
         if not self.training or self.p == 0:
             return x
 
-        seed, offset = default_generator._step(1)  # pylint: disable=protected-access
+        seed, offset = default_generator._step(self.generator_step)  # pylint: disable=protected-access
         out, _ = dropout_ext_op(x, self.p, seed, offset)
         return out
 

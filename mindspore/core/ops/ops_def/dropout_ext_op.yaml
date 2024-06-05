@@ -5,15 +5,10 @@ dropout_ext:
             dtype: tensor
         p:
             dtype: float
-            default: 0.5
         seed:
-            dtype: int
-            type_cast: tensor
-            default: 0
+            dtype: tensor
         offset:
-            dtype: int
-            type_cast: tensor
-            default: 0
+            dtype: tensor
     labels:
         side_effect_hidden: True
     returns:

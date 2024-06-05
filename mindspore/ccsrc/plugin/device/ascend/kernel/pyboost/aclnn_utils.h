@@ -20,6 +20,7 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <utility>
 #include "runtime/device/device_address_utils.h"
 #include "runtime/pynative/op_executor.h"
 #include "transform/acl_ir/op_api_exec.h"
@@ -95,6 +96,8 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 int8_t GetCubeMathType();
+std::pair<int64_t, int64_t> UpdateGeneratorState(const tensor::BaseTensorPtr &seed, const tensor::BaseTensorPtr &offset,
+                                                 int64_t step = 10);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

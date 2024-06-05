@@ -27,9 +27,8 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::BaseTensorPtr RandLikeExtAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                 const BaseTensorPtr &tensor_tensor,
-                                                 const std::optional<Int64ImmPtr> &dtype, const Int64ImmPtr &seed,
-                                                 const Int64ImmPtr &offset);
+                                                 const BaseTensorPtr &tensor_tensor, const BaseTensorPtr &seed,
+                                                 const BaseTensorPtr &offset, const std::optional<Int64ImmPtr> &dtype);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

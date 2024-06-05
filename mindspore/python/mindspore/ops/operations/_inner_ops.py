@@ -39,7 +39,7 @@ from mindspore.common.api import _pynative_executor
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore import ops
 from ..auto_generate import TensorCopySlices, SiLU, Cummin, TopKRouter, ExtractImagePatches, DecoderKVCache, \
-    PromptKVCache, ApplyCamePart1, ApplyCamePart2, ApplyCamePart3, ApplyCamePart4, Generator
+    PromptKVCache, ApplyCamePart1, ApplyCamePart2, ApplyCamePart3, ApplyCamePart4
 
 # Bit operation
 bit_and = bit_and()
@@ -56,6 +56,30 @@ string_not = Primitive("string_not")
 string_in = Primitive("string_in")
 string_mul = Primitive("string_mul")
 string_getitem = Primitive("string_getitem")
+
+
+class Generator(Primitive):
+    r"""
+    Manage the state of random number generation.
+
+    Inputs:
+        - **cmd** (int) : operation to be executed.
+        - **inputs** (tuple[tensor]) : inputs for the operation.
+
+    Outputs:
+        - **seed** (Tensor): Seed for the random number generation algorithm.
+        - **offset** (Tensor): Offset of the random number sequence.
+        - **state** (Tensor): State tensor, can be used to restore current state.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.add_prim_attr("side_effect_mem", True)
+
+    def __call__(self, cmd, inputs):
+        if cmd == 0:  # step cmd
+            return inputs[0], inputs[1]
+        return super().__call__(cmd, inputs)
 
 
 class Quant(PrimitiveWithInfer):
