@@ -951,7 +951,11 @@ std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, const Shap
     auto graph_output = graph->output();
     type = graph_output->Type();
   } else {
-    type = node->Type();
+    if (node->isa<CNode>() && IsPrimitiveCNode(node->cast<CNodePtr>(), prim::kPrimDepend)) {
+      type = cnode->input(1)->Type();
+    } else {
+      type = node->Type();
+    }
   }
   MS_EXCEPTION_IF_NULL(type);
 
