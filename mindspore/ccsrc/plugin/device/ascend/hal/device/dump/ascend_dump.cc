@@ -277,7 +277,11 @@ bool AscendAsyncDump::DumpTensorStatsIfNeeded(const dump_data_t &dump_tensor_inf
     trans_buf = std::make_shared<tensor::Tensor>(*bfloat16_tensor, TypeId::kNumberTypeFloat32);
   }
   if (trans_buf) {
-    data->SetByteSize(trans_buf->Size());
+    if (dump_tensor_info.data_type == TypeId::kNumberTypeBFloat16) {
+      data->SetByteSize(dump_tensor_info.data_size);
+    } else {
+      data->SetByteSize(trans_buf->Size());
+    }
     data->SetDataPtr(static_cast<char *>(trans_buf->data_c()));
     data->SetType(static_cast<TypeId>(trans_buf->data_type_c()));
   } else {
