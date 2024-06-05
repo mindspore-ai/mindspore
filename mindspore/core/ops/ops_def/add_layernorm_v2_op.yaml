@@ -1,0 +1,34 @@
+#operator AddLayerNormV2
+add_layernorm_v2:
+  args:
+    x1:
+      dtype: tensor
+    x2:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+    beta:
+      dtype: tensor
+    epsilon:
+      dtype: float
+      default: 1e-5
+    additionalOut:
+      dtype: bool
+      default: false
+  returns:
+    y:
+      dtype: tensor
+    mean:
+      dtype: tensor
+    rstd:
+      dtype: tensor
+    x:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: AddLayerNormV2
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: AddLayerNormAscend
