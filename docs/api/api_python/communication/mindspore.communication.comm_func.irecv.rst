@@ -18,7 +18,7 @@ mindspore.communication.comm_func.irecv
         - **tag** (int，可选) - 用于区分发送、接收消息的标签。该消息将被接收来自相同 `tag` 的Send发送的张量。默认值：0。
 
     返回：
-        Tensor，即 :math:`(\sum x_1, x_2, ..., x_R)`。
+        Tensor，其shape为:math:`(x_1, x_2, ..., x_R)`。
 
     异常：
         - **TypeError** - src不是int或group不是str。

@@ -556,7 +556,7 @@ def batch_isend_irecv(p2p_op_list):
 
 
 def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
-    """
+    r"""
     Scatter tensor evently across the processes in the specified communication group.
 
     Note:
@@ -573,7 +573,7 @@ def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
             Default: "GlobalComm.WORLD_COMM_GROUP".
 
     Returns:
-        Tensor, the shape of output is :math:`(x_1/src_rank, x_2, ..., x_R)`. The dimension 0 of data is equal to
+        Tensor, the shape of output is :math:`(x_1/src\_rank, x_2, ..., x_R)`. The dimension 0 of data is equal to
         the dimension of input tensor divided by `src`, and the other dimension keep the same.
 
     Raise:
@@ -624,7 +624,7 @@ def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
 
 
 def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
-    """
+    r"""
     Gathers tensors from the specified communication group. The operation will gather the tensor
     from processes according to dimension 0.
 
@@ -640,7 +640,7 @@ def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
     Returns:
-        Tensor, the shape of output is :math:`(sum x_1, x_2, ..., x_R)`. The dimension 0 of data is equal to
+        Tensor, the shape of output is :math:`(\sum x_1, x_2, ..., x_R)`. The dimension 0 of data is equal to
         sum of the dimension of input tensor, and the other dimension keep the same.
 
     Raise:
@@ -874,7 +874,7 @@ def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
             be received by the Send op with the same "tag". Default: 0.
 
     Returns:
-        Tensor, the shape of output is :math:`(sum x_1, x_2, ..., x_R)`.
+        Tensor, the shape of output is :math:`(x_1, x_2, ..., x_R)`.
 
     Raises:
         TypeError: If `src` is not an int or `group` is not a str.
