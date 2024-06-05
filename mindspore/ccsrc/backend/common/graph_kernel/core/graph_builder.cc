@@ -29,6 +29,7 @@
 #include "utils/ordered_set.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "ir/func_graph_cloner.h"
 #include "backend/common/graph_kernel/core/value_depend_op_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -161,9 +162,11 @@ bool ConvertTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr
       if (ValueDependOpUtils::KeepValueNode(primitive->name(), i - 1)) {
         continue;
       }
+      auto type_id = tensor->data_type();
       // data is nullptr means uninitialized.
       if (tensor->data().const_data() == nullptr || tensor->DataSize() > 1 ||
-          !IsFiniteScalar(tensor->data_c(), tensor->data_type())) {
+          !IsFiniteScalar(tensor->data_c(), type_id) ||
+          (type_id == kNumberTypeBool && GraphKernelFlags::GetInstance().kernel_generator == "DVM")) {
         (void)value_nodes.insert(tnode);
       }
     }
