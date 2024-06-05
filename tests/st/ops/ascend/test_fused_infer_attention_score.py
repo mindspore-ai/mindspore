@@ -20,7 +20,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.ops.operations import nn_ops as P
+from mindspore.ops.operations import _infer_ops as P
 from mindspore.ops.function.nn_func import prompt_flash_attention, incre_flash_attention
 
 class PromptFlashAttention(nn.Cell):
@@ -357,3 +357,53 @@ def test_fused_infer_attention_score_bsh_incre_antiquant(context_mode):
     del os.environ['GRAPH_OP_RUN']
     assert fias_result_att.shape == ifa_out.shape
     np.testing.assert_allclose(fias_result_att.asnumpy(), ifa_out.asnumpy(), rtol=5e-3, atol=5e-3)
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_fused_infer_attention_score_pfa_bnsd_fwd_dynamic(context_mode):
+    """
+    Feature: test FusedInferAttentionScore.
+    Description: test case for FusedInferAttentionScore, input_layout :'BNSD'
+    Expectation: the result match with PromptFlashAttention result.
+    """
+    ms.context.set_context(mode=context_mode)
+    os.environ['GRAPH_OP_RUN'] = "0"
+    np.random.seed(968941859)
+    B = 1
+    Q_N = 10
+    N = 5
+    S = 1024
+    D = 32
+    query = Tensor(shape=[None, Q_N, None, None], dtype=mstype.float16)
+    key = Tensor(shape=[None, N, None, None], dtype=mstype.float16)
+    value = Tensor(shape=[None, N, None, None], dtype=mstype.float16)
+
+    key_mut = [key]
+    value_mut = [value]
+    net_fias = FusedInferAttentionScoreFunc(num_heads=Q_N, input_layout='BNSD', num_key_value_heads=N)
+    net_fias.set_inputs(query, key_mut, value_mut, None, None,
+                        None, None, None, None, None, None,
+                        None, None, None, None, None, None)
+
+    q = np.random.rand(B, Q_N, S, D).astype(np.float16)
+    k = np.random.rand(B, N, S, D).astype(np.float16)
+    v = np.random.rand(B, N, S, D).astype(np.float16)
+    query_v = Tensor(q, dtype=mstype.float16)
+    key_v = Tensor(k, dtype=mstype.float16)
+    value_v = Tensor(v, dtype=mstype.float16)
+    key_mut_v = [key_v]
+    value_mut_v = [value_v]
+    fias_result = net_fias(query_v, key_mut_v, value_mut_v, None, None,
+                           None, None, None, None, None, None,
+                           None, None, None, None, None, None)
+    fias_result_att = fias_result[0]
+
+    net = PromptFlashAttention()
+    pfa_attention_out = net(query_v, key_v, value_v, None, None, None, None, None,
+                            None, None, None, None, num_heads=Q_N,
+                            input_layout='BNSD', num_key_value_heads=N)
+    del os.environ['GRAPH_OP_RUN']
+    assert fias_result_att.shape == pfa_attention_out.shape
+    np.testing.assert_allclose(pfa_attention_out.asnumpy(), fias_result_att.asnumpy(), rtol=5e-3, atol=5e-3)

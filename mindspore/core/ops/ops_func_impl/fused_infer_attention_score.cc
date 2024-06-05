@@ -73,21 +73,21 @@ BaseShapePtr FusedInferAttentionScoreFuncImpl::InferShape(const PrimitivePtr &pr
 
 TypePtr FusedInferAttentionScoreFuncImpl::InferType(const PrimitivePtr &prim,
                                                     const std::vector<AbstractBasePtr> &input_args) const {
-  auto query_type = input_args[kIndex0]->BuildType();
+  auto query_type = input_args[kIndex0]->GetType();
 
   auto attention_out_type = query_type;
-  auto softmax_lse_type = kFloat;
+  auto softmax_lse_type = std::make_shared<TensorType>(kFloat32);
   bool has_deqScale1 = !input_args[kFusedInferAttentionScoreInputDequantScale1Index]->GetType()->isa<TypeNone>();
   bool has_qScale1 = !input_args[kFusedInferAttentionScoreInputQuantScale1Index]->GetType()->isa<TypeNone>();
   bool has_deqScale2 = !input_args[kFusedInferAttentionScoreInputDequantScale2Index]->GetType()->isa<TypeNone>();
   bool has_qScale2 = !input_args[kFusedInferAttentionScoreInputQuantScale2Index]->GetType()->isa<TypeNone>();
   bool has_qOffset2 = !input_args[kFusedInferAttentionScoreInputQuantOffset2Index]->GetType()->isa<TypeNone>();
-  if (query_type == kInt8) {
+  if (query_type->type_id() == TypeId::kNumberTypeInt8) {
     if (has_deqScale1 && has_qScale1 && has_deqScale2 && !has_qScale2 && !has_qOffset2) {
-      attention_out_type = kFloat16;
+      attention_out_type = std::make_shared<TensorType>(kFloat16);
     }
   } else {
-    attention_out_type = has_qScale2 ? kInt8 : query_type;
+    attention_out_type = has_qScale2 ? std::make_shared<TensorType>(kInt8) : query_type;
   }
   return std::make_shared<Tuple>(std::vector<TypePtr>{attention_out_type, softmax_lse_type});
 }

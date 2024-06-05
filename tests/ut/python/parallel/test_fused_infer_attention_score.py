@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import mindspore
 import mindspore.nn as nn
-import mindspore.ops.operations.nn_ops as P
+import mindspore.ops.operations._infer_ops as P
 from mindspore import Tensor, context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.context import set_auto_parallel_context
