@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,18 +111,10 @@ Status DynamicQuantExtInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
 }
 
 std::vector<StrategyPtr> DynamicQuantExtInfo::GenerateOpStrategies(int64_t stage_id) {
-  Shape split_flag_x;
-  Shape split_flag_smooth_scales;
   size_t size = inputs_shape_[0].size();
-  for (size_t i = 0; i < size; ++i) {
-    if (i == size - 1) {
-      split_flag_x.push_back(0);
-    } else {
-      split_flag_x.push_back(1);
-    }
-  }
-
-  split_flag_smooth_scales.push_back(0);
+  Shape split_flag_x(size, 1);
+  split_flag_x[size - 1] = 0;
+  Shape split_flag_smooth_scales = {0};
 
   Shapes splittable_input = {split_flag_x, split_flag_smooth_scales};
   Shapes tmp_inputs_shape = {inputs_shape_[0]};
