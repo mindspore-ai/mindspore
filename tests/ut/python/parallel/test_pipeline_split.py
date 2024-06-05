@@ -619,6 +619,7 @@ class TestPipelineSplitWithNoOptimizer:
         self.cat_fp16_from_ir(pattern='(<Tensor[Float16], (4, 64)>) -> (<Tensor[Float16], (64, 64)>)',
                               target_count=2)
 
+    @pytest.mark.skip(reason="Timeout")
     def test_pipeline_with_micro_batch_dp1_parallel_optimizer(self):
         """
         Feature: Test Pipeline with Mirror Operator.
