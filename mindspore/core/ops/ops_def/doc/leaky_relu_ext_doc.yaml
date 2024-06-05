@@ -36,8 +36,8 @@ leaky_relu_ext:
         Examples:
             >>> import mindspore
             >>> import numpy as np
-            >>> from mindspore import Tensor, mint
+            >>> from mindspore import Tensor, ops
             >>> input = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-            >>> print(mint.nn.functional.leaky_relu(input, negative_slope=0.2))
+            >>> print(ops.extend.leaky_relu_ext(input, negative_slope=0.2))
             [[-0.2  4.  -1.6]
              [ 2.  -1.   9. ]]
