@@ -988,3 +988,32 @@ def test_type_of_getattr_after_setattr():
     net = Net()
     res = net()
     assert np.all(res.asnumpy() == np.array([[1, 2, 8, 4, 8]]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_global_setattr_for_cell():
+    """
+    Feature: Feature setattr. For attribute of global cell, the same as setattr(module, var_name, value).
+    Description: Support 'cell.attr = value'.
+    Expectation: No exception.
+    """
+    class InnerNet(nn.Cell):
+        def __init__(self):
+            super(InnerNet, self).__init__()
+            self.x = 10
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.inner = InnerNet()
+
+        def construct(self):
+            self.inner.x = 100
+
+    net = Net()
+    net()
+    assert net.inner.x == 100
