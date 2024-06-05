@@ -86,7 +86,7 @@ class BACKEND_EXPORT DumpJsonParser {
   bool IsDumpEnabled();
   bool IsDeviceCalcStats() const;
   void PyNativeModeCheck();
-  void CheckGEBackend();
+  void CheckE2eSetting();
   bool IsHCCLKernelInput(const std::string &kernel_name) const;
 
   void ClearGraph() { graphs_.clear(); }

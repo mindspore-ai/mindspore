@@ -107,28 +107,20 @@ void DumpJsonParser::PyNativeModeCheck() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
-      op_debug_mode_ == static_cast<uint32_t>(DUMP_ALL)) {
-    MS_LOG(EXCEPTION) << "Dump is not supported in PyNative mode, it only support overflow check. Please set "
-                         "op_debug_mode to 1 or 2 or 3 in PyNative mode.";
-  }
-  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
       dump_mode_ == static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
     MS_LOG(EXCEPTION) << "Cell dump is only supported in GRAPH mode. Please set dump_mode to 0 or 1 in PyNative mode.";
   }
-  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode && iteration_ != "all") {
-    MS_LOG(EXCEPTION) << "Iteration is only supported 'all' in PyNative mode, Please set iteration value to 'all'.";
-  }
 }
 
-void DumpJsonParser::CheckGEBackend() {
+void DumpJsonParser::CheckE2eSetting() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  std::string backend = context->backend_policy();
-  if (backend == "ge") {
-    if (e2e_dump_enabled()) {
+  if (e2e_dump_enabled()) {
+    if (!context->IsKByKExecutorMode()) {
       MS_LOG(WARNING) << "E2e dump only support kernel by kernel mode on Ascend platform.";
-      return;
     }
+    CheckStatCalcModeVaild();
+  } else {
     if (dump_mode_ == static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
       MS_LOG(EXCEPTION) << "Cell dump only support e2e dump mode. Please set dump_mode to 0 or 1.";
     }
@@ -180,9 +172,8 @@ void DumpJsonParser::Parse() {
   ParseE2eDumpSetting(j);
   ParseCommonDumpSetting(j);
   PyNativeModeCheck();
-  CheckGEBackend();
+  CheckE2eSetting();
   JudgeDumpEnabled();
-  CheckStatCalcModeVaild();
 }
 
 void WriteJsonFile(const std::string &file_path, const std::ifstream &json_file) {
@@ -439,9 +430,6 @@ void DumpJsonParser::ParseE2eDumpSetting(const nlohmann::json &content) {
   auto trans_flag = CheckJsonKeyExist(*e2e_dump_setting, kTransFlag);
 
   e2e_dump_enabled_ = ParseEnable(*e2e_dump_enable);
-  if (e2e_dump_enabled_ && context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    MS_LOG(WARNING) << "Deprecated: Synchronous dump mode is deprecated and will be removed in a future release";
-  }
   trans_flag_ = ParseEnable(*trans_flag);
   ParseStatCalcMode(*e2e_dump_setting);
   if (CheckSelectableKeyExist(*e2e_dump_setting, kSampleMode)) {
