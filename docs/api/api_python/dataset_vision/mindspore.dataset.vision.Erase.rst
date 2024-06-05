@@ -12,9 +12,9 @@ mindspore.dataset.vision.Erase
         - **left** (int) - 擦除区域左上角位置的横坐标。
         - **height** (int) - 擦除区域的高度。
         - **width** (int) - 擦除区域的宽度。
-        - **value** (Union[int, Sequence[int, int, int]]，可选) - 擦除区域的像素填充值。默认值： ``0`` 。
-          若输入int，将以该值填充RGB通道；
-          若输入Sequence[int, int, int]，将分别用于填充R、G、B通道。
+        - **value** (Union[float, Sequence[float, float, float]]，可选) - 擦除区域的像素填充值。默认值： ``0`` 。
+          若输入float，将以该值填充RGB通道；
+          若输入Sequence[float, float, float]，将分别用于填充R、G、B通道。
         - **inplace** (bool，可选) - 是否直接在原图上执行擦除。默认值： ``False`` 。
 
     异常：
@@ -26,7 +26,7 @@ mindspore.dataset.vision.Erase
         - **ValueError** - 如果 `height` 非正数。
         - **TypeError** - 如果 `width` 不是int类型。
         - **ValueError** - 如果 `width` 非正数。
-        - **TypeError** - 如果 `value` 不是int或Sequence[int, int, int]类型。
+        - **TypeError** - 如果 `value` 不是float或Sequence[float, float, float]类型。
         - **ValueError** - 如果 `value` 中元素的值不在[0, 255]范围。
         - **TypeError** - 如果 `inplace` 不是bool类型。
         - **RuntimeError** - 如果输入图像的形状不是 <H, W, C>。

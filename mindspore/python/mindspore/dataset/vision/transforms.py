@@ -1051,10 +1051,10 @@ class AutoContrast(ImageTensorOperation, PyTensorOperation):
             (100, 100, 3) uint8
             >>>
             >>> # Use the transform in eager mode
-            >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
             >>> output = vision.AutoContrast(cutoff=10.0, ignore=[10, 20]).device("Ascend")(data)
             >>> print(output.shape, output.dtype)
-            (2, 2, 3) uint8
+            (100, 100, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -1314,10 +1314,10 @@ class ConvertColor(ImageTensorOperation):
         (100, 100, 3) uint8
         >>>
         >>> # Use the transform in eager mode
-        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
         >>> output = vision.ConvertColor(vision.ConvertMode.COLOR_RGB2GRAY)(data)
         >>> print(output.shape, output.dtype)
-        (2, 2) uint8
+        (100, 100) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1938,10 +1938,10 @@ class Equalize(ImageTensorOperation, PyTensorOperation):
             (100, 100, 3) uint8
             >>>
             >>> # Use the transform in eager mode
-            >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
             >>> output = vision.Equalize().device("Ascend")(data)
             >>> print(output.shape, output.dtype)
-            (2, 2, 3) uint8
+            (100, 100, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -1976,9 +1976,9 @@ class Erase(ImageTensorOperation):
         left (int): Horizontal ordinate of the upper left corner of erased region.
         height (int): Height of erased region.
         width (int): Width of erased region.
-        value (Union[int, Sequence[int, int, int]], optional): Pixel value used to pad the erased area.
-            Default: ``0``. If int is provided, it will be used for all RGB channels.
-            If Sequence[int, int, int] is provided, it will be used for R, G, B channels respectively.
+        value (Union[float, Sequence[float, float, float]], optional): Pixel value used to pad the erased area.
+            Default: ``0``. If float is provided, it will be used for all RGB channels.
+            If Sequence[float, float, float] is provided, it will be used for R, G, B channels respectively.
         inplace (bool, optional): Whether to apply erasing inplace. Default: ``False``.
 
     Raises:
@@ -1990,7 +1990,7 @@ class Erase(ImageTensorOperation):
         ValueError: If `height` is not positive.
         TypeError: If `width` is not of type int.
         ValueError: If `width` is not positive.
-        TypeError: If `value` is not of type int or Sequence[int, int, int].
+        TypeError: If `value` is not of type float or Sequence[float, float, float].
         ValueError: If `value` is not in range of [0, 255].
         TypeError: If `inplace` is not of type bool.
         RuntimeError: If shape of the input image is not <H, W, C>.
@@ -2014,10 +2014,10 @@ class Erase(ImageTensorOperation):
         (100, 100, 3) uint8
         >>>
         >>> # Use the transform in eager mode
-        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
-        >>> output = vision.Erase(0, 0, 2, 1)(data)
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.Erase(10, 10, 10, 10)(data)
         >>> print(output.shape, output.dtype)
-        (2, 2, 3) uint8
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -2679,7 +2679,7 @@ class Invert(ImageTensorOperation, PyTensorOperation):
             >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
             ...     print(item["image"].shape, item["image"].dtype)
             ...     break
-            (100, 75, 3) uint8
+            (100, 100, 3) uint8
             >>>
             >>> # Use the transform in eager mode
             >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
@@ -6453,23 +6453,24 @@ class Rotate(ImageTensorOperation):
             >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
+            >>> from mindspore.dataset.vision import Inter
             >>>
             >>> # Use the transform in dataset pipeline mode
-            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> data = np.random.randint(0, 255, size=(1, 300, 400, 3)).astype(np.uint8)
             >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-            >>> rotate_op = vision.Rotate(degrees=30.0, resample=Inter.NEAREST, expand=True).device("Ascend")
+            >>> rotate_op = vision.Rotate(degrees=90.0, resample=Inter.NEAREST, expand=True).device("Ascend")
             >>> transforms_list = [rotate_op]
             >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
             >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
             ...     print(item["image"].shape, item["image"].dtype)
             ...     break
-            (100, 100, 3) uint8
+            (400, 300, 3) uint8
             >>>
             >>> # Use the transform in eager mode
-            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
-            >>> output = vision.Rotate(degrees=30.0, resample=Inter.NEAREST, expand=True).device("Ascend")(data)
+            >>> data = np.random.randint(0, 255, size=(300, 400, 3)).astype(np.uint8)
+            >>> output = vision.Rotate(degrees=90.0, resample=Inter.NEAREST, expand=True).device("Ascend")(data)
             >>> print(output.shape, output.dtype)
-            (100, 100, 3) uint8
+            (400, 300, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
