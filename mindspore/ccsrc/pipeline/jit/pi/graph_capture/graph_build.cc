@@ -776,6 +776,9 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
       }
     }
   } else if (opcode == STORE_ATTR) {
+    if (trace_flag() && parent_ != nullptr) {
+      return false;
+    }
     auto o = pop();
     auto v = pop();
     auto node = NewValueNode(nullptr, instr, {v, o});
@@ -3474,6 +3477,7 @@ ValueNode *MindGraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &
   static const std::vector<AObject::Type> const_type = {AObject::kTypeInt,      AObject::kTypeFloat, AObject::kTypeBool,
                                                         AObject::kTypeTuple,    AObject::kTypeList,  AObject::kTypeDict,
                                                         AObject::kTypePrimitive};
+  // Need to check whether the guard is failed in the future.
   if (std::any_of(const_type.begin(), const_type.end(),
                   [attr_type](const AObject::Type type) { return attr_type == type; })) {
     graph_->GuardValueNode(graph_attr_node, GuardLevel::GEqual);
