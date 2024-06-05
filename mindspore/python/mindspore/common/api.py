@@ -65,6 +65,7 @@ _PYNATIVE_PARALLEL_FUNC_NAME = "after_shard"
 
 def _check_recompile_args(compile_args, kwargs):
     """Check recompile of graph"""
+
     def _check_constant_tensor_arg(arg):
         if hasattr(arg, "__ms_mutable__"):
             return False
@@ -97,13 +98,15 @@ def _check_recompile(obj, compile_args, kwargs, full_function_name, create_time,
                 and create_time not in function_phases[full_function_name]:
             if isinstance(obj, ms.nn.Cell):
                 tips = f"Please try to create {echo_function_name} instance only once to avoid recompiling. "
+                logger.info(f"The {echo_function_name} has been compiled again. "
+                            f"{tips} ")
             else:
                 tips = "Try to decorate the function with @jit(hash_args=...) " \
                        "or @jit(compile_once=True) to reduce the compile time. " \
                        "For more details, get instructions about `jit` at " \
                        "https://www.mindspore.cn/search?inputValue=jit."
-            logger.warning(f"The {echo_function_name} has been compiled again. "
-                           f"{tips} ")
+                logger.warning(f"The {echo_function_name} has been compiled again. "
+                               f"{tips} ")
         else:
             _check_recompile_args(compile_args, kwargs)
     else:
