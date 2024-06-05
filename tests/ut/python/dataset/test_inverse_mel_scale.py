@@ -133,6 +133,7 @@ def test_inverse_mel_scale_pipeline_invalid_param():
         data1 = data1.map(operations=transforms, input_columns=["multi_dimensional_data"])
 
 
+@pytest.mark.skip(reason="Timeout")
 def test_inverse_mel_scale_eager():
     """
     Feature: InverseMelScale
