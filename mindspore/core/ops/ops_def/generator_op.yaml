@@ -9,5 +9,7 @@ generator:
     returns:
         outputs: 
             dtype: tuple[tensor]
+    labels:
+        side_effect_mem: True
     function:
         disable: True
