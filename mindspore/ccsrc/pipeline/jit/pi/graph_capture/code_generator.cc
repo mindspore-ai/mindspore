@@ -1256,6 +1256,18 @@ static int FindLoopEnd(int start, const CFG *cfg) {
   return std::max(result, target) - 1;
 }
 
+static size_t FindTryBlockEnd(int start_bci, const CFG *cfg) {
+  const auto &list = cfg->instr_pool();
+  size_t block_end = list[start_bci]->extra_jump()->bci();
+  for (; block_end < list.size() && list[block_end]->op() != END_FINALLY; ++block_end) {
+  }
+  if (list[block_end - 1]->extra_jump()) {
+    size_t jump = list[block_end - 1]->extra_jump()->bci();
+    block_end = std::max(block_end, jump);
+  }
+  return block_end;
+}
+
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 9)
 
 static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_effect) {
@@ -1268,13 +1280,7 @@ static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_ef
 
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
   } else if (opcode == SETUP_EXCEPT) {
-    block_end = list[start_bci]->extra_jump()->bci();
-    for (; block_end < list.size() && list[block_end]->op() != END_FINALLY; ++block_end) {
-    }
-    if (list[block_end - 1]->extra_jump()) {
-      size_t jump = list[block_end - 1]->extra_jump()->bci();
-      block_end = std::max(block_end, jump);
-    }
+    block_end = FindTryBlockEnd(start_bci, cfg);
   } else if (opcode == SETUP_LOOP) {
     block_end = list[start_bci]->extra_jump()->bci() - 1;
   } else if (opcode == FOR_ITER) {
@@ -1292,13 +1298,7 @@ static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_ef
     if (opcode == SETUP_WITH) {
       *stack_effect = -1;
     }
-    block_end = list[start_bci]->extra_jump()->bci();
-    for (; block_end < list.size() && list[block_end]->op() != END_FINALLY; ++block_end) {
-    }
-    if (list[block_end - 1]->extra_jump()) {
-      size_t jump = list[block_end - 1]->extra_jump()->bci();
-      block_end = std::max(block_end, jump);
-    }
+    block_end = FindTryBlockEnd(start_bci, cfg);
   } else {
     block_end = FindLoopEnd(start_bci, cfg);
   }
