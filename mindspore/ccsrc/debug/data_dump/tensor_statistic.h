@@ -38,7 +38,8 @@ class TensorStat {
  public:
   TensorStat(const string &type, const string &name, size_t task_id, size_t stream_id, uint64_t timestamp,
              const string &io, size_t slot, size_t data_size, const string &data_type, const string &shape,
-             const string &max_value, const string &min_value, const string &avg_value, size_t count)
+             const string &max_value, const string &min_value, const string &avg_value, const string &norm_value,
+             size_t count)
       : type_(type),
         name_(name),
         task_id_(task_id),
@@ -52,6 +53,7 @@ class TensorStat {
         max_value_(max_value),
         min_value_(min_value),
         avg_value_(avg_value),
+        norm_value_(norm_value),
         count_(count) {}
   TensorStat() = default;
 
@@ -69,6 +71,7 @@ class TensorStat {
   string max_value_;
   string min_value_;
   string avg_value_;
+  string norm_value_;
   size_t count_;
 };
 
