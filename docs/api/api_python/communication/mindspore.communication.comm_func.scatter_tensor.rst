@@ -6,7 +6,7 @@ mindspore.communication.comm_func.scatter_tensor
     对输入张量进行均匀散射到通信域的卡上。
 
     .. note::
-        该接口和`pytoch.distributed.scatter`存在行为差异。该接口只支持Tensor输入，且只支持均匀切分。
+        该接口只支持Tensor输入，且只支持均匀切分。
         只有源为src的进程(全局的进程编号)才会将输入张量作为散射源。
         当前支持PyNative模式，不支持Graph模式。
 

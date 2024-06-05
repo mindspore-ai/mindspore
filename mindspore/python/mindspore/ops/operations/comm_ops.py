@@ -1117,7 +1117,8 @@ class CollectiveScatter(Primitive):
     Scatter tensor evently across the processes in the specified communication group.
 
     Note:
-        Only the tensor in process `src`(global rank) will do scatter.
+        The interface behavior only support Tensor input and scatter evenly.
+        Only the tensor in process `src_rank`(global rank) will do scatter.
 
     Args:
         src_rank (int, optional): Specifies the rank of the process that send the tensor.
@@ -1133,11 +1134,12 @@ class CollectiveScatter(Primitive):
 
     Raises:
         TypeError: If `group` is not a str.
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
         ValueError: If the local rank id of the calling process in the group
             is larger than the group's rank size.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend``
 
     Examples:
         .. note::
@@ -1156,7 +1158,7 @@ class CollectiveScatter(Primitive):
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
         >>> from mindspore.communication.management import init, get_rank
-        >>> from mindspore.ops as ops
+        >>> from mindspore import ops
         >>> # Launch 2 processes.
         >>> init()
         >>> class CollectiveScatterNet(nn.Cell):
@@ -1199,7 +1201,7 @@ class CollectiveGather(Primitive):
     from processes according to dimension 0.
 
     Note:
-        Only the tensor in process `dst`(global rank) will keep the gathered tensor. The other process
+        Only the tensor in process `dest_rank`(global rank) will keep the gathered tensor. The other process
         will keep a tensor with shape [1], which has no mathematical meaning.
 
     Args:
@@ -1216,6 +1218,7 @@ class CollectiveGather(Primitive):
 
     Raises:
         TypeError: If `group` is not a str.
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
         ValueError: If the local rank id of the calling process in the group
                     is larger than the group's rank size.
 
@@ -1241,7 +1244,7 @@ class CollectiveGather(Primitive):
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
-        >>> from mindspore.ops as ops
+        >>> from mindspore import ops
         >>> # Launch 2 processes.
         >>>
         >>> ms.set_context(mode=ms.GRAPH_MODE)
@@ -1290,6 +1293,7 @@ class Barrier(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `group` is not a str.
+        RuntimeError: If backend is invalid, or distributed initialization fails.
         ValueError: If the local rank id of the calling process in the group
                     is larger than the group's rank size.
 
@@ -1311,10 +1315,10 @@ class Barrier(PrimitiveWithInfer):
             This example should be run with 2 devices.
 
         >>> import numpy as np
-        >>> import mindspore.ops as ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
+        >>> from mindspore import ops
         >>> # Launch 4 processes.
         >>> init()
         >>> class BarrierNet(nn.Cell):
@@ -1352,12 +1356,15 @@ class Send(PrimitiveWithInfer):
                       be received by the Receive op with the same "sr_tag".
         dest_rank (int): A required integer identifying the destination rank.
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+        group_back (str, optional): The communication group for backpropagation.
+                                    Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Raises:
         TypeError: If `group` is not a str.
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
         ValueError: If the local rank id of the calling process in the group
                     is larger than the group's rank size.
 
@@ -1379,10 +1386,10 @@ class Send(PrimitiveWithInfer):
             This example should be run with 2 devices.
 
         >>> import numpy as np
-        >>> import mindspore.ops as ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
+        >>> from mindspore import ops
         >>>
         >>> init()
         >>> class SendNet(nn.Cell):
@@ -1428,11 +1435,17 @@ class Receive(PrimitiveWithInfer):
         src_rank (int): A required integer identifying the source rank.
         shape (list[int]): A required list identifying the shape of the tensor to be received.
         dtype (Type): A required Type identifying the type of the tensor to be received. The supported types:
-                       int8, int16, int32, float16, float32.
+                       int8/int16/int32/float16/float32.
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+        group_back (str, optional): The communication group for backpropagation.
+                                    Default: ``GlobalComm.WORLD_COMM_GROUP``.
+
+    Outputs:
+        Tensor, output has the same shape as the Tensor sent by `Send` operation.
 
     Raises:
         TypeError: If `group` is not a str.
+        RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
         ValueError: If the local rank id of the calling process in the group
                     is larger than the group's rank size.
 
@@ -1454,10 +1467,10 @@ class Receive(PrimitiveWithInfer):
             This example should be run with 2 devices.
 
         >>> import numpy as np
-        >>> import mindspore.ops as ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
+        >>> from mindspore import ops
         >>>
         >>> init()
         >>> class ReceiveNet(nn.Cell):
