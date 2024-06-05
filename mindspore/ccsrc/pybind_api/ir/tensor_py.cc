@@ -524,7 +524,7 @@ py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kAsnumpy);
   {
     py::gil_scoped_release gil_release;
-    if (tensor.device_address() == nullptr || tensor.get_copy_done_flag()) {
+    if (tensor.get_copy_done_flag()) {
       const_cast<Tensor &>(tensor).set_copy_done_flag(false);
       if (tensor.need_release_device_mem()) {
         const_cast<Tensor &>(tensor).set_device_address(nullptr);
