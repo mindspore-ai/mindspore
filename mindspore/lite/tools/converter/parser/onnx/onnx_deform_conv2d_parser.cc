@@ -103,10 +103,17 @@ PrimitiveCPtr OnnxDeformConv2dParser::Parse(const onnx::GraphProto &onnx_graph, 
     MS_LOG(ERROR) << "Parse kernel_size failed for " << onnx_node.name();
     return nullptr;
   }
+  int64_t deformable_groups = 1;
+  for (const auto &onnx_node_attr : onnx_node.attribute()) {
+    const auto &attribute_name = onnx_node_attr.name();
+    if (attribute_name == "deform_groups") {
+      deformable_groups = onnx_node_attr.i();
+    }
+  }
   prim->set_strides(strides);
   prim->set_dilations(dilation);
   prim->set_pads(pads);
-  prim->set_deformable_groups(1);
+  prim->set_deformable_groups(deformable_groups);
   prim->set_modulated(true);  // True for v2, false for v1
 
   return prim->GetPrim();

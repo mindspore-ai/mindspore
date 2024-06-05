@@ -24,6 +24,11 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr size_t kNumShapeSize2 = 2;
+constexpr size_t kNumShapeSize4 = 4;
+}  // namespace
+
 PrimitiveCPtr OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::AvgPoolFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -38,14 +43,14 @@ PrimitiveCPtr OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, const
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "kernel_shape") {
-      if (onnx_node_attr.ints_size() == 2) {
+      if (onnx_node_attr.ints_size() == kNumShapeSize2) {
         kernels.push_back(onnx_node_attr.ints(0));
         kernels.push_back(onnx_node_attr.ints(1));
         prim->set_kernel_size(kernels);
       }
     }
     if (attribute_name == "strides") {
-      if (onnx_node_attr.ints_size() == 2) {
+      if (onnx_node_attr.ints_size() == kNumShapeSize2) {
         strides.push_back(onnx_node_attr.ints(0));
         strides.push_back(onnx_node_attr.ints(1));
       }
@@ -59,7 +64,7 @@ PrimitiveCPtr OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, const
       }
     }
     if (attribute_name == "pads") {
-      if (onnx_node_attr.ints_size() == 4) {
+      if (onnx_node_attr.ints_size() == kNumShapeSize4) {
         pads.push_back(onnx_node_attr.ints(0));
         pads.push_back(onnx_node_attr.ints(2));
         pads.push_back(onnx_node_attr.ints(1));
@@ -117,14 +122,14 @@ PrimitiveCPtr OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "kernel_shape") {
-      if (onnx_node_attr.ints_size() == 2) {
+      if (onnx_node_attr.ints_size() == kNumShapeSize2) {
         kernels.push_back(onnx_node_attr.ints(0));
         kernels.push_back(onnx_node_attr.ints(1));
         prim->set_kernel_size(kernels);
       }
     }
     if (attribute_name == "strides") {
-      if (onnx_node_attr.ints_size() == 2) {
+      if (onnx_node_attr.ints_size() == kNumShapeSize2) {
         strides.push_back(onnx_node_attr.ints(0));
         strides.push_back(onnx_node_attr.ints(1));
       }
@@ -138,7 +143,7 @@ PrimitiveCPtr OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const
       }
     }
     if (attribute_name == "pads") {
-      if (onnx_node_attr.ints_size() == 4) {
+      if (onnx_node_attr.ints_size() == kNumShapeSize4) {
         prim->set_pad_mode(mindspore::PadMode::PAD);
         pads.push_back(onnx_node_attr.ints(0));
         pads.push_back(onnx_node_attr.ints(2));
@@ -154,8 +159,10 @@ PrimitiveCPtr OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const
       }
     }
     if (attribute_name == "dilations") {
-      MS_LOG(ERROR) << "pooling op not support dilations now";
-      return nullptr;
+      if (onnx_node_attr.ints_size() != kNumShapeSize2 || onnx_node_attr.ints(0) != 1 || onnx_node_attr.ints(1) != 1) {
+        MS_LOG(ERROR) << "MaxPool op only support dilations=<1, 1> now!";
+        return nullptr;
+      }
     }
   }
   prim->set_round_mode(round_mode);
