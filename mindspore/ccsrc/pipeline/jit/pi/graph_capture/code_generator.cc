@@ -1271,6 +1271,10 @@ static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_ef
     block_end = list[start_bci]->extra_jump()->bci();
     for (; block_end < list.size() && list[block_end]->op() != END_FINALLY; ++block_end) {
     }
+    if (list[block_end - 1]->extra_jump()) {
+      size_t jump = list[block_end - 1]->extra_jump()->bci();
+      block_end = std::max(block_end, jump);
+    }
   } else if (opcode == SETUP_LOOP) {
     block_end = list[start_bci]->extra_jump()->bci() - 1;
   } else if (opcode == FOR_ITER) {
@@ -1290,6 +1294,10 @@ static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_ef
     }
     block_end = list[start_bci]->extra_jump()->bci();
     for (; block_end < list.size() && list[block_end]->op() != END_FINALLY; ++block_end) {
+    }
+    if (list[block_end - 1]->extra_jump()) {
+      size_t jump = list[block_end - 1]->extra_jump()->bci();
+      block_end = std::max(block_end, jump);
     }
   } else {
     block_end = FindLoopEnd(start_bci, cfg);
