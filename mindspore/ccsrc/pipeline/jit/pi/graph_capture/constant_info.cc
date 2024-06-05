@@ -421,6 +421,9 @@ void ConstantInfo::CollectBuiltinFuncConstantInfo(CallNode *node) {
   if (PyMethod_Check(func)) {
     func = PyMethod_GET_FUNCTION(func);
   }
+  if (PyInstanceMethod_Check(func)) {
+    func = PyInstanceMethod_GET_FUNCTION(func);
+  }
   MS_EXCEPTION_IF_CHECK_FAIL(PyCFunction_Check(func), "must be builtin function or method");
   PyCFunction cfunc = PyCFunction_GET_FUNCTION(func);
 

@@ -1660,6 +1660,13 @@ py::object get_code_extra(const py::object &func) {
 }
 
 size_t FunctionId(const py::object &callable) {
+  // filter special cpp function
+  auto py_cfunction_filter = [](PyObject *op) -> void * {
+    // pybind11::cpp_function::dispatcher;
+    static PyCFunction pybind_dispatcher = PyCFunction_GET_FUNCTION(py::cpp_function([]() {}).ptr());
+    PyCFunction result = PyCFunction_GET_FUNCTION(op);
+    return result == pybind_dispatcher ? op : reinterpret_cast<void *>(result);
+  };
   PyObject *op = callable.ptr();
   if (PyMethod_Check(op)) {
     op = PyMethod_GET_FUNCTION(op);
@@ -1670,8 +1677,7 @@ size_t FunctionId(const py::object &callable) {
   void *result = op;
   if (PyCFunction_Check(op)) {
     // types.BuiltinFunctionType = type(len) same as types.BuiltinMethodType = type(list().append)
-    PyCFunction func = PyCFunction_GET_FUNCTION(op);
-    result = reinterpret_cast<void *>(func);
+    result = py_cfunction_filter(op);
   } else if (Py_IS_TYPE(op, &PyMethodDescr_Type)) {
     // types.MethodDescriptorType = type(list.append)
     PyCFunction func = reinterpret_cast<PyMethodDescrObject *>(op)->d_method->ml_meth;
