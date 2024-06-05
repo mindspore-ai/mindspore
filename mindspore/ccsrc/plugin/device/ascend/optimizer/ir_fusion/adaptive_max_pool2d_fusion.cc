@@ -159,7 +159,8 @@ const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph
   auto height_attr = ComputeKernelAttr(height, output_h);
   auto width_attr = ComputeKernelAttr(width, output_w);
   if (height_attr[kIndex0] == -1 || width_attr[kIndex0] == -1) {
-    MS_LOG(EXCEPTION) << "Current AdaptiveMaxPool2D not support this scene! node:" << node->DebugString();
+    MS_LOG_WITH_NODE(EXCEPTION, node) << "Current AdaptiveMaxPool2D not support this scene! node:"
+                                      << node->DebugString();
   }
 
   std::vector<AnfNodePtr> pooling_inputs = {NewValueNode(std::make_shared<Primitive>(kPoolingOpName))};

@@ -254,8 +254,8 @@ KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
 
   if (!std::static_pointer_cast<KernelMod>(kernel_mod_ptr)
          ->Init(common::AnfAlgo::GetCNodePrimitive(anf_node), input_kernel_tensors, output_kernel_tensors)) {
-    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize aicpu kernel op["
-                      << anf_node->fullname_with_scope() << "] failed.";
+    MS_LOG_WITH_NODE(EXCEPTION, anf_node) << "#dmsg#Kernel build failed:#dmsg#Initialize aicpu kernel op["
+                                          << anf_node->fullname_with_scope() << "] failed.";
   }
   kernel_mod_ptr->SetIsDynamicShape(common::AnfAlgo::IsDynamicShape(anf_node));
   kernel_mod_ptr->SetNodeScopeName(anf_node->fullname_with_scope());
@@ -264,7 +264,7 @@ KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   CreateExtInfo(anf_node, kernel_mod_ptr);
 
   if (!AicpuOpKernelLoad::GetInstance().LoadAicpuKernelSo(anf_node, kernel_mod_ptr)) {
-    MS_LOG(EXCEPTION) << "Aicpu kernel so load failed. task is " << anf_node->fullname_with_scope();
+    MS_LOG_WITH_NODE(EXCEPTION, anf_node) << "Aicpu kernel so load failed. task is " << anf_node->fullname_with_scope();
   }
 
   auto cnode = anf_node->cast<CNodePtr>();

@@ -69,11 +69,12 @@ void KernelActor::Init() {
   if (is_dynamic_value_ && (is_dynamic_shape_ || is_dynamic_type_)) {
     static const bool is_dry_run_mode = (common::GetEnv(kSimulationLevel) == kSimulationLevelCompileKernel);
     if (is_dry_run_mode) {
-      MS_LOG(EXCEPTION) << "The dry run mode can not support dynamic shape graph which contains value depend kernel:"
-                        << kernel_->fullname_with_scope()
-                        << ", launch kernel is skipped for dry run mode, which leads to fail to GetValue for infer "
-                           "shape of these value depend kernel. You can only simulate compile graph and not do "
-                           "InferShape and Resize by `export MS_SIMULATION_LEVEL=0` instead.";
+      MS_LOG_WITH_NODE(EXCEPTION, kernel_)
+        << "The dry run mode can not support dynamic shape graph which contains value depend kernel:"
+        << kernel_->fullname_with_scope()
+        << ", launch kernel is skipped for dry run mode, which leads to fail to GetValue for infer "
+           "shape of these value depend kernel. You can only simulate compile graph and not do "
+           "InferShape and Resize by `export MS_SIMULATION_LEVEL=0` instead.";
     }
   }
 
@@ -543,8 +544,9 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
 
   bool skip_launch = CollectiveManager::instance()->need_reinit() || IsSkippedLaunch(kernel_, nullptr);
   if (!skip_launch && !LaunchKernel(context)) {
-    MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope()
-                      << trace::DumpSourceLines(kernel_);
+    MS_LOG_WITH_NODE(EXCEPTION, kernel_) << "#umsg#Kernel error:#umsg#Launch kernel failed: " +
+                                              kernel_->fullname_with_scope()
+                                         << trace::DumpSourceLines(kernel_);
   }
 
   // Record mem info, because async send may free device info.
@@ -826,8 +828,9 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
   }
 
   if (!IsSkippedLaunch(kernel_, nullptr) && !LaunchKernel(context)) {
-    MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope()
-                      << trace::DumpSourceLines(kernel_);
+    MS_LOG_WITH_NODE(EXCEPTION, kernel_) << "#umsg#Kernel error:#umsg#Launch kernel failed: " +
+                                              kernel_->fullname_with_scope()
+                                         << trace::DumpSourceLines(kernel_);
   }
 
   if (debug_aid_ != nullptr || recorder_aid_ != nullptr) {
@@ -929,7 +932,7 @@ void KernelActor::ResizeKernelMod() {
                 << ", the output size list: " << kernel_mod_->GetOutputSizeList()
                 << ", workspace size list: " << kernel_mod_->GetWorkspaceSizeList();
   if (ret != kernel::KRET_OK) {
-    MS_LOG(EXCEPTION) << "Resize failed for kernel: " << kernel_->fullname_with_scope();
+    MS_LOG_WITH_NODE(EXCEPTION, kernel_) << "Resize failed for kernel: " << kernel_->fullname_with_scope();
   }
 }
 namespace {

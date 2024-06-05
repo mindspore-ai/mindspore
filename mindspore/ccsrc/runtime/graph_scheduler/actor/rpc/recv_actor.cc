@@ -305,7 +305,8 @@ void RecvActor::AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const Sh
     real_abs->set_shape(updated_shape);
   } else if (real_abs->isa<abstract::AbstractTuple>()) {
     if (common::AnfAlgo::IsDynamicSequence(real_input)) {
-      MS_LOG(EXCEPTION) << "Invalid dynamic sequence for actor:" << GetAID() << " node:" << real_input->DebugString();
+      MS_LOG_WITH_NODE(EXCEPTION, real_input)
+        << "Invalid dynamic sequence for actor:" << GetAID() << " node:" << real_input->DebugString();
     }
     auto abstract_tuple = real_abs->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(abstract_tuple);

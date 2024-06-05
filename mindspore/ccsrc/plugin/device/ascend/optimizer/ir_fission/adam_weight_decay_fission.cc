@@ -88,8 +88,8 @@ const AnfNodePtr AdamWeightDecayFission::Process(const FuncGraphPtr &graph, cons
   MS_EXCEPTION_IF_NULL(adam_weight_decay_cnode);
   CheckCNodeInputSize(adam_weight_decay_cnode, kAamWeightDecayInputNum);
   if (common::AnfAlgo::IsDynamicShape(adam_weight_decay_cnode)) {
-    MS_LOG(EXCEPTION) << "AdamWeightDecay don't support dynamic shape, node: "
-                      << adam_weight_decay_cnode->fullname_with_scope();
+    MS_LOG_WITH_NODE(EXCEPTION, adam_weight_decay_cnode)
+      << "AdamWeightDecay don't support dynamic shape, node: " << adam_weight_decay_cnode->fullname_with_scope();
   }
 
   const auto ori_inputs = adam_weight_decay_cnode->inputs();

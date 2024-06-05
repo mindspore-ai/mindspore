@@ -153,9 +153,9 @@ void AnyTypeKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const c
                            .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
                            .get();
     if (device_tensor == nullptr) {
-      MS_LOG(EXCEPTION) << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()
-                        << " index:" << device_tensor_store_key.first
-                        << " device type:" << device_contexts_[0]->GetDeviceType();
+      MS_LOG_WITH_NODE(EXCEPTION, device_tensor_store_key.second)
+        << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()
+        << " index:" << device_tensor_store_key.first << " device type:" << device_contexts_[0]->GetDeviceType();
       continue;
     }
     if (device_tensor_store_key.first >= input_device_tensors_.size()) {
@@ -409,8 +409,8 @@ void AnyTypeKernelActor::RunForGraphInput(OpContext<DeviceTensor> *const context
       const auto &return_node = graph()->get_return();
       MS_EXCEPTION_IF_NULL(return_node);
       if (!return_node->isa<CNode>() || return_node->cast<CNodePtr>()->size() <= 1) {
-        MS_LOG(EXCEPTION) << "Invalid return node:" << return_node->DebugString()
-                          << " for graph:" << graph()->ToString();
+        MS_LOG_WITH_NODE(EXCEPTION, return_node)
+          << "Invalid return node:" << return_node->DebugString() << " for graph:" << graph()->ToString();
       }
       if (device_contexts().empty() || device_contexts()[0] == nullptr) {
         MS_LOG(EXCEPTION) << "Invalid device context for actor:" << GetAID();
@@ -464,8 +464,8 @@ size_t FetchInputIndexByBackendParameter(const AnfNodePtr &backend_node, const K
   const auto &front_parameters = front_graph->input_nodes();
   const auto &iter = find(front_parameters.begin(), front_parameters.end(), front_node);
   if (iter == front_parameters.end()) {
-    MS_LOG(EXCEPTION) << "Invalid front parameter:" << front_node->DebugString()
-                      << " for graph:" << front_graph->ToString();
+    MS_LOG_WITH_NODE(EXCEPTION, front_node)
+      << "Invalid front parameter:" << front_node->DebugString() << " for graph:" << front_graph->ToString();
   }
   return iter - front_parameters.begin();
 }
@@ -489,8 +489,8 @@ void AnyTypeKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const cont
     }
     size_t from_index = FetchInputIndexByBackendParameter(input_node, graph(), real_graph);
     if (!AnfAlgo::OutputAddrExist(input_node, 0, false)) {
-      MS_LOG(EXCEPTION) << "Input node:" << input_node->DebugString()
-                        << " has no device address for actor:" << GetAID();
+      MS_LOG_WITH_NODE(EXCEPTION, input_node)
+        << "Input node:" << input_node->DebugString() << " has no device address for actor:" << GetAID();
     }
     auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
     MS_EXCEPTION_IF_NULL(device_address);
@@ -501,8 +501,9 @@ void AnyTypeKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const cont
     }
     node_device_tensors_[from_index] = device_address;
     if (input_device_tensors_[from_index] == nullptr) {
-      MS_LOG(EXCEPTION) << "actor:" << GetAID() << " real graph:" << real_graph->ToString()
-                        << " input node:" << input_node->DebugString() << " index : " << i << " is nullptr ";
+      MS_LOG_WITH_NODE(EXCEPTION, input_node)
+        << "actor:" << GetAID() << " real graph:" << real_graph->ToString()
+        << " input node:" << input_node->DebugString() << " index : " << i << " is nullptr ";
     }
     node_device_tensors_[from_index]->SetNodeIndex(input_device_tensors_[from_index]->node_index().first.lock(),
                                                    input_device_tensors_[from_index]->node_index().second);
@@ -599,8 +600,9 @@ void AnyTypeKernelActor::Init() {
   for (const auto &node_with_index : common::AnfAlgo::GetAllOutputWithOutMonadAndParameter(graph()->output())) {
     MS_EXCEPTION_IF_NULL(node_with_index.first);
     if (!AnfAlgo::OutputAddrExist(node_with_index.first, node_with_index.second)) {
-      MS_LOG(EXCEPTION) << "Failed to get output address from node:" << node_with_index.first->DebugString()
-                        << " index:" << node_with_index.second << " for actor:" << GetAID();
+      MS_LOG_WITH_NODE(EXCEPTION, node_with_index.first)
+        << "Failed to get output address from node:" << node_with_index.first->DebugString()
+        << " index:" << node_with_index.second << " for actor:" << GetAID();
     }
     graph_ouput_device_tensors_.emplace_back(
       AnfAlgo::GetMutableOutputAddr(node_with_index.first, node_with_index.second, false).get());
@@ -747,13 +749,14 @@ void AnyTypeKernelActor::UpdateOutputData(OpData<DeviceTensor> *const output_dat
     const auto &real_output = common::AnfAlgo::GetAllOutputWithOutMonadAndParameter(graph()->output());
     const auto &output_iter = find(real_output.begin(), real_output.end(), std::make_pair(output_node, index));
     if (output_iter == real_output.end()) {
-      MS_LOG(EXCEPTION) << "Invalid output node:" << output_node->DebugString() << " index:" << index
-                        << " for graph:" << graph()->ToString();
+      MS_LOG_WITH_NODE(EXCEPTION, output_node) << "Invalid output node:" << output_node->DebugString()
+                                               << " index:" << index << " for graph:" << graph()->ToString();
     }
     size_t real_output_index = LongToSize(output_iter - real_output.begin());
     if (real_output_index >= graph_ouput_device_tensors_.size()) {
-      MS_LOG(EXCEPTION) << "Invalid input index:" << real_output_index << " by node:" << output_node->DebugString()
-                        << " for actor:" << GetAID();
+      MS_LOG_WITH_NODE(EXCEPTION, output_node)
+        << "Invalid input index:" << real_output_index << " by node:" << output_node->DebugString()
+        << " for actor:" << GetAID();
     }
     MS_LOG(DEBUG) << "actor:" << GetAID() << " output node:" << output_node->DebugString()
                   << " to actor:" << data_arrow->to_op_id_ << " from index:" << real_output_index;
@@ -771,13 +774,13 @@ void AnyTypeKernelActor::UpdateOutputData(OpData<DeviceTensor> *const output_dat
   auto &input_nodes = model_graph->input_nodes();
   const auto &iter = find(input_nodes.begin(), input_nodes.end(), front_node);
   if (iter == input_nodes.end()) {
-    MS_LOG(EXCEPTION) << "Invalid input node:" << output_node->DebugString()
-                      << " front node:" << front_node->DebugString();
+    MS_LOG_WITH_NODE(EXCEPTION, output_node)
+      << "Invalid input node:" << output_node->DebugString() << " front node:" << front_node->DebugString();
   }
   size_t index = LongToSize(iter - input_nodes.begin());
   if (index >= node_device_tensors_.size()) {
-    MS_LOG(EXCEPTION) << "Invalid input index:" << index << " by node:" << output_node->DebugString()
-                      << " for actor:" << GetAID();
+    MS_LOG_WITH_NODE(EXCEPTION, output_node)
+      << "Invalid input index:" << index << " by node:" << output_node->DebugString() << " for actor:" << GetAID();
   }
   if (node_device_tensors_[index] == nullptr) {
     MS_LOG(EXCEPTION) << "failed to get input index:" << index << " for actor:" << GetAID();

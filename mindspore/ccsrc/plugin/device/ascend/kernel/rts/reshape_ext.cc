@@ -36,8 +36,8 @@ bool ReshapeExtKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (CheckResizeCondition(cnode)) {
     if (Resize(input_kernel_tensors, output_kernel_tensors) == KRET_RESIZE_FAILED) {
-      MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#rts kernel op[" << cnode->fullname_with_scope()
-                        << "] Resize failed.";
+      MS_LOG_WITH_NODE(EXCEPTION, cnode) << "#dmsg#Kernel build failed:#dmsg#rts kernel op["
+                                         << cnode->fullname_with_scope() << "] Resize failed.";
     }
   }
   return true;

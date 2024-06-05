@@ -460,8 +460,8 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
   } else {
     auto cand_format = GetValidFormat(input_num, output_num);
     if (cand_format.empty()) {
-      MS_LOG(EXCEPTION) << "The kernel: " << kernel->fullname_with_scope()
-                        << " does not have a supported dynamic shape format on the Ascend platform.";
+      MS_LOG_WITH_NODE(EXCEPTION, kernel) << "The kernel: " << kernel->fullname_with_scope()
+                                          << " does not have a supported dynamic shape format on the Ascend platform.";
     }
     input_formats = cand_format.at(kFirstItem).first;
     output_formats = cand_format.at(kFirstItem).second;
@@ -501,16 +501,16 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
   builder->SetInputsReshapeType(input_reshape_types);
   builder->SetOutputsReshapeType(output_reshape_types);
   if (input_formats.size() != input_types.size() || input_formats.size() != input_object_types.size()) {
-    MS_LOG(EXCEPTION) << "The input buildInfo size kernel: " << kernel->fullname_with_scope()
-                      << "is not equal, input_formats size: " << input_formats.size()
-                      << ", input_types size: " << input_types.size()
-                      << ", input_object_types size: " << input_object_types.size();
+    MS_LOG_WITH_NODE(EXCEPTION, kernel) << "The input buildInfo size kernel: " << kernel->fullname_with_scope()
+                                        << "is not equal, input_formats size: " << input_formats.size()
+                                        << ", input_types size: " << input_types.size()
+                                        << ", input_object_types size: " << input_object_types.size();
   }
   if (output_formats.size() != output_types.size() || output_formats.size() != output_object_types.size()) {
-    MS_LOG(EXCEPTION) << "The output buildInfo size kernel: " << kernel->fullname_with_scope()
-                      << "is not equal, output_formats size: " << output_formats.size()
-                      << ", output_types size: " << output_types.size()
-                      << ", output_object_types size: " << output_object_types.size();
+    MS_LOG_WITH_NODE(EXCEPTION, kernel) << "The output buildInfo size kernel: " << kernel->fullname_with_scope()
+                                        << "is not equal, output_formats size: " << output_formats.size()
+                                        << ", output_types size: " << output_types.size()
+                                        << ", output_object_types size: " << output_object_types.size();
   }
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel.get());
 }
@@ -648,8 +648,8 @@ bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
   }
   if (kernel::IsEnabledAclnnDispatch(op_name)) {
     if (!kernel::IsRegisteredAclnnOp(op_name)) {
-      MS_LOG(EXCEPTION) << "Kernel " << node->fullname_with_scope()
-                        << " is enabled dispatch in yaml, but not registered an aclnn kernelmod.";
+      MS_LOG_WITH_NODE(EXCEPTION, node) << "Kernel " << node->fullname_with_scope()
+                                        << " is enabled dispatch in yaml, but not registered an aclnn kernelmod.";
     }
     kIsEnableAclnnMap.insert({op_name, true});
     return true;

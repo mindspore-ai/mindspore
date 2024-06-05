@@ -130,10 +130,10 @@ void RpcNodeScheduler::Link(const ActorSet *actor_set) const {
       common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(rpc_send_kernel, kAttrInterProcessEdgeNames);
 
     if (send_dst_ranks.empty() || send_dst_roles.empty()) {
-      MS_LOG(EXCEPTION) << "The attributes of send node " << rpc_send_kernel->fullname_with_scope()
-                        << " is invalid. send_dst_ranks: " << send_dst_ranks << ", send_dst_roles: " << send_dst_roles
-                        << ", send_src_node_name: " << send_src_node_name
-                        << ", send_dst_node_name: " << send_dst_node_name;
+      MS_LOG_WITH_NODE(EXCEPTION, rpc_send_kernel)
+        << "The attributes of send node " << rpc_send_kernel->fullname_with_scope()
+        << " is invalid. send_dst_ranks: " << send_dst_ranks << ", send_dst_roles: " << send_dst_roles
+        << ", send_src_node_name: " << send_src_node_name << ", send_dst_node_name: " << send_dst_node_name;
     }
     send_actor->set_inter_process_edge_names(edge_names);
     send_actor->SetRouteInfo(send_dst_ranks[0], send_dst_roles[0], send_src_node_name, send_dst_node_name);
@@ -151,10 +151,10 @@ void RpcNodeScheduler::Link(const ActorSet *actor_set) const {
       common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(rpc_recv_kernel, kAttrInterProcessEdgeNames);
 
     if (recv_src_ranks.empty() || recv_src_roles.empty()) {
-      MS_LOG(EXCEPTION) << "The attributes of recv node " << rpc_recv_kernel->fullname_with_scope()
-                        << " is invalid. recv_src_ranks: " << recv_src_ranks << ", recv_src_roles: " << recv_src_roles
-                        << ", recv_src_node_name: " << recv_src_node_name
-                        << ", recv_dst_node_name: " << recv_dst_node_name;
+      MS_LOG_WITH_NODE(EXCEPTION, rpc_recv_kernel)
+        << "The attributes of recv node " << rpc_recv_kernel->fullname_with_scope()
+        << " is invalid. recv_src_ranks: " << recv_src_ranks << ", recv_src_roles: " << recv_src_roles
+        << ", recv_src_node_name: " << recv_src_node_name << ", recv_dst_node_name: " << recv_dst_node_name;
     }
     recv_actor->set_inter_process_edge_names(edge_names);
     recv_actor->SetRouteInfo(recv_src_ranks[0], recv_src_roles[0], recv_src_node_name, recv_dst_node_name);

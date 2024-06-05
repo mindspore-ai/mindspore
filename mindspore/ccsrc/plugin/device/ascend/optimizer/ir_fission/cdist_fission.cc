@@ -104,7 +104,8 @@ const AnfNodePtr CdistFission::Process(const FuncGraphPtr &graph, const AnfNodeP
   auto cdist_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cdist_cnode);
   if (common::AnfAlgo::IsDynamicShape(cdist_cnode)) {
-    MS_LOG(EXCEPTION) << "Cdist don't support dynamic shape, node: " << cdist_cnode->fullname_with_scope();
+    MS_LOG_WITH_NODE(EXCEPTION, cdist_cnode)
+      << "Cdist don't support dynamic shape, node: " << cdist_cnode->fullname_with_scope();
   }
   if (GetBoolAttr(cdist_cnode, kAttrVisited)) {
     return nullptr;
@@ -140,7 +141,8 @@ const AnfNodePtr CdistGradFission::Process(const FuncGraphPtr &graph, const AnfN
   auto cdist_grad_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cdist_grad_cnode);
   if (common::AnfAlgo::IsDynamicShape(cdist_grad_cnode)) {
-    MS_LOG(EXCEPTION) << "CdistGrad don't support dynamic shape, node: " << cdist_grad_cnode->fullname_with_scope();
+    MS_LOG_WITH_NODE(EXCEPTION, cdist_grad_cnode)
+      << "CdistGrad don't support dynamic shape, node: " << cdist_grad_cnode->fullname_with_scope();
   }
   if (GetBoolAttr(cdist_grad_cnode, kAttrVisited)) {
     return nullptr;

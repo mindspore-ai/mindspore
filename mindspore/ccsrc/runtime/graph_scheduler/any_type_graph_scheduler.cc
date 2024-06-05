@@ -126,15 +126,15 @@ void AnyTypeGraphScheduler::TransArrowInDataSourceActorToAnyTypeKernelActor(
     MS_LOG(DEBUG) << "output data node:" << node->DebugString();
     const auto &front_node = real_graph->GetFrontAnfByBackendAnf(node);
     if (front_node == nullptr) {
-      MS_LOG(EXCEPTION) << "Failed to get front node by data node:" << node->DebugString()
-                        << " in real graph:" << real_graph->ToString();
+      MS_LOG_WITH_NODE(EXCEPTION, node) << "Failed to get front node by data node:" << node->DebugString()
+                                        << " in real graph:" << real_graph->ToString();
     }
     MS_LOG(DEBUG) << "output data front node:" << front_node->DebugString();
     const auto &front_parameters = model_graph->input_nodes();
     const auto &iter = find(front_parameters.begin(), front_parameters.end(), front_node);
     if (iter == front_parameters.end()) {
-      MS_LOG(EXCEPTION) << "Failed to find index by backend parameter:" << node->DebugString()
-                        << " front node:" << front_node->DebugString();
+      MS_LOG_WITH_NODE(EXCEPTION, front_node) << "Failed to find index by backend parameter:" << node->DebugString()
+                                              << " front node:" << front_node->DebugString();
     }
     MS_EXCEPTION_IF_NULL(data_source_actor->output_data_arrows_[i]);
     MS_EXCEPTION_IF_NULL(data_source_actor->output_data_[i].first);
@@ -287,9 +287,9 @@ void AnyTypeGraphScheduler::CollectBackendParameterForDynamicShape(AnyTypeKernel
       MS_EXCEPTION_IF_NULL(front_node);
       const auto &iter = find(model_graph->input_nodes().begin(), model_graph->input_nodes().end(), front_node);
       if (iter == model_graph->input_nodes().end()) {
-        MS_LOG(EXCEPTION) << "Invalid input node:" << input_node->DebugString()
-                          << " front node:" << front_node->DebugString()
-                          << " for actor:" << any_type_kernel_actor->GetAID();
+        MS_LOG_WITH_NODE(EXCEPTION, input_node)
+          << "Invalid input node:" << input_node->DebugString() << " front node:" << front_node->DebugString()
+          << " for actor:" << any_type_kernel_actor->GetAID();
       }
       size_t index = LongToSize(iter - model_graph->input_nodes().begin());
       MS_LOG(DEBUG) << "Add dynamic parameter:" << input_node->DebugString() << " in graph:" << real_graph->ToString()
@@ -366,7 +366,7 @@ void PrepareDataForValueNode(const AnfNodePtr &node, const DeviceContext *const 
     MS_EXCEPTION_IF_NULL(kernel_tensor);
     if (!device_tensor->SyncHostToDevice(kernel_tensor->GetShapeVector(), kernel_tensor->size(),
                                          kernel_tensor->dtype_id(), kernel_tensor->GetValuePtr())) {
-      MS_LOG(EXCEPTION) << "Failed to sync data for value node:" << node->DebugString();
+      MS_LOG_WITH_NODE(EXCEPTION, node) << "Failed to sync data for value node:" << node->DebugString();
     }
 
     MS_LOG(DEBUG) << "Device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()

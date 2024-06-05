@@ -63,23 +63,25 @@ void GetBranchNameToCondtionActor(const KernelGraphPtr &graph,
     MS_EXCEPTION_IF_NULL(gather_to_switch.first);
     if (!common::AnfAlgo::CheckPrimitiveType(gather_to_switch.first, prim::kPrimConditionGather) ||
         !common::AnfAlgo::CheckPrimitiveType(gather_to_switch.second, prim::kPrimConditionSwitch)) {
-      MS_LOG(EXCEPTION) << "Invalid condition gather node:" << gather_to_switch.first->DebugString()
-                        << " or condition switch node:" << gather_to_switch.second->DebugString();
+      MS_LOG_WITH_NODE(EXCEPTION, gather_to_switch.first)
+        << "Invalid condition gather node:" << gather_to_switch.first->DebugString()
+        << " or condition switch node:" << gather_to_switch.second->DebugString();
     }
     const auto &gather_cnode = gather_to_switch.first->cast<CNodePtr>();
     const auto &switch_cnode = gather_to_switch.second->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(gather_cnode);
     MS_EXCEPTION_IF_NULL(switch_cnode);
     if (!gather_cnode->HasAttr(kAttrBranchGraphName)) {
-      MS_LOG(EXCEPTION) << "Failed to get inline graph name by node:" << gather_cnode->fullname_with_scope();
+      MS_LOG_WITH_NODE(EXCEPTION, gather_cnode)
+        << "Failed to get inline graph name by node:" << gather_cnode->fullname_with_scope();
     }
     const auto &branch_graph_names = gather_cnode->GetAttr(kAttrBranchGraphName);
     MS_EXCEPTION_IF_NULL(branch_graph_names);
     MS_LOG(DEBUG) << "Branch graph name:" << branch_graph_names->ToString()
                   << " for node:" << gather_cnode->fullname_with_scope();
     if (!branch_graph_names->isa<ValueTuple>()) {
-      MS_LOG(EXCEPTION) << "Invalid branch group name:" << branch_graph_names->ToString()
-                        << " for node:" << gather_cnode->fullname_with_scope();
+      MS_LOG_WITH_NODE(EXCEPTION, gather_cnode) << "Invalid branch group name:" << branch_graph_names->ToString()
+                                                << " for node:" << gather_cnode->fullname_with_scope();
     }
     const auto &tuple_name = branch_graph_names->cast<ValueTuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_name);
@@ -431,10 +433,9 @@ void InlineControlFlowScheduler::FixRefCountForRefNode(const KernelWithIndex &in
     const auto &gather_cnode = input_with_index.first->cast<CNodePtr>();
     size_t input_num = common::AnfAlgo::GetInputNum(gather_cnode);
     if (input_num == 0 || input_num != gather_actor->branch_names_.size() * gather_actor->branch_output_num_) {
-      MS_LOG(EXCEPTION) << "Invalid input num:" << input_num
-                        << " branch output num:" << gather_actor->branch_output_num_
-                        << " branch num:" << gather_actor->branch_names_.size()
-                        << " for node:" << gather_cnode->fullname_with_scope();
+      MS_LOG_WITH_NODE(EXCEPTION, gather_cnode)
+        << "Invalid input num:" << input_num << " branch output num:" << gather_actor->branch_output_num_
+        << " branch num:" << gather_actor->branch_names_.size() << " for node:" << gather_cnode->fullname_with_scope();
     }
     for (size_t i = input_with_index.second; i < input_num; i = i + gather_actor->branch_output_num_) {
       FixRefCountForInputNode(common::AnfAlgo::VisitKernelWithReturnType(gather_cnode->input(i + 1), 0), ref_count,
@@ -494,10 +495,9 @@ void InlineControlFlowScheduler::FixRefCountForInputNode(const KernelWithIndex &
     MS_EXCEPTION_IF_NULL(gather_actor);
     size_t input_num = common::AnfAlgo::GetInputNum(gather_cnode);
     if (input_num == 0 || input_num != gather_actor->branch_names_.size() * gather_actor->branch_output_num_) {
-      MS_LOG(EXCEPTION) << "Invalid input num:" << input_num
-                        << " branch output num:" << gather_actor->branch_output_num_
-                        << " branch num:" << gather_actor->branch_names_.size()
-                        << " for node:" << gather_cnode->fullname_with_scope();
+      MS_LOG_WITH_NODE(EXCEPTION, gather_cnode)
+        << "Invalid input num:" << input_num << " branch output num:" << gather_actor->branch_output_num_
+        << " branch num:" << gather_actor->branch_names_.size() << " for node:" << gather_cnode->fullname_with_scope();
     }
     for (size_t i = input_with_index.second; i < input_num; i = i + gather_actor->branch_output_num_) {
       FixRefCountForInputNode(common::AnfAlgo::VisitKernelWithReturnType(gather_cnode->input(i + 1), 0), ref_count,
@@ -661,11 +661,13 @@ void InlineControlFlowScheduler::HandleConditionGatherActor(const KernelActorPtr
   const auto &gather_switch_map = kernel_graph->condition_gather_to_switch();
   const auto &gather_switch_iter = gather_switch_map.find(gather_node);
   if (gather_switch_iter == gather_switch_map.end()) {
-    MS_LOG(EXCEPTION) << "Failed to get switch node by gather node:" << gather_node->fullname_with_scope();
+    MS_LOG_WITH_NODE(EXCEPTION, gather_node)
+      << "Failed to get switch node by gather node:" << gather_node->fullname_with_scope();
   }
   if (gather_switch_iter->second == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to get switch node by gather node:" << gather_node->fullname_with_scope()
-                      << " in kernel graph:" << kernel_graph->ToString();
+    MS_LOG_WITH_NODE(EXCEPTION, gather_node)
+      << "Failed to get switch node by gather node:" << gather_node->fullname_with_scope()
+      << " in kernel graph:" << kernel_graph->ToString();
   }
   const auto &actor = FetchActor(gather_switch_iter->second->fullname_with_scope());
   MS_EXCEPTION_IF_NULL(actor);
@@ -766,10 +768,10 @@ void InlineControlFlowScheduler::Link(ActorSet *actor_set, const GraphCompilerIn
                     << " input node:" << input_pair.first->fullname_with_scope();
       const auto &actor = FetchActor(output_pair.first->fullname_with_scope());
       if (actor == nullptr) {
-        MS_LOG(EXCEPTION) << "Failed to get actor by ref node:" << output_pair.first->fullname_with_scope()
-                          << " index:" << output_pair.second
-                          << " origin node:" << input_pair.first->fullname_with_scope()
-                          << " index:" << input_pair.second << " in graph:" << kernel_graph->ToString();
+        MS_LOG_WITH_NODE(EXCEPTION, output_pair.first)
+          << "Failed to get actor by ref node:" << output_pair.first->fullname_with_scope()
+          << " index:" << output_pair.second << " origin node:" << input_pair.first->fullname_with_scope()
+          << " index:" << input_pair.second << " in graph:" << kernel_graph->ToString();
       }
       size_t ref_count = 1;
       std::for_each(actor->output_data_arrows().begin(), actor->output_data_arrows().end(),
@@ -795,9 +797,10 @@ void InlineControlFlowScheduler::FixRefCountRecursively(const KernelWithIndex &o
   if (common::AnfAlgo::CheckPrimitiveType(input_pair.first, prim::kPrimConditionSwitch)) {
     const auto &iter = kernel_graph->inline_sub_graph_kernels().find(output_pair.first);
     if (iter == kernel_graph->inline_sub_graph_kernels().end()) {
-      MS_LOG(EXCEPTION) << "Invalid ref node pair, input node:" << input_pair.first->fullname_with_scope()
-                        << " index:" << input_pair.second << " output node:" << output_pair.first->fullname_with_scope()
-                        << " index:" << output_pair.second << " in kernel graph:" << kernel_graph->ToString();
+      MS_LOG_WITH_NODE(EXCEPTION, input_pair.first)
+        << "Invalid ref node pair, input node:" << input_pair.first->fullname_with_scope()
+        << " index:" << input_pair.second << " output node:" << output_pair.first->fullname_with_scope()
+        << " index:" << output_pair.second << " in kernel graph:" << kernel_graph->ToString();
     }
     const auto &branch_name = iter->second;
     const auto &actor = FetchActor(input_pair.first->fullname_with_scope());

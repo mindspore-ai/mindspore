@@ -101,8 +101,8 @@ bool HasFraczGroupAttrAndSet(const AnfNodePtr &node, size_t index, int64_t group
     if (kInOutOperatorSet.find(node_name) != kInOutOperatorSet.end()) {
       auto input_num = common::AnfAlgo::GetInputTensorNum(node);
       if (index >= input_num) {
-        MS_LOG(EXCEPTION) << "Index out of range, node[" << node->fullname_with_scope() << "] only have " << input_num
-                          << " inputs, but get index " << index;
+        MS_LOG_WITH_NODE(EXCEPTION, node) << "Index out of range, node[" << node->fullname_with_scope()
+                                          << "] only have " << input_num << " inputs, but get index " << index;
       }
       std::vector<int64_t> fz_group_idx(input_num, 1);
       if (common::AnfAlgo::HasNodeAttr(kAttrFracZGroupIdx, cnode)) {

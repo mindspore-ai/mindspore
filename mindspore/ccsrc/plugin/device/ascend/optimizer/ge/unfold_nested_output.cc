@@ -71,7 +71,7 @@ size_t GetElementsSize(const CNodePtr &cnode, int64_t origin_index) {
   auto abs = cnode->abstract();
   MS_EXCEPTION_IF_NULL(abs);
   if (!abs->isa<abstract::AbstractTuple>()) {
-    MS_LOG(EXCEPTION) << "Node: " << cnode->fullname_with_scope() << " must be a nested tuple.";
+    MS_LOG_WITH_NODE(EXCEPTION, cnode) << "Node: " << cnode->fullname_with_scope() << " must be a nested tuple.";
   }
   auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(abs_tuple);

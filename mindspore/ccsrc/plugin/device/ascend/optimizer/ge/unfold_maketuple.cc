@@ -152,7 +152,8 @@ void ProcessSucceedTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr
       tuplegetitem_node_inputs.push_back(unfold_maketuple_node);
       auto iter = unfold_nodes_index.find(real_node);
       if (iter == unfold_nodes_index.end()) {
-        MS_LOG(EXCEPTION) << "Node: " << real_node->fullname_with_scope() << " cannot be found in unfold_nodes_index.";
+        MS_LOG_WITH_NODE(EXCEPTION, real_node)
+          << "Node: " << real_node->fullname_with_scope() << " cannot be found in unfold_nodes_index.";
       }
       int64_t real_idx = iter->second;
       auto new_idx_node = NewValueNode(real_idx);
@@ -179,7 +180,8 @@ void ProcessSucceedTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr
     auto real_node = real_nodes[kIndex0];
     auto iter = unfold_nodes_index.find(real_node);
     if (iter == unfold_nodes_index.end()) {
-      MS_LOG(EXCEPTION) << "Node: " << real_node->fullname_with_scope() << " cannot be found in unfold_nodes_index.";
+      MS_LOG_WITH_NODE(EXCEPTION, real_node)
+        << "Node: " << real_node->fullname_with_scope() << " cannot be found in unfold_nodes_index.";
     }
     auto new_idx_node = NewValueNode(iter->second);
     tuplegetitem_cnode->set_input(kRealInputNodeIndexInTupleGetItem, unfold_maketuple_node);

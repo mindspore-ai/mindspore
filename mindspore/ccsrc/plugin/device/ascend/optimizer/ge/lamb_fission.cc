@@ -140,9 +140,9 @@ AnfNodePtr CreateLambApplyOptimizerAssignNode(const FuncGraphPtr &graph, const s
   std::vector<AnfNodePtr> lamb_assign_outputs;
   CreateMultipleOutputsOfAnfNode(graph, new_node, kLambApplyOptimizerAssignOutputNum, &lamb_assign_outputs);
   if (lamb_assign_outputs.size() != kLambApplyOptimizerAssignOutputNum) {
-    MS_LOG(EXCEPTION) << "The input tensor size[" << lamb_assign_outputs.size()
-                      << "] of node [" + new_node->DebugString() + "] is not equal to "
-                      << kLambApplyOptimizerAssignOutputNum << trace::DumpSourceLines(new_node);
+    MS_LOG_WITH_NODE(EXCEPTION, new_node) << "The input tensor size[" << lamb_assign_outputs.size()
+                                          << "] of node [" + new_node->DebugString() + "] is not equal to "
+                                          << kLambApplyOptimizerAssignOutputNum << trace::DumpSourceLines(new_node);
   }
   return lamb_assign_outputs[kLambApplyOptimizerAssignUpdateIndex];
 }
@@ -248,9 +248,9 @@ const AnfNodePtr LambFissionGe::Process(const FuncGraphPtr &graph, const AnfNode
   MS_EXCEPTION_IF_NULL(lamb_cnode);
   auto real_input_num = common::AnfAlgo::GetInputNum(lamb_cnode);
   if (real_input_num < kLambInputNum) {
-    MS_LOG(EXCEPTION) << "The input tensor size[" << real_input_num
-                      << "] of node [" + lamb_cnode->DebugString() + "] is not equal to " << kLambInputNum
-                      << trace::DumpSourceLines(lamb_cnode);
+    MS_LOG_WITH_NODE(EXCEPTION, lamb_cnode)
+      << "The input tensor size[" << real_input_num << "] of node [" + lamb_cnode->DebugString() + "] is not equal to "
+      << kLambInputNum << trace::DumpSourceLines(lamb_cnode);
   }
 
   bool is_exist_umonad_node = false;
