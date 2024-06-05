@@ -20,9 +20,10 @@ from functools import wraps
 from mindspore import log as logger
 
 
-def lazy_inline(fn=None, attrs=None):
+def lazy_inline(fn=None, attrs=None, policy=None):
     """
     Make the cell to be reusable. The corresponding sub graph will not be inline at first.
+    and will be inline with the policy
     Registering the decorator of the built-in function `__init__` of a cell, the decorator
     will add the parameters of `__init__` according to the `attrs` as the attributes of this cell.
 
@@ -33,6 +34,11 @@ def lazy_inline(fn=None, attrs=None):
     Args:
         fn (function): `__init__` function of a cell.
         attrs (Union[list[string], string]): The attributes list to add for the cell.
+        policy:
+               None: The cell will be compiled to sub graph with no inline = true
+               "front": The cell will be compiled to sub graph first and will be inline
+               at front end.
+               default is None.
 
     Returns:
         function, original function.
@@ -204,6 +210,12 @@ def lazy_inline(fn=None, attrs=None):
                 del new_args['self']
                 new_args = new_args.values()
             fn(self, *args, **kwargs)
+
+            if isinstance(policy, str) and policy == "front":
+                self.no_inline = False
+            elif policy is not None:
+                raise ValueError(f"policy must be None or 'front'")
+
             if attrs is None:
                 self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(new_args)
                 return
