@@ -24,6 +24,7 @@
 #include "utils/log_adapter.h"
 #include "kernel/common_utils.h"
 #include "mindspore/core/utils/ms_context.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 
 namespace mindspore {
 namespace runtime {
@@ -39,6 +40,7 @@ void DataSourceActor::Init() {
 void DataSourceActor::FetchData(OpContext<DeviceTensor> *const context) {
   MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") fetches data.";
   MS_EXCEPTION_IF_NULL(context);
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "", "");
   // Pop the data of last time.
   if (!buffers_.empty()) {
     buffers_.pop();
