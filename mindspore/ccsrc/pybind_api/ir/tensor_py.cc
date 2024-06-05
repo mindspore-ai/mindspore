@@ -573,6 +573,9 @@ void TensorPy::Offload(const Tensor &tensor) {
 
 void TensorPy::SetDeviceAddress(const Tensor &tensor, uintptr_t addr, const ShapeVector &shape,
                                 const TypePtr type_ptr) {
+  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
+    MS_LOG(EXCEPTION) << "set_device_address now only support Ascend backend!";
+  }
   if (type_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Dtype to be set is nullptr.";
   }

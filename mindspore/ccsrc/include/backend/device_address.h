@@ -503,14 +503,17 @@ class MbufDeviceAddress : public device::DeviceAddress {
   void SetData(void *data) { set_ptr(data); }
 
   bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override {
+    MS_LOG(ERROR) << "Mbuf address does not support sync data from device to host, please use graph mode";
     return false;
   }
   bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
                         const std::string &format) const override {
+    MS_LOG(ERROR) << "Mbuf address does not support sync data from host to device, please use graph mode";
     return false;
   }
   bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const override {
-    return SyncHostToDevice(shape, size, type, host_ptr, "DefaultFormat");
+    MS_LOG(ERROR) << "Mbuf address does not support sync data from device to host, please use graph mode";
+    return false;
   }
   void ClearDeviceMemory() override {}
   device::DeviceType GetDeviceType() const { return DeviceType::kAscend; }
