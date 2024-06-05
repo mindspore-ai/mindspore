@@ -1,7 +1,7 @@
-mindspore.mint.grid_sample
-==========================
+mindspore.mint.nn.functional.grid_sample
+========================================
 
-.. py:function:: mindspore.ops.grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corners=False)
+.. py:function:: mindspore.mint.nn.functional.grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corners=False)
 
     给定一个输入和一个网格，使用网格中的输入值和像素位置计算输出。`input` 只支持4-D（GridSampler2D）和5-D（GridSampler3D）。
 
