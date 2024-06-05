@@ -54,9 +54,6 @@
 
         为参数添加pipeline_stage。
 
-        .. note::
-            这个接口在2.3版本废弃，并且会在未来版本移除。
-
         参数：
             - **stage** (int) - 参数的pipeline_stage。
 

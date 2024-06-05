@@ -1544,6 +1544,8 @@ def set_context(**kwargs):
                 - 2: Apply fusion to backward nodes.
 
                 - 3: Apply fusion to all nodes.
+              - bias_add_comm_swap (bool): Enable node execution order swap communication operators and add operators
+                if ``True``. Default: ``False``.
             - host_scheduling_max_threshold(int): The max threshold to control whether the dynamic shape process is
               used when run the static graph, the default value is 0. When the number of operations in the static graph
               is less than the max threshold, this graph will be executed in dynamic shape process. In large model
