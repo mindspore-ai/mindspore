@@ -586,7 +586,7 @@ def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
     Args:
         tensor (Tensor): The tensor to be gathered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         dst(int, optional): Specifies the rank(global rank) of the process that receive the tensor.
-            And only process `dst` will receive the gathered tensor.
+            And only process `dst` will receive the gathered tensor. Default: 0.
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
     Returns:
@@ -849,11 +849,11 @@ def isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
 
     Args:
         tensor (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        dst (int): A required integer identifying the destination rank(global rank).
+        dst (int, optional): A required integer identifying the destination rank(global rank). Default: 0.
         group (str, optional): The communication group to work on.
             Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
-        tag (int): A required integer identifying the send/recv message tag. The message will
-            be received by the Receive op with the same "tag".
+        tag (int, optional): A required integer identifying the send/recv message tag. The message will
+            be received by the Receive op with the same "tag". Default: 0.
 
     Raises:
         TypeError: `dst` is not an int or `group` is not a str。
@@ -908,11 +908,11 @@ def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     Args:
         tensor (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The shape and dtype of this
             tensor is used to receive tensor, but the value of input `tensor` would not take effect.
-        src (int): A required integer identifying the source rank(global rank).
+        src (int, optional): A required integer identifying the source rank(global rank). Default: 0.
         group (str, optional): The communication group to work on.
             Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
-        tag (int): A required integer identifying the send/recv message tag. The message will
-            be received by the Send op with the same "tag".
+        tag (int, optional): A required integer identifying the send/recv message tag. The message will
+            be received by the Send op with the same "tag". Default: 0.
 
     Returns:
         Tensor, the shape of output is :math:`(sum x_1, x_2, ..., x_R)`.

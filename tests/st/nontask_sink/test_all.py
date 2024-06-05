@@ -165,7 +165,14 @@ def test_hccl_scatter_tensor():
     Description: mpi run 2P case of 'scatter_tensor' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_scatter_tensor.py")
+    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s "
+                            "test_scatter_tensor.py::test_hccl_scatter_tensor_func_in_cell_2p")
+    assert return_code == 0
+    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s "
+                            "test_scatter_tensor.py::test_hccl_scatter_tensor_func_2p")
+    assert return_code == 0
+    return_code = os.system("mpirun --allow-run-as-root -n 4 pytest -s "
+                            "test_scatter_tensor.py::test_scatter_tensor_two_groups")
     assert return_code == 0
 
 

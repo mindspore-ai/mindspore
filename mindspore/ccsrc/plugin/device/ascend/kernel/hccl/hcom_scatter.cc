@@ -27,7 +27,7 @@ bool HcomScatterKernel::Init(const std::vector<KernelTensor *> &inputs, const st
     MS_LOG(ERROR) << "HcclKernel Init failed.";
     return false;
   }
-  rank_id_ = static_cast<int>(distributed::collective::CollectiveManager::instance()->local_rank_id());
+  rank_id_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("rank_id")));
   src_rank_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("src_rank")));
   rank_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("rank_size")));
   return true;
