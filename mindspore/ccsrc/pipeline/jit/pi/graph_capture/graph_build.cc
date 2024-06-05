@@ -586,6 +586,10 @@ bool GraphBuilder::DoException(const Instr &instr) {
     (void)pop();
     return true;
   } else if (opCode == SETUP_EXCEPT) {
+    if (graph_->Config().GetBoolConfig(GraphJitConfig::kSkipException)) {
+      graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceSkip_Exception);
+      return false;
+    }
     PushStack(TryBlock{SETUP_EXCEPT, instr.extra_jump()->bci(), instr.bci(), false});
     cur_bci_++;
     return true;
@@ -3478,7 +3482,8 @@ ValueNode *MindGraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &
   if (std::any_of(const_type.begin(), const_type.end(),
                   [attr_type](const AObject::Type type) { return attr_type == type; })) {
     graph_->GuardValueNode(graph_attr_node, GuardLevel::GEqual);
-  } else {
+  } else if (attr_type != AObject::kTypeFunction && attr_type != AObject::kTypeBoundMethod &&
+             attr_type != AObject::kTypeCFunction) {
     graph_->GuardValueNode(graph_attr_node, GuardLevel::GDeduce);
   }
   return graph_attr_node;
