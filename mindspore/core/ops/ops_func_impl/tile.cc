@@ -132,6 +132,12 @@ ShapeArray TileFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePt
   MS_EXCEPTION_IF_NULL(x_tensor);
   auto x_shape = x_tensor->shape();
   auto dims = GetValue<std::vector<int64_t>>(input_values[kInputIndex1]);
+  for (size_t i = 0; i < dims.size(); ++i) {
+    if (dims[i] < 0) {
+      MS_EXCEPTION(ValueError) << "For 'Tile', 'dims' cannot contain negative integer numbers, but got " << dims[i]
+                               << " in " << i << "th.";
+    }
+  }
   AdaptShapeAndMultipies(&x_shape, &dims);
 
   auto adapted_rank = x_shape.size();
