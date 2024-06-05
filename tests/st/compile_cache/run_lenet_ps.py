@@ -29,7 +29,8 @@ from mindspore.common.initializer import TruncatedNormal
 from mindspore.communication.management import init
 
 DATASET_PATH = "/home/workspace/mindspore_dataset/mnist"
-context.set_context(mode=context.GRAPH_MODE, enable_compile_cache=True, compile_cache_path=sys.argv[1])
+context.set_context(mode=context.GRAPH_MODE, device_target="GPU", enable_compile_cache=True,
+                    compile_cache_path=sys.argv[1])
 context.set_ps_context(enable_ps=True)
 
 

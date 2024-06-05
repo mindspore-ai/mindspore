@@ -266,8 +266,8 @@ def start_ps_subprocess(script_path, cache_path, str_to_check, log_name):
     os.chdir(cwd)
     check_log("server", log_name, str_to_check)
     check_log("worker", log_name, str_to_check)
-    sched_process.wait()
     server_process.wait()
+    sched_process.wait()
 
 
 def clear_and_make_run_dir(dir_path):
@@ -445,9 +445,8 @@ def test_compile_cache_lenet_change_dir():
     shutil.rmtree(new_path, ignore_errors=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_compile_cache_lenet_ps():
     """
