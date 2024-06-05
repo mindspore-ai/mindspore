@@ -60,7 +60,7 @@ BaseShapePtr ScatterAddExtFuncImpl::InferShape(const PrimitivePtr &primitive,
     if (d != final_dim && index_shape_vec[d] > input_shape_vec[d]) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", "
                                << "except for the dimension specified by 'dim', the size of each dimension of 'index' "
-                                  "must be less than or equal to to that of 'input'. But got "
+                                  "must be less than or equal to that of 'input'. But got "
                                << d << "th dim of 'index' and 'input' " << index_shape_vec[d] << ", "
                                << input_shape_vec[d] << "respectively.";
     }
@@ -76,7 +76,9 @@ TypePtr ScatterAddExtFuncImpl::InferType(const PrimitivePtr &primitive,
   (void)types.emplace("input", input_type);
   (void)types.emplace("src", src_type);
   (void)CheckAndConvertUtils::CheckTypeSame(types, primitive->name());
-  (void)CheckAndConvertUtils::CheckTypeValid("input", input_type, common_valid_types_with_bool, primitive->name());
+  const std::set<TypePtr> valid_types = {kInt8,    kInt16,   kInt32,   kInt64, kUInt8,
+                                         kFloat16, kFloat32, kFloat64, kBool,  kBFloat16};
+  (void)CheckAndConvertUtils::CheckTypeValid("input", input_type, valid_types, primitive->name());
   return input_args[kIndex0]->GetType()->Clone();
 }
 }  // namespace ops
