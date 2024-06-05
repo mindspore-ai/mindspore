@@ -807,6 +807,9 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
         auto send_out = InsertSend(parameter, user_stage, stage_, micro);
         sends.push_back(send_out.depend);
       } else {
+        if (!is_train_ && !enable_share_cell_) {
+          continue;
+        }
         auto receive = Reuse(parameter, *parameter_stage.begin(), recvs, SRC_RANK);
         if (receive) {
           manager_->SetEdge(node, user.second, receive);
