@@ -148,7 +148,7 @@ def all_gather_into_tensor(tensor, group=GlobalComm.WORLD_COMM_GROUP):
 
     Args:
         tensor (Tensor): The input tensor to be all gathered into tensor.
-                        The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+            The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
             means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
 
@@ -776,7 +776,7 @@ def all_to_all_single(tensor, output_split_sizes=None, input_split_sizes=None, g
             scatter yet, the elements should be all the same. Default: ``None``.
         input_split_sizes (Tuple[int], optional): Input split sizes for dim 0. This operation cannot support uneven
             scatter yet, the elements should be all the same. Default: ``None``.
-        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Outputs:
         Tensor. If the shape of input tensor is :math:`(x_1, x_2, ..., x_R)`, then the shape of output tensor is
@@ -812,7 +812,7 @@ def all_to_all_single(tensor, output_split_sizes=None, input_split_sizes=None, g
         >>> from mindspore.communication import init
         >>> from mindspore.communication.comm_func import all_to_all_single
         >>> import numpy as np
-
+        >>>
         >>> init()
         >>> net = Net()
         >>> rank_id = int(os.getenv("RANK_ID"))
@@ -825,13 +825,11 @@ def all_to_all_single(tensor, output_split_sizes=None, input_split_sizes=None, g
          [ 2.  3.]
          [16. 17.]
          [18. 19.]]
-
         # Rank 1:
         [[ 4.  5.]
          [ 6.  7.]
          [20. 21.]
          [22. 23.]]
-
         # Launch 4 processes.
         >>> input_split_sizes = [1, 1, 1, 1]
         >>> out = all_to_all_single(tensor=data, input_split_sizes=input_split_sizes)

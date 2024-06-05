@@ -1,5 +1,6 @@
 mindspore.mint.nn.functional.pad
 ================================
+
 .. py:function:: mindspore.mint.nn.functional.pad(input, pad, mode='constant', value=None)
 
     根据参数 `pad` 对输入进行填充。
