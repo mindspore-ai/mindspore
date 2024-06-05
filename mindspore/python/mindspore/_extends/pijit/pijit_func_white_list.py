@@ -241,7 +241,7 @@ _func_map = {
     function_id(Tensor_.is_init): FUNC_KEY_BUILTIN_FUNC,
     function_id(Tensor_.is_contiguous): FUNC_KEY_BUILTIN_FUNC,
     function_id(Tensor_.stride): FUNC_KEY_BUILTIN_FUNC,
-    function_id(Tensor_.asnumpy): FUNC_KEY_BUILTIN_FUNC,
+    # Tensor_.asnumpy need real tensor value
 
     # other builtin function
     function_id(collections.abc.Mapping.get): FUNC_KEY_MAPPING_GET,
