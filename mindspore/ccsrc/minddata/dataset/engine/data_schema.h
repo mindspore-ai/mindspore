@@ -95,9 +95,13 @@ class ColDescriptor {
   /// \return The column's shape
   TensorShape Shape() const;
 
-  /// \brief getter function
-  /// \return TF if the column has an assigned fixed shape.
+  /// \brief Check if the column has a shape.
+  /// \return Whether the column has a shape.
   bool HasShape() const { return tensor_shape_ != nullptr; }
+
+  /// \brief Check if the column has a known shape.
+  /// \return Whether the column has a known shape.
+  bool HasKnownShape() const { return HasShape() && Shape().known(); }
 
   /// \brief getter function
   /// \return The column's tensor implementation type
