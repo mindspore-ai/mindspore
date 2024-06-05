@@ -58,6 +58,25 @@ Status StackInfo::GetAttrs() {
   return SUCCESS;
 }
 
+Status StackExtInfo::GetAttrs() {
+  auto axis_value = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, DIM);
+  if (!axis_value.has_value()) {
+    return FAILED;
+  }
+  axis_ = axis_value.value();
+
+  if (inputs_shape_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
+    return FAILED;
+  }
+  int64_t dim = SizeToLong(inputs_shape_[0].size());
+
+  if (axis_ < 0) {
+    axis_ = axis_ + dim;
+  }
+  return SUCCESS;
+}
+
 Status StackInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
@@ -163,5 +182,6 @@ std::vector<StrategyPtr> StackInfo::GenerateOpStrategies(int64_t stage_id) {
 }
 
 REGISTER(StackInfo);
+REGISTER(StackExtInfo);
 }  // namespace parallel
 }  // namespace mindspore
