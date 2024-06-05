@@ -174,7 +174,7 @@ static bool IsRealKernelNode(const AnfNodePtr &node) {
   if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad) ||
       IsPrimitiveCNode(node, prim::kPrimCast) || IsPrimitiveCNode(node, prim::kPrimVirtualDiv) ||
       IsPrimitiveCNode(node, prim::kPrimReceive) || IsPrimitiveCNode(node, prim::kPrimMicroStepAllGather) ||
-      IsPrimitiveCNode(node, prim::kPrimSend)) {
+      IsPrimitiveCNode(node, prim::kPrimSend) || IsPrimitiveCNode(node, prim::kPrimInsertGradientOf)) {
     return false;
   }
   return true;
@@ -185,13 +185,15 @@ std::pair<AnfNodePtr, int64_t> GetRealKernelNode(const AnfNodePtr &node, int64_t
   if (!IsRealKernelNode(node)) {
     return GetRealKernelNode(node->cast<CNodePtr>()->input(1), get_item_index, call_node, ignore_get_item);
   }
-  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem) && ignore_get_item) {
+  if ((IsPrimitiveCNode(node, prim::kPrimTupleGetItem) || IsPrimitiveCNode(node, prim::kPrimInsertGradientOf)) &&
+      ignore_get_item) {
     auto cnode = node->cast<CNodePtr>();
     auto cur_get_item_index = LongToInt(GetTupleGetItemIndex(cnode));
     auto tuple_getitem_input = cnode->input(1);
     return GetRealKernelNode(tuple_getitem_input, cur_get_item_index, call_node, ignore_get_item);
   }
-  if (get_item_index != -1 && IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+  if (get_item_index != -1 &&
+      (IsPrimitiveCNode(node, prim::kPrimMakeTuple) || IsPrimitiveCNode(node, prim::kPrimInsertGradientOf))) {
     auto make_tuple_cnode = node->cast<CNodePtr>();
     auto make_tuple_input = make_tuple_cnode->input(LongToSize(get_item_index + 1));
     return GetRealKernelNode(make_tuple_input, -1, call_node, ignore_get_item);
