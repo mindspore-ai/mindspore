@@ -796,13 +796,9 @@ class Parameter(Tensor_):
         return new_param
 
     @_LogActionOnce(logger=logger, key='add_pipeline_stage')
-    @deprecated("2.3", "add_pipeline_stage")
     def add_pipeline_stage(self, stage):
         """
         Add a pipeline stage to the parameter.
-
-        Note:
-            This interface is deprecated in 2.3, and will be deleted in the future.
 
         Args:
             stage(int): The pipeline stage to be added.
