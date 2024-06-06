@@ -18,9 +18,9 @@ mindspore.mint.mean
         Tensor，具有与 `input` 相同的数据类型。
 
         - 如果 `axis` 为 ``None`` ，且 `keep_dims` 为 ``False`` ，则输出一个零维Tensor，表示输入Tensor中所有元素的平均值。
-        - 如果 `axis` 为int，取值为1，并且 `keep_dims` 为 ``False`` ，则输出的shape为 :math:`(x_0, x_2, ..., x_R)` 。
-        - 如果 `axis` 为tuple(int)或list(int)，取值为(1, 2)，并且 `keep_dims` 为 ``False`` ，则输出Tensor的shape为 :math:`(x_0, x_3, ..., x_R)` 。
-        - 如果 `axis` 为一维Tensor，例如取值为[1, 2]，并且 `keep_dims` 为 ``False`` ，则输出Tensor的shape为 :math:`(x_0, x_3, ..., x_R)` 。
+        - 如果 `axis` 为int，取值为1，并且 `keep_dims` 为 ``False`` ，则输出的shape为 :math:`(input_0, input_2, ..., input_R)` 。
+        - 如果 `axis` 为tuple(int)或list(int)，取值为(1, 2)，并且 `keep_dims` 为 ``False`` ，则输出Tensor的shape为 :math:`(input_0, input_3, ..., input_R)` 。
+        - 如果 `axis` 为一维Tensor，例如取值为[1, 2]，并且 `keep_dims` 为 ``False`` ，则输出Tensor的shape为 :math:`(input_0, input_3, ..., input_R)` 。
 
     异常：
         - **TypeError** - `input` 不是Tensor。
