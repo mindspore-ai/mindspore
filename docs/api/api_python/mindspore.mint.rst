@@ -43,6 +43,7 @@ Tensor创建
     :template: classtemplate.rst
 
     mindspore.mint.ceil
+    mindspore.mint.clamp
     mindspore.mint.cos
     mindspore.mint.erf
     mindspore.mint.floor
