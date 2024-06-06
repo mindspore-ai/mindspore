@@ -875,7 +875,8 @@ static std::unique_ptr<AbstractBasePtrList> MakeArgumentsAbstract(const py::obje
     return std::make_unique<AbstractBasePtrList>(std::move(list));
   }
 
-  PyObject *key, *value;
+  PyObject *key;
+  PyObject *value;
   Py_ssize_t pos = 0;
   while (PyDict_Next(key_words.ptr(), &pos, &key, &value)) {
     auto abs = PyToAbs(value);

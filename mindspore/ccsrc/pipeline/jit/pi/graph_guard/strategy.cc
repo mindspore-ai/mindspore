@@ -65,7 +65,8 @@ static bool CompareOptCodeByCount(OptCodePtr a, OptCodePtr b) {
 }
 
 void ShrinkCodeSet(OptCodeSet *set, OptCodePtr target) {
-  OptCodeSet match, mismatch;
+  OptCodeSet match;
+  OptCodeSet mismatch;
   auto guard_target = target->GetGuard();
   for (size_t i = set->size(); i != 0;) {
     i--;
