@@ -143,7 +143,7 @@ static bool IsSideEffect(ValueNode *v) {
   static const std::set<std::string> funcs = {"assign", "Assign"};
   static const std::set<int> unsupported_op = {
     STORE_DEREF,  DELETE_DEREF,  STORE_GLOBAL, DELETE_GLOBAL, STORE_ATTR, DELETE_ATTR,
-    STORE_SUBSCR, DELETE_SUBSCR, IMPORT_STAR,  RAISE_VARARGS, RERAISE,
+    STORE_SUBSCR, DELETE_SUBSCR, IMPORT_STAR,  RAISE_VARARGS, RERAISE,    FORMAT_VALUE,
   };
   Opcode opcode(v->GetOpcode());
   if (opcode.MayDelete()) {

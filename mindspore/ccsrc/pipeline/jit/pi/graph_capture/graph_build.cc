@@ -586,6 +586,10 @@ bool GraphBuilder::DoException(const Instr &instr) {
     (void)pop();
     return true;
   } else if (opCode == SETUP_EXCEPT) {
+    if (graph_->Config().GetBoolConfig(GraphJitConfig::kSkipException)) {
+      graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceSkip_Exception);
+      return false;
+    }
     PushStack(TryBlock{SETUP_EXCEPT, instr.extra_jump()->bci(), instr.bci(), false});
     cur_bci_++;
     return true;
@@ -776,6 +780,9 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
       }
     }
   } else if (opcode == STORE_ATTR) {
+    if (trace_flag() && parent_ != nullptr) {
+      return false;
+    }
     auto o = pop();
     auto v = pop();
     auto node = NewValueNode(nullptr, instr, {v, o});
@@ -1710,12 +1717,6 @@ bool ApplyInlinePolicy(CallNode *call_node) {
     // if inline, guard free variable
     return nfrees == 1 && std::string("__class__") == PyUnicode_AsUTF8(PyTuple_GET_ITEM(co->co_freevars, 0));
   }
-
-  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co), false);
-  if (jcr != nullptr && jcr->break_count_ > 0) {
-    return false;
-  }
-
   if (g->GetRetVal()->GetOpcode() == MAKE_FUNCTION) {
     return false;
   }
@@ -1987,7 +1988,7 @@ py::object GetPIJitCopiedFunc(const py::object &func) {
   PyErr_Clear();
   py::object copy = CopyPyFunc(func);
   PyObject_SetAttrString(func.ptr(), kPIJitCopyFuncKey, copy.ptr());
-  (void)pi_jit_should_compile(copy, py::dict());
+  (void)pi_jit_should_compile(copy, py::dict(), py::none());
   return copy;
 }
 
@@ -3481,10 +3482,12 @@ ValueNode *MindGraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &
   static const std::vector<AObject::Type> const_type = {AObject::kTypeInt,      AObject::kTypeFloat, AObject::kTypeBool,
                                                         AObject::kTypeTuple,    AObject::kTypeList,  AObject::kTypeDict,
                                                         AObject::kTypePrimitive};
+  // Need to check whether the guard is failed in the future.
   if (std::any_of(const_type.begin(), const_type.end(),
                   [attr_type](const AObject::Type type) { return attr_type == type; })) {
     graph_->GuardValueNode(graph_attr_node, GuardLevel::GEqual);
-  } else {
+  } else if (attr_type != AObject::kTypeFunction && attr_type != AObject::kTypeBoundMethod &&
+             attr_type != AObject::kTypeCFunction) {
     graph_->GuardValueNode(graph_attr_node, GuardLevel::GDeduce);
   }
   return graph_attr_node;

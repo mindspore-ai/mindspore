@@ -2445,6 +2445,9 @@ TracePtr CreateOpTraceByBytecode(PyObject *obj, int opcode, int opargs, TraceVec
   static const std::set<int> root_op = {
     LOAD_CLOSURE, LOAD_DEREF, LOAD_GLOBAL, LOAD_NAME, LOAD_CLASSDEREF,
   };
+  if (opcode == LOAD_DEREF && opargs < 0) {
+    return nullptr;
+  }
   if (root_op.find(opcode) != root_op.end()) {
     return std::make_shared<RootTrace>(obj, kMapBytecodeToTraceType[opcode], opargs, name, module_name);
   }

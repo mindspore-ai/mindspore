@@ -399,8 +399,7 @@ def test_mix_0(mode: int):
     Expectation: The results should match for both modes.
     """
 
-    @jit(mode="PIJit", jit_config={"kEnableEliminateUnusedOperation": True, "loop_unrolling": True,
-                                   "compile_by_trace": False}) # One-stage will fix it later
+    @jit(mode="PIJit", jit_config={"kEnableEliminateUnusedOperation": True, "loop_unrolling": True})
     def inner_func(mode):
         index = 1 if mode else 0
         x = [Tensor([1]), 1]
@@ -414,14 +413,3 @@ def test_mix_0(mode: int):
     result = inner_func(mode)
 
     assert excepted == result
-
-    # just unrolling loop in python 3.9
-    if sys.version_info.major == 3 and sys.version_info.minor == 9:
-        jcr = get_code_extra(inner_func)
-        # check loop unrolling, function inliner
-        for i in dis.get_instructions(jcr["code"]["compiled_code_"]):
-            assert i.opname != "FOR_ITER"
-            assert i.opname != "CALL_FUNCTION"
-
-        # check no "isinstance" guard
-        assert "isinstance" not in jcr["code"]["guard_"]

@@ -38,6 +38,7 @@
 #include "pipeline/jit/pi/utils/utils.h"
 #include "pipeline/jit/pi/graph_guard/guard.h"
 #include "pipeline/jit/pi/graph_guard/strategy.h"
+#include "pipeline/jit/pi/graph_guard/shape_ctx.h"
 #include "pipeline/jit/ps/pipeline.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "runtime/pynative/op_executor.h"
@@ -329,6 +330,7 @@ static JitCompileResults *allocJitCompileResults() {
   c->codehub = std::make_shared<OptCodeHub>();
   c->conf = std::make_shared<GraphJitConfig>();
   c->break_count_ = 0;
+  c->signature_ = nullptr;
   return c;
 }
 
@@ -906,6 +908,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
     return false;
   }
 
+  ShapeContext sc(c->origin_frame_, c->signature_);
   std::string code_str = py::str(reinterpret_cast<PyObject *>(c->origin_frame_->f_code));
   MS_LOG(DEBUG) << "---start compile " << code_str << "---";
 
@@ -1376,6 +1379,9 @@ static py::object CodeHook(PyThreadState *tstate, JitCompileResults *c, PyFrameO
         c->origin_frame_ = nullptr;
         return CallCompiledResults(tstate, frame, c);
       }
+      if (c->stat == JitCompileResults::NEVER_COMPILE) {
+        break;
+      }
       if (!just_compiled) {
         c->stat = JitCompileResults::GRAPH_CANDIDATE;
         return CodeHook(tstate, c, frame);
@@ -1410,7 +1416,7 @@ static void ApplyAutoJit(PyFrameObject *f) {
   if (!kPIJitConfigDefault.ShouldAutoJit(f)) {
     return;
   }
-  (void)pi_jit_should_compile(py::cast<py::object>(code), py::dict());
+  (void)pi_jit_should_compile(py::cast<py::object>(code), py::dict(), py::none());
 }
 
 py::list CollectGradientArguments(const PyFrameObject &frame) {
@@ -1532,7 +1538,7 @@ py::bool_ pi_jit_disable() {
   return true;
 }
 
-py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &tag) {
+py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &tag, const py::object &signature) {
   PyObject *func = funcHandle.ptr();
   PyObject *code = NULL;
   if (PyFunction_Check(func)) {
@@ -1548,6 +1554,11 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
   mindspore::pijit::JitCompileResults *c = mindspore::pijit::getJitCompileResults(code);
   if (c == nullptr) {
     return false;
+  }
+  PyObject *sig = signature.ptr();
+  if (sig != nullptr && sig != Py_None) {
+    c->signature_ = sig;
+    Py_INCREF(sig);
   }
   auto new_config = mindspore::pijit::GraphJitConfig(tag);
   // When switching between one-stage and two-stage, reset the config.
@@ -1586,7 +1597,9 @@ py::bool_ pi_jit_enable() {
   return py::bool_(false);
 }
 py::bool_ pi_jit_disable() { return py::bool_(false); }
-py::bool_ pi_jit_should_compile(const py::object &func, const py::object &tag) { return py::bool_(false); }
+py::bool_ pi_jit_should_compile(const py::object &func, const py::object &tag, const py::object &signature) {
+  return py::bool_(false);
+}
 
 #endif
 
@@ -1640,6 +1653,13 @@ py::object get_code_extra(const py::object &func) {
 }
 
 size_t FunctionId(const py::object &callable) {
+  // filter special cpp function
+  auto py_cfunction_filter = [](PyObject *op) -> void * {
+    // pybind11::cpp_function::dispatcher;
+    static PyCFunction pybind_dispatcher = PyCFunction_GET_FUNCTION(py::cpp_function([]() {}).ptr());
+    PyCFunction result = PyCFunction_GET_FUNCTION(op);
+    return result == pybind_dispatcher ? op : reinterpret_cast<void *>(result);
+  };
   PyObject *op = callable.ptr();
   if (PyMethod_Check(op)) {
     op = PyMethod_GET_FUNCTION(op);
@@ -1650,8 +1670,7 @@ size_t FunctionId(const py::object &callable) {
   void *result = op;
   if (PyCFunction_Check(op)) {
     // types.BuiltinFunctionType = type(len) same as types.BuiltinMethodType = type(list().append)
-    PyCFunction func = PyCFunction_GET_FUNCTION(op);
-    result = reinterpret_cast<void *>(func);
+    result = py_cfunction_filter(op);
   } else if (Py_IS_TYPE(op, &PyMethodDescr_Type)) {
     // types.MethodDescriptorType = type(list.append)
     PyCFunction func = reinterpret_cast<PyMethodDescrObject *>(op)->d_method->ml_meth;

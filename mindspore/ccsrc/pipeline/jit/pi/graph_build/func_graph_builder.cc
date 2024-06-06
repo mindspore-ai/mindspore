@@ -219,6 +219,7 @@ ValuePtr FuncGraphBuilder::ConvertPyObjToValue(const py::object &obj) {
   }
   ValuePtr ret = nullptr;
   try {
+    MS_LOG_TRY_CATCH_SCOPE;
     if (!parse::ConvertData(obj, &ret)) {
       return nullptr;
     }
@@ -274,6 +275,7 @@ AbstractBasePtr FuncGraphBuilder::EvalValue(const ValuePtr &value, const Abstrac
     return nullptr;
   }
   try {
+    MS_LOG_TRY_CATCH_SCOPE;
     if (value->isa<Primitive>()) {
       auto prim = value->cast<PrimitivePtr>();
       auto eval_res = abstract::EvalOnePrim(prim, inputs_abs_list);
@@ -648,6 +650,7 @@ CNodePtr FuncGraphBuilder::DoPrimitiveInferAndCheck(const PrimitivePtr &primitiv
                                                     const AnfNodePtrList &input_node_list,
                                                     const AbstractBasePtrList &args_abs_list) {
   try {
+    MS_LOG_TRY_CATCH_SCOPE;
     const CNodePtr &new_node = AddPrimitiveCNode(primitive, input_node_list, args_abs_list);
     if (new_node == nullptr) {
       MS_LOG(INFO) << "Failed to add CNode for Primitive: " << primitive->name();
@@ -876,6 +879,12 @@ FuncGraphPtr FuncGraphBuilder::graph() {
   }
   if (output_nodes_.empty()) {
     MS_LOG(DEBUG) << "The graph " << graph_->ToString() << " has not been set output.";
+    return nullptr;
+  }
+  bool all_value_node = std::any_of(output_nodes_.begin(), output_nodes_.end(),
+                                    [](const AnfNodePtr &node) { return node->isa<ValueNode>(); });
+  if (all_value_node) {
+    MS_LOG(INFO) << "All graph output is value node, no need to run graph.";
     return nullptr;
   }
   // Single output case.

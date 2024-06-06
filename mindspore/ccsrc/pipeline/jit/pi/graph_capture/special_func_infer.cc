@@ -285,7 +285,7 @@ static bool InferGradOperation(CallNode *call_node, AObject::MindsporeFlag f) {
   if (func.ptr() == nullptr) {
     return false;
   }
-  (void)pi_jit_should_compile(func, py::dict());
+  (void)pi_jit_should_compile(func, py::dict(), py::none());
   auto jcr = getJitCompileResults(PyFunction_GET_CODE(func.ptr()));
   *jcr->conf = call_node->GetGraph()->Config();
   return false;
@@ -487,7 +487,18 @@ static bool InferMSConstexpr(CallNode *call_node, GraphBuilder *unused = nullptr
   return false;
 }
 
-static bool GuardBuiltinFunc(CallNode *call_node, GraphBuilder *unused = nullptr) {
+static bool GuardBuiltinFunc(CallNode *call_node) {
+  if (call_node->input(0)->GetVobj() == nullptr) {
+    return false;
+  }
+  PyObject *func = call_node->input(0)->GetVobj()->GetPyObject().ptr();
+  if (PyMethod_Check(func)) {
+    auto self = PyMethod_GET_SELF(func);
+    if (IsTensorType<true>(Py_TYPE(self)) && !CheckTensorDataInitialized(py::cast<py::object>(self))) {
+      // fake value
+      return false;
+    }
+  }
   Graph *graph = call_node->GetGraph();
   for (auto i : call_node->getInputs()) {
     if (i->GetVobj() && i->GetVobj()->GetType() == AObject::kTypeTensor) {

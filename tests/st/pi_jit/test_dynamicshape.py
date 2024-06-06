@@ -14,7 +14,28 @@
 # ============================================================================
 """run dynamic shape test"""
 import pytest
-from mindspore import Tensor, jit, context
+import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor, jit, context, Symbol
+from mindspore.nn import Cell
+from mindspore._c_expression import get_code_extra
+from .share.utils import match_array
+
+s=Symbol(max=10,min=1)
+g_relu=nn.ReLU()
+
+class SignatureNet(Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+
+    @jit(mode="PIJit", input_signature=(Tensor(shape=(s,None), dtype=ms.float32)))
+    def construct(self, a):
+        return self.relu(a)
+
+@jit(mode="PIJit", input_signature=(Tensor(shape=(None, s), dtype=ms.float32)))
+def signature_test(a):
+    return g_relu(a)
 
 @jit(mode="PIJit", jit_config={"enable_dynamic_shape": True, "limit_graph_count": 1})
 def dynamic_shape_test(a, b):
@@ -47,3 +68,30 @@ def test_dynamic_shape_case():
     expect = Tensor([3, 3, 3])
     c = dynamic_shape_test(a, b)
     assert all(c == expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_signature_case():
+    """
+    Feature: Method DynamicShape DynamicSymbolic In Signature Testing
+    Description: Test dynamicshape and dynamicsymbolic in signature function to check whether it works.
+    Expectation: The result of the case should compile the graph no more than once.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    t1 = Tensor([[1.1, 1.1],[2.2,2.2]], dtype=ms.float32)
+    t2 = Tensor([[1.1],[2.2]], dtype=ms.float32)
+    res1 = signature_test(t1)
+    match_array(res1, t1)
+    res2 = signature_test(t2)
+    match_array(res2, t2)
+    res1 = SignatureNet()(t1)
+    match_array(res1, t1)
+    res2 = SignatureNet()(t2)
+    match_array(res2, t2)
+    jcr1 = get_code_extra(signature_test)
+    assert(jcr1["compile_count_"] == 1)
+    jcr2 = get_code_extra(SignatureNet().construct)
+    assert(jcr2["compile_count_"] == 1)

@@ -243,6 +243,9 @@ TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_d
     case AbstractNode::Type::Param:
     case AbstractNode::Type::CellVar: /* fall-through */
     case AbstractNode::Type::FreeVar:
+      if (oparg == -1) {
+        return nullptr;
+      }
       ret = std::make_shared<RootTrace>(obj, mindspore::pijit::TraceType::Param, oparg, name);
       break;
     case AbstractNode::Type::kUnbound:
