@@ -538,7 +538,11 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
   }
   try {
     auto mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
-    if (first_step_ || mode == kPynativeMode || !tensors_need_reprepare_.empty() || has_parameter_input_) {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    static const bool enable_infer_boost = ms_context->IsEnableInferBoost();
+    if (first_step_ || mode == kPynativeMode || !tensors_need_reprepare_.empty() ||
+        (has_parameter_input_ && !enable_infer_boost)) {
       PrepareDataForDeviceTensorStore(input_tensors, args, context);
     }
     PrepareDataForHostTensorQueue(input_tensors, args, context);
