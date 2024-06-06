@@ -13,15 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """
-Name: BOOTSTRAP
-Function: Whether to use bootstrap action.
-Value Range:
-    0: Disable.
-    Default: Enable.
-"""
-BOOTSTRAP = ''
-
-"""
 Name: COMPILE_PROFILE
 Function: Whether to do profile and print profile log.
 Value Range:
@@ -221,17 +212,7 @@ Value Range:
 """
 DUMP_IR_DDE_DETAIL = ''
 
-"""
-Name: ENABLE_BOOST_INFER
-Function: Whether to do infer first in the compile pipeline.
-Value Range:
-    0: Do not do infer first.
-    Default: Do infer first.
-"""
-BOOST_INFER = ''
-
 __all__ = [
-    "BOOTSTRAP",
     "COMPILE_PROFILE",
     "COMPILE_PROFILE_FINISH_ACTION",
     "FALLBACK_SUPPORT_LIST_DICT_INPLACE",
@@ -254,5 +235,4 @@ __all__ = [
     "RECORD_MEMORY",
     "TRACE_LABEL_WITH_UNIQUE_ID",
     "DUMP_IR_DDE_DETAIL",
-    "BOOST_INFER",
 ]
