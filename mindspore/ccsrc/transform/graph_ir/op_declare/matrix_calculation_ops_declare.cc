@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -287,6 +287,24 @@ CUST_INPUT_MAP(TraceGrad) = {{1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x_shape)}};
 CUST_ATTR_MAP(TraceGrad) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(TraceGrad) = {{0, OUTPUT_DESC(x_grad)}};
 REG_ADPT_DESC(TraceGrad, prim::kPrimTraceGrad->name(), CUST_ADPT_DESC(TraceGrad));
+
+// TraceV2
+CUST_INPUT_MAP(TraceV2) = {
+  {1, INPUT_DESC(input)}, {2, INPUT_DESC(offset)}, {3, INPUT_DESC(axis1)}, {4, INPUT_DESC(axis2)}};
+CUST_ATTR_MAP(TraceV2) = EMPTY_ATTR_MAP;
+CUST_INPUT_ATTR_MAP(TraceV2) = {{5, ATTR_DESC(dtype, AnyTraits<GEType>())}};
+CUST_OUTPUT_MAP(TraceV2) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(TraceV2, prim::kPrimTraceV2->name(), CUST_ADPT_DESC(TraceV2));
+
+// TraceV2Grad
+CUST_INPUT_MAP(TraceV2Grad) = {{1, INPUT_DESC(dout)},
+                               {2, INPUT_DESC(shape)},
+                               {3, INPUT_DESC(offset)},
+                               {4, INPUT_DESC(axis1)},
+                               {5, INPUT_DESC(axis2)}};
+CUST_ATTR_MAP(TraceV2Grad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(TraceV2Grad) = {{0, OUTPUT_DESC(din)}};
+REG_ADPT_DESC(TraceV2Grad, prim::kPrimTraceV2Grad->name(), CUST_ADPT_DESC(TraceV2Grad));
 
 // SwinAttentionFFN
 INPUT_MAP(SwinAttentionFFN) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}, {4, INPUT_DESC(x3)}};

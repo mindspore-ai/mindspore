@@ -1,0 +1,23 @@
+#operator trace_v2
+trace_v2:
+    args:
+        input:
+            dtype: tensor
+        offset:
+            dtype: int
+            default: 0
+        axis1:
+            dtype: int
+            default: 1
+        axis2:
+            dtype: int
+            default: 0
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True

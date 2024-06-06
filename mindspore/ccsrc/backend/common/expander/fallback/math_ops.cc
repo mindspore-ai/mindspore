@@ -225,6 +225,39 @@ REG_FALLBACK_BUILDER("ProdExt").SetBody(BODYFUNC(ib) {
   return {out};
 });
 
+REG_FALLBACK_BUILDER("TraceV2").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto offset = ib->GetInput(kIndex1);
+  auto axis1 = ib->GetInput(kIndex2);
+  auto axis2 = ib->GetInput(kIndex3);
+  auto dtype = ib->GetInput(kIndex4);
+  auto diag = ib->Emit("Diagonal", {x, offset, axis1, axis2});
+  NodePtr casted_diag;
+  if (dtype->BuildValue()->type_name() != "None") {
+    int64_t dtype_value = GetValue<int64_t>(dtype->BuildValue());
+    TypeId dtype_id = static_cast<TypeId>(dtype_value);
+    casted_diag = ib->Cast(diag, TypeIdToType(dtype_id));
+  } else {
+    auto input_type = diag->GetType();
+    auto input_type_ptr = input_type->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(input_type_ptr);
+    auto input_type_id = input_type_ptr->element()->type_id();
+    static const std::vector<TypeId> type_to_int64 = {
+      kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeUInt16, kNumberTypeUInt32,
+    };
+    bool is_type_to_int64 = std::any_of(type_to_int64.begin(), type_to_int64.end(),
+                                        [&input_type_id](const TypeId &type_id) { return input_type_id == type_id; });
+    if (is_type_to_int64) {
+      casted_diag = ib->Cast(diag, kInt64);
+    } else {
+      casted_diag = diag;
+    }
+  }
+  auto out = ib->Emit(
+    "ReduceSum", {casted_diag, ib->Value<std::vector<int64_t>>({-1}), ib->Value<bool>(false), ib->Value<bool>(false)});
+  return {out};
+});
+
 NodePtr BuilderForMaxorMin(FallbackIRBuilder *ib, const std::string &emit_op) {
   auto input = ib->GetInput(kIndex0);
   // empty axis: all dimensions will be reduced
