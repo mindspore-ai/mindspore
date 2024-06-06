@@ -30,6 +30,10 @@ namespace pijit {
 
 namespace py = pybind11;
 
+constexpr auto kTwo = 2;
+constexpr auto kThree = 3;
+constexpr auto kFive = 5;
+
 enum StopTraceReason : uint8_t {
 #define STOP_TRACE_REASON_KIND(kind, description) k##kind,
 #include "stop_trace_reason.def"

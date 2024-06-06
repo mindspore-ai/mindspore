@@ -57,8 +57,8 @@ namespace pijit {
 
 // mindspore graph can accept these value
 static const std::set<AObject::Type> kMsSupportedType = {
-  AObject::kTypeInt,    AObject::kTypeBool,   AObject::kTypeFloat,     AObject::kTypeNone,
-  AObject::kTypeString, AObject::kTypeTensor,
+  AObject::kTypeInt,  AObject::kTypeBool,   AObject::kTypeFloat,
+  AObject::kTypeNone, AObject::kTypeString, AObject::kTypeTensor,
 };
 
 MemPool<AbstractObjectBase> AbstractObjectBase::aobject_mem_pool_(__FILE__, __LINE__, "AObject");
@@ -108,7 +108,7 @@ static const std::unordered_map<PyObject *, AObject::Type> const_object_type_map
 static const std::vector<std::pair<PyTypeObject *, AObject::Type>> sub_type_map = {
   {&PyModule_Type, AObject::kTypeModule}, {&PyCFunction_Type, AObject::kTypeCFunction}};
 
-static const int fast_type_mask = Py_TPFLAGS_LONG_SUBCLASS | Py_TPFLAGS_LIST_SUBCLASS | Py_TPFLAGS_TUPLE_SUBCLASS |
+constexpr size_t fast_type_mask = Py_TPFLAGS_LONG_SUBCLASS | Py_TPFLAGS_LIST_SUBCLASS | Py_TPFLAGS_TUPLE_SUBCLASS |
                                   Py_TPFLAGS_UNICODE_SUBCLASS | Py_TPFLAGS_DICT_SUBCLASS | Py_TPFLAGS_TYPE_SUBCLASS;
 
 const char *AbstractObjectBase::GetTypeDesc(AObject::Type type) {
