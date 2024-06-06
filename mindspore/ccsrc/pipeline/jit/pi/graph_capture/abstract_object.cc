@@ -1666,7 +1666,8 @@ AObject *AbstractTensor::GetAttr(const std::string &name) {
 
 std::string AbstractTensor::ToString() const {
   std::stringstream s;
-  py::object dtype, shape;
+  py::object dtype;
+  py::object shape;
   std::stringstream extra_info;
   if (value_.ptr()) {
     dtype = value_.attr("dtype");
