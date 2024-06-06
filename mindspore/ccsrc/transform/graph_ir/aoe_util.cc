@@ -57,6 +57,19 @@ void AoeUtil::Initialize() {
       MS_LOG(WARNING) << "plugin " << plugin_path << " not exist";
       return;
     }
+
+    const std::vector<std::string> depend_libs = {"libopat.so", "libaoe_plugin.so", "libparser_common.so"};
+    for (const auto &dep_lib : depend_libs) {
+      auto dep_lip_path = ascend_path + "lib64/" + dep_lib;
+      auto dep_handler = dlopen(dep_lip_path.c_str(), RTLD_LAZY | RTLD_LOCAL);
+      if (dep_handler != nullptr) {
+        depend_handler_.push_back(dep_handler);
+      } else {
+        MS_LOG(INFO) << "Cannot dlopen " << dep_lip_path << ", result = " << GetDlErrorMsg()
+                     << ", it can be ignored if not use aoe.";
+      }
+    }
+
     plugin_handle_ = dlopen(plugin_path.c_str(), RTLD_LAZY | RTLD_LOCAL);
     if (plugin_handle_ == nullptr) {
       MS_LOG(INFO) << "Cannot dlopen " << plugin_path << ", result = " << GetDlErrorMsg()
@@ -113,6 +126,9 @@ void AoeUtil::Destroy() {
   aoe_tuning_graph_ = nullptr;
   aoe_destroy_session_ = nullptr;
   MS_LOG(INFO) << "AoeFinalization success.";
+  for (const auto &dep_handler : depend_handler_) {
+    (void)dlclose(dep_handler);
+  }
   (void)dlclose(plugin_handle_);
   plugin_handle_ = nullptr;
   initialize_ = false;
