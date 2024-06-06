@@ -19,5 +19,7 @@
 namespace mindspore {
 namespace transform {
 REGISTER_ACL_OP(IdentityN).set_extra_supported_datatype({ge::DT_BF16});
+
+REGISTER_ACL_OP(TensorMove).set_extra_supported_datatype({ge::DT_INT16});
 }  // namespace transform
 }  // namespace mindspore

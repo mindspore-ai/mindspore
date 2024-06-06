@@ -49,7 +49,7 @@ bool IsValidInlinePartial(const AnfNodePtr &node, std::set<FuncGraphPtr> *checke
   // Output valuenode check should be in partial check, as the root graph could.
   const auto &outputs = common::AnfAlgo::GetAllOutputWithIndex(sub_graph->return_node()->input(1));
   if (std::any_of(outputs.begin(), outputs.end(), [](const std::pair<AnfNodePtr, int64_t> &pair) {
-        return pair.first != nullptr && (pair.first->isa<ValueNode>() || pair.first->isa<ValueNode>());
+        return pair.first != nullptr && (pair.first->isa<ValueNode>() || pair.first->isa<Parameter>());
       })) {
     MS_LOG(DEBUG) << "Partial graph:" << sub_graph->ToString()
                   << " has value node output for node:" << node->DebugString();
