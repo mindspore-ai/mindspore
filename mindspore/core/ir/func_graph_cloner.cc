@@ -306,6 +306,7 @@ void Cloner::SetFuncGraphInfo(const FuncGraphPtr &func_graph, const FuncGraphPtr
   target_func_graph->set_stub(func_graph->stub());
   target_func_graph->set_indirect(func_graph->indirect());
   target_func_graph->set_python_obj(func_graph->python_obj());
+  target_func_graph->set_has_side_effect_node(func_graph->has_side_effect_node());
 }
 
 void Cloner::CloneParameters(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph) {
