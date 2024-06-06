@@ -414,7 +414,7 @@ class GradOperation(GradOperation_):
         else:
             # Check if fn have run already
             if not _pynative_executor.check_run(grad, fn, weights, None, *args, **new_kwargs):
-                fn.set_grad()
+                _pynative_executor.set_grad_flag(True)
                 fn(*args, **new_kwargs)
 
 
@@ -653,7 +653,7 @@ class _Grad(GradOperation_):
         else:
             # Check if fn has run already.
             if not _pynative_executor.check_run(grad, fn, weights, self.grad_position, *args, **new_kwargs):
-                fn.set_grad()
+                _pynative_executor.set_grad_flag(True)
                 outputs = fn(*args, **new_kwargs)
                 return outputs
         if (self.get_value or self.has_aux) and not outputs:
