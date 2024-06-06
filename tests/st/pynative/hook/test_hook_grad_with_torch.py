@@ -219,3 +219,35 @@ def test_bprop_with_weight():
 
     assert np.allclose(grad1[0][0].asnumpy(), grad2[0][0].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(grad1[1][0].asnumpy(), grad2[1][0].asnumpy(), 0.0001, 0.0001)
+
+
+class MEMul1WithUsedMap(nn.Cell):
+    def __init__(self):
+        super(MEMul1WithUsedMap, self).__init__()
+        self.f = MEMul()
+        self.used_bprop_inputs = [0]
+
+    def construct(self, x):
+        out = self.f(x)
+        return out
+
+    def bprop(self, *args):
+        grads = args[0] * 2
+        return (grads,)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_bprop_used_map():
+    """
+    Feature: Test custom bprop with used map
+    Description: Test custom bprop with used map
+    Expectation: Success
+    """
+    input1 = Tensor(np.ones(1).astype(dtype=np.float32))
+    output = Tensor(np.ones(1).astype(dtype=np.float32))
+    net = MEMul1WithUsedMap()
+    grad_net = GradOfFirstInput(net)
+    input_grad = grad_net(input1, output)
+    assert np.allclose(input_grad.asnumpy(), np.array([2], dtype=np.float32), 0.0001, 0.0001)
