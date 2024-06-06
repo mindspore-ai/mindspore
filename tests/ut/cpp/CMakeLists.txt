@@ -1,5 +1,7 @@
 message("build ut testcases...")
 
+string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
 # virtual project for common include and library file path.
 project(ut)
 
@@ -344,9 +346,9 @@ foreach(comp ${ALL_UT_COMPS})
             _ut_mindspore_obj -Wl,--end-group proto_input_ut)
 
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-        target_link_libraries(ut_${comp}_tests PRIVATE mindspore::gtest mindspore::gmock mindspore::event
-                mindspore::event_pthreads mindspore::event_openssl mindspore::ssl mindspore::crypto ${PYTHON_LIBRARIES}
-                pthread util dl)
+        target_link_libraries(ut_${comp}_tests PRIVATE mindspore::gtest mindspore::gmock mindspore::mockcpp
+                mindspore::event mindspore::event_pthreads mindspore::event_openssl mindspore::ssl mindspore::crypto
+                ${PYTHON_LIBRARIES} pthread util dl)
         target_link_libraries(ut_${comp}_tests PRIVATE mindspore::sqlite mindspore::jpeg_turbo mindspore::turbojpeg
                 mindspore::opencv_core mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
                 mindspore::sentencepiece mindspore::sentencepiece_train mindspore::icuuc mindspore::icudata
@@ -358,7 +360,8 @@ foreach(comp ${ALL_UT_COMPS})
     elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
         target_link_libraries(ut_${comp}_tests PRIVATE  mindspore::z)
     else()
-        target_link_libraries(ut_${comp}_tests PRIVATE mindspore::gtest mindspore::gmock ${PYTHON_LIBRARIES})
+        target_link_libraries(ut_${comp}_tests PRIVATE mindspore::gtest mindspore::gmock mindspore::mockcpp
+                ${PYTHON_LIBRARIES})
     endif()
     target_link_libraries(ut_${comp}_tests PRIVATE mindspore::glog)
     target_link_libraries(ut_${comp}_tests PRIVATE securec mindspore::grpc++ mindspore::protobuf)
