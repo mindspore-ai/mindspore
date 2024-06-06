@@ -501,15 +501,15 @@ static void MarkBreak(Graph *g) {
 
 std::vector<py::object> GetAllArgs(JitCompileResults *jcr) {
   auto all_args = PackArgs(jcr->origin_frame_);
-  int argIndex = 0;
-  auto args = py::cast<py::list>(all_args[argIndex]);
-  argIndex = 1;
-  if (all_args[argIndex].ptr() != nullptr) {
-    PyList_Append(args.ptr(), all_args[argIndex].ptr());  // args + vargs
+  constexpr size_t arg_index = 0;
+  constexpr size_t vargs_index = 1;
+  constexpr size_t kwargs_index = 2;
+  auto args = py::cast<py::list>(all_args[arg_index]);
+  if (all_args[vargs_index].ptr() != nullptr) {
+    PyList_Append(args.ptr(), all_args[vargs_index].ptr());  // args + vargs
   }
-  argIndex = 2;
-  if (all_args[argIndex].ptr() != nullptr) {
-    PyList_Append(args.ptr(), all_args[argIndex].ptr());  // args + kwargs
+  if (all_args[kwargs_index].ptr() != nullptr) {
+    PyList_Append(args.ptr(), all_args[kwargs_index].ptr());  // args + kwargs
   }
   return args.cast<std::vector<py::object>>();
 }
