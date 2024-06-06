@@ -69,11 +69,11 @@ PrimitiveCPtr OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const 
   prim->set_group(group);
   prim->set_pad_mode(pad_mode);
 
-  bool conv1d = false;
-  if (ParseVecAttr(onnx_node, &kernel, &stride, &dilate, &pads, &conv1d) != RET_OK) {
+  int conv_dims = 0;
+  if (ParseVecAttr(onnx_node, &kernel, &stride, &dilate, &pads, &conv_dims) != RET_OK) {
     return nullptr;
   }
-  if (conv1d) {
+  if (conv_dims == CONV1D_DIM) {
     (void)prim_c->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(NCW));
   }
   if (!dilate.empty()) {
