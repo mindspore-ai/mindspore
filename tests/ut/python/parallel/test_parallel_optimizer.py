@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test adam """
+import subprocess
 import numpy as np
 import pytest
 
@@ -24,6 +25,8 @@ from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
 from mindspore.nn.optim import Adam, AdamWeightDecay, Lamb, Momentum
 from mindspore.ops import operations as P
 from mindspore import context
+from mindspore.common.initializer import initializer
+from mindspore.train import Model
 
 
 def setup_function():
@@ -299,3 +302,77 @@ def test_edge_case():
         context.set_auto_parallel_context(parallel_optimizer_config={"parallel_optimizer_threshold": -1})
         Lamb(net.trainable_params(), learning_rate=0.1)
     context.reset_auto_parallel_context()
+
+
+class DatasetLenet():
+    def __init__(self, data, label, length=3):
+        self.data = data
+        self.label = label
+        self.index = 1
+        self.length = length
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.index >= self.length:
+            raise StopIteration
+        self.index += 1
+        return self.data, self.label
+
+    def reset(self):
+        self.index = 0
+
+    def get_dataset_size(self):
+        return 32
+
+    def get_repeat_count(self):
+        return 1
+
+    def get_batch_size(self):
+        return 32
+
+    def create_tuple_iterator(self, num_epochs=1, do_copy=True):
+        return self
+
+def test_repeat_size_large_than_shard_size():
+    """
+    Feature: semi-parallel-optimizer repeat size larger than shard size
+    Description: ckpt info bug fix
+    Expectation: compile success
+    """
+    class TestNet(nn.Cell):
+        def __init__(self, strategy):
+            super().__init__()
+            self.matmul = P.MatMul().shard(strategy)
+            self.param = Parameter(initializer(
+                "zeros", [64, 64]), name="param")
+
+        def construct(self, x):
+            out = self.matmul(x, self.param)
+            return out
+
+    context.set_auto_parallel_context(device_num=16, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", strategy_ckpt_save_file="./tmp.json",
+                                      parallel_optimizer_config={'parallel_optimizer_threshold': 0},
+                                      optimizer_weight_shard_size=4,
+                                      enable_parallel_optimizer=True)
+    strategy = ((2, 1), (1, 8))
+    network = TestNet(strategy)
+    net_loss = nn.BCELoss(weight=None, reduction='mean')
+    net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
+
+    model = Model(network, loss_fn=net_loss,
+                  optimizer=net_opt, metrics={'acc'})
+    data = Tensor(np.ones([32, 64]).astype(np.float32))
+    label = Tensor(np.ones([32, 64]).astype(np.float32))
+    ds_train = DatasetLenet(data, label, 3)
+    model.train(5, ds_train, dataset_sink_mode=False)
+    file = "tmp.json"
+    para = "\"opt_weight_shard_size\":2"
+    output = subprocess.check_output(
+        ["grep '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    context.reset_auto_parallel_context()
+    assert out == "1"
