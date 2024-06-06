@@ -74,6 +74,7 @@ Pointwise Operations
 
     mindspore.mint.abs
     mindspore.mint.add
+    mindspore.mint.clamp
     mindspore.mint.cumsum
     mindspore.mint.atan2
     mindspore.mint.arctan2
