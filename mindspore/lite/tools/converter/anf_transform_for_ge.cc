@@ -52,6 +52,7 @@
 #include "tools/optimizer/graph/padv3_ge_pass.h"
 #include "tools/optimizer/graph/broadcast_for_select.h"
 #include "tools/optimizer/graph/send_op_add_control_depend.h"
+#include "tools/optimizer/graph/split_with_size_op_pass.h"
 
 namespace mindspore::lite {
 void EnableKVCacheFusion(std::vector<opt::PassPtr> *fusions, const std::shared_ptr<ConverterPara> &param) {
@@ -130,6 +131,7 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
   }
   // concat_op_pass must be executed after kvcache pass, because some pass will create concat node
   fusions.push_back(std::make_shared<opt::ConcatOpPass>());
+  fusions.push_back(std::make_shared<opt::SplitWithSizeOpPass>());
   for (size_t index = 0; index < fusions.size(); index++) {
     auto pass_ptr = fusions.at(index);
     MS_CHECK_TRUE_RET(pass_ptr != nullptr, RET_ERROR);
