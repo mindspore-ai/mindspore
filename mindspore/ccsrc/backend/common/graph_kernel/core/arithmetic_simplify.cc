@@ -1160,6 +1160,7 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
       bool find_pattern = true;
       bool change_anf_graph = false;
       try {
+        MS_LOG_TRY_CATCH_SCOPE;
         while (find_pattern) {
           find_pattern = false;
           find_pattern = DoConstantFold(lg) || find_pattern;
