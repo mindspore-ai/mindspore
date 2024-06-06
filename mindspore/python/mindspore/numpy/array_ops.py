@@ -2606,7 +2606,11 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         array1 = ar1.ravel()
         array2 = ar2.ravel()
     concat_array = concatenate((array1, array2))
-    concat_array, concat_sort_indices = concat_array.sort()
+    if return_indices:
+        concat_sort_indices = F.argsort(concat_array)
+        concat_array = concat_array[concat_sort_indices]
+    else:
+        concat_array, concat_sort_indices = concat_array.sort()
 
     mask_res = concat_array[1:] == concat_array[:-1]
     res = F.masked_select(concat_array[1:], mask_res)
