@@ -58,8 +58,9 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/flash_attention_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/inference_multi_matmul_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/multi_weight_matmuls_fusion.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/add_layernorm_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/add_layer_norm_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/add_rms_norm_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/add_cast_rms_norm_cast_fusion.h"
 #include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/mc2_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/shape_reshape_fusion.h"
@@ -146,6 +147,7 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddLayernormFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::ShapeReshapeFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddRmsNormFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddCastRmsNormCastFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatMulAllReduceFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulElemBiasaddFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulElemReluFusion>());
