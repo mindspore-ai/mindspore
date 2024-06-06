@@ -1825,8 +1825,12 @@ static ValuePtr GetMakeTupleValue(const AnfNodePtr &node) {
 bool HasSupportedValueSequence(const CNodePtr &node) {
   const auto &all_inputs = node->inputs();
   return std::any_of(all_inputs.begin() + 1, all_inputs.end(), [&node](const AnfNodePtr &input) {
-    return (input->abstract()->isa<abstract::AbstractSequence>() || IsValueSequence(input)) &&
-           IsSomePrimitiveList(node, SUPPORT_NEW_SHAPEBASE_OPS);
+    bool is_abs_seq = false;
+    auto abs = input->abstract();
+    if (abs != nullptr) {
+      is_abs_seq = abs->isa<abstract::AbstractSequence>();
+    }
+    return (is_abs_seq || IsValueSequence(input)) && IsSomePrimitiveList(node, SUPPORT_NEW_SHAPEBASE_OPS);
   });
 }
 
