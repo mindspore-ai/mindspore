@@ -89,7 +89,8 @@ bool IsConstant(const py::object &obj) {
       return IsConstant(py::cast<py::object>(pair.first)) && IsConstant(py::cast<py::object>(pair.second));
     });
   }
-  return !py::isinstance<tensor::Tensor>(obj) && !py::isinstance<tensor::BaseTensor>(obj) && !IsStubTensor(obj);
+  // Attention: should exclude BaseTensor in the future (when the BaseTensor PR is merged)
+  return !py::isinstance<tensor::Tensor>(obj) && !IsStubTensor(obj);
 }
 
 bool TensorArgMutable(const py::object &obj, const ValuePtr &value) {
