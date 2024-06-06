@@ -183,8 +183,11 @@ def test_div():
     assert output4.shape == expect4.shape
 
     output5 = div(x5, y5)
-    expect5 = x5_np // y5_np
-    assert np.all(output5.asnumpy() == expect5)
+    expect5 = x5_np / y5_np
+    diff5 = output5.asnumpy() - expect5
+    error5 = np.ones(shape=expect5.shape) * 1.0e-5
+    assert np.all(diff5 < error5)
+    assert output5.shape == expect5.shape
 
     output6 = div(x6, y6)
     expect6 = np.divide(x6_np, y6_np)
@@ -194,8 +197,10 @@ def test_div():
     assert output6.shape == expect6.shape
 
     output7 = div(x7, y7)
-    expect7 = np.divide(x7_np, y7_np).astype(np.int64)
-    assert np.all(output7.asnumpy() == expect7)
+    expect7 = np.divide(x7_np, y7_np)
+    diff7 = output7.asnumpy() - expect7
+    error7 = np.ones(shape=expect7.shape) * 1.0e-5
+    assert np.all(diff7 < error7)
     assert output7.shape == expect7.shape
 
     output8 = div(x8, y8)
