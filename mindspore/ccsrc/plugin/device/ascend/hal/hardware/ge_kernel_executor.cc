@@ -606,8 +606,9 @@ CNodePtr FlattenConditionGatherNodeInput(const CNodePtr &kernel, const KernelGra
   ValuePtr abstract_construct_index = nullptr;
   AbstractBasePtrList new_abstract_list = CollectAbstract(kernel->abstract());
   auto front_abs = kernel->abstract();
-  const auto &switch_iter = graph->condition_gather_to_switch().find(kernel);
-  if (switch_iter == graph->condition_gather_to_switch().end() || switch_iter->second == nullptr) {
+  auto gather_to_switch = graph->condition_gather_to_switch();
+  const auto &switch_iter = gather_to_switch.find(kernel);
+  if (switch_iter == gather_to_switch.end() || switch_iter->second == nullptr) {
     MS_LOG(WARNING) << "Failed to get condition switch node by condition gather:" << kernel->DebugString();
   } else {
     const auto &front_call = graph->GetFrontAnfByBackendAnf(switch_iter->second);
@@ -692,8 +693,9 @@ void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
     }
     const auto &new_kernel = FlattenConditionGatherNodeInput(kernel, graph);
     MS_EXCEPTION_IF_NULL(new_kernel);
-    const auto &iter = graph->condition_gather_to_switch().find(kernel);
-    if (iter == graph->condition_gather_to_switch().end()) {
+    auto gather_to_switch = graph->condition_gather_to_switch();
+    const auto &iter = gather_to_switch.find(kernel);
+    if (iter == gather_to_switch.end()) {
       MS_LOG(EXCEPTION) << "Failed to get condition switch node for gather:" << kernel->DebugString();
     }
     MS_EXCEPTION_IF_NULL(iter->second);
