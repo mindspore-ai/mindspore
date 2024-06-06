@@ -368,7 +368,9 @@ class TupleToTensor(Primitive):
         if isinstance(x, range):
             x = tuple(x)
         if isinstance(x, tuple) and None not in x:
-            return Tensor(x, dtype=dtype)
+            if x:
+                return Tensor(x, dtype=dtype)
+            raise ValueError("For TupleToTensor, the input can not be empty.")
         return None
 
 

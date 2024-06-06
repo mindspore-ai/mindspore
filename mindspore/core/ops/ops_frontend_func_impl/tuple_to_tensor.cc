@@ -158,6 +158,9 @@ class TupleToTensorFrontendFuncImpl : public OpFrontendFuncImpl {
     }
     auto value_tuple = elem_value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(value_tuple);
+    if (value_tuple->value().empty()) {
+      MS_EXCEPTION(ValueError) << "For TupleToTensor, the input can not be empty.";
+    }
     auto dtype_value = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue());
     MS_CHECK_VALUE(dtype_value.has_value(),
                    CheckAndConvertUtils::FormatCommMsg("For primitive[", prim_name,
