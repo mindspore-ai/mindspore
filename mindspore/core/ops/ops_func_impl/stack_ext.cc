@@ -29,19 +29,17 @@
 #include "ir/primitive.h"
 #include "abstract/dshape.h"
 #include "base/base.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore::ops {
 namespace {
 constexpr size_t kTupleInputNum = 2;
-inline ShapeVector CheckAndGetInferredShape(const PrimitivePtr &primitive,
-                                            const abstract::BaseShapePtrList &element_shapes) {
+inline ShapeVector CheckAndGetInferredShape(const PrimitivePtr &primitive, const ShapeArray &element_shapes) {
   MS_CHECK_VALUE(element_shapes.size() >= 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
                                                "size of elements", element_shapes.size(), kGreaterEqual, 1, primitive));
   bool has_rank_valid_shape = false;
   ShapeVector inferred_shape = {abstract::TensorShape::kShapeRankAny};
-  for (auto element_shape : element_shapes) {
-    MS_EXCEPTION_IF_NULL(element_shape);
-    auto shape = element_shape->GetShapeVector();
+  for (auto shape : element_shapes) {
     if (MS_UNLIKELY(IsDynamicRank(shape))) {
       continue;
     }
@@ -86,16 +84,20 @@ BaseShapePtr StackExtFuncImpl::InferShape(const PrimitivePtr &primitive,
       auto tuple_shape = input_shape->cast<abstract::TupleShapePtr>();
       MS_EXCEPTION_IF_NULL(tuple_shape);
       num = SizeToLong(tuple_shape->size());
-      auto element_shapes = tuple_shape->shape();
+      ShapeArray element_shapes;
+      element_shapes.reserve(tuple_shape->size());
+      for (size_t i = 0; i < tuple_shape->size(); ++i) {
+        element_shapes.push_back((*tuple_shape)[i]->GetShapeVector());
+      }
       inferred_shape = CheckAndGetInferredShape(primitive, element_shapes);
     }
   } else if (input_args.size() > kTupleInputNum) {
     // Here for the case expanding tuple to tensors, it maybe deleted in the near future...
     num = SizeToLong(axis_index);
-    abstract::BaseShapePtrList element_shapes;
+    ShapeArray element_shapes;
     element_shapes.reserve(axis_index);
     for (size_t i = 0; i < axis_index; ++i) {
-      element_shapes.push_back(input_args[i]->GetShape());
+      element_shapes.push_back(input_args[i]->GetShape()->GetShapeVector());
     }
     inferred_shape = CheckAndGetInferredShape(primitive, element_shapes);
   } else {
@@ -160,4 +162,82 @@ TypePtr StackExtFuncImpl::InferType(const PrimitivePtr &primitive,
   }
   return std::make_shared<TensorType>(out_type);
 }
+
+ShapeArray StackExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  auto tuple_x = input_values[kInputIndex0]->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_x);
+  ShapeArray shapes;
+  shapes.reserve(tuple_x->size());
+  for (const auto &item : tuple_x->value()) {
+    MS_EXCEPTION_IF_NULL(item);
+    auto tensor = item->cast<tensor::BaseTensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    shapes.push_back(tensor->shape());
+  }
+  auto num = SizeToLong(tuple_x->size());
+  auto inferred_shape = CheckAndGetInferredShape(primitive, shapes);
+  auto axis = GetValue<int64_t>(input_values[kInputIndex1]);
+  size_t out_rank = inferred_shape.size() + 1;
+  MS_CHECK_VALUE(-SizeToLong(out_rank) <= axis && axis <= SizeToLong(out_rank) - 1,
+                 CheckAndConvertUtils::FormatCheckInRangeMsg(
+                   "dim", axis, kIncludeBoth, {-SizeToLong(out_rank), SizeToLong(out_rank) - 1}, primitive));
+
+  axis = axis < 0 ? SizeToLong(out_rank) + axis : axis;
+  (void)inferred_shape.insert(inferred_shape.begin() + axis, num);
+  return {inferred_shape};
+}
+
+TypePtrList StackExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  auto tuple_x = input_values[kInputIndex0]->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(tuple_x);
+  MS_CHECK_VALUE(tuple_x->size() >= 1, CheckAndConvertUtils::FormatCheckIntegerMsg("size of elements", tuple_x->size(),
+                                                                                   kGreaterEqual, 1, primitive));
+  TypePtrList elements;
+  elements.reserve(tuple_x->size());
+  for (const auto &item : tuple_x->value()) {
+    MS_EXCEPTION_IF_NULL(item);
+    auto tensor = item->cast<tensor::BaseTensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    elements.push_back(tensor->Dtype());
+  }
+
+  auto out_type = elements[0];
+  MS_EXCEPTION_IF_NULL(out_type);
+
+  // Check all element' types is valid:
+  // 1. all same
+  // 2. is one of the common_valid_types_with_complex_and_bool.
+  if (MS_UNLIKELY(std::any_of(elements.cbegin(), elements.cend(),
+                              [&out_type](const TypePtr &type) { return type != out_type; }))) {
+    std::ostringstream buffer;
+    buffer << "The primitive[" << primitive->name() << "]'s input arguments must be same, but got ";
+    for (size_t i = 0; i < elements.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(elements[i]);
+      buffer << "element[" << i << "]:" << elements[i]->ToString();
+      if (i != (elements.size() - 1)) {
+        buffer << ", ";
+      }
+    }
+    buffer << ".";
+    MS_LOG(EXCEPTION) << buffer.str();
+  }
+  if (MS_UNLIKELY(std::all_of(common_valid_types_with_complex_and_bool.cbegin(),
+                              common_valid_types_with_complex_and_bool.cend(),
+                              [&out_type](const TypePtr &type) { return out_type != type; }))) {
+    std::ostringstream buffer;
+    buffer << "The primitive[" << primitive->name() << "]'s valid type list: {";
+    for (const auto &type : common_valid_types_with_complex_and_bool) {
+      buffer << type->ToString();
+      if (type != *(--common_valid_types_with_complex_and_bool.end())) {
+        buffer << ", ";
+      }
+    }
+    buffer << "}, but got " << out_type->ToString();
+    MS_LOG(EXCEPTION) << buffer.str();
+  }
+
+  return {out_type};
+}
+
+REGISTER_SIMPLE_INFER(kNameStackExt, StackExtFuncImpl)
 }  // namespace mindspore::ops
