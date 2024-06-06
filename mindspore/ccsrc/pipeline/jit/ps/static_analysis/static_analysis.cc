@@ -392,6 +392,12 @@ bool CheckFuncSideEffect(const AbstractFunctionPtr &func) {
       MS_EXCEPTION_IF_NULL(meta_func_graph_abs->meta_func_graph());
       return meta_func_graph_abs->meta_func_graph()->has_side_effect_node();
     }
+    if (func->isa<abstract::PartialAbstractClosure>()) {
+      const auto &abstract_partial_func = func->cast<abstract::PartialAbstractClosurePtr>();
+      const auto &abstract_fn = abstract_partial_func->fn();
+      MS_EXCEPTION_IF_NULL(abstract_fn);
+      return CheckFuncSideEffect(abstract_fn);
+    }
   }
   return false;
 }
