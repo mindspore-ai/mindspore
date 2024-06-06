@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ADD_LAYERNORM_FUSION_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ADD_LAYERNORM_FUSION_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ADD_CAST_RMSNORM_CAST_FUSION_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ADD_CAST_RMSNORM_CAST_FUSION_H_
 
 #include <memory>
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class AddLayernormFusion : public PatternProcessPass {
+class AddCastRmsNormCastFusion : public PatternProcessPass {
  public:
-  explicit AddLayernormFusion(bool multigraph = true) : PatternProcessPass("add_layernorm_fusion", multigraph) {
+  explicit AddCastRmsNormCastFusion(bool multigraph = true)
+      : PatternProcessPass("add_cast_rms_norm_cast_fusion", multigraph) {
     x1_ = std::make_shared<Var>();
     x2_ = std::make_shared<Var>();
     gamma_ = std::make_shared<Var>();
-    beta_ = std::make_shared<Var>();
-    begin_norm_axis_ = std::make_shared<Var>();
-    begin_params_axis_ = std::make_shared<Var>();
-    eps_ = std::make_shared<Var>();
   }
-  ~AddLayernormFusion() override = default;
+  ~AddCastRmsNormCastFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
@@ -40,11 +37,7 @@ class AddLayernormFusion : public PatternProcessPass {
   VarPtr x1_;
   VarPtr x2_;
   VarPtr gamma_;
-  VarPtr beta_;
-  VarPtr begin_norm_axis_;
-  VarPtr begin_params_axis_;
-  VarPtr eps_;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ADD_LAYERNORM_FUSION_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ADD_RMSNORM_FUSION_H_
