@@ -20,6 +20,7 @@ Array Operation
     mindspore.mint.scatter_add
     mindspore.mint.tile
     mindspore.mint.topk
+    mindspore.mint.stack
     mindspore.mint.where
 
 Tensor Creation
