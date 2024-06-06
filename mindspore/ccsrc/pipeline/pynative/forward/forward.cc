@@ -332,6 +332,7 @@ bool ForwardExecutor::EnablePipeline(const std::string &op_name) const {
 void ForwardExecutor::DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_info) {
   auto forward_task = std::make_shared<FrontendTask>(
     [this](const FrontendOpRunInfoPtr &op_run_info) { RunOpFrontend(op_run_info); }, op_run_info);
+  runtime::ProfilerAnalyzer::GetInstance().RecordFlowData(forward_task->task_id());
   runtime::Pipeline::Get().frontend_stage()->Push(forward_task);
 }
 

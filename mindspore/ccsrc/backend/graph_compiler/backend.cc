@@ -961,7 +961,7 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
 
   auto run_task = std::make_shared<runtime::DeviceOpRunTask>(
     run_op_context, [this](const std::shared_ptr<runtime::OpTaskContext> &ctx) { OpRunCallback(ctx); });
-  run_task->set_task_id(op_compiler_info->graph_id_);
+  runtime::ProfilerAnalyzer::GetInstance().RecordFlowData(run_task->task_id());
   op_executor.PushOpRunTask(run_task);
 }
 
@@ -981,7 +981,7 @@ void MindRTBackend::DispatchOpTaskDynamic(VectorRef *outputs, const OpCompilerIn
   auto &op_executor = runtime::OpExecutor::GetInstance();
   auto task = std::make_shared<runtime::DeviceOpRunTask>(
     run_op_context, [this](const std::shared_ptr<runtime::OpTaskContext> &ctx) { OpRunCallbackDynamic(ctx); });
-  task->set_task_id(op_compiler_info->graph_id_);
+  runtime::ProfilerAnalyzer::GetInstance().RecordFlowData(task->task_id());
   op_executor.PushOpRunTask(task);
 }
 
