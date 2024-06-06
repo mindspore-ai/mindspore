@@ -170,9 +170,7 @@ class SkipBoostInferScope {
     origin_value_ = common::GetEnv("MS_DEV_BOOST_INFER");
     common::SetEnv("MS_DEV_BOOST_INFER", "0");
   }
-  ~SkipBoostInferScope() {
-    common::SetEnv("MS_DEV_BOOST_INFER", origin_value_.c_str());
-  }
+  ~SkipBoostInferScope() { common::SetEnv("MS_DEV_BOOST_INFER", origin_value_.c_str()); }
 
  private:
   std::string origin_value_;
