@@ -70,5 +70,13 @@ TypePtr OneHotExtFuncImpl::InferType(const PrimitivePtr &primitive,
   auto tensor_type = input_args[kInputIndex0]->GetType();
   return tensor_type->Clone();
 }
+
+int32_t OneHotExtFuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) const {
+  const int64_t input_num = 5;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  return OP_CHECK_SUCCESS;
+}
+
 }  // namespace ops
 }  // namespace mindspore

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <set>
+#include <string>
 #include <memory>
 #include "ops/ops_func_impl/one_hot.h"
 #include "ops/op_utils.h"
@@ -88,5 +90,13 @@ TypePtr OneHotFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
   }
   return on_value_type->Clone();
 }
+
+int32_t OneHotFuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                        const std::vector<AbstractBasePtr> &input_args) const {
+  const int64_t input_num = 5;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  return OP_CHECK_SUCCESS;
+}
+
 }  // namespace ops
 }  // namespace mindspore
