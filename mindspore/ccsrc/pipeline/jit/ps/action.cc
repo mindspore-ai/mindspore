@@ -1373,6 +1373,15 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, s
     backend_ptr->set_is_multi_graph_sink(is_multi_graph_sink);
   };
 
+  auto graphs = func_graph->func_graphs_used_total();
+  (void)graphs.insert(func_graph);
+  bool exist_while =
+    std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
+  if (exist_while && context_ptr->CellReuseLevel() == CellReuseLevel::kLazyInline) {
+    MS_LOG(INFO) << "Set no inline because graph has while.";
+    context_ptr->SetCellReuseLevel(CellReuseLevel::kNoInline);
+  }
+
   auto jit_level = pipeline::GetJitLevel();
   func_graph->set_attr(kAttrJitLevel, MakeValue<std::string>(jit_level));
   graphkernel::GraphKernelFlags::SaveJitConfig(PhaseManager::GetInstance().jit_config());
