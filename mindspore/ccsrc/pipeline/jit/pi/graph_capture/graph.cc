@@ -416,7 +416,7 @@ bool Graph::GuardInlinedFunc(CallNode *call_node) {
 }
 
 static std::string TraceInferFailed(ValueNode *node, int depth = 0) {
-  std::string prefix(depth << 1, ' ');
+  std::string prefix(IntToSize(depth) << 1, ' ');
   std::stringstream s;
   s << prefix << node << " ";
   switch (node->GetType()) {
