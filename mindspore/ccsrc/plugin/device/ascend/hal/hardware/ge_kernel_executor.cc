@@ -704,6 +704,7 @@ CNodePtr FlattenConditionGatherNodeInput(const CNodePtr &kernel, const KernelGra
   for (size_t i = 0; i < output_num; ++i) {
     auto get_item = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleGetItem->name())),
                                      new_kernel, NewValueNode(MakeValue<int64_t>(i))});
+    MS_EXCEPTION_IF_NULL(get_item);
     get_item_list.emplace_back(get_item);
     get_item->set_abstract(new_abstract_list[i]);
   }
@@ -751,9 +752,10 @@ void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(iter->second);
     const auto &inline_iter = graph->inline_sub_graph_kernels().find(kernel);
     if (inline_iter != graph->inline_sub_graph_kernels().end()) {
-      graph->AddInlineSubgraphKernel(new_kernel, inline_iter->second);
+      auto subgraph_name = inline_iter->second;
+      graph->AddInlineSubgraphKernel(new_kernel, subgraph_name);
       MS_LOG(INFO) << "Add new condition gather node:" << new_kernel->fullname_with_scope()
-                   << " subgraph name:" << inline_iter->second << " to graph:" << graph->ToString();
+                   << " subgraph name:" << subgraph_name << " to graph:" << graph->ToString();
     }
     graph->AddConditionGatherSwitchPair(new_kernel, iter->second);
     graph->RemoveConditionGatherSwitchPair(kernel);
@@ -761,7 +763,7 @@ void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
                  << " to replace node:" << kernel->fullname_with_scope() << " branch name:"
                  << (kernel->HasAttr(kAttrBranchGraphName) ? new_kernel->GetAttr(kAttrBranchGraphName)->ToString()
                                                            : " null")
-                 << " for switch node:" << iter->second->fullname_with_scope() << " in graph:" << graph->ToString();
+                 << " in graph:" << graph->ToString();
   }
   graph->SetExecOrderByDefault();
 
