@@ -1080,7 +1080,9 @@ AObject *AbstractTuple::GetItem(AObject *k) {
     }
     AObject *resultTuple = AObject::MakeAObject(this->type_);
     PyObject *slicePyObject = k->GetPyObject().ptr();
-    Py_ssize_t start, stop, step;
+    Py_ssize_t start;
+    Py_ssize_t stop;
+    Py_ssize_t step;
     if (PySlice_Unpack(slicePyObject, &start, &stop, &step) < 0) {
       return AObject::MakeAObject(kTypeAnyValue);
     }
@@ -1332,7 +1334,8 @@ bool AbstractDict::Update() {
   this->write_cache_.clear();
   // copy it
   value_ = py::dict();
-  PyObject *k, *v;
+  PyObject *k;
+  PyObject *v;
   Py_ssize_t p = 0;
   bool init_element_type = false;
   while (PyDict_Next(dict_.ptr(), &p, &k, &v)) {

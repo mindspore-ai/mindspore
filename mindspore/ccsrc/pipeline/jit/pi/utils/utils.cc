@@ -134,7 +134,9 @@ py::object Utils::GetModuleAttr(const std::string &mod_name, const std::string &
 
 std::string Utils::ReportPythonException() {
   if (PyErr_Occurred()) {
-    PyObject *et, *ev, *tb;
+    PyObject *et;
+    PyObject *ev;
+    PyObject *tb;
     PyErr_Fetch(&et, &ev, &tb);
     py::object s = py::str(ev);
     MS_LOG(DEBUG) << "has python exception " << PyUnicode_AsUTF8(s.ptr());

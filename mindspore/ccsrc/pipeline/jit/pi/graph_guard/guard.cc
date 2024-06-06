@@ -87,7 +87,8 @@ static bool CheckLiteral(PyObject *obj) {
     return true;
   } else if (PyDict_Check(obj)) {
     Py_ssize_t pos = 0;
-    PyObject *key, *val;
+    PyObject *key;
+    PyObject *val;
     while (PyDict_Next(obj, &pos, &key, &val)) {
       if (!CheckLiteral(key) || !CheckLiteral(val)) {
         return false;
