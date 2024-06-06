@@ -402,8 +402,6 @@ class Cell(Cell_):
         if hasattr(self, "compile_cache") and self.compile_cache:
             _cell_graph_executor.del_net_res(self, self.compile_cache)
         Cell.total_instance_count -= 1
-        if hasattr(self, "origin_enable_boost_infer"):
-            os.environ['MS_DEV_BOOST_INFER'] = self.origin_enable_boost_infer
 
     def __delattr__(self, name):
         if name in self._params:
@@ -2619,8 +2617,7 @@ class GraphCell(Cell):
         params_dict = update_func_graph_hyper_params(self.graph, params_init)
         for name, param in params_dict.items():
             self._params[name] = param
-        self.origin_enable_boost_infer = os.getenv('MS_DEV_BOOST_INFER')
-        os.environ['MS_DEV_BOOST_INFER'] = '0'
+        self.graph_cell = True
 
     def construct(self, *inputs):
         return self.graph(*inputs)
