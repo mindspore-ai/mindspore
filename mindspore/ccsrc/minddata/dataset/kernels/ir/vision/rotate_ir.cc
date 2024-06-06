@@ -52,13 +52,6 @@ std::string RotateOperation::Name() const { return kRotateOperation; }
 
 Status RotateOperation::ValidateParams() {
 #ifndef ENABLE_ANDROID
-  // interpolation
-  if (interpolation_mode_ != InterpolationMode::kLinear &&
-      interpolation_mode_ != InterpolationMode::kNearestNeighbour && interpolation_mode_ != InterpolationMode::kCubic &&
-      interpolation_mode_ != InterpolationMode::kArea) {
-    std::string err_msg = "Rotate: Invalid InterpolationMode, check input value of enum.";
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
   // center
   constexpr auto kCenterSize = 2;
   if (!center_.empty() && center_.size() != kCenterSize) {
@@ -66,12 +59,30 @@ Status RotateOperation::ValidateParams() {
       "Rotate: center must be a vector of two values or empty, got: " + std::to_string(center_.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
+
   // fill_value
   RETURN_IF_NOT_OK(ValidateVectorFillvalue("Rotate", fill_value_));
+
   // device target
   if (device_target_ != "CPU" && device_target_ != "Ascend") {
     std::string err_msg = "Pad: Invalid device target. It's not CPU or Ascend.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  // interpolation
+  if (device_target_ == "CPU") {
+    if (interpolation_mode_ != InterpolationMode::kLinear &&
+        interpolation_mode_ != InterpolationMode::kNearestNeighbour &&
+        interpolation_mode_ != InterpolationMode::kCubic && interpolation_mode_ != InterpolationMode::kArea) {
+      std::string err_msg = "Rotate: Invalid InterpolationMode, check input value of enum.";
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  } else {
+    if (interpolation_mode_ != InterpolationMode::kLinear &&
+        interpolation_mode_ != InterpolationMode::kNearestNeighbour) {
+      std::string err_msg = "DvppRotate: Invalid Interpolation mode, only support BILINEAR and NEAREST.";
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
   }
 #else
   if (angle_id_ < 1 || angle_id_ > 8) {

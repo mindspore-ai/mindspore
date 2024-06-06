@@ -647,6 +647,8 @@ class AdjustSharpness(ImageTensorOperation):
     """
     Adjust the sharpness of the input image.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         sharpness_factor (float): How much to adjust the sharpness, must be
             non negative. ``0`` gives a blurred image, ``1`` gives the
@@ -872,6 +874,8 @@ class Affine(ImageTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
+        if self.resample not in [Inter.BILINEAR, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR and NEAREST.")
         return self
 
     def parse(self):
@@ -961,6 +965,8 @@ class AutoContrast(ImageTensorOperation, PyTensorOperation):
     """
     Apply automatic contrast on input image. This operation calculates histogram of image, reassign cutoff percent
     of the lightest pixels from histogram to 255, and reassign cutoff percent of the darkest pixels from histogram to 0.
+
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
         cutoff (float, optional): Percent of lightest and darkest pixels to cut off from
@@ -1237,6 +1243,8 @@ class CenterCrop(ImageTensorOperation, PyTensorOperation):
 class ConvertColor(ImageTensorOperation):
     """
     Change the color space of the image.
+
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
         convert_mode (ConvertMode): The mode of image channel conversion.
@@ -1867,6 +1875,8 @@ class Equalize(ImageTensorOperation, PyTensorOperation):
     """
     Apply histogram equalization on input image.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Raises:
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -1971,6 +1981,8 @@ class Erase(ImageTensorOperation):
     """
     Erase the input image with given value.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         top (int): Vertical ordinate of the upper left corner of erased region.
         left (int): Horizontal ordinate of the upper left corner of erased region.
@@ -2043,6 +2055,7 @@ class Erase(ImageTensorOperation):
 
         - When the device is Ascend, input type supports `uint8` or `float32` , input channel supports 1 and 3.
           The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
+          The inplace parameter is not supported.
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -2398,6 +2411,8 @@ class HorizontalFlip(ImageTensorOperation):
     """
     Flip the input image horizontally.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Raises:
         RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
@@ -2608,6 +2623,8 @@ class Invert(ImageTensorOperation, PyTensorOperation):
     For each pixel in the image, if the original pixel value is `pixel`,
     the inverted pixel value will be `255 - pixel`.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Raises:
         RuntimeError: If the input image is not in shape of <H, W, C>.
 
@@ -2643,7 +2660,7 @@ class Invert(ImageTensorOperation, PyTensorOperation):
     def __init__(self):
         super().__init__()
         self.random = False
-    
+
     @check_device_target
     def device(self, device_target="CPU"):
         """
@@ -3370,6 +3387,8 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
     """
     Apply perspective transformation on input image.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         start_points (Sequence[Sequence[int, int]]): Sequence of the starting point coordinates, containing four
             two-element subsequences, corresponding to [top-left, top-right, bottom-right, bottom-left] of the
@@ -3483,6 +3502,8 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
+        if self.interpolation not in [Inter.BILINEAR, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR and NEAREST.")
         return self
 
     def parse(self):
@@ -3510,6 +3531,8 @@ class Posterize(ImageTensorOperation):
     """
     Reduce the bit depth of the color channels of image to create a high contrast and vivid color effect,
     similar to that seen in posters or printed materials.
+
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
         bits (int): The number of bits to keep for each channel, should be in range of [0, 8].
@@ -6067,9 +6090,8 @@ class Resize(ImageTensorOperation, PyTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
-        if self.interpolation == Inter.ANTIALIAS and self.device_target == "Ascend":
-            raise ValueError("The current InterpolationMode is not supported by DVPP. It is {}."
-                             .format(self.interpolation))
+        if self.interpolation not in [Inter.BILINEAR, Inter.CUBIC, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR, CUBIC and NEAREST.")
         return self
 
     def parse(self):
@@ -6095,6 +6117,8 @@ class Resize(ImageTensorOperation, PyTensorOperation):
 class ResizedCrop(ImageTensorOperation):
     """
     Crop the input image at a specific region and resize it to desired size.
+
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
         top (int): Horizontal ordinate of the upper left corner of the crop region.
@@ -6212,6 +6236,8 @@ class ResizedCrop(ImageTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
+        if self.interpolation not in [Inter.BILINEAR, Inter.CUBIC, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR, CUBIC and NEAREST.")
         return self
 
     def parse(self):
@@ -6360,6 +6386,8 @@ class Rotate(ImageTensorOperation):
     """
     Rotate the input image by specified degrees.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         degrees (Union[int, float]): Rotation degrees.
         resample (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
@@ -6429,7 +6457,7 @@ class Rotate(ImageTensorOperation):
         self.center = center
         self.fill_value = fill_value
         self.implementation = Implementation.C
-    
+
     @check_device_target
     def device(self, device_target="CPU"):
         """
@@ -6477,6 +6505,9 @@ class Rotate(ImageTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
+        if self.resample == Inter.ANTIALIAS and self.resample == "Ascend":
+            raise ValueError("The current InterpolationMode is not supported by DVPP. It is {}."
+                             .format(self.resample))
         return self
 
     def parse(self):
@@ -6565,6 +6596,8 @@ class SlicePatches(ImageTensorOperation):
 class Solarize(ImageTensorOperation):
     """
     Solarize the image by inverting all pixel values within the threshold.
+
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
         threshold (Union[float, Sequence[float, float]]): Range of solarize threshold, should always
@@ -7152,6 +7185,8 @@ class UniformAugment(CompoundOperation):
 class VerticalFlip(ImageTensorOperation):
     """
     Flip the input image vertically.
+
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Raises:
         RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
