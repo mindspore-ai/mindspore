@@ -46,20 +46,30 @@ def _get_dp_tp_from_layout(parameter_layout_dict, initial_rank=0):
     tp = []
     dp = []
     parameter_redundancy_dict = get_parameter_redundancy(parameter_layout_dict, initial_rank)
-    num = 0
+    value_len = 0
     for _, value in parameter_redundancy_dict.items():
-        if len(value) > 1:
-            dp, tp = _get_dp_tp_from_redundancy(value)
-            break
-        num += 1
-        if num == len(parameter_redundancy_dict):
+        if len(value) > value_len:
+            value_len = len(value)
             dp, tp = _get_dp_tp_from_redundancy(value)
     return dp, tp
 
 
+def _check_perf_config(perf_config):
+    """Check if the format of perf_config is correct."""
+    enabled = perf_config.get("enable", None)
+    if enabled is None or not isinstance(enabled, bool):
+        raise TypeError(f"For cluster monitor, enabled should be bool, but got {type(enabled)}.")
+    enable_step_time = perf_config.get("steptime", None)
+    if enable_step_time is None or not isinstance(enable_step_time, bool):
+        raise TypeError(f"For cluster monitor, enable_step_time should be bool, but got {type(enable_step_time)}.")
+    enabled_dtp_group = perf_config.get("dtpGroup", None)
+    if enabled_dtp_group is None or not isinstance(enabled_dtp_group, bool):
+        raise TypeError(f"For cluster monitor, enabled_dtp_group should be bool, but got {type(enabled_dtp_group)}.")
+
+
 def _parse_perf_config():
     """parse perf config"""
-    perf_config = os.getenv("PERF_CONFIG")
+    perf_config = os.getenv("PERF_DUMP_CONFIG")
     perf_config_dict = {}
     if perf_config is None:
         return perf_config_dict
@@ -74,6 +84,7 @@ def _parse_perf_config():
             perf_config_dict[key] = int(value)
         else:
             perf_config_dict[key] = value
+    _check_perf_config(perf_config_dict)
     return perf_config_dict
 
 
@@ -95,8 +106,8 @@ class ClusterMonitor(Callback):
         self.global_rank = get_rank()
         self.process_id = os.getpid()
         self.device_id = get_local_rank()
-        self.log_name = "perf" + "_" + str(self.process_id) + "_" + str(self.device_id) + ".log"
-        self.log_path = os.getenv("MS_SAVE_PATH")
+        self.log_name = "perf_ms" + "_" + str(self.process_id) + "_" + str(self.device_id) + ".log"
+        self.log_path = os.getenv("PERF_DUMP_PATH")
         if not self.log_path.endswith(os.path.sep):
             self.log_path += os.path.sep
         self.full_path = self.log_path + self.log_name
@@ -117,6 +128,9 @@ class ClusterMonitor(Callback):
 
         self.initial_rank = (self.global_rank // chunk_size) * chunk_size
         with _perf_mutex:
+            dir_path = os.path.dirname(self.full_path)
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
             if os.path.exists(self.full_path):
                 os.chmod(self.full_path, stat.S_IWUSR)
                 os.remove(self.full_path)
@@ -127,7 +141,7 @@ class ClusterMonitor(Callback):
                     file.write(f'PP:{split_pp_list}\n')
             os.chmod(self.full_path, stat.S_IRUSR)
 
-    def on_train_step_begin(self, run_context):
+    def step_begin(self, run_context):
         """
         Record time at the beginning of step.
 
@@ -137,7 +151,7 @@ class ClusterMonitor(Callback):
         """
         self.data_time_start = time.time()
 
-    def on_train_step_end(self, run_context):
+    def step_end(self, run_context):
         """
         Record time at the end of step.
 
@@ -146,7 +160,7 @@ class ClusterMonitor(Callback):
                     please refer to :class:`mindspore.train.RunContext`.
         """
         self.data_time_end = time.time()
-        if self.write_dp_tp_flag:
+        if self.enabled and self.enabled_dtp_group and self.write_dp_tp_flag:
             cb_params = run_context.original_args()
             param_layout_dict = cb_params.train_network.parameter_layout_dict
             dp, tp = _get_dp_tp_from_layout(param_layout_dict, self.initial_rank)
@@ -159,8 +173,9 @@ class ClusterMonitor(Callback):
                         file.write(f'tp:{tp_value}\n')
                 os.chmod(self.full_path, stat.S_IRUSR)
             self.write_dp_tp_flag = False
-        with _perf_mutex:
-            os.chmod(self.full_path, stat.S_IWUSR)
-            with open(self.full_path, 'a') as file:
-                file.write(f"STEPTIME:{int(self.data_time_start * 1000)},{int(self.data_time_end * 1000)}\n")
-            os.chmod(self.full_path, stat.S_IRUSR)
+        if self.enabled and self.enable_step_time:
+            with _perf_mutex:
+                os.chmod(self.full_path, stat.S_IWUSR)
+                with open(self.full_path, 'a') as file:
+                    file.write(f"STEPTIME:{int(self.data_time_start * 1000)},{int(self.data_time_end * 1000)}\n")
+                os.chmod(self.full_path, stat.S_IRUSR)
