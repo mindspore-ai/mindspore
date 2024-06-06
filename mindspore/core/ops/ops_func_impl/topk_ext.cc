@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -127,5 +128,6 @@ TypePtrList TopkExtFuncImpl::InferType(const PrimitivePtr &primitive, const Valu
   return {x_tensor->Dtype(), kInt64};
 }
 
+REGISTER_SIMPLE_INFER(kNameTopkExt, TopkExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
