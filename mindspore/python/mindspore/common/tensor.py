@@ -4628,7 +4628,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get('lu_solve')(self, LU_data, LU_pivots)
 
-
     def nextafter(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.nextafter`.
@@ -4642,14 +4641,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         validator.check_value_type('some', some, bool, 'Tensor.qr')
         return tensor_operator_registry.get('qr')(self, 'reduced' if some else 'complete')
 
-
     def ormqr(self, input2, input3, left=True, transpose=False):
         r"""
         For details, please refer to :func:`mindspore.ops.ormqr`,
         Args `input2` and `input3` correspond to the args `tau` and `other` of :func:`mindspore.ops.ormqr`.
         """
         return tensor_operator_registry.get('ormqr')(self, input2, input3, left, transpose)
-
 
     def masked_scatter(self, mask, x):
         r"""
@@ -4745,23 +4742,29 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def move_to(self, to, blocking=True):
         r"""
-        Copy tensor between host and device synchronously if blocking=True otherwise asynchronously.
-        if the arg `to`=`CPU`, means D2H copy; if the arg `to`=`GPU` or `to`=`ASCEND`, means H2D copy.
+        Copy Tensor to target device synchronously or asynchronously, default synchronously. only support PyNative mode.
 
         Args:
-            to (str): A string, "CPU" or "ASCEND" or "GPU".
-            blocking(bool): A bool type value, Default: ``True`` .
+            to (str): a string type value, one of ``"Ascend"``, ``"GPU"``, ``"CPU"``.
+            blocking (bool): a bool type value, using synchronous copy or asynchronous copy.
+                Default: ``True`` , synchronous copy.
 
         Returns:
-            Tensor, storged on CPU or DEVICE which with the same type and shape as the "self Tensor".
+            New Tensor, storged on target device which with the same type and shape as the "self Tensor".
+
+        Raises:
+            ValueError: If the type of `blocking` is not bool type.
+            ValueError: If the value of `to` is not one of ``"Ascend"``, ``"GPU"``, ``"CPU"``.
+            ValueError: If the run mode is not PyNative mode.
 
         Supported Platforms:
-            ``Ascend`` ``GPU``
+            ``Ascend`` ``GPU`` ``CPU``
+
         Examples:
             >>> import mindspore as ms
             >>> from mindspore import Tensor
             >>> x = ms.Tensor([1, 2, 3], ms.int64)
-            >>> x.move_to("CPU")
+            >>> new_tensor = x.move_to("CPU")
         """
         if not isinstance(blocking, bool):
             raise ValueError(f"The type of 'blocking' must be bool, but got {blocking}")
