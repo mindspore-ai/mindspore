@@ -1272,31 +1272,10 @@ class JitSyntaxLevelScope {
   bool enable_;
 };
 
-class SkipBoostInferScope {
- public:
-  explicit SkipBoostInferScope(bool skip) : skip_(skip) {
-    if (skip_) {
-      MS_LOG(DEBUG) << "Disable boost-infer when running PIJit with two-stages mode";
-      origin_value_ = common::GetEnv("MS_DEV_BOOST_INFER");
-      common::SetEnv("MS_DEV_BOOST_INFER", "0");
-    }
-  }
-  ~SkipBoostInferScope() {
-    if (skip_) {
-      common::SetEnv("MS_DEV_BOOST_INFER", origin_value_.c_str());
-    }
-  }
-
- private:
-  std::string origin_value_;
-  bool skip_;
-};
-
 static bool JitCompileWithTry(PyThreadState *tstate, JitCompileResults *c) {
   TimeRecorder time_recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
 
   JitSyntaxLevelScope jit_syntax_level_scope(c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag));
-  SkipBoostInferScope skip_boost_infer_scope(!c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag));
 
   if (!c->conf->GetBoolConfig(GraphJitConfig::kCompileWithTry)) {
     return JitCompile(tstate, c);
