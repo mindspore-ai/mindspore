@@ -44,6 +44,7 @@ Element-wise Operation
     :template: classtemplate.rst
 
     mindspore.mint.ceil
+    mindspore.mint.clamp
     mindspore.mint.cos
     mindspore.mint.erf
     mindspore.mint.floor
