@@ -511,8 +511,7 @@ def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
     Scatter tensor evently across the processes in the specified communication group.
 
     Note:
-        The interface behavior only support Tensor input and scatter evenly, which
-        is different from that of `pytoch.distributed.scatter`.
+        The interface behavior only support Tensor input and scatter evenly.
         Only the tensor in process `src`(global rank) will do scatter.
         Only support PyNative mode, Graph mode is not currently supported.
 
@@ -814,7 +813,6 @@ def all_to_all_single(tensor, output_split_sizes=None, input_split_sizes=None, g
         >>> import numpy as np
         >>>
         >>> init()
-        >>> net = Net()
         >>> rank_id = int(os.getenv("RANK_ID"))
         >>> data = ms.Tensor(np.arange(8).reshape([4, 2]).astype(np.float32)) + 8 * rank_id
         # Launch 2 processes.
@@ -823,13 +821,13 @@ def all_to_all_single(tensor, output_split_sizes=None, input_split_sizes=None, g
         # Rank 0:
         [[ 0.  1.]
          [ 2.  3.]
-         [16. 17.]
-         [18. 19.]]
+         [ 8.  9.]
+         [10. 11.]]
         # Rank 1:
         [[ 4.  5.]
          [ 6.  7.]
-         [20. 21.]
-         [22. 23.]]
+         [12. 13.]
+         [14. 15.]]
         # Launch 4 processes.
         >>> input_split_sizes = [1, 1, 1, 1]
         >>> out = all_to_all_single(tensor=data, input_split_sizes=input_split_sizes)

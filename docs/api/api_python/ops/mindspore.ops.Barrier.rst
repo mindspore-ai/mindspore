@@ -11,4 +11,5 @@ mindspore.ops.Barrier
 
     异常：
         - **TypeError** - 首个输入的数据类型不为Tensor，`op` 或 `group` 不是str。
-        - **RuntimeError** - 如果目标设备无效，或者后端无效，或者分布式初始化失败。
+        - **RuntimeError** - 后端无效，或者分布式初始化失败。
+        - **ValueError** - 调用进程的rank id大于本通信组的rank大小。

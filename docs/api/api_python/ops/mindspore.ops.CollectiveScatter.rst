@@ -6,7 +6,7 @@ mindspore.ops.CollectiveScatter
     对输入数据的数据进行均匀散射到通信域的卡上。
 
     .. note::
-        该接口和 `pytoch.distributed.scatter` 存在行为差异。该接口只支持Tensor输入，且只支持均匀切分。
+        该接口只支持Tensor输入，且只支持均匀切分。
         只有源为src_rank的进程(全局的进程编号)才会将输入张量作为散射源。
 
     参数：
@@ -23,3 +23,4 @@ mindspore.ops.CollectiveScatter
     异常：
         - **TypeError** - 首个输入的数据类型不为Tensor， `op` 或 `group` 不是str。
         - **RuntimeError** - 如果目标设备无效，或者后端无效，或者分布式初始化失败。
+        - **ValueError** - 调用进程的rank id大于本通信组的rank大小。
