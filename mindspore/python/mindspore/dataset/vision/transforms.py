@@ -2044,7 +2044,7 @@ class Erase(ImageTensorOperation):
         self.height = height
         self.width = width
         if isinstance(value, (int, float)):
-            value = tuple([value] * 3)
+            value = tuple([value])
         self.value = value
         self.inplace = inplace
 

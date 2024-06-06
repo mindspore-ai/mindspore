@@ -127,7 +127,7 @@ MapTargetDevice EraseOperation::Type() {
   } else if (device_target_ == "Ascend") {
     return MapTargetDevice::kAscend910B;
   } else {
-    MS_LOG(ERROR) << "AdjustContrast: Invalid device target. It's not CPU or Ascend.";
+    MS_LOG(ERROR) << "Erase: Invalid device target. It's not CPU or Ascend.";
   }
   return MapTargetDevice::kInvalid;
 }
