@@ -240,7 +240,8 @@ static py::tuple ConstsMapToTuple(const py::dict &consts) {
   const Py_ssize_t size = PyDict_GET_SIZE(consts.ptr());
   py::tuple co_consts(size);
 
-  PyObject *key, *val;
+  PyObject *key;
+  PyObject *val;
   Py_ssize_t pos = 0;
   while (PyDict_Next(consts.ptr(), &pos, &key, &val)) {
     Py_ssize_t index = PyLong_AsLong(val);
