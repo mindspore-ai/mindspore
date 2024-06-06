@@ -19,7 +19,9 @@
 #include <iomanip>
 #include <utility>
 #include "utils/file_utils.h"
+#include "include/common/utils/utils.h"
 #include "include/common/debug/common.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace runtime {
@@ -33,6 +35,10 @@ static const char kJsonTid[] = "tid";
 static const char kJsonTs[] = "ts";
 static const char kJsonDur[] = "dur";
 static const char kJsonPhX[] = "X";
+static const char kJsonArgs[] = "args";
+static const char kJsonFlowId[] = "flow_id";
+static const char kJsonPyStack[] = "py-stack";
+static const char kNameFlow[] = "flow";
 
 // The env of runtime profiler.
 static const char kEnableRuntimeProfiler[] = "MS_ENABLE_RUNTIME_PROFILER";
@@ -91,6 +97,7 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kKernelLaunchInner, "KernelLaunchInner"},
   {ProfilerEvent::kBackendGraphRunInner, "BackendGraphRunInner"},
   // PyNative events
+  {ProfilerEvent::kRunOp, "RunOp"},
   {ProfilerEvent::kPyNativeFrontendTask, "FrontendTask"},
   {ProfilerEvent::kPyNativeBackendTask, "BackendTask"},
   {ProfilerEvent::kPyNativeDeviceTask, "DeviceTask"},
@@ -136,12 +143,13 @@ std::string GetRealPathName(const std::string &name) {
 }  // namespace
 
 ProfilerRecorder::ProfilerRecorder(ProfilerModule module, ProfilerEvent event, const std::string &op_name,
-                                   bool is_inner_event) {
+                                   bool is_inner_event, bool need_py_stack, uint64_t flow_id) {
   if (!ProfilerAnalyzer::GetInstance().profiler_enable()) {
     return;
   }
   data_ = std::make_unique<Data>(module, event, ProfilerAnalyzer::GetInstance().GetBriefName(op_name),
-                                 ProfilerAnalyzer::GetInstance().GetTimeStamp(), is_inner_event);
+                                 need_py_stack ? GetPythonStackStr() : std::string(),
+                                 ProfilerAnalyzer::GetInstance().GetTimeStamp(), flow_id, is_inner_event);
 }
 
 ProfilerRecorder::~ProfilerRecorder() {
@@ -151,9 +159,9 @@ ProfilerRecorder::~ProfilerRecorder() {
   if (data_ == nullptr) {
     return;
   }
-  ProfilerAnalyzer::GetInstance().RecordData(
-    std::make_shared<ProfilerData>(data_->module_, data_->event_, data_->op_name_, data_->is_inner_event_,
-                                   data_->start_time_, ProfilerAnalyzer::GetInstance().GetTimeStamp()));
+  ProfilerAnalyzer::GetInstance().RecordData(std::make_shared<ProfilerData>(
+    data_->module_, data_->event_, data_->op_name_, data_->is_inner_event_, data_->start_time_,
+    ProfilerAnalyzer::GetInstance().GetTimeStamp(), data_->flow_id_, data_->py_stack_));
 }
 
 PythonProfilerRecorder::PythonProfilerRecorder(const std::string &record_name)
@@ -223,16 +231,6 @@ void ProfilerAnalyzer::Initialize() {
   detail_info_file_name_ = GetRealPathName(kDetailInfoFileName + now_time + ".csv");
 }
 
-std::string ProfilerAnalyzer::GetTidString(const std::thread::id &tid) const {
-  auto iter = thread_id_to_name_.find(tid);
-  if (iter != thread_id_to_name_.end()) {
-    return iter->second;
-  }
-  std::stringstream ss;
-  ss << tid;
-  return ss.str();
-}
-
 void ProfilerAnalyzer::SetThreadIdToName(const std::thread::id &id, const std::string &name) {
   std::unique_lock<SpinLock> lock(data_mutex_);
   thread_id_to_name_[id] = name;
@@ -276,11 +274,7 @@ void ProfilerAnalyzer::Clear() noexcept {
   init_ = false;
 }
 
-uint64_t ProfilerAnalyzer::GetTimeStamp() const noexcept {
-  auto now_time = std::chrono::steady_clock::now();
-  int64_t us_time_stamp = std::chrono::duration_cast<std::chrono::microseconds>(now_time.time_since_epoch()).count();
-  return static_cast<uint64_t>(us_time_stamp);
-}
+uint64_t ProfilerAnalyzer::GetTimeStamp() const noexcept { return profiler::GetClockSyscnt(); }
 
 // For example: ScopeName(XX/XX/ReLU-op1) --> BriefName(ReLU)
 std::string ProfilerAnalyzer::GetBriefName(const std::string &scope_name) const {
@@ -297,6 +291,15 @@ void ProfilerAnalyzer::RecordData(const ProfilerDataPtr &data) noexcept {
   MS_EXCEPTION_IF_NULL(data);
   std::unique_lock<SpinLock> lock(data_mutex_);
   (void)data_.emplace_back(data);
+}
+
+void ProfilerAnalyzer::RecordFlowData(uint64_t flow_id) {
+  if (!ProfilerAnalyzer::GetInstance().profiler_enable()) {
+    return;
+  }
+  ProfilerAnalyzer::GetInstance().RecordData(std::make_shared<ProfilerData>(
+    ProfilerModule::kDefault, ProfilerEvent::kDefault, kNameFlow, true, ProfilerAnalyzer::GetInstance().GetTimeStamp(),
+    ProfilerAnalyzer::GetInstance().GetTimeStamp(), flow_id));
 }
 
 void ProfilerAnalyzer::StartStep() {
@@ -380,9 +383,15 @@ void ProfilerAnalyzer::SaveJsonData(const ProfilerDataPtr &data) {
   }
   json_data[kJsonPh] = kJsonPhX;
   json_data[kJsonPid] = std::to_string(data->pid_);
-  json_data[kJsonTid] = GetTidString(data->tid_);
+  json_data[kJsonTid] = std::to_string(data->tid_);
   json_data[kJsonTs] = data->start_time_;
   json_data[kJsonDur] = data->dur_time_;
+  nlohmann::json args;
+  args[kJsonFlowId] = data->flow_id_;
+  if (!data->py_stack_.empty()) {
+    args[kJsonPyStack] = data->py_stack_;
+  }
+  json_data[kJsonArgs] = args;
 
   (void)json_infos_.emplace_back(json_data);
 }
@@ -503,7 +512,7 @@ void ProfilerAnalyzer::DumpDetailData(const size_t step, const ProfilerDataSpan 
                                              : ("module:" + kProfilerModuleString.at(data->module_));
     ofs << title_name << ", event:" << kProfilerEventString.at(data->event_) << ", op:" << data->op_name_
         << ", start_time:" << data->start_time_ << ", end_time:" << data->end_time_ << ", dur_time:," << data->dur_time_
-        << ",us, tid:" << GetTidString(data->tid_) << ", pid:" << data->pid_ << "\n";
+        << ",us, tid:" << std::to_string(data->tid_) << ", pid:" << data->pid_ << "\n";
   }
   ofs << "\n";
 

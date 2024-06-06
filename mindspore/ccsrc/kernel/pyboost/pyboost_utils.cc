@@ -276,6 +276,7 @@ void PyBoostUtils::DispatchRun(const std::shared_ptr<runtime::PyBoostDeviceTask>
     runtime::OpExecutor::GetInstance().WaitAll();
     task->Run();
   } else {
+    runtime::ProfilerAnalyzer::GetInstance().RecordFlowData(task->task_id());
     runtime::OpExecutor::GetInstance().PushOpRunTask(task);
   }
 }
