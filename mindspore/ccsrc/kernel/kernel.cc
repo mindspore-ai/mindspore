@@ -546,8 +546,6 @@ bool KernelTensor::SyncDataFromDeviceToHost() const {
 
   void *device_ptr = this->device_ptr();
   if (device_ptr == nullptr) {
-    MS_LOG(ERROR) << "Not malloc device memory yet, sync data from device to host side failed, size: "
-                  << device_info_->size_;
     return false;
   }
 
