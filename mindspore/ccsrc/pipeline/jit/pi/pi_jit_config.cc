@@ -262,7 +262,8 @@ bool GraphJitConfig::ShouldAutoJit(PyFrameObject *f) {
 GraphJitConfig::GraphJitConfig(const py::object &c) {
   *this = kPIJitConfigDefault;
   (void)c.cast<py::dict>();
-  PyObject *key, *value;
+  PyObject *key;
+  PyObject *value;
   Py_ssize_t pos = 0;
   while (PyDict_Next(c.ptr(), &pos, &key, &value)) {
     if (PyUnicode_Check(key)) {

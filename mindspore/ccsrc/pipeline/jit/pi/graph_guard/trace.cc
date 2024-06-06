@@ -1607,7 +1607,9 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
    {ByteCodeSupported,
     [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
                                                                    * {
-                                                                     PyObject *start, *stop, *step;
+                                                                     PyObject *start;
+                                                                     PyObject *stop;
+                                                                     PyObject *step;
                                                                      if (opargs == 3)
                                                                        step = objs[2];
                                                                      else
@@ -2129,7 +2131,8 @@ void OpTrace::JudgeDTypeTensorAttrPass() {
     return;
   }
   int idx;
-  std::string name, module_name;
+  std::string name;
+  std::string module_name;
   global_op->GetParam(&idx, &name, &module_name);
   auto tsr = call_op->GetObject();
   if (tsr == nullptr) {
