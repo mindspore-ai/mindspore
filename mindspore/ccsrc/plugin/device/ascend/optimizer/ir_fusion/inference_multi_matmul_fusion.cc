@@ -33,6 +33,7 @@
 namespace mindspore {
 namespace opt {
 static std::map<std::string, ValueNodePtr> weights_cache_map;
+static bool global_mmf_flag = true;
 
 bool InferenceMultiMatmulFusion::Run(const FuncGraphPtr &graph) {
   auto kernel_graph = graph->cast<KernelGraphPtr>();
@@ -76,7 +77,8 @@ bool InferenceMultiMatmulFusion::Run(const FuncGraphPtr &graph) {
         user_matmuls.push_back(user_pair.first);
       }
     }
-    if (user_matmuls.size() <= 1 || !can_process) {
+    global_mmf_flag &= can_process;
+    if (user_matmuls.size() <= 1 || !global_mmf_flag) {
       continue;
     }
     SortWeightNodeList(&user_matmuls);
