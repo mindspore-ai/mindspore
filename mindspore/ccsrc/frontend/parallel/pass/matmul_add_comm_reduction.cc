@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include "include/common/utils/utils.h"
+#include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "mindspore/core/ops/math_ops.h"
@@ -31,7 +32,7 @@ namespace parallel {
 namespace {
 constexpr auto MATMUL_ADD_COMM_BEGIN = "matmul_add_comm_begin";
 constexpr auto MATMUL_ADD_COMM_END = "matmul_add_comm_end";
-constexpr auto MATMUL_ADD_COMM_DIV = "matmul_add_comm_div";
+constexpr auto MATMUL_ADD_COMM_MUL = "matmul_add_comm_mul";
 constexpr const char MATMUL_ADD_COMM_REDUCTION[] = "matmul_add_comm_reduction";
 
 bool IsSubRankList(const RankList &child_list, const RankList &parent_list) {
@@ -91,10 +92,12 @@ AnfNodePtr FindPullDownNode(const AnfNodePtr &anode) {
       if (input_prim == nullptr) {
         return std::make_pair(false, i);
       }
+      // cur prim must in ALLREDUCE_PULL_DOWN_WHITE_LIST and input_prim is not marked or marked false
       bool filter =
-        (ALLREDUCE_PULL_DOWN_WHITE_LIST.find(prim->name()) != ALLREDUCE_PULL_DOWN_WHITE_LIST.end()) &&
-        (!input_prim->HasAttr(MATMUL_ADD_COMM_BEGIN)) &&
-        (input_prim->HasAttr(MATMUL_ADD_COMM_BEGIN) && !GetValue<bool>(prim->GetAttr(MATMUL_ADD_COMM_BEGIN)));
+        (ALLREDUCE_PULL_DOWN_WHITE_LIST.find(prim->name()) != ALLREDUCE_PULL_DOWN_WHITE_LIST.end() ||
+         prim->name() == MATMUL) &&
+        (!input_prim->HasAttr(MATMUL_ADD_COMM_BEGIN) ||
+         (input_prim->HasAttr(MATMUL_ADD_COMM_BEGIN) && !GetValue<bool>(input_prim->GetAttr(MATMUL_ADD_COMM_BEGIN))));
       return std::make_pair(filter, i);
     }
     return std::make_pair(false, LongToSize(1));
@@ -120,14 +123,14 @@ void FindAllValidAddNode(const FuncGraphPtr &graph, HashMap<AnfNodePtr, std::vec
       }
       auto comm_node = FindPullDownNode(input_node);
       if (comm_node == nullptr) {
-        MS_LOG(INFO) << "For matmul add comm reduction, can not find valid comm node, node is "
-                     << input_node->DebugString();
+        MS_LOG(ERROR) << "For matmul add comm reduction, can not find valid comm node, node is "
+                      << input_node->DebugString();
         continue;
       }
       if ((!IsPrimitiveCNode(comm_node, prim::kPrimAllReduce) &&
            !IsPrimitiveCNode(comm_node, prim::kPrimReduceScatter))) {
-        MS_LOG(INFO) << "For matmul comm reduction, comm node is not allreduce or reduce scatter, node is "
-                     << comm_node->DebugString();
+        MS_LOG(ERROR) << "For matmul comm reduction, comm node is not allreduce or reduce scatter, node is "
+                      << comm_node->DebugString();
         continue;
       }
 
@@ -170,7 +173,7 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node) {
   auto comm_group = GetValue<std::string>(comm_prim->GetAttr(GROUP));
   MS_EXCEPTION_IF_NULL(g_device_manager);
   auto comm_rank_list = g_device_manager->FindRankListByHashName(comm_group);
-  int64_t rank_size = SizeToLong(comm_rank_list.size());
+  double rank_size = 1.0 / comm_rank_list.size();
 
   auto add_node = FindBiasAdd(comm_node);
   if (add_node == nullptr) {
@@ -209,20 +212,20 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node) {
   auto const_node = NewValueNode(MakeValue(tensor_ptr));
   const_node->set_abstract(bias_node_abstract);
 
-  auto div_prim = NewValueNode(prim::kPrimRealDiv);
-  auto cur_prim = GetValueNode<PrimitivePtr>(div_prim);
+  auto mul_prim = NewValueNode(prim::kPrimMul);
+  auto cur_prim = GetValueNode<PrimitivePtr>(mul_prim);
   MS_EXCEPTION_IF_NULL(cur_prim);
-  (void)cur_prim->AddAttr(MATMUL_ADD_COMM_DIV, MakeValue(true));
-  AnfNodePtrList div_node_inputs = {div_prim, bias_node, const_node};
+  (void)cur_prim->AddAttr(MATMUL_ADD_COMM_MUL, MakeValue(true));
+  AnfNodePtrList mul_node_inputs = {mul_prim, bias_node, const_node};
   auto fg = comm_node->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
-  auto div_node = fg->NewCNode(div_node_inputs);
-  div_node->set_abstract(bias_node->abstract()->Clone());
+  auto mul_node = fg->NewCNode(mul_node_inputs);
+  mul_node->set_abstract(bias_node->abstract()->Clone());
 
   MS_EXCEPTION_IF_NULL(fg);
   auto manager = fg->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  (void)manager->Replace(bias_node, div_node);
+  (void)manager->Replace(bias_node, mul_node);
 }
 
 void HandleNodePullUp(const AnfNodePtr &add_node, const std::vector<AnfNodePtr> &comm_node_list,
@@ -286,10 +289,12 @@ void HandleAddNode(const HashMap<AnfNodePtr, std::vector<AnfNodePtr>> &pull_down
 //  MatMul/BatchMatMul -> AllReduce -> ... -> X -> Add, and MatMul/BatchMatMul -> AllReduce -> ... -> Y -> Add
 // Change it to MatMul/BatchMatMul -> ... -> X -> Add -> AllReduce and MatMul/BatchMatMul -> ... -> Y -> Add ->
 // AllReduce thus it can reduce a communication op.
-void MatmulAddCommReduction(const FuncGraphPtr &graph) {
+bool MatmulAddCommReduction(const FuncGraphPtr &graph, const opt::OptimizerPtr &) {
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
+  // assume no change to graph
+  bool changes = false;
   HashMap<AnfNodePtr, std::vector<AnfNodePtr>> pull_down_node_map;
   // candidate node to pull down
   for (const auto &each_graph : manager->func_graphs()) {
@@ -297,6 +302,7 @@ void MatmulAddCommReduction(const FuncGraphPtr &graph) {
   }
   // Node Pull up
   HandleAddNode(pull_down_node_map);
+  return changes;
 }
 }  // namespace parallel
 }  // namespace mindspore
