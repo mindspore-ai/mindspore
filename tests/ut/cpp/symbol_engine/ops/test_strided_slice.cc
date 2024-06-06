@@ -19,6 +19,7 @@
 #include "symbol_engine/ops/symbolic_shape_test_utils.h"
 #include "backend/graph_optimizer_test_framework.h"
 #include "abstract/dshape.h"
+#include "common/mockcpp.h"
 
 namespace mindspore::symshape::test {
 struct StridedSliceOp {
@@ -30,7 +31,11 @@ struct StridedSliceOp {
 
 class TestStridedSlice : public TestSymbolEngine, public testing::WithParamInterface<StridedSliceOp> {};
 
+using abstract::TensorShape;
 TEST_P(TestStridedSlice, static_shape) {
+  // building symbolic shape like a dynamic shape node.
+  MOCKER_CPP(&TensorShape::IsDynamic, bool (*)(const TensorShape *)).stubs().will(returnValue(true));
+
   const auto &param = GetParam();
   mindspore::test::ConstructGraph cg;
   auto x = cg.NewTensorInput("x", kFloat32, param.x_shape);
