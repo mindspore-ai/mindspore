@@ -59,8 +59,6 @@ def check_affine(method):
             check_value(shear, [-180, 180], "shear")
 
         type_check(resample, (Inter,), "resample")
-        if resample in [Inter.ANTIALIAS, Inter.PILCUBIC]:
-            raise RuntimeError("Unsupported interpolation, only NEAREST, LINEAR, CUBIC and AREA.")
 
         check_fill_value(fill_value)
 

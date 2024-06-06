@@ -2017,7 +2017,7 @@ APP_ERROR DvppPosterize(const std::shared_ptr<DeviceTensorAscend910B> &input,
   }
 
   // the input should be 1HWC or 1CHW
-  if (input->GetShape().Rank() != 4) {
+  if (input->GetShape().Rank() != kNHWCImageRank) {
     MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
     return APP_ERR_DVPP_POSTERIZE_FAIL;
   }
@@ -2034,8 +2034,8 @@ APP_ERROR DvppPosterize(const std::shared_ptr<DeviceTensorAscend910B> &input,
   }
 
   // the type is uint8 / float
-  if (input->GetType() != DataType::DE_UINT8 && input->GetType() != DataType::DE_FLOAT32) {
-    MS_LOG(ERROR) << "The input data is not uint8 or float32";
+  if (input->GetType() != DataType::DE_UINT8) {
+    MS_LOG(ERROR) << "The input data is not uint8.";
     return APP_ERR_DVPP_POSTERIZE_FAIL;
   }
 
@@ -2426,7 +2426,7 @@ APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
   }
 
   // the input should be 1HWC or 1CHW
-  if (input->GetShape().Rank() != 4) {
+  if (input->GetShape().Rank() != kNHWCImageRank) {
     MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
     return APP_ERR_DVPP_VERTICAL_FLIP_FAIL;
   }
@@ -2519,7 +2519,7 @@ APP_ERROR DvppRotate(const std::shared_ptr<DeviceTensorAscend910B> &input,
   }
 
   // the input should be 1HWC or 1CHW
-  if (input->GetShape().Rank() != 4) {
+  if (input->GetShape().Rank() != kNHWCImageRank) {
     MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
     return APP_ERR_DVPP_ROTATE_FAIL;
   }
