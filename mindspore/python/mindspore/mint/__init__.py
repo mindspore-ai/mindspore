@@ -120,9 +120,9 @@ from mindspore.ops.functional import cos
 # 46
 
 # 47
-
+from mindspore.ops.extend import max
 # 48
-
+from mindspore.ops.extend import min
 # 49
 
 # 50
@@ -349,9 +349,9 @@ __all__ = [
     # 46
 
     # 47
-
+    'max',
     # 48
-
+    'min',
     # 49
 
     # 50

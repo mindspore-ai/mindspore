@@ -17,6 +17,8 @@ Array操作
     mindspore.mint.cat
     mindspore.mint.flip
     mindspore.mint.index_select
+    mindspore.mint.max
+    mindspore.mint.min
     mindspore.mint.scatter_add
     mindspore.mint.tile
     mindspore.mint.topk
@@ -99,6 +101,8 @@ mindspore.mint.nn.functional
     :template: classtemplate.rst
 
     mindspore.mint.greater_equal
+    mindspore.mint.maximum
+    mindspore.mint.minimum
 
 池化函数
 ^^^^^^^^^^^^^^^^^^^
