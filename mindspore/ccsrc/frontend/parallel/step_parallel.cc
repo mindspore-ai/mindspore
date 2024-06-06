@@ -605,11 +605,11 @@ static void StepRedistribution(const CNodePtr &cnode, const NodeUsersMap &node_u
   // Insert Redistribution nodes between pre_nodes and next_nodes
   for (auto &pre_node : pre_nodes) {
     for (auto &next_node : next_nodes) {
-      MS_LOG(DEBUG) << "===========Do Redistribution start============" << std::endl
-                    << pre_node->fullname_with_scope() << "->" << next_node.first.first->fullname_with_scope() << "("
-                    << next_node.first.second << ")";
+      MS_LOG(INFO) << "===========Do Redistribution start============" << std::endl
+                   << pre_node->fullname_with_scope() << "->" << next_node.first.first->fullname_with_scope() << "("
+                   << next_node.first.second << ")";
       Redistribution(next_node.first, pre_node, next_node.second);
-      MS_LOG(DEBUG) << "===========Do Redistribution end  ============";
+      MS_LOG(INFO) << "===========Do Redistribution end  ============";
     }
     for (const auto &next_node : next_nodes) {
       if (!next_node.first.first->has_user_data(FUNC_PARAM)) {
@@ -808,6 +808,7 @@ static void StepSplitTensor(const AnfNodePtr &node, const FuncGraphManagerPtr &m
 }
 
 static void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
+  MS_LOG(INFO) << "Start StepReplaceOp for " << node->fullname_with_scope();
   // step1:get graph manager distribute_operator
   OperatorInfoPtr distribute_operator = node->user_data<OperatorInfo>();
   if (distribute_operator == nullptr) {
@@ -841,11 +842,12 @@ static void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
   bool replace_op_info_flag = !replace_op_info.empty();
   for (size_t index = 0; index < replace_op.size(); ++index) {
     std::string instance_name = CreateInstanceName(node, index);
+    std::string full_inst_name = std::string(REDISTRIBUTION_OP) + "_" + instance_name;
     std::vector<AnfNodePtr> replace_input;
     if (index != replace_op.size() - 1) {
-      replace_input = CreateInput(replace_op[index], node, instance_name, node);
+      replace_input = CreateInput(replace_op[index], node, full_inst_name, node);
     } else {
-      replace_input = ReplaceOpInput(replace_op[index], instance_name, node);
+      replace_input = ReplaceOpInput(replace_op[index], full_inst_name, node);
     }
     CNodePtr replace_node = func_graph->NewCNode(replace_input);
     MS_EXCEPTION_IF_NULL(replace_node);

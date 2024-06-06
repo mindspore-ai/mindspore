@@ -328,9 +328,9 @@ TensorRedistributionPtr ReshapeInfo::ReshapeRedistribution() {
 }
 
 Status ReshapeInfo::ComputeReplaceOp() {
-  MS_LOG(DEBUG) << "Infer reshape redistribution for " << this->cnode_->fullname_with_scope() << "." << std::endl
-                << "input_layout_: " << this->input_layout_.ToString() << std::endl
-                << "output_layout_: " << this->output_layout_.ToString();
+  MS_LOG(INFO) << "Infer reshape redistribution for " << this->cnode_->fullname_with_scope() << "." << std::endl
+               << "input_layout_: " << this->input_layout_.ToString() << std::endl
+               << "output_layout_: " << this->output_layout_.ToString();
   if (is_skip_) {
     MS_LOG(DEBUG) << "Skip reshape redistribution for " << cnode_->fullname_with_scope() << std::endl;
     if (DstShapeIsConstant(cnode_->input(2))) {
@@ -362,9 +362,8 @@ Status ReshapeInfo::ComputeReplaceOp() {
       return SUCCESS;
     }
     auto reshape_input = this->cnode_->input(1);
-    if (reshape_input == nullptr) {
-      MS_LOG(EXCEPTION) << "input of Reshape " << this->cnode_->fullname_with_scope() << " is nullptr.";
-    }
+    MS_EXCEPTION_IF_CHECK_FAIL(reshape_input != nullptr,
+                               "input of Reshape " + this->cnode_->fullname_with_scope() + " is nullptr.");
 
     RankList dev_list = stage_device_list();
     TensorRedistributionPtr tensor_redistribution =
@@ -381,7 +380,8 @@ Status ReshapeInfo::ComputeReplaceOp() {
     MS_LOG(DEBUG) << name_ << ": input " << input_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
-    RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
+    RedistributionOpListPtr redistribution_oplist_ptr;
+    redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
     if (!is_generating_costs_ && !tensor_redistribution->IsAssembledStaticShape()) {
       redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
         redistribution_oplist_ptr, tensor_redistribution->input_shape());
@@ -394,7 +394,7 @@ Status ReshapeInfo::ComputeReplaceOp() {
       }
       return FAILED;
     }
-    if (tensor_redistribution->IsAssembledStaticShape()) {
+    if (!redistribution_oplist_ptr->first.empty() && tensor_redistribution->IsAssembledStaticShape()) {
       auto func_graph = this->cnode_->func_graph();
       tensor_redistribution->CreateAssembledDynamicMapping(this->cnode_, reshape_input, func_graph, INDEX_ONE);
     }

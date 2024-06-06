@@ -167,8 +167,6 @@ def test_shape_sub():
     assert validator.check_parameter_shape("w3", [8, 128])
 
 
-@pytest.mark.skip(reason="offline this testcase for dynamic paddings temporarily, "
-                         "only support static paddings in Ascend for now")
 def test_padv3_dynamic():
     """
     Feature: test dynamic shape
@@ -188,8 +186,6 @@ def test_padv3_dynamic():
     assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])
 
 
-@pytest.mark.skip(reason="offline this testcase for dynamic paddings temporarily, "
-                         "only support static paddings in Ascend for now")
 def test_padv3_paddings_concat_scalar_to_tensor_dynamic():
     """
     Feature: test dynamic shape
@@ -209,8 +205,6 @@ def test_padv3_paddings_concat_scalar_to_tensor_dynamic():
     assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])
 
 
-@pytest.mark.skip(reason="offline this testcase for dynamic paddings temporarily, "
-                         "only support static paddings in Ascend for now")
 def test_padv3_concat_tensor_shape_dynamic():
     """
     Feature: test dynamic shape
@@ -321,8 +315,6 @@ class AttentionNet(Cell):
         return out
 
 
-@pytest.mark.skip(reason="offline this testcase for tensor redistribution temporarily, "
-                         "online after can tracing ir.")
 def test_attention_reshape():
     """
     Feature: test attention parallel, the dst shape of reshape is dynamic
@@ -352,8 +344,7 @@ def test_attention_reshape():
     assert validator.check_node_inputs_has('Transpose-0', ['Reshape-0'])
     assert validator.check_parameter_shape('w1', [32, 8])
     assert validator.check_parameter_shape('bias', [8])
-    reshape_expect_inputs = ['Add-0', '(1, -1, 2, 4)']
-    assert validator.check_node_inputs_fuzzy_match('Reshape-0', reshape_expect_inputs)
+    assert validator.check_node_inputs('Reshape-0', ['Add-0', (1, -1, 2, 4)])
 
 
 class AttentionNet2(Cell):
@@ -501,8 +492,6 @@ class ConcatPadV3Net(Cell):
         return out
 
 
-@pytest.mark.skip(reason="offline this testcase for dynamic paddings temporarily, "
-                         "only support static paddings in Ascend for now")
 def test_concat_is_the_input_of_padv3():
     """
     Feature: test concat is the input of padv3
