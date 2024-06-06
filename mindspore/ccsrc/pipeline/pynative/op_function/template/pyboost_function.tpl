@@ -58,12 +58,13 @@ py::object ${func_name}_Base(const PrimitivePtr &prim, const py::list &args) {
 }
 
 py::object ${func_name}(const py::args &args) {
-  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
   if (args.size() != kIndex2) {
     MS_LOG(EXCEPTION) << "Two args are needed by RunOp"
                       << ", but got " << args.size();
   }
   const auto &prim = PyNativeAlgo::PyBoost::ConvertPrimitive(args[0]);
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRunOp,
+                                     prim->name(), false, true);
   return ${func_name}_Base(prim, args[1]);
 }
 
@@ -73,7 +74,8 @@ class ${class_name}PrimAdapter: public PrimitiveFunctionAdapter {
    ~${class_name}PrimAdapter() = default;
    std::string name() override { return "${class_name}"; }
    py::object Call(const py::args &args) {
-     runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
+     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRunOp,
+                                        "${class_name}", false, true);
      return ${func_name}_Base(prim::kPrim${class_name}, args);
    }
 };
