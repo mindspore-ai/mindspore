@@ -35,7 +35,6 @@ class CastBaseOperation {
 
  protected:
   PrimitivePtr GetPrimByTypeId(const TypeId &type_id) const;
-  const std::string &TypeIdToMsTypeStr(const TypeId &type_id) const;
   bool GetSignatureType(const std::vector<Signature> &signatures, std::vector<SignatureEnumDType> *dtypes) const;
   // Modify tensor data type, when op input source dtype is not tensor without dispatch cast op.
   tensor::BaseTensorPtr TensorToDstDtypeValue(const ValuePtr &src_value, const TypeId &dst_type_id) const;

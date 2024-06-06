@@ -181,8 +181,8 @@ class PyBoostCastOperation : public CastBaseOperation {
       is_same_type = (arg_type_id == it->second.first);
     }
     if (signature[index].rw == SignatureEnumRW::kRWWrite && arg_type_id != kTypeUnknown && !is_same_type) {
-      prim::RaiseExceptionForConvertRefDtype(op_run_info->op_grad_info->op_prim, TypeIdToMsTypeStr(arg_type_id),
-                                             TypeIdToMsTypeStr(it->second.first), index);
+      prim::RaiseExceptionForConvertRefDtype(op_run_info->op_grad_info->op_prim, TypeIdToString(arg_type_id),
+                                             TypeIdToString(it->second.first), index);
     }
     if (is_same_type) {
       MS_LOG(DEBUG) << "Get same dtype";

@@ -139,15 +139,6 @@ PrimitivePtr CastBaseOperation::GetPrimByTypeId(const TypeId &type_id) const {
 #endif
 }
 
-const std::string &CastBaseOperation::TypeIdToMsTypeStr(const TypeId &type_id) const {
-  const auto &type_name = type_name_map().find(type_id);
-  if (type_name == type_name_map().cend()) {
-    MS_LOG(EXCEPTION) << "For implicit type conversion, not support convert to the type: "
-                      << TypeIdToType(type_id)->ToString();
-  }
-  return type_name->second;
-}
-
 bool CastBaseOperation::GetSignatureType(const std::vector<Signature> &signatures,
                                          std::vector<SignatureEnumDType> *dtypes) const {
   MS_EXCEPTION_IF_NULL(dtypes);
