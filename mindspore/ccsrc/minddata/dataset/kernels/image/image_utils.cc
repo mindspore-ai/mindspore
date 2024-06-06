@@ -1716,8 +1716,14 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
     int32_t true_height = max_height - h_start;
 
     float fill_r = value[kRIndex];
-    float fill_g = value[kGIndex];
-    float fill_b = value[kBIndex];
+    float fill_g = value[kRIndex];
+    float fill_b = value[kRIndex];
+    const size_t kMaxFillValuesSize = 3;
+    if (value.size() == kMaxFillValuesSize) {
+      fill_r = value[kRIndex];
+      fill_g = value[kGIndex];
+      fill_b = value[kBIndex];
+    }
 
     cv::Rect idx = cv::Rect(w_start, h_start, true_width, true_height);
     cv::Scalar fill_color = cv::Scalar(fill_r, fill_g, fill_b);
