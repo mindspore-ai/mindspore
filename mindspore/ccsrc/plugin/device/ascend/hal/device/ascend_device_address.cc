@@ -977,6 +977,41 @@ bool AscendDeviceAddress::CopyBetweenHostDevice(void *dst, const void *src, size
   return true;
 }
 
+bool AscendDeviceAddress::CopyDeviceToDevice(void *dst, const void *src, const size_t &size) const {
+  SyncMemory(dst, src, size, ACL_MEMCPY_DEVICE_TO_DEVICE);
+  return true;
+}
+
+void AscendDeviceAddress::AsyncCopyDeviceToDevice(void *dst, const void *src, const size_t &size) const {
+  if (size == 0) {
+    return;
+  }
+  if (dst == nullptr) {
+    MS_LOG(EXCEPTION) << "dst ptr is null, please check the address is set correctly.";
+  }
+  if (src == nullptr) {
+    MS_LOG(EXCEPTION) << "src ptr is null, please check the address is set correctly.";
+  }
+  BindDevice();
+  if (!MoveToDevice(false)) {
+    MS_LOG(WARNING) << "Move data to device failed, check previous log for details.";
+  }
+  std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  bool ret;
+  ret = runtime_instance->MemcpyAsync(dst, src, size, static_cast<int32_t>(ACL_MEMCPY_DEVICE_TO_DEVICE),
+                                      runtime_instance->compute_stream());
+  runtime_instance->SyncStream();
+  if (!ret) {
+    MS_LOG(ERROR) << "MemcpyAsync failed!";
+  }
+  return;
+}
+
 bool AscendDeviceAddress::CopyDeviceToHost(void *dst, const void *src, const size_t &size) const {
   SyncMemory(dst, src, size, ACL_MEMCPY_DEVICE_TO_HOST);
   return true;

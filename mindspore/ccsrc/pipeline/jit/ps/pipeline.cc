@@ -2617,5 +2617,36 @@ void SwapCache(const tensor::TensorPtr &host, const tensor::TensorPtr &device, c
     }
   }
 }
+
+void StrideSliceCache(const tensor::TensorPtr &device, const tensor::TensorPtr &begin, const tensor::TensorPtr &end,
+                      const tensor::TensorPtr &dst_index, const tensor::TensorPtr &batch_index) {
+  auto device_addr = std::dynamic_pointer_cast<device::DeviceAddress>(device->device_address());
+  MS_EXCEPTION_IF_NULL(device_addr);
+  uint8_t *device_ptr = reinterpret_cast<uint8_t *>(const_cast<void *>(device_addr->GetPtr()));
+  MS_EXCEPTION_IF_NULL(device_ptr);
+  auto in_shape = device->shape();
+  if (in_shape.size() != 4) {
+    MS_LOG_EXCEPTION << "The shape size of Cache input mapping tensor should be 4, but got: " << in_shape.size();
+  }
+
+  auto type_byte = GetTypeByte(TypeIdToType(device->data_type()));
+
+  auto begin_data = reinterpret_cast<int64_t *>(begin->data_c())[0];
+  auto end_data = reinterpret_cast<int64_t *>(end->data_c())[0];
+  auto dst_index_data = reinterpret_cast<int64_t *>(dst_index->data_c())[0];
+  auto batch_index_data = reinterpret_cast<int64_t *>(batch_index->data_c())[0];
+
+  auto shape_1 = batch_index_data * in_shape[1] * in_shape[2] * in_shape[3];
+  auto shape_2 = in_shape[2] * in_shape[3];
+  for (int64_t i = 0; i < in_shape[1]; i++) {
+    for (int64_t j = begin_data; j < end_data; j++) {
+      size_t src_offset = LongToSize((shape_1 + i * shape_2 + j * in_shape[3]) * type_byte);
+      size_t dst_offset =
+        LongToSize((shape_1 + i * shape_2 + (j - begin_data + dst_index_data) * in_shape[3]) * type_byte);
+      size_t block_size = LongToSize(in_shape[3] * type_byte);
+      device_addr->AsyncCopyDeviceToDevice(device_ptr + dst_offset, device_ptr + src_offset, block_size);
+    }
+  }
+}
 }  // namespace pipeline
 }  // namespace mindspore
