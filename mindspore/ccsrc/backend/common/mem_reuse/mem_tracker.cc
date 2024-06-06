@@ -566,7 +566,7 @@ void MemoryTrackerEnabled::DumpProfilingMemInfo(const std::string &path, const s
 
   auto csv_path = path + "/" + file_name + "_" + GetRankID() + ".csv";
   Common::CreatePrefixPath(csv_path);
-  MS_LOG(INFO) << "MemoryTracker DumpProfilingMemInfo start, last_profiling_time_stamp:" << last_profiling_time_stamp_;
+  MS_LOG(INFO) << "MemoryTracker DumpProfilingMemInfo start, last_profiling_pos:" << last_profiling_pos_;
 
   std::ofstream block_file(csv_path);
   block_file << std::fixed << std::setprecision(kPrecisionDigits);
@@ -575,12 +575,14 @@ void MemoryTrackerEnabled::DumpProfilingMemInfo(const std::string &path, const s
   }
 
   block_file << "\n";
-  for (auto &mem_block : mem_block_list_) {
-    if (mem_block->pool_name == "CPU") {
+
+  for (size_t i = 0; i < mem_block_list_.size(); i++) {
+    const auto &mem_block = mem_block_list_[i];
+    if (i < last_profiling_pos_) {
       continue;
     }
 
-    if (mem_block->start_time_stamp <= last_profiling_time_stamp_) {
+    if (mem_block->pool_name == "CPU") {
       continue;
     }
     for (const auto &csv : prof_csv) {
@@ -592,11 +594,8 @@ void MemoryTrackerEnabled::DumpProfilingMemInfo(const std::string &path, const s
   block_file.close();
 
   // record the last time stamp
-  if (!mem_block_list_.empty()) {
-    MS_EXCEPTION_IF_NULL(mem_block_list_.back());
-    last_profiling_time_stamp_ = mem_block_list_.back()->start_time_stamp;
-  }
-  MS_LOG(INFO) << "MemoryTracker DumpProfilingMemInfo end, last_profiling_time_stamp:" << last_profiling_time_stamp_;
+  last_profiling_pos_ = mem_block_list_.size();
+  MS_LOG(INFO) << "MemoryTracker DumpProfilingMemInfo end, last_profiling_pos:" << last_profiling_pos_;
 }
 
 }  // namespace tracker

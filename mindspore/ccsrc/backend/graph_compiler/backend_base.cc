@@ -1212,7 +1212,8 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
     MS_LOG(DEBUG) << "Create device tensor:" << split_device_tensor << " type:" << device_tensor->type_id();
     // Copy data from origin tensor to the split tensor.
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo("Split tuple outputs", device::AllocatorType::kOther);
-    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "ConstructOutputByTupleTensor", "", "");
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "ConstructOutputByTupleTensor",
+                                                   "ConstructOutputByTupleTensor", "");
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "ConstructOutputByTupleTensor",
                                                    device::tracker::MemType::kOther, split_device_tensor->GetSize(),
                                                    split_device_tensor.get());
