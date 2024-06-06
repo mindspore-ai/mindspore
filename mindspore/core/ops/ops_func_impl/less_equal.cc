@@ -34,6 +34,7 @@
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -47,5 +48,20 @@ TypePtr LessEqualFuncImpl::InferType(const PrimitivePtr &primitive,
   return std::make_shared<TensorType>(kBool);
 }
 
+ShapeArray LessEqualFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x1_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x1_tensor);
+  const auto &x2_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x2_tensor);
+  auto broadcast_shape = CalBroadCastShape(x1_tensor->shape(), x2_tensor->shape(), primitive->name());
+
+  return {broadcast_shape};
+}
+
+TypePtrList LessEqualFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {kBool};
+}
+
+REGISTER_SIMPLE_INFER(kNameLessEqual, LessEqualFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
