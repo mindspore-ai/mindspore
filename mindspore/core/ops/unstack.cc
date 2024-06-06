@@ -84,7 +84,7 @@ AbstractBasePtr UnstackInferInner(const PrimitivePtr &primitive, const std::vect
   if (!IsDynamicOutputs(x_shape, primitive)) {
     auto unstack_axis = GetUnstackAxis(x_shape, primitive);
     auto output_num = x_shape[unstack_axis];
-    (void)CheckAndConvertUtils::CheckInteger("output_num", output_num, kGreaterThan, 0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("output_num", output_num, kGreaterEqual, 0, prim_name);
     (void)primitive->AddAttr(kAttrNum, MakeValue(output_num));
     auto output_type = UnstackInferType(input_args, output_num);
     auto output_shape = UnstackInferShape(x_shape, unstack_axis);
