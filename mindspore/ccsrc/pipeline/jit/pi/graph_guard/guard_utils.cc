@@ -1180,7 +1180,7 @@ class TensorData : public MetaTensorData {
       return false;
     }
     bool ret = MetaTensorData::operator==(obj);
-    const TensorData &other = (const TensorData &)obj;
+    const TensorData &other = static_cast<const TensorData &>(obj);
     if (is_stubtensor_ || other.is_stubtensor_) {
       return ret;
     }
