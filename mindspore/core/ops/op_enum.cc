@@ -178,6 +178,12 @@ REG_STRING_TO_ENUM_COMMON(fas_input_layout_mode, StrToEnumMap{{"BSH", FASInputLa
                                                               {"BSND", FASInputLayoutMode::BSND},
                                                               {"TND", FASInputLayoutMode::TND}})
 
+// DriverName
+REG_STRING_TO_ENUM_COMMON(driver_name, StrToEnumMap{{"GELS", DriverName::GELS},
+                                                    {"GELSY", DriverName::GELSY},
+                                                    {"GELSD", DriverName::GELSD},
+                                                    {"GELSS", DriverName::GELSS}})
+
 // InitializerMode
 StrToEnumMap StrToInitializerModeMap = {{"", InitializerMode::DEFAULT_MODE},
                                         {"TRUNCATED_NORMAL", InitializerMode::TRUNCATED_NORMAL},

@@ -634,4 +634,198 @@ CUST_IMPLEMT_INFERFUNC(SolveTriangularGrad, SolveTriangularGradInfer) {
 
 CUST_INFER_FUNC_REG(SolveTriangularGrad, SolveTriangularGradInfer);
 // -----------------------SolveTriangularGrad END---------------------------------
+
+// -----------------------LstsqV2---------------------------------
+
+bool LstsqBroadCast(const std::vector<int64_t> &a_batch_dims, const std::vector<int64_t> &b_batch_dims,
+                    std::vector<int64_t> &broadcast_batch_dims) {
+  for (size_t i = 0; i < a_batch_dims.size(); i++) {
+    if (a_batch_dims[i] == b_batch_dims[i]) {
+      broadcast_batch_dims.emplace_back(a_batch_dims[i]);
+    } else {
+      int64_t max_dim = a_batch_dims[i] > b_batch_dims[i] ? a_batch_dims[i] : b_batch_dims[i];
+      int64_t min_dim = a_batch_dims[i] < b_batch_dims[i] ? a_batch_dims[i] : b_batch_dims[i];
+      if (min_dim == 1 || min_dim == -1)
+        broadcast_batch_dims.emplace_back(max_dim);
+      else
+        return false;
+    }
+  }
+  return true;
+}
+
+void LstsqGetDriver(Operator &op, int64_t &driver_value) {
+  Tensor driver_data;
+  constexpr int64_t Driver_GELSY = 1;
+  bool is_unknown_driver{true};
+  if (op.GetInputConstData("driver", driver_data) == GRAPH_SUCCESS) {
+    is_unknown_driver = false;
+  }
+  OP_LOGD(TbeGetName(op), "lstsqv2 driver is unknown[%s].", is_unknown_driver ? "true" : "false");
+  driver_value = Driver_GELSY;
+  if (!is_unknown_driver) {
+    DataType dtype = op.GetInputDescByName("driver").GetDataType();
+    std::vector<int64_t> const_vec;
+    if (!GetConstValue(op, driver_data, dtype, const_vec)) {
+      is_unknown_driver = true;
+      OP_LOGW(TbeGetName(op), "Get lstsqv2 driver value failed.");
+    } else {
+      driver_value = const_vec[0];
+    }
+  }
+}
+
+void LstsqHandleOutShape(bool calculate, std::vector<int64_t> &out_dims, std::vector<int64_t> &broadcast_batch_dims) {
+  if (calculate) {
+    out_dims = std::vector<int64_t>(broadcast_batch_dims);
+  } else {
+    out_dims.emplace_back(0);
+  }
+}
+
+graphStatus SetOutputDesc(Operator &op, TensorDesc &solution_desc, TensorDesc &residuals_desc, TensorDesc &rank_desc,
+                          TensorDesc &singular_values_desc) {
+  if (op.UpdateOutputDesc("solution", solution_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Failed to update solution desc.");
+    return GRAPH_FAILED;
+  }
+  if (op.UpdateOutputDesc("residuals", residuals_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Failed to update residuals desc.");
+    return GRAPH_FAILED;
+  }
+  if (op.UpdateOutputDesc("rank", rank_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Failed to update rank desc.");
+    return GRAPH_FAILED;
+  }
+  if (op.UpdateOutputDesc("singular_values", singular_values_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Failed to update singularValue desc.");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_IMPLEMT_INFERFUNC(LstsqV2, LstsqV2Infer) {
+  TensorDesc solution_desc = op.GetOutputDescByName("solution");
+  TensorDesc residuals_desc = op.GetOutputDescByName("residuals");
+  TensorDesc rank_desc = op.GetOutputDescByName("rank");
+  TensorDesc singular_values_desc = op.GetOutputDescByName("singular_values");
+
+  // infer type
+  DataType a_type = op.GetInputDescByName("a").GetDataType();
+  DataType solution_type = a_type;
+  DataType residuals_type = a_type;
+  DataType rank_type = DT_INT64;
+  DataType singular_values_type = a_type;
+  if (a_type == DT_COMPLEX64) {
+    residuals_type = DT_FLOAT;
+    singular_values_type = DT_FLOAT;
+  } else if (a_type == DT_COMPLEX128) {
+    residuals_type = DT_DOUBLE;
+    singular_values_type = DT_DOUBLE;
+  }
+  solution_desc.SetDataType(solution_type);
+  residuals_desc.SetDataType(residuals_type);
+  rank_desc.SetDataType(rank_type);
+  singular_values_desc.SetDataType(singular_values_type);
+
+  // infer shape
+  Shape a_shape = op.GetInputDescByName("a").GetShape();
+  Shape b_shape = op.GetInputDescByName("b").GetShape();
+
+  if (IsUnknownRankShape(a_shape) || IsUnknownRankShape(b_shape)) {
+    solution_desc.SetShape(Shape({UNKNOWN_RANK}));
+    residuals_desc.SetShape(Shape({UNKNOWN_RANK}));
+    rank_desc.SetShape(Shape({UNKNOWN_RANK}));
+    solution_desc.SetShape(Shape({UNKNOWN_RANK}));
+  } else {
+    std::vector<int64_t> a_dims = a_shape.GetDims();
+    std::vector<int64_t> b_dims = b_shape.GetDims();
+
+    size_t a_rank = a_shape.GetDimNum();
+    size_t b_rank = b_shape.GetDimNum();
+
+    constexpr size_t mat_size = 2;
+    constexpr size_t vec_size = 1;
+    constexpr int64_t Driver_GELS = 0;
+    constexpr int64_t Driver_GELSY = 1;
+    constexpr int64_t Driver_GELSD = 2;
+    constexpr int64_t Driver_GELSS = 3;
+    const size_t expected_b_dim = (b_rank == a_rank - 1) ? vec_size : mat_size;
+    std::vector<int64_t> a_batch_dims(a_dims.begin(), a_dims.end() - mat_size);
+    std::vector<int64_t> b_batch_dims(b_dims.begin(), b_dims.end() - expected_b_dim);
+    std::vector<int64_t> broadcast_batch_dims;
+    if (LstsqBroadCast(a_batch_dims, b_batch_dims, broadcast_batch_dims) == false) {
+      OP_LOGE(TbeGetName(op).c_str(),
+              "Batch Dimensions of a and b should can be broadcast with the minimum dimension set to 1.");
+      return GRAPH_FAILED;
+    }
+    int64_t driver_value;
+    LstsqGetDriver(op, driver_value);
+
+    int64_t m = a_dims[a_rank - 2];
+    int64_t n = a_dims[a_rank - 1];
+    int64_t k = b_rank == a_rank ? b_dims[b_rank - 1] : 1;
+    std::vector<int64_t> solution_dims;
+    std::vector<int64_t> residual_dims;
+    std::vector<int64_t> rank_dims;
+    std::vector<int64_t> singular_values_dims;
+    solution_dims.emplace_back(n);
+
+    bool calculate_res = (m == -1 || n == -1 || m > n) && driver_value != Driver_GELSY;
+    bool calculate_rank = driver_value != Driver_GELS;
+    bool calculate_singular_values = driver_value == Driver_GELSD || driver_value == Driver_GELSS;
+    LstsqHandleOutShape(calculate_res, residual_dims, broadcast_batch_dims);
+    LstsqHandleOutShape(calculate_rank, rank_dims, a_batch_dims);
+    if (calculate_res) residual_dims.emplace_back(k);
+    if (calculate_singular_values) {
+      singular_values_dims = std::vector<int64_t>(a_batch_dims);
+      singular_values_dims.emplace_back(m < n ? m : n);
+    } else {
+      singular_values_dims.emplace_back(0);
+    }
+    if (expected_b_dim == 2) {
+      solution_dims.emplace_back(k);
+    }
+    solution_desc.SetShape(Shape(solution_dims));
+    residuals_desc.SetShape(Shape(residual_dims));
+    rank_desc.SetShape(Shape(rank_dims));
+    singular_values_desc.SetShape(Shape(singular_values_dims));
+  }
+  return SetOutputDesc(op, solution_desc, residuals_desc, rank_desc, singular_values_desc);
+}
+
+CUST_INFER_FUNC_REG(LstsqV2, LstsqV2Infer);
+// -----------------------LstsqV2 END---------------------------------
+
+// -----------------------LstsqV2Grad---------------------------------
+CUST_IMPLEMT_INFERFUNC(LstsqV2Grad, LstsqV2GradInfer) {
+  TensorDesc ga_desc = op.GetOutputDescByName("ga");
+  TensorDesc gb_desc = op.GetOutputDescByName("gb");
+
+  // infer type
+  DataType a_type = op.GetInputDescByName("a").GetDataType();
+  DataType ga_type = a_type;
+  DataType gb_type = a_type;
+  ga_desc.SetDataType(ga_type);
+  gb_desc.SetDataType(gb_type);
+
+  // infer shape
+  Shape a_shape = op.GetInputDescByName("a").GetShape();
+  Shape b_shape = op.GetInputDescByName("b").GetShape();
+
+  ga_desc.SetShape(a_shape);
+  if (op.UpdateOutputDesc("ga", ga_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Failed to update ga desc.");
+    return GRAPH_FAILED;
+  }
+  gb_desc.SetShape(b_shape);
+  if (op.UpdateOutputDesc("gb", gb_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Failed to update gb desc.");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_INFER_FUNC_REG(LstsqV2Grad, LstsqV2GradInfer);
+// -----------------------LstsqV2Grad END---------------------------------
 }  // namespace ge

@@ -1,0 +1,16 @@
+#operator lstsq_v2_grad
+lstsq_v2_grad:
+    args:
+        gX:
+            dtype: tensor
+        A:
+            dtype: tensor
+        B:
+            dtype: tensor
+    returns:
+        gA:
+            dtype: tensor
+        gB:
+            dtype: tensor
+    function:
+        disable: True
