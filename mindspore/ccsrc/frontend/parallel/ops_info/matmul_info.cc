@@ -125,9 +125,29 @@ Status MatMulBase::GetAttrs() {
   if (mat_a_dimension_ < 2 || mat_b_dimension_ < 2) {
     MS_LOG(ERROR) << name_ << ": The dim of mat_a or mat_b can not smaller than 2, but the dim of mat_a is "
                   << mat_a_dimension_ << ", the dim of mat_b is " << mat_b_dimension_;
+    return FAILED;
   }
 
   MS_LOG(INFO) << name_ << ": the transpose_a is " << transpose_a_ << ", transpose_b is " << transpose_b_;
+  return SUCCESS;
+}
+
+Status MatMulExtInfo::GetAttrs() {
+  transpose_a_ = false;
+  transpose_b_ = false;
+
+  if ((inputs_shape_.size() != MATMUL_INPUTS_SIZE) || (outputs_shape_.size() != MATMUL_OUTPUTS_SIZE)) {
+    MS_LOG(ERROR) << name_ << ": Inputs shape size or outputs shape size is wrong.";
+    return FAILED;
+  }
+  mat_a_dimension_ = inputs_shape_.at(0).size();
+  mat_b_dimension_ = inputs_shape_.at(1).size();
+  if (mat_a_dimension_ < 2 || mat_b_dimension_ < 2) {
+    MS_LOG(ERROR) << name_ << ": The dim of mat_a or mat_b can not smaller than 2, but the dim of mat_a is "
+                  << mat_a_dimension_ << ", the dim of mat_b is " << mat_b_dimension_;
+    return FAILED;
+  }
+
   return SUCCESS;
 }
 
@@ -1056,5 +1076,7 @@ ReplaceGraphPtr MatMul::replace_graph(const CNodePtr &cnode) {
 }
 REGISTER(MatMulInfo);
 REGISTER(BatchMatMulInfo);
+REGISTER(MatMulExtInfo);
+REGISTER(BatchMatMulExtInfo);
 }  // namespace parallel
 }  // namespace mindspore

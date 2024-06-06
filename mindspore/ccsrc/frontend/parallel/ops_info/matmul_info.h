@@ -105,6 +105,25 @@ class BatchMatMulInfo : public MatMul {
 
   std::shared_ptr<Strategies> GenerateBatchStrategies() override;
 };
+
+class MatMulExtInfo : public BatchMatMulInfo {
+ public:
+  MatMulExtInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
+      : BatchMatMulInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~MatMulExtInfo() override = default;
+
+ protected:
+  Status GetAttrs() override;
+};
+
+class BatchMatMulExtInfo : public MatMulExtInfo {
+ public:
+  BatchMatMulExtInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                     const PrimitiveAttrs &attrs)
+      : MatMulExtInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~BatchMatMulExtInfo() override = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_MATMUL_INFO_H_
