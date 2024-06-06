@@ -435,6 +435,7 @@ template class TensorSummary<int32_t>;
 template class TensorSummary<uint64_t>;
 template class TensorSummary<int64_t>;
 template class TensorSummary<float16>;
+template class TensorSummary<bfloat16>;
 template class TensorSummary<float>;
 template class TensorSummary<double>;
 template class TensorSummary<bool>;

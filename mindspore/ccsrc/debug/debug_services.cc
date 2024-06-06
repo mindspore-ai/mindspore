@@ -197,8 +197,8 @@ std::unique_ptr<ITensorSummary> GetSummaryPtr(const std::shared_ptr<TensorData> 
                                                       prev_num_elements);
     }
     case DbgDataType::DT_BFLOAT16: {
-      return std::make_unique<TensorSummary<mindspore::Float16>>(tensor->GetDataPtr(), previous_tensor_ptr,
-                                                                 num_elements, prev_num_elements);
+      return std::make_unique<TensorSummary<bfloat16>>(tensor->GetDataPtr(), previous_tensor_ptr, num_elements,
+                                                       prev_num_elements);
     }
     case DbgDataType::DT_FLOAT32:
     case DbgDataType::DT_BASE_FLOAT: {
