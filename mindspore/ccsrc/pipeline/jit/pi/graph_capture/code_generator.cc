@@ -1256,6 +1256,8 @@ static int FindLoopEnd(int start, const CFG *cfg) {
   return std::max(result, target) - 1;
 }
 
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 9)
+
 static size_t FindTryBlockEnd(int start_bci, const CFG *cfg) {
   const auto &list = cfg->instr_pool();
   size_t block_end = list[start_bci]->extra_jump()->bci();
@@ -1267,8 +1269,6 @@ static size_t FindTryBlockEnd(int start_bci, const CFG *cfg) {
   }
   return block_end;
 }
-
-#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 9)
 
 static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_effect) {
   const auto &list = cfg->instr_pool();
