@@ -60,7 +60,7 @@ def test_environment_variable_ir_print_interval():
     ir_files = glob.glob(os.path.join(
         "graph_save_path", '*_type_inference*.ir'))
     ir_files_not_exist = glob.glob(
-        os.path.join("graph_save_path", '*_parse*.ir'))
+        os.path.join("graph_save_path", '*_bootstrap*.ir'))
     shutil.rmtree('./graph_save_path')
     ir_files_size = len(ir_files)
     ir_files_not_exist_size = len(ir_files_not_exist)
