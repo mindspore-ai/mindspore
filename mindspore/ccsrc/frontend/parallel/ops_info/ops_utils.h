@@ -178,6 +178,7 @@ constexpr char STAND_ALONE[] = "StandAlone";
 constexpr char ACTIVATION_TYPE[] = "activation_type";
 constexpr char TARGET[] = "primitive_target";
 constexpr char CPU[] = "CPU";
+constexpr char ENABLE_ND_TP[] = "enable_nd_tp";
 constexpr char TRANSPOSE_A[] = "transpose_a";
 constexpr char TRANSPOSE_B[] = "transpose_b";
 constexpr char DIAGONAL[] = "diagonal";

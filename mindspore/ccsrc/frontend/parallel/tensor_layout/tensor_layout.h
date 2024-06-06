@@ -150,7 +150,7 @@ class TensorLayout {
 
   RankList InferRepeatedGroup();
 
-  Arrangement tensor_shape_before() { return tensor_shape_before_; }
+  Arrangement tensor_shape_before() const { return tensor_shape_before_; }
 
   std::vector<Shape> tensor_map_before() const { return tensor_map_before_; }
 

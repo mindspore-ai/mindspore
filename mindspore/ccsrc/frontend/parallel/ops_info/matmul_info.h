@@ -25,6 +25,7 @@
 #include "utils/ms_utils.h"
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/strategy.h"
 
@@ -52,6 +53,8 @@ class MatMulBase : public OperatorInfo {
   Status CheckBatchDimensions(const Dimensions &long_strategy, const Dimensions &short_strategy);
   Shape GetCommonShape(const Dimensions &mat_a_strategy, const Dimensions &mat_b_strategy) const;
 
+  bool three_d_tp_ = false;
+  bool enable_nd_tp_ = false;
   bool candidate_flag_ = false;
   bool transpose_a_ = false;
   bool transpose_b_ = false;
@@ -81,6 +84,14 @@ class MatMul : public MatMulBase {
   virtual Status ComputeReplaceGraphForInterleaved(const CNodePtr &cnode);
 
  private:
+  Status ComputeNDTPReplaceGraph(const CNodePtr &cnode);
+  AnfNodePtr ComputePreAllGatherGraph(const CNodePtr &cnode, GenerateGraph *gen_g,
+                                      const std::vector<Group> &device_group_list, int64_t all_gather_tensor_axis,
+                                      const AnfNodePtr &all_gather_node, bool transpose);
+  AnfNodePtr ComputePostMatMulGraph(const CNodePtr &cnode, GenerateGraph *gen_g, const AnfNodePtr &matmul,
+                                    const TensorLayout &input_layout, int64_t scatter_tensor_axis);
+  TensorLayout InferNDTPOutputLayout();
+  Status CheckNDTPInputLayout(const TensorLayout &a_in_layout, const TensorLayout &b_in_layout);
   void CheckPCLMatMul(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
   Status CheckInputStrategy(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
   TensorLayout InferOutputLayout();
