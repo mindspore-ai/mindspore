@@ -31,7 +31,6 @@
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/graph_util/graph_utils.h"
 #include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/ops_func_impl/flash_attention_score.h"
 #include "ops/op_enum.h"
 
@@ -39,7 +38,6 @@ namespace mindspore {
 using mindspore::ops::FASInputLayoutMode;
 namespace parallel {
 namespace {
-
 constexpr size_t kInputRealShiftSeqDim = 2;
 constexpr size_t kInputDropMaskSeqDim = 2;
 constexpr size_t kOutputSoftmaxSeqDim = 2;
@@ -121,6 +119,25 @@ int64_t LongAdd(int64_t base, int64_t shift) {
     }
   }
   return result;
+}
+
+int64_t GetSplitNumByMapId(const Shape &dev_matrix, int64_t map_id) {
+  if (map_id == MAP_NONE) {
+    return (int64_t)1;
+  }
+  auto axis = dev_matrix.size() - 1 - LongToSize(map_id);
+  if (axis >= dev_matrix.size()) {
+    MS_LOG(EXCEPTION) << "The tensor map id (" << map_id
+                      << ") is out of device matrix's range. device_matrix: " << dev_matrix;
+  }
+  return dev_matrix[axis];
+}
+
+int64_t GetSplitNumByTensorMap(const Shape &dev_matrix, const Shape &tensor_map) {
+  auto split_num = std::accumulate(tensor_map.begin(), tensor_map.end(), 1, [&dev_matrix](int64_t a, int64_t map_id) {
+    return a * GetSplitNumByMapId(dev_matrix, map_id);
+  });
+  return split_num;
 }
 }  // namespace
 
@@ -297,6 +314,11 @@ Status FlashAttentionScoreInfo::InitQKVTensorMap() {
       inputs_tensor_map_[ops::kFlashAttentionScoreInputKeyIndex] = {dev_matrix_batch_dim_, -1, kv_head_num_map, -1};
       inputs_tensor_map_[ops::kFlashAttentionScoreInputValueIndex] = {dev_matrix_batch_dim_, -1, kv_head_num_map, -1};
       break;
+    case FASInputLayoutMode::TND:
+      inputs_tensor_map_[ops::kFlashAttentionScoreInputQueryIndex] = {dev_matrix_batch_dim_, dev_matrix_n1_dim_, -1};
+      inputs_tensor_map_[ops::kFlashAttentionScoreInputKeyIndex] = {dev_matrix_batch_dim_, kv_head_num_map, -1};
+      inputs_tensor_map_[ops::kFlashAttentionScoreInputValueIndex] = {dev_matrix_batch_dim_, kv_head_num_map, -1};
+      break;
     default:
       MS_LOG(ERROR) << name_ << "Not support layout: " << input_layout_;
       return FAILED;
@@ -377,6 +399,11 @@ Status FlashAttentionScoreInfo::InitSplittableInputs() {
       splittable_inputs_[ops::kFlashAttentionScoreInputQueryIndex] = {batch_group, s1_group, n1_group, 0};
       splittable_inputs_[ops::kFlashAttentionScoreInputKeyIndex] = {batch_group, 0, n2_group, 0};
       splittable_inputs_[ops::kFlashAttentionScoreInputValueIndex] = {batch_group, 0, n2_group, 0};
+      break;
+    case FASInputLayoutMode::TND:
+      splittable_inputs_[ops::kFlashAttentionScoreInputQueryIndex] = {batch_group, n1_group, 0};
+      splittable_inputs_[ops::kFlashAttentionScoreInputKeyIndex] = {batch_group, n2_group, 0};
+      splittable_inputs_[ops::kFlashAttentionScoreInputValueIndex] = {batch_group, n2_group, 0};
       break;
     default:
       MS_LOG(ERROR) << name_ << "Not support layout: " << input_layout_;
@@ -774,51 +801,51 @@ Status FlashAttentionScoreInfo::InferSplitNumAndDevMatrixShapeByLayout() {
   auto query_layout = inputs_tensor_info_[ops::kFlashAttentionScoreInputQueryIndex].tensor_layout();
   auto key_layout = inputs_tensor_info_[ops::kFlashAttentionScoreInputKeyIndex].tensor_layout();
   auto query_tensor_map = query_layout.tensor_map_before();
-  auto key_tensor_map = key_layout.tensor_map_before();
-  auto batch_map = query_tensor_map[qkv_batch_dim_];
-  auto seq_map = query_tensor_map[qkv_seq_dim_];
-  auto head_map = query_tensor_map[qkv_head_dim_];
+  auto query_batch_map = query_tensor_map.at(qkv_batch_dim_);
+  auto query_seq_map = query_tensor_map.at(qkv_seq_dim_);
+  auto query_head_map = query_tensor_map.at(qkv_head_dim_);
+  auto key_seq_map = key_layout.tensor_map_before().at(qkv_seq_dim_);
 
   auto dev_matrix_shape = dev_matrix_shape_;
-  auto get_split_num_by_map_ip = [&dev_matrix_shape](int64_t map_id) {
-    if (map_id == MAP_NONE) {
-      return (int64_t)1;
-    }
-    return dev_matrix_shape[dev_matrix_shape.size() - 1 - LongToSize(map_id)];
-  };
-
   if (input_layout_ == FASInputLayoutMode::TND) {
-    if (batch_map.size() == 1) {
-      dev_matrix_batch_dim_ = batch_map[0];
+    if (query_batch_map.size() == 1) {
+      dev_matrix_batch_dim_ = query_batch_map[0];
       dev_matrix_s1_dim_ = MAP_NONE;
-    } else if (batch_map.size() == 2) {
-      dev_matrix_batch_dim_ = batch_map[0];
-      dev_matrix_s1_dim_ = batch_map[1];
+    } else if (query_batch_map.size() == 2) {
+      dev_matrix_batch_dim_ = query_batch_map[0];
+      dev_matrix_s1_dim_ = query_batch_map[1];
     } else {
       MS_LOG(ERROR) << name_
                     << ": The seq-dimension of query can only be mapped upto 2 device matrix dimension, but got "
-                    << batch_map;
+                    << query_batch_map;
       return FAILED;
     }
     n1_split_num_ = 1;
-    for (auto map_id : head_map) {
-      n1_split_num_ *= get_split_num_by_map_ip(map_id);
+    for (auto map_id : query_head_map) {
+      n1_split_num_ *= GetSplitNumByMapId(dev_matrix_shape, map_id);
     }
   } else {
-    if (batch_map.size() != 1 || seq_map.size() != 1 || head_map.size() != 1) {
+    if (query_batch_map.size() != 1 || query_seq_map.size() != 1 || query_head_map.size() != 1) {
       MS_LOG(ERROR) << name_
                     << ": Each dimension of query can only be mapped to one device matrix dimension, but got the "
                        "tensor info of query is "
                     << query_layout.ToString();
       return FAILED;
     }
-    dev_matrix_batch_dim_ = batch_map[0];
-    dev_matrix_s1_dim_ = seq_map[0];
-    dev_matrix_n1_dim_ = head_map[0];
-    n1_split_num_ = get_split_num_by_map_ip(dev_matrix_n1_dim_);
+    dev_matrix_batch_dim_ = query_batch_map[0];
+    dev_matrix_s1_dim_ = query_seq_map[0];
+    dev_matrix_n1_dim_ = query_head_map[0];
+    n1_split_num_ = GetSplitNumByMapId(dev_matrix_shape, dev_matrix_n1_dim_);
   }
-  batch_split_num_ = get_split_num_by_map_ip(dev_matrix_batch_dim_);
-  s1_split_num_ = get_split_num_by_map_ip(dev_matrix_s1_dim_);
+  batch_split_num_ = GetSplitNumByMapId(dev_matrix_shape, dev_matrix_batch_dim_);
+  s1_split_num_ = GetSplitNumByMapId(dev_matrix_shape, dev_matrix_s1_dim_);
+  if (s1_split_num_ > 1 && GetSplitNumByTensorMap(dev_matrix_shape, query_seq_map) !=
+                             GetSplitNumByTensorMap(dev_matrix_shape, key_seq_map) * s1_split_num_) {
+    MS_LOG(EXCEPTION) << name_ << ": Cannot split the seq-dimension of key. query_seq_slice: "
+                      << GetSplitNumByTensorMap(dev_matrix_shape, query_seq_map)
+                      << ", key_seq_slice: " << GetSplitNumByTensorMap(dev_matrix_shape, key_seq_map)
+                      << ", s1_split_num: " << s1_split_num_;
+  }
   return SUCCESS;
 }
 
@@ -887,7 +914,8 @@ Status FlashAttentionScoreInfo::ReplaceActualSeqLenForSplitSeqInTnd(const CNodeP
   std::vector<int64_t> split_info = GetSplitIdAndRank();
   int64_t tq = inputs_shape_[GetStrategyRealIndex(ops::kFlashAttentionScoreInputQueryIndex)][qkv_batch_dim_];
   int64_t tk = inputs_shape_[GetStrategyRealIndex(ops::kFlashAttentionScoreInputKeyIndex)][qkv_batch_dim_];
-  int64_t slice_tq = tq / s1_split_num_;
+  int64_t slice_tq = tq / s1_split_num_ / batch_split_num_;
+  int64_t slice_tk = tk / batch_split_num_;
   int64_t split_id = split_info[kIndex2];
   int64_t offset = slice_tq * split_id;
   if (!is_input_passed_[ops::kFlashAttentionScoreInputActualSeqQlenIndex] ||
@@ -919,9 +947,9 @@ Status FlashAttentionScoreInfo::ReplaceActualSeqLenForSplitSeqInTnd(const CNodeP
   auto tmp_new_actual_seq_kvlen_cnode =
     func_graph->NewCNode({NewValueNode(prim::kPrimSub), actual_seq_kvlen_node, kvlen_offset_sub_cnode});
 
-  // new_actual_seq_kvlen[actual_seq_kvlen == tk] = tk
+  // new_actual_seq_kvlen[actual_seq_kvlen == slice_tk] = slice_tk
   auto equal =
-    func_graph->NewCNode({NewValueNode(prim::kPrimEqual), actual_seq_kvlen_node, CreateInt32Tensor(tk, true)});
+    func_graph->NewCNode({NewValueNode(prim::kPrimEqual), actual_seq_kvlen_node, CreateInt32Tensor(slice_tk, true)});
   auto new_actual_seq_kvlen_cnode = func_graph->NewCNode(
     {NewValueNode(prim::kPrimSelect), equal, actual_seq_kvlen_node, tmp_new_actual_seq_kvlen_cnode});
   manager->SetEdge(cnode, actual_seq_kvlen_input_index, new_actual_seq_kvlen_cnode);
@@ -932,8 +960,6 @@ Status FlashAttentionScoreInfo::ReplaceActualSeqLenForSplitSeqInTnd(const CNodeP
 void FlashAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
   for (auto &cnode : cnodes_) {
     SetValueInputToCNode<int64_t>(cnode, ops::kFlashAttentionScoreInputHeadNumIndex + 1, head_num_ / n1_split_num_);
-    std::vector<int64_t> split_info = GetSplitIdAndRank();
-    int64_t split_id = split_info[kIndex2];
     if (s1_split_num_ > 1 && !enable_load_balance_ && need_update_op_attrs_mode_) {
       if (input_layout_ == FASInputLayoutMode::TND) {
         if (ReplaceActualSeqLenForSplitSeqInTnd(cnode) != SUCCESS) {
@@ -941,6 +967,8 @@ void FlashAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
         }
       } else {
         int64_t new_pre_tokens, new_next_tokens;
+        std::vector<int64_t> split_info = GetSplitIdAndRank();
+        int64_t split_id = split_info[kIndex2];
         std::tie(new_pre_tokens, new_next_tokens) = GetAttentionMaskAttrs(split_id, s1_split_num_);
         int64_t new_sparse_mode = is_attn_mask_compressed_ ? ops::kSparseBand : sparse_mode_;
         SetValueInputToCNode<int64_t>(cnode, ops::kFlashAttentionScoreInputSparseModeIndex + 1, new_sparse_mode);
@@ -1105,14 +1133,14 @@ std::vector<std::pair<AnfNodePtr, int64_t>> FlashAttentionScoreInfo::ReplaceGrap
                                                               std::make_pair(flash_attention_score_target, kIndex2),
                                                               std::make_pair(flash_attention_score_target, kIndex3)};
   if (!is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
-    inputs_nodes.push_back(std::make_pair(flash_attention_score_target, kIndex4));
+    (void)inputs_nodes.emplace_back(std::make_pair(flash_attention_score_target, kIndex4));
   }
   if (!is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex]) {
-    inputs_nodes.push_back(std::make_pair(flash_attention_score_target, kIndex5));
+    (void)inputs_nodes.emplace_back(std::make_pair(flash_attention_score_target, kIndex5));
   }
-  inputs_nodes.push_back(std::make_pair(flash_attention_score_target, kIndex6));
+  (void)inputs_nodes.emplace_back(std::make_pair(flash_attention_score_target, kIndex6));
   if (!is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex] || is_attn_mask_compressed_) {
-    inputs_nodes.push_back(std::make_pair(flash_attention_score_target, kIndex7));
+    (void)inputs_nodes.emplace_back(std::make_pair(flash_attention_score_target, kIndex7));
   }
   inputs_nodes.insert(inputs_nodes.end(), {std::make_pair(flash_attention_score_target, kIndex8),
                                            std::make_pair(flash_attention_score_target, kIndex9),
