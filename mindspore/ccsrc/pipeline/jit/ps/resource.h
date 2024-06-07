@@ -67,6 +67,7 @@ const char kAutoMonad[] = "auto_monad";
 const char kInline[] = "inline";
 const char kPreAutoParallel[] = "pre_auto_parallel";
 const char kPipelineSplit[] = "pipeline_split";
+const char kPipelineParallelScheduler[] = "pipeline_parallel_scheduler";
 const char kOptimize[] = "optimize";
 const char kAutoMonadReorder[] = "auto_monad_reorder";
 const char kGetJitBpropGraph[] = "get_jit_bprop_graph";

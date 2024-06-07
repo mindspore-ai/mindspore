@@ -787,8 +787,8 @@ def set_auto_parallel_context(**kwargs):
     parallel_optimizer_config    full_batch
     enable_alltoall              dataset_strategy
     force_fp32_communication      pipeline_stages
+    pipeline_config              auto_parallel_search_mode
                \                 pipeline_result_broadcast
-               \                 auto_parallel_search_mode
                \                 comm_fusion
                \                 strategy_ckpt_config
                \                 group_ckpt_save_file
@@ -866,6 +866,12 @@ def set_auto_parallel_context(**kwargs):
                         Default: ``1`` .
         pipeline_result_broadcast (bool): A switch that broadcast the last stage result to all other stage in pipeline
                         parallel inference. Default: ``False`` .
+        pipeline_config (dict): A dict contains the keys and values for setting the pipeline parallelism configuration.
+                        It supports the following keys:
+
+                        - pipeline_interleave(bool): Indicates whether to enable the interleaved execution mode.
+                        - pipeline_scheduler(str): Indicates the scheduling mode for pipeline parallelism. Only support
+                          ``gpipe/1f1b``.
         parallel_optimizer_config (dict): A dict contains the keys and values for setting the parallel optimizer
                         configure. The configure provides more detailed behavior control about parallel training
                         when parallel optimizer is enabled. The configure will be effective when we use

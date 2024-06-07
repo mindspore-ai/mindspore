@@ -66,6 +66,12 @@ inline bool is_first_receive(const AnfNodePtr &node) {
 }  // namespace
 
 void OverlapOptShardInPipeline(const FuncGraphPtr &graph) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  static const bool is_enable_ge = (context->backend_policy() == "ge");
+  if (is_enable_ge) {
+    return;
+  }
   if (parallel::g_device_manager == nullptr) {
     MS_LOG(INFO) << "parallel::g_device_manager is not initialized.";
     return;
