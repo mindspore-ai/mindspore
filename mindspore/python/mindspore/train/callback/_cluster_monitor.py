@@ -34,10 +34,10 @@ def _get_dp_tp_from_redundancy(redundancy_tuple):
     """From redundancy get dp and tp"""
     dp = []
     tp = []
-    for tp_value in redundancy_tuple:
-        tp.append(list(tp_value))
+    for dp_value in redundancy_tuple:
+        dp.append(list(dp_value))
     for i in range(len(redundancy_tuple[0])):
-        dp.append([v[i] for v in redundancy_tuple])
+        tp.append([v[i] for v in redundancy_tuple])
     return dp, tp
 
 
