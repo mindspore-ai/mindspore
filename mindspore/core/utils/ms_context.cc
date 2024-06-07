@@ -468,10 +468,13 @@ bool MsContext::IsKByKExecutorMode() const {
     jit_level = iter->second;
   }
 
+  auto global_jit_level = get_param<std::string>(MS_CTX_JIT_LEVEL);
   auto mode = get_param<int>(MS_CTX_EXECUTION_MODE);
+  auto device_target = get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (jit_level.empty()) {
-    auto device_target = get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    if (mode == kGraphMode && device_target == kAscendDevice) {
+    if (!global_jit_level.empty()) {
+      jit_level = global_jit_level;
+    } else if (mode == kGraphMode && device_target == kAscendDevice) {
       jit_level = kAttrJitLevelO2;
     } else {
       jit_level = kAttrJitLevelO1;
