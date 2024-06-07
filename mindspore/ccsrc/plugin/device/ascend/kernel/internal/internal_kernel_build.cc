@@ -98,7 +98,7 @@ void GetMsTypesList(const CNodePtr &kernel, std::vector<TypeId> *ms_in_dtypes, s
 bool IsRegisteredInternalKernel(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   std::string opname = common::AnfAlgo::GetCNodeName(anf_node);
-  if (Factory<InternalKernelMod>::Instance().IsRegistered(opname) == true) {
+  if (Factory<InternalKernelMod>::Instance().IsRegistered(opname)) {
     internal::DtypesParamPtr check_param = std::make_shared<internal::DtypesParam>();
     check_param->op_id_ = InternalKernelUtils::ToInternalOpId(opname);
     std::vector<TypeId> ms_in_dtypes;

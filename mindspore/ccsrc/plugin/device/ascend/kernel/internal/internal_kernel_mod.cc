@@ -60,19 +60,19 @@ int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const st
   impl_ = internal::CreateInternalKernelImpl(param);
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Internal Op '" << kernel_name_ << "' create FAILED.";
-    return 1;
+    return KRET_RESIZE_FAILED;
   }
 
   if (!impl_->Init(info)) {
     MS_LOG(ERROR) << "Internal Op '" << kernel_name_ << "' is initialized FAILED.";
-    return 1;
+    return KRET_RESIZE_FAILED;
   }
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
     InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
   }
   impl_->SetInputs(inputs_);
 
-  return 0;
+  return KRET_OK;
 }
 
 uint64_t InternalKernelMod::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
@@ -165,7 +165,7 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
     workspace_size_list_[i] = static_cast<size_t>(workspace_size_list[i]);
   }
 
-  return 0;
+  return KRET_OK;
 }
 
 bool InternalKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,

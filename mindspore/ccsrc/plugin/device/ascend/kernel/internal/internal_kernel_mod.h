@@ -43,7 +43,6 @@ static std::map<std::string, int> ms_op_key_to_internel_op_id = {
   {"Sub", internal::OpId::Sub},
   {"RealDiv", internal::OpId::RealDiv},
   {"Mul", internal::OpId::Mul},
-  {"LessEqual", internal::OpId::LessEqual},
   {"Less", internal::OpId::Less},
   {"LogicalNot", internal::OpId::LogicalNot},
   {"NotEqual", internal::OpId::NotEqual},
@@ -51,8 +50,6 @@ static std::map<std::string, int> ms_op_key_to_internel_op_id = {
   {"Transpose", internal::OpId::Transpose},
   {"GeLU", internal::OpId::Gelu},
   {"Softmax", internal::OpId::Softmax},
-  {"Split", internal::OpId::Split},
-  {"Concat", internal::OpId::Concat},
   {"RmsNorm", internal::OpId::RmsNorm},
   {"AddRmsNorm", internal::OpId::AddRmsNorm},
   {"ReduceSum", internal::OpId::ReduceSum},
@@ -62,6 +59,7 @@ static std::map<std::string, int> ms_op_key_to_internel_op_id = {
   {"FusedMatMulElemBinary", internal::OpId::MatMul},
   {"FusedMatMulElemUnary", internal::OpId::MatMul},
   {"MatMul", internal::OpId::MatMul},
+  {"QuantBatchMatmul", internal::OpId::MatMul},
   {"MatmulFfn", internal::OpId::MatmulQkv},
   {"MatmulQkv", internal::OpId::MatmulQkv}};
 
