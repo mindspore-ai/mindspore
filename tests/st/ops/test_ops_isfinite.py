@@ -220,7 +220,7 @@ def test_ops_isfinite_backward_dynamic_rank(context_mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize('mode', ['GE', 'pynative', 'KBK'])
+@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_isfinite_forward_static_shape(mode):
     """
     Feature: Test isfinite with static shape in graph and pynative mode.
@@ -245,7 +245,7 @@ def test_isfinite_forward_static_shape(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize("mode", ['GE', 'pynative', 'KBK'])
+@pytest.mark.parametrize("mode", ['pynative', 'GE', 'KBK'])
 def test_isfinite_backward_static_shape(mode):
     """
     Feature: Test isfinite with backward.

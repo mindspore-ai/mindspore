@@ -289,7 +289,8 @@ class BACKEND_EXPORT MemoryTrackerDisabled : public MemTracker {
 class BACKEND_EXPORT MemTrackerManager {
  public:
   static MemTracker &GetInstance() {
-    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PROF_MEM)) {
+    if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PROF_MEM) ||
+        common::IsEnableAlllocConfig(common::kAllocMemoryTracker)) {
       return MemoryTrackerEnabled::getInstance();
     } else {
       return MemoryTrackerDisabled::getInstance();

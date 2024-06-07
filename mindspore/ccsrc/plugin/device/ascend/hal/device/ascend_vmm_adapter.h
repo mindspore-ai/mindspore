@@ -26,7 +26,6 @@
 
 #include "acl/acl.h"
 #include "utils/dlopen_macro.h"
-#include "utils/hash_map.h"
 #include "utils/log_adapter.h"
 
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
@@ -43,11 +42,7 @@ class AscendVmmAdapter {
   }
 
   AscendVmmAdapter() {
-    alloc_conf_map_ = parseAllocConf();
-    for (auto &kv : alloc_conf_map_) {
-      MS_LOG(INFO) << "VMM alloc conf key: " << kv.first << ", value: " << kv.second;
-    }
-    auto align_size = alloc_conf_map_["vmm_align_size"];
+    auto align_size = common::GetAllocConfigValue(common::kAllocVmmAlignSize);
     if (align_size.empty()) {
       kVmmAlignSize = kDefaultAlignSize;
     } else {
@@ -56,6 +51,7 @@ class AscendVmmAdapter {
         MS_LOG(EXCEPTION) << "VMM align size must be multiple of 2MB, but got " << kVmmAlignSize;
       }
     }
+    MS_LOG(INFO) << "VMM align size is " << kVmmAlignSize;
   }
   ~AscendVmmAdapter();
 
@@ -68,17 +64,19 @@ class AscendVmmAdapter {
   size_t MmapDeviceMem(const size_t size, const DeviceMemPtr addr);
   size_t EagerFreeDeviceMem(const DeviceMemPtr addr, const size_t size);
 
-  const bool IsEnabled() const {
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    if (ms_context->get_param<std::string>(MS_CTX_JIT_LEVEL) == "O2" ||
-        ms_context->get_param<std::string>(MS_CTX_JIT_LEVEL) == "") {
+  static const bool IsEnabled() {
+    auto ctx = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ctx);
+    if (ctx->GetJitLevel() == kAttrJitLevelO2) {
       return false;
     }
 
-    static bool is_vmm_disabled =
-      alloc_conf_map_.find("enable_vmm") != alloc_conf_map_.end() &&
-      (alloc_conf_map_.at("enable_vmm") == "False" || alloc_conf_map_.at("enable_vmm") == "false");
+    const auto &soc_version = ctx->ascend_soc_version();
+    if (!(soc_version == "ascend910b" || soc_version == "ascend910c")) {
+      return false;
+    }
+
+    static bool is_vmm_disabled = common::IsDisableAlllocConfig(common::kAllocEnableVmm);
     return !is_vmm_disabled;
   }
 
@@ -89,7 +87,6 @@ class AscendVmmAdapter {
   std::map<DeviceMemPtr, aclrtDrvMemHandle> vmm_map_;
   std::vector<DeviceMemPtr> all_reserve_mems_;
   std::queue<aclrtDrvMemHandle> handle_queue_;
-  std::map<std::string, std::string> alloc_conf_map_;
   static constexpr uint64_t kMB = 1024 * 1024;
   static constexpr uint64_t kDefaultAlignSize = 2 * kMB;
   static int StringToMB(const std::string &str) {
@@ -106,25 +103,6 @@ class AscendVmmAdapter {
       MS_LOG(EXCEPTION) << "The string has extra characters, " << str;
     }
     return num;
-  }
-  static std::map<std::string, std::string> parseAllocConf() {
-    std::map<std::string, std::string> result;
-    auto env_value = common::GetEnv("MS_ALLOC_CONF");
-    if (env_value.empty()) {
-      return result;
-    }
-    std::stringstream ss(env_value);
-    std::string item;
-
-    while (std::getline(ss, item, ',')) {
-      std::size_t delimiterPos = item.find(':');
-      if (delimiterPos != std::string::npos) {
-        std::string key = item.substr(0, delimiterPos);
-        std::string value = item.substr(delimiterPos + 1);
-        result[key] = value;
-      }
-    }
-    return result;
   }
 };
 }  // namespace ascend

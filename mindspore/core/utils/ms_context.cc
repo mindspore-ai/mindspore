@@ -38,28 +38,6 @@ std::map<std::string, MsBackendPolicy> kPolicyMap = {{"ge", kMsBackendGePrior}, 
                                                      {"ge_only", kMsBackendGeOnly}, {"vm_prior", kMsBackendVmPrior}};
 
 constexpr auto kDeviceTargetSize2 = 2;
-
-bool DisableVMM() {
-  std::string alloc_conf = common::GetEnv("MS_ALLOC_CONF");
-  if (alloc_conf.empty()) {
-    return false;
-  }
-
-  std::stringstream ss(alloc_conf);
-  std::string item;
-  while (std::getline(ss, item, ',')) {
-    std::size_t delimiterPos = item.find(':');
-    if (delimiterPos != std::string::npos) {
-      std::string key = item.substr(0, delimiterPos);
-      if (key != "enable_vmm") {
-        continue;
-      }
-      std::string value = item.substr(delimiterPos + 1);
-      return value == "False" || value == "false";
-    }
-  }
-  return false;
-}
 }  // namespace
 std::atomic<bool> thread_1_must_end(false);
 
@@ -486,6 +464,7 @@ std::string MsContext::GetJitLevel() const {
   if (iter != jit_config.end()) {
     jit_level = iter->second;
   }
+
   auto global_jit_level = get_param<std::string>(MS_CTX_JIT_LEVEL);
   auto mode = get_param<int>(MS_CTX_EXECUTION_MODE);
   auto device_target = get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -498,7 +477,7 @@ std::string MsContext::GetJitLevel() const {
       jit_level = kAttrJitLevelO0;
     }
   }
-  static bool disable_vmm = DisableVMM();
+  static bool disable_vmm = common::IsDisableAlllocConfig(common::kAllocEnableVmm);
   static std::string first_jit_level = jit_level;
   if (!global_jit_level.empty() && device_target == kAscendDevice && !disable_vmm &&
       first_jit_level != kAttrJitLevelO2 && jit_level == kAttrJitLevelO2) {
@@ -524,7 +503,7 @@ bool MsContext::IsKByKExecutorMode() const {
   }
 
   if (mode == kPynativeMode) {
-    if (jit_level == "O2") {
+    if (jit_level == kAttrJitLevelO2) {
       PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable graph_sink executor in the PYNATIVE mode.");
       return false;
     }
@@ -533,7 +512,7 @@ bool MsContext::IsKByKExecutorMode() const {
   }
 
   if (mode == kGraphMode) {
-    if (common::GetEnv("GRAPH_OP_RUN") == "1" || jit_level == "O0" || jit_level == "O1") {
+    if (common::GetEnv("GRAPH_OP_RUN") == "1" || jit_level == kAttrJitLevelO0 || jit_level == kAttrJitLevelO1) {
       PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable kernelbykernel executor in the GRAPH mode.");
       return true;
     }

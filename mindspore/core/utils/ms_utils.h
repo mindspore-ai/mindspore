@@ -65,7 +65,15 @@ namespace common {
 inline const char *SafeCStr(const std::string &str) { return str.c_str(); }
 MS_CORE_API const char *SafeCStr(const std::string &&str);
 
+// Memory dev config.
+const char kAllocConf[] = "MS_ALLOC_CONF";
+const char kAllocEnableVmm[] = "enable_vmm";
+const char kAllocVmmAlignSize[] = "vmm_align_size";
+const char kAllocMemoryRecycle[] = "memory_recycle";
+const char kAllocMemoryTracker[] = "memory_tracker";
+
 // Runtime dev config.
+const char kRuntimeConf[] = "MS_DEV_RUNTIME_CONF";
 const char kRuntimeInline[] = "inline";
 const char kRuntimeSwitchInline[] = "switch_inline";
 const char kRuntimeMultiStream[] = "multi_stream";
@@ -81,9 +89,13 @@ const char kRuntimeMemoryStat[] = "memory_statistics";
 const char kRuntimeCompileStat[] = "compile_statistics";
 const char kRuntimePerformanceStat[] = "performance_statistics";
 const char kRuntimePerformanceStatTopNum[] = "performance_statistics_top_num";
-MS_CORE_API std::string GetRuntimeConfigValue(const std::string &runtime_config);
+MS_CORE_API void ResetConfig(const std::string &config);
+MS_CORE_API std::string GetConfigValue(const std::string &config, const std::string &config_key);
 MS_CORE_API bool IsEnableRuntimeConfig(const std::string &runtime_config);
 MS_CORE_API bool IsDisableRuntimeConfig(const std::string &runtime_config);
+MS_CORE_API std::string GetAllocConfigValue(const std::string &alloc_config);
+MS_CORE_API bool IsEnableAlllocConfig(const std::string &alloc_config);
+MS_CORE_API bool IsDisableAlllocConfig(const std::string &alloc_config);
 
 static inline std::string GetEnv(const std::string &envvar) {
   const char *value = std::getenv(envvar.c_str());

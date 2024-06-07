@@ -141,7 +141,7 @@ def test_ops_any_forward_dynamic_rank(context_mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
+@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_any_forward_static_shape(mode):
     """
     Feature: Test any with static shape in graph and pynative mode.

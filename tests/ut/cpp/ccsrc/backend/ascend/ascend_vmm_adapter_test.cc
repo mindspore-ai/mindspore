@@ -36,6 +36,7 @@ class TestAscendVmmAdapter : public UT::Common {
     mindspore::transform::aclrtMapMem_ = aclrtMapMem;
     mindspore::transform::aclrtFreePhysical_ = aclrtFreePhysical;
     mindspore::transform::aclrtReleaseMemAddress_ = aclrtReleaseMemAddress;
+    common::ResetConfig("MS_ALLOC_CONF");
   }
   void TearDown() override {}
 
@@ -62,6 +63,7 @@ TEST_F(TestAscendVmmAdapter, test_set_align_size) {
   AscendVmmAdapter test_vmm_adapter;
   EXPECT_EQ(test_vmm_adapter.kVmmAlignSize, 20 * mb);
   common::SetEnv("MS_ALLOC_CONF", "");
+  common::ResetConfig("MS_ALLOC_CONF");
 }
 
 /// Feature: test ascend vmm adapter.
@@ -71,6 +73,7 @@ TEST_F(TestAscendVmmAdapter, test_set_align_size_throw) {
   common::SetEnv("MS_ALLOC_CONF", "vmm_align_size:balabala");
   EXPECT_ANY_THROW(AscendVmmAdapter test_vmm_adapter);
   common::SetEnv("MS_ALLOC_CONF", "");
+  common::ResetConfig("MS_ALLOC_CONF");
 }
 
 /// Feature: test ascend vmm adapter.
@@ -94,6 +97,7 @@ TEST_F(TestAscendVmmAdapter, test_round_up_1) {
   size_t ret = test_vmm_adapter.GetRoundUpAlignSize(size);
   EXPECT_EQ(ret, block * 2);
   common::SetEnv("MS_ALLOC_CONF", "");
+  common::ResetConfig("MS_ALLOC_CONF");
 }
 
 /// Feature: test ascend vmm adapter.
@@ -117,6 +121,7 @@ TEST_F(TestAscendVmmAdapter, test_round_down_1) {
   size_t ret = test_vmm_adapter.GetRoundDownAlignSize(size);
   EXPECT_EQ(ret, block);
   common::SetEnv("MS_ALLOC_CONF", "");
+  common::ResetConfig("MS_ALLOC_CONF");
 }
 
 /// Feature: test ascend vmm adapter.

@@ -210,7 +210,7 @@ def test_functional_where_broadcast(mode):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
+@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_where_ext_static_shape(mode):
     """
     Feature: Test where with static shape in graph and pynative mode.
@@ -306,7 +306,7 @@ def test_where_vmap(graph_level):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize("mode", ['GE', 'KBK', 'pynative'])
+@pytest.mark.parametrize("mode", ['pynative', 'GE', 'KBK'])
 def test_where_ext_grad(mode):
     """
     Feature: Test where with backward.
