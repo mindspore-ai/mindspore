@@ -141,7 +141,7 @@ Non-linear activation functions
     :template: classtemplate.rst
 
     mindspore.mint.nn.functional.relu
-    mindpsore.mint.nn.functional.leaky_relu
+    mindspore.mint.nn.functional.leaky_relu
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
     mindspore.mint.nn.functional.softmax

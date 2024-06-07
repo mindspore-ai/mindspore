@@ -1,7 +1,7 @@
 mindspore.ops.Receive
 =====================
 
-.. py:class:: mindspore.ops.Receive(sr_tag, src_rank, shape, dtype, group=GlobalComm.WORLD_COMM_GROUP)
+.. py:class:: mindspore.ops.Receive(sr_tag, src_rank, shape, dtype, group=GlobalComm.WORLD_COMM_GROUP, group_back=GlobalComm.WORLD_COMM_GROUP)
 
     接收来自 `src_rank` 线程的张量。
 
