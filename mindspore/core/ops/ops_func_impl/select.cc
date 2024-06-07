@@ -43,9 +43,6 @@
 
 namespace mindspore {
 namespace ops {
-using float_complex = std::complex<float>;
-using double_complex = std::complex<double>;
-
 abstract::BaseShapePtr SelectFuncImpl::InferShape(const PrimitivePtr &prim,
                                                   const std::vector<AbstractBasePtr> &input_args) const {
   auto cond_shape = input_args[kSelectCondIndex]->GetShape()->GetShapeVector();
@@ -59,23 +56,37 @@ abstract::BaseShapePtr SelectFuncImpl::InferShape(const PrimitivePtr &prim,
   return std::make_shared<abstract::TensorShape>(output_size);
 }
 
+ShapeArray SelectFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &cond_tensor = input_values[kSelectCondIndex]->cast<tensor::BaseTensorPtr>();
+  const auto &x_tensor = input_values[kSelectXIndex]->cast<tensor::BaseTensorPtr>();
+  const auto &y_tensor = input_values[kSelectYIndex]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(cond_tensor);
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+
+  const auto &cond_shape = cond_tensor->shape();
+  const auto &x_shape = x_tensor->shape();
+  const auto &y_shape = y_tensor->shape();
+  auto broadcast_output_size = CalBroadCastShape(x_shape, y_shape, primitive->name(), "input", "other");
+  auto output_size = CalBroadCastShape(cond_shape, broadcast_output_size, primitive->name(), "condition", "input");
+
+  return {output_size};
+}
+
 TypePtr SelectFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const {
-  auto prim_name = prim->name();
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   auto x_type = input_args[kSelectXIndex]->GetType();
-  auto y_type = input_args[kSelectYIndex]->GetType();
-  auto cond_type = input_args[kSelectCondIndex]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
-  MS_EXCEPTION_IF_NULL(y_type);
 
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_type", x_type, common_valid_types_with_complex_and_bool,
-                                                   prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("y_type", y_type, common_valid_types_with_complex_and_bool,
-                                                   prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("cond", cond_type, {kBool}, prim_name);
   return x_type->Clone();
+}
+
+TypePtrList SelectFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kSelectXIndex]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->Dtype()};
 }
 }  // namespace ops
 }  // namespace mindspore

@@ -26,18 +26,18 @@ namespace pyboost {
 void AddLayerNormAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x1_tensor,
                                  const BaseTensorPtr &x2_tensor, const BaseTensorPtr &gamma_tensor,
                                  const BaseTensorPtr &beta_tensor, const FP32ImmPtr &epsilon,
-                                 const BoolImmPtr &additionalOut) {
+                                 const BoolImmPtr &additional_out) {
   MS_LOG(DEBUG) << "Call start";
-  OpRunner::InferOpOutput(op, x1_tensor, x2_tensor, gamma_tensor, beta_tensor, epsilon, additionalOut);
+  OpRunner::InferOpOutput(op, x1_tensor, x2_tensor, gamma_tensor, beta_tensor, epsilon, additional_out);
   // Convert ValuePtr to c++ scalar
   auto epsilon_imm = static_cast<double>(GetValue<float>(epsilon));
-  auto additionalOut_imm = GetValue<bool>(additionalOut);
+  auto additional_out_imm = GetValue<bool>(additional_out);
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x1_tensor, x2_tensor, gamma_tensor, beta_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, x1_tensor, x2_tensor, gamma_tensor, beta_tensor, epsilon_imm, additionalOut_imm]() {
+    [op, x1_tensor, x2_tensor, gamma_tensor, beta_tensor, epsilon_imm, additional_out_imm]() {
       MS_LOG(DEBUG) << "Run device task AddLayerNorm start";
       auto device_context = op->device_context();
       const auto &outputs = op->outputs();
@@ -46,7 +46,7 @@ void AddLayerNormAscendCustomize(const std::shared_ptr<OpRunner> &op, const Base
       // Malloc for output tensors
       PyBoostUtils::MallocOpOutputs(device_context, outputs);
       LAUNCH_ACLNN(aclnnAddLayerNorm, device_context, op->stream_id(), x1_tensor, x2_tensor, gamma_tensor, beta_tensor,
-                   nullptr, epsilon_imm, additionalOut_imm, outputs[0], outputs[1], outputs[2], outputs[3]);
+                   nullptr, epsilon_imm, additional_out_imm, outputs[0], outputs[1], outputs[2], outputs[3]);
       MS_LOG(DEBUG) << "Run device task AddLayerNorm end";
     }));
 }
