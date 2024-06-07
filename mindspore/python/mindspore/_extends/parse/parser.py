@@ -795,6 +795,21 @@ def get_args(node):
     return args
 
 
+def get_arg_spec_and_default_values(func):
+    """Get the full arg specification and the default arg values of a function"""
+    arg_spec = inspect.getfullargspec(func)
+    defaults = {}
+    args_len = len(arg_spec.args)
+    if arg_spec.defaults:
+        defaults_len = len(arg_spec.defaults)
+        for i in range(defaults_len):
+            defaults[arg_spec.args[args_len - i - 1]] = arg_spec.defaults[defaults_len - i - 1]
+    if arg_spec.kwonlydefaults:
+        for k, v in arg_spec.kwonlydefaults.items():
+            defaults[k] = v
+    return arg_spec, defaults
+
+
 def _convert_stub_tensor(data):
     """Convert stub tensor output to tensor"""
     if is_stub_tensor(data):

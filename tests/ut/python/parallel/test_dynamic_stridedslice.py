@@ -60,7 +60,7 @@ def compile_net(net, _x1, _b1):
     train_net.set_inputs(_x1, _b1)
     phase, _ = _cell_graph_executor.compile(train_net, _x1, _b1)
     context.reset_auto_parallel_context()
-    return phase
+    return phase, train_net
 
 
 def test_dynamic_stridedslice():
@@ -71,7 +71,7 @@ def test_dynamic_stridedslice():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     net = Net(_w1)
-    phase = compile_net(net, _x1, _b1)
+    phase, _ = compile_net(net, _x1, _b1)
     validator = ParallelValidator(net, phase)
 
     # check inputs
@@ -94,7 +94,7 @@ def test_dynamic_stridedslice_handle_begin_end():
     _x = Tensor(shape=[s1, s2], dtype=ms.int32)
     _b = Tensor(shape=[s1, s2], dtype=ms.int32)
 
-    phase = compile_net(net, _x, _b)
+    phase, _ = compile_net(net, _x, _b)
     validator = ParallelValidator(net, phase)
 
     # check inputs

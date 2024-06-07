@@ -57,15 +57,6 @@ TEST_F(TestGraphExecutor, test_jit_config_with_jit_level_equal_o1) {
 
   auto jit_level = pipeline::GetJitLevel();
   ASSERT_TRUE(jit_level == "O1");
-
-  auto actions = VmPipeline(std::make_shared<pipeline::Resource>());
-  bool ret = false;
-  for (auto action : actions) {
-    if (action.first == "combine_like_graphs") {
-      ret = true;
-    }
-  }
-  ASSERT_TRUE(ret == true);
 }
 
 /// Feature: Test jit_config
@@ -76,15 +67,6 @@ TEST_F(TestGraphExecutor, test_jit_config_with_unused_config) {
   pipeline::GraphExecutorPy::GetInstance()->SetJitConfig(obj);
   auto jit_level = pipeline::GetJitLevel();
   ASSERT_TRUE(jit_level == "");
-
-  auto actions = VmPipeline(std::make_shared<pipeline::Resource>());
-  bool ret = false;
-  for (auto action : actions) {
-    if (action.first == "combine_like_graphs") {
-      ret = true;
-    }
-  }
-  ASSERT_TRUE(ret == true);
 }
 }  // namespace pipeline
 }  // namespace mindspore

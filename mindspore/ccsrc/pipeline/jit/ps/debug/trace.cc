@@ -704,6 +704,7 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     last_location_info = this_location_info;
     oss << "# " << index++ << " " << this_location_info;
   }
+  bool empty_stack_info = oss.str() == "\n";
 
 #ifndef ENABLE_SECURITY
   std::string msg =
@@ -722,6 +723,9 @@ void GetEvalStackInfo(std::ostringstream &oss) {
 #endif
   stack.clear();
   MS_LOG(INFO) << "Get graph analysis information end";
+  if (empty_stack_info) {
+    oss.str("");
+  }
 }
 
 // Trace the graph evaluator stack

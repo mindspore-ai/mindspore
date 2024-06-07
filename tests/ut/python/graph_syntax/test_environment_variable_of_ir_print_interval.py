@@ -21,7 +21,6 @@ import mindspore as ms
 from mindspore import Tensor, context
 from mindspore.nn import Cell
 
-
 context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -59,9 +58,9 @@ def test_environment_variable_ir_print_interval():
     os.unsetenv('MS_DEV_SAVE_GRAPHS_PATH')
     os.unsetenv('MS_DEV_DUMP_IR_INTERVAL')
     ir_files = glob.glob(os.path.join(
-        "graph_save_path", '*_symbol_resolve*.ir'))
+        "graph_save_path", '*_type_inference*.ir'))
     ir_files_not_exist = glob.glob(
-        os.path.join("graph_save_path", '*_parse*.ir'))
+        os.path.join("graph_save_path", '*_bootstrap*.ir'))
     shutil.rmtree('./graph_save_path')
     ir_files_size = len(ir_files)
     ir_files_not_exist_size = len(ir_files_not_exist)

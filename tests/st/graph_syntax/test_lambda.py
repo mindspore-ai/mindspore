@@ -22,6 +22,7 @@ from mindspore._extends.parse import compile_config
 context.set_context(mode=context.GRAPH_MODE)
 
 
+@pytest.mark.skip(reason="Removed Pre-Lift action.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
