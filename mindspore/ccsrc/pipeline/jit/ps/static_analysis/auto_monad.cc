@@ -992,7 +992,7 @@ class SideEffectFinder {
       return TraceTupleFromSwitch(cnode->input(0)->cast<CNodePtr>(), *indexes);
     }
     // Rare case.
-    MS_LOG(WARNING) << "Tuple untraceable from: " << cnode->DebugString(recursive_level);
+    MS_LOG(INFO) << "Tuple untraceable from: " << cnode->DebugString(recursive_level);
     return {EffectInfo::kDetected, false, false, false};
   }
 
