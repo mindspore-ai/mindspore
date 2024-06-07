@@ -890,8 +890,9 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
   }
 
   auto device_address = std::static_pointer_cast<device::DeviceAddress>(device_sync);
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeInput,
-                                                 device_address->GetSize(), device_address.get());
+  auto mem_type = tensor->is_parameter() ? device::tracker::MemType::kWeight : device::tracker::MemType::kPyNativeInput;
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", mem_type, device_address->GetSize(),
+                                                 device_address.get());
   if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }

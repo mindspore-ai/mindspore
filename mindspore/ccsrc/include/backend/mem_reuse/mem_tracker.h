@@ -226,7 +226,7 @@ class BACKEND_EXPORT MemoryTrackerEnabled : public MemTracker {
                                  const std::string &file_name, size_t line_num);
   std::mutex mutex_;
   int64_t time_stamp_ = 0;
-  int64_t last_profiling_time_stamp_{-1};  // Prevent the same data from being dumped.
+  size_t last_profiling_pos_{0};  // Prevent the same data from being dumped.
   // for dump
   bool has_dump = false;
   bool has_set_path = false;
