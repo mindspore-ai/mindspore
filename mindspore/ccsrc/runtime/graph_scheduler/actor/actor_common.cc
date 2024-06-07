@@ -40,6 +40,8 @@ bool ActorDispatcher::enable_runtime_multi_pipeline_ = false;
 bool ActorDispatcher::enable_async_launch_kernel_ = false;
 bool ActorDispatcher::disable_kbk_sub_graph_execute_ = false;
 bool ActorDispatcher::enable_static_shape_ = false;
+bool ActorDispatcher::enable_trace_dynamic_memory_ = false;
+bool ActorDispatcher::enable_use_trace_memory_ = false;
 
 bool IsRunningFailed(const OpContext<DeviceTensor> *context) { return (context->error_info_ != ""); }
 
@@ -238,6 +240,32 @@ bool EnableAsyncInfer() {
   static const char kEnableAsyncInferdEnv[] = "MS_ENABLE_ASYNC_INFER";
   static bool ret = common::GetEnv(kEnableAsyncInferdEnv) == "1";
   return ret;
+}
+
+bool EnableTraceMemory() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  static const bool enable_infer_boost = ms_context->IsEnableInferBoost();
+  if (!enable_infer_boost) {
+    return false;
+  }
+
+  if (!EnableKbkSubGraphExecute()) {
+    return false;
+  }
+
+  static const char kEnableTraceMemoryEnv[] = "MS_ENABLE_TRACE_MEMORY";
+  static bool ret = common::GetEnv(kEnableTraceMemoryEnv) == "1";
+  if (ret) {
+    MS_LOG(INFO) << "Enable trace memory to optimize dynamic memory manage performance.";
+  }
+  return ret;
+}
+
+void ResetTraceMemoryStatus() {
+  ActorDispatcher::set_enable_static_shape(false);
+  ActorDispatcher::set_enable_trace_dynamic_memory(false);
+  ActorDispatcher::set_enable_use_trace_memory(false);
 }
 
 bool EnableKbkSubGraphExecute() {
@@ -500,6 +528,118 @@ std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &cnode, const Kern
 
 bool is_embedding_cache_server() {
   return ps::PSContext::instance()->cache_enable() && ps::PSContext::instance()->is_server();
+}
+
+void MemoryTraceManager::ReserveKernelMemoryBlocks(size_t size, const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  (*kernel_memory_trace_blocks_)[device_context].reserve(size);
+}
+
+void MemoryTraceManager::PickMemoryTrackInfoForGraph(uint32_t graph_id) {
+  if (graph_to_kernel_memory_trace_blocks_.find(graph_id) == graph_to_kernel_memory_trace_blocks_.end()) {
+    graph_to_kernel_memory_trace_blocks_.emplace(
+      graph_id, std::make_shared<std::map<const DeviceContext *, std::vector<KernelMemoryTraceBlockPtr>>>());
+  }
+  kernel_memory_trace_blocks_ = graph_to_kernel_memory_trace_blocks_[graph_id];
+  MS_EXCEPTION_IF_NULL(kernel_memory_trace_blocks_);
+
+  if (graph_to_merged_memory_trace_blocks_.find(graph_id) == graph_to_merged_memory_trace_blocks_.end()) {
+    graph_to_merged_memory_trace_blocks_.emplace(
+      graph_id, std::make_shared<std::map<const DeviceContext *, std::vector<MemoryTraceBlockPtr>>>());
+  }
+  merged_memory_trace_blocks_ = graph_to_merged_memory_trace_blocks_[graph_id];
+  MS_EXCEPTION_IF_NULL(merged_memory_trace_blocks_);
+
+  if (graph_to_kernel_blocks_.find(graph_id) == graph_to_kernel_blocks_.end()) {
+    graph_to_kernel_blocks_.emplace(
+      graph_id, std::make_shared<mindspore::HashMap<CNodePtr, std::vector<KernelMemoryTraceBlockPtr>>>());
+  }
+  kernel_to_block_ = graph_to_kernel_blocks_[graph_id];
+  MS_EXCEPTION_IF_NULL(kernel_to_block_);
+}
+
+void MemoryTraceManager::AddKernelMemoryTraceBlock(const KernelMemoryTraceBlockPtr &block,
+                                                   const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(block);
+  MS_EXCEPTION_IF_NULL(block->start_);
+  MS_EXCEPTION_IF_NULL(block->end_);
+  (*kernel_memory_trace_blocks_)[device_context].emplace_back(block);
+}
+
+const std::shared_ptr<std::map<const DeviceContext *, std::vector<MemoryTraceBlockPtr>>>
+  &MemoryTraceManager::GetMergeBlocks() {
+  return merged_memory_trace_blocks_;
+}
+
+const std::shared_ptr<mindspore::HashMap<CNodePtr, std::vector<KernelMemoryTraceBlockPtr>>>
+  &MemoryTraceManager::GetAllKernelBlocksnfo() {
+  return kernel_to_block_;
+}
+
+void MemoryTraceManager::MergeBlocks() {
+  merged_memory_trace_blocks_->clear();
+  for (auto &item : *kernel_memory_trace_blocks_) {
+    auto &device_context = item.first;
+    auto &kernel_memory_trace_blocks = item.second;
+    MergeBlocksForSameDeviceContext(&kernel_memory_trace_blocks, &((*merged_memory_trace_blocks_)[device_context]));
+    MS_LOG(DEBUG) << "The number of merged blocks is " << (*merged_memory_trace_blocks_)[device_context].size()
+                  << ", device type: " << device_context->device_context_key().device_name_;
+  }
+}
+
+void MemoryTraceManager::MergeBlocksForSameDeviceContext(
+  std::vector<KernelMemoryTraceBlockPtr> *kernel_memory_trace_blocks,
+  std::vector<MemoryTraceBlockPtr> *merged_memory_trace_blocks) {
+  MS_EXCEPTION_IF_NULL(kernel_memory_trace_blocks);
+  MS_EXCEPTION_IF_NULL(merged_memory_trace_blocks);
+  merged_memory_trace_blocks->clear();
+
+  if (kernel_memory_trace_blocks->empty()) {
+    MS_LOG(INFO) << "No block to merge.";
+    return;
+  }
+
+  std::sort(kernel_memory_trace_blocks->begin(), kernel_memory_trace_blocks->end(),
+            [](const KernelMemoryTraceBlockPtr &block1, const KernelMemoryTraceBlockPtr &block2) {
+              return (block1->start_ < block2->start_) ||
+                     ((block1->start_ == block2->start_) && (block1->end_ < block2->end_));
+            });
+  merged_memory_trace_blocks->emplace_back(std::make_shared<MemoryTraceBlock>((*kernel_memory_trace_blocks)[0]->start_,
+                                                                              (*kernel_memory_trace_blocks)[0]->size_));
+  (*kernel_memory_trace_blocks)[0]->in_memory_trace_block_index_ = 0;
+  for (size_t i = 1; i < kernel_memory_trace_blocks->size(); i++) {
+    auto &back = merged_memory_trace_blocks->back();
+    auto &block = (*kernel_memory_trace_blocks)[i];
+    if (block->start_ >= back->end_) {
+      merged_memory_trace_blocks->emplace_back(std::make_shared<MemoryTraceBlock>(block->start_, block->size_));
+    } else if (block->end_ > back->end_) {
+      back->end_ = block->end_;
+      back->size_ = back->end_ - back->start_;
+    }
+    block->in_memory_trace_block_index_ = merged_memory_trace_blocks->size() - 1;
+  }
+
+  // Reset offset
+  for (size_t i = 0; i < kernel_memory_trace_blocks->size(); i++) {
+    auto &kernel_mem_block = (*kernel_memory_trace_blocks)[i];
+    MS_EXCEPTION_IF_NULL(kernel_mem_block);
+    const auto &mem_block = (*merged_memory_trace_blocks)[kernel_mem_block->in_memory_trace_block_index_];
+    MS_EXCEPTION_IF_NULL(mem_block);
+    if (kernel_mem_block->start_ < mem_block->start_) {
+      MS_LOG(EXCEPTION) << "Invalid memory block, block start: " << kernel_mem_block->start_
+                        << ", block end: " << kernel_mem_block->end_ << ", mem block start: " << mem_block->start_
+                        << ", mem block end: " << mem_block->end_;
+    }
+
+    kernel_mem_block->offset_in_memory_trace_block_ = kernel_mem_block->start_ - mem_block->start_;
+    (*kernel_to_block_)[kernel_mem_block->kernel_].emplace_back(kernel_mem_block);
+  }
+}
+
+void MemoryTraceManager::Clear() {
+  kernel_memory_trace_blocks_->clear();
+  merged_memory_trace_blocks_->clear();
+  kernel_to_block_->clear();
 }
 }  // namespace runtime
 }  // namespace mindspore
