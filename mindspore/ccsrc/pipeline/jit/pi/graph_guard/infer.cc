@@ -855,8 +855,13 @@ static AbstractBasePtr PyToAbs(py::handle handle) {
   return value_ptr->ToAbstract();
 }
 
-static std::unique_ptr<AbstractBasePtrList> MakeArgumentsAbstract(const py::object &callable_object, py::object args,
+static std::unique_ptr<AbstractBasePtrList> MakeArgumentsAbstract(py::object callable_object, py::object args,
                                                                   py::object key_words) {
+  // for cell construct
+  auto callable_type = Py_TYPE(callable_object.ptr());
+  if (IsCellType<true>(callable_type)) {
+    callable_object = callable_object.attr("construct");
+  }
   py::object signature = py::module::import("inspect").attr("signature")(callable_object).attr("bind");
   py::object bind_args = py::reinterpret_steal<py::object>(PyObject_Call(signature.ptr(), args.ptr(), key_words.ptr()));
   (void)bind_args.attr("apply_defaults")();
@@ -910,8 +915,12 @@ py::object EvalMSAPIValue(const py::object &ms_api, const py::object &args, cons
     for (size_t i = 0, size = inputs_abs_list.size(); i != size; ++i) {
       inputs_abs_list[i] = inputs_abs_list[i]->Broaden();
     }
-    auto analyze_res = pipeline::AbstractAnalyze(func_graph, inputs_abs_list);
-    eval_result = analyze_res.eval_result == nullptr ? nullptr : analyze_res.eval_result->abstract();
+    try {
+      auto analyze_res = pipeline::AbstractAnalyze(func_graph, inputs_abs_list);
+      eval_result = analyze_res.eval_result == nullptr ? nullptr : analyze_res.eval_result->abstract();
+    } catch (const std::exception &ex) {
+      MS_LOG(ERROR) << "AbstractAnalyze failed for [" << func_graph->ToString() << "], error:" << ex.what();
+    }
   }
   if (eval_result == nullptr) {
     MS_LOG(ERROR) << "eval callable object failed [" << std::string(py::str(callable_object)) << "]";
