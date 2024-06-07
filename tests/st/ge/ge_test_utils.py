@@ -51,7 +51,7 @@ def run_testcase_and_check_log(file_name, case_name="", str_to_check=""):
 
     check_log(log_file, str_to_check)
 
-    del os.environ['ASCEND_SLOG_PRINT_TO_STDOUT']
-    del os.environ['ASCEND_GLOBAL_LOG_LEVEL']
-    del os.environ['GLOG_v']
+    os.environ['ASCEND_SLOG_PRINT_TO_STDOUT'] = '0'
+    os.environ['ASCEND_GLOBAL_LOG_LEVEL'] = '3'
+    os.environ['GLOG_v'] = '2'
     os.system(f'rm {log_file} -rf')
