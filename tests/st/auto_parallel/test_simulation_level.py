@@ -234,7 +234,8 @@ def test_simulation_graph():
     context.reset_auto_parallel_context()
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
-@pytest.mark.level0
+
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
