@@ -561,16 +561,36 @@ void DoUnifyMindIRPass(const FuncGraphPtr &graph, const std::shared_ptr<opt::Gra
   }
 #endif
 }
+
+bool HasSwitchNode(const FuncGraphPtr &func_graph) {
+  if (func_graph == nullptr) {
+    return false;
+  }
+  const auto &nodes = TopoSort(func_graph->get_return());
+  return std::any_of(nodes.begin(), nodes.end(), [](const AnfNodePtr &node) {
+    return node != nullptr && node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch);
+  });
+}
+
 bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (std::any_of(
+        graph->func_graphs_used_total().cbegin(), graph->func_graphs_used_total().cend(), [](const auto &sub_graph) {
+          return sub_graph != nullptr && sub_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE) && HasSwitchNode(sub_graph);
+        })) {
+    MS_LOG(INFO) << "Set reuse level from:" << context->CellReuseLevel() << " to:" << CellReuseLevel::kNoInline;
+    context->SetCellReuseLevel(CellReuseLevel::kNoInline);
+  }
   if (common::IsDisableRuntimeConfig(common::kRuntimeSwitchInline)) {
+    MS_LOG(INFO) << "Disable switch inline by runtime config.";
     return false;
   }
 
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
   // Only support ge backend, kernel by kernel mode and multi-funcgraph.
   static const bool is_enable_ge = (context->backend_policy() == "ge");
   if (!is_enable_ge || !context->IsKByKExecutorMode() || graph->func_graphs_used_total().empty()) {
+    MS_LOG(INFO) << "Disable switch inline, executor mode:" << context->IsKByKExecutorMode();
     return false;
   }
 
@@ -578,6 +598,7 @@ bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
   // Not support recursive.
   if (std::any_of(graph->func_graphs_used_total().cbegin(), graph->func_graphs_used_total().cend(),
                   [](const auto &sub_graph) { return sub_graph->recursive(); })) {
+    MS_LOG(INFO) << "Disable switch inline for recursive.";
     return false;
   }
 
@@ -597,13 +618,16 @@ bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
       return false;
     };
     if (is_include_no_switch_call(graph)) {
+      MS_LOG(INFO) << "Disable switch inline for unsupported call node.";
       return false;
     }
     if (std::any_of(graph->func_graphs_used_total().begin(), graph->func_graphs_used_total().end(),
                     is_include_no_switch_call)) {
+      MS_LOG(INFO) << "Disable switch inline for unsupported call node.";
       return false;
     }
   }
+  MS_LOG(INFO) << "Enable switch inline.";
   return true;
 }
 }  // namespace
