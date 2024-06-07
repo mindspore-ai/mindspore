@@ -163,7 +163,7 @@ const std::vector<OpWithLevel> expand_ops_with_level_dvm = {
   {kAscendDevice, OpLevel_0, prim::kPrimOnesLike},
   {kAscendDevice, OpLevel_0, prim::kPrimZerosLike},
   {kAscendDevice, OpLevel_0, prim::kPrimReduceMean},
-  {kAscendDevice, OpLevel_0, prim::kPrimLogSoftmaxGrad},
+  {kAscendDevice, OpLevel_1, prim::kPrimLogSoftmaxGrad},  // will be split to multiple sub graphs because of ReduceSum
   {kAscendDevice, OpLevel_0, prim::kPrimReLU},
   {kAscendDevice, OpLevel_0, prim::kPrimReluGrad},
   {kAscendDevice, OpLevel_0, prim::kPrimAssignAdd},
