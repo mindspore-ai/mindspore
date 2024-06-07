@@ -37,15 +37,18 @@ class MatMulAllReduceFusion : public MultiplePatternProcessPass {
   VectorRef DefineMatMulAllReducePattern() const;
   VectorRef DefineMatMulBiasAddAllReducePattern() const;
   VectorRef DefineMatMulDequantAllReducePattern() const;
+  VectorRef DefineQuantBatchMatmulAllReducePattern() const;
   CNodePtr CreateMatMulAllReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   CNodePtr CreateMatMulBiasAddAllReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   CNodePtr CreateMatMulDequantAllReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
+  CNodePtr CreateQuantBatchMatmulAllReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   PrimitivePtr CreateMatMulAllReducePrim(const PrimitivePtr &allreduce_prim, const PrimitivePtr &matmul_prim) const;
 
  protected:
   const std::string kPatternNameMatMulAllReduce = "MatMulAllReduce";
   const std::string kPatternNameMatMulBiasAddAllReduce = "MatMulBiasAddAllReduce";
   const std::string kPatternNameMatMulDequantAllReduce = "MatMulDequantAllReduce";
+  const std::string kPatternNameQuantBatchMatmulAllReduce = "QuantBatchMatmulAllReduce";
   const std::string kAttrNameGroup = "group";
   const std::string kAttrNameCommRenuse = "comm_renuse";
   const std::string kAttrNameFusion = "fusion";
