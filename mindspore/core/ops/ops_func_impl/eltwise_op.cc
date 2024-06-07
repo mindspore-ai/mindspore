@@ -44,5 +44,20 @@ TypePtr EltwiseOpFuncImpl::InferType(const PrimitivePtr &primitive,
   auto input_type = input_args[kInputIndex0]->GetType();
   return input_type->Clone();
 }
+
+ShapeArray EltwiseOpFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &x_shape = x_tensor->shape();
+  return {x_shape};
+}
+
+TypePtrList EltwiseOpFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &input_x_type = x_tensor->Dtype();
+  return {input_x_type};
+}
+
 }  // namespace ops
 }  // namespace mindspore
