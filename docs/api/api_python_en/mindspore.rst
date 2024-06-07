@@ -89,7 +89,6 @@ DataType
     ``type_none``                   No matching return type, corresponding to the ``type(None)`` in Python.
     ``symbolic_key``                The value of a variable is used as a key of the variable in ``env_type`` .
     ``env_type``                    Used to store the gradient of the free variable of a function, where the key is the ``symbolic_key`` of the free variable's node and the value is the gradient.
-    ``npy_bfloat16``                The ``bfloat16`` data type under NumPy. This type is only used to construct Tensor of type ``bfloat16``, and does not guarantee the full computing power under Numpy. Only valid in Numpy versions 1.20.0 to 1.26.4.
     ============================   =================
 
 .. class:: mindspore.np_dtype
