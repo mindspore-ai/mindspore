@@ -1,7 +1,7 @@
 mindspore.mint.topk
 ===================
 
-.. py:function:: mindspore.mint.topk(input, k, dim=None, largest=True, sorted=True)
+.. py:function:: mindspore.mint.topk(input, k, dim=-1, largest=True, sorted=True)
 
     沿给定维度查找 `k` 个最大或最小元素和对应的索引。
 
@@ -20,7 +20,7 @@ mindspore.mint.topk
     参数：
         - **input** (Tensor) - 需计算的输入。
         - **k** (int) - 指定计算最大或最小元素的数量。
-        - **dim** (int, 可选) - 需要排序的维度。默认值： ``None`` 。
+        - **dim** (int, 可选) - 需要排序的维度。默认值： ``-1`` 。
         - **largest** (bool, 可选) - 如果为 ``False`` ，则会返回前k个最小值。默认值： ``True`` 。
         - **sorted** (bool, 可选) - 如果为 ``True`` ，则获取的元素将根据设置的largest对值进行升序或降序排序。如果为 ``False`` ，则不对获取的元素进行排序。默认值： ``True`` 。
 

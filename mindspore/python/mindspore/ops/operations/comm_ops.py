@@ -1118,7 +1118,7 @@ class CollectiveScatter(Primitive):
 
     Note:
         The interface behavior only support Tensor input and scatter evenly.
-        Only the tensor in process `src_rank`(global rank) will do scatter.
+        Only the tensor in process `src_rank` (global rank) will do scatter.
 
     Args:
         src_rank (int, optional): Specifies the rank of the process that send the tensor.
@@ -1201,7 +1201,7 @@ class CollectiveGather(Primitive):
     from processes according to dimension 0.
 
     Note:
-        Only the tensor in process `dest_rank`(global rank) will keep the gathered tensor. The other process
+        Only the tensor in process `dest_rank` (global rank) will keep the gathered tensor. The other process
         will keep a tensor with shape [1], which has no mathematical meaning.
 
     Args:
