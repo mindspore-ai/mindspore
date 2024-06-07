@@ -481,7 +481,8 @@ static bool InferMSConstexpr(CallNode *call_node, GraphBuilder *unused = nullptr
     return false;
   }
   bool is_constexpr = CheckConstexpr(call_node->input(0)->GetVobj()->GetPyObject());
-  if (is_constexpr || GuardConstCallNodeParam(call_node, g, 2)) {
+  constexpr int max_guard_depth = 2;
+  if (is_constexpr || GuardConstCallNodeParam(call_node, g, max_guard_depth)) {
     return CallNodeReturnConst(call_node, g, call_node->GetVobj());
   }
   return false;

@@ -157,6 +157,8 @@ static void PrintLabel(std::stringstream &os, const std::string &str, int distan
 }
 
 std::string Tracebackes::Dump(bool is_all) const {
+  constexpr auto width = 10;
+
   std::stringstream os;
   std::string cur_name = tbs_.empty() ? "" : tbs_.back().func_name_;
   if (is_all) {
@@ -176,28 +178,27 @@ std::string Tracebackes::Dump(bool is_all) const {
   }
   // dump traceback list head
   int name_length = FindMaxNameLength(candidates);
-  os << std::left << std::setw(name_length) << "func_name:"
-     << "  -->  " << std::left << std::setw(name_length) << "changed_func:" << std::left << std::setw(10)
-     << "run_mode:" << std::left << std::setw(30) << "stop_trace:" << std::left << std::setw(10)
-     << "code_size:" << std::endl;
+  os << std::left << std::setw(name_length) << "func_name:  -->  " << std::left << std::setw(name_length)
+     << "changed_func:" << std::left << std::setw(width) << "run_mode:" << std::left << std::setw(kThree * width)
+     << "stop_trace:" << std::left << std::setw(width) << "code_size:" << std::endl;
   os << "--------------------------------------------------------------------------------------\n";
   // dump traceback list content
   for (const auto &tb : candidates) {
     os << std::left << std::setw(name_length) << tb.func_name_ << "  -->  ";
     os << std::left << std::setw(name_length) << tb.changed_func_;
     if (tb.is_graph_mode_) {
-      os << std::left << std::setw(10) << "[GRAPH]";
+      os << std::left << std::setw(width) << "[GRAPH]";
     } else {
-      os << std::left << std::setw(10) << "PYNATIVE";
+      os << std::left << std::setw(width) << "PYNATIVE";
     }
     // dump stop trace reason
     auto it_trace = stop_trace_res_.find(tb.func_name_);
     if (it_trace != stop_trace_res_.cend()) {
-      os << std::left << std::setw(30) << GetStopTraceReasonDesc(it_trace->second);
+      os << std::left << std::setw(kThree * width) << GetStopTraceReasonDesc(it_trace->second);
     } else {
-      os << std::left << std::setw(30) << "unknown";
+      os << std::left << std::setw(kThree * width) << "unknown";
     }
-    os << std::left << std::setw(10) << tb.code_size_ << " =====>\n";
+    os << std::left << std::setw(width) << tb.code_size_ << " =====>\n";
     // dump inline info
     DumpInlineInfo(os, tb.func_name_);
   }
@@ -214,7 +215,7 @@ void Tracebackes::DumpInlineInfo(std::stringstream &os, const std::string &func_
     return;
   }
   for (const auto &info : it->second) {
-    std::string space((info.depth + 1) * 2, ' ');
+    std::string space((info.depth + 1) * kTwo, ' ');
     os << space << "| inline_info:" << GetInlineReasonDesc(info.res) << " line:" << info.line;
     if (!info.inline_name_.empty()) {
       os << " func_name:" << info.inline_name_;
@@ -288,13 +289,14 @@ std::string Tracebackes::DumpSummary() const {
 }
 
 int Tracebackes::FindMaxNameLength(const std::list<Tracebacke> &tbs) const {
+  constexpr auto name_length = kFive * (kTwo + kFive);
   int max_length = 15;
   for (const auto &tb : tbs) {
     int len1 = SizeToInt(tb.func_name_.length());
     int len2 = SizeToInt(tb.changed_func_.length());
-    max_length = std::max(max_length, std::max(len1, len2)) + 2;
+    max_length = std::max(max_length, std::max(len1, len2)) + kTwo;
   }
-  max_length = std::min(max_length, 35);
+  max_length = std::min(max_length, name_length);
   return max_length;
 }
 
@@ -501,15 +503,15 @@ static void MarkBreak(Graph *g) {
 
 std::vector<py::object> GetAllArgs(JitCompileResults *jcr) {
   auto all_args = PackArgs(jcr->origin_frame_);
-  int argIndex = 0;
-  auto args = py::cast<py::list>(all_args[argIndex]);
-  argIndex = 1;
-  if (all_args[argIndex].ptr() != nullptr) {
-    PyList_Append(args.ptr(), all_args[argIndex].ptr());  // args + vargs
+  constexpr size_t arg_index = 0;
+  constexpr size_t vargs_index = 1;
+  constexpr size_t kwargs_index = 2;
+  auto args = py::cast<py::list>(all_args[arg_index]);
+  if (all_args[vargs_index].ptr() != nullptr) {
+    PyList_Append(args.ptr(), all_args[vargs_index].ptr());  // args + vargs
   }
-  argIndex = 2;
-  if (all_args[argIndex].ptr() != nullptr) {
-    PyList_Append(args.ptr(), all_args[argIndex].ptr());  // args + kwargs
+  if (all_args[kwargs_index].ptr() != nullptr) {
+    PyList_Append(args.ptr(), all_args[kwargs_index].ptr());  // args + kwargs
   }
   return args.cast<std::vector<py::object>>();
 }
@@ -742,7 +744,7 @@ void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach) 
   for (int bci = 0; bci < size; ++bci) {
     int opcode = _Py_OPCODE(bytecodes[bci]);
     int oparg = (exarg << 8) | _Py_OPARG(bytecodes[bci]);
-    exarg = (opcode == EXTENDED_ARG) ? oparg : 0;
+    exarg = static_cast<unsigned>((opcode == EXTENDED_ARG) ? oparg : 0);
     if (opcode != LOAD_GLOBAL) {
       continue;
     }
