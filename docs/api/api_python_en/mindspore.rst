@@ -242,6 +242,7 @@ JIT
     mindspore.mutable
     mindspore.constexpr
     mindspore.lazy_inline
+    mindspore.no_inline
 
 Tool
 -----
