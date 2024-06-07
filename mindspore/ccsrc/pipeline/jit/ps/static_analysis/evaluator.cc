@@ -798,7 +798,8 @@ EvalResultPtr TransitionPrimEvaluator::Run(AnalysisEnginePtr engine, const Confi
     MS_LOG(INTERNAL_EXCEPTION) << "Size should be greater than 0, during running " << identifier_;
   }
   AbstractBasePtrList args_abs_list = EvaluateArguments(args_conf_list);
-  EvalResultPtr res = EvalPrim(engine, args_abs_list, args_conf_list[0], out_conf);
+  ConfigPtr conf = args_conf_list.empty() ? nullptr : args_conf_list[0];
+  EvalResultPtr res = EvalPrim(engine, args_abs_list, conf, out_conf);
   MS_EXCEPTION_IF_NULL(res);
   // Update the input abstract for inplace primitive.
   if (inplace_prim() && !args_abs_list.empty() && args_abs_list[0] != res->abstract()) {
