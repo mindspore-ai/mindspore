@@ -21,3 +21,6 @@
 	path = tests/st/networks/mindone
 	url = https://gitee.com/mindspore-lab/mindone.git
 	branch = ms2.3
+[submodule "tests/st/networks/mindformers"]
+	path = tests/st/networks/mindformers
+	url = https://gitee.com/mindspore/mindformers.git
