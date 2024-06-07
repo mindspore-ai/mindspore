@@ -1357,7 +1357,7 @@ class ConvertColor(ImageTensorOperation):
             >>> # Use the transform in dataset pipeline mode
             >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
             >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-            >>> transforms_list = [vision.Equalize().device("Ascend")]
+            >>> transforms_list = [vision.ConvertColor(vision.ConvertMode.COLOR_RGB2BGR).device("Ascend")]
             >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
             >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
             ...     print(item["image"].shape, item["image"].dtype)
@@ -1365,10 +1365,10 @@ class ConvertColor(ImageTensorOperation):
             (100, 100, 3) uint8
             >>>
             >>> # Use the transform in eager mode
-            >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
-            >>> output = vision.Equalize().device("Ascend")(data)
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.ConvertColor(vision.ConvertMode.COLOR_RGB2BGR).device("Ascend")(data)
             >>> print(output.shape, output.dtype)
-            (2, 2, 3) uint8
+            (100, 100, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -2071,10 +2071,10 @@ class Erase(ImageTensorOperation):
             (100, 100, 3) uint8
             >>>
             >>> # Use the transform in eager mode
-            >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
-            >>> output = vision.Erase(0, 0, 2, 1).device("Ascend")(data)
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.Erase(10, 10, 10, 10, (100, 100, 100)).device("Ascend")(data)
             >>> print(output.shape, output.dtype)
-            (2, 2, 3) uint8
+            (100, 100, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -2150,8 +2150,10 @@ class FiveCrop(PyTensorOperation):
         >>> img.save("./2.jpg")
         >>> data = Image.open("./2.jpg")
         >>> output = vision.FiveCrop(size=20)(data)
-        >>> print(np.array(output).shape, np.array(output).dtype)
-        (5,) object
+        >>> for cropped_img in output:
+        ...     print(cropped_img.size)
+        ...     break
+        (20, 20)
         >>> os.remove("./2.jpg")
 
 
