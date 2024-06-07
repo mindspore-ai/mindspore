@@ -547,6 +547,23 @@ void UpdateFMTracker(size_t feature_memory_size, const std::string &graph_name) 
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddCompileTimeMemInfo, "RunGeGraph", feature_memory_size, 0,
                                                  device::tracker::MemType::kGeFeatureMemory);
 }
+
+bool CacheFileExists(const std::string &name) {
+  auto &compile_cache_context = CompileCacheContext::GetInstance();
+  auto dep_files_hash = compile_cache_context.CompileCacheDepFilesHash();
+  auto ge_graph_key = name;
+  if (!dep_files_hash.empty()) {
+    ge_graph_key = dep_files_hash + "_" + ge_graph_key;
+  }
+  auto ge_cache_path = Common::GetCompilerCachePath() + kGeCache;
+  ge_graph_key = NormalizeString(ge_graph_key);
+  auto cache_idx_file = ge_cache_path + "/" + ge_graph_key + ".idx";
+  struct stat buffer;
+  bool ret = stat(cache_idx_file.c_str(), &buffer) == 0;
+  MS_LOG(INFO) << "Cached index file name: " << cache_idx_file << " exists: " << ret;
+  return ret;
+}
+
 }  // namespace
 
 void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const {
@@ -937,7 +954,9 @@ bool GeGraphExecutor::BuildGraph(const KernelGraphPtr &graph, const transform::T
   GEGraphOptimization::GetInstance().OptimizeGEGraph(graph, &memo);
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   auto use_compile_cache = compile_cache_context.UseCompileCache();
-  if (use_compile_cache) {
+  auto name = GetGraphName(graph);
+  bool has_cache = CacheFileExists(name);
+  if (use_compile_cache && has_cache) {
     MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
     if (!BuildFakeGraph(graph)) {
       return false;
@@ -965,7 +984,9 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
   auto use_compile_cache = compile_cache_context.UseCompileCache();
   std::map<std::string, ShapeVector> origin_shape;
   const auto &tensor_order_map = GetDefaultParams(graph, &origin_shape);
-  if (use_compile_cache) {
+  auto name = GetGraphName(graph);
+  bool has_cache = CacheFileExists(name);
+  if (use_compile_cache && has_cache) {
     MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
     std::set<KernelGraphPtr> memo;
     GEGraphOptimization::GetInstance().OptimizeGEGraph(graph, &memo);

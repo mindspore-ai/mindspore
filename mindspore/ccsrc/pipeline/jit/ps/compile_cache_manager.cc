@@ -126,12 +126,12 @@ std::string GetDepFilesHashPath() {
   return dep_files_hash_path;
 }
 
-std::string GetGroupCkptSavePath() {
+std::string GetGroupCkptSavePath(size_t index) {
   auto group_info_save_path = common::GetEnv("GROUP_INFO_FILE");
   if (!group_info_save_path.empty()) {
     return group_info_save_path;
   }
-  return GetGraphCacheDir() + "/" + kGroupCkptFileName;
+  return GetGraphCacheDir() + "/group_" + std::to_string(index) + ".ckpt";
 }
 
 std::string GetDataQueueNameCachePath(const std::string &data_queue_num) {
@@ -177,10 +177,8 @@ std::pair<FuncGraphPtr, LayoutMap> LoadFuncGraphFromMindIR(const py::dict &weigh
     MS_LOG(ERROR) << "Get real path of file " << compile_cache_path << " failed.";
     return std::make_pair(nullptr, layout_map);
   }
-  std::ifstream f(realpath.value());
-  bool file_is_good = f.good();
-  f.close();
-  if (!file_is_good) {
+  struct stat buffer;
+  if (stat(realpath.value().c_str(), &buffer) != 0) {
     MS_LOG(WARNING) << "Open the compilation cache file " << realpath.value() << " failed.";
     return std::make_pair(nullptr, layout_map);
   }
@@ -256,6 +254,10 @@ bool ExportDepFilesHash(const std::string &compile_cache_dep_files_hash) {
 }
 
 bool ExportDataQueueName(const std::string &dataset_phase, const string &queue_name) {
+  if (queue_name.empty()) {
+    MS_LOG(WARNING) << "Export data queue name in dataset phase: " << dataset_phase << ", queue name: " << queue_name;
+    return true;
+  }
   MS_LOG(INFO) << "Export data queue name in dataset phase: " << dataset_phase;
   auto &context = CompileCacheContext::GetInstance();
   context.set_has_cached_queue_name(true);
@@ -288,8 +290,8 @@ bool ExportDataQueueName(const std::string &dataset_phase, const string &queue_n
   return Common::SaveStringToFile(filename, name_json.dump());
 }
 
-bool CreateParallelGroupsByCkptFile() {
-  static const std::string group_ckpt_save_path = GetGroupCkptSavePath();
+bool CreateParallelGroupsByCkptFile(size_t index) {
+  const std::string group_ckpt_save_path = GetGroupCkptSavePath(index);
   auto realpath = Common::CreatePrefixPath(group_ckpt_save_path, true);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path of file " << group_ckpt_save_path << " failed.";
@@ -391,7 +393,7 @@ void CompileCacheManager::InitCompileCacheHash(const py::list &compile_cache_dep
   context.SetCompileCacheDepFilesHash(compile_cache_dep_files_hash_);
 }
 
-bool CompileCacheManager::CheckDepFilesHashConsistency() {
+bool CompileCacheManager::CanLoadCache() {
   if (compile_cache_dep_files_hash_.empty()) {
     MS_LOG(ERROR) << "Get current dependency files hash failed.";
     return false;
@@ -418,6 +420,12 @@ bool CompileCacheManager::CheckDepFilesHashConsistency() {
     MS_LOG(WARNING) << "The compilation dependency files are changed.";
     return false;
   }
+  auto compile_cache_path = GetCompileCachePath(compile_cache_id_);
+  struct stat buffer;
+  if (stat(compile_cache_path.c_str(), &buffer) != 0) {
+    MS_LOG(WARNING) << "Failed to find cache file, execute all the compilation actions.";
+    return false;
+  }
   return true;
 }
 
@@ -427,7 +435,7 @@ FuncGraphPtr CompileCacheManager::GetCachedFuncGraph(const FuncGraphManagerPtr &
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   bool has_parallel_info = false;
   if ((parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel)) {
-    if (!CreateParallelGroupsByCkptFile()) {
+    if (!CreateParallelGroupsByCkptFile(compile_cache_id_)) {
       MS_LOG(WARNING) << "Failed to create the parallel groups info. Execute all the compilation actions.";
       return nullptr;
     }
@@ -471,7 +479,7 @@ FuncGraphPtr CompileCacheManager::GetCachedFuncGraph(const FuncGraphManagerPtr &
 void CompileCacheManager::InitParallelGroupCkptSaveFile() {
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   if ((parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel)) {
-    parallel::ParallelContext::GetInstance()->set_group_ckpt_save_file(GetGroupCkptSavePath());
+    parallel::ParallelContext::GetInstance()->set_group_ckpt_save_file(GetGroupCkptSavePath(compile_cache_id_));
   }
 }
 }  // namespace pipeline

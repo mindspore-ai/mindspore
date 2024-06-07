@@ -46,6 +46,9 @@ struct CachedIOSizeInfo {
 };
 
 COMMON_EXPORT bool CompileCacheEnable();
+
+COMMON_EXPORT std::string NormalizeString(const std::string &name);
+
 class COMMON_EXPORT CompileCacheContext {
  public:
   CompileCacheContext(const CompileCacheContext &) = delete;
