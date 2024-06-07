@@ -21,6 +21,7 @@
 #include <memory>
 #include "ir/primitive.h"
 #include "ops/ops_func_impl/op_func_impl.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace ops {
@@ -32,6 +33,8 @@ class ReduceAllFuncImpl : public OpFuncImpl {
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {kInputIndex1, kInputIndex2}; };
 };
 }  // namespace ops
 }  // namespace mindspore
