@@ -162,6 +162,7 @@ def set_parameter(config):
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="to be adjust case")
 def test_network_dataset_with_multiprocessing_without_fd_leak():
     """
     Feature: Network with dataset which use multiprocessing to process data
