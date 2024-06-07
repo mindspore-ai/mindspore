@@ -605,7 +605,10 @@ bool ParseAction(const ResourcePtr &resource) {
   python_adapter::set_python_env_flag(true);
   python_adapter::SetPythonPath(dir);
 
-  parse::DataConverter data_converter(resource->arguments(), true);
+  ValuePtrList args_value_list;
+  (void)std::transform(resource->args_abs().begin(), resource->args_abs().end(), std::back_inserter(args_value_list),
+                       [](const AbstractBasePtr &abs) { return abs->BuildValue(); });
+  parse::DataConverter data_converter(args_value_list, true);
   auto converted_ret = data_converter.ConvertData(input);
   if (converted_ret == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(input));
