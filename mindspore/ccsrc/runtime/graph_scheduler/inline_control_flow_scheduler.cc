@@ -175,8 +175,9 @@ std::string InlineControlFlowScheduler::GetBranchNameByConditionGatherActor(Kern
   MS_EXCEPTION_IF_NULL(kernel_graph);
   const auto &condition_gather_kernel = condition_gather_actor->kernel();
   MS_EXCEPTION_IF_NULL(condition_gather_kernel);
-  const auto &condition_pair_iter = kernel_graph->condition_gather_to_switch().find(condition_gather_kernel);
-  if (condition_pair_iter == kernel_graph->condition_gather_to_switch().end() ||
+  auto gather_to_switch = kernel_graph->condition_gather_to_switch();
+  const auto &condition_pair_iter = gather_to_switch.find(condition_gather_kernel);
+  if (condition_pair_iter == gather_to_switch.end() ||
       condition_pair_iter->second != condition_switch_actor->kernel()) {
     MS_LOG(EXCEPTION) << "Condition switch actor:" << condition_switch_actor->GetAID()
                       << " and gather actor:" << condition_gather_actor << " is not match.";
