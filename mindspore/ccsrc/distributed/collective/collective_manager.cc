@@ -218,7 +218,6 @@ bool CollectiveManager::InitializeDummyCommLib() {
   // collective lib.
   if (device_type == kAscendDevice) {
     MS_LOG(WARNING) << "Initialize dummy Ascend collective communication lib.";
-    MsContext::GetInstance()->set_param_inner<uint32_t>(MS_CTX_DEVICE_ID, 0);
     RETURN_IF_FALSE_WITH_LOG(InitDeviceCommLib(), "Failed to initialize dummy device communication library on Ascend.");
   }
   inited_ = true;
