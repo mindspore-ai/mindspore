@@ -43,7 +43,8 @@ class BACKEND_EXPORT AclDumpJsonWriter {
   // Parse the json file by DumpJsonParser.
   void Parse();
   // Write the parsed feilds to a new json file with acldump format.
-  bool WriteToFile(uint32_t device_id = 0, uint32_t step_id = 0, bool is_init = false);
+  bool WriteToFile(uint32_t device_id = 0, uint32_t step_id = 0, bool is_init = false,
+                   nlohmann::json target_kernel_names = nlohmann::json::array());
   std::string GetAclDumpJsonPath() { return acl_dump_json_path_; }
 
  private:
