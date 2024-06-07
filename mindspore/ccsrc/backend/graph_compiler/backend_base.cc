@@ -1051,9 +1051,11 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
     input_tensors = GetRunGraphInputs(graph_compiler_info, args);
     // The tensor needs to be converted to contiguous before being given to the actors.
     // After the view feature is supported in the graph mode, the following code will be deleted.
+    // Single ops(run in pynative mode) output to net(context is graph mode) input.
     (void)std::for_each(input_tensors.begin(), input_tensors.end(), [this](const auto &tensor_vec) {
       (void)std::for_each(tensor_vec.begin(), tensor_vec.end(), [](const tensor::TensorPtr &t) {
         runtime::DeviceAddressUtils::ConvertContiguousTensorSync(t);
+        runtime::DeviceAddressUtils::CreateKernelTensor(t);
       });
     });
   }

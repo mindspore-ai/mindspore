@@ -961,6 +961,15 @@ void DeviceAddressUtils::CreateKernelTensor(const ValuePtr &input_value) {
   }
 }
 
+void DeviceAddressUtils::CreateKernelTensor(const tensor::TensorPtr &input_tensor) {
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  if (input_tensor->device_address() != nullptr) {
+    auto device_address = std::static_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
+    MS_EXCEPTION_IF_NULL(device_address);
+    CreateKernelTensor(device_address, input_tensor);
+  }
+}
+
 void DeviceAddressUtils::CreateKernelTensor(const device::DeviceAddressPtr &device_address,
                                             const AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(device_address);
