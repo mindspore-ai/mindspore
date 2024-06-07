@@ -24,6 +24,7 @@
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/step_parallel_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -59,6 +60,13 @@ Status StandAloneInfo::InferTensorMap() {
 }
 
 Status StandAloneInfo::InferTensorInfo() {
+  if (inputs_shape_.empty() || outputs_shape_.empty() || inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
+    MS_LOG(ERROR) << name_ << ": Invalid args";
+    return FAILED;
+  }
+  if (IsSomePrimitiveList(cnode_, INPUT_IS_TUPLE_OR_LIST_OPS)) {
+    return OperatorInfo::InferTensorInfo();
+  }
   // infer input TensorInfo
   size_t temp = 0;
   for (size_t i = 0; i < input_value_.size(); ++i) {

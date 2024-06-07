@@ -730,6 +730,7 @@ constexpr char TARGET_PARAM[] = "target_param";
 constexpr char ASCEND_QUANT[] = "Quant";
 constexpr char ASCEND_DEQUANT[] = "Dequant";
 constexpr char ANTI_QUANT[] = "AntiQuant";
+constexpr char MESHGRID[] = "Meshgrid";
 
 // Batch parallel black list
 constexpr char TENSOR_SCATTER_UPDATE[] = "TensorScatterUpdate";

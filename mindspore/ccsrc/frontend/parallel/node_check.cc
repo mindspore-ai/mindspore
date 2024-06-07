@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace parallel {
-const std::set<std::string> BATCH_PARALLEL_BLACK_LIST = {STACK, TENSOR_SCATTER_UPDATE};
+const std::set<std::string> BATCH_PARALLEL_BLACK_LIST = {STACK, TENSOR_SCATTER_UPDATE, MESHGRID};
 
 bool IsInBatchParallelBlackList(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
