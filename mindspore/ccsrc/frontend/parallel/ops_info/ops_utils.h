@@ -419,6 +419,7 @@ constexpr char REPEAT_ELEMENTS[] = "RepeatElements";
 constexpr char TENSOR_DOT[] = "TensorDot";
 constexpr char RANGE[] = "Range";
 constexpr char ONEHOT[] = "OneHot";
+constexpr char ONEHOTEXT[] = "OneHotExt";
 constexpr char ONEHOT_INFO[] = "OneHotInfo";
 constexpr char DROPOUT_DO_MASK[] = "DropoutDoMask";
 constexpr char DROPOUT_GEN_MASK[] = "DropoutGenMask";
