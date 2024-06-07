@@ -2644,7 +2644,7 @@ class BatchDataset(UnionBaseDataset):
         self.python_multiprocessing = python_multiprocessing
         self.process_pool = None
         if isinstance(max_rowsize, int):
-            self.max_rowsize = [max_rowsize * self.batch_size] * 2
+            self.max_rowsize = [max_rowsize * self.batch_size] * 2 if max_rowsize != -1 else [max_rowsize, max_rowsize]
         else:
             self.max_rowsize = [max_rowsize[0] * self.batch_size, max_rowsize[1] * self.batch_size]
 
