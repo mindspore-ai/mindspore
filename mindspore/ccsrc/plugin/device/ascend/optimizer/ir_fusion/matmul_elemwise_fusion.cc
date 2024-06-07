@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,10 @@ const AnfNodePtr MatmulElemFusionBase::Process(const FuncGraphPtr &func_graph, c
     return nullptr;
   }
 
-  if (common::GetEnv("DISABLE_MATMULELEMWISE_FUSION") == "True") {
+  auto enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
+  bool enable_matmul_elemwise =
+    (std::find(enable_op_list.begin(), enable_op_list.end(), "MatMulElemwise") != enable_op_list.end());
+  if (!enable_matmul_elemwise) {
     return nullptr;
   }
 
