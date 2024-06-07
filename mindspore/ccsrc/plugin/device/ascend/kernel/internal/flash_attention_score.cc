@@ -55,7 +55,14 @@ internal::OpParamPtr InternalFlashAttentionScore::CreateOpParam(const std::vecto
   param_ptr->mask_dims_ = internal::VecToSVec<int64_t>(inputs[kIndex6]->GetShapeVector());
 
   internal::MixParam op_param;
-  op_param.mixType = internal::MixParam::MixType::MIX_UNPAD_DYNAMIC_BATCH_FLASH_ATTENTION;
+
+  if (soc_ == "ascend310p") {
+    op_param.mixType = internal::MixParam::MixType::MIX_UNPAD_FLASH_ATTENTION_NZ_ENCODER_NOCACHE;
+    op_param.maskType = internal::MixParam::MaskType::MASK_TYPE_NORM;
+  } else {
+    op_param.mixType = internal::MixParam::MixType::MIX_UNPAD_DYNAMIC_BATCH_FLASH_ATTENTION;
+  }
+
   op_param.headSize = head_num;
   op_param.preTokens = pre_tokens;
   op_param.nextTokens = next_tokens;

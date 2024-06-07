@@ -1,5 +1,5 @@
 /**
- * Copyright 2023-2024 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,35 +14,34 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/internal/apply_rotary_pos_emb.h"
+#include "plugin/device/ascend/kernel/internal/trans_data.h"
+
 #include <memory>
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 
 namespace mindspore {
 namespace kernel {
-internal::OpParamPtr ApplyRotaryPosEmb::CreateOpParam(const std::vector<KernelTensor *> &inputs,
+internal::OpParamPtr InternalTransData::CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                                       const std::vector<KernelTensor *> &outputs) {
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
-  param_ptr->opId = internal::OpId::ApplyRotaryPosEmb;
+  param_ptr->opId = internal::OpId::TransData;
+  internal::TransDataParam op_param;
 
-  if (soc_ == "ascend310p") {
-    param_ptr->opId = internal::OpId::ApplyRotaryPosEmbNz;
-  }
-
-  internal::ApplyRotaryPosEmbParam ropeParam;
-  auto last_input = inputs.at(kIndex5);
-  if (last_input->dtype_id() == TypeId::kNumberTypeInt64) {
-    ropeParam.cosFormat = static_cast<int32_t>(last_input->GetValue<int64_t>().value());
+  if (outputs[0]->GetStringFormat() == "FRACTAL_NZ") {
+    op_param.transdataType = internal::TransDataParam::ND_TO_FRACTAL_NZ;
   } else {
-    MS_LOG(EXCEPTION) << "ApplyRotaryPosEmb input[5] dtype is not kNumberTypeInt64";
+    op_param.transdataType = internal::TransDataParam::FRACTAL_NZ_TO_ND;
   }
-  param_ptr->specificParam = ropeParam;
+  if (primitive_->HasAttr(kAttrInternalSepcialFormat)) {
+    op_param.specialTransdata = GetValue<int64_t>(primitive_->GetAttr(kAttrInternalSepcialFormat));
+  }
+  param_ptr->specificParam = op_param;
   return param_ptr;
 }
 
-MS_INTERNAL_KERNEL_FACTORY_REG(ApplyRotaryPosEmb, ApplyRotaryPosEmb);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(ApplyRotaryPosEmb, INPUT_NUM_5, INDEX_0, INDEX_1, INDEX_2, INDEX_3, INDEX_4);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(ApplyRotaryPosEmb, OUTPUT_NUM_2, INDEX_0, INDEX_1);
+MS_INTERNAL_KERNEL_FACTORY_REG(TransData, InternalTransData);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(TransData, INPUT_NUM_1, INDEX_0);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(TransData, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

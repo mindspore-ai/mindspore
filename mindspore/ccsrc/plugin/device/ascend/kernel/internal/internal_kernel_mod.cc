@@ -16,9 +16,11 @@
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_mod.h"
 
+#include <functional>
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #include "acl/acl_rt.h"
 #include "utils/llm_manager.h"
 
@@ -141,6 +143,22 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
     MS_LOG(ERROR) << "op " << op_type_ << " invoke resize failed";
     return KRET_RESIZE_FAILED;
   }
+
+  // update output_size_list_
+  for (size_t i = 0; i < output_size_list_.size(); ++i) {
+    if (outputs[i]->GetStringFormat() == kOpFormat_FRAC_NZ) {
+      auto &output = outputs[i];
+      MS_EXCEPTION_IF_NULL(output);
+      auto shape = output->GetShapeVector();
+      auto dev_shape = trans::TransShapeToDevice(shape, output->GetStringFormat(), output->dtype_id());
+      auto type_size = GetTypeByte(TypeIdToType(output->dtype_id()));
+      auto tensor_size = dev_shape.empty()
+                           ? std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>())
+                           : std::accumulate(dev_shape.begin(), dev_shape.end(), type_size, std::multiplies<size_t>());
+      output_size_list_[i] = tensor_size;
+    }
+  }
+
   if (impl_ == nullptr) {
     ret = Build(inputs, outputs);
     if (ret != 0) {
@@ -149,7 +167,8 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
     }
   }
 
-  if (op_type_ == "PagedAttention" && llm_manager.enable_multi_level_seq_length_) {
+  if ((op_type_ == "PagedAttention" && llm_manager.enable_multi_level_seq_length_) || op_type_ == "MatMul" ||
+      op_type_ == "QuantBatchMatmul") {
     MS_LOG(INFO) << "Update multi_level_seq_length for Internal Op: " << op_type_;
     auto param = CreateOpParam(inputs, outputs);
     impl_->UpdateParam(param);

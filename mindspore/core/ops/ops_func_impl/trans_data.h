@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_BUILD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_BUILD_H_
+
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_TRANS_DATA_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_TRANS_DATA_H_
 
 #include <memory>
-#include <string>
 #include <vector>
-
-#include "kernel/kernel.h"
+#include "mindapi/base/types.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
-namespace kernel {
-KernelModPtr InternalKernelBuild(const AnfNodePtr &anf_node);
-bool IsRegisteredInternalKernel(const AnfNodePtr &anf_node);
-void GetValidKernelBuildInfoWithInternalFormat(const AnfNodePtr &node, std::vector<std::string> *input_formats,
-                                               std::vector<std::string> *output_formats);
-}  // namespace kernel
+namespace ops {
+class MIND_API TransDataFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
+}  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_BUILD_H_
+#endif  // MINDSPORE_CORE_OPS_TRANSDATA_H_
