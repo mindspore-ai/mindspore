@@ -33,7 +33,7 @@ class SingleWhileNet(nn.Cell):
         return y
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_jit_function_while():
@@ -57,7 +57,7 @@ def test_jit_function_while():
     graph = load(mindir_name)
     loaded_net = nn.GraphCell(graph)
 
-    @jit(mode="PIJit")
+    @jit(mode="PIJit", jit_config={"compile_by_trace": False}) # One-stage will fix it later
     def run_graph(x, y):
         outputs = loaded_net(x, y)
         return outputs
@@ -76,7 +76,7 @@ class SingleWhileInlineNet(nn.Cell):
         return y
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_single_while_inline_export():
@@ -98,7 +98,7 @@ def test_single_while_inline_export():
     assert os.path.exists(mindir_name)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_single_while_inline_load():

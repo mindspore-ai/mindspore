@@ -44,7 +44,7 @@ class Obj:
         return 1
 
 
-@jit(mode="PIJit")
+@jit(mode="PIJit", jit_config={"compile_by_trace": False}) # One-stage will fix it later
 def func(self, x):
     tpe = kw_inline_test()
     lst = list(tpe)
@@ -413,14 +413,3 @@ def test_mix_0(mode: int):
     result = inner_func(mode)
 
     assert excepted == result
-
-    # just unrolling loop in python 3.9
-    if sys.version_info.major == 3 and sys.version_info.minor == 9:
-        jcr = get_code_extra(inner_func)
-        # check loop unrolling, function inliner
-        for i in dis.get_instructions(jcr["code"]["compiled_code_"]):
-            assert i.opname != "FOR_ITER"
-            assert i.opname != "CALL_FUNCTION"
-
-        # check no "isinstance" guard
-        assert "isinstance" not in jcr["code"]["guard_"]

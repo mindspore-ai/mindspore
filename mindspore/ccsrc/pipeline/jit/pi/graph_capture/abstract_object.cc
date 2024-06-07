@@ -58,10 +58,20 @@ namespace pijit {
 // mindspore graph can accept these value
 static const std::set<AObject::Type> kMsSupportedType = {
   AObject::kTypeInt,    AObject::kTypeBool,   AObject::kTypeFloat,     AObject::kTypeNone,
-  AObject::kTypeString, AObject::kTypeTensor, AObject::kTypeTraceNode,
+  AObject::kTypeString, AObject::kTypeTensor,
 };
 
 MemPool<AbstractObjectBase> AbstractObjectBase::aobject_mem_pool_(__FILE__, __LINE__, "AObject");
+bool AbstractObjectBase::trace_flag_ = false;
+
+AObjectSourceScope::AObjectSourceScope() {
+  // can't reentrant
+}
+
+AObjectSourceScope::~AObjectSourceScope() {
+  // release the resource
+  AbstractObjectBase::aobject_mem_pool_.Clear(__FILE__, __LINE__);
+}
 
 // exact equal check
 static const std::unordered_map<PyTypeObject *, AObject::Type> exact_type_map = {
@@ -189,13 +199,16 @@ std::string AbstractObjectBase::ToString() const {
 }
 
 AbstractObjectBase::Type AbstractObjectBase::GetPyType(PyTypeObject *tp) {
+  if (tp == nullptr) {
+    return kTypeAnyValue;
+  }
   FIND_MAP_CACHE(exact_type_map, tp);
   // fast sub type check
   // __builtin_clz(tp->tp_flags & fast_type_mask), or std::countl_zero
   /**
    * sub-class int, float, list, tuple, str, is mindspore unsupported
    */
-  switch ((unsigned)(tp->tp_flags) & (unsigned)fast_type_mask) {
+  switch (tp->tp_flags & fast_type_mask) {
     case Py_TPFLAGS_LONG_SUBCLASS:
     case Py_TPFLAGS_LIST_SUBCLASS:
     case Py_TPFLAGS_TUPLE_SUBCLASS:
@@ -232,7 +245,7 @@ AbstractObjectBase::Type AbstractObjectBase::GetMsType(PyTypeObject *tp) {
     {IsStubTensorType<true>, kTypeStubTensor}, {IsTensorType<true>, kTypeTensor},
     {IsCellListType<false>, kTypeNNCellList},  {IsCellType<true>, kTypeCell},
     {IsPrimitiveType<true>, kTypePrimitive},   {IsMetaFuncGraphType<true>, kTypeMetaFuncGraph},
-    {IsMSDTypeType<true>, kTypeMSDType},
+    {IsMSDTypeType<true>, kTypeMSDType},       {IsPrimitiveFunctionType<true>, kTypePrimitiveFunction},
   };
   if (tp == nullptr) {
     return kTypeAnyValue;
@@ -296,21 +309,21 @@ AObject *AbstractObjectBase::MakeFunction(const std::vector<AObject *> &args, co
   py::object f_handle = py::reinterpret_steal<py::object>(PyFunction_NewWithQualName(code, globals.ptr(), qualname));
   PyFunctionObject *func = reinterpret_cast<PyFunctionObject *>(f_handle.ptr());
   MS_EXCEPTION_IF_CHECK_FAIL(func, "MAKE_FUNCTION failed");
-  if ((unsigned)oparg & 0x08) {
+  if (IntToSize(oparg) & 0x08) {
     func->func_closure = (*iter--).inc_ref().ptr();
     Py_ssize_t nfrees = PyTuple_GET_SIZE(reinterpret_cast<PyCodeObject *>(code)->co_freevars);
     bool is_valid = func->func_closure && nfrees == PyTuple_GET_SIZE(func->func_closure);
     MS_EXCEPTION_IF_CHECK_FAIL(is_valid, "must be has python objects, and it is tuple of cell objects");
   }
-  if ((unsigned)oparg & 0x04) {
+  if (IntToSize(oparg) & 0x04) {
     func->func_annotations = (*iter--).inc_ref().ptr();
     MS_EXCEPTION_IF_CHECK_FAIL(func->func_annotations, "must be has python objects, and it is const key map");
   }
-  if ((unsigned)oparg & 0x02) {
+  if (IntToSize(oparg) & 0x02) {
     func->func_kwdefaults = (*iter--).inc_ref().ptr();
     MS_EXCEPTION_IF_CHECK_FAIL(func->func_kwdefaults, "must be has python objects, and it is const key map");
   }
-  if ((unsigned)oparg & 0x01) {
+  if (IntToSize(oparg) & 0x01) {
     func->func_defaults = (*iter--).inc_ref().ptr();
     MS_EXCEPTION_IF_CHECK_FAIL(func->func_defaults, "must be has python objects, and it is const tuple");
   }
@@ -322,48 +335,38 @@ py::object AbstractObjectBase::BuildOperations(const std::vector<py::object> &ar
   PyObject *res = nullptr;
   PyObject **tmp;
   std::vector<PyObject *> arr;
-  switch (opcode) {
-    case BUILD_SLICE:
-      res = PySlice_New(args[0].ptr(), args[1].ptr(), args.size() > 2 ? args[2].ptr() : nullptr);
-      break;
-    case BUILD_STRING:
-      std::transform(args.begin(), args.end(), std::back_inserter(arr), [](const py::object &o) { return o.ptr(); });
-      res = _PyUnicode_JoinArray(py::str().ptr(), arr.data(), arr.size());
-      break;
-    case BUILD_SET:
-      res = PySet_New(nullptr);
-      (void)std::find_if(args.begin(), args.end(), [&res](const py::object &i) { return PySet_Add(res, i.ptr()); });
-      break;
-    case BUILD_LIST:
-      res = PyList_New(args.size());
-      tmp = &PyList_GET_ITEM(res, 0);
-      std::for_each(args.begin(), args.end(), [&tmp](const py::object &i) { return *(tmp++) = i.inc_ref().ptr(); });
-      break;
-    case BUILD_TUPLE:
-      res = PyTuple_New(args.size());
-      tmp = &PyTuple_GET_ITEM(res, 0);
-      std::for_each(args.begin(), args.end(), [&tmp](const py::object &i) { return *(tmp++) = i.inc_ref().ptr(); });
-      break;
-    case BUILD_CONST_KEY_MAP:
-      res = PyDict_New();
-      // must be tuple, here has a cast check
-      tmp = &PyTuple_GET_ITEM(args.back().ptr(), 0);
-      (void)std::find_if(args.begin(), args.end() - 1, [&res, &tmp](const py::object &i) {
-        return PyDict_SetItem(res, *(tmp++), i.ptr());  // break if err_ocurred
-      });
-      break;
-    case BUILD_MAP:
-      res = PyDict_New();
-      for (size_t i = 0; !PyErr_Occurred() && i < args.size(); i += 2) {
-        PyDict_SetItem(res, args[i].ptr(), args[i + 1].ptr());
-      }
-      break;
-    default:
-      break;
+  if (opcode == BUILD_SLICE) {
+    res = PySlice_New(args[0].ptr(), args[1].ptr(), args.size() > 2 ? args[2].ptr() : nullptr);
+  } else if (opcode == BUILD_STRING) {
+    std::transform(args.begin(), args.end(), std::back_inserter(arr), [](const py::object &o) { return o.ptr(); });
+    res = _PyUnicode_JoinArray(py::str().ptr(), arr.data(), arr.size());
+  } else if (opcode == BUILD_SET) {
+    res = PySet_New(nullptr);
+    (void)std::find_if(args.begin(), args.end(), [&res](const py::object &i) { return PySet_Add(res, i.ptr()); });
+  } else if (opcode == BUILD_LIST) {
+    res = PyList_New(args.size());
+    tmp = &PyList_GET_ITEM(res, 0);
+    std::for_each(args.begin(), args.end(), [&tmp](const py::object &i) { return *(tmp++) = i.inc_ref().ptr(); });
+  } else if (opcode == BUILD_TUPLE) {
+    res = PyTuple_New(args.size());
+    tmp = &PyTuple_GET_ITEM(res, 0);
+    std::for_each(args.begin(), args.end(), [&tmp](const py::object &i) { return *(tmp++) = i.inc_ref().ptr(); });
+  } else if (opcode == BUILD_CONST_KEY_MAP) {
+    res = PyDict_New();
+    // must be tuple, here has a cast check
+    tmp = &PyTuple_GET_ITEM(args.back().ptr(), 0);
+    (void)std::find_if(args.begin(), args.end() - 1, [&res, &tmp](const py::object &i) {
+      return PyDict_SetItem(res, *(tmp++), i.ptr());  // break if err_ocurred
+    });
+  } else if (opcode == BUILD_MAP) {
+    res = PyDict_New();
+    for (size_t i = 0; !PyErr_Occurred() && i < args.size(); i += 2) {
+      PyDict_SetItem(res, args[i].ptr(), args[i + 1].ptr());
+    }
   }
   if (PyErr_Occurred()) {
     Py_XDECREF(res);
-    MS_LOG(DEBUG) << "build operation failed: " << Utils::GetOpName(opcode);
+    MS_LOG(DEBUG) << "build operation failed: " << Opcode(opcode).name();
     PyErr_Clear();
     res = nullptr;
   }
@@ -384,38 +387,29 @@ AObject *AbstractObjectBase::BuildOperations(const std::vector<AObject *> &input
   AObject *res = nullptr;
   PyObject *keys;
   bool err = false;
-  switch (opcode) {
-    case BUILD_LIST:
-    case BUILD_TUPLE:
-      res = MakeAObject(opcode == BUILD_LIST ? kTypeList : kTypeTuple);
-      static_cast<AbstractTuple *>(res)->Update(inputs);
-      break;
-    case BUILD_CONST_KEY_MAP:
-      res = MakeAObject(kTypeDict);
-      keys = inputs.back()->GetPyObject().ptr();
-      err = static_cast<Py_ssize_t>(inputs.size() - 1) != PyTuple_GET_SIZE(keys);
-      for (Py_ssize_t i = (unsigned)(inputs.size() - 2); !err && i >= 0; --i) {
-        err = !static_cast<AbstractDict *>(res)->MapAdd(Convert(PyTuple_GET_ITEM(keys, i)), inputs[i]);
-      }
-      break;
-    case BUILD_MAP:
-      res = MakeAObject(kTypeDict);
-      for (size_t i = 0; !err && i < inputs.size(); i += 2) {
-        err = !static_cast<AbstractDict *>(res)->MapAdd(inputs[i], inputs[i + 1]);
-      }
-      break;
-    case BUILD_STRING:
-      res = MakeAObject(kTypeString);
-      break;
-    case BUILD_SLICE:
-      res = MakeAObject(kTypeSlice);
-      break;
-    case BUILD_SET:
-      res = MakeAObject(kTypeSet);
-      break;
-    default:
-      err = true;
-      break;
+  if (opcode == BUILD_LIST || opcode == BUILD_TUPLE) {
+    res = MakeAObject(opcode == BUILD_LIST ? kTypeList : kTypeTuple);
+    static_cast<AbstractTuple *>(res)->Update(inputs);
+  } else if (opcode == BUILD_CONST_KEY_MAP) {
+    res = MakeAObject(kTypeDict);
+    keys = inputs.back()->GetPyObject().ptr();
+    err = static_cast<Py_ssize_t>(inputs.size() - 1) != PyTuple_GET_SIZE(keys);
+    for (Py_ssize_t i = IntToSize(inputs.size() - 2); !err && i >= 0; --i) {
+      err = !static_cast<AbstractDict *>(res)->MapAdd(Convert(PyTuple_GET_ITEM(keys, i)), inputs[i]);
+    }
+  } else if (opcode == BUILD_MAP) {
+    res = MakeAObject(kTypeDict);
+    for (size_t i = 0; !err && i < inputs.size(); i += 2) {
+      err = !static_cast<AbstractDict *>(res)->MapAdd(inputs[i], inputs[i + 1]);
+    }
+  } else if (opcode == BUILD_STRING) {
+    res = MakeAObject(kTypeString);
+  } else if (opcode == BUILD_SLICE) {
+    res = MakeAObject(kTypeSlice);
+  } else if (opcode == BUILD_SET) {
+    res = MakeAObject(kTypeSet);
+  } else {
+    err = true;
   }
   return err ? MakeAObject(kTypeAnyValue) : res;
 }
@@ -423,29 +417,19 @@ AObject *AbstractObjectBase::BuildOperations(const std::vector<AObject *> &input
 AObject *AbstractObjectBase::MergeOperations(AObject *container, std::vector<AObject *> args, int opcode) {
   Type type = container ? container->GetType() : kTypeAnyValue;
   bool success = false;
-  switch (opcode) {
-    case LIST_EXTEND:
-      success = type == kTypeList && (static_cast<AbstractList *>(container))->ListExtend(args[0]);
-      break;
-    case LIST_APPEND:
-      success = type == kTypeList && (static_cast<AbstractList *>(container))->ListAppend(args[0]);
-      break;
-    case DICT_MERGE:
-      success = type == kTypeDict && (static_cast<AbstractDict *>(container))->DictMerge(args[0]);
-      break;
-    case DICT_UPDATE:
-      success = type == kTypeDict && (static_cast<AbstractDict *>(container))->DictUpdate(args[0]);
-      break;
-    case MAP_ADD:
-      success = type == kTypeDict && (static_cast<AbstractDict *>(container))->MapAdd(args[0], args[1]);
-      break;
-    case SET_UPDATE: /* fall-through */
-    case SET_ADD:
-      success = true;
-      container = MakeAObject(kTypeSet);
-      break;
-    default:
-      break;
+  if (opcode == LIST_EXTEND) {
+    success = type == kTypeList && (static_cast<AbstractList *>(container))->ListExtend(args[0]);
+  } else if (opcode == LIST_APPEND) {
+    success = type == kTypeList && (static_cast<AbstractList *>(container))->ListAppend(args[0]);
+  } else if (opcode == DICT_MERGE) {
+    success = type == kTypeDict && (static_cast<AbstractDict *>(container))->DictMerge(args[0]);
+  } else if (opcode == DICT_UPDATE) {
+    success = type == kTypeDict && (static_cast<AbstractDict *>(container))->DictUpdate(args[0]);
+  } else if (opcode == MAP_ADD) {
+    success = type == kTypeDict && (static_cast<AbstractDict *>(container))->MapAdd(args[0], args[1]);
+  } else if (opcode == SET_UPDATE || opcode == SET_ADD) {
+    success = true;
+    container = MakeAObject(kTypeSet);
   }
   if (!success) {
     return MakeAObject(kTypeAnyValue);
@@ -499,7 +483,7 @@ AObject *AbstractObjectBase::GetAttr(const std::string &name) {
       attr = m;
     } else {
       // other type
-      attr = nullptr;
+      attr = MakeAObject(kTypeAnyValue);
     }
   }
   return attr;
@@ -567,23 +551,15 @@ bool AbstractSequence::SetItem(AObject *k, AObject *v) {
 
 AObject *AbstractObject::UnaryValue(int op) const {
   PyObject *res = nullptr;
-  switch (op) {
-    case UNARY_POSITIVE:
-      res = PyNumber_Positive(value_.ptr());
-      break;
-    case UNARY_NEGATIVE:
-      res = PyNumber_Negative(value_.ptr());
-      break;
-    case UNARY_INVERT:
-      res = PyNumber_Invert(value_.ptr());
-      break;
-    case UNARY_NOT: {
-      int err = PyObject_IsTrue(value_.ptr());
-      res = err > 0 ? Py_False : (err == 0 ? Py_True : nullptr);
-      break;
-    }
-    default:
-      break;
+  if (op == UNARY_POSITIVE) {
+    res = PyNumber_Positive(value_.ptr());
+  } else if (op == UNARY_NEGATIVE) {
+    res = PyNumber_Negative(value_.ptr());
+  } else if (op == UNARY_INVERT) {
+    res = PyNumber_Invert(value_.ptr());
+  } else if (op == UNARY_NOT) {
+    int err = PyObject_IsTrue(value_.ptr());
+    res = err > 0 ? Py_False : (err == 0 ? Py_True : nullptr);
   }
   CHECK_PYTHON_EXCEPTION(res);
   AObject *ret = Convert(res);
@@ -600,25 +576,17 @@ AObject *AbstractObject::Unary(int op) const {
   }
   Type res_type = kTypeAnyValue;
   Type type = this->GetType();
-  switch (op) {
-    case UNARY_POSITIVE:
-    case UNARY_NEGATIVE:
-    case UNARY_INVERT:
-      if (type == kTypeBool || type == kTypeInt) {
-        res_type = kTypeInt;
-      } else if (type == kTypeFloat) {
-        res_type = kTypeFloat;
-      }
-      break;
-    case UNARY_NOT: {
-      bool is_num = type == kTypeBool || type == kTypeInt || type == kTypeFloat;
-      if (is_num || type == kTypeList || type == kTypeTuple || type == kTypeDict) {
-        res_type = kTypeBool;
-      }
-      break;
+  if (op == UNARY_POSITIVE || op == UNARY_NEGATIVE || op == UNARY_INVERT) {
+    if (type == kTypeBool || type == kTypeInt) {
+      res_type = kTypeInt;
+    } else if (type == kTypeFloat) {
+      res_type = kTypeFloat;
     }
-    default:
-      break;
+  } else if (op == UNARY_NOT) {
+    bool is_num = type == kTypeBool || type == kTypeInt || type == kTypeFloat;
+    if (is_num || type == kTypeList || type == kTypeTuple || type == kTypeDict) {
+      res_type = kTypeBool;
+    }
   }
   return MakeAObject(res_type);
 }
@@ -686,7 +654,7 @@ static AObject::Type BinaryAdd(AObject::Type l, AObject::Type r) {
 
 static AObject::Type BinaryInferDefault(AObject::Type, AObject::Type) { return AObject::kTypeAnyValue; }
 
-static AObject *BinaryIs(AObject *l, AObject *r) {
+int AObject::BinaryIs(AObject *l, AObject *r) {
   PyObject *a = l ? l->GetPyObject().ptr() : nullptr;
   PyObject *b = r ? r->GetPyObject().ptr() : nullptr;
   const auto &map = const_object_type_map;
@@ -694,33 +662,43 @@ static AObject *BinaryIs(AObject *l, AObject *r) {
   bool const_b = map.find(b) != map.end();
   // all is const object
   if (const_a && const_b) {
-    return AObject::Convert(a == b ? Py_True : Py_False);
+    return a == b;
   }
   // a const object and a known object
   if ((const_a && b) || (const_b && a)) {
-    return AObject::Convert(Py_False);
+    return false;
   }
   // a const object and a unknown object, but known it's type
   if (const_a && r != nullptr && r->GetType() != AObject::kTypeAnyValue && r->GetType() != AObject::kTypeBool) {
     MS_EXCEPTION_IF_CHECK_FAIL(!const_b, "shouldn't reach here");
-    return AObject::Convert(Py_False);
+    return false;
   }
   if (const_b && l != nullptr && l->GetType() != AObject::kTypeAnyValue && l->GetType() != AObject::kTypeBool) {
     MS_EXCEPTION_IF_CHECK_FAIL(!const_a, "shouldn't reach here");
-    return AObject::Convert(Py_False);
+    return false;
   }
-  return AObject::MakeAObject(AObject::kTypeBool);
+  return -1;
 }
 
-static AObject *BinaryContains(AObject *l, AObject *r) {
+int AObject::BinaryContains(AObject *l, AObject *r) {
   PyObject *o = l->GetPyObject().ptr();
   PyObject *c = r->GetPyObject().ptr();
   if (c == nullptr || o == nullptr || r->GetType() == AObject::kTypeAnyValue) {
-    return AObject::MakeAObject(AObject::kTypeBool);
+    return -1;
   }
   int res = PySequence_Contains(c, o);
   CHECK_PYTHON_EXCEPTION(res < 0 ? nullptr : Py_True);
-  return AObject::Convert(res ? Py_True : Py_False);
+  return res;
+}
+
+AObject *BinaryIs(AObject *l, AObject *r) {
+  int res = AObject::BinaryIs(l, r);
+  return res == -1 ? AObject::MakeAObject(AObject::kTypeBool) : AObject::Convert(res ? Py_True : Py_False);
+}
+
+AObject *BinaryContains(AObject *l, AObject *r) {
+  int res = AObject::BinaryContains(l, r);
+  return res == -1 ? AObject::MakeAObject(AObject::kTypeBool) : AObject::Convert(res ? Py_True : Py_False);
 }
 
 using InferBinaryFunc = AObject *(*)(AObject *, AObject *);
@@ -1299,6 +1277,9 @@ bool AbstractTuple::Update() {
   if (!this->IsElementValid()) {
     return false;
   }
+  if (trace_flag_) {
+    return true;
+  }
   this->element_type_ = kTypeAnyValue;
   // copy it
   PyObject *c = (this->type_ == kTypeTuple) ? PyTuple_New(items_.size()) : PyList_New(items_.size());
@@ -1336,6 +1317,9 @@ py::object AbstractList::GetPyObject() {
 }
 
 bool AbstractDict::Update() {
+  if (trace_flag_) {
+    return true;
+  }
   value_ = py::object();
   for (auto i : this->write_cache_) {
     PyObject *key = i.first == nullptr ? nullptr : i.first->GetPyObject().ptr();
@@ -1410,16 +1394,6 @@ py::object AbstractTensor::GetTensor(bool sync) {
   return py::reinterpret_steal<py::object>(res);
 }
 
-static bool CheckAdapterTensor(py::object tensor) {
-  bool is_adapter = false;
-  if (IsStubTensor(tensor)) {
-    is_adapter = py::hasattr(tensor, "adapter_flag") && py::cast<bool>(py::getattr(tensor, "adapter_flag"));
-  } else {
-    is_adapter = py::cast<mindspore::tensor::TensorPtr>(tensor.ptr())->is_adapter();
-  }
-  return is_adapter;
-}
-
 AbstractBasePtr PyObjectToAbstract(const py::object &arg) {
   ValuePtr converted = nullptr;
   bool success;
@@ -1488,7 +1462,6 @@ mindspore::abstract::AbstractTensorPtr InferWithPrim(const AbstractBasePtr &left
 
 py::object TensorInferBinary(const AbstractBasePtr &left, const AbstractBasePtr &right, int opcode) {
   mindspore::abstract::AbstractTensorPtr abs;
-  auto left_tensor = dyn_cast_ptr<mindspore::abstract::AbstractTensor>(left);
   if (right->isa<mindspore::abstract::AbstractTensor>()) {
     abs = InferWithPrim(left, right, opcode);
   } else if (right->isa<mindspore::abstract::AbstractScalar>()) {
@@ -1505,10 +1478,7 @@ py::object TensorInferBinary(const AbstractBasePtr &left, const AbstractBasePtr 
   auto shape = shape_ptr->cast<mindspore::abstract::ShapePtr>()->shape();
   auto dtype = dtype_ptr->type_id();
   auto tensor = std::make_shared<mindspore::tensor::Tensor>(dtype, shape);
-  auto res = py::cast(tensor);
-  tensor->set_adapter_flag(left_tensor->is_adapter());
-  py::object func = Utils::GetModuleAttr("mindspore.common.api", "_convert_python_data", false, true);
-  return func(res);
+  return py::cast(tensor);
 }
 
 AObject *AbstractTensor::Binary(AObject *other, int op) {
@@ -1544,6 +1514,11 @@ AObject *AbstractTensor::Binary(AObject *other, int op) {
     right = PyObjectToAbstract(other->GetPyObject());
   }
   auto res = TensorInferBinary(left, right, op);
+  if (CheckAdapterTensor(value_)) {
+    res = ConvertToAdapterTensor(res);
+  } else {
+    res = ConvertToMsTensor(res);
+  }
   return Convert(res);
 }
 
@@ -1558,62 +1533,44 @@ AObject *AbstractTensor::GetItem(AObject *key) {
   } else {
     return MakeAObject(kTypeAnyValue);
   }
-  py::object py_t = py::reinterpret_steal<py::object>(t);
-  if (CheckAdapterTensor(value_) && !CheckAdapterTensor(py_t)) {
-    if (mindspore::IsStubTensor(py_t)) {
-      mindspore::abstract::AbstractTensorPtr abs =
-        dyn_cast<mindspore::abstract::AbstractTensor>(PyObjectToAbstract(py_t));
-      auto dtype_ptr = abs->element()->BuildType();
-      MS_EXCEPTION_IF_NULL(dtype_ptr);
-      auto shape_ptr = abs->BuildShape();
-      MS_EXCEPTION_IF_NULL(shape_ptr);
-      auto shape = shape_ptr->cast<mindspore::abstract::ShapePtr>()->shape();
-      auto dtype = dtype_ptr->type_id();
-      auto tensor = std::make_shared<mindspore::tensor::Tensor>(dtype, shape);
-      tensor->set_adapter_flag(true);
-      py_t = py::cast(tensor);
-    } else {
-      auto tensor = py::cast<mindspore::tensor::TensorPtr>(t);
-      tensor->set_adapter_flag(true);
-    }
-    py::object func = Utils::GetModuleAttr("mindspore.common.api", "_convert_python_data", false, true);
-    py_t = func(py_t);
+  py::object res = py::reinterpret_steal<py::object>(t);
+  if (CheckAdapterTensor(value_)) {
+    res = ConvertToAdapterTensor(res);
+  } else {
+    res = ConvertToMsTensor(res);
   }
-  return Convert(py_t);
+  return Convert(res);
 }
 
 AObject *AbstractTensor::Unary(int op) const {
-  switch (op) {
-    case UNARY_POSITIVE:
-      return const_cast<AbstractTensor *>(this);
-    case UNARY_NEGATIVE:
-    case UNARY_INVERT: {
-      AbstractTensor *res = static_cast<AbstractTensor *>(MakeAObject(kTypeTensor));
-      auto it = attrs_.find("shape");
-      if (it != attrs_.end()) {
-        res->attrs_["shape"] = it->second;
-      }
-      it = attrs_.find("dtype");
-      if (it != attrs_.end()) {
-        res->attrs_["dtype"] = it->second;
-      }
-      return res;
+  if (this->value_.ptr() != nullptr) {
+    return this->AbstractObject::UnaryValue(op);
+  }
+  if (op == UNARY_POSITIVE) {
+    return const_cast<AbstractTensor *>(this);
+  } else if (op == UNARY_NEGATIVE || op == UNARY_INVERT) {
+    AbstractTensor *res = static_cast<AbstractTensor *>(MakeAObject(kTypeTensor));
+    auto it = attrs_.find("shape");
+    if (it != attrs_.end()) {
+      res->attrs_["shape"] = it->second;
     }
-    case UNARY_NOT: {
-      auto it = attrs_.find("shape");
-      if (it == attrs_.end() || it->second == nullptr) {
-        return MakeAObject(kTypeTensor);
-      }
-      AObject *shape_info = it->second;
-      PyObject *shape = shape_info->GetPyObject().ptr();
-      Py_ssize_t ndim = PyTuple_GET_SIZE(shape);
-      if (ndim == 0 || (ndim == 1 && PyLong_AS_LONG(PyTuple_GET_ITEM(shape, 0))) == 1) {
-        return MakeAObject(kTypeBool);
-      }
-      return MakeAObject(kTypeAnyValue);
+    it = attrs_.find("dtype");
+    if (it != attrs_.end()) {
+      res->attrs_["dtype"] = it->second;
     }
-    default:
-      break;
+    return res;
+  } else if (op == UNARY_NOT) {
+    auto it = attrs_.find("shape");
+    if (it == attrs_.end() || it->second == nullptr) {
+      return MakeAObject(kTypeTensor);
+    }
+    AObject *shape_info = it->second;
+    PyObject *shape = shape_info->GetPyObject().ptr();
+    Py_ssize_t ndim = PyTuple_GET_SIZE(shape);
+    if (ndim == 0 || (ndim == 1 && PyLong_AS_LONG(PyTuple_GET_ITEM(shape, 0))) == 1) {
+      return MakeAObject(kTypeBool);
+    }
+    return MakeAObject(kTypeAnyValue);
   }
   return MakeAObject(kTypeAnyValue);
 }

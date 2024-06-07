@@ -26,6 +26,9 @@
 #include "pipeline/jit/ps/parse/parse.h"
 
 namespace mindspore {
+class FuncGraphBuilder;
+using FuncGraphBuilderPtr = std::shared_ptr<FuncGraphBuilder>;
+
 class FuncGraphBuilder {
  public:
   explicit FuncGraphBuilder(bool is_top = false) : graph_(std::make_shared<FuncGraph>()) {
@@ -40,7 +43,14 @@ class FuncGraphBuilder {
   /// \param[in] obj The input python object.
   ///
   /// \return If the input is a tensor, return a fake tensor python object, else return the origin python object.
-  py::object AddInput(const py::object &obj);
+  py::object AddSubGraphInput(const py::object &obj);
+
+  /// \brief Add an input parameter to the top graph.
+  ///
+  /// \param[in] packed_inputs The input python object for top graph.
+  ///
+  /// \return True if add top graph success, otherwise false.
+  bool AddTopGraphInputs(std::vector<py::object> packed_inputs);
 
   /// \brief Add a cnode to the graph.
   ///
@@ -58,6 +68,13 @@ class FuncGraphBuilder {
   /// \return The python object of the infer result.
   py::object AddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj);
 
+  /// \brief Add a python object to graph.
+  ///
+  /// \param[in] object The python object add to graph.
+  ///
+  /// \return Indicate whether the python object add to graph successfully.
+  bool AddAttrPythonObject(const py::object &object);
+
   /// \brief Add a binary operation cnode to the graph.
   ///
   /// \param[in] opcode The binary operation code.
@@ -69,9 +86,10 @@ class FuncGraphBuilder {
   /// \brief Add an output node to the graph.
   ///
   /// \param[in] output_obj The output python object.
+  /// \param[in] is_top_graph Indicate whether the graph to add output is top graph.
   ///
   /// \return Return true if the output object can be used as the output of the graph.
-  bool AddOutput(const py::object &output_obj, bool add_repeat = true);
+  bool AddOutput(const py::object &output_obj, bool is_top_graph = true);
 
   /// \brief Remove an output node of the graph.
   ///
@@ -109,6 +127,13 @@ class FuncGraphBuilder {
   /// \return Return true if the python object is a function which can be constantly folded.
   static bool CanConstantFoldFunc(const py::object &obj);
 
+  /// \brief Check if the python object is valid as the callable object in graph.
+  ///
+  /// \param[in] obj A python object.
+  ///
+  /// \return Return true if the python object is valid as the callable object in graph.
+  static bool ValidateCallableObject(const py::object &obj);
+
   /// \brief Set the final outputs and get the graph.
   ///
   /// \return The graph constructed.
@@ -126,14 +151,26 @@ class FuncGraphBuilder {
 
   static AbstractBasePtr EvalValue(const ValuePtr &value, const AbstractBasePtrList &inputs_abs_list);
 
+  using PyTensorConverter = std::function<py::object(const py::object &)>;
   static py::object ConvertToPyObj(const AbstractBasePtr &abs);
+  static py::object ConvertToPyObj(const AbstractBasePtr &abs, const PyTensorConverter &tensor_convert_func);
+
+  void AddPrevBuilder(const FuncGraphBuilderPtr &builder);
+
+  const std::vector<FuncGraphBuilder *> &prev_builders() const { return prev_builders_; }
+
+  AnfNodePtr GetNodeByObject(const py::object &obj);
+
+  AnfNodePtr ReadLocalVariable(const py::object &obj);
+
+  bool AddLocalVariable(const py::object &obj);
 
  private:
   static bool CheckCallable(const ValuePtr &value, const AbstractBasePtr &abs);
 
   static bool CheckGraphOutput(const AbstractBasePtr &abs);
 
-  AnfNodePtr ConvertInputObjToNode(const py::object &input_obj);
+  AnfNodePtr ConvertObjToNode(const py::object &input_obj);
 
   py::object AddFgCallNode(const FuncGraphPtr &fg, const std::vector<py::object> &inputs_obj);
 
@@ -144,13 +181,32 @@ class FuncGraphBuilder {
   static AbstractBasePtr DoInferAndCheck(const ValuePtr &callable_value,
                                          const std::vector<AbstractBasePtr> &input_abs_list);
 
+  CNodePtr DoPrimitiveInferAndCheck(const PrimitivePtr &primitive, const AnfNodePtrList &input_node_list,
+                                    const AbstractBasePtrList &args_abs_list);
+  CNodePtr AddPrimitiveCNode(const PrimitivePtr &primitive, const AnfNodePtrList &input_node_list,
+                             const AbstractBasePtrList &args_abs_list);
+
+  static AbstractBasePtr GetAbstractOf(const AnfNodePtr &node);
+
   py::object TryToAddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj);
+
+  py::object ConvertToPyTensorOrParameter(const py::object &cpp_tensor);
+
+  static bool CheckInvalidCellListDictMethod(const py::object &obj);
+
+  bool AddTopGraphArgsInputs(const py::object &object);
+
+  bool AddTopGraphVargsInputs(const py::object &vargs);
+
+  bool AddTopGraphKwargsInputs(const py::object &vargs);
 
   FuncGraphPtr graph_{nullptr};
   bool has_set_output_{false};
   HashMap<PyObject *, AnfNodePtr> py_obj_to_node_;
   std::vector<AnfNodePtr> output_nodes_;
+
+  // Store all previous builders for subgraph call and control flow.
+  std::vector<FuncGraphBuilder *> prev_builders_;
 };
-using FuncGraphBuilderPtr = std::shared_ptr<FuncGraphBuilder>;
 }  // namespace mindspore
 #endif  // MINDSPORE_PI_JIT_GRAPH_BUILD_FUNC_GRAPH_BUILDER_H_

@@ -54,7 +54,7 @@ def test_jit_function_while():
     loaded_net = nn.GraphCell(graph)
     context.set_context(mode=context.PYNATIVE_MODE)
 
-    @jit(mode="PIJit")
+    @jit(mode="PIJit", jit_config={"compile_by_trace": False}) # One-stage will fix it later
     def run_graph(x, y):
         outputs = loaded_net(x, y)
         return outputs

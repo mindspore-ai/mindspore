@@ -81,8 +81,8 @@ def perf_bytecode_complex(a, b):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func_param', [(perf_statistic_simple, False), (perf_statistic_complex, True),
-                                        (perf_bytecode_simple, False), (perf_bytecode_complex, True)])
+@pytest.mark.parametrize('func_param', [(perf_statistic_simple, True), (perf_statistic_complex, True),
+                                        (perf_bytecode_simple, True), (perf_bytecode_complex, True)])
 def test_perf_statistic_case(func_param):
     """
     Feature: Method Perf Testing

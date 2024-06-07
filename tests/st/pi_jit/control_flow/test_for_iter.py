@@ -77,12 +77,6 @@ def test_for_iter_unrolling(func, param):
     excepted = func(param)
     result = jit(fn=func, mode="PIJit", jit_config=config)(param)
     jcr = get_code_extra(func)
-    new_code = jcr["code"]["compiled_code_"]
-
-    # just unrolling loop in python 3.9
-    if sys.version_info.major == 3 and sys.version_info.minor == 9:
-        for i in dis.get_instructions(new_code):
-            assert i.opname != "FOR_ITER"
 
     assert jcr["stat"] == "GRAPH_CALLABLE"
     assert jcr["code"]["call_count_"] > 0

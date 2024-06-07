@@ -23,6 +23,7 @@
 #include <chrono>
 #include "pybind11/pybind11.h"
 #include "pipeline/jit/pi/pydef.h"
+#include "mindspore/core/ir/cell.h"
 
 namespace mindspore {
 namespace pijit {
@@ -59,21 +60,6 @@ class Utils {
   ~Utils() = default;
 
   static std::string GetPyName(PyObject *obj);
-  static int GetBranchDestIndex(int op, int arg, int ci);
-  static int GetBranchDestArg(int op, int jump_bci, int cur_bci);
-  static bool IsNameRelated(int op);
-  static bool IsCallOp(int op);
-  static bool IsCellAccessOp(int op);
-  static bool IsLocalAccessOp(int op);
-  static bool IsRelativeJump(int op);
-  static bool IsAbsoluteJump(int op);
-  static bool IsIfJump(int op);
-  static bool IsNonFall(int op);
-  static bool IsNoSideEffectOp(int op);
-  static bool IsGeneralNoSideEffectOp(int op);
-  static bool IsLoadOp(int op);
-  static bool IsMsUnsupported(int op);
-  static bool IsBinaryMathOp(int op);
 
   static PyFrameObject *PrepareFrame(PyObject *callable, PyObject *args, PyObject *kwargs);
 
@@ -97,12 +83,12 @@ class Utils {
   static std::pair<py::object, py::object> PackCallStackArgs(const std::vector<py::object> &args, int opcode,
                                                              bool ret_vector_args = false);
 
-  // debug tools
-  static const std::string &GetOpName(int opcode);
   // alias python 'print(func); import dis; dis.dis(func)'
   static void DisFuncObject(PyObject *);
   // alias python 'print(...)'
   static void PyBuiltinPrint(PyObject *);
+
+  static PyObject *MixedPrecisionTypeToDType(MixedPrecisionType mixedPrecisionType);
 };
 
 #define GRAPH_JIT_LOG_F PY_PRINT_F
@@ -170,6 +156,11 @@ bool CheckContainer(PyObject *obj);
 bool IsTensorPyObject(PyObject *obj);
 bool IsMsClass(PyObject *obj);
 bool IsNumpyObject(PyObject *obj);
+const char *GetFuncName(const py::object &handle);
+
+bool CheckAdapterTensor(const py::object &tensor);
+py::object ConvertToMsTensor(const py::object &tensor);
+py::object ConvertToAdapterTensor(const py::object &tensor);
 
 std::string GetTopModule(const py::object &o);
 py::object GetPyCodeObject(const py::object &any, bool exact_func = false);
@@ -180,32 +171,26 @@ class TimeRecorder {
  public:
   using RecorderType = const char *;
   static constexpr double scale = std::nano::den;
-  static constexpr const char *kTimeCompile = "kTimeCompile";
-  static constexpr const char *kTimeCompileCapture = "kTimeCompileCapture";
-  static constexpr const char *kTimeCompileGraph = "kTimeCompileGraph";
-  static constexpr const char *kTimeGuard = "kTimeGuard";
-  static constexpr const char *kTimeInferPrimitive = "kTimeInferPrimitive";
 
-  struct PerfData {
-    uint64_t count;
-    uint64_t nano;
+  class TimeData {
+   public:
+    struct Data {
+      uint64_t count;
+      uint64_t nano;
+    };
+    TimeData() = default;
+    ~TimeData();
+    std::string ToString();
+
+    std::map<RecorderType, Data> data_;
   };
-  static std::map<RecorderType, PerfData> data_;
 
-  explicit TimeRecorder(const RecorderType &descr, bool record = true) : descr_(descr), record_(record) {
-    if (record_) {
-      start_ = std::chrono::steady_clock::now();
-    }
-  }
-  ~TimeRecorder() {
-    if (record_) {
-      uint64_t clk = (std::chrono::steady_clock::now() - start_).count();
-      data_[descr_].count++;
-      data_[descr_].nano += clk;
-    }
-  }
+  explicit TimeRecorder(const RecorderType &descr, bool record = true);
+  ~TimeRecorder();
 
  private:
+  static TimeData *Data();
+
   RecorderType descr_;
   std::chrono::steady_clock::time_point start_;
   bool record_;

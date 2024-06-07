@@ -3,6 +3,19 @@ from mindspore.ops import operations as P
 from mindspore import jit
 from mindspore._c_expression import get_code_extra
 import pytest
+import sys
+
+SYS_VER = (sys.version_info.major, sys.version_info.minor)
+if SYS_VER != (3, 7) and SYS_VER != (3, 9):
+    pytest.skip(reason="not implement for python" + str(SYS_VER), allow_module_level=True)
+
+def fibonacci():
+    a, b = 0, 1
+    while True:
+        yield a
+        a, b = b, a + b
+
+GEN = fibonacci()
 
 
 @pytest.mark.level0
@@ -21,7 +34,7 @@ def test_exception_case_1():
             val = val + 1
             val = ad(Tensor([val]), Tensor([val]))
         except ValueError:
-            print(1)
+            next(GEN)
         finally:
             val = ad(val, val)
         return val
@@ -51,7 +64,7 @@ def test_exception_case_2():
             val = val + 1
             val = ad(Tensor([val]), Tensor([val]))
         except ValueError:
-            print(1)
+            next(GEN)
         else:
             val = ad(val, val)
         finally:
@@ -81,9 +94,9 @@ def test_exception_case_3():
         ad = P.Add()
         try:
             val = val + 1
-            print("break!")
+            next(GEN) # break
         except ValueError:
-            print(1)
+            next(GEN)
         else:
             val = ad(Tensor([val]), Tensor([val]))
         finally:
@@ -114,10 +127,10 @@ def test_exception_case_4():
         try:
             val = val + 1
         except ValueError:
-            print(1)
+            next(GEN)
         else:
             val = ad(Tensor([val]), Tensor([val]))
-            print("break!")
+            next(GEN) # break
         finally:
             val = ad(val, val)
         return val
@@ -146,12 +159,12 @@ def test_exception_case_5():
         try:
             val = val + 1
         except ValueError:
-            print(1)
+            next(GEN)
         else:
             val = ad(Tensor([val]), Tensor([val]))
         finally:
             val = ad(val, val)
-            print("break!")
+            next(GEN) # break
         return val
 
     expected = func(5)
@@ -181,11 +194,11 @@ def test_exception_case_6():
                 val = val + 1
                 val = ad(Tensor([val]), Tensor([val]))
             except ValueError:
-                print(1)
+                next(GEN)
             finally:
                 val = ad(val, val)
         except ValueError:
-            print(1)
+            next(GEN)
         else:
             val = ad(val, val)
         finally:
@@ -217,15 +230,15 @@ def test_exception_case_7():
             val = val + 1
             try:
                 val = val + 1
-                print("break!")
+                next(GEN) # break
             except ValueError:
-                print(1)
+                next(GEN)
             else:
                 val = ad(Tensor([val]), Tensor([val]))
             finally:
                 val = ad(val, val)
         except ValueError:
-            print(1)
+            next(GEN)
         else:
             val = ad(val, val)
         finally:
@@ -257,19 +270,19 @@ def test_exception_case_8():
             val = val + 1
             try:
                 val = val + 1
-                print("break!")
+                next(GEN) # break
             except ValueError:
-                print(1)
+                next(GEN)
             else:
                 val = ad(Tensor([val]), Tensor([val]))
             finally:
                 val = ad(val, val)
-                print("break!")
+                next(GEN) # break
         except ValueError:
-            print(1)
+            next(GEN)
         else:
             val = ad(val, val)
-            print("break!")
+            next(GEN) # break
         finally:
             val = ad(val, val)
         return val
@@ -318,7 +331,7 @@ def test_exception_case_9():
                 val = val + 1
                 val = ad(Tensor([val]), Tensor([val]))
             except ValueError:
-                print(1)
+                next(GEN)
             else:
                 val = ad(val, val)
             finally:
@@ -350,9 +363,9 @@ def test_exception_case_10():
             try:
                 val = val + 1
                 val = ad(Tensor([val]), Tensor([val]))
-                print("break!")
+                next(GEN) # break
             except ValueError:
-                print(1)
+                next(GEN)
             else:
                 val = ad(val, val)
             finally:
@@ -386,7 +399,7 @@ def test_exception_case_11():
                 val = val + 2
                 val = ad(Tensor([val]), Tensor([val]))
         except ValueError:
-            print(1)
+            next(GEN)
         else:
             val = ad(val, val)
         finally:
@@ -419,9 +432,9 @@ def test_exception_case_12():
             with TestWithContext(val):
                 val = val + 2
                 val = ad(Tensor([val]), Tensor([val]))
-                print("break!")
+                next(GEN) # break
         except ValueError:
-            print(1)
+            next(GEN)
         else:
             val = ad(val, val)
         finally:
@@ -457,11 +470,11 @@ def test_exception_case_13():
                     val = val + 1
                     val = ad(Tensor([val]), Tensor([val]))
                 except ValueError:
-                    print(1)
+                    next(GEN)
                 finally:
                     val = ad(val, val)
             except ValueError:
-                print(1)
+                next(GEN)
             else:
                 val = ad(val, val)
             finally:
@@ -496,13 +509,13 @@ def test_exception_case_14():
                     val = val + 2
                     val = ad(Tensor([val]), Tensor([val]))
             except ValueError:
-                print(1)
+                next(GEN)
             else:
                 val = ad(val, val)
             finally:
                 val = ad(val, val)
         except ValueError:
-            print(1)
+            next(GEN)
         else:
             val = ad(val, val)
         finally:
@@ -537,18 +550,18 @@ def test_exception_case_15():
                 with TestWithContext(val):
                     val = val + 2
                     val = ad(Tensor([val]), Tensor([val]))
-                print("break!")
+                next(GEN) # break
             except ValueError:
-                print(1)
+                next(GEN)
             else:
                 val = ad(val, val)
             finally:
                 val = ad(val, val)
         except ValueError:
-            print(1)
+            next(GEN)
         else:
             val = ad(val, val)
-            print("break!")
+            next(GEN) # break
         finally:
             val = ad(val, val)
         return val

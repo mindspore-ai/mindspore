@@ -31,19 +31,30 @@ bool IsNonLocalValue(ValueNode *i) {
          i->GetType() == ValueNode::FreeVar;
 }
 
-void ValueNode::store_attr(const std::string &nam, ValueNode *v) { attr_ = true; }
-
-void ValueNode::store_subscr(ValueNode *sub, ValueNode *v) { subscr_ = true; }
+void ValueNode::SetVobj(AObject *object_info) {
+  auto replaced = this->vobj_;
+  this->vobj_ = object_info;
+  if (this->GetGraph() == nullptr) {
+    return;
+  }
+  const auto &data = this->GetGraph()->GetSideEffect()->data();
+  if (replaced != nullptr) {
+    data->UnTrack(replaced->GetPyObject().ptr(), this);
+  }
+  if (object_info != nullptr) {
+    data->Track(object_info->GetPyObject().ptr(), this);
+  }
+}
 
 AObject *ValueNode::get_attr(const std::string &nam) {
-  if (!attr_ && vobj_) {
+  if (vobj_) {
     return vobj_->GetAttr(nam);
   }
   return AObject::MakeAObject(AObject::kTypeAnyValue);
 }
 
 AObject *ValueNode::binary_subscr(ValueNode *sub) {
-  if (!subscr_ && vobj_) {
+  if (vobj_) {
     return vobj_->GetItem(sub->GetVobj());
   }
   return AObject::MakeAObject(AObject::kTypeAnyValue);
@@ -109,8 +120,8 @@ std::string ValueNode::ToString() const {
 
 std::string InstrNode::ToString() const {
   std::stringstream s;
-  s << this->AbstractNode::ToString() << " bci " << bci() << " lno " << GetLineNo() << ' '
-    << Utils::GetOpName(GetOpcode()) << ' ' << GetOparg() << ' ' << GetName();
+  s << this->AbstractNode::ToString() << " bci " << bci() << " lno " << GetLineNo() << ' ' << Opcode(GetOpcode()).name()
+    << ' ' << GetOparg() << ' ' << GetName();
   return s.str();
 }
 

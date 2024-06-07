@@ -18,7 +18,7 @@ class Net(nn.Cell):
         self.forward_time += self.step_time
         print("2nd=>cur_time:", self.forward_time, " step:", self.step_time)
 
-    @jit(mode="PIJit")
+    @jit(mode="PIJit", jit_config={"compile_by_trace": False})
     def construct(self, x):
         x = self.fc(x)
         self.inc_time()

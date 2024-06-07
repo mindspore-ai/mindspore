@@ -829,7 +829,7 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
             config.update(jit_config)
         jit_mode_pi_enable()
 
-        if jit_mode_pi_compile(func, config) is False:
+        if jit_mode_pi_compile(func, config, input_signature) is False:
             logger.warning('add fn {} to compile failed '.format(func))
 
         return decorated

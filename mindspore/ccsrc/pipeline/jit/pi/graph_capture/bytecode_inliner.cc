@@ -110,7 +110,7 @@ void BytecodeInliner::Rebuild(CodeGenerator *cg) {
 
     // reset bci
     int last_op = cg->GetCode().co_code.back()->op();
-    new_bci = static_cast<int>(cg->GetCode().co_code.size()) - 1 - (last_op == POP_TOP || last_op == STORE_FAST);
+    new_bci = SizeToInt(cg->GetCode().co_code.size()) - 1 - (last_op == POP_TOP || last_op == STORE_FAST);
     node->set_bci(new_bci);
 
     // reset frame status
@@ -162,7 +162,7 @@ void BytecodeInliner::Rebuild() {
   if (last_frame_ != nullptr) {
     MS_EXCEPTION_IF_CHECK_FAIL(new_frames_.find(cg.GetCode().co_code.size()) == new_frames_.end(),
                                "duplicate frame status");
-    new_break_bci_ = static_cast<int>(cg.GetCode().co_code.size());
+    new_break_bci_ = SizeToInt(cg.GetCode().co_code.size());
     new_frames_[new_break_bci_] = std::move(last_frame_);
   }
 
@@ -182,11 +182,6 @@ void BytecodeInliner::CollectTracedNodes(Graph *graph) {
     }
     std::copy(call_node->GetParams().begin(), call_node->GetParams().end(), std::back_inserter(traced_nodes_));
     CollectTracedNodes(call_node->GetSubGraph());
-  }
-  if (graph != graph_) {
-    if (graph->GetSideEffect() != nullptr) {
-      graph_->GetSideEffect()->Merge(graph->GetSideEffect());
-    }
   }
 }
 
@@ -261,7 +256,7 @@ static bool CanIninePartial(Graph *top_graph, Graph *sub_graph) {
   }
   for (auto i : sub_graph->GetTracedNodes()) {
     int op = i->GetOpcode();
-    if (op == MAKE_FUNCTION || op == STORE_GLOBAL || op == DELETE_GLOBAL) {
+    if (op == MAKE_FUNCTION) {
       return false;
     }
   }
@@ -309,7 +304,7 @@ void BytecodeInliner::FixInstr(Graph *graph, int local_off, std::vector<std::uni
     return;
   }
   for (const auto &i : *list) {
-    if (Utils::IsLocalAccessOp(i->op())) {
+    if (Opcode(i->op()).IsLocalAccess()) {
       i->set_arg(i->arg() + local_off);
       continue;
     }
@@ -362,7 +357,7 @@ void BytecodeInliner::InitCFG() {
   blocks.insert({0, cfg_->NewBBAppend()});
   for (const auto &i : list) {
     size_t bci = list.size();
-    if (Utils::IsNonFall(i->op())) {
+    if (Opcode(i->op()).IsNotFall()) {
       bci = (size_t)i->bci() + 1;
     }
     if (i->extra_jump() != nullptr) {
@@ -385,7 +380,7 @@ void BytecodeInliner::InitCFG() {
     if (iter != blocks.end()) {
       back = iter->first;
     } else {
-      back = static_cast<int>(list.size());
+      back = SizeToInt(list.size());
     }
     cur->set_begin_ci(head);
     cur->set_end_ci(back);
@@ -393,7 +388,7 @@ void BytecodeInliner::InitCFG() {
     if (instr->extra_jump()) {
       cur->SetJumpBB(blocks[instr->extra_jump()->bci()]);
     }
-    if (!Utils::IsNonFall(instr->op())) {
+    if (!Opcode(instr->op()).IsNotFall()) {
       cur->SetFallBB(iter->second);
     }
   }
@@ -402,21 +397,18 @@ void BytecodeInliner::InitCFG() {
 }
 
 static bool IsEliminate(ValueNode *v) {
-  int op = v->GetOpcode();
-  if (Utils::IsNoSideEffectOp(op)) {
+  auto op = Opcode(v->GetOpcode());
+  if (op.MayDelete()) {
     return true;
   }
-  if (Utils::IsGeneralNoSideEffectOp(op)) {
-    return true;
-  }
-  if (Utils::IsBinaryMathOp(op)) {
+  if (op.IsBinaryMath()) {
     // inplace binary
     AObject::Type t = v->input(0)->GetVobj()->GetType();
     return t != AObject::kTypeAnyValue && t != AObject::kTypeList && t != AObject::kTypeCell &&
            t != AObject::kTypeNNCellList;
   }
-  if (Utils::IsCallOp(op)) {
-    py::object callable = v->GetVobj()->GetPyObject();
+  if (op.IsCall()) {
+    py::object callable = v->input(0)->GetVobj()->GetPyObject();
     if (callable.ptr() == nullptr) {
       return false;
     }

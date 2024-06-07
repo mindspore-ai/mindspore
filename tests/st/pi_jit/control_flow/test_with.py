@@ -5,6 +5,14 @@ from mindspore._c_expression import get_code_extra
 import pytest
 import dis
 
+def fibonacci():
+    a, b = 0, 1
+    while True:
+        yield a
+        a, b = b, a + b
+
+GEN = fibonacci()
+
 
 class TestWithContext:
     def __init__(self, val):
@@ -20,6 +28,7 @@ class TestWithContext:
         test_value = self.val - 3
         test_value += 1
 
+
 class TestWithContext_1:
     def __init__(self, val):
         self.val = val
@@ -27,13 +36,14 @@ class TestWithContext_1:
     def __enter__(self):
         test_value = self.val + 2
         test_value += 1
-        print("1")
+        next(GEN)
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         test_value = self.val + 3
         test_value = self.val - 3
         test_value += 1
+
 
 class TestWithContext_2:
     def __init__(self, val):
@@ -46,9 +56,10 @@ class TestWithContext_2:
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         test_value = self.val + 3
-        print("2")
+        next(GEN)
         test_value = self.val - 3
         test_value += 1
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -86,7 +97,7 @@ def test_with_case_2():
     def func(val, add):
         with TestWithContext(val):
             val = val + add
-            print("1")
+            next(GEN)
         add = add + 1
         val = val + 3
         return val + add
@@ -124,6 +135,7 @@ def test_with_case_3():
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -145,6 +157,7 @@ def test_with_case_4():
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -201,6 +214,7 @@ def test_with_case_6():
     jcr = get_code_extra(func)
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -259,6 +273,7 @@ def test_with_case_8():
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -273,7 +288,7 @@ def test_with_case_9():
             val = val + add
             with TestWithContext(val):
                 val = val + add
-                print("1")
+                next(GEN)
         test_val = 3
         with TestWithContext(test_val):
             dv = P.Div()
@@ -291,6 +306,7 @@ def test_with_case_9():
             flag = True
     assert flag
     assert expected == res
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -311,7 +327,7 @@ def test_with_case_10():
         test_val = 3
         with TestWithContext(test_val):
             val = val + add
-            print("2")
+            next(GEN)
         return val + test_val + add
     test_value = 0
     expected = func(test_value, 5)
