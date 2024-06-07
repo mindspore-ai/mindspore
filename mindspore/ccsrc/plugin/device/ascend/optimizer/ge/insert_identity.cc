@@ -21,6 +21,8 @@
 #include "ops/array_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "utils/ms_context.h"
+#include "ops/nn_op_name.h"
 
 namespace mindspore {
 namespace opt {
@@ -45,7 +47,7 @@ bool NeedInsertIdentity(const BaseRef &n) {
 }
 
 void SetBuildInfo(const AnfNodePtr &cnode, const CNodePtr &new_node, const size_t index, bool need_trans = true,
-                  bool need_cast = false) {
+                  bool need_cast = false, const std::string &dst_dev_fmt = kOpFormat_DEFAULT) {
   MS_EXCEPTION_IF_NULL(cnode);
   const std::string dev_fmt = AnfAlgo::GetOutputFormat(cnode, index);
   const auto origin_shape = AnfAlgo::GetOutputDetailShape(cnode, index);
@@ -60,13 +62,19 @@ void SetBuildInfo(const AnfNodePtr &cnode, const CNodePtr &new_node, const size_
   new_node->set_abstract(abs);
   // set kernel build info
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-  builder.SetKernelType(KernelType::ACL_KERNEL);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->IsEnableInferBoost() && context_ptr->ascend_soc_version() == "ascend310p") {
+    builder.SetKernelType(KernelType::INTERNAL_KERNEL);
+  } else {
+    builder.SetKernelType(KernelType::ACL_KERNEL);
+  }
   if (need_trans) {
     builder.SetInputsFormat({dev_fmt});
   } else {
     builder.SetInputsFormat({kOpFormat_DEFAULT});
   }
-  builder.SetOutputsFormat({kOpFormat_DEFAULT});
+  builder.SetOutputsFormat({dst_dev_fmt});
   builder.SetInputsReshapeType({});
   builder.SetOutputsReshapeType({});
   builder.SetInputsDeviceType({input_type});
@@ -82,17 +90,35 @@ CNodePtr InsertTransIdentityForInput(const FuncGraphPtr &func_graph, const CNode
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  for (auto index : trans_input) {
+  for (size_t i = 0; i < trans_input.size(); ++i) {
+    auto index = trans_input[i];
     auto input_kernel = common::AnfAlgo::GetInputNode(cnode, index);
     auto identity_node =
       kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), input_kernel});
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    if (context_ptr->IsEnableInferBoost() && context_ptr->ascend_soc_version() == "ascend310p") {
+      identity_node =
+        kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kTransDataOpName)), input_kernel});
+    }
+
     identity_node->set_scope(cnode->scope());
     auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, index, false);
     bool need_cast = cast_input->count(index) != 0;
     if (need_cast) {
       cast_input->erase(index);
     }
-    SetBuildInfo(kernel_with_index.first, identity_node, kernel_with_index.second, true, need_cast);
+    if (common::AnfAlgo::HasNodeAttr(kAttrInternalSepcialFormat, cnode)) {
+      auto special_inputs = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrInternalSepcialFormat);
+      if (special_inputs.size() != trans_input.size()) {
+        MS_LOG(EXCEPTION) << cnode->fullname_with_scope()
+                          << " special_input size must be equal to trans_input size, but got special_inputs = "
+                          << special_inputs << " trans_input = " << trans_input;
+      }
+      common::AnfAlgo::SetNodeAttr(kAttrInternalSepcialFormat, MakeValue<int64_t>(special_inputs[i]), identity_node);
+    }
+    std::string dst_dev_fmt = AnfAlgo::GetInputFormat(cnode, index);
+    SetBuildInfo(kernel_with_index.first, identity_node, kernel_with_index.second, true, need_cast, dst_dev_fmt);
     common::AnfAlgo::SetNodeInput(cnode, identity_node, index);
   }
   return cnode;
@@ -125,6 +151,11 @@ CNodePtr InsertIdentityForOutput(const FuncGraphPtr &func_graph, const CNodePtr 
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   CNodePtr new_node = kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), cnode});
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->IsEnableInferBoost() && context_ptr->ascend_soc_version() == "ascend310p") {
+    new_node = kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kTransDataOpName)), cnode});
+  }
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(cnode->scope());
   SetBuildInfo(cnode, new_node, 0);

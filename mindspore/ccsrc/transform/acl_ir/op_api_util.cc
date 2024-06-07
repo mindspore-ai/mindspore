@@ -23,10 +23,13 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "ops/math_op_name.h"
+#include "ops/nn_op_name.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "utils/ms_context.h"
 #include "transform/symbol/acl_base_symbol.h"
 #include "transform/symbol/acl_compiler_symbol.h"
 #include "transform/symbol/symbol_utils.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_build.h"
 
 namespace mindspore::transform {
 namespace {
@@ -92,7 +95,7 @@ aclCubeMathType OpApiUtil::GetCubeMathType(bool use_hf32) {
 void OpApiUtil::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std::string> *input_formats,
                                         std::vector<std::string> *output_formats,
                                         std::vector<std::string> *input_reshape_types,
-                                        std::vector<std::string> *output_reshape_types) {
+                                        std::vector<std::string> *output_reshape_types, const KernelType &kernel_type) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(input_formats);
   MS_EXCEPTION_IF_NULL(output_formats);
@@ -103,20 +106,26 @@ void OpApiUtil::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
   output_formats->clear();
   input_reshape_types->clear();
   output_reshape_types->clear();
+
   size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   size_t output_num = AnfUtils::GetOutputTensorNum(node);
+
   input_formats->assign(input_num, kOpFormat_DEFAULT);
   output_formats->assign(output_num, kOpFormat_DEFAULT);
+
   input_reshape_types->assign(input_num, "");
   output_reshape_types->assign(output_num, "");
 
+  if (kernel_type == INTERNAL_KERNEL || IsOneOfPrimitiveCNode(node, {prim::kPrimReshapeExt, prim::kPrimReshape})) {
+    kernel::GetValidKernelBuildInfoWithInternalFormat(node, input_formats, output_formats);
+    return;
+  }
+
   std::vector<size_t> special_inputs;
-  std::unordered_set<std::string> matmul_ops = {kMatMulOpName, kMatMulV2OpName, kBatchMatMulOpName};
   for (size_t i = 0; i < input_num; ++i) {
     auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
     std::string input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
-    if (!AclHelper::CheckDefaultSupportFormat(input_format) &&
-        matmul_ops.find(AnfUtils::GetCNodeName(kernel_with_index.first)) == matmul_ops.end()) {
+    if (!AclHelper::CheckDefaultSupportFormat(input_format)) {
       (void)special_inputs.emplace_back(i);
     }
   }

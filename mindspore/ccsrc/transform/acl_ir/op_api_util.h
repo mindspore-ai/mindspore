@@ -42,7 +42,7 @@ class OpApiUtil {
   static void GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std::string> *input_formats,
                                       std::vector<std::string> *output_formats,
                                       std::vector<std::string> *input_reshape_types,
-                                      std::vector<std::string> *output_reshape_types);
+                                      std::vector<std::string> *output_reshape_types, const KernelType &kernel_type);
 };
 
 class AclUtil {

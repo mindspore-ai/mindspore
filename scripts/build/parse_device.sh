@@ -59,8 +59,12 @@ parse_device()
       fi
       # building 310 package by giving specific -V 310 instruction
       if [[ "X$DEVICE_VERSION" == "X310" ]]; then
-        ENABLE_ACL="on"
-        export ENABLE_AKG="off"
+        export ENABLE_D="on"
+        export ENABLE_AKG="on"
+        export ENABLE_ACL="on"
+        ENABLE_CPU="on"
+        export ENABLE_MPI="on"
+        export ENABLE_INTERNAL_KERNELS="on"
       # universal ascend package, building 910b package by giving specific -V 910b instruction
       elif [[ "X$DEVICE_VERSION" == "X910" || "X$DEVICE_VERSION" == "X910b" ]]; then
         export ENABLE_D="on"

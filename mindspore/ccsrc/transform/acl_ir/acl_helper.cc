@@ -94,46 +94,6 @@ bool GLogIsDebug() {
   return is_debug || is_submodule_debug;
 }
 
-void SetParameterFormat(const AnfNodePtr &node, const std::string &format, std::string *old_foramt) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<Parameter>()) {
-    if (IsPrimitiveCNode(node, prim::kPrimCast)) {
-      auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, 0);
-      if (kernel_with_index.first->isa<Parameter>()) {
-        SetParameterFormat(kernel_with_index.first, format, old_foramt);
-      } else {
-        return;
-      }
-      auto kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
-      MS_EXCEPTION_IF_NULL(kernel_info);
-      auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
-      MS_EXCEPTION_IF_NULL(build_info);
-      build_info->SetInputsFormat({format});
-      build_info->SetOutputsFormat({format});
-      kernel_info->set_select_kernel_build_info(build_info);
-    }
-    return;
-  }
-  const auto &output_with_indexs = common::AnfAlgo::GetAllOutputWithIndex(node);
-  std::vector<std::string> output_formats{output_with_indexs.size(), format};
-  auto kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
-  if (kernel_info == nullptr) {
-    kernel_info = std::make_shared<device::KernelInfo>();
-    node->set_kernel_info(kernel_info);
-  }
-  MS_EXCEPTION_IF_NULL(kernel_info);
-
-  auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
-  if (build_info == nullptr) {
-    auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-    build_info = builder->Build();
-  }
-  MS_EXCEPTION_IF_NULL(build_info);
-  build_info->SetOutputsFormat(output_formats);
-  kernel_info->set_select_kernel_build_info(build_info);
-  *old_foramt = format;
-}
-
 bool NeedNDInput(const CNodePtr &cnode, const AnfNodePtr &input_node, const std::string &new_format,
                  std::string *input_format, bool *input_special_flag) {
   if (AclHelper::IsNopNode(cnode) && !AclHelper::CheckDefaultSupportFormat(*input_format)) {
@@ -280,6 +240,46 @@ void RefreshRefFormat(const std::unordered_map<size_t, size_t> &ref_map, const s
   }
 }
 }  // namespace
+
+void SetParameterFormat(const AnfNodePtr &node, const std::string &format, std::string *old_foramt) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<Parameter>()) {
+    if (IsPrimitiveCNode(node, prim::kPrimCast)) {
+      auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, 0);
+      if (kernel_with_index.first->isa<Parameter>()) {
+        SetParameterFormat(kernel_with_index.first, format, old_foramt);
+      } else {
+        return;
+      }
+      auto kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
+      MS_EXCEPTION_IF_NULL(kernel_info);
+      auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+      MS_EXCEPTION_IF_NULL(build_info);
+      build_info->SetInputsFormat({format});
+      build_info->SetOutputsFormat({format});
+      kernel_info->set_select_kernel_build_info(build_info);
+    }
+    return;
+  }
+  const auto &output_with_indexs = common::AnfAlgo::GetAllOutputWithIndex(node);
+  std::vector<std::string> output_formats{output_with_indexs.size(), format};
+  auto kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
+  if (kernel_info == nullptr) {
+    kernel_info = std::make_shared<device::KernelInfo>();
+    node->set_kernel_info(kernel_info);
+  }
+  MS_EXCEPTION_IF_NULL(kernel_info);
+
+  auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+  if (build_info == nullptr) {
+    auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+    build_info = builder->Build();
+  }
+  MS_EXCEPTION_IF_NULL(build_info);
+  build_info->SetOutputsFormat(output_formats);
+  kernel_info->set_select_kernel_build_info(build_info);
+  *old_foramt = format;
+}
 
 bool AclHelper::IsPrintDebugString() {
   static bool is_debug = GLogIsDebug();
