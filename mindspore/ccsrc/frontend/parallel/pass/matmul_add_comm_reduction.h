@@ -18,11 +18,12 @@
 #define MINDSPORE_MATMUL_ADD_COMM_REDUCTION_H
 
 #include "ir/anf.h"
+#include "frontend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace parallel {
 // MatMul allReduce structure fusion
-void MatmulAddCommReduction(const FuncGraphPtr &graph);
+bool MatmulAddCommReduction(const FuncGraphPtr &graph, const opt::OptimizerPtr &);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_MATMUL_ADD_COMM_REDUCTION_H

@@ -486,6 +486,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
                          {"merge_comm", opt::OptPassConfig(parallel::MergeComm)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
+                         {"matmul_add_comm_reduction", opt::OptPassConfig(parallel::MatmulAddCommReduction)},
                          {"virtual_dataset", virtual_dataset},
                          {"get_grad_eliminate_", get_grad},
                          {"virtual_output", opt::OptPassConfig({irpass.virtual_output_eliminate_})},
@@ -821,12 +822,6 @@ bool RemoveCastBeforeAssignAdd(const ResourcePtr &resource) {
 bool BiasAddCommSwap(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::BiasAddCommSwap(resource->func_graph());
-  return true;
-}
-
-bool MatmulAddCommReduction(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  parallel::MatmulAddCommReduction(resource->func_graph());
   return true;
 }
 
@@ -1219,7 +1214,6 @@ std::vector<PassItem> kVmPasses = {
   {"cse_after_recomputation", OptAfterRecomputeGroup},
   {"environ_conv", EnvironConversionPass},
   {"bias_add_comm_swap", BiasAddCommSwap},
-  {"matmul_add_comm_reduction", MatmulAddCommReduction},
   {"label_micro_interleaved_index", LabelMicroInterleavedIndexPass},
   {"label_fine_grained_interleaved_index", LabelFineGrainedInterleavedIndexPass},
   {"merge_cast_opt", MergeCastOpt},
