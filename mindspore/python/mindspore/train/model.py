@@ -594,18 +594,25 @@ class Model:
     def _check_need_ckpt(self, callbacks):
         """Check callback list contain ckpt"""
         need_ckpt = False
-        save_checkpoint_steps = 1
+        save_ckpt_steps = 1
         last_triggered_step = 0
         for cb in callbacks:
             if isinstance(cb, ModelCheckpoint):
                 need_ckpt = True
                 cfg_size = cb.get_save_checkpoint_steps
-                save_checkpoint_steps = save_checkpoint_steps if cfg_size >= sys.maxsize else cfg_size
+                save_ckpt_steps = save_ckpt_steps if (cfg_size is None or cfg_size >= sys.maxsize) else cfg_size
                 last_triggered_step = cb.get_last_trigger_step
                 break
-        return need_ckpt, save_checkpoint_steps, last_triggered_step
+        return need_ckpt, save_ckpt_steps, last_triggered_step
 
     def _store_training_step_info(self, cb_params):
+        """
+        cache train step info
+        :param cb_params: callback params
+        :return: none
+        """
+        if os.environ.get("MS_ENABLE_CKPT_D2H_ASYNC") != "1":
+            return
         if (context.get_context("mode") == context.GRAPH_MODE) and (context.get_context("device_target") == "Ascend"):
             cb_params.need_ckpt, cb_params.save_checkpoint_steps, \
             cb_params.last_triggered_step = self._check_need_ckpt(cb_params.list_callback)
