@@ -759,7 +759,7 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 void KernelActor::ExecuteInferShapeTask(OpContext<DeviceTensor> *const context) {
   ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelInfer, GetAID().Name());
   if (IsRunningFailed(context)) {
-    MS_LOG(INFO) << "Run failed and early stop infer shape for kernel: " << kernel_->fullname_with_scope();
+    MS_LOG(DEBUG) << "Run failed and early stop infer shape for kernel: " << kernel_->fullname_with_scope();
     return;
   }
 
@@ -775,7 +775,7 @@ void KernelActor::ExecuteInferShapeTask(OpContext<DeviceTensor> *const context) 
 void KernelActor::ExecuteResizeKernelModTask(OpContext<DeviceTensor> *const context) {
   ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelResize, GetAID().Name());
   if (IsRunningFailed(context)) {
-    MS_LOG(INFO) << "Run failed and early stop resize for kernel: " << kernel_->fullname_with_scope();
+    MS_LOG(DEBUG) << "Run failed and early stop resize for kernel: " << kernel_->fullname_with_scope();
     return;
   }
 
@@ -794,7 +794,7 @@ void KernelActor::ExecuteResizeKernelModTask(OpContext<DeviceTensor> *const cont
 
 void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context) {
   if (IsRunningFailed(context)) {
-    MS_LOG(INFO) << "Run failed and early stop launch kernel: " << kernel_->fullname_with_scope();
+    MS_LOG(DEBUG) << "Run failed and early stop launch kernel: " << kernel_->fullname_with_scope();
     return;
   }
   // 1. Allocate memory.
@@ -803,7 +803,7 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
   }
 
   if (IsRunningFailed(context)) {
-    MS_LOG(INFO) << "Run failed and early stop launch kernel: " << kernel_->fullname_with_scope();
+    MS_LOG(DEBUG) << "Run failed and early stop launch kernel: " << kernel_->fullname_with_scope();
     return;
   }
   // For performance, Only kernel need user data (such as PyExecute op) need call 'PreLaunchKernel', the
