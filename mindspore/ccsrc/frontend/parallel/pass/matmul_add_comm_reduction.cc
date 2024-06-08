@@ -147,22 +147,25 @@ void FindAllValidAddNode(const FuncGraphPtr &graph, HashMap<AnfNodePtr, std::vec
   }
 }
 
-AnfNodePtr FindBiasAdd(const AnfNodePtr &comm_node) {
+AnfNodePtr FindBiasAdd(const AnfNodePtr &comm_node, const AnfNodePtr &add_node_input) {
   MS_EXCEPTION_IF_NULL(comm_node);
-  auto graph = comm_node->func_graph();
-  MS_EXCEPTION_IF_NULL(graph);
-  auto manager = graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  auto comm_node_user_list = manager->node_users()[comm_node];
-  for (auto comm_node_user : comm_node_user_list) {
-    if (IsPrimitiveCNode(comm_node_user.first, prim::kPrimAdd)) {
-      return comm_node_user.first;
+  auto add_node = GetInputNodeWithFilter(add_node_input, [&](const AnfNodePtr &anode) {
+    auto prim = GetCNodePrimitive(anode);
+    if (prim == nullptr) {
+      return std::make_pair(false, 0);
     }
-  }
-  return nullptr;
+    // find add node, current ops must lie in ALLREDUCE_PULL_DOWN_WHITE_LIST, cannot be add node or equal to comm node
+    bool filter = (ALLREDUCE_PULL_DOWN_WHITE_LIST.find(prim->name()) != ALLREDUCE_PULL_DOWN_WHITE_LIST.end() ||
+                   prim->name() == MATMUL) &&
+                  prim->name() != ADD && anode != comm_node;
+    return std::make_pair(filter, 1);
+  });
+  return add_node;
 }
 
-void HandleNodeBiasAdd(const AnfNodePtr &comm_node) {
+void HandleNodeBiasAdd(const AnfNodePtr &comm_node, const AnfNodePtr &add_node_input) {
+  MS_EXCEPTION_IF_NULL(comm_node);
+  MS_EXCEPTION_IF_NULL(add_node_input);
   auto comm_prim = GetCNodePrimitive(comm_node);
   MS_EXCEPTION_IF_NULL(comm_prim);
   if (!comm_prim->HasAttr(GROUP)) {
@@ -175,10 +178,10 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node) {
   auto comm_rank_list = g_device_manager->FindRankListByHashName(comm_group);
   double rank_size = 1.0 / comm_rank_list.size();
 
-  auto add_node = FindBiasAdd(comm_node);
-  if (add_node == nullptr) {
-    MS_LOG(WARNING) << "For matmul comm reduction, cannot find bias add node, cur comm node is: "
-                    << comm_node->DebugString();
+  auto add_node = FindBiasAdd(comm_node, add_node_input);
+  if (add_node == nullptr || !IsPrimitiveCNode(add_node, prim::kPrimAdd)) {
+    MS_LOG(WARNING) << "For matmul comm reduction, cannot find bias add node, find node is: " << add_node->DebugString()
+                    << " start node is " << add_node_input->DebugString();
     return;
   }
   if (!IsAddNodeValid(add_node, comm_node)) {
@@ -190,14 +193,18 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node) {
   MS_EXCEPTION_IF_NULL(add_cnode);
   // find load node for bias parameter
   auto bias_side_start_node = add_cnode->input(2);
-  MS_EXCEPTION_IF_NULL(bias_side_start_node);
   auto bias_node = GetInputNodeWithFilter(bias_side_start_node, [&](const AnfNodePtr &anode) {
-    bool filter = !IsPrimitiveCNode(anode, prim::kPrimLoad);
+    auto prim = GetCNodePrimitive(anode);
+    if (prim == nullptr) {
+      return std::make_pair(false, 0);
+    }
+    bool filter = ALLREDUCE_PULL_DOWN_WHITE_LIST.find(prim->name()) != ALLREDUCE_PULL_DOWN_WHITE_LIST.end();
     return std::make_pair(filter, 1);
   });
-  if (bias_node == nullptr) {
-    MS_LOG(WARNING) << "From cur add node, cannot find Load op for bias parameter, please check whether it exists,"
-                    << "  cur node is: " << add_node->DebugString();
+  if (bias_node == nullptr || !IsPrimitiveCNode(bias_node, prim::kPrimLoad)) {
+    MS_LOG(WARNING) << "For comm reduction, cannot find load op for bias parameter along current add node, please "
+                       "check whether it exists, cur add node is: "
+                    << add_node->DebugString();
     return;
   }
   // insert div node
@@ -230,21 +237,23 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node) {
 
 void HandleNodePullUp(const AnfNodePtr &add_node, const std::vector<AnfNodePtr> &comm_node_list,
                       HashMap<AnfNodePtr, AnfNodePtr> *comm_node_map) {
-  for (auto &each_node : comm_node_list) {
+  for (size_t index = 0; index < comm_node_list.size(); ++index) {
     // Node pull down
     // Node After AllReduce pull up
+    auto each_node = comm_node_list[index];
     auto each_cnode = each_node->cast<CNodePtr>();
     auto pre_node = each_cnode->input(1);
     auto pre_prim = GetCNodePrimitive(pre_node);
     if (!pre_prim->HasAttr(MATMUL_ADD_COMM_BEGIN) || !GetValue<bool>(pre_prim->GetAttr(MATMUL_ADD_COMM_BEGIN))) {
-      MS_LOG(INFO) << "For comm reduction, its pre node does not marked or marked false, skip it.";
+      MS_LOG(WARNING) << "For comm reduction, its pre node does not marked or marked false, skip it.";
       continue;
     }
     auto graph = each_node->func_graph();
     MS_EXCEPTION_IF_NULL(graph);
     auto manager = graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
-    HandleNodeBiasAdd(each_node);
+    auto add_cnode = add_node->cast<CNodePtr>();
+    HandleNodeBiasAdd(each_node, add_cnode->input(index));
     (void)manager->Replace(each_node, pre_node);
     if ((*comm_node_map).find(add_node) == (*comm_node_map).end()) {
       (*comm_node_map)[add_node] = each_node;
