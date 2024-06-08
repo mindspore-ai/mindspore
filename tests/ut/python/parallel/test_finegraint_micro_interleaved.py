@@ -59,6 +59,13 @@ def compile_net(net, input_x):
     return phase
 
 
+def compile_net_unsupported(net, input_x, indices, update):
+    net.set_auto_parallel()
+    net.set_train()
+    phase, _ = _cell_graph_executor.compile(net, input_x, indices, update)
+    return phase
+
+
 class Net(nn.Cell):
     def __init__(self, weight, in_layout, out_layout=None):
         super().__init__()
@@ -254,6 +261,21 @@ class NetWithTranspose(nn.Cell):
         return x
 
 
+class NetWithUnsupportedOps(nn.Cell):
+    def __init__(self, in_layout, out_layout):
+        super().__init__()
+        self.tensor_scatter_update = P.TensorScatterUpdate()
+        self.tensor_scatter_update.shard(in_strategy=in_layout, out_strategy=out_layout)
+        self.relu = P.ReLU()
+        self.mul = P.Mul()
+
+    def construct(self, input_x, indices, update):
+        out = self.relu(input_x)
+        out = self.tensor_scatter_update(out, indices, update)
+        out = self.mul(out, 2)
+        return out
+
+
 def test_interleaved_base():
     """
     Feature: test micro interleaved
@@ -441,3 +463,39 @@ def test_interleaved_with_transpose():
         NetWithLoss(
             NetWithTranspose((64, 96, 16, 16), (1, 3, 0, 2), in_strategy, out_strategy)))
     _ = compile_net(net, x)
+
+
+def test_interleaved_with_transpose_failed():
+    """
+    Feature: test micro interleaved when interleaved_parallel is not 2
+    Description: dev_num is 4.
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=4, global_rank=0)
+    with pytest.raises(ValueError):
+        layout = Layout((2, 2, 1, 1, 3), ("dp", "sp", "mp", "cp", "interleaved_parallel"))
+        in_strategy = (layout("dp", ("sp", "cp"), "mp", "interleaved_parallel"),)
+        out_strategy = (layout(("sp", "cp"), "interleaved_parallel", "dp", "mp"),)
+        x = Tensor(np.ones([64, 96, 16, 16]), dtype=ms.float32)
+        net = GradWrap(
+            NetWithLoss(
+                NetWithTranspose((64, 96, 16, 16), (1, 3, 0, 2), in_strategy, out_strategy)))
+        _ = compile_net(net, x)
+
+
+def test_interleaved_with_unsupported_ops():
+    """
+    Feature: test layout extend
+    Description: dev_num is 2.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=2, global_rank=0)
+    layout = Layout((2, 1), ("dp", "mp"))
+    layout1 = (layout("dp", "mp", "None"), layout("dp", "mp", "None"), layout("dp", "mp", "None"))
+    layout2 = (layout("dp", "mp", "None"),)
+    net = NetWithUnsupportedOps(layout1, layout2)
+    input_x = Tensor(np.zeros((2, 2, 3)).astype(np.float32))
+    indices = Tensor(np.array([[[0, 0], [1, 1]], [[0, 0], [1, 1]]]).astype(np.int32))
+    update = Tensor(np.ones((2, 2, 3)).astype(np.float32))
+    with pytest.raises(RuntimeError):
+        compile_net_unsupported(net, input_x, indices, update)

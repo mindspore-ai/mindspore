@@ -79,6 +79,9 @@ class Layout():
         if "interleaved_parallel" in alias_name and alias_name.index("interleaved_parallel") != len(alias_name) - 1:
             raise ValueError(f"When alias_name {alias_name} contains keyword 'interleaved_parallel',"
                              f" it should be at the last dim of alias_name, which means the virtual sharding.")
+        if "interleaved_parallel" in alias_name and device_matrix[alias_name.index("interleaved_parallel")] != 2:
+            raise ValueError(f"When alias_name {alias_name} contains keyword 'interleaved_parallel',"
+                             f" the corresponding dim of device_matrix should be 2.")
         self._device_shape = device_matrix
         self._alias_name = alias_name
         self._tensor_map = None

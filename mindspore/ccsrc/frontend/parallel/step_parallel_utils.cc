@@ -1270,8 +1270,10 @@ static Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &fun
 
 std::pair<std::vector<NewShapes>, std::vector<Symbols>> ExtractNewShapeAndSymbol(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  NewShapes shape_inputs, shape_outputs;
-  Symbols symbol_inputs, symbol_outputs;
+  NewShapes shape_inputs;
+  NewShapes shape_outputs;
+  Symbols symbol_inputs;
+  Symbols symbol_outputs;
   std::vector<NewShapes> shape_all;
   std::vector<Symbols> symbol_all;
   std::vector<AnfNodePtr> all_inputs = node->inputs();
@@ -3102,13 +3104,27 @@ bool IsDuplicatedVirtualConverterBegin(const CNodePtr &virtual_converter_begin) 
   return true;
 }
 
+bool GetOrderOfTwoAnode(const std::pair<AnfNodePtr, int> &pair1, const std::pair<AnfNodePtr, int> &pair2) {
+  int number1 = pair1.second;
+  int number2 = pair2.second;
+  auto pair1_input_node = pair1.first->cast<CNodePtr>()->input(pair1.second);
+  auto pair2_input_node = pair2.first->cast<CNodePtr>()->input(pair2.second);
+  if (IsPrimitiveCNode(pair1_input_node, prim::kPrimTupleGetItem)) {
+    number1 = LongToInt(GetTupleGetItemIndex(pair1_input_node->cast<CNodePtr>()));
+  }
+  if (IsPrimitiveCNode(pair2_input_node, prim::kPrimTupleGetItem)) {
+    number2 = LongToInt(GetTupleGetItemIndex(pair2_input_node->cast<CNodePtr>()));
+  }
+  return number1 < number2;
+}
+
 std::vector<CNodePtr> DoSplitForNotParallelCareOpsInterleaved(const FuncGraphManagerPtr &manager,
                                                               const CNodePtr &virtual_converter_begin) {
   auto virtual_converter_begin_input = virtual_converter_begin->input(kSizeOne);
   auto virtual_converter_begin_users = GetOutputNodesWithFilter(
     virtual_converter_begin, [&](const AnfNodePtr &anode) { return IsPrimitiveCNode(anode, prim::kPrimTupleGetItem); });
   std::sort(virtual_converter_begin_users.begin(), virtual_converter_begin_users.end(),
-            [](const auto &pair1, const auto &pair2) { return pair1.second < pair2.second; });
+            [](const auto &pair1, const auto &pair2) { return GetOrderOfTwoAnode(pair1, pair2); });
   auto virtual_converter_begin_input_cnode = virtual_converter_begin_input->cast<CNodePtr>();
   std::vector<AnfNodePtr> new_inputs;
   std::vector<CNodePtr> new_virtual_converter_begin_vector;
