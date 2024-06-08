@@ -745,6 +745,7 @@ constexpr char ANTI_QUANT[] = "AntiQuant";
 constexpr char TENSOR_SCATTER_UPDATE[] = "TensorScatterUpdate";
 constexpr char TENSOR_SCATTER_ELEMENTS[] = "TensorScatterElements";
 constexpr char STACK[] = "Stack";
+constexpr char STACK_EXT[] = "StackExt";
 constexpr char GRID_SAMPLER_2D[] = "GridSampler2D";
 
 constexpr size_t LAST_INDEX(size_t s) {
