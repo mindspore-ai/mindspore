@@ -114,6 +114,7 @@ class ModelImpl {
   }
   std::vector<Metrics *> GetMetrics() { return metrics_; }
   const lite::LiteSession *GetSession() const { return session_.get(); }
+  Status Finalize();
 
  protected:
   // Utility methods

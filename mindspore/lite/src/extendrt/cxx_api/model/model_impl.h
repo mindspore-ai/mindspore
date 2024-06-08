@@ -200,6 +200,9 @@ class ModelImpl {
 
   std::map<std::string, std::string> GetModelInfo() const { return model_info_; }
 
+  // release inference resource, only used for mindspore_lite's ascend backend now.
+  Status Finalize();
+
  private:
   /// \brief Model build by buffer implementation, unified model build flow.
   ///
