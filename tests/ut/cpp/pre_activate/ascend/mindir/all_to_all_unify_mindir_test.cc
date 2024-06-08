@@ -68,7 +68,7 @@ TEST_F(TestAllToAllUnifyMindIr, test_all_to_all) {
   bool has_concat_node = false;
   bool has_split_v_node = false;
   for (const auto &n : TopoSort(func_graph->get_return())) {
-    ASSERT_FALSE(IsPrimitiveCNode(n, prim::kPrimAllToAll));
+    ASSERT_FALSE(IsPrimitiveCNode(n, prim::kPrimAlltoAll));
     if (IsPrimitiveCNode(n, prim::kPrimAllToAllv)) {
       has_all_to_all_v_node = true;
     }

@@ -121,6 +121,7 @@ void HcclAdapter::InitPlugin() {
   hccl_exec_enqueue_op_ = DlsymFuncObj(HcomExecEnqueueOperation, plugin_handle_);
   hccl_exec_enqueue_all_to_all_v_ = DlsymFuncObj(HcomExecEnqueueAllToAllV, plugin_handle_);
   launch_hccl_all_to_allv_ = DlsymFuncObj(HcclAlltoAllV, plugin_handle_);
+  launch_hccl_all_to_all_ = DlsymFuncObj(HcclAlltoAll, plugin_handle_);
   hcom_destroy_ = DlsymFuncObj(HcomDestroy, plugin_handle_);
 }
 
@@ -552,13 +553,22 @@ bool HcclAdapter::UseHcclCM() const {
   return common::UseDynamicCluster() && !common::GetEnv("MS_HCCL_CM_INIT").empty();
 }
 
-HcclResult HcclAdapter::HcclAllToAll(void *send_buf, void *recv_buf, hccl::HcclAllToAllVParams params,
-                                     HcclDataType dataType, aclrtStream stream, HcclComm hccl_comm) const {
+HcclResult HcclAdapter::HcclAllToAllv(void *send_buf, void *recv_buf, hccl::HcclAllToAllVParams params,
+                                      HcclDataType dataType, aclrtStream stream, HcclComm hccl_comm) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_all_to_allv_);
   MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_all_to_allv_(send_buf, params.sendcounts.data(), params.sdispls.data(), dataType, recv_buf,
                                   params.recvcounts.data(), params.rdispls.data(), dataType, hccl_comm, stream);
+}
+
+HcclResult HcclAdapter::HcclAllToAll(void *send_buf, void *recv_buf, hccl::HcclAllToAllParams params,
+                                     HcclDataType dataType, aclrtStream stream, HcclComm hccl_comm) const {
+  CheckExcutionMode();
+  CHECK_SYMBOL_NULL(launch_hccl_all_to_all_);
+  MS_EXCEPTION_IF_NULL(hccl_comm);
+  return launch_hccl_all_to_all_(send_buf, params.sendcount, dataType, recv_buf, params.recvcount, dataType, hccl_comm,
+                                 stream);
 }
 
 bool HcclAdapter::IsSameServer(const std::vector<uint32_t> &rank_ids) const {

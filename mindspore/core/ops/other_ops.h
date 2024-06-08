@@ -59,7 +59,8 @@ GVAR_DEF(PrimitivePtr, kPrimCollectiveGather, std::make_shared<Primitive>("Colle
 GVAR_DEF(PrimitivePtr, kPrimNeighborExchange, std::make_shared<Primitive>("NeighborExchange"));
 GVAR_DEF(PrimitivePtr, kPrimNeighborExchangeV2, std::make_shared<Primitive>("NeighborExchangeV2"));
 GVAR_DEF(PrimitivePtr, kPrimNeighborExchangeV2Grad, std::make_shared<Primitive>("NeighborExchangeV2Grad"));
-GVAR_DEF(PrimitivePtr, kPrimAllToAll, std::make_shared<Primitive>("AlltoAll"));
+GVAR_DEF(PrimitivePtr, kPrimAlltoAll, std::make_shared<Primitive>("AlltoAll"));
+GVAR_DEF(PrimitivePtr, kPrimAllToAll, std::make_shared<Primitive>("AllToAll"));
 GVAR_DEF(PrimitivePtr, kPrimAllToAllv, std::make_shared<Primitive>("AllToAllv"));
 GVAR_DEF(PrimitivePtr, kPrimAllGather, std::make_shared<Primitive>("AllGather"));
 GVAR_DEF(PrimitivePtr, kPrimAllSwap, std::make_shared<Primitive>("_AllSwap"));
