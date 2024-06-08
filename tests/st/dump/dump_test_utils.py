@@ -135,6 +135,19 @@ async_dump_dict_acl = {
     }
 }
 
+async_dump_dict_acl_assign_ops_by_regex = {
+    "common_dump_settings": {
+        "dump_mode": 1,
+        "path": "",
+        "net_name": "Net",
+        "iteration": "0",
+        "input_output": 0,
+        "kernels": ["name-regex(.+Add.*)"],
+        "support_device": [0, 1, 2, 3, 4, 5, 6, 7],
+        "op_debug_mode": 0
+    }
+}
+
 def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
     """
     Util function to generate dump configuration json file.
@@ -211,6 +224,9 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
         data["common_dump_settings"]["path"] = dump_path
         data["common_dump_settings"]["op_debug_mode"] = 4
         data["e2e_dump_settings"]["trans_flag"] = True
+    elif test_key == "test_acl_dump_assign_ops_by_regex":
+        data = async_dump_dict_acl_assign_ops_by_regex
+        data["common_dump_settings"]["path"] = dump_path
     else:
         raise ValueError(
             "Failed to generate dump json file. The test name value " + test_key + " is invalid.")
