@@ -78,7 +78,9 @@ const std::map<ProtoDataType, mindspore::TypeId> kDataTypetoMSTypeMap = {
   {ProtoDataType::DT_BOOL, mindspore::TypeId::kNumberTypeBool},
   {ProtoDataType::DT_DOUBLE, mindspore::TypeId::kNumberTypeFloat64},
   {ProtoDataType::DT_STRING, mindspore::TypeId::kObjectTypeString},
-  {ProtoDataType::DT_BF16, mindspore::TypeId::kNumberTypeBFloat16}};
+  {ProtoDataType::DT_BF16, mindspore::TypeId::kNumberTypeBFloat16},
+  {ProtoDataType::DT_COMPLEX64, mindspore::TypeId::kNumberTypeComplex64},
+  {ProtoDataType::DT_COMPLEX128, mindspore::TypeId::kNumberTypeComplex128}};
 
 inline uint64_t UnpackUint64Value(const char *ptr) {
 #if defined(__APPLE__)

@@ -142,6 +142,40 @@ def run_ge_dump(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
+def run_ge_dump_complex(test_name, dtype):
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'ge_dump')
+        dump_config_path = os.path.join(tmp_dir, 'ge_dump.json')
+        generate_dump_json(dump_path, dump_config_path, test_name)
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+        add = Net()
+        x_complex = np.array([1 + 2j])
+        y_complex = np.array([2 + 3j])
+        if dtype == "complex64":
+            output = add(Tensor(x_complex, mindspore.complex64), Tensor(y_complex, mindspore.complex64))
+        else:
+            output = add(Tensor(x_complex, mindspore.complex128), Tensor(y_complex, mindspore.complex128))
+        find_x_cmd = 'find {0} -name "Data.x*.output.*.npy"'.format(dump_path)
+        x_file_path = os.popen(find_x_cmd).read()
+        x_file_path = x_file_path.replace('\n', '')
+        find_y_cmd = 'find {0} -name "Data.y*.output.*.npy"'.format(dump_path)
+        y_file_path = os.popen(find_y_cmd).read()
+        y_file_path = y_file_path.replace('\n', '')
+        find_add_cmd = 'find {0} -name "Add.*.output.*.npy"'.format(dump_path)
+        add_file_path = os.popen(find_add_cmd).read()
+        add_file_path = add_file_path.replace('\n', '')
+        x_output = np.load(x_file_path)
+        y_output = np.load(y_file_path)
+        add_output = np.load(add_file_path)
+        assert (x_output == x_complex).all()
+        assert (y_output == y_complex).all()
+        assert (add_output == output.asnumpy()).all()
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
 def run_ge_dump_acl(test_name):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
@@ -448,6 +482,34 @@ def test_ge_dump_npy():
     Expectation: dump data are generated as npy files, and the value is correct
     """
     run_ge_dump("test_ge_dump_npy")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ge_dump_complex64():
+    """
+    Feature: async dump on Ascend on GE backend.
+    Description: test async dump with file_format set to npy in complex64 dtype
+    Expectation: dump data are generated as npy files, and the value is correct
+    """
+    run_ge_dump_complex("test_ge_dump_npy", "complex64")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ge_dump_complex128():
+    """
+    Feature: async dump on Ascend on GE backend.
+    Description: test async dump with file_format set to npy in complex128 dtype
+    Expectation: dump data are generated as npy files, and the value is correct
+    """
+    run_ge_dump_complex("test_ge_dump_npy", "complex128")
 
 
 class DynamicNet(Cell):
