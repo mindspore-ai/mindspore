@@ -35,6 +35,7 @@
 #include "ops/framework_ops.h"
 #include "ops/structure_ops.h"
 #include "mindspore/core/ir/cell.h"
+#include "pybind_api/ir/primitive_py.h"
 
 namespace mindspore {
 namespace pijit {
@@ -349,8 +350,18 @@ bool GraphBuilder::DoUnpack(const Instr &instr) {
   ValueNode *iterable = pop();
 
   size_t elements_size = frame_.GetStacks().size();
-  if (!UnpackElements(iterable)) {
-    return false;
+  int iterable_opcode = iterable->GetOpcode();
+  if (iterable_opcode == BUILD_LIST || iterable_opcode == BUILD_TUPLE) {
+    std::for_each(iterable->getInputs().begin(), iterable->getInputs().end(), [this](ValueNode *i) { this->push(i); });
+  } else if (iterable->IsConstantValue()) {
+    std::vector<ValueNode *> nodes = UnpackConstObject(iterable->GetVobj()->GetPyObject());
+    std::for_each(nodes.begin(), nodes.end(), [this](ValueNode *i) { this->push(i); });
+  } else {
+    for (Py_ssize_t index = 0; index < size; ++index) {
+      push(iterable);
+      DoLoadConst({LOAD_CONST, -1, py::object(py::int_(index))});
+      DoItemAccess({BINARY_SUBSCR, 0});
+    }
   }
   elements_size = frame_.GetStacks().size() - elements_size;
   std::vector<ValueNode *> elements(frame_.GetStacks().end() - elements_size, frame_.GetStacks().end());

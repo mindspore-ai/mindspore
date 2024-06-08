@@ -846,6 +846,9 @@ static FuncKey KeyFinderFuncId(const py::object &callable) {
 
 static FuncKey KeyFinderFuncCodeId(const py::object &callable) {
   PyObject *func = callable.ptr();
+  if (IsCellType<true>(Py_TYPE(callable.ptr()))) {
+    func = callable.attr("construct").ptr();
+  }
   if (PyMethod_Check(func)) {
     func = PyMethod_GET_FUNCTION(func);
   }
