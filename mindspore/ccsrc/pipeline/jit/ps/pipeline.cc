@@ -1645,11 +1645,12 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase) 
 
 #ifdef WITH_BACKEND
 void GraphExecutorPy::GeFirstInitParams() {
-  if (phase_cache_.find(phase_) == phase_cache_.end()) {
+  static bool inited = false;
+  if (!inited) {
     MS_LOG(INFO) << "Start init params.";
     const auto &init_params = GetParams(phase_);
     InitParams(init_params, phase_);
-    phase_cache_.insert(phase_);
+    inited = true;
   }
 }
 #endif
