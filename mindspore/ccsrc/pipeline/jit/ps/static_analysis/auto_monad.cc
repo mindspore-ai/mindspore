@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2024 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -535,7 +535,8 @@ class SideEffectFinder {
     }
 
     // Not retry checking, if has already confirmed the Partial func graph has side effect, or still detect ongoing.
-    if (old_info.state != EffectInfo::kDetected || old_info.memory || old_info.io || old_info.load) {
+    if (old_info.state != EffectInfo::kDetected || old_info.memory || old_info.io || old_info.load ||
+        old_info.back_mem) {
       return old_info;
     }
 
@@ -598,7 +599,7 @@ class SideEffectFinder {
       MS_EXCEPTION_IF_NULL(caller->abstract());
       MS_LOG(DEBUG) << "func_graph: " << func_graph->ToString() << ", caller: " << caller->DebugString() << ", "
                     << caller->abstract()->ToString() << ", effect_info: " << effect_info.memory << "/"
-                    << effect_info.io << "/" << effect_info.load;
+                    << effect_info.io << "/" << effect_info.load << "/" << effect_info.back_mem;
       AddMonadForCaller(caller, effect_info);
       // Setup monad parameters for func graph according the effect info.
       if (effect_info.memory || effect_info.load) {
@@ -837,7 +838,7 @@ class SideEffectFinder {
   }
 
   EffectInfo TraceTupleListParaEffectInfo(const ParameterPtr &para, const std::stack<ValuePtr> &indexes) {
-    EffectInfo info{EffectInfo::kDetected, false, false, false};
+    EffectInfo info{EffectInfo::kDetected, false, false, false, false};
     ForEachRealArguments(para, [this, &info, indexes](const AnfNodePtr &arg) {
       // Merge real argument effect info.
       auto indexes_copy = indexes;
@@ -991,6 +992,19 @@ class SideEffectFinder {
     if (cnode->size() == 1 && IsPrimitiveCNode(cnode->input(0), prim::kPrimSwitch)) {
       return TraceTupleFromSwitch(cnode->input(0)->cast<CNodePtr>(), *indexes);
     }
+    // Tuple is returned from J().
+    //   %1 = J(primal)
+    //   tuple = %1(args)
+    if (cnode->size() > 0 && IsPrimitiveCNode(cnode->input(0), prim::kPrimJ)) {
+      MS_LOG(DEBUG) << "Tuple from J: " << cnode->DebugString(recursive_level);
+      constexpr size_t func_index = 1;
+      auto j_conde = cnode->input(0)->cast<CNodePtr>();
+      auto j_func = j_conde->input(func_index);
+      auto func_info = TraceEffectInfo(j_func);
+      // In order to add the Umonad arg to the bprop_top_cell in advance,
+      // so that the side effects in the bprop graph are sorted earlier than the side effects of the optimizer.
+      return {EffectInfo::kDetected, false, false, false, func_info.back_mem};
+    }
     // Rare case.
     MS_LOG(INFO) << "Tuple untraceable from: " << cnode->DebugString(recursive_level);
     return {EffectInfo::kDetected, false, false, false};
@@ -999,7 +1013,7 @@ class SideEffectFinder {
   // Trace effect info from a Switch node that output is a tuple.
   EffectInfo TraceTupleFromSwitch(const CNodePtr &switch_cnode, const std::stack<ValuePtr> &tuple_indexes) {
     auto branches = GetSwitchBranches(switch_cnode);
-    EffectInfo info = {EffectInfo::kDetected, false, false, false};
+    EffectInfo info = {EffectInfo::kDetected, false, false, false, false};
     for (auto &branch : branches) {
       MS_EXCEPTION_IF_NULL(branch);
       auto tuple_indexes_copy = tuple_indexes;
@@ -1029,7 +1043,7 @@ class SideEffectFinder {
 
   // Merge effect info for switch or switch_layer branch graphs.
   EffectInfo MergeEffectInfo(const std::vector<FuncGraphPtr> &branches) {
-    EffectInfo info = {EffectInfo::kDetected, false, false, false};
+    EffectInfo info = {EffectInfo::kDetected, false, false, false, false};
     for (auto &branch : branches) {
       MS_EXCEPTION_IF_NULL(branch);
       EffectInfo branch_info = ObtainEffectInfoForFuncGraph(branch);
@@ -1061,7 +1075,7 @@ class SideEffectFinder {
 
     if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
       // Trace make_tuple or make_list.
-      EffectInfo info{EffectInfo::kDetected, false, false, false};
+      EffectInfo info{EffectInfo::kDetected, false, false, false, false};
       for (size_t i = 1; i < cnode->size(); ++i) {
         auto input_info = TraceEffectInfo(cnode->input(i));
         info.Merge(input_info);
@@ -1124,7 +1138,7 @@ class SideEffectFinder {
     }
     // Otherwise, assume no side effect and stop trace.
     MS_LOG(INFO) << "CNode side effect unknown: " << cnode->DebugString();
-    return {EffectInfo::kDetected, false, false, false};
+    return {EffectInfo::kDetected, false, false, false, false};
   }
 
   // Trace effect info from output of the cnode.
@@ -1135,7 +1149,7 @@ class SideEffectFinder {
     if (values.size() == 1) {
       return ObtainEffectInfoForValue(values.front());
     }
-    EffectInfo info{EffectInfo::kDetected, false, false, false};
+    EffectInfo info{EffectInfo::kDetected, false, false, false, false};
     for (auto &value : values) {
       info.Merge(ObtainEffectInfoForValue(value));
     }
@@ -1155,7 +1169,7 @@ class SideEffectFinder {
       return GetPrimEffectInfo(prim);
     }
     MS_LOG(INFO) << "Value side effect unknown: " << value->ToString();
-    return {EffectInfo::kDetected, false, false, false};
+    return {EffectInfo::kDetected, false, false, false, false};
   }
 
   void GetOutputValues(const CNodePtr &cnode, std::vector<ValuePtr> *values) {
@@ -1257,12 +1271,12 @@ class SideEffectFinder {
     //  node2 = _get_cache_prim(node1) // the node has side effects.
     if (node->isa<ValueNode>()) {
       MS_LOG(DEBUG) << "The ValueNode has no side effect: " << node->DebugString();
-      return {EffectInfo::kDetected, false, false, false};
+      return {EffectInfo::kDetected, false, false, false, false};
     }
     // Something is wrong if we reached here.
     MS_LOG(WARNING) << "The effect info of the node is untraceable: " << node->DebugString()
                     << ".\nLine:" << trace::GetDebugInfoStr(node->debug_info());
-    return {EffectInfo::kDetected, false, false, false};
+    return {EffectInfo::kDetected, false, false, false, false};
   }
 
   int GetParameterIndex(const FuncGraphPtr &func_graph, const ParameterPtr &para) const {
@@ -1278,7 +1292,7 @@ class SideEffectFinder {
 
   // Trace effect info from function parameter.
   EffectInfo TraceEffectInfoForParameter(const ParameterPtr &para) {
-    EffectInfo info{EffectInfo::kDetected, false, false, false};
+    EffectInfo info{EffectInfo::kDetected, false, false, false, false};
     ForEachRealArguments(para, [this, &para, &info](const AnfNodePtr &arg) {
       // Merge caller input effect info.
       auto input_info = TraceEffectInfo(arg);
@@ -1342,7 +1356,7 @@ class SideEffectFinder {
     if (prim != nullptr) {
       // Skip 'return' cnode.
       if (IsPrimitiveEquals(prim, prim::kPrimReturn)) {
-        return {EffectInfo::kDetected, false, false, false};
+        return {EffectInfo::kDetected, false, false, false, false};
       }
       // Special handling for 'call' cnode.
       if (IsPrimitiveEquals(prim, prim::kPrimCall)) {
@@ -1399,12 +1413,12 @@ class SideEffectFinder {
     auto func_multitype = GetFuncMultitypeFuncGraph(cnode);
     if (func_multitype != nullptr) {
       MS_LOG(DEBUG) << "Assume memory side effect for: " << cnode->DebugString();
-      return {EffectInfo::kDetected, true, false, false};
+      return {EffectInfo::kDetected, true, false, false, false};
     }
 
     // For other cnodes, we assume that they have no side effects.
     MS_LOG(DEBUG) << "Assume no side effect for: " << cnode->DebugString();
-    return {EffectInfo::kDetected, false, false, false};
+    return {EffectInfo::kDetected, false, false, false, false};
   }
 
   // Gets EffectInfo for CNode.
@@ -1469,7 +1483,7 @@ class SideEffectFinder {
     }
     // To prevent SCC members be visited again, we set effect info
     // to 'kDetecting' state before start to check cnodes.
-    EffectInfo info{EffectInfo::kDetecting, false, false, false};
+    EffectInfo info{EffectInfo::kDetecting, false, false, false, false};
     SetSccEffectInfo(scc, info);
 
     // Check side effects for all cnodes in the SCC.
@@ -1653,7 +1667,7 @@ class AutoMonadConverter {
   }
 
   // Check if there are side effects from effect info.
-  static bool HasSideEffects(const EffectInfo &info) { return (info.memory || info.io || info.load); }
+  static bool HasSideEffects(const EffectInfo &info) { return (info.memory || info.io || info.load || info.back_mem); }
 
   // Gets effect info for a cnode.
   const EffectInfo &GetEffectInfoFromCNode(const CNodePtr &cnode) const {
