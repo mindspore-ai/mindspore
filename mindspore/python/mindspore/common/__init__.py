@@ -15,7 +15,7 @@
 """Top-level reference to dtype of common module."""
 from __future__ import absolute_import
 from mindspore.common import dtype
-from mindspore.common.api import ms_function, ms_memory_recycle, ms_class, jit, jit_class, _no_grad
+from mindspore.common.api import ms_function, ms_memory_recycle, ms_class, jit, jit_class, _no_grad, flops_collection
 from mindspore.common.dtype import Type, int8, byte, int16, short, int32, intc, int64, intp, \
     uint8, ubyte, uint16, ushort, uint32, uintc, uint64, uintp, float16, half, \
     float32, single, float64, bfloat16, double, bool_, float_, list_, tuple_, int_, \
@@ -75,6 +75,7 @@ __all__.extend([
     "set_dump",
     "ms_memory_recycle",
     "mutable", "JitConfig",
+    "flops_collection",
     "lazy_inline", "load_mindir", "save_mindir",
     "no_inline",
     "Symbol",

@@ -43,7 +43,6 @@ bool IsDxMatMul(const CNodePtr &matmul_node) {
     cnode_queue.push(matmul_node->input(i));
     visited.push_back(matmul_node->input(i));
   }
-
   std::vector<AnfNodePtr> res;
   while (!cnode_queue.empty()) {
     auto queue_front = cnode_queue.front();
@@ -65,7 +64,9 @@ bool IsDxMatMul(const CNodePtr &matmul_node) {
     }
     if (IsPrimitiveCNode(node, prim::kPrimAllGather)) {
       auto prim = GetCNodePrimitive(node->cast<CNodePtr>());
-      return prim->instance_name().find("parallel_optimizer") != std::string::npos;
+      if (prim->instance_name().find("parallel_optimizer") != std::string::npos) {
+        return true;
+      }
     }
   }
   return false;

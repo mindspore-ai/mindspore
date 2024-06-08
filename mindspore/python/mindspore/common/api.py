@@ -1772,7 +1772,7 @@ class _CellGraphExecutor:
         phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
         obj.phase_cache[raw_phase] = phase
         update_auto_dynamic_shape_phase(args, key_id, phase)
-
+        obj.current_phase = phase
         if phase in obj.compile_cache and self.has_compiled(phase):
             logger.debug("%r graph has existed.", phase)
             # Release resource should be released when CompileInner won't be executed, such as cur_convert_input_
@@ -1811,7 +1811,6 @@ class _CellGraphExecutor:
         elif 'skip_auto_parallel_compile' not in obj.get_flags().keys():
             obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
             obj.parallel_parameter_name_list = self._graph_executor.get_parallel_parameter_name_list(phase)
-
         if "export.air" in phase:
             self._build_data_graph(obj, phase)
         elif BROADCAST_PHASE not in phase and _get_parameter_broadcast():
@@ -1850,6 +1849,18 @@ class _CellGraphExecutor:
             bool, specifies whether the specific graph has been compiled.
         """
         return self._graph_executor.has_compiled(phase)
+
+    def flops_collection(self, phase='train'):
+        """
+        Specify whether have been compiled.
+
+        Args:
+            phase (str): The phase name. Default: 'predict'.
+
+        Returns:
+            bool, specifies whether the specific graph has been compiled.
+        """
+        return self._graph_executor.flops_collection(phase)
 
     @_wrap_func
     def _exec_pip(self, obj, *args, phase=''):
@@ -1989,7 +2000,20 @@ def _bind_device_context():
     _bind_device_ctx()
 
 
+def flops_collection(phase='train'):
+    """
+    Recycle memory used by MindSpore.
+    When train multi Neural network models in one process, memory used by MindSpore is very large,
+    this is because MindSpore cached runtime memory for every model.
+    To recycle these cached memory, users can call this function after training of one model.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.ms_memory_recycle()
+    """
+    return _cell_graph_executor.flops_collection(phase)
+
 _cell_graph_executor = _CellGraphExecutor()
 _pynative_executor = _PyNativeExecutor()
 
-__all__ = ['ms_function', 'ms_memory_recycle', 'ms_class', 'jit', 'jit_class']
+__all__ = ['ms_function', 'ms_memory_recycle', 'ms_class', 'jit', 'jit_class', 'flops_collection']

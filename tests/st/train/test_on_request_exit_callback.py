@@ -27,7 +27,7 @@ import pytest
 from mindspore import nn, context
 from mindspore import dataset as ds
 from mindspore.common.initializer import TruncatedNormal
-from mindspore.train import Callback, OnRequestExit, LossMonitor, Model
+from mindspore.train import Callback, OnRequestExit, LossMonitor, Model, FlopsUtilizationCollector
 
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
@@ -189,3 +189,29 @@ def test_on_request_exit_callback():
     assert epoch_and_step_record.step == step_num
 
     shutil.rmtree(directory)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_flops_callback():
+    """
+    Feature: FlopsUtilizationCollector Callback.
+    Description: test OnRequestExit Callback when a signal receive.
+    Expectation: When a signal received,
+        the train process should be stopped and save the ckpt and mindir should be saved.
+    """
+    if sys.platform != 'linux':
+        return
+    context.set_context(mode=context.GRAPH_MODE)
+    directory = "./data"
+    if os.path.exists(directory):
+        shutil.rmtree(directory)
+    os.makedirs(directory)
+
+    dataset = construct_dataset()
+    model = construct_model()
+    epoch_num = 2
+    step_num = dataset.get_dataset_size()
+    model.train(epoch_num, dataset, callbacks=[FlopsUtilizationCollector(step_num)])
+    model.eval(dataset, callbacks=[FlopsUtilizationCollector(step_num)], dataset_sink_mode=False)

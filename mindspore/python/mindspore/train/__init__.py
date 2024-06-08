@@ -29,7 +29,7 @@ from mindspore.train.serialization import save_checkpoint, load_checkpoint, load
     async_ckpt_thread_status, restore_group_info_list, convert_model, obfuscate_model, export_split_mindir, \
     load_checkpoint_async
 from mindspore.train.callback import Callback, LossMonitor, TimeMonitor, ModelCheckpoint, SummaryCollector, \
-    CheckpointConfig, RunContext, LearningRateScheduler, SummaryLandscape, \
+    CheckpointConfig, RunContext, LearningRateScheduler, SummaryLandscape, FlopsUtilizationCollector, \
     History, LambdaCallback, ReduceLROnPlateau, EarlyStopping, OnRequestExit, BackupAndRestore
 from mindspore.train.summary import SummaryRecord
 from mindspore.train.train_thor import ConvertNetUtils, ConvertModelUtils
