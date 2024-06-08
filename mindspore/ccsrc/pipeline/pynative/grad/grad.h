@@ -83,10 +83,6 @@ class GradExecutor {
     MS_EXCEPTION_IF_NULL(jit_);
     return jit_;
   }
-  inline InputArgsInfoPtr top_input_args_info() const {
-    MS_EXCEPTION_IF_NULL(top_input_args_info_);
-    return top_input_args_info_;
-  }
 
   inline bool TopCellHasNotBeenCreate() const { return top_cell_ == nullptr; }
   inline void set_top_cell(TopCellInfoPtr top_cell) { top_cell_ = std::move(top_cell); }

@@ -1887,6 +1887,7 @@ void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_ru
 void DataConvert::ConvertValueTensorId(const ValuePtr &value, std::vector<std::string> *converted_tensor_id) {
   if (value->isa<tensor::BaseTensor>()) {
     (void)converted_tensor_id->emplace_back(value->cast<tensor::BaseTensorPtr>()->id());
+    MS_LOG(DEBUG) << "Get top cell output tensor id " << converted_tensor_id->back();
   } else if (value->isa<ValueSequence>()) {
     const auto &seq = value->cast<ValueSequencePtr>();
     for (const auto &val : seq->value()) {
