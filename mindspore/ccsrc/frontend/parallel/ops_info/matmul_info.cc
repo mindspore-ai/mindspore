@@ -450,7 +450,7 @@ Status MatMul::CheckInputLayout() {
       return FAILED;
     }
   }
-  if (!in_layout0.device_arrangement_interleaved().array().empty()) {
+  if (in_layout0.IsInterleavedParallel()) {
     auto tensor_map_interleaved0 = in_layout0.tensor_map_before();
     auto reduce_axis_map = tensor_map_interleaved0[axis0];
     if (std::find(reduce_axis_map.begin(), reduce_axis_map.end(), 0) != reduce_axis_map.end()) {
@@ -458,7 +458,7 @@ Status MatMul::CheckInputLayout() {
       return FAILED;
     }
   }
-  if (!in_layout1.device_arrangement_interleaved().array().empty()) {
+  if (in_layout1.IsInterleavedParallel()) {
     auto tensor_map_intereaved1 = in_layout1.tensor_map_before();
     if (std::any_of(tensor_map_intereaved1.begin(), tensor_map_intereaved1.end(),
                     [](const auto &map1) { return std::find(map1.begin(), map1.end(), 0) != map1.end(); })) {
@@ -621,7 +621,7 @@ Status MatMul::InferForwardCommunicationByLayout() {
   } else {
     op = CreateAllReduceOp(REDUCE_OP_SUM, forward_group.name());
   }
-  if (!inputs_tensor_info_[kIndex0].tensor_layout().device_arrangement_interleaved().array().empty()) {
+  if (inputs_tensor_info_[kIndex0].tensor_layout().IsInterleavedParallel()) {
     forward_op_interleaved_.push_back(op);
   } else {
     forward_op_.push_back(op);

@@ -336,7 +336,7 @@ class OperatorInfo {
   virtual Status InferOutputTensorMap() { return SUCCESS; }
   virtual Status InferOutputTensorInfo() { return SUCCESS; }
   virtual Status CheckLayoutConfig() { return SUCCESS; }
-  virtual Status CheckInputLayout() { return SUCCESS; }
+  virtual Status CheckInputLayout();
   virtual Status CheckOutputLayout() { return SUCCESS; }
   virtual Status InferForwardCommunicationByLayout() { return SUCCESS; }
   virtual Status InferMirrorOpsByLayout();
