@@ -223,6 +223,14 @@ class BACKEND_EXPORT PyBoostUtils {
     return result;
   }
   static BaseTensorPtr ScalarToTensor(const ScalarPtr &scalar);
+
+  static uint32_t cur_stream_id() { return cur_stream_id_; }
+
+  // Set current stream for CREATE_PYBOOST_OP in front queue.
+  static void set_cur_stream_id(uint32_t cur_stream_id) { cur_stream_id_ = cur_stream_id; }
+
+ private:
+  inline static uint32_t cur_stream_id_ = kDefaultStreamIndex;
 };
 
 template <typename T>
