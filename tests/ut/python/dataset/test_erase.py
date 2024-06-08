@@ -113,7 +113,7 @@ def test_erase_invalid_input():
     test_invalid_input("invalid value parameter Value", 10, 10, 10, 10, 999999999999,
                        False, ValueError, "Input value[0] is not within the required interval of [0, 255].")
     test_invalid_input("invalid value parameter shape", 10, 10, 10, 10, (2, 3), False, TypeError,
-                       "fill_value should be a single integer/float or a 3-tuple.")
+                       "value should be a single integer/float or a 3-tuple.")
     test_invalid_input("invalid inplace parameter type as a single number", 10, 10, 10, 10, 0, 0, TypeError,
                        "Argument inplace with value 0 is not of type [<class 'bool'>], but got <class 'int'>.")
 

@@ -53,7 +53,7 @@ Status DvppEraseOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input
 
   APP_ERROR ret = AclAdapter::GetInstance().DvppErase(input, output, top_, left_, height_, width_, value_);
   if (ret != APP_ERR_OK) {
-    std::string error = "DvppCrop: Error in dvpp processing: " + std::to_string(ret);
+    std::string error = "DvppErase: Error in dvpp processing: " + std::to_string(ret);
     RETURN_STATUS_UNEXPECTED(error);
   }
   return Status::OK();

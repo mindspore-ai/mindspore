@@ -44,7 +44,7 @@ Status PosterizeOperation::ValidateParams() {
 
   // device target
   if (device_target_ != "CPU" && device_target_ != "Ascend") {
-    std::string err_msg = "Pad: Invalid device target. It's not CPU or Ascend.";
+    std::string err_msg = "Posterize: Invalid device target. It's not CPU or Ascend.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 

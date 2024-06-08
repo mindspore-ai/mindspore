@@ -1627,6 +1627,13 @@ def test_eager_auto_contrast_dvpp_exception():
         img = vision.AutoContrast().device("Ascend")(img)
     assert "the input shape should be from [4, 6] to [8192, 4096]" in str(error_info.value)
 
+    # the length of ignore should be less or equal to 256
+    img = np.random.randint(0, 255, size=(300, 400), dtype=np.uint8)
+    ignore = np.random.randint(0, 255, (1000,)).astype(np.uint8).tolist()
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.AutoContrast(cutoff=38.653, ignore=ignore).device("Ascend")(img)
+    assert "the length of ignore should be less or equal to 256" in str(error_info.value)
+
     # the device(device_target) is invalid
     with pytest.raises(TypeError) as error_info:
         _ = vision.AutoContrast().device(123)
@@ -1797,20 +1804,20 @@ def test_eager_erase_dvpp():
     img = cv2.imread(input_apple_jpg)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
-    img_transformed = vision.Erase(10, 10, 10, 10).device("Ascend")(img)
+    img_transformed = vision.Erase(10, 10, 10, 10, (100, 100, 100)).device("Ascend")(img)
     logger.info("Image.type: {}, Image.shape: {}".format(img_transformed.dtype, img_transformed.shape))
     check_img = cv2.imread(input_apple_jpg)
     check_img = cv2.cvtColor(check_img, cv2.COLOR_BGR2RGB)
-    check_img = vision.Erase(10, 10, 10, 10).device("CPU")(check_img)
+    check_img = vision.Erase(10, 10, 10, 10, (100, 100, 100)).device("CPU")(check_img)
     assert (img_transformed == check_img).all()
 
     img = np.random.randint(0, 255, size=(300, 400, 3), dtype=np.uint8)
     img_copy = copy.copy(img)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
-    img_transformed = vision.Erase(10, 10, 10, 10).device("Ascend")(img)
+    img_transformed = vision.Erase(10, 10, 10, 10, (100, 100, 100)).device("Ascend")(img)
     logger.info("Image.type: {}, Image.shape: {}".format(img_transformed.dtype, img_transformed.shape))
     # check the result
-    check_img = vision.Erase(10, 10, 10, 10).device("CPU")(img_copy)
+    check_img = vision.Erase(10, 10, 10, 10, (100, 100, 100)).device("CPU")(img_copy)
     assert (img_transformed == check_img).all()
 
 @pytest.mark.level1
@@ -1852,6 +1859,19 @@ def test_eager_erase_dvpp_exception():
     with pytest.raises(RuntimeError) as error_info:
         img = vision.Erase(10, 10, 10, 10).device("Ascend")(img)
     assert "the input shape should be from [4, 6] to [8192, 4096]" in str(error_info.value)
+
+    # When The input data is float32, the range of value should be [0, 1]
+    img = np.random.randn(30, 60, 3).astype(np.float32)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Erase(1, 4, 20, 30, (30, 5, 10)).device("Ascend")(img)
+    assert "When The input data is float32, the range of value should be [0, 1]" in str(error_info.value)
+
+    # The length of value should be the same as the value of channel
+    img = np.random.randn(40, 40, 1).astype(np.float32)
+    with pytest.raises(RuntimeError) as error_info:
+        img = vision.Erase(1, 4, 20, 30, (1., 1., 1.)).device("Ascend")(img)
+    assert "The length of value should be the same as the value of channel" in str(error_info.value)
+
 
     # the device(device_target) is invalid
     with pytest.raises(TypeError) as error_info:

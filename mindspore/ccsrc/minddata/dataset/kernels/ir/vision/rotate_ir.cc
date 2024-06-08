@@ -70,7 +70,7 @@ Status RotateOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateVectorFillvalue("Rotate", fill_value_));
   // device target
   if (device_target_ != "CPU" && device_target_ != "Ascend") {
-    std::string err_msg = "Pad: Invalid device target. It's not CPU or Ascend.";
+    std::string err_msg = "Rotate: Invalid device target. It's not CPU or Ascend.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 #else
@@ -169,7 +169,7 @@ MapTargetDevice RotateOperation::Type() {
   } else if (device_target_ == "Ascend") {
     return MapTargetDevice::kAscend910B;
   } else {
-    MS_LOG(ERROR) << "Pad: Invalid device target. It's not CPU or Ascend.";
+    MS_LOG(ERROR) << "Rotate: Invalid device target. It's not CPU or Ascend.";
   }
   return MapTargetDevice::kInvalid;
 }

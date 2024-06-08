@@ -857,7 +857,7 @@ APP_ERROR DvppConvertColor(const std::shared_ptr<DeviceTensorAscend910B> &input,
             input->GetShape().AsVector()[kWidthIndexNHWC], kMaxImageChannel};
   } else if (std::find(one_channels.begin(), one_channels.end(), convertMode) != one_channels.end()) {
     node = {input->GetShape().AsVector()[0], input->GetShape().AsVector()[kHeightIndexNHWC],
-            input->GetShape().AsVector()[kWidthIndexNHWC], input->GetShape().AsVector()[kChannelIndexNHWC]};
+            input->GetShape().AsVector()[kWidthIndexNHWC], kMinImageChannel};
   } else {
     MS_LOG(ERROR) << "The mode of image channel conversion must be in ConvertMode, which mainly includes "
                      "conversion between RGB, BGR, GRAY, RGBA etc.";
@@ -897,7 +897,9 @@ APP_ERROR DvppConvertColor(const std::shared_ptr<DeviceTensorAscend910B> &input,
     reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), dvpp_convert_mode,
     reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()), &workspace_size, &executor);
   if (ret != ACL_SUCCESS) {
-    MS_LOG(ERROR) << "Call acldvppAdjustGammaGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    MS_LOG(ERROR) << "Call acldvppConvertColorGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
+    MS_LOG(ERROR) << "Call acldvppConvertColorGetWorkspaceSize failed, error msg: "
+                  << CALL_ASCEND_API(aclGetRecentErrMsg);
     return APP_ERR_DVPP_CONVERT_COLOR_FAIL;
   }
 
@@ -1065,19 +1067,24 @@ APP_ERROR DvppErase(const std::shared_ptr<DeviceTensorAscend910B> &input,
     return APP_ERR_DVPP_ERASE_FAIL;
   }
 
+  if (input->GetType() == DataType::DE_FLOAT32) {
+    for (const float &val : value) {
+      if (val > 1.) {
+        MS_LOG(ERROR) << "When The input data is float32, the range of value should be [0, 1]";
+      }
+    }
+  }
+
   // create the output shape and type, it's 1HWC or 1CHW
   TensorShape shape = input->GetShape();
   DataType type = input->GetType();
 
   // create fill vector
   std::vector<float> value_one;
-  aclFloatArray *acl_value;
-  if (input->GetShape().AsVector()[kChannelIndexNHWC] == 1) {
-    value_one = {value[0]};
-    acl_value = aclCreateFloatArray(value_one.data(), value_one.size());
-  } else {
-    acl_value = aclCreateFloatArray(value.data(), value.size());
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != value.size()) {
+    MS_LOG(ERROR) << "The length of value should be the same as the value of channel";
   }
+  aclFloatArray *acl_value = aclCreateFloatArray(value.data(), value.size());
   if (acl_value == nullptr) {
     MS_LOG(ERROR) << "Call aclCreateFloatArray failed.";
     return APP_ERR_DVPP_ERASE_FAIL;
@@ -1098,11 +1105,23 @@ APP_ERROR DvppErase(const std::shared_ptr<DeviceTensorAscend910B> &input,
 
   // call DVPP step1
   uint64_t workspace_size = 0;
+
+  uint32_t image_h = input->GetShape().AsVector()[kHeightIndexNHWC];
+  uint32_t image_w = input->GetShape().AsVector()[kWidthIndexNHWC];
+  uint32_t h_start = top;
+  uint32_t w_start = left;
+  h_start = (h_start < 0) ? 0 : h_start;
+  w_start = (w_start < 0) ? 0 : w_start;
+
+  uint32_t max_width = (w_start + width > image_w) ? static_cast<int32_t>(image_w) : w_start + width;
+  uint32_t max_height = (h_start + height > image_h) ? static_cast<int32_t>(image_h) : h_start + height;
+  uint32_t true_width = max_width - w_start;
+  uint32_t true_height = max_height - h_start;
   aclOpExecutor *executor;
   // decode output C is 3
   // don't recovery truncate
   auto ret = acldvppEraseGetWorkspaceSize(
-    reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), top, left, height, width, acl_value,
+    reinterpret_cast<aclTensor *>(input->GetDeviceTensor()), top, left, true_height, true_width, acl_value,
     reinterpret_cast<aclTensor *>(device_tensor->GetDeviceTensor()), &workspace_size, &executor);
   if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Call acldvppEraseGetWorkspaceSize failed, error code: " + std::to_string(ret) + ".";
