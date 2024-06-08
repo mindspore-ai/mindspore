@@ -1028,7 +1028,7 @@ REG_BPROP_BUILDER("Cosh").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("Abs").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("AbsGrad", {x, dout});
+  auto dx = ib->Mul(dout, ib->Sign(x));
   return {dx};
 });
 
