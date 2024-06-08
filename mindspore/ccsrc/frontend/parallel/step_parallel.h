@@ -48,8 +48,10 @@ struct LossNodeInfo {
 };
 
 void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node);
+void ForwardCommunicationForMultiOut(OperatorVector forward_op, const CNodePtr &node);
 
-TensorLayout GetTensorInLayout(const AnfNodePtr &pre_node, int get_item_index);
+TensorLayout GetTensorInLayout(const AnfNodePtr &pre_node, std::vector<int> get_item_index);
+TensorLayout GetTensorInLayoutForNewShape(const AnfNodePtr &pre_node, std::vector<int> get_item_index);
 
 void MarkForwardCNode(const FuncGraphPtr &root);
 
