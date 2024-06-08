@@ -48,6 +48,7 @@ class TensorRedistribution {
         keep_reshape_(keep_reshape) {
     this->is_inited_ = false;
   }
+  ~TensorRedistribution() = default;
 
   void SetPreAndNextCNode(const AnfNodePtr &pre_cnode, const CNodePtr &next_cnode) {
     this->pre_cnode_ = pre_cnode;
@@ -58,8 +59,13 @@ class TensorRedistribution {
     return this->pre_cnode_->fullname_with_scope() + "->" + this->next_cnode_->fullname_with_scope();
   }
 
+  void set_original_reshape_shape(const AnfNodePtr &original_reshape_shape) {
+    this->original_reshape_shape_ = original_reshape_shape;
+  }
+
+  const AnfNodePtr original_reshape_shape() { return this->original_reshape_shape_; }
+  bool is_dynamic_shape() { return this->is_dynamic_shape_; }
   Status Init(const TensorLayout &from, const TensorLayout &to, const RankList &dev_list);
-  ~TensorRedistribution() = default;
   RedistributionOpListPtr InferTensorRedistributionOperatorList(bool is_cost_model = false);
   std::vector<RedistributionOpListPtr> InferTensorRedistributionOperatorVirtualGraphs();
   RedistributionOpListPtr InferTensorRedistributionOperatorListForMultiDynamicReshape(bool is_cost_model = false);
@@ -88,7 +94,6 @@ class TensorRedistribution {
   void SetVirtualRank(const int64_t virtual_rank) { virtual_rank_ = virtual_rank; }
 
  private:
-  void GetAssembledOriginLayout(TensorLayout *from_origin, TensorLayout *to_origin);
   Status CalculateToTensorShapeUsingEnumeration(const Shape &from_tsr_shape, Shape *to_tsr_shape, const Array &factors);
   Status CalculateToTensorShape(const Shape &from_shape, const Shape &origin_to_shape, const Array &to_in_factors,
                                 Shape *to_shape);
@@ -145,8 +150,8 @@ class TensorRedistribution {
   CNodePtr next_cnode_;
   int64_t virtual_rank_ = -1;
   std::vector<int64_t> virtual_rank_list_;
+  AnfNodePtr original_reshape_shape_ = nullptr;
 };
 }  // namespace parallel
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_TENSOR_REDISTRIBUTION_H_

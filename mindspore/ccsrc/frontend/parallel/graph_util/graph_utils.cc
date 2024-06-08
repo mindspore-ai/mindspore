@@ -283,9 +283,16 @@ bool HasAssebledDynamicDim(const Shape &shape_vec, const AssembledDynamicDimsMap
     if (iter != dyn_dims_mapping.end()) {
       return true;
     }
-    int64_t prime_of_dim = GetPrimeFactor(dim);
-    if (prime_of_dim != -1 && MatchWithPrime(dyn_dims_mapping, prime_of_dim)) {
-      return true;
+    int64_t prime_base = dim;
+    while (prime_base > 1) {
+      int64_t prime_of_dim = GetPrimeFactor(prime_base);
+      if (prime_of_dim == -1) {
+        break;
+      }
+      if (MatchWithPrime(dyn_dims_mapping, prime_of_dim)) {
+        return true;
+      }
+      prime_base /= prime_of_dim;
     }
   }
   return false;
@@ -446,7 +453,12 @@ AnfNodePtr ConvertConstParamToDynamic(const TensorRedistributionPtr &tensor_redi
     val->set_abstract(param.first.second->ToAbstract());
     return val;
   }
-
+  if (shape_vec.size() == 1) {
+    std::vector<int64_t> const_shape{-1};
+    AnfNodePtr val = NewValueNode(const_shape);
+    val->set_abstract(param.first.second->ToAbstract());
+    return val;
+  }
   std::vector<AnfNodePtr> shape_input;
   if (is_same_rank) {
     MatchingAccordingToIndex(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input);
@@ -536,27 +548,47 @@ bool WhetherMatchingIsNeededForReshape(const Shape &shape_vec, const TensorRedis
 Status ConvertReshapeInputs(const OperatorParams &params,
                             const TensorRedistributionPtr &tensor_redistribution_from_cnode,
                             const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *new_node_input) {
+  Param shape_param;
+  bool use_origin_shape = false;
   for (auto &param : params) {
-    if (param.first.first != SHAPE) {
+    if (param.first.first == SHAPE) {
+      shape_param = param;
       continue;
     }
-    Shape shape_vec = GetValue<Shape>(param.first.second);
-    MS_LOG(INFO) << "shape param = " << shape_vec;
-    size_t dynamic_axis_cnt = std::count(shape_vec.begin(), shape_vec.end(), -1);
-    if (shape_vec.size() > 1 && dynamic_axis_cnt >= SIZE_TWO) {
-      MS_LOG(EXCEPTION) << "The shape of Reshape op has more than one -1, cannot be supported for now.";
+    if (param.first.first == USE_ORIGIN_SHAPE) {
+      use_origin_shape = GetValue<bool>(param.first.second);
+      MS_LOG(ERROR) << "Has USE_ORIGIN_SHAPE = " << use_origin_shape;
+      continue;
     }
-    if (!WhetherMatchingIsNeededForReshape(shape_vec, tensor_redistribution_from_cnode)) {
-      MS_LOG(INFO) << "No need to matching for " << shape_vec;
-      AnfNodePtr val = NewValueNode(param.first.second);
-      val->set_abstract(param.first.second->ToAbstract());
-      (void)new_node_input->emplace_back(val);
-      return SUCCESS;
-    }
-    auto dynamic_input = ConvertConstParamToDynamic(tensor_redistribution_from_cnode, param, func_graph, true);
-    MS_ERROR_IF_NULL_W_RET_VAL(dynamic_input, FAILED);
-    (void)new_node_input->emplace_back(dynamic_input);
   }
+  Shape shape_vec = GetValue<Shape>(shape_param.first.second);
+  if (shape_vec.size() == 1) {
+    std::vector<int64_t> const_shape{-1};
+    AnfNodePtr val = NewValueNode(const_shape);
+    (void)new_node_input->emplace_back(val);
+    return SUCCESS;
+  }
+  MS_LOG(ERROR) << "shape param = " << shape_vec;
+  if (use_origin_shape && tensor_redistribution_from_cnode->original_reshape_shape() != nullptr) {
+    // Only reshape in user's code should be in this branch.
+    // original_reshape_shape could be ValueNode, MakeTuple, Shape.
+    (void)new_node_input->emplace_back(tensor_redistribution_from_cnode->original_reshape_shape());
+    return SUCCESS;
+  }
+  size_t dynamic_axis_cnt = std::count(shape_vec.begin(), shape_vec.end(), -1);
+  if (shape_vec.size() > 1 && dynamic_axis_cnt >= SIZE_TWO) {
+    MS_LOG(WARNING) << "The shape of Reshape op has more than one -1, cannot be supported for now.";
+  }
+  if (!WhetherMatchingIsNeededForReshape(shape_vec, tensor_redistribution_from_cnode)) {
+    MS_LOG(ERROR) << "No need to matching for " << shape_vec;
+    AnfNodePtr val = NewValueNode(shape_param.first.second);
+    val->set_abstract(shape_param.first.second->ToAbstract());
+    (void)new_node_input->emplace_back(val);
+    return SUCCESS;
+  }
+  auto dynamic_input = ConvertConstParamToDynamic(tensor_redistribution_from_cnode, shape_param, func_graph, true);
+  MS_ERROR_IF_NULL_W_RET_VAL(dynamic_input, FAILED);
+  (void)new_node_input->emplace_back(dynamic_input);
   return SUCCESS;
 }
 
