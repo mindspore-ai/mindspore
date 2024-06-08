@@ -236,6 +236,7 @@ void DumpJsonParser::ParseStatisticCategory(const nlohmann::json &content) {
       MS_LOG(INFO) << itm;
     }
   }
+  CsvHeaderUtil::GetInstance().SetStatCsvHeader(statistic_category_);
 }
 
 void WriteJsonFile(const std::string &file_path, const std::ifstream &json_file) {

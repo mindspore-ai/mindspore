@@ -26,8 +26,8 @@ from pathlib import Path
 from dump_test_utils import generate_statistic_dump_json, generate_dump_json
 
 def check_statistic_l2_value(tensor, l2_value):
-    if "L2 Value" in tensor:
-        assert math.isclose(float(tensor["L2 Value"]), l2_value, rel_tol=1e-4, abs_tol=1e-4)
+    if "L2Norm Value" in tensor:
+        assert math.isclose(float(tensor["L2Norm Value"]), l2_value, rel_tol=1e-4, abs_tol=1e-4)
 
 def check_statistic_device_dump(dump_file_path):
     output_name = "statistic.csv"

@@ -22,6 +22,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include "debug/debug_services.h"
 #include "runtime/hardware/device_context.h"
 #include "utils/log_adapter.h"
 
@@ -56,6 +57,10 @@ class TensorStat {
         norm_value_(norm_value),
         count_(count) {}
   TensorStat() = default;
+  std::map<std::string, std::string> header_item_map;
+  void UpdateHeaderItemMap() {
+    header_item_map = {{"max", max_value_}, {"min", min_value_}, {"avg", avg_value_}, {"l2norm", norm_value_}};
+  }
 
  public:
   string type_;
