@@ -65,6 +65,7 @@ def test_pynative_single_stream_vmm():
     o1 = o0 + 1
     o2 = o0 + 1
     del o0, o1, o2
+    ms.hal.synchronize()
 
     o3 = ops.broadcast_to(x, (12, 256, 1024, 1024))
     o3 += 1
