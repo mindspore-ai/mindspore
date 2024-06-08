@@ -370,7 +370,6 @@ std::vector<std::tuple<std::string, int, std::string>> GetPythonStack() {
     py::gil_scoped_acquire gil_acquire;
     py::module traceback_module = py::module::import("traceback");
     py::list extracted_stack = traceback_module.attr("extract_stack")();
-
     for (size_t i = 0; i < extracted_stack.size(); ++i) {
       py::tuple frame_info = extracted_stack[i].cast<py::tuple>();
 
