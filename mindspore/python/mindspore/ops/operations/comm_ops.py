@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -401,7 +401,7 @@ class _MiniStepAllGather(PrimitiveWithInfer):
         self.grad_accumulation_step = grad_accumulation_step
         self.mean_flag = mean_flag
         self.add_prim_attr('order_enforce_skip', True)
-        self.add_prim_attr('side_effect_backprop', True)
+        self.add_prim_attr('side_effect_backprop_mem', True)
 
     def infer_shape(self, x_shape, z_shape):
         validator.check_positive_int(len(x_shape), "x shape", self.name)
@@ -1559,7 +1559,7 @@ class _MirrorMiniStepOperator(PrimitiveWithInfer):
         self.mean_flag = mean_flag
         self.grad_accumulation_step = grad_accumulation_step
         self.add_prim_attr('order_enforce_skip', True)
-        self.add_prim_attr('side_effect_backprop', True)
+        self.add_prim_attr('side_effect_backprop_mem', True)
 
     def infer_shape(self, x_shape, z_shape):
         return x_shape
@@ -1665,7 +1665,7 @@ class _VirtualAssignAdd(PrimitiveWithInfer):
     def __init__(self):
         """Initialize _VirtualAssignAdd."""
         self.add_prim_attr('order_enforce_skip', True)
-        self.add_prim_attr('side_effect_backprop', True)
+        self.add_prim_attr('side_effect_backprop_mem', True)
 
     def infer_shape(self, x_shape, y_shape):
         return x_shape
@@ -1750,7 +1750,7 @@ class _MirrorMicroStepOperator(PrimitiveWithInfer):
         self.dev_num = dev_num
         self.mean_flag = mean_flag
         self.add_prim_attr('order_enforce_skip', True)
-        self.add_prim_attr('side_effect_backprop', True)
+        self.add_prim_attr('side_effect_backprop_mem', True)
 
     def infer_shape(self, x_shape, z_shape):
         return x_shape
