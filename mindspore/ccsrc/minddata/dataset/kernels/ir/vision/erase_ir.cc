@@ -49,13 +49,14 @@ Status EraseOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateIntScalarPositive("Erase", "height", height_));
   RETURN_IF_NOT_OK(ValidateIntScalarPositive("Erase", "width", width_));
   constexpr float kValueMax = 255.0;
+  constexpr float kValueMin = 0.;
   const size_t kMaxFillValueSize = 3;
   if (value_.empty() || (value_.size() != 1 && value_.size() != kMaxFillValueSize)) {
     std::string err_msg = "Erase: value expecting size 1 or 3, got value.size(): " + std::to_string(value_.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   for (float val : value_) {
-    if (val < 0. || val > kValueMax) {
+    if (val < kValueMin || val > kValueMax) {
       std::string err_msg = "Erase: value has to be between 0. and 255., got:" + std::to_string(val);
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }

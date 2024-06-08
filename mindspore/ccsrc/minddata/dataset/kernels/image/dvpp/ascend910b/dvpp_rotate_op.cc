@@ -55,7 +55,7 @@ Status DvppRotateOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &inpu
     input->GetShape().Rank() == kNHWCImageRank,
     "DvppRotate: the input tensor is not HW, HWC or 1HWC, but got: " + std::to_string(input->GetShape().Rank()));
 
-  std::vector<float> fill = {static_cast<float>(fill_r_), static_cast<float>(fill_g_), static_cast<float>(fill_b_)};
+  std::vector<float> fill = {static_cast<float>(fill_b_), static_cast<float>(fill_g_), static_cast<float>(fill_r_)};
 
   // verify InterpolationMode
   CHECK_FAIL_RETURN_UNEXPECTED(GetDVPPRotateMode(resample_) != kInvalidRotateMode,
@@ -78,7 +78,8 @@ Status DvppRotateOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &inpu
 Status DvppRotateOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
-  int32_t outputH = -1, outputW = -1;
+  int32_t outputH = -1;
+  int32_t outputW = -1;
   // if expand_, then we cannot know the shape. We need the input image to find the output shape --> set it to
   // <-1,-1[,3]>
   CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "DvppRotate: inputs cannot be empty.");

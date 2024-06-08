@@ -690,11 +690,27 @@ Status AVDecodeVisualFrame(struct AudioVisual *avinfo, std::shared_ptr<Tensor> *
   uint8_t *target_address = avinfo->visual_unaligned_buffer;
   int src_offset = linesize;
   int target_offset = width * channels;
-  for (i = 0; i < height; i++) {
-    memcpy(target_address, src_address, target_offset);
-    src_address += src_offset;
-    target_address += target_offset;
+  std::string copy_error_message = "Failed to copy data.";
+  if (target_offset < SECUREC_MEM_MAX_LEN) {
+    for (i = 0; i < height; i++) {
+      auto ret_code = memcpy_s(target_address, target_offset, src_address, target_offset);
+      src_address += src_offset;
+      target_address += target_offset;
+      if (ret_code != EOK) {
+        RETURN_STATUS_UNEXPECTED(copy_error_message);
+      }
+    }
+  } else {
+    for (i = 0; i < height; i++) {
+      auto ret_code = std::memcpy(target_address, src_address, target_offset);
+      src_address += src_offset;
+      target_address += target_offset;
+      if (ret_code != target_address) {
+        RETURN_STATUS_UNEXPECTED(copy_error_message);
+      }
+    }
   }
+
   return Tensor::CreateFromMemory(TensorShape({height, width, channels}), (const DataType)DataType::DE_UINT8,
                                   (const uchar *)avinfo->visual_unaligned_buffer, output);
 }
