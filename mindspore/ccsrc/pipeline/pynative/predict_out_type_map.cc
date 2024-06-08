@@ -34,7 +34,7 @@ inline TypePtr PredictOutTypeByOutputNum(const int64_t &output_num) {
 }
 }  // namespace
 
-TypePtr PredictOutTypeByOpDef(const ops::OpDefPtr op_def) {
+TypePtr PredictOutTypeByOpDef(const ops::OpDefPtr &op_def) {
   auto returns_num = op_def->returns_.size();
   if (returns_num == 1) {
     if (op_def->returns_[0].arg_dtype_ == ops::OP_DTYPE::DT_TENSOR) {

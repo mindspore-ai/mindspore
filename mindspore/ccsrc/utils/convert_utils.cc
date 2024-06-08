@@ -923,8 +923,8 @@ std::map<SignatureEnumDType, std::pair<TypeId, bool>> GetSignatureTypeMap(const 
 
 std::string ValueSimpleInfoToString(const ValueSimpleInfo &value_simple_info) {
   std::ostringstream buf;
-  buf << "Value simple info element size : " << value_simple_info.size;
-  for (size_t i = 0; i < value_simple_info.size; ++i) {
+  buf << "Value simple info element size : " << value_simple_info.size_;
+  for (size_t i = 0; i < value_simple_info.size_; ++i) {
     buf << ". The " << i << "th shape: " << value_simple_info.shape_vector_[i] << ", dtype "
         << value_simple_info.dtype_vector_[i];
     if (!value_simple_info.object_type_vector_.empty()) {
@@ -935,17 +935,17 @@ std::string ValueSimpleInfoToString(const ValueSimpleInfo &value_simple_info) {
 }
 
 abstract::AbstractBasePtr TransformValueSimpleInfoToAbstract(const ValueSimpleInfo &value_simple_info) {
-  if (value_simple_info.size < 1) {
-    MS_LOG(EXCEPTION) << "Simple infer info size must greater than 1, but got " << value_simple_info.size;
+  if (value_simple_info.size_ < 1) {
+    MS_LOG(EXCEPTION) << "Simple infer info size must greater than 1, but got " << value_simple_info.size_;
   }
   abstract::AbstractBasePtr out_abs;
-  if (value_simple_info.size == 1) {
+  if (value_simple_info.size_ == 1 && !value_simple_info.is_tuple_output_) {
     out_abs = std::make_shared<abstract::AbstractTensor>(value_simple_info.dtype_vector_[kIndex0],
                                                          value_simple_info.shape_vector_[kIndex0]);
   } else {
     AbstractBasePtrList out_abs_list;
-    out_abs_list.resize(value_simple_info.size);
-    for (size_t i = 0; i < value_simple_info.size; ++i) {
+    out_abs_list.resize(value_simple_info.size_);
+    for (size_t i = 0; i < value_simple_info.size_; ++i) {
       out_abs_list[i] = std::make_shared<abstract::AbstractTensor>(value_simple_info.dtype_vector_[i],
                                                                    value_simple_info.shape_vector_[i]);
     }

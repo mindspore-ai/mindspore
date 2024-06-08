@@ -812,6 +812,11 @@ void GradExecutor::EndGraphInner(const py::object &obj, const py::object &out, c
     GetCustomBpropPrim(obj, args, input_args_info);
     runtime::OpExecutor::GetInstance().WaitAll();
     input_args_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(out, false);
+    // Recompute need to regardless of non tensor inputs, maybe it is a middle cell and not call EndGraphImpl
+    if (input_args_info->is_need_recompute) {
+      input_args_info->out_value =
+        ConvertOutputValueToTensor(input_args_info->out_value, !top_cell()->jit_out_has_dict());
+    }
     const auto &out_id = PyNativeAlgo::Common::GetIdByValue(input_args_info->out_value);
     DoGradForCustomBprop(input_args_info, out_id);
   }
@@ -1800,8 +1805,9 @@ void GradExecutor::ClearGradRes() {
   ClearPipelineTopCellRes();
   top_input_args_info_ = nullptr;
   ClearGlobalRes();
-  MS_LOG(DEBUG) << "Current top cell stack size " << top_cell_stack_.size()
-                << ", pipeline top cell map with already run cell id " << top_cell_->already_run_cell_id() << " size "
+  MS_LOG(DEBUG) << "Current top cell stack size " << top_cell_stack_.size() << ", pipeline top cell map size "
+                << pipeline_top_cell_map_.size() << ", pipeline top cell map with already run cell id "
+                << top_cell_->already_run_cell_id() << " size "
                 << (pipeline_top_cell_map_.find(top_cell_->already_run_cell_id()) == pipeline_top_cell_map_.end()
                       ? 0
                       : pipeline_top_cell_map_[top_cell_->already_run_cell_id()].size());
@@ -1826,7 +1832,7 @@ void GradExecutor::ClearPipelineTopCellRes() {
       ErasePipelineTopCell(top_cell_->already_run_cell_id(), top_cell_->input_args_id(), false);
     }
   } else {
-    // If top cell is not pipeline, because it is stored in in pipeline top cell map in first step, here no do delete
+    // If top cell is not pipeline, because it is stored in pipeline top cell map in first step, here need to do delete
     // from the map.
     ErasePipelineTopCell(top_cell_->already_run_cell_id(), top_cell_->input_args_id(), true);
   }
@@ -2159,9 +2165,10 @@ void GradExecutor::UpdateTopCellForwardTensorInfoInBpropGraph(const std::string 
     pre_top_cell = GetPipelineRunTopCell(top_cell_->already_run_cell_id());
     if (pre_top_cell == nullptr) {
       top_cell_->SaveTensorIdWithOpInfo(op_info, v);
-      use_dynamic_shape_process()
-        ? MS_LOG(DEBUG) << "Current top cell is in dynamic process"
-        : MS_LOG(DEBUG) << "Top cell " << top_cell_->already_run_cell_id() << " run firstly, op info " << op_info;
+      use_dynamic_shape_process() ? MS_LOG(DEBUG) << "Current top cell is in dynamic process"
+                                  : MS_LOG(DEBUG)
+                                      << "Top cell " << top_cell_->already_run_cell_id() << " run firstly, op info "
+                                      << op_info << ", output id " << PyNativeAlgo::Common::GetIdByValue(v);
       return;
     }
   }
@@ -2179,16 +2186,19 @@ void GradExecutor::UpdateTopCellForwardTensorInfoInBpropGraph(const std::string 
         MS_LOG(EXCEPTION) << "Forward repalce top cell must be ir grad";
       }
       MS_LOG(DEBUG) << "Store pipeline top cell " << top_cell_->already_run_cell_id() << " with input args id "
-                    << top_cell_->input_args_id() << ", op info " << op_info;
+                    << top_cell_->input_args_id() << ", op info " << op_info << ", output id "
+                    << PyNativeAlgo::Common::GetIdByValue(v);
       StoreForwardOutputWithOpInfo(pre_top_cell->replace_info().op_info_with_tensor_object, op_info, v,
                                    &top_cell_->replace_info());
     } else {
       // The first ir grad is not run before, indicate this is a first step, top cell will run func grad independently
-      MS_LOG(DEBUG) << "Current top cell is pipeline top cell and run firstly, op info " << op_info;
+      MS_LOG(DEBUG) << "Current top cell is pipeline top cell and run firstly, op info " << op_info << ", output id "
+                    << PyNativeAlgo::Common::GetIdByValue(v);
     }
   } else {
     // Not first run top cell, do update
-    MS_LOG(DEBUG) << "Update top cell forward output tensor info " << op_info;
+    MS_LOG(DEBUG) << "Update top cell forward output tensor info " << op_info << ", output id "
+                  << PyNativeAlgo::Common::GetIdByValue(v);
     UpdateForwardOutputTensorInfo(op_info, v, pre_top_cell->replace_info());
   }
 }

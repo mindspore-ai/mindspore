@@ -42,9 +42,9 @@ void SimpleInfer::DoSimpleInfer(const PrimitivePtr &primitive, const ValueSimple
                                 const ops::OpFuncImplPtr &simple_infer_func, const ValuePtrList &input_values) {
   value_simple_info->shape_vector_ = simple_infer_func->InferShape(primitive, input_values);
   value_simple_info->dtype_vector_ = simple_infer_func->InferType(primitive, input_values);
-  value_simple_info->size = value_simple_info->shape_vector_.size();
-  if (value_simple_info->size != value_simple_info->dtype_vector_.size()) {
-    MS_LOG(EXCEPTION) << "Infer shape size " << value_simple_info->size << " is not equal to dtype size "
+  value_simple_info->size_ = value_simple_info->shape_vector_.size();
+  if (value_simple_info->size_ != value_simple_info->dtype_vector_.size()) {
+    MS_LOG(EXCEPTION) << "Infer shape size " << value_simple_info->size_ << " is not equal to dtype size "
                       << value_simple_info->dtype_vector_.size();
   }
 }
