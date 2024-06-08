@@ -227,8 +227,9 @@ void CopyDataFromInt64(const int64_t *origin_data, int *tensor_data, size_t data
 }
 
 int CopyTensorDataFromTensorInfo(const tensor::TensorPtr &tensor_info,
-                                 const std::shared_ptr<tensor::Tensor> &tensor_info_dst, size_t data_count) {
-  if (tensor_info->data_type() == kNumberTypeInt64) {
+                                 const std::shared_ptr<tensor::Tensor> &tensor_info_dst, size_t data_count,
+                                 bool keep_origin_dtype) {
+  if (tensor_info->data_type() == kNumberTypeInt64 && !keep_origin_dtype) {
     auto *tensor_data = reinterpret_cast<int *>(tensor_info_dst->data_c());
     if (tensor_data == nullptr) {
       MS_LOG(ERROR) << "new data failed";
@@ -825,7 +826,7 @@ STATUS TransFilterFormat(const tensor::TensorPtr &tensor, schema::Format src_for
 }
 
 ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const tensor::TensorPtr &tensor_info,
-                                const std::string &node_name) {
+                                const std::string &node_name, bool keep_origin_dtype) {
   if (func_graph == nullptr || tensor_info == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr.";
     return nullptr;
@@ -837,10 +838,11 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const tensor::Te
   std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
                  [](const int &val) { return static_cast<int64_t>(val); });
   auto data_type = tensor_info->data_type();
+  if (tensor_info->data_type() == kNumberTypeFloat64 && !keep_origin_dtype) {
+    data_type = kNumberTypeFloat32;
+  }
   if (tensor_info->data_type() == kNumberTypeInt64) {
     data_type = kNumberTypeInt32;
-  } else if (tensor_info->data_type() == kNumberTypeFloat64) {
-    data_type = kNumberTypeFloat32;
   }
   param_node->set_name(node_name);
   param_node->debug_info()->set_name(node_name);
@@ -870,7 +872,8 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const tensor::Te
     return param_node;
   }
 
-  if (CopyTensorDataFromTensorInfo(tensor_info, tensor_info_new, static_cast<size_t>(data_count)) != RET_OK) {
+  if (CopyTensorDataFromTensorInfo(tensor_info, tensor_info_new, static_cast<size_t>(data_count), keep_origin_dtype) !=
+      RET_OK) {
     MS_LOG(ERROR) << "copy tensor data failed";
     return nullptr;
   }
@@ -939,6 +942,29 @@ ParameterPtr BuildIntVecParameterNode(const FuncGraphPtr &func_graph, const std:
   return param_node;
 }
 
+ParameterPtr BuildInt64VecParameterNode(const FuncGraphPtr &func_graph, const std::vector<int64_t> &data,
+                                        const std::string &node_name) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  auto param_node = func_graph->add_parameter();
+  MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
+  param_node->set_name(node_name);
+
+  std::vector<int64_t> shape_vector{static_cast<int64_t>(data.size())};
+  auto tensor_info = lite::CreateTensorInfo(data.data(), data.size() * sizeof(int64_t), shape_vector, kNumberTypeInt64);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed!";
+    return nullptr;
+  }
+
+  auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed!";
+    return nullptr;
+  }
+
+  return param_node;
+}
+
 ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const std::vector<std::vector<int32_t>> &data,
                                         const std::string &node_name) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
@@ -986,6 +1012,26 @@ ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const 
   auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return nullptr;
+  }
+  return param_node;
+}
+
+ParameterPtr BuildInt64ValueParameterNode(const FuncGraphPtr &func_graph, const int64_t &data,
+                                          const std::string &node_name, bool empty_shape) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  auto param_node = func_graph->add_parameter();
+  MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
+  param_node->set_name(node_name);
+  ShapeVector shape = empty_shape ? std::vector<int64_t>{} : std::vector<int64_t>{1};
+  auto tensor_info = lite::CreateTensorInfo(&data, sizeof(int64_t), shape, kNumberTypeInt64);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed!";
+    return nullptr;
+  }
+  auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed!";
     return nullptr;
   }
   return param_node;

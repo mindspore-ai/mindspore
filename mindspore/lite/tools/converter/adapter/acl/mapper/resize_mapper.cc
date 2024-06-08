@@ -17,6 +17,7 @@
 #include "tools/converter/adapter/acl/mapper/resize_mapper.h"
 #include <memory>
 #include <vector>
+#include <string>
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
@@ -153,7 +154,21 @@ STATUS ResizeMapper::ProcScaleInput(const CNodePtr &cnode, const PrimitivePtr &p
   return lite::RET_OK;
 }
 
+STATUS ResizeMapper::CastSize(const CNodePtr &cnode, const PrimitivePtr &prim) {
+  auto scale_input = cnode->input(kResizeShapeInputIndex);
+  CHECK_NULL_RETURN(scale_input);
+  auto cast_int32_node =
+    NewCNode(cnode, prim::kPrimCast, {scale_input, NewValueNode(static_cast<int64_t>(kNumberTypeInt32))},
+             {DIMENSION_2D}, kNumberTypeInt64, cnode->fullname_with_scope() + "_shape_cast_int32");
+  cnode->set_input(kResizeShapeInputIndex, cast_int32_node);
+  return RET_OK;
+}
+
 STATUS ResizeMapper::CalResizeShape(const CNodePtr &cnode, const PrimitivePtr &prim) {
+  if (prim->HasAttr("bysize")) {
+    auto ret = CastSize(cnode, prim);
+    return ret;
+  }
   auto data_input = cnode->input(kResizeDataInputIndex);
   CHECK_NULL_RETURN(data_input);
   auto scale_input = cnode->input(kResizeShapeInputIndex);
@@ -183,7 +198,7 @@ STATUS ResizeMapper::CalResizeShape(const CNodePtr &cnode, const PrimitivePtr &p
     NewCNode(cnode, prim::kPrimCast, {gather_cnode, NewValueNode(static_cast<int64_t>(kNumberTypeFloat32))},
              {DIMENSION_2D}, kNumberTypeFloat32, cnode->fullname_with_scope() + "_shape_cast_fp32");
   if (!cast_fp32_node) {
-    MS_LOG(ERROR) << "Failed to create cast node for node " << cnode->fullname_with_scope();
+    MS_LOG(ERROR) << "Failed to create cast node for node " << cnode->fullname_with_scope() << "!";
     return RET_ERROR;
   }
 

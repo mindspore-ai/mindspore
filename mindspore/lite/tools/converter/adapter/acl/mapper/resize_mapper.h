@@ -35,6 +35,7 @@ class ResizeMapper : public PrimitiveMapper {
  private:
   STATUS ProcScaleInput(const CNodePtr &cnode, const PrimitivePtr &prim);
   STATUS CalResizeShape(const CNodePtr &cnode, const PrimitivePtr &prim);
+  STATUS CastSize(const CNodePtr &cnode, const PrimitivePtr &prim);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -211,7 +211,7 @@ STATUS OnnxNodeParser::SetDataTypeAndValue(const onnx::TensorProto &onnx_tensor,
       }
       break;
     case onnx::TensorProto_DataType_INT64:
-      *type = GetDataTypeFromOnnx(onnx::TensorProto_DataType_INT32);
+      *type = GetDataTypeFromOnnx(onnx::TensorProto_DataType_INT64);
       if (onnx_tensor.int64_data_size() > 0) {
         for (int i = 0; i < onnx_tensor.int64_data_size(); i++) {
           value->push_back(onnx_tensor.int64_data(i));

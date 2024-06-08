@@ -25,6 +25,9 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr size_t kUseSizeLen = 4;  // If the input length of resize is 4, the size parameter is used to resize
+}
 PrimitiveCPtr OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Resize>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -83,7 +86,9 @@ PrimitiveCPtr OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, const 
       }
     }
   }
-
+  if (onnx_node.input().size() == kUseSizeLen) {
+    prim_c->AddAttr("bysize", MakeValue<bool>(true));
+  }
   return prim->GetPrim();
 }
 

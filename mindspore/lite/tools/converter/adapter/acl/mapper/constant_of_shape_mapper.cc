@@ -23,6 +23,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/op_utils.h"
 #include "src/common/log_util.h"
+#include "tools/common/tensor_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -55,6 +56,17 @@ STATUS ConstantOfShapeMapper::Mapper(const CNodePtr &cnode) {
         std::transform(values.begin(), values.end(), std::back_inserter(dst_values),
                        [](float ele) { return static_cast<int>(ele); });
         value_param = opt::BuildIntVecParameterNode(func_graph, dst_values, cnode->fullname_with_scope() + "_values");
+      }
+    } break;
+    case kNumberTypeInt64: {
+      if (values.size() == 1) {
+        value_param =
+          opt::BuildInt64ValueParameterNode(func_graph, values[0], cnode->fullname_with_scope() + "_value", true);
+      } else {
+        std::vector<int64_t> dst_values;
+        std::transform(values.begin(), values.end(), std::back_inserter(dst_values),
+                       [](float ele) { return static_cast<int64_t>(ele); });
+        value_param = opt::BuildInt64VecParameterNode(func_graph, dst_values, cnode->fullname_with_scope() + "_values");
       }
     } break;
     case kNumberTypeFloat16: {

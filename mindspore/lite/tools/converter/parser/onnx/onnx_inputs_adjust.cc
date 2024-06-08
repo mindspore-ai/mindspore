@@ -87,7 +87,7 @@ STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int
 }
 
 STATUS ReplaceTypeParameterNode(const FuncGraphPtr &func_graph, const ParameterPtr &param_node, TypeId input,
-                                TypeId output) {
+                                TypeId output, bool keep_origin_dtype) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(param_node != nullptr, RET_NULL_PTR);
   if (param_node->abstract() == nullptr) {
@@ -117,7 +117,8 @@ STATUS ReplaceTypeParameterNode(const FuncGraphPtr &func_graph, const ParameterP
       MS_LOG(ERROR) << "default data is not tensor::Tensor.";
       return lite::RET_NULL_PTR;
     }
-    auto param_node_new = opt::BuildParameterNode(func_graph, tensor_info, param_node->fullname_with_scope());
+    auto param_node_new =
+      opt::BuildParameterNode(func_graph, tensor_info, param_node->fullname_with_scope(), keep_origin_dtype);
     if (param_node_new == nullptr) {
       MS_LOG(ERROR) << "BuildParameterNode failed.";
       return lite::RET_NULL_PTR;
@@ -146,7 +147,7 @@ bool ValidParameterNode(const ParameterPtr &param_node) {
   return tensor_info->Size() != 0;
 }
 
-STATUS ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+STATUS ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool keep_origin_dtype) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
   if (cnode->inputs().empty() || cnode->input(0) == nullptr) {
@@ -178,9 +179,10 @@ STATUS ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
     MS_LOG(ERROR) << "valueptr is not tensor::Tensorptr.";
     return lite::RET_ERROR;
   }
-  auto param_node = opt::BuildParameterNode(func_graph, tensor_info_ptr, cnode->fullname_with_scope());
+  auto param_node =
+    opt::BuildParameterNode(func_graph, tensor_info_ptr, cnode->fullname_with_scope(), keep_origin_dtype);
   if (param_node == nullptr) {
-    MS_LOG(ERROR) << "convert constant to param node failed.";
+    MS_LOG(ERROR) << "convert constant to param node failed!";
     return lite::RET_ERROR;
   }
   auto manager = func_graph->manager();
@@ -258,12 +260,66 @@ STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNod
   return lite::RET_OK;
 }
 
-STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+STATUS FullFillParam(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool keep_origin_dtype, int32_t size) {
+  auto manager = func_graph->manager();
+  switch (cnode->size()) {
+    case opt::kInputSizeFour: {
+      ParameterPtr new_param_node = nullptr;
+      if (keep_origin_dtype) {
+        std::vector<int64_t> axes;
+        for (int i = 0; i < size; ++i) {
+          axes.push_back(i);
+        }
+        new_param_node = opt::BuildInt64VecParameterNode(func_graph, axes, cnode->fullname_with_scope() + "_axises");
+      } else {
+        std::vector<int> axes;
+        for (int i = 0; i < size; ++i) {
+          axes.push_back(i);
+        }
+        new_param_node = opt::BuildIntVecParameterNode(func_graph, axes, cnode->fullname_with_scope() + "_axises");
+      }
+      if (new_param_node == nullptr) {
+        MS_LOG(ERROR) << "new a parameter node failed!";
+        return lite::RET_ERROR;
+      }
+      manager->AddEdge(cnode, new_param_node);
+      // fall through
+    }
+    case opt::kInputSizeFive: {
+      ParameterPtr new_param_node = nullptr;
+      if (keep_origin_dtype) {
+        std::vector<int64_t> steps;
+        for (int i = 0; i < size; ++i) {
+          steps.push_back(1);
+        }
+        new_param_node = opt::BuildInt64VecParameterNode(func_graph, steps, cnode->fullname_with_scope() + "_steps");
+      } else {
+        std::vector<int> steps;
+        for (int i = 0; i < size; ++i) {
+          steps.push_back(1);
+        }
+        new_param_node = opt::BuildIntVecParameterNode(func_graph, steps, cnode->fullname_with_scope() + "_steps");
+      }
+      if (new_param_node == nullptr) {
+        MS_LOG(ERROR) << "new a parameter node failed!";
+        return lite::RET_ERROR;
+      }
+      manager->AddEdge(cnode, new_param_node);
+      break;
+    }
+    default:
+      MS_LOG(DEBUG) << "no need to adjust.";
+      return lite::RET_OK;
+  }
+  return lite::RET_OK;
+}
+
+STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool keep_origin_dtype) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   auto manager = func_graph->manager();
   MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
   if (!opt::CheckInputs(cnode)) {
-    MS_LOG(ERROR) << "input is invalid.";
+    MS_LOG(ERROR) << "input is invalid!";
     return lite::RET_INPUT_TENSOR_ERROR;
   }
   if (cnode->size() == opt::kInputSizeTwo) {
@@ -271,7 +327,7 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
         AddAttrToInput(func_graph, cnode, opt::kInputIndexThree, "ends") != lite::RET_OK ||
         AddAttrToInput(func_graph, cnode, opt::kInputIndexFour, "axes") != lite::RET_OK ||
         AddAttrToInput(func_graph, cnode, opt::kInputIndexFive, "steps") != lite::RET_OK) {
-      MS_LOG(ERROR) << "attr to input failed.";
+      MS_LOG(ERROR) << "attr to input failed!";
       return lite::RET_ERROR;
     }
   } else if (cnode->size() <= opt::kInputSizeThree) {
@@ -288,7 +344,7 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
     }
     const auto &default_data = param_node->default_param()->cast<tensor::TensorPtr>();
     if (default_data == nullptr) {
-      MS_LOG(ERROR) << "this input is not a tensor::Tensor";
+      MS_LOG(ERROR) << "this input is not a tensor::Tensor!";
       return lite::RET_ERROR;
     }
     auto shape = default_data->shape();
@@ -299,35 +355,10 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
     }
     break;
   }
-  switch (cnode->size()) {
-    case opt::kInputSizeFour: {
-      std::vector<int32_t> axes;
-      for (int i = 0; i < size; ++i) {
-        axes.push_back(i);
-      }
-      auto new_param_node = opt::BuildIntVecParameterNode(func_graph, axes, cnode->fullname_with_scope() + "_axises");
-      if (new_param_node == nullptr) {
-        MS_LOG(ERROR) << "new a parameter node failed.";
-      }
-      manager->AddEdge(cnode, new_param_node);
-      // fall through
-    }
-    case opt::kInputSizeFive: {
-      std::vector<int32_t> steps;
-      for (int i = 0; i < size; ++i) {
-        steps.push_back(1);
-      }
-      auto new_param_node = opt::BuildIntVecParameterNode(func_graph, steps, cnode->fullname_with_scope() + "_steps");
-      if (new_param_node == nullptr) {
-        MS_LOG(ERROR) << "new a parameter node failed.";
-        return lite::RET_ERROR;
-      }
-      manager->AddEdge(cnode, new_param_node);
-      break;
-    }
-    default:
-      MS_LOG(DEBUG) << "no need to adjust.";
-      return lite::RET_NO_CHANGE;
+  auto ret = FullFillParam(func_graph, cnode, keep_origin_dtype, size);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "FullFillParam failed! Ret:" << ret << "!";
+    return ret;
   }
   return lite::RET_OK;
 }
@@ -339,7 +370,7 @@ STATUS AdjustResize(bool *need_update_manager, const CNodePtr &cnode) {
   MS_CHECK_TRUE_RET(node != nullptr, RET_NULL_PTR);
   auto resize_prim = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(node);
   if (resize_prim == nullptr) {
-    MS_LOG(ERROR) << "cnode is invalid.";
+    MS_LOG(ERROR) << "cnode is invalid!";
     return lite::RET_ERROR;
   }
   if (cnode->size() == opt::kInputSizeFour) {
@@ -359,7 +390,7 @@ STATUS AdjustResize(bool *need_update_manager, const CNodePtr &cnode) {
     MS_CHECK_TRUE_RET(scale_node != nullptr, RET_NULL_PTR);
     MS_CHECK_TRUE_RET(size_node != nullptr, RET_NULL_PTR);
     if (scale_node->isa<CNode>() && size_node->isa<CNode>()) {
-      MS_LOG(ERROR) << "One of scale and size should be specified.";
+      MS_LOG(ERROR) << "One of scale and size should be specified!";
       return lite::RET_ERROR;
     } else if ((scale_node->isa<CNode>() && size_node->isa<Parameter>()) ||
                (scale_node->isa<Parameter>() && size_node->isa<CNode>())) {
@@ -367,7 +398,7 @@ STATUS AdjustResize(bool *need_update_manager, const CNodePtr &cnode) {
         scale_node->isa<Parameter>() ? scale_node->cast<ParameterPtr>() : size_node->cast<ParameterPtr>();
       MS_CHECK_TRUE_RET(param_node != nullptr, RET_NULL_PTR);
       if (ValidParameterNode(param_node)) {
-        MS_LOG(ERROR) << "One of scale and size should be specified.";
+        MS_LOG(ERROR) << "One of scale and size should be specified!";
         return lite::RET_ERROR;
       }
       shape_index = scale_node->isa<CNode>() ? opt::kInputIndexThree : opt::kInputIndexFour;
@@ -379,7 +410,7 @@ STATUS AdjustResize(bool *need_update_manager, const CNodePtr &cnode) {
       bool is_scale_valid = ValidParameterNode(scale_param);
       bool is_size_valid = ValidParameterNode(size_param);
       if (!(is_scale_valid || is_size_valid)) {
-        MS_LOG(ERROR) << "One of scale and size should be specified.";
+        MS_LOG(ERROR) << "One of scale and size should be specified!";
         return lite::RET_ERROR;
       }
       shape_index = is_scale_valid ? opt::kInputIndexThree : opt::kInputIndexFour;
@@ -606,17 +637,26 @@ bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph, const converter::Co
   auto node_list = TopoSort(func_graph->get_return());
   int status = RET_OK;
   bool need_update_manager = false;
+  bool keep_origin_dtype = false;
+  auto env_var = std::getenv("KEEP_ORIGIN_DTYPE");
+  if (env_var != nullptr) {
+    std::string env_var_value(env_var);
+    keep_origin_dtype = env_var_value == "1";
+  }
   for (auto &node : node_list) {
     if (utils::isa<ParameterPtr>(node)) {
       auto param_node = node->cast<ParameterPtr>();
-      status = ReplaceTypeParameterNode(func_graph, param_node, kNumberTypeFloat64, kNumberTypeFloat32);
-      if (status != lite::RET_OK) {
-        MS_LOG(ERROR) << "replace fp64 param node failed.";
-        return status;
+      if (!keep_origin_dtype) {
+        status = ReplaceTypeParameterNode(func_graph, param_node, kNumberTypeInt64, kNumberTypeInt32, false);
+        if (status != lite::RET_OK) {
+          MS_LOG(ERROR) << "replace fp64 param node failed!";
+          return status;
+        }
       }
-      status = ReplaceTypeParameterNode(func_graph, param_node, kNumberTypeInt64, kNumberTypeInt32);
+      status =
+        ReplaceTypeParameterNode(func_graph, param_node, kNumberTypeFloat64, kNumberTypeFloat32, keep_origin_dtype);
       if (status != lite::RET_OK) {
-        MS_LOG(ERROR) << "replace int64 param node failed.";
+        MS_LOG(ERROR) << "replace fp64 param node failed!";
         return status;
       }
     }
@@ -626,11 +666,11 @@ bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph, const converter::Co
       continue;
     }
     if (opt::CheckPrimitiveType(node, prim::kPrimConstant)) {
-      status = ReplaceConstant(func_graph, cnode);
+      status = ReplaceConstant(func_graph, cnode, keep_origin_dtype);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimTranspose) && flag.save_type != kMindIR) {
       status = ReplaceTransposeWithGraphInput(func_graph, cnode);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimStridedSlice)) {
-      status = AdjustStridedSlice(func_graph, cnode);
+      status = AdjustStridedSlice(func_graph, cnode, keep_origin_dtype);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimResize)) {
       status = AdjustResize(&need_update_manager, cnode);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimRandomNormal)) {
