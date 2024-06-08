@@ -20,10 +20,41 @@ import mindspore.context as context
 import tempfile
 import time
 import math
+import json
 
 from mindspore import JitConfig, Tensor, nn
 from pathlib import Path
-from dump_test_utils import generate_statistic_dump_json, generate_dump_json
+from dump_test_utils import generate_statistic_dump_json
+
+e2e_dump_dict = {
+    "common_dump_settings": {
+        "dump_mode": 0,
+        "path": "",
+        "net_name": "Net",
+        "iteration": "0",
+        "input_output": 0,
+        "kernels": ["Default/Conv-op12"],
+        "support_device": [0, 1, 2, 3, 4, 5, 6, 7],
+        "op_debug_mode": 0
+    },
+    "e2e_dump_settings": {
+        "enable": True,
+        "trans_flag": False
+    }
+}
+
+
+def generate_dump_json(dump_path, json_file_name, base_dump_json_name, extra_settings_func=None):
+    data = {}
+    if base_dump_json_name == "e2e_dump_settings":
+        data = e2e_dump_dict
+    data["common_dump_settings"]["path"] = dump_path
+    data["common_dump_settings"]["saved_data"] = "tensor"
+    data["common_dump_settings"]["net_name"] = "Net"
+    if extra_settings_func is not None:
+        extra_settings_func(data)
+    with open(json_file_name, 'w') as f:
+        json.dump(data, f)
 
 
 def check_statistic_l2_value(tensor, l2_value):

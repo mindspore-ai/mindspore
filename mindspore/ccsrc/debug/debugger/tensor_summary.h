@@ -84,13 +84,14 @@ class VarianceAndMeanCalculator {
 };
 
 class L2Calculator {
-public:
-  L2Calculator(): squre_sum_div_max_(0.0), max_value_(0.0) {}
+ public:
+  L2Calculator() : squre_sum_div_max_(0.0), max_value_(0.0) {}
   ~L2Calculator() = default;
   void ProcessElement(double value);
-  void ProcessElement(const L2Calculator& other);
+  void ProcessElement(const L2Calculator &other);
   double GetL2Value() const;
-private:
+
+ private:
   // save (x^2 + y^2)/y^2, when y > x, to avoid itermidiate value overflow
   // the true l2 value should be sqrt(squre_sum_div_max_ * max_value_^2)
   double squre_sum_div_max_;
@@ -152,6 +153,7 @@ class TensorSummary : public ITensorSummary {
   const uint64_t pos_inf_count() const override { return pos_inf_count_; }
   const uint64_t zero_count() const override { return zero_count_; }
   const double l2_value() const override { return l2_calc_.GetL2Value(); }
+
  private:
   const T *current_tensor_ptr_;
   const T *prev_tensor_ptr_;
