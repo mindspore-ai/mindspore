@@ -24,8 +24,8 @@ def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
 
-def set_context():
-    context.set_context(mode=context.PYNATIVE_MODE)
+def set_context(mode=context.PYNATIVE_MODE):
+    context.set_context(mode=mode)
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(device_num=8, parallel_mode="auto_parallel", search_mode="sharding_propagation")
 
@@ -64,13 +64,17 @@ def add_one_func(x):
     return x + 1
 
 
+def add_one_func2(x):
+    return shard(add_one_func)((None,))(x) + 1
+
+
 def test_in_strategy_numbers_check():
     """
     Feature: shard function for cell
     Description: inconsistent input number and in_strategy number
     Expectation: throw an exception indicating inconsistent input number and in_strategy number
     """
-    set_context()
+    set_context(mode=context.PYNATIVE_MODE)
     in_strategy = ((8, 1), None, (1, 8))
     out_strategy = (None,)
     error_log = "Input numbers: 2 is not equal to in_strategy numbers: 3"
@@ -83,7 +87,7 @@ def test_in_strategy_dimension_check():
     Description: inconsistent input dimension and in_strategy dimension
     Expectation: throw an exception indicating inconsistent input_dimension and in_strategy dimension
     """
-    set_context()
+    set_context(mode=context.PYNATIVE_MODE)
     in_strategy = ((8, 1, 1), None)
     out_strategy = (None, (8, 1))
     error_log = "Input dimension: 2 is not equal to in_strategy dimension: 3 at index 0"
@@ -96,7 +100,7 @@ def test_in_strategy_format_check():
     Description: unsupported in_strategy format
     Expectation: throw an exception indicating a supported in_strategy format
     """
-    set_context()
+    set_context(mode=context.PYNATIVE_MODE)
     in_strategy = ([8, 1], None)
     out_strategy = (None,)
     error_log = "in_strategy should be a two-dimension tuple"
@@ -109,7 +113,7 @@ def test_parameter_plan_dimension_check():
     Description: inconsistent parameter dimension and parameter layout dimension
     Expectation: throw an exception indicating inconsistent parameter dimension and parameter layout dimension
     """
-    set_context()
+    set_context(mode=context.PYNATIVE_MODE)
     in_strategy = (None,)
     parameter_plan = {"param": (1, 1, 1)}
     error_log = "the length of param_strategy: 3, is not equal to param_shape len: 2"
@@ -125,7 +129,7 @@ def test_parameter_plan_layout_check():
     Description: layout has a value that is not divisible into shape
     Expectation: throw an exception indicating layout is invalid
     """
-    set_context()
+    set_context(mode=context.PYNATIVE_MODE)
     in_strategy = (None,)
     parameter_plan = {"param": (2, 4)}
     error_log = "For 'param', the param_shape is (8, 10) and the setting param_strategy is (2, 4). " \
@@ -142,7 +146,7 @@ def test_parameter_plan_format_check():
     Description: unsupported parameter_plan format
     Expectation: throw an exception indicating a supported parameter_plan format
     """
-    set_context()
+    set_context(mode=context.PYNATIVE_MODE)
     in_strategy = (None,)
     parameter_plan = {"param": None}
     error_log = "For 'Shard', the type of each key and value in 'parameter_plan' must be str and tuple"
@@ -158,7 +162,7 @@ def test_vmap_nested_shard_check():
     Description: test usage of vmap nested shard
     Expectation: throw an exception indicating that vmap nested shard is invalid usage
     """
-    set_context()
+    set_context(mode=context.PYNATIVE_MODE)
     x = Tensor(np.ones([16, 8]), ms.float32)
     in_strategy = ((8,),)
     func = ops.vmap(shard(add_one_func, in_strategy=in_strategy), in_axes=0, out_axes=0)
@@ -168,17 +172,31 @@ def test_vmap_nested_shard_check():
     assert error_log in str(err.value)
 
 
-def test_shard_nested_shard_check():
+def test_shard_nested_shard_check_pynative():
     """
     Feature: shard nested shard
     Description: test usage of shard nested shard
     Expectation: throw an exception indicating that shard nested shard is invalid usage
     """
-    set_context()
+    set_context(mode=context.PYNATIVE_MODE)
     x = Tensor(np.ones([16, 8]), ms.float32)
     in_strategy = ((8, 1),)
     func = shard(shard(add_one_func, in_strategy=in_strategy), in_strategy=in_strategy)
-    error_log = "Nested use of shard (e.g shard(shard(...), ...) is not supported currently."
+    error_log = "Nested use of shard (e.g shard(shard(...), ...) is not supported in PyNative mode"
+    with pytest.raises(Exception) as err:
+        _ = func(x)
+    assert error_log in str(err.value)
+
+def test_shard_in_jit_check():
+    """
+    Feature: vmap nested shard
+    Description: test usage of vmap nested shard
+    Expectation: throw an exception indicating that vmap nested shard is invalid usage
+    """
+    set_context(mode=context.PYNATIVE_MODE)
+    x = Tensor(np.ones([16, 8]), ms.float32)
+    func = ms.jit(add_one_func2)
+    error_log = "Cell.shard or ms.shard not supported in jit syntax"
     with pytest.raises(Exception) as err:
         _ = func(x)
     assert error_log in str(err.value)
