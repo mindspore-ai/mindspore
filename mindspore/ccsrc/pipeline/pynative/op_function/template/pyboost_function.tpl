@@ -16,6 +16,9 @@ py::object ${func_name}_Base(const PrimitivePtr &prim, const py::list &args) {
       std::make_shared<FrontendTask>(
         [${op_args}](const FrontendOpRunInfoPtr &op_run_info) {
           MS_LOG(DEBUG) << "Run frontend task ${func_name} start";
+          auto old_stream_id = kernel::pyboost::PyBoostUtils::cur_stream_id();
+          kernel::pyboost::PyBoostUtils::set_cur_stream_id(op_run_info->base_op_run_info.stream_id);
+
           // stub tensor to tensor.
           ${convert_stub}
 
@@ -27,7 +30,6 @@ py::object ${func_name}_Base(const PrimitivePtr &prim, const py::list &args) {
           auto [${cast_args}] = PyNativeAlgo::PyBoost::SetPyBoostCastForInputs<${type_num}>(op_run_info, same_type_table, ${call_args});
 
           // Run op
-          op->set_stream_id(op_run_info->base_op_run_info.stream_id);
           (void)op->Call(${cast_args});
           ${optional_to_value}
 
@@ -41,6 +43,7 @@ py::object ${func_name}_Base(const PrimitivePtr &prim, const py::list &args) {
           if (op_run_info->requires_grad) {
             PyNativeAlgo::PyBoost::DoGrad(op, op_run_info, {${grad_args}});
           }
+          kernel::pyboost::PyBoostUtils::set_cur_stream_id(old_stream_id);
 
           MS_LOG(DEBUG) << "Run frontend task ${func_name} end";
         },

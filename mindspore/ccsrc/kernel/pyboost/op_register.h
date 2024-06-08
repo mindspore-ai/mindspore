@@ -25,6 +25,7 @@
 #include "ops/auto_generate/gen_ops_primitive.h"
 #include "kernel/pyboost/op_runner.h"
 #include "runtime/pynative/op_runner.h"
+#include "pipeline/pynative/pynative_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,7 +43,7 @@ class BACKEND_EXPORT OpFactory {
     }
   }
 
-  std::shared_ptr<T> Create(const std::string &device);
+  std::shared_ptr<T> Create(const std::string &device, uint32_t stream_id);
 
   bool IsRegistered(const std::string &device) const { return op_creator_.find(device) != op_creator_.end(); }
 
@@ -67,8 +68,9 @@ class OpRegister {
     return std::make_shared<clazz##DEVICE>(prim::kPrim##clazz, runtime::OpRunner::GetDeviceContext(#DEVICE)); \
   });
 
-#define CREATE_PYBOOST_OP(NAME, DEVICE) \
-  mindspore::kernel::pyboost::OpFactory<mindspore::kernel::pyboost::NAME>::Get().Create(DEVICE);
+#define CREATE_PYBOOST_OP(NAME, DEVICE)                                                  \
+  mindspore::kernel::pyboost::OpFactory<mindspore::kernel::pyboost::NAME>::Get().Create( \
+    DEVICE, kernel::pyboost::PyBoostUtils::cur_stream_id());
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
