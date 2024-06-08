@@ -87,6 +87,8 @@ class BACKEND_EXPORT E2eDump {
 
   static void DumpParameters(const session::KernelGraph *graph, const std::string &dump_path, const Debugger *debugger);
 
+  static void DumpArgsSingleNode(const CNodePtr &node, const std::string &dump_path, const Debugger *debugger);
+
   static void DumpMemFromTensorLoaderToFile(const Debugger *debugger, const std::string &file_path,
                                             const std::string &original_kernel_name, size_t slot);
 
