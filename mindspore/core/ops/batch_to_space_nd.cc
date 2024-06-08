@@ -175,8 +175,6 @@ class MIND_API AGBatchToSpaceNDInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return BatchToSpaceNDInfer(engine, primitive, input_args);
   }
-
-  std::set<int64_t> GetValueDependArgIndices() const override { return {1, 2}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchToSpaceND, prim::kPrimBatchToSpaceND, AGBatchToSpaceNDInfer, false);
