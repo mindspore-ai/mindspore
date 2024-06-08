@@ -16,18 +16,14 @@
 
 #include "include/backend/debug/data_dump/tensor_stat_dump.h"
 #include <map>
-#include "include/common/debug/common.h"
 #include "debug/debug_services.h"
-#include "include/backend/debug/debugger/debugger.h"
+#include "debug/utils.h"
 #include "include/backend/debug/common/csv_writer.h"
-
+#include "include/backend/debug/debugger/debugger.h"
+#include "include/common/debug/common.h"
 namespace {
 constexpr auto kInput = "input";
 constexpr auto kOutput = "output";
-constexpr auto kCsvHeader =
-  "Op Type,Op Name,Task ID,Stream ID,Timestamp,IO,Slot,Data Size,Data Type,Shape,Max Value,Min Value,Avg Value,"
-  "Count,Negative Zero Count,Positive Zero Count,NaN Count,Negative Inf Count,Positive Inf Count,Zero Count,L2 "
-  "Value,MD5\n";
 constexpr auto kCsvFileName = "statistic.csv";
 }  // namespace
 
@@ -70,9 +66,10 @@ bool TensorStatDump::OpenStatisticsFile(const std::string &dump_path) {
   std::string filename = dump_path + "/" + kCsvFileName;
   // try to open file
   CsvWriter &csv = CsvWriter::GetInstance();
+  const string csv_header = CsvHeaderUtil::GetInstance().GetStatCsvHeader();
   int retry = 2;
   while (retry > 0) {
-    if (csv.OpenFile(filename, kCsvHeader)) {
+    if (csv.OpenFile(filename, csv_header)) {
       break;
     }
     retry--;
@@ -109,7 +106,8 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
   std::string filename = dump_path + "/" + kCsvFileName;
   // try to open file
   CsvWriter csv;
-  if (!csv.OpenFile(filename, kCsvHeader)) {
+  const auto csv_header = CsvHeaderUtil::GetInstance().GetStatCsvHeader();
+  if (!csv.OpenFile(filename, csv_header)) {
     MS_LOG(WARNING) << "Open statistic dump file failed, skipping current statistics";
     return false;
   }
