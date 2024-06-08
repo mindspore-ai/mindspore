@@ -3503,6 +3503,36 @@ static void RecordFlopsOriginShape(const FuncGraphManagerPtr &mng) {
   }
 }
 
+bool IsVirtualDatasetDynamicShape(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto all_nodes = TopoSort(func_graph->get_return());
+  for (const auto &node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim == nullptr) {
+      continue;
+    }
+    MS_EXCEPTION_IF_NULL(prim);
+    if (prim->name() == VIRTUAL_DATA_SET) {
+      MS_LOG(INFO) << "VIRTUAL_DATA_SET: " << cnode->DebugString();
+      for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+        auto input_node = cnode->input(i);
+        auto base_shape = input_node->Shape();
+        MS_EXCEPTION_IF_NULL(base_shape);
+        std::vector<int64_t> shape_vec = base_shape->GetShapeVector();
+        MS_LOG(INFO) << "VIRTUAL_DATA_SET: " << node->fullname_with_scope() << ", shape:" << shape_vec;
+        if (std::find(shape_vec.begin(), shape_vec.end(), -1) != shape_vec.end()) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 static void HandleSilentCheck(const FuncGraphPtr &root, const FuncGraphManagerPtr &mng) {
   auto env = common::GetEnv(NPU_ASD_ENABLE);
   if (env != kSilentCheckEnvEnable) {
@@ -3550,7 +3580,8 @@ static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const 
   auto adasum_param_tensor_layout_map = AdaSumParamTensorLayout(root);
   bool is_apply_adasum = HandleAdaSum(root, all_nodes, &adasum_param_tensor_layout_map);
 
-  if (MergeEntireShapeForDynamic(root) != Status::SUCCESS) {
+  bool is_virtual_dataset_dynamic = IsVirtualDatasetDynamicShape(root);
+  if (is_virtual_dataset_dynamic && MergeEntireShapeForDynamic(root) != Status::SUCCESS) {
     MS_LOG(EXCEPTION) << "Merge entire shape for dynamic shape failed.";
   }
 

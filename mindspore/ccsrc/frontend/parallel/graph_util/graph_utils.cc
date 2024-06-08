@@ -211,6 +211,12 @@ CNodePtr CreateSplit(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
   return split;
 }
 
+CNodePtr CreateCast(const AnfNodePtr &cast_input, const ValueNodePtr &dest_type, const FuncGraphPtr &func_graph) {
+  auto cast_prim = NewValueNode(prim::kPrimScalarCast);
+  auto cast = func_graph->NewCNode({cast_prim, cast_input, dest_type});
+  return cast;
+}
+
 AnfNodePtr CreateDiv(const AnfNodePtr &input_node, int64_t divisor, const FuncGraphPtr &func_graph, bool to_long,
                      const std::string &inst_name) {
   MS_EXCEPTION_IF_NULL(input_node);
@@ -229,11 +235,8 @@ AnfNodePtr CreateDiv(const AnfNodePtr &input_node, int64_t divisor, const FuncGr
   inputs[INDEX_TWO] = CreatInt64Imm(divisor);
   auto div = func_graph->NewCNode(inputs);
   if (to_long) {
-    auto cast_prim = NewValueNode(prim::kPrimScalarCast);
-    auto type_val = MakeValue(static_cast<int64_t>(kInt64->type_id()));
-    auto type_id = NewValueNode(type_val);
-    auto cast = func_graph->NewCNode({cast_prim, div, type_id});
-    return cast;
+    auto type_id = NewValueNode(MakeValue(static_cast<int64_t>(kInt64->type_id())));
+    return CreateCast(div, type_id, func_graph);
   }
   return div;
 }
@@ -253,11 +256,8 @@ CNodePtr CreateMul(const AnfNodePtr &input_node, const int64_t factor, const Fun
   inputs[INDEX_TWO] = CreatInt64Imm(factor);
   auto mul = func_graph->NewCNode(inputs);
   if (to_long) {
-    auto cast_prim = NewValueNode(prim::kPrimScalarCast);
-    auto type_val = MakeValue(static_cast<int64_t>(kInt64->type_id()));
-    auto type_id = NewValueNode(type_val);
-    auto cast = func_graph->NewCNode({cast_prim, mul, type_id});
-    return cast;
+    auto type_id = NewValueNode(MakeValue(static_cast<int64_t>(kInt64->type_id())));
+    return CreateCast(mul, type_id, func_graph);
   }
   return mul;
 }
@@ -479,6 +479,7 @@ AnfNodePtr ConvertConstParamToDynamic(const TensorRedistributionPtr &tensor_redi
       for (size_t i = 0; i < shape_input.size(); ++i) {
         if (shape_input[i]->isa<CNode>()) {
           shape_input[i] = NewValueNode(MakeValue(unknown));
+          MS_LOG(INFO) << "change index " << i << " to -1.";
           break;
         }
       }
@@ -770,9 +771,9 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
   return replace_input;
 }
 
-void InsertNode(const Operator &op, const CNodePtr &node, size_t index, const AnfNodePtr &pre_node,
-                const FuncGraphPtr &func_graph, const std::string &instance_name, const std::string &param_name,
-                const FuncGraphPtr &root, const TensorRedistributionPtr &tensor_redistribution) {
+CNodePtr InsertNode(const Operator &op, const CNodePtr &node, size_t index, const AnfNodePtr &pre_node,
+                    const FuncGraphPtr &func_graph, const std::string &instance_name, const std::string &param_name,
+                    const FuncGraphPtr &root, const TensorRedistributionPtr &tensor_redistribution) {
   // insert new node before the node
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -823,6 +824,7 @@ void InsertNode(const Operator &op, const CNodePtr &node, size_t index, const An
   }
   manager->SetEdge(node, SizeToInt(index), new_node);
   MS_LOG(INFO) << "Insert " << instance_name << " success";
+  return new_node;
 }
 
 bool IsRootNode(const CNodePtr &cnode, const AnfNodePtr &root_node) {
@@ -1014,6 +1016,109 @@ Status GetDistributeOperatorFromCNode(const CNodePtr &cnode, TensorInfo *tensor_
   return Status::SUCCESS;
 }
 
+Status UpdateTupleGetItemShapeValue(const CNodePtr &tuple_getitem, const TensorInfo &tensor_info,
+                                    const FuncGraphPtr &func_graph) {
+  MS_LOG(INFO) << "into UpdateTupleGetItemShapeValue";
+  Map tensor_map = tensor_info.tensor_layout().tensor_map();
+  Arrangement dev_arr = tensor_info.tensor_layout().device_arrangement();
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto node_users_map = manager->node_users();
+
+  int64_t index = GetTupleGetItemIndex(tuple_getitem);
+  if (LongToSize(index) >= tensor_map.GetDimSize()) {
+    MS_LOG(ERROR) << "Index cannot be larger than tensor_map size.";
+    return Status::FAILED;
+  }
+  if (tensor_map.GetDimByIdx(index) < 0) {
+    MS_LOG(DEBUG) << "Skip index " << index << ", because it's " << tensor_map.GetDimByIdx(index);
+    return Status::SUCCESS;
+  }
+  int64_t scalar = dev_arr.GetDimByReverseIdx(tensor_map.GetDimByIdx(index));
+  for (const auto &next_node : node_users_map[tuple_getitem]) {
+    auto tuple_getitem_user = next_node.first->cast<CNodePtr>();
+    if (tuple_getitem_user == nullptr) {
+      continue;
+    }
+    MS_LOG(INFO) << tuple_getitem->input(1)->fullname_with_scope() << "->" << tuple_getitem->fullname_with_scope()
+                 << "->ScalarMul(" << scalar << ")->" << next_node.first->fullname_with_scope() << "["
+                 << next_node.second << "]" << std::endl;
+    Operator scalar_mul_op = CreateScalarMulOp(scalar);
+    (void)InsertNode(scalar_mul_op,                     // to be inserted op
+                     tuple_getitem_user,                // current node
+                     next_node.second,                  // tuple_getitem_user[input_index] = scalar_mul_op
+                     tuple_getitem,                     // insert scalar_mul_op between previous and current
+                     tuple_getitem_user->func_graph(),  // current func_graph
+                     "update_partial_shape", "", nullptr);
+  }
+  return Status::SUCCESS;
+}
+
+Status UpdateReshapeShapeValue(const CNodePtr &reshape_cnode, const CNodePtr &shape_cnode, const Shape &shape,
+                               const TensorInfo &tensor_info, const FuncGraphPtr &func_graph) {
+  // Replace shape to MakeTuple(shape[0]*factor0, shape[1]*factor1,...)
+  MS_LOG(INFO) << "into UpdateReshapeShapeValue: " << shape;
+  MS_EXCEPTION_IF_NULL(reshape_cnode);
+  MS_EXCEPTION_IF_NULL(shape_cnode);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  FuncGraphManagerPtr manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  Map tensor_map = tensor_info.tensor_layout().tensor_map();
+  Arrangement dev_arr = tensor_info.tensor_layout().device_arrangement();
+  TensorRedistributionPtr tensor_redistribution = GetTensorRedistributionFromCNode(reshape_cnode);
+
+  std::vector<AnfNodePtr> make_tuple_inputs;
+  std::string instance_name = std::string(REDISTRIBUTION_OP) + "_replace_reshape";
+  for (size_t i = 0; i < shape.size(); ++i) {
+    if (shape[i] > 0) {
+      // Get const value and set to make_tuple_inputs.
+      auto const_val_node = NewValueNode(MakeValue(shape[i]));
+      make_tuple_inputs.emplace_back(const_val_node);
+      MS_LOG(INFO) << "Create ValueNode " << shape[i];
+      continue;
+    }
+    // Get shape from shape node.
+    auto prim_tuple_get_item = std::make_shared<Primitive>(TUPLE_GETITEM_OP);
+    AnfNodePtrList inputs{NewValueNode(prim_tuple_get_item), shape_cnode, NewValueNode(MakeValue(SizeToLong(i)))};
+    auto tuple_get_item_cnode = func_graph->NewCNode(inputs);
+    tuple_get_item_cnode->set_fullname_with_scope("tuple_getitem_replace_reshape");
+    prim_tuple_get_item->set_instance_name(instance_name);
+    make_tuple_inputs.emplace_back(tuple_get_item_cnode);
+    MS_LOG(INFO) << "Create TupleGetItem for " << i;
+  }
+  auto make_tuple = CreateMakeTuple(make_tuple_inputs, func_graph, instance_name);
+  make_tuple->set_in_forward_flag(true);
+  std::string fullname = shape_cnode->fullname_with_scope() + "_replace";
+  make_tuple->set_fullname_with_scope(fullname);
+  manager->SetEdge(reshape_cnode, 2, make_tuple);
+  MS_LOG(INFO) << shape_cnode->fullname_with_scope() << "->" << make_tuple->fullname_with_scope() << "->"
+               << reshape_cnode->fullname_with_scope();
+  MS_LOG(INFO) << "reshape shape is : " << shape;
+  MS_LOG(INFO) << "reshape tensor_map is : " << tensor_map.array();
+  MS_LOG(INFO) << "reshape dev_arr is : " << dev_arr.array();
+  for (size_t i = 0; i < tensor_map.array().size(); ++i) {
+    if (tensor_map.GetDimByIdx(i) == -1) {
+      continue;
+    }
+    if (make_tuple_inputs[i]->isa<ValueNode>()) {
+      continue;
+    }
+    int64_t scalar = dev_arr.GetDimByReverseIdx(tensor_map.GetDimByIdx(i));
+    Operator scalar_mul_op = CreateScalarMulOp(scalar);
+    (void)InsertNode(scalar_mul_op,             // to be inserted op
+                     make_tuple,                // current node
+                     i + 1,                     // make_tuple[input_index] = scalar_mul_op
+                     make_tuple->input(i + 1),  // insert scalar_mul_op between previous and current
+                     func_graph,                // current func_graph
+                     "update_partial_shape", "", nullptr);
+  }
+  if (tensor_redistribution != nullptr && tensor_redistribution->original_reshape_shape() != nullptr) {
+    tensor_redistribution->set_original_reshape_shape(make_tuple);
+    MS_LOG(INFO) << "Change original_reshape_shape";
+  }
+  return Status::SUCCESS;
+}
+
 Status UpdateShapeNode(const CNodePtr &cnode, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(cnode);
   // Step1. Get shape input tensor layout. cnode is Shape op.
@@ -1037,51 +1142,105 @@ Status UpdateShapeNode(const CNodePtr &cnode, const FuncGraphPtr &func_graph) {
 
   // Step2. Get shape node users.
   auto node_users_map = func_graph->manager()->node_users();
-  for (const auto &node_user : node_users_map[cnode]) {
+  auto shape_node_users = node_users_map[cnode];
+  for (const auto &node_user : shape_node_users) {
     MS_EXCEPTION_IF_NULL(node_user.first);
     auto shape_user = node_user.first->cast<CNodePtr>();
-    if (shape_user == nullptr) {
-      continue;
-    }
     if (IsReshapeOp(shape_user)) {
-      MS_LOG(WARNING) << "Won't supply shape for Reshape.";
+      std::vector<Shape> input_shapes = GetNodeShape(input_of_shape);
+      if (input_shapes.size() != 1) {
+        MS_LOG(EXCEPTION) << "Shape's input size is illegal.";
+      }
+      if (UpdateReshapeShapeValue(shape_user, cnode, input_shapes[0], tensor_info, func_graph) != Status::SUCCESS) {
+        MS_LOG(EXCEPTION) << "Update reshape shape value failed.";
+      }
       continue;
     }
-
-    if (IsTargetOp(shape_user, ZEROS)) {
+    if (shape_user == nullptr || IsTargetOp(shape_user, ZEROS)) {
+      MS_LOG(ERROR) << "won't supply shape for " << shape_user->fullname_with_scope();
       continue;
     }
     MS_EXCEPTION_IF_CHECK_FAIL(IsTupleGetItem(shape_user),
                                "Only support TupleGetItem here, but got " + GetPrimName(shape_user));
-    int64_t index = GetTupleGetItemIndex(shape_user);
-    if (LongToSize(index) >= tensor_map.GetDimSize()) {
-      MS_LOG(ERROR) << "Index cannot be larger than tensor_map size.";
-      return Status::FAILED;
-    }
-    if (tensor_map.GetDimByIdx(index) < 0) {
-      continue;
-    }
-    int64_t scalar = dev_arr.GetDimByReverseIdx(tensor_map.GetDimByIdx(index));
-    for (const auto &next_node : node_users_map[shape_user]) {
-      auto shape_user_user = next_node.first->cast<CNodePtr>();
-      if (shape_user_user == nullptr) {
-        continue;
-      }
-      MS_LOG(DEBUG) << shape_user->fullname_with_scope() << "->ScalarMul(" << scalar << ")->"
-                    << next_node.first->fullname_with_scope() << "[" << next_node.second << "]" << std::endl;
-      Operator scalar_mul_op = CreateScalarMulOp(scalar);
-      InsertNode(scalar_mul_op,                  // to be inserted op
-                 shape_user_user,                // current node
-                 next_node.second,               // shape_user_user[input_index] = scalar_mul_op
-                 shape_user,                     // insert scalar_mul_op between previous and current
-                 shape_user_user->func_graph(),  // current func_graph
-                 "update_partial_shape", "", nullptr);
+    if (IsTupleGetItem(shape_user) &&
+        UpdateTupleGetItemShapeValue(shape_user, tensor_info, func_graph) != Status::SUCCESS) {
+      MS_LOG(EXCEPTION) << "Update tuple get item shape value failed.";
     }
   }
   return Status::SUCCESS;
 }
 
+Status UpdateMakeTupleShapeValue(const CNodePtr &make_tuple, const std::map<size_t, int64_t> &factor_mapping,
+                                 const FuncGraphPtr &func_graph) {
+  for (size_t i = 1; i < make_tuple->inputs().size(); ++i) {
+    if (factor_mapping.find(i - 1) == factor_mapping.end()) {
+      continue;
+    }
+    auto make_tuple_input = make_tuple->input(i);
+    if (make_tuple_input->isa<ValueNode>()) {
+      auto val_node = make_tuple_input->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(val_node->value());
+      auto dim_value = GetValue<int64_t>(val_node->value());
+      if (dim_value == -1) {
+        continue;
+      }
+    }
+    Operator scalar_div_op = CreateScalarDivOp(factor_mapping.at(i - 1));
+    // TODO(liuchongming): If make_tuple_input is mul op, then consider merge the two op.
+    auto div_cnode = InsertNode(scalar_div_op,     // to be inserted op
+                                make_tuple,        // current node
+                                i,                 // tuple_getitem_user[i] = scalar_div_op
+                                make_tuple_input,  // insert scalar_div_op between previous and current
+                                func_graph,        // current func_graph
+                                "segment_partial_shape", "", nullptr);
+    Operator cast_op = CreateScalarCastOp(kInt64);
+    (void)InsertNode(cast_op,     // to be inserted op
+                     make_tuple,  // current node
+                     i,           // tuple_getitem_user[i] = cast_op
+                     div_cnode,   // div_cnode->scalar_div_op->make_tuple
+                     func_graph,  // current func_graph
+                     "segment_partial_shape", "", nullptr);
+  }
+  return Status::SUCCESS;
+}
+
+Status SegmentEntireShapeToPartialForDynamic(const CNodePtr &reshape_node, const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(reshape_node);
+  // reshape_node is Reshape node.
+  // Step1. Get reshape_node's user tensor layout.
+  // Step2. Shard reshape_node's second input (only for TupleGetItem).
+  auto tensor_redistribution = GetTensorRedistributionFromCNode(reshape_node);
+  if (tensor_redistribution == nullptr) {
+    MS_LOG(WARNING) << "Cannot find layout in " << reshape_node->fullname_with_scope();
+    return Status::FAILED;
+  }
+  if (!tensor_redistribution->is_dynamic_shape()) {
+    MS_LOG(INFO) << reshape_node->fullname_with_scope() << " is static shape.";
+    return Status::SUCCESS;
+  }
+  TensorLayout out_layout = tensor_redistribution->to_origin_no_assembled();
+  auto tensor_map = out_layout.tensor_map();
+  auto dev_mat = out_layout.device_arrangement();
+  std::map<size_t, int64_t> factor_mapping;
+  for (size_t i = 0; i < tensor_map.array().size(); ++i) {
+    if (tensor_map.GetDimByIdx(i) != -1) {
+      factor_mapping.insert({i, dev_mat.GetDimByReverseIdx(tensor_map.GetDimByIdx(i))});
+    }
+  }
+  auto shape_input = reshape_node->input(INDEX_TWO);
+  if (!shape_input->isa<CNode>()) {
+    MS_LOG(WARNING) << "Reshape's second input is not a CNode.";
+    return Status::SUCCESS;
+  }
+  auto shape_input_cnode = shape_input->cast<CNodePtr>();
+  if (IsTargetOp(shape_input_cnode, MAKE_TUPLE)) {
+    UpdateMakeTupleShapeValue(shape_input_cnode, factor_mapping, func_graph);
+  }
+  return Status::SUCCESS;
+}
+
 Status MergeEntireShapeForDynamic(const FuncGraphPtr &root) {
+  MS_LOG(INFO) << "Begin RebuildShapeForDynamic";
   MS_EXCEPTION_IF_NULL(root);
   // Step1. Judge whether is dynamic shape.
   // Step2. Find all Shape node, get its factor arr.
@@ -1104,10 +1263,10 @@ Status MergeEntireShapeForDynamic(const FuncGraphPtr &root) {
           continue;
         }
         auto cnode = node->cast<CNodePtr>();
-        if (!IsShapeOp(cnode)) {
+        if (IsShapeOp(cnode)) {
+          UpdateShapeNode(cnode, *fg);
           continue;
         }
-        UpdateShapeNode(cnode, *fg);
       }
     }
   } else {
@@ -1121,10 +1280,10 @@ Status MergeEntireShapeForDynamic(const FuncGraphPtr &root) {
           continue;
         }
         auto cnode = node->cast<CNodePtr>();
-        if (!IsShapeOp(cnode)) {
+        if (IsShapeOp(cnode)) {
+          UpdateShapeNode(cnode, *func_graph);
           continue;
         }
-        UpdateShapeNode(cnode, *func_graph);
       }
     }
   }

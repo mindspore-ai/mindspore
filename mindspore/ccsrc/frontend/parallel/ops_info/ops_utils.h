@@ -403,6 +403,7 @@ constexpr char BIAS_ADD[] = "BiasAdd";
 constexpr char SUB[] = "Sub";
 constexpr char MUL[] = "Mul";
 constexpr char DIV[] = "Div";
+constexpr char SCALAR_CAST[] = "ScalarCast";
 constexpr char SCALAR_MUL[] = "ScalarMul";
 constexpr char SCALAR_DIV[] = "ScalarDiv";
 constexpr char REAL_DIV[] = "RealDiv";

@@ -109,3 +109,83 @@ def test_parallel_dynamic_shape_with_features_010():
     model.set_inputs(x)
     phase = compile_net(model, x)
     _ = ParallelValidator(model, phase)
+
+
+def test_parallel_reshape_has_multi_dynamic_axis():
+    """
+    Feature: Test tensor redistribution in dynamic shape.
+    Description: Reshape has more than one dynamic axis.
+    Expectation: Compile success and assertion passed.
+    """
+
+    class ReshapeNet(nn.Cell):
+        def __init__(self):
+            super(ReshapeNet, self).__init__()
+            self.relu0 = P.ReLU().shard(((2, 4, 1, 1),))
+            self.relu1 = P.ReLU().shard(((8, 1),))
+            self.shape = P.Shape()
+            self.reshape = P.Reshape()
+
+        def construct(self, inputs):
+            x = self.relu0(inputs)  # shard: (2, 4, 1, 1)
+            x_shape = self.shape(x)
+            x = self.reshape(x, (x_shape[0] * x_shape[1], x_shape[2] * x_shape[3]))
+            x = self.relu1(x)  # shard: (8, 1)
+            return x
+
+    dump_ir_path = "./test_parallel_reshape_has_multi_dynamic_axis"
+    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
+    dataset_shard = (1, 1, 1, 1)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                      global_rank=0, device_num=8, full_batch=True,
+                                      dataset_strategy=(dataset_shard,))
+    model = ReshapeNet()
+    model = _VirtualDatasetCell(model)
+    model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+    # 4,32,16,16
+    s0 = Symbol(divisor=8)
+    s1 = Symbol(divisor=4)
+    x = Tensor(shape=[s0, 32, s1, 16], dtype=mstype.float16)
+    model.set_inputs(x)
+    phase = compile_net(model, x)
+    _ = ParallelValidator(model, phase)
+
+
+def test_parallel_static_reshape_has_multi_user():
+    """
+    Feature: Test tensor redistribution in dynamic shape.
+    Description: Reshape has more than one dynamic axis.
+    Expectation: Compile success and assertion passed.
+    """
+
+    class ReshapeNet(nn.Cell):
+        def __init__(self):
+            super(ReshapeNet, self).__init__()
+            self.relu0 = P.ReLU().shard(((2, 4),))
+            self.relu1 = P.ReLU().shard(((4, 2),))
+            self.shape = P.Shape()
+            self.reshape = P.Reshape()
+
+        def construct(self, inputs):
+            x_shape = self.shape(inputs)
+            x = self.reshape(inputs, (x_shape[0] * x_shape[1], x_shape[2] * x_shape[3]))
+            y1 = self.relu0(x)  # shard: (2, 4)
+            y2 = self.relu1(x)  # shard: (4, 2)
+            return y1 + y2
+
+    dump_ir_path = "./test_parallel_static_reshape_has_multi_user"
+    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
+    dataset_shard = (1, 1, 1, 1)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                      global_rank=0, device_num=8, full_batch=True,
+                                      dataset_strategy=(dataset_shard,))
+    model = ReshapeNet()
+    model = _VirtualDatasetCell(model)
+    model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+    # 4,32,16,16
+    # s0 = Symbol(divisor=8)
+    # s1 = Symbol(divisor=4)
+    x = Tensor(np.random.rand(3, 32, 5, 16), dtype=mstype.float16)
+    model.set_inputs(x)
+    phase = compile_net(model, x)
+    _ = ParallelValidator(model, phase)
