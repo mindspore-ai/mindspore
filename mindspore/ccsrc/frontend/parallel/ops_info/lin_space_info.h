@@ -49,15 +49,28 @@ class LinSpaceInfo : public OperatorInfo {
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
-
- private:
   void InferSliceId();
-  Status ComputeReplaceGraph(const CNodePtr &cnode);
+  virtual Status ComputeReplaceGraph(const CNodePtr &cnode);
   int64_t GetSplitNum();
 
   int64_t slice_id_ = 0;
   int64_t split_num_ = 0;
   int64_t output_size_ = 0;
+};
+
+class LinSpaceExtInfo : public LinSpaceInfo {
+ public:
+  LinSpaceExtInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                  const PrimitiveAttrs &attrs)
+      : LinSpaceInfo(name, inputs_shape, outputs_shape, attrs) {}
+
+  ~LinSpaceExtInfo() override = default;
+
+  Status GetAttrs() override;
+
+ private:
+  Status ComputeReplaceGraph(const CNodePtr &cnode) override;
+  int64_t dtype_ = 0;
 };
 }  // namespace parallel
 }  // namespace mindspore

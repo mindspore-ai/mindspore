@@ -336,6 +336,7 @@ constexpr char NEXT_TOKENS[] = "next_tokens";
 constexpr char INNER_PRECISE[] = "inner_precise";
 constexpr char INPUT_LAYOUT[] = "input_layout";
 constexpr char SPARSE_MODE[] = "sparse_mode";
+constexpr char KEEP_ALIVE[] = "keep_alive";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";
@@ -406,6 +407,8 @@ constexpr char MUL[] = "Mul";
 constexpr char DIV[] = "Div";
 constexpr char SCALAR_MUL[] = "ScalarMul";
 constexpr char SCALAR_DIV[] = "ScalarDiv";
+constexpr char SCALAR_ADD[] = "ScalarAdd";
+constexpr char SCALAR_SUB[] = "ScalarSub";
 constexpr char REAL_DIV[] = "RealDiv";
 constexpr char SCALAR_FLOOR_DIV[] = "ScalarFloorDiv";
 constexpr char ASSIGN_SUB[] = "AssignSub";
@@ -627,6 +630,7 @@ constexpr char GAMMA[] = "Gamma";
 constexpr char PAD_V3[] = "PadV3";
 constexpr char KLDIV_LOSS[] = "KLDivLoss";
 constexpr char LIN_SPACE[] = "LinSpace";
+constexpr char LIN_SPACE_EXT[] = "LinSpaceExt";
 constexpr char SORT[] = "SORT";
 constexpr char FILLV2[] = "FillV2";
 constexpr char WKV[] = "WKV";
