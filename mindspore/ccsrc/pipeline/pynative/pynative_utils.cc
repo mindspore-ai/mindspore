@@ -43,6 +43,7 @@
 #include "runtime/pipeline/pipeline.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
 #include "include/common/pynative/abstract_converter.h"
+#include "kernel/pyboost/pyboost_utils.h"
 
 namespace mindspore {
 namespace pynative {
@@ -670,12 +671,15 @@ ValuePtr StubNodeToValueInner(const ValuePtr &v) {
 
 void Common::StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info);
+  auto old_stream_id = kernel::pyboost::PyBoostUtils::cur_stream_id();
+  kernel::pyboost::PyBoostUtils::set_cur_stream_id(op_run_info->base_op_run_info.stream_id);
   for (size_t i = 0; i < op_run_info->input_size; i++) {
     op_run_info->op_grad_info->input_value[i] = StubNodeToValueInner(op_run_info->op_grad_info->input_value[i]);
     if (!op_run_info->is_view_op) {
       op_run_info->op_grad_info->input_value[i] =
         ConvertToContiguousValue(op_run_info->op_grad_info->input_value[i], op_run_info->requires_grad);
     }
+    kernel::pyboost::PyBoostUtils::set_cur_stream_id(old_stream_id);
     runtime::DeviceAddressUtils::CreateKernelTensor(op_run_info->op_grad_info->input_value[i]);
   }
 }
