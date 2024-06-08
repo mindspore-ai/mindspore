@@ -739,5 +739,8 @@ REGISTER(GcdInfo);
 REGISTER(LerpInfo);
 REGISTER(SquaredDifferenceInfo);
 REGISTER(MaskedFillInfo);
+REGISTER(AddExtInfo);
+REGISTER(SubExtInfo);
+REGISTER(DivModInfo);
 }  // namespace parallel
 }  // namespace mindspore
