@@ -90,8 +90,8 @@ AnfNodePtr FindValidCommNode(const AnfNodePtr &node) {
   }
   auto matmul_node = FindMatMulNode(comm_node);
   if (matmul_node == nullptr || !IsPrimitiveCNode(matmul_node, prim::kPrimMatMul)) {
-    MS_LOG(ERROR) << "For bias_add_comm_swap, cannot find matmul node from comm node, comm node is: "
-                  << comm_node->DebugString();
+    MS_LOG(WARNING) << "For bias_add_comm_swap, cannot find matmul node from comm node, comm node is: "
+                    << comm_node->DebugString();
     return nullptr;
   }
   return comm_node;
@@ -132,6 +132,22 @@ void HandleNodePullUp(const AnfNodePtr &comm_node, const CNodePtr &add_node) {
   (void)manager->Replace(comm_node, comm_node_input);
 }
 
+void changeNodeShape(const CNodePtr &add_node, size_t rank_size) {
+  MS_EXCEPTION_IF_NULL(add_node);
+  auto add_node_abstract = add_node->abstract();
+  MS_EXCEPTION_IF_NULL(add_node_abstract);
+  auto add_node_shape_ptr = add_node_abstract->GetShape();
+  MS_EXCEPTION_IF_NULL(add_node_shape_ptr);
+  auto add_node_shape = add_node_shape_ptr->GetShapeVector();
+  if (add_node_shape.size() < 1) {
+    return;
+  }
+  add_node_shape[0] = add_node_shape[0] * rank_size;
+  auto new_shape_item = std::make_shared<abstract::Shape>(add_node_shape);
+  add_node_abstract->set_shape(new_shape_item);
+  add_node->set_abstract(add_node_abstract);
+}
+
 void HandleNodeBiasAdd(const AnfNodePtr &comm_node, const CNodePtr &add_node) {
   auto comm_prim = GetCNodePrimitive(comm_node);
   MS_EXCEPTION_IF_NULL(comm_prim);
@@ -144,6 +160,11 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node, const CNodePtr &add_node) {
   MS_EXCEPTION_IF_NULL(g_device_manager);
   auto comm_rank_list = g_device_manager->FindRankListByHashName(comm_group);
   double rank_size = 1.0 / comm_rank_list.size();
+
+  // change node shape
+  if (IsPrimitiveCNode(comm_node, prim::kPrimReduceScatter)) {
+    changeNodeShape(add_node, comm_rank_list.size());
+  }
 
   auto bias_side_start_node = add_node->input(2);
   MS_EXCEPTION_IF_NULL(bias_side_start_node);
@@ -205,16 +226,17 @@ void HandleAddNode(HashMap<CNodePtr, AnfNodePtr> *add_node_map) {
 }
 }  // namespace
 
-void BiasAddCommSwap(const FuncGraphPtr &graph) {
-  if (parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kSemiAutoParallel &&
-      parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
-    MS_LOG(WARNING) << "BiasAddCommSwap is only support under [semi_]auto_parallel, skip it.";
-    return;
-  }
+bool BiasAddCommSwap(const FuncGraphPtr &graph, const opt::OptimizerPtr &) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  bool changes = False;
+
+  if (parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kSemiAutoParallel &&
+      parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
+    return changes;
+  }
   if (!ms_context->get_param<bool>(MS_CTX_BIAS_ADD_COMM_SWAP)) {
-    return;
+    return changes;
   }
 
   MS_EXCEPTION_IF_NULL(graph);
@@ -226,6 +248,7 @@ void BiasAddCommSwap(const FuncGraphPtr &graph) {
   }
   // pull up add node, pull down allreduce/reduce_scatter node
   HandleAddNode(&add_node_map);
+  return changes;
 }
 }  // namespace parallel
 }  // namespace mindspore

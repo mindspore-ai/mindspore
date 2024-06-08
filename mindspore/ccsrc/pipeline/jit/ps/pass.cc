@@ -488,6 +488,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
                          {"merge_comm", opt::OptPassConfig(parallel::MergeComm)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
+                         {"bias_add_comm_swap", opt::OptPassConfig(parallel::BiasAddCommSwap)},
                          {"matmul_add_comm_reduction", opt::OptPassConfig(parallel::MatmulAddCommReduction)},
                          {"virtual_dataset", virtual_dataset},
                          {"get_grad_eliminate_", get_grad},
@@ -812,12 +813,6 @@ bool ForceFp32Comm(const ResourcePtr &resource) {
 bool RemoveCastBeforeAssignAdd(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::RemoveCastBeforeAssignAdd(resource->func_graph());
-  return true;
-}
-
-bool BiasAddCommSwap(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  parallel::BiasAddCommSwap(resource->func_graph());
   return true;
 }
 
@@ -1199,7 +1194,6 @@ std::vector<PassItem> kVmPasses = {
   {"add_recomputation", AddRecomputationPass},
   {"cse_after_recomputation", OptAfterRecomputeGroup},
   {"environ_conv", EnvironConversionPass},
-  {"bias_add_comm_swap", BiasAddCommSwap},
   {"label_micro_interleaved_index", LabelMicroInterleavedIndexPass},
   {"label_fine_grained_interleaved_index", LabelFineGrainedInterleavedIndexPass},
   {"merge_cast_opt", MergeCastOpt},
