@@ -346,7 +346,8 @@ void MemoryTrackerEnabled::UseMemBlock(const std::string &task_name, DeviceMemPt
 
 namespace {
 constexpr size_t kKBToByte = 1024;
-static const int kPrecisionDigits = 1;
+constexpr size_t kMBToKB = 1024;
+static const int kPrecisionDigits = 20;
 
 auto task_list_to_str = [](const std::vector<TaskInfoPtr> &task_list) -> std::string {
   std::stringstream ss;
@@ -466,21 +467,21 @@ const std::vector<std::pair<std::string, std::function<void(const MemBlockInfoPt
        oss << (mem_block->real_end_time - mem_block->real_start_time);
      }
    }},
-  {"Allocation Total Allocated(KB)",
+  {"Allocation Total Allocated(MB)",
    [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) {
-     oss << (static_cast<float>(mem_block->alloc_in_used_size) / kKBToByte);
+     oss << (static_cast<float>(mem_block->alloc_in_used_size) / kKBToByte / kMBToKB);
    }},
-  {"Allocation Total Reserved(KB)",
+  {"Allocation Total Reserved(MB)",
    [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) {
-     oss << (static_cast<float>(mem_block->alloc_total_size) / kKBToByte);
+     oss << (static_cast<float>(mem_block->alloc_total_size) / kKBToByte / kMBToKB);
    }},
-  {"Release Total Allocated(KB)",
+  {"Release Total Allocated(MB)",
    [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) {
-     oss << (static_cast<float>(mem_block->release_in_used_size) / kKBToByte);
+     oss << (static_cast<float>(mem_block->release_in_used_size) / kKBToByte / kMBToKB);
    }},
-  {"Release Total Reserved(KB)",
+  {"Release Total Reserved(MB)",
    [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) {
-     oss << (static_cast<float>(mem_block->release_total_size) / kKBToByte);
+     oss << (static_cast<float>(mem_block->release_total_size) / kKBToByte / kMBToKB);
    }},
   {"Device", [](const MemBlockInfoPtr &mem_block, std::ofstream &oss) { oss << mem_block->pool_name; }},
 };
@@ -569,7 +570,8 @@ void MemoryTrackerEnabled::DumpProfilingMemInfo(const std::string &path, const s
   MS_LOG(INFO) << "MemoryTracker DumpProfilingMemInfo start, last_profiling_pos:" << last_profiling_pos_;
 
   std::ofstream block_file(csv_path);
-  block_file << std::fixed << std::setprecision(kPrecisionDigits);
+  block_file.unsetf(std::ios_base::floatfield);
+  block_file.precision(kPrecisionDigits);
   for (const auto &csv : prof_csv) {
     block_file << csv.first << ",";
   }
