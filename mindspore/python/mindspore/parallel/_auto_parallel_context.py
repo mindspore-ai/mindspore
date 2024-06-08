@@ -1410,6 +1410,7 @@ def _set_auto_parallel_context(**kwargs):
                         and `size`. Config is same as `allgather`.
 
 
+
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
     """

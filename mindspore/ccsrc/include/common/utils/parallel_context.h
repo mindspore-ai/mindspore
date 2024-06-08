@@ -46,7 +46,8 @@ constexpr char kAllGroupParallel[] = "all_group_parallel";
 constexpr char kSameServerGroupParallel[] = "same_server_group_parallel";
 constexpr char kNoGroupParallel[] = "no_group_parallel";
 
-constexpr char kPynativeShard[] = "pynative_shard";
+constexpr char kHasShard[] = "has_shard";
+constexpr char kSharded[] = "sharded";
 constexpr char kSkipAutoParallelCompile[] = "skip_auto_parallel_compile";
 constexpr char kKeepInputUnchanged[] = "keep_input_unchanged";
 

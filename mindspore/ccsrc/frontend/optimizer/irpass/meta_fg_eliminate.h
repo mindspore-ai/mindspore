@@ -41,13 +41,24 @@ class ExpandMetaFg {
     (void)expand_meta_fg_list_.emplace_back("J", std::make_shared<ExpandJPrim>());
     (void)expand_meta_fg_list_.emplace_back("vmap", std::make_shared<ExpandVmapPrim>());
     (void)expand_meta_fg_list_.emplace_back("taylor", std::make_shared<ExpandTaylorPrim>());
-    (void)expand_meta_fg_list_.emplace_back("shard", std::make_shared<ExpandShardPrim>());
   }
   virtual ~ExpandMetaFg() = default;
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
 
  private:
   std::vector<std::pair<std::string, ExpandMetaFGPrimPtr>> expand_meta_fg_list_;
+};
+class ExpandMetaShardFg {
+ public:
+  ExpandMetaShardFg() {
+    // Register derived class of `ExpandShardPrim` to `ExpandShardFg`
+    (void)expand_meta_shard_fg_list_.emplace_back("shard", std::make_shared<ExpandShardPrim>());
+  }
+  virtual ~ExpandMetaShardFg() = default;
+  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
+
+ private:
+  std::vector<std::pair<std::string, ExpandMetaFGPrimPtr>> expand_meta_shard_fg_list_;
 };
 }  // namespace irpass
 }  // namespace opt

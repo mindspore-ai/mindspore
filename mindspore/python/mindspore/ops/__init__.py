@@ -44,7 +44,7 @@ __primitive__ = [
 __all__ = ["get_vm_impl_fn", "vm_impl_registry",
            "op_info_register", "custom_info_register", "AkgGpuRegOp", "AkgAscendRegOp", "AiCPURegOp", "TBERegOp",
            "CpuRegOp", "CustomRegOp", "DataType",
-           "constexpr"]
+           "constexpr", "reshard"]
 __all__.extend(__primitive__)
 __all__.extend(composite.__all__)
 __all__.extend(operations.__all__)

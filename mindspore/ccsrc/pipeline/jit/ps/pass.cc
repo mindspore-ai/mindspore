@@ -49,7 +49,7 @@
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
 #include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
-#include "frontend/parallel/pynative_shard/pynative_shard.h"
+#include "frontend/parallel/shard/shard.h"
 #include "frontend/parallel/pass/label_micro_interleaved_index.h"
 #include "frontend/parallel/pass/label_fine_grained_interleaved_index.h"
 #include "frontend/parallel/pass/reorder_send_recv_between_fp_bp.h"
@@ -493,7 +493,9 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"parameter_eliminate", opt::OptPassConfig(opt::irpass::ParameterEliminator())},
                          {"a_2", a_2},
                          {"accelerated_algorithm", accelerated_algorithm},
-                         {"pynative_shard", opt::OptPassConfig(parallel::PynativeShard)},
+                         {"shard", opt::OptPassConfig(parallel::Shard)},
+                         {"meta_shard_fg_expand", opt::OptPassConfig(opt::irpass::ExpandMetaShardFg())},
+                         {"shard_inline", opt::OptPassConfig({irpass.inline_})},
                          {"auto_parallel", opt::OptPassConfig(parallel::StepAutoParallel)},
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
                          {"flash_sp", opt::OptPassConfig(FlashSPFrontPass)},

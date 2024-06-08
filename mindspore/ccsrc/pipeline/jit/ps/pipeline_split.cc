@@ -117,6 +117,7 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
       }
     }
   }
+  auto execution_mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
@@ -128,7 +129,8 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
     }
     auto expect_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     FuncGraphPtr fun_graph = nullptr;
-    if (expect_prim->name() == mindspore::parallel::J || expect_prim->name() == mindspore::parallel::SHARD) {
+    if (expect_prim->name() == mindspore::parallel::J ||
+        ((expect_prim->name() == mindspore::parallel::SHARD) && (execution_mode == kPynativeMode))) {
       if (IsValueNode<FuncGraph>(cnode->inputs()[1])) {
         fun_graph = GetValueNode<FuncGraphPtr>(cnode->inputs()[1]);
       } else {
@@ -181,16 +183,6 @@ void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<AnfNodePtr
           manager->SetEdge(parameter_index_map[node_input_index], 1, virtual_dataset_node);
         }
       }
-    }
-  }
-}
-
-// If graph has shard node, set flag 'kPynativeShard' for root graph
-void SetPynativeShardFlagIfHasShardNode(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
-  for (auto &node : all_nodes) {
-    if (IsPrimitiveCNode(node, prim::kPrimShard)) {
-      root->set_flag(parallel::kPynativeShard, true);
-      break;
     }
   }
 }
@@ -336,7 +328,6 @@ bool ParallelVirtualDataset(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
 
-  SetPynativeShardFlagIfHasShardNode(root, all_nodes);
   if (!HasVirtualDataset(all_nodes)) {
     InsertVirtualDataset(root, all_nodes);
   }

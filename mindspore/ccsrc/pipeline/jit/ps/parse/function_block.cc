@@ -360,6 +360,10 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
   }
 
   auto symbol_name = info[symbol_index].cast<std::string>();
+  if (symbol_name == "Shard") {
+    MS_LOG(EXCEPTION) << "Cell.shard or ms.shard not supported in jit syntax, please use shard out of jit"
+                      << " or construct scope.";
+  }
   AddGlobalPyParam(symbol_name, py_obj);
   MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symbol: {" << symbol_name << " : "
                << py::str(py_obj) << "}";

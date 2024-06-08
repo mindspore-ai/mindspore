@@ -87,20 +87,35 @@ void SearchParallelStrategy(const std::string &strategy_search_mode, const FuncG
   }
 }
 
+bool HasCellShard(const FuncGraphPtr &func_graph) {
+  AnfNodePtr ret = func_graph->get_return();
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+  for (auto &node : all_nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimShard)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool IsSkipAutoParallel(const FuncGraphPtr &root, const std::string &strategy_search_mode, const bool is_pre_action) {
+  root->set_flag(kHasShard, HasCellShard(root));
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   if (root->has_flag(kSkipAutoParallelCompile) || parallel_mode != kAutoParallel ||
       root->has_flag(AUTO_PARALLEL_RUN_ONCE_ONLY) || HasNestedMetaFg(root)) {
     return true;
   }
 
-  if (IsPynativeParallel() && !root->has_flag(kPynativeShard)) {
+  // For parallel with shard, skip PreAutoParallel
+  // Shard Prim will be deleted once shard is set, see pass.cc.
+  if (root->has_flag(kHasShard)) {
     return true;
   }
-
-  // For pynative parallel, run auto parallel after it.
-  if (IsPynativeParallel() && root->has_flag(kPynativeShard)) {
+  if (root->has_flag(kSharded)) {
     return false;
+  }
+  if (parallel::IsPynativeParallel() && !root->has_flag(kHasShard)) {
+    return true;
   }
 
   if ((is_pre_action && strategy_search_mode == kDynamicProgramming) ||
@@ -128,6 +143,7 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   } else {
     changes = false;
   }
+
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::Util::IsRoleOfPServer() || ps::Util::IsRoleOfScheduler()) {
     return changes;
