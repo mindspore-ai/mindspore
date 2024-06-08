@@ -131,6 +131,10 @@ package_data = {
         'include/*/*',
         'include/*/*/*',
         'include/*/*/*/*',
+        'custom_compiler/*',
+        'custom_compiler/*/*',
+        'custom_compiler/*/*/*',
+        'custom_compiler/*/*/*/*',
         'Third_Party_Open_Source_Software_Notice'
     ]
 }
@@ -188,7 +192,7 @@ setup(
         'Issue Tracker': 'https://github.com/mindspore-ai/mindspore/issues',
     },
     description='MindSpore is a new open source deep learning training/inference '
-    'framework that could be used for mobile, edge and cloud scenarios.',
+                'framework that could be used for mobile, edge and cloud scenarios.',
     long_description=readme,
     long_description_content_type="text/markdown",
     packages=find_packages(),

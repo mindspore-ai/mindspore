@@ -20,6 +20,7 @@
 #include <dlfcn.h>
 #include <vector>
 #include <string>
+#include <map>
 #include <memory>
 #include <algorithm>
 #include <functional>
@@ -87,12 +88,20 @@ inline void *GetOpApiLibHandler(const std::string &lib_path) {
 }
 
 inline void *GetOpApiFunc(const char *api_name) {
+  static std::map<string, void *> opapi_cache;
+  auto res = opapi_cache.find(string(api_name));
+  if (res != opapi_cache.end()) {
+    MS_LOG(DEBUG) << "OpApi " << api_name << " hit cache.";
+    return res->second;
+  }
   if (opapi_lib_handle.size() == 0) {
     LoadOpApiLib();
   }
   for (const auto &handle : opapi_lib_handle) {
     const auto api_func = GetOpApiFuncFromLib(handle.first, handle.second.c_str(), api_name);
     if (api_func != nullptr) {
+      (void)opapi_cache.emplace(string(api_name), api_func);
+      MS_LOG(DEBUG) << "Get OpApiFunc [" << api_name << "] from " << handle.second;
       return api_func;
     }
   }

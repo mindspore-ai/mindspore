@@ -44,7 +44,7 @@ class AGCustomInfer : public abstract::OpInferBase {
     const auto &exec_info = GetValue<std::string>(primitive->GetAttr(kFuncName));
     if (func_type != kAOTFuncType) {
       MS_LOG(EXCEPTION) << "The custom operator of type '" << func_type
-                        << "' does not support dynamic shape yet, func name:" << exec_info;
+                        << "' does not support shape inference in cpp yet, func name:" << exec_info;
     }
 
     auto kernel_name = primitive->name();
