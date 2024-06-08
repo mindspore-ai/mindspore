@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -27,6 +28,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.train import Model
 from mindspore.context import ParallelMode
+from mindspore.ops.auto_generate import OneHotExt
 from tests.dataset_mock import MindData
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
@@ -82,7 +84,7 @@ class Args():
 
 
 class SemiAutoOneHotNet(Cell):
-    def __init__(self, args, strategy):
+    def __init__(self, args, strategy, use_onehot_ext=False):
         super(SemiAutoOneHotNet, self).__init__()
         self.a = args.a
         self.b = args.b
@@ -106,7 +108,10 @@ class SemiAutoOneHotNet(Cell):
         self.e_const = Tensor(self.e, dtype=mstype.float32)
         self.m_const_zero = Tensor(0, dtype=mstype.float32)
         self.a_const_one = Tensor(1, dtype=mstype.float32)
-        self.onehot = P.OneHot()
+        if use_onehot_ext:
+            self.onehot = OneHotExt()
+        else:
+            self.onehot = P.OneHot()
         self.onehot.shard(strategy.onehot_strategy)
         self.exp = P.Exp()
         self.exp.shard(strategy.twod_strategy)
@@ -203,9 +208,12 @@ class SemiAutoOneHotNet(Cell):
 
 
 class OneHotWithMulNet(Cell):
-    def __init__(self, onehot_strategy, mul_strategy):
+    def __init__(self, onehot_strategy, mul_strategy, use_onehot_ext=False):
         super(OneHotWithMulNet, self).__init__()
-        self.onehot = P.OneHot().shard(onehot_strategy)
+        if use_onehot_ext:
+            self.onehot = OneHotExt().shard(onehot_strategy)
+        else:
+            self.onehot = P.OneHot().shard(onehot_strategy)
         self.mul = P.Mul().shard(mul_strategy)
         self.depth = Tensor(120, mstype.int64)
         self.on_value = Tensor(1.0, mstype.float32)
@@ -301,21 +309,23 @@ def test_bn_reshape_dense_bn_train_loss():
     _cell_graph_executor.compile(net, input_, label)
 
 
-def test_semi_one_hot_net_batch():
+@pytest.mark.parametrize('use_onehot_ext', [True, False])
+def test_semi_one_hot_net_batch(use_onehot_ext):
     batch_size = 16
     context.set_auto_parallel_context(device_num=device_num, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     input_ = Tensor(np.ones([batch_size * 1, 512]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([batch_size]), dtype=ms.int32)
 
-    net = SemiAutoOneHotNet(args=Args(), strategy=StrategyBatch())
+    net = SemiAutoOneHotNet(args=Args(), strategy=StrategyBatch(), use_onehot_ext=use_onehot_ext)
     net = GradWrap(NetWithLoss(net))
 
     net.set_train()
     _cell_graph_executor.compile(net, input_, label)
 
 
-def test_semi_one_hot_net_model():
+@pytest.mark.parametrize('use_onehot_ext', [True, False])
+def test_semi_one_hot_net_model(use_onehot_ext):
     batch_size = 16
     learning_rate = 0.1
     momentum = 0.9
@@ -329,7 +339,7 @@ def test_semi_one_hot_net_model():
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=16,
                                       dataset_strategy="data_parallel")
     context.set_context(mode=context.GRAPH_MODE)
-    net = SemiAutoOneHotNet(args=Args(), strategy=StrategyModel())
+    net = SemiAutoOneHotNet(args=Args(), strategy=StrategyModel(), use_onehot_ext=use_onehot_ext)
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     model = Model(net, optimizer=opt)
     model.train(epoch_size, dataset, dataset_sink_mode=False)
