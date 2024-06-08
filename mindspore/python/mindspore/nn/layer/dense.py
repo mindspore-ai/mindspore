@@ -178,6 +178,9 @@ class BiDense(Cell):
         _check_is_tensor("input2", input2, self.cls_name)
         input1_shape = input1.shape
         input2_shape = input2.shape
+        check_last_dimension(input1_shape[-1], self.in1_channels, "input1", "in1_channels", self.cls_name)
+        check_last_dimension(input2_shape[-1], self.in2_channels, "input2", "in2_channels", self.cls_name)
+        check_dense_inputs_same_shape(input1_shape, input2_shape, self.cls_name)
         if len(input1_shape) != 2:
             input1 = input1.reshape((-1, input1_shape[-1]))
             input2 = input2.reshape((-1, input2_shape[-1]))

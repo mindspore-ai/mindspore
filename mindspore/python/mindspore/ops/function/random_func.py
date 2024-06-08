@@ -1431,8 +1431,18 @@ def multinomial(input, num_samples, replacement=True, seed=None):
         >>> # [[0 0 0 0 0 0 0 0 1 0]
         >>> #  [1 1 1 1 1 0 1 1 1 1]]
     """
+    def _check_valid_dim(dim, name):
+        if dim not in (1, 2):
+            raise ValueError(f"For '{name}', the dimension of inputs must be 1d or 2d, but got {dim}.")
+
+    _check_valid_dim(len(shape_(input)), "multinomial")
     seed1, seed2 = _get_seed(seed, "multinomial")
     if not replacement:
+        if shape_(input)[-1] < num_samples:
+            const_utils.raise_value_error(f"For 'multinomial', the 'num_samples' must be less than "
+                                          f"the last dimension of input without 'replacement', "
+                                          f"but got 'num_samples': {num_samples} and "
+                                          f"'replacement': {replacement}")
         n_dist = 1
         if len(shape_(input)) > 1:
             n_dist = shape_(input)[-2]

@@ -35,6 +35,7 @@ dtype_ = P.DType()
 geqrf_ = P.Geqrf()
 slice_ = P.Slice()
 
+
 def cond(A, p=None):
     r"""
     Returns the matrix norm or vector norm of a given tensor.
@@ -241,6 +242,20 @@ def svd(input, full_matrices=False, compute_uv=True):
     return s
 
 
+def _check_pinv(x, hermitian):
+    """check pinv input"""
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError("The input x must be tensor")
+    if x.shape == ():
+        raise TypeError("For pinv, the 0-D input is not supported")
+    x_shape = F.shape(x)
+    if len(x_shape) < 2:
+        raise ValueError("input x should have 2 or more dimensions, " f"but got {len(x_shape)}.")
+    x_dtype = dtype_(x)
+    _check_input_dtype("x", x_dtype, [mstype.float32, mstype.float64], "pinv")
+    _check_attr_dtype("hermitian", hermitian, [bool], "pinv")
+
+
 def pinv(x, *, atol=None, rtol=None, hermitian=False):
     r"""
     Computes the (Moore-Penrose) pseudo-inverse of a matrix.
@@ -301,12 +316,8 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         [[0.25 0.  ]
          [0.   0.2 ]]
     """
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError("The input x must be tensor")
-    x_dtype = dtype_(x)
-    _check_input_dtype("x", x_dtype, [mstype.float32, mstype.float64], "pinv")
-    _check_attr_dtype("hermitian", hermitian, [bool], "pinv")
 
+    _check_pinv(x, hermitian)
     if atol is not None:
         if rtol is None:
             rtol = Tensor(0.0)

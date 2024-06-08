@@ -747,9 +747,14 @@ def adaptive_max_pool1d(input, output_size):
     if x_in_shape[2] % output_size != 0:
         raise ValueError(f"For adaptive_max_pool1d input's last dimension must be divisible by "
                          f"output size {output_size}, but got {x_in_shape[2]}.")
-    if x_dtype not in [mstype.float16, mstype.float32]:
-        raise TypeError(f"For adaptive_max_pool1d, the input dtype must be float16 or float32, "
-                        f"but got {x_dtype}.")
+    if is_ascend_backend():
+        if x_dtype not in [mstype.float16]:
+            raise TypeError(f"For adaptive_max_pool1d in Ascend platform, the input dtype must be float16, "
+                            f"but got {x_dtype}.")
+    else:
+        if x_dtype not in [mstype.float16, mstype.float32]:
+            raise TypeError(f"For adaptive_max_pool1d, the input dtype must be float16 or float32, "
+                            f"but got {x_dtype}.")
 
     squeeze_ = _get_cache_prim(P.Squeeze)(2)
     width = x_in_shape[2]
@@ -1463,8 +1468,6 @@ def dropout1d(input, p=0.5, training=True):
         return input
     dropout_2d_op = NN_OPS.Dropout2D(1.0 - p)
 
-    if not F.isconstant(len(input.shape)):
-        raise ValueError("For dropout1d, dynamic rank is not support now.")
     if len(input.shape) == 2:
         input = input.expand_dims(0)
         input = input.expand_dims(-1)
@@ -3465,6 +3468,7 @@ def bidense(input1, input2, weight, bias=None):
     _check_is_tensor("bias", bias, "bidense")
     input1_shape = input1.shape
     input2_shape = input2.shape
+    check_dense_inputs_same_shape(input1_shape, input2_shape, "bidense")
 
     if len(input1_shape) != 2:
         input1 = input1.reshape((-1, input1_shape[-1]))
@@ -6107,13 +6111,21 @@ def adaptive_avg_pool1d(input, output_size):
         (1, 3, 2)
     """
     def _check(x, output_size):
+        x_in_shape = x.shape
         x_dtype = dtype_(x)
         if not isinstance(x, (Tensor, Tensor_)):
             raise TypeError("For adaptive_avg_pool1d, the input input must be tensor")
 
         _check_adaptive_avg_pool1d_output_size(output_size)
 
-
+        if len(x_in_shape) != 3:
+            raise ValueError(f"For adaptive_avg_pool1d input must have 3 dim, but got {len(x_in_shape)}.")
+        if x_in_shape[2] < output_size:
+            raise ValueError(f"For adaptive_avg_pool1d input's last dimension must be greater or equal to " \
+                             f"output size {output_size}, but got {x_in_shape[2]}.")
+        if x_in_shape[2] % output_size != 0:
+            raise ValueError(f"For adaptive_avg_pool1d input's last dimension must be divisible by "
+                             f"output size {output_size}, but got {x_in_shape[2]}.")
         if x_dtype not in [mstype.float16, mstype.float32]:
             raise TypeError(f"For adaptive_avg_pool1d, the input dtype must be float16 or float32, " \
                             f"but got {x_dtype}.")

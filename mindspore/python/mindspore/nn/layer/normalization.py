@@ -814,6 +814,7 @@ class _InstanceNorm(Cell):
         self.instance_bn = P.InstanceNorm(epsilon=self.eps, momentum=self.momentum)
 
     def construct(self, x):
+        self._check_input_dim(self.shape(x), self.cls_name)
         return self.instance_bn(x,
                                 self.gamma,
                                 self.beta,

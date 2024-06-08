@@ -786,6 +786,12 @@ def check_astype_dtype(dtype):
 
 def check_transpose_axis(axes, ndim):
     """Check the axis argument for tensor.transpose"""
+    def _check_dim():
+        # if multiple arguments provided, it must be `ndim` number of ints
+        if len(axes) != ndim:
+            raise ValueError(f"For Tensor.transpose, the number of axes must be equal to the dimension of Tensor, " \
+                             f"but got {len(axes)} in the number of axes.")
+
     if not axes or (len(axes) == 1 and axes[0] is None):
         return tuple(range(ndim-1, -1, -1))
 
@@ -796,12 +802,14 @@ def check_transpose_axis(axes, ndim):
             perm = tuple(perm)
         elif isinstance(perm, int):
             perm = (perm,)
+            _check_dim()
         else:
             if not isinstance(perm, tuple):
                 raise TypeError(f"For Tensor.transpose, the parameter 'axes' must be a tuple/list, " \
                                 f"or series of integer, but got {type(axes[0])}")
         return perm
 
+    _check_dim()
     return axes
 
 
