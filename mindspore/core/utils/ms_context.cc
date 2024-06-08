@@ -529,7 +529,8 @@ void PrintJitLevelAndExecMode(bool is_jit_level_changed, const std::string &jit_
   }
 
   MS_LOG(INFO) << "The jit_level is: " << jit_level << ", and " << exec_mode;
-  if (common::IsEnableRuntimeConfig(common::kRuntimeCompileStat)) {
+  static std::string is_enable_runtime_cfg = common::GetEnv("MS_DEV_RUNTIME_CONF");
+  if (!is_enable_runtime_cfg.empty()) {
     std::cout << "[MS_RUNTIME_PROF]The jit_level is: " << jit_level << ", and " << exec_mode << std::endl;
   }
 }
