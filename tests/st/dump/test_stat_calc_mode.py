@@ -25,9 +25,11 @@ from mindspore import JitConfig, Tensor, nn
 from pathlib import Path
 from dump_test_utils import generate_statistic_dump_json, generate_dump_json
 
+
 def check_statistic_l2_value(tensor, l2_value):
     if "L2Norm Value" in tensor:
         assert math.isclose(float(tensor["L2Norm Value"]), l2_value, rel_tol=1e-4, abs_tol=1e-4)
+
 
 def check_statistic_device_dump(dump_file_path):
     output_name = "statistic.csv"
@@ -97,10 +99,11 @@ def test_kbk_stat_calc_mode_dump():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_kbk_stat_calc_mode_l2_dump():
+@pytest.mark.parametrize('stat_calc_mode', ["host", "device"])
+def test_kbk_stat_calc_mode_l2_dump(stat_calc_mode):
     """
     Feature: kbyk statistic dump support host l2 value dump.
-    Description: Test kbyk statistic l2 value dump on host.
+    Description: Test kbyk statistic l2 value dump on host and device.
     Expectation: The statistics result meet the requirement.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -111,7 +114,7 @@ def test_kbk_stat_calc_mode_l2_dump():
     dump_config_path = str(path / "config.json")
 
     def extra_json_settings(data):
-        data["e2e_dump_settings"]["stat_calc_mode"] = "host"
+        data["e2e_dump_settings"]["stat_calc_mode"] = stat_calc_mode
         data["common_dump_settings"]["saved_data"] = "statistic"
 
     generate_dump_json(dump_path, dump_config_path, "e2e_dump_settings", extra_json_settings)
