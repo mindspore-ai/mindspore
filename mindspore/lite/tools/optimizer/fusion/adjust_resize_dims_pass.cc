@@ -308,6 +308,7 @@ CNodePtr CreateResizeCNodeFor3D(const FuncGraphPtr &func_graph, const CNodePtr &
   auto shape_tensor = std::dynamic_pointer_cast<tensor::Tensor>(resize_shape_node->default_param());
   if (shape_tensor == nullptr) {
     MS_LOG(ERROR) << "Get resize shape_tensor failed!";
+    return nullptr;
   }
   if (shape_tensor->data_type() == kNumberTypeFloat32) {
     auto tensor_data = static_cast<float *>(shape_tensor->data_c());
