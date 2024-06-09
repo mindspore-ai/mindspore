@@ -16,9 +16,46 @@
 #ifndef MINDSPORE_UTILS_H
 #define MINDSPORE_UTILS_H
 
+#include <set>
 #include <string>
-
+#include <unordered_map>
 namespace mindspore {
+
+constexpr auto csvHeaderComm = "Op Type,Op Name,Task ID,Stream ID,Timestamp,IO,Slot,Data Size,Data Type,Shape";
+const std::unordered_map<std::string, std::string> header_map = {{"max", "Max Value"},
+                                                                 {"min", "Min Value"},
+                                                                 {"avg", "Avg Value"},
+                                                                 {"count", "Count"},
+                                                                 {"negative zero count", "Negative Zero Count"},
+                                                                 {"positive zero count", "Positive Zero Count"},
+                                                                 {"nan count", "Nan Count"},
+                                                                 {"negative inf count", "Negative Inf Count"},
+                                                                 {"positive inf count", "Positive Inf Count"},
+                                                                 {"zero count", "Zero Count"},
+                                                                 {"l2norm", "L2Norm Value"},
+                                                                 {"md5", "MD5"}};
+
+class CsvHeaderUtil {
+ public:
+  static CsvHeaderUtil &GetInstance() {
+    static CsvHeaderUtil instance;
+    return instance;
+  }
+  void SetStatCsvHeader(std::set<std::string> headers) {
+    csv_header.assign(csvHeaderComm);
+    for (const auto &str : headers) {
+      // JsonDumpParser guarantee headers are valid.
+      csv_header = csv_header + "," + header_map.at(str);
+    }
+    csv_header += '\n';
+  }
+  std::string GetStatCsvHeader() { return csv_header; }
+
+ private:
+  CsvHeaderUtil() : csv_header("") {}
+  std::string csv_header;
+};
+
 bool CheckStoull(uint64_t *const output_digit, const std::string &input_str);
 
 bool CheckStoul(size_t *const output_digit, const std::string &input_str);

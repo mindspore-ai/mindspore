@@ -16,6 +16,7 @@
 #include "debug/data_dump/statistic_kernel.h"
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 #include "debug/debugger/debugger_utils.h"
 #include "include/common/debug/common.h"
@@ -32,6 +33,12 @@ const std::set<TypeId> &min_supported_dtype = max_supported_dtype;
 const std::set<TypeId> mean_supported_dtype = {
   kNumberTypeBFloat16, kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64, kNumberTypeFloat, kNumberTypeDouble,
   kNumberTypeInt,      kNumberTypeInt8,    kNumberTypeUInt8,   kNumberTypeInt16,   kNumberTypeInt32, kNumberTypeInt64};
+const std::set<TypeId> &norm_supported_dtype = {kNumberTypeBFloat16, kNumberTypeFloat16, kNumberTypeFloat32};
+
+const char KStatMax[] = "max";
+const char KStatMin[] = "min";
+const char KStatMean[] = "mean";
+const char KStatL2Norm[] = "l2norm";
 
 void WarningOnce(const string &device_name, const string &type_name, const string &statistic_name) {
   static std::set<string> warning_once;
@@ -43,6 +50,28 @@ void WarningOnce(const string &device_name, const string &type_name, const strin
     MS_LOG(WARNING) << "In the '" << device_name << "' platform, '" << type_name << "' is not supported for '"
                     << statistic_name << "' statistic dump.";
   }
+}
+
+void WarningOnceCategory(const string &name) {
+  static std::set<string> warning_once;
+  if (warning_once.find(name) != warning_once.end()) {
+    return;
+  } else {
+    warning_once.insert(name);
+    MS_LOG(WARNING) << name << " category is not support!";
+  }
+}
+
+template <typename Func, typename... Args>
+auto TimeWrapper(Func &&func, const std::string &funcName, Args &&... args) -> decltype(auto) {
+  auto start = std::chrono::high_resolution_clock::now();
+  auto result = std::forward<Func>(func)(std::forward<Args>(args)...);
+  auto end = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+  auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+  auto microseconds = duration.count() % 1000;
+  MS_LOG(DEBUG) << funcName << " took " << milliseconds.count() << " ms " << microseconds << " us";
+  return result;
 }
 
 }  // namespace
@@ -130,7 +159,7 @@ TensorPtr StatisticKernel::LaunchKernel(KernelTensor *input) {
   return SyncDeviceToHostTensor(output_addr);
 }
 
-DeviceAddressPtr MeanStatisticKernel::GetAxisDeviceAddress(const uint32_t stream_id, size_t dim) {
+DeviceAddressPtr DimStatisticKernel::GetAxisDeviceAddress(const uint32_t stream_id, size_t dim) {
   vector<int64_t> axes(dim);
   for (size_t i = 0; i < dim; i++) {
     axes[i] = static_cast<int64_t>(i);
@@ -140,18 +169,18 @@ DeviceAddressPtr MeanStatisticKernel::GetAxisDeviceAddress(const uint32_t stream
   return GenerateDeviceAddress(stream_id, axisbytes, kNumberTypeInt64, axes_shape, MakeValue(axes));
 }
 
-DeviceAddressPtr MeanStatisticKernel::GetKeepDimsDeviceAddress(const uint32_t stream_id) {
+DeviceAddressPtr DimStatisticKernel::GetKeepDimsDeviceAddress(const uint32_t stream_id) {
   ShapeVector keepdims_shape = {};
   return GenerateDeviceAddress(stream_id, UnitSizeInBytes(kNumberTypeBool), kNumberTypeBool, keepdims_shape,
                                MakeValue(false));
 }
 
-DeviceAddressPtr MeanStatisticKernel::GetDtypeDeviceAddress(const uint32_t stream_id, const TypeId &dtype_id) {
+DeviceAddressPtr DimStatisticKernel::GetDtypeDeviceAddress(const uint32_t stream_id, const TypeId &dtype_id) {
   ShapeVector dtype_shape_vec = {1};
   return GenerateDeviceAddress(stream_id, UnitSizeInBytes(dtype_id), dtype_id, dtype_shape_vec);
 }
 
-TensorPtr MeanStatisticKernel::LaunchKernel(KernelTensor *input) {
+TensorPtr DimStatisticKernel::LaunchKernel(KernelTensor *input) {
   MS_EXCEPTION_IF_NULL(input);
   const auto stream_id = input->stream_id();
   vector<KernelTensor *> inputs{input};
@@ -185,14 +214,63 @@ TensorPtr MeanStatisticKernel::LaunchKernel(KernelTensor *input) {
   return SyncDeviceToHostTensor(output_addr);
 }
 
-TensorPtr StatisticKernelManager::CalMax(const DeviceContext *device_context, KernelTensor *input) {
-  if (max_kernel.find(device_context) == max_kernel.end()) {
-    max_kernel.emplace(device_context,
-                       std::make_unique<StatisticKernel>(device_context, ops::kNameMax, max_supported_dtype));
+DeviceAddressPtr NormStatisticKernel::GetScalar(const uint32_t stream_id, float scalar) {
+  ShapeVector axes_shape{};
+  size_t axisbytes = UnitSizeInBytes(kNumberTypeFloat32);
+  return GenerateDeviceAddress(stream_id, axisbytes, kNumberTypeFloat32, axes_shape, MakeValue(scalar));
+}
+
+TensorPtr NormStatisticKernel::LaunchKernel(KernelTensor *input) {
+  MS_EXCEPTION_IF_NULL(input);
+  if (input->GetShapeVector().empty()) {
+    return std::make_shared<tensor::Tensor>(input->dtype_id(), input->GetShapeVector(),
+                                            const_cast<void *>(input->GetValuePtr()),
+                                            UnitSizeInBytes(input->dtype_id()));
   }
+  const auto stream_id = input->stream_id();
+  vector<KernelTensor *> inputs{input};
+  auto output_addr = GetOutputDeviceAddress(stream_id, kNumberTypeFloat32);
+  MS_EXCEPTION_IF_NULL(output_addr);
+  MS_EXCEPTION_IF_NULL(kernel_mod_);
+
+  auto scalar = GetScalar(stream_id);
+  MS_EXCEPTION_IF_NULL(scalar);
+  inputs.emplace_back(scalar->kernel_tensor().get());
+
+  auto axis = GetAxisDeviceAddress(stream_id, input->GetShapeVector().size());
+  MS_EXCEPTION_IF_NULL(axis);
+  inputs.emplace_back(axis->kernel_tensor().get());
+
+  auto keepdims = GetKeepDimsDeviceAddress(stream_id);
+  inputs.emplace_back(keepdims->kernel_tensor().get());
+
+  auto dtype = GetDtypeDeviceAddress(stream_id, kNumberTypeFloat32);
+  inputs.emplace_back(dtype->kernel_tensor().get());
+
+  void *stream_ptr = device_context_->device_res_manager_->GetStream(stream_id);
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+  auto workspace_addr = GetWorkSpaceDeviceAddress(stream_id, inputs, {output_addr->kernel_tensor().get()});
+  bool ret = false;
+  if (workspace_addr) {
+    ret = kernel_mod_->Launch(inputs, {workspace_addr->kernel_tensor().get()}, {output_addr->kernel_tensor().get()},
+                              stream_ptr);
+  } else {
+    ret = kernel_mod_->Launch(inputs, {}, {output_addr->kernel_tensor().get()}, stream_ptr);
+  }
+  if (!ret) {
+    MS_LOG(EXCEPTION) << kernel_name_ << " kernel launch failed";
+  }
+  return SyncDeviceToHostTensor(output_addr);
+}
+
+TensorPtr CalMax(const DeviceContext *device_context, KernelTensor *input) {
+  static std::map<const DeviceContext *, std::unique_ptr<StatisticKernel>> max_kernel;
+  auto result = max_kernel.try_emplace(
+    device_context, std::make_unique<StatisticKernel>(device_context, ops::kNameMax, max_supported_dtype));
+  auto &kernel = result.first->second;
   auto dtype = input->dtype_id();
-  if (max_kernel[device_context]->CheckDataType(dtype)) {
-    return max_kernel[device_context]->LaunchKernel(input);
+  if (kernel->CheckDataType(dtype)) {
+    return kernel->LaunchKernel(input);
   } else {
     const auto &device_name = device_context->device_context_key_.device_name_;
     const auto &type_name = TypeIdToString(dtype);
@@ -201,14 +279,14 @@ TensorPtr StatisticKernelManager::CalMax(const DeviceContext *device_context, Ke
   }
 }
 
-TensorPtr StatisticKernelManager::CalMin(const DeviceContext *device_context, KernelTensor *input) {
-  if (min_kernel.find(device_context) == min_kernel.end()) {
-    min_kernel.emplace(device_context,
-                       std::make_unique<StatisticKernel>(device_context, ops::kNameMin, min_supported_dtype));
-  }
+TensorPtr CalMin(const DeviceContext *device_context, KernelTensor *input) {
+  static std::map<const DeviceContext *, std::unique_ptr<StatisticKernel>> min_kernel;
+  auto result = min_kernel.try_emplace(
+    device_context, std::make_unique<StatisticKernel>(device_context, ops::kNameMin, min_supported_dtype));
+  auto &kernel = result.first->second;
   auto dtype = input->dtype_id();
-  if (min_kernel[device_context]->CheckDataType(dtype)) {
-    return min_kernel[device_context]->LaunchKernel(input);
+  if (kernel->CheckDataType(dtype)) {
+    return kernel->LaunchKernel(input);
   } else {
     const auto &device_name = device_context->device_context_key_.device_name_;
     const auto &type_name = TypeIdToString(dtype);
@@ -217,19 +295,47 @@ TensorPtr StatisticKernelManager::CalMin(const DeviceContext *device_context, Ke
   }
 }
 
-TensorPtr StatisticKernelManager::CalMean(const DeviceContext *device_context, KernelTensor *input) {
-  if (mean_kernel.find(device_context) == mean_kernel.end()) {
-    mean_kernel.emplace(device_context, std::make_unique<MeanStatisticKernel>(device_context, mean_supported_dtype));
-  }
+TensorPtr CalMean(const DeviceContext *device_context, KernelTensor *input) {
+  static std::map<const DeviceContext *, std::unique_ptr<MeanStatisticKernel>> mean_kernel;
+  auto result = mean_kernel.try_emplace(device_context,
+                                        std::make_unique<MeanStatisticKernel>(device_context, mean_supported_dtype));
+  auto &kernel = result.first->second;
   auto dtype = input->dtype_id();
-  if (mean_kernel[device_context]->CheckDataType(dtype)) {
-    return mean_kernel[device_context]->LaunchKernel(input);
+  if (kernel->CheckDataType(dtype)) {
+    return kernel->LaunchKernel(input);
   } else {
     const auto &device_name = device_context->device_context_key_.device_name_;
     const auto &type_name = TypeIdToString(dtype);
     WarningOnce(device_name, type_name, "mean");
     return nullptr;
   }
+}
+
+TensorPtr CalL2Norm(const DeviceContext *device_context, KernelTensor *input) {
+  static std::map<const DeviceContext *, std::unique_ptr<NormStatisticKernel>> norm_kernel;
+  auto result = norm_kernel.try_emplace(device_context,
+                                        std::make_unique<NormStatisticKernel>(device_context, norm_supported_dtype));
+  auto &kernel = result.first->second;
+  auto dtype = input->dtype_id();
+  if (kernel->CheckDataType(dtype)) {
+    return kernel->LaunchKernel(input);
+  } else {
+    const auto &device_name = device_context->device_context_key_.device_name_;
+    const auto &type_name = TypeIdToString(dtype);
+    WarningOnce(device_name, type_name, "norm");
+    return nullptr;
+  }
+}
+
+TensorPtr CalStatistic(const std::string &stat_name, const DeviceContext *device_context, KernelTensor *input) {
+  static const std::map<std::string, std::function<TensorPtr(const DeviceContext *, KernelTensor *)>> func_map = {
+    {KStatMax, CalMax}, {KStatMin, CalMin}, {KStatL2Norm, CalL2Norm}, {KStatMean, CalMean}};
+  auto it = func_map.find(stat_name);
+  if (it == func_map.end()) {
+    WarningOnceCategory(stat_name);
+    return nullptr;
+  }
+  return TimeWrapper(it->second, stat_name, device_context, input);
 }
 
 }  // namespace datadump

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,15 @@
  */
 
 #include "include/backend/debug/data_dump/tensor_stat_dump.h"
-
-#include "include/common/debug/common.h"
+#include <map>
 #include "debug/debug_services.h"
-#include "include/backend/debug/debugger/debugger.h"
+#include "debug/utils.h"
 #include "include/backend/debug/common/csv_writer.h"
-
+#include "include/backend/debug/debugger/debugger.h"
+#include "include/common/debug/common.h"
 namespace {
 constexpr auto kInput = "input";
 constexpr auto kOutput = "output";
-constexpr auto kCsvHeader =
-  "Op Type,Op Name,Task ID,Stream ID,Timestamp,IO,Slot,Data Size,Data Type,Shape,Max Value,Min Value,Avg Value,"
-  "Count,Negative Zero Count,Positive Zero Count,NaN Count,Negative Inf Count,Positive Inf Count,Zero Count,MD5\n";
 constexpr auto kCsvFileName = "statistic.csv";
 }  // namespace
 
@@ -69,9 +66,10 @@ bool TensorStatDump::OpenStatisticsFile(const std::string &dump_path) {
   std::string filename = dump_path + "/" + kCsvFileName;
   // try to open file
   CsvWriter &csv = CsvWriter::GetInstance();
+  const string csv_header = CsvHeaderUtil::GetInstance().GetStatCsvHeader();
   int retry = 2;
   while (retry > 0) {
-    if (csv.OpenFile(filename, kCsvHeader)) {
+    if (csv.OpenFile(filename, csv_header)) {
       break;
     }
     retry--;
@@ -108,11 +106,12 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
   std::string filename = dump_path + "/" + kCsvFileName;
   // try to open file
   CsvWriter csv;
-  if (!csv.OpenFile(filename, kCsvHeader)) {
+  const auto csv_header = CsvHeaderUtil::GetInstance().GetStatCsvHeader();
+  if (!csv.OpenFile(filename, csv_header)) {
     MS_LOG(WARNING) << "Open statistic dump file failed, skipping current statistics";
     return false;
   }
-  const DebugServices::TensorStat &stat = DebugServices::GetTensorStatistics(data);
+  DebugServices::TensorStat stat = DebugServices::GetTensorStatistics(data);
   // write tensor statistics to csv file
   std::ostringstream shape;
   shape << "\"(";
@@ -135,23 +134,16 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
     csv.WriteToCsv(type);
   }
   csv.WriteToCsv(shape.str());
-  if (stat.count == stat.nan_count + stat.neg_inf_count + stat.pos_inf_count) {
-    csv.WriteToCsv(std::string("null"));
-    csv.WriteToCsv(std::string("null"));
-    csv.WriteToCsv(std::string("null"));
-  } else {
-    csv.WriteToCsv(stat.max_value);
-    csv.WriteToCsv(stat.min_value);
-    csv.WriteToCsv(stat.avg_value);
+  stat.UpdateHeaderItemMap();
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  auto statistic_category = dump_json_parser.statistic_category();
+  // first several item write to file without endline;
+  for (auto &header : statistic_category) {
+    auto &item = stat.header_item_map[header];
+    csv.WriteToCsv(item);
+    MS_LOG(INFO) << "Write the :" << header << " into file, value is: " << item;
   }
-  csv.WriteToCsv(stat.count);
-  csv.WriteToCsv(stat.neg_zero_count);
-  csv.WriteToCsv(stat.pos_zero_count);
-  csv.WriteToCsv(stat.nan_count);
-  csv.WriteToCsv(stat.neg_inf_count);
-  csv.WriteToCsv(stat.pos_inf_count);
-  csv.WriteToCsv(stat.zero_count);
-  csv.WriteToCsv(stat.md5, true);
+  csv.WriteToCsv("", true);
   csv.CloseFile();
   return true;
 }

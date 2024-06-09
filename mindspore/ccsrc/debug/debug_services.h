@@ -235,7 +235,7 @@ class DebugServices {
   struct TensorStat {
     TensorStat(uint64_t data_size, int dtype, const std::vector<int64_t> &shape, bool is_bool, double max_value,
                double min_value, double avg_value, uint64_t count, uint64_t neg_zero_count, uint64_t pos_zero_count,
-               uint64_t nan_count, uint64_t neg_inf_count, uint64_t pos_inf_count, uint64_t zero_count,
+               uint64_t nan_count, uint64_t neg_inf_count, uint64_t pos_inf_count, uint64_t zero_count, double l2_value,
                std::string md5 = "")
         : data_size(data_size),
           dtype(dtype),
@@ -251,6 +251,7 @@ class DebugServices {
           neg_inf_count(neg_inf_count),
           pos_inf_count(pos_inf_count),
           zero_count(zero_count),
+          l2_value(l2_value),
           md5(md5) {}
 
     TensorStat() = default;
@@ -269,7 +270,28 @@ class DebugServices {
     uint64_t neg_inf_count = 0;
     uint64_t pos_inf_count = 0;
     uint64_t zero_count = 0;
+    double l2_value = 0.0;
     std::string md5 = "";
+    std::map<std::string, std::string> header_item_map;
+    std::string DoubleToString(double value) {
+      std::ostringstream ss;
+      ss << value;
+      return ss.str();
+    }
+    void UpdateHeaderItemMap() {
+      header_item_map = {{"max", DoubleToString(max_value)},
+                         {"min", DoubleToString(min_value)},
+                         {"avg", DoubleToString(avg_value)},
+                         {"count", std::to_string(count)},
+                         {"negative zero count", std::to_string(neg_zero_count)},
+                         {"positive zero count", std::to_string(pos_zero_count)},
+                         {"nan count", std::to_string(nan_count)},
+                         {"negative inf count", std::to_string(neg_inf_count)},
+                         {"positive inf count", std::to_string(pos_inf_count)},
+                         {"zero count", std::to_string(zero_count)},
+                         {"l2norm", DoubleToString(l2_value)},
+                         {"md5", md5}};
+    }
   };
 
   struct ChunkData {

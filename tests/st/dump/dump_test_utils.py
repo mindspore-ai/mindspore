@@ -148,6 +148,7 @@ async_dump_dict_acl_assign_ops_by_regex = {
     }
 }
 
+
 def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
     """
     Util function to generate dump configuration json file.
@@ -261,12 +262,13 @@ def generate_dump_json_with_overflow(dump_path, json_file_name, test_key, op):
         json.dump(data, f)
 
 
-def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data, net_name='Net'):
+def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data, net_name='Net',
+                                 statistic_category=None):
     """
     Util function to generate dump configuration json file for statistic dump.
     """
     data = {}
-    if test_key == "test_gpu_e2e_dump":
+    if test_key in ["test_gpu_e2e_dump", "test_e2e_dump_dynamic_shape_custom_statistic"]:
         data = e2e_dump_dict
     elif test_key == "test_async_dump" or test_key == "test_ge_dump":
         data = async_dump_dict
@@ -281,6 +283,8 @@ def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data
     data["common_dump_settings"]["path"] = dump_path
     data["common_dump_settings"]["saved_data"] = saved_data
     data["common_dump_settings"]["net_name"] = net_name
+    if statistic_category:
+        data["common_dump_settings"]["statistic_category"] = statistic_category
     with open(json_file_name, 'w') as f:
         json.dump(data, f)
 
@@ -371,15 +375,15 @@ def check_statistic_dump(dump_file_path):
             if tensor['IO'] == 'input' and tensor['Slot'] == '0':
                 assert tensor['Min Value'] == '1'
                 assert tensor['Max Value'] == '6'
-                assert tensor['MD5'] == 'fa85978152c7dfb5f1322082915cb050'
+                assert tensor['L2Norm Value'] == '9.53939'
             elif tensor['IO'] == 'input' and tensor['Slot'] == '1':
                 assert tensor['Min Value'] == '7'
                 assert tensor['Max Value'] == '12'
-                assert tensor['MD5'] == '9fd3b07ba2cfea7833f1da3a2960aadd'
+                assert tensor['L2Norm Value'] == '23.6432'
             elif tensor['IO'] == 'output' and tensor['Slot'] == '0':
                 assert tensor['Min Value'] == '8'
                 assert tensor['Max Value'] == '18'
-                assert tensor['MD5'] == '72bb57525231b5c8d3176bc5497f8aa0'
+                assert tensor['L2Norm Value'] == '32.9242'
 
 
 def check_data_dump(dump_file_path, is_ge=False):

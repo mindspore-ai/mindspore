@@ -17,6 +17,7 @@
 #include "mindspore/core/utils/log_adapter.h"
 
 namespace mindspore {
+
 bool CheckStoull(uint64_t *const output_digit, const std::string &input_str) {
   try {
     *output_digit = std::stoull(input_str);

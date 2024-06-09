@@ -66,35 +66,35 @@ class StatisticKernel {
   std::set<TypeId> supported_dtype_;
 };
 
-class MeanStatisticKernel : public StatisticKernel {
+class DimStatisticKernel : public StatisticKernel {
  public:
-  explicit MeanStatisticKernel(const DeviceContext *device_context, const std::set<TypeId> &dtype_id)
-      : StatisticKernel(device_context, ops::kNameMeanExt, dtype_id) {}
+  explicit DimStatisticKernel(const DeviceContext *device_context, string kernel_name, const std::set<TypeId> &dtype_id)
+      : StatisticKernel(device_context, kernel_name, dtype_id) {}
   TensorPtr LaunchKernel(KernelTensor *input);
   DeviceAddressPtr GetAxisDeviceAddress(const uint32_t stream_id, size_t dim);
   DeviceAddressPtr GetKeepDimsDeviceAddress(const uint32_t stream_id);
   DeviceAddressPtr GetDtypeDeviceAddress(const uint32_t stream_id, const TypeId &);
 };
 
-class StatisticKernelManager {
+class MeanStatisticKernel : public DimStatisticKernel {
  public:
-  static StatisticKernelManager &GetInstance() {
-    static StatisticKernelManager instance;
-    return instance;
-  }
-  ~StatisticKernelManager() = default;
-  StatisticKernelManager(const StatisticKernelManager &) = delete;
-  StatisticKernelManager &operator=(const StatisticKernelManager &) = delete;
-  TensorPtr CalMax(const DeviceContext *device_context, KernelTensor *input);
-  TensorPtr CalMin(const DeviceContext *device_context, KernelTensor *input);
-  TensorPtr CalMean(const DeviceContext *device_context, KernelTensor *input);
-
- private:
-  StatisticKernelManager() = default;
-  std::map<const DeviceContext *, std::unique_ptr<StatisticKernel>> max_kernel;
-  std::map<const DeviceContext *, std::unique_ptr<StatisticKernel>> min_kernel;
-  std::map<const DeviceContext *, std::unique_ptr<MeanStatisticKernel>> mean_kernel;
+  explicit MeanStatisticKernel(const DeviceContext *device_context, const std::set<TypeId> &dtype_id)
+      : DimStatisticKernel(device_context, ops::kNameMeanExt, dtype_id) {}
 };
+
+class NormStatisticKernel : public DimStatisticKernel {
+ public:
+  explicit NormStatisticKernel(const DeviceContext *device_context, const std::set<TypeId> &dtype_id)
+      : DimStatisticKernel(device_context, ops::kNameNorm, dtype_id) {}
+  TensorPtr LaunchKernel(KernelTensor *input);
+  DeviceAddressPtr GetScalar(const uint32_t stream_id, float scalar = 2.0);
+};
+
+TensorPtr CalL2Norm(const DeviceContext *device_context, KernelTensor *input);
+TensorPtr CalMax(const DeviceContext *device_context, KernelTensor *input);
+TensorPtr CalMin(const DeviceContext *device_context, KernelTensor *input);
+TensorPtr CalMean(const DeviceContext *device_context, KernelTensor *input);
+TensorPtr CalStatistic(const std::string &stat_name, const DeviceContext *device_context, KernelTensor *input);
 
 }  // namespace datadump
 

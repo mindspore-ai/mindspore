@@ -19,6 +19,7 @@ import tempfile
 import shutil
 import glob
 import numpy as np
+import csv
 import pytest
 import mindspore.context as context
 
@@ -28,7 +29,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore import dataset as ds
 from mindspore.train import Model
-from dump_test_utils import generate_dump_json, check_dump_structure
+from dump_test_utils import generate_dump_json, check_dump_structure, generate_statistic_dump_json
 from tests.security_utils import security_off_wrap
 
 
@@ -57,7 +58,11 @@ def run_trans_flag(test_name):
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, test_name)
         dump_config_path = os.path.join(tmp_dir, '{}.json'.format(test_name))
-        generate_dump_json(dump_path, dump_config_path, test_name)
+        if test_name == "test_e2e_dump_dynamic_shape_custom_statistic":
+            generate_statistic_dump_json(dump_path, dump_config_path, test_name, saved_data="statistic",
+                                         statistic_category=["l2norm", "max"])
+        else:
+            generate_dump_json(dump_path, dump_config_path, test_name)
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
@@ -77,6 +82,26 @@ def run_trans_flag(test_name):
             real_path = os.path.realpath(output_path)
             output = np.load(real_path)
             assert output.shape == (32, 2)
+        if test_name == "test_e2e_dump_dynamic_shape_custom_statistic":
+            statistic_file_name = "statistic.csv"
+            output_path = glob.glob(os.path.join(dump_data_path, statistic_file_name))[0]
+            real_path = os.path.realpath(output_path)
+            with open(real_path) as f:
+                reader = csv.DictReader(f)
+                stats = list(reader)
+                def get_add_node(statistic):
+                    return statistic['Op Type'] == 'Add'
+
+                add_statistics = list(filter(get_add_node, stats))
+                num_tensors = len(add_statistics)
+                assert num_tensors == 3
+                for tensor in add_statistics:
+                    if tensor['IO'] == 'input':
+                        assert tensor['Max Value'] == '1'
+                        assert tensor['L2Norm Value'] == '8'
+                    elif tensor['IO'] == 'output' and tensor['Slot'] == '0':
+                        assert tensor['Max Value'] == '2'
+                        assert tensor['L2Norm Value'] == '16'
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
@@ -94,4 +119,21 @@ def test_ascend_kernel_by_kernel_dynamic_shape():
     os.environ['GRAPH_OP_RUN'] = "1"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_trans_flag("test_e2e_dump_dynamic_shape")
+    del os.environ['GRAPH_OP_RUN']
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_kernel_by_kernel_dynamic_shape_custom_statistic():
+    """
+    Feature: Ascend kernel by kernel dump with dynamic shape model.
+    Description: Test kernel by kernel dump in Ascend with trans_flag is configured to true.
+    Expectation: Dump user configured statistic_category, the config is ["l2norm", "max"].
+    """
+    os.environ['GRAPH_OP_RUN'] = "1"
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_trans_flag("test_e2e_dump_dynamic_shape_custom_statistic")
     del os.environ['GRAPH_OP_RUN']
