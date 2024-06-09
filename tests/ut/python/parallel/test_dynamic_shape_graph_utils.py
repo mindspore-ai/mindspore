@@ -1014,7 +1014,8 @@ def test_pangu_multi_batch_qkv_reshape_scene_without_constant_folding():
             super(PanguReshapeNet, self).__init__()
             self.add = P.Add().shard(((1, 8), (8,)))
             self.weight = Parameter(np.full((15360,), 0.5, dtype=np.float32), name="weight")
-            self.reshape = P.Reshape()
+            # TODO: Consider optimize reshape skip redistribution.
+            self.reshape = P.Reshape().add_prim_attr("skip_redistribution", True)  # dynamic
             self.shape = P.Shape()
             self.transpose = P.Transpose().shard(((1, 1, 8, 1),))
             self.relu = P.ReLU().shard(((1, 8, 1, 1),))
@@ -1234,3 +1235,44 @@ def test_multi_model_static_shape_gen():
     x = Tensor(shape=(2, s, 8192), dtype=mstype.float16)
     model.set_inputs(x)
     _ = compile_net(model, x)
+
+
+def test_pangu_reshape_directly_use_shape():
+    """
+    Feature: Test tensor redistribution in dynamic shape.
+    Description: Test PanGu multi-batch qkv reshape.
+    Expectation: Compile success and assertion passed.
+    """
+
+    class PanguReshapeNet(nn.Cell):
+        def __init__(self):
+            super(PanguReshapeNet, self).__init__()
+            self.add = P.Add().shard(((1, 8), (8,)))
+            self.weight = Parameter(np.full((15360,), 0.5, dtype=np.float32), name="weight")
+            self.reshape = P.Reshape()
+            self.shape = P.Shape()
+            self.transpose = P.Transpose().shard(((1, 1, 8, 1),))
+            self.relu = P.ReLU().shard(((1, 8, 1, 1),))
+
+        def construct(self, x):
+            shape = self.shape(x)
+            x = self.reshape(x, (8, -1, 120, 128))  # constant folding
+            x = self.relu(x)
+            x = self.reshape(x, shape)
+            return x
+
+    dump_ir_path = "./test_pangu_reshape_directly_use_shape"
+    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
+    dataset_shard = (1, 1)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                      global_rank=0, device_num=8,
+                                      dataset_strategy=(dataset_shard,))
+    model = PanguReshapeNet()
+    model = _VirtualDatasetCell(model)
+    model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+    s = Symbol(divisor=4096)
+    x = Tensor(shape=(s, 15360), dtype=mstype.float32)
+    model.set_inputs(x)
+    phase = compile_net(model, x)
+    validator = ParallelValidator(model, phase)
+    assert validator.check_node_inputs('MakeTuple-0', ['inputs0'])

@@ -102,7 +102,7 @@ Status TensorRedistribution::Init(const TensorLayout &from, const TensorLayout &
     return FAILED;
   }
   this->is_dynamic_shape_ = CheckDynamicShape(from, to);
-  if (is_dynamic_shape_) {
+  if (this->is_dynamic_shape_) {
     // Dynamic info of func_graph should be considered.
     MS_LOG(INFO) << "LayoutTransfer inited with dynamic shape.";
     this->from_origin_no_assembled_ = this->from_origin_;
@@ -560,7 +560,6 @@ void TensorRedistribution::UnifyAssembledMapping() {
   // 12,10,2,2 -> 2,6,10,2,2, 12 and 10 are all dynamic.
   //  4, 6,2,2 -> 2,2, 6,2,2, 4 is static and 6 is dynamic.
   // After refactor, from_origin_ and layer_transfer_.from_in are both in static shape.
-  // FIXME: The logic should be as follow:
   // 1. If origin_from_shape.size > before_unified_from_shape, it means the shape is squeezed.
   //   Squeezed could be in head and also be in tail.
   // 2. If before_unified_from_shape < unified_from_shape, it means the shape is expanded.
@@ -746,16 +745,65 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
     std::make_pair(operator_vector, output_info_vector));
 }
 
+void GetRedistributionOperators(const RedistributionOperatorInfer &operator_infer, OperatorVector *operator_vector,
+                                OutPutInfoVector *output_info_vector, OperatorList *operator_list) {
+  for (const auto &op : operator_infer.operator_vector()) {
+    (void)operator_vector->emplace_back(op);
+  }
+  for (auto info : operator_infer.output_info_vector()) {
+    (void)output_info_vector->emplace_back(info);
+  }
+  for (const auto &opc : operator_infer.operator_list()) {
+    (void)operator_list->emplace_back(opc);
+  }
+}
+
 RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorListForMultiDynamicReshape(
   bool is_cost_model) {
   MS_LOG(INFO) << "Start to infer tensor redistribution for multi dynamic axis reshape.";
   if (this->pre_cnode_ != nullptr && this->next_cnode_ != nullptr) {
     MS_LOG(DEBUG) << this->PrintRedistribution();
   }
-  // 1. Do AllGather.
-  // 2. Do Reshape.
-  // 3. Do Split.
-  return nullptr;
+  OperatorVector operator_vector;
+  OutPutInfoVector output_info_vector;
+  RedistributionOperatorInfer allgather_infer(this->construct_op_flag_);
+  if (allgather_infer.Init(this->from_origin_no_assembled_, this->to_origin_no_assembled_.tensor_map(), this->dev_list_,
+                           is_cost_model, this->is_dynamic_shape_) == Status::FAILED) {
+    MS_LOG(EXCEPTION) << "Init operatorInfer failed.";
+  }
+  // 1. Do AllGather on dynamic axis, skip const axis?
+  if (allgather_infer.MergePartialToFullForReshapeHasMultiDynamicAxis() != Status::SUCCESS) {
+    MS_LOG(EXCEPTION) << "Insert AllGather for Reshape which has multi dynamic axis failed.";
+  }
+  GetRedistributionOperators(allgather_infer, &operator_vector, &output_info_vector, &this->operator_list_);
+  // 2. Do Reshape. Const axis value should be divided later?
+  ConstructOperator constructor;
+  // Actually, no need to create virtual shape, store the original inputs and replace it later in replace op.
+  Shape full_shape = this->to_origin_no_assembled_.tensor_shape().array();
+  MS_LOG(INFO) << "before ReshapeOP, full_shape:" << full_shape;
+  if (constructor.ReshapeOP(full_shape, true) == Status::FAILED) {
+    MS_LOG(EXCEPTION) << "Cannot construct Reshape op for shape " << full_shape;
+  }
+  (void)operator_vector.emplace_back(constructor.GetOperator());
+  (void)output_info_vector.emplace_back(std::make_pair(false, 0));
+  // 3. Do Split, skip const axis?
+  RedistributionOperatorInfer allsplit_infer(this->construct_op_flag_);
+  if (allsplit_infer.Init(this->to_origin_no_assembled_, this->to_origin_no_assembled_.tensor_map(), this->dev_list_,
+                          is_cost_model, this->is_dynamic_shape_) == Status::FAILED) {
+    MS_LOG(ERROR) << "Init operatorInfer failed";
+    return nullptr;
+  }
+  if (allsplit_infer.SegmentFullShapeToPartial() != Status::SUCCESS) {
+    MS_LOG(EXCEPTION) << "Insert AllSplit for Reshape which has multi dynamic axis failed.";
+  }
+  GetRedistributionOperators(allsplit_infer, &operator_vector, &output_info_vector, &this->operator_list_);
+  //  operator_vector = {AllGather, Reshape, Split};
+  std::string operator_vec_str;
+  AppendOperatorVecStr(operator_vector, &operator_vec_str);
+  MS_LOG(INFO) << "After InferAllSplit, operator_vector size: " << operator_vector.size()
+               << ", operator_vector: " << operator_vec_str;
+  return std::make_shared<std::pair<OperatorVector, OutPutInfoVector>>(
+    std::make_pair(operator_vector, output_info_vector));
 }
 
 RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorList(bool is_cost_model) {

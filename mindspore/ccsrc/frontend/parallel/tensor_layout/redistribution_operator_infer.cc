@@ -26,8 +26,8 @@ Status RedistributionOperatorInfer::Init(const TensorLayout &tensor_layout, cons
                                          RankList dev_list, bool is_cost_model, bool is_dynamic_shape) {
   in_tensor_map_ = tensor_layout.tensor_map();
   dev_mat_ = tensor_layout.device_arrangement();
-
-  if (in_tensor_map_.GetDimSize() == 0 || out_tensor_map.GetDimSize() != in_tensor_map_.GetDimSize()) {
+  if (!is_dynamic_shape &&
+      (in_tensor_map_.GetDimSize() == 0 || out_tensor_map.GetDimSize() != in_tensor_map_.GetDimSize())) {
     MS_LOG(ERROR) << "Invalid input when initialize RedistributionOperatorInfer!";
     return Status::FAILED;
   }
@@ -55,6 +55,43 @@ Status RedistributionOperatorInfer::Init(const TensorLayout &tensor_layout, cons
   }
 
   is_cost_model_ = is_cost_model;
+  return Status::SUCCESS;
+}
+
+Status RedistributionOperatorInfer::MergePartialToFullForReshapeHasMultiDynamicAxis() {
+  for (size_t i = 0; i < this->in_tensor_map_.array().size(); ++i) {
+    int64_t matrix_index = this->in_tensor_map_.GetDimByIdx(i);
+    if (matrix_index == -1) {
+      continue;
+    }
+    int64_t shard_value = this->dev_mat_.GetDimByReverseIdx(LongToSize(matrix_index));
+    Args args = {
+      SizeToLong(i),  // TRANSFER_CONCAT_TENSOR_DIM_INDEX
+      matrix_index,   // TRANSFER_CONCAT_DEV_DIM_INDEX
+      shard_value     // TRANSFER_CONCAT_SPLIT_COUNT_INDEX
+    };
+    if (InsertOperator(CONCAT_BY_AXIS, args) == Status::FAILED) {
+      return Status::FAILED;
+    }
+  }
+  return Status::SUCCESS;
+}
+
+Status RedistributionOperatorInfer::SegmentFullShapeToPartial() {
+  // According to out layout tensor map, insert split.
+  for (size_t i = 0; i < this->out_tensor_map_.array().size(); ++i) {
+    int64_t matrix_index = this->out_tensor_map_.GetDimByIdx(i);
+    if (matrix_index == -1) {
+      continue;
+    }
+    constructor_.UpdateTensorShape(cur_tensor_layout_.tensor_shape().array());
+    // Insert Split on each dim.
+    Args args = {dev_mat_.GetDimByReverseIdx(LongToSize(matrix_index)), SizeToLong(i), matrix_index};
+    if (InsertOperator(SPLIT_BY_AXIS, args) == Status::FAILED) {
+      MS_LOG(ERROR) << "Insert SplitByAxis Error!";
+      return Status::FAILED;
+    }
+  }
   return Status::SUCCESS;
 }
 

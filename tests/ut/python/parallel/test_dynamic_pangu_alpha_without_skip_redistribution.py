@@ -507,7 +507,6 @@ class Attention(nn.Cell):
 
         shape = F.shape(attention_scores)
         # attention probs
-        # FIXME: Problem could be here
         attention_probs = self.softmax(self.reshape(attention_scores, (shape[0], -1, shape[-1])))
         attention_probs = P.Cast()(attention_probs, ori_dtype)
         attention_probs = self.reshape(attention_probs, shape)

@@ -327,6 +327,56 @@ TensorRedistributionPtr ReshapeInfo::ReshapeRedistribution() {
   return tensor_redistribution;
 }
 
+bool SpecialPatternInTransformer(const TensorLayout &from_layout, const TensorLayout &to_layout) {
+  auto from_tensor_shape = from_layout.tensor_shape();
+  auto to_tensor_shape = to_layout.tensor_shape();
+  auto from_dev_mat = from_layout.device_arrangement();
+  auto to_dev_mat = to_layout.device_arrangement();
+  auto from_tensor_map = from_layout.tensor_map();
+  auto to_tensor_map = to_layout.tensor_map();
+  if (from_dev_mat.array() != to_dev_mat.array()) {
+    return false;
+  }
+  // Reshape (bs, d1*d2, d3) -> (bs, d1, d2, d3) and only shard on 1,2 axis.
+  if (from_tensor_shape.array().size() != SIZE_THREE && to_tensor_shape.array().size() != SIZE_FOUR) {
+    return false;
+  }
+  if (from_tensor_shape.GetDimByIdx(0) == to_tensor_shape.GetDimByIdx(0) &&
+      (from_tensor_shape.GetDimByIdx(1) == -1 && from_tensor_shape.GetDimByIdx(2) == -1) &&
+      (to_tensor_shape.GetDimByIdx(2) == -1 && to_tensor_shape.GetDimByIdx(3) == -1)) {
+    if (from_tensor_map.GetDimByIdx(0) == to_tensor_map.GetDimByIdx(0) &&
+        from_tensor_map.GetDimByIdx(1) == to_tensor_map.GetDimByIdx(1)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool SkipTensorRedistribution(const TensorLayout &from_layout, const TensorLayout &to_layout) {
+  // If only one axis is sharded, and it's const axis, use past solution.
+  size_t from_shard_axis_cnt = 0;
+  size_t to_shard_axis_cnt = 0;
+  int64_t from_index = 0;
+  int64_t to_index = 0;
+  for (size_t i = 0; i < from_layout.tensor_map().array().size(); ++i) {
+    if (from_layout.tensor_map().GetDimByIdx(i) != -1) {
+      from_shard_axis_cnt += 1;
+      from_index = i;
+    }
+  }
+  for (size_t i = 0; i < to_layout.tensor_map().array().size(); ++i) {
+    if (to_layout.tensor_map().GetDimByIdx(i) != -1) {
+      to_shard_axis_cnt += 1;
+      to_index = i;
+    }
+  }
+  if (from_shard_axis_cnt == 1 && to_shard_axis_cnt == 1 && from_layout.tensor_shape().GetDimByIdx(from_index) != -1 &&
+      to_layout.tensor_shape().GetDimByIdx(to_index) != -1) {
+    return true;
+  }
+  return false;
+}
+
 Status ReshapeInfo::ComputeReplaceOp() {
   MS_LOG(INFO) << "Infer reshape redistribution for " << this->cnode_->fullname_with_scope() << "." << std::endl
                << "input_layout_: " << this->input_layout_.ToString() << std::endl
@@ -353,14 +403,6 @@ Status ReshapeInfo::ComputeReplaceOp() {
       replace_op_info_.clear();
       return SUCCESS;
     }
-    auto output_shape = output_layout_.tensor_shape_origin().array();
-    if (std::count(output_shape.cbegin(), output_shape.cend(), DYNAMIC_DIM_VAL) > 1) {
-      replace_op_.clear();
-      replace_op_info_.clear();
-      // handle dynamic shape, now the dynamic dimension can not be split, only static shape will be split.
-      ChangeDynamicDstShapeForSkipRedistribution(cnode_->input(2));
-      return SUCCESS;
-    }
     auto reshape_input = this->cnode_->input(1);
     MS_EXCEPTION_IF_CHECK_FAIL(reshape_input != nullptr,
                                "input of Reshape " + this->cnode_->fullname_with_scope() + " is nullptr.");
@@ -381,7 +423,32 @@ Status ReshapeInfo::ComputeReplaceOp() {
     MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
     RedistributionOpListPtr redistribution_oplist_ptr;
-    redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
+    Shape output_tensor_shape = this->output_layout_.tensor_shape().array();
+    if (this->input_layout_.tensor_shape().array().size() != this->output_layout_.tensor_shape().array().size() &&
+        std::count(output_tensor_shape.begin(), output_tensor_shape.end(), -1) > 1) {
+      // If only one axis is sharded, and it's const axis, use past solution.
+      if (SpecialPatternInTransformer(this->input_layout_, this->output_layout_)) {
+        MS_LOG(INFO) << "Match special pattern in transformer.";
+        replace_op_.clear();
+        replace_op_info_.clear();
+        return SUCCESS;
+      }
+      if (SkipTensorRedistribution(this->input_layout_, this->output_layout_)) {
+        MS_LOG(WARNING) << "Skip tensor redistribution for " << this->cnode_->fullname_with_scope();
+        replace_op_.clear();
+        replace_op_info_.clear();
+        ChangeDynamicDstShapeForSkipRedistribution(cnode_->input(2));
+        return SUCCESS;
+      }
+      // use naive method. Do AllGather on each dim.
+      tensor_redistribution->set_original_reshape_shape(this->cnode_->input(2));
+      MS_LOG(INFO) << this->name_
+                   << " has more than 1 dynamic axis. shape: " << this->cnode_->input(2)->fullname_with_scope();
+      redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorListForMultiDynamicReshape();
+    } else {
+      tensor_redistribution->set_original_reshape_shape(nullptr);
+      redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
+    }
     if (!is_generating_costs_ && !tensor_redistribution->IsAssembledStaticShape()) {
       redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
         redistribution_oplist_ptr, tensor_redistribution->input_shape());
@@ -394,7 +461,8 @@ Status ReshapeInfo::ComputeReplaceOp() {
       }
       return FAILED;
     }
-    if (!redistribution_oplist_ptr->first.empty() && tensor_redistribution->IsAssembledStaticShape()) {
+    if (!redistribution_oplist_ptr->first.empty() && tensor_redistribution->original_reshape_shape() == nullptr &&
+        tensor_redistribution->IsAssembledStaticShape()) {
       auto func_graph = this->cnode_->func_graph();
       tensor_redistribution->CreateAssembledDynamicMapping(this->cnode_, reshape_input, func_graph, INDEX_ONE);
     }

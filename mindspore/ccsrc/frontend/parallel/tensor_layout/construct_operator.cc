@@ -48,10 +48,10 @@ OperatorVector ConstructOperator::SkipRedisReshapeOP(const Shape &shape) const {
   return opvector;
 }
 
-Status ConstructOperator::ReshapeOP(const Shape &shape) {
+Status ConstructOperator::ReshapeOP(const Shape &shape, bool use_origin_shape) {
   int64_t prod = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
   int64_t prod_expect = std::accumulate(tensor_shape_.begin(), tensor_shape_.end(), 1, std::multiplies<int64_t>());
-  if (!IsDynamicShape(shape) && !IsDynamicShape(tensor_shape_) > 0 && prod != prod_expect) {
+  if (!IsDynamicShape(shape) && !IsDynamicShape(tensor_shape_) && prod != prod_expect) {
     ValuePtr ptr = MakeValue(shape);
     MS_EXCEPTION_IF_NULL(ptr);
     MS_LOG(ERROR) << "Invalid tensor shape " << ptr->ToString()
@@ -63,6 +63,12 @@ Status ConstructOperator::ReshapeOP(const Shape &shape) {
   ValuePtr param_value = MakeValue(shape);
   Attr param = std::make_pair(SHAPE, param_value);
   OperatorParams params = {std::make_pair(param, 2)};
+  if (use_origin_shape) {
+    // Only user's reshape could be in this branch.
+    ValuePtr use_origin_shape_flag = MakeValue(use_origin_shape);
+    Attr use_origin_shape_param = std::make_pair(USE_ORIGIN_SHAPE, use_origin_shape_flag);
+    params.emplace_back(std::make_pair(use_origin_shape_param, -1));
+  }
   OperatorArgs args = std::make_pair(attrs, params);
   op_ = std::make_pair(RESHAPE, args);
   return Status::SUCCESS;
