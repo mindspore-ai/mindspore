@@ -1433,7 +1433,7 @@ class Profiler:
             return []
         kernel_map = {}
         for kernel in kernels:
-            key = kernel.name if kernel.is_comm_op else (kernel.name, str(kernel.ts))
+            key = kernel.name if kernel.name.startswith('hcom_') else (kernel.name, str(kernel.ts))
             kernel_map[key] = kernel.parent
         launch_ops = [None] * len(op_summary)
         for index, summary in enumerate(op_summary):

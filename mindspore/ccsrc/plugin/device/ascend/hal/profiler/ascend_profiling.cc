@@ -23,7 +23,7 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
-#include "plugin/device/ascend/hal/profiler/profiling_framework_data.h"
+#include "common/debug/profiler/profiling_framework_data.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "transform/symbol/acl_prof_symbol.h"
 #include "transform/symbol/acl_rt_symbol.h"
@@ -110,7 +110,11 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
       MS_LOG(EXCEPTION) << "Failed to set pcie profiling config. error_code : " << static_cast<int>(pcieRet);
     }
   }
-
+  if (options["host_stack"] == "on") {
+    host_stack_ = true;
+  } else {
+    host_stack_ = false;
+  }
   uint32_t device_list[1] = {device_id_};
   uint32_t device_num = 1;
   aclprofAicoreMetrics aic_metrics = GetAicMetrics();
@@ -197,13 +201,13 @@ void AscendProfiler::Start() {
     global_rank_id_ = static_cast<int32_t>(std::atoi(common::GetEnv("RANK_ID").c_str()));
   }
   ProfilingFrameworkData::Device_Id = global_rank_id_;
-  ProfilingDataDumper::GetInstance()->Init(op_range_dir);
-  ProfilingDataDumper::GetInstance()->Start();
+  ProfilingDataDumper::GetInstance().Init(op_range_dir);
+  ProfilingDataDumper::GetInstance().Start();
   StepProfilingEnable(true);
 }
 
 void AscendProfiler::Stop() {
-  MS_LOG(INFO) << "Begin to stop profiling.";
+  MS_LOG(WARNING) << "Begin to stop profiling.";
 
   if (acl_config_ == nullptr) {
     MS_LOG(EXCEPTION)
@@ -211,7 +215,7 @@ void AscendProfiler::Stop() {
          "before call Profiler.Stop function.";
   }
 
-  ProfilingDataDumper::GetInstance()->Stop();
+  ProfilingDataDumper::GetInstance().Stop();
   aclError aclRet = CALL_ASCEND_API(aclprofStop, acl_config_);
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofStop function. error_code : " << static_cast<int>(aclRet);
