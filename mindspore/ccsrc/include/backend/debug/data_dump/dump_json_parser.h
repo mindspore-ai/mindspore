@@ -23,6 +23,7 @@
 #include <mutex>
 #include <vector>
 #include <memory>
+#include <regex>
 #include "nlohmann/json.hpp"
 #include "utils/ms_utils.h"
 #include "include/backend/kernel_graph.h"
@@ -48,7 +49,7 @@ class BACKEND_EXPORT DumpJsonParser {
   void CopyDumpJsonToDir(uint32_t rank_id);
   void CopyHcclJsonToDir(uint32_t rank_id);
   void CopyMSCfgJsonToDir(uint32_t rank_id);
-  bool NeedDump(const std::string &op_full_name) const;
+  bool NeedDump(const std::string &op_full_name);
   void MatchKernel(const std::string &kernel_name);
   void PrintUnusedKernel();
   bool IsStatisticDump() const;
@@ -66,6 +67,8 @@ class BACKEND_EXPORT DumpJsonParser {
   std::string net_name() const { return net_name_; }
   uint32_t op_debug_mode() const { return op_debug_mode_; }
   bool trans_flag() const { return trans_flag_; }
+  uint32_t sample_mode() const { return sample_mode_; }
+  uint32_t sample_num() const { return sample_num_; }
   uint32_t cur_dump_iter() const { return cur_dump_iter_; }
   uint32_t input_output() const { return input_output_; }
   void UpdateDumpIter() { ++cur_dump_iter_; }
@@ -81,8 +84,9 @@ class BACKEND_EXPORT DumpJsonParser {
   void GetCellDumpFlag(const session::KernelGraph &kernel_graph);
   void UpdateNeedDumpKernels(const session::KernelGraph &kernel_graph);
   bool IsDumpEnabled();
+  bool IsDeviceCalcStats() const;
   void PyNativeModeCheck();
-  void CheckGEBackend();
+  void CheckE2eSetting();
   bool IsHCCLKernelInput(const std::string &kernel_name) const;
   bool IsCallbackRegistered() { return dumpdatacallback_registered_; }
   void SetCallbackRegistered() { dumpdatacallback_registered_ = true; }
@@ -100,6 +104,7 @@ class BACKEND_EXPORT DumpJsonParser {
     DUMP_BOTH_OVERFLOW = 3,
     DUMP_LITE_EXCEPTION = 4
   };
+  enum JosonSampleMode { DUMP_NORMAL = 0, DUMP_HEAD_AND_TAIL = 1 };
   static bool IsAclDump();
   nlohmann::json GetKernelsJson() { return kernels_json_; }
 
@@ -123,15 +128,20 @@ class BACKEND_EXPORT DumpJsonParser {
   uint32_t input_output_{0};
   std::map<std::string, uint32_t> kernels_;
   std::map<std::string, uint32_t> kernel_types_;
+  std::map<std::string, std::regex> kernel_regs_;
+  std::map<std::string, uint32_t> kernel_strings_;
   std::vector<std::string> cell_dump_kernels_;
   std::set<std::string> hccl_input_kernels_;
   std::set<uint32_t> support_devices_;
   uint32_t op_debug_mode_{0};
   JsonFileFormat file_format_{FORMAT_BIN};
   bool trans_flag_{false};
+  uint32_t sample_mode_{0};
+  uint32_t sample_num_{100};
   uint32_t cur_dump_iter_{0};
   bool already_parsed_{false};
   std::string dump_layer_{""};
+  std::string stat_calc_mode_{""};
   nlohmann::json kernels_json_ = nlohmann::json::array();
 
   // Save graphs for dump.
@@ -141,6 +151,7 @@ class BACKEND_EXPORT DumpJsonParser {
   void ParseE2eDumpSetting(const nlohmann::json &content);
 
   static auto CheckJsonKeyExist(const nlohmann::json &content, const std::string &key);
+  static auto CheckSelectableKeyExist(const nlohmann::json &content, const std::string &key);
 
   void ParseDumpMode(const nlohmann::json &content);
   void ParseDumpPath(const nlohmann::json &content);
@@ -151,11 +162,15 @@ class BACKEND_EXPORT DumpJsonParser {
   void ParseKernels(const nlohmann::json &content);
   void ParseSupportDevice(const nlohmann::json &content);
   bool ParseEnable(const nlohmann::json &content) const;
+  void ParseSampleMode(const nlohmann::json &content);
+  void ParseSampleNum(const nlohmann::json &content);
   void ParseOpDebugMode(const nlohmann::json &content);
   void ParseFileFormat(const nlohmann::json &content);
+  void ParseStatCalcMode(const nlohmann::json &content);
 
   void JudgeDumpEnabled();
   void JsonConfigToString();
+  void CheckStatCalcModeVaild();
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DUMP_JSON_PARSER_H_

@@ -371,7 +371,7 @@ bool GPUDeviceAddress::CopyDeviceToHost(void *dst, const void *src, const size_t
 #ifdef ENABLE_DEBUGGER
 bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
                                      const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev,
-                                     uint32_t root_graph_id, bool force_update, bool) const {
+                                     uint32_t root_graph_id, bool force_update, bool, bool) const {
   bool ret = false;
   if (GetSize() == 0) {
     return true;

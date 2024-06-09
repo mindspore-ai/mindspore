@@ -654,6 +654,21 @@ ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &node, si
   return trans::TransShapeToDevice(infer_shape, format, node, output_idx, dtype);
 }
 
+ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx,
+                                                      ShapeVector real_shape) {
+  auto format = GetOutputFormat(node, output_idx);
+  if (real_shape.empty()) {
+    return real_shape;
+  }
+
+  // if format is default_format or NC1KHKWHWC0,device shape = original shape
+  if (trans::IsNeedPadding(format, real_shape)) {
+    real_shape = trans::PaddingShape(real_shape, format, GetOutputReshapeType(node, output_idx), node);
+  }
+  auto dtype = GetOutputDeviceDataType(node, output_idx);
+  return trans::TransShapeToDevice(real_shape, format, node, output_idx, dtype);
+}
+
 std::vector<int64_t> AnfRuntimeAlgorithm::GetInputDeviceShapeForTbeBuild(const AnfNodePtr &node, size_t input_idx,
                                                                          const std::string &format) {
   auto output_shape = AnfAlgo::GetPrevNodeOutputDetailShape(node, input_idx);

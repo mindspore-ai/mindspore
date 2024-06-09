@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -90,6 +90,25 @@ e2e_dump_dict_2 = {
     }
 }
 
+e2e_dump_dict_3 = {
+    "common_dump_settings": {
+        "dump_mode": 0,
+        "path": "",
+        "net_name": "Net",
+        "iteration": "all",
+        "input_output": 0,
+        "kernels": ["Default/Conv-op12"],
+        "support_device": [0, 1, 2, 3, 4, 5, 6, 7],
+        "op_debug_mode": 0
+    },
+    "e2e_dump_settings": {
+        "enable": True,
+        "trans_flag": False,
+        "slice_flag": 1,
+        "slice_num": 20
+    }
+}
+
 async_dump_dict_3 = {
     "common_dump_settings": {
         "dump_mode": 0,
@@ -144,17 +163,54 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
         data = async_dump_dict
         data["common_dump_settings"]["path"] = dump_path
         data["common_dump_settings"]["file_format"] = "bin"
-    elif test_key == "test_e2e_dump_trans_true":
+    elif test_key in ["test_e2e_dump_trans_true", "test_e2e_dump_lenet", "test_e2e_dump_dynamic_shape"]:
         data = e2e_dump_dict
         data["common_dump_settings"]["path"] = dump_path
         data["e2e_dump_settings"]["trans_flag"] = True
+    elif test_key == "test_e2e_dump_trans_true_op_debug_mode":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["path"] = dump_path
+        data["e2e_dump_settings"]["trans_flag"] = True
+        data["common_dump_settings"]["op_debug_mode"] = 3
+    elif test_key == "test_e2e_dump_save_kernel_args_true":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["path"] = dump_path
+        data["e2e_dump_settings"]["save_kernel_args"] = True
+    elif test_key == "test_e2e_dump_save_kernel_args_true":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["path"] = dump_path
+        data["e2e_dump_settings"]["save_kernel_args"] = True
     elif test_key == "test_async_dump_net_multi_layer_mode1_npy":
         data = async_dump_dict_2
         data["common_dump_settings"]["path"] = dump_path
         data["common_dump_settings"]["file_format"] = "npy"
+    elif test_key == "test_e2e_dump_sample_debug_mode":
+        data = e2e_dump_dict_3
+        data["common_dump_settings"]["path"] = dump_path
+        data["e2e_dump_settings"]["trans_flag"] = True
     elif test_key == "test_acl_dump":
         data = async_dump_dict_acl
         data["common_dump_settings"]["path"] = dump_path
+    elif test_key == "test_acl_dump_dynamic_shape":
+        data = async_dump_dict_acl
+        data["common_dump_settings"]["path"] = dump_path
+        data["common_dump_settings"]["file_format"] = "npy"
+    elif test_key == "test_kbk_e2e_set_dump":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["dump_mode"] = 2
+        data["common_dump_settings"]["path"] = dump_path
+        data["e2e_dump_settings"]["trans_flag"] = True
+    elif test_key == "test_kbk_e2e_dump_reg":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["dump_mode"] = 1
+        data["common_dump_settings"]["path"] = dump_path
+        data["common_dump_settings"]["kernels"] = ["name-regex(.+/Add[^/]*)"]
+        data["e2e_dump_settings"]["trans_flag"] = True
+    elif test_key == "test_exception_dump":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["path"] = dump_path
+        data["common_dump_settings"]["op_debug_mode"] = 4
+        data["e2e_dump_settings"]["trans_flag"] = True
     else:
         raise ValueError(
             "Failed to generate dump json file. The test name value " + test_key + " is invalid.")
@@ -200,6 +256,9 @@ def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data
         data = async_dump_dict
         data["common_dump_settings"]["input_output"] = 0
         data["common_dump_settings"]["file_format"] = "npy"
+    elif test_key == "stat_calc_mode":
+        data = e2e_dump_dict
+        data["e2e_dump_settings"]["stat_calc_mode"] = "device"
     else:
         raise ValueError(
             "Failed to generate statistic dump json file. The test name value " + test_key + " is invalid.")
@@ -226,7 +285,7 @@ def generate_cell_dump_json(dump_path, json_file_name, test_key, dump_mode):
 
 
 def check_dump_structure(dump_path, json_file_path, num_card, num_graph, num_iteration, root_graph_id=None,
-                         test_iteration_id=None):
+                         test_iteration_id=None, execution_history=True):
     """
     Util to check if the dump structure is correct.
     """
@@ -259,9 +318,10 @@ def check_dump_structure(dump_path, json_file_path, num_card, num_graph, num_ite
                                                 + str(graph_id) + ".csv")
             assert os.path.exists(execution_order_file)
             if graph_id in root_graph_id:
-                execution_history_file = os.path.join(execution_order_path,
-                                                      "ms_global_execution_order_graph_" + str(graph_id) + ".csv")
-                assert os.path.exists(execution_history_file)
+                if execution_history:
+                    execution_history_file = os.path.join(execution_order_path,
+                                                          "ms_global_execution_order_graph_" + str(graph_id) + ".csv")
+                    assert os.path.exists(execution_history_file)
                 graph_id_path = os.path.join(net_name_path, str(graph_id))
                 assert os.path.exists(graph_id_path)
                 for iteration_id in test_iteration_id:

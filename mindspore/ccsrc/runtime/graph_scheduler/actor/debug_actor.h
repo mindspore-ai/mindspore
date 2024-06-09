@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,25 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_DEBUG_ACTOR_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_DEBUG_ACTOR_H_
 
-#include <vector>
-#include <set>
+#include <map>
+#include <memory>
 #include <mutex>
+#include <set>
 #include <string>
+#include <vector>
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"
 #ifdef ENABLE_DEBUGGER
 #include "include/backend/debug/data_dump/dump_utils.h"
 #endif
+#include "ir/dtype/tensor_type.h"
 
 namespace mindspore {
 namespace runtime {
+using device::DeviceAddressPtr;
+using kernel::KernelTensor;
+using kernel::KernelTensorPtr;
 using mindspore::device::DeviceContext;
 using mindspore::kernel::KernelLaunchAddr;
 
@@ -43,9 +49,13 @@ class DebugActor : public ActorBase {
   void ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &graphs, bool is_kbyk);
 
   // The debug of each node.
-  void Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info, const DeviceContext *device_context,
+  void Debug(const AnfNodePtr &node, const std::vector<DeviceTensor *> &op_input_kernel_tensors,
+             const std::vector<DeviceTensor *> &op_output_kernel_tensors, const DeviceContext *device_context,
              OpContext<DeviceTensor> *const op_context, const AID *from_aid);
-
+#ifdef ENABLE_DEBUGGER
+  void AscendKbkDump(const CNodePtr &cnode, const std::vector<DeviceTensor *> &input_kernel_tensors,
+                     const std::vector<DeviceTensor *> &output_kernel_tensors, const DeviceContext *device_context);
+#endif
   void AscendStepStart(const std::vector<KernelGraphPtr> &graphs, std::vector<DeviceContext *> device_contexts);
 
   void AscendStepEnd();
@@ -61,6 +71,14 @@ class DebugActor : public ActorBase {
   static inline uint64_t current_step{1};
 
  private:
+  // Check kernel output is finite or not synchronously.
+  bool CheckOverflow(const DeviceContext *device_context, const std::vector<DeviceTensor *> &inputs);
+  // Release device memory for AllFinite kernel.
+  void Finalize() override;
+
+  std::map<const DeviceContext *, kernel::KernelModPtr> finite_kernel_mods_;
+  std::map<const DeviceContext *, std::map<uint32_t, DeviceAddressPtr>> finite_output_device_addresses_;
+
   // class members
   uint32_t exec_order_ = 0;
   int step_count = 0;

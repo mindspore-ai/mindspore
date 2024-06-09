@@ -411,6 +411,11 @@ bool ReadAclnnEnableEnv(const std::string &op_name) {
     }
   }
 
+  static std::set<std::string> kAscendcKernelList = {"AllFinite"};
+  if (kAscendcKernelList.count(op_name) != 0) {
+    return true;
+  }
+
   return false;
 }
 }  // namespace

@@ -9900,3 +9900,14 @@ class RmsNorm(Primitive):
         """Initialize Dense."""
         validator.check_value_type("epsilon", epsilon, [float], self.name)
         self.init_prim_io_names(inputs=['x', 'gamma'], outputs=["y", "rstd"])
+
+
+class AllFinite(Primitive):
+    r"""
+    Check all gradients is finite.
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize"""
+        self.init_prim_io_names(inputs=['gradients'],
+                                outputs=["is_finite"])
