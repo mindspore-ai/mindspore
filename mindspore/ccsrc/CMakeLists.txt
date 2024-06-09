@@ -387,6 +387,20 @@ endforeach()
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
 
+## link mindspore_np_dtype to mindspore
+if(WIN32)
+add_compile_definitions(BUILDING_NP_DTYPE_DLL)
+endif()
+
+add_subdirectory(common/np_dtype)
+target_link_libraries(mindspore PUBLIC mindspore_np_dtype)
+add_dependencies(mindspore mindspore_np_dtype)
+
+target_link_libraries(mindspore_np_dtype PRIVATE mindspore_core)
+if(CMAKE_SYSTEM_NAME MATCHES "Windows" OR CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    target_link_libraries(mindspore_np_dtype PRIVATE mindspore::pybind11_module)
+endif()
+
 set(COMMON_SUB_COMP
         utils
         common
@@ -406,6 +420,7 @@ foreach(_comp ${COMMON_SUB_COMP})
         endif()
     endif()
 endforeach()
+
 
 add_library(mindspore_common SHARED ${COMMON_SUB_OBJECTS_SRC})
 target_link_libraries(mindspore_common PRIVATE mindspore_core proto_input mindspore::protobuf)

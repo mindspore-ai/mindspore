@@ -338,11 +338,6 @@ class Parameter(Tensor_):
                     # in other place, so we can make a Tensor without copy data.
                     return (Tensor, data)
                 # make a copy of Tensor to init the parameter.
-                if data.dtype == mstype.bfloat16:
-                    from mindspore.ops.operations import Cast
-                    cpu_cast = Cast().set_device("CPU")
-                    data = cpu_cast(data, mstype.float32)
-                    return (Tensor, data.asnumpy(), mstype.bfloat16)
                 if data.dtype == mstype.qint4x2:
                     return (Tensor, data.asnumpy(), mstype.qint4x2)
                 return (Tensor, data.asnumpy())
