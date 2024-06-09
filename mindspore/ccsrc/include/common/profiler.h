@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_PROFILER_PROFILER_H_
 #define MINDSPORE_CCSRC_RUNTIME_PROFILER_PROFILER_H_
 
+#include <sys/syscall.h>
 #include <list>
 #include <map>
 #include <memory>
@@ -25,7 +26,6 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include <sys/syscall.h>
 #include "nlohmann/json.hpp"
 #include "utils/os.h"
 #include "utils/ms_utils.h"
@@ -119,6 +119,87 @@ enum class ProfilerEvent {
   kCaptureCompile,
   kCaptureGuard,
 };
+
+static const std::map<ProfilerStage, std::string> kProfilerStageString = {
+  {ProfilerStage::kDefault, "Default"},           {ProfilerStage::kPython, "Python"},
+  {ProfilerStage::kCapture, "Capture"},           {ProfilerStage::kRunGraph, "RunGraph"},
+  {ProfilerStage::kRunGrad, "RunGrad"},           {ProfilerStage::kRunOp, "RunOp"},
+  {ProfilerStage::kAsnumpy, "Asnumpy"},           {ProfilerStage::kCompileGradGraph, "CompileGradGraph"},
+  {ProfilerStage::kWaitPipeline, "WaitPipeline"}, {ProfilerStage::kSyncStream, "SyncStream"},
+};
+
+static const std::map<ProfilerModule, std::string> kProfilerModuleString = {
+  {ProfilerModule::kDefault, "Default"},
+  {ProfilerModule::kGraphExecutorPy, "GraphExecutorPy"},
+  {ProfilerModule::kRuntime, "RuntimeFramework"},
+  {ProfilerModule::kPynative, "PynativeFramework"},
+  {ProfilerModule::kKernel, "Kernel"},
+  {ProfilerModule::kPython, "Python"},
+  {ProfilerModule::kCapture, "Capture"},
+  {ProfilerModule::kOther, "Other"},
+};
+
+static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
+  {ProfilerEvent::kDefault, "Default"},
+  {ProfilerEvent::kKernelInfer, "KernelInfer"},
+  {ProfilerEvent::kKernelResize, "KernelResize"},
+  {ProfilerEvent::kKernelInferAndResize, "KernelInferAndResize"},
+  {ProfilerEvent::kKernelLaunch, "KernelLaunch"},
+  {ProfilerEvent::kKernelLaunckCallback, "KernelLaunchCallback"},
+  {ProfilerEvent::kKernelUpdate, "KernelUpdate"},
+  {ProfilerEvent::kGraphLaunch, "GraphLaunch"},
+  {ProfilerEvent::kInputProcess, "InputProcess"},
+  {ProfilerEvent::kOutputProcess, "OutputProcess"},
+  {ProfilerEvent::kWaitTaskFinish, "WaitTaskFinish"},
+  {ProfilerEvent::kPreLaunch, "PreLaunch"},
+  {ProfilerEvent::kPostLaunch, "PostLaunch"},
+  {ProfilerEvent::kSendOutput, "SendOutput"},
+  {ProfilerEvent::kMemoryAlloc, "MemoryAlloc"},
+  {ProfilerEvent::kMemoryFree, "MemoryFree"},
+  {ProfilerEvent::kCopyData, "CopyData"},
+  {ProfilerEvent::kStreamSync, "StreamSync"},
+  {ProfilerEvent::kProcessMultiStream, "ProcessMultiStream"},
+  {ProfilerEvent::kWaitKernelsInferFinish, "WaitKernelsInferFinish"},
+  {ProfilerEvent::kWaitKernelsResizeFinish, "WaitKernelsResizeFinish"},
+  {ProfilerEvent::kWaitKernelsLaunchFinish, "WaitKernelsLaunchFinish"},
+  // Inner event.
+  {ProfilerEvent::kKernelInferInner, "KernelInferInner"},
+  {ProfilerEvent::kKernelInferDataSync, "KernelInferDataSync"},
+  {ProfilerEvent::kKernelLaunchInner, "KernelLaunchInner"},
+  {ProfilerEvent::kBackendGraphRunInner, "BackendGraphRunInner"},
+  // PyNative events
+  {ProfilerEvent::kRunOp, "RunOp"},
+  {ProfilerEvent::kPyNativeFrontendTask, "FrontendTask"},
+  {ProfilerEvent::kPyNativeBackendTask, "BackendTask"},
+  {ProfilerEvent::kPyNativeDeviceTask, "DeviceTask"},
+  {ProfilerEvent::kPyNativeLaunchTask, "LaunchTask"},
+  {ProfilerEvent::kPyNativeBpropTask, "BpropTask"},
+  {ProfilerEvent::kPyNativeGilAcquire, "AcquireGil"},
+  {ProfilerEvent::kPyNativeCast, "PyNativeCast"},
+  {ProfilerEvent::kPyNativeInfer, "PyNativeInfer"},
+  {ProfilerEvent::kPyNativeOpCompile, "OpCompile"},
+  {ProfilerEvent::kPyNativeGradExpander, "Expander"},
+  {ProfilerEvent::kPyNativeGradUpdateSens, "UpdateSens"},
+  {ProfilerEvent::kPyNativeGradClearTopCell, "ClearTopCell"},
+  {ProfilerEvent::kPyNativeGradClearAutoGradCell, "ClearAutoGradCell"},
+  // PyBoost events
+  {ProfilerEvent::kPyBoostInferOutput, "InferOutput"},
+  {ProfilerEvent::kPyBoostInferByOpDef, "InferByOpDef"},
+  {ProfilerEvent::kPyBoostCreateOutputTensor, "CreateOutputTensor"},
+  {ProfilerEvent::kPyBoostDeviceTask, "DeviceTask"},
+  {ProfilerEvent::kPyBoostMallocInput, "MallocInput"},
+  {ProfilerEvent::kPyBoostMallocOutput, "MallocOutput"},
+  {ProfilerEvent::kPyBoostLaunchAclnn, "LaunchAclnn"},
+  // pybind api
+  {ProfilerEvent::kPyNativeNewGraph, "new_graph"},
+  {ProfilerEvent::kPyNativeEndGraph, "end_graph"},
+  // python events
+  {ProfilerEvent::kPythonObserved, "PythonObserved"},
+  // Capture events
+  {ProfilerEvent::kCaptureRunGraph, "CaptureRunGraph"},
+  {ProfilerEvent::kCaptureProcess, "CaptureProcess"},
+  {ProfilerEvent::kCaptureCompile, "CaptureCompile"},
+  {ProfilerEvent::kCaptureGuard, "CaptureGuard"}};
 
 #define PROFILER_START(start_time)                                          \
   do {                                                                      \
@@ -287,7 +368,7 @@ struct ProfilerData {
   uint64_t start_time_{0L};
   uint64_t end_time_{0L};
   uint64_t dur_time_{0L};
-  long tid_{};
+  uint64_t tid_{};
   int32_t pid_{0};
   uint64_t flow_id_{UINT64_MAX};
   std::string py_stack_{};
@@ -346,7 +427,7 @@ class COMMON_EXPORT ProfilerAnalyzer {
   void Clear() noexcept;
 
   // The used by ProfilerRecorder to record data.
-  bool profiler_enable() const { return profiler_enable_; }
+  bool profiler_enable() const;
   void RecordData(const ProfilerDataPtr &data) noexcept;
   void RecordFlowData(uint64_t flow_id);
   uint64_t GetTimeStamp() const noexcept;

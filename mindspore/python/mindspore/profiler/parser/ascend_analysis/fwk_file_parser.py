@@ -24,13 +24,14 @@ from mindspore.profiler.parser.ascend_analysis.file_manager import FileManager
 from mindspore.profiler.parser.ascend_analysis.tlv_decoder import TLVDecoder
 from mindspore.profiler.parser.ascend_analysis.function_event import MindSporeOpEvent
 from mindspore.profiler.parser.ascend_analysis.trace_event_manager import TraceEventManager
+from mindspore.profiler.parser.ascend_analysis.constant import Constant
 
 
 class FwkFileParser:
     """Framework-side operator file parser."""
 
     _op_range = "FRAMEWORK/op_range_{}"
-    _op_range_struct_size = 57
+    _op_range_struct_size = 65
 
     def __init__(self, source_path: str, rank_id: int):
         """
@@ -54,17 +55,17 @@ class FwkFileParser:
         """Generate chrome trace format json data from decoded oprange data."""
         if not mindspore_op_data:
             mindspore_op_data = self.get_op_range_data()
-        tid_map = defaultdict(list)
-        fwk_x_event_list = [None] * len(mindspore_op_data)
-        index = 0
+        tid_map = defaultdict(set)
+        fwk_x_event_list = []
 
         for mindspore_op in mindspore_op_data:
-            tid_map[mindspore_op.pid].append(mindspore_op.tid)
-            fwk_x_event_list[index] = TraceEventManager.create_x_event(mindspore_op, "cpu_op")
-            index += 1
+            if mindspore_op.name == Constant.FLOW_OP:
+                continue
+            tid_map[mindspore_op.pid].add(mindspore_op.tid)
+            fwk_x_event_list.append(TraceEventManager.create_x_event(mindspore_op, "cpu_op"))
         fwk_m_event_list = []
-        for pid, tid_list in tid_map.items():
-            fwk_m_event_list.extend(TraceEventManager.create_m_event(pid, tid_list))
+        for pid, tid_set in tid_map.items():
+            fwk_m_event_list.extend(TraceEventManager.create_m_event(pid, tid_set))
         return fwk_x_event_list + fwk_m_event_list
 
     def __init_framework_path(self, source_path: str):

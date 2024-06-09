@@ -511,6 +511,7 @@ class Profiler:
         self._pretty_json = False
         self._analyse_only = kwargs.get("analyse_only", False)
         self._data_simplification = kwargs.get("data_simplification", True)
+        self._host_stack = True
         if self._msprof_enable:
             return
         self._start_time = int(time.time() * 1e6)  # us
@@ -1080,7 +1081,8 @@ class Profiler:
             "parallel_strategy": self.ENABLE_STATUS if self._parallel_strategy else self.DISABLE_STATUS,
             "op_time": self.ENABLE_STATUS if self._op_time else self.DISABLE_STATUS,
             "profile_framework": self._profile_framework,
-            "profiler_level": self.profiler_level.value if self.profiler_level else self.DISABLE_STATUS
+            "profiler_level": self.profiler_level.value if self.profiler_level else self.DISABLE_STATUS,
+            "host_stack": "on" if self._host_stack else "off"
         }
 
         return profiling_options
@@ -1504,7 +1506,7 @@ class Profiler:
             return []
         kernel_map = {}
         for kernel in kernels:
-            key = kernel.name if kernel.is_comm_op else (kernel.name, str(kernel.ts))
+            key = kernel.name if kernel.name.startswith('hcom_') else (kernel.name, str(kernel.ts))
             kernel_map[key] = kernel.parent
         launch_ops = [None] * len(op_summary)
         for index, summary in enumerate(op_summary):
@@ -1977,6 +1979,12 @@ class Profiler:
             logger.warning(f"For '{self.__class__.__name__}', the parameter data_simplification must be bool, "
                            f"but got type {type(self._data_simplification)}, it will be set to True.")
             self._data_simplification = True
+        self._host_stack = kwargs.pop("host_stack", True)
+        if not isinstance(self._host_stack, bool):
+            logger.warning(f"For '{self.__class__.__name__}', the parameter host_stack must be bool, but got "
+                           f"type {type(self._host_stack)}, it will be set to True.")
+            self._host_stack = True
+
 
     def _host_info_analyse(self):
         """

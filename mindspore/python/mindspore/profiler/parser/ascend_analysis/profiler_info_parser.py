@@ -28,7 +28,6 @@ from mindspore.profiler.parser.profiler_info import ProfilerInfo
 class ProfilerInfoParser:
     """Parse files that record information, such as profiler_info.json"""
 
-    _localtime_diff = Decimal(0)
     _freq = 100.0
     _time_offset = 0
     _start_cnt = 0
@@ -87,7 +86,7 @@ class ProfilerInfoParser:
             ProfilerInfo.set_system_cnt(cls._start_cnt)
             cls._loaded_frequency = True
         start_ns = cls.__get_timestamp(syscnt)
-        start_us = Decimal(start_ns) / Constant.NS_TO_US
+        start_us = Decimal(start_ns * Constant.NS_TO_US)
         return start_us
 
     @classmethod
