@@ -56,6 +56,8 @@ constexpr char kShuffleOp[] = "ShuffleOp";
 constexpr char kSkipOp[] = "SkipOp";
 constexpr char kTakeOp[] = "TakeOp";
 constexpr char kZipOp[] = "ZipOp";
+constexpr char kSendBridgeOp[] = "SendBridgeOp";
+constexpr char kReceiveBridgeOp[] = "ReceiveBridgeOp";
 
 // Forward declare
 class ExecutionTree;
