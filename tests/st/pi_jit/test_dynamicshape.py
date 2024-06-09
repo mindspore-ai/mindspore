@@ -37,6 +37,10 @@ class SignatureNet(Cell):
 def signature_test(a):
     return g_relu(a)
 
+@jit(mode="PIJit", input_signature=((Tensor(shape=(None, s), dtype=ms.float32), Tensor(shape=(None, s), dtype=ms.float32)), None))
+def signature_tuple_test(a, b):
+    return g_relu(a[0])
+
 @jit(mode="PIJit", jit_config={"enable_dynamic_shape": True, "limit_graph_count": 1})
 def dynamic_shape_test(a, b):
     return a + b
@@ -86,6 +90,10 @@ def test_signature_case():
     res1 = signature_test(t1)
     match_array(res1, t1)
     res2 = signature_test(t2)
+    match_array(res2, t2)
+    res1 = signature_tuple_test((t1, t2), 1)
+    match_array(res1, t1)
+    res2 = signature_tuple_test((t2, t1), 1)
     match_array(res2, t2)
     res1 = SignatureNet()(t1)
     match_array(res1, t1)
