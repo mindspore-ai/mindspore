@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/hal/profiler/profiling_framework_data.h"
+#include "common/debug/profiler/profiling_framework_data.h"
 #include <sys/syscall.h>
 #include <utility>
 #include <algorithm>
@@ -87,10 +87,30 @@ inline void EncodeStrArrayData(const uint16_t type, const std::vector<std::strin
   EncodeStrData(type, rst, result);
 }
 
+void OpRangeData::preprocess() {
+  const std::string delim = ";";
+  const std::string remove_ms = "site-packages/mindspore";
+  if (stack.size() > 0 && !stack[0].empty()) {
+    std::string all_stack = stack[0];
+    stack.erase(stack.begin());
+    size_t nPos = all_stack.find(delim.c_str());
+    while (nPos != std::string::npos) {
+      std::string temp = all_stack.substr(0, nPos);
+      if (temp.find(remove_ms.c_str()) == std::string::npos) {
+        stack.push_back(temp);
+      }
+      all_stack = all_stack.substr(nPos + 1);
+      nPos = all_stack.find(delim.c_str());
+    }
+  }
+}
+
 std::vector<uint8_t> OpRangeData::encode() {
+  preprocess();
   std::unique_ptr<std::vector<uint8_t>> result = std::make_unique<std::vector<uint8_t>>();
   EncodeFixedData<int64_t>({start_ns, end_ns, sequence_number}, result);
   EncodeFixedData<uint64_t>({process_id, start_thread_id, end_thread_id, forward_thread_id}, result);
+  EncodeFixedData<uint64_t>({flow_id}, result);
   result->push_back(is_async);
   EncodeStrData(static_cast<uint16_t>(OpRangeDataType::NAME), name, result);
   if (!input_dtypes.empty()) {
@@ -152,11 +172,35 @@ void ProfilingFrameworkData::RecordGETask(const std::string &scope_name) {
   uint64_t forward_thread_id = start_thread_id;
   bool is_async = false;
 
-  OpRangeData report = OpRangeData(start_ns, end_ns, sequence_number, process_id, start_thread_id, end_thread_id,
-                                   forward_thread_id, is_async, scope_name, ProfilingFrameworkData::Device_Id);
-  ProfilingDataDumper::GetInstance()->Report(std::make_unique<OpRangeData>(report));
+  std::vector<std::string> stack_vec;
+  stack_vec.push_back(scope_name + ":50");
+  stack_vec.push_back(scope_name + ":60");
+  uint32_t flow_id = 10;
+
+  OpRangeData report =
+    OpRangeData(start_ns, end_ns, sequence_number, process_id, start_thread_id, end_thread_id, forward_thread_id,
+                is_async, scope_name, stack_vec, flow_id, ProfilingFrameworkData::Device_Id);
+  ProfilingDataDumper::GetInstance().Report(std::make_unique<OpRangeData>(report));
 }
 
+void ProfilingFrameworkData::RecordHostStack(std::shared_ptr<ProfilerData> data) {
+  auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
+  MS_EXCEPTION_IF_NULL(ascend_profiler);
+  if (!ascend_profiler->GetEnableFlag()) {
+    return;
+  }
+  std::vector<std::string> stack_vec;
+  stack_vec.push_back(data->py_stack_);
+  std::string op_name = data->op_name_;
+  if (data->is_stage_) {
+    op_name = kProfilerStageString.at(data->stage_);
+  } else if (data->op_name_ != "flow") {
+    op_name = kProfilerModuleString.at(data->module_) + "::" + kProfilerEventString.at(data->event_) + "::" + op_name;
+  }
+  OpRangeData report = OpRangeData(data->start_time_, data->end_time_, 0, 0, data->tid_, data->tid_, data->tid_, false,
+                                   op_name, std::move(stack_vec), data->flow_id_, ProfilingFrameworkData::Device_Id);
+  ProfilingDataDumper::GetInstance().Report(std::make_unique<OpRangeData>(report));
+}
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@
 #include <memory>
 #include <utility>
 #include <string>
+#include "utils/ms_utils.h"
+#include "include/common/visible.h"
 
 namespace mindspore {
 namespace profiler {
@@ -41,7 +43,7 @@ constexpr uint32_t kBatchMaxLen = 5 * 1024 * 1024;  // 5 MB
 constexpr uint32_t kMaxWaitTimeUs = 100 * 1000;
 constexpr uint32_t kMaxWaitTimes = 10;
 
-class Utils {
+class COMMON_EXPORT Utils {
  public:
   static bool IsFileExist(const std::string &path);
   static bool IsFileWritable(const std::string &path);
@@ -58,7 +60,7 @@ class Utils {
 };
 
 template <typename T>
-class RingBuffer {
+class COMMON_EXPORT RingBuffer {
  public:
   RingBuffer()
       : is_inited_(false),
@@ -89,18 +91,17 @@ class RingBuffer {
   std::vector<T> data_queue_;
 };
 
-struct BaseReportData {
+struct COMMON_EXPORT BaseReportData {
   int32_t device_id{0};
   std::string tag;
   BaseReportData(int32_t device_id, std::string tag) : device_id(device_id), tag(std::move(tag)) {}
   virtual ~BaseReportData() = default;
   virtual std::vector<uint8_t> encode() = 0;
+  virtual void preprocess() = 0;
 };
 
-class ProfilingDataDumper {
+class COMMON_EXPORT ProfilingDataDumper {
  public:
-  ProfilingDataDumper();
-  virtual ~ProfilingDataDumper();
   void Init(const std::string &path, size_t capacity = kDefaultRingBuffer);
   void UnInit();
   void Report(std::unique_ptr<BaseReportData> data);
@@ -108,10 +109,7 @@ class ProfilingDataDumper {
   void Stop();
   void Flush();
 
-  static std::shared_ptr<ProfilingDataDumper> &GetInstance() {
-    static std::shared_ptr<ProfilingDataDumper> instance = std::make_shared<ProfilingDataDumper>();
-    return instance;
-  }
+  static ProfilingDataDumper &GetInstance();
 
  private:
   void Dump(const std::map<std::string, std::vector<uint8_t>> &dataMap);
@@ -119,6 +117,9 @@ class ProfilingDataDumper {
   void GatherAndDumpData();
 
  private:
+  ProfilingDataDumper();
+  virtual ~ProfilingDataDumper();
+
   std::string path_;
   std::atomic<bool> start_;
   std::atomic<bool> init_;
@@ -126,8 +127,8 @@ class ProfilingDataDumper {
   RingBuffer<std::unique_ptr<BaseReportData>> data_chunk_buf_;
   std::map<std::string, FILE *> fd_map_;
   std::mutex flush_mutex_;
+  DISABLE_COPY_AND_ASSIGN(ProfilingDataDumper);
 };
-
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore

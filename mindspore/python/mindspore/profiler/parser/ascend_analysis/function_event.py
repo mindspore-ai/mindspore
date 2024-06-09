@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Function event data struct."""
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 from enum import Enum
 from decimal import Decimal
 import struct
@@ -25,10 +25,6 @@ from mindspore.profiler.parser.ascend_analysis.profiler_info_parser import Profi
 
 class BaseEvent(ABC):
     """Base class of CANNEvent and MindSporeOpEvent"""
-
-    HOST_TO_DEVICE = "HostToDevice"
-    START_FLOW = "s"
-    END_FLOW = "f"
 
     def __init__(self, data: Dict):
         if not isinstance(data, dict):
@@ -43,7 +39,6 @@ class BaseEvent(ABC):
         self.dur: float = 0.0
         self.args: Dict = {}
         self.parent: Optional[BaseEvent] = None
-        self.children: List[BaseEvent] = []
         self._init_params()
 
     @abstractmethod
@@ -55,15 +50,6 @@ class BaseEvent(ABC):
 class CANNEvent(BaseEvent):
     """Function event collected on the CANN side"""
 
-    def __init__(self, data: Dict):
-        self.unique_id = ""
-        self.is_ai_core = False
-        super().__init__(data)
-
-    @property
-    def is_comm_op(self):
-        return self.name.startswith("hcom_")
-
     def _init_params(self):
         """Initialize the attribute value of CANNEvent."""
         self.ts = Decimal(str(self._orig_data.get("ts", 0)))
@@ -74,20 +60,18 @@ class CANNEvent(BaseEvent):
         self.name = self._orig_data.get("name", "")
         self.id = self._orig_data.get("id", 0)
         self.args = self._orig_data.get("args", {})
-        self.unique_id = f"{self.pid}-{self.tid}-{str(self.ts)}"
-        self.is_ai_core = self.args.get("Task Type") == Constant.AI_CORE
         self.ph = self._orig_data.get("ph")
         self.cat = self._orig_data.get("cat")
 
     def is_flow_start_event(self) -> bool:
         """Determine whether the event is flow start event or not."""
-        return self._orig_data.get("cat") == self.HOST_TO_DEVICE and \
-               self._orig_data.get("ph") == self.START_FLOW
+        return self._orig_data.get("cat") == Constant.HOST_TO_DEVICE and \
+               self._orig_data.get("ph") == Constant.START_FLOW
 
     def is_flow_end_event(self) -> bool:
         """Determine whether the event is flow end event or not."""
-        return self._orig_data.get("cat") == self.HOST_TO_DEVICE and \
-               self._orig_data.get("ph") == self.END_FLOW
+        return self._orig_data.get("cat") == Constant.HOST_TO_DEVICE and \
+               self._orig_data.get("ph") == Constant.END_FLOW
 
     def is_x_event(self) -> bool:
         """Determine whether the event x event or not."""
@@ -129,7 +113,8 @@ class MindSporeOpEnum(Enum):
     START_THREAD_ID = 4
     END_THREAD_ID = 5
     FORWORD_THREAD_ID = 6
-    IS_ASYNC = 7
+    FLOW_ID = 7
+    IS_ASYNC = 8
 
 
 class MindSporeOpEvent(BaseEvent):
@@ -143,11 +128,7 @@ class MindSporeOpEvent(BaseEvent):
         Constant.OP_NAME: 3, Constant.INPUT_SHAPES: 5, Constant.INPUT_DTYPES: 4,
         Constant.CALL_STACK: 6, Constant.MODULE_HIERARCHY: 7, Constant.FLOPS: 8
     }
-    _fix_data_format = "<3q4Q?"
-
-    def __init__(self, data: Dict):
-        self.is_mindspore_op = True
-        super().__init__(data)
+    _fix_data_format = "<3q5Q?"
 
     def _init_params(self):
         """Initialize the attribute value of MindSporeOpEvent."""
@@ -158,6 +139,7 @@ class MindSporeOpEvent(BaseEvent):
         self.ts = ProfilerInfoParser.get_local_time(fix_size_data[MindSporeOpEnum.START_NS.value])
         self.end_us = ProfilerInfoParser.get_local_time(fix_size_data[MindSporeOpEnum.END_NS.value])
         self.dur = self.end_us - self.ts
+        self.flow_id = int(fix_size_data[MindSporeOpEnum.FLOW_ID.value])
         self.args = self.__get_args(fix_size_data)
 
     def __get_args(self, fix_size_data) -> Dict:

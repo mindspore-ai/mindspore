@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/hal/profiler/profiling_data_dumper.h"
+#include "common/debug/profiler/profiling_data_dumper.h"
 #include <sys/syscall.h>
 #include <algorithm>
 #include <mutex>
@@ -233,6 +233,11 @@ ProfilingDataDumper::ProfilingDataDumper() : path_(""), start_(false), init_(fal
 
 ProfilingDataDumper::~ProfilingDataDumper() { UnInit(); }
 
+ProfilingDataDumper &ProfilingDataDumper::GetInstance() {
+  static ProfilingDataDumper instance;
+  return instance;
+}
+
 void ProfilingDataDumper::Init(const std::string &path, size_t capacity) {
   MS_LOG(INFO) << "init profiling data dumper, capacity: " << capacity;
   path_ = path;
@@ -258,6 +263,7 @@ void ProfilingDataDumper::UnInit() {
 void ProfilingDataDumper::Start() {
   MS_LOG(INFO) << "start profiling data dumper.";
   if (!init_.load() || !Utils::CreateDir(path_)) {
+    MS_LOG(ERROR) << "init_.load() " << !init_.load() << !Utils::CreateDir(path_);
     return;
   }
   start_.store(true);
@@ -348,7 +354,6 @@ void ProfilingDataDumper::Dump(const std::map<std::string, std::vector<uint8_t>>
     fflush(fd);
   }
 }
-
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore
