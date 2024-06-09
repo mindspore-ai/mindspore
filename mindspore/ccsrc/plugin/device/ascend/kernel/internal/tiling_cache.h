@@ -35,23 +35,28 @@ namespace mindspore::kernel {
 
 struct TilingInfo {
   internal::DeviceRawBuf device_buf_;
+  internal::HostRawBuf host_buf_;
   internal::CacheInfo cache_info_;
   bool need_free_device_buf_;
 
   TilingInfo() {
     this->device_buf_.size_ = 0;
     this->device_buf_.addr_ = nullptr;
+    this->host_buf_.size_ = 0;
+    this->host_buf_.addr_ = nullptr;
     this->need_free_device_buf_ = false;
   }
 
   TilingInfo(const TilingInfo &other) {
     this->device_buf_ = other.device_buf_;
+    this->host_buf_ = other.host_buf_;
     this->cache_info_ = other.cache_info_;
     this->need_free_device_buf_ = other.need_free_device_buf_;
   }
 
   const TilingInfo &operator=(const TilingInfo &other) {
     this->device_buf_ = other.device_buf_;
+    this->host_buf_ = other.host_buf_;
     this->cache_info_ = other.cache_info_;
     this->need_free_device_buf_ = other.need_free_device_buf_;
     return *this;
@@ -65,8 +70,6 @@ constexpr int kBufSize = 8192;
 constexpr int kBufMaxSize = kBufSize + 1024;
 constexpr size_t kMemAlignSize = 64;
 constexpr size_t kMaxDevBlockSize = kMaxSize * kMemAlignSize;
-// this is a trick make memory pool allocate memory section for tiling cache
-constexpr int kTilingCacheStreamId = 100;
 
 class TilingCacheMgr {
  public:
@@ -132,6 +135,7 @@ class TilingCacheMgr {
   std::mutex key_mtx_, cache_mtx_;
   size_t cache_capcity_{kMaxSize};
   bool has_warned_cache_full_{false};
+  void *default_stream_{nullptr};
 
   uint64_t calc_hash_id();
 
@@ -157,8 +161,7 @@ class TilingCacheMgr {
     if (cache_buf_.size() >= cache_capcity_) {
       dev_addr_ = nullptr;
       dev_offset_ = 0;
-      dev_addr_ = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(aligned_size, false, false,
-                                                                                 kTilingCacheStreamId);
+      dev_addr_ = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(aligned_size);
       tiling_cache_addr = dev_addr_;
       tiling_cache_elem->device_buf_.addr_ = tiling_cache_addr;
       tiling_cache_elem->need_free_device_buf_ = true;
@@ -170,8 +173,7 @@ class TilingCacheMgr {
     } else {
       dev_addr_ = nullptr;
       dev_offset_ = 0;
-      dev_addr_ = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(kMaxDevBlockSize, false, false,
-                                                                                 kTilingCacheStreamId);
+      dev_addr_ = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(kMaxDevBlockSize);
       tiling_cache_addr = dev_addr_;
     }
     dev_offset_ += aligned_size;

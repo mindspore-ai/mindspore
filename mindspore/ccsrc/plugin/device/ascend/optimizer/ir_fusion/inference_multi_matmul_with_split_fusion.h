@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MULTI_MATMULS_FUSION_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MULTI_MATMULS_FUSION_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_INFERENCE_MULTI_MATMUL_WITH_SPLIT_FUSION_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_INFERENCE_MULTI_MATMUL_WITH_SPLIT_FUSION_H_
+
+#include "plugin/device/ascend/optimizer/ir_fusion/inference_weight_preprocess_utils.h"
 
 #include <string>
 #include <memory>
@@ -31,25 +33,10 @@
 
 namespace mindspore {
 namespace opt {
-/**
- * Fuse MatMul when a node is used by several matmuls.
- *
- * example:
- * x = MatMul(A, B, false, false)
- * y = MatMul(A, C, false, true)
- * z = MatMul(A, D, false, false)
- * ...
- * ------->
- * t = MatmulQkv(A, B, false, false, C, false, true, D, false, false) # or MatmulFfn
- * x = tuple_getitem(t, 0)
- * y = tuple_getitem(t, 1)
- * z = tuple_getitem(t, 2)
- * ...
- */
-class MultiMatmulsFusion : public Pass {
+class InferenceMultiMatmulWithSplitFusion : public Pass {
  public:
-  MultiMatmulsFusion() : Pass("multi_matmuls_fusion") {}
-  ~MultiMatmulsFusion() override = default;
+  InferenceMultiMatmulWithSplitFusion() : Pass("inference_multi_matmul_with_split_fusion") {}
+  ~InferenceMultiMatmulWithSplitFusion() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 
  protected:
@@ -59,4 +46,4 @@ class MultiMatmulsFusion : public Pass {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MULTI_MATMULS_FUSION_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_INFERENCE_MULTI_MATMUL_WITH_SPLIT_FUSION_H_

@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,15 +37,8 @@ internal::OpParamPtr InternalPagedAttention::CreateOpParam(const std::vector<Ker
   return param_ptr;
 }
 
-void InternalPagedAttention::SetInOutIdx() {
-  inputsIdxMap_[kIndex0] = kIndex0;
-  inputsIdxMap_[kIndex1] = kIndex1;
-  inputsIdxMap_[kIndex2] = kIndex2;
-  inputsIdxMap_[kIndex3] = kIndex4;
-  inputsIdxMap_[kIndex4] = kIndex3;
-  outputsIdxMap_[kIndex0] = kIndex0;
-}
-
 MS_INTERNAL_KERNEL_FACTORY_REG(PagedAttention, InternalPagedAttention);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(PagedAttention, INPUT_NUM_5, INDEX_0, INDEX_1, INDEX_2, INDEX_4, INDEX_3);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(PagedAttention, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

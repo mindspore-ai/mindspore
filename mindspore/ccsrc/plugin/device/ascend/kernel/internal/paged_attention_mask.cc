@@ -15,6 +15,7 @@
  */
 #include <memory>
 #include "plugin/device/ascend/kernel/internal/paged_attention_mask.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 namespace mindspore {
 namespace kernel {
 internal::OpParamPtr InternalPagedAttentionMask::CreateOpParam(const std::vector<KernelTensor *> &inputs,
@@ -24,16 +25,9 @@ internal::OpParamPtr InternalPagedAttentionMask::CreateOpParam(const std::vector
   return param_ptr;
 }
 
-void InternalPagedAttentionMask::SetInOutIdx() {
-  inputsIdxMap_[kIndex0] = kIndex0;
-  inputsIdxMap_[kIndex1] = kIndex1;
-  inputsIdxMap_[kIndex2] = kIndex2;
-  inputsIdxMap_[kIndex3] = kIndex4;
-  inputsIdxMap_[kIndex4] = kIndex3;
-  inputsIdxMap_[kIndex5] = kIndex5;
-  outputsIdxMap_[kIndex0] = kIndex0;
-}
-
 MS_INTERNAL_KERNEL_FACTORY_REG(PagedAttentionMask, InternalPagedAttentionMask);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(PagedAttentionMask, INPUT_NUM_6, INDEX_0, INDEX_1, INDEX_2, INDEX_4, INDEX_3,
+                                     INDEX_5);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(PagedAttentionMask, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

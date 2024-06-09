@@ -80,31 +80,6 @@ AclKernelFormatList GetValidFormat(size_t input_num, size_t output_num) {
   return {std::make_pair(inputs_format, outputs_format)};
 }
 
-TypeId GetInputDeviceType(const AnfNodePtr &kernel_node, size_t input_idx) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  TypeId type = kTypeUnknown;
-  auto [input_node, idx] = common::AnfAlgo::GetPrevNodeOutput(kernel_node, input_idx);
-  MS_EXCEPTION_IF_NULL(input_node);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(input_node->kernel_info());
-  if (kernel_info != nullptr && kernel_info->select_kernel_build_info() != nullptr) {
-    type = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_idx);
-    if (type == kTypeUnknown) {
-      MS_LOG(DEBUG) << "This node kernel build info in valid, it may be parameter or value node: "
-                    << kernel_node->DebugString() << ", idx: " << input_idx
-                    << ", input node: " << input_node->DebugString();
-      type = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_idx);
-      auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
-      MS_EXCEPTION_IF_NULL(build_info);
-      build_info->SetOutputDeviceType(type, idx);
-    }
-  } else {
-    MS_LOG(DEBUG) << "Node no build info, node name: " << kernel_node->DebugString() << ", idx: " << input_idx
-                  << ", input node: " << input_node->DebugString();
-    type = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_idx);
-  }
-  return type;
-}
-
 void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> output_format, const CNodePtr &kernel_node,
                      size_t input_index, bool force_fresh = false) {
   MS_EXCEPTION_IF_NULL(real_input_node);
@@ -283,8 +258,8 @@ std::pair<std::string, ExceptionType> CollectNotMatchMessage(
       break;
     }
     case transform::kInValidType: {
-      ss << "The supported input and output data types for the current operator are:"
-         << " node is " << node->fullname_with_scope() << trace::DumpSourceLines(node) << std::endl;
+      ss << "The supported input and output data types for the current operator are: node is "
+         << node->fullname_with_scope() << trace::DumpSourceLines(node) << std::endl;
       std::string name = GetCNodeFuncName(node);
       const auto &info = transform::GeAdapterManager::GetInstance().GetInfo(name, true);
       const auto &input_supported_dtypes = info->input_supported_dtypes();
@@ -373,19 +348,6 @@ bool SetMatchKernelInfo(const CNodePtr &kernel_node, const std::vector<kernel::K
   return find_valid;
 }
 
-bool IsEmptyTupleInput(const CNodePtr &kernel, const size_t i, const TypeId cur_type_id) {
-  auto input_node = common::AnfAlgo::GetPrevNodeOutput(kernel, i).first;
-  if (input_node->isa<ValueNode>()) {
-    auto value_node = input_node->cast<ValueNodePtr>();
-    if (cur_type_id == kTypeUnknown && value_node->value() != nullptr && value_node->value()->isa<ValueTuple>() &&
-        value_node->value()->cast<ValueTuplePtr>()->size() == 0) {
-      MS_LOG(DEBUG) << "Set int64 type for empty value tuple node:" << value_node->DebugString();
-      return true;
-    }
-  }
-  return false;
-}
-
 static std::once_flag kAclnnEnableListInit;
 static std::unordered_set<std::string> kAclnnEnableList;
 bool ReadAclnnEnableEnv(const std::string &op_name) {
@@ -422,6 +384,44 @@ bool ReadAclnnEnableEnv(const std::string &op_name) {
   return false;
 }
 }  // namespace
+
+bool IsEmptyTupleInput(const CNodePtr &kernel, const size_t i, const TypeId cur_type_id) {
+  auto input_node = common::AnfAlgo::GetPrevNodeOutput(kernel, i).first;
+  if (input_node->isa<ValueNode>()) {
+    auto value_node = input_node->cast<ValueNodePtr>();
+    if (cur_type_id == kTypeUnknown && value_node->value() != nullptr && value_node->value()->isa<ValueTuple>() &&
+        value_node->value()->cast<ValueTuplePtr>()->size() == 0) {
+      MS_LOG(DEBUG) << "Set int64 type for empty value tuple node:" << value_node->DebugString();
+      return true;
+    }
+  }
+  return false;
+}
+
+TypeId GetInputDeviceType(const AnfNodePtr &kernel_node, size_t input_idx) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  TypeId type = kTypeUnknown;
+  auto [input_node, idx] = common::AnfAlgo::GetPrevNodeOutput(kernel_node, input_idx);
+  MS_EXCEPTION_IF_NULL(input_node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(input_node->kernel_info());
+  if (kernel_info != nullptr && kernel_info->select_kernel_build_info() != nullptr) {
+    type = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_idx);
+    if (type == kTypeUnknown) {
+      MS_LOG(DEBUG) << "This node kernel build info in valid, it may be parameter or value node: "
+                    << kernel_node->DebugString() << ", idx: " << input_idx
+                    << ", input node: " << input_node->DebugString();
+      type = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_idx);
+      auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+      MS_EXCEPTION_IF_NULL(build_info);
+      build_info->SetOutputDeviceType(type, idx);
+    }
+  } else {
+    MS_LOG(DEBUG) << "Node no build info, node name: " << kernel_node->DebugString() << ", idx: " << input_idx
+                  << ", input node: " << input_node->DebugString();
+    type = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_idx);
+  }
+  return type;
+}
 
 void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel);

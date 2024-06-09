@@ -18,6 +18,7 @@
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 #include "acl/acl_rt.h"
 
 namespace mindspore {
@@ -35,34 +36,43 @@ InternalKernelMod::~InternalKernelMod() {
 
 int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto param = CreateOpParam(inputs, outputs);
-  impl_ = internal::CreateInternalKernelImpl(param);
-  if (impl_ == nullptr) {
-    return 1;
-  }
+  param->op_fullname_ = fullname_;
 
   // abstract validation info from inputs
   internal::ValidateInfo info;
   info.input_num_ = inputsIdxMap_.size();
   info.output_num_ = outputsIdxMap_.size();
+  param->in_dtypes_.resize(info.input_num_);
+  param->out_dtypes_.resize(info.output_num_);
+
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
     info.input_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(inputs[iter->first]->dtype_id()));
     info.input_format_.emplace_back(InternalKernelUtils::ToInternalFormat(inputs[iter->first]->format()));
+    param->in_dtypes_[iter->second] = InternalKernelUtils::ToInternalDType(inputs[iter->first]->dtype_id());
   }
 
   for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
     info.output_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(outputs[iter->first]->dtype_id()));
     info.output_format_.emplace_back(InternalKernelUtils::ToInternalFormat(outputs[iter->first]->format()));
+    param->out_dtypes_[iter->second] = InternalKernelUtils::ToInternalDType(outputs[iter->first]->dtype_id());
   }
+
+  impl_ = internal::CreateInternalKernelImpl(param);
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Internal Op '" << kernel_name_ << "' create FAILED.";
+    return KRET_RESIZE_FAILED;
+  }
+
   if (!impl_->Init(info)) {
     MS_LOG(ERROR) << "Internal Op '" << kernel_name_ << "' is initialized FAILED.";
-    return 1;
+    return KRET_RESIZE_FAILED;
   }
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
     InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
   }
   impl_->SetInputs(inputs_);
 
-  return 0;
+  return KRET_OK;
 }
 
 uint64_t InternalKernelMod::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
@@ -78,6 +88,7 @@ void InternalKernelMod::SetTilingInfo(const uint64_t key) {
     return ret;
   };
   if (tiling_info_.need_free_device_buf_) {
+    free(tiling_info_.host_buf_.addr_);
     device::ascend::AscendMemoryPool::GetInstance().FreeTensorMem(tiling_info_.device_buf_.addr_);
   }
   tiling_info_ = TilingCacheMgr::GetInstance().GetOrCreateTilingInfo(key, tiling_func, tiling_size);
@@ -85,14 +96,38 @@ void InternalKernelMod::SetTilingInfo(const uint64_t key) {
   impl_->SetDeviceTilingBuf(tiling_info_.device_buf_);
 }
 
+void InternalKernelMod::SetInOutIdx(size_t in_count, size_t out_count) {
+  bool input_mutable = false;
+  auto in_idx_list = InternalKernelModInOutMap::GetInstance()->GetKernelInMap(kernel_name_, &input_mutable);
+  if (input_mutable) {
+    for (size_t i = 0; i < in_count; i++) {
+      inputsIdxMap_[i] = i;
+    }
+  } else {
+    for (size_t i = 0; i < in_idx_list.size(); i++) {
+      inputsIdxMap_[in_idx_list.at(i)] = i;
+    }
+  }
+
+  bool output_mutable = false;
+  auto out_idx_list = InternalKernelModInOutMap::GetInstance()->GetKernelOutMap(kernel_name_, &output_mutable);
+  if (output_mutable) {
+    for (size_t i = 0; i < out_count; i++) {
+      outputsIdxMap_[i] = i;
+    }
+  } else {
+    for (size_t i = 0; i < out_idx_list.size(); i++) {
+      outputsIdxMap_[out_idx_list.at(i)] = i;
+    }
+  }
+}
+
 bool InternalKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  SetInOutIdx();
+  SetInOutIdx(inputs.size(), outputs.size());
   inputs_.resize(inputsIdxMap_.size());
   std::generate(inputs_.begin(), inputs_.end(), []() { return new internal::Tensor(); });
-
   outputs_.resize(outputsIdxMap_.size());
   std::generate(outputs_.begin(), outputs_.end(), []() { return new internal::Tensor(); });
-
   tiling_info_.device_buf_.size_ = 0;
   tiling_info_.device_buf_.addr_ = nullptr;
   return true;
@@ -117,12 +152,10 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
     input_shapes[iter->second] = inputs_[iter->second]->desc.dims;
   }
   impl_->SetInputs(inputs_);
-
   for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
     InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
   }
   impl_->SetOutputs(outputs_);
-
   auto key = GenTilingCacheKey(inputs, outputs);
   SetTilingInfo(key);
   // update workspace_size list
@@ -132,7 +165,7 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
     workspace_size_list_[i] = static_cast<size_t>(workspace_size_list[i]);
   }
 
-  return 0;
+  return KRET_OK;
 }
 
 bool InternalKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -151,7 +184,13 @@ bool InternalKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
     InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
   }
   impl_->SetOutputs(outputs_);
-  auto ret = impl_->Launch();
+  int ret = 0;
+  if (ascend_profiler_->GetEnableFlag()) {
+    MS_LOG(INFO) << "The enable_profiler_flag is " << ascend_profiler_->GetEnableFlag();
+    ret = impl_->LaunchWithProfiling();
+  } else {
+    ret = impl_->Launch();
+  }
   return (ret == 0);
 }
 }  // namespace kernel

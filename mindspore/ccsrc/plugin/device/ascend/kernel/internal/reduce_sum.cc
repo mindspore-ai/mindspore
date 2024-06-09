@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <memory>
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 #include "plugin/device/ascend/kernel/internal/reduce_sum.h"
 namespace mindspore {
 namespace kernel {
@@ -33,11 +34,8 @@ internal::OpParamPtr InternalReduceSum::CreateOpParam(const std::vector<KernelTe
   return param_ptr;
 }
 
-void InternalReduceSum::SetInOutIdx() {
-  inputsIdxMap_[0] = 0;
-  outputsIdxMap_[0] = 0;
-}
-
 MS_INTERNAL_KERNEL_FACTORY_REG(ReduceSum, InternalReduceSum);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(ReduceSum, INPUT_NUM_1, INDEX_0);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(ReduceSum, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore
