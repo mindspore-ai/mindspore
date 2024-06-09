@@ -33,6 +33,7 @@
 #include "tools/optimizer/fusion/affine_fusion.h"
 #include "tools/optimizer/fusion/conv_biasadd_fusion.h"
 #include "tools/optimizer/fusion/conv_activation_fusion.h"
+#include "tools/optimizer/fusion/adjust_matmul_pass.h"
 #include "tools/optimizer/fusion/conv_tuple_activation_fusion.h"
 #include "tools/optimizer/fusion/conv_scale_fusion.h"
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
@@ -830,7 +831,7 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
     {"LayerNormV3Fusion", std::make_shared<opt::LayerNormV3Fusion>(), false},
     {"FFNFusion", std::make_shared<opt::FFNFusion>(), false},
     {"FuseAddAndLayernorm", std::make_shared<opt::FuseAddAndLayernorm>(), false},
-  };
+    {"AdjustMatmulPass", std::make_shared<opt::AdjustMatmulPass>(), false}};
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
     PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));
