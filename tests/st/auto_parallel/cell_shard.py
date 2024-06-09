@@ -172,23 +172,23 @@ class ResNet(nn.Cell):
                                        in_channel=in_channels[0],
                                        out_channel=out_channels[0],
                                        stride=strides[0])
-        self.layer1.shard(in_strategy=(None,), out_strategy=(None,))
+        self.layer1_shard = self.layer1.shard(in_strategy=(None,), out_strategy=(None,))
         self.layer2 = self._make_layer(block,
                                        layer_nums[1],
                                        in_channel=in_channels[1],
                                        out_channel=out_channels[1],
                                        stride=strides[1])
-        self.layer2.shard(in_strategy=((1, 1, 1, 1),), out_strategy=(None,),
-                          parameter_plan={
-                              'self.layer2.1.conv1.weight': (1, 8, 1, 1),
-                              'self.layer2.0.conv_down_sample.weight': (8, 1, 1, 1),
-                          })
+        self.layer2_shard = self.layer2.shard(in_strategy=((1, 1, 1, 1),), out_strategy=(None,),
+                                              parameter_plan={
+                                                  'self.layer2.1.conv1.weight': (1, 8, 1, 1),
+                                                  'self.layer2.0.conv_down_sample.weight': (8, 1, 1, 1),
+                                              })
         self.layer3 = self._make_layer(block,
                                        layer_nums[2],
                                        in_channel=in_channels[2],
                                        out_channel=out_channels[2],
                                        stride=strides[2])
-        self.layer3.shard(in_strategy=((8, 1, 1, 1),), out_strategy=(None,))
+        self.layer3_shard = self.layer3.shard(in_strategy=((8, 1, 1, 1),), out_strategy=(None,))
         self.layer4 = self._make_layer(block,
                                        layer_nums[3],
                                        in_channel=in_channels[3],
@@ -224,9 +224,9 @@ class ResNet(nn.Cell):
         x = self.relu(x)
         c1 = self.maxpool(x)
 
-        c2 = self.layer1(c1)
-        c3 = self.layer2(c2)
-        c4 = self.layer3(c3)
+        c2 = self.layer1_shard(c1)
+        c3 = self.layer2_shard(c2)
+        c4 = self.layer3_shard(c3)
         c5 = self.layer4_shard(c4)
 
         out = self.mean(c5, (2, 3))
@@ -397,6 +397,38 @@ def test_train_feed_gpu():
     Expectation: Run success
     '''
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(device_id=int(os.getenv('DEVICE_ID')))
+    init()
+    context.set_auto_parallel_context(gradients_mean=True, parallel_mode=ParallelMode.AUTO_PARALLEL,
+                                      search_mode="sharding_propagation", device_num=8,
+                                      dataset_strategy="data_parallel")
+    np.random.seed(1)
+    set_seed(1)
+    train_feed(num_classes=65536)
+
+def test_train_feed_ascend_graphmode():
+    '''
+    Feature: shard function for cell to enable parallel execution under Graph mode in Ascend
+    Description: Test a shrunk version of ResNet50 with a alternative execution of shard and Graph
+    Expectation: Run success
+    '''
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", max_device_memory="25GB")
+    context.set_context(device_id=int(os.getenv('DEVICE_ID')))
+    init()
+    context.set_auto_parallel_context(gradients_mean=True, parallel_mode=ParallelMode.AUTO_PARALLEL,
+                                      search_mode="sharding_propagation", device_num=8,
+                                      dataset_strategy="data_parallel")
+    np.random.seed(42)
+    set_seed(42)
+    train_feed(num_classes=65536)
+
+def test_train_feed_gpu_graphmode():
+    '''
+    Feature: shard function for cell to enable parallel execution under Graph mode in GPU
+    Description: Test a shrunk version of ResNet50 with a alternative execution of shard and Graph
+    Expectation: Run success
+    '''
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     context.set_context(device_id=int(os.getenv('DEVICE_ID')))
     init()
     context.set_auto_parallel_context(gradients_mean=True, parallel_mode=ParallelMode.AUTO_PARALLEL,

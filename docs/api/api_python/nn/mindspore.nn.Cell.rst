@@ -539,12 +539,12 @@
 
     .. py:method:: shard(in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0)
 
-        指定输入/输出Tensor的分布策略，通过其余算子的策略推导得到。在PyNative模式下，可以利用此方法指定某个Cell以图模式进行分布式执行。 in_strategy/out_strategy需要为元组类型，
+        指定输入/输出Tensor的分布策略，通过其余算子的策略推导得到。在PyNative模式下，可以利用此方法指定某个Cell以图模式进行分布式执行。 在图模式下，
+        可以利用此方法设置某个模块的分布式切分策略，未设置的会自动通过策略传播方式配置。 in_strategy/out_strategy需要为元组类型，
         其中的每一个元素指定对应的输入/输出的Tensor分布策略，可参考： :func:`mindspore.ops.Primitive.shard` 的描述。也可以设置为None，会默认以数据并行执行。
         其余算子的并行策略由输入输出指定的策略推导得到。
 
-        .. note:: 需设置为PyNative模式，并且ParallelMode.AUTO_PARALLEL，
-            同时设置 :func:`mindspore.set_auto_parallel_context` 中的搜索模式(search mode)为"sharding_propagation"。
+        .. note:: 调用该方法后，并行模式(parallel_mode)会自动设置为"auto_parallel"且搜索模式(search_mode)自动设置为"sharding_propagation"。
             如果输入含有Parameter，其对应的策略应该在 `in_strategy` 里设置。
 
         参数：
@@ -556,7 +556,7 @@
             - **level** (int) - 指定搜索切分策略的目标函数，即是最大化计算通信比、最小化内存消耗、最大化执行速度等。可以为[ ``0`` , ``1`` , ``2`` ]中任意一个，默认值： ``0`` 。目前仅支持最大化计算通信比，其余模式未使能。
 
         返回：
-            Cell类型，Cell本身。
+            Function，返回一个在自动并行流程下执行的函数。
 
     .. py:method:: to_float(dst_type)
 

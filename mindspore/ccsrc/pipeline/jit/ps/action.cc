@@ -40,6 +40,7 @@
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/graph_util/graph_splitter.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/shard/shard.h"
 #include "pipeline/jit/ps/pipeline.h"
 #include "pipeline/jit/ps/pass.h"
 #include "pipeline/jit/ps/parse/parse_base.h"

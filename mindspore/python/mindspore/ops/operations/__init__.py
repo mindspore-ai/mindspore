@@ -136,6 +136,7 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax, DropoutGen
                           TensorAdd, InplaceUpdate, ScatterNonAliasingAdd,
                           BatchToSpaceND, Unpack, GatherV2, DynamicShape, ScalarToArray, Pack)
 from .manually_defined._inner import ScalarCast
+from .reshard_ops import (Reshard)
 
 __all__ = [
     'HSVToRGB',
@@ -702,6 +703,7 @@ __all__ = [
     "ReshapeAndCache",
     "ApplyRotaryPosEmb",
     "RmsNorm",
+    "Reshard",
 ]
 
 __custom__ = [
