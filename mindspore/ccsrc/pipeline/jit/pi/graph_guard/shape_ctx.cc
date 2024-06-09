@@ -131,6 +131,69 @@ static bool CheckSymbolicShape(PyObject *attr, mindspore::tensor::TensorPtr org)
   return true;
 }
 
+static bool CheckTensorValid(PyObject *sig, PyObject *org) {
+  mindspore::tensor::TensorPtr psig = py::cast<mindspore::tensor::TensorPtr>(sig);
+  mindspore::tensor::TensorPtr porg = py::cast<mindspore::tensor::TensorPtr>(org);
+  if (IsShapeUnknown(psig) && !CheckDynamicShape(psig, porg)) {
+    return false;
+  }
+  if (PyObject_HasAttrString(sig, "symbolic_shape")) {
+    PyObject *attr = PyObject_GetAttrString(sig, "symbolic_shape");
+    if (!CheckSymbolicShape(attr, porg)) {
+      Py_DECREF(attr);
+      return false;
+    }
+    Py_DECREF(attr);
+  }
+  return true;
+}
+
+static bool CheckItemValid(PyObject *sig, PyObject *org);
+static bool CheckListValid(PyObject *sig, PyObject *org) {
+  if (PyList_Size(sig) != PyList_Size(org)) {
+    return false;
+  }
+  for (Py_ssize_t i = 0; i < PyList_Size(sig); ++i) {
+    PyObject *sig_item = PyList_GetItem(sig, i);
+    PyObject *org_item = PyList_GetItem(org, i);
+    if (!CheckItemValid(sig_item, org_item)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool CheckTupleValid(PyObject *sig, PyObject *org) {
+  if (PyTuple_GET_SIZE(sig) != PyTuple_GET_SIZE(org)) {
+    return false;
+  }
+  for (Py_ssize_t i = 0; i < PyTuple_GET_SIZE(sig); ++i) {
+    PyObject *sig_item = PyTuple_GET_ITEM(sig, i);
+    PyObject *org_item = PyTuple_GET_ITEM(org, i);
+    if (!CheckItemValid(sig_item, org_item)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool CheckItemValid(PyObject *sig, PyObject *org) {
+  if (sig == nullptr || org == nullptr || sig == Py_None || org == Py_None) {
+    return true;
+  }
+  if (py::isinstance<mindspore::tensor::Tensor>(sig) && py::isinstance<mindspore::tensor::Tensor>(org) &&
+      !CheckTensorValid(sig, org)) {
+    return false;
+  }
+  if (PyList_Check(sig) && PyList_Check(org) && !CheckListValid(sig, org)) {
+    return false;
+  }
+  if (PyTuple_Check(sig) && PyTuple_Check(org) && !CheckTupleValid(sig, org)) {
+    return false;
+  }
+  return true;
+}
+
 bool ShapeContext::CheckValid() {
   if (signature_ == nullptr) {
     return false;
@@ -142,23 +205,8 @@ bool ShapeContext::CheckValid() {
   for (int i = 0; i < PyTuple_GET_SIZE(signature_); ++i) {
     auto sig = PyTuple_GetItem(signature_, i);
     auto org = origin_[i];
-    if (sig != nullptr && py::isinstance<mindspore::tensor::Tensor>(sig)) {
-      if (org == nullptr || !py::isinstance<mindspore::tensor::Tensor>(org)) {
-        return false;
-      }
-      mindspore::tensor::TensorPtr psig = py::cast<mindspore::tensor::TensorPtr>(sig);
-      mindspore::tensor::TensorPtr porg = py::cast<mindspore::tensor::TensorPtr>(org);
-      if (IsShapeUnknown(psig) && !CheckDynamicShape(psig, porg)) {
-        return false;
-      }
-      if (PyObject_HasAttrString(sig, "symbolic_shape")) {
-        PyObject *attr = PyObject_GetAttrString(sig, "symbolic_shape");
-        if (!CheckSymbolicShape(attr, porg)) {
-          Py_DECREF(attr);
-          return false;
-        }
-        Py_DECREF(attr);
-      }
+    if (!CheckItemValid(sig, org)) {
+      return false;
     }
   }
   return true;
@@ -173,7 +221,11 @@ void ShapeContext::ApplySignature() {
   }
   int argc = frame_->f_code->co_argcount + frame_->f_code->co_kwonlyargcount;
   for (int i = (is_method_ ? 1 : 0), j = 0; i < argc; ++i, ++j) {
-    frame_->f_localsplus[i] = PyTuple_GetItem(signature_, j);
+    PyObject *sig_item = PyTuple_GetItem(signature_, j);
+    PyObject *org_item = frame_->f_localsplus[i];
+    if (sig_item != nullptr && sig_item != Py_None && org_item != nullptr && org_item != Py_None) {
+      frame_->f_localsplus[i] = sig_item;
+    }
   }
   applied_ = true;
 }
