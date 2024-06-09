@@ -205,6 +205,58 @@ enum SubModuleId : int {
 #define SUBMODULE_ID mindspore::SubModuleId::SM_ME
 #endif
 
+constexpr int COMPONENT_START = 10000;  // vlog start level for component
+constexpr int COMPONENT_RANGE = 100;    // number for levels allocated for each component
+#define NUM_ALIGN(val, base) (((val) + (base)-1) / (base) * (base))
+
+// VLOG level definition and group
+enum VLogLevel : int {
+  VL_INVALID = 0,  // invalid vlog level
+  VL_FLOW = 1,     // start of end to end flow related log level
+
+  VL_CORE = COMPONENT_START + (SM_CORE - 1) * COMPONENT_RANGE,                            // 0. core
+  VL_ANALYZER = COMPONENT_START + (SM_ANALYZER - 1) * COMPONENT_RANGE,                    // 1. static analyzer
+  VL_COMMON = COMPONENT_START + (SM_COMMON - 1) * COMPONENT_RANGE,                        // 2. common
+  VL_DEBUG = COMPONENT_START + (SM_DEBUG - 1) * COMPONENT_RANGE,                          // 3. debug
+  VL_OFFLINE_DEBUG = COMPONENT_START + (SM_OFFLINE_DEBUG - 1) * COMPONENT_RANGE,          // 4. offline debug
+  VL_DEVICE = COMPONENT_START + (SM_DEVICE - 1) * COMPONENT_RANGE,                        // 5. device
+  VL_GE_ADPT = COMPONENT_START + (SM_GE_ADPT - 1) * COMPONENT_RANGE,                      // 6. ge adapter
+  VL_IR = COMPONENT_START + (SM_IR - 1) * COMPONENT_RANGE,                                // 7. IR
+  VL_KERNEL = COMPONENT_START + (SM_KERNEL - 1) * COMPONENT_RANGE,                        // 8. kernel
+  VL_MD = COMPONENT_START + (SM_MD - 1) * COMPONENT_RANGE,                                // 9. MindData
+  VL_ME = COMPONENT_START + (SM_ME - 1) * COMPONENT_RANGE,                                // 10. MindExpression
+  VL_EXPRESS = COMPONENT_START + (SM_EXPRESS - 1) * COMPONENT_RANGE,                      // 11. EXPRESS_IR
+  VL_OPTIMIZER = COMPONENT_START + (SM_OPTIMIZER - 1) * COMPONENT_RANGE,                  // 12. optimzer
+  VL_PARALLEL = COMPONENT_START + (SM_PARALLEL - 1) * COMPONENT_RANGE,                    // 13. parallel
+  VL_PARSER = COMPONENT_START + (SM_PARSER - 1) * COMPONENT_RANGE,                        // 14. parser
+  VL_PIPELINE = COMPONENT_START + (SM_PIPELINE - 1) * COMPONENT_RANGE,                    // 15. ME pipeline
+  VL_PRE_ACT = COMPONENT_START + (SM_PRE_ACT - 1) * COMPONENT_RANGE,                      // 16. pre-activate
+  VL_PYNATIVE = COMPONENT_START + (SM_PYNATIVE - 1) * COMPONENT_RANGE,                    // 17. PyNative
+  VL_SESSION = COMPONENT_START + (SM_SESSION - 1) * COMPONENT_RANGE,                      // 18. session
+  VL_UTILS = COMPONENT_START + (SM_UTILS - 1) * COMPONENT_RANGE,                          // 19. utils
+  VL_VM = COMPONENT_START + (SM_VM - 1) * COMPONENT_RANGE,                                // 20. VM
+  VL_PROFILER = COMPONENT_START + (SM_PROFILER - 1) * COMPONENT_RANGE,                    // 21. profiler
+  VL_PS = COMPONENT_START + (SM_PS - 1) * COMPONENT_RANGE,                                // 22. Parameter Server
+  VL_PI = COMPONENT_START + (SM_PI - 1) * COMPONENT_RANGE,                                // 23. PIJIT
+  VL_FL = COMPONENT_START + (SM_FL - 1) * COMPONENT_RANGE,                                // 24. Federated Learning
+  VL_DISTRIBUTED = COMPONENT_START + (SM_DISTRIBUTED - 1) * COMPONENT_RANGE,              // 25. Distributed
+  VL_LITE = COMPONENT_START + (SM_LITE - 1) * COMPONENT_RANGE,                            // 26. LITE
+  VL_ARMOUR = COMPONENT_START + (SM_ARMOUR - 1) * COMPONENT_RANGE,                        // 27. ARMOUR
+  VL_HCCL_ADPT = COMPONENT_START + (SM_HCCL_ADPT - 1) * COMPONENT_RANGE,                  // 28. Hccl Adapter
+  VL_RUNTIME_FRAMEWORK = COMPONENT_START + (SM_RUNTIME_FRAMEWORK - 1) * COMPONENT_RANGE,  // 29. Runtime framework
+
+  VL_GE = COMPONENT_START + (SM_GE - 1) * COMPONENT_RANGE,  // 30. GraphEngine
+  VL_ASCEND_KERNEL_SELECT = VL_GE,                          // print ascend kernel select
+
+  VL_API = COMPONENT_START + (SM_API - 1) * COMPONENT_RANGE,                        // 31. MindAPI
+  VL_SYMBOLIC_SHAPE = COMPONENT_START + (SM_SYMBOLIC_SHAPE - 1) * COMPONENT_RANGE,  // 32. symbolic shape
+  VL_GRAPH_KERNEL = COMPONENT_START + (SM_GRAPH_KERNEL - 1) * COMPONENT_RANGE,      // 33. graph kernel fusion
+
+  VL_USER_CUSTOM = NUM_ALIGN(COMPONENT_START + (NUM_SUBMODUES - 1) * COMPONENT_RANGE,
+                             COMPONENT_START),  // start of user defined vlog level
+  VL_DISP_VLOG_TAGS = VL_USER_CUSTOM            // print already used vlog tags
+};
+
 /// \brief Get sub-module name by the module id.
 ///
 /// \param[in] module_id The module id.
@@ -221,6 +273,10 @@ MS_EXPORT std::string GetTimeString();
 
 /// \brief The log levels of mindspore sub-module.
 MS_EXPORT extern int g_ms_submodule_log_levels[];
+
+/// \brief The variables for controlling output of vlog.
+MS_EXPORT extern int g_ms_vlog_level_from;
+MS_EXPORT extern int g_ms_vlog_level_to;
 
 #if defined(_WIN32) || defined(_WIN64)
 /// \brief The max log level of current thread.
@@ -255,10 +311,19 @@ class MS_CORE_API LogWriter {
             const AnfNodePtr &node = nullptr)
       : location_(location),
         log_level_(log_level),
+        vlog_level_(-1),
         submodule_(submodule),
         exception_type_(excp_type),
         is_internal_exception_(is_internal_exception),
         node_(node) {}
+  LogWriter(const LocationInfo &location, int vlog_level, SubModuleId submodule)
+      : location_(location),
+        log_level_(mindspore::kInfo),
+        vlog_level_(vlog_level),
+        submodule_(submodule),
+        exception_type_(NoExceptionType),
+        is_internal_exception_(false),
+        node_(nullptr) {}
   ~LogWriter() = default;
 
   /// \brief Output log message from the input log stream.
@@ -317,6 +382,7 @@ class MS_CORE_API LogWriter {
 
   LocationInfo location_;
   MsLogLevel log_level_;
+  int vlog_level_ = -1;
   SubModuleId submodule_;
   ExceptionType exception_type_;
   bool is_internal_exception_;
@@ -338,6 +404,7 @@ class MS_CORE_API LogWriter {
     static_cast<int>(level) <= static_cast<int>(mindspore::this_thread_max_log_level)
 
 #define IS_OUTPUT_ON(level) (MATCH_LEVEL(level))
+#define IS_VLOG_ON(level) (((level) >= g_ms_vlog_level_from) && ((level) <= g_ms_vlog_level_to))
 
 #define __MS_LOG_DEBUG(node) \
   MSLOG_IF(mindspore::kDebug, IS_OUTPUT_ON(mindspore::kDebug), mindspore::NoExceptionType, node)
@@ -351,6 +418,10 @@ class MS_CORE_API LogWriter {
 
 #define MS_LOG(level) __MS_LOG_##level(nullptr)
 #define MS_LOG_WITH_NODE(level, node) __MS_LOG_##level(node)
+#define MS_VLOG(level)                                                                                           \
+  !(IS_VLOG_ON(level)) ? void(0)                                                                                 \
+                       : mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), level, \
+                                              SUBMODULE_ID) < mindspore::LogStream()
 
 #define MS_LOG_EXCEPTION __MS_LOG_EXCEPTION(nullptr)
 #define MS_INTERNAL_EXCEPTION(type) MSLOG_THROW(type, true, nullptr)
