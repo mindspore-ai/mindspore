@@ -668,6 +668,30 @@ void AscendKernelRuntime::CreateDefaultStream() {
   copy_data_stream_ = AscendStreamMng::GetInstance().GetStream(copy_stream_id);
   AscendStreamMng::GetInstance().SetCopyStream(copy_data_stream_);
   MS_EXCEPTION_IF_NULL(copy_data_stream_);
+
+  size_t forward_send_stream_id;
+  AscendStreamMng::GetInstance().CreateStream(&forward_send_stream_id);
+  MS_LOG(INFO) << "Create ascend forward Send communication stream, stream id: " << forward_send_stream_id;
+  forward_send_stream_ = AscendStreamMng::GetInstance().GetStream(forward_send_stream_id);
+  MS_EXCEPTION_IF_NULL(forward_send_stream_);
+
+  size_t backward_send_stream_id;
+  AscendStreamMng::GetInstance().CreateStream(&backward_send_stream_id);
+  MS_LOG(INFO) << "Create ascend backward Send communication stream, stream id: " << backward_send_stream_id;
+  backward_send_stream_ = AscendStreamMng::GetInstance().GetStream(backward_send_stream_id);
+  MS_EXCEPTION_IF_NULL(backward_send_stream_);
+
+  size_t forward_recv_stream_id;
+  AscendStreamMng::GetInstance().CreateStream(&forward_recv_stream_id);
+  MS_LOG(INFO) << "Create ascend forward Receive communication stream, stream id: " << forward_recv_stream_id;
+  forward_recv_stream_ = AscendStreamMng::GetInstance().GetStream(forward_recv_stream_id);
+  MS_EXCEPTION_IF_NULL(forward_recv_stream_);
+
+  size_t backward_recv_stream_id;
+  AscendStreamMng::GetInstance().CreateStream(&backward_recv_stream_id);
+  MS_LOG(INFO) << "Create ascend backward Receive communication stream, stream id: " << backward_recv_stream_id;
+  backward_recv_stream_ = AscendStreamMng::GetInstance().GetStream(backward_recv_stream_id);
+  MS_EXCEPTION_IF_NULL(backward_recv_stream_);
 }
 
 bool AscendKernelRuntime::InitDevice() {

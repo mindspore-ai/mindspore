@@ -50,6 +50,7 @@ class PipelineInterleave {
   bool HasNoUpdateParameter();
 
  private:
+  void CreateSendReceiveGroup();
   void RedundancyNode(const AnfNodePtr &node, mindspore::HashMap<CNodePtr, std::vector<AnfNodePtr>> *make_tuple_map);
   bool IsRedundancyParameter(const AnfNodePtr &parameter, const std::vector<AnfNodePtr> &non_cloned_parameters);
   void InsertSendReceive(const AnfNodePtr &node, const AnfNodePtr &user_node, int64_t order);
@@ -70,6 +71,7 @@ class PipelineInterleave {
   int64_t micro_size_ = 0;
   mindspore::HashMap<AnfNodePtr, std::set<int64_t>> parameter_color_map_ = {};
   std::string world_group_;
+  std::vector<std::string> group_;
   bool is_train_{true};
   int64_t global_rank_ = 0;
   int64_t per_stage_rank_num_ = 0;

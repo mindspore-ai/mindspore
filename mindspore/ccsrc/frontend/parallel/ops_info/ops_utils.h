@@ -640,6 +640,7 @@ constexpr char CONVOLUTION[] = "Convolution";
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;
 constexpr char MICRO[] = "micro";
+constexpr char ENABLE_PIPELINE_MEMORY_OPTIMIZE[] = "ENABLE_PIPELINE_MEMORY_OPTIMIZE";
 constexpr char NO_UPDATE[] = "no_update";
 constexpr char HAS_ATTACHED[] = "has_attached";
 constexpr char CHUNK[] = "chunk";

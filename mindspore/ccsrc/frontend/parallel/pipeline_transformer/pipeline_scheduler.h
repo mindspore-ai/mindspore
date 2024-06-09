@@ -70,6 +70,9 @@ class InterleavedScheduler : public PipelineScheduler {
   void Reorder() override;
 
  private:
+  void MemoryOptimizedWarmUpPhaseReorder();
+  void MemoryOptimizedStablePhaseReorder();
+  void MemoryOptimizedReorder();
   void WarmUpPhaseReorder();
   void LastForwardMicroReorder();
   void EndPhaseReorder();
@@ -86,8 +89,8 @@ class InterleavedScheduler : public PipelineScheduler {
   std::vector<Border> bwd_cell_;
   std::vector<Border> fwd_params_;
   std::vector<Border> bwd_params_;
-  int64_t bias_ = 0;
-  int64_t offset_ = 0;
+  size_t bias_ = 0;
+  size_t offset_ = 0;
   bool is_even_stage_ = true;
 };
 bool SortFuncInsideMicro(const Border &b_i, const Border &b_j);

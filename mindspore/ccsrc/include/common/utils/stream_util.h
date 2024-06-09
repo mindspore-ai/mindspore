@@ -19,5 +19,9 @@
 namespace mindspore {
 constexpr auto kDefaultStreamIndex = 0;
 constexpr auto kWorldGroupStreamIndex = 1;
+constexpr auto kForwardSendStreamIndex = 2;
+constexpr auto kBackwardSendStreamIndex = 3;
+constexpr auto kForwardReceiveStreamIndex = 4;
+constexpr auto kBackwardReceiveStreamIndex = 5;
 }  // namespace mindspore
 #endif
