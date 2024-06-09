@@ -121,6 +121,8 @@ def _ms_adapter_tensor_as_parameter_output(data):
     """Check whether the data is an output from a parameter which is a ms_adapter tensor.
        Pylint: disable=unidiomatic-typecheck.
     """
+    if isinstance(data, PythonTensor):
+        return False
     return ms_adapter_registry.is_registered and isinstance(data, ms_adapter_registry.tensor) \
         and hasattr(data, "__ms_parameter_output__") and getattr(data, "__ms_parameter_output__")
 

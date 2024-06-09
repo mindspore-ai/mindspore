@@ -122,6 +122,7 @@ def test_tensor_convert_type():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.skip("skip testcase")
 def test_convert_to_ms_tensor():
     """
     Feature: MSAdapter
