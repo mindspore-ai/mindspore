@@ -16,12 +16,13 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_PROFILING_PROFILING_DATA_DUMPER_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_PROFILING_PROFILING_DATA_DUMPER_H_
 
-#include <unistd.h>
 #include <sys/stat.h>
-#include <linux/limits.h>
-#include <libgen.h>
 #include <fcntl.h>
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
+#include <libgen.h>
+#include <linux/limits.h>
 #include <sys/syscall.h>
+#endif
 #include <stdint.h>
 #include <fstream>
 #include <queue>

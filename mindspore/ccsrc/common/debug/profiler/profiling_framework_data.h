@@ -30,10 +30,10 @@
 namespace mindspore {
 namespace profiler {
 namespace ascend {
-using mindspore::runtime::ProfilerData;
 using mindspore::runtime::kProfilerEventString;
 using mindspore::runtime::kProfilerModuleString;
 using mindspore::runtime::kProfilerStageString;
+using mindspore::runtime::ProfilerData;
 
 enum class COMMON_EXPORT OpRangeDataType {
   OP_RANGE_DATA = 1,

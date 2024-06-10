@@ -104,7 +104,7 @@ class DeviceSupportParam(Enum):
     ASCEND = [
         'start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'profile_memory',
         'parallel_strategy', 'profile_communication', 'aicore_metrics', 'l2_cache', 'hbm_ddr', 'pcie', 'op_time',
-        'ascend_job_id', 'profile_framework', 'profiler_level', 'data_simplification'
+        'ascend_job_id', 'profile_framework', 'profiler_level', 'data_simplification', 'host_stack'
     ]
 
 
@@ -407,6 +407,8 @@ class Profiler:
             - "time": Only record host timestamp.
             - "memory": Only record host memory usage.
             - None: Not record host information.
+        host_stack (bool, optional): (Ascend) Whether to collect frame host call stack data.
+            Default value: ``True`` .
 
     Raises:
         RuntimeError: When the version of CANN does not match the version of MindSpore,
