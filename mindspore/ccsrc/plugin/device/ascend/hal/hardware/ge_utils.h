@@ -17,9 +17,11 @@
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_GE_UTILS_H_
 
 #include <string>
+#include <vector>
 #include <unordered_set>
 #include "include/transform/graph_ir/types.h"
 #include "utils/phase.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 namespace device {
@@ -34,6 +36,9 @@ void SetPassthroughGeOptions(bool is_global, OptionMap *options);
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air);
 bool AddFakeGraph(const FuncGraphPtr &anf_graph);
 bool IsGeTrain();
+void SyncCopyStream(aclrtStream stream);
+void SavePrevStepWeight(const std::vector<AnfNodePtr> &weights, aclrtStream stream);
+
 inline std::string GetPhasePrefix() {
   const std::string &phase = PhaseManager::GetInstance().phase();
   auto pos = phase.find('.');

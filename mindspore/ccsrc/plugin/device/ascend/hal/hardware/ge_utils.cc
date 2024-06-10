@@ -26,7 +26,10 @@
 #include "include/common/utils/scoped_long_running.h"
 #include "abstract/abstract_value.h"
 #include "include/backend/kernel_graph.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "transform/symbol/symbol_utils.h"
+#include "transform/symbol/acl_rt_symbol.h"
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -264,6 +267,41 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   }
 
   return true;
+}
+
+void SyncCopyStream(aclrtStream stream) {
+  MS_LOG(INFO) << "Start sync copy data stream";
+  if (CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream, -1) != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Exec aclrtSynchronizeStreamWithTimeout failed";
+  }
+  MS_LOG(INFO) << "End sync copy data stream";
+}
+
+void SavePrevStepWeight(const std::vector<AnfNodePtr> &weights, aclrtStream stream) {
+  for (const auto &node : weights) {
+    if (!node->isa<Parameter>()) {
+      continue;
+    }
+    auto param = node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param);
+    if (common::AnfAlgo::IsParameterWeight(param)) {
+      auto tensor = param->default_param()->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      auto out_addr = AnfAlgo::GetMutableOutputAddr(param, 0, false);
+      if (out_addr == nullptr || out_addr->GetPtr() == nullptr || IsOneOfHWSpecialFormat(out_addr->format())) {
+        // skip async copy if addr is nullptr.
+        // special format need convert to default format at host, so skip async copy if format is a special format.
+        continue;
+      }
+      auto size = tensor->Size();
+      auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, tensor->data_c(), size, out_addr->GetMutablePtr(), size,
+                                 ACL_MEMCPY_DEVICE_TO_HOST, stream);
+      if (ret != ACL_ERROR_NONE) {
+        MS_LOG(EXCEPTION) << "Call aclrtMemcpyAsync failed, param: " << param->DebugString();
+      }
+      tensor->set_copy_done_flag(true);
+    }
+  }
 }
 }  // namespace ascend
 }  // namespace device

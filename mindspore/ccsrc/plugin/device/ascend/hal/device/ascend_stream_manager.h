@@ -88,6 +88,8 @@ class AscendStreamMng {
   std::vector<uint32_t> GetStreamIds() const;
   void SetBusyStreamNum(uint32_t stream_num) { busy_stream_num_ = stream_num; }
   uint32_t GetBusyStreamNum() const { return busy_stream_num_; }
+  void SetCopyStream(aclrtStream stream) { copy_stream_ = stream; }
+  aclrtStream GetCopyStream() const { return copy_stream_; }
 
   void set_current_stream(size_t stream_id) { current_stream_id_ = stream_id; }
   size_t current_stream() const { return current_stream_id_; }
@@ -112,6 +114,7 @@ class AscendStreamMng {
 
   // Ensure the thread safety for creating and destroying stream.
   std::mutex stream_mutex_;
+  aclrtStream copy_stream_{nullptr};
 
   // all gpu CUDA streams including default_stream_.
   std::vector<void *> streams_;

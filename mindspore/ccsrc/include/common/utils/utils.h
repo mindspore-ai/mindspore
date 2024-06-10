@@ -683,6 +683,8 @@ constexpr auto kSummaryNodeExist = "summary_node_exist";
 constexpr auto kGeCache = "ge_cache";
 constexpr auto kGeGraphKey = "ge.graph_key";
 constexpr auto kGeGraphCompilerCacheDir = "ge.graph_compiler_cache_dir";
+constexpr auto kIsRefGraph = "is_ref_graph";
+constexpr auto kFromRefGraph = "from_ref_graph";
 
 // recompute and parallel
 constexpr auto kRecomputeInsert = "recompute_insert";
@@ -735,6 +737,11 @@ COMMON_EXPORT size_t GetSystemFreeDiskSize(const std::string &path);
 
 COMMON_EXPORT bool IsEnableRefMode();
 COMMON_EXPORT bool IsMemoryPoolRecycle();
+
+// copy once flag, and reset copy flag when step end
+COMMON_EXPORT bool SkipOrResetCopyAction(bool need_reset = false);
+// only sync once flag
+COMMON_EXPORT bool SkipOrResetSyncAction(bool need_reset = false);
 
 // The map between kernel's output and input ref relationship.
 // Key is the output index while the value is input index which will be used as the reference of output.
