@@ -521,6 +521,18 @@ bool MsContext::EnableAoeOffline() const {
   return aoe_tune_mode == "offline";
 }
 
+namespace {
+void PrintJitLevelAndExecMode(bool is_jit_level_changed, const std::string &jit_level, const std::string &exec_mode) {
+  if (!is_jit_level_changed) {
+    return;
+  }
+
+  MS_LOG(INFO) << "The jit_level is: " << jit_level << ", and " << exec_mode;
+  if (common::IsEnableRuntimeConfig(common::kRuntimeCompileStat)) {
+    std::cout << "[MS_RUNTIME_PROF]The jit_level is: " << jit_level << ", and " << exec_mode << std::endl;
+  }
+}
+}  // namespace
 bool MsContext::IsKByKExecutorMode() const {
   // Get jit level.
   const auto &jit_config = PhaseManager::GetInstance().jit_config();
@@ -532,10 +544,13 @@ bool MsContext::IsKByKExecutorMode() const {
     jit_level = iter->second;
   }
 
+  auto global_jit_level = get_param<std::string>(MS_CTX_JIT_LEVEL);
   auto mode = get_param<int>(MS_CTX_EXECUTION_MODE);
+  auto device_target = get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (jit_level.empty()) {
-    auto device_target = get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    if (mode == kGraphMode && device_target == kAscendDevice) {
+    if (!global_jit_level.empty()) {
+      jit_level = global_jit_level;
+    } else if (mode == kGraphMode && device_target == kAscendDevice) {
       jit_level = kAttrJitLevelO2;
     } else {
       jit_level = kAttrJitLevelO1;
@@ -544,36 +559,27 @@ bool MsContext::IsKByKExecutorMode() const {
   if (jit_level_log != jit_level) {
     is_jit_level_changed = true;
     jit_level_log = jit_level;
-    MS_LOG(INFO) << "The jit level is: " << jit_level_log;
   }
   if (get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD)) {
-    MS_LOG(INFO) << "Enable kbyk executor mode by mem offload.";
+    PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable kernelbykernel executor by mem offload.");
     return true;
   }
 
   if (mode == kPynativeMode) {
     if (jit_level == "O2") {
-      if (is_jit_level_changed) {
-        MS_LOG(INFO) << "The pynative mode enable ge executor mode by JitLevelO2.";
-      }
+      PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable graph_sink executor in the PYNATIVE mode.");
       return false;
     }
-    if (is_jit_level_changed) {
-      MS_LOG(INFO) << "The pynative mode enable kbyk executor mode.";
-    }
+    PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable kernelbykernel executor in the PYNATIVE mode.");
     return true;
   }
 
   if (mode == kGraphMode) {
     if (common::GetEnv("GRAPH_OP_RUN") == "1" || jit_level == "O0" || jit_level == "O1") {
-      if (is_jit_level_changed) {
-        MS_LOG(INFO) << "The graph mode enable kbyk executor mode by JitConfig.";
-      }
+      PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable kernelbykernel executor in the GRAPH mode.");
       return true;
     }
-    if (is_jit_level_changed) {
-      MS_LOG(INFO) << "The graph mode enable ge executor mode.";
-    }
+    PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable graph_sink executor in the GRAPH mode.");
     return false;
   }
 

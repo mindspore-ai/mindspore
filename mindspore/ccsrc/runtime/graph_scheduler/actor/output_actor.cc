@@ -282,6 +282,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
 
     if (!WaitRuntimePipelineFinish(context, is_computed_depend_kernel)) {
       MS_LOG(INFO) << "Run graph failed and please check error log.";
+      return nullptr;
     }
   }
 

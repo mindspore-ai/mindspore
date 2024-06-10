@@ -650,7 +650,7 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   const bool enable_ge = context->backend_policy() == "ge";
-  const bool force_no_inline = common::GetEnv("MS_FORCE_NO_INLINE") == "1";
+  const bool force_no_inline = common::IsDisableRuntimeConfig(common::kRuntimeInline);
   context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
 
   MS_LOG(INFO) << "Cell reuse(@lazy_inline) actually takes effect.";
@@ -1168,6 +1168,15 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, s
     context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, enable_loop_sink);
     backend_ptr->set_is_multi_graph_sink(is_multi_graph_sink);
   };
+
+  auto graphs = func_graph->func_graphs_used_total();
+  (void)graphs.insert(func_graph);
+  bool exist_while =
+    std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
+  if (exist_while && context_ptr->CellReuseLevel() == CellReuseLevel::kLazyInline) {
+    MS_LOG(INFO) << "Set no inline because graph has while.";
+    context_ptr->SetCellReuseLevel(CellReuseLevel::kNoInline);
+  }
 
   auto jit_level = pipeline::GetJitLevel();
   func_graph->set_attr(kAttrJitLevel, MakeValue<std::string>(jit_level));

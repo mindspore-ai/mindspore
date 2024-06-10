@@ -134,10 +134,17 @@ bool AscendMemAdapter::DeInitialize() {
 
   auto ret = FreeToRts(device_mem_base_addr_, ms_used_hbm_size_);
   if (ret) {
-    MS_LOG(INFO) << " Ascend Memory Adapter deinitialize success, statistics:" << DevMemStatistics();
+    std::ostringstream oss_buf;
+    oss_buf << "Ascend Memory Adapter deinitialize success, statistics:" << DevMemStatistics();
+    MS_LOG(INFO) << oss_buf.str();
     if (common::IsNeedProfileMemory() || common::IsNeedMemoryStatistic()) {
-      MS_LOG(WARNING) << " Ascend Memory Adapter deinitialize success, statistics:" << DevMemStatistics();
+      MS_LOG(WARNING) << oss_buf.str();
     }
+    if (common::IsEnableRuntimeConfig(common::kRuntimeMemoryStat) ||
+        common::IsEnableRuntimeConfig(common::kRuntimeMemoryTrack)) {
+      std::cout << "[MS_RUNTIME_PROF]" << oss_buf.str() << std::endl;
+    }
+
     device_hbm_total_size_ = 0;
     device_hbm_free_size_ = 0;
     max_available_ms_hbm_size_ = 0;

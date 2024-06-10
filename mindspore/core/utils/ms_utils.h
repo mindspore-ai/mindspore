@@ -65,6 +65,26 @@ namespace common {
 inline const char *SafeCStr(const std::string &str) { return str.c_str(); }
 MS_CORE_API const char *SafeCStr(const std::string &&str);
 
+// Runtime dev config.
+const char kRuntimeInline[] = "inline";
+const char kRuntimeSwitchInline[] = "switch_inline";
+const char kRuntimeMultiStream[] = "multi_stream";
+const char kRuntimePipeline[] = "pipeline";
+const char kRuntimeView[] = "view";
+const char kRuntimeInsertTensorMove[] = "insert_tensormove";
+const char kRuntimeAllfinite[] = "all_finite";
+const char kRuntimeParalletAssignAddOpt[] = "parallel_assignadd_opt";
+// Runtime debug config.
+const char kRuntimeSynchronize[] = "synchronize";
+const char kRuntimeMemoryTrack[] = "memory_track";
+const char kRuntimeMemoryStat[] = "memory_statistics";
+const char kRuntimeCompileStat[] = "compile_statistics";
+const char kRuntimePerformanceStat[] = "performance_statistics";
+const char kRuntimePerformanceStatTopNum[] = "performance_statistics_top_num";
+MS_CORE_API std::string GetRuntimeConfigValue(const std::string &runtime_config);
+MS_CORE_API bool IsEnableRuntimeConfig(const std::string &runtime_config);
+MS_CORE_API bool IsDisableRuntimeConfig(const std::string &runtime_config);
+
 static inline std::string GetEnv(const std::string &envvar) {
   const char *value = std::getenv(envvar.c_str());
 
@@ -198,7 +218,6 @@ inline bool IsNeedProfileMemory() {
   static const bool skip_launch = (launch_skipped == "all" || launch_skipped == "ALL" || !simulation_level.empty());
   return skip_launch && IsNeedMemoryStatistic();
 }
-
 }  // namespace common
 }  // namespace mindspore
 

@@ -34,10 +34,12 @@ void KernelAsyncLaunchActor::LaunchKernel(OpContext<DeviceTensor> *const context
   try {
     kernel_actor->ExecuteLaunchKernelTask(context);
   } catch (const std::exception &e) {
-    MsException::Instance().SetException();
-    MS_LOG(ERROR) << "Failed to launch kernel: " << kernel_actor->kernel()->fullname_with_scope()
-                  << " and catch exception: " << e.what();
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), e.what());
+    if (context->error_info_.empty()) {
+      MsException::Instance().SetException();
+      MS_LOG(INFO) << "Failed to launch kernel: " << kernel_actor->kernel()->fullname_with_scope()
+                   << " and catch exception: " << e.what();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), e.what());
+    }
   }
 }
 

@@ -124,7 +124,9 @@ enum class KernelTransformType {
 
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR(op_context, message) \
   do {                                                         \
-    (op_context).error_info_ = message;                        \
+    if ((op_context).error_info_.empty()) {                    \
+      (op_context).error_info_ = message;                      \
+    }                                                          \
     (op_context).SetFailed(kFailure);                          \
     return;                                                    \
   } while (0);
@@ -140,7 +142,9 @@ enum class KernelTransformType {
     if ((strategy) == GraphExecutionStrategy::kStep) {                               \
       MS_LOG(EXCEPTION) << (message);                                                \
     }                                                                                \
-    (op_context).error_info_ = message;                                              \
+    if ((op_context).error_info_.empty()) {                                          \
+      (op_context).error_info_ = message;                                            \
+    }                                                                                \
     (op_context).SetFailed(kFailure);                                                \
     return;                                                                          \
   } while (0);
@@ -161,7 +165,9 @@ enum class KernelTransformType {
     } else {                                                                                                       \
       MS_LOG(ERROR) << message;                                                                                    \
     }                                                                                                              \
-    (op_context).error_info_ = message;                                                                            \
+    if ((op_context).error_info_.empty()) {                                                                        \
+      (op_context).error_info_ = message;                                                                          \
+    }                                                                                                              \
     (op_context).SetFailed(kFailure);                                                                              \
     return;                                                                                                        \
   } while (0);

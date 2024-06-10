@@ -463,70 +463,6 @@ CNodePtr ProcessSwitchNode(const KernelGraphPtr &graph, const CNodePtr &kernel_c
   return cond_gather_node;
 }
 
-void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *const memo) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (memo->find(graph) != memo->end()) {
-    return;
-  }
-  memo->insert(graph);
-  for (auto &child_graph : graph->child_graph_order()) {
-    InlineSwitchGraph(child_graph.lock(), memo);
-  }
-#ifdef ENABLE_DUMP_IR
-  bool save_graphs = context_ptr->CanDump(kIntroductory);
-  if (save_graphs) {
-    std::string file_name = "hwopt_d_before_inline_switch_graph_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_name, graph, true, kWholeStack);
-  }
-#endif
-  // process ConditionSwitch/ConditionGather
-  auto kernel_cnodes = graph->execution_order();
-  auto mng = graph->manager();
-  std::vector<CNodePtr> partial_inline_cnode;
-  for (auto &kernel_cnode : kernel_cnodes) {
-    if (!IsPrimitiveCNode(kernel_cnode, prim::kPrimSwitch)) {
-      continue;
-    }
-    auto cond_gather_node = ProcessSwitchNode(graph, kernel_cnode, &partial_inline_cnode);
-    if (mng == nullptr) {
-      auto manager = MakeManager({graph});
-      MS_EXCEPTION_IF_NULL(manager);
-      manager->AddFuncGraph(graph);
-      graph->set_manager(manager);
-      mng = manager;
-    }
-    (void)mng->Replace(kernel_cnode, cond_gather_node);
-  }
-
-  // inline switch graph
-  std::vector<FuncGraphManagerPtr> subgraph_managers;
-  for (auto &kernel_cnode : partial_inline_cnode) {
-    MS_EXCEPTION_IF_NULL(kernel_cnode);
-    if (common::AnfAlgo::CheckPrimitiveType(kernel_cnode, prim::kPrimPartialInline)) {
-      auto inline_subgraph = common::AnfAlgo::GetNodeAttr<KernelGraphPtr>(kernel_cnode, kAttrKernelGraph);
-      auto sub_mng = inline_subgraph->manager();
-      if (sub_mng == nullptr) {
-        auto sub_manager = MakeManager({inline_subgraph}, false);
-        MS_EXCEPTION_IF_NULL(sub_manager);
-        sub_manager->AddFuncGraph(inline_subgraph);
-        inline_subgraph->set_manager(sub_manager);
-        subgraph_managers.emplace_back(sub_manager);
-      }
-      InlineSubGraph(graph, inline_subgraph, kernel_cnode, nullptr, true);
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid node type, node: " << kernel_cnode->fullname_with_scope();
-    }
-  }
-  graph->SetExecOrderByDefault();
-#ifdef ENABLE_DUMP_IR
-  if (save_graphs) {
-    std::string file_name = "hwopt_d_after_inline_switch_graph_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_name, graph, true, kWholeStack);
-  }
-#endif
-}
-
 // Flatten the input abstract, and record the index construct.
 // eg. tuple(tuple(1, 2), 3) -> {1, 2, 3}  ((-1, -1), -1)
 AbstractBasePtrList CollectAbstract(const abstract::AbstractBasePtr &abstract) {
@@ -729,7 +665,14 @@ void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
     DumpIR(file_name, graph, true, kWholeStack);
   }
 #endif
-  for (auto &kernel : graph->execution_order()) {
+  const auto &nodes = TopoSort(graph->output());
+  for (auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto kernel = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(kernel);
     if (IsPrimitiveCNode(kernel, prim::kPrimConditionSwitch)) {
       for (size_t i = 2; i < kernel->size(); ++i) {
         const auto &input = kernel->input(i);
@@ -770,11 +713,75 @@ void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
                                                            : " null")
                  << " in graph:" << graph->ToString();
   }
-  graph->SetExecOrderByDefault();
 
 #ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     std::string file_name = "hwopt_d_after_flatten_gather_input_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
+}
+
+void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *const memo) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (memo->find(graph) != memo->end()) {
+    return;
+  }
+  memo->insert(graph);
+  for (auto &child_graph : graph->child_graph_order()) {
+    InlineSwitchGraph(child_graph.lock(), memo);
+  }
+#ifdef ENABLE_DUMP_IR
+  bool save_graphs = context_ptr->CanDump(kIntroductory);
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_before_inline_switch_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
+  // process ConditionSwitch/ConditionGather
+  auto kernel_cnodes = graph->execution_order();
+  auto mng = graph->manager();
+  std::vector<CNodePtr> partial_inline_cnode;
+  for (auto &kernel_cnode : kernel_cnodes) {
+    if (!IsPrimitiveCNode(kernel_cnode, prim::kPrimSwitch)) {
+      continue;
+    }
+    auto cond_gather_node = ProcessSwitchNode(graph, kernel_cnode, &partial_inline_cnode);
+    if (mng == nullptr) {
+      auto manager = MakeManager({graph});
+      MS_EXCEPTION_IF_NULL(manager);
+      manager->AddFuncGraph(graph);
+      graph->set_manager(manager);
+      mng = manager;
+    }
+    (void)mng->Replace(kernel_cnode, cond_gather_node);
+  }
+
+  // inline switch graph
+  std::vector<FuncGraphManagerPtr> subgraph_managers;
+  for (auto &kernel_cnode : partial_inline_cnode) {
+    MS_EXCEPTION_IF_NULL(kernel_cnode);
+    if (common::AnfAlgo::CheckPrimitiveType(kernel_cnode, prim::kPrimPartialInline)) {
+      auto inline_subgraph = common::AnfAlgo::GetNodeAttr<KernelGraphPtr>(kernel_cnode, kAttrKernelGraph);
+      auto sub_mng = inline_subgraph->manager();
+      if (sub_mng == nullptr) {
+        auto sub_manager = MakeManager({inline_subgraph}, false);
+        MS_EXCEPTION_IF_NULL(sub_manager);
+        sub_manager->AddFuncGraph(inline_subgraph);
+        inline_subgraph->set_manager(sub_manager);
+        subgraph_managers.emplace_back(sub_manager);
+      }
+      InlineSubGraph(graph, inline_subgraph, kernel_cnode, nullptr, true);
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid node type, node: " << kernel_cnode->fullname_with_scope();
+    }
+  }
+  FlattenConditionNodeInput(graph);
+  graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_after_inline_switch_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph, true, kWholeStack);
   }
 #endif
@@ -933,7 +940,6 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   InlineCallGraph(kernel_graph);
   memo.clear();
   InlineSwitchGraph(kernel_graph, &memo);
-  FlattenConditionNodeInput(kernel_graph);
   AddTensorMoveForMonad(kernel_graph);
   OptimizeExecutionOrder(NOT_NULL(graph));
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 1);
@@ -996,7 +1002,7 @@ void GeKernelExecutor::DoStreamAssign(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(ms_context);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // stream assign
-  if (common::GetEnv("MS_FORCE_SINGLE_STREAM") == "1") {
+  if (common::IsDisableRuntimeConfig(common::kRuntimeMultiStream)) {
     MS_LOG(INFO) << "Force single stream.";
   } else {
     AclStreamAssign::GetInstance().AssignStream(NOT_NULL(kernel_graph));
@@ -1028,7 +1034,9 @@ void GeKernelExecutor::DoSomas(const FuncGraphPtr &graph) {
   MS_LOG(DEBUG) << "Status record: start do somas.";
   if (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
     auto somas = std::make_shared<AclSomas>();
+    PROF_START(somas);
     bool ret = somas->Assign(kernel_graph);
+    PROF_END(somas);
     if (ret) {
       MS_LOG(INFO) << "Somas allocate success for graph " << kernel_graph->graph_id()
                    << " somas size: " << kernel_graph->somas_whole_block_size();

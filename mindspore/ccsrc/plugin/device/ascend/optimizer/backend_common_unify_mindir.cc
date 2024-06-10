@@ -37,7 +37,6 @@
 #include "plugin/device/ascend/optimizer/mindir/renorm_split.h"
 #include "plugin/device/ascend/optimizer/mindir/optimizer_unify_output.h"
 #include "plugin/device/ascend/optimizer/mindir/space_batch_nd_attr_update.h"
-#include "plugin/device/ascend/optimizer/mindir/avg_pool_grad_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/bn_grad_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/all_to_all_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/neighbor_exchange_v2_unify_mindir.h"
@@ -80,7 +79,6 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::TensorArrayPrepare>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AdamWeightDecayUnifyMindIR>());
   (*unify_mindir_pm)->AddPass(std::make_shared<CdistFission>());
   (*unify_mindir_pm)->AddPass(std::make_shared<CdistGradFission>());

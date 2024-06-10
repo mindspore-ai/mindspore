@@ -27,6 +27,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <sstream>
 #include <vector>
 
 #include "include/common/visible.h"
@@ -738,11 +739,16 @@ static inline double GetCurrentUSec() {
 }
 
 #define PROF_START(stage) double start_usec_##stage = mindspore::GetCurrentUSec()
-#define PROF_END(stage)                                                                           \
-  do {                                                                                            \
-    double end_usec_##stage = mindspore::GetCurrentUSec();                                        \
-    MS_LOG(INFO) << "[PROF]" << #stage << " costs "                                               \
-                 << (end_usec_##stage - start_usec_##stage) / kBasicTimeTransferUnit << " msec."; \
+#define PROF_END(stage)                                                                                        \
+  do {                                                                                                         \
+    double end_usec_##stage = mindspore::GetCurrentUSec();                                                     \
+    std::ostringstream oss;                                                                                    \
+    oss << "[PROF]" << #stage << " costs " << (end_usec_##stage - start_usec_##stage) / kBasicTimeTransferUnit \
+        << " msec.";                                                                                           \
+    if (common::IsEnableRuntimeConfig(common::kRuntimeCompileStat)) {                                          \
+      std::cout << oss.str() << std::endl;                                                                     \
+    }                                                                                                          \
+    MS_LOG(INFO) << oss.str();                                                                                 \
   } while (0)
 
 #define PROF_MULTI_DEFINE(stage)       \
