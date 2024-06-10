@@ -51,6 +51,7 @@
 #include "tools/optimizer/fusion/conv_scale_fusion.h"
 #include "tools/optimizer/common/pass_manager_extends.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
+#include "tools/optimizer/fusion/adjust_matmul_pass.h"
 #include "tools/optimizer/graph/remove_load_pass.h"
 #include "tools/optimizer/fusion/transpose_fusion.h"
 #include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"
@@ -90,6 +91,7 @@ constexpr auto kToNCHWFormatPass = "ToNCHWFormat";
 constexpr auto kInferShapePass = "InferShapePass";
 constexpr auto kConstFoldPass = "ConstFoldPass";
 constexpr auto kRemoveRedundantOpPass = "RemoveRedundantOpPass";
+constexpr auto kAdjustMatmulPass = "AdjustMatmulPass";
 constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
 constexpr auto kRemoveUnusedAddNodePass = "RemoveUnusedAddNodePass";
 constexpr auto kAdjustResizeDimsPass = "AdjustResizeDimsPass";
@@ -659,6 +661,11 @@ STATUS AclPassImpl::RunAclOptimizerPass(const FuncGraphPtr &func_graph) {
     MS_LOG(INFO) << "using GroupNormSilu";
     MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kCustomOpGroupNormSiluFusion}), lite::RET_ERROR,
                       "GroupNormSilu op pass failed.");
+  }
+  if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "BatchMatmulToMatmul") != plugin_custom_ops.end()) {
+    MS_LOG(INFO) << "using BMM2MM";
+    MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kAdjustMatmulPass}), lite::RET_ERROR,
+                      "BMM2MM op pass failed.");
   }
   if (!lite::RunOptimizerPass(func_graph, {kAdjustResizeDimsPass})) {
     MS_LOG(ERROR) << "AdjustResizeDimsPass failed!";

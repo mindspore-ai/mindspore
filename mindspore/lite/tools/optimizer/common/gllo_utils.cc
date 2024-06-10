@@ -1265,6 +1265,38 @@ CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_n
   return cnode;
 }
 
+CNodePtr GenGatherNodeDynamicIndex(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
+                                   const AnfNodePtr &indices_node, const std::string &cnode_name,
+                                   const std::vector<int> &axis) {
+  if (func_graph == nullptr || input_node == nullptr || indices_node == nullptr) {
+    MS_LOG(ERROR) << "Input parameter is nullptr, which is nullptr!";
+    return nullptr;
+  }
+  auto axis_node = BuildIntVecParameterNode(func_graph, axis, cnode_name + "_axis");
+  if (axis_node == nullptr) {
+    MS_LOG(ERROR) << "Build axis node failed!";
+    return nullptr;
+  }
+  ops::Gather gather_node;
+  auto gather_prim = gather_node.GetPrim();
+  MS_CHECK_TRUE_RET(gather_prim != nullptr, nullptr);
+  auto cnode = func_graph->NewCNode(gather_prim, {input_node, indices_node, axis_node});
+  MS_CHECK_TRUE_RET(cnode != nullptr, nullptr);
+  auto manager = Manage(func_graph);
+  MS_CHECK_TRUE_RET(manager != nullptr, nullptr);
+  manager->SetEdge(cnode, 1, input_node);
+  manager->SetEdge(cnode, kInputIndexTwo, indices_node);
+  manager->SetEdge(cnode, kInputIndexThree, axis_node);
+  cnode->set_fullname_with_scope(cnode_name);
+  if (input_node->abstract() != nullptr) {
+    cnode->set_abstract(input_node->abstract()->Clone());
+  }
+  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(kInputSizeThree, 1);
+  MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
+  gather_prim->AddAttr("quant_params", quant_params_holder);
+  return cnode;
+}
+
 CNodePtr GenConcatNode(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &input_node_vec,
                        const std::string &cnode_name, int64_t axis) {
   if (func_graph == nullptr) {
