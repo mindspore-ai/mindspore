@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "common/debug/profiler/profiling_data_dumper.h"
-#include <sys/syscall.h>
 #include <algorithm>
 #include <mutex>
 #include <utility>
@@ -148,7 +147,11 @@ bool Utils::IsSoftLink(const std::string &path) {
 }
 
 uint64_t Utils::GetTid() {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   static thread_local uint64_t tid = static_cast<uint64_t>(syscall(SYS_gettid));
+#else
+  static thread_local uint64_t tid = 0;
+#endif
   return tid;
 }
 

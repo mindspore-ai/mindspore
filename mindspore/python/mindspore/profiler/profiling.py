@@ -388,6 +388,8 @@ class Profiler:
             - "time": Only record host timestamp.
             - "memory": Only record host memory usage.
             - None: Not record host information.
+        host_stack (bool, optional): (Ascend) Whether to collect frame host call stack data.
+            Default value: ``True`` .
 
     Raises:
         RuntimeError: When the version of CANN does not match the version of MindSpore,

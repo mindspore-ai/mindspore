@@ -207,7 +207,7 @@ void AscendProfiler::Start() {
 }
 
 void AscendProfiler::Stop() {
-  MS_LOG(WARNING) << "Begin to stop profiling.";
+  MS_LOG(INFO) << "Begin to stop profiling.";
 
   if (acl_config_ == nullptr) {
     MS_LOG(EXCEPTION)

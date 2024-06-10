@@ -159,7 +159,7 @@ class BACKEND_EXPORT Profiler {
   bool sync_enable_flag_ = true;
   bool data_process_enable_ = false;
   std::string op_type_ = "GetNext";
-  bool host_stack_ = true;
+  bool host_stack_ = false;
 
  private:
   static std::map<std::string, std::shared_ptr<Profiler>> &GetInstanceMap();

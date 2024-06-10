@@ -17,7 +17,9 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_PROFILER_PROFILER_H_
 #define MINDSPORE_CCSRC_RUNTIME_PROFILER_PROFILER_H_
 
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #include <sys/syscall.h>
+#endif
 #include <list>
 #include <map>
 #include <memory>
@@ -306,10 +308,15 @@ struct ProfilerData {
         start_time_(start_time),
         end_time_(end_time),
         dur_time_(end_time - start_time),
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
         tid_(syscall(SYS_gettid)),
+#else
+        tid_(0),
+#endif
         pid_(getpid()),
         flow_id_(flow_id),
-        py_stack_(std::move(py_stack)) {}
+        py_stack_(std::move(py_stack)) {
+  }
 
   ProfilerData(ProfilerStage stage, uint64_t start_time, uint64_t end_time)
       : is_stage_(true),
@@ -321,7 +328,11 @@ struct ProfilerData {
         start_time_(start_time),
         end_time_(end_time) {
     dur_time_ = end_time - start_time;
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
     tid_ = syscall(SYS_gettid);
+#else
+    tid_ = 0;
+#endif
     pid_ = getpid();
   }
 
