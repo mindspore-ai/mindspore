@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 #include "common/debug/profiler/profiling_framework_data.h"
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #include <sys/syscall.h>
+#endif
 #include <utility>
 #include <algorithm>
 #include <mutex>
@@ -141,23 +143,31 @@ std::vector<uint8_t> OpRangeData::encode() {
 void ProfilingFrameworkData::RecordLaunchGETaskBegin(const std::string &scope_name) {
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
-  if (!ascend_profiler->GetEnableFlag()) {
+  if (!ascend_profiler->GetHostStack()) {
     return;
   }
 
   int64_t start_ns = GetClockSyscnt();
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   auto tid = syscall(SYS_gettid);
+#else
+  auto tid = 0;
+#endif
   kernel_launch_begin_[std::to_string(tid) + "_" + scope_name] = start_ns;
 }
 
 void ProfilingFrameworkData::RecordGETask(const std::string &scope_name) {
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
-  if (!ascend_profiler->GetEnableFlag()) {
+  if (!ascend_profiler->GetHostStack()) {
     return;
   }
 
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   auto tid = syscall(SYS_gettid);
+#else
+  auto tid = 0;
+#endif
   auto iter = kernel_launch_begin_.find(std::to_string(tid) + "_" + scope_name);
   if (iter == kernel_launch_begin_.end()) {
     MS_LOG(WARNING) << "Do not find op info: " << scope_name;
@@ -186,7 +196,7 @@ void ProfilingFrameworkData::RecordGETask(const std::string &scope_name) {
 void ProfilingFrameworkData::RecordHostStack(std::shared_ptr<ProfilerData> data) {
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
-  if (!ascend_profiler->GetEnableFlag()) {
+  if (!ascend_profiler->GetHostStack()) {
     return;
   }
   std::vector<std::string> stack_vec;
