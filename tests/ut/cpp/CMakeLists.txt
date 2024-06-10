@@ -50,7 +50,7 @@ file(GLOB_RECURSE UT_API_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./cxx_api/*.c
 file(GLOB_RECURSE UT_FRONTEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./operator/*.cc ./optimizer/*.cc
         ./parallel/*.cc ./pipeline/*.cc ./pynative/*.cc ./func_graph_builder/*.cc)
 file(GLOB_RECURSE UT_OLD_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./device/*.cc ./kernel/*.cc
-        ./pre_activate/common/*.cc  ./session/*.cc
+        ./pre_activate/common/*.cc  ./session/*.cc ./runtime/device/move_to_test.cc
         ./transform/*.cc ./vm/*.cc ./runtime/device/gsm/*.cc)
 file(GLOB_RECURSE UT_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./backend/*.cc ./runtime/graph_scheduler/*.cc)
 # plugin/device/cpu/hal/test_ms_collective_topo.cc will also open 127.0.0.1:8090

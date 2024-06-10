@@ -72,6 +72,7 @@
 #include "ops/ascend_op_name.h"
 #include "runtime/device/device_address_utils.h"
 #include "runtime/pipeline/task/kernel_task.h"
+#include "runtime/device/move_to.h"
 
 namespace mindspore {
 namespace device {
@@ -357,6 +358,11 @@ void SetUserData(DeviceAddress *device_address, const UserDataPtr &user_data) {
   }
 }
 }  // namespace
+
+void GPUDeviceResManager::MoveTo(const tensor::TensorPtr &src_tensor, const tensor::TensorPtr &dst_tensor,
+                                 const std::string &to, bool blocking, bool *return_self) {
+  device::MoveTo(src_tensor, dst_tensor, to, blocking, return_self);
+}
 
 DeviceAddressPtr GPUDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
   MS_EXCEPTION_IF_NULL(kernel_tensor);

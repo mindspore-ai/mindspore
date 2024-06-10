@@ -37,6 +37,7 @@
 #include "runtime/pipeline/task/task.h"
 #include "ir/device_event.h"
 #include "utils/ms_context.h"
+#include "ir/tensor.h"
 #ifdef __APPLE__
 #include "mindrt/include/async/spinlock.h"
 #endif
@@ -201,6 +202,10 @@ class BACKEND_EXPORT DeviceResManager {
 
   // Create concrete device address according different device type using KernelTensor.
   virtual DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
+    MS_LOG(EXCEPTION) << "Unimplemented interface.";
+  }
+  virtual void MoveTo(const tensor::TensorPtr &src_tensor, const tensor::TensorPtr &dst_tensor, const std::string &to,
+                      bool blocking, bool *return_self) {
     MS_LOG(EXCEPTION) << "Unimplemented interface.";
   }
 

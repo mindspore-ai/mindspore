@@ -4724,6 +4724,42 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         return _index_put(self, values, indices)
 
 
+    def move_to(self, to, blocking=True):
+        r"""
+        Copy Tensor to target device synchronously or asynchronously, default synchronously. only support PyNative mode.
+
+        Args:
+            to (str): a string type value, one of ``"Ascend"``, ``"GPU"``, ``"CPU"``.
+            blocking (bool): a bool type value, using synchronous copy or asynchronous copy.
+                Default: ``True`` , synchronous copy.
+
+        Returns:
+            New Tensor, storged on target device which with the same type and shape as the "self Tensor".
+
+        Raises:
+            ValueError: If the type of `blocking` is not bool type.
+            ValueError: If the value of `to` is not one of ``"Ascend"``, ``"GPU"``, ``"CPU"``.
+            ValueError: If the run mode is not PyNative mode.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> x = ms.Tensor([1, 2, 3], ms.int64)
+            >>> new_tensor = x.move_to("CPU")
+        """
+        if not isinstance(blocking, bool):
+            raise ValueError(f"The type of 'blocking' must be bool, but got {blocking}")
+        if to not in ("Ascend", "GPU", "CPU"):
+            raise ValueError(f"The value of 'to' must be one of ['Ascend', 'GPU', 'CPU'], but got {to}")
+        mode = context.get_context("mode")
+        if mode != context.PYNATIVE_MODE:
+            raise ValueError(f"The method of 'move_to' only supported in pynative mode, but got: {mode}.")
+        return Tensor(Tensor_.move_to(self, to, blocking))
+
+
     def _offload(self):
         r"""
         Offload tensor parameter to host. Currently, only support for pynative mode.
