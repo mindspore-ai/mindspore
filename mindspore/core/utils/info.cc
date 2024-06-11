@@ -88,43 +88,58 @@ std::string Location::DebugString() const {
 
 // Generate debug information for the location node .
 // print the file name, line no and column no, and part of the content
-std::string Location::ToString(SourceLineTip tip, int start_line) const {
+std::string Location::ToString(SourceLineTip tip, int start_line) {
   std::stringstream debug_info_ss;
   std::stringstream section_debug_info_ss;
-  // For example,
-  // the location is from {line 9, column 4}, to {line 15, column 20}:
-  //     In file /x/xxx/x.py:9~15, 4~20
-  // If in single line, from {line 9, column 4}, to {line 9, column 20}:
-  //     In file /x/xxx/x.py:9, 4~20
-  debug_info_ss << "In file " << file_name_ << ":" << line_;
-  if (line_end_ > line_) {
-    debug_info_ss << "~" << line_end_;
+  if (tip != kSourceSectionTipNextLineHere) {
+    // For example,
+    // the location is from {line 9, column 4}, to {line 15, column 20}:
+    //     In file /x/xxx/x.py:9~15, 4~20
+    // If in single line, from {line 9, column 4}, to {line 9, column 20}:
+    //     In file /x/xxx/x.py:9, 4~20
+    debug_info_ss << "In file " << file_name_ << ":" << line_;
+    if (line_ <= 0) {
+      return debug_info_ss.str();
+    }
+    if (line_end_ > line_) {
+      debug_info_ss << "~" << line_end_;
+    }
+    debug_info_ss << ", " << column_ << "~" << column_end_ << std::endl;
+    // Use line_str_ as cache.
+    if (!line_str_.empty()) {
+      debug_info_ss << HighlightLine(line_str_, column_, column_end_, line_end_ == line_, tip) << std::endl;
+      return debug_info_ss.str();
+    }
+  } else {  // tip == kSourceSectionTipNextLineHere
+    section_debug_info_ss << "In file " << file_name_ << ":" << line_ << std::endl;
   }
-  debug_info_ss << ", " << column_ << "~" << column_end_ << std::endl;
-  section_debug_info_ss << "In file " << file_name_ << ":" << line_ << std::endl;
-  if (line_ <= 0) {
-    return debug_info_ss.str();
-  }
+
+  // Start read the specific line. Optimize here by seekg().
   auto path = FileUtils::GetRealPath(file_name_.c_str());
   if (!path.has_value()) {
+    MS_LOG(WARNING) << "The file '" << file_name_ << "' may not exists.";
     return debug_info_ss.str();
   }
   std::ifstream file(path.value());
   if (!file.is_open()) {
+    MS_LOG(WARNING) << "Failed to open file '" << file_name_ << "'.";
     return debug_info_ss.str();
   }
-
+  // Read the lines one by one.
   int line_num = 0;
   std::string line;
   (void)getline(file, line);
   while (line_num != line_ - 1) {
-    if (line_num >= start_line - 1) {
+    if (tip == kSourceSectionTipNextLineHere && line_num >= start_line - 1) {
       section_debug_info_ss << line << "\n";
     }
     (void)getline(file, line);
     line_num++;
   }
   file.close();
+  // Store the line string as cache.
+  line_str_ = line;
+
   if (tip == kSourceSectionTipNextLineHere) {
     section_debug_info_ss << HighlightLine(line, column_, column_end_, line_end_ == line_, tip) << std::endl;
     return section_debug_info_ss.str();
