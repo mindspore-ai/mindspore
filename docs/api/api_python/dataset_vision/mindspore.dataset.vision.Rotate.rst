@@ -33,6 +33,7 @@ mindspore.dataset.vision.Rotate
         指定该变换执行的设备。
 
         - 当执行设备是 Ascend 时，输入数据支持 `uint8` 或者 `float32` 类型，输入数据的通道仅支持1和3。输入数据的高度限制范围为[4, 32768]、宽度限制范围为[6, 32768]。
+        - 当执行设备是 Ascend 并且参数 `expand` 为True时， 参数 `center` 不生效，图像会按照图像中心点旋转。
 
         参数：
             - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 和 ``Ascend`` 。默认值： ``CPU`` 。
