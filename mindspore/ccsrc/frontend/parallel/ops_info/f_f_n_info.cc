@@ -69,6 +69,8 @@ enum FFNInputIndex : size_t {
 
 constexpr auto kMoeScaleDim1 = 1;
 constexpr auto kMoeScaleDim2 = 2;
+constexpr auto kInputShapeRank2 = 2;
+constexpr auto kInputShapeRank3 = 3;
 
 auto GetStrategy = [](const Dimensions &strategy, int64_t org_dim) {
   auto dim = org_dim;
@@ -225,6 +227,68 @@ Status FFNInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
+Status FFNInfo::SetAntiquantTensorMap(int64_t antiquant_index, const Shape &antiquant_tensor_map,
+                                      const Shape &antiquant_group_tensor_map) {
+  if (inputs_shape_[antiquant_index].size() == kInputShapeRank2) {
+    inputs_tensor_map_.emplace_back(antiquant_tensor_map);
+  } else if (inputs_shape_[antiquant_index].size() == kInputShapeRank3) {
+    inputs_tensor_map_.emplace_back(antiquant_group_tensor_map);
+  } else {
+    MS_LOG(ERROR) << "MOE antiquant shape dims should be 2 or 3, but get " << inputs_shape_[antiquant_index].size();
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status FFNInfo::InferAntiQuantTensorMap(int64_t expert_pos) {
+  size_t antiquant_scale1 = GetStrategyRealIndex(kInputAntiquantScale1);
+  size_t antiquant_scale2 = GetStrategyRealIndex(kInputAntiquantScale2);
+  size_t antiquant_offset1 = GetStrategyRealIndex(kInputAntiquantOffset1);
+  size_t antiquant_offset2 = GetStrategyRealIndex(kInputAntiquantOffset2);
+
+  // aq scale1: [expert, ffn_hidden_size]
+  Shape antiquant_scale1_tensor_map{expert_pos, 0};
+  // aq scale2: [expert, hidden_size]
+  Shape antiquant_scale2_tensor_map{expert_pos, 1};
+  // aq offset1: [expert, ffn_hidden_size]
+  Shape antiquant_offset1_tensor_map{expert_pos, 0};
+  // aq offset2: [expert, hidden_size]
+  Shape antiquant_offset2_tensor_map{expert_pos, 1};
+
+  // aq group scale1: [expert, group, ffn_hidden_size]
+  Shape antiquant_group_scale1_tensor_map{expert_pos, -1, 0};
+  // aq group scale2: [expert, group, hidden_size]
+  Shape antiquant_group_scale2_tensor_map{expert_pos, -1, 1};
+  // aq group offset1: [expert, group, ffn_hidden_size]
+  Shape antiquant_group_offset1_tensor_map{expert_pos, -1, 0};
+  // aq group offset2: [expert, group, hidden_size]
+  Shape antiquant_group_offset2_tensor_map{expert_pos, -1, 1};
+
+  if (inputs_shape_.size() > antiquant_scale1 && SetAntiquantTensorMap(antiquant_scale1, antiquant_scale1_tensor_map,
+                                                                       antiquant_group_scale1_tensor_map) != SUCCESS) {
+    MS_LOG(ERROR) << "Fail to SetAntiquantTensorMap: antiquant_scale1";
+    return FAILED;
+  }
+  if (inputs_shape_.size() > antiquant_scale2 && SetAntiquantTensorMap(antiquant_scale2, antiquant_scale2_tensor_map,
+                                                                       antiquant_group_scale2_tensor_map) != SUCCESS) {
+    MS_LOG(ERROR) << "Fail to SetAntiquantTensorMap: antiquant_scale2";
+    return FAILED;
+  }
+  if (inputs_shape_.size() > antiquant_offset1 &&
+      SetAntiquantTensorMap(antiquant_offset1, antiquant_offset1_tensor_map, antiquant_group_offset1_tensor_map) !=
+        SUCCESS) {
+    MS_LOG(ERROR) << "Fail to SetAntiquantTensorMap: antiquant_offset1";
+    return FAILED;
+  }
+  if (inputs_shape_.size() > antiquant_offset2 &&
+      SetAntiquantTensorMap(antiquant_offset2, antiquant_offset2_tensor_map, antiquant_group_offset2_tensor_map) !=
+        SUCCESS) {
+    MS_LOG(ERROR) << "Fail to SetAntiquantTensorMap: antiquant_offset2";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
 Status FFNInfo::InferTensorMap() {
   size_t expert_index = GetStrategyRealIndex(kInputIndexExpert);
   size_t bias1_index = GetStrategyRealIndex(kInputIndexBias1);
@@ -233,10 +297,6 @@ Status FFNInfo::InferTensorMap() {
   size_t input_offset = GetStrategyRealIndex(kInputOffset);
   size_t input_deqscale1 = GetStrategyRealIndex(kInputDeqScale1);
   size_t input_deqscale2 = GetStrategyRealIndex(kInputDeqScale2);
-  size_t antiquant_scale1 = GetStrategyRealIndex(kInputAntiquantScale1);
-  size_t antiquant_scale2 = GetStrategyRealIndex(kInputAntiquantScale2);
-  size_t antiquant_offset1 = GetStrategyRealIndex(kInputAntiquantOffset1);
-  size_t antiquant_offset2 = GetStrategyRealIndex(kInputAntiquantOffset2);
   // x: [bs * seq_length, hidden]
   Shape x_tensor_map;  // [...,5,4,3,2,1]
   for (size_t i = inputs_shape_[0].size(); i > 0; i--) {
@@ -263,15 +323,6 @@ Status FFNInfo::InferTensorMap() {
     Shape input_deqscale1_tensor_map{expert_pos, 0};
     // input deqscale2: [expert, hidden_size]
     Shape input_deqscale2_tensor_map{expert_pos, 1};
-
-    // aq scale1: [expert, ffn_hidden_size]
-    Shape antiquant_scale1_tensor_map{expert_pos, 0};
-    // aq scale2: [expert, hidden_size]
-    Shape antiquant_scale2_tensor_map{expert_pos, 1};
-    // aq offset1: [expert, ffn_hidden_size]
-    Shape antiquant_offset1_tensor_map{expert_pos, 0};
-    // aq offset2: [expert, hidden_size]
-    Shape antiquant_offset2_tensor_map{expert_pos, 1};
 
     inputs_tensor_map_.emplace_back(x_tensor_map);
     inputs_tensor_map_.emplace_back(weight1_tensor_map);
@@ -302,17 +353,8 @@ Status FFNInfo::InferTensorMap() {
     if (inputs_shape_.size() > input_deqscale2) {
       inputs_tensor_map_.emplace_back(input_deqscale2_tensor_map);
     }
-    if (inputs_shape_.size() > antiquant_scale1) {
-      inputs_tensor_map_.emplace_back(antiquant_scale1_tensor_map);
-    }
-    if (inputs_shape_.size() > antiquant_scale2) {
-      inputs_tensor_map_.emplace_back(antiquant_scale2_tensor_map);
-    }
-    if (inputs_shape_.size() > antiquant_offset1) {
-      inputs_tensor_map_.emplace_back(antiquant_offset1_tensor_map);
-    }
-    if (inputs_shape_.size() > antiquant_offset2) {
-      inputs_tensor_map_.emplace_back(antiquant_offset2_tensor_map);
+    if (InferAntiQuantTensorMap(expert_pos) != SUCCESS) {
+      return FAILED;
     }
   } else {
     // w1: [hidden, ffn_hidden_size]

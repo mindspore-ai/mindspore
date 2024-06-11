@@ -2507,7 +2507,9 @@ class FFN(Primitive):
     def __init__(self, activation, inner_precise):
         """Initialize FFN."""
         self.init_prim_io_names(inputs=["x", "weight1", "weight2", "expert_tokens", "bias1",
-                                        "bias2", "scale", "offset", "deq_scale1", "deq_scale2"],
+                                        "bias2", "scale", "offset", "deq_scale1", "deq_scale2",
+                                        "antiquant_scale1", "antiquant_scale2",
+                                        "antiquant_offset1", "antiquant_offset2"],
                                 outputs=["y"])
         cls_name = self.name
         validator.check_value_type("activation", activation, [str], cls_name)
