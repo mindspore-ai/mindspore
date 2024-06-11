@@ -915,13 +915,13 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_
   std::string obj_key = results[1];
   FuncGraphPtr func_graph = nullptr;
   ValuePtr value = nullptr;
+  bool is_debug = MsContext::GetInstance()->get_param<int>(MS_CTX_DEBUG_LEVEL) == kLevelDebug;
   bool is_cache = data_converter::GetObjectValue(obj_id, &value);
-  if (is_cache && value != nullptr && value->isa<FuncGraph>()) {
+  if (!is_debug && is_cache && value != nullptr && value->isa<FuncGraph>()) {
     func_graph = value->cast<FuncGraphPtr>();
     if (!func_graph->dropped()) {
       bool has_forbid_reuse_attr = py::hasattr(obj, PYTHON_FUNCTION_FORBID_REUSE);
-      if (forbid_reuse || has_forbid_reuse_attr ||
-          MsContext::GetInstance()->get_param<int>(MS_CTX_DEBUG_LEVEL) == kLevelDebug) {
+      if (forbid_reuse || has_forbid_reuse_attr) {
         return BasicClone(func_graph);
       }
       return func_graph;
