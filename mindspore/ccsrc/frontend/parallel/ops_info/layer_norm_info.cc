@@ -20,6 +20,7 @@
 #include <vector>
 #include <utility>
 
+#include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
@@ -34,6 +35,20 @@ namespace parallel {
 // if the begin-norm-axis is 2, the shape of second output is: [A, B, 1, 1]
 // if the begin-norm-axis is 3, the shape of second output is: [A, B, C, 1]
 // the shape of third output is the same as the shape of second output
+Status LayerNormInfo::ObtainActualAxis(const int64_t &axis, const int64_t &dim, size_t *actual_axis) {
+  if ((axis >= dim) || (axis < -dim)) {
+    MS_LOG(ERROR) << name_ << ": The axis(" << axis << ") is out of range[" << (-dim) << ", " << (dim - 1) << "]";
+    return FAILED;
+  }
+
+  if (axis < 0) {
+    *actual_axis = LongToSize(axis + dim);
+  } else {
+    *actual_axis = LongToSize(axis);
+  }
+  return SUCCESS;
+}
+
 Status LayerNormInfo::GetAttrs() {
   if (InitShapes() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init Shape failed";
@@ -42,22 +57,28 @@ Status LayerNormInfo::GetAttrs() {
   std::string op_name = GetPrimNameFromInfoName(this->name_);
 
   std::optional<int64_t> axis_opt = GetScalarValueFromInputs<int64_t>(input_value_, op_name, BEGIN_NORM_AXIS);
+  std::optional<int64_t> params_axis_opt = GetScalarValueFromInputs<int64_t>(input_value_, op_name, BEGIN_PARAMS_AXIS);
+  std::optional<float> epsilon = GetScalarValueFromInputs<float>(input_value_, op_name, EPSILON);
   if (!axis_opt.has_value()) {
     MS_LOG(ERROR) << name_ << ": Can not find the attr of begin_norm_axis.";
     return FAILED;
   }
 
-  int64_t dim = SizeToLong(inputs_shape_[0].size());
-  auto axis = axis_opt.value();
-  if ((axis >= dim) || (axis < -dim)) {
-    MS_LOG(ERROR) << name_ << ": The axis(" << axis << ") is out of range[" << (-dim) << ", " << (dim - 1) << "]";
+  if (!params_axis_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << ": Can not find the attr of begin_params_axis.";
     return FAILED;
   }
 
-  if (axis < 0) {
-    axis = axis + dim;
+  if (!epsilon.has_value()) {
+    MS_LOG(ERROR) << name_ << ": Can not find the attr of epsilon.";
+    return FAILED;
   }
-  begin_norm_axis_ = LongToSize(axis);
+
+  int64_t dim = SizeToLong(inputs_shape_[0].size());
+  ObtainActualAxis(axis_opt.value(), dim, &begin_norm_axis_);
+  ObtainActualAxis(params_axis_opt.value(), dim, &begin_params_axis_);
+  epsilon_ = epsilon.value();
+
   return SUCCESS;
 }
 
@@ -355,7 +376,54 @@ Status LayerNormInfo::CheckOutputLayout() {
     return FAILED;
   }
   MS_LOG(INFO) << "Using output tensor layout infer by input tensor layout.";
+  UpdateOutputTensorInfoForInterleaved();
   return SUCCESS;
+}
+
+Status LayerNormInfo::ComputeReplaceGraphForInterleaved(const CNodePtr &cnode) {
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << "GenerateGraph Init failed";
+    return FAILED;
+  }
+  auto interleaved_num = ParallelContext::GetInstance()->fine_grained_micro_interleaved_size();
+  Attr output_nums_attr = {"output_nums", MakeValue(interleaved_num)};
+  OperatorAttrs virtual_converter_begin_attrs = {output_nums_attr};
+  auto virtual_converter_begin = gen_g.PushBack(
+    {gen_g.NewOpInst(VIRTUAL_CONVERTER_BEGIN, virtual_converter_begin_attrs), gen_g.virtual_input_node()});
+  std::vector<AnfNodePtr> virtual_converter_end_inputs_vector;
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(virtual_converter_begin, 1)};
+  for (int64_t i = 0; i < interleaved_num; ++i) {
+    auto tuple_get_item = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), virtual_converter_begin, CreatInt64Imm(i)});
+    auto begin_norm_axis = CreatInt64Imm(SizeToLong(begin_norm_axis_));
+    auto begin_params_axis = CreatInt64Imm(SizeToLong(begin_params_axis_));
+    auto epsilon = CreateFP32Imm(epsilon_);
+    auto layernorm = gen_g.PushBack({gen_g.NewOpInst(prim_name_), tuple_get_item, gen_g.virtual_input_node(),
+                                     gen_g.virtual_input_node(), begin_norm_axis, begin_params_axis, epsilon});
+    input_nodes.push_back(std::make_pair(layernorm, kIndexTwo));
+    input_nodes.push_back(std::make_pair(layernorm, kIndexThree));
+    virtual_converter_end_inputs_vector.push_back(layernorm);
+  }
+  Attr input_nums_attr = {"input_nums", MakeValue(interleaved_num)};
+  OperatorAttrs virtual_converter_end_attrs = {input_nums_attr};
+  std::vector<AnfNodePtr> virtual_converter_end_inputs = {
+    gen_g.NewOpInst(VIRTUAL_CONVERTER_END, virtual_converter_end_attrs)};
+  std::copy(virtual_converter_end_inputs_vector.begin(), virtual_converter_end_inputs_vector.end(),
+            std::back_inserter(virtual_converter_end_inputs));
+  auto virtual_converter_end = gen_g.PushBack(virtual_converter_end_inputs);
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, virtual_converter_end));
+  return SUCCESS;
+}
+
+ReplaceGraphPtr LayerNormInfo::replace_graph(const CNodePtr &cnode) {
+  if (inputs_tensor_info_[kIndex0].tensor_layout().IsInterleavedParallel()) {
+    if (ComputeReplaceGraphForInterleaved(cnode) != SUCCESS) {
+      MS_LOG(EXCEPTION) << name_ << " splitting micro interleaved failed.";
+    }
+    return replace_graph_;
+  }
+  return replace_graph_;
 }
 
 Status LayerNormInfo::InferOutputLayout() {

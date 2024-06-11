@@ -579,6 +579,28 @@ Status OperatorInfo::InferTensorInfoNew() {
   return SUCCESS;
 }
 
+void OperatorInfo::UpdateOutputTensorInfoForInterleaved() {
+  if (!std::any_of(inputs_tensor_info_.begin(), inputs_tensor_info_.end(), [](const TensorInfo &input_tensor_info) {
+        return input_tensor_info.tensor_layout().IsInterleavedParallel();
+      })) {
+    return;
+  }
+  if (std::any_of(outputs_tensor_info_.begin(), outputs_tensor_info_.end(), [](const TensorInfo &output_tensor_info) {
+        return output_tensor_info.tensor_layout().IsInterleavedParallel();
+      })) {
+    return;
+  }
+  auto interleaved_num = ParallelContext::GetInstance()->fine_grained_micro_interleaved_size();
+  auto output_dev_matrix = outputs_tensor_info_[kIndex0].tensor_layout().device_arrangement_origin().array();
+  output_dev_matrix[output_dev_matrix.size() - 1] = interleaved_num;
+  Arrangement out_device_arrangement_interleaved;
+  out_device_arrangement_interleaved.Init(output_dev_matrix);
+  auto new_tensor_layout = outputs_tensor_info_[kIndex0].tensor_layout();
+  new_tensor_layout.set_device_arrangement_interleaved(out_device_arrangement_interleaved);
+  TensorInfo new_output_tensor_info(new_tensor_layout);
+  outputs_tensor_info_[kIndex0] = new_output_tensor_info;
+}
+
 Status OperatorInfo::InferTensorInfo() {
   if (!inputs_shape_new_.empty()) {
     return InferTensorInfoNew();
@@ -1363,6 +1385,14 @@ Status OperatorInfo::InitWithAutoRepeatCalc(const StrategyPtr &in_strategy, cons
 
   InferReplaceOps();
   return SUCCESS;
+}
+
+Status OperatorInfo::CheckInputLayout() {
+  MS_LOG(ERROR) << "Current op " << name_
+                << " does not support config layout. Please check "
+                   "https://www.mindspore.cn/docs/zh-CN/r2.3.0rc2/note/operator_list_parallel.html to get limitation "
+                   "and more details";
+  return FAILED;
 }
 
 Status OperatorInfo::InitWithTensorLayout(const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts,

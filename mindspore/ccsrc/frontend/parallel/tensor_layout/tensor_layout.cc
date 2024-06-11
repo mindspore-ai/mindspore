@@ -104,8 +104,23 @@ Status TensorLayout::InitFromVector(const Shape &device_arrangement, const Shape
  *    in_tensor_map = [1, 0, 2],
  *    in_tensor_shape = [512, 4, 256],
  */
-Status TensorLayout::InitFromExtendVector(const Shape &device_arrangement, const std::vector<Shape> &tensor_map,
-                                          const Shape &tensor_shape) {
+Status TensorLayout::InitFromExtendVector(const Shape &device_matrix, const std::vector<Shape> &tensor_map,
+                                          const Shape &tensor_shape, bool interleaved_parallel, bool check_device_num) {
+  auto device_arrangement = device_matrix;
+  if (interleaved_parallel) {
+    if (device_arrangement_interleaved_.Init(device_matrix) != SUCCESS) {
+      return FAILED;
+    }
+    if (parallel::ParallelContext::GetInstance()->fine_grained_micro_interleaved_size() == -1) {
+      parallel::ParallelContext::GetInstance()->set_fine_grained_micro_interleaved_size(
+        device_arrangement[device_arrangement.size() - 1]);
+    } else if (parallel::ParallelContext::GetInstance()->fine_grained_micro_interleaved_size() !=
+               device_arrangement[device_arrangement.size() - 1]) {
+      MS_LOG(EXCEPTION) << "The micro interleaved num should be configured be consistent for each operator's layout.";
+    }
+    device_arrangement[device_arrangement.size() - 1] = 1;
+  }
+
   if (device_arrangement_origin_.Init(device_arrangement) != SUCCESS) {
     return FAILED;
   }
@@ -113,7 +128,7 @@ Status TensorLayout::InitFromExtendVector(const Shape &device_arrangement, const
   auto device_num = g_device_manager->stage_device_num();
   int64_t device_total =
     std::accumulate(device_arrangement.begin(), device_arrangement.end(), 1, std::multiplies<int64_t>());
-  if (device_num != device_total) {
+  if (device_num != device_total && check_device_num) {
     MS_LOG(ERROR) << "The configured device_matrix " << device_arrangement << " accumulate value " << device_total
                   << " dose not equal to the device number in one stage " << device_num;
     return FAILED;
@@ -169,6 +184,32 @@ Status TensorLayout::InitFromExtendVector(const Shape &device_arrangement, const
   }
   tensor_map_before_ = tensor_map;
   return SUCCESS;
+}
+
+std::vector<int64_t> TensorLayout::GetVirtualRank() const {
+  int64_t rank = g_device_manager->global_rank();
+  if (!IsInterleavedParallel()) {
+    return {rank};
+  }
+  auto interleaved_num = device_arrangement_interleaved_.array().back();
+  std::vector<int64_t> virtual_ranks;
+  for (int64_t i = 0; i < interleaved_num; ++i) {
+    virtual_ranks.push_back(rank * interleaved_num + i);
+  }
+  return virtual_ranks;
+}
+
+TensorLayout TensorLayout::LayoutForRedistribution() const {
+  if (!IsInterleavedParallel()) {
+    return *this;
+  }
+  TensorLayout interleaved_layout;
+  if (interleaved_layout.InitFromExtendVector(device_arrangement_interleaved_.array(), tensor_map_before_,
+                                              tensor_shape_before_.array(), false, false) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Init layout for micro interleaved failed, device_matrix:"
+                      << device_arrangement_interleaved_.array() << ", tensor_map:" << tensor_map_before_;
+  }
+  return interleaved_layout;
 }
 
 bool TensorLayout::IsValidTensorLayout() const {
@@ -504,6 +545,21 @@ bool TensorLayout::IsSameWithoutSplit(const TensorLayout &t1) const {
     return false;
   }
   return true;
+}
+
+// Check whether layout has interleaved dev mat and the tensor map use the interleaved parallel
+bool TensorLayout::IsInterleavedParallel() const {
+  if (device_arrangement_interleaved_.array().empty()) {
+    return false;
+  }
+  bool is_interleaved_parallel = false;
+  for (size_t i = 0; i < origin_tensor_map().array().size(); ++i) {
+    if (origin_tensor_map().array()[i] == 0) {
+      is_interleaved_parallel = true;
+      break;
+    }
+  }
+  return is_interleaved_parallel;
 }
 
 /*

@@ -73,6 +73,20 @@ Status Group::GetIndex(size_t *index) {
   return Status::FAILED;
 }
 
+Status Group::GetIndexByRank(int64_t rank, size_t *index) {
+  size_t pos = 0;
+  for (auto &device : devices_) {
+    if (device.rank() == rank) {
+      *index = pos;
+      return Status::SUCCESS;
+    } else {
+      pos++;
+    }
+  }
+  MS_LOG(ERROR) << "Could not find device rank " << rank << "in this group!";
+  return Status::FAILED;
+}
+
 GroupManager::GroupManager() { groups_.clear(); }
 
 #if (!defined(_WIN32) && !defined(__APPLE__) && !(defined(ENABLE_TESTCASES) || defined(ENABLE_TEST)))

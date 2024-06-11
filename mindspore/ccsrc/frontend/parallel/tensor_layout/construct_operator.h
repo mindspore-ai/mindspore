@@ -46,6 +46,7 @@ class ConstructOperator {
   Status AlltoAllOP(const Args &args);
   Operator GetOperator() const { return op_; }
   void UpdateTensorShape(const Shape &tensor_shape) { tensor_shape_ = tensor_shape; }
+  void SetVirtualRank(const int64_t virtual_rank) { virtual_rank_ = virtual_rank; }
 
  private:
   Operator op_;
@@ -55,6 +56,8 @@ class ConstructOperator {
   Shape dev_matrix_shape_;
   bool is_cost_model_ = false;
   bool is_dynamic_shape_ = false;
+  int64_t virtual_rank_ = -1;
+  bool check_group() { return virtual_rank_ < 0; }
   Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
 };
 }  // namespace parallel

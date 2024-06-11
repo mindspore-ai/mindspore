@@ -450,6 +450,23 @@ Status MatMul::CheckInputLayout() {
       return FAILED;
     }
   }
+  if (in_layout0.IsInterleavedParallel()) {
+    auto tensor_map_interleaved0 = in_layout0.tensor_map_before();
+    auto reduce_axis_map = tensor_map_interleaved0[axis0];
+    if (std::find(reduce_axis_map.begin(), reduce_axis_map.end(), 0) != reduce_axis_map.end()) {
+      MS_LOG(ERROR) << "Only support splitting micro interleaved in batch axis for matmul.";
+      return FAILED;
+    }
+  }
+  if (in_layout1.IsInterleavedParallel()) {
+    auto tensor_map_intereaved1 = in_layout1.tensor_map_before();
+    if (std::any_of(tensor_map_intereaved1.begin(), tensor_map_intereaved1.end(),
+                    [](const auto &map1) { return std::find(map1.begin(), map1.end(), 0) != map1.end(); })) {
+      MS_LOG(ERROR) << "Only support splitting micro interleaved in batch axis for matmul.";
+      return FAILED;
+    }
+  }
+
   return SUCCESS;
 }
 
@@ -463,12 +480,14 @@ Status MatMul::CheckOutputLayout() {
   auto out_layout = outputs_tensor_info_[kIndex0].tensor_layout();
   if (!output_infer_tensor_layout_.tensor_shape_before().array().empty()) {
     MS_LOG(INFO) << "Using output tensor layout infer by input tensor layout.";
+    UpdateOutputTensorInfoForInterleaved();
     return SUCCESS;
   }
   output_infer_tensor_layout_ = InferOutputLayout();
   if (output_infer_tensor_layout_ == out_layout) {
     MS_LOG(INFO)
       << "output tensor layout infer by input tensor layout is same with user configured output tensor layout.";
+    UpdateOutputTensorInfoForInterleaved();
     return SUCCESS;
   }
 
@@ -500,6 +519,7 @@ Status MatMul::CheckOutputLayout() {
     return FAILED;
   }
   forward_reduce_scatter_ = true;
+  UpdateOutputTensorInfoForInterleaved();
   return SUCCESS;
 }
 
@@ -552,6 +572,7 @@ Status MatMul::InferOutputTensorInfo() {
 
 Status MatMul::InferForwardCommunicationByLayout() {
   forward_op_.clear();
+  forward_op_interleaved_.clear();
   auto input_layout0 = inputs_tensor_info_[kIndex0].tensor_layout();
   size_t axis0 = input_layout0.tensor_shape_before().array().size() - 1;
   if (transpose_a_) {
@@ -600,7 +621,11 @@ Status MatMul::InferForwardCommunicationByLayout() {
   } else {
     op = CreateAllReduceOp(REDUCE_OP_SUM, forward_group.name());
   }
-  forward_op_.push_back(op);
+  if (inputs_tensor_info_[kIndex0].tensor_layout().IsInterleavedParallel()) {
+    forward_op_interleaved_.push_back(op);
+  } else {
+    forward_op_.push_back(op);
+  }
   MS_LOG(INFO) << name_ << ": The group name of forward communication is " << forward_group.name();
   return SUCCESS;
 }
@@ -885,8 +910,62 @@ std::shared_ptr<Strategies> BatchMatMulInfo::GenerateBatchStrategies() {
 
 Status MatMulBase::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
+Status MatMul::ComputeReplaceGraphForInterleaved(const CNodePtr &cnode) {
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << "GenerateGraph Init failed";
+    return FAILED;
+  }
+  auto interleaved_num = ParallelContext::GetInstance()->fine_grained_micro_interleaved_size();
+  Attr output_nums_attr = {"output_nums", MakeValue(interleaved_num)};
+  OperatorAttrs virtual_converter_begin_attrs = {output_nums_attr};
+  auto virtual_converter_begin = gen_g.PushBack(
+    {gen_g.NewOpInst(VIRTUAL_CONVERTER_BEGIN, virtual_converter_begin_attrs), gen_g.virtual_input_node()});
+  auto trans_a = CreateBoolImm(transpose_a_);
+  auto trans_b = CreateBoolImm(transpose_b_);
+  std::vector<AnfNodePtr> virtual_converter_end_inputs_vector;
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(virtual_converter_begin, 1)};
+  for (int64_t i = 0; i < interleaved_num; ++i) {
+    auto tuple_get_item = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), virtual_converter_begin, CreatInt64Imm(i)});
+    // matmul
+    auto matmul =
+      gen_g.PushBack({gen_g.NewOpInst(MATMUL), tuple_get_item, gen_g.virtual_input_node(), trans_a, trans_b});
+    input_nodes.push_back(std::make_pair(matmul, 2));
+    if (forward_op_interleaved_.empty()) {
+      virtual_converter_end_inputs_vector.push_back(matmul);
+      continue;
+    }
+    // create allreduce/reduce_scatter
+    auto comm_op = gen_g.PushBack(
+      {gen_g.NewOpInst(forward_op_interleaved_.front().first, forward_op_interleaved_.front().second.first), matmul});
+    auto comm_cnode = comm_op->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(comm_cnode);
+    auto comm_prim = GetCNodePrimitive(comm_cnode);
+    auto instance_name = comm_prim->instance_name();
+    comm_prim->set_instance_name(FORWARD_OP + instance_name);
+    virtual_converter_end_inputs_vector.push_back(comm_op);
+  }
+  Attr input_nums_attr = {"input_nums", MakeValue(interleaved_num)};
+  OperatorAttrs virtual_converter_end_attrs = {input_nums_attr};
+  std::vector<AnfNodePtr> virtual_converter_end_inputs = {
+    gen_g.NewOpInst(VIRTUAL_CONVERTER_END, virtual_converter_end_attrs)};
+  std::copy(virtual_converter_end_inputs_vector.begin(), virtual_converter_end_inputs_vector.end(),
+            std::back_inserter(virtual_converter_end_inputs));
+  auto virtual_converter_end = gen_g.PushBack(virtual_converter_end_inputs);
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, virtual_converter_end));
+  return SUCCESS;
+}
+
 // PCL matmul
 ReplaceGraphPtr MatMul::replace_graph(const CNodePtr &cnode) {
+  if (inputs_tensor_info_[kIndex0].tensor_layout().IsInterleavedParallel()) {
+    if (ComputeReplaceGraphForInterleaved(cnode) != SUCCESS) {
+      MS_LOG(EXCEPTION) << name_ << " splitting micro interleaved failed.";
+    }
+    return replace_graph_;
+  }
+
   if (!candidate_flag_) {
     return nullptr;
   }

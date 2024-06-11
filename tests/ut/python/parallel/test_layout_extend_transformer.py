@@ -186,6 +186,74 @@ class Net(nn.Cell):
         return end1 + end2
 
 
+class Net2(nn.Cell):
+    def __init__(self, hidden_size, ffn_hidden_size, dp, mp, interleaved_parallel):
+        super().__init__()
+        transfomer_layout = Layout((dp, mp, interleaved_parallel), ("dp", "mp", "interleaved_parallel"))
+        input_size = hidden_size
+        output_size = ffn_hidden_size
+        param_init_type = mstype.float32
+        compute_dtype = mstype.float16
+        self.mapping = _Linear(in_channels=input_size,
+                               out_channels=output_size,
+                               transpose_b=False,
+                               param_init_type=param_init_type).to_float(compute_dtype)
+        self.mapping.shard((transfomer_layout(("dp", "interleaved_parallel"), "None"), transfomer_layout("None", "mp")))
+        self.projection = _Linear(in_channels=output_size,
+                                  out_channels=input_size,
+                                  transpose_b=False,
+                                  param_init_type=param_init_type).to_float(compute_dtype)
+        self.projection.shard(
+            (transfomer_layout(("dp", "interleaved_parallel"), "mp"), transfomer_layout("mp", "None")),
+            (transfomer_layout(("dp", "interleaved_parallel", "mp"), "None"),),
+            (transfomer_layout(("dp", "interleaved_parallel", "mp"), "None"), transfomer_layout("None")))
+        self.attention_projection = _Linear(in_channels=hidden_size,
+                                            out_channels=hidden_size,
+                                            transpose_b=False,
+                                            param_init_type=param_init_type).to_float(compute_dtype)
+        self.attention_projection.shard(
+            (transfomer_layout(("dp", "interleaved_parallel"), "mp"), transfomer_layout("mp", "None")),
+            (transfomer_layout(("dp", "interleaved_parallel", "mp"), "None"),),
+            (transfomer_layout(("dp", "interleaved_parallel", "mp"), "None"), transfomer_layout("None")))
+        self.qkv_dense = _Linear(hidden_size,
+                                 hidden_size,
+                                 param_init_type=param_init_type).to_float(compute_dtype)
+        self.qkv_dense.shard(
+            (transfomer_layout(("dp", "interleaved_parallel"), "None"), transfomer_layout("mp", "None")))
+        self.gelu = P.GeLU().shard((transfomer_layout(("dp", "interleaved_parallel"), "mp"),))
+        self.add1 = P.Add().shard((transfomer_layout(("dp", "interleaved_parallel", "mp"), "None"),
+                                   transfomer_layout(("dp", "interleaved_parallel", "mp"), "None")))
+        self.add2 = P.Add().shard((transfomer_layout(("dp", "interleaved_parallel", "mp"), "None"),
+                                   transfomer_layout(("dp", "interleaved_parallel", "mp"), "None")))
+        self.begin1 = P.ReLU().shard(((dp, mp),))
+        self.begin2 = P.ReLU().shard(((dp, 1),))
+        self.end1 = P.ReLU().shard(((dp, mp),))
+        self.end2 = P.ReLU().shard(((dp * mp, 1),))
+        self.layernorm1 = _LayerNorm((hidden_size,)).to_float(mstype.float32)
+        self.layernorm2 = _LayerNorm((hidden_size,)).to_float(mstype.float32)
+        self.layernorm1.shard((transfomer_layout(("dp", "interleaved_parallel", "mp"), "None"),
+                               transfomer_layout("None"), transfomer_layout("None")))
+        self.layernorm2.shard((transfomer_layout(("dp", "interleaved_parallel", "mp"), "None"),
+                               transfomer_layout("None"), transfomer_layout("None")))
+
+    def construct(self, input_ids, y):
+        # input_ids: (seq_len, hidden_size), y: (seq_len ,hidden_size)
+        input_ids_begin = self.begin1(input_ids)
+        add_begin = self.begin2(y)
+        attention_proj = self.attention_projection(input_ids_begin)
+        ffn_input = self.add1(attention_proj, add_begin)
+        mapping_input = self.layernorm2(ffn_input)
+        hidden = self.mapping(mapping_input)
+        hidden = self.gelu(hidden)
+        ffn_out = self.projection(hidden)
+        ffn_out = self.add2(ffn_out, ffn_input)
+        qkv_input = self.layernorm1(ffn_out)
+        attention_input = self.qkv_dense(qkv_input)
+        end1 = self.end1(attention_input)
+        end2 = self.end2(ffn_out)
+        return end1 + end2
+
+
 def test_layout_extend_transformer():
     """
     Feature: test layout extend with tranformer, modify sequence micro interleaved
@@ -202,4 +270,23 @@ def test_layout_extend_transformer():
     input_ids = Tensor(np.ones([bs_seq_len, hidden_size]), dtype=ms.float32)
     y = Tensor(np.ones([bs_seq_len, hidden_size]), dtype=ms.float32)
     net = Net(hidden_size, ffn_hidden_size, dp, mp, vp)
+    _ = compile_net(net, input_ids, y)
+
+
+def test_layout_extend_transformer_interleaved():
+    """
+    Feature: test layout extend with tranformer, modify sequence micro interleaved
+    Description: dp4,mp8,interleaved_parallel2.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
+    bs_seq_len = 4096 * 4
+    hidden_size = 12288
+    ffn_hidden_size = hidden_size * 3
+    dp = 4
+    mp = 8
+    interleaved_parallel = 2
+    input_ids = Tensor(np.ones([bs_seq_len, hidden_size]), dtype=ms.float32)
+    y = Tensor(np.ones([bs_seq_len, hidden_size]), dtype=ms.float32)
+    net = Net2(hidden_size, ffn_hidden_size, dp, mp, interleaved_parallel)
     _ = compile_net(net, input_ids, y)

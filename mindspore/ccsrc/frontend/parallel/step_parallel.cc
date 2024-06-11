@@ -422,6 +422,68 @@ Status ObtainOutputTensorLayout(const OperatorInfoPtr &next_distribute_operator,
   return SUCCESS;
 }
 
+void InsertRedistributionForMicroInterleaved(const TensorRedistributionPtr &tensor_redistribution,
+                                             const std::pair<AnfNodePtr, int64_t> &node_pair,
+                                             const FuncGraphPtr &func_graph, const CNodePtr &attr_cnode,
+                                             const CNodePtr &real_pre_node) {
+  auto redistribution_oplist_ptr_vector = tensor_redistribution->InferTensorRedistributionOperatorVirtualGraphs();
+  auto next_cnode = node_pair.first->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(next_cnode);
+  auto next_cnode_index = node_pair.second;
+  // create VirtualConverterBeginNode
+  MS_EXCEPTION_IF_NULL(real_pre_node);
+  auto virtual_converter_begin =
+    CreateVirtualConverterBeginNode(real_pre_node, redistribution_oplist_ptr_vector.size());
+  std::vector<CNodePtr> tuple_get_item_vector;
+  for (size_t i = 0; i < redistribution_oplist_ptr_vector.size(); ++i) {
+    if (redistribution_oplist_ptr_vector[i]->first.empty()) {
+      return;
+    }
+    // create tuple_get_item
+    std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(prim::kPrimTupleGetItem), virtual_converter_begin,
+                                                  CreatInt64Imm(UlongToLong(i))};
+    auto tuple_get_item_cnode = func_graph->NewCNode(tuple_get_item_inputs);
+    tuple_get_item_vector.push_back(tuple_get_item_cnode);
+  }
+  // create VirtualConverterEndNode
+  auto virtual_converter_end = CreateVirtualConverterEndNode(func_graph, tuple_get_item_vector);
+  auto manager = func_graph->manager();
+  (void)manager->SetEdge(next_cnode, next_cnode_index, virtual_converter_end);
+  // add recompute_comm_op attrs
+  auto prim_out = GetCNodePrimitive(next_cnode);
+  if (prim_out != nullptr && prim_out->HasAttr(RECOMPUTE_COMM_OP)) {
+    auto out_recompute_comm_op_attr = prim_out->GetAttr(RECOMPUTE_COMM_OP);
+    auto virtual_converter_end_prim = GetCNodePrimitive(virtual_converter_end);
+    virtual_converter_end_prim->AddAttr(RECOMPUTE_COMM_OP, out_recompute_comm_op_attr);
+  }
+  std::vector<std::vector<std::vector<int64_t>>> ag_group_ranks_vectors;
+
+  for (size_t i = 0; i < redistribution_oplist_ptr_vector.size(); ++i) {
+    auto redistribution_oplist_ptr = redistribution_oplist_ptr_vector[i];
+    if (!tensor_redistribution->IsAssembledStaticShape()) {
+      redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
+        redistribution_oplist_ptr, tensor_redistribution->input_shape());
+    }
+    // Get allgather group_ranks attr in redistribution_oplist_ptr
+    std::vector<std::vector<int64_t>> ag_group_ranks_vector;
+    for (size_t findex = 0; findex < (redistribution_oplist_ptr->first).size(); ++findex) {
+      // Create instance_name
+      auto index = (redistribution_oplist_ptr->first).size() - 1 - findex;
+      auto op = (redistribution_oplist_ptr->first)[index];
+      std::string op_name = (redistribution_oplist_ptr->first)[index].first;
+      if (op_name == ALL_GATHER) {
+        auto group_ranks_attr = (redistribution_oplist_ptr->first)[index].second.first[1].second;
+        auto group_ranks = GetValue<std::vector<int64_t>>(group_ranks_attr);
+        ag_group_ranks_vector.push_back(group_ranks);
+      }
+    }
+    ag_group_ranks_vectors.push_back(ag_group_ranks_vector);
+    InsertRedistribution(redistribution_oplist_ptr, virtual_converter_end, func_graph, i + 1, attr_cnode,
+                         tensor_redistribution);
+  }
+  ConvertInterleaveAllGatherToConcat(func_graph, virtual_converter_end, ag_group_ranks_vectors);
+}
+
 static void Redistribution(const std::pair<AnfNodePtr, std::vector<int>> &node_pair, const AnfNodePtr &pre_node,
                            const std::vector<int> &get_item_index) {
   MS_LOG(DEBUG) << "Do Redistribution for " << node_pair.first->fullname_with_scope();
@@ -479,6 +541,13 @@ static void Redistribution(const std::pair<AnfNodePtr, std::vector<int>> &node_p
                   << next_cnode->DebugString();
     DumpGraph(func_graph, "redistribution_error");
     MS_LOG(EXCEPTION) << "Failure:tensor_redistribution init failed";
+  }
+  if (tensorlayout_in.GetVirtualRank().size() > 1 || tensorlayout_out.GetVirtualRank().size() > 1) {
+    auto real_pre_node = next_cnode->input(node_pair.second[node_pair.second.size() - 1])->cast<CNodePtr>();
+    InsertRedistributionForMicroInterleaved(tensor_redistribution,
+                                            {node_pair.first, node_pair.second[node_pair.second.size() - 1]},
+                                            func_graph, pre_cnode, real_pre_node);
+    return;
   }
   RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
   if (redistribution_oplist_ptr == nullptr) {
@@ -1591,6 +1660,9 @@ static std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair
   parameter->set_abstract(cloned_abstract);
   ParameterPtr parameter_ptr = parameter->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(parameter_ptr);
+  if (tensor_layout.IsInterleavedParallel()) {
+    MS_LOG(EXCEPTION) << "parameter " << parameter->ToString() << " can not set to interleaved parallel";
+  }
   parameter_ptr->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(tensor_layout));
   if (ParallelContext::GetInstance()->direct_split() && parameter_ptr->has_default()) {
     auto layout = parameter_ptr->user_data<TensorLayout>();
@@ -2443,6 +2515,24 @@ static void StepReplace(const std::vector<AnfNodePtr> &all_nodes) {
         MS_LOG(INFO) << "StepReplaceGraph " << cnode->ToString();
         StepReplaceGraph(replace_graph, cnode, distribute_operator);
       }
+      if (distribute_operator->name().find(RESHAPEINFO) != std::string::npos) {
+        auto reshape_info = std::dynamic_pointer_cast<ReshapeInfo>(distribute_operator);
+        if (!reshape_info->InterleavedParallel()) {
+          continue;
+        }
+        auto reshape_redis = reshape_info->ReshapeRedistribution();
+        InsertRedistributionForMicroInterleaved(reshape_redis, {cnode, 1}, cnode->func_graph(), cnode,
+                                                cnode->input(kIndex1)->cast<CNodePtr>());
+        if (!IsPrimitiveCNode(cnode->input(kIndex1), prim::kPrimVirtualConverterEnd)) {
+          continue;
+        }
+        auto virtual_converter_end = cnode->input(kIndex1)->cast<CNodePtr>();
+        auto func_graph = cnode->func_graph();
+        MS_EXCEPTION_IF_NULL(func_graph);
+        auto manager = func_graph->manager();
+        MS_EXCEPTION_IF_NULL(manager);
+        manager->Replace(cnode, virtual_converter_end);
+      }
     }
   }
 }
@@ -2626,7 +2716,13 @@ static void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const F
       } else {
         stra = operator_info->strategy();
       }
-      stra_map[strategy_key_name] = stra;
+      if (stra) {
+        stra_map[strategy_key_name] = stra;
+      } else {
+        Strategies new_stra_v;
+        StrategyPtr new_stra = std::make_shared<Strategy>(g_device_manager->stage_id(), new_stra_v);
+        stra_map[strategy_key_name] = new_stra;
+      }
 
       for (auto param_name_pair : param_names) {
         tensor_info_map[param_name_pair.first] = param_name_pair.second->user_data<TensorLayout>();
@@ -3421,6 +3517,8 @@ static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const 
   }
   // ForwardCommunication BackwardCommunication TensorRedistribution
   ParallelCommunication(root, all_nodes, manager);
+  SplitNotParallelCareOpsInterleaved(root);
+  EraseVirtualConverter(root);
   if (is_apply_adasum) {
     HandleMirrorInAdaSum(root, &adasum_param_tensor_layout_map);
   }
@@ -3527,11 +3625,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   }
 
   ParallelPartProcess(all_nodes, root, manager);
-
   BroadcastLastResult(root, manager);
-
   MicroBatchPostProcess(root, all_nodes);
-
   DumpGraph(root, std::string(STEP_PARALLEL_END));
 
   // step parallel only run once

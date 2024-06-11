@@ -38,6 +38,7 @@ class ArithmeticBase : public OperatorInfo {
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   void ReComputeBatchSplitFlagList() override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status CheckInputLayout() override;
@@ -52,6 +53,7 @@ class ArithmeticBase : public OperatorInfo {
   Status InferOutputTensorMap() override;
   Status CheckLayoutConfig() override;
   Shapes InferExpandShape();
+  virtual Status ComputeReplaceGraphForInterleaved(const CNodePtr &cnode);
 
  private:
   TensorLayout InferOutputLayout();
