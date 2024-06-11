@@ -1396,6 +1396,19 @@ class Profiler:
         target_timeline_path = os.path.join(ascend_profiler_output_path, f"trace_view.json")
         shutil.copy(source_timeline_path, target_timeline_path)
 
+        src_op_mem_file = os.path.join(self._output_path, f"operator_memory_{dev_id}.csv")
+        if os.path.exists(src_op_mem_file):
+            dst_op_mem_file = os.path.join(ascend_profiler_output_path, f"operator_memory.csv")
+            shutil.copy(src_op_mem_file, dst_op_mem_file)
+
+        ms_output_path = os.path.abspath(
+            os.path.join(source_path, os.path.pardir, 'mindstudio_profiler_output'))
+        static_op_mem_path = os.path.join(ms_output_path, f"static_op_mem_*.csv")
+        src_static_op_mem_path = glob.glob(static_op_mem_path)
+        if src_static_op_mem_path:
+            dst_static_op_mem_file = os.path.join(ascend_profiler_output_path, f"static_op_mem.csv")
+            shutil.copy(src_static_op_mem_path[0], dst_static_op_mem_file)
+
         self._ascend_graph_cluster_analyse(source_path, ascend_profiler_output_path)
         self._ascend_graph_communicate_analyse(source_path, ascend_profiler_output_path)
         AscendIntegrateGenerator(source_path, ascend_profiler_output_path).parse()
