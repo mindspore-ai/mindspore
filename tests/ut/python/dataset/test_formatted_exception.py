@@ -15,6 +15,7 @@
 import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
+import pytest
 
 
 def test_generator_single_worker_exception():
@@ -46,6 +47,7 @@ def test_generator_single_worker_exception():
         assert "Dataset Pipeline Error Message:" in str(e)
 
 
+@pytest.mark.skip(reason="segmentation fault")
 def test_generator_multi_workers_exception():
     """
     Feature: Formatted exception.

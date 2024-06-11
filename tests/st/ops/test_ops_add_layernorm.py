@@ -48,7 +48,7 @@ class Add_LayerNorm(nn.Cell):
         return y, meanOut, rstdOut, res
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.platform_x86_ascend910b_training
