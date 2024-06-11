@@ -11,7 +11,7 @@ mindspore.communication.comm_func.broadcast
 
     参数：
         - **tensor** (Tensor) - 输入待广播的Tensor。Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。
-        - **src** (int，可选) - 表示发送源的进程编号。只有该进程会广播张量。
+        - **src** (int，可选) - 表示发送源的进程编号。只有该进程会广播张量。默认值：0。
         - **group** (str，可选) - 表示通信域。默认值： ``GlobalComm.WORLD_COMM_GROUP`` 。
 
     返回：

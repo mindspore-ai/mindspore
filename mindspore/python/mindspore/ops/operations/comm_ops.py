@@ -1192,9 +1192,11 @@ class CollectiveScatter(Primitive):
     @prim_attr_register
     def __init__(self, src_rank=0, group=GlobalComm.WORLD_COMM_GROUP):
         validator.check_value_type('group', _get_group(group), (str,), self.name)
-        self.rank_size = get_group_size(_get_group(group))
+        self.rank_id = get_rank(_get_group(group))
         self.src_rank = src_rank
-
+        self.rank_size = get_group_size(_get_group(group))
+        validator.check('rank', self.rank_id, 'rank_size', self.rank_size, validator.LT, self.name)
+        self.add_prim_attr('rank_id', self.rank_id)
         self.add_prim_attr('src_rank', self.src_rank)
         self.add_prim_attr('rank_size', self.rank_size)
         self.add_prim_attr('group', _get_group(group))
