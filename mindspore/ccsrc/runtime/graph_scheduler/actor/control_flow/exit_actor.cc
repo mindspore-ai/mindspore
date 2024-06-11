@@ -373,7 +373,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
 
     // If the address ptr can't be changed, then alloc the new device memory and copy the data.
     if (input_device_tensor->is_ptr_persisted()) {
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "", "");
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "CopyDeviceAddress", "");
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(), device::tracker::MemType::kOther,
                                                      new_device_tensor->GetSize(), new_device_tensor.get());
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther);
