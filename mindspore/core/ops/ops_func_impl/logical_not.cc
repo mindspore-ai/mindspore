@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
+#include <memory>
 #include "ops/ops_func_impl/logical_not.h"
+#include "ops/ops_func_impl/simple_infer.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -27,5 +30,15 @@ TypePtr LogicalNotFuncImpl::InferType(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
   return std::make_shared<TensorType>(kBool);
 }
+
+TypePtrList LogicalNotFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {kBool};
+}
+ShapeArray LogicalNotFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameLogicalNot, LogicalNotFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

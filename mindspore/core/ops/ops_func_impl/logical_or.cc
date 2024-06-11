@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+#include <memory>
 #include "ops/ops_func_impl/logical_or.h"
 #include "ops/op_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -28,5 +30,13 @@ TypePtr LogicalOrFuncImpl::InferType(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
   return std::make_shared<TensorType>(kBool);
 }
+
+TypePtrList LogicalOrFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {kBool};
+}
+ShapeArray LogicalOrFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {BroadCastInferShape(primitive->name(), input_values)};
+}
+REGISTER_SIMPLE_INFER(kNameLogicalOr, LogicalOrFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
