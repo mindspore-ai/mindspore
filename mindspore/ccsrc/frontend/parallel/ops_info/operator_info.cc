@@ -678,6 +678,34 @@ void OperatorInfo::SetRepeatedCalcDevMatrix() {
   }
 }
 
+void OperatorInfo::ResetTupleTensorMapIfRepeatedCalc(NewTensorMaps *tensor_map_new) {
+  for (auto &tensor_map : *tensor_map_new) {
+    if (tensor_map->is_list()) {
+      std::vector<ShapeBasePtr> new_list;
+      for (auto &elements : tensor_map->GetAllElements()) {
+        std::vector<int64_t> new_shape;
+        for (auto &element : elements) {
+          if (element != MAP_NONE) {
+            element += 1;
+          }
+          new_shape.emplace_back(element);
+        }
+        new_list.emplace_back(std::make_shared<ShapeValue>(new_shape));
+      }
+      tensor_map->set_shape(std::make_shared<ShapeList>(new_list));
+    } else {
+      std::vector<int64_t> new_shape;
+      for (auto &element : tensor_map->GetValue()) {
+        if (element != MAP_NONE) {
+          element += 1;
+        }
+        new_shape.emplace_back(element);
+      }
+      tensor_map->set_shape(std::make_shared<ShapeValue>(new_shape));
+    }
+  }
+}
+
 // If repeated calculation, and the repeated_calc_num is inserted to the last dimension of the dev-matrix,
 // the index value of tensor map needs to be increased by 1.
 void OperatorInfo::ResetTensorMapIfRepeatedCalc() {
@@ -703,6 +731,9 @@ void OperatorInfo::ResetTensorMapIfRepeatedCalc() {
       element += 1;
     }
   }
+
+  ResetTupleTensorMapIfRepeatedCalc(&inputs_tensor_map_new_);
+  ResetTupleTensorMapIfRepeatedCalc(&outputs_tensor_map_new_);
 }
 
 // use for loss repeated calculation

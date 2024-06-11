@@ -45,9 +45,46 @@ constexpr size_t kInputQueryBatchDimBSND = 0;
 constexpr size_t kInputQuerySeqDimBSND = 1;
 constexpr size_t kInputQueryNDimBSND = 2;
 constexpr size_t kInputQueryHiddenDimBSND = 3;
-constexpr size_t rank_2 = 2;
-constexpr size_t rank_3 = 3;
+constexpr size_t kRank2 = 2;
+constexpr size_t kRank3 = 3;
+constexpr size_t kRank4 = 4;
+constexpr size_t kDpAxis = 2;
+enum SparseMode : int64_t {
+  kSparseDefaultMask = 0,
+  kSparseAllMask,
+  kSparseLeftUpCausal,
+  kSparseRightDownCausal,
+  kSparseBand,
+  kSparsePrefix,
+  kSparseGlobal,
+  kSparseDilated,
+  kSparseBlockLocal,
+};
+enum OpAttrUpdateMode : int64_t {
+  kLeftUpToLeftUp = 0,
+  kLeftUpToRightDown = 1,
+  kRightDownToRightDown = 2,
+};
+
+const std::vector<int64_t> needCompressAttnMask = {kSparseLeftUpCausal, kSparseRightDownCausal, kSparseBand};
 }  // namespace
+
+template <typename T>
+T GetInputValueFromCNode(const CNodePtr &cnode, size_t index) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto inputs = cnode->inputs();
+  if (index >= inputs.size()) {
+    MS_LOG(EXCEPTION) << "The input index (" << index << ") is exceed of inputs size (" << inputs.size() << ").";
+  }
+  auto input_node = inputs[index];
+  MS_EXCEPTION_IF_NULL(input_node);
+  if (!input_node->isa<ValueNode>()) {
+    MS_LOG(EXCEPTION) << "The " << GetSerialNumberString(index) << " input is not a value node.";
+  }
+  auto value = input_node->cast<ValueNodePtr>()->value();
+  MS_EXCEPTION_IF_NULL(value);
+  return GetValue<T>(value);
+}
 
 template <typename T>
 void SetValueInputToCNode(const CNodePtr &cnode, size_t index, T value) {
@@ -74,92 +111,106 @@ bool FusedInferAttentionScoreInfo::CheckStrategyOnIndex(int64_t strategy, int64_
   return true;
 }
 
-void FusedInferAttentionScoreInfo::SetOptinalInputs() {
-  optinal_inputs.resize(ops::kFusedInferAttentionScoreInputKvPaddingSizeIndex + 1, true);
-  size_t valid_input_index = 3;
+void FusedInferAttentionScoreInfo::SetOptionalInputs() {
+  optional_inputs_.resize(ops::kFusedInferAttentionScoreInputKvPaddingSizeIndex + 1, true);
+  size_t valid_input_index = 3;  // after qkv index
   for (size_t index = ops::kFusedInferAttentionScoreInputPseShiftIndex; index < input_value_.size(); index++) {
-    auto optinal_input_ptr = input_value_[index];
-    if (optinal_input_ptr == nullptr) {
+    auto optional_input_ptr = input_value_[index];
+    if (optional_input_ptr == nullptr || optional_input_ptr->isa<tensor::Tensor>()) {
       if (index == ops::kFusedInferAttentionScoreInputPseShiftIndex && valid_input_index < inputs_shape_new_.size()) {
         auto padding_mask_shape = inputs_shape_new_[valid_input_index]->GetAllElements();
-        padding_mask_rank = padding_mask_shape[0].size();
+        padding_mask_rank_ = padding_mask_shape[0].size();
       }
       if (index == ops::kFusedInferAttentionScoreInputAttnMaskIndex && valid_input_index < inputs_shape_new_.size()) {
         auto atten_mask_shape = inputs_shape_new_[valid_input_index]->GetAllElements();
-        atten_mask_rank = atten_mask_shape[0].size();
+        atten_mask_rank_ = atten_mask_shape[0].size();
       }
       valid_input_index++;
-    } else {
-      if (optinal_input_ptr->isa<None>()) {
-        optinal_inputs[index] = False;
-      }
+    } else if (optional_input_ptr->isa<None>()) {
+      optional_inputs_[index] = False;
     }
   }
-  if (atten_mask_rank == rank_2) {
-    optinal_tensor_map[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {-1, -1};
-    optinal_op_strategies[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {0, 0};
-  }
-  if (atten_mask_rank == rank_3) {
-    optinal_tensor_map[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {1, -1, -1};
-    optinal_op_strategies[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {1, 0, 0};
-  }
-  if (padding_mask_rank == rank_2) {
-    optinal_tensor_map[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {-1, -1};
-    optinal_op_strategies[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {0, 0};
-  }
-  if (padding_mask_rank == rank_3) {
-    optinal_tensor_map[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {1, -1, -1};
-    optinal_op_strategies[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {1, 0, 0};
-  }
+  // init optional tensor map
+  Shape atten_mask_tensor_map(atten_mask_rank_, -1);
+  Shape atten_mask_strategy_map(atten_mask_rank_, 0);
+  Shape padding_mask_tensor_map(padding_mask_rank_, -1);
+  Shape padding_mask_strategy_map(padding_mask_rank_, 0);
+  optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = atten_mask_tensor_map;
+  optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = padding_mask_tensor_map;
+  optional_op_strategies_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = atten_mask_strategy_map;
+  optional_op_strategies_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = padding_mask_strategy_map;
 }
 
 void FusedInferAttentionScoreInfo::GenerateExpectStrategies() {
-  expect_strategies = {{}, {}, {}, {dp_, 1, 1, 1}, {dp_, 1, 1}, {dp_}, {dp_}, {}, {}, {}, {}, {}, {}, {}, {}};
-  if (atten_mask_rank == rank_2) {
-    expect_strategies[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {1, 1};
+  expect_strategies_ = {{}, {}, {}, {dp_, 1, 1, 1}, {dp_, 1, 1}, {dp_}, {dp_}, {}, {}, {}, {}, {}, {}, {}, {}};
+  if (atten_mask_rank_ == kRank2) {
+    expect_strategies_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {1, 1};
   }
-  if (atten_mask_rank == rank_3) {
-    expect_strategies[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {dp_, 1, 1};
+  if (atten_mask_rank_ == kRank3) {
+    expect_strategies_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {dp_, 1, 1};
   }
-  if (padding_mask_rank == rank_2) {
-    expect_strategies[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {1, 1};
+  if (padding_mask_rank_ == kRank2) {
+    expect_strategies_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {1, 1};
   }
-  if (padding_mask_rank == rank_3) {
-    expect_strategies[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {dp_, 1, 1};
+  if (padding_mask_rank_ == kRank3) {
+    expect_strategies_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {dp_, 1, 1};
   }
 }
 
 Status FusedInferAttentionScoreInfo::GetAttrs() {
-  MS_EXCEPTION_IF_NULL(cnode_);
-  auto inputs = cnode_->inputs();
+  head_num_ = GetInputValueFromCNode<int64_t>(cnode_, ops::kFusedInferAttentionScoreInputNumHeadsIndex + 1);
+  kv_head_num_ = GetInputValueFromCNode<int64_t>(cnode_, ops::kFusedInferAttentionScoreInputNumKeyValueHeadsIndex + 1);
+  pre_tokens_ = GetInputValueFromCNode<int64_t>(cnode_, ops::kFusedInferAttentionScoreInputPreTokensIndex + 1);
+  next_tokens_ = GetInputValueFromCNode<int64_t>(cnode_, ops::kFusedInferAttentionScoreInputNextTokensIndex + 1);
+  sparse_mode_ = GetInputValueFromCNode<int64_t>(cnode_, ops::kFusedInferAttentionScoreInputSparseModeIndex + 1);
+  is_attn_mask_compressed_ =
+    std::find(needCompressAttnMask.begin(), needCompressAttnMask.end(), sparse_mode_) != needCompressAttnMask.end();
+  need_update_op_attrs_mode_ = sparse_mode_ != kSparseAllMask;
+  input_layout_ = GetInputValueFromCNode<int64_t>(cnode_, ops::kFusedInferAttentionScoreInputLayoutIndex + 1);
+  softmax_lse_flag_ = GetInputValueFromCNode<bool>(cnode_, ops::kFusedInferAttentionScoreInputSoftmaxLseFlagIndex + 1);
+  SetOptionalInputs();
+  return SUCCESS;
+}
 
-  auto head_num_node = inputs[ops::kFusedInferAttentionScoreInputNumHeadsIndex + 1];
-  MS_EXCEPTION_IF_NULL(head_num_node);
-  if (!head_num_node->isa<ValueNode>()) {
-    MS_LOG(EXCEPTION) << "The head_num input is not a value node.";
+Status FusedInferAttentionScoreInfo::CheckQueryStrategy(const NewStrategies &stra) {
+  auto query_strategys = stra[ops::kFusedInferAttentionScoreInputQueryIndex]->GetAllElements();
+  auto key_strategys = stra[ops::kFusedInferAttentionScoreInputKeyIndex]->GetAllElements();
+  auto query_strategy = query_strategys[0];
+  auto query_input = inputs_shape_new_[ops::kFusedInferAttentionScoreInputQueryIndex]->GetAllElements()[0];
+  switch (input_layout_) {
+    case FASInputLayoutMode::BSH:
+      if (head_num_ % query_strategy[kInputQueryHiddenDimBSH] != 0) {
+        MS_LOG(ERROR) << "For " << name_ << ": head_num % query_strategy[2] must be 0, but got " << head_num_
+                      << "(head_num) and " << query_strategy[kInputQueryHiddenDimBSH] << "(query_strategy[2])";
+        return FAILED;
+      }
+      is_ifa_ = query_input[kInputQuerySeqDimBSH] == 1;
+      dp_ = query_strategy[kInputQueryBatchDimBSH];
+      mp_ = query_strategy[kInputQueryHiddenDimBSH];
+      sp_ = key_strategys[0][kInputQuerySeqDimBSH];
+      break;
+    case FASInputLayoutMode::BNSD:
+      if (!CheckStrategyOnIndex(query_strategy[kInputQueryHiddenDimBNSD], 1, "D-Dimention", "query")) {
+        return FAILED;
+      }
+      is_ifa_ = query_input[kInputQuerySeqDimBNSD] == 1;
+      dp_ = query_strategy[kInputQueryBatchDimBNSD];
+      mp_ = query_strategy[kInputQueryNDimBNSD];
+      sp_ = key_strategys[0][kInputQuerySeqDimBNSD];
+      break;
+    case FASInputLayoutMode::BSND:
+      if (!CheckStrategyOnIndex(query_strategy[kInputQueryHiddenDimBSND], 1, "D-Dimention", "query")) {
+        return FAILED;
+      }
+      is_ifa_ = query_input[kInputQuerySeqDimBSND] == 1;
+      dp_ = query_strategy[kInputQueryBatchDimBSND];
+      mp_ = query_strategy[kInputQueryNDimBSND];
+      sp_ = key_strategys[0][kInputQuerySeqDimBSND];
+      break;
+    default:
+      MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
+      return FAILED;
   }
-  auto head_num_value = head_num_node->cast<ValueNodePtr>()->value();
-  MS_EXCEPTION_IF_NULL(head_num_value);
-  head_num_ = GetValue<int64_t>(head_num_value);
-
-  auto kv_head_node = inputs[ops::kFusedInferAttentionScoreInputNumKeyValueHeadsIndex + 1];
-  MS_EXCEPTION_IF_NULL(kv_head_node);
-  if (!kv_head_node->isa<ValueNode>()) {
-    MS_LOG(EXCEPTION) << "The NumKeyValueHeads input is not a value node.";
-  }
-  auto kv_head_value = kv_head_node->cast<ValueNodePtr>()->value();
-  MS_EXCEPTION_IF_NULL(kv_head_value);
-  kv_head_num = GetValue<int64_t>(kv_head_value);
-
-  auto input_layout_node = inputs[ops::kFusedInferAttentionScoreInputLayoutIndex + 1];
-  MS_EXCEPTION_IF_NULL(input_layout_node);
-  if (!input_layout_node->isa<ValueNode>()) {
-    MS_LOG(EXCEPTION) << "The NumKeyValueHeads input is not a value node.";
-  }
-  auto input_layout_value = input_layout_node->cast<ValueNodePtr>()->value();
-  MS_EXCEPTION_IF_NULL(input_layout_value);
-  input_layout_ = GetValue<int64_t>(input_layout_value);
-  SetOptinalInputs();
   return SUCCESS;
 }
 
@@ -180,8 +231,6 @@ Status FusedInferAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) 
     MS_LOG(ERROR) << name_ << ": Strategy size must be larger than 1.";
     return FAILED;
   }
-  auto query_strategys = stra[ops::kFusedInferAttentionScoreInputQueryIndex]->GetAllElements();
-  auto query_strategy = query_strategys[0];
   auto key_strategys = stra[ops::kFusedInferAttentionScoreInputKeyIndex]->GetAllElements();
   auto value_strategys = stra[ops::kFusedInferAttentionScoreInputValueIndex]->GetAllElements();
 
@@ -208,81 +257,111 @@ Status FusedInferAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) 
     return FAILED;
   }
 
-  switch (input_layout_) {
-    case FASInputLayoutMode::BSH:
-      if (head_num_ % query_strategy[kInputQueryHiddenDimBSH] != 0) {
-        MS_LOG(ERROR) << "For " << name_ << ": head_num % query_strategy[2] must be 0, but got " << head_num_
-                      << "(head_num) and " << query_strategy[kInputQueryHiddenDimBSH] << "(query_strategy[2])";
-        return FAILED;
-      }
-      dp_ = query_strategy[kInputQueryBatchDimBSH];
-      mp_ = query_strategy[kInputQueryHiddenDimBSH];
-      break;
-    case FASInputLayoutMode::BNSD:
-      if (!CheckStrategyOnIndex(query_strategy[kInputQueryHiddenDimBNSD], 1, "D-Dimention", "query")) {
-        return FAILED;
-      }
-      dp_ = query_strategy[kInputQueryBatchDimBNSD];
-      mp_ = query_strategy[kInputQueryNDimBNSD];
-      break;
-    case FASInputLayoutMode::BSND:
-      if (!CheckStrategyOnIndex(query_strategy[kInputQueryHiddenDimBSND], 1, "D-Dimention", "query")) {
-        return FAILED;
-      }
-      dp_ = query_strategy[kInputQueryBatchDimBSND];
-      mp_ = query_strategy[kInputQueryNDimBSND];
-      break;
-    default:
-      MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
-      return FAILED;
+  if (CheckQueryStrategy(stra) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": The query strategy check failed.";
+    return FAILED;
   }
 
-  if (optinal_inputs.empty()) {
-    SetOptinalInputs();
+  if (optional_inputs_.empty()) {
+    SetOptionalInputs();
   }
   return SUCCESS;
 }
 
 Status FusedInferAttentionScoreInfo::InferDevMatrixShape() {
-  dev_matrix_shape_ = {dp_, mp_};
-  return SUCCESS;
-}
-
-Status FusedInferAttentionScoreInfo::InferTensorMap() {
-  if (optinal_inputs.empty()) {
-    SetOptinalInputs();
-  }
-  Shape validMap;
   switch (input_layout_) {
     case FASInputLayoutMode::BSH:
-      // (b, h) -> (dp_, mp_) -> (1, 0)
-      validMap = Shape{1, -1, 0};  // query
+      dev_matrix_shape_ = {dp_, sp_, mp_};
+      dev_matrix_batch_dim_ = kDpAxis;
+      dev_matrix_s1_dim_ = 1;
+      dev_matrix_n1_dim_ = 0;
       break;
     case FASInputLayoutMode::BNSD:
-      // (b, n) -> (dp_, mp_) -> (1, 0)  BNSD -> (1 ,0, , )
-      validMap = Shape{1, 0, -1, -1};
+      dev_matrix_shape_ = {dp_, mp_, sp_};
+      dev_matrix_batch_dim_ = kDpAxis;
+      dev_matrix_s1_dim_ = 0;
+      dev_matrix_n1_dim_ = 1;
       break;
     case FASInputLayoutMode::BSND:
-      // (b, n) -> (dp_, mp_) -> (1, 0)  BSND -> (1 , ,0, )
-      validMap = Shape{1, -1, 0, -1};
+      dev_matrix_shape_ = {dp_, sp_, mp_};
+      dev_matrix_batch_dim_ = kDpAxis;
+      dev_matrix_s1_dim_ = 1;
+      dev_matrix_n1_dim_ = 0;
       break;
     default:
       MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
       return FAILED;
   }
-  std::vector<ShapeBasePtr> key_value_tensorist_map_idx;
-  for (size_t i = 0; i < inputs_shape_new_[ops::kFusedInferAttentionScoreInputKeyIndex]->size(); i++) {
-    key_value_tensorist_map_idx.emplace_back(std::make_shared<ShapeValue>(validMap));
+  return SUCCESS;
+}
+
+int64_t LongAddNew(int64_t base, int64_t shift) {
+  int64_t result;
+  if (shift > 0) {
+    if (base > INT_MAX - shift) {
+      result = INT_MAX;
+    } else {
+      result = base + shift;
+    }
+  } else {
+    if (base < INT_MIN - shift) {
+      result = INT_MIN;
+    } else {
+      result = base + shift;
+    }
   }
-  inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeValue>(validMap));                    // query
-  inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeList>(key_value_tensorist_map_idx));  // key
-  inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeList>(key_value_tensorist_map_idx));  // value
-  outputs_tensor_map_new_.emplace_back(std::make_shared<ShapeValue>(validMap));                   // attention_out
-  outputs_tensor_map_new_.emplace_back(std::make_shared<ShapeValue>(Shape{1, 0, -1, -1}));        // softmax_lse
+  return result;
+}
+
+void FusedInferAttentionScoreInfo::InferOptionalTensorMap() {
+  if (is_ifa_) {  // IFA
+    if (atten_mask_rank_ == kRank2) {
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex][0] = dev_matrix_batch_dim_;
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex][1] = dev_matrix_s1_dim_;
+    } else if (atten_mask_rank_ == kRank3) {
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex][0] = dev_matrix_batch_dim_;
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex][2] = dev_matrix_s1_dim_;
+    } else if (atten_mask_rank_ == kRank4) {
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex][0] = dev_matrix_batch_dim_;
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex][3] = dev_matrix_s1_dim_;
+    }
+    if (padding_mask_rank_ == kRank4) {
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex][0] = dev_matrix_batch_dim_;
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex][1] = dev_matrix_n1_dim_;
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex][3] = dev_matrix_s1_dim_;
+    }
+  } else {
+    int32_t pos_s = 0;
+    if (sparse_mode_ == 0) {
+      pos_s = 1;
+    } else {
+      pos_s = -1;
+    }
+    if (atten_mask_rank_ == kRank2) {
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {pos_s, -1};
+      optional_op_strategies_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {0, 0};
+    }
+    if (atten_mask_rank_ == kRank3) {
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {2, pos_s, -1};
+      optional_op_strategies_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {2, 0, 0};
+    }
+    if (atten_mask_rank_ == kRank4) {
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {2, -1, pos_s, -1};
+      optional_op_strategies_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {2, 0, 0, 0};
+    }
+    if (padding_mask_rank_ == kRank2) {
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {pos_s, -1};
+      optional_op_strategies_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {0, 0};
+    }
+    if (padding_mask_rank_ == kRank3) {
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {2, pos_s, -1};
+      optional_op_strategies_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {2, 0, 0};
+    }
+  }
 
   for (auto index = static_cast<size_t>(ops::kFusedInferAttentionScoreInputPseShiftIndex);
-       index < optinal_inputs.size(); index++) {
-    if (optinal_inputs[index]) {
+       index < optional_inputs_.size(); index++) {
+    if (optional_inputs_[index]) {
       if (index == ops::kFusedInferAttentionScoreInputAntiquantScaleIndex ||
           index == ops::kFusedInferAttentionScoreInputAntiquantOffsetIndex) {
         if (input_layout_ == FASInputLayoutMode::BSH) {  // (2, D) D=H/N
@@ -294,9 +373,49 @@ Status FusedInferAttentionScoreInfo::InferTensorMap() {
           continue;
         }
       }
-      (void)inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeValue>(optinal_tensor_map[index]));
+      (void)inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeValue>(optional_tensor_map_[index]));
     }
   }
+}
+
+Status FusedInferAttentionScoreInfo::InferTensorMap() {
+  if (optional_inputs_.empty()) {
+    SetOptionalInputs();
+  }
+  Shape validMap;
+  Shape valid_q_map;
+  switch (input_layout_) {
+    case FASInputLayoutMode::BSH:
+      // (b, s, h) -> (dp_, sp_, mp_) -> (2, 1, 0)
+      validMap = Shape{2, 1, 0};
+      valid_q_map = is_ifa_ ? Shape{2, -1, 0} : validMap;
+      break;
+    case FASInputLayoutMode::BNSD:
+      // (b, n, s) -> (dp_, mp_, sp_) -> (2, 1, 0) BNSD -> (2, 1, 0, )
+      validMap = Shape{2, 1, 0, -1};
+      valid_q_map = is_ifa_ ? Shape{2, 1, -1, -1} : validMap;
+      break;
+    case FASInputLayoutMode::BSND:
+      // (b, s, n) -> (dp_, sp_, mp_) -> (2, 1, 0) BSND -> (2, 1, 0, )
+      validMap = Shape{2, 1, 0, -1};
+      valid_q_map = is_ifa_ ? Shape{2, -1, 0, -1} : validMap;
+      break;
+    default:
+      MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
+      return FAILED;
+  }
+  Shape lse_tensor_map = Shape{dev_matrix_batch_dim_, dev_matrix_n1_dim_, -1, -1};
+  std::vector<ShapeBasePtr> key_value_tensorist_map_idx;
+  for (size_t i = 0; i < inputs_shape_new_[ops::kFusedInferAttentionScoreInputKeyIndex]->size(); i++) {
+    key_value_tensorist_map_idx.emplace_back(std::make_shared<ShapeValue>(validMap));
+  }
+  inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeValue>(valid_q_map));                 // query
+  inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeList>(key_value_tensorist_map_idx));  // key
+  inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeList>(key_value_tensorist_map_idx));  // value
+  outputs_tensor_map_new_.emplace_back(std::make_shared<ShapeValue>(valid_q_map));                // attention_out
+  outputs_tensor_map_new_.emplace_back(std::make_shared<ShapeValue>(lse_tensor_map));             // softmax_lse
+
+  InferOptionalTensorMap();
   return SUCCESS;
 }
 
@@ -331,20 +450,20 @@ Status FusedInferAttentionScoreInfo::InferAsLossDivisor() {
 std::vector<StrategyPtr> FusedInferAttentionScoreInfo::GenerateOpStrategies(int64_t stage_id) { return {}; }
 
 void FusedInferAttentionScoreInfo::ReComputeBatchSplitFlagList() {
-  if (optinal_inputs.empty()) {
-    SetOptinalInputs();
+  if (optional_inputs_.empty()) {
+    SetOptionalInputs();
   }
   split_flag_list_[ops::kFusedInferAttentionScoreInputQueryIndex] = true;
   split_flag_list_[ops::kFusedInferAttentionScoreInputKeyIndex] = true;
   split_flag_list_[ops::kFusedInferAttentionScoreInputValueIndex] = true;
   split_flag_list_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] =
-    (optinal_inputs[ops::kFusedInferAttentionScoreInputAttnMaskIndex] && atten_mask_rank > rank_2);
+    (optional_inputs_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] && atten_mask_rank_ > kRank2);
   split_flag_list_[ops::kFusedInferAttentionScoreInputPseShiftIndex] =
-    (optinal_inputs[ops::kFusedInferAttentionScoreInputPseShiftIndex] && padding_mask_rank > rank_2);
+    (optional_inputs_[ops::kFusedInferAttentionScoreInputPseShiftIndex] && padding_mask_rank_ > kRank2);
   split_flag_list_[ops::kFusedInferAttentionScoreInputActualSeqLengthsIndex] =
-    optinal_inputs[ops::kFusedInferAttentionScoreInputActualSeqLengthsIndex];
+    optional_inputs_[ops::kFusedInferAttentionScoreInputActualSeqLengthsIndex];
   split_flag_list_[ops::kFusedInferAttentionScoreInputActualSeqLengthsKvIndex] =
-    optinal_inputs[ops::kFusedInferAttentionScoreInputActualSeqLengthsKvIndex];
+    optional_inputs_[ops::kFusedInferAttentionScoreInputActualSeqLengthsKvIndex];
   split_flag_list_[ops::kFusedInferAttentionScoreInputDequantScale1Index] = false;
   split_flag_list_[ops::kFusedInferAttentionScoreInputQuantScale1Index] = false;
   split_flag_list_[ops::kFusedInferAttentionScoreInputDequantScale2Index] = false;
@@ -377,9 +496,146 @@ void FusedInferAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
     auto clone_prim = prim->Clone();
     SetValueInputToCNode<int64_t>(cnode, ops::kFusedInferAttentionScoreInputNumHeadsIndex + 1, head_num_ / mp_);
     SetValueInputToCNode<int64_t>(cnode, ops::kFusedInferAttentionScoreInputNumKeyValueHeadsIndex + 1,
-                                  kv_head_num / mp_);
+                                  kv_head_num_ / mp_);
     cnode->set_input(0, NewValueNode(clone_prim)->cast<AnfNodePtr>());
   }
+}
+
+void FusedInferAttentionScoreInfo::SplitKVSequenceGraph(const Group &group, GenerateGraph *gen_g,
+                                                        AnfNodePtr *fused_attention_score, AnfNodePtr *output) {
+  *fused_attention_score = gen_g->PushBack({gen_g->NewOpInst(FUSED_INFER_ATTENTION_SCORE),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node(),
+                                            gen_g->virtual_input_node()});
+  auto attention_out = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *fused_attention_score,
+                                        CreatInt64Imm(ops::kFusedInferAttentionScoreOutputAttentionOutIndex)});
+  auto softmax_max_lse = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *fused_attention_score,
+                                          CreatInt64Imm(ops::kFusedInferAttentionScoreOutputSoftmaxLseIndex)});
+
+  auto dtype = gen_g->PushBack({gen_g->NewOpInst(DTYPE), attention_out});
+  auto dtype_id =
+    gen_g->PushBack({gen_g->NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype});
+  auto cast_lse = gen_g->PushBack({gen_g->NewOpInst(CAST), softmax_max_lse, dtype_id});
+
+  OperatorAttrs all_gather_attrs = {std::make_pair(GROUP, MakeValue(group.name()))};
+  AnfNodePtr all_gather = gen_g->PushBack({gen_g->NewOpInst(ALL_GATHER, all_gather_attrs), cast_lse});
+
+  auto max = gen_g->PushBack({gen_g->NewOpInst(MAX), all_gather});
+
+  auto sub = gen_g->PushBack({gen_g->NewOpInst(SUB), cast_lse, max});
+
+  auto exp = gen_g->PushBack({gen_g->NewOpInst(EXP), sub});
+
+  Attr attr_op = std::make_pair(OP, MakeValue(REDUCE_OP_SUM));
+  Attr attr_group = std::make_pair(GROUP, MakeValue(group.name()));
+  OperatorAttrs attrs = {attr_op, attr_group};
+  auto reduce_op_lse_sum = gen_g->PushBack({gen_g->NewOpInst(ALL_REDUCE, attrs), exp});
+
+  auto log = gen_g->PushBack({gen_g->NewOpInst(LOG), reduce_op_lse_sum});
+
+  auto add = gen_g->PushBack({gen_g->NewOpInst(ADD), log, max});
+
+  auto sub_lse = gen_g->PushBack({gen_g->NewOpInst(SUB), cast_lse, add});
+
+  auto exp_lse = gen_g->PushBack({gen_g->NewOpInst(EXP), sub_lse});
+
+  if (input_layout_ == FASInputLayoutMode::BSH) {
+    auto query_input = inputs_shape_new_[ops::kFusedInferAttentionScoreInputQueryIndex]->GetAllElements()[0];
+    auto batch_size = query_input[kInputQueryBatchDimBSH];
+    auto hidden_size = query_input[kInputQueryHiddenDimBSH];
+    auto hidden_dim = hidden_size / head_num_;
+    std::vector<int64_t> make_shape = {batch_size / dp_, head_num_ / mp_, 1, hidden_dim};
+    attention_out = gen_g->PushBack({gen_g->NewOpInst(RESHAPE), attention_out, NewValueNode(MakeValue(make_shape))});
+  }
+
+  auto mul = gen_g->PushBack({gen_g->NewOpInst(MUL), attention_out, exp_lse});
+
+  // Then aggregate all segments with AllReduce.
+  auto reduce_op = gen_g->PushBack({gen_g->NewOpInst(ALL_REDUCE, attrs), mul});
+
+  *output = gen_g->PushBack({NewValueNode(prim::kPrimMakeTuple), reduce_op, exp_lse});
+}
+
+Status FusedInferAttentionScoreInfo::ComputeReplaceGraphForSplitKVSeq(const CNodePtr &cnode) {
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << "GenerateGraph Init failed";
+    return FAILED;
+  }
+
+  CheckGlobalDeviceManager();
+  int64_t rank = g_device_manager->global_rank();
+  DeviceMatrix dev_matrix(rank, stage_device_list_, dev_matrix_shape_);
+  RankList group_devices;
+  int64_t seq_dim = SizeToLong(dev_matrix_shape_.size()) - dev_matrix_s1_dim_ - 1;
+  if (dev_matrix.GetDevicesAlongDim(seq_dim, &group_devices) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << " get group devices along dim " << seq_dim << " failed.";
+    return FAILED;
+  }
+  Group group;
+  if (g_device_manager->CreateGroup(group_devices, &group) != SUCCESS) {
+    MS_LOG(ERROR) << "Create communication group for " << group_devices << " failed";
+    return FAILED;
+  }
+  MS_LOG(INFO) << name_ << ": The rank is " << g_device_manager->rank_index_in_stage();
+
+  AnfNodePtr fused_attention_score, output_maketuple;
+  SplitKVSequenceGraph(group, &gen_g, &fused_attention_score, &output_maketuple);
+
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {
+    std::make_pair(fused_attention_score, kIndex1),  std::make_pair(fused_attention_score, kIndex2),
+    std::make_pair(fused_attention_score, kIndex3),  std::make_pair(fused_attention_score, kIndex4),
+    std::make_pair(fused_attention_score, kIndex5),  std::make_pair(fused_attention_score, kIndex6),
+    std::make_pair(fused_attention_score, kIndex7),  std::make_pair(fused_attention_score, kIndex8),
+    std::make_pair(fused_attention_score, kIndex9),  std::make_pair(fused_attention_score, kIndex10),
+    std::make_pair(fused_attention_score, kIndex11), std::make_pair(fused_attention_score, kIndex12),
+    std::make_pair(fused_attention_score, kIndex13), std::make_pair(fused_attention_score, kIndex14),
+    std::make_pair(fused_attention_score, kIndex15), std::make_pair(fused_attention_score, kIndex16),
+    std::make_pair(fused_attention_score, kIndex17), std::make_pair(fused_attention_score, kIndex18),
+    std::make_pair(fused_attention_score, kIndex19), std::make_pair(fused_attention_score, kIndex20),
+    std::make_pair(fused_attention_score, kIndex21), std::make_pair(fused_attention_score, kIndex22),
+    std::make_pair(fused_attention_score, kIndex23), std::make_pair(fused_attention_score, kIndex24),
+    std::make_pair(fused_attention_score, kIndex25), std::make_pair(fused_attention_score, kIndex26),
+    std::make_pair(fused_attention_score, kIndex27), std::make_pair(fused_attention_score, kIndex28)};
+
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, output_maketuple));
+
+  return SUCCESS;
+}
+
+ReplaceGraphPtr FusedInferAttentionScoreInfo::replace_graph(const CNodePtr &cnode) {
+  if (softmax_lse_flag_ && sp_ != 1 && !IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+    if (ComputeReplaceGraphForSplitKVSeq(cnode) != SUCCESS) {
+      MS_LOG(EXCEPTION) << name_ << ": FusedInferFlashAttentionScore sequence parallel get replace graph failed";
+    }
+  }
+  return replace_graph_;
 }
 
 REGISTER(FusedInferAttentionScoreInfo);
