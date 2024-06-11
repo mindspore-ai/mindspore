@@ -87,6 +87,7 @@ def vm_impl_logical_not(self):
 
     return vm_impl
 
+
 @vm_impl_getters.register(P.MatMul)
 def vm_impl_mat_mul(self):
     """Generate vm_impl function for MatMul."""
@@ -249,6 +250,7 @@ def vm_impl_reduce_mean(self):
 
     return vm_impl
 
+
 @vm_impl_getters.register(P.ReduceMax)
 def vm_impl_reduce_max(self):
     """Generate vm_impl function for ReduceMean."""
@@ -261,6 +263,7 @@ def vm_impl_reduce_max(self):
         return Tensor(out)
 
     return vm_impl
+
 
 @vm_impl_getters.register(P.Equal)
 def vm_impl_equal(self):
