@@ -65,6 +65,7 @@ Reduction Functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.all
     mindspore.mint.any
     mindspore.mint.argmax
     mindspore.mint.mean
