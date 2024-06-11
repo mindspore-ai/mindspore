@@ -57,6 +57,14 @@ class FFTNBaseCpuKernelMod : public NativeCpuKernelMod {
   bool LaunchKernelC2C(const std::vector<kernel::KernelTensor *> &inputs,
                        const std::vector<kernel::KernelTensor *> &outputs);
 
+  template <typename T_in, typename T_out>
+  bool LaunchKernelR2C(const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs);
+
+  template <typename T_in, typename T_out>
+  bool LaunchKernelC2R(const std::vector<kernel::KernelTensor *> &inputs,
+                       const std::vector<kernel::KernelTensor *> &outputs);
+
   using FFTNBaseFunc = std::function<bool(FFTNBaseCpuKernelMod *, const std::vector<KernelTensor *> &,
                                           const std::vector<KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, FFTNBaseFunc>> func_list_;

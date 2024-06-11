@@ -1,0 +1,54 @@
+irfft2:
+  description: |
+    Calculates the inverse of `rfft2()`.
+    
+    Note:
+        - `irfft2` is currently only used in `mindscience` scientific computing scenarios and
+          dose not support other usage scenarios.
+        - `irfft2` is not supported on Windows platform yet.
+    
+    Args:
+        input (Tensor): The input tensor.
+            Supported dtypes:
+    
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
+    
+        s (tuple[int], optional): Length of the transformed `dim` of the result.
+            If given, the size of the `dim[i]` axis will be zero-padded or truncated to `s[i]` before calculating `irfft2`.
+            Default: ``None`` , the dim[-1] of the `input` will be zero-padded to :math:`2*(input.shape[dim[-1]]-1)`.
+        dim (tuple[int], optional): The dimension along which to take the one dimensional `irfft2`.
+            Default: ``(-2, -1)`` , which means transform the last two dimension of `input`.
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
+            Three modes are defined as, where :math: `n = prod(s)`
+    
+            - ``"backward"`` (normalize by :math:`1/n`).
+            - ``"forward"`` (no normalization).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+    
+    Returns:
+        Tensor, The result of `irfft2()` function, result.shape[dim[i]] is s[i].
+        When the input is int16, int32, int64, float16, float32, complex64, the return value type is float32.
+        When the input is float64 or complex128, the return value type is float64.
+    
+    Raises:
+        TypeError: If the `input` type is not Tensor.
+        TypeError: If the `input` data type is not one of: int32, int64, float32, float64, complex64, complex128.
+        TypeError: If the type/dtype of `s` and `dim` is not int.
+        ValueError: If `dim` is not in the range of "[ `-input.ndim` , `input.ndim` )".
+        ValueError: If `dim` has duplicate values.
+        ValueError: If `s` is less than 1.
+        ValueError: If `norm` is none of ``"backward"`` , ``"forward"`` or ``"ortho"`` .
+    
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+    
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> input = ops.ones((4, 4))
+        >>> ops.irfft2(input, s=(4, 4), dim=(0, 1), norm="backward")
+        Tensor(shape=[4, 4], dtype=Float32, value=
+        [[ 1.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+         [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+         [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+         [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00]])
