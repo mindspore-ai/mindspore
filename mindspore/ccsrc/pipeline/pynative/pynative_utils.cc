@@ -45,6 +45,7 @@
 #include "ops/auto_generate/gen_ops_primitive.h"
 #include "include/common/pynative/abstract_converter.h"
 #include "kernel/pyboost/pyboost_utils.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 
 namespace mindspore {
 namespace pynative {
@@ -290,6 +291,20 @@ void UnsetValueAbstractCache(const ValuePtr &value) {
       UnsetValueAbstractCache(element);
     }
   }
+}
+
+bool NeedToContiguous(const TensorStorageInfoPtr &storage_info, const device::DeviceAddressPtr &device_address) {
+  MS_EXCEPTION_IF_NULL(storage_info);
+  MS_EXCEPTION_IF_NULL(device_address);
+  if (!storage_info->is_contiguous || storage_info->storage_offset > 0) {
+    // Tensor is not contiguous, or offset is not zero. Need to contiguous or copy.
+    return true;
+  }
+  if (!trans::FormatHelper::GetInstance().IsBaseFormatType(device_address->GetFormatEnum())) {
+    // Special format need to contiguous
+    return true;
+  }
+  return false;
 }
 }  // namespace
 
@@ -708,13 +723,8 @@ ValuePtr Common::ConvertToContiguousValue(const ValuePtr &v, bool requires_grad)
   if (v->isa<tensor::BaseTensor>()) {
     auto tensor = v->cast<tensor::BaseTensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
-    if (tensor->storage_info() == nullptr) {
-      return tensor;
-    }
 
     auto contiguous_tensor = ConvertToContiguousTensor(tensor, requires_grad);
-    MS_LOG(DEBUG) << "ConvertToContiguousValue, old tensor id:" << tensor->id()
-                  << ", new tensor id:" << contiguous_tensor->id();
     return contiguous_tensor;
   }
   if (utils::isa<ValueSequence>(v)) {
@@ -741,14 +751,24 @@ ValuePtr Common::ConvertToContiguousValue(const ValuePtr &v, bool requires_grad)
 
 tensor::BaseTensorPtr Common::ConvertToContiguousTensor(const tensor::BaseTensorPtr &tensor, bool requires_grad) {
   MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->storage_info() == nullptr) {
+    return tensor;
+  }
 
   // Tensor with storage info, need covert to contiguous in no-view op.
-  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  auto device_address = std::static_pointer_cast<device::DeviceAddress>(tensor->device_address());
   MS_EXCEPTION_IF_NULL(device_address);
   const auto &device_target = device_address->device_name();
 
-  return GetContiguousTensor(tensor, device_target, requires_grad);
-}
+  if (!NeedToContiguous(tensor->storage_info(), device_address)) {
+    return tensor;
+  }
+
+  const auto &contiguous_tensor = GetContiguousTensor(tensor, device_target, requires_grad);
+  MS_LOG(DEBUG) << "ConvertToContiguousValue, old tensor id:" << tensor->id()
+                << ", new tensor id:" << contiguous_tensor->id();
+  return contiguous_tensor;
+}  // namespace PyNativeAlgo
 
 tensor::BaseTensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous, bool requires_grad) {
   const auto &tensor = StubNodeToTensor(v);
@@ -757,13 +777,16 @@ tensor::BaseTensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, bool ne
     return tensor;
   }
 
-  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  auto device_address = std::static_pointer_cast<device::DeviceAddress>(tensor->device_address());
   MS_EXCEPTION_IF_NULL(device_address);
   const auto &device_target = device_address->device_name();
   if (device_target == kAscendDevice) {
     return tensor;
   }
 
+  if (!NeedToContiguous(tensor->storage_info(), device_address)) {
+    return tensor;
+  }
   return GetContiguousTensor(tensor, device_target, requires_grad);
 }
 

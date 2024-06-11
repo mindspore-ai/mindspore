@@ -559,6 +559,7 @@ class BACKEND_EXPORT FormatHelper {
   static FormatHelper &GetInstance() noexcept;
   const std::string GetBaseFormat(const std::string &format);
   bool IsBaseFormatType(const std::string &format);
+  bool IsBaseFormatType(mindspore::Format format);
   bool IsPadded(const std::string &format);
   void Clear();
 
@@ -568,6 +569,7 @@ class BACKEND_EXPORT FormatHelper {
   void InitInfo();
 
   std::unordered_map<std::string, FormatInfo> info;
+  std::set<mindspore::Format> base_format_set_;
 };
 }  // namespace trans
 }  // namespace mindspore

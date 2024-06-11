@@ -19,14 +19,24 @@
 #include <vector>
 #include <memory>
 #include "kernel/pyboost/auto_generate/contiguous.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 
 namespace mindspore::runtime {
 namespace {
 tensor::BaseTensorPtr GetContiguousTensor(OpRunnerInfo *op_runner_info, const tensor::BaseTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
-  auto device_address = tensor->device_address();
-  if (device_address == nullptr || device_address->GetTensorStorageInfo() == nullptr) {
+  const auto &storage_info = tensor->storage_info();
+  if (storage_info == nullptr) {
     return tensor;
+  }
+
+  if (storage_info->is_contiguous && storage_info->storage_offset == 0) {
+    // Tensor is not contiguous, or offset is not zero. Need to contiguous or copy.
+    auto new_device_address = std::static_pointer_cast<device::DeviceAddress>(tensor->device_address());
+    if (trans::FormatHelper::GetInstance().IsBaseFormatType(new_device_address->GetFormatEnum())) {
+      // Special format need to contiguous
+      return tensor;
+    }
   }
 
   auto op = CREATE_PYBOOST_OP(Contiguous, op_runner_info->device_target);

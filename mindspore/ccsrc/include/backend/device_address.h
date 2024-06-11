@@ -227,6 +227,7 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   std::string format() const { return kernel::GetFormatFromEnumToStr(address_common_->format_); }
   void set_format(const std::string &format) { address_common_->format_ = kernel::GetFormatFromStrToEnum(format); }
+  Format GetFormatEnum() const { return address_common_->format_; }
   const std::string &padding_type() const { return padding_type_; }
   void set_padding_type(const std::string &padding_type) { padding_type_ = padding_type; }
   TypeId type_id() const { return address_common_->dtype_id_; }
