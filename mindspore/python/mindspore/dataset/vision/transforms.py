@@ -660,7 +660,7 @@ class AdjustSharpness(ImageTensorOperation):
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -778,7 +778,7 @@ class Affine(ImageTensorOperation):
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -982,7 +982,7 @@ class AutoContrast(ImageTensorOperation, PyTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -1294,7 +1294,7 @@ class ConvertColor(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -1411,7 +1411,7 @@ class Crop(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -1881,7 +1881,7 @@ class Equalize(ImageTensorOperation, PyTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -2008,7 +2008,7 @@ class Erase(ImageTensorOperation):
         RuntimeError: If shape of the input image is not <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -2223,7 +2223,7 @@ class GaussianBlur(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -2419,7 +2419,7 @@ class HorizontalFlip(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -2631,7 +2631,7 @@ class Invert(ImageTensorOperation, PyTensorOperation):
         RuntimeError: If the input image is not in shape of <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -3204,7 +3204,7 @@ class Pad(ImageTensorOperation, PyTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -3408,7 +3408,7 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -6149,7 +6149,7 @@ class ResizedCrop(ImageTensorOperation):
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -6415,7 +6415,7 @@ class Rotate(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -6612,7 +6612,7 @@ class Solarize(ImageTensorOperation):
         ValueError: If `threshold` is not in range of [0, 255].
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -7194,7 +7194,7 @@ class VerticalFlip(ImageTensorOperation):
         RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend``
 
     Examples:
         >>> import numpy as np
