@@ -139,6 +139,11 @@ const char *GetOpPythonPath(const char *op_name) {
     return NN_OPS_PATH;
   }
 
+  static const py::module comm_mod = py::module::import(COMM_OP_PATH);
+  if (py::hasattr(comm_mod, op_name)) {
+    return COMM_OP_PATH;
+  }
+
   static const py::module functional_mod = py::module::import(FUNCTIONAL_OP_PATH);
   if (!py::hasattr(functional_mod, op_name)) {
     MS_LOG(EXCEPTION) << OP_PATH << " and " << INNER_OP_PATH << " and " << GRAD_OP_PATH << " and " << NN_OPS_PATH
@@ -258,12 +263,18 @@ AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr) {
 }
 
 static mindspore::HashMap<int64_t, AnfNodePtr> int_tensor_map = {};
-AnfNodePtr CreateInt32Tensor(int64_t value) {
+AnfNodePtr CreateInt32Tensor(int64_t value, bool int64_type) {
   auto it = int_tensor_map.find(value);
   if (it != int_tensor_map.end()) {
     return it->second;
   }
-  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<tensor::Tensor>(value, kInt32);
+  mindspore::tensor::TensorPtr tensor_ptr;
+  if (int64_type) {
+    tensor_ptr = std::make_shared<tensor::Tensor>(value, kInt64);
+  } else {
+    tensor_ptr = std::make_shared<tensor::Tensor>(value, kInt32);
+  }
+
   ValuePtr value_ptr = MakeValue(tensor_ptr);
   auto anf_node_ptr = ValuePtrToAnfNodePtr(value_ptr);
   int_tensor_map[value] = anf_node_ptr;
@@ -359,6 +370,31 @@ void InsertVirtualPipelineEndNode(const CNodePtr &cnode, const FuncGraphManagerP
     auto seg = ParallelContext::GetInstance()->pipeline_segment_split_num();
     virtual_end->AddPrimalAttr(SEGMENT, MakeValue(seg - 1));
   }
+}
+
+CNodePtr CreateVirtualConverterBeginNode(const CNodePtr &input_cnode, size_t output_nums) {
+  auto graph = input_cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  Attr output_nums_attr = {"output_nums", MakeValue(output_nums)};
+  OperatorAttrs attrs_ = {output_nums_attr};
+  auto op = CreateOpInstance(attrs_, "_VirtualConverterBegin", "virtual_converter_begin");
+  auto value_node = NewValueNode(op);
+  auto virtual_begin = graph->NewCNode({value_node, input_cnode});
+  return virtual_begin;
+}
+
+CNodePtr CreateVirtualConverterEndNode(const FuncGraphPtr &graph, const std::vector<CNodePtr> &input_cnodes) {
+  if (input_cnodes.empty()) {
+    MS_LOG(EXCEPTION) << "input cnodes for _VirtualConverterEnd is empty.";
+  }
+  Attr input_nums_attr = {"input_nums", MakeValue(input_cnodes.size())};
+  OperatorAttrs attrs_ = {input_nums_attr};
+  auto op = CreateOpInstance(attrs_, "_VirtualConverterEnd", "virtual_converter_End");
+  auto value_node = NewValueNode(op);
+  std::vector<AnfNodePtr> virtual_end_input = {value_node};
+  std::copy(input_cnodes.begin(), input_cnodes.end(), std::back_inserter(virtual_end_input));
+  auto virtual_end = graph->NewCNode(virtual_end_input);
+  return virtual_end;
 }
 
 Status GenerateGraph::Init(const CNodePtr &cnode) {

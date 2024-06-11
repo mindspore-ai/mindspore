@@ -2385,7 +2385,7 @@ StrategyPtr ExtractStrategy(const ValuePtr &stra) {
 }
 
 Status GetLayoutFromAttrValue(const ValuePtr &layout_item, std::vector<int64_t> *device_matrix_vector,
-                              std::vector<std::vector<int64_t>> *tensor_map_vector) {
+                              std::vector<std::vector<int64_t>> *tensor_map_vector, bool *interleaved_parallel) {
   auto layout_dict_value = layout_item->cast<ValueDictionaryPtr>();
   if (!layout_dict_value) {
     MS_LOG(ERROR) << "The layout item configured for node is unreasonable";
@@ -2394,6 +2394,7 @@ Status GetLayoutFromAttrValue(const ValuePtr &layout_item, std::vector<int64_t> 
   auto layout_dict = layout_dict_value->value();
   ValuePtr device_matrix_value = nullptr;
   ValuePtr tensor_map_value = nullptr;
+  ValuePtr interleaved_parallel_value = nullptr;
   for (const auto &value_pair : layout_dict) {
     if ((*value_pair.first) == (*MakeValue<std::string>(DEVICE_MATRIX))) {
       device_matrix_value = value_pair.second;
@@ -2401,12 +2402,16 @@ Status GetLayoutFromAttrValue(const ValuePtr &layout_item, std::vector<int64_t> 
     if ((*value_pair.first) == (*MakeValue<std::string>(TENSOR_MAP))) {
       tensor_map_value = value_pair.second;
     }
+    if ((*value_pair.first) == (*MakeValue<std::string>(INTERLEAVED_PARALLEL))) {
+      interleaved_parallel_value = value_pair.second;
+    }
   }
-  if (!device_matrix_value || !tensor_map_value) {
+  if (!device_matrix_value || !tensor_map_value || !interleaved_parallel_value) {
     MS_LOG(ERROR) << "The layout item configured for node is unreasonable";
     return FAILED;
   }
   *device_matrix_vector = GetValue<std::vector<int64_t>>(device_matrix_value);
+  *interleaved_parallel = GetValue<bool>(interleaved_parallel_value);
   auto tensor_map_value_tuple = tensor_map_value->cast<ValueTuplePtr>();
   std::vector<ValuePtr> tensor_map_value_tuple_vector = tensor_map_value_tuple->value();
   for (const auto &tensor_map_item : tensor_map_value_tuple_vector) {
@@ -2442,11 +2447,14 @@ Status ExtractUserConfigLayout(const mindspore::HashMap<std::string, ValuePtr> &
       auto layout_item = layout_value_vector[i];
       std::vector<int64_t> device_matrix_vector;
       std::vector<std::vector<int64_t>> tensor_map_vector;
-      if (GetLayoutFromAttrValue(layout_item, &device_matrix_vector, &tensor_map_vector) != SUCCESS) {
+      bool interleaved_parallel;
+      if (GetLayoutFromAttrValue(layout_item, &device_matrix_vector, &tensor_map_vector, &interleaved_parallel) !=
+          SUCCESS) {
         return FAILED;
       }
       auto in_layout = std::make_shared<TensorLayout>();
-      if (in_layout->InitFromExtendVector(device_matrix_vector, tensor_map_vector, inputs_shape[i]) != SUCCESS) {
+      if (in_layout->InitFromExtendVector(device_matrix_vector, tensor_map_vector, inputs_shape[i],
+                                          interleaved_parallel) != SUCCESS) {
         MS_LOG(ERROR) << "The in_layout configured incorrect, device_matrix:" << device_matrix_vector
                       << ", tensor_map:" << tensor_map_vector;
         return FAILED;
@@ -2468,11 +2476,14 @@ Status ExtractUserConfigLayout(const mindspore::HashMap<std::string, ValuePtr> &
       auto layout_item = layout_value_vector[i];
       std::vector<int64_t> device_matrix_vector;
       std::vector<std::vector<int64_t>> tensor_map_vector;
-      if (GetLayoutFromAttrValue(layout_item, &device_matrix_vector, &tensor_map_vector) != SUCCESS) {
+      bool interleaved_parallel;
+      if (GetLayoutFromAttrValue(layout_item, &device_matrix_vector, &tensor_map_vector, &interleaved_parallel) !=
+          SUCCESS) {
         return FAILED;
       }
       auto out_layout = std::make_shared<TensorLayout>();
-      if (out_layout->InitFromExtendVector(device_matrix_vector, tensor_map_vector, outputs_shape[i]) != SUCCESS) {
+      if (out_layout->InitFromExtendVector(device_matrix_vector, tensor_map_vector, outputs_shape[i],
+                                           interleaved_parallel) != SUCCESS) {
         MS_LOG(ERROR) << "The out_layout configured incorrect, device_matrix:" << device_matrix_vector
                       << ", tensor_map:" << tensor_map_vector;
         return FAILED;
@@ -2840,6 +2851,390 @@ Shape mirror_group_list(const TensorLayoutPtr &layout) {
     MS_LOG(EXCEPTION) << "For layout:" << layout->ToString() << ", infer mirror failed";
   }
   return group_devices;
+}
+
+void ChangeAllGatherGroup(const CNodePtr &ag_cnode, const RankList &new_group_ranks) {
+  Group new_group;
+  if (g_device_manager->CreateGroup(new_group_ranks, &new_group) != SUCCESS) {
+    MS_LOG(EXCEPTION) << ": Create communication group failed, the rank_list is: " << new_group_ranks;
+  }
+  auto ag_prim = GetCNodePrimitive(ag_cnode);
+  ag_prim->AddAttr(GROUP, MakeValue(new_group.name()));
+  ag_prim->AddAttr(GROUP_RANKS, MakeValue(g_device_manager->FindRankListNameByHashName(new_group.name())));
+  ag_prim->AddAttr(RANK_SIZE, MakeValue<int64_t>(new_group_ranks.size()));
+}
+
+std::vector<CNodePtr> InterleavedReplacedConcatNodes(const std::vector<CNodePtr> &ag_vector) {
+  std::vector<CNodePtr> replace_nodes;
+  for (const auto &ag : ag_vector) {
+    auto ag_next_nodes = GetOutputNodesWithFilter(ag, [&](const AnfNodePtr &anode) {
+      return IsPrimitiveCNode(anode, prim::kPrimSplit) || IsPrimitiveCNode(anode, prim::kPrimTupleGetItem) ||
+             IsPrimitiveCNode(anode, prim::kPrimMakeTuple);
+    });
+    std::set<AnfNodePtr> next_nodes_set;
+    std::transform(ag_next_nodes.begin(), ag_next_nodes.end(), std::inserter(next_nodes_set, next_nodes_set.begin()),
+                   [](auto pair) { return pair.first; });
+    if (!(next_nodes_set.size() == kSizeOne && IsPrimitiveCNode(ag_next_nodes.front().first, prim::kPrimConcat))) {
+      continue;
+    }
+    auto concat_cnode = ag_next_nodes.front().first->cast<CNodePtr>();
+    auto concat_prim = GetCNodePrimitive(concat_cnode);
+    if (concat_prim->instance_name().find(REDISTRIBUTION_OP) != std::string::npos) {
+      replace_nodes.push_back(concat_cnode);
+    }
+  }
+  return replace_nodes;
+}
+
+std::vector<std::vector<CNodePtr>> CreateInterleavedNeedReplaceOpLists(const CNodePtr &virtual_converter_end,
+                                                                       const PrimitivePtr &r_prim) {
+  std::vector<std::vector<CNodePtr>> need_replace_op_lists;
+  for (size_t j = 1; j < virtual_converter_end->size(); ++j) {
+    auto current_node = virtual_converter_end->input(j)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(current_node);
+    std::vector<CNodePtr> need_replace_op_list;
+    while (!IsPrimitiveCNode(current_node, prim::kPrimVirtualConverterBegin)) {
+      if (IsPrimitiveCNode(current_node, r_prim)) {
+        need_replace_op_list.push_back(current_node);
+      }
+      current_node = current_node->input(kIndex1)->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(current_node);
+    }
+    need_replace_op_lists.push_back(need_replace_op_list);
+  }
+  return need_replace_op_lists;
+}
+
+CNodePtr ReplaceInterleavedAllGatherToConcat(const FuncGraphPtr &func_graph, const std::vector<CNodePtr> &ag_vector,
+                                             const std::vector<std::vector<int64_t>> &new_group_ranks_vector,
+                                             size_t independent_size) {
+  std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple->Clone())};
+  std::transform(ag_vector.begin(), ag_vector.end(), std::back_inserter(make_tuple_inputs),
+                 [&](auto node) { return independent_size == 1 ? node->input(kIndex1) : node; });
+  auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
+  auto replace_nodes = InterleavedReplacedConcatNodes(ag_vector);
+  bool replace_concat = (!replace_nodes.empty() && independent_size == 1);
+  AnfNodePtr axis = NewValueNode(MakeValue<int64_t>(0));
+  if (replace_concat) {
+    axis = replace_nodes.front()->input(kIndex2);
+  }
+  std::vector<AnfNodePtr> concat_inputs = {NewValueNode(prim::kPrimConcat->Clone()), make_tuple, axis};
+  auto concat = func_graph->NewCNode(concat_inputs);
+  concat->AddAttr(INTERLEAVED_PARALLEL, MakeValue(true));
+  auto manager = func_graph->manager();
+
+  for (size_t i = 0; i < ag_vector.size(); ++i) {
+    auto ag = ag_vector[i];
+    if (independent_size != 1) {
+      // set allgather attrs
+      ChangeAllGatherGroup(ag, new_group_ranks_vector[i]);
+    }
+    if (!replace_concat) {
+      (void)manager->Replace(ag, concat);
+    }
+  }
+  if (!replace_concat) {
+    return concat;
+  }
+  for (size_t i = 0; i < replace_nodes.size(); ++i) {
+    (void)manager->Replace(replace_nodes[i], concat);
+  }
+  return concat;
+}
+
+void MergeOpBeforeInterleaveSlice(const FuncGraphPtr &func_graph, const CNodePtr &virtual_converter_end) {
+  std::vector<std::vector<CNodePtr>> need_replace_op_lists =
+    CreateInterleavedNeedReplaceOpLists(virtual_converter_end, prim::kPrimStridedSlice);
+  auto manager = func_graph->manager();
+  if (need_replace_op_lists.empty()) {
+    return;
+  }
+  auto col_size = need_replace_op_lists.front().size();
+  for (size_t i = 0; i < need_replace_op_lists.size(); ++i) {
+    if (need_replace_op_lists[i].size() != col_size) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Slice redistribution infer failed.";
+    }
+  }
+  for (size_t col = 0; col < col_size; ++col) {
+    std::set<std::vector<std::vector<int64_t>>> slice_value_list_set;
+    for (size_t row = 0; row < need_replace_op_lists.size(); ++row) {
+      auto slice_cnode = need_replace_op_lists[row][col];
+      std::vector<std::vector<int64_t>> slice_value_list;
+      for (size_t i = 2; i < kSizeFive; ++i) {
+        ValuePtr slice_value = GetValueNode(slice_cnode->input(i));
+        MS_EXCEPTION_IF_NULL(slice_value);
+        auto value_vector = GetValue<std::vector<int64_t>>(slice_value);
+        slice_value_list.push_back(value_vector);
+      }
+      slice_value_list_set.insert(slice_value_list);
+    }
+    if (slice_value_list_set.size() != need_replace_op_lists.size()) {
+      continue;
+    }
+    // merge nodes before multi slice
+    auto slice_input = need_replace_op_lists[kIndex0][col]->input(kIndex1);
+    need_replace_op_lists[kIndex0][col]->AddAttr(INTERLEAVED_PARALLEL, MakeValue(true));
+    for (size_t row = 1; row < need_replace_op_lists.size(); ++row) {
+      auto slice_cnode = need_replace_op_lists[row][col];
+      slice_cnode->AddAttr(INTERLEAVED_PARALLEL, MakeValue(true));
+      (void)manager->SetEdge(slice_cnode, kIndex1, slice_input);
+    }
+  }
+}
+
+void ConvertInterleaveAllGatherToConcat(const FuncGraphPtr &func_graph, const CNodePtr &virtual_converter_end,
+                                        const std::vector<std::vector<std::vector<int64_t>>> &ag_group_ranks_vectors) {
+  // Change communication rank_list && Create communication group
+  // Replace AllConcat to Concat
+  std::vector<std::vector<CNodePtr>> need_replace_op_lists =
+    CreateInterleavedNeedReplaceOpLists(virtual_converter_end, prim::kPrimAllGather);
+  MergeOpBeforeInterleaveSlice(func_graph, virtual_converter_end);
+  if (need_replace_op_lists.size() != ag_group_ranks_vectors.size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "AllGather redistribution infer failed.";
+  }
+  if (need_replace_op_lists.empty()) {
+    return;
+  }
+  auto col_size = need_replace_op_lists.front().size();
+  for (size_t i = 0; i < need_replace_op_lists.size(); ++i) {
+    if (need_replace_op_lists[i].size() != col_size || ag_group_ranks_vectors[i].size() != col_size) {
+      MS_LOG(INTERNAL_EXCEPTION) << "AllGather redistribution infer failed.";
+    }
+  }
+  auto interleaved_num = ParallelContext::GetInstance()->fine_grained_micro_interleaved_size();
+  for (size_t col = 0; col < col_size; ++col) {
+    std::vector<std::vector<int64_t>> new_group_ranks_vector;
+    std::vector<CNodePtr> ag_vector;
+    size_t independent_size = 0;
+    for (size_t row = 0; row < need_replace_op_lists.size(); ++row) {
+      auto group_ranks = ag_group_ranks_vectors[row][col];
+      std::vector<int64_t> new_group_ranks;
+      std::set<int64_t> new_group_ranks_set;
+      for (const auto &g_rank : group_ranks) {
+        new_group_ranks_set.insert(int64_t(g_rank / interleaved_num));
+        new_group_ranks.push_back(int64_t(g_rank / interleaved_num));
+      }
+      if (new_group_ranks_set.size() == new_group_ranks.size()) {
+        // set allgather attrs
+        ChangeAllGatherGroup(need_replace_op_lists[row][col], new_group_ranks);
+        continue;
+      }
+      std::vector<int64_t> new_group_ranks_no_repeat;
+      std::copy(new_group_ranks_set.begin(), new_group_ranks_set.end(), std::back_inserter(new_group_ranks_no_repeat));
+      std::sort(new_group_ranks_no_repeat.begin(), new_group_ranks_no_repeat.end());
+      new_group_ranks_vector.push_back(new_group_ranks_no_repeat);
+      if (independent_size > 0 && new_group_ranks_no_repeat.size() != independent_size) {
+        MS_LOG(INTERNAL_EXCEPTION) << "The concat group in micro interleaved is wrong!";
+      }
+      independent_size = new_group_ranks_no_repeat.size();
+      ag_vector.push_back(need_replace_op_lists[row][col]);
+    }
+    if (new_group_ranks_vector.empty()) {
+      continue;
+    }
+
+    // Check whether all branch needing be replace
+    if (new_group_ranks_vector.size() < need_replace_op_lists.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The concat group in micro interleaved is wrong!";
+    }
+
+    // replace allgathers to one concat.
+    auto replaced_concat =
+      ReplaceInterleavedAllGatherToConcat(func_graph, ag_vector, new_group_ranks_vector, independent_size);
+    auto manager = func_graph->manager();
+    auto replaced_concat_users =
+      GetOutputNodesWithFilter(replaced_concat, [&](const AnfNodePtr &anode) { return false; });
+    if (replaced_concat_users.size() == kSizeOne) {
+      continue;
+    }
+    if (std::all_of(replaced_concat_users.begin(), replaced_concat_users.end(),
+                    [](const std::pair<AnfNodePtr, int> &pair) {
+                      return IsPrimitiveCNode(pair.first, prim::kPrimStridedSlice) &&
+                             pair.first->cast<CNodePtr>()->HasAttr(INTERLEAVED_PARALLEL);
+                    })) {
+      continue;
+    }
+    // merge the nodes afer the interleaved parallel concat.
+    auto virtual_end_input1 = virtual_converter_end->input(kIndex1)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(virtual_end_input1);
+    auto new_virtual_converter_end = CreateVirtualConverterEndNode(func_graph, {virtual_end_input1});
+
+    (void)manager->Replace(virtual_converter_end, new_virtual_converter_end);
+  }
+}
+
+bool IsDuplicatedVirtualConverterBegin(const CNodePtr &virtual_converter_begin) {
+  auto virtual_converter_begin_input = virtual_converter_begin->input(kSizeOne);
+  if (IsPrimitiveCNode(virtual_converter_begin_input, prim::kPrimVirtualConverterEnd)) {
+    return false;
+  }
+  if (!IsPrimitiveCNode(virtual_converter_begin_input) ||
+      IsPrimitiveCNode(virtual_converter_begin_input, prim::kPrimUpdateState)) {
+    return false;
+  }
+  auto virtual_converter_begin_input_cnode = virtual_converter_begin_input->cast<CNodePtr>();
+  if (IsParallelCareNode(virtual_converter_begin_input_cnode)) {
+    return false;
+  }
+  auto virtual_converter_begin_users = GetOutputNodesWithFilter(
+    virtual_converter_begin, [&](const AnfNodePtr &anode) { return IsPrimitiveCNode(anode, prim::kPrimTupleGetItem); });
+  if (virtual_converter_begin_users.size() <= kSizeOne) {
+    return false;
+  }
+  std::set<std::vector<std::vector<int64_t>>> slice_value_list_set;
+  for (const auto &user_pair : virtual_converter_begin_users) {
+    if (!IsPrimitiveCNode(user_pair.first, prim::kPrimStridedSlice)) {
+      continue;
+    }
+    auto slice = user_pair.first->cast<CNodePtr>();
+    std::vector<std::vector<int64_t>> slice_value_list;
+    for (size_t i = 2; i < kSizeFive; ++i) {
+      ValuePtr slice_value = GetValueNode(slice->input(i));
+      MS_EXCEPTION_IF_NULL(slice_value);
+      auto value_vector = GetValue<std::vector<int64_t>>(slice_value);
+      slice_value_list.push_back(value_vector);
+    }
+    slice_value_list_set.insert(slice_value_list);
+  }
+  if (slice_value_list_set.size() == virtual_converter_begin_users.size()) {
+    return false;
+  }
+  return true;
+}
+
+bool GetOrderOfTwoAnode(const std::pair<AnfNodePtr, int> &pair1, const std::pair<AnfNodePtr, int> &pair2) {
+  int number1 = pair1.second;
+  int number2 = pair2.second;
+  auto pair1_input_node = pair1.first->cast<CNodePtr>()->input(pair1.second);
+  auto pair2_input_node = pair2.first->cast<CNodePtr>()->input(pair2.second);
+  if (IsPrimitiveCNode(pair1_input_node, prim::kPrimTupleGetItem)) {
+    number1 = LongToInt(GetTupleGetItemIndex(pair1_input_node->cast<CNodePtr>()));
+  }
+  if (IsPrimitiveCNode(pair2_input_node, prim::kPrimTupleGetItem)) {
+    number2 = LongToInt(GetTupleGetItemIndex(pair2_input_node->cast<CNodePtr>()));
+  }
+  return number1 < number2;
+}
+
+std::vector<CNodePtr> DoSplitForNotParallelCareOpsInterleaved(const FuncGraphManagerPtr &manager,
+                                                              const CNodePtr &virtual_converter_begin) {
+  auto virtual_converter_begin_input = virtual_converter_begin->input(kSizeOne);
+  auto virtual_converter_begin_users = GetOutputNodesWithFilter(
+    virtual_converter_begin, [&](const AnfNodePtr &anode) { return IsPrimitiveCNode(anode, prim::kPrimTupleGetItem); });
+  std::sort(virtual_converter_begin_users.begin(), virtual_converter_begin_users.end(),
+            [](const auto &pair1, const auto &pair2) { return GetOrderOfTwoAnode(pair1, pair2); });
+  auto virtual_converter_begin_input_cnode = virtual_converter_begin_input->cast<CNodePtr>();
+  std::vector<AnfNodePtr> new_inputs;
+  std::vector<CNodePtr> new_virtual_converter_begin_vector;
+  for (size_t i = 1; i < virtual_converter_begin_input_cnode->size(); ++i) {
+    if (!IsPrimitiveCNode(virtual_converter_begin_input_cnode->input(i)) ||
+        IsPrimitiveCNode(virtual_converter_begin_input_cnode->input(i), prim::kPrimUpdateState)) {
+      new_inputs.push_back(virtual_converter_begin_input_cnode->input(i));
+      continue;
+    }
+    auto new_virtual_converter_begin = CreateVirtualConverterBeginNode(
+      virtual_converter_begin_input_cnode->input(i)->cast<CNodePtr>(), virtual_converter_begin_users.size());
+    new_inputs.push_back(new_virtual_converter_begin);
+    new_virtual_converter_begin_vector.push_back(new_virtual_converter_begin);
+  }
+
+  for (size_t interleveaved_index = 0; interleveaved_index < virtual_converter_begin_users.size();
+       ++interleveaved_index) {
+    std::vector<AnfNodePtr> splited_node_inputs = {virtual_converter_begin_input_cnode->input(kIndex0)};
+    for (size_t i = 0; i < new_inputs.size(); ++i) {
+      if (!IsPrimitiveCNode(new_inputs[i])) {
+        splited_node_inputs.push_back(new_inputs[i]);
+        continue;
+      }
+      std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(prim::kPrimTupleGetItem), new_inputs[i],
+                                                    CreatInt64Imm(UlongToLong(interleveaved_index))};
+      auto tuple_get_item_cnode = virtual_converter_begin_input_cnode->func_graph()->NewCNode(tuple_get_item_inputs);
+      splited_node_inputs.push_back(tuple_get_item_cnode);
+    }
+    auto splited_node = virtual_converter_begin_input_cnode->func_graph()->NewCNode(splited_node_inputs);
+    manager->SetEdge(virtual_converter_begin_users[interleveaved_index].first,
+                     virtual_converter_begin_users[interleveaved_index].second, splited_node);
+  }
+  return new_virtual_converter_begin_vector;
+}
+
+void SplitNotParallelCareOpsInterleaved(const FuncGraphPtr &root) {
+  AnfNodePtr ret_after = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret_after);
+  auto all_nodes = TopoSort(ret_after, SuccDeeperSimple);
+  auto manager = root->manager();
+  auto node_users = manager->node_users();
+  for (const auto &node : all_nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimVirtualConverterBegin)) {
+      continue;
+    }
+    std::queue<CNodePtr> visited;
+    visited.push(node->cast<CNodePtr>());
+    while (!visited.empty()) {
+      auto virtual_converter_begin = visited.front();
+      visited.pop();
+      if (!IsDuplicatedVirtualConverterBegin(virtual_converter_begin)) {
+        continue;
+      }
+      // Need to split the input
+      auto new_virtual_converter_begins = DoSplitForNotParallelCareOpsInterleaved(manager, virtual_converter_begin);
+      for (auto &new_virtual_converter_begin : new_virtual_converter_begins) {
+        visited.push(new_virtual_converter_begin);
+      }
+    }
+  }
+}
+
+void EraseVirtualConverter(const FuncGraphPtr &root) {
+  AnfNodePtr ret_after = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret_after);
+  auto all_nodes = TopoSort(ret_after, SuccDeeperSimple);
+  auto manager = root->manager();
+  auto node_users = manager->node_users();
+  for (const auto &node : all_nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimVirtualConverterBegin)) {
+      continue;
+    }
+    auto virtual_converter_begin = node->cast<CNodePtr>();
+    if (!IsPrimitiveCNode(virtual_converter_begin->input(kIndex1), prim::kPrimVirtualConverterEnd)) {
+      MS_LOG(INFO) << "The VirtualConverterBegin input is not VirtualConverterEnd, it is "
+                   << virtual_converter_begin->input(kIndex1)->fullname_with_scope();
+      auto virtual_converter_begin_input_node = virtual_converter_begin->input(kIndex1);
+      for (const auto &v_user_pair : node_users.at(virtual_converter_begin)) {
+        (void)manager->Replace(v_user_pair.first, virtual_converter_begin_input_node);
+      }
+      continue;
+    }
+    auto virtual_converter_end = virtual_converter_begin->input(kIndex1)->cast<CNodePtr>();
+    auto virtual_converter_begin_users = manager->node_users()[virtual_converter_begin];
+    if (virtual_converter_begin_users.size() != virtual_converter_end->size() - 1) {
+      MS_LOG(INTERNAL_EXCEPTION)
+        << "The VirtualConverterBegin users nums is not equal to VirtualConverterEnd inputs nums";
+    }
+    for (const auto &node_pair : virtual_converter_begin_users) {
+      if (!IsPrimitiveCNode(node_pair.first, prim::kPrimTupleGetItem)) {
+        MS_LOG(INTERNAL_EXCEPTION) << "The VirtualConverterBegin user should be tuple_get_item.";
+      }
+      auto tuple_get_item = node_pair.first->cast<CNodePtr>();
+      auto tuple_get_item_index_value = GetValueNode(tuple_get_item->input(kIndex2));
+      MS_EXCEPTION_IF_NULL(tuple_get_item_index_value);
+      auto get_item_index = GetValue<int64_t>(tuple_get_item_index_value);
+      (void)manager->Replace(tuple_get_item, virtual_converter_end->input(get_item_index + 1));
+    }
+  }
+  AnfNodePtr new_ret_after = root->get_return();
+  MS_EXCEPTION_IF_NULL(new_ret_after);
+  auto new_all_nodes = TopoSort(new_ret_after, SuccDeeperSimple);
+  for (const auto &node : new_all_nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimVirtualConverterEnd)) {
+      auto virtual_converter_end_cnode = node->cast<CNodePtr>();
+      if (virtual_converter_end_cnode->size() != kSizeTwo) {
+        MS_LOG(INTERNAL_EXCEPTION) << "The VirtualConverterEnd nums is not equal to VirtualConverterBegin nums.";
+      }
+      auto virtual_converter_end_input = virtual_converter_end_cnode->input(kIndex1);
+      (void)manager->Replace(virtual_converter_end_cnode, virtual_converter_end_input);
+    }
+  }
 }
 
 std::string GetSerialNumberString(size_t number) {

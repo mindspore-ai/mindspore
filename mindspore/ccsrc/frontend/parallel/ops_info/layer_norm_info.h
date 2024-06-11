@@ -33,6 +33,7 @@ constexpr size_t LAYER_NORM_INPUT_INDEX = 0;
 constexpr size_t LAYER_NORM_GAMMA_INDEX = 1;
 constexpr size_t LAYER_NORM_BETA_INDEX = 2;
 constexpr char BEGIN_NORM_AXIS[] = "begin_norm_axis";
+constexpr char BEGIN_PARAMS_AXIS[] = "begin_params_axis";
 
 // The dimensions of input tensor starting from begin norm axis cannot be split. Other dimensions can be split
 // arbitrarily. Gamma and beta should match input to meet the broadcast requirements of mul and add.
@@ -46,6 +47,7 @@ class LayerNormInfo : public OperatorInfo {
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status GetAttrs() override;
@@ -63,13 +65,17 @@ class LayerNormInfo : public OperatorInfo {
   Status InferForwardCommunicationByLayout() override;
   Status CheckInputLayout() override;
   Status CheckOutputLayout() override;
+  Status ComputeReplaceGraphForInterleaved(const CNodePtr &cnode);
 
  private:
   size_t begin_norm_axis_;
+  size_t begin_params_axis_;
+  float epsilon_;
   Shape input_shape_;
   Shape gamma_shape_;
   Shape beta_shape_;
   Status InferOutputLayout();
+  Status ObtainActualAxis(const int64_t &axis, const int64_t &dim, size_t *actual_axis);
   TensorLayout output_infer_tensor_layout_;
   TensorLayout mean_infer_tensor_layout_;
   TensorLayout var_infer_tensor_layout_;

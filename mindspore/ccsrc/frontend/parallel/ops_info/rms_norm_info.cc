@@ -18,7 +18,9 @@
 
 #include <algorithm>
 #include <vector>
+#include <utility>
 
+#include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
@@ -273,7 +275,49 @@ Status RmsNormInfo::CheckOutputLayout() {
     return FAILED;
   }
   MS_LOG(INFO) << name_ << ": Using output tensor layout infer by input tensor layout.";
+  UpdateOutputTensorInfoForInterleaved();
   return SUCCESS;
+}
+
+Status RmsNormInfo::ComputeReplaceGraphForInterleaved(const CNodePtr &cnode) {
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << "GenerateGraph Init failed";
+    return FAILED;
+  }
+  auto interleaved_num = ParallelContext::GetInstance()->fine_grained_micro_interleaved_size();
+  Attr output_nums_attr = {"output_nums", MakeValue(interleaved_num)};
+  OperatorAttrs virtual_converter_begin_attrs = {output_nums_attr};
+  auto virtual_converter_begin = gen_g.PushBack(
+    {gen_g.NewOpInst(VIRTUAL_CONVERTER_BEGIN, virtual_converter_begin_attrs), gen_g.virtual_input_node()});
+  std::vector<AnfNodePtr> virtual_converter_end_inputs_vector;
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(virtual_converter_begin, 1)};
+  for (int64_t i = 0; i < interleaved_num; ++i) {
+    auto tuple_get_item = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), virtual_converter_begin, CreatInt64Imm(i)});
+    auto rmsnorm = gen_g.PushBack({gen_g.NewOpInst(prim_name_), tuple_get_item, gen_g.virtual_input_node()});
+    input_nodes.push_back(std::make_pair(rmsnorm, kIndexTwo));
+    virtual_converter_end_inputs_vector.push_back(rmsnorm);
+  }
+  Attr input_nums_attr = {"input_nums", MakeValue(interleaved_num)};
+  OperatorAttrs virtual_converter_end_attrs = {input_nums_attr};
+  std::vector<AnfNodePtr> virtual_converter_end_inputs = {
+    gen_g.NewOpInst(VIRTUAL_CONVERTER_END, virtual_converter_end_attrs)};
+  std::copy(virtual_converter_end_inputs_vector.begin(), virtual_converter_end_inputs_vector.end(),
+            std::back_inserter(virtual_converter_end_inputs));
+  auto virtual_converter_end = gen_g.PushBack(virtual_converter_end_inputs);
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, virtual_converter_end));
+  return SUCCESS;
+}
+
+ReplaceGraphPtr RmsNormInfo::replace_graph(const CNodePtr &cnode) {
+  if (inputs_tensor_info_[kIndex0].tensor_layout().IsInterleavedParallel()) {
+    if (ComputeReplaceGraphForInterleaved(cnode) != SUCCESS) {
+      MS_LOG(EXCEPTION) << name_ << " splitting micro interleaved failed.";
+    }
+    return replace_graph_;
+  }
+  return replace_graph_;
 }
 
 Status RmsNormInfo::InferOutputLayout() {

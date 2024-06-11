@@ -175,10 +175,9 @@ std::vector<std::pair<std::string, std::vector<int64_t>>> TensorTransform::Trans
   (void)from_layout.InitFromVector(from[kIndex0], from[kIndex1], from[kIndex2]);
   TensorLayout to_layout;
   (void)to_layout.InitFromVector(to[kIndex0], to[kIndex1], to[kIndex2]);
-  (void)tensor_redistribution_.Init(from_layout, to_layout, dev_list);
-  auto origin_rank_id = ParallelContext::GetInstance()->global_rank();
   ParallelContext::GetInstance()->set_do_transform(true);
-  ParallelContext::GetInstance()->set_global_rank(rank_id);
+  tensor_redistribution_.SetVirtualRank(rank_id);
+  (void)tensor_redistribution_.Init(from_layout, to_layout, dev_list);
   RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution_.InferTensorRedistributionOperatorList();
   if (redistribution_oplist_ptr == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Infer tensor redistribution failed.";
@@ -198,7 +197,6 @@ std::vector<std::pair<std::string, std::vector<int64_t>>> TensorTransform::Trans
   }
   OptimizeAllConcat(&transform_op_list);
   ParallelContext::GetInstance()->set_do_transform(false);
-  ParallelContext::GetInstance()->set_global_rank(origin_rank_id);
   return transform_op_list;
 }
 

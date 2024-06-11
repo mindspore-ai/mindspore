@@ -43,6 +43,7 @@ class Group {
   std::string name() const { return name_; }
   bool IsInThisGroup(int64_t device_rank);
   Status GetIndex(size_t *index);
+  Status GetIndexByRank(int64_t rank, size_t *index);
   size_t GetDevNum() const { return devices_.size(); }
 
  private:

@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
@@ -116,6 +117,80 @@ Status ArithmeticBase::InferDevMatrixShape() {
   dev_matrix_shape_ = dev_shape;
 
   return SUCCESS;
+}
+
+Status ArithmeticBase::ComputeReplaceGraphForInterleaved(const CNodePtr &cnode) {
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << "GenerateGraph Init failed";
+    return FAILED;
+  }
+  auto interleaved_num = ParallelContext::GetInstance()->fine_grained_micro_interleaved_size();
+  Attr output_nums_attr = {"output_nums", MakeValue(interleaved_num)};
+  OperatorAttrs virtual_converter_begin_attrs = {output_nums_attr};
+
+  bool first_input_interleaved = inputs_tensor_info_[kIndex0].tensor_layout().IsInterleavedParallel();
+  bool second_input_interleaved = inputs_tensor_info_[kIndex1].tensor_layout().IsInterleavedParallel();
+
+  std::vector<AnfNodePtr> virtual_converter_end_inputs_vector;
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes;
+
+  if (first_input_interleaved && second_input_interleaved) {
+    // take first as begin 1
+    auto virtual_converter_begin_1 = gen_g.PushBack(
+      {gen_g.NewOpInst(VIRTUAL_CONVERTER_BEGIN, virtual_converter_begin_attrs), gen_g.virtual_input_node()});
+    input_nodes.push_back(std::make_pair(virtual_converter_begin_1, 1));
+    // take second as begin 2
+    auto virtual_converter_begin_2 = gen_g.PushBack(
+      {gen_g.NewOpInst(VIRTUAL_CONVERTER_BEGIN, virtual_converter_begin_attrs), gen_g.virtual_input_node()});
+    input_nodes.push_back(std::make_pair(virtual_converter_begin_2, kIndexTwo));
+    for (int64_t i = 0; i < interleaved_num; ++i) {
+      auto tuple_get_item_1 =
+        gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), virtual_converter_begin_1, CreatInt64Imm(i)});
+      auto tuple_get_item_2 =
+        gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), virtual_converter_begin_2, CreatInt64Imm(i)});
+      auto arithmetic = gen_g.PushBack({gen_g.NewOpInst(prim_name_), tuple_get_item_1, tuple_get_item_2});
+      virtual_converter_end_inputs_vector.push_back(arithmetic);
+    }
+  } else {
+    auto virtual_converter_begin = gen_g.PushBack(
+      {gen_g.NewOpInst(VIRTUAL_CONVERTER_BEGIN, virtual_converter_begin_attrs), gen_g.virtual_input_node()});
+    int64_t take_input = first_input_interleaved ? kIndexOne : kIndexTwo;
+    input_nodes.push_back(std::make_pair(virtual_converter_begin, take_input));
+    for (int64_t i = 0; i < interleaved_num; ++i) {
+      auto tuple_get_item = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), virtual_converter_begin, CreatInt64Imm(i)});
+      AnfNodePtr arithmetic;
+      if (first_input_interleaved) {
+        arithmetic = gen_g.PushBack({gen_g.NewOpInst(prim_name_), tuple_get_item, gen_g.virtual_input_node()});
+        input_nodes.push_back(std::make_pair(arithmetic, kIndexTwo));
+      } else {
+        arithmetic = gen_g.PushBack({gen_g.NewOpInst(prim_name_), gen_g.virtual_input_node(), tuple_get_item});
+        input_nodes.push_back(std::make_pair(arithmetic, 1));
+      }
+      virtual_converter_end_inputs_vector.push_back(arithmetic);
+    }
+  }
+  Attr input_nums_attr = {"input_nums", MakeValue(interleaved_num)};
+  OperatorAttrs virtual_converter_end_attrs = {input_nums_attr};
+  std::vector<AnfNodePtr> virtual_converter_end_inputs = {
+    gen_g.NewOpInst(VIRTUAL_CONVERTER_END, virtual_converter_end_attrs)};
+  std::copy(virtual_converter_end_inputs_vector.begin(), virtual_converter_end_inputs_vector.end(),
+            std::back_inserter(virtual_converter_end_inputs));
+  auto virtual_converter_end = gen_g.PushBack(virtual_converter_end_inputs);
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, virtual_converter_end));
+  return SUCCESS;
+}
+
+ReplaceGraphPtr ArithmeticBase::replace_graph(const CNodePtr &cnode) {
+  if (inputs_tensor_info_[kIndex0].tensor_layout().IsInterleavedParallel() ||
+      inputs_tensor_info_[kIndex1].tensor_layout().IsInterleavedParallel()) {
+    if (ComputeReplaceGraphForInterleaved(cnode) != SUCCESS) {
+      MS_LOG(EXCEPTION) << name_ << " splitting micro interleaved failed.";
+    }
+    return replace_graph_;
+  }
+  return replace_graph_;
 }
 
 TensorMap SetExpandTensorMap(const Shape &strategy, const Shape &dev_matrix_shape) {
@@ -368,6 +443,7 @@ Status ArithmeticBase::CheckOutputLayout() {
     return FAILED;
   }
   MS_LOG(INFO) << name_ << ": Using output tensor layout infer by input tensor layout.";
+  UpdateOutputTensorInfoForInterleaved();
   return SUCCESS;
 }
 

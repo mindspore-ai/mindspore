@@ -43,6 +43,7 @@ class RmsNormInfo : public OperatorInfo {
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status GetAttrs() override;
@@ -59,6 +60,7 @@ class RmsNormInfo : public OperatorInfo {
   Status CheckInputLayout() override;
   Status CheckOutputLayout() override;
   Status InferOutputLayout();
+  Status ComputeReplaceGraphForInterleaved(const CNodePtr &cnode);
 
  private:
   size_t begin_norm_axis_;

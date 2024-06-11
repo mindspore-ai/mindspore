@@ -35,6 +35,7 @@ class ActivationBase : public OperatorInfo {
                  const PrimitiveAttrs &attrs, const OperatorCostPtr &cost)
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, cost) {}
   ~ActivationBase() override = default;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status InferMirrorOps() override;
@@ -45,6 +46,7 @@ class ActivationBase : public OperatorInfo {
   Status CheckInputLayout() override;
   Status CheckOutputLayout() override;
   Status InferOutputTensorInfo() override;
+  virtual Status ComputeReplaceGraphForInterleaved(const CNodePtr &cnode);
 
  private:
   TensorLayout output_infer_tensor_layout_;
@@ -135,6 +137,7 @@ class Softmax : public ActivationBase {
   Status CheckLayoutConfig() override;
   Status GetAttrs() override;
   std::vector<int64_t> axis_;
+  Status ComputeReplaceGraphForInterleaved(const CNodePtr &cnode) override;
 };
 
 class SoftmaxInfo : public Softmax {

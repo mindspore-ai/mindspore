@@ -218,6 +218,11 @@ class COMMON_EXPORT ParallelContext {
   void set_enable_fine_grained_micro_interleaved(const bool);
   bool enable_fine_grained_micro_interleaved() const { return enable_fine_grained_micro_interleaved_; }
 
+  void set_fine_grained_micro_interleaved_size(const int64_t fine_grained_micro_interleaved_size) {
+    fine_grained_micro_interleaved_size_ = fine_grained_micro_interleaved_size;
+  }
+  int64_t fine_grained_micro_interleaved_size() const { return fine_grained_micro_interleaved_size_; }
+
   void set_pipeline_micro_size(const size_t);
   size_t pipeline_micro_size() const { return pipeline_micro_size_; }
 
@@ -283,6 +288,7 @@ class COMMON_EXPORT ParallelContext {
   bool sharding_propagation_;
   bool enable_micro_interleaved_ = false;
   bool enable_fine_grained_micro_interleaved_ = false;
+  int64_t fine_grained_micro_interleaved_size_ = -1;
   bool do_transform_ = false;
   bool stra_file_only_trainable_params_ = true;
   std::string fusion_mode_;

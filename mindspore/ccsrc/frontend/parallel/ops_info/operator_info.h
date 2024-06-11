@@ -336,7 +336,7 @@ class OperatorInfo {
   virtual Status InferOutputTensorMap() { return SUCCESS; }
   virtual Status InferOutputTensorInfo() { return SUCCESS; }
   virtual Status CheckLayoutConfig() { return SUCCESS; }
-  virtual Status CheckInputLayout() { return SUCCESS; }
+  virtual Status CheckInputLayout();
   virtual Status CheckOutputLayout() { return SUCCESS; }
   virtual Status InferForwardCommunicationByLayout() { return SUCCESS; }
   virtual Status InferMirrorOpsByLayout();
@@ -348,6 +348,7 @@ class OperatorInfo {
   virtual Status InferTensorInfoNew();
 
   virtual void InferReplaceOps() {}
+  virtual void UpdateOutputTensorInfoForInterleaved();
   virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
   virtual Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) { return SUCCESS; }
   Status CheckStrategyByVector(const Shapes &strategy, const Shapes &inputs_shape);
@@ -421,6 +422,7 @@ class OperatorInfo {
   NewTensorMaps inputs_tensor_map_new_;
   NewTensorMaps outputs_tensor_map_new_;
   ForwardOp forward_op_;
+  ForwardOp forward_op_interleaved_;
   Ops sub_ops_;
   ForwardOp replace_op_;
   OutPutInfoVector replace_op_info_;
