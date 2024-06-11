@@ -134,6 +134,13 @@ SymbolPtr ReduceShapeBuilder(OperationBuilder *b) {
   return b->Emit(std::make_shared<Reduce>(input, axis, keep_dims, skip_mode));
 }
 
+SymbolPtr SumExtShapeBuilder(OperationBuilder *b) {
+  auto input = b->GetInputShape(kIndex0);
+  auto axis = b->GetInputValue(kIndex1);
+  auto keep_dims = b->GetInputValue(kIndex2);
+  return b->Emit(std::make_shared<Reduce>(input, axis, keep_dims, BoolSymbol::Make(false)));
+}
+
 SymbolPtr ArgMinMaxShapeBuilder(OperationBuilder *b) {
   auto input = b->GetInputShape(kIndex0);
   auto axis = b->GetInputValue(kIndex1);
@@ -167,6 +174,9 @@ REG_SYMBOL_OP_BUILDER("ReduceMin")
 REG_SYMBOL_OP_BUILDER("ReduceMean")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue})
   .SetShapeFunc(ReduceShapeBuilder);
+REG_SYMBOL_OP_BUILDER("ReduceAny")
+  .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue})
+  .SetShapeFunc(ReduceShapeBuilder);
 
 REG_SYMBOL_OP_BUILDER("ArgMax")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue})
@@ -180,6 +190,10 @@ REG_SYMBOL_OP_BUILDER("ArgMaxWithValue")
 REG_SYMBOL_OP_BUILDER("ArgMinWithValue")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue})
   .SetShapeFunc(ArgMinMaxWithValueShapeBuilder);
+
+REG_SYMBOL_OP_BUILDER("SumExt")
+  .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue, DependOn::kNone})
+  .SetShapeFunc(SumExtShapeBuilder);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

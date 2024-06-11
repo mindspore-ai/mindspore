@@ -61,9 +61,13 @@ REG_SYMBOL_OP_BUILDER("Gather")
     auto params = b->GetInputShape(kIndex0);
     auto indices = b->GetInputShape(kIndex1);
     auto axis = b->GetInputValue(kIndex2);
-    auto batch_dims = b->GetInputOrAttr(kIndex3, kAttrBatchDims);  // todo, change to DefaultBuilder
+    auto batch_dims = b->GetInputOrAttr(kIndex3, kAttrBatchDims);
     return b->Emit(std::make_shared<Gather>(params, indices, axis, batch_dims));
   });
+
+REG_SYMBOL_OP_BUILDER("GatherD")
+  .SetShapeDepend({DependOn::kNone, DependOn::kNone, DependOn::kShape})
+  .SetShapeFunc(TransparentInput);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

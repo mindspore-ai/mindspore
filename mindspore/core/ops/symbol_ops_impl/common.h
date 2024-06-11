@@ -59,6 +59,11 @@ class MS_CORE_API ScalarOp : public InferValueOp {
 /// "DependOn::kShape" (or "DependOn::kValue") exists. the depending symbol is used as output.
 SymbolPtr TransparentInput(OperationBuilder *b);
 
+/// \brief Set input value to output shape symbol.
+///
+/// \note This function will set the input value symbol to positive.
+SymbolPtr TransValueToShape(OperationBuilder *b);
+
 /// \brief The default builder to create an `Operation`, input shapes or values are related to the depend list.
 ///
 /// When using this function in `SetShapeFunc`, it generates inputs according to the depend list of `SetShapeDepend`.

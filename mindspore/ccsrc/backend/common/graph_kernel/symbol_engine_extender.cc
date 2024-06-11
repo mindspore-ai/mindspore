@@ -40,7 +40,7 @@
 
 namespace mindspore::graphkernel {
 bool IsBeginOp(const AnfNodePtr &node, const SymbolEnginePtr &main_engine) {
-  if (main_engine->IsDependShape(node) && common::AnfAlgo::IsDynamicShape(node) &&
+  if (main_engine->IsDependShape(node) && common::AnfAlgo::IsDynamicShape(node) && !AnfUtils::IsGraphKernel(node) &&
       !common::AnfAlgo::IsDynamicRankNode(node) && AnfUtils::IsRealCNodeKernel(node)) {
     MS_LOG(DEBUG) << "A begin op: " << node->DebugString();
     return true;

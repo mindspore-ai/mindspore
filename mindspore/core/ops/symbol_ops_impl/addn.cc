@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/core/symbolic_shape/operation_builder.h"
+#include "mindspore/core/ops/symbol_ops_impl/addn.h"
+#include <memory>
 #include "mindspore/core/ops/symbol_ops_impl/elemwise_binop.h"
 
 namespace mindspore {
 namespace symshape {
 namespace ops {
-SymbolPtr Process(OperationBuilder *b, const SymbolPtrList &symbols) {
+SymbolPtr AddnBuildShape(OperationBuilder *b, const SymbolPtrList &symbols) {
   if (symbols.empty()) {
     return nullptr;
   }
@@ -38,12 +39,12 @@ REG_SYMBOL_OP_BUILDER("AddN").SetShapeFunc([](OperationBuilder *b) {
     for (size_t i = 0; i < symbols.size(); i++) {
       symbols[i] = b->GetInputShape(i);
     }
-    return Process(b, symbols);
+    return AddnBuildShape(b, symbols);
   }
 
   auto inputs = b->GetInputShape(kIndex0)->as_sptr<ListSymbol>();
   MS_EXCEPTION_IF_NULL(inputs);
-  return Process(b, inputs->symbols());
+  return AddnBuildShape(b, inputs->symbols());
 });
 }  // namespace ops
 }  // namespace symshape

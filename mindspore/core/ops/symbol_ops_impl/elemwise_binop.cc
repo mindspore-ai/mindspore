@@ -86,6 +86,7 @@ SymbolPtrList ElemwiseBinop::Process(const SymbolPtrList &lhs, const SymbolPtrLi
 }
 
 REG_SYMBOL_OP_BUILDER("Add").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
+REG_SYMBOL_OP_BUILDER("AddExt").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
 REG_SYMBOL_OP_BUILDER("Div").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
 REG_SYMBOL_OP_BUILDER("Equal").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
 REG_SYMBOL_OP_BUILDER("Greater").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
@@ -101,6 +102,7 @@ REG_SYMBOL_OP_BUILDER("NotEqual").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
 REG_SYMBOL_OP_BUILDER("Pow").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
 REG_SYMBOL_OP_BUILDER("RealDiv").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
 REG_SYMBOL_OP_BUILDER("Sub").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
+REG_SYMBOL_OP_BUILDER("SubExt").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

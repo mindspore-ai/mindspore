@@ -86,16 +86,26 @@ class MS_CORE_API IntSymbol : public ScalarSymbol {
   bool is_divisible_by(int64_t d) const;
   bool is_divisible_by(const IntSymbolPtr &d) const;
   /// \brief Check the symbol is ALWAYS greater than x
-  bool is_greater_than(int64_t x) const { return range_min() > x; }
+  bool is_greater_than(int64_t x) const { return has_data_ ? value_ > x : range_min() > x; }
+  /// \brief Check the symbol is ALWAYS greater than or equal to x
+  bool is_greater_equal(int64_t x) const { return has_data_ ? value_ >= x : range_min() >= x; }
   /// \brief Check the symbol is ALWAYS less than x
-  bool is_less_than(int64_t x) const { return range_max() < x; }
+  bool is_less_than(int64_t x) const { return has_data_ ? value_ < x : range_max() < x; }
+  /// \brief Check the symbol is ALWAYS less than or equal to x
+  bool is_less_equal(int64_t x) const { return has_data_ ? value_ <= x : range_max() <= x; }
   /// \brief Check the symbol is ALWAYS positive
   bool is_positive() const { return is_greater_than(0); }
   /// \brief Check the symbol is ALWAYS negative
   bool is_negative() const { return is_less_than(0); }
 
   /// \brief Set the two symbols are equal.
-  void SetEqual(const IntSymbolPtr &other) { math_info_.SetEqual(other); }
+  void SetEqual(const IntSymbolPtr &other) {
+    MS_EXCEPTION_IF_NULL(other);
+    // only variables can set equal
+    if (!is_const_ && !other->is_const_) {
+      math_info_.SetEqual(other);
+    }
+  }
   /// \brief Set the expression of symbol to "this = s * a + b"
   void SetMathExpr(const IntSymbolPtr &s, const Frac &a, int64_t b) { math_info_.SetMathExpr(s, a, b); }
 
@@ -104,9 +114,10 @@ class MS_CORE_API IntSymbol : public ScalarSymbol {
   MathInfo math_info_;
   int64_t value_{0};
 };
-
-using IntSymbolPtr = std::shared_ptr<IntSymbol>;
-GVAR_DEF(IntSymbolPtr, kSym1, IntSymbol::Make(1));
 }  // namespace symshape
+GVAR_DEF(IntSymbolPtr, kSym0, IntSymbol::Make(0));
+GVAR_DEF(IntSymbolPtr, kSym1, IntSymbol::Make(1));
+GVAR_DEF(IntSymbolPtr, kSym2, IntSymbol::Make(2));
+GVAR_DEF(IntSymbolPtr, kSymNeg1, IntSymbol::Make(-1));
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_SYMBOLIC_SHAPE_INT_SYMBOL_H_
