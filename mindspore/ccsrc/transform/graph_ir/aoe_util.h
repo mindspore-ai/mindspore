@@ -20,6 +20,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <vector>
 #include "include/transform/graph_ir/types.h"
 #include "utils/dlopen_macro.h"
 
@@ -61,6 +62,7 @@ class AoeUtil {
   Status AoeGeGraph(::ge::Session *ge_session, const transform::DfGraphPtr &graph,
                     const std::map<::ge::AscendString, ::ge::AscendString> &tuningOptions) const;
   void *plugin_handle_ = nullptr;
+  std::vector<void *> depend_handler_;
   AoeInitializeFunObj aoe_initialize_ = nullptr;
   AoeFinalizeFunObj aoe_finalize_ = nullptr;
   AoeCreateSessionFunObj aoe_create_session_ = nullptr;
