@@ -641,11 +641,12 @@ def read_video(filename, start_pts=0, end_pts=None, pts_unit="pts"):
         pts_unit(str, optional)): The unit of the timestamps. It can be any of ["pts", "sec"]. Default: "pts".
 
     Returns:
-        numpy.ndarray, four dimensions uint8 data for video. The format is [T, H, W, C]. `T` is the number of frames,
-            `H` is the height, `W` is the width, `C` is the channel for RGB.
-        numpy.ndarray, two dimensions float for audio. The format is [C, L]. `C` is the number of channels.
-            `L` is the length of the points in one channel.
-        dict, metadata for the video and audio. It contains video_fps(float), audio_fps(int).
+        - numpy.ndarray, four dimensions uint8 data for video. The format is [T, H, W, C]. `T` is the number of frames,
+          `H` is the height, `W` is the width, `C` is the channel for RGB.
+        - numpy.ndarray, two dimensions float for audio. The format is [C, L]. `C` is the number of channels.
+          `L` is the length of the points in one channel.
+        - dict, metadata for the video and audio.
+          It contains video_fps data of type float and audio_fps data of type int.
 
     Raises:
         TypeError: If `filename` is not of type str.
@@ -714,9 +715,9 @@ def read_video_timestamps(filename, pts_unit="pts"):
         pts_unit(str, optional): The unit of the timestamps. It can be any of ["pts", "sec"]. Default: "pts".
 
     Returns:
-        list, when `pts_unit` is set to "pts", list[int] is returned, when `pts_unit` is set to "sec",
-            list[float] is returned.
-        float, the frames per second of the video file.
+        - list, when `pts_unit` is set to "pts", list[int] is returned, when `pts_unit` is set to "sec",
+          list[float] is returned.
+        - float, the frames per second of the video file.
 
     Raises:
         TypeError: If `filename` is not of type str.
