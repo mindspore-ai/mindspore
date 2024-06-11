@@ -30,6 +30,7 @@ namespace mindspore {
 namespace profiler {
 namespace ascend {
 
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 bool Utils::IsFileExist(const std::string &path) {
   if (path.empty() || path.size() > PATH_MAX) {
     return false;
@@ -122,7 +123,7 @@ uint64_t Utils::GetClockMonotonicRawNs() {
          static_cast<uint64_t>(ts.tv_nsec);  // To convert to nanoseconds, it needs to be 1000000000.
 }
 
-bool Utils::CreateFile(const std::string &path) {
+bool Utils::CreateDumpFile(const std::string &path) {
   if (path.empty() || path.size() > PATH_MAX || !CreateDir(DirName(path))) {
     return false;
   }
@@ -340,7 +341,7 @@ void ProfilingDataDumper::Dump(const std::map<std::string, std::vector<uint8_t>>
 
     auto iter = fd_map_.find(dump_file);
     if (iter == fd_map_.end()) {
-      if (!Utils::IsFileExist(dump_file) && !Utils::CreateFile(dump_file)) {
+      if (!Utils::IsFileExist(dump_file) && !Utils::CreateDumpFile(dump_file)) {
         MS_LOG(WARNING) << "create file failed, dump_file: " << dump_file;
         continue;
       }
@@ -357,6 +358,106 @@ void ProfilingDataDumper::Dump(const std::map<std::string, std::vector<uint8_t>>
     fflush(fd);
   }
 }
+#else
+bool Utils::IsFileExist(const std::string &path) { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+
+bool Utils::IsFileWritable(const std::string &path) {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+bool Utils::IsDir(const std::string &path) { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+bool Utils::CreateDir(const std::string &path) { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+
+std::string Utils::RealPath(const std::string &path) {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+std::string Utils::RelativeToAbsPath(const std::string &path) {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+std::string Utils::DirName(const std::string &path) {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+uint64_t Utils::GetClockMonotonicRawNs() { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+
+bool Utils::CreateDumpFile(const std::string &path) {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+bool Utils::IsSoftLink(const std::string &path) { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+
+uint64_t Utils::GetTid() { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+
+uint64_t Utils::GetPid() { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+
+template <typename T>
+void RingBuffer<T>::Init(size_t capacity) {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+template <typename T>
+void RingBuffer<T>::UnInit() {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+template <typename T>
+size_t RingBuffer<T>::Size() {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+template <typename T>
+bool RingBuffer<T>::Full() {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+template <typename T>
+bool RingBuffer<T>::Push(T data) {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+template <typename T>
+T RingBuffer<T>::Pop() {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+template <typename T>
+void RingBuffer<T>::Reset() {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+ProfilingDataDumper::ProfilingDataDumper() : path_(""), start_(false), init_(false) {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+ProfilingDataDumper::~ProfilingDataDumper() { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+
+ProfilingDataDumper &ProfilingDataDumper::GetInstance() {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+void ProfilingDataDumper::Init(const std::string &path, size_t capacity) {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+void ProfilingDataDumper::UnInit() { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+
+void ProfilingDataDumper::Start() { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+
+void ProfilingDataDumper::Stop() { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+
+void ProfilingDataDumper::GatherAndDumpData() { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+
+void ProfilingDataDumper::Flush() { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+
+void ProfilingDataDumper::Report(std::unique_ptr<BaseReportData> data) {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+
+void ProfilingDataDumper::Dump(const std::map<std::string, std::vector<uint8_t>> &dataMap) {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+#endif
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore
