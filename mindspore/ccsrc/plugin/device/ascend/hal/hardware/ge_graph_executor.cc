@@ -1483,11 +1483,11 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
       MS_LOG(EXCEPTION) << input_node->DebugString() << ", index: " << kv.second << " is greater than "
                         << ge_inputs.size();
     }
-    MS_LOG(INFO) << "[ZeroCopy] For Graph " << kernel_graph->ToString() << ", update input "
-                 << input_node->DebugString() << " address to " << output_addr->GetMutablePtr()
-                 << ", shape:" << output_addr->kernel_tensor()->GetShapeVector()
-                 << ", type: " << TypeIdToString(output_addr->type_id()) << ", format: " << output_addr->format()
-                 << ", memory size: " << output_addr->GetSize();
+    MS_LOG(DEBUG) << "[ZeroCopy] For Graph " << kernel_graph->ToString() << ", update input "
+                  << input_node->DebugString() << " address to " << output_addr->GetMutablePtr()
+                  << ", shape:" << output_addr->kernel_tensor()->GetShapeVector()
+                  << ", type: " << TypeIdToString(output_addr->type_id()) << ", format: " << output_addr->format()
+                  << ", memory size: " << output_addr->GetSize();
     if (output_addr->GetPtr() != ge_inputs[kv.second].GetData() ||
         output_addr->GetSize() != ge_inputs[kv.second].GetSize()) {
       (void)ge_inputs[kv.second].SetData(static_cast<uint8_t *>(output_addr->GetMutablePtr()), output_addr->GetSize(),
