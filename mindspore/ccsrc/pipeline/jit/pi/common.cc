@@ -811,6 +811,10 @@ static std::string CallGraphCompiler(JitCompileResults *jcr, PyFunctionObject *f
   std::string phase = GetFuncGraphPhase(*frame, jcr->code);
   MS_LOG(DEBUG) << "Phase is " << phase << "!";
   CallableGraph callable = mindspore::pijit::Compiler::Compile(*func, *frame, phase);
+  if (callable == nullptr) {
+    jcr->stat = JitCompileResults::NEVER_COMPILE;
+    return std::string();
+  }
 
   ReleaseFunc rFunc = nullptr;
   if (jcr->conf->GetBoolConfig(GraphJitConfig::kAutoCleanCache)) {
