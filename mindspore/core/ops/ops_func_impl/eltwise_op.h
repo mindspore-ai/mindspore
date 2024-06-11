@@ -27,12 +27,8 @@ class MIND_API EltwiseOpFuncImpl : public OpFuncImpl {
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   // simply infer
-  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override {
-    MS_LOG(EXCEPTION) << "Not implement exception";
-  }
-  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override {
-    MS_LOG(EXCEPTION) << "Not implement exception";
-  }
+  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
 
  protected:
   BaseShapePtr InferShapeWithCheck(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,

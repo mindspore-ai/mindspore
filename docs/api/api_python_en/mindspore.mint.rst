@@ -19,11 +19,13 @@ Array Operation
     mindspore.mint.index_select
     mindspore.mint.max
     mindspore.mint.min
+    mindspore.mint.ones_like
     mindspore.mint.scatter_add
     mindspore.mint.tile
     mindspore.mint.topk
     mindspore.mint.stack
     mindspore.mint.where
+    mindspore.mint.zeros_like
 
 Tensor Creation
 ^^^^^^^^^^^^^^^

@@ -17,6 +17,7 @@
 #include "ops/ops_func_impl/zeros_like_ext.h"
 #include <memory>
 #include "ops/op_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -36,5 +37,25 @@ TypePtr ZerosLikeExtFuncImpl::InferType(const PrimitivePtr &primitive,
   auto output_type = TypeIdToType(static_cast<TypeId>(val));
   return std::make_shared<TensorType>(output_type);
 }
+
+TypePtrList ZerosLikeExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  auto prim_name = primitive->name();
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  auto dtype = input_values[kIndex1];
+  if (dtype->isa<None>()) {
+    return {x_tensor->Dtype()};
+  }
+  if (!dtype->isa<Int64Imm>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', 'dtype' must be a TypeId, but got an invalid type: " << dtype->ToString() << ".";
+  }
+  const auto &dtype_scalar = dtype->cast<Int64ImmPtr>();
+  MS_EXCEPTION_IF_NULL(dtype_scalar);
+  auto type_id = static_cast<TypeId>(dtype_scalar->value());
+  return {TypeIdToType(type_id)};
+}
+
+REGISTER_SIMPLE_INFER(kNameZerosLikeExt, ZerosLikeExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
