@@ -356,7 +356,7 @@ bool IsNeedOptimizeAssignAdd(bool is_kbyk_mode) {
     return false;
   }
 
-  if (is_kbyk_mode && !common::IsEnableRuntimeConfig(common::kRuntimeParalletAssignAddOpt)) {
+  if (is_kbyk_mode && common::IsDisableRuntimeConfig(common::kRuntimeParalletAssignAddOpt)) {
     MS_LOG(INFO) << "KBK mode disable the assginadd opt.";
     return false;
   }
