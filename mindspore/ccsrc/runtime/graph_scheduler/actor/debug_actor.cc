@@ -163,7 +163,7 @@ void DebugActor::AscendKbkDump(const CNodePtr &cnode, const std::vector<DeviceTe
     debugger->SetAscendKernelByKernelFlag(true);
     auto &dump_json_parser = DumpJsonParser::GetInstance();
     bool e2e_dump_enabled = dump_json_parser.e2e_dump_enabled();
-    int op_debug_mode = dump_json_parser.op_debug_mode();
+    uint32_t op_debug_mode = dump_json_parser.op_debug_mode();
     bool abnormal_dump = false;
     bool sync_ok = true;
     bool read_data = false;

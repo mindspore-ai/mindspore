@@ -37,7 +37,7 @@ const std::set<TypeId> &norm_supported_dtype = {kNumberTypeBFloat16, kNumberType
 
 const char KStatMax[] = "max";
 const char KStatMin[] = "min";
-const char KStatMean[] = "mean";
+const char KStatMean[] = "avg";
 const char KStatL2Norm[] = "l2norm";
 
 void WarningOnce(const string &device_name, const string &type_name, const string &statistic_name) {
@@ -180,6 +180,23 @@ DeviceAddressPtr DimStatisticKernel::GetDtypeDeviceAddress(const uint32_t stream
   return GenerateDeviceAddress(stream_id, UnitSizeInBytes(dtype_id), dtype_id, dtype_shape_vec);
 }
 
+TensorPtr DimStatisticKernel::Launch(vector<KernelTensor *> inputs, DeviceAddressPtr output_addr, uint32_t stream_id) {
+  void *stream_ptr = device_context_->device_res_manager_->GetStream(stream_id);
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+  auto workspace_addr = GetWorkSpaceDeviceAddress(stream_id, inputs, {output_addr->kernel_tensor().get()});
+  bool ret = false;
+  if (workspace_addr) {
+    ret = kernel_mod_->Launch(inputs, {workspace_addr->kernel_tensor().get()}, {output_addr->kernel_tensor().get()},
+                              stream_ptr);
+  } else {
+    ret = kernel_mod_->Launch(inputs, {}, {output_addr->kernel_tensor().get()}, stream_ptr);
+  }
+  if (!ret) {
+    MS_LOG(EXCEPTION) << kernel_name_ << " kernel launch failed";
+  }
+  return SyncDeviceToHostTensor(output_addr);
+}
+
 TensorPtr DimStatisticKernel::LaunchKernel(KernelTensor *input) {
   MS_EXCEPTION_IF_NULL(input);
   const auto stream_id = input->stream_id();
@@ -198,20 +215,7 @@ TensorPtr DimStatisticKernel::LaunchKernel(KernelTensor *input) {
   auto dtype = GetDtypeDeviceAddress(stream_id, input->dtype_id());
   inputs.emplace_back(dtype->kernel_tensor().get());
 
-  void *stream_ptr = device_context_->device_res_manager_->GetStream(stream_id);
-  MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto workspace_addr = GetWorkSpaceDeviceAddress(stream_id, inputs, {output_addr->kernel_tensor().get()});
-  bool ret = false;
-  if (workspace_addr) {
-    ret = kernel_mod_->Launch(inputs, {workspace_addr->kernel_tensor().get()}, {output_addr->kernel_tensor().get()},
-                              stream_ptr);
-  } else {
-    ret = kernel_mod_->Launch(inputs, {}, {output_addr->kernel_tensor().get()}, stream_ptr);
-  }
-  if (!ret) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " kernel launch failed";
-  }
-  return SyncDeviceToHostTensor(output_addr);
+  return Launch(inputs, output_addr, stream_id);
 }
 
 DeviceAddressPtr NormStatisticKernel::GetScalar(const uint32_t stream_id, float scalar) {
@@ -247,20 +251,7 @@ TensorPtr NormStatisticKernel::LaunchKernel(KernelTensor *input) {
   auto dtype = GetDtypeDeviceAddress(stream_id, kNumberTypeFloat32);
   inputs.emplace_back(dtype->kernel_tensor().get());
 
-  void *stream_ptr = device_context_->device_res_manager_->GetStream(stream_id);
-  MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto workspace_addr = GetWorkSpaceDeviceAddress(stream_id, inputs, {output_addr->kernel_tensor().get()});
-  bool ret = false;
-  if (workspace_addr) {
-    ret = kernel_mod_->Launch(inputs, {workspace_addr->kernel_tensor().get()}, {output_addr->kernel_tensor().get()},
-                              stream_ptr);
-  } else {
-    ret = kernel_mod_->Launch(inputs, {}, {output_addr->kernel_tensor().get()}, stream_ptr);
-  }
-  if (!ret) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " kernel launch failed";
-  }
-  return SyncDeviceToHostTensor(output_addr);
+  return Launch(inputs, output_addr, stream_id);
 }
 
 TensorPtr CalMax(const DeviceContext *device_context, KernelTensor *input) {
