@@ -36,7 +36,7 @@ from mindspore.train import Model
 from mindspore.parallel import set_algo_parameters
 from mindspore import Tensor
 from mindspore.common.parameter import Parameter
-from mindspore import context
+from mindspore import context, JitConfig
 from mindspore.context import ParallelMode
 
 context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
@@ -280,6 +280,7 @@ class OptimizerSemiAutoAndAutoParallelFactory:
         context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL,
                                           device_num=device_num, search_mode="dynamic_programming")
         parallel_mode_net = self.net(self.strategy_dict)
+        parallel_mode_net.set_jit_config(JitConfig(jit_level="O2"))
         self.parallel_ckpt = self._model_train_and_save_ckpt(net=parallel_mode_net,
                                                              dataset=dataset, epoch=epoch)
         context.reset_auto_parallel_context()
@@ -294,6 +295,7 @@ class OptimizerSemiAutoAndAutoParallelFactory:
                                           device_num=device_num, search_mode="dynamic_programming",
                                           enable_parallel_optimizer=True)
         parallel_mode_net = self.net(self.strategy_dict)
+        parallel_mode_net.set_jit_config(JitConfig(jit_level="O2"))
         self.optimizer_parallel_ckpt = self._model_train_and_save_ckpt(net=parallel_mode_net,
                                                                        dataset=dataset, epoch=epoch)
         context.reset_auto_parallel_context()

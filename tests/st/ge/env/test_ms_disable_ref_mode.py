@@ -14,7 +14,7 @@
 # ============================================================================
 import os
 import numpy as np
-from mindspore import Tensor, ops, nn
+from mindspore import Tensor, ops, nn, JitConfig
 import mindspore.context as context
 
 
@@ -31,8 +31,10 @@ def test_ms_disable_ref_mode_0_graph_mode():
     Expectation: the result is correct
     """
     os.environ['MS_DISABLE_REF_MODE'] = '0'
+    context.set_context(jit_config={"jit_level": "O2"})
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     net = Net()
+    net.set_jit_config(JitConfig(jit_level="O2"))
     x = Tensor(np.array([1, 2, 3]).astype(np.float32))
     y = Tensor(np.array([4, 5, 6]).astype(np.float32))
     out = net(x, y)
@@ -47,6 +49,7 @@ def test_ms_disable_ref_mode_1_graph_mode():
     Expectation: the result is correct
     """
     os.environ['MS_DISABLE_REF_MODE'] = '1'
+    context.set_context(jit_config={"jit_level": "O2"})
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     net = Net()
     x = Tensor(np.array([1, 2, 3]).astype(np.float32))
@@ -64,6 +67,7 @@ def test_ms_disable_ref_mode_0_pynative_mode():
     Expectation: the result is correct
     """
     os.environ['MS_DISABLE_REF_MODE'] = '0'
+    context.set_context(jit_config={"jit_level": "O2"})
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     net = Net()
     x = Tensor(np.array([1, 2, 3]).astype(np.float32))
@@ -80,6 +84,7 @@ def test_ms_disable_ref_mode_1_pynative_mode():
     Expectation: the result is correct
     """
     os.environ['MS_DISABLE_REF_MODE'] = '1'
+    context.set_context(jit_config={"jit_level": "O2"})
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     net = Net()
     x = Tensor(np.array([1, 2, 3]).astype(np.float32))

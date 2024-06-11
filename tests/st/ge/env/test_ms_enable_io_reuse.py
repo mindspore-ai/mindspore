@@ -19,6 +19,7 @@ import mindspore.context as context
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+context.set_context(jit_config={"jit_level": "O2"})
 
 
 class Net(nn.Cell):

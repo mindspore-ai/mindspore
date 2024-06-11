@@ -28,6 +28,8 @@ logger = logging.getLogger()
 def main(args):
     """main function."""
 
+    ms.set_context(jit_config={"jit_level": "O2"})
+
     # set model config
     config = MindFormerConfig(args.yaml_file)
     config.use_parallel = args.use_parallel

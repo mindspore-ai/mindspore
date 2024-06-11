@@ -216,6 +216,7 @@ def test_db_r50_1p():
         [f"--config={workspace}/mindocr/configs/det/dbnet/db_r50_icdar15.yaml"]
     )
     config = Dict(config)
+    set_context(jit_config={"jit_level": "O2"})
 
     loss_start, loss_end, _, _ = main_test_process(args, config)
 

@@ -18,7 +18,7 @@ import numpy as np
 import time
 import pytest
 import mindspore.context as context
-from mindspore import Tensor, nn, load_checkpoint
+from mindspore import Tensor, nn, load_checkpoint, JitConfig
 from tests.st.mindscience.mindsponge.mindsponge.cell.amp import amp_convert
 from tests.st.mindscience.mindsponge.mindsponge.common.config_load import load_config
 
@@ -26,7 +26,7 @@ from data import Feature
 from model import MegaFold, compute_confidence
 
 
-def fold_infer(mixed_precision, crop_size):
+def fold_infer(mixed_precision, crop_size, is_ge_only=False):
     '''mega fold inference'''
     data_config = "./config/data.yaml"
     model_config = "./config/model.yaml"
@@ -39,6 +39,8 @@ def fold_infer(mixed_precision, crop_size):
     slice_val = vars(model_cfg.slice)[slice_key]
     model_cfg.slice = slice_val
     megafold = MegaFold(model_cfg, mixed_precision=mixed_precision)
+    if is_ge_only:
+        megafold.set_jit_config(JitConfig(jit_level="O2"))
     load_checkpoint(checkpoint_path, megafold)
     fp32_white_list = (nn.Softmax, nn.LayerNorm)
     amp_convert(megafold, fp32_white_list)
@@ -102,9 +104,10 @@ def test_910A_Ascend_fold():
                         device_target="Ascend",
                         memory_optimize_level="O1",
                         max_call_depth=6000)
+    context.set_context(jit_config={"jit_level": "O2"})
     mixed_precision = 1
     crop_size = 1024
-    confidence, time_list = fold_infer(mixed_precision, crop_size)
+    confidence, time_list = fold_infer(mixed_precision, crop_size, True)
     compile_time, exectue_time = time_list
     compile_time = compile_time - exectue_time
     assert confidence > 0.9

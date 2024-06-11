@@ -16,6 +16,7 @@ import argparse
 
 import numpy as np
 
+import mindspore as ms
 from mindformers import LlamaConfig, TransformerOpParallelConfig, LlamaTokenizer, LlamaForCausalLM, init_context
 from mindformers.normal_config import MindFormerConfig
 
@@ -60,6 +61,7 @@ def main(args):
     init_context(use_parallel=args.use_parallel,
                  context_config=config.context,
                  parallel_config=config.parallel)
+    ms.set_context(jit_config={"jit_level": "O2"})
 
     model_config = LlamaConfig(**config.model.model_config)
 

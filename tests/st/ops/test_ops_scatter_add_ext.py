@@ -44,7 +44,7 @@ def test_scatter_add_ext_normal(mode):
     Expectation: expect correct result.
     """
     if mode == ms.GRAPH_MODE:
-        os.environ['GRAPH_OP_RUN'] = "1"
+        ms.set_context(jit_config={"jit_level": "O0"})
     ms.context.set_context(mode=mode, device_target="Ascend")
     ## forward
     x = Tensor(np.array([[1.341, 2.435, 3.21, -4.144, 5.098]]), dtype=ms.float32)
@@ -87,8 +87,6 @@ def test_scatter_add_ext_normal(mode):
     expect_dsrc = np.ones((1, 2))
     assert np.allclose(out1[0].asnumpy(), expect_dx)
     assert np.allclose(out1[1].asnumpy(), expect_dsrc)
-    if mode == ms.GRAPH_MODE:
-        del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level1

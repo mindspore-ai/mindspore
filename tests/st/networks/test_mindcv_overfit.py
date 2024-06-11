@@ -20,10 +20,11 @@ import logging
 import os
 import sys
 from time import time
-from multiprocessing import Process, Queue
 
 import numpy as np
 import pytest
+
+# pylint:disable=C0413,C0411
 
 import mindspore as ms
 from mindspore.communication import get_group_size, get_rank, init
@@ -49,9 +50,14 @@ MINDSPORE_HCCL_CONFIG_PATH = "/home/workspace/mindspore_config/hccl/rank_table_8
 
 
 def train(args, device_id=0, rank_id=0, device_num=1):
-    os.environ["RANK_ID"] = str(rank_id)
+    """
+    entry point for network training
+    """
+    if not rank_id is None:
+        os.environ["RANK_ID"] = str(rank_id)
     os.environ["RANK_SIZE"] = str(device_num)
-    ms.set_context(mode=args.mode, device_id=device_id)
+    if not device_id is None:
+        ms.set_context(mode=args.mode, device_id=device_id)
     ms.set_context(deterministic="ON")
 
     # change learning rate
@@ -90,7 +96,7 @@ def train(args, device_id=0, rank_id=0, device_num=1):
         checkpoint_path=args.ckpt_path,
         ema=args.ema,
     )
-    num_params = sum([param.size for param in network.get_parameters()])
+    num_params = sum(param.size for param in network.get_parameters())
 
     # create loss
     loss = create_loss(
@@ -239,14 +245,6 @@ def train(args, device_id=0, rank_id=0, device_num=1):
     return loss_start, loss_end, average_step_time, compile_time
 
 
-def compute_process(q, device_id, device_num, args):
-    os.environ["RANK_TABLE_FILE"] = MINDSPORE_HCCL_CONFIG_PATH
-    _, loss_end, _, _ = train(
-        args, device_id=device_id, rank_id=device_id, device_num=device_num
-    )
-    q.put(loss_end)
-
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
@@ -275,24 +273,11 @@ def test_resnet_50_8p():
     Description: Test resnet50 8p overfit training, check the start loss and end loss after 200 steps.
     Expectation: No exception.
     """
-    q = Queue()
-    device_num = 8
-    args = parse_args([f"--config={workspace}/mindcv/configs/resnet/resnet_50_ascend.yaml"])
-    process = []
-    for i in range(device_num):
-        device_id = i
-        process.append(Process(target=compute_process, args=(q, device_id, device_num, args)))
+    ret = os.system("export GLOG_v=2 && msrun --worker_num=8 --local_worker_num=8 "
+                    "--master_addr=127.0.0.1 --master_port=10969 "
+                    f"--join=True python {__file__}")
+    assert ret == 0
 
-    for i in range(device_num):
-        process[i].start()
-
-    print("Waiting for all subprocesses done...")
-
-    for i in range(device_num):
-        process[i].join()
-
-    res0 = q.get()
-    assert 0.97 <= res0 <= 1.07, f"Loss start should in [7.25, 7.35], but got {res0}"
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
@@ -351,3 +336,13 @@ def test_vit_b32_1p():
     assert 7.04 <= loss_start <= 7.14, f"Loss start should in [7.04, 7.14], but got {loss_start}"
     assert 0.98 <= loss_end <= 1.08, f"Loss start should in [0.98, 1.08], but got {loss_end}"
     # assert average_step_time < 809.58, f"Average step time should shorter than 809.58ms"
+
+
+# entrypoint for 8P parallel
+if __name__ == '__main__':
+    devices_num = 8
+    input_args = parse_args([f"--config={workspace}/mindcv/configs/resnet/resnet_50_ascend.yaml"])
+
+    _, last_loss, _, _ = train(input_args, device_id=None, rank_id=None, device_num=devices_num)
+
+    assert 0.97 <= last_loss <= 1.07, f"Loss start should in [0.97, 1.07], but got {last_loss}"

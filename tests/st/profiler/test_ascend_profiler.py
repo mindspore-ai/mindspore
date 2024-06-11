@@ -26,7 +26,7 @@ import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import Model
 from mindspore import Profiler
-from mindspore import Tensor
+from mindspore import Tensor, JitConfig
 from mindspore.ops import operations as P
 from tests.security_utils import security_off_wrap
 
@@ -179,6 +179,7 @@ def test_collect_custom_aicpu():
     with tempfile.TemporaryDirectory() as tmpdir:
         profiler = Profiler(output_path=tmpdir)
         net = Net1()
+        net.set_jit_config(JitConfig(jit_level="O2"))
         net(Tensor(np.random.random((6,)), mstype.float64))
         profiler.analyse()
         aicpu_intermediate_file_list = glob.glob(f"{tmpdir}/profiler/aicpu_intermediate_*.csv")
