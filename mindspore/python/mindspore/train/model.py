@@ -36,6 +36,7 @@ from mindspore._checkparam import check_input_data, check_output_data
 from mindspore import _checkparam as Validator
 from mindspore.train.callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback, TimeMonitor
 from mindspore.train.callback import __all__ as internal_cb_names
+from mindspore.train.callback._cluster_monitor import ClusterMonitor
 from mindspore import context
 from mindspore.parallel._utils import _get_parallel_mode, _get_device_num, _get_parameter_broadcast, \
     _device_number_check, _parameter_broadcast_check, _parallel_predict_check, \
@@ -114,6 +115,33 @@ def _save_final_ckpt(func):
         else:
             func(self, *args, **kwargs)
     return wrapper
+
+
+def _append_ccae(callbacks):
+    """Add cluster monitoring when CCAE is enabled."""
+    perf_config = os.getenv("PERF_DUMP_CONFIG")
+    if perf_config is None:
+        return callbacks
+    pairs = perf_config.split(',')
+    perf_config_dict = {}
+    for pair in pairs:
+        key, value = pair.split(':')
+        if value.lower() == 'true':
+            perf_config_dict[key] = True
+        elif value.lower() == 'false':
+            perf_config_dict[key] = False
+        elif value.isdigit():
+            perf_config_dict[key] = int(value)
+        else:
+            perf_config_dict[key] = value
+    if perf_config_dict.get("enable", False):
+        if callbacks is None:
+            callbacks = ClusterMonitor()
+        elif isinstance(callbacks, list):
+            callbacks.append(ClusterMonitor())
+        else:
+            callbacks = [callbacks, ClusterMonitor()]
+    return callbacks
 
 
 class Model:
@@ -1075,6 +1103,8 @@ class Model:
                              "but got {}.".format(sink_size))
 
         _device_number_check(self._parallel_mode, self._device_number)
+
+        callbacks = _append_ccae(callbacks)
 
         if callbacks:
             self._check_methods_for_custom_callbacks(callbacks, "train")
