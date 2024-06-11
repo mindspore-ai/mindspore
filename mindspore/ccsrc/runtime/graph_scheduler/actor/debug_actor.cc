@@ -81,6 +81,16 @@ void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &
     }
   }
 }
+
+void DebugActor::DebugPreLaunch(const AnfNodePtr &node, const std::vector<DeviceTensor *> &input_device_tensors,
+                                const std::vector<DeviceTensor *> &output_device_tensors,
+                                const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context,
+                                const AID *) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(op_context);
+}
+
 /*
  * Feature group: Dump, Online debugger.
  * Target device group: GPU.
@@ -88,9 +98,10 @@ void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &
  * Description: Load and read data for the given node if needed. Dump the node if dump is enabled and free the loaded
  * memory after the dump (for GPU and ascend kernel-by-kernel).
  */
-void DebugActor::Debug(const AnfNodePtr &node, const std::vector<DeviceTensor *> &input_device_tensors,
-                       const std::vector<DeviceTensor *> &output_device_tensors, const DeviceContext *device_context,
-                       OpContext<DeviceTensor> *const op_context, const AID *) {
+void DebugActor::DebugPostLaunch(const AnfNodePtr &node, const std::vector<DeviceTensor *> &input_device_tensors,
+                                 const std::vector<DeviceTensor *> &output_device_tensors,
+                                 const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context,
+                                 const AID *) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);

@@ -567,6 +567,11 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   }
   PreLaunchKernel(context);
 
+  if (debug_aid_ != nullptr) {
+    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugPreLaunch, kernel_, input_device_tensors_,
+                              output_device_tensors_, device_contexts_[0], context, &GetAID());
+  }
+
   bool skip_launch = CollectiveManager::instance()->need_reinit() || IsSkippedLaunch(kernel_, nullptr);
   if (!skip_launch && !LaunchKernel(context)) {
     MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope()
@@ -580,8 +585,8 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
 
   // Debug actor is blocked, must wait debug actor callback message to process continue.
   if (debug_aid_ != nullptr) {
-    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, input_device_tensors_, output_device_tensors_,
-                              device_contexts_[0], context, &GetAID());
+    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugPostLaunch, kernel_, input_device_tensors_,
+                              output_device_tensors_, device_contexts_[0], context, &GetAID());
   }
 
   PostLaunchKernel(context);
@@ -851,6 +856,12 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
 
   // 2. Launch kernel if need.
   device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread(false);
+
+  if (debug_aid_ != nullptr) {
+    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugPreLaunch, kernel_, input_device_tensors_,
+                              output_device_tensors_, device_contexts_[0], context, &GetAID());
+  }
+
   if (!IsSkippedLaunch(kernel_, nullptr) && !LaunchKernel(context)) {
     MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope()
                       << trace::DumpSourceLines(kernel_);
@@ -860,8 +871,8 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
     SetMemInfoForDebugAndRdr();
 
     if (debug_aid_ != nullptr) {
-      ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, input_device_tensors_, output_device_tensors_,
-                                device_contexts_[0], context, &GetAID());
+      ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugPostLaunch, kernel_, input_device_tensors_,
+                                output_device_tensors_, device_contexts_[0], context, &GetAID());
     }
     if (recorder_aid_ != nullptr) {
       ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &mem_info_,
