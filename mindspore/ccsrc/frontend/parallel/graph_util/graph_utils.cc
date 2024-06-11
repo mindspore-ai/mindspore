@@ -558,7 +558,7 @@ Status ConvertReshapeInputs(const OperatorParams &params,
     }
     if (param.first.first == USE_ORIGIN_SHAPE) {
       use_origin_shape = GetValue<bool>(param.first.second);
-      MS_LOG(ERROR) << "Has USE_ORIGIN_SHAPE = " << use_origin_shape;
+      MS_LOG(INFO) << "Has USE_ORIGIN_SHAPE = " << use_origin_shape;
       continue;
     }
   }
@@ -569,7 +569,6 @@ Status ConvertReshapeInputs(const OperatorParams &params,
     (void)new_node_input->emplace_back(val);
     return SUCCESS;
   }
-  MS_LOG(ERROR) << "shape param = " << shape_vec;
   if (use_origin_shape && tensor_redistribution_from_cnode->original_reshape_shape() != nullptr) {
     // Only reshape in user's code should be in this branch.
     // original_reshape_shape could be ValueNode, MakeTuple, Shape.
@@ -581,7 +580,7 @@ Status ConvertReshapeInputs(const OperatorParams &params,
     MS_LOG(WARNING) << "The shape of Reshape op has more than one -1, cannot be supported for now.";
   }
   if (!WhetherMatchingIsNeededForReshape(shape_vec, tensor_redistribution_from_cnode)) {
-    MS_LOG(ERROR) << "No need to matching for " << shape_vec;
+    MS_LOG(INFO) << "No need to matching for " << shape_vec;
     AnfNodePtr val = NewValueNode(shape_param.first.second);
     val->set_abstract(shape_param.first.second->ToAbstract());
     (void)new_node_input->emplace_back(val);
