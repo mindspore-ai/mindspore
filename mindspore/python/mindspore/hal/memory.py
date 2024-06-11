@@ -25,7 +25,8 @@ def memory_stats(device_target=None):
     Returns status information queried from the memory pool.
 
     Note:
-        If `device_target` is not specified, get the device capability of the current backend set by context.
+        - If `device_target` is not specified, get the device capability of the current backend set by context.
+        - For the `CPU` backend, a dictionary with empty data is always returned.
 
     Args:
         device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
@@ -59,7 +60,8 @@ def memory_reserved(device_target=None):
     Returns the total amount of memory currently managed by the memory pool.
 
     Note:
-        If `device_target` is not specified, get the device capability of the current backend set by context.
+        - If `device_target` is not specified, get the device capability of the current backend set by context.
+        - For the `CPU` backend, 0 is always returned.
 
     Args:
         device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
@@ -86,7 +88,8 @@ def max_memory_reserved(device_target=None):
     Returns the peak value of the total memory managed by the memory pool since the process was started.
 
     Note:
-        If `device_target` is not specified, get the device capability of the current backend set by context.
+        - If `device_target` is not specified, get the device capability of the current backend set by context.
+        - For the `CPU` backend, 0 is always returned.
 
     Args:
         device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
@@ -210,7 +213,8 @@ def memory_allocated(device_target=None):
     Returns the actual memory size currently occupied by Tensor.
 
     Note:
-        If `device_target` is not specified, get the device capability of the current backend set by context.
+        - If `device_target` is not specified, get the device capability of the current backend set by context.
+        - For the `CPU` backend, 0 is always returned.
 
     Args:
         device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
@@ -237,7 +241,8 @@ def max_memory_allocated(device_target=None):
     Returns the peak memory size of the memory pool actually occupied by Tensor since the process was started.
 
     Note:
-        If `device_target` is not specified, get the device capability of the current backend set by context.
+        - If `device_target` is not specified, get the device capability of the current backend set by context.
+        - For the `CPU` backend, 0 is always returned.
 
     Args:
         device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
