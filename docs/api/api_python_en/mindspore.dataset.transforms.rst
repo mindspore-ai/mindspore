@@ -73,6 +73,7 @@ Transforms
     mindspore.dataset.vision.CutMixBatch
     mindspore.dataset.vision.CutOut
     mindspore.dataset.vision.Decode
+    mindspore.dataset.vision.DecodeVideo
     mindspore.dataset.vision.Equalize
     mindspore.dataset.vision.Erase
     mindspore.dataset.vision.FiveCrop
@@ -157,6 +158,8 @@ Utilities
     mindspore.dataset.vision.get_image_size
     mindspore.dataset.vision.read_file
     mindspore.dataset.vision.read_image
+    mindspore.dataset.vision.read_video
+    mindspore.dataset.vision.read_video_timestamps
     mindspore.dataset.vision.write_file
     mindspore.dataset.vision.write_jpeg
     mindspore.dataset.vision.write_png

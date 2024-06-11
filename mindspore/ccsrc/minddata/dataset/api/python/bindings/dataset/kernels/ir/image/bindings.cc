@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
+#include "minddata/dataset/kernels/image/video_utils.h"
 
 #include "minddata/dataset/kernels/ir/vision/adjust_brightness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/adjust_contrast_ir.h"
@@ -36,6 +37,7 @@
 #include "minddata/dataset/kernels/ir/vision/cutmix_batch_ir.h"
 #include "minddata/dataset/kernels/ir/vision/cutout_ir.h"
 #include "minddata/dataset/kernels/ir/vision/decode_ir.h"
+#include "minddata/dataset/kernels/ir/vision/decode_video_ir.h"
 #include "minddata/dataset/kernels/ir/vision/equalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/erase_ir.h"
 #include "minddata/dataset/kernels/ir/vision/gaussian_blur_ir.h"
@@ -269,6 +271,17 @@ PYBIND_REGISTER(DecodeOperation, 1, ([](const py::module *m) {
                       return decode;
                     }));
                 }));
+
+PYBIND_REGISTER(
+  DecodeVideoOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::DecodeVideoOperation, TensorOperation, std::shared_ptr<vision::DecodeVideoOperation>>(
+      *m, "DecodeVideoOperation")
+      .def(py::init([]() {
+        auto decode_video = std::make_shared<vision::DecodeVideoOperation>();
+        THROW_IF_ERROR(decode_video->ValidateParams());
+        return decode_video;
+      }));
+  }));
 
 PYBIND_REGISTER(EncodeJpegOperation, 1, ([](py::module *m) {
                   (void)m->def("encode_jpeg", ([](const std::shared_ptr<Tensor> &image, int quality) {
@@ -790,6 +803,30 @@ PYBIND_REGISTER(ReadImageOperation, 1, ([](py::module *m) {
                                  std::shared_ptr<Tensor> output;
                                  THROW_IF_ERROR(mindspore::dataset::ReadImage(filename, &output, mode));
                                  return output;
+                               }));
+                }));
+
+PYBIND_REGISTER(ReadVideo, 1, ([](py::module *m) {
+                  (void)m->def(
+                    "read_video",
+                    ([](const std::string &filename, float start_pts, float end_pts, const std::string &pts_unit) {
+                      std::shared_ptr<Tensor> video_output;
+                      std::shared_ptr<Tensor> audio_output;
+                      std::map<std::string, std::string> metadata_output;
+                      THROW_IF_ERROR(mindspore::dataset::ReadVideo(filename, &video_output, &audio_output,
+                                                                   &metadata_output, start_pts, end_pts, pts_unit));
+                      return std::make_tuple(video_output, audio_output, metadata_output);
+                    }));
+                }));
+
+PYBIND_REGISTER(ReadVideoTimestampsOperation, 1, ([](py::module *m) {
+                  (void)m->def("read_video_timestamps", ([](const std::string &filename, const std::string &pts_unit) {
+                                 std::vector<int64_t> pts_int64_vector;
+                                 float video_fps;
+                                 float time_base;
+                                 THROW_IF_ERROR(mindspore::dataset::ReadVideoTimestamps(
+                                   filename, &pts_int64_vector, &video_fps, &time_base, pts_unit));
+                                 return std::make_tuple(pts_int64_vector, video_fps, time_base);
                                }));
                 }));
 

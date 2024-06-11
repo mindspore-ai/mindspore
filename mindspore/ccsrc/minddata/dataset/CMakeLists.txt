@@ -234,6 +234,12 @@ else()
     target_link_libraries(_c_dataengine PUBLIC mindspore::sentencepiece mindspore::z)
 endif()
 
+if(ENABLE_FFMPEG)
+    set(FFMPEG_LIB mindspore::avcodec mindspore::avdevice mindspore::avfilter mindspore::avformat mindspore::avutil
+    mindspore::swresample mindspore::swscale)
+    target_link_libraries(_c_dataengine PUBLIC ${FFMPEG_LIB})
+endif()
+
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turbojpeg mindspore::opencv_core
                                           mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
                                           mindspore::sentencepiece_train ${ICU_LIB})

@@ -5,6 +5,8 @@ mindspore.dataset.vision.ConvertColor
 
     更改图像的色彩空间。
 
+    支持 Ascend 硬件加速，需要通过 `.device("Ascend")` 方式开启。
+
     参数：
         - **convert_mode**  (:class:`~.vision.ConvertMode`) - 图像色彩空间转换的模式。
 

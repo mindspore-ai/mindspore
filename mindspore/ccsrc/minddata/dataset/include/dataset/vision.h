@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -438,6 +439,36 @@ class DATASET_API CutOut final : public TensorTransform {
  private:
   struct Data;
   std::shared_ptr<Data> data_;
+};
+
+/// \brief Decode the input video.
+class DATASET_API DecodeVideo final : public TensorTransform {
+ public:
+  /// \brief Constructor. It will decode a vector containing a raw video tensor into a vector containing two tensors.
+  ///     The raw video tensor in the input vector should be 1D array of UINT8.
+  ///     The first tensor in the output vector is a visual tensor, the shape is <T,H,W,C>, the type is DE_UINT8. Pixel
+  ///     order is RGB. The second tensor in the output vector is an audio tensor, the shape is <C, L>.
+  /// \par Example
+  /// \code
+  ///     /* Read video file into tensor */
+  ///     mindspore::MSTensor video;
+  ///     ASSERT_OK(mindspore::dataset::vision::ReadFile("/path/to/video/file", &video));
+  ///     std::vector<mindspore::MSTensor> input_tensor;
+  ///     std::vector<mindspore::MSTensor> output_tensor;
+  ///     input_tensor.push_back(video);
+  ///     auto decode_video = vision::DecodeVideo();
+  ///     auto transform = Execute(decode_video);
+  ///     Status rc = transform(input_tensor, &output_tensor);
+  /// \endcode
+  DecodeVideo();
+
+  /// \brief Destructor.
+  ~DecodeVideo() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
 };
 
 /// \brief Encode the image as JPEG data.
@@ -1685,6 +1716,27 @@ Status DATASET_API ReadFile(const std::string &filename, mindspore::MSTensor *ou
 /// \return The status code.
 Status DATASET_API ReadImage(const std::string &filename, mindspore::MSTensor *output,
                              ImageReadMode mode = ImageReadMode::kUNCHANGED);
+
+/// \brief Read the video, audio, metadata from a video file. It supports AVI, H264, H265, MOV, MP4, WMV file formats.
+/// \param[in] filename The path to the videoe file to be read.
+/// \param[out] video_output The video frames of the video file.
+/// \param[out] audio_output The audio frames of the video file.
+/// \param[out] metadata_output The metadata contains video_fps, audio_fps.
+/// \param[in] start_pts The start presentation timestamp of the video. Default: 0.0.
+/// \param[in] end_pts The end presentation timestamp of the video. Default: 2147483647.0.
+/// \param[in] pts_unit The unit for the timestamps, can be one of ["pts", "sec"]. Default: "pts".
+/// \return The status code.
+Status DATASET_API ReadVideo(const std::string &filename, mindspore::MSTensor *video_output,
+                             mindspore::MSTensor *audio_output, std::map<std::string, std::string> *metadata_output,
+                             float start_pts = 0.0, float end_pts = 2147483647.0, const std::string &pts_unit = "pts");
+
+/// \brief Read the timestamps and frame rate of a video file. It supports AVI, H264, H265, MOV, MP4, WMV files.
+/// \param[in] filename The path to the videoe file to be read.
+/// \param[out] output The tuple(video_timestamps, video_fps) of the video.
+/// \param[in] pts_unit The unit for the timestamps, can be one of ["pts", "sec"]. Default: "pts".
+/// \return The status code.
+Status DATASET_API ReadVideoTimestamps(const std::string &filename, std::tuple<std::vector<float>, float> *output,
+                                       const std::string &pts_unit = "pts");
 
 /// \brief Crop the given image and zoom to the specified size.
 class DATASET_API ResizedCrop final : public TensorTransform {

@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 Interpolation Mode, Resampling Filters
 """
 from enum import Enum, IntEnum
+from fractions import Fraction
 import numbers
 
 import numpy as np
@@ -624,6 +625,125 @@ def read_image(filename, mode=ImageReadMode.UNCHANGED):
     if not isinstance(mode, ImageReadMode):
         raise TypeError("Input mode is not of type {0}, but got: {1}.".format(ImageReadMode, type(mode)))
     return cde.read_image(filename, ImageReadMode.to_c_type(mode)).as_array()
+
+
+def read_video(filename, start_pts=0, end_pts=None, pts_unit="pts"):
+    """
+    Read the video, audio, metadata from a video file.
+
+    It supports AVI, H264, H265, MOV, MP4, WMV file formats.
+
+    Args:
+        filename(str): The path to the video file to be read.
+        start_pts(Union[float, Fraction, int], optional): The start presentation timestamp of the video. Default: 0.
+        end_pts(Union[float, Fraction, int], optional): The end presentation timestamp of the video. Default: None.
+            The None is represented by 2147483647.
+        pts_unit(str, optional)): The unit of the timestamps. It can be any of ["pts", "sec"]. Default: "pts".
+
+    Returns:
+        - numpy.ndarray, four dimensions uint8 data for video. The format is [T, H, W, C]. `T` is the number of frames,
+          `H` is the height, `W` is the width, `C` is the channel for RGB.
+        - numpy.ndarray, two dimensions float for audio. The format is [C, L]. `C` is the number of channels.
+          `L` is the length of the points in one channel.
+        - dict, metadata for the video and audio.
+          It contains video_fps data of type float and audio_fps data of type int.
+
+    Raises:
+        TypeError: If `filename` is not of type str.
+        TypeError: If `start_pts` is not of type [float, Fraction, int].
+        TypeError: If `end_pts` is not of type [float, Fraction, int].
+        TypeError: If `pts_unit` is not of type str.
+        RuntimeError: If `filename` does not exist, or not a regular file, or not a supported video file.
+        ValueError: If `start_pts` is less than 0.
+        ValueError: If `end_pts` is less than `start_pts`.
+        ValueError: If `pts_unit` is not in ["pts", "sec"].
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import mindspore.dataset.vision as vision
+        >>> video_output, audio_output, metadata_output = vision.read_video("/path/to/file")
+    """
+    if not isinstance(filename, str):
+        raise TypeError("Input filename is not of type {0}, but got: {1}.".format(str, type(filename)))
+    if not isinstance(start_pts, (float, Fraction, int)):
+        raise TypeError("Input start_pts is not of type [{0}, {1}, {2}], but got: {3}".format(float, Fraction, int,
+                                                                                              type(start_pts)))
+    if start_pts < 0.0:
+        err_msg = "Not supported start_pts for " + str(start_pts) + ". The start_pts should be >= 0."
+        raise ValueError(err_msg)
+    if end_pts is None:
+        end_pts = 2147483647.0
+    if not isinstance(end_pts, (float, Fraction, int)):
+        raise TypeError("Input end_pts is not of type [{0}, {1}, {2}], but got: {3}".format(float, Fraction, int,
+                                                                                            type(end_pts)))
+    if end_pts < start_pts:
+        err_msg = "Not supported end_pts for " + str(end_pts) + ". start_pts = " + str(start_pts) + "."
+        err_msg += " The end_pts should be >= start_pts."
+        raise ValueError(err_msg)
+    if not isinstance(pts_unit, str):
+        raise TypeError("Input pts_unit is not of type {0}, but got: {1}.".format(str, type(pts_unit)))
+    if pts_unit not in ["pts", "sec"]:
+        raise ValueError("Not supported pts_unit for " + pts_unit)
+
+    video_output, audio_output, raw_metadata = cde.read_video(filename, float(start_pts), float(end_pts), pts_unit)
+
+    if video_output is not None:
+        video_output = video_output.as_array()
+    if audio_output is not None:
+        audio_output = audio_output.as_array()
+    metadata_output = {}
+    for key in raw_metadata:
+        if key == "video_fps":
+            metadata_output[key] = float(raw_metadata[key])
+            continue
+        if key == "audio_fps":
+            metadata_output[key] = int(raw_metadata[key])
+            continue
+        metadata_output[key] = raw_metadata[key]
+    return video_output, audio_output, metadata_output
+
+
+def read_video_timestamps(filename, pts_unit="pts"):
+    """
+    Read the timestamps and frames per second of a video file.
+    It supports AVI, H264, H265, MOV, MP4, WMV files.
+
+    Args:
+        filename(str): The path to the video file to be read.
+        pts_unit(str, optional): The unit of the timestamps. It can be any of ["pts", "sec"]. Default: "pts".
+
+    Returns:
+        - list, when `pts_unit` is set to "pts", list[int] is returned, when `pts_unit` is set to "sec",
+          list[float] is returned.
+        - float, the frames per second of the video file.
+
+    Raises:
+        TypeError: If `filename` is not of type str.
+        TypeError: If `pts_unit` is not of type str.
+        RuntimeError: If `filename` does not exist, or not a regular file, or not a supported video file.
+        RuntimeError: If `pts_unit` is not in ["pts", "sec"].
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import mindspore.dataset.vision as vision
+        >>> video_timestamps, video_fps = vision.read_video_timestamps("/path/to/file")
+    """
+    if not isinstance(filename, str):
+        raise TypeError("Input filename is not of type {0}, but got: {1}.".format(str, type(filename)))
+    if not isinstance(pts_unit, str):
+        raise TypeError("Input pts_unit is not of type {0}, but got: {1}.".format(str, type(pts_unit)))
+
+    video_pts, video_fps, time_base = cde.read_video_timestamps(filename, pts_unit)
+
+    if video_pts == []:
+        return video_pts, None
+    if pts_unit == "pts":
+        return video_pts, video_fps
+    return [x * time_base for x in video_pts], video_fps
 
 
 def write_file(filename, data):
