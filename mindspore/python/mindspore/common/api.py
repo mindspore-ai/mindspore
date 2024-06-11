@@ -137,7 +137,7 @@ def _convert_python_data(data):
     """
     if isinstance(data, (Tensor, PythonTensor)) and data.adapter_flag:
         return ms_adapter_registry.tensor(data)
-    if _ms_adapter_tensor_as_parameter_output(data):
+    if _ms_adapter_tensor_as_parameter_output(data) and hasattr(data, "tensor"):
         return data.tensor
     if isinstance(data, Tensor) and not isinstance(data, PythonTensor):
         return PythonTensor(data, internal=True)

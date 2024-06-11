@@ -879,7 +879,10 @@ void ByteCodeParser::ParseCallFunction(const InstrPtr &instr) {
     // the number of parameters is 2 when flag is 1
     // Otherwise, the number of parameters is 1
     MS_EXCEPTION_IF_CHECK_FAIL((size == 0 || size == 1), "The flag of CALL_FUNCTION_EX must be 0 or 1.");
-    size = (IntToSize(size) & 0x1) ? 2 : 1;
+    size = 1;
+    if (IntToSize(size) & 0x1){
+      size += 1;
+    }
   }
   // The tuple of keys occupies a position
   if (instr->GetOpCode() == CALL_FUNCTION_KW) {

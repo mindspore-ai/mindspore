@@ -127,7 +127,7 @@ class AbstractObjectBase {
   static AObject *MakeAObject(Type type, PyTypeObject *tp, PyObject *op, RecMap *rec = nullptr);
   PyTypeObject *type_object_;
   const Type type_;
-  int ms_flag_;
+  unsigned ms_flag_;
 };
 
 class AbstractObject : public AbstractObjectBase {
