@@ -16,6 +16,7 @@
 #include "ops/ops_func_impl/sum_ext.h"
 #include <set>
 #include "ops/ops_func_impl/reduce_arithmetic.h"
+#include "ops/ops_func_impl/simple_infer.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {
@@ -44,5 +45,30 @@ TypePtr SumExtFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
 
   return std::make_shared<TensorType>(TypeIdToType(type_id));
 }
+
+ShapeArray SumExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return ReduceExtandSimpleInferShape(primitive, input_values);
+}
+
+TypePtrList SumExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  if (input_values[kIndex3] == mindspore::kNone) {
+    const auto &input = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+    MS_EXCEPTION_IF_NULL(input);
+    const auto &input_type = input->Dtype();
+    const auto &input_type_id = input->Dtype()->type_id();
+    static std::set<TypeId> intergral_set = {kNumberTypeBool, kNumberTypeUInt8, kNumberTypeInt8, kNumberTypeInt16,
+                                             kNumberTypeInt32};
+    if (intergral_set.find(input_type_id) != intergral_set.end()) {
+      return {kInt64};
+    } else {
+      return {input_type};
+    }
+  } else {
+    const auto &dtype = input_values[kIndex3]->cast<Int64ImmPtr>();
+    MS_EXCEPTION_IF_NULL(dtype);
+    return {TypeIdToType(static_cast<TypeId>(dtype->value()))};
+  }
+}
+REGISTER_SIMPLE_INFER(kNameSumExt, SumExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

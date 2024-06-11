@@ -70,7 +70,7 @@ void MeanExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPt
   }
 
   // Infer function has confirmed the actual dtype of output
-  TypeId out_dtype = op->output_abs()->GetType()->cast<TensorTypePtr>()->element()->type_id();
+  TypeId out_dtype = op->output_value_simple_info()->dtype_vector_[kIndex0]->type_id();
 
   BaseTensorPtr act_tensor = input_tensor;
   // Call Cast before Launch ReduceMean
