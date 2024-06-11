@@ -36,6 +36,7 @@ Tensor Creation
     :template: classtemplate.rst
 
     mindspore.mint.eye
+    mindspore.mint.one_hot
 
 Element-wise Operation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -71,6 +72,17 @@ Reduction Functions
     mindspore.mint.prod
     mindspore.mint.sum
 
+Comparison Functions
+^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.greater_equal
+    mindspore.mint.maximum
+    mindspore.mint.minimum
 
 Element-wise Operation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -107,19 +119,6 @@ Neural Network Layer Functions
 Convolution functions
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-
-
-Comparison Functions
-^^^^^^^^^^^^^^^^^^^^
-
-.. msplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.greater_equal
-    mindspore.mint.maximum
-    mindspore.mint.minimum
 
 Pooling functions
 ^^^^^^^^^^^^^^^^^^^
@@ -164,18 +163,6 @@ Non-linear activation functions
 
 Linear functions
 ^^^^^^^^^^^^^^^^^^^
-
-
-Tensor Creation
-^^^^^^^^^^^^^^^
-
-.. msplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.one_hot
-
 
 
 
