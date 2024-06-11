@@ -162,6 +162,8 @@ def check_range(x, dim_size):
     if dim_size is None:
         return x
     if isinstance(x, int) and not isinstance(x, bool):
+        if x >= dim_size or x < -dim_size:
+            raise IndexError(f'index {x} is out of bounds for dimension with size {dim_size}')
         x = x % dim_size
     return x
 
@@ -725,6 +727,8 @@ def sequence_mul_int(seq, number):
     Returns:
         New sequence, has the same type as `seq`.
     """
+    if not isinstance(number, int):
+        raise TypeError(f"can't multiply sequence by non-int of type {type(number)}")
     return seq * number
 
 

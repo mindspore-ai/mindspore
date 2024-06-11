@@ -261,6 +261,10 @@ def arange(start=0, end=None, step=1, *, dtype=None):
     start = _cast_type(start, max_type)
     end = _cast_type(end, max_type)
     step = _cast_type(step, max_type)
+
+    if start.shape != () or end.shape != () or step.shape != ():
+        raise ValueError(f"For arange, the input args must be a TensorScalar,"
+                         f" but got start shape:{start.shape}, end shape:{end.shape}, step shape:{step.shape}")
     data = range_(start, end, step)
     if dtype is not None:
         data = cast_(data, dtype)
@@ -4277,6 +4281,8 @@ def is_nonzero(input):
     """
     if not isinstance(input, Tensor):
         raise TypeError(f'For is_nonzero, the input must be a Tensor, but got {type(input)}.')
+    if input.numel() != 1:
+        raise ValueError(f"For is_nonzero, the numel of input must be 1, but got {input.numel()}.")
     out = ops.squeeze(input)
     return bool(out)
 
@@ -5384,8 +5390,6 @@ def narrow(input, axis, start, length):
          [ 5 6]
          [ 8 9]]
     """
-    if not ops.isconstant(input.ndim) or not ops.isconstant(input.shape):
-        return ms.mint.narrow(input, axis, start, length)
     validator.check_value_type("input", input, Tensor, "narrow")
     validator.check_axis_in_range(axis, input.ndim)
     validator.check_int_range(start, 0, input.shape[axis], validator.INC_LEFT)
@@ -5513,10 +5517,11 @@ def topk(input, k, dim=None, largest=True, sorted=True):
     if not largest:
         input = -input
     if dim is None or dim == input.ndim - 1:
-        values, indices = top_k_(input, k)
         if not largest:
-            values = -values
-        return values, indices
+            res = top_k_(input, k)
+            values, indices = -res[0], res[1]
+            return values, indices
+        return top_k_(input, k)
     input = input.swapaxes(dim, input.ndim - 1)
     output = top_k_(input, k)
     values = output[0].swapaxes(dim, input.ndim - 1)
@@ -5787,6 +5792,7 @@ def diagonal_scatter(input, src, offset=0, dim1=0, dim2=1):
     _check_is_tensor("input", input, "diagonal_scatter")
     _check_is_tensor("src", src, "diagonal_scatter")
     input_diag = input.diagonal(offset, dim1, dim2)
+    _check_diagonal_scatter_shape(input_diag.shape, src.shape)
     input_shape = input.shape
     zeros_shape = list(input_shape)
     m, n = input_shape[dim1], input_shape[dim2]
@@ -6133,8 +6139,6 @@ def movedim(x, source, destination):
         (4, 3, 5)
     """
     ndim = ops.rank(x)
-    if not ops.isconstant(ndim):
-        raise ValueError("For 'movedim', dynamic rank is not support now.")
     source = _check_axis_valid(source, ndim)
     destination = _check_axis_valid(destination, ndim)
     if len(source) != len(destination):
@@ -6202,11 +6206,7 @@ def swapaxes(input, axis0, axis1):
     '''
     if not isinstance(input, Tensor):
         raise TypeError(f'For ops.swapaxes, parameter `input` must be Tensor, but got {type(input)}')
-
-    if not ops.isconstant(input.ndim):
-        raise ValueError("For swapaxes, dynamic rank is not support now.")
     axis0, axis1 = _check_swapaxes_axis((axis0, axis1), input.ndim)
-
     if axis0 == axis1:
         return input
     if axis0 > axis1:
@@ -6416,6 +6416,7 @@ def repeat_elements(x, rep, axis=0):
     rep = _check_positive_int(rep, "rep", "repeat_elements")
     axis = _check_is_int(axis, "axis", "repeat_elements")
     x_rank = rank_(x)
+    axis = _check_axis_range(axis, x_rank, "axis", "repeat_elements")
     axis = axis + x.ndim if axis < 0 else axis
     expand_axis = axis + 1
     x_expand = expand_dims(x, expand_axis)
