@@ -218,8 +218,8 @@ def _tensor_setitem(self, index, value):
     return output
 
 
-tensor_operator_registry.register("__getitem__", _tensor_getitem)
-tensor_operator_registry.register("__setitem__", _tensor_setitem)
+setattr(tensor_operator_registry, "__getitem__", _tensor_getitem)
+setattr(tensor_operator_registry, "__setitem__", _tensor_setitem)
 
 
 def _tensor_add(self, other):
@@ -288,15 +288,15 @@ def _tensor_floordiv(self, other):
     return F.floordiv(self, other)
 
 
-tensor_operator_registry.register('__add__', _tensor_add)
-tensor_operator_registry.register('__sub__', _tensor_sub)
-tensor_operator_registry.register('__mul__', _tensor_mul)
-tensor_operator_registry.register('__matmul__', _tensor_matmul)
-tensor_operator_registry.register('__truediv__', _tensor_div)
-tensor_operator_registry.register('__mod__', _tensor_mod)
-tensor_operator_registry.register('__pow__', _tensor_pow)
-tensor_operator_registry.register('__rpow__', _tensor_rpow)
-tensor_operator_registry.register('__floordiv__', _tensor_floordiv)
+setattr(tensor_operator_registry, '__add__', _tensor_add)
+setattr(tensor_operator_registry, '__sub__', _tensor_sub)
+setattr(tensor_operator_registry, '__mul__', _tensor_mul)
+setattr(tensor_operator_registry, '__matmul__', _tensor_matmul)
+setattr(tensor_operator_registry, '__truediv__', _tensor_div)
+setattr(tensor_operator_registry, '__mod__', _tensor_mod)
+setattr(tensor_operator_registry, '__pow__', _tensor_pow)
+setattr(tensor_operator_registry, '__rpow__', _tensor_rpow)
+setattr(tensor_operator_registry, '__floordiv__', _tensor_floordiv)
 
 
 def _scalar_to_tensor(input_x):
@@ -356,8 +356,8 @@ def tensor_itemset(data, *args):
     return tensor_itemset_with_number(data, args[0])
 
 
-tensor_operator_registry.register("item", tensor_item)
-tensor_operator_registry.register("itemset", tensor_itemset)
+setattr(tensor_operator_registry, "item", tensor_item)
+setattr(tensor_operator_registry, "itemset", tensor_itemset)
 
 
 def tensor_itemset_with_number(data, number_value):
@@ -1401,7 +1401,7 @@ def reduce_(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
     return reduce_fn(a, axes).astype(dtype)
 
 
-tensor_operator_registry.register("reduce", reduce_)
+setattr(tensor_operator_registry, "reduce", reduce_)
 
 
 def check_indices(dims, indices, mode, allow_negative_index=True):
@@ -1428,7 +1428,7 @@ def check_indices(dims, indices, mode, allow_negative_index=True):
     return clipped
 
 
-tensor_operator_registry.register('check_indices', check_indices)
+setattr(tensor_operator_registry, 'check_indices', check_indices)
 
 
 def convert_slice_to_tensor(index, final_shape, slice_cnt, broadcast_shape, slice_shapes, fancy_position):
