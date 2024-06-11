@@ -20,6 +20,7 @@ Array Operation
     mindspore.mint.max
     mindspore.mint.min
     mindspore.mint.ones_like
+    mindspore.mint.rand_like
     mindspore.mint.scatter_add
     mindspore.mint.tile
     mindspore.mint.topk
@@ -37,6 +38,7 @@ Tensor Creation
 
     mindspore.mint.eye
     mindspore.mint.one_hot
+    mindspore.mint.rand
 
 Element-wise Operation
 ^^^^^^^^^^^^^^^^^^^^^^^^^

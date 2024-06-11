@@ -3,7 +3,7 @@ mindspore.mint.rand_like
 
 .. py:function:: mindspore.mint.rand_like(input, *, dtype=None)
 
-    返回一个Tensor，shape和dtype由输入决定，其元素为服从均匀分布的 :math:`[0, 1)` 区间的数字。
+    返回shape与输入相同，类型为 `dtype` 的Tensor，dtype由输入决定，其元素取值服从 :math:`[0, 1)` 区间内的均匀分布。
 
     参数：
         - **input** (Tensor) - 输入的Tensor，用来决定输出Tensor的shape和默认的dtype。
