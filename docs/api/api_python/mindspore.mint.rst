@@ -20,6 +20,7 @@ Array操作
     mindspore.mint.max
     mindspore.mint.min
     mindspore.mint.ones_like
+    mindspore.mint.rand_like
     mindspore.mint.scatter_add
     mindspore.mint.tile
     mindspore.mint.topk
@@ -37,6 +38,7 @@ Tensor创建
 
     mindspore.mint.eye
     mindspore.mint.one_hot
+    mindspore.mint.rand
 
 逐元素运算
 ^^^^^^^^^^^^^^^^
