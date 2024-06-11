@@ -17,7 +17,7 @@ mindspore.communication.comm_func.scatter_tensor
 
     返回：
         Tensor，即 :math:`(x_1/src, x_2, ..., x_R)` 。
-        Tensor第0维等于输入数据第0维除以`src`，其他维度相同。
+        Tensor第0维等于输入数据第0维除以 `src` ，其他维度相同。
 
     异常：
         - **TypeError** - 首个输入的数据类型不为Tensor，`op` 或 `group` 不是str。

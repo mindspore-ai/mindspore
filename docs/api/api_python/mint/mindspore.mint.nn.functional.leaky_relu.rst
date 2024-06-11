@@ -9,9 +9,9 @@ mindspore.mint.nn.functional.leaky_relu
 
     .. math::
         \text{leaky_relu}(input) = \begin{cases}input, &\text{if } input \geq 0; \cr
-        {\negative_slope} * input, &\text{otherwise.}\end{cases}
+        \text{negative_slope} * input, &\text{otherwise.}\end{cases}
 
-    其中，:math:`\negative_slope` 表示 `negative_slope` 参数。
+    其中，:math:`negative\_slope` 表示 `negative_slope` 参数。
 
     更多细节详见 `Rectifier Nonlinearities Improve Neural Network Acoustic Models <https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_ 。
 
