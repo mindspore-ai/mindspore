@@ -36,23 +36,20 @@ split_item        inputs     weight      outputs
       2:      separated     separated    integrated
       3:     integrated     b, k, n      integrated
 */
+namespace {
 constexpr size_t listInputNum = 7;
-constexpr size_t kInputX = 0;
-constexpr size_t kInputWeight = 1;
-constexpr size_t kInputBias = 2;
-constexpr size_t kInputScale = 3;
-constexpr size_t kInputOffset = 4;
-constexpr size_t kInputAntiquantScale = 5;
-constexpr size_t kInputAntiquantOffset = 6;
+constexpr size_t kGmmInputX = 0;
+constexpr size_t kGmmInputWeight = 1;
 // optional None
-constexpr size_t kInputGroupList = 7;
+constexpr size_t kGmmInputGroupList = 7;
 // attr
-constexpr size_t kInputSplitItem = 8;
-constexpr size_t kInputGroupType = 9;
+constexpr size_t kGmmInputSplitItem = 8;
+constexpr size_t kGmmInputGroupType = 9;
 
-constexpr size_t tensor2D = 2;
-constexpr size_t tensor3D = 3;
-constexpr size_t tensor6D = 6;
+constexpr size_t gmmTensor2D = 2;
+constexpr size_t gmmTensor3D = 3;
+constexpr size_t gmmTensor6D = 6;
+}  // namespace
 
 int64_t gGroupedMatmulSplitItem = 0;
 
@@ -104,35 +101,35 @@ BaseShapePtr GroupedMatmulFuncImpl::InferShape(const PrimitivePtr &primitive,
   const std::string op_name = primitive->name();
 
   // check split_item
-  MS_EXCEPTION_IF_NULL(input_args[kInputSplitItem]);
-  auto split_type = input_args[kInputSplitItem]->GetType();
+  MS_EXCEPTION_IF_NULL(input_args[kGmmInputSplitItem]);
+  auto split_type = input_args[kGmmInputSplitItem]->GetType();
   if (split_type->isa<TypeNone>()) {
     MS_EXCEPTION(ShapeError) << "For '" << op_name << "', the split_item must be a int. Current split_item is None";
   }
-  ValuePtr split_ptr = input_args[kInputSplitItem]->GetValue();
+  ValuePtr split_ptr = input_args[kGmmInputSplitItem]->GetValue();
   auto split_item = GetValue<int64_t>(split_ptr);
   CheckSplitItem(op_name, split_item);
   gGroupedMatmulSplitItem = split_item;
 
   // check group_type
-  MS_EXCEPTION_IF_NULL(input_args[kInputGroupType]);
-  auto group_type_type = input_args[kInputGroupType]->GetType();
+  MS_EXCEPTION_IF_NULL(input_args[kGmmInputGroupType]);
+  auto group_type_type = input_args[kGmmInputGroupType]->GetType();
   if (group_type_type->isa<TypeNone>()) {
     MS_EXCEPTION(ShapeError) << "For '" << op_name << "', the group_type must be a int. Current group_type is None";
   }
-  ValuePtr group_type_ptr = input_args[kInputGroupType]->GetValue();
+  ValuePtr group_type_ptr = input_args[kGmmInputGroupType]->GetValue();
   auto group_type = GetValue<int64_t>(group_type_ptr);
   CheckGroupType(op_name, group_type);
 
   CheckSplitItemAndGroupType(op_name, group_type, split_item);
 
   // x_list
-  auto x_ptr = input_args[kInputX]->cast<abstract::AbstractTuplePtr>();
+  auto x_ptr = input_args[kGmmInputX]->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(x_ptr);
   abstract::AbstractTuple x_list = *x_ptr;
 
   // weight_list
-  auto weight_ptr = input_args[kInputWeight]->cast<abstract::AbstractTuplePtr>();
+  auto weight_ptr = input_args[kGmmInputWeight]->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(weight_ptr);
   abstract::AbstractTuple weight_list = *weight_ptr;
 
@@ -153,11 +150,11 @@ BaseShapePtr GroupedMatmulFuncImpl::InferShape(const PrimitivePtr &primitive,
     if (x_list.size() == 1 && weight_list.size() == 1) {
       std::vector<int64_t> x_shape = x_list[0]->GetShape()->GetShapeVector();
       std::vector<int64_t> w_shape = weight_list[0]->GetShape()->GetShapeVector();
-      if (x_shape.size() != tensor2D) {
+      if (x_shape.size() != gmmTensor2D) {
         MS_EXCEPTION(ShapeError) << "For '" << op_name
                                  << "', when split_item is 3, the x[0] must be 2D Tensor. But x[0] shape :" << x_shape;
       }
-      if (w_shape.size() != tensor3D) {
+      if (w_shape.size() != gmmTensor3D) {
         MS_EXCEPTION(ShapeError) << "For '" << op_name
                                  << "', when split_item is 3, the w[0] must be 3D Tensor. But w[0] shape :" << w_shape;
       }
@@ -184,11 +181,11 @@ BaseShapePtr GroupedMatmulFuncImpl::InferShape(const PrimitivePtr &primitive,
   for (size_t i = 0; i < x_list.size(); i++) {
     std::vector<int64_t> x_shape = x_list[i]->GetShape()->GetShapeVector();
     std::vector<int64_t> w_shape = weight_list[i]->GetShape()->GetShapeVector();
-    if (x_shape.size() < tensor2D || x_shape.size() > tensor6D) {
+    if (x_shape.size() < gmmTensor2D || x_shape.size() > gmmTensor6D) {
       MS_EXCEPTION(ShapeError) << "For '" << op_name << "', when split_item is 0, the tensor in x must be 2-6D. But"
                                << i << "th tensor in x, shape is : " << x_shape;
     }
-    if (w_shape.size() != tensor2D) {
+    if (w_shape.size() != gmmTensor2D) {
       MS_EXCEPTION(ShapeError) << "For '" << op_name << "', when split_item is 0, the tensor in x must be 2-6D. But"
                                << i << "th tensor in x, shape is : " << x_shape;
     }
@@ -211,34 +208,35 @@ TypePtr GroupedMatmulFuncImpl::InferType(const PrimitivePtr &primitive,
   const auto &op_name = primitive->name();
   const std::set<TypePtr> xw_input_type = {kFloat16, kBFloat16, kFloat32, kInt8};
 
-  MS_EXCEPTION_IF_NULL(input_args[kInputX]);
-  CheckInputType(input_args, op_name, "x", kInputX, xw_input_type);
+  MS_EXCEPTION_IF_NULL(input_args[kGmmInputX]);
+  CheckInputType(input_args, op_name, "x", kGmmInputX, xw_input_type);
 
-  MS_EXCEPTION_IF_NULL(input_args[kInputWeight]);
-  CheckInputType(input_args, op_name, "weight", kInputWeight, xw_input_type);
+  MS_EXCEPTION_IF_NULL(input_args[kGmmInputWeight]);
+  CheckInputType(input_args, op_name, "weight", kGmmInputWeight, xw_input_type);
 
   // get split_item and check groups
-  MS_EXCEPTION_IF_NULL(input_args[kInputSplitItem]);
-  auto split_type = input_args[kInputSplitItem]->GetType();
+  MS_EXCEPTION_IF_NULL(input_args[kGmmInputSplitItem]);
+  auto split_type = input_args[kGmmInputSplitItem]->GetType();
   if (split_type->isa<TypeNone>()) {
     MS_EXCEPTION(TypeError) << "For '" << op_name << "', the group_type must be a int. Current split_item is None";
   }
-  ValuePtr split_ptr = input_args[kInputSplitItem]->GetValue();
+  ValuePtr split_ptr = input_args[kGmmInputSplitItem]->GetValue();
   auto split_item = GetValue<int64_t>(split_ptr);
   CheckSplitItem(op_name, split_item);
   if (split_item == 3) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("grouplist", input_args[kInputGroupList]->GetType(), {kInt64},
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("grouplist", input_args[kGmmInputGroupList]->GetType(), {kInt64},
                                                      op_name);
   }
 
   // check group_list
-  MS_EXCEPTION_IF_NULL(input_args[kInputGroupList]);
-  auto group_list_type = input_args[kInputGroupList]->GetType();
+  MS_EXCEPTION_IF_NULL(input_args[kGmmInputGroupList]);
+  auto group_list_type = input_args[kGmmInputGroupList]->GetType();
   if (split_item == 3 && group_list_type->isa<TypeNone>()) {
     MS_EXCEPTION(ShapeError) << "For '" << op_name
                              << "', the group_type must be a int when split_item equal 3. Current group_type is None";
   }
-  auto group_list_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputGroupList]->GetShape());
+  auto group_list_shape_map =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGmmInputGroupList]->GetShape());
   auto group_list_shape = group_list_shape_map[kShape];
   if (split_item == 3 && group_list_shape.size() != 1) {
     MS_EXCEPTION(ShapeError) << "For '" << op_name << "', the grouplist must be 1D Tensor when split_item equal 3."
@@ -246,13 +244,13 @@ TypePtr GroupedMatmulFuncImpl::InferType(const PrimitivePtr &primitive,
   }
 
   // check group_type
-  MS_EXCEPTION_IF_NULL(input_args[kInputGroupType]);
-  auto group_type_type = input_args[kInputGroupType]->GetType();
+  MS_EXCEPTION_IF_NULL(input_args[kGmmInputGroupType]);
+  auto group_type_type = input_args[kGmmInputGroupType]->GetType();
   if (split_item == 3 && group_type_type->isa<TypeNone>()) {
     MS_EXCEPTION(ShapeError) << "For '" << op_name
                              << "', the group_type must be a int when split_item equal 3. Current group_type is None";
   }
-  ValuePtr group_type_ptr = input_args[kInputGroupType]->GetValue();
+  ValuePtr group_type_ptr = input_args[kGmmInputGroupType]->GetValue();
   auto group_type = GetValue<int64_t>(group_type_ptr);
   if (split_item == 3 && group_type != 0) {
     MS_EXCEPTION(ShapeError) << "For '" << op_name
@@ -262,7 +260,7 @@ TypePtr GroupedMatmulFuncImpl::InferType(const PrimitivePtr &primitive,
 
   // support split_item 0 or 3
   std::vector<TypePtr> type_tuple;
-  abstract::AbstractTuple x_list = *(input_args[kInputX]->cast<abstract::AbstractTuplePtr>());
+  abstract::AbstractTuple x_list = *(input_args[kGmmInputX]->cast<abstract::AbstractTuplePtr>());
   for (size_t i = 0; i < x_list.size(); i++) {
     type_tuple.emplace_back(x_list[i]->GetType()->Clone());
   }
@@ -273,7 +271,7 @@ TypePtr GroupedMatmulFuncImpl::InferType(const PrimitivePtr &primitive,
 // In compiler get grouplist(not none) for resize
 std::set<int64_t> GroupedMatmulFuncImpl::GetValueDependArgIndices() const {
   if (gGroupedMatmulSplitItem == 3) {
-    return {kInputGroupList};
+    return {kGmmInputGroupList};
   } else {
     return {};
   }
