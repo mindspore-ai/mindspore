@@ -84,8 +84,6 @@ struct COMMON_EXPORT OpRangeData : BaseReportData {
 
 class COMMON_EXPORT ProfilingFrameworkData {
  public:
-  static void RecordLaunchGETaskBegin(const std::string &scope_name);
-  static void RecordGETask(const std::string &scope_name);
   static void RecordHostStack(std::shared_ptr<ProfilerData> data);
 
   inline static std::map<std::string, uint64_t> kernel_launch_begin_;

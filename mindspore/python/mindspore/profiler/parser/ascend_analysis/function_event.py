@@ -151,7 +151,7 @@ class MindSporeOpEvent(BaseEvent):
             if type_name == Constant.OP_NAME or type_id not in self._orig_data.keys():
                 continue
             if type_name in set([Constant.INPUT_SHAPES, Constant.INPUT_DTYPES, Constant.CALL_STACK]):
-                args[type_name] = self._orig_data.get(type_id).replace(";", ";\r\n")
+                args[type_name] = self._orig_data.get(type_id).replace("|", "\r\n")
             else:
                 args[type_name] = self._orig_data.get(type_id)
         return args
