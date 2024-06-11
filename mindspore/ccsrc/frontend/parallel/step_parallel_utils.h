@@ -45,6 +45,8 @@ static const std::set<std::string> INPUT_IS_TUPLE_OR_LIST_OPS = {CONCAT, STACK, 
 static const std::set<std::string> ALLREDUCE_PULL_DOWN_WHITE_LIST = {
   STRIDED_SLICE, TUPLE_GETITEM_OP, RESHAPE, TRANSPOSE, MIRROR_OPERATOR, ADD, MUL, DIV, GATHERV2, PRELU, RELU, SILU,
   GELU,          FAST_GELU};
+// support new shapebase operator
+static const std::set<std::string> SUPPORT_NEW_SHAPEBASE_OPS = {VIRTUAL_DATA_SET};
 
 const int64_t TWO_INPUT_SIZE = 2;
 
@@ -74,13 +76,16 @@ bool IsSomePrimitiveList(const CNodePtr &cnode, const std::set<string> &check_li
 bool IsParallelCareNode(const CNodePtr &cnode);
 bool IsAutoParallelCareNode(const CNodePtr &cnode);
 Shapes GetNodeShape(const AnfNodePtr &node);
+bool HasSupportedValueSequence(const CNodePtr &node);
 // Extract shape from anfnode
 std::vector<Shapes> ExtractShape(const CNodePtr &node);
+std::vector<NewShapes> ExtractNewShape(const CNodePtr &node);
 std::vector<Shapes> ExtractRealDivisor(const CNodePtr &node);
 // Generate and init parallel operator
 OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
                                  const std::vector<Shapes> &shape_list);
 OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode);
+OperatorInfoPtr CreateOperatorInfoForTupleShape(const CNodePtr &cnode);
 std::string GetPrimName(const CNodePtr &node);
 std::shared_ptr<Value> GetAttrsFromAnfNode(const std::shared_ptr<AnfNode> &node, const string &key);
 std::string CreateInstanceName(const CNodePtr &node, size_t index);
@@ -97,9 +102,10 @@ AnfNodePtr GetInputNodeWithFilter(const AnfNodePtr &node,
                                   std::function<std::pair<bool, size_t>(const CNodePtr &)> filter);
 void RedistributionPreNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager,
                            std::vector<AnfNodePtr> *pre_nodes);
-void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager,
-                            const NodeUsersMap &node_users_map, int64_t get_item_index, int64_t make_tuple_index,
-                            std::vector<std::pair<std::pair<AnfNodePtr, int>, int>> *next_nodes);
+void RedistributionNextNode(
+  const AnfNodePtr &node, const FuncGraphManagerPtr &manager, const NodeUsersMap &node_users_map,
+  const std::vector<int> &get_item_index, int64_t make_tuple_index,
+  std::vector<std::pair<std::pair<AnfNodePtr, std::vector<int>>, std::vector<int>>> *next_nodes);
 AnfNodePtr NewMicroMirrorPrimByMicroMirror(const FuncGraphPtr &func_graph, const CNodePtr &micro_mirror,
                                            const AnfNodePtr &micro_mirror_new_input);
 // for specific scenarios
@@ -130,6 +136,7 @@ void ExceptionIfHasCommunicationOp(const std::vector<AnfNodePtr> &all_nodes);
 std::string MirrorOpName();
 // Extract strategy from attr
 StrategyPtr ExtractStrategy(const ValuePtr &stra);
+StrategyPtr ExtractNewStrategy(const ValuePtr &stra);
 ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth);
 std::vector<std::pair<AnfNodePtr, int>> FuncGraphNodeUsers(const std::pair<AnfNodePtr, int> &node_pair);
 Status ParallelInit(size_t rank_id = 0, const size_t devices = 0);
@@ -143,9 +150,10 @@ bool CrossInterNode(CNodePtr *prev_cnode, ValueNodePtr *prev_prim_anf_node, Prim
 bool IsCarePrevCNode(const CNodePtr &prev_cnode, const PrimitivePtr &prev_prim);
 void SetSharedParameterFlag(const FuncGraphPtr &root, const AnfNodePtr &parameter);
 StrategyPtr GenerateStandAloneStrategy(const Shapes &inputs_shape);
+StrategyPtr GenerateStandAloneStrategyForNewShapes(const NewShapes &inputs_shape);
 StrategyPtr GenerateBatchParallelStrategy(const OperatorInfoPtr operator_, const PrimitivePtr prim);
 bool IsInsertVirtualOutput(const FuncGraphPtr &root);
-TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_pair);
+TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_pair, const int &make_tuple_index);
 Shape mirror_group_list(const TensorLayoutPtr &layout);
 // Transfer number to serial number string
 std::string GetSerialNumberString(size_t number);

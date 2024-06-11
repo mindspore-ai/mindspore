@@ -154,13 +154,20 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const CNodePtr &cnode, bool 
       make_tuple_index = node_pair.second;
       return FindNextLayout(use_apply, next_is_reshape, make_tuple_index);
     }
+    if (IsParallelCareNode(use_apply) && use_apply->has_user_data<OperatorInfo>() &&
+        IsSomePrimitiveList(use_apply, SUPPORT_NEW_SHAPEBASE_OPS)) {
+      MS_LOG(INFO) << "FindNextLayout success node " << use_apply->DebugString() << ", in support new shapebase ops";
+      *next_is_reshape = false;
+      auto layout = GetInputLayoutFromCNode(node_pair, make_tuple_index);
+      return std::make_shared<TensorLayout>(layout);
+    }
     if (IsParallelCareNode(use_apply) && use_apply->has_user_data<OperatorInfo>()) {
       if (make_tuple_index != -1) {
         node_pair.second = make_tuple_index;
       }
       MS_LOG(INFO) << "FindNextLayout success node " << use_apply->DebugString();
       *next_is_reshape = false;
-      auto layout = GetInputLayoutFromCNode(node_pair);
+      auto layout = GetInputLayoutFromCNode(node_pair, -1);
       return std::make_shared<TensorLayout>(layout);
     }
     MS_LOG(DEBUG) << "FindNextLayout failed node " << use_apply->DebugString() << "  " << IsParallelCareNode(use_apply)
