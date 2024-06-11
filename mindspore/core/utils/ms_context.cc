@@ -534,12 +534,10 @@ void PrintJitLevelAndExecMode(bool is_jit_level_changed, const std::string &jit_
   }
 }
 }  // namespace
-bool MsContext::IsKByKExecutorMode() const {
-  // Get jit level.
+
+std::string MsContext::GetJitLevel() const {
   const auto &jit_config = PhaseManager::GetInstance().jit_config();
   std::string jit_level = "";
-  static std::string jit_level_log = "";
-  bool is_jit_level_changed = false;
   auto iter = jit_config.find("jit_level");
   if (iter != jit_config.end()) {
     jit_level = iter->second;
@@ -554,9 +552,18 @@ bool MsContext::IsKByKExecutorMode() const {
     } else if (mode == kGraphMode && device_target == kAscendDevice) {
       jit_level = kAttrJitLevelO2;
     } else {
-      jit_level = kAttrJitLevelO1;
+      jit_level = kAttrJitLevelO0;
     }
   }
+  return jit_level;
+}
+
+bool MsContext::IsKByKExecutorMode() const {
+  // Get jit level.
+  std::string jit_level = GetJitLevel();
+  static std::string jit_level_log = "";
+  bool is_jit_level_changed = false;
+  auto mode = get_param<int>(MS_CTX_EXECUTION_MODE);
   if (jit_level_log != jit_level) {
     is_jit_level_changed = true;
     jit_level_log = jit_level;

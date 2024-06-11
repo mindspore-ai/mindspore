@@ -14,7 +14,6 @@
 # ============================================================================
 
 import numpy as np
-import os
 import pytest
 import mindspore.context as context
 from mindspore import Tensor, nn, JitConfig
@@ -59,7 +58,8 @@ class ComplexNet(nn.Cell):
 
 
 def get_output(net, args, args_dyn=None, enable_graph_kernel=False):
-    context.set_context(enable_graph_kernel=enable_graph_kernel)
+    jit_level = "O1" if enable_graph_kernel else "O0"
+    context.set_context(jit_config={"jit_level": jit_level})
     with AssertGKEnable(enable_graph_kernel):
         net_obj = net()
         if args_dyn:
@@ -98,10 +98,8 @@ def test_easy_fuse_dvm(shape1, shape2, dtype):
     Description: ascend test case, use graph_kernel execute ops.
     Expectation: the result match with close graph_kernel result
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     fuse(shape1, shape2, dtype)
-    del os.environ["GRAPH_OP_RUN"]
 
 
 class Net(nn.Cell):
@@ -162,7 +160,7 @@ def test_dvm_multiple_run():
     """
     np.random.seed(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_graph_kernel=True,
+    context.set_context(jit_config={"jit_level": "O1"},
                         graph_kernel_flags="--enable_cluster_ops=Reshape")
     x0_dyn = Tensor(shape=(None,), dtype=ms.float16)
     x1_dyn = Tensor(shape=(None,), dtype=ms.float16)
@@ -206,7 +204,7 @@ def test_dvm_transpose():
     np.random.seed(1)
     enable_graph_kernel = True
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_graph_kernel=enable_graph_kernel,
+    context.set_context(jit_config={"jit_level": "O1"},
                         graph_kernel_flags="--enable_cluster_ops=Transpose")
     x0 = np.random.normal(0, 1, (16, 32, 16)).astype(np.float16)
     trans = [(1, 0, 2), (0, 2, 1)]
