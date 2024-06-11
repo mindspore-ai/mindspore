@@ -167,6 +167,7 @@ bool InsertTensorMoveForHcclOpGe::NeedInsertTensorMove(const FuncGraphPtr &graph
 void InsertTensorMoveForHcclOpGe::InsertTensorMove(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(hccl_node);
+  auto manager = graph->manager();
   bool need_tensor_move_async = false;
   std::vector<AnfNodePtr> new_inputs = {hccl_node->input(0)};
   for (size_t i = 1; i < hccl_node->size(); ++i) {
@@ -185,6 +186,22 @@ void InsertTensorMoveForHcclOpGe::InsertTensorMove(const FuncGraphPtr &graph, co
         MS_LOG(DEBUG) << "The tenser move op has dynamic shape attr.";
       }
       AdjustDepend(input, tensor_move);
+      if (IsPrimitiveCNode(input, prim::kPrimDepend) && input->cast<CNodePtr>()->HasAttr(kAttrRecomputeCommDepend)) {
+        auto tensor_move_cnode = tensor_move->cast<CNodePtr>();
+        auto depend_cnode = input->cast<CNodePtr>();
+        tensor_move_cnode->set_input(kIndex1, depend_cnode->input(kIndex1));
+        manager->SetEdge(depend_cnode, kIndex1, tensor_move_cnode);
+        new_inputs.push_back(depend_cnode);
+        need_tensor_move_async = true;
+        auto depend_rely_node = depend_cnode->input(kIndex2);
+        if (IsPrimitiveCNode(depend_rely_node)) {
+          std::vector<AnfNodePtr> depend_inputs1{NewValueNode(prim::kPrimDepend), depend_rely_node, tensor_move_cnode};
+          auto depend_node1 = graph->NewCNode(depend_inputs1);
+          depend_node1->set_abstract(depend_rely_node->cast<CNodePtr>()->abstract()->Clone());
+          manager->Replace(depend_rely_node, depend_node1);
+        }
+        continue;
+      }
       new_inputs.push_back(tensor_move);
       need_tensor_move_async = true;
     } else {
@@ -198,7 +215,6 @@ void InsertTensorMoveForHcclOpGe::InsertTensorMove(const FuncGraphPtr &graph, co
     new_hccl_node->set_inputs(new_inputs);
     new_hccl_node->set_scope(hccl_node->scope());
     new_hccl_node->set_fullname_with_scope(hccl_node->fullname_with_scope());
-    auto manager = graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
     MS_LOG(DEBUG) << "start replace new_hccl_node to old hccl_node";
     auto kernel_graph = graph->cast<KernelGraphPtr>();
