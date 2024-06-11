@@ -1,5 +1,5 @@
 mindspore.ops.elu
-=================
+==================
 
 .. py:function:: mindspore.ops.elu(input_x, alpha=1.0)
 
@@ -27,7 +27,7 @@ mindspore.ops.elu
         - **alpha** (float, 可选) - ELU的alpha值，数据类型为float，目前仅支持1.0。默认值： ``1.0`` 。
 
     返回：
-        Tensor，输出的shape、数据类型与 `input_x` 相同。
+        Tensor，输出的shape和数据类型与 `input_x` 相同。
 
     异常：
         - **TypeError** - 如果 `alpha` 不是float。

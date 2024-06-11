@@ -351,16 +351,17 @@ class ELU(Cell):
 
     Args:
         alpha (float): The alpha value of ELU, the data type is float. Default: ``1.0`` .
+            Only alpha equal to ``1.0`` is supported currently.
 
     Inputs:
-        - **x** (Tensor) - The input of ELU is a Tensor of any dimension with data type of float16 or float32.
+        - **input_x** (Tensor) - The input of ELU is a Tensor of any dimension with data type of float16 or float32.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same type and shape as the `input_x`.
 
     Raises:
         TypeError: If `alpha` is not a float.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
         ValueError: If `alpha` is not equal to 1.0.
 
     Supported Platforms:

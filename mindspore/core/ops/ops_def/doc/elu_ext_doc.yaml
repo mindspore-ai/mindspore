@@ -1,0 +1,46 @@
+elu_ext:
+  description: |
+    Exponential Linear Unit activation function.
+
+    Applies the exponential linear unit function element-wise.
+    The activation function is defined as:
+
+    .. math::
+
+        \text{ELU}(x)= \left\{
+        \begin{array}{align}
+            \alpha(e^{x}  - 1) & \text{if } x \le 0\\
+            x & \text{if } x \gt 0\\
+        \end{array}\right.
+
+    Where :math:`x` is the element of input Tensor `input`, :math:`\alpha` is param `alpha`,
+    it determines the smoothness of ELU.
+
+    ELU function graph:
+
+    .. image:: ../images/ELU.png
+        :align: center
+
+    Args:
+        input (Tensor): The input of ELU is a Tensor of any dimension.
+        alpha (float, optional): The alpha value of ELU, the data type is float.
+            Default: ``1.0`` .
+
+    Returns:
+        Tensor, has the same shape and data type as `input`.
+
+    Raises:
+        TypeError: If `alpha` is not a float.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> output = ops.elu_ext(x)
+        >>> print(output)
+        [[-0.63212055  4.         -0.99966455]
+         [ 2.         -0.99326205  9.        ]]

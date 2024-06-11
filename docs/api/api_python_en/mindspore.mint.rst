@@ -92,6 +92,8 @@ Pointwise Operations
     mindspore.mint.sqrt
     mindspore.mint.sub
 
+    mindspore.mint.tanh
+
 
 Reduction Operations
 ^^^^^^^^^^^^^^^^^^^^^
@@ -101,6 +103,7 @@ Reduction Operations
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.all
     mindspore.mint.mean
     mindspore.mint.prod
     mindspore.mint.sum
@@ -229,11 +232,14 @@ Non-linear activation functions
     :template: classtemplate.rst
 
     mindspore.mint.nn.functional.binary_cross_entropy
+    mindspore.mint.nn.functional.elu
     mindspore.mint.nn.functional.leaky_relu
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
     mindspore.mint.nn.functional.softmax
     mindspore.mint.nn.functional.softplus
+    mindspore.mint.nn.functional.tanh
+
 
 
 
