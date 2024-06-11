@@ -33,12 +33,16 @@ namespace mindspore {
 namespace profiler {
 namespace ascend {
 
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 uint64_t GetClockMonotonicRawNs() {
   struct timespec ts = {0};
   clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
   return static_cast<uint64_t>(ts.tv_sec) * 1000000000 +
          static_cast<uint64_t>(ts.tv_nsec);  // 1000000000为秒转换为纳秒的倍数
 }
+#else
+uint64_t GetClockMonotonicRawNs() { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+#endif
 
 inline void EncodeStrData(uint16_t type, const std::string &data, const std::unique_ptr<std::vector<uint8_t>> &result) {
   for (size_t i = 0; i < sizeof(uint16_t); ++i) {
@@ -90,7 +94,7 @@ inline void EncodeStrArrayData(const uint16_t type, const std::vector<std::strin
 }
 
 void OpRangeData::preprocess() {
-  const std::string delim = ";";
+  const std::string delim = "|";
   const std::string remove_ms = "site-packages/mindspore";
   if (stack.size() > 0 && !stack[0].empty()) {
     std::string all_stack = stack[0];
