@@ -96,6 +96,7 @@ void PyBoostOpExecute::RunOpInVm(OpRunnerInfo *op_runner_info, VectorRef *op_out
   VectorRef args;
   std::transform(op_runner_info->inputs.begin(), op_runner_info->inputs.end(), std::back_inserter(args),
                  [](const auto &value) { return value; });
+  py::gil_scoped_acquire gil;
   auto result = compile::RunOperation(op_runner_info->prim, args);
   if (utils::isa<PyObjectRef>(result)) {
     PyObjectRef py_ref = utils::cast<PyObjectRef>(result);
