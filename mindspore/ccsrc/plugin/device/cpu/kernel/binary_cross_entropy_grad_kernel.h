@@ -20,9 +20,9 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "mindapi/base/types.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "plugin/device/cpu/kernel/binary_cross_entropy_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -46,7 +46,7 @@ class BinaryCrossEntropyGradCpuKernelMod : public NativeCpuKernelMod {
 
   TypeId dtype_{kTypeUnknown};
   size_t input_size_{1};
-  ReductionType reduction_{kNone};
+  Reduction reduction_{Reduction::MEAN};
 };
 }  // namespace kernel
 }  // namespace mindspore

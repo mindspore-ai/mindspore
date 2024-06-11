@@ -1,0 +1,27 @@
+#operator binary_cross_entropy_grad
+binary_cross_entropy_grad:
+  args:
+    input:
+      dtype: tensor
+    target:
+      dtype: tensor
+    grad_output:
+      dtype: tensor
+    weight:
+      dtype: tensor
+      default: None
+    reduction:
+      dtype: int
+      default: "'mean'"
+      prim_init: True
+      arg_handler: str_to_enum
+  returns:
+    out:
+      dtype: tensor
+  class:
+    name: BinaryCrossEntropyGrad
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: BinaryCrossEntropyGradAscend
