@@ -30,6 +30,7 @@ namespace ops {
 constexpr auto kSelectCondIndex = 0;
 constexpr auto kSelectXIndex = 1;
 constexpr auto kSelectYIndex = 2;
+constexpr auto kSelectInputLen = 3;
 class MIND_API SelectFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

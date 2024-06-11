@@ -48,6 +48,14 @@ using double_complex = std::complex<double>;
 
 abstract::BaseShapePtr SelectFuncImpl::InferShape(const PrimitivePtr &prim,
                                                   const std::vector<AbstractBasePtr> &input_args) const {
+  if (input_args.size() < kSelectInputLen) {
+    MS_LOG(EXCEPTION) << "For " << prim->name() << ", the input size should be at least" << kSelectInputLen
+                      << " but got " << input_args.size();
+  }
+  for (size_t i = 0; i < kSelectInputLen; ++i) {
+    MS_EXCEPTION_IF_NULL(input_args[i]);
+    MS_EXCEPTION_IF_NULL(input_args[i]->GetShape());
+  }
   auto cond_shape = input_args[kSelectCondIndex]->GetShape()->GetShapeVector();
   auto x_shape = input_args[kSelectXIndex]->GetShape()->GetShapeVector();
   auto y_shape = input_args[kSelectYIndex]->GetShape()->GetShapeVector();
@@ -60,7 +68,11 @@ abstract::BaseShapePtr SelectFuncImpl::InferShape(const PrimitivePtr &prim,
 }
 
 TypePtr SelectFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const {
-  auto prim_name = prim->name();
+  const auto &prim_name = prim->name();
+  if (input_args.size() < kSelectInputLen) {
+    MS_LOG(EXCEPTION) << "For " << prim->name() << ", the input size should be at least" << kSelectInputLen
+                      << " but got " << input_args.size();
+  }
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
