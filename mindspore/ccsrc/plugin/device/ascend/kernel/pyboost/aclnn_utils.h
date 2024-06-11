@@ -45,7 +45,7 @@
       DISPATCH_LAUNCH_KERNEL(device_context, aclnn_name, nullptr, 0, executor_handle, stream_ptr, release_function); \
     } else {                                                                                                         \
       auto workspace_device_address =                                                                                \
-        runtime::DeviceAddressUtils::CreateWorkspaceAddressWithoutKernelTensor(device_context, stream_id, ws_size);  \
+        runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, stream_id, ws_size);                     \
       DISPATCH_LAUNCH_KERNEL(device_context, aclnn_name, workspace_device_address->GetMutablePtr(), ws_size,         \
                              executor_handle, stream_ptr, release_function);                                         \
     }                                                                                                                \
@@ -80,8 +80,8 @@
     if (ws_size == 0) {                                                                                           \
       LAUNCH_KERNEL(aclnn_name, nullptr, 0, executor_handle, stream_ptr);                                         \
     } else {                                                                                                      \
-      auto workspace_device_address = runtime::DeviceAddressUtils::CreateWorkspaceAddressWithoutKernelTensor(     \
-        device_context, real_stream_id, ws_size);                                                                 \
+      auto workspace_device_address =                                                                             \
+        runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, real_stream_id, ws_size);             \
       LAUNCH_KERNEL(aclnn_name, workspace_device_address->GetMutablePtr(), ws_size, executor_handle, stream_ptr); \
     }                                                                                                             \
     if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {                                       \
