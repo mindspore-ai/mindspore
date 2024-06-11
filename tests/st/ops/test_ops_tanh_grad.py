@@ -387,7 +387,7 @@ def test_tanh_grad_backward_bfloat16(mode):
     np.testing.assert_allclose(output[1].float().asnumpy(), expect[1], rtol=4e-3, atol=4e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
