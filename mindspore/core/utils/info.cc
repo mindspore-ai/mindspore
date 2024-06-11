@@ -388,7 +388,7 @@ void UpdateInlineCNodeDebugInfo(const AnfNodePtr &caller, const AnfNodePtr &call
       return;
     }
     if (caller_locaton != callee_locaton) {
-      pos = i;
+      pos = SizeToLong(i);
       break;
     }
   }
@@ -401,14 +401,14 @@ void UpdateInlineCNodeDebugInfo(const AnfNodePtr &caller, const AnfNodePtr &call
                 << ", callee_debug_info: " << callee_debug_info << "/"
                 << trace::GetDebugInfoStr(callee_debug_info, "", kSourceLineTipNextLine, true);
   // Change the parse func debug info with call func debug info.
-  const int64_t callee_reverse_pos = callee_debug_infos.size() - pos - 1;
+  const int64_t callee_reverse_pos = SizeToLong(callee_debug_infos.size()) - pos - 1;
   if (callee_reverse_pos < 0) {
     DumpNodesDebugInfos(caller, callee);
     MS_LOG(INTERNAL_EXCEPTION) << "Wrong index for callee.";
   }
   auto parse_def_debug_info = callee_debug_infos[callee_reverse_pos];
   MS_EXCEPTION_IF_NULL(parse_def_debug_info);
-  const int64_t caller_reverse_pos = caller_debug_infos.size() - pos - 1;
+  const int64_t caller_reverse_pos = SizeToLong(caller_debug_infos.size()) - pos - 1;
   if (caller_reverse_pos < 0) {
     DumpNodesDebugInfos(caller, callee);
     MS_LOG(INTERNAL_EXCEPTION) << "Wrong index for caller.";
