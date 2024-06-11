@@ -236,14 +236,16 @@ REG_ADPT_DESC(DropOutDoMaskV3D, kNameDropOutDoMaskV3D, ADPT_DESC(DropOutDoMaskV3
 
 // BinaryCrossEntropy
 INPUT_MAP(BinaryCrossEntropy) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}, {3, INPUT_DESC(weight)}};
-ATTR_MAP(BinaryCrossEntropy) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+ATTR_MAP(BinaryCrossEntropy) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(BinaryCrossEntropy) = {{4, ATTR_DESC(reduction, AnyTraits<GEReduction>())}};
 OUTPUT_MAP(BinaryCrossEntropy) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(BinaryCrossEntropy, kNameBinaryCrossEntropy, ADPT_DESC(BinaryCrossEntropy))
 
 // BinaryCrossEntropyGrad
 INPUT_MAP(BinaryCrossEntropyGrad) = {
   {1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}, {3, INPUT_DESC(grad_output)}, {4, INPUT_DESC(weight)}};
-ATTR_MAP(BinaryCrossEntropyGrad) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+ATTR_MAP(BinaryCrossEntropyGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(BinaryCrossEntropyGrad) = {{5, ATTR_DESC(reduction, AnyTraits<GEReduction>())}};
 OUTPUT_MAP(BinaryCrossEntropyGrad) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(BinaryCrossEntropyGrad, kNameBinaryCrossEntropyGrad, ADPT_DESC(BinaryCrossEntropyGrad))
 

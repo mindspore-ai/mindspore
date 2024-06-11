@@ -819,13 +819,29 @@ REG_BPROP_BUILDER("DropoutExt").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(p), ib->OutZeros(seed), ib->OutZeros(offset)};
 });
 
-REG_BPROP_BUILDER("BinaryCrossEntropy").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("BinaryCrossEntropy").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto weight = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex4);
-  auto dx = ib->Emit("BinaryCrossEntropyGrad", {x, y, dout, weight}, {{"reduction", ib->GetAttr("reduction")}});
-  return {dx, ib->OutZeros(y), ib->OutZeros(weight)};
+  auto reduction = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = ib->Emit("BinaryCrossEntropyGrad", {x, y, dout, weight, reduction});
+  NodePtr dy;
+  if (y->need_compute_grad_out()) {
+    dy = ib->Mul(ib->Mul(ib->Sub(ib->Log(ib->Sub(ib->Tensor(1, ib->GetDtype(x)), x)), ib->Log(x)), dout), weight);
+    auto reduction_value = GetValue<int64_t>(reduction->BuildValue());
+    if (reduction_value == 1) {
+      if (IsDynamic(ib->GetShape(dx))) {
+        auto res = ib->DynSize(y, ib->GetDtype(dy));
+        dy = ib->RealDiv(dy, res);
+      } else {
+        dy = ib->RealDiv(dy, ib->Tensor(ib->GetSize(y), ib->GetDtype(y)));
+      }
+    }
+  } else {
+    dy = ib->OutZeros(y);
+  }
+  return {dx, dy, ib->OutZeros(weight), ib->OutZeros(reduction)};
 });
 
 REG_BPROP_BUILDER("DropoutGrad").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {

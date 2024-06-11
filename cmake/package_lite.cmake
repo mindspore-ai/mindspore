@@ -53,7 +53,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/audio_spectrogram.h
             ${TOP_DIR}/mindspore/core/ops/batch_to_space.h
             ${TOP_DIR}/mindspore/core/ops/batch_to_space_nd.h
-            ${TOP_DIR}/mindspore/core/ops/binary_cross_entropy.h
             ${TOP_DIR}/mindspore/core/ops/broadcast.h
             ${TOP_DIR}/mindspore/core/ops/clip.h
             ${TOP_DIR}/mindspore/core/ops/attention.h

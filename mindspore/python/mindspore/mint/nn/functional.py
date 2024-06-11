@@ -52,7 +52,7 @@ from mindspore.ops.function.nn_func import dropout_ext as dropout
 # 16
 
 # 17
-
+from mindspore.ops.function.nn_func import binary_cross_entropy
 # 18
 
 # 19
@@ -259,7 +259,7 @@ __all__ = [
     # 18
 
     # 19
-
+    'binary_cross_entropy',
     # 20
 
     # 21
