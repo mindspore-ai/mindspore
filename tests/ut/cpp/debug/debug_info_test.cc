@@ -33,10 +33,10 @@ class TestDebugInfo : public UT::Common {
 // Description: Make a location
 // Expectation: make a location with no error
 TEST_F(TestDebugInfo, test_make_location) {
-  LocationPtr loc1 = std::make_shared<Location>("/home/workspace/a.py", 0, 4, 1, 8, "", std::vector<std::string>());
+  LocationPtr loc1 = std::make_shared<Location>("/home/workspace/a.py", 1, 4, 2, 8, "", std::vector<std::string>());
   std::string result_str = loc1->ToString(kSourceLineTipDiscard);
 
-  std::string expect_str("In file /home/workspace/a.py:0~1, 4~8\n");
+  std::string expect_str("In file /home/workspace/a.py:1~2, 4~8\n");
   if (result_str != expect_str) {
     MS_LOG(ERROR) << "expect: " << expect_str;
     MS_LOG(ERROR) << "result: " << result_str;

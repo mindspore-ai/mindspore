@@ -56,7 +56,7 @@ class Location {
         expr_src_(expr),
         comments_(std::move(comments)) {}
   ~Location() = default;
-  MS_CORE_API std::string ToString(SourceLineTip tip = kSourceLineTipNextLine, int start_line = 0) const;
+  MS_CORE_API std::string ToString(SourceLineTip tip = kSourceLineTipNextLine, int start_line = 0);
   MS_CORE_API std::string DebugString() const;
   std::string file_name() const { return file_name_; }
   void set_file_name(const std::string &file_name) { file_name_ = file_name; }
@@ -82,6 +82,7 @@ class Location {
   int column_end_;
   std::string expr_src_;
   std::vector<std::string> comments_;
+  std::string line_str_;
 };
 
 class TraceContext {
