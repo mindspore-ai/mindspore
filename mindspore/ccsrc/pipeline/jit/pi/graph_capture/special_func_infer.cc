@@ -42,6 +42,7 @@ constexpr const char *kModuleName = "mindspore._extends.pijit.pijit_func_white_l
 constexpr const char *kFuncMapName = "_func_map";
 constexpr const char *kSlotCallName = "__call__";
 constexpr const size_t kDictPopParamsNum = 2;
+constexpr const size_t BoundMethodInputSize = 2;
 
 static bool CheckConstexpr(const py::object &func);
 
@@ -602,7 +603,7 @@ static bool InferListAppend(CallNode *call_node, GraphBuilder *parent) {
   ValueNode *new_element = call_node->input(1 + is_method_descriptor);
 
   // transform to "new_list = [old_list[0], old_list[1]..., new_element]"
-  int size = parent->frame().GetStacks().size();
+  size_t size = parent->frame().GetStacks().size();
   if (!parent->UnpackElements(self)) {
     return false;
   }
@@ -741,7 +742,7 @@ bool InferMsApiFunc(CallNode *call_node, GraphBuilder *unused = nullptr) {
 }
 
 bool InferMappingGet(CallNode *call_node, GraphBuilder *unused = nullptr) {
-  if (call_node->getInputs().size() == 2 &&
+  if (call_node->getInputs().size() == BoundMethodInputSize &&
       call_node->input(0)->GetVobj()->GetType() == AbstractObjectBase::kTypeBoundMethod) {
     auto func_node = call_node->input(0);
     auto self = func_node->input(0);

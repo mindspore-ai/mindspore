@@ -35,6 +35,7 @@
 
 namespace mindspore {
 namespace pijit {
+constexpr const size_t MoveEightBits = 2;
 
 class GraphParameterBuilder {
  public:
@@ -184,7 +185,7 @@ std::pair<py::bytes, py::bytes> CodeGenerator::ConvertToCodeBytes(const std::vec
       line = i->line();
     }
     int oparg = i->arg();
-    for (unsigned c = 0, exa = IntToSize(oparg) >> 8; exa > 0; exa >>= 8, ++c) {
+    for (unsigned c = 0, exa = IntToSize(oparg) >> MoveEightBits; exa > 0; exa >>= MoveEightBits, ++c) {
       co_code.insert(co_code.end() - c, PY_MAKECODEUNIT(EXTENDED_ARG, exa & 0xff));
     }
     co_code.push_back(PY_MAKECODEUNIT(i->op(), (signed)oparg & 0xff));

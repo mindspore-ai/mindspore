@@ -90,10 +90,10 @@ class AbstractObjectBase {
   virtual bool IsMindSporeSupportedType();
   virtual std::string ToString() const;
 
-  void SetMsFlag(MindsporeFlag flag) { ms_flag_ |= SizeToInt(flag); }
-  void ClearMsFlag(int flag) { ms_flag_ &= SizeToInt(~flag); }
-  bool HasMsFlag(MindsporeFlag flag) { return ms_flag_ & SizeToInt(flag); }
-  bool TestMsFlag(int flag) { return ms_flag_ & SizeToInt(flag); }
+  void SetMsFlag(unsigned flag) { ms_flag_ |= flag; }
+  void ClearMsFlag(unsigned flag) { ms_flag_ &= ~flag; }
+  bool HasMsFlag(unsigned flag) { return ms_flag_ & flag; }
+  bool TestMsFlag(unsigned flag) { return ms_flag_ & flag; }
 
   static Type GetPyType(PyObject *op);
   static Type GetPyType(PyTypeObject *tp);
