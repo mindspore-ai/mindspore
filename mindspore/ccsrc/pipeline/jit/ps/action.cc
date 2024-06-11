@@ -1404,7 +1404,9 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, s
 
   auto jit_level = pipeline::GetJitLevel();
   func_graph->set_attr(kAttrJitLevel, MakeValue<std::string>(jit_level));
-  graphkernel::GraphKernelFlags::SaveJitConfig(PhaseManager::GetInstance().jit_config());
+  auto jit_config = PhaseManager::GetInstance().jit_config();
+  jit_config[kAttrJitLevel] = context_ptr->GetJitLevel();
+  graphkernel::GraphKernelFlags::SaveJitConfig(jit_config);
 
   const bool pynative_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
   const auto &device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
