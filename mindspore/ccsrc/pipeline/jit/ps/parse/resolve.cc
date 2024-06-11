@@ -270,8 +270,8 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
     (scope != nullptr && scope->name().compare(0, strlen(kAttrRecompute), kAttrRecompute) == 0);
   ValuePtr convert_result = nullptr;
   constexpr auto resolve_with_args_inputs_size = 4;
-  if (is_resolve && origin_cnode->size() == resolve_with_args_inputs_size &&
-      !HasMutableAttr(obj)) {  // (resolve, namespace, symbol, arguments)
+  MS_LOG(DEBUG) << "origin_cnode: " << origin_cnode->DebugString();
+  if (is_resolve && origin_cnode->size() == resolve_with_args_inputs_size) {  // (resolve, namespace, symbol, arguments)
     constexpr auto args_input_pos = 3;
     auto args_node = origin_cnode->input(args_input_pos);
     auto args_value = GetValueNode<ValueTuplePtr>(args_node);

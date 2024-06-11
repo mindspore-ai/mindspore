@@ -500,7 +500,8 @@ FuncArgSpec GetFuncArgSpec(const FuncGraphPtr &func_graph, const py::object &inp
   return arg_spec;
 }
 
-void BuildTopGraph(const FuncGraphPtr &func_graph, const py::object &input, const ValuePtrList &args) {
+void BuildTopGraph(const FuncGraphPtr &func_graph, const py::object &input,
+                   const abstract::AbstractBasePtrList &args_abs) {
   // Make Resolve for user top graph 'input'.
   auto function_name = GetFunctionName(input);
   parse::NameSpacePtr name_space =
@@ -509,9 +510,24 @@ void BuildTopGraph(const FuncGraphPtr &func_graph, const py::object &input, cons
   MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
   ValueNodePtr module_node = NewValueNode(name_space);
   ValueNodePtr symbol_node = NewValueNode(symbol);
-  ValueNodePtr args_node = NewValueNode<ValuePtrList>(args);
-  auto resolve_node =
-    func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node, args_node});
+
+  bool contains_value_any = false;
+  ValuePtrList args_value_list;
+  (void)std::transform(args_abs.cbegin(), args_abs.cend(), std::back_inserter(args_value_list),
+                       [&contains_value_any](const AbstractBasePtr &abs) {
+                         auto res = abs->BuildValue();
+                         if (res->isa<ValueAny>()) {
+                           contains_value_any = true;
+                         }
+                         return res;
+                       });
+  CNodePtr resolve_node;
+  if (contains_value_any) {
+    resolve_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node});
+  } else {
+    ValueNodePtr args_node = NewValueNode<ValuePtrList>(args_value_list);
+    resolve_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node, args_node});
+  }
 
   auto arg_spec = GetFuncArgSpec(func_graph, input);
   bool need_unpack = false;
@@ -580,7 +596,7 @@ bool BootstrapAction(const ResourcePtr &resource) {
   }
   UpdateTopGraphDebugInfo(top_graph, input);
   // Call the user top graph with its arguments.
-  BuildTopGraph(top_graph, input, resource->arguments());
+  BuildTopGraph(top_graph, input, resource->args_abs());
   // Set the top graph.
   parse::Parser::UpdateTopFuncGraph(top_graph);
   resource->set_func_graph(top_graph);
