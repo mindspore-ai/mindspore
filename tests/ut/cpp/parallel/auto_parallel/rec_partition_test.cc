@@ -18,6 +18,7 @@
 #include "frontend/parallel/auto_parallel/rec_core/rec_tensor.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_graph.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_partition.h"
+#include "frontend/parallel/auto_parallel/stage_compute.h"
 #include <memory>
 #include "ir/value.h"
 
@@ -232,14 +233,14 @@ TEST_F(TestPartition, test_PartitionForAllDevices) {
   std::shared_ptr<Graph> graph = MakeMatMulData(9);
   double device_memory = 1024.0 * 1024.0 * 1024.0 * 16.0;
   bool isTraining = true;
-  ASSERT_EQ(PartitionForAllDevices(1024, device_memory, graph, isTraining), SUCCESS);
+  ASSERT_EQ(PartitionForAllDevices(1024, device_memory, graph, isTraining, nullptr), SUCCESS);
 }
 
 TEST_F(TestPartition, test_PartitionForAllDevices2) {
   std::shared_ptr<Graph> graph = MakeMatMulData(9);
   double device_memory = 1024.0 * 1024.0 * 1024.0 * 16.0;
   bool isTraining = true;
-  ASSERT_EQ(PartitionForAllDevices(2, device_memory, graph, isTraining), SUCCESS);
+  ASSERT_EQ(PartitionForAllDevices(2, device_memory, graph, isTraining, nullptr), SUCCESS);
 }
 
 // Negative case: partition on 0 device
@@ -248,7 +249,7 @@ TEST_F(TestPartition, test_PartitionForAllDevices0) {
   double device_memory = 1024.0 * 1024.0 * 1024.0 * 16.0;
   bool isTraining = true;
   // Throw Exception "Number of devices can't be 0"
-  EXPECT_ANY_THROW(PartitionForAllDevices(0, device_memory, graph, isTraining));
+  EXPECT_ANY_THROW(PartitionForAllDevices(0, device_memory, graph, isTraining, nullptr));
 }
 
 TEST_F(TestPartition, test_ApplyStrToTensor) {
@@ -265,5 +266,19 @@ TEST_F(TestPartition, test_ApplyStrToTensor) {
   ASSERT_EQ(h_str, h_node);
   ASSERT_EQ(w_str, w_node);
 }
+
+/// Feature: test GetDPAndMP.
+/// Description:
+/// Expectation: success
+TEST_F(TestPartition, test_get_dp_mp) {
+  std::shared_ptr<Graph> graph = MakeMatMulData(9);
+  size_t dp, mp;
+  std::tie(dp, mp) = GetDPAndMP(graph);
+  ASSERT_GT(dp, 0);
+  ASSERT_GT(mp, 0);
+  ASSERT_LE(dp, GetNumDevices());
+  ASSERT_LE(mp, GetNumDevices());
+}
+
 }  // namespace parallel
 }  // namespace mindspore

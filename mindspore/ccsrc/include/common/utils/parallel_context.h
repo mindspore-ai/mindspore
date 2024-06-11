@@ -226,6 +226,9 @@ class COMMON_EXPORT ParallelContext {
   void set_pipeline_micro_size(const size_t);
   size_t pipeline_micro_size() const { return pipeline_micro_size_; }
 
+  void set_auto_pipeline(const bool);
+  bool auto_pipeline() const { return auto_pipeline_; }
+
   void set_do_transform(const bool);
   bool do_transform() const { return do_transform_; }
 
@@ -255,6 +258,7 @@ class COMMON_EXPORT ParallelContext {
   bool pipeline_interleave_;
   std::string pipeline_scheduler_;
   size_t pipeline_micro_size_;
+  bool auto_pipeline_;
   bool parameter_broadcast_;
   bool device_num_is_set_;
   bool fusion_threshold_is_set_;

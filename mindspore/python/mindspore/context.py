@@ -821,6 +821,7 @@ def set_auto_parallel_context(**kwargs):
                \                 comm_fusion
                \                 strategy_ckpt_config
                \                 group_ckpt_save_file
+               \                 auto_pipeline
     ===========================  ===========================
 
     Args:
@@ -969,6 +970,9 @@ def set_auto_parallel_context(**kwargs):
                         - only_trainable_params (bool): Only save/load the strategy information for trainable parameter.
                           Default: ``True`` .
         group_ckpt_save_file (str): The path to save parallel group checkpoint.
+        auto_pipeline (bool): Set the pipeline stage number to automatic. Its value will be selected between 1 and the
+                        parameter `pipeline_stages`. This option requires the `parallel_mode` to be ``auto_parallel``
+                        and the `search_mode` to be ``recursive_programming``. Default: ``False`` .
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -1044,6 +1048,7 @@ def reset_auto_parallel_context():
     - pipeline_stages: 1.
     - pipeline_result_broadcast: False.
     - fusion_threshold: 64.
+    - auto_pipeline: False.
 
     Examples:
         >>> import mindspore as ms

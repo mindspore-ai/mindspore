@@ -26,6 +26,7 @@
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/auto_parallel/stage_compute.h"
 #include "include/common/utils/parallel_context.h"
 
 namespace mindspore {
@@ -117,7 +118,11 @@ std::vector<size_t> SortByWeight(const std::shared_ptr<Graph> &graph) {
     if (graph->nodes[pos].info == kApplication) {
       const Graph::NodeType &node_ptr = graph->nodes[pos];
       double weight;
-      if (PARTITION_ORDER == PartitionOrder::TopologyOrder) {
+      bool mem_first = false;
+      if (g_device_manager->DeviceNum() > SIZE_THIRTY_TWO && graph->micro_batch_size < INT64_EIGHT) {
+        mem_first = true;
+      }
+      if (PARTITION_ORDER == PartitionOrder::TopologyOrder && !mem_first) {
         weight = (node_ptr.apply.op_type == OperatorType::kRecUnknownType) ? DOUBLE_LOWEST : pos;
       } else {
         weight = GetWeights(node_ptr);
@@ -353,7 +358,7 @@ void PartitionPipelineStages(double device_memory, const std::shared_ptr<Graph> 
 
 // Partition graph into all devices.
 Status PartitionForAllDevices(size_t num_device, double device_memory, const std::shared_ptr<Graph> &graph,
-                              bool isTraining) {
+                              bool isTraining, const FuncGraphPtr &root) {
   if (num_device < 1) {
     MS_LOG(EXCEPTION) << "ERROR: Number of devices can't be " << num_device << ".";
   }
@@ -413,6 +418,12 @@ Status PartitionForAllDevices(size_t num_device, double device_memory, const std
       auto node_name_to_str = std::pair<std::string, StrategyRec>(graph->nodes[index].name, one_loop_strategyrec);
       node_name_to_strategy.push_back(node_name_to_str);
     }
+  }
+
+  // Auto pipeline
+  size_t new_stage_num = ParallelSuggestion(root, graph);
+  if (parallel::ParallelContext::GetInstance()->auto_pipeline()) {
+    ChangeStageNumber(root, new_stage_num);
   }
 
   // Partition stages

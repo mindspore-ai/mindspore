@@ -361,6 +361,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_pipeline_stage_split_num", &ParallelContext::set_pipeline_stage_split_num,
          "Set pipeline stage split num.")
     .def("get_pipeline_stage_split_num", &ParallelContext::pipeline_stage_split_num, "Get pipeline stage split num.")
+    .def("set_auto_pipeline", &ParallelContext::set_auto_pipeline, "Set the pipeline stage number to automatic.")
+    .def("get_auto_pipeline", &ParallelContext::auto_pipeline, "Get whether the pipeline stage number is automatic.")
     .def("set_pipeline_result_broadcast", &ParallelContext::set_pipeline_result_broadcast,
          "Set pipeline result broadcast")
     .def("get_pipeline_result_broadcast", &ParallelContext::pipeline_result_broadcast, "Get pipeline result broadcast")

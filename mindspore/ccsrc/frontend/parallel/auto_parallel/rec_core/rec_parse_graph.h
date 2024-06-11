@@ -38,7 +38,8 @@ static const std::set<OperatorType> EliminateOpType = {
   OperatorType::kRecSoftmax,      OperatorType::kRecOneHot,        OperatorType::kRecExpandDims,
   OperatorType::kRecStridedSlice, OperatorType::kRecCum,           OperatorType::kRecLayerNorm,
   OperatorType::kRecFlatten,      OperatorType::kRecBatchParallel, OperatorType::kRecStandAlone,
-  OperatorType::kRecPadV3,        OperatorType::kRecBatchMatMul};
+  OperatorType::kRecPadV3,        OperatorType::kRecBatchMatMul,   OperatorType::kFlashAttentionScore,
+  OperatorType::kRecRmsNorm};
 
 const std::map<std::string, OperatorType> DictOpType{
   {MATMUL, OperatorType::kRecMatMul},
@@ -55,6 +56,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {BIAS_ADD, OperatorType::kRecBiasAdd},
   {BATCH_NORM, OperatorType::kRecBatchNorm},
   {LAYER_NORM, OperatorType::kRecLayerNorm},
+  {RMS_NORM, OperatorType::kRecRmsNorm},
   {SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits},
   {ONEHOT, OperatorType::kRecOneHot},
   {SQUEEZE, OperatorType::kRecSqueeze},
@@ -189,7 +191,8 @@ const std::map<std::string, OperatorType> DictOpType{
   {FILLV2, OperatorType::kRecElmWiseOp},
   {SCATTER_UPDATE, OperatorType::kRecElmWiseOp},
   {KV_CACHE_MGR, OperatorType::kRecElmWiseOp},
-  {GATHERD, OperatorType::kRecBatchParallel}};
+  {GATHERD, OperatorType::kRecBatchParallel},
+  {FLASH_ATTENTION_SCORE, OperatorType::kFlashAttentionScore}};
 
 const TensorParam MakeTensor(int64_t n, int64_t c, int64_t h, int64_t w);
 

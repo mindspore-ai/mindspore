@@ -1042,10 +1042,6 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     }
     // 如果是双递归的话枚举reshape和前向算子的策略
     if (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming) {
-      (void)GenerateStrategiesByOperatorInfoPtr(operator_info);
-      if (pre_operator_info) {
-        (void)GenerateStrategiesByOperatorInfoPtr(pre_operator_info);
-      }
       ConstructCNodeCostGraphEdges(cnode, all_nodes);
     }
     if (is_prev_param) {
@@ -1073,7 +1069,6 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
       for (auto &op_index : next_ops_index) {
         // 如果是双递归的话枚举reshape的后向算子的策略
         if (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming) {
-          (void)GenerateStrategiesByOperatorInfoPtr(op_index.first);
           ConstructCNodeCostGraphEdges(op_index.first->cnode(), all_nodes);
         }
         auto op_cost = op_index.first->strategy_cost();
@@ -1082,9 +1077,11 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
       reshape_info->set_next_operator_name(next_ops_index[0].first->name());
       reshape_info->set_next_operator_index(next_ops_index[0].second);
     }
-    if (reshape_info->GenerateStrategyCosts(pre_stra_costs, next_costs_index, out_index, is_prev_param,
-                                            is_next_reshape) != SUCCESS) {
-      MS_LOG(EXCEPTION) << "reshape generate strategy_costs failed!";
+    if (ParallelContext::GetInstance()->strategy_search_mode() != kRecursiveProgramming) {
+      if (reshape_info->GenerateStrategyCosts(pre_stra_costs, next_costs_index, out_index, is_prev_param,
+                                              is_next_reshape) != SUCCESS) {
+        MS_LOG(EXCEPTION) << "Reshape generate strategy costs failed";
+      }
     }
   }
 }
@@ -1476,7 +1473,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   // To specify the process is training or inference. For training, if optimizer parallel is activated, it requires at
   // least one cut on DP dimension.
   bool isTraining = IsTraining(root->manager());
-  if (PartitionForAllDevices(num_device, device_memory, graph, isTraining) == SUCCESS) {
+  if (PartitionForAllDevices(num_device, device_memory, graph, isTraining, root) == SUCCESS) {
     MS_LOG(INFO) << "Partition Success With " << num_device << " devices.";
   } else {
     MS_LOG(ERROR) << "PartitionForAllDevices failed.";
@@ -1494,8 +1491,10 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
         MS_LOG(EXCEPTION) << "Parallel init failed";
       }
     }
-    ReInitCostGraph(all_nodes, root, graph->dyn_shape_tmp_fix);
-    ops = entire_costgraph->GetOperators();
+    if (parallel::ParallelContext::GetInstance()->auto_pipeline()) {
+      ReInitCostGraph(all_nodes, root, graph->dyn_shape_tmp_fix);
+      ops = entire_costgraph->GetOperators();
+    }
   }
 
   GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list, isTraining, param_users_ops_index, root);

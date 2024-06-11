@@ -157,6 +157,7 @@ TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_
 Shape mirror_group_list(const TensorLayoutPtr &layout);
 // Transfer number to serial number string
 std::string GetSerialNumberString(size_t number);
+size_t GetDeviceCapacity();
 bool IsIgnoreSplitTensor(const CNodePtr &node, int64_t index);
 bool MergeConcatSlice(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager);
 void UpdateMicroBatchInterleavedStatus(const std::vector<AnfNodePtr> &all_nodes);

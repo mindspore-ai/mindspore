@@ -26,6 +26,7 @@
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "frontend/parallel/auto_parallel/stage_compute.h"
 #include "utils/ms_context.h"
 
 using namespace pybind11::literals;
@@ -607,5 +608,75 @@ TEST_F(TestStepParallel, UpdateMicroBatchInterleavedStatus) {
   EXPECT_EQ(inputs.back()->cast<CNodePtr>()->HasAttr(INTERLEAVED_NUM), true);
   EXPECT_EQ(GetValue<int64_t>(inputs.back()->cast<CNodePtr>()->GetAttr(INTERLEAVED_NUM)), 2);
 }
+
+/// Feature: test ParallelSuggestion.
+/// Description:
+/// Expectation: success
+TEST_F(TestStepParallel, test_parallel_suggestion) {
+  size_t pp = ParallelSuggestion(nullptr, nullptr);
+  bool power_of_two = !(pp == 0) && !(pp & (pp - 1));
+  ASSERT_EQ(power_of_two, true);
+  ASSERT_LE(pp, GetNumDevices());
+}
+
+/// Feature: test GetSeqLengthAndAttentionHeads.
+/// Description:
+/// Expectation: success
+TEST_F(TestStepParallel, test_get_sequence_length_activation_heads) {
+  FuncGraphManagerPtr manager = Make_Manager();
+  FuncGraphSet graphs = manager->func_graphs();
+  FuncGraphPtr root = *graphs.begin();
+  size_t seq, heads;
+  std::tie(seq, heads) = GetSeqLengthAndAttentionHeads(root);
+  ASSERT_GT(seq, 0);
+  ASSERT_GT(heads, 0);
+}
+
+/// Feature: test GetVocabAndHiddenSize.
+/// Description:
+/// Expectation: success
+TEST_F(TestStepParallel, test_get_vocab_hidden_size) {
+  FuncGraphManagerPtr manager = Make_Manager();
+  FuncGraphSet graphs = manager->func_graphs();
+  FuncGraphPtr root = *graphs.begin();
+  size_t hidden, vocab;
+  std::tie(hidden, vocab) = GetVocabAndHiddenSize(root);
+  ASSERT_GT(hidden, 0);
+  ASSERT_GT(vocab, 0);
+}
+
+/// Feature: test GetNumLayers.
+/// Description:
+/// Expectation: success
+TEST_F(TestStepParallel, test_get_num_layers) {
+  FuncGraphManagerPtr manager = Make_Manager();
+  FuncGraphSet graphs = manager->func_graphs();
+  FuncGraphPtr root = *graphs.begin();
+  size_t l = GetNumLayers(root);
+  ASSERT_GT(l, 0);
+}
+
+/// Feature: test GetNumMicro.
+/// Description:
+/// Expectation: success
+TEST_F(TestStepParallel, test_get_num_microbatch) {
+  FuncGraphManagerPtr manager = Make_Manager();
+  FuncGraphSet graphs = manager->func_graphs();
+  FuncGraphPtr root = *graphs.begin();
+  size_t m = GetNumMicro(root);
+  ASSERT_GT(m, 0);
+}
+
+/// Feature: test GetPerBatch.
+/// Description:
+/// Expectation: success
+TEST_F(TestStepParallel, test_get_per_batch) {
+  FuncGraphManagerPtr manager = Make_Manager();
+  FuncGraphSet graphs = manager->func_graphs();
+  FuncGraphPtr root = *graphs.begin();
+  size_t b = GetPerBatch(root, 1024);  // example of non null seq length as parameter
+  ASSERT_GT(b, 0);
+}
+
 }  // namespace parallel
 }  // namespace mindspore

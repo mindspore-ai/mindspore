@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,9 @@ Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>>
   }
 
   CompleteOperatorInputs(ops, iter_ops, &NewOp);
+  MS_LOG(INFO) << "Node " << NewOp.name << "created successfully"
+               << " its input is " << ops[iter_ops]->inputs_shape() << " and its output is "
+               << ops[iter_ops]->outputs_shape() << ".";
   return NewOp;
 }
 
