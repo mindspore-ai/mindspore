@@ -338,7 +338,7 @@ APP_ERROR PluginDvppAdjustSharpness(const std::shared_ptr<mindspore::dataset::De
   if (output == nullptr) {
     return APP_ERR_ACL_FAILURE;
   }
-  return DvppAdjustSaturation(input, output, factor);
+  return DvppAdjustSharpness(input, output, factor);
 }
 
 APP_ERROR PluginDvppAffine(const std::shared_ptr<mindspore::dataset::DeviceTensorAscend910B> &input,

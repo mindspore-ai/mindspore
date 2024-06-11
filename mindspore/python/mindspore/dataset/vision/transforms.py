@@ -6467,6 +6467,8 @@ class Rotate(ImageTensorOperation):
 
         - When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1 and 3.
           need change [The input data has a height limit of [4, 8192] and a width limit of [6, 4096].]
+        - When the device is Ascend and `expand` is True, `center` does not take effect
+          and the image is rotated according to the center of the image.
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -6507,9 +6509,8 @@ class Rotate(ImageTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
-        if self.resample == Inter.ANTIALIAS and self.resample == "Ascend":
-            raise ValueError("The current InterpolationMode is not supported by DVPP. It is {}."
-                             .format(self.resample))
+        if self.resample not in [Inter.BILINEAR, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR and NEAREST.")
         return self
 
     def parse(self):
