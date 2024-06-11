@@ -29,7 +29,8 @@ def memory_stats(device_target=None):
         - For the `CPU` backend, a dictionary with empty data is always returned.
 
     Args:
-        device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+            Default value: ``None``.
 
     Returns:
         dict, the queried memory information.
@@ -64,7 +65,8 @@ def memory_reserved(device_target=None):
         - For the `CPU` backend, 0 is always returned.
 
     Args:
-        device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+            Default value: ``None``.
 
     Returns:
         int, in Byte.
@@ -92,7 +94,8 @@ def max_memory_reserved(device_target=None):
         - For the `CPU` backend, 0 is always returned.
 
     Args:
-        device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+            Default value: ``None``.
 
     Returns:
         int, in Byte.
@@ -132,7 +135,8 @@ def reset_peak_memory_stats(device_target=None):
         If `device_target` is not specified, get the device capability of the current backend set by context.
 
     Args:
-        device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+            Default value: ``None``.
 
     Examples:
         >>> import mindspore as ms
@@ -164,7 +168,8 @@ def memory_summary(device_target=None):
         If `device_target` is not specified, get the device capability of the current backend set by context.
 
     Args:
-        device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+            Default value: ``None``.
 
     Returns:
         str, readable memory pool status information in tabular form.
@@ -217,7 +222,8 @@ def memory_allocated(device_target=None):
         - For the `CPU` backend, 0 is always returned.
 
     Args:
-        device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+            Default value: ``None``.
 
     Returns:
         int, in Byte.
@@ -245,7 +251,8 @@ def max_memory_allocated(device_target=None):
         - For the `CPU` backend, 0 is always returned.
 
     Args:
-        device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+            Default value: ``None``.
 
     Returns:
         int, in Byte.
@@ -272,7 +279,8 @@ def reset_max_memory_reserved(device_target=None):
         If `device_target` is not specified, get the device capability of the current backend set by context.
 
     Args:
-        device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+            Default value: ``None``.
 
     Examples:
         >>> import mindspore as ms
@@ -299,7 +307,8 @@ def reset_max_memory_allocated(device_target=None):
         If `device_target` is not specified, get the device capability of the current backend set by context.
 
     Args:
-        device_target (str， optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+        device_target (str, optional): The device name of backend, should be one of "CPU", "GPU" and "Ascend".
+            Default value: ``None``.
 
     Examples:
         >>> import mindspore as ms
