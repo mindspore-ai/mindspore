@@ -23,13 +23,18 @@
 namespace mindspore {
 namespace ops {
 BaseShapePtr FFTInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+BaseShapePtr DCTInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 BaseShapePtr FFTNInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+BaseShapePtr DCTNInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 
 TypePtr FFTInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+TypePtr DCTInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 
 void FFTCheckInputShape(const PrimitivePtr &primitive, std::vector<int64_t> x_shape_vec, int64_t x_rank);
 int32_t FFTCheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+int32_t DCTCheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 int32_t FFTNCheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+int32_t DCTNCheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_FFT_ARITHMETIC_H_

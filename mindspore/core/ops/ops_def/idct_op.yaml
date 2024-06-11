@@ -1,5 +1,5 @@
-#operator dct
-dct:
+#operator idct
+idct:
   args:
     x:
       dtype: tensor
@@ -20,7 +20,7 @@ dct:
     output:
       dtype: tensor
   class:
-    name: DCT
+    name: IDCT
   function:
     disable: True
 

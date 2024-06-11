@@ -23,9 +23,8 @@
 
 namespace ge {
 const std::string op_prefix = "Cust";
-const std::string fft_prefix = "FFT";
 std::string GetOpName(std::string op_name) {
-  if (!op_name.compare(0, op_prefix.size(), op_prefix) && op_name.find(fft_prefix) != std::string::npos) {
+  if (!op_name.compare(0, op_prefix.size(), op_prefix)) {
     op_name.erase(op_name.begin(), op_name.begin() + op_prefix.size());
   }
   return op_name;
@@ -33,7 +32,8 @@ std::string GetOpName(std::string op_name) {
 
 DataType FFTGetType(std::string op_name, DataType x_dtype) {
   static const std::vector<DataType> double_type = {DT_DOUBLE, DT_COMPLEX128};
-  static const std::vector<std::string> float_prim = {"HFFT", "HFFT2", "HFFTN", "IRFFT", "IRFFT2", "IRFFTN"};
+  static const std::vector<std::string> float_prim = {"HFFT",   "HFFT2", "HFFTN", "IRFFT", "IRFFT2",
+                                                      "IRFFTN", "DCT",   "IDCT",  "DCTN",  "IDCTN"};
   bool is_double_type = std::any_of(double_type.begin(), double_type.end(),
                                     [&x_dtype](const DataType &type_id) { return x_dtype == type_id; });
   bool is_float_prim = std::find(float_prim.begin(), float_prim.end(), op_name) != float_prim.end();
@@ -50,6 +50,25 @@ DataType FFTGetType(std::string op_name, DataType x_dtype) {
   if (!is_double_type && !is_float_prim) {
     y_dtype = DT_COMPLEX64;
   }
+  return y_dtype;
+}
+
+DataType DCTGetType(DataType x_dtype) {
+  static const std::vector<DataType> double_type = {DT_DOUBLE};
+  static const std::vector<DataType> complex_type = {DT_COMPLEX64, DT_COMPLEX128};
+  bool is_double_type = std::any_of(double_type.begin(), double_type.end(),
+                                    [&x_dtype](const DataType &type_id) { return x_dtype == type_id; });
+  bool is_complex_type = std::any_of(complex_type.begin(), complex_type.end(),
+                                     [&x_dtype](const DataType &type_id) { return x_dtype == type_id; });
+  DataType y_dtype;
+  if (is_double_type) {
+    y_dtype = DT_DOUBLE;
+  } else if (is_complex_type) {
+    y_dtype = x_dtype;
+  } else {
+    y_dtype = DT_FLOAT;
+  }
+
   return y_dtype;
 }
 
@@ -139,6 +158,60 @@ IMPLEMT_COMMON_INFERFUNC(FFTBaseInferShape) {
   return GRAPH_SUCCESS;
 }
 
+IMPLEMT_COMMON_INFERFUNC(DCTInferShape) {
+  auto input_desc = op.GetInputDescByName("x");
+  auto out_desc = op.GetOutputDescByName("y");
+  auto op_name = GetOpName(op.GetOpType());
+
+  DataType x_dtype = input_desc.GetDataType();
+  DataType y_dtype = DCTGetType(x_dtype);
+  out_desc.SetDataType(y_dtype);
+
+  bool unknown_rank_shape = IsUnknownRankShape(input_desc.GetShape());
+  if (unknown_rank_shape) {
+    out_desc.SetShape(ge::Shape(UNKNOWN_RANK));
+    OP_LOGD(TbeGetName(op).c_str(), "output shape:%s", to_string(out_desc.GetShape()).c_str());
+    op.UpdateOutputDesc("y", out_desc);
+    return GRAPH_SUCCESS;
+  }
+
+  size_t x_rank = input_desc.GetShape().GetDimNum();
+  auto input_shape = input_desc.GetShape().GetDims();
+  vector<int64_t> output_shape(input_shape.begin(), input_shape.end());
+  const vector<string> depend_names = {"n", "axis"};
+  PREPARE_DYNAMIC_SHAPE(depend_names);
+
+  // infer output shape based on 'n' and 'dim'
+  Tensor dim_tensor;
+  std::vector<int64_t> dim_vec;
+  if (op.GetInputConstData("axis", dim_tensor) == GRAPH_SUCCESS) {
+    DataType dim_dtype = op.GetInputDescByName("axis").GetDataType();
+    GetConstValue(op, dim_tensor, dim_dtype, dim_vec);
+    for (size_t i = 0; i < dim_vec.size(); i++) {
+      dim_vec[i] = dim_vec[i] < 0 ? static_cast<int64_t>(x_rank) + dim_vec[i] : dim_vec[i];
+    }
+  }
+
+  Tensor s_tensor;
+  std::vector<int64_t> s_vec;
+  bool s_is_none{true};
+  if (op.GetInputConstData("n", s_tensor) == GRAPH_SUCCESS) {
+    DataType dtype = op.GetInputDescByName("n").GetDataType();
+    GetConstValue(op, s_tensor, dtype, s_vec);
+    s_is_none = false;
+  }
+
+  FFTNGetAttr(output_shape, x_rank, &s_vec, &dim_vec);
+  int64_t dim = dim_vec[0];
+  if (!s_is_none) {
+    int64_t n = s_vec[0];
+    output_shape[dim] = n;
+  }
+  out_desc.SetShape(ge::Shape(output_shape));
+  op.UpdateOutputDesc("y", out_desc);
+  return GRAPH_SUCCESS;
+}
+
 IMPLEMT_COMMON_INFERFUNC(FFTNBaseInferShape) {
   auto input_desc = op.GetInputDescByName("input");
   auto out_desc = op.GetOutputDescByName("y");
@@ -208,6 +281,57 @@ IMPLEMT_COMMON_INFERFUNC(FFTNBaseInferShape) {
   return GRAPH_SUCCESS;
 }
 
+IMPLEMT_COMMON_INFERFUNC(DCTNInferShape) {
+  auto input_desc = op.GetInputDescByName("x");
+  auto out_desc = op.GetOutputDescByName("y");
+  auto op_name = GetOpName(op.GetOpType());
+  DataType input_dtype = input_desc.GetDataType();
+  DataType output_dtype = DCTGetType(input_dtype);
+  out_desc.SetDataType(output_dtype);
+
+  bool unknown_rank_shape = IsUnknownRankShape(input_desc.GetShape());
+  if (unknown_rank_shape) {
+    out_desc.SetShape(ge::Shape(UNKNOWN_RANK));
+    OP_LOGD(TbeGetName(op).c_str(), "output shape:%s", to_string(out_desc.GetShape()).c_str());
+    op.UpdateOutputDesc("y", out_desc);
+    return GRAPH_SUCCESS;
+  }
+  const vector<string> depend_names = {"s", "axes"};
+  PREPARE_DYNAMIC_SHAPE(depend_names);
+
+  std::vector<int64_t> s_vec;
+  std::vector<int64_t> dim_vec;
+  size_t x_rank = input_desc.GetShape().GetDimNum();
+  auto input_shape = input_desc.GetShape().GetDims();
+  vector<int64_t> output_shape(input_shape.begin(), input_shape.end());
+
+  // infer output shape based on 's' and 'dim'
+  Tensor s_tensor;
+  if (op.GetInputConstData("s", s_tensor) == GRAPH_SUCCESS) {
+    DataType dtype = op.GetInputDescByName("s").GetDataType();
+    GetConstValue(op, s_tensor, dtype, s_vec);
+  }
+
+  Tensor dim_tensor;
+  if (op.GetInputConstData("axes", dim_tensor) == GRAPH_SUCCESS) {
+    DataType dim_dtype = op.GetInputDescByName("axes").GetDataType();
+    GetConstValue(op, dim_tensor, dim_dtype, dim_vec);
+    for (size_t i = 0; i < dim_vec.size(); i++) {
+      dim_vec[i] = dim_vec[i] < 0 ? static_cast<int64_t>(x_rank) + dim_vec[i] : dim_vec[i];
+    }
+  }
+
+  FFTNGetAttr(output_shape, x_rank, &s_vec, &dim_vec);
+
+  for (size_t i = 0; i < s_vec.size(); i++) {
+    output_shape[dim_vec[i]] = s_vec[i];
+  }
+
+  out_desc.SetShape(ge::Shape(output_shape));
+  op.UpdateOutputDesc("y", out_desc);
+  return GRAPH_SUCCESS;
+}
+
 IMPLEMT_COMMON_INFERFUNC(FFTShiftInferShape) {
   TensorDesc out_desc = op.GetOutputDescByName("input");
   out_desc.SetDataType(op.GetInputDescByName("input").GetDataType());
@@ -244,9 +368,15 @@ CUST_COMMON_INFER_FUNC_REG(FFTShapeCopy, FFTShapeCopyInferShape);
 CUST_COMMON_INFER_FUNC_REG(FFTShift, FFTShiftInferShape);
 CUST_COMMON_INFER_FUNC_REG(IFFTShift, FFTShiftInferShape);
 CUST_COMMON_INFER_FUNC_REG(IRFFTDouble, FFTShiftInferShape);
+CUST_COMMON_INFER_FUNC_REG(FFTOrtho, FFTShiftInferShape);
 
 CUST_COMMON_INFER_FUNC_REG(FFT, FFTBaseInferShape);
 CUST_COMMON_INFER_FUNC_REG(IFFT, FFTBaseInferShape);
+
+CUST_COMMON_INFER_FUNC_REG(DCT, DCTInferShape);
+CUST_COMMON_INFER_FUNC_REG(DCTN, DCTNInferShape);
+CUST_COMMON_INFER_FUNC_REG(IDCT, DCTInferShape);
+CUST_COMMON_INFER_FUNC_REG(IDCTN, DCTNInferShape);
 
 CUST_COMMON_INFER_FUNC_REG(HFFT, FFTBaseInferShape);
 CUST_COMMON_INFER_FUNC_REG(IHFFT, FFTBaseInferShape);
