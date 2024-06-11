@@ -43,6 +43,8 @@ void DeviceOpRunTask::Run() {
 }
 
 void DeviceLaunchTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeLaunchTask,
+                                     kProfilerNamePyboost, false, false, task_id_);
   if (run_func_) {
     run_func_();
   } else {

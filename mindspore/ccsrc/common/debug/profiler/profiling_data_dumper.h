@@ -54,7 +54,7 @@ class COMMON_EXPORT Utils {
   static std::string RelativeToAbsPath(const std::string &path);
   static std::string DirName(const std::string &path);
   static uint64_t GetClockMonotonicRawNs();
-  static bool CreateFile(const std::string &path);
+  static bool CreateDumpFile(const std::string &path);
   static bool IsSoftLink(const std::string &path);
   static uint64_t GetTid();
   static uint64_t GetPid();
