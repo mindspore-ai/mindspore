@@ -598,9 +598,9 @@ class Model:
         for cb in callbacks:
             if isinstance(cb, ModelCheckpoint):
                 need_ckpt = True
-                cfg_size = cb.get_save_checkpoint_steps
+                cfg_size = cb._get_save_checkpoint_steps
                 save_ckpt_steps = save_ckpt_steps if (cfg_size is None or cfg_size >= sys.maxsize) else cfg_size
-                last_triggered_step = cb.get_last_trigger_step
+                last_triggered_step = cb._get_last_trigger_step
                 break
         return need_ckpt, save_ckpt_steps, last_triggered_step
 
