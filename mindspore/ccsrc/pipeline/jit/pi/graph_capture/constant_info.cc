@@ -27,6 +27,7 @@ namespace pijit {
 constexpr const char kModuleName[] = "mindspore";
 constexpr const char kTensorShapeName[] = "shape";
 constexpr const char kTensorDtypeName[] = "dtype";
+constexpr const size_t CmpSize = 2;
 
 static void MakePrimitiveConstantInfoCommon(ValueNode *node);
 
@@ -263,7 +264,7 @@ static void MakeSpecificConstantInfo(ValueNode *node) {
       PyErr_Clear();
       return;
     }
-    if (strncmp(module_name, "os", 2) == 0 && name == "environ") {
+    if (strncmp(module_name, "os", CmpSize) == 0 && name == "environ") {
       auto env_obj = PyObject_GetAttrString(module_obj, "environ");
       node->SetConstantValue(true);
       node->MakeConstantInfo()->set_value(env_obj);

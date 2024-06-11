@@ -35,6 +35,7 @@
 
 namespace mindspore {
 namespace pijit {
+static const size_t DictStep = 2;
 #define FIND_MAP_CACHE(map, target) \
   do {                              \
     auto iter = (map).find(target); \
@@ -394,7 +395,7 @@ AObject *AbstractObjectBase::BuildOperations(const std::vector<AObject *> &input
     res = MakeAObject(kTypeDict);
     keys = inputs.back()->GetPyObject().ptr();
     err = static_cast<Py_ssize_t>(inputs.size() - 1) != PyTuple_GET_SIZE(keys);
-    for (Py_ssize_t i = IntToSize(inputs.size() - 2); !err && i >= 0; --i) {
+    for (Py_ssize_t i = IntToSize(inputs.size() - DictStep); !err && i >= 0; --i) {
       err = !static_cast<AbstractDict *>(res)->MapAdd(Convert(PyTuple_GET_ITEM(keys, i)), inputs[i]);
     }
   } else if (opcode == BUILD_MAP) {
