@@ -384,7 +384,7 @@ void ProfilerAnalyzer::AnalyzeModuleSummaryData(const ProfilerDataPtr &data) {
 void ProfilerAnalyzer::AnalyzeEventSummaryData(const ProfilerDataPtr &data) {
   MS_EXCEPTION_IF_NULL(data);
   if (module_infos_.count(data->module_) == 0) {
-    MS_LOG(ERROR) << "Summarize Unknown module : " << data->module_ << ", will skip current data.";
+    MS_LOG(INFO) << "Summarize Unknown module : " << data->module_ << ", will skip current data.";
     return;
   }
 
