@@ -1643,7 +1643,7 @@ def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mas
 
     .. math::
         \begin{array}{ll} \\
-            y = Dropout(Softmax(Mask(scale_value \mul (real_shift + query * key), attn_mask), -1), keep_prob) \\
+            y = Dropout(Softmax(Mask(scale\_value \mul (real\_shift + query * key), attn\_mask), -1), keep\_prob) \\
             \mul value \\
         \end{array}
 

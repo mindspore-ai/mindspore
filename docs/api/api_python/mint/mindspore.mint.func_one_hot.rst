@@ -1,7 +1,7 @@
 mindspore.mint.one_hot
 =======================
 
-.. py:class:: mindspore.mint.one_hot(tensor, num_classes)
+.. py:function:: mindspore.mint.one_hot(tensor, num_classes)
 
     返回一个one-hot类型的Tensor。
 
