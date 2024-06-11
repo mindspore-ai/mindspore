@@ -1249,9 +1249,9 @@ def _infer_value_for_Reduce(input_x, axis, keep_dims, prim_name):
     return value
 
 
-def infer_value_for_Cast(x, dst_type_enum):
+def infer_value_for_Cast(x, dst_type_enum=None):
     """Infer value for Cast op."""
-    if x is None:
+    if x is None or dst_type_enum is None:
         return None
     dst_type = typing.type_id_to_type(dst_type_enum)
     src_type = mstype.get_py_obj_dtype(x)
