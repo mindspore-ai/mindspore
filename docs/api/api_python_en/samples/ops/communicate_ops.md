@@ -131,7 +131,7 @@ The running result is as follows, with the output log path `log/1/rank.0`:
 
 ![image](../../../api_python/samples/ops/images/broadcast.png)
 
-The sample code is as follows: we set the root node of the `Broadcast` operator to card 0, indicating that data will be broadcast from card 0 to other cards. We request an input of size 1x1 with a value of 0. Then call the `Broadcast` operator to communicate among the cards with communication domain `0-1-2-3` (communication range of all cards i.e. nccl_world_group). Finally, the output value of each card is from card 0.
+The sample code is as follows: we set the root node of the `Broadcast` operator to card 0, indicating that data will be broadcast from card 0 to other cards. We request an input of size 1x1 with a value of 0. Then call the `Broadcast` operator to communicate among the cards with communication domain `0-1-2-3` (communication range of all cards i.e. nccl_world_group). Finally, the output value of each card is from card 0. The tensors must have the same shape and format in all processes of the collection.
 
 ```python
 import mindspore as ms
