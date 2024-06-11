@@ -287,7 +287,7 @@ def test_tanh_grad_dynamic_shape_testop():
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_tanh_grad_forward_static_shape(mode):
     """
     Feature: Test tanh with static shape in graph and pynative mode.
@@ -317,7 +317,7 @@ def test_tanh_grad_forward_static_shape(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_tanh_grad_backward_static_shape(mode):
     """
     Feature: Test tanh with static shape in graph and pynative mode.

@@ -52,7 +52,7 @@ def quant_forward_func(data, scale, offset, sqrt_mode, round_mode, out_type):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 @pytest.mark.parametrize('rounding', ['ROUND', 'FLOOR', 'CEIL', 'TRUNC'])
 @pytest.mark.parametrize('support_type', [mstype.float32, mstype.float16, mstype.bfloat16])
 def test_quant_static_shape(mode, rounding, support_type):

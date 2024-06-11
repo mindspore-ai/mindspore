@@ -154,7 +154,7 @@ def np_quant_int4_pergroup_data_gen(channel_in, channel_out, group_num):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ms_int4_weight_quant_1p(mode):
     """
     feature: test int4 dtype parameter save and load
@@ -192,7 +192,7 @@ def test_ms_int4_weight_quant_1p(mode):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ms_int4_weight_quant_perchannel_1p(mode):
     """
     feature: test int4 dtype parameter save and load
@@ -229,7 +229,7 @@ def test_ms_int4_weight_quant_perchannel_1p(mode):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ms_int4_ckpt_save_and_load(mode):
     """
     feature: test weight quant int4 net save ckpt and load
@@ -322,7 +322,7 @@ def test_ms_int4_mindir_save_and_load(mode):
 
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ms_int4_weight_quant_pergroup_1p_GE(mode):
     """
     feature: test int4 dtype parameter save and load

@@ -69,10 +69,17 @@ class AscendVmmAdapter {
   size_t EagerFreeDeviceMem(const DeviceMemPtr addr, const size_t size);
 
   const bool IsEnabled() const {
-    static bool is_vmm_enabled =
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ms_context->get_param<std::string>(MS_CTX_JIT_LEVEL) == "O2" ||
+        ms_context->get_param<std::string>(MS_CTX_JIT_LEVEL) == "") {
+      return false;
+    }
+
+    static bool is_vmm_disabled =
       alloc_conf_map_.find("enable_vmm") != alloc_conf_map_.end() &&
-      (alloc_conf_map_.at("enable_vmm") == "True" || alloc_conf_map_.at("enable_vmm") == "true");
-    return is_vmm_enabled;
+      (alloc_conf_map_.at("enable_vmm") == "False" || alloc_conf_map_.at("enable_vmm") == "false");
+    return !is_vmm_disabled;
   }
 
  private:
