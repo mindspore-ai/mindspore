@@ -47,7 +47,7 @@ Event
 Memory
 ------------
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: hal
     :nosignatures:
     :template: classtemplate.rst
