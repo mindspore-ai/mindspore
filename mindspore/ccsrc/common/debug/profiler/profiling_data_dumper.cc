@@ -148,7 +148,11 @@ bool Utils::IsSoftLink(const std::string &path) {
 }
 
 uint64_t Utils::GetTid() {
+#if defined(USING_LINUX)
   static thread_local uint64_t tid = static_cast<uint64_t>(syscall(SYS_gettid));
+#else
+  static thread_local uint64_t tid = 0;
+#endif
   return tid;
 }
 
