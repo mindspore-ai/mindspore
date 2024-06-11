@@ -53,7 +53,8 @@ bool IsCommOps(const AnfNodePtr &node) {
                                                      prim::kPrimBarrier,
                                                      prim::kPrimCollectiveScatter,
                                                      prim::kPrimCollectiveGather,
-                                                     prim::kPrimBatchISendIRecv};
+                                                     prim::kPrimBatchISendIRecv,
+                                                     prim::kPrimAlltoAllV};
   return IsOneOfPrimitiveCNode(node, kCommunicationOpsPrim);
 }
 

@@ -20,13 +20,15 @@ import mindspore.ops.operations as P
 from mindspore.communication import GlobalComm, get_group_rank_from_world_rank, get_group_size
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import Tensor as Tensor_
-from mindspore.ops import ReduceOp
+from mindspore.ops import ReduceOp, cat
 from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore.ops.primitive import _primexpr
 
 __all__ = [
     'all_reduce',
     'all_gather_into_tensor',
-    'all_to_all_single',
+    'all_to_all_with_output_shape',
+    'all_to_all_single_with_output_shape',
     'barrier',
     'broadcast',
     'gather_into_tensor',
@@ -80,6 +82,53 @@ def _check_compute_split_count(tensor, output_split_sizes, input_split_sizes, gr
     else:
         split_count = group_size
     return split_count
+
+
+@_primexpr
+def _check_all_tensors(tensor_list):
+    """check all elements in tensor_list are type of Tensor"""
+    if not isinstance(tensor_list, (list, tuple)):
+        raise TypeError(f"Expected list or tuple, but got {type(tensor_list)}.")
+    for t in tensor_list:
+        if not isinstance(t, Tensor):
+            raise TypeError(f"Expected tensor, but got {type(t)}")
+
+
+@_primexpr
+def _check_all_tensors_or_tuple(tensor_list):
+    """check all elements in tensor_list are type of Tensor or tuple or list"""
+    if not isinstance(tensor_list, (list, tuple)):
+        raise TypeError(f"Expected list or tuple, but got {type(tensor_list)}.")
+    for t in tensor_list:
+        if not isinstance(t, (Tensor, tuple, list)):
+            raise TypeError(f"Expected tensor or tuple, but got {type(t)}")
+
+
+@_primexpr
+def _check_all_tensor_same_dtype(*tensor_lists):
+    """check all the input tensor has same dtype"""
+    consistent_dtype = None
+    for list_ in tensor_lists:
+        if not isinstance(list_, (list, tuple)):
+            list_ = [list_]
+        for tensor_ in list_:
+            if not isinstance(tensor_, Tensor):
+                continue
+
+            dtype = tensor_.dtype
+            if consistent_dtype is None:
+                consistent_dtype = dtype
+            else:
+                if dtype != consistent_dtype:
+                    raise TypeError("all_to_all input dtype must be the same, "
+                                    f"but got {consistent_dtype} and {dtype}.")
+
+
+def _get_size(shape):
+    numel = 1
+    for s in shape:
+        numel *= s
+    return numel
 
 
 def all_reduce(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
@@ -390,7 +439,7 @@ class P2POp:
         if op_name not in ['isend', 'irecv']:
             raise ValueError(f"Expected ``op`` to be of type ``isend`` or `irecv``, but got {op_name}")
         if not isinstance(tensor, (Tensor, tuple)):
-            raise TypeError(f"Expected ``tensor`` to be type of tuple of Tensor, but got {type(tensor)}.")
+            raise TypeError(f"Expected ``tensor`` to be type of tuple or Tensor, but got {type(tensor)}.")
         if tag != 0:
             raise NotImplementedError("``tag`` not support yet.")
         return object.__new__(cls)
@@ -749,97 +798,6 @@ def barrier(group=GlobalComm.WORLD_COMM_GROUP):
     return _op()
 
 
-def all_to_all_single(tensor, output_split_sizes=None, input_split_sizes=None, group=GlobalComm.WORLD_COMM_GROUP):
-    r"""
-    Split and scatter tensor to all processes in the specified group.
-
-    all_to_all_single split the tensor evenly into blocks according to dimension 0, and scatter them in order.
-    It has three phases:
-
-    - The prepare phase: the operand check input_split_sizes, output_split_sizes, and use them to
-      compute the number of blocks(`split_count`).
-    - The scatter phase: On each process, the operand is split into `split_count` number of blocks along the
-      dimension 0, and the blocks are scattered to all processes, e.g., the ith block is send to the ith process.
-    - The gather phase: Each process concatenates the received blocks along the dimension 0.
-
-    This operation cannot support uneven scatter yet. The elements in input_split_sizes or output_split_sizes
-    should be all the same.
-
-    Note:
-        In the gather phase, tensors must have the same shape and format in all processes of the collection.
-        Only support PyNative mode, Graph mode is not currently supported.
-
-    Args:
-        tensor (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        output_split_sizes (Tuple[int], optional): Output split sizes for dim 0. This operation cannot support uneven
-            scatter yet, the elements should be all the same. Default: ``None``.
-        input_split_sizes (Tuple[int], optional): Input split sizes for dim 0. This operation cannot support uneven
-            scatter yet, the elements should be all the same. Default: ``None``.
-        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
-
-    Outputs:
-        Tensor. If the shape of input tensor is :math:`(x_1, x_2, ..., x_R)`, then the shape of output tensor is
-        :math:`(y_1, x_2, ..., x_R)`
-
-    Raises:
-        TypeError: If group is not a string.
-        TypeError: Elements in `output_split_sizes` or `input_split_sizes` are not the same.
-        TypeError: The sum of `output_split_sizes` or `input_split_sizes` is not equal to tensor.shape[0]
-        ValueError: The `split_count` can not be divisible by `rank_size`.
-        RuntimeError: If backend is invalid, or distributed initialization fails.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        .. note::
-            Before running the following examples, you need to configure the communication environment variables.
-
-            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
-            Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
-            for more details.
-
-            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
-
-            This example should be run with 2 devices.
-
-        >>> import os
-        >>> import mindspore as ms
-        >>> from mindspore import Tensor
-        >>> from mindspore.communication import init
-        >>> from mindspore.communication.comm_func import all_to_all_single
-        >>> import numpy as np
-        >>>
-        >>> init()
-        >>> rank_id = int(os.getenv("RANK_ID"))
-        >>> data = ms.Tensor(np.arange(8).reshape([4, 2]).astype(np.float32)) + 8 * rank_id
-        # Launch 2 processes.
-        >>> out = all_to_all_single(tensor=data)
-        >>> print(out)
-        # Rank 0:
-        [[ 0.  1.]
-         [ 2.  3.]
-         [ 8.  9.]
-         [10. 11.]]
-        # Rank 1:
-        [[ 4.  5.]
-         [ 6.  7.]
-         [12. 13.]
-         [14. 15.]]
-        # Launch 4 processes.
-        >>> input_split_sizes = [1, 1, 1, 1]
-        >>> out = all_to_all_single(tensor=data, input_split_sizes=input_split_sizes)
-        >>> print(out)
-    """
-    _split_count = _check_compute_split_count(tensor, output_split_sizes, input_split_sizes, group)
-    _split_dim = 0
-    _concat_dim = 0
-    _op = _get_cache_prim(P.AlltoAll)(_split_count, _split_dim, _concat_dim)
-    return _op(tensor)
-
-
 def isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     """
     Send tensors to the specified dest_rank.
@@ -962,3 +920,207 @@ def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     dtype = tensor.dtype
     _op = _get_cache_prim(P.Receive)(tag, _src, shape, dtype, group, group)
     return _op(tensor)
+
+
+def all_to_all_with_output_shape(output_shape_list, input_tensor_list, group=None):
+    """
+    scatter and gather list of tensor to/from all rank.
+
+    Note:
+        Length of ``output_tensor_list`` and ``input_tensor_list`` should be equal to rank size of ``group``.
+        Only support Pynative mode, Graph mode is not currently supported.
+
+    Args:
+        output_shape_list (Union[Tuple(Tensor), List(Tensor), Tuple(Tuple(int))]): List of shape
+            that indicate the gathered tensors shape from remote ranks.
+        input_tensor_list (Union[Tuple(Tensor), List(Tensor)]):
+            List of tensors to scatter to the remote rank.
+        group (str, optional): The communication group to work on.
+            Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
+
+    Returns:
+        Tuple(Tensor), the tensors gathered from remote ranks.
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 2 devices.
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore.communication import init, get_rank, get_group_size
+        >>> from mindspore.communication.comm_func import all_to_all
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import zeros
+        >>>
+        >>> init()
+        >>> this_rank = get_rank()
+        >>> if this_rank == 0:
+        >>>     send_tensor_list = [Tensor(1.), Tensor([[2, 3], [4, 5.]])]
+        >>>     recv_tensor_list = [(), (2,)]
+        >>> if this_rank == 1:
+        >>>     send_tensor_list = [Tensor([2, 2.]), Tensor([4, 5, 6, 7.])]
+        >>>     recv_tensor_list = [(2, 2), (4,)]
+        >>> output = all_to_all(recv_tensor_list, send_tensor_list)
+        >>> print(output)
+        rank 0:
+        (Tensor(shape=[], dtype=Float32, value= 1),
+         Tensor(shape=[2], dtype=Float32, value= [2.00000000e+00, 2.00000000e+00]))
+        rank 1:
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[2.00000000e+00, 3.00000000e+00],
+         [4.00000000e+00, 5.00000000e+00]]),
+         Tensor(shape=[4], dtype=Float32, value=[4.00000000e+00, 5.00000000e+00, 6.00000000e+00, 7.00000000e+00]))
+
+    """
+
+    _check_all_tensors(input_tensor_list)
+    _check_all_tensors_or_tuple(output_shape_list)
+    _check_all_tensor_same_dtype(input_tensor_list)
+    send_numel_list = []
+    send_flatten_tensor = []
+    recv_numel_list = []
+    recv_shape_list = []
+
+    for tensor in input_tensor_list:
+        send_numel_list.append(tensor.size)
+        send_flatten_tensor.append(tensor.reshape(-1))
+    for tensor in output_shape_list:
+        if isinstance(tensor, Tensor):
+            recv_numel_list.append(tensor.size)
+            recv_shape_list.append(tensor.shape)
+        else:
+            _shape = tensor
+            recv_numel_list.append(_get_size(_shape))
+            recv_shape_list.append(_shape)
+
+    _op = _get_cache_prim(P.AlltoAllV)(send_numel_list, recv_numel_list, group)
+    send_flatten_tensor = cat(send_flatten_tensor)
+    output = _op(send_flatten_tensor)
+    result = []
+    offset = 0
+    for numel, shape in zip(recv_numel_list, recv_shape_list):
+        result.append(output[offset:offset + numel].reshape(shape))
+        offset = offset + numel
+    return tuple(result)
+
+
+def all_to_all_single_with_output_shape(output_shape, tensor, output_split_sizes=None,
+                                        input_split_sizes=None, group=None):
+    """
+    scatter and gather input with split size to/from all rank.
+
+    Note:
+        ``output`` and ``input`` shape should match that in the remote rank.
+        Only support Pynative mode, Graph mode is not currently supported.
+
+    Args:
+        output_shape (Union(Tensor, Tuple(int))): shape to indicate the shape
+          of tensor gathered concatenated from remote rank.
+        tensor (Tensor): tensor to be scattered to remote rank.
+        output_split_sizes (Union(Tuple(int), List(int))): output split size at dim 0. If set to None,
+            it means equally split by ``world_size``.
+        input_split_sizes (Union(Tuple(int), List(int))): input split size at dim 0. If set to None,
+            it means equally split by ``world_size``.
+        group (str, optional): The communication group to work on.
+            Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
+
+    Returns:
+        Tensor, the tensors gathered concatenated from remote ranks.
+        If the numel of tensor gathered from remote is zero, it will return a Tensor will value 0,
+            which has no actual meanning.
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
+            Please see the `rank table Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            for more details.
+
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            This example should be run with 2 devices.
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore.communication import init, get_rank, get_group_size
+        >>> from mindspore.communication.comm_func import all_to_all_tensor
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import zeros
+        >>>
+        >>> init()
+        >>> this_rank = get_rank()
+        >>> if this_rank == 0:
+        >>>     output_shape = (3, 3)
+        >>>     tensor = Tensor([[0, 1, 2.], [3, 4, 5], [6, 7, 8]])
+        >>>     result = all_to_all_tensor(output_shape, tensor, [2, 1], [2, 1])
+        >>> if this_rank == 1:
+        >>>     output_shape = (2, 3)
+        >>>     tensor = Tensor([[9, 10., 11], [12, 13, 14]])
+        >>>     result = all_to_all_tensor(output_shape, tensor)
+        >>> print(result)
+        rank 0:
+        [[ 0.  1.  2.]
+         [ 3.  4.  5.]
+         [ 9. 10. 11.]]
+        rank 1:
+        [[ 6.  7.  8.]
+         [12. 13. 14.]]
+
+    """
+
+    _check_all_tensors([tensor])
+    _check_all_tensors_or_tuple([output_shape])
+    if group is None:
+        group = GlobalComm.WORLD_COMM_GROUP
+
+    if input_split_sizes is None or not input_split_sizes:
+        _world_size = get_group_size(group)
+        if tensor.shape[0] % _world_size != 0:
+            raise ValueError("input shape at dim 0 must be divided by world_size, "
+                             f"but got {tensor.shape[0]} and {_world_size}.")
+        _split_size = tensor.shape[0] // _world_size
+        input_split_sizes = (_split_size,) * _world_size
+    if output_split_sizes is None or not output_split_sizes:
+        _world_size = get_group_size(group)
+        shape_dim_0 = None
+        if isinstance(output_shape, Tensor):
+            shape_dim_0 = output_shape.shape[0]
+        else:
+            shape_dim_0 = output_shape[0]
+        if shape_dim_0 % _world_size != 0:
+            raise ValueError("output shape at dim 0 must be divided by world_size, "
+                             f"but got {shape_dim_0} and {_world_size}.")
+        _split_size = shape_dim_0 // _world_size
+        output_split_sizes = (_split_size,) * _world_size
+
+    send_size_without_first_dim = _get_size(tensor.shape[1:])
+    send_numel_list = [size * send_size_without_first_dim for size in input_split_sizes]
+
+    recv_size_without_first_dim = None
+    recv_shape_without_first_dim = None
+    if isinstance(output_shape, Tensor):
+        recv_shape_without_first_dim = output_shape.shape[1:]
+        recv_size_without_first_dim = _get_size(recv_shape_without_first_dim)
+    else:
+        recv_shape_without_first_dim = output_shape[1:]
+        recv_size_without_first_dim = _get_size(recv_shape_without_first_dim)
+    recv_numel_list = [size * recv_size_without_first_dim for size in output_split_sizes]
+
+    _op = _get_cache_prim(P.AlltoAllV)(send_numel_list, recv_numel_list, group)
+    _input = tensor.reshape(-1)
+    result = _op(_input)
+    if any(recv_numel_list):
+        result = result.reshape((-1,) + recv_shape_without_first_dim)
+
+    return result
