@@ -435,7 +435,7 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
         {device_tensor->device_name(), device_tensor->device_id()});
       MS_EXCEPTION_IF_NULL(device_context);
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther, 0);
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "", "");
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "UpdateOutputData", "");
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(), device::tracker::MemType::kOther,
                                                      device_tensor->GetSize(), device_tensor.get());
       auto data_stream_id = data->stream_id();

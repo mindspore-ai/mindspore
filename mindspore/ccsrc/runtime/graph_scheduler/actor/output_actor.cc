@@ -372,7 +372,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
   // need be set new device ptr, to avoid that the device ptr context of host tensor be rewritten in the next
   // step or next loop. But the graph output nodes corresponding to device tensor store need to be skipped, because
   // they are fixed addresses and persistent.
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "", "");
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "UpdateOutputDeviceAddress", "");
   for (size_t i = 0; i < output_nodes_.size(); ++i) {
     auto &output_node = output_nodes_[i].first;
     if (i >= output_device_tensors_.size()) {
