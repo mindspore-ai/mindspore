@@ -159,7 +159,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             logger.error('Could not find msprof_*.json file in %s', self._mindstudio_profiler_output)
         else:
             msprof_timeline = self._parse_msprof_data(get_newest_file(file_list_msprof))
-            timeline_data.extend(msprof_timeline)
 
         # get Ascend Hardware for scope
         scope_data = self._parse_ascend_hardware_scope(msprof_timeline)

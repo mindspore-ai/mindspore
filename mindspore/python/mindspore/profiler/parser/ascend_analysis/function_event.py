@@ -76,20 +76,49 @@ class CANNEvent(BaseEvent):
         self.args = self._orig_data.get("args", {})
         self.unique_id = f"{self.pid}-{self.tid}-{str(self.ts)}"
         self.is_ai_core = self.args.get("Task Type") == Constant.AI_CORE
+        self.ph = self._orig_data.get("ph")
+        self.cat = self._orig_data.get("cat")
 
     def is_flow_start_event(self) -> bool:
         """Determine whether the event is flow start event or not."""
         return self._orig_data.get("cat") == self.HOST_TO_DEVICE and \
-            self._orig_data.get("ph") == self.START_FLOW
+               self._orig_data.get("ph") == self.START_FLOW
 
     def is_flow_end_event(self) -> bool:
         """Determine whether the event is flow end event or not."""
         return self._orig_data.get("cat") == self.HOST_TO_DEVICE and \
-            self._orig_data.get("ph") == self.END_FLOW
+               self._orig_data.get("ph") == self.END_FLOW
 
     def is_x_event(self) -> bool:
         """Determine whether the event x event or not."""
         return self._orig_data.get("ph") == "X"
+
+    def to_json(self):
+        """Cast to trace event."""
+        if self.ph == 'M':
+            res = {'name': self.name, 'pid': self.pid, 'tid': self.tid,
+                   'args': self.args, 'ph': self.ph}
+            if self.cat:
+                res.update({'cat': self.cat})
+            return res
+
+        if self.ph == 'X':
+            if self.parent is not None:
+                self.args.update({'mindspore_op': self.parent.name})
+            res = {'name': self.name, 'pid': self.pid, 'tid': self.tid,
+                   'ts': str(self.ts), 'dur': self.dur, 'args': self.args, 'ph': self.ph}
+            if self.cat:
+                res.update({'cat': self.cat})
+            return res
+
+        if self.ph == 's':
+            return {"ph": self.ph, "name": self.name, "id": self.id, "pid": self.pid,
+                    "tid": self.tid, "ts": str(self.ts), "cat": self.cat}
+
+        if self.ph == 'f':
+            return {"ph": self.ph, "name": self.name, "id": self.id, "pid": self.pid,
+                    "tid": self.tid, "ts": str(self.ts), "cat": self.cat, 'bp': "e"}
+        return {}
 
 
 class MindSporeOpEnum(Enum):
