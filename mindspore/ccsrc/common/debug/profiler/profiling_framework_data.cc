@@ -101,7 +101,7 @@ void OpRangeData::preprocess() {
     stack.erase(stack.begin());
     size_t nPos = all_stack.find(delim.c_str());
     while (nPos != std::string::npos) {
-      std::string temp = all_stack.substr(0, nPos);
+      std::string temp = all_stack.substr(0, nPos + 1);
       if (temp.find(remove_ms.c_str()) == std::string::npos) {
         stack.push_back(temp);
       }
@@ -144,59 +144,7 @@ std::vector<uint8_t> OpRangeData::encode() {
   return resultTLV;
 }
 
-void ProfilingFrameworkData::RecordLaunchGETaskBegin(const std::string &scope_name) {
-  auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
-  MS_EXCEPTION_IF_NULL(ascend_profiler);
-  if (!ascend_profiler->GetHostStack()) {
-    return;
-  }
-
-  int64_t start_ns = GetClockSyscnt();
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
-  auto tid = syscall(SYS_gettid);
-#else
-  auto tid = 0;
-#endif
-  kernel_launch_begin_[std::to_string(tid) + "_" + scope_name] = start_ns;
-}
-
-void ProfilingFrameworkData::RecordGETask(const std::string &scope_name) {
-  auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
-  MS_EXCEPTION_IF_NULL(ascend_profiler);
-  if (!ascend_profiler->GetHostStack()) {
-    return;
-  }
-
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
-  auto tid = syscall(SYS_gettid);
-#else
-  auto tid = 0;
-#endif
-  auto iter = kernel_launch_begin_.find(std::to_string(tid) + "_" + scope_name);
-  if (iter == kernel_launch_begin_.end()) {
-    MS_LOG(WARNING) << "Do not find op info: " << scope_name;
-    return;
-  }
-  int64_t start_ns = iter->second;
-  int64_t end_ns = GetClockSyscnt();
-  int64_t sequence_number = 0;
-  uint64_t process_id = 0;
-  uint64_t start_thread_id = static_cast<uint64_t>(tid);
-  uint64_t end_thread_id = start_thread_id;
-  uint64_t forward_thread_id = start_thread_id;
-  bool is_async = false;
-
-  std::vector<std::string> stack_vec;
-  stack_vec.push_back(scope_name + ":50");
-  stack_vec.push_back(scope_name + ":60");
-  uint32_t flow_id = 10;
-
-  OpRangeData report =
-    OpRangeData(start_ns, end_ns, sequence_number, process_id, start_thread_id, end_thread_id, forward_thread_id,
-                is_async, scope_name, stack_vec, flow_id, ProfilingFrameworkData::Device_Id);
-  ProfilingDataDumper::GetInstance().Report(std::make_unique<OpRangeData>(report));
-}
-
 void ProfilingFrameworkData::RecordHostStack(std::shared_ptr<ProfilerData> data) {
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
@@ -215,6 +163,11 @@ void ProfilingFrameworkData::RecordHostStack(std::shared_ptr<ProfilerData> data)
                                    op_name, std::move(stack_vec), data->flow_id_, ProfilingFrameworkData::Device_Id);
   ProfilingDataDumper::GetInstance().Report(std::make_unique<OpRangeData>(report));
 }
+#else
+void ProfilingFrameworkData::RecordHostStack(std::shared_ptr<ProfilerData> data) {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
+}
+#endif
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore
