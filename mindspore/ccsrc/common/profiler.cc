@@ -152,8 +152,12 @@ void ProfilerAnalyzer::Initialize() {
 }
 
 bool ProfilerAnalyzer::profiler_enable() const {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   auto ascend_profiler = mindspore::profiler::Profiler::GetInstance(kAscendDevice);
   return profiler_enable_ || (ascend_profiler != nullptr && ascend_profiler->GetHostStack());
+#else
+  return profiler_enable_;
+#endif
 }
 
 void ProfilerAnalyzer::SetThreadIdToName(const std::thread::id &id, const std::string &name) {
@@ -199,7 +203,13 @@ void ProfilerAnalyzer::Clear() noexcept {
   init_ = false;
 }
 
-uint64_t ProfilerAnalyzer::GetTimeStamp() const noexcept { return profiler::GetClockSyscnt(); }
+uint64_t ProfilerAnalyzer::GetTimeStamp() const noexcept {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
+  return profiler::GetClockSyscnt();
+#else
+  return 0;
+#endif
+}
 
 // For example: ScopeName(XX/XX/ReLU-op1) --> BriefName(ReLU)
 std::string ProfilerAnalyzer::GetBriefName(const std::string &scope_name) const {
@@ -213,6 +223,7 @@ std::string ProfilerAnalyzer::GetBriefName(const std::string &scope_name) const 
 }
 
 void ProfilerAnalyzer::RecordData(const ProfilerDataPtr &data) noexcept {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   MS_EXCEPTION_IF_NULL(data);
   std::unique_lock<SpinLock> lock(data_mutex_);
   if (profiler_enable_) {
@@ -222,6 +233,7 @@ void ProfilerAnalyzer::RecordData(const ProfilerDataPtr &data) noexcept {
   if (ascend_profiler != nullptr && ascend_profiler->GetHostStack()) {
     profiler::ascend::ProfilingFrameworkData::RecordHostStack(data);
   }
+#endif
 }
 
 void ProfilerAnalyzer::RecordFlowData(uint64_t flow_id) {

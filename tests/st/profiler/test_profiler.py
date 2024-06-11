@@ -338,11 +338,11 @@ class TestProfiler:
                 elif 'KernelLaunch' in name:
                     KernelLaunch_set.add(name)
 
-        assert len(RunOp_set) > 0
-        assert len(FrontendTask_set) > 0
-        assert len(DeviceTask_set) > 0
-        assert len(LaunchTask_set) > 0
-        assert len(KernelLaunch_set) > 0
+        assert RunOp_set
+        assert FrontendTask_set
+        assert DeviceTask_set
+        assert LaunchTask_set
+        assert KernelLaunch_set
         for v in async_ms_dict.values():
             assert v == 2
         for v in async_npu_dict.values():
