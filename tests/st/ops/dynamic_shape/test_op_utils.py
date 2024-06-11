@@ -17,7 +17,6 @@
 
 import copy
 import os
-import hashlib
 
 import numpy as np
 import mindspore as ms
@@ -283,23 +282,15 @@ def check_args(inputs_seq, yaml_name, disable_input_check, disable_yaml_check, d
         raise TypeError(f"Arg 'debug_info' must be type of bool, but got {type(debug_info)}.")
 
 
-def check_yaml_file_md5(file_path):
-    expect_value = 'bd9f4c2f05c90cbca2c24ac18825a164'
-    with open(file_path, 'rb') as file:
-        file_contents = file.read()
-        md5_hash = hashlib.md5(file_contents).hexdigest()
-    file.close()
-    if md5_hash != expect_value:
-        warning_log(f"It seems test_op_utils.yaml should be updated. If you got a 'not found' error on CI auto test, " \
-                    f"Please commit a newer test_op_utils.yaml and change the value of 'expect_value' to '{md5_hash}'.")
-
-
 def check_inputs_with_yaml(inputs_seq, yaml_name, disable_yaml_check):
     if disable_yaml_check:
         warning_log("yaml check is disabled.")
         return
-    ops_yaml_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_op_utils.yaml')
-    check_yaml_file_md5(ops_yaml_path)
+    work_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../../../')
+    ops_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops.yaml')
+    if not os.path.exists(ops_yaml_path):
+        warning_log(ops_yaml_path, " is not found.")
+        return
     ops_yaml_data = safe_load_yaml(ops_yaml_path)
     debug_log("ops yaml file path: ", ops_yaml_path)
     if yaml_name not in ops_yaml_data.keys():
