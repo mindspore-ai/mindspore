@@ -23,6 +23,7 @@
 #include "include/common/utils/stub_tensor.h"
 #include "pipeline/jit/pi/graph_guard/strategy.h"
 #include "pipeline/jit/pi/graph_guard/guard.h"
+#include "pipeline/jit/pi/graph_guard/infer.h"
 
 namespace mindspore {
 namespace pijit {
@@ -294,18 +295,7 @@ class StringData : public ItemData {
 
 class ListData : public ItemData {
  public:
-  ListData(PyObject *obj, bool needSpecialize, int recurseDepth)
-      : ItemData(ItemType::PyList, needSpecialize, recurseDepth) {
-    if (PyList_Check(obj)) {
-      InitList(obj, needSpecialize, recurseDepth);
-    } else if (PyTuple_Check(obj)) {
-      InitTuple(obj, needSpecialize, recurseDepth);
-    } else if (PySet_Check(obj)) {
-      InitSet(obj, needSpecialize, recurseDepth);
-    } else if (PyFrozenSet_Check(obj)) {
-      InitFrozenSet(obj, needSpecialize, recurseDepth);
-    }
-  }
+  ListData(PyObject *obj, bool needSpecialize, int recurseDepth);
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
@@ -761,6 +751,17 @@ class TypeData : public ItemData {
   TypeData(PyObject *obj, bool needSpecialize, int recurseDepth)
       : ItemData(ItemType::PyType, needSpecialize, recurseDepth) {
     refType_ = reinterpret_cast<PyTypeObject *>(obj);
+    is_adapter_tensor_type_ = false;
+    ambiguous_tensor_type_ = false;
+  }
+
+  void set_ambiguous_tensor_type(bool value) {
+    if (value && (IsTensorType<true>(refType_) || IsStubTensorType<true>(refType_))) {
+      ambiguous_tensor_type_ = true;
+      PyObject *obj = reinterpret_cast<PyObject *>(refType_);
+      py::object registry = Utils::GetModuleAttr("mindspore.common._register_for_adapter", "ms_adapter_registry");
+      is_adapter_tensor_type_ = registry.ptr() != nullptr && obj == py::getattr(registry, "tensor", nullptr).ptr();
+    }
   }
 
   bool operator==(const ItemData &obj) const override {
@@ -769,6 +770,11 @@ class TypeData : public ItemData {
       bool ret = refType_ == otherType;
       if (!ret) {
         ret = PyType_IsSubtype(refType_, otherType) || PyType_IsSubtype(otherType, refType_);
+      }
+      // adapter tensor type must be check exactly
+      // if exactly type check failed, check ambiguous tensor type if necessary
+      if (!is_adapter_tensor_type_ && !ret && ambiguous_tensor_type_) {
+        ret = IsTensorType<true>(otherType) || IsStubTensorType<true>(otherType);
       }
       return ret;
     }
@@ -783,6 +789,13 @@ class TypeData : public ItemData {
  protected:
   void SubInfo(InfoPack *info) override { (*info) << refType_->tp_name; }
   PyTypeObject *refType_;
+
+  // this flag is checked only if tensor type is ambiguous
+  bool is_adapter_tensor_type_;
+
+  // mix the tensor type.
+  // only set true if _c_expression.Tensor type, common.Tensor type, StubTensor type and all subtype of them
+  bool ambiguous_tensor_type_;
 };
 
 class NumpyData : public ItemData {
@@ -1727,6 +1740,27 @@ class UnknownData : public ItemData {
  protected:
   PyObject *refId_;
 };
+
+ListData::ListData(PyObject *obj, bool needSpecialize, int recurseDepth)
+    : ItemData(ItemType::PyList, needSpecialize, recurseDepth) {
+  if (PyList_Check(obj)) {
+    InitList(obj, needSpecialize, recurseDepth);
+  } else if (PyTuple_Check(obj)) {
+    InitTuple(obj, needSpecialize, recurseDepth);
+  } else if (PySet_Check(obj)) {
+    InitSet(obj, needSpecialize, recurseDepth);
+  } else if (PyFrozenSet_Check(obj)) {
+    InitFrozenSet(obj, needSpecialize, recurseDepth);
+  }
+  if (needSpecialize) {
+    return;  // value check exactly
+  }
+  for (const auto &data : listVar_) {
+    if (data->GetItemType() == ItemType::PyType) {
+      static_cast<TypeData *>(data.get())->set_ambiguous_tensor_type(true);
+    }
+  }
+}
 
 using CheckPyObjectFunc = bool (*)(PyObject *obj);
 using CreatePyObjectFunc = ItemDataPtr (*)(PyObject *obj, bool need_specialize, int recurse_depth);
