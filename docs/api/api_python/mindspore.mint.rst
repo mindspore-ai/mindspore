@@ -175,6 +175,7 @@ mindspore.mint.nn.functional
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.elu
     mindspore.mint.nn.functional.gelu
     mindspore.mint.nn.functional.relu
     mindspore.mint.nn.functional.leaky_relu
