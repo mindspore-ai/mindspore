@@ -378,7 +378,7 @@ def test_compile_cache_lenet():
     run_twice_with_same_network("run_lenet.py", "./lenet", "lenet_first.txt", "lenet_second.txt")
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -390,7 +390,7 @@ def test_compile_cache_lenet_with_force_use_compile_cache():
     Expectation: success.
     """
     run_network_once_with_force_use_compile_cache("run_lenet.py", "./lenet_with_force_use_compile_cache",
-                                                  "lenet_first.txt")
+                                                  "lenet_force_cache.txt")
 
 
 @pytest.mark.level0
@@ -508,7 +508,7 @@ def test_compile_cache_lenet_ge():
     Description: Test whether the ge compile cache function can run successfully.
     Expectation: success.
     """
-    run_twice_with_same_network("run_lenet.py", "./lenet", "lenet_first.txt", "lenet_second.txt", True)
+    run_twice_with_same_network("run_lenet.py", "./lenet", "lenet_ge_first.txt", "lenet_ge_second.txt", True)
 
 
 @pytest.mark.level0
