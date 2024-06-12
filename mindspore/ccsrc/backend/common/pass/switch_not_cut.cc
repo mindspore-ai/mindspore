@@ -48,13 +48,39 @@ bool IsValidInlinePartial(const AnfNodePtr &node, std::set<FuncGraphPtr> *checke
   }
   // Output valuenode check should be in partial check, as the root graph could.
   const auto &outputs = common::AnfAlgo::GetAllOutputWithIndex(sub_graph->return_node()->input(1));
-  if (std::any_of(outputs.begin(), outputs.end(), [](const std::pair<AnfNodePtr, int64_t> &pair) {
-        return pair.first != nullptr && (pair.first->isa<ValueNode>() || pair.first->isa<Parameter>());
-      })) {
-    MS_LOG(DEBUG) << "Partial graph:" << sub_graph->ToString()
-                  << " has value node output for node:" << node->DebugString();
-    return false;
+  if (outputs.size() > 1) {
+    if (std::any_of(outputs.begin(), outputs.end(), [](const std::pair<AnfNodePtr, int64_t> &pair) {
+          return pair.first != nullptr && (pair.first->isa<ValueNode>() || pair.first->isa<Parameter>());
+        })) {
+      MS_LOG(DEBUG) << "Partial graph:" << sub_graph->ToString()
+                    << " has value node output for node:" << node->DebugString();
+      return false;
+    }
+  } else if (outputs.size() == 1) {
+    const auto &real_output_node = outputs.begin()->first;
+    if (real_output_node == nullptr || real_output_node->isa<ValueNode>()) {
+      return false;
+    } else if (real_output_node->isa<Parameter>()) {
+      const auto &output_node = sub_graph->return_node()->input(1);
+      const auto &abstract = output_node->abstract();
+      if (abstract == nullptr || (!abstract->isa<abstract::AbstractTensor>()) ||
+          common::AnfAlgo::HasAbstractRef(output_node)) {
+        return false;
+      }
+
+      auto tensor_move =
+        sub_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimTensorMove->name())), output_node});
+      MS_EXCEPTION_IF_NULL(tensor_move);
+      tensor_move->set_abstract(abstract->Clone());
+      const auto &mng = sub_graph->manager();
+      if (mng == nullptr) {
+        MS_LOG(WARNING) << "Manager is null in funcgraph:" << sub_graph->ToString();
+        return false;
+      }
+      mng->Replace(output_node, tensor_move);
+    }
   }
+
   if (!IsValidFuncGraph(sub_graph, checked_graphs, nullptr)) {
     MS_LOG(DEBUG) << "Partial graph:" << sub_graph->ToString() << " is not valid for node:" << node->DebugString();
     return false;
