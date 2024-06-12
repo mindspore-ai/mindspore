@@ -271,5 +271,25 @@ REG_FALLBACK_BUILDER("DivMod").SetBody(BODYFUNC(ib) {
     MS_LOG(EXCEPTION) << "DivMod abstract failed.";
   }
 });
+
+REG_FALLBACK_BUILDER("EqualCount").SetBody(BODYFUNC(ib) {
+  const auto &input_x = ib->GetInput(kIndex0);
+  const auto &input_y = ib->GetInput(kIndex1);
+  // Expand
+  auto dtype = input_x->dtype();
+  auto eql_val = ib->Equal(input_x, input_y);
+  auto cast_val = ib->Cast(eql_val, kNumberTypeFloat32);
+  auto shape_size = input_x->shape().size();
+  std::vector<int64_t> axis(shape_size);
+  for (size_t i = 0; i < shape_size; ++i) {
+    axis[i] = SizeToLong(i);
+  }
+  auto result = ib->ReduceSum(cast_val, axis, false);
+  result = ib->Reshape(result, {1});
+  if (result->dtype() != dtype) {
+    result = ib->Cast(result, dtype->type_id());
+  }
+  return {result};
+});
 }  // namespace expander
 }  // namespace mindspore

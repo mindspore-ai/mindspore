@@ -188,8 +188,7 @@ bool RemoveRedundantDepends(const FuncGraphPtr &func_graph, const FuncGraphManag
         continue;
       }
       const auto &attach_node = depend_cnode->input(kIndex2);
-      if (attach_node->isa<ValueNode>()) {
-        // Umonad
+      if (attach_node->isa<ValueNode>() || attach_node->isa<Parameter>()) {
         mng->Replace(depend_cnode, depend_cnode->input(kIndex1));
         continue;
       }
