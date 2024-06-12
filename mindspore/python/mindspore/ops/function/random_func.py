@@ -29,7 +29,7 @@ from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithM
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import randperm
 from mindspore.common.generator import default_generator
-from mindspore.ops.auto_generate import UniformExt, NormalExt
+from mindspore.ops.auto_generate import UniformExt, NormalExt, RandExt, RandLikeExt
 
 normal_ext_op = NormalExt()
 cast_ = P.Cast()
@@ -39,6 +39,8 @@ reshape_ = P.Reshape()
 shape_ = P.Shape()
 top_k_ = P.TopK()
 uniform_ = UniformExt()
+rand_ext_ = RandExt()
+rand_like_ext_ = RandLikeExt()
 
 @constexpr
 def _set_prim_op_user_data(prim, key, value):
@@ -1026,21 +1028,17 @@ def rand_ext(*size, dtype=None, generator=None):
         ValueError: If `dtype` is not a `mstype.float_type` type.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> import mindspore.ops as ops
-        >>> print(ops.rand_ext((2,3)))
-        [[4.1702199e-01 9.9718481e-01 7.2032452e-01]
-         [9.3255734e-01 1.1438108e-04 1.2812445e-01]]
+        >>> print(ops.rand_ext((2, 3)).shape)
+        (2, 3)
     """
-    if dtype is None:
-        dtype = mstype.float32
-    elif dtype not in mstype.float_type:
-        raise ValueError(
-            f"For 'rand', the 'dtype' must be a float type, but got {dtype}.")
-    stub_tensor = F.zeros(size, dtype)
-    return uniform_ext(stub_tensor, 0., 1., generator)
+    if not generator:
+        generator = default_generator
+    seed, offset = generator._step(1)  # pylint: disable=protected-access
+    return rand_ext_(size, dtype, seed, offset)
 
 
 @_function_forbid_reuse
@@ -1064,26 +1062,17 @@ def rand_like_ext(input, *, dtype=None):
         ValueError: If `dtype` is not a `mstype.float_type` type.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> import mindspore as ms
         >>> from mindspore import Tensor, ops
         >>> a = Tensor([[2, 3, 4], [1, 2, 3]])
-        >>> print(ops.rand_like_ext(a, dtype=ms.float32))
-        [[4.1702199e-01 9.9718481e-01 7.2032452e-01]
-         [9.3255734e-01 1.1438108e-04 1.2812445e-01]]
+        >>> print(ops.rand_like_ext(a, dtype=ms.float32).shape)
+        (2, 3)
     """
-    if not isinstance(input, Tensor):
-        raise TypeError(
-            f"For 'rand_like', the 'input' must be a Tensor, but got {type(input)}")
-    if dtype is None:
-        dtype = input.dtype
-    if dtype not in mstype.float_type:
-        raise ValueError(
-            f"For 'rand_like', the 'dtype' must be a float type, but got {dtype}.")
-    stub_tensor = F.zeros_like_ext(input, dtype=dtype)
-    return uniform_ext(stub_tensor, 0., 1.)
+    seed, offset = default_generator._step(1)  # pylint: disable=protected-access
+    return rand_like_ext_(input, dtype, seed, offset)
 
 
 @_function_forbid_reuse
