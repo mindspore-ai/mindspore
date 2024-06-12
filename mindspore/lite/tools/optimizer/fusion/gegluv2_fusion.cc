@@ -20,7 +20,7 @@
 #include "ops/op_utils.h"
 #include "ops/array_ops.h"
 #include "ops/nn_ops.h"
-#include "ops/custom.h"
+#include "ops/fusion/gegluv2.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "mindspore/core/ops/lite_ops.h"
 #include "ops/slice.h"
@@ -71,7 +71,7 @@ const VectorRef GeGluV2Fusion::DefineGeGluV2Pattern() const {
 CNodePtr GeGluV2Fusion::CreateGeGluV2Node(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                           const AnfNodePtr &add_output) const {
   MS_LOG(INFO) << "CreateGeGluV2Cnode";
-  auto gegluv2_prim = std::make_shared<ops::Custom>();
+  auto gegluv2_prim = std::make_shared<ops::GeGluV2>();
   if (gegluv2_prim == nullptr) {
     MS_LOG(ERROR) << "new gegluv2 prim failed.";
     return nullptr;
@@ -79,12 +79,6 @@ CNodePtr GeGluV2Fusion::CreateGeGluV2Node(const FuncGraphPtr &func_graph, const 
   gegluv2_prim->AddAttr("dim", api::MakeValue(kNumDim));
   gegluv2_prim->AddAttr("approximate", api::MakeValue(kNumUseTanh));
   gegluv2_prim->AddAttr("activate_left", api::MakeValue(false));
-  std::vector<std::string> input_names = {"x"};
-  std::vector<std::string> output_names = {"y", "gelu"};
-  gegluv2_prim->set_type("GeGluV2");
-  gegluv2_prim->AddAttr("input_names", api::MakeValue(input_names));
-  gegluv2_prim->AddAttr("output_names", api::MakeValue(output_names));
-  gegluv2_prim->AddAttr("reg_op_name", api::MakeValue("GeGluV2"));
 
   auto gegluv2_prim_c = gegluv2_prim->GetPrim();
   if (gegluv2_prim_c == nullptr) {
