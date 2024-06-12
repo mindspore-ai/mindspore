@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import numpy as np
 import pytest
 import mindspore
@@ -40,7 +39,8 @@ class Net(Cell):
 
 
 def get_output(x0, x1, shape, enable_graph_kernel):
-    context.set_context(enable_graph_kernel=enable_graph_kernel)
+    jit_level = "O1" if enable_graph_kernel else "O0"
+    context.set_context(jit_config={"jit_level": jit_level})
     with AssertGKEnable(enable_graph_kernel):
         net = Net(shape)
         y0, _ = net(x0, x1)
@@ -56,7 +56,6 @@ def test_convert_bfloat16():
     Description: input is bfloat16
     Expectation: the result match with the expected result
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     np.random.seed(1)
     shape = (4, 4)
@@ -68,4 +67,3 @@ def test_convert_bfloat16():
     outputs = get_output(x0_ms, x1_ms, shape, True)
     compare_result = [np.allclose(e, o, 1.5e-3, 1.5e-3) for e, o in zip(expects, outputs)]
     assert False not in compare_result
-    del os.environ["GRAPH_OP_RUN"]

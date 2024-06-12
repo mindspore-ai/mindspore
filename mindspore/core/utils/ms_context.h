@@ -291,6 +291,7 @@ class MS_CORE_API MsContext {
   void SetCellReuseLevel(const CellReuseLevel &level) { cell_reuse_level_ = level; }
   enum CellReuseLevel CellReuseLevel() const { return cell_reuse_level_; }
 
+  std::string GetJitLevel() const;
   bool IsKByKExecutorMode() const;
 
   std::string GetLoadPluginErrorStr() const { return load_plugin_error_(); }
