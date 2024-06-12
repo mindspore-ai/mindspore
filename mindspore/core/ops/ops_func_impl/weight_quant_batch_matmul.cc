@@ -23,6 +23,7 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
 constexpr size_t kMatSize = 2;
 constexpr size_t kInputX = 0;
 constexpr size_t kInputWeight = 1;
@@ -35,6 +36,7 @@ constexpr size_t kInputTransposeX = 7;
 constexpr size_t kInputTransposeWeight = 8;
 constexpr size_t kInputGroupSize = 9;
 constexpr int kInt4ShapeMul = 2;
+}  // namespace
 
 BaseShapePtr WeightQuantBatchMatmulFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                         const std::vector<AbstractBasePtr> &input_args) const {
