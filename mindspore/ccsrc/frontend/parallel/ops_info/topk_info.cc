@@ -62,11 +62,11 @@ Status TopkExtInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
     return FAILED;
   }
-  size_t rank = inputs_shape_[0].size();
+  int rank = SizeToInt(inputs_shape_[0].size());
   if (dim < 0) {
     dim = dim + rank;
   }
-  dim_ = dim;
+  dim_ = LongToSize(dim);
 
   inputs_shape_ = Shapes{inputs_shape_[0]};
 

@@ -488,16 +488,27 @@ Status QuantBatchMatmulInfo::InferTensorLayout(TensorLayouts *inputs_layout, Ten
     }
   }
 
+  size_t real_input_index = 0;
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
-    TensorLayout tensor_layout;
-    if ((tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[i], inputs_shape_[i]) != SUCCESS)) {
+    // Insert placeholder TensorInfo for optional input
+    while (real_input_index < input_value_.size() && input_value_[real_input_index] != nullptr &&
+           input_value_[real_input_index]->isa<None>()) {
+      (void)inputs_tensor_info_.emplace_back(TensorInfo());
+      ++real_input_index;
+    }
+    TensorLayout input_layout;
+    if (input_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[i], inputs_shape_[i]) != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": Infer input tensor layout failed, the index is " << i;
       return FAILED;
     }
+    TensorInfo input_tensor_info(input_layout);
+    inputs_tensor_info_.push_back(input_tensor_info);
+    ++real_input_index;
 
     if (i == kQbmmInputX2 && field_size_ != 0) {
-      tensor_layout.set_field_size(field_size_);
+      input_layout.set_field_size(field_size_);
     }
-    inputs_layout->push_back(tensor_layout);
+    inputs_layout->push_back(input_layout);
   }
 
   TensorLayout output_layout;
@@ -514,12 +525,6 @@ Status QuantBatchMatmulInfo::InferTensorInfo() {
   TensorLayouts inputs_layout, outputs_layout;
   if (InferTensorLayout(&inputs_layout, &outputs_layout) != SUCCESS) {
     return FAILED;
-  }
-
-  for (size_t i = 0; i < inputs_layout.size(); i++) {
-    TensorLayout tensor_layout = inputs_layout.at(i);
-    TensorInfo tensor_info(tensor_layout);
-    inputs_tensor_info_.push_back(tensor_info);
   }
 
   TensorLayout output_layout = outputs_layout.at(kQbmmOutput);
