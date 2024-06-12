@@ -128,4 +128,16 @@ CUST_ATTR_MAP(SolveTriangularGrad) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(SolveTriangularGrad) = {{0, OUTPUT_DESC(da)}, {1, OUTPUT_DESC(db)}};
 REG_ADPT_DESC(SolveTriangularGrad, prim::kPrimSolveTriangularGrad->name(), CUST_ADPT_DESC(SolveTriangularGrad));
 
+// LstsqV2
+CUST_INPUT_MAP(LstsqV2) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(b)}, {3, INPUT_DESC(driver)}};
+CUST_ATTR_MAP(LstsqV2) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(LstsqV2) = {
+  {0, OUTPUT_DESC(solution)}, {1, OUTPUT_DESC(residuals)}, {2, OUTPUT_DESC(rank)}, {3, OUTPUT_DESC(singular_values)}};
+REG_ADPT_DESC(LstsqV2, prim::kPrimLstsqV2->name(), CUST_ADPT_DESC(LstsqV2));
+
+// LstsqV2Grad
+CUST_INPUT_MAP(LstsqV2Grad) = {{1, INPUT_DESC(gx)}, {2, INPUT_DESC(a)}, {3, INPUT_DESC(b)}};
+CUST_ATTR_MAP(LstsqV2Grad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(LstsqV2Grad) = {{0, OUTPUT_DESC(ga)}, {1, OUTPUT_DESC(gb)}};
+REG_ADPT_DESC(LstsqV2Grad, prim::kPrimLstsqV2Grad->name(), CUST_ADPT_DESC(LstsqV2Grad));
 }  // namespace mindspore::transform
