@@ -24,7 +24,7 @@ void AscendDeprecatedInterface::DoExecNonInputGraph(const std::string &) {}
 void AscendDeprecatedInterface::ExportDFGraph(const std::string &, const std::string &, const pybind11::object &,
                                               char *) {}
 FuncGraphPtr AscendDeprecatedInterface::BuildDFGraph(const FuncGraphPtr &, const pybind11::dict &) { return nullptr; }
-void AscendDeprecatedInterface::RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) {}
+bool AscendDeprecatedInterface::RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) { return true; }
 void AscendDeprecatedInterface::ClearGraphWrapper() {}
 void AscendDeprecatedInterface::ClearOpAdapterMap() {}
 void AscendDeprecatedInterface::DumpProfileParallelStrategy(const FuncGraphPtr &) {}

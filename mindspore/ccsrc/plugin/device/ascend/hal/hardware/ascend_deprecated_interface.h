@@ -38,7 +38,7 @@ class AscendDeprecatedInterface : public DeprecatedInterface {
 
   // for ge
   void DoExecNonInputGraph(const std::string &phase) override;
-  void RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) override;
+  bool RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) override;
   void ExportDFGraph(const std::string &file_name, const std::string &phase, const pybind11::object &encrypt,
                      char *key) override;
   FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) override;
