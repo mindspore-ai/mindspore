@@ -1,12 +1,16 @@
 mindspore.communication.comm_func
 =================================
-集合通信函数式接口。
+Collection communication functional interface
 
-注意，集合通信函数式接口需要先配置好通信环境变量。
+Note that the APIs in the following list need to preset communication environment variables.
 
-针对Ascend/GPU/CPU设备，推荐使用msrun启动方式，无第三方以及配置文件依赖。详见 `msrun启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/msrun_launcher.html>`_ 。
+For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+without any third-party or configuration file dependencies.
+Please see the `msrun start up
+<https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/msrun_launcher.html>`_
+for more details.
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: communication
     :nosignatures:
     :template: classtemplate.rst
