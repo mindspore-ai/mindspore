@@ -1,0 +1,12 @@
+approvers:
+- yuchaojie #
+- jjfeing
+- linqingke
+- laiyongqiang
+- liujunzhu
+- reku1997
+
+reviewers:
+
+options:
+    no_parent_owners: true

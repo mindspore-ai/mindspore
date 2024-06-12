@@ -20,6 +20,17 @@ import subprocess
 import shutil
 from mindspore import log as logger
 
+OP_HOST = "op_host"
+OP_KERNEL = "op_kernel"
+SUFFIX_CPP = "cpp"
+SUFFIX_H = "h"
+CONFIG_KEY_CONFIGUREPRESET = "configurePresets"
+CONFIG_KEY_VALUE = "value"
+CONFIG_KEY_VARIABLE = "cacheVariables"
+CONFIG_KEY_CANN_PATH = "ASCEND_CANN_PACKAGE_PATH"
+CONFIG_KEY_VENDOR_NAME = "vendor_name"
+CONFIG_KEY_COMPUTE_UNIT = "ASCEND_COMPUTE_UNIT"
+
 
 def get_config():
     """get config from user"""
@@ -82,6 +93,7 @@ class CustomOOC():
                 raise ValueError(
                     f"Install path [{self.args.install_path}] is not valid path, please check your set"
                     f" --install_path is set correctly")
+        self.ori_cmake_preset = ""
 
     def compile_config(self):
         """create CMakePresets.json by config"""
@@ -100,23 +112,26 @@ class CustomOOC():
         if not os.path.isdir(cann_package_path):
             logger.error(f"The path '{cann_package_path}' is not a valid path.")
         logger.info("ASCEND_CANN_PACKAGE_PATH is {}".format(cann_package_path))
-        data['configurePresets'][0]["cacheVariables"]["ASCEND_CANN_PACKAGE_PATH"][
-            "value"] = cann_package_path
+        data[CONFIG_KEY_CONFIGUREPRESET][0][CONFIG_KEY_VARIABLE][CONFIG_KEY_CANN_PATH][
+            CONFIG_KEY_VALUE] = cann_package_path
 
         if self.args.soc_version != "":
-            data['configurePresets'][0]["cacheVariables"]["ASCEND_COMPUTE_UNIT"][
-                "value"] = self.args.soc_version
+            data[CONFIG_KEY_CONFIGUREPRESET][0][CONFIG_KEY_VARIABLE][CONFIG_KEY_COMPUTE_UNIT][
+                CONFIG_KEY_VALUE] = self.args.soc_version
 
-        data['configurePresets'][0]["cacheVariables"]["vendor_name"][
-            "value"] = self.args.vendor_name
+        data[CONFIG_KEY_CONFIGUREPRESET][0][CONFIG_KEY_VARIABLE][CONFIG_KEY_VENDOR_NAME][
+            CONFIG_KEY_VALUE] = self.args.vendor_name
 
-        with open(os.path.join(dir_path, 'CMakePresets.json'), 'w', encoding='utf-8') as f:
+        with os.fdopen(
+                os.open(os.path.join(dir_path, 'CMakePresets.json'), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700),
+                "w") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
 
     def clear(self):
+        """clear log and build out"""
         if self.args.clear:
-            command = ['rm -rf build_out install.log build.log']
-            result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
+            command = ['rm', '-rf', 'build_out', 'install.log', 'build.log']
+            result = subprocess.run(command, shell=False, stderr=subprocess.STDOUT)
             if result.returncode == 0:
                 logger.info("Delete build_out install.log build.log successfully!")
             else:
@@ -129,8 +144,8 @@ class CustomOOC():
         if self.args.install or self.args.install_path != "":
             logger.info("Install custom opp run in {}".format(self.args.install_path))
             os.environ['ASCEND_CUSTOM_OPP_PATH'] = self.args.install_path
-            command = ['bash build_out/*.run']
-            result = subprocess.run(command, shell=True, stdout=open("install.log", 'w'),
+            result = subprocess.run(['bash', 'build_out/*.run'], stdout=os.fdopen(
+                os.open("install.log", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700), "w"),
                                     stderr=subprocess.STDOUT)
             if result.returncode == 0:
                 logger.info("Install custom run opp successfully!")
@@ -148,37 +163,41 @@ class CustomOOC():
         """compile custom op"""
         script_path = os.path.abspath(__file__)
         project_path = os.path.dirname(script_path)
-        for item in os.listdir(os.path.join(project_path, "op_host")):
-            if item.split('.')[-1] in {'cpp', 'h'}:
-                os.remove(os.path.join(project_path, "op_host", item))
+        ascend_suffix = {SUFFIX_CPP, SUFFIX_H}
+        for item in os.listdir(os.path.join(project_path, OP_HOST)):
+            if item.split('.')[-1] in ascend_suffix:
+                os.remove(os.path.join(project_path, OP_HOST, item))
 
-        for item in os.listdir(os.path.join(project_path, "op_kernel")):
-            if item.split('.')[-1] in {'cpp', 'h'}:
-                os.remove(os.path.join(project_path, "op_kernel", item))
+        for item in os.listdir(os.path.join(project_path, OP_KERNEL)):
+            if item.split('.')[-1] in ascend_suffix:
+                os.remove(os.path.join(project_path, OP_KERNEL, item))
 
         for item in os.listdir(self.args.op_host_path):
-            if item.split('.')[-1] in {'cpp', 'h'}:
+            if item.split('.')[-1] in ascend_suffix:
                 item_path = os.path.join(self.args.op_host_path, item)
-                target_path = os.path.join(project_path, "op_host", item)
+                target_path = os.path.join(project_path, OP_HOST, item)
                 if os.path.isfile(item_path):
                     shutil.copy(item_path, target_path)
         for item in os.listdir(self.args.op_kernel_path):
-            if item.split('.')[-1] in {'cpp', 'h'}:
+            if item.split('.')[-1] in ascend_suffix:
                 item_path = os.path.join(self.args.op_kernel_path, item)
-                target_path = os.path.join(project_path, "op_kernel", item)
+                target_path = os.path.join(project_path, OP_KERNEL, item)
                 if os.path.isfile(item_path):
                     shutil.copy(item_path, target_path)
 
-        for root, _, files in os.walk(os.path.join(project_path, "cmake")):
+        for root, _, files in os.walk(project_path):
             for f in files:
                 _, file_extension = os.path.splitext(f)
                 if file_extension == ".sh":
                     os.chmod(os.path.join(root, f), 0o700)
 
-        command = ['bash', 'build.sh']
-        result = subprocess.run(command,
-                                stdout=open("build.log", 'w'),
+        log_fd = os.open("build.log", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700)
+        log_file = os.fdopen(log_fd, "w")
+        bash_command = 'unset ASCEND_CUSTOM_OPP_PATH && ./build.sh'
+        result = subprocess.run(['bash', '-c', bash_command],
+                                stdout=log_file,
                                 stderr=subprocess.STDOUT)
+        log_file.close()
         if result.returncode == 0:
             logger.info("Compile custom op successfully!")
         else:
@@ -188,6 +207,7 @@ class CustomOOC():
             raise RuntimeError("Compile failed! Please see build.log in current directory for detail info.")
 
     def compile(self):
+        """compile op"""
         self.check_args()
         self.compile_config()
         self.compile_custom()

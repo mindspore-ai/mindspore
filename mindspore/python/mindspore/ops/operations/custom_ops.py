@@ -545,6 +545,7 @@ class Custom(ops.PrimitiveWithInfer):
             if 'function ' + func not in jl:
                 raise Exception("{}, function {} is not found in source file {}!"
                                 .format(self.log_prefix, func, source_file))
+
     def _check_aot_func(self):
         """Check the source code and bin lib for aot type custom op"""
         if not isinstance(self.func, str):

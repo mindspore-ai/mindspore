@@ -14,7 +14,6 @@
 # ============================================================================
 
 import pytest
-import os
 import numpy as np
 import mindspore as ms
 from mindspore import context, Tensor
@@ -60,9 +59,7 @@ class BaseNet(Cell):
         res = self.sub(res, z)
         return res
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclnn(context_mode):
     """
@@ -70,11 +67,8 @@ def test_custom_add_aclnn(context_mode):
     Description: test case for aclnnAddCustom op with func_type="aclnn"
     Expectation: the result match with numpy result
     """
-    # TODO(jiaorui) GRAPH_OP_RUN--> JIT_LEVEL
-    os.putenv('GRAPH_OP_RUN', '1')
-    os.putenv('MS_ENABLE_ACLNN', '1')
-
-    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs")
+    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs",
+                        jit_config={"jit_level": "O0"})
     x = np.ones([8, 2048]).astype(np.float16)
     y = np.ones([8, 2048]).astype(np.float16)
     z = np.random.rand(8, 2048).astype(np.float16)
@@ -83,9 +77,7 @@ def test_custom_add_aclnn(context_mode):
     out = net(Tensor(x), Tensor(y), Tensor(z))
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclnn_dynamic(context_mode):
     """
@@ -93,11 +85,8 @@ def test_custom_add_aclnn_dynamic(context_mode):
     Description: test case for aclnnAddCustom op in Dynamic Shape
     Expectation: the result match with numpy result
     """
-    # TODO(jiaorui) GRAPH_OP_RUN--> JIT_LEVEL
-    os.putenv('GRAPH_OP_RUN', '1')
-    os.putenv('MS_ENABLE_ACLNN', '1')
-
-    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs")
+    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs",
+                        jit_config={"jit_level": "O0"})
     x = np.ones([8, 2048]).astype(np.float16)
     y = np.ones([8, 2048]).astype(np.float16)
     z = np.random.rand(8, 2048).astype(np.float16)
@@ -108,9 +97,7 @@ def test_custom_add_aclnn_dynamic(context_mode):
     out = net(Tensor(x), Tensor(y), Tensor(z))
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclnn_cpp_infer(context_mode):
     """
@@ -118,11 +105,8 @@ def test_custom_add_aclnn_cpp_infer(context_mode):
     Description: test case for aclnnAddCustom op with func_type="aclnn", infer shape by cpp.
     Expectation: the result match with numpy result
     """
-    # TODO(jiaorui) GRAPH_OP_RUN--> JIT_LEVEL
-    os.putenv('GRAPH_OP_RUN', '1')
-    os.putenv('MS_ENABLE_ACLNN', '1')
-
-    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs")
+    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs",
+                        jit_config={"jit_level": "O0"})
     x = np.ones([8, 2048]).astype(np.float16)
     y = np.ones([8, 2048]).astype(np.float16)
     z = np.random.rand(8, 2048).astype(np.float16)
@@ -131,9 +115,7 @@ def test_custom_add_aclnn_cpp_infer(context_mode):
     out = net(Tensor(x), Tensor(y), Tensor(z))
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclnn_bprop(context_mode):
     """
@@ -141,14 +123,12 @@ def test_custom_add_aclnn_bprop(context_mode):
     Description: test case for aclnnAddCustom backpropagation.
     Expectation: the result match with numpy result
     """
-    # TODO(jiaorui) GRAPH_OP_RUN--> JIT_LEVEL
-    os.putenv('GRAPH_OP_RUN', '1')
-    os.putenv('MS_ENABLE_ACLNN', '1')
 
     def bprop(x, y, out, dout):
         return dout, dout
 
-    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs")
+    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs",
+                        jit_config={"jit_level": "O0"})
     x = np.ones([8, 2048]).astype(np.float16)
     y = np.ones([8, 2048]).astype(np.float16)
     z = np.random.rand(8, 2048).astype(np.float16)
