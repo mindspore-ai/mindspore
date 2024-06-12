@@ -138,11 +138,11 @@ STATUS GetAxes(const CNodePtr &cnode, int64_t mode, std::vector<int64_t> *axes, 
     int rank = shape.size();
     if (data_info.data_type_ == kNumberTypeInt64) {
       for (int dim = 0; dim < rank; dim++) {
-        data_int.push_back(dim);
+        data_int64.push_back(dim);
       }
     } else {
       for (int dim = 0; dim < rank; dim++) {
-        data_int64.push_back(dim);
+        data_int.push_back(dim);
       }
     }
   }
