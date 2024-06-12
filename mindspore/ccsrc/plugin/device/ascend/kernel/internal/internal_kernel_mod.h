@@ -42,6 +42,7 @@ static std::map<std::string, int> ms_op_key_to_internel_op_id = {
   {"Add", internal::OpId::Add},
   {"Sub", internal::OpId::Sub},
   {"RealDiv", internal::OpId::RealDiv},
+  {"QuantV2", internal::OpId::QuantPerChannel},
   {"Mul", internal::OpId::Mul},
   {"Less", internal::OpId::Less},
   {"LogicalNot", internal::OpId::LogicalNot},
