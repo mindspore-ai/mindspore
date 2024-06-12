@@ -36,12 +36,13 @@ constexpr size_t kInputAntiquantOffsetIdx = 6;
 }  // namespace
 void GroupedMatmulAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
-  std::vector<int64_t> dyn_input_sizes = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrDynInputSizes));
+  std::vector<int64_t> group_info = GetValue<std::vector<int64_t>>(primitive_->GetAttr("group_info"));
 
+  std::vector<int64_t> dyn_input_idx{};
   int64_t idx = 0;
-  for (size_t i = 0; i < dyn_input_sizes.size(); ++i) {
-    idx += (dyn_input_sizes[i] == -1 ? 1 : dyn_input_sizes[i]);
-    (void)dyn_input_idx_.emplace_back(idx);
+  for (size_t i = 0; i < group_info.size(); ++i) {
+    idx += (group_info[i] == 0 ? 1 : group_info[i]);
+    (void)dyn_input_idx.emplace_back(idx);
   }
 
   std::vector<KernelTensor *> x;
@@ -52,35 +53,43 @@ void GroupedMatmulAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &in
   std::vector<KernelTensor *> antiquant_scale;
   std::vector<KernelTensor *> antiquant_offset;
 
-  x.assign(inputs.begin(), inputs.begin() + dyn_input_idx_[kInputXIdx]);
-  weight.assign(inputs.begin() + dyn_input_idx_[kInputXIdx], inputs.begin() + dyn_input_idx_[kInputWeightIdx]);
-  bias.assign(inputs.begin() + dyn_input_idx_[kInputWeightIdx], inputs.begin() + dyn_input_idx_[kInputBiasIdx]);
-  scale.assign(inputs.begin() + dyn_input_idx_[kInputBiasIdx], inputs.begin() + dyn_input_idx_[kInputScaleIdx]);
-  offset.assign(inputs.begin() + dyn_input_idx_[kInputScaleIdx], inputs.begin() + dyn_input_idx_[kInputOffsetIdx]);
-  antiquant_scale.assign(inputs.begin() + dyn_input_idx_[kInputOffsetIdx],
-                         inputs.begin() + dyn_input_idx_[kInputAntiquantScaleIdx]);
-  antiquant_offset.assign(inputs.begin() + dyn_input_idx_[kInputAntiquantScaleIdx],
-                          inputs.begin() + dyn_input_idx_[kInputAntiquantOffsetIdx]);
-
+  x.assign(inputs.begin(), inputs.begin() + dyn_input_idx[kInputXIdx]);
+  weight.assign(inputs.begin() + dyn_input_idx[kInputXIdx], inputs.begin() + dyn_input_idx[kInputWeightIdx]);
+  bias.assign(inputs.begin() + dyn_input_idx[kInputWeightIdx], inputs.begin() + dyn_input_idx[kInputBiasIdx]);
+  scale.assign(inputs.begin() + dyn_input_idx[kInputBiasIdx], inputs.begin() + dyn_input_idx[kInputScaleIdx]);
+  offset.assign(inputs.begin() + dyn_input_idx[kInputScaleIdx], inputs.begin() + dyn_input_idx[kInputOffsetIdx]);
+  antiquant_scale.assign(inputs.begin() + dyn_input_idx[kInputOffsetIdx],
+                         inputs.begin() + dyn_input_idx[kInputAntiquantScaleIdx]);
+  antiquant_offset.assign(inputs.begin() + dyn_input_idx[kInputAntiquantScaleIdx],
+                          inputs.begin() + dyn_input_idx[kInputAntiquantOffsetIdx]);
   auto group_list_tensor = *(inputs.end() - kIndex3);
   MS_EXCEPTION_IF_NULL(group_list_tensor);
 
   auto split_item_tensor = *(inputs.end() - kIndex2);
   MS_EXCEPTION_IF_NULL(split_item_tensor);
-  split_item_ = split_item_tensor->GetValueWithCheck<int64_t>();
+  int64_t split_item = split_item_tensor->GetValueWithCheck<int64_t>();
 
   auto group_type_tensor = *(inputs.end() - kIndex1);
   MS_EXCEPTION_IF_NULL(group_type_tensor);
-  group_type_ = group_type_tensor->GetValueWithCheck<int64_t>();
+  int64_t group_type = group_type_tensor->GetValueWithCheck<int64_t>();
 
   GetWorkspaceForResize(x, weight, bias, scale, offset, antiquant_scale, antiquant_offset, group_list_tensor,
-                        split_item_, group_type_, outputs);
+                        split_item, group_type, outputs);
 }
 
 bool GroupedMatmulAscend::Launch(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &workspace,
                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
+
+  std::vector<int64_t> group_info = GetValue<std::vector<int64_t>>(primitive_->GetAttr("group_info"));
+
+  std::vector<int64_t> dyn_input_idx{};
+  int64_t idx = 0;
+  for (size_t i = 0; i < group_info.size(); ++i) {
+    idx += (group_info[i] == 0 ? 1 : group_info[i]);
+    (void)dyn_input_idx.emplace_back(idx);
+  }
 
   std::vector<KernelTensor *> x;
   std::vector<KernelTensor *> weight;
@@ -90,19 +99,28 @@ bool GroupedMatmulAscend::Launch(const std::vector<KernelTensor *> &inputs,
   std::vector<KernelTensor *> antiquant_scale;
   std::vector<KernelTensor *> antiquant_offset;
 
-  x.assign(inputs.begin(), inputs.begin() + dyn_input_idx_[kInputXIdx]);
-  weight.assign(inputs.begin() + dyn_input_idx_[kInputXIdx], inputs.begin() + dyn_input_idx_[kInputWeightIdx]);
-  bias.assign(inputs.begin() + dyn_input_idx_[kInputWeightIdx], inputs.begin() + dyn_input_idx_[kInputBiasIdx]);
-  scale.assign(inputs.begin() + dyn_input_idx_[kInputBiasIdx], inputs.begin() + dyn_input_idx_[kInputScaleIdx]);
-  offset.assign(inputs.begin() + dyn_input_idx_[kInputScaleIdx], inputs.begin() + dyn_input_idx_[kInputOffsetIdx]);
-  antiquant_scale.assign(inputs.begin() + dyn_input_idx_[kInputOffsetIdx],
-                         inputs.begin() + dyn_input_idx_[kInputAntiquantScaleIdx]);
-  antiquant_offset.assign(inputs.begin() + dyn_input_idx_[kInputAntiquantScaleIdx],
-                          inputs.begin() + dyn_input_idx_[kInputAntiquantOffsetIdx]);
+  x.assign(inputs.begin(), inputs.begin() + dyn_input_idx[kInputXIdx]);
+  weight.assign(inputs.begin() + dyn_input_idx[kInputXIdx], inputs.begin() + dyn_input_idx[kInputWeightIdx]);
+  bias.assign(inputs.begin() + dyn_input_idx[kInputWeightIdx], inputs.begin() + dyn_input_idx[kInputBiasIdx]);
+  scale.assign(inputs.begin() + dyn_input_idx[kInputBiasIdx], inputs.begin() + dyn_input_idx[kInputScaleIdx]);
+  offset.assign(inputs.begin() + dyn_input_idx[kInputScaleIdx], inputs.begin() + dyn_input_idx[kInputOffsetIdx]);
+  antiquant_scale.assign(inputs.begin() + dyn_input_idx[kInputOffsetIdx],
+                         inputs.begin() + dyn_input_idx[kInputAntiquantScaleIdx]);
+  antiquant_offset.assign(inputs.begin() + dyn_input_idx[kInputAntiquantScaleIdx],
+                          inputs.begin() + dyn_input_idx[kInputAntiquantOffsetIdx]);
   auto group_list_tensor = *(inputs.end() - kIndex3);
+  MS_EXCEPTION_IF_NULL(group_list_tensor);
+
+  auto split_item_tensor = *(inputs.end() - kIndex2);
+  MS_EXCEPTION_IF_NULL(split_item_tensor);
+  int64_t split_item = split_item_tensor->GetValueWithCheck<int64_t>();
+
+  auto group_type_tensor = *(inputs.end() - kIndex1);
+  MS_EXCEPTION_IF_NULL(group_type_tensor);
+  int64_t group_type = group_type_tensor->GetValueWithCheck<int64_t>();
 
   ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, x, weight, bias, scale, offset, antiquant_scale,
-                                      antiquant_offset, group_list_tensor, split_item_, group_type_, outputs));
+                                      antiquant_offset, group_list_tensor, split_item, group_type, outputs));
   RunOp(stream_ptr, workspace);
   return true;
 }
