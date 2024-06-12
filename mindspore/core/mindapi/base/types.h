@@ -107,6 +107,12 @@ enum Reduction : int64_t {
   UPDATE = 3,
 };
 
+enum Reduce : int64_t {
+  REDUCE_NONE = 0,
+  ADD = 1,
+  MULTIPLY = 2,
+};
+
 enum PadMode : int64_t {
   PAD = 0,
   SAME = 1,

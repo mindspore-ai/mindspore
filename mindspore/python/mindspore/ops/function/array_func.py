@@ -33,6 +33,7 @@ from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_util
 from mindspore.ops.operations._sequence_ops import TensorToList
 from mindspore.ops.auto_generate import OnesLikeExt, ZerosLikeExt, FillScalar, FillTensor, Arange, Chunk, UniqueDim,\
     Unique2, NonZero, NonZeroExt
+from mindspore.ops.auto_generate import Scatter, ScatterValue, SortExt
 from mindspore.ops.auto_generate.gen_ops_prim import SplitTensor, slice_ext_op
 from mindspore.ops.auto_generate.gen_ops_prim import SplitWithSize, RepeatInterleave
 
@@ -131,6 +132,9 @@ ones_like_ext_ = OnesLikeExt()
 zeros_like_ext_ = ZerosLikeExt()
 fill_scalar_ = FillScalar()
 fill_tensor_ = FillTensor()
+scatter_ = Scatter()
+scatter_value_ = ScatterValue()
+sort_ext_ = SortExt()
 arange_ = Arange()
 chunk_ = Chunk()
 repeat_interleave_ = RepeatInterleave()
@@ -2851,6 +2855,59 @@ def sort(input_x, axis=-1, descending=False):
     return _sort(input_x)
 
 
+def sort_ext(input, *, dim=-1, descending=False, stable=False):
+    r"""
+    Sorts the elements of the input tensor along the given dimension in the specified order.
+
+    .. warning::
+        Currently, the data types of float16, uint8, int8, int16, int32, int64 are well supported.
+        If use float32, it may cause loss of accuracy.
+
+    Args:
+        input(Tensor): The input tensor to sort.
+            The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Keyword Args:
+        dim (int, optional): The dimension to sort along. Default: ``-1``, means the last dimension.
+        descending (bool, optional): Controls the sort order. If `descending` is True, the elements
+            are sorted in descending order, or else sorted in ascending order. Default: ``False`` .
+        stable (bool, optional): Controls the sort order. If stable is True then the sorting routine
+            becomes stable, preserving the order of equivalent elements. Default: ``False`` .
+
+    Returns:
+        - y1, a tensor whose values are the sorted values, with the same shape and data type as input.
+        - y2, a tensor that consists of the indices of the elements in the original input tensor.
+          Data type is int64.
+
+    Raises:
+        TypeError: If `dim` is not an int.
+        TypeError: If `descending` is not a bool.
+        TypeError: If `input` not in float16, float32, uint8, int8, int16, int32, int64, bfloat16
+        TypeError: If `stable` is not a bool.
+        ValueError: If `dim` is not in range of [-len(input_x.shape), len(input_x.shape)).
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
+        >>> output = ops.sort_ext(x)
+        >>> # The output below is based on the Ascend platform.
+        >>> print(output)
+        (Tensor(shape=[3, 3], dtype=Float16, value=
+        [[ 1.0000e+00,  2.0000e+00,  8.0000e+00],
+        [ 3.0000e+00,  5.0000e+00,  9.0000e+00],
+        [ 4.0000e+00,  6.0000e+00,  7.0000e+00]]), Tensor(shape=[3, 3], dtype=Int64, value=
+        [[2, 1, 0],
+        [2, 0, 1],
+        [0, 1, 2]]))
+    """
+    return sort_ext_(input, dim, descending, stable)
+
+
 def argsort(input, axis=-1, descending=False):
     r"""
     Sorts the input tensor along the given dimension in specified order and return the sorted indices.
@@ -3263,8 +3320,8 @@ def scatter(input, axis, index, src):
         axis (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(input).
         index (Tensor): The index to do update operation whose data type must be mindspore.int32 or
             mindspore.int64. Same rank as `input` . And accepted range is [-s, s) where s is the size along axis.
-        src (Tensor, float): The data to be updated to `input`. It should be a Tensor which has the same data type as
-            `input` and same shape as `index`, or a float number to scatter.
+        src (Tensor, float): The tensor doing the update operation with `input` , has the same data type as
+            `input` ,and the shape of `src` should be equal to the shape of `index`, or the float number to scatter.
 
     Returns:
         Tensor, has the same shape and type as `input` .
@@ -3311,7 +3368,9 @@ def scatter(input, axis, index, src):
         [0. 0. 0. 0. 0.]
         [0. 0. 0. 0. 0.]]
     """
-    return ops.tensor_scatter_elements(input_x=input, indices=index, updates=src, axis=axis)
+    if isinstance(src, Tensor):
+        return scatter_(input, axis, index, src)
+    return scatter_value_(input, axis, index, src)
 
 
 def scatter_add_ext(input, dim, index, src):
@@ -6776,6 +6835,7 @@ __all__ = [
     'moveaxis',
     'aminmax',
     'sort',
+    'sort_ext',
     'top_k',
     'deepcopy',
     'flip',

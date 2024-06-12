@@ -25,6 +25,7 @@ Array操作
     mindspore.mint.scatter_add
     mindspore.mint.tile
     mindspore.mint.topk
+    mindspore.mint.sort
     mindspore.mint.stack
     mindspore.mint.unique
     mindspore.mint.where

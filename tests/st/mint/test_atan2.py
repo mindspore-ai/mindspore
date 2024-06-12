@@ -54,7 +54,6 @@ def test_atan2_std(mode):
     Expectation: success
     """
     x, y = generate_random_input((2, 3), np.float32)
-    grad, _ = generate_random_input((2, 3), np.float32)
 
     expect_forward = generate_expect_forward_output(x, y)
     expect_grad = generate_expect_backward_output(x, y)

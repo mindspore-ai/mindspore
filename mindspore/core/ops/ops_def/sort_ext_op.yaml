@@ -1,0 +1,25 @@
+#operator sort_ext
+sort_ext:
+    args:
+        input:
+            dtype: tensor
+        dim:
+            dtype:  int
+            default: -1
+        descending:
+            dtype: bool
+            default: False
+        stable:
+            dtype: bool
+            default: False
+    returns:
+        output: 
+            dtype: tensor
+        indices:
+            dtype: tensor
+    class:
+        name: SortExt
+    dispatch:
+        enable: True
+        Ascend: SortExtAscend
+

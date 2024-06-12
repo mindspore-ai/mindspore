@@ -93,6 +93,10 @@ StrToEnumMap StrToPadModeMap = {
   {"PAD", PadMode::PAD}, {"SAME", PadMode::SAME}, {"VALID", PadMode::VALID}, {"FULL", PadMode::FULL}};
 REG_STRING_TO_ENUM_COMMON(pad_mode, StrToPadModeMap)
 
+// Reduce
+StrToEnumMap StrToReduceMap = {{"none", Reduce::REDUCE_NONE}, {"add", Reduce::ADD}, {"multiple", Reduce::MULTIPLY}};
+REG_STRING_TO_ENUM_COMMON(reduce, StrToReduceMap)
+
 // Reduction
 StrToEnumMap StrToReductionMap = {{"SUM", Reduction::REDUCTION_SUM},
                                   {"MEAN", Reduction::MEAN},
