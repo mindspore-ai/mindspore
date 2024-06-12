@@ -1,0 +1,17 @@
+#operator dynamic_quant_ext
+dynamic_quant_ext:
+  args:
+    x:
+      dtype: tensor
+    smooth_scales:
+      dtype: tensor
+      default: None
+  returns:
+    y:
+      dtype: tensor
+    scale:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True

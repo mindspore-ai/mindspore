@@ -74,4 +74,13 @@ INPUT_ATTR_MAP(WeightQuantBatchMatmulV2) = {{8, ATTR_DESC(transpose_x, AnyTraits
                                             {10, ATTR_DESC(antiquant_group_size, AnyTraits<int64_t>())}};
 OUTPUT_MAP(WeightQuantBatchMatmulV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(WeightQuantBatchMatmulV2, kNameWeightQuantBatchMatmul, ADPT_DESC(WeightQuantBatchMatmulV2))
+
+// DynamicQuant
+INPUT_MAP(DynamicQuant) = {
+  {1, INPUT_DESC(x)},
+  {2, INPUT_DESC(smooth_scales)},
+};
+ATTR_MAP(DynamicQuant) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(DynamicQuant) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(scale)}};
+REG_ADPT_DESC(DynamicQuant, kNameDynamicQuantExt, ADPT_DESC(DynamicQuant))
 }  // namespace mindspore::transform
