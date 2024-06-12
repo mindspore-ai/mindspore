@@ -507,6 +507,7 @@ constexpr const char kNamePromptFlashAttention[] = "PromptFlashAttention";
 constexpr const char kNameIncreFlashAttention[] = "IncreFlashAttention";
 constexpr const char kNameFlashAttentionScore[] = "FlashAttentionScore";
 constexpr const char kNameFlashAttentionScoreGrad[] = "FlashAttentionScoreGrad";
+constexpr const char kNameFusedInferAttentionScore[] = "FusedInferAttentionScore";
 constexpr const char kNameEnvironCreate[] = "EnvironCreate";
 constexpr const char kNameEnvironDestroyAll[] = "EnvironDestroyAll";
 constexpr const char kNameEnvironGet[] = "EnvironGet";

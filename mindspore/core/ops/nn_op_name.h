@@ -146,6 +146,7 @@ constexpr auto kFlashPromptFlashAttentionOpName = "PromptFlashAttention";
 constexpr auto kFlashIncreFlashAttentionOpName = "IncreFlashAttention";
 constexpr auto kFlashAttentionScoreOpName = "FlashAttentionScore";
 constexpr auto kFlashAttentionScoreGradOpName = "FlashAttentionScoreGrad";
+constexpr auto kFusedInferAttentionScoreOpName = "FusedInferAttentionScore";
 constexpr auto kPagedAttentionOpName = "PagedAttention";
 constexpr auto kPagedAttentionMaskOpName = "PagedAttentionMask";
 constexpr auto kReshapeAndCacheOpName = "ReshapeAndCache";
