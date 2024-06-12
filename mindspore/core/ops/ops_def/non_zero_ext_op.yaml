@@ -1,15 +1,15 @@
-#operator non_zero
-non_zero:
+#operator non_zero_ext
+non_zero_ext:
     args:
         input:
             dtype: tensor
     returns:
         output:
-            dtype: tensor
+            dtype: tuple[tensor]
+    class:
+        name: NonZeroExt
     function:
         disable: True
     dispatch:
         enable: True
-        Ascend: NonZeroAscend
-        CPU: NonZeroCPU
-        GPU: NonZeroGPU
+        Ascend: NonZeroExtAscend

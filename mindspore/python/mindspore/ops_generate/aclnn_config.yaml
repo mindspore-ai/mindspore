@@ -145,7 +145,7 @@ Col2ImExt: 'aclnnIm2colBackward'
 # 36
 
 # 37
-
+NonZero: 'aclnnNonzero'
 # 38
 
 # 39
