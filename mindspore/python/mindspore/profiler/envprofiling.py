@@ -160,7 +160,7 @@ def parse_ascend_args(options):
     if options.get("aicore_metrics") not in AICORE_METRICS_DICT:
         logger.warning(
             "The 'aicore_metrics' parameter of the environment variable MS_PROFILE_OPTIONS must be in "
-            f"[-1, 0, 1, 2, 3, 4, 5], but got {options.get('aicore_metrics')}, it will be set to 0.")
+            f"[-1, 0, 1, 2, 3, 4, 5, 6], but got {options.get('aicore_metrics')}, it will be set to 0.")
         options["aicore_metrics"] = 0
     if not isinstance(options.get("l2_cache"), bool):
         logger.warning(

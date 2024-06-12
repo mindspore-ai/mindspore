@@ -347,7 +347,7 @@ class Profiler:
         start_profile (bool, optional): The start_profile parameter controls whether to enable or disable performance
             data collection based on conditions. Default: ``True`` .
         aicore_metrics (int, optional): (Ascend only) Types of AICORE performance data collected, when using this
-            parameter, `op_time` must be set to ``True`` , and the value must be in [-1, 0, 1, 2, 3, 4, 5],
+            parameter, `op_time` must be set to ``True`` , and the value must be in [-1, 0, 1, 2, 3, 4, 5, 6],
             Default: ``0`` , the data items contained in each metric are as follows:
 
             - -1: Does not collect AICORE data.
@@ -359,6 +359,7 @@ class Profiler:
             - 4: ResourceConflictRatio contains vec_bankgroup/bank/resc_cflt_ratio etc.
             - 5: MemoryUB contains ub_read/write_bw_mte, ub_read/write_bw_vector, ub\_/write_bw_scalar etc.
             - 6: L2Cache contains write_cache_hit, write_cache_miss_allocate, r0_read_cache_hit, r1_read_cache_hit etc.
+              (only support on 910B).
 
         l2_cache (bool, optional): (Ascend only) Whether to collect l2 cache data, collect when True.
             Default: ``False`` .
@@ -737,12 +738,10 @@ class Profiler:
         """
         self._model_iteration_dict = model_iteration_dict
         self._init_profiler_info()
-        self._is_support_step_info_collect()
         parallel_mode = get_auto_parallel_context("parallel_mode")
         stage_num = get_auto_parallel_context("pipeline_stages")
 
         ProfilerInfo.set_parallel_info(parallel_mode, stage_num)
-        ProfilerInfo.set_heterogeneous(self._is_heterogeneous)
         if offline_path:
             ProfilerInfo.set_analyse_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
             self._ascend_graph_analyse(offline_path=offline_path)
@@ -763,6 +762,8 @@ class Profiler:
         cpu_op_file = glob.glob(os.path.join(self._output_path, 'cpu_op_type_info_*'))
         if self._device_target and self._device_target != DeviceTarget.CPU.value and cpu_op_file:
             self._is_heterogeneous = True
+
+        ProfilerInfo.set_heterogeneous(self._is_heterogeneous)
         ProfilerInfo.set_analyse_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         if self._device_target and self._device_target == DeviceTarget.CPU.value:
             self._cpu_analyse()
@@ -1095,7 +1096,7 @@ class Profiler:
 
         if self._aicore_metrics_id not in AICORE_METRICS_DICT:
             logger.warning(f"For '{self.__class__.__name__}', the parameter aicore_metrics must be in "
-                           f"[-1, 0, 1, 2, 3, 4, 5], but got {self._aicore_metrics_id}, it will be set to 0.")
+                           f"[-1, 0, 1, 2, 3, 4, 5, 6], but got {self._aicore_metrics_id}, it will be set to 0.")
             self._aicore_metrics_id = 0
 
         l2_cache_enable = kwargs.pop("l2_cache", False)
@@ -1526,25 +1527,6 @@ class Profiler:
             logger.warning(err.message)
         finally:
             pass
-
-    def _is_support_step_info_collect(self, analyse_step_trace=True):
-        """Whether iteration related information needs to be parsed."""
-        profiler_info = ProfilerInfo.get_profiler_info()
-        graph_ids = profiler_info.get("graph_ids")
-        if graph_ids and len(graph_ids) > 1:
-            analyse_step_trace = False
-            logger.warning(
-                "[Profiler]Current model has multiple sub graphs, the segmentation of steps may be inaccurate.")
-        if context.get_context("mode") == context.PYNATIVE_MODE:
-            analyse_step_trace = False
-            logger.warning(
-                "[Profiler]Pynative mode does not support collecting step trace performance data currently.")
-        if self._is_heterogeneous:
-            analyse_step_trace = False
-            logger.warning(
-                "[Profiler]Profiler does not support collecting step trace performance data for heterogeneous "
-                "scenarios currently.")
-        return analyse_step_trace
 
     def _analyse_step_relation_info(self):
         """Parse iteration related information."""

@@ -185,6 +185,7 @@ class TestProfiler:
     def test_ascend_profiler(self):
         self._train_with_profiler(device_target="Ascend", profile_memory=True)
         self._check_d_profiling_file()
+        self._check_d_profiling_step_trace_on_multisubgraph()
         self._check_host_profiling_file()
 
     @pytest.mark.level1
@@ -253,6 +254,14 @@ class TestProfiler:
                               timeline_file, getnext_file, pipeline_file, framework_file)
         for file in gpu_profiler_files:
             assert os.path.isfile(file)
+
+    def _check_d_profiling_step_trace_on_multisubgraph(self):
+        step_trace_file = self.profiler_path + f'step_trace_raw_{self.rank_id}_detail_time.csv'
+        assert os.path.isfile(step_trace_file)
+        with open(step_trace_file, 'r') as fr:
+            reader = csv.DictReader(fr)
+            row_count = sum(1 for _ in reader)
+        assert row_count == 11
 
     def _check_d_profiling_file(self):
         aicore_file = self.profiler_path + f'aicore_intermediate_{self.rank_id}_detail.csv'
