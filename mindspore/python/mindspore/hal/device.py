@@ -152,7 +152,7 @@ def is_initialized(device_target):
                          f"{valid_targets}, but got {device_target}.")
     _device_context = _device_context_mgr.get_device_context(device_target)
     if _device_context is None:
-        logger.warning(f"Backend {device_target} is not created yet.")
+        logger.info(f"Backend {device_target} is not created yet.")
         return False
     return _device_context.initialized()
 

@@ -23,6 +23,7 @@ from mindspore.communication._comm_helper import Backend, _get_rank_helper, _get
     MCCL_WORLD_COMM_GROUP, DEVICE_TO_BACKEND, _get_local_rank_helper, _get_local_size_helper, GlobalComm, \
     _check_mpi_envs, _set_elegant_exit_handle, _get_group_ranks
 from mindspore._c_expression import init_hccl, finalize_hccl, init_cluster, MSContext, ms_ctx_param
+from mindspore.hal.device import is_initialized
 
 __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
            "get_local_rank_size", "get_world_rank_from_group_rank",
@@ -182,6 +183,10 @@ def init(backend_name=None):
         if device_target != "Ascend":
             raise RuntimeError("For 'init', the argument 'backend_name' should be '{}' to init '{}', "
                                "but got 'hccl'.".format(DEVICE_TO_BACKEND[device_target], device_target))
+        if is_initialized(device_target):
+            logger.warning(f"For 'init' in Ascend backend, the backend is already initialized, please set it before "
+                           "the definition of any Tensor and Parameter, and the instantiation and execution of any "
+                           "operation and net, otherwise the 'init' may not take effect.")
         if not host_init:
             _check_parallel_envs()
         GlobalComm.BACKEND = Backend("hccl")
