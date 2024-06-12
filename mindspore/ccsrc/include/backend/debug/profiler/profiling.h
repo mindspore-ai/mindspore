@@ -137,7 +137,7 @@ class BACKEND_EXPORT Profiler {
   bool GetParallelStrategyEnableFlag() const { return is_parallel_strategy; }
   void SyncEnable(const bool enable_flag);
   void DataProcessEnable(const bool enable_flag);
-  bool GetHostStack() const { return host_stack_ && enable_flag_; }
+  bool EnableHostStack() const { return host_stack_ && enable_flag_; }
 
  protected:
   void SetRunTimeData(const std::string &op_name, const float time_elapsed);
