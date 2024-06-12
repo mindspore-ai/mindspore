@@ -61,6 +61,7 @@
 #include "frontend/parallel/pass/merge_cast_opt.h"
 #include "frontend/parallel/pass/remove_cast_before_assign_add.h"
 #include "frontend/parallel/pass/bias_add_comm_swap.h"
+#include "frontend/parallel/pass/matmul_add_comm_reduction.h"
 #include "frontend/parallel/pass/comp_comm_scheduling.h"
 #include "frontend/parallel/pass/overlap_opt_shard_in_pipeline.h"
 #include "frontend/parallel/pass/slice_activation_in_cell_share_recompute.h"
@@ -485,6 +486,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
                          {"merge_comm", opt::OptPassConfig(parallel::MergeComm)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
+                         {"matmul_add_comm_reduction", opt::OptPassConfig(parallel::MatmulAddCommReduction)},
                          {"virtual_dataset", virtual_dataset},
                          {"get_grad_eliminate_", get_grad},
                          {"virtual_output", opt::OptPassConfig({irpass.virtual_output_eliminate_})},
