@@ -12,7 +12,7 @@ mindspore.Profiler
         - **profile_memory** (bool, 可选) -（仅限Ascend）表示是否收集Tensor内存数据。当值为 ``True`` 时，收集这些数据。使用此参数时， `op_time` 必须设置成 ``True`` 。默认值： ``False`` 。
         - **parallel_strategy** (bool, 可选) -（仅限Ascend）表示是否收集并行策略性能数据， 默认值： ``True`` 。
         - **start_profile** (bool, 可选) - 该参数控制是否在Profiler初始化的时候开启数据采集。默认值： ``True`` 。
-        - **aicore_metrics** (int, 可选) -（仅限Ascend）收集的AICORE性能数据类型，使用此参数时， `op_time` 必须设置成 ``True`` ，且值必须包含在[-1, 0, 1, 2, 3, 4, 5]，默认值： ``0`` ，每种类型包含的数据项如下：
+        - **aicore_metrics** (int, 可选) -（仅限Ascend）收集的AICORE性能数据类型，使用此参数时， `op_time` 必须设置成 ``True`` ，且值必须包含在[-1, 0, 1, 2, 3, 4, 5, 6]，默认值： ``0`` ，每种类型包含的数据项如下：
 
           - -1: 不收集任何AICORE数据。
           - 0: ArithmeticUtilization，包含mac_fp16/int8_ratio、vec_fp32/fp16/int32_ratio、vec_misc_ratio等。
