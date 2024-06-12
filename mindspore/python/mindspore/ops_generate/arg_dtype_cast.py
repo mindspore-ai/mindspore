@@ -20,23 +20,16 @@ import mindspore as ms
 from mindspore import ops
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations._sequence_ops import TensorToScalar, TensorToTuple
-from mindspore.ops_generate.gen_ops_inner_prim import TupleToList
+from mindspore.ops_generate.gen_ops_inner_prim import TupleToList, ListToTuple
 from mindspore._c_expression import OpDtype
 
 tensor_to_tuple_ = TensorToTuple()
 tuple_to_list = TupleToList()
+list_to_tuple = ListToTuple()
 
 
 def int_to_float(data):
     return float(data)
-
-
-def list_to_tuple(data):
-    # tuple() currently does not support Any from JIT Fallback.
-    res = ()
-    for element in data:
-        res += (element,)
-    return res
 
 
 def scalar_to_tuple(data):
