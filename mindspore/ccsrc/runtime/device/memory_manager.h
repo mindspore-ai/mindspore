@@ -21,6 +21,8 @@
 #include <vector>
 #include <map>
 #include <queue>
+#include <string>
+#include <unordered_map>
 #include "backend/common/mem_reuse/mem_reuse.h"
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 #include "runtime/device/common_somas_allocator.h"
@@ -111,6 +113,26 @@ class BACKEND_EXPORT MemoryManager {
   }
 
   DynamicMemPoolBestFit *memory_pool() { return memory_pool_; }
+
+  // Relevant function to manage memory statistics
+  virtual size_t GetTotalMemStatistics() const { return 0; }
+  virtual size_t GetTotalUsedMemStatistics() const { return 0; }
+  virtual size_t GetTotalIdleMemStatistics() const { return 0; }
+  virtual size_t GetTotalEagerFreeMemStatistics() const { return 0; }
+  virtual size_t GetUsedMemPeakStatistics() const { return 0; }
+  virtual size_t GetReservedMemPeakStatistics() const { return 0; }
+  virtual std::unordered_map<std::string, std::size_t> GetBlockCountsStatistics() const { return {}; }
+  virtual std::unordered_map<std::string, std::size_t> GetBlockUnitSizeStatistics() const { return {}; }
+  virtual std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
+  GetCommonMemBlocksInfoStatistics() const {
+    return {};
+  }
+  virtual std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
+  GetPersistentMemBlocksInfoStatistics() const {
+    return {};
+  }
+  virtual void ResetMaxMemoryReserved() const {}
+  virtual void ResetMaxMemoryAllocated() const {}
 
  protected:
   virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id) = 0;

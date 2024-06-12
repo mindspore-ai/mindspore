@@ -41,6 +41,7 @@ void RegForkUtils(py::module *m);
 namespace hal {
 void RegStream(py::module *m);
 void RegEvent(py::module *m);
+void RegMemory(py::module *m);
 }  // namespace hal
 namespace initializer {
 void RegRandomNormal(py::module *m);

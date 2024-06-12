@@ -45,6 +45,7 @@
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #endif
 #include "runtime/hardware/device_context_manager.h"
+#include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 #include "frontend/parallel/tensor_layout/tensor_transform.h"
 
 #include "pybind_api/gil_scoped_long_running.h"
@@ -161,6 +162,7 @@ void RegModule(py::module *m) {
   RegForkUtils(m);
   mindspore::hal::RegStream(m);
   mindspore::hal::RegEvent(m);
+  mindspore::hal::RegMemory(m);
   mindspore::pynative::RegPyNativeExecutor(m);
   mindspore::pynative::RegisterPyBoostFunction(m);
   mindspore::pijit::RegPIJitInterface(m);

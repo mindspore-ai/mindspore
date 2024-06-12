@@ -1,7 +1,7 @@
 mindspore.hal
 =============
 
-Hal中封装了设备管理、流管理与事件管理的接口。MindSpore从不同后端抽象出对应的上述模块，允许用户在Python层调度硬件资源。
+Hal中封装了设备管理、流管理、事件管理与内存管理的接口。MindSpore从不同后端抽象出对应的上述模块，允许用户在Python层调度硬件资源。
 
 设备管理
 ------------
@@ -43,3 +43,22 @@ Hal中封装了设备管理、流管理与事件管理的接口。MindSpore从�
     :template: classtemplate.rst
 
     mindspore.hal.Event
+
+内存管理
+------------
+
+.. mscnplatformautosummary::
+    :toctree: hal
+    :nosignatures:
+    :template: classtemplate.rst
+    
+    mindspore.hal.max_memory_allocated
+    mindspore.hal.max_memory_reserved
+    mindspore.hal.memory_allocated
+    mindspore.hal.memory_reserved
+    mindspore.hal.memory_stats
+    mindspore.hal.memory_summary
+    mindspore.hal.reset_max_memory_reserved
+    mindspore.hal.reset_max_memory_allocated
+    mindspore.hal.reset_peak_memory_stats
+    mindspore.hal.empty_cache
