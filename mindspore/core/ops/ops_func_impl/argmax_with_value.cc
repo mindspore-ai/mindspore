@@ -38,6 +38,9 @@ inline ShapeArray GetOutputShapeArray(const ShapeVector &output_shape) {
 
 BaseShapePtr ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) const {
+  if (input_args.size() < 3) {
+    MS_EXCEPTION(ValueError) << primitive->name() << " should have 3 inputs. Please try other inputs";
+  }
   auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
   auto x_shape = x_shape_ptr->GetShapeVector();
   if (MS_UNLIKELY(IsDynamicRank(x_shape))) {
@@ -94,6 +97,9 @@ BaseShapePtr ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 ShapeArray ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  if (input_values.size() < 3) {
+    MS_EXCEPTION(ValueError) << primitive->name() << " should have 3 inputs. Please try other inputs";
+  }
   const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
   const auto x_shape = x_tensor->shape();
@@ -108,7 +114,7 @@ ShapeArray ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive, co
     return GetOutputShapeArray(x_shape);
   }
   if (std::any_of(x_shape.begin(), x_shape.end(), [](const auto &item) { return item == 0; })) {
-    MS_EXCEPTION(TypeError) << primitive->name() << " cannot deal with empty input. Please try other inputs";
+    MS_EXCEPTION(ValueError) << primitive->name() << " cannot deal with empty input. Please try other inputs";
   }
 
   auto x_rank = SizeToLong(x_shape.size());
