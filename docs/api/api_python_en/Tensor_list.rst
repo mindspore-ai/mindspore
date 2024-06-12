@@ -227,6 +227,7 @@
     mindspore.Tensor.mm
     mindspore.Tensor.movedim
     mindspore.Tensor.moveaxis
+    mindspore.Tensor.move_to
     mindspore.Tensor.msort
     mindspore.Tensor.mT
     mindspore.Tensor.mul

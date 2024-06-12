@@ -53,6 +53,9 @@ class GPUDeviceResManager : public DeviceResManager {
 
   DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
 
+  void MoveTo(const tensor::TensorPtr &src_tensor, const tensor::TensorPtr &dst_tensor, const std::string &to,
+              bool blocking, bool *return_self) override;
+
   bool CreateStream(size_t *stream_id) const override;
   bool CreateStreamWithPriority(size_t *stream_id, int32_t priority) const override;
   size_t QueryStreamSize() const override;
