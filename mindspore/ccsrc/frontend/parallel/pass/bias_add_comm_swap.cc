@@ -148,13 +148,13 @@ void changeNodeShape(const CNodePtr &add_node, size_t rank_size) {
   add_node->set_abstract(add_node_abstract);
 }
 
-void HandleNodeBiasAdd(const AnfNodePtr &comm_node, const CNodePtr &add_node) {
+bool HandleNodeBiasAdd(const AnfNodePtr &comm_node, const CNodePtr &add_node) {
   auto comm_prim = GetCNodePrimitive(comm_node);
   MS_EXCEPTION_IF_NULL(comm_prim);
   if (!comm_prim->HasAttr(GROUP)) {
     MS_LOG(WARNING) << "For matmul comm reduction, cur prim has not attr " << GROUP
                     << ", skip it, node is: " << comm_node->DebugString();
-    return;
+    return false;
   }
   auto comm_group = GetValue<std::string>(comm_prim->GetAttr(GROUP));
   MS_EXCEPTION_IF_NULL(g_device_manager);
@@ -179,14 +179,25 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node, const CNodePtr &add_node) {
   if (bias_node == nullptr || !IsPrimitiveCNode(bias_node, prim::kPrimLoad)) {
     MS_LOG(WARNING) << "From cur add node, cannot find Load op for bias parameter, please check whether it exists,"
                     << "  cur node is: " << add_node->DebugString();
-    return;
+    return true;
   }
-  const auto bias_dtype = bias_node->abstract()->cast<abstract::AbstractTensorPtr>();
+  auto load_node_shape_ptr = bias_node->Shape();
+  if (load_node_shape_ptr == nullptr) {
+    return false;
+  }
+  auto load_node_shape = load_node_shape_ptr->GetShapeVector();
+  if (load_node_shape.size() > 1) {
+    MS_LOG(WARNING) << "for bias add comm swap, bias shape can not larger than 1, but got " << load_node_shape;
+    return false;
+  }
+  auto bias_node_abstract = bias_node->abstract();
+  MS_EXCEPTION_IF_NULL(bias_node_abstract);
+  const auto bias_dtype = bias_node_abstract->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(bias_dtype);
   mindspore::tensor::TensorPtr tensor_ptr =
     std::make_shared<mindspore::tensor::Tensor>(rank_size, bias_dtype->element()->GetType());
   auto const_node = NewValueNode(MakeValue(tensor_ptr));
-  const_node->set_abstract(bias_node->abstract());
+  const_node->set_abstract(const_node->value()->ToAbstract());
   AnfNodePtrList mul_node_inputs = {NewValueNode(prim::kPrimMul), bias_node, const_node};
 
   auto fg = comm_node->func_graph();
@@ -198,6 +209,7 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node, const CNodePtr &add_node) {
   MS_EXCEPTION_IF_NULL(manager);
   (void)manager->Replace(bias_node, mul_node);
   MS_LOG(INFO) << "For bias add comm swap, insert mul node after bias parameter, node is: " << bias_node->DebugString();
+  return true;
 }
 
 void HandleNodePullDown(const AnfNodePtr &comm_node, const CNodePtr &add_node) {
@@ -218,25 +230,27 @@ void HandleAddNode(HashMap<CNodePtr, AnfNodePtr> *add_node_map) {
   for (auto node_pair : (*add_node_map)) {
     auto add_node = node_pair.first;
     auto comm_node = node_pair.second;
+    auto is_bias_node_valie = HandleNodeBiasAdd(comm_node, add_node);
+    if (!is_bias_node_valie) {
+      return;
+    }
     HandleNodePullUp(comm_node, add_node);
-    HandleNodeBiasAdd(comm_node, add_node);
     // pull down comm node, change add node user's input to allreduce
     HandleNodePullDown(comm_node, add_node);
   }
 }
 }  // namespace
 
-bool BiasAddCommSwap(const FuncGraphPtr &graph, const opt::OptimizerPtr &) {
+void BiasAddCommSwap(const FuncGraphPtr &graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  bool changes = False;
 
   if (parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kSemiAutoParallel &&
       parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
-    return changes;
+    return;
   }
   if (!ms_context->get_param<bool>(MS_CTX_BIAS_ADD_COMM_SWAP)) {
-    return changes;
+    return;
   }
 
   MS_EXCEPTION_IF_NULL(graph);
@@ -248,7 +262,6 @@ bool BiasAddCommSwap(const FuncGraphPtr &graph, const opt::OptimizerPtr &) {
   }
   // pull up add node, pull down allreduce/reduce_scatter node
   HandleAddNode(&add_node_map);
-  return changes;
 }
 }  // namespace parallel
 }  // namespace mindspore

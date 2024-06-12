@@ -17,12 +17,11 @@
 #ifndef MINDSPORE_BIAS_ADD_COMM_SWAP_H
 #define MINDSPORE_BIAS_ADD_COMM_SWAP_H
 #include "ir/anf.h"
-#include "frontend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace parallel {
 // Pull down allreduce
-bool BiasAddCommSwap(const FuncGraphPtr &graph, const opt::OptimizerPtr &);
+void BiasAddCommSwap(const FuncGraphPtr &graph);
 }  // namespace parallel
 }  // namespace mindspore
 
