@@ -536,8 +536,6 @@ void TensorRedistribution::UnifyAssembledMappingWithDiffSize(const std::set<int6
         left_size = left_size / unified_slice_shape[unified_offset];
         // If it's prime then add it to mapping.
         if (GetPrimeFactor(unified_slice_shape[unified_offset]) != -1) {
-          // divisor = real_dim_value / unified_slice_shape[unified_offset];
-          // new_dim_node = CreateDiv(dyn_dim.second, divisor, func_graph, true, "assemble_dynamic_shape_op");
           new_mapping.insert({unified_slice_shape[unified_offset], {unified_offset, dyn_dim.second}});
           MS_LOG(INFO) << "insert at " << unified_offset << " with " << unified_slice_shape[unified_offset];
         } else {
@@ -610,6 +608,9 @@ void TensorRedistribution::UnifyAssembledMapping() {
 void TensorRedistribution::CreateAssembledDynamicMapping(const CNodePtr &cur_cnode, const AnfNodePtr &pre_cnode,
                                                          const FuncGraphPtr &func_graph, int64_t redistribution_index) {
   MS_EXCEPTION_IF_NULL(func_graph);
+  if (!this->IsAssembledStaticShape()) {
+    return;
+  }
   MS_LOG(INFO) << "Start to create assembled dynamic shape mapping for " << pre_cnode->fullname_with_scope() << "->"
                << cur_cnode->fullname_with_scope();
   this->dynamic_dim_mapping_.clear();
@@ -797,7 +798,6 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
     MS_LOG(EXCEPTION) << "Insert AllSplit for Reshape which has multi dynamic axis failed.";
   }
   GetRedistributionOperators(allsplit_infer, &operator_vector, &output_info_vector, &this->operator_list_);
-  //  operator_vector = {AllGather, Reshape, Split};
   std::string operator_vec_str;
   AppendOperatorVecStr(operator_vector, &operator_vec_str);
   MS_LOG(INFO) << "After InferAllSplit, operator_vector size: " << operator_vector.size()
@@ -838,7 +838,7 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
       MS_LOG(ERROR) << "Infer tensor layout return nullptr!";
       return nullptr;
     }
-    this->layout_transfer_.Init(ptr->from_in(), ptr->to_in(), true);
+    this->layout_transfer_.Init(ptr->from_in(), ptr->to_in());
     if (!ptr->ExpandAble()) {
       expand_able_ = false;
       return InferTensorRedistributionOperatorListUnExpand(is_cost_model);
@@ -904,8 +904,8 @@ bool IsSameShape(const Shape &src, const Shape &tgt) {
 
 Shape AlignToLayoutShape(const Shape &to_origin_shape, const Shape &to_layout_shape) {
   Shape target_shape(to_origin_shape);
-  size_t cnt = std::count(target_shape.begin(), target_shape.end(), -1);
-  if (cnt < SIZE_TWO || to_layout_shape[0] != 1 || to_layout_shape.size() - 1 != target_shape.size()) {
+  auto cnt = std::count(target_shape.begin(), target_shape.end(), -1);
+  if (cnt < SizeToInt(SIZE_TWO) || to_layout_shape[0] != 1 || to_layout_shape.size() - 1 != target_shape.size()) {
     return target_shape;
   }
   for (size_t i = 0; i < target_shape.size(); ++i) {
@@ -953,9 +953,12 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
                  << "from_origin_.slice_shape=" << from_origin_.slice_shape().array()
                  << ", from_layout.slice_shape=" << from_layout.slice_shape().array() << ", reshape to "
                  << shape.ToString();
-    if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
+    auto reshape_mode = ReshapeMode::FROM_ORIGIN_SLICE_TO_FROM_LAYOUT_SLICE;
+    reshape_mode = this->is_dynamic_shape_ ? reshape_mode : ReshapeMode::NO_RESHAPE;
+    if (constructor.ReshapeOP(shape.array(), false, reshape_mode) == Status::FAILED) {
       return Status::FAILED;
     } else {
+      // Before all-gather.
       (void)operator_vector->insert(operator_vector->cbegin(), constructor.GetOperator());
       (void)output_info_vector->insert(output_info_vector->cbegin(), std::make_pair(false, 0));
     }
@@ -972,6 +975,7 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return Status::FAILED;
     } else {
+      // Before all-gather.
       (void)operator_vector->insert(operator_vector->cbegin(), constructor.GetOperator());
       (void)output_info_vector->insert(output_info_vector->cbegin(), std::make_pair(false, 0));
     }
@@ -990,9 +994,12 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     MS_LOG(INFO) << "to_origin_.slice_shape is not same with to_layout.slice_shape: "
                  << "to_origin_.slice_shape=" << to_origin_.slice_shape().array()
                  << ", to_layout.slice_shape=" << to_layout.slice_shape().array() << ", reshape to " << target_shape;
-    if (constructor.ReshapeOP(target_shape) == Status::FAILED) {
+    auto reshape_mode = ReshapeMode::TO_ORIGIN_SLICE_TO_TO_LAYOUT_SLICE;
+    reshape_mode = this->is_dynamic_shape_ ? reshape_mode : ReshapeMode::NO_RESHAPE;
+    if (constructor.ReshapeOP(target_shape, false, reshape_mode) == Status::FAILED) {
       return Status::FAILED;
     } else {
+      // After all-gather.
       (void)operator_vector->insert(operator_vector->cend(), constructor.GetOperator());
       (void)output_info_vector->insert(output_info_vector->cend(), std::make_pair(false, 0));
     }
@@ -1009,6 +1016,7 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return Status::FAILED;
     } else {
+      // After all-gather.
       (void)operator_vector->insert(operator_vector->cend(), constructor.GetOperator());
       (void)output_info_vector->insert(output_info_vector->cend(), std::make_pair(false, 0));
     }

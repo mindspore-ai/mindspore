@@ -182,6 +182,7 @@ constexpr char TRANSPOSE_B[] = "transpose_b";
 constexpr char DIAGONAL[] = "diagonal";
 constexpr char SHAPE[] = "shape";
 constexpr char USE_ORIGIN_SHAPE[] = "USE_ORIGIN_SHAPE";
+constexpr char REDISTRIBUTION_RESHAPE_MODE[] = "REDISTRIBUTION_RESHAPE_MODE";
 constexpr char BEGIN_MASK[] = "begin_mask";
 constexpr char END_MASK[] = "end_mask";
 constexpr char ELLIPSIS_MASK[] = "ellipsis_mask";

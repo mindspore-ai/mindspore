@@ -225,7 +225,7 @@ AnfNodePtr CreateDiv(const AnfNodePtr &input_node, int64_t divisor, const FuncGr
   if (divisor == 1) {
     return input_node;
   }
-  auto prim = std::make_shared<Primitive>(SCALAR_DIV);
+  auto prim = std::make_shared<Primitive>(SCALAR_FLOOR_DIV);
   if (!inst_name.empty()) {
     prim->set_instance_name(inst_name);
   }
@@ -300,14 +300,16 @@ bool HasAssebledDynamicDim(const Shape &shape_vec, const AssembledDynamicDimsMap
 
 void MatchingAccordingToPrime(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
                               const TensorRedistributionPtr &tensor_redistribution, const FuncGraphPtr &func_graph,
-                              std::vector<AnfNodePtr> *shape_input) {
-  MS_LOG(INFO) << "Match with prime, shape_vec=" << shape_vec;
+                              std::vector<AnfNodePtr> *shape_input,
+                              enum ReshapeMode reshape_mode = ReshapeMode::NO_RESHAPE) {
+  MS_LOG(INFO) << "Match with prime, shape_vec=" << shape_vec << ", reshape_mode=" << reshape_mode;
   MS_EXCEPTION_IF_NULL(shape_input);
   // If the shape not changed, it means not reshape.
   // So the dynamic dim can be matched according to index.
   std::string instance_name = std::string(REDISTRIBUTION_OP) + "_" + "assemble_shape";
   for (size_t i = 0; i < shape_vec.size(); ++i) {
     int64_t dim = shape_vec[i];
+    // TODO(liuchongming): dim could has more than one prime, have to get all prime in dim.
     int64_t dim_prime = GetPrimeFactor(dim);
     bool found = false;
     if (dim != -1 && dim_prime != -1) {
@@ -318,23 +320,22 @@ void MatchingAccordingToPrime(const Shape &shape_vec, const AssembledDynamicDims
         if (dyn_prime != dim_prime) {
           continue;
         }
+        MS_LOG(INFO) << "i=" << i << ", dim_value_in_graph=" << dim_value_in_graph << ", dim_prime=" << dim_prime
+                     << ", dim=" << dim;
         if (dim_value_in_graph > dim) {
           int64_t divisor = dim_value_in_graph / dim;
-          AnfNodePtr div_op = CreateDiv(tuple_getitem, divisor, func_graph, true, instance_name);
+          AnfNodePtr div_op = CreateDiv(tuple_getitem, divisor, func_graph, false, instance_name);
           (void)shape_input->emplace_back(div_op);
-          MS_LOG(INFO) << "shape[" << i << "] match " << dim;
           found = true;
           break;
         } else if (dim_value_in_graph < dim) {
           int64_t divisor = dim / dim_value_in_graph;
-          AnfNodePtr mul_op = CreateMul(tuple_getitem, divisor, func_graph, true, instance_name);
+          AnfNodePtr mul_op = CreateMul(tuple_getitem, divisor, func_graph, false, instance_name);
           (void)shape_input->emplace_back(mul_op);
-          MS_LOG(INFO) << "shape[" << i << "] match " << dim;
           found = true;
           break;
         } else {
           (void)shape_input->emplace_back(tuple_getitem);
-          MS_LOG(INFO) << "shape[" << i << "] match " << dim_value_in_graph;
           found = true;
           break;
         }
@@ -350,7 +351,8 @@ void MatchingAccordingToPrime(const Shape &shape_vec, const AssembledDynamicDims
 
 void MatchingAccordingToIndex(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
                               const TensorRedistributionPtr &tensor_redistribution, const FuncGraphPtr &func_graph,
-                              std::vector<AnfNodePtr> *shape_input) {
+                              std::vector<AnfNodePtr> *shape_input,
+                              enum ReshapeMode reshape_mode = ReshapeMode::NO_RESHAPE) {
   MS_LOG(INFO) << "Match with index, shape_vec=" << shape_vec;
   MS_EXCEPTION_IF_NULL(shape_input);
   TensorLayout to_layout = tensor_redistribution->layout_transfer().to_in();
@@ -418,7 +420,8 @@ int64_t CountDynamicAxis(const AnfNodePtrList &shape_input) {
 inline bool WhetherIsValueNode(const AnfNodePtr &node) { return node->isa<ValueNode>(); }
 
 AnfNodePtr ConvertConstParamToDynamic(const TensorRedistributionPtr &tensor_redistribution, const Param &param,
-                                      const FuncGraphPtr &func_graph, bool is_reshape) {
+                                      const FuncGraphPtr &func_graph, bool is_reshape,
+                                      enum ReshapeMode reshape_mode = ReshapeMode::NO_RESHAPE) {
   // Only ConvertReshapeInputs will use this function.
   MS_EXCEPTION_IF_NULL(tensor_redistribution);
   AssembledDynamicDimsMapping dyn_dims_mapping = tensor_redistribution->GetDynamicDimsMapping();
@@ -438,10 +441,15 @@ AnfNodePtr ConvertConstParamToDynamic(const TensorRedistributionPtr &tensor_redi
   // 2. to_layout.to->to_origin_: when shape is unified, it could be expanded.
   // 3. User's reshape: written in user's scripts.
   Shape origin_from_shape = tensor_redistribution->from_origin_layout().tensor_shape().array();
+  Shape origin_slice_from_shape = tensor_redistribution->from_origin_layout().slice_shape().array();
   Shape from_shape = tensor_redistribution->from_layout().tensor_shape().array();
   Shape unified_from_shape = tensor_redistribution->layout_transfer().from_in().tensor_shape().array();
-  MS_LOG(INFO) << "shape_vec: " << shape_vec << ", \norigin_from_shape: " << origin_from_shape
-               << ", \nfrom_shape: " << from_shape << ", \nunified_from_shape: " << unified_from_shape;
+  Shape unified_slice_from_shape = tensor_redistribution->layout_transfer().from_in().slice_shape().array();
+  MS_LOG(INFO) << "reshape_mode=" << reshape_mode << ", shape_vec: " << shape_vec
+               << ", origin_from_shape: " << origin_from_shape
+               << ", \norigin_slice_from_shape: " << origin_slice_from_shape << ", \nfrom_shape: " << from_shape
+               << ", \nunified_from_shape: " << unified_from_shape
+               << ", \nunified_slice_from_shape:" << unified_slice_from_shape;
   // The rank should be compared between shape_vec and origin_from_shape, because
   // the mapping is generated according to origin_from_shape.
   bool is_same_rank = IsSameRank(shape_vec, origin_from_shape);
@@ -460,10 +468,18 @@ AnfNodePtr ConvertConstParamToDynamic(const TensorRedistributionPtr &tensor_redi
     return val;
   }
   std::vector<AnfNodePtr> shape_input;
-  if (is_same_rank) {
-    MatchingAccordingToIndex(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input);
+  if (reshape_mode == ReshapeMode::FROM_ORIGIN_SLICE_TO_FROM_LAYOUT_SLICE ||
+      reshape_mode == ReshapeMode::TO_ORIGIN_SLICE_TO_TO_LAYOUT_SLICE) {
+    MatchingAccordingToPrime(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input,
+                             reshape_mode);
   } else {
-    MatchingAccordingToPrime(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input);
+    if (is_same_rank) {
+      MatchingAccordingToIndex(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input,
+                               reshape_mode);
+    } else {
+      MatchingAccordingToPrime(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input,
+                               reshape_mode);
+    }
   }
   if (shape_input.size() != shape_vec.size()) {
     MS_LOG(ERROR) << "shape size is not equal.";
@@ -551,6 +567,7 @@ Status ConvertReshapeInputs(const OperatorParams &params,
                             const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *new_node_input) {
   Param shape_param;
   bool use_origin_shape = false;
+  ReshapeMode reshape_mode = ReshapeMode::NO_RESHAPE;
   for (auto &param : params) {
     if (param.first.first == SHAPE) {
       shape_param = param;
@@ -559,6 +576,11 @@ Status ConvertReshapeInputs(const OperatorParams &params,
     if (param.first.first == USE_ORIGIN_SHAPE) {
       use_origin_shape = GetValue<bool>(param.first.second);
       MS_LOG(INFO) << "Has USE_ORIGIN_SHAPE = " << use_origin_shape;
+      continue;
+    }
+    if (param.first.first == REDISTRIBUTION_RESHAPE_MODE) {
+      reshape_mode = static_cast<ReshapeMode>(GetValue<int64_t>(param.first.second));
+      MS_LOG(INFO) << "Has REDISTRIBUTION_RESHAPE_MODE = " << reshape_mode;
       continue;
     }
   }
@@ -586,7 +608,8 @@ Status ConvertReshapeInputs(const OperatorParams &params,
     (void)new_node_input->emplace_back(val);
     return SUCCESS;
   }
-  auto dynamic_input = ConvertConstParamToDynamic(tensor_redistribution_from_cnode, shape_param, func_graph, true);
+  auto dynamic_input =
+    ConvertConstParamToDynamic(tensor_redistribution_from_cnode, shape_param, func_graph, true, reshape_mode);
   MS_ERROR_IF_NULL_W_RET_VAL(dynamic_input, FAILED);
   (void)new_node_input->emplace_back(dynamic_input);
   return SUCCESS;
@@ -1037,6 +1060,7 @@ Status UpdateTupleGetItemShapeValue(const CNodePtr &tuple_getitem, const TensorI
   for (const auto &next_node : node_users_map[tuple_getitem]) {
     auto tuple_getitem_user = next_node.first->cast<CNodePtr>();
     if (tuple_getitem_user == nullptr) {
+      MS_LOG(DEBUG) << "tuple_getitem_user is nullptr";
       continue;
     }
     MS_LOG(INFO) << tuple_getitem->input(1)->fullname_with_scope() << "->" << tuple_getitem->fullname_with_scope()
@@ -1089,7 +1113,7 @@ Status UpdateReshapeShapeValue(const CNodePtr &reshape_cnode, const CNodePtr &sh
   make_tuple->set_in_forward_flag(true);
   std::string fullname = shape_cnode->fullname_with_scope() + "_replace";
   make_tuple->set_fullname_with_scope(fullname);
-  manager->SetEdge(reshape_cnode, 2, make_tuple);
+  manager->SetEdge(reshape_cnode, INDEX_TWO, make_tuple);
   MS_LOG(INFO) << shape_cnode->fullname_with_scope() << "->" << make_tuple->fullname_with_scope() << "->"
                << reshape_cnode->fullname_with_scope();
   MS_LOG(INFO) << "reshape shape is : " << shape;
@@ -1228,7 +1252,7 @@ Status SegmentEntireShapeToPartialForDynamic(const CNodePtr &reshape_node, const
   }
   auto shape_input = reshape_node->input(INDEX_TWO);
   if (!shape_input->isa<CNode>()) {
-    MS_LOG(WARNING) << "Reshape's second input is not a CNode.";
+    MS_LOG(DEBUG) << "Reshape's second input is not a CNode.";
     return Status::SUCCESS;
   }
   auto shape_input_cnode = shape_input->cast<CNodePtr>();
@@ -1239,7 +1263,7 @@ Status SegmentEntireShapeToPartialForDynamic(const CNodePtr &reshape_node, const
 }
 
 Status MergeEntireShapeForDynamic(const FuncGraphPtr &root) {
-  MS_LOG(INFO) << "Begin RebuildShapeForDynamic";
+  MS_LOG(INFO) << "Into MergeEntireShapeForDynamic";
   MS_EXCEPTION_IF_NULL(root);
   // Step1. Judge whether is dynamic shape.
   // Step2. Find all Shape node, get its factor arr.

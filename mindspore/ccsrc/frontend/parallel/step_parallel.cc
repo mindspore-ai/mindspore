@@ -514,9 +514,10 @@ static void Redistribution(const std::pair<AnfNodePtr, std::vector<int>> &node_p
   } else {
     next_distribute_operator = GetDistributeOperator(next_cnode);
   }
-  MS_EXCEPTION_IF_NULL(next_distribute_operator);
   MS_LOG(DEBUG) << "Redistribution for pre_node: " << pre_cnode->DebugString()
                 << " next_node: " << next_cnode->DebugString();
+  MS_EXCEPTION_IF_NULL(next_distribute_operator);
+
   auto tensor_redistribution = next_distribute_operator->CreateTensorRedistribution();
   tensor_redistribution->SetPreAndNextCNode(pre_cnode, next_cnode);
   MS_LOG(DEBUG) << "Redistribution for pre_node: " << pre_cnode->DebugString()
@@ -3580,8 +3581,7 @@ static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const 
   auto adasum_param_tensor_layout_map = AdaSumParamTensorLayout(root);
   bool is_apply_adasum = HandleAdaSum(root, all_nodes, &adasum_param_tensor_layout_map);
 
-  bool is_virtual_dataset_dynamic = IsVirtualDatasetDynamicShape(root);
-  if (is_virtual_dataset_dynamic && MergeEntireShapeForDynamic(root) != Status::SUCCESS) {
+  if (MergeEntireShapeForDynamic(root) != Status::SUCCESS) {
     MS_LOG(EXCEPTION) << "Merge entire shape for dynamic shape failed.";
   }
 
