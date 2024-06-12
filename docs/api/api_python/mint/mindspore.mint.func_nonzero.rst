@@ -3,7 +3,7 @@ mindspore.mint.nonzero
 
 .. py:function:: mindspore.mint.nonzero(input, as_tuple=False)
 
-    计算input中非零元素的下标。
+    返回所有非零元素下标位置。
 
     参数：
         - **input** (Tensor) - 输入Tensor，其秩应大于等于1。
