@@ -25,6 +25,7 @@
 
 namespace mindspore {
 namespace ops {
+constexpr auto kBiasAddInputLen = 3;
 /// \brief Returns sum of input and bias tensor. Refer to Python API @ref mindspore.ops.BiasAdd for more details.
 class MIND_API BiasAddFuncImpl : public OpFuncImpl {
  public:
