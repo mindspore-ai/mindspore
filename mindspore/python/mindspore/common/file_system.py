@@ -14,7 +14,9 @@
 # ============================================================================
 """File system registration management"""
 
+
 class FileSystem:
+    """File operation interface manager"""
     def __init__(self):
         self.create = open
         self.create_args = ("ab",)
