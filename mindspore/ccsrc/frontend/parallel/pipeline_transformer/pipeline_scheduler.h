@@ -74,6 +74,7 @@ class InterleavedScheduler : public PipelineScheduler {
   void MemoryOptimizedStablePhaseReorder();
   void MemoryOptimizedReorder();
   void WarmUpPhaseReorder();
+  void StablePhaseReorder();
   void LastForwardMicroReorder();
   void EndPhaseReorder();
   AbstractBasePtr GenerateTupleAbstract(const std::vector<AnfNodePtr> &nodes);

@@ -557,8 +557,8 @@ void PipelineInterleave::InsertSendReceive(const AnfNodePtr &node, const AnfNode
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
   Attr attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[1]));
   if (node_stage > user_stage) {
-    attr_group = std::make_pair(GROUP, MakeValue(group_[2]));
-    attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[3]));
+    attr_group = std::make_pair(GROUP, MakeValue(group_[INDEX_TWO]));
+    attr_group_back = std::make_pair(GROUP_BACK, MakeValue(group_[INDEX_THREE]));
   }
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_group, attr_group_back};
   auto send_op = CreateOpInstance(attrs, SEND, SEND);

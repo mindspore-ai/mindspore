@@ -649,32 +649,13 @@ static bool EnableKbk() {
   return (jit_level == "O0" || jit_level == "O1");
 }
 
-void InterleavedScheduler::Reorder() {
-  auto enable_kbk = EnableKbk();
-  if (enable_kbk) {
-    auto sorted_fwd_begin = SortBetweenMicro(fwd_begin_, false);
-    auto sorted_bwd_end = SortBetweenMicro(bwd_end_, true);
-    MemoryOptimizedReorder();
-    ParameterReorder(sorted_fwd_begin, sorted_bwd_end);
-    OptimizerShardCommReorder();
-    return;
-  }
-  offset_ = micro_size_ % stage_num_;
-  bias_ = (stage_num_ + offset_) * (chunk_num_ - 1) + (stage_num_ - stage_ - 1) * 2;
-  is_even_stage_ = stage_ % 2 == 0;
+void InterleavedScheduler::StablePhaseReorder() {
   auto sorted_fwd_begin = SortBetweenMicro(fwd_begin_, false);
   auto sorted_fwd_end = SortBetweenMicro(fwd_end_, false);
   auto sorted_bwd_begin = SortBetweenMicro(bwd_begin_, true);
   auto sorted_bwd_end = SortBetweenMicro(bwd_end_, true);
   auto sorted_fwd_cell = SortBetweenMicro(fwd_cell_, false);
   auto sorted_bwd_cell = SortBetweenMicro(bwd_cell_, true);
-  if (micro_size_ < stage_num_) {
-    MS_LOG(EXCEPTION) << "For 1F1B Scheduler, MicroBatch num must be larger or equal than StageNum, but got MicroBatch:"
-                      << micro_size_ << " StageNum:" << stage_num_;
-  }
-  // WarmUp phase
-  WarmUpPhaseReorder();
-
   for (size_t i = LongToSize(bias_); i < LongToSize(micro_size_ * chunk_num_ - 1); ++i) {
     if (stage_ == stage_num_ - 1 && sorted_fwd_end[i].first.chunk == chunk_num_ - 1) {
       auto prior = sorted_fwd_end[i].second;
@@ -745,9 +726,35 @@ void InterleavedScheduler::Reorder() {
     auto last1 = sorted_bwd_cell[i - LongToSize(bias_) + 1].first;
     ControlOrder(prior1, last1);
   }
+}
+
+void InterleavedScheduler::Reorder() {
+  auto enable_kbk = EnableKbk();
+  auto sorted_fwd_begin = SortBetweenMicro(fwd_begin_, false);
+  auto sorted_bwd_end = SortBetweenMicro(bwd_end_, true);
+  if (enable_kbk) {
+    MemoryOptimizedReorder();
+    ParameterReorder(sorted_fwd_begin, sorted_bwd_end);
+    OptimizerShardCommReorder();
+    return;
+  }
+  offset_ = micro_size_ % stage_num_;
+  bias_ = (stage_num_ + offset_) * (chunk_num_ - 1) + (stage_num_ - stage_ - 1) * 2;
+  is_even_stage_ = stage_ % 2 == 0;
+  if (micro_size_ < stage_num_) {
+    MS_LOG(EXCEPTION) << "For 1F1B Scheduler, MicroBatch num must be larger or equal than StageNum, but got MicroBatch:"
+                      << micro_size_ << " StageNum:" << stage_num_;
+  }
+  // WarmUp phase
+  WarmUpPhaseReorder();
+
+  // Stable phase
+  StablePhaseReorder();
   LastForwardMicroReorder();
+
   // End phase
   EndPhaseReorder();
+
   // Parameters phase
   ParameterReorder(sorted_fwd_begin, sorted_bwd_end);
   OptimizerShardCommReorder();

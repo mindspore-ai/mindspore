@@ -575,6 +575,7 @@ void AclStreamAssign::GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kern
                                              mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv,
                                              mindspore::HashMap<AnfNodePtr, std::set<size_t>> *producer_streams) {
   MS_LOG(DEBUG) << "Start GenEventsForParallelOp...";
+  constexpr size_t INDEX_TWO = 2;
   auto exec_kernels = kernel_graph->execution_order();
   mindspore::HashMap<CNodePtr, NodeIoExecInfoPtr> kernel_io_exec_info_map;
   GenKernelIoExecInfoMap(kernel_graph, &kernel_io_exec_info_map);
@@ -598,8 +599,8 @@ void AclStreamAssign::GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kern
     ProcessStreamForInputs(kernel_graph, process_kernel, process_io_exec_info, kernel_send, kernel_recv,
                            producer_streams);
     InsertEventsForOutputs(kernel_graph, process_kernel, process_io_exec_info, kernel_send, kernel_recv);
-    InsertEventsForSendOp(kernel_graph, process_kernel, std::get<0>(recvs), std::get<1>(recvs), std::get<2>(recvs),
-                          kernel_send, kernel_recv);
+    InsertEventsForSendOp(kernel_graph, process_kernel, std::get<0>(recvs), std::get<1>(recvs),
+                          std::get<INDEX_TWO>(recvs), kernel_send, kernel_recv);
   }
   MS_LOG(DEBUG) << "Finish GenEventsForParallelOp.";
 }
