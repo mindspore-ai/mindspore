@@ -1,7 +1,7 @@
-mindspore.ops.gelu
-==================
+mindspore.mint.nn.functional.gelu
+====================================
 
-.. py:function:: mindspore.ops.gelu(input, approximate='none')
+.. py:function:: mindspore.mint.nn.functional.gelu(input, approximate='none')
 
     高斯误差线性单元激活函数。
 
