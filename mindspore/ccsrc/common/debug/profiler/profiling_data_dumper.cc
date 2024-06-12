@@ -147,9 +147,7 @@ bool Utils::IsSoftLink(const std::string &path) {
   return S_ISLNK(st.st_mode);
 }
 
-uint64_t Utils::GetTid() {
-  static thread_local uint64_t tid = static_cast<uint64_t>(syscall(SYS_gettid));
-}
+uint64_t Utils::GetTid() { static thread_local uint64_t tid = static_cast<uint64_t>(syscall(SYS_gettid)); }
 
 uint64_t Utils::GetPid() {
   static thread_local uint64_t pid = static_cast<uint64_t>(getpid());
