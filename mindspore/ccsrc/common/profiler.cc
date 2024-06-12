@@ -154,7 +154,7 @@ void ProfilerAnalyzer::Initialize() {
 bool ProfilerAnalyzer::profiler_enable() const {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   auto ascend_profiler = mindspore::profiler::Profiler::GetInstance(kAscendDevice);
-  return profiler_enable_ || (ascend_profiler != nullptr && ascend_profiler->GetHostStack());
+  return profiler_enable_ || (ascend_profiler != nullptr && ascend_profiler->EnableHostStack());
 #else
   return profiler_enable_;
 #endif
@@ -230,8 +230,8 @@ void ProfilerAnalyzer::RecordData(const ProfilerDataPtr &data) noexcept {
     (void)data_.emplace_back(data);
   }
   auto ascend_profiler = mindspore::profiler::Profiler::GetInstance(kAscendDevice);
-  if (ascend_profiler != nullptr && ascend_profiler->GetHostStack()) {
-    profiler::ascend::ProfilingFrameworkData::RecordHostStack(data);
+  if (ascend_profiler != nullptr && ascend_profiler->EnableHostStack()) {
+    profiler::ascend::ProfilingFrameworkData::RecordHostProfile(data);
   }
 #endif
 }

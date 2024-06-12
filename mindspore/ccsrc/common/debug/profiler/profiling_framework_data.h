@@ -84,7 +84,7 @@ struct COMMON_EXPORT OpRangeData : BaseReportData {
 
 class COMMON_EXPORT ProfilingFrameworkData {
  public:
-  static void RecordHostStack(std::shared_ptr<ProfilerData> data);
+  static void RecordHostProfile(std::shared_ptr<ProfilerData> data);
 
   inline static std::map<std::string, uint64_t> kernel_launch_begin_;
   inline static int32_t Device_Id = 0;

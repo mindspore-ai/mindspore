@@ -145,10 +145,10 @@ std::vector<uint8_t> OpRangeData::encode() {
 }
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
-void ProfilingFrameworkData::RecordHostStack(std::shared_ptr<ProfilerData> data) {
+void ProfilingFrameworkData::RecordHostProfile(std::shared_ptr<ProfilerData> data) {
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
-  if (!ascend_profiler->GetHostStack()) {
+  if (!ascend_profiler->EnableHostStack()) {
     return;
   }
   std::vector<std::string> stack_vec;
@@ -164,7 +164,7 @@ void ProfilingFrameworkData::RecordHostStack(std::shared_ptr<ProfilerData> data)
   ProfilingDataDumper::GetInstance().Report(std::make_unique<OpRangeData>(report));
 }
 #else
-void ProfilingFrameworkData::RecordHostStack(std::shared_ptr<ProfilerData> data) {
+void ProfilingFrameworkData::RecordHostProfile(std::shared_ptr<ProfilerData> data) {
   MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
 }
 #endif
