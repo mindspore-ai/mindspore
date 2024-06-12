@@ -30,11 +30,27 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationGradGpuKernelM
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &ActivationGradGpuKernelMod::LaunchEluRelu<half>}}},
     {ops::kNameEluGrad,
-     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     {{KernelAttr()
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeFloat32),
        &ActivationGradGpuKernelMod::LaunchEluRelu<float>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-       &ActivationGradGpuKernelMod::LaunchEluRelu<half>}}},
-};
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat16)
+         .AddInputAttr(kNumberTypeFloat16)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeFloat16),
+       &ActivationGradGpuKernelMod::LaunchEluRelu<half>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeFloat64),
+       &ActivationGradGpuKernelMod::LaunchEluRelu<double>}}}};
 
 bool ActivationGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {

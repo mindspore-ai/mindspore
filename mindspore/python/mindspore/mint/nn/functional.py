@@ -220,6 +220,13 @@ from mindspore.ops.function.math_func import tanh
 
 # 100
 
+# 323
+
+# 324
+from mindspore.ops.function.nn_func import elu # pylint: disable=C0413
+# 325
+
+
 __all__ = [
     'conv_transpose2d',
     'max_pool2d',
@@ -422,4 +429,11 @@ __all__ = [
     # 99
 
     # 100
+
+    # 323
+
+    # 324
+    'elu',
+    # 325
+
 ]

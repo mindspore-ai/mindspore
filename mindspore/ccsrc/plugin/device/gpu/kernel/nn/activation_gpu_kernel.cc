@@ -81,6 +81,7 @@ bool ActivationFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   mode_ = mode_iter->second;
 
   dtype_ = inputs[kIndex0]->dtype_id();
+
   return true;
 }
 
@@ -149,6 +150,11 @@ std::vector<KernelAttr> ActivationFwdGpuKernelMod::GetOpSupport() {
 template <typename T>
 bool ActivationFwdGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                                              const std::vector<kernel::KernelTensor *> &outputs) {
+  if (kernel_name_ == ops::kNameElu) {
+    const auto &alpha = inputs[kIndex1]->GetValueWithCheck<float>();
+    MS_EXCEPTION_IF_CHECK_FAIL(alpha == 1.f, "Only support alpha = 1.0");
+  }
+
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
 
