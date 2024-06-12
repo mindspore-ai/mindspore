@@ -194,6 +194,7 @@ std::pair<FuncGraphPtr, LayoutMap> LoadFuncGraphFromMindIR(const py::dict &weigh
   context.SetFrontNameToFrontNode(name_to_node);
   context.SetFrontGraph(fg);
   context.InsertBackendGraphCachePath(fg, GetBackendCompileCachePathWithoutExtension(idx));
+
   if (ms_context->CellReuseLevel() != CellReuseLevel::kNoCellReuse) {
     MS_LOG(INFO) << "Cell reuse(@lazy_inline) actually takes effect.";
   }
