@@ -525,7 +525,7 @@ TimeRecorder::TimeRecorder(const RecorderType &descr, bool record) : descr_(desc
 
 TimeRecorder::~TimeRecorder() {
   if (record_) {
-    uint64_t clk = IntToSize((std::chrono::steady_clock::now() - start_).count());
+    uint64_t clk = static_cast<uint64_t>((std::chrono::steady_clock::now() - start_).count());
     auto &data = TimeRecorder::Data()->data_[descr_];
     data.count++;
     data.nano += clk;
