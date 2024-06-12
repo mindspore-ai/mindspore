@@ -1644,8 +1644,10 @@ void GraphExecutorPy::GeFirstInitParams() {
   if (!inited) {
     MS_LOG(INFO) << "Start init params.";
     const auto &init_params = GetParams(phase_);
-    InitParams(init_params, phase_);
-    inited = true;
+    auto ret = InitParams(init_params, phase_);
+    if (ret) {
+      inited = true;
+    }
   }
 }
 #endif
@@ -1745,7 +1747,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
   return res;
 }  // namespace pipeline
 
-void GraphExecutorPy::InitParams(const py::dict &init_params, const std::string &phase) const {
+bool GraphExecutorPy::InitParams(const py::dict &init_params, const std::string &phase) const {
   MS_LOG(INFO) << "Init params when ge backend, phase = " << phase;
   if (info_.count(phase) == 0) {
     MS_LOG(INTERNAL_EXCEPTION) << "No phase in executor: " << GetPhasePrefix(phase);
@@ -1757,12 +1759,11 @@ void GraphExecutorPy::InitParams(const py::dict &init_params, const std::string 
     auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
   } catch (const std::exception &) {
-    return;
+    return false;
   }
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
-  device_context->GetDeprecatedInterface()->RunInitGraph(info_.at(phase)->func_graph, init_params);
-  return;
+  return device_context->GetDeprecatedInterface()->RunInitGraph(info_.at(phase)->func_graph, init_params);
 }
 
 FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase) const {

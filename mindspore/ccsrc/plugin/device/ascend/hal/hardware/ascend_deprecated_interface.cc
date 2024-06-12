@@ -118,14 +118,14 @@ void GetInputTensor(const FuncGraphPtr &anf_graph, const pybind11::dict &init_pa
 }
 }  // namespace
 
-void AscendDeprecatedInterface::RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) {
+bool AscendDeprecatedInterface::RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::RunOptions run_options;
   run_options.name = "init_subgraph." + anf_graph->ToString();
 
   auto graph_runner = transform::CheckAndGetGraphRunner(run_options);
   if (graph_runner == nullptr) {
-    return;
+    return false;
   }
 
   std::vector<transform::GeTensorPtr> ge_outputs;
@@ -152,6 +152,7 @@ void AscendDeprecatedInterface::RunInitGraph(const FuncGraphPtr &anf_graph, cons
   }
   auto &infer_need_update_parameter_names = Singleton<InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
   infer_need_update_parameter_names.clear();
+  return true;
 }
 
 void AscendDeprecatedInterface::DoExecNonInputGraph(const std::string &phase) {
