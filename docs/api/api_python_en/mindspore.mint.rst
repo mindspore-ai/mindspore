@@ -19,6 +19,7 @@ Array Operation
     mindspore.mint.index_select
     mindspore.mint.max
     mindspore.mint.min
+    mindspore.mint.nonzero
     mindspore.mint.ones_like
     mindspore.mint.rand_like
     mindspore.mint.scatter_add
@@ -28,7 +29,6 @@ Array Operation
     mindspore.mint.unique
     mindspore.mint.where
     mindspore.mint.zeros_like
-    mindspore.mint.nonzero
 
 Tensor Creation
 ^^^^^^^^^^^^^^^

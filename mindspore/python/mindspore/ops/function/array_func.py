@@ -32,7 +32,7 @@ from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._sequence_ops import TensorToList
 from mindspore.ops.auto_generate import OnesLikeExt, ZerosLikeExt, FillScalar, FillTensor, Arange, Chunk, UniqueDim,\
-    Unique2,NonZero, NonZeroExt
+    Unique2, NonZero, NonZeroExt
 from mindspore.ops.auto_generate.gen_ops_prim import SplitTensor, slice_ext_op
 from mindspore.ops.auto_generate.gen_ops_prim import SplitWithSize, RepeatInterleave
 
@@ -6005,13 +6005,13 @@ def mvlgamma(input, p):
 
 def nonzero(input, as_tuple=False):
     r"""
-    Return a Tensor of the positions of all non-zero values.
+    Return the positions of all non-zero values.
 
     Args:
         input (Tensor): The input Tensor, its rank should be greater than or eaqual to 1.
         as_tuple (bool, optional): Whether the output is tuple.
             If ``False`` , return Tensor. Default: ``False`` .
-            If ``True`` , return Tuple of Tensor, Only support``Ascend``.
+            If ``True`` , return Tuple of Tensor, only support``Ascend``.
 
 
     Returns:
