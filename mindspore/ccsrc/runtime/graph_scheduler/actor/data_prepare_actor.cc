@@ -898,12 +898,12 @@ void DataPrepareActor::PrepareDataForHostTensorQueueNew(const VectorRef &args, O
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   static const bool enable_infer_boost = ms_context->IsEnableInferBoost();
-  if (enable_infer_boost && has_dynamic_shape_ && EnableKbkSubGraphExecute()) {
+  const auto &phase = PhaseManager::GetInstance().phase();
+  bool is_increment_graph = (phase.find("increment") != std::string::npos);
+  if (enable_infer_boost && has_dynamic_shape_ && EnableKbkSubGraphExecute() && is_increment_graph) {
     ActorDispatcher::set_enable_static_shape(!isDyn);
 
-    const auto &phase = PhaseManager::GetInstance().phase();
-    bool is_increment_graph = (phase.find("increment") != std::string::npos);
-    if (EnableTraceMemory() && is_increment_graph) {
+    if (EnableTraceMemory()) {
       if (continuous_memory_alloc_list_list_.size() > 0) {
         MS_LOG(EXCEPTION)
           << "Can not support continuous memory allocate in dynamic shape graph when enable trace memory.";
@@ -914,6 +914,8 @@ void DataPrepareActor::PrepareDataForHostTensorQueueNew(const VectorRef &args, O
         ActorDispatcher::set_enable_use_trace_memory(true);
       }
     }
+  } else {
+    ActorDispatcher::set_enable_static_shape(false);
   }
   host_tensor_queue_->Push(host_tensors);
 }
