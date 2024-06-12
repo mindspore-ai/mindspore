@@ -84,14 +84,16 @@ OpAdapterPtr FindAdapter(const std::string &name, bool train) {
     return it->second->Get(train);
   }
 
-  std::set<std::string> cpu_only_ops{kRealMakeTupleOpName, kRealTupleGetItemOpName};
+  std::set<std::string> cpu_only_ops{kRealMakeTupleOpName, kRealTupleGetItemOpName, kShapeCalcOpName};
   auto iter = cpu_only_ops.find(name);
-  if (iter != cpu_only_ops.end()) {
+  // If ops in cpu only list or ops is scalar ops or is sequence ops
+  if (iter != cpu_only_ops.end() || name.find("Scalar") != std::string::npos ||
+      name.find("Sequence") != std::string::npos || name.find("Tuple") != std::string::npos ||
+      name.find("List") != std::string::npos) {
     MS_LOG(INFO) << "Can't find OpAdapter for " << name;
-  } else {
-    MS_LOG(WARNING) << "Can't find OpAdapter for " << name;
+    return nullptr;
   }
-
+  MS_LOG(WARNING) << "Can't find OpAdapter for " << name;
   return nullptr;
 }
 
