@@ -71,6 +71,7 @@ class DimStatisticKernel : public StatisticKernel {
   explicit DimStatisticKernel(const DeviceContext *device_context, string kernel_name, const std::set<TypeId> &dtype_id)
       : StatisticKernel(device_context, kernel_name, dtype_id) {}
   TensorPtr LaunchKernel(KernelTensor *input);
+  TensorPtr Launch(vector<KernelTensor *> inputs, DeviceAddressPtr output_addr, uint32_t stream_id);
   DeviceAddressPtr GetAxisDeviceAddress(const uint32_t stream_id, size_t dim);
   DeviceAddressPtr GetKeepDimsDeviceAddress(const uint32_t stream_id);
   DeviceAddressPtr GetDtypeDeviceAddress(const uint32_t stream_id, const TypeId &);

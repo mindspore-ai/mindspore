@@ -51,7 +51,7 @@ string TensorToString(TensorPtr tensor) {
 
 namespace datadump {
 
-TensorStat GetKernelTensorStats(const DumpTensorInfo &tensor_info) {
+TensorStat GetKernelTensorStats(const DumpTensorInfo &tensor_info, const std::set<string> &stat_name_list) {
   auto tensor = tensor_info.tensor;
   if (tensor == nullptr) {
     MS_LOG(WARNING) << "Tensor is nullptr, returning empty tensor statistics.";
@@ -64,10 +64,17 @@ TensorStat GetKernelTensorStats(const DumpTensorInfo &tensor_info) {
   size_t data_size = tensor->size();
   string data_type = TypeIdToString(tensor->dtype_id(), true);
   MS_LOG(DEBUG) << "Tensor shape is " << shape << ", size is " << data_size << ", type is " << data_type;
-  std::string max_value = TensorToString(CalStatistic("max", tensor_info.device_context, tensor));
-  std::string min_value = TensorToString(CalStatistic("min", tensor_info.device_context, tensor));
-  std::string mean_value = TensorToString(CalStatistic("mean", tensor_info.device_context, tensor));
-  std::string norm_value = TensorToString(CalStatistic("l2norm", tensor_info.device_context, tensor));
+  auto is_calc_stat = [&stat_name_list](std::string name) {
+    return (stat_name_list.find(name) != stat_name_list.end());
+  };
+  std::string max_value =
+    is_calc_stat("max") ? TensorToString(CalStatistic("max", tensor_info.device_context, tensor)) : "0";
+  std::string min_value =
+    is_calc_stat("min") ? TensorToString(CalStatistic("min", tensor_info.device_context, tensor)) : "0";
+  std::string mean_value =
+    is_calc_stat("avg") ? TensorToString(CalStatistic("avg", tensor_info.device_context, tensor)) : "0";
+  std::string norm_value =
+    is_calc_stat("l2norm") ? TensorToString(CalStatistic("l2norm", tensor_info.device_context, tensor)) : "0";
 
   size_t task_id = 0;  // Under the kbyk, there is no concept of task_id. The default setting is 0.
   uint64_t timestamp = Common::GetTimeStamp();
@@ -97,7 +104,7 @@ void DumpKernelTensorStats(const DeviceContext *device_context, vector<device::D
   for (size_t i = 0; i < tensors.size(); ++i) {
     auto tensor = tensors[i]->kernel_tensor().get();
     DumpTensorInfo tensor_info(device_context, tensor, is_input, i, node_name, node_type);
-    auto stat = GetKernelTensorStats(tensor_info);
+    auto stat = GetKernelTensorStats(tensor_info, stat_name_list);
     stat.UpdateHeaderItemMap();
 
     csv.WriteToCsv(stat.type_);

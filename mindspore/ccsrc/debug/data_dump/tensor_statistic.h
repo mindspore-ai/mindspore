@@ -92,7 +92,7 @@ class DumpTensorInfo {
   string op_type;
 };
 
-TensorStat GetKernelTensorStats(const DumpTensorInfo &);
+TensorStat GetKernelTensorStats(const DumpTensorInfo &, const std::set<std::string> &stat_name_list);
 void DumpKernelTensorStats(const DeviceContext *device_context, vector<device::DeviceAddress *> tensors, bool is_input,
                            const CNodePtr &node, uint32_t graph_id);
 
