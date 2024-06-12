@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,8 +82,10 @@ ParameterPtr ConstructGraph::NewListInput(const std::string &name,
   return NewInput(name, abs);
 }
 
-CNodePtr ConstructGraph::NewCNode(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
-                                  const mindspore::HashMap<std::string, ValuePtr> &attrs) {
+ValueNodePtr ConstructGraph::NewValueNode(const ValuePtr &value) { return graph_->NewValueNode(value); }
+
+CNodePtr ConstructGraph::NewCNodeWithoutInfer(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
+                                              const mindspore::HashMap<std::string, ValuePtr> &attrs) {
   MS_EXCEPTION_IF_NULL(graph_);
   auto prim = std::make_shared<Primitive>(prim_name);
   prim->SetAttrs(attrs);
@@ -91,10 +93,17 @@ CNodePtr ConstructGraph::NewCNode(const std::string &prim_name, const std::vecto
   std::vector<AnfNodePtr> new_inputs = {value_node};
   new_inputs.insert(new_inputs.end(), inputs.begin(), inputs.end());
   auto cnode = graph_->NewCNode(new_inputs);
+  return cnode;
+}
+
+CNodePtr ConstructGraph::NewCNode(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
+                                  const mindspore::HashMap<std::string, ValuePtr> &attrs) {
+  auto cnode = NewCNodeWithoutInfer(prim_name, inputs, attrs);
   AbstractBasePtrList args;
   std::transform(inputs.begin(), inputs.end(), std::back_inserter(args),
                  [](const AnfNodePtr &node) -> abstract::AbstractBasePtr { return node->abstract(); });
-  opt::CppInferShape(prim, args, cnode);
+  auto out_abs = opt::CppInferShapeAndType(GetCNodePrimitive(cnode), args);
+  cnode->set_abstract(out_abs);
   return cnode;
 }
 
