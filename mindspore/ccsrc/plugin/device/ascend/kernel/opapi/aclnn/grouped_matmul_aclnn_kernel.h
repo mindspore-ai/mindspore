@@ -34,10 +34,6 @@ class GroupedMatmulAscend : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
-
-  std::vector<int64_t> dyn_input_idx_{};
-  int64_t split_item_;
-  int64_t group_type_;
 };
 }  // namespace kernel
 }  // namespace mindspore
