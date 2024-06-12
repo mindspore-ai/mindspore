@@ -18,7 +18,6 @@ from __future__ import absolute_import
 import os
 import stat
 import time
-import uuid
 from threading import RLock
 
 from mindspore.train.callback._callback import Callback
@@ -102,7 +101,9 @@ class ClusterMonitor(Callback):
         self.data_time_start = None
         self.data_time_end = None
         self.frame_work = "MindSpore"
-        self.uuid_value = uuid.uuid1()
+        self.ms_sched_host = os.getenv("MS_SCHED_HOST", "127.0.0.1")
+        self.ms_sched_port = os.getenv("MS_SCHED_PORT", "8888")
+        self.uuid_value = self.ms_sched_host + "_" + self.ms_sched_port
         self.global_rank = get_rank()
         self.process_id = os.getpid()
         self.device_id = get_local_rank()
