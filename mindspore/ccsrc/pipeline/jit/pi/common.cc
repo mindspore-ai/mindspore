@@ -76,8 +76,8 @@ class ByteCodeRunStatistic {
 
   std::string ToString() {
     const auto SumFunc = [](size_t sum, const std::pair<uint64_t, size_t> &i) { return sum + (i.first * i.second); };
-    size_t sum_py = IntToSize(std::accumulate(py_.begin(), py_.end(), 0, SumFunc));
-    size_t sum_graph = IntToSize(std::accumulate(graph_.begin(), graph_.end(), 0, SumFunc));
+    size_t sum_py = std::accumulate(py_.begin(), py_.end(), 0, SumFunc);
+    size_t sum_graph = std::accumulate(graph_.begin(), graph_.end(), 0, SumFunc);
     double ratio = static_cast<double>(sum_graph) / (sum_graph + sum_py);
     return "execute code ratio (graph / (graph + python)): " + std::to_string(ratio);
   }

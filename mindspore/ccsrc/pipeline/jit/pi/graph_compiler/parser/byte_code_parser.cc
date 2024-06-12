@@ -834,14 +834,14 @@ void ByteCodeParser::ParseLoadFast(const InstrPtr &instr) {
 void ByteCodeParser::ParseStoreName(const InstrPtr &instr) {
   ir::OpCode op_code = instr->GetOpCode();
   bool is_free_var = (instr->GetArg() > PyTuple_GET_SIZE(code_.co_cellvars));
-  auto names = (op_code == STORE_FAST)    ? code_.co_varnames
-               : (op_code == STORE_DEREF) ? (is_free_var ? code_.co_freevars : code_.co_cellvars)
-                                          : code_.co_names;
+  auto names = (op_code == STORE_FAST)
+                 ? code_.co_varnames
+                 : (op_code == STORE_DEREF) ? (is_free_var ? code_.co_freevars : code_.co_cellvars) : code_.co_names;
   int index = is_free_var ? instr->GetArg() - PyTuple_GET_SIZE(code_.co_cellvars) : instr->GetArg();
   py::object name = py::cast<py::object>(PyTuple_GET_ITEM(names, index));
-  auto scope = (op_code == STORE_FAST)    ? ir::kScopeLocal
-               : (op_code == STORE_DEREF) ? (is_free_var ? ir::kScopeFreeVar : ir::kScopeCellVar)
-                                          : ir::kScopeName;
+  auto scope = (op_code == STORE_FAST)
+                 ? ir::kScopeLocal
+                 : (op_code == STORE_DEREF) ? (is_free_var ? ir::kScopeFreeVar : ir::kScopeCellVar) : ir::kScopeName;
   ir::ValuePtr value = std::make_shared<ir::Value>(name, name.cast<std::string>(), scope);
   auto top = PopStack();
   ir::NodePtr node = std::make_shared<ir::StoreNode>(op_code, top, value);
@@ -1009,13 +1009,13 @@ void ByteCodeParser::ParseDeleteSubscr(const InstrPtr &instr) {
 }
 
 void ByteCodeParser::ParseDeleteName(const InstrPtr &instr) {
-  auto names = (instr->GetOpCode() == DELETE_FAST)    ? code_.co_varnames
-               : (instr->GetOpCode() == DELETE_DEREF) ? code_.co_cellvars
-                                                      : code_.co_names;
+  auto names = (instr->GetOpCode() == DELETE_FAST)
+                 ? code_.co_varnames
+                 : (instr->GetOpCode() == DELETE_DEREF) ? code_.co_cellvars : code_.co_names;
   py::object name = py::cast<py::object>(PyTuple_GET_ITEM(names, instr->GetArg()));
-  auto scope = (instr->GetOpCode() == DELETE_FAST)    ? ir::kScopeLocal
-               : (instr->GetOpCode() == DELETE_DEREF) ? ir::kScopeCellVar
-                                                      : ir::kScopeName;
+  auto scope = (instr->GetOpCode() == DELETE_FAST)
+                 ? ir::kScopeLocal
+                 : (instr->GetOpCode() == DELETE_DEREF) ? ir::kScopeCellVar : ir::kScopeName;
   ir::NodePtr opnd = std::make_shared<ir::Value>(name, scope);
   ir::NodePtr node = std::make_shared<ir::DeleteNode>(instr->GetOpCode(), opnd);
   node->SetDebugInfo(GetNodeDebugInfo(instr));

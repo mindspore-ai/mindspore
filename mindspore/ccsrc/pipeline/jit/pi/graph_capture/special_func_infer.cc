@@ -603,7 +603,7 @@ static bool InferListAppend(CallNode *call_node, GraphBuilder *parent) {
   ValueNode *new_element = call_node->input(1 + is_method_descriptor);
 
   // transform to "new_list = [old_list[0], old_list[1]..., new_element]"
-  size_t size = parent->frame().GetStacks().size();
+  int size = parent->frame().GetStacks().size();
   if (!parent->UnpackElements(self)) {
     return false;
   }

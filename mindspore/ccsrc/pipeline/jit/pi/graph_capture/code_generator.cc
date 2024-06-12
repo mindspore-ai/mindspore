@@ -35,7 +35,7 @@
 
 namespace mindspore {
 namespace pijit {
-constexpr const size_t MoveEightBits = 2;
+constexpr const size_t MoveEightBits = 8;
 
 class GraphParameterBuilder {
  public:
