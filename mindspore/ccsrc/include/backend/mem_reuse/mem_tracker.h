@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <utility>
 #include <memory>
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
@@ -206,7 +207,7 @@ class BACKEND_EXPORT MemoryTrackerEnabled : public MemTracker {
   void DumpProfilingMemInfo(const std::string &path, const std::string &file_name) override;
 
   bool IsEnabled() override { return true; }
-  void SetPath();
+  std::pair<std::string, std::string> GetPath();
   MemoryTrackerEnabled(const MemoryTrackerEnabled &) = delete;
   MemoryTrackerEnabled &operator=(const MemoryTrackerEnabled &) = delete;
 
@@ -230,8 +231,6 @@ class BACKEND_EXPORT MemoryTrackerEnabled : public MemTracker {
   // for dump
   bool has_dump = false;
   bool has_set_path = false;
-  std::string block_csv_path;
-  std::string task_csv_path;
   std::vector<TaskInfoPtr> task_list_;
   std::vector<MemInfoPtr> mem_info_list_;
   std::vector<MemBlockInfoPtr> mem_block_list_;
