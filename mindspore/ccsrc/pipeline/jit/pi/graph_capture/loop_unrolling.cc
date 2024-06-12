@@ -60,7 +60,8 @@ LoopUnrollingReason LoopUnrolling::ExecuteLoopUnroll(Block *header) {
 
 void LoopUnrolling::Run() {
   // check only one exit and one backedges in loop
-  if (loop_->exits().empty() || loop_->exits().size() >= 2 || loop_->backedges().size() >= 2) {
+  constexpr size_t max_size = 2;
+  if (loop_->exits().empty() || loop_->exits().size() >= max_size || loop_->backedges().size() >= max_size) {
     res_ = kCanNotSplitGoto;
     return;
   }

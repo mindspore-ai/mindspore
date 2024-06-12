@@ -57,8 +57,8 @@ namespace pijit {
 
 // mindspore graph can accept these value
 static const std::set<AObject::Type> kMsSupportedType = {
-  AObject::kTypeInt,    AObject::kTypeBool,   AObject::kTypeFloat,     AObject::kTypeNone,
-  AObject::kTypeString, AObject::kTypeTensor,
+  AObject::kTypeInt,  AObject::kTypeBool,   AObject::kTypeFloat,
+  AObject::kTypeNone, AObject::kTypeString, AObject::kTypeTensor,
 };
 
 MemPool<AbstractObjectBase> AbstractObjectBase::aobject_mem_pool_(__FILE__, __LINE__, "AObject");
@@ -108,7 +108,7 @@ static const std::unordered_map<PyObject *, AObject::Type> const_object_type_map
 static const std::vector<std::pair<PyTypeObject *, AObject::Type>> sub_type_map = {
   {&PyModule_Type, AObject::kTypeModule}, {&PyCFunction_Type, AObject::kTypeCFunction}};
 
-static const int fast_type_mask = Py_TPFLAGS_LONG_SUBCLASS | Py_TPFLAGS_LIST_SUBCLASS | Py_TPFLAGS_TUPLE_SUBCLASS |
+constexpr size_t fast_type_mask = Py_TPFLAGS_LONG_SUBCLASS | Py_TPFLAGS_LIST_SUBCLASS | Py_TPFLAGS_TUPLE_SUBCLASS |
                                   Py_TPFLAGS_UNICODE_SUBCLASS | Py_TPFLAGS_DICT_SUBCLASS | Py_TPFLAGS_TYPE_SUBCLASS;
 
 const char *AbstractObjectBase::GetTypeDesc(AObject::Type type) {
@@ -1080,7 +1080,9 @@ AObject *AbstractTuple::GetItem(AObject *k) {
     }
     AObject *resultTuple = AObject::MakeAObject(this->type_);
     PyObject *slicePyObject = k->GetPyObject().ptr();
-    Py_ssize_t start, stop, step;
+    Py_ssize_t start;
+    Py_ssize_t stop;
+    Py_ssize_t step;
     if (PySlice_Unpack(slicePyObject, &start, &stop, &step) < 0) {
       return AObject::MakeAObject(kTypeAnyValue);
     }
@@ -1332,7 +1334,8 @@ bool AbstractDict::Update() {
   this->write_cache_.clear();
   // copy it
   value_ = py::dict();
-  PyObject *k, *v;
+  PyObject *k;
+  PyObject *v;
   Py_ssize_t p = 0;
   bool init_element_type = false;
   while (PyDict_Next(dict_.ptr(), &p, &k, &v)) {
@@ -1666,7 +1669,8 @@ AObject *AbstractTensor::GetAttr(const std::string &name) {
 
 std::string AbstractTensor::ToString() const {
   std::stringstream s;
-  py::object dtype, shape;
+  py::object dtype;
+  py::object shape;
   std::stringstream extra_info;
   if (value_.ptr()) {
     dtype = value_.attr("dtype");

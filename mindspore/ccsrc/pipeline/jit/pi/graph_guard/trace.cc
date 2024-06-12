@@ -1607,7 +1607,9 @@ static std::unordered_map<int, PythonBytecodeFuncSet> kBytecodeExecuter = {
    {ByteCodeSupported,
     [](int opargs, const PyObjectArray &objs, PTraceContext ctx) -> PyObject
                                                                    * {
-                                                                     PyObject *start, *stop, *step;
+                                                                     PyObject *start;
+                                                                     PyObject *stop;
+                                                                     PyObject *step;
                                                                      if (opargs == 3)
                                                                        step = objs[2];
                                                                      else
@@ -2089,12 +2091,10 @@ void OpTrace::JudgeDTypeChangePass() {
     return;
   }
   for (size_t i = 0; i < kParamCountTwo; ++i) {
-    OpTracePtr trace;
-    ConstTracePtr const_op;
-    PyObject *const_param;
-    if ((trace = CastOpTrace(GetParam(i), CALL_FUNCTION)) != nullptr &&
-        (const_op = CastConstTrace(trace->GetParam(kParamIndexOne))) != nullptr &&
-        (const_param = const_op->GetObject()) != nullptr &&
+    OpTracePtr trace = CastOpTrace(GetParam(i), CALL_FUNCTION);
+    ConstTracePtr const_op = CastConstTrace(trace->GetParam(kParamIndexOne));
+    PyObject *const_param = const_op->GetObject();
+    if (trace != nullptr && const_op != nullptr && const_param != nullptr &&
         py::isinstance<mindspore::PrimitivePyAdapter>(const_param) &&
         py::cast<mindspore::PrimitivePyAdapterPtr>(const_param)->name() == kDTypePrimName) {
       // Compare for output of DType primitive
@@ -2131,7 +2131,8 @@ void OpTrace::JudgeDTypeTensorAttrPass() {
     return;
   }
   int idx;
-  std::string name, module_name;
+  std::string name;
+  std::string module_name;
   global_op->GetParam(&idx, &name, &module_name);
   auto tsr = call_op->GetObject();
   if (tsr == nullptr) {

@@ -465,7 +465,9 @@ class SliceData : public ItemData {
  public:
   SliceData(PyObject *obj, bool needSpecialize, int recurseDepth)
       : ItemData(ItemType::PySlice, needSpecialize, recurseDepth) {
-    Py_ssize_t start = 0, stop = 0, step = 0;
+    Py_ssize_t start = 0;
+    Py_ssize_t stop = 0;
+    Py_ssize_t step = 0;
     if (needSpecialize) {
       PySlice_Unpack(obj, &start, &stop, &step);
       sliceVar_.push_back((int64_t)start);
@@ -520,10 +522,12 @@ class DictData : public ItemData {
       dt_ = DictType::DtDict;
     }
     Py_ssize_t pos = 0;
-    PyObject *key, *val;
+    PyObject *key;
+    PyObject *val;
     if (dt_ == DictType::DtItems || dt_ == DictType::DtDict) {
       while (PyDict_Next(obj, &pos, &key, &val)) {
-        ItemDataPtr k, v;
+        ItemDataPtr k;
+        ItemDataPtr v;
         if (recurseDepth > 0 || needSpecialize) {
           k = CreateItem(key, needSpecialize, recurseDepth);
           v = CreateItem(val, needSpecialize, recurseDepth);
@@ -1186,7 +1190,7 @@ class TensorData : public MetaTensorData {
       return false;
     }
     bool ret = MetaTensorData::operator==(obj);
-    const TensorData &other = (const TensorData &)obj;
+    const TensorData &other = static_cast<const TensorData &>(obj);
     if (is_stubtensor_ || other.is_stubtensor_) {
       return ret;
     }
@@ -1362,7 +1366,7 @@ class MapTensorData : public TensorData {
     if (!ItemData::operator==(obj)) {
       return false;
     }
-    const MapTensorData &other = (const MapTensorData &)obj;
+    const MapTensorData &other = dynamic_cast<const MapTensorData &>(obj);
     bool ret = TensorData::operator==(obj);
     return ret && other.key_dtype_ == key_dtype_ && other.key_shape_ == key_shape_ && IsDefaultValue(other) &&
            IsPermitFilterValue(other) && IsEvictFilterValue(other) && value_shape_ == other.value_shape_ &&
@@ -1567,9 +1571,11 @@ class PrimitiveData : public ItemData {
     py::dict pd = data->GetAttrDict();
     auto dct = pd.ptr();
     Py_ssize_t pos = 0;
-    PyObject *key, *val;
+    PyObject *key;
+    PyObject *val;
     while (PyDict_Next(dct, &pos, &key, &val)) {
-      ItemDataPtr k, v;
+      ItemDataPtr k;
+      ItemDataPtr v;
       if (recurseDepth > 0 || needSpecialize) {
         k = CreateItem(key, needSpecialize, recurseDepth);
         v = CreateItem(val, needSpecialize, recurseDepth);
@@ -1648,7 +1654,8 @@ class CellData : public ItemData {
       }
       PyObject *key = PySequence_Fast_GET_ITEM(it, 0);
       PyObject *val = PySequence_Fast_GET_ITEM(it, 1);
-      ItemDataPtr k, v;
+      ItemDataPtr k;
+      ItemDataPtr v;
       if (recurseDepth > 0 || needSpecialize) {
         k = CreateItem(key, needSpecialize, recurseDepth);
         v = CreateItem(val, needSpecialize, recurseDepth);

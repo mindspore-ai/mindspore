@@ -20,6 +20,7 @@
 #include <numeric>
 #include <limits>
 #include <algorithm>
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {
@@ -104,7 +105,7 @@ class BitMap {
   static constexpr const int shf = CountTrailingZeros(std::numeric_limits<size_t>::digits);
   static constexpr const int mod = (1 << shf) - 1;
 
-  size_t count() const { return (size_ >> shf) + static_cast<bool>(size_ & mod); }
+  size_t count() const { return (size_ >> shf) + static_cast<bool>(size_ & IntToSize(mod)); }
   size_t bytes() const { return count() * sizeof(size_t); }
   size_t *data() { return bits_.data(); }
   const size_t *data() const { return bits_.data(); }
