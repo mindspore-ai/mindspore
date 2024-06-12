@@ -182,6 +182,15 @@ ValueTuplePtr Converter::ToTensorList(const py::list &python_args, size_t i) {
   return ConvertValueTupleByCastDtype(python_args, op_arg, i);
 }
 
+template <typename T>
+std::optional<ValueTuplePtr> Converter::ToTensorListOptional(const py::list &python_args, size_t i) {
+  const py::object &obj = (python_args)[i];
+  if (py::isinstance<py::none>(obj)) {
+    return std::nullopt;
+  }
+  return std::make_optional(ToTensorList<T>(python_args, i));
+}
+
 Int64ImmPtr Converter::ToInt(const py::list &python_args, size_t i) {
   const auto &op_arg = op_def_->args_[i];
   const py::object &obj = python_args[i];
@@ -430,6 +439,8 @@ ValueTuplePtr Converter::ConvertValueTupleByCastDtype(const py::list &python_arg
 // Declare template to compile corresponding method.
 template ValueTuplePtr Converter::ToTensorList<py::tuple>(const py::list &python_args, size_t i);
 template ValueTuplePtr Converter::ToTensorList<py::list>(const py::list &python_args, size_t i);
+template std::optional<ValueTuplePtr> Converter::ToTensorListOptional<py::tuple>(const py::list &python_args, size_t i);
+template std::optional<ValueTuplePtr> Converter::ToTensorListOptional<py::list>(const py::list &python_args, size_t i);
 template std::optional<ValueTuplePtr> Converter::ToIntListOptional<py::tuple>(const py::list &python_args, size_t i);
 template std::optional<ValueTuplePtr> Converter::ToIntListOptional<py::list>(const py::list &python_args, size_t i);
 template std::optional<ValueTuplePtr> Converter::ToBoolListOptional<py::tuple>(const py::list &python_args, size_t i);
