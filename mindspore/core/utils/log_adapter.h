@@ -198,7 +198,8 @@ enum SubModuleId : int {
   SM_API,                // MindAPI
   SM_SYMBOLIC_SHAPE,     // symbolic shape
   SM_GRAPH_KERNEL,       // graph kernel fusion
-  NUM_SUBMODUES          // number of submodules
+  SM_MINDIO,             // mindio tpp
+  NUM_SUBMODUES,         // number of submodules
 };
 
 #ifndef SUBMODULE_ID

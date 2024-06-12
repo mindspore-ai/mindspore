@@ -30,7 +30,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.train import ModelCheckpoint, RunContext, LossMonitor, Callback, CheckpointConfig, \
-    LambdaCallback, History
+    LambdaCallback, History, MindIOTTPAdapter
 from mindspore.train.callback import _InternalCallbackParam, _CallbackManager, _checkpoint_cb_for_save_op, _set_cur_net
 from mindspore.train.callback._checkpoint import _chg_ckpt_file_name_if_same_exist
 
@@ -596,3 +596,54 @@ def test_lambda():
         callbacklist.on_train_step_end(run_context)
         callbacklist.on_train_epoch_end(run_context)
         callbacklist.on_train_end(run_context)
+
+
+def test_mindio_ttp_adapter():
+    """
+    Feature: callback.
+    Description: Test mindio adapter callback.
+    Expectation: run success.
+    """
+    with pytest.raises(ModuleNotFoundError):
+        mindio_cb = MindIOTTPAdapter(
+            controller_ip="192.168.0.1",
+            controller_port=8080,
+            ckpt_save_path='./ckpt'
+        )
+    _mock = mock.Mock()
+    modules = {"mindio_ttp": _mock, "mindio_ttp.framework_ttp": _mock.module}
+    with mock.patch.dict("sys.modules", modules):
+        context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+        mindio_cb = MindIOTTPAdapter(
+            controller_ip="192.168.0.1",
+            controller_port=8080,
+            ckpt_save_path='./ckpt')
+        assert mindio_cb.enable is False
+
+        os.environ["MS_ENABLE_MINDIO_GRACEFUL_EXIT"] = '1'
+        mindio_cb = MindIOTTPAdapter(
+            controller_ip="192.168.0.1",
+            controller_port=8080,
+            ckpt_save_path='./ckpt')
+        assert mindio_cb.enable is True
+
+        cb_params = _InternalCallbackParam()
+        cb_params.cur_epoch_num = 4
+        cb_params.epoch_num = 4
+        cb_params.cur_step_num = 2
+        cb_params.dataset_sink_mode = True
+        cb_params.sink_size = 1
+        run_context = RunContext(cb_params)
+        mindio_cb.on_train_step_end(run_context)
+        assert mindio_cb.enable is False
+
+        mindio_cb = MindIOTTPAdapter(
+            controller_ip="192.168.0.1",
+            controller_port=8080,
+            ckpt_save_path='./ckpt')
+        assert mindio_cb.enable is True
+        context.set_auto_parallel_context(
+            parallel_mode=context.ParallelMode.SEMI_AUTO_PARALLEL, pipeline_stages=2)
+        # for no distribution environment is init, runtime errors occur
+        with pytest.raises(RuntimeError):
+            mindio_cb.on_train_step_end(run_context)
