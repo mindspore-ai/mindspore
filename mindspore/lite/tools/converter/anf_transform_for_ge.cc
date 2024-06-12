@@ -51,6 +51,7 @@
 #include "tools/optimizer/graph/quant_fusion_x_offset_to_bias_pass.h"
 #include "tools/optimizer/graph/padv3_ge_pass.h"
 #include "tools/optimizer/graph/broadcast_for_select.h"
+#include "tools/optimizer/graph/send_op_add_control_depend.h"
 
 namespace mindspore::lite {
 void EnableKVCacheFusion(std::vector<opt::PassPtr> *fusions, const std::shared_ptr<ConverterPara> &param) {
@@ -85,7 +86,8 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
   CHECK_NULL_RETURN(fusion_pm);
 
   std::vector<opt::PassPtr> fusions{std::make_shared<opt::MakeListPass>(), std::make_shared<opt::ScalarOpPass>(),
-                                    std::make_shared<opt::PadV3GePass>(), std::make_shared<opt::BroadCastForSelect>()};
+                                    std::make_shared<opt::PadV3GePass>(), std::make_shared<opt::BroadCastForSelect>(),
+                                    std::make_shared<opt::SendOpAddControlDepend>()};
   std::map<std::string, std::function<void(std::vector<opt::PassPtr> *, const std::shared_ptr<ConverterPara> &)>>
     fusion_mappings = {
       {kFusionNameMatMulAllReduce,
