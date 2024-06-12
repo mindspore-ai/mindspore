@@ -21,8 +21,10 @@
 #include "utils/file_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/common/debug/common.h"
+#ifdef ENABLE_DEBUGGER
 #include "include/backend/debug/profiler/profiling.h"
 #include "common/debug/profiler/profiling_framework_data.h"
+#endif
 
 namespace mindspore {
 namespace runtime {
@@ -229,10 +231,12 @@ void ProfilerAnalyzer::RecordData(const ProfilerDataPtr &data) noexcept {
   if (profiler_enable_) {
     (void)data_.emplace_back(data);
   }
+#if defined(ENABLE_DEBUGGER)
   auto ascend_profiler = mindspore::profiler::Profiler::GetInstance(kAscendDevice);
   if (ascend_profiler != nullptr && ascend_profiler->EnableHostStack()) {
     profiler::ascend::ProfilingFrameworkData::RecordHostProfile(data);
   }
+#endif
 #endif
 }
 
