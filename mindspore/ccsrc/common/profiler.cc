@@ -154,7 +154,8 @@ void ProfilerAnalyzer::Initialize() {
 }
 
 bool ProfilerAnalyzer::profiler_enable() const {
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__) && \
+  defined(ENABLE_DEBUGGER)
   auto ascend_profiler = mindspore::profiler::Profiler::GetInstance(kAscendDevice);
   return profiler_enable_ || (ascend_profiler != nullptr && ascend_profiler->EnableHostStack());
 #else
@@ -206,7 +207,8 @@ void ProfilerAnalyzer::Clear() noexcept {
 }
 
 uint64_t ProfilerAnalyzer::GetTimeStamp() const noexcept {
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__) && \
+  defined(ENABLE_DEBUGGER)
   return profiler::GetClockSyscnt();
 #else
   return 0;
