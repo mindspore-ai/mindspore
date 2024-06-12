@@ -31,6 +31,7 @@
 #include "ir/tensor.h"
 #include "mindapi/base/shape_vector.h"
 #include "abstract/abstract_value.h"
+#include "mindspore/core/utils/simple_info.h"
 
 namespace mindspore {
 namespace stub {
@@ -53,14 +54,16 @@ class COMMON_EXPORT StubNode : public Value {
   virtual void SetValue(const ValuePtr &val);
   virtual void SetException(const std::exception_ptr &e_ptr);
 
-  AbstractBasePtr WaitAbstract();
   ValuePtr WaitValue();
+  virtual bool SetValueSimpleInfo(const ValueSimpleInfoPtr &output_value_simple_info);
+  void WaitPipeline();
 
-  AbstractBasePtr ToAbstract() override { return WaitAbstract(); }
+  AbstractBasePtr ToAbstract() override;
   bool operator==(const Value &other) const override { return other.isa<StubNode>() && &other == this; }
 
  protected:
   AbstractBasePtr abstract_;
+  ValueSimpleInfoPtr output_value_simple_info_;
   ValuePtr value_;
   std::condition_variable cond_var_;
   std::mutex mutex_;
@@ -86,6 +89,7 @@ class SequenceNode : public StubNode {
   py::object GetElements();
 
   bool SetAbstract(const AbstractBasePtr &abs) override;
+  bool SetValueSimpleInfo(const ValueSimpleInfoPtr &output_value_simple_info) override;
   void SetValue(const ValuePtr &val) override;
   void SetException(const std::exception_ptr &e_ptr) override;
 

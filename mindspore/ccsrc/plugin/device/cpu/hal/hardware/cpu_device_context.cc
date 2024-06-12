@@ -221,6 +221,14 @@ void CPUDeviceResManager::MoveTo(const tensor::TensorPtr &src_tensor, const tens
   device::MoveTo(src_tensor, dst_tensor, to, blocking, return_self);
 }
 
+DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector,
+                                                          const Format &format, TypeId type_id,
+                                                          const std::string &device_name, uint32_t device_id,
+                                                          uint32_t stream_id) const {
+  return std::make_shared<CPUDeviceAddress>(ptr, size, shape_vector, format, type_id, device_name, device_id,
+                                            stream_id);
+}
+
 void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();

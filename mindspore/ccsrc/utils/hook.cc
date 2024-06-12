@@ -38,7 +38,7 @@ ValuePtrList GetCValue(const py::object &output) {
   return output_tensors;
 }
 
-void RunHook(std::map<int, py::function> *hook_map, py::tuple *arg) {
+void RunHook(std::map<uint64_t, py::function> *hook_map, py::tuple *arg) {
   MS_EXCEPTION_IF_NULL(hook_map);
   MS_EXCEPTION_IF_NULL(arg);
   for (auto it = hook_map->begin(); it != hook_map->end();) {
@@ -46,7 +46,7 @@ void RunHook(std::map<int, py::function> *hook_map, py::tuple *arg) {
       MS_LOG(DEBUG) << "Hook id " << it->first << " have been delete by python";
       hook_map->erase(it++);
     } else {
-      MS_LOG(DEBUG) << "Run hook id " << it->first << " and its value " << py::str(it->second).cast<std::string>();
+      MS_LOG(DEBUG) << "Run hook id " << it->first << " and its value " << ConvertPyObjToString(it->second);
       // Flatten input
       auto res = (it->second)(*(*arg));
       if (py::isinstance<py::none>(res)) {
@@ -72,7 +72,7 @@ void RunHook(std::map<int, py::function> *hook_map, py::tuple *arg) {
 }
 }  // namespace
 
-TensorBackwardHook::TensorBackwardHook(int tensor_id, const py::function &obj) {
+TensorBackwardHook::TensorBackwardHook(uint64_t tensor_id, const py::function &obj) {
   (void)hook_map_.emplace(tensor_id, obj);
 }
 

@@ -25,8 +25,8 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr ArgMaxAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_x_tensor,
-                                        const std::optional<Int64ImmPtr> &dim, const BoolImmPtr &keepdim) {
+tensor::BaseTensorPtr ArgMaxAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_x_tensor,
+                                            const std::optional<Int64ImmPtr> &dim, const BoolImmPtr &keepdim) {
   OpRunner::InferOpOutput(op, input_x_tensor, dim, keepdim);
   int64_t dim_imm = 0;
   bool keepdim_imm = GetValue<bool>(keepdim);
@@ -46,8 +46,6 @@ tensor::TensorPtr ArgMaxAscendCustomize(const std::shared_ptr<OpRunner> &op, con
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_x_imm, dim_imm, keepdim_imm]() {
     MS_LOG(DEBUG) << "Run device task ArgMax end";
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
-                                       "ArgMax", false);
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
     // Malloc for input tensors

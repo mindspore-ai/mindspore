@@ -24,14 +24,12 @@
 #include "pipeline/pynative/pynative_utils.h"
 #include "pipeline/pynative/grad/jit/jit_dfunctor.h"
 #include "ir/func_graph_cloner.h"
-#include "pipeline/pynative/grad/bprop_task.h"
-#include "pipeline/jit/ps/pass.h"
 #include "frontend/expander/bprop/bprop.h"
 
 namespace mindspore {
 namespace pynative {
 namespace {
-const char kAddedValue[] = "added_value";
+constexpr char kAddedValue[] = "added_value";
 
 const mindspore::HashSet<std::string> kExpanderWhiteList{
   kVmapStackAssignOpName,
@@ -48,7 +46,6 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, c
   op_run_info->base_op_run_info.op_name = graph_phase;
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args);
   // Set input abs
-  op_run_info->op_grad_info->input_abs.resize(op_run_info->input_size);
   const auto &original_params = jit_forward_graph->parameters();
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
     op_run_info->op_grad_info->input_abs[i] = original_params[i]->abstract();
@@ -206,7 +203,7 @@ void Jit::RunReplace(const CNodePtr &added_node, const ValuePtrList &total_outpu
     std::vector<ValuePtr> new_values;
     for (size_t j = index; j < index + output_num; ++j) {
       // If jit graph reused in dynamic shape, added output tensor should be update tensor address in run actor
-      auto tensor = total_output_tensors[j]->cast<tensor::TensorPtr>();
+      auto tensor = total_output_tensors[j]->cast<tensor::BaseTensorPtr>();
       if (tensor != nullptr) {
         tensor->set_is_forward_output(true);
       }
@@ -438,7 +435,7 @@ void Jit::UpdateJitForwardTensorInfoInBpropGraph(const std::string &op_info, con
   }
   // Not first run
   MS_LOG(DEBUG) << "Update jit forward output tensor info " << op_info;
-  UpdateForwardOutputTensorInfo(op_info, v, it->second, stream_id);
+  UpdateForwardOutputTensorInfo(op_info, v, it->second);
 }
 
 void Jit::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph) {

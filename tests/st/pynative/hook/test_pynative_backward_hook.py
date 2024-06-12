@@ -21,22 +21,22 @@ from mindspore.ops import GradOperation
 from mindspore.common import ParameterTuple
 
 
-def forward_pre_hook_fn_add(cell_id, inp):
+def forward_pre_hook_fn_add(cell, inp):
     x = inp[0] + inp[0]
     return x
 
 
-def forward_pre_hook_fn_mul(cell_id, inp):
+def forward_pre_hook_fn_mul(cell, inp):
     x = inp[0] * inp[0]
     return x
 
 
-def forward_hook_fn_relu(cell_id, inp, outp):
+def forward_hook_fn_relu(cell, inp, outp):
     out = nn.ReLU()(outp)
     return out
 
 
-def forward_hook_fn_add(cell_id, inp, outp):
+def forward_hook_fn_add(cell, inp, outp):
     out = outp + outp
     return out
 

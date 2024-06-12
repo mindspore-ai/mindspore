@@ -25,14 +25,14 @@ namespace kernel {
 namespace pyboost {
 namespace {
 void SigmoidGradAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
-                           const TensorPtr &dy_tensor, const TensorPtr &y_tensor,
-                           const std::vector<tensor::TensorPtr> &outputs) {
+                           const BaseTensorPtr &dy_tensor, const BaseTensorPtr &y_tensor,
+                           const std::vector<tensor::BaseTensorPtr> &outputs) {
   LAUNCH_ACLNN(aclnnSigmoidBackward, device_context, op->stream_id(), dy_tensor, y_tensor, outputs[0]);
 }
 }  // namespace
 
-tensor::TensorPtr SigmoidGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &y_tensor,
-                                             const TensorPtr &dy_tensor) {
+tensor::BaseTensorPtr SigmoidGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &y_tensor,
+                                                 const BaseTensorPtr &dy_tensor) {
   OpRunner::InferOpOutput(op, dy_tensor, y_tensor);
   // Create device address for input/output tensors
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), dy_tensor, y_tensor);

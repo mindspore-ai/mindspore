@@ -20,6 +20,7 @@
 #include "ir/dtype.h"
 #include "ops/op_name.h"
 #include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -45,5 +46,22 @@ TypePtr CastFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector
     return dst_type->cast<TypePtr>();
   }
 }
+TypePtrList CastFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &input_type = x_tensor->Dtype();
+  (void)CheckAndConvertUtils::CheckTypeValid("x", input_type, common_valid_types_with_complex_and_bool,
+                                             primitive->name());
+  auto input_scalar = input_values[kIndex1]->cast<Int64ImmPtr>();
+  MS_EXCEPTION_IF_NULL(input_scalar);
+  auto type = TypeIdToType(static_cast<TypeId>(input_scalar->value()));
+  return {type};
+}
+ShapeArray CastFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameCast, CastFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

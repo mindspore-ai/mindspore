@@ -33,12 +33,12 @@ AutoGradMetaDataWeakPtr BuildAutoGradMeta(const tensor::Tensor &tensor) {
   return {auto_grad_meta_data};
 }
 
-inline int GetTensorNumId(const std::string &id) { return std::stoi(id.substr(1)); }
+inline uint64_t GetTensorNumId(const std::string &id) { return std::stoull(id.substr(1)); }
 }  // namespace
 
-std::map<int, std::pair<AutoGradMetaDataWeakPtr, TensorBackwardHookPtr>> RegisterHook::hook_meta_fn_map_ = {};
+std::map<uint64_t, std::pair<AutoGradMetaDataWeakPtr, TensorBackwardHookPtr>> RegisterHook::hook_meta_fn_map_ = {};
 
-int RegisterHook::RegisterTensorBackwardHook(const Tensor &tensor, const py::function &hook) {
+uint64_t RegisterHook::RegisterTensorBackwardHook(const Tensor &tensor, const py::function &hook) {
   // Delete char 'T'
   const auto &tensor_id = GetTensorNumId(tensor.id());
   MS_LOG(DEBUG) << "Register hook " << py::str(py::cast<py::object>(hook)).cast<std::string>() << " for tensor "
@@ -53,7 +53,7 @@ int RegisterHook::RegisterTensorBackwardHook(const Tensor &tensor, const py::fun
   return tensor_id;
 }
 
-void RegisterHook::RemoveTensorBackwardHook(int id) {
+void RegisterHook::RemoveTensorBackwardHook(uint64_t id) {
   const auto it = hook_meta_fn_map_.find(id);
   if (it == hook_meta_fn_map_.end()) {
     return;

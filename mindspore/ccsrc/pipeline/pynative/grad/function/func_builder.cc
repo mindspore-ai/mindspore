@@ -42,8 +42,8 @@ std::string PrintDebugInfo(std::vector<T> items, const std::string &info_header 
       MS_LOG(DEBUG) << "The " << i << "'th item is nullptr!";
       continue;
     }
-    if (items[i]->template isa<tensor::Tensor>()) {
-      auto tensor = items[i]->template cast<tensor::TensorPtr>();
+    if (items[i]->template isa<tensor::BaseTensor>()) {
+      auto tensor = items[i]->template cast<tensor::BaseTensorPtr>();
       auto grad = std::make_shared<tensor::Tensor>(*tensor);
       grad->data_sync();
       buf << i << "th: "
@@ -97,7 +97,7 @@ void SetDependValue(const PrimitivePtr &primitive, const NodePtrList &inputs) {
     }
     const auto abstract = inputs[index]->abstract();
     const auto value = inputs[index]->Value();
-    auto tensor = value->cast<tensor::TensorPtr>();
+    auto tensor = value->cast<tensor::BaseTensorPtr>();
     if (tensor != nullptr) {
       tensor->data_sync();
     }
@@ -119,8 +119,9 @@ bool ParseCond(const NodePtr &cond) {
   auto cond_val = cond->Value();
   if (cond_val->isa<BoolImm>()) {
     return GetValue<bool>(cond_val);
-  } else if (cond_val->isa<tensor::Tensor>()) {
-    auto tensor = cond_val->cast<tensor::TensorPtr>();
+  }
+  if (cond_val->isa<tensor::BaseTensor>()) {
+    auto tensor = cond_val->cast<tensor::BaseTensorPtr>();
     tensor->data_sync();
     size_t data_size = tensor->DataSize();
     auto tensor_type = tensor->Dtype();
@@ -160,13 +161,21 @@ NodePtr FuncBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs)
   auto real_outputs = common::AnfAlgo::TransformVectorRefToMultiValue(outputs);
   MS_LOG(DEBUG) << "Get output value size " << real_outputs.size() << ", "
                 << PyNativeAlgo::Common::PrintDebugInfo(real_outputs);
+  if (op_runner_info.output_value_simple_info != nullptr) {
+    // Get output abstract
+    op_runner_info.output_abs = TransformValueSimpleInfoToAbstract(*op_runner_info.output_value_simple_info);
+  }
   ValuePtr value_result;
+  MS_EXCEPTION_IF_NULL(op_runner_info.output_abs);
   if (real_outputs.size() == kSizeOne && !op_runner_info.output_abs->isa<abstract::AbstractSequence>()) {
     value_result = real_outputs[kIndex0];
   } else {
     value_result = std::make_shared<ValueTuple>(std::move(real_outputs));
   }
-  MS_EXCEPTION_IF_NULL(op_runner_info.output_abs);
+  // Set abstract to tensor cache
+  if (op_runner_info.output_value_simple_info != nullptr) {
+    PyNativeAlgo::AutoGrad::CacheOutputAbstract(value_result, op_runner_info.output_abs);
+  }
   auto result = NewFuncNode(value_result, op_runner_info.output_abs, InputType::kOpOutput);
   return result;
 }

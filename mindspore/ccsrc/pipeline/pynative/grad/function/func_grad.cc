@@ -106,8 +106,8 @@ ValuePtr GenerateEmptyTupleValue() {
 
 void SetFlattenTensorGradMetaData(const ValuePtrList &flatten_outs, const VariablePtr &variable) {
   for (size_t i = 0; i < flatten_outs.size(); ++i) {
-    if (flatten_outs[i]->isa<tensor::Tensor>()) {
-      auto tensor = flatten_outs[i]->cast<tensor::TensorPtr>();
+    if (flatten_outs[i]->isa<tensor::BaseTensor>()) {
+      auto tensor = flatten_outs[i]->cast<tensor::BaseTensorPtr>();
       auto auto_grad_meta_data = tensor->auto_grad_meta_data();
       if (auto_grad_meta_data == nullptr) {
         MS_LOG(DEBUG) << "tensor has no auto_grad_meta_data";
@@ -122,13 +122,13 @@ void SetFlattenTensorGradMetaData(const ValuePtrList &flatten_outs, const Variab
 
 bool IsValidTensorInput(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
-  return v->isa<tensor::Tensor>() || v->isa<tensor::MetaSparseTensor>();
+  return v->isa<tensor::BaseTensor>() || v->isa<tensor::MetaSparseTensor>();
 }
 
 bool IsNeedComputeGrad(const ValuePtr &input) {
   MS_EXCEPTION_IF_NULL(input);
-  if (input->isa<tensor::Tensor>()) {
-    auto input_tensor = input->cast<tensor::TensorPtr>();
+  if (input->isa<tensor::BaseTensor>()) {
+    auto input_tensor = input->cast<tensor::BaseTensorPtr>();
     auto auto_grad_meta_data = input_tensor->auto_grad_meta_data();
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
     auto variable = auto_grad_meta_data->variable();
@@ -137,7 +137,7 @@ bool IsNeedComputeGrad(const ValuePtr &input) {
     }
   } else if (input->isa<ValueSequence>()) {
     auto seq = input->cast<ValueSequencePtr>();
-    if (!seq->value().empty() && !seq->value().front()->isa<tensor::Tensor>()) {
+    if (!seq->value().empty() && !seq->value().front()->isa<tensor::BaseTensor>()) {
       return false;
     }
     return std::any_of(seq->value().begin(), seq->value().end(),
@@ -148,12 +148,13 @@ bool IsNeedComputeGrad(const ValuePtr &input) {
 
 ValuePtrList CallBackwardHooks(const ValuePtr &value, ValuePtrList *grad_in) {
   if (value == nullptr) {
+    MS_LOG(DEBUG) << "Get null value";
     return *grad_in;
   }
   MS_EXCEPTION_IF_NULL(grad_in);
-  auto tensor = value->cast<tensor::TensorPtr>();
+  auto tensor = value->cast<tensor::BaseTensorPtr>();
   if (tensor == nullptr) {
-    MS_LOG(DEBUG) << "Get not tensor input value " << value->ToString();
+    MS_LOG(DEBUG) << "Hook just work on tensor, not support value " << value->ToString();
     return *grad_in;
   }
   auto auto_grad_meta = tensor->auto_grad_meta_data();
@@ -168,7 +169,7 @@ ValuePtrList CallBackwardHooks(const ValuePtr &value, ValuePtrList *grad_in) {
   for (const auto &hook : auto_grad_meta->backward_hooks()) {
     MS_LOG(DEBUG) << "Run hook id " << hook.first;
     MS_EXCEPTION_IF_NULL(hook.second);
-    (*grad_in)[kIndex0] = (*(hook.second))((*grad_in).front());
+    (*grad_in)[kIndex0] = (*(hook.second))(grad_in->front());
   }
   MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(*grad_in, "After hook print gradient in: ");
   auto_grad_meta->ClearBackwardHooks();
@@ -427,6 +428,7 @@ void FuncGrad::BackPropagate() {
   const auto &root_fn = (*last_node_reverse_iter)->func_node();
   mindspore::HashMap<BackwardNode *, ValuePtrList> input_buffer;
   (void)input_buffer.insert({root_fn.get(), root_gradients_});
+  MS_LOG(DEBUG) << "Is running recompute grad " << is_run_recompute_;
   for (auto iter = last_node_reverse_iter; iter != variable_set_.rend(); ++iter) {
     const auto &variable = *iter;
     const auto &fn = variable->func_node();
@@ -481,7 +483,7 @@ void FuncGrad::BackPropagate() {
       if (grads.empty() || grads[0]->isa<None>()) {
         MS_LOG(EXCEPTION) << variable->ToString() << ", " << (grads.empty() ? "grad is empty" : "grad is kNone");
       }
-      auto grad_tensor = grads[0]->cast<tensor::TensorPtr>();
+      auto grad_tensor = grads[0]->cast<tensor::BaseTensorPtr>();
       MS_EXCEPTION_IF_NULL(grad_tensor);
       variable->set_grad(grad_tensor);
     }
@@ -503,8 +505,8 @@ OrderedSet<FuncVariablePtr>::reverse_iterator FuncGrad::GetLastNodeReverseIter()
 
 void FuncGrad::ConstructParameterNodes(const ValuePtrList &inputs) {
   for (const auto &value : inputs) {
-    if (value->isa<tensor::Tensor>()) {
-      auto tensor = value->cast<tensor::TensorPtr>();
+    if (value->isa<tensor::BaseTensor>()) {
+      auto tensor = value->cast<tensor::BaseTensorPtr>();
       auto auto_grad_meta_data = tensor->auto_grad_meta_data();
       MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
       if (auto_grad_meta_data->variable() != nullptr) {
@@ -524,6 +526,7 @@ void FuncGrad::ConstructParameterNodes(const ValuePtrList &inputs) {
 
 BackwardNodePtr FuncGrad::BuildFuncBackwardNode(const PrimitivePtr &prim, const expander::bprop::BpropBuilderFunc &func,
                                                 const ValuePtrList &flatten_inputs, const OpGradInfoPtr &op_grad_info) {
+  PyNativeAlgo::AutoGrad::CheckAndSetAbstract(op_grad_info);
   auto fn = std::make_shared<FuncBackwardNode>(
     prim->name(), func, prim->attrs(), op_grad_info->input_value, op_grad_info->input_abs, op_grad_info->out_value,
     op_grad_info->output_size, op_grad_info->out_abs, op_grad_info->input_value_grad_type);
@@ -547,7 +550,7 @@ BackwardNodePtr FuncGrad::BuildCustomBackwardNode(const PrimitivePtr &prim, cons
       fn = GetBpropFunction(prim->name());
     }
     if (!fn || py::isinstance<py::none>(fn)) {
-      MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << py::str(fn);
+      MS_LOG(INFO) << "Can not find bprop function for " << prim->name() << ". fn: " << ConvertPyObjToString(fn);
       return BuildFakeBackwardNode(prim, flatten_inputs, op_grad_info);
     }
     (void)prim_py->AddBackwardHookFn(0, fn);
@@ -576,7 +579,7 @@ BackwardNodePtr FuncGrad::BuildFakeBackwardNode(const PrimitivePtr &prim, const 
   return fn;
 }
 
-ValuePtr FuncGrad::GetGrads(const tensor::TensorPtrList &weights, const std::vector<size_t> &grad_position,
+ValuePtr FuncGrad::GetGrads(const tensor::BaseTensorPtrList &weights, const std::vector<size_t> &grad_position,
                             const GradAttr &grad_attr) {
   auto inputs_grad = GetInputGrads(grad_attr.grad_all_inputs, grad_attr.get_by_position, grad_position);
   auto weights_grad = GetWeightGrads(grad_attr.grad_weights, weights, grad_attr.weight_param_is_tuple);
@@ -584,10 +587,9 @@ ValuePtr FuncGrad::GetGrads(const tensor::TensorPtrList &weights, const std::vec
   if (inputs_grad != nullptr && weights_grad != nullptr) {
     if (IsOutputBothEmpty(inputs_grad, weights_grad)) {
       return GenerateEmptyTupleValue();
-    } else {
-      ValuePtrList gradients{inputs_grad, weights_grad};
-      return std::make_shared<ValueTuple>(gradients);
     }
+    ValuePtrList gradients{inputs_grad, weights_grad};
+    return std::make_shared<ValueTuple>(gradients);
   }
   // Gradients wrt inputs.
   if (inputs_grad != nullptr) {
@@ -600,20 +602,17 @@ ValuePtr FuncGrad::GetGrads(const tensor::TensorPtrList &weights, const std::vec
   // grad_all_inputs, grad_weights and get_by_position are all false.
   if (cell_inputs_.empty()) {
     // If no input nodes, return empty tuple.
-    ValuePtrList empty_tuple;
-    return std::make_shared<ValueTuple>(empty_tuple);
-  } else {
-    // If there are input nodes, return gradient of first input node.
-    // Tuple, List, scalar will be ignore
-    if (IsValidTensorInput(cell_inputs_[kIndex0].first)) {
-      return PyNativeAlgo::AutoGrad::BuildSpecialValueGrad(cell_inputs_[kIndex0].first,
-                                                           cell_inputs_[kIndex0].second->grad(), func_impl_.get(),
-                                                           SpecialType::kZerosLikeType);
-    } else {
-      MS_LOG(DEBUG) << "Get first input node is not tensor " << cell_inputs_[0].first->ToString();
-      return kNull;
-    }
+    return std::make_shared<ValueTuple>(ValuePtrList{});
   }
+
+  // If there are input nodes, return gradient of first input node.
+  // Tuple, List, scalar will be ignore
+  if (IsValidTensorInput(cell_inputs_[kIndex0].first)) {
+    return PyNativeAlgo::AutoGrad::BuildSpecialValueGrad(
+      cell_inputs_[kIndex0].first, cell_inputs_[kIndex0].second->grad(), func_impl_.get(), SpecialType::kZerosLikeType);
+  }
+  MS_LOG(DEBUG) << "Get first input node is not tensor " << cell_inputs_[0].first->ToString();
+  return std::make_shared<ValueTuple>(ValuePtrList{});
 }
 
 ValuePtr FuncGrad::GetInputGrads(bool grad_all_inputs, bool get_by_position, const std::vector<size_t> &grad_position) {
@@ -649,7 +648,8 @@ ValuePtr FuncGrad::GetInputGrads(bool grad_all_inputs, bool get_by_position, con
   return std::make_shared<ValueTuple>(input_grads);
 }
 
-ValuePtr FuncGrad::GetWeightGrads(bool grad_weights, const tensor::TensorPtrList &weights, bool weight_param_is_tuple) {
+ValuePtr FuncGrad::GetWeightGrads(bool grad_weights, const tensor::BaseTensorPtrList &weights,
+                                  bool weight_param_is_tuple) {
   // No need to return gradient of weights.
   if (!grad_weights) {
     return nullptr;
@@ -661,12 +661,11 @@ ValuePtr FuncGrad::GetWeightGrads(bool grad_weights, const tensor::TensorPtrList
       (void)weight_grads.emplace_back(GetWeightGrad(weight));
     }
     return std::make_shared<ValueTuple>(weight_grads);
-  } else {
-    return GetWeightGrad(weights[0]);
   }
+  return GetWeightGrad(weights[0]);
 }
 
-ValuePtr FuncGrad::GetWeightGrad(const tensor::TensorPtr &weight) {
+ValuePtr FuncGrad::GetWeightGrad(const tensor::BaseTensorPtr &weight) {
   MS_EXCEPTION_IF_NULL(weight);
   auto auto_grad_meta_data = weight->auto_grad_meta_data();
   if (auto_grad_meta_data == nullptr) {
@@ -688,7 +687,7 @@ ValuePtr FuncGrad::GetWeightGrad(const tensor::TensorPtr &weight) {
   return func_impl_->Zeros(weight);
 }
 
-void FuncGrad::ClearGrads(const TensorPtrList &weights) {
+void FuncGrad::ClearGrads(const tensor::BaseTensorPtrList &weights) {
   // Clear input grads.
   for (const auto &input : cell_inputs_) {
     input.second->set_grad(nullptr);
@@ -737,7 +736,7 @@ void FuncGrad::CheckSensShapeAndType(const ValuePtr &sens_gradient) {
   }
 }
 
-void FuncGrad::PruningGradGraph(const TensorPtrList &weights, const GradAttr &grad_attr,
+void FuncGrad::PruningGradGraph(const tensor::BaseTensorPtrList &weights, const GradAttr &grad_attr,
                                 const std::vector<size_t> &grad_position) {
   PruningInput(grad_attr, grad_position);
   PruningWeights(weights, grad_attr);
@@ -777,13 +776,13 @@ void FuncGrad::PruningInput(const GradAttr &grad_attr, const std::vector<size_t>
 
   // Pruning all inputs not grad
   if (!grad_attr.grad_all_inputs && grad_attr.grad_weights) {
-    for (size_t i = 0; i < cell_inputs_.size(); ++i) {
-      cell_inputs_[i].second->set_is_need_grad(false);
+    for (auto &cell_input : cell_inputs_) {
+      cell_input.second->set_is_need_grad(false);
     }
   }
 }
 
-void FuncGrad::PruningWeights(const TensorPtrList &weights, const GradAttr &grad_attr) {
+void FuncGrad::PruningWeights(const tensor::BaseTensorPtrList &weights, const GradAttr &grad_attr) {
   // Pruning weights in grad graph
   if (grad_attr.grad_weights) {
     mindspore::HashSet<std::string> grad_weights_id;
@@ -806,7 +805,7 @@ void FuncGrad::PruningWeights(const TensorPtrList &weights, const GradAttr &grad
   }
 }
 
-ValuePtr FuncGrad::Finish(const TensorPtrList &weights, const std::vector<size_t> &grad_position,
+ValuePtr FuncGrad::Finish(const tensor::BaseTensorPtrList &weights, const std::vector<size_t> &grad_position,
                           const GradAttr &grad_attr, const ValuePtr &sens) {
   CheckSensShapeAndType(sens);
   BuildForwardLastNode(sens);

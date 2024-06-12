@@ -226,7 +226,6 @@ void CPUSession::SetOutputFlags(const VectorRef &base_ref) {
     } else if (utils::isa<tensor::TensorPtr>(base_ref[i])) {
       auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(base_ref[i]);
       MS_EXCEPTION_IF_NULL(tensor_ptr);
-      tensor_ptr->SetNeedWait(false);
       tensor_ptr->data_sync(false);
     }
   }

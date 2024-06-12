@@ -53,8 +53,6 @@ class ForwardExecutor {
     RunOpFrontend(std::forward<decltype(PH1)>(PH1));
   };
 
-  void DispatchBackendTask(const FrontendOpRunInfoPtr &op_run_info,
-                           const session::BackendOpRunInfoPtr &backend_op_run_info);
   void DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_info);
   void RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info);
   // If sub is true, this function will not convert StubTensor to Tensor.
@@ -100,7 +98,7 @@ class ForwardExecutor {
   std::string GetCurrentCellObjId() const;
   std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
   void ReInit();
-  void ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info);
+  void ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info) const;
   GradExecutorPtr grad() const;
   void InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info);
   // Mix precision and Implicit transform
@@ -131,9 +129,8 @@ class ForwardExecutor {
   // Check sync condition in heterogeneous
   void CheckIfNeedSyncForHeterogeneous(const std::string &cur_target);
   void PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info);
-  void PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) const;
   void OpRunInfoUsePrimC(const FrontendOpRunInfoPtr &op_run_info) const;
-  void CreateInputAddressForViewOp(const tensor::TensorPtr &input_tensor, const FrontendOpRunInfoPtr &op_run_info);
+  void CreateInputAddressForViewOp(const tensor::BaseTensorPtr &input_tensor, const FrontendOpRunInfoPtr &op_run_info);
   void DispatchViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const runtime::KernelTaskType &task_type);
   void ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const runtime::KernelTaskType &task_type,
                                 bool enable_async);
@@ -143,7 +140,7 @@ class ForwardExecutor {
   device::DeviceAddressPtr TensorContiguousCallback(const DeviceSyncPtr &device_address,
                                                     const TensorStorageInfoPtr &storage_info);
 
-  void CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
+  void CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::BaseTensorPtr &input_tensor,
                               const TensorStorageInfoPtr &storage_info, runtime::KernelTaskType task_type);
 
   void DispatchAllocateMemTask(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
@@ -151,7 +148,7 @@ class ForwardExecutor {
   PrimitivePtr GetSlicePrimFromCache(const std::string &op_name);
   FrontendOpRunInfoPtr GenerateSliceOpRunInfo(const std::string &op_name, bool requires_grad,
                                               const stub::StubNodePtr &stub_output);
-  void CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &view_input_tensor,
+  void CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info, const tensor::BaseTensorPtr &view_input_tensor,
                            runtime::KernelTaskType task_type, const TensorStorageInfoPtrList &storage_infos,
                            bool is_tuple_output);
 

@@ -27,12 +27,14 @@ OpFactory<T> &OpFactory<T>::Get() {
 }
 
 template <typename T>
-std::shared_ptr<T> OpFactory<T>::Create(const string &device) {
+std::shared_ptr<T> OpFactory<T>::Create(const string &device, uint32_t stream_id) {
   auto iter = op_creator_.find(device);
   if (iter == op_creator_.end()) {
     MS_LOG(EXCEPTION) << "Not found op " << typeid(T).name() << " on device " << device;
   }
-  return iter->second();
+  auto op = iter->second();
+  op->set_stream_id(stream_id);
+  return op;
 }
 
 ${op_factory_templates}

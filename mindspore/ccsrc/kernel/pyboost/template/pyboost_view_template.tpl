@@ -18,10 +18,7 @@
       )
     );
 
-    // Need input abstract to generate grad op.
-    if (grad_func_ != nullptr) {
-      GenerateAbstract(${call_args});
-    }
+    GenerateInputAbstract(${call_args});
     // Stub tensor need output abstract
     ${set_output_abs}
   } else {

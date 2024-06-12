@@ -45,8 +45,6 @@ tensor::BaseTensorPtr UniformExtAscendCustomize(const std::shared_ptr<OpRunner> 
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, tensor_tensor, a_imm, b_imm, seed_imm,
                                                                           offset_imm]() {
     MS_LOG(DEBUG) << "Run device task UniformExt end";
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
-                                       "uniform", false);
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
     // Malloc for input tensors

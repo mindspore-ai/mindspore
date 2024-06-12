@@ -23,8 +23,8 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr GeLUGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &dy_tensor,
-                                          const TensorPtr &x_tensor, const TensorPtr &y_tensor) {
+tensor::BaseTensorPtr GeLUGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &dy_tensor,
+                                              const BaseTensorPtr &x_tensor, const BaseTensorPtr &y_tensor) {
   OpRunner::InferOpOutput(op, dy_tensor, x_tensor, y_tensor);
   // Create device address for input/output tensors
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), dy_tensor, x_tensor, y_tensor);

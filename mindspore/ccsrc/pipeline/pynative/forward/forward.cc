@@ -20,8 +20,6 @@
 #include <unordered_set>
 #include <vector>
 #include "ops/structure_op_name.h"
-#include "ops/conv_pool_op_name.h"
-#include "ops/nn_op_name.h"
 #include "ops/array_ops.h"
 #include "ops/framework_ops.h"
 #include "pipeline/pynative/pynative_utils.h"
@@ -37,7 +35,6 @@
 #include "include/backend/debug/profiler/profiling.h"
 using mindspore::profiler::ProfilerManager;
 #endif
-#include "include/common/utils/tensor_future.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "runtime/pipeline/pipeline.h"
 #include "runtime/device/device_address_utils.h"
@@ -62,48 +59,49 @@ ValuePtr ShallowCopyValue(const FrontendOpRunInfoPtr &op_run_info, const ValuePt
   }
   auto new_shape = tensor_abs->BuildShape()->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(new_shape);
-  if (value->isa<mindspore::tensor::Tensor>()) {
-    auto tensor_value = value->cast<mindspore::tensor::TensorPtr>();
+  if (value->isa<mindspore::tensor::BaseTensor>()) {
+    auto tensor_value = value->cast<mindspore::tensor::BaseTensorPtr>();
     return std::make_shared<mindspore::tensor::Tensor>(tensor_value->data_type(), new_shape->shape(),
                                                        tensor_value->data_c(), tensor_value->Size());
-  } else if (value->isa<ValueTuple>()) {
+  }
+  if (value->isa<ValueTuple>()) {
     std::vector<ValuePtr> values;
     auto value_tuple = value->cast<ValueTuplePtr>();
     (void)std::transform(value_tuple->value().begin(), value_tuple->value().end(), std::back_inserter(values),
                          [op_run_info](const ValuePtr &elem) { return ShallowCopyValue(op_run_info, elem); });
     return std::make_shared<ValueTuple>(values);
-  } else {
-    return value;
   }
+  return value;
 }
 
 ValuePtr CopyTensorValueWithNewId(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
-  if (v->isa<tensor::Tensor>()) {
-    auto tensor = v->cast<tensor::TensorPtr>();
+  if (v->isa<tensor::BaseTensor>()) {
+    auto tensor = v->cast<tensor::BaseTensorPtr>();
     // This constructor will make a tensor with the new id
     auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
     new_tensor->set_need_pipeline_sync(true);
     new_tensor->set_device_address(tensor->device_address());
     new_tensor->set_sync_status(tensor->sync_status());
     return new_tensor;
-  } else if (v->isa<ValueTuple>()) {
+  }
+  if (v->isa<ValueTuple>()) {
     const auto &v_tup = v->cast<ValueTuplePtr>();
     ValuePtrList list;
     for (const auto &ele : v_tup->value()) {
       (void)list.emplace_back(CopyTensorValueWithNewId(ele));
     }
     return std::make_shared<ValueTuple>(list);
-  } else if (v->isa<ValueList>()) {
+  }
+  if (v->isa<ValueList>()) {
     const auto &v_list = v->cast<ValueListPtr>();
     ValuePtrList list;
     for (const auto &ele : v_list->value()) {
       (void)list.emplace_back(CopyTensorValueWithNewId(ele));
     }
     return std::make_shared<ValueList>(list);
-  } else {
-    return v;
   }
+  return v;
 }
 
 void UpdateOutputStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
@@ -155,14 +153,14 @@ bool IsDynamicInputs(const FrontendOpRunInfoPtr &op_run_info) {
     if (tuple_inputs.empty()) {
       continue;
     }
-    if (tuple_inputs[0]->isa<tensor::Tensor>() || tuple_inputs[0]->isa<stub::TensorNode>()) {
+    if (tuple_inputs[0]->isa<tensor::BaseTensor>() || tuple_inputs[0]->isa<stub::TensorNode>()) {
       return true;
     }
   }
   return false;
 }
 
-ValuePtr ConstructOutputInVM(const FrontendOpRunInfoPtr &op_run_info, const std::vector<ValuePtr> &result) {
+ValuePtr ConstructOutputInVM(const std::vector<ValuePtr> &result) {
   if (result.size() == 1) {
     return result[kIndex0];
   }
@@ -178,8 +176,6 @@ void UpdateOutputStubNodeValue(const FrontendOpRunInfoPtr &op_run_info) {
 BackendOpRunInfoPtr CreateBackendOpRunInfo(const FrontendOpRunInfoPtr &op_run_info) {
   auto backend_op_run_info = std::make_shared<BackendOpRunInfo>(
     op_run_info->base_op_run_info, std::make_shared<Primitive>(*op_run_info->op_grad_info->op_prim), true, false);
-  // Need to update promise in backend task.
-  backend_op_run_info->device_sync_promises = std::move(op_run_info->device_sync_promises);
   // Erase RandomOp cache avoid memory leak.
   if (AnfAlgo::NeedEraseCache(backend_op_run_info->op_prim)) {
     backend_op_run_info->base_op_run_info.need_earse_cache = true;
@@ -188,69 +184,6 @@ BackendOpRunInfoPtr CreateBackendOpRunInfo(const FrontendOpRunInfoPtr &op_run_in
     backend_op_run_info->base_op_run_info.use_dynamic_shape_process = true;
   }
   return backend_op_run_info;
-}
-
-void TransformOutputValues(const FrontendOpRunInfoPtr &op_run_info) {
-  std::vector<ValuePtr> output_values;
-  for (auto &output_tensor : op_run_info->base_op_run_info.output_tensors) {
-    MS_EXCEPTION_IF_NULL(output_tensor);
-
-    if (op_run_info->requires_grad) {
-      output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-      output_tensor->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
-    }
-    (void)output_values.emplace_back(output_tensor);
-  }
-  auto result_value = std::make_shared<ValueTuple>(output_values);
-  if (result_value->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
-      !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
-    op_run_info->real_out = result_value->value().front();
-  } else {
-    op_run_info->real_out = result_value;
-  }
-}
-
-void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs,
-                        std::vector<DeviceAddressPromisePtr> *device_sync_promises) {
-  auto create_tensor = [&outputs, &device_sync_promises](const TypePtr &type, const ShapeVector &shape_vector) {
-    auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
-    output_tensor->set_need_pipeline_sync(true);
-    (void)outputs->emplace_back(output_tensor);
-    MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
-
-    DeviceAddressPromisePtr promise =
-      std::make_shared<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
-    auto future = promise->GetFuture();
-    auto device_address_future = std::make_shared<DeviceAddressFuture>(std::move(future));
-    output_tensor->set_address_future(device_address_future);
-    (void)device_sync_promises->emplace_back(std::move(promise));
-  };
-
-  MS_EXCEPTION_IF_NULL(abstract);
-  if (abstract->isa<abstract::AbstractSequence>()) {
-    auto seq = abstract->cast<abstract::AbstractSequencePtr>();
-    auto elements = seq->elements();
-    for (const auto &element : elements) {
-      CreateOutputTensor(element, outputs, device_sync_promises);
-    }
-  } else if (abstract->isa<abstract::AbstractTensor>()) {
-    auto abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
-    auto shape = abstract_tensor->BuildShape();
-    auto type = abstract_tensor->element()->BuildType();
-    MS_LOG(DEBUG) << "get abstract tensor shape " << shape->ToString() << " type " << type->ToString();
-    if (!shape->isa<abstract::Shape>()) {
-      MS_LOG(EXCEPTION) << "AbstractTensor shape is valid " << shape->ToString();
-    }
-    auto shape_vector = shape->cast<abstract::ShapePtr>()->shape();
-    create_tensor(type, shape_vector);
-  } else if (abstract->isa<abstract::AbstractScalar>()) {
-    auto scalar = abstract->cast<abstract::AbstractScalarPtr>();
-    const auto &type = scalar->BuildType();
-    MS_LOG(DEBUG) << "Create scalar tensor type " << type->ToString();
-    create_tensor(type, {});
-  } else {
-    MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
-  }
 }
 
 void UpdateStubTensor(const FrontendOpRunInfoPtr &op_run_info) {
@@ -280,8 +213,7 @@ void EmplaceSliceInputs(const FrontendOpRunInfoPtr &op_run_info, const std::vect
     (void)op_run_info->op_grad_info->input_value.emplace_back(input_values[idx]);
   }
 
-  for (size_t i = 0; i < slice_op_info->slice_index_inputs.size(); i++) {
-    auto slice_index = slice_op_info->slice_index_inputs[i];
+  for (const auto &slice_index : slice_op_info->slice_index_inputs) {
     ValuePtr v = nullptr;
     if (slice_index->is_int()) {
       v = MakeValue(slice_index->int_value());
@@ -304,7 +236,7 @@ void EmplaceSliceInputs(const FrontendOpRunInfoPtr &op_run_info, const std::vect
   }
 
   op_run_info->input_size = op_run_info->op_grad_info->input_value.size();
-  PyNativeAlgo::PyParser::PrepareOpGradInfo(op_run_info);
+  op_run_info->op_grad_info->input_value_grad_type.resize(op_run_info->input_size);
 }
 
 #ifndef ENABLE_TEST
@@ -382,7 +314,6 @@ void ForwardExecutor::RefreshForwardCallback() {
   });
 #endif
   // ForwardCallback has been set in ForwardExecutor::Init, no need to refresh anymore.
-  return;
 }
 
 bool ForwardExecutor::enable_async() const {
@@ -404,13 +335,9 @@ void ForwardExecutor::DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_in
   runtime::Pipeline::Get().frontend_stage()->Push(forward_task);
 }
 
-void ForwardExecutor::ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info) {
-  if (!op_run_info->requires_grad) {
-    MS_LOG(DEBUG) << "Grad flag is false";
-    return;
-  }
-  // 4. Do op grad and record op info
-  // If ms function is compile, op info will not be find in second training step
+void ForwardExecutor::ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info) const {
+  // If jit is compiled in first step, op info will not be find in second training step
+  MS_LOG(DEBUG) << "Current custom bprop cell count " << op_run_info->async_status.custom_bprop_cell_count;
   if (!op_run_info->async_status.is_jit_compiling && op_run_info->async_status.custom_bprop_cell_count <= 0) {
     grad()->ProcessOpGradInfo(op_run_info);
   }
@@ -431,7 +358,8 @@ void ForwardExecutor::ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_ru
 }
 
 void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info,
-                                          const tensor::TensorPtr &view_input_tensor, runtime::KernelTaskType task_type,
+                                          const tensor::BaseTensorPtr &view_input_tensor,
+                                          runtime::KernelTaskType task_type,
                                           const TensorStorageInfoPtrList &storage_infos, bool is_tuple_output) {
   const bool is_single_tensor_output = storage_infos.size() == 1 && !is_tuple_output;
   // Generate output abs by storage_info.
@@ -485,11 +413,11 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
   // Only split and chunk has mul outputs, and input tensor is first input.
   auto view_value = op_run_info->op_grad_info->input_value[0];
   MS_EXCEPTION_IF_NULL(view_value);
-  if (!view_value->isa<tensor::Tensor>()) {
+  if (!view_value->isa<tensor::BaseTensor>()) {
     MS_EXCEPTION(TypeError) << "For primitive[" << op_run_info->base_op_run_info.op_name
                             << "],  the input[0] should be Tensor, but got:" << view_value->ToString();
   }
-  auto view_input_tensor = view_value->cast<tensor::TensorPtr>();
+  auto view_input_tensor = view_value->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(view_input_tensor);
 
   auto storage_infos = strides_calc_func(op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_value);
@@ -517,7 +445,9 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
   // Gil might be release  by ACL, so release here to reduce conflict
   GilReleaseWithCheck release_gil;
   ForwardRunViewKernelTask(op_run_info, task_type, false);
-  ForwardOpGradImpl(op_run_info);
+  if (op_run_info->requires_grad) {
+    ForwardOpGradImpl(op_run_info);
+  }
   MS_LOG(DEBUG) << "End";
   return true;
 }
@@ -546,7 +476,7 @@ ValuePtr ForwardExecutor::RunSliceOpFrontend(const std::vector<ValuePtr> &input_
   auto last_tensor = input_values[0];
 
   for (size_t i = 0; i < slice_op_infos.size(); i++) {
-    auto slice_op_info = slice_op_infos[i];
+    const auto &slice_op_info = slice_op_infos[i];
     MS_EXCEPTION_IF_NULL(slice_op_info);
     MS_LOG(DEBUG) << "Run slice op name:" << slice_op_info->slice_op_name;
     MS_EXCEPTION_IF_CHECK_FAIL(!slice_op_info->data_indexs.empty(), "data_indexs can not be empty");
@@ -645,7 +575,7 @@ void ForwardExecutor::RunOpBackendSync(const FrontendOpRunInfoPtr &op_run_info) 
     UpdateStubTensor(op_run_info);
     return;
   }
-  // 4. Do op grad and record op info
+  // Do op grad and record op info
   ForwardOpGradImpl(op_run_info);
   // output is dynamic shape. Need to update abstract and value.
   UpdateStubTensor(op_run_info);
@@ -844,7 +774,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     for (size_t i = 0; i < op_run_info->input_size; i++) {
       result[i] = CopyTensorValueWithNewId(op_run_info->op_grad_info->input_value[i]);
     }
-    auto result_v = ConstructOutputInVM(op_run_info, result);
+    auto result_v = ConstructOutputInVM(result);
     if (op_run_info->requires_grad) {
       op_run_info->op_grad_info->output_size = result.size();
       (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, InputType::kOpOutput);
@@ -914,7 +844,7 @@ void ForwardExecutor::PrintPyObjInfo(const py::object &obj, const std::string &s
 void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::args &args) {
   bool is_cell = py::isinstance<Cell>(obj);
   if (is_cell) {
-    CellPtr cell = obj.cast<CellPtr>();
+    auto cell = obj.cast<CellPtr>();
     MS_EXCEPTION_IF_NULL(cell);
     PushForwardCell(cell);
     if (!grad()->RequiresGrad()) {
@@ -925,6 +855,8 @@ void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::arg
         ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
 #endif
       }
+    } else {
+      PrintPyObjInfo(obj, kBegin, is_cell);
     }
   }
 }
@@ -1004,7 +936,7 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info,
   return RunOpInMsInner(op_run_info, backend_op_run_info);
 }
 
-void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input_tensor,
+void ForwardExecutor::CreateInputAddressForViewOp(const tensor::BaseTensorPtr &input_tensor,
                                                   const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(input_tensor);
 
@@ -1057,14 +989,14 @@ void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
   CheckIfNeedSyncForHeterogeneous(op_run_info->base_op_run_info.device_target);
   PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, op_run_info->requires_grad ? grad()->top_cell() : nullptr);
   for (const auto &value : op_run_info->base_op_run_info.expanded_input_values) {
-    if (!value->isa<tensor::Tensor>()) {
+    if (!value->isa<tensor::BaseTensor>()) {
       continue;
     }
   }
 }
 
 void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_info,
-                                             const tensor::TensorPtr &input_tensor,
+                                             const tensor::BaseTensorPtr &input_tensor,
                                              const TensorStorageInfoPtr &storage_info,
                                              runtime::KernelTaskType task_type) {
   MS_EXCEPTION_IF_NULL(input_tensor);
@@ -1108,19 +1040,6 @@ void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_
   (void)op_run_info->base_op_run_info.output_tensors.emplace_back(output_tensor);
 }
 
-void ForwardExecutor::PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) const {
-  CreateOutputTensor(op_run_info->base_op_run_info.abstract, &op_run_info->base_op_run_info.output_tensors,
-                     &op_run_info->device_sync_promises);
-  TransformOutputValues(op_run_info);
-  UpdateOutputStubNodeValue(op_run_info);
-  // Not use GetNext abs
-  if (op_run_info->base_op_run_info.op_name != kGetNextOpName) {
-    op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->real_out);
-    // save abs for next infer
-    SetNodeAbsMapByValue(op_run_info);
-  }
-}
-
 ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info,
                                          const BackendOpRunInfoPtr &backend_op_run_info) {
   const auto &outputs = RunOpBackendInner(op_run_info, backend_op_run_info);
@@ -1143,7 +1062,9 @@ void ForwardExecutor::ClearRes() {
     item.second->ClearOpExecutorResource();
   }
   init_ = false;
+  enable_async_ = false;
   is_jit_compiling_ = false;
+  last_target_ = "Unknown";
   cast_operation()->ClearRes();
   ClearNodeAbsMap();
   infer_operation()->ClearPrimAbsList();

@@ -15,6 +15,9 @@
  */
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 #include "transform/acl_ir/op_api_util.h"
+#include "runtime/pipeline/pipeline.h"
+#include "runtime/pipeline/task/device_task.h"
+#include "runtime/pynative/op_executor.h"
 namespace mindspore {
 namespace kernel {
 namespace pyboost {

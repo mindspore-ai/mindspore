@@ -31,6 +31,7 @@
 #include "abstract/utils.h"
 #include "include/common/utils/utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
@@ -79,6 +80,10 @@ bool IsOpNeedTransFormat(const std::string &format) {
     kOpFormat_NHWC,    kOpFormat_HWCN,        kOpFormat_NC1HWC0,       kOpFormat_FRAC_Z,   kOpFormat_C1HWNCoC0,
     kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D};
   return op_need_trans_format.find(format) != op_need_trans_format.end();
+}
+
+void AscendDeviceAddress::DeviceSynchronizerInit() {
+  set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
 }
 
 void AscendDeviceAddress::SyncHostMemoryToDeviceWithCopySrc(void *dst, const void *src, uint64_t size,
@@ -230,22 +235,22 @@ bool AscendDeviceAddress::SyncDeviceToHostAndFloatToFloat64(void *dst, size_t ds
 }
 
 void AscendDeviceAddress::SetDevicePtrDeleter() {
-  const auto &kernel_tensor = this->kernel_tensor();
-  if (!kernel_tensor) {
+  if (!address_common_) {
     return;
   }
 
-  kernel_tensor->set_deleter([communication_ptr = this->communication_ptr_](void *ptr, bool from_mem_pool) {
-    if (ptr == nullptr || !from_mem_pool) {
-      return;
-    }
+  address_common_->pointer_ref_count_->set_deleter(
+    [communication_ptr = this->communication_ptr_](void *ptr, bool from_mem_pool) {
+      if (ptr == nullptr || !from_mem_pool) {
+        return;
+      }
 
-    if (communication_ptr != nullptr) {
-      AscendMemoryPool::GetInstance().FreeTensorMem(communication_ptr);
-    } else {
-      AscendMemoryPool::GetInstance().FreeTensorMem(ptr);
-    }
-  });
+      if (communication_ptr != nullptr) {
+        AscendMemoryPool::GetInstance().FreeTensorMem(communication_ptr);
+      } else {
+        AscendMemoryPool::GetInstance().FreeTensorMem(ptr);
+      }
+    });
 }
 
 void AscendDeviceAddress::BindDevice() const {
@@ -419,7 +424,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
       sync_ok = true;
     } else if (type_id() == kNumberTypeFloat32 && type == kNumberTypeFloat64) {
       if (mem_offloaded()) {
-        FloatToDouble(host_ptr, offload_ptr_, GetSize() / sizeof(float));
+        FloatToDouble(host_ptr, loadable_mem_->offload_ptr_, GetSize() / sizeof(float));
         sync_ok = true;
       } else {
         sync_ok = SyncDeviceToHostAndFloatToFloat64(host_ptr, size, GetDevicePtr(), GetSize());
@@ -752,7 +757,8 @@ bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector & /* shape */, s
   MS_EXCEPTION_IF_NULL(runtime_instance);
   bool ret;
   if (mem_offloaded()) {
-    ret = runtime_instance->MemcpyAsync(offload_ptr_, src_ptr, size, static_cast<int32_t>(ACL_MEMCPY_DEVICE_TO_HOST),
+    ret = runtime_instance->MemcpyAsync(loadable_mem_->offload_ptr_, src_ptr, size,
+                                        static_cast<int32_t>(ACL_MEMCPY_DEVICE_TO_HOST),
                                         runtime_instance->compute_stream());
   } else {
     ret =
@@ -885,11 +891,11 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
 void AscendDeviceAddress::ClearDeviceMemory() {
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   (void)Wait();
-  if (offload_ptr_ != nullptr) {
+  if (loadable_mem_ != nullptr && loadable_mem_->offload_ptr_ != nullptr) {
     auto device_context = GetDeviceContext();
     MS_EXCEPTION_IF_NULL(device_context);
-    device_context->device_res_manager_->FreeOffloadMemory(offload_ptr_);
-    offload_ptr_ = nullptr;
+    device_context->device_res_manager_->FreeOffloadMemory(loadable_mem_->offload_ptr_);
+    loadable_mem_->offload_ptr_ = nullptr;
   }
   if (GetDevicePtr() != nullptr && from_mem_pool()) {
     if (communication_ptr_ != nullptr) {
@@ -905,8 +911,8 @@ void AscendDeviceAddress::ClearDeviceMemory() {
 void AscendDeviceAddress::CopyDeviceToHost(void *dst, uint64_t size) const {
   MS_EXCEPTION_IF_NULL(dst);
   if (mem_offloaded()) {
-    MS_EXCEPTION_IF_NULL(offload_ptr_);
-    SyncMemory(dst, offload_ptr_, size, ACL_MEMCPY_HOST_TO_HOST);
+    MS_EXCEPTION_IF_NULL(loadable_mem_->offload_ptr_);
+    SyncMemory(dst, loadable_mem_->offload_ptr_, size, ACL_MEMCPY_HOST_TO_HOST);
   } else {
     MS_EXCEPTION_IF_NULL(GetDevicePtr());
     SyncMemory(dst, GetDevicePtr(), size, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -918,8 +924,8 @@ void AscendDeviceAddress::CopyHostToDevice(const void *src, uint64_t size,
   MS_EXCEPTION_IF_NULL(src);
 
   if (mem_offloaded()) {
-    MS_EXCEPTION_IF_NULL(offload_ptr_);
-    SyncMemory(offload_ptr_, src, size, ACL_MEMCPY_HOST_TO_HOST, tensor_data);
+    MS_EXCEPTION_IF_NULL(loadable_mem_->offload_ptr_);
+    SyncMemory(loadable_mem_->offload_ptr_, src, size, ACL_MEMCPY_HOST_TO_HOST, tensor_data);
   } else {
     MS_EXCEPTION_IF_NULL(GetDevicePtr());
     if (type_id() == kObjectTypeString) {
@@ -958,7 +964,10 @@ bool AscendDeviceAddress::CopyBetweenHostDevice(void *dst, const void *src, size
     auto record_event = std::make_shared<AscendEvent>();
     record_event->set_record_stream(stream);
     record_event->RecordEvent();
-    swap_event_.device_event_ = record_event;
+    if (loadable_mem_ == nullptr) {
+      loadable_mem_ = std::make_unique<LoadableMember>();
+    }
+    loadable_mem_->swap_event_.device_event_ = record_event;
   } else {
     if (!AscendStreamMng::GetInstance().SyncStream(stream)) {
       MS_LOG(ERROR) << "Sync default stream failed.";
@@ -1037,11 +1046,11 @@ AscendDeviceAddress::~AscendDeviceAddress() {
     // multi GPUDeviceAddress objects use same device pointer in ref case.
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
     (void)Wait();
-    if (offload_ptr_ != nullptr) {
+    if (loadable_mem_ != nullptr && loadable_mem_->offload_ptr_ != nullptr) {
       auto device_context = GetDeviceContext();
       MS_EXCEPTION_IF_NULL(device_context);
-      device_context->device_res_manager_->FreeOffloadMemory(offload_ptr_);
-      offload_ptr_ = nullptr;
+      device_context->device_res_manager_->FreeOffloadMemory(loadable_mem_->offload_ptr_);
+      loadable_mem_->offload_ptr_ = nullptr;
     }
     LoadableDeviceAddress::ReleaseResource();
   } catch (const std::exception &e) {

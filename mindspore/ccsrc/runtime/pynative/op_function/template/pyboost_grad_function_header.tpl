@@ -56,8 +56,9 @@ void PyBoostOpExecute::Execute(OpRunnerInfo *op_runner_info, VectorRef *op_outpu
   MS_EXCEPTION_IF_NULL(op_runner_info);
   const auto it = grad_op_func_map_.find(op_runner_info->prim->name());
   // Run op by pyboost
-  if (it != grad_op_func_map_.end() && kernel::pyboost::PyBoostUtils::IsKernelModRegistered(
-                                         op_runner_info->device_target, op_runner_info->prim->name())) {
+  if (it != grad_op_func_map_.end() && 
+      (kernel::pyboost::PyBoostUtils::IsKernelModRegistered(op_runner_info->device_target, op_runner_info->prim->name())
+       || kernel::pyboost::PyBoostUtils::IsPyBoostCustomRegistered(op_runner_info->device_target, op_runner_info->prim->name()))) {
     const auto &func = FuncCast<Func>(it->second);
     MS_EXCEPTION_IF_NULL(func);
     func(op_runner_info, op_outputs);

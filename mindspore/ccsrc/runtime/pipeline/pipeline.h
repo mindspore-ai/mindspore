@@ -28,6 +28,7 @@ class BACKEND_EXPORT Pipeline {
 
   const AsyncRQueuePtr &frontend_stage() const { return frontend_stage_; }
   const AsyncRQueuePtr &backend_stage() const { return backend_stage_; }
+  const AsyncRQueuePtr &launch_stage() const { return launch_stage_; }
 
  private:
   Pipeline();
@@ -36,8 +37,10 @@ class BACKEND_EXPORT Pipeline {
 
   // Infer and create output tensor.
   AsyncRQueuePtr frontend_stage_;
-  // Malloc and launch kernels.
+  // Malloc and free.
   AsyncRQueuePtr backend_stage_;
+  // Launch kernel.
+  AsyncRQueuePtr launch_stage_;
 };
 }  // namespace runtime
 }  // namespace mindspore

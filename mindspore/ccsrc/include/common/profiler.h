@@ -87,6 +87,7 @@ enum class ProfilerEvent {
   kPyNativeFrontendTask,
   kPyNativeBackendTask,
   kPyNativeDeviceTask,
+  kPyNativeLaunchTask,
   kPyNativeBpropTask,
   // PyNative inner Event
   kPyNativeGilAcquire,
@@ -105,6 +106,9 @@ enum class ProfilerEvent {
   kPyBoostMallocInput,
   kPyBoostMallocOutput,
   kPyBoostLaunchAclnn,
+  // pybind api
+  kPyNativeNewGraph,
+  kPyNativeEndGraph,
   // Python
   kPythonObserved,
   // Capture Event

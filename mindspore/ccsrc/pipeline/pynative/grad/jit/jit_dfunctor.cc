@@ -54,16 +54,16 @@ ValuePtr NewValue(const TypePtr &type_elem, const BaseShapePtr &shape_elem) {
       value_list.push_back(new_value);
     }
     return std::make_shared<ValueTuple>(value_list);
-  } else {
-    if (type_elem->isa<TensorType>()) {
-      return GenNewTensorInner(type_elem, shape_elem);
-    } else if (shape_elem->isa<abstract::NoShape>()) {
-      ShapeVector NoShape;
-      if (type_elem->type_id() == kMetaTypeNone) {
-        return kNone;
-      }
-      return std::make_shared<tensor::Tensor>(type_elem->type_id(), NoShape);
+  }
+  if (type_elem->isa<TensorType>()) {
+    return GenNewTensorInner(type_elem, shape_elem);
+  }
+  if (shape_elem->isa<abstract::NoShape>()) {
+    ShapeVector NoShape;
+    if (type_elem->type_id() == kMetaTypeNone) {
+      return kNone;
     }
+    return std::make_shared<tensor::Tensor>(type_elem->type_id(), NoShape);
   }
   MS_LOG(INTERNAL_EXCEPTION) << "Unknown shape: " << shape_elem->ToString() << ", type: " << type_elem->ToString();
 }
@@ -160,7 +160,7 @@ void GetForwardOutNodeAndBpropGraph(const CNodePtr &k_app, CNodePtr *forward_nod
   }
 
   // Get forward CNode.
-  const size_t forward_output_index = 1;
+  constexpr size_t forward_output_index = 1;
   const auto &output_node = make_tuple_node->input(forward_output_index);
   MS_EXCEPTION_IF_NULL(output_node);
   if (!output_node->isa<CNode>()) {
@@ -168,7 +168,7 @@ void GetForwardOutNodeAndBpropGraph(const CNodePtr &k_app, CNodePtr *forward_nod
   }
 
   // Get bprop graph of forward CNode.
-  const size_t bprop_graph_index = 2;
+  constexpr size_t bprop_graph_index = 2;
   const auto &bprop_vnode = make_tuple_node->input(bprop_graph_index);
   if (!IsValueNode<FuncGraph>(bprop_vnode)) {
     return;

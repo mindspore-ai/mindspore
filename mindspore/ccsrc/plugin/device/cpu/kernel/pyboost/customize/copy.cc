@@ -21,7 +21,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-tensor::TensorPtr CopyCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
+tensor::BaseTensorPtr CopyCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "Call start";
   return CopyCustomizeCall(op, input_tensor);
 }

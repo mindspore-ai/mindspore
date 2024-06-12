@@ -22,25 +22,31 @@
 #include <vector>
 #include <utility>
 #include "utils/hash_map.h"
-#include "ir/anf.h"
-#include "ir/value.h"
 #include "ir/tensor.h"
 #include "pipeline/jit/ps/resource.h"
 
 namespace mindspore {
 namespace pynative {
 using TensorIdWithOpInfo = mindspore::HashMap<std::string, std::pair<std::string, size_t>>;
-using OpInfoWithTensorObject = std::map<std::string, std::vector<std::pair<size_t, tensor::TensorPtr>>>;
+using OpInfoWithTensorObject = std::map<std::string, std::vector<std::pair<size_t, tensor::BaseTensorPtr>>>;
+// key: op info, value: op output value
+using OpInfoWithForwardOutput = std::map<std::string, ValuePtr>;
 
 struct TensorReplaceInfo {
   TensorIdWithOpInfo id_with_op_info{};
   OpInfoWithTensorObject op_info_with_tensor_object{};
+  OpInfoWithForwardOutput op_info_with_forward_output{};
+  size_t need_replace_size{};
 };
 
 void SetIdWithOpInfo(const ValuePtr &v, const std::string &op_info, size_t out_index,
                      TensorIdWithOpInfo *id_with_op_info);
-void UpdateForwardOutputTensorInfo(const std::string &op_info, const ValuePtr &v, const TensorReplaceInfo &replace_info,
-                                   const size_t &stream_id);
+void UpdateForwardOutputTensorInfo(const std::string &op_info, const ValuePtr &v,
+                                   const TensorReplaceInfo &replace_info);
+void StoreForwardOutputWithOpInfo(const OpInfoWithTensorObject &op_info_with_tensor_object, const std::string &op_info,
+                                  const ValuePtr &v, TensorReplaceInfo *replace_info);
+void UpdatePipelineTopCellFowardTensor(const TensorReplaceInfo &ir_replace_info,
+                                       const TensorReplaceInfo &cur_replace_info);
 void SaveForwardOutputTensorInfo(const FuncGraphPtr &func_graph, bool need_save_tensor_info,
                                  TensorReplaceInfo *replace_info);
 }  // namespace pynative

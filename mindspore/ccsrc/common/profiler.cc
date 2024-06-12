@@ -94,6 +94,7 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kPyNativeFrontendTask, "FrontendTask"},
   {ProfilerEvent::kPyNativeBackendTask, "BackendTask"},
   {ProfilerEvent::kPyNativeDeviceTask, "DeviceTask"},
+  {ProfilerEvent::kPyNativeLaunchTask, "LaunchTask"},
   {ProfilerEvent::kPyNativeBpropTask, "BpropTask"},
   {ProfilerEvent::kPyNativeGilAcquire, "AcquireGil"},
   {ProfilerEvent::kPyNativeCast, "PyNativeCast"},
@@ -111,6 +112,9 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kPyBoostMallocInput, "MallocInput"},
   {ProfilerEvent::kPyBoostMallocOutput, "MallocOutput"},
   {ProfilerEvent::kPyBoostLaunchAclnn, "LaunchAclnn"},
+  // pybind api
+  {ProfilerEvent::kPyNativeNewGraph, "new_graph"},
+  {ProfilerEvent::kPyNativeEndGraph, "end_graph"},
   // python events
   {ProfilerEvent::kPythonObserved, "PythonObserved"},
   // Capture events

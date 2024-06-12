@@ -19,6 +19,7 @@
 #include "runtime/device/convert_tensor_utils.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/cpu/hal/hardware/cpu_memory_pool.h"
+#include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
 #include "plugin/device/cpu/hal/device/cpu_hash_table_util.h"
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -47,7 +48,6 @@ bool CopySameTypeMem(void *dst_ptr, size_t dst_size, const void *src_ptr, size_t
     return true;
   }
 }
-
 // Synchronize user data from host to device.
 bool SyncUserDataToDevice(const UserDataPtr &user_data, const void *host_ptr, size_t size) {
   MS_EXCEPTION_IF_NULL(user_data);
@@ -73,12 +73,13 @@ bool SyncUserDataToDevice(const UserDataPtr &user_data, const void *host_ptr, si
 }
 }  // namespace
 
+void CPUDeviceAddress::DeviceSynchronizerInit() { set_device_synchronizer(std::make_shared<CPUDeviceSynchronizer>()); }
+
 void CPUDeviceAddress::SetDevicePtrDeleter() {
-  const auto &kernel_tensor = this->kernel_tensor();
-  if (!kernel_tensor) {
+  if (address_common_ == nullptr || address_common_->pointer_ref_count_ == nullptr) {
     return;
   }
-  kernel_tensor->set_deleter([](void *ptr, bool from_mem_pool) {
+  address_common_->pointer_ref_count_->set_deleter([](void *ptr, bool from_mem_pool) {
     if (ptr != nullptr && from_mem_pool) {
       CPUMemoryPool::GetInstance().FreeTensorMem(ptr);
     }
@@ -184,7 +185,7 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
 
 bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId type, const void *host_ptr,
                                         const std::string &) const {
-  if (user_data() != nullptr && user_data()->has(kUserDataType)) {
+  if (kernel_tensor() != nullptr && user_data() != nullptr && user_data()->has(kUserDataType)) {
     return SyncUserDataToDevice(user_data(), host_ptr, size);
   }
 

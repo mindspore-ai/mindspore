@@ -30,17 +30,12 @@
 #include "runtime/pynative/op_compiler.h"
 #include "runtime/pynative/op_runner.h"
 #include "include/common/profiler.h"
-#include "pipeline/jit/ps/parse/data_converter.h"
 #include "ir/cell.h"
-#include "abstract/utils.h"
 #include "include/common/utils/stub_tensor.h"
 #include "include/common/utils/python_utils.h"
 #include "frontend/operator/ops_front_infer_function.h"
-#include "backend/operator/ops_backend_infer_function.h"
-#include "include/common/utils/python_fallback_running.h"
 #include "kernel/kernel_mod_cache.h"
 #include "runtime/pipeline/pipeline.h"
-#include "kernel/pyboost/pyboost_utils.h"
 
 namespace mindspore::pynative {
 std::shared_ptr<PyNativeExecutor> PyNativeExecutor::executor_ = nullptr;
@@ -49,7 +44,6 @@ GradExecutorPtr PyNativeExecutor::grad_executor_ = nullptr;
 std::mutex PyNativeExecutor::instance_lock_;
 
 namespace {
-enum class AsyncRunOpArgsEnum : size_t { PY_PRIM = 0, PY_INPUTS, PY_ARGS_NUM };
 template <typename T, typename... Args>
 T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Args &... args) {
   const auto &inst = PyNativeExecutor::GetInstance();
@@ -82,8 +76,8 @@ T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Arg
 void SetCallbackForInputTensor(const std::vector<ValuePtr> &input_values) {
   for (auto &input : input_values) {
     MS_EXCEPTION_IF_NULL(input);
-    if (input->isa<tensor::Tensor>()) {
-      auto tensor = input->cast<tensor::TensorPtr>();
+    if (input->isa<tensor::BaseTensor>()) {
+      auto tensor = input->cast<tensor::BaseTensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
       tensor->set_need_pipeline_sync(true);
     }
@@ -243,6 +237,8 @@ py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad,
 }
 
 void PyNativeExecutor::NewGraph(const py::object &obj, const py::args &args) const {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeNewGraph,
+                                     runtime::ProfilerRecorder::kNoName, false);
   forward_executor()->ProcessBeforeNewGraph(obj, args);
 
   if (!grad_executor()->RequiresGrad()) {
@@ -254,6 +250,8 @@ void PyNativeExecutor::NewGraph(const py::object &obj, const py::args &args) con
 }
 
 void PyNativeExecutor::EndGraph(const py::object &obj, const py::object &out, const py::args &args) const {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeEndGraph,
+                                     runtime::ProfilerRecorder::kNoName, false);
   bool is_cell = py::isinstance<Cell>(obj);
   forward_executor()->ProcessBeforeEndGraph(obj, is_cell);
 

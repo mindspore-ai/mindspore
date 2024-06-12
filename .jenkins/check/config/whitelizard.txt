@@ -15,7 +15,7 @@ mindspore/mindspore/lite/tools/converter/graphdef_transform.cc:mindspore::lite::
 mindspore/mindspore/lite/providers/nnie_proposal/src/proposal.cc:mindspore::proposal::Rpn
 mindspore/mindspore/lite/tools/converter/config_parser/config_file_parser.cc:mindspore::lite::ConfigFileParser::SetParamByConfigfile
 mindspore/mindspore/core/abstract/ops/primitive_infer_map.cc:mindspore::abstract::GetPrimitiveInferMap
-mindspore/mindspore/core/ir/tensor.cc:mindspore::tensor::MakeTensorData
+mindspore/mindspore/core/ir/base_tensor.h:mindspore::tensor::MakeTensorData
 mindspore/mindspore/core/ir/dtype_extends.cc:mindspore::UnitSizeInBytes
 mindspore/mindspore/ccsrc/frontend/optimizer/irpass.cc:mindspore::opt::irpass::OptimizeIRPassLib::OptimizeIRPassLib
 mindspore/mindspore/ccsrc/frontend/parallel/ops_info/gather_v2_p_info.cc:mindspore::parallel::GatherV2PInfo::CheckStrategy
@@ -60,6 +60,7 @@ mindspore/mindspore/python/mindspore/common/tensor.py:__init__
 mindspore/mindspore/python/mindspore/common/parameter.py:set_data
 mindspore/mindspore/python/mindspore/ops/_grad_experimental/grad_math_ops.py:get_bprop_fft_with_size.bprop
 mindspore/mindspore/python/mindspore/ops/operations/array_ops.py:_compute_slicing_shape
+mindspore/mindspore/python/mindspore/ops_generate/gen_pyboost_func.py:generate_pyboost_op_source_code
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::GetDataType
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_index_py.cc:mindspore::tensor::TensorIndex::GetItemByTupleWithView
 mindspore/mindspore/ccsrc/frontend/operator/composite/tensor_index.cc:mindspore::prim::TensorIndexGetitem::GetStrideInfoFromTuple

@@ -18,7 +18,6 @@
 
 #include <string>
 #include <memory>
-#include "include/common/utils/tensor_future.h"
 #include "include/common/profiler.h"
 
 namespace mindspore {
@@ -65,15 +64,6 @@ void BackendTask::Run() {
                                      runtime::ProfilerRecorder::kNoName, false);
   run_func_(op_run_info_, backend_op_run_info_);
   op_run_info_ = nullptr;
-}
-
-void BackendTask::SetException(const std::exception_ptr &e) {
-  if (backend_op_run_info_ != nullptr) {
-    for (auto &promise : backend_op_run_info_->device_sync_promises) {
-      MS_EXCEPTION_IF_NULL(promise);
-      promise->SetValue(std::make_shared<pynative::DeviceAddressFutureData>(nullptr, e));
-    }
-  }
 }
 
 void AllocViewMemBackendTask::Run() {

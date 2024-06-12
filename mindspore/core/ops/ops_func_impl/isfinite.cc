@@ -20,6 +20,7 @@
 #include "ops/ops_func_impl/isfinite.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -42,6 +43,20 @@ TypePtr IsFiniteFuncImpl::InferType(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, number_types, prim_name);
   return std::make_shared<TensorType>(kBool);
 }
-
+TypePtrList IsFiniteFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &input_type = x_tensor->Dtype();
+  static const std::set<TypePtr> number_types = {kBool,   kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,   kUInt16,
+                                                 kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBFloat16};
+  (void)CheckAndConvertUtils::CheckTypeValid("x", input_type, number_types, primitive->name());
+  return {kBool};
+}
+ShapeArray IsFiniteFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameIsFinite, IsFiniteFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

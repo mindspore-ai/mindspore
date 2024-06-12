@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "pipeline/pynative/grad/top_cell.h"
-#include <iostream>
 #include "pipeline/pynative/pynative_utils.h"
 #include "ir/tensor.h"
 #include "include/backend/device_address.h"
@@ -52,14 +51,19 @@ void TopCellInfo::ClearDeviceMemory() const {
     MS_LOG(DEBUG) << "No need to clear device address when run in CPU device.";
     return;
   }
-  // Get all tensors obj in value node of running graph
-  std::vector<tensor::TensorPtr> tensors_in_bprop_graph;
-  MS_EXCEPTION_IF_NULL(resource_);
+  // Top cell has already call Clear(), this maybe happen in no need compile grad scenario
+  if (resource_ == nullptr) {
+    MS_LOG(DEBUG) << "This top cell " << this << " has already been clear";
+    return;
+  }
+
   const auto &bprop_graph = resource_->func_graph();
   if (bprop_graph == nullptr) {
     return;
   }
   const auto &value_node_list = bprop_graph->value_nodes();
+  // Get all tensors obj in value node of running graph
+  std::vector<tensor::BaseTensorPtr> tensors_in_bprop_graph;
   for (const auto &elem : value_node_list) {
     auto &node = elem.first;
     MS_EXCEPTION_IF_NULL(node);
@@ -83,15 +87,77 @@ void TopCellInfo::ClearDeviceMemory() const {
   }
 }
 
-void TopCellInfo::AddParamGradInfo(const tensor::TensorPtr &tensor, const AutoGradMetaDataPtr &auto_grad_meta_data) {
-  param_grad_info_[tensor] = auto_grad_meta_data;
+void TopCellInfo::AddMetaGradInfo(const tensor::BaseTensorPtr &tensor, const AutoGradMetaDataPtr &auto_grad_meta_data) {
+  meta_grad_info_[tensor] = auto_grad_meta_data;
 }
 
-void TopCellInfo::ClearParamGradInfo() {
-  for (auto &params : param_grad_info_) {
-    params.first->set_auto_grad_meta_data(nullptr);
+void TopCellInfo::BackUpValueMetaGradInfo(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::BaseTensor>()) {
+    auto tensor_value = value->cast<tensor::BaseTensorPtr>();
+    auto auto_grad_meta_data = tensor_value->auto_grad_meta_data();
+    if (auto_grad_meta_data != nullptr) {
+      meta_grad_info_[tensor_value] = auto_grad_meta_data;
+    }
+  } else if (value->isa<ValueSequence>()) {
+    const auto &value_seq = value->cast<ValueSequencePtr>();
+    for (const auto &elem : value_seq->value()) {
+      BackUpValueMetaGradInfo(elem);
+    }
+  } else if (value->isa<stub::StubNode>()) {
+    auto stub_node = value->cast<stub::StubNodePtr>();
+    MS_EXCEPTION_IF_NULL(stub_node);
+    BackUpValueMetaGradInfo(stub_node->WaitValue());
   }
-  param_grad_info_.clear();
+}
+
+void TopCellInfo::ClearValueMetaGradInfo(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::BaseTensor>()) {
+    auto tensor_value = value->cast<tensor::BaseTensorPtr>();
+    // Hook register before op run
+    if (tensor_value->auto_grad_meta_data() != nullptr && tensor_value->auto_grad_meta_data()->is_register_hook()) {
+      return;
+    }
+    tensor_value->set_auto_grad_meta_data(nullptr);
+  } else if (value->isa<ValueSequence>()) {
+    const auto &value_seq = value->cast<ValueSequencePtr>();
+    for (const auto &elem : value_seq->value()) {
+      ClearValueMetaGradInfo(elem);
+    }
+  } else if (value->isa<stub::StubNode>()) {
+    auto stub_node = value->cast<stub::StubNodePtr>();
+    MS_EXCEPTION_IF_NULL(stub_node);
+    ClearValueMetaGradInfo(stub_node->WaitValue());
+  }
+}
+
+void TopCellInfo::ResetMetaGradInfo() {
+  if (meta_grad_info_.empty()) {
+    return;
+  }
+  for (auto &item : meta_grad_info_) {
+    item.first->set_auto_grad_meta_data(nullptr);
+  }
+  need_resume_meta_grad_ = true;
+}
+
+void TopCellInfo::ResumeMetaGradInfo() {
+  if (!need_resume_meta_grad_ || meta_grad_info_.empty()) {
+    return;
+  }
+
+  for (auto &item : meta_grad_info_) {
+    item.first->set_auto_grad_meta_data(item.second);
+  }
+  need_resume_meta_grad_ = false;
+}
+
+void TopCellInfo::ClearMetaGradInfo() {
+  for (auto &item : meta_grad_info_) {
+    item.first->set_auto_grad_meta_data(nullptr);
+  }
+  meta_grad_info_.clear();
 }
 
 void TopCellInfo::Clear() {
@@ -108,6 +174,7 @@ void TopCellInfo::Clear() {
   op_index_ = 0;
   resource_ = nullptr;
   fg_ = nullptr;
+  shadow_top_cell_ = nullptr;
   graph_info_map_.clear();
 }
 
@@ -189,15 +256,19 @@ void TopCellInfo::SetUnpackOutputToGraphInfoMap(const std::string &id, const Anf
 }
 
 void TopCellInfo::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph) {
-  MS_LOG(DEBUG) << "Save top cell forward output tensor info";
   initial_graph_param_size_ = func_graph->parameters().size();
+  if (has_bprop_cut_op()) {
+    MS_LOG(DEBUG) << "Top cell has bprop cut, no need to save forward output tensor info";
+    return;
+  }
+  MS_LOG(DEBUG) << "Save top cell forward output tensor info";
   SaveForwardOutputTensorInfo(func_graph, !use_dynamic_shape_process_, &replace_info_);
 }
 
 void TopCellInfo::SetLastOutputValueForwardOutputFlag(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>()) {
-    auto tensor = value->cast<tensor::TensorPtr>();
+  if (value->isa<tensor::BaseTensor>()) {
+    auto tensor = value->cast<tensor::BaseTensorPtr>();
     const auto it = replace_info_.id_with_op_info.find(tensor->id());
     if (it != replace_info_.id_with_op_info.end()) {
       tensor->set_is_forward_output(true);
@@ -219,11 +290,12 @@ void TopCellInfo::ChangeTopCellInfo(const std::vector<BaseShapePtr> &args_new_sh
   cell_id_ = new_cell_id;
   input_args_info_->cell_id = new_cell_id;
   already_run_cell_id_ = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor()->GetAlreadyRunCellId(new_cell_id);
+  MS_LOG(DEBUG) << "Get new already run top cell id " << already_run_cell_id_;
   input_args_info_->already_run_cell_id = already_run_cell_id_;
   is_unknown_shape_ = true;
 }
 
-bool TopCellInfo::IsOutputTensor(const tensor::TensorPtr &tensor) const {
+bool TopCellInfo::IsOutputTensor(const tensor::BaseTensorPtr &tensor) const {
   return std::any_of(output_ids().begin(), output_ids().end(),
                      [&tensor](const std::string &output_id) { return tensor->id() == output_id; });
 }

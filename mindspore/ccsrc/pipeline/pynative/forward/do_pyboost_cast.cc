@@ -30,15 +30,15 @@ ValuePtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_inf
     MS_LOG(DEBUG) << "Source value: " << v->ToString() << " cast to value: " << dst_value->ToString();
     return dst_value;
   }
-  if (!v->isa<tensor::Tensor>()) {
+  if (!v->isa<tensor::BaseTensor>()) {
     return v;
   }
-  return DoAutoCast(op_run_info, dst_type, index, v->cast<tensor::TensorPtr>());
+  return DoAutoCast(op_run_info, dst_type, index, v->cast<tensor::BaseTensorPtr>());
 }
 
-tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info,
-                                                   const std::pair<TypeId, bool> &dst_type, size_t index,
-                                                   const tensor::TensorPtr &t) const {
+tensor::BaseTensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info,
+                                                       const std::pair<TypeId, bool> &dst_type, size_t index,
+                                                       const tensor::BaseTensorPtr &t) const {
   if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN) {
     MS_LOG(DEBUG) << "Try cast Source tensor: " << t->ToString();
     auto dst_tensor = TensorToDstDtypeValue(t, dst_type.first);
@@ -47,39 +47,36 @@ tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &o
   }
   auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(dst_type.first));
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
-  cast_run_info->requires_grad = op_run_info->requires_grad;
-  if (cast_run_info->requires_grad) {
-    (void)cast_run_info->op_grad_info->input_value.emplace_back(t);
-    (void)cast_run_info->op_grad_info->input_value.emplace_back(type_id64);
-  }
   auto cast_prim = GetPrimByTypeId(dst_type.first);
   // Use pyboost op call
   cast_run_info->base_op_run_info.device_target =
     PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(cast_prim);
   auto cast_op = CREATE_PYBOOST_OP(Cast, cast_run_info->base_op_run_info.device_target);
   (void)cast_op->Call(t, type_id64);
-  PyNativeAlgo::PyBoost::UpdateOpRunInfo(cast_op, cast_run_info->op_grad_info->input_value, cast_run_info);
+  cast_run_info->requires_grad = op_run_info->requires_grad;
+  PyNativeAlgo::PyBoost::UpdateOpRunInfo(cast_op, cast_run_info);
   if (op_run_info->requires_grad) {
     constexpr auto input_size = 2;
     cast_run_info->input_size = input_size;
     cast_run_info->base_op_run_info.op_name = kCast;
     cast_run_info->op_grad_info->op_prim = cast_prim;
-    PyNativeAlgo::PyBoost::DoGrad(cast_run_info);
+    PyNativeAlgo::PyBoost::DoGrad(cast_op, cast_run_info, {t, type_id64});
   }
-  return cast_run_info->real_out->cast<tensor::TensorPtr>();
+  return cast_run_info->real_out->cast<tensor::BaseTensorPtr>();
 }
 
 ValuePtr PyBoostCastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
                                                          size_t index) const {
   MS_EXCEPTION_IF_NULL(v);
-  if (v->isa<tensor::Tensor>()) {
-    return SetTensorMixPrecisionCast(op_run_info, v->cast<tensor::TensorPtr>(), index);
+  if (v->isa<tensor::BaseTensor>()) {
+    return SetTensorMixPrecisionCast(op_run_info, v->cast<tensor::BaseTensorPtr>(), index);
   }
   return v;
 }
 
-tensor::TensorPtr PyBoostCastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
-                                                                  const tensor::TensorPtr &t, size_t index) const {
+tensor::BaseTensorPtr PyBoostCastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
+                                                                      const tensor::BaseTensorPtr &t,
+                                                                      size_t index) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(t);
   if (op_run_info->mix_type != kNotSet) {
@@ -102,8 +99,8 @@ tensor::TensorPtr PyBoostCastOperation::SetTensorMixPrecisionCast(const Frontend
   return t;
 }
 
-std::optional<tensor::TensorPtr> PyBoostCastOperation::SetTensorMixPrecisionCast(
-  const FrontendOpRunInfoPtr &op_run_info, const std::optional<tensor::TensorPtr> &t, size_t index) const {
+std::optional<tensor::BaseTensorPtr> PyBoostCastOperation::SetTensorMixPrecisionCast(
+  const FrontendOpRunInfoPtr &op_run_info, const std::optional<tensor::BaseTensorPtr> &t, size_t index) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   if (!t.has_value()) {
     return std::nullopt;
