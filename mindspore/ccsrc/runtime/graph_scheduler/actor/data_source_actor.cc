@@ -40,7 +40,7 @@ void DataSourceActor::Init() {
 void DataSourceActor::FetchData(OpContext<DeviceTensor> *const context) {
   MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") fetches data.";
   MS_EXCEPTION_IF_NULL(context);
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "", "");
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), GetAID().Name(), "");
   // Pop the data of last time.
   if (!buffers_.empty()) {
     buffers_.pop();

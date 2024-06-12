@@ -543,7 +543,7 @@ void UpdateFMTracker(size_t feature_memory_size, const std::string &graph_name) 
   device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, 0, feature_memory_size, "Ascend",
                                        AscendMemAdapter::GetInstance().GetActualPeakMemory(), 0, 0, 0);
   device::tracker::CALL_MEMORY_TRACKER(FreeMemBlock, 0, 0, 0);
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "RunGeGraph", "", graph_name);
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "RunGeGraph", "RunGeGraph", graph_name);
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddCompileTimeMemInfo, "RunGeGraph", feature_memory_size, 0,
                                                  device::tracker::MemType::kGeFeatureMemory);
 }
