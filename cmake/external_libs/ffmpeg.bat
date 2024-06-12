@@ -22,7 +22,7 @@ SET TEMP_FILE="temp.txt"
 
 where %MINGW64_NAME% > %TEMP_FILE%
 if errorlevel 1 (
-    echo The software 'MSYS2' is not installed, please refer to the link https://www.mindspore.cn/install to install it first.
+    echo Can not find "mingw64.exe", please check if the software "MSYS2" is installed, please refer to the link https://www.mindspore.cn/install to install it first.
     EXIT /b 1
 )
 SET /p file_path=<%TEMP_FILE%
@@ -32,7 +32,7 @@ SET MSYS64_PATH=%file_path:~0,-12%
 SET FFMPEG_DLL_SOURCE_PATH=%MSYS64_PATH%\home\ffmpeg\install_ffmpeg_lib\bin
 SET FFMPEG_COMPILE_SOURCE_PATH=%MSYS64_PATH%\home\ffmpeg\install_ffmpeg_lib
 SET FFMPEG_DLL_PATH=%BASE_PATH%\build\mindspore\ffmpeg_lib
-SET FFMPEG_ERROR_LOG=%MSYS64_PATH%\home\ffmpeg\ffbuild\config.log
+SET FFMPEG_ERROR_LOG=%MSYS64_PATH%\home\ffmpeg\build\ffbuild\config.log
 
 
 SET SOFTWARE_NAME=FFmpeg
