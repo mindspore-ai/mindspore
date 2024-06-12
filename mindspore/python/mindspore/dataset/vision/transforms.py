@@ -647,6 +647,8 @@ class AdjustSharpness(ImageTensorOperation):
     """
     Adjust the sharpness of the input image.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         sharpness_factor (float): How much to adjust the sharpness, must be
             non negative. ``0`` gives a blurred image, ``1`` gives the
@@ -693,8 +695,56 @@ class AdjustSharpness(ImageTensorOperation):
         self.sharpness_factor = sharpness_factor
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        - When the device is Ascend, input type supports `uint8` or `float32` , input channel supports 1 and 3.
+          The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> # create a dataset that reads all files in dataset_dir with 8 threads
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> transforms_list = [vision.AdjustSharpness(sharpness_factor=2.0).device("Ascend")]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.AdjustSharpness(sharpness_factor=0).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.AdjustSharpnessOperation(self.sharpness_factor)
+        return cde.AdjustSharpnessOperation(self.sharpness_factor, self.device_target)
 
 
 class Affine(ImageTensorOperation):
@@ -824,6 +874,8 @@ class Affine(ImageTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
+        if self.resample not in [Inter.BILINEAR, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR and NEAREST.")
         return self
 
     def parse(self):
@@ -914,6 +966,8 @@ class AutoContrast(ImageTensorOperation, PyTensorOperation):
     Apply automatic contrast on input image. This operation calculates histogram of image, reassign cutoff percent
     of the lightest pixels from histogram to 255, and reassign cutoff percent of the darkest pixels from histogram to 0.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         cutoff (float, optional): Percent of lightest and darkest pixels to cut off from
             the histogram of input image. The value must be in the range [0.0, 50.0]. Default: ``0.0``.
@@ -967,8 +1021,56 @@ class AutoContrast(ImageTensorOperation, PyTensorOperation):
         self.ignore = ignore
         self.random = False
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        - When the device is Ascend, input type supports `uint8` or `float32` , input channel supports 1 and 3.
+          If the data type is float32, the expected input value is in the range [0, 1].
+          The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> transforms_list = [vision.AutoContrast(cutoff=10.0, ignore=[10, 20]).device("Ascend")]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.AutoContrast(cutoff=10.0, ignore=[10, 20]).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.AutoContrastOperation(self.cutoff, self.ignore)
+        return cde.AutoContrastOperation(self.cutoff, self.ignore, self.device_target)
 
     def _execute_py(self, img):
         """
@@ -1142,6 +1244,8 @@ class ConvertColor(ImageTensorOperation):
     """
     Change the color space of the image.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         convert_mode (ConvertMode): The mode of image channel conversion.
 
@@ -1218,10 +1322,10 @@ class ConvertColor(ImageTensorOperation):
         (100, 100, 3) uint8
         >>>
         >>> # Use the transform in eager mode
-        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
         >>> output = vision.ConvertColor(vision.ConvertMode.COLOR_RGB2GRAY)(data)
         >>> print(output.shape, output.dtype)
-        (2, 2) uint8
+        (100, 100) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1234,8 +1338,55 @@ class ConvertColor(ImageTensorOperation):
         self.convert_mode = convert_mode
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        - When the device is Ascend, input type only supports `uint8` , input channel supports 1 and 3.
+          The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> transforms_list = [vision.ConvertColor(vision.ConvertMode.COLOR_RGB2BGR).device("Ascend")]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.ConvertColor(vision.ConvertMode.COLOR_RGB2BGR).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.ConvertColorOperation(ConvertMode.to_c_type(self.convert_mode))
+        return cde.ConvertColorOperation(ConvertMode.to_c_type(self.convert_mode), self.device_target)
 
 
 class Crop(ImageTensorOperation):
@@ -1724,6 +1875,8 @@ class Equalize(ImageTensorOperation, PyTensorOperation):
     """
     Apply histogram equalization on input image.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Raises:
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -1760,8 +1913,55 @@ class Equalize(ImageTensorOperation, PyTensorOperation):
         super().__init__()
         self.random = False
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        - When the device is Ascend, input type only supports `uint8` , input channel supports 1 and 3.
+          The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> transforms_list = [vision.Equalize().device("Ascend")]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.Equalize().device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.EqualizeOperation()
+        return cde.EqualizeOperation(self.device_target)
 
     def _execute_py(self, img):
         """
@@ -1781,14 +1981,16 @@ class Erase(ImageTensorOperation):
     """
     Erase the input image with given value.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         top (int): Vertical ordinate of the upper left corner of erased region.
         left (int): Horizontal ordinate of the upper left corner of erased region.
         height (int): Height of erased region.
         width (int): Width of erased region.
-        value (Union[int, Sequence[int, int, int]], optional): Pixel value used to pad the erased area.
-            Default: ``0``. If int is provided, it will be used for all RGB channels.
-            If Sequence[int, int, int] is provided, it will be used for R, G, B channels respectively.
+        value (Union[float, Sequence[float, float, float]], optional): Pixel value used to pad the erased area.
+            Default: ``0``. If float is provided, it will be used for all RGB channels.
+            If Sequence[float, float, float] is provided, it will be used for R, G, B channels respectively.
         inplace (bool, optional): Whether to apply erasing inplace. Default: ``False``.
 
     Raises:
@@ -1800,7 +2002,7 @@ class Erase(ImageTensorOperation):
         ValueError: If `height` is not positive.
         TypeError: If `width` is not of type int.
         ValueError: If `width` is not positive.
-        TypeError: If `value` is not of type int or Sequence[int, int, int].
+        TypeError: If `value` is not of type float or Sequence[float, float, float].
         ValueError: If `value` is not in range of [0, 255].
         TypeError: If `inplace` is not of type bool.
         RuntimeError: If shape of the input image is not <H, W, C>.
@@ -1824,10 +2026,10 @@ class Erase(ImageTensorOperation):
         (100, 100, 3) uint8
         >>>
         >>> # Use the transform in eager mode
-        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
-        >>> output = vision.Erase(0, 0, 2, 1)(data)
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.Erase(10, 10, 10, 10)(data)
         >>> print(output.shape, output.dtype)
-        (2, 2, 3) uint8
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1841,13 +2043,62 @@ class Erase(ImageTensorOperation):
         self.left = left
         self.height = height
         self.width = width
-        if isinstance(value, int):
+        if isinstance(value, (int, float)):
             value = tuple([value] * 3)
         self.value = value
         self.inplace = inplace
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        - When the device is Ascend, input type supports `uint8` or `float32` , input channel supports 1 and 3.
+          The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
+          The inplace parameter is not supported.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> transforms_list = [vision.Erase(10,10,10,10).device("Ascend")]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.Erase(10, 10, 10, 10, (100, 100, 100)).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.EraseOperation(self.top, self.left, self.height, self.width, self.value, self.inplace)
+        return cde.EraseOperation(self.top, self.left, self.height, self.width, self.value, self.inplace,
+                                  self.device_target)
 
 
 class FiveCrop(PyTensorOperation):
@@ -1912,8 +2163,10 @@ class FiveCrop(PyTensorOperation):
         >>> img.save("./2.jpg")
         >>> data = Image.open("./2.jpg")
         >>> output = vision.FiveCrop(size=20)(data)
-        >>> print(np.array(output).shape, np.array(output).dtype)
-        (5,) object
+        >>> for cropped_img in output:
+        ...     print(cropped_img.size)
+        ...     break
+        (20, 20)
         >>> os.remove("./2.jpg")
 
 
@@ -2160,6 +2413,8 @@ class HorizontalFlip(ImageTensorOperation):
     """
     Flip the input image horizontally.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Raises:
         RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
@@ -2370,6 +2625,8 @@ class Invert(ImageTensorOperation, PyTensorOperation):
     For each pixel in the image, if the original pixel value is `pixel`,
     the inverted pixel value will be `255 - pixel`.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Raises:
         RuntimeError: If the input image is not in shape of <H, W, C>.
 
@@ -2406,8 +2663,58 @@ class Invert(ImageTensorOperation, PyTensorOperation):
         super().__init__()
         self.random = False
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        - When the device is CPU, input type only support `uint8` , input channel support 1/2/3.
+        - When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1/3.
+          input shape should be limited from [4, 6] to [8192, 4096].
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>> from mindspore.dataset.vision import Inter
+            >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> invert_op = vision.Invert()
+            >>> transforms_list = [invert_op]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.Invert().device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.InvertOperation()
+        return cde.InvertOperation(self.device_target)
 
     def _execute_py(self, img):
         """
@@ -3082,6 +3389,8 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
     """
     Apply perspective transformation on input image.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         start_points (Sequence[Sequence[int, int]]): Sequence of the starting point coordinates, containing four
             two-element subsequences, corresponding to [top-left, top-right, bottom-right, bottom-left] of the
@@ -3195,6 +3504,8 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
+        if self.interpolation not in [Inter.BILINEAR, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR and NEAREST.")
         return self
 
     def parse(self):
@@ -3222,6 +3533,8 @@ class Posterize(ImageTensorOperation):
     """
     Reduce the bit depth of the color channels of image to create a high contrast and vivid color effect,
     similar to that seen in posters or printed materials.
+
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
         bits (int): The number of bits to keep for each channel, should be in range of [0, 8].
@@ -3263,8 +3576,56 @@ class Posterize(ImageTensorOperation):
         self.bits = bits
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        - When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1 and 3.
+          The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> posterize_op = vision.Posterize(4).device("Ascend")
+            >>> transforms_list = [posterize_op]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.Posterize(4).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.PosterizeOperation(self.bits)
+        return cde.PosterizeOperation(self.bits, self.device_target)
 
 
 class RandAugment(ImageTensorOperation):
@@ -5731,9 +6092,8 @@ class Resize(ImageTensorOperation, PyTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
-        if self.interpolation == Inter.ANTIALIAS and self.device_target == "Ascend":
-            raise ValueError("The current InterpolationMode is not supported by DVPP. It is {}."
-                             .format(self.interpolation))
+        if self.interpolation not in [Inter.BILINEAR, Inter.CUBIC, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR, CUBIC and NEAREST.")
         return self
 
     def parse(self):
@@ -5759,6 +6119,8 @@ class Resize(ImageTensorOperation, PyTensorOperation):
 class ResizedCrop(ImageTensorOperation):
     """
     Crop the input image at a specific region and resize it to desired size.
+
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
         top (int): Horizontal ordinate of the upper left corner of the crop region.
@@ -5876,6 +6238,8 @@ class ResizedCrop(ImageTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
+        if self.interpolation not in [Inter.BILINEAR, Inter.CUBIC, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR, CUBIC and NEAREST.")
         return self
 
     def parse(self):
@@ -6024,6 +6388,8 @@ class Rotate(ImageTensorOperation):
     """
     Rotate the input image by specified degrees.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         degrees (Union[int, float]): Rotation degrees.
         resample (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
@@ -6094,9 +6460,62 @@ class Rotate(ImageTensorOperation):
         self.fill_value = fill_value
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        - When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1 and 3.
+          The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
+        - When the device is Ascend and `expand` is True, `center` does not take effect
+          and the image is rotated according to the center of the image.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>> from mindspore.dataset.vision import Inter
+            >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 300, 400, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> rotate_op = vision.Rotate(degrees=90.0, resample=Inter.NEAREST, expand=True).device("Ascend")
+            >>> transforms_list = [rotate_op]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (400, 300, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(300, 400, 3)).astype(np.uint8)
+            >>> output = vision.Rotate(degrees=90.0, resample=Inter.NEAREST, expand=True).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (400, 300, 3) uint8
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        if self.resample not in [Inter.BILINEAR, Inter.NEAREST] and self.device_target == "Ascend":
+            raise RuntimeError("Invalid interpolation mode, only support BILINEAR and NEAREST.")
+        return self
+
     def parse(self):
         return cde.RotateOperation(self.degrees, Inter.to_c_type(self.resample), self.expand, self.center,
-                                   self.fill_value)
+                                   self.fill_value, self.device_target)
 
 
 class SlicePatches(ImageTensorOperation):
@@ -6181,6 +6600,8 @@ class Solarize(ImageTensorOperation):
     """
     Solarize the image by inverting all pixel values within the threshold.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         threshold (Union[float, Sequence[float, float]]): Range of solarize threshold, should always
             be in (min, max) format, where min and max are integers in range of [0, 255], and min <= max.
@@ -6228,8 +6649,56 @@ class Solarize(ImageTensorOperation):
         self.threshold = threshold
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        - When the device is Ascend, input type only supports `uint8` , input channel supports 1 and 3.
+          The input data has a height limit of [4, 8192] and a width limit of [6, 4096].
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> solarize_op = vision.Solarize(threshold=(10, 100)).device("Ascend")
+            >>> transforms_list = [solarize_op]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.Solarize(threshold=(10, 100)).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.SolarizeOperation(self.threshold)
+        return cde.SolarizeOperation(self.threshold, self.device_target)
 
 
 class TenCrop(PyTensorOperation):
@@ -6719,6 +7188,8 @@ class UniformAugment(CompoundOperation):
 class VerticalFlip(ImageTensorOperation):
     """
     Flip the input image vertically.
+
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Raises:
         RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.

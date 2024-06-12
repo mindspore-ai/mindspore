@@ -360,7 +360,7 @@ Status CutOut(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 /// \param value: fill value for erase
 /// \param inplace: whether to apply erasing inplace
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t top, int32_t left,
-             int32_t height, int32_t width, const std::vector<uint8_t> &value, bool inplace);
+             int32_t height, int32_t width, const std::vector<float> &value, bool inplace);
 
 /// \brief Invert the colors of the input image.
 /// \param[in] input: Tensor of input image.

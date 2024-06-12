@@ -33,7 +33,7 @@ constexpr char kPosterizeOperation[] = "Posterize";
 
 class PosterizeOperation : public TensorOperation {
  public:
-  explicit PosterizeOperation(uint8_t bits);
+  explicit PosterizeOperation(uint8_t bits, const std::string &device_target = "CPU");
 
   ~PosterizeOperation() override;
 
@@ -47,8 +47,11 @@ class PosterizeOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   uint8_t bits_;
+  std::string device_target_;
 };
 }  // namespace vision
 }  // namespace dataset

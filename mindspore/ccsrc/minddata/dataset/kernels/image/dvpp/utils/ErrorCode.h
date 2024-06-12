@@ -115,6 +115,15 @@ enum {
   APP_ERR_DVPP_PAD_FAIL = APP_ERR_DVPP_BASE + 24,                // DVPP: pad fail
   APP_ERR_DVPP_AFFINE_FAIL = APP_ERR_DVPP_BASE + 25,             // DVPP: affine fail
   APP_ERR_DVPP_GAUSSIAN_BLUR_FAIL = APP_ERR_DVPP_BASE + 26,      // DVPP: gaussian blur fail
+  APP_ERR_DVPP_EQUALIZE_FAIL = APP_ERR_DVPP_BASE + 27,           // DVPP: equalize blur fail
+  APP_ERR_DVPP_ROTATE_FAIL = APP_ERR_DVPP_BASE + 28,             // DVPP: rotate fail
+  APP_ERR_DVPP_AUTO_CONTRAST_FAIL = APP_ERR_DVPP_BASE + 29,      // DVPP: auto contrast fail
+  APP_ERR_DVPP_POSTERIZE_FAIL = APP_ERR_DVPP_BASE + 30,          // DVPP: posterize fail
+  APP_ERR_DVPP_ADJUST_SHARPNESS_FAIL = APP_ERR_DVPP_BASE + 31,   // DVPP: adjust sharpness fail
+  APP_ERR_DVPP_INVERT_FAIL = APP_ERR_DVPP_BASE + 32,             // DVPP: invert fail
+  APP_ERR_DVPP_SOLARIZE_FAIL = APP_ERR_DVPP_BASE + 33,           // DVPP: solarize fail
+  APP_ERR_DVPP_CONVERT_COLOR_FAIL = APP_ERR_DVPP_BASE + 34,      // DVPP: convert color fail
+  APP_ERR_DVPP_ERASE_FAIL = APP_ERR_DVPP_BASE + 35,              // DVPP: erase fail
   APP_ERR_DVPP_END,  // Not an error code, define the range of common error code
 
   // define the error code of inference

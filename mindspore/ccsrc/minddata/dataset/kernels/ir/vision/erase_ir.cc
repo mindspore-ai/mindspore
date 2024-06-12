@@ -18,6 +18,9 @@
 
 #include "minddata/dataset/audio/ir/validators.h"
 #include "minddata/dataset/kernels/image/erase_op.h"
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_erase_op.h"
+#endif
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -27,8 +30,14 @@ namespace vision {
 #ifndef ENABLE_ANDROID
 // EraseOperation
 EraseOperation::EraseOperation(int32_t top, int32_t left, int32_t height, int32_t width,
-                               const std::vector<uint8_t> &value, bool inplace)
-    : top_(top), left_(left), height_(height), width_(width), value_(value), inplace_(inplace) {}
+                               const std::vector<float> &value, bool inplace, const std::string &device_target)
+    : top_(top),
+      left_(left),
+      height_(height),
+      width_(width),
+      value_(value),
+      inplace_(inplace),
+      device_target_(device_target) {}
 
 EraseOperation::~EraseOperation() = default;
 
@@ -39,13 +48,42 @@ Status EraseOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateIntScalarNonNegative("Erase", "left", left_));
   RETURN_IF_NOT_OK(ValidateIntScalarPositive("Erase", "height", height_));
   RETURN_IF_NOT_OK(ValidateIntScalarPositive("Erase", "width", width_));
-  RETURN_IF_NOT_OK(ValidateVectorFillvalue("Erase", value_));
+  constexpr float kValueMax = 255.0;
+  constexpr float kValueMin = 0.;
+  const size_t kMaxFillValueSize = 3;
+  if (value_.empty() || (value_.size() != 1 && value_.size() != kMaxFillValueSize)) {
+    std::string err_msg = "Erase: value expecting size 1 or 3, got value.size(): " + std::to_string(value_.size());
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  for (float val : value_) {
+    if (val < kValueMin || val > kValueMax) {
+      std::string err_msg = "Erase: value has to be between 0. and 255., got:" + std::to_string(val);
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
+  // device target
+  if (device_target_ != "CPU" && device_target_ != "Ascend") {
+    std::string err_msg = "Erase: Invalid device target. It's not CPU or Ascend.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   return Status::OK();
 }
 
 std::shared_ptr<TensorOp> EraseOperation::Build() {
-  std::shared_ptr<EraseOp> tensor_op = std::make_shared<EraseOp>(top_, left_, height_, width_, value_, inplace_);
-  return tensor_op;
+  if (device_target_ == "CPU") {
+    std::shared_ptr<EraseOp> tensor_op = std::make_shared<EraseOp>(top_, left_, height_, width_, value_, inplace_);
+    return tensor_op;
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  } else if (device_target_ == "Ascend") {
+    std::vector<float> value_cast(value_.begin(), value_.end());
+    std::shared_ptr<DvppEraseOp> dvpp_tensor_op =
+      std::make_shared<DvppEraseOp>(top_, left_, height_, width_, value_cast);
+    return dvpp_tensor_op;
+#endif
+  } else {
+    MS_LOG(ERROR) << "AdjustContrast: Invalid device target. It's not CPU or Ascend.";
+    return nullptr;
+  }
 }
 
 Status EraseOperation::to_json(nlohmann::json *out_json) {
@@ -57,6 +95,7 @@ Status EraseOperation::to_json(nlohmann::json *out_json) {
   args["width"] = width_;
   args["value"] = value_;
   args["inplace"] = inplace_;
+  args["device_target"] = device_target_;
   *out_json = args;
   return Status::OK();
 }
@@ -69,15 +108,28 @@ Status EraseOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tenso
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "width", kEraseOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "value", kEraseOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "inplace", kEraseOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "device_target", kEraseOperation));
 
   int32_t top = op_params["top"];
   int32_t left = op_params["left"];
   int32_t height = op_params["height"];
   int32_t width = op_params["width"];
-  std::vector<uint8_t> value = op_params["value"];
+  std::vector<float> value = op_params["value"];
   bool inplace = op_params["inplace"];
-  *operation = std::make_shared<vision::EraseOperation>(top, left, height, width, value, inplace);
+  std::string device_target = op_params["device_target"];
+  *operation = std::make_shared<vision::EraseOperation>(top, left, height, width, value, inplace, device_target);
   return Status::OK();
+}
+
+MapTargetDevice EraseOperation::Type() {
+  if (device_target_ == "CPU") {
+    return MapTargetDevice::kCpu;
+  } else if (device_target_ == "Ascend") {
+    return MapTargetDevice::kAscend910B;
+  } else {
+    MS_LOG(ERROR) << "AdjustContrast: Invalid device target. It's not CPU or Ascend.";
+  }
+  return MapTargetDevice::kInvalid;
 }
 #endif
 }  // namespace vision

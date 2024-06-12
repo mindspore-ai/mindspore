@@ -1332,6 +1332,7 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
                                std::to_string(input_cv->Rank()));
     }
     // Reshape to extend dimension if rank is 2 for algorithm to work. then reshape output to be of rank 2 like input
+    auto input_rank = input_cv->Rank();
     if (input_cv->Rank() == kMinImageRank) {
       RETURN_IF_NOT_OK(input_cv->ExpandDim(kMinImageRank));
     }
@@ -1395,7 +1396,9 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, input_cv->Rank(), &output_cv));
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
-    RETURN_IF_NOT_OK((*output)->Reshape(input_cv->shape()));
+    if (input_rank == kMinImageRank) {
+      (*output)->Squeeze();
+    }
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("AutoContrast: " + std::string(e.what()));
   }
@@ -1464,6 +1467,7 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       RETURN_STATUS_UNEXPECTED("Equalize: image rank should be 2 or 3,  but got: " + std::to_string(input_cv->Rank()));
     }
     // For greyscale images, extend dimension if rank is 2 and reshape output to be of rank 2.
+    auto input_rank = input_cv->Rank();
     if (input_cv->Rank() == kMinImageRank) {
       RETURN_IF_NOT_OK(input_cv->ExpandDim(kMinImageRank));
     }
@@ -1489,7 +1493,9 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(result, input_cv->Rank(), &output_cv));
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
-    RETURN_IF_NOT_OK((*output)->Reshape(input_cv->shape()));
+    if (input_rank == kMinImageRank) {
+      (*output)->Squeeze();
+    }
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Equalize: " + std::string(e.what()));
   }
@@ -1677,7 +1683,7 @@ Status CutOut(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 }
 
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t top, int32_t left,
-             int32_t height, int32_t width, const std::vector<uint8_t> &value, bool inplace) {
+             int32_t height, int32_t width, const std::vector<float> &value, bool inplace) {
   try {
     std::vector<dsize_t> size;
     RETURN_IF_NOT_OK(ImageSize(input, &size));
@@ -1690,8 +1696,13 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
         ", image width: " + std::to_string(image_w));
     }
 
-    RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(*output);
+    std::shared_ptr<CVTensor> input_cv;
+    if (!inplace) {
+      RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
+      input_cv = CVTensor::AsCVTensor(*output);
+    } else {
+      input_cv = CVTensor::AsCVTensor(input);
+    }
     cv::Mat input_img = input_cv->mat();
 
     int32_t h_start = top;
@@ -1704,15 +1715,22 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
     int32_t true_width = max_width - w_start;
     int32_t true_height = max_height - h_start;
 
-    uint8_t fill_r = value[kRIndex];
-    uint8_t fill_g = value[kGIndex];
-    uint8_t fill_b = value[kBIndex];
+    float fill_r = value[kRIndex];
+    float fill_g = value[kGIndex];
+    float fill_b = value[kBIndex];
 
     cv::Rect idx = cv::Rect(w_start, h_start, true_width, true_height);
     cv::Scalar fill_color = cv::Scalar(fill_r, fill_g, fill_b);
     (void)input_img(idx).setTo(fill_color);
 
-    *output = std::static_pointer_cast<Tensor>(input_cv);
+    if (!inplace) {
+      *output = std::static_pointer_cast<Tensor>(input_cv);
+    } else {
+      std::shared_ptr<CVTensor> output_cv;
+      RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_img, input_cv->Rank(), &output_cv));
+      *output = std::static_pointer_cast<Tensor>(output_cv);
+    }
+
     return Status::OK();
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Erase: " + std::string(e.what()));

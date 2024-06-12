@@ -34,7 +34,7 @@ constexpr char kAutoContrastOperation[] = "AutoContrast";
 
 class AutoContrastOperation : public TensorOperation {
  public:
-  AutoContrastOperation(float cutoff, const std::vector<uint32_t> &ignore);
+  AutoContrastOperation(float cutoff, const std::vector<uint32_t> &ignore, const std::string &device_target = "CPU");
 
   ~AutoContrastOperation() override;
 
@@ -48,9 +48,12 @@ class AutoContrastOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   float cutoff_;
   std::vector<uint32_t> ignore_;
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset

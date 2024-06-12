@@ -107,19 +107,28 @@ void AclAdapter::InitPlugin() {
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
   // Ascend910B
   dvpp_affine_fun_obj_ = DlsymFuncObj(DvppAffine, plugin_handle_);
+  dvpp_auto_contrast_fun_obj_ = DlsymFuncObj(DvppAutoContrast, plugin_handle_);
   dvpp_brightness_fun_obj_ = DlsymFuncObj(DvppAdjustBrightness, plugin_handle_);
   dvpp_contrast_fun_obj_ = DlsymFuncObj(DvppAdjustContrast, plugin_handle_);
+  dvpp_convert_color_fun_obj_ = DlsymFuncObj(DvppConvertColor, plugin_handle_);
   dvpp_crop_fun_obj_ = DlsymFuncObj(DvppCrop, plugin_handle_);
   dvpp_decode_fun_obj_ = DlsymFuncObj(DvppDecode, plugin_handle_);
+  dvpp_equalize_fun_obj_ = DlsymFuncObj(DvppEqualize, plugin_handle_);
+  dvpp_erase_fun_obj_ = DlsymFuncObj(DvppErase, plugin_handle_);
   dvpp_gaussian_blur_fun_obj_ = DlsymFuncObj(DvppGaussianBlur, plugin_handle_);
   dvpp_horizontal_flip_fun_obj_ = DlsymFuncObj(DvppHorizontalFlip, plugin_handle_);
+  dvpp_invert_fun_obj_ = DlsymFuncObj(DvppInvert, plugin_handle_);
   dvpp_hue_fun_obj_ = DlsymFuncObj(DvppAdjustHue, plugin_handle_);
   dvpp_normalize_fun_obj_ = DlsymFuncObj(DvppNormalize, plugin_handle_);
   dvpp_pad_fun_obj_ = DlsymFuncObj(DvppPad, plugin_handle_);
   dvpp_perspective_fun_obj_ = DlsymFuncObj(DvppPerspective, plugin_handle_);
+  dvpp_posterize_fun_obj_ = DlsymFuncObj(DvppPosterize, plugin_handle_);
   dvpp_resize_fun_obj_ = DlsymFuncObj(DvppResize, plugin_handle_);
   dvpp_resized_crop_fun_obj_ = DlsymFuncObj(DvppResizedCrop, plugin_handle_);
+  dvpp_rotate_fun_obj_ = DlsymFuncObj(DvppRotate, plugin_handle_);
   dvpp_saturation_fun_obj_ = DlsymFuncObj(DvppAdjustSaturation, plugin_handle_);
+  dvpp_sharpness_fun_obj_ = DlsymFuncObj(DvppAdjustSharpness, plugin_handle_);
+  dvpp_solarize_fun_obj_ = DlsymFuncObj(DvppSolarize, plugin_handle_);
   dvpp_vertical_flip_fun_obj_ = DlsymFuncObj(DvppVerticalFlip, plugin_handle_);
 
   // acl
@@ -179,19 +188,28 @@ void AclAdapter::FinalizePlugin() {
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
   // Ascend910B
   dvpp_affine_fun_obj_ = nullptr;
+  dvpp_auto_contrast_fun_obj_ = nullptr;
   dvpp_brightness_fun_obj_ = nullptr;
   dvpp_contrast_fun_obj_ = nullptr;
+  dvpp_convert_color_fun_obj_ = nullptr;
   dvpp_crop_fun_obj_ = nullptr;
   dvpp_decode_fun_obj_ = nullptr;
+  dvpp_equalize_fun_obj_ = nullptr;
+  dvpp_erase_fun_obj_ = nullptr;
   dvpp_gaussian_blur_fun_obj_ = nullptr;
   dvpp_horizontal_flip_fun_obj_ = nullptr;
+  dvpp_invert_fun_obj_ = nullptr;
   dvpp_hue_fun_obj_ = nullptr;
   dvpp_normalize_fun_obj_ = nullptr;
   dvpp_pad_fun_obj_ = nullptr;
   dvpp_perspective_fun_obj_ = nullptr;
+  dvpp_posterize_fun_obj_ = nullptr;
   dvpp_resize_fun_obj_ = nullptr;
   dvpp_resized_crop_fun_obj_ = nullptr;
+  dvpp_rotate_fun_obj_ = nullptr;
   dvpp_saturation_fun_obj_ = nullptr;
+  dvpp_sharpness_fun_obj_ = nullptr;
+  dvpp_solarize_fun_obj_ = nullptr;
   dvpp_vertical_flip_fun_obj_ = nullptr;
 
   // acl
@@ -522,6 +540,14 @@ APP_ERROR AclAdapter::DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAsc
   return dvpp_saturation_fun_obj_(input, output, factor);
 }
 
+APP_ERROR AclAdapter::DvppAdjustSharpness(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                          std::shared_ptr<DeviceTensorAscend910B> *output, float factor) {
+  if (!HasAclPlugin() || dvpp_sharpness_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_sharpness_fun_obj_(input, output, factor);
+}
+
 APP_ERROR AclAdapter::DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                  std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &matrix,
                                  uint32_t interpolation_mode, uint32_t padding_mode, const std::vector<float> &fill) {
@@ -529,6 +555,23 @@ APP_ERROR AclAdapter::DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &
     return APP_ERR_ACL_FAILURE;
   }
   return dvpp_affine_fun_obj_(input, output, matrix, interpolation_mode, padding_mode, fill);
+}
+
+APP_ERROR AclAdapter::DvppAutoContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                       std::shared_ptr<DeviceTensorAscend910B> *output,
+                                       const std::vector<float> &cutoff, const std::vector<uint32_t> &ignore) {
+  if (!HasAclPlugin() || dvpp_auto_contrast_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_auto_contrast_fun_obj_(input, output, cutoff, ignore);
+}
+
+APP_ERROR AclAdapter::DvppConvertColor(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                       std::shared_ptr<DeviceTensorAscend910B> *output, ConvertMode convertMode) {
+  if (!HasAclPlugin() || dvpp_convert_color_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_convert_color_fun_obj_(input, output, convertMode);
 }
 
 APP_ERROR AclAdapter::DvppCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
@@ -548,6 +591,23 @@ APP_ERROR AclAdapter::DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &
   return dvpp_decode_fun_obj_(input, output);
 }
 
+APP_ERROR AclAdapter::DvppEqualize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                   std::shared_ptr<DeviceTensorAscend910B> *output) {
+  if (!HasAclPlugin() || dvpp_equalize_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_equalize_fun_obj_(input, output);
+}
+
+APP_ERROR AclAdapter::DvppErase(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left,
+                                uint32_t height, uint32_t width, const std::vector<float> &value) {
+  if (!HasAclPlugin() || dvpp_erase_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_erase_fun_obj_(input, output, top, left, height, width, value);
+}
+
 APP_ERROR AclAdapter::DvppGaussianBlur(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                        std::shared_ptr<DeviceTensorAscend910B> *output,
                                        const std::vector<int64_t> &kernel_size, const std::vector<float> &sigma,
@@ -564,6 +624,14 @@ APP_ERROR AclAdapter::DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscen
     return APP_ERR_ACL_FAILURE;
   }
   return dvpp_horizontal_flip_fun_obj_(input, output);
+}
+
+APP_ERROR AclAdapter::DvppInvert(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<DeviceTensorAscend910B> *output) {
+  if (!HasAclPlugin() || dvpp_invert_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_invert_fun_obj_(input, output);
 }
 
 APP_ERROR AclAdapter::DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
@@ -595,6 +663,14 @@ APP_ERROR AclAdapter::DvppPerspective(const std::shared_ptr<DeviceTensorAscend91
   return dvpp_perspective_fun_obj_(input, output, start_points, end_points, interpolation);
 }
 
+APP_ERROR AclAdapter::DvppPosterize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                    std::shared_ptr<DeviceTensorAscend910B> *output, uint8_t bits) {
+  if (!HasAclPlugin() || dvpp_posterize_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_posterize_fun_obj_(input, output, bits);
+}
+
 APP_ERROR AclAdapter::DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                  std::shared_ptr<DeviceTensorAscend910B> *output, int32_t output_height,
                                  int32_t output_width, double fx, double fy, InterpolationMode mode) {
@@ -615,12 +691,30 @@ APP_ERROR AclAdapter::DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend91
                                     interpolation);
 }
 
+APP_ERROR AclAdapter::DvppRotate(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<DeviceTensorAscend910B> *output, float degrees, InterpolationMode mode,
+                                 bool expand, const std::vector<float> &center, const std::vector<float> &fill) {
+  if (!HasAclPlugin() || dvpp_rotate_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_rotate_fun_obj_(input, output, degrees, mode, expand, center, fill);
+}
+
 APP_ERROR AclAdapter::DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                        std::shared_ptr<DeviceTensorAscend910B> *output) {
   if (!HasAclPlugin() || dvpp_vertical_flip_fun_obj_ == nullptr) {
     return APP_ERR_ACL_FAILURE;
   }
   return dvpp_vertical_flip_fun_obj_(input, output);
+}
+
+APP_ERROR AclAdapter::DvppSolarize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                   std::shared_ptr<DeviceTensorAscend910B> *output,
+                                   const std::vector<float> &threshold) {
+  if (!HasAclPlugin() || dvpp_solarize_fun_obj_ == nullptr) {
+    return APP_ERR_ACL_FAILURE;
+  }
+  return dvpp_solarize_fun_obj_(input, output, threshold);
 }
 
 // acl

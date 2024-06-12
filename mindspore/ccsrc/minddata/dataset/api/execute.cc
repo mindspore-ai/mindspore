@@ -468,8 +468,14 @@ Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_t
     for (auto &item : input_tensor_list) {
       std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
       // here we use the first op's IsHWC() to create device tensor
-      RETURN_IF_NOT_OK(DeviceTensorAscend910B::CreateDeviceTensor(item, device_context_, stream_id_, &device_tensor,
-                                                                  transforms_rt[0]->IsHWC()));
+      if (transforms_rt[0]->Name() == kDvppConvertColorOp) {
+        std::vector<int> channels = {1, 3, 4};
+        RETURN_IF_NOT_OK(DeviceTensorAscend910B::CreateDeviceTensor(item, device_context_, stream_id_, &device_tensor,
+                                                                    transforms_rt[0]->IsHWC(), channels));
+      } else {
+        RETURN_IF_NOT_OK(DeviceTensorAscend910B::CreateDeviceTensor(item, device_context_, stream_id_, &device_tensor,
+                                                                    transforms_rt[0]->IsHWC()));
+      }
       device_tensor_list.push_back(std::move(device_tensor));
     }
 

@@ -54,6 +54,11 @@ Status DvppResizedCropOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
   // the type should be uint8 or float
   CHECK_FAIL_RETURN_UNEXPECTED(input->GetType() == DataType::DE_UINT8 || input->GetType() == DataType::DE_FLOAT32,
                                "DvppResizedCrop: the type of the input is not uint8 or float.");
+
+  // check the height and width of input
+  const auto kHeightIndexNHWC = 1;
+  const auto kWidthIndexNHWC = 2;
+
   std::vector<dsize_t> size = {input->GetShape().AsVector()[kHeightIndexNHWC],
                                input->GetShape().AsVector()[kWidthIndexNHWC]};
   int32_t input_h = size[kHeightIndex];
@@ -91,9 +96,9 @@ Status DvppResizedCropOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
   }
 
   // verify InterpolationMode
-  CHECK_FAIL_RETURN_UNEXPECTED(GetDVPPInterpolationMode(interpolation_) != kInvalidInterpolationMode,
-                               "The current InterpolationMode is not supported by DVPP. It is " +
-                                 std::to_string(static_cast<int>(interpolation_)));
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    GetDVPPInterpolationMode(interpolation_) != kInvalidInterpolationMode,
+    "DvppResizedCrop: Invalid interpolation mode, only support BILINEAR, CUBIC and NEAREST.");
 
   // Dvpp Limit
   RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppResizedCropOp, "input"));

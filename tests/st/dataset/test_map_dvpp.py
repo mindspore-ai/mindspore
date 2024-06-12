@@ -456,7 +456,7 @@ def test_map_with_dvpp_resize_with_exception():
         count = 0
         for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is HW4
     class RandomAccessDatasetHW4:
@@ -478,7 +478,7 @@ def test_map_with_dvpp_resize_with_exception():
         count = 0
         for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is 23HW4
     class RandomAccessDataset23HW4:
@@ -590,35 +590,26 @@ def test_map_with_dvpp_resize_with_exception():
     # dataset with interpolation=ANTIALIAS
     data1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
     data1 = data1.map(vision.Decode(), input_columns="image")
-    with pytest.raises(ValueError) as info:
+    with pytest.raises(RuntimeError) as info:
         _ = data1.map(vision.Resize([224, 224], interpolation=vision.Inter.ANTIALIAS).device("Ascend"),
                       input_columns="image")
-    assert "The current InterpolationMode is not supported by DVPP." in str(info.value)
+    assert "Invalid interpolation mode, only support BILINEAR, CUBIC and NEAREST" in str(info.value)
 
     # dataset with interpolation=AREA
     data2 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
     data2 = data2.map(vision.Decode(), input_columns="image")
-    data2 = data2.map(vision.Resize([224, 224], interpolation=vision.Inter.AREA).device("Ascend"),
-                      input_columns="image")
-
-    # Expect to equal
     with pytest.raises(RuntimeError) as info:
-        for _ in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
-            count += 1
-    assert "The current InterpolationMode is not supported by DVPP." in str(info.value)
+        _ = data2.map(vision.Resize([224, 224], interpolation=vision.Inter.AREA).device("Ascend"),
+                      input_columns="image")
+    assert "Invalid interpolation mode, only support BILINEAR, CUBIC and NEAREST" in str(info.value)
 
     # dataset with interpolation=PILCUBIC
     data3 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
     data3 = data3.map(vision.Decode(), input_columns="image")
-    data3 = data3.map(vision.Resize([224, 224], interpolation=vision.Inter.PILCUBIC).device("Ascend"),
-                      input_columns="image")
-
-    # Expect to equal
     with pytest.raises(RuntimeError) as info:
-        for _ in data3.create_tuple_iterator(num_epochs=1, output_numpy=True):
-            count += 1
-    assert "The current InterpolationMode is not supported by DVPP." in str(info.value)
-
+        _ = data3.map(vision.Resize([224, 224], interpolation=vision.Inter.PILCUBIC).device("Ascend"),
+                      input_columns="image")
+    assert "Invalid interpolation mode, only support BILINEAR, CUBIC and NEAREST" in str(info.value)
 
 def map_with_dvpp_decode(num_workers=1, python_multiprocess=False):
     """
@@ -1399,7 +1390,7 @@ def test_map_with_dvpp_normalize_exception():
         count = 0
         for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # float16
     class RandomAccessDatasetHWCFloat16:
@@ -1493,7 +1484,7 @@ def test_map_with_dvpp_horizontal_flip_with_exception():
         count = 0
         for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is HW4
     class RandomAccessDatasetHW4:
@@ -1514,7 +1505,7 @@ def test_map_with_dvpp_horizontal_flip_with_exception():
         count = 0
         for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is 23HW4
     class RandomAccessDataset23HW4:
@@ -1570,7 +1561,7 @@ def test_map_with_dvpp_vertical_flip_with_exception():
         count = 0
         for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is HW4
     class RandomAccessDatasetHW4:
@@ -1591,7 +1582,7 @@ def test_map_with_dvpp_vertical_flip_with_exception():
         count = 0
         for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is 23HW4
     class RandomAccessDataset23HW4:
@@ -1647,7 +1638,7 @@ def test_map_with_dvpp_resize_crop_with_exception():
         count = 0
         for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is HW4
     class RandomAccessDatasetHW4:
@@ -1668,7 +1659,7 @@ def test_map_with_dvpp_resize_crop_with_exception():
         count = 0
         for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is 23HW4
     class RandomAccessDataset23HW4:
@@ -1728,7 +1719,7 @@ def test_map_with_dvpp_perspective_with_exception():
         count = 0
         for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is HW4
     class RandomAccessDatasetHW4:
@@ -1750,7 +1741,7 @@ def test_map_with_dvpp_perspective_with_exception():
         count = 0
         for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1 or 3" in str(info.value)
+    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
 
     # the input is 23HW4
     class RandomAccessDataset23HW4:
