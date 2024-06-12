@@ -17,6 +17,16 @@ Element-wise Operation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Element-wise Operation
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.abs
+
 mindspore.mint.nn
 ------------------
 

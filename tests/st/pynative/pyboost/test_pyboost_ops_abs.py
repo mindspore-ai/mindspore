@@ -15,11 +15,11 @@
 import pytest
 import numpy as np
 import test_utils
-import mindspore
+import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops.auto_generate import abs
 from mindspore import ops
-
+from mindspore import context
 
 @test_utils.run_with_cell
 def abs_forward_func(x):
@@ -31,37 +31,109 @@ def abs_backward_func(x):
     return ops.grad(abs_forward_func, (0))(x)
 
 
+def abs_dyn_shape_func(x):
+    return abs(x)
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_pyboost_abs_forward():
+@pytest.mark.parametrize('mode',
+                         [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_abs_forward(mode):
     """
     Feature: test abs operator
     Description: test abs forward by pyboost
     Expectation: success
     """
-    x = Tensor([1.0, -2.0, -3.0], mindspore.float32)
-    output1 = abs_forward_func(x)
-    assert np.allclose(output1.asnumpy(), [1.0, 2.0, 3.0])
-    x = Tensor([1, 0, 0], mindspore.bool_)
-    output2 = abs_forward_func(x)
-    assert np.allclose(output2.asnumpy(), [True, False, False])
+    ms.context.set_context(mode=mode)
+    x = Tensor([1.0, -2.0, -3.0], ms.float32)
+    output = abs_forward_func(x)
+    assert np.allclose(output.asnumpy(), [1.0, 2.0, 3.0])
+    x = Tensor([1, 0, 0], ms.int8)
+    output = abs_forward_func(x)
+    assert np.allclose(output.asnumpy(), [1, 0, 0])
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_pyboost_abs_backward():
+@pytest.mark.parametrize('mode',
+                         [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_abs_backward(mode):
     """
     Feature: test abs operator
     Description: test abs backward by pyboost
     Expectation: success
     """
-    x = Tensor([1.0, -2.0, -3.0], mindspore.float32)
-    output1 = abs_backward_func(x)
-    assert np.allclose(output1.asnumpy(), [1.0, -1.0, -1.0])
-    x = Tensor([1, 0, 0], mindspore.float32)
-    output2 = abs_backward_func(x)
-    assert np.allclose(output2.asnumpy(), [1.0, 0, 0])
+    ms.context.set_context(mode=mode)
+    x = Tensor([1.0, -2.0, -3.0], ms.float32)
+    output = abs_backward_func(x)
+    assert np.allclose(output.asnumpy(), [1.0, -1.0, -1.0])
+    x = Tensor([1, 0, 0], ms.float32)
+    output = abs_backward_func(x)
+    assert np.allclose(output.asnumpy(), [1.0, 0, 0])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode',
+                         [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_abs_vmap(mode):
+    """
+    Feature: test vmap function.
+    Description: test abs op vmap.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x = Tensor([[1.0, -2.0, -3.0], [1.0, -2.0, -3.0]], ms.float32)
+    abs_vmap = ops.vmap(abs_forward_func)
+    output = abs_vmap(x)
+    assert np.allclose(output.asnumpy(), [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode',
+                         [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_abs_dynamic_shape(mode):
+    """
+    Feature: test dynamic tensor of abs.
+    Description: test dynamic tensor of abs.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x_dyn = Tensor(shape=[None], dtype=ms.float32)
+    x = Tensor([1.0, -2.0, -3.0], dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(abs_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    out = test_cell(x)
+    expect = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+    assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode',
+                         [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_abs_dynamic_rank(mode):
+    """
+    Feature: test dynamic tensor of abs.
+    Description: test dynamic tensor of abs.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    x = Tensor([1.0, -2.0, -3.0], dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(abs_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    out = test_cell(x)
+    expect = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+    assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
