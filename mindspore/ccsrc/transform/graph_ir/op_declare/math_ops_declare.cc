@@ -500,6 +500,13 @@ CUST_ATTR_MAP(IRFFTDouble) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(IRFFTDouble) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(IRFFTDouble, prim::kPrimIRFFTDouble->name(), CUST_ADPT_DESC(IRFFTDouble));
 
+// FFTOrtho
+CUST_INPUT_MAP(FFTOrtho) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(axes)}};
+CUST_ATTR_MAP(FFTOrtho) = EMPTY_ATTR_MAP;
+CUST_INPUT_ATTR_MAP(FFTOrtho) = {{3, ATTR_DESC(forward, AnyTraits<bool>())}};
+CUST_OUTPUT_MAP(FFTOrtho) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FFTOrtho, prim::kPrimFFTOrtho->name(), CUST_ADPT_DESC(FFTOrtho));
+
 std::vector<std::string> mode_strings = {"pad", "same", "valid", "full"};
 // Correlate
 CUST_INPUT_MAP(Correlate) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(v)}};
@@ -509,13 +516,32 @@ CUST_OUTPUT_MAP(Correlate) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(Correlate, prim::kPrimCorrelate->name(), CUST_ADPT_DESC(Correlate));
 
 // DCT
-CUST_INPUT_MAP(DCT) = {{1, INPUT_DESC(x)}};
+CUST_INPUT_MAP(DCT) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(type)}, {3, INPUT_DESC(n)}, {4, INPUT_DESC(axis)}, {5, INPUT_DESC(norm)}};
 CUST_ATTR_MAP(DCT) = EMPTY_ATTR_MAP;
-CUST_INPUT_ATTR_MAP(DCT) = {{2, ATTR_DESC(type, AnyTraits<int64_t>())}, {3, ATTR_DESC(n, AnyTraits<int64_t>())},
-                            {4, ATTR_DESC(axis, AnyTraits<int64_t>())}, {5, ATTR_DESC(norm, AnyTraits<int64_t>())},
-                            {6, ATTR_DESC(forward, AnyTraits<bool>())}, {7, ATTR_DESC(grad, AnyTraits<bool>())}};
 CUST_OUTPUT_MAP(DCT) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DCT, prim::kPrimDCT->name(), CUST_ADPT_DESC(DCT));
+
+// IDCT
+CUST_INPUT_MAP(IDCT) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(type)}, {3, INPUT_DESC(n)}, {4, INPUT_DESC(axis)}, {5, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(IDCT) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(IDCT) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IDCT, prim::kPrimIDCT->name(), CUST_ADPT_DESC(IDCT));
+
+// DCTN
+CUST_INPUT_MAP(DCTN) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(type)}, {3, INPUT_DESC(s)}, {4, INPUT_DESC(axes)}, {5, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(DCTN) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(DCTN) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DCTN, prim::kPrimDCTN->name(), CUST_ADPT_DESC(DCTN));
+
+// IDCT
+CUST_INPUT_MAP(IDCTN) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(type)}, {3, INPUT_DESC(s)}, {4, INPUT_DESC(axes)}, {5, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(IDCTN) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(IDCTN) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IDCTN, prim::kPrimIDCTN->name(), CUST_ADPT_DESC(IDCTN));
 
 // Polar
 CUST_INPUT_MAP(Polar) = {{1, INPUT_DESC(abs)}, {2, INPUT_DESC(angle)}};

@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 #include <utility>
-#include "ops/ops_func_impl/dct.h"
+#include "ops/ops_func_impl/idct.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 #include "ops/ops_func_impl/fft_arithmetic.h"
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr DCTFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args) const {
+BaseShapePtr IDCTFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                      const std::vector<AbstractBasePtr> &input_args) const {
   return DCTInferShape(primitive, input_args);
 }
 
-TypePtr DCTFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+TypePtr IDCTFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   return DCTInferType(primitive, input_args);
 }
 
-int32_t DCTFuncImpl::CheckValidation(const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args) const {
+int32_t IDCTFuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                      const std::vector<AbstractBasePtr> &input_args) const {
   return DCTCheckValidation(primitive, input_args);
 }
 
