@@ -107,7 +107,15 @@ class ParallelValidator:
         if node_name not in cnode_info_dict.keys():
             return False
         inputs = cnode_info_dict[node_name]['inputs']
-        return inputs == expect_inputs
+        if len(inputs) != len(expect_inputs):
+            return False
+        result = []
+        for i in range(len(expect_inputs)):
+            if isinstance(expect_inputs[i], (int, list, tuple)) and isinstance(inputs[i], str):
+                result.append(str(expect_inputs[i]) in inputs[i])
+                continue
+            result.append(expect_inputs[i] == inputs[i])
+        return all(result)
 
     def check_node_inputs_fuzzy_match(self, node_name: str, expect_inputs: [tuple, list], graph_id=0) -> bool:
         """Verify node inputs fuzzy match"""
@@ -132,6 +140,11 @@ class ParallelValidator:
                 return False
         return True
 
+    def _is_shape(self, input_shape, expect_input):
+        flag1 = [isinstance(i, int) for i in input_shape]
+        flag2 = [isinstance(i, int) for i in expect_input]
+        return all(flag1) and all(flag2)
+
     def check_node_inputs_has(self, node_name: str, expect_inputs: [tuple, list], graph_id=0) -> bool:
         """Verify node inputs fuzzy match"""
         if not isinstance(expect_inputs, (tuple, list)):
@@ -144,7 +157,8 @@ class ParallelValidator:
         inputs = cnode_info_dict[node_name]['inputs']
         expect_len = len(expect_inputs)
         inputs_len = len(inputs)
-
+        if self._is_shape(inputs, expect_inputs):
+            return inputs == expect_inputs
         for i in range(expect_len):
             found = False
             for j in range(inputs_len):

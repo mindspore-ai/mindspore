@@ -27,6 +27,8 @@
 #include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/tensor_layout/prime_generator.h"
+#include "frontend/parallel/tensor_layout/layout_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -99,6 +101,19 @@ Status TensorRedistribution::Init(const TensorLayout &from, const TensorLayout &
     MS_LOG(ERROR) << "Make from_layout and to_layout failed.";
     return FAILED;
   }
+  this->is_dynamic_shape_ = CheckDynamicShape(from, to);
+  if (this->is_dynamic_shape_) {
+    // Dynamic info of func_graph should be considered.
+    MS_LOG(INFO) << "LayoutTransfer inited with dynamic shape.";
+    this->from_origin_no_assembled_ = this->from_origin_;
+    this->to_origin_no_assembled_ = this->to_origin_;
+    Status ret = this->AssembleStaticTensorShape(this->from_origin_no_assembled_, this->to_origin_no_assembled_,
+                                                 &this->from_origin_, &this->to_origin_);
+    if (ret != Status::SUCCESS) {
+      return ret;
+    }
+    this->is_assembled_static_shape_ = true;
+  }
   const Shape from_origin_shape = from_origin_.tensor_shape().array();
   const Shape to_origin_shape = to_origin_.tensor_shape().array();
   bool is_from_dyn = std::find(from_origin_shape.begin(), from_origin_shape.end(), -1) != from_origin_shape.end();
@@ -120,17 +135,257 @@ Status TensorRedistribution::Init(const TensorLayout &from, const TensorLayout &
       }
     }
   }
-
-  size_t cnt = std::count(to_origin_shape.begin(), to_origin_shape.end(), -1);
-  if ((is_from_dyn || is_to_dyn) && cnt >= SIZE_TWO) {
-    from_ = from_origin_;
-    to_ = to_origin_;
-  } else {
-    from_ = from_origin_.SqueezeShape();
-    to_ = to_origin_.SqueezeShape();
-  }
+  from_ = from_origin_.SqueezeShape();
+  to_ = to_origin_.SqueezeShape();
 
   this->is_inited_ = true;
+  return Status::SUCCESS;
+}
+
+Status TensorRedistribution::CalculateFromTensorShape(Shape *from_shape, const Array &from_factors,
+                                                      const Shape &to_shape, const Array &to_factors) {
+  if (from_shape->size() != from_factors.GetDimSize() || to_shape.size() != to_factors.GetDimSize()) {
+    MS_LOG(ERROR) << "Shape size is not equal to factor size.";
+    return Status::FAILED;
+  }
+  int64_t to_layout_added_factor = GetLeastFactorWithoutConstDims(to_shape, to_factors);
+  int64_t to_layout_const_size = GetTensorSize(to_shape);
+  int64_t from_layout_const_size = GetTensorSize(*from_shape);
+  if (to_layout_const_size > from_layout_const_size && to_layout_const_size % from_layout_const_size == 0) {
+    to_layout_added_factor *= (to_layout_const_size / from_layout_const_size);
+  }
+  MS_LOG(INFO) << "from_shape=" << (*from_shape) << ", from_factors=" << from_factors.array()
+               << ", to_shape=" << to_shape << ", to_factors=" << to_factors.array()
+               << ", to_layout_added_factor=" << to_layout_added_factor;
+  if (from_layout_const_size > to_layout_const_size && from_layout_const_size % to_layout_const_size == 0) {
+    int64_t merged_const_factor = from_layout_const_size / to_layout_const_size;
+    // Existed dim in from_layout already satisfy to_layout_added_factor.
+    if (to_layout_added_factor > merged_const_factor && to_layout_added_factor % merged_const_factor == 0) {
+      to_layout_added_factor /= merged_const_factor;
+    }
+    if (to_layout_added_factor == 1) {
+      to_layout_added_factor = -1;
+    }
+  }
+  bool strict_mode = UseStrictMode(*from_shape, to_shape);
+  std::vector<int64_t> known_dims;
+  (void)std::copy_if(from_shape->begin(), from_shape->end(), std::back_inserter(known_dims),
+                     [](int64_t dim) -> bool { return dim != -1; });
+  constexpr size_t INVALID_TENSOR_RANK = 9999;
+  size_t last_dyn_dim = INVALID_TENSOR_RANK;
+  auto last_dyn_dim_iter = std::find(from_shape->rbegin(), from_shape->rend(), -1);
+  if (last_dyn_dim_iter != from_shape->rend()) {
+    last_dyn_dim = from_shape->size() - (last_dyn_dim_iter - from_shape->rbegin()) - 1;
+  }
+  for (size_t i = 0; i < from_shape->size(); ++i) {
+    if (from_shape->at(i) != -1) {
+      continue;
+    }
+    int64_t prime_num = PrimeGenerator::GetInstance()->GetCoprimeNum(known_dims);
+    if (prime_num == -1) {
+      return Status::FAILED;
+    }
+    (*from_shape)[i] = prime_num * from_factors.GetDimByIdx(i);
+    if (strict_mode && from_shape->at(i) < to_factors.GetDimByIdx(i) &&
+        from_factors.GetDimByIdx(i) < to_factors.GetDimByIdx(i)) {
+      int64_t common_factor = std::gcd(from_factors.GetDimByIdx(i), to_factors.GetDimByIdx(i));
+      int64_t left_factor = to_factors.GetDimByIdx(i) / common_factor;
+      (*from_shape)[i] *= left_factor;
+      if (to_layout_added_factor >= left_factor && to_layout_added_factor % left_factor == 0) {
+        to_layout_added_factor /= left_factor;
+      }
+      if (to_layout_added_factor < left_factor) {
+        to_layout_added_factor = -1;
+      }
+    }
+    if (strict_mode && from_shape->at(i) >= to_factors.GetDimByIdx(i) &&
+        from_shape->at(i) % to_factors.GetDimByIdx(i) != 0) {
+      (*from_shape)[i] *= to_factors.GetDimByIdx(i);
+      if (to_layout_added_factor >= to_factors.GetDimByIdx(i) &&
+          to_layout_added_factor % to_factors.GetDimByIdx(i) == 0) {
+        to_layout_added_factor /= to_factors.GetDimByIdx(i);
+      }
+    }
+    if (i == last_dyn_dim && to_layout_added_factor > 0) {
+      if (from_shape->at(i) % to_layout_added_factor != 0) {
+        (*from_shape)[i] *= to_layout_added_factor;
+      }
+      to_layout_added_factor = -1;
+    }
+    known_dims.emplace_back(from_shape->at(i));
+    MS_LOG(DEBUG) << "Replace  " << i << " with value " << from_shape->at(i) << " prime " << prime_num;
+    if (!RecordDimsChange(i, from_shape->at(i), &this->from_dims_replace_memo_)) {
+      MS_LOG(ERROR) << "Index " << i << " conflicts.";
+      return Status::FAILED;
+    }
+  }
+  return Status::SUCCESS;
+}
+
+static std::vector<int64_t> EnumerateArray(int64_t base_n, size_t length = 100) {
+  static std::map<int64_t, std::vector<int64_t>> enum_numbers;
+  if (enum_numbers.find(base_n) != enum_numbers.end()) {
+    return enum_numbers.at(base_n);
+  }
+  std::vector<int64_t> array(length);
+  for (size_t i = 1; i < length + 1; ++i) {
+    array[i - 1] = base_n * SizeToLong(i);
+  }
+  return array;
+}
+
+Status TensorRedistribution::CalculateToTensorShapeUsingEnumeration(const Shape &from_tsr_shape, Shape *to_tsr_shape,
+                                                                    const Array &factors) {
+  int64_t src_element_size = GetTensorSize(from_tsr_shape);
+  int64_t dst_element_size = GetTensorSize(*to_tsr_shape);
+  if (src_element_size % dst_element_size != 0) {
+    MS_LOG(ERROR) << "Calculate to tensor shape failed. Tensor shape size is not matched.";
+    return Status::FAILED;
+  }
+  const int64_t dyn_dim_val = -1;
+  int64_t dyn_axis_cnt = std::count(to_tsr_shape->begin(), to_tsr_shape->end(), dyn_dim_val);
+  int64_t left_size = src_element_size / dst_element_size;
+
+  if (dyn_axis_cnt == 0) {
+    if (left_size != 1) {
+      MS_LOG(ERROR) << "Calculate to tensor shape failed. Tensor shape size is not matched.";
+      return Status::FAILED;
+    }
+    return Status::SUCCESS;
+  }
+
+  if (dyn_axis_cnt == 1) {
+    /**
+     * Case1:
+     * from: c1, -1(32), c3, c4; to: c1/2, -1(32)*c3, c4
+     */
+    auto iter = std::find(to_tsr_shape->begin(), to_tsr_shape->end(), dyn_dim_val);
+    size_t index = static_cast<size_t>(iter - to_tsr_shape->begin());
+    if (left_size % factors.GetDimByIdx(index) != 0) {
+      MS_LOG(ERROR) << "Generate static shape failed, the shape cannot be divided by factor. dim=" << left_size
+                    << ", factor=" << factors.GetDimByIdx(index);
+      return Status::FAILED;
+    }
+    (*iter) = left_size;
+    if (!RecordDimsChange(index, left_size, &this->to_dims_replace_memo_)) {
+      MS_LOG(ERROR) << "Index " << iter - to_tsr_shape->begin() << " conflicts.";
+      return Status::FAILED;
+    }
+    return Status::SUCCESS;
+  } else {
+    /**
+     * Case2:
+     * from: -1(16), c1, c2; to: -1(2), c1*c2/2, 2*-1(8)
+     * Solution:
+     * -1(16), c1*c2/2, 2
+     *      A,       B, c1*c2/2, 2
+     *      A, c1*c2/2, 2* B
+     *
+     * A*B=3*16 && A%2=0 && B%8=0
+     */
+    std::vector<std::vector<int64_t>> enum_numbers;
+    for (size_t i = 0; i < to_tsr_shape->size(); ++i) {
+      if (to_tsr_shape->at(i) == -1) {
+        std::vector<int64_t> array = EnumerateArray(factors.GetDimByIdx(i));
+        enum_numbers.emplace_back(array);
+      }
+    }
+    std::vector<int64_t> candidates(enum_numbers.size());
+    if (!SolveCombination(from_tsr_shape, 0, enum_numbers, 0, left_size, &candidates)) {
+      MS_LOG(ERROR) << "Not supported for now.";
+      return Status::FAILED;
+    }
+    size_t cnt = 0;
+    for (size_t i = 0; i < to_tsr_shape->size(); ++i) {
+      if (to_tsr_shape->at(i) == -1) {
+        (*to_tsr_shape)[i] = candidates[cnt++];
+        if (!RecordDimsChange(i, to_tsr_shape->at(i), &this->to_dims_replace_memo_)) {
+          MS_LOG(ERROR) << "Index " << i << " conflicts.";
+          return Status::FAILED;
+        }
+      }
+    }
+    return Status::SUCCESS;
+  }
+}
+
+Status TensorRedistribution::CalculateToTensorShape(const Shape &from_shape, const Shape &origin_to_shape,
+                                                    const Array &to_in_factors, Shape *to_shape) {
+  // Use forward and backward matching first, if failed, turn to enumeration.
+  bool flag_forward_match = ForwardMatching(from_shape, origin_to_shape, to_shape, to_in_factors);
+  if (!flag_forward_match && !BackwardMatching(origin_to_shape, to_shape, to_in_factors)) {
+    MS_LOG(DEBUG) << "Backward matching failed.";
+    if (CalculateToTensorShapeUsingEnumeration(from_shape, to_shape, to_in_factors) != Status::SUCCESS) {
+      MS_LOG(ERROR) << "Calculate to tensor shape failed trying to use enumeration method.";
+      return Status::FAILED;
+    }
+  }
+  return Status::SUCCESS;
+}
+
+Status TensorRedistribution::AssembleStaticTensorShape(const TensorLayout &from_in, const TensorLayout &to_in,
+                                                       TensorLayout *new_from_layout, TensorLayout *new_to_layout) {
+  Shape new_from_shape(from_in.tensor_shape().array());
+  Shape original_to_shape = to_in.tensor_shape().array();
+  Array from_in_factors;
+  if (GetFactors(from_in, &from_in_factors) != Status::SUCCESS) {
+    MS_LOG(ERROR) << "Get from_in factors failed.";
+    return Status::FAILED;
+  }
+  Array to_in_factors;
+  if (GetFactors(to_in, &to_in_factors) != Status::SUCCESS) {
+    MS_LOG(ERROR) << "Get to_in factors failed.";
+    return Status::FAILED;
+  }
+  if (CalculateFromTensorShape(&new_from_shape, from_in_factors, original_to_shape, to_in_factors) != Status::SUCCESS) {
+    MS_LOG(ERROR) << "Failed to generate static shape for from_tensor layout: " << from_in.ToString();
+    return Status::FAILED;
+  }
+  Shape new_to_shape(to_in_factors.GetDimSize(), 1);
+  if (CalculateToTensorShape(new_from_shape, original_to_shape, to_in_factors, &new_to_shape)) {
+    MS_LOG(ERROR) << "Failed to generate static shape for to_tensor layout: " << to_in.ToString() << std::endl
+                  << "from_in layout: " << from_in.ToString() << std::endl
+                  << "Already generate from_in shape: " << new_from_shape;
+    return Status::FAILED;
+  }
+  size_t size = std::min(new_from_shape.size(), new_to_shape.size());
+  if (GetTensorSize(new_from_shape) != GetTensorSize(new_to_shape)) {
+    int64_t acc_scalar = 1;
+    for (size_t i = 0; i < size; ++i) {
+      if (new_from_shape.at(i) > new_to_shape.at(i) && new_from_shape.at(i) % new_to_shape.at(i) == 0) {
+        int64_t scalar = new_from_shape.at(i) / new_to_shape.at(i);
+        new_to_shape[i] = new_to_shape[i] * scalar;
+        acc_scalar *= scalar;
+      }
+    }
+    const Shape &f_in_tensor_shape = from_in.tensor_shape().array();
+    auto last_dyn_dim_iter = std::find(f_in_tensor_shape.rbegin(), f_in_tensor_shape.rend(), -1);
+    if (last_dyn_dim_iter != f_in_tensor_shape.rend()) {
+      size_t last_dyn_dim =
+        f_in_tensor_shape.size() - static_cast<size_t>(last_dyn_dim_iter - f_in_tensor_shape.rbegin()) - 1;
+      new_from_shape[static_cast<size_t>(last_dyn_dim)] *= acc_scalar;
+    }
+  }
+
+  // Unify shape from begin to end.
+  UnifyFromAndToShape(&new_from_shape, &new_to_shape, from_in, to_in, &this->from_dims_replace_memo_);
+
+  MS_LOG(INFO) << "new_from_shape=" << new_from_shape << ", new_to_shape=" << new_to_shape;
+  if (new_from_layout->InitFromVector(from_in.device_arrangement().array(), from_in.tensor_map().array(),
+                                      new_from_shape) != Status::SUCCESS) {
+    MS_LOG(ERROR) << "Failed to init new from_tensor layout.";
+    return Status::FAILED;
+  }
+  MS_LOG(DEBUG) << "Init new_from_tensor layout, origin:" << from_in.ToString()
+                << ", new:" << new_from_layout->ToString();
+
+  if (new_to_layout->InitFromVector(to_in.device_arrangement().array(), to_in.tensor_map().array(), new_to_shape) !=
+      Status::SUCCESS) {
+    MS_LOG(ERROR) << "Failed to init new to_tensor layout.";
+    return Status::FAILED;
+  }
+  MS_LOG(DEBUG) << "Init new_to_layout layout, origin:" << to_in.ToString() << ", new:" << new_to_layout->ToString();
+
   return Status::SUCCESS;
 }
 
@@ -175,6 +430,36 @@ std::pair<int64_t, AnfNodePtr> GetDimMapping(const AssembledDynamicDimsMapping &
     }
   }
   MS_LOG(EXCEPTION) << "Cannot find index " << index << " in AssembledDynamicDimsMapping.";
+}
+
+void TensorRedistribution::UnifyAssembledMappingWithSqueezedFromShape() {
+  AssembledDynamicDimsMapping new_mapping;
+  for (const auto &iter : this->dynamic_dim_mapping_) {
+    auto origin_tuple_get_item = iter.second.second;
+    auto origin_tuple_get_item_cnode = origin_tuple_get_item->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(origin_tuple_get_item_cnode);
+    auto func_graph = origin_tuple_get_item->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto prim_tuple_get_item = std::make_shared<Primitive>(TUPLE_GETITEM_OP);
+    int64_t index = SizeToLong(iter.second.first) + 1;
+    AnfNodePtrList inputs{NewValueNode(prim_tuple_get_item), origin_tuple_get_item_cnode->input(1),
+                          NewValueNode(MakeValue(index))};
+    auto tuple_get_item_cnode = func_graph->NewCNode(inputs);
+    tuple_get_item_cnode->set_fullname_with_scope(iter.second.second->fullname_with_scope());
+    prim_tuple_get_item->set_instance_name("tuple_getitem_for_value_" + std::to_string(iter.first));
+    if (iter.second.second->isa<CNode>()) {
+      auto raw_cnode = iter.second.second->cast<CNodePtr>();
+      if (IsValueNode<Primitive>(raw_cnode->input(0))) {
+        auto prim_node = raw_cnode->input(0)->cast<ValueNodePtr>();
+        auto prim = GetValueNode<PrimitivePtr>(prim_node);
+        prim_tuple_get_item->set_instance_name(prim->instance_name());
+      }
+    }
+    new_mapping.insert({iter.first, {iter.second.first, tuple_get_item_cnode}});
+    MS_LOG(WARNING) << "Adjust TupleGetItem for dim=" << iter.second.first << " to " << iter.second.first + 1
+                    << " to replace value=" << iter.first;
+  }
+  this->dynamic_dim_mapping_ = new_mapping;
 }
 
 void TensorRedistribution::UnifyAssembledMappingWithSameSize(const std::set<int64_t> &index_mapping) {
@@ -238,16 +523,25 @@ void TensorRedistribution::UnifyAssembledMappingWithDiffSize(const std::set<int6
       int64_t left_size = real_dim_value / unified_slice_shape[unified_offset];
       MS_EXCEPTION_IF_CHECK_FAIL(left_size >= 1, "left_size must be greater than or equal to 1.");
       int64_t divisor = real_dim_value / unified_slice_shape[unified_offset];
-      AnfNodePtr new_dim_node = CreateDiv(dyn_dim.second, divisor, func_graph, true, "assemble_dynamic_shape_op");
-      new_mapping.insert({unified_slice_shape[unified_offset], {unified_offset, new_dim_node}});
-      MS_LOG(INFO) << "insert at " << unified_offset << " with " << unified_slice_shape[unified_offset];
+      if (GetPrimeFactor(unified_slice_shape[unified_offset]) != -1) {
+        AnfNodePtr new_dim_node = CreateDiv(dyn_dim.second, divisor, func_graph, true, "assemble_dynamic_shape_op");
+        new_mapping.insert({unified_slice_shape[unified_offset], {unified_offset, new_dim_node}});
+        MS_LOG(INFO) << "insert at " << unified_offset << " with " << unified_slice_shape[unified_offset];
+      } else {
+        new_mapping.insert({unified_slice_shape[unified_offset], {unified_offset, dyn_dim.second}});
+        MS_LOG(INFO) << "insert at " << unified_offset << " with " << unified_slice_shape[unified_offset];
+      }
       --unified_offset;
       while (left_size != 1 && unified_offset >= 0) {
         left_size = left_size / unified_slice_shape[unified_offset];
-        divisor = real_dim_value / unified_slice_shape[unified_offset];
-        new_dim_node = CreateDiv(dyn_dim.second, divisor, func_graph, true, "assemble_dynamic_shape_op");
-        new_mapping.insert({unified_slice_shape[unified_offset], {unified_offset, new_dim_node}});
-        MS_LOG(INFO) << "insert at " << unified_offset << " with " << unified_slice_shape[unified_offset];
+        // If it's prime then add it to mapping.
+        if (GetPrimeFactor(unified_slice_shape[unified_offset]) != -1) {
+          new_mapping.insert({unified_slice_shape[unified_offset], {unified_offset, dyn_dim.second}});
+          MS_LOG(INFO) << "insert at " << unified_offset << " with " << unified_slice_shape[unified_offset];
+        } else {
+          MS_LOG(INFO) << "skip at " << unified_offset << " for " << unified_slice_shape[unified_offset]
+                       << ", because it's not a prime.";
+        }
         --unified_offset;
       }
       if (left_size != 1 && unified_offset < 0) {
@@ -263,8 +557,14 @@ void TensorRedistribution::UnifyAssembledMappingWithDiffSize(const std::set<int6
 void TensorRedistribution::UnifyAssembledMapping() {
   // 12,10,2,2 -> 2,6,10,2,2, 12 and 10 are all dynamic.
   //  4, 6,2,2 -> 2,2, 6,2,2, 4 is static and 6 is dynamic.
-  Shape from_shape = this->assembled_static_origin_from_.tensor_shape().array();
-  Shape origin_slice_shape = this->assembled_static_origin_from_.slice_shape().array();
+  // After refactor, from_origin_ and layer_transfer_.from_in are both in static shape.
+  // 1. If origin_from_shape.size > before_unified_from_shape, it means the shape is squeezed.
+  //   Squeezed could be in head and also be in tail.
+  // 2. If before_unified_from_shape < unified_from_shape, it means the shape is expanded.
+  Shape origin_from_shape = this->from_origin_.tensor_shape().array();
+  Shape origin_from_slice_shape = this->from_origin_.slice_shape().array();
+  Shape before_unified_from_shape = this->assembled_static_origin_from_.tensor_shape().array();
+  Shape before_unified_from_slice_shape = this->assembled_static_origin_from_.slice_shape().array();
   Shape unified_from_shape = this->layout_transfer_.from_in().tensor_shape().array();
   Shape unified_from_slice_shape = this->layout_transfer_.from_in().slice_shape().array();
 
@@ -272,25 +572,47 @@ void TensorRedistribution::UnifyAssembledMapping() {
   for (const auto &iter : this->dynamic_dim_mapping_) {
     index_mapping.insert(iter.second.first);
   }
-
-  MS_LOG(INFO) << "from_shape=" << from_shape << ", origin_slice_shape=" << origin_slice_shape
-               << ", unified_from_shape=" << unified_from_shape
+  MS_LOG(INFO) << "\norigin_from_shape=" << origin_from_shape << ", origin_from_slice_shape=" << origin_from_slice_shape
+               << ", \nbefore_unified_from_shape=" << before_unified_from_shape
+               << ", before_unified_from_slice_shape=" << before_unified_from_slice_shape
+               << ", \nunified_from_shape=" << unified_from_shape
                << ", unified_from_slice_shape=" << unified_from_slice_shape;
-
-  if (unified_from_shape.size() == from_shape.size()) {
-    this->UnifyAssembledMappingWithSameSize(index_mapping);
-  } else if (unified_from_shape.size() > from_shape.size()) {
-    this->UnifyAssembledMappingWithDiffSize(index_mapping);
-  } else {
-    MS_LOG(EXCEPTION) << "unified_from_shape.size() must be greater than from_shape.size().";
+  if (before_unified_from_shape.size() == origin_from_shape.size() - 1 &&
+      (origin_from_shape.front() == 1 || origin_from_shape.back() == 1)) {
+    // It means unified_from_shape and before_unified_from_shape are squeezed,
+    // origin_from_shape has no squeezed info.
+    MS_LOG(WARNING) << "before_unified_from_shape == origin_from_shape - 1.";
+    this->UnifyAssembledMappingWithSqueezedFromShape();
+    return;
   }
+  if (unified_from_shape.size() == origin_from_shape.size()) {
+    MS_LOG(WARNING) << "unified_from_shape == origin_from_shape.";
+    this->UnifyAssembledMappingWithSameSize(index_mapping);
+    return;
+  }
+  if (unified_from_shape.size() > before_unified_from_shape.size()) {
+    // In this branch, it means the unified_from_shape is expanded,
+    // or it's reshaped to another shape.
+    MS_LOG(WARNING) << "unified_from_shape > before_unified_from_shape.";
+    if (before_unified_from_shape.size() == origin_from_shape.size() - 1 &&
+        (origin_from_shape.front() == 1 || origin_from_shape.back() == 1)) {
+      // It means shape has been squeezed, so add one to index in mapping.
+      this->UnifyAssembledMappingWithSqueezedFromShape();
+    }
+    this->UnifyAssembledMappingWithDiffSize(index_mapping);
+    return;
+  }
+  MS_LOG(EXCEPTION) << "unified_from_shape.size() must be greater than before_unified_from_shape.size().";
 }
 
 void TensorRedistribution::CreateAssembledDynamicMapping(const CNodePtr &cur_cnode, const AnfNodePtr &pre_cnode,
                                                          const FuncGraphPtr &func_graph, int64_t redistribution_index) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  MS_LOG(DEBUG) << "Start to create assembled dynamic shape mapping for " << pre_cnode->fullname_with_scope() << "->"
-                << cur_cnode->fullname_with_scope();
+  if (!this->IsAssembledStaticShape()) {
+    return;
+  }
+  MS_LOG(INFO) << "Start to create assembled dynamic shape mapping for " << pre_cnode->fullname_with_scope() << "->"
+               << cur_cnode->fullname_with_scope();
   this->dynamic_dim_mapping_.clear();
 
   AnfNodePtr shape_root = pre_cnode;
@@ -308,23 +630,31 @@ void TensorRedistribution::CreateAssembledDynamicMapping(const CNodePtr &cur_cno
     shape_root = cur_cnode->input(redistribution_index);
     MS_LOG(INFO) << "Change shape_root to " << shape_root->fullname_with_scope();
   }
+
+  ReplacementMemo from_layout_memo = this->from_dims_replace_memo_;
+  Shape assembled_origin_slice_shape = this->from_origin_.slice_shape().array();
   MS_LOG(INFO) << "Start to create assembled dynamic shape mapping: " << pre_cnode->fullname_with_scope() << "->"
-               << cur_cnode->fullname_with_scope() << ", shape_root=" << shape_root->fullname_with_scope();
-  ReplacementMemo from_layout_memo = this->layout_transfer_.FromLayoutDimsReplacementMemo();
+               << cur_cnode->fullname_with_scope() << ", shape_root=" << shape_root->fullname_with_scope()
+               << ", assembled_origin_slice_shape=" << assembled_origin_slice_shape;
   // 1. New shape and set pre_cnode to its inputs.
-  auto shape_cnode = CreateShape(shape_root, func_graph, "assemble_dynamic_shape_op");
+  std::string instance_name = std::string(REDISTRIBUTION_OP) + "_" + pre_cnode->fullname_with_scope();
+  auto shape_cnode = CreateShape(shape_root, func_graph, instance_name + "_get_shape");
   // 2. Create TupleGetItem node to get dim value and insert to mapping.
   for (const auto &iter : from_layout_memo) {
     int64_t dim = SizeToLong(iter.first);
     int64_t replacement = iter.second;
+    MS_EXCEPTION_IF_CHECK_FAIL(replacement % assembled_origin_slice_shape[LongToSize(dim)] == 0,
+                               "Slice shape is not matched.");
+    MS_EXCEPTION_IF_CHECK_FAIL(LongToSize(dim) < assembled_origin_slice_shape.size(), "Slice shape is not matched.");
+    replacement = assembled_origin_slice_shape[dim];
     auto prim_tuple_get_item = std::make_shared<Primitive>(TUPLE_GETITEM_OP);
     AnfNodePtrList inputs{NewValueNode(prim_tuple_get_item), shape_cnode, NewValueNode(MakeValue(dim))};
     auto tuple_get_item_cnode = func_graph->NewCNode(inputs);
     tuple_get_item_cnode->set_fullname_with_scope("tuple_getitem_for_value_" + std::to_string(replacement));
+    prim_tuple_get_item->set_instance_name(instance_name + "_getitem");
     this->dynamic_dim_mapping_.insert({replacement, {iter.first, tuple_get_item_cnode}});
-    MS_LOG(DEBUG) << "Create TupleGetItem for dim=" << dim << " to replace value=" << replacement;
+    MS_LOG(INFO) << "Create TupleGetItem for dim=" << dim << " to replace value=" << replacement;
   }
-  this->UnifyAssembledMapping();
 }
 
 void AppendOperatorVecStr(const OperatorVector &vec, std::string *res) {
@@ -337,7 +667,7 @@ void AppendOperatorVecStr(const OperatorVector &vec, std::string *res) {
 }
 
 RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorListUnExpand(bool is_cost_model) {
-  MS_LOG(DEBUG) << "Start to infer tensor redistribution with unexpanded.";
+  MS_LOG(INFO) << "Start to infer tensor redistribution with unexpanded.";
   TensorLayout from_origin = this->from_origin_;
   TensorLayout to_origin = this->to_origin_;
   TensorLayout from_repeat = from_origin.TransferRepeatLayout();
@@ -353,12 +683,10 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
       Status::FAILED) {
     return nullptr;
   }
-#ifdef DEBUG
   std::string operator_vec_str;
   AppendOperatorVecStr(operator_vector, &operator_vec_str);
-  MS_LOG(DEBUG) << "After InferRedistribution line112, operator_vector size: " << operator_vector.size()
-                << ", operator_vector: " << operator_vec_str;
-#endif
+  MS_LOG(INFO) << "After InferRedistribution, operator_vector size: " << operator_vector.size()
+               << ", operator_vector: " << operator_vec_str;
   if (from_repeat.slice_shape().array() != to_repeat.slice_shape().array()) {
     reshape_flag_ = true;
     ConstructOperator constructor;
@@ -379,43 +707,70 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
       Status::FAILED) {
     return nullptr;
   }
-  ConstructOperator constructor;
-  if (from_origin_.base_slice_shape().array() != from_origin_.slice_shape().array()) {
-    reshape_flag_ = true;
-    constructor.UpdateTensorShape(from_origin_.base_slice_shape().array());
-    Arrangement shape = from_origin_.slice_shape();
-    MS_LOG(INFO) << "from_origin_.base_slice_shape is not same with from_origin_.slice_shape: "
-                 << "from_origin_.base_slice_shape=" << from_origin_.base_slice_shape().array()
-                 << ", from_origin_.slice_shape=" << from_origin_.slice_shape().array() << ", reshape to "
-                 << shape.ToString();
-    if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
-      return nullptr;
-    } else {
-      (void)operator_vector.insert(operator_vector.cbegin(), constructor.GetOperator());
-      (void)output_info_vector.insert(output_info_vector.cbegin(), std::make_pair(false, 0));
-    }
-  }
-  if (to_origin_.slice_shape().array() != to_origin_.base_slice_shape().array()) {
-    reshape_flag_ = true;
-    constructor.UpdateTensorShape(to_origin_.slice_shape().array());
-    Arrangement shape = to_origin_.base_slice_shape();
-    MS_LOG(INFO) << "to_origin_.slice_shape is not same with to_origin_.base_slice_shape: "
-                 << "to_origin_.slice_shape=" << to_origin_.slice_shape().array()
-                 << ", to_origin_.base_slice_shape=" << to_origin_.base_slice_shape().array() << ", reshape to "
-                 << shape.ToString();
-    if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
-      return nullptr;
-    } else {
-      (void)operator_vector.insert(operator_vector.cend(), constructor.GetOperator());
-      (void)output_info_vector.insert(output_info_vector.cend(), std::make_pair(false, 0));
-    }
-  }
-#ifdef DEBUG
   operator_vec_str.clear();
   AppendOperatorVecStr(operator_vector, &operator_vec_str);
-  MS_LOG(DEBUG) << "After InferRedistribution line130, operator_vector size: " << operator_vector.size()
-                << ", operator_vector: " << operator_vec_str;
-#endif
+  MS_LOG(INFO) << "After InferRedistribution, operator_vector size: " << operator_vector.size()
+               << ", operator_vector: " << operator_vec_str;
+  return std::make_shared<std::pair<OperatorVector, OutPutInfoVector>>(
+    std::make_pair(operator_vector, output_info_vector));
+}
+
+void GetRedistributionOperators(const RedistributionOperatorInfer &operator_infer, OperatorVector *operator_vector,
+                                OutPutInfoVector *output_info_vector, OperatorList *operator_list) {
+  for (const auto &op : operator_infer.operator_vector()) {
+    (void)operator_vector->emplace_back(op);
+  }
+  for (auto info : operator_infer.output_info_vector()) {
+    (void)output_info_vector->emplace_back(info);
+  }
+  for (const auto &opc : operator_infer.operator_list()) {
+    (void)operator_list->emplace_back(opc);
+  }
+}
+
+RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorListForMultiDynamicReshape(
+  bool is_cost_model) {
+  MS_LOG(INFO) << "Start to infer tensor redistribution for multi dynamic axis reshape.";
+  if (this->pre_cnode_ != nullptr && this->next_cnode_ != nullptr) {
+    MS_LOG(DEBUG) << this->PrintRedistribution();
+  }
+  OperatorVector operator_vector;
+  OutPutInfoVector output_info_vector;
+  RedistributionOperatorInfer allgather_infer(this->construct_op_flag_);
+  if (allgather_infer.Init(this->from_origin_no_assembled_, this->to_origin_no_assembled_.tensor_map(), this->dev_list_,
+                           is_cost_model, this->is_dynamic_shape_) == Status::FAILED) {
+    MS_LOG(EXCEPTION) << "Init operatorInfer failed.";
+  }
+  // 1. Do AllGather on dynamic axis, skip const axis?
+  if (allgather_infer.MergePartialToFullForReshapeHasMultiDynamicAxis() != Status::SUCCESS) {
+    MS_LOG(EXCEPTION) << "Insert AllGather for Reshape which has multi dynamic axis failed.";
+  }
+  GetRedistributionOperators(allgather_infer, &operator_vector, &output_info_vector, &this->operator_list_);
+  // 2. Do Reshape. Const axis value should be divided later?
+  ConstructOperator constructor;
+  // Actually, no need to create virtual shape, store the original inputs and replace it later in replace op.
+  Shape full_shape = this->to_origin_no_assembled_.tensor_shape().array();
+  MS_LOG(INFO) << "before ReshapeOP, full_shape:" << full_shape;
+  if (constructor.ReshapeOP(full_shape, true) == Status::FAILED) {
+    MS_LOG(EXCEPTION) << "Cannot construct Reshape op for shape " << full_shape;
+  }
+  (void)operator_vector.emplace_back(constructor.GetOperator());
+  (void)output_info_vector.emplace_back(std::make_pair(false, 0));
+  // 3. Do Split, skip const axis?
+  RedistributionOperatorInfer allsplit_infer(this->construct_op_flag_);
+  if (allsplit_infer.Init(this->to_origin_no_assembled_, this->to_origin_no_assembled_.tensor_map(), this->dev_list_,
+                          is_cost_model, this->is_dynamic_shape_) == Status::FAILED) {
+    MS_LOG(ERROR) << "Init operatorInfer failed";
+    return nullptr;
+  }
+  if (allsplit_infer.SegmentFullShapeToPartial() != Status::SUCCESS) {
+    MS_LOG(EXCEPTION) << "Insert AllSplit for Reshape which has multi dynamic axis failed.";
+  }
+  GetRedistributionOperators(allsplit_infer, &operator_vector, &output_info_vector, &this->operator_list_);
+  std::string operator_vec_str;
+  AppendOperatorVecStr(operator_vector, &operator_vec_str);
+  MS_LOG(INFO) << "After InferAllSplit, operator_vector size: " << operator_vector.size()
+               << ", operator_vector: " << operator_vec_str;
   return std::make_shared<std::pair<OperatorVector, OutPutInfoVector>>(
     std::make_pair(operator_vector, output_info_vector));
 }
@@ -438,18 +793,21 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
   }
   TensorLayout from_layout;
   TensorLayout to_layout;
-  if (this->layout_transfer_.IsDynamicShape() && !this->layout_transfer_.IsAssembledStaticShape()) {
+  if (this->is_dynamic_shape_ && !this->is_assembled_static_shape_) {
     from_layout = this->layout_transfer_.from_in();
     to_layout = this->layout_transfer_.to_in();
   } else {
     // init a new layout_transfer
+    // The function of assembled_static_origin_from_ is used to record layout before unify.
+    // When device matrix or tensor shape is needed to unified, it could insert 1 in front of tensor shape
+    // or split a dim into multi dim.
     this->assembled_static_origin_from_ = this->layout_transfer_.from_in();
     std::shared_ptr<ReshapeLayoutTransfer> ptr = this->layout_transfer_.UnifyDeviceArrangementAndTensorShape();
     if (ptr == nullptr) {
       MS_LOG(ERROR) << "Infer tensor layout return nullptr!";
       return nullptr;
     }
-    this->layout_transfer_.Init(ptr->from_in(), ptr->to_in(), true);
+    this->layout_transfer_.Init(ptr->from_in(), ptr->to_in());
     if (!ptr->ExpandAble()) {
       expand_able_ = false;
       return InferTensorRedistributionOperatorListUnExpand(is_cost_model);
@@ -476,12 +834,10 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
     MS_LOG(ERROR) << "Construct Reshape operator failed!";
     return nullptr;
   }
-#ifdef DEBUG
   std::string operator_vec_str;
   AppendOperatorVecStr(operator_vector, &operator_vec_str);
-  MS_LOG(DEBUG) << "After InferRedistribution, operator_vector size: " << operator_vector.size()
-                << ", operator_vector: " << operator_vec_str;
-#endif
+  MS_LOG(INFO) << "After InferRedistribution, operator_vector size: " << operator_vector.size()
+               << ", operator_vector: " << operator_vec_str;
   return std::make_shared<std::pair<OperatorVector, OutPutInfoVector>>(
     std::make_pair(operator_vector, output_info_vector));
 }
@@ -517,8 +873,8 @@ bool IsSameShape(const Shape &src, const Shape &tgt) {
 
 Shape AlignToLayoutShape(const Shape &to_origin_shape, const Shape &to_layout_shape) {
   Shape target_shape(to_origin_shape);
-  size_t cnt = std::count(target_shape.begin(), target_shape.end(), -1);
-  if (cnt < SIZE_TWO || to_layout_shape[0] != 1 || to_layout_shape.size() - 1 != target_shape.size()) {
+  auto cnt = std::count(target_shape.begin(), target_shape.end(), -1);
+  if (cnt < SizeToInt(SIZE_TWO) || to_layout_shape[0] != 1 || to_layout_shape.size() - 1 != target_shape.size()) {
     return target_shape;
   }
   for (size_t i = 0; i < target_shape.size(); ++i) {
@@ -566,9 +922,12 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
                  << "from_origin_.slice_shape=" << from_origin_.slice_shape().array()
                  << ", from_layout.slice_shape=" << from_layout.slice_shape().array() << ", reshape to "
                  << shape.ToString();
-    if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
+    auto reshape_mode = ReshapeMode::FROM_ORIGIN_SLICE_TO_FROM_LAYOUT_SLICE;
+    reshape_mode = this->is_dynamic_shape_ ? reshape_mode : ReshapeMode::NO_RESHAPE;
+    if (constructor.ReshapeOP(shape.array(), false, reshape_mode) == Status::FAILED) {
       return Status::FAILED;
     } else {
+      // Before all-gather.
       (void)operator_vector->insert(operator_vector->cbegin(), constructor.GetOperator());
       (void)output_info_vector->insert(output_info_vector->cbegin(), std::make_pair(false, 0));
     }
@@ -585,6 +944,7 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return Status::FAILED;
     } else {
+      // Before all-gather.
       (void)operator_vector->insert(operator_vector->cbegin(), constructor.GetOperator());
       (void)output_info_vector->insert(output_info_vector->cbegin(), std::make_pair(false, 0));
     }
@@ -595,15 +955,20 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     constructor.UpdateTensorShape(to_layout.slice_shape().array());
     // If to_origin_ is all -1, it can not be reshape.
     Shape target_shape = to_origin_.slice_shape().array();
-    if (this->IsAssembledStaticShape()) {
+    size_t cnt = std::count(target_shape.begin(), target_shape.end(), -1);
+    if (this->IsAssembledStaticShape() && cnt >= SIZE_TWO) {
       target_shape = AlignToLayoutShape(to_origin_.slice_shape().array(), to_layout.slice_shape().array());
+      MS_LOG(INFO) << "update reshape target shape.";
     }
     MS_LOG(INFO) << "to_origin_.slice_shape is not same with to_layout.slice_shape: "
                  << "to_origin_.slice_shape=" << to_origin_.slice_shape().array()
                  << ", to_layout.slice_shape=" << to_layout.slice_shape().array() << ", reshape to " << target_shape;
-    if (constructor.ReshapeOP(target_shape) == Status::FAILED) {
+    auto reshape_mode = ReshapeMode::TO_ORIGIN_SLICE_TO_TO_LAYOUT_SLICE;
+    reshape_mode = this->is_dynamic_shape_ ? reshape_mode : ReshapeMode::NO_RESHAPE;
+    if (constructor.ReshapeOP(target_shape, false, reshape_mode) == Status::FAILED) {
       return Status::FAILED;
     } else {
+      // After all-gather.
       (void)operator_vector->insert(operator_vector->cend(), constructor.GetOperator());
       (void)output_info_vector->insert(output_info_vector->cend(), std::make_pair(false, 0));
     }
@@ -620,6 +985,7 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return Status::FAILED;
     } else {
+      // After all-gather.
       (void)operator_vector->insert(operator_vector->cend(), constructor.GetOperator());
       (void)output_info_vector->insert(output_info_vector->cend(), std::make_pair(false, 0));
     }
@@ -637,8 +1003,8 @@ Status TensorRedistribution::InferRedistribution(const TensorLayout &from_layout
   if (virtual_rank_ >= 0) {
     operator_infer.SetVirtualRank(virtual_rank_);
   }
-  if (operator_infer.Init(from_layout, to_layout.tensor_map(), dev_list_, is_cost_model,
-                          this->IsAssembledStaticShape()) == Status::FAILED) {
+  if (operator_infer.Init(from_layout, to_layout.tensor_map(), dev_list_, is_cost_model, this->is_dynamic_shape_) ==
+      Status::FAILED) {
     MS_LOG(ERROR) << "Init operatorInfer failed";
     return Status::FAILED;
   }
@@ -656,6 +1022,21 @@ Status TensorRedistribution::InferRedistribution(const TensorLayout &from_layout
       (void)operator_list_.insert(operator_list_.cend(), opc);
     }
   }
+  return Status::SUCCESS;
+}
+
+Status TensorRedistribution::RollbackToDynamicShape() {
+  if (!this->IsAssembledStaticShape()) {
+    return Status::FAILED;
+  }
+  for (auto &iter : this->from_dims_replace_memo_) {
+    MS_LOG(DEBUG) << "from index=" << iter.first << ", value=" << iter.second << std::endl;
+  }
+  for (auto &iter : this->to_dims_replace_memo_) {
+    MS_LOG(DEBUG) << "to index=" << iter.first << ", value=" << iter.second << std::endl;
+  }
+  MS_LOG(DEBUG) << "RollbackToDynamicShape: from_in_=" << this->from_origin_.ToString() << std::endl
+                << "to_in_=" << this->to_origin_.ToString() << std::endl;
   return Status::SUCCESS;
 }
 

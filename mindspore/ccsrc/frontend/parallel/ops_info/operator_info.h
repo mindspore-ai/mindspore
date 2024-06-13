@@ -496,6 +496,8 @@ Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &
 Operator CreateAllGatherOp(const std::string &group);
 Operator CreateCastOp(TypePtr type);
 Operator CreateDivOp(float scale);
+Operator CreateScalarDivOp(int64_t div_num);
+Operator CreateScalarCastOp(TypePtr type);
 Operator CreateScalarFloorDivOp(int64_t div_num);
 Operator CreateScalarMulOp(int64_t scalar);
 void AddCNodePrimAttr(const CNodePtr &comm_node, const std::string &attr_name, const ValuePtr &attr_val);
