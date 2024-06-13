@@ -1132,6 +1132,8 @@ class Unfold(Cell):
 
 class UnfoldExt(Cell):
     r"""
+    Extracts sliding local blocks from a batched input tensor.
+
     For details, please refer to :func:`mindspore.mint.nn.functional.unfold`.
 
     Supported Platforms:
@@ -1160,7 +1162,9 @@ class UnfoldExt(Cell):
 
 class Fold(Cell):
     r"""
-    For details, please refer to :func:`mindspore.mint.nn.functional.unfold`.
+    Combines an array of sliding local blocks into a large containing tensor.
+
+    For details, please refer to :func:`mindspore.mint.nn.functional.fold`.
 
     Supported Platforms:
         ``Ascend``

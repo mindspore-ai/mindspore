@@ -121,7 +121,7 @@ Linear Algebraic Functions
 mindspore.mint.nn
 ------------------
 
-Dropout Layer
+Dropout Layers
 ^^^^^^^^^^^^^^^
 
 .. msplatformautosummary::
@@ -130,6 +130,17 @@ Dropout Layer
     :template: classtemplate.rst
 
     mindspore.mint.nn.Dropout
+
+Convolution Layers
+^^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.Fold
+    mindspore.mint.nn.Unfold
 
 
 mindspore.mint.nn.functional
@@ -154,6 +165,14 @@ Neural Network Layer Functions
 
 Convolution functions
 ^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.functional.fold
+    mindspore.mint.nn.functional.unfold
 
 
 Pooling functions
@@ -239,8 +258,6 @@ Vision functions
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.mint.nn.functional.unfold
-    mindspore.mint.nn.functional.fold
     mindspore.mint.nn.functional.pad
 
 
