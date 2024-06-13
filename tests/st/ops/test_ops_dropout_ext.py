@@ -52,6 +52,14 @@ def compare_output(x, p, output):
     nonzero_count = np.count_nonzero(output_np)
     assert (elem_count * (keep_prob - 0.02)) < nonzero_count < (elem_count * (keep_prob + 0.02))
 
+    expect_sum = np.array(nonzero_count / (1 - p), dtype=np.float64)
+    output_sum = np.sum(output_np.astype(np.float64))
+
+    if output.dtype == mstype.float32:
+        np.testing.assert_allclose(output_sum, expect_sum, rtol=1e-3)
+    else:
+        np.testing.assert_allclose(output_sum, expect_sum, rtol=1e-2)
+
 
 def compare_grad(x, p, grad):
     # check grad
@@ -69,7 +77,7 @@ def compare_grad(x, p, grad):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
 def test_func_dropout_normal(context_mode, dtype):
     """
@@ -96,7 +104,7 @@ def test_func_dropout_normal(context_mode, dtype):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_func_dropout_bfloat16(context_mode):
     """
     Feature: pyboost function.
@@ -156,7 +164,7 @@ def compare_func(x, p, output, mask=None):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nn_DropoutExt_normal(context_mode):
     """
     Feature: nn.DropoutExt
@@ -181,7 +189,7 @@ def test_nn_DropoutExt_normal(context_mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nn_DropoutExt_bf16(context_mode):
     """
     Feature: nn.DropoutExt
@@ -216,7 +224,7 @@ class DropoutExtCell(Cell):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_DropoutExt_normal(context_mode):
     """
     Feature: ops.DropoutExt
