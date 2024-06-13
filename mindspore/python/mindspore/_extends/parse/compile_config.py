@@ -212,6 +212,15 @@ Value Range:
 """
 DUMP_IR_DDE_DETAIL = ''
 
+"""
+Name: COMBINE_LIKE_GRAPHS
+Function: Whether to combine the func_graphs which have the same object key according to the @cell_attr_register.
+Value Range:
+    0: Disable
+    Default: Enable.
+"""
+COMBINE_LIKE_GRAPHS = ''
+
 __all__ = [
     "COMPILE_PROFILE",
     "COMPILE_PROFILE_FINISH_ACTION",
@@ -235,4 +244,5 @@ __all__ = [
     "RECORD_MEMORY",
     "TRACE_LABEL_WITH_UNIQUE_ID",
     "DUMP_IR_DDE_DETAIL",
+    "COMBINE_LIKE_GRAPHS",
 ]
