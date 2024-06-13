@@ -42,7 +42,7 @@ REG_EXPANDER_FUNC("AssignAdd").SetBody(BODYFUNC(ib) {
   auto param = ib->input(0);
   auto x = ib->input(1);
   if (x->GetDtype() != param->GetDtype()) {
-    return {};
+    x = ib->Cast(x, param->GetDtype());
   }
   auto result = ib->Assign(param, ib->Add(param, x));
   return {result};

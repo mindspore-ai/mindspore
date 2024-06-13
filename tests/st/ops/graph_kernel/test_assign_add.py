@@ -45,7 +45,7 @@ def get_output(x2, y2, enable_graph_kernel=False):
 
 def assign_add():
     x2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
-    y2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+    y2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float16))
 
     expect = get_output(x2, y2, False)
     output = get_output(x2, y2, True)
