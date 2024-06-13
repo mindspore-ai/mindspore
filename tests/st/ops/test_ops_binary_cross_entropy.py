@@ -64,54 +64,32 @@ def binary_cross_entropy_backward_func(inputx, target, weight=None, reduction="m
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("mode", ["pynative", "KBK", "graph"])
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
-def test_ops_binary_cross_entropy_forward(mode, reduction):
-    """
-    Feature: pyboost function.
-    Description: test function binary_cross_entropy forward.
-    Expectation: expect correct result.
-    """
-    inputx, target, weight = get_input()
-    expect_value = get_output_forward(reduction)
-
-    if mode == "pynative":
-        ms.context.set_context(mode=ms.PYNATIVE_MODE)
-        output_value = binary_cross_entropy_forward_func(inputx, target, weight, reduction)
-    elif mode == "KBK":
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-        op = ms.jit(binary_cross_entropy_forward_func, jit_config=ms.JitConfig(jit_level="O0"))
-        output_value = op(inputx, target, weight, reduction)
-    else:
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-        output_value = binary_cross_entropy_forward_func(inputx, target, weight, reduction)
-    np.testing.assert_allclose(output_value.asnumpy(), expect_value, rtol=1e-3)
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("mode", ["pynative", "KBK", "graph"])
-@pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
-def test_ops_binary_cross_entropy_backward(mode, reduction):
+def test_ops_binary_cross_entropy_normal(mode, reduction):
     """
     Feature: pyboost function.
     Description: test function binary_cross_entropy backward.
     Expectation: expect correct result.
     """
     inputx, target, weight = get_input()
-    expect_value = get_output_backward(reduction)
+    expect_forward = get_output_forward(reduction)
+    expect_backward = get_output_backward(reduction)
     if mode == "pynative":
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
-        output_value = binary_cross_entropy_backward_func(inputx, target, weight, reduction)
+        output_forward = binary_cross_entropy_forward_func(inputx, target, weight, reduction)
+        output_backward = binary_cross_entropy_backward_func(inputx, target, weight, reduction)
 
     elif mode == "KBK":
         ms.context.set_context(mode=ms.GRAPH_MODE)
-        op = ms.jit(binary_cross_entropy_backward_func, jit_config=ms.JitConfig(jit_level="O0"))
-        output_value = op(inputx, target, weight, reduction)
+        op_froward = ms.jit(binary_cross_entropy_forward_func, jit_config=ms.JitConfig(jit_level="O0"))
+        output_forward = op_froward(inputx, target, weight, reduction)
+        op_backward = ms.jit(binary_cross_entropy_backward_func, jit_config=ms.JitConfig(jit_level="O0"))
+        output_backward = op_backward(inputx, target, weight, reduction)
     else:
         ms.context.set_context(mode=ms.GRAPH_MODE)
-        output_value = binary_cross_entropy_backward_func(inputx, target, weight, reduction)
-    np.testing.assert_allclose(output_value[0].asnumpy(), expect_value, rtol=1e-3)
+        output_forward = binary_cross_entropy_forward_func(inputx, target, weight, reduction)
+        output_backward = binary_cross_entropy_backward_func(inputx, target, weight, reduction)
+    np.testing.assert_allclose(output_forward.asnumpy(), expect_forward, rtol=1e-3)
+    np.testing.assert_allclose(output_backward[0].asnumpy(), expect_backward, rtol=1e-3)
 
 
 @pytest.mark.level1
