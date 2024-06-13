@@ -36,6 +36,7 @@ bool IsRegisteredInternalKernel(const AnfNodePtr &anf_node) { return false; }
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
+#include "plugin/device/ascend/kernel/internal/acme_kernel_mod.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/factory/ms_factory.h"
@@ -50,7 +51,13 @@ KernelModPtr InternalKernelBuild(const AnfNodePtr &anf_node) {
   std::string opname = common::AnfAlgo::GetCNodeName(anf_node);
   // Easy to compare accuracy and performance, later changed to debug
   MS_LOG(INFO) << "internal op [" << opname << "]";
-  auto kernel_ptr = Factory<InternalKernelMod>::Instance().Create(opname);
+  KernelModPtr kernel_ptr;
+  if (Factory<AcmeKernelMod>::Instance().IsRegistered(opname)) {
+    MS_LOG(DEBUG) << "Supported by AcmeKernel: " << opname;
+    kernel_ptr = std::static_pointer_cast<KernelMod>(Factory<AcmeKernelMod>::Instance().Create(opname));
+  } else {
+    kernel_ptr = std::static_pointer_cast<KernelMod>(Factory<InternalKernelMod>::Instance().Create(opname));
+  }
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "internal can't find Kernel[" << opname << "]";
     return nullptr;
@@ -58,10 +65,8 @@ KernelModPtr InternalKernelBuild(const AnfNodePtr &anf_node) {
   kernel_ptr->set_fullname(op_fullname);
   std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
   std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(anf_node);
-
-  if (!std::static_pointer_cast<KernelMod>(kernel_ptr)
-         ->Init(common::AnfAlgo::GetCNodePrimitive(anf_node), input_kernel_tensors, output_kernel_tensors)) {
-    MS_LOG_WITH_NODE(EXCEPTION, anf_node) << "#dmsg#Kernel build failed:#dmsg#Initialize aclnn kernel op["
+  if (!kernel_ptr->Init(common::AnfAlgo::GetCNodePrimitive(anf_node), input_kernel_tensors, output_kernel_tensors)) {
+    MS_LOG_WITH_NODE(EXCEPTION, anf_node) << "#dmsg#Kernel build failed:#dmsg#Initialize internal kernel op["
                                           << anf_node->fullname_with_scope() << "] failed.";
   }
 
@@ -69,7 +74,7 @@ KernelModPtr InternalKernelBuild(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (CheckResizeCondition(cnode)) {
     if (kernel_ptr->Resize(input_kernel_tensors, output_kernel_tensors) == KRET_RESIZE_FAILED) {
-      MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#hostapi kernel op[" << cnode->fullname_with_scope()
+      MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#internal kernel op[" << cnode->fullname_with_scope()
                         << "] Resize failed.";
     }
   }
