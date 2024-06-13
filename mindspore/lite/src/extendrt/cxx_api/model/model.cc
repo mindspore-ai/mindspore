@@ -483,5 +483,11 @@ std::vector<char> Model::GetModelInfo(const std::vector<char> &key) {
   return StringToChar(it->second);
 }
 
-Status Model::Finalize() { return impl_->Finalize(); }
+Status Model::Finalize() {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null!";
+    return kLiteNullptr;
+  }
+  return impl_->Finalize();
+}
 }  // namespace mindspore
