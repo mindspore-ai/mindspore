@@ -68,6 +68,7 @@ class DataQueueOp : public PipelineOp {
   Status EoeReceived(int32_t worker_id) override;
 
   void StopSend() {
+    MS_LOG(INFO) << "Received signal to stop sending data to device.";
     stop_send_ = true;
     send_finished_ = true;
   }

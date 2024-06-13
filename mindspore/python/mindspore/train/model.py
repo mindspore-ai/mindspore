@@ -615,6 +615,22 @@ class Model:
         train_dataset._dataset_helper = dataset_helper
         train_dataset._warmup_epoch = epoch
 
+    def _waiting_for_dataset_warmup_ready(self, train_dataset):
+        """
+        Wait for the dataset to warmup until there is a batch of data available for training on the device side.
+
+        Args:
+            train_dataset (Dataset): A training dataset iterator. If `train_dataset` is defined, training graphs will be
+                                     initialized. Default: ``None``.
+        """
+        mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
+        while mbuf_size == 0:
+            time.sleep(10)
+            mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
+            if mbuf_size != 0:
+                break
+            logger.warning(f"Waiting for the dataset warmup, current device queue size: {mbuf_size}")
+
     def _init(self, train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1):
         """
         Initialize compute graphs and data graphs with the sink mode.
@@ -653,17 +669,12 @@ class Model:
                                                                         dataset_sink_mode=True,
                                                                         sink_size=sink_size)
             self._warmup_dataset(epoch, train_dataset, sink_size)
+
             # Since dataset pipeline has been triggered, delete flag
             delattr(train_dataset, "__no_send__")
-            if train_dataset.get_init_step() > 0:
-                mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
-                while mbuf_size == 0:
-                    time.sleep(10)
-                    mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
-                    if mbuf_size != 0:
-                        break
-                    logger.warning(f"Failover mode, waiting for dataset recover to specify step, "
-                                   f"current device queue size: {mbuf_size}")
+
+            # Waiting for the dataset warmup ready
+            self._waiting_for_dataset_warmup_ready(train_dataset)
 
             if context.get_auto_parallel_context("pipeline_stages") > 1 and valid_dataset:
                 train_network.add_flags_recursive(is_first_iteration=True)

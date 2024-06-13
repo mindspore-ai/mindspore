@@ -579,6 +579,9 @@ Status ShardIndexGenerator::WriteToDatabase() {
 
 void ShardIndexGenerator::DatabaseWriter() {
   int shard_no = task_++;
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  pthread_setname_np(pthread_self(), std::string(__func__ + std::to_string(shard_no)).c_str());
+#endif
   while (shard_no < shard_header_.GetShardCount()) {
     sqlite3 *db = nullptr;
     Status st = CreateDatabase(shard_no, &db);

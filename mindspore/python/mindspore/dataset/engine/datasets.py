@@ -3176,7 +3176,8 @@ class _MPWorker(multiprocessing.Process):
         shared_memory = get_enable_shared_mem()
         self.pipe = Pipe(warning_ctl, shared_memory=shared_memory, max_rowsize=max_rowsize)
         self.check_interval = get_multiprocessing_timeout_interval()
-        super().__init__(target=worker_target(operations, worker_id), args=(self.pipe,), daemon=True)
+        super().__init__(target=worker_target(operations, worker_id), name="MapWorker" + str(worker_id),
+                         args=(self.pipe,), daemon=True)
 
     def execute(self, idx, *args):
         """Acquiring data from a worker in an infinite loop"""
@@ -3203,6 +3204,14 @@ class _MPWorker(multiprocessing.Process):
                     logger.warning("Please `pip install py-spy` to get the stacks of the stuck process.")
             try:
                 res = self.pipe.master_receive()
+                # Because there is no need to copy when creating Tensors in the C++layer, it reduces the time
+                # from np.ndarray to C++Tensor creation. However, when using shared memory in multiple processes,
+                # the address of the shared memory will always be passed to subsequent nodes in the dataset pipeline,
+                # and the shared memory will also be written by the current node, causing dirty data to be accessed
+                # by subsequent nodes in the pipeline. So make a memory copy here to solve the problem of
+                # shared memory being contaminated.
+                if get_enable_shared_mem():
+                    res = copy.deepcopy(res)
             except queue.Empty:
                 continue
             if res is None:
@@ -3563,16 +3572,16 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         if platform.system().lower() != 'windows':
             self.eof = multiprocessing.Event()
             self.cleaning_process = multiprocessing.Process(target=self._clean_process,
+                                                            name="MapCleanProcess",
                                                             args=(self.ppid, self.workers, self.eof),
-                                                            name="OrphanCleaner",
                                                             daemon=True)
             self.cleaning_process.start()
 
             if get_enable_watchdog():
                 self.eot = threading.Event()
                 self.watch_dog = threading.Thread(target=self._watch_dog,
+                                                  name="MapWatchDog",
                                                   args=(self.eot, self.workers + [self.cleaning_process]),
-                                                  name="WatchDog",
                                                   daemon=True)
                 self.watch_dog.start()
 

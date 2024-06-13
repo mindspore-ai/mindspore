@@ -162,6 +162,7 @@ DataQueueOp::~DataQueueOp() {
   if (!send_finished_ && !rdr_msg.empty() && num_epochs != -1) {
     MS_LOG(WARNING) << rdr_msg;
   }
+  MS_LOG(INFO) << "Release the DataQueueOp, channel name: " << channel_name_;
 #endif
 }
 
@@ -513,6 +514,10 @@ Status DataQueueOp::SendDataToAscend() {
       RETURN_IF_NOT_OK(md_channel_info_->RecordBatchQueue(ChildOpConnectorSize()));
       RETURN_IF_NOT_OK(md_channel_info_->RecordPreprocessBatch(send_batch));
       RETURN_IF_NOT_OK(md_channel_info_->RecordPushStartTime());
+      if (send_batch == 0) {
+        // record the push start time for first batch
+        RETURN_IF_NOT_OK(md_channel_info_->RecordPushFirstStartTime());
+      }
 #endif
 #ifndef ENABLE_SECURITY
       DetectPerBatchTime(&batch_record_start, &batch_record_end);
@@ -526,10 +531,20 @@ Status DataQueueOp::SendDataToAscend() {
       }
       RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "PushToAscend"));
       if (!enable_prefetch_cache_pipeline_) {
+#ifdef ENABLE_DUMP_IR
+        RETURN_IF_NOT_OK(md_channel_info_->RecordDeviceQueue(ascend_data_queue_->QueryQueueSize()));
+        MS_LOG(INFO) << md_channel_info_->ToFormatString();
+#endif
         RETURN_IF_NOT_OK(SendRowToTdt(curr_row, is_profiling_enable, &tdt_cost));
       } else {
         RETURN_IF_NOT_OK(PushDataToAscendCacheQueue(curr_row));
       }
+#ifdef ENABLE_DUMP_IR
+      if (send_batch == 0) {
+        // record the push end time for first batch
+        RETURN_IF_NOT_OK(md_channel_info_->RecordPushFirstEndTime());
+      }
+#endif
       RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "PushToAscend", {{"TensorRowFlags", curr_row.FlagName()}}));
       PrintEndInfoWhenFirstBatch(&first_push_flag_);
 #ifndef ENABLE_SECURITY
@@ -749,6 +764,10 @@ Status DataQueueOp::GetDataInfo(DATA_INFO *data_info) {
 
 Status DataQueueOp::GetMbufQueueSize(size_t *queue_size) {
 #ifdef WITH_BACKEND
+  if (TaskManager::FindMe()->Interrupted()) {
+    RETURN_STATUS_ERROR(StatusCode::kMDTDTPushFailure,
+                        "DataQueueOp thread had been interrupted, please check for other error messages.");
+  }
   if (device_type_ == DeviceType::Ascend) {
     *queue_size = ascend_data_queue_->QueryQueueSize();
   } else {
@@ -810,7 +829,8 @@ Status DataQueueOp::LaunchParallelCopyThread() {
   receive_queues_.Init(num_workers_, queue_capacity_);
   RETURN_IF_NOT_OK(receive_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(static_cast<int>(num_workers_),
-                                        std::bind(&DataQueueOp::WorkerEntry, this, std::placeholders::_1), "", id()));
+                                        std::bind(&DataQueueOp::WorkerEntry, this, std::placeholders::_1),
+                                        Name() + "::WorkerEntry", id()));
   RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask("Push data to GPU queue",
                                                       std::bind(&DataQueueOp::PushDataToGPU, this), nullptr, id()));
   if (enable_prefetch_cache_pipeline_) {

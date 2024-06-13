@@ -152,11 +152,28 @@ Status ShardReader::VerifyDataset(sqlite3 **db, const string &file) {
   }
 
   // sqlite3_open create a database if not found, use sqlite3_open_v2 instead of it
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  // use "unix-none" to avoid flock and achieve better performance on shared storage platform
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(
+    sqlite3_open_v2(path_utf8.data(), db, SQLITE_OPEN_READONLY, "unix-none") == SQLITE_OK,
+    "Invalid file, failed to open mindrecord meta file. Please check whether the meta file: " + file +
+      ".db exists and do not rename the mindrecord file and meta file.");
+#else
   CHECK_FAIL_RETURN_UNEXPECTED_MR(
     sqlite3_open_v2(path_utf8.data(), db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK,
     "Invalid file, failed to open mindrecord meta file. Please check whether the meta file: " + file +
       ".db exists and do not rename the mindrecord file and meta file.");
+#endif
   MS_LOG(DEBUG) << "Succeed to open meta file, path: " << file << ".db.";
+
+  // starting a transaction during a read-only select operation can solve the problem of frequently
+  // accessing *-journal / *-wal files.
+  auto sql_code = sqlite3_exec(*db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+  if (sql_code != SQLITE_OK) {
+    sqlite3_free(*db);
+    RETURN_STATUS_UNEXPECTED_MR("Execute SQL statement `BEGIN TRANSACTION;` failed, SQLite result code: " +
+                                std::to_string(sql_code));
+  }
 
   string sql = "SELECT NAME from SHARD_NAME;";
   std::vector<std::vector<std::string>> name;
@@ -323,6 +340,13 @@ void ShardReader::FileStreamsOperator() {
   }
   for (int i = static_cast<int>(database_paths_.size()) - 1; i >= 0; --i) {
     if (database_paths_[i] != nullptr) {
+      auto sql_code = sqlite3_exec(database_paths_[i], "END TRANSACTION;", nullptr, nullptr, nullptr);
+      if (sql_code != SQLITE_OK) {
+        sqlite3_close(database_paths_[i]);
+        MS_LOG(ERROR) << "Execute SQL statement `END TRANSACTION;` failed, SQLite result code: "
+                      << std::to_string(sql_code);
+        continue;
+      }
       auto ret = sqlite3_close(database_paths_[i]);
       if (ret != SQLITE_OK) {
         MS_LOG(ERROR) << "[Internal ERROR] Failed to close meta file, " << ret << ".";
@@ -541,6 +565,9 @@ void ShardReader::GetClassesInShard(sqlite3 *db, int shard_id, const std::string
   if (db == nullptr) {
     return;
   }
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  pthread_setname_np(pthread_self(), std::string(__func__ + std::to_string(shard_id)).c_str());
+#endif
   std::vector<std::vector<std::string>> columns;
   char *errmsg = nullptr;
   int ret = sqlite3_exec(db, common::SafeCStr(sql), SelectCallback, &columns, &errmsg);
@@ -1094,9 +1121,24 @@ int64_t ShardReader::GetNumClasses(const std::string &category_field) {
       path_utf8 = file_paths_[x] + ".db";
     }
 
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+    // use "unix-none" to avoid flock and achieve better performance on shared storage platform
+    int rc = sqlite3_open_v2(path_utf8.data(), &db, SQLITE_OPEN_READONLY, "unix-none");
+#else
     int rc = sqlite3_open_v2(path_utf8.data(), &db, SQLITE_OPEN_READONLY, nullptr);
+#endif
     if (SQLITE_OK != rc) {
       MS_LOG(ERROR) << "[Internal ERROR] Failed to open meta file: " << file_paths_[x] + ".db, " << sqlite3_errmsg(db);
+      return -1;
+    }
+
+    // starting a transaction during a read-only select operation can solve the problem of frequently
+    // accessing *-journal / *-wal files.
+    auto sql_code = sqlite3_exec(db, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+    if (sql_code != SQLITE_OK) {
+      sqlite3_free(db);
+      MS_LOG(ERROR) << "Execute SQL statement `BEGIN TRANSACTION;` failed, SQLite result code: "
+                    << std::to_string(sql_code);
       return -1;
     }
     threads[x] = std::thread(&ShardReader::GetClassesInShard, this, db, x, sql, category_ptr);
@@ -1319,6 +1361,9 @@ Status ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, int,
   uint32_t current_offset = 0;
   for (uint32_t shard_id = 0; shard_id < shard_count_; shard_id++) {
     init_tasks_thread[shard_id] = std::thread([this, &offsets, &local_columns, shard_id, current_offset]() {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+      pthread_setname_np(pthread_self(), std::string("ParallelCreateTasks" + std::to_string(shard_id)).c_str());
+#endif
       auto offset = current_offset;
       for (uint32_t i = 0; i < offsets[shard_id].size(); i += 1) {
         tasks_.InsertTask(offset, TaskType::kCommonTask, offsets[shard_id][i][0], offsets[shard_id][i][1],
@@ -1356,6 +1401,9 @@ Status ShardReader::CreateLazyTasksByRow(const std::vector<std::tuple<int, int, 
     uint32_t shard_count =
       shard_id == 0 ? shard_sample_count_[0] : shard_sample_count_[shard_id] - shard_sample_count_[shard_id - 1];
     init_tasks_thread[shard_id] = std::thread([this, shard_id, current_offset, shard_count]() {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+      pthread_setname_np(pthread_self(), std::string("ParallelCreateLazyTasks" + std::to_string(shard_id)).c_str());
+#endif
       for (uint32_t i = current_offset; i < shard_count + current_offset; ++i) {
         // here "i - current_offset" indicate the sample id in the shard
         tasks_.InsertTask(i, TaskType::kCommonTask, shard_id, i - current_offset, {}, json());
@@ -1506,7 +1554,7 @@ Status ShardReader::ConsumerOneTask(int64_t task_id, uint32_t consumer_id,
   // read the blob from data file
   std::shared_ptr<Page> page_ptr;
   RETURN_IF_NOT_OK_MR(shard_header_->GetPageByGroupId(group_id, shard_id, &page_ptr));
-  MS_LOG(DEBUG) << "[Internal ERROR] Success to get page by group id: " << group_id;
+  MS_LOG(DEBUG) << "Success to get page by group id: " << group_id;
 
   // Pack image list
   std::vector<uint8_t> images(blob_end - blob_start);
@@ -1535,8 +1583,7 @@ Status ShardReader::ConsumerOneTask(int64_t task_id, uint32_t consumer_id,
 void ShardReader::ConsumerByRow(int consumer_id) {
   // Set thread name
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
-  auto thread_id = kThreadName + std::to_string(consumer_id);
-  prctl(PR_SET_NAME, common::SafeCStr(thread_id), 0, 0, 0);
+  pthread_setname_np(pthread_self(), std::string(__func__ + std::to_string(consumer_id)).c_str());
 #endif
 
   // Loop forever
@@ -1694,12 +1741,12 @@ void ShardReader::ShuffleTask() {
     if (std::dynamic_pointer_cast<ShardShuffle>(op) && has_sharding == false) {
       auto s = (*op)(tasks_);
       if (s.IsError()) {
-        MS_LOG(WARNING) << "[Internal ERROR] Failed to redo randomSampler in new epoch.";
+        MS_LOG(WARNING) << "Failed to redo randomSampler in new epoch.";
       }
     } else if (std::dynamic_pointer_cast<ShardDistributedSample>(op)) {
       auto s = (*op)(tasks_);
       if (s.IsError()) {
-        MS_LOG(WARNING) << "[Internal ERROR] Failed to redo distributeSampler in new epoch.";
+        MS_LOG(WARNING) << "Failed to redo distributeSampler in new epoch.";
       }
     }
   }
