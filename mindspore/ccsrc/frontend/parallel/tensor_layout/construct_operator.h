@@ -28,6 +28,15 @@
 namespace mindspore {
 namespace parallel {
 using Args = std::vector<std::int64_t>;
+enum class ReshapeMode : int64_t {
+  NO_RESHAPE = 0,
+  FROM_ORIGIN_BASE_SLICE_TO_TO_ORIGIN_SLICE,
+  FROM_ORIGIN_SLICE_TO_FROM_LAYOUT_SLICE,
+  FROM_ORIGIN_BASE_SLICE_TO_FROM_ORIGIN_SLICE,
+  TO_ORIGIN_SLICE_TO_TO_LAYOUT_SLICE,
+  TO_ORIGIN_SLICE_TO_TO_ORIGIN_BASE_SLICE,
+};
+
 Operator CreateStridedSliceOp(int64_t value, const Shape &begin, const Shape &end, const Shape &strides);
 class ConstructOperator {
  public:
@@ -37,7 +46,8 @@ class ConstructOperator {
   Status Init(const RankList &dev_list, const Shape &dev_matrix_shape, bool is_cost_model = false,
               bool is_dynamic_shape = false);
   OperatorVector SkipRedisReshapeOP(const Shape &shape) const;
-  Status ReshapeOP(const Shape &shape, bool use_origin_shape = false);
+  Status ReshapeOP(const Shape &shape, bool use_origin_shape = false,
+                   enum ReshapeMode reshape_mode = ReshapeMode::NO_RESHAPE);
   Status StridedSliceOP(const Args &args);
   Status ReplaceStridedSliceOpToSplitOp(const Args &args);
   Status AllGatherOP(int64_t dev_dim);

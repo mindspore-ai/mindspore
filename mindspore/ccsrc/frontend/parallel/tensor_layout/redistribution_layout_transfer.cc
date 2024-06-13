@@ -22,7 +22,8 @@
 namespace mindspore {
 namespace parallel {
 Status RedistributionLayoutTransfer::CheckValidTransfer() {
-  if (this->IsDynamicShape() && !this->IsAssembledStaticShape()) {
+  Shape from_shape = from_in_.tensor_shape().array();
+  if (std::find(from_shape.begin(), from_shape.end(), -1) != from_shape.end()) {
     Shape from_map = from_in_.tensor_map().array();
     Shape to_map = to_in_.tensor_map().array();
     bool not_all_repeat = std::any_of(from_map.begin(), from_map.end(), [](int64_t i) { return i != -1; }) ||

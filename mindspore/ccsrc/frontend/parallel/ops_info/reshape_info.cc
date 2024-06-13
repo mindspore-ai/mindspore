@@ -341,13 +341,15 @@ bool SpecialPatternInTransformer(const TensorLayout &from_layout, const TensorLa
   if (from_tensor_shape.array().size() != SIZE_THREE && to_tensor_shape.array().size() != SIZE_FOUR) {
     return false;
   }
-  if (from_tensor_shape.GetDimByIdx(0) == to_tensor_shape.GetDimByIdx(0) &&
-      (from_tensor_shape.GetDimByIdx(1) == -1 && from_tensor_shape.GetDimByIdx(2) == -1) &&
-      (to_tensor_shape.GetDimByIdx(2) == -1 && to_tensor_shape.GetDimByIdx(3) == -1)) {
-    if (from_tensor_map.GetDimByIdx(0) == to_tensor_map.GetDimByIdx(0) &&
-        from_tensor_map.GetDimByIdx(1) == to_tensor_map.GetDimByIdx(1)) {
-      return true;
-    }
+  bool is_same_batch_dim = from_tensor_shape.GetDimByIdx(0) == to_tensor_shape.GetDimByIdx(0);
+  bool is_from_dyn_on_last_two_dim =
+    from_tensor_shape.GetDimByIdx(INDEX_ONE) == -1 && from_tensor_shape.GetDimByIdx(INDEX_TWO) == -1;
+  bool is_to_dyn_on_last_two_dim =
+    to_tensor_shape.GetDimByIdx(INDEX_TWO) == -1 && to_tensor_shape.GetDimByIdx(INDEX_THREE) == -1;
+  if (is_same_batch_dim && is_from_dyn_on_last_two_dim && is_to_dyn_on_last_two_dim) {
+    bool same_shard_on_front_two_dim = from_tensor_map.GetDimByIdx(0) == to_tensor_map.GetDimByIdx(0) &&
+                                       from_tensor_map.GetDimByIdx(1) == to_tensor_map.GetDimByIdx(1);
+    return same_shard_on_front_two_dim;
   }
   return false;
 }
@@ -356,8 +358,8 @@ bool SkipTensorRedistribution(const TensorLayout &from_layout, const TensorLayou
   // If only one axis is sharded, and it's const axis, use past solution.
   size_t from_shard_axis_cnt = 0;
   size_t to_shard_axis_cnt = 0;
-  int64_t from_index = 0;
-  int64_t to_index = 0;
+  size_t from_index = 0;
+  size_t to_index = 0;
   for (size_t i = 0; i < from_layout.tensor_map().array().size(); ++i) {
     if (from_layout.tensor_map().GetDimByIdx(i) != -1) {
       from_shard_axis_cnt += 1;
@@ -370,8 +372,10 @@ bool SkipTensorRedistribution(const TensorLayout &from_layout, const TensorLayou
       to_index = i;
     }
   }
-  if (from_shard_axis_cnt == 1 && to_shard_axis_cnt == 1 && from_layout.tensor_shape().GetDimByIdx(from_index) != -1 &&
-      to_layout.tensor_shape().GetDimByIdx(to_index) != -1) {
+  bool only_shard_on_one_axis = from_shard_axis_cnt == 1 && to_shard_axis_cnt == 1;
+  bool only_shard_on_const_axis =
+    from_layout.tensor_shape().GetDimByIdx(from_index) != -1 && to_layout.tensor_shape().GetDimByIdx(to_index) != -1;
+  if (only_shard_on_one_axis && only_shard_on_const_axis) {
     return true;
   }
   return false;
@@ -441,9 +445,9 @@ Status ReshapeInfo::ComputeReplaceOp() {
         return SUCCESS;
       }
       // use naive method. Do AllGather on each dim.
-      tensor_redistribution->set_original_reshape_shape(this->cnode_->input(2));
+      tensor_redistribution->set_original_reshape_shape(this->cnode_->input(INDEX_TWO));
       MS_LOG(INFO) << this->name_
-                   << " has more than 1 dynamic axis. shape: " << this->cnode_->input(2)->fullname_with_scope();
+                   << " has more than 1 dynamic axis. shape: " << this->cnode_->input(INDEX_TWO)->fullname_with_scope();
       redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorListForMultiDynamicReshape();
     } else {
       tensor_redistribution->set_original_reshape_shape(nullptr);

@@ -1276,3 +1276,40 @@ def test_pangu_reshape_directly_use_shape():
     phase = compile_net(model, x)
     validator = ParallelValidator(model, phase)
     assert validator.check_node_inputs('MakeTuple-0', ['inputs0'])
+
+
+def test_parallel_dynamic_shape_with_multi_prime_dim():
+    """
+    Feature: Test tensor redistribution in dynamic shape.
+    Description: Test PanGu multi-batch qkv reshape.
+    Expectation: Compile success and assertion passed.
+    """
+
+    class PanguReshapeNet(nn.Cell):
+        def __init__(self):
+            super(PanguReshapeNet, self).__init__()
+            mul_np = np.full((1, 1), 0.5, dtype=np.float32)
+            self.mul_weight = Parameter(Tensor(mul_np), name="mul_weight")
+            self.mul = P.Mul()
+            self.reshape = P.Reshape()
+            self.mul.shard(((8, 1), (1, 1)))
+
+        def construct(self, x):
+            x = self.mul(x, self.mul_weight)
+            x = self.reshape(x, (-1,))
+            return x
+
+    dump_ir_path = "./test_parallel_dynamic_shape_with_multi_prime_dim"
+    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
+    dataset_shard = (8, 1)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                      global_rank=0, device_num=8,
+                                      dataset_strategy=(dataset_shard,))
+    model = PanguReshapeNet()
+    model = _VirtualDatasetCell(model)
+    model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+    x = Tensor(shape=(None, 96), dtype=mstype.float32)
+    model.set_inputs(x)
+    phase = compile_net(model, x)
+    validator = ParallelValidator(model, phase)
+    assert validator.check_node_inputs('MakeTuple-0', ['inputs0'])

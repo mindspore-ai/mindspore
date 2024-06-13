@@ -90,7 +90,7 @@ Status GroupNormInfo::InferTensorMap() {
   // dev_matrix: (n, c, h, w)
   TensorMap input_tensor_map(this->inputs_shape_[INPUT_INDEX].size(), MAP_NONE);
   input_tensor_map[BATCH_DIM_INDEX] = SizeToLong(this->inputs_shape_[INPUT_INDEX].size()) - 1;
-  // TensorMap input_tensor_map = {batch_split_index, MAP_NONE, MAP_NONE, MAP_NONE};
+  // input_tensor_map: batch_split_index, MAP_NONE, MAP_NONE, MAP_NONE
   TensorMap in_other_tensor_map = {MAP_NONE};
 
   // Has 3 tensor input: input, weight_opt(gamma), bias_opt(beta)
