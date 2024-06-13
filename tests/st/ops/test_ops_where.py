@@ -234,12 +234,11 @@ def test_where_ext_static_shape(mode):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.platform_x86_gpu_training
-def test_where_ext_dynamic_shape(jit_level):
+def test_where_ext_dynamic_shape():
     """
     Feature: Test where with dynamic shape in graph mode.
     Description: call ops.where with valid input and index.
@@ -252,7 +251,7 @@ def test_where_ext_dynamic_shape(jit_level):
     x2 = generate_random_input((6, 7, 8), np.float32)
     y2 = generate_random_input((6, 7, 8), np.float32)
     cond2 = x2 > 0
-    TEST_OP(where_forward_func, [[cond1, x1, y1], [cond2, x2, y2]], grad=True, jit_level=jit_level)
+    TEST_OP(where_forward_func, [[cond1, x1, y1], [cond2, x2, y2]], '', disable_yaml_check=True)
 
 
 @pytest.mark.level0

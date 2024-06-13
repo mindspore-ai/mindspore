@@ -178,15 +178,12 @@ def test_scatter_add_ext_bfloat16(mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_scatter_add_ext_dynamic(mode):
+def test_scatter_add_ext_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test ops.scatter_add_ext dynamic shape feature.
     Expectation: expect correct result.
     """
-    if mode == ms.GRAPH_MODE:
-        os.environ['GRAPH_OP_RUN'] = "1"
     x1 = Tensor(np.array([[1, 2, 3, 4, 5]]), dtype=ms.float32)
     dim1 = 1
     index1 = Tensor(np.array([[2, 4]]), dtype=ms.int64)
@@ -196,6 +193,5 @@ def test_scatter_add_ext_dynamic(mode):
     dim2 = 0
     index2 = Tensor(np.array([[0, 0, 0], [2, 2, 2], [4, 4, 4]]), dtype=ms.int64)
     src2 = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
-    TEST_OP(scatter_add_ext_forward_func, [[x1, dim1, index1, src1], [x2, dim2, index2, src2]], mode=mode, grad=True)
-    if mode == ms.GRAPH_MODE:
-        del os.environ['GRAPH_OP_RUN']
+    TEST_OP(scatter_add_ext_forward_func, [[x1, dim1, index1, src1], [x2, dim2, index2, src2]], 'scatter_add_ext',
+            disable_input_check=True, disable_mode=['GRAPH_MODE'])

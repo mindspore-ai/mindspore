@@ -113,8 +113,7 @@ def test_relu_bfloat16(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_relu_dynamic(mode):
+def test_relu_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test ops.relu dynamic shape feature.
@@ -122,4 +121,4 @@ def test_relu_dynamic(mode):
     """
     input_case1 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
     input_case2 = Tensor(np.random.rand(3, 4).astype(np.float32))
-    TEST_OP(relu_forward_func, [[input_case1], [input_case2]], mode=mode, grad=True)
+    TEST_OP(relu_forward_func, [[input_case1], [input_case2]], 'relu')

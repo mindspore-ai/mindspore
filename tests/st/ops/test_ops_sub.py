@@ -110,20 +110,18 @@ def test_ops_forward(context_mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_dynamic(context_mode):
+def test_ops_dynamic():
     """
     Feature: ops.extend.sub
     Description: dynamic shape and rank
     Expectation: success
     """
-    ms.context.set_context(mode=context_mode)
     x1 = ms.Tensor(np.array([[1, 2], [3, 4]], np.float32))
     y1 = ms.Tensor(np.array([[5, 6], [7, 8]], np.float32))
     x2 = ms.Tensor(np.array([[1, 2, 3]], np.float32))
     y2 = ms.Tensor(np.array([[10, 11, 12], [13, 14, 15], [16, 17, 18]], np.float32))
 
-    TEST_OP(sub, [[x1, y1, 1.], [x2, y2, 2.]], dump_ir=True, custom_flag='2')
+    TEST_OP(sub, [[x1, y1, 1.], [x2, y2, 2.]], 'sub_ext', disable_input_check=True)
 
 
 @pytest.mark.level1

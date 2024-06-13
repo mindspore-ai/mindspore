@@ -61,11 +61,10 @@ def test_maximum_vmap(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_maximum_all_dynamic(mode):
+def test_maximum_all_dynamic():
     """
     Feature: Test minimum op.
     Description: Test minimum with both input and axis are dynamic.
     Expectation: the result match with expected result.
     """
-    minimum_maximum_case_all_dyn(maximum, mode)
+    minimum_maximum_case_all_dyn(maximum)

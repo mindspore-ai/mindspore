@@ -76,8 +76,7 @@ def test_arange_forward(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_forward_dynamic_shape(mode):
+def test_forward_dynamic_shape():
     """
     Feature: mint.arange
     Description: Verify the result of arange forward with dynamic shape
@@ -85,5 +84,6 @@ def test_forward_dynamic_shape(mode):
     """
     inputs1 = [[1, 10, 2], [0, 6, 1]]
     inputs2 = [[5, 0.1, -1.2], [0, 5.5, 1.2]]
-    TEST_OP(arange_forward_func, inputs1, nontensor_dynamic_type='STATIC_LEN', mode=mode, grad=False, test_resize=False)
-    TEST_OP(arange_forward_func, inputs2, mode=mode, grad=False, test_resize=True)
+    TEST_OP(arange_forward_func, inputs1, 'arange', disable_input_check=True,
+            disable_nontensor_dynamic_type='MUTABLE_LEN', disable_grad=True, disable_resize=True)
+    TEST_OP(arange_forward_func, inputs2, 'arange', disable_input_check=True, disable_grad=True)

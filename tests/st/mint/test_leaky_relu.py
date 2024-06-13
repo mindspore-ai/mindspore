@@ -76,8 +76,7 @@ def test_leaky_relu_std(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
-def test_leaky_relu_dynamic_shape(mode):
+def test_leaky_relu_dynamic_shape():
     """
     Feature: Test leaky relu with dynamic shape in graph mode.
     Description: call mint.leaky_relu with valid input and index.
@@ -86,10 +85,8 @@ def test_leaky_relu_dynamic_shape(mode):
     x1, ng1 = generate_random_input((2, 3), np.float32)
     x2, ng2 = generate_random_input((2, 3, 4), np.float32)
 
-    if mode == 'pynative':
-        TEST_OP(leaky_relu_forward_func, [[ms.Tensor(x1), ng1], [ms.Tensor(x2), ng2]], grad=True, mode=ms.PYNATIVE_MODE)
-    else:
-        TEST_OP(leaky_relu_forward_func, [[ms.Tensor(x1), ng1], [ms.Tensor(x2), ng2]], grad=True, jit_level='O0')
+    TEST_OP(leaky_relu_forward_func, [[ms.Tensor(x1), ng1], [ms.Tensor(x2), ng2]], 'leaky_relu_ext',
+            disable_input_check=True, disable_mode=['GRAPH_MODE'])
 
 
 @pytest.mark.level1

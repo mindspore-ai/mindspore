@@ -178,7 +178,7 @@ def test_op():
 
         inputs_seq.append([x, w, b])
 
-    TEST_OP(dense_cell, inputs_seq, dump_ir=True, custom_flag="2")
+    TEST_OP(dense_cell, inputs_seq, '', disable_input_check=True, disable_yaml_check=True)
 
 
 def random_input(shape, dtype=np.float32):

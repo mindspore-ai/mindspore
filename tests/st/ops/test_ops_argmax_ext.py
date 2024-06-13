@@ -88,10 +88,9 @@ def test_ops_argmax_ext_backward(context_mode):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-def test_argmax_ext_dynamic_shape(jit_level):
+def test_argmax_ext_dynamic_shape():
     """
     Feature: Test argmax with dynamic shape in graph mode.
     Description: call ops.argmax with valid input and dim, keepdim is False.
@@ -102,4 +101,4 @@ def test_argmax_ext_dynamic_shape(jit_level):
 
     ms_data2 = GenInputData(np.float32, (5, 8, 7))
     dim2 = 1
-    TEST_OP(argmax_ext_forward_func, [[ms_data1, dim1], [ms_data2, dim2]], grad=True, jit_level=jit_level)
+    TEST_OP(argmax_ext_forward_func, [[ms_data1, dim1], [ms_data2, dim2]], '', disable_yaml_check=True)

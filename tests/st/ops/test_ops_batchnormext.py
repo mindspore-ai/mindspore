@@ -13,8 +13,6 @@
 # limitations under the License.
 # ============================================================================
 # pylint: disable=unused-variable
-import os
-
 import pytest
 import numpy as np
 
@@ -144,15 +142,12 @@ def test_bn_vmap(mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_bn_dyn(mode):
+def test_bn_dyn():
     """
     Feature: Ops.
     Description: test BatchNorm dynamic shape and dynamic rank.
     Expectation: expect correct result.
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
-    context.set_context(mode=mode)
     input_x1 = np.random.randn(*(1, 2, 4, 4)).astype(np.float32)
     input_x2 = np.random.randn(*(1, 2, 3, 4)).astype(np.float32)
     scale = Tensor(np.ones(2).astype(np.float32))
@@ -164,5 +159,5 @@ def test_bn_dyn(mode):
 
     TEST_OP(batch_norm_forward_func_dyn,
             [[Tensor(input_x1), scale, bias, mean, variance, momentum, eps],
-             [Tensor(input_x2), scale, bias, mean, variance, momentum, eps]])
-    del os.environ["GRAPH_OP_RUN"]
+             [Tensor(input_x2), scale, bias, mean, variance, momentum, eps]],
+            '', disable_input_check=True, disable_yaml_check=True, disable_mode=['GRAPH_MODE'])

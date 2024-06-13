@@ -110,8 +110,7 @@ def test_full_backward(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('jit_level', ["O0", "O2"])
-def test_full_dynamic_shape(jit_level):
+def test_full_dynamic_shape():
     """
     Feature: Test full with dynamic shape in graph mode.
     Description: call ops.mint.full with valid input and index.
@@ -122,17 +121,16 @@ def test_full_dynamic_shape(jit_level):
     size_2 = Tensor(np.array([1, 2, 3, 4]).astype(np.int64))
     value_2 = Tensor(6)
 
-    TEST_OP(full_forward_func, [[size_1, value_1], [size_2, value_2]], grad=False, jit_level=jit_level,
-            tensor_dynamic_type='DYNAMIC_SHAPE')
-    TEST_OP(full_forward_func, [[size_1, value_1], [size_2, value_2]], grad=True, jit_level=jit_level,
-            tensor_dynamic_type='DYNAMIC_SHAPE')
+    TEST_OP(full_forward_func, [[size_1, value_1], [size_2, value_2]], '', disable_input_check=True,
+            disable_yaml_check=True, disable_tensor_dynamic_type='DYNAMIC_RANK')
 
     size_1 = (1, 2, 3)
     value_1 = 5
     size_2 = (4, 3, 2)
     value_2 = 6
 
-    TEST_OP(full_forward_func, [[size_1, value_1], [size_2, value_2]], grad=False, jit_level=jit_level)
+    TEST_OP(full_forward_func, [[size_1, value_1], [size_2, value_2]], '', disable_input_check=True,
+            disable_yaml_check=True, disable_grad=True)
 
 
 @pytest.mark.level0

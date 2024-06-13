@@ -122,16 +122,14 @@ def test_flatten_backward(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_flatten_dynamic_shape(mode):
+def test_flatten_dynamic_shape():
     """
     Feature: Test dynamic shape.
     Description: test function div dynamic feature.
     Expectation: expect correct result.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
-    ms_data1 = generate_random_input((2, 3, 4, 5), np.float32)
+    ms_data1 = generate_random_input((2, 3, 4, 5, 6), np.float32)
     ms_data2 = generate_random_input((3, 4, 5, 6), np.float32)
     TEST_OP(flatten_forward_func, [[ms.Tensor(ms_data1), 2, 3],
-                                   [ms.Tensor(ms_data2), 0, 1]], grad=True, mode=mode)
-    del os.environ['GRAPH_OP_RUN']
+                                   [ms.Tensor(ms_data2), 0, 1]], '', disable_yaml_check=True,
+            disable_mode=['GRAPH_MODE'])
