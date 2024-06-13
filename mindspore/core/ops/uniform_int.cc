@@ -45,6 +45,29 @@ int64_t UniformInt::get_seed2() const {
   return GetValue<int64_t>(value_ptr);
 }
 
+template <typename T>
+BaseShapePtr TransUniformIntShapeValue(const T &shape_v, const PrimitivePtr &primitive) {
+  if (!shape_v.has_value()) {
+    ShapeVector dyn_output{abstract::TensorShape::kShapeRankAny};
+    return std::make_shared<abstract::TensorShape>(dyn_output);
+  }
+  // shape_v will always have value.
+  auto shape = shape_v.value();
+  ShapeVector output_shape;
+  for (size_t i = 0; i < shape_v->size(); i++) {
+    if (shape.IsValueUnknown(i)) {
+      output_shape.push_back(abstract::TensorShape::kShapeDimAny);
+    } else {
+      int64_t shape_i = shape[i];
+      MS_CHECK_VALUE(shape_i >= 0, CheckAndConvertUtils::FormatCheckIntegerMsg(
+                                     "the " + std::to_string(i) + "th dimension of input shape", shape_i, kGreaterEqual,
+                                     0, primitive));
+      output_shape.push_back(shape_i);
+    }
+  }
+  return std::make_shared<abstract::TensorShape>(output_shape);
+}
+
 BaseShapePtr UniformIntInferShape(const PrimitivePtr &primitive,
                                   const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -66,28 +89,31 @@ BaseShapePtr UniformIntInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "The max value should be a scalar tensor, while the shape is: "
                              << maxval_shape->ToString();
   }
-
-  auto shape_v = GetArrayValue<int64_t>(input_args[kInputIndex0]);
-  if (!shape_v.has_value()) {
-    ShapeVector dyn_output{abstract::TensorShape::kShapeRankAny};
-    return std::make_shared<abstract::TensorShape>(dyn_output);
-  }
-
-  auto shape = shape_v.value();
-  ShapeVector output_shape;
-  for (size_t i = 0; i < shape_v->size(); i++) {
-    if (shape.IsValueUnknown(i)) {
-      output_shape.push_back(abstract::TensorShape::kShapeDimAny);
+  auto x = input_args[kInputIndex0];
+  auto element_type = kNumberTypeInt64;
+  if (CheckAndConvertUtils::IsTensor(x)) {
+    auto tensor_type = x->GetType()->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor_type);
+    element_type = tensor_type->element()->type_id();
+  } else if (CheckAndConvertUtils::IsTuple(x)) {
+    auto tuple_type = x->BuildType()->cast<TuplePtr>();
+    if (tuple_type->dynamic_len()) {
+      element_type = tuple_type->dynamic_element_type()->type_id();
     } else {
-      int64_t shape_i = shape[i];
-      MS_CHECK_VALUE(shape_i >= 0, CheckAndConvertUtils::FormatCheckIntegerMsg(
-                                     "the " + std::to_string(i) + "th dimension of input shape", shape_i, kGreaterEqual,
-                                     0, primitive));
-      output_shape.push_back(shape_i);
+      if (std::any_of(tuple_type->elements().cbegin(), tuple_type->elements().cend(),
+                      [](const TypePtr &ele) { return ele->type_id() != kNumberTypeInt64; })) {
+        element_type = kTypeUnknown;
+      }
     }
+  } else {
+    MS_LOG(EXCEPTION) << "Unexpected type of input0:" << x->ToString() << " of op:" << primitive->ToString();
   }
-
-  return std::make_shared<abstract::TensorShape>(output_shape);
+  if (element_type == kNumberTypeInt64) {
+    return TransUniformIntShapeValue(GetArrayValue<int64_t>(input_args[kInputIndex0]), primitive);
+  } else if (element_type == kNumberTypeInt32) {
+    return TransUniformIntShapeValue(GetArrayValue<int32_t>(input_args[kInputIndex0]), primitive);
+  }
+  MS_LOG(EXCEPTION) << "Unexpected element type of input0:" << x->ToString() << " of op:" << primitive->ToString();
 }
 
 class MIND_API UniformIntInfer : public abstract::OpInferBase {
