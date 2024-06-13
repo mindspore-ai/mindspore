@@ -22,8 +22,9 @@
 
 namespace mindspore {
 namespace ops {
-constexpr size_t kVecSize = 1;
-constexpr size_t kMatSize = 2;
+namespace {
+constexpr size_t kFzrVecSize = 1;
+constexpr size_t kFzrMatSize = 2;
 
 constexpr size_t kExpandedX = 0;
 constexpr size_t kx1 = 1;
@@ -32,6 +33,7 @@ constexpr size_t kbias = 3;
 constexpr size_t kscales = 4;
 constexpr size_t krowIdx = 5;
 constexpr size_t kexpertIdx = 6;
+}  // namespace
 
 BaseShapePtr MoeFinalizeRoutingFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                     const std::vector<AbstractBasePtr> &input_args) const {
@@ -45,28 +47,28 @@ BaseShapePtr MoeFinalizeRoutingFuncImpl::InferShape(const PrimitivePtr &primitiv
   auto rowIdx_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[krowIdx]->GetShape());
   auto expertIdx_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kexpertIdx]->GetShape());
 
-  if (x_shape_map.empty() || x_shape_map[kShape].size() != kMatSize) {
+  if (x_shape_map.empty() || x_shape_map[kShape].size() != kFzrMatSize) {
     MS_LOG(EXCEPTION) << "For '" << prim_name
                       << "', input 'X' must be a 2D Tensor type, but got:" << input_args[kExpandedX]->ToString();
   }
-  if (skip_shape_map.empty() || skip_shape_map[kShape].size() != kMatSize) {
+  if (skip_shape_map.empty() || skip_shape_map[kShape].size() != kFzrMatSize) {
     MS_LOG(EXCEPTION) << "For '" << prim_name
                       << "', input 'skip1' must be a 2D Tensor type, but got:" << input_args[kx1]->ToString();
   }
-  if (bias_shape_map.empty() || bias_shape_map[kShape].size() != kMatSize) {
+  if (bias_shape_map.empty() || bias_shape_map[kShape].size() != kFzrMatSize) {
     MS_LOG(EXCEPTION) << "For '" << prim_name
                       << "', input 'bias' must be a 2D Tensor type, but got:" << input_args[kbias]->ToString();
   }
-  if (scales_shape_map.empty() || scales_shape_map[kShape].size() != kMatSize) {
+  if (scales_shape_map.empty() || scales_shape_map[kShape].size() != kFzrMatSize) {
     MS_LOG(EXCEPTION) << "For '" << prim_name
                       << "', input 'scales' must be a 2D Tensor type, but got:" << input_args[kscales]->ToString();
   }
-  if (rowIdx_shape_map.empty() || rowIdx_shape_map[kShape].size() != kVecSize) {
+  if (rowIdx_shape_map.empty() || rowIdx_shape_map[kShape].size() != kFzrVecSize) {
     MS_LOG(EXCEPTION) << "For '" << prim_name << "', input 'expanded_row_idx' must be a 1D Tensor type, but got:"
                       << input_args[krowIdx]->ToString();
   }
 
-  if (expertIdx_shape_map.empty() || expertIdx_shape_map[kShape].size() != kMatSize) {
+  if (expertIdx_shape_map.empty() || expertIdx_shape_map[kShape].size() != kFzrMatSize) {
     MS_LOG(EXCEPTION) << "For '" << prim_name << "', input 'expanded_expert_idx' must be a 2D Tensor type, but got:"
                       << input_args[kexpertIdx]->ToString();
   }
