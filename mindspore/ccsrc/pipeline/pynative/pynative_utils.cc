@@ -775,7 +775,7 @@ std::optional<tensor::BaseTensorPtr> Common::ConvertStubNodeToTensor(const std::
   return std::make_optional(ConvertStubNodeToTensor(v.value(), need_contiguous, requires_grad));
 }
 
-ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValuePtr &v, bool need_contiguous, bool requires_grad) {
+ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValueListPtr &v, bool need_contiguous, bool requires_grad) {
   if (utils::isa<ValueSequence>(v)) {
     const auto &value_seq = utils::cast<ValueSequencePtr>(v);
     const auto &values = value_seq->value();
@@ -787,6 +787,28 @@ ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValuePtr &v, bool need_c
     return std::make_shared<ValueTuple>(tensor_list);
   }
   MS_LOG(EXCEPTION) << "It should be stub tensor sequence, but got " << v->ToString();
+}
+
+ValueTuplePtr Common::ConvertStubNodeToValueTuple(const ValueTuplePtr &v, bool need_contiguous, bool requires_grad) {
+  if (utils::isa<ValueSequence>(v)) {
+    const auto &value_seq = utils::cast<ValueSequencePtr>(v);
+    const auto &values = value_seq->value();
+    std::vector<ValuePtr> tensor_list;
+    (void)std::transform(values.begin(), values.end(), std::back_inserter(tensor_list),
+                         [need_contiguous, requires_grad](const ValuePtr &value) {
+                           return ConvertStubNodeToTensor(value, need_contiguous, requires_grad);
+                         });
+    return std::make_shared<ValueTuple>(tensor_list);
+  }
+  MS_LOG(EXCEPTION) << "It should be stub tensor sequence, but got " << v->ToString();
+}
+
+std::optional<ValueTuplePtr> Common::ConvertStubNodeToValueTuple(const std::optional<ValueTuplePtr> &v,
+                                                                 bool need_contiguous, bool requires_grad) {
+  if (!v.has_value()) {
+    return std::nullopt;
+  }
+  return std::make_optional(ConvertStubNodeToValueTuple(v.value(), need_contiguous, requires_grad));
 }
 
 void Common::GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name,

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
+import pytest
 
 import mindspore as ms
 from mindspore import dtype as mstype
@@ -72,18 +73,23 @@ class GroupedMatmulNet(Cell):
         super().__init__()
         self.gmm = GroupedMatmul(split_item, group_type)
 
-    def construct(self, x, weight, bias, scale, offset, antiquant_scale, antiquant_offset, group_list):
+    def construct(self, x, weight, bias=None, scale=None, offset=None, antiquant_scale=None, antiquant_offset=None,
+                  group_list=None):
         out = self.gmm(x, weight, bias, scale, offset, antiquant_scale, antiquant_offset, group_list)
         return out
 
-
-def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_emptytensor_case0():
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_emptytensor_case0(mode):
     """
     Feature: Test grouped_matmul
     Description: semi_auto_parallel
     Expectation: shape is as expected.
     """
-    context.set_context(device_target="Ascend", mode=ms.GRAPH_MODE)
+    context.set_context(device_target="Ascend", mode=mode)
     gmm_net = GroupedMatmulNet(split_item=0, group_type=-1)
 
     # (16, 256) * (256, 128)   (127, 88) * (88, 64)
@@ -114,21 +120,26 @@ def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_emptytensor_case0():
     offset = [get_empty_tensor(dtype=mstype.float32)]
     antiquant_scale = [get_empty_tensor(dtype=mstype.float16)]
     antiquant_offset = [get_empty_tensor(dtype=mstype.float16)]
-    group_list = None
 
-    res = gmm_net(x, w, b, scale, offset, antiquant_scale, antiquant_offset, group_list)
+    res = gmm_net(x, w, b, scale, offset, antiquant_scale, antiquant_offset)
 
     # compare
     np.testing.assert_allclose(except0, res[0].asnumpy(), rtol=1e-3)
     np.testing.assert_allclose(except1, res[1].asnumpy(), rtol=1e-3)
 
-def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_case1():
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_case1(mode):
     """
     Feature: Test grouped_matmul
     Description: semi_auto_parallel
     Expectation: shape is as expected.
     """
-    context.set_context(device_target="Ascend", mode=ms.GRAPH_MODE)
+    context.set_context(device_target="Ascend", mode=mode)
     gmm_net = GroupedMatmulNet(split_item=0, group_type=-1)
 
     # (16, 256) * (256, 128)   (127, 88) * (88, 64)
@@ -154,26 +165,25 @@ def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_case1():
     x = [ms.Tensor(np_x0), ms.Tensor(np_x1)]
     w = [ms.Tensor(np_w0), ms.Tensor(np_w1)]
 
-    b = None
-    scale = None
-    offset = None
-    antiquant_scale = None
-    antiquant_offset = None
-    group_list = None
-
-    res = gmm_net(x, w, b, scale, offset, antiquant_scale, antiquant_offset, group_list)
+    res = gmm_net(x, w)
 
     # compare
     np.testing.assert_allclose(except0, res[0].asnumpy(), rtol=1e-3)
     np.testing.assert_allclose(except1, res[1].asnumpy(), rtol=1e-3)
 
-def test_grouped_matmul_x6d_w2d_splititem0_grouptypeneg1_none_case2():
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_grouped_matmul_x6d_w2d_splititem0_grouptypeneg1_none_case2(mode):
     """
     Feature: Test grouped_matmul
     Description: semi_auto_parallel
     Expectation: shape is as expected.
     """
-    context.set_context(device_target="Ascend", mode=ms.GRAPH_MODE)
+    context.set_context(device_target="Ascend", mode=mode)
     gmm_net = GroupedMatmulNet(split_item=0, group_type=-1)
 
     # (16, 256) * (256, 128)   (127, 88) * (88, 64)
@@ -199,26 +209,25 @@ def test_grouped_matmul_x6d_w2d_splititem0_grouptypeneg1_none_case2():
     x = [ms.Tensor(np_x0), ms.Tensor(np_x1)]
     w = [ms.Tensor(np_w0), ms.Tensor(np_w1)]
 
-    b = None
-    scale = None
-    offset = None
-    antiquant_scale = None
-    antiquant_offset = None
-    group_list = None
-
-    res = gmm_net(x, w, b, scale, offset, antiquant_scale, antiquant_offset, group_list)
+    res = gmm_net(x, w)
 
     # compare
     np.testing.assert_allclose(except0, res[0].asnumpy(), rtol=1e-3)
     np.testing.assert_allclose(except1, res[1].asnumpy(), rtol=1e-3)
 
-def test_grouped_matmul_x2d_w2d_b1d_splititem0_grouptypeneg1_none_case3():
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_grouped_matmul_x2d_w2d_b1d_splititem0_grouptypeneg1_none_case3(mode):
     """
     Feature: Test grouped_matmul
     Description: semi_auto_parallel
     Expectation: shape is as expected.
     """
-    context.set_context(device_target="Ascend", mode=ms.GRAPH_MODE)
+    context.set_context(device_target="Ascend", mode=mode)
     gmm_net = GroupedMatmulNet(split_item=0, group_type=-1)
 
     # (16, 256) * (256, 128)   (127, 88) * (88, 64)
@@ -247,25 +256,25 @@ def test_grouped_matmul_x2d_w2d_b1d_splititem0_grouptypeneg1_none_case3():
     w = [ms.Tensor(np_w0), ms.Tensor(np_w1)]
     b = [ms.Tensor(np_b0), ms.Tensor(np_b1)]
 
-    scale = None
-    offset = None
-    antiquant_scale = None
-    antiquant_offset = None
-    group_list = None
-
-    res = gmm_net(x, w, b, scale, offset, antiquant_scale, antiquant_offset, group_list)
+    res = gmm_net(x, w, b)
 
     # compare
     np.testing.assert_allclose(except0, res[0].asnumpy(), rtol=1e-3)
     np.testing.assert_allclose(except1, res[1].asnumpy(), rtol=1e-3)
 
-def test_grouped_matmul_x2d_w3d_splititem3_grouptype0_none_case4():
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_grouped_matmul_x2d_w3d_splititem3_grouptype0_none_case4(mode):
     """
     Feature: Test grouped_matmul
     Description: semi_auto_parallel
     Expectation: shape is as expected.
     """
-    context.set_context(device_target="Ascend", mode=ms.GRAPH_MODE)
+    context.set_context(device_target="Ascend", mode=mode)
     gmm_net = GroupedMatmulNet(split_item=3, group_type=0)
 
     M0 = 32
@@ -287,24 +296,25 @@ def test_grouped_matmul_x2d_w3d_splititem3_grouptype0_none_case4():
     x = [ms.Tensor(np_x_all)] # [M0, K0]
     w = [ms.Tensor(np_w_all)] # [E0, K0, N0]
 
-    b = None
-    scale = None
-    offset = None
-    antiquant_scale = None
-    antiquant_offset = None
     group_list = ms.Tensor(group_list_np, dtype=mstype.int64)
 
-    res = gmm_net(x, w, b, scale, offset, antiquant_scale, antiquant_offset, group_list)
+    res = gmm_net(x, w, group_list=group_list)
 
     np.testing.assert_allclose(except_np, res[0].asnumpy(), rtol=1e-3)
 
-def test_grouped_matmul_x2d_w3d_b2d_splititem3_grouptype0_none_case5():
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_grouped_matmul_x2d_w3d_b2d_splititem3_grouptype0_none_case5(mode):
     """
     Feature: Test grouped_matmul
     Description: semi_auto_parallel
     Expectation: shape is as expected.
     """
-    context.set_context(device_target="Ascend", mode=ms.GRAPH_MODE)
+    context.set_context(device_target="Ascend", mode=mode)
     gmm_net = GroupedMatmulNet(split_item=3, group_type=0)
 
     M0 = 32
@@ -330,23 +340,25 @@ def test_grouped_matmul_x2d_w3d_b2d_splititem3_grouptype0_none_case5():
     w = [ms.Tensor(np_w_all)] # after cann update 0515, w should be a [3DTensor,]
     b = [ms.Tensor(np_b_all)]
 
-    scale = None
-    offset = None
-    antiquant_scale = None
-    antiquant_offset = None
     group_list = ms.Tensor(group_list_np, dtype=mstype.int64)
 
-    res = gmm_net(x, w, b, scale, offset, antiquant_scale, antiquant_offset, group_list)
+    res = gmm_net(x, w, b, group_list=group_list)
 
     np.testing.assert_allclose(except_np, res[0].asnumpy(), rtol=1e-3)
 
-def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_a16w8_case6():
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_a16w8_case6(mode):
     """
     Feature: Test grouped_matmul
     Description: semi_auto_parallel
     Expectation: shape is as expected.
     """
-    context.set_context(device_target="Ascend", mode=ms.GRAPH_MODE)
+    context.set_context(device_target="Ascend", mode=mode)
     gmm_net = GroupedMatmulNet(split_item=0, group_type=-1)
 
     # (16, 256) * (256, 128)   (127, 88) * (88, 64)
