@@ -1,0 +1,86 @@
+moe_finalize_routing:
+    description: |
+        In MoE calculation, merge the results output by FFN and rearrange the output in time order by experts.
+
+        Notes:
+            - E: The number of experts, such as 8.
+            - K: The number of experts selected by a token, such as 1 or 2.
+            - N: The number of rows in x1, which is the number of original tokens.
+            - H: The number of cols in x1, which is the hiddens of tokens.
+
+        .. math::
+
+            expertid = expanded_expert_idx[i,k]
+            out(i,j) = x1_{i,j} + x2_{i,j} + \sum_{k=0}^{K}(scales_{i,k}*(expanded\_x_{expanded\_row\_idx_{i+k*N},j} + bias_{expertid,j}))
+
+        Inputs:
+            expanded_x (Tensor): The output of MoE FFN. The tensor must be 2D tensor. The shape of the tensor must be :math:`(K*N, H)`.
+                                 Supported dtypes: Float16, Float32.
+            x1 (Tensor): The output of attention. The tensor must be 2D tensor. The shape of the tensor must be :math:`(N, H)`.
+                         Data type requirements should be consistent with expanded_x.
+                         If not used, the required values to be passed are all 0, The shape of the Tensor meets the requirements
+            x2 (Tensor, optional): The output of attention. The tensor must be 2D tensor. The shape of the tensor must be :math:`(N, H)`. If not used, None.
+                                   Data type requirements should be consistent with expanded_x.
+            bias (Tensor): The bias of the last matmul in MoE FFN. The tensor must be 2D tensor. The shape of the tensor must be :math:`(E, H)`.
+                           Data type requirements should be consistent with expanded_x.
+            scales (Tensor): Weighted expanded when each token corresponds to multiple experts. The tensor must be 2D tensor.
+                             The shape of the tensor must be :math:`(N, K)`. Data type requirements should be consistent with expanded_x.
+                             If not used, the required values to be passed are all 1. The shape of the Tensor meets the requirements
+            expanded_row_idx (Tensor): The index in time order. The tensor must be 1D tensor. The shape of the tensor must be :math:`(K*N)`. Supported dtypes: Int32.
+                                       The value in Tensor must be between 0 and K*N, and the value cannot be repeated.
+            expanded_expert_idx (Tensor): The experts selected for each token are used to find the bias of which experts need to be accumulated.
+                                          The tensor must be 2D tensor. The shape of the tensor must be :math:`(N, K)`. Supported dtypes: Int32.
+
+        Outputs:
+            Tensor, the merged and sorted results. The tensor is 2D tensor. The shape of the tensor is :math:`(N, H)`. Data type consistent with expanded_x.
+
+        Raises:
+            TypeError: If the data type of input Tensor does not match the description in args.
+            ShapeError: If the shape of input Tensor does not match the description in args.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor, nn, context
+            >>> from mindspore.ops.auto_generate import MoeFinalizeRouting
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.moe_finalize_routing = MoeFinalizeRouting()
+            ...
+            ...     def construct(self, expanded_x, x1, x2, bias, scales, expanded_row_idx, expanded_expert_idx):
+            ...         result = self.moe_finalize_routing(expanded_x, x1, x2, bias, scales, expanded_row_idx, expanded_expert_idx)
+            ...         return result
+            ...
+            >>> context.set_context(device_target="Ascend", mode=ms.GRAPH_MODE)
+            >>> # E = 4, K = 2, N = 3, H = 4
+            >>> expanded_x = ms.Tensor(np.array([[0.1, 0.1, 0.1, 0.1],
+            ...                                  [0.2, 0.2, 0.2, 0.2],
+            ...                                  [0.3, 0.3, 0.3, 0.3],
+            ...                                  [0.1, 0.1, 0.1, 0.1],
+            ...                                  [0.2, 0.2, 0.2, 0.2],
+            ...                                  [0.3, 0.3, 0.3, 0.3]]), ms.float16)
+            >>> x1 = ms.Tensor(np.array([[1, 1, 1, 1],
+            ...                          [0.2, 0.2, 0.2, 0.2],
+            ...                          [0.3, 0.3, 0.3, 0.3]]), ms.float16)
+            >>> x2 = None
+            >>> bias = ms.Tensor(np.array([[0.1, 0.1, 0.1, 0.1],
+            ...                            [0.2, 0.2, 0.2, 0.2],
+            ...                            [0.3, 0.3, 0.3, 0.3],
+            ...                            [0.4, 0.4, 0.4, 0.4]]), ms.float16)
+            >>> scales = ms.Tensor(np.array([[0.7, 0.3],
+            ...                              [0.8, 0.2],
+            ...                              [0.8, 0.2]]), ms.float16)
+            >>> expanded_row_idx = ms.Tensor(np.array([2, 3, 1, 0, 5, 4]), ms.int32)
+            >>> expanded_expert_idx = ms.Tensor(np.array([[0, 1],
+            ...                                           [0, 2],
+            ...                                           [1, 3]]), ms.int32)
+            >>> net = Net()
+            >>> output = net(expanded_x, x1, x2, bias, scales, expanded_row_idx, expanded_expert_idx)
+            >>> print(output)
+            [[1.37 1.37 1.37 1.37]
+             [0.48 0.48 0.48 0.48]
+             [0.74 0.74 0.74 0.74]]

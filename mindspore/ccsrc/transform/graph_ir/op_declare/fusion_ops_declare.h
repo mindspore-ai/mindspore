@@ -44,6 +44,10 @@ DECLARE_OP_USE_OUTPUT(MatmulReduceScatter)
 DECLARE_OP_ADAPTER(AllGatherMatmul)
 DECLARE_OP_USE_OUTPUT(AllGatherMatmul)
 
+// MoeGroupedMatmul
+DECLARE_OP_ADAPTER(GroupedMatmul)
+DECLARE_OP_USE_DYN_OUTPUT(GroupedMatmul)
+
 // MoeFinalizeRouting
 DECLARE_OP_ADAPTER(MoeFinalizeRouting)
 DECLARE_OP_USE_OUTPUT(MoeFinalizeRouting)
