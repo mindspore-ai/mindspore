@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@ import os
 import pytest
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_single
@@ -30,4 +30,21 @@ def test_es_ascend():
     if return_code != 0:
         os.system(f"echo '\n**************** ES Log ****************'")
         os.system(f"grep -E 'ERROR|Error|error' ./es.log")
+    assert return_code == 0
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_single
+def test_es_external_api_ascend():
+    """
+    Feature: Parameter Server.
+    Description: Test es external api for Ascend.
+    Expectation: success.
+    """
+    return_code = os.system("bash run_msrun.sh")
+    if return_code != 0:
+        os.system(f"echo '\n**************** ES External API Log ****************'")
+        os.system(f"grep -E 'ERROR|Error|error' ./worker_0.log")
     assert return_code == 0
