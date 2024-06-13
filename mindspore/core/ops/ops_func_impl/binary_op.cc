@@ -24,6 +24,8 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr BinaryOpFuncImpl::InferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
   auto x_shape = x_shape_ptr->GetShapeVector();
   auto y_shape_ptr = input_args[kInputIndex1]->GetShape();
