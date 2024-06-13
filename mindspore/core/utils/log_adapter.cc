@@ -18,7 +18,6 @@
 #include <cstddef>
 #include <sstream>
 #include <string>
-#include "utils/info.h"
 
 #ifndef _MSC_VER
 #include <unistd.h>
@@ -688,7 +687,7 @@ bool ParsePositiveInt(const std::string &str, const size_t beg, const size_t end
     ++idx;
   }
   if (val == 0) {
-    return False;
+    return false;
   }
   if (ptr_val != nullptr) {
     *ptr_val = static_cast<int>(val);
