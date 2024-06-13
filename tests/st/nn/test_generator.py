@@ -13,14 +13,16 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import numpy as np
 
 import mindspore as ms
-from mindspore.nn import Generator, default_generator, get_rng_state, set_rng_state
+from mindspore.common.generator import Generator, default_generator, get_rng_state, set_rng_state
+from tests.st.utils import test_utils
 
+# pylint: disable=protected-access
 
+@test_utils.run_with_cell
 def run(generator):
-    seed, offset = generator(1)
+    seed, offset = generator._step(1)
     return seed, offset
 
 
@@ -50,7 +52,7 @@ def assert_state_same(seed1, offset1, seed2, offset2):
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_offset_inc(mode):
     """
-    Feature: nn.Generator
+    Feature: common.Generator
     Description: Verify the offset inc
     Expectation: success
     """
@@ -72,7 +74,7 @@ def test_offset_inc(mode):
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_restore_state(mode):
     """
-    Feature: nn.Generator
+    Feature: common.Generator
     Description: Verify restore state
     Expectation: success
     """
@@ -85,36 +87,28 @@ def test_restore_state(mode):
     seed1, offset1 = run(generator1)
 
     generator2 = Generator()
-    generator2.set_state(*state)
+    generator2.set_state(state)
 
     seed2, offset2 = run(generator2)
+    assert seed1 == 5
     assert_state_same(seed1, offset1, seed2, offset2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_default_generator(mode):
+def test_default_generator():
     """
     Feature: default_generator
     Description: Verify the function of default_generator
     Expectation: success
     """
-    default_gen = default_generator()
-
-    origin_seed, origin_offset = default_gen.get_state()
-    seed1, offset1 = get_rng_state()
-
-    assert_state_same(origin_seed, origin_offset, seed1, offset1)
-
-    set_rng_state(12, 12)
-    seed2, offset2 = get_rng_state()
-    assert np.allclose(seed2.asnumpy(), 12)
-    assert np.allclose(offset2.asnumpy(), 12)
-
-    set_rng_state(origin_seed, origin_offset)
+    state = get_rng_state()
+    seed1, offset1 = default_generator._step(5)
+    set_rng_state(state)
+    seed2, offset2 = default_generator._step(5)
+    assert_state_same(seed1, offset1, seed2, offset2)

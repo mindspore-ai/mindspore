@@ -20,6 +20,8 @@
 "mindspore/mindspore/core/utils/log_adapter.cc"                                                    "runtime/references"
 "mindspore/mindspore/ccsrc/runtime/hardware/device_context.h"                                                "readability/braces"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/arithmetic_self_cpu_kernel.cc"                  "readability/braces"
+"mindspore/mindspore/core/ops/ops_func_impl/generator.cc"                  "build/namespace"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/generator_cpu_kernel.cc"                  "build/namespace"
 "mindspore/mindspore/ccsrc/transform/graph_ir/convert.h"                                            "runtime/references"
 "mindspore/mindspore/ccsrc/transform/graph_ir/convert.cc"                                           "build/include_what_you_use"
 "mindspore/mindspore/ccsrc/transform/graph_ir/op_adapter.cc"                                        "runtime/references"

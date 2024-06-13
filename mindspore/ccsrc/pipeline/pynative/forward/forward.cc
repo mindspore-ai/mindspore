@@ -428,7 +428,6 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
 
   // Reuse SetInputAbstract, abs of inputs is need when requires_grad is true.
   InferOutputAbstract(op_run_info);
-  CheckIfNeedSyncForHeterogeneous(op_run_info->base_op_run_info.device_target);
   runtime::KernelTaskType task_type = GetViewOpTaskType(op_run_info->base_op_run_info.op_name);
 
   // Create view output tensor
@@ -808,13 +807,6 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   return result_v;
 }
 
-void ForwardExecutor::CheckIfNeedSyncForHeterogeneous(const std::string &cur_target) {
-  if (last_target_ != "Unknown" && last_target_ != cur_target) {
-    Sync();
-  }
-  last_target_ = cur_target;
-}
-
 bool ForwardExecutor::CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   const auto &cur_cell = forward_cell_stack_.top();
@@ -986,7 +978,6 @@ device::DeviceAddressPtr ForwardExecutor::TensorContiguousCallback(const DeviceS
 
 void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  CheckIfNeedSyncForHeterogeneous(op_run_info->base_op_run_info.device_target);
   PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, op_run_info->requires_grad ? grad()->top_cell() : nullptr);
   for (const auto &value : op_run_info->base_op_run_info.expanded_input_values) {
     if (!value->isa<tensor::BaseTensor>()) {

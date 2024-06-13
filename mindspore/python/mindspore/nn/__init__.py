@@ -21,7 +21,6 @@ from __future__ import absolute_import
 
 from mindspore.nn import layer, loss, optim, wrap, grad, metrics, probability, sparse, dynamic_lr, reinforcement
 from mindspore.nn.learning_rate_schedule import *
-from mindspore.nn.generator import *
 from mindspore.nn.dynamic_lr import *
 from mindspore.nn.cell import Cell, GraphCell
 from mindspore.nn.layer import *
@@ -45,6 +44,5 @@ __all__.extend(sparse.__all__)
 __all__.extend(learning_rate_schedule.__all__)
 __all__.extend(dynamic_lr.__all__)
 __all__.extend(reinforcement.__all__)
-__all__.extend(generator.__all__)
 
 __all__.sort()

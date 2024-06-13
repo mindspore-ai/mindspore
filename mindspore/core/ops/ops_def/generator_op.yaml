@@ -1,0 +1,15 @@
+#operator generator
+generator:
+    args:
+        cmd:
+            dtype: int
+        inputs:
+            dtype: tuple[tensor]
+            arg_handler: generator_handler
+    returns:
+        outputs: 
+            dtype: tuple[tensor]
+    labels:
+        side_effect_mem: True
+    function:
+        disable: True

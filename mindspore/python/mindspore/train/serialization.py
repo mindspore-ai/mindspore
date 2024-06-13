@@ -68,6 +68,7 @@ from mindspore.parallel.checkpoint_transform import sync_pipeline_shared_paramet
 from mindspore.train._utils import read_proto
 from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir, \
     split_mindir, split_dynamic_mindir
+from mindspore.common.generator import Generator
 from ..ops.operations._opaque_predicate_registry import add_opaque_predicate, clean_funcs
 
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
@@ -487,7 +488,9 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     if append_dict:
         append_info_list = []
         for k_name, value in append_dict.items():
-            if not isinstance(value, str):
+            if isinstance(value, Generator):
+                value = value.get_state()
+            elif not isinstance(value, str):
                 value = Tensor(value)
             append_info_list.append({"name": k_name, "data": value})
         save_obj.extend(append_info_list)
@@ -692,9 +695,9 @@ def _check_append_dict(append_dict):
         raise TypeError("For 'save_checkpoint', the argument 'append_dict' must be dict, but got "
                         "{}.".format(type(append_dict)))
     for key, value in append_dict.items():
-        if not isinstance(key, str) or not isinstance(value, (int, float, bool, str, Parameter, Tensor)):
+        if not isinstance(key, str) or not isinstance(value, (int, float, bool, str, Parameter, Tensor, Generator)):
             raise TypeError(f"For 'save_checkpoint', the type of dict 'append_info' must be key: string, "
-                            f"value: int, float or bool, but got key: {type(key)}, value: {type(value)}")
+                            f"value: int, float, bool or Generator, but got key: {type(key)}, value: {type(value)}")
     return append_dict
 
 

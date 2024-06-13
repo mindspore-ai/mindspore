@@ -39,7 +39,7 @@ from mindspore.common.api import _pynative_executor
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore import ops
 from ..auto_generate import TensorCopySlices, SiLU, Cummin, ExtractImagePatches, DecoderKVCache, PromptKVCache, \
-    ApplyCamePart1, ApplyCamePart2, ApplyCamePart3, ApplyCamePart4
+    ApplyCamePart1, ApplyCamePart2, ApplyCamePart3, ApplyCamePart4, Generator
 
 # Bit operation
 bit_and = bit_and()
