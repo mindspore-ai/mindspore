@@ -96,7 +96,7 @@ constexpr auto kCustomOpFlashAttentionFusionForCustom = "FlashAttentionFusionFor
 constexpr auto kCustomOpFlashAttentionFusion = "FlashAttentionFusion";
 constexpr auto kCustomOpGroupNormSiluFusion = "GroupNormSiluFusion";
 constexpr auto kCustomOpGeGluV2Fusion = "GeGluV2Fusion";
-constexpr auto kAddLayerNormFusion = "AddLayerNormFusion";
+constexpr auto kLayerNormV3Fusion = "LayerNormV3Fusion";
 constexpr auto kFuseAddAndLayernorm = "FuseAddAndLayernorm";
 constexpr auto kCustomOpFFNFusion = "FFNFusion";
 constexpr auto kScalarOpPass = "ScalarOpPass";
@@ -661,7 +661,7 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
     if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
         find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "LayerNormV3") != plugin_custom_ops.end()) {
       MS_LOG(INFO) << "run LayerNormV3.";
-      MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kAddLayerNormFusion}), lite::RET_ERROR,
+      MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kLayerNormV3Fusion}), lite::RET_ERROR,
                         "LayerNormV3 op pass failed.");
     }
     if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "AddLayerNorm") != plugin_custom_ops.end()) {
