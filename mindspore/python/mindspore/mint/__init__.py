@@ -179,7 +179,7 @@ from mindspore.ops.functional import isfinite
 # 73
 from mindspore.ops.functional import ceil
 # 74
-
+from mindspore.ops.function.array_func import sort_ext as sort
 # 75
 from mindspore.ops.functional import less, lt
 # 76
@@ -231,6 +231,9 @@ from mindspore.ops.function.math_func import tanh
 # 99
 
 # 100
+
+# 157
+from mindspore.ops.function.array_func import scatter
 
 # 176
 from mindspore.ops.function.math_func import atan2_ext as atan2
@@ -410,7 +413,7 @@ __all__ = [
     # 73
     'ceil',
     # 74
-
+    'sort',
     # 75
     'less',
     'lt',
@@ -465,6 +468,8 @@ __all__ = [
 
     # 100
 
+    # 157
+    'scatter',
     # 176
     'atan2',
     'arctan2',

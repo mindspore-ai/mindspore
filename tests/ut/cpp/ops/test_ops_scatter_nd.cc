@@ -62,8 +62,6 @@ TEST_P(TestScatterNd, scatter_nd_dyn_shape) {
   if (param.is_dyn_len) {
     shape->CheckAndConvertToDynamicLenSequence();
   }
-  auto infer_impl = std::make_shared<ScatterNdFuncImpl>();
-  ASSERT_NE(infer_impl, nullptr);
   std::vector<abstract::AbstractBasePtr> input_args{std::move(indices), std::move(updates), std::move(shape)};
   auto expect_shape = std::make_shared<abstract::Shape>(param.out_shape);
   auto expect_type = std::make_shared<TensorType>(param.out_type);
