@@ -184,6 +184,7 @@ function Convert() {
           done
         fi
         if [[ ${cfg_file_name} =~ "_with_config_cloud_ascend" ]]; then
+            input_format=""
             spec_shapes=""
             config_file="${ascend_config_path}/${model_name}.config"
         fi
