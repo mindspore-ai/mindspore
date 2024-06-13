@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-from mindspore import ops
+from mindspore import ops, JitConfig
 from mindspore.nn import Cell
 from mindspore.ops.extend import sub
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
@@ -52,9 +52,8 @@ def test_ops_forward(context_mode):
 
     sub_cell = SubCell()
 
-    # 2 x 2
-    x = np.array([[1, 2], [3, 4]], np.float32)
-    y = np.array([[1, 2], [3, 4]], np.float32)
+    x = np.random.randn(64, 32, 57344).astype(np.float32)
+    y = np.random.randn(64, 32, 1).astype(np.float32)
     alpha = 2.0
 
     output = sub_cell(ms.tensor(x), ms.tensor(y), alpha).asnumpy()
@@ -65,9 +64,8 @@ def test_ops_forward(context_mode):
     sub_cell.set_inputs(ms.tensor(shape=[None, None], dtype=ms.float32),
                         ms.tensor(shape=[None, None], dtype=ms.float32), alpha)
 
-    # 3 x 3
-    x = np.array([[1, 2], [3, 4]], np.float32)
-    y = np.array([[1, 2], [3, 4]], np.float32)
+    x = np.random.randn(64, 1536).astype(np.float32)
+    y = 1.
     alpha = 2.0
 
     output = sub_cell(ms.tensor(x), ms.tensor(y), alpha).asnumpy()
@@ -75,8 +73,11 @@ def test_ops_forward(context_mode):
 
     np.testing.assert_allclose(output, expect, rtol=rtol)
 
-    x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], np.float32)
-    y = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], np.float32)
+    sub_cell.set_inputs(ms.tensor(shape=[None, None, None, None], dtype=ms.float32),
+                        ms.tensor(shape=[None, None, None, None], dtype=ms.float32), alpha)
+
+    x = np.random.randn(3, 4, 64, 64).astype(np.float32)
+    y = np.random.randn(3, 4, 64, 64).astype(np.float32)
 
     output = sub_cell(ms.tensor(x), ms.tensor(y), alpha).asnumpy()
     expect = x - y * alpha
@@ -85,24 +86,6 @@ def test_ops_forward(context_mode):
 
     sub_cell.set_inputs(ms.tensor(shape=None, dtype=ms.float32),
                         ms.tensor(shape=None, dtype=ms.float32), alpha)
-
-    # 2 x 2 x 2
-    x = np.array([[1, 2], [3, 4]], np.float32)
-    y = np.array([[1, 2], [3, 4]], np.float32)
-    alpha = 2.0
-
-    output = sub_cell(ms.tensor(x), ms.tensor(y), alpha).asnumpy()
-    expect = x - y * alpha
-
-    np.testing.assert_allclose(output, expect, rtol=rtol)
-
-    x = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], np.float32)
-    y = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], np.float32)
-
-    output = sub_cell(ms.tensor(x), ms.tensor(y), alpha).asnumpy()
-    expect = x - y * alpha
-
-    np.testing.assert_allclose(output, expect, rtol=rtol)
     del os.environ["GRAPH_OP_RUN"]
 
 
@@ -166,15 +149,44 @@ def test_ops_bf16(context_mode):
     os.environ["GRAPH_OP_RUN"] = "1"
     ms.context.set_context(mode=context_mode)
 
-    add_cell = SubCell()
+    sub_cell = SubCell()
 
-    # 2 x 2
-    x = np.array([[1, 2], [3, 4]], np.float32)
-    y = np.array([[5, 6], [7, 8]], np.float32)
+    x_np_32 = np.random.randn(1).astype(np.float32)
+    y_np_32 = np.random.randn(1, 4096, 4096).astype(np.float32)
+    x = ms.tensor(x_np_32, ms.bfloat16)
+    y = ms.tensor(y_np_32, ms.bfloat16)
+    x_np_bf16 = x.float().asnumpy()
+    y_np_bf16 = y.float().asnumpy()
     alpha = 2.0
 
-    output = ops.grad(add_cell, (0))(ms.tensor(x, ms.bfloat16), ms.tensor(y, ms.bfloat16), alpha).float().asnumpy()
-    expect = np.ones_like(y)
+    output = sub_cell(x, y, alpha).float().asnumpy()
+    expect = x_np_bf16 - y_np_bf16 * alpha
+
+    np.testing.assert_allclose(output, expect, rtol=4e-3)
+    del os.environ["GRAPH_OP_RUN"]
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_bool(context_mode):
+    """
+    Feature: test sub backward
+    Description: test sub backward
+    Expectation: success
+    """
+    ms.context.set_context(mode=context_mode)
+
+    sub_cell = SubCell()
+    sub_cell.set_jit_config(JitConfig(jit_level='O0'))
+
+    # 2 x 2
+    x = np.array([[True, True], [False, False]], np.bool_)
+    y = np.array([[True, False], [True, False]], np.bool_)
+    alpha = True
+
+    output = sub_cell(ms.tensor(x), ms.tensor(y), alpha).asnumpy()
+    expect = x ^ (y & alpha)
 
     np.testing.assert_allclose(output, expect, rtol=rtol)
-    del os.environ["GRAPH_OP_RUN"]

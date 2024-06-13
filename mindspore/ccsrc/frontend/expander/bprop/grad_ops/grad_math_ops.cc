@@ -704,7 +704,7 @@ REG_BPROP_BUILDER("AddExt").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   }
 
   std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dx, dy);
-  ret.emplace_back(ib->Tensor(0, ib->GetDtype(alpha)));
+  ret.emplace_back(ib->OutZeros(alpha));
   return ret;
 });
 
@@ -738,7 +738,7 @@ REG_BPROP_BUILDER("SubExt").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   }
 
   std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dx, dy);
-  ret.emplace_back(ib->Tensor(0, ib->GetDtype(alpha)));
+  ret.emplace_back(ib->OutZeros(alpha));
   return ret;
 });
 

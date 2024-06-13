@@ -51,7 +51,7 @@ def test_basic(context_mode):
 
     uniform_cell = UniformExtCell()
 
-    x = random_input([10, 10, 10])
+    x = random_input([64])
     from_ = 90.0
     to = 100.0
 

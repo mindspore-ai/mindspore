@@ -244,8 +244,8 @@ def uniform_ext(tensor, a, b, generator=None):
 
     Args:
         tensor (Tensor): The origin input tensor.
-        a (float): The lower bound of the interval.
-        b (float): The upper bound of the interval.
+        a (number): The lower bound of the interval.
+        b (number): The upper bound of the interval.
         generator (Generator, optional): The random seed. Default: None.
 
     Raises:
@@ -255,12 +255,13 @@ def uniform_ext(tensor, a, b, generator=None):
         Tensor, with the same shape as tensor.
 
     Examples:
-        >>> from mindspore import Tensor, ops
         >>> import mindspore
-        >>> import numpy as np
-        >>> x = mindspore.ops.ones(4, 2)
-        >>> output = ops.uniform_ext(x, 1., 2.)
-        >>> print(result)
+        >>> x = mindspore.ops.ones((4, 2))
+        >>> generator = mindspore.Generator()
+        >>> generator.manual_seed(100)
+        >>> result = mindspore.ops.uniform_ext(x, 1., 2., generator)
+        >>> print(result.shape)
+        (4, 2)
     """
     if generator is None:
         generator = default_generator
