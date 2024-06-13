@@ -117,6 +117,7 @@ class _ProcessManager:
         self.join = args.join
         self.cluster_time_out = args.cluster_time_out
         self.bind_core = args.bind_core
+        self.rank_table_file = args.rank_table_file
 
         self.sim_level = args.sim_level
         self.sim_rank_id = args.sim_rank_id
@@ -152,6 +153,10 @@ class _ProcessManager:
 
         """
         os.environ["RANK_SIZE"] = str(self.exported_rank_size)
+        if self.rank_table_file != "":
+            os.environ["RANK_TABLE_FILE"] = self.rank_table_file
+            logger.warning(f"msrun launching distributed job with user configured rank table file path:"
+                           f"{self.rank_table_file}")
         if self.is_scale:
             response_message = _send_scale_num(self.scheduler_url, self.scale_num)
             is_first_manager = response_message

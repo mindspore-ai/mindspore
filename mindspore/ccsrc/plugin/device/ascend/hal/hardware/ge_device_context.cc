@@ -425,9 +425,14 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
   auto env_device_id = std::to_string(inst_context->get_param<uint32_t>(MS_CTX_DEVICE_ID));
   auto env_cluster_info = common::GetEnv("HELP_CLUSTER");
   auto enable_hccl = inst_context->get_param<bool>(MS_CTX_ENABLE_HCCL);
+  MS_LOG(INFO) << "Values for hccl options: env_table_file[" << env_table_file << "], simulation_level["
+               << simulation_level << "], env_rank_id[" << env_rank_id << "], env_device_id[" << env_device_id
+               << "], enable_hccl[" << enable_hccl << "], UseDynamicCluster[" << common::UseDynamicCluster() << "].";
+
   if (enable_hccl &&
       (!(env_table_file.empty() || env_rank_id.empty()) || !(env_cluster_info.empty() || env_rank_id.empty()) ||
-       hccl::HcclAdapter::GetInstance().UseHcclCM())) {
+       hccl::HcclAdapter::GetInstance().UseHcclCM()) &&
+      !(common::UseDynamicCluster() && !env_table_file.empty())) {
     MS_LOG(INFO) << "Initialize Ge for distribute parameter";
     if (!env_table_file.empty()) {
       MS_LOG(INFO) << "Use hccl, make sure hccl lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";

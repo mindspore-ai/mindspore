@@ -106,6 +106,13 @@ def get_args():
         help="specifies simulation process's rank id. Only one process is spawned in simulation scenario."
     )
     parser.add_argument(
+        "--rank_table_file",
+        default="",
+        type=str,
+        help="specifies rank table file path. This path is not used to initialize distributed job in "
+             "'rank table file manner' but to help support other features."
+    )
+    parser.add_argument(
         "task_script",
         type=str,
         help="The full path to the script that will be launched in distributed manner, followed "
