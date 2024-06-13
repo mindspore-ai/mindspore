@@ -105,6 +105,8 @@ class CheckpointConfig:
         enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
                         mode, currently supports 'AES-GCM', 'AES-CBC' and 'SM4-CBC'. Default: ``'AES-GCM'`` .
         exception_save (bool): Whether to save the current checkpoint when an exception occurs. Default: ``False`` .
+        crc_check (bool): Whether to perform crc32 calculation when saving checkpoint and save the calculation
+                          result to the end of ckpt. Default: ``False`` .
         kwargs (dict): Configuration options dictionary.
 
     Raises:
@@ -158,6 +160,7 @@ class CheckpointConfig:
                  enc_key=None,
                  enc_mode='AES-GCM',
                  exception_save=False,
+                 crc_check=False,
                  **kwargs):
 
         if save_checkpoint_steps is not None:
@@ -200,6 +203,7 @@ class CheckpointConfig:
         self._append_dict = self._handle_append_info(append_info)
         self._enc_key = Validator.check_isinstance('enc_key', enc_key, (type(None), bytes))
         self._enc_mode = Validator.check_isinstance('enc_mode', enc_mode, str)
+        self._crc_check = Validator.check_isinstance('crc_check', crc_check, bool)
         self._map_param_inc = kwargs.get('incremental', False)
 
     @property
@@ -290,6 +294,16 @@ class CheckpointConfig:
             str, encryption mode.
         """
         return self._enc_mode
+
+    @property
+    def crc_check(self):
+        """
+        Get the value of the whether open crc check.
+
+        Returns:
+            bool, whether open crc check.
+        """
+        return self._crc_check
 
     @property
     def append_dict(self):
@@ -581,6 +595,7 @@ class ModelCheckpoint(Callback):
             network = self._config.saved_network if self._config.saved_network is not None else cb_params.train_network
             save_checkpoint(network, cur_file, self._config.integrated_save, self._config.async_save,
                             self._append_dict, self._config.enc_key, self._config.enc_mode,
+                            crc_check=self._config.crc_check,
                             incremental=self._map_param_inc)
 
             self._latest_ckpt_file_name = cur_file
