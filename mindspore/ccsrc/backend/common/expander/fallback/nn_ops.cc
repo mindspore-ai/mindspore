@@ -938,7 +938,6 @@ REG_FALLBACK_BUILDER("ReplicationPad3DGrad").SetBody(BODYFUNC(ib) {
 });
 
 REG_FALLBACK_BUILDER("Embedding").SetBody(BODYFUNC(ib) {
-  MS_LOG(ERROR) << "ABCCC";
   auto input = ib->GetInput(kIndex0);
   auto weight = ib->GetInput(kIndex1);
   auto padding_idx = ib->GetInput(kIndex2);

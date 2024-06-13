@@ -17,6 +17,7 @@
 #include "backend/common/graph_kernel/expander/mindir_adapter/anf_node_holder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "abstract/abstract_value.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore::graphkernel::expander {
 ValuePtr AnfNodeHolder::GetValue() {
@@ -35,7 +36,9 @@ ShapeVector AnfNodeHolderWithDeviceInfo::GetShape() { return Callback::Instance(
 TypePtr AnfNodeHolderWithDeviceInfo::GetDtype() { return TypeIdToType(Callback::Instance()->GetOutputType(node_, 0)); }
 std::string AnfNodeHolderWithDeviceInfo::GetFormat() { return Callback::Instance()->GetOutputFormat(node_, 0); }
 BaseShapePtr AnfNodeHolderWithHostInfo::GetShapePtr() { return nullptr; }
-ShapeVector AnfNodeHolderWithHostInfo::GetShape() { return Callback::Instance()->GetOutputShape(node_, 0); }
-TypePtr AnfNodeHolderWithHostInfo::GetDtype() { return TypeIdToType(Callback::Instance()->GetOutputType(node_, 0)); }
-std::string AnfNodeHolderWithHostInfo::GetFormat() { return Callback::Instance()->GetOutputFormat(node_, 0); }
+ShapeVector AnfNodeHolderWithHostInfo::GetShape() { return Callback::Instance()->GetOutputInferShape(node_, 0); }
+TypePtr AnfNodeHolderWithHostInfo::GetDtype() {
+  return TypeIdToType(Callback::Instance()->GetOutputInferType(node_, 0));
+}
+std::string AnfNodeHolderWithHostInfo::GetFormat() { return kOpFormat_DEFAULT; }
 }  // namespace mindspore::graphkernel::expander
