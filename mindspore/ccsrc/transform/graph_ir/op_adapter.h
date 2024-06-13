@@ -189,7 +189,19 @@ class OpAdapter : public BaseOpAdapter {
       if (common::AnfAlgo::CheckPrimitiveType(anf, prim::kPrimReturn)) {
         auto cnode = anf->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(cnode);
-        judge_node = cnode->inputs()[1];
+        auto input_node = cnode->inputs()[1];
+        if (common::AnfAlgo::CheckPrimitiveType(judge_node, prim::kPrimMakeTuple)) {
+          judge_node = input_node;
+        }
+        auto judge_cnode = judge_node->cast<CNodePtr>();
+        if (judge_cnode != nullptr) {
+          auto inputs = judge_cnode->inputs();
+          for (const auto &input : inputs) {
+            if (common::AnfAlgo::IsNoOuputNode(input)) {
+              --num;
+            }
+          }
+        }
       }
 
       if (common::AnfAlgo::CheckPrimitiveType(judge_node, prim::kPrimMakeTuple)) {
@@ -664,6 +676,18 @@ class OpAdapter : public BaseOpAdapter {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
 
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEInitializerMode> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEFilterMode> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEOptimizerMode> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
   static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEEnumToStr> enum_str,
                                 const std::vector<std::string> &enum_string) {
     return ConvertAnyUtil(value, enum_str, enum_string);
@@ -851,6 +875,21 @@ class OpAdapter : public BaseOpAdapter {
   }
 
   static std::string GetAttrType(const AnyTraits<GECoordinateTransformMode> anyTraitsGE) {
+    std::string ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<GEInitializerMode> anyTraitsGE) {
+    std::string ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<GEFilterMode> anyTraitsGE) {
+    std::string ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<GEOptimizerMode> anyTraitsGE) {
     std::string ret{};
     return ret;
   }

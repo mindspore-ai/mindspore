@@ -567,6 +567,7 @@ bool CacheFileExists(const std::string &name) {
 void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   const auto &inputs = kernel_graph->inputs();
+  auto device_id = device_context_->device_context_key().device_id_;
   for (const auto &input : inputs) {
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
     builder->SetOutputsFormat({kOpFormat_DEFAULT});
@@ -591,9 +592,10 @@ void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) c
       tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     }
 
-    auto device_id = device_context_->device_context_key().device_id_;
-    auto device_address_ptr = std::make_shared<GeHostAddress>(nullptr, tensor_size, kOpFormat_DEFAULT, output_type_id,
-                                                              kAscendDevice, device_id);
+    auto input_with_index = std::make_pair(input_node, 0);
+    const auto kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      input_with_index, nullptr, tensor_size, kOpFormat_DEFAULT, output_type_id, {}, kAscendDevice, device_id);
+    auto device_address_ptr = std::make_shared<GeHostAddress>(kernel_tensor);
     device_address_ptr->set_is_ptr_persisted(false);
     AnfAlgo::SetOutputAddr(device_address_ptr, 0, input_node.get());
   }
@@ -602,6 +604,7 @@ void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) c
 void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(kernel_graph->output());
+  auto device_id = device_context_->device_context_key().device_id_;
   for (const auto &output : outputs) {
     const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     auto &output_node = output_with_index.first;
@@ -615,11 +618,8 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
 
     auto i = output_with_index.second;
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, i);
-
-    auto device_id = device_context_->device_context_key().device_id_;
     const auto kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
       output_with_index, nullptr, 0, kOpFormat_DEFAULT, output_type_id, {}, kAscendDevice, device_id);
-
     auto output_device_addr = std::make_shared<GeHostAddress>(kernel_tensor);
     AnfAlgo::SetOutputAddr(output_device_addr, i, output_node.get());
 
@@ -1389,17 +1389,20 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
         MS_LOG(EXCEPTION) << "Exec graph failed";
       }
     }
-    if (me_types.size() != ge_outputs.size()) {
-      MS_LOG(EXCEPTION) << "Invalid output size, me_type's size " << me_types.size() << " tensor size "
-                        << ge_outputs.size();
+    auto no_output = common::AnfAlgo::IsNoOuputNode(output);
+    if (!no_output) {
+      if (me_types.size() != ge_outputs.size()) {
+        MS_LOG(EXCEPTION) << "Invalid output size, me_type's size " << me_types.size() << " tensor size "
+                          << ge_outputs.size();
+      }
+      // copy output from host to device
+      auto graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
+      if (graph_outputs.size() != ge_outputs.size()) {
+        MS_LOG(EXCEPTION) << "Invalid output size, graph's size " << graph_outputs.size() << " tensor size "
+                          << ge_outputs.size();
+      }
+      SetOutputs(graph_outputs, ge_outputs, me_types);
     }
-    // copy output from host to device
-    auto graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
-    if (graph_outputs.size() != ge_outputs.size()) {
-      MS_LOG(EXCEPTION) << "Invalid output size, graph's size " << graph_outputs.size() << " tensor size "
-                        << ge_outputs.size();
-    }
-    SetOutputs(graph_outputs, ge_outputs, me_types);
   }
   if (graph->has_flag(transform::kGraphFlagHasGetNext)) {
     MS_LOG(DEBUG) << "Reset ConfigManager, graph: " << graph_name;

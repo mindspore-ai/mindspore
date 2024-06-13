@@ -76,10 +76,12 @@ def get_type_str(type_str):
         'tuple[float]',
         'tuple[bool]',
         'tuple[tensor]',
+        'tuple[str]',
         'list[int]',
         'list[float]',
         'list[bool]',
         'list[tensor]',
+        'list[str]',
         'tensor',
         'type',
     }

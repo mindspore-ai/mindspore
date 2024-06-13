@@ -31,25 +31,35 @@ using StrToEnumMap = std::unordered_map<std::string, int64_t>;
 class RegStringToEnumHelper {
  public:
   template <typename T>
-  std::string AddValues(T &&string_to_enum) {
+  std::string AddValues(T &&string_to_enum, const std::string &key = "") {
+    auto &string_to_enum_target = string_to_enum_memory_[key];
     for (const auto &kv : string_to_enum) {
-      if (string_to_enum_.find(kv.first) != string_to_enum_.end()) {
-        MS_LOG_EXCEPTION << kv.first << " has been registered!";
+      if (string_to_enum_target.find(kv.first) != string_to_enum_target.end()) {
+        MS_LOG(EXCEPTION) << kv.first << " has been registered!";
       }
     }
-    string_to_enum_.merge(std::move(string_to_enum));
+    string_to_enum_target.merge(std::move(string_to_enum));
     return "";
   }
 
-  const StrToEnumMap &GetValues() { return string_to_enum_; }
+  const StrToEnumMap &GetValues(const std::string &key = "") {
+    auto it = string_to_enum_memory_.find(key);
+    if (it != string_to_enum_memory_.end()) {
+      return it->second;
+    }
+    return string_to_enum_memory_[""];
+  }
 
  private:
-  StrToEnumMap string_to_enum_;
+  std::unordered_map<std::string, StrToEnumMap> string_to_enum_memory_;
 };
 RegStringToEnumHelper reg_string_to_enum_helper;
 
-#define REG_STRING_TO_ENUM(enum_type, ...) \
+#define REG_STRING_TO_ENUM_COMMON(enum_type, ...) \
   const auto op_enum_##enum_type = reg_string_to_enum_helper.AddValues(__VA_ARGS__);
+
+#define REG_STRING_TO_ENUM_SPECIAL(enum_type, ...) \
+  const auto op_enum_##enum_type = reg_string_to_enum_helper.AddValues(__VA_ARGS__, #enum_type);
 
 // Convert to uppercase uniformly
 inline std::string StrToUpper(const std::string &str) {
@@ -69,21 +79,21 @@ inline std::unordered_map<std::string, int64_t> GetStringToFormatMap() {
   }
   return map;
 }
-REG_STRING_TO_ENUM(format, GetStringToFormatMap())
+REG_STRING_TO_ENUM_COMMON(format, GetStringToFormatMap())
 
 // RoundingMode
 StrToEnumMap StrToRoundingModeMap = {{"FLOOR", RoundingMode::FLOOR}, {"TRUNC", RoundingMode::TRUNC}};
-REG_STRING_TO_ENUM(rounding_mode, StrToRoundingModeMap)
+REG_STRING_TO_ENUM_COMMON(rounding_mode, StrToRoundingModeMap)
 
 // PadMode
 StrToEnumMap StrToPadModeMap = {
   {"PAD", PadMode::PAD}, {"SAME", PadMode::SAME}, {"VALID", PadMode::VALID}, {"FULL", PadMode::FULL}};
-REG_STRING_TO_ENUM(pad_mode, StrToPadModeMap)
+REG_STRING_TO_ENUM_COMMON(pad_mode, StrToPadModeMap)
 
 // Reduction
 StrToEnumMap StrToReductionMap = {
   {"SUM", Reduction::REDUCTION_SUM}, {"MEAN", Reduction::MEAN}, {"NONE", Reduction::NONE}};
-REG_STRING_TO_ENUM(reduction, StrToReductionMap)
+REG_STRING_TO_ENUM_COMMON(reduction, StrToReductionMap)
 
 // Activation
 StrToEnumMap StrToActivationMap = {{"NO_ACTIVATION", ActivationType::NO_ACTIVATION},
@@ -113,62 +123,87 @@ StrToEnumMap StrToActivationMap = {{"NO_ACTIVATION", ActivationType::NO_ACTIVATI
                                    {"GEGLU", ActivationType::GEGLU},
                                    {"SWIGLU", ActivationType::SWIGLU},
                                    {"REGLU", ActivationType::REGLU}};
-REG_STRING_TO_ENUM(activation, StrToActivationMap)
+REG_STRING_TO_ENUM_COMMON(activation, StrToActivationMap)
 
 // GateOrder
-REG_STRING_TO_ENUM(gate_order, StrToEnumMap{{"RZH", GateOrderMode::RZH}, {"ZRH", GateOrderMode::ZRH}})
+REG_STRING_TO_ENUM_COMMON(gate_order, StrToEnumMap{{"RZH", GateOrderMode::RZH}, {"ZRH", GateOrderMode::ZRH}})
 
 // CoordinateTransformationMode
 StrToEnumMap StrToCoordinateTransformationModeMap = {{"ASYMMETRIC", CoordinateTransformMode::ASYMMETRIC},
                                                      {"ALIGN_CORNERS", CoordinateTransformMode::ALIGN_CORNERS},
                                                      {"HALF_PIXEL", CoordinateTransformMode::HALF_PIXEL},
                                                      {"CROP_AND_RESIZE", CoordinateTransformMode::CROP_AND_RESIZE}};
-REG_STRING_TO_ENUM(coordinate_transformation_mode, StrToCoordinateTransformationModeMap)
+REG_STRING_TO_ENUM_COMMON(coordinate_transformation_mode, StrToCoordinateTransformationModeMap)
 
 // PaddingMode
 StrToEnumMap StrToPaddingModeMap = {{"CONSTANT", PaddingMode::CONSTANT},
                                     {"REFLECT", PaddingMode::REFLECT},
                                     {"SYMMETRIC", PaddingMode::SYMMETRIC},
                                     {"MODE_RESERVED", PaddingMode::MODE_RESERVED}};
-REG_STRING_TO_ENUM(padding_mode, StrToPaddingModeMap)
+REG_STRING_TO_ENUM_COMMON(padding_mode, StrToPaddingModeMap)
 
 // Direction
-REG_STRING_TO_ENUM(direction, StrToEnumMap{{"UNIDIRECTIONAL", Direction::UNIDIRECTIONAL}})
+REG_STRING_TO_ENUM_COMMON(direction, StrToEnumMap{{"UNIDIRECTIONAL", Direction::UNIDIRECTIONAL}})
 
 // CellType
-REG_STRING_TO_ENUM(cell_type, StrToEnumMap{{"LSTM", CellType::CELL_TYPE_LSTM}})
+REG_STRING_TO_ENUM_COMMON(cell_type, StrToEnumMap{{"LSTM", CellType::CELL_TYPE_LSTM}})
 
 // Group
-REG_STRING_TO_ENUM(group, StrToEnumMap{{"SYNC_BN_GROUP0", Group::SYNC_BN_GROUP0}})
+REG_STRING_TO_ENUM_COMMON(group, StrToEnumMap{{"SYNC_BN_GROUP0", Group::SYNC_BN_GROUP0}})
 
 // InterpolationMode
-REG_STRING_TO_ENUM(interpolation_mode,
-                   StrToEnumMap{{"BILINEAR", InterpolationMode::BILINEAR}, {"NEAREST", InterpolationMode::NEAREST}})
+REG_STRING_TO_ENUM_COMMON(interpolation_mode, StrToEnumMap{{"BILINEAR", InterpolationMode::BILINEAR},
+                                                           {"NEAREST", InterpolationMode::NEAREST}})
 
 // NormMode
 StrToEnumMap StrToNormModeMap = {
   {"BACKWARD", NormMode::BACKWARD}, {"FORWARD", NormMode::FORWARD}, {"ORTHO", NormMode::ORTHO}};
-REG_STRING_TO_ENUM(norm_mode, StrToNormModeMap)
+REG_STRING_TO_ENUM_COMMON(norm_mode, StrToNormModeMap)
 
 // GridSamplerPaddingMode
 StrToEnumMap StrToGridSamplerPaddingMode = {{"ZEROS", GridSamplerPaddingMode::ZEROS},
                                             {"BORDER", GridSamplerPaddingMode::BORDER},
                                             {"REFLECTION", GridSamplerPaddingMode::REFLECTION}};
-REG_STRING_TO_ENUM(grid_sampler_padding_mode, StrToGridSamplerPaddingMode)
+REG_STRING_TO_ENUM_COMMON(grid_sampler_padding_mode, StrToGridSamplerPaddingMode)
 
 // KVCacheAlignMode
-REG_STRING_TO_ENUM(k_v_cache_align_mode,
-                   StrToEnumMap{{"LEFT", KVCacheAlignMode::LEFT}, {"RIGHT", KVCacheAlignMode::RIGHT}})
+REG_STRING_TO_ENUM_COMMON(k_v_cache_align_mode,
+                          StrToEnumMap{{"LEFT", KVCacheAlignMode::LEFT}, {"RIGHT", KVCacheAlignMode::RIGHT}})
 
-REG_STRING_TO_ENUM(fas_input_layout_mode, StrToEnumMap{{"BSH", FASInputLayoutMode::BSH},
-                                                       {"BNSD", FASInputLayoutMode::BNSD},
-                                                       {"SBH", FASInputLayoutMode::SBH},
-                                                       {"BSND", FASInputLayoutMode::BSND},
-                                                       {"TND", FASInputLayoutMode::TND}})
+REG_STRING_TO_ENUM_COMMON(fas_input_layout_mode, StrToEnumMap{{"BSH", FASInputLayoutMode::BSH},
+                                                              {"BNSD", FASInputLayoutMode::BNSD},
+                                                              {"SBH", FASInputLayoutMode::SBH},
+                                                              {"BSND", FASInputLayoutMode::BSND},
+                                                              {"TND", FASInputLayoutMode::TND}})
+
+// InitializerMode
+StrToEnumMap StrToInitializerModeMap = {{"", InitializerMode::DEFAULT_MODE},
+                                        {"TRUNCATED_NORMAL", InitializerMode::TRUNCATED_NORMAL},
+                                        {"CONSTANT", InitializerMode::CONSTANT},
+                                        {"RANDOM_UNIFORM", InitializerMode::RANDOM_UNIFORM}};
+REG_STRING_TO_ENUM_SPECIAL(initializer_mode, StrToInitializerModeMap)
+
+// FilterMode
+StrToEnumMap StrToFilterModeMap = {{"NO_FILTER", FilterMode::NO_FILTER}, {"COUNTER", FilterMode::COUNTER}};
+REG_STRING_TO_ENUM_COMMON(filter_mode, StrToFilterModeMap)
+
+// OptimizerMode
+StrToEnumMap StrToOptimizerModeMap = {{"", OptimizerMode::DEFAULT},
+                                      {"ADAM", OptimizerMode::ADAM},
+                                      {"ADAMW", OptimizerMode::ADAMW},
+                                      {"ADAGRAD", OptimizerMode::ADAGRAD}};
+REG_STRING_TO_ENUM_SPECIAL(optimizer_mode, StrToOptimizerModeMap)
+
+// BackwardMode
+StrToEnumMap StrToBackwardModeMap = {{"ADAM", BackwardMode::APPLYA_ADAM},
+                                     {"ADAMW", BackwardMode::APPLYA_ADAMW},
+                                     {"ADAGRAD", BackwardMode::APPLY_ADA_GRAD},
+                                     {"FTRL", BackwardMode::APPLY_FTRL}};
+REG_STRING_TO_ENUM_SPECIAL(backward_mode, StrToBackwardModeMap)
 }  // namespace
 
 int64_t StringToEnumImpl(const std::string &op_name, const std::string &arg_name, const std::string &enum_string) {
-  const auto &string_to_enum_map = reg_string_to_enum_helper.GetValues();
+  const auto &string_to_enum_map = reg_string_to_enum_helper.GetValues(arg_name);
   const auto enum_val_iter = string_to_enum_map.find(StrToUpper(enum_string));
   if (enum_val_iter == string_to_enum_map.end()) {
     MS_EXCEPTION(ValueError) << "Failed to convert the value \"" << enum_string << "\" of input '" << arg_name

@@ -34,6 +34,7 @@
 #include "ops/framework_ops.h"
 #include "ops/op_utils.h"
 #include "ops/op_def.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "include/common/utils/utils.h"
@@ -2472,7 +2473,14 @@ std::string AnfAlgo::GetInputName(const CNodePtr &origin_op, size_t input_index)
 
 bool AnfAlgo::IsNoOuputNode(const AnfNodePtr &node) {
   const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> no_output_prims = {
-    prim::kPrimSend, prim::kPrimNPUClearFloatStatusV2};
+    prim::kPrimSend,
+    prim::kPrimNPUClearFloatStatusV2,
+    prim::kPrimInitPartitionMap,
+    prim::kPrimInitEmbeddingHashmap,
+    prim::kPrimEmbeddingTableImport,
+    prim::kPrimEmbeddingComputeVarExport,
+    prim::kPrimEmbeddingComputeVarImport,
+    prim::kPrimEmbeddingTableExport};
   if (IsOneOfPrimitiveCNode(node, no_output_prims)) {
     return true;
   }

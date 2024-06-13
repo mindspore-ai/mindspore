@@ -1,0 +1,27 @@
+#operator EmbeddingTableFind
+embedding_table_find:
+    args:
+        table_id:
+            dtype: tensor
+        keys:
+            dtype: tensor
+        embedding_dim:
+            dtype: int
+        default_value:
+            dtype: float
+            default: -1.0
+        _embedding_dim:
+            dtype: int
+            default: 0
+        _max_key_num:
+            dtype: int
+            default: 0
+        _use_counter_filter:
+            dtype: int
+            default: 0
+    labels:
+        _process_node_engine_id: "'PS'"
+        _execute_times: 2
+    returns:
+        values:
+            dtype: tensor

@@ -1181,6 +1181,73 @@ class Cast(Primitive):
             return output
         return _convert_stub(pyboost_cast(self, [input_x, dtype_to_type_id('Cast', 'dtype', dtype)]))
 
+
+class EmbeddingTableExport(Primitive):
+    """
+    .. code-block::
+
+        prim = ops.EmbeddingTableExport(embedding_dim, value_total_len,
+                                        export_mode, only_var_flag, file_type,
+                                        table_name, filter_export_flag)
+        out = prim(file_path, ps_id, table_id)
+
+    """
+
+    @prim_attr_register
+    def __init__(self, embedding_dim, value_total_len, export_mode="all",
+                 only_var_flag=False, file_type="bin", table_name=(),
+                 filter_export_flag=False, steps_to_live_list=()):
+        """Initialize EmbeddingTableExport"""
+        self.add_prim_attr("_process_node_engine_id", "PS")
+
+
+class EmbeddingTableImport(Primitive):
+    """
+    .. code-block::
+
+        prim = ops.EmbeddingTableImport(embedding_dim, value_total_len,
+                                        only_var_flag, file_type, table_name)
+        out = prim(file_path, ps_id, table_id)
+
+    """
+
+    @prim_attr_register
+    def __init__(self, embedding_dim, value_total_len,
+                 only_var_flag=False, file_type="bin", table_name=()):
+        """Initialize EmbeddingTableImport"""
+        self.add_prim_attr("_process_node_engine_id", "PS")
+
+
+class EmbeddingComputeVarImport(Primitive):
+    """
+    .. code-block::
+
+        prim = ops.EmbeddingComputeVarImport(table_name)
+        out = prim(file_path, ps_id, table_id)
+
+    """
+
+    @prim_attr_register
+    def __init__(self, table_name=()):
+        """Initialize EmbeddingComputeVarImport"""
+        self.add_prim_attr("_process_node_engine_id", "PS")
+
+
+class EmbeddingComputeVarExport(Primitive):
+    """
+    .. code-block::
+
+        prim = ops.EmbeddingComputeVarExport(table_name)
+        out = prim(file_path, ps_id, table_id)
+
+    """
+
+    @prim_attr_register
+    def __init__(self, table_name=()):
+        """Initialize EmbeddingComputeVarExport"""
+        self.add_prim_attr("_process_node_engine_id", "PS")
+
+
 # Following is Python Infer Value.
 # A valid infer value function should be:
 #
