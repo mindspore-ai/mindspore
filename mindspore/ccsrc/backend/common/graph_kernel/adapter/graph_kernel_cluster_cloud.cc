@@ -141,6 +141,10 @@ bool DvmSupported(const AnfNodePtr &node) {
                   [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
     return node_output_type == kNumberTypeFloat16 || node_output_type == kNumberTypeBFloat16;
   }
+  if (IsPrimitiveCNode(node, prim::kPrimTranspose)) {
+    // for bf16, extra cast will be inserted, to do: move ConvertBFloat16 after garph kernel split
+    return node_output_type == kNumberTypeFloat16 || node_output_type == kNumberTypeFloat32;
+  }
   // other op
   return dvm_float_types.find(node_output_type) != dvm_float_types.end();
 }

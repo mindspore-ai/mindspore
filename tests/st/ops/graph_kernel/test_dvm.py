@@ -217,3 +217,41 @@ def test_dvm_transpose():
         output = output.asnumpy()
     expect = np.transpose(np.transpose(x0, trans[0]), trans[1])
     assert np.allclose(expect, output, 1e-3, 1e-3)
+
+
+class NetBool(nn.Cell):
+    def __init__(self):
+        super(NetBool, self).__init__()
+        self.cond = Tensor(np.array(False))
+
+    def construct(self, x0, x1, x2, x3, x4):
+        y0 = ops.Select()(self.cond, x0, x1)
+        y1 = ops.BroadcastTo((3, 1, 1, 1))(x2)
+        y2 = ops.Select()(y1, x3, x4)
+        y3 = ops.Mul()(y0, y2)
+        return y3
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_dvm_bool():
+    """
+    Feature: Boolean type test case
+    Description: test dvm boolean data type
+    Expectation: the result match with expect
+    """
+    np.random.seed(1)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(jit_config={"jit_level": "O1"})
+    x0 = np.random.normal(0, 1, (3, 1, 1, 1)).astype(np.float16)
+    x1 = np.random.normal(0, 1, (3, 1, 1, 1)).astype(np.float16)
+    x2 = np.array(True)
+    x3 = np.random.normal(0, 1, (3, 1, 1, 1)).astype(np.float16)
+    x4 = np.random.normal(0, 1, (3, 1, 1, 1)).astype(np.float16)
+    with AssertGKEnable(True):
+        net = NetBool()
+        output = net(Tensor(x0), Tensor(x1), Tensor(x2), Tensor(x3), Tensor(x4))
+        output = output.asnumpy()
+    expect = x1 * x3
+    assert np.allclose(expect, output, 1e-3, 1e-3)

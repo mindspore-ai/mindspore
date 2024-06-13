@@ -34,6 +34,7 @@ from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache
 from mindspore.common.api import _generate_branch_control_input, _convert_python_data, _get_args_for_run_predict
+from mindspore.common.api import process_dyn_args, generate_dyn_compile_args
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations import Cast
@@ -904,14 +905,25 @@ class Cell(Cell_):
         """
         logger.warning("'set_parallel_input_with_inputs' function is deprecated.")
 
-    def set_inputs(self, *inputs):
+    def set_inputs(self, *inputs, **kwargs):
         """
         Save set inputs for computation graph. The number of inputs should be the same with that of the datasets. When
         using Model for dynamic shape, please make sure that all networks and loss functions passed to the Model are
-        configured with set_inputs. The inputs can be Tensor of either dynamic or static shape.
+        configured with set_inputs. The shape of input Tensor can be either dynamic or static.
+
+        .. note::
+            There are two mode:
+
+            - Full mode: arguments will be used as all compile inputs for graph-compiling.
+            - Incremental mode: arguments will set to some of the Cell inputs, which will be substituted into the input
+              at the corresponding position for graph-compiling.
+
+            Only one of inputs or kwargs can be set. Inputs for full mode and kwargs for incremental mode.
 
         Args:
-            inputs (tuple): Inputs of the Cell object.
+            inputs (tuple): Full mode arguments.
+            kwargs (dict): Incremental mode arguments. The acceptable key is the name of parameter defined
+                in `self.construct`.
 
         .. warning::
             This is an experimental API that is subject to change or deletion.
@@ -931,16 +943,29 @@ class Cell(Cell_):
             >>> net = ReluNet()
             >>> input_dyn = Tensor(shape=[3, None], dtype=ms.float32)
             >>> net.set_inputs(input_dyn)
-            >>> input1 = Tensor(np.random.random([3, 10]), dtype=ms.float32)
-            >>> output = net(input1)
+            >>> input = Tensor(np.random.random([3, 10]), dtype=ms.float32)
+            >>> output = net(input)
+            >>>
+            >>> net2 = ReluNet()
+            >>> net2.set_inputs(x=input_dyn)
+            >>> output = net2(input)
         """
         if self.grad_ops_label:
             logger.warning(f'For Cell, set_inputs must be set before the gradient function of the network is '
                            f'generated.')
-        self._dynamic_shape_inputs = inputs
-        self._check_construct_args(*inputs)
-        if context._get_mode() == context.PYNATIVE_MODE:
-            _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
+        if kwargs and inputs:
+            raise ValueError('For Cell, set_inputs should only set inputs or kwargs(inputs: %s, kwargs: %s)!'
+                             % (inputs, kwargs))
+
+        if not kwargs:
+            self._dynamic_shape_inputs = inputs
+            self._check_construct_args(*inputs)
+            # TODO(tronzhang): It may error for no actually args here. So just set in fullmode,
+            #                  which means that incremental mode is lacking dynamic input.
+            if context._get_mode() == context.PYNATIVE_MODE:
+                _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
+        else:
+            self._dynamic_shape_inputs = process_dyn_args(self.construct, kwargs)
 
     def get_inputs(self):
         """
@@ -978,15 +1003,23 @@ class Cell(Cell_):
     def _get_compile_args(self, args):
         """Get compile arguments."""
         # this is used only for test
-        if is_auto_dynamic() and (self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None):
+        set_by_auto_dynamic = False
+        if is_auto_dynamic():
+            if self._dynamic_shape_inputs is None:
+                set_by_auto_dynamic = True
+            else:
+                if isinstance(self._dynamic_shape_inputs, (list, tuple)) and self._dynamic_shape_inputs[0] is None:
+                    set_by_auto_dynamic = True
+        if set_by_auto_dynamic:
             self._dynamic_shape_inputs = convert_inputs_to_dynamic(*args)
 
         if self._dynamic_shape_inputs is not None:
             logger.debug("Compiled Graph with dynamic shape")
-            self._check_compile_dynamic_shape(self._dynamic_shape_inputs, args)
-            Validator.check_symbolic_shape(self._dynamic_shape_inputs, args)
-            self.saved_dynamic_shape = self._dynamic_shape_inputs
-            return self._dynamic_shape_inputs
+            compile_args = generate_dyn_compile_args(args, self._dynamic_shape_inputs)
+            self._check_compile_dynamic_shape(compile_args, args)
+            Validator.check_symbolic_shape(compile_args, args)
+            self.saved_dynamic_shape = compile_args
+            return compile_args
         return args
 
     def compile(self, *args, **kwargs):

@@ -62,6 +62,9 @@ function_phases = dict()
 BROADCAST_PHASE = "_broadcast_"
 _PYNATIVE_PARALLEL_FUNC_NAME = "after_shard"
 
+ARG_SPECIFIED = "arg_specified_infos"
+TOTAL_ARG_LEN = "total_arg_length"
+
 
 def _check_recompile_args(compile_args, kwargs):
     """Check recompile of graph"""
@@ -119,7 +122,7 @@ def _ms_adapter_tensor_as_parameter_output(data):
        Pylint: disable=unidiomatic-typecheck.
     """
     return ms_adapter_registry.is_registered and isinstance(data, ms_adapter_registry.tensor) \
-           and hasattr(data, "__ms_parameter_output__") and getattr(data, "__ms_parameter_output__")
+        and hasattr(data, "__ms_parameter_output__") and getattr(data, "__ms_parameter_output__")
 
 
 def _convert_python_data(data):
@@ -398,6 +401,119 @@ def _get_args_for_run_predict(obj, args, kwargs, compile_args):
     return new_args
 
 
+def _is_dyn_args_fullmode(dyn_args):
+    if not isinstance(dyn_args, dict):
+        return True
+    return False
+
+
+def _process_sequence(args):
+    """Convert the argument to mutable if it is tuple or list and containing dynamic element."""
+    new_args = []
+    for elem in args:
+        if not isinstance(elem, (list, tuple)):
+            new_args.append(elem)
+            continue
+        should_convert_mutable = False
+        for inner_elem in elem:
+            if not isinstance(inner_elem, Tensor):
+                continue
+            if is_shape_unknown(inner_elem.shape):
+                should_convert_mutable = True
+                break
+        new_args.append(elem if not should_convert_mutable else mutable(tuple(elem)))
+    return new_args
+
+
+def process_dyn_args(fn, dyn_args):
+    """Process the dynamic arguments, return the necessary data for latter processing.
+
+    Args:
+        fn (Function): The root function to compile.
+        dyn_args (Union[dict, list, tuple, None]): Given arguments for dynamic compilation.
+            None for nothing, list or tuple for fullmode setting, dict for incremental configuration.
+
+    Returns:
+        A dict which contains args for dynamic compilation. None for nothing dynamic.
+    """
+    if dyn_args is None:
+        # nothing should be done for None.
+        return None
+
+    if isinstance(dyn_args, dict) and ARG_SPECIFIED in dyn_args:
+        return dyn_args
+
+    args_sig = inspect.signature(fn)
+    if _is_dyn_args_fullmode(dyn_args):
+        if not isinstance(dyn_args, (list, tuple)):
+            temp_dyn_args = _process_sequence((dyn_args,))
+        else:
+            temp_dyn_args = _process_sequence(dyn_args)
+
+        # If dyn_args is fullmode, it should be apply directly.
+        args_sig_parameters = list(args_sig.parameters.values())
+        if not args_sig_parameters:
+            return ()
+
+        # fn may be Cell's construct while the first input is 'self'.
+        if args_sig_parameters[0].name == "self" and (len(temp_dyn_args) + 1) == len(args_sig_parameters):
+            bound_args = args_sig.bind(None, *temp_dyn_args)
+            bound_args.apply_defaults()
+            return bound_args.args[1:]
+
+        bound_args = args_sig.bind(*temp_dyn_args)
+        bound_args.apply_defaults()
+        return bound_args.args
+
+    # The dyn_args is not fullmode, a real compilation arguments should be assembled by latter procession...
+    arg_names = []
+    args_sig_parameters = list(args_sig.parameters.values())
+    for arg_p in args_sig_parameters:
+        if arg_p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD):
+            arg_names.append(arg_p.name)
+        else:
+            raise TypeError("Dynamic arguments is not accepted for VAR_POSITIONAL or VAR_KEYWORD parameters!")
+
+    meet_index = set()
+
+    def _check_index_valid(index):
+        if index >= len(arg_names):
+            raise ValueError("For dict mode, valid index is \"0\"-\"%d\", but got %s!" % (len(arg_names) - 1, index))
+        if index in meet_index:
+            raise ValueError("For dict mode, there are more than one same specified key for real index: %d!" % index)
+        meet_index.add(index)
+
+    arg_handler_infos = []
+    for k, v in dyn_args.items():
+        if not isinstance(k, str):
+            raise TypeError("For dict mode, only string key is accepted, but got %s!" % k)
+        if k in arg_names:
+            cur_id = arg_names.index(k)
+            _check_index_valid(cur_id)
+            arg_handler_infos.append([cur_id, v])
+        else:
+            raise ValueError("For dict mode, valid key is %s, but got %s!" % (arg_names, k))
+    return {ARG_SPECIFIED: arg_handler_infos, TOTAL_ARG_LEN: len(args_sig_parameters)}
+
+
+def generate_dyn_compile_args(compile_args, dyn_args):
+    """Generate the dynamic compile arguments."""
+    if not dyn_args:
+        return compile_args
+    if _is_dyn_args_fullmode(dyn_args):
+        if not isinstance(dyn_args, (list, tuple)):
+            return _process_sequence((dyn_args,))
+        return _process_sequence(dyn_args)
+    arg_specified_infos = dyn_args.get(ARG_SPECIFIED, None)
+    if arg_specified_infos is None:
+        raise RuntimeError("For dict mode, a key with \"%s\" should exist, but got %s!" %
+                           (ARG_SPECIFIED, str(dyn_args)))
+    new_compile_args = list(compile_args)
+    for index, arg in arg_specified_infos:
+        new_compile_args[index] = arg
+    return _process_sequence(new_compile_args)
+
+
 class _MindsporeFunctionExecutor:
     """
     Represents a function compiled by graph compiler.
@@ -599,7 +715,7 @@ class _MindsporeFunctionExecutor:
         compile_args = _pynative_executor.get_dynamic_input(args_list)
         # Case: The `set_inputs()` of Cell object has been set, using these dynamic shape args as compile args.
         if self.fn.__name__ == 'construct' and isinstance(self.obj, ms.nn.Cell) and self.obj.get_inputs():
-            compile_args = self.obj.get_inputs()
+            compile_args = generate_dyn_compile_args(args_list, self.obj.get_inputs())
             if len(compile_args) != len(args_list):
                 raise ValueError(f"The number of actual input tensors: {len(args_list)} is not equal to the number of "
                                  f"dynamic shape tensors: {len(compile_args)}.")
@@ -610,29 +726,27 @@ class _MindsporeFunctionExecutor:
 
         # Case: If dynamic shape tensors have been assigned to `input_signature`, they are preferred as compile args.
         if self.input_signature is not None:
-            if not isinstance(self.input_signature, (tuple, list)):
-                self.input_signature = (self.input_signature,)
-            self.input_signature = list(self.input_signature)
+            compile_args = list(generate_dyn_compile_args(args_list, self.input_signature))
             dyn_shape = False
-            for i, elem in enumerate(self.input_signature):
+            for i, elem in enumerate(compile_args):
                 if isinstance(elem, PythonTensor) and is_shape_unknown(elem.shape):
-                    Validator.check_dynamic_shape(self.input_signature[i], args_list[i], i)
+                    Validator.check_dynamic_shape(compile_args[i], args_list[i], i)
                     dyn_shape = True
             Validator.check_symbolic_shape(self.input_signature, args_list)
             if dyn_shape:
                 # Checkout whether the `sens` has been added to args_list.
-                if len(self.input_signature) == len(args_list) - 1:
+                if len(compile_args) == len(args_list) - 1:
                     logger.warning(f"The number of actual input args '{len(args_list)}' is one more than the number "
-                                   f"of input_signature args '{len(self.input_signature)}'. The last actual args may "
+                                   f"of input_signature args '{len(compile_args)}'. The last actual args may "
                                    f"be 'sens' and added it to compile args.")
-                    self.input_signature.append(args_list[-1])
-                compile_args = tuple(self.input_signature)
+                    compile_args.append(args_list[-1])
+                compile_args = tuple(compile_args)
                 if self.obj is not None:
                     _pynative_executor.set_dynamic_input(self.obj, *compile_args)
                 else:
                     _pynative_executor.set_dynamic_input(self.fn, *compile_args)
             else:
-                if not verify_inputs_signature(self.input_signature, args_list):
+                if not verify_inputs_signature(compile_args, args_list):
                     raise ValueError("The input args is incompatible with the args in `input_signature`!")
         return compile_args
 
@@ -688,10 +802,18 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
             - `PSJit <https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html>`_ : MindSpore GRAPH_MODE.
             - `PIJit <https://www.mindspore.cn/docs/en/master/design/dynamic_graph_and_static_graph.html>`_ : MindSpore PYNATIVE_MODE.
 
-        input_signature (Tensor): The Tensor which describes the input arguments. The shape and dtype of the Tensor
-            will be supplied to this function. If input_signature is specified, each input to `fn` must be a `Tensor`.
-            And the input parameters of `fn` cannot accept `**kwargs`. The shape and dtype of actual inputs should
-            keep the same as input_signature. Otherwise, TypeError will be raised. Default: ``None`` .
+        input_signature (Union[Tuple, List, Dict, Tensor]): The Tensor which describes the input arguments. The
+            shape and dtype of the Tensor will be supplied to this function. If `input_signature` is specified, the
+            input parameters of `fn` cannot accept `**kwargs`, and the shape and dtype of actual inputs should keep the
+            same as `input_signature`. Otherwise, TypeError will be raised. There are two mode for `input_signature`:
+
+            - Full mode: Arguments is a Tuple, List or a Tensor, and they will be used as all compile inputs
+              for graph-compiling.
+            - Incremental mode: Argument is a Dict, and they will set to some of the graph inputs, which will be
+              substituted into the input at the corresponding position for graph-compiling.
+
+            Default: ``None`` .
+
         hash_args (Union[Object, List or Tuple of Objects]): The local free variables used inside `fn`,
             like functions or objects of class defined outside `fn`. Calling `fn` again with change of `hash_args`
             will trigger recompilation. Default: ``None`` .
@@ -747,6 +869,13 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
         ...
         >>> out = tensor_add_with_sig(x, y)
         ...
+        >>> @jit(input_signature={"y": Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))})
+        ... def tensor_add_with_sig_1(x, y):
+        ...     z = x + y
+        ...     return z
+        ...
+        >>> out1 = tensor_add_with_sig_1(x, y)
+        ...
         ... # Set hash_args as fn, otherwise cache of compiled closure_fn will not be reused.
         ... # While fn differs during calling again, recompilation will be triggered.
         >>> def func(x):
@@ -786,6 +915,8 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
         else:
             hash_obj = int(time.time() * 1e9)
 
+        dyn_args = process_dyn_args(func, input_signature)
+
         @wraps(func)
         def staging_specialize(*args, **kwargs):
             if os.getenv("MS_JIT") == '0':
@@ -799,7 +930,7 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
             # only the function or cell instance wrapped by shard will fall into this branch
             if _is_pynative_parallel() and func.__name__ == _PYNATIVE_PARALLEL_FUNC_NAME:
                 process_obj = hash_args
-            out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj, jit_config)(*args, **kwargs)
+            out = _MindsporeFunctionExecutor(func, hash_obj, dyn_args, process_obj, jit_config)(*args, **kwargs)
             return out
 
         return staging_specialize
