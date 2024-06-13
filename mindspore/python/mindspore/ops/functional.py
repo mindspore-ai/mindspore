@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ from mindspore.ops.composite.math_ops import mm
 from mindspore.ops.function.math_func import dot
 from mindspore.ops import auto_generate
 from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum
-from mindspore.ops.operations.manually_defined.ops_def import scalar_div, scalar_mod, scalar_add, scalar_mul,\
-    scalar_sub, scalar_gt, scalar_ge, scalar_le, scalar_lt, scalar_eq, scalar_floordiv, scalar_log, scalar_pow,\
+from mindspore.ops.operations.manually_defined.ops_def import scalar_div, scalar_mod, scalar_add, scalar_mul, \
+    scalar_sub, scalar_gt, scalar_ge, scalar_le, scalar_lt, scalar_eq, scalar_floordiv, scalar_log, scalar_pow, \
     scalar_uadd, scalar_usub, flash_attention_score
 
 typeof = Primitive('typeof')
@@ -115,7 +115,8 @@ reduced_shape = Primitive("reduced_shape")
 # shape_mul:input must be shape multiply elements in tuple(shape)
 shape_mul = _sequence_ops.shape_mul()
 
-setattr(tensor_operator_registry, 'tuple_to_tensor', _sequence_ops.TupleToTensor)
+setattr(tensor_operator_registry, 'tuple_to_tensor',
+        _sequence_ops.TupleToTensor)
 setattr(tensor_operator_registry, 'add', add)
 setattr(tensor_operator_registry, 'softmax', softmax)
 setattr(tensor_operator_registry, 'addr', addr)
@@ -135,6 +136,7 @@ setattr(tensor_operator_registry, 'rsqrt', rsqrt)
 setattr(tensor_operator_registry, 'bincount', bincount)
 setattr(tensor_operator_registry, 'slogdet', slogdet)
 setattr(tensor_operator_registry, 'trace', trace)
+setattr(tensor_operator_registry, 'tracev2', auto_generate.trace_v2_op)
 setattr(tensor_operator_registry, 'tril', tril)
 setattr(tensor_operator_registry, 'chunk', chunk)
 setattr(tensor_operator_registry, 'count_nonzero', count_nonzero)
@@ -209,7 +211,8 @@ setattr(tensor_operator_registry, 'dot', dot)
 setattr(tensor_operator_registry, 'outer', outer)
 setattr(tensor_operator_registry, 'log1p', log1p)
 setattr(tensor_operator_registry, 'logdet', logdet)
-setattr(tensor_operator_registry, 'log_matrix_determinant', log_matrix_determinant)
+setattr(tensor_operator_registry,
+        'log_matrix_determinant', log_matrix_determinant)
 setattr(tensor_operator_registry, 'matrix_determinant', matrix_determinant)
 setattr(tensor_operator_registry, 'ceil', ceil)
 setattr(tensor_operator_registry, 'fillv2', P.FillV2)

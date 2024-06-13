@@ -26,6 +26,7 @@ from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _r
     _extend, _dict_setitem, _dict_clear, _haskey, _update, _fromkeys
 from mindspore.ops.operations._sequence_ops import TensorToTuple
 from mindspore.ops_generate.gen_ops_inner_prim import ListToTuple, TupleToList
+from mindspore.ops.auto_generate import trace_v2_op
 
 from ... import _checkparam as validator
 from ..._checkparam import check_is_number, check_reshape_shp, check_axis_in_range, \
@@ -1598,17 +1599,7 @@ def trace(x, offset=0, axis1=0, axis2=1, dtype=None):
         >>> print(x.trace())
         3.0
     """
-    if offset == 0 and axis1 == 0 and axis2 == 1 and dtype is None:
-        return F.trace(x)
-    d = x.diagonal(offset, axis1=axis1, axis2=axis2)
-    shape = d.shape
-    if dtype is None:
-        dtype = d.dtype
-    dtype = check_astype_dtype_const(dtype)
-    if shape[-1] == 0:
-        return F.fill(dtype, shape[:-1], 0)
-    res = F.reduce_sum(d.astype(mstype.float32), -1)
-    return res.astype(dtype)
+    return trace_v2_op(x, offset, axis1, axis2, dtype)
 
 
 def take(x, indices, axis=None, mode='clip'):

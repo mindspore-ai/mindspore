@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,28 @@ REG_CUST_OP(TraceGrad)
   .OUTPUT(x_grad, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
           DT_UINT32, DT_UINT64, DT_UINT8}))
   .CUST_OP_END_FACTORY_REG(TraceGrad)
+
+REG_CUST_OP(TraceV2)
+  .INPUT(input, TensorType({DT_COMPLEX128, DT_COMPLEX64, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64,
+         DT_INT8, DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8, DT_BOOL, DT_BFLOAT16}))
+  .INPUT(offset, TensorType({DT_INT64}))
+  .INPUT(axis1, TensorType({DT_INT64}))
+  .INPUT(axis2, TensorType({DT_INT64}))
+  .ATTR(dtype, Type, DT_UNDEFINED)
+  .OUTPUT(output, TensorType({DT_COMPLEX128, DT_COMPLEX64, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32,
+          DT_INT64, DT_INT8, DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8, DT_BOOL, DT_BFLOAT16}))
+  .CUST_OP_END_FACTORY_REG(TraceV2)
+
+REG_CUST_OP(TraceV2Grad)
+  .INPUT(dout, TensorType({DT_COMPLEX128, DT_COMPLEX64, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64,
+         DT_INT8, DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8, DT_BOOL, DT_BFLOAT16}))
+  .INPUT(shape, TensorType({DT_INT64}))
+  .INPUT(offset, TensorType({DT_INT64}))
+  .INPUT(axis1, TensorType({DT_INT64}))
+  .INPUT(axis2, TensorType({DT_INT64}))
+  .OUTPUT(din, TensorType({DT_COMPLEX128, DT_COMPLEX64, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64,
+          DT_INT8, DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8, DT_BOOL, DT_BFLOAT16}))
+  .CUST_OP_END_FACTORY_REG(TraceV2Grad)
 
 REG_CUST_OP(Lgamma)
   .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT32}))
