@@ -148,7 +148,7 @@ class ParallelValidator:
         for i in range(expect_len):
             found = False
             for j in range(inputs_len):
-                if isinstance(inputs[j], int):
+                if isinstance(inputs[j], int) or isinstance(expect_inputs[i], int):
                     if inputs[j] == expect_inputs[i]:
                         return True
                     continue
