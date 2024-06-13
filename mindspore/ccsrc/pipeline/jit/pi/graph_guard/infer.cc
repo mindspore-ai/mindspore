@@ -54,6 +54,7 @@ extern std::optional<StandardPrimitiveImplReg> GetPrimitiveInferImpl(const Primi
 namespace pijit {
 
 static InferEnginePtr g_pInferEngine = nullptr;
+constexpr const int ArgsSizeTwo = 2;
 
 template <>
 bool IsPrimitiveFunctionType<true>(PyTypeObject *tp) {
@@ -397,8 +398,25 @@ mindspore::ValuePtr convertData(py::object param_obj, bool is_stub, ops::OpDef *
   return converted;
 }
 
-static AbstractBasePtrList ChangeAbstractArgList(PrimitivePtr prim, const std::vector<PyObject *> &args,
-                                                 bool *has_tensor, int *monad_count) {
+static AbstractBasePtrList ChangeAbstractArgList(PrimitivePtr prim, std::vector<PyObject *> args, bool *has_tensor,
+                                                 int *monad_count) {
+  std::vector<std::string> prim_cast_ops = {"Div"};
+  py::object handle;
+  if (std::find(prim_cast_ops.begin(), prim_cast_ops.end(), prim->name()) != prim_cast_ops.end() &&
+      args.size() == ArgsSizeTwo) {
+    auto tensor_type = py::reinterpret_borrow<py::object>(GetMsTensorType());
+    if (py::isinstance<mindspore::tensor::Tensor>(args[0]) && CheckScalar(args[1])) {
+      py::object dtype = py::reinterpret_borrow<py::object>(args[0]).attr("dtype");
+      py::object arg1 = py::reinterpret_borrow<py::object>(args[1]);
+      handle = tensor_type(arg1, dtype);
+      args[1] = handle.ptr();
+    } else if (CheckScalar(args[0]) && py::isinstance<mindspore::tensor::Tensor>(args[1])) {
+      py::object dtype = py::reinterpret_borrow<py::object>(args[1]).attr("dtype");
+      py::object arg0 = py::reinterpret_borrow<py::object>(args[0]);
+      handle = tensor_type(arg0, dtype);
+      args[0] = handle.ptr();
+    }
+  }
   auto op_def = mindspore::ops::GetOpDef(prim->name());
   AbstractBasePtrList list;
   for (size_t i = 0; i < args.size(); ++i) {
