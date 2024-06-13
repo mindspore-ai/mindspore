@@ -52,7 +52,7 @@ Element-wise Operation
     :template: classtemplate.rst
 
     mindspore.mint.add
-    mindpsore.mint.div
+    mindspore.mint.div
     mindspore.mint.divide
     mindspore.mint.ceil
     mindspore.mint.clamp
