@@ -185,7 +185,7 @@ void OverlapRecomputeAllGatherAndFlashAttentionGrad(const FuncGraphPtr &graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto soc_version = ms_context->ascend_soc_version();
-  if (soc_version != "ascend910" && soc_version != "ascend910b") {
+  if (soc_version != "ascend910" && soc_version != "ascend910b" && soc_version != "ascend910c") {
     return;
   }
   const auto cell_reuse = ms_context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
