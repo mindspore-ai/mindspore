@@ -184,7 +184,7 @@ void SetAclDebugKernel() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto op_debug_option = ms_context->get_param<std::string>(MS_CTX_OP_DEBUG_OPTION);
-  if (!op_debug_option.empty()) {
+  if (op_debug_option == "oom") {
     auto ret = CALL_ASCEND_API(aclrtCtxSetSysParamOpt, aclSysParamOpt::ACL_OPT_ENABLE_DEBUG_KERNEL, 1);
     if (ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Acl enable debug kernel failed! Error flag is " << ret;

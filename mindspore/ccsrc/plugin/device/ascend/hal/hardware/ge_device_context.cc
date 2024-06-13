@@ -69,9 +69,11 @@ bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
 void SetAclOpDebugOption(const std::shared_ptr<MsContext> &ms_context) {
   MS_EXCEPTION_IF_NULL(ms_context);
   auto op_debug_option = ms_context->get_param<std::string>(MS_CTX_OP_DEBUG_OPTION);
-  auto ret = CALL_ASCEND_API(aclSetCompileopt, aclCompileOpt::ACL_OP_DEBUG_OPTION, op_debug_option.c_str());
-  if (ret != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Acl set op debug option: " << op_debug_option << " failed! Error flag is " << ret;
+  if (op_debug_option == "oom") {
+    auto ret = CALL_ASCEND_API(aclSetCompileopt, aclCompileOpt::ACL_OP_DEBUG_OPTION, op_debug_option.c_str());
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Acl set op debug option: " << op_debug_option << " failed! Error flag is " << ret;
+    }
   }
 }
 }  // namespace
