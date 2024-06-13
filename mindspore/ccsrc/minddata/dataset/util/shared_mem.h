@@ -49,8 +49,8 @@ class SharedMem {
   std::string name_;
   int32_t fd_ = -1;
   void *buf_ = nullptr;
-  int flags_ = O_RDWR;
-  int mode_ = 0600;
+  uint32_t flags_ = O_RDWR;
+  mode_t mode_ = 0600;
   size_t size_ = 0;
 };
 }  // namespace mindspore::dataset

@@ -26,7 +26,7 @@
 
 namespace mindspore::dataset {
 #if !defined(_WIN32) && !defined(_WIN64)
-const int O_CREX = O_CREAT | O_EXCL;
+constexpr uint32_t O_CREX = O_CREAT | O_EXCL;
 static constexpr int64_t kMapAllocAlignment = 64;
 
 struct CountInfo {
@@ -89,7 +89,7 @@ SharedMem::SharedMem(const std::string &name, bool create, size_t size) {
   if (fstat(fd_, &file_stat) == -1) {
     ::close(fd_);
   }
-  size_t file_size = file_stat.st_size;
+  auto file_size = static_cast<size_t>(file_stat.st_size);
   buf_ = mmap(nullptr, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0);
   if (buf_ == MAP_FAILED) {
     MS_EXCEPTION(RuntimeError) << "SharedMemory: mmap failed with errno: " << errno;

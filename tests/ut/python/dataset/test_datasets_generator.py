@@ -2426,14 +2426,16 @@ def test_generator_with_dynamic_shared_queue():
     Expectation: The dataset is processed as expected
     """
 
+    data = [np.random.random((1024, 1024, 3)).astype(np.float32),  # 12M
+            np.random.random((1024, 1024, 3)).astype(np.float32),  # 12M
+            np.random.random((1024, 1024, 4)).astype(np.float32),  # 16M
+            np.random.random((1024, 1024, 4)).astype(np.float32),  # 16M
+            np.random.random((1024, 1024, 5)).astype(np.float32),  # 20M
+            np.random.random((1024, 1024, 5)).astype(np.float32)]  # 20M
+
     class DynamicDataset:
         def __init__(self):
-            self.data = [np.random.random((1024, 1024, 3)).astype(np.float32),  # 12M
-                         np.random.random((1024, 1024, 3)).astype(np.float32),  # 12M
-                         np.random.random((1024, 1024, 4)).astype(np.float32),  # 16M
-                         np.random.random((1024, 1024, 4)).astype(np.float32),  # 16M
-                         np.random.random((1024, 1024, 5)).astype(np.float32),  # 20M
-                         np.random.random((1024, 1024, 5)).astype(np.float32)]  # 20M
+            self.data = data
 
         def __getitem__(self, index):
             return self.data[index]
@@ -2441,11 +2443,11 @@ def test_generator_with_dynamic_shared_queue():
         def __len__(self):
             return len(self.data)
 
-    def map_func(data):
-        return data
+    def map_func(input_data):
+        return input_data
 
-    def batch_func(data, batch_info):
-        return data
+    def batch_func(input_data, batch_info):
+        return input_data
 
     dataset = ds.GeneratorDataset(DynamicDataset(), column_names=["data"], num_parallel_workers=2,
                                   shuffle=False, max_rowsize=-1)
@@ -2454,7 +2456,8 @@ def test_generator_with_dynamic_shared_queue():
                             python_multiprocessing=True, max_rowsize=-1)
 
     count = 0
-    for _ in dataset.create_dict_iterator(output_numpy=True, num_epochs=1):
+    for sample in dataset.create_dict_iterator(output_numpy=True, num_epochs=1):
+        np.testing.assert_array_equal(sample["data"], np.array(data[count * 2:(count + 1) * 2]))
         count += 1
     assert count == 3
 

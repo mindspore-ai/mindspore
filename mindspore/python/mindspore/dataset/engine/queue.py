@@ -108,8 +108,8 @@ class _SharedQueue(multiprocessing.queues.Queue):
                         raise TypeError("Cannot pickle {} object, please verify pyfunc return with numpy array"
                                         .format(type(r)))
                     if isinstance(r, np.ndarray) and self.dynamic_shm:
-                        bytes = r.nbytes
-                        shm = cde.SharedMemory("", True, bytes)
+                        byte = r.nbytes
+                        shm = cde.SharedMemory("", True, byte)
                         dest = np.ndarray(r.shape, r.dtype, buffer=shm.buf())
                         np.copyto(dest, r)
                         name_list.append((self.data_shared, shm.name(), r.dtype, r.shape))
