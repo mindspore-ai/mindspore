@@ -1,3 +1,18 @@
+# Copyright 2024 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+import numpy as np
 from mindspore import ops, numpy, Tensor
 from mindspore.nn import Cell
 from mindspore import jit
@@ -17,7 +32,7 @@ config = {
 def test_try_block():
     """
     Feature:
-        Testing with block
+        Testing try block
 
     Description:
         Split bytecode and results is right
@@ -41,6 +56,88 @@ def test_try_block():
     b = jit(fn=try_catch_block_test, mode="PIJit",
             jit_config=config)("aaaa")
     assert a == b
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_try_block_2():
+    """
+    Feature:
+        Testing try block
+
+    Description:
+        Split bytecode and results is right
+
+    Expectation:
+        The outputs should be identical regardless of the status of PIJit.
+    """
+    @jit(mode="PIJit")
+    def foo(x):
+        try:
+            out = x + x
+        finally:
+            pass
+        return out
+    input = Tensor([1, 2, 3])
+    ret = foo(input)
+    assert np.all(ret.asnumpy() == np.array([2, 4, 6]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_try_block_3():
+    """
+    Feature:
+        Testing try block
+
+    Description:
+        Split bytecode and results is right
+
+    Expectation:
+        The outputs should be identical regardless of the status of PIJit.
+    """
+    @jit(mode="PIJit")
+    def foo(x):
+        try:
+            out = x + x
+        except ValueError:
+            out = x * 2
+        else:
+            out = out + 1
+        return out
+    input = Tensor([1, 2, 3])
+    ret = foo(input)
+    assert np.all(ret.asnumpy() == np.array([3, 5, 7]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_try_block_4():
+    """
+    Feature:
+        Testing try block
+
+    Description:
+        Split bytecode and results is right
+
+    Expectation:
+        The outputs should be identical regardless of the status of PIJit.
+    """
+    @jit(mode="PIJit")
+    def foo(x):
+        try:
+            out = x + x
+        except ValueError:
+            pass
+        else:
+            out = out + 1
+        return out
+    input = Tensor([1, 2, 3])
+    ret = foo(input)
+    assert np.all(ret.asnumpy() == np.array([3, 5, 7]))
 
 
 @pytest.mark.level0
