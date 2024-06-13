@@ -39,6 +39,7 @@
 #include "abstract/utils.h"
 #include "runtime/hardware/device_context_manager.h"
 #ifdef ENABLE_DEBUGGER
+#include "ops/op_def.h"
 #include "debug/debug_services.h"
 #include "debug/tensor_load.h"
 #include "include/backend/debug/debugger/debugger.h"
@@ -60,6 +61,22 @@ std::string GenDataFilePath(const CNodePtr &node, const std::string &kernel_name
                           std::to_string(stream_id) + '.' + std::to_string(timestamp) + tensor_type +
                           std::to_string(slot);
   return file_path;
+}
+
+TypeId ConvertStringToTypeId(const std::string &dtype) {
+  const std::map<std::string, TypeId> kDbgDataTypeToStringMap = {
+    {"bool", TypeId::kNumberTypeBool},        {"int8", TypeId::kNumberTypeInt16},
+    {"int16", TypeId::kNumberTypeInt16},      {"int32", TypeId::kNumberTypeInt32},
+    {"int64", TypeId::kNumberTypeInt64},      {"uint8", TypeId::kNumberTypeUInt8},
+    {"uint16", TypeId::kNumberTypeUInt16},    {"uint32", TypeId::kNumberTypeUInt32},
+    {"uint64", TypeId::kNumberTypeUInt64},    {"float16", TypeId::kNumberTypeFloat16},
+    {"float32", TypeId::kNumberTypeFloat32},  {"float64", TypeId::kNumberTypeFloat64},
+    {"bfloat16", TypeId::kNumberTypeBFloat16}};
+  auto iter_type = kDbgDataTypeToStringMap.find(dtype);
+  if (iter_type == kDbgDataTypeToStringMap.end()) {
+    return TypeId::kTypeUnknown;
+  }
+  return iter_type->second;
 }
 
 bool E2eDump::IsDeviceTargetGPU() {
@@ -228,6 +245,56 @@ void E2eDump::DumpInputSingleNode(const CNodePtr &node, const std::string &dump_
   }
   DumpJsonParser::GetInstance().MatchKernel(kernel_name);
   DumpInputImpl(node, trans_flag, dump_path, &kernel_name, debugger);
+}
+
+void E2eDump::DumpArgsSingleNode(const CNodePtr &node, const std::string &dump_path, const Debugger *debugger) {
+  auto op_name = GetKernelNodeName(node);
+  int start_index = static_cast<int>(op_name.rfind('/')) + 1;
+  int end_index = static_cast<int>(op_name.rfind('-'));
+  if (end_index == -1) {
+    end_index = static_cast<int>(op_name.length());
+  }
+  std::string op_t = op_name.substr(start_index, end_index - start_index);
+  auto op_def = mindspore::ops::GetOpDef(op_t);
+  nlohmann::json json;
+  if (!op_def) {
+    auto prim_node = GetCNodePrimitive(node);
+    if (prim_node != nullptr) {
+      auto prim_attrs = prim_node->attrs();
+      for (const auto &entry : prim_attrs) {
+        json[entry.first] = entry.second->ToString();
+      }
+    }
+  } else {
+    int idx = 0;
+    for (const auto &op_arg : op_def->args_) {
+      ++idx;
+      if (op_arg.as_init_arg_) {
+        auto input_kernel = node->input(idx);
+        std::string input_kernel_name = GetKernelNodeName(input_kernel);
+        string input_tensor_name = input_kernel_name + ':' + "0";
+        auto arg_name = op_arg.arg_name_;
+        auto t_data = debugger->GetTensor(input_tensor_name);
+        std::string type = t_data->GetTypeString();
+        std::shared_ptr<tensor::Tensor> converted_tensor = nullptr;
+        converted_tensor = std::make_shared<tensor::Tensor>(
+          ConvertStringToTypeId(type), t_data->GetShape(),
+          static_cast<void *>(const_cast<char *>(t_data->GetDataPtr())), t_data->GetByteSize());
+        json[arg_name] =
+          converted_tensor->data().ToString(converted_tensor->data_type(), converted_tensor->shape(), false);
+      }
+    }
+  }
+
+  std::string scope_name = node->fullname_with_scope();
+  std::replace(scope_name.begin(), scope_name.end(), '.', '_');
+  std::replace(scope_name.begin(), scope_name.end(), '/', '_');
+
+  constexpr int kJsonIndent = 4;
+  std::string file_path = dump_path + op_t + "." + scope_name + ".json";
+  std::ofstream outFile(file_path);
+  outFile << json.dump(kJsonIndent);
+  outFile.close();
 }
 
 void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
@@ -657,6 +724,9 @@ bool E2eDump::DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32
     std::string dump_path = GenerateDumpPath(graph_id, rank_id);
     DumpInputSingleNode(node, dump_path, debugger);
     DumpOutputSingleNode(node, dump_path, debugger);
+    if (dump_json_parser.save_args_flag()) {
+      DumpArgsSingleNode(node, dump_path, debugger);
+    }
     success = true;
   }
   return success;
