@@ -125,8 +125,11 @@ bool HcomUtil::GetHcomCount(const PrimitivePtr &primitive, const vector<HcclData
       }
       input_size = static_cast<uint64_t>(input_size / LongToSize(rank_size));
     }
-    if (type_size == 0 || input_size % type_size != 0) {
-      MS_LOG(ERROR) << "Input_size[" << input_size << "],Type_size[" << type_size << "] != 0, fail!";
+    bool all_dynamic = std::all_of(shape_list[i].begin(), shape_list[i].end(), [](int64_t x) { return x == -1; });
+    if (!all_dynamic && (type_size == 0 || input_size % type_size != 0)) {
+      MS_LOG(ERROR) << "primitive=" << primitive->name() << ", Input_size[" << input_size << "],Type_size[" << type_size
+                    << "] != 0, fail!"
+                    << "shape_list[i]=" << shape_list[i];
       return false;
     }
     total_size += input_size / type_size;
