@@ -4,8 +4,11 @@ mindspore.mint
 mindspore.mint
 ---------------
 
-Array操作
-^^^^^^^^^^^^^^^^
+张量
+---------
+
+创建运算
+^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -13,89 +16,42 @@ Array操作
     :template: classtemplate.rst
 
     mindspore.mint.arange
-    mindspore.mint.broadcast_to
-    mindspore.mint.cat
-    mindspore.mint.flip
-    mindspore.mint.index_select
-    mindspore.mint.max
-    mindspore.mint.min
-    mindspore.mint.nonzero
+    mindspore.mint.eye
     mindspore.mint.ones_like
-    mindspore.mint.rand_like
-    mindspore.mint.scatter_add
-    mindspore.mint.tile
-    mindspore.mint.topk
-    mindspore.mint.sort
-    mindspore.mint.stack
-    mindspore.mint.unique
-    mindspore.mint.where
     mindspore.mint.zeros_like
 
-Tensor创建
-^^^^^^^^^^^^^^^
+索引、切分、连接、突变运算
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.mint.eye
-    mindspore.mint.one_hot
+    mindspore.mint.cat
+    mindspore.mint.index_select
+    mindspore.mint.nonzero
+    mindspore.mint.scatter_add
+    mindspore.mint.stack
+    mindspore.mint.tile
+    mindspore.mint.where
+
+随机采样
+^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.rand_like
     mindspore.mint.rand
 
-逐元素运算
-^^^^^^^^^^^^^^^^
+数学运算
+---------
 
-.. mscnplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.add
-    mindspore.mint.div
-    mindspore.mint.divide
-    mindspore.mint.ceil
-    mindspore.mint.clamp
-    mindspore.mint.cos
-    mindspore.mint.erf
-    mindspore.mint.floor
-    mindspore.mint.isclose
-    mindspore.mint.isfinite
-    mindspore.mint.log
-    mindspore.mint.atan2
-    mindspore.mint.arctan2
-    mindspore.mint.square
-    mindspore.mint.sub
-
-Reduction函数
-^^^^^^^^^^^^^
-
-.. mscnplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.all
-    mindspore.mint.any
-    mindspore.mint.argmax
-    mindspore.mint.mean
-    mindspore.mint.prod
-    mindspore.mint.sum
-
-比较函数
-^^^^^^^^^^^^^
-
-.. mscnplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.greater_equal
-    mindspore.mint.maximum
-    mindspore.mint.minimum
-
-逐元素运算
-^^^^^^^^^^^^^^^^
+逐点运算
+^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -103,12 +59,67 @@ Reduction函数
     :template: classtemplate.rst
 
     mindspore.mint.abs
+    mindspore.mint.add
+    mindspore.mint.arctan2
+    mindspore.mint.atan2
+    mindspore.mint.ceil
+    mindspore.mint.clamp
+    mindspore.mint.cos
+    mindspore.mint.div
+    mindspore.mint.divide
+    mindspore.mint.erf
+    mindspore.mint.floor
+    mindspore.mint.log
+    mindspore.mint.tanh
+    mindspore.mint.square
+    mindspore.mint.sub
 
+Reduction运算
+^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+    
+    mindspore.mint.any
+    mindspore.mint.argmax
+    mindspore.mint.max
+    mindspore.mint.mean
+    mindspore.mint.min
+    mindspore.mint.prod
+    mindspore.mint.sum
+    mindspore.mint.unique
 
+对比运算
+^^^^^^^^^^
 
-线性函数
-^^^^^^^^^^^^^^^^^^^
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.greater_equal
+    mindspore.mint.isclose
+    mindspore.mint.isfinite
+    mindspore.mint.maximum
+    mindspore.mint.minimum
+    mindspore.mint.sort
+    mindspore.mint.topk
+
+其他运算
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.broadcast_to
+    mindspore.mint.flip
+
+BLAS和LAPACK运算
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -118,38 +129,10 @@ Reduction函数
     mindspore.mint.bmm
     mindspore.mint.matmul
 
-
-
-
 mindspore.mint.nn
 ------------------
 
 Dropout层
-^^^^^^^^^^^
-
-.. mscnplatformautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.nn.Dropout
-
-卷积层
-^^^^^^
-
-.. mscnplatformautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.nn.Fold
-    mindspore.mint.nn.Unfold
-
-
-mindspore.mint.nn.functional
------------------------------
-
-神经网络层函数
 ^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
@@ -157,16 +140,24 @@ mindspore.mint.nn.functional
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.mint.nn.functional.batch_norm
-    mindspore.mint.nn.functional.dropout
-    mindspore.mint.nn.functional.grid_sample
-    mindspore.mint.nn.functional.group_norm
-    mindspore.mint.nn.functional.layer_norm
-    mindspore.mint.nn.functional.linear
+    mindspore.mint.nn.Dropout
 
+卷积层
+^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.Fold
+    mindspore.mint.nn.Unfold
+
+mindspore.mint.nn.functional
+-----------------------------
 
 卷积函数
-^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -176,10 +167,8 @@ mindspore.mint.nn.functional
     mindspore.mint.nn.functional.fold
     mindspore.mint.nn.functional.unfold
 
-
-
 池化函数
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -188,89 +177,66 @@ mindspore.mint.nn.functional
 
     mindspore.mint.nn.functional.max_pool2d
 
-
-
-
-
-
-注意力机制
-^^^^^^^^^^^^^^^^^^^
-
-
-
-
-
-
-
 非线性激活函数
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.batch_norm
     mindspore.mint.nn.functional.elu
     mindspore.mint.nn.functional.gelu
-    mindspore.mint.nn.functional.relu
+    mindspore.mint.nn.functional.group_norm
+    mindspore.mint.nn.functional.layer_norm
     mindspore.mint.nn.functional.leaky_relu
+    mindspore.mint.nn.functional.relu
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
     mindspore.mint.nn.functional.softmax
     mindspore.mint.nn.functional.tanh
 
-
-
-
-
 线性函数
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^
 
-
-
-
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+    
+    mindspore.mint.nn.functional.linear
 
 Dropout函数
-^^^^^^^^^^^^^^^^^^^
-
-
-
-
-
-
-
-距离函数
-^^^^^^^^^^^^^^^^^^^
-
-
-
-
-
-
-
-损失函数
-^^^^^^^^^^^^^^^^^^^
-
-
-
-
-
-
-
-视觉函数
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.dropout
+
+稀疏函数
+^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.one_hot
+
+Vision函数
+^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.functional.grid_sample
     mindspore.mint.nn.functional.pad
-
-
-
-
-
 
 mindspore.mint.optim
 ---------------------
