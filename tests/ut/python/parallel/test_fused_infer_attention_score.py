@@ -25,7 +25,7 @@ from mindspore.ops import operations as OPS
 context.set_context(mode=context.GRAPH_MODE)
 
 
-def generate_inputs(dims, optinal_inputs, input_layout='BSH', sparse_mode=0):
+def generate_inputs(dims, optinal_inputs, input_layout='BSH', sparse_mode=0, is_ifa=False):
     B, N, S, D = dims
     has_pse_shift, has_atten_mask, has_actual_seq_lengths, has_actual_seq_lengths_kv, has_deq_scale1, \
     has_quant_scale1, has_deq_scale2, has_quant_scale2, has_quant_offset2, has_antiquant_scale, has_antiquant_offset, \
@@ -46,40 +46,41 @@ def generate_inputs(dims, optinal_inputs, input_layout='BSH', sparse_mode=0):
     kv_padding_size = Tensor(1, dtype=mindspore.float32) if has_kv_padding_size else None
 
     ret_inputs = None
+    Q_S = 1 if is_ifa else S
     if input_layout == 'BSH':
         H = N * D
-        query = Tensor(np.ones((B, S, H), dtype=np.float16))
+        query = Tensor(np.ones((B, Q_S, H), dtype=np.float16))
         key = Tensor(np.ones((B, S, H), dtype=np.float16))
         value = Tensor(np.ones((B, S, H), dtype=np.float16))
         if has_atten_mask:
-            attn_mask = Tensor(np.ones((B, S, S)), dtype=mindspore.float16) if sparse_mode == 0 else Tensor(
+            attn_mask = Tensor(np.ones((B, Q_S, S)), dtype=mindspore.float16) if sparse_mode == 0 else Tensor(
                 np.ones((1, 2048, 2048)), dtype=mindspore.float16)
         if has_pse_shift:
-            pse_shift = Tensor(np.zeros((B, 1, S, S)), dtype=mindspore.float16)
+            pse_shift = Tensor(np.zeros((B, N, Q_S, S)), dtype=mindspore.float16)
         ret_inputs = (query, key, value, pse_shift, attn_mask, actual_seq_lengths, actual_seq_lengths_kv,
                       deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2, antiquant_scale,
                       antiquant_offset, block_table, query_padding_size, kv_padding_size)
     elif input_layout == 'BNSD':
-        query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        query = Tensor(np.ones((B, N, Q_S, D), dtype=np.float16))
         key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
         value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
         if has_atten_mask:
-            attn_mask = Tensor(np.ones((B, S, S)), dtype=mindspore.float16) if sparse_mode == 0 else Tensor(
+            attn_mask = Tensor(np.ones((B, Q_S, S)), dtype=mindspore.float16) if sparse_mode == 0 else Tensor(
                 np.ones((1, 2048, 2048)), dtype=mindspore.float16)
         if has_pse_shift:
-            pse_shift = Tensor(np.zeros((B, 1, S, S)), dtype=mindspore.float16)
+            pse_shift = Tensor(np.zeros((B, N, Q_S, S)), dtype=mindspore.float16)
         ret_inputs = (query, key, value, pse_shift, attn_mask, actual_seq_lengths, actual_seq_lengths_kv,
                       deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2, antiquant_scale,
                       antiquant_offset, block_table, query_padding_size, kv_padding_size)
     elif input_layout == 'BSND':
-        query = Tensor(np.ones((B, S, N, D), dtype=np.float16))
+        query = Tensor(np.ones((B, Q_S, N, D), dtype=np.float16))
         key = Tensor(np.ones((B, S, N, D), dtype=np.float16))
         value = Tensor(np.ones((B, S, N, D), dtype=np.float16))
         if has_atten_mask:
-            attn_mask = Tensor(np.ones((B, S, S)), dtype=mindspore.float16) if sparse_mode == 0 else Tensor(
+            attn_mask = Tensor(np.ones((B, Q_S, S)), dtype=mindspore.float16) if sparse_mode == 0 else Tensor(
                 np.ones((1, 2048, 2048)), dtype=mindspore.float16)
         if has_pse_shift:
-            pse_shift = Tensor(np.zeros((B, 1, S, S)), dtype=mindspore.float16)
+            pse_shift = Tensor(np.zeros((B, N, Q_S, S)), dtype=mindspore.float16)
         ret_inputs = (query, key, value, pse_shift, attn_mask, actual_seq_lengths, actual_seq_lengths_kv,
                       deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2, antiquant_scale,
                       antiquant_offset, block_table, query_padding_size, kv_padding_size)
@@ -88,44 +89,45 @@ def generate_inputs(dims, optinal_inputs, input_layout='BSH', sparse_mode=0):
     return ret_inputs
 
 
-def generate_strategy(dp, mp, optinal_inputs, input_layout='BSH', sparse_mode=0, sp=1):
+def generate_strategy(dp, mp, optinal_inputs, input_layout='BSH', sparse_mode=0, sp=1, is_ifa=False):
     has_pse_shift, has_atten_mask, has_actual_seq_lengths, has_actual_seq_lengths_kv, has_deq_scale1, \
     has_quant_scale1, has_deq_scale2, has_quant_scale2, has_quant_offset2, has_antiquant_scale, has_antiquant_offset, \
     has_block_table, has_query_padding_size, has_kv_padding_size = optinal_inputs
     if dp is None or mp is None:
         return ()
+    q_sp = 1 if is_ifa else sp
     if input_layout == 'BSH':
-        stra = ((dp, sp, mp), ((dp, 1, mp),), ((dp, 1, mp),))
+        stra = ((dp, q_sp, mp), ((dp, sp, mp),), ((dp, sp, mp),))
         if has_pse_shift:
             stra += ((dp, 1, 1, 1),)
         if has_atten_mask:
             if sparse_mode in [2, 3, 4]:
                 sp = 1
-            stra += ((dp, sp, 1),) if sparse_mode == 0 else ((1, sp, 1),)
+            stra += ((dp, q_sp, sp),) if sparse_mode == 0 else ((1, q_sp, 1),)
         if has_actual_seq_lengths:
             stra += ((dp,),)
         if has_actual_seq_lengths_kv:
             stra += ((dp,),)
     if input_layout == 'BNSD':
-        stra = ((dp, mp, sp, 1), ((dp, mp, 1, 1),), ((dp, mp, 1, 1),))
+        stra = ((dp, mp, q_sp, 1), ((dp, mp, sp, 1),), ((dp, mp, sp, 1),))
         if has_pse_shift:
             stra += ((dp, 1, 1, 1),)
         if has_atten_mask:
             if sparse_mode in [2, 3, 4]:
                 sp = 1
-            stra += ((dp, sp, 1),) if sparse_mode == 0 else ((1, sp, 1),)
+            stra += ((dp, q_sp, sp),) if sparse_mode == 0 else ((1, q_sp, 1),)
         if has_actual_seq_lengths:
             stra += ((dp,),)
         if has_actual_seq_lengths_kv:
             stra += ((dp,),)
     if input_layout == 'BSND':
-        stra = ((dp, sp, mp, 1), ((dp, 1, mp, 1),), ((dp, 1, mp, 1),))
+        stra = ((dp, q_sp, mp, 1), ((dp, sp, mp, 1),), ((dp, sp, mp, 1),))
         if has_pse_shift:
             stra += ((dp, 1, 1, 1),)
         if has_atten_mask:
             if sparse_mode in [2, 3, 4]:
                 sp = 1
-            stra += ((dp, sp, 1),) if sparse_mode == 0 else ((1, sp, 1),)
+            stra += ((dp, q_sp, sp),) if sparse_mode == 0 else ((1, q_sp, 1),)
         if has_actual_seq_lengths:
             stra += ((dp,),)
         if has_actual_seq_lengths_kv:
@@ -203,6 +205,26 @@ def test_self_attention_standalone(input_layout):
 
 
 @pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
+def test_self_attention_standalone_ifa(input_layout):
+    """
+    Feature: test FusedInferAttentionScore standalone
+    Description: standalone
+    Expectation: compile success
+    """
+    context.reset_auto_parallel_context()
+
+    set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="stand_alone")
+    B, N, S, D = 8, 16, 1024, 128
+    dims = [B, N, S, D]
+    optinal_inputs = [True, False, False, False, False, False, False,
+                      False, False, False, False, False, False, False]
+    inputs = generate_inputs(dims, optinal_inputs, input_layout=input_layout, is_ifa=True)
+    net = Net(N, input_layout=input_layout)
+    compile_net(net, *inputs)
+
+
+@pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
 @pytest.mark.parametrize('strategys', [(4, 2), (2, 2)])
 def test_fused_infer_attention_score_semi_auto_parallel(input_layout, strategys):
     """
@@ -220,6 +242,28 @@ def test_fused_infer_attention_score_semi_auto_parallel(input_layout, strategys)
     dims = [B, N, S, D]
     inputs = generate_inputs(dims, optinal_inputs, input_layout=input_layout)
     strategies = generate_strategy(dp, mp, optinal_inputs, input_layout=input_layout)
+    net = Net(N, input_layout=input_layout, strategy=strategies)
+    compile_net(net, *inputs)
+
+
+@pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
+@pytest.mark.parametrize('strategys', [(4, 2), (2, 2)])
+def test_fused_infer_attention_score_semi_auto_parallel_ifa(input_layout, strategys):
+    """
+    Feature: test FusedInferAttentionScore semi parallel
+    Description: semi parallel
+    Expectation: compile success
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    B, N, S, D = 8, 16, 1024, 128
+    dp = strategys[0]
+    mp = strategys[1]
+    optinal_inputs = [False, True, False, False, False, False, False,
+                      False, False, False, False, False, False, False]
+    dims = [B, N, S, D]
+    inputs = generate_inputs(dims, optinal_inputs, input_layout=input_layout, is_ifa=True)
+    strategies = generate_strategy(dp, mp, optinal_inputs, input_layout=input_layout, is_ifa=True)
     net = Net(N, input_layout=input_layout, strategy=strategies)
     compile_net(net, *inputs)
 
@@ -265,4 +309,28 @@ def test_fused_infer_attention_score_semi_auto_parallel_sparsemode0(input_layout
     strategies = generate_strategy(dp, mp, optinal_inputs, input_layout=input_layout, sparse_mode=0, sp=sp)
     net = Net(N, input_layout=input_layout, strategy=strategies,
               sparse_mode=0)
+    compile_net(net, *inputs)
+
+
+@pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
+@pytest.mark.parametrize('strategys', [(2, 2, 2), (1, 1, 8)])
+def test_fused_infer_attention_score_semi_auto_parallel_ifa_split_s(input_layout, strategys):
+    """
+    Feature: test FusedInferAttentionScore semi parallel
+    Description: semi parallel
+    Expectation: compile success
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="full_batch")
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    B, N, S, D = 8, 16, 1024, 128
+    dp = strategys[0]
+    mp = strategys[1]
+    sp = strategys[2]
+    optinal_inputs = [True, True, True, False, False, False, False,
+                      False, False, False, False, False, False, False]
+    dims = [B, N, S, D]
+    inputs = generate_inputs(dims, optinal_inputs, input_layout=input_layout, sparse_mode=0, is_ifa=True)
+    strategies = generate_strategy(dp, mp, optinal_inputs, input_layout=input_layout, sparse_mode=0, sp=sp, is_ifa=True)
+    net = Net(N, input_layout=input_layout, strategy=strategies,
+              sparse_mode=0, softmax_lse_flag=True)
     compile_net(net, *inputs)
