@@ -69,6 +69,19 @@ mindspore
     mindspore.set_seed
     mindspore.get_seed
 
+随机状态管理
+--------------
+
+.. mscnautosummary::
+    :toctree: mindspore
+
+    mindspore.get_rng_state
+    mindspore.Generator
+    mindspore.initial_seed
+    mindspore.manual_seed
+    mindspore.seed
+    mindspore.set_rng_state
+
 序列化
 -------
 

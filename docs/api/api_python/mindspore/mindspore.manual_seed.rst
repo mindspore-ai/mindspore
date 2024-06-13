@@ -1,7 +1,7 @@
-mindspore.nn.manual_seed
+mindspore.manual_seed
 ========================
 
-.. py:function:: mindspore.nn.manual_seed(seed)
+.. py:function:: mindspore.manual_seed(seed)
 
     设置默认生成器种子。
 

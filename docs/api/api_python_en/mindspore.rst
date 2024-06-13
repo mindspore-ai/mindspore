@@ -137,6 +137,21 @@ Seed
     mindspore.set_seed
     mindspore.get_seed
 
+Random Number Generator
+-----------------------
+
+.. autosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.get_rng_state
+    mindspore.Generator
+    mindspore.initial_seed
+    mindspore.manual_seed
+    mindspore.seed
+    mindspore.set_rng_state
+
 Serialization
 -------------
 
