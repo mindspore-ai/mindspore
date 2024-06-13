@@ -81,6 +81,7 @@ class ParamInfo {
     clone->requires_aggr_ = this->requires_aggr_;
     clone->strategy_ckpt_saved_ = this->strategy_ckpt_saved_;
     clone->param_strategy_ = this->param_strategy_;
+    clone->storage_format_ = this->storage_format_;
     clone->ClearParameter();
     return clone;
   }
@@ -132,6 +133,9 @@ class ParamInfo {
   bool ignore_device_addr() const { return ignore_device_addr_; }
   void set_ignore_device_addr(bool ignore) { ignore_device_addr_ = ignore; }
 
+  std::string storage_format() const { return storage_format_; }
+  void set_storage_format(const std::string &storage_format) { storage_format_ = storage_format; }
+
  private:
   std::string name_{"Parameter"};
   bool requires_grad_{true};
@@ -150,6 +154,7 @@ class ParamInfo {
   ParameterWeakPtr parameter_;
   bool requires_aggr_{true};
   std::vector<int64_t> parameter_shape_;
+  std::string storage_format_{""};
 
   // Record the origin shape before cut huge parameter to a small one.
   std::vector<int64_t> origin_shape_;
