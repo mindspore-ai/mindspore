@@ -206,7 +206,7 @@ class TestProfiler:
     @security_off_wrap
     def test_ascend_kbyk_profiler(self):
         context.set_context(jit_config={"jit_level": "O0"})
-        self._train_with_profiler(device_target="Ascend", profile_memory=False)
+        self._train_with_profiler(device_target="Ascend", profile_memory=False, host_stack=True)
         self._check_d_profiling_file()
         self._check_host_profiling_file()
         self._check_kbyk_profiling_file()
