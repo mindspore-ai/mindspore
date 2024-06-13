@@ -230,7 +230,6 @@ class _Context:
                              f"or context.DEBUG, but got {level}.")
         self.set_param(ms_ctx_param.debug_level, level)
 
-
     def set_memory_optimize_level(self, memory_optimize_level):
         """
         The memory optimize level, support "O0", "O1".
@@ -1545,7 +1544,7 @@ def set_context(**kwargs):
 
                 - 3: Apply fusion to all nodes.
               - bias_add_comm_swap (bool): Enable node execution order swap communication operators and add operators
-                if ``True``. Default: ``False``.
+                if ``True``. Only 1-dimension bias node is supported. Default: ``False``.
             - host_scheduling_max_threshold(int): The max threshold to control whether the dynamic shape process is
               used when run the static graph, the default value is 0. When the number of operations in the static graph
               is less than the max threshold, this graph will be executed in dynamic shape process. In large model
