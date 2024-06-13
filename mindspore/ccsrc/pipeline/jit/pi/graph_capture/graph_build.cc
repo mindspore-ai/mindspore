@@ -3055,6 +3055,9 @@ static void LogPrunBranch(ValueNode *cond, const Instr &instr, const GraphJitCon
       std::map<Trace *, size_t> cache;
       GRAPH_JIT_LOG_F("trace:\n%s\n", tr ? tr->FormatString(&cache).c_str() : "trace failed");
     }
+    if (cond->GetGraph() == nullptr || cond->GetGraph()->GetCodeObj() == nullptr) {
+      return;
+    }
     GRAPH_JIT_LOG_F("if branch prune failed, condition [%s] at [%U : %d]", cond->ToString().c_str(),
                     cond->GetGraph()->GetCodeObj()->co_filename, cond->GetLineNo());
   }
