@@ -169,6 +169,12 @@ class FlagRegister {
 };
 }  // namespace
 
+bool GraphKernelFlags::IsEnableKernelPacket() const {
+  // Default disable kernelpacket now.
+  // todo: default enable when jit_level is O1.
+  return common::GetEnv("MS_DEV_ENABLE_KERNEL_PACKET") == "on";
+}
+
 const GraphKernelFlags &GraphKernelFlags::GetInstance() {
   static std::unique_ptr<GraphKernelFlags> flags(nullptr);
   auto config = GetGraphKernelConfig();
@@ -367,6 +373,8 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_cce_lib_ops", &enable_cce_lib_ops);
   reg.AddFlag("enable_cce_lib_ops_only", &enable_cce_lib_ops_only);
   reg.AddFlag("disable_cce_lib_ops", &disable_cce_lib_ops);
+  reg.AddFlag("enable_packet_ops_only", &enable_packet_ops_only);
+  reg.AddFlag("disable_packet_ops", &disable_packet_ops);
 
   if (enable_dynamic_shape_fusion && !is_ascend) {
     kernel_generator = "AKG_V2";
@@ -438,6 +446,8 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["enable_cce_lib_ops"] = enable_cce_lib_ops_only;
   json["enable_cce_lib_ops_only"] = enable_cce_lib_ops_only;
   json["disable_cce_lib_ops"] = disable_cce_lib_ops;
+  json["enable_packet_ops_only"] = enable_packet_ops_only;
+  json["disable_packet_ops"] = disable_packet_ops;
 
   return json.dump();
 }

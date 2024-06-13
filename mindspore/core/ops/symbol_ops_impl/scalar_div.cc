@@ -115,8 +115,8 @@ SymbolPtr ScalarCeilDiv::Eval() {
   return GenVInt();
 }
 
-REG_SYMBOL_OP_BUILDER("ScalarDiv").SetValueFunc(DefaultBuilder<ScalarDiv>);
-REG_SYMBOL_OP_BUILDER("ScalarFloorDiv").SetValueFunc(DefaultBuilder<ScalarFloorDiv>);
+REG_SYMBOL_OP_BUILDER("ScalarDiv").SetValueDependN<DependOn::kValue, 2>().SetValueFuncWith<ScalarDiv>();
+REG_SYMBOL_OP_BUILDER("ScalarFloorDiv").SetValueDependN<DependOn::kValue, 2>().SetValueFuncWith<ScalarFloorDiv>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

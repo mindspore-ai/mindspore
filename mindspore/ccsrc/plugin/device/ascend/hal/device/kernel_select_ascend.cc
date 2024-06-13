@@ -518,6 +518,53 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel.get());
 }
 
+void GenerateKernelPacketBuildInfo(const CNodePtr &node) {
+  MS_LOG(DEBUG) << "Begin set kernel info for kernelpacket "
+                << common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrKernelPacketNode) << ". The node is "
+                << node->fullname_with_scope() << ", " << node->DebugString();
+  auto sub_fg = common::AnfAlgo::GetNodeAttr<FuncGraphPtr>(node, kAttrFuncGraph);
+  MS_EXCEPTION_IF_NULL(sub_fg);
+  std::vector<std::string> input_formats;
+  std::vector<TypeId> input_types;
+  auto input_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(node));
+  auto input_num = common::AnfAlgo::GetInputTensorNum(node);
+  input_formats.reserve(input_num);
+  input_types.reserve(input_num);
+  if (sub_fg->parameters().size() < input_num) {
+    MS_LOG(INTERNAL_EXCEPTION) << "For kernel " << node->DebugString() << ", the input tensor num (" << input_num
+                               << ") is greater than the parameter num of inner graph " << sub_fg->ToString();
+  }
+  for (size_t i = 0; i < input_num; i++) {
+    auto cur_input_type = GetInputDeviceType(node, i);
+    if (IsEmptyTupleInput(node, i, cur_input_type)) {
+      cur_input_type = TypeId::kNumberTypeInt64;
+    }
+    (void)input_types.emplace_back(cur_input_type);
+    (void)input_formats.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(node, i));
+    // set parameters' output info.
+    auto param_infobuilder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+    MS_EXCEPTION_IF_NULL(param_infobuilder);
+    param_infobuilder->SetOutputsDeviceType({input_types.back()});
+    param_infobuilder->SetOutputsFormat({input_formats.back()});
+    param_infobuilder->SetOutputsKernelObjectType({input_object_types[i]});
+    sub_fg->parameters()[i]->set_kernel_info(std::make_shared<device::KernelInfo>());
+    AnfAlgo::SetSelectKernelBuildInfo(param_infobuilder->Build(), sub_fg->parameters()[i].get());
+  }
+  auto inner_build_info = AnfAlgo::GetSelectKernelBuildInfo(sub_fg->output());
+  MS_EXCEPTION_IF_NULL(inner_build_info);
+  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(builder);
+  builder->SetKernelType(KernelType::AKG_KERNEL);
+  builder->SetInputsFormat(input_formats);
+  builder->SetInputsDeviceType(input_types);
+  builder->SetInputsKernelObjectType(input_object_types);
+  builder->SetOutputsFormat(inner_build_info->GetAllOutputFormats());
+  builder->SetOutputsDeviceType(inner_build_info->GetAllOutputDeviceTypes());
+  builder->SetOutputsKernelObjectType(inner_build_info->GetAllOutputKernelObjectTypes());
+  AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
+  MS_LOG(DEBUG) << "Finish set kernel info for kernelpacket node " << node->fullname_with_scope();
+}
+
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
                                const std::pair<std::string, ExceptionType> &failure_info) {
   auto msg = TryBackoffCpu(graph, node, failure_info);
@@ -601,6 +648,11 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
       MS_VLOG(VL_ASCEND_KERNEL_SELECT) << op_name << " select hccl kernel.";
       MS_LOG(INFO) << op_name << " select hccl kernel.";
     }
+    return result;
+  }
+
+  if (common::AnfAlgo::HasNodeAttr(kAttrKernelPacketNode, node)) {
+    GenerateKernelPacketBuildInfo(node);
     return result;
   }
 

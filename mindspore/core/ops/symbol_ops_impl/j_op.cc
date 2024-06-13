@@ -16,17 +16,20 @@
 #include "mindspore/core/ops/symbol_ops_impl/j_op.h"
 #include <utility>
 #include "mindspore/core/symbolic_shape/operation_builder.h"
+#include "mindspore/core/ops/symbol_ops_impl/common.h"
 
 namespace mindspore {
 namespace symshape {
 namespace ops {
-REG_SYMBOL_OP_BUILDER(kJFuncCaller).SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
-  SymbolPtrList result(b->input_num());
-  for (size_t i = 0; i < result.size(); i++) {
-    result[i] = b->GetInputShape(i);
-  }
-  return ListSymbol::Make(std::move(result));
-});
+REG_SYMBOL_OP_BUILDER(kJFuncCaller)
+  .SetShapeDependN<DependOn::kShape>()
+  .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
+    SymbolPtrList result(b->input_num());
+    for (size_t i = 0; i < result.size(); i++) {
+      result[i] = b->GetInputShape(i);
+    }
+    return ListSymbol::Make(std::move(result));
+  });
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

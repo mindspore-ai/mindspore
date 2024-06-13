@@ -42,7 +42,7 @@ SymbolPtr UnsortedSegmentSum::Eval() {
 
 REG_SYMBOL_OP_BUILDER("UnsortedSegmentSum")
   .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<UnsortedSegmentSum>);
+  .SetShapeFuncWith<UnsortedSegmentSum>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

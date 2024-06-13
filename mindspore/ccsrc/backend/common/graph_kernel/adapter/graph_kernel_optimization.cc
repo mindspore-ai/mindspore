@@ -62,7 +62,8 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/compact_tensor_liveness.h"
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
-#include "backend/common/graph_kernel/symbol_engine_extender.h"
+#include "backend/common/graph_kernel/kernel_packet/symbol_engine_extender.h"
+#include "backend/common/graph_kernel/convert_call_to_prim.h"
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
 #include "backend/common/graph_kernel/set_infershape_functor.h"
 #include "backend/common/graph_kernel/recognize_softmax_grad_ext.h"
@@ -305,17 +306,16 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   // Add the new tensors to the kernel_graph
   pm->Add(std::make_shared<BindValueToGraph>(), OptLevel_1);
 
-  // Default disable kernelpacket.
-  bool enable_kernel_packet = common::GetEnv("MS_DEV_ENABLE_KERNEL_PACKET") == "on";
-  auto kernel_packet_lv = GetPassLevelByFlag(enable_kernel_packet);
-  pm->Add(std::make_shared<SymbolEngineBuilder>(true), kernel_packet_lv, is_dvm);
-  pm->Add(std::make_shared<SymbolEngineExtender>(), kernel_packet_lv, is_dvm);
-
   // Update side effect attr, update kernel graph ref pair(used in device address allocation)
   pm->Add(std::make_shared<DealWithSideEffect>(), OptLevel_1, is_dvm);
+  pm->Add(std::make_shared<ConvertCallToPrim>(), OptLevel_1, is_dvm);
+  return pm;
+}
 
-  // Convert graph kernel call node to primitive node
-  pm->Add(std::make_shared<ConvertCallToPrim>(), OptLevel_1);
+PassManagerPtr GraphKernelOptimizer::KernelPacket() const {
+  auto pm = std::make_shared<GraphKernelPassManager>(8, "kernelpacket");
+  pm->Add(std::make_shared<packet::SymbolEngineExtender>(), OptLevel_0);
+  pm->Add(std::make_shared<ConvertCallToPrim>(), OptLevel_0);
   return pm;
 }
 
@@ -364,9 +364,20 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   }
 }
 
+void GraphKernelOptimizer::RunKernelPacket(const KernelGraphPtr &kernel_graph) {
+  auto optimizer = std::make_shared<GraphOptimizer>("graph_kernel_optimizer");
+  optimizer->AddPassManager(KernelPacket());
+  (void)optimizer->Optimize(kernel_graph);
+}
+
 void GraphKernelOptimize(const KernelGraphPtr &kernel_graph) {
   GraphKernelOptimizer graph_kernel_optimizer;
   graph_kernel_optimizer.Run(kernel_graph);
+}
+
+void KernelPacketOptimize(const KernelGraphPtr &kernel_graph) {
+  GraphKernelOptimizer graph_kernel_optimizer;
+  graph_kernel_optimizer.RunKernelPacket(kernel_graph);
 }
 
 bool GraphKernelSupported(const std::vector<AnfNodePtr> &nodes) {

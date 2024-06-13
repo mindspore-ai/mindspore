@@ -185,7 +185,8 @@ KernelPacketKernelMod::AddressArgs KernelPacketKernelMod::GetLaunchArgs(const st
       res_inputs[i]->set_pointer_ref_count(workspaces[j]->pointer_ref_count());
       // copy host data to device
       if (host_data_cache_[i] != nullptr) {
-        MS_LOG(DEBUG) << "Copy input " << i << " from host to device.";
+        MS_LOG(DEBUG) << "Copy input " << i << " from host to device. device_ptr: " << res_inputs[i]->device_ptr()
+                      << ", size: " << res_inputs[i]->size();
         CopyHostToDevice(res_inputs[i]->device_ptr(), host_data_cache_[i], res_inputs[i]->size(), stream_ptr);
       }
     } else {

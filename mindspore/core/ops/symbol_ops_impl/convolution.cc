@@ -110,7 +110,7 @@ SymbolPtr Convolution::Eval() {
 REG_SYMBOL_OP_BUILDER("Convolution")
   .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kNone, DependOn::kValue, DependOn::kValue,
                    DependOn::kValue, DependOn::kValue, DependOn::kValue, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<Convolution>);
+  .SetShapeFuncWith<Convolution>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

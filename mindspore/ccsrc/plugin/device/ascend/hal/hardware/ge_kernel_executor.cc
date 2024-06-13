@@ -107,7 +107,7 @@ kernel::KernelModPtr CreateKernelPacketKernelMod(const CNodePtr &kernel) {
   // when the kernel is inlined, multiple kernels may share a Primitive, so clone an object.
   prim = prim->Clone();
   kernel->set_input(0, NewValueNode(prim));
-  auto name = GetValue<std::string>(prim->GetAttr("kernel_packet_node"));
+  auto name = GetValue<std::string>(prim->GetAttr(kAttrKernelPacketNode));
   auto infer_func = std::make_shared<kernel::KernelPacketInfer>(name, real_kernel->func_graph(), kp_kernelmod.get());
   prim->set_attr("infer_shape_functor", infer_func);
   auto real_kernel_info = dynamic_cast<device::KernelInfo *>(real_kernel->kernel_info());
@@ -123,7 +123,7 @@ kernel::KernelModPtr CreateKernelPacketKernelMod(const CNodePtr &kernel) {
 }
 
 kernel::KernelModPtr GenerateAkgKernelMod(const CNodePtr &kernel) {
-  if (IsPrimitiveCNode(kernel, prim::kPrimKernelPacket)) {
+  if (common::AnfAlgo::HasNodeAttr(kAttrKernelPacketNode, kernel)) {
     return CreateKernelPacketKernelMod(kernel);
   }
 #ifdef ENABLE_DVM

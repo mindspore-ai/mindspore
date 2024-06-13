@@ -243,6 +243,20 @@ void SymbolEngineImpl::PreBuildSpecialNode(const CNodePtr &cnode) {
   helper->SetDependStatus(&depend_status_map_);
 }
 
+void SymbolEngineImpl::SetInputDependStatus(const CNodePtr &cnode, bool depend_value) {
+  auto prim = GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(prim);
+  size_t input_num = cnode->size() - 1;
+  auto depends = depend_value ? GetValueDepends(prim, input_num) : GetShapeDepends(prim, input_num);
+  for (size_t i = 0; i < depends.size(); i++) {
+    if (depends[i] == DependOn::kValue) {
+      depend_status_map_[cnode->input(i + 1)].value = true;
+    } else if (depends[i] == DependOn::kShape) {
+      depend_status_map_[cnode->input(i + 1)].shape = true;
+    }
+  }
+}
+
 void SymbolEngineImpl::PreBuildQueryDependStatus(const AnfNodePtrList &cnodes) {
   for (auto iter = cnodes.rbegin(); iter != cnodes.rend(); ++iter) {
     auto cnode = (*iter)->cast<CNodePtr>();
@@ -264,40 +278,15 @@ void SymbolEngineImpl::PreBuildQueryDependStatus(const AnfNodePtrList &cnodes) {
       PreBuildQuerySubgraphDependStatus(cnode, subfg_with_index.first, subfg_with_index.second);
       continue;
     }
-    // the normal CNode, get the depend status from operation builder info.
-    auto *info = OperationBuilderInfoRegistry::GetBuildInfo(AnfUtils::GetCNodeName(cnode));
-    if (info == nullptr) {
+    // the normal CNode, check the depend status from operation builder info.
+    if (!OperationBuilderInfoRegistry::HasOp(AnfUtils::GetCNodeName(cnode))) {
       continue;
     }
-    auto prim = GetCNodePrimitive(cnode);
-    auto set_prev_node_func = [this, &cnode, info](const PrimitivePtr &prim, bool depend_value) {
-      auto depends = info->GetDepends(prim, cnode->size() - 1, depend_value);
-      for (size_t i = 0; i + 1 < cnode->size(); i++) {
-        DependOn input_depend;
-        if (depends.empty()) {
-          // if the depend status is not set in build_info, set the output depend status to inputs.
-          input_depend = depend_value ? DependOn::kValue : DependOn::kShape;
-        } else {
-          // if the depend status is set in build_info, use the config status.
-          // and if the size of config is less than input size, skip post inputs (depend nothing).
-          // e.g. like BiasAdd, set "{kShape, kNone}" is equivalent to "{kShape}".
-          if (i >= depends.size()) {
-            break;
-          }
-          input_depend = depends[i];
-        }
-        if (input_depend == DependOn::kValue) {
-          depend_status_map_[cnode->input(i + 1)].value = true;
-        } else if (input_depend == DependOn::kShape) {
-          depend_status_map_[cnode->input(i + 1)].shape = true;
-        }
-      }
-    };
     if (depend_status.shape) {
-      set_prev_node_func(prim, false);
+      SetInputDependStatus(cnode, false);
     }
     if (depend_status.value) {
-      set_prev_node_func(prim, true);
+      SetInputDependStatus(cnode, true);
     }
   }
 }

@@ -42,10 +42,10 @@ SymbolPtr LinSpace::Eval() {
 
 REG_SYMBOL_OP_BUILDER("LinSpace")
   .SetShapeDepend({DependOn::kShape, DependOn::kNone, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<LinSpace>);
+  .SetShapeFuncWith<LinSpace>();
 REG_SYMBOL_OP_BUILDER("LinSpaceExt")
   .SetShapeDepend({DependOn::kShape, DependOn::kNone, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<LinSpace>);
+  .SetShapeFuncWith<LinSpace>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

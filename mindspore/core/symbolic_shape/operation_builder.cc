@@ -88,6 +88,22 @@ SymbolPtr OperationBuilder::Emit(const OpPtr &op) const {
   return ret;
 }
 
+SymbolPtr TransparentInput(OperationBuilder *b) {
+  bool build_value = !b->is_building_shape();
+  auto depends = b->symbol_builder_info().GetDepends(b->prim(), b->input_num(), build_value);
+  // check only one depend status in the list.
+  auto iter1 = std::find_if(depends.begin(), depends.end(), [](DependOn d) { return d != DependOn::kNone; });
+  if (iter1 == depends.end()) {
+    return nullptr;
+  }
+  auto iter2 = std::find_if(iter1 + 1, depends.end(), [](DependOn d) { return d != DependOn::kNone; });
+  if (iter2 != depends.end()) {
+    return nullptr;
+  }
+  size_t idx = iter1 - depends.begin();
+  return (*iter1 == DependOn::kShape) ? b->GetInputShape(idx) : b->GetInputValue(idx);
+}
+
 const OperationBuilderInfo *OperationBuilderInfoRegistry::GetBuildInfo(const std::string &name) {
   const auto &builders = OperationBuilderInfoRegistry::Instance().builders_;
   auto iter = builders.find(name);
@@ -100,6 +116,32 @@ OperationBuilderPtr OperationBuilderInfoRegistry::GetBuilder(const std::string &
     return nullptr;
   }
   return std::make_unique<OperationBuilder>(e, *build_info);
+}
+
+std::vector<DependOn> GetShapeDepends(const PrimitivePtr &prim, size_t input_num) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto build_info = OperationBuilderInfoRegistry::GetBuildInfo(prim->name());
+  if (build_info == nullptr) {
+    return std::vector<DependOn>();
+  }
+  auto ret = build_info->GetDepends(prim, input_num, false);
+  if (!ret.empty()) {
+    ret.resize(input_num, DependOn::kNone);
+  }
+  return ret;
+}
+
+std::vector<DependOn> GetValueDepends(const PrimitivePtr &prim, size_t input_num) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto build_info = OperationBuilderInfoRegistry::GetBuildInfo(prim->name());
+  if (build_info == nullptr) {
+    return std::vector<DependOn>();
+  }
+  auto ret = build_info->GetDepends(prim, input_num, true);
+  if (!ret.empty()) {
+    ret.resize(input_num, DependOn::kNone);
+  }
+  return ret;
 }
 }  // namespace symshape
 }  // namespace mindspore

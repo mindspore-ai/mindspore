@@ -63,14 +63,14 @@ class MS_CORE_API TupleGetItemValueOp : public InferValueOp {
 
 REG_SYMBOL_OP_BUILDER("TupleGetItem")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<TupleGetItemShapeOp>)
+  .SetShapeFuncWith<TupleGetItemShapeOp>()
   .SetValueDepend({DependOn::kValue, DependOn::kValue})
-  .SetValueFunc(DefaultBuilder<TupleGetItemValueOp>);
+  .SetValueFuncWith<TupleGetItemValueOp>();
 REG_SYMBOL_OP_BUILDER("RealTupleGetItem")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<TupleGetItemShapeOp>)
+  .SetShapeFuncWith<TupleGetItemShapeOp>()
   .SetValueDepend({DependOn::kValue, DependOn::kValue})
-  .SetValueFunc(DefaultBuilder<TupleGetItemValueOp>);
+  .SetValueFuncWith<TupleGetItemValueOp>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

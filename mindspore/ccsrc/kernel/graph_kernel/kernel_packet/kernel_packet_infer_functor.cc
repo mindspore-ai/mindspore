@@ -39,7 +39,7 @@ void KernelPacketInfer::SaveSymbolicValue() {
     auto abs = inner_inputs_abstract_[i];
     auto symbolic_value = abs->GetSymbolicValue();
     MS_EXCEPTION_IF_NULL(symbolic_value);
-    kernel_mod_ptr_->host_value_cache_[i] = symbolic_value->ToValue();
+    kernel_mod_ptr_->host_value_cache_[i] = symbolic_value->ToValueOf(abs->GetType());
   }
 }
 }  // namespace mindspore::kernel

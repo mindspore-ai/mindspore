@@ -90,6 +90,9 @@ AnfNodePtr CreateRealMakeTupleByMakeTuple(const FuncGraphPtr &func_graph, const 
 AnfNodePtr CreateRealMakeTupleByTupleUnfoldInput(const FuncGraphPtr &func_graph,
                                                  const AnfNodePtr &node_with_tuple_unfold_output);
 
+// Backoff ops which is inserted in this pass.
+bool IsBackOffOp(const CNodePtr &cnode);
+
 // Set kernel info validation flag according to white list.
 void SetBackOffFlag(const KernelBuildInfoPtr &build_info, const CNodePtr &cnode);
 

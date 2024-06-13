@@ -37,7 +37,7 @@ class MS_CORE_API CTCLoss : public InferShapeOp {
   }
 };
 
-REG_SYMBOL_OP_BUILDER("CTCLoss").SetShapeDepend({DependOn::kShape}).SetShapeFunc(DefaultBuilder<CTCLoss>);
+REG_SYMBOL_OP_BUILDER("CTCLoss").SetShapeDepend({DependOn::kShape}).SetShapeFuncWith<CTCLoss>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

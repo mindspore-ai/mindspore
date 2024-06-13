@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_SYMBOL_ENGINE_KERNEL_PACKET_ENGINE_H_
-#define MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_SYMBOL_ENGINE_KERNEL_PACKET_ENGINE_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_KERNEL_PACKET_KERNEL_PACKET_ENGINE_H_
+#define MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_KERNEL_PACKET_KERNEL_PACKET_ENGINE_H_
 
 #include <string>
 #include <memory>
@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace graphkernel {
-namespace symshape {
+namespace packet {
 using mindspore::symshape::SymbolEngineImpl;
 
 /// \brief SymbolEngine for kernel packet graph.
@@ -33,10 +33,13 @@ class KernelPacketEngine : public SymbolEngineImpl {
   MS_DECLARE_PARENT(KernelPacketEngine, SymbolEngineImpl)
 
   std::string ToString() const override { return "KernelPacketEngine_" + name_; }
-  static std::shared_ptr<symshape::KernelPacketEngine> Build(const FuncGraphPtr &func_graph);
+  static std::shared_ptr<KernelPacketEngine> Build(const FuncGraphPtr &func_graph);
+
+ protected:
+  void SetBaseNodeDepend(const CNodePtr &basenode);
 };
-}  // namespace symshape
-using KernelPacketEnginePtr = std::shared_ptr<symshape::KernelPacketEngine>;
+}  // namespace packet
+using KernelPacketEnginePtr = std::shared_ptr<packet::KernelPacketEngine>;
 }  // namespace graphkernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_SYMBOL_ENGINE_KERNEL_PACKET_ENGINE_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_KERNEL_PACKET_KERNEL_PACKET_ENGINE_H_

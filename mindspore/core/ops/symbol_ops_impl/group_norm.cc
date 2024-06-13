@@ -40,9 +40,7 @@ SymbolPtr GroupNorm::Eval() {
   return GenList({x, out_shape, out_shape});
 }
 
-REG_SYMBOL_OP_BUILDER("GroupNorm")
-  .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<GroupNorm>);
+REG_SYMBOL_OP_BUILDER("GroupNorm").SetShapeDepend({DependOn::kShape, DependOn::kValue}).SetShapeFuncWith<GroupNorm>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

@@ -21,11 +21,11 @@
 namespace mindspore {
 namespace symshape {
 namespace ops {
-class MS_CORE_API ScalarMul : public ScalarOp {
+class MS_CORE_API ScalarMul : public ScalarIntOp {
  public:
-  using ScalarOp::ScalarOp;
-  ScalarMul(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarOp({lhs, rhs}) { support_commutative_law_ = true; }
-  MS_DECLARE_PARENT(ScalarMul, ScalarOp)
+  using ScalarIntOp::ScalarIntOp;
+  ScalarMul(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarIntOp({lhs, rhs}) { support_commutative_law_ = true; }
+  MS_DECLARE_PARENT(ScalarMul, ScalarIntOp)
 
  protected:
   SymbolPtr Eval() override;

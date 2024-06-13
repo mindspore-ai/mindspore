@@ -79,6 +79,7 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
   void PreBuild();
   void PreBuildQueryDependStatus(const AnfNodePtrList &cnodes);
   void PreBuildSpecialNode(const CNodePtr &cnode);
+  void SetInputDependStatus(const CNodePtr &cnode, bool current_depend_value);
 
   // build symbol engine
   void BuildImpl();

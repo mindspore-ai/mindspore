@@ -15,6 +15,7 @@
  */
 #include "mindspore/core/ops/symbol_ops_impl/make_tuple.h"
 #include <utility>
+#include "mindspore/core/ops/symbol_ops_impl/common.h"
 
 namespace mindspore {
 namespace symshape {
@@ -33,10 +34,26 @@ SymbolPtr MakeTupleBuilder(OperationBuilder *b) {
   return ListSymbol::Make(std::move(result));
 }
 
-REG_SYMBOL_OP_BUILDER("MakeTuple").SetShapeFunc(MakeTupleBuilder).SetValueFunc(MakeTupleBuilder);
-REG_SYMBOL_OP_BUILDER("_VirtualDataset").SetShapeFunc(MakeTupleBuilder).SetValueFunc(MakeTupleBuilder);
-REG_SYMBOL_OP_BUILDER("RealMakeTuple").SetShapeFunc(MakeTupleBuilder).SetValueFunc(MakeTupleBuilder);
-REG_SYMBOL_OP_BUILDER("make_list").SetShapeFunc(MakeTupleBuilder).SetValueFunc(MakeTupleBuilder);
+REG_SYMBOL_OP_BUILDER("MakeTuple")
+  .SetShapeDependN<DependOn::kShape>()
+  .SetShapeFunc(MakeTupleBuilder)
+  .SetValueDependN<DependOn::kValue>()
+  .SetValueFunc(MakeTupleBuilder);
+REG_SYMBOL_OP_BUILDER("_VirtualDataset")
+  .SetShapeDependN<DependOn::kShape>()
+  .SetShapeFunc(MakeTupleBuilder)
+  .SetValueDependN<DependOn::kValue>()
+  .SetValueFunc(MakeTupleBuilder);
+REG_SYMBOL_OP_BUILDER("RealMakeTuple")
+  .SetShapeDependN<DependOn::kShape>()
+  .SetShapeFunc(MakeTupleBuilder)
+  .SetValueDependN<DependOn::kValue>()
+  .SetValueFunc(MakeTupleBuilder);
+REG_SYMBOL_OP_BUILDER("make_list")
+  .SetShapeDependN<DependOn::kShape>()
+  .SetShapeFunc(MakeTupleBuilder)
+  .SetValueDependN<DependOn::kValue>()
+  .SetValueFunc(MakeTupleBuilder);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

@@ -193,9 +193,7 @@ void Reshape::EvalOnRun() {
   output_as<ListSymbol>()->UpdateList(std::move(result));
 }
 
-REG_SYMBOL_OP_BUILDER("Reshape")
-  .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<Reshape>);
+REG_SYMBOL_OP_BUILDER("Reshape").SetShapeDepend({DependOn::kShape, DependOn::kValue}).SetShapeFuncWith<Reshape>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

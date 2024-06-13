@@ -62,7 +62,8 @@ SymbolPtr ExpandDims::Eval() {
 
 REG_SYMBOL_OP_BUILDER("ExpandDims")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<ExpandDims>)
+  .SetShapeFuncWith<ExpandDims>()
+  .SetValueDepend({DependOn::kValue})
   .SetValueFunc([](OperationBuilder *b) -> SymbolPtr {
     auto v = b->GetInputValue(kIndex0);
     // only support int to intlist for shape calculation

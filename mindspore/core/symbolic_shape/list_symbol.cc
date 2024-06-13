@@ -77,6 +77,27 @@ ValuePtr ListSymbol::ToValue() const {
   return std::make_shared<ValueTuple>(values);
 }
 
+ValuePtr ListSymbol::ToValueOf(const TypePtr &type) const {
+  if (!AllHaveData()) {
+    return kValueAny;
+  }
+  ValuePtrList values;
+  values.reserve(symbols_.size());
+  TypePtr inner_type = type;
+  if (type->isa<Tuple>()) {
+    auto tuple = type->cast_ptr<Tuple>();
+    if (tuple->dynamic_len()) {
+      inner_type = tuple->dynamic_element_type();
+    } else if (!tuple->elements().empty()) {
+      // element type in tuple is all the same.
+      inner_type = tuple->elements()[0];
+    }
+  }
+  (void)std::transform(symbols_.begin(), symbols_.end(), std::back_inserter(values),
+                       [&inner_type](const SymbolPtr &s) { return s->ToValueOf(inner_type); });
+  return std::make_shared<ValueTuple>(values);
+}
+
 void ListSymbol::UpdateImpl(const SymbolPtr &s) { UpdateList(s->as<ListSymbol>()->symbols()); }
 
 const SymbolPtr &ListSymbol::item(size_t i) const {

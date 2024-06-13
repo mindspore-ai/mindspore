@@ -57,7 +57,7 @@ SymbolPtr Tile::Eval() {
   return GenList(std::move(result));
 }
 
-REG_SYMBOL_OP_BUILDER("Tile").SetShapeDepend({DependOn::kShape, DependOn::kValue}).SetShapeFunc(DefaultBuilder<Tile>);
+REG_SYMBOL_OP_BUILDER("Tile").SetShapeDepend({DependOn::kShape, DependOn::kValue}).SetShapeFuncWith<Tile>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

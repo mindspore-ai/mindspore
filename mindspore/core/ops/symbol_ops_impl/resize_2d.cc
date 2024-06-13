@@ -63,19 +63,19 @@ SymbolPtr Resize2D::Eval() {
 
 REG_SYMBOL_OP_BUILDER("ResizeBicubic")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<Resize2D>);
+  .SetShapeFuncWith<Resize2D>();
 REG_SYMBOL_OP_BUILDER("ResizeBilinearV2")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<Resize2D>);
+  .SetShapeFuncWith<Resize2D>();
 REG_SYMBOL_OP_BUILDER("ResizeNearestNeighborV2Grad")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<Resize2D>);
+  .SetShapeFuncWith<Resize2D>();
 REG_SYMBOL_OP_BUILDER("ResizeNearestNeighborV2")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<Resize2D>);
+  .SetShapeFuncWith<Resize2D>();
 REG_SYMBOL_OP_BUILDER("ResizeNearestNeighbor")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<Resize2D>);
+  .SetShapeFuncWith<Resize2D>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

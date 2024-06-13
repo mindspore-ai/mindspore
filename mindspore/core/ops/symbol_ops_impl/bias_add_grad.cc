@@ -46,7 +46,7 @@ REG_SYMBOL_OP_BUILDER("BiasAddGrad")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue})
   .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
     auto x = b->GetInputShape(kIndex0);
-    auto fmt = b->GetInputOrAttr(kIndex1, "format");  // todo, change to DefaultBuilder
+    auto fmt = b->GetInputOrAttr(kIndex1, "format");
     if (fmt == nullptr) {
       fmt = IntSymbol::Make(0);
     } else if (fmt->is<StrSymbol>()) {

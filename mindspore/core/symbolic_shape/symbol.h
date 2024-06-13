@@ -96,6 +96,7 @@ class MS_CORE_API Symbol : public Base {
 
   /// \brief Convert the symbol to a ValuePtr
   virtual ValuePtr ToValue() const { return kValueAny; }
+  virtual ValuePtr ToValueOf(const TypePtr &) const { return ToValue(); }
 
   /// \brief Get the operation that built this symbol.
   inline OpPtr operation() const { return operation_.lock(); }
@@ -187,6 +188,9 @@ class MS_CORE_API DynamicSymbol : public Symbol {
   std::string ToString() const override { return symbol_ == nullptr ? "DYN-" + sid() : symbol_->ToString(); }
   std::string ToRawString() const override { return symbol_ == nullptr ? sid() : symbol_->ToRawString(); }
   ValuePtr ToValue() const override { return symbol_ == nullptr ? Symbol::ToValue() : symbol_->ToValue(); }
+  ValuePtr ToValueOf(const TypePtr &type) const override {
+    return symbol_ == nullptr ? Symbol::ToValue() : symbol_->ToValueOf(type);
+  }
   const SymbolPtr &symbol() const { return symbol_; }
 
  protected:
@@ -224,8 +228,9 @@ class MS_CORE_API ScalarSymbol : public Symbol {
 };
 using ScalarSymbolPtr = std::shared_ptr<ScalarSymbol>;
 
-class MS_CORE_API BoolSymbol : public ScalarSymbol {
+class MS_CORE_API BoolSymbol final : public ScalarSymbol {
  public:
+  using elem_type = bool;
   using ScalarSymbol::ScalarSymbol;
   ~BoolSymbol() override = default;
   MS_DECLARE_PARENT(BoolSymbol, ScalarSymbol)
@@ -257,12 +262,13 @@ class MS_CORE_API BoolSymbol : public ScalarSymbol {
 };
 using BoolSymbolPtr = std::shared_ptr<BoolSymbol>;
 
-class MS_CORE_API FloatSymbol : public ScalarSymbol {
+class MS_CORE_API FloatSymbol final : public ScalarSymbol {
  public:
+  using elem_type = double;
   using ScalarSymbol::ScalarSymbol;
   ~FloatSymbol() override = default;
   MS_DECLARE_PARENT(FloatSymbol, ScalarSymbol)
-  static inline std::shared_ptr<FloatSymbol> Make(double val, const OpPtr &op = nullptr) {
+  static inline std::shared_ptr<FloatSymbol> Make(elem_type val, const OpPtr &op = nullptr) {
     auto s = std::make_shared<FloatSymbol>(true, true, op);
     s->value_ = val;
     return s;
@@ -270,27 +276,28 @@ class MS_CORE_API FloatSymbol : public ScalarSymbol {
   static inline std::shared_ptr<FloatSymbol> Make(const OpPtr &op = nullptr) {
     return std::make_shared<FloatSymbol>(false, false, op);
   }
-  inline void SetValue(double v) {
+  inline void SetValue(elem_type v) {
     MS_EXCEPTION_IF_CHECK_FAIL(!is_const_, ToString() + " is const symbol and cannot be updated.");
     has_data_ = true;
     value_ = v;
   }
-  inline double value() const {
+  inline elem_type value() const {
     MS_EXCEPTION_IF_CHECK_FAIL(has_data_, ToString() + "has no value.");
     return value_;
   }
   std::string ToRawString() const override;
   ValuePtr ToValue() const override;
+  ValuePtr ToValueOf(const TypePtr &type) const override;
 
  protected:
   void SetValueByScalar(const Symbol *s) override { value_ = static_cast<const FloatSymbol *>(s)->value_; }
   bool CheckEqualValue(const Symbol *s) const override { return value_ == static_cast<const FloatSymbol *>(s)->value_; }
 
-  double value_{0};
+  elem_type value_{0};
 };
 using FloatSymbolPtr = std::shared_ptr<FloatSymbol>;
 
-class MS_CORE_API StrSymbol : public ScalarSymbol {
+class MS_CORE_API StrSymbol final : public ScalarSymbol {
  public:
   using ScalarSymbol::ScalarSymbol;
   ~StrSymbol() override = default;
@@ -323,7 +330,7 @@ class MS_CORE_API StrSymbol : public ScalarSymbol {
 };
 using StrSymbolPtr = std::shared_ptr<StrSymbol>;
 
-class MS_CORE_API ListSymbol : public Symbol {
+class MS_CORE_API ListSymbol final : public Symbol {
  public:
   using SPtr = std::shared_ptr<ListSymbol>;
   ListSymbol(const SymbolPtrList &slist, const OpPtr &op) : Symbol(op), symbols_(slist) {}
@@ -348,6 +355,7 @@ class MS_CORE_API ListSymbol : public Symbol {
   std::string ToString() const override;
   std::string ToRawString() const override;
   ValuePtr ToValue() const override;
+  ValuePtr ToValueOf(const TypePtr &type) const override;
 
   bool HasData() const override { return has_data_; }
   bool AllHaveData() const {

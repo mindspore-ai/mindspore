@@ -83,24 +83,24 @@ SymbolPtrList ElemwiseBinop::Process(const SymbolPtrList &lhs, const SymbolPtrLi
   return result;
 }
 
-REG_SYMBOL_OP_BUILDER("Add").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("AddExt").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("Div").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("Equal").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("Greater").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("GreaterEqual").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("Less").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("LessEqual").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("LogicalAnd").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("LogicalOr").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("Maximum").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("Minimum").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("Mul").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("NotEqual").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("Pow").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("RealDiv").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("Sub").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
-REG_SYMBOL_OP_BUILDER("SubExt").SetShapeFunc(DefaultBuilder<ElemwiseBinop>);
+REG_SYMBOL_OP_BUILDER("Add").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("AddExt").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("Div").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("Equal").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("Greater").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("GreaterEqual").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("Less").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("LessEqual").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("LogicalAnd").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("LogicalOr").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("Maximum").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("Minimum").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("Mul").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("NotEqual").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("Pow").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("RealDiv").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("Sub").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+REG_SYMBOL_OP_BUILDER("SubExt").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

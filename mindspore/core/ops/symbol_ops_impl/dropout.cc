@@ -18,7 +18,7 @@
 namespace mindspore {
 namespace symshape {
 namespace ops {
-REG_SYMBOL_OP_BUILDER("Dropout").SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
+REG_SYMBOL_OP_BUILDER("Dropout").SetShapeDepend({DependOn::kShape}).SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
   auto s = b->GetInputShape(kIndex0);
   return ListSymbol::Make({s, s});
 });

@@ -265,6 +265,7 @@ REG_SYMBOL_OP_BUILDER("StridedSlice")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue, DependOn::kValue, DependOn::kValue,
                    DependOn::kValue, DependOn::kValue, DependOn::kValue, DependOn::kValue})
   .SetShapeFunc(StridedSliceShapeBuilder)
+  .SetValueDependN<DependOn::kValue, 9>()
   .SetValueFunc(StridedSliceValueBuilder);
 }  // namespace ops
 }  // namespace symshape

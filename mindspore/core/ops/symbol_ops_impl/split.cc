@@ -46,7 +46,7 @@ SymbolPtr Split::Eval() {
 
 REG_SYMBOL_OP_BUILDER("Split")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<Split>);
+  .SetShapeFuncWith<Split>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

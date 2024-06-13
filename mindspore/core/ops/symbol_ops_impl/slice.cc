@@ -74,7 +74,7 @@ SymbolPtr Slice::Eval() {
 
 REG_SYMBOL_OP_BUILDER("Slice")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<Slice>);
+  .SetShapeFuncWith<Slice>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

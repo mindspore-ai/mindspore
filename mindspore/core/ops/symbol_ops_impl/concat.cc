@@ -125,6 +125,7 @@ REG_SYMBOL_OP_BUILDER("Concat")
     return depends;
   })
   .SetShapeFunc(ConcatShape)
+  .SetValueDependN<DependOn::kValue>()
   .SetValueFunc(ConcatValue);
 }  // namespace ops
 }  // namespace symshape
