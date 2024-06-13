@@ -217,6 +217,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/common/pynative/*.cc"
         "../../../mindspore/ccsrc/common/symbol_engine/*.cc"
         "../../../mindspore/ccsrc/common/np_dtype/*.cc"
+        "../../../mindspore/ccsrc/common/amp/*.cc"
         "../../../mindspore/ccsrc/backend/common/session/anf_runtime_algorithm.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_session.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_auto_monad.cc"

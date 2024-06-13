@@ -56,6 +56,7 @@
 
 #include "pipeline/jit/pi/external.h"
 #include "include/common/np_dtype/np_dtypes.h"
+#include "include/common/amp/amp.h"
 
 namespace py = pybind11;
 using GraphExecutorPy = mindspore::pipeline::GraphExecutorPy;
@@ -164,6 +165,7 @@ void RegModule(py::module *m) {
   RegSecurity(m);
   RegForkUtils(m);
   RegNumpyTypes(m);
+  RegAmpModule(m);
   mindspore::hal::RegStream(m);
   mindspore::hal::RegEvent(m);
   mindspore::hal::RegMemory(m);

@@ -407,6 +407,7 @@ set(COMMON_SUB_COMP
         common/debug
         common/expander
         common/symbol_engine
+        common/amp
         )
 
 foreach(_comp ${COMMON_SUB_COMP})
