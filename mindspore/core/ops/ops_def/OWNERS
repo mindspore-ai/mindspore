@@ -3,6 +3,7 @@ approvers:
 - zhaizhiqiang
 - chenfei52
 - chujinjin
+- changzherui
 
 options:
     no_parent_owners: true
