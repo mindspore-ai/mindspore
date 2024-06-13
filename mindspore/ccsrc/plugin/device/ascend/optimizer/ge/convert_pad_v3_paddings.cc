@@ -191,6 +191,12 @@ const AnfNodePtr ConvertBasePaddings::CreateDynPaddingsPass(const FuncGraphPtr &
   MS_EXCEPTION_IF_NULL(paddings);
   auto paddings_abstract = paddings->abstract();
   MS_EXCEPTION_IF_NULL(paddings_abstract);
+  auto paddings_type = paddings_abstract->GetType();
+  MS_EXCEPTION_IF_NULL(paddings_type);
+  if (!paddings_type->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "For " << prim_name
+                            << ", the input `paddings` is required to be Tensor when it is dynamic.";
+  }
   auto paddings_shape_ptr = paddings_abstract->GetShape();
   MS_EXCEPTION_IF_NULL(paddings_shape_ptr);
   auto paddings_shape = paddings_shape_ptr->GetShapeVector();
