@@ -90,6 +90,7 @@ mindspore
 
     mindspore.async_ckpt_thread_status
     mindspore.build_searched_strategy
+    mindspore.check_checkpoint
     mindspore.convert_model
     mindspore.export
     mindspore.load
