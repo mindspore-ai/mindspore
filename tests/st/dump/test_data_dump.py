@@ -111,7 +111,7 @@ def test_cpu_e2e_dump_with_hccl_set():
     del os.environ['RANK_ID']
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @security_off_wrap
@@ -288,7 +288,7 @@ def test_gpu_e2e_statistic_dump():
     run_saved_data_dump_test('test_gpu_e2e_dump', 'statistic')
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @security_off_wrap
@@ -302,7 +302,7 @@ def test_gpu_e2e_tensor_dump():
     run_saved_data_dump_test('test_gpu_e2e_dump', 'tensor')
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @security_off_wrap

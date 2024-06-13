@@ -76,6 +76,7 @@
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/eltwise_grad_cpu_kernel.cc"                        "compareBoolExpressionWithInt"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/arithmetic_self_cpu_kernel.cc"                        "duplicateExpression"
 "mindspore/mindspore/ccsrc/common/np_dtype/np_dtypes.cc"                                              "knownConditionTrueFalse"
+"mindspore/mindspore/ccsrc/runtime/graph_scheduler/actor/debug_actor.cc"                              "unreadVariable"
 
 # MindData
 "mindspore/mindspore/ccsrc/minddata/dataset/engine/dataset_iterator.cc"                               "useStlAlgorithm"

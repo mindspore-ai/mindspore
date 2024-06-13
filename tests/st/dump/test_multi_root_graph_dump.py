@@ -107,10 +107,10 @@ def run_multi_root_graph_dump(device, dump_mode, test_name):
             # In graph history dir, there are 2 files for each graph (ms_execution_order and ms_global_execution_order).
             assert len(os.listdir(dump_file_path)) == 4
             assert len(os.listdir(execution_order_path)) == 8
-            check_graph_structure(dump_file_path, execution_order_path, '0', ['0', '2', '4'])
-            check_graph_structure(dump_file_path, execution_order_path, '1', ['1', '3', '5'])
-            check_graph_structure(dump_file_path, execution_order_path, '2', ['1', '3'])
-            check_graph_structure(dump_file_path, execution_order_path, '3', ['5'])
+            check_graph_structure(dump_file_path, execution_order_path, '0', ['0', '1', '2'])
+            check_graph_structure(dump_file_path, execution_order_path, '1', ['1', '2', '3'])
+            check_graph_structure(dump_file_path, execution_order_path, '2', ['1', '2'])
+            check_graph_structure(dump_file_path, execution_order_path, '3', ['3'])
         else:
             # In Ascend, we have 2 root graphs folders under rank_0 dir.
             # In graph history dir, there are 4 ms_execution_order files and 2 ms_global_execution_order files.

@@ -287,7 +287,7 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
  * Description: Dump parameters and constants and update dump iter for CPU. Call PostExecuteGraph Debugger for GPU and
  * Ascend and update step number of online debugger GPU.
  */
-void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *, int total_running_count_) {
+void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const, const AID *, int total_running_count_) {
   MS_LOG(INFO) << "Debug on step end. total_running_count is: " << total_running_count_;
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -301,12 +301,7 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
     }
     dump_flag = false;
   }
-  auto is_kbk = context->IsKByKExecutorMode();
   device_ctx_->device_res_manager_->SyncAllStreams();
-  if (backend == "ge" && !is_kbk) {
-    return;
-  }
-  MS_EXCEPTION_IF_NULL(op_context);
   std::lock_guard<std::mutex> locker(debug_mutex_);
 
 #ifndef ENABLE_SECURITY
@@ -319,6 +314,10 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
 #ifdef ENABLE_DEBUGGER
   auto debugger = Debugger::GetInstance();
   if (debugger != nullptr) {
+    if (backend == "ge" && !debugger->GetAscendKernelByKernelFlag()) {
+      MS_LOG(INFO) << "Not kernel mode, skip post actions.";
+      return;
+    }
     // Reset exec_order for the next step
     exec_order_ = 0;
     debugger->Debugger::PostExecuteGraphDebugger();
