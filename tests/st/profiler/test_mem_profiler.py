@@ -43,16 +43,18 @@ y = np.random.randn(1, 3, 3, 4).astype(np.float32)
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
-def test_ascend_mem_profiling():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_ascend_mem_profiling(mode):
     """
     Feature: mem profiler support ascend pynative mode.
     Description: profiling the memory of pynative.
     Expectation: No exception.
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=mode, device_target="Ascend")
     with tempfile.TemporaryDirectory() as tmpdir:
         profiler = Profiler(output_path=tmpdir, profile_memory=True)
         add = Net()
         add(Tensor(x), Tensor(y))
-        profiler.stop()
+        profiler.analyse()
         assert len(glob.glob(f"{tmpdir}/profiler*/operator_memory*")) == 1
+        assert len(glob.glob(f"{tmpdir}/profiler*/memory_block.csv")) == 1

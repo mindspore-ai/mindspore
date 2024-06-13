@@ -68,24 +68,20 @@ AllocatorType GetAllocatorType(MemType mem_type) {
 }
 }  // namespace
 
-void MemoryTrackerEnabled::SetPath() {
+std::pair<std::string, std::string> MemoryTrackerEnabled::GetPath() {
+  std::string block_csv_path;
+  std::string task_csv_path;
+
   auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL) == false) {
-    return;
+  const auto &trace_path = ms_context->get_param<std::string>(MS_CTX_PROF_MEM_OUTPUT_PATH);
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
+    block_csv_path = trace_path + "/rank_" + GetRankID() + "/memory_block.csv";
+    task_csv_path = trace_path + "/rank_" + GetRankID() + "/task.csv";
+  } else {
+    block_csv_path = trace_path + "/memory_block.csv";
+    task_csv_path = trace_path + "/task.csv";
   }
-  if (has_set_path) {
-    return;
-  }
-  auto trace_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_PROF_MEM_OUTPUT_PATH);
-  if (trace_path.empty()) {
-    trace_path = "./";
-  }
-
-  block_csv_path = trace_path + "/rank_" + GetRankID() + "/memory_block.csv";
-  task_csv_path = trace_path + "/rank_" + GetRankID() + "/task.csv";
-
-  has_set_path = true;
+  return std::make_pair(block_csv_path, task_csv_path);
 }
 
 void MemoryTrackerEnabled::AddTask(const std::string &task_name, const std::string &node_name,
@@ -96,7 +92,6 @@ void MemoryTrackerEnabled::AddTask(const std::string &task_name, const std::stri
   }
 
   std::lock_guard lock(mutex_);
-  SetPath();
   time_stamp_++;
   auto task_info = std::make_shared<TaskInfo>();
   MS_EXCEPTION_IF_NULL(task_info);
@@ -246,6 +241,8 @@ void MemoryTrackerEnabled::BindDevicePtr(DeviceAddress *device_address, DeviceMe
     mem_info->mem_block = mem_block_info;
     device_mem_block_map[device_ptr] = mem_block_info;
     mem_block_list_.push_back(mem_block_info);
+    // mem_block need to dump again, after mem_block_list_ changed
+    has_dump = false;
     return;
   }
   auto mem_block_iter = device_mem_block_map.find(device_ptr);
@@ -302,6 +299,8 @@ void MemoryTrackerEnabled::AllocMemBlock(DeviceMemPtr device_addr, size_t size, 
   device_mem_block_map[device_addr] = mem_block;
   real_device_mem_block_map[device_addr] = mem_block;
   mem_block_list_.emplace_back(mem_block);
+  // mem_block need to dump again, after mem_block_list_ changed
+  has_dump = false;
 }
 
 void MemoryTrackerEnabled::FreeMemBlock(DeviceMemPtr device_addr, size_t in_used_size, size_t total_size) {
@@ -494,24 +493,7 @@ void MemoryTrackerEnabled::Dump() {
   }
   has_dump = true;
 
-  if (block_csv_path.empty() || task_csv_path.empty()) {
-    // for single rank
-    auto trace_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_PROF_MEM_OUTPUT_PATH);
-    if (trace_path.empty()) {
-      trace_path = "./";
-    }
-
-    block_csv_path = trace_path + "/memory_block.csv";
-    task_csv_path = trace_path + "/task.csv";
-
-    has_set_path = true;
-  }
-
-  if (!has_set_path) {
-    MS_LOG(ERROR) << "MemoryTracker Dump failed, path not set";
-    return;
-  }
-
+  auto [block_csv_path, task_csv_path] = GetPath();
   Common::CreatePrefixPath(block_csv_path);
   Common::CreatePrefixPath(task_csv_path);
 
