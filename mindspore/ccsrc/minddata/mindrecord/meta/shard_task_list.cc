@@ -19,8 +19,8 @@
 
 namespace mindspore {
 namespace mindrecord {
-// when mindrecord is slow load mode, the shuffle size is 1000,000
-const int64_t ShuffleSize = 1000000;
+// the shuffle size when mindrecord is slow load mode
+const int64_t ShuffleSize = 50000000;
 
 GeneratorIds::GeneratorIds() : partitioned_shard_sample_count_(), partition_index_(0), partition_sample_index_(0) {}
 
