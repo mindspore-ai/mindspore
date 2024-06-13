@@ -216,7 +216,7 @@ class TestProfiler:
         assert os.path.isfile(op_range_file)
 
     def _train_with_profiler(self, device_target, profile_memory, context_mode=context.GRAPH_MODE,
-                             only_profile_host=False, profile_framework='all', host_stack=False):
+                             only_profile_host=False, profile_framework='all', host_stack=True):
         context.set_context(mode=context_mode, device_target=device_target)
         ds_train = create_dataset(os.path.join(self.mnist_path, "train"))
         if ds_train.get_dataset_size() == 0:
