@@ -2,11 +2,16 @@ grouped_matmul:
   description: |
     Group calculation matmul.
 
+    ** Non-Quant: **
+
     .. math::
-        ** Non-Quant: **
             y_i = x_i\times weight_i + bias_i
-        ** Antiquant-Quant: **
+
+    ** Antiquant-Quant: **
+
+    .. math::
             y_i = x_i\times (weight_i + antiquant\_offset_i) * antiquant\_scale_i + bias_i
+
     Args:
         split_item (int): Splitting input mode. Only support 0 and 3. 0 represents multiple Tensors, and 3 represents a single Tensor.
         group_type (int): The axis to be split. Only support -1 and 0. If the matrix is multiplied by A[m,k]xB[k,n]=C[m,n].
