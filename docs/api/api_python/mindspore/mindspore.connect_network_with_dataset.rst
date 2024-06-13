@@ -3,14 +3,14 @@ mindspore.connect_network_with_dataset
 
 .. py:function:: mindspore.connect_network_with_dataset(network, dataset_helper)
 
-    ½« `network` Óë `dataset_helper` ÖĞµÄÊı¾İ¼¯Á¬½Ó£¬Ö»Ö§³Ö `ÏÂ³ÁÄ£Ê½ <https://mindspore.cn/tutorials/experts/zh-CN/master/optimize/execution_opt.html>`_£¬(dataset_sink_mode=True)¡£
+    å°† `network` ä¸ `dataset_helper` ä¸­çš„æ•°æ®é›†è¿æ¥ï¼Œåªæ”¯æŒ `ä¸‹æ²‰æ¨¡å¼ <https://mindspore.cn/tutorials/experts/zh-CN/master/optimize/execution_opt.html>`_ï¼Œ(dataset_sink_mode=True)ã€‚
 
-    ²ÎÊı£º
-        - **network** (Cell) - Êı¾İ¼¯µÄÑµÁ·ÍøÂç¡£
-        - **dataset_helper** (DatasetHelper) - Ò»¸ö´¦ÀíMindDataÊı¾İ¼¯µÄÀà£¬Ìá¹©ÁËÊı¾İ¼¯µÄÀàĞÍ¡¢ĞÎ×´£¨shape£©ºÍ¶ÓÁĞÃû³Æ¡£
+    å‚æ•°ï¼š
+        - **network** (Cell) - æ•°æ®é›†çš„è®­ç»ƒç½‘ç»œã€‚
+        - **dataset_helper** (DatasetHelper) - ä¸€ä¸ªå¤„ç†MindDataæ•°æ®é›†çš„ç±»ï¼Œæä¾›äº†æ•°æ®é›†çš„ç±»å‹ã€å½¢çŠ¶ï¼ˆshapeï¼‰å’Œé˜Ÿåˆ—åç§°ã€‚
 
-    ·µ»Ø£º
-        Cell£¬Ò»¸öĞÂÍøÂç£¬°üº¬Êı¾İ¼¯µÄÀàĞÍ¡¢ĞÎ×´£¨shape£©ºÍ¶ÓÁĞÃû³ÆĞÅÏ¢¡£
+    è¿”å›ï¼š
+        Cellï¼Œä¸€ä¸ªæ–°ç½‘ç»œï¼ŒåŒ…å«æ•°æ®é›†çš„ç±»å‹ã€å½¢çŠ¶ï¼ˆshapeï¼‰å’Œé˜Ÿåˆ—åç§°ä¿¡æ¯ã€‚
 
-    Òì³££º
-        - **RuntimeError** - Èç¹û¸Ã½Ó¿ÚÔÚ·ÇÊı¾İÏÂ³ÁÄ£Ê½µ÷ÓÃ¡£
+    å¼‚å¸¸ï¼š
+        - **RuntimeError** - å¦‚æœè¯¥æ¥å£åœ¨éæ•°æ®ä¸‹æ²‰æ¨¡å¼è°ƒç”¨ã€‚

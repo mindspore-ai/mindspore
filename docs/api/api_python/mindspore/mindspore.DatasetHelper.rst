@@ -3,35 +3,35 @@ mindspore.DatasetHelper
 
 .. py:class:: mindspore.DatasetHelper(dataset, dataset_sink_mode=True, sink_size=-1, epoch_num=1)
 
-    DatasetHelperÊÇÒ»¸ö´¦ÀíMindDataÊı¾İ¼¯µÄÀà£¬Ìá¹©Êı¾İ¼¯ĞÅÏ¢¡£
+    DatasetHelperæ˜¯ä¸€ä¸ªå¤„ç†MindDataæ•°æ®é›†çš„ç±»ï¼Œæä¾›æ•°æ®é›†ä¿¡æ¯ã€‚
 
-    ¸ù¾İ²»Í¬µÄÉÏÏÂÎÄ£¬¸Ä±äÊı¾İ¼¯µÄµü´ú£¬ÔÚ²»Í¬µÄÉÏÏÂÎÄÖĞÊ¹ÓÃÏàÍ¬µÄµü´ú¡£
+    æ ¹æ®ä¸åŒçš„ä¸Šä¸‹æ–‡ï¼Œæ”¹å˜æ•°æ®é›†çš„è¿­ä»£ï¼Œåœ¨ä¸åŒçš„ä¸Šä¸‹æ–‡ä¸­ä½¿ç”¨ç›¸åŒçš„è¿­ä»£ã€‚
 
     .. note::
-        DatasetHelperµÄµü´ú½«Ìá¹©Ò»¸öepochµÄÊı¾İ¡£
+        DatasetHelperçš„è¿­ä»£å°†æä¾›ä¸€ä¸ªepochçš„æ•°æ®ã€‚
 
-    ²ÎÊı£º
-        - **dataset** (Dataset) - ÑµÁ·Êı¾İ¼¯µü´úÆ÷¡£Êı¾İ¼¯¿ÉÒÔÓÉÊı¾İ¼¯Éú³ÉÆ÷APIÔÚ `mindspore.dataset` Ä£¿éÖĞÉú³É£¬ÀıÈç :class:`mindspore.dataset.ImageFolderDataset` ¡£
-        - **dataset_sink_mode** (bool) - Èç¹ûÖµÎª ``True`` £¬Ê¹ÓÃ :class:`mindspore.ops.GetNext` ÔÚÉè±¸£¨Device£©ÉÏÍ¨¹ıÊı¾İÍ¨µÀÖĞ»ñÈ¡Êı¾İ£¬·ñÔòÔÚÖ÷»ú£¨Host£©Ö±½Ó±éÀúÊı¾İ¼¯»ñÈ¡Êı¾İ¡£Ä¬ÈÏÖµ£º ``True``¡£
-        - **sink_size** (int) - ¿ØÖÆÃ¿¸öÏÂ³ÁÖĞµÄÊı¾İÁ¿¡£Èç¹û `sink_size` Îª-1£¬ÔòÏÂ³ÁÃ¿¸öepochµÄÍêÕûÊı¾İ¼¯¡£Èç¹û `sink_size` ´óÓÚ0£¬ÔòÏÂ³ÁÃ¿¸öepochµÄ `sink_size` Êı¾İ¡£Ä¬ÈÏÖµ£º ``-1``¡£
-        - **epoch_num** (int) - ¿ØÖÆ´ı·¢ËÍµÄepochÊı¾İÁ¿¡£Ä¬ÈÏÖµ£º ``1``¡£
+    å‚æ•°ï¼š
+        - **dataset** (Dataset) - è®­ç»ƒæ•°æ®é›†è¿­ä»£å™¨ã€‚æ•°æ®é›†å¯ä»¥ç”±æ•°æ®é›†ç”Ÿæˆå™¨APIåœ¨ `mindspore.dataset` æ¨¡å—ä¸­ç”Ÿæˆï¼Œä¾‹å¦‚ :class:`mindspore.dataset.ImageFolderDataset` ã€‚
+        - **dataset_sink_mode** (bool) - å¦‚æœå€¼ä¸º ``True`` ï¼Œä½¿ç”¨ :class:`mindspore.ops.GetNext` åœ¨è®¾å¤‡ï¼ˆDeviceï¼‰ä¸Šé€šè¿‡æ•°æ®é€šé“ä¸­è·å–æ•°æ®ï¼Œå¦åˆ™åœ¨ä¸»æœºï¼ˆHostï¼‰ç›´æ¥éå†æ•°æ®é›†è·å–æ•°æ®ã€‚é»˜è®¤å€¼ï¼š ``True``ã€‚
+        - **sink_size** (int) - æ§åˆ¶æ¯ä¸ªä¸‹æ²‰ä¸­çš„æ•°æ®é‡ã€‚å¦‚æœ `sink_size` ä¸º-1ï¼Œåˆ™ä¸‹æ²‰æ¯ä¸ªepochçš„å®Œæ•´æ•°æ®é›†ã€‚å¦‚æœ `sink_size` å¤§äº0ï¼Œåˆ™ä¸‹æ²‰æ¯ä¸ªepochçš„ `sink_size` æ•°æ®ã€‚é»˜è®¤å€¼ï¼š ``-1``ã€‚
+        - **epoch_num** (int) - æ§åˆ¶å¾…å‘é€çš„epochæ•°æ®é‡ã€‚é»˜è®¤å€¼ï¼š ``1``ã€‚
 
     .. py:method:: continue_send()
-        
-        ÔÚepoch¿ªÊ¼Ê±¼ÌĞøÏòÉè±¸·¢ËÍÊı¾İ¡£
+
+        åœ¨epochå¼€å§‹æ—¶ç»§ç»­å‘è®¾å¤‡å‘é€æ•°æ®ã€‚
 
     .. py:method:: release()
-        
-        ÊÍ·ÅÊı¾İÏÂ³Á×ÊÔ´¡£
+
+        é‡Šæ”¾æ•°æ®ä¸‹æ²‰èµ„æºã€‚
 
     .. py:method:: sink_size()
-        
-        »ñÈ¡Ã¿´Îµü´úµÄ `sink_size` ¡£
+
+        è·å–æ¯æ¬¡è¿­ä»£çš„ `sink_size` ã€‚
 
     .. py:method:: stop_send()
-        
-        Í£Ö¹·¢ËÍÊı¾İÏÂ³ÁÊı¾İ¡£
+
+        åœæ­¢å‘é€æ•°æ®ä¸‹æ²‰æ•°æ®ã€‚
 
     .. py:method:: types_shapes()
-        
-        ´Óµ±Ç°ÅäÖÃÖĞµÄÊı¾İ¼¯»ñÈ¡ÀàĞÍºÍĞÎ×´(shape)¡£
+
+        ä»å½“å‰é…ç½®ä¸­çš„æ•°æ®é›†è·å–ç±»å‹å’Œå½¢çŠ¶(shape)ã€‚
