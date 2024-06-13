@@ -51,6 +51,8 @@ Tensor创建
     :template: classtemplate.rst
 
     mindspore.mint.add
+    mindpsore.mint.div
+    mindspore.mint.divide
     mindspore.mint.ceil
     mindspore.mint.clamp
     mindspore.mint.cos
