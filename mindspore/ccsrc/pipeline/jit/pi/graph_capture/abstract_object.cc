@@ -665,6 +665,9 @@ int AObject::BinaryIs(AObject *l, AObject *r) {
   if (const_a && const_b) {
     return a == b;
   }
+  if (a != nullptr && b != nullptr && PyType_Check(a) && PyType_Check(b)) {
+    return a == b;
+  }
   // a const object and a known object
   if ((const_a && b) || (const_b && a)) {
     return false;
