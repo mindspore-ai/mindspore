@@ -1261,7 +1261,6 @@ void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::
                                 const std::vector<size_t> &p_args) {
   // Get bprop graph of top cell
   auto bprop_graph = GetBpropGraph(grad_attr, w_args, p_args);
-  AsyncClearAutoGradCell(top_cell());
   auto resource = top_cell()->resource();
   MS_EXCEPTION_IF_NULL(resource);
   resource->set_func_graph(bprop_graph);
@@ -1269,6 +1268,8 @@ void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(bprop_graph, true);
   bprop_graph->ResetOwnNodes();
+  // If clear autogradcell before resetownnode, it may corrupt.
+  AsyncClearAutoGradCell(top_cell());
   if (top_cell()->has_control_flow()) {
     (void)opt::EnvironConversion(resource);
   }
