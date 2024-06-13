@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/group_norm.h"
+#include <map>
+#include <string>
+#include <set>
 #include <memory>
 #include "abstract/dshape.h"
 #include "ops/op_name.h"
@@ -21,6 +24,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -99,5 +103,31 @@ TypePtr GroupNormFuncImpl::InferType(const PrimitivePtr &primitive,
   return std::make_shared<Tuple>(types_list);
 }
 
+TypePtrList GroupNormFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->Dtype(), x_tensor->Dtype(), x_tensor->Dtype()};
+}
+
+ShapeArray GroupNormFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &x_shape = x_tensor->shape();
+  const auto &num_groups_value = input_values[kInputIndex1];
+  if (MS_UNLIKELY(IsDynamicRank(x_shape))) {
+    return {x_shape, x_shape, x_shape};
+  }
+  auto num_groups_opt = GetScalarValue<int64_t>(num_groups_value);
+  if (MS_UNLIKELY(!num_groups_opt.has_value())) {
+    ShapeVector dynamic_rank_shape{abstract::TensorShape::kShapeRankAny};
+    return {dynamic_rank_shape, dynamic_rank_shape, dynamic_rank_shape};
+  }
+  auto N = x_shape[0];
+  ShapeVector out_shape{N, num_groups_opt.value()};
+
+  return {x_shape, out_shape, out_shape};
+}
+
+REGISTER_SIMPLE_INFER(kNameGroupNorm, GroupNormFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
