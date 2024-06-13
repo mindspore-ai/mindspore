@@ -1,7 +1,7 @@
-mindspore.nn.get_rng_state
+mindspore.get_rng_state
 ==========================
 
-.. py:function:: mindspore.nn.get_rng_state()
+.. py:function:: mindspore.get_rng_state()
 
     获取默认生成器状态。
 

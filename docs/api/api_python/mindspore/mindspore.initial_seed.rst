@@ -1,7 +1,7 @@
-mindspore.nn.initial_seed
+mindspore.initial_seed
 =========================
 
-.. py:function:: mindspore.nn.initial_seed()
+.. py:function:: mindspore.initial_seed()
 
     返回默认生成器的初始种子。
 
