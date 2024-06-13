@@ -1851,7 +1851,7 @@ Dimensions ModifyStrategyIfSqueezeOutgoing(const std::vector<std::shared_ptr<Ope
   size_t s_index = 0;
   size_t axis_list_index = 0;
   for (size_t i = 0; i < strategy.size() + axis_list.size(); i++) {
-    if (i == LongToSize(axis_list[axis_list_index])) {
+    if (axis_list[axis_list_index] > 0 && i == LongToSize(axis_list[axis_list_index])) {
       s_Squeeze.push_back(1);
       axis_list_index++;
     } else {
