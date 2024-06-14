@@ -66,12 +66,13 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   void set_enable_grad(bool enable_grad) const;
   void set_py_exe_path(const py::object &py_exe_path) const;
   void set_kernel_build_server_dir(const py::object &kernel_build_server_dir) const;
-  void SetHookChanged(const py::object &cell) const;
+  void SetHookCellId(const py::object &cell) const;
   void NewGraph(const py::object &obj, const py::args &args) const;
   void EndGraph(const py::object &obj, const py::object &out, const py::args &args) const;
   py::object RunGrad(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                      const py::object &grad_position, const py::args &args) const;
   py::object GradJit(const py::object &out, const py::args &args) const;
+  void set_forward_use_dynamic_shape_process(bool flag) const;
   void SetDynamicInput(const py::object &obj, const py::args &args) const;
   py::object GetDynamicInput(const py::object &actual_input) const;
 
@@ -80,7 +81,7 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   void ClearRes() const;
   // Sync stream
   void Sync() const;
-  bool IsFirstCell() const;
+  void SetMixedPrecisionType(const MixedPrecisionType mix_type, bool is_push) const;
   void WorkerJoin();
   void SetJitCompileStatus(bool is_compiling, const std::string &phase) const;
   void SetIsRunRecompute(bool is_runing_recompute) const;

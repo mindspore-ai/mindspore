@@ -170,7 +170,7 @@ def test_hal_reset_max_memory_reserved():
     Description: Test hal.reset_max_memory_reserved api.
     Expectation: hal.reset_max_memory_reserved api performs as expected in grad.
     """
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, pynative_synchronize=True)
 
     net = Net()
     net(Tensor(2.0))

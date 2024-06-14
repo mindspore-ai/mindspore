@@ -54,7 +54,7 @@ def test_assert_op():
     l = Tensor(np.array([True, False]).astype(np.bool))
     context.set_context(mode=context.GRAPH_MODE)
     assert1(True, [a, b, c, d, e, f, g, h, i, j, k, l])
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, pynative_synchronize=True)
 
     with pytest.raises(RuntimeError) as info:
         assert1(False, [a, b, c, d, e, f, g, h, i, j, k, l])

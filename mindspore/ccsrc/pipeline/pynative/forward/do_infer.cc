@@ -339,7 +339,9 @@ void InferOperation::SetNodeAbsCacheByValue(const FrontendOpRunInfoPtr &op_run_i
   // So, set a threshold for clear it.
   if (node_abs_cache_.size() > kCacheThreshold) {
     std::unique_lock lock(abs_mutex_);
-    node_abs_cache_.clear();
+    auto half_it = node_abs_cache_.begin();
+    std::advance(half_it, kCacheThreshold / 2);
+    node_abs_cache_.erase(node_abs_cache_.begin(), half_it);
   }
 }
 

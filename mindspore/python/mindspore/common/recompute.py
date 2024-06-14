@@ -121,6 +121,7 @@ class _RecomputeCell(Cell):
             # To avoid sub cell same name
             block.__self__.check_names_and_refresh_name()
             self.internal_params = block.__self__.trainable_params()
+            self.wrap_cell.mixed_precision_type = block.__self__.get_mixed_precision_type()
             self.wrap_cell.set_mixed_precision_type(block.__self__.get_mixed_precision_type())
             self.net = self.wrap_cell
         else:

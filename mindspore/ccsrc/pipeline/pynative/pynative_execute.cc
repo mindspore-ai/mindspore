@@ -87,8 +87,7 @@ void SetCallbackForInputTensor(const std::vector<ValuePtr> &input_values) {
 
 void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info) const {
   // Pure function running or cell not set mix precision
-  op_run_info->async_status.disable_mix_precision =
-    (forward_executor()->IsFirstCell() || forward_executor()->CellNotSetMixedPrecision(op_run_info));
+  op_run_info->async_status.disable_mix_precision = forward_executor()->CellNotSetMixedPrecision(op_run_info);
   op_run_info->async_status.is_jit_compiling = forward_executor()->is_jit_compiling();
   op_run_info->async_status.custom_bprop_cell_count = grad_executor()->custom_bprop_cell_count();
 }
@@ -216,11 +215,8 @@ void PyNativeExecutor::Sync() const {
   runtime::ProfilerAnalyzer::GetInstance().StartStep();
 }
 
-void PyNativeExecutor::SetHookChanged(const py::object &cell) const {
-  if (!py::isinstance<Cell>(cell)) {
-    MS_LOG(EXCEPTION) << "The 'set_hook_changed' function is only supported on Cell object!";
-  }
-  grad_executor()->SetHookChanged(cell);
+void PyNativeExecutor::SetHookCellId(const py::object &cell) const {
+  grad_executor()->set_hook_cell_id(PyNativeAlgo::PyParser::GetIdByPyObj(cell));
 }
 
 bool PyNativeExecutor::grad_flag() const { return grad_executor()->grad_flag(); }
@@ -240,28 +236,13 @@ py::object PyNativeExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad,
 void PyNativeExecutor::NewGraph(const py::object &obj, const py::args &args) const {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeNewGraph,
                                      runtime::ProfilerRecorder::kNoName, false);
-  forward_executor()->ProcessBeforeNewGraph(obj, args);
-
-  if (!grad_executor()->RequiresGrad()) {
-    MS_LOG(DEBUG) << "Grad flag is false";
-    return;
-  }
   PyNativeExecutorTry(grad_executor()->InitGraph, obj, args);
-  forward_executor()->ProcessAfterNewGraph(obj);
 }
 
 void PyNativeExecutor::EndGraph(const py::object &obj, const py::object &out, const py::args &args) const {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeEndGraph,
                                      runtime::ProfilerRecorder::kNoName, false);
-  bool is_cell = py::isinstance<Cell>(obj);
-  forward_executor()->ProcessBeforeEndGraph(obj, is_cell);
-
-  if (!grad_executor()->RequiresGrad()) {
-    MS_LOG(DEBUG) << "Grad flag is false";
-    return;
-  }
   PyNativeExecutorTry(grad_executor()->LinkGraph, obj, out, args);
-  forward_executor()->ProcessAfterEndGraph(obj, is_cell);
 }
 
 py::object PyNativeExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::object &cell,
@@ -276,7 +257,9 @@ py::object PyNativeExecutor::GradJit(const py::object &out, const py::args &args
   return ret;
 }
 
-bool PyNativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstCell(); }
+void PyNativeExecutor::SetMixedPrecisionType(const MixedPrecisionType mix_type, bool is_push) const {
+  return forward_executor()->set_mix_precision_type(mix_type, is_push);
+}
 
 void PyNativeExecutor::WorkerJoin() {
   GilReleaseWithCheck release_gil;
@@ -290,6 +273,15 @@ void PyNativeExecutor::SetJitCompileStatus(bool is_compiling, const std::string 
 
 void PyNativeExecutor::SetIsRunRecompute(bool is_runing_recompute) const {
   grad_executor()->set_is_run_recompute(is_runing_recompute);
+}
+
+void PyNativeExecutor::set_forward_use_dynamic_shape_process(bool flag) const {
+  grad_executor()->set_forward_use_dynamic_shape_process(flag);
+#ifndef ENABLE_SECURITY
+  if (flag) {
+    profiler::ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
+  }
+#endif
 }
 
 void PyNativeExecutor::SetDynamicInput(const py::object &obj, const py::args &args) const {
@@ -348,7 +340,7 @@ void RegPyNativeExecutor(const py::module *m) {
 
   (void)py::class_<PyNativeExecutor, std::shared_ptr<PyNativeExecutor>>(*m, "PyNativeExecutor_")
     .def_static("get_instance", &PyNativeExecutor::GetInstance, "PyNativeExecutor get_instance.")
-    .def("is_first_cell", &PyNativeExecutor::IsFirstCell, "check if the first cell.")
+    .def("set_mixed_precision_type", &PyNativeExecutor::SetMixedPrecisionType, "set cell mixed precision type.")
     .def("new_graph", &PyNativeExecutor::NewGraph, "pynative new a graph.")
     .def("end_graph", &PyNativeExecutor::EndGraph, "pynative end a graph.")
     .def("check_run", &PyNativeExecutor::CheckAlreadyRun, "pynative check graph run before.")
@@ -358,11 +350,13 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("grad", &PyNativeExecutor::RunGrad, "pynative executor run grad.")
     .def("grad_flag", &PyNativeExecutor::grad_flag, "pynative grad flag")
     .def("enable_grad", &PyNativeExecutor::enable_grad, "pynative enable grad, used for with no_grad")
-    .def("set_hook_changed", &PyNativeExecutor::SetHookChanged, "set pynative hook changed")
+    .def("set_hook_id", &PyNativeExecutor::SetHookCellId, "set pynative hook changed")
     .def("set_grad_flag", &PyNativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
          "Executor set grad flag.")
     .def("set_enable_grad", &PyNativeExecutor::set_enable_grad, py::arg("enable_grad") = py::bool_(true),
          "pynative set enable grad")
+    .def("set_eval_use_dynamic_shape_process", &PyNativeExecutor::set_forward_use_dynamic_shape_process,
+         "set eval use dynamic shape process.")
     .def("set_dynamic_input", &PyNativeExecutor::SetDynamicInput, "set dynamic input")
     .def("get_dynamic_input", &PyNativeExecutor::GetDynamicInput, "get dynamic input")
     .def("set_py_exe_path", &PyNativeExecutor::set_py_exe_path, py::arg("py_exe_path") = py::str(""),
@@ -371,6 +365,7 @@ void RegPyNativeExecutor(const py::module *m) {
          py::arg("kernel_build_server_dir") = py::str(""), "set kernel build server directory path.")
     .def("set_jit_compile_status", &PyNativeExecutor::SetJitCompileStatus, "set jit compile status.")
     .def("set_is_run_recompute", &PyNativeExecutor::SetIsRunRecompute, "set grad is in recompile status.")
+    .def("real_run_op", &PyNativeExecutor::RealRunOp, "run op synchronously")
     .def("run_op_async", &PyNativeExecutor::RunOpStub, "run op asynchronously")
     .def("set_async_for_graph", &PyNativeExecutor::SetAsyncForGraph, py::arg("flag") = py::bool_(false),
          "Executor set async flag.")

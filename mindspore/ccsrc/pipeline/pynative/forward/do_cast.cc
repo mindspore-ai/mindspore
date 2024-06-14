@@ -108,7 +108,6 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   cast_run_info->base_op_run_info.next_op_name = op_name;
   cast_run_info->base_op_run_info.next_input_index = index;
   cast_run_info->base_op_run_info.use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
-  cast_run_info->cell_obj_id = op_run_info->cell_obj_id;
   cast_run_info->base_op_run_info.device_target =
     PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(cast_prim);
   bool is_dynamic_shape =

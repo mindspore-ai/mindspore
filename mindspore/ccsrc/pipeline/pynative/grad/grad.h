@@ -96,7 +96,6 @@ class GradExecutor {
   inline size_t custom_bprop_cell_count() const { return custom_bprop_cell_count_; }
   inline runtime::AsyncHqueuePtr bprop_queue() const { return bprop_queue_; }
   TopCellIdWithTopCell &already_run_top_cell() { return already_run_top_cell_; }
-  void SetHookChanged(const py::object &cell) const;
   py::object RunGrad(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                      const py::object &grad_position, const py::args &args);
   py::object RunGradFunc(const autograd::GradAttr &grad_attr, const std::vector<tensor::BaseTensorPtr> &w_args,
@@ -149,9 +148,9 @@ class GradExecutor {
   inline void set_forward_use_dynamic_shape_process(bool forward_use_dynamic_shape_process) {
     forward_use_dynamic_shape_process_ = forward_use_dynamic_shape_process;
   }
-  inline bool is_cell_has_dynamic_inputs(const std::string &obj_id) const {
-    return dynamic_inputs_cells_.count(obj_id) > 0;
-  }
+  const std::string &hook_cell_id() { return hook_cell_id_; }
+  inline void set_hook_cell_id(const std::string &hook_cell_id) { hook_cell_id_ = hook_cell_id; }
+
   std::string GetAlreadyRunCellId(const std::string &obj_id) const;
 
   inline bool is_high_order_top_cell() const { return top_cell_ != nullptr && top_cell_->is_high_order_top_cell(); }
@@ -243,6 +242,9 @@ class GradExecutor {
   bool is_run_recompute_{false};
   bool save_graphs_{false};
   bool forward_use_dynamic_shape_process_{false};
+
+  // Cell which register hook
+  std::string hook_cell_id_;
 
   uint32_t kernel_graph_id_for_control_flow_{UINT32_MAX};
   size_t custom_bprop_cell_count_{0};

@@ -44,6 +44,7 @@ from mindspore.parallel.shard import Shard
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._decorator import deprecated
 from mindspore.common._register_for_recompute import recompute_registry
+from mindspore.common._with_context import _PyNativeCellCall
 
 
 class Cell(Cell_):
@@ -136,6 +137,7 @@ class Cell(Cell_):
         self.exist_names = set("")
         self.exist_objs = set()
         self.recompute_cell = None
+        self.mixed_precision_type = None
         self.sig = inspect.signature(self.construct)
         init_pipeline()
 
@@ -373,6 +375,10 @@ class Cell(Cell_):
     @property
     def jit_config_dict(self):
         return self._jit_config_dict
+
+    @property
+    def enable_backward_hook(self):
+        return self._enable_backward_hook
 
     def get_func_graph_proto(self):
         """Return graph binary proto."""
@@ -684,7 +690,7 @@ class Cell(Cell_):
 
     def __call__(self, *args, **kwargs):
         # Run in Graph mode.
-        if os.getenv("MS_JIT") != '0' and context._get_mode() == context.GRAPH_MODE:
+        if context._get_mode() == context.GRAPH_MODE and os.getenv("MS_JIT") != '0':
             if kwargs:
                 bound_arguments = self.sig.bind(*args, **kwargs)
                 bound_arguments.apply_defaults()
@@ -709,16 +715,9 @@ class Cell(Cell_):
             self._init_check()
             self._init_flag = True
 
-        if self.requires_grad:
-            _pynative_executor.set_grad_flag(True)
-
-        try:
-            _pynative_executor.new_graph(self, *args, **kwargs)
+        with _PyNativeCellCall(self, args, kwargs) as call:
             output = self._run_construct(args, kwargs)
-            _pynative_executor.end_graph(self, output, *args, **kwargs)
-        except Exception as err:
-            _pynative_executor.clear_res()
-            raise err
+            call.output = output
 
         return output
 
@@ -961,9 +960,12 @@ class Cell(Cell_):
 
         if not kwargs:
             self._dynamic_shape_inputs = inputs
-            self._check_construct_args(*inputs)
             if context._get_mode() == context.PYNATIVE_MODE:
                 _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
+            else:
+                self._check_construct_args(*inputs)
+                # TODO(tronzhang): It may error for no actually args here. So just set in fullmode,
+                #                  which means that incremental mode is lacking dynamic input.
         else:
             self._dynamic_shape_inputs = _process_dyn_args(self.construct, kwargs)
 
@@ -1682,10 +1684,13 @@ class Cell(Cell_):
     def _add_mixed_precision_flag(self, **flags):
         """Add mixed precision flag to current cell"""
         if "fp16" in flags and flags.get("fp16", False):
+            self.mixed_precision_type = MixedPrecisionType.FP16
             Cell_.set_mixed_precision_type(self, MixedPrecisionType.FP16)
         if "fp32" in flags and flags.get("fp32", False):
+            self.mixed_precision_type = MixedPrecisionType.FP32
             Cell_.set_mixed_precision_type(self, MixedPrecisionType.FP32)
         if "bf16" in flags and flags.get("bf16", False):
+            self.mixed_precision_type = MixedPrecisionType.BF16
             Cell_.set_mixed_precision_type(self, MixedPrecisionType.BF16)
 
     def apply(self, fn):
@@ -2053,7 +2058,6 @@ class Cell(Cell_):
         if not check_hook_fn("register_forward_pre_hook", hook_fn):
             return HookHandle()
         self._enable_forward_pre_hook = True
-        _pynative_executor.set_hook_changed(self)
         if not hasattr(self, '_forward_pre_hook_key'):
             self._forward_pre_hook_key = -1
         self._forward_pre_hook_key += 1
@@ -2145,7 +2149,6 @@ class Cell(Cell_):
         if not check_hook_fn("register_forward_hook", hook_fn):
             return HookHandle()
         self._enable_forward_hook = True
-        _pynative_executor.set_hook_changed(self)
         if not hasattr(self, '_forward_hook_key'):
             self._forward_hook_key = -1
         self._forward_hook_key += 1

@@ -17,10 +17,8 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_DO_INFER_H_
 #define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_DO_INFER_H_
 
-#include <vector>
 #include <string>
 #include <memory>
-#include <set>
 #include <shared_mutex>
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/pynative_cache.h"

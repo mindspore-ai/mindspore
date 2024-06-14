@@ -197,5 +197,6 @@ def test_fftwithsize_exception():
     inverse = True
     real = True
     x = Tensor(np.random.uniform(-10, 10, size=[2, 1])).astype(ms.complex64)
+    ms.context.set_context(pynative_synchronize=True)
     with pytest.raises(ValueError, match="For 'FFTWithSize', the last dimension of the input cannot be 1"):
         fft_forward_func(x, signal_ndim, inverse, real)

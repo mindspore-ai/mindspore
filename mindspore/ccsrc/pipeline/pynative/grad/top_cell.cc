@@ -21,9 +21,10 @@
 
 namespace mindspore {
 namespace pynative {
-void TopCellInfo::RecordCellBackwardHookOp(const std::string &cell_order, const AnfNodePtr &hook_op) {
+void TopCellInfo::RecordCellBackwardHookOp(const std::string &cell_id, const AnfNodePtr &hook_op) {
   MS_EXCEPTION_IF_NULL(hook_op);
-  (void)cell_backward_hook_op_[cell_order].emplace_back(hook_op);
+  MS_LOG(DEBUG) << "Get cell register backward hook, id " << cell_id;
+  (void)cell_backward_hook_op_[cell_id].emplace_back(hook_op);
 }
 
 void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info, bool is_jit_graph) const {
@@ -167,7 +168,6 @@ void TopCellInfo::Clear() {
                                      runtime::ProfilerRecorder::kNoName, true);
   MS_LOG(DEBUG) << "Clear top cell info. Cell id " << cell_id_;
   auto_grad_cell_ptr_ = nullptr;
-  hook_changed_ = false;
   is_init_kpynative_ = false;
   need_compile_graph_ = false;
   forward_already_run_ = false;

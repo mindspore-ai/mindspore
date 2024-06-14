@@ -67,7 +67,7 @@ __all__ = [
 ]
 
 __all__.extend([
-    "tensor", "Tensor", "RowTensor", "SparseTensor", "COOTensor", "CSRTensor", # tensor
+    "tensor", "Tensor", "RowTensor", "SparseTensor", "COOTensor", "CSRTensor",  # tensor
     "ms_function", "ms_class", 'jit', 'jit_class', '_no_grad',  # api
     "Parameter", "ParameterTuple",  # parameter
     "dtype",
@@ -79,6 +79,6 @@ __all__.extend([
     "lazy_inline", "load_mindir", "save_mindir",
     "no_inline",
     "Symbol",
-    "recompute"
+    "recompute",
 ])
 __all__.extend(generator.__all__)

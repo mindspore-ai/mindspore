@@ -59,7 +59,7 @@ using PrimAbsCache = std::unordered_map<AbsCacheKey, AbstractListMap, AbsCacheKe
 
 // Used to get input abstract of op from cache
 // Key is id of input obj, value is the abstract of input obj
-using NodeAbsCache = mindspore::HashMap<std::string, abstract::AbstractBasePtr>;
+using NodeAbsCache = std::unordered_map<std::string, abstract::AbstractBasePtr>;
 
 // Used to cache implicit cast info according to primitive
 // Key is primitive name, value is the implicit cast info

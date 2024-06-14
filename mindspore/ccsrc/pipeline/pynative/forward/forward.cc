@@ -257,14 +257,6 @@ bool ForwardExecutor::IsVmOp(const std::string &op_name) const {
   return kVmOperators.find(op_name) != kVmOperators.end();
 }
 
-std::string ForwardExecutor::GetCurrentCellObjId() const {
-  if (forward_cell_stack_.empty()) {
-    return "";
-  }
-  auto &cell = forward_cell_stack_.top();
-  return cell->id();
-}
-
 GradExecutorPtr ForwardExecutor::grad() const {
   auto grad_executor = grad_executor_.lock();
   MS_EXCEPTION_IF_NULL(grad_executor);
@@ -282,7 +274,6 @@ void ForwardExecutor::InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info) {
       grad()->forward_use_dynamic_shape_process() || grad()->use_dynamic_shape_process();
   }
   op_run_info->base_op_run_info.device_target = GetCurrentDeviceTarget(op_run_info->op_grad_info->op_prim);
-  op_run_info->cell_obj_id = GetCurrentCellObjId();
   auto device_context = runtime::OpRunner::GetDeviceContext(op_run_info->base_op_run_info.device_target);
   op_run_info->base_op_run_info.stream_id = device_context->device_res_manager_->GetCurrentStreamId();
 }
@@ -661,7 +652,6 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
   // Obtaining device context may fail in UT
   op_run_info->base_op_run_info.stream_id = GetCurStreamId(op_run_info->base_op_run_info.device_target);
 #endif
-  op_run_info->cell_obj_id = GetCurrentCellObjId();
   return op_run_info;
 }
 
@@ -675,6 +665,16 @@ void ForwardExecutor::SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) 
 }
 
 void ForwardExecutor::ClearNodeAbsMap() const { infer_operation()->ClearNodeAbsCache(); }
+
+void ForwardExecutor::ClearForwardRes() const {
+#if defined(__APPLE__)
+  ClearNodeAbsMap();
+#else
+  static const auto op_run_info = std::make_shared<FrontendOpRunInfo>();
+  auto forward_task = std::make_shared<FrontendTask>([this](...) { ClearNodeAbsMap(); }, op_run_info);
+  runtime::Pipeline::Get().frontend_stage()->Push(forward_task);
+#endif
+}
 
 void ForwardExecutor::SetNodeAbsMapByValue(const FrontendOpRunInfoPtr &op_run_info) const {
   infer_operation()->SetNodeAbsCacheByValue(op_run_info);
@@ -812,13 +812,10 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
 
 bool ForwardExecutor::CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &cur_cell = forward_cell_stack_.top();
-  MS_EXCEPTION_IF_NULL(cur_cell);
-  MixedPrecisionType mix_type = cur_cell->GetMixedPrecisionType();
-  if (mix_type == kNotSet) {
+  if (mix_precision_type_stack_.empty() || mix_precision_type_stack_.top() == kNotSet) {
     return true;
   }
-  op_run_info->mix_type = mix_type;
+  op_run_info->mix_type = mix_precision_type_stack_.top();
   return false;
 }
 
@@ -826,73 +823,6 @@ void ForwardExecutor::ExecuteLazyTask() const {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
   GilReleaseWithCheck gil_release;
   runtime::OpExecutor::GetInstance().WaitAll();
-}
-
-void ForwardExecutor::PrintPyObjInfo(const py::object &obj, const std::string &str, bool is_cell) const {
-  if (is_cell) {
-    MS_LOG(DEBUG) << str << " run " << obj.cast<CellPtr>()->ToString();
-    return;
-  }
-  MS_LOG(DEBUG) << str << " run python function " << py::getattr(obj, "__name__").cast<std::string>();
-}
-
-void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::args &args) {
-  bool is_cell = py::isinstance<Cell>(obj);
-  if (is_cell) {
-    auto cell = obj.cast<CellPtr>();
-    MS_EXCEPTION_IF_NULL(cell);
-    PushForwardCell(cell);
-    if (!grad()->RequiresGrad()) {
-      if (grad()->is_cell_has_dynamic_inputs(cell->id())) {
-        MS_LOG(DEBUG) << "obj id:" << cell->id() << " set forward use dynamic shape process true";
-        grad()->set_forward_use_dynamic_shape_process(true);
-#ifndef ENABLE_SECURITY
-        ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
-#endif
-      }
-    } else {
-      PrintPyObjInfo(obj, kBegin, is_cell);
-    }
-  }
-}
-
-void ForwardExecutor::ProcessAfterNewGraph(const py::object &obj) const { grad()->SetTopCellDynamicAttr(obj); }
-
-void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell) {
-  if (is_cell) {
-    PopForwardCell();
-  }
-
-  // Do some finishing work before end graph
-  if (IsFirstCell()) {
-    {
-      runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
-      GilReleaseWithCheck gil_release;
-      runtime::Pipeline::Get().frontend_stage()->Wait();
-    }
-    // Finish lazy task
-    ExecuteLazyTask();
-    if (!grad()->RequiresGrad()) {
-      ClearNodeAbsMap();
-    }
-    if (grad()->forward_use_dynamic_shape_process()) {
-      MS_LOG(DEBUG) << "first cell run end, set forward use dynamic shape process false";
-      grad()->set_forward_use_dynamic_shape_process(false);
-    }
-  }
-}
-
-void ForwardExecutor::ProcessAfterEndGraph(const py::object &obj, bool is_cell) const {
-  if (IsFirstCell()) {
-#if defined(__APPLE__)
-    ClearNodeAbsMap();
-#else
-    static const auto op_run_info = std::make_shared<FrontendOpRunInfo>();
-    auto forward_task = std::make_shared<FrontendTask>([this](...) { ClearNodeAbsMap(); }, op_run_info);
-    runtime::Pipeline::Get().frontend_stage()->Push(forward_task);
-#endif
-  }
-  PrintPyObjInfo(obj, kEnd, is_cell);
 }
 
 std::string ForwardExecutor::GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const {
@@ -1066,11 +996,11 @@ void ForwardExecutor::ClearRes() {
   enable_async_ = false;
   is_jit_compiling_ = false;
   last_target_ = "Unknown";
+  std::stack<MixedPrecisionType>().swap(mix_precision_type_stack_);
   cast_operation()->ClearRes();
   ClearNodeAbsMap();
   infer_operation()->ClearPrimAbsList();
   infer_operation()->ClearConstFlagPrimCache();
-  std::stack<CellPtr>().swap(forward_cell_stack_);
   mindrt_backends_.clear();
   slice_prim_cache_.clear();
 }

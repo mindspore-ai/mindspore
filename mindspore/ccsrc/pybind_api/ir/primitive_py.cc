@@ -391,7 +391,9 @@ BaseRef PrimitivePy::RunCellCustomBpropFunction(const py::tuple &py_args) const 
     py::tuple grads;
     MS_LOG(DEBUG) << "Get num of backward hook fn is " << backward_hook_fn_.size();
     for (const auto &elem : backward_hook_fn_) {
-      inst->NewGraph(elem.second, input_args.cast<py::args>());
+      if (inst->grad_flag()) {
+        inst->NewGraph(elem.second, input_args.cast<py::args>());
+      }
       py::object grads_obj = elem.second(*converted_args);
       MS_LOG(DEBUG) << "Get cell hook output " << ConvertPyObjToString(grads_obj);
       grads = check_bprop_out(grads_obj, py_args, bprop_cls_name_);
@@ -401,7 +403,9 @@ BaseRef PrimitivePy::RunCellCustomBpropFunction(const py::tuple &py_args) const 
         MS_LOG(DEBUG) << "Get grads size " << grads.size();
         out = py::cast<py::tuple>(grads_obj)[0];
       }
-      inst->EndGraph(elem.second, out, input_args.cast<py::args>());
+      if (inst->grad_flag()) {
+        inst->EndGraph(elem.second, out, input_args.cast<py::args>());
+      }
     }
     MS_LOG(DEBUG) << "Run cell custom bprop function end.";
     return std::make_shared<PyObjectRef>(grads);
