@@ -1030,6 +1030,19 @@ void AnfAlgo::SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
   }
 }
 
+void AnfAlgo::SetSingleOutputTypeAndDetailShape(const std::vector<TypeId> &types,
+                                                const std::vector<abstract::BaseShapePtr> &shapes, AnfNode *node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto node_ptr = node->cast<AnfNodePtr>();
+  MS_EXCEPTION_IF_NULL(node_ptr);
+  if (types.size() != shapes.size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
+                               << " for node " << node->fullname_with_scope() << "." << trace::DumpSourceLines(node);
+  }
+  auto abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shapes[0]);
+  node->set_abstract(abstract);
+}
+
 namespace {
 void DeleteDynamicLen(AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);

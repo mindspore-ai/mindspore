@@ -38,6 +38,7 @@ constexpr size_t kInputFlashAttentionScoreQueryBNSDRank = 4;
 constexpr size_t kInputFlashAttentionScoreQueryBSNDRank = 4;
 constexpr size_t kFAGRealShiftCompressionDim = 1024;
 constexpr size_t kInputFlashAttentionScoreAttnMaskCompressionDim = 2048;
+constexpr auto kEnableRingAttention = "enable_ring_attention";
 
 // None indicates that the optional input is not passed
 bool IsFlashAttentionScoreOptionalInputNotPass(const AbstractBasePtr &input) {
@@ -249,8 +250,7 @@ BaseShapePtr FlashAttentionScoreFuncImpl::InferShape(const PrimitivePtr &primiti
     }
   }
 
-  size_t seq_index = kIndex1;
-  size_t batch_index = kIndex0;
+  size_t seq_index = kIndex1, batch_index = kIndex0;
   if (input_layout == FASInputLayoutMode::SBH) {
     seq_index = kIndex0;
     batch_index = kIndex1;
@@ -288,8 +288,20 @@ BaseShapePtr FlashAttentionScoreFuncImpl::InferShape(const PrimitivePtr &primiti
   auto sparse_mode_opt = GetScalarValue<int64_t>(input_args[kFlashAttentionScoreInputSparseModeIndex]->GetValue());
   if (sparse_mode_opt.has_value()) {
     auto sparse_mode = sparse_mode_opt.value();
-    CheckFlashAttentionScoreAttnMaskShape(input_args[kFlashAttentionScoreInputAttnMaskIndex], op_name, sparse_mode,
-                                          batch_size, q_head_num, q_seq_len, kv_seq_len);
+
+    bool enable_ring_attention = false;
+    if (primitive->HasAttr(kEnableRingAttention)) {
+      auto enable_ring_attention_valueptr = primitive->GetAttr(kEnableRingAttention);
+      if (enable_ring_attention_valueptr->isa<BoolImm>()) {
+        enable_ring_attention = enable_ring_attention_valueptr->cast<BoolImmPtr>()->value();
+      } else {
+        MS_LOG(ERROR) << "enable_ring_attention should be bool";
+      }
+    }
+    if (!enable_ring_attention) {
+      CheckFlashAttentionScoreAttnMaskShape(input_args[kFlashAttentionScoreInputAttnMaskIndex], op_name, sparse_mode,
+                                            batch_size, q_head_num, q_seq_len, kv_seq_len);
+    }
     CheckFlashAttentionScorePrefix(input_args[kFlashAttentionScoreInputPrefixIndex], op_name, sparse_mode, batch_size);
   }
 

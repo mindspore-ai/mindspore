@@ -146,6 +146,10 @@ class COMMON_EXPORT AnfAlgo {
   // set output shape ptr
   static void SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
                                           const std::vector<abstract::BaseShapePtr> &shapes, AnfNode *node);
+
+  static void SetSingleOutputTypeAndDetailShape(const std::vector<TypeId> &types,
+                                                const std::vector<abstract::BaseShapePtr> &shapes, AnfNode *node);
+
   static void CopyAbstract(const AnfNodePtr &from_node, AnfNode *to_node);
   // checkout whether the anf node is a graph kernel.
   static bool IsGraphKernel(const AnfNodePtr &node);
