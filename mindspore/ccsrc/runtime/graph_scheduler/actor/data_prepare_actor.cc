@@ -848,7 +848,8 @@ void DataPrepareActor::PrepareDataForHostTensorQueueNew(const VectorRef &args, O
                       << ", parameter: " << origin_parameter->fullname_with_scope();
         continue;
       }
-
+      // Single ops(run in pynative mode) output to net(context is graph mode) input.
+      runtime::DeviceAddressUtils::CreateKernelTensor(input_tensor);
       auto tensor_position = host_data_source_actor_->FetchNodePosition(origin_to_backend_pair.second);
       if (tensor_position >= host_tensors.size()) {
         std::string error_info = "The position of tensor is out of range: " + std::to_string(tensor_position);
