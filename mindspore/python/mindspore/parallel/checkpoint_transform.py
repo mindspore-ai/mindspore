@@ -409,17 +409,16 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
     src_layout_map = _extract_layout_map(src_strategy_file)
     dst_layout_map = _extract_layout_map(dst_strategy_file)
     pipeline_stage_num = _extract_pipeline_stage_num(src_strategy_file)
+    dst_stage_num = _extract_pipeline_stage_num(dst_strategy_file)
     if src_layout_map:
         src_param_keys = {param_name for param_name in src_layout_map if
                           not param_name.startswith(("accu_grads", "adam_v", "adam_m"))}
     if dst_layout_map:
-        dst_param_keys = {param_name for param_name in dst_layout_map if not param_name.startswith("accu_grads")}
-    if src_layout_map and dst_layout_map and pipeline_stage_num == 1 \
-        and src_param_keys.issubset(dst_param_keys) and len(src_param_keys) < len(dst_param_keys):
-        dst_stage_num = _extract_pipeline_stage_num(dst_strategy_file)
-        if dst_stage_num > 1:
-            raise NotImplementedError("When using unmerged src strategy, dst strategy doesn't \
-                                       support strategy with pipeline parallel.")
+        dst_param_keys = {param_name for param_name in dst_layout_map if
+                          not param_name.startswith(("accu_grads", "adam_v", "adam_m"))}
+    layout_is_passed = src_layout_map and dst_layout_map
+    src_is_subset = src_param_keys.issubset(dst_param_keys) and len(src_param_keys) < len(dst_param_keys)
+    if layout_is_passed and pipeline_stage_num == 1 and dst_stage_num == 1 and src_is_subset:
         ms.log.info("Transform checkpoint by every pipeline stage.")
         _transform_checkpoint_by_stage(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
                                        src_strategy_file, dst_strategy_file)
