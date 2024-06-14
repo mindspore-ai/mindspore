@@ -81,7 +81,7 @@ def test_llama_data_parallel_optim_cut_steps():
     check_result(cur_path, exp_res)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.platform_x86_ascend910b_training
 @pytest.mark.env_single
