@@ -227,9 +227,7 @@ get_algo_parameters_config_func_map = {
                  enable_algo_approxi=bool, algo_approxi_epsilon=float)
 def set_algo_parameters(**kwargs):
     """
-    Set parameters in the algorithm for parallel strategy searching. See a typical use in
-    `test_auto_parallel_resnet.py
-    <https://gitee.com/mindspore/mindspore/blob/master/tests/ut/python/parallel/test_auto_parallel_resnet.py>`_.
+    Set parameters in the algorithm for parallel strategy searching.
 
     Note:
         The attribute name is required. This interface works ONLY in AUTO_PARALLEL mode.

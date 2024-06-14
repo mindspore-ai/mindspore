@@ -6931,8 +6931,6 @@ def gelu(input, approximate='none'):
     .. math::
         GELU(x_i) = 0.5 * x_i * (1 + \tanh(\sqrt(2 / \pi) * (x_i + 0.044715 * x_i^3)))
 
-    For the related GELU graph, refer to `GELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_gelu.png>`_ .
-
     GELU Activation Function Graph:
 
     .. image:: ../images/GELU.png
