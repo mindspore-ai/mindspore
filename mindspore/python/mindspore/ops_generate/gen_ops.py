@@ -960,6 +960,11 @@ def generate_create_instance_helper_file(work_path, yaml_str):
 
 def generate_aclnn_reg_code(yaml_data):
     """generate aclnn register code"""
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    work_path = os.path.join(current_path, '../../../../')
+    ops_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops.yaml')
+    yaml_str = gen_utils.safe_load_yaml(ops_yaml_path)
+
     reg_code = f"""
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
 
@@ -975,7 +980,7 @@ namespace kernel {{
             continue
         _, _, none_tensor_exist = get_dtypes(operator_data)
         if none_tensor_exist:
-            gen_aclnn_kernel(operator_name, auto=True)
+            gen_aclnn_kernel(operator_name, yaml_str, auto=True)
             continue
         class_name = ''.join(word.capitalize() for word in operator_name.split('_'))
         op_class = operator_data.get("class")
