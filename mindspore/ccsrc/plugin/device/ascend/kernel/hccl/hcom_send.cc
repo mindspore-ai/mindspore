@@ -69,7 +69,14 @@ int HcomSendKernel::SendShapeForDynamic() {
     MS_EXCEPTION_IF_NULL(node);
     auto cgn = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(node);
     MS_EXCEPTION_IF_NULL(cgn);
-    auto actor_route_table_proxy = std::make_shared<mindspore::distributed::cluster::ActorRouteTableProxy>(cgn);
+
+    // Set querying route table timeout as HCCL_CONNECT_TIMEOUT in case of large scale training.
+    std::string env_hccl_timeout = common::GetEnv("HCCL_CONNECT_TIMEOUT");
+    int int_hccl_timeout = env_hccl_timeout.empty() ? 3600 : std::stoi(env_hccl_timeout);
+    MS_LOG(INFO) << "HCCL connect timeout is " << int_hccl_timeout << " seconds. Use this as hcom_send route timeout.";
+
+    auto actor_route_table_proxy =
+      std::make_shared<mindspore::distributed::cluster::ActorRouteTableProxy>(cgn, int_hccl_timeout * 1000);
     MS_EXCEPTION_IF_NULL(actor_route_table_proxy);
     auto peer_actor_address = actor_route_table_proxy->LookupRoute(server_url_key);
     server_url_ = peer_actor_address.ip() + ":" + std::to_string(peer_actor_address.port());
