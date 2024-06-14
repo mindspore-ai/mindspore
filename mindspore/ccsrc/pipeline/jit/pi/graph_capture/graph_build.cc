@@ -1313,9 +1313,15 @@ bool GraphBuilder::DoCompare(const Instr &instr) {
   if (oparg >= Py_LT && oparg <= Py_GE) {
     PyObject *left = l->GetVobj() ? l->GetVobj()->GetPyObject().ptr() : nullptr;
     PyObject *right = r->GetVobj() ? r->GetVobj()->GetPyObject().ptr() : nullptr;
-    if (left && right && CheckValueValid(l->GetVobj()) && CheckValueValid(r->GetVobj())) {
-      o = AObject::Convert(PyObject_RichCompare(left, right, oparg));
-      PyErr_Clear();
+    if (left && right) {
+      if (CheckValueValid(l->GetVobj()) && CheckValueValid(r->GetVobj())) {
+        o = AObject::Convert(PyObject_RichCompare(left, right, oparg));
+        PyErr_Clear();
+      } else if (l->GetVobj()->GetType() == AObject::kTypeTensor || r->GetVobj()->GetType() == AObject::kTypeTensor) {
+        o = l->GetVobj()->GetType() == AObject::kTypeTensor ? l->GetVobj() : r->GetVobj();
+      } else {
+        o = AObject::MakeAObject(AObject::kTypeBool);
+      }
     } else {
       o = AObject::MakeAObject(AObject::kTypeBool);
     }
@@ -3012,6 +3018,54 @@ static bool IsConstantBoolValue(ValueNode *node) {
   return false;
 }
 
+bool IsShapeOrDtypeRelatedNode(const ValueNode *node) {
+  if (node->GetOpcode() == CALL_FUNCTION && node->input(0)->GetVobj()->GetType() == AObject ::kTypeCFunction &&
+      node->input(0)->GetName() == "len") {
+    node = node->input(1);
+  }
+  if (node->GetOpcode() == BINARY_SUBSCR) {
+    node = node->input(0);
+  }
+  if (node->GetOpcode() == CALL_FUNCTION) {
+    auto func_node = node->input(0);
+    // prim
+    if (py::isinstance<mindspore::PrimitivePyAdapter>(func_node->GetVobj()->GetPyObject())) {
+      auto prime_name = py::cast<mindspore::PrimitivePyAdapterPtr>(func_node->GetVobj()->GetPyObject())->name();
+      if (prime_name == "Shape" || prime_name == "DType" || prime_name == "Rank") {
+        return true;
+      }
+    }
+  } else if (node->GetOpcode() == LOAD_ATTR) {
+    auto attr_name = node->GetName();
+    if (attr_name == "dtype" || attr_name == "shape" || attr_name == "ndim" || attr_name == "size") {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool TryGuardEscape(ValueNode *cond_node) {
+  if (cond_node->GetOpcode() == COMPARE_OP &&
+      std::any_of(cond_node->getInputs().begin(), cond_node->getInputs().end(),
+                  [](const ValueNode *node) { return IsShapeOrDtypeRelatedNode(node); })) {
+    return true;
+  }
+  if (cond_node->GetOpcode() == COMPARE_OP && cond_node->getInputs().size() == 2 &&
+      cond_node->input(0)->GetOpcode() == BINARY_SUBSCR && cond_node->input(1)->GetOpcode() == BINARY_SUBSCR) {
+    return true;
+  }
+  if (cond_node->GetOpcode() == CONTAINS_OP &&
+      (IsShapeOrDtypeRelatedNode(cond_node->input(0)) || IsShapeOrDtypeRelatedNode(cond_node->input(1)))) {
+    return true;
+  }
+  if (cond_node->GetOpcode() == CALL_FUNCTION &&
+      std::all_of(cond_node->getInputs().begin() + 1, cond_node->getInputs().end(),
+                  [](const ValueNode *node) { return IsShapeOrDtypeRelatedNode(node); })) {
+    return true;
+  }
+  return false;
+}
+
 bool IsSatisfyPruneLimit(int cond, Graph *graph_, ValueNode *cond_node) {
   if (cond == -1) {
     return false;
@@ -3025,6 +3079,12 @@ bool IsSatisfyPruneLimit(int cond, Graph *graph_, ValueNode *cond_node) {
   }
   auto tr = graph_->TraceValueNode(cond_node);
   if (tr == nullptr) {
+    if (kPIJitConfigDefault.getIntConfig(GraphJitConfig::kGuardRelaxCount) > 0) {
+      PyObject *bool_value = cond_node->GetVobj()->GetPyObject().ptr();
+      if ((bool_value == Py_True || bool_value == Py_False) && TryGuardEscape(cond_node)) {
+        return true;
+      }
+    }
     return false;
   }
   PyObject *bool_value = cond_node->GetVobj()->GetPyObject().ptr();
@@ -3206,6 +3266,9 @@ AObject *InferFuncResult(const py::object &callable, const py::object &args, con
     return nullptr;
   }
   g->TraceRun();
+  if (conf.GetBoolConfig(GraphJitConfig::kPrintAfterAll)) {
+    g->DumpDFG();
+  }
   if (clear_guard) {
     Graph *graph = g->GetGraph();
     auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(graph->GetCodeObj()));

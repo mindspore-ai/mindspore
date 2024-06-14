@@ -655,6 +655,13 @@ static AObject::Type BinaryAdd(AObject::Type l, AObject::Type r) {
 
 static AObject::Type BinaryInferDefault(AObject::Type, AObject::Type) { return AObject::kTypeAnyValue; }
 
+static bool IsSameType(PyObject *a, PyObject *b) {
+  if (a != nullptr && b != nullptr && PyType_Check(a) && PyType_Check(b)) {
+    return a == b;
+  }
+  return false;
+}
+
 int AObject::BinaryIs(AObject *l, AObject *r) {
   PyObject *a = l ? l->GetPyObject().ptr() : nullptr;
   PyObject *b = r ? r->GetPyObject().ptr() : nullptr;
@@ -664,6 +671,9 @@ int AObject::BinaryIs(AObject *l, AObject *r) {
   // all is const object
   if (const_a && const_b) {
     return a == b;
+  }
+  if (IsSameType(a, b)) {
+    return true;
   }
   // a const object and a known object
   if ((const_a && b) || (const_b && a)) {
