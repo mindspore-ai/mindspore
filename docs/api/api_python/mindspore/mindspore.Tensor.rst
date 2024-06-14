@@ -340,6 +340,7 @@ mindspore.Tensor
     mindspore.Tensor.type_as
     mindspore.Tensor.unbind
     mindspore.Tensor.unfold
+    mindspore.Tensor.uniform
     mindspore.Tensor.unique_consecutive
     mindspore.Tensor.unique_with_pad
     mindspore.Tensor.unsorted_segment_max

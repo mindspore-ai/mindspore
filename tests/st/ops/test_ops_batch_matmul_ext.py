@@ -20,8 +20,9 @@ import mindspore as ms
 from mindspore.nn import Cell
 from mindspore.ops.extend import bmm
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.st.pynative.utils import allclose_nparray
 
-rtol = 1e-3
+loss = 1e-3
 
 
 class BmmCell(Cell):
@@ -57,7 +58,38 @@ def test_ops(context_mode, shape1, shape2):
 
     output = bmm_cell(ms.tensor(x), ms.tensor(y)).numpy()
     expect = x @ y
-    np.testing.assert_allclose(output, expect, rtol=rtol)
+    np.testing.assert_allclose(output, expect, rtol=1e-3)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
+@pytest.mark.parametrize("shape1, shape2", [
+    [[1280, 77, 64], [1280, 64, 77]],
+    [[128, 256, 224], [128, 224, 256]],
+])
+@pytest.mark.parametrize("dtype", [
+    np.float16, np.float32
+])
+def test_ops_network(context_mode, shape1, shape2, dtype):
+    """
+    Feature: BatchMatMulExt op.
+    Description: test bmm_ext
+    Expectation: expect correct shape result.
+    """
+    ms.set_context(mode=context_mode)
+
+    bmm_cell = BmmCell()
+
+    x = random_input(shape1, dtype)
+    y = random_input(shape2, dtype)
+
+    output = bmm_cell(ms.tensor(x), ms.tensor(y)).numpy()
+    expect = x @ y
+    allclose_nparray(output, expect, loss, loss)
 
 
 @pytest.mark.level1
@@ -79,5 +111,5 @@ def test_ops_dynamic():
     TEST_OP(bmm, [[x1, y1], [x2, y2]], '', disable_input_check=True, disable_yaml_check=True)
 
 
-def random_input(shape):
-    return np.random.randint(0, 10, shape).astype(np.float32)
+def random_input(shape, dtype=np.float32):
+    return np.random.randint(0, 10, shape).astype(dtype)

@@ -3243,6 +3243,35 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         validator.check_is_int(batch_dims, "batch_dims")
         return tensor_operator_registry.get('gather')(self, input_indices, axis, batch_dims)
 
+    def uniform(self, from_=0., to=1., generator=None):
+        r"""
+        Generates random numbers in the half-open interval [from_, to).
+
+        Args:
+            from_ (number): The lower bound of the interval.
+            to (number): The upper bound of the interval.
+            generator (Generator, optional): The random seed. Default: None.
+
+        Raises:
+            TypeError: If `from_` is larger than `to`.
+
+        Returns:
+            Tensor, with the same shape as tensor.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import mindspore
+            >>> x = mindspore.ops.ones((4, 2))
+            >>> generator = mindspore.Generator()
+            >>> generator.manual_seed(100)
+            >>> output = x.uniform(1., 2., generator)
+            >>> print(output.shape)
+            (4, 2)
+        """
+        return tensor_operator_registry.get('uniform')(self, from_, to, generator)
+
     def var(self, axis=None, ddof=0, keepdims=False):
         """
         Compute the variance along the specified axis.
