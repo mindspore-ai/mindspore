@@ -123,6 +123,9 @@ class BACKEND_EXPORT CollectiveManager {
   // Create communication group in simulation mode.
   bool CreateSimulationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks);
 
+  // Get timeout window for communicator initialization.
+  int64_t GetCommunicatorInitTimeout();
+
   std::atomic_bool inited_;
   std::atomic_bool finalized_;
 

@@ -1530,17 +1530,9 @@ void SetRunMode(const ResourcePtr &resource) {
   auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   auto is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   auto enable_hccl = context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL);
-  bool using_cm = common::UseDynamicCluster() && common::GetEnv("MS_HCCL_CM_INIT") == "1";
-  if (using_cm && context_ptr->IsKByKExecutorMode()) {
-    MS_LOG(INTERNAL_EXCEPTION)
-      << "You are setting 'MS_HCCL_CM_INIT' and 'jit_level' to 'O0/O1' at the same time, which will cause confilct "
-         "because 'MS_HCCL_CM_INIT' means running in sink mode, but 'O0/O1' of 'jit_level' means running kernel by "
-         "kernel. Please unset either of them and rerun the task.";
-  }
   if ((!is_task_sink ||
        (context_ptr->IsKByKExecutorMode() && common::AnfAlgo::IsDynamicGraph(resource->func_graph()))) &&
-      mode == kGraphMode && enable_hccl && (!common::UseHostCollective() || using_cm) &&
-      common::GetEnv(kSimulationLevel).empty()) {
+      mode == kGraphMode && enable_hccl && !common::UseHostCollective() && common::GetEnv(kSimulationLevel).empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Current execution mode is 'kernelbykernel', reason: " << kbk_reason
                                << ", but you're launching job using 'ranktable', which "
                                   "does not support 'kernelbykernel' mode.\n Please refer to link: "
