@@ -19,7 +19,7 @@ import mindspore as ms
 from mindspore import nn
 from mindspore.communication import init
 from mindspore.communication.comm_func import scatter_tensor
-from mindspore.communication.management import get_rank
+from mindspore.communication.management import get_rank, create_group
 
 
 # 'scatter_tensor' function only supports KernelByKernel mode by now. So we set 'GRAPH_OP_RUN' to 1.
@@ -43,7 +43,6 @@ def test_hccl_scatter_tensor_func_in_cell_2p():
     data = ms.Tensor(np.arange(64).reshape([8, 8]).astype(np.float32))
     net = ScatterTensorFuncNet()
     out = net(data, 0)
-    print(out)
     if rank == 0:
         gt_rank0 = np.arange(0, 32).reshape([4, 8]).astype(np.float32)
         rst = np.allclose(gt_rank0, out.asnumpy())
@@ -62,7 +61,6 @@ def test_hccl_scatter_tensor_func_2p():
     rank = get_rank()
     data = ms.Tensor(np.arange(64).reshape([8, 8]).astype(np.float32))
     out = scatter_tensor(data, 0)
-    print(out)
     if rank == 0:
         gt_rank0 = np.arange(0, 32).reshape([4, 8]).astype(np.float32)
         rst = np.allclose(gt_rank0, out.asnumpy())
@@ -72,4 +70,21 @@ def test_hccl_scatter_tensor_func_2p():
         rst = np.allclose(gt_rank1, out.asnumpy())
         assert rst
 
-test_hccl_scatter_tensor_func_2p()
+def test_scatter_tensor_two_groups():
+    """
+    Feature: test 'scatter_tensor' communication function in two groups.
+    Description: test 'scatter_tensor' communication function in two groups.
+    Expectation: expect correct result.
+    """
+    rank = get_rank()
+    data = ms.Tensor(np.full((64), rank).reshape([4, 16]).astype(np.float32))
+    if rank in [0, 2]:
+        create_group("group1", [0, 2])
+        out = scatter_tensor(data, 0, group="group1")
+        exp = np.full((16), 0).reshape([1, 16]).astype(np.float32)
+        assert np.allclose(exp, out.asnumpy())
+    else:
+        create_group("group2", [1, 3])
+        out = scatter_tensor(data, 1, group="group2")
+        exp = np.full((16), 1).reshape([1, 16]).astype(np.float32)
+        assert np.allclose(exp, out.asnumpy())

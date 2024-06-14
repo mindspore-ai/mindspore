@@ -12,7 +12,7 @@ mindspore.communication.comm_func.gather_into_tensor
 
     参数：
         - **tensor** (Tensor) - 输入待聚合的Tensor。Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。
-        - **dst** (int，可选) - 表示发送源的进程编号。只有该进程会接收聚合后的张量。
+        - **dst** (int，可选) - 表示发送源的进程编号。只有该进程会接收聚合后的张量。默认值：0。
         - **group** (str，可选) - 表示通信域。默认值： ``GlobalComm.WORLD_COMM_GROUP`` 。
 
     返回：
