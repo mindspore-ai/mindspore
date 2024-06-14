@@ -15,19 +15,20 @@
  */
 
 #include "debug/debugger/debugger_utils.h"
-#include <vector>
 #include <memory>
+#include <set>
 #include <string>
-#include "include/common/debug/anf_dump_utils.h"
-#include "include/backend/debug/debugger/debugger.h"
-#include "include/backend/debug/data_dump/dump_json_parser.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "kernel/kernel.h"
-#include "include/backend/debug/data_dump/e2e_dump.h"
-#include "include/common/utils/config_manager.h"
+#include <vector>
 #include "backend/common/session/session_basic.h"
 #include "debug/data_dump/tensor_statistic.h"
+#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/backend/debug/data_dump/e2e_dump.h"
+#include "include/backend/debug/debugger/debugger.h"
+#include "include/common/debug/anf_dump_utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/config_manager.h"
+#include "kernel/kernel.h"
 
 constexpr int kFailure = 1;
 
@@ -58,6 +59,35 @@ std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &
     }
   }
   return real_outputs;
+}
+
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: GPU, Ascend.
+ * Runtime category: MindRT.
+ * Description: Get Valid Tensor indexes.
+ */
+vector<size_t> GetValidDumpIndex(const CNodePtr &cnode, size_t index_size, bool is_input) {
+  std::vector<size_t> valid_indexes;
+  valid_indexes.reserve(index_size);
+  if (is_input) {
+    std::vector<size_t> ignored_address;
+    auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
+    if (kernel_mod != nullptr) {
+      ignored_address = kernel_mod->GetLaunchIgnoredInputAddressIdx();
+    }
+    std::set<size_t> ignored_address_set(ignored_address.begin(), ignored_address.end());
+    for (size_t index = 0; index < index_size; ++index) {
+      if (ignored_address_set.find(index) != ignored_address_set.end()) {
+        continue;
+      }
+      valid_indexes.push_back(index);
+    }
+  } else {
+    auto node_name = common::AnfAlgo::GetCNodeName(cnode);
+    valid_indexes = CheckRealOutput(node_name, index_size);
+  }
+  return valid_indexes;
 }
 
 /*

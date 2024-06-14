@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include "debug/data_dump/statistic_kernel.h"
+#include "debug/debugger/debugger_utils.h"
 #include "include/backend/debug/common/csv_writer.h"
 #include "include/backend/debug/data_dump/dump_utils.h"
 #include "include/common/debug/anf_dump_utils.h"
@@ -101,7 +102,8 @@ void DumpKernelTensorStats(const DeviceContext *device_context, vector<device::D
     MS_LOG(WARNING) << "Open statistic dump file failed, skipping current statistics";
     return;
   }
-  for (size_t i = 0; i < tensors.size(); ++i) {
+  auto valid_index = GetValidDumpIndex(node, tensors.size(), is_input);
+  for (auto i : valid_index) {
     auto tensor = tensors[i]->kernel_tensor().get();
     DumpTensorInfo tensor_info(device_context, tensor, is_input, i, node_name, node_type);
     auto stat = GetKernelTensorStats(tensor_info, stat_name_list);
