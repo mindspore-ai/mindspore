@@ -459,7 +459,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                                  If returns ``False`` , the Parameter that not matching the custom condition will not
                                  be saved. Default: ``None`` .
         crc_check (bool) : Whether to perform crc32 calculation when saving checkpoint and save the calculation
-            result to the end of ckpt. Default: ``False`` .
+            result to the file. Default: ``False`` .
         kwargs (dict): Configuration options dictionary.
 
     Raises:
@@ -2268,13 +2268,13 @@ def _save_dataset_to_mindir(model, dataset):
 
 def check_checkpoint(ckpt_file_name):
     """
-    Check checkpoint is valid.
+    Check whether the checkpoint is valid.
 
     Args:
         ckpt_file_name (str): Checkpoint file name.
 
     Returns:
-        Bool, whether the checkpoint is valid.
+        bool, whether the checkpoint is valid.
 
     Examples:
         >>> import mindspore as ms

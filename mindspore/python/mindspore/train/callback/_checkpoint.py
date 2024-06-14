@@ -298,10 +298,10 @@ class CheckpointConfig:
     @property
     def crc_check(self):
         """
-        Get the value of the whether open crc check.
+        Get the value of whether to enable crc check.
 
         Returns:
-            bool, whether open crc check.
+            bool, whether to enable crc check.
         """
         return self._crc_check
 
