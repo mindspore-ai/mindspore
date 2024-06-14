@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <utility>
 
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
@@ -30,6 +31,8 @@
 
 namespace mindspore::graphkernel {
 namespace {
+using OutIndexParamPair = std::pair<size_t, AnfNodePtr>;
+
 /**
  * If an Assign's source node was outputted with this Assign, the src-node should be removed from output list,
  * external users can use the dest-node under the premise of correct execution order.
@@ -38,13 +41,13 @@ namespace {
  * 1. Assign is always in output list. (links to external Depend node)
  * 2. Assign's dest-node should be a Parameter.
  */
-std::map<size_t, AnfNodePtr> FindAssignAndOutputVal(const CNodePtr &fg_cnode) {
+std::map<size_t, OutIndexParamPair> FindAssignAndOutputVal(const CNodePtr &fg_cnode) {
   // Check output includes assign
   auto func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(fg_cnode);
   MS_EXCEPTION_IF_NULL(func_graph);
   auto out_cnode = func_graph->output()->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(out_cnode);
-  std::map<size_t, AnfNodePtr> output_replace_map;
+  std::map<size_t, OutIndexParamPair> output_replace_map;
 
   if (!IsPrimitiveCNode(out_cnode, prim::kPrimMakeTuple)) {
     return output_replace_map;
@@ -58,7 +61,8 @@ std::map<size_t, AnfNodePtr> FindAssignAndOutputVal(const CNodePtr &fg_cnode) {
   };
 
   const auto &inputs = out_cnode->inputs();
-  for (const auto &out : inputs) {
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    auto out = inputs[i];
     if (IsPrimitiveCNode(out, prim::kPrimAssign)) {
       auto assign_val = out->cast<CNodePtr>()->input(2);
       auto assign_parameter = out->cast<CNodePtr>()->input(1);
@@ -67,7 +71,7 @@ std::map<size_t, AnfNodePtr> FindAssignAndOutputVal(const CNodePtr &fg_cnode) {
         size_t assign_val_index = static_cast<size_t>(iter - inputs.begin());
         auto assign_to = ParameterToInput(assign_parameter);
         if (assign_to != nullptr && assign_val_index > 0) {
-          output_replace_map[assign_val_index - 1] = assign_to;
+          output_replace_map[assign_val_index - 1] = std::make_pair(i - 1, assign_to);
         }
       }
     }
@@ -110,11 +114,14 @@ int64_t GetitemIndex(const AnfNodePtr &getitem) {
 }
 
 void UpdateUsersOfGraphKernel(const FuncGraphPtr &func_graph, const AnfNodePtr &cnode, const AnfNodePtr &assign_to,
-                              int64_t removed_index) {
+                              int64_t removed_index, int64_t assign_idx) {
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   for (const auto &getitem_iter : mng->node_users()[cnode]) {
     auto getitem = getitem_iter.first;
+    if (!IsPrimitiveCNode(getitem, prim::kPrimTupleGetItem)) {
+      continue;
+    }
     if (GetitemIndex(getitem) != removed_index) {
       continue;
     }
@@ -131,6 +138,11 @@ void UpdateUsersOfGraphKernel(const FuncGraphPtr &func_graph, const AnfNodePtr &
       }
       KeepExecOrder(func_graph, getitem, assign_to, mng);
     }
+    // the index of TupleGetItem should be changed from the output index of the replaced node to the assign node
+    auto item_idx = opt::CreateValueNodeWithKernelInfo(func_graph, MakeValue(assign_idx));
+    auto getitem_cnode = getitem->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(getitem_cnode);
+    getitem_cnode->set_input(kInputNodeOutputIndexInTupleGetItem, item_idx);
     break;
   }
 }
@@ -150,8 +162,9 @@ bool RepalceOutputByParameter(const FuncGraphPtr &func_graph) {
       continue;
     }
     changed = true;
-    for (const auto &[index, node] : replaceable_nodes) {
-      UpdateUsersOfGraphKernel(func_graph, cnode, node, static_cast<int64_t>(index));
+    for (const auto &[index, idx_node] : replaceable_nodes) {
+      UpdateUsersOfGraphKernel(func_graph, cnode, idx_node.second, static_cast<int64_t>(index),
+                               static_cast<int64_t>(idx_node.first));
     }
   }
   return changed;
