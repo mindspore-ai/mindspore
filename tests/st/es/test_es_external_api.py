@@ -108,14 +108,6 @@ def train():
 
     es.embedding_ckpt_import(save_ckpt_path)
     print("Succ do import embedding.", flush=True)
-
-    table_id_dict, es_initializer, es_counter_filter = es.embedding_init("test", init_vocabulary_size=vocab_size,
-                                                                         embedding_dim=embedding_dim,
-                                                                         max_feature_count=feature_length,
-                                                                         optimizer="adam", ev_option=ev_option,
-                                                                         mode="predict")
-    es.embedding_table_import(save_embedding_path)
-    print("Succ do import ckpt.", flush=True)
     release()
 
 
