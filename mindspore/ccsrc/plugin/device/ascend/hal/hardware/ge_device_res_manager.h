@@ -87,6 +87,10 @@ class GeDeviceResManager : public DeviceResManager {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
     return runtime_instance_->compute_stream();
   }
+  void *GetCopyDataStream() const {
+    MS_EXCEPTION_IF_NULL(runtime_instance_);
+    return runtime_instance_->copy_data_stream();
+  }
 
   // Relevant function to allocate and free device memory of raw ptr.
   bool AllocateMemory(DeviceAddress *const &address, uint32_t stream_id = UINT32_MAX) const override;

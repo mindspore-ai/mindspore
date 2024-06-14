@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "backend/common/session/kernel_graph_mgr.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
+#include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/hardware/ge_graph_optimization.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
@@ -1134,6 +1135,33 @@ bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Kernel
   return true;
 }
 
+void GeKernelExecutor::DoAsyncCkpt(const CNodePtr &kernel) const {
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto env = common::GetEnv("MS_ENABLE_CKPT_D2H_ASYNC");
+  int execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (env == "1" && ms_context->get_param<bool>(MS_CTX_NEED_CKPT) && (execution_mode != kPynativeMode)) {
+    auto kg = std::dynamic_pointer_cast<session::KernelGraph>(kernel->func_graph());
+    auto cur_step = ms_context->get_param<int>(MS_CTX_CUR_STEP_NUM);
+    auto save_steps = ms_context->get_param<int>(MS_CTX_SAVE_CKPT_STEPS);
+    auto last_triggered_step = ms_context->get_param<int>(MS_CTX_LAST_TRIGGERED_STEP);
+    MS_LOG(DEBUG) << "cur_step:" << cur_step << ", save_steps: " << save_steps
+                  << ", last_triggered_step:" << last_triggered_step;
+    if (cur_step >= (last_triggered_step + save_steps) && kg != nullptr) {
+      if (SkipOrResetCopyAction()) {
+        MS_LOG(INFO) << "Enable async d2h copy";
+        SavePrevStepWeight(kg->GetRootWeights(), AscendStreamMng::GetInstance().GetCopyStream());
+      }
+      if (common::AnfAlgo::HasNodeAttr(kFromRefGraph, kernel) &&
+          common::AnfAlgo::GetNodeAttr<bool>(kernel, kFromRefGraph) && SkipOrResetSyncAction()) {
+        MS_LOG(INFO) << "Ref op sync once action";
+        SyncCopyStream(AscendStreamMng::GetInstance().GetCopyStream());
+      }
+    }
+  }
+}
+
 bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelTensor *> &inputs,
                                     const vector<KernelTensor *> &workspace, const vector<KernelTensor *> &outputs,
                                     KernelMod *kernel_mod, void *stream) const {
@@ -1141,6 +1169,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
   // launch kernel
   uint64_t start_time = 0;
   PROFILER_START(start_time);
+  DoAsyncCkpt(kernel);
   if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
     if (!MemoryCopyAsync(kernel, inputs, outputs)) {
       MS_LOG(ERROR) << "Memory copy failed for kernel " << kernel->fullname_with_scope();

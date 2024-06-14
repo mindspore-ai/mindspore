@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from collections.abc import Iterable
 from functools import wraps
 
+import sys
 import os
 import math
 import copy
@@ -590,6 +591,40 @@ class Model:
             self._backbone_is_train = is_train
         return network
 
+    def _check_need_ckpt(self, callbacks):
+        """Check callback list contain ckpt"""
+        need_ckpt = False
+        save_ckpt_steps = 1
+        last_triggered_step = 0
+        for cb in callbacks:
+            if isinstance(cb, ModelCheckpoint):
+                need_ckpt = True
+                cfg_size = cb._get_save_checkpoint_steps
+                save_ckpt_steps = save_ckpt_steps if (cfg_size is None or cfg_size >= sys.maxsize) else cfg_size
+                last_triggered_step = cb._get_last_trigger_step
+                break
+        return need_ckpt, save_ckpt_steps, last_triggered_step
+
+    def _store_training_step_info(self, cb_params):
+        """
+        cache train step info
+        :param cb_params: callback params
+        :return: none
+        """
+        if os.environ.get("MS_ENABLE_CKPT_D2H_ASYNC") != "1":
+            return
+        if (context.get_context("mode") == context.GRAPH_MODE) and (context.get_context("device_target") == "Ascend"):
+            cb_params.need_ckpt, cb_params.save_checkpoint_steps, \
+            cb_params.last_triggered_step = self._check_need_ckpt(cb_params.list_callback)
+            logger.info(f"need_ckpt:{cb_params.need_ckpt},"
+                        f"save_checkpoint_steps:{cb_params.save_checkpoint_steps},"
+                        f"cur_step_num:{cb_params.cur_step_num},"
+                        f"last_triggered_step:{cb_params.last_triggered_step}")
+            context.set_context(ascend_config={"need_ckpt": cb_params.need_ckpt,
+                                               "save_checkpoint_steps": cb_params.save_checkpoint_steps,
+                                               "cur_step_num": cb_params.cur_step_num,
+                                               "last_triggered_step": cb_params.last_triggered_step})
+
     def _warmup_dataset(self, epoch, train_dataset, sink_size=-1):
         """
         Trigger dataset pipeline running before graph compiling.
@@ -855,6 +890,7 @@ class Model:
                 else:
                     cb_params.cur_step_num += 1
                 self._current_step_num = int((cb_params.cur_step_num - 1) % cb_params.batch_num + 1)
+                self._store_training_step_info(cb_params)
                 cb_params.train_dataset_element = inputs
                 list_callback.on_train_step_begin(run_context)
                 train_network = self._check_network_mode(train_network, True)

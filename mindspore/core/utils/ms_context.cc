@@ -62,88 +62,12 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   int_params_[MS_CTX_SAVE_GRAPHS_FLAG - MS_CTX_TYPE_BOOL_BEGIN] = 0;
   string_params_[MS_CTX_SAVE_GRAPHS_PATH - MS_CTX_TYPE_STRING_BEGIN] = ".";
 #endif
-  set_param<std::string>(MS_CTX_PYTHON_EXE_PATH, "python");
-  set_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR, "");
-  set_param<bool>(MS_CTX_ENABLE_DUMP, false);
-  set_param<std::string>(MS_CTX_SAVE_DUMP_PATH, ".");
-  set_param<std::string>(MS_CTX_DETERMINISTIC, "OFF");
-  set_param<std::string>(MS_CTX_ENV_CONFIG_PATH, "");
-  set_param<std::string>(MS_CTX_TUNE_MODE, "NO_TUNE");
-  set_param<std::string>(MS_CTX_AOE_TUNE_MODE, "");
-  set_param<std::string>(MS_CTX_AOE_JOB_TYPE, "2");
-  set_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS, "");
-  set_param<std::string>(MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD, "");
-  set_param<std::string>(MS_CTX_ENABLE_EXCEPTION_DUMP, "2");
-
-  set_param<uint32_t>(MS_CTX_TSD_REF, 0);
-  set_param<uint32_t>(MS_CTX_GE_REF, 0);
-
-  set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
-  set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
-  set_param<bool>(MS_CTX_ENABLE_REDUCE_PRECISION, true);
+  InitBoolTypeDefaultValue();
+  InitStringTypeDefaultValue();
+  InitDigitalTypeDefaultValue();
   MsContext::SetDeviceId();
-
-  set_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH, MAX_CALL_DEPTH_DEFAULT);
   string_params_[MS_CTX_DEVICE_TARGET - MS_CTX_TYPE_STRING_BEGIN] = target;
-  set_param<int>(MS_CTX_EXECUTION_MODE, kPynativeMode);
-  set_param<bool>(MS_CTX_ENABLE_TASK_SINK, true);
-  set_param<bool>(MS_CTX_IR_FUSION_FLAG, true);
-  set_param<bool>(MS_CTX_ENABLE_HCCL, false);
-  set_param<bool>(MS_CTX_ENABLE_GPU_SUMMARY, true);
-  set_param<bool>(MS_CTX_PRECOMPILE_ONLY, false);
-  set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
-  set_param<bool>(MS_CTX_ENABLE_PYNATIVE_HOOK, false);
-  set_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL, true);
-  set_param<std::string>(MS_CTX_GRAPH_MEMORY_MAX_SIZE, "0");
-  set_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE, "0");
   set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, target == kAscendDevice || target == kDavinciDevice);
-  set_param<bool>(MS_CTX_ENABLE_PROFILING, false);
-  set_param<std::string>(MS_CTX_PROFILING_OPTIONS, "training_trace");
-  set_param<bool>(MS_CTX_CHECK_BPROP_FLAG, false);
-  set_param<float>(MS_CTX_MAX_DEVICE_MEMORY, kDefaultMaxDeviceMemory);
-  set_param<float>(MS_CTX_MEMPOOL_BLOCK_SIZE, kDefaultMempoolBlockSize);
-  set_param<std::string>(MS_CTX_PRINT_FILE_PATH, "");
-  set_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL, false);
-  set_param<bool>(MS_CTX_ENABLE_PARALLEL_SPLIT, false);
-  set_param<bool>(MS_CTX_ENABLE_INFER_OPT, false);
-  set_param<bool>(MS_CTX_GRAD_FOR_SCALAR, false);
-  set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
-  set_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE, false);
-  set_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE, true);
-  set_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD, false);
-  set_param<bool>(MS_CTX_ENABLE_RECOVERY, false);
-  set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, false);
-  set_param<bool>(MS_CTX_DISABLE_FORMAT_TRANSFORM, false);
-  set_param<bool>(MS_CTX_RECOMPUTE_COMM_OVERLAP, false);
-  set_param<bool>(MS_CTX_GRAD_COMM_OVERLAP, false);
-  set_param<bool>(MS_CTX_RECOMPUTE_ALLGATHER_OVERLAP_FAGRAD, false);
-  set_param<bool>(MS_CTX_ENABLE_OPT_SHARD_COMM_OPT, false);
-  set_param<bool>(MS_CTX_ENABLE_TASK_OPT, false);
-  set_param<bool>(MS_CTX_ENABLE_GRAD_COMM_OPT, false);
-  set_param<bool>(MS_CTX_INTERLEAVED_MATMUL_COMM, false);
-  set_param<bool>(MS_CTX_INTERLEAVED_LAYERNORM_COMM, false);
-  set_param<bool>(MS_CTX_BIAS_ADD_COMM_SWAP, false);
-  set_param<bool>(MS_CTX_ENABLE_BEGIN_END_INLINE_OPT, false);
-  set_param<bool>(MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT, false);
-  set_param<uint32_t>(MS_CTX_OP_TIMEOUT, kOpTimeout);
-  set_param<int>(MS_CTX_JIT_SYNTAX_LEVEL, kLax);
-  set_param<std::string>(MS_CTX_CONV_FPROP_ALGO, "normal");
-  set_param<std::string>(MS_CTX_CONV_DGRAD_ALGO, "normal");
-  set_param<std::string>(MS_CTX_CONV_WGRAD_ALGO, "normal");
-  set_param<bool>(MS_CTX_CONV_ALLOW_TF32, true);
-  set_param<bool>(MS_CTX_MATMUL_ALLOW_TF32, false);
-  set_param<std::string>(MS_CTX_JIT_LEVEL, "");
-  set_param<int>(MS_CTX_COMPUTE_COMMUNICATE_FUSION_LEVEL, 0);
-  set_param<int>(MS_CTX_DEBUG_LEVEL, kLevelRelease);
-  set_param<bool>(MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE, false);
-
-  uint32_t kDefaultInterOpParallelThreads = 0;
-  uint32_t kDefaultRuntimeNumThreads = 30;
-  uint32_t cpu_core_num = std::thread::hardware_concurrency();
-  uint32_t runtime_num_threads_default = std::min(cpu_core_num, kDefaultRuntimeNumThreads);
-  uint32_t inter_op_parallel_num_default = std::min(cpu_core_num, kDefaultInterOpParallelThreads);
-  set_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS, runtime_num_threads_default);
-  set_param<uint32_t>(MS_CTX_INTER_OP_PARALLEL_NUM, inter_op_parallel_num_default);
 
   backend_policy_ = kPolicyMap[policy];
   ascend_soc_version_ = "";
@@ -604,6 +528,96 @@ void MsContext::SetAscendConfig() {
   set_param<std::string>(MS_CTX_OP_PRECISION_MODE, "");
   set_param<std::string>(MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD, "");
   set_param<std::string>(MS_CTX_GE_OPTIONS, "");
+}
+
+void MsContext::InitBoolTypeDefaultValue() {
+  set_param<bool>(MS_CTX_ENABLE_DUMP, false);
+  set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
+  set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
+  set_param<bool>(MS_CTX_ENABLE_REDUCE_PRECISION, true);
+  set_param<bool>(MS_CTX_ENABLE_TASK_SINK, true);
+  set_param<bool>(MS_CTX_IR_FUSION_FLAG, true);
+  set_param<bool>(MS_CTX_ENABLE_HCCL, false);
+  set_param<bool>(MS_CTX_ENABLE_GPU_SUMMARY, true);
+  set_param<bool>(MS_CTX_PRECOMPILE_ONLY, false);
+  set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
+  set_param<bool>(MS_CTX_ENABLE_PYNATIVE_HOOK, false);
+  set_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL, true);
+  set_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL, false);
+  set_param<bool>(MS_CTX_ENABLE_PARALLEL_SPLIT, false);
+  set_param<bool>(MS_CTX_ENABLE_INFER_OPT, false);
+  set_param<bool>(MS_CTX_GRAD_FOR_SCALAR, false);
+  set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
+  set_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE, false);
+  set_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE, true);
+  set_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD, false);
+  set_param<bool>(MS_CTX_ENABLE_RECOVERY, false);
+  set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, false);
+  set_param<bool>(MS_CTX_DISABLE_FORMAT_TRANSFORM, false);
+  set_param<bool>(MS_CTX_RECOMPUTE_COMM_OVERLAP, false);
+  set_param<bool>(MS_CTX_GRAD_COMM_OVERLAP, false);
+  set_param<bool>(MS_CTX_ENABLE_OPT_SHARD_COMM_OPT, false);
+  set_param<bool>(MS_CTX_ENABLE_TASK_OPT, false);
+  set_param<bool>(MS_CTX_ENABLE_GRAD_COMM_OPT, false);
+  set_param<bool>(MS_CTX_INTERLEAVED_MATMUL_COMM, false);
+  set_param<bool>(MS_CTX_INTERLEAVED_LAYERNORM_COMM, false);
+  set_param<bool>(MS_CTX_BIAS_ADD_COMM_SWAP, false);
+  set_param<bool>(MS_CTX_ENABLE_BEGIN_END_INLINE_OPT, false);
+  set_param<bool>(MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT, false);
+  set_param<bool>(MS_CTX_ENABLE_PROFILING, false);
+  set_param<bool>(MS_CTX_CHECK_BPROP_FLAG, false);
+  set_param<bool>(MS_CTX_CONV_ALLOW_TF32, true);
+  set_param<bool>(MS_CTX_MATMUL_ALLOW_TF32, false);
+  set_param<bool>(MS_CTX_NEED_CKPT, false);
+  set_param<bool>(MS_CTX_RECOMPUTE_ALLGATHER_OVERLAP_FAGRAD, false);
+  set_param<bool>(MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE, false);
+}
+
+void MsContext::InitStringTypeDefaultValue() {
+  set_param<std::string>(MS_CTX_PYTHON_EXE_PATH, "python");
+  set_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR, "");
+  set_param<std::string>(MS_CTX_SAVE_DUMP_PATH, ".");
+  set_param<std::string>(MS_CTX_DETERMINISTIC, "OFF");
+  set_param<std::string>(MS_CTX_ENV_CONFIG_PATH, "");
+  set_param<std::string>(MS_CTX_TUNE_MODE, "NO_TUNE");
+  set_param<std::string>(MS_CTX_AOE_TUNE_MODE, "");
+  set_param<std::string>(MS_CTX_AOE_JOB_TYPE, "2");
+  set_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS, "");
+  set_param<std::string>(MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD, "");
+  set_param<std::string>(MS_CTX_ENABLE_EXCEPTION_DUMP, "2");
+  set_param<std::string>(MS_CTX_GRAPH_MEMORY_MAX_SIZE, "0");
+  set_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE, "0");
+  set_param<std::string>(MS_CTX_PROFILING_OPTIONS, "training_trace");
+  set_param<std::string>(MS_CTX_PRINT_FILE_PATH, "");
+  set_param<std::string>(MS_CTX_CONV_FPROP_ALGO, "normal");
+  set_param<std::string>(MS_CTX_CONV_DGRAD_ALGO, "normal");
+  set_param<std::string>(MS_CTX_CONV_WGRAD_ALGO, "normal");
+  set_param<std::string>(MS_CTX_JIT_LEVEL, "");
+}
+
+void MsContext::InitDigitalTypeDefaultValue() {
+  set_param<int>(MS_CTX_EXECUTION_MODE, kPynativeMode);
+  set_param<int>(MS_CTX_JIT_SYNTAX_LEVEL, kLax);
+  set_param<int>(MS_CTX_CUR_STEP_NUM, 0);
+  set_param<int>(MS_CTX_SAVE_CKPT_STEPS, 0);
+  set_param<int>(MS_CTX_LAST_TRIGGERED_STEP, 0);
+  set_param<int>(MS_CTX_COMPUTE_COMMUNICATE_FUSION_LEVEL, 0);
+  set_param<int>(MS_CTX_DEBUG_LEVEL, kLevelRelease);
+  set_param<float>(MS_CTX_MAX_DEVICE_MEMORY, kDefaultMaxDeviceMemory);
+  set_param<float>(MS_CTX_MEMPOOL_BLOCK_SIZE, kDefaultMempoolBlockSize);
+  //
+  uint32_t kDefaultInterOpParallelThreads = 0;
+  uint32_t kDefaultRuntimeNumThreads = 30;
+  uint32_t cpu_core_num = std::thread::hardware_concurrency();
+  uint32_t runtime_num_threads_default = std::min(cpu_core_num, kDefaultRuntimeNumThreads);
+  uint32_t inter_op_parallel_num_default = std::min(cpu_core_num, kDefaultInterOpParallelThreads);
+  set_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS, runtime_num_threads_default);
+  set_param<uint32_t>(MS_CTX_INTER_OP_PARALLEL_NUM, inter_op_parallel_num_default);
+  //
+  set_param<uint32_t>(MS_CTX_TSD_REF, 0);
+  set_param<uint32_t>(MS_CTX_GE_REF, 0);
+  set_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH, MAX_CALL_DEPTH_DEFAULT);
+  set_param<uint32_t>(MS_CTX_OP_TIMEOUT, kOpTimeout);
 }
 
 inline void SplitString(const std::string &str, char delim, std::set<std::string> *output_list) {

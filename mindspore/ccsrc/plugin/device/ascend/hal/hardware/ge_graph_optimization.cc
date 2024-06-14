@@ -17,6 +17,8 @@
 #include "plugin/device/ascend/hal/hardware/ge_graph_optimization.h"
 #include <string>
 #include <memory>
+#include "ops/framework_ops.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
@@ -31,6 +33,45 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+namespace {
+void MarkRefGraph(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(INFO) << "Mark graph is ref graph: " << kernel_graph->graph_id();
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto is_kbk = ms_context->IsKByKExecutorMode();
+  auto manager = kernel_graph->manager();
+  if (manager == nullptr || kernel_graph->has_attr(kIsRefGraph)) {
+    return;
+  }
+  for (const auto &node : TopoSort(kernel_graph->get_return(), SuccDeeperSimple, AlwaysInclude)) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr) {
+      continue;
+    }
+    auto is_side_effect = common::AnfAlgo::HasNodeAttr(GRAPH_FLAG_SIDE_EFFECT_MEM, cnode) &&
+                          common::AnfAlgo::GetNodeAttr<bool>(cnode, GRAPH_FLAG_SIDE_EFFECT_MEM);
+    if (!(is_side_effect && cnode->fullname_with_scope().find("optimizer") != std::string::npos)) {
+      continue;
+    }
+    for (const auto &node_pair : manager->node_users()[cnode]) {
+      if (IsPrimitiveCNode(node_pair.first, prim::kPrimUpdateState)) {
+        kernel_graph->set_attr(kIsRefGraph, MakeValue(true));
+        MS_LOG(INFO) << "graph is ref graph: " << kernel_graph->graph_id();
+        if (!is_kbk) {
+          return;
+        }
+        common::AnfAlgo::SetNodeAttr(kFromRefGraph, MakeValue(true), cnode);
+        break;
+      }
+    }
+  }
+}
+}  // namespace
+
 void GEGraphOptimization::OptimizeGEGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *const memo) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(memo);
@@ -46,6 +87,7 @@ void GEGraphOptimization::OptimizeGEGraph(const KernelGraphPtr &graph, std::set<
     graph->set_executable(false);
     MS_LOG(DEBUG) << "Status record: end optimize ge graph. graph id: " << graph->graph_id();
   }
+  MarkRefGraph(graph);
   opt::GEBackendOptimizeACL(graph);
   opt::GEBackendOptimization(graph);
   if (const auto &gk = graphkernel::GraphKernelFlags::GetInstance(); gk.IsEnableGraphKernel()) {
@@ -77,6 +119,7 @@ void GEGraphOptimization::OptimizeACLGraph(const KernelGraphPtr &graph, std::set
     graph->set_executable(false);
     MS_LOG(DEBUG) << "Status record: end optimize acl graph. graph id: " << graph->graph_id();
   }
+  MarkRefGraph(graph);
   opt::AscendUnfoldInputsForSpecialNodes(graph);
   opt::GEBackendOptimizeACL(graph);
   for (auto &child_graph : graph->child_graph_order()) {

@@ -58,6 +58,7 @@ class AscendKernelRuntime : public KernelRuntime {
   std::shared_ptr<DeviceEvent> CreateDeviceEvent() override;
   std::shared_ptr<DeviceEvent> CreateDeviceTimeEvent() override;
   void *compute_stream() const override { return stream_; }
+  void *copy_data_stream() const override { return copy_data_stream_; }
   void *communication_stream() const override { return communication_stream_; }
   void *GetKernelStream(const AnfNodePtr &kernel) const override;
   // add for MindRT
