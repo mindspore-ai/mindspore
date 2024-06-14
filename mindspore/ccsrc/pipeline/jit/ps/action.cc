@@ -1815,8 +1815,8 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag, bool enable_boost
       auto parallel_mode = parallel_context->parallel_mode();
       const bool is_parallel_mode =
         parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
-      static const auto combine_like_graphs = (common::GetEnv("COMBINE_LIKE_GRAPHS") == "1");
-      static const auto force_disable_combine = (common::GetEnv("COMBINE_LIKE_GRAPHS") == "0");
+      static const auto combine_like_graphs = (common::GetCompileConfig("COMBINE_LIKE_GRAPHS") == "1");
+      static const auto force_disable_combine = (common::GetCompileConfig("COMBINE_LIKE_GRAPHS") == "0");
       if (!is_cluster_initialized && (!is_parallel_mode || combine_like_graphs) && !force_disable_combine) {
         (void)actions.emplace_back(std::make_pair(kCombineLikeGraphs, CombineLikeGraphs));
       }
