@@ -35,7 +35,7 @@ def antiquant_forward_func(x, scale, sqrt_mode=False, offset=None):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('sqrt_mode', [True, False])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_antiquant_offset_none(sqrt_mode, mode):
@@ -54,7 +54,7 @@ def test_ops_antiquant_offset_none(sqrt_mode, mode):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('sqrt_mode', [True, False])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_antiquant_offset_not_none(sqrt_mode, mode):
