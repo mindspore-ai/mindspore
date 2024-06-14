@@ -70,8 +70,21 @@ tensor::BaseTensorPtr WeightQuantBatchMatmulV2AscendCustomize(
   auto transpose_weight_imm = GetValue<bool>(transpose_weight);
   auto antiquant_group_size_imm = GetValue<int64_t>(antiquant_group_size);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor, weight_tensor, antiquant_scale_tensor,
-                                antiquant_offset_tensor, quant_scale_tensor, quant_offset_tensor, bias_tensor);
+  BaseTensorPtr new_weight_tensor = weight_tensor;
+  auto tensor_type = op->input_abs()[kIndex1]->GetType()->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(tensor_type);
+  if (tensor_type->element()->type_id() == kNumberTypeInt4) {
+    ShapeVector weight_shape = weight_tensor->shape();
+    int kInt4ShapeMul = 2;
+    weight_shape.back() *= kInt4ShapeMul;
+    const ShapeVector &new_weight_shape = weight_shape;
+    new_weight_tensor =
+      std::make_shared<tensor::Tensor>(weight_tensor->data_type(), new_weight_shape, weight_tensor->data_ptr());
+  }
+
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor, new_weight_tensor,
+                                antiquant_scale_tensor, antiquant_offset_tensor, quant_scale_tensor,
+                                quant_offset_tensor, bias_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   auto device_context = op->device_context();
@@ -81,7 +94,7 @@ tensor::BaseTensorPtr WeightQuantBatchMatmulV2AscendCustomize(
     auto transpose_op = CREATE_PYBOOST_OP(Transpose, device_name);
     x_tensor_trans = transpose_op->Call(x_tensor_trans, GetTransposePerm(x_tensor_trans));
   }
-  BaseTensorPtr weight_tensor_trans = weight_tensor;
+  BaseTensorPtr weight_tensor_trans = new_weight_tensor;
   if (transpose_weight_imm) {
     const auto &device_name = device_context->device_context_key_.device_name_;
     auto transpose_op = CREATE_PYBOOST_OP(Transpose, device_name);
@@ -89,7 +102,7 @@ tensor::BaseTensorPtr WeightQuantBatchMatmulV2AscendCustomize(
   }
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
     [op, x_tensor_trans, weight_tensor_trans, antiquant_scale_tensor, antiquant_offset_tensor, quant_scale_tensor,
-     quant_offset_tensor, bias_tensor, transpose_x_imm, transpose_weight_imm, antiquant_group_size_imm]() {
+     quant_offset_tensor, bias_tensor, antiquant_group_size_imm]() {
       MS_LOG(DEBUG) << "Run device task weight quant batchMatmul v2 start";
       auto device_context = op->device_context();
       const auto &outputs = op->outputs();
