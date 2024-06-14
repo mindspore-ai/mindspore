@@ -70,7 +70,7 @@ ProfilerRecorder::ProfilerRecorder(ProfilerModule module, ProfilerEvent event, c
     return;
   }
   data_ = std::make_unique<Data>(module, event, ProfilerAnalyzer::GetInstance().GetBriefName(op_name),
-                                 need_py_stack ? GetPythonStackStr() : std::string(),
+                                 need_py_stack ? GetPythonStackStr_() : std::string(),
                                  ProfilerAnalyzer::GetInstance().GetTimeStamp(), flow_id, is_inner_event);
 }
 

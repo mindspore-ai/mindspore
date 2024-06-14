@@ -15,8 +15,10 @@
 """Profiler file manager"""
 import json
 import os.path
+from typing import List
 
 from mindspore import log as logger
+from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 from mindspore.profiler.parser.ascend_analysis.constant import Constant
 
 
