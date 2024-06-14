@@ -1177,6 +1177,7 @@ void ConvertSimpleInferInfoToAbstract(const OpGradInfoPtr &op_grad_info) {
   MS_LOG(DEBUG) << "Get output abstract " << op_grad_info->out_abs->ToString();
 }
 }  // namespace
+
 void AutoGrad::CheckAndSetAbstract(const OpGradInfoPtr &op_grad_info) {
   MS_EXCEPTION_IF_NULL(op_grad_info);
   if (op_grad_info->output_value_simple_info != nullptr) {
@@ -1641,9 +1642,16 @@ FrontendOpRunInfoPtr PyBoost::Init(const PrimitivePtr &prim, const py::list &arg
 
 void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const kernel::pyboost::OpPtr &op) {
   size_t size = op->outputs().size();
-  if (size == kSizeOne) {
-    if ((op->output_abs() != nullptr && !op->output_abs()->isa<abstract::AbstractSequence>()) ||
-        (op->output_value_simple_info() != nullptr && op->output_value_simple_info()->size == kSizeOne)) {
+  // If op are Contiguous, Cast(precision, implicit cast), which are internal ops and not have stub output
+  bool is_tuple_output = op_run_info->stub_output != nullptr ? op_run_info->stub_output->isa<stub::SequenceNode>()
+                                                             : PredictOutTypeByName(op->primitive()->name()) == kTuple;
+  if (op->output_value_simple_info() != nullptr) {
+    op_run_info->op_grad_info->output_value_simple_info = op->output_value_simple_info();
+    op_run_info->op_grad_info->output_value_simple_info->is_tuple_output_ = is_tuple_output;
+  }
+  if (!is_tuple_output) {
+    MS_EXCEPTION_IF_CHECK_FAIL(size == kSizeOne, "The size is more than one!");
+    if (op->output_abs() != nullptr || op->output_value_simple_info() != nullptr) {
       // Set auto grad meta data for op output
       if (op_run_info->requires_grad) {
         op->outputs()[0]->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
@@ -1781,9 +1789,7 @@ void PyBoost::DoGrad(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPt
   const auto &pynative_executor = Common::GetPyNativeExecutor();
   const auto &forward = pynative_executor->forward_executor();
   op_run_info->op_grad_info->output_size = op->outputs().size();
-  if (op->output_value_simple_info() != nullptr) {
-    op_run_info->op_grad_info->output_value_simple_info = op->output_value_simple_info();
-  } else {
+  if (op->output_value_simple_info() == nullptr) {
     if (op->input_abs().size() != op_run_info->input_size) {
       MS_LOG(EXCEPTION) << "Op " << op_run_info->base_op_run_info.op_name << " input size is "
                         << op_run_info->input_size << " but got input abstract size " << op->input_abs().size();
@@ -1913,6 +1919,7 @@ void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_ru
 void DataConvert::ConvertValueTensorId(const ValuePtr &value, std::vector<std::string> *converted_tensor_id) {
   if (value->isa<tensor::BaseTensor>()) {
     (void)converted_tensor_id->emplace_back(value->cast<tensor::BaseTensorPtr>()->id());
+    MS_LOG(DEBUG) << "Get top cell output tensor id " << converted_tensor_id->back();
   } else if (value->isa<ValueSequence>()) {
     const auto &seq = value->cast<ValueSequencePtr>();
     for (const auto &val : seq->value()) {

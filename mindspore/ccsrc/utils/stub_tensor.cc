@@ -164,8 +164,8 @@ py::object TensorNode::GetShape() {
       shape_vector = tensor->shape();
     }
   } else {
-    if (output_value_simple_info_->size != kIndex1) {
-      MS_LOG(EXCEPTION) << "Simple infer size " << output_value_simple_info_->size << " is not equal to 1";
+    if (output_value_simple_info_->size_ != kIndex1) {
+      MS_LOG(EXCEPTION) << "Simple infer size " << output_value_simple_info_->size_ << " is not equal to 1";
     }
     shape_vector = output_value_simple_info_->shape_vector_[kIndex0];
   }
@@ -186,8 +186,8 @@ py::object TensorNode::GetDtype() {
       base = base->cast<TensorTypePtr>()->element();
     }
   } else {
-    if (output_value_simple_info_->size != kIndex1) {
-      MS_LOG(EXCEPTION) << "Simple infer size " << output_value_simple_info_->size << " is not equal to 1";
+    if (output_value_simple_info_->size_ != kIndex1) {
+      MS_LOG(EXCEPTION) << "Simple infer size " << output_value_simple_info_->size_ << " is not equal to 1";
     }
     base = output_value_simple_info_->dtype_vector_[kIndex0];
   }
@@ -240,15 +240,15 @@ bool SequenceNode::SetAbstract(const AbstractBasePtr &abs) {
 bool SequenceNode::SetValueSimpleInfo(const mindspore::ValueSimpleInfoPtr &output_value_simple_info) {
   MS_EXCEPTION_IF_NULL(output_value_simple_info);
   if (!is_elements_build_.load()) {
-    for (size_t i = 0; i < output_value_simple_info->size; ++i) {
+    for (size_t i = 0; i < output_value_simple_info->size_; ++i) {
       (void)elements_.emplace_back(
         MakeStubNode(std::make_shared<TensorType>(output_value_simple_info->dtype_vector_[i])));
     }
   }
   is_elements_build_ = true;
-  for (size_t i = 0; i < output_value_simple_info->size; ++i) {
+  for (size_t i = 0; i < output_value_simple_info->size_; ++i) {
     auto elem_simple_info = std::make_shared<mindspore::ValueSimpleInfo>();
-    elem_simple_info->size = kIndex1;
+    elem_simple_info->size_ = kIndex1;
     (void)elem_simple_info->shape_vector_.emplace_back(output_value_simple_info->shape_vector_[i]);
     (void)elem_simple_info->dtype_vector_.emplace_back(output_value_simple_info->dtype_vector_[i]);
     MS_EXCEPTION_IF_NULL(elements_[i]);
@@ -261,6 +261,7 @@ bool SequenceNode::SetValueSimpleInfo(const mindspore::ValueSimpleInfoPtr &outpu
 
 void SequenceNode::SetValue(const ValuePtr &val) {
   auto seq_value = val->cast<ValueSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_value);
   auto children = seq_value->value();
   for (size_t i = 0; i < children.size(); ++i) {
     elements_[i]->SetValue(children[i]);

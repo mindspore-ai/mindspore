@@ -39,8 +39,9 @@ void SaveForwardTensorForReplace(const ValuePtr &value, const TensorIdWithOpInfo
       MS_EXCEPTION_IF_NULL(op_info_with_tensor_object);
       (void)(*op_info_with_tensor_object)[it->second.first].emplace_back(std::make_pair(it->second.second, tensor));
       MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
-                    << " device address: " << tensor->device_address() << " shape and dtype "
-                    << tensor->GetShapeAndDataTypeInfo();
+                    << " device address: " << tensor->device_address() << ", device ptr: "
+                    << std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address())->GetPtr()
+                    << ", shape and dtype " << tensor->GetShapeAndDataTypeInfo();
     }
   } else if (value->isa<ValueSequence>()) {
     const auto &value_seq = value->cast<ValueSequencePtr>();

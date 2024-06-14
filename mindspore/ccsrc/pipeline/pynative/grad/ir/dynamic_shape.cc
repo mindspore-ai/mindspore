@@ -232,7 +232,7 @@ struct CompareBasedOnValueSimpleInfo {
 
   static void BuildInputsValueSimpleInfo(const DynamicDetectNodeInfoPtr &node, const ValuePtrList &inputs) {
     size_t input_size = inputs.size();
-    node->value_compare_info.input_value_simple_info.size = input_size;
+    node->value_compare_info.input_value_simple_info.size_ = input_size;
     node->value_compare_info.input_value_simple_info.shape_vector_.reserve(input_size);
     node->value_compare_info.input_value_simple_info.dtype_vector_.reserve(input_size);
     node->value_compare_info.input_value_simple_info.object_type_vector_.reserve(input_size);
@@ -263,12 +263,12 @@ struct CompareBasedOnValueSimpleInfo {
 
   static bool IsValueSimpleInfoChange(const ValueSimpleInfo &old_input_simple_info,
                                       const ValueSimpleInfo &new_input_simple_info) {
-    if (old_input_simple_info.size != new_input_simple_info.size) {
-      MS_LOG(DEBUG) << "Graph is dynamic, old_input_simple_info size: " << old_input_simple_info.size
-                    << ", new_input_simple_info size: " << new_input_simple_info.size;
+    if (old_input_simple_info.size_ != new_input_simple_info.size_) {
+      MS_LOG(DEBUG) << "Graph is dynamic, old_input_simple_info size: " << old_input_simple_info.size_
+                    << ", new_input_simple_info size: " << new_input_simple_info.size_;
       return true;
     }
-    for (size_t i = 0; i < old_input_simple_info.size; ++i) {
+    for (size_t i = 0; i < old_input_simple_info.size_; ++i) {
       if (IsNotEuqal(old_input_simple_info.shape_vector_[i], new_input_simple_info.shape_vector_[i]) ||
           IsNotEuqal(old_input_simple_info.dtype_vector_[i], new_input_simple_info.dtype_vector_[i]) ||
           IsNotEuqal(old_input_simple_info.object_type_vector_[i], new_input_simple_info.object_type_vector_[i])) {

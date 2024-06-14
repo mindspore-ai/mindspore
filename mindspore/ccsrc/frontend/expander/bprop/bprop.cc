@@ -148,7 +148,7 @@ class PynativeIRBuilder : public IrBuilder {
     if (real_input_value != nullptr) {
       auto item_idx = GetValue<int64_t>(inputs[1]->get()->cast<ValueNodePtr>()->value());
       auto valuenode = NewValueNode((*real_input_value)[item_idx]);
-      valuenode->set_abstract(valuenode->value()->ToAbstract());
+      valuenode->set_abstract(valuenode->value()->ToAbstract()->Broaden());
       return NewIrNode(valuenode);
     }
     return nullptr;
@@ -322,7 +322,7 @@ class PynativeIRBuilderWithCache : public PynativeIRBuilder {
           auto value = no->BuildValue();
           node_map[node] = graph->nodes.size();
           (void)input_indexs.emplace_back(graph->nodes.size());
-          (void)graph->nodes.emplace_back(std::make_shared<SimpleNode>(value, value->ToAbstract()));
+          (void)graph->nodes.emplace_back(std::make_shared<SimpleNode>(value, value->ToAbstract()->Broaden()));
         } else {
           (void)input_indexs.emplace_back(it->second);
         }

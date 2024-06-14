@@ -19,7 +19,6 @@
 
 #include <memory>
 #include <vector>
-#include "mindapi/base/macros.h"
 #include "mindapi/base/shape_vector.h"
 #include "ir/dtype/type.h"
 
@@ -27,8 +26,10 @@ namespace mindspore {
 // Save the shape, dtype and object type info of op inputs or outputs, where size is the size of the inputs or outputs
 // element
 struct ValueSimpleInfo {
+  // Is tuple output
+  bool is_tuple_output_{false};
   // Number of total element
-  size_t size;
+  size_t size_;
   // ShapeVector of every element
   ShapeArray shape_vector_;
   // TypePtr of every element
