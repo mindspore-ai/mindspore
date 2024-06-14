@@ -84,3 +84,55 @@ class TestCase():
         command = ['pytest -sv test_custom_aclop.py::test_custom_add_aclop_graph']
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
+
+    @pytest.mark.level1
+    @pytest.mark.env_onecard
+    @pytest.mark.platform_arm_ascend_training
+    def test_custom_add_aclnn(self):
+        """
+        Feature: Custom op testcase
+        Description: test case for aclnnAddCustom op with func_type="aclnn"
+        Expectation: the result match with numpy result
+        """
+        command = ['pytest -sv test_custom_aclnn.py::test_custom_add_aclnn']
+        result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
+        assert result.returncode == 0
+
+    @pytest.mark.level1
+    @pytest.mark.env_onecard
+    @pytest.mark.platform_arm_ascend_training
+    def test_custom_add_aclnn_dynamic(self):
+        """
+        Feature: Custom op testcase
+        Description: test case for aclnnAddCustom op in Dynamic Shape
+        Expectation: the result match with numpy result
+        """
+        command = ['pytest -sv test_custom_aclnn.py::test_custom_add_aclnn_dynamic']
+        result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
+        assert result.returncode == 0
+
+    @pytest.mark.level1
+    @pytest.mark.env_onecard
+    @pytest.mark.platform_arm_ascend_training
+    def test_custom_add_aclnn_cpp_infer(self):
+        """
+        Feature: Custom op testcase
+        Description: test case for aclnnAddCustom op with func_type="aclnn", infer shape by cpp.
+        Expectation: the result match with numpy result
+        """
+        command = ['pytest -sv test_custom_aclnn.py::test_custom_add_aclnn_cpp_infer']
+        result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
+        assert result.returncode == 0
+
+    @pytest.mark.level1
+    @pytest.mark.env_onecard
+    @pytest.mark.platform_arm_ascend_training
+    def test_custom_add_aclnn_bprop(self):
+        """
+        Feature: Custom op testcase
+        Description: test case for aclnnAddCustom backpropagation.
+        Expectation: the result match with numpy result
+        """
+        command = ['pytest -sv test_custom_aclnn.py::test_custom_add_aclnn_bprop']
+        result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
+        assert result.returncode == 0

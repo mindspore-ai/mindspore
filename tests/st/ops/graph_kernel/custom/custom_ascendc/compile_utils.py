@@ -18,7 +18,6 @@ import mindspore as ms
 import shutil
 import glob
 import subprocess
-import json
 
 
 def compile_custom_run(workspace_dir):
@@ -39,14 +38,6 @@ def compile_custom_run(workspace_dir):
     except FileExistsError:
         shutil.rmtree(dst_compiler_path)
         shutil.copytree(custom_compiler_path, dst_compiler_path)
-
-    with open(os.path.join(dst_compiler_path, 'CMakePresetsDefault.json'), 'r', encoding='utf-8') as f:
-        data = json.load(f)
-
-    data['configurePresets'][0]["cacheVariables"]["ENABLE_BINARY_PACKAGE"]["value"] = False
-
-    with open(os.path.join(dst_compiler_path, 'CMakePresetsDefault.json'), 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
 
     op_path, _ = os.path.split(__file__)
     op_host_path = os.path.join(op_path, 'op_host')

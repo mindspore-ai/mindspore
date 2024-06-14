@@ -100,7 +100,7 @@ std::vector<std::string> ParseCustomPriority(std::string file_name) {
   std::vector<std::string> vendor_names;
 
   if (!file.is_open()) {
-    MS_LOG(ERROR) << "Could not open the file " << file_name;
+    MS_LOG(INFO) << "Could not open the file " << file_name;
     return vendor_names;
   }
 

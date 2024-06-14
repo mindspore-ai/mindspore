@@ -29,6 +29,8 @@ constexpr auto kAclOpJitCompile = "acl_op_jit_compile";
 
 bool CustomOpAclKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   converter_ = std::make_shared<transform::AclConverter>();
+  MS_EXCEPTION_IF_NULL(converter_);
+  MS_EXCEPTION_IF_NULL(primitive_);
   auto op_name = primitive_->GetAttr("reg_op_name");
   if (op_name == nullptr) {
     MS_LOG(EXCEPTION) << "Custom op reg info is error!";
@@ -53,6 +55,7 @@ bool CustomOpAclKernelMod::Init(const std::vector<KernelTensor *> &inputs, const
 
 int CustomOpAclKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
+  MS_EXCEPTION_IF_NULL(converter_);
   converter_->Reset();
   converter_->runner().ResizeOpInputs(inputs.size());
   converter_->runner().ResizeOpOutputs(outputs.size());
@@ -99,6 +102,7 @@ bool CustomOpAclKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   }
 
   MS_EXCEPTION_IF_NULL(converter_);
+  MS_EXCEPTION_IF_NULL(primitive_);
   auto input_names_v = primitive_->GetAttr("pure_input_names");
   MS_EXCEPTION_IF_NULL(input_names_v);
   auto input_names = GetValue<std::vector<std::string>>(input_names_v);
