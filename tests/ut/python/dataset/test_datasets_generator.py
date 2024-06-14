@@ -1486,6 +1486,7 @@ def test_generator_one_dimensional_numpy_input():
     Description: The input source data is a one-dimensional numpy array of type numpy.int32
     Expectation: No error was reported, and the iteration succeeded
     """
+
     class SequentialAccessDataset:
         def __init__(self):
             self.__data = np.array([i for i in range(64)], dtype=np.int32)
@@ -2255,6 +2256,7 @@ def test_generator_traceback():
     Description: Generator is too slow then main process will log the stack of the stuck process
     Expectation: The stuck locality can be logged
     """
+
     class SlowDataset:
         def __init__(self):
             self.data = np.random.randint(0, 255, (100, 28, 28, 3), dtype=np.uint8)
@@ -2417,6 +2419,49 @@ def test_generator_multiprocessing_with_fixed_handle():
             assert lsof >= new_lsof
 
 
+def test_generator_with_dynamic_shared_queue():
+    """
+    Feature: GeneratorDataset
+    Description: test GeneratorDataset with dynamic shared memory queue
+    Expectation: The dataset is processed as expected
+    """
+
+    data = [np.random.random((1024, 1024, 3)).astype(np.float32),  # 12M
+            np.random.random((1024, 1024, 3)).astype(np.float32),  # 12M
+            np.random.random((1024, 1024, 4)).astype(np.float32),  # 16M
+            np.random.random((1024, 1024, 4)).astype(np.float32),  # 16M
+            np.random.random((1024, 1024, 5)).astype(np.float32),  # 20M
+            np.random.random((1024, 1024, 5)).astype(np.float32)]  # 20M
+
+    class DynamicDataset:
+        def __init__(self):
+            self.data = data
+
+        def __getitem__(self, index):
+            return self.data[index]
+
+        def __len__(self):
+            return len(self.data)
+
+    def map_func(input_data):
+        return input_data
+
+    def batch_func(input_data, batch_info):
+        return input_data
+
+    dataset = ds.GeneratorDataset(DynamicDataset(), column_names=["data"], num_parallel_workers=2,
+                                  shuffle=False, max_rowsize=-1)
+    dataset = dataset.map(map_func, num_parallel_workers=2, python_multiprocessing=True, max_rowsize=-1)
+    dataset = dataset.batch(2, num_parallel_workers=2, per_batch_map=batch_func,
+                            python_multiprocessing=True, max_rowsize=-1)
+
+    count = 0
+    for sample in dataset.create_dict_iterator(output_numpy=True, num_epochs=1):
+        np.testing.assert_array_equal(sample["data"], np.array(data[count * 2:(count + 1) * 2]))
+        count += 1
+    assert count == 3
+
+
 if __name__ == "__main__":
     test_generator_0()
     test_generator_1()
@@ -2476,3 +2521,4 @@ if __name__ == "__main__":
     test_generator_split_with_next()
     test_generator_with_next_and_dataset_size_when_iter()
     test_generator_multiprocessing_with_fixed_handle()
+    test_generator_with_dynamic_shared_queue()

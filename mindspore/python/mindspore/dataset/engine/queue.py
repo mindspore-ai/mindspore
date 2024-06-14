@@ -20,12 +20,14 @@ but it will pass large data through shared memory.
 
 import errno
 import multiprocessing
+import platform
 import queue
 import types
 
 import numpy as np
 
 from mindspore import log as logger
+import mindspore._c_dataengine as cde
 from ..transforms.py_transforms_util import ExceptionHandler
 
 
@@ -45,32 +47,36 @@ class _SharedQueue(multiprocessing.queues.Queue):
 
         self.copy_out = copy_out
 
-        # change max_rowsize in MB into bytes
-        self.seg_size = max_rowsize * 1024 * 1024
         # pipe can hold up to 65,636 bytes at a time
         # there is less benefit for small data. To small data it can be slower as we need to pass 100 bytes of metadata
         # and then access the shared memory.
         self.min_shared_mem = 10000
-        self.shm_list = []
-        self.seg_pos = 0
-        # num_seg has to be 2 more than the queue size.  We can have remote worker filling a buffer, main process
-        # reading a buffer and also have a full queue of buffers in the meta-data queue
-        self.num_seg = size + 2
         self.data_immediate = 0
         self.data_shared = 1
         self.count = count
         self.print_error = True
 
-        for _ in range(self.num_seg):
-            try:
-                a = multiprocessing.Array("b", self.seg_size)
-            except OSError as e:
-                if e.errno == errno.ENOMEM:
-                    raise RuntimeError("Failed to allocate shared memory for {0} elements of {1}MB: {2}"
-                                       .format(self.num_seg, self.seg_size / 1024 / 1024, e))
-                raise
-            else:
-                self.shm_list.append(a)
+        if platform.system().lower() != 'windows' and max_rowsize == -1:
+            self.dynamic_shm = True
+        else:
+            self.dynamic_shm = False
+            # change max_rowsize in MB into bytes
+            self.seg_size = max_rowsize * 1024 * 1024
+            self.shm_list = []
+            self.seg_pos = 0
+            # num_seg has to be 2 more than the queue size.  We can have remote worker filling a buffer, main process
+            # reading a buffer and also have a full queue of buffers in the meta-data queue
+            self.num_seg = size + 2
+            for _ in range(self.num_seg):
+                try:
+                    a = multiprocessing.Array("b", self.seg_size)
+                except OSError as e:
+                    if e.errno == errno.ENOMEM:
+                        raise RuntimeError("Failed to allocate shared memory for {0} elements of {1}MB: {2}"
+                                           .format(self.num_seg, self.seg_size / 1024 / 1024, e))
+                    raise
+                else:
+                    self.shm_list.append(a)
 
     def put_until(self, data, timeout=None, exit_signal=None):
         """Put data into the queue. Block until timeout is reached or exit_signal is set."""
@@ -90,7 +96,6 @@ class _SharedQueue(multiprocessing.queues.Queue):
             super().put(data, timeout=timeout)
         else:
             name_list = []
-            count = 0
             start_bytes = 0
             if not isinstance(data, tuple):
                 data = (data,)
@@ -102,8 +107,15 @@ class _SharedQueue(multiprocessing.queues.Queue):
                     if isinstance(r, types.GeneratorType):
                         raise TypeError("Cannot pickle {} object, please verify pyfunc return with numpy array"
                                         .format(type(r)))
-                    if (isinstance(r, np.ndarray) and r.size > self.min_shared_mem
-                            and start_bytes + r.nbytes < self.seg_size):
+                    if isinstance(r, np.ndarray) and self.dynamic_shm:
+                        byte = r.nbytes
+                        shm = cde.SharedMemory("", True, byte)
+                        dest = np.ndarray(r.shape, r.dtype, buffer=shm.buf())
+                        np.copyto(dest, r)
+                        name_list.append((self.data_shared, shm.name(), r.dtype, r.shape))
+                        shm.incref()
+                    elif (isinstance(r, np.ndarray) and r.size > self.min_shared_mem
+                          and start_bytes + r.nbytes < self.seg_size):
                         # need to convert start_bytes to offset in array
                         start_offset = start_bytes
                         dest = np.ndarray(r.shape, r.dtype, buffer=self.shm_list[self.seg_pos].get_obj(),
@@ -113,7 +125,6 @@ class _SharedQueue(multiprocessing.queues.Queue):
                         byte = 8 * ((byte + 7) // 8)
                         start_bytes += byte
                         name_list.append((self.data_shared, self.seg_pos, byte, r.dtype, r.shape))
-                        count += 1
                     else:
                         if isinstance(r, np.ndarray) and r.size > self.min_shared_mem:
                             # Only print out error the first time it happens
@@ -163,19 +174,24 @@ class _SharedQueue(multiprocessing.queues.Queue):
         start_bytes = 0
         for x in result:
             if x[0] == self.data_shared:
-                seg_pos = x[1]
-                byte = x[2]
-                dtype = x[3]
-                shape = x[4]
-                start_offset = start_bytes
-                b = self.shm_list[seg_pos]
-                data = np.ndarray(shape, dtype, buffer=b.get_obj(), offset=start_offset)
-                start_bytes += byte
-                if self.copy_out:
-                    data2 = np.copy(data)
-                    r.append(data2)
+                if self.dynamic_shm:
+                    shm_name, dtype, shape = x[1:]
+                    shm = cde.SharedMemory(shm_name, False, 0)
+                    data = np.ndarray(shape, dtype, buffer=shm.buf())
+                    dest = np.copy(data)
+                    shm.decref()
+                    r.append(dest)
                 else:
-                    r.append(data)
+                    seg_pos, byte, dtype, shape = x[1:]
+                    start_offset = start_bytes
+                    b = self.shm_list[seg_pos]
+                    data = np.ndarray(shape, dtype, buffer=b.get_obj(), offset=start_offset)
+                    start_bytes += byte
+                    if self.copy_out:
+                        dest = np.copy(data)
+                        r.append(dest)
+                    else:
+                        r.append(data)
             elif x[0] == self.data_immediate:
                 r.append(x[1])
             else:
@@ -183,11 +199,12 @@ class _SharedQueue(multiprocessing.queues.Queue):
         return tuple(r)
 
     def __del__(self):
-        shm_list_len = len(self.shm_list)
-        for idx in range(shm_list_len):
-            del self.shm_list[shm_list_len - idx - 1]
-        self.shm_list.clear()
-        del self.shm_list
+        if not self.dynamic_shm:
+            shm_list_len = len(self.shm_list)
+            for idx in range(shm_list_len):
+                del self.shm_list[shm_list_len - idx - 1]
+            self.shm_list.clear()
+            del self.shm_list
 
         self.close()
         self.join_thread()

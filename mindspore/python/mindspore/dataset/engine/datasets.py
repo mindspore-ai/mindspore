@@ -604,8 +604,9 @@ class Dataset:
 
                 - max_rowsize(Union[int, list[int]], optional): Maximum size of row in MB that is used for shared memory
                   allocation to copy data between processes, the total occupied shared memory will increase as
-                  ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. This is only
-                  used if python_multiprocessing is set to True. If it is an int value, it represents
+                  ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. If set
+                  to -1, shared memory will be dynamically allocated with the actual size of data. This is only used if
+                  ``python_multiprocessing`` is set to True. If it is an int value, it represents
                   ``input_columns`` and ``output_columns`` use this value as the unit to create shared memory.
                   If it is a list, the first element represents the ``input_columns`` use this value as the unit to
                   create shared memory, and the second element represents ``output_columns`` use this value as the unit
@@ -897,8 +898,9 @@ class Dataset:
 
                 - max_rowsize (Union[int, list[int]], optional): Maximum size of row in MB that is used for shared
                   memory allocation to copy data between processes, the total occupied shared memory will increase as
-                  ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. This is only
-                  used if python_multiprocessing is set to True. If it is an int value, it represents
+                  ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. If set
+                  to -1, shared memory will be dynamically allocated with the actual size of data. This is only used if
+                  ``python_multiprocessing`` is set to True. If it is an int value, it represents
                   ``input_columns`` and ``output_columns`` use this value as the unit to create shared memory.
                   If it is a list, the first element represents the ``input_columns`` use this value as the unit to
                   create shared memory, and the second element represents ``output_columns`` use this value as the unit
@@ -2612,8 +2614,9 @@ class BatchDataset(UnionBaseDataset):
             name as the input columns, i.e., the columns will be replaced.
         max_rowsize(Union[int, list[int]], optional): Maximum size of row in MB that is used for shared memory
             allocation to copy data between processes, the total occupied shared memory will increase as
-            ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. This is only
-            used if python_multiprocessing is set to True. If it is an int value, it represents
+            ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. If set to -1,
+            shared memory will be dynamically allocated with the actual size of data. This is only used if
+            ``python_multiprocessing`` is set to True. If it is an int value, it represents
             ``input_columns`` and ``output_columns`` use this value as the unit to create shared memory.
             If it is a list, the first element represents the ``input_columns`` use this value as the unit to
             create shared memory, and the second element represents ``output_columns`` use this value as the unit
@@ -2644,7 +2647,7 @@ class BatchDataset(UnionBaseDataset):
         self.python_multiprocessing = python_multiprocessing
         self.process_pool = None
         if isinstance(max_rowsize, int):
-            self.max_rowsize = [max_rowsize * self.batch_size] * 2
+            self.max_rowsize = [max_rowsize * self.batch_size] * 2 if max_rowsize != -1 else [max_rowsize, max_rowsize]
         else:
             self.max_rowsize = [max_rowsize[0] * self.batch_size, max_rowsize[1] * self.batch_size]
 
@@ -3660,8 +3663,9 @@ class MapDataset(UnionBaseDataset):
         callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called. Default: ``None``.
         max_rowsize(Union[int, list[int]], optional): Maximum size of row in MB that is used for shared memory
             allocation to copy data between processes, the total occupied shared memory will increase as
-            ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. This is only
-            used if python_multiprocessing is set to True. If it is an int value, it represents ``input_columns`` and
+            ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. If set to -1,
+            shared memory will be dynamically allocated with the actual size of data. This is only used if
+            ``python_multiprocessing`` is set to True. If it is an int value, it represents ``input_columns`` and
             ``output_columns`` use this value as the unit to create shared memory. If it is a list, the first element
             represents the ``input_columns`` use this value as the unit to create shared memory, and the second element
             represents ``output_columns`` use this value as the unit to create shared memory. Default: 16.
