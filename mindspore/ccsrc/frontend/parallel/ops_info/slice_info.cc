@@ -226,6 +226,152 @@ Status SliceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   return SUCCESS;
 }
 
+Status SliceExtInfo::GetInput(const ValuePtr &input_value, int64_t *input) {
+  MS_EXCEPTION_IF_NULL(input_value);
+  if (input_value->isa<Int64Imm>()) {
+    int64_t value = input_value->cast<Int64ImmPtr>()->value();
+    *input = value;
+  } else {
+    MS_LOG(ERROR) << name_ << ": The value must be int64";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status SliceExtInfo::GetAttrs() {
+  if (input_value_.size() != SLICE_EXT_INPUTS_SIZE) {
+    MS_LOG(ERROR) << name_ << ": The size of input value must be " << SLICE_EXT_INPUTS_SIZE << ", but got "
+                  << input_value_.size();
+    return FAILED;
+  }
+
+  if ((GetInput(input_value_[SLICE_DIM_INDEX], &dim_) != SUCCESS) ||
+      (GetInput(input_value_[SLICE_START_INDEX], &start_) != SUCCESS) ||
+      (GetInput(input_value_[SLICE_END_INDEX], &end_) != SUCCESS) ||
+      (GetInput(input_value_[SLICE_STEP_INDEX], &step_) != SUCCESS)) {
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
+
+Status SliceExtInfo::CheckStrategy(const StrategyPtr &strategy) {
+  MS_EXCEPTION_IF_NULL(strategy);
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Invalid strategy";
+    return FAILED;
+  }
+  std::vector<Dimensions> stra = strategy->GetInputDim();
+  if (stra.empty()) {
+    MS_LOG(ERROR) << name_ << ": The strategy is empty";
+    return FAILED;
+  }
+
+  Dimensions strategy_value = stra[0];
+  if (LongToSize(dim_) >= strategy_value.size()) {
+    MS_LOG(ERROR) << name_ << ": The dim is out of range, dim: " << dim_
+                  << ", first strategy size: " << strategy_value.size();
+    return FAILED;
+  }
+  if (strategy_value[dim_] != 1) {
+    MS_LOG(ERROR) << name_ << ": When a dimension is not fully fetched, the dimension can not be split now";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status SliceExtInfo::InferTensorMap() {
+  TensorMap tensor_map;
+  if (inputs_shape_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
+    return FAILED;
+  }
+
+  // cannot use dev_matrix_shape_ replace inputs_shape_[0], because it may not be fully split in all devices.
+  int64_t size = SizeToInt(inputs_shape_[0].size());
+  for (int i = 0; i < size; ++i) {
+    tensor_map.push_back(size - i - 1);
+  }
+
+  inputs_tensor_map_.push_back(tensor_map);
+  outputs_tensor_map_.push_back(tensor_map);
+  return SUCCESS;
+}
+
+Status SliceExtInfo::InferDevMatrixShape() {
+  MS_EXCEPTION_IF_NULL(strategy_);
+  std::vector<Dimensions> stra = strategy_->GetInputDim();
+  if (stra.empty()) {
+    MS_LOG(ERROR) << name_ << ": The strategy is empty";
+    return FAILED;
+  }
+
+  dev_matrix_shape_ = stra[0];
+  return SUCCESS;
+}
+
+Status SliceExtInfo::InferMirrorOps() {
+  mirror_ops_.clear();
+  if (inputs_tensor_map_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The inputs tensor map is empty";
+    return FAILED;
+  }
+  Shape input_tensor_map = inputs_tensor_map_[0];
+  std::vector<Group> group;
+  if (CreateGroupByTensorMap(input_tensor_map, &group) != SUCCESS) {
+    ReportError(name_ + ": Create group failed.");
+    return FAILED;
+  }
+
+  if (group.empty()) {
+    MS_LOG(INFO) << name_ << ": The mirror group is empty.";
+    return SUCCESS;
+  }
+
+  OperatorVector input_op;
+  OperatorVector dim_op;
+  OperatorVector start_op;
+  OperatorVector end_op;
+  OperatorVector step_op;
+  input_op = CreateMirrorOps(group[0].name(), group[0].GetDevNum());
+  mirror_ops_.push_back(input_op);
+  mirror_ops_.push_back(dim_op);
+  mirror_ops_.push_back(start_op);
+  mirror_ops_.push_back(end_op);
+  mirror_ops_.push_back(step_op);
+  return SUCCESS;
+}
+
+// Note: if the batch dimension is not fully fetched, the batch strategy may not work.
+std::shared_ptr<Strategies> SliceExtInfo::GenerateBatchStrategies() {
+  if (GetAttrs() != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << "generate batch parallel strategies failed.";
+  }
+  split_flag_list_ = {dim_ != 0};
+  return GenerateBatchStrategiesBySplitFlag(inputs_shape_, split_flag_list_);
+}
+
+Status SliceExtInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
+
+std::vector<StrategyPtr> SliceExtInfo::GenerateOpStrategies(int64_t stage_id) {
+  if (LongToSize(dim_) >= inputs_shape_.size()) {
+    MS_LOG(EXCEPTION) << name_ << ": The dim is out of range, dim: " << dim_
+                      << ", first input shape size: " << inputs_shape_.size();
+  }
+  Shape input_split(inputs_shape_[0].size(), 1);
+  input_split[dim_] = 0;
+
+  Shapes splittable_inputs = {input_split};
+
+  std::vector<StrategyPtr> sp_vector;
+  if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": generate strategies failed";
+  }
+
+  return sp_vector;
+}
+
 REGISTER(SliceInfo);
+REGISTER(SliceExtInfo);
 }  // namespace parallel
 }  // namespace mindspore

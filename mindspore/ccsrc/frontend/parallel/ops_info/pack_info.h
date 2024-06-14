@@ -46,11 +46,19 @@ class StackInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-
- private:
   size_t axis_ = 0;
 };
 
+class StackExtInfo : public StackInfo {
+ public:
+  StackExtInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+               const PrimitiveAttrs &attrs)
+      : StackInfo(operator_name, inputs_shape, outputs_shape, attrs) {}
+  ~StackExtInfo() override = default;
+
+ protected:
+  Status GetAttrs() override;
+};
 using PackInfoPtr = std::shared_ptr<StackInfo>;
 }  // namespace parallel
 }  // namespace mindspore

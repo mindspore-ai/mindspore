@@ -21,6 +21,7 @@ from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
 from mindspore.nn import Dense, Flatten
+from mindspore.ops.auto_generate import StackExt
 
 
 def setup_function():
@@ -128,6 +129,19 @@ class PackConstantNet2(nn.Cell):
         x = self.mul(x1, x2)
         x = self.dense(x)
         return x
+
+class StackExtNet1(nn.Cell):
+    def __init__(self, weight1, weight2, axis=0, strategy1=None, strategy2=None):
+        super(StackExtNet1, self).__init__()
+        self.pack = StackExt(axis).shard(strategy1)
+        self.mul = P.Mul().shard(strategy2)
+        self.weight1 = Parameter(weight1, "w1")
+        self.weight2 = Parameter(weight2, "w2")
+
+    def construct(self, x):
+        out = self.mul(x, self.weight1)
+        out = self.pack([out, self.weight2])
+        return out
 
 
 _w1 = Tensor(np.ones([48, 64]), dtype=ms.float32)
@@ -300,3 +314,42 @@ def test_pack_auto_constant():
     net = PackConstantNet1(dense_in_channel=64, dense_out_channel=4, axis=0, shape=(8, 8),
                            strategy=((8, 1), (8, 1), (8, 1), (8, 1), (8, 1), (8, 1), (8, 1), (8, 1)))
     compile_net_con(net)
+
+
+def test_stack_ext_output():
+    """
+    Feature: test stack ext
+    Description: semi auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((4, 2), (4, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = StackExtNet1(_w1, _w2, 0, strategy1, strategy2)
+    compile_net1(net)
+
+
+def test_stack_ext_output_axis1():
+    """
+    Feature: test stack ext
+    Description: semi auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((4, 2), (4, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = StackExtNet1(_w1, _w2, 1, strategy1, strategy2)
+    compile_net1(net)
+
+
+def test_stack_ext_output_no_full_split():
+    """
+    Feature: test stack ext
+    Description: semi auto parallel
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((2, 2), (2, 2))
+    strategy2 = ((4, 2), (4, 2))
+    net = StackExtNet1(_w1, _w2, 0, strategy1, strategy2)
+    compile_net1(net)

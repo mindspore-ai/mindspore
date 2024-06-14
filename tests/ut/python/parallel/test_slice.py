@@ -20,6 +20,7 @@ from mindspore import context, Tensor, Parameter
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell, TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
+from mindspore.ops.auto_generate import SliceExt
 
 
 def setup_function():
@@ -59,6 +60,23 @@ class Net2(Cell):
     def construct(self, x, b):
         out = self.mul(x, self.weight2)
         out = self.slice(out, self.begin, self.end)
+        return out
+
+
+class NetSliceExt(Cell):
+    def __init__(self, weight2, dim, start, end, step, strategy1=None, strategy2=None):
+        super().__init__()
+        self.mul = P.Mul().shard(strategy1)
+        self.slice = SliceExt().shard(strategy2)
+        self.weight2 = Parameter(weight2, name="w2")
+        self.dim = dim
+        self.start = start
+        self.end = end
+        self.step = step
+
+    def construct(self, x, b):
+        out = self.mul(x, self.weight2)
+        out = self.slice(out, self.dim, self.start, self.end, self.step)
         return out
 
 
@@ -133,13 +151,28 @@ def test_stridedslice_no_strategy():
     compile_net(net)
 
 
-def test_slice_auto_parallel():
+def test_slice_ext_no_fully_fetch_split_error():
     """
-    Feature: test auto parallel
-    Description: auto parallel
-    Expectation: compile success
+    Feature: distribute operator SliceExt in auto parallel.
+    Description: matmul-sliceext net with strategy in semi auto parallel.
+    Expectation: the dim split can not be slice.
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
-                                      global_rank=0)
-    net = Net2(_w2, (0, 0, 0), (32, 64, 1))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 8, 1), (1, 8, 1))
+    strategy2 = ((1, 8, 1),)
+    net = NetSliceExt(_w2, 1, 0, 8, 1, strategy1, strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net)
+
+
+def test_slice_ext():
+    """
+    Feature: distribute operator SliceExt in auto parallel.
+    Description: matmul-sliceext net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 8, 1), (1, 8, 1))
+    strategy2 = ((1, 8, 1),)
+    net = NetSliceExt(_w2, 0, 64, 128, 1, strategy1, strategy2)
     compile_net(net)
