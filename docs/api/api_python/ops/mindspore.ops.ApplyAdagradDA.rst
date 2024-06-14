@@ -3,9 +3,9 @@ mindspore.ops.ApplyAdagradDA
 
 .. py:class:: mindspore.ops.ApplyAdagradDA(use_locking=False)
 
-    ¸ù¾İAdagradËã·¨¸üĞÂ `var` ¡£
+    æ ¹æ®Adagradç®—æ³•æ›´æ–° `var` ã€‚
 
-    AdagradËã·¨ÔÚÂÛÎÄ `Adaptive Subgradient Methods for Online Learning and Stochastic Optimization <http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf>`_ ÖĞÌá³ö¡£
+    Adagradç®—æ³•åœ¨è®ºæ–‡ `Adaptive Subgradient Methods for Online Learning and Stochastic Optimization <http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf>`_ ä¸­æå‡ºã€‚
 
     .. math::
         \begin{array}{ll} \\
@@ -21,34 +21,34 @@ mindspore.ops.ApplyAdagradDA
             var = \frac{ x\_value }{ y\_value }
         \end{array}
 
-    `var` ¡¢ `gradient_accumulator` ¡¢ `gradient_squared_accumulator` ºÍ `grad` µÄÊäÈë×ñÑ­ÒşÊ½ÀàĞÍ×ª»»¹æÔò£¬Ê¹Êı¾İÀàĞÍÒ»ÖÂ¡£
-    Èç¹ûËüÃÇ¾ßÓĞ²»Í¬µÄÊı¾İÀàĞÍ£¬Ôò½ÏµÍ¾«¶ÈµÄÊı¾İÀàĞÍ½«×ª»»ÎªÏà¶Ô×î¸ß¾«¶ÈµÄÊı¾İÀàĞÍ¡£
+    `var` ã€ `gradient_accumulator` ã€ `gradient_squared_accumulator` å’Œ `grad` çš„è¾“å…¥éµå¾ªéšå¼ç±»å‹è½¬æ¢è§„åˆ™ï¼Œä½¿æ•°æ®ç±»å‹ä¸€è‡´ã€‚
+    å¦‚æœå®ƒä»¬å…·æœ‰ä¸åŒçš„æ•°æ®ç±»å‹ï¼Œåˆ™è¾ƒä½ç²¾åº¦çš„æ•°æ®ç±»å‹å°†è½¬æ¢ä¸ºç›¸å¯¹æœ€é«˜ç²¾åº¦çš„æ•°æ®ç±»å‹ã€‚
 
-    ²ÎÊı£º
-        - **use_locking** (bool) - Èç¹ûÎª ``True`` £¬ `var` ºÍ `gradient_accumulator` µÄ¸üĞÂ½«ÊÜµ½ËøµÄ±£»¤¡£·ñÔò£¬ĞĞÎªÎªÎ´¶¨Òå£¬ºÜ¿ÉÄÜ³öÏÖ½ÏÉÙµÄ³åÍ»¡£Ä¬ÈÏÖµÎª ``False`` ¡£
+    å‚æ•°ï¼š
+        - **use_locking** (bool) - å¦‚æœä¸º ``True`` ï¼Œ `var` å’Œ `gradient_accumulator` çš„æ›´æ–°å°†å—åˆ°é”çš„ä¿æŠ¤ã€‚å¦åˆ™ï¼Œè¡Œä¸ºä¸ºæœªå®šä¹‰ï¼Œå¾ˆå¯èƒ½å‡ºç°è¾ƒå°‘çš„å†²çªã€‚é»˜è®¤å€¼ä¸º ``False`` ã€‚
 
-    ÊäÈë£º
-        - **var** (Parameter) - Òª¸üĞÂµÄ±äÁ¿¡£Êı¾İÀàĞÍ±ØĞëÎªfloat16»òfloat32¡£shape£º :math:`(N, *)` £¬ÆäÖĞ :math:`*` ±íÊ¾ÈÎÒâÊıÁ¿µÄ¸½¼ÓÎ¬¶È¡£
-        - **gradient_accumulator** (Parameter) - Òª¸üĞÂÀÛ»ıµÄÌİ¶È£¬Îª¹«Ê½ÖĞµÄ :math:`grad\_accum` ¡£shape±ØĞëÓë `var` ÏàÍ¬¡£
-        - **gradient_squared_accumulator** (Parameter) - Òª¸üĞÂµÄÆ½·½ÀÛ»ıµÄÌİ¶È£¬ Îª¹«Ê½ÖĞµÄ :math:`grad\_squared\_accum` ¡£shape±ØĞëÓë `var` ÏàÍ¬¡£
-        - **grad** (Tensor) - Ìİ¶È£¬ÎªÒ»¸öTensor¡£shape±ØĞëÓë `var` ÏàÍ¬¡£
-        - **lr** ([Number, Tensor]) - Ñ§Ï°ÂÊ¡£±ØĞëÊÇScalar¡£Êı¾İÀàĞÍÎªfloat32»òfloat16¡£
-        - **l1** ([Number, Tensor]) - L1ÕıÔò»¯¡£±ØĞëÊÇScalar¡£Êı¾İÀàĞÍÎªfloat32»òfloat16¡£
-        - **l2** ([Number, Tensor]) - L2ÕıÔò»¯¡£±ØĞëÊÇScalar¡£Êı¾İÀàĞÍÎªfloat32»òfloat16¡£
-        - **global_step** ([Number, Tensor]) - ÑµÁ·²½ÖèµÄ±àºÅ¡£±ØĞëÊÇScalar¡£Êı¾İÀàĞÍÎªint32»òint64¡£
+    è¾“å…¥ï¼š
+        - **var** (Parameter) - è¦æ›´æ–°çš„å˜é‡ã€‚æ•°æ®ç±»å‹å¿…é¡»ä¸ºfloat16æˆ–float32ã€‚shapeï¼š :math:`(N, *)` ï¼Œå…¶ä¸­ :math:`*` è¡¨ç¤ºä»»æ„æ•°é‡çš„é™„åŠ ç»´åº¦ã€‚
+        - **gradient_accumulator** (Parameter) - è¦æ›´æ–°ç´¯ç§¯çš„æ¢¯åº¦ï¼Œä¸ºå…¬å¼ä¸­çš„ :math:`grad\_accum` ã€‚shapeå¿…é¡»ä¸ `var` ç›¸åŒã€‚
+        - **gradient_squared_accumulator** (Parameter) - è¦æ›´æ–°çš„å¹³æ–¹ç´¯ç§¯çš„æ¢¯åº¦ï¼Œ ä¸ºå…¬å¼ä¸­çš„ :math:`grad\_squared\_accum` ã€‚shapeå¿…é¡»ä¸ `var` ç›¸åŒã€‚
+        - **grad** (Tensor) - æ¢¯åº¦ï¼Œä¸ºä¸€ä¸ªTensorã€‚shapeå¿…é¡»ä¸ `var` ç›¸åŒã€‚
+        - **lr** ([Number, Tensor]) - å­¦ä¹ ç‡ã€‚å¿…é¡»æ˜¯Scalarã€‚æ•°æ®ç±»å‹ä¸ºfloat32æˆ–float16ã€‚
+        - **l1** ([Number, Tensor]) - L1æ­£åˆ™åŒ–ã€‚å¿…é¡»æ˜¯Scalarã€‚æ•°æ®ç±»å‹ä¸ºfloat32æˆ–float16ã€‚
+        - **l2** ([Number, Tensor]) - L2æ­£åˆ™åŒ–ã€‚å¿…é¡»æ˜¯Scalarã€‚æ•°æ®ç±»å‹ä¸ºfloat32æˆ–float16ã€‚
+        - **global_step** ([Number, Tensor]) - è®­ç»ƒæ­¥éª¤çš„ç¼–å·ã€‚å¿…é¡»æ˜¯Scalarã€‚æ•°æ®ç±»å‹ä¸ºint32æˆ–int64ã€‚
 
-    Êä³ö£º
-        1¸öTensor×é³ÉµÄtuple£¬¸üĞÂºóµÄ²ÎÊı¡£
+    è¾“å‡ºï¼š
+        1ä¸ªTensorç»„æˆçš„tupleï¼Œæ›´æ–°åçš„å‚æ•°ã€‚
 
-        - **var** (Tensor) - shapeºÍÊı¾İÀàĞÍÓë `var` ÏàÍ¬¡£
+        - **var** (Tensor) - shapeå’Œæ•°æ®ç±»å‹ä¸ `var` ç›¸åŒã€‚
 
-    Òì³££º
-        - **TypeError** - Èç¹û `var` ¡¢ `gradient_accumulator` »ò `gradient_squared_accumulator` ²»ÊÇParameter¡£
-        - **TypeError** - Èç¹û `grad` ²»ÊÇ Tensor¡£
-        - **TypeError** - Èç¹û `lr` ¡¢ `l1` ¡¢ `l2` »òÕß `global_step` ¼È²»ÊÇÊıÖµĞÍÒ²²»ÊÇTensor¡£
-        - **TypeError** - Èç¹û `use_locking` ²»ÊÇbool¡£
-        - **TypeError** - Èç¹û `var` ¡¢ `gradient_accumulator` ¡¢ `gradient_squared_accumulator` ¡¢ `grad` ¡¢ `lr` ¡¢ `l1` »ò `l2` µÄÊı¾İÀàĞÍ¼È²»ÊÇfloat16Ò²²»ÊÇfloat32¡£ 
-        - **TypeError** - Èç¹û `gradient_accumulator` ¡¢ `gradient_squared_accumulator` ¡¢ `grad` Óë `var` µÄÊı¾İÀàĞÍ²»ÏàÍ¬¡£
-        - **TypeError** - Èç¹û `global_step` µÄÊı¾İÀàĞÍ²»ÊÇint32Ò²²»ÊÇint64¡£
-        - **ValueError** - Èç¹û `lr` ¡¢ `l1` ¡¢ `l2` ºÍ `global_step` µÄshape´óĞ¡²»Îª0¡£
-        - **TypeError** - Èç¹û `var` ¡¢ `gradient_accumulator` ¡¢ `gradient_squared_accumulator` ºÍ `grad` ²»Ö§³ÖÊı¾İÀàĞÍ×ª»»¡£
+    å¼‚å¸¸ï¼š
+        - **TypeError** - å¦‚æœ `var` ã€ `gradient_accumulator` æˆ– `gradient_squared_accumulator` ä¸æ˜¯Parameterã€‚
+        - **TypeError** - å¦‚æœ `grad` ä¸æ˜¯ Tensorã€‚
+        - **TypeError** - å¦‚æœ `lr` ã€ `l1` ã€ `l2` æˆ–è€… `global_step` æ—¢ä¸æ˜¯æ•°å€¼å‹ä¹Ÿä¸æ˜¯Tensorã€‚
+        - **TypeError** - å¦‚æœ `use_locking` ä¸æ˜¯boolã€‚
+        - **TypeError** - å¦‚æœ `var` ã€ `gradient_accumulator` ã€ `gradient_squared_accumulator` ã€ `grad` ã€ `lr` ã€ `l1` æˆ– `l2` çš„æ•°æ®ç±»å‹æ—¢ä¸æ˜¯float16ä¹Ÿä¸æ˜¯float32ã€‚ 
+        - **TypeError** - å¦‚æœ `gradient_accumulator` ã€ `gradient_squared_accumulator` ã€ `grad` ä¸ `var` çš„æ•°æ®ç±»å‹ä¸ç›¸åŒã€‚
+        - **TypeError** - å¦‚æœ `global_step` çš„æ•°æ®ç±»å‹ä¸æ˜¯int32ä¹Ÿä¸æ˜¯int64ã€‚
+        - **ValueError** - å¦‚æœ `lr` ã€ `l1` ã€ `l2` å’Œ `global_step` çš„shapeå¤§å°ä¸ä¸º0ã€‚
+        - **TypeError** - å¦‚æœ `var` ã€ `gradient_accumulator` ã€ `gradient_squared_accumulator` å’Œ `grad` ä¸æ”¯æŒæ•°æ®ç±»å‹è½¬æ¢ã€‚
