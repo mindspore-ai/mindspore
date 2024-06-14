@@ -97,7 +97,7 @@ Status BatchParallelInfo::InferTensorMap() {
   for (size_t i = 0; i < outputs_shape_.size(); i++) {
     Shape tensor_map_index;
     for (size_t j = 0; j < outputs_shape_[i].size(); ++j) {
-      if (i == 0 && j == 0) {
+      if (j == 0) {
         tensor_map_index.push_back(0);
       } else {
         tensor_map_index.push_back(MAP_NONE);

@@ -1,0 +1,16 @@
+topkrouter:
+    description: |
+      TopkRouter implementation in MOE.
+
+      Inputs:
+          - **x** (Tensor) - Input Tensor of 3D, Supporting types:[int32, int64]
+          - **capacity** (Int64) - The maximum number of tokens each expert can handle
+          - **expert_num** (Int64) - The number of expert.
+
+      Outputs:
+          tuple(Tensor), tuple of 2 tensors, `dispatch_index` and `combine_inex`.
+          - dispatch_index (Tensor) - Token ID processed by each expert.
+          - combine_index (Tensor) - The combine index of each token.
+
+      Supported Platforms:
+          ``Ascend``
