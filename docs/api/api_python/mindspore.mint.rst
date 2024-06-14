@@ -1,11 +1,8 @@
 mindspore.mint
 ===============
 
-mindspore.mint
----------------
-
 张量
----------
+---------------
 
 创建运算
 ^^^^^^^^^
@@ -37,7 +34,7 @@ mindspore.mint
     mindspore.mint.where
 
 随机采样
-^^^^^^^^^^
+---------------
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -48,9 +45,9 @@ mindspore.mint
     mindspore.mint.rand
 
 数学运算
----------
+---------------
 
-逐点运算
+逐元素运算
 ^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
@@ -82,6 +79,7 @@ Reduction运算
     :nosignatures:
     :template: classtemplate.rst
     
+    mindspore.mint.all
     mindspore.mint.any
     mindspore.mint.argmax
     mindspore.mint.max
@@ -91,7 +89,7 @@ Reduction运算
     mindspore.mint.sum
     mindspore.mint.unique
 
-对比运算
+比较运算
 ^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
@@ -107,17 +105,6 @@ Reduction运算
     mindspore.mint.sort
     mindspore.mint.topk
 
-其他运算
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. mscnplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.broadcast_to
-    mindspore.mint.flip
-
 BLAS和LAPACK运算
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -129,8 +116,30 @@ BLAS和LAPACK运算
     mindspore.mint.bmm
     mindspore.mint.matmul
 
+其他运算
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.broadcast_to
+    mindspore.mint.flip
+
 mindspore.mint.nn
-------------------
+-----------------
+
+卷积层
+^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.Fold
+    mindspore.mint.nn.Unfold
 
 Dropout层
 ^^^^^^^^^^^^^^^
@@ -142,22 +151,11 @@ Dropout层
 
     mindspore.mint.nn.Dropout
 
-卷积层
-^^^^^^^^^^^^^^^^^^^^
-
-.. mscnplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.nn.Fold
-    mindspore.mint.nn.Unfold
-
 mindspore.mint.nn.functional
------------------------------
+--------------------------------
 
 卷积函数
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -168,7 +166,7 @@ mindspore.mint.nn.functional
     mindspore.mint.nn.functional.unfold
 
 池化函数
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -178,7 +176,7 @@ mindspore.mint.nn.functional
     mindspore.mint.nn.functional.max_pool2d
 
 非线性激活函数
-^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -198,7 +196,7 @@ mindspore.mint.nn.functional
     mindspore.mint.nn.functional.tanh
 
 线性函数
-^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -208,7 +206,7 @@ mindspore.mint.nn.functional
     mindspore.mint.nn.functional.linear
 
 Dropout函数
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -218,7 +216,7 @@ Dropout函数
     mindspore.mint.nn.functional.dropout
 
 稀疏函数
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -228,7 +226,7 @@ Dropout函数
     mindspore.mint.one_hot
 
 Vision函数
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -239,6 +237,6 @@ Vision函数
     mindspore.mint.nn.functional.pad
 
 mindspore.mint.optim
----------------------
+-----------------------
 
 

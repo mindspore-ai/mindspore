@@ -1,11 +1,8 @@
 mindspore.mint
 ===============
 
-mindspore.mint
----------------
-
 Tensors
----------
+---------------
 
 Creation Operations
 ^^^^^^^^^^^^^^^^^^^^
@@ -37,7 +34,7 @@ Indexing, Slicing, Joining, Mutating Operations
     mindspore.mint.where
 
 Random Sampling
-^^^^^^^^^^^^^^^^
+-----------------
 
 .. msplatwarnautosummary::
     :toctree: mint
@@ -82,6 +79,7 @@ Reduction Operations
     :nosignatures:
     :template: classtemplate.rst
     
+    mindspore.mint.all
     mindspore.mint.any
     mindspore.mint.argmax
     mindspore.mint.max
@@ -107,17 +105,6 @@ Comparison Operations
     mindspore.mint.sort
     mindspore.mint.topk
 
-Other Operations
-^^^^^^^^^^^^^^^^^^^^^
-
-.. msplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.broadcast_to
-    mindspore.mint.flip
-
 BLAS and LAPACK Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -129,8 +116,30 @@ BLAS and LAPACK Operations
     mindspore.mint.bmm
     mindspore.mint.matmul
 
+Other Operations
+^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.broadcast_to
+    mindspore.mint.flip
+
 mindspore.mint.nn
-------------------
+---------------------
+
+Convolution Layers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.Fold
+    mindspore.mint.nn.Unfold
 
 Dropout Layers
 ^^^^^^^^^^^^^^^
@@ -142,22 +151,11 @@ Dropout Layers
 
     mindspore.mint.nn.Dropout
 
-Convolution Layers
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. msplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.nn.Fold
-    mindspore.mint.nn.Unfold
-
 mindspore.mint.nn.functional
------------------------------
+------------------------------
 
 Convolution Functions
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatwarnautosummary::
     :toctree: mint
@@ -168,7 +166,7 @@ Convolution Functions
     mindspore.mint.nn.functional.unfold
 
 Pooling Functions
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatwarnautosummary::
     :toctree: mint
@@ -178,7 +176,7 @@ Pooling Functions
     mindspore.mint.nn.functional.max_pool2d
 
 Non-linear activation Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatwarnautosummary::
     :toctree: mint
@@ -198,7 +196,7 @@ Non-linear activation Functions
     mindspore.mint.nn.functional.tanh
 
 Linear Functions
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatwarnautosummary::
     :toctree: mint
@@ -208,7 +206,7 @@ Linear Functions
     mindspore.mint.nn.functional.linear
 
 Dropout Functions
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatwarnautosummary::
     :toctree: mint
@@ -218,7 +216,7 @@ Dropout Functions
     mindspore.mint.nn.functional.dropout
 
 Sparse Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatwarnautosummary::
     :toctree: mint
@@ -228,7 +226,7 @@ Sparse Functions
     mindspore.mint.one_hot
 
 Vision Functions
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatwarnautosummary::
     :toctree: mint
@@ -239,6 +237,6 @@ Vision Functions
     mindspore.mint.nn.functional.pad
 
 mindspore.mint.optim
----------------------
+----------------------
 
 
