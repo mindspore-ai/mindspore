@@ -40,7 +40,7 @@ class DeprecatedInterface {
   virtual FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) {
     return nullptr;
   }
-  virtual void RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) {}
+  virtual bool RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) { return true; }
   virtual void ClearGraphWrapper() {}
   virtual void ClearOpAdapterMap() {}
   virtual void UnregisterExternalAllocator() {}
