@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 from __future__ import division
 
+import binascii
 import copy
 import json
 import os
@@ -30,6 +31,7 @@ from io import BytesIO
 import math
 import sys
 import time
+import google
 import numpy as np
 
 from mindspore.train.checkpoint_pb2 import Checkpoint
@@ -248,7 +250,7 @@ def _save_weight(checkpoint_dir, model_name, iteration, params):
         logger.warning(f"Checkpoint dir: '{checkpoint_dir}' is not existed.")
 
 
-def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_param_inc=False):
+def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_param_inc=False, crc_check=False):
     """Execute the process of saving checkpoint into file."""
     try:
         with _ckpt_mutex:
@@ -260,6 +262,7 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_
                 if enc_key is not None:
                     plain_data = BytesIO()
 
+                crc_num = 0
                 for name, value in data_list.items():
                     if name == "random_op":
                         _write_random_seed(name, value, f)
@@ -274,16 +277,16 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_
                         _offload_if_config(value[3])
                         continue
                     if value[1] == "str":
-                        _write_parameter_data(name, value, f, enc_key, plain_data)
+                        crc_num = _write_parameter_data(name, value, f, enc_key, plain_data, crc_num, crc_check)
                         continue
                     if isinstance(value[2], np.ndarray):
-                        _write_parameter_data(name, value, f, enc_key, plain_data)
+                        crc_num = _write_parameter_data(name, value, f, enc_key, plain_data, crc_num, crc_check)
                         continue
                     if isinstance(value[2], Tensor) and hasattr(value[2], "slice_num") and value[2].slice_num > 1:
                         _write_hugeparameter(name, value, f)
                         continue
 
-                    _write_parameter_bytes_data(name, value, f, enc_key, plain_data)
+                    crc_num = _write_parameter_bytes_data(name, value, f, enc_key, plain_data, crc_num, crc_check)
 
                 if enc_key is not None:
                     plain_data.seek(0)
@@ -292,6 +295,9 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_
                     while block_data:
                         f.write(_encrypt(block_data, len(block_data), enc_key, len(enc_key), enc_mode))
                         block_data = plain_data.read(max_block_size)
+
+                if crc_check:
+                    f.write('crc_num'.encode() + crc_num.to_bytes(10, byteorder='big'))
 
             os.chmod(ckpt_file_name, stat.S_IRUSR)
 
@@ -313,7 +319,7 @@ def _write_random_seed(name, value, f):
     f.write(checkpoint_list.SerializeToString())
 
 
-def _write_parameter_data(name, value, f, enc_key, plain_data):
+def _write_parameter_data(name, value, f, enc_key, plain_data, crc_num=0, crc_check=False):
     """Write parameter data into protobuf file."""
     data_size = value[2].nbytes / 1024
     if data_size > SLICE_SIZE:
@@ -332,12 +338,17 @@ def _write_parameter_data(name, value, f, enc_key, plain_data):
         param_tensor.tensor_content = param_slice.tobytes()
 
         if enc_key is None:
-            f.write(checkpoint_list.SerializeToString())
+            output_data = checkpoint_list.SerializeToString()
+            if crc_check:
+                crc_num = binascii.crc32(output_data, crc_num)
+            f.write(output_data)
         else:
             plain_data.write(checkpoint_list.SerializeToString())
 
+    return crc_num
 
-def _write_parameter_bytes_data(name, value, f, enc_key, plain_data):
+
+def _write_parameter_bytes_data(name, value, f, enc_key, plain_data, crc_num=0, crc_check=False):
     """Write parameter bytes data into protobuf file."""
     bytes_value = value[2].get_bytes()
     chunk_size = 1024 * SLICE_SIZE
@@ -352,9 +363,14 @@ def _write_parameter_bytes_data(name, value, f, enc_key, plain_data):
         param_tensor.tensor_content = bytes_value[i:i + chunk_size]
 
         if enc_key is None:
-            f.write(checkpoint_list.SerializeToString())
+            output_data = checkpoint_list.SerializeToString()
+            if crc_check:
+                crc_num = binascii.crc32(output_data, crc_num)
+            f.write(output_data)
         else:
             plain_data.write(checkpoint_list.SerializeToString())
+
+    return crc_num
 
 
 def _write_mapparameter(name, value, f, map_param_inc=False):
@@ -416,7 +432,8 @@ def _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name):
 
 
 def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
-                    async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM", choice_func=None, **kwargs):
+                    async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM", choice_func=None,
+                    crc_check=False, **kwargs):
     r"""
     Save checkpoint to a specified file.
 
@@ -441,6 +458,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                                  If returns ``True`` , the Parameter that matching the custom condition will be saved.
                                  If returns ``False`` , the Parameter that not matching the custom condition will not
                                  be saved. Default: ``None`` .
+        crc_check (bool) : Whether to perform crc32 calculation when saving checkpoint and save the calculation
+            result to the end of ckpt. Default: ``False`` .
         kwargs (dict): Configuration options dictionary.
 
     Raises:
@@ -480,6 +499,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     append_dict = _check_append_dict(append_dict)
     enc_key = Validator.check_isinstance('enc_key', enc_key, (type(None), bytes))
     enc_mode = Validator.check_isinstance('enc_mode', enc_mode, str)
+    crc_check = Validator.check_isinstance('crc_check', crc_check, bool)
     map_param_inc = kwargs.get('incremental', False)
     logger.info("Execute the process of saving checkpoint files.")
 
@@ -533,10 +553,11 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
 
     if async_save:
         data_copy = copy.deepcopy(data_list)
-        thr = Thread(target=_exec_save, args=(ckpt_file_name, data_copy, enc_key, enc_mode), name="asyn_save_ckpt")
+        thr = Thread(target=_exec_save, args=(ckpt_file_name, data_copy, enc_key, enc_mode, map_param_inc, crc_check),
+                     name="asyn_save_ckpt")
         thr.start()
     else:
-        _exec_save(ckpt_file_name, data_list, enc_key, enc_mode, map_param_inc)
+        _exec_save(ckpt_file_name, data_list, enc_key, enc_mode, map_param_inc, crc_check)
 
     logger.info("Saving checkpoint process is finished.")
 
@@ -1028,12 +1049,13 @@ def obfuscate_model(obf_config, **kwargs):
     obf_net = nn.GraphCell(obf_graph)
     if obf_random_seed != 0:
         append_y_tensor = Tensor(np.ones((1, 1)).astype(np.int32))
-        model_inputs += [append_y_tensor,]
+        model_inputs += [append_y_tensor]
     export(obf_net, *model_inputs, file_name=saved_path, file_format="MINDIR", **kwargs)
 
 
 def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None,
-                    dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None):
+                    dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None,
+                    crc_check=False):
     """
     Load checkpoint info from a specified file.
 
@@ -1064,6 +1086,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
             and the return value is a bool. If returns ``True`` , the Parameter
             that matches the custom condition will be loaded. If returns ``False`` , the Parameter that
             matches the custom condition will be removed. Default: ``None`` .
+        crc_check (bool) : Whether to perform crc32 validation when loading checkpoint. Default: ``False`` .
 
     Returns:
         Dict, key is parameter name, value is a Parameter or string. When the `append_dict` parameter of
@@ -1113,8 +1136,9 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     filter_prefix = _check_prefix(filter_prefix)
     dec_key = Validator.check_isinstance('dec_key', dec_key, (type(None), bytes))
     dec_mode = Validator.check_isinstance('dec_mode', dec_mode, str)
+    crc_check = Validator.check_isinstance('crc_check', crc_check, bool)
     logger.info("Execute the process of loading checkpoint files.")
-    checkpoint_list = _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode)
+    checkpoint_list = _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode, crc_check)
 
     parameter_dict = {}
     try:
@@ -1338,7 +1362,7 @@ def _check_prefix(prefix):
     return prefix
 
 
-def _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode):
+def _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode, crc_check):
     """Parse checkpoint protobuf."""
     checkpoint_list = Checkpoint()
     try:
@@ -1349,6 +1373,17 @@ def _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode):
             pb_content = _decrypt(ckpt_file_name, dec_key, len(dec_key), dec_mode)
             if pb_content is None:
                 raise ValueError("For 'load_checkpoint', failed to decrypt the checkpoint file.")
+        if crc_check and b"crc_num" not in pb_content:
+            logger.warning("For 'load_checkpoint', the ckpt file do not contain the crc code, please check the file.")
+        if b"crc_num" in pb_content:
+            crc_num_bytes = pb_content[-10:]
+            pb_content = pb_content[:-17]
+            if crc_check:
+                crc_num = int.from_bytes(crc_num_bytes, byteorder='big')
+                cal_crc_num = binascii.crc32(pb_content, 0)
+                if cal_crc_num != crc_num:
+                    raise ValueError("For 'load_checkpoint', the crc check is failed, "
+                                     "please check whether the ckpt file is damaged.")
         checkpoint_list.ParseFromString(pb_content)
     except BaseException as e:
         if _is_cipher_file(ckpt_file_name):
@@ -2229,6 +2264,43 @@ def _save_dataset_to_mindir(model, dataset):
             model.preprocessor.op[-1].op_type = json.dumps(op['op_type'])
             model.preprocessor.op[-1].operations = json.dumps(op['operations'])
             model.preprocessor.op[-1].offload = op['offload'] if 'offload' in op.keys() else False
+
+
+def check_checkpoint(ckpt_file_name):
+    """
+    Check checkpoint is valid.
+
+    Args:
+        ckpt_file_name (str): Checkpoint file name.
+
+    Returns:
+        Bool, whether the checkpoint is valid.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
+        >>> check_result = ms.check_checkpoint(ckpt_file_name)
+        >>> print(check_result)
+        True
+    """
+    checkpoint_list = Checkpoint()
+    with _ckpt_fs.open(ckpt_file_name, *_ckpt_fs.open_args) as f:
+        pb_content = f.read()
+        if b"crc_num" in pb_content:
+            crc_num_bytes = pb_content[-10:]
+            pb_content = pb_content[:-17]
+            crc_num = int.from_bytes(crc_num_bytes, byteorder='big')
+            cal_crc_num = binascii.crc32(pb_content, 0)
+            if cal_crc_num != crc_num:
+                logger.warning("For 'check_checkpoint', the ckpt crc check is failed.")
+                return False
+        try:
+            checkpoint_list.ParseFromString(pb_content)
+        except google.protobuf.message.DecodeError as e:
+            logger.warning("For 'check_checkpoint', the ckpt parse is failed.")
+            logger.warning(e)
+            return False
+        return True
 
 
 def parse_print(print_file_name):

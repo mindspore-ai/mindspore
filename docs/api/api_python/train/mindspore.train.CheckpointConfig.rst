@@ -20,6 +20,7 @@ mindspore.train.CheckpointConfig
         - **enc_key** (Union[None, bytes]) - 用于加密的字节类型key。如果值为None，则不需要加密。默认值： ``None`` 。
         - **enc_mode** (str) - 仅当 `enc_key` 不设为None时，该参数有效。指定了加密模式，目前支持AES-GCM，AES-CBC和SM4-CBC。默认值： ``'AES-GCM'`` 。
         - **exception_save** (bool) - 当有异常发生时，是否保存当前checkpoint文件。默认值： ``False`` 。
+        - **crc_check** (bool) - 是否在保存checkpoint时进行crc32计算，并将计算结果保存到ckpt尾部。默认值： ``False`` 。
         - **kwargs** (dict) - 配置选项字典。
 
     异常：
@@ -40,6 +41,14 @@ mindspore.train.CheckpointConfig
 
         返回：
             bool: 是否异步保存checkpoint。
+
+    .. py:method:: crc_check
+        :property:
+
+        获取是否打开crc校验。
+
+        返回：
+            bool: 是否打开crc校验。
 
     .. py:method:: enc_key
         :property:
