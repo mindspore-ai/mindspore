@@ -147,6 +147,25 @@ def merge_files(origin_dir, merged_file_path, file_format):
     merge_files_to_one_file(op_yaml_file_names, merged_file_path)
 
 
+def merge_files_append(origin_dir, merged_file_path, file_format):
+    """
+    Merge multiple files into one file.
+    origin_dir: indicates the origin file directory.
+    merged_file_path: indicates the merged file path.
+    file_format: indicates the format of regular matching.
+    Files whose names meet the regular matching in 'origin_dir' directory will be merged into one file.
+    """
+    file_paths = glob.glob(os.path.join(origin_dir, file_format))
+    merged_content = ''
+    file_paths.sort()
+    for file_path in file_paths:
+        with open(file_path, 'r') as file:
+            merged_content += file.read()
+            merged_content += '\n'
+    with open(merged_file_path, 'a') as file:
+        file.write(merged_content)
+
+
 def safe_load_yaml(yaml_file_path):
     """
     Load yaml dictionary from file.

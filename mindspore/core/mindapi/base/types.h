@@ -104,6 +104,7 @@ enum Reduction : int64_t {
   REDUCTION_SUM = 0,
   MEAN = 1,
   NONE = 2,
+  UPDATE = 3,
 };
 
 enum PadMode : int64_t {

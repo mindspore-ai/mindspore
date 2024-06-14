@@ -1,0 +1,31 @@
+kv_cache_scatter_update:
+  description: |
+    Update var with updates and indices along sequence axis.
+
+    Args:
+        var (Tensor): 4-D tensor, the target tensor.
+        indices (Tensor): 1-D tensor, the index tensor.
+        updates (Tensor): 4-D tensor, the tensor doing the update operation.
+        axis (Int): Which axis to scatter, can be '-1' and '-2'.
+        reduce (String): Scatter mode, default to string "none" and can be "update".
+
+    Returns:
+        Tensor, has the same data type and shape as original `var`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore.ops.operations._infer_ops import KVCacheScatterUpdate
+        >>> kv_cache_scatter_update_op = KVCacheScatterUpdate()
+        >>> var_shape = [1, 5, 128, 4096]
+        >>> var = np.random.uniform(low=1, high=10, size=var_shape).astype(np.float32)
+        >>> indices_shape = [1]
+        >>> indices = np.random.randint(low=1, high=10, size=indices_shape).astype(np.int64)
+        >>> updates_shape = [1, 5, 128, 1]
+        >>> updates = np.random.uniform(low=1, high=10, size=updates_shape).astype(np.float32)
+        >>> output = kv_cache_scatter_update_op(Tensor(var), Tensor(indices), Tensor(updates), -1, 'update')
+        >>> print(output.shape)
