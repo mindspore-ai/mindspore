@@ -143,7 +143,6 @@ def test_griffin_lim_pipeline_invalid_param_range():
             _ = item["multi_dimensional_data"]
 
 
-@pytest.mark.skip(reason="segmentation fault")
 def test_griffin_lim_pipeline_invalid_param_constraint():
     """
     Feature: GriffinLim
