@@ -1,4 +1,4 @@
-index_select_ext:
+index_select:
     description: |
         Generates a new Tensor that accesses the values of `input` along the specified `dim` dimension
         using the indices specified in `index`. The new Tensor has the same number of dimensions as `input`,

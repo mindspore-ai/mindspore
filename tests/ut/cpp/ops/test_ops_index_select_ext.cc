@@ -20,14 +20,14 @@
 #include "common/common_test.h"
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
-#include "ops/ops_func_impl/index_select_ext.h"
+#include "ops/ops_func_impl/index_select.h"
 #include "ops/test_ops.h"
 #include "ops/test_ops_cmp_utils.h"
 #include "ops/test_value_utils.h"
 
 namespace mindspore {
 namespace ops {
-struct IndexSelectExtOpParams {
+struct IndexSelectOpParams {
   ShapeVector input_shape;
   TypePtr input_type;
   ValuePtr axis;
@@ -37,10 +37,10 @@ struct IndexSelectExtOpParams {
   TypePtr output_type;
 };
 
-class TestIndexSelectExt : public TestOps, public testing::WithParamInterface<IndexSelectExtOpParams> {};
+class TestIndexSelect : public TestOps, public testing::WithParamInterface<IndexSelectOpParams> {};
 
-TEST_P(TestIndexSelectExt, dyn_shape) {
-  auto primitive = std::make_shared<Primitive>("IndexSelectExt");
+TEST_P(TestIndexSelect, dyn_shape) {
+  auto primitive = std::make_shared<Primitive>("IndexSelect");
   ASSERT_NE(primitive, nullptr);
   const auto &param = GetParam();
   auto input = std::make_shared<abstract::AbstractTensor>(param.input_type, param.input_shape);
@@ -51,7 +51,7 @@ TEST_P(TestIndexSelectExt, dyn_shape) {
   ASSERT_NE(axis, nullptr);
 
   std::vector<abstract::AbstractBasePtr> input_args{std::move(input), std::move(axis), std::move(index)};
-  auto infer_impl = std::make_shared<IndexSelectExtFuncImpl>();
+  auto infer_impl = std::make_shared<IndexSelectFuncImpl>();
   ASSERT_NE(infer_impl, nullptr);
   auto infer_shape = infer_impl->InferShape(primitive, input_args);
   ASSERT_NE(infer_shape, nullptr);
@@ -67,20 +67,20 @@ TEST_P(TestIndexSelectExt, dyn_shape) {
   TypeCompare(infer_type, expect_type);
 }
 
-INSTANTIATE_TEST_CASE_P(TestIndexSelectExtGroup, TestIndexSelectExt,
+INSTANTIATE_TEST_CASE_P(TestIndexSelectGroup, TestIndexSelect,
   testing::Values(
-    IndexSelectExtOpParams{{2, 2, 3}, kFloat32, CreateScalar<int64_t>(-1), {4}, kInt64, {2, 2, 4}, kFloat32},
-    IndexSelectExtOpParams{{2, 2, -1}, kFloat32, CreateScalar<int64_t>(-1), {4}, kInt64, {2, 2, 4}, kFloat32},
-    IndexSelectExtOpParams{{-1, -1, -1}, kFloat32, CreateScalar<int64_t>(-1), {4}, kInt64, {-1, -1, 4}, kFloat32},
-    IndexSelectExtOpParams{{-2}, kFloat32, CreateScalar<int64_t>(-1), {4}, kInt64, {-2}, kFloat32},
-    IndexSelectExtOpParams{{2, 2, 3}, kFloat32, CreateScalar<int64_t>(-1), {-1}, kInt64, {2, 2, -1}, kFloat32},
-    IndexSelectExtOpParams{{2, 2, 3}, kFloat32, CreateScalar<int64_t>(-1), {-2}, kInt64, {2, 2, -1}, kFloat32},
-    IndexSelectExtOpParams{{-2}, kFloat32, CreateScalar<int64_t>(-1), {-1}, kInt64, {-2}, kFloat32},
-    IndexSelectExtOpParams{{2, 2, 3}, kFloat32, kValueAny, {4}, kInt64, {-1, -1, -1}, kFloat32},
-    IndexSelectExtOpParams{{-1, -1, -1}, kFloat32, kValueAny, {4}, kInt64, {-1, -1, -1}, kFloat32},
-    IndexSelectExtOpParams{{-2}, kFloat32, kValueAny, {4}, kInt64, {-2}, kFloat32},
-    IndexSelectExtOpParams{{2, 2, 3}, kFloat32, kValueAny, {-1}, kInt64, {-1, -1, -1}, kFloat32},
-    IndexSelectExtOpParams{{2, 2, 3}, kFloat32, kValueAny, {-2}, kInt64, {-1, -1, -1}, kFloat32}
+    IndexSelectOpParams{{2, 2, 3}, kFloat32, CreateScalar<int64_t>(-1), {4}, kInt64, {2, 2, 4}, kFloat32},
+    IndexSelectOpParams{{2, 2, -1}, kFloat32, CreateScalar<int64_t>(-1), {4}, kInt64, {2, 2, 4}, kFloat32},
+    IndexSelectOpParams{{-1, -1, -1}, kFloat32, CreateScalar<int64_t>(-1), {4}, kInt64, {-1, -1, 4}, kFloat32},
+    IndexSelectOpParams{{-2}, kFloat32, CreateScalar<int64_t>(-1), {4}, kInt64, {-2}, kFloat32},
+    IndexSelectOpParams{{2, 2, 3}, kFloat32, CreateScalar<int64_t>(-1), {-1}, kInt64, {2, 2, -1}, kFloat32},
+    IndexSelectOpParams{{2, 2, 3}, kFloat32, CreateScalar<int64_t>(-1), {-2}, kInt64, {2, 2, -1}, kFloat32},
+    IndexSelectOpParams{{-2}, kFloat32, CreateScalar<int64_t>(-1), {-1}, kInt64, {-2}, kFloat32},
+    IndexSelectOpParams{{2, 2, 3}, kFloat32, kValueAny, {4}, kInt64, {-1, -1, -1}, kFloat32},
+    IndexSelectOpParams{{-1, -1, -1}, kFloat32, kValueAny, {4}, kInt64, {-1, -1, -1}, kFloat32},
+    IndexSelectOpParams{{-2}, kFloat32, kValueAny, {4}, kInt64, {-2}, kFloat32},
+    IndexSelectOpParams{{2, 2, 3}, kFloat32, kValueAny, {-1}, kInt64, {-1, -1, -1}, kFloat32},
+    IndexSelectOpParams{{2, 2, 3}, kFloat32, kValueAny, {-2}, kInt64, {-1, -1, -1}, kFloat32}
   ));
 }  // namespace ops
 }  // namespace mindspore
