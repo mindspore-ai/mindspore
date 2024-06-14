@@ -22,35 +22,32 @@ from mindspore.profiler.parser.ascend_analysis.function_event import CANNEvent
 class MsprofTimelineParser:
     """Msprof timeline file parser."""
 
-    ACL_TO_NPU = "acl_to_npu"
-    START_FLOW = "s"
-    END_FLOW = "f"
-    TIMELINE = "timeline"
-
     def __init__(self, msprof_data: List):
         self.timeline_data = msprof_data
 
     def get_acl_to_npu_data(self):
         """Get all the acl to npu flow events."""
         flow_start_dict, flow_end_dict = {}, {}
-        cann_event_list: List[CANNEvent] = []
+        x_event_list, other_event_json = [], []
         for data in self.timeline_data:
             cann_event = CANNEvent(data)
-            cann_event_list.append(cann_event)
-            if cann_event.is_flow_start_event():
-                flow_start_dict[cann_event.id] = (cann_event.ts, cann_event.tid)
-            elif cann_event.is_flow_end_event():
-                flow_end_dict[cann_event.unique_id] = cann_event.id
-        acl_to_npu_dict = defaultdict(list)
-        other_trace_data = []
-        for cann_event in cann_event_list:
-            if not cann_event.is_x_event():
-                other_trace_data.append(cann_event.to_json())
-                continue
-            corr_id = flow_end_dict.get(cann_event.unique_id)
-            acl_ts_tid = flow_start_dict.get(corr_id)
-            if corr_id is not None and acl_ts_tid is not None:
-                acl_to_npu_dict[acl_ts_tid].append(cann_event)
+            if cann_event.is_x_event():
+                x_event_list.append(cann_event)
             else:
-                other_trace_data.append(cann_event.to_json())
-        return acl_to_npu_dict, other_trace_data
+                other_event_json.append(cann_event.to_json())
+
+            if cann_event.is_flow_start_event():
+                flow_start_dict[cann_event.id] = (cann_event.tid, cann_event.ts)
+            elif cann_event.is_flow_end_event():
+                flow_end_dict[(cann_event.pid, cann_event.tid, cann_event.ts)] = cann_event.id
+        start_flow_to_npu_dict = defaultdict(list)
+        device_data_without_flow_json = []
+        for cann_event in x_event_list:
+            flow_id = flow_end_dict.get((cann_event.pid, cann_event.tid, cann_event.ts))
+            start_flow_info = flow_start_dict.get(flow_id)
+            if flow_id is not None and start_flow_info is not None:
+                start_flow_to_npu_dict[start_flow_info].append(cann_event)
+            else:
+                device_data_without_flow_json.append(cann_event.to_json())
+
+        return start_flow_to_npu_dict, device_data_without_flow_json + other_event_json

@@ -14,12 +14,9 @@
 # ============================================================================
 """Profiler file manager"""
 import csv
-import json
 import os.path
-from typing import List
 
 from mindspore import log as logger
-from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 from mindspore.profiler.parser.ascend_analysis.constant import Constant
 
 
@@ -52,30 +49,6 @@ class FileManager:
                 return file.read()
         except Exception as err:
             raise RuntimeError(f"Failed to read file: {path}") from err
-
-    @classmethod
-    def make_dir_safety(cls, dir_path: str):
-        """Make directory with least authority"""
-        dir_path = validate_and_normalize_path(dir_path)
-
-        if os.path.exists(dir_path):
-            return
-        try:
-            os.makedirs(dir_path, mode=cls.DATA_DIR_AUTHORITY, exist_ok=True)
-        except Exception as err:
-            msg = f"Failed to make directory: {dir_path}"
-            raise RuntimeError(msg) from err
-
-    @classmethod
-    def create_json_file(cls, output_path: str, json_data: List, file_name: str) -> None:
-        """Create json file with least authority"""
-        if not json_data:
-            return
-        cls.make_dir_safety(output_path)
-        file_path = os.path.join(output_path, file_name)
-        flags = os.O_WRONLY | os.O_CREAT
-        with os.fdopen(os.open(file_path, flags, cls.DATA_FILE_AUTHORITY), 'w') as fp:
-            json.dump(json_data, fp, ensure_ascii=False)
 
     @classmethod
     def read_csv_file(cls, file_path: str) -> list:

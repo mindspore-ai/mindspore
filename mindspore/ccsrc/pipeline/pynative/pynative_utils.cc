@@ -2542,6 +2542,7 @@ void DispatchOp(const std::shared_ptr<runtime::AsyncTask> &task) {
     runtime::OpExecutor::GetInstance().WaitAll();
     task->Run();
   } else {
+    runtime::ProfilerAnalyzer::GetInstance().RecordFlowData(task->task_id());
     runtime::Pipeline::Get().frontend_stage()->Push(task);
   }
 }

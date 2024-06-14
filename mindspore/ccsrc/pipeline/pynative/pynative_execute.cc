@@ -94,8 +94,9 @@ void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info)
 }
 
 py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
-  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args, true);
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRunOp,
+                                     op_run_info->base_op_run_info.op_name, false, true);
   SetCallbackForInputTensor(op_run_info->op_grad_info->input_value);
 
   StoreAsyncStatus(op_run_info);
