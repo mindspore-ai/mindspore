@@ -1,7 +1,7 @@
 mindspore.train.CheckpointConfig
 ================================
 
-.. py:class:: mindspore.train.CheckpointConfig(save_checkpoint_steps=1, save_checkpoint_seconds=0, keep_checkpoint_max=5, keep_checkpoint_per_n_minutes=0, integrated_save=True, async_save=False, saved_network=None, append_info=None, enc_key=None, enc_mode='AES-GCM', exception_save=False, **kwargs)
+.. py:class:: mindspore.train.CheckpointConfig(save_checkpoint_steps=1, save_checkpoint_seconds=0, keep_checkpoint_max=5, keep_checkpoint_per_n_minutes=0, integrated_save=True, async_save=False, saved_network=None, append_info=None, enc_key=None, enc_mode='AES-GCM', exception_save=False, crc_check=False, **kwargs)
 
     保存checkpoint时的配置策略。
 
@@ -45,10 +45,10 @@ mindspore.train.CheckpointConfig
     .. py:method:: crc_check
         :property:
 
-        获取是否打开crc校验。
+        获取是否启动crc校验。
 
         返回：
-            bool: 是否打开crc校验。
+            bool: 是否启动crc校验。
 
     .. py:method:: enc_key
         :property:

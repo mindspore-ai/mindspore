@@ -9,4 +9,4 @@ mindspore.check_checkpoint
         - **ckpt_file_name** (str) - checkpoint的文件名称。
 
     返回：
-        Bool，checkpoint文件是否合法。
+        bool，checkpoint文件是否合法。
