@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr int kSearchSortedInputsNum = 2;
+constexpr int kSearchSortedInputsNum = 5;
 constexpr int kSearchSortedOutputsNum = 1;
 constexpr size_t kSearchSortedIndex0 = 0;
 constexpr size_t kSearchSortedIndex1 = 1;
@@ -43,18 +43,16 @@ bool SearchSortedGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   sequence_per_size_ = abstract::TypeIdSize(inputs[0]->dtype_id());
   value_per_size_ = abstract::TypeIdSize(inputs[1]->dtype_id());
   unit_output_size_ = abstract::TypeIdSize(outputs[0]->dtype_id());
-  right = GetValue<bool>(primitive_->GetAttr("right"));
+  right = inputs[4]->GetValueWithCheck<bool>();
   return true;
 }
 
 int SearchSortedGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
-  for (const auto &input : inputs) {
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
+  if (!IsValidShape(inputs[0]->GetShapeVector()) || !IsValidShape(inputs[1]->GetShapeVector())) {
+    return KRET_UNKNOWN_SHAPE;
   }
+
   ResetResource();
   std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
                                                            outputs.at(kIndex0)->GetDeviceShapeVector().end());
@@ -131,49 +129,125 @@ bool SearchSortedGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &i
 template <typename S, typename T>
 void SearchSortedGpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &outputs) {
-  constexpr size_t kInputSize = 2;
-  constexpr size_t kOutputSize = 1;
-  if (inputs.size() != kInputSize) {
-    MS_LOG(ERROR) << "Input number is: " << inputs.size() << ", but SearchSorted needs" << kInputSize << " inputs.";
+  if (inputs.size() != kSearchSortedInputsNum) {
+    MS_LOG(ERROR) << "Input number is: " << inputs.size() << ", but SearchSorted needs" << kSearchSortedInputsNum
+                  << " inputs.";
   }
   if (outputs[0]->size() / sizeof(T) != inputs[1]->size() / sizeof(S)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the dimension of `v` and output must be equal, but got the dimension of `v` "
                   << inputs[1]->size() << " and the dimension of output " << outputs[0]->size();
   }
-  if (outputs.size() != kOutputSize) {
-    MS_LOG(ERROR) << "Output number is " << outputs.size() << ", but SearchSorted needs " << kOutputSize << " outputs";
+  if (outputs.size() != kSearchSortedOutputsNum) {
+    MS_LOG(ERROR) << "Output number is " << outputs.size() << ", but SearchSorted needs " << kSearchSortedOutputsNum
+                  << " outputs";
   }
   if (outputs[0]->size() / sizeof(T) != inputs[1]->size() / sizeof(S)) {
     MS_LOG(ERROR) << "The output dimensions " << outputs[0]->size() << " must match the dimensions of input values "
                   << inputs[1]->size();
   }
+  auto sorter_type = inputs[kIndex2]->GetType();
+  if (!sorter_type->isa<TypeNone>()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the GPU Device is not supported sorter param.";
+  }
 }
 
 std::vector<std::pair<KernelAttr, SearchSortedGpuKernelMod::SearchSortedFunc>> SearchSortedGpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeInt32),
    &SearchSortedGpuKernelMod::LaunchKernel<double, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeInt32),
    &SearchSortedGpuKernelMod::LaunchKernel<float, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeInt32),
    &SearchSortedGpuKernelMod::LaunchKernel<int64_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeInt32),
    &SearchSortedGpuKernelMod::LaunchKernel<int32_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt16)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeInt32),
    &SearchSortedGpuKernelMod::LaunchKernel<int16_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt8)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeInt32),
    &SearchSortedGpuKernelMod::LaunchKernel<int8_t, int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeInt64),
    &SearchSortedGpuKernelMod::LaunchKernel<double, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeInt64),
    &SearchSortedGpuKernelMod::LaunchKernel<float, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeInt64),
    &SearchSortedGpuKernelMod::LaunchKernel<int64_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeInt64),
    &SearchSortedGpuKernelMod::LaunchKernel<int32_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt16)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeInt64),
    &SearchSortedGpuKernelMod::LaunchKernel<int16_t, int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt8)
+     .AddOptionalInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeInt64),
    &SearchSortedGpuKernelMod::LaunchKernel<int8_t, int64_t>},
 };
 

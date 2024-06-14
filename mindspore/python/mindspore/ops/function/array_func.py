@@ -1381,7 +1381,7 @@ def unique_consecutive(input, return_idx=False, return_counts=False, axis=None):
     return output
 
 
-def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
+def searchsorted(sorted_sequence, values, *, out_int32=False, right=False, side=None, sorter=None):
     """
     Return the position indices such that after inserting the values into the `sorted_sequence`, the order of innermost
     dimension of the `sorted_sequence` remains unchanged.
@@ -1396,6 +1396,12 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
             if ``False`` , the output datatype will be int64. Default: ``False`` .
         right (bool, optional): Search Strategy. If ``True`` , return the last suitable index found;
             if ``False`` , return the first such index. Default: ``False`` .
+        side (str, optional): the same as right but preferred. ``"left"`` corresponds to ``False`` for `right`
+            and ``"right"`` corresponds to ``True`` for `right`. An error will be reported if this parameter is
+            set to ``"left"`` while `right` is ``True``. Default: ``None`` .
+        sorter(Tensor, optional): if provided, a tensor matching the shape of the unsorted sorted_sequence
+            containing a sequence of indices that sort it in the ascending order on the innermost
+            dimension and type must be int64. Default: ``None`` .
 
     Returns:
         Tensor containing the indices from the innermost dimension of `sorted_sequence` such that,
@@ -1406,6 +1412,8 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
     Raises:
         ValueError: If the dimension of `sorted_sequence` isn't 1 and all dimensions except the last dimension of
             `sorted_sequence` and `values` are different.
+        ValueError: If `sorted_sequence` value is a scalar.
+        ValueError: If `values` is a scalar when `sorted_sequence` dimension is not 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1422,10 +1430,16 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
          [1 2 4]]
     """
 
-    _check_attr_dtype("out_int32", out_int32, [bool], "search_sorted")
-    dtype = mstype.int64 if not out_int32 else mstype.int32
+    validator.check_value_type("out_int32", out_int32, [bool], "search_sorted")
+    validator.check_value_type("right", right, [bool], "search_sorted")
+    dtype = mstype.int32 if bool(out_int32) else mstype.int64
+    if (side == "left" and right is True):
+        raise ValueError(f"For 'searchsorted', side and right can't be set to opposites,"
+                         f"got side of left while right was True.")
+    if side == "right":
+        right = True
     search_sorted_ = SearchSorted(dtype, right)
-    return search_sorted_(sorted_sequence, values)
+    return search_sorted_(sorted_sequence, values, sorter)
 
 
 def ger(input, vec2):

@@ -53,6 +53,16 @@ BLAS and LAPACK Operations
 
     mindspore.mint.inverse
 
+Other Operations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.searchsorted
+
 mindspore.mint.nn
 ------------------
 

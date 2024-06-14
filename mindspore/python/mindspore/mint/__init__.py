@@ -86,7 +86,7 @@ from mindspore.ops.functional import exp
 # 29
 from mindspore.ops.functional import sqrt
 # 30
-
+from mindspore.ops.functional import searchsorted
 # 31
 
 # 32
@@ -308,7 +308,7 @@ __all__ = [
     # 29
     'sqrt',
     # 30
-
+    'searchsorted',
     # 31
 
     # 32

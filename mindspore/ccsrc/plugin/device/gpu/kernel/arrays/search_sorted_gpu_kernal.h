@@ -23,7 +23,6 @@
 #include <functional>
 #include <numeric>
 #include <map>
-#include "mindspore/core/ops/search_sorted.h"
 #include "abstract/utils.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
