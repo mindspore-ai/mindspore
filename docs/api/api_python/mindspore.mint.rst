@@ -175,6 +175,16 @@ BLAS和LAPACK运算
 mindspore.mint.nn
 ------------------
 
+损失函数
+^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.L1Loss
+
 卷积层
 ^^^^^^^^^^^^^^^^^^
 .. mscnplatwarnautosummary::
@@ -312,6 +322,7 @@ Dropout函数
 
     mindspore.mint.nn.functional.binary_cross_entropy
     mindspore.mint.nn.functional.binary_cross_entropy_with_logits
+    mindspore.mint.nn.functional.l1_loss
 
 Vision函数
 ^^^^^^^^^^^^^^^^^^

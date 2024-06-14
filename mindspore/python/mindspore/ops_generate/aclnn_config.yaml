@@ -294,5 +294,7 @@ HShrink: 'aclnnHardshrink'
 HShrinkGrad: 'aclnnHardshrinkBackward'
 # 231
 MatrixInverseExt: 'aclnnInverse'
+# 238
+L1LossExt: 'aclnnL1Loss'
 
 # 301
