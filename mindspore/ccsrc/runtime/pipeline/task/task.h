@@ -47,12 +47,13 @@ class BACKEND_EXPORT AsyncTask {
   virtual void SetException(const std::exception_ptr & /* e */) {}
 
   TaskType task_type() const { return task_type_; }
-  uint32_t task_id() const { return task_id_; }
-  void set_task_id(uint32_t task_id) { task_id_ = task_id; }
+  uint64_t task_id() const { return task_id_; }
+  void set_task_id(uint64_t task_id) { task_id_ = task_id; }
+  static uint64_t MakeId();
 
- private:
+ protected:
   TaskType task_type_;
-  uint32_t task_id_{UINT32_MAX};
+  uint64_t task_id_{MakeId()};
 };
 
 class ExitTask : public AsyncTask {

@@ -17,6 +17,9 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_PROFILER_PROFILER_H_
 #define MINDSPORE_CCSRC_RUNTIME_PROFILER_PROFILER_H_
 
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
+#include <sys/syscall.h>
+#endif
 #include <list>
 #include <map>
 #include <memory>
@@ -84,6 +87,7 @@ enum class ProfilerEvent {
   kBackendGraphRunInner,
 
   // PyNative Pipeline
+  kRunOp,
   kPyNativeFrontendTask,
   kPyNativeBackendTask,
   kPyNativeDeviceTask,
@@ -118,6 +122,87 @@ enum class ProfilerEvent {
   kCaptureGuard,
 };
 
+static const std::map<ProfilerStage, std::string> kProfilerStageString = {
+  {ProfilerStage::kDefault, "Default"},           {ProfilerStage::kPython, "Python"},
+  {ProfilerStage::kCapture, "Capture"},           {ProfilerStage::kRunGraph, "RunGraph"},
+  {ProfilerStage::kRunGrad, "RunGrad"},           {ProfilerStage::kRunOp, "RunOp"},
+  {ProfilerStage::kAsnumpy, "Asnumpy"},           {ProfilerStage::kCompileGradGraph, "CompileGradGraph"},
+  {ProfilerStage::kWaitPipeline, "WaitPipeline"}, {ProfilerStage::kSyncStream, "SyncStream"},
+};
+
+static const std::map<ProfilerModule, std::string> kProfilerModuleString = {
+  {ProfilerModule::kDefault, "Default"},
+  {ProfilerModule::kGraphExecutorPy, "GraphExecutorPy"},
+  {ProfilerModule::kRuntime, "RuntimeFramework"},
+  {ProfilerModule::kPynative, "PynativeFramework"},
+  {ProfilerModule::kKernel, "Kernel"},
+  {ProfilerModule::kPython, "Python"},
+  {ProfilerModule::kCapture, "Capture"},
+  {ProfilerModule::kOther, "Other"},
+};
+
+static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
+  {ProfilerEvent::kDefault, "Default"},
+  {ProfilerEvent::kKernelInfer, "KernelInfer"},
+  {ProfilerEvent::kKernelResize, "KernelResize"},
+  {ProfilerEvent::kKernelInferAndResize, "KernelInferAndResize"},
+  {ProfilerEvent::kKernelLaunch, "KernelLaunch"},
+  {ProfilerEvent::kKernelLaunckCallback, "KernelLaunchCallback"},
+  {ProfilerEvent::kKernelUpdate, "KernelUpdate"},
+  {ProfilerEvent::kGraphLaunch, "GraphLaunch"},
+  {ProfilerEvent::kInputProcess, "InputProcess"},
+  {ProfilerEvent::kOutputProcess, "OutputProcess"},
+  {ProfilerEvent::kWaitTaskFinish, "WaitTaskFinish"},
+  {ProfilerEvent::kPreLaunch, "PreLaunch"},
+  {ProfilerEvent::kPostLaunch, "PostLaunch"},
+  {ProfilerEvent::kSendOutput, "SendOutput"},
+  {ProfilerEvent::kMemoryAlloc, "MemoryAlloc"},
+  {ProfilerEvent::kMemoryFree, "MemoryFree"},
+  {ProfilerEvent::kCopyData, "CopyData"},
+  {ProfilerEvent::kStreamSync, "StreamSync"},
+  {ProfilerEvent::kProcessMultiStream, "ProcessMultiStream"},
+  {ProfilerEvent::kWaitKernelsInferFinish, "WaitKernelsInferFinish"},
+  {ProfilerEvent::kWaitKernelsResizeFinish, "WaitKernelsResizeFinish"},
+  {ProfilerEvent::kWaitKernelsLaunchFinish, "WaitKernelsLaunchFinish"},
+  // Inner event.
+  {ProfilerEvent::kKernelInferInner, "KernelInferInner"},
+  {ProfilerEvent::kKernelInferDataSync, "KernelInferDataSync"},
+  {ProfilerEvent::kKernelLaunchInner, "KernelLaunchInner"},
+  {ProfilerEvent::kBackendGraphRunInner, "BackendGraphRunInner"},
+  // PyNative events
+  {ProfilerEvent::kRunOp, "RunOp"},
+  {ProfilerEvent::kPyNativeFrontendTask, "FrontendTask"},
+  {ProfilerEvent::kPyNativeBackendTask, "BackendTask"},
+  {ProfilerEvent::kPyNativeDeviceTask, "DeviceTask"},
+  {ProfilerEvent::kPyNativeLaunchTask, "LaunchTask"},
+  {ProfilerEvent::kPyNativeBpropTask, "BpropTask"},
+  {ProfilerEvent::kPyNativeGilAcquire, "AcquireGil"},
+  {ProfilerEvent::kPyNativeCast, "PyNativeCast"},
+  {ProfilerEvent::kPyNativeInfer, "PyNativeInfer"},
+  {ProfilerEvent::kPyNativeOpCompile, "OpCompile"},
+  {ProfilerEvent::kPyNativeGradExpander, "Expander"},
+  {ProfilerEvent::kPyNativeGradUpdateSens, "UpdateSens"},
+  {ProfilerEvent::kPyNativeGradClearTopCell, "ClearTopCell"},
+  {ProfilerEvent::kPyNativeGradClearAutoGradCell, "ClearAutoGradCell"},
+  // PyBoost events
+  {ProfilerEvent::kPyBoostInferOutput, "InferOutput"},
+  {ProfilerEvent::kPyBoostInferByOpDef, "InferByOpDef"},
+  {ProfilerEvent::kPyBoostCreateOutputTensor, "CreateOutputTensor"},
+  {ProfilerEvent::kPyBoostDeviceTask, "DeviceTask"},
+  {ProfilerEvent::kPyBoostMallocInput, "MallocInput"},
+  {ProfilerEvent::kPyBoostMallocOutput, "MallocOutput"},
+  {ProfilerEvent::kPyBoostLaunchAclnn, "LaunchAclnn"},
+  // pybind api
+  {ProfilerEvent::kPyNativeNewGraph, "new_graph"},
+  {ProfilerEvent::kPyNativeEndGraph, "end_graph"},
+  // python events
+  {ProfilerEvent::kPythonObserved, "PythonObserved"},
+  // Capture events
+  {ProfilerEvent::kCaptureRunGraph, "CaptureRunGraph"},
+  {ProfilerEvent::kCaptureProcess, "CaptureProcess"},
+  {ProfilerEvent::kCaptureCompile, "CaptureCompile"},
+  {ProfilerEvent::kCaptureGuard, "CaptureGuard"}};
+
 #define PROFILER_START(start_time)                                          \
   do {                                                                      \
     if (runtime::ProfilerAnalyzer::GetInstance().profiler_enable()) {       \
@@ -149,20 +234,26 @@ enum class ProfilerEvent {
 // Record the profiler data by the constructor and destructor of this class.
 class COMMON_EXPORT ProfilerRecorder {
  public:
-  ProfilerRecorder(ProfilerModule module, ProfilerEvent event, const std::string &op_name, bool is_inner_event = false);
+  ProfilerRecorder(ProfilerModule module, ProfilerEvent event, const std::string &op_name, bool is_inner_event = false,
+                   bool need_py_stack = false, uint64_t flow_id = UINT64_MAX);
   ~ProfilerRecorder();
 
   struct Data {
-    Data(ProfilerModule module, ProfilerEvent event, std::string op_name, uint64_t start_time, bool is_inner_event)
+    Data(ProfilerModule module, ProfilerEvent event, std::string op_name, std::string py_stack, uint64_t start_time,
+         uint64_t flow_id, bool is_inner_event)
         : module_(module),
           event_(event),
           op_name_(std::move(op_name)),
+          py_stack_(std::move(py_stack)),
           start_time_(start_time),
+          flow_id_(flow_id),
           is_inner_event_(is_inner_event) {}
     ProfilerModule module_;
     ProfilerEvent event_;
     std::string op_name_;
+    std::string py_stack_;
     uint64_t start_time_;
+    uint64_t flow_id_;
     bool is_inner_event_;
   };
 
@@ -207,7 +298,7 @@ using StepInfoPtr = std::shared_ptr<StepInfo>;
 
 struct ProfilerData {
   ProfilerData(ProfilerModule module, ProfilerEvent event, const std::string &op_name, bool is_inner_event,
-               uint64_t start_time, uint64_t end_time)
+               uint64_t start_time, uint64_t end_time, uint64_t flow_id = UINT64_MAX, std::string py_stack = "")
       : is_stage_(false),
         stage_(ProfilerStage::kDefault),
         module_(module),
@@ -217,8 +308,15 @@ struct ProfilerData {
         start_time_(start_time),
         end_time_(end_time),
         dur_time_(end_time - start_time),
-        tid_(std::this_thread::get_id()),
-        pid_(getpid()) {}
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
+        tid_(syscall(SYS_gettid)),
+#else
+        tid_(0),
+#endif
+        pid_(getpid()),
+        flow_id_(flow_id),
+        py_stack_(std::move(py_stack)) {
+  }
 
   ProfilerData(ProfilerStage stage, uint64_t start_time, uint64_t end_time)
       : is_stage_(true),
@@ -230,7 +328,11 @@ struct ProfilerData {
         start_time_(start_time),
         end_time_(end_time) {
     dur_time_ = end_time - start_time;
-    tid_ = std::this_thread::get_id();
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
+    tid_ = syscall(SYS_gettid);
+#else
+    tid_ = 0;
+#endif
     pid_ = getpid();
   }
 
@@ -245,7 +347,8 @@ struct ProfilerData {
         end_time_(other.end_time_),
         dur_time_(other.dur_time_),
         tid_(other.tid_),
-        pid_(other.pid_) {}
+        pid_(other.pid_),
+        flow_id_(other.flow_id_) {}
 
   ProfilerData &operator=(const ProfilerData &other) {
     if (this == &other) {
@@ -263,6 +366,7 @@ struct ProfilerData {
     dur_time_ = other.dur_time_;
     tid_ = other.tid_;
     pid_ = other.pid_;
+    flow_id_ = other.flow_id_;
     return *this;
   }
 
@@ -275,10 +379,14 @@ struct ProfilerData {
   uint64_t start_time_{0L};
   uint64_t end_time_{0L};
   uint64_t dur_time_{0L};
-  std::thread::id tid_{};
+  uint64_t tid_{};
   int32_t pid_{0};
+  uint64_t flow_id_{UINT64_MAX};
+  std::string py_stack_{};
 };
 using ProfilerDataPtr = std::shared_ptr<ProfilerData>;
+
+struct ProfilerFlowEventData {};
 
 struct ProfilerStatisticsInfo {
   explicit ProfilerStatisticsInfo(const std::string &name, bool is_inner_info = false)
@@ -330,8 +438,9 @@ class COMMON_EXPORT ProfilerAnalyzer {
   void Clear() noexcept;
 
   // The used by ProfilerRecorder to record data.
-  bool profiler_enable() const { return profiler_enable_; }
+  bool profiler_enable() const;
   void RecordData(const ProfilerDataPtr &data) noexcept;
+  void RecordFlowData(uint64_t flow_id);
   uint64_t GetTimeStamp() const noexcept;
   std::string GetBriefName(const std::string &scope_name) const;
 
@@ -345,7 +454,6 @@ class COMMON_EXPORT ProfilerAnalyzer {
   const nlohmann::json &json_infos() const { return json_infos_; }
   const std::map<ProfilerModule, ProfilerModuleInfoPtr> &module_infos() const { return module_infos_; }
   const std::map<ProfilerStage, ProfilerStatisticsInfoPtr> &stage_infos() const { return stage_infos_; }
-  std::string GetTidString(const std::thread::id &tid) const;
   void SetThreadIdToName(const std::thread::id &id, const std::string &name);
 
  private:

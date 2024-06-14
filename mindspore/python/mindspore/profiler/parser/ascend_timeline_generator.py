@@ -148,8 +148,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         logger.info("Start parse timeline data...")
         self._pretty = pretty
         timeline_data = []
-
-        all_scope_data = []  # 所有带scope的算子
+        all_scope_data = []
 
         # get msprof data
         msprof_file_name = fr'{self._mindstudio_profiler_output}/msprof_*.json'
@@ -185,6 +184,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             result = self._parse_fwk_device_data(msprof_timeline)
             timeline_data.extend(result.get("trace_data", []))
             self._kernel_events = result.get("kernels", [])
+        else:
+            timeline_data.extend(msprof_timeline)
 
         logger.info("All timeline data parse complete.")
         self._timeline_data = timeline_data

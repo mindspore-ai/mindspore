@@ -19,7 +19,12 @@
 #include <iomanip>
 #include <utility>
 #include "utils/file_utils.h"
+#include "include/common/utils/utils.h"
 #include "include/common/debug/common.h"
+#ifdef ENABLE_DEBUGGER
+#include "include/backend/debug/profiler/profiling.h"
+#include "common/debug/profiler/profiling_framework_data.h"
+#endif
 
 namespace mindspore {
 namespace runtime {
@@ -33,6 +38,10 @@ static const char kJsonTid[] = "tid";
 static const char kJsonTs[] = "ts";
 static const char kJsonDur[] = "dur";
 static const char kJsonPhX[] = "X";
+static const char kJsonArgs[] = "args";
+static const char kJsonFlowId[] = "flow_id";
+static const char kJsonPyStack[] = "py-stack";
+static const char kNameFlow[] = "flow";
 
 // The env of runtime profiler.
 static const char kEnableRuntimeProfiler[] = "MS_ENABLE_RUNTIME_PROFILER";
@@ -42,86 +51,6 @@ static const char kRuntimeProfilerTopNum[] = "MS_ENABLE_PROFILER_TOP_NUM";
 static const char kJsonFileName[] = "RuntimeProfilerJson";
 static const char kSummaryInfoFileName[] = "RuntimeProfilerSummary";
 static const char kDetailInfoFileName[] = "RuntimeProfilerDetail";
-
-static const std::map<ProfilerStage, std::string> kProfilerStageString = {
-  {ProfilerStage::kDefault, "Default"},           {ProfilerStage::kPython, "Python"},
-  {ProfilerStage::kCapture, "Capture"},           {ProfilerStage::kRunGraph, "RunGraph"},
-  {ProfilerStage::kRunGrad, "RunGrad"},           {ProfilerStage::kRunOp, "RunOp"},
-  {ProfilerStage::kAsnumpy, "Asnumpy"},           {ProfilerStage::kCompileGradGraph, "CompileGradGraph"},
-  {ProfilerStage::kWaitPipeline, "WaitPipeline"}, {ProfilerStage::kSyncStream, "SyncStream"},
-};
-
-static const std::map<ProfilerModule, std::string> kProfilerModuleString = {
-  {ProfilerModule::kDefault, "Default"},
-  {ProfilerModule::kGraphExecutorPy, "GraphExecutorPy"},
-  {ProfilerModule::kRuntime, "RuntimeFramework"},
-  {ProfilerModule::kPynative, "PynativeFramework"},
-  {ProfilerModule::kKernel, "Kernel"},
-  {ProfilerModule::kPython, "Python"},
-  {ProfilerModule::kCapture, "Capture"},
-  {ProfilerModule::kOther, "Other"},
-};
-
-static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
-  {ProfilerEvent::kDefault, "Default"},
-  {ProfilerEvent::kKernelInfer, "KernelInfer"},
-  {ProfilerEvent::kKernelResize, "KernelResize"},
-  {ProfilerEvent::kKernelInferAndResize, "KernelInferAndResize"},
-  {ProfilerEvent::kKernelLaunch, "KernelLaunch"},
-  {ProfilerEvent::kKernelLaunckCallback, "KernelLaunchCallback"},
-  {ProfilerEvent::kKernelUpdate, "KernelUpdate"},
-  {ProfilerEvent::kGraphLaunch, "GraphLaunch"},
-  {ProfilerEvent::kInputProcess, "InputProcess"},
-  {ProfilerEvent::kOutputProcess, "OutputProcess"},
-  {ProfilerEvent::kWaitTaskFinish, "WaitTaskFinish"},
-  {ProfilerEvent::kPreLaunch, "PreLaunch"},
-  {ProfilerEvent::kPostLaunch, "PostLaunch"},
-  {ProfilerEvent::kSendOutput, "SendOutput"},
-  {ProfilerEvent::kMemoryAlloc, "MemoryAlloc"},
-  {ProfilerEvent::kMemoryFree, "MemoryFree"},
-  {ProfilerEvent::kCopyData, "CopyData"},
-  {ProfilerEvent::kStreamSync, "StreamSync"},
-  {ProfilerEvent::kProcessMultiStream, "ProcessMultiStream"},
-  {ProfilerEvent::kWaitKernelsInferFinish, "WaitKernelsInferFinish"},
-  {ProfilerEvent::kWaitKernelsResizeFinish, "WaitKernelsResizeFinish"},
-  {ProfilerEvent::kWaitKernelsLaunchFinish, "WaitKernelsLaunchFinish"},
-  // Inner event.
-  {ProfilerEvent::kKernelInferInner, "KernelInferInner"},
-  {ProfilerEvent::kKernelInferDataSync, "KernelInferDataSync"},
-  {ProfilerEvent::kKernelLaunchInner, "KernelLaunchInner"},
-  {ProfilerEvent::kBackendGraphRunInner, "BackendGraphRunInner"},
-  // PyNative events
-  {ProfilerEvent::kPyNativeFrontendTask, "FrontendTask"},
-  {ProfilerEvent::kPyNativeBackendTask, "BackendTask"},
-  {ProfilerEvent::kPyNativeDeviceTask, "DeviceTask"},
-  {ProfilerEvent::kPyNativeLaunchTask, "LaunchTask"},
-  {ProfilerEvent::kPyNativeBpropTask, "BpropTask"},
-  {ProfilerEvent::kPyNativeGilAcquire, "AcquireGil"},
-  {ProfilerEvent::kPyNativeCast, "PyNativeCast"},
-  {ProfilerEvent::kPyNativeInfer, "PyNativeInfer"},
-  {ProfilerEvent::kPyNativeOpCompile, "OpCompile"},
-  {ProfilerEvent::kPyNativeGradExpander, "Expander"},
-  {ProfilerEvent::kPyNativeGradUpdateSens, "UpdateSens"},
-  {ProfilerEvent::kPyNativeGradClearTopCell, "ClearTopCell"},
-  {ProfilerEvent::kPyNativeGradClearAutoGradCell, "ClearAutoGradCell"},
-  // PyBoost events
-  {ProfilerEvent::kPyBoostInferOutput, "InferOutput"},
-  {ProfilerEvent::kPyBoostInferByOpDef, "InferByOpDef"},
-  {ProfilerEvent::kPyBoostCreateOutputTensor, "CreateOutputTensor"},
-  {ProfilerEvent::kPyBoostDeviceTask, "DeviceTask"},
-  {ProfilerEvent::kPyBoostMallocInput, "MallocInput"},
-  {ProfilerEvent::kPyBoostMallocOutput, "MallocOutput"},
-  {ProfilerEvent::kPyBoostLaunchAclnn, "LaunchAclnn"},
-  // pybind api
-  {ProfilerEvent::kPyNativeNewGraph, "new_graph"},
-  {ProfilerEvent::kPyNativeEndGraph, "end_graph"},
-  // python events
-  {ProfilerEvent::kPythonObserved, "PythonObserved"},
-  // Capture events
-  {ProfilerEvent::kCaptureRunGraph, "CaptureRunGraph"},
-  {ProfilerEvent::kCaptureProcess, "CaptureProcess"},
-  {ProfilerEvent::kCaptureCompile, "CaptureCompile"},
-  {ProfilerEvent::kCaptureGuard, "CaptureGuard"}};
 
 namespace {
 std::string GetRealPathName(const std::string &name) {
@@ -136,12 +65,13 @@ std::string GetRealPathName(const std::string &name) {
 }  // namespace
 
 ProfilerRecorder::ProfilerRecorder(ProfilerModule module, ProfilerEvent event, const std::string &op_name,
-                                   bool is_inner_event) {
+                                   bool is_inner_event, bool need_py_stack, uint64_t flow_id) {
   if (!ProfilerAnalyzer::GetInstance().profiler_enable()) {
     return;
   }
   data_ = std::make_unique<Data>(module, event, ProfilerAnalyzer::GetInstance().GetBriefName(op_name),
-                                 ProfilerAnalyzer::GetInstance().GetTimeStamp(), is_inner_event);
+                                 need_py_stack ? GetPythonStackStr() : std::string(),
+                                 ProfilerAnalyzer::GetInstance().GetTimeStamp(), flow_id, is_inner_event);
 }
 
 ProfilerRecorder::~ProfilerRecorder() {
@@ -151,9 +81,9 @@ ProfilerRecorder::~ProfilerRecorder() {
   if (data_ == nullptr) {
     return;
   }
-  ProfilerAnalyzer::GetInstance().RecordData(
-    std::make_shared<ProfilerData>(data_->module_, data_->event_, data_->op_name_, data_->is_inner_event_,
-                                   data_->start_time_, ProfilerAnalyzer::GetInstance().GetTimeStamp()));
+  ProfilerAnalyzer::GetInstance().RecordData(std::make_shared<ProfilerData>(
+    data_->module_, data_->event_, data_->op_name_, data_->is_inner_event_, data_->start_time_,
+    ProfilerAnalyzer::GetInstance().GetTimeStamp(), data_->flow_id_, data_->py_stack_));
 }
 
 PythonProfilerRecorder::PythonProfilerRecorder(const std::string &record_name)
@@ -223,14 +153,14 @@ void ProfilerAnalyzer::Initialize() {
   detail_info_file_name_ = GetRealPathName(kDetailInfoFileName + now_time + ".csv");
 }
 
-std::string ProfilerAnalyzer::GetTidString(const std::thread::id &tid) const {
-  auto iter = thread_id_to_name_.find(tid);
-  if (iter != thread_id_to_name_.end()) {
-    return iter->second;
-  }
-  std::stringstream ss;
-  ss << tid;
-  return ss.str();
+bool ProfilerAnalyzer::profiler_enable() const {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__) && \
+  defined(ENABLE_DEBUGGER)
+  auto ascend_profiler = mindspore::profiler::Profiler::GetInstance(kAscendDevice);
+  return profiler_enable_ || (ascend_profiler != nullptr && ascend_profiler->EnableHostStack());
+#else
+  return profiler_enable_;
+#endif
 }
 
 void ProfilerAnalyzer::SetThreadIdToName(const std::thread::id &id, const std::string &name) {
@@ -277,9 +207,12 @@ void ProfilerAnalyzer::Clear() noexcept {
 }
 
 uint64_t ProfilerAnalyzer::GetTimeStamp() const noexcept {
-  auto now_time = std::chrono::steady_clock::now();
-  int64_t us_time_stamp = std::chrono::duration_cast<std::chrono::microseconds>(now_time.time_since_epoch()).count();
-  return static_cast<uint64_t>(us_time_stamp);
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__) && \
+  defined(ENABLE_DEBUGGER)
+  return profiler::GetClockSyscnt();
+#else
+  return 0;
+#endif
 }
 
 // For example: ScopeName(XX/XX/ReLU-op1) --> BriefName(ReLU)
@@ -294,9 +227,28 @@ std::string ProfilerAnalyzer::GetBriefName(const std::string &scope_name) const 
 }
 
 void ProfilerAnalyzer::RecordData(const ProfilerDataPtr &data) noexcept {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   MS_EXCEPTION_IF_NULL(data);
   std::unique_lock<SpinLock> lock(data_mutex_);
-  (void)data_.emplace_back(data);
+  if (profiler_enable_) {
+    (void)data_.emplace_back(data);
+  }
+#if defined(ENABLE_DEBUGGER)
+  auto ascend_profiler = mindspore::profiler::Profiler::GetInstance(kAscendDevice);
+  if (ascend_profiler != nullptr && ascend_profiler->EnableHostStack()) {
+    profiler::ascend::ProfilingFrameworkData::RecordHostProfile(data);
+  }
+#endif
+#endif
+}
+
+void ProfilerAnalyzer::RecordFlowData(uint64_t flow_id) {
+  if (!ProfilerAnalyzer::GetInstance().profiler_enable()) {
+    return;
+  }
+  ProfilerAnalyzer::GetInstance().RecordData(std::make_shared<ProfilerData>(
+    ProfilerModule::kDefault, ProfilerEvent::kDefault, kNameFlow, true, ProfilerAnalyzer::GetInstance().GetTimeStamp(),
+    ProfilerAnalyzer::GetInstance().GetTimeStamp(), flow_id));
 }
 
 void ProfilerAnalyzer::StartStep() {
@@ -380,9 +332,15 @@ void ProfilerAnalyzer::SaveJsonData(const ProfilerDataPtr &data) {
   }
   json_data[kJsonPh] = kJsonPhX;
   json_data[kJsonPid] = std::to_string(data->pid_);
-  json_data[kJsonTid] = GetTidString(data->tid_);
+  json_data[kJsonTid] = std::to_string(data->tid_);
   json_data[kJsonTs] = data->start_time_;
   json_data[kJsonDur] = data->dur_time_;
+  nlohmann::json args;
+  args[kJsonFlowId] = data->flow_id_;
+  if (!data->py_stack_.empty()) {
+    args[kJsonPyStack] = data->py_stack_;
+  }
+  json_data[kJsonArgs] = args;
 
   (void)json_infos_.emplace_back(json_data);
 }
@@ -444,7 +402,7 @@ void ProfilerAnalyzer::AnalyzeModuleSummaryData(const ProfilerDataPtr &data) {
 void ProfilerAnalyzer::AnalyzeEventSummaryData(const ProfilerDataPtr &data) {
   MS_EXCEPTION_IF_NULL(data);
   if (module_infos_.count(data->module_) == 0) {
-    MS_LOG(ERROR) << "Summarize Unknown module : " << data->module_ << ", will skip current data.";
+    MS_LOG(INFO) << "Summarize Unknown module : " << data->module_ << ", will skip current data.";
     return;
   }
 
@@ -503,7 +461,7 @@ void ProfilerAnalyzer::DumpDetailData(const size_t step, const ProfilerDataSpan 
                                              : ("module:" + kProfilerModuleString.at(data->module_));
     ofs << title_name << ", event:" << kProfilerEventString.at(data->event_) << ", op:" << data->op_name_
         << ", start_time:" << data->start_time_ << ", end_time:" << data->end_time_ << ", dur_time:," << data->dur_time_
-        << ",us, tid:" << GetTidString(data->tid_) << ", pid:" << data->pid_ << "\n";
+        << ",us, tid:" << std::to_string(data->tid_) << ", pid:" << data->pid_ << "\n";
   }
   ofs << "\n";
 

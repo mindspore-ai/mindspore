@@ -35,7 +35,7 @@ DeviceOpRunTask::~DeviceOpRunTask() { context_->op_compiler_info()->UpdateStatus
 
 void DeviceOpRunTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
-                                     context_->op_run_info()->base_op_run_info.op_name, false);
+                                     context_->op_run_info()->base_op_run_info.op_name, false, false, task_id_);
   Pipeline::Get().launch_stage()->Wait();
   MS_EXCEPTION_IF_NULL(run_func_);
   run_func_(context_);
@@ -43,6 +43,8 @@ void DeviceOpRunTask::Run() {
 }
 
 void DeviceLaunchTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeLaunchTask,
+                                     kProfilerNamePyboost, false, false, task_id_);
   if (run_func_) {
     run_func_();
   } else {
@@ -53,7 +55,7 @@ void DeviceLaunchTask::Run() {
 
 void PyBoostDeviceTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
-                                     kProfilerNamePyboost, false);
+                                     kProfilerNamePyboost, false, false, task_id_);
   if (run_func_) {
     run_func_();
   } else {
@@ -64,7 +66,7 @@ void PyBoostDeviceTask::Run() {
 
 void PassthroughDeviceTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
-                                     runtime::ProfilerRecorder::kNoName, false);
+                                     runtime::ProfilerRecorder::kNoName, false, false, task_id_);
   Pipeline::Get().launch_stage()->Wait();
   run_func_();
 }

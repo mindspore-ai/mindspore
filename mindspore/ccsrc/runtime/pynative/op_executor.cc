@@ -87,6 +87,7 @@ void OpExecutor::DispatchLaunchTask(const std::function<void()> &func) {
     func();
   } else {
     auto task = std::make_shared<runtime::DeviceLaunchTask>([=]() { func(); });
+    runtime::ProfilerAnalyzer::GetInstance().RecordFlowData(task->task_id());
     runtime::Pipeline::Get().launch_stage()->Push(task);
   }
 }

@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/hal/profiler/profiling_framework_data.h"
+#include "common/debug/profiler/profiling_framework_data.h"
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #include <sys/syscall.h>
+#endif
 #include <utility>
 #include <algorithm>
 #include <mutex>
@@ -31,12 +33,16 @@ namespace mindspore {
 namespace profiler {
 namespace ascend {
 
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 uint64_t GetClockMonotonicRawNs() {
   struct timespec ts = {0};
   clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
   return static_cast<uint64_t>(ts.tv_sec) * 1000000000 +
          static_cast<uint64_t>(ts.tv_nsec);  // 1000000000为秒转换为纳秒的倍数
 }
+#else
+uint64_t GetClockMonotonicRawNs() { MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows."; }
+#endif
 
 inline void EncodeStrData(uint16_t type, const std::string &data, const std::unique_ptr<std::vector<uint8_t>> &result) {
   for (size_t i = 0; i < sizeof(uint16_t); ++i) {
@@ -87,10 +93,30 @@ inline void EncodeStrArrayData(const uint16_t type, const std::vector<std::strin
   EncodeStrData(type, rst, result);
 }
 
+void OpRangeData::preprocess() {
+  const std::string delim = "|";
+  const std::string remove_ms = "site-packages/mindspore";
+  if (stack.size() > 0 && !stack[0].empty()) {
+    std::string all_stack = stack[0];
+    stack.erase(stack.begin());
+    size_t nPos = all_stack.find(delim.c_str());
+    while (nPos != std::string::npos) {
+      std::string temp = all_stack.substr(0, nPos + 1);
+      if (temp.find(remove_ms.c_str()) == std::string::npos) {
+        stack.push_back(temp);
+      }
+      all_stack = all_stack.substr(nPos + 1);
+      nPos = all_stack.find(delim.c_str());
+    }
+  }
+}
+
 std::vector<uint8_t> OpRangeData::encode() {
+  preprocess();
   std::unique_ptr<std::vector<uint8_t>> result = std::make_unique<std::vector<uint8_t>>();
   EncodeFixedData<int64_t>({start_ns, end_ns, sequence_number}, result);
   EncodeFixedData<uint64_t>({process_id, start_thread_id, end_thread_id, forward_thread_id}, result);
+  EncodeFixedData<uint64_t>({flow_id}, result);
   result->push_back(is_async);
   EncodeStrData(static_cast<uint16_t>(OpRangeDataType::NAME), name, result);
   if (!input_dtypes.empty()) {
@@ -118,45 +144,30 @@ std::vector<uint8_t> OpRangeData::encode() {
   return resultTLV;
 }
 
-void ProfilingFrameworkData::RecordLaunchGETaskBegin(const std::string &scope_name) {
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
+void ProfilingFrameworkData::RecordHostProfile(std::shared_ptr<ProfilerData> data) {
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
-  if (!ascend_profiler->GetEnableFlag()) {
+  if (!ascend_profiler->EnableHostStack()) {
     return;
   }
-
-  int64_t start_ns = GetClockSyscnt();
-  auto tid = syscall(SYS_gettid);
-  kernel_launch_begin_[std::to_string(tid) + "_" + scope_name] = start_ns;
+  std::vector<std::string> stack_vec;
+  stack_vec.push_back(data->py_stack_);
+  std::string op_name = data->op_name_;
+  if (data->is_stage_) {
+    op_name = kProfilerStageString.at(data->stage_);
+  } else if (data->op_name_ != "flow") {
+    op_name = kProfilerModuleString.at(data->module_) + "::" + kProfilerEventString.at(data->event_) + "::" + op_name;
+  }
+  OpRangeData report = OpRangeData(data->start_time_, data->end_time_, 0, 0, data->tid_, data->tid_, data->tid_, false,
+                                   op_name, std::move(stack_vec), data->flow_id_, ProfilingFrameworkData::Device_Id);
+  ProfilingDataDumper::GetInstance().Report(std::make_unique<OpRangeData>(report));
 }
-
-void ProfilingFrameworkData::RecordGETask(const std::string &scope_name) {
-  auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
-  MS_EXCEPTION_IF_NULL(ascend_profiler);
-  if (!ascend_profiler->GetEnableFlag()) {
-    return;
-  }
-
-  auto tid = syscall(SYS_gettid);
-  auto iter = kernel_launch_begin_.find(std::to_string(tid) + "_" + scope_name);
-  if (iter == kernel_launch_begin_.end()) {
-    MS_LOG(WARNING) << "Do not find op info: " << scope_name;
-    return;
-  }
-  int64_t start_ns = iter->second;
-  int64_t end_ns = GetClockSyscnt();
-  int64_t sequence_number = 0;
-  uint64_t process_id = 0;
-  uint64_t start_thread_id = static_cast<uint64_t>(tid);
-  uint64_t end_thread_id = start_thread_id;
-  uint64_t forward_thread_id = start_thread_id;
-  bool is_async = false;
-
-  OpRangeData report = OpRangeData(start_ns, end_ns, sequence_number, process_id, start_thread_id, end_thread_id,
-                                   forward_thread_id, is_async, scope_name, ProfilingFrameworkData::Device_Id);
-  ProfilingDataDumper::GetInstance()->Report(std::make_unique<OpRangeData>(report));
+#else
+void ProfilingFrameworkData::RecordHostProfile(std::shared_ptr<ProfilerData> data) {
+  MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
 }
-
+#endif
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore
