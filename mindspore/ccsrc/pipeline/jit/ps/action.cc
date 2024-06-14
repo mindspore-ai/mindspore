@@ -1831,12 +1831,13 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag, bool enable_boost
   // Evaluate type and shape, and specialize.
   (void)actions.emplace_back(std::make_pair(kTypeInference, TypeInferenceAction));
 
+  // Auto-monad for side-effects handling.
+  (void)actions.emplace_back(std::make_pair(kAutoMonad, AutoMonadAction));
+
   if (boost_infer) {
     (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
   }
 
-  // Auto-monad for side-effects handling.
-  (void)actions.emplace_back(std::make_pair(kAutoMonad, AutoMonadAction));
   // Do data structure simplifications and inline.
   (void)actions.emplace_back(std::make_pair(kInline, OptInlineAction));
 
