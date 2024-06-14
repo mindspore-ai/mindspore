@@ -24,7 +24,7 @@ cur_path = os.path.split(os.path.realpath(__file__))[0]
 TOELERANCE = 5e-2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.platform_x86_ascend910b_training
 @pytest.mark.env_onecard

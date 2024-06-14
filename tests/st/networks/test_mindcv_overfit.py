@@ -313,7 +313,7 @@ def test_mobilenetv3_small_1p():
     # assert average_step_time < 117.26, f"Average step time should shorter than 117.26ms"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @test_utils.run_test_with_On
