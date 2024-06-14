@@ -172,7 +172,7 @@ def generate(op_name, class_name, op_yaml, h_and_cc, need_update_shape):
     gen_cc(op_name, class_name, op_yaml, h_and_cc, need_update_shape)
 
 
-def gen_aclnn_kernel(op_name, need_update_shape=False, auto=False):
+def gen_aclnn_kernel(op_name, yaml_str, need_update_shape=False, auto=False):
     """gen_aclnn_kernel function"""
     if check_op_registed(op_name) and not auto:
         logging.warning("Kernel {%s} is already registered.", op_name)
@@ -180,10 +180,7 @@ def gen_aclnn_kernel(op_name, need_update_shape=False, auto=False):
     current_path = os.path.dirname(os.path.abspath(__file__))
     work_path = os.path.join(current_path, '../../../../')
 
-    # get ops yaml
-    ops_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops.yaml')
     aclnn_path = 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/aclnn/'
-    yaml_str = gen_utils.safe_load_yaml(ops_yaml_path)
     # merge inner ops
     op_yaml = yaml_str.get(op_name)
     class_name = ''.join(word.capitalize() for word in op_name.split('_'))
