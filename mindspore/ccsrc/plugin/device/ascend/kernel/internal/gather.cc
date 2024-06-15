@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 
 namespace mindspore {
 namespace kernel {
@@ -58,12 +59,8 @@ internal::OpParamPtr Gather::CreateOpParam(const std::vector<KernelTensor *> &in
   return param_ptr;
 }
 
-void Gather::SetInOutIdx() {
-  inputsIdxMap_[kIndex0] = kIndex0;
-  inputsIdxMap_[kIndex1] = kIndex1;
-  outputsIdxMap_[kIndex0] = kIndex0;
-}
-
 MS_INTERNAL_KERNEL_FACTORY_REG(Gather, Gather);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Gather, INPUT_NUM_2, INDEX_0, INDEX_1);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Gather, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

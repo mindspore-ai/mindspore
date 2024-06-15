@@ -15,7 +15,7 @@
  */
 
 #ifndef ENABLE_INTERNAL_KERNELS
-#include "plugin/device/ascend/optimizer/ir_fusion/add_layernorm_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/add_layer_norm_fusion.h"
 
 #include <vector>
 #include <string>
@@ -45,7 +45,7 @@ const AnfNodePtr AddLayernormFusion::Process(const FuncGraphPtr &graph, const An
 }  // namespace mindspore
 
 #else
-#include "plugin/device/ascend/optimizer/ir_fusion/add_layernorm_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/add_layer_norm_fusion.h"
 
 #include <vector>
 #include <string>

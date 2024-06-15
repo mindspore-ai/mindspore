@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 #include "param/attention_param.h"
 #include "utils/ms_context.h"
 
@@ -96,15 +97,8 @@ int InternalFlashAttentionScore::Resize(const std::vector<KernelTensor *> &input
   return 0;
 }
 
-void InternalFlashAttentionScore::SetInOutIdx() {
-  inputsIdxMap_[kIndex0] = kIndex0;
-  inputsIdxMap_[kIndex1] = kIndex1;
-  inputsIdxMap_[kIndex2] = kIndex2;
-  inputsIdxMap_[kIndex3] = kIndex3;
-  inputsIdxMap_[kIndex6] = kIndex4;
-  outputsIdxMap_[kIndex3] = kIndex0;
-}
-
 MS_INTERNAL_KERNEL_FACTORY_REG(FlashAttentionScore, InternalFlashAttentionScore);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(FlashAttentionScore, INPUT_NUM_5, INDEX_0, INDEX_1, INDEX_2, INDEX_3, INDEX_6);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(FlashAttentionScore, OUTPUT_NUM_1, INDEX_3);
 }  // namespace kernel
 }  // namespace mindspore

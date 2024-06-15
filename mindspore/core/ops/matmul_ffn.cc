@@ -48,30 +48,29 @@ abstract::TupleShapePtr MatmulFfnInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
-  auto w1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
-  auto w2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   // (todo) check dynamic rank and dynamic shape
-  if (IsDynamicRank(x_shape) || IsDynamicRank(w1_shape) || IsDynamicRank(w2_shape)) {
+  if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {
     MS_LOG(EXCEPTION) << "For " << op_name << ", dynamic rank is not supported";
   }
   const size_t x_rank = x_shape.size();
-  const size_t w1_rank = w1_shape.size();
-  const size_t w2_rank = w2_shape.size();
-  MS_CHECK_VALUE(x_rank != 0 && x_rank == w1_rank && x_rank == w2_rank,
+  const size_t w_rank = w_shape.size();
+  MS_CHECK_VALUE(x_rank != 0 && x_rank == w_rank,
                  CheckAndConvertUtils::FormatCommMsg("For 'MatmulFfn', all inputs must have the same rank."));
 
   auto m = x_shape[0];
   auto k = x_shape[1];
-  auto n0 = w1_shape[0];
-  auto k0 = w1_shape[1];
-  auto n1 = w2_shape[0];
-  auto k1 = w2_shape[1];
+  auto k0 = w_shape[1];
 
-  MS_CHECK_VALUE(k == k0 && k == k1, CheckAndConvertUtils::FormatCommMsg(
-                                       "For 'MatmulFfn', the K axis of all inputs must have the same length."));
+  MS_CHECK_VALUE(k == k0, CheckAndConvertUtils::FormatCommMsg(
+                            "For 'MatmulFfn', the K axis of all inputs must have the same length."));
 
-  ShapeVector output_1_shape = {m, n0};
-  ShapeVector output_2_shape = {m, n1};
+  MS_CHECK_VALUE(primitive->HasAttr("n_lens"),
+                 CheckAndConvertUtils::FormatCommMsg("For 'MatmulQkv', op must have attr 'n_lens'."));
+  std::vector<int64_t> n_len_list = GetValue<std::vector<int64_t>>(primitive->GetAttr("n_lens"));
+
+  ShapeVector output_1_shape = {m, n_len_list[0]};
+  ShapeVector output_2_shape = {m, n_len_list[1]};
   std::vector<BaseShapePtr> shape_lists;
   (void)shape_lists.emplace_back(std::make_shared<abstract::TensorShape>(output_1_shape));
   (void)shape_lists.emplace_back(std::make_shared<abstract::TensorShape>(output_2_shape));

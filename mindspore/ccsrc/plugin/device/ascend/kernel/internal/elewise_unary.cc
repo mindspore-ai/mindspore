@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,12 +29,6 @@ internal::OpParamPtr ElewiseUnary::CreateOpParam(const std::vector<KernelTensor 
   SetComputeType(param_ptr);
   return param_ptr;
 }
-
-void ElewiseUnary::SetInOutIdx() {
-  inputsIdxMap_[kIndex0] = kIndex0;
-  outputsIdxMap_[kIndex0] = kIndex0;
-}
-
 class InternalLogicalNot : public ElewiseUnary {
  public:
   InternalLogicalNot() : ElewiseUnary("LogicalNot") {}
@@ -49,5 +44,7 @@ class InternalLogicalNot : public ElewiseUnary {
 };
 
 MS_INTERNAL_KERNEL_FACTORY_REG(LogicalNot, InternalLogicalNot);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(LogicalNot, INPUT_NUM_1, INDEX_0);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(LogicalNot, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

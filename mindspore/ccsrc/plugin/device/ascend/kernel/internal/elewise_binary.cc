@@ -19,8 +19,10 @@
 #include <memory>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 #include "param/add_param.h"
 #include "param/sub_param.h"
+#include "param/compare_param.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,12 +31,6 @@ internal::OpParamPtr ElewiseBinary::CreateOpParam(const std::vector<KernelTensor
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
   SetComputeType(param_ptr);
   return param_ptr;
-}
-
-void ElewiseBinary::SetInOutIdx() {
-  inputsIdxMap_[kIndex0] = kIndex0;
-  inputsIdxMap_[kIndex1] = kIndex1;
-  outputsIdxMap_[kIndex0] = kIndex0;
 }
 
 uint64_t ElewiseBinary::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
@@ -80,9 +76,6 @@ class InternalSub : public ElewiseBinary {
     internal::ElewiseParam op_param;
     op_param.elewiseType = internal::ElewiseParam::ELEWISE_SUB;
     param_ptr->specificParam = op_param;
-
-    param_ptr->input1_dtype_ = InternalKernelUtils::ToInternalDType(inputs[kIndex0]->dtype_id());
-    param_ptr->input2_dtype_ = InternalKernelUtils::ToInternalDType(inputs[kIndex1]->dtype_id());
     param_ptr->input1_dims_ = internal::VecToSVec<int64_t>(inputs[kIndex0]->GetShapeVector());
     param_ptr->input2_dims_ = internal::VecToSVec<int64_t>(inputs[kIndex1]->GetShapeVector());
 
@@ -110,12 +103,16 @@ class InternalNotEqual : public ElewiseBinary {
   ~InternalNotEqual() = default;
 
  protected:
-  void SetComputeType(internal::OpParamPtr param_ptr) override {
+  void SetComputeType(internal::OpParamPtr param_ptr) override {}
+  internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) override {
+    auto param_ptr = std::make_shared<internal::CompareParam>();
     param_ptr->opId = internal::OpId::NotEqual;
-    return;
+    param_ptr->input1_dims_ = internal::VecToSVec<int64_t>(inputs[kIndex0]->GetShapeVector());
+    param_ptr->input2_dims_ = internal::VecToSVec<int64_t>(inputs[kIndex1]->GetShapeVector());
+    return std::static_pointer_cast<internal::OpParam>(param_ptr);
   }
 };
-MS_INTERNAL_KERNEL_FACTORY_REG(NotEqual, InternalNotEqual);
 
 class InternalLess : public ElewiseBinary {
  public:
@@ -159,11 +156,26 @@ class InternalRealDiv : public ElewiseBinary {
   }
 };
 
+MS_INTERNAL_KERNEL_FACTORY_REG(NotEqual, InternalNotEqual);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(NotEqual, INPUT_NUM_2, INDEX_0, INDEX_1);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(NotEqual, OUTPUT_NUM_1, INDEX_0);
 MS_INTERNAL_KERNEL_FACTORY_REG(Add, InternalAdd);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Add, INPUT_NUM_2, INDEX_0, INDEX_1);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Add, OUTPUT_NUM_1, INDEX_0);
 MS_INTERNAL_KERNEL_FACTORY_REG(Sub, InternalSub);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Sub, INPUT_NUM_2, INDEX_0, INDEX_1);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Sub, OUTPUT_NUM_1, INDEX_0);
 MS_INTERNAL_KERNEL_FACTORY_REG(Equal, InternalEqual);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Equal, INPUT_NUM_2, INDEX_0, INDEX_1);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Equal, OUTPUT_NUM_1, INDEX_0);
 MS_INTERNAL_KERNEL_FACTORY_REG(Less, InternalLess);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Less, INPUT_NUM_2, INDEX_0, INDEX_1);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Less, OUTPUT_NUM_1, INDEX_0);
 MS_INTERNAL_KERNEL_FACTORY_REG(Mul, InternalMul);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Mul, INPUT_NUM_2, INDEX_0, INDEX_1);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Mul, OUTPUT_NUM_1, INDEX_0);
 MS_INTERNAL_KERNEL_FACTORY_REG(RealDiv, InternalRealDiv);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(RealDiv, INPUT_NUM_2, INDEX_0, INDEX_1);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(RealDiv, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

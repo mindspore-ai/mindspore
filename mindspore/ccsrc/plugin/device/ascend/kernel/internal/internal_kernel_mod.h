@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <map>
 #include <vector>
 #include <string>
 #include <utility>
@@ -26,18 +27,57 @@
 #include "./internal_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/ascend/kernel/internal/tiling_cache.h"
+#include "utils/ms_context.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace kernel {
+static std::map<std::string, int> ms_op_key_to_internel_op_id = {
+  {"SiLU", internal::OpId::Swish},
+  {"AddLayerNorm", internal::OpId::AddLayerNorm},
+  {"Cast", internal::OpId::Cast},
+  {"ReshapeAndCache", internal::OpId::ReshapeAndCache},
+  {"Gather", internal::OpId::Gather},
+  {"ApplyRotaryPosEmb", internal::OpId::ApplyRotaryPosEmb},
+  {"Add", internal::OpId::Add},
+  {"Sub", internal::OpId::Sub},
+  {"RealDiv", internal::OpId::RealDiv},
+  {"Mul", internal::OpId::Mul},
+  {"Less", internal::OpId::Less},
+  {"LogicalNot", internal::OpId::LogicalNot},
+  {"NotEqual", internal::OpId::NotEqual},
+  {"Equal", internal::OpId::Equal},
+  {"Transpose", internal::OpId::Transpose},
+  {"GeLU", internal::OpId::Gelu},
+  {"Softmax", internal::OpId::Softmax},
+  {"RmsNorm", internal::OpId::RmsNorm},
+  {"AddRmsNorm", internal::OpId::AddRmsNorm},
+  {"ReduceSum", internal::OpId::ReduceSum},
+  {"FlashAttentionScore", internal::OpId::FlashAttentionScore},
+  {"PagedAttentionMask", internal::OpId::PagedAttention},
+  {"PagedAttention", internal::OpId::PagedAttention},
+  {"FusedMatMulElemBinary", internal::OpId::MatMul},
+  {"FusedMatMulElemUnary", internal::OpId::MatMul},
+  {"MatMul", internal::OpId::MatMul},
+  {"QuantBatchMatmul", internal::OpId::MatMul},
+  {"MatmulFfn", internal::OpId::MatmulQkv},
+  {"MatmulQkv", internal::OpId::MatmulQkv}};
+
 class InternalKernelMod : public KernelMod {
  public:
-  explicit InternalKernelMod(std::string &&op_type) : op_type_(std::move(op_type)) {}
+  explicit InternalKernelMod(std::string &&op_type) : op_type_(std::move(op_type)) {
+    ascend_profiler_ = profiler::Profiler::GetInstance(kAscendDevice);
+    MS_EXCEPTION_IF_NULL(ascend_profiler_);
+  }
   virtual ~InternalKernelMod();
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  void set_fullname(const std::string &fullname) {
+    fullname_ = fullname;
+  }
 
   std::vector<KernelAttr> GetOpSupport() override {
     MS_LOG(EXCEPTION) << "This interface is not support in internal kernel.";
@@ -45,7 +85,7 @@ class InternalKernelMod : public KernelMod {
 
  protected:
   virtual int Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
-  virtual void SetInOutIdx() = 0;
+  void SetInOutIdx(size_t in_count, size_t out_count);
   virtual internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                              const std::vector<KernelTensor *> &outputs) = 0;
   virtual uint64_t GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
@@ -58,6 +98,8 @@ class InternalKernelMod : public KernelMod {
   std::vector<internal::Tensor *> outputs_;
   TilingInfo tiling_info_;
   std::string op_type_;
+  std::shared_ptr<profiler::Profiler> ascend_profiler_{nullptr};
+  std::string fullname_;
 };
 
 using InternalKernelModPtr = std::shared_ptr<InternalKernelMod>;

@@ -26,6 +26,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
                                const std::pair<std::string, ExceptionType> &failure_info);
 
@@ -36,6 +37,8 @@ bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node);
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes);
 
 void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_type);
+bool IsEmptyTupleInput(const CNodePtr &kernel, const size_t i, const TypeId cur_type_id);
+TypeId GetInputDeviceType(const AnfNodePtr &kernel_node, size_t input_idx);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

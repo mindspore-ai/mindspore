@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 
 namespace mindspore {
 namespace kernel {
@@ -52,11 +53,9 @@ internal::OpParamPtr InternalSoftmax::CreateOpParam(const std::vector<KernelTens
   param_ptr->specificParam = softmax_param;
   return param_ptr;
 }
-void InternalSoftmax::SetInOutIdx() {
-  inputsIdxMap_[kIndex0] = kIndex0;
-  outputsIdxMap_[kIndex0] = kIndex0;
-}
 
 MS_INTERNAL_KERNEL_FACTORY_REG(Softmax, InternalSoftmax);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Softmax, INPUT_NUM_1, INDEX_0);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Softmax, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore
