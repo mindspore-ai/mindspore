@@ -512,7 +512,8 @@ void FuncGrad::ConstructParameterNodes(const ValuePtrList &inputs) {
       if (auto_grad_meta_data->variable() != nullptr) {
         continue;
       }
-      if (auto_grad_meta_data->input_type() == InputType::kParameter) {
+      if (auto_grad_meta_data->input_type() == InputType::kParameter &&
+          PyNativeAlgo::Common::IsParamRequiresGrad(tensor)) {
         auto fn = std::make_shared<BackwardNode>("parameter");
         fn->set_op_output(value);
         auto variable = std::make_shared<FuncVariable>(fn, true);

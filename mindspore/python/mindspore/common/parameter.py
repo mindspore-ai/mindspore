@@ -755,6 +755,7 @@ class Parameter(Tensor_):
     def requires_grad(self, value=True):
         if not isinstance(value, bool):
             raise TypeError("The argument `requires_grad` must be bool type")
+        Tensor_.wait_pipeline(self)
         self.param_info.requires_grad = value
 
     @property

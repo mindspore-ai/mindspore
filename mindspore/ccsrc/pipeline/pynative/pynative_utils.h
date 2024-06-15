@@ -75,6 +75,9 @@ struct Common {
   static inline bool IsParam(InputType grad_type) {
     return grad_type == InputType::kParameter || grad_type == InputType::kInput;
   }
+  static inline bool IsParamRequiresGrad(const tensor::BaseTensorPtr &tensor) {
+    return tensor->param_info() != nullptr && tensor->param_info()->requires_grad();
+  }
   static void ClearDeviceAddress(const ValuePtr &value);
   static inline bool IsConstant(InputType grad_type) { return grad_type == InputType::kConstant; }
   static InputType SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell, InputType grad_type);
