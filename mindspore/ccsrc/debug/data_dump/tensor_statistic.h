@@ -22,6 +22,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include "debug/debug_services.h"
 #include "runtime/hardware/device_context.h"
 #include "utils/log_adapter.h"
 
@@ -38,7 +39,8 @@ class TensorStat {
  public:
   TensorStat(const string &type, const string &name, size_t task_id, size_t stream_id, uint64_t timestamp,
              const string &io, size_t slot, size_t data_size, const string &data_type, const string &shape,
-             const string &max_value, const string &min_value, const string &avg_value, size_t count)
+             const string &max_value, const string &min_value, const string &avg_value, const string &norm_value,
+             size_t count)
       : type_(type),
         name_(name),
         task_id_(task_id),
@@ -52,8 +54,13 @@ class TensorStat {
         max_value_(max_value),
         min_value_(min_value),
         avg_value_(avg_value),
+        norm_value_(norm_value),
         count_(count) {}
   TensorStat() = default;
+  std::map<std::string, std::string> header_item_map;
+  void UpdateHeaderItemMap() {
+    header_item_map = {{"max", max_value_}, {"min", min_value_}, {"avg", avg_value_}, {"l2norm", norm_value_}};
+  }
 
  public:
   string type_;
@@ -69,6 +76,7 @@ class TensorStat {
   string max_value_;
   string min_value_;
   string avg_value_;
+  string norm_value_;
   size_t count_;
 };
 
@@ -84,7 +92,7 @@ class DumpTensorInfo {
   string op_type;
 };
 
-TensorStat GetKernelTensorStats(const DumpTensorInfo &);
+TensorStat GetKernelTensorStats(const DumpTensorInfo &, const std::set<std::string> &stat_name_list);
 void DumpKernelTensorStats(const DeviceContext *device_context, vector<device::DeviceAddress *> tensors, bool is_input,
                            const CNodePtr &node, uint32_t graph_id);
 

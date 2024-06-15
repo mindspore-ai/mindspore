@@ -89,6 +89,51 @@ double VarianceAndMeanCalculator::GetVariance() const {
 
 double VarianceAndMeanCalculator::GetStandardDeviation() const { return sqrt(GetVariance()); }
 
+void L2Calculator::ProcessElement(double value) {
+  if (std::isinf(this->max_value_) || std::isnan(this->max_value_) || value == 0.0) {
+    return;
+  }
+  if (std::isinf(value) || std::isnan(value)) {
+    this->max_value_ = value;
+    return;
+  }
+  value = std::abs(value);
+  if (value > this->max_value_) {
+    double scale_factor = this->max_value_ / value;
+    this->squre_sum_div_max_ *= scale_factor * scale_factor;
+    this->squre_sum_div_max_ += 1;
+    this->max_value_ = value;
+  } else {
+    double scale_factor = value / this->max_value_;
+    this->squre_sum_div_max_ += scale_factor * scale_factor;
+  }
+}
+
+void L2Calculator::ProcessElement(const L2Calculator& other) {
+  if (std::isinf(this->max_value_) || std::isnan(this->max_value_)) {
+    return;
+  }
+  if (std::isinf(other.max_value_) || std::isnan(other.max_value_)) {
+    this->max_value_ = other.max_value_;
+    return;
+  }
+  if (this->max_value_ > other.max_value_) {
+    double scale_factor = other.max_value_ / this->max_value_;
+    this->squre_sum_div_max_ += other.squre_sum_div_max_ * scale_factor * scale_factor;
+  } else if (this->max_value_ < other.max_value_) {
+    double scale_factor = this->max_value_ / other.max_value_;
+    this->squre_sum_div_max_ *= scale_factor * scale_factor;
+    this->squre_sum_div_max_ += other.squre_sum_div_max_;
+    this->max_value_ = other.max_value_;
+  } else {
+    this->squre_sum_div_max_ += other.squre_sum_div_max_;
+  }
+}
+
+double L2Calculator::GetL2Value() const {
+  return std::sqrt(squre_sum_div_max_) * max_value_;
+}
+
 template <typename T>
 TensorSummary<T>::TensorSummary(const void *current_tensor_ptr, const void *const previous_tensor_ptr,
                                 uint64_t num_elements, uint64_t prev_num_elements)
@@ -220,6 +265,7 @@ void TensorSummary<T>::TensorStatistics(DbgDataType dtype_value) {
     inf_count_ += cur_summary.inf_count_;
     nan_count_ += cur_summary.nan_count_;
     zero_count_ += cur_summary.zero_count_;
+    l2_calc_.ProcessElement(cur_summary.l2_calc_);
   }
 }
 
@@ -258,6 +304,7 @@ void TensorSummary<T>::TensorStatisticsSingleThread() {
       min_ = std::min(min_, current_value);
       mean_calc.ProcessElement(current_value);
     }
+    l2_calc_.ProcessElement(current_value);
   }
   avg_ = mean_calc.GetMean();
 }
