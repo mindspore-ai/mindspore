@@ -22,7 +22,6 @@
 #include <string>
 #include <memory>
 
-#include "ops/ops_func_impl/embedding_utils.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_name.h"
@@ -83,16 +82,6 @@ void EmbeddingApplyAdamWFuncImpl::CheckInputTypes(const PrimitivePtr &primitive,
   type_dict.emplace("beta2", beta2_type);
   type_dict.emplace("epsilon", epsilon_type);
 
-  auto amsgrad_opt = GetScalarValue<bool>(input_args[kAmsgradIndex]->GetValue());
-  if (amsgrad_opt.has_value() && amsgrad_opt.value()) {
-    const auto &max_grad_norm_type = input_args[kMaxGradNormIndex]->GetType();
-    if (MS_UNLIKELY(max_grad_norm_type->isa<TypeNone>())) {
-      MS_EXCEPTION(ValueError) << "For " << primitive->name()
-                               << ", when amsgrad is true, max_grad_norm should not be None.";
-    }
-    type_dict.emplace("max_grad_norm", max_grad_norm_type);
-  }
-
   CheckAndConvertUtils::CheckTensorTypeSame(type_dict, grad_types, prim_name);
 }
 
@@ -106,22 +95,6 @@ TypePtr EmbeddingApplyAdamWFuncImpl::InferType(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) const {
   CheckInputTypes(primitive, input_args);
   return std::make_shared<TensorType>(kInt32);
-}
-
-int32_t EmbeddingApplyAdamWFuncImpl::CheckValidation(const PrimitivePtr &primitive,
-                                                     const std::vector<AbstractBasePtr> &input_args) const {
-  auto ret_normal = CheckEmbeddingOptimizerArgsValidation(primitive, input_args,
-                                                          std::make_tuple(kEmbeddingDimIndex, kKeysIndex, kGradIndex),
-                                                          true, std::make_tuple(kAmsgradIndex, kMaxGradNormIndex));
-  const size_t _embedding_dim_idx = 15;
-  const size_t _max_key_num_idx = 16;
-  auto ret_extra =
-    CheckEmbeddingOpsExtraArgs(primitive, {input_args[kEmbeddingDimIndex], input_args[_embedding_dim_idx],
-                                           input_args[kKeysIndex], input_args[_max_key_num_idx]});
-  if (ret_normal == OP_CHECK_RETRY || ret_extra == OP_CHECK_RETRY) {
-    return OP_CHECK_RETRY;
-  }
-  return OP_CHECK_SUCCESS;
 }
 }  // namespace ops
 }  // namespace mindspore

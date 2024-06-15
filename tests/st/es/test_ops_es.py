@@ -18,10 +18,11 @@ import mindspore.dataset as ds
 from mindspore import Tensor, context
 from mindspore import ops, nn
 from mindspore.communication import init, release
+from mindspore.ops.operations.manually_defined import ops_def
 
 init()
 
-table_id = 2500000
+table_id = 0
 embedding_dim = 12
 value_total_len = 38
 max_key_num = 20480
@@ -38,8 +39,8 @@ class InitNet(nn.Cell):
         self.ps_num_tensor = Tensor(1, ms.int32)
         self.ps_ids_tensor = Tensor([0], ms.int32)
         self.table_id_tensor = Tensor(table_id, ms.int32)
-        self.es_op1 = ops.auto_generate.init_partition_map
-        self.es_op2 = ops.auto_generate.init_embedding_hashmap
+        self.es_op1 = ops_def.init_partition_map
+        self.es_op2 = ops_def.init_embedding_hashmap
         self.depend = ops.Depend()
         self.embedding_dim = embedding_dim_
         self.value_total_len = value_total_len_
@@ -50,18 +51,16 @@ class InitNet(nn.Cell):
             self.ps_ids_tensor,
             _embedding_dim=self.embedding_dim,
             _max_key_num=max_key_num,
-            _ps_num=1,
         )
         z = self.depend(self.table_id_tensor, es_op1)
         es_op2 = self.es_op2(
             z,
             value_total_len=self.value_total_len,
             embedding_dim=self.embedding_dim,
-            bucket_size=100,
-            initializer_mode="random_uniform",
-            seed=1024,
-            seed2=1024,
             _table_id=table_id,
+            bucket_size=100,
+            seed=1024,
+            seed2=1024
         )
         return es_op2
 
@@ -75,19 +74,20 @@ def init_es_net_func(embedding_dim_, value_total_len_):
 
 
 # FindAndInit
-def embedding_table_find_and_init_forward_func(table_id_, keys, max_grad_norm, parameter):
+def embedding_table_find_and_init_forward_func(table_id_,
+                                               keys, max_grad_norm, parameter):
     """
     embedding_table_find_and_init.
     """
-    y = ops.auto_generate.embedding_table_find_and_init(
+    y = ops_def.embedding_table_find_and_init(
         table_id_,
         keys,
         max_grad_norm,
+        parameter,
         embedding_dim,
         value_total_len,
-        _embedding_dim=embedding_dim,
+        _table_id=table_id,
         _max_key_num=max_key_num,
-        parameter=parameter,
     )
     return y
 

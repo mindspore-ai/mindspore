@@ -57,18 +57,12 @@ BaseShapePtr InitEmbeddingHashmapFuncImpl::InferShape(const PrimitivePtr &primit
   if (!CheckRank(table_id_shape, 0)) {
     MS_LOG(EXCEPTION) << "For " << op_name << " input:0 must be scalar.";
   }
-  auto filter_ptr = input_args[kInputFilterModeIndex]->GetValue();
-  MS_EXCEPTION_IF_NULL(filter_ptr);
-  auto filter_mode = GetValue<std::string>(filter_ptr);
-  if (filter_mode != "counter" && filter_mode != "no_filter") {
-    MS_LOG(EXCEPTION) << "For " << op_name << " attr " << kNameFilterMode << " should be counter or no_filter, but got "
-                      << filter_mode;
-  }
   return std::make_shared<abstract::TensorShape>(ShapeVector{});
 }
 
 TypePtr InitEmbeddingHashmapFuncImpl::InferType(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) const {
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("table_id", input_args[0]->GetType(), {kInt32}, primitive->name());
   return std::make_shared<TensorType>(kInt32);
 }
 }  // namespace ops

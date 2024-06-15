@@ -177,31 +177,6 @@ REG_STRING_TO_ENUM_COMMON(fas_input_layout_mode, StrToEnumMap{{"BSH", FASInputLa
                                                               {"SBH", FASInputLayoutMode::SBH},
                                                               {"BSND", FASInputLayoutMode::BSND},
                                                               {"TND", FASInputLayoutMode::TND}})
-
-// InitializerMode
-StrToEnumMap StrToInitializerModeMap = {{"", InitializerMode::DEFAULT_MODE},
-                                        {"TRUNCATED_NORMAL", InitializerMode::TRUNCATED_NORMAL},
-                                        {"CONSTANT", InitializerMode::CONSTANT},
-                                        {"RANDOM_UNIFORM", InitializerMode::RANDOM_UNIFORM}};
-REG_STRING_TO_ENUM_SPECIAL(initializer_mode, StrToInitializerModeMap)
-
-// FilterMode
-StrToEnumMap StrToFilterModeMap = {{"NO_FILTER", FilterMode::NO_FILTER}, {"COUNTER", FilterMode::COUNTER}};
-REG_STRING_TO_ENUM_COMMON(filter_mode, StrToFilterModeMap)
-
-// OptimizerMode
-StrToEnumMap StrToOptimizerModeMap = {{"", OptimizerMode::DEFAULT},
-                                      {"ADAM", OptimizerMode::ADAM},
-                                      {"ADAMW", OptimizerMode::ADAMW},
-                                      {"ADAGRAD", OptimizerMode::ADAGRAD}};
-REG_STRING_TO_ENUM_SPECIAL(optimizer_mode, StrToOptimizerModeMap)
-
-// BackwardMode
-StrToEnumMap StrToBackwardModeMap = {{"ADAM", BackwardMode::APPLYA_ADAM},
-                                     {"ADAMW", BackwardMode::APPLYA_ADAMW},
-                                     {"ADAGRAD", BackwardMode::APPLY_ADA_GRAD},
-                                     {"FTRL", BackwardMode::APPLY_FTRL}};
-REG_STRING_TO_ENUM_SPECIAL(backward_mode, StrToBackwardModeMap)
 }  // namespace
 
 int64_t StringToEnumImpl(const std::string &op_name, const std::string &arg_name, const std::string &enum_string) {

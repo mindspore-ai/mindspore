@@ -35,166 +35,162 @@
 namespace mindspore::expander::bprop {
 namespace {
 const int kConstNumberTwo = 2;
-NodePtr ConstScalarToTensor(BpropBuilder *ib, const NodePtr &node, const TypePtr &type) {
-  auto abs = node->abstract();
-  MS_EXCEPTION_IF_NULL(abs);
-  NodePtr tensor_node{nullptr};
-  if (abs->isa<abstract::AbstractScalar>()) {
-    auto value_ptr = node->BuildValue();
-    MS_EXCEPTION_IF_NULL(value_ptr);
-    if (!value_ptr->isa<ValueAny>()) {
-      auto ori_type = abs->BuildType()->type_id();
-      switch (ori_type) {
-        case TypeId::kNumberTypeFloat32:
-          tensor_node = ib->Tensor(GetValue<float>(value_ptr), type);
-          break;
-        case TypeId::kNumberTypeFloat64:
-          tensor_node = ib->Tensor(GetValue<double>(value_ptr), type);
-          break;
-        case TypeId::kNumberTypeInt32:
-          tensor_node = ib->Tensor(GetValue<int32_t>(value_ptr), type);
-          break;
-        case TypeId::kNumberTypeInt64:
-          tensor_node = ib->Tensor(GetValue<int64_t>(value_ptr), type);
-          break;
-        case TypeId::kNumberTypeBool:
-          tensor_node = ib->Tensor(GetValue<bool>(value_ptr), type);
-          break;
-        default:
-          tensor_node = ib->ScalarToTensor(node);
-          break;
-      }
-    } else {
-      MS_LOG(EXCEPTION) << "Currently, only const Scalar supports conversion to Tensor.";
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "Currently, only Scalar supports conversion to Tensor, but got: " << abs->ToString();
-  }
-  return tensor_node;
-}
 }  // namespace
 NodePtr ApplyAdam(BpropBuilder *ib, const std::vector<NodePtr> &nodes, const std::string &prim_name) {
-  auto &table_id = nodes[kIndex1];
-  auto &dout = nodes[kIndex2];
-  auto &keys = nodes[kIndex3];
-  auto &embedding_dim = nodes[kIndex5];
-  auto &backward_int_params = nodes[kIndex6];
-  auto &backward_float_params = nodes[kIndex7];
-  auto &backward_bool_params = nodes[kIndex8];
-  auto &_embedding_dim = nodes[kIndex9];
-  auto &_max_key_num = nodes[kIndex10];
+  auto &table_id = nodes[kIndex0];
+  auto &dout = nodes[kIndex1];
+  auto &keys = nodes[kIndex2];
 
   auto grad_dtype = ib->GetDtype(dout);
-  auto beta1_power = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 0), grad_dtype);
-  auto beta2_power = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 1), grad_dtype);
-  auto lr = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 2), grad_dtype);
-  auto beta1 = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 3), grad_dtype);
-  auto beta2 = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 4), grad_dtype);
-  auto epsilon = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 5), grad_dtype);
-  auto global_step = ConstScalarToTensor(ib, ib->TupleGetItem(backward_int_params, 0), kInt32);
-  auto mask_zero = ib->TupleGetItem(backward_bool_params, 0);
+
+  auto backward_float_params = GetValue<std::vector<float>>(ib->GetAttr("backward_float_params"));
+  assert(backward_float_params.size() == kIndex6);
+  auto beta1_power = ib->Tensor(backward_float_params[0], grad_dtype);
+  auto beta2_power = ib->Tensor(backward_float_params[1], grad_dtype);
+  auto lr = ib->Tensor(backward_float_params[2], grad_dtype);
+  auto beta1 = ib->Tensor(backward_float_params[3], grad_dtype);
+  auto beta2 = ib->Tensor(backward_float_params[4], grad_dtype);
+  auto epsilon = ib->Tensor(backward_float_params[5], grad_dtype);
+
+  auto backward_int_params = GetValue<std::vector<std::vector<int64_t>>>(ib->GetAttr("backward_int_params"));
+  assert(backward_int_params.size() == kIndex4);
+  auto global_step = ib->Tensor(backward_int_params[0][0], kInt32);
+  const auto &mask_zero = backward_int_params[1];
+  const auto &padding_key = backward_int_params[2];
+  const auto &padding_key_mask = backward_int_params[3];
+
   auto dx = ib->Emit("EmbeddingApplyAdam",
-                     {table_id, beta1_power, beta2_power, lr, beta1, beta2, epsilon, dout, keys, global_step,
-                      embedding_dim, mask_zero, _embedding_dim, _max_key_num},
-                     {{"_process_node_engine_id", MakeValue("PS")}});
+                     {table_id, beta1_power, beta2_power, lr, beta1, beta2, epsilon, dout, keys, global_step},
+                     {{"embedding_dim", ib->GetAttr("embedding_dim")},
+                      {"mask_zero", MakeValue(mask_zero)},
+                      {"padding_key", MakeValue(padding_key)},
+                      {"padding_key_mask", MakeValue(padding_key_mask)},
+                      {"completion_key", ib->GetAttr("completion_key")},
+                      {"completion_key_mask", ib->GetAttr("completion_key_mask")},
+                      {"_embedding_dim", ib->GetAttr("_embedding_dim")},
+                      {"_max_key_num", ib->GetAttr("_max_key_num")},
+                      {"_process_node_engine_id", MakeValue("PS")}});
   return dx;
 }
 
 NodePtr ApplyFtrl(BpropBuilder *ib, const std::vector<NodePtr> &nodes, const std::string &prim_name) {
-  auto &table_id = nodes[kIndex1];
-  auto &dout = nodes[kIndex2];
-  auto &keys = nodes[kIndex3];
-  auto &embedding_dim = nodes[kIndex5];
-  auto &backward_float_params = nodes[kIndex7];
-  auto &backward_bool_params = nodes[kIndex8];
-  auto &_embedding_dim = nodes[kIndex9];
-  auto &_max_key_num = nodes[kIndex10];
+  auto &table_id = nodes[kIndex0];
+  auto &dout = nodes[kIndex1];
+  auto &keys = nodes[kIndex2];
 
   auto grad_dtype = ib->GetDtype(dout);
-  auto lr = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 0), grad_dtype);
-  auto lr_power = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 1), grad_dtype);
-  auto lambda1 = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 2), grad_dtype);
-  auto lambda2 = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 3), grad_dtype);
-  auto mask_zero = ib->TupleGetItem(backward_bool_params, 0);
-  auto dx = ib->Emit(
-    "EmbeddingApplyFtrl",
-    {table_id, lr, lr_power, lambda1, lambda2, dout, keys, embedding_dim, mask_zero, _embedding_dim, _max_key_num},
-    {{"_process_node_engine_id", MakeValue("PS")}});
+
+  auto backward_float_params = GetValue<std::vector<float>>(ib->GetAttr("backward_float_params"));
+  assert(backward_float_params.size() == kIndex4);
+  auto lr = ib->Tensor(backward_float_params[0], grad_dtype);
+  auto lr_power = ib->Tensor(backward_float_params[1], grad_dtype);
+  auto lambda1 = ib->Tensor(backward_float_params[2], grad_dtype);
+  auto lambda2 = ib->Tensor(backward_float_params[3], grad_dtype);
+
+  auto backward_int_params = GetValue<std::vector<std::vector<int64_t>>>(ib->GetAttr("backward_int_params"));
+  assert(backward_int_params.size() == kIndex4);
+  auto global_step = ib->Tensor(backward_int_params[0][0], kInt32);
+  const auto &mask_zero = backward_int_params[1];
+  const auto &padding_key = backward_int_params[2];
+  const auto &padding_key_mask = backward_int_params[3];
+
+  auto dx = ib->Emit("EmbeddingApplyFtrl", {table_id, lr, lr_power, lambda1, lambda2, dout, keys, global_step},
+                     {{"embedding_dim", ib->GetAttr("embedding_dim")},
+                      {"mask_zero", MakeValue(mask_zero)},
+                      {"padding_key", MakeValue(padding_key)},
+                      {"padding_key_mask", MakeValue(padding_key_mask)},
+                      {"completion_key", ib->GetAttr("completion_key")},
+                      {"completion_key_mask", ib->GetAttr("completion_key_mask")},
+                      {"_embedding_dim", ib->GetAttr("_embedding_dim")},
+                      {"_max_key_num", ib->GetAttr("_max_key_num")},
+                      {"_process_node_engine_id", MakeValue("PS")}});
   return dx;
 }
 
 NodePtr ApplyAdamW(BpropBuilder *ib, const std::vector<NodePtr> &nodes, const std::string &prim_name) {
-  auto &table_id = nodes[kIndex1];
-  auto &dout = nodes[kIndex2];
-  auto &keys = nodes[kIndex3];
-  auto &max_grad_norm = nodes[kIndex4];
-  auto &embedding_dim = nodes[kIndex5];
-  auto &backward_float_params = nodes[kIndex7];
-  auto &backward_bool_params = nodes[kIndex8];
-  auto &_embedding_dim = nodes[kIndex9];
-  auto &_max_key_num = nodes[kIndex10];
+  auto &table_id = nodes[kIndex0];
+  auto &dout = nodes[kIndex1];
+  auto &keys = nodes[kIndex2];
+  auto &max_grad_norm = nodes[kIndex3];
 
   auto grad_dtype = ib->GetDtype(dout);
-  auto beta1_power = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 0), grad_dtype);
-  auto beta2_power = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 1), grad_dtype);
-  auto lr = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 2), grad_dtype);
-  auto weight_decay = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 3), grad_dtype);
-  auto beta1 = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 4), grad_dtype);
-  auto beta2 = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 5), grad_dtype);
-  auto epsilon = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 6), grad_dtype);
-  auto amsgrad = ib->TupleGetItem(backward_bool_params, 0);
-  auto maximize = ib->TupleGetItem(backward_bool_params, 1);
-  auto mask_zero = ib->TupleGetItem(backward_bool_params, 2);
+
+  auto backward_float_params = GetValue<std::vector<float>>(ib->GetAttr("backward_float_params"));
+  assert(backward_float_params.size() == kIndex7);
+  auto beta1_power = ib->Tensor(backward_float_params[0], grad_dtype);
+  auto beta2_power = ib->Tensor(backward_float_params[1], grad_dtype);
+  auto lr = ib->Tensor(backward_float_params[2], grad_dtype);
+  auto weight_decay = ib->Tensor(backward_float_params[3], grad_dtype);
+  auto beta1 = ib->Tensor(backward_float_params[4], grad_dtype);
+  auto beta2 = ib->Tensor(backward_float_params[5], grad_dtype);
+  auto epsilon = ib->Tensor(backward_float_params[6], grad_dtype);
+
+  auto backward_int_params = GetValue<std::vector<std::vector<int64_t>>>(ib->GetAttr("backward_int_params"));
+  assert(backward_int_params.size() == kIndex6);
+  auto global_step = ib->Tensor(backward_int_params[0][0], kInt32);
+  const auto &amsgrad = backward_int_params[1];
+  const auto &maximize = backward_int_params[2];
+  const auto &mask_zero = backward_int_params[3];
+  const auto &padding_key = backward_int_params[4];
+  const auto &padding_key_mask = backward_int_params[5];
+
   auto dx = ib->Emit("EmbeddingApplyAdamW",
                      {table_id, beta1_power, beta2_power, lr, weight_decay, beta1, beta2, epsilon, dout, keys,
-                      max_grad_norm, embedding_dim, amsgrad, maximize, mask_zero, _embedding_dim, _max_key_num},
-                     {{"_process_node_engine_id", MakeValue("PS")}});
-
+                      max_grad_norm, global_step},
+                     {{"embedding_dim", ib->GetAttr("embedding_dim")},
+                      {"amsgrad", MakeValue(amsgrad)},
+                      {"maximize", MakeValue(maximize)},
+                      {"mask_zero", MakeValue(mask_zero)},
+                      {"padding_key", MakeValue(padding_key)},
+                      {"padding_key_mask", MakeValue(padding_key_mask)},
+                      {"completion_key", ib->GetAttr("completion_key")},
+                      {"completion_key_mask", ib->GetAttr("completion_key_mask")},
+                      {"_embedding_dim", ib->GetAttr("_embedding_dim")},
+                      {"_max_key_num", ib->GetAttr("_max_key_num")},
+                      {"_process_node_engine_id", MakeValue("PS")}});
   return dx;
 }
 
 NodePtr ApplyAdaGrad(BpropBuilder *ib, const std::vector<NodePtr> &nodes, const std::string &prim_name) {
-  auto &table_id = nodes[kIndex1];
-  auto &dout = nodes[kIndex2];
-  auto &keys = nodes[kIndex3];
-  auto &embedding_dim = nodes[kIndex5];
-  auto &backward_int_params = nodes[kIndex6];
-  auto &backward_float_params = nodes[kIndex7];
-  auto &backward_bool_params = nodes[kIndex8];
-  auto &_embedding_dim = nodes[kIndex9];
-  auto &_max_key_num = nodes[kIndex10];
+  auto &table_id = nodes[kIndex0];
+  auto &dout = nodes[kIndex1];
+  auto &keys = nodes[kIndex2];
 
   auto grad_dtype = ib->GetDtype(dout);
-  auto lr = ConstScalarToTensor(ib, ib->TupleGetItem(backward_float_params, 0), grad_dtype);
-  auto mask_zero = ib->TupleGetItem(backward_bool_params, 0);
-  auto global_step = ConstScalarToTensor(ib, ib->TupleGetItem(backward_int_params, 0), kInt32);
-  auto dx = ib->Emit("EmbeddingApplyAdaGrad",
-                     {table_id, lr, dout, keys, global_step, embedding_dim, mask_zero, _embedding_dim, _max_key_num},
-                     {{"_process_node_engine_id", MakeValue("PS")}});
+
+  auto backward_float_params = GetValue<std::vector<float>>(ib->GetAttr("backward_float_params"));
+  auto lr = ib->Tensor(backward_float_params.at(0), grad_dtype);
+
+  auto backward_int_params = GetValue<std::vector<std::vector<int64_t>>>(ib->GetAttr("backward_int_params"));
+  assert(backward_int_params.size() == kIndex4);
+  auto global_step = ib->Tensor(backward_int_params[0][0], kInt32);
+  const auto &mask_zero = backward_int_params[1];
+  const auto &padding_key = backward_int_params[2];
+  const auto &padding_key_mask = backward_int_params[3];
+
+  auto dx = ib->Emit("EmbeddingApplyAdaGrad", {table_id, lr, dout, keys, global_step},
+                     {{"embedding_dim", ib->GetAttr("embedding_dim")},
+                      {"mask_zero", MakeValue(mask_zero)},
+                      {"padding_key", MakeValue(padding_key)},
+                      {"padding_key_mask", MakeValue(padding_key_mask)},
+                      {"completion_key", ib->GetAttr("completion_key")},
+                      {"completion_key_mask", ib->GetAttr("completion_key_mask")},
+                      {"_embedding_dim", ib->GetAttr("_embedding_dim")},
+                      {"_max_key_num", ib->GetAttr("_max_key_num")},
+                      {"_process_node_engine_id", MakeValue("PS")}});
   return dx;
 }
 
 NodePtr FakeRemoteAndTableFindInitBackwardFunc(BpropBuilder *ib, const std::vector<NodePtr> &nodes,
                                                const std::string &prim_name) {
   using BackwardFunc = std::function<NodePtr(BpropBuilder *, const std::vector<NodePtr> &, const std::string &)>;
-  using BackwardMode = mindspore::ops::BackwardMode;
-  static std::unordered_map<BackwardMode, BackwardFunc> backward_func_map = {
-    {BackwardMode::APPLYA_ADAM, ApplyAdam},
-    {BackwardMode::APPLYA_ADAMW, ApplyAdamW},
-    {BackwardMode::APPLY_ADA_GRAD, ApplyAdaGrad},
-    {BackwardMode::APPLY_FTRL, ApplyFtrl}};
+  static std::unordered_map<std::string, BackwardFunc> backward_func_map = {
+    {"adam", ApplyAdam}, {"adamw", ApplyAdamW}, {"adagrad", ApplyAdaGrad}, {"ftrl", ApplyFtrl}};
 
-  auto &backward_mode = nodes[kIndex0];
-  auto backward_mode_ptr = backward_mode->BuildValue();
-  MS_EXCEPTION_IF_NULL(backward_mode_ptr);
-  if (backward_mode_ptr->isa<ValueAny>()) {
-    MS_LOG(EXCEPTION) << "For " << prim_name << "'s backward, backward_mode should not be ValueAny.";
-  }
-  auto backward_mode_value = static_cast<mindspore::ops::BackwardMode>(GetValue<int64_t>(backward_mode_ptr));
-
-  auto it = backward_func_map.find(backward_mode_value);
+  const auto &backward_mode = GetValue<std::string>(ib->GetAttr("backward_mode"));
+  auto it = backward_func_map.find(backward_mode);
   if (it == backward_func_map.end()) {
-    MS_LOG(EXCEPTION) << "For " << prim_name << ", backward_mode is invalid.";
+    MS_LOG(EXCEPTION) << "For " << prim_name << ", backward_mode is invalid, which is " << backward_mode;
   }
   auto dx = it->second(ib, nodes, prim_name);
   dx = ib->Cast(dx, kFloat32);
@@ -2919,145 +2915,34 @@ REG_BPROP_BUILDER("AvgPool2DGrad").SetBody((BODYFUNC(ib) {
 }));
 
 REG_BPROP_BUILDER("EmbeddingTableFindAndInit").SetBody((BODYFUNC(ib) {
-  mindspore::ops::EmbeddingTableFindAndInitIndexes indexes;
   static std::string prim_name = "EmbeddingTableFindAndInit";
-  auto table_id = ib->GetInput(indexes.table_id);
-  auto keys = ib->GetInput(indexes.keys);
-  auto max_grad_norm = ib->GetInput(indexes.max_grad_norm);
-  auto embedding_dim = ib->GetInput(indexes.embedding_dim);
-  auto value_total_len = ib->GetInput(indexes.value_total_len);
-  auto initializer_mode = ib->GetInput(indexes.initializer_mode);
-  auto constant_value = ib->GetInput(indexes.constant_value);
-  auto min = ib->GetInput(indexes.min);
-  auto max = ib->GetInput(indexes.max);
-  auto mu = ib->GetInput(indexes.mu);
-  auto sigma = ib->GetInput(indexes.sigma);
-  auto seed = ib->GetInput(indexes.seed);
-  auto seed2 = ib->GetInput(indexes.seed2);
-  auto filter_mode = ib->GetInput(indexes.filter_mode);
-  auto filter_freq = ib->GetInput(indexes.filter_freq);
-  auto default_key_or_value = ib->GetInput(indexes.default_key_or_value);
-  auto default_key = ib->GetInput(indexes.default_key);
-  auto default_value = ib->GetInput(indexes.default_value);
-  auto optimizer_mode = ib->GetInput(indexes.optimizer_mode);
-  auto optimizer_params = ib->GetInput(indexes.optimizer_params);
-  auto _embedding_dim = ib->GetInput(indexes._embedding_dim);
-  auto _max_key_num = ib->GetInput(indexes._max_key_num);
-  auto _use_counter_filter = ib->GetInput(indexes._use_counter_filter);
-  auto backward_mode = ib->GetInput(indexes.backward_mode);
-  auto backward_int_params = ib->GetInput(indexes.backward_int_params);
-  auto backward_float_params = ib->GetInput(indexes.backward_float_params);
-  auto backward_bool_params = ib->GetInput(indexes.backward_bool_params);
-  auto dout = ib->GetInput(indexes.parameter + kIndex2);
-
-  auto dx = FakeRemoteAndTableFindInitBackwardFunc(
-    ib,
-    {backward_mode, table_id, dout, keys, max_grad_norm, embedding_dim, backward_int_params, backward_float_params,
-     backward_bool_params, _embedding_dim, _max_key_num},
-    prim_name);
-
-  return {ib->OutZeros(table_id),
-          ib->OutZeros(keys),
-          ib->OutZeros(max_grad_norm),
-          ib->OutZeros(embedding_dim),
-          ib->OutZeros(value_total_len),
-          ib->OutZeros(initializer_mode),
-          ib->OutZeros(constant_value),
-          ib->OutZeros(min),
-          ib->OutZeros(max),
-          ib->OutZeros(mu),
-          ib->OutZeros(sigma),
-          ib->OutZeros(seed),
-          ib->OutZeros(seed2),
-          ib->OutZeros(filter_mode),
-          ib->OutZeros(filter_freq),
-          ib->OutZeros(default_key_or_value),
-          ib->OutZeros(default_key),
-          ib->OutZeros(default_value),
-          ib->OutZeros(optimizer_mode),
-          ib->OutZeros(optimizer_params),
-          ib->OutZeros(_embedding_dim),
-          ib->OutZeros(_max_key_num),
-          ib->OutZeros(_use_counter_filter),
-          ib->OutZeros(backward_mode),
-          ib->OutZeros(backward_int_params),
-          ib->OutZeros(backward_float_params),
-          ib->OutZeros(backward_bool_params),
-          dx};
+  auto table_id = ib->GetInput(kIndex0);
+  auto keys = ib->GetInput(kIndex1);
+  auto max_grad_norm = ib->GetInput(kIndex2);
+  auto parameter = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = FakeRemoteAndTableFindInitBackwardFunc(ib, {table_id, dout, keys, max_grad_norm}, prim_name);
+  return {ib->OutZeros(table_id), ib->OutZeros(keys), ib->OutZeros(max_grad_norm), dx};
 }));
 
 REG_BPROP_BUILDER("FakeRemoteLookupUniqued").SetBody((BODYFUNC(ib) {
-  mindspore::ops::FakeRemoteLookupUniquedIndexes indexes;
   static std::string prim_name = "FakeRemoteLookupUniqued";
-  auto table_id = ib->GetInput(indexes.table_id);
-  auto keys = ib->GetInput(indexes.keys);
-  auto actual_keys_num = ib->GetInput(indexes.actual_keys_num);
-  auto unique_indices = ib->GetInput(indexes.unique_indices);
-  auto key_count = ib->GetInput(indexes.key_count);
-  auto max_grad_norm = ib->GetInput(indexes.max_grad_norm);
-  auto embedding_dim = ib->GetInput(indexes.embedding_dim);
-  auto value_total_len = ib->GetInput(indexes.value_total_len);
-  auto initializer_mode = ib->GetInput(indexes.initializer_mode);
-  auto constant_value = ib->GetInput(indexes.constant_value);
-  auto min = ib->GetInput(indexes.min);
-  auto max = ib->GetInput(indexes.max);
-  auto mu = ib->GetInput(indexes.mu);
-  auto sigma = ib->GetInput(indexes.sigma);
-  auto seed = ib->GetInput(indexes.seed);
-  auto seed2 = ib->GetInput(indexes.seed2);
-  auto filter_mode = ib->GetInput(indexes.filter_mode);
-  auto filter_freq = ib->GetInput(indexes.filter_freq);
-  auto default_key_or_value = ib->GetInput(indexes.default_key_or_value);
-  auto default_key = ib->GetInput(indexes.default_key);
-  auto default_value = ib->GetInput(indexes.default_value);
-  auto optimizer_mode = ib->GetInput(indexes.optimizer_mode);
-  auto optimizer_params = ib->GetInput(indexes.optimizer_params);
-  auto _embedding_dim = ib->GetInput(indexes._embedding_dim);
-  auto _max_key_num = ib->GetInput(indexes._max_key_num);
-  auto _use_counter_filter = ib->GetInput(indexes._use_counter_filter);
-  auto backward_mode = ib->GetInput(indexes.backward_mode);
-  auto backward_int_params = ib->GetInput(indexes.backward_int_params);
-  auto backward_float_params = ib->GetInput(indexes.backward_float_params);
-  auto backward_bool_params = ib->GetInput(indexes.backward_bool_params);
-  auto dout = ib->GetInput(indexes.parameter + kIndex2);
-
+  auto table_id = ib->GetInput(kIndex0);
+  auto keys = ib->GetInput(kIndex1);
+  auto actual_keys_num = ib->GetInput(kIndex2);
+  auto unique_indices = ib->GetInput(kIndex3);
+  auto key_count = ib->GetInput(kIndex4);
+  auto max_grad_norm = ib->GetInput(kIndex5);
+  auto parameter = ib->GetInput(kIndex6);
+  auto dout = ib->GetInput(kIndex8);
   auto keys_recovery = ib->Emit("Gather", {keys, unique_indices, ib->Value<int64_t>(0), ib->Value<int64_t>(0)});
-  auto dx = FakeRemoteAndTableFindInitBackwardFunc(
-    ib,
-    {backward_mode, table_id, dout, keys_recovery, max_grad_norm, embedding_dim, backward_int_params,
-     backward_float_params, backward_bool_params, _embedding_dim, _max_key_num},
-    prim_name);
-
+  auto dx = FakeRemoteAndTableFindInitBackwardFunc(ib, {table_id, dout, keys_recovery, max_grad_norm}, prim_name);
   return {ib->OutZeros(table_id),
           ib->OutZeros(keys),
           ib->OutZeros(actual_keys_num),
           ib->OutZeros(unique_indices),
           ib->OutZeros(key_count),
           ib->OutZeros(max_grad_norm),
-          ib->OutZeros(embedding_dim),
-          ib->OutZeros(value_total_len),
-          ib->OutZeros(initializer_mode),
-          ib->OutZeros(constant_value),
-          ib->OutZeros(min),
-          ib->OutZeros(max),
-          ib->OutZeros(mu),
-          ib->OutZeros(sigma),
-          ib->OutZeros(seed),
-          ib->OutZeros(seed2),
-          ib->OutZeros(filter_mode),
-          ib->OutZeros(filter_freq),
-          ib->OutZeros(default_key_or_value),
-          ib->OutZeros(default_key),
-          ib->OutZeros(default_value),
-          ib->OutZeros(optimizer_mode),
-          ib->OutZeros(optimizer_params),
-          ib->OutZeros(_embedding_dim),
-          ib->OutZeros(_max_key_num),
-          ib->OutZeros(_use_counter_filter),
-          ib->OutZeros(backward_mode),
-          ib->OutZeros(backward_int_params),
-          ib->OutZeros(backward_float_params),
-          ib->OutZeros(backward_bool_params),
           dx};
 }));
 

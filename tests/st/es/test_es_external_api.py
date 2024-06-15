@@ -31,14 +31,15 @@ class Net(nn.Cell):
                  es_counter_filter=None):
         super(Net, self).__init__()
         self.table_id = table_id_dict["test"]
-        self.embedding = EsEmbeddingLookup(self.table_id, es_initializer[self.table_id], embedding_dim=embedding_dim,
+        self.embedding = EsEmbeddingLookup(self.table_id, es_initializer[self.table_id], embedding_dim=[embedding_dim],
                                            max_key_num=max_feature_count, optimizer_mode="adam",
+                                           optimizer_params=[0.0, 0.0],
                                            es_filter=es_counter_filter[self.table_id])
         self.w = ms.Parameter(Tensor([1.5], ms.float32), name="w", requires_grad=True)
 
-    def construct(self, keys, actual_keys_input=None, unique_indices=None):
+    def construct(self, keys, actual_keys_input=None, unique_indices=None, key_count=None):
         if (actual_keys_input is not None) and (unique_indices is not None):
-            es_out = self.embedding(keys, actual_keys_input, unique_indices)
+            es_out = self.embedding(keys, actual_keys_input, unique_indices, key_count)
         else:
             es_out = self.embedding(keys)
         output = es_out * self.w
@@ -79,6 +80,11 @@ def train():
                                                                          max_feature_count=feature_length,
                                                                          optimizer="adam", ev_option=ev_option,
                                                                          mode="train")
+    if "test" not in table_id_dict:
+        raise ValueError("embedding_init error, not contain test table!")
+    if len(es_initializer) != 1 or len(es_counter_filter) != 1:
+        raise ValueError("embedding_init error, table len should be 1!")
+
     print("Succ do embedding_init: ", table_id_dict, es_initializer, es_counter_filter, flush=True)
 
 

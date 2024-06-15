@@ -22,7 +22,6 @@
 #include <string>
 #include <memory>
 
-#include "ops/ops_func_impl/embedding_utils.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_name.h"
@@ -89,23 +88,6 @@ TypePtr EmbeddingApplyAdamFuncImpl::InferType(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) const {
   CheckInputTypes(primitive, input_args);
   return std::make_shared<TensorType>(kInt32);
-}
-
-int32_t EmbeddingApplyAdamFuncImpl::CheckValidation(const PrimitivePtr &primitive,
-                                                    const std::vector<AbstractBasePtr> &input_args) const {
-  const size_t embedding_dim_idx = 10;
-  const size_t keys_idx = 8;
-  const size_t grad_idx = 7;
-  const size_t _embedding_dim_idx = 12;
-  const size_t _max_key_num_idx = 13;
-  auto ret_normal = CheckEmbeddingOptimizerArgsValidation(primitive, input_args,
-                                                          std::make_tuple(embedding_dim_idx, keys_idx, grad_idx));
-  auto ret_extra = CheckEmbeddingOpsExtraArgs(primitive, {input_args[embedding_dim_idx], input_args[_embedding_dim_idx],
-                                                          input_args[keys_idx], input_args[_max_key_num_idx]});
-  if (ret_normal == OP_CHECK_RETRY || ret_extra == OP_CHECK_RETRY) {
-    return OP_CHECK_RETRY;
-  }
-  return OP_CHECK_SUCCESS;
 }
 }  // namespace ops
 }  // namespace mindspore

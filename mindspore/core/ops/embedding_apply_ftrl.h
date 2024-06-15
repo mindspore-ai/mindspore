@@ -14,16 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_FUNC_IMPL_FAKE_REMOTE_LOOKUP_UNIQUED_H_
-#define MINDSPORE_CORE_OPS_FUNC_IMPL_FAKE_REMOTE_LOOKUP_UNIQUED_H_
+#ifndef MINDSPORE_CORE_OPS_EMBEDDING_APPLY_FTRL_H
+#define MINDSPORE_CORE_OPS_EMBEDDING_APPLY_FTRL_H
 
+#include <memory>
 #include <vector>
-#include "ops/ops_func_impl/embedding_table_find.h"
+#include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API FakeRemoteLookupUniquedFuncImpl final : public EmbeddingTableFindFuncImpl {};
+constexpr auto kNameEmbeddingApplyFtrl = "EmbeddingApplyFtrl";
+class MIND_API EmbeddingApplyFtrl : public BaseOperator {
+ public:
+  MIND_API_BASE_MEMBER(EmbeddingApplyFtrl);
+  EmbeddingApplyFtrl() : BaseOperator(kNameEmbeddingApplyFtrl) {
+    InitIOName({"var_handle", "lr", "lr_power", "lambda1", "lambda2", "grad", "keys"}, {"var_handle"});
+  }
+};
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_FUNC_IMPL_FAKE_REMOTE_LOOKUP_UNIQUED_H_
+#endif  // MINDSPORE_CORE_OPS_EMBEDDING_APPLY_FTRL_H

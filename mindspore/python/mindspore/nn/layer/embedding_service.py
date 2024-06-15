@@ -32,8 +32,6 @@ class CounterFilter:
         self.default_key = default_key
         self.default_value = default_value
         self.default_key_or_value = default_key_or_value
-        print("CounterFilter params is: ", self.filter_freq, self.default_key, self.default_value,
-              self.default_key_or_value, flush=True)
 
 
 class EmbeddingVariableOption:
@@ -223,9 +221,9 @@ class EmbeddingService:
             raise TypeError("When default_key is not None, it must be int, please check.")
         self._use_counter_filter = True
         if default_key is None:
-            return CounterFilter(filter_freq=filter_freq, default_key_or_value=False,
+            return CounterFilter(filter_freq=filter_freq, default_key_or_value=0,
                                  default_key=default_key, default_value=default_value)
-        return CounterFilter(filter_freq=filter_freq, default_key_or_value=True,
+        return CounterFilter(filter_freq=filter_freq, default_key_or_value=1,
                              default_key=default_key, default_value=default_value)
 
     def embedding_variable_option(self, filter_option=None, evict_option=None, storage_option=None,
@@ -348,7 +346,7 @@ class EmbeddingService:
         :param table_id: table id
         :return:
         """
-        if not optimizer in ["adam", "adagrad", "adamw"]:
+        if optimizer not in ["adam", "adagrad", "adamw"]:
             raise ValueError("optimizer should be one of adam, adagrad, adamw")
         if initializer is not None:
             if isinstance(initializer, EsInitializer):

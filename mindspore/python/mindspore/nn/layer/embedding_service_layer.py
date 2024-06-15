@@ -73,7 +73,6 @@ class ESInitLayer(nn.Cell):
             self.value_total_len = self.embedding_dim * (self.slot_var_num + 1) + 2
         else:
             self.value_total_len = self.embedding_dim * (self.slot_var_num + 1)
-        self.default_key_or_value = True
         self.filter_freq = None
         self.default_key = None
         self.default_value = None
@@ -135,6 +134,7 @@ class EsEmbeddingLookup(nn.Cell):
         self.reshape = ops.Reshape()
 
         self.table_id = Tensor(table_id, ms.int32)
+        self._table_id = table_id
         self.es_initializer = es_initializer
         self.embedding_dim = embedding_dim
         self.optimizer_mode = optimizer_mode
@@ -142,11 +142,12 @@ class EsEmbeddingLookup(nn.Cell):
         self.es_filter = es_filter
 
         self.slot_var_num = _get_slot_var_num(self.optimizer_mode)
-        self.value_total_len = self.embedding_dim * (self.slot_var_num + 1) + 2
+        self.value_total_len = [self.embedding_dim[table_id] * (self.slot_var_num + 1) + 2] * len(embedding_dim)
 
         self.default_key_or_value = True
         self.filter_freq = 0
         self.default_key = 0
+        self.optimizer_params = optimizer_params
 
         if es_filter is not None:
             self.filter_mode = "counter"
@@ -161,24 +162,30 @@ class EsEmbeddingLookup(nn.Cell):
         self.b = Parameter(Tensor(0, ms.float32), name="b", requires_grad=True)
         self.max_grad_norm = Tensor([1.0], ms.float32)
 
-    def construct(self, keys, actual_keys_input=None, unique_indices=None):
+    def construct(self, keys, actual_keys_input=None, unique_indices=None, key_count=None):
         origin_shape = None
         if len(keys.shape) != 1:
             origin_shape = keys.shape
             keys = self.reshape(keys, (-1,))
         keys = self.cast(keys, ms.int64)
         use_host_unique = False
+        use_counter_filter = 1 if self.filter_mode == "counter" else 0
         if (actual_keys_input is not None) and (unique_indices is not None):
             use_host_unique = True
             actual_keys_input = self.cast(actual_keys_input, ms.int64)
             unique_indices = self.cast(unique_indices, ms.int32)
+        if use_host_unique:
+            if use_counter_filter:
+                key_count = key_count
+            else:
+                key_count = keys
         if self.training:
             if use_host_unique:
                 output = fake_remote_lookup_uniqued(table_id=self.table_id,
                                                     keys=keys,
                                                     actual_keys_num=actual_keys_input,
                                                     unique_indices=unique_indices,
-                                                    key_count=keys,
+                                                    key_count=key_count,
                                                     max_grad_norm=self.max_grad_norm,
                                                     embedding_dim=self.embedding_dim,
                                                     initializer_mode=self.es_initializer.initializer_mode,
@@ -196,9 +203,10 @@ class EsEmbeddingLookup(nn.Cell):
                                                     default_key=self.default_key,
                                                     default_value=self.default_value,
                                                     optimizer_mode=self.optimizer_mode,
-                                                    _embedding_dim=self.embedding_dim,
+                                                    optimizer_params=self.optimizer_params,
                                                     _max_key_num=self.max_key_num,
-                                                    _use_counter_filter=1 if self.filter_mode == "counter" else 0,
+                                                    _table_id=self._table_id,
+                                                    _use_counter_filter=use_counter_filter,
                                                     parameter=self.b
                                                     )
             else:
@@ -220,17 +228,18 @@ class EsEmbeddingLookup(nn.Cell):
                                                        default_key=self.default_key,
                                                        default_value=self.default_value,
                                                        optimizer_mode=self.optimizer_mode,
-                                                       _embedding_dim=self.embedding_dim,
+                                                       optimizer_params=self.optimizer_params,
                                                        _max_key_num=self.max_key_num,
-                                                       _use_counter_filter=1 if self.filter_mode == "counter" else 0,
+                                                       _table_id=self._table_id,
+                                                       _use_counter_filter=use_counter_filter,
                                                        parameter=self.b)
         else:
             output = embedding_table_find(self.table_id, keys,
                                           embedding_dim=self.embedding_dim,
                                           default_value=self.default_value,
-                                          _embedding_dim=self.embedding_dim,
                                           _max_key_num=self.max_key_num,
-                                          _use_counter_filter=1 if self.filter_mode == "counter" else 0)
+                                          _table_id=self._table_id,
+                                          _use_counter_filter=use_counter_filter)
         # input 20480 2 ->41960
         # output 41960 embedding_dim -> 20480 2 embedding_dim
         if origin_shape is not None:

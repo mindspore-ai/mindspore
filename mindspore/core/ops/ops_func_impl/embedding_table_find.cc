@@ -18,12 +18,36 @@
 #include <memory>
 #include <utility>
 #include "utils/check_convert_utils.h"
-#include "ops/ops_func_impl/embedding_utils.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
+namespace {
+int32_t CommonCheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const auto &prim_name = primitive->name();
+
+  const auto &keys_shape = input_args[kIndex1]->GetShape()->GetShapeVector();
+  if (MS_UNLIKELY(IsDynamic(keys_shape))) {
+    return OP_CHECK_RETRY;
+  }
+
+  auto keys_num = std::accumulate(keys_shape.begin(), keys_shape.end(), int64_t(1), std::multiplies<int64_t>());
+  auto _max_key_num = GetValue<int64_t>(primitive->GetAttr("_max_key_num"));
+  if (MS_UNLIKELY(keys_num != _max_key_num)) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", _max_key_num should be equal to keys' num, but got "
+                             << _max_key_num << " and " << keys_num << ".";
+  }
+
+  return OP_CHECK_SUCCESS;
+}
+}  // namespace
+int32_t EmbeddingTableFindFuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                                    const std::vector<AbstractBasePtr> &input_args) const {
+  return CommonCheckValidation(primitive, input_args);
+}
+
 BaseShapePtr EmbeddingTableFindFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                     const std::vector<AbstractBasePtr> &input_args) const {
   CheckTensorScalarRank(primitive, input_args[0], "table_id");
@@ -40,12 +64,22 @@ BaseShapePtr EmbeddingTableFindFuncImpl::InferShape(const PrimitivePtr &primitiv
     output_shape[0] = keys_shape[0];
   }
 
-  auto embedding_dim_opt = GetScalarValue<int64_t>(input_args[2]->GetValue());
-  if (MS_LIKELY(embedding_dim_opt.has_value())) {
-    auto embedding_dim = embedding_dim_opt.value();
+  const auto &embedding_dims = GetValue<std::vector<int64_t>>(primitive->GetAttr("embedding_dim"));
+  for (const auto &embedding_dim : embedding_dims) {
     MS_CHECK_VALUE(embedding_dim > 0, CheckAndConvertUtils::FormatCheckIntegerMsg("embedding_dim", embedding_dim,
                                                                                   kGreaterThan, int64_t(0), primitive));
-    output_shape[1] = embedding_dim;
+  }
+
+  if (embedding_dims.size() == 1) {
+    output_shape[1] = embedding_dims[0];
+  } else {
+    auto table_id = GetScalarValue<int64_t>(primitive->GetAttr("_table_id")).value();
+    if (table_id < 0 || table_id >= SizeToLong(embedding_dims.size())) {
+      MS_EXCEPTION(ValueError)
+        << "table_id should be less than embedding_dim.size and greater than zero, bug got embedding_dim.size "
+        << embedding_dims.size() << "and table_id " << table_id;
+    }
+    output_shape[1] = embedding_dims[table_id];
   }
 
   return std::make_shared<abstract::TensorShape>(std::move(output_shape));
@@ -63,13 +97,6 @@ TypePtr EmbeddingTableFindFuncImpl::InferType(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckTensorTypeValid("keys", keys_type, {kInt64}, prim_name);
 
   return kFloat32;
-}
-
-int32_t EmbeddingTableFindFuncImpl::CheckValidation(const PrimitivePtr &primitive,
-                                                    const std::vector<AbstractBasePtr> &input_args) const {
-  auto ret = CheckEmbeddingOpsExtraArgs(primitive, {input_args[kInputIndex2], input_args[kInputIndex4],
-                                                    input_args[kInputIndex1], input_args[kInputIndex5]});
-  return ret;
 }
 }  // namespace ops
 }  // namespace mindspore
