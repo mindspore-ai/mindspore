@@ -32,7 +32,7 @@ void *AclAllocator::AllocFunc(void *obj, size_t size) {
   if (block == nullptr) {
     MS_LOG(EXCEPTION) << "Malloc Mem From Mem Pool failed, size:" << size;
   }
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "AclWorkspace", "", "");
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "AclWorkspace", "AclWorkspace", "");
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddCompileTimeMemInfo, "AclWorkspace", size, block,
                                                  device::tracker::MemType::kWorkSpace);
   return block;

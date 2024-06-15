@@ -48,7 +48,7 @@ void CopyActor::Init() {
 
 void CopyActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "", "");
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), GetAID().Name(), "");
   FetchDeviceTensor(context);
   SendMemoryAllocReq(context);
 }

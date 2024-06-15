@@ -54,6 +54,7 @@ static const std::map<AllocatorType, std::string> kAllocatorTypeString = {
   {AllocatorType::kConstantValue, "constant value"},
   {AllocatorType::kKernelOutput, "kernel output"},
   {AllocatorType::kGraphOutput, "graph output"},
+  {AllocatorType::kWorkspace, "workspace"},
   {AllocatorType::kOther, "other"},
 };
 
@@ -128,7 +129,8 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
                     << ", from persistent mem: " << from_persistent_mem << ", need recycle: " << need_recycle;
   }
   if (device_addr != nullptr) {
-    device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, size, GetMemoryPoolType(), ActualPeakStatistics(),
+    device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, align_size, GetMemoryPoolType(),
+                                         ActualPeakStatistics(), TotalUsedMemStatistics(), TotalMemStatistics(),
                                          stream_id);
     if (IsMemoryPoolRecycle()) {
       (void)mem_bufs_.insert(device_addr);
@@ -618,7 +620,8 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block,
                     << ", used by event mem: " << TotalUsedByEventMemStatistics()
                     << ", device address addr: " << mem_buf->device_addr_ << ", size: " << mem_buf->size_;
   }
-  device::tracker::CALL_MEMORY_TRACKER(FreeMemBlock, mem_buf->device_addr_);
+  device::tracker::CALL_MEMORY_TRACKER(FreeMemBlock, mem_buf->device_addr_, TotalUsedMemStatistics(),
+                                       TotalMemStatistics());
 
   if (mem_buf->status_ != origin_status) {
     DumpDynamicMemPoolDebugInfo();
@@ -745,7 +748,7 @@ void DynamicMemPoolBestFit::KeepTensorMemByAddr(const DeviceMemPtr &device_addr,
   // Fetch the memblock and membuf by the device address.
   auto [mem_block, mem_buf, mem_mng] = FindByKeepAddr(device_addr);
   device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, size, GetMemoryPoolType(), ActualPeakStatistics(),
-                                       mem_block->stream_id_);
+                                       TotalUsedMemStatistics(), TotalMemStatistics(), mem_block->stream_id_);
   MS_EXCEPTION_IF_NULL(mem_block);
   MS_EXCEPTION_IF_NULL(mem_buf);
   MS_EXCEPTION_IF_NULL(mem_mng);
