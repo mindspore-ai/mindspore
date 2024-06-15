@@ -23,6 +23,7 @@
 #include "utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/distributed/ps/ps_context.h"
+#include "utils/phase.h"
 #ifndef BUILD_LITE
 #include "runtime/graph_scheduler/actor/kernel_async_launch_actor.h"
 #include "runtime/graph_scheduler/actor/kernel_async_infer_actor.h"
@@ -640,6 +641,11 @@ void MemoryTraceManager::Clear() {
   kernel_memory_trace_blocks_->clear();
   merged_memory_trace_blocks_->clear();
   kernel_to_block_->clear();
+}
+
+bool IsTwoPhaseInfer() {
+  const auto &phase = PhaseManager::GetInstance().phase();
+  return phase.find("prefill") != std::string::npos || phase.find("increment") != std::string::npos;
 }
 }  // namespace runtime
 }  // namespace mindspore

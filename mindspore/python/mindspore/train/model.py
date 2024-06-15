@@ -1899,8 +1899,25 @@ class Model:
                 self._lite_infer = False
                 logger.warning(f"Lite inference failed, {e.__str__()}, fallback to original inference!")
 
+        def _check_input_data():
+            """Input data check."""
+            for item in predict_data:
+                if item is None:
+                    continue
+                if isinstance(item, Tensor):
+                    if item.size == 0:
+                        msg = "The input data can not be empty."
+                        logger.critical(msg)
+                        raise ValueError(msg)
+                    continue
+                if not isinstance(item, (int, float, str)):
+                    data_class_str = "Tensor, None, int, float, str"
+                    raise TypeError(f'The types of input data must be in the Union({data_class_str}, ' \
+                                    f'tuple[{data_class_str}], list[{data_class_str}], dict[{data_class_str}]), ' \
+                                    f'but got type {item if item is None else type(item).__name__}.')
+
         self._check_network_mode(self._predict_network, False)
-        check_input_data(*predict_data, data_class=(int, float, str, None, Tensor))
+        _check_input_data()
         _parallel_predict_check()
         result = self._predict_network(*predict_data)
 

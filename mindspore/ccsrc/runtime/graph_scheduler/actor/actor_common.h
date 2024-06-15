@@ -475,6 +475,8 @@ std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &node, const Kerne
 
 // Check whether this process is parameter server and enable embedding cache.
 bool is_embedding_cache_server();
+
+bool IsTwoPhaseInfer();
 }  // namespace runtime
 }  // namespace mindspore
 
