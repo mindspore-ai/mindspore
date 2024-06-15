@@ -371,6 +371,7 @@ class OperatorInfo {
   Status InferVirtualDivOpsByLayout();
   bool IsDynamicShape();
   bool IsDynamicRank();
+  bool IsSelfDefineShard();
 
   // Calculate the number of repeated calculations for the output by the number of devices and the output tensor map.
   // The tensor map of Outputs[0] is used by default. If there are multiple outputs, need to identify which output
@@ -478,6 +479,7 @@ class OperatorInfo {
   bool repeated_num_in_dev_matrix_right_ = true;
   // Whether the list of available strategies is exact or approximate
   bool is_strategy_cost_exact_ = true;
+  bool self_define_shard_;
 
  private:
   OperatorCostPtr operator_cost_;

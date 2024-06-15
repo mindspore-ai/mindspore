@@ -180,6 +180,7 @@ constexpr char NONE[] = "None";
 constexpr char DEPEND[] = "Depend";
 constexpr char BATCH_PARALLEL[] = "BatchParallel";
 constexpr char STAND_ALONE[] = "StandAlone";
+constexpr char SELF_DEFINE_SHARD_OP[] = "SelfDefineShard";
 
 constexpr char ACTIVATION_TYPE[] = "activation_type";
 constexpr char TARGET[] = "primitive_target";
@@ -233,6 +234,7 @@ constexpr char FORWARD[] = "forward";
 constexpr char BACKWARD[] = "backward";
 constexpr char REDISTRIBUTION[] = "redistribution";
 constexpr char SKIP_REDISTRIBUTION[] = "skip_redistribution";
+constexpr char SELF_DEFINE_SHARD[] = "self_define_shard";
 constexpr char REPLACE[] = "replace";
 constexpr char CONNSYMBOL[] = "/";
 constexpr char INSTANCE_NAME[] = "instance_name";
