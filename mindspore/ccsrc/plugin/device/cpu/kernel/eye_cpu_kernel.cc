@@ -30,6 +30,9 @@ bool EyeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std:
 }
 
 int EyeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
+    return KRET_RESIZE_FAILED;
+  }
   int ret = 0;
   if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";

@@ -21,6 +21,7 @@
 #include "ir/dtype.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -39,6 +40,33 @@ BaseShapePtr EyeFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   return std::make_shared<abstract::TensorShape>(ShapeVector{n, m});
+}
+
+ShapeArray EyeFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  MS_EXCEPTION_IF_NULL(primitive);
+  int64_t n = abstract::Shape::kShapeDimAny;
+  int64_t m = abstract::Shape::kShapeDimAny;
+  auto n_ptr = GetScalarValue<int64_t>(input_values[0]);
+  auto m_ptr = GetScalarValue<int64_t>(input_values[1]);
+
+  if (n_ptr.has_value()) {
+    n = n_ptr.value();
+  }
+  if (m_ptr.has_value()) {
+    m = m_ptr.value();
+  }
+
+  auto prim_name = primitive->name();
+  MS_CHECK_VALUE(n >= 0, prim_name + " error: n value can not be negative.");
+  MS_CHECK_VALUE(m >= 0, prim_name + " error: m value can not be negative.");
+
+  return {ShapeVector{n, m}};
+}
+
+TypePtrList EyeFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  auto dtype_ptr = GetScalarValue<int64_t>(input_values[kInputIndex2]);
+  MS_CHECK_VALUE(dtype_ptr.has_value(), primitive->name() + " error: dtype input should has valid value.");
+  return {TypeIdToType(static_cast<TypeId>(dtype_ptr.value()))};
 }
 
 TypePtr EyeFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
@@ -74,5 +102,7 @@ int32_t EyeFuncImpl::CheckValidation(const PrimitivePtr &primitive,
 
   return OP_CHECK_SUCCESS;
 }
+
+REGISTER_SIMPLE_INFER(kNameEye, EyeFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

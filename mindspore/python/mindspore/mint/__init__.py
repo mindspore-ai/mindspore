@@ -227,6 +227,9 @@ from mindspore.ops.function.math_func import tanh
 
 # 100
 
+# 208
+from mindspore.ops.function.array_func import eye
+
 # 285
 from mindspore.ops.function.array_func import scatter_add_ext as scatter_add
 
@@ -444,6 +447,9 @@ __all__ = [
     # 99
 
     # 100
+
+    # 208
+    'eye',
 
     # 285
     'scatter_add',

@@ -13,6 +13,16 @@ Array操作
 
     mindspore.mint.index_select
 
+Tensor创建
+^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.eye
+
 
 逐元素运算
 ^^^^^^^^^^^^^^^^
