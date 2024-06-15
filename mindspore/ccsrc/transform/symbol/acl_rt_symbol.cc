@@ -69,6 +69,7 @@ aclrtMallocPhysicalFunObj aclrtMallocPhysical_ = nullptr;
 aclrtMapMemFunObj aclrtMapMem_ = nullptr;
 aclrtFreePhysicalFunObj aclrtFreePhysical_ = nullptr;
 aclrtReleaseMemAddressFunObj aclrtReleaseMemAddress_ = nullptr;
+aclrtCtxSetSysParamOptFunObj aclrtCtxSetSysParamOpt_ = nullptr;
 
 void LoadAclRtApiSymbol(const std::string &ascend_path) {
   std::string aclrt_plugin_path = ascend_path + "lib64/libascendcl.so";
@@ -127,6 +128,7 @@ void LoadAclRtApiSymbol(const std::string &ascend_path) {
   aclrtMapMem_ = DlsymAscendFuncObj(aclrtMapMem, handler);
   aclrtFreePhysical_ = DlsymAscendFuncObj(aclrtFreePhysical, handler);
   aclrtReleaseMemAddress_ = DlsymAscendFuncObj(aclrtReleaseMemAddress, handler);
+  aclrtCtxSetSysParamOpt_ = DlsymAscendFuncObj(aclrtCtxSetSysParamOpt, handler);
   MS_LOG(INFO) << "Load acl rt api success!";
 }
 

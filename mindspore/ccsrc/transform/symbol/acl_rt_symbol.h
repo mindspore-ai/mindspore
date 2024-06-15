@@ -72,6 +72,7 @@ ORIGIN_METHOD(aclrtMallocPhysical, aclError, aclrtDrvMemHandle *, size_t, const 
 ORIGIN_METHOD(aclrtMapMem, aclError, void *, size_t, size_t, aclrtDrvMemHandle, uint64_t)
 ORIGIN_METHOD(aclrtFreePhysical, aclError, aclrtDrvMemHandle)
 ORIGIN_METHOD(aclrtReleaseMemAddress, aclError, void *)
+ORIGIN_METHOD(aclrtCtxSetSysParamOpt, aclError, aclSysParamOpt, int64_t)
 
 extern aclrtCreateContextFunObj aclrtCreateContext_;
 extern aclrtCreateEventFunObj aclrtCreateEvent_;
@@ -123,6 +124,7 @@ extern aclrtMallocPhysicalFunObj aclrtMallocPhysical_;
 extern aclrtMapMemFunObj aclrtMapMem_;
 extern aclrtFreePhysicalFunObj aclrtFreePhysical_;
 extern aclrtReleaseMemAddressFunObj aclrtReleaseMemAddress_;
+extern aclrtCtxSetSysParamOptFunObj aclrtCtxSetSysParamOpt_;
 
 void LoadAclRtApiSymbol(const std::string &ascend_path);
 }  // namespace transform

@@ -41,6 +41,7 @@
 #include "transform/symbol/acl_base_symbol.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
+#include "transform/symbol/acl_compiler_symbol.h"
 
 namespace mindspore {
 namespace device {
@@ -63,6 +64,17 @@ bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
     return common::AnfAlgo::IsDynamicShape(node) || common::AnfAlgo::IsDynamicSequence(node) ||
            common::AnfAlgo::IsNodeMutableScalar(node);
   });
+}
+
+void SetAclOpDebugOption(const std::shared_ptr<MsContext> &ms_context) {
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto op_debug_option = ms_context->get_param<std::string>(MS_CTX_OP_DEBUG_OPTION);
+  if (op_debug_option == "oom") {
+    auto ret = CALL_ASCEND_API(aclSetCompileopt, aclCompileOpt::ACL_OP_DEBUG_OPTION, op_debug_option.c_str());
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Acl set op debug option: " << op_debug_option << " failed! Error flag is " << ret;
+    }
+  }
 }
 }  // namespace
 
@@ -240,6 +252,8 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
       MS_LOG(EXCEPTION) << "Initialize GE failed!";
     }
   }
+  // should be called after ge initialize.
+  SetAclOpDebugOption(inst_context);
 
   GeDeviceResManager::CreateSessionAndGraphRunner();
   auto graph_runner = transform::GetGraphRunner();
