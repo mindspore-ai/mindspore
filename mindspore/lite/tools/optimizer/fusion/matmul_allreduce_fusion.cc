@@ -35,6 +35,7 @@ std::unordered_map<std::string, VectorRef> MatMulAllReduceFusion::DefinePatterns
   patterns[kPatternNameMatMulAllReduce] = DefineMatMulAllReducePattern();
   patterns[kPatternNameMatMulBiasAddAllReduce] = DefineMatMulBiasAddAllReducePattern();
   patterns[kPatternNameMatMulDequantAllReduce] = DefineMatMulDequantAllReducePattern();
+  patterns[kPatternNameQuantBatchMatmulAllReduce] = DefineQuantBatchMatmulAllReducePattern();
   return patterns;
 }
 
@@ -100,6 +101,31 @@ VectorRef MatMulAllReduceFusion::DefineMatMulDequantAllReducePattern() const {
   MS_CHECK_TRUE_RET(is_allreduce != nullptr, {});
   VectorRef pattern_ref = VectorRef({is_allreduce, dequant_ref});
   return pattern_ref;
+}
+
+VectorRef MatMulAllReduceFusion::DefineQuantBatchMatmulAllReducePattern() const {
+  MS_LOG(DEBUG) << "Do QuantBatchMatmulAllReduce Pattern";
+  // QuantBatchMatmul
+  auto x_input = std::make_shared<Var>();           // input x
+  auto w_input = std::make_shared<Var>();           // input w
+  auto deq_scale_input = std::make_shared<Var>();   // input dequant scale
+  auto deq_offset_input = std::make_shared<Var>();  // input dequant offset
+  auto deq_bias_input = std::make_shared<Var>();    // input dequant bias
+  MS_CHECK_TRUE_RET(w_input != nullptr, {});
+  MS_CHECK_TRUE_RET(x_input != nullptr, {});
+  MS_CHECK_TRUE_RET(deq_scale_input != nullptr, {});
+  MS_CHECK_TRUE_RET(deq_offset_input != nullptr, {});
+  MS_CHECK_TRUE_RET(deq_bias_input != nullptr, {});
+  auto is_quant_bmm = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimQuantBatchMatmul>);
+  MS_CHECK_TRUE_RET(is_quant_bmm != nullptr, {});
+
+  auto quant_bmm = VectorRef({is_quant_bmm, x_input, w_input, deq_scale_input, deq_offset_input, deq_bias_input});
+
+  // AllReduce
+  auto is_allreduce = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAllReduce>);
+  MS_CHECK_TRUE_RET(is_allreduce != nullptr, {});
+  auto allreduce = VectorRef({is_allreduce, quant_bmm});
+  return allreduce;
 }
 
 PrimitivePtr MatMulAllReduceFusion::CreateMatMulAllReducePrim(const PrimitivePtr &allreduce_prim,
@@ -271,6 +297,65 @@ CNodePtr MatMulAllReduceFusion::CreateMatMulDequantAllReduceNode(const FuncGraph
   return matmul_allreduce_cnode;
 }
 
+CNodePtr MatMulAllReduceFusion::CreateQuantBatchMatmulAllReduceNode(const FuncGraphPtr &func_graph,
+                                                                    const AnfNodePtr &node) const {
+  MS_LOG(INFO) << "start create QuantBatchMatmulAllReduceNode";
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node);
+  auto allreduce_cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(allreduce_cnode);
+
+  auto qbmm_cnode = allreduce_cnode->input(kIndex1)->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(qbmm_cnode);
+
+  auto input_x = qbmm_cnode->input(kIndex1);
+  MS_EXCEPTION_IF_NULL(input_x);
+  auto input_w = qbmm_cnode->input(kIndex2);
+  MS_EXCEPTION_IF_NULL(input_w);
+  auto input_deq_scale = qbmm_cnode->input(kIndex3);
+  MS_EXCEPTION_IF_NULL(input_deq_scale);
+  auto input_deq_offset = qbmm_cnode->input(kIndex4);
+  MS_EXCEPTION_IF_NULL(input_deq_offset);
+  MS_LOG(WARNING) << "QuantBatchMatmul" << qbmm_cnode->fullname_with_scope()
+                  << ", its dequant offset input will not use";
+  auto input_deq_bias = qbmm_cnode->input(kIndex5);
+  MS_EXCEPTION_IF_NULL(input_deq_bias);
+
+  auto matmul_cnode_users = qbmm_cnode->func_graph()->manager()->node_users()[qbmm_cnode];
+  MS_CHECK_TRUE_RET(matmul_cnode_users.size() == 1, {});
+
+  // create op
+  auto matmul_allreduce_prim = std::make_shared<Primitive>("MatMulAllReduce")->Clone();
+  MS_CHECK_TRUE_RET(matmul_allreduce_prim, {});
+
+  // add attr
+  auto allreduce_prim = GetCNodePrimitive(allreduce_cnode);
+  auto qbmm_prim = GetCNodePrimitive(qbmm_cnode);
+  matmul_allreduce_prim->AddAttr(kAttrNameCommRenuse, allreduce_prim->GetAttr(kAttrNameCommRenuse));
+  matmul_allreduce_prim->AddAttr(kAttrNameGroup, allreduce_prim->GetAttr(kAttrNameGroup));
+  matmul_allreduce_prim->AddAttr(kAttrNameFusion, allreduce_prim->GetAttr(kAttrNameFusion));
+  matmul_allreduce_prim->AddAttr(kAttrNameOp, allreduce_prim->GetAttr(kAttrNameOp));
+  matmul_allreduce_prim->AddAttr(kAttrNameTransposeA, qbmm_prim->GetAttr(kAttrTransposeX1));
+  matmul_allreduce_prim->AddAttr(kAttrNameTransposeB, qbmm_prim->GetAttr(kAttrTransposeX2));
+
+  auto none = std::make_shared<None>();
+  auto none_node = NewValueNode(none);
+  MS_EXCEPTION_IF_NULL(none_node);
+  none_node->set_abstract(std::make_shared<abstract::AbstractNone>());
+  func_graph->NewCNode({none_node});
+  auto matmul_allreduce_cnode =
+    func_graph->NewCNode({NewValueNode(matmul_allreduce_prim), input_x, input_w, input_deq_bias, none_node, none_node,
+                          none_node, input_deq_scale});
+  if (matmul_allreduce_cnode == nullptr) {
+    MS_LOG(ERROR) << "New matmul_allreduce_cnode should not be null, but it is null.";
+    return nullptr;
+  }
+  matmul_allreduce_cnode->set_abstract(allreduce_cnode->abstract()->Clone());
+  matmul_allreduce_cnode->set_fullname_with_scope(allreduce_cnode->fullname_with_scope() + "_qbmm_allreduce_fusion");
+  MS_LOG(INFO) << "create QuantBatchMatmulAllReduceNode success.";
+  return matmul_allreduce_cnode;
+}
+
 AnfNodePtr MatMulAllReduceFusion::Process(const std::string &pattern_name, const mindspore::FuncGraphPtr &func_graph,
                                           const mindspore::AnfNodePtr &node, const mindspore::EquivPtr &equiv) const {
   if (func_graph == nullptr || node == nullptr) {
@@ -290,6 +375,9 @@ AnfNodePtr MatMulAllReduceFusion::Process(const std::string &pattern_name, const
   }
   if (pattern_name == kPatternNameMatMulDequantAllReduce) {
     matmul_allreduce_cnode = CreateMatMulDequantAllReduceNode(func_graph, node);
+  }
+  if (pattern_name == kPatternNameQuantBatchMatmulAllReduce) {
+    matmul_allreduce_cnode = CreateQuantBatchMatmulAllReduceNode(func_graph, node);
   }
   MS_CHECK_TRUE_RET(matmul_allreduce_cnode != nullptr, nullptr);
 
