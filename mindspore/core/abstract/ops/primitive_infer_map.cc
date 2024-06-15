@@ -162,9 +162,9 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode, bool is_proto)
       ori = op_infer->GetValueDependArgIndices();
     }
     if (prim_name == ops::kNameShapeCalc) {
-      auto value_depend_vector = GetValue<std::vector<bool>>(primitive->GetAttr(ops::kAttrValueDepend));
-      for (size_t i = 0; i < value_depend_vector.size(); i++) {
-        if (value_depend_vector[i]) {
+      auto only_depend_shape = GetValue<std::vector<bool>>(primitive->GetAttr(kAttrOnlyDependShape));
+      for (size_t i = 0; i < only_depend_shape.size(); i++) {
+        if (!only_depend_shape[i]) {
           ori.insert(i);
         }
       }
@@ -173,8 +173,8 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode, bool is_proto)
     MS_LOG(DEBUG) << "Not find infer function GetValueDependArgIndices, prim name: " << prim_name;
     // if not found in infer, consider all the non-tensor inputs as value depend args.
     ori = ops::GetInputDependValueList(primitive);
-    if (prim_name == ops::kNameAvgPoolGrad && primitive->HasAttr(ops::kAttrValueDepend)) {
-      auto value_depend_vector = GetValue<std::vector<int64_t>>(primitive->GetAttr(ops::kAttrValueDepend));
+    if (prim_name == ops::kNameAvgPoolGrad && primitive->HasAttr(kAttrValueDepend)) {
+      auto value_depend_vector = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrValueDepend));
       ori.clear();
       ori.insert(value_depend_vector.begin(), value_depend_vector.end());
     }

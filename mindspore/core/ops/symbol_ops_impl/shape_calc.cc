@@ -233,14 +233,14 @@ SymbolPtr ShapeCalcValueBuilder(OperationBuilder *b) {
     return b->Emit(std::make_shared<ShapeCalcBroadcastGradientArgs>(inp1, inp2, shift));
   }
 
-  auto value_depend_attr = b->prim()->GetAttr(mindspore::ops::kAttrValueDepend);
-  MS_EXCEPTION_IF_NULL(value_depend_attr);
-  auto value_depend = GetValue<std::vector<bool>>(value_depend_attr);
+  auto only_depend_shape_attr = b->prim()->GetAttr(kAttrOnlyDependShape);
+  MS_EXCEPTION_IF_NULL(only_depend_shape_attr);
+  auto only_depend_shape = GetValue<std::vector<bool>>(only_depend_shape_attr);
   auto num = b->input_num();
   SymbolPtrList inputs;
   inputs.reserve(num);
   for (size_t i = 0; i < num; ++i) {
-    if (value_depend[i]) {
+    if (!only_depend_shape[i]) {
       inputs.push_back(b->GetInputValue(i));
     } else {
       inputs.push_back(b->GetInputShape(i));
@@ -253,12 +253,12 @@ SymbolPtr ShapeCalcValueBuilder(OperationBuilder *b) {
 
 REG_SYMBOL_OP_BUILDER("ShapeCalc")
   .SetValueDepend([](const PrimitivePtr &p, size_t) -> std::vector<DependOn> {
-    auto value_depend_attr = p->GetAttr(mindspore::ops::kAttrValueDepend);
-    MS_EXCEPTION_IF_NULL(value_depend_attr);
-    auto value_depend = GetValue<std::vector<bool>>(value_depend_attr);
-    std::vector<DependOn> depends(value_depend.size());
-    (void)std::transform(value_depend.cbegin(), value_depend.cend(), depends.begin(),
-                         [](bool v) { return v ? DependOn::kValue : DependOn::kShape; });
+    auto only_depend_shape_attr = p->GetAttr(kAttrOnlyDependShape);
+    MS_EXCEPTION_IF_NULL(only_depend_shape_attr);
+    auto only_depend_shape = GetValue<std::vector<bool>>(only_depend_shape_attr);
+    std::vector<DependOn> depends(only_depend_shape.size());
+    (void)std::transform(only_depend_shape.cbegin(), only_depend_shape.cend(), depends.begin(),
+                         [](bool v) { return v ? DependOn::kShape : DependOn::kValue; });
     return depends;
   })
   .SetValueFunc(ShapeCalcValueBuilder);

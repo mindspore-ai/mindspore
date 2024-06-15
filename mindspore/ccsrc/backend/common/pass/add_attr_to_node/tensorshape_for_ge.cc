@@ -41,5 +41,22 @@ const AnfNodePtr TensorShapeAddDtype(const FuncGraphPtr &, const AnfNodePtr &nod
 
   return node;
 }
+
+const AnfNodePtr AddOnlyDependShapeAttr(const FuncGraphPtr &, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (common::AnfAlgo::HasNodeAttr(kAttrOnlyDependShape, cnode)) {
+    return nullptr;
+  }
+  common::AnfAlgo::SetNodeAttr(kAttrOnlyDependShape, MakeValue(std::vector<bool>{true}), node);
+  return node;
+}
+
+const AnfNodePtr TensorShapeProcess(const FuncGraphPtr &fg, const AnfNodePtr &node) {
+  auto ret1 = TensorShapeAddDtype(fg, node);
+  auto ret2 = AddOnlyDependShapeAttr(fg, node);
+  return (ret1 != nullptr || ret2 != nullptr) ? node : nullptr;
+}
 }  // namespace opt
 }  // namespace mindspore

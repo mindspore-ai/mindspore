@@ -88,20 +88,20 @@ bool IsSkipLaunchShapeRelatedOp(KernelActor *kernel_actor) {
         break;
       }
 
-      if (!common::AnfAlgo::HasNodeAttr("value_depend", user_cnode)) {
+      if (!common::AnfAlgo::HasNodeAttr(kAttrOnlyDependShape, user_cnode)) {
         can_skip_launch_real_make_tuple = false;
         break;
       }
-      const auto &value_depend = common::AnfAlgo::GetNodeAttr<std::vector<bool>>(user_cnode, "value_depend");
+      const auto &only_depend_shape = common::AnfAlgo::GetNodeAttr<std::vector<bool>>(user_cnode, kAttrOnlyDependShape);
       auto user_input_index = item.second;
       if (user_input_index < 1) {
         MS_LOG(EXCEPTION) << "The input index should start from 1, but got: " << user_input_index;
       }
-      if (IntToSize(user_input_index) > value_depend.size()) {
+      if (IntToSize(user_input_index) > only_depend_shape.size()) {
         MS_LOG(EXCEPTION) << "The input index[" << user_input_index
-                          << "] is out of range, input size: " << value_depend.size();
+                          << "] is out of range, input size: " << only_depend_shape.size();
       }
-      if (value_depend[user_input_index - 1]) {
+      if (!only_depend_shape[user_input_index - 1]) {
         can_skip_launch_real_make_tuple = false;
         break;
       }
@@ -114,6 +114,39 @@ bool IsSkipLaunchShapeRelatedOp(KernelActor *kernel_actor) {
   }
 
   return false;
+}
+
+void UpdateDataArrowRefCount(AbstractActor *const to_actor, size_t to_input_index,
+                             const DeviceTensorPtr &device_tensor) {
+  MS_LOG(DEBUG) << "Process value depend attribute for actor : " << to_actor->GetAID().Name();
+  bool need_increase_ref_count = true;
+  auto to_kernel_actor = dynamic_cast<KernelActor *>(to_actor);
+  if (to_kernel_actor != nullptr) {
+    auto to_kernel = to_kernel_actor->kernel();
+    auto cnode = to_kernel->cast<CNodePtr>();
+    if (cnode != nullptr) {
+      MS_LOG(DEBUG) << "Process value depend attribute for cnode : " << cnode->fullname_with_scope();
+      const auto &only_depend_shape_attr = common::AnfAlgo::GetCNodePrimitiveAttr(cnode, kAttrOnlyDependShape);
+      if (only_depend_shape_attr != nullptr) {
+        auto only_depend_shape = GetValue<std::vector<bool>>(only_depend_shape_attr);
+        if (only_depend_shape.size() <= to_input_index) {
+          MS_LOG(DEBUG) << "to_input_index : " << to_input_index
+                        << " is out of range, only_depend_shape size : " << only_depend_shape.size();
+        } else {
+          auto is_shape_depend = only_depend_shape[to_input_index];
+          MS_LOG(DEBUG) << "value_depend[" << to_input_index << "] : " << is_shape_depend;
+          if (is_shape_depend) {
+            need_increase_ref_count = false;
+          }
+        }
+      }
+    }
+  }
+  if (need_increase_ref_count) {
+    UpdateRefCount(device_tensor.get(), false);
+  } else {
+    device_tensor->UpdateFlag(device::kDeviceAddressFlagNullptr);
+  }
 }
 }  // namespace
 
@@ -356,7 +389,7 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
       (to_actor->type_ == KernelTransformType::kSuperKernelActor)) {
     UpdateRefCount(device_tensor.get(), true);
   } else {
-    UpdateRefCount(device_tensor.get(), false);
+    UpdateDataArrowRefCount(to_actor, to_input_index, device_tensor);
   }
 
   if (IsControlFlowActor(to_actor->type())) {

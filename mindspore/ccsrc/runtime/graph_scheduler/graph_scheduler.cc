@@ -1997,8 +1997,29 @@ void GraphScheduler::LinkDataArrowForBaseActor(AbstractActor *const from_actor, 
 
   // The custom actor will sync the device tensor data from the data arrow and no need copy.
   // Ignore the input address that no need copy.
+  bool need_copy = true;
+  auto to_kernel_actor = dynamic_cast<KernelActor *>(to_actor);
+  if (to_kernel_actor != nullptr) {
+    auto to_kernel = to_kernel_actor->kernel();
+    auto cnode = to_kernel->cast<CNodePtr>();
+    if (cnode != nullptr) {
+      MS_LOG(DEBUG) << "Process value depend attribute for cnode : " << cnode->fullname_with_scope();
+      const auto &only_depend_shape_attr = common::AnfAlgo::GetCNodePrimitiveAttr(cnode, kAttrOnlyDependShape);
+      if (only_depend_shape_attr != nullptr) {
+        auto only_depend_shape = GetValue<std::vector<bool>>(only_depend_shape_attr);
+        if (only_depend_shape.size() <= to_input_index) {
+          MS_LOG(DEBUG) << "to_input_index : " << to_input_index
+                        << " is out of range, only_depend_shape size : " << only_depend_shape.size();
+        } else {
+          need_copy = !only_depend_shape[to_input_index];
+          MS_LOG(DEBUG) << "only_depend_shape [" << to_input_index << "] " << need_copy;
+        }
+      }
+    }
+  }
+
   if ((to_actor->type_ != KernelTransformType::kCustomActor) &&
-      (!SchedulerHelper::IsIgnoredInputAddress(to_actor, to_input_index)) &&
+      (!SchedulerHelper::IsIgnoredInputAddress(to_actor, to_input_index)) && need_copy &&
       IsNeedInsertCopyActor(from_actor->device_contexts_[position], to_actor->device_contexts_[0])) {
     LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else {

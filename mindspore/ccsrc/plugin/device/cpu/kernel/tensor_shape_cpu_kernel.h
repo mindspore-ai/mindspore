@@ -32,6 +32,7 @@ class TensorShapeCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override;
   std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex0}; }
 
  private:
   ShapeVector input_shape_;

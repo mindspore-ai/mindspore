@@ -34,7 +34,6 @@
 #include "utils/ms_context.h"
 #include "ops/op_def.h"
 #include "ir/primitive.h"
-#include "ops/shape_calc.h"
 
 namespace mindspore {
 namespace expander {
@@ -451,9 +450,8 @@ NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, int64_t a
   return Gather(params, indices, Value(axis), batch_dims);
 }
 
-std::tuple<bool, ShapeArray, std::vector<std::vector<size_t>>> GetConstInputs(const NodePtrList &inputs,
-                                                                              const std::vector<bool> &is_value_depend,
-                                                                              const ShapeValidFunc &valid_func) {
+std::tuple<bool, ShapeArray, std::vector<std::vector<size_t>>> GetConstInputs(
+  const NodePtrList &inputs, const std::vector<bool> &only_depend_shape, const ShapeValidFunc &valid_func) {
   bool all_const = true;
   ShapeArray const_args;
   std::vector<std::vector<size_t>> pos_idx;
@@ -461,7 +459,7 @@ std::tuple<bool, ShapeArray, std::vector<std::vector<size_t>>> GetConstInputs(co
   for (size_t i = 0; i < inputs.size(); ++i) {
     MS_EXCEPTION_IF_NULL(inputs[i]);
 
-    if (is_value_depend[i]) {
+    if (!only_depend_shape[i]) {
       // input[i]'s value is used
       auto [success, vec] = GetIntList(inputs[i]);
       if (!success) {
@@ -510,16 +508,16 @@ std::tuple<bool, ShapeArray, std::vector<std::vector<size_t>>> GetConstInputs(co
 
 NodePtrList Emitter::ShapeCalc(const ShapeCalcBaseFunctorPtr &functor, const NodePtrList &inputs,
                                const std::vector<int64_t> &value_depend, const ShapeValidFunc &valid_func) {
-  std::vector<bool> is_value_depend(inputs.size(), false);
+  std::vector<bool> only_depend_shape(inputs.size(), true);
   for (auto idx : value_depend) {
-    is_value_depend[LongToSize(idx)] = true;
+    only_depend_shape[LongToSize(idx)] = false;
   }
 
   bool all_const;
   ShapeArray const_args;
   std::vector<std::vector<size_t>> pos_idx;
   // Try to get all const input shapes or values, and call the shape calc function when success.
-  std::tie(all_const, const_args, pos_idx) = GetConstInputs(inputs, is_value_depend, valid_func);
+  std::tie(all_const, const_args, pos_idx) = GetConstInputs(inputs, only_depend_shape, valid_func);
   NodePtrList res;
   // all inputs are static-shape tensors,
   if (all_const) {
@@ -532,7 +530,7 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcBaseFunctorPtr &functor, const Nod
 
   auto out = Emit(kShapeCalcOpName, inputs,
                   {{kAttrFunctor, functor},
-                   {ops::kAttrValueDepend, MakeValue(is_value_depend)},
+                   {kAttrOnlyDependShape, MakeValue(only_depend_shape)},
                    {kAttrInputIsDynamicShape, MakeValue(true)}});
   MS_EXCEPTION_IF_NULL(out);
   auto abs = out->abstract();

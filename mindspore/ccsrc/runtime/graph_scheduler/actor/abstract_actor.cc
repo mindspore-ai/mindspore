@@ -25,7 +25,8 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
   MS_EXCEPTION_IF_NULL(input_data->data_);
   // The unused data may be invalid ptr.
   if (!ActorDispatcher::enable_async_launch_kernel() && !input_data->data_->IsPtrValid() &&
-      !TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNotUsed)) {
+      (!TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNotUsed) &&
+       !TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNullptr))) {
     std::string error_info = "The input_data does not have a valid ptr of actor:" + GetAID().Name() +
                              " with index:" + std::to_string(input_data->index_) +
                              ", flag:" + std::to_string(input_data->data_->flag()) +

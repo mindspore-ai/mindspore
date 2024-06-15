@@ -24,7 +24,6 @@
 #include "ops/base_operator.h"
 
 namespace mindspore::ops {
-constexpr auto kAttrValueDepend = "value_depend";
 constexpr auto kNameShapeCalc = "ShapeCalc";
 constexpr auto kAttrCalcResult = "calc_result";
 class MIND_API ShapeCalc : public BaseOperator {
@@ -33,7 +32,6 @@ class MIND_API ShapeCalc : public BaseOperator {
   ShapeCalc() : BaseOperator(kNameShapeCalc) { InitIOName({"inputs"}, {"outputs"}); }
 
   ShapeCalcBaseFunctorPtr get_functor() const;
-  std::vector<bool> get_value_depend() const;
   ShapeArray get_calc_result() const;
 };
 

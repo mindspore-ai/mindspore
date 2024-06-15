@@ -405,6 +405,8 @@ constexpr char kAttrBpropAutoMonadLevel[] = "bprop_auto_monad_level";
 constexpr char kAttrSideEffectBpropAppPropagate[] = "side_effect_bprop_app_propagate";
 constexpr char kAttrSideEffectBpropApp[] = "side_effect_bprop_app";
 constexpr char kAttrNotRemove[] = "not_remove";
+constexpr const char kAttrValueDepend[] = "value_depend";
+constexpr const char kAttrOnlyDependShape[] = "only_depend_shape";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
