@@ -142,7 +142,7 @@ Status LinSpaceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   if (output_size_ == 2) {
     interval = sub;
   } else {
-    auto interval_divsor = gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(output_size_ - 2), dtype_id});
+    auto interval_divsor = gen_g.PushBack({gen_g.NewOpInst(CAST), CreateInt32Tensor(output_size_ - 1), dtype_id});
     interval = gen_g.PushBack({gen_g.NewOpInst(DIV), sub, interval_divsor});
   }
 
@@ -195,6 +195,75 @@ Status LinSpaceInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
+Status LinSpaceExtInfo::GetAttrs() {
+  constexpr size_t kLinSpaceExtInputSize = 4;
+  constexpr size_t kLinSpaceExtLastInputIndex = 3;
+  if (outputs_shape_.empty() || outputs_shape_[0].empty()) {
+    MS_LOG(ERROR) << name_ << ": Invalid args";
+    return FAILED;
+  }
+  auto output_0_shape = outputs_shape_.at(0);
+  output_size_ = output_0_shape.at(0);
+
+  if (input_value_.size() != kLinSpaceExtInputSize) {
+    MS_LOG(ERROR) << name_ << ": Invalid input_value's size " << input_value_.size();
+    return FAILED;
+  }
+
+  if (!input_value_[kLinSpaceExtLastInputIndex]->isa<Int64Imm>()) {
+    MS_LOG(ERROR) << name_ << ": The value of type is not int";
+    return FAILED;
+  }
+
+  dtype_ = GetValue<int64_t>(input_value_[kLinSpaceExtLastInputIndex]);
+  return SUCCESS;
+}
+
+Status LinSpaceExtInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
+  constexpr size_t kOutputSizeTwo = 2;
+  if (split_num_ == 1) {
+    MS_LOG(INFO) << name_ << ": split num is 1, no need to replace graph";
+    return SUCCESS;
+  }
+
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << "GenerateGraph Init failed.";
+    return FAILED;
+  }
+
+  MS_EXCEPTION_IF_ZERO("split_num_", split_num_);
+  int64_t slice_output_size = output_size_ / split_num_;
+  auto sub = gen_g.PushBack({gen_g.NewOpInst(SCALAR_SUB), gen_g.virtual_input_node(), gen_g.virtual_input_node()});
+  AnfNodePtr interval = nullptr;
+  if (output_size_ == kOutputSizeTwo) {
+    interval = sub;
+  } else {
+    interval = gen_g.PushBack({gen_g.NewOpInst(SCALAR_DIV), sub, CreatInt64Imm(output_size_ - 1)});
+  }
+
+  // new_start = start + slice_id * slice_output_size * interval
+  // new_end = new_start + (slice_output_size - 1) * interval
+  // new_x = slice_output_size
+  InferSliceId();
+  OperatorAttrs keep_alive_attr = {std::make_pair(KEEP_ALIVE, MakeValue(true))};
+  auto start_offset = gen_g.PushBack(
+    {gen_g.NewOpInst(SCALAR_MUL, keep_alive_attr), interval, CreatInt64Imm(slice_id_ * slice_output_size)});
+  auto new_start = gen_g.PushBack({gen_g.NewOpInst(SCALAR_ADD), gen_g.virtual_input_node(), start_offset});
+  auto start_end_offset =
+    gen_g.PushBack({gen_g.NewOpInst(SCALAR_MUL, keep_alive_attr), interval, CreatInt64Imm(slice_output_size - 1)});
+  auto new_end = gen_g.PushBack({gen_g.NewOpInst(SCALAR_ADD), new_start, start_end_offset});
+  auto lin_space = gen_g.PushBack(
+    {gen_g.NewOpInst(LIN_SPACE_EXT), new_start, new_end, CreatInt64Imm(slice_output_size), CreatInt64Imm(dtype_)});
+
+  std::vector<std::pair<AnfNodePtr, int64_t>> inputs_nodes = {std::make_pair(sub, 1), std::make_pair(sub, 2),
+                                                              std::make_pair(new_start, 1)};
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(inputs_nodes, lin_space));
+  return SUCCESS;
+}
+
 REGISTER(LinSpaceInfo);
+REGISTER(LinSpaceExtInfo);
 }  // namespace parallel
 }  // namespace mindspore

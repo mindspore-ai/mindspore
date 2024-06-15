@@ -61,6 +61,14 @@ class OneHotInfo : public OperatorInfo {
   ValuePtr axis_value_ptr_;
   int64_t mod_rank_ = 0;
 };
+
+class OneHotExtInfo : public OneHotInfo {
+ public:
+  OneHotExtInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
+      : OneHotInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~OneHotExtInfo() override = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_ONEHOT_INFO_H_

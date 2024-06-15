@@ -200,7 +200,7 @@ Status OneHotInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto sub2 = gen_g.PushBack({gen_g.NewOpInst(SUB), mul3, CreateInt32Tensor(1)});
   Attr attr_onehot_axis = std::make_pair(AXIS, axis_value_ptr_);
   OperatorAttrs attrs_onehot = {attr_onehot_axis};
-  auto onehot = gen_g.PushBack({gen_g.NewOpInst(ONEHOT, attrs_onehot), sub2, CreatInt64Imm(classes_each_device_),
+  auto onehot = gen_g.PushBack({gen_g.NewOpInst(prim_name_, attrs_onehot), sub2, CreatInt64Imm(classes_each_device_),
                                 cnode->input(3), cnode->input(4)});
   std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(floor_div, 1), std::make_pair(sub1, 1)};
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
@@ -249,5 +249,6 @@ std::shared_ptr<Strategies> OneHotInfo::GenerateBatchStrategies() {
 }
 
 REGISTER(OneHotInfo);
+REGISTER(OneHotExtInfo);
 }  // namespace parallel
 }  // namespace mindspore

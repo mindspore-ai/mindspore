@@ -59,6 +59,33 @@ class SliceInfo : public OperatorInfo {
   int64_t slice_axis_;
 };
 
+class SliceExtInfo : public OperatorInfo {
+ public:
+  SliceExtInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+               const PrimitiveAttrs &attrs)
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<SliceCost>()) {}
+  ~SliceExtInfo() override = default;
+
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  std::shared_ptr<Strategies> GenerateBatchStrategies() override;
+
+ protected:
+  Status GetAttrs() override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status InferMirrorOps() override;
+  Status InferForwardCommunication() override { return SUCCESS; }
+  Status InferDevMatrixShape() override;
+  Status InferTensorMap() override;
+
+ private:
+  Status GetInput(const ValuePtr &input_value, int64_t *input);
+  int64_t dim_;
+  int64_t start_;
+  int64_t end_;
+  int64_t step_;
+};
+
 using SliceInfoPtr = std::shared_ptr<SliceInfo>;
 }  // namespace parallel
 }  // namespace mindspore
