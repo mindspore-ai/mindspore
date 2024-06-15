@@ -97,11 +97,11 @@ MS_CORE_API std::string GetAllocConfigValue(const std::string &alloc_config);
 MS_CORE_API bool IsEnableAlllocConfig(const std::string &alloc_config);
 MS_CORE_API bool IsDisableAlllocConfig(const std::string &alloc_config);
 
-static inline std::string GetEnv(const std::string &envvar) {
+static inline std::string GetEnv(const std::string &envvar, const std::string &default_value = "") {
   const char *value = std::getenv(envvar.c_str());
 
   if (value == nullptr) {
-    return std::string();
+    return default_value;
   }
 
   return std::string(value);
