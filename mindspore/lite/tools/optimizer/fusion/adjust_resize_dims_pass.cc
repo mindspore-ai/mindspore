@@ -62,8 +62,8 @@ CNodePtr CreateBeforeReshapeNode(const FuncGraphPtr &func_graph, const CNodePtr 
     return nullptr;
   }
   if (cnode->inputs().size() < kInputIndex_1 + 1) {
-    MS_LOG(ERROR) << "The inputs num of " << cnode->fullname_with_scope() << " is smaller than " << (kInputIndex_1 + 1)
-                  << ", please check it!";
+    MS_LOG(INFO) << "The inputs num of " << cnode->fullname_with_scope() << " is smaller than " << (kInputIndex_1 + 1)
+                 << ", please check it!";
     return nullptr;
   }
   auto inputs = {cnode->input(kInputIndex_1), shape_node};
@@ -111,12 +111,12 @@ CNodePtr CreateResizeCNodeFor5D(const FuncGraphPtr &func_graph, const CNodePtr &
   auto resize_prim_c = resize_op->GetPrim();
   MS_CHECK_TRUE_RET(resize_prim_c != nullptr, nullptr);
   if (resize_cnode->inputs().size() < kInputIndex_0 + 1) {
-    MS_LOG(ERROR) << "The inputs num of " << resize_cnode->fullname_with_scope() << " is smaller than "
-                  << (kInputIndex_0 + 1) << ", please check it!";
+    MS_LOG(INFO) << "The inputs num of " << resize_cnode->fullname_with_scope() << " is smaller than "
+                 << (kInputIndex_0 + 1) << ", please check it!";
     return nullptr;
   }
   if (!utils::isa<ValueNodePtr>(resize_cnode->input(kInputIndex_0))) {
-    MS_LOG(ERROR) << "The first input of resize_cnode is not ValueNode!";
+    MS_LOG(INFO) << "The first input of resize_cnode is not ValueNode!";
     return nullptr;
   }
   ValueNodePtr value_node = resize_cnode->input(kInputIndex_0)->cast<ValueNodePtr>();
@@ -154,8 +154,8 @@ CNodePtr CreateShapeCNode(const FuncGraphPtr &func_graph, const CNodePtr &resize
   auto shape_prim_c = reshape_op->GetPrim();
   MS_CHECK_TRUE_RET(shape_prim_c != nullptr, nullptr);
   if (resize_cnode->inputs().size() < kInputIndex_1 + 1) {
-    MS_LOG(ERROR) << "The inputs num of " << resize_cnode->fullname_with_scope() << " is smaller than "
-                  << (kInputIndex_1 + 1) << ", please check it!";
+    MS_LOG(INFO) << "The inputs num of " << resize_cnode->fullname_with_scope() << " is smaller than "
+                 << (kInputIndex_1 + 1) << ", please check it!";
     return nullptr;
   }
   std::vector<AnfNodePtr> inputs = {resize_cnode->input(kInputIndex_1)};
@@ -267,8 +267,8 @@ CNodePtr CreateUnsqueezeCNode(const FuncGraphPtr &func_graph, const CNodePtr &cn
     return nullptr;
   }
   if (cnode->inputs().size() < kInputIndex_1 + 1) {
-    MS_LOG(ERROR) << "The inputs num of " << cnode->fullname_with_scope() << " is smaller than " << (kInputIndex_1 + 1)
-                  << ", please check it!";
+    MS_LOG(INFO) << "The inputs num of " << cnode->fullname_with_scope() << " is smaller than " << (kInputIndex_1 + 1)
+                 << ", please check it!";
     return nullptr;
   }
   std::vector<AnfNodePtr> inputs = {cnode->input(kInputIndex_1)};
@@ -292,22 +292,22 @@ CNodePtr CreateResizeCNodeFor3D(const FuncGraphPtr &func_graph, const CNodePtr &
   MS_CHECK_TRUE_RET(resize_cnode != nullptr, nullptr);
   MS_CHECK_TRUE_RET(unsqueeze_cnode != nullptr, nullptr);
   if (resize_cnode->inputs().size() < kInputIndex_2 + 1) {
-    MS_LOG(ERROR) << "The inputs num of " << resize_cnode->fullname_with_scope() << " is smaller than "
-                  << (kInputIndex_2 + 1) << ", please check it!";
+    MS_LOG(INFO) << "The inputs num of " << resize_cnode->fullname_with_scope() << " is smaller than "
+                 << (kInputIndex_2 + 1) << ", please check it!";
     return nullptr;
   }
   if (!utils::isa<ParameterPtr>(resize_cnode->input(kInputIndex_2))) {
-    MS_LOG(ERROR) << "The third input of resize_cnode is not Parameter!";
+    MS_LOG(INFO) << "The third input of resize_cnode is not Parameter!";
     return nullptr;
   }
   auto resize_shape_node = resize_cnode->input(kInputIndex_2)->cast<ParameterPtr>();
   if (resize_shape_node->default_param() == nullptr) {
-    MS_LOG(ERROR) << "resize_shape_node->default_param() is nullptr!";
+    MS_LOG(INFO) << "resize_shape_node->default_param() is nullptr!";
     return nullptr;
   }
   auto shape_tensor = std::dynamic_pointer_cast<tensor::Tensor>(resize_shape_node->default_param());
   if (shape_tensor == nullptr) {
-    MS_LOG(ERROR) << "Get resize shape_tensor failed!";
+    MS_LOG(INFO) << "Get resize shape_tensor failed!";
     return nullptr;
   }
   if (shape_tensor->data_type() == kNumberTypeFloat32) {
@@ -317,17 +317,17 @@ CNodePtr CreateResizeCNodeFor3D(const FuncGraphPtr &func_graph, const CNodePtr &
       return nullptr;
     }
   } else {
-    MS_LOG(ERROR) << "not support data type, " << shape_tensor->data_type();
+    MS_LOG(INFO) << "not support data type, " << shape_tensor->data_type();
     return nullptr;
   }
   float *tensor_data = reinterpret_cast<float *>(shape_tensor->data_c());
   if (tensor_data == nullptr) {
-    MS_LOG(ERROR) << "tensor_data is nullptr!";
+    MS_LOG(INFO) << "tensor_data is nullptr!";
     return nullptr;
   }
   if (shape_tensor->ElementsNum() < static_cast<int>(kShape_2)) {
-    MS_LOG(ERROR) << "resize shape tensor should contain at least 2 elements, but got "
-                  << " shape_tensor->ElementsNum()!";
+    MS_LOG(INFO) << "resize shape tensor should contain at least 2 elements, but got "
+                 << " shape_tensor->ElementsNum()!";
     return nullptr;
   }
   std::vector<float> shape = {tensor_data[shape_tensor->ElementsNum() - 2],
@@ -340,7 +340,7 @@ CNodePtr CreateResizeCNodeFor3D(const FuncGraphPtr &func_graph, const CNodePtr &
     return nullptr;
   }
   if (!utils::isa<ValueNodePtr>(resize_cnode->input(kInputIndex_0))) {
-    MS_LOG(ERROR) << "The first input of resize_cnode is not ValueNode!";
+    MS_LOG(INFO) << "The first input of resize_cnode is not ValueNode!";
     return nullptr;
   }
   ValueNodePtr value_node = resize_cnode->input(kInputIndex_0)->cast<ValueNodePtr>();
@@ -375,8 +375,8 @@ CNodePtr CreateResizeCNodeFor3D(const FuncGraphPtr &func_graph, const CNodePtr &
 int GetResizeInputDims(const CNodePtr &cnode) {
   MS_CHECK_TRUE_RET(cnode != nullptr, 0);
   if (cnode->inputs().size() < kInputIndex_2 + 1) {
-    MS_LOG(ERROR) << "The inputs num of " << cnode->fullname_with_scope() << " is smaller than " << (kInputIndex_2 + 1)
-                  << ", please check it!";
+    MS_LOG(INFO) << "The inputs num of " << cnode->fullname_with_scope() << " is smaller than " << (kInputIndex_2 + 1)
+                 << ", please check it!";
     return 0;
   }
   auto size_node = cnode->input(kInputIndex_2);
@@ -385,7 +385,7 @@ int GetResizeInputDims(const CNodePtr &cnode) {
     return 0;
   }
   if (!utils::isa<ParameterPtr>(size_node)) {
-    MS_LOG(ERROR) << "size_node is not Parameter!";
+    MS_LOG(INFO) << "size_node is not Parameter!";
     return 0;
   }
   auto resize_shape_node = size_node->cast<ParameterPtr>();
@@ -395,17 +395,17 @@ int GetResizeInputDims(const CNodePtr &cnode) {
     return 0;
   }
   if (resize_shape_node->default_param() == nullptr) {
-    MS_LOG(ERROR) << "resize_shape_node->default_param() is nullptr!";
+    MS_LOG(INFO) << "resize_shape_node->default_param() is nullptr!";
     return 0;
   }
   auto shape_tensor = std::dynamic_pointer_cast<tensor::Tensor>(resize_shape_node->default_param());
   if (shape_tensor == nullptr) {
-    MS_LOG(ERROR) << "shape_tensor is nullptr!";
+    MS_LOG(INFO) << "shape_tensor is nullptr!";
     return 0;
   }
   if (shape_tensor->shape().size() < kDimIndex_0 + 1) {
-    MS_LOG(ERROR) << "The dimension size of resize's shape tensor is smaller than " << (kDimIndex_0 + 1)
-                  << ", please check it!";
+    MS_LOG(INFO) << "The dimension size of resize's shape tensor is smaller than " << (kDimIndex_0 + 1)
+                 << ", please check it!";
     return 0;
   }
   int input_dim = shape_tensor->shape().at(kDimIndex_0);
@@ -417,32 +417,32 @@ bool AdjustResize5DToResize4D(const FuncGraphPtr &func_graph, const CNodePtr &re
   MS_CHECK_TRUE_RET(func_graph != nullptr, false);
   auto input_shape_cnode = CreateShapeCNode(func_graph, resize_cnode);
   if (input_shape_cnode == nullptr) {
-    MS_LOG(ERROR) << "input_shape_cnode is nullptr!";
+    MS_LOG(INFO) << "input_shape_cnode is nullptr!";
     return false;
   }
   auto before_reshape_cnode = CreateBeforeReshapeNode(func_graph, resize_cnode);
   if (before_reshape_cnode == nullptr) {
-    MS_LOG(ERROR) << "before_reshape_cnode is nullptr!";
+    MS_LOG(INFO) << "before_reshape_cnode is nullptr!";
     return false;
   }
   auto squeeze_cnode = CreateSqueezeCnode(func_graph, before_reshape_cnode);
   if (squeeze_cnode == nullptr) {
-    MS_LOG(ERROR) << "squeeze_cnode is nullptr!";
+    MS_LOG(INFO) << "squeeze_cnode is nullptr!";
     return false;
   }
   auto new_resize_cnode = CreateResizeCNodeFor5D(func_graph, resize_cnode, squeeze_cnode);
   if (new_resize_cnode == nullptr) {
-    MS_LOG(ERROR) << "new_resize_cnode is nullptr!";
+    MS_LOG(INFO) << "new_resize_cnode is nullptr!";
     return false;
   }
   auto mul_node = CreateMulNode(func_graph, input_shape_cnode);
   if (mul_node == nullptr) {
-    MS_LOG(ERROR) << "mul_node is nullptr!";
+    MS_LOG(INFO) << "mul_node is nullptr!";
     return false;
   }
   auto reshape_node = CreateAfterReshapeNode(func_graph, new_resize_cnode, mul_node);
   if (reshape_node == nullptr) {
-    MS_LOG(ERROR) << "reshape_node is nullptr!";
+    MS_LOG(INFO) << "reshape_node is nullptr!";
     return false;
   }
   auto manager = Manage(func_graph);
@@ -457,17 +457,17 @@ bool AdjustResize3DToResize4D(const FuncGraphPtr &func_graph, const CNodePtr &re
   MS_CHECK_TRUE_RET(func_graph != nullptr, false);
   auto unsqueze_cnode = CreateUnsqueezeCNode(func_graph, resize_cnode);
   if (unsqueze_cnode == nullptr) {
-    MS_LOG(ERROR) << "unsqueze_cnode is nullptr!";
+    MS_LOG(INFO) << "unsqueze_cnode is nullptr!";
     return false;
   }
   auto new_resize_cnode = CreateResizeCNodeFor3D(func_graph, resize_cnode, unsqueze_cnode);
   if (new_resize_cnode == nullptr) {
-    MS_LOG(ERROR) << "new_resize_cnode is nullptr!";
+    MS_LOG(INFO) << "new_resize_cnode is nullptr!";
     return false;
   }
   auto squeeze_cnode = CreateSqueezeCnode(func_graph, new_resize_cnode);
   if (squeeze_cnode == nullptr) {
-    MS_LOG(ERROR) << "squeeze_cnode is nullptr!";
+    MS_LOG(INFO) << "squeeze_cnode is nullptr!";
     return false;
   }
   auto manager = Manage(func_graph);
@@ -508,7 +508,7 @@ bool AdjustResizeDimsPass::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     if (!adjust_result) {
-      MS_LOG(ERROR) << "Adjust resize node failed!";
+      MS_LOG(INFO) << "Adjust resize node failed!";
       return adjust_result;
     }
   }
