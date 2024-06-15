@@ -429,7 +429,8 @@ void RedistributionNextNodeInMakeTuple(
   auto modified_get_item_idx = RemovePlaceholderIdx(get_item_index);
   std::vector<int> input_index = {node_pair.second};
   if (*make_tuple_index != -1) {
-    auto real_node = GetRealKernelNode(use_cnode->input(node_pair.second), -1, nullptr);
+    int node_pos = IsSomePrimitiveList(use_cnode, SUPPORT_NEW_SHAPEBASE_OPS) ? node_pair.second : 1;
+    auto real_node = GetRealKernelNode(use_cnode->input(node_pos), -1, nullptr);
     if (IsPrimitiveCNode(real_node.first, prim::kPrimMakeTuple)) {
       input_index.push_back(LongToInt((*make_tuple_index) + 1));
       next_nodes->push_back(std::make_pair(std::make_pair(real_node.first, input_index), modified_get_item_idx));
@@ -1224,10 +1225,16 @@ OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs 
                                  const std::vector<Shapes> &shape_list) {
   MS_EXCEPTION_IF_NULL(prim);
   OperatorInfoPtr op_info;
-  if (prim->HasAttr(SELF_DEFINE_SHARD) && GetValue<bool>(prim->GetAttr(SELF_DEFINE_SHARD))) {
-    op_info = OperatorInstanceByName(SELF_DEFINE_SHARD_OP, attrs, shape_list);
-    MS_LOG(INFO) << "Operator " << prim->name() << " has self_define_shard attribute. Create SelfDefineShardInfo";
-    return op_info;
+  if (prim->HasAttr(SELF_DEFINE_SHARD)) {
+    auto self_define_shard_attr = prim->GetAttr(SELF_DEFINE_SHARD);
+    if (self_define_shard_attr->cast_ptr<BoolImm>() == nullptr) {
+      MS_LOG(EXCEPTION) << "SELF_DEFINE_SHARD attribute is not a bool";
+    }
+    if (GetValue<bool>(self_define_shard_attr)) {
+      op_info = OperatorInstanceByName(SELF_DEFINE_SHARD_OP, attrs, shape_list);
+      MS_LOG(INFO) << "Operator " << prim->name() << " has self_define_shard attribute. Create SelfDefineShardInfo";
+      return op_info;
+    }
   }
   op_info = OperatorInstanceByName(prim->name(), attrs, shape_list);
   if (op_info) {

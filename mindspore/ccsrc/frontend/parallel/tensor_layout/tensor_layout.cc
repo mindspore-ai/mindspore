@@ -253,8 +253,13 @@ bool TensorLayout::TensorShapeDimensionIsDividedBySplitDeviceDimension() const {
         return false;
       }
       if (tensor_shape_.GetDimByIdx(i) != -1 && tensor_shape_.GetDimByIdx(i) % divisor != 0) {
-        MS_LOG(ERROR) << i << "th input shape is not divisible. The input shape is " << tensor_shape_.GetDimByIdx(i)
-                      << ", but the slice number is " << divisor;
+        if (layout_transfer_) {
+          MS_LOG(DEBUG) << i << "th input shape is not divisible. The input shape is " << tensor_shape_.GetDimByIdx(i)
+                        << ", but the slice number is " << divisor;
+        } else {
+          MS_LOG(ERROR) << i << "th input shape is not divisible. The input shape is " << tensor_shape_.GetDimByIdx(i)
+                        << ", but the slice number is " << divisor;
+        }
         return false;
       }
     }

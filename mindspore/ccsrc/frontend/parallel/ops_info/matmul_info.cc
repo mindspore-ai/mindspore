@@ -1286,7 +1286,7 @@ Status MatMul::ComputeReplaceGraphForInterleaved(const CNodePtr &cnode) {
     // matmul
     auto matmul =
       gen_g.PushBack({gen_g.NewOpInst(MATMUL), tuple_get_item, gen_g.virtual_input_node(), trans_a, trans_b});
-    input_nodes.push_back(std::make_pair(matmul, 2));
+    input_nodes.push_back(std::make_pair(matmul, kIndexTwo));
     if (forward_op_interleaved_.empty()) {
       virtual_converter_end_inputs_vector.push_back(matmul);
       continue;
