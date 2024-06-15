@@ -437,10 +437,15 @@ class SamplerFn:
             self.workers = None
 
     def _abort_watchdog(self):
+        """Let watchdog quit."""
         if hasattr(self, 'eot') and self.eot is not None and not self.eot.is_set():
             self.eot.set()
         if hasattr(self, 'cleaning_process') and self.cleaning_process is not None:
-            _PythonMultiprocessing._terminate_processes([self.cleaning_process])  # pylint: disable=W0212
+            # let the quit event notify the cleaning process to exit
+            self.cleaning_process.join(timeout=5)
+            if self.cleaning_process.is_alive():
+                # if the cleaning process did not exit, it may hang, try to terminate it
+                _PythonMultiprocessing._terminate_processes([self.cleaning_process])  # pylint: disable=W0212
             del self.cleaning_process
         if hasattr(self, 'count'):
             del self.count
