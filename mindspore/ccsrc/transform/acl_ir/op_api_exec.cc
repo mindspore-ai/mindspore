@@ -15,6 +15,12 @@
  */
 
 #include "transform/acl_ir/op_api_exec.h"
+#include <dirent.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <iostream>
+#include <vector>
+#include <string>
 
 namespace mindspore::transform {
 namespace {
@@ -88,10 +94,71 @@ ShapeVector UpdateOutputShape(const aclTensor *tensor) {
   return output_shape;
 }
 
+std::vector<std::string> ParseCustomPriority(std::string file_name) {
+  std::ifstream file(file_name);
+  std::string line;
+  std::vector<std::string> vendor_names;
+
+  if (!file.is_open()) {
+    MS_LOG(INFO) << "Could not open the file " << file_name;
+    return vendor_names;
+  }
+
+  while (std::getline(file, line)) {
+    if (line.empty() || line[0] == ';' || line[0] == '#') {
+      continue;
+    }
+    auto pos = line.find('=');
+    if (pos == std::string::npos) {
+      MS_LOG(ERROR) << "Can not parse file: " << file_name;
+      break;
+    }
+
+    pos = pos + 1;
+    while (pos < line.size()) {
+      auto new_pos = line.find(',', pos);
+      if (new_pos == std::string::npos) {
+        (void)vendor_names.emplace_back(line.substr(pos));
+        break;
+      }
+      (void)vendor_names.emplace_back(line.substr(pos, new_pos - pos));
+      pos = new_pos + 1;
+    }
+    break;
+  }
+  return vendor_names;
+}
+
+void GetAscendDefaultCustomPath(std::vector<std::string> *cust_paths) {
+  MS_EXCEPTION_IF_NULL(cust_paths);
+  auto ascend_path = mindspore::transform::GetAscendPath();
+  std::string custom_path = ascend_path + "opp/vendors/";
+  DIR *dir = opendir(custom_path.c_str());
+  if (dir == nullptr) {
+    MS_LOG(INFO) << "There is no custom path [" << custom_path << "] in ascend path [" << ascend_path << "].";
+    return;
+  }
+  std::string config_file = custom_path + "config.ini";
+  auto custom_priority = ParseCustomPriority(config_file);
+
+  for (auto &item_custom : custom_priority) {
+    std::string custom_opapi = custom_path + item_custom + GetCustOpApiLibName();
+    std::ifstream file(custom_opapi);
+    if (!file.good()) {
+      MS_LOG(WARNING) << "Checking whether the so exists or if permission to access it is available: " << custom_opapi;
+      continue;
+    }
+    cust_paths->emplace_back(custom_opapi);
+    MS_LOG(INFO) << "Add path [" << custom_opapi << " to custom opapi paths.";
+  }
+  closedir(dir);
+}
+
 void LoadOpApiLib() {
   auto cust_paths = common::GetEnv("ASCEND_CUSTOM_OPP_PATH");
   std::vector<std::string> cust_path_vec;
   if (!cust_paths.empty()) {
+    MS_LOG(DEBUG) << "ASCEND_CUSTOM_OPP_PATH: " << cust_paths;
     std::regex re{":"};
     std::vector<std::string> split_path_vec(std::sregex_token_iterator(cust_paths.begin(), cust_paths.end(), re, -1),
                                             std::sregex_token_iterator());
@@ -106,6 +173,8 @@ void LoadOpApiLib() {
       }
     }
   }
+
+  GetAscendDefaultCustomPath(&cust_path_vec);
 
   for (const auto &cust_lib_path : cust_path_vec) {
     auto cust_handler = GetOpApiLibHandler(cust_lib_path);

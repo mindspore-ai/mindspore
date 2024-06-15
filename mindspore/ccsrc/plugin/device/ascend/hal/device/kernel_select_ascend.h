@@ -34,6 +34,8 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
 
 bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node);
 
+bool IsEnableInternalNode(const AnfNodePtr &node);
+
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes);
 
 void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_type);
