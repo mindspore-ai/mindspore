@@ -452,3 +452,6 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/cast.cc:aicpu::CastKernel::Compute
 mindspore/mindspore/ccsrc/frontend/parallel/step_parallel.cc:mindspore::parallel::StepParallel
 mindspore/mindspore/python/mindspore/parallel/cluster/run.py:get_args
+mindspore/mindspore/ccsrc/frontend/parallel/tensor_layout/layout_utils.cc:mindspore::parallel::IntroduceConstraints
+mindspore/mindspore/ccsrc/frontend/parallel/tensor_layout/tensor_redistribution.cc:mindspore::parallel::TensorRedistribution::CalculateFromTensorShape
+g

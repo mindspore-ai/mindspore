@@ -50,7 +50,6 @@ def test_no_need_to_accomplish():
             out = self.relu(out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_no_need_to_accomplish")
     dataset_shard = (1, 1, 1, 1)
     from_shard = (2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -63,13 +62,13 @@ def test_no_need_to_accomplish():
     model.set_inputs(input_ids)
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
-    assert validator.check_node_inputs_has('Split-0', ['TupleGetItem-0', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
-    assert validator.check_node_inputs_has('Split-1', ['TupleGetItem-1', 2, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-1', 0])
-    assert validator.check_node_inputs_has('Reshape-0', ['TupleGetItem-2', '(-1, 2)'])
-    assert validator.check_node_inputs_has('ReLU-0', ['Reshape-0'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Split-0', ['TupleGetItem-0', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('Split-1', ['TupleGetItem-1', 2, 2])
+    assert validator.check_node_inputs('TupleGetItem-2', ['Split-1', 0])
+    assert validator.check_node_inputs('Reshape-0', ['TupleGetItem-2', (-1, 2)])
+    assert validator.check_node_inputs('ReLU-0', ['Reshape-0'])
 
 
 def test_no_need_to_accomplish_static():
@@ -91,7 +90,6 @@ def test_no_need_to_accomplish_static():
             out = self.relu(out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_no_need_to_accomplish_static")
     dataset_shard = (1, 1, 1, 1)
     from_shard = (2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -128,7 +126,6 @@ def test_shape_used_by_one_rank0():
             out = self.relu(out)  # 2,2,2
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_shape_used_by_one_rank0")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -142,25 +139,25 @@ def test_shape_used_by_one_rank0():
     model.set_inputs(input_ids)
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('MakeTuple-0', ['inputs0'])
-    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
-    assert validator.check_node_inputs_has('Split-0', ['TupleGetItem-0', 1, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
-    assert validator.check_node_inputs_has('Add-0', ['TupleGetItem-1', '_GetTensorSlice-0'])
-    assert validator.check_node_inputs_has('Split-1', ['Add-0', 3, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-1', 0])
-    assert validator.check_node_inputs_has('Split-2', ['TupleGetItem-2', 2, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-3', ['Split-2', 0])
-    assert validator.check_node_inputs_has('AllGather-0', ['TupleGetItem-3'])
-    assert validator.check_node_inputs_has('Split-3', ['AllGather-0', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-4', ['Split-3', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-5', ['Split-3', 1])
-    assert validator.check_node_inputs_has('MakeTuple-1', ['TupleGetItem-4', 'TupleGetItem-5'])
-    assert validator.check_node_inputs_has('Concat-0', ['MakeTuple-1', 1])
-    assert validator.check_node_inputs_has('Split-4', ['Concat-0', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-6', ['Split-4', 0])
-    assert validator.check_node_inputs_fuzzy_match('Reshape-0', ['TupleGetItem-6', '(-1, 1, 1)'])
-    assert validator.check_node_inputs_has('ReLU-0', ['Reshape-0'])
+    assert validator.check_node_inputs('MakeTuple-0', ['inputs0'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Split-0', ['TupleGetItem-0', 1, 2])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('Add-0', ['TupleGetItem-1', '_GetTensorSlice-0'])
+    assert validator.check_node_inputs('Split-1', ['Add-0', 3, 2])
+    assert validator.check_node_inputs('TupleGetItem-2', ['Split-1', 0])
+    assert validator.check_node_inputs('Split-2', ['TupleGetItem-2', 2, 2])
+    assert validator.check_node_inputs('TupleGetItem-3', ['Split-2', 0])
+    assert validator.check_node_inputs('AllGather-0', ['TupleGetItem-3'])
+    assert validator.check_node_inputs('Split-3', ['AllGather-0', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-4', ['Split-3', 0])
+    assert validator.check_node_inputs('TupleGetItem-5', ['Split-3', 1])
+    assert validator.check_node_inputs('MakeTuple-1', ['TupleGetItem-4', 'TupleGetItem-5'])
+    assert validator.check_node_inputs('Concat-0', ['MakeTuple-1', 1])
+    assert validator.check_node_inputs('Split-4', ['Concat-0', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-6', ['Split-4', 0])
+    assert validator.check_node_inputs('Reshape-0', ['TupleGetItem-6', (-1, 1, 1)])
+    assert validator.check_node_inputs('ReLU-0', ['Reshape-0'])
 
 
 def test_shape_used_by_one_rank6():
@@ -186,7 +183,6 @@ def test_shape_used_by_one_rank6():
             out = self.relu(out)  # 2,2,2
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_shape_used_by_one_rank6")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -200,25 +196,25 @@ def test_shape_used_by_one_rank6():
     model.set_inputs(input_ids)
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
-    assert validator.check_node_inputs_has('Split-0', ['TupleGetItem-0', 1, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 1])
-    assert validator.check_node_inputs_has('Add-0', ['TupleGetItem-1', '_GetTensorSlice-0'])
-    assert validator.check_node_inputs_has('Split-1', ['Add-0', 3, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-1', 0])
-    assert validator.check_node_inputs_has('Split-2', ['TupleGetItem-2', 2, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-3', ['Split-2', 1])
-    assert validator.check_node_inputs_has('AllGather-0', ['TupleGetItem-3'])
-    assert validator.check_node_inputs_has('Split-3', ['AllGather-0', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-4', ['Split-3', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-5', ['Split-3', 1])
-    assert validator.check_node_inputs_has('MakeTuple-1', ['TupleGetItem-4', 'TupleGetItem-5'])
-    assert validator.check_node_inputs_has('Concat-0', ['MakeTuple-1', 1])
-    assert validator.check_node_inputs_has('Split-4', ['Concat-0', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-6', ['Split-4', 1])
-    assert validator.check_node_inputs_fuzzy_match('Reshape-0', ['TupleGetItem-6', '(-1, 1, 1)'])
-    assert validator.check_node_inputs_has('ReLU-0', ['Reshape-0'])
-    assert validator.check_node_inputs_has('Return-0', ['ReLU-0'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Split-0', ['TupleGetItem-0', 1, 2])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 1])
+    assert validator.check_node_inputs('Add-0', ['TupleGetItem-1', '_GetTensorSlice-0'])
+    assert validator.check_node_inputs('Split-1', ['Add-0', 3, 2])
+    assert validator.check_node_inputs('TupleGetItem-2', ['Split-1', 0])
+    assert validator.check_node_inputs('Split-2', ['TupleGetItem-2', 2, 2])
+    assert validator.check_node_inputs('TupleGetItem-3', ['Split-2', 1])
+    assert validator.check_node_inputs('AllGather-0', ['TupleGetItem-3'])
+    assert validator.check_node_inputs('Split-3', ['AllGather-0', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-4', ['Split-3', 0])
+    assert validator.check_node_inputs('TupleGetItem-5', ['Split-3', 1])
+    assert validator.check_node_inputs('MakeTuple-1', ['TupleGetItem-4', 'TupleGetItem-5'])
+    assert validator.check_node_inputs('Concat-0', ['MakeTuple-1', 1])
+    assert validator.check_node_inputs('Split-4', ['Concat-0', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-6', ['Split-4', 1])
+    assert validator.check_node_inputs('Reshape-0', ['TupleGetItem-6', (-1, 1, 1)])
+    assert validator.check_node_inputs('ReLU-0', ['Reshape-0'])
+    assert validator.check_node_inputs('Return-0', ['ReLU-0'])
 
 
 def test_shape_used_by_one_static():
@@ -244,7 +240,6 @@ def test_shape_used_by_one_static():
             out = self.relu(out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_shape_used_by_one_static")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -285,7 +280,6 @@ def test_shape_used_by_two():
             out = self.matmul(out, self.w)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_shape_used_by_two")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -299,42 +293,39 @@ def test_shape_used_by_two():
     model.set_inputs(input_ids)
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('Split-0', ['TupleGetItem-0', 0, 4])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
-    assert validator.check_node_inputs_has('Split-1', ['TupleGetItem-1', 1, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-1', 0])
-    assert validator.check_node_inputs_has('Add-0', ['TupleGetItem-2', '_GetTensorSlice-0'])
-    assert validator.check_node_inputs_has('Shape-0', ['Add-0'])
-    assert validator.check_node_inputs_has('tuple_getitem_for_value_6-0', ['Shape-0', 1])
-    assert validator.check_node_inputs_has('MakeTuple-1', [1, 1, 'tuple_getitem_for_value_6-0', 2, 2])
-    assert validator.check_node_inputs_has('Reshape-0', ['Add-0', 'MakeTuple-1'])
-    assert validator.check_node_inputs_has('AllGather-0', ['Reshape-0'])
-    assert validator.check_node_inputs_has('Split-2', ['AllGather-0', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-3', ['Split-2', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-4', ['Split-2', 1])
-    assert validator.check_node_inputs_has('MakeTuple-2', ['TupleGetItem-3', 'TupleGetItem-4'])
-    assert validator.check_node_inputs_has('Concat-0', ['MakeTuple-2', 2])
-    assert validator.check_node_inputs_has('Split-3', ['Concat-0', 4, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-5', ['Split-3', 0])
-    assert validator.check_node_inputs_has('AllGather-1', ['TupleGetItem-5'])
-    assert validator.check_node_inputs_has('Split-4', ['AllGather-1', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-6', ['Split-4', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-7', ['Split-4', 1])
-    assert validator.check_node_inputs_has('MakeTuple-3', ['TupleGetItem-6', 'TupleGetItem-7'])
-    assert validator.check_node_inputs_has('Concat-1', ['MakeTuple-3', 1])
-    assert validator.check_node_inputs_has('Split-5', ['Concat-1', 3, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-8', ['Split-5', 0])
-    assert validator.check_node_inputs_fuzzy_match('Reshape-1', ['TupleGetItem-8', '(-1, 1, 1)'])
-    assert validator.check_node_inputs_has('ReLU-0', ['Reshape-1'])
-    assert validator.check_node_inputs_has('AllGather-2', ['ReLU-0'])
-    assert validator.check_node_inputs_has('Split-6', ['AllGather-2', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-9', ['Split-6', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-10', ['Split-6', 1])
-    assert validator.check_node_inputs_has('MakeTuple-4', ['TupleGetItem-9', 'TupleGetItem-10'])
-    assert validator.check_node_inputs_has('Concat-2', ['MakeTuple-4', 2])
-    assert validator.check_node_inputs_fuzzy_match('Reshape-2', ['Concat-2', '(-1, 2)'])
-    assert validator.check_node_inputs_has('MatMul-0', ['Reshape-2', '_GetTensorSlice-1'])
-    assert validator.check_node_inputs_has('AllReduce-0', ['MatMul-0'])
+    assert validator.check_node_inputs('Split-0', ['TupleGetItem-0', 0, 4])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('Split-1', ['TupleGetItem-1', 1, 2])
+    assert validator.check_node_inputs('TupleGetItem-2', ['Split-1', 0])
+    assert validator.check_node_inputs('Add-0', ['TupleGetItem-2', '_GetTensorSlice-0'])
+    assert validator.check_node_inputs('Reshape-0', ['Add-0', (1, 1, -1, 2, 2)])
+    assert validator.check_node_inputs('AllGather-0', ['Reshape-0'])
+    assert validator.check_node_inputs('Split-2', ['AllGather-0', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-3', ['Split-2', 0])
+    assert validator.check_node_inputs('TupleGetItem-4', ['Split-2', 1])
+    assert validator.check_node_inputs('MakeTuple-1', ['TupleGetItem-3', 'TupleGetItem-4'])
+    assert validator.check_node_inputs('Concat-0', ['MakeTuple-1', 2])
+    assert validator.check_node_inputs('Split-3', ['Concat-0', 4, 2])
+    assert validator.check_node_inputs('TupleGetItem-5', ['Split-3', 0])
+    assert validator.check_node_inputs('AllGather-1', ['TupleGetItem-5'])
+    assert validator.check_node_inputs('Split-4', ['AllGather-1', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-6', ['Split-4', 0])
+    assert validator.check_node_inputs('TupleGetItem-7', ['Split-4', 1])
+    assert validator.check_node_inputs('MakeTuple-2', ['TupleGetItem-6', 'TupleGetItem-7'])
+    assert validator.check_node_inputs('Concat-1', ['MakeTuple-2', 1])
+    assert validator.check_node_inputs('Split-5', ['Concat-1', 3, 2])
+    assert validator.check_node_inputs('TupleGetItem-8', ['Split-5', 0])
+    assert validator.check_node_inputs('Reshape-1', ['TupleGetItem-8', (-1, 1, 1)])
+    assert validator.check_node_inputs('ReLU-0', ['Reshape-1'])
+    assert validator.check_node_inputs('AllGather-2', ['ReLU-0'])
+    assert validator.check_node_inputs('Split-6', ['AllGather-2', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-9', ['Split-6', 0])
+    assert validator.check_node_inputs('TupleGetItem-10', ['Split-6', 1])
+    assert validator.check_node_inputs('MakeTuple-3', ['TupleGetItem-9', 'TupleGetItem-10'])
+    assert validator.check_node_inputs('Concat-2', ['MakeTuple-3', 2])
+    assert validator.check_node_inputs('Reshape-2', ['Concat-2', (-1, 2)])
+    assert validator.check_node_inputs('MatMul-0', ['Reshape-2', '_GetTensorSlice-1', False, False])
+    assert validator.check_node_inputs('AllReduce-0', ['MatMul-0'])
 
 
 def test_shape_used_by_two_static():
@@ -364,7 +355,6 @@ def test_shape_used_by_two_static():
             out = self.matmul(out, self.w)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_shape_used_by_two_static")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -405,7 +395,6 @@ def test_two_dynamic_dims_used_by_two():
             out = self.matmul(out, self.w)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_two_dynamic_dims_used_by_two")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -420,45 +409,45 @@ def test_two_dynamic_dims_used_by_two():
     model.set_inputs(input_ids)
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
-    assert validator.check_node_inputs_has('Split-0', ['TupleGetItem-0', 0, 4])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
-    assert validator.check_node_inputs_has('Split-1', ['TupleGetItem-1', 1, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-1', 0])
-    assert validator.check_node_inputs_has('Add-0', ['TupleGetItem-2', '_GetTensorSlice-0'])
-    assert validator.check_node_inputs_has('Shape-0', ['Add-0'])
-    assert validator.check_node_inputs_has('tuple_getitem_for_value_12-0', ['Shape-0', 0])
-    assert validator.check_node_inputs_has('tuple_getitem_for_value_10-0', ['Shape-0', 1])
-    assert validator.check_node_inputs_has('MakeTuple-1',
-                                           [1, 'tuple_getitem_for_value_12-0', 'tuple_getitem_for_value_10-0', 2, 2])
-    assert validator.check_node_inputs_has('Reshape-0', ['Add-0', 'MakeTuple-1'])
-    assert validator.check_node_inputs_has('AllGather-0', ['Reshape-0'])
-    assert validator.check_node_inputs_has('Split-2', ['AllGather-0', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-3', ['Split-2', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-4', ['Split-2', 1])
-    assert validator.check_node_inputs_has('MakeTuple-2', ['TupleGetItem-3', 'TupleGetItem-4'])
-    assert validator.check_node_inputs_has('Concat-0', ['MakeTuple-2', 2])
-    assert validator.check_node_inputs_has('Split-3', ['Concat-0', 4, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-5', ['Split-3', 0])
-    assert validator.check_node_inputs_has('AllGather-1', ['TupleGetItem-5'])
-    assert validator.check_node_inputs_has('Split-4', ['AllGather-1', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-6', ['Split-4', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-7', ['Split-4', 1])
-    assert validator.check_node_inputs_has('MakeTuple-3', ['TupleGetItem-6', 'TupleGetItem-7'])
-    assert validator.check_node_inputs_has('Concat-1', ['MakeTuple-3', 1])
-    assert validator.check_node_inputs_has('Split-5', ['Concat-1', 3, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-8', ['Split-5', 0])
-    assert validator.check_node_inputs_fuzzy_match('Reshape-1', ['TupleGetItem-8', '(-1, 1, 1)'])
-    assert validator.check_node_inputs_has('ReLU-0', ['Reshape-1'])
-    assert validator.check_node_inputs_has('AllGather-2', ['ReLU-0'])
-    assert validator.check_node_inputs_has('Split-6', ['AllGather-2', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-9', ['Split-6', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-10', ['Split-6', 1])
-    assert validator.check_node_inputs_has('MakeTuple-4', ['TupleGetItem-9', 'TupleGetItem-10'])
-    assert validator.check_node_inputs_has('Concat-2', ['MakeTuple-4', 2])
-    assert validator.check_node_inputs_fuzzy_match('Reshape-2', ['Concat-2', '(-1, 2)'])
-    assert validator.check_node_inputs_has('MatMul-0', ['Reshape-2', '_GetTensorSlice-1'])
-    assert validator.check_node_inputs_has('AllReduce-0', ['MatMul-0'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Split-0', ['TupleGetItem-0', 0, 4])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('Split-1', ['TupleGetItem-1', 1, 2])
+    assert validator.check_node_inputs('TupleGetItem-2', ['Split-1', 0])
+    assert validator.check_node_inputs('Add-0', ['TupleGetItem-2', '_GetTensorSlice-0'])
+    assert validator.check_node_inputs('Shape-0', ['Add-0'])
+    assert validator.check_node_inputs('tuple_getitem_for_value_3-0', ['Shape-0', 0])
+    assert validator.check_node_inputs('tuple_getitem_for_value_5-0', ['Shape-0', 1])
+    assert validator.check_node_inputs('MakeTuple-1',
+                                       [1, 'tuple_getitem_for_value_3-0', 'tuple_getitem_for_value_5-0', 2, 2])
+    assert validator.check_node_inputs('Reshape-0', ['Add-0', 'MakeTuple-1'])
+    assert validator.check_node_inputs('AllGather-0', ['Reshape-0'])
+    assert validator.check_node_inputs('Split-2', ['AllGather-0', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-3', ['Split-2', 0])
+    assert validator.check_node_inputs('TupleGetItem-4', ['Split-2', 1])
+    assert validator.check_node_inputs('MakeTuple-2', ['TupleGetItem-3', 'TupleGetItem-4'])
+    assert validator.check_node_inputs('Concat-0', ['MakeTuple-2', 2])
+    assert validator.check_node_inputs('Split-3', ['Concat-0', 4, 2])
+    assert validator.check_node_inputs('TupleGetItem-5', ['Split-3', 0])
+    assert validator.check_node_inputs('AllGather-1', ['TupleGetItem-5'])
+    assert validator.check_node_inputs('Split-4', ['AllGather-1', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-6', ['Split-4', 0])
+    assert validator.check_node_inputs('TupleGetItem-7', ['Split-4', 1])
+    assert validator.check_node_inputs('MakeTuple-3', ['TupleGetItem-6', 'TupleGetItem-7'])
+    assert validator.check_node_inputs('Concat-1', ['MakeTuple-3', 1])
+    assert validator.check_node_inputs('Split-5', ['Concat-1', 3, 2])
+    assert validator.check_node_inputs('TupleGetItem-8', ['Split-5', 0])
+    assert validator.check_node_inputs('Reshape-1', ['TupleGetItem-8', (-1, 1, 1)])
+    assert validator.check_node_inputs('ReLU-0', ['Reshape-1'])
+    assert validator.check_node_inputs('AllGather-2', ['ReLU-0'])
+    assert validator.check_node_inputs('Split-6', ['AllGather-2', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-9', ['Split-6', 0])
+    assert validator.check_node_inputs('TupleGetItem-10', ['Split-6', 1])
+    assert validator.check_node_inputs('MakeTuple-4', ['TupleGetItem-9', 'TupleGetItem-10'])
+    assert validator.check_node_inputs('Concat-2', ['MakeTuple-4', 2])
+    assert validator.check_node_inputs('Reshape-2', ['Concat-2', (-1, 2)])
+    assert validator.check_node_inputs('MatMul-0', ['Reshape-2', '_GetTensorSlice-1', False, False])
+    assert validator.check_node_inputs('AllReduce-0', ['MatMul-0'])
 
 
 def test_two_dynamic_dims_used_by_two_static():
@@ -488,7 +477,6 @@ def test_two_dynamic_dims_used_by_two_static():
             out = self.matmul(out, self.w)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_two_dynamic_dims_used_by_two_static")
     dataset_shard = (1, 1, 1, 1)
     successor_shard = (2, 2, 2)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
@@ -526,7 +514,6 @@ def test_not_equal_cast_mul_need_allgather_static():
             out = self.mul(out, out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_not_equal_cast_mul_need_allgather_static")
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -563,7 +550,6 @@ def test_not_equal_cast_mul_need_allgather_dyn():
             out = self.mul(out, out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_not_equal_cast_mul_need_allgather_dyn")
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -576,19 +562,19 @@ def test_not_equal_cast_mul_need_allgather_dyn():
     model.set_inputs(input_ids)
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
-    assert validator.check_node_inputs_has('Split-0', ['TupleGetItem-0', 1, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
-    assert validator.check_node_inputs_fuzzy_match('NotEqual-0', ['TupleGetItem-1', '1.0'])
-    assert validator.check_node_inputs_has('Cast-0', ['NotEqual-0', 42])
-    assert validator.check_node_inputs_has('AllGather-0', ['Cast-0'])
-    assert validator.check_node_inputs_has('Split-1', ['AllGather-0', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-1', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-3', ['Split-1', 1])
-    assert validator.check_node_inputs_has('MakeTuple-1', ['TupleGetItem-2', 'TupleGetItem-3'])
-    assert validator.check_node_inputs_has('Concat-0', ['MakeTuple-1', 1])
-    assert validator.check_node_inputs_fuzzy_match('Reshape-0', ['Concat-0', '(-1)'])
-    assert validator.check_node_inputs_has('Mul-0', ['Reshape-0', 'Reshape-0'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Split-0', ['TupleGetItem-0', 1, 2])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('NotEqual-0', ['TupleGetItem-1', 1])
+    assert validator.check_node_inputs('Cast-0', ['NotEqual-0', 42])
+    assert validator.check_node_inputs('AllGather-0', ['Cast-0'])
+    assert validator.check_node_inputs('Split-1', ['AllGather-0', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-2', ['Split-1', 0])
+    assert validator.check_node_inputs('TupleGetItem-3', ['Split-1', 1])
+    assert validator.check_node_inputs('MakeTuple-1', ['TupleGetItem-2', 'TupleGetItem-3'])
+    assert validator.check_node_inputs('Concat-0', ['MakeTuple-1', 1])
+    assert validator.check_node_inputs('Reshape-0', ['Concat-0', (-1)])
+    assert validator.check_node_inputs('Mul-0', ['Reshape-0', 'Reshape-0'])
 
 
 def test_not_equal_cast_mul_no_need_allgather_static():
@@ -615,7 +601,6 @@ def test_not_equal_cast_mul_no_need_allgather_static():
             out = self.mul(out, out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_not_equal_cast_mul_no_need_allgather_static")
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -652,7 +637,6 @@ def test_not_equal_cast_mul_no_need_allgather_dyn():
             out = self.mul(out, out)
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_not_equal_cast_mul_no_need_allgather_dyn")
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -665,14 +649,14 @@ def test_not_equal_cast_mul_no_need_allgather_dyn():
     model.set_inputs(input_ids)
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('MakeTuple-0', ['inputs0'])
-    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
-    assert validator.check_node_inputs_has('Split-0', ['TupleGetItem-0', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
-    assert validator.check_node_inputs_has('NotEqual-0', ['TupleGetItem-1', '1.0'])
-    assert validator.check_node_inputs_has('Cast-0', ['NotEqual-0', 42])
-    assert validator.check_node_inputs_has('Reshape-0', ['Cast-0', '(-1)'])
-    assert validator.check_node_inputs_has('Mul-0', ['Reshape-0', 'Reshape-0'])
+    assert validator.check_node_inputs('MakeTuple-0', ['inputs0'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Split-0', ['TupleGetItem-0', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('NotEqual-0', ['TupleGetItem-1', 1])
+    assert validator.check_node_inputs('Cast-0', ['NotEqual-0', 42])
+    assert validator.check_node_inputs('Reshape-0', ['Cast-0', -1])
+    assert validator.check_node_inputs('Mul-0', ['Reshape-0', 'Reshape-0'])
 
 
 def test_reshape_shape_overflow():
@@ -697,7 +681,6 @@ def test_reshape_shape_overflow():
             out = self.matmul(out, self.w)  # shard: ((2, 1), (4, 1))
             return out
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_reshape_shape_overflow")
     dataset_shard = (1, 1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -710,7 +693,8 @@ def test_reshape_shape_overflow():
     model.set_inputs(input_ids)
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_fuzzy_match('Reshape-0', ["", "-1, 4096"])
+    assert validator.check_node_inputs('Reshape-0', ['Concat-0', (-1, 4096)])
+    assert validator.check_node_inputs('MatMul-0', ['Reshape-0', '_GetTensorSlice-1', False, True])
 
 
 def test_dataset_shard_is_same_with_first_op():
@@ -721,8 +705,7 @@ def test_dataset_shard_is_same_with_first_op():
     """
 
     class ParallelArgMaxWithValueNet(nn.Cell):
-        def __init__(self, mul_size, mul2_size, keep_dims=False, axis=-1,
-                     strategy=None, strategy2=None):
+        def __init__(self, mul_size, mul2_size, keep_dims=False, axis=-1):
             super(ParallelArgMaxWithValueNet, self).__init__()
             mul_np = np.full(mul_size, 0.5, dtype=np.float32)
             mul2_np = np.full(mul2_size, 0.5, dtype=np.float32)
@@ -731,13 +714,9 @@ def test_dataset_shard_is_same_with_first_op():
             self.mul = P.Mul()
             self.mul2 = P.Mul()
             self.arg_max_with_value = P.ArgMaxWithValue(keep_dims=keep_dims, axis=axis)
-            if strategy is not None and strategy2 is not None:
-                self.arg_max_with_value.shard(strategy)
-                self.mul.shard(strategy2)
-                if keep_dims:
-                    self.mul2.shard(((1, 1), (1, 1)))
-                else:
-                    self.mul2.shard(((1,), (1,)))
+            self.arg_max_with_value.shard(((4, 1),))
+            self.mul.shard(((4, 1), (1, 1)))
+            self.mul2.shard(((1, 1), (1, 1)))
 
         def construct(self, inputs):
             x = self.mul(inputs, self.mul_weight)  # (128, 96), (1, 1), shard: (4, 1), (1, 1)
@@ -745,14 +724,12 @@ def test_dataset_shard_is_same_with_first_op():
             x = self.mul2(x, self.mul2_weight)
             return x
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_dataset_shard_is_same_with_first_op")
-
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
                                       dataset_strategy=(dataset_shard,))
-    model = ParallelArgMaxWithValueNet(mul_size=(1, 1), mul2_size=(128, 1), keep_dims=True,
-                                       strategy=((4, 1),), strategy2=((4, 1), (1, 1))).to_float(mstype.float16)
+    model = ParallelArgMaxWithValueNet(mul_size=(1, 1), mul2_size=(128, 1),
+                                       keep_dims=True).to_float(mstype.float16)
     model = _VirtualDatasetCell(model)
     model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
     d0 = Symbol(divisor=8)
@@ -760,23 +737,19 @@ def test_dataset_shard_is_same_with_first_op():
     model.set_inputs(x)
     phase = compile_net(model, x)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
-    assert validator.check_node_inputs_has('Cast-0', ['TupleGetItem-0', 42])
-    assert validator.check_node_inputs_has('Split-0', ['Cast-0', 0, 4])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
-    assert validator.check_node_inputs_has('Cast-1', ['Load-0', 42])
-    assert validator.check_node_inputs_has('Mul-0', ['TupleGetItem-1', 'Cast-1'])
-    assert validator.check_node_inputs_has('ArgMaxWithValue-0', ['Mul-0', -1, True])
-    assert validator.check_node_inputs_has('TupleGetItem-2', ['ArgMaxWithValue-0', 1])
-    assert validator.check_node_inputs_has('Shape-0', ['TupleGetItem-2'])
-    assert validator.check_node_inputs_has('tuple_getitem_for_value_12-0', ['Shape-0', 0])
-    assert validator.check_node_inputs_has('MakeTuple-1', ['tuple_getitem_for_value_12-0'])
-    assert validator.check_node_inputs_has('Reshape-0', ['TupleGetItem-2', 'MakeTuple-1'])
-    assert validator.check_node_inputs_has('AllGather-0', ['Reshape-0'])
-    assert validator.check_node_inputs_has('Reshape-1', ['AllGather-0', '(-1, 1)'])
-    assert validator.check_node_inputs_has('Cast-2', ['Load-1', 42])
-    assert validator.check_node_inputs_has('Mul-1', ['Reshape-1', 'Cast-2'])
-    assert validator.check_node_inputs_has('MakeTuple-2', ['Load-1', 'Load-0'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Cast-0', ['TupleGetItem-0', 42])
+    assert validator.check_node_inputs('Split-0', ['Cast-0', 0, 4])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('Cast-1', ['Load-0', 42])
+    assert validator.check_node_inputs('Mul-0', ['TupleGetItem-1', 'Cast-1'])
+    assert validator.check_node_inputs('ArgMaxWithValue-0', ['Mul-0', -1, True])
+    assert validator.check_node_inputs('TupleGetItem-2', ['ArgMaxWithValue-0', 1])
+    assert validator.check_node_inputs('Reshape-0', ['TupleGetItem-2', (-1)])
+    assert validator.check_node_inputs('AllGather-0', ['Reshape-0'])
+    assert validator.check_node_inputs('Reshape-1', ['AllGather-0', (-1, 1)])
+    assert validator.check_node_inputs('Cast-2', ['Load-1', 42])
+    assert validator.check_node_inputs('Mul-1', ['Reshape-1', 'Cast-2'])
 
 
 def test_dataset_shard_is_not_same_with_first_op():
@@ -811,8 +784,6 @@ def test_dataset_shard_is_not_same_with_first_op():
             x = self.mul2(x, self.mul2_weight)
             return x
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_dataset_shard_is_not_same_with_first_op")
-
     dataset_shard = (8, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -826,30 +797,25 @@ def test_dataset_shard_is_not_same_with_first_op():
     model.set_inputs(x)
     phase = compile_net(model, x)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
-    assert validator.check_node_inputs_has('Cast-0', ['TupleGetItem-0', 42])
-    assert validator.check_node_inputs_has('Shape-0', ['Cast-0'])
-    assert validator.check_node_inputs_has('tuple_getitem_for_value_24-0', ['Shape-0', 0])
-    assert validator.check_node_inputs_has('MakeTuple-1', [1, 'tuple_getitem_for_value_24-0', 4])
-    assert validator.check_node_inputs_has('Reshape-0', ['Cast-0', 'MakeTuple-1'])
-    assert validator.check_node_inputs_has('AllGather-0', ['Reshape-0'])
-    assert validator.check_node_inputs_has('Split-0', ['AllGather-0', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-0', 1])
-    assert validator.check_node_inputs_has('MakeTuple-2', ['TupleGetItem-1', 'TupleGetItem-2'])
-    assert validator.check_node_inputs_has('Concat-0', ['MakeTuple-2', 1])
-    assert validator.check_node_inputs_has('Reshape-1', ['Concat-0', '(-1, 4)'])
-    assert validator.check_node_inputs_has('Cast-1', ['Load-0', 42])
-    assert validator.check_node_inputs_has('Mul-0', ['Reshape-1', 'Cast-1'])
-    assert validator.check_node_inputs_has('ArgMaxWithValue-0', ['Mul-0', -1, True])
-    assert validator.check_node_inputs_has('TupleGetItem-3', ['ArgMaxWithValue-0', 1])
-    assert validator.check_node_inputs_has('Shape-1', ['TupleGetItem-3'])
-    assert validator.check_node_inputs_has('tuple_getitem_for_value_12-0', ['Shape-1', 0])
-    assert validator.check_node_inputs_has('MakeTuple-3', ['tuple_getitem_for_value_12-0'])
-    assert validator.check_node_inputs_has('Reshape-2', ['TupleGetItem-3', 'MakeTuple-3'])
-    assert validator.check_node_inputs_has('AllGather-1', ['Reshape-2'])
-    assert validator.check_node_inputs_has('Reshape-3', ['AllGather-1', '(-1, 1)'])
-    assert validator.check_node_inputs_has('Mul-1', ['Reshape-3', 'Cast-2'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Cast-0', ['TupleGetItem-0', 42])
+    assert validator.check_node_inputs('Reshape-0', ['Cast-0', (1, -1, 4)])
+    assert validator.check_node_inputs('AllGather-0', ['Reshape-0'])
+    assert validator.check_node_inputs('Split-0', ['AllGather-0', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('TupleGetItem-2', ['Split-0', 1])
+    assert validator.check_node_inputs('MakeTuple-1', ['TupleGetItem-1', 'TupleGetItem-2'])
+    assert validator.check_node_inputs('Concat-0', ['MakeTuple-1', 1])
+    assert validator.check_node_inputs('Reshape-1', ['Concat-0', (-1, 4)])
+    assert validator.check_node_inputs('Cast-1', ['Load-0', 42])
+    assert validator.check_node_inputs('Mul-0', ['Reshape-1', 'Cast-1'])
+    assert validator.check_node_inputs('ArgMaxWithValue-0', ['Mul-0', -1, True])
+    assert validator.check_node_inputs('TupleGetItem-3', ['ArgMaxWithValue-0', 1])
+    assert validator.check_node_inputs('Reshape-2', ['TupleGetItem-3', (-1)])
+    assert validator.check_node_inputs('AllGather-1', ['Reshape-2'])
+    assert validator.check_node_inputs('Reshape-3', ['AllGather-1', (-1, 1)])
+    assert validator.check_node_inputs('Cast-2', ['Load-1', 42])
+    assert validator.check_node_inputs('Mul-1', ['Reshape-3', 'Cast-2'])
 
 
 def test_greater_equal_op_with_two_dynamic_axis():
@@ -877,7 +843,6 @@ def test_greater_equal_op_with_two_dynamic_axis():
             x = self.div(x, self.flat(inputs))
             return x
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_greater_equal_op")
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -891,19 +856,19 @@ def test_greater_equal_op_with_two_dynamic_axis():
     model.set_inputs(x)
     phase = compile_net(model, x)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('MakeTuple-0', ['inputs0'])
-    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
-    assert validator.check_node_inputs_has('Split-0', ['TupleGetItem-0', 0, 4])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
-    assert validator.check_node_inputs_has('Split-1', ['TupleGetItem-0', 0, 4])
-    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-1', 0])
-    assert validator.check_node_inputs_has('GreaterEqual-0', ['TupleGetItem-1', 'TupleGetItem-2'])
-    assert validator.check_node_inputs_has('Cast-0', ['GreaterEqual-0', 42])
-    assert validator.check_node_inputs_has('AllGather-0', ['Cast-0'])
-    assert validator.check_node_inputs_has('Flatten-0', ['AllGather-0'])
-    assert validator.check_node_inputs_has('Cast-1', ['Flatten-0', 43])
-    assert validator.check_node_inputs_has('Flatten-1', ['TupleGetItem-0'])
-    assert validator.check_node_inputs_has('Div-0', ['Cast-1', 'Flatten-1'])
+    assert validator.check_node_inputs('MakeTuple-0', ['inputs0'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Split-0', ['TupleGetItem-0', 0, 4])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('Split-1', ['TupleGetItem-0', 0, 4])
+    assert validator.check_node_inputs('TupleGetItem-2', ['Split-1', 0])
+    assert validator.check_node_inputs('GreaterEqual-0', ['TupleGetItem-1', 'TupleGetItem-2'])
+    assert validator.check_node_inputs('Cast-0', ['GreaterEqual-0', 42])
+    assert validator.check_node_inputs('AllGather-0', ['Cast-0'])
+    assert validator.check_node_inputs('Flatten-0', ['AllGather-0'])
+    assert validator.check_node_inputs('Cast-1', ['Flatten-0', 43])
+    assert validator.check_node_inputs('Flatten-1', ['TupleGetItem-0'])
+    assert validator.check_node_inputs('Div-0', ['Cast-1', 'Flatten-1'])
 
 
 def test_two_matmul_with_different_layout():
@@ -928,7 +893,6 @@ def test_two_matmul_with_different_layout():
             x = self.relu(x)
             return x
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_two_matmul_with_different_layout")
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -941,45 +905,39 @@ def test_two_matmul_with_different_layout():
     model.set_inputs(x)
     phase = compile_net(model, x)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
-    assert validator.check_node_inputs_has('Split-0', ['TupleGetItem-0', 0, 4])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
-    assert validator.check_node_inputs_has('MatMul-0', ['TupleGetItem-1', 'Load-0'])
-    assert validator.check_node_inputs_has('Shape-0', ['MatMul-0'])
-    assert validator.check_node_inputs_has('tuple_getitem_for_value_12-0', ['Shape-0', 0])
-    assert validator.check_node_inputs_has('MakeTuple-1', [1, 'tuple_getitem_for_value_12-0', 16])
-    assert validator.check_node_inputs_has('Reshape-0', ['MatMul-0', 'MakeTuple-1'])
-    assert validator.check_node_inputs_has('AllGather-0', ['Reshape-0'])
-    assert validator.check_node_inputs_has('Split-1', ['AllGather-0', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-1', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-3', ['Split-1', 1])
-    assert validator.check_node_inputs_has('MakeTuple-2', ['TupleGetItem-2', 'TupleGetItem-3'])
-    assert validator.check_node_inputs_has('Concat-0', ['MakeTuple-2', 2])
-    assert validator.check_node_inputs_has('AllGather-1', ['Concat-0'])
-    assert validator.check_node_inputs_has('Split-2', ['AllGather-1', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-4', ['Split-2', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-5', ['Split-2', 1])
-    assert validator.check_node_inputs_has('MakeTuple-3', ['TupleGetItem-4', 'TupleGetItem-5'])
-    assert validator.check_node_inputs_has('Concat-1', ['MakeTuple-3', 1])
-    assert validator.check_node_inputs_has('Split-3', ['Concat-1', 2, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-6', ['Split-3', 0])
-    assert validator.check_node_inputs_has('Reshape-1', ['TupleGetItem-6', '(-1, 16)'])
-    assert validator.check_node_inputs_has('MatMul-1', ['Reshape-1', 'Load-1'])
-    assert validator.check_node_inputs_has('AllReduce-0', ['MatMul-1'])
-    assert validator.check_node_inputs_has('Shape-1', ['MatMul-1'])
-    assert validator.check_node_inputs_has('tuple_getitem_for_value_24-0', ['Shape-1', 0])
-    assert validator.check_node_inputs_has('MakeTuple-4', [1, 'tuple_getitem_for_value_24-0', 16])
-    assert validator.check_node_inputs_has('Reshape-2', ['AllReduce-0', 'MakeTuple-4'])
-    assert validator.check_node_inputs_has('Split-4', ['Reshape-2', 1, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-7', ['Split-4', 0])
-    assert validator.check_node_inputs_has('AllGather-2', ['TupleGetItem-7'])
-    assert validator.check_node_inputs_has('Split-5', ['AllGather-2', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-8', ['Split-5', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-9', ['Split-5', 1])
-    assert validator.check_node_inputs_has('MakeTuple-5', ['TupleGetItem-8', 'TupleGetItem-9'])
-    assert validator.check_node_inputs_has('Concat-2', ['MakeTuple-5', 2])
-    assert validator.check_node_inputs_has('Reshape-3', ['Concat-2', '(-1, 32)'])
-    assert validator.check_node_inputs_has('ReLU-0', ['Reshape-3'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Split-0', ['TupleGetItem-0', 0, 4])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('MatMul-0', ['TupleGetItem-1', 'Load-0', False, False])
+    assert validator.check_node_inputs('Reshape-0', ['MatMul-0', (1, -1, 16)])
+    assert validator.check_node_inputs('AllGather-0', ['Reshape-0'])
+    assert validator.check_node_inputs('Split-1', ['AllGather-0', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-2', ['Split-1', 0])
+    assert validator.check_node_inputs('TupleGetItem-3', ['Split-1', 1])
+    assert validator.check_node_inputs('MakeTuple-1', ['TupleGetItem-2', 'TupleGetItem-3'])
+    assert validator.check_node_inputs('Concat-0', ['MakeTuple-1', 2])
+    assert validator.check_node_inputs('AllGather-1', ['Concat-0'])
+    assert validator.check_node_inputs('Split-2', ['AllGather-1', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-4', ['Split-2', 0])
+    assert validator.check_node_inputs('TupleGetItem-5', ['Split-2', 1])
+    assert validator.check_node_inputs('MakeTuple-2', ['TupleGetItem-4', 'TupleGetItem-5'])
+    assert validator.check_node_inputs('Concat-1', ['MakeTuple-2', 1])
+    assert validator.check_node_inputs('Split-3', ['Concat-1', 2, 2])
+    assert validator.check_node_inputs('TupleGetItem-6', ['Split-3', 0])
+    assert validator.check_node_inputs('Reshape-1', ['TupleGetItem-6', (-1, 16)])
+    assert validator.check_node_inputs('MatMul-1', ['Reshape-1', 'Load-1', False, False])
+    assert validator.check_node_inputs('AllReduce-0', ['MatMul-1'])
+    assert validator.check_node_inputs('Reshape-2', ['AllReduce-0', (1, -1, 16)])
+    assert validator.check_node_inputs('Split-4', ['Reshape-2', 1, 2])
+    assert validator.check_node_inputs('TupleGetItem-7', ['Split-4', 0])
+    assert validator.check_node_inputs('AllGather-2', ['TupleGetItem-7'])
+    assert validator.check_node_inputs('Split-5', ['AllGather-2', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-8', ['Split-5', 0])
+    assert validator.check_node_inputs('TupleGetItem-9', ['Split-5', 1])
+    assert validator.check_node_inputs('MakeTuple-3', ['TupleGetItem-8', 'TupleGetItem-9'])
+    assert validator.check_node_inputs('Concat-2', ['MakeTuple-3', 2])
+    assert validator.check_node_inputs('Reshape-3', ['Concat-2', (-1, 32)])
+    assert validator.check_node_inputs('ReLU-0', ['Reshape-3'])
 
 
 def test_shrink_four_dims_into_two_dims():
@@ -1005,7 +963,6 @@ def test_shrink_four_dims_into_two_dims():
             x = self.relu(x)
             return x
 
-    context.set_context(save_graphs=True, save_graphs_path="./test_shrink_four_dims_into_two_dims")
     dataset_shard = (1, 1, 1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -1018,31 +975,31 @@ def test_shrink_four_dims_into_two_dims():
     model.set_inputs(x)
     phase = compile_net(model, x)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
-    assert validator.check_node_inputs_has('Split-0', ['TupleGetItem-0', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
-    assert validator.check_node_inputs_has('Split-1', ['TupleGetItem-1', 1, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-1', 0])
-    assert validator.check_node_inputs_has('Split-2', ['TupleGetItem-2', 2, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-3', ['Split-2', 0])
-    assert validator.check_node_inputs_has('Add-0', ['TupleGetItem-3', 'Load-0'])
-    assert validator.check_node_inputs_has('AllGather-0', ['Add-0'])
-    assert validator.check_node_inputs_has('AllGather-1', ['AllGather-0'])
-    assert validator.check_node_inputs_has('Split-3', ['AllGather-1', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-4', ['Split-3', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-5', ['Split-3', 1])
-    assert validator.check_node_inputs_has('MakeTuple-1', ['TupleGetItem-4', 'TupleGetItem-5'])
-    assert validator.check_node_inputs_has('Concat-0', ['MakeTuple-1', 1])
-    assert validator.check_node_inputs_has('AllGather-2', ['Concat-0'])
-    assert validator.check_node_inputs_has('Split-4', ['AllGather-2', 0, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-6', ['Split-4', 0])
-    assert validator.check_node_inputs_has('TupleGetItem-7', ['Split-4', 1])
-    assert validator.check_node_inputs_has('MakeTuple-2', ['TupleGetItem-6', 'TupleGetItem-7'])
-    assert validator.check_node_inputs_has('Concat-1', ['MakeTuple-2', 2])
-    assert validator.check_node_inputs_has('Reshape-0', ['Concat-1', '(-1, 256)'])
-    assert validator.check_node_inputs_has('Split-5', ['Reshape-0', 0, 4])
-    assert validator.check_node_inputs_has('TupleGetItem-8', ['Split-5', 0])
-    assert validator.check_node_inputs_has('ReLU-0', ['TupleGetItem-8'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Split-0', ['TupleGetItem-0', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('Split-1', ['TupleGetItem-1', 1, 2])
+    assert validator.check_node_inputs('TupleGetItem-2', ['Split-1', 0])
+    assert validator.check_node_inputs('Split-2', ['TupleGetItem-2', 2, 2])
+    assert validator.check_node_inputs('TupleGetItem-3', ['Split-2', 0])
+    assert validator.check_node_inputs('Add-0', ['TupleGetItem-3', 'Load-0'])
+    assert validator.check_node_inputs('Reshape-0', ['Add-0', (1, -1, 16, 8, 16)])
+    assert validator.check_node_inputs('AllGather-0', ['Reshape-0'])
+    assert validator.check_node_inputs('Split-3', ['AllGather-0', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-4', ['Split-3', 0])
+    assert validator.check_node_inputs('TupleGetItem-5', ['Split-3', 1])
+    assert validator.check_node_inputs('MakeTuple-1', ['TupleGetItem-4', 'TupleGetItem-5'])
+    assert validator.check_node_inputs('Concat-0', ['MakeTuple-1', 2])
+    assert validator.check_node_inputs('Split-4', ['Concat-0', 1, 2])
+    assert validator.check_node_inputs('TupleGetItem-6', ['Split-4', 0])
+    assert validator.check_node_inputs('AllGather-1', ['TupleGetItem-6'])
+    assert validator.check_node_inputs('Split-5', ['AllGather-1', 0, 2])
+    assert validator.check_node_inputs('TupleGetItem-7', ['Split-5', 0])
+    assert validator.check_node_inputs('TupleGetItem-8', ['Split-5', 1])
+    assert validator.check_node_inputs('MakeTuple-2', ['TupleGetItem-7', 'TupleGetItem-8'])
+    assert validator.check_node_inputs('Concat-1', ['MakeTuple-2', 3])
+    assert validator.check_node_inputs('Reshape-1', ['Concat-1', (-1, 256)])
+    assert validator.check_node_inputs('ReLU-0', ['Reshape-1'])
 
 
 def test_pangu_multi_batch_qkv_reshape_scene_without_constant_folding():
@@ -1057,7 +1014,8 @@ def test_pangu_multi_batch_qkv_reshape_scene_without_constant_folding():
             super(PanguReshapeNet, self).__init__()
             self.add = P.Add().shard(((1, 8), (8,)))
             self.weight = Parameter(np.full((15360,), 0.5, dtype=np.float32), name="weight")
-            self.reshape = P.Reshape()
+            # TODO: Consider optimize reshape skip redistribution.
+            self.reshape = P.Reshape().add_prim_attr("skip_redistribution", True)  # dynamic
             self.shape = P.Shape()
             self.transpose = P.Transpose().shard(((1, 1, 8, 1),))
             self.relu = P.ReLU().shard(((1, 8, 1, 1),))
@@ -1069,8 +1027,6 @@ def test_pangu_multi_batch_qkv_reshape_scene_without_constant_folding():
             x = self.relu(x)
             return x
 
-    dump_ir_path = "./test_pangu_multi_batch_qkv_reshape_scene_without_constant_folding"
-    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -1082,17 +1038,17 @@ def test_pangu_multi_batch_qkv_reshape_scene_without_constant_folding():
     model.set_inputs(x)
     phase = compile_net(model, x)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('MakeTuple-0', ['inputs0'])
-    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
-    assert validator.check_node_inputs_has('Split-0', ['TupleGetItem-0', 1, 8])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
-    assert validator.check_node_inputs_has('Add-0', ['TupleGetItem-1', 'Load-0'])
-    assert validator.check_node_inputs_has('Shape-0', ['Add-0'])
-    assert validator.check_node_inputs_has('TupleGetItem-2', ['Shape-0', 0])
-    assert validator.check_node_inputs_has('MakeTuple-1', ['TupleGetItem-2', -1, 15, 128])
-    assert validator.check_node_inputs_has('Reshape-0', ['Add-0', 'MakeTuple-1'])
-    assert validator.check_node_inputs_has('Transpose-0', ['Reshape-0', '(0, 2, 1, 3)'])
-    assert validator.check_node_inputs_has('ReLU-0', ['Transpose-0'])
+    assert validator.check_node_inputs('MakeTuple-0', ['inputs0'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Split-0', ['TupleGetItem-0', 1, 8])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('Add-0', ['TupleGetItem-1', 'Load-0'])
+    assert validator.check_node_inputs('Shape-0', ['Add-0'])
+    assert validator.check_node_inputs('TupleGetItem-2', ['Shape-0', 0])
+    assert validator.check_node_inputs('MakeTuple-1', ['TupleGetItem-2', -1, 15, 128])
+    assert validator.check_node_inputs('Reshape-0', ['Add-0', 'MakeTuple-1'])
+    assert validator.check_node_inputs('Transpose-0', ['Reshape-0', (0, 2, 1, 3)])
+    assert validator.check_node_inputs('ReLU-0', ['Transpose-0'])
 
 
 def test_pangu_multi_batch_qkv_reshape_scene_with_constant_folding():
@@ -1119,8 +1075,6 @@ def test_pangu_multi_batch_qkv_reshape_scene_with_constant_folding():
             x = self.relu(x)
             return x
 
-    dump_ir_path = "./test_pangu_multi_batch_qkv_reshape_scene_with_constant_folding"
-    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
     dataset_shard = (1, 1)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
@@ -1132,11 +1086,230 @@ def test_pangu_multi_batch_qkv_reshape_scene_with_constant_folding():
     model.set_inputs(x)
     phase = compile_net(model, x)
     validator = ParallelValidator(model, phase)
-    assert validator.check_node_inputs_has('MakeTuple-0', ['inputs0'])
-    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
-    assert validator.check_node_inputs_has('Split-0', ['TupleGetItem-0', 1, 8])
-    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
-    assert validator.check_node_inputs_has('Add-0', ['TupleGetItem-1', 'Load-0'])
-    assert validator.check_node_inputs_has('Reshape-0', ['Add-0', '(8, -1, 15, 128)'])
-    assert validator.check_node_inputs_has('Transpose-0', ['Reshape-0', '(0, 2, 1, 3)'])
-    assert validator.check_node_inputs_has('ReLU-0', ['Transpose-0'])
+    assert validator.check_node_inputs('MakeTuple-0', ['inputs0'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Split-0', ['TupleGetItem-0', 1, 8])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('Add-0', ['TupleGetItem-1', 'Load-0'])
+    assert validator.check_node_inputs('Reshape-0', ['Add-0', (8, -1, 15, 128)])
+    assert validator.check_node_inputs('Transpose-0', ['Reshape-0', (0, 2, 1, 3)])
+    assert validator.check_node_inputs('ReLU-0', ['Transpose-0'])
+
+
+def test_llama2_70b_embedding_shard():
+    """
+    Feature: Test tensor redistribution in dynamic shape.
+    Description: Test LLaMA embedding sharding.
+    Expectation: Compile success and assertion passed.
+    """
+
+    class LLama2Net(nn.Cell):
+        def __init__(self):
+            super(LLama2Net, self).__init__()
+            vocab_size = 4000
+            embed_size = 8192
+            self.embedding_weight = Tensor(np.random.rand(vocab_size, embed_size), dtype=mstype.float16)
+            self.gather = P.Gather().shard(((8, 1), (1, 1)))
+            self.relu = P.ReLU().shard(((1, 8, 1),))
+            self.shape = P.Shape()
+            self.reshape = P.Reshape()
+
+        def construct(self, x):
+            shape = self.shape(x)
+            x = self.gather(self.embedding_weight, x, 0)
+            x = self.reshape(x, (shape[0], shape[1], 8192))
+            x = self.relu(x)
+            return x
+
+    dump_ir_path = "./test_llama2_70b_embedding_shard"
+    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
+    dataset_shard = (1, 1)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                      global_rank=0, device_num=8,
+                                      dataset_strategy=(dataset_shard,))
+    model = LLama2Net()
+    model = _VirtualDatasetCell(model)
+    model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+    s = Symbol(divisor=4096)
+    x = Tensor(shape=(1, s), dtype=mstype.int32)
+    model.set_inputs(x)
+    phase = compile_net(model, x)
+    validator = ParallelValidator(model, phase)
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('ReLU-0', ['Sub-0'])
+    assert validator.check_node_inputs_has('Minimum-0', ['ReLU-0'])
+    assert validator.check_node_inputs('Gather-0', ['_GetTensorSlice-0', 'Minimum-0', 0, 0])
+    assert validator.check_node_inputs('Equal-0', ['Sub-0', 'Minimum-0'])
+    assert validator.check_node_inputs('DType-0', ['Gather-0'])
+    assert validator.check_node_inputs('DtypeToEnum-0', ['DtypeToEnum', 'dtype', 'DType-0'])
+    assert validator.check_node_inputs('Cast-0', ['Equal-0', 'DtypeToEnum-0'])
+    assert validator.check_node_inputs('ExpandDims-0', ['Cast-0', -1])
+    assert validator.check_node_inputs('Mul-0', ['Gather-0', 'ExpandDims-0'])
+    assert validator.check_node_inputs('AllReduce-0', ['Mul-0'])
+    assert validator.check_node_inputs('Reshape-0', ['AllReduce-0', (-1, 8192)])
+    assert validator.check_node_inputs('Split-0', ['Reshape-0', 0, 8])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('Reshape-1', ['TupleGetItem-1', (1, -1, 8192)])
+    assert validator.check_node_inputs('ReLU-1', ['Reshape-1'])
+
+
+def test_moe_shape_uniform():
+    """
+    Feature: Test tensor redistribution in dynamic shape.
+    Description: Test MoE all to all.
+    Expectation: Compile success and assertion passed.
+    """
+
+    class MoeSubNet(nn.Cell):
+        def __init__(self):
+            super(MoeSubNet, self).__init__()
+            self.weight = Tensor(np.random.rand(8, 4096, 14336), dtype=mstype.float16)
+            self.bmm = P.BatchMatMul(transpose_b=True).shard(((1, 8, 1, 1), (8, 1, 1)))
+            self.transpose = P.Transpose().shard(((1, 8, 1, 1),))
+            self.reshape = P.Reshape()
+
+        def construct(self, x):
+            x = self.bmm(x, self.weight)
+            x = self.reshape(x, (8, 8, -1, 4096))
+            x = self.transpose(x, (1, 0, 2, 3))
+            return x
+
+    dump_ir_path = "./test_moe_shape_uniform"
+    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
+    dataset_shard = (1, 1, 1, 1)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                      global_rank=0, device_num=8, full_batch=True,
+                                      enable_alltoall=True,
+                                      dataset_strategy=(dataset_shard,))
+    model = MoeSubNet()
+    model = _VirtualDatasetCell(model)
+    model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+    s = Symbol(divisor=4096)
+    x = Tensor(shape=(1, 8, s, 14336), dtype=mstype.float16)
+    model.set_inputs(x)
+    phase = compile_net(model, x)
+    validator = ParallelValidator(model, phase)
+    assert validator.check_node_inputs('MakeTuple-0', ['inputs0'])
+    assert validator.check_node_inputs('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs('Reshape-0', ['TupleGetItem-0', (8, -1, 14336)])
+    assert validator.check_node_inputs('Split-0', ['Reshape-0', 0, 8])
+    assert validator.check_node_inputs('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs('Reshape-1', ['TupleGetItem-1', (1, 1, -1, 14336)])
+    assert validator.check_node_inputs('BatchMatMul-0', ['Reshape-1', '_GetTensorSlice-0', False, True])
+    assert validator.check_node_inputs('Reshape-2', ['BatchMatMul-0', (1, 8, -1, 4096)])
+    assert validator.check_node_inputs('AlltoAll-0', ['Reshape-2'])
+    assert validator.check_node_inputs('Transpose-0', ['AlltoAll-0', (1, 0, 2, 3)])
+
+
+def test_multi_model_static_shape_gen():
+    """
+    Feature: Test tensor redistribution in dynamic shape.
+    Description: Test multi-model static shape generation.
+    Expectation: Compile success and assertion passed.
+    """
+
+    class MultiModelNet(nn.Cell):
+        def __init__(self):
+            super(MultiModelNet, self).__init__()
+            self.relu0 = P.ReLU().shard(((1, 1, 1),))
+            self.reshape = P.Reshape()
+            self.relu1 = P.ReLU().shard(((4, 1),))
+            self.shape = P.Shape()
+
+        def construct(self, x):
+            shape = self.shape(x)  # 2,-1,8192
+            x = self.reshape(x, (-1, shape[-1]))
+            x = self.relu1(x)  # -1,8192
+            return x
+
+    dump_ir_path = "./test_multi_model_static_shape_gen"
+    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
+    dataset_shard = (1, 1, 1)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                      global_rank=0, device_num=4, full_batch=True,
+                                      dataset_strategy=(dataset_shard,))
+    model = MultiModelNet()
+    model = _VirtualDatasetCell(model)
+    model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+    s = Symbol(divisor=4096)
+    x = Tensor(shape=(2, s, 8192), dtype=mstype.float16)
+    model.set_inputs(x)
+    _ = compile_net(model, x)
+
+
+def test_pangu_reshape_directly_use_shape():
+    """
+    Feature: Test tensor redistribution in dynamic shape.
+    Description: Test PanGu multi-batch qkv reshape.
+    Expectation: Compile success and assertion passed.
+    """
+
+    class PanguReshapeNet(nn.Cell):
+        def __init__(self):
+            super(PanguReshapeNet, self).__init__()
+            self.add = P.Add().shard(((1, 8), (8,)))
+            self.weight = Parameter(np.full((15360,), 0.5, dtype=np.float32), name="weight")
+            self.reshape = P.Reshape()
+            self.shape = P.Shape()
+            self.transpose = P.Transpose().shard(((1, 1, 8, 1),))
+            self.relu = P.ReLU().shard(((1, 8, 1, 1),))
+
+        def construct(self, x):
+            shape = self.shape(x)
+            x = self.reshape(x, (8, -1, 120, 128))  # constant folding
+            x = self.relu(x)
+            x = self.reshape(x, shape)
+            return x
+
+    dump_ir_path = "./test_pangu_reshape_directly_use_shape"
+    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
+    dataset_shard = (1, 1)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                      global_rank=0, device_num=8,
+                                      dataset_strategy=(dataset_shard,))
+    model = PanguReshapeNet()
+    model = _VirtualDatasetCell(model)
+    model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+    s = Symbol(divisor=4096)
+    x = Tensor(shape=(s, 15360), dtype=mstype.float32)
+    model.set_inputs(x)
+    phase = compile_net(model, x)
+    validator = ParallelValidator(model, phase)
+    assert validator.check_node_inputs('MakeTuple-0', ['inputs0'])
+
+
+def test_parallel_dynamic_shape_with_multi_prime_dim():
+    """
+    Feature: Test tensor redistribution in dynamic shape.
+    Description: Test PanGu multi-batch qkv reshape.
+    Expectation: Compile success and assertion passed.
+    """
+
+    class PanguReshapeNet(nn.Cell):
+        def __init__(self):
+            super(PanguReshapeNet, self).__init__()
+            mul_np = np.full((1, 1), 0.5, dtype=np.float32)
+            self.mul_weight = Parameter(Tensor(mul_np), name="mul_weight")
+            self.mul = P.Mul()
+            self.reshape = P.Reshape()
+            self.mul.shard(((8, 1), (1, 1)))
+
+        def construct(self, x):
+            x = self.mul(x, self.mul_weight)
+            x = self.reshape(x, (-1,))
+            return x
+
+    dump_ir_path = "./test_parallel_dynamic_shape_with_multi_prime_dim"
+    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
+    dataset_shard = (8, 1)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                      global_rank=0, device_num=8,
+                                      dataset_strategy=(dataset_shard,))
+    model = PanguReshapeNet()
+    model = _VirtualDatasetCell(model)
+    model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+    x = Tensor(shape=(None, 96), dtype=mstype.float32)
+    model.set_inputs(x)
+    phase = compile_net(model, x)
+    validator = ParallelValidator(model, phase)
+    assert validator.check_node_inputs('MakeTuple-0', ['inputs0'])

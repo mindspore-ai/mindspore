@@ -51,6 +51,8 @@ class RedistributionOperatorInfer {
   OutPutInfoVector output_info_vector() const { return output_info_vector_; }
   Status InferRedistributionOperator();
   void SetVirtualRank(const int64_t virtual_rank) { virtual_rank_ = virtual_rank; }
+  Status MergePartialToFullForReshapeHasMultiDynamicAxis();
+  Status SegmentFullShapeToPartial();
 
  private:
   Status InferSplitByAxis();

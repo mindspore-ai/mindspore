@@ -507,7 +507,6 @@ class Attention(nn.Cell):
 
         shape = F.shape(attention_scores)
         # attention probs
-        # FIXME: Problem could be here
         attention_probs = self.softmax(self.reshape(attention_scores, (shape[0], -1, shape[-1])))
         attention_probs = P.Cast()(attention_probs, ori_dtype)
         attention_probs = self.reshape(attention_probs, shape)
@@ -1129,7 +1128,6 @@ def test_pangu_alpha_batch_dim_dynamic_and_data_parallel():
     '''
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, full_batch=False)
-    context.set_context(save_graphs=True, save_graphs_path="./pangu_alpha_batch_dim_dynamic_and_data_parallel")
 
     config = PANGUALPHAConfig(data_parallel_num=8, model_parallel_num=1, num_layers=1)
     pangu_alpha = PanguAlpha(config)
@@ -1152,7 +1150,6 @@ def test_pangu_alpha_batch_dim_dynamic_and_dp_mp():
     context.reset_auto_parallel_context()
     ds_strategy = ((2, 1), (2, 1), (2, 1, 1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, dataset_strategy=ds_strategy)
-    context.set_context(save_graphs=True, save_graphs_path="./pangu_alpha_batch_dim_dynamic_and_dp_mp")
 
     config = PANGUALPHAConfig(data_parallel_num=2, model_parallel_num=4, num_layers=1)
     pangu_alpha = PanguAlpha(config)
@@ -1218,7 +1215,6 @@ def test_pangu_alpha_batch_and_seq_dims_dynamic_and_dp_mp_op():
     Description: all reshape skip redistribution
     Expectation: compile success
     '''
-    context.set_context(save_graphs=True, save_graphs_path="./dump_ir_without_skip")
     context.reset_auto_parallel_context()
     ds_strategy = ((2, 1), (2, 1), (2, 1, 1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, dataset_strategy=ds_strategy,

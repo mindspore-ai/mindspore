@@ -245,7 +245,7 @@ def test_force_fp32_comm():
             out = self.matmul(x, y)
             out = self.mul(out, b)
             return out
-    context.set_context(save_graphs=True)
+    context.set_context(save_graphs=True, save_graphs_path="./")
     assert not auto_parallel_context().get_force_fp32_communication()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
                                       force_fp32_communication=True)

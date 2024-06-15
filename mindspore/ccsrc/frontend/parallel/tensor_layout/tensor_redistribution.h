@@ -33,6 +33,7 @@ namespace parallel {
 constexpr double ALLTOALL_SCALE_FACTOR = 2.0;
 constexpr double ALLGATHER_REDUCESCATTER_SCALE_FACTOR = 0.5;
 using AssembledDynamicDimsMapping = std::map<int64_t, std::pair<size_t, AnfNodePtr>>;
+using ReplacementMemo = std::map<size_t, int64_t>;
 
 class TensorRedistribution {
  public:
@@ -47,6 +48,7 @@ class TensorRedistribution {
         keep_reshape_(keep_reshape) {
     this->is_inited_ = false;
   }
+  ~TensorRedistribution() = default;
 
   void SetPreAndNextCNode(const AnfNodePtr &pre_cnode, const CNodePtr &next_cnode) {
     this->pre_cnode_ = pre_cnode;
@@ -57,10 +59,16 @@ class TensorRedistribution {
     return this->pre_cnode_->fullname_with_scope() + "->" + this->next_cnode_->fullname_with_scope();
   }
 
+  void set_original_reshape_shape(const AnfNodePtr &original_reshape_shape) {
+    this->original_reshape_shape_ = original_reshape_shape;
+  }
+
+  const AnfNodePtr original_reshape_shape() { return this->original_reshape_shape_; }
+  bool is_dynamic_shape() { return this->is_dynamic_shape_; }
   Status Init(const TensorLayout &from, const TensorLayout &to, const RankList &dev_list);
-  ~TensorRedistribution() = default;
   RedistributionOpListPtr InferTensorRedistributionOperatorList(bool is_cost_model = false);
   std::vector<RedistributionOpListPtr> InferTensorRedistributionOperatorVirtualGraphs();
+  RedistributionOpListPtr InferTensorRedistributionOperatorListForMultiDynamicReshape(bool is_cost_model = false);
   OperatorList operator_list() const { return operator_list_; }
   bool reshape_flag() const { return reshape_flag_; }
   bool IsInited() const { return this->is_inited_; }
@@ -71,31 +79,30 @@ class TensorRedistribution {
   double backward_comm_cost() const { return backward_comm_cost_; }
   double memory_cost() const { return memory_cost_; }
   Shape input_shape() const { return from_origin_.slice_shape().array(); }
-  Status ResetLayoutTransfer() { return this->layout_transfer_.RollbackToDynamicShape(); }
-  bool IsAssembledStaticShape() const { return this->layout_transfer_.IsAssembledStaticShape(); }
+  Status ResetLayoutTransfer() { return this->RollbackToDynamicShape(); }
+  Status RollbackToDynamicShape();
+  TensorLayout from_origin_layout() const { return this->from_origin_; }
+  TensorLayout from_layout() const { return this->from_; }
+  TensorLayout assembled_static_origin_from() const { return this->assembled_static_origin_from_; }
+  TensorLayout from_origin_no_assembled() const { return this->from_origin_no_assembled_; }
+  TensorLayout to_origin_no_assembled() const { return this->to_origin_no_assembled_; }
+  bool IsAssembledStaticShape() const { return this->is_assembled_static_shape_; }
   RedistributionLayoutTransfer layout_transfer() const { return this->layout_transfer_; }
-  TensorLayout assembled_from_layout() const {
-    if (!this->IsAssembledStaticShape()) {
-      MS_LOG(WARNING) << "TensorRedistribution didn't assemble static shape but call assembled_from_layout().";
-      return this->from_origin_;
-    }
-    return this->layout_transfer_.from_in();
-  }
-  TensorLayout assembled_to_layout() const {
-    if (!this->IsAssembledStaticShape()) {
-      MS_LOG(WARNING) << "TensorRedistribution didn't assemble static shape but call assembled_to_layout().";
-      return this->to_origin_;
-    }
-    return this->layout_transfer_.to_in();
-  }
   AssembledDynamicDimsMapping GetDynamicDimsMapping() const { return this->dynamic_dim_mapping_; }
   void CreateAssembledDynamicMapping(const CNodePtr &cur_cnode, const AnfNodePtr &pre_cnode,
                                      const FuncGraphPtr &func_graph, int64_t redistribution_index);
   void SetVirtualRank(const int64_t virtual_rank) { virtual_rank_ = virtual_rank; }
 
  private:
-  void GetAssembledOriginLayout(TensorLayout *from_origin, TensorLayout *to_origin);
+  Status CalculateToTensorShapeUsingEnumeration(const Shape &from_tsr_shape, Shape *to_tsr_shape, const Array &factors);
+  Status CalculateToTensorShape(const Shape &from_shape, const Shape &origin_to_shape, const Array &to_in_factors,
+                                Shape *to_shape);
+  Status CalculateFromTensorShape(Shape *from_shape, const Array &from_factors, const Shape &to_shape,
+                                  const Array &to_factors);
+  Status AssembleStaticTensorShape(const TensorLayout &from_in, const TensorLayout &to_in,
+                                   TensorLayout *new_from_layout, TensorLayout *new_to_layout);
   void UnifyAssembledMapping();
+  void UnifyAssembledMappingWithSqueezedFromShape();
   void UnifyAssembledMappingWithSameSize(const std::set<int64_t> &index_mapping);
   void UnifyAssembledMappingWithDiffSize(const std::set<int64_t> &index_mapping);
   Status InferReshape(const TensorLayout &from_layout, const TensorLayout &to_layout,
@@ -109,6 +116,8 @@ class TensorRedistribution {
   Status MakeFromToLayout(const TensorLayout &from, const TensorLayout &to);
   RedistributionLayoutTransfer layout_transfer_;
   AssembledDynamicDimsMapping dynamic_dim_mapping_;
+  TensorLayout from_origin_no_assembled_;
+  TensorLayout to_origin_no_assembled_;
   TensorLayout from_origin_;
   TensorLayout to_origin_;
   TensorLayout from_;
@@ -133,12 +142,16 @@ class TensorRedistribution {
   bool construct_op_flag_;
   bool keep_reshape_;
   bool expand_able_ = true;
+  bool is_assembled_static_shape_ = false;
+  bool is_dynamic_shape_ = false;
+  ReplacementMemo from_dims_replace_memo_;
+  ReplacementMemo to_dims_replace_memo_;
   AnfNodePtr pre_cnode_;
   CNodePtr next_cnode_;
   int64_t virtual_rank_ = -1;
   std::vector<int64_t> virtual_rank_list_;
+  AnfNodePtr original_reshape_shape_ = nullptr;
 };
 }  // namespace parallel
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_TENSOR_LAYOUT_TENSOR_REDISTRIBUTION_H_

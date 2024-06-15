@@ -747,6 +747,19 @@ Operator CreateScalarFloorDivOp(int64_t div_num) {
   return op;
 }
 
+Operator CreateScalarDivOp(int64_t div_num) {
+  OperatorName operator_name = SCALAR_DIV;
+  OperatorAttrs operator_attrs;
+  OperatorParams operator_param;
+  constexpr size_t parameter_pos = 2;
+  ValuePtr scale_value = MakeValue(std::make_shared<Int64Imm>(div_num));
+  (void)operator_param.emplace_back(std::make_pair(std::make_pair(Y, scale_value), parameter_pos));
+  OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
+
+  Operator op = std::make_pair(operator_name, operator_arg);
+  return op;
+}
+
 Operator CreateScalarMulOp(int64_t scalar) {
   OperatorName operator_name = SCALAR_MUL;
   OperatorAttrs operator_attrs;
@@ -799,6 +812,16 @@ Operator CreateCastOp(TypePtr type) {
   OperatorParams params = {param_type};
   OperatorArgs args = std::make_pair(attrs, params);
   Operator op_cast = std::make_pair(CAST, args);
+  return op_cast;
+}
+
+Operator CreateScalarCastOp(TypePtr type) {
+  auto type_id = MakeValue(static_cast<int64_t>(type->type_id()));
+  Param param_type = std::make_pair(std::make_pair(DTYPE, type_id), 2);
+  OperatorAttrs attrs;
+  OperatorParams params = {param_type};
+  OperatorArgs args = std::make_pair(attrs, params);
+  Operator op_cast = std::make_pair(SCALAR_CAST, args);
   return op_cast;
 }
 

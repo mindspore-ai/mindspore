@@ -1121,7 +1121,6 @@ def test_pangu_alpha_batch_dim_dynamic_and_data_parallel():
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, full_batch=False)
     config = PANGUALPHAConfig(data_parallel_num=8, model_parallel_num=1, num_layers=2)
-    context.set_context(save_graphs=True)
     pangu_alpha = PanguAlpha(config)
     loss = CrossEntropyLoss(config)
     pangu_alpha_loss = PanguAlphaWithLoss(config, pangu_alpha, loss)

@@ -32,11 +32,59 @@
 namespace mindspore {
 namespace parallel {
 namespace {
+static Shape GetMakeTupleValue(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() == kSizeThree, "Input size of Reshape is not 3.");
+  auto make_tuple = cnode->input(kIndex2);
+  auto make_tuple_cnode = make_tuple->cast<CNodePtr>();
+  Shape ret;
+  for (size_t i = 1; i < make_tuple_cnode->size(); ++i) {
+    auto input_node = make_tuple_cnode->input(i);
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto value_node = GetValueNode(input_node);
+    if (value_node != nullptr && value_node->isa<Int64Imm>()) {
+      auto shape_ele = GetValue<int64_t>(value_node);
+      ret.push_back(shape_ele);
+    } else {
+      ret.push_back(-1);
+    }
+  }
+  return ret;
+}
+
+static bool IsSameTargetDynamicShape(const CNodePtr &reshape_node_a, const CNodePtr &reshape_node_b) {
+  MS_EXCEPTION_IF_NULL(reshape_node_a);
+  MS_EXCEPTION_IF_NULL(reshape_node_b);
+  MS_EXCEPTION_IF_CHECK_FAIL(reshape_node_a->inputs().size() == kSizeThree, "Input size of Reshape is not 3.");
+  MS_EXCEPTION_IF_CHECK_FAIL(reshape_node_b->inputs().size() == kSizeThree, "Input size of Reshape is not 3.");
+  if (!IsPrimitiveCNode(reshape_node_a->input(kIndex2), prim::kPrimMakeTuple)) {
+    MS_LOG(WARNING) << "the dst shape of reshape node a is not make_tuple for dynamic shape";
+    return false;
+  }
+
+  if (!IsPrimitiveCNode(reshape_node_b->input(kIndex2), prim::kPrimMakeTuple)) {
+    MS_LOG(WARNING) << "the dst shape of reshape node b is not make_tuple for dynamic shape";
+    return false;
+  }
+
+  Shape node_a_shape = GetMakeTupleValue(reshape_node_a);
+  Shape node_b_shape = GetMakeTupleValue(reshape_node_b);
+  MS_LOG(INFO) << "the node a shape is " << node_a_shape << ", the node b shape is " << node_b_shape;
+  if (std::count(node_a_shape.cbegin(), node_a_shape.cend(), -1) > 1) {
+    return false;
+  }
+  if (std::count(node_b_shape.cbegin(), node_b_shape.cend(), -1) > 1) {
+    return false;
+  }
+
+  return (node_a_shape == node_b_shape);
+}
+
 bool IsSameTargetShape(const CNodePtr &reshape_node_a, const CNodePtr &reshape_node_b) {
   MS_EXCEPTION_IF_CHECK_FAIL(reshape_node_a->inputs().size() == kSizeThree, "Input size of Reshape is not 3.");
   MS_EXCEPTION_IF_CHECK_FAIL(reshape_node_b->inputs().size() == kSizeThree, "Input size of Reshape is not 3.");
   if (!reshape_node_a->input(kIndex2)->isa<ValueNode>() || !reshape_node_b->input(kIndex2)->isa<ValueNode>()) {
-    return false;
+    return IsSameTargetDynamicShape(reshape_node_a, reshape_node_b);
   }
   auto value_ptr_a = reshape_node_a->input(kIndex2)->cast<ValueNodePtr>()->value()->cast<ValueTuplePtr>()->value();
   auto value_ptr_b = reshape_node_b->input(kIndex2)->cast<ValueNodePtr>()->value()->cast<ValueTuplePtr>()->value();

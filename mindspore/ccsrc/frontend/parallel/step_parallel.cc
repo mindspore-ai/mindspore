@@ -512,9 +512,10 @@ static void Redistribution(const std::pair<AnfNodePtr, std::vector<int>> &node_p
   } else {
     next_distribute_operator = GetDistributeOperator(next_cnode);
   }
-  MS_EXCEPTION_IF_NULL(next_distribute_operator);
   MS_LOG(DEBUG) << "Redistribution for pre_node: " << pre_cnode->DebugString()
                 << " next_node: " << next_cnode->DebugString();
+  MS_EXCEPTION_IF_NULL(next_distribute_operator);
+
   auto tensor_redistribution = next_distribute_operator->CreateTensorRedistribution();
   tensor_redistribution->SetPreAndNextCNode(pre_cnode, next_cnode);
   MS_LOG(DEBUG) << "Redistribution for pre_node: " << pre_cnode->DebugString()
@@ -605,11 +606,11 @@ static void StepRedistribution(const CNodePtr &cnode, const NodeUsersMap &node_u
   // Insert Redistribution nodes between pre_nodes and next_nodes
   for (auto &pre_node : pre_nodes) {
     for (auto &next_node : next_nodes) {
-      MS_LOG(DEBUG) << "===========Do Redistribution start============" << std::endl
-                    << pre_node->fullname_with_scope() << "->" << next_node.first.first->fullname_with_scope() << "("
-                    << next_node.first.second << ")";
+      MS_LOG(INFO) << "===========Do Redistribution start============" << std::endl
+                   << pre_node->fullname_with_scope() << "->" << next_node.first.first->fullname_with_scope() << "("
+                   << next_node.first.second << ")";
       Redistribution(next_node.first, pre_node, next_node.second);
-      MS_LOG(DEBUG) << "===========Do Redistribution end  ============";
+      MS_LOG(INFO) << "===========Do Redistribution end  ============";
     }
     for (const auto &next_node : next_nodes) {
       if (!next_node.first.first->has_user_data(FUNC_PARAM)) {
@@ -808,6 +809,7 @@ static void StepSplitTensor(const AnfNodePtr &node, const FuncGraphManagerPtr &m
 }
 
 static void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
+  MS_LOG(INFO) << "Start StepReplaceOp for " << node->fullname_with_scope();
   // step1:get graph manager distribute_operator
   OperatorInfoPtr distribute_operator = node->user_data<OperatorInfo>();
   if (distribute_operator == nullptr) {
@@ -841,11 +843,12 @@ static void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
   bool replace_op_info_flag = !replace_op_info.empty();
   for (size_t index = 0; index < replace_op.size(); ++index) {
     std::string instance_name = CreateInstanceName(node, index);
+    std::string full_inst_name = std::string(REDISTRIBUTION_OP) + "_" + instance_name;
     std::vector<AnfNodePtr> replace_input;
     if (index != replace_op.size() - 1) {
-      replace_input = CreateInput(replace_op[index], node, instance_name, node);
+      replace_input = CreateInput(replace_op[index], node, full_inst_name, node);
     } else {
-      replace_input = ReplaceOpInput(replace_op[index], instance_name, node);
+      replace_input = ReplaceOpInput(replace_op[index], full_inst_name, node);
     }
     CNodePtr replace_node = func_graph->NewCNode(replace_input);
     MS_EXCEPTION_IF_NULL(replace_node);
@@ -3456,6 +3459,36 @@ static void BroadcastLastResult(const FuncGraphPtr &root, const FuncGraphManager
 
   InsertAllReduceToNodeInput(return_node, group.name(), PARALLEL_RESULT_BROADCAST);
   return_node->input(1)->set_abstract(abstract);
+}
+
+bool IsVirtualDatasetDynamicShape(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto all_nodes = TopoSort(func_graph->get_return());
+  for (const auto &node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim == nullptr) {
+      continue;
+    }
+    MS_EXCEPTION_IF_NULL(prim);
+    if (prim->name() == VIRTUAL_DATA_SET) {
+      MS_LOG(INFO) << "VIRTUAL_DATA_SET: " << cnode->DebugString();
+      for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+        auto input_node = cnode->input(i);
+        auto base_shape = input_node->Shape();
+        MS_EXCEPTION_IF_NULL(base_shape);
+        std::vector<int64_t> shape_vec = base_shape->GetShapeVector();
+        MS_LOG(INFO) << "VIRTUAL_DATA_SET: " << node->fullname_with_scope() << ", shape:" << shape_vec;
+        if (std::find(shape_vec.begin(), shape_vec.end(), -1) != shape_vec.end()) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
 
 static void HandleSilentCheck(const FuncGraphPtr &root, const FuncGraphManagerPtr &mng) {
