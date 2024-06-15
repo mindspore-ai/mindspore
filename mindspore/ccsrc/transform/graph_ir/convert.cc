@@ -3551,7 +3551,7 @@ OperatorPtr DfGraphConvertor::Convert(const AnfNodePtr node) {
   }
   // find in cache
   if (op_cache_.count(node.get()) != 0) {
-    MS_LOG(INFO) << "Get op from cache: " << op_cache_[node.get()]->GetName();
+    MS_LOG(DEBUG) << "Get op from cache: " << op_cache_[node.get()]->GetName();
     return op_cache_[node.get()];
   }
 
