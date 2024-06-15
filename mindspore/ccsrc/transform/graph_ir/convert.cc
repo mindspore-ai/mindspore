@@ -3877,7 +3877,8 @@ void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
   }
   MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
   auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  if (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel) {
+  if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_TASK_OPT) &&
+      (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel)) {
     fusion_id = 0;
     fusion = 0;
   }
