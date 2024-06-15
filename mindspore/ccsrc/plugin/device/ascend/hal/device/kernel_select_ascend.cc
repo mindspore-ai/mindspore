@@ -418,6 +418,18 @@ bool ReadAclnnEnableEnv(const std::string &op_name) {
 
   return false;
 }
+
+bool IsDynamicTuple(const CNodePtr &kernel, bool is_acl, size_t output_num) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  if (is_acl) {
+    auto cnode_output_object_type =
+      kernel::TypeIdToKernelObjectType(AnfAlgo::GetAbstractObjectType(kernel->abstract()));
+    return output_num == 1 && cnode_output_object_type == kernel::KernelObjectType::TUPLE;
+  }
+
+  return kernel->abstract() != nullptr && kernel->abstract()->isa<abstract::AbstractTuple>() &&
+         kernel->abstract()->cast<abstract::AbstractTuplePtr>()->dynamic_len();
+}
 }  // namespace
 
 void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_type) {
@@ -429,20 +441,13 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
   auto input_num = common::AnfAlgo::GetInputTensorNum(kernel);
   auto output_num = AnfUtils::GetOutputTensorNum(kernel);
   auto output_object_type = kernel::KernelObjectType::TENSOR;
-  if (kernel_type == ACL_KERNEL) {
-    transform::AclHelper::GetValidKernelBuildInfo(kernel, &input_formats, &output_formats, &input_reshape_types,
-                                                  &output_reshape_types);
-    // NOTE: acl default output objecttype is tensor, here are 2 special case:
-    // case 1: when cnode output is tuple, and ge ops prototype output num is 1, the real output objecttype is tuple;
-    // case 2: when cnode output is scalar, the real output objecttype is scalar
-    // others: output objecttype is tensor
-    std::string name = GetCNodeFuncName(kernel);
-    const auto &info = transform::GeAdapterManager::GetInstance().GetInfo(name, true);
-    auto adapter_output_num = info->GetNumStaticOutputsOfMsOpProto();
+
+  auto process_tuple_output = [&output_num, &output_object_type, &output_formats, &output_reshape_types](
+                                const CNodePtr &kernel, bool is_acl, size_t cur_output_number) {
     auto cnode_output_object_type =
       kernel::TypeIdToKernelObjectType(AnfAlgo::GetAbstractObjectType(kernel->abstract()));
-    if (adapter_output_num == 1 && cnode_output_object_type == kernel::KernelObjectType::TUPLE) {
-      MS_LOG(INFO) << "acl node " << kernel->fullname_with_scope() << " output is real tuple";
+    if (IsDynamicTuple(kernel, is_acl, cur_output_number)) {
+      MS_LOG(INFO) << "Node " << kernel->fullname_with_scope() << " output is real tuple";
       output_object_type = cnode_output_object_type;
       output_num = 1;
       auto output_format = output_formats[kFirstItem];
@@ -454,9 +459,22 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
     } else if (cnode_output_object_type == kernel::KernelObjectType::SCALAR) {
       output_object_type = cnode_output_object_type;
     }
+  };
+  if (kernel_type == ACL_KERNEL) {
+    transform::AclHelper::GetValidKernelBuildInfo(kernel, &input_formats, &output_formats, &input_reshape_types,
+                                                  &output_reshape_types);
+    // NOTE: acl default output objecttype is tensor, here are 2 special case:
+    // case 1: when cnode output is tuple, and ge ops prototype output num is 1, the real output objecttype is tuple;
+    // case 2: when cnode output is scalar, the real output objecttype is scalar
+    // others: output objecttype is tensor
+    std::string name = GetCNodeFuncName(kernel);
+    const auto &info = transform::GeAdapterManager::GetInstance().GetInfo(name, true);
+    auto adapter_output_num = info->GetNumStaticOutputsOfMsOpProto();
+    process_tuple_output(kernel, true, adapter_output_num);
   } else if (kernel_type == OPAPI_KERNEL || kernel_type == INTERNAL_KERNEL) {
     transform::OpApiUtil::GetValidKernelBuildInfo(kernel, &input_formats, &output_formats, &input_reshape_types,
                                                   &output_reshape_types);
+    process_tuple_output(kernel, false, 1);
   } else {
     auto cand_format = GetValidFormat(input_num, output_num);
     if (cand_format.empty()) {
