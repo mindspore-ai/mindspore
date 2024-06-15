@@ -752,7 +752,6 @@ void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach) 
     PyObject *v = PyDict_GetItem(f->f_globals, k);
     std::string key = PyUnicode_AsUTF8(k);
     if (v == nullptr) {
-      MS_LOG(WARNING) << "can't pass undefined symbol to graph!! key error [" << key << "] at bci " << bci;
       PyErr_Clear();
       continue;
     }
