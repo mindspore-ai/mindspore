@@ -8,6 +8,7 @@ mindspore.lazy_inline
 
     .. warning::
         该特性仅支持Ascend，其它硬件不支持。
+        lazy inline 装饰的cell不包含控制流。
 
     参数：
         - **fn** (function) - cell的 `__init__` 函数。

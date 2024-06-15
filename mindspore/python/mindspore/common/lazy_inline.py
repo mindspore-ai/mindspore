@@ -30,6 +30,7 @@ def lazy_inline(fn=None, attrs=None, policy=None):
     .. warning::
         This feature is only supported on Ascend and is not supported on other hardwares.
         The construct parameters must be positional or key word arguments and have not default values.
+        The cell has not switch sub graph.
 
     Args:
         fn (function): `__init__` function of a cell.
