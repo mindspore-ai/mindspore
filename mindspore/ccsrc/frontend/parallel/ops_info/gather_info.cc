@@ -1351,6 +1351,14 @@ Status GatherInfo::InferTensorInfo() {
 
   inputs_tensor_info_ = gather_util_->inputs_tensor_info();
   outputs_tensor_info_ = gather_util_->outputs_tensor_info();
+  if (name_.find(INDEX_SELECT) != std::string::npos) {
+    TensorInfo axis_place_holder;
+    if (inputs_tensor_info_.empty()) {
+      MS_LOG(ERROR) << name_ << ": the tensor info of inputs is empty";
+      return FAILED;
+    }
+    (void)inputs_tensor_info_.insert(inputs_tensor_info_.cbegin() + 1, axis_place_holder);
+  }
   return SUCCESS;
 }
 
