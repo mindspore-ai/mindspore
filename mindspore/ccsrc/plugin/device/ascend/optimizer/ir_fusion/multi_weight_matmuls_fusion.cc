@@ -27,6 +27,7 @@
 #include "include/api/data_type.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/utils/ms_context.h"
+#include "ops/nn_op_name.h"
 
 namespace mindspore {
 namespace opt {
@@ -40,8 +41,15 @@ bool MultiWeightMatmulsFusion::Run(const FuncGraphPtr &graph) {
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (!ms_context->IsEnableInferBoost() || common::GetEnv("ENABLE_WEIGHT_MATMUL_FUSION") != "on") {
+  static auto matmul_fusion_list = common::GetEnv("ENABLE_WEIGHT_MATMUL_FUSION");
+  if (!ms_context->IsEnableInferBoost() || matmul_fusion_list.empty()) {
     return changed;
+  }
+
+  bool enable_matmul_qkv = matmul_fusion_list.find(kWeightQuantMatmulQkvOpName) != std::string::npos;
+  bool enable_matmul_ffn = matmul_fusion_list.find(kWeightQuantMatmulFfnOpName) != std::string::npos;
+  if (!(enable_matmul_qkv || enable_matmul_ffn)) {
+    return false;
   }
 
   auto mng = graph->manager();
@@ -49,6 +57,7 @@ bool MultiWeightMatmulsFusion::Run(const FuncGraphPtr &graph) {
   const auto &node_users_map = mng->node_users();
   auto node_list = TopoSort(graph->output());
   constexpr size_t kMatMulQkvNum = 3;
+  constexpr size_t kMatMulFfnNum = 2;
 
   const std::vector<TypeId> valid_dtypes = {TypeId::kNumberTypeInt8};
 
@@ -66,12 +75,19 @@ bool MultiWeightMatmulsFusion::Run(const FuncGraphPtr &graph) {
         user_matmuls.push_back(user_pair.first);
       }
     }
-    if (user_matmuls.size() != kMatMulQkvNum || !can_process) {
+
+    if (!can_process) {
       continue;
     }
     SortWeightNodeList(&user_matmuls);
     AnfNodePtrList getitems;
-    Process("WeightQuantBatchMatmul", node, user_matmuls, &getitems);
+    if (enable_matmul_ffn && user_matmuls.size() == kMatMulFfnNum) {
+      Process("WeightQuantBatchMatmul", node, user_matmuls, &getitems);
+    } else if (enable_matmul_qkv && user_matmuls.size() == kMatMulQkvNum) {
+      Process("WeightQuantBatchMatmul", node, user_matmuls, &getitems);
+    } else {
+      MS_LOG(INFO) << "user_matmuls.size() == " << user_matmuls.size();
+    }
     if (!getitems.empty()) {
       for (size_t i = 0; i < getitems.size(); i++) {
         (void)mng->Replace(user_matmuls[i], getitems[i]);
