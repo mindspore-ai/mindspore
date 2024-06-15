@@ -117,7 +117,6 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
     if (!all_support) {
       context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
     }
-    return all_support;
   }
   return context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
 }
