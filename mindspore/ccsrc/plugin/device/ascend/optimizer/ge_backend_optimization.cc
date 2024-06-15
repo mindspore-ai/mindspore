@@ -27,6 +27,7 @@
 #include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/optimizer/ge/all_to_all_v_for_ge.h"
 #include "plugin/device/ascend/optimizer/ge/maketuple_depend_remover.h"
+#include "plugin/device/ascend/optimizer/ge/fused_cast_add.h"
 #include "plugin/device/ascend/optimizer/ge/expand_dims_for_batchnorm.h"
 #include "plugin/device/ascend/optimizer/ge/convert_data_depend_to_control_depend.h"
 #include "plugin/device/ascend/optimizer/ge/convert_condition_input_to_scalar.h"
@@ -92,6 +93,7 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertCondInputToScalar>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertDataDependToControlDepend>());
   opt_ge_pm->AddPass(std::make_shared<opt::MakeTupleDependRemover>());
+  opt_ge_pm->AddPass(std::make_shared<opt::FusedCastAdd>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddParallelGroupForHcom>());
   opt_ge_pm->AddPass(std::make_shared<opt::ExpandDimsForBatchNorm>());
   opt_ge_pm->AddPass(std::make_shared<opt::DropoutGenMaskDepend>());

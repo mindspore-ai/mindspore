@@ -565,6 +565,7 @@ void MsContext::InitBoolTypeDefaultValue() {
   set_param<bool>(MS_CTX_BIAS_ADD_COMM_SWAP, false);
   set_param<bool>(MS_CTX_ENABLE_BEGIN_END_INLINE_OPT, false);
   set_param<bool>(MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT, false);
+  set_param<bool>(MS_CTX_ENABLE_FUSED_CAST_ADD_OPT, false);
   set_param<bool>(MS_CTX_ENABLE_PROFILING, false);
   set_param<bool>(MS_CTX_CHECK_BPROP_FLAG, false);
   set_param<bool>(MS_CTX_CONV_ALLOW_TF32, true);
