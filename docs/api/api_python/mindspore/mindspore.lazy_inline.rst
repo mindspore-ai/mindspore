@@ -14,8 +14,8 @@ mindspore.lazy_inline
         - **attrs** (Union[list[string], string]) - cell需要添加的属性列表。
         - **policy** (Union[None, "front"]) - inline 的策略。
 
-            - None : Cell 编译为可复用的子图，该子图的属性no_inline = true， using_cell = true。
-            - "front": Cell 先编译为可复用的子图，然后inline到大图中。
+          - None : Cell 编译为可复用的子图，该子图不inline到大图中。
+          - "front": Cell 先编译为可复用的子图，然后inline到大图中。
 
     返回：
         function，原始函数。
