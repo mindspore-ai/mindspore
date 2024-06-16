@@ -44,6 +44,7 @@ const std::unordered_set<TypeId> int_type_with_bool = {kNumberTypeUInt8,  kNumbe
 const std::unordered_map<std::string, std::pair<std::vector<CastInfo>, std::vector<CastInfo>>> kNeedAddCastMap = {
   {ops::kNameReciprocal, {{{0, int_type_with_bool, kNumberTypeFloat32}}, {}}},
   {ops::kNameExp, {{{0, int_type_with_bool, kNumberTypeFloat32}}, {}}},
+  {ops::kNameTanh, {{{0, int_type_with_bool, kNumberTypeFloat32}}, {}}},
   {ops::kNameSqrt, {{{0, int_type_with_bool, kNumberTypeFloat32}}, {}}},
   {ops::kNameRsqrt, {{{0, int_type_with_bool, kNumberTypeFloat32}}, {}}},
   {ops::kNameErfinv, {{{0, int_type_with_bool, kNumberTypeFloat32}}, {}}},
