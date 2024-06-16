@@ -1684,6 +1684,10 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
   auto phase = py::cast<std::string>(phase_obj);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  static const bool enable_infer_boost = ms_context->IsEnableInferBoost();
+  if (enable_infer_boost) {
+    PhaseManager::GetInstance().set_phase(phase);
+  }
 #ifdef WITH_BACKEND
   if (ms_context->backend_policy() == "ge") {
     if (!IsEnableRefMode()) {
