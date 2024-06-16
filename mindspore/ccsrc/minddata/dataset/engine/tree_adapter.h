@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_TREE_ADAPTER_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_TREE_ADAPTER_H_
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -71,6 +72,7 @@ class TreeAdapter {
   Status GetNext(TensorRow *);
 
   // unique_ptr overloads operator bool(), will return false if it doesn't manage an object
+  // This is needed by Iterator to get data by 'GetNext'.
   std::weak_ptr<DatasetOp> GetRoot() const { return tree_ ? tree_->root() : nullptr; }
 
   // This function will return the column_name_map once BuildAndPrepare() is called
@@ -115,6 +117,15 @@ class TreeAdapter {
   // Run the mandatory pass augmenting the IR tree
   Status PostPass(const std::shared_ptr<DatasetNode> &ir);
 
+#if !defined(__APPLE__) && !defined(BUILD_LITE) && !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && \
+  !defined(ANDROID)
+  // Insert SendBridgeOp and ReceiveBridgeOp to the tree
+  Status InsertSendReceiveOp();
+
+  // Split the tree to send tree and receive tree
+  Status SplitBySendReceiveOp();
+#endif
+
   // Build an Execution tree
   Status Build(const std::shared_ptr<DatasetNode> &root_ir, int64_t init_epoch = 0);
 
@@ -127,6 +138,15 @@ class TreeAdapter {
   std::unordered_map<std::string, int32_t> column_name_map_;
   std::shared_ptr<DatasetNode> input_ir_;
   std::shared_ptr<DatasetNode> root_ir_;
+#if !defined(__APPLE__) && !defined(BUILD_LITE) && !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && \
+  !defined(ANDROID)
+  // the send tree, like: xxDataset -> map -> ... -> batch -> send
+  std::unique_ptr<ExecutionTree> send_tree_;
+  // the receive tree, like: receive -> iterator / data_queue
+  std::unique_ptr<ExecutionTree> receive_tree_;
+#endif
+  // 1. the tree holder, the send_tree_ will be moved to it and launched in independent dataset process
+  // 2. the tree holder, the receive_tree_ will be moved to it and launched in main dataset process
   std::unique_ptr<ExecutionTree> tree_;
   bool optimize_;  // Flag to enable optional optimization pass
 #ifndef ENABLE_SECURITY

@@ -266,6 +266,11 @@ Status Tensor::CreateFromPythonObject(py::object obj, std::shared_ptr<Tensor> *o
   {
     py::gil_scoped_acquire gil_acquire;
     (*out)->python_dict_ = obj;
+
+    // serialize python object to bytes which used by dataset independent process mode
+    (*out)->python_dict_as_str_ = py::str(py::module::import("pickle").attr("dumps")((*out)->python_dict_));
+    (*out)->data_ = reinterpret_cast<unsigned char *>((*out)->python_dict_as_str_.data());
+    (*out)->data_end_ = (*out)->data_ + (*out)->python_dict_as_str_.length();
   }
   CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Failed to create a tensor for python object.");
   return Status::OK();
@@ -423,17 +428,19 @@ Tensor::~Tensor() {
 #ifdef ENABLE_PYTHON
   if (!static_cast<bool>(python_array_)) {  // the data is not np.ndarray from python layer
 #endif
-    if (data_ != nullptr) {
-      if (GetAllocator() != nullptr) {
-        GetAllocator()->deallocate(data_);
-        data_ = nullptr;
-        data_end_ = nullptr;
-      } else {
-        // If we didn't have an allocator, but data_ is not null then it must
-        // be a stand-alone tensor that used malloc directly.
-        free(data_);
-        data_ = nullptr;
-        data_end_ = nullptr;
+    if (!type().IsPython()) {  // The Tensor is a python_dict_
+      if (data_ != nullptr) {
+        if (GetAllocator() != nullptr) {
+          GetAllocator()->deallocate(data_);
+          data_ = nullptr;
+          data_end_ = nullptr;
+        } else {
+          // If we didn't have an allocator, but data_ is not null then it must
+          // be a stand-alone tensor that used malloc directly.
+          free(data_);
+          data_ = nullptr;
+          data_end_ = nullptr;
+        }
       }
     }
 #ifdef ENABLE_PYTHON

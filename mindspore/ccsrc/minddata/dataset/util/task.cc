@@ -44,6 +44,7 @@ void Task::operator()() {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   native_handle_ = pthread_self();
   thread_id_ = syscall(SYS_gettid);
+  process_id_ = getpid();
 #endif
   try {
     // Previously there is a timing hole where the thread is spawn but hit error immediately before we can set
@@ -156,7 +157,9 @@ Status Task::Join(WaitFlag blocking) {
   RETURN_UNEXPECTED_IF_NULL(MsContext::GetInstance());
   std::string device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
 #endif
-  if (running_) {
+  // If the current process is subprocess of map or batch, the getpid() != process_id_.
+  // And no need to join WatchDog.
+  if (running_ && getpid() == process_id_) {
     RETURN_UNEXPECTED_IF_NULL(MyTaskGroup());
     auto interrupt_svc = MyTaskGroup()->GetIntrpService();
     try {

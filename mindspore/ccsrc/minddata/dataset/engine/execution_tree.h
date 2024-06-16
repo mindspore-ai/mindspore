@@ -234,7 +234,6 @@ class ExecutionTree {
   std::shared_ptr<DatasetOp> root_;  // The root node of the tree
   int32_t id_count_;                 // Counter for generating operator id's
   TreeState tree_state_;             // Tracking the current tree state
-  uint32_t prepare_flags_;           // Flags used during tree prepare
   std::string unique_id_;            // A unique identifier for the tree
 
 #ifdef WITH_BACKEND
