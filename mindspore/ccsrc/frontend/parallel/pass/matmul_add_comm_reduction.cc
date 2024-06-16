@@ -95,7 +95,7 @@ AnfNodePtr FindPullDownNode(const AnfNodePtr &anode) {
       // cur prim must in ALLREDUCE_PULL_DOWN_WHITE_LIST and input_prim is not marked or marked false
       bool filter =
         (ALLREDUCE_PULL_DOWN_WHITE_LIST.find(prim->name()) != ALLREDUCE_PULL_DOWN_WHITE_LIST.end() ||
-         prim->name() == MATMUL) &&
+         prim->name() == MATMUL || prim->name() == BATCH_MATMUL) &&
         (!input_prim->HasAttr(MATMUL_ADD_COMM_BEGIN) ||
          (input_prim->HasAttr(MATMUL_ADD_COMM_BEGIN) && !GetValue<bool>(input_prim->GetAttr(MATMUL_ADD_COMM_BEGIN))));
       return std::make_pair(filter, i);
@@ -157,7 +157,7 @@ AnfNodePtr FindBiasAdd(const AnfNodePtr &comm_node, const AnfNodePtr &add_node_i
     }
     // find add node, current ops must lie in ALLREDUCE_PULL_DOWN_WHITE_LIST, cannot be add node or equal to comm node
     bool filter = (ALLREDUCE_PULL_DOWN_WHITE_LIST.find(prim->name()) != ALLREDUCE_PULL_DOWN_WHITE_LIST.end() ||
-                   prim->name() == MATMUL) &&
+                   prim->name() == MATMUL || prim->name() == BATCH_MATMUL) &&
                   prim->name() != ADD && anode != comm_node;
     return std::make_pair(filter, 1);
   });
