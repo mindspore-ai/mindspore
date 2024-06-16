@@ -216,7 +216,7 @@ inline bool IsNeedProfileMemory() {
   static const auto launch_skipped = GetEnv(kLaunchSkippedEnv);
   static const auto simulation_level = common::GetEnv(kSimulationLevel);
   static const bool skip_launch = (launch_skipped == "all" || launch_skipped == "ALL" || !simulation_level.empty());
-  return skip_launch && IsNeedMemoryStatistic();
+  return skip_launch;
 }
 }  // namespace common
 }  // namespace mindspore
