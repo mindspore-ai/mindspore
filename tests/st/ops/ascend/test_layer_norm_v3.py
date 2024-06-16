@@ -34,7 +34,7 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_layer_norm_v3(mode):
     """
     Feature: test LayerNormV3 forward.
@@ -60,7 +60,7 @@ def test_layer_norm_v3(mode):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_layer_norm_grad_v3(mode):
     """
     Feature: test LayerNormV3 backward.
@@ -81,7 +81,7 @@ def test_layer_norm_grad_v3(mode):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_layer_norm_v3_dynamic_shape(mode):
     """
     Feature: test LayerNormV3 forward dynamic shape.

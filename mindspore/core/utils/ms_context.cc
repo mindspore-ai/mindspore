@@ -15,6 +15,7 @@
  */
 
 #include "utils/ms_context.h"
+#include <string>
 #include <thread>
 #include <atomic>
 #include <fstream>
@@ -303,11 +304,8 @@ void MsContext::SetDeviceTargetFromInner(const std::string &device_target) {
     MS_LOG(INFO) << "ms set context device target:" << device_target;
     seter_(device_target);
   }
-  if (device_target == "Ascend" && !CheckWriteStatus(MS_CTX_MEMORY_OPTIMIZE_LEVEL)) {
-    MS_LOG(INFO) << "Set memory_optimize_level to O1 as default on ascend";
-    int_params_[MS_CTX_MEMORY_OPTIMIZE_LEVEL - MS_CTX_TYPE_INT_BEGIN] = kOptimizeO1;
-  } else if (!CheckWriteStatus(MS_CTX_MEMORY_OPTIMIZE_LEVEL)) {
-    MS_LOG(INFO) << "Set memory_optimize_level to O0 as default on other device";
+  if (!CheckWriteStatus(MS_CTX_MEMORY_OPTIMIZE_LEVEL)) {
+    MS_LOG(INFO) << "Set memory_optimize_level to O0 as default.";
     int_params_[MS_CTX_MEMORY_OPTIMIZE_LEVEL - MS_CTX_TYPE_INT_BEGIN] = kOptimizeO0;
   }
   string_params_[MS_CTX_DEVICE_TARGET - MS_CTX_TYPE_STRING_BEGIN] = device_target;
@@ -461,6 +459,10 @@ void PrintJitLevelAndExecMode(bool is_jit_level_changed, const std::string &jit_
 }  // namespace
 
 std::string MsContext::GetJitLevel() const {
+  if (get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    return kAttrJitLevelO0;
+  }
+
   const auto &jit_config = PhaseManager::GetInstance().jit_config();
   std::string jit_level = "";
   auto iter = jit_config.find("jit_level");
@@ -469,12 +471,11 @@ std::string MsContext::GetJitLevel() const {
   }
 
   auto global_jit_level = get_param<std::string>(MS_CTX_JIT_LEVEL);
-  auto mode = get_param<int>(MS_CTX_EXECUTION_MODE);
   auto device_target = get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (jit_level.empty()) {
     if (!global_jit_level.empty()) {
       jit_level = global_jit_level;
-    } else if (mode == kGraphMode && device_target == kAscendDevice) {
+    } else if (device_target == kAscendDevice) {
       jit_level = kAttrJitLevelO2;
     } else {
       jit_level = kAttrJitLevelO0;
@@ -493,13 +494,14 @@ bool MsContext::IsKByKExecutorMode() const {
     is_jit_level_changed = true;
     jit_level_log = jit_level;
   }
+
   if (get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD)) {
     PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable kernelbykernel executor by mem offload.");
     return true;
   }
 
   if (mode == kPynativeMode) {
-    if (jit_level == "O2") {
+    if (jit_level == kAttrJitLevelO2) {
       PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable graph_sink executor in the PYNATIVE mode.");
       return false;
     }
@@ -508,7 +510,7 @@ bool MsContext::IsKByKExecutorMode() const {
   }
 
   if (mode == kGraphMode) {
-    if (common::GetEnv("GRAPH_OP_RUN") == "1" || jit_level == "O0" || jit_level == "O1") {
+    if (common::GetEnv("GRAPH_OP_RUN") == "1" || jit_level == kAttrJitLevelO0 || jit_level == kAttrJitLevelO1) {
       PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable kernelbykernel executor in the GRAPH mode.");
       return true;
     }

@@ -168,7 +168,8 @@ bool AscendMemAdapter::DeInitialize() {
 uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, const std::string &tag) {
   std::lock_guard<std::mutex> locker(mutex_);
   if (AscendVmmAdapter::GetInstance().IsEnabled()) {
-    MS_LOG(ERROR) << "VMM is enabled, can not allocate static memory.";
+    MS_LOG(ERROR) << "The device virtual memory doesn't support the O2 jit level, please set "
+                     "MS_ALLOC_CONF=enable_vmm:False to disable the device virtual memory.";
     return nullptr;
   }
   size = GetRoundUpAlignSize(size);

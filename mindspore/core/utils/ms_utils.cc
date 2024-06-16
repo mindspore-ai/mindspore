@@ -15,6 +15,7 @@
  */
 #include "utils/ms_utils.h"
 #include <map>
+#include <set>
 #include <string>
 #include <sstream>
 #include <ostream>
@@ -35,19 +36,30 @@ const char *SafeCStr(const std::string &&str) {
   return STR_HOLDER[cur_index].c_str();
 }
 
-std::string GetRuntimeConfigValue(const std::string &runtime_config) {
-  static std::map<std::string, std::string> runtime_configs;
-  static bool first_get_runtime_config_value = true;
-  // Parse runtime config.
-  if (first_get_runtime_config_value) {
-    first_get_runtime_config_value = false;
-    std::string env_value = GetEnv("MS_DEV_RUNTIME_CONF");
+class Config {
+ public:
+  static std::string GetValue(const std::string &config, const std::string &config_key);
+  static void Reset(const std::string &config);
+
+ private:
+  static std::map<std::string, std::map<std::string, std::string>> configs;
+  static std::set<std::string> has_parsed_config;
+};
+
+std::map<std::string, std::map<std::string, std::string>> Config::configs;
+std::set<std::string> Config::has_parsed_config;
+
+std::string Config::GetValue(const std::string &config, const std::string &config_key) {
+  auto ret_val = has_parsed_config.insert(config);
+  if (ret_val.second) {
+    // Parse config.
+    std::string env_value = GetEnv(config);
     if (env_value.empty()) {
       return "";
     }
 
     std::ostringstream oss_buf;
-    oss_buf << "[MS_RUNTIME_PROF]Runtime config:";
+    oss_buf << "[" << config << "]Runtime config:";
     std::stringstream ss(env_value);
     std::string item;
     while (std::getline(ss, item, ',')) {
@@ -55,26 +67,52 @@ std::string GetRuntimeConfigValue(const std::string &runtime_config) {
       if (delimiterPos != std::string::npos) {
         std::string key = item.substr(0, delimiterPos);
         std::string value = item.substr(delimiterPos + 1);
-        runtime_configs[key] = value;
         oss_buf << "  " << key << ":" << value;
+        configs[config][key] = value;
       }
     }
     std::cout << oss_buf.str() << std::endl;
   }
-
-  if (runtime_configs.count(runtime_config) == 0) {
+  auto configs_iter = configs.find(config);
+  if (configs_iter == configs.end()) {
     return "";
   }
-  return runtime_configs.at(runtime_config);
+  if (configs_iter->second.count(config_key) == 0) {
+    return "";
+  }
+  return configs_iter->second.at(config_key);
+}
+
+void Config::Reset(const std::string &config) { (void)has_parsed_config.erase(config); }
+
+MS_CORE_API void ResetConfig(const std::string &config) { Config::Reset(config); }
+
+std::string GetConfigValue(const std::string &config, const std::string &config_key) {
+  return Config::GetValue(config, config_key);
 }
 
 bool IsEnableRuntimeConfig(const std::string &runtime_config) {
-  const auto &value = GetRuntimeConfigValue(runtime_config);
+  const auto &value = GetConfigValue(kRuntimeConf, runtime_config);
   return ((value == "True") || (value == "true"));
 }
 
 bool IsDisableRuntimeConfig(const std::string &runtime_config) {
-  const auto &value = GetRuntimeConfigValue(runtime_config);
+  const auto &value = GetConfigValue(kRuntimeConf, runtime_config);
+  return ((value == "False") || (value == "false"));
+}
+
+std::string GetAllocConfigValue(const std::string &alloc_config) {
+  const auto &value = GetConfigValue(kAllocConf, alloc_config);
+  return value;
+}
+
+bool IsEnableAlllocConfig(const std::string &alloc_config) {
+  const auto &value = GetAllocConfigValue(alloc_config);
+  return ((value == "True") || (value == "true"));
+}
+
+bool IsDisableAlllocConfig(const std::string &alloc_config) {
+  const auto &value = GetAllocConfigValue(alloc_config);
   return ((value == "False") || (value == "false"));
 }
 }  // namespace common

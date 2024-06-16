@@ -1066,6 +1066,11 @@ void GeKernelExecutor::OptimizeExecutionOrder(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(DEBUG) << "Status record: start optimize execution order. graph id: " << kernel_graph->graph_id();
   auto execution_order = kernel_graph->execution_order();
+  if (common::IsEnableRuntimeConfig(common::kRuntimeCompileStat)) {
+    const auto &nodes = TopoSort(graph->get_return());
+    std::cout << "The size of execution order: " << execution_order.size() << std::endl;
+    std::cout << "The size of all node: " << nodes.size() << std::endl;
+  }
   kernel_graph->EnableRuntimeCache();
   common::AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
   kernel_graph->DisableRuntimeCache();

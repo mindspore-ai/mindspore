@@ -154,13 +154,21 @@ def np_quant_int4_pergroup_data_gen(channel_in, channel_out, group_num):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ms_int4_weight_quant_1p(mode):
     """
     feature: test int4 dtype parameter save and load
     Description: test antiquant using weight quant bmm cell
     Expectation: accuracy in tolerance
     """
+    if mode == 'pynative':
+        ms.set_context(mode=ms.PYNATIVE_MODE)
+    elif mode == 'GE':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+        ms.set_context(jit_level='O2')
+    elif mode == 'KBK':
+        ms.set_context(mode=ms.GRAPH_MODE)
+
     scale = 0.1
     offset = 4
     np_x, np_int8_data, np_int4_weight = np_gen_int4_data(scale, offset)
@@ -175,14 +183,6 @@ def test_ms_int4_weight_quant_1p(mode):
     quant_offset = None
     bias = None
     wqbm_net = WeightQuantBatchMatmulNet(ms_int4_weight)
-    if mode == 'pynative':
-        ms.context.set_context(mode=ms.PYNATIVE_MODE)
-    elif mode == 'GE':
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-    elif mode == 'KBK':
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-        wqbm_net.set_jit_config(JitConfig(jit_level='O0'))
-
     x = Tensor(np_x, dtype=mstype.float16)
     fact = wqbm_net(x, antiquant_scale, antiquant_offset,
                     quant_scale, quant_offset, bias).asnumpy()
@@ -192,13 +192,21 @@ def test_ms_int4_weight_quant_1p(mode):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ms_int4_weight_quant_perchannel_1p(mode):
     """
     feature: test int4 dtype parameter save and load
     Description: test antiquant using weight quant bmm cell
     Expectation: accuracy in tolerance
     """
+    if mode == 'pynative':
+        ms.set_context(mode=ms.PYNATIVE_MODE)
+    elif mode == 'GE':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+        ms.set_context(jit_level='O2')
+    elif mode == 'KBK':
+        ms.set_context(mode=ms.GRAPH_MODE)
+
     ms.set_seed(666)
     np_x, np_int8_data, np_int4_weight, scale, offset = np_gen_int4_data_perchannel()
 
@@ -212,14 +220,6 @@ def test_ms_int4_weight_quant_perchannel_1p(mode):
     quant_offset = None
     bias = None
     wqbm_net = WeightQuantBatchMatmulNet(ms_int4_weight)
-    if mode == 'pynative':
-        ms.context.set_context(mode=ms.PYNATIVE_MODE)
-    elif mode == 'GE':
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-    elif mode == 'KBK':
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-        wqbm_net.set_jit_config(JitConfig(jit_level='O0'))
-
     x = Tensor(np_x, dtype=mstype.float16)
     fact = wqbm_net(x, antiquant_scale, antiquant_offset,
                     quant_scale, quant_offset, bias).asnumpy()
@@ -229,13 +229,21 @@ def test_ms_int4_weight_quant_perchannel_1p(mode):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ms_int4_ckpt_save_and_load(mode):
     """
     feature: test weight quant int4 net save ckpt and load
     Description: test int4 ckpt save and load procedure
     Expectation: save and load successful with the same inference results
     """
+    if mode == 'pynative':
+        ms.set_context(mode=ms.PYNATIVE_MODE)
+    elif mode == 'GE':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+        ms.set_context(jit_level='O2')
+    elif mode == 'KBK':
+        ms.set_context(mode=ms.GRAPH_MODE)
+
     scale = 0.1
     np_x, _, np_int4_weight = np_gen_int4_data(scale)
 
@@ -247,14 +255,6 @@ def test_ms_int4_ckpt_save_and_load(mode):
     quant_offset = None
     bias = None
     wqbm_net = WeightQuantBatchMatmulNet(ms_int4_weight)
-    if mode == 'pynative':
-        ms.context.set_context(mode=ms.PYNATIVE_MODE)
-    elif mode == 'GE':
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-    elif mode == 'KBK':
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-        wqbm_net.set_jit_config(JitConfig(jit_level='O0'))
-
     x = Tensor(np_x, dtype=mstype.float16)
     expect = wqbm_net(x, antiquant_scale, antiquant_offset,
                       quant_scale, quant_offset, bias).asnumpy()
@@ -283,6 +283,14 @@ def test_ms_int4_mindir_save_and_load(mode):
     Description: test int4 mindir save and load procedure
     Expectation: save and load successful with the same inference results
     """
+    if mode == 'pynative':
+        ms.set_context(mode=ms.PYNATIVE_MODE)
+    elif mode == 'GE':
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+        ms.set_context(jit_level='O2')
+    elif mode == 'KBK':
+        ms.set_context(mode=ms.GRAPH_MODE)
+
     scale = 0.1
     offset = 4.0
     ms.set_seed(666)
@@ -296,14 +304,6 @@ def test_ms_int4_mindir_save_and_load(mode):
     quant_offset = None
     bias = None
     wqbm_net = WeightQuantBatchMatmulNet(ms_int4_weight)
-    if mode == 'pynative':
-        ms.context.set_context(mode=ms.PYNATIVE_MODE)
-    elif mode == 'GE':
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-    elif mode == 'KBK':
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-        wqbm_net.set_jit_config(JitConfig(jit_level='O0'))
-
     x = Tensor(np_x, dtype=mstype.float16)
     expect = wqbm_net(x, antiquant_scale, antiquant_offset,
                       quant_scale, quant_offset, bias).asnumpy()
