@@ -20,8 +20,10 @@ from __future__ import absolute_import
 def no_inline(fn=None):
     """
     Make the function to be reusable. The corresponding sub graph will not be inline.
+
     Args:
-        fn (function): It is the python function. If it is a methon of a cell，please refer to lazy_inline.
+        fn (function): It is the python function. If it is a methon of a cell，please
+            refer to :func:`mindspore.lazy_inline`.
 
     Returns:
         function, original function.

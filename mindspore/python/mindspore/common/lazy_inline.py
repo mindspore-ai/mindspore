@@ -22,8 +22,8 @@ from mindspore import log as logger
 
 def lazy_inline(fn=None, attrs=None, policy=None):
     """
-    Make the cell to be reusable. The corresponding sub graph will not be inline at first.
-    and will be inline with the policy
+    Make the cell to be reusable. The corresponding sub graph will not be inline at first
+    and will be inline with the policy.
     Registering the decorator of the built-in function `__init__` of a cell, the decorator
     will add the parameters of `__init__` according to the `attrs` as the attributes of this cell.
 
@@ -35,11 +35,10 @@ def lazy_inline(fn=None, attrs=None, policy=None):
     Args:
         fn (function): `__init__` function of a cell.
         attrs (Union[list[string], string]): The attributes list to add for the cell.
-        policy:
-               None: The cell will be compiled to sub graph with no inline = true
-               "front": The cell will be compiled to sub graph first and will be inline
-               at front end.
-               default is None.
+        policy: The policy of inline. Default is None.
+
+            - ``None``: The cell will be compiled to sub graph and will not be inline.
+            - ``"front"``: The cell will be compiled to sub graph first and will be inline at front end.
 
     Returns:
         function, original function.
