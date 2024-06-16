@@ -50,6 +50,7 @@
 #include "tools/converter/parser/unify_format.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/converter/parser/onnx/onnx_dtype_adjust.h"
 
 using mindspore::converter::kFmkTypeOnnx;
 namespace mindspore {
@@ -70,6 +71,11 @@ int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs, const converte
     }
     if (!OnnxInputAdjust::Adjust(func_graph, flag)) {
       MS_LOG(ERROR) << "onnx adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
+    if (!OnnxDtypeAdjust::Adjust(func_graph, flag)) {
+      MS_LOG(ERROR) << "onnx dtype adjust failed!";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return RET_ERROR;
     }
