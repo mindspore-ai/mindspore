@@ -30,6 +30,7 @@
 
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace device {
@@ -65,19 +66,39 @@ class AscendVmmAdapter {
   size_t EagerFreeDeviceMem(const DeviceMemPtr addr, const size_t size);
 
   static const bool IsEnabled() {
+    static bool is_enable_vmm = IsVmmEnabled();
+    return is_enable_vmm;
+  }
+
+ private:
+  static const bool IsVmmEnabled() {
     auto ctx = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ctx);
     if (ctx->GetJitLevel() == kAttrJitLevelO2) {
+      MS_LOG(INFO) << "Jit level is O2, vmm is disabled.";
+      return false;
+    }
+
+    if (common::IsEnableAlllocConfig(common::kAllocEnableVmm)) {
+      MS_LOG(INFO) << "VMM is explicitly enabled.";
+      return true;
+    }
+
+    if (common::IsDisableAlllocConfig(common::kAllocEnableVmm)) {
+      MS_LOG(INFO) << "VMM is explicitly disabled.";
       return false;
     }
 
     const auto &soc_version = ctx->ascend_soc_version();
     if (!(soc_version == "ascend910b" || soc_version == "ascend910c")) {
+      MS_LOG(INFO) << "Soc is neither ascend910b nor ascend910c, vmm is disabled by default.";
       return false;
     }
 
-    static bool is_vmm_disabled = common::IsDisableAlllocConfig(common::kAllocEnableVmm);
-    return !is_vmm_disabled;
+    // Not open vmm by default in PyNative mode
+    bool is_enable_vmm = ctx->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode;
+    MS_LOG(INFO) << "VMM is " << (is_enable_vmm ? "enabled" : "disabled") << " by default.";
+    return is_enable_vmm;
   }
 
  private:
