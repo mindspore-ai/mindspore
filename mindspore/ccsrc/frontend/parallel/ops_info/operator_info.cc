@@ -1238,6 +1238,43 @@ Status OperatorInfo::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
   return SUCCESS;
 }
 
+Status OperatorInfo::CreateGroupByDimWithDevMatrix(DeviceMatrix *dev_matrix, size_t axis, std::vector<Group> *group) {
+  if (group == nullptr) {
+    MS_LOG(ERROR) << name_ << ": The group is null.";
+    return FAILED;
+  }
+  CheckGlobalDeviceManager();
+  RankList group_devices;
+  if (dev_matrix->GetDevicesAlongDim(SizeToUlong(axis), &group_devices) != SUCCESS) {
+    return FAILED;
+  }
+
+  if (group_devices.size() == 1) {
+    MS_LOG(INFO) << name_ << ": The dev size is 1, no need to create group.";
+    return SUCCESS;
+  }
+  if (is_auto_parallel_) {
+    if (g_device_manager->CheckDeviceList(group_devices) != SUCCESS) {
+      MS_LOG(INFO) << name_ << ": Try to create communication group : " << group_devices
+                   << " failed in auto parallel mode, "
+                      "this error can be ignored in parallel strategies searching step";
+      return FAILED;
+    }
+    return SUCCESS;
+  }
+  Group g;
+  if (g_device_manager->CreateGroup(group_devices, &g) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Create communication group by dim failed, the rank_list is: " << group_devices
+                  << ", the input strategy is " << strategy_->GetInputDim()
+                  << ", the full_name of node is: " << cnode_->fullname_with_scope();
+    return FAILED;
+  }
+  MS_LOG(INFO) << name_ << ": Create communication group by dim " << axis
+               << " success, the rank_list is: " << group_devices;
+  group->push_back(g);
+  return SUCCESS;
+}
+
 Shape GetSliceShape(const Shape &tensor_shape, const Dimensions &strategy) {
   Shape slice_shape;
   if (std::any_of(strategy.begin(), strategy.end(), [](int64_t value) { return value <= 0; })) {

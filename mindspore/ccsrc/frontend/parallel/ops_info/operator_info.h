@@ -360,6 +360,7 @@ class OperatorInfo {
   void ResetTensorMapIfRepeatedCalc();
   void ChangeMakeTupleConstant(const CNodePtr &cnode, size_t make_tuple_index);
   Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
+  Status CreateGroupByDimWithDevMatrix(DeviceMatrix *dev_matrix, size_t axis, std::vector<Group> *group);
   Status InferAttrs();
   void ResetQueueMember();
   Status InitWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
