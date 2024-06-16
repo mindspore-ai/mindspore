@@ -52,6 +52,8 @@ class BACKEND_EXPORT GraphKernelFlags {
   bool IsEnableGraphKernel() const { return false; }
 #endif
 
+  bool IsEnableKernelPacket() const;
+
   // Check whether GraphKernel supports current situation.
   void CheckSupport() const;
 
@@ -289,12 +291,18 @@ class BACKEND_EXPORT GraphKernelFlags {
    * Cluster ops to run akg cce lib.
    */
   bool enable_cce_lib{false};
-
   std::vector<std::string> enable_cce_lib_ops;
-
   std::vector<std::string> enable_cce_lib_ops_only;
-
   std::vector<std::string> disable_cce_lib_ops;
+
+  /**
+   * The real kernel to be clustered by kernelpacket (case sensitive).
+   */
+  std::vector<std::string> enable_packet_ops_only;
+  /**
+   * The real kernel to be disabled by kernelpacket (case sensitive).
+   */
+  std::vector<std::string> disable_packet_ops;
 
  private:
   GraphKernelFlags(const std::string &graph_kernel_flags, bool enable_graph_kernel)

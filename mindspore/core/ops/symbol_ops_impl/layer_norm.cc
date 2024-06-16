@@ -85,11 +85,11 @@ REG_SYMBOL_OP_BUILDER("LayerNorm")
   });
 REG_SYMBOL_OP_BUILDER("LayerNormV3")
   .SetShapeDepend({DependOn::kShape, DependOn::kNone, DependOn::kNone, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<LayerNorm>);
+  .SetShapeFuncWith<LayerNorm>();
 
 REG_SYMBOL_OP_BUILDER("LayerNormExt")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<LayerNormExt>);
+  .SetShapeFuncWith<LayerNormExt>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

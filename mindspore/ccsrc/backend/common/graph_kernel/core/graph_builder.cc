@@ -331,13 +331,13 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(con
     eqv[node]->cast<CNodePtr>()->set_fullname_with_scope(node->fullname_with_scope());
   }
   AnfNodePtrList outputs;
-  if (config.only_output_basenode) {
+  if (config.only_output_basenode != nullptr) {
     // Make base node the only output of func_graph, to duplicate the overlapping parts
-    MS_EXCEPTION_IF_NULL(config.base_node);
-    if (eqv.find(config.base_node) == eqv.end()) {
-      MS_LOG(EXCEPTION) << "Base node is not in the list of nodes: " << config.base_node->fullname_with_scope();
+    if (eqv.find(config.only_output_basenode) == eqv.end()) {
+      MS_LOG(EXCEPTION) << "Base node is not in the list of nodes: "
+                        << config.only_output_basenode->fullname_with_scope();
     }
-    outputs.push_back(config.base_node);
+    outputs.push_back(config.only_output_basenode);
   } else {
     outputs = FindOutputs(nodes, eqv);
   }
@@ -406,13 +406,6 @@ CNodePtr ReplaceNodesWithGraphKernelNode(const AnfNodePtrList &nodes, const Func
   ReplaceNewFuseCNode(main_graph, fuse_new_node, outputs);
   auto fuse_op_name = GkUtils::ExtractGraphKernelName(nodes, "", postfix);
   fg->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(fuse_op_name));
-  return fuse_new_node;
-}
-
-CNodePtr ReplaceNodesWithGraphKernelFuncGraph(const FuncGraphPtr &main_graph, const FuncGraphPtr &sub_graph,
-                                              const AnfNodePtrList &inputs, const AnfNodePtrList &outputs) {
-  auto fuse_new_node = CreateNewFuseCNode(main_graph, sub_graph, inputs);
-  ReplaceNewFuseCNode(main_graph, fuse_new_node, outputs);
   return fuse_new_node;
 }
 

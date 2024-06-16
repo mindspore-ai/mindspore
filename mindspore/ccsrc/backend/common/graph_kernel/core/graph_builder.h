@@ -26,9 +26,8 @@ using AnfNodePtrToAnfNodePtrMap = std::unordered_map<AnfNodePtr, AnfNodePtr>;
 
 struct ClusterConfig {
   bool inline_sub_func_graph{true};
-  bool only_output_basenode{false};
   bool sort_parameter{false};
-  AnfNodePtr base_node{nullptr};
+  AnfNodePtr only_output_basenode{nullptr};
 };
 
 std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(
@@ -39,8 +38,6 @@ CNodePtr CreateNewFuseCNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &sub
 CNodePtr ReplaceNodesWithGraphKernelNode(const AnfNodePtrList &nodes, const FuncGraphPtr &main_graph,
                                          const std::string &postfix = "",
                                          const ClusterConfig &config = ClusterConfig{});
-CNodePtr ReplaceNodesWithGraphKernelFuncGraph(const FuncGraphPtr &main_graph, const FuncGraphPtr &sub_graph,
-                                              const AnfNodePtrList &inputs, const AnfNodePtrList &outputs);
 bool ConvertTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr);
 /// \brief Put Monads at end of parameters
 bool SortParameters(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr);

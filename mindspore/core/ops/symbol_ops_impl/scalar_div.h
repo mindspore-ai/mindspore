@@ -22,11 +22,11 @@
 namespace mindspore {
 namespace symshape {
 namespace ops {
-class MS_CORE_API ScalarDiv : public ScalarOp {
+class MS_CORE_API ScalarDiv : public ScalarIntOp {
  public:
-  using ScalarOp::ScalarOp;
-  ScalarDiv(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarOp({lhs, rhs}) {}
-  MS_DECLARE_PARENT(ScalarDiv, ScalarOp)
+  using ScalarIntOp::ScalarIntOp;
+  ScalarDiv(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarIntOp({lhs, rhs}) {}
+  MS_DECLARE_PARENT(ScalarDiv, ScalarIntOp)
 
  protected:
   SymbolPtr Eval() override;
@@ -40,11 +40,11 @@ class MS_CORE_API ScalarDiv : public ScalarOp {
   void UpdateMathInfo() override;
 };
 
-class MS_CORE_API ScalarFloorDiv : public ScalarOp {
+class MS_CORE_API ScalarFloorDiv : public ScalarIntOp {
  public:
-  using ScalarOp::ScalarOp;
-  ScalarFloorDiv(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarOp({lhs, rhs}) {}
-  MS_DECLARE_PARENT(ScalarFloorDiv, ScalarOp)
+  using ScalarIntOp::ScalarIntOp;
+  ScalarFloorDiv(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarIntOp({lhs, rhs}) {}
+  MS_DECLARE_PARENT(ScalarFloorDiv, ScalarIntOp)
 
  protected:
   SymbolPtr Eval() override;
@@ -54,11 +54,11 @@ class MS_CORE_API ScalarFloorDiv : public ScalarOp {
   }
 };
 
-class MS_CORE_API ScalarCeilDiv : public ScalarOp {
+class MS_CORE_API ScalarCeilDiv : public ScalarIntOp {
  public:
-  using ScalarOp::ScalarOp;
-  ScalarCeilDiv(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarOp({lhs, rhs}) {}
-  MS_DECLARE_PARENT(ScalarCeilDiv, ScalarOp)
+  using ScalarIntOp::ScalarIntOp;
+  ScalarCeilDiv(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarIntOp({lhs, rhs}) {}
+  MS_DECLARE_PARENT(ScalarCeilDiv, ScalarIntOp)
 
  protected:
   SymbolPtr Eval() override;

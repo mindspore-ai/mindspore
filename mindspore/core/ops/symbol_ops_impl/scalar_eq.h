@@ -21,12 +21,12 @@
 namespace mindspore {
 namespace symshape {
 namespace ops {
-class MS_CORE_API ScalarEq : public ScalarOp {
+class MS_CORE_API ScalarEq : public ScalarIntOp {
  public:
-  using ScalarOp::ScalarOp;
-  ScalarEq(const SymbolPtr &a, const SymbolPtr &b) : ScalarOp({a, b}) {}
+  using ScalarIntOp::ScalarIntOp;
+  ScalarEq(const SymbolPtr &a, const SymbolPtr &b) : ScalarIntOp({a, b}) {}
   ~ScalarEq() override = default;
-  MS_DECLARE_PARENT(ScalarEq, ScalarOp)
+  MS_DECLARE_PARENT(ScalarEq, ScalarIntOp)
  protected:
   SymbolPtr Eval() override;
   void EvalOnRun() override { output_as<BoolSymbol>()->SetValue(AsInt(input(0)) == AsInt(input(1))); }

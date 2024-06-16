@@ -54,7 +54,7 @@ class MS_CORE_API IndexSelect : public InferShapeOp {
 
 REG_SYMBOL_OP_BUILDER("IndexSelect")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kShape})
-  .SetShapeFunc(DefaultBuilder<IndexSelect>);
+  .SetShapeFuncWith<IndexSelect>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

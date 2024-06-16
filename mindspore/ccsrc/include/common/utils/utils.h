@@ -342,6 +342,7 @@ constexpr auto kAttrKernelBackoffWithFailureType = "kernel_backoff_with_failure_
 constexpr auto kAttrKernelGraph = "kernel_graph";
 constexpr auto kAttrPreKernelGraph = "pre_kernel_graph";
 constexpr auto kAttrKernelGraphBoundary = "kernel_graph_boundary";
+constexpr auto kAttrKernelPacketNode = "kernel_packet_node";
 constexpr auto kAttrNeedInline = "need_inline";
 constexpr auto kAttrOriFusionName = "ori_fusion_name";
 constexpr auto kAttrDynamicLenName = "is_dynamic_len";

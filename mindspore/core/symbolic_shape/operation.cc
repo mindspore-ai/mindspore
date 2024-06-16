@@ -81,7 +81,7 @@ SymbolPtr Operation::Emitter::Emit(const OpPtr &op) const {
 }
 
 void Operation::Emitter::Cse(const OpPtr &op) {
-  if (!op->isa<ops::ScalarOp>() || !op->output()->is<IntSymbol>()) {
+  if (!op->isa<ops::ScalarIntOp>() || !op->output()->is<IntSymbol>()) {
     return;
   }
   bool has_same = false;

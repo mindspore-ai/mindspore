@@ -67,6 +67,26 @@ ValuePtr BoolSymbol::ToValue() const { return has_data_ ? MakeValue<bool>(value_
 
 std::string FloatSymbol::ToRawString() const { return has_data_ ? std::to_string(value_) : sid(); }
 ValuePtr FloatSymbol::ToValue() const { return has_data_ ? MakeValue<double>(value_) : kValueAny; }
+ValuePtr FloatSymbol::ToValueOf(const TypePtr &type) const {
+  if (!has_data_) {
+    return kValueAny;
+  }
+  auto type_id = type->type_id();
+  if (type_id == kObjectTypeTensorType) {
+    auto tensor_type = type->cast_ptr<TensorType>();
+    MS_EXCEPTION_IF_NULL(tensor_type);
+    type_id = tensor_type->element()->type_id();
+  }
+  switch (type_id) {
+    case kNumberTypeFloat64:
+      return MakeValue<double>(value_);
+    case kNumberTypeFloat32:
+      return MakeValue<float>(static_cast<float>(value_));
+    default:
+      MS_LOG(INTERNAL_EXCEPTION) << "Cannot convert the IntSymbol to type " << type->ToString();
+  }
+  return ToValue();
+}
 
 std::string StrSymbol::ToRawString() const { return has_data_ ? value_ : sid(); }
 ValuePtr StrSymbol::ToValue() const { return has_data_ ? MakeValue<std::string>(value_) : kValueAny; }

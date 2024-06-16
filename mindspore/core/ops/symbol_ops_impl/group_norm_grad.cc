@@ -41,7 +41,7 @@ SymbolPtr GroupNormGrad::Eval() {
 
 REG_SYMBOL_OP_BUILDER("GroupNormGrad")
   .SetShapeDepend({DependOn::kNone, DependOn::kShape})
-  .SetShapeFunc(DefaultBuilder<GroupNormGrad>);
+  .SetShapeFuncWith<GroupNormGrad>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

@@ -58,7 +58,7 @@ ListSymbolPtr GetOutputSymbolicShape(const AnfNodePtr &node, size_t i) {
     if (shape_i == nullptr) {
       return nullptr;
     }
-    return shape_i->as_sptr<ListSymbol>();
+    return shape_i->as_sptr_noexcept<ListSymbol>();
   }
   // single output
   return symbol_shape;

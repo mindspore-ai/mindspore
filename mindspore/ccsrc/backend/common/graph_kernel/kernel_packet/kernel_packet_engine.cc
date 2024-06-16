@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/graph_kernel/symbol_engine/kernel_packet_engine.h"
+#include "backend/common/graph_kernel/kernel_packet/kernel_packet_engine.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace graphkernel {
-namespace symshape {
+namespace packet {
 void CloneAllAbstracts(const FuncGraphPtr &func_graph) {
   auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple, AlwaysInclude);
   for (auto &node : nodes) {
@@ -32,14 +33,26 @@ void CloneAllAbstracts(const FuncGraphPtr &func_graph) {
   }
 }
 
+void KernelPacketEngine::SetBaseNodeDepend(const CNodePtr &basenode) {
+  depend_status_map_[basenode].shape = true;
+  for (size_t i = 1; i < basenode->size(); i++) {
+    if (basenode->input(i)->isa<CNode>()) {
+      depend_status_map_[basenode->input(i)].value = true;
+    }
+  }
+}
+
 KernelPacketEnginePtr KernelPacketEngine::Build(const FuncGraphPtr &func_graph) {
   CloneAllAbstracts(func_graph);
   auto engine = std::make_shared<KernelPacketEngine>(func_graph);
   func_graph->set_symbol_engine(engine);
+  auto basenode = func_graph->output()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(basenode);
+  engine->SetBaseNodeDepend(basenode);
   engine->PreBuild();
   engine->BuildImpl();
   return engine;
 }
-}  // namespace symshape
+}  // namespace packet
 }  // namespace graphkernel
 }  // namespace mindspore

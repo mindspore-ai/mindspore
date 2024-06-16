@@ -27,7 +27,7 @@ namespace ops {
 /// @param axis_set The set stores the values of axes
 /// @return if success
 bool Reduce::GetAxisSet(const SymbolPtr &axis, int64_t rank, bool skip_mode, HashSet<int64_t> *axis_set) const {
-  auto axis_list = axis->as<ListSymbol>();
+  auto axis_list = axis->as_noexcept<ListSymbol>();
   if (axis_list != nullptr) {
     if (axis_list->symbols().empty()) {
       if (skip_mode) {
@@ -64,7 +64,7 @@ SymbolPtr Reduce::DynEval(size_t rank, bool keep_dims, SymbolPtr axis) {
   if (keep_dims) {
     return GenVIntList(res_len);
   }
-  auto axis_list = axis->as<ListSymbol>();
+  auto axis_list = axis->as_noexcept<ListSymbol>();
   // axis_list may contain duplicate numbers
   if (axis_list == nullptr || axis_list->symbols().size() == 1) {
     MS_EXCEPTION_IF_CHECK_FAIL(rank >= 1, "input's rank is smaller than axis size");
@@ -80,7 +80,7 @@ SymbolPtr Reduce::Eval() {
   bool skip_mode = input_as<BoolSymbol>(kIndex3)->value();
   if (!data->HasData() || !axis->HasData()) {
     // for empty axis
-    auto axis_list = axis->as<ListSymbol>();
+    auto axis_list = axis->as_noexcept<ListSymbol>();
     if (axis_list != nullptr && axis_list->HasData() && axis_list->size() == 0) {
       if (skip_mode) {
         DoNotEvalOnRun();

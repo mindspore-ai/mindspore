@@ -313,6 +313,15 @@ std::vector<PrimitivePtr> StaticShapeCluster::GetClusterOps() {
 
 std::vector<PrimitivePtr> StaticShapeCluster::GetClusterableOpList() { return StaticShapeCluster::GetClusterOps(); }
 
+bool SkipHostInputNode(const AnfNodePtr &node, bool is_dvm) {
+  if (is_dvm && GraphKernelFlags::GetInstance().IsEnableKernelPacket()) {
+    auto cnode = node->cast<CNodePtr>();
+    return cnode != nullptr &&
+           std::any_of(cnode->inputs().begin() + 1, cnode->inputs().end(), AnfAlgo::IsKernelSelectBackoffOp);
+  }
+  return false;
+}
+
 bool StaticShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
   if (AnfUtils::IsGraphKernel(node)) {
     auto sub_graph = GetCNodeFuncGraph(node);
@@ -370,6 +379,11 @@ bool StaticShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
   if (!ValueDependOpUtils::IsConstInput(node)) {
     return false;
   }
+  if (SkipHostInputNode(node, is_dvm)) {
+    // this node can be fused with input host ops by kernelpacket
+    return false;
+  }
+
   return true;
 }
 

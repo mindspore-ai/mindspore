@@ -18,17 +18,19 @@
 namespace mindspore {
 namespace symshape {
 namespace ops {
-REG_SYMBOL_OP_BUILDER("list_setitem").SetValueFunc([](OperationBuilder *b) -> SymbolPtr {
-  auto list = b->GetInputValue(kIndex0)->as_sptr<ListSymbol>();
-  if (!list->HasData()) {
-    return nullptr;
-  }
-  SymbolPtrList result = list->symbols();
-  int64_t index = GetValue<int64_t>(b->GetInput(kIndex1)->GetValue());
-  int64_t value = GetValue<int64_t>(b->GetInput(kIndex2)->GetValue());
-  result[index] = IntSymbol::Make(value);
-  return ListSymbol::Make(std::move(result));
-});
+REG_SYMBOL_OP_BUILDER("list_setitem")
+  .SetValueDependN<DependOn::kValue, 3>()
+  .SetValueFunc([](OperationBuilder *b) -> SymbolPtr {
+    auto list = b->GetInputValue(kIndex0)->as_sptr<ListSymbol>();
+    if (!list->HasData()) {
+      return nullptr;
+    }
+    SymbolPtrList result = list->symbols();
+    int64_t index = GetValue<int64_t>(b->GetInput(kIndex1)->GetValue());
+    int64_t value = GetValue<int64_t>(b->GetInput(kIndex2)->GetValue());
+    result[index] = IntSymbol::Make(value);
+    return ListSymbol::Make(std::move(result));
+  });
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

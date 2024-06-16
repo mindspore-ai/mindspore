@@ -23,8 +23,9 @@
 
 namespace mindspore {
 namespace symshape {
-class MS_CORE_API IntSymbol : public ScalarSymbol {
+class MS_CORE_API IntSymbol final : public ScalarSymbol {
  public:
+  using elem_type = int64_t;
   /// \brief make a constant IntSymbol
   /// \param val the symbol value
   /// \param op the Operation that created this symbol.
@@ -54,6 +55,7 @@ class MS_CORE_API IntSymbol : public ScalarSymbol {
   std::string ToRawString() const override;
   std::string ToString() const override;
   ValuePtr ToValue() const override;
+  ValuePtr ToValueOf(const TypePtr &type) const override;
 
   bool operator==(const Symbol &s) const override;
   bool operator<(const IntSymbol &s) const;

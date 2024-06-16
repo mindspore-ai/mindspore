@@ -152,6 +152,10 @@ void GEGraphOptimization::OptimizeACLGraphAfterKernelSelect(const KernelGraphPtr
   for (auto &child_graph : graph->child_graph_order()) {
     OptimizeACLGraphAfterKernelSelect(child_graph.lock(), memo);
   }
+  if (!graph->is_from_single_op() && graphkernel::GraphKernelFlags::GetInstance().IsEnableKernelPacket()) {
+    graphkernel::KernelPacketOptimize(graph);
+    graph->SetExecOrderByDefault();
+  }
   MS_LOG(DEBUG) << "Status record: end optimize acl graph after kernel select. graph id: " << graph->graph_id();
 }
 

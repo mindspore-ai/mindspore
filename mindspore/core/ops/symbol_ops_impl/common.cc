@@ -22,11 +22,11 @@ namespace symshape {
 namespace ops {
 void InferShapeOp::SetPositive(const ListSymbol *list) {
   for (auto &s : list->symbols()) {
-    auto list_s = s->as<ListSymbol>();
+    auto list_s = s->as_noexcept<ListSymbol>();
     if (list_s != nullptr) {
       SetPositive(list_s);
     } else {
-      auto int_s = s->as<IntSymbol>();
+      auto int_s = s->as_noexcept<IntSymbol>();
       MS_EXCEPTION_IF_NULL(int_s);
       if (!int_s->is_positive()) {
         int_s->SetRangeMin(1);
@@ -35,31 +35,12 @@ void InferShapeOp::SetPositive(const ListSymbol *list) {
   }
 }
 
-SymbolPtr TransparentInput(OperationBuilder *b) {
-  bool build_value = !b->is_building_shape();
-  auto depends = b->symbol_builder_info().GetDepends(b->prim(), b->input_num(), build_value);
-  if (depends.empty()) {
-    (void)depends.emplace_back((build_value ? DependOn::kValue : DependOn::kShape));
-  }
-  // check only one depend status in the list.
-  auto iter1 = std::find_if(depends.begin(), depends.end(), [](DependOn d) { return d != DependOn::kNone; });
-  if (iter1 == depends.end()) {
-    return nullptr;
-  }
-  auto iter2 = std::find_if(iter1 + 1, depends.end(), [](DependOn d) { return d != DependOn::kNone; });
-  if (iter2 != depends.end()) {
-    return nullptr;
-  }
-  size_t idx = iter1 - depends.begin();
-  return (*iter1 == DependOn::kShape) ? b->GetInputShape(idx) : b->GetInputValue(idx);
-}
-
 SymbolPtr TransValueToShape(OperationBuilder *b) {
   auto ret = TransparentInput(b);
   if (ret == nullptr) {
     return nullptr;
   }
-  auto ret_shape = ret->as<ListSymbol>();
+  auto ret_shape = ret->as_noexcept<ListSymbol>();
   MS_EXCEPTION_IF_NULL(ret_shape);
   InferShapeOp::SetPositive(ret_shape);
   return ret;

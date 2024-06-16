@@ -31,9 +31,7 @@ SymbolPtr AddnBuildShape(OperationBuilder *b, const SymbolPtrList &symbols) {
   return result;
 }
 
-REG_SYMBOL_OP_BUILDER("AddN").SetShapeFunc([](OperationBuilder *b) {
-  // inputs are spread
-  // todo, remove this branch
+REG_SYMBOL_OP_BUILDER("AddN").SetShapeDependN<DependOn::kShape>().SetShapeFunc([](OperationBuilder *b) {
   if (b->input_num() > kDim1) {
     SymbolPtrList symbols(b->input_num());
     for (size_t i = 0; i < symbols.size(); i++) {
@@ -41,9 +39,7 @@ REG_SYMBOL_OP_BUILDER("AddN").SetShapeFunc([](OperationBuilder *b) {
     }
     return AddnBuildShape(b, symbols);
   }
-
   auto inputs = b->GetInputShape(kIndex0)->as_sptr<ListSymbol>();
-  MS_EXCEPTION_IF_NULL(inputs);
   return AddnBuildShape(b, inputs->symbols());
 });
 }  // namespace ops

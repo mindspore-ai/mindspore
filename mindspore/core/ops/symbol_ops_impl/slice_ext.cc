@@ -55,7 +55,7 @@ SymbolPtr SliceExt::Eval() {
 
 REG_SYMBOL_OP_BUILDER("SliceExt")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue, DependOn::kValue, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<SliceExt>);
+  .SetShapeFuncWith<SliceExt>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

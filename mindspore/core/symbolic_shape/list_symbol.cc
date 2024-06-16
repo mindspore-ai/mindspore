@@ -28,8 +28,8 @@ bool ListSymbol::operator==(const Symbol &s) const {
   if (!has_data_ || !s.HasData()) {
     return false;
   }
-  auto *list = s.as<ListSymbol>();
-  if (size() != list->size()) {
+  auto *list = s.as_noexcept<ListSymbol>();
+  if (list == nullptr || size() != list->size()) {
     return false;
   }
   for (size_t i = 0; i < symbols_.size(); i++) {
@@ -77,16 +77,31 @@ ValuePtr ListSymbol::ToValue() const {
   return std::make_shared<ValueTuple>(values);
 }
 
-void ListSymbol::UpdateImpl(const SymbolPtr &s) {
-  ListSymbol *other = s->as<ListSymbol>();
-  if (other == nullptr) {
-    MS_LOG(EXCEPTION) << "Symbol " << s->ToString() << " is not a ListSymbol";
+ValuePtr ListSymbol::ToValueOf(const TypePtr &type) const {
+  if (!AllHaveData()) {
+    return kValueAny;
   }
-  UpdateList(other->symbols());
+  ValuePtrList values;
+  values.reserve(symbols_.size());
+  TypePtr inner_type = type;
+  if (type->isa<Tuple>()) {
+    auto tuple = type->cast_ptr<Tuple>();
+    if (tuple->dynamic_len()) {
+      inner_type = tuple->dynamic_element_type();
+    } else if (!tuple->elements().empty()) {
+      // element type in tuple is all the same.
+      inner_type = tuple->elements()[0];
+    }
+  }
+  (void)std::transform(symbols_.begin(), symbols_.end(), std::back_inserter(values),
+                       [&inner_type](const SymbolPtr &s) { return s->ToValueOf(inner_type); });
+  return std::make_shared<ValueTuple>(values);
 }
 
+void ListSymbol::UpdateImpl(const SymbolPtr &s) { UpdateList(s->as<ListSymbol>()->symbols()); }
+
 const SymbolPtr &ListSymbol::item(size_t i) const {
-  if (i >= symbols_.size()) {
+  if (MS_UNLIKELY(i >= symbols_.size())) {
     MS_LOG(INTERNAL_EXCEPTION) << "Index " << i << " out of range of symbols size " << symbols_.size();
   }
   return symbols_[i];

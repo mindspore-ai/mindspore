@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/core/symbolic_shape/operation_builder.h"
+#include "mindspore/core/ops/symbol_ops_impl/scalar_cast.h"
+#include <memory>
 
 namespace mindspore {
 namespace symshape {
@@ -21,13 +22,19 @@ namespace ops {
 REG_SYMBOL_OP_BUILDER("ScalarCast")
   .SetValueDepend({DependOn::kValue})
   .SetValueFunc([](OperationBuilder *b) -> SymbolPtr {
-    auto s = b->GetInputValue(kIndex1);
+    auto s = b->GetInputValue(kIndex0);
     auto output_type = b->out_abstract()->GetType()->generic_type_id();
-    if (s->is<IntSymbol>() && (output_type == kNumberTypeInt || output_type == kNumberTypeUInt)) {
-      return s;
+    switch (output_type) {
+      case kNumberTypeInt:
+      case kNumberTypeUInt:
+        return b->Emit(std::make_shared<ScalarCast<IntSymbol>>(s));
+      case kNumberTypeFloat:
+        return b->Emit(std::make_shared<ScalarCast<FloatSymbol>>(s));
+      case kNumberTypeBool:
+        return b->Emit(std::make_shared<ScalarCast<BoolSymbol>>(s));
+      default:
+        return nullptr;
     }
-    MS_LOG(DEBUG) << "ScalarCast only support int symbol now";
-    return nullptr;
   });
 }  // namespace ops
 }  // namespace symshape

@@ -46,7 +46,7 @@ SymbolPtr ControlFlowJoin::ShapeJoin(const SymbolPtr &tb, const SymbolPtr &fb) {
     return DynamicSymbol::Make(shared_from_this());
   }
 
-  if (auto tb_list = tb->as<ListSymbol>(); tb_list != nullptr) {
+  if (auto tb_list = tb->as_noexcept<ListSymbol>(); tb_list != nullptr) {
     auto fb_list = fb->as<ListSymbol>();
     MS_EXCEPTION_IF_NULL(fb_list);
     if (tb_list->size() != fb_list->size()) {
@@ -73,12 +73,14 @@ SymbolPtr ControlFlowJoin::Eval() {
 }
 
 REG_SYMBOL_OP_BUILDER(kControlFlowJoin)
+  .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kShape})
   .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
     auto cond = b->GetInputValue(kIndex0);
     auto true_branch = b->GetInputShape(kIndex1);
     auto false_branch = b->GetInputShape(kIndex2);
     return b->Emit(std::make_shared<ControlFlowJoin>(cond, true_branch, false_branch));
   })
+  .SetValueDepend({DependOn::kValue, DependOn::kValue, DependOn::kValue})
   .SetValueFunc([](OperationBuilder *b) -> SymbolPtr {
     auto cond = b->GetInputValue(kIndex0)->as_sptr<BoolSymbol>();
     // buildvalue for control flow only support constant folding.
@@ -88,7 +90,9 @@ REG_SYMBOL_OP_BUILDER(kControlFlowJoin)
     return nullptr;
   });
 
-REG_SYMBOL_OP_BUILDER("Switch").SetValueFunc([](OperationBuilder *b) -> SymbolPtr { return IntSymbol::Make(); });
+REG_SYMBOL_OP_BUILDER("Switch").SetValueDepend({DependOn::kNone}).SetValueFunc([](OperationBuilder *b) -> SymbolPtr {
+  return IntSymbol::Make();
+});
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

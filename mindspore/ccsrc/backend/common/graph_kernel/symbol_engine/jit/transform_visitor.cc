@@ -31,7 +31,6 @@ void TransformVisitor::Init(const FuncGraphPtr &func_graph) {
   MS_LOG(DEBUG) << "TransformVisitor init with graph " << func_graph->ToString();
   auto record_symbol = [this](const SymbolPtr &symbol, size_t i, size_t j) {
     auto sym = symbol->as<ScalarSymbol>();
-    MS_EXCEPTION_IF_NULL(sym);
     if (!sym->HasData()) {
       auto input_sym = std::make_shared<ast::Input>(i, j);
       auto val = NewVal(input_sym, sym->ToRawString());
@@ -45,7 +44,7 @@ void TransformVisitor::Init(const FuncGraphPtr &func_graph) {
       sym_shape = func_graph->parameters()[idx]->abstract()->GetSymbolicValue();
     }
     MS_EXCEPTION_IF_NULL(sym_shape);
-    auto shape_list = sym_shape->as<ListSymbol>();
+    auto shape_list = sym_shape->as_noexcept<ListSymbol>();
     if (shape_list == nullptr) {
       record_symbol(sym_shape, idx, 0);
     }

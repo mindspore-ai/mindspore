@@ -45,7 +45,7 @@ class MS_CORE_API Operation : public Base {
 
   const SymbolPtrList &inputs() const { return inputs_; }
   const SymbolPtr &input(size_t i) const {
-    if (i >= inputs_.size()) {
+    if (MS_UNLIKELY(i >= inputs_.size())) {
       MS_LOG(INTERNAL_EXCEPTION) << "The index " << i << " is out of range of the inputs size " << inputs_.size();
     }
     return inputs_[i];
@@ -54,27 +54,27 @@ class MS_CORE_API Operation : public Base {
   const SymbolPtr &output() const { return output_; }
   template <typename T>
   const T *input_as(size_t i) const {
-    const T *p = input(i)->as<T>();
-    if (p == nullptr) {
+    const T *p = input(i)->as_noexcept<T>();
+    if (MS_UNLIKELY(p == nullptr)) {
       MS_LOG(INTERNAL_EXCEPTION) << "Convert failed for input " << i << " of " << name();
     }
     return p;
   }
   template <typename T>
   std::shared_ptr<T> input_as_sptr(size_t i) const {
-    auto p = input(i)->as_sptr<T>();
-    if (p == nullptr) {
+    auto p = input(i)->as_sptr_noexcept<T>();
+    if (MS_UNLIKELY(p == nullptr)) {
       MS_LOG(INTERNAL_EXCEPTION) << "Convert failed for input " << i << " of " << name();
     }
     return p;
   }
   template <typename T>
   T *output_as() const {
-    if (output_ == nullptr) {
+    if (MS_UNLIKELY(output_ == nullptr)) {
       MS_LOG(INTERNAL_EXCEPTION) << "The output of " << name() << " is not initialized.";
     }
-    T *p = output_->as<T>();
-    if (p == nullptr) {
+    T *p = output_->as_noexcept<T>();
+    if (MS_UNLIKELY(p == nullptr)) {
       MS_LOG(INTERNAL_EXCEPTION) << "Convert failed for output of " << name();
     }
     return p;

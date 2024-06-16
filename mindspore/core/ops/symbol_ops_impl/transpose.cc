@@ -60,9 +60,7 @@ void Transpose::EvalOnRun() {
   output_as<ListSymbol>()->UpdateList(GenResult(inp, perm));
 }
 
-REG_SYMBOL_OP_BUILDER("Transpose")
-  .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<Transpose>);
+REG_SYMBOL_OP_BUILDER("Transpose").SetShapeDepend({DependOn::kShape, DependOn::kValue}).SetShapeFuncWith<Transpose>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

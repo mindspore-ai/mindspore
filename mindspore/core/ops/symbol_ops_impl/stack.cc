@@ -81,6 +81,7 @@ SymbolPtr Stack::Eval() {
 }
 
 REG_SYMBOL_OP_BUILDER("Stack")
+  .SetShapeDependN<DependOn::kShape>()
   .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
     auto axis = b->GetAttr(kAttrAxis);
     if (b->input_num() == 1 && b->GetInput(0)->isa<abstract::AbstractSequence>()) {
@@ -93,6 +94,7 @@ REG_SYMBOL_OP_BUILDER("Stack")
     }
     return b->Emit(std::make_shared<Stack>(ListSymbol::Make(std::move(inputs)), axis));
   })
+  .SetValueDependN<DependOn::kValue>()
   .SetValueFunc(StackValue);
 }  // namespace ops
 }  // namespace symshape

@@ -49,7 +49,7 @@ SymbolPtr ExpandDims::Eval() {
     }
     (void)result.insert(result.begin() + LongToSize(NormAxis(axis_val, rank + 1)), const1);
   };
-  auto axis_list = axis->as<ListSymbol>();
+  auto axis_list = axis->as_noexcept<ListSymbol>();
   if (axis_list == nullptr) {
     expand_dims(AsInt(axis));
   } else {
@@ -62,7 +62,8 @@ SymbolPtr ExpandDims::Eval() {
 
 REG_SYMBOL_OP_BUILDER("ExpandDims")
   .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<ExpandDims>)
+  .SetShapeFuncWith<ExpandDims>()
+  .SetValueDepend({DependOn::kValue})
   .SetValueFunc([](OperationBuilder *b) -> SymbolPtr {
     auto v = b->GetInputValue(kIndex0);
     // only support int to intlist for shape calculation

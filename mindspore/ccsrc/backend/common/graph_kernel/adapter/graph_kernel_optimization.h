@@ -26,6 +26,7 @@ using opt::PassManagerPtr;
 class GraphKernelOptimizer {
  public:
   void Run(const KernelGraphPtr &kernel_graph);
+  void RunKernelPacket(const KernelGraphPtr &kernel_graph);
 
  private:
   void Init() const;
@@ -45,6 +46,8 @@ class GraphKernelOptimizer {
   PassManagerPtr Build() const;
   // Post-process
   PassManagerPtr PostProcess() const;
+  // Pack a device op with input host ops
+  PassManagerPtr KernelPacket() const;
 
   bool is_gpu{false};
   bool is_ascend{false};
@@ -55,5 +58,6 @@ class GraphKernelOptimizer {
 
 BACKEND_EXPORT void GraphKernelOptimize(const KernelGraphPtr &kernel_graph);
 BACKEND_EXPORT bool GraphKernelSupported(const std::vector<AnfNodePtr> &nodes);
+BACKEND_EXPORT void KernelPacketOptimize(const KernelGraphPtr &kernel_graph);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADAPTER_GRAPH_KERNEL_OPTIMIZATION_H_

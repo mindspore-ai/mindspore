@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <utility>
 #include <unordered_map>
 #include "mindspore/core/ir/primitive.h"
 #include "mindspore/core/symbolic_shape/symbol.h"
@@ -27,6 +28,13 @@ namespace mindspore {
 namespace symshape {
 class OperationBuilder;
 enum class DependOn : int { kShape, kValue, kNone };
+
+/// \brief Get depend status of inputs when building shape of prim
+MS_CORE_API std::vector<DependOn> GetShapeDepends(const PrimitivePtr &prim, size_t input_num);
+
+/// \brief Get depend status of inputs when building shape of prim
+MS_CORE_API std::vector<DependOn> GetValueDepends(const PrimitivePtr &prim, size_t input_num);
+
 using InferFunc = std::function<SymbolPtr(OperationBuilder *)>;
 using DependFunc = std::function<std::vector<DependOn>(const PrimitivePtr &, size_t)>;
 struct MS_CORE_API OperationBuilderInfo {
@@ -62,7 +70,6 @@ class MS_CORE_API OperationBuilder {
   SymbolPtr GetInputShape(size_t i) const { return GetShape(GetInput(i)); }
   SymbolPtr GetInputValue(size_t i) const { return GetValue(GetInput(i)); }
   SymbolPtr GetAttr(const std::string &attr_name) const;
-  // todo, remove this after converting all attrs to input.
   SymbolPtr GetInputOrAttr(size_t index, const std::string &attr_name) const;
 
   bool is_building_shape() const { return is_building_shape_; }
@@ -81,10 +88,53 @@ class MS_CORE_API OperationBuilder {
 };
 using OperationBuilderPtr = std::unique_ptr<OperationBuilder>;
 
+template <DependOn d, size_t n = 0>
+std::vector<DependOn> DefaultDepender(const PrimitivePtr &, size_t input_num) {
+  if (n == 0) {
+    return std::vector<DependOn>(input_num, d);
+  }
+  return std::vector<DependOn>(n, d);
+}
+
+/// \brief The default builder to create an `Operation`, input shapes or values are related to the depend list.
+///
+/// \tparam OP The class that inherit from `Operation`.
+template <typename OP, typename = std::enable_if_t<std::is_base_of_v<Operation, OP>>>
+SymbolPtr DefaultBuilder(OperationBuilder *b) {
+  bool build_value = !b->is_building_shape();
+  auto depends = b->symbol_builder_info().GetDepends(b->prim(), b->input_num(), build_value);
+  if (depends.empty()) {
+    MS_LOG(WARNING) << "For " << b->prim()->name() << ", the depends list is empty.";
+    return nullptr;
+  }
+  if (b->input_num() < depends.size()) {
+    MS_LOG(WARNING) << "For " << b->prim()->name() << ", the input args num is less than the depends size. "
+                    << b->input_num() << " vs " << depends.size();
+    return nullptr;
+  }
+  SymbolPtrList inputs;
+  inputs.reserve(depends.size());
+  for (size_t i = 0; i < depends.size(); i++) {
+    if (depends[i] == DependOn::kShape) {
+      (void)inputs.emplace_back(b->GetInputShape(i));
+    } else if (depends[i] == DependOn::kValue) {
+      (void)inputs.emplace_back(b->GetInputValue(i));
+    }
+  }
+  return b->Emit(std::make_shared<OP>(std::move(inputs)));
+}
+
+/// \brief Use the input symbol as output directly.
+///
+/// \note When using this function, the `SetShapeDepend` or `SetValueDepend` should be set, and only one
+/// "DependOn::kShape" (or "DependOn::kValue") exists. the depending symbol is used as output.
+SymbolPtr TransparentInput(OperationBuilder *b);
+
 class MS_CORE_API OperationBuilderInfoRegistry {
  public:
   static const OperationBuilderInfo *GetBuildInfo(const std::string &name);
   static OperationBuilderPtr GetBuilder(const std::string &name, OperationEmitter *e);
+  static inline bool HasOp(const std::string &name) { return GetBuildInfo(name) != nullptr; }
 
   static OperationBuilderInfoRegistry &Instance() {
     static OperationBuilderInfoRegistry instance{};
@@ -102,10 +152,19 @@ class MS_CORE_API OperationBuilderInfoRegistry {
       builder_->shape_depend_func = func;
       return *this;
     }
+    template <DependOn d, size_t n = 0>
+    RegHelper &SetShapeDependN() {
+      return SetShapeDepend(DefaultDepender<d, n>);
+    }
     RegHelper &SetShapeFunc(const InferFunc &func) {
       builder_->build_shape_func = func;
       return *this;
     }
+    template <typename OP, typename = std::enable_if_t<std::is_base_of_v<Operation, OP>>>
+    RegHelper &SetShapeFuncWith() {
+      return SetShapeFunc(DefaultBuilder<OP>);
+    }
+    RegHelper &SetShapeTransparentFunc() { return SetShapeFunc(TransparentInput); }
 
     RegHelper &SetValueDepend(const std::initializer_list<DependOn> &depends) {
       builder_->value_depend_list = depends;
@@ -115,12 +174,22 @@ class MS_CORE_API OperationBuilderInfoRegistry {
       builder_->value_depend_func = func;
       return *this;
     }
+    template <DependOn d, size_t n = 0>
+    RegHelper &SetValueDependN() {
+      return SetValueDepend(DefaultDepender<d, n>);
+    }
     RegHelper &SetValueFunc(const InferFunc &func) {
       builder_->build_value_func = func;
       return *this;
     }
+    template <typename OP, typename = std::enable_if_t<std::is_base_of_v<Operation, OP>>>
+    RegHelper &SetValueFuncWith() {
+      return SetValueFunc(DefaultBuilder<OP>);
+    }
     OperationBuilderInfo *builder_;
   };  // class RegHelper
+
+  const std::unordered_map<std::string, OperationBuilderInfo> &builders() const { return builders_; }
 
  private:
   OperationBuilderInfo *NewBuilder(const std::string &name) { return &builders_[name]; }

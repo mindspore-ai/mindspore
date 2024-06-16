@@ -79,6 +79,7 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
   void PreBuild();
   void PreBuildQueryDependStatus(const AnfNodePtrList &cnodes);
   void PreBuildSpecialNode(const CNodePtr &cnode);
+  void SetInputDependStatus(const CNodePtr &cnode, bool current_depend_value);
 
   // build symbol engine
   void BuildImpl();
@@ -95,6 +96,8 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
 
   void BuildNodesSymbol(const FuncGraphPtr &fg, const AnfNodePtrList &cnodes);
   void BuildCNodeSymbol(const CNodePtr &cnode);
+
+  bool HasAbstractAny(const AbstractBasePtrList &inputs, const AbstractBasePtr &output);
 
   std::string name_;
   AnfNodePtrList cnodes_;

@@ -18,9 +18,8 @@
 namespace mindspore {
 namespace symshape {
 namespace ops {
-REG_SYMBOL_OP_BUILDER("RmsNorm").SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
+REG_SYMBOL_OP_BUILDER("RmsNorm").SetShapeDepend({DependOn::kShape}).SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
   auto inp = b->GetInputShape(kIndex0)->as_sptr<ListSymbol>();
-  MS_EXCEPTION_IF_NULL(inp);
   if (inp->is_dyn_len()) {
     return nullptr;
   }

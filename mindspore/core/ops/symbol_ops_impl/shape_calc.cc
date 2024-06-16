@@ -86,7 +86,6 @@ class MS_CORE_API FunctorOperation : public InferValueOp {
     }
 
     auto list_sym = sym->as_sptr<ListSymbol>();
-    MS_EXCEPTION_IF_NULL(list_sym);
     MS_EXCEPTION_IF_CHECK_FAIL(list_sym->HasData(), "ListSymbol should have data in run status!");
     ShapeVector res;
     res.reserve(list_sym->size());
@@ -203,9 +202,7 @@ class MS_CORE_API ShapeCalcReduceSumGrad : public InferValueOp {
     MS_EXCEPTION_IF_NULL(r_shape);
     MS_EXCEPTION_IF_CHECK_FAIL(r_shape->HasData(), "r_shape should not be dynamic-rank");
     auto inp_list = inp->as<ListSymbol>();
-    MS_EXCEPTION_IF_NULL(inp_list);
     auto r_shape_list = r_shape->as<ListSymbol>();
-    MS_EXCEPTION_IF_NULL(r_shape_list);
     SymbolPtrList scaling(r_shape_list->size());
     for (size_t i = 0; i < r_shape_list->size(); i++) {
       scaling[i] = Emit(std::make_shared<ScalarDiv>(inp_list->item(i), r_shape_list->item(i)));

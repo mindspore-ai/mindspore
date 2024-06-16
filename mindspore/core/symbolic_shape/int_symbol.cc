@@ -22,6 +22,38 @@ namespace symshape {
 std::string IntSymbol::ToRawString() const { return has_data_ ? std::to_string(value_) : sid(); }
 
 ValuePtr IntSymbol::ToValue() const { return has_data_ ? MakeValue<int64_t>(value_) : kValueAny; }
+ValuePtr IntSymbol::ToValueOf(const TypePtr &type) const {
+  if (!has_data_) {
+    return kValueAny;
+  }
+  TypeId type_id = type->type_id();
+  if (type_id == kObjectTypeTensorType) {
+    auto tensor_type = type->cast_ptr<TensorType>();
+    MS_EXCEPTION_IF_NULL(tensor_type);
+    type_id = tensor_type->element()->type_id();
+  }
+  switch (type_id) {
+    case kNumberTypeInt64:
+      return MakeValue<int64_t>(value_);
+    case kNumberTypeInt32:
+      return MakeValue<int32_t>(static_cast<int32_t>(value_));
+    case kNumberTypeInt16:
+      return MakeValue<int16_t>(static_cast<int16_t>(value_));
+    case kNumberTypeInt8:
+      return MakeValue<int8_t>(static_cast<int8_t>(value_));
+    case kNumberTypeUInt64:
+      return MakeValue<uint64_t>(static_cast<uint64_t>(value_));
+    case kNumberTypeUInt32:
+      return MakeValue<uint32_t>(static_cast<uint32_t>(value_));
+    case kNumberTypeUInt16:
+      return MakeValue<uint16_t>(static_cast<uint16_t>(value_));
+    case kNumberTypeUInt8:
+      return MakeValue<uint8_t>(static_cast<uint8_t>(value_));
+    default:
+      MS_LOG(INTERNAL_EXCEPTION) << "Cannot convert the IntSymbol to type " << type->ToString();
+  }
+  return ToValue();
+}
 
 std::shared_ptr<IntSymbol> IntSymbol::Make(int64_t val, const OpPtr &op) {
   auto s = std::make_shared<IntSymbol>(true, true, op);
@@ -44,14 +76,10 @@ void IntSymbol::UpdateImpl(const SymbolPtr &s) {
   if (is_const_) {
     MS_LOG(EXCEPTION) << "Const symbol '" << ToString() << "' cannot be updated, other: " << s->ToString();
   }
-  auto other = s->as<IntSymbol>();
-  if (other == nullptr) {
-    MS_LOG(EXCEPTION) << "Symbol " << s->ToString() << " is not a IntSymbol.";
-  }
-  if (!other->has_data_) {
+  if (!s->HasData()) {
     MS_LOG(EXCEPTION) << "Symbol " << s->ToString() << " has no data.";
   }
-  value_ = other->value_;
+  value_ = s->as<IntSymbol>()->value_;
   has_data_ = true;
 }
 
@@ -59,7 +87,7 @@ bool IntSymbol::operator==(const Symbol &s) const {
   if (this == &s) {
     return true;
   }
-  auto other = s.as<IntSymbol>();
+  auto other = s.as_noexcept<IntSymbol>();
   if (other == nullptr) {
     return false;
   }

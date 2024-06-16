@@ -57,8 +57,7 @@ void Reshape::ProductShape(const ListSymbol *shape) {
   size_t notpositive_symbol_cnt = 0;
   int notpositive_symbol_idx = 0;
   for (size_t i = 0; i < shape->size(); i++) {
-    auto item = shape->symbols()[i]->as<IntSymbol>();
-    MS_EXCEPTION_IF_NULL(item);
+    auto item = shape->item_as<IntSymbol>(i);
     if (item->HasData()) {
       auto s = item->value();
       if (s < 0) {
@@ -194,9 +193,7 @@ void Reshape::EvalOnRun() {
   output_as<ListSymbol>()->UpdateList(std::move(result));
 }
 
-REG_SYMBOL_OP_BUILDER("Reshape")
-  .SetShapeDepend({DependOn::kShape, DependOn::kValue})
-  .SetShapeFunc(DefaultBuilder<Reshape>);
+REG_SYMBOL_OP_BUILDER("Reshape").SetShapeDepend({DependOn::kShape, DependOn::kValue}).SetShapeFuncWith<Reshape>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore
