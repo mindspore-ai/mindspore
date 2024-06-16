@@ -64,6 +64,49 @@ bool IsOneOfCacheBlackList(const std::string &name) {
   return iter != kOpCacheBlackList.end();
 }
 
+std::vector<std::tuple<std::string, int, std::string>> GetPythonStack_() {
+  std::vector<std::tuple<std::string, int, std::string>> all_stacks;
+#if !defined(BUILD_LITE)
+  try {
+    const size_t func_name_index = 2;
+    const size_t min_frame_info_size = 3;
+    py::gil_scoped_acquire gil_acquire;
+    py::module traceback_module = py::module::import("traceback");
+    py::list extracted_stack = traceback_module.attr("extract_stack")();
+    for (size_t i = 0; i < extracted_stack.size(); ++i) {
+      py::tuple frame_info = extracted_stack[i].cast<py::tuple>();
+
+      if (frame_info.size() < min_frame_info_size) {
+        MS_LOG(ERROR) << "frame_info size is invalid, frame_info size:" << frame_info.size();
+        continue;
+      }
+
+      // frame_info: (filename, line number, function name, code_context)
+      std::string file_name = frame_info[0].cast<std::string>();
+      int line_number = frame_info[1].cast<int>();
+      std::string func_name = frame_info[func_name_index].cast<std::string>();
+      (void)all_stacks.emplace_back(std::tuple(file_name, line_number, func_name));
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Error while accessing Python stack: " << e.what();
+  }
+#endif
+
+  return all_stacks;
+}
+
+std::string GetPythonStackStr_() {
+  const auto &stacks = GetPythonStack_();
+  const size_t func_name_index = 2;
+
+  std::stringstream ss;
+  for (const auto &stack_info : stacks) {
+    ss << "File:" << std::get<0>(stack_info) << ";Line:" << std::get<1>(stack_info)
+       << ";Function:" << std::get<func_name_index>(stack_info) << '|';
+  }
+  return ss.str();
+}
+
 bool IsOneOf3DFormat(const std::string &format) {
   static const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
                                                      kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};

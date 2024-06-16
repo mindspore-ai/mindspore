@@ -722,6 +722,10 @@ enum class InputType {
   kUnkown,
 };
 
+// Return vec<filename, line number, function name>
+COMMON_EXPORT std::vector<std::tuple<std::string, int, std::string>> GetPythonStack_();
+COMMON_EXPORT std::string GetPythonStackStr_();
+
 COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
 COMMON_EXPORT bool IsOneOfOperator(const std::string &name);
 COMMON_EXPORT bool IsOneOfNotSupportedTransFormat(const std::string &format);

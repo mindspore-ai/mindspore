@@ -15,7 +15,8 @@
 import os
 import shutil
 import tempfile
-
+from collections import defaultdict
+import json
 import sys
 import csv
 
@@ -185,6 +186,7 @@ class TestProfiler:
     def test_ascend_profiler(self):
         self._train_with_profiler(device_target="Ascend", profile_memory=True)
         self._check_d_profiling_file()
+        self._check_d_profiling_step_trace_on_multisubgraph()
         self._check_host_profiling_file()
 
     @pytest.mark.level1
@@ -205,7 +207,7 @@ class TestProfiler:
     @security_off_wrap
     def test_ascend_kbyk_profiler(self):
         os.environ['GRAPH_OP_RUN'] = "1"
-        self._train_with_profiler(device_target="Ascend", profile_memory=False)
+        self._train_with_profiler(device_target="Ascend", profile_memory=False, host_stack=True)
         self._check_d_profiling_file()
         self._check_host_profiling_file()
         self._check_kbyk_profiling_file()
@@ -216,7 +218,7 @@ class TestProfiler:
         assert os.path.isfile(op_range_file)
 
     def _train_with_profiler(self, device_target, profile_memory, context_mode=context.GRAPH_MODE,
-                             only_profile_host=False, profile_framework='all'):
+                             only_profile_host=False, profile_framework='all', host_stack=True):
         context.set_context(mode=context_mode, device_target=device_target)
         ds_train = create_dataset(os.path.join(self.mnist_path, "train"))
         if ds_train.get_dataset_size() == 0:
@@ -224,10 +226,10 @@ class TestProfiler:
         if only_profile_host:
             profiler = Profiler(output_path=self.data_path, op_time=False,
                                 parallel_strategy=False, aicore_metrics=-1, data_process=False,
-                                profile_framework=profile_framework)
+                                profile_framework=profile_framework, host_stack=host_stack)
         else:
             profiler = Profiler(profile_memory=profile_memory, output_path=self.data_path,
-                                profile_framework=profile_framework)
+                                profile_framework=profile_framework, host_stack=host_stack)
         profiler_name = 'profiler/'
         self.profiler_path = os.path.join(self.data_path, profiler_name)
         lenet = LeNet5()
@@ -253,6 +255,14 @@ class TestProfiler:
                               timeline_file, getnext_file, pipeline_file, framework_file)
         for file in gpu_profiler_files:
             assert os.path.isfile(file)
+
+    def _check_d_profiling_step_trace_on_multisubgraph(self):
+        step_trace_file = self.profiler_path + f'step_trace_raw_{self.rank_id}_detail_time.csv'
+        assert os.path.isfile(step_trace_file)
+        with open(step_trace_file, 'r') as fr:
+            reader = csv.DictReader(fr)
+            row_count = sum(1 for _ in reader)
+        assert row_count == 11
 
     def _check_d_profiling_file(self):
         aicore_file = self.profiler_path + f'aicore_intermediate_{self.rank_id}_detail.csv'
@@ -292,3 +302,58 @@ class TestProfiler:
                               'custom_info', 'memory_usage(kB)', 'time_stamp(us)']
             for row in f_reader:
                 assert len(row) == 11
+
+    @pytest.mark.level1
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_ascend_pynative_profiler(self):
+        self._train_with_profiler(device_target='Ascend', profile_memory=False,
+                                  context_mode=context.PYNATIVE_MODE, host_stack=True)
+        self._check_pynative_timeline_host_data()
+
+    def _check_pynative_timeline_host_data(self):
+        timeline_display_file = os.path.join(self.profiler_path, f'ascend_timeline_display_{self.rank_id}.json')
+        assert os.path.isfile(timeline_display_file)
+        with open(timeline_display_file, 'r') as fr:
+            data = json.load(fr)
+        async_ms_dict, async_npu_dict, host_to_device_dict = defaultdict(int), defaultdict(int), defaultdict(int)
+        RunOp_set, FrontendTask_set, DeviceTask_set, LaunchTask_set, KernelLaunch_set \
+            = set(), set(), set(), set(), set()
+
+        for d in data:
+            ph = d.get('ph')
+            cat = d.get('cat')
+            name = d.get('name')
+            if ph in ('s', 'f'):
+                if cat == 'async_mindspore':
+                    async_ms_dict[d.get('id')] += 1
+                elif cat == 'async_npu':
+                    async_npu_dict[d.get('id')] += 1
+                elif cat == 'HostToDevice':
+                    host_to_device_dict[d.get('id')] += 1
+            elif ph == 'X':
+                if 'RunOp' in name:
+                    assert d.get('args', {}).get('Call stack')
+                    RunOp_set.add(name)
+                elif 'FrontendTask' in name:
+                    FrontendTask_set.add(name)
+                elif 'DeviceTask' in name:
+                    DeviceTask_set.add(name)
+                elif 'LaunchTask' in name:
+                    LaunchTask_set.add(name)
+                elif 'KernelLaunch' in name:
+                    KernelLaunch_set.add(name)
+
+        assert RunOp_set
+        assert FrontendTask_set
+        assert DeviceTask_set
+        assert LaunchTask_set
+        assert KernelLaunch_set
+        for v in async_ms_dict.values():
+            assert v == 2
+        for v in async_npu_dict.values():
+            assert v == 2
+        for v in host_to_device_dict.values():
+            assert v == 2

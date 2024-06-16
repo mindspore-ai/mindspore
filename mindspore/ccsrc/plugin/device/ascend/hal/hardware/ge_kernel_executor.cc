@@ -61,7 +61,6 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
 #include "include/backend/debug/profiler/profiling.h"
-#include "plugin/device/ascend/hal/profiler/profiling_framework_data.h"
 #include "utils/anf_utils.h"
 #endif
 
@@ -1178,7 +1177,6 @@ void GeKernelExecutor::DoAsyncCkpt(const CNodePtr &kernel) const {
 bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelTensor *> &inputs,
                                     const vector<KernelTensor *> &workspace, const vector<KernelTensor *> &outputs,
                                     KernelMod *kernel_mod, void *stream) const {
-  profiler::ascend::ProfilingFrameworkData::RecordLaunchGETaskBegin(kernel->fullname_with_scope());
   // launch kernel
   uint64_t start_time = 0;
   PROFILER_START(start_time);
@@ -1198,7 +1196,6 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
       return false;
     }
   }
-  profiler::ascend::ProfilingFrameworkData::RecordGETask(kernel->fullname_with_scope());
   // for PyNative Sync Run mode
   auto ret = PySyncRuning(stream);
   if (!ret) {

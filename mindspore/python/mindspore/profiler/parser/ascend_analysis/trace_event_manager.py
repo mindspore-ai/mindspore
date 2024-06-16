@@ -33,7 +33,7 @@ class TraceEventManager:
         return x_event
 
     @classmethod
-    def create_m_event(cls, pid: int, tid_list: List) -> List:
+    def create_m_event(cls, pid: int, tid_list: set) -> List:
         """Create some metadata event."""
         # framework sidee trace information display format: MindSpore(pid pid_value): CPU
         event_list = [
@@ -57,3 +57,12 @@ class TraceEventManager:
                  "tid": start_event.tid, "ts": str(start_event.ts), "cat": "async_npu"},
                 {"ph": "f", "bp": "e", "name": "mindspore_to_npu", "id": flow_id, "pid": end_event.pid,
                  "tid": end_event.tid, "ts": str(end_event.ts), "cat": "async_npu"}]
+
+    @classmethod
+    def create_mindspore_to_self_flow(cls, start_event: BaseEvent, end_event: BaseEvent) -> List:
+        """Create flow events link mindspore operator and npu kernel."""
+        flow_id = start_event.flow_id
+        return [{"ph": "s", "bp": "e", "name": "mindspore_to_self", "id": flow_id, "pid": start_event.pid,
+                 "tid": start_event.tid, "ts": str(start_event.ts), "cat": "async_mindspore"},
+                {"ph": "f", "bp": "e", "name": "mindspore_to_self", "id": flow_id, "pid": end_event.pid,
+                 "tid": end_event.tid, "ts": str(end_event.ts), "cat": "async_mindspore"}]
