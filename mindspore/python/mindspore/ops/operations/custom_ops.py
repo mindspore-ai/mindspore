@@ -551,10 +551,10 @@ class Custom(ops.PrimitiveWithInfer):
         if not isinstance(self.func, str):
             raise TypeError("{}, 'func' must be of type str, but got {}".format(
                 self.log_prefix, type(self.func)))
-        if callable(self.out_shape):
-            return
         file_name_list = self.func.split(":")
         if len(file_name_list) != 2:
+            if callable(self.out_shape):
+                return
             raise TypeError(
                 "{}, 'func' should be like 'file_name:func_name', but got {}".format(
                     self.log_prefix, self.func))
