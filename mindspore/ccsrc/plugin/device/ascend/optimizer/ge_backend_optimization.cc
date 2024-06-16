@@ -144,6 +144,7 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   opt_acl_pm->AddPass(std::make_shared<opt::ExpanderFallback>());
   opt_acl_pm->AddPass(std::make_shared<opt::ConvertPadV3Paddings>());
   opt_acl_pm->AddPass(std::make_shared<opt::ConvertPadV3GradPaddings>());
+  opt_acl_pm->AddPass(std::make_shared<opt::ResizeBilinearAddAttr>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
