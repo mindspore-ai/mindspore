@@ -1400,7 +1400,7 @@ void DumpParallelJson(const std::string &filename, const FuncGraphPtr &graph, co
   auto path = GetSaveGraphsPathName(filename, save_path);
   auto realpath = Common::CreatePrefixPath(path);
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << path;
+    MS_LOG(ERROR) << "Get real path failed, path is " << path;
     return;
   }
 
