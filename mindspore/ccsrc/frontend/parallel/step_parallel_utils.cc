@@ -3289,8 +3289,22 @@ size_t GetDeviceCapacity() {
     MS_LOG(DEBUG) << "variable_memory_max_size(GB):" << gb_var;
     size_from_context = gb_var * kGBToByte;
   }
-
   return size_from_context;
+}
+
+abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, const AnfNodePtrList &input_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  std::vector<AbstractBasePtr> input_args;
+  (void)std::for_each(input_list.begin(), input_list.end(),
+                      [&input_args](const auto &input) { (void)input_args.emplace_back(input->abstract()); });
+  auto abs_opt = abstract::TryInferAbstract(primitive, input_args);
+  if (!abs_opt.has_value()) {
+    MS_LOG(EXCEPTION) << primitive->name() << " infer is not registered.";
+  }
+  auto abs = abs_opt.value();
+  MS_EXCEPTION_IF_NULL(abs);
+  MS_LOG(DEBUG) << "Abstract for " << primitive->name() << " is " << abs->ToString();
+  return abs;
 }
 }  // namespace parallel
 }  // namespace mindspore
