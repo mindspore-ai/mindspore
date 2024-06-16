@@ -27,6 +27,7 @@
 
 namespace mindspore {
 namespace lite {
+enum ConvDims { CONV1D_DIM = 1, CONV3D_DIM = 3 };
 class OnnxConvBaseParser : public OnnxNodeParser {
  public:
   ~OnnxConvBaseParser() override = default;
@@ -34,7 +35,7 @@ class OnnxConvBaseParser : public OnnxNodeParser {
  protected:
   explicit OnnxConvBaseParser(std::string nodeName) : OnnxNodeParser(std::move(nodeName)) {}
   STATUS ParseVecAttr(const onnx::NodeProto &onnx_node, std::vector<int64_t> *kernels, std::vector<int64_t> *strides,
-                      std::vector<int64_t> *dilation, std::vector<int64_t> *pads, bool *conv1d);
+                      std::vector<int64_t> *dilation, std::vector<int64_t> *pads, int *conv_dims);
 };
 
 }  // namespace lite
