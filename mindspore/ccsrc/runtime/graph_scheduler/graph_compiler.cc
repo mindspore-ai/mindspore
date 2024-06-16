@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License"){}
  * you may not use this file except in compliance with the License.
@@ -452,11 +452,17 @@ GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
   kernel_graph->erase_flag(kFlagPyNativeRunInGraph);
   SetRunGraphBySingleOpFlag(kernel_graph);
   kernel_graph->UpdateGraphAquireGilAttr();
+  if (run_mode == device::RunMode::kUnknown) {
+    kernel_graph->set_run_mode(device_context->GetRunMode(kernel_graph));
+  } else {
+    kernel_graph->set_run_mode(run_mode);
+  }
   auto manager = MakeManager({kernel_graph});
   if (manager) {
     manager->AddFuncGraph(kernel_graph);
     kernel_graph->set_manager(manager);
   }
+
   opt::OptimizationWithoutBackend(kernel_graph);
   // Unify the MindIR, must be before of the kernel_graph optimization.
   auto kernel_executor = device_context->GetKernelExecutor(false);
@@ -479,12 +485,6 @@ GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
     return kernel_graph->graph_id();
   }
   kernel_graph->SetOptimizerFlag();
-
-  if (run_mode == device::RunMode::kUnknown) {
-    kernel_graph->set_run_mode(device_context->GetRunMode(kernel_graph));
-  } else {
-    kernel_graph->set_run_mode(run_mode);
-  }
 
   GraphId graph_id = 0;
   if (run_in_pynative) {

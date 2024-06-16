@@ -964,11 +964,14 @@ class AlltoAll(PrimitiveWithInfer):
         if self.split_count != rank_size:
             raise ValueError(f"For '{self.name}', the 'split_count' must be equal to 'rank_size', "
                              f"but got 'split_count': {self.split_count}, 'rank_size': {rank_size}.")
-        if x_shape[self.split_dim] % self.split_count != 0:
-            raise ValueError(f"For '{self.name}', the 'split_count' must be divisible by 'rank_size', "
-                             f"but got 'split_count' {self.split_count}, 'rank_size' {x_shape[self.split_dim]}.")
-        x_shape[self.concat_dim] = x_shape[self.concat_dim] * self.split_count
-        x_shape[self.split_dim] = int(x_shape[self.split_dim] / self.split_count)
+        if x_shape[self.split_dim] >= 0 and x_shape[self.split_dim] % self.split_count != 0:
+            raise ValueError(f"For '{self.name}', the 'x_shape[self.split_dim]' must be divisible by 'split_count', "
+                             f"but got 'x_shape[self.split_dim]' {x_shape[self.split_dim]}, "
+                             f"'split_count' {self.split_count}.")
+        if x_shape[self.concat_dim] >= 0:
+            x_shape[self.concat_dim] = x_shape[self.concat_dim] * self.split_count
+        if x_shape[self.split_dim] >= 0:
+            x_shape[self.split_dim] = int(x_shape[self.split_dim] / self.split_count)
         return x_shape
 
     def infer_dtype(self, x_dtype):

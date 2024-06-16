@@ -184,7 +184,7 @@ CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all,
 }  // namespace
 
 const BaseRef AllToAllFusion::DefinePattern() const {
-  return VectorRef({prim::kPrimAllToAll, std::make_shared<SeqVar>()});
+  return VectorRef({prim::kPrimAlltoAll, std::make_shared<SeqVar>()});
 }
 
 const AnfNodePtr AllToAllFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
