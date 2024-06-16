@@ -886,4 +886,12 @@ bool ModelImpl::CheckModelSupport(DeviceType device_type, ModelType model_type) 
   }
   return false;
 }
+
+Status ModelImpl::Finalize() {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "session_ is nullptr,please build model first!";
+    return kLiteError;
+  }
+  return session_->Finalize();
+}
 }  // namespace mindspore

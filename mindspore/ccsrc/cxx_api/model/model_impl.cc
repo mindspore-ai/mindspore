@@ -132,4 +132,10 @@ Status ModelImpl::PredictWithPreprocess(const std::vector<std::vector<MSTensor>>
   return Status(kMEFailed, "Predict with data preprocess is not supported on Windows yet.");
 #endif
 }
+
+Status ModelImpl::Finalize() {
+  MS_LOG(ERROR) << "Finalize is only support for mindspore_lite's ascend backend.";
+  return kLiteError;
+}
+
 }  // namespace mindspore

@@ -40,6 +40,7 @@ mindspore::HashMap<std::string, std::string> IOFormatMap::io_format_map_ = {{"BN
                                                                             {"ResizeNearestNeighborV2", "NCHW"},
                                                                             {"Conv3D", "format"},
                                                                             {"MaxPool3D", "NCDHW"},
+                                                                            {"MaxPoolV3", "NCHW"},
                                                                             {"MaxPool3DGrad", "NCDHW"},
                                                                             {"AvgPool3D", "NCDHW"},
                                                                             {"AvgPool3DGrad", "NCDHW"},

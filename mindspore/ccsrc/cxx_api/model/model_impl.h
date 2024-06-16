@@ -49,6 +49,8 @@ class MS_API ModelImpl {
 
   virtual bool HasPreprocess();
 
+  Status Finalize();
+
  protected:
   FuncGraphPtr GetFuncGraph() const {
     if (graph_->ModelType() != ModelType::kMindIR) {

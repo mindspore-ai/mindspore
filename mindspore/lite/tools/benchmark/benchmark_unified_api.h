@@ -121,6 +121,8 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
   int MarkAccuracy();
 
+  int GetBenchmarkResult();
+
   void UpdateDistributionName(const std::shared_ptr<mindspore::Context> &context, std::string *name);
 
  private:
