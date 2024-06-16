@@ -1,0 +1,17 @@
+#operator repeat_interleave_grad
+repeat_interleave_grad:
+  args:
+    input:
+      dtype: tensor
+    repeats:
+      dtype: tensor
+    dim:
+      dtype: int
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: RepeatInterleaveGradAscend
