@@ -128,6 +128,14 @@ class _ProcessManager:
             self.worker_num = 1
             self.local_worker_num = 1
             os.environ["MS_SIMULATION_LEVEL"] = str(self.sim_level)
+        elif os.getenv("MS_SIMULATION_LEVEL"):
+            # If simulation level env is set, load RANK_ID and RANK_SIZE envs.
+            self.worker_num = 1
+            self.local_worker_num = 1
+            self.is_simulation = True
+            self.sim_rank_id = os.getenv("RANK_ID", "0")
+            if os.getenv("RANK_SIZE"):
+                self.exported_rank_size = os.getenv("RANK_SIZE")
 
         self.cmd = args.task_script
         self.cmd_args = args.task_script_args
@@ -223,8 +231,8 @@ class _ProcessManager:
                 raise RuntimeError("Fail to get cpu number from /proc/cpuinfo.")
             if self.bind_core:
                 avg = int(cpu_num) // self.local_worker_num
-                cpu_start = avg * i + 1
-                cpu_end = avg * (i + 1)
+                cpu_start = avg * i
+                cpu_end = cpu_start + avg - 1
                 cmd = _generate_cmd_args_list_with_core(self.cmd, self.cmd_args, cpu_start, cpu_end)
             else:
                 cmd = _generate_cmd_args_list(self.cmd, self.cmd_args)

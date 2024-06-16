@@ -100,8 +100,9 @@ class BACKEND_EXPORT CollectiveManager {
   bool initialized() const { return inited_.load(); }
   std::unordered_map<std::string, std::vector<uint32_t>> get_group_map() { return group_map_; }
 
-  // Init Dummy communication lib
+  // Initialize and finalize Dummy communication lib.
   bool InitializeDummyCommLib();
+  bool FinalizeDummyCommLib();
 
  private:
   CollectiveManager();
@@ -118,6 +119,9 @@ class BACKEND_EXPORT CollectiveManager {
   // Assign local rank and size for each group in current server.
   bool GetLocalGroupRankAndSize(const std::vector<uint32_t> &group_ranks, uint32_t *local_group_rank,
                                 uint32_t *local_group_size);
+
+  // Create communication group in simulation mode.
+  bool CreateSimulationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks);
 
   std::atomic_bool inited_;
   std::atomic_bool finalized_;
@@ -146,7 +150,7 @@ class BACKEND_EXPORT CollectiveManager {
   // alias of host_comm_lib_instance_ and device_comm_lib_instance_ to avoid condition branch.
   CollectiveCommunicationLib *comm_lib_instance_;
 
-  // Dummy collective communication for single device compile
+  // Dummy collective communication for single device compile.
   std::shared_ptr<CollectiveCommunicationLib> dummy_comm_lib_instance_;
 
   // The global rank id of this process. Normally this range is 0 to `total process number - 1`.

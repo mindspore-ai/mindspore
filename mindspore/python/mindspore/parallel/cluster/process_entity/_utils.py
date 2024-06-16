@@ -15,6 +15,7 @@
 """Utils for ms_run"""
 import os
 import json
+import socket
 import requests
 import mindspore.log as logger
 
@@ -75,11 +76,18 @@ def _is_local_ip(ip_address):
     p = os.popen("ip -j addr")
     addr_info_str = p.read()
     p.close()
+    if not addr_info_str:
+        # This means this host has no "ip -j addr" command.
+        # We use socket module to get local ip address.
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect((ip_address, 0))
+        return s.getsockname()[0] == ip_address
+
     addr_infos = json.loads(addr_info_str)
     for info in addr_infos:
         for addr in info["addr_info"]:
             if addr["local"] == ip_address:
-                logger.info(f"IP address found on this node. Address info:{addr}.")
+                logger.info(f"IP address found on this node. Address info:{addr}. Found address:{ip_address}")
                 return True
     return False
 

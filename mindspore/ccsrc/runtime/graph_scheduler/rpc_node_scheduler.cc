@@ -233,7 +233,9 @@ void RpcNodeScheduler::Clear() {
 
 void RpcNodeScheduler::Abort() {
   MS_LOG(INFO) << "Start aborting rpc actors.";
-  MS_ERROR_IF_NULL_WO_RET_VAL(rpc_actors_);
+  if (rpc_actors_ == nullptr) {
+    return;
+  }
   for (const auto &recv_actor : rpc_actors_->recv_actors_) {
     MS_EXCEPTION_IF_NULL(recv_actor);
     ActorDispatcher::Send(recv_actor->GetAID(), &RecvActor::StopRpcAtException);
