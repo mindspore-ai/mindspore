@@ -20,6 +20,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <vector>
 #include "include/backend/device_type.h"
 #include "utils/log_adapter.h"
 #include "include/backend/visible.h"
@@ -30,7 +31,8 @@ namespace datadump {
 class BACKEND_EXPORT DataDumper {
  public:
   virtual void Initialize() { MS_LOG(WARNING) << "Initialize ACL DataDumper"; }
-  virtual void EnableDump(uint32_t device_id, uint32_t step_id, bool is_init) {
+  virtual void EnableDump(uint32_t device_id, uint32_t step_id, bool is_init,
+                          const std::vector<std::string> &all_kernel_names) {
     MS_LOG(WARNING) << "EnableDump ACL DataDumper";
   }
   virtual void Finalize() { MS_LOG(WARNING) << "Finalize ACL DataDumper"; }
