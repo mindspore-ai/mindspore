@@ -44,6 +44,7 @@ constexpr auto kSupportDevice = "support_device";
 constexpr auto kEnable = "enable";
 constexpr auto kOpDebugMode = "op_debug_mode";
 constexpr auto kTransFlag = "trans_flag";
+constexpr auto kSaveArgs = "save_kernel_args";
 constexpr auto kSampleMode = "sample_mode";
 constexpr auto kSampleNum = "sample_num";
 constexpr auto kStatCalcMode = "stat_calc_mode";
@@ -517,6 +518,10 @@ void DumpJsonParser::ParseE2eDumpSetting(const nlohmann::json &content) {
   auto e2e_dump_enable = CheckJsonKeyExist(*e2e_dump_setting, kEnable);
   auto trans_flag = CheckJsonKeyExist(*e2e_dump_setting, kTransFlag);
 
+  if (CheckSelectableKeyExist(*e2e_dump_setting, kSaveArgs)) {
+    auto save_args_flag = CheckJsonKeyExist(*e2e_dump_setting, kSaveArgs);
+    save_args_flag_ = ParseEnable(*save_args_flag);
+  }
   e2e_dump_enabled_ = ParseEnable(*e2e_dump_enable);
   trans_flag_ = ParseEnable(*trans_flag);
   ParseStatCalcMode(*e2e_dump_setting);
