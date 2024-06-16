@@ -19,6 +19,7 @@
 import collections
 import types
 import math
+import os
 import numpy
 from mindspore.nn import GraphCell, Cell
 from mindspore.ops.primitive import Primitive, constexpr, _primexpr
@@ -30,6 +31,7 @@ from mindspore.common._register_for_tensor import Registry, tensor_operator_regi
 from mindspore._c_expression import MetaFuncGraph_, function_id, Primitive_, PrimitiveFunction_
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._extends.parse.resources import convert_object_map
+from mindspore import _checkparam as validator
 
 
 def _get_after_grad_code():
@@ -48,17 +50,10 @@ def _get_after_grad_code():
 
 def _get_psjit_code():
     """Get the code object of 'staging_specialize'"""
-    code = jit.__code__
-    for cnst in code.co_consts:
-        if isinstance(cnst, types.CodeType) and cnst.co_name == "wrap_mindspore":
-            code = cnst
-            break
-    for cnst in code.co_consts:
-        if isinstance(cnst, types.CodeType) and cnst.co_name == "staging_specialize":
-            code = cnst
-            break
-    assert code is not jit.__code__, "check mindspore.api.jit, can't find 'staging_specialize'"
-    return code
+    @jit
+    def inner():
+        pass
+    return inner.__code__
 
 
 def _get_constexpr_code():
@@ -88,6 +83,12 @@ def _get_primexpr_code():
 def _pijit_constexpr():
     """Placeholder for uniqure id"""
 
+def _get_pijit_constexpr_code():
+    codes = []
+    for cnst in validator.check_transpose_axis.__code__.co_consts:
+        if isinstance(cnst, types.CodeType) and cnst.co_name == "_check_dim":
+            codes.append(cnst)
+    return codes
 
 def _get_ms_api():
     """Get ms api"""
@@ -251,6 +252,12 @@ _func_map = {
     function_id(numpy.isnan): FUNC_KEY_BUILTIN_FUNC,
     function_id(numpy.abs): FUNC_KEY_BUILTIN_FUNC,
     function_id(numpy.log): FUNC_KEY_BUILTIN_FUNC,
+
+    # const function
+    function_id(os.getenv): FUNC_KEY_PIJIT_CONSTEXPR,
+    function_id(validator.check_number_range): FUNC_KEY_PIJIT_CONSTEXPR,
+    function_id(validator.check_is_int): FUNC_KEY_PIJIT_CONSTEXPR,
+    function_id(validator.check_is_number): FUNC_KEY_PIJIT_CONSTEXPR,
 }
 
 for after_grad in _get_after_grad_code():
@@ -262,6 +269,9 @@ for k, v in convert_object_map.items():
         if key is print:
             continue
         _func_map[key] = FUNC_KEY_PSJIT_CONVERTMAP
+
+for const_code in _get_pijit_constexpr_code():
+    _func_map[id(const_code)] = FUNC_KEY_PIJIT_CONSTEXPR
 
 GUARD_KEY_RELAX_FUNC = 1
 _guard_func_map = dict()

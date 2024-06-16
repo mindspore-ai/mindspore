@@ -35,6 +35,7 @@
 
 namespace mindspore {
 namespace pijit {
+static const size_t DictStep = 2;
 #define FIND_MAP_CACHE(map, target) \
   do {                              \
     auto iter = (map).find(target); \
@@ -394,7 +395,7 @@ AObject *AbstractObjectBase::BuildOperations(const std::vector<AObject *> &input
     res = MakeAObject(kTypeDict);
     keys = inputs.back()->GetPyObject().ptr();
     err = static_cast<Py_ssize_t>(inputs.size() - 1) != PyTuple_GET_SIZE(keys);
-    for (Py_ssize_t i = IntToSize(inputs.size() - 2); !err && i >= 0; --i) {
+    for (Py_ssize_t i = IntToSize(inputs.size() - DictStep); !err && i >= 0; --i) {
       err = !static_cast<AbstractDict *>(res)->MapAdd(Convert(PyTuple_GET_ITEM(keys, i)), inputs[i]);
     }
   } else if (opcode == BUILD_MAP) {
@@ -654,6 +655,13 @@ static AObject::Type BinaryAdd(AObject::Type l, AObject::Type r) {
 
 static AObject::Type BinaryInferDefault(AObject::Type, AObject::Type) { return AObject::kTypeAnyValue; }
 
+static bool IsSameType(PyObject *a, PyObject *b) {
+  if (a != nullptr && b != nullptr && PyType_Check(a) && PyType_Check(b)) {
+    return a == b;
+  }
+  return false;
+}
+
 int AObject::BinaryIs(AObject *l, AObject *r) {
   PyObject *a = l ? l->GetPyObject().ptr() : nullptr;
   PyObject *b = r ? r->GetPyObject().ptr() : nullptr;
@@ -663,6 +671,9 @@ int AObject::BinaryIs(AObject *l, AObject *r) {
   // all is const object
   if (const_a && const_b) {
     return a == b;
+  }
+  if (IsSameType(a, b)) {
+    return true;
   }
   // a const object and a known object
   if ((const_a && b) || (const_b && a)) {

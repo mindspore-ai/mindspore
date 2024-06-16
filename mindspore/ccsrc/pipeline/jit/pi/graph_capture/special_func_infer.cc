@@ -42,6 +42,7 @@ constexpr const char *kModuleName = "mindspore._extends.pijit.pijit_func_white_l
 constexpr const char *kFuncMapName = "_func_map";
 constexpr const char *kSlotCallName = "__call__";
 constexpr const size_t kDictPopParamsNum = 2;
+constexpr const size_t BoundMethodInputSize = 2;
 
 static bool CheckConstexpr(const py::object &func);
 
@@ -518,9 +519,23 @@ static bool GuardIsInstance(CallNode *call_node) {
   const auto &cnst = call_node->input(1)->GetConstantInfo();
   if (cnst != nullptr && cnst->type() != nullptr) {
     constexpr int second_arg = 2;
-    return graph->GuardValueNode(call_node->input(second_arg));
+    auto success = graph->GuardValueNode(call_node->input(second_arg));
+    if (!success && (kPIJitConfigDefault.getIntConfig(GraphJitConfig::kGuardRelaxCount) > 0)) {
+      TracePtr tr = graph->TraceValueNode(call_node->input(second_arg));
+      if (tr == nullptr) {
+        return true;
+      }
+    }
+    return success;
   }
-  return graph->GuardValueNode(call_node);
+  auto success = graph->GuardValueNode(call_node);
+  if (!success && (kPIJitConfigDefault.getIntConfig(GraphJitConfig::kGuardRelaxCount) > 0)) {
+    TracePtr tr = graph->TraceValueNode(call_node);
+    if (tr == nullptr) {
+      return true;
+    }
+  }
+  return success;
 }
 
 bool InferBuiltinFuncOrMethod(CallNode *call_node, GraphBuilder *unused = nullptr) {
@@ -561,6 +576,19 @@ static bool InferTensorAsType(CallNode *call_node, GraphBuilder *unused = nullpt
   s << (tp->tp_name ? tp->tp_name : "<unnamed>") << "<" << prim_cast.ptr() << ">";
 
   ValueNode *prim_node = sub_graph->NewValueNode(AObject::Convert(prim_cast), LOAD_CONST, -1, {});
+
+  if (dtype_node->GetVobj()->GetType() == AObject::kTypeString &&
+      dtype_node->GetVobj()->GetPyObject().ptr() != nullptr) {
+    auto dtypeStr = py::cast<std::string>(dtype_node->GetVobj()->GetPyObject());
+    std::vector<std::string> under_line_dtype = {"bool", "int", "float", "list", "tuple"};
+    if (std::find(under_line_dtype.begin(), under_line_dtype.end(), dtypeStr) != under_line_dtype.end()) {
+      dtypeStr = dtypeStr + "_";
+    }
+    auto dtype_obj = Utils::GetModuleAttr("mindspore.common.dtype", dtypeStr, false, true);
+    if (dtype_obj.ptr() != nullptr) {
+      dtype_node = sub_graph->NewValueNode(AObject::Convert(dtype_obj), LOAD_CONST, -1, {});
+    }
+  }
 
   std::vector<ValueNode *> cast_args = {prim_node, self_node, dtype_node};
   CallNode *ret_node = sub_graph->NewCallNode(CALL_FUNCTION, cast_args.size() - 1, cast_args);
@@ -741,7 +769,7 @@ bool InferMsApiFunc(CallNode *call_node, GraphBuilder *unused = nullptr) {
 }
 
 bool InferMappingGet(CallNode *call_node, GraphBuilder *unused = nullptr) {
-  if (call_node->getInputs().size() == 2 &&
+  if (call_node->getInputs().size() == BoundMethodInputSize &&
       call_node->input(0)->GetVobj()->GetType() == AbstractObjectBase::kTypeBoundMethod) {
     auto func_node = call_node->input(0);
     auto self = func_node->input(0);
@@ -846,6 +874,9 @@ static FuncKey KeyFinderFuncId(const py::object &callable) {
 
 static FuncKey KeyFinderFuncCodeId(const py::object &callable) {
   PyObject *func = callable.ptr();
+  if (IsCellType<true>(Py_TYPE(callable.ptr()))) {
+    func = callable.attr("construct").ptr();
+  }
   if (PyMethod_Check(func)) {
     func = PyMethod_GET_FUNCTION(func);
   }

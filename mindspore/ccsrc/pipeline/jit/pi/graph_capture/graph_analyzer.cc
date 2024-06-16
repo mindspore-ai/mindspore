@@ -850,7 +850,7 @@ void MindGraphAnalyzer::CollectGraphInputs() {
   ValueNode *vargs = nullptr;
   ValueNode *kwargs = nullptr;
   int arg_index = co_->co_argcount + co_->co_kwonlyargcount;
-  if ((co_->co_flags & CO_VARARGS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
+  if ((IntToSize(co_->co_flags) & CO_VARARGS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
     vargs = interpret_.inputs[arg_index];
   }
   arg_index += (IntToSize(co_->co_flags) & CO_VARARGS) != 0;

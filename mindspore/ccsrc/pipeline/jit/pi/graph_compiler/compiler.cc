@@ -218,11 +218,13 @@ CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObjec
   args = ExpandVariableArgs(args, code->co_flags, code->co_argcount);
   args = EliminateSelf(args, name);
   MarkArgmentMutable(args);
-
-  SkipBoostInferScope skip_boost_infer_scope;
-
-  (void)graph_executor->CompileInner(graph, args, kwargs, phase, true);
-
+  try {
+    SkipBoostInferScope skip_boost_infer_scope;
+    (void)graph_executor->CompileInner(graph, args, kwargs, phase, true);
+  } catch (const std::exception &ex) {
+    MS_LOG(ERROR) << "CompileInner failed for [" << std::string(py::str(name)) << "], error:" << ex.what();
+    return nullptr;
+  }
   return callable;
 }
 

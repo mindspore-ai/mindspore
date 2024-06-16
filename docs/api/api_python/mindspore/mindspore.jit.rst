@@ -11,13 +11,8 @@ mindspore.jit
         - **fn** (Function) - 要编译成图的Python函数。默认值： ``None`` 。
         - **mode** (str) - 使用jit的类型，可选值有 ``"PSJit"`` 和 ``"PIJit"`` 。默认值： ``"PSJit"``。
 
-          - `PSJit <https://www.mindspore.cn/docs/zh-CN/master/note/static_graph_syntax_support.html>`_ ：MindSpore 静态图模式。
-          - `PIJit <https://www.mindspore.cn/docs/zh-CN/master/design/dynamic_graph_and_static_graph.html>`_ ：MindSpore 动态图模式。
-
-        - **input_signature** (Union[Tuple, List, Dict, Tensor]) - 用于表示输入参数的Tensor。Tensor的shape和dtype将作为函数的输入shape和dtype。如果设置了 `input_signature` ，则 `fn` 不能有 `**kwargs` 的输入，并且实际输入的shape和dtype需要和 `input_signature` 保持一致，否则将抛出 `TypeError` 异常。
-
-          - 全量配置模式：参数为Tuple，List或Tensor，这些参数将被用作图编译时的完整编译参数。
-          - 增量配置模式：参数为Dict，这些参数被配置到Cell的部分输入上，将替换图编译对应位置上的参数。
+          - `PSJit <https://www.mindspore.cn/docs/zh-CN/r2.3/note/static_graph_syntax_support.html>`_ ：解析python的ast以构建静态图。
+          - `PIJit <https://www.mindspore.cn/docs/zh-CN/r2.3/design/dynamic_graph_and_static_graph.html>`_ ：在运行时解析python字节码以构建静态图。
 
           默认值： ``None`` 。
         - **hash_args** (Union[Object, List or Tuple of Objects]) - `fn` 里面用到的自由变量，比如外部函数或类对象，再次调用时若 `hash_args` 出现变化会触发重新编译。默认值： ``None`` 。

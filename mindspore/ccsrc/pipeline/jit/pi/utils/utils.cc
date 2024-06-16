@@ -33,6 +33,7 @@ static const char kMutableAttr[] = "__ms_mutable__";
 static const char kConstArgAttr[] = "const_arg";
 static const char kDynamicLengthAttr[] = "__ms_dynamic_len__";
 static const char kMsClassAttr[] = "__ms_class__";
+static const int DefaultPercision = 6;
 
 std::string GetStopTraceReasonDesc(StopTraceReason res) {
 #define STOP_TRACE_REASON_KIND(kind, description) \
@@ -524,7 +525,7 @@ TimeRecorder::TimeRecorder(const RecorderType &descr, bool record) : descr_(desc
 
 TimeRecorder::~TimeRecorder() {
   if (record_) {
-    uint64_t clk = (std::chrono::steady_clock::now() - start_).count();
+    uint64_t clk = static_cast<uint64_t>((std::chrono::steady_clock::now() - start_).count());
     auto &data = TimeRecorder::Data()->data_[descr_];
     data.count++;
     data.nano += clk;
@@ -554,7 +555,7 @@ std::string TimeRecorder::TimeData::ToString() {
   };
 
   std::stringstream s;
-  s.precision(6);
+  s.precision(DefaultPercision);
   s.setf(std::ios::fixed);
   s << "============= TimeRecorder =============" << std::endl;
   s << Fmt << "type" << Fmt << "times" << Fmt << "seconds" << std::endl;

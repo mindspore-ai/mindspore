@@ -121,6 +121,8 @@ def _ms_adapter_tensor_as_parameter_output(data):
     """Check whether the data is an output from a parameter which is a ms_adapter tensor.
        Pylint: disable=unidiomatic-typecheck.
     """
+    if isinstance(data, PythonTensor):
+        return False
     return ms_adapter_registry.is_registered and isinstance(data, ms_adapter_registry.tensor) \
         and hasattr(data, "__ms_parameter_output__") and getattr(data, "__ms_parameter_output__")
 
@@ -137,7 +139,7 @@ def _convert_python_data(data):
     """
     if isinstance(data, (Tensor, PythonTensor)) and data.adapter_flag:
         return ms_adapter_registry.tensor(data)
-    if _ms_adapter_tensor_as_parameter_output(data):
+    if _ms_adapter_tensor_as_parameter_output(data) and hasattr(data, "tensor"):
         return data.tensor
     if isinstance(data, Tensor) and not isinstance(data, PythonTensor):
         return PythonTensor(data, internal=True)
@@ -789,6 +791,18 @@ def _get_jit_hash(hash_input):
     return _get_obj_id(hash_input)
 
 
+def _update_graph_executor_config(jit_config):
+    """Update GraphExecutor jit_config"""
+    if isinstance(jit_config, JitConfig):
+        jit_config = jit_config.jit_config_dict
+    if not isinstance(jit_config, dict):
+        return
+    valid_config = dict()
+    for k, v in jit_config.items():
+        valid_config[str(k)] = str(v)
+    GraphExecutor_.get_instance().set_jit_config(JitConfig(**valid_config).jit_config_dict)
+
+
 def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=None, compile_once=False):
     """
     Create a callable MindSpore graph from a Python function.
@@ -799,8 +813,10 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
         fn (Function): The Python function that will be run as a graph. Default: ``None`` .
         mode (str): The type of jit used, the value of mode should be ``PIJit`` or ``PSJit``. Default: ``PSJit`` .
 
-            - `PSJit <https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html>`_ : MindSpore GRAPH_MODE.
-            - `PIJit <https://www.mindspore.cn/docs/en/master/design/dynamic_graph_and_static_graph.html>`_ : MindSpore PYNATIVE_MODE.
+            - `PSJit <https://www.mindspore.cn/docs/en/r2.3/note/static_graph_syntax_support.html>`_ :
+              Parse python ast to build graph.
+            - `PIJit <https://www.mindspore.cn/docs/en/r2.3/design/dynamic_graph_and_static_graph.html>`_ :
+              Parse python bytecode to build graph at runtime.
 
         input_signature (Union[Tuple, List, Dict, Tensor]): The Tensor which describes the input arguments. The
             shape and dtype of the Tensor will be supplied to this function. If `input_signature` is specified, the
@@ -953,6 +969,7 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
         if func.__code__.co_flags & UNSUPPORTED_CODE_TYPE:
             return decorated
 
+        _update_graph_executor_config(jit_config)
         config = dict()
         if isinstance(jit_config, JitConfig):
             config.update(jit_config.jit_config_dict)
