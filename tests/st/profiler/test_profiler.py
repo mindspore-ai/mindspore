@@ -226,10 +226,10 @@ class TestProfiler:
         if only_profile_host:
             profiler = Profiler(output_path=self.data_path, op_time=False,
                                 parallel_strategy=False, aicore_metrics=-1, data_process=False,
-                                profile_framework=profile_framework, host_stack=host_stack, data_simplification=False)
+                                profile_framework=profile_framework, host_stack=host_stack)
         else:
             profiler = Profiler(profile_memory=profile_memory, output_path=self.data_path,
-                                profile_framework=profile_framework, host_stack=host_stack, data_simplification=False)
+                                profile_framework=profile_framework, host_stack=host_stack)
         profiler_name = 'profiler/'
         self.profiler_path = os.path.join(self.data_path, profiler_name)
         lenet = LeNet5()

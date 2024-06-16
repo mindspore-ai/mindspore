@@ -470,9 +470,7 @@ if(ENABLE_TEST OR ENABLE_TESTCASES)
     include_directories(${CMAKE_BINARY_DIR})
     list(APPEND STUB_BACKEND_SOURCE ${CMAKE_SOURCE_DIR}/tests/ut/cpp/stub/ps/ps_core_stub.cc)
     add_library(stub_backend_obj OBJECT ${STUB_BACKEND_SOURCE})
-    list(APPEND BACKEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:stub_backend_obj>
-        "plugin/device/cpu/hal/profiler/cpu_profiling.cc"
-        "plugin/device/cpu/hal/profiler/cpu_data_saver.cc")
+    list(APPEND BACKEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:stub_backend_obj>)
 endif()
 
 if(ENABLE_D)

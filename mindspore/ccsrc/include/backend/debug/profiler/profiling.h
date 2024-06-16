@@ -72,13 +72,6 @@ struct HostProfileData {
   uint64_t time_stamp = 0;
 };
 
-struct MemoryPoolInfo {
-  uint64_t time_stamp = 0;
-  size_t total_allocated = 0;
-  size_t total_reserved = 0;
-  size_t total_active = 0;
-};
-
 class BACKEND_EXPORT ProfilerManager {
  public:
   static std::shared_ptr<ProfilerManager> &GetInstance();
@@ -124,9 +117,7 @@ class BACKEND_EXPORT Profiler {
   void RecordOneStepStartEndInfo();
   bool GetEnableFlag() const { return enable_flag_; }
   void EnableOpTime() { op_time_ = true; }
-  void EnableProfileMemory() { profile_memory_ = true; }
   bool GetOpTimeFlag() const { return op_time_; }
-  bool GetProfileMemoryFlag() const { return profile_memory_; }
   std::string GetProfilingOptions() const { return profiling_options_; }
   std::string ProfileDataPath() const { return profile_data_path_; }
   void RecordOneStepStartEndInfo(std::string op_name);
@@ -152,13 +143,11 @@ class BACKEND_EXPORT Profiler {
   std::pair<double, double> single_op_launch_start_time_end_time_;
   bool enable_flag_ = false;
   bool op_time_ = false;
-  bool profile_memory_ = false;
   bool has_find_ = false;
   bool is_parallel_strategy = false;
   bool init_flag_ = false;
   std::string profile_data_path_;
   std::unordered_map<std::string, OpInfo> op_info_map_;
-  std::vector<MemoryPoolInfo> memory_info_list_;
   OneStepStartEndInfo step_start_end_info_;
   std::vector<OneStepStartEndInfo> all_step_start_end_info_;
   std::vector<std::string> step_start_end_info_vector_;

@@ -14,8 +14,6 @@
 # ============================================================================
 """Minddata aicpu parser."""
 import os
-import glob
-import csv
 
 from mindspore.profiler.common.util import get_file_join_name, fwrite_format
 from mindspore import log as logger
@@ -88,80 +86,13 @@ class MinddataParser:
         return result
 
     @staticmethod
-    def execute(source_path, output_path, job_id, device_id):
+    def execute(source_path, output_path, device_id):
         """
         Execute the parser.
 
         Args:
-            source_path (str): the source file path, eg: profiler.
-            output_path (str): the output file path, eg: profiler.
-            job_id (str): the job id, eg: PROF_XXX/device_*
-            device_id (str): the device id.
-        """
-        if MinddataParser._is_legacy_aicpu_data(source_path, job_id):
-            logger.warning("The aicpu data is legacy, which will be deprecated in the future, please update your "
-                           "CANN and driver version.")
-            MinddataParser._execute_legacy(os.path.join(source_path, job_id), output_path, device_id)
-            return
-
-        MinddataParser._execute(source_path, output_path, job_id, device_id)
-
-    @staticmethod
-    def _is_legacy_aicpu_data(source_path, job_id) -> bool:
-        """
-        Check whether the aicpu data is legacy.
-
-        Args:
-            source_path (str): the source file path, eg: profiler.
-            job_id (str): the job id, eg: PROF_XXX/device_*
-        Returns:
-            bool, True if the aicpu data is legacy, False otherwise.
-        """
-        legacy_files = glob.glob(os.path.join(source_path, job_id, "data", "DATA_PREPROCESS.*"))
-        return len(legacy_files) > 0
-
-    @staticmethod
-    def _execute(source_path, output_path, job_id, device_id):
-        """
-        Execute the parser when using newest CANN and driver version.
-
-        Args:
-            source_path (str): the source file path, eg: profiler.
-            output_path (str): the output file path, eg: profiler.
-            job_id (str): the job id, eg: PROF_XXX/device_*
-            device_id (str): the device id.
-        """
-        minddata_aicpu_data = []
-        prof_path = job_id.split("/")[0]
-        if not prof_path:
-            logger.error("The job_id is invalid: %s", job_id)
-            return
-
-        prof_output_path = os.path.join(source_path, prof_path, "mindstudio_profiler_output")
-        aicpu_file = glob.glob(os.path.join(prof_output_path, "aicpu_mi_*.csv"))
-        if not aicpu_file:
-            return
-
-        # aicpu_file len is 1
-        for file_path in aicpu_file:
-            file_path = validate_and_normalize_path(file_path)
-            with open(file_path, "r", newline='') as f:
-                reader = csv.reader(f)
-                minddata_aicpu_data = [[line[1], line[2][:-2], line[3][:-2], line[4]] for line in reader]
-
-        if minddata_aicpu_data:
-            minddata_aicpu_output_path = os.path.join(output_path, "minddata_aicpu_" + str(device_id) + ".txt")
-            fwrite_format(minddata_aicpu_output_path, minddata_aicpu_data[1:], is_start=True)
-            logger.info("Minddata aicpu data has been saved to %s", minddata_aicpu_output_path)
-
-    @staticmethod
-    def _execute_legacy(source_path, output_path, device_id):
-        """
-        Execute the parser when using legacy CANN and driver version.
-
-        Args:
-            source_path (str): the source file path, eg: profiler/PROF_XXX/device_*.
-            output_path (str): the output file path, eg: profiler.
+            source_path (str): the source file path.
+            output_path (str): the output file path.
             device_id (str): the device id.
         """
         col_names = ["node_name", "start_time", "end_time", "queue_size"]
