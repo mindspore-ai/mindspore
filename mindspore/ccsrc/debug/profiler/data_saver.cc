@@ -218,6 +218,33 @@ void DataSaver::WriteFrameWork(const std::string &base_dir, const std::vector<Cu
   MS_LOG(INFO) << "Write framework infos into file: " << file_path;
 }
 
+void DataSaver::ParseMemoryInfo(const MemoryInfoList &memory_info_list) {
+  for (auto memory_info : memory_info_list) {
+    memory_info_ += std::to_string(memory_info.time_stamp) + "," + std::to_string(memory_info.total_allocated) + "," +
+                    std::to_string(memory_info.total_reserved) + "," + std::to_string(memory_info.total_active) + "\n";
+  }
+}
+
+void DataSaver::WriteMemoryData(const std::string &saver_base_dir) {
+  std::string file_path = saver_base_dir + "/" + op_side_ + "_ms_memory_record_" + device_id_ + ".txt";
+  std::ofstream ofs(file_path);
+  // check if the file is writable
+  if (!ofs.is_open()) {
+    MS_LOG(WARNING) << "Open file '" << file_path << "' failed!";
+    return;
+  }
+  try {
+    // write memory info into file
+    ofs << "Timestamp(ns),Total Allocated(Byte),Total Reserved(Byte),Total Active(Byte)\n";
+    ofs << memory_info_;
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Write " << file_path << "failed: " << e.what();
+  }
+  ofs.close();
+  ChangeFileMode(file_path);
+  memory_info_.clear();
+}
+
 void DataSaver::ChangeFileMode(const std::string &file_path) const {
   if (chmod(common::SafeCStr(file_path), S_IRUSR | S_IWUSR) == -1) {
     MS_LOG(WARNING) << "Modify file: " << file_path << " to rw fail.";
