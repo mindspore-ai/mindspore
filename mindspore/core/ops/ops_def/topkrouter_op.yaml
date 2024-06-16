@@ -1,0 +1,16 @@
+#operator topkrouter
+topkrouter:
+  args:
+    input:
+      dtype: tensor
+    capacity:
+      dtype: int
+    expert_num:
+      dtype: int
+  returns:
+    dispatch_index:
+      dtype: tensor
+    combine_index:
+      dtype: tensor
+  class:
+    name: TopKRouter

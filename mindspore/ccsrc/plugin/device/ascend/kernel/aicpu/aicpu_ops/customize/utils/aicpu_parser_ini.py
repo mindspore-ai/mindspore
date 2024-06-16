@@ -246,6 +246,7 @@ cust_op_lists = [
     "tracegrad",
     "tril",
     "truncatednormal",
+    "topkrouter",
     "unravelindex",
     "unsortedsegmentsum",
     "unstack",

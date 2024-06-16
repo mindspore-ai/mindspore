@@ -401,6 +401,60 @@ CUST_INFER_FUNC_REG(Mvlgamma, MvlgammaInferShape);
 CUST_VERIFY_FUNC_REG(Mvlgamma, MvlgammaVerify);
 // ----------------Mvlgamma END---------------------
 
+// ----------------TopKRouter Begin---------------------
+CUST_IMPLEMT_INFERFUNC(TopKRouter, TopKRouterInfer) {
+  DataType input_dtype = op.GetInputDescByName("x").GetDataType();
+  Format input_format = op.GetInputDescByName("x").GetFormat();
+  ge::Shape input_shape = op.GetInputDescByName("x").GetShape();
+
+  // get output shape
+  Tensor capacity_tensor;
+  int64_t capacity_data;
+  int64_t expert_num_data;
+  std::vector<std::string> input2_infer_depends = {"capacity"};
+  PREPARE_DYNAMIC_SHAPE(input2_infer_depends);
+  if (op.GetInputConstData("capacity", capacity_tensor) == GRAPH_SUCCESS) {
+    int64_t *capacity = reinterpret_cast<int64_t *>(capacity_tensor.GetData());
+    capacity_data = static_cast<int64_t>(*capacity);
+  } else {
+    capacity_data = UNKNOWN_DIM;
+  }
+
+  Tensor expert_num_tensor;
+  std::vector<std::string> input3_infer_depends = {"expert_num"};
+  PREPARE_DYNAMIC_SHAPE(input3_infer_depends);
+  if (op.GetInputConstData("expert_num", expert_num_tensor) == GRAPH_SUCCESS) {
+    int64_t *expert_num = reinterpret_cast<int64_t *>(expert_num_tensor.GetData());
+    expert_num_data = static_cast<int64_t>(*expert_num);
+  } else {
+    expert_num_data = UNKNOWN_DIM;
+  }
+
+  std::vector<int64_t> output_dim;
+  int64_t batch_dim = input_shape.GetDim(0);
+  output_dim.push_back(batch_dim);
+  output_dim.push_back(expert_num_data);
+  output_dim.push_back(capacity_data);
+  ge::Shape dispatch_shape = ge::Shape(output_dim);
+
+  // dispatch index
+  TensorDesc dis_output_desc = op.GetOutputDescByName("dispatch_index");
+  dis_output_desc.SetShape(dispatch_shape);
+  dis_output_desc.SetDataType(input_dtype);
+  dis_output_desc.SetFormat(input_format);
+  op.UpdateOutputDesc("dispatch_index", dis_output_desc);
+
+  // combine index
+  TensorDesc com_output_desc = op.GetOutputDescByName("combine_index");
+  com_output_desc.SetShape(input_shape);
+  com_output_desc.SetDataType(input_dtype);
+  com_output_desc.SetFormat(input_format);
+  op.UpdateOutputDesc("combine_index", com_output_desc);
+  return GRAPH_SUCCESS;
+}
+CUST_INFER_FUNC_REG(TopKRouter, TopKRouterInfer);
+// ----------------TopKRouter END-------------------
+
 // ----------------MvlgammaGrad Begin-------------------
 CUST_IMPLEMT_INFERFUNC(MvlgammaGrad, MvlgammaGradInferShape) {
   const char *op_name = "MvlgammaGrad";
