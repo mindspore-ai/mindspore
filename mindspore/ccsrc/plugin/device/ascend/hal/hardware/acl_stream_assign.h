@@ -107,6 +107,12 @@ class AclStreamAssign {
                          const CNodePtr last_kernel, std::vector<AnfNodePtr> *real_inputs,
                          std::map<AnfNodePtr, std::set<size_t>> *side_effect_map,
                          std::map<size_t, std::set<size_t>> *no_event_streams, std::vector<CNodePtr> *new_exec_orders);
+  CNodePtr GetTargetRecvKernel(const std::vector<CNodePtr> &recv_ops, int64_t target_micro, int64_t target_chunk,
+                               bool target_phase);
+  void InsertEventsForSendOp(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &kernel,
+                             const std::vector<CNodePtr> &recv_ops, int64_t chunk_num, int64_t micro_size,
+                             mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
+                             mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv);
   std::atomic<uint32_t> event_generate_id_ = 0;
 };
 }  // namespace ascend
