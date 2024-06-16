@@ -23,6 +23,7 @@ mindspore::HashMap<std::string, std::string> IOFormatMap::io_format_map_ = {{"BN
                                                                             {"BNTrainingUpdateGrad", "NCHW"},
                                                                             {"BNTrainingReduceGrad", "NCHW"},
                                                                             {"BNInfer", "NCHW"},
+                                                                            {"FusedBatchNorm", "NCHW"},
                                                                             {"BNInferGrad", "NCHW"},
                                                                             {"Conv2D", "NCHW"},
                                                                             {"Transpose", "ND"},
@@ -50,6 +51,7 @@ mindspore::HashMap<std::string, std::string> IOFormatMap::io_format_map_ = {{"BN
                                                                             {"DepthToSpace", "format"},
                                                                             {"DeformableOffsetsGrad", "format"},
                                                                             {"ExtractVolumePatches", "format"},
+                                                                            {"DeformableConv2d", "NCHW"},
                                                                             {"Conv2DTransposeV2", "NCHW"}};
 mindspore::HashMap<std::string, std::string> &IOFormatMap::get() { return io_format_map_; }
 }  // namespace transform
