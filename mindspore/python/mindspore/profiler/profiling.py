@@ -1085,7 +1085,7 @@ class Profiler:
             "parallel_strategy": self.ENABLE_STATUS if self._parallel_strategy else self.DISABLE_STATUS,
             "op_time": self.ENABLE_STATUS if self._op_time else self.DISABLE_STATUS,
             "profile_framework": self._profile_framework,
-            "profiler_level": self.profiler_level.value if self.profiler_level else self.DISABLE_STATUS
+            "profiler_level": self.profiler_level.value if self.profiler_level else self.DISABLE_STATUS，
             "host_stack": "on" if self._host_stack else "off"
         }
 
