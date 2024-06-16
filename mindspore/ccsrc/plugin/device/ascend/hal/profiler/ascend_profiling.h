@@ -27,10 +27,6 @@
 namespace mindspore {
 namespace profiler {
 namespace ascend {
-constexpr uint64_t Level0 = ACL_PROF_TASK_TIME_L0 | ACL_PROF_ACL_API;
-constexpr uint64_t Level1 = ACL_PROF_TASK_TIME | ACL_PROF_ACL_API | ACL_PROF_HCCL_TRACE | ACL_PROF_AICORE_METRICS;
-constexpr uint64_t Level2 = Level1 | ACL_PROF_AICPU | ACL_PROF_RUNTIME_API;
-
 class AscendProfiler : public Profiler {
  public:
   static std::shared_ptr<AscendProfiler> GetInstance();

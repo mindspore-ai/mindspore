@@ -27,7 +27,7 @@ namespace cpu {
 std::shared_ptr<CpuDataSaver> CpuDataSaver::cpu_data_saver_inst_ = std::make_shared<CpuDataSaver>();
 
 void CpuDataSaver::WriteFile(const std::string out_path_dir) {
-  if (memory_info_.empty() && (op_detail_infos_.empty() || op_type_infos_.empty())) {
+  if (op_detail_infos_.empty() || op_type_infos_.empty()) {
     MS_LOG(INFO) << "No cpu operation detail infos to write.";
     return;
   }
@@ -55,14 +55,9 @@ void CpuDataSaver::WriteFile(const std::string out_path_dir) {
   }
 
   op_side_ = "cpu";
-  if (!op_detail_infos_.empty() && !op_type_infos_.empty()) {
-    WriteOpDetail(out_path_dir);
-    WriteOpType(out_path_dir);
-    WriteOpTimestamp(out_path_dir);
-  }
-  if (!memory_info_.empty()) {
-    WriteMemoryData(out_path_dir);
-  }
+  WriteOpDetail(out_path_dir);
+  WriteOpType(out_path_dir);
+  WriteOpTimestamp(out_path_dir);
 }
 OpTimestampInfo &CpuDataSaver::GetOpTimeStampInfo() { return op_timestamps_map_; }
 

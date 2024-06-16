@@ -195,7 +195,6 @@ void CPUProfiler::SaveProfileData() {
     auto cpu_data_saver_inst = profiler::cpu::CpuDataSaver::GetInstance();
     MS_EXCEPTION_IF_NULL(cpu_data_saver_inst);
     cpu_data_saver_inst->ParseOpInfo(op_info_map_);
-    cpu_data_saver_inst->ParseMemoryInfo(memory_info_list_);
     cpu_data_saver_inst->WriteFile(profile_data_path_);
     if (!all_kernel_info_.empty()) {
       cpu_data_saver_inst->WriteFrameWork(profile_data_path_, all_kernel_info_);
@@ -230,19 +229,6 @@ void CPUProfiler::RecordGpuOneStepStartEndInfo() {
       gpu_instance->GetEnableFlag() && gpu_instance->GetOpTimeFlag()) {
     gpu_instance->RecordOneStepStartEndInfo();
   }
-}
-
-void CPUProfiler::RecordMemoryPoolInfo(const size_t total_allocated, const size_t total_reserved,
-                                       const size_t used_by_event_mem) {
-  if (!GetEnableFlag() || !GetProfileMemoryFlag()) {
-    return;
-  }
-  MemoryPoolInfo memory_info;
-  memory_info.time_stamp = GetHostMonoTimeStamp();
-  memory_info.total_allocated = total_allocated;
-  memory_info.total_reserved = total_reserved;
-  memory_info.total_active = total_allocated + used_by_event_mem;
-  memory_info_list_.push_back(memory_info);
 }
 }  // namespace cpu
 }  // namespace profiler
