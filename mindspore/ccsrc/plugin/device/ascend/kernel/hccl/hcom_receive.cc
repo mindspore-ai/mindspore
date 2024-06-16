@@ -91,7 +91,15 @@ int HcomReceiveKernel::ReceiveShapeForDynamic() {
     MS_EXCEPTION_IF_NULL(node);
     auto cgn = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(node);
     MS_EXCEPTION_IF_NULL(cgn);
-    auto actor_route_table_proxy = std::make_shared<mindspore::distributed::cluster::ActorRouteTableProxy>(cgn);
+
+    // Set querying route table timeout as HCCL_CONNECT_TIMEOUT in case of large scale training.
+    std::string env_hccl_timeout = common::GetEnv("HCCL_CONNECT_TIMEOUT");
+    int int_hccl_timeout = env_hccl_timeout.empty() ? 3600 : std::stoi(env_hccl_timeout);
+    MS_LOG(INFO) << "HCCL connect timeout is " << int_hccl_timeout
+                 << " seconds. Use this as hcom_receive route timeout.";
+
+    auto actor_route_table_proxy =
+      std::make_shared<mindspore::distributed::cluster::ActorRouteTableProxy>(cgn, int_hccl_timeout * 1000);
     MS_EXCEPTION_IF_NULL(actor_route_table_proxy);
     if (!actor_route_table_proxy->RegisterRoute(inter_process_edge_name, recv_actor_addresss)) {
       MS_LOG(EXCEPTION) << "Failed to register route for " << inter_process_edge_name << " " << server_url
