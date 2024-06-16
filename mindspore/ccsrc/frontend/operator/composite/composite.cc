@@ -1871,7 +1871,10 @@ FuncGraphPtr Shard::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) 
   MS_EXCEPTION_IF_NULL(real_fn);
   FuncGraphPtr origin_graph = real_fn->func_graph();
   MS_EXCEPTION_IF_NULL(origin_graph);
-  origin_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+  auto execution_mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (execution_mode == kPynativeMode) {
+    origin_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+  }
   FuncGraphPtr shard_fg = nullptr;
   {
     TraceGuard g(std::make_shared<TraceShard>(origin_graph->debug_info()));

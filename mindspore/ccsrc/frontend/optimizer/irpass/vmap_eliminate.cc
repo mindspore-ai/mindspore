@@ -942,12 +942,6 @@ bool ExpandVmapPrim::CheckIfEmbedMetaFgPrim(const CNodePtr &node) const {
   if (func_graph == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Unexpected meta function graph node:" << node->DebugString();
   }
-  if (parallel::IsEmbedShardNode(func_graph)) {
-    MS_LOG(EXCEPTION)
-      << "The usage of vmap nested shard (e.g vmap(shard)) is not supported currently. Current FuncGraph: "
-      << func_graph->ToString();
-  }
-
   auto func_graph_manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(func_graph_manager);
   return func_graph_manager->func_graph_meta_fg_prim_total(func_graph);

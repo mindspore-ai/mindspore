@@ -2056,11 +2056,11 @@ bool IsPynativeParallel() {
 bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) {
   // compile graph order:
   // 1, ParallelParameterContextRestoreShape
-  // 2, PynativeShard: find 'shard' node and set 'pynative_shard' flag for root graph
-  // 3, PipelineSplit: insert virtual dataset
-  // 4, StepAutoParallel
-  // 5, StepParallel
-  // if IsPynativeParallel() is true, it maybe has some graphs that we no care, so need to check 'pynative_shard' flag
+  // 2, PipelineSplit: insert virtual dataset
+  // 3, StepAutoParallel
+  // 4, StepParallel
+  // if IsParallel() is true, it maybe has some graphs that we now care, so need to check
+  // 'sharded' or 'has_shard' flag
   MS_EXCEPTION_IF_NULL(func_graph);
   if (func_graph->has_flag(kSkipAutoParallelCompile)) {
     return false;
@@ -2072,7 +2072,7 @@ bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph) {
     return false;
   }
 
-  if (IsPynativeParallel() && !func_graph->has_flag(kPynativeShard)) {
+  if (IsPynativeParallel() && !func_graph->has_flag(kHasShard) && !(func_graph->has_flag(kSharded))) {
     return false;
   }
   return true;
