@@ -1407,7 +1407,7 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
           kernel_actor =
             GenerateInnerControlFlowActor(kernel, real_device_context, strategy, ref_input_indexes, ref_output_indexes);
         } else {
-          kernel_actor = std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, real_device_context,
+          kernel_actor = std::make_shared<KernelActor>(GenerateActorIdByKernel(kernel), kernel, real_device_context,
                                                        memory_manager_aid_, debug_aid_, recorder_aid_, strategy,
                                                        ref_input_indexes, ref_output_indexes);
         }
@@ -1640,20 +1640,20 @@ KernelActorPtr GraphScheduler::GenerateRpcActor(const CNodePtr &kernel, const De
   if (common::AnfAlgo::GetCNodeName(kernel) == kRpcSendOpName) {
     SendActorPtr send_actor =
       generate_mux_rpc_actor
-        ? std::make_shared<MuxSendActor>(kernel->fullname_with_scope(), kernel, real_device_context,
+        ? std::make_shared<MuxSendActor>(GenerateActorIdByKernel(kernel), kernel, real_device_context,
                                          memory_manager_aid_, debug_aid_, recorder_aid_, strategy, ref_input_indexes,
                                          ref_output_indexes)
-        : std::make_shared<SendActor>(kernel->fullname_with_scope(), kernel, real_device_context, memory_manager_aid_,
+        : std::make_shared<SendActor>(GenerateActorIdByKernel(kernel), kernel, real_device_context, memory_manager_aid_,
                                       debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
     MS_EXCEPTION_IF_NULL(send_actor);
     return send_actor;
   } else if (common::AnfAlgo::GetCNodeName(kernel) == kRpcRecvOpName) {
     RecvActorPtr recv_actor =
       generate_mux_rpc_actor
-        ? std::make_shared<MuxRecvActor>(kernel->fullname_with_scope(), kernel, real_device_context,
+        ? std::make_shared<MuxRecvActor>(GenerateActorIdByKernel(kernel), kernel, real_device_context,
                                          memory_manager_aid_, debug_aid_, recorder_aid_, strategy, ref_input_indexes,
                                          ref_output_indexes)
-        : std::make_shared<RecvActor>(kernel->fullname_with_scope(), kernel, real_device_context, memory_manager_aid_,
+        : std::make_shared<RecvActor>(GenerateActorIdByKernel(kernel), kernel, real_device_context, memory_manager_aid_,
                                       debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
     MS_EXCEPTION_IF_NULL(recv_actor);
     return recv_actor;
@@ -1678,11 +1678,11 @@ KernelActorPtr GraphScheduler::GenerateInnerControlFlowActor(const CNodePtr &ker
       << " is not a inner control flow kernel.";
   }
   if (common::AnfAlgo::GetCNodeName(kernel) == "ConditionSwitch") {
-    return std::make_shared<ConditionSwitchActor>(kernel->fullname_with_scope(), kernel, device_context,
+    return std::make_shared<ConditionSwitchActor>(GenerateActorIdByKernel(kernel), kernel, device_context,
                                                   memory_manager_aid_, debug_aid_, recorder_aid_, strategy,
                                                   ref_input_indexes, ref_output_indexes);
   }
-  return std::make_shared<ConditionGatherActor>(kernel->fullname_with_scope(), kernel, device_context,
+  return std::make_shared<ConditionGatherActor>(GenerateActorIdByKernel(kernel), kernel, device_context,
                                                 memory_manager_aid_, debug_aid_, recorder_aid_, strategy,
                                                 ref_input_indexes, ref_output_indexes);
 }
@@ -1851,7 +1851,7 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
     if (IsSkippedKernelActor(kernel) || (!IsKernelActor(kernel, graph_compiler_info.strategy_))) {
       continue;
     }
-    const auto &kernel_actor = FetchActor(kernel->fullname_with_scope());
+    const auto &kernel_actor = FetchActor(GetActorIdByKernel(kernel));
     MS_EXCEPTION_IF_NULL(kernel_actor);
 
     for (size_t i = 0; i < common::AnfAlgo::GetInputNum(kernel); ++i) {
@@ -2080,7 +2080,7 @@ void GraphScheduler::LinkDataArrowForKernelActor(AbstractActor *const from_actor
                  << ", aggregate input index: " << to_kernel_with_input_idx.second
                  << ", skip node: " << from_kernel->fullname_with_scope()
                  << ", real node: " << real_from_kernel_with_output_idx.first->fullname_with_scope();
-    real_from_actor = FetchActor(real_from_kernel_with_output_idx.first->fullname_with_scope());
+    real_from_actor = FetchActor(GetActorIdByKernel(real_from_kernel_with_output_idx.first));
     MS_EXCEPTION_IF_NULL(real_from_actor);
   }
 
@@ -2331,7 +2331,7 @@ void GraphScheduler::LinkControlArrowBySkippedNode(AbstractActor *to_actor, cons
   for (size_t i = 0; i < input_num; ++i) {
     auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(skipped_node, i, false);
     MS_EXCEPTION_IF_NULL(kernel_with_index.first);
-    auto from_actor = FetchActor(kernel_with_index.first->fullname_with_scope());
+    auto from_actor = FetchActor(GetActorIdByKernel(kernel_with_index.first));
     // Get the from actor by the internal parameter.
     if (IsInternalParameter(kernel_with_index.first, graph)) {
       auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(kernel_with_index.first);
@@ -2362,9 +2362,9 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
       MS_EXCEPTION_IF_NULL(send_node);
       MS_EXCEPTION_IF_NULL(recv_node);
       MS_LOG(INFO) << "Link control arrow for parallel node output: " << parallel_node->fullname_with_scope();
-      auto parallel_actor = FetchActor(parallel_node->fullname_with_scope());
-      auto send_actor = FetchActor(send_node->fullname_with_scope());
-      auto recv_actor = dynamic_cast<KernelActor *>(FetchActor(recv_node->fullname_with_scope()));
+      auto parallel_actor = FetchActor(GetActorIdByKernel(parallel_node));
+      auto send_actor = FetchActor(GetActorIdByKernel(send_node));
+      auto recv_actor = dynamic_cast<KernelActor *>(FetchActor(GetActorIdByKernel(recv_node)));
       MS_EXCEPTION_IF_NULL(parallel_actor);
       MS_EXCEPTION_IF_NULL(send_actor);
       MS_EXCEPTION_IF_NULL(recv_actor);
@@ -2670,8 +2670,8 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNode
 
   // Ensure communication node to execute orderly.
   for (size_t i = 1; i < communication_nodes.size(); ++i) {
-    auto from_actor = FetchActor(communication_nodes[i - 1]->fullname_with_scope());
-    auto to_actor = FetchActor(communication_nodes[i]->fullname_with_scope());
+    auto from_actor = FetchActor(GetActorIdByKernel(communication_nodes[i - 1]));
+    auto to_actor = FetchActor(GetActorIdByKernel(communication_nodes[i]));
     MS_EXCEPTION_IF_NULL(from_actor);
     MS_EXCEPTION_IF_NULL(to_actor);
     SchedulerHelper::AddControlArrow(from_actor, to_actor);

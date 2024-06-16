@@ -477,6 +477,8 @@ std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &node, const Kerne
 bool is_embedding_cache_server();
 
 bool IsTwoPhaseInfer();
+std::string GetActorIdByKernel(const AnfNodePtr &node);
+std::string GenerateActorIdByKernel(const AnfNodePtr &node);
 }  // namespace runtime
 }  // namespace mindspore
 

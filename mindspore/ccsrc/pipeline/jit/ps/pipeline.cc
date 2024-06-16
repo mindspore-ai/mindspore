@@ -422,6 +422,29 @@ void AddManagerForFuncGraphArgs(const ResourcePtr &resource, const ValuePtrList 
     AddManager(manager, arg);
   }
 }
+
+void ResetId(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+#ifdef ENABLE_DUMP_IR
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto need_dump = common::GetCompileConfig("DUMP_VALIDATE_BEFORE_RESET_ID");
+  if (context->CanDump(kIntroductory) && need_dump == "1") {
+    FuncGraphPtr graph = resource->func_graph();
+    DumpIR("validate_before_reset_id.ir", graph, true, kWholeStack);
+  }
+#endif
+  mindspore::id_generator::reset_id();
+  auto manager = resource->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  for (const auto &node : manager->all_nodes()) {
+    if (node != nullptr && node->isa<CNode>()) {
+      const auto &cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      cnode->set_fullname_with_scope("");
+    }
+  }
+}
 }  // namespace
 
 std::string GetObjDesc(const py::object &source) {
@@ -1519,8 +1542,8 @@ void Pipeline::Run() {
         }
 #endif
 #endif
+        ResetId(resource_);
       }
-
       FuncGraphPtr graph = resource_->func_graph();
 #ifdef ENABLE_DUMP_IR
       std::string filename = GetBaseNameForIR(SizeToLong(i), action.first);

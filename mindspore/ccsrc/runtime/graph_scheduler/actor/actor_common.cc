@@ -16,6 +16,7 @@
 
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include <memory>
+#include <unordered_map>
 #include "ops/framework_op_name.h"
 #include "ops/framework_ops.h"
 #include "ops/structure_op_name.h"
@@ -467,7 +468,7 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
       break;
     case KernelTransformType::kKernelActor:
       MS_EXCEPTION_IF_NULL(real_node);
-      actor_name = real_node->fullname_with_scope();
+      actor_name = GetActorIdByKernel(real_node);
       break;
     case KernelTransformType::kKernelInferActor:
       MS_EXCEPTION_IF_NULL(real_node);
@@ -646,6 +647,25 @@ void MemoryTraceManager::Clear() {
 bool IsTwoPhaseInfer() {
   const auto &phase = PhaseManager::GetInstance().phase();
   return phase.find("prefill") != std::string::npos || phase.find("increment") != std::string::npos;
+}
+
+std::unordered_map<AnfNode *, std::string> actor_ids;
+static size_t actor_index = 0;
+
+std::string GetActorIdByKernel(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (actor_ids.find(node.get()) == actor_ids.end()) {
+    MS_LOG(WARNING) << "Failed to get actor id by node:" << node->fullname_with_scope();
+    return node->fullname_with_scope();
+  }
+  return actor_ids[node.get()];
+}
+
+std::string GenerateActorIdByKernel(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto id = std::to_string(actor_index++) + "_" + node->fullname_with_scope();
+  actor_ids[node.get()] = id;
+  return id;
 }
 }  // namespace runtime
 }  // namespace mindspore

@@ -221,6 +221,15 @@ Value Range:
 """
 COMBINE_LIKE_GRAPHS = ''
 
+"""
+Name: DUMP_VALIDATE_BEFORE_RESET_ID
+Function: Whether to dump validate ir before reset id.
+Value Range:
+    1: Enable
+    Default: Disable.
+"""
+DUMP_VALIDATE_BEFORE_RESET_ID = ''
+
 __all__ = [
     "COMPILE_PROFILE",
     "COMPILE_PROFILE_FINISH_ACTION",
@@ -245,4 +254,5 @@ __all__ = [
     "TRACE_LABEL_WITH_UNIQUE_ID",
     "DUMP_IR_DDE_DETAIL",
     "COMBINE_LIKE_GRAPHS",
+    "DUMP_VALIDATE_BEFORE_RESET_ID",
 ]

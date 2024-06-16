@@ -77,7 +77,7 @@ def run_trans_flag(test_name):
         dump_data_path = os.path.join(dump_path, 'rank_0', 'Net', '1', '0')
         assert os.path.exists(dump_data_path)
         if test_name == "test_e2e_dump_dynamic_shape":
-            output_name = "Add.Default_network-Net_Add-op1.0.0.*.output.0.DefaultFormat.npy"
+            output_name = "Add.Default_network-Net_Add-op0.0.0.*.output.0.DefaultFormat.npy"
             output_path = glob.glob(os.path.join(dump_data_path, output_name))[0]
             real_path = os.path.realpath(output_path)
             output = np.load(real_path)
