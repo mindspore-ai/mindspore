@@ -29,11 +29,40 @@
 namespace mindspore {
 namespace runtime {
 namespace {
-bool InputDataNoNeedCopy(DeviceTensor *input_device_tensor, DeviceTensorPtr node_device_tensor) {
-  if (TEST_FLAG(node_device_tensor->flag(), device::kDeviceAddressFlagNotUsed) || (input_device_tensor == nullptr) ||
-      (input_device_tensor->GetPtr() == node_device_tensor->GetPtr())) {
+inline void UpdateShape(const AnfNodePtr &input_node, const DeviceTensorPtr &node_device_tensor,
+                        DeviceTensor *input_device_tensor, const KernelTransformType &type) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  const auto &node_device_kernel_tensor = node_device_tensor->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(input_device_tensor);
+  const auto &input_kernel_tensor = input_device_tensor->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(node_device_kernel_tensor);
+  MS_EXCEPTION_IF_NULL(input_kernel_tensor);
+  if (type != KernelTransformType::kSuperKernelActor || input_node->cast<ParameterPtr>()->has_dynamic_shape()) {
+    // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
+    node_device_tensor->SetSize(input_device_tensor->GetSize());
+    // Update Shape.
+    node_device_kernel_tensor->SetShape(input_kernel_tensor->GetShape()->Clone());
+  }
+}
+
+inline bool InputDataNoNeedCopy(const AnfNodePtr &input_node, DeviceTensor *input_device_tensor,
+                                const DeviceTensorPtr &node_device_tensor, const KernelTransformType &type) {
+  if (input_device_tensor == node_device_tensor.get()) {
+    (void)input_device_tensor->TouchSyncHandler();
     return true;
   }
+
+  if (input_device_tensor == nullptr) {
+    return true;
+  }
+
+  UpdateShape(input_node, node_device_tensor, input_device_tensor, type);
+
+  if (TEST_FLAG(node_device_tensor->flag(), device::kDeviceAddressFlagNotUsed) ||
+      input_device_tensor->GetPtr() == node_device_tensor->GetPtr()) {
+    return true;
+  }
+
   return false;
 }
 
@@ -180,30 +209,6 @@ void SuperKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const con
     }
     memory_free_lists_.push(memory_free_list);
   }
-
-  // Check device tensor store.
-  if (!enable_kbk_sub_graph_execute_) {
-    for (auto &device_tensor_store_key : device_tensor_store_keys_) {
-      auto input_device_tensor = DeviceTensorStore::GetInstance()
-                                   .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
-                                   .get();
-      // Ge backend maybe nullptr.
-      if (input_device_tensor == nullptr) {
-        MS_LOG(DEBUG) << "Failed get device tensor for node:" << device_tensor_store_key.second->DebugString()
-                      << " index:" << device_tensor_store_key.first;
-        continue;
-      }
-
-      size_t index = device_tensor_store_key.first;
-      if (index >= input_device_tensors_.size()) {
-        std::string error_info = "Invalid input index:" + std::to_string(index) +
-                                 " total:" + std::to_string(input_device_tensors_.size()) +
-                                 " for actor:" + GetAID().Name();
-        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-      }
-      input_device_tensors_[index] = input_device_tensor;
-    }
-  }
 }
 
 void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
@@ -228,6 +233,11 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
     return;
   }
   FetchInputDeviceTensor(context);
+  if (!already_fetch_persistent_device_tensor_) {
+    FetchPersistentDeviceTensor();
+    already_fetch_persistent_device_tensor_ = IsTwoPhaseInfer();
+  }
+
   if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
     for (auto &device_addr : input_device_tensors_) {
       if (device_addr == nullptr || !device_addr->IsPtrValid()) {
@@ -657,22 +667,6 @@ bool SuperKernelActor::CopyInputDataPersistedHandle(const DeviceContext *device_
   return false;
 }
 
-void SuperKernelActor::UpdateShape(const AnfNodePtr &input_node, const DeviceTensorPtr &node_device_tensor,
-                                   DeviceTensor *input_device_tensor) {
-  MS_EXCEPTION_IF_NULL(input_node);
-  const auto &node_device_kernel_tensor = node_device_tensor->kernel_tensor();
-  MS_EXCEPTION_IF_NULL(input_device_tensor);
-  const auto &input_kernel_tensor = input_device_tensor->kernel_tensor();
-  MS_EXCEPTION_IF_NULL(node_device_kernel_tensor);
-  MS_EXCEPTION_IF_NULL(input_kernel_tensor);
-  if (type_ != KernelTransformType::kSuperKernelActor || input_node->cast<ParameterPtr>()->has_dynamic_shape()) {
-    // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
-    node_device_tensor->SetSize(input_device_tensor->GetSize());
-    // Update Shape.
-    node_device_kernel_tensor->SetShape(input_kernel_tensor->GetShape()->Clone());
-  }
-}
-
 bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph);
@@ -683,24 +677,19 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
   }
   auto device_context = device_contexts_[0];
   auto &input_nodes = graph->input_nodes();
+  if (input_device_tensors_.size() != node_device_tensors_.size()) {
+    MS_LOG(ERROR) << "The size of input_device_tensors_[" << input_device_tensors_.size()
+                  << "] is not equal to the size of node_device_tensors_[" << node_device_tensors_.size() << "].";
+    return false;
+  }
+
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
-    if (i >= node_device_tensors_.size()) {
-      MS_LOG(ERROR) << "The input index:" << i << "is out of range:" << node_device_tensors_.size() << ".";
-      return false;
-    }
     auto &node_device_tensor = node_device_tensors_[i];
     MS_EXCEPTION_IF_NULL(node_device_tensor);
     auto &input_device_tensor = input_device_tensors_[i];
-    if (InputDataNoNeedCopy(input_device_tensor, node_device_tensor)) {
-      if (input_device_tensor != nullptr && input_device_tensor == node_device_tensor.get() &&
-          input_device_tensor->GetValidPtr(input_device_tensor->stream_id()) != nullptr) {
-        MS_LOG(DEBUG) << "Actor:" << GetAID() << " input device tensor " << i << ":" << input_device_tensor
-                      << " no need copy.";
-      }
-      if (input_device_tensor != nullptr && node_device_tensor != nullptr &&
-          (input_device_tensor->GetPtr() == node_device_tensor->GetPtr())) {
-        UpdateShape(input_nodes[i], node_device_tensor, input_device_tensor);
-      }
+    if (InputDataNoNeedCopy(input_nodes[i], input_device_tensor, node_device_tensor, type_)) {
+      MS_LOG(DEBUG) << "Actor:" << GetAID() << " input device tensor " << i << ":" << input_device_tensor
+                    << " no need copy.";
       continue;
     }
     MS_EXCEPTION_IF_NULL(input_nodes[i]);
@@ -709,7 +698,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
     const auto &input_kernel_tensor = input_device_tensor->kernel_tensor();
     MS_EXCEPTION_IF_NULL(node_device_kernel_tensor);
     MS_EXCEPTION_IF_NULL(input_kernel_tensor);
-    UpdateShape(input_nodes[i], node_device_tensor, input_device_tensor);
+    UpdateShape(input_nodes[i], node_device_tensor, input_device_tensor, type_);
     node_device_tensor->set_user_data(input_device_tensor->user_data());
     node_device_tensor->set_need_sync_user_data(input_device_tensor->need_sync_user_data());
     if (type_ != KernelTransformType::kSuperKernelActor) {

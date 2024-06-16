@@ -1688,6 +1688,8 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
     MS_LOG(INTERNAL_EXCEPTION) << "Run failed, phase input is not a str";
   }
   auto phase = py::cast<std::string>(phase_obj);
+  auto phase_prefix = GetPhasePrefix(phase);
+  PhaseManager::GetInstance().set_phase(phase_prefix);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   static const bool enable_infer_boost = ms_context->IsEnableInferBoost();
@@ -1699,7 +1701,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
     if (!IsEnableRefMode()) {
       GeFirstInitParams();
     }
-    std::string phase_prefix = GetPhasePrefix(phase);
+
     if (phase_prefix == "save") {
       auto pos = phase.find('.');
       std::string origin_phase = phase.substr(pos + 1);
@@ -1762,6 +1764,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
   }
   py::object res = BaseRefToPyDataWithUserData(value, output_abs);
   ClearRunArgumentsResource(args.size(), &execute_info->arg_list);
+  PhaseManager::GetInstance().ClearPhase();
   MS_LOG(DEBUG) << "Run end";
   return res;
 }  // namespace pipeline

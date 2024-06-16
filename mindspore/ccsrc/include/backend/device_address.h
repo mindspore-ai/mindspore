@@ -361,6 +361,20 @@ class DeviceAddress : public mindspore::DeviceSync {
     return GetDevicePtr();
   }
 
+  inline void TouchSyncHandler() {
+    if (!need_sync_user_data_ || kernel_tensor_->user_data() == nullptr) {
+      return;
+    }
+    std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
+    auto sync_handler = user_data()->get<SyncUserDataHandler>(kSyncUserDataHandler);
+    if (sync_handler == nullptr) {
+      MS_LOG(WARNING) << "For device address:" << this << ", the sync user data handler is null.";
+      return;
+    }
+    (*sync_handler)(this);
+    need_sync_user_data_ = false;
+  }
+
   // Offload data from device to host and free device memory
   virtual bool Offload(size_t) { MS_LOG(EXCEPTION) << "Not implemented."; }
 

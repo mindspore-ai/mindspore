@@ -104,7 +104,7 @@ bool GetNeedSyncStream(const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(ms_context);
   static const bool enable_internal_kernel = ms_context->IsEnableInferBoost();
   static auto enable_syn = common::GetEnv("MS_SYNC_RUN");
-  if (enable_internal_kernel && enable_syn != "on") {
+  if ((enable_internal_kernel || IsTwoPhaseInfer()) && enable_syn != "on") {
     return false;
   }
   const auto &graphs = graph_compiler_info.graphs_;
@@ -750,6 +750,12 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
 }
 
 void GraphScheduler::RefreshContextAndThreadPool(ActorSet *const actor_set, ActorThreadPool *const thread_pool) {
+  if (IsTwoPhaseInfer()) {
+    // GE backend's memory optimization litmits the thread number to be 1, but the memory is not a problem in inference
+    // so the multi-thread can be enabled.
+    return;
+  }
+
   static constexpr size_t kSingleThreadNum = 1;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);

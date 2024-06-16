@@ -311,6 +311,7 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
   // Copy data from host tensor to device tensor.
   uint64_t start_time = 0;
   PROFILER_START(start_time);
+  auto enable_async_copy = ms_context->IsEnableInferBoost() || IsTwoPhaseInfer();
   try {
     for (size_t i = 0; i < host_tensors.size(); ++i) {
       auto &host_tensor = host_tensors[i];
@@ -338,7 +339,7 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
         continue;
       }
 
-      if (ms_context->IsEnableInferBoost()) {
+      if (enable_async_copy) {
         if (!device_tensor->AsyncHostToDevice(LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(),
                                               host_tensor->data_ptr()->data())) {
           SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");

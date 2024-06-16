@@ -72,8 +72,6 @@ class SuperKernelActor : public DebugAwareActor {
   // The input may come from the control actor, so need free the input memory by the dynamic ref count.
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
   bool CopyInputData(const OpContext<DeviceTensor> *context, const KernelGraphPtr &graph);
-  void UpdateShape(const AnfNodePtr &input_node, const DeviceTensorPtr &node_device_tensor,
-                   DeviceTensor *input_device_tensor);
 
   const KernelGraphPtr &graph() const { return graph_; }
 
