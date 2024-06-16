@@ -1,7 +1,7 @@
 mindspore.load_checkpoint
 ==========================
 
-.. py:function:: mindspore.load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None, dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None)
+.. py:function:: mindspore.load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None, dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None, crc_check=False)
 
     加载checkpoint文件。
 
@@ -19,6 +19,7 @@ mindspore.load_checkpoint
         - **dec_mode** (str) - 该参数仅当 `dec_key` 不为 ``None`` 时有效。指定解密模式，目前支持 ``"AES-GCM"`` ， ``"AES-CBC"`` 和 ``"SM4-CBC"`` 。默认值： ``"AES-GCM"`` 。
         - **specify_prefix** (Union[str, list[str], tuple[str]]) - 废弃（请参考参数 `choice_func`）。以 `specify_prefix` 开头的参数将会被加载。默认值： ``None`` 。
         - **choice_func** (Union[None, function]) - 函数的输入值为字符串类型的Parameter名称，并且返回值是一个布尔值。如果返回 ``True`` ，则匹配自定义条件的Parameter将被加载。 如果返回 ``False`` ，则匹配自定义条件的Parameter将被删除。默认值： ``None`` 。
+        - **crc_check** (bool) - 是否在加载checkpoint时进行crc32校验。默认值： ``False`` 。
 
     返回：
         字典，key是参数名称，value是Parameter类型。当使用 :func:`mindspore.save_checkpoint` 的 `append_dict` 参数和 :class:`mindspore.train.CheckpointConfig` 的 `append_info` 参数保存
