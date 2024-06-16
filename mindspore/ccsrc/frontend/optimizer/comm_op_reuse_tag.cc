@@ -45,7 +45,8 @@ inline bool is_comm_ops(const AnfNodePtr &node) {
                                                                   prim::kPrimNeighborExchangeV2,
                                                                   prim::kPrimNeighborExchangeV2Grad,
                                                                   prim::kPrimBarrier,
-                                                                  prim::kPrimBatchISendIRecv};
+                                                                  prim::kPrimBatchISendIRecv,
+                                                                  prim::kPrimAlltoAllV};
 
   for (const auto &prim : kCommunicationOpsPrim) {
     if (IsPrimitiveCNode(node, prim)) {

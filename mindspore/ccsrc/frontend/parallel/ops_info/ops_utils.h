@@ -359,6 +359,7 @@ constexpr char VIRTUAL_DIV[] = "_VirtualDiv";
 constexpr char GET_TENSOR_SLICE[] = "_GetTensorSlice";
 constexpr char SPLIT[] = "Split";
 constexpr char ALL_TO_ALL[] = "AlltoAll";
+constexpr char ALL_TO_ALLV[] = "AlltoAllV";
 constexpr char NEIGHBOREXCHANGE[] = "NeighborExchange";
 constexpr char NEIGHBOREXCHANGEV2[] = "NeighborExchangeV2";
 constexpr char PARALLEL_RESIZE_BILINEAR[] = "ParallelResizeBilinear";
