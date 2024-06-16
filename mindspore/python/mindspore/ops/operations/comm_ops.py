@@ -270,7 +270,9 @@ class Reduce(PrimitiveWithInfer):
         validator.check_value_type('op', op, (type(ReduceOp.SUM),), self.name)
         self.dest_rank = dest_rank
         self.op = op
-        self.group = group
+        self.group = _get_group(group)
+        self.add_prim_attr('group', _get_group(group))
+        self.add_prim_attr('dest_rank', dest_rank)
 
     def infer_shape(self, x_shape):
         # The process with dest_rank returns the reduced output.
