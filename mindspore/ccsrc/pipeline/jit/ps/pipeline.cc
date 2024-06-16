@@ -387,7 +387,7 @@ py::object BaseRefToPyDataWithUserData(const BaseRef &value, const AbstractBaseP
     if (user_data != nullptr) {
       return user_data->obj;
     } else {
-      MS_LOG(INFO) << "user data is empty";
+      MS_LOG(DEBUG) << "user data is empty";
     }
   } else if (utils::isa<VectorRef>(value)) {
     auto vec_ref = utils::cast<VectorRef>(value);
@@ -1429,11 +1429,7 @@ void RecordIR(const size_t action_index, const size_t action_size, const std::st
     if (switch_order) {
       ExportIR(base_name + ".ir", graph);
     } else {
-      if (action_index == action_size - 1) {
-        DumpIR(base_name + ".ir", graph, true, kWholeStack);
-      } else {
-        DumpIR(base_name + ".ir", graph, true, kTopStack);
-      }
+      DumpIR(base_name + ".ir", graph, true, kWholeStack);
     }
     if (context->CanDump(kFully)) {
       draw::Draw(base_name + ".dot", graph);

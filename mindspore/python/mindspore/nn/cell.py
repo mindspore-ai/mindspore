@@ -2617,6 +2617,7 @@ class GraphCell(Cell):
         params_dict = update_func_graph_hyper_params(self.graph, params_init)
         for name, param in params_dict.items():
             self._params[name] = param
+        self.graph_cell = True
 
     def construct(self, *inputs):
         return self.graph(*inputs)

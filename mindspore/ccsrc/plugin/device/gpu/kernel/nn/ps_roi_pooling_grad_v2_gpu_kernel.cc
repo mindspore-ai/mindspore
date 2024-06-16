@@ -36,12 +36,12 @@ bool PSROIPoolingBackV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inp
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
   if (!is_match) {
-    MS_LOG_ERROR << "Can not match kernel based on given attr!";
+    MS_LOG(ERROR) << "Can not match kernel based on given attr!";
     return false;
   }
 
   if (Resize(inputs, outputs) == KRET_RESIZE_FAILED) {
-    MS_LOG_ERROR << "Resize failed!";
+    MS_LOG(ERROR) << "Resize failed!";
     return false;
   }
   return true;
@@ -169,29 +169,29 @@ int PSROIPoolingBackV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &in
 
   auto dy_shape = inputs[0]->GetShapeVector();
   if (dy_shape[0] != batch_size_ * rois_num_) {
-    MS_LOG_ERROR << "For '" << kernel_name_ << "', input[0].shape[0](" << dy_shape[0]
-                 << ") should be equal to input[1].shape[0](" << rois_shape[0] << ") * input[1].shape[2]("
-                 << rois_shape[ROIS_NUM_INDEX] << "), but it's not true.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input[0].shape[0](" << dy_shape[0]
+                  << ") should be equal to input[1].shape[0](" << rois_shape[0] << ") * input[1].shape[2]("
+                  << rois_shape[ROIS_NUM_INDEX] << "), but it's not true.";
     return KRET_RESIZE_FAILED;
   }
 
   if (dy_shape[kDyOutputDimIndex] != output_channels_) {
-    MS_LOG_ERROR << "For '" << kernel_name_ << "', input[0].shape[" << kDyOutputDimIndex << "]("
-                 << dy_shape[kDyOutputDimIndex] << ") should be equal to output_dim(" << output_channels_
-                 << "), but it's not true.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input[0].shape[" << kDyOutputDimIndex << "]("
+                  << dy_shape[kDyOutputDimIndex] << ") should be equal to output_dim(" << output_channels_
+                  << "), but it's not true.";
     return KRET_RESIZE_FAILED;
   }
 
   if (dy_shape[kDyHeightIndex] != group_size_) {
-    MS_LOG_ERROR << "For '" << kernel_name_ << "', input[0].shape[" << kDyHeightIndex << "]("
-                 << dy_shape[kDyHeightIndex] << ") should be equal to group_size(" << group_size_
-                 << "), but it's not true.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input[0].shape[" << kDyHeightIndex << "]("
+                  << dy_shape[kDyHeightIndex] << ") should be equal to group_size(" << group_size_
+                  << "), but it's not true.";
     return KRET_RESIZE_FAILED;
   }
 
   if (dy_shape[kDyWidthIndex] != group_size_) {
-    MS_LOG_ERROR << "For '" << kernel_name_ << "', input[0].shape[" << kDyWidthIndex << "](" << dy_shape[kDyWidthIndex]
-                 << ") should be equal to group_size(" << group_size_ << "), but it's not true.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input[0].shape[" << kDyWidthIndex << "](" << dy_shape[kDyWidthIndex]
+                  << ") should be equal to group_size(" << group_size_ << "), but it's not true.";
     return KRET_RESIZE_FAILED;
   }
 

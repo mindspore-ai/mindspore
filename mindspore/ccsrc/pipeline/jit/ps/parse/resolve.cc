@@ -33,6 +33,7 @@
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "pipeline/jit/ps/parse/parse.h"
 #include "include/common/utils/python_adapter.h"
+#include "include/common/utils/parallel_context.h"
 #include "utils/any.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/opt.h"
@@ -162,15 +163,31 @@ std::string GetPyObjId(const py::object &obj) {
   return out.cast<std::string>();
 }
 
-void BroadenCNodeAbstract(const FuncGraphPtr &func_graph) {
-  std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
-  for (const AnfNodePtr &node : nodes) {
-    if (!node->isa<CNode>()) {
+void ClearCNodeAbstract(const FuncGraphPtr &func_graph) {
+  std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple, AlwaysInclude);
+  static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
+  for (const auto &node : nodes) {
+    if (node == nullptr || node->isa<Parameter>()) {
       continue;
     }
-    auto abstract = node->abstract();
-    if (abstract != nullptr) {
-      node->set_abstract(abstract->Broaden());
+    auto primitive = GetCNodePrimitive(node);
+    if (primitive != nullptr) {
+      auto is_load = primitive->GetAttr("is_load");
+      if (abstract::GetPrimEvaluator(primitive, nullptr) == nullptr && is_load != nullptr && GetValue<bool>(is_load)) {
+        MS_LOG(INFO) << "The primitive is not defined in front end. Primitive: " << primitive->ToString();
+        continue;
+      }
+    }
+    auto prev_inferred = node->abstract();
+    // Keep previous inferred value for ValueNode if the inferred value is not AbstractFunction.
+    if (!node->isa<ValueNode>() || (prev_inferred != nullptr && prev_inferred->isa<abstract::AbstractFunction>())) {
+      // Reset tuple/list abstract use flags.
+      if (enable_eliminate_unused_element && prev_inferred != nullptr &&
+          prev_inferred->isa<abstract::AbstractSequence>()) {
+        SetSequenceNodeElementsUseFlags(node, nullptr);
+      }
+      node->set_abstract(nullptr);
+      MS_LOG(DEBUG) << "Abstract of node " << node->DebugString() << " is set to nullptr";
     }
   }
 }
@@ -208,7 +225,7 @@ void ConvertLoadedGraph(const FuncGraphPtr &func_graph, const ValuePtr &value) {
     resolved_graph->DropNode(param_ptr);
   }
   resolved_graph->set_parameters(input_params);
-  BroadenCNodeAbstract(resolved_graph);
+  ClearCNodeAbstract(resolved_graph);
 }
 
 bool HasConstArgAttr(const py::object &obj) {
@@ -245,15 +262,32 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
                                bool is_element_obj) {
   // When the cell is set recomputed, it should not use old scope from cache.
   MS_EXCEPTION_IF_NULL(origin_node);
+  auto origin_cnode = dyn_cast<CNode>(origin_node);
+  MS_EXCEPTION_IF_NULL(origin_cnode);
+  bool is_resolve = IsPrimitiveCNode(origin_node, prim::kPrimResolve);
   auto scope = origin_node->scope();
   bool has_recompute_scope =
     (scope != nullptr && scope->name().compare(0, strlen(kAttrRecompute), kAttrRecompute) == 0);
   ValuePtr convert_result = nullptr;
-  bool converted =
-    ConvertData(obj, &convert_result, python_adapter::UseSignatureInResolve(), nullptr, has_recompute_scope);
-  if (!converted) {
-    MS_LOG(ERROR) << "Convert data failed";
-    return nullptr;
+  constexpr auto resolve_with_args_inputs_size = 4;
+  MS_LOG(DEBUG) << "origin_cnode: " << origin_cnode->DebugString();
+  if (is_resolve && origin_cnode->size() == resolve_with_args_inputs_size) {  // (resolve, namespace, symbol, arguments)
+    constexpr auto args_input_pos = 3;
+    auto args_node = origin_cnode->input(args_input_pos);
+    auto args_value = GetValueNode<ValueTuplePtr>(args_node);
+    MS_EXCEPTION_IF_NULL(args_value);
+    parse::DataConverter data_converter(args_value->value(), python_adapter::UseSignatureInResolve());
+    convert_result = data_converter.ConvertData(obj);
+    if (convert_result == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Convert error with Python object: " << std::string(py::str(obj));
+    }
+  } else {  // (resolve/getattr, namespace, symbol, optional[getattr])
+    bool converted =
+      ConvertData(obj, &convert_result, python_adapter::UseSignatureInResolve(), nullptr, has_recompute_scope);
+    if (!converted) {
+      MS_LOG(ERROR) << "Convert data failed";
+      return nullptr;
+    }
   }
 
   // If obj is an element, do not convert InterpretedObj.
@@ -509,7 +543,9 @@ py::object GetSymbolObject(const NameSpacePtr &name_space, const SymbolPtr &symb
   if (node->func_graph() == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Node " << node->DebugString() << " graph is nullptr.";
   }
-  if (name_space->module() == RESOLVE_NAMESPACE_NAME_CLASS_OBJECT) {
+  if (name_space->module() == RESOLVE_NAMESPACE_NAME_ENTRY) {
+    return name_space->module_obj();
+  } else if (name_space->module() == RESOLVE_NAMESPACE_NAME_CLASS_OBJECT) {
     MS_LOG(DEBUG) << "namespace: " << py::str(name_space->namespace_obj()) << ", symbol: " << symbol;
     return name_space->namespace_obj();
   }
@@ -532,7 +568,7 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
   }
   MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString()
                 << ", loc: " << trace::GetDebugInfoStr(node->debug_info());
-  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
+  TraceGuard trace_guard(std::make_shared<TraceResolve>(trace::GetSourceCodeDebugInfo(node->debug_info())));
   auto obj = GetSymbolObject(name_space, symbol, node);
   AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
   if (IsValueNode<NameSpace>(resolved_node) && !py::isinstance<py::none>(name_space->module_obj())) {
@@ -541,6 +577,37 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
     nameptr->set_module_obj(name_space->module_obj());
   }
   fallback::SetPyObjectToNode(resolved_node, obj);
+  // Update top graph debug info with user top graph's
+  if (name_space->module() == RESOLVE_NAMESPACE_NAME_ENTRY && IsValueNode<FuncGraph>(resolved_node)) {
+    auto user_top_fg = GetValueNode<FuncGraphPtr>(resolved_node);
+    MS_EXCEPTION_IF_NULL(user_top_fg);
+    auto top_fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(top_fg);
+    top_fg->set_debug_info(user_top_fg->debug_info());
+    top_fg->return_node()->set_debug_info(user_top_fg->return_node()->debug_info());
+    MS_LOG(DEBUG) << "Update top graph's and node's debug infos with user top graph's. top_fg: " << top_fg->ToString()
+                  << ", user_top_fg: " << user_top_fg->ToString();
+    top_fg->set_attrs(user_top_fg->attrs());
+    // Update top graph parameters' name
+    auto top_params = top_fg->parameters();
+    auto resolve_params = user_top_fg->parameters();
+    auto top_arg_size = top_fg->GetPositionalArgsCount();
+    auto user_arg_size = user_top_fg->GetPositionalArgsCount();
+    if (top_arg_size != user_arg_size) {
+      MS_LOG(INFO) << "Top graph's parameter size: " << top_arg_size
+                   << " does not match the user top func_graph's parameter size: " << user_arg_size;
+    } else {
+      for (int i = 0; i < top_arg_size; i++) {
+        auto param_ptr = top_params[i]->cast<ParameterPtr>();
+        MS_EXCEPTION_IF_NULL(param_ptr);
+        auto user_param_ptr = resolve_params[i]->cast<ParameterPtr>();
+        MS_EXCEPTION_IF_NULL(user_param_ptr);
+        param_ptr->set_debug_info(user_param_ptr->debug_info());
+        param_ptr->set_name(user_param_ptr->name());
+      }
+      MS_LOG(DEBUG) << "Update top graph's parameters debug info with user top graph's parameters";
+    }
+  }
   return resolved_node;
 }
 
@@ -911,6 +978,12 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
     param_obj_ids[param_name] = obj_id;
     MS_LOG(DEBUG) << "Created a new weight parameter for " << func_graph->ToString()
                   << ", param: " << para_node->DebugString() << ", top_func_graph: " << top_func_graph->ToString();
+    auto context = parallel::ParallelContext::GetInstance();
+    if (context != nullptr && para_node->has_default()) {
+      auto param_abs = pipeline::GetDefaultValueAbstract(para_node);
+      context->ParallelParameterContextRestoreShape(func_graph, para_node, param_abs);
+      para_node->set_abstract(param_abs);
+    }
   }
   func_graph->add_parameter_obj_node(para_node);
   return para_node;

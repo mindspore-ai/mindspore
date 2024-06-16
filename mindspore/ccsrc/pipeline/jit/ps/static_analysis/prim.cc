@@ -1735,6 +1735,40 @@ EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_
   return eng->ForwardConfig(old_conf, fn_conf);
 }
 
+void SetSideEffectFlag(const PrimitivePtr &prim, const AnfNodeConfigPtr &out_conf) {
+  if (prim == nullptr) {
+    return;
+  }
+  auto effect_info = GetPrimEffectInfo(prim);
+  if (effect_info.memory || effect_info.io) {
+    const auto &cnode = dyn_cast<CNode>(out_conf->node());
+    MS_EXCEPTION_IF_NULL(cnode);
+    MS_EXCEPTION_IF_NULL(out_conf->func_graph());
+    MS_LOG(DEBUG) << "Found side-effect, cnode: " << cnode->DebugString()
+                  << ", func_graph: " << out_conf->func_graph()->ToString();
+    cnode->set_has_side_effect_node(true);
+    out_conf->func_graph()->set_has_side_effect_node(true);
+  }
+}
+
+void SetOriginObject(const AnfNodePtr &node, const AnfNodeConfigPtr &out_conf) {
+  if (!node->isa<ValueNode>()) {
+    return;
+  }
+  auto vnode = node->cast<ValueNodePtr>();
+  if (vnode->value()->has_user_data("origin_object")) {
+    auto origin_object = vnode->value()->user_data<py::object>("origin_object");
+    out_conf->node()->set_user_data<py::object>("origin_object", origin_object);
+  }
+}
+
+void SetSparseBpropFlag(const PrimitivePtr &prim, const AnfNodeConfigPtr &out_conf) {
+  if (GetPrimitiveFlag(prim, GRAPH_FLAG_BPROP_RETURN_SPARSE)) {
+    out_conf->func_graph()->set_flag(FUNC_GRAPH_FLAG_SPARSE_BPROP, true);
+    EnvSetSparseResultMgr::GetInstance().Set(true);
+  }
+}
+
 EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &args_abs_list, const ValuePtr &data_value,
                                                   const AnfNodeConfigPtr &out_conf, const std::string &data) {
   constexpr size_t item_index = 1;
@@ -1755,6 +1789,13 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
   // item_name to func addr from obj_map
   auto symbol = item_value->cast<parse::SymbolPtr>();
   auto name_space = data_value->cast<parse::NameSpacePtr>();
+  constexpr auto tensors_queue_attr = "__is_tensors_queue__";
+  constexpr auto pop_attr = "pop";
+  if (name_space != nullptr && py::hasattr(name_space->namespace_obj(), tensors_queue_attr) &&
+      symbol->symbol() == pop_attr) {
+    constexpr auto graph_pop_attr = "__graph_pop__";
+    symbol = std::make_shared<parse::Symbol>(graph_pop_attr);
+  }
   MS_EXCEPTION_IF_NULL(out_conf);
   auto out_node = out_conf->node();
   MS_EXCEPTION_IF_NULL(out_node);
@@ -1764,6 +1805,11 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
   if (new_node == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Resolve node failed";
   }
+
+  auto prim = GetPrimitiveWithoutDoSignature(new_node);
+  SetSparseBpropFlag(prim, out_conf);
+  SetSideEffectFlag(prim, out_conf);
+  SetOriginObject(new_node, out_conf);
 
   if (IsValueNode<TypeNull>(new_node)) {
     // Do not find the attribute.
@@ -1994,6 +2040,22 @@ EvalResultPtr GetEvaluatedValueForAdapterTensorAttrOrMethod(const AnalysisEngine
   return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
 }
 
+py::object GetOriginObj(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  py::object origin_obj;
+  if (node->has_user_data("origin_object")) {
+    return *node->user_data<py::object>("origin_object");
+  }
+  if (!node->isa<ValueNode>()) {
+    return origin_obj;
+  }
+  auto vnode = node->cast<ValueNodePtr>();
+  if (vnode->value()->has_user_data("origin_object")) {
+    return *vnode->value()->user_data<py::object>("origin_object");
+  }
+  return origin_obj;
+}
+
 EvalResultPtr GetEvaluatedValueForAttrOrMethodNotInMap(const AnalysisEnginePtr &engine,
                                                        const AbstractBasePtrList &args_abs_list,
                                                        const AnfNodeConfigPtr &out_conf, const std::string &item_name,
@@ -2011,10 +2073,10 @@ EvalResultPtr GetEvaluatedValueForAttrOrMethodNotInMap(const AnalysisEnginePtr &
     auto fn_conf = eng->MakeConfig(default_node, out_conf->context(), out_conf->func_graph());
     return eng->ForwardConfig(out_conf, fn_conf);
   }
-  auto vnode = out_cnode->input(1)->cast<ValueNodePtr>();
-  if (vnode != nullptr && vnode->value()->has_user_data("origin_object")) {
+
+  py::object value_obj = GetOriginObj(out_cnode->input(1));
+  if (value_obj.ptr() != nullptr) {
     std::vector<AnfNodePtr> new_inputs;
-    py::object value_obj = *vnode->value()->user_data<py::object>("origin_object");
     std::string data_type_str = TypeIdLabel(NormalizeTypeId(data_type->type_id()));
     py::module mod1 = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
     py::object obj_define = python_adapter::CallPyModFn(mod1, parse::PYTHON_MOD_GET_OBJ_DEFINED, data_type_str);
@@ -2724,6 +2786,15 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
   constexpr size_t index_data = 1;
   auto op_node = cnode->input(index_op);
   AnfNodePtr new_node = nullptr;
+  parse::SymbolPtr symbol_node = nullptr;
+  if (op_node->isa<CNode>()) {
+    auto inner_op_node = op_node->cast<CNodePtr>()->input(index_op);
+    if (IsPrimitiveCNode(inner_op_node, prim::kPrimResolve)) {
+      auto resolve_node = inner_op_node->cast<CNodePtr>();
+      constexpr size_t index_symbol = 2;
+      symbol_node = GetValueNode<parse::SymbolPtr>(resolve_node->input(index_symbol));
+    }
+  }
   if (IsPrimitiveCNode(op_node, prim::kPrimPartial)) {
     // The input may be a Partial node, such as {{prim::kPrimPartial, prim::kPrimRank, x}} -> {prim::kPrimRank, x}.
     AnfNodeWeakPtrList partial_inputs;
@@ -2734,7 +2805,8 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
                     std::back_inserter(partial_inputs));
     new_node = ConvertArgsToInputs(prim_, partial_inputs, fg, engine, out_conf);
   } else if (IsPrimitiveCNode(op_node, prim::kPrimGetAttr) ||
-             IsPrimitiveCNodeWithoutDoSignature(op_node, prim::kPrimGetAttr)) {
+             IsPrimitiveCNodeWithoutDoSignature(op_node, prim::kPrimGetAttr) ||
+             (symbol_node != nullptr && symbol_node->symbol() == "getattr")) {
     // The input may be a GetAttr node, such as x.abs(): {{prim::kPrimGetAttr, x, abs}} -> {prim::kPrimAbs, x}
     auto op_cnode = op_node->cast<CNodePtr>();
     AnfNodeWeakPtrList getattr_inputs;
@@ -3845,10 +3917,11 @@ class ResolveEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(ResolveEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
                          const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
-    constexpr auto resolve_args_size = 2;
+    constexpr auto resolve_args_size = 2;       // (namespace, symbol)
+    constexpr auto resolve_with_args_size = 3;  // (namespace, symbol, arguments)
     // Inputs: namespace, symbol
-    if (args_abs_list.size() != resolve_args_size) {
-      MS_LOG(EXCEPTION) << "Expected args_abs_list size = 2, but has size: " << args_abs_list.size();
+    if (args_abs_list.size() != resolve_args_size && args_abs_list.size() != resolve_with_args_size) {
+      MS_LOG(EXCEPTION) << "Expected args_abs_list size is 2 or 3, but has size: " << args_abs_list.size();
     }
     EvalResultPtr res = nullptr;
     if (bound_node() != nullptr) {

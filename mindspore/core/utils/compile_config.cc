@@ -41,7 +41,7 @@ void CompileConfigManager::SetConfig(const std::string &config_name, const std::
   if (!overwrite && compile_config_.find(config_name) != compile_config_.end()) {
     return;
   }
-  compile_config_.insert(std::make_pair(config_name, value));
+  compile_config_.insert_or_assign(config_name, value);
 }
 
 std::string CompileConfigManager::GetConfig(const std::string &config_name) {

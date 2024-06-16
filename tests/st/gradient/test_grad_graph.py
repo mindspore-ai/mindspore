@@ -18,7 +18,7 @@ import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore import jit
+from mindspore import jit, ops
 from mindspore.ops.functional import grad, value_and_grad, get_grad
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
@@ -1282,3 +1282,153 @@ def test_value_and_grad_nest_with_weights_graph_get_grad():
     assert np.allclose(res1.asnumpy(), expect_grad_input)
     assert np.allclose(res2.asnumpy(), expect_grad_weight1)
     assert np.allclose(res3.asnumpy(), expect_grad_weight2)
+
+
+class MatMulNet(nn.Cell):
+    def __init__(self):
+        super(MatMulNet, self).__init__()
+        self.matmul = ops.MatMul()
+        self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+    def construct(self, *inputs):
+        x = inputs[0]
+        y = inputs[1]
+        x = x * self.z
+        out = self.matmul(x, y)
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_varargs_single_call():
+    """
+    Features: Support varargs for forward graph.
+    Description: The forward graph has varargs while the grad graph has no varargs.
+    Expectation: The gradient result is correct.
+    """
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation()
+
+        def construct(self, x, y):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(x, y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    output = GradNetWrtX(MatMulNet())(x, y)
+    expect = np.array([[1.41, 1.6, 6.6], [1.41, 1.6, 6.6]]).astype(np.float32)
+    assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_varargs_single_call_need_unpack():
+    """
+    Features: Support varargs for forward graph.
+    Description: Both the forward graph and the grad graph have varargs.
+    Expectation: The gradient result is correct.
+    """
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation()
+
+        def construct(self, *inputs):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(*inputs)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    output = GradNetWrtX(MatMulNet())(x, y)
+    expect = np.array([[1.41, 1.6, 6.6], [1.41, 1.6, 6.6]]).astype(np.float32)
+    assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_varargs_grad_inited():
+    """
+    Features: Support varargs for forward graph.
+    Description: Both the forward and grad graph have varargs, and the GradOperation is initialized in __init__.
+    Expectation: The gradient result is correct.
+    """
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.grad = ops.GradOperation()(net)
+
+        def construct(self, *inputs):
+            return self.grad(*inputs)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    output = GradNetWrtX(MatMulNet())(x, y)
+    expect = np.array([[1.41, 1.6, 6.6], [1.41, 1.6, 6.6]]).astype(np.float32)
+    assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_varargs_double_call():
+    """
+    Features: Support varargs for forward graph.
+    Description: Both the forward graph and the grad graph have varargs, and the grad graph is called twice.
+    Expectation: The gradient result is correct.
+    """
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation()
+
+        def construct(self, *inputs):
+            x = inputs[0]
+            y = inputs[1]
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(*inputs), gradient_function(x, y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    output = GradNetWrtX(MatMulNet())(x, y)
+    expect = np.array([[1.41, 1.6, 6.6], [1.41, 1.6, 6.6]]).astype(np.float32)
+    assert np.allclose(output[0].asnumpy(), expect)
+    assert np.allclose(output[1].asnumpy(), expect)
+
+
+@pytest.mark.skip(reason="Func grad node not match GradOperation")
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_func_grad_varargs_single_call():
+    """
+    Features: Support varargs for forward graph.
+    Description: Use the func grad and both the forward graph and the grad graph have varargs.
+    Expectation: The gradient result is correct.
+    """
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+
+        def construct(self, *inputs):
+            gradient_function = ops.grad(self.net)
+            return gradient_function(*inputs)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    output = GradNetWrtX(MatMulNet())(x, y)
+    expect = np.array([[1.41, 1.6, 6.6], [1.41, 1.6, 6.6]]).astype(np.float32)
+    assert np.allclose(output.asnumpy(), expect)

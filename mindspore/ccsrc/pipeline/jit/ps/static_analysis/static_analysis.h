@@ -34,12 +34,14 @@
 #include "utils/hash_set.h"
 #include "utils/log_adapter.h"
 #include "utils/compile_config.h"
+#include "utils/trace_base.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "abstract/abstract_value.h"
 #include "abstract/analysis_context.h"
 #include "abstract/abstract_function.h"
 #include "pipeline/jit/ps/parse/parse.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace abstract {
@@ -70,17 +72,39 @@ class AnfNodeConfig final : public Config {
     if (context == nullptr) {
       return;
     }
-    auto fg = GetValuePtr<FuncGraph>(node);
+    auto fg = GetValueNode<FuncGraphPtr>(node);
     if (fg == nullptr && node != nullptr) {
-      fg = node->func_graph().get();
+      fg = node->func_graph();
     }
-    if (context->func_graph().get() == fg) {
+    if (context->func_graph() == fg) {
       // Usually `node` is CNode and not a FV, or top graph's ValueNodes.
       context_ = context;
     } else {
       // If `node` is FV, FuncGraph, or other graph ValueNodes.
       // Non-FuncGraph ValueNodes will always get a DummyContext since `fg` is null.
-      context_ = context->FindOwnOrParentContext(fg);
+      context_ = context->FindOwnOrParentContext(fg.get());
+      if (context_ == nullptr) {
+        FuncGraphPtr parent_graph = fg->parent();
+#ifdef ENABLE_DUMP_IR
+        const auto no_parent = parent_graph == nullptr;
+        DumpIR(std::string("EXCEPTION_NEW_CONTEXT_CURRENT_") + (no_parent ? "0" : "1") + "_" + fg->ToString() + ".ir",
+               fg);
+        if (!no_parent) {
+          DumpIR("EXCEPTION_NEW_CONTEXT_PARENT_" + parent_graph->ToString() + ".ir", parent_graph);
+        }
+#endif
+        // Context not found, it would be a bug in code so we raise exception.
+        std::ostringstream oss;
+        oss << "BUG: Failed to find context for: " << fg->ToString()
+            << ", parent: " << (parent_graph == nullptr ? "null" : parent_graph->ToString()) << " from contexts: ["
+            << context->ToString();
+        for (auto p = context->parent(); p != nullptr; p = p->parent()) {
+          oss << ", " << p->ToString();
+        }
+        oss << "] "
+            << ", node: " << node->DebugString() << ", " << trace::GetDebugInfoStr(fg->debug_info());
+        MS_LOG(INTERNAL_EXCEPTION) << oss.str();
+      }
     }
   }
 

@@ -159,14 +159,7 @@ AnalysisContextPtr AnalysisContext::FindOwnOrParentContext(FuncGraph *fg) {
     }
   }
   // Context not found, it would be a bug in code so we raise exception.
-  std::ostringstream oss;
-  oss << "BUG: Failed to find context for: " << fg->ToString()
-      << ", parent: " << (parent_fg == nullptr ? "null" : parent_fg->ToString()) << " from contexts: [" << ToString();
-  for (auto p = parent_; p != nullptr; p = p->parent_) {
-    oss << ", " << p->ToString();
-  }
-  oss << "] " << trace::GetDebugInfoStr(fg->debug_info());
-  MS_LOG(INTERNAL_EXCEPTION) << oss.str();
+  return nullptr;
 }
 
 AnalysisContextPtr AnalysisContext::DummyContext() {

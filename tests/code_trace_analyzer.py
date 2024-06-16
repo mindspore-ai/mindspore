@@ -124,7 +124,11 @@ class CodeTraceAnalyzer:
 
         lines, offset = inspect.getsourcelines(fn)
         for index, line in enumerate(lines):
-            line = line.replace('\n', '').replace('\r', '')
+            line = line.replace('\n', '').replace('\r', '') \
+                .replace('[', r'\[').replace(']', r'\]') \
+                .replace('(', r'\(').replace(')', r'\)') \
+                .replace('{', r'\{').replace('}', r'\}') \
+                .replace('.', r'\.').replace('*', r'\*').replace('+', r'\+')
             if self.skip_check(line):
                 continue
 
@@ -134,8 +138,8 @@ class CodeTraceAnalyzer:
                 self.ignore_code_lines += 1
                 continue
 
-            line = f"In file {fn_file_name}:{offset + index}/{line}/"
-            if line in self.ir_content:
+            line = f"In file {fn_file_name}:{offset + index}.*/{line}/"
+            if re.search(line, self.ir_content):
                 self.traced_code_lines += 1
             else:
                 self.not_traced_codes.append(line)

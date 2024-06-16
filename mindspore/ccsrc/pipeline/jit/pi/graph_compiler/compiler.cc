@@ -162,6 +162,19 @@ PyObject *RunGraph(const std::string &phase, const py::tuple &args, const std::s
   ret.inc_ref();
   return ret.ptr();
 }
+
+class SkipBoostInferScope {
+ public:
+  SkipBoostInferScope() {
+    MS_LOG(DEBUG) << "Disable boost-infer when running PIJit with two-stages mode";
+    origin_value_ = common::GetEnv("MS_DEV_BOOST_INFER");
+    common::SetEnv("MS_DEV_BOOST_INFER", "0");
+  }
+  ~SkipBoostInferScope() { common::SetEnv("MS_DEV_BOOST_INFER", origin_value_.c_str()); }
+
+ private:
+  std::string origin_value_;
+};
 }  // namespace
 
 CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObject &frame, const std::string &phase) {
@@ -205,6 +218,9 @@ CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObjec
   args = ExpandVariableArgs(args, code->co_flags, code->co_argcount);
   args = EliminateSelf(args, name);
   MarkArgmentMutable(args);
+
+  SkipBoostInferScope skip_boost_infer_scope;
+
   (void)graph_executor->CompileInner(graph, args, kwargs, phase, true);
 
   return callable;

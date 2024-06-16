@@ -162,6 +162,7 @@ mindspore
     mindspore.mutable
     mindspore.constexpr
     mindspore.lazy_inline
+    mindspore.no_inline
 
 工具
 -----

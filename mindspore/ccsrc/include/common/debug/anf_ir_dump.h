@@ -49,16 +49,17 @@ struct SubGraphIRInfo {
 COMMON_EXPORT void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph,
                              const OrderedMap<AnfNodePtr, int32_t> &para_map,
                              const std::shared_ptr<SubGraphIRInfo> &gsub, bool dump_full_name = false,
-                             LocDumpMode dump_location = kOff);
+                             LocDumpMode dump_location = kWholeStack);
 COMMON_EXPORT int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer,
                                  OrderedMap<AnfNodePtr, int32_t> *para_map);
 COMMON_EXPORT void OutputOrderList(const FuncGraphPtr &sub_graph, std::ostringstream &oss);
 constexpr char PARALLEL_STRATEGY[] = "strategy";
 COMMON_EXPORT void DumpIRHead(const FuncGraphPtr &graph, std::ostringstream &buffer);
+COMMON_EXPORT void SaveIRFile(const std::string &filename, const std::string &str, const std::string &target_file);
 COMMON_EXPORT void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name = false,
-                          LocDumpMode dump_location = kOff, const std::string &target_file = "");
+                          LocDumpMode dump_location = kWholeStack, const std::string &target_file = "");
 COMMON_EXPORT void DumpIR(std::ostringstream &graph_buffer, const FuncGraphPtr &graph, bool dump_full_name = false,
-                          LocDumpMode dump_location = kOff);
+                          int dump_location = kWholeStack, bool avoid_circle = false);
 COMMON_EXPORT void DumpParallelJson(const std::string &filename, const FuncGraphPtr &graph,
                                     const int64_t global_rank_id,
                                     const std::unordered_map<std::string, std::vector<uint32_t>> &group_map);
@@ -87,7 +88,8 @@ COMMON_EXPORT int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &
 
 COMMON_EXPORT void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePtr, int32_t> *para_map,
                                     OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> *const sub_graphs,
-                                    int32_t total_para, bool dump_full_name = false, LocDumpMode dump_location = kOff);
+                                    int32_t total_para, bool dump_full_name = false,
+                                    LocDumpMode dump_location = kWholeStack);
 
 COMMON_EXPORT void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer, size_t sub_graphs_size);
 

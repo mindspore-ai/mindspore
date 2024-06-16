@@ -35,7 +35,7 @@ void MemoryExternalTensorHelper::free_data() {
 
 void *MemoryExternalTensorHelper::GetExternalTensorData(const mindspore::schema::ExternalData *external_info) {
   if (external_info == nullptr) {
-    MS_LOG_ERROR << "external_info is nullptr.";
+    MS_LOG(ERROR) << "external_info is nullptr.";
     return nullptr;
   }
   auto data_key = external_info->location()->str() + std::to_string(external_info->offset());
@@ -49,7 +49,7 @@ void *MemoryExternalTensorHelper::GetExternalTensorData(const mindspore::schema:
 void MemoryExternalTensorHelper::SetExternalTensorData(const mindspore::schema::ExternalData *external_info,
                                                        void *data) {
   if (external_info == nullptr) {
-    MS_LOG_ERROR << "external_info is nullptr.";
+    MS_LOG(ERROR) << "external_info is nullptr.";
     return;
   }
   auto data_key = external_info->location()->str() + std::to_string(external_info->offset());
@@ -57,7 +57,7 @@ void MemoryExternalTensorHelper::SetExternalTensorData(const mindspore::schema::
     auto size = external_info->length();
     auto *new_data = malloc(size);
     if (new_data == nullptr) {
-      MS_LOG_ERROR << "malloc new data with " << size << " failed.";
+      MS_LOG(ERROR) << "malloc new data with " << size << " failed.";
       return;
     }
     (void)memcpy(new_data, data, size);

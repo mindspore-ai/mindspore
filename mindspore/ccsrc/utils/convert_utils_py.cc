@@ -128,6 +128,12 @@ py::object CSRTensorToPyData(const tensor::CSRTensorPtr &csr_tensor) {
   return ref[0];
 }
 
+py::object COOTensorToPyData(const tensor::COOTensorPtr &coo_tensor) {
+  auto ref = py::tuple(1);
+  ref[0] = coo_tensor;
+  return ref[0];
+}
+
 py::object TensorToPyData(const tensor::BaseTensorPtr &tensor, const AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(tensor);
   auto scalar_obj = CheckAndConvertToScalar(tensor, abs);
@@ -315,6 +321,12 @@ static ValueNameToConverterVector value_name_to_converter = {
    [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
      auto csr_tensor_ptr = value->cast<tensor::CSRTensorPtr>();
      return CSRTensorToPyData(csr_tensor_ptr);
+   }},
+  // COOTensor
+  {tensor::COOTensor::kTypeId,
+   [](const ValuePtr &value, const AbstractBasePtr &) -> py::object {
+     auto coo_tensor_ptr = value->cast<tensor::COOTensorPtr>();
+     return COOTensorToPyData(coo_tensor_ptr);
    }},
   // RefKey
   {RefKey::kTypeId,
@@ -716,7 +728,7 @@ py::object MakeCSRTensor(const ValuePtr &value) {
     auto csr_tensor_ptr = std::make_shared<CSRTensor>(indptr, indices, values, shape);
     return CSRTensorToPyData(csr_tensor_ptr);
   }
-  MS_LOG_WARNING << "value is not ValueSequence, but got " << value->ToString();
+  MS_LOG(WARNING) << "value is not ValueSequence, but got " << value->ToString();
   return ret;
 }
 
@@ -793,7 +805,7 @@ py::object MakeCOOTensor(const ValuePtr &value) {
     ShapeVector shape = ConvertShapeTupleToShapeVector(shape_ptr);
     ret[0] = std::make_shared<tensor::COOTensor>(indices, values, shape);
   }
-  MS_LOG_WARNING << "value is not ValueSequence, but got " << value->ToString();
+  MS_LOG(WARNING) << "value is not ValueSequence, but got " << value->ToString();
   return ret[0];
 }
 

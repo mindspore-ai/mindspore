@@ -78,7 +78,6 @@ void PrepareEvalFuncGraph(const AnfNodePtr &func, AbstractBasePtrList *args_spec
   res->set_func_graph(func_graph);
   res->set_args_abs(*args_spec);
   parse::ResolveFuncGraph(func_graph, res);
-  pipeline::MetaUnpackPreparePass(res);
   ExpandFuncGraphVarargs(func_graph, args_spec);
   ExpandFuncGraphKwargs(func_graph, args_spec);
 }
@@ -129,7 +128,7 @@ abstract::AbstractBasePtr DeduceNodeAbstract(const ir::NodePtr &node) {
   try {
     return EvalFunctionValue(func, &args_spec);
   } catch (const std::exception &e) {
-    MS_LOG_WARNING << e.what();
+    MS_LOG(WARNING) << e.what();
   }
   return nullptr;
 }

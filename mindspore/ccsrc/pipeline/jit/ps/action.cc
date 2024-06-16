@@ -375,6 +375,236 @@ void SetMindIRLoadFlag(const ResourcePtr &resource) {
   }
 }
 
+namespace {
+// Get entry function/class.method name.
+std::string GetFunctionName(const py::object &input) {
+  // Get Cell.construct() or @jit function name.
+  std::string function_name;
+  if (py::hasattr(input, parse::PYTHON_PARSE_METHOD)) {
+    // The class type string format is like: <class 'x.x.xxx'>
+    std::string class_type_name = py::cast<std::string>(py::str(input.get_type()));
+    constexpr auto class_type_prefix_len = 8;  // <class '
+    constexpr auto class_type_suffix_len = 2;  // '>
+    const auto class_type_len = class_type_name.length();
+    // Exclude class prefix and suffix.
+    auto class_name =
+      class_type_name.substr(class_type_prefix_len, class_type_len - class_type_prefix_len - class_type_suffix_len);
+    auto method_name = py::cast<std::string>(input.attr(parse::PYTHON_PARSE_METHOD));
+    function_name = class_name + '.' + method_name;
+  } else if (py::hasattr(input, "__jit_function__") && py::hasattr(input, "__name__")) {
+    // Get @jit decorated function name.
+    auto jit_name = py::cast<std::string>(input.attr("__name__"));
+    function_name = jit_name;
+  } else {
+    MS_EXCEPTION(NotSupportError) << "Entry Python object for JIT is invalid.\ninput: " << py::str(input);
+  }
+  MS_LOG(DEBUG) << "function_name: " << function_name;
+  return function_name;
+}
+
+// Update top graph name.
+void UpdateTopGraphDebugInfo(const FuncGraphPtr &func_graph, const py::object &input) {
+  auto function_name = GetFunctionName(input);
+  // Normalize the name.
+  std::replace(function_name.begin(), function_name.end(), '.', '_');
+  std::replace(function_name.begin(), function_name.end(), '<', '_');
+  std::replace(function_name.begin(), function_name.end(), '>', '_');
+
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(func_graph->debug_info());
+  func_graph->debug_info()->set_name(function_name);
+}
+
+struct FuncArgSpec {
+  AnfNodePtrList args_;
+  ParameterPtr varargs_{nullptr};
+  AnfNodePtrList kwonlyargs_;
+  ParameterPtr varkw_{nullptr};
+};
+
+void MakeDefaultValue(const py::dict &defaults, const std::string &arg_name,
+                      std::vector<std::string> *namelist_for_default_value, std::vector<AnfNodePtr> *default_values) {
+  (void)namelist_for_default_value->emplace_back(arg_name);
+  if (defaults.contains(arg_name)) {
+    AnfNodePtr arg_node = NewValueNode(parse::data_converter::PyDataToValue(defaults[py::str(arg_name)]));
+    (void)default_values->emplace_back(arg_node);
+  } else {
+    (void)default_values->emplace_back(NewValueNode(kNull));
+  }
+}
+
+FuncArgSpec GetFuncArgSpec(const FuncGraphPtr &func_graph, const py::object &input) {
+  auto func = input;
+  if (py::hasattr(input, parse::PYTHON_PARSE_METHOD)) {
+    auto func_name = py::cast<std::string>(input.attr(parse::PYTHON_PARSE_METHOD));
+    func = input.attr(func_name.c_str());
+  }
+  py::tuple obj_tuple =
+    python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, "get_arg_spec_and_default_values", func);
+  auto full_arg_spec = obj_tuple[0];
+  py::dict defaults = obj_tuple[1];
+  std::vector<std::string> namelist_for_default_value;
+  std::vector<AnfNodePtr> default_values;
+  FuncArgSpec arg_spec;
+  if (py::hasattr(full_arg_spec, "args")) {
+    for (const auto &arg : full_arg_spec.attr("args")) {
+      auto arg_name = py::cast<std::string>(arg);
+      if (arg_name == "self") {
+        continue;
+      }
+      auto para = func_graph->add_parameter();
+      para->set_is_top_graph_param(true);
+      para->set_name(arg_name);
+      (void)arg_spec.args_.emplace_back(para);
+      MakeDefaultValue(defaults, arg_name, &namelist_for_default_value, &default_values);
+    }
+  }
+
+  if (py::hasattr(full_arg_spec, "varargs")) {
+    auto varargs = full_arg_spec.attr("varargs");
+    if (!py::isinstance<py::none>(varargs)) {
+      arg_spec.varargs_ = func_graph->add_parameter();
+      arg_spec.varargs_->set_is_top_graph_param(true);
+      auto arg_name = py::cast<std::string>(varargs);
+      arg_spec.varargs_->set_name(arg_name);
+      func_graph->set_has_vararg(true);
+      MakeDefaultValue(defaults, arg_name, &namelist_for_default_value, &default_values);
+    }
+  }
+
+  if (py::hasattr(full_arg_spec, "kwonlyargs")) {
+    for (const auto &arg : full_arg_spec.attr("kwonlyargs")) {
+      auto para = func_graph->add_parameter();
+      para->set_is_top_graph_param(true);
+      auto arg_name = py::cast<std::string>(arg);
+      para->set_name(arg_name);
+      (void)arg_spec.kwonlyargs_.emplace_back(para);
+      MakeDefaultValue(defaults, arg_name, &namelist_for_default_value, &default_values);
+    }
+    func_graph->set_kwonlyargs_count(SizeToInt(arg_spec.kwonlyargs_.size()));
+  }
+
+  if (py::hasattr(full_arg_spec, "varkw")) {
+    auto varkw = full_arg_spec.attr("varkw");
+    if (!py::isinstance<py::none>(varkw)) {
+      arg_spec.varkw_ = func_graph->add_parameter();
+      arg_spec.varkw_->set_is_top_graph_param(true);
+      auto arg_name = py::cast<std::string>(varkw);
+      arg_spec.varkw_->set_name(arg_name);
+      func_graph->set_has_kwarg(true);
+      MakeDefaultValue(defaults, arg_name, &namelist_for_default_value, &default_values);
+    }
+  }
+  func_graph->SetDefaultValues(namelist_for_default_value, default_values);
+  return arg_spec;
+}
+
+void BuildTopGraph(const FuncGraphPtr &func_graph, const py::object &input,
+                   const abstract::AbstractBasePtrList &args_abs) {
+  // Make Resolve for user top graph 'input'.
+  auto function_name = GetFunctionName(input);
+  parse::NameSpacePtr name_space =
+    std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_ENTRY, py::str(function_name), input);
+  parse::SymbolPtr symbol = std::make_shared<parse::Symbol>(function_name);
+  MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
+  ValueNodePtr module_node = NewValueNode(name_space);
+  ValueNodePtr symbol_node = NewValueNode(symbol);
+
+  bool contains_value_any = false;
+  ValuePtrList args_value_list;
+  (void)std::transform(args_abs.cbegin(), args_abs.cend(), std::back_inserter(args_value_list),
+                       [&contains_value_any](const AbstractBasePtr &abs) {
+                         auto res = abs->BuildValue();
+                         if (res->isa<ValueAny>()) {
+                           contains_value_any = true;
+                         }
+                         return res;
+                       });
+  CNodePtr resolve_node;
+  if (contains_value_any) {
+    resolve_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node});
+  } else {
+    ValueNodePtr args_node = NewValueNode<ValuePtrList>(args_value_list);
+    resolve_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node, args_node});
+  }
+
+  auto arg_spec = GetFuncArgSpec(func_graph, input);
+  bool need_unpack = false;
+  if (func_graph->has_vararg() || func_graph->has_kwarg() || func_graph->kwonlyargs_count() > 0) {
+    need_unpack = true;
+  }
+  // Call user top graph in top graph.
+  AnfNodePtrList inputs;
+  if (!need_unpack) {
+    (void)inputs.emplace_back(resolve_node);
+    std::copy(func_graph->parameters().cbegin(), func_graph->parameters().cend(), std::back_inserter(inputs));
+  } else {
+    (void)inputs.emplace_back(NewValueNode(std::make_shared<prim::UnpackCall>(parse::NAMED_METAGRAPH_UNPACKCALL)));
+    (void)inputs.emplace_back(resolve_node);
+    if (!arg_spec.args_.empty()) {
+      AnfNodePtrList args_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+      std::copy(arg_spec.args_.cbegin(), arg_spec.args_.cend(), std::back_inserter(args_inputs));
+      (void)inputs.emplace_back(func_graph->NewCNodeInOrder(args_inputs));
+    }
+    if (arg_spec.varargs_ != nullptr) {
+      (void)inputs.emplace_back(arg_spec.varargs_);
+    }
+    if (arg_spec.varkw_ != nullptr) {
+      (void)inputs.emplace_back(arg_spec.varkw_);
+    }
+    if (!arg_spec.kwonlyargs_.empty()) {
+      AnfNodePtrList key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+      AnfNodePtrList value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+      for (const auto &kwonlyarg : arg_spec.kwonlyargs_) {
+        (void)key_inputs.emplace_back(NewValueNode(kwonlyarg->cast<ParameterPtr>()->name()));
+        (void)value_inputs.emplace_back(kwonlyarg);
+      }
+      auto make_dict =
+        func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimMakeDict), func_graph->NewCNodeInOrder(key_inputs),
+                                     func_graph->NewCNodeInOrder(value_inputs)});
+      (void)inputs.emplace_back(make_dict);
+    }
+  }
+  auto output = func_graph->NewCNodeInOrder(inputs);
+  constexpr auto recursive_level = 2;
+  MS_LOG(DEBUG) << "output: " << output->DebugString(recursive_level);
+  func_graph->set_output(output);
+}
+}  // namespace
+
+bool BootstrapAction(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  TraceManager::OpenParserDebugInfoFlag();
+  if (!resource->source_input()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Bootstrap error";
+  }
+  py::object input = resource->source_input();
+  parse::Parser::InitParserEnvironment(input);
+  parse::Parser::EnableDeferResolve(false);
+  py::module path = py::module::import("os.path");
+  auto dir = path.attr("dirname")(py::globals()["__file__"]).cast<std::string>();
+  python_adapter::set_python_env_flag(true);
+  python_adapter::SetPythonPath(dir);
+
+  // Create fake top graph firstly.
+  auto top_graph = std::make_shared<FuncGraph>();
+  MS_EXCEPTION_IF_NULL(top_graph);
+  auto is_top_graph = (py::hasattr(input, parse::PYTHON_PARSE_METHOD) || py::hasattr(input, "__jit_function__"));
+  if (!is_top_graph) {
+    MS_EXCEPTION(NotSupportError) << "Not supported Python object for JIT entry.\ninput: " << py::str(input);
+  }
+  UpdateTopGraphDebugInfo(top_graph, input);
+  // Call the user top graph with its arguments.
+  BuildTopGraph(top_graph, input, resource->args_abs());
+  // Set the top graph.
+  parse::Parser::UpdateTopFuncGraph(top_graph);
+  resource->set_func_graph(top_graph);
+  FuncGraphManagerPtr manager = resource->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  manager->AddFuncGraph(top_graph);
+  return true;
+}
+
 bool ParseAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   TraceManager::OpenParserDebugInfoFlag();
@@ -383,10 +613,6 @@ bool ParseAction(const ResourcePtr &resource) {
   }
 
   py::object input = resource->source_input();
-  // CellList need convert to FuncGraph in Parse, add flag for input from top graph.
-  if (py::hasattr(input, PYTHON_CELL_AS_LIST)) {
-    py::setattr(input, PYTHON_CELL_LIST_FROM_TOP, py::bool_(true));
-  }
   parse::Parser::InitParserEnvironment(input);
   parse::Parser::EnableDeferResolve(false);
   py::module path = py::module::import("os.path");
@@ -401,7 +627,7 @@ bool ParseAction(const ResourcePtr &resource) {
   parse::DataConverter data_converter(args_value_list, true);
   auto converted_ret = data_converter.ConvertData(input);
   if (converted_ret == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Attribute convert error with type:" << std::string(py::str(input));
+    MS_LOG(INTERNAL_EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(input));
   }
 
   auto top_graph = converted_ret->cast<FuncGraphPtr>();
@@ -453,7 +679,7 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
     }
     auto &cloned_nodes = cloner.cloned_nodes();
     for (auto &fv : fg->parameter_obj_nodes()) {
-      TraceGuard guard(std::make_shared<TraceCombileLikeGraphs>(fv->debug_info()));
+      TraceGuard guard(std::make_shared<TraceCombileLikeGraphs>(fg->output()->debug_info()));
       auto param = base_graph->add_parameter();
       MS_EXCEPTION_IF_NULL(resource->manager());
       auto &node_users = resource->manager()->node_users()[fv];
@@ -471,6 +697,7 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
     MS_LOG(DEBUG) << "Fg0 parameter_obj_nodes size :" << fg->parameter_obj_nodes().size();
 
     for (auto &g : graphs) {
+      TraceGuard guard(std::make_shared<TraceCopy>(fg->output()->debug_info()));
       auto &fvs = g->parameter_obj_nodes();
       std::vector<AnfNodePtr> new_node_inputs;
       new_node_inputs.push_back(NewValueNode(base_graph));
@@ -788,17 +1015,6 @@ bool OrderEnforceAction(const ResourcePtr &resource) {
   return true;
 }
 
-bool MetaUnpackPrepareAction(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  if (resource->manager() == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "MetaUnpackPrepareAction error, manager is null.";
-  }
-  if (resource->func_graph() == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "MetaUnpackPrepareAction error, graph is null.";
-  }
-  return MetaUnpackPreparePass(resource);
-}
-
 // Get abstract of the default value in the given parameter.
 AbstractBasePtr GetDefaultValueAbstract(const ParameterPtr &param) {
   auto value = param->default_param();
@@ -839,7 +1055,7 @@ abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
 }
 }  // namespace
 
-bool AbstractSpecializeAction(const ResourcePtr &resource) {
+bool TypeInferenceAction(const ResourcePtr &resource) {
   EventMessage::PrintCompileStatusMessage("Start performing static analysis and type inference.");
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->func_graph() == nullptr) {
@@ -853,14 +1069,21 @@ bool AbstractSpecializeAction(const ResourcePtr &resource) {
   // Check isolated side-effect nodes.
   engine->set_check_side_effect(true);
   // Analyze
-  (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kAbstractAnalyze, 0, 0, 0);
-  AnalysisResult result =
-    AbstractAnalyze(resource->engine(), resource->func_graph(), GetArgsAbs(resource), resource->is_load());
-  (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kAbstractAnalyze, 0, 0, 1);
+  (void)profiler::CollectHostInfo(kCompiler, kTypeInference, kAbstractAnalyze, 0, 0, 0);
+  AnalysisResult result;
+  {
+    MsProfileStatGuard stat_guard("type_inference.infer");
+    result = AbstractAnalyze(resource->engine(), resource->func_graph(), GetArgsAbs(resource), resource->is_load());
+  }
+  (void)profiler::CollectHostInfo(kCompiler, kTypeInference, kAbstractAnalyze, 0, 0, 1);
   // Specialize
-  (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kProgramSpecialize, 0, 0, 0);
-  FuncGraphPtr new_fg = ProgramSpecialize(resource->engine(), result.context->func_graph(), result.context);
-  (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kProgramSpecialize, 0, 0, 1);
+  (void)profiler::CollectHostInfo(kCompiler, kTypeInference, kProgramSpecialize, 0, 0, 0);
+  FuncGraphPtr new_fg;
+  {
+    MsProfileStatGuard stat_guard("type_inference.specialize");
+    new_fg = ProgramSpecialize(resource->engine(), result.context->func_graph(), result.context);
+  }
+  (void)profiler::CollectHostInfo(kCompiler, kTypeInference, kProgramSpecialize, 0, 0, 1);
   // Update the top func graph with the specialized graph.
   parse::Parser::UpdateTopFuncGraph(new_fg);
   resource->set_func_graph(new_fg);
@@ -1565,56 +1788,55 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
   return true;
 }
 
-static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
+static std::vector<ActionItem> CommonPipeline(bool trace_flag, bool enable_boost_infer) {
   std::vector<ActionItem> actions;
-  // Resolve the python func
-  static const bool enable_resolve_action =
-    (common::GetCompileConfig("GREED_PARSE") != "1") && (common::GetEnv("MS_DEV_BOOST_INFER") != "1");
-
+  const bool boost_infer = common::GetEnv("MS_DEV_BOOST_INFER") != "0" && enable_boost_infer;
   if (!trace_flag) {
-    // Parse the python ast to ANF graph
-    (void)actions.emplace_back(std::make_pair(kParse, ParseAction));
+    if (boost_infer) {
+      // Bootstrap for JIT.
+      (void)actions.emplace_back(std::make_pair(kBootstrap, BootstrapAction));
+    } else {
+      // Parse the python ast to ANF graph
+      (void)actions.emplace_back(std::make_pair(kParse, ParseAction));
 
-    // Resolve the python func
-    if (enable_resolve_action) {
+      // Resolve the python func
       (void)actions.emplace_back(std::make_pair(kSymbolResolve, SymbolResolveAction));
-    }
 
-    // Notice: Temporary solution, to be implemented using Python Rewriter in the future.
-    // Set mixed Precision flag in subgraph.
-    static bool enable_set_mixed_precision_flag = (common::GetCompileConfig("AMP_ENABLE_ALL_FG") == "1");
-    if (enable_set_mixed_precision_flag) {
-      (void)actions.emplace_back(std::make_pair(kSetMixedPrecisionFlag, SetMixedPrecisionAction));
-    }
+      // Notice: Temporary solution, to be implemented using Python Rewriter in the future.
+      // Set mixed Precision flag in subgraph.
+      static bool enable_set_mixed_precision_flag = (common::GetCompileConfig("AMP_ENABLE_ALL_FG") == "1");
+      if (enable_set_mixed_precision_flag) {
+        (void)actions.emplace_back(std::make_pair(kSetMixedPrecisionFlag, SetMixedPrecisionAction));
+      }
 
-    auto parallel_context = parallel::ParallelContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(parallel_context);
-    auto parallel_mode = parallel_context->parallel_mode();
-    const bool is_parallel_mode =
-      parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
-    static const auto combine_like_graphs = (common::GetEnv("COMBINE_LIKE_GRAPHS") == "1");
-    static const auto force_disable_combine = (common::GetEnv("COMBINE_LIKE_GRAPHS") == "0");
-    if (!is_cluster_initialized && (!is_parallel_mode || combine_like_graphs) && !force_disable_combine) {
-      (void)actions.emplace_back(std::make_pair(kCombineLikeGraphs, CombineLikeGraphs));
-    }
+      auto parallel_context = parallel::ParallelContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(parallel_context);
+      auto parallel_mode = parallel_context->parallel_mode();
+      const bool is_parallel_mode =
+        parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
+      static const auto combine_like_graphs = (common::GetCompileConfig("COMBINE_LIKE_GRAPHS") == "1");
+      static const auto force_disable_combine = (common::GetCompileConfig("COMBINE_LIKE_GRAPHS") == "0");
+      if (!is_cluster_initialized && (!is_parallel_mode || combine_like_graphs) && !force_disable_combine) {
+        (void)actions.emplace_back(std::make_pair(kCombineLikeGraphs, CombineLikeGraphs));
+      }
 
-    // Make the reusable cell to be the reusable function graph
-    if (enable_resolve_action) {
+      // Make the reusable cell to be the reusable function graph
       (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
-    }
 
-    (void)actions.emplace_back(std::make_pair(kMetaUnpackPrepare, MetaUnpackPrepareAction));
-    // Pre-Lift the func graphs.
-    (void)actions.emplace_back(std::make_pair(kPreCConv, PreCConvAction));
+      // Pre-Lift the func graphs.
+      (void)actions.emplace_back(std::make_pair(kPreCConv, PreCConvAction));
+    }
   }
   // Evaluate type and shape, and specialize.
-  (void)actions.emplace_back(std::make_pair(kAbstractSpecialize, AbstractSpecializeAction));
+  (void)actions.emplace_back(std::make_pair(kTypeInference, TypeInferenceAction));
 
-  if (!enable_resolve_action) {
-    (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
-  }
   // Auto-monad for side-effects handling.
   (void)actions.emplace_back(std::make_pair(kAutoMonad, AutoMonadAction));
+
+  if (boost_infer) {
+    (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
+  }
+
   // Do data structure simplifications and inline.
   (void)actions.emplace_back(std::make_pair(kInline, OptInlineAction));
 
@@ -1648,7 +1870,7 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag,
   if (IsPhaseLoadFromMindIR(phase)) {
     actions = MindIRPipeline();
   } else if (!resource->EnableCompileCache() || resource->func_graph() == nullptr) {
-    actions = CommonPipeline(trace_flag);
+    actions = CommonPipeline(trace_flag, !py::hasattr(resource->source_input(), "graph_cell"));
 
     // Optimize
     (void)actions.emplace_back(std::make_pair(kOptimize, VmOptimizeAction));

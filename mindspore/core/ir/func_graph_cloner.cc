@@ -122,17 +122,17 @@ void Cloner::CloneCNodeWithoutInputs(const AnfNodePtr &node, const FuncGraphPtr 
     debug_info = node->debug_info();
   }
 
-  if (inline_call_node_debug_info_ != nullptr) {
-    MS_LOG(DEBUG) << "Start move inlined node:" << node->DebugString();
-    debug_info = DebugInfo::UpdateInlineCNodeDebugInfo(inline_call_node_debug_info_, debug_info);
-  }
   auto cloned_debug_info = CloneNodeDebugInfo(debug_info, relation_);
   CNodePtr new_node = std::make_shared<CNode>(std::move(inputs), target, std::move(cloned_debug_info));
-  MS_EXCEPTION_IF_NULL(new_node->debug_info());
-  new_node->debug_info()->set_node(new_node);
-  auto node_debug_info = std::dynamic_pointer_cast<NodeDebugInfo>(debug_info);
-  if (node_debug_info != nullptr) {
-    node_debug_info->set_node(new_node);
+  if (inline_call_node_ != nullptr) {
+    MS_LOG(DEBUG) << "inline_call_node_: " << inline_call_node_ << "/" << inline_call_node_->DebugString()
+                  << ", new_node: " << new_node << "/" << new_node->DebugString();
+    UpdateInlineCNodeDebugInfo(inline_call_node_, new_node);
+  } else {
+    // Synchronize callers' shadow debug infos.
+    auto &new_shadow_debug_infos = new_node->debug_info()->shadow_debug_infos_map();
+    const auto &old_shadow_debug_infos = debug_info->shadow_debug_infos_map();
+    new_shadow_debug_infos.insert(old_shadow_debug_infos.cbegin(), old_shadow_debug_infos.cend());
   }
   new_node->CloneCNodeInfo(old_node);
   // Copy to target graph
@@ -306,6 +306,7 @@ void Cloner::SetFuncGraphInfo(const FuncGraphPtr &func_graph, const FuncGraphPtr
   target_func_graph->set_stub(func_graph->stub());
   target_func_graph->set_indirect(func_graph->indirect());
   target_func_graph->set_python_obj(func_graph->python_obj());
+  target_func_graph->set_has_side_effect_node(func_graph->has_side_effect_node());
 }
 
 void Cloner::CloneParameters(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph) {
@@ -393,36 +394,39 @@ ParameterPtr Cloner::AddParameter(const FuncGraphPtr &func_graph, const AnfNodeP
 }
 
 namespace {
-void FilterMonadInput(const AnfNodeWeakPtrList &old_inputs, AnfNodeWeakPtrList *new_inputs,
+bool FilterMonadInput(const AnfNodeWeakPtrList &old_inputs, AnfNodeWeakPtrList *new_inputs,
                       AnfNodePtr *possible_u_monad, AnfNodePtr *possible_io_monad) {
   AnfNodePtr local_u_monad = nullptr;
   AnfNodePtr local_io_monad = nullptr;
-  (void)std::copy_if(old_inputs.cbegin(), old_inputs.cend(), std::back_inserter(*new_inputs),
-                     [&local_u_monad, &local_io_monad](const auto &weak_input) -> bool {
-                       auto input = weak_input.lock();
-                       MS_EXCEPTION_IF_NULL(input);
-                       if (HasAbstractUMonad(input)) {
-                         if (local_u_monad != nullptr) {
-                           MS_LOG(INTERNAL_EXCEPTION)
-                             << "Cannot have multiple U Monad in one call, first: " << local_u_monad->ToString()
-                             << ", second: " << input->ToString();
-                         }
-                         local_u_monad = input;
-                         return false;
-                       }
-                       if (HasAbstractIOMonad(input)) {
-                         if (local_io_monad != nullptr) {
-                           MS_LOG(INTERNAL_EXCEPTION)
-                             << "Cannot have multiple IO Monad in one call, first: " << local_io_monad->ToString()
-                             << ", second: " << input->ToString();
-                         }
-                         local_io_monad = input;
-                         return false;
-                       }
-                       return true;
-                     });
+  for (const auto &weak_input : old_inputs) {
+    auto input = weak_input.lock();
+    MS_EXCEPTION_IF_NULL(input);
+    // Should be only one U Monad input.
+    if (HasAbstractUMonad(input)) {
+      if (local_u_monad != nullptr) {
+        MS_LOG(ERROR) << "Cannot have multiple U Monad in one call, first: " << local_u_monad->ToString()
+                      << ", second: " << input->ToString();
+        return false;
+      }
+      local_u_monad = input;
+      continue;
+    }
+    // Should be only one IO Monad input.
+    if (HasAbstractIOMonad(input)) {
+      if (local_io_monad != nullptr) {
+        MS_LOG(ERROR) << "Cannot have multiple IO Monad in one call, first: " << local_io_monad->ToString()
+                      << ", second: " << input->ToString();
+        return false;
+      }
+      local_io_monad = input;
+      continue;
+    }
+    // Collect all non-monad inputs.
+    (void)new_inputs->emplace_back(weak_input);
+  }
   *possible_u_monad = local_u_monad;
   *possible_io_monad = local_io_monad;
+  return true;
 }
 
 // After lift, func_graph will not refer any free variable, so DummyContext is proper.
@@ -439,6 +443,25 @@ AnfNodePtr BuildPrimitiveValueNode(const PrimitivePtr &primitive) {
   auto abstract = std::make_shared<abstract::PrimitiveAbstractClosure>(primitive, new_node);
   new_node->set_abstract(abstract);
   return new_node;
+}
+
+void PresetPartialAbstractClosure(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
+                                  const AnfNodeWeakPtrList &weak_inputs, bool preset_abstract) {
+  if (!preset_abstract) {
+    return;
+  }
+  constexpr auto ignore_partial_fg_count = 2;
+  AbstractBasePtrList args_abs_list;
+  (void)std::for_each(weak_inputs.cbegin() + ignore_partial_fg_count, weak_inputs.cend(),
+                      [&args_abs_list](const AnfNodeWeakPtr &weak_node) {
+                        auto node = weak_node.lock();
+                        MS_EXCEPTION_IF_NULL(node);
+                        (void)args_abs_list.emplace_back(node->abstract());
+                      });
+  MS_EXCEPTION_IF_NULL(func_graph->ToAbstract());
+  auto abs = std::make_shared<abstract::PartialAbstractClosure>(
+    func_graph->ToAbstract()->cast<abstract::AbstractFuncAtomPtr>(), args_abs_list, cnode);
+  cnode->set_abstract(abs);
 }
 }  // namespace
 
@@ -508,20 +531,7 @@ CNodePtr Cloner::SetPartialEdges(const FuncGraphPtr &func_graph, const CNodePtr 
                   std::back_inserter(new_inputs));
   auto new_cnode = func_graph->NewCNodeWeak(std::move(new_inputs));
   MS_EXCEPTION_IF_NULL(new_cnode);
-
-  if (preset_abstract()) {
-    AbstractBasePtrList args_abs_list;
-    (void)std::for_each(new_cnode->weak_inputs().cbegin() + ignore_partial_fg_count, new_cnode->weak_inputs().cend(),
-                        [&args_abs_list](const AnfNodeWeakPtr &weak_node) {
-                          auto node = weak_node.lock();
-                          MS_EXCEPTION_IF_NULL(node);
-                          (void)args_abs_list.emplace_back(node->abstract());
-                        });
-    MS_EXCEPTION_IF_NULL(graph->ToAbstract());
-    auto abs = std::make_shared<abstract::PartialAbstractClosure>(
-      graph->ToAbstract()->cast<abstract::AbstractFuncAtomPtr>(), args_abs_list, new_cnode);
-    new_cnode->set_abstract(abs);
-  }
+  PresetPartialAbstractClosure(new_cnode, graph, new_cnode->weak_inputs(), preset_abstract());
 
   MS_LOG(DEBUG) << "Rebuild partial CNode, old_node: " << cnode->DebugString()
                 << ", partial_cnode: " << partial_cnode->DebugString() << ", new_node: " << new_cnode->DebugString()
@@ -647,8 +657,15 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
   AnfNodePtr param_io_monad;
   AnfNodeWeakPtrList inputs;
   AnfNodeWeakPtrList add_params;
-  FilterMonadInput(cnode->weak_inputs(), &inputs, &input_u_monad, &input_io_monad);
-  FilterMonadInput(params, &add_params, &param_u_monad, &param_io_monad);
+  if (!FilterMonadInput(cnode->weak_inputs(), &inputs, &input_u_monad, &input_io_monad)) {
+    constexpr auto recursive_level = 2;
+    MS_LOG(INTERNAL_EXCEPTION) << "Cannot have multiple U Monad or multiple IO Monad in one CNode, cnode: "
+                               << cnode->DebugString(recursive_level);
+  }
+  if (!FilterMonadInput(params, &add_params, &param_u_monad, &param_io_monad)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Cannot have multiple U Monad or multiple IO Monad in Parameters list, func_graph: "
+                               << func_graph->ToString();
+  }
 
   // Append new inputs from free variable.
   constexpr auto caller_first_arg_index = 2;
@@ -686,20 +703,7 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
 
   cnode->set_weak_inputs(inputs);
   OrderParameters(func_graph, inputs, caller_first_arg_index);
-
-  if (preset_abstract()) {
-    AbstractBasePtrList args_abs_list;
-    (void)std::for_each(inputs.begin() + caller_first_arg_index, inputs.end(),
-                        [&args_abs_list](const AnfNodeWeakPtr &weak_node) {
-                          auto node = weak_node.lock();
-                          MS_EXCEPTION_IF_NULL(node);
-                          (void)args_abs_list.emplace_back(node->abstract());
-                        });
-    MS_EXCEPTION_IF_NULL(func_graph->ToAbstract());
-    auto abs = std::make_shared<abstract::PartialAbstractClosure>(
-      func_graph->ToAbstract()->cast<abstract::AbstractFuncAtomPtr>(), args_abs_list, cnode);
-    cnode->set_abstract(abs);
-  }
+  PresetPartialAbstractClosure(cnode, func_graph, inputs, preset_abstract());
   MS_LOG(DEBUG) << "Create new partial CNode: " << cnode->DebugString();
 }
 
@@ -973,15 +977,18 @@ FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes, 
 }
 
 AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
-                       const AnfNodePtrList &func_graph_args, const ScopePtr &scope,
-                       const NodeDebugInfoPtr &call_debug_info) {
+                       const AnfNodePtrList &func_graph_args, const AnfNodePtr &call_node) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(target_func_graph);
   Cloner cloner({}, false);
-  if (scope != nullptr) {
-    cloner.set_scope(scope);
+  if (call_node != nullptr) {
+    auto call_cnode = dyn_cast<CNode>(call_node);
+    MS_EXCEPTION_IF_NULL(call_cnode);
+    if (call_cnode->input(0)->scope() != nullptr) {
+      cloner.set_scope(call_cnode->input(0)->scope());
+    }
   }
-  cloner.set_inline_call_node_debug_info(call_debug_info);
+  cloner.set_inline_call_node(call_node);
   cloner.AddClone(func_graph, target_func_graph, func_graph_args, kInline);
   if (func_graph->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
     target_func_graph->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);

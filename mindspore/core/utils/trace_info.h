@@ -208,8 +208,19 @@ class TraceEquiv : public TraceInfo {
  public:
   explicit TraceEquiv(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceEquiv() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("equiv", "equiv_");
+  MS_DECLARE_TRACE_NAME_SYMBOL(std::string("equiv") + std::to_string(equiv_id_),
+                               std::string("equiv_") + std::to_string(equiv_id_) + "_");
   TraceInfoPtr clone() override { return std::make_shared<TraceEquiv>(*this); }
+
+ private:
+  size_t equiv_id() const {
+    // cppcheck-suppress variableScope
+    static size_t current_id = 0;
+    ++current_id;
+    return current_id;
+  }
+
+  size_t equiv_id_{equiv_id()};
 };
 
 class TraceGradFpropApp : public TraceInfo {

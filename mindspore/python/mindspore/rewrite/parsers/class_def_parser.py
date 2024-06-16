@@ -20,7 +20,7 @@ import sys
 from textwrap import dedent
 from mindspore import log as logger
 from mindspore.nn import Cell
-from mindspore._extends.parse.namespace import CellNamespace
+from mindspore._extends.parse.namespace import ModuleNamespace
 from . import Parser, ParserRegister, reg_parser
 from ..node import NodeManager
 from ..symbol_tree import SymbolTree
@@ -47,7 +47,7 @@ class ClassDefParser(Parser):
     def __init__(self):
         """Constructor"""
         super(ClassDefParser, self).__init__()
-        self._cell_namespace = CellNamespace('mindspore.nn')
+        self._cell_namespace = ModuleNamespace('mindspore.nn')
 
     @staticmethod
     def _save_imports(stree):

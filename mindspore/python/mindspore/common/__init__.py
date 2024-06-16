@@ -30,6 +30,7 @@ from mindspore.common.sparse_tensor import RowTensor, RowTensorInner, SparseTens
 from mindspore.common.mutable import mutable
 from mindspore.common.jit_config import JitConfig
 from mindspore.common.lazy_inline import lazy_inline
+from mindspore.common.no_inline import no_inline
 from mindspore.common.mindir_util import load_mindir, save_mindir
 from mindspore.common.symbol import Symbol
 from mindspore.common.recompute import recompute
@@ -76,6 +77,7 @@ __all__.extend([
     "mutable", "JitConfig",
     "flops_collection",
     "lazy_inline", "load_mindir", "save_mindir",
+    "no_inline",
     "Symbol",
     "recompute"
 ])

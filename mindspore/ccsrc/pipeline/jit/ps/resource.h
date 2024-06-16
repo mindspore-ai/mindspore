@@ -54,15 +54,14 @@ const char kOutput[] = "output";
 const char kPynativeGraphId[] = "graph_id";
 const char kActorInfo[] = "actor_info";
 const char kCompiler[] = "Compiler";
+const char kBootstrap[] = "bootstrap";
 const char kParse[] = "parse";
 const char kSymbolResolve[] = "symbol_resolve";
 const char kSetMixedPrecisionFlag[] = "set_mixed_precision_flag";
 const char kCombineLikeGraphs[] = "combine_like_graphs";
 const char kGraphReusing[] = "graph_reusing";
-const char kMetaUnpackPrepare[] = "meta_unpack_prepare";
 const char kPreCConv[] = "pre_cconv";
-const char kAbstractSpecialize[] = "abstract_specialize";
-const char kPackExpand[] = "pack_expand";
+const char kTypeInference[] = "type_inference";
 const char kAutoMonad[] = "auto_monad";
 const char kInline[] = "inline";
 const char kPreAutoParallel[] = "pre_auto_parallel";
@@ -116,8 +115,8 @@ class Resource : public ResourceBase {
   const abstract::AbstractBasePtrList &args_abs() const { return args_abs_; }
   void set_args_abs(const abstract::AbstractBasePtrList &args_abs) { args_abs_ = args_abs; }
 
-  const std::vector<ValuePtr> &arguments() const { return arguments_; }
-  void set_arguments(const std::vector<ValuePtr> &arguments) { arguments_ = arguments; }
+  const ValuePtrList &arguments() const { return arguments_; }
+  void set_arguments(const ValuePtrList &arguments) { arguments_ = arguments; }
 
   void set_vm_loop(const bool &flag, const int64_t size) {
     vm_loop_flag_ = flag;

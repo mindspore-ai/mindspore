@@ -19,8 +19,10 @@
 #ifndef MINDSPORE_CORE_IR_GRAPH_UTILS_H_
 #define MINDSPORE_CORE_IR_GRAPH_UTILS_H_
 
-#include <vector>
 #include <functional>
+#include <string>
+#include <vector>
+
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "ir/anf.h"
@@ -60,12 +62,12 @@ MS_CORE_API AnfNodePtrList DeepScopedGraphSearchWithFilter(const AnfNodePtr &roo
                                                            const FilterFunc &filter);
 
 MS_CORE_API AnfNodePtrList TopoSort(const AnfNodePtr &root, const SuccFunc &succ = SuccIncoming,
-                                    const IncludeFunc &include = AlwaysInclude);
+                                    const IncludeFunc &include = AlwaysInclude, bool exclude_circle_node = false);
 
 // @deprecated
 // To use 'AnfNodePtrList TopoSort(const AnfNodePtr &, const SuccFunc &, const IncludeFunc &)' instead.
 MS_CORE_API AnfNodePtrList TopoSort(const AnfNodePtr &root, const DeprecatedSuccFunc &deprecated_succ,
-                                    const IncludeFunc &include = AlwaysInclude);
+                                    const IncludeFunc &include = AlwaysInclude, bool exclude_circle_node = false);
 
 MS_CORE_API std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &root);
 std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root,
@@ -73,6 +75,11 @@ std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root,
 
 MS_CORE_API CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &roots, const MatchFunc &match_predicate);
 
+using DumpIRPrividerFunction = void (*)(std::ostringstream &, const FuncGraphPtr &, bool, int, bool);
+MS_CORE_API void SetDumpIRPrivider(const DumpIRPrividerFunction &func);
+using DumpIRStorageFunction = void (*)(const std::string &, const std::string &, const std::string &);
+MS_CORE_API void SetDumpIRStorage(const DumpIRStorageFunction &func);
+constexpr auto kTopoSortCircle = "TopoSortCircle";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_GRAPH_UTILS_H_

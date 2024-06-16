@@ -432,7 +432,7 @@ int RemoveRedundantOpPass::FlattenMakeTuple(const FuncGraphPtr &func_graph, cons
       new_inputs.push_back(inputs[0]);
       bool has_make_tuple = false;
       if (lite::GetFlattenInputsIfMakeTuple(cnode, &new_inputs, &has_make_tuple) != RET_OK) {
-        MS_LOG_WARNING << "Failed to get flatten inputs of cnode, node " << cnode->fullname_with_scope();
+        MS_LOG(WARNING) << "Failed to get flatten inputs of cnode, node " << cnode->fullname_with_scope();
         continue;
       }
       if (has_make_tuple) {
@@ -445,7 +445,7 @@ int RemoveRedundantOpPass::FlattenMakeTuple(const FuncGraphPtr &func_graph, cons
     } else if (opt::CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
       auto real_node = opt::GetTupleGetItemRealInput(cnode);
       if (!real_node) {
-        MS_LOG_WARNING << "Failed to get tuple real input, node " << cnode->fullname_with_scope();
+        MS_LOG(WARNING) << "Failed to get tuple real input, node " << cnode->fullname_with_scope();
         continue;
       }
       auto real_node_as_cnode = real_node->cast<CNodePtr>();

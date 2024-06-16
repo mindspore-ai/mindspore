@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/structure_ops.h"
 #include "utils/label.h"
 #include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #include "utils/symbolic.h"
 #include "utils/compile_config.h"
 #include "ir/primitive.h"
@@ -256,26 +257,42 @@ void PrintTupleNodeUsedFlags(std::ostringstream &buffer, const abstract::Abstrac
   if (sequence_abs == nullptr || sequence_abs->sequence_nodes() == nullptr || sequence_abs->sequence_nodes()->empty()) {
     return;
   }
-
-  buffer << ", sequence_nodes={";
-  for (size_t i = 0; i < sequence_abs->sequence_nodes()->size(); ++i) {
-    auto node = (*sequence_abs->sequence_nodes())[i].lock();
-    if (node == nullptr) {
-      MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
-      buffer << "node={<freed node>}";
-    } else {
-      buffer << "node={" << node->DebugString();
+  static const bool dump_dde_detail = (common::GetCompileConfig("DUMP_IR_DDE_DETAIL") == "1");
+  if (dump_dde_detail) {
+    buffer << ", sequence_nodes={";
+    for (size_t i = 0; i < sequence_abs->sequence_nodes()->size(); ++i) {
+      auto node = (*sequence_abs->sequence_nodes())[i].lock();
+      if (node == nullptr) {
+        MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
+        buffer << "node={<freed node>}";
+      } else {
+        buffer << "node={" << node << "/" << node->DebugString();
+        auto flags = GetSequenceNodeElementsUseFlags(node);
+        if (flags != nullptr) {
+          buffer << ", elements_use_flags: {ptr: " << flags << ", value: " << (*flags) << "}";
+        }
+        buffer << "}";
+      }
+      if (i != sequence_abs->sequence_nodes()->size() - 1) {
+        buffer << ", ";
+      }
+    }
+    buffer << "}";
+  } else {
+    buffer << ", elements_use_flags={";
+    for (size_t i = 0; i < sequence_abs->sequence_nodes()->size(); ++i) {
+      auto node = (*sequence_abs->sequence_nodes())[i].lock();
+      if (node == nullptr) {
+        continue;
+      }
       auto flags = GetSequenceNodeElementsUseFlags(node);
       if (flags != nullptr) {
-        buffer << ", elements_use_flags: {ptr: " << flags << ", value: " << (*flags) << "}";
+        buffer << (*flags);
+        break;
       }
-      buffer << "}";
     }
-    if (i != sequence_abs->sequence_nodes()->size() - 1) {
-      buffer << ", ";
-    }
+    buffer << "}";
   }
-  buffer << "}";
 }
 
 void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
@@ -781,8 +798,27 @@ void DumpShape(const AnfNodePtr &node, const FuncGraphPtr &sub_graph, const std:
 void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::shared_ptr<SubGraphIRInfo> &gsub) {
   auto dump_debug_info = debug_info;
   std::list<DebugInfoPtr> need_dump_debug_infos;
+  const auto &shadow_debug_infos_map = debug_info->shadow_debug_infos_map();
+  HashSet<DebugInfoPtr> all_shadowed_debug_infos;
   while (dump_debug_info != nullptr) {
     need_dump_debug_infos.push_front(dump_debug_info);
+    auto iter = shadow_debug_infos_map.find(dump_debug_info);
+    if (iter != shadow_debug_infos_map.end()) {
+      DebugInfoPtr shadowed_debug_info = iter->first;
+      DebugInfoPtr shadow_debug_info = iter->second;
+      MS_LOG(DEBUG) << "Insert debug info, shadow_debug_info: " << shadow_debug_info << "/" << shadow_debug_info->name()
+                    << "/" << shadow_debug_info->debug_name() << "/"
+                    << trace::GetDebugInfoStr(shadow_debug_info, "", kSourceLineTipNextLine, true) << ", shadow_trace: "
+                    << (shadow_debug_info->trace_info() != nullptr ? shadow_debug_info->trace_info()->name() : "none")
+                    << ", shadowed_debug_info: " << shadowed_debug_info << "/" << shadowed_debug_info->name() << "/"
+                    << shadowed_debug_info->debug_name() << "/"
+                    << trace::GetDebugInfoStr(shadowed_debug_info, "", kSourceLineTipNextLine, true)
+                    << ", shadowed_trace: "
+                    << (shadowed_debug_info->trace_info() != nullptr ? shadowed_debug_info->trace_info()->name()
+                                                                     : "none");
+      need_dump_debug_infos.push_front(shadow_debug_info);
+      all_shadowed_debug_infos.emplace(shadowed_debug_info);
+    }
     if (dump_debug_info->trace_info() == nullptr) {
       break;
     }
@@ -791,10 +827,16 @@ void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::share
   HashSet<std::string> visited_locations;
   for (const auto &cur_debug_info : need_dump_debug_infos) {
     if (cur_debug_info->location() != nullptr) {
-      auto prefix = cur_debug_info->inlined() ? "      # inlined:" : "      # ";
       auto debug_info_str = trace::GetDebugInfoStr(cur_debug_info, "", kSourceLineTipDiscard);
       if (visited_locations.find(debug_info_str) == visited_locations.cend()) {
-        gsub->buffer << prefix << debug_info_str << "\n";
+        constexpr auto prefix = "      # ";
+        gsub->buffer << prefix << debug_info_str;
+        if (all_shadowed_debug_infos.count(cur_debug_info) != 0) {
+          constexpr auto shared_code_line_hint =
+            "<~~This line of code can be shared by multiple nodes, and may be duplicated./";
+          gsub->buffer << shared_code_line_hint;
+        }
+        gsub->buffer << "\n";
         (void)visited_locations.insert(debug_info_str);
       }
     }
@@ -909,6 +951,14 @@ void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const Ordere
     return;
   }
 
+  // Print for TopoSort circle indicator only.
+  if (node->has_user_data(kTopoSortCircle)) {
+    auto num = node->user_data<size_t>(kTopoSortCircle);
+    MS_EXCEPTION_IF_NULL(num);
+    gsub->buffer << "\n#------------------------> " << (*num) << "\n";
+  }
+
+  // Print node's name.
   if (node != sub_graph->get_return()) {
     gsub->buffer << "  %" << gsub->local_var << "(" << node->ToString() << ")"
                  << " = ";
@@ -1256,20 +1306,12 @@ void DumpNodeCounting(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRI
   oss << std::endl;
 }
 
-#ifdef ENABLE_DUMP_IR
-void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name, LocDumpMode dump_location,
-            const std::string &target_file) {
-  GetEnvDumpIrLineLevel(&dump_location);
-  if (graph == nullptr) {
-    return;
-  }
-  auto path = GetSaveGraphsPathName(Common::AddId(filename, ".ir"));
-  bool need_dump = Common::CheckIfPrintIrPass(filename);
-  if (!need_dump) {
-    return;
-  }
+void SaveIRFile(const std::string &filename, const std::string &str, const std::string &target_file) {
+  std::string path;
   if (!target_file.empty()) {
     path = target_file;
+  } else {
+    path = GetSaveGraphsPathName(filename);
   }
   auto realpath = Common::CreatePrefixPath(path);
   if (!realpath.has_value()) {
@@ -1279,41 +1321,19 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
 
   ChangeFileMode(realpath.value(), S_IWUSR);
   std::ofstream fout(realpath.value());
-  std::ostringstream oss;
-  std::ostringstream buffer;
   if (!fout.is_open()) {
     MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
     return;
   }
 
-  auto nodes = TopoSort(graph->get_return(), SuccDeeperSimple, AlwaysInclude);
-  OrderedMap<AnfNodePtr, int32_t> para_map;
-  // Dump global info
-  int32_t total_para = DumpParams(graph, oss, &para_map);
-
-  OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> sub_graphs;
-  // Dump ir in each sub graph
-  DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
-
-  DumpGlobalInfoEntry(graph, buffer, sub_graphs.size());
-  buffer << oss.str();
-  // Add counting information for nodes
-  buffer << std::endl;
-  DumpNodeCounting(&sub_graphs, buffer, nodes);
-  // Output global info
-  fout << buffer.str() << std::endl;
-  buffer.str(std::string());
-  buffer.clear();
-
-  // Output each sub graph
-  DumpSubgraph(&sub_graphs, graph, &para_map, buffer);
-  fout << buffer.str();
-
+  // Output all content.
+  fout << str;
   fout.close();
   // Set file mode to read only by user
   ChangeFileMode(realpath.value(), S_IRUSR);
 }
 
+#ifdef ENABLE_DUMP_IR
 nlohmann::ordered_json ToJson(const CNodePtr &para_node, const int64_t global_rank_id,
                               std::unordered_map<std::string, std::vector<uint32_t>> group_map) {
   nlohmann::ordered_json args;
@@ -1431,36 +1451,57 @@ void DumpIRHead(const FuncGraphPtr &top_func, std::ostringstream &ofs) {
   ofs << std::endl;
 }
 
-void DumpIR(std::ostringstream &graph_buffer, const FuncGraphPtr &graph, bool dump_full_name,
-            LocDumpMode dump_location) {
-  GetEnvDumpIrLineLevel(&dump_location);
+void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name, LocDumpMode dump_location,
+            const std::string &target_file) {
   if (graph == nullptr) {
     return;
   }
-  std::ostringstream oss;
-  auto nodes = TopoSort(graph->get_return(), SuccDeeperSimple, AlwaysInclude);
+  // Id auto increment in AddId(), and CheckIfPrintIrPass() would check id, so we call AddId() in advance.
+  auto filename_with_id = Common::AddId(filename, ".ir");
+  bool need_dump = Common::CheckIfPrintIrPass(filename);
+  if (!need_dump) {
+    return;
+  }
+
+  std::ostringstream out_oss;
+  DumpIR(out_oss, graph, dump_full_name, dump_location, false);
+  SaveIRFile(filename_with_id, out_oss.str(), target_file);
+}
+
+void DumpIR(std::ostringstream &out_oss, const FuncGraphPtr &graph, bool dump_full_name, int dump_location,
+            bool avoid_circle) {
+  if (graph == nullptr) {
+    return;
+  }
+  auto nodes =
+    TopoSort(graph->get_return(), avoid_circle ? SuccIncoming : SuccDeeperSimple, AlwaysInclude, avoid_circle);
+
   OrderedMap<AnfNodePtr, int32_t> para_map;
-  int32_t total_para = DumpParams(graph, oss, &para_map);
-
-  graph_buffer << "\n";
-
+  std::ostringstream param_oss;
+  int32_t total_para = DumpParams(graph, param_oss, &para_map);
   OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> sub_graphs;
-  // Dump ir in each sub graph
-  DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
+  // Check If update dump_location option by compile config
+  GetEnvDumpIrLineLevel(reinterpret_cast<LocDumpMode *>(&dump_location));
+  // Output ir in each sub graph
+  DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, static_cast<LocDumpMode>(dump_location));
 
-  // Dump global info
-  DumpGlobalInfoEntry(graph, graph_buffer, sub_graphs.size());
-  graph_buffer << oss.str();
+  if (!avoid_circle) {
+    // Output global info
+    DumpGlobalInfoEntry(graph, out_oss, sub_graphs.size());
+    // Output parameters info
+    out_oss << param_oss.str();
+  }
+
   // Add counting information for nodes
-  graph_buffer << std::endl;
-  DumpNodeCounting(&sub_graphs, graph_buffer, nodes);
+  out_oss << std::endl;
+  DumpNodeCounting(&sub_graphs, out_oss, nodes);
+
   // Output each sub graph
-  DumpSubgraph(&sub_graphs, graph, &para_map, graph_buffer);
+  DumpSubgraph(&sub_graphs, graph, &para_map, out_oss);
 }
 
 void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name,
                   LocDumpMode dump_location) {
-  GetEnvDumpIrLineLevel(&dump_location);
   if (graph == nullptr) {
     return;
   }
@@ -1487,6 +1528,7 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
   OrderedMap<AnfNodePtr, int32_t> para_map;
   int32_t total_para = DumpParams(graph, buffer, &para_map);
   OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> sub_graphs;
+  GetEnvDumpIrLineLevel(&dump_location);
   // Dump ir in each sub graph
   DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
   // Add counting information for nodes
@@ -1507,9 +1549,8 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
   // Set file mode to read only by user
   ChangeFileMode(realpath.value(), S_IRUSR);
 }
-
 #else
-void DumpIR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode, const std::string &) {
+void DumpIR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode, const std::string &, bool) {
   static bool already_printed = false;
   if (already_printed) {
     return;
@@ -1519,7 +1560,7 @@ void DumpIR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode, const 
                   << "please recompile source to enable it. See help of building script.";
 }
 
-void DumpIR(std::ostringstream &, const FuncGraphPtr &, bool, LocDumpMode) {
+void DumpIR(std::ostringstream &, const FuncGraphPtr &, bool, int, bool) {
   static bool already_printed = false;
   if (already_printed) {
     return;
@@ -1739,5 +1780,25 @@ void ExportIR(const std::string &, const FuncGraphPtr &) {
   MS_LOG(WARNING) << "The functionality of dumping function graph IR is disabled, "
                   << "please recompile to enable it. See help of building script.";
 }
+#endif
+
+#ifdef ENABLE_DUMP_IR
+// Register DumpIR Privider.
+struct DumpIRPrividerRegister {
+  DumpIRPrividerRegister() noexcept {
+    DumpIRPrividerFunction func = &DumpIR;
+    SetDumpIRPrivider(func);
+  }
+  ~DumpIRPrividerRegister() = default;
+} dump_ir_provider_register;
+
+// Register DumpIR Storage.
+struct DumpIRStorageRegister {
+  DumpIRStorageRegister() noexcept {
+    DumpIRStorageFunction func = &SaveIRFile;
+    SetDumpIRStorage(func);
+  }
+  ~DumpIRStorageRegister() = default;
+} dump_ir_storage_register;
 #endif
 }  // namespace mindspore
