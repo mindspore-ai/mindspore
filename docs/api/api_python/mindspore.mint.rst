@@ -1,19 +1,10 @@
 mindspore.mint
 ===============
 
-mindspore.mint
+Tensor
 ---------------
-Array操作
-^^^^^^^^^^^^^^^^
 
-.. mscnplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.index_select
-
-Tensor创建
+创建运算
 ^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
@@ -23,9 +14,21 @@ Tensor创建
 
     mindspore.mint.eye
 
+索引、切分、连接、突变运算
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.index_select
+
+数学运算
+-----------------
 
 逐元素运算
-^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
     :toctree: mint
@@ -126,5 +129,4 @@ Dropout函数
 
 mindspore.mint.optim
 ---------------------
-
 

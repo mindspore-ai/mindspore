@@ -16,7 +16,6 @@ mindspore.ops.elu
         \end{array}\right.
 
     其中， :math:`x` 表示输入Tensor `input_x` ， :math:`\alpha` 表示 `alpha` 参数， `alpha` 决定ELU的平滑度。
-    ELU相关图参见 `ELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_elu.svg>`_  。
 
     ELU函数图：
 

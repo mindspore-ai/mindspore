@@ -1,20 +1,11 @@
 mindspore.mint
 ===============
 
-mindspore.mint
+Tensor
 ---------------
-Array Operation
-^^^^^^^^^^^^^^^
 
-.. msplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.index_select
-
-Tensor Creation
-^^^^^^^^^^^^^^^
+Creation Operations
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatwarnautosummary::
     :toctree: mint
@@ -23,12 +14,21 @@ Tensor Creation
 
     mindspore.mint.eye
 
-Element-wise Operation
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Indexing, Slicing, Joining, Mutating Operations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
-Element-wise Operation
-^^^^^^^^^^^^^^^^^^^^^^^^^
+    mindspore.mint.index_select
+
+Math Operations
+-----------------
+
+Pointwise Operations
+^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatwarnautosummary::
     :toctree: mint
@@ -129,5 +129,4 @@ Vision functions
 
 mindspore.mint.optim
 ---------------------
-
 

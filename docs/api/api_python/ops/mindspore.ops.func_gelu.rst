@@ -20,8 +20,6 @@ mindspore.ops.gelu
     .. math::
         GELU(x_i) = 0.5 * x_i * (1 + \tanh(\sqrt(2 / \pi) * (x_i + 0.044715 * x_i^3)))
 
-    GELU相关图参见 `GELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_gelu.png>`_ 。
-
     GELU函数图：
 
     .. image:: ../images/GELU.png
