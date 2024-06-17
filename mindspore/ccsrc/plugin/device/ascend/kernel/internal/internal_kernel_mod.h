@@ -61,8 +61,16 @@ static std::map<std::string, int> ms_op_key_to_internel_op_id = {
   {"FusedMatMulElemUnary", internal::OpId::MatMul},
   {"MatMul", internal::OpId::MatMul},
   {"QuantBatchMatmul", internal::OpId::MatMul},
-  {"MatmulFfn", internal::OpId::MatmulQkv},
-  {"MatmulQkv", internal::OpId::MatmulQkv}};
+  {"MatmulSplitOut2", internal::OpId::MatmulQkv},
+  {"MatmulSplitOut3", internal::OpId::MatmulQkv},
+  {"MatmulBiasSplitOut2", internal::OpId::MatmulQkv},
+  {"MatmulBiasSplitOut3", internal::OpId::MatmulQkv},
+  {"MatmulBiasSplitSiluOut2", internal::OpId::MatmulQkv},
+  {"MatmulSplitSiluOut2", internal::OpId::MatmulQkv},
+  {"QuantBatchMatmulSplitOut2", internal::OpId::MatmulQkv},
+  {"QuantBatchMatmulSplitOut3", internal::OpId::MatmulQkv},
+  {"QuantBatchMatmulSplitSiluOut2", internal::OpId::MatmulQkv},
+};
 
 class InternalKernelMod : public KernelMod {
  public:

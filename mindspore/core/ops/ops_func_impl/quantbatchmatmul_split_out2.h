@@ -14,27 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_MATMUL_FFN_H_
-#define MINDSPORE_CORE_OPS_MATMUL_FFN_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_QUANTBATCHMATMUL_SPLIT_OUT2_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_QUANTBATCHMATMUL_SPLIT_OUT2_H_
 #include <memory>
 #include <vector>
-
-#include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMatmulFfn = "MatmulFfn";
-/// \brief Computes the attentions of Feed Forward with hidden states
-class MIND_API MatmulFfn : public BaseOperator {
+class MIND_API QuantbatchmatmulSplitOut2FuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(MatmulFfn);
-  /// \brief Constructor.
-  MatmulFfn() : BaseOperator(kNameMatmulFfn) {
-    InitIOName({"hidden_states", "weight_gate", "weight_up"}, {"output_gate", "output_up"});
-  }
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
+
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_MATMUL_FFN_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_QUANTBATCHMATMUL_SPLIT_OUT2_H_
