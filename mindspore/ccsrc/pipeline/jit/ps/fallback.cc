@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -437,6 +437,36 @@ bool ContainsSequenceAnyType(const AbstractBasePtr &abs) {
     }
   }
   return abs->isa<abstract::AbstractAny>();
+}
+
+bool SequenceAllElementsIsScalar(const AbstractBasePtr &abs) {
+  if (abs == nullptr || !abs->isa<abstract::AbstractSequence>()) {
+    return false;
+  }
+  auto seq_abs = abs->cast_ptr<abstract::AbstractSequence>();
+  MS_EXCEPTION_IF_NULL(seq_abs);
+  if (seq_abs->dynamic_len()) {
+    auto element_abs = seq_abs->dynamic_len_element_abs();
+    if (element_abs == nullptr || !element_abs->isa<abstract::AbstractScalar>()) {
+      return false;
+    }
+    auto arg_type = element_abs->BuildType();
+    MS_EXCEPTION_IF_NULL(arg_type);
+    return arg_type->isa<Number>();
+  }
+  const auto &elements = seq_abs->elements();
+  for (size_t item_index = 0; item_index < elements.size(); ++item_index) {
+    const auto &item_abs = elements[item_index];
+    if (item_abs == nullptr || !item_abs->isa<abstract::AbstractScalar>()) {
+      return false;
+    }
+    auto item_arg_type = item_abs->BuildType();
+    MS_EXCEPTION_IF_NULL(item_arg_type);
+    if (!item_arg_type->isa<Number>()) {
+      return false;
+    }
+  }
+  return true;
 }
 
 py::object GeneratePyObj(const abstract::AbstractBasePtr &abs) {
