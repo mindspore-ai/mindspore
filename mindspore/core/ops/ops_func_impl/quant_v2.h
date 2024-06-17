@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_QUANT_V2_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_QUANT_V2_H_
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADD_LAYERNORM_V2_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADD_LAYERNORM_V2_H_
-
-#include <map>
-#include <memory>
-#include <string>
 #include <vector>
-#include "mindapi/base/types.h"
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API AddLayerNormV2FuncImpl : public OpFuncImpl {
+class MIND_API QuantV2FuncImpl : public OpFuncImpl {
  public:
+  QuantV2FuncImpl() = default;
+  ~QuantV2FuncImpl() = default;
+
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
-  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADD_LAYERNORM_V2_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_QUANT_V2_H_

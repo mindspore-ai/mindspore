@@ -664,6 +664,10 @@ class OpAdapter : public BaseOpAdapter {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
 
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<AscendQuantRoundMode> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
   static std::string ConvertAny(const ValuePtr &value, const AnyTraits<FASInputLayoutMode> anyTraitsGE) {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
@@ -842,6 +846,11 @@ class OpAdapter : public BaseOpAdapter {
   }
 
   static std::string GetAttrType(const AnyTraits<GEDataFormat> anyTraitsGE) {
+    std::string ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<AscendQuantRoundMode> anyTraitsGE) {
     std::string ret{};
     return ret;
   }

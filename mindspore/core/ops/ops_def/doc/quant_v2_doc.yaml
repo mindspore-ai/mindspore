@@ -1,0 +1,46 @@
+quant_v2:
+    description: |
+        Returns the quantized value of input x.
+
+        If `sqrt_mode` is False:
+
+        .. math::
+            y = round(scale * x + offset)
+
+        If `sqrt_mode` is True:
+
+        .. math::
+            y = round(scale * x * scale + offset)
+
+        Inputs:
+            x (Tensor) : Input tensor. 
+                Its data type must be mindspore.float16, mindspore.float32 or mindspore.bfloat32.
+            scale (Tensor) : Scaling ratio tensor in quantization. Its type is the same as x.
+                Its shape in the last axis must equal to the shape of x in the last axis,
+                and shapes of other dimensions must be 1.
+            offset (Tensor) : Offset tensor in quantization. Its type is the same as x.
+                Its shape in the last axis must equal to the shape of x in the last axis,
+                and shapes of other dimensions must be 1.
+            sqrt_mode (bool) : Specifies whether to perform square root on `scale`. Only support: ``False``.
+            rounding_mode (str) : Specifies the way to round. Only support: "ROUND".
+            dst_type (Type) : Specifies the output type. Only support ``int8``.
+
+        Returns:
+            Tensor, the quantized output tensor of type mindspore.int8. Its shape is the same as x.
+
+        Raises:
+            TypeError: If input, scale or offset is not a Tensor.
+            ValueError: The shape of scale or offset in the last axis is different from the shape of x in the last axis.
+
+        Supported Platforms:
+            ``Ascend``
+        
+        Examples:
+            >>> from mindspore import Tensor
+            >>> from mindspore.ops.operations import _infer_ops as infer_ops
+            >>> x = Tensor([100.0, 150.0], mstype.float32)
+            >>> scale = Tensor([80.0, 40.0], mstype.float32)
+            >>> offset = Tensor([0.0, 2.0], mstype.float32)
+            >>> quant = infer_ops.QuantV2()
+            >>> y = quant(x, scale, offset, False, "Round", mstype.int8)
+            [127 127]

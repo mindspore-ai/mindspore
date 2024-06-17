@@ -1,0 +1,28 @@
+#operator quant_v2
+quant_v2:
+    args:
+        x:
+            dtype: tensor
+        scale:
+            dtype: tensor
+        offset:
+            dtype: tensor
+        sqrt_mode:
+            dtype: bool
+            default: False
+        rounding_mode:
+            dtype: int
+            default: "'ROUND'"
+            arg_handler: str_to_enum
+        dst_type:
+            dtype: TypeId
+            default: mstype.int8
+            arg_handler: dtype_to_type_id
+    returns:
+        y:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: QuantV2Ascend

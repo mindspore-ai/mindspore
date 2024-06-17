@@ -137,6 +137,8 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEPadMod>);
 
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEReduction>);
 
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<AscendQuantRoundMode>);
+
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<FASInputLayoutMode>);
 
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<FFNActivationMode>);
