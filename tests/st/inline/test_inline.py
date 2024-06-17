@@ -18,6 +18,7 @@ from mindspore.nn import Cell
 from mindspore.common import Tensor, Parameter
 from mindspore import context, ops, lazy_inline, nn, no_inline, jit
 
+
 class Grad(Cell):
     def __init__(self, net):
         super(Grad, self).__init__()
@@ -27,6 +28,7 @@ class Grad(Cell):
     def construct(self, x):
         grad_net = self.grad(self.net)
         return grad_net(x)
+
 
 class TestBlock(Cell):
     def __init__(self):
@@ -39,8 +41,10 @@ class TestBlock(Cell):
         x = x - 9
         return x
 
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
 def test_nest():
     """
     Feature: Nest reusing cell with lazy inline.
@@ -125,14 +129,17 @@ def test_nest():
     net = Grad(net)
     net(x)
 
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
 def test_no_inline():
     """
     Feature: make reusing function with no inline.
     Description: reusing function with no inline.
     Expectation: Run successfully.
     """
+
     @no_inline
     def no_inline_fun(val):
         x = val * 3 + 2
@@ -143,5 +150,6 @@ def test_no_inline():
         for _ in range(100):
             val = no_inline_fun(val)
         return val
+
     x = Tensor(1)
     x = call_no_inline_fun(x)
