@@ -79,8 +79,8 @@ class GroupedMatmulNet(Cell):
         return out
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.platform_x86_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_emptytensor_case0(mode):
@@ -129,8 +129,8 @@ def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_emptytensor_case0(mode)
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.platform_x86_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_case1(mode):
@@ -173,8 +173,8 @@ def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_case1(mode):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.platform_x86_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x6d_w2d_splititem0_grouptypeneg1_none_case2(mode):
@@ -217,8 +217,8 @@ def test_grouped_matmul_x6d_w2d_splititem0_grouptypeneg1_none_case2(mode):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.platform_x86_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x2d_w2d_b1d_splititem0_grouptypeneg1_none_case3(mode):
@@ -264,8 +264,8 @@ def test_grouped_matmul_x2d_w2d_b1d_splititem0_grouptypeneg1_none_case3(mode):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.platform_x86_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x2d_w3d_splititem3_grouptype0_none_case4(mode):
@@ -304,8 +304,8 @@ def test_grouped_matmul_x2d_w3d_splititem3_grouptype0_none_case4(mode):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.platform_x86_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x2d_w3d_b2d_splititem3_grouptype0_none_case5(mode):
@@ -348,8 +348,8 @@ def test_grouped_matmul_x2d_w3d_b2d_splititem3_grouptype0_none_case5(mode):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.platform_x86_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_a16w8_case6(mode):

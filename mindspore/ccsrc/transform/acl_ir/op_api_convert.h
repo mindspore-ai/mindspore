@@ -463,7 +463,7 @@ inline aclBoolArray *ConvertType(const std::vector<uint8_t> &bool_array) {
 
 inline aclTensorList *ConvertType(const std::vector<tensor::BaseTensorPtr> &tensor_list) {
   if (tensor_list.empty()) {
-    MS_LOG(ERROR) << "tensor list is empty!";
+    MS_LOG(DEBUG) << "tensor list is empty!";
   }
   static const auto aclCreateTensorList = GET_OP_API_FUNC(aclCreateTensorList);
   std::vector<aclTensor *> tmp;
@@ -485,7 +485,7 @@ inline aclTensor *ConvertType(const std::optional<tensor::TensorPtr> &value) {
 
 inline aclTensorList *ConvertType(const std::vector<tensor::TensorPtr> &tensor_list) {
   if (tensor_list.empty()) {
-    MS_LOG(ERROR) << "tensor list is empty!";
+    MS_LOG(DEBUG) << "tensor list is empty!";
   }
   static const auto aclCreateTensorList = GET_OP_API_FUNC(aclCreateTensorList);
   std::vector<aclTensor *> tmp;
@@ -496,7 +496,7 @@ inline aclTensorList *ConvertType(const std::vector<tensor::TensorPtr> &tensor_l
 
 inline aclTensorList *ConvertType(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
   if (tensor_list.empty()) {
-    MS_LOG(ERROR) << "tensor list is empty!";
+    MS_LOG(DEBUG) << "tensor list is empty!";
   }
   static const auto aclCreateTensorList = GET_OP_API_FUNC(aclCreateTensorList);
   std::vector<aclTensor *> tmp;
