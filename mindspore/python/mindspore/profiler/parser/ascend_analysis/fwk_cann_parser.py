@@ -30,6 +30,8 @@ from mindspore.profiler.parser.ascend_analysis.constant import Constant
 class FwkCANNParser:
     """The top-level trace view parser."""
 
+    _time_padding_diff = 1000 # ns
+
     def __init__(self, source_path: str, msprof_data: List, rank_id: int):
         source_path = validate_and_normalize_path(source_path)
         ProfilerInfoParser.init_source_path(source_path)
@@ -123,7 +125,7 @@ class FwkCANNParser:
         right = len(op_list) if (right is None or right < 0) else right
         # The data in range [left, right) is considered.
         while right > left:
-            if op_list[left].ts > ts:
+            if op_list[left].ts - FwkCANNParser._time_padding_diff > ts:
                 return left, False
             if op_list[left].end_us < ts:
                 left += 1
