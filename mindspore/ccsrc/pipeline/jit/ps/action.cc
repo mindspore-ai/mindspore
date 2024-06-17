@@ -299,6 +299,20 @@ abstract::AnalysisResult AbstractAnalyze(const ValuePtr &func, const abstract::A
   return AbstractAnalyze(engine, infer_graph, args_abs, false, clear);
 }
 
+abstract::AnalysisResult AbstractAnalyzeWithResourceClean(const ValuePtr &func,
+                                                          const abstract::AbstractBasePtrList &args_abs) {
+  auto infer_graph = func->isa<FuncGraph>() ? func->cast<FuncGraphPtr>() : ConstructGraphForEval(func, args_abs);
+
+  ResourcePtr resource = std::make_shared<Resource>();
+  resource->set_func_graph(infer_graph);
+
+  auto engine = resource->engine();
+  auto res = AbstractAnalyze(engine, infer_graph, args_abs, false, true);
+
+  GraphExecutorPy::GetInstance()->CleanCompileRes(resource);
+  return res;
+}
+
 FuncGraphPtr ProgramSpecialize(const abstract::AnalysisEnginePtr &engine, const FuncGraphPtr &func_graph,
                                const abstract::AnalysisContextPtr &context) {
   MS_EXCEPTION_IF_NULL(engine);
