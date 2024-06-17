@@ -336,6 +336,8 @@ class MindGraphBuilder : public GraphBuilder {
   std::vector<py::object> GetNewArgs(CallNode *call_node, AObject *vobj = nullptr);
   bool AllConstantArgs(const std::vector<py::object> &args, const py::object &callable_info, CallNode *call_node);
 
+  py::object HandleGetShapeOfDynamicLengthTensor(const py::object &object);
+
   mindspore::FuncGraphBuilderPtr fg_builder_{nullptr};
   std::string co_name_;
   AObject *HandleMultiOp(const Instr &instr, const std::vector<ValueNode *> &p, bool is_compare);

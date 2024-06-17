@@ -52,9 +52,8 @@ bool ShouldFallBackInRuntime(const PrimitivePtr &prim) {
 }
 
 bool IsValidScalar(const AbstractBasePtr &abs) {
-  auto build_value = abs->BuildValue();
-  return build_value->isa<StringImm>() || build_value->isa<BoolImm>() || build_value->isa<IntegerImm>() ||
-         build_value->isa<FloatImm>();
+  auto build_type = abs->BuildType();
+  return build_type->isa<String>() || build_type->isa<Number>();
 }
 
 bool Mutable(const py::object &obj, const ValuePtr &value = nullptr) {
