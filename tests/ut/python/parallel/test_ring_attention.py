@@ -79,7 +79,7 @@ def compile_net(net, *inputs):
 
 class Net(nn.Cell):
     def __init__(self, head_num, keep_prob=1.0, input_layout="BSH", sparse_mode=0, use_mqa=False,
-                 with_real_shift=False, dp=None, mp=None, sp=1, enable_ring_attention=True):
+                 with_real_shift=False, dp=None, mp=None, sp=1, enable_ring_attention=True, enable_ud_mask=False):
         super(Net, self).__init__()
         self.reshape = P.Reshape()
         self.drop_gen_mask = P.DropoutGenMask()
@@ -107,6 +107,9 @@ class Net(nn.Cell):
                 stra = ((dp, sp, mp, 1), (dp, sp, kv_head_stra, 1), (dp, sp, kv_head_stra, 1))
             else:
                 raise ValueError(f"input_layout is invalid.")
+            if enable_ud_mask:
+                # if using user define mask
+                stra += ((sp, 1),)
             if with_real_shift:
                 stra += ((dp, mp, sp, 1),)
             if keep_prob < 1.0:
@@ -150,4 +153,25 @@ def test_ring_attention_semi_auto_parallel(input_layout):
     query, key, value, real_shift, attn_mask = generate_inputs(B, N, S, D,
                                                                input_layout)
     net = Net(N, input_layout=input_layout, dp=dp, mp=mp, sp=sp, enable_ring_attention=True)
+    compile_net(net, query, key, value, real_shift, attn_mask)
+
+@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+def test_ring_attention_user_define_mask_semi_auto_parallel(input_layout):
+    """
+    Features: test Ring Attention with user define mask
+    Description: semi_auto_parallel with strategy
+    Expectation: compile success
+    """
+
+    set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    dp = 1
+    mp = 1
+    sp = 4
+    B, N, S, D = 8, 16, 1024, 128
+    query, key, value, real_shift, attn_mask = generate_inputs(B, N, S, D,
+                                                               input_layout)
+    np.random.seed(42)
+    attn_mask = Tensor(np.random.uniform(0, 2, size=(S, S)).astype(np.uint8), dtype=ms.uint8)
+    net = Net(N, input_layout=input_layout, dp=dp, mp=mp, sp=sp, enable_ring_attention=True, enable_ud_mask=True)
     compile_net(net, query, key, value, real_shift, attn_mask)

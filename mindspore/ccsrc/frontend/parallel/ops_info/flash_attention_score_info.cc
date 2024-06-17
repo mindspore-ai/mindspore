@@ -194,11 +194,9 @@ Status FlashAttentionScoreInfo::InitAttnMaskStrategies() {
   if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
     auto attn_mask_shape = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
     int64_t s1_split_num_attn_mask = is_attn_mask_compressed_ ? 1 : s1_split_num_;
-    int64_t s2_split_num_attn_mask = enable_ring_attention_ ? s1_split_num_attn_mask : 1;
     if (attn_mask_shape.size() == kSizeTwo) {
-      // attn_mask_shape: (S1, S2)
-      expect_strategies_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {s1_split_num_attn_mask,
-                                                                         s2_split_num_attn_mask};
+      // attn_mask_shape: (S1, 1)
+      expect_strategies_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {s1_split_num_attn_mask, 1};
     } else if (attn_mask_shape.size() == kSizeFour) {
       // attn_mask_shape: (B, N1, S1, S2) or (B, 1, S1, S2)
       auto attn_mask_n1_split_num = attn_mask_have_n1_dim_ ? n1_split_num_ : 1;
@@ -694,7 +692,7 @@ Status FlashAttentionScoreInfo::GetAttrs() {
       MS_LOG(ERROR) << "Ring attention currently only supports keep prob 1.0";
     }
     if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
-      MS_LOG(ERROR) << "Ring attention do not need input attn mask";
+      MS_LOG(INFO) << "Ring attention applies the input attn mask";
     }
   }
 
@@ -792,15 +790,25 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
          "set the strategy.";
     return FAILED;
   }
+  return CheckStrategyExpected(strategy);
+}
 
+Status FlashAttentionScoreInfo::CheckStrategyExpected(const StrategyPtr &strategy) {
+  auto strategies = strategy->GetInputDim();
   if (InitExpectedStrategies() != SUCCESS) {
     return FAILED;
   }
+
   if (strategies != expect_strategies_) {
     MS_LOG(ERROR) << name_ << ": The input strategy must be " << expect_strategies_ << ", but got " << strategies;
+    if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
+      Dimensions attn_stra = strategies.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
+      if (attn_stra[attn_stra.size() - kIndex1] != kIndex1) {
+        MS_LOG(ERROR) << name_ << ": The last dim of the attn_mask should not be split.";
+      }
+    }
     return FAILED;
   }
-
   return SUCCESS;
 }
 
