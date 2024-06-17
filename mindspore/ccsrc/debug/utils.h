@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_UTILS_H
 #define MINDSPORE_UTILS_H
 
-#include <set>
+#include <vector>
 #include <string>
 #include <unordered_map>
 namespace mindspore {
@@ -41,7 +41,7 @@ class CsvHeaderUtil {
     static CsvHeaderUtil instance;
     return instance;
   }
-  void SetStatCsvHeader(std::set<std::string> headers) {
+  void SetStatCsvHeader(std::vector<std::string> headers) {
     csv_header.assign(csvHeaderComm);
     for (const auto &str : headers) {
       // JsonDumpParser guarantee headers are valid.

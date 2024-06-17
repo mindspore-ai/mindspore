@@ -61,7 +61,7 @@ constexpr auto kDumpOutputOnly = 2;
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 constexpr auto kBracketsOffset = 1;
 constexpr auto kRegexPrefixLength = 11;
-const std::set<std::string> kDefaultStatisticCategory = {"max", "min", "l2norm"};
+const std::vector<std::string> kDefaultStatisticCategory = {"max", "min", "l2norm"};
 const std::set<std::string> kDeviceStatisticCategory = {"max", "min", "avg", "l2norm"};
 const std::set<std::string> kHostStatisticCategory = {"max",
                                                       "min",
@@ -222,7 +222,7 @@ void DumpJsonParser::ParseStatisticCategory(const nlohmann::json &content) {
             device_unsupported_items += statistic_item + ", ";
           }
         } else {
-          statistic_category_.insert(statistic_item);
+          statistic_category_.push_back(statistic_item);
           MS_LOG(INFO) << "The item: " << statistic_item
                        << " is a valid statistic category, it will be computed on device.";
         }
@@ -239,7 +239,7 @@ void DumpJsonParser::ParseStatisticCategory(const nlohmann::json &content) {
         if (rt_find == kHostStatisticCategory.end()) {
           unsupported_items += statistic_item + ", ";
         } else {
-          statistic_category_.insert(statistic_item);
+          statistic_category_.push_back(statistic_item);
           MS_LOG(INFO) << "The item: " << statistic_item
                        << " is a valid statistic category, it will be computed on host.";
         }

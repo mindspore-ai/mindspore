@@ -52,7 +52,7 @@ string TensorToString(TensorPtr tensor) {
 
 namespace datadump {
 
-TensorStat GetKernelTensorStats(const DumpTensorInfo &tensor_info, const std::set<string> &stat_name_list) {
+TensorStat GetKernelTensorStats(const DumpTensorInfo &tensor_info, const std::vector<string> &stat_name_list) {
   auto tensor = tensor_info.tensor;
   if (tensor == nullptr) {
     MS_LOG(WARNING) << "Tensor is nullptr, returning empty tensor statistics.";
@@ -66,7 +66,7 @@ TensorStat GetKernelTensorStats(const DumpTensorInfo &tensor_info, const std::se
   string data_type = TypeIdToString(tensor->dtype_id(), true);
   MS_LOG(DEBUG) << "Tensor shape is " << shape << ", size is " << data_size << ", type is " << data_type;
   auto is_calc_stat = [&stat_name_list](std::string name) {
-    return (stat_name_list.find(name) != stat_name_list.end());
+    return (std::find(stat_name_list.begin(), stat_name_list.end(), name) != stat_name_list.end());
   };
   std::string max_value =
     is_calc_stat("max") ? TensorToString(CalStatistic("max", tensor_info.device_context, tensor)) : "0";
@@ -93,9 +93,9 @@ void DumpKernelTensorStats(const DeviceContext *device_context, vector<device::D
   string node_type = common::AnfAlgo::GetCNodeName(node);
   MS_LOG(DEBUG) << "Start calc " << node_name << " node statistics.";
   const string csv_header = CsvHeaderUtil::GetInstance().GetStatCsvHeader();
-  const std::set<string> &stat_name_list = DumpJsonParser::GetInstance().statistic_category();
+  const std::vector<string> &stat_name_list = DumpJsonParser::GetInstance().statistic_category();
   uint32_t rank_id = GetRankId();
-  string filename = GenerateDumpPath(0, rank_id) + "/" + kCsvFileName;
+  string filename = GenerateDumpPath(graph_id, rank_id) + "/" + kCsvFileName;
   CsvWriter csv;
   if (!csv.OpenFile(filename, csv_header)) {
     MS_LOG(WARNING) << "filename is " << filename;

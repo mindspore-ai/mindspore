@@ -245,13 +245,8 @@ DebugServices::TensorStat DebugServices::GetTensorStatistics(const std::shared_p
   std::string md5 = "";
   MSLogTime msTime;
 #ifndef OFFLINE_DBG_MODE
-  bool need_md5 = false;
   auto statistic_category = DumpJsonParser::GetInstance().statistic_category();
-  auto find_md5 = statistic_category.find("md5");
-  if (find_md5 != statistic_category.end()) {
-    need_md5 = true;
-  }
-  if (need_md5) {
+  if (std::find(statistic_category.begin(), statistic_category.end(), "md5") != statistic_category.end()) {
     msTime.Start();
     char md5str[33];
     auto ret = memset_s(md5str, sizeof(md5str), '\0', sizeof(md5str));
