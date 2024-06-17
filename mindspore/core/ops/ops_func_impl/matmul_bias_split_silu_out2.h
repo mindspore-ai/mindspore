@@ -14,27 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_MATMUL_QKV_H_
-#define MINDSPORE_CORE_OPS_MATMUL_QKV_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_MATMUL_BIAS_SPLIT_SILU_OUT2_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_MATMUL_BIAS_SPLIT_SILU_OUT2_H_
 #include <memory>
 #include <vector>
-
-#include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMatmulQkv = "MatmulQkv";
-/// \brief Computes the attentions of Q, K, V with hidden states
-class MIND_API MatmulQkv : public BaseOperator {
+class MIND_API MatmulBiasSplitSiluOut2FuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(MatmulQkv);
-  /// \brief Constructor.
-  MatmulQkv() : BaseOperator(kNameMatmulQkv) {
-    InitIOName({"hidden_states", "weight_q", "weight_k", "weight_v"}, {"output_q", "output_k", "output_v"});
-  }
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
+
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_MATMUL_QKV_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_MATMUL_BIAS_SPLIT_SILU_OUT2_H_

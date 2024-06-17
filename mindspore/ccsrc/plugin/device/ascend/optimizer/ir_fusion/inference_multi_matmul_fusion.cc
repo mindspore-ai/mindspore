@@ -84,9 +84,9 @@ bool InferenceMultiMatmulFusion::Run(const FuncGraphPtr &graph) {
     SortWeightNodeList(&user_matmuls);
     AnfNodePtrList getitems;
     if (user_matmuls.size() == weight_num_two) {
-      Process("MatmulFfn", node, user_matmuls, &getitems);
+      Process("MatmulSplitOut2", node, user_matmuls, &getitems);
     } else if (user_matmuls.size() == weight_num_three) {
-      Process("MatmulQkv", node, user_matmuls, &getitems);
+      Process("MatmulSplitOut3", node, user_matmuls, &getitems);
     }
     if (!getitems.empty()) {
       for (size_t i = 0; i < getitems.size(); i++) {

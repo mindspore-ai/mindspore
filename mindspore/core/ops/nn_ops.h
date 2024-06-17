@@ -176,8 +176,6 @@ GVAR_DEF(PrimitivePtr, kPrimChannelShuffle, std::make_shared<Primitive>(kChannel
 GVAR_DEF(PrimitivePtr, kPrimPromptFlashAttention, std::make_shared<Primitive>(kFlashPromptFlashAttentionOpName));
 GVAR_DEF(PrimitivePtr, kPrimIncreFlashAttention, std::make_shared<Primitive>(kFlashIncreFlashAttentionOpName));
 GVAR_DEF(PrimitivePtr, kPrimRNNTLoss, std::make_shared<Primitive>(kRNNTLossOpName));
-GVAR_DEF(PrimitivePtr, kPrimMatmulQkv, std::make_shared<Primitive>(kMatmulQkvOpName));
-GVAR_DEF(PrimitivePtr, kPrimMatmulFfn, std::make_shared<Primitive>(kMatmulFfnOpName));
 GVAR_DEF(PrimitivePtr, kPrimAllFinite, std::make_shared<Primitive>(kAllFiniteOpName));
 GVAR_DEF(PrimitivePtr, kPrimEmbeddingTableExport, std::make_shared<Primitive>("EmbeddingTableExport"));
 GVAR_DEF(PrimitivePtr, kPrimEmbeddingTableImport, std::make_shared<Primitive>("EmbeddingTableImport"));

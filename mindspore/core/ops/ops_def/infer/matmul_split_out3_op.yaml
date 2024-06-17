@@ -1,0 +1,20 @@
+#operator MatmulSplitOut3
+matmul_split_out3:
+  args:
+    input:
+      dtype: tensor
+    weight:
+      dtype: tensor
+    reshape:
+      dtype: tuple[int]
+  class:
+    disable: True
+  function:
+    disable: True
+  returns:
+    output0:
+      dtype: tensor
+    output1:
+      dtype: tensor
+    output2:
+      dtype: tensor
