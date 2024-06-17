@@ -34,7 +34,7 @@ from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache
 from mindspore.common.api import _generate_branch_control_input, _convert_python_data, _get_args_for_run_predict
-from mindspore.common.api import process_dyn_args, generate_dyn_compile_args
+from mindspore.common.api import _process_dyn_args, _generate_dyn_compile_args, _check_compile_consistency
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations import Cast
@@ -965,7 +965,7 @@ class Cell(Cell_):
             if context._get_mode() == context.PYNATIVE_MODE:
                 _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
         else:
-            self._dynamic_shape_inputs = process_dyn_args(self.construct, kwargs)
+            self._dynamic_shape_inputs = _process_dyn_args(self.construct, kwargs)
 
     def get_inputs(self):
         """
@@ -1000,6 +1000,27 @@ class Cell(Cell_):
 
         return self._dynamic_shape_inputs
 
+    def _check_parameter_consistency(self, set_inputs, net_inputs):
+        """Check consistency for parameter."""
+        for index, (set_input, net_input) in enumerate(zip(set_inputs, net_inputs)):
+            if isinstance(set_input, Tensor):
+                if not isinstance(net_input, Tensor):
+                    raise TypeError(
+                        f"For 'set_inputs' and tuple(list) in 'set_inputs',the type of {index + 1}th input must "
+                        f"be Tensor, but got {type(net_input)}.")
+                is_param_set_input = isinstance(set_input, Parameter)
+                is_param_net_input = isinstance(net_input, Parameter)
+                if (is_param_set_input and not is_param_net_input) or (is_param_net_input and not is_param_set_input):
+                    raise TypeError(
+                        f"For 'set_inputs' and tuple(list) in 'set_inputs', the {index + 1}th input must be the same "
+                        f"as expected, but got expected: {type(set_input)} and input: {type(net_input)}.")
+            elif isinstance(set_input, (tuple, list)):
+                if not isinstance(net_input, (tuple, list)):
+                    raise TypeError(
+                        f"The {index + 1}th input type of 'set_inputs' or tuple(list) in "
+                        f"'set_inputs' must be tuple or list, but got {type(net_input)}.")
+                self._check_parameter_consistency(set_input, net_input)
+
     def _get_compile_args(self, args):
         """Get compile arguments."""
         # this is used only for test
@@ -1015,8 +1036,9 @@ class Cell(Cell_):
 
         if self._dynamic_shape_inputs is not None:
             logger.debug("Compiled Graph with dynamic shape")
-            compile_args = generate_dyn_compile_args(args, self._dynamic_shape_inputs)
-            self._check_compile_dynamic_shape(compile_args, args)
+            compile_args = _generate_dyn_compile_args(args, self._dynamic_shape_inputs)
+            _check_compile_consistency(compile_args, args, "set_inputs")
+            self._check_parameter_consistency(compile_args, args)
             Validator.check_symbolic_shape(compile_args, args)
             self.saved_dynamic_shape = compile_args
             return compile_args
@@ -2461,65 +2483,6 @@ class Cell(Cell_):
         all_ops = self._get_prims_recursively()
         for op in all_ops:
             op.place(role, rank_id)
-
-    def _check_dynamic_tensor(self, set_input, net_input, index):
-        """
-        Check if tensor is correctly set for dynamic shape.
-
-        Args:
-            set_input (Tensor): Tensor set for dynamic shape.
-            net_input (Tensor): Input tensor of the Cell object.
-            index (int): Tensor index for set inputs.
-        """
-        if not isinstance(net_input, Tensor):
-            raise TypeError(
-                f"For 'set_inputs' and tuple(list) in 'set_inputs',the type of {index + 1}th input must be Tensor, "
-                f"but got {type(net_input)}.")
-        is_param_set_input = isinstance(set_input, Parameter)
-        is_param_net_input = isinstance(net_input, Parameter)
-        if (is_param_set_input and not is_param_net_input) or (is_param_net_input and not is_param_set_input):
-            raise TypeError(
-                f"For 'set_inputs' and tuple(list) in 'set_inputs', the {index + 1}th input must be the same "
-                f"as network's input, but got 'set_inputs': {type(set_input)} and network's input: {type(net_input)}.")
-        if set_input.dtype != net_input.dtype:
-            raise TypeError(
-                f"For 'set_inputs' and tuple(list) in 'set_inputs',the dtype of {index + 1}th input must be the same "
-                f"as network's input, but got 'set_inputs': {set_input.dtype} and network's input: {net_input.dtype}.")
-        if -2 not in set_input.shape:
-            if net_input.dim() != 0 and set_input.dim() != net_input.dim():
-                raise ValueError(
-                    f"For 'set_inputs' and tuple(list) in 'set_inputs',the dims of {index + 1}th input must be the "
-                    f"same as network's input, but got 'set_inputs': {set_input.dim()} and network's input: "
-                    f"{net_input.dim()}.")
-            if not all([ele1 in (-1, ele2) for ele1, ele2 in zip(set_input.shape, net_input.shape)]):
-                raise ValueError(
-                    f"For 'set_inputs' and tuple(list) in 'set_inputs',the shape of {index + 1}th input must be the "
-                    f"same as network's input, but got 'set_inputs': {set_input.shape} and network's input: "
-                    f"{net_input.shape}.")
-
-    def _check_compile_dynamic_shape(self, set_inputs, net_inputs):
-        """
-        Check if graph has been compiled with dynamic shape.
-
-        Args:
-            net_inputs (tuple): Inputs of the Cell object.
-        """
-        if not getattr(set_inputs, '__ms_dynamic_len__', False):
-            set_inputs_len = len(set_inputs)
-            net_inputs_len = len(net_inputs)
-            if set_inputs_len != net_inputs_len:
-                raise ValueError(f"The length of 'set_inputs' or tuple(list) in 'set_inputs' "
-                                 f"must be equal to network's inputs, but got 'set_inputs': "
-                                 f"{set_inputs_len} and network's input: {net_inputs_len}.")
-        for index, (set_input, net_input) in enumerate(zip(set_inputs, net_inputs)):
-            if isinstance(set_input, Tensor):
-                self._check_dynamic_tensor(set_input, net_input, index)
-            elif isinstance(set_input, (tuple, list)):
-                if not isinstance(net_input, (tuple, list)):
-                    raise TypeError(
-                        f"The {index + 1}th input type of 'set_inputs' or tuple(list) in "
-                        f"'set_inputs' must be tuple or list, but got {type(net_input)}.")
-                self._check_compile_dynamic_shape(set_input, net_input)
 
     def _mixed_precision_cast(self, inputs):
         mixed_type = self.get_mixed_precision_type()
