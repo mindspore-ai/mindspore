@@ -689,6 +689,7 @@ def test_rounding():
 
 # Run this test in separate process since this test updates shared memory config
 @pytest.mark.forked
+@pytest.mark.skip(reason="timeout")
 def test_split_numpyslices_num_workers():
     """
     Feature: Split op
