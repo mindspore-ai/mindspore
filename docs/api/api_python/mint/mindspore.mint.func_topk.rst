@@ -1,0 +1,36 @@
+mindspore.mint.topk
+===================
+
+.. py:function:: mindspore.mint.topk(input, k, dim=None, largest=True, sorted=True)
+
+    沿给定维度查找 `k` 个最大或最小元素和对应的索引。
+
+    .. warning::
+        - 如果 `sorted` 设置为False, 由于在不同平台上存在内存排布以及遍历方式不同等问题，`sorted` 设置为False时计算结果的显示顺序可能会出现不一致的情况。
+
+    如果 `input` 是一维Tensor，则查找Tensor中 `k` 个最大或最小元素，并将其值和索引输出为Tensor。 `values[k]` 是 `input` 中 `k` 个最大元素，其索引是 `indices[k]` 。
+
+    对于多维矩阵，计算给定维度中最大或最小的 `k` 个元素，因此：
+
+    .. math::
+        values.shape = indices.shape
+
+    如果两个比较的元素相同，则优先返回索引值较小的元素。
+
+    参数：
+        - **input** (Tensor) - 需计算的输入。
+        - **k** (int) - 指定计算最大或最小元素的数量。
+        - **dim** (int, 可选) - 需要排序的维度。默认值： ``-1`` 。
+        - **largest** (bool, 可选) - 如果为 ``False`` ，则会返回前k个最小值。默认值： ``True`` 。
+        - **sorted** (bool, 可选) - 如果为 ``True`` ，则获取的元素将根据设置的largest对值进行升序或降序排序。如果为 ``False`` ，则不对获取的元素进行排序。默认值： ``True`` 。
+
+    返回：
+        由 `values` 和 `indices` 组成的tuple。
+
+        - **values** (Tensor) - 给定维度的每个切片中的 `k` 最大元素或最小元素。
+        - **indices** (Tensor) - `k` 最大元素的对应索引。
+
+    异常：
+        - **TypeError** - 如果 `sorted` 不是bool。
+        - **TypeError** - 如果 `input` 不是Tensor。
+        - **TypeError** - 如果 `k` 不是int。
