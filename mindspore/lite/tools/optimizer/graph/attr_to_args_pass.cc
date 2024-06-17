@@ -188,6 +188,20 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
    {
      "axis",
    }},
+  {"FusedInferAttentionScore",
+   {
+     "num_heads",
+     "scale_value",
+     "pre_tokens",
+     "next_tokens",
+     "input_layout",
+     "num_key_value_heads",
+     "sparse_mode",
+     "inner_precise",
+     "block_size",
+     "antiquant_mode",
+     "softmax_lse_flag",
+   }},
   {"GridSampler3D",
    {
      "interpolation_mode",
