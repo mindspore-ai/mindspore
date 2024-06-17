@@ -307,7 +307,8 @@ def test_reduce():
     network = WithLossCell(network, loss_fn)
     network = TrainOneStepCell(network, optimizer)
     if get_rank() == desk_rank:
-        _cell_graph_executor.compile(network, input_tensor, label_tensor)
+        _, result = _cell_graph_executor.compile(network, input_tensor, label_tensor)
+        assert result
 
 
 def test_collective_gather():
@@ -329,7 +330,8 @@ def test_collective_gather():
     network = WithLossCell(network, loss_fn)
     network = TrainOneStepCell(network, optimizer)
     if get_rank() == desk_rank:
-        _cell_graph_executor.compile(network, input_tensor, label_tensor)
+        _, result = _cell_graph_executor.compile(network, input_tensor, label_tensor)
+        assert result
 
 
 def test_collective_scatter():
@@ -350,4 +352,5 @@ def test_collective_scatter():
                          momentum=0.9)
     network = WithLossCell(network, loss_fn)
     network = TrainOneStepCell(network, optimizer)
-    _cell_graph_executor.compile(network, input_tensor, label_tensor)
+    _, result = _cell_graph_executor.compile(network, input_tensor, label_tensor)
+    assert result
