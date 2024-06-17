@@ -415,7 +415,6 @@ std::vector<std::tuple<std::string, int, std::string>> GetPythonStack() {
     py::list extracted_stack = traceback_module.attr("extract_stack")();
     for (size_t i = 0; i < extracted_stack.size(); ++i) {
       py::tuple frame_info = extracted_stack[i].cast<py::tuple>();
-
       if (frame_info.size() < min_frame_info_size) {
         MS_LOG(ERROR) << "frame_info size is invalid, frame_info size:" << frame_info.size();
         continue;
