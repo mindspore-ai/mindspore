@@ -698,7 +698,8 @@ def TEST_OP(op, inputs_seq, yaml_name, *, disable_input_check=False, disable_yam
         >>> from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
         >>> np_data1 = np.random.rand(2, 3, 4).astype(np.float32)
         >>> in1 = Tensor(np_data1)
-        >>> np_data2 = np.random.rand(2, 3, 4).astype(np.float32)
+        >>> np_data2 = np.random.rand(2, 3, 4, 5).astype(np.float32)
+        >>> in2 = Tensor(np_data2)
         >>> tuple_in1 = (0,)
         >>> tuple_in2 = (1,)
         >>> # Testing Primitive
