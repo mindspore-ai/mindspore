@@ -18,12 +18,11 @@ import mindspore as ms
 from mindspore import ops, nn, Tensor, Symbol
 from mindspore.ops import functional as F
 from mindspore.common.api import jit
+from tests.mark_utils import arg_mark
 import pytest
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_symbol_graphmode_setinputs():
     """
     Feature: Symbol
@@ -63,9 +62,7 @@ def test_symbol_graphmode_setinputs():
     assert net(x, x).shape == (16, 8, 8)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_symbol_pynativemode_setinputs():
     """
     Feature: Symbol
@@ -97,9 +94,7 @@ def test_symbol_pynativemode_setinputs():
     assert net(x, x).shape == (16, 8)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_symbol_pynativemode_signature():
     """
     Feature: Symbol

@@ -20,7 +20,7 @@ import mindspore.ops as ops
 import mindspore.context as context
 from mindspore import Tensor, Parameter
 from mindspore.nn import Cell
-from tests.st.ops.graph_kernel.gk_utils import AssertGKEnable
+from tests.st.graph_kernel.gk_utils import AssertGKEnable
 
 
 class Net(Cell):

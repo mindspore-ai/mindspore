@@ -20,7 +20,7 @@ from mindspore import Tensor, nn, JitConfig
 import mindspore as ms
 import mindspore.ops as ops
 import mindspore.ops.operations as P
-from tests.st.ops.graph_kernel.gk_utils import AssertGKEnable
+from tests.st.graph_kernel.gk_utils import AssertGKEnable
 
 ascend_grad_overflow = P.IsFinite()
 
