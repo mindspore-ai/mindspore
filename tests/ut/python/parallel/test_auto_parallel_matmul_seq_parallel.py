@@ -66,6 +66,89 @@ def test_auto_parallel_two_matmul_seq_parallel():
     """
 
     context.set_auto_parallel_context(dataset_strategy="full_batch")
+    context.set_auto_parallel_context(device_num=64, global_rank=0)
+    x = Tensor(np.ones([640, 1280]), dtype=ms.float32)
+    y = Tensor(np.ones([1280, 1280]), dtype=ms.float32)
+    b = Tensor(np.ones([640, 1280]), dtype=ms.float32)
+    p = Tensor(np.ones([1280, 1280]), dtype=ms.float32)
+    q = Tensor(np.ones([640, 1280]), dtype=ms.float32)
+
+    net = TwoMatMulNet()
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="recursive_programming")
+    _set_rp_matmul_mem_coef(1024)
+
+    net.set_train()
+    _cell_graph_executor.compile(net, x, y, b, p, q, phase='train')
+    strategies = _cell_graph_executor._get_shard_strategy(net)
+    for (k, v) in strategies.items():
+        if re.search('Add-op0', k) is not None:
+            assert v == [[64, 1], [64, 1]]
+
+
+def test_auto_parallel_two_matmul_reshape1_seq_parallel():
+    """
+    Feature: test auto parallel sequence parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+    context.set_auto_parallel_context(device_num=64, global_rank=0)
+    x = Tensor(np.ones([640, 1280]), dtype=ms.float32)
+    y = Tensor(np.ones([1280, 1280]), dtype=ms.float32)
+    b = Tensor(np.ones([640, 1280]), dtype=ms.float32)
+    p = Tensor(np.ones([1280, 1280]), dtype=ms.float32)
+    r = (64, 10, 1280)
+    q = Tensor(np.ones([64, 10, 1280]), dtype=ms.float32)
+
+    net = TwoMatMulReshapeNet()
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="recursive_programming")
+    _set_rp_matmul_mem_coef(1024)
+
+    net.set_train()
+    _cell_graph_executor.compile(net, x, y, b, p, r, q, phase='train')
+    strategies = _cell_graph_executor._get_shard_strategy(net)
+    for (k, v) in strategies.items():
+        if re.search('Add-op0', k) is not None:
+            assert v == [[64, 1, 1], [64, 1, 1]]
+
+
+def test_auto_parallel_two_matmul_reshape2_seq_parallel():
+    """
+    Feature: test auto parallel sequence parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+    context.set_auto_parallel_context(device_num=64, global_rank=0)
+    x = Tensor(np.ones([640, 1280]), dtype=ms.float32)
+    y = Tensor(np.ones([1280, 1280]), dtype=ms.float32)
+    b = Tensor(np.ones([640, 1280]), dtype=ms.float32)
+    p = Tensor(np.ones([1280, 1280]), dtype=ms.float32)
+    r = (10, 64, 1280)
+    q = Tensor(np.ones([10, 64, 1280]), dtype=ms.float32)
+
+    net = TwoMatMulReshapeNet()
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="recursive_programming")
+    _set_rp_matmul_mem_coef(1024)
+
+    net.set_train()
+    _cell_graph_executor.compile(net, x, y, b, p, r, q, phase='train')
+    strategies = _cell_graph_executor._get_shard_strategy(net)
+    for (k, v) in strategies.items():
+        if re.search('Add-op0', k) is not None:
+            assert v == [[1, 64, 1], [1, 64, 1]]
+
+
+def test_auto_parallel_two_matmul_no_seq_parallel():
+    """
+    Feature: test auto parallel sequence parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     x = Tensor(np.ones([160, 320]), dtype=ms.float32)
     y = Tensor(np.ones([320, 320]), dtype=ms.float32)
@@ -82,60 +165,4 @@ def test_auto_parallel_two_matmul_seq_parallel():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('Add-op0', k) is not None:
-            assert v == [[8, 1], [8, 1]]
-
-
-def test_auto_parallel_two_matmul_reshape1_seq_parallel():
-    """
-    Feature: test auto parallel sequence parallel
-    Description: auto parallel
-    Expectation: compile success
-    """
-
-    context.set_auto_parallel_context(dataset_strategy="full_batch")
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
-    x = Tensor(np.ones([160, 320]), dtype=ms.float32)
-    y = Tensor(np.ones([320, 320]), dtype=ms.float32)
-    b = Tensor(np.ones([160, 320]), dtype=ms.float32)
-    p = Tensor(np.ones([320, 320]), dtype=ms.float32)
-    r = (16, 10, 320)
-    q = Tensor(np.ones([16, 10, 320]), dtype=ms.float32)
-
-    net = TwoMatMulReshapeNet()
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="recursive_programming")
-    _set_rp_matmul_mem_coef(1024)
-
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y, b, p, r, q, phase='train')
-    strategies = _cell_graph_executor._get_shard_strategy(net)
-    for (k, v) in strategies.items():
-        if re.search('Add-op0', k) is not None:
-            assert v == [[8, 1, 1], [8, 1, 1]]
-
-
-def test_auto_parallel_two_matmul_reshape2_seq_parallel():
-    """
-    Feature: test auto parallel sequence parallel
-    Description: auto parallel
-    Expectation: compile success
-    """
-
-    context.set_auto_parallel_context(dataset_strategy="full_batch")
-    context.set_auto_parallel_context(device_num=8, global_rank=0)
-    x = Tensor(np.ones([160, 320]), dtype=ms.float32)
-    y = Tensor(np.ones([320, 320]), dtype=ms.float32)
-    b = Tensor(np.ones([160, 320]), dtype=ms.float32)
-    p = Tensor(np.ones([320, 320]), dtype=ms.float32)
-    r = (10, 16, 320)
-    q = Tensor(np.ones([10, 16, 320]), dtype=ms.float32)
-
-    net = TwoMatMulReshapeNet()
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="recursive_programming")
-    _set_rp_matmul_mem_coef(1024)
-
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y, b, p, r, q, phase='train')
-    strategies = _cell_graph_executor._get_shard_strategy(net)
-    for (k, v) in strategies.items():
-        if re.search('Add-op0', k) is not None:
-            assert v == [[1, 8, 1], [1, 8, 1]]
+            assert v == [[1, 1], [1, 1]]

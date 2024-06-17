@@ -104,7 +104,6 @@ bool HasRecompute(const FuncGraphPtr &root) {
       continue;
     }
     auto cnode = forward_node->cast<CNodePtr>();
-
     if (IsValueNode<FuncGraph>(cnode->input(0))) {
       auto fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
       if (fg->has_flag(FUNC_GRAPH_RECOMPUTE_GRAD_GRAPH) || fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)) {
@@ -132,15 +131,21 @@ bool HasRecompute(const FuncGraphPtr &root) {
 }
 
 // Get DP and MP dimensions
-std::tuple<size_t, size_t> GetDPAndMP(const std::shared_ptr<Graph> &graph) {
+std::tuple<size_t, size_t> GetDPAndMP(const std::shared_ptr<Graph> &graph, const size_t stage) {
   std::map<std::string, int> strategy_occurrence;
 
   size_t dp = 0;
   size_t mp = 0;
   const unsigned int kTargetLength = 2;
-  for (auto &n : graph->nodes) {
-    if (n.apply.op_type == kRecMatMul) {
-      StrategyRec strategy = n.apply.str;
+  size_t roll_back = FloatToSize(log2(stage));
+  for (auto &node_ptr : graph->nodes) {
+    if (node_ptr.apply.op_type == kRecMatMul) {
+      size_t n_cut = node_ptr.apply.strs.size() - roll_back - 1;
+      if (n_cut >= node_ptr.apply.strs.size()) {
+        MS_LOG(WARNING) << "Strategy of  " << node_ptr.name << " not available";
+        return {PARSING_FAILED, PARSING_FAILED};
+      }
+      StrategyRec strategy = node_ptr.apply.strs[n_cut];
       if (sizeof(strategy.inputTensor) / sizeof(TensorStr4D) >= kTargetLength) {
         MS_LOG(DEBUG) << "inputTensor[0] " << strategy.inputTensor[0].str_w << " " << strategy.inputTensor[0].str_h
                       << " " << strategy.inputTensor[0].str_c << " " << strategy.inputTensor[0].str_n;
@@ -767,7 +772,7 @@ size_t ParallelSuggestion(const FuncGraphPtr &root, const std::shared_ptr<Graph>
   }
 
   std::tie(seq, heads) = GetSeqLengthAndAttentionHeads(root);
-  std::tie(dp, mp) = GetDPAndMP(graph);
+  std::tie(dp, mp) = GetDPAndMP(graph, pp);
   std::tie(hidden, vocab) = GetVocabAndHiddenSize(root);
   er = GetExpansionRatio(root);
   layers = GetNumLayers(root);
@@ -832,7 +837,6 @@ void ChangeStageNumber(const FuncGraphPtr &root, size_t new_stage_num) {
   // Update stage in all sub_graphs
   for (auto &graph : subgraphs) {
     int graph_old_stage = graph->stage();
-
     if (graph_old_stage != -1) {
       graph->set_stage(graph_old_stage / change_factor);  // Either increase or decrease
     }

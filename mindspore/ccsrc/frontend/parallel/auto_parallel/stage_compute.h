@@ -31,7 +31,7 @@ namespace parallel {
 
 // Get hyperparams
 std::tuple<size_t, size_t> GetSeqLengthAndAttentionHeads(const FuncGraphPtr &root);
-std::tuple<size_t, size_t> GetDPAndMP(const std::shared_ptr<Graph> &graph);
+std::tuple<size_t, size_t> GetDPAndMP(const std::shared_ptr<Graph> &graph, const size_t stage);
 std::tuple<size_t, size_t> GetVocabAndHiddenSize(const FuncGraphPtr &root);
 size_t GetNumLayers(const FuncGraphPtr &root);
 size_t GetNumMicro(const FuncGraphPtr &root);
