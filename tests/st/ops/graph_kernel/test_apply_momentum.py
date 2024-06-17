@@ -14,7 +14,6 @@
 # ============================================================================
 
 import numpy as np
-import os
 import pytest
 import mindspore
 from mindspore import Tensor, nn, ops, Parameter
@@ -57,7 +56,6 @@ def test_apply_momentum_ascend():
     Description: run test case on Ascend
     Expectation: the result match with expect
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_apply_momentum()
-    del os.environ["GRAPH_OP_RUN"]

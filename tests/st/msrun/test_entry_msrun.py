@@ -15,6 +15,7 @@
 import os
 import pytest
 import subprocess
+import mindspore as ms
 
 
 @pytest.mark.level0
@@ -27,7 +28,7 @@ def test_msrun():
     Description: Launch distributed training job with dynamic cluster using msrun.
     Expectation: All workers are successfully spawned and running training.
     """
-    os.environ['GRAPH_OP_RUN'] = str(1)
+    ms.set_context(jit_level='O0')
     return_code = os.system(
         "msrun --worker_num=4 --local_worker_num=4 --master_addr=127.0.0.1 "\
         "--master_port=10969 --join=True "\

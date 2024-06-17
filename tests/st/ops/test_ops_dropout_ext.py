@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 from functools import reduce
 import numpy as np
 import pytest
@@ -84,7 +83,7 @@ def test_func_dropout_normal(context_mode, dtype):
     """
     ms.context.set_context(mode=context_mode)
     if context_mode == ms.GRAPH_MODE:
-        os.environ['GRAPH_OP_RUN'] = "1"
+        context.set_context(jit_level='O0')
     x = generate_random_input((128, 128), dtype)
     p = 0.4
     output = dropout_forward_func(ms.Tensor(x), p)
@@ -94,8 +93,6 @@ def test_func_dropout_normal(context_mode, dtype):
     p1 = 0.3
     grad = dropout_backward_func(ms.Tensor(x1), p1)
     compare_grad(x1, p1, grad)
-    if context_mode == ms.GRAPH_MODE:
-        del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level0
@@ -110,7 +107,7 @@ def test_func_dropout_bfloat16(context_mode):
     """
     ms.context.set_context(mode=context_mode)
     if context_mode == ms.GRAPH_MODE:
-        os.environ['GRAPH_OP_RUN'] = "1"
+        ms.set_context(jit_level='O0')
     x = generate_random_input((128, 128), np.float32)
     p = 0.4
     output = dropout_forward_func(ms.Tensor(x).astype(mstype.bfloat16), p)
@@ -120,8 +117,6 @@ def test_func_dropout_bfloat16(context_mode):
     p1 = 0.3
     grad = dropout_backward_func(ms.Tensor(x1).astype(mstype.bfloat16), p1)
     compare_grad(x1, p1, grad)
-    if context_mode == ms.GRAPH_MODE:
-        del os.environ['GRAPH_OP_RUN']
 
 
 def compare_func(x, p, output, mask=None):
@@ -168,7 +163,7 @@ def test_nn_DropoutExt_normal(context_mode):
     Description: forward
     Expectation: success
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=context_mode)
 
     x = np.array(np.random.random((16, 16, 16, 16)), np.float32)
@@ -180,7 +175,6 @@ def test_nn_DropoutExt_normal(context_mode):
     output = net(ms.tensor(x))
     compare_func(x, p, output)
 
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level1
@@ -193,7 +187,7 @@ def test_nn_DropoutExt_bf16(context_mode):
     Description: bf16
     Expectation: success
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=context_mode)
 
     x = np.array(np.random.random((128, 128)), np.float32)
@@ -205,7 +199,6 @@ def test_nn_DropoutExt_bf16(context_mode):
     output = net(ms.tensor(x, mstype.bfloat16))
     compare_func(x, p, output.float())
 
-    del os.environ["GRAPH_OP_RUN"]
 
 
 class DropoutExtCell(Cell):
@@ -228,7 +221,7 @@ def test_ops_DropoutExt_normal(context_mode):
     Description: forward
     Expectation: success
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=context_mode)
 
     dropout_cell = DropoutExtCell()
@@ -268,4 +261,3 @@ def test_ops_DropoutExt_normal(context_mode):
 
     output, mask = dropout_cell(ms.tensor(x), p)
     compare_func(x, p, output, mask)
-    del os.environ["GRAPH_OP_RUN"]

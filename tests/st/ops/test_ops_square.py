@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import os
 import time
 import numpy as np
 import mindspore as ms
@@ -300,8 +299,8 @@ def test_square_dynamic_shape_testop():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize('graph_level', ["0", "1"])
-def test_square_vmap(graph_level):
+@pytest.mark.parametrize('param_jit_level', ["O2", "O0"])
+def test_square_vmap(param_jit_level):
     """
     Feature: Test square with vmap.
     Description: call ops.square with valid input and index.
@@ -318,7 +317,7 @@ def test_square_vmap(graph_level):
         out = ops.Stack()(out)
         return out
 
-    os.environ['GRAPH_OP_RUN'] = graph_level
+    ms.set_context(jit_level=param_jit_level)
     x = generate_random_input((4, 5, 6), np.float32)
 
     batch_axis = -1
@@ -331,7 +330,6 @@ def test_square_vmap(graph_level):
     expect = _foreach_run(ms.Tensor(x), batch_axis)
     assert np.allclose(output.asnumpy(), expect.asnumpy(), rtol=1e-4)
 
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.parametrize('batch', [8, 16, 32, 64, 128])

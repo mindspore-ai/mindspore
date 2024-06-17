@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import pytest
 import numpy as np
 import mindspore as ms
@@ -57,7 +56,7 @@ def test_ops_softplus_forward(context_mode):
     Description: test function softplus forward.
     Expectation: expect correct result.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=context_mode)
     x = generate_random_input((2, 3, 4, 5), np.float32)
     output = softplus_forward_func(ms.Tensor(x))
@@ -67,7 +66,6 @@ def test_ops_softplus_forward(context_mode):
     output2 = softplus_forward_func(ms.Tensor(x), 2, 12)
     expect2 = generate_expect_forward_output(x, 2, 12)
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level1
@@ -80,7 +78,7 @@ def test_ops_softplus_bf16(context_mode):
     Description: test function softplus forward(bf16).
     Expectation: expect correct result.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=context_mode)
     x_tensor = ms.Tensor([0.1, 0.2, 30, 25], dtype=ms.bfloat16)
     output = softplus_forward_func(x_tensor)
@@ -90,7 +88,6 @@ def test_ops_softplus_bf16(context_mode):
     output2 = softplus_forward_func(x_tensor, 0.3, 100)
     expect2 = np.array([2.3594, 2.4062, 30.0000, 25.0000])
     np.testing.assert_allclose(output2.float().asnumpy(), expect2, rtol=5e-3, atol=5e-3)
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level1
@@ -103,7 +100,7 @@ def test_ops_softplus_backward(context_mode):
     Description: test function softplus backward.
     Expectation: expect correct result.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=context_mode)
     x = np.array([0.1, 0.2, 0.3, 1, 2]).astype(np.float32)
     output1 = softplus_backward_func(ms.Tensor(x))
@@ -113,7 +110,6 @@ def test_ops_softplus_backward(context_mode):
     output2 = softplus_backward_func(ms.Tensor(x), 0.2, 0.2)
     expect2 = np.array([0.50499983, 0.5099986, 0.5149955, 0.5498339, 1.00000]).astype(np.float32)
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level0

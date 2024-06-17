@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import os
 import numpy as np
 import torch
 import mindspore
@@ -47,7 +46,7 @@ def test_pynative_and_graph_mixed_run():
     Description: single op run in pynative, the output to net input which run in graph
     Expectation: run success
     """
-    os.environ['GRAPH_OP_RUN'] = "1"
+    context.set_context(jit_level='O0')
     data_x = np.random.randn(7, 3, 8, 8, 8).astype(np.float32)
     x = Tensor(data_x) + 100
     data_indices = np.unique(np.random.randint(2, 4, size=4).astype(np.int32))
@@ -60,5 +59,4 @@ def test_pynative_and_graph_mixed_run():
     unique_indices = list(torch.relu(indices_pt).numpy())
     y_reduce = torch.amax(input=y, dim=unique_indices, keepdims=False)
     out_tf = torch.sinc(y_reduce)
-    os.environ.pop('GRAPH_OP_RUN')
     assert np.allclose(out_ms.asnumpy(), out_tf, 0.0001, 0.0001)

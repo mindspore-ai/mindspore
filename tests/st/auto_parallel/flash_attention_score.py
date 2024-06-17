@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import os
 import numpy as np
 import mindspore as ms
 import mindspore.common.dtype as mstype
@@ -160,7 +159,7 @@ def test_flash_attention_score_tnd(mode, dtype, input_layout):
     Description: Test function flash attention score forward and backward.
     Expectation: The result of TND and BSH is equal.
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(mode=mode)
     init()
     B, N, S, D = 1, 8, 1024, 128

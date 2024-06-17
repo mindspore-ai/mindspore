@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import mindspore
 from mindspore.common import mutable
 from mindspore.nn import Cell
@@ -22,7 +21,7 @@ from mindspore.common import ParameterTuple
 
 def context_prepare():
     if mindspore.get_context("device_target") == "Ascend":
-        os.environ["GRAPH_OP_RUN"] = "1"
+        mindspore.set_context(jit_level='O0')
 
 
 class _Grad(Cell):

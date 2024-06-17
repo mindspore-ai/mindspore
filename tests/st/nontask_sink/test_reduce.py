@@ -15,7 +15,6 @@
 
 """test hccl reduce with 8p"""
 
-import os
 import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -25,9 +24,9 @@ from mindspore.communication.comm_func import reduce
 from mindspore import context
 from mindspore.communication import GlobalComm
 
-# 'Reduce' operator only supports KernelByKernel mode by now. So we set 'GRAPH_OP_RUN' to 1.
+# 'Reduce' operator only supports KernelByKernel mode by now.
 np.random.seed(1)
-os.environ['GRAPH_OP_RUN'] = str(1)
+context.set_context(jit_level='O0')
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 init()
 this_rank = get_rank()

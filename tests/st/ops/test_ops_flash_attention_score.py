@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import os
 import numpy as np
 import mindspore as ms
 import mindspore.common.dtype as mstype
@@ -142,7 +141,7 @@ def test_ops_flash_attention_score(mode, dtype):
     Description: Test function flash attention score forward and backward.
     Expectation: Correct result.
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(mode=mode)
     input_layout = "BNSD"
     N1 = 1
@@ -264,7 +263,6 @@ def test_ops_flash_attention_score(mode, dtype):
     np.testing.assert_allclose(dq_diff, expect_dq_diff, rtol=1e-4)
     np.testing.assert_allclose(dk_diff, expect_dk_diff, rtol=1e-4)
     np.testing.assert_allclose(dv_diff, expect_dv_diff, rtol=1e-4)
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level0
@@ -337,7 +335,7 @@ def test_ops_flash_attention_score_tnd(mode, dtype):
     actual_seq_qlen = tuple(range(S // sample_num, S + 1, S // sample_num))
     actual_seq_kvlen = tuple(range(S // sample_num, S + 1, S // sample_num))
     full_attn_mask_tensor = generate_unpad_full_attn_mask(B, S, actual_seq_qlen, actual_seq_kvlen)
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(mode=mode)
     input_layout = "BSH"
     head_num = N

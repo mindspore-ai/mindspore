@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import numpy as np
 import pytest
 import math
@@ -97,7 +96,7 @@ def test_fused_infer_attention_score_pfa_bsh_fwd(context_mode):
     Expectation: the result match with PromptFlashAttention result.
     """
     ms.context.set_context(mode=context_mode)
-    os.environ['GRAPH_OP_RUN'] = "0"
+    ms.context.set_context(jit_level='O2')
     np.random.seed(968941859)
     B = 1
     S = 256
@@ -128,7 +127,6 @@ def test_fused_infer_attention_score_pfa_bsh_fwd(context_mode):
                            None, None, None, None, None, None,
                            None, None, None, None, None, None)
     fias_result_att = fias_result[0]
-    del os.environ['GRAPH_OP_RUN']
     assert fias_result_att.shape == pfa_attention_out.shape
     np.testing.assert_allclose(fias_result_att.asnumpy(), pfa_attention_out.asnumpy(), rtol=5e-3, atol=5e-3)
 
@@ -144,7 +142,7 @@ def test_fused_infer_attention_score_pfa_bnsd_fwd(context_mode):
     Expectation: the result match with PromptFlashAttention result.
     """
     ms.context.set_context(mode=context_mode)
-    os.environ['GRAPH_OP_RUN'] = "0"
+    ms.context.set_context(jit_level='O2')
     np.random.seed(968941859)
     B = 1
     Q_N = 10
@@ -173,7 +171,6 @@ def test_fused_infer_attention_score_pfa_bnsd_fwd(context_mode):
                            None, None, None, None, None, None)
     fias_result_att = fias_result[0]
 
-    del os.environ['GRAPH_OP_RUN']
     assert fias_result_att.shape == attention_out.shape
     np.testing.assert_allclose(attention_out.asnumpy(), fias_result_att.asnumpy(), rtol=5e-3, atol=5e-3)
 
@@ -189,7 +186,7 @@ def test_fused_infer_attention_score_bnsd_incre(context_mode):
     Expectation: the result match with increFlashAttention result.
     """
     ms.context.set_context(mode=context_mode)
-    os.environ['GRAPH_OP_RUN'] = "0"
+    ms.context.set_context(jit_level='O2')
     np.random.seed(968941859)
     B = 1
     Q_N = 5
@@ -218,7 +215,6 @@ def test_fused_infer_attention_score_bnsd_incre(context_mode):
                            None, None, None, None, None, None, None,
                            None, None, None, None, None)
     fias_result_att = fias_result[0]
-    del os.environ['GRAPH_OP_RUN']
     assert fias_result_att.shape == ifa_out.shape
     np.testing.assert_allclose(fias_result_att.asnumpy(), ifa_out.asnumpy(), rtol=5e-3, atol=5e-3)
 
@@ -233,7 +229,7 @@ def test_fused_infer_attention_score_bnsd_incre_antiquant(context_mode):
     Expectation: the result match with increFlashAttention result.
     """
     ms.context.set_context(mode=context_mode)
-    os.environ['GRAPH_OP_RUN'] = "0"
+    ms.context.set_context(jit_level='O2')
     np.random.seed(968941859)
     B = 1
     Q_N = 5
@@ -266,7 +262,6 @@ def test_fused_infer_attention_score_bnsd_incre_antiquant(context_mode):
                            None, None, None, None, None, None, None,
                            antiquant_scale, antiquant_offset, None, None, None)
     fias_result_att = fias_result[0]
-    del os.environ['GRAPH_OP_RUN']
     assert fias_result_att.shape == ifa_out.shape
     np.testing.assert_allclose(fias_result_att.asnumpy(), ifa_out.asnumpy(), rtol=5e-3, atol=5e-3)
 
@@ -281,7 +276,7 @@ def test_fused_infer_attention_score_bsh_incre(context_mode):
     Expectation: the result match with increFlashAttention result.
     """
     ms.context.set_context(mode=context_mode)
-    os.environ['GRAPH_OP_RUN'] = "0"
+    ms.context.set_context(jit_level='O2')
     np.random.seed(968941859)
     B = 1
     Q_N = 5
@@ -307,7 +302,6 @@ def test_fused_infer_attention_score_bsh_incre(context_mode):
                            None, None, None, None, None, None, None,
                            None, None, None, None, None)
     fias_result_att = fias_result[0]
-    del os.environ['GRAPH_OP_RUN']
     assert fias_result_att.shape == ifa_out.shape
     np.testing.assert_allclose(fias_result_att.asnumpy(), ifa_out.asnumpy(), rtol=5e-3, atol=5e-3)
 
@@ -322,7 +316,7 @@ def test_fused_infer_attention_score_bsh_incre_antiquant(context_mode):
     Expectation: the result match with increFlashAttention result.
     """
     ms.context.set_context(mode=context_mode)
-    os.environ['GRAPH_OP_RUN'] = "0"
+    ms.context.set_context(jit_level='O2')
     np.random.seed(968941859)
     B = 1
     Q_N = 5
@@ -354,7 +348,6 @@ def test_fused_infer_attention_score_bsh_incre_antiquant(context_mode):
                            None, None, None, None, None, None, None,
                            antiquant_scale, antiquant_offset, None, None, None)
     fias_result_att = fias_result[0]
-    del os.environ['GRAPH_OP_RUN']
     assert fias_result_att.shape == ifa_out.shape
     np.testing.assert_allclose(fias_result_att.asnumpy(), ifa_out.asnumpy(), rtol=5e-3, atol=5e-3)
 
@@ -369,7 +362,7 @@ def test_fused_infer_attention_score_pfa_bnsd_fwd_dynamic(context_mode):
     Expectation: the result match with PromptFlashAttention result.
     """
     ms.context.set_context(mode=context_mode)
-    os.environ['GRAPH_OP_RUN'] = "0"
+    ms.context.set_context(jit_level='O2')
     np.random.seed(968941859)
     B = 1
     Q_N = 10
@@ -404,6 +397,5 @@ def test_fused_infer_attention_score_pfa_bnsd_fwd_dynamic(context_mode):
     pfa_attention_out = net(query_v, key_v, value_v, None, None, None, None, None,
                             None, None, None, None, num_heads=Q_N,
                             input_layout='BNSD', num_key_value_heads=N)
-    del os.environ['GRAPH_OP_RUN']
     assert fias_result_att.shape == pfa_attention_out.shape
     np.testing.assert_allclose(pfa_attention_out.asnumpy(), fias_result_att.asnumpy(), rtol=5e-3, atol=5e-3)

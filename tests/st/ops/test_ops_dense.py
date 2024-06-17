@@ -1,4 +1,3 @@
-import os
 
 import numpy as np
 import pytest
@@ -96,7 +95,7 @@ def test_dynamic(mode, dynamic, shape_x, shape_w, has_bias, e_shape, e_grad_x_sh
 
 
 def dense_case(dynamic, e_grad_b_shape, e_grad_w_shape, e_grad_x_shape, e_shape, has_bias, mode, shape_w, shape_x):
-    os.environ["GRAPH_OP_RUN"] = "1"
+    mindspore.set_context(jit_level='O0')
     dense_cell = DenseCell()
     mindspore.context.set_context(mode=mode)
     x = random_input(shape_x)
@@ -156,7 +155,6 @@ def dense_case(dynamic, e_grad_b_shape, e_grad_w_shape, e_grad_x_shape, e_shape,
     assert actual_grad_w.shape == e_grad_w_shape
     if has_bias:
         assert actual_grad_b.shape == e_grad_b_shape
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level1

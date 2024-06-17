@@ -14,7 +14,6 @@
 # ============================================================================
 
 import numpy as np
-import os
 import pytest
 
 import mindspore as ms
@@ -45,7 +44,7 @@ def test_ops_norm_forward(mode):
     Description: Verify the result of norm
     Expectation: success
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    ms.set_context(jit_level='O0')
     ms.set_context(mode=mode)
     a = ops.arange(9, dtype=ms.float32) - 4
     b = a.reshape((3, 3))
@@ -56,7 +55,6 @@ def test_ops_norm_forward(mode):
     output2 = norm_ext_forward_func(b)
     expect_output2 = np.array(7.745967)
     assert np.allclose(output2.asnumpy(), expect_output2)
-    del os.environ['GRAPH_OP_RUN']
 
 
 
@@ -71,7 +69,7 @@ def test_ops_norm_backward(mode):
     Description: Verify the result of norm backward
     Expectation: success
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    ms.set_context(jit_level='O0')
     ms.set_context(mode=mode)
     a = ops.arange(9, dtype=ms.float32) - 4
     b = a.reshape((3, 3))
@@ -82,7 +80,6 @@ def test_ops_norm_backward(mode):
     output2 = norm_ext_backward_func(b)
     expect_output2 = ops.grad(ops.norm, (0))(b).asnumpy()
     assert np.allclose(output2.asnumpy(), expect_output2)
-    del os.environ['GRAPH_OP_RUN']
 
 
 

@@ -20,7 +20,7 @@ from mindspore.communication import init
 from mindspore.communication.comm_func import isend, irecv
 from mindspore.communication.management import get_rank, get_group_size
 
-# 'isend' and 'irecv' function only supports KernelByKernel mode by now. So we set 'GRAPH_OP_RUN' to 1.
+# 'isend' and 'irecv' function only supports KernelByKernel mode by now.
 np.random.seed(1)
 ms.context.set_context(mode=ms.context.PYNATIVE_MODE, device_target="Ascend")
 init()

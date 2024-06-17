@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import numpy as np
 import pytest
 import math
@@ -52,7 +51,7 @@ def test_incre_flash_attention_bsh_fwd():
     Expectation: Assert result compare with expect value.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    os.environ['GRAPH_OP_RUN'] = "1"
+    context.set_context(jit_level='O0')
     B, N, S, D = 1, 1, 32, 32
     H = N * D
 
@@ -71,5 +70,4 @@ def test_incre_flash_attention_bsh_fwd():
     net = IncreFlashAttentionFunc(N, input_layout, scale_value, num_key_value_heads)
 
     ifa_result = net(query, key, value, attn_mask, asl_tensor, padding_mask, None, None, None, None, None)
-    os.environ.pop('GRAPH_OP_RUN')
     assert ifa_result.shape == (B, 1, H)

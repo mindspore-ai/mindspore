@@ -15,17 +15,17 @@
 
 """test hccl reduce with 8p"""
 
-import os
 import time
 import numpy as np
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore.ops.operations import comm_ops
 from mindspore.communication.comm_func import barrier
 from mindspore.communication.management import init, get_rank
 
-# 'Barrier' operator only supports KernelByKernel mode by now. So we set 'GRAPH_OP_RUN' to 1.
+# 'Barrier' operator only supports KernelByKernel mode by now.
 np.random.seed(1)
-os.environ['GRAPH_OP_RUN'] = str(1)
+ms.set_context(jit_level='O0')
 init()
 rank = get_rank()
 

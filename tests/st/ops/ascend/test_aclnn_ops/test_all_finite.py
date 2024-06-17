@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 '''test all finite'''
-import os
 import pytest
 import numpy as np
 
@@ -43,7 +42,7 @@ def test_all_finite(mode):
     Expectation: Success.
     """
     ms.set_context(mode=mode)
-    os.environ['GRAPH_OP_RUN'] = "1"
+    ms.set_context(jit_level='O0')
     shape1 = [128, 128]
     shape2 = [12960, 65]
     inputs = [
@@ -77,7 +76,6 @@ def test_all_finite(mode):
     ]
     output1 = net(inputs1)
     assert output1.asnumpy() == True
-    os.environ.pop('GRAPH_OP_RUN')
 
 
 @pytest.mark.level0
@@ -91,7 +89,7 @@ def test_all_finite_small(mode):
     Expectation: Success.
     """
     ms.set_context(mode=mode)
-    os.environ['GRAPH_OP_RUN'] = "1"
+    ms.set_context(jit_level='O0')
     net = Net()
 
     in1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -148,4 +146,3 @@ def test_all_finite_small(mode):
     bf16_in = Tensor(in2, ms.bfloat16)
     output = net(bf16_in)
     assert output == True
-    os.environ.pop('GRAPH_OP_RUN')

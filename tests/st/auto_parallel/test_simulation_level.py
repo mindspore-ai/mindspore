@@ -57,9 +57,9 @@ def test_run_graph_kbk():
     os.environ["MS_SIMULATION_LEVEL"] = "1"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "1"
-    os.environ["GRAPH_OP_RUN"] = "1"
     os.environ["OMPI_COMMAND"] = "1"
     os.environ["PMIX_RANK"] = "1"
+    context.set_context(jit_level='O0')
     init()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net = DenseNet()
@@ -71,7 +71,6 @@ def test_run_graph_kbk():
     train_net.set_train()
     train_net(input_, label_)
     context.reset_auto_parallel_context()
-    os.environ["GRAPH_OP_RUN"] = ""
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 

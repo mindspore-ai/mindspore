@@ -14,7 +14,6 @@
 # ============================================================================
 
 import pytest
-import os
 import numpy as np
 import mindspore as ms
 from mindspore import context, Tensor
@@ -55,7 +54,7 @@ def test_custom_add_aclop(context_mode):
     Description: test case for AddCustom op with func_type="aclop"
     Expectation: the result match with numpy result
     """
-    os.putenv('GRAPH_OP_RUN', '1')
+    context.set_context(jit_level='O0')
 
     context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs")
     x = np.ones([8, 2048]).astype(np.float16)
@@ -74,7 +73,7 @@ def test_custom_add_aclop_dynamic(context_mode):
     Description: test case for AddCustom op in dynamic shape
     Expectation: the result match with numpy result
     """
-    os.putenv('GRAPH_OP_RUN', '1')
+    context.set_context(jit_level='O0')
 
     context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs")
     x = np.ones([8, 2048]).astype(np.float16)

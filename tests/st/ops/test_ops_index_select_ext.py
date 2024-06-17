@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import numpy as np
 import pytest
 
@@ -56,7 +55,7 @@ def test_func_index_select_ext_normal(context_mode):
     """
     ms.context.set_context(mode=context_mode)
     if context_mode == ms.GRAPH_MODE:
-        os.environ['GRAPH_OP_RUN'] = "1"
+        ms.set_context(jit_level='O0')
 
     input_np = generate_random_input((2, 3, 3, 4), np.float32)
     axis = -1
@@ -71,9 +70,6 @@ def test_func_index_select_ext_normal(context_mode):
     grad = index_select_ext_backward_func(ms.Tensor(input_np1), axis1, ms.Tensor(index_np1))
     expect1 = np.array([[[1, 2, 2], [1, 2, 2]], [[1, 2, 2], [1, 2, 2]]]).astype(np.float32)
     np.testing.assert_allclose(grad.asnumpy(), expect1, rtol=1e-3)
-
-    if context_mode == ms.GRAPH_MODE:
-        del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level0

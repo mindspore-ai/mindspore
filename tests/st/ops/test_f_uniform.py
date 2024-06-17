@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 
 import numpy as np
 import pytest
@@ -46,7 +45,7 @@ def test_basic(context_mode):
     Description: extend.uniform
     Expectation: Success
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    mindspore.set_context(jit_level='O0')
     mindspore.set_context(mode=context_mode)
 
     uniform_cell = UniformExtCell()
@@ -87,7 +86,6 @@ def test_basic(context_mode):
 
     assert not np.allclose(output1, output2, rtol=rtol)
     assert not np.allclose(expect1, expect2, rtol=rtol)
-    del os.environ['GRAPH_OP_RUN']
 
 
 def random_input(shape):

@@ -20,7 +20,6 @@ from mindspore import Tensor
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
 from mindspore.common import dtype as mstype
-import os
 
 class Net(Cell):
     def __init__(self):
@@ -113,7 +112,6 @@ def test_basic_ascend_bfloat16():
     Expectation: the result match with expect
     """
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(graph_kernel_flags="--enable_cluster_ops=MatMul")
     basic_bfloat16()
-    del os.environ["GRAPH_OP_RUN"]

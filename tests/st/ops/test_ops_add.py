@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 
 import numpy as np
 import pytest
@@ -42,7 +41,7 @@ class AddCell(Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_forward(context_mode):
-    os.environ["GRAPH_OP_RUN"] = "1"
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=context_mode)
 
     add_cell = AddCell()
@@ -77,7 +76,6 @@ def test_ops_forward(context_mode):
     expect = x + y * alpha
 
     np.testing.assert_allclose(output, expect, rtol=rtol)
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level1
@@ -105,7 +103,7 @@ def test_ops_dynamic():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_backward(context_mode):
-    os.environ["GRAPH_OP_RUN"] = "1"
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=context_mode)
 
     add_cell = AddCell()
@@ -119,7 +117,6 @@ def test_ops_backward(context_mode):
     expect = np.ones_like(y)
 
     np.testing.assert_allclose(output, expect, rtol=rtol)
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level1
@@ -132,7 +129,7 @@ def test_ops_bf16(context_mode):
     Description: bf16
     Expectation: success
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=context_mode)
 
     add_cell = AddCell()
@@ -146,7 +143,6 @@ def test_ops_bf16(context_mode):
     expect = np.ones_like(y)
 
     np.testing.assert_allclose(output, expect, rtol=rtol)
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level1

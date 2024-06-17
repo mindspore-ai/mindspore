@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import numpy as np
 import mindspore as ms
 from mindspore import nn
@@ -22,9 +21,9 @@ from mindspore.communication.comm_func import scatter_tensor
 from mindspore.communication.management import get_rank, create_group
 
 
-# 'scatter_tensor' function only supports KernelByKernel mode by now. So we set 'GRAPH_OP_RUN' to 1.
+# 'scatter_tensor' function only supports KernelByKernel mode by now. So we set 'jit_level' to 'O0'.
 np.random.seed(1)
-os.environ['GRAPH_OP_RUN'] = str(1)
+ms.set_context(jit_level='O0')
 ms.context.set_context(mode=ms.context.PYNATIVE_MODE, device_target="Ascend")
 init()
 

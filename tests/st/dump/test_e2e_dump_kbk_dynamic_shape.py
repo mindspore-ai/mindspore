@@ -116,10 +116,9 @@ def test_ascend_kernel_by_kernel_dynamic_shape():
     Description: Test kernel by kernel dump in Ascend with trans_flag is configured to true.
     Expectation: Dump files has tensor data in host format (4 dimensions).
     """
-    os.environ['GRAPH_OP_RUN'] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_trans_flag("test_e2e_dump_dynamic_shape")
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level0
@@ -133,7 +132,6 @@ def test_ascend_kernel_by_kernel_dynamic_shape_custom_statistic():
     Description: Test kernel by kernel dump in Ascend with trans_flag is configured to true.
     Expectation: Dump user configured statistic_category, the config is ["l2norm", "max"].
     """
-    os.environ['GRAPH_OP_RUN'] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_trans_flag("test_e2e_dump_dynamic_shape_custom_statistic")
-    del os.environ['GRAPH_OP_RUN']

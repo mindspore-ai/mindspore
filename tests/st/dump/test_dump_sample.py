@@ -77,11 +77,10 @@ def test_ascend_kernel_by_kernel_dump_sample():
     Description: Test kernel by kernel dump in Ascend with trans_flag is configured to true.
     Expectation: Dump files has tensor data in host format (4 dimensions).
     """
-    os.environ['GRAPH_OP_RUN'] = "1"
+    context.set_context(jit_level='O0')
     os.environ['INF_NAN_MODE_ENABLE'] = "1"
     os.environ['MS_ASCEND_CHECK_OVERFLOW_MODE'] = "INFNAN_MODE"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_trans_flag("test_e2e_dump_sample_debug_mode")
-    del os.environ['GRAPH_OP_RUN']
     del os.environ['INF_NAN_MODE_ENABLE']
     del os.environ['MS_ASCEND_CHECK_OVERFLOW_MODE']

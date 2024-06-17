@@ -14,7 +14,6 @@
 # ============================================================================
 import numpy as np
 import pytest
-import os
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -72,7 +71,6 @@ def test_ascend():
     Description: Verify GeLUGrad expander in Ascend
     Expectation: No exception
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     relu_grad_test((4, 3), (4, 3), np.float32)
-    del os.environ["GRAPH_OP_RUN"]

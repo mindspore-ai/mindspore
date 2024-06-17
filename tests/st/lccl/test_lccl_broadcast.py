@@ -23,6 +23,7 @@ from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+context.set_context(jit_level='O0')
 
 init()
 rank = get_rank()

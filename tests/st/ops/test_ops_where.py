@@ -17,7 +17,6 @@
 """test where"""
 import numpy as np
 import pytest
-import os
 import mindspore.common.dtype as mstype
 
 from mindspore.ops import where
@@ -260,8 +259,8 @@ def test_where_ext_dynamic_shape():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize('graph_level', ["0", "1"])
-def test_where_vmap(graph_level):
+@pytest.mark.parametrize('param_jit_level', ["O2", "O0"])
+def test_where_vmap(param_jit_level):
     """
     Feature: Test where with vmap.
     Description: call ops.where with valid input and index.
@@ -282,7 +281,7 @@ def test_where_vmap(graph_level):
         out = ops.Stack()(out)
         return out
 
-    os.environ['GRAPH_OP_RUN'] = graph_level
+    context.set_context(jit_level=param_jit_level)
     x = generate_random_input((2, 3, 4, 5), np.float32)
     y = generate_random_input((2, 3, 4, 5), np.float32)
     cond = x > 0
@@ -297,7 +296,6 @@ def test_where_vmap(graph_level):
     expect = _foreach_run(cond, x, y, batch_axis)
     assert np.allclose(output.asnumpy(), expect.asnumpy(), rtol=1e-4)
 
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level0

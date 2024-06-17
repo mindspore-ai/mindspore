@@ -159,7 +159,7 @@ class TestSummaryOps:
     @pytest.mark.env_onecard
     @security_off_wrap
     def test_kernel_by_kernel_summary_ops(self):
-        os.environ['GRAPH_OP_RUN'] = '1'
+        context.set_context(jit_level='O0')
         context.set_context(mode=context.GRAPH_MODE, device_id=self.device_id)
         ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
         ds_train_iter = ds_train.create_dict_iterator()
@@ -183,7 +183,6 @@ class TestSummaryOps:
         assert np.allclose(expected_data, histogram_data)
         assert not np.allclose(0, x_fc3)
 
-        del os.environ['GRAPH_OP_RUN']
 
     @pytest.mark.level1
     @pytest.mark.platform_x86_ascend_training

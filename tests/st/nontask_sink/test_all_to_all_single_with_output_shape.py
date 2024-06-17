@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import numpy as np
 
 import mindspore as ms
@@ -22,9 +21,9 @@ from mindspore.communication import init
 from mindspore.communication.comm_func import all_to_all_single_with_output_shape
 from mindspore.communication.management import get_rank
 
-# 'all_to_all_single_with_output_shape' function only supports KernelByKernel mode by now. So we set 'GRAPH_OP_RUN' to 1.
+# 'all_to_all_single_with_output_shape' function only supports KernelByKernel mode by now.
 np.random.seed(1)
-os.environ['GRAPH_OP_RUN'] = str(1)
+ms.set_context(jit_level='O0')
 ms.context.set_context(mode=ms.context.PYNATIVE_MODE, device_target="Ascend")
 init()
 

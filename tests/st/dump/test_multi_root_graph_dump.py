@@ -191,7 +191,6 @@ def test_ascend_multi_root_graph_dump_kernel_by_kernel():
     """
     saved_config = compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE
     compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 0
-    os.environ['GRAPH_OP_RUN'] = "1"
+    context.set_context(jit_level='O0')
     run_multi_root_graph_dump("Ascend", "e2e_dump", "test_Ascend_e2e_multi_root_graph_dump")
-    del os.environ['GRAPH_OP_RUN']
     compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = saved_config
