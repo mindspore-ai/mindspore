@@ -80,7 +80,7 @@ bool HcomAlltoAllVKernel::Launch(const std::vector<KernelTensor *> &inputs, cons
   auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllToAllv(send_buf, recv_buf, params_,
                                                                     hccl_data_type_list_[0], stream_ptr, comm_);
   if (hccl_result != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "HcclAllToAll failed, ret:" << hccl_result;
+    MS_LOG(ERROR) << "HcclAllToAllv failed, ret:" << hccl_result;
     return false;
   }
   return true;

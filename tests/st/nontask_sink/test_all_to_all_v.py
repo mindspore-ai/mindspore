@@ -45,7 +45,7 @@ class AllToAllTensorFunNet(nn.Cell):
     def construct(self, output, input_x, output_split_sizes=None, input_split_sizes=None, group=None):
         return all_to_all_single_with_output_shape(output, input_x, output_split_sizes, input_split_sizes, group)
 
-def test_hccl_alltoallv2_8p():
+def test_hccl_alltoallv2_2p():
     """
     Feature: test 'AlltoAllV' communication operator.
     Description: test 'AlltoAllV' communication operator.
@@ -59,7 +59,7 @@ def test_hccl_alltoallv2_8p():
     expect_output = np.array(data, dtype=np.float32)
     assert np.allclose(output.asnumpy(), expect_output)
 
-def test_hccl_alltoall_func_8p():
+def test_hccl_alltoall_func_2p():
     """
     Feature: test 'AlltoAllV' communication operator.
     Description: test 'AlltoAllV' communication operator.
@@ -74,7 +74,7 @@ def test_hccl_alltoall_func_8p():
         expect_output = np.array([data[i]], dtype=np.float32)
         assert np.allclose(out.asnumpy(), expect_output)
 
-def test_hccl_alltoall_tensor_8p():
+def test_hccl_alltoall_tensor_2p():
     """
     Feature: test 'AlltoAllV' communication operator.
     Description: test 'AlltoAllV' communication operator.
