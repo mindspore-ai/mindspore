@@ -37,6 +37,17 @@ Tensor
 
     mindspore.mint.abs
 
+
+BLAS和LAPACK运算
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.inverse
+
 mindspore.mint.nn
 ------------------
 
@@ -130,3 +141,15 @@ Dropout函数
 mindspore.mint.optim
 ---------------------
 
+mindspore.mint.linalg
+----------------------
+
+逆数
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.linalg.inv

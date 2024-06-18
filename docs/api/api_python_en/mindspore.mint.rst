@@ -37,6 +37,17 @@ Pointwise Operations
 
     mindspore.mint.abs
 
+
+BLAS and LAPACK Operations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.inverse
+
 mindspore.mint.nn
 ------------------
 
@@ -130,3 +141,15 @@ Vision functions
 mindspore.mint.optim
 ---------------------
 
+mindspore.mint.linalg
+----------------------
+
+Inverses
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.linalg.inv

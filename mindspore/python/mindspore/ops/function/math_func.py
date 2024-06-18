@@ -44,7 +44,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
                                          log, log1p, neg, not_equal, pow, round, isfinite, argmax, mean_ext_op,
-                                         sum_ext_op, prod_ext_op, all)
+                                         sum_ext_op, prod_ext_op, all, matrix_inverse_ext)
 from mindspore.ops.auto_generate import tanh
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
@@ -2117,6 +2117,35 @@ def inverse(input):
     """
     _check_is_tensor("input", input, "inverse")
     return matrix_inverse_(input)
+
+def inverse_ext(input):
+    """
+    Compute the inverse of the input matrix.
+
+    Args:
+        input (Tensor): A matrix to be calculated. Input `input` must be at least two dimensions, and the size of
+            the last two dimensions must be the same size.
+
+    Returns:
+        Tensor, has the same type and shape as input `input`.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        ValueError: If the size of the last two dimensions of `input` is not the same.
+        ValueError: If the dimension of `input` is euqal 1.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
+        >>> x = Tensor([[1., 2.], [3., 4.]], mstype.float32)
+        >>> print(ops.inverse_ext(x))
+        [[-2.   1. ]
+         [ 1.5 -0.5]]
+    """
+    return matrix_inverse_ext(input)
 
 
 def invert(x):

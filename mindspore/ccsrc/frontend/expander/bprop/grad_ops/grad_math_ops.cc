@@ -1469,6 +1469,21 @@ REG_BPROP_BUILDER("MatrixInverse").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   return {-dx};
 });
 
+REG_BPROP_BUILDER("MatrixInverseExt").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  auto out_shape = ib->GetShape(out);
+  auto dx = out;
+  if (out_shape.size() == 2) {
+    dx = ib->MatMul(dout, dx, false, true);
+    dx = ib->MatMul(out, dx, true, false);
+  } else if (out_shape.size() > 2 || IsDynamicRank(out_shape)) {
+    dx = ib->BatchMatMul(dout, dx, false, true);
+    dx = ib->BatchMatMul(out, dx, true, false);
+  }
+  return {-dx};
+});
+
 REG_BPROP_BUILDER("Neg").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   return {-dout};
