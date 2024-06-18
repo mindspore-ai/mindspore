@@ -33,23 +33,21 @@ class TestMSCollectiveTopo : public UT::Common {
 /// Feature: test create cpu collective topology node.
 /// Description: create the topology node.
 /// Expectation: the topology node is created successfully.
-TEST_F(TestMSCollectiveTopo, DISABLED_InitCollectiveTopoNode) {
-  common::SetEnv("MS_NODE_TIMEOUT", "30");
-  common::SetEnv("MS_TOPO_TIMEOUT", "600");
-  common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
+TEST_F(TestMSCollectiveTopo, InitCollectiveTopoNode) {
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
   common::SetEnv(distributed::cluster::topology::kEnvMetaServerHost, server_host.c_str());
   common::SetEnv(distributed::cluster::topology::kEnvMetaServerPort, server_port.c_str());
 
   size_t total_node_num = 8;
+  common::SetEnv("MS_WORKER_NUM", std::to_string(total_node_num).c_str());
   std::vector<std::shared_ptr<distributed::cluster::topology::ComputeGraphNode>> cgns;
-  distributed::cluster::topology::MetaServerNode msn("meta_server_node", "scheduler", total_node_num);
+  distributed::cluster::topology::MetaServerNode msn("meta_server_node", "MS_SCHED", total_node_num);
   ASSERT_TRUE(msn.Initialize());
 
   for (size_t i = 0; i < total_node_num; ++i) {
     auto cgn = std::make_shared<distributed::cluster::topology::ComputeGraphNode>(
-      "compute_graph_node_" + std::to_string(i + 1), "worker");
+      "compute_graph_node_" + std::to_string(i + 1), "MS_WORKER");
     ASSERT_TRUE(cgn->Initialize());
     cgns.push_back(cgn);
   }
