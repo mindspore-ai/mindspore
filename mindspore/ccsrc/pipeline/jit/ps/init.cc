@@ -122,7 +122,8 @@ void RegFrameworkProfiler(py::module *m) {
       "_framework_profiler_step_end", []() { runtime::ProfilerAnalyzer::GetInstance().EndStep(); }, "Profiler step end")
     .def(
       "_framework_profiler_clear", []() { runtime::ProfilerAnalyzer::GetInstance().Clear(); },
-      "Dump json and clear data");
+      "Dump json and clear data")
+    .def("_framework_profiler_enable_mi", []() { runtime::ProfilerAnalyzer::GetInstance().EnableMiProfile(); });
 }
 
 void RegFrameworkPythonProfileRecorder(py::module *m) {
