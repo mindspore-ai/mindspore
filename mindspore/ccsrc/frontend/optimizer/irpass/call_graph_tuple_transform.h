@@ -166,12 +166,19 @@ class PartialUnusedArgsEliminate : public AnfVisitor {
     std::vector<AnfNodePtr> new_parameters;
     const auto &node_users = manager->node_users();
     const auto &origin_parameters = fg->parameters();
+    bool added_forward_u = fg->has_flag(kFuncGraphFlagAddedForwardU);
+    AnfNodePtr unused_arg_u = nullptr;
     for (size_t i = 0; i < origin_parameters.size(); ++i) {
-      auto iter = node_users.find(origin_parameters[i]);
+      auto origin_para = origin_parameters[i];
+      auto iter = node_users.find(origin_para);
       if (iter == node_users.end() || iter->second.empty()) {
         (void)unused_parameter_idx.emplace_back(i);
+      } else if (added_forward_u && HasAbstractUMonad(origin_para) && i < origin_parameters.size() - 1) {
+        // The fv u monad from fprop should be replaced with the forward u added by pass 'add_forward_monad_depend.h'.
+        (void)unused_parameter_idx.emplace_back(i);
+        unused_arg_u = origin_para;
       } else {
-        (void)new_parameters.emplace_back(origin_parameters[i]);
+        (void)new_parameters.emplace_back(origin_para);
       }
     }
     if (unused_parameter_idx.empty()) {
@@ -180,6 +187,9 @@ class PartialUnusedArgsEliminate : public AnfVisitor {
     mindspore::HashMap<AnfNodePtr, AnfNodePtr> repl;
     if (!GetPartialRepl(partial_nodes, unused_parameter_idx, &repl)) {
       return nullptr;
+    }
+    if (unused_arg_u != nullptr) {
+      manager->Replace(unused_arg_u, origin_parameters[origin_parameters.size() - 1]);
     }
     fg->set_parameters(new_parameters);
     auto tr = manager->Transact();
