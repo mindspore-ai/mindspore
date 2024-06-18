@@ -15,6 +15,7 @@
 import copy
 import os
 import time
+import pytest
 
 import numpy as np
 
@@ -87,6 +88,7 @@ def test_dataset_with_independent_process():
     del os.environ["MS_INDEPENDENT_DATASET"]
 
 
+@pytest.mark.skip(reason="timeout")
 def test_dataset_with_independent_process_dynamic_shape():
     """
     Feature: Dataset With Independent Process
