@@ -19,7 +19,7 @@
           默认值： ``1`` 。
 
     输入：
-        - **features** (Tensor) - 输入特征，shape: :math:`(N, C, H, W)` 。
+        - **features** (Tensor) - 输入特征，shape: :math:`(N, C, H, W)` 。数据类型支持float16和float32。
         - **rois** (Tensor) - shape: :math:`(rois\_n, 5)` 。数据类型支持float16和float32。
           `rois_n` 为RoI的数量。第二个维度的大小必须为 `5` ，分别代表 :math:`(image\_index, top\_left\_x, top\_left\_y, bottom\_right\_x, bottom\_right\_y)` 。
           `image_index` 表示图像的索引； `top_left_x` 和 `top_left_y` 分别对应RoI左上角坐标的 `x` 和 `y` 值； 
