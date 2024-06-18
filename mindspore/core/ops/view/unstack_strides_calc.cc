@@ -46,7 +46,7 @@ TensorStorageInfoPtrList UnstackCalc(const PrimitivePtr &prim, const std::vector
   CheckAndConvertUtils::CheckInRange("axis value", dim, kIncludeLeft, {-ndims, ndims}, "Unstack");
   dim = DynamicDimWrap(dim, ndims);
   int64_t size = oldShape[dim];
-  (void)CheckAndConvertUtils::CheckInteger("output_num", size, kGreaterThan, 0, "Unstack");
+  (void)CheckAndConvertUtils::CheckInteger("output_num", size, kGreaterEqual, 0, "Unstack");
 
   std::vector<TensorStorageInfoPtr> res_storage_info(size);
   for (int64_t d = 0; d < size; d++) {
