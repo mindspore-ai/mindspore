@@ -292,18 +292,12 @@ void ForwardExecutor::Init() {
   MS_LOG(DEBUG) << "Init ForwardExecutor";
   compile::SetMindRTEnable();
   python_adapter::set_python_env_flag(true);
-  runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() {
-    runtime::Pipeline::Get().frontend_stage()->Wait();
-    grad()->WaitBpropTask();
-  });
+  tensor::Tensor::RegisterLazyCallback([]() { runtime::Pipeline::Get().WaitAll(); });
 }
 
 void ForwardExecutor::RefreshForwardCallback() {
 #if defined(_WIN32) || defined(_WIN64)
-  runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() {
-    runtime::Pipeline::Get().frontend_stage()->Wait();
-    grad()->WaitBpropTask();
-  });
+  tensor::Tensor::RegisterLazyCallback([]() { runtime::Pipeline::Get().WaitAll(); });
 #endif
   // ForwardCallback has been set in ForwardExecutor::Init, no need to refresh anymore.
 }
@@ -821,8 +815,7 @@ bool ForwardExecutor::CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_ru
 
 void ForwardExecutor::ExecuteLazyTask() const {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
-  GilReleaseWithCheck gil_release;
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitAll();
 }
 
 std::string ForwardExecutor::GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const {

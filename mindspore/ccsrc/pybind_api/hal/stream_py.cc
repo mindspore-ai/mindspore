@@ -16,6 +16,7 @@
 #include "pybind_api/hal/stream_py.h"
 #include <utility>
 #include "runtime/pynative/op_executor.h"
+#include "runtime/pipeline/pipeline.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "utils/ms_context.h"
 #include "include/common/pybind_api/api_register.h"
@@ -55,13 +56,13 @@ StreamPy::~StreamPy() { device_ctx_ = nullptr; }
 
 bool StreamPy::Query() {
   MS_LOG(DEBUG) << "stream_id:" << stream_id_;
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitForward();
   return device_ctx_->device_res_manager_->QueryStream(stream_id_);
 }
 
 void StreamPy::Synchronize() {
   MS_LOG(DEBUG) << "stream_id:" << stream_id_;
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitForward();
   device::MultiStreamController::GetInstance()->Refresh(device_ctx_);
   (void)device::MultiStreamController::GetInstance()->SyncStream(device_ctx_, stream_id_);
 }
@@ -98,7 +99,7 @@ void SetCurStream(const StreamPyPtr &cur_stream) {
 
 void Synchronize() {
   auto device_ctx = GetDeviceCtx();
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitForward();
   device::MultiStreamController::GetInstance()->Refresh(device_ctx);
   (void)device::MultiStreamController::GetInstance()->SyncAllStreams(device_ctx);
 }

@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
+#include "runtime/pipeline/pipeline.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,7 +29,7 @@ void CustomizeCopyAscend(device::DeviceContext *device_context, const device::De
   MS_EXCEPTION_IF_NULL(input_addr);
   MS_EXCEPTION_IF_NULL(output_addr);
 
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitForward();
 
   // The input_addr_list address is malloc before
   // Malloc for output tensors

@@ -155,7 +155,7 @@ void EventPy::Synchronize() {
     return;
   }
 
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitForward();
   event_->SyncEvent();
   MS_EXCEPTION_IF_NULL(device_ctx_);
   // Clear cross stream memory event which task id less than task_id_on_stream.
@@ -175,7 +175,7 @@ float EventPy::ElapsedTime(const EventPyPtr &other_event) {
     return 0;
   }
 
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitForward();
   float elapsed_time = 0;
   event_->ElapsedTime(&elapsed_time, other_event->event().get());
   return elapsed_time;

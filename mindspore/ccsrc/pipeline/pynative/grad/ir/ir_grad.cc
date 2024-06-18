@@ -183,8 +183,7 @@ void IrFunctionNode::ReplaceEdges() {
 }
 
 IrGrad::IrGrad(const std::vector<ValuePtr> &input_param_values, const AbstractBasePtrList &abs_list,
-               size_t op_num_in_bprop_graph, const runtime::AsyncHqueuePtr &assist_queue, bool grad_by_value,
-               bool is_run_recompute)
+               size_t op_num_in_bprop_graph, bool grad_by_value, bool is_run_recompute)
     : ad_param_(std::make_shared<AdParam>()) {
   ad_param()->tape_->debug_info()->set_name("grad_top");
   MS_LOG(DEBUG) << "Start IrGrad, input size: " << input_param_values.size();
@@ -215,7 +214,6 @@ IrGrad::IrGrad(const std::vector<ValuePtr> &input_param_values, const AbstractBa
     (void)ad_param()->variable_adjoint_set_.insert(input_adjoint);
   }
 
-  assist_queue_ = assist_queue;
   grad_by_value_ = grad_by_value;
   device_target_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   ir_bprop_ = std::make_unique<IrBprop>(ad_param_, device_target_, grad_by_value_, is_run_recompute);

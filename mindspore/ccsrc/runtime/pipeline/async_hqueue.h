@@ -89,7 +89,7 @@ class BACKEND_EXPORT AsyncHqueue {
   size_t spin_count_{0};
   std::exception_ptr e_ptr_{nullptr};
 };
-using AsyncHqueuePtr = std::shared_ptr<AsyncHqueue>;
+using AsyncHqueuePtr = std::unique_ptr<AsyncHqueue>;
 }  // namespace runtime
 }  // namespace mindspore
 

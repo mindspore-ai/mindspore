@@ -557,7 +557,7 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
   if (top_cell_->is_ir_grad()) {
     top_cell_->set_auto_grad_cell_ptr(
       std::make_shared<autograd::IrGrad>(input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio,
-                                         assist_queue_, !top_cell_->is_high_order_top_cell(), is_run_recompute_));
+                                         !top_cell_->is_high_order_top_cell(), is_run_recompute_));
   } else {
     top_cell_->set_auto_grad_cell_ptr(
       std::make_shared<autograd::FuncGrad>(input_param_values, op_num_in_bprop_graph_ * kContainerRatio,
@@ -886,7 +886,7 @@ void GradExecutor::EndGraphInner(const py::object &obj, const py::object &out, c
   }
   if (!top_cell()->is_bprop_need_get_forward_graph() && need_do_custom_bprop_grad) {
     GetCustomBpropPrim(obj, args, input_args_info);
-    runtime::OpExecutor::GetInstance().WaitAll();
+    runtime::Pipeline::Get().WaitAll();
     input_args_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(out, false);
     // Recompute need to regardless of non tensor inputs, maybe it is a middle cell and not call EndGraphImpl
     if (input_args_info->is_need_recompute) {
@@ -900,7 +900,7 @@ void GradExecutor::EndGraphInner(const py::object &obj, const py::object &out, c
 
   // Get top cell endgraph
   if (input_args_info->cell_id == top_cell()->cell_id()) {
-    runtime::OpExecutor::GetInstance().WaitAll();
+    runtime::Pipeline::Get().WaitAll();
     if (input_args_info->out_value == nullptr) {
       input_args_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(out, false);
     }
@@ -1197,7 +1197,7 @@ void GradExecutor::ErasePipelineTopCell(const std::string &already_run_cell_id, 
 py::object GradExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                                  const py::object &grad_position, const py::args &args) {
   // Wait forward task finish.
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitAll();
 
   GetTopCellWithInputArgsRespectTo(grad, obj, args);
   MS_EXCEPTION_IF_NULL(top_cell_);
@@ -1963,10 +1963,7 @@ void GradExecutor::AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell) {
   }
 }
 
-void GradExecutor::WorkerJoin() {
-  bprop_queue_->WorkerJoin();
-  assist_queue_->WorkerJoin();
-}
+void GradExecutor::WorkerJoin() { runtime::Pipeline::Get().bprop_stage()->WorkerJoin(); }
 
 AnfNodePtr GradExecutor::GetInput(const ValuePtr &v, const string &obj_id) const {
   // Is not a tensor
@@ -2410,45 +2407,36 @@ void GradExecutor::SetTopCellDynamicAttr(const py::object &cell) {
 }
 
 void GradExecutor::DispatchGradQueueTask(std::function<void(void)> &&task) const {
-  if (!bprop_queue_->Push(new (std::nothrow) BpropTask(std::move(task)))) {
-    bprop_queue_->CheckException();
+  const auto &bprop_queue = runtime::Pipeline::Get().bprop_stage();
+  if (!bprop_queue->Push(new (std::nothrow) BpropTask(std::move(task)))) {
+    bprop_queue->CheckException();
   }
 }
 
 void GradExecutor::ClearBpropTask() const {
-  if (bprop_queue_ != nullptr) {
+  const auto &bprop_queue = runtime::Pipeline::Get().bprop_stage();
+  if (bprop_queue != nullptr) {
     GilReleaseWithCheck gil_release;
-    bprop_queue_->Clear();
-    assist_queue_->Clear();
-    bprop_queue_->CheckException();
+    bprop_queue->Clear();
+    bprop_queue->CheckException();
   }
 }
 
 void GradExecutor::WaitBpropTask() const {
-  if (bprop_queue_ != nullptr) {
+  const auto &bprop_queue = runtime::Pipeline::Get().bprop_stage();
+  if (bprop_queue != nullptr) {
     GilReleaseWithCheck gil_release;
-    bprop_queue_->Wait();
-    assist_queue_->Wait();
-    bprop_queue_->CheckException();
-  }
-}
-
-void GradExecutor::DispatchAssistQueueTask(std::function<void(void)> task) const {
-  bool success = assist_queue_->Push(new (std::nothrow) BpropTask(std::move(task)));
-  if (!success) {
-    assist_queue_->CheckException();
+    bprop_queue->Wait();
+    bprop_queue->CheckException();
   }
 }
 
 void GradExecutor::ChildAfterFork() {
   MS_LOG(DEBUG) << "GradExecutor reinitialize after fork.";
-  if (bprop_queue_ != nullptr) {
+  const auto &bprop_queue = runtime::Pipeline::Get().bprop_stage();
+  if (bprop_queue != nullptr) {
     MS_LOG(DEBUG) << "Reinitialize bprop_queue_.";
-    bprop_queue_->ChildAfterFork();
-  }
-  if (assist_queue_ != nullptr) {
-    MS_LOG(DEBUG) << "Reinitialize assist_queue_.";
-    assist_queue_->ChildAfterFork();
+    bprop_queue->ChildAfterFork();
   }
   runtime::PyBoostOpExecute::GetInstance().ClearBackend();
   MS_LOG(DEBUG) << "GradExecutor reinitialize after fork done.";

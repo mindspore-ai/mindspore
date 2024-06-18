@@ -199,7 +199,7 @@ DeviceSyncPtr PyBoostUtils::ContiguousByDeviceAddress(const DeviceSyncPtr &devic
         runtime::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {new_device_address}, stream_id)) {
     MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
   }
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitForward();
   return new_device_address;
 }
 
@@ -273,7 +273,7 @@ void PyBoostUtils::DispatchRun(const std::shared_ptr<runtime::PyBoostDeviceTask>
   static auto need_sync = runtime::OpExecutor::NeedSync();
   if (need_sync && !runtime::OpExecutor::GetInstance().async_for_graph()) {
     MS_LOG(INFO) << "PyBoost sync run device task";
-    runtime::OpExecutor::GetInstance().WaitAll();
+    runtime::Pipeline::Get().WaitAll();
     task->Run();
   } else {
     runtime::ProfilerAnalyzer::GetInstance().RecordFlowData(task->task_id());

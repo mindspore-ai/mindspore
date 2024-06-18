@@ -60,6 +60,7 @@
 
 #include "runtime/device/device_address_utils.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
+#include "runtime/pipeline/pipeline.h"
 
 namespace mindspore {
 namespace compile {
@@ -596,6 +597,13 @@ bool DisableRunOpAsync(const OpCompilerInfoPtr &op_compiler_info, const session:
          EnablePyNativeSyncRunning();                         // context.set_context(pynative_synchronize=True)
 #endif
 }
+
+void WaitBackendQueue() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kWaitTaskFinish,
+                                     runtime::kDefaultOpName);
+  GilReleaseWithCheck gil_release;
+  runtime::Pipeline::Get().backend_stage()->Wait();
+}
 }  // namespace
 
 void CreateKernelTensor(const std::vector<std::vector<tensor::TensorPtr>> &input_tensors,
@@ -882,7 +890,7 @@ void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const Graph
 void MindRTBackend::WaitTaskFinish() const {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kWaitTaskFinish,
                                      runtime::kDefaultOpName);
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitForward();
 }
 
 void MindRTBackend::ClearOpExecutorResource() const { runtime::OpExecutor::GetInstance().Reset(); }
@@ -1023,7 +1031,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
 
   MS_LOG(DEBUG) << "Async exec disabled, op: " << op_run_info->base_op_run_info.op_name;
   if (!op_executor.RunQueueEmpty()) {
-    WaitTaskFinish();
+    WaitBackendQueue();
   }
   if (!single_op_cache_hit) {
     CompileSingleOpGraph(op_compiler_info, device_context);
@@ -1079,7 +1087,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   MS_LOG(DEBUG) << "Async exec disabled, op: " << op_run_info->base_op_run_info.op_name;
   auto &op_executor = runtime::OpExecutor::GetInstance();
   if (!op_executor.RunQueueEmpty()) {
-    WaitTaskFinish();
+    WaitBackendQueue();
   }
   auto input_tensors = runtime::OpRunner::GetTensorWithoutValueMask(op_run_info);
   runtime::DynamicOpRunner::UpdateInputDeviceAddress(op_compiler_info, input_tensors, true);
@@ -1187,7 +1195,7 @@ void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run
     RunViewKernelTaskAsyncImpl(task_type, device_context, input_addr_list, output_addr_list,
                                base_op_run_info.stream_id);
   } else {
-    WaitTaskFinish();
+    WaitBackendQueue();
     runtime::OpRunner::LaunchKernelTask(task_type, device_context, input_addr_list, output_addr_list,
                                         base_op_run_info.stream_id);
   }
@@ -1196,7 +1204,7 @@ void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run
 void MindRTBackend::RunAllocMemTask(DeviceContext *device_context, const tensor::BaseTensorPtr &tensor,
                                     bool enable_async, bool is_cpu_address_exist) {
   if (!enable_async) {
-    WaitTaskFinish();
+    WaitBackendQueue();
     return AllocateMemForTensor(tensor, device_context, is_cpu_address_exist);
   }
   auto alloc_mem_func = [device_context, tensor, is_cpu_address_exist]() {

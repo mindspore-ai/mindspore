@@ -1092,10 +1092,10 @@ static py::object CallGraph(const JitCompileResults *c, const py::object &args, 
     std::function<PyObject *(PyObject * py_args, PyObject * py_kwvargs)> func = [c](PyObject *py_args,
                                                                                     PyObject *py_kwvargs) {
       auto ret = c->code->GetNativeFunc()(py_args, py_kwvargs);
-      runtime::OpExecutor::GetInstance().WaitAll();
+      runtime::Pipeline::Get().WaitAll();
       return ret;
     };
-    runtime::OpExecutor::GetInstance().WaitAll();
+    runtime::Pipeline::Get().WaitAll();
     res = CallFunction(c->code->GetPerf(OptPerf::PerfKind::kPerfGraph), func, py_args, py_kwvargs);
   } else {
     res = c->code->GetNativeFunc()(py_args, py_kwvargs);
@@ -1126,10 +1126,10 @@ static py::object CallCompiledCallable(PyThreadState *tstate, PyFrameObject *f, 
     std::function<PyObject *(PyThreadState * tstate, PyFrameObject * f, int exc)> func = [](PyThreadState *tstate,
                                                                                             PyFrameObject *f, int exc) {
       auto ret = _PyEval_EvalFrameDefault(tstate, f, exc);
-      runtime::OpExecutor::GetInstance().WaitAll();
+      runtime::Pipeline::Get().WaitAll();
       return ret;
     };
-    runtime::OpExecutor::GetInstance().WaitAll();
+    runtime::Pipeline::Get().WaitAll();
     // use function pointer not std::function
     res = CallFunction(c->code->GetPerf(OptPerf::PerfKind::kPerfPyNative), func, tstate, new_f, 0);
   } else {

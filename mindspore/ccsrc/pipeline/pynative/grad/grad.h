@@ -27,7 +27,7 @@
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/grad/top_cell.h"
 #include "pipeline/pynative/grad/jit/jit_grad.h"
-#include "runtime/pipeline/async_hqueue.h"
+#include "runtime/pipeline/pipeline.h"
 #include "pipeline/pynative/grad/bprop_task.h"
 #include "pipeline/pynative/grad/ir/dynamic_shape.h"
 #include "pipeline/pynative/grad/variable.h"
@@ -51,9 +51,7 @@ class GradExecutor {
   explicit GradExecutor(const ForwardExecutorPtr &forward_executor = nullptr)
       : forward_executor_(ForwardExecutorWeakPtr(forward_executor)),
         jit_(std::make_shared<Jit>()),
-        dynamic_shape_(std::make_shared<DynamicShape>()),
-        bprop_queue_(std::make_shared<runtime::AsyncHqueue>("bprop_queue")),
-        assist_queue_(std::make_shared<runtime::AsyncHqueue>("assist_queue")) {}
+        dynamic_shape_(std::make_shared<DynamicShape>()) {}
 
   void Init();
   std::function<void(const py::object &, const py::args &)> InitGraph = [this](auto &&PH1, auto &&PH2) {
@@ -94,7 +92,6 @@ class GradExecutor {
   inline void set_is_run_recompute(bool is_run_recompute) { is_run_recompute_ = is_run_recompute; }
   // Construct grad graph for jit
   inline size_t custom_bprop_cell_count() const { return custom_bprop_cell_count_; }
-  inline runtime::AsyncHqueuePtr bprop_queue() const { return bprop_queue_; }
   TopCellIdWithTopCell &already_run_top_cell() { return already_run_top_cell_; }
   py::object RunGrad(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                      const py::object &grad_position, const py::args &args);
@@ -232,7 +229,6 @@ class GradExecutor {
   AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id,
                                     const std::pair<AnfNodePtr, std::vector<int64_t>> &out) const;
   void DispatchGradQueueTask(std::function<void(void)> &&task) const;
-  void DispatchAssistQueueTask(std::function<void(void)> task) const;
   void ResetMetaGradInfoForNewTopCell(const InputArgsInfoPtr &input_args_info) const;
   void ClearBpropTask() const;
 
@@ -280,8 +276,6 @@ class GradExecutor {
   ForwardExecutorWeakPtr forward_executor_;
   JitPtr jit_;
   DynamicShapePtr dynamic_shape_{nullptr};
-  runtime::AsyncHqueuePtr bprop_queue_;
-  runtime::AsyncHqueuePtr assist_queue_;
 };
 }  // namespace pynative
 }  // namespace mindspore

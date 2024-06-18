@@ -38,8 +38,7 @@ namespace autograd {
 class IrGrad : public AutoGrad {
  public:
   IrGrad(const std::vector<ValuePtr> &input_param_values, const AbstractBasePtrList &abs_list,
-         size_t op_num_in_bprop_graph, const runtime::AsyncHqueuePtr &assist_queue, bool grad_by_value,
-         bool is_run_recompute);
+         size_t op_num_in_bprop_graph, bool grad_by_value, bool is_run_recompute);
   ~IrGrad() = default;
 
   // Reverse connect bprop of op
@@ -106,7 +105,6 @@ class IrGrad : public AutoGrad {
   // Keep reference for cnode
   AnfNodePtrList k_nodes_used_in_graph_;
   bool need_do_manager_replace_{false};
-  runtime::AsyncHqueuePtr assist_queue_{nullptr};
 };
 }  // namespace autograd
 }  // namespace pynative

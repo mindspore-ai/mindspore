@@ -39,6 +39,7 @@
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/device_type.h"
 #endif
+#include "runtime/pipeline/pipeline.h"
 
 namespace mindspore {
 using tensor::TensorPtr;
@@ -1306,12 +1307,12 @@ device::DeviceAddressPtr DeviceAddressUtils::ConvertContiguousDeviceAddress(
 
   if (is_sync) {
     // ExecuteKernelTask sync, need to wait until all tasks in queue are complete.
-    runtime::OpExecutor::GetInstance().WaitAll();
+    runtime::Pipeline::Get().WaitForward();
     if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
           runtime::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {new_device_address}, stream_id)) {
       MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
     }
-    runtime::OpExecutor::GetInstance().WaitAll();
+    runtime::Pipeline::Get().WaitForward();
   } else {
     auto async_task = [device_context, old_device_address, new_device_address, stream_id]() {
       if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(

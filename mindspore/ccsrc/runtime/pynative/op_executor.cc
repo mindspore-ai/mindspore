@@ -28,34 +28,9 @@ OpExecutor::OpExecutor() = default;
 
 OpExecutor::~OpExecutor() = default;
 
-void OpExecutor::RegisterForwardCallback(const std::function<void()> &callback) {
-  forward_callback_ = callback;
-  tensor::Tensor::RegisterLazyCallback([]() { OpExecutor::GetInstance().WaitAll(); });
-}
-
 void OpExecutor::Reset() {
   runtime::Pipeline::Get().backend_stage()->Reset();
   runtime::Pipeline::Get().launch_stage()->Reset();
-}
-
-void OpExecutor::WaitForRun() {
-  MS_LOG(DEBUG) << "Start";
-  runtime::Pipeline::Get().backend_stage()->Wait();
-  runtime::Pipeline::Get().launch_stage()->Wait();
-  MS_LOG(DEBUG) << "All task finish";
-}
-
-void OpExecutor::Wait() {
-  GilReleaseWithCheck gil_release;
-  WaitForRun();
-}
-
-void OpExecutor::WaitAll() {
-  GilReleaseWithCheck gil_release;
-  if (forward_callback_ != nullptr) {
-    forward_callback_();
-  }
-  WaitForRun();
 }
 
 void OpExecutor::PushOpRunTask(const std::shared_ptr<DeviceOpRunTask> &op_run_task) {
@@ -83,7 +58,7 @@ void OpExecutor::WorkerJoin() {
 
 void OpExecutor::DispatchLaunchTask(const std::function<void()> &func) {
   if (NeedSync()) {
-    runtime::OpExecutor::GetInstance().WaitAll();
+    runtime::Pipeline::Get().WaitForward();
     func();
   } else {
     auto task = std::make_shared<runtime::DeviceLaunchTask>([=]() { func(); });
@@ -105,7 +80,7 @@ void OpExecutor::ChildAfterFork() {
   runtime::Pipeline::Get().backend_stage()->ChildAfterFork();
   runtime::Pipeline::Get().launch_stage()->ChildAfterFork();
   // Refresh the lazy callback in Tensor.
-  tensor::Tensor::RegisterLazyCallback([]() { OpExecutor::GetInstance().WaitAll(); });
+  tensor::Tensor::RegisterLazyCallback([]() { runtime::Pipeline::Get().WaitAll(); });
   MS_LOG(DEBUG) << "OpExecutor reinitialize after fork done.";
 }
 }  // namespace mindspore::runtime

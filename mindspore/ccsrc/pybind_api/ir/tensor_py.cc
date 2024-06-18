@@ -28,6 +28,7 @@
 #include "include/common/profiler.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/pynative/op_executor.h"
+#include "runtime/pipeline/pipeline.h"
 #include "include/backend/mbuf_device_address.h"
 
 namespace mindspore {
@@ -650,7 +651,7 @@ TensorPtr TensorPy::MoveTo(const Tensor &self, const std::string &to, bool block
   target_tensor->set_device_address(nullptr);
   bool return_self = false;
   // make sure op execute end before data copy
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitForward();
   context->device_res_manager_->MoveTo(std::make_shared<tensor::Tensor>(self), target_tensor, to, blocking,
                                        &return_self);
   if (return_self) {

@@ -173,8 +173,7 @@ void PyNativeExecutor::set_kernel_build_server_dir(const py::object &kernel_buil
 }
 
 void PyNativeExecutor::ClearRes() const {
-  forward_executor()->WaitForwardTask();
-  runtime::OpExecutor::GetInstance().Wait();
+  runtime::Pipeline::Get().WaitAll();
   // Clear forward tasks before clear op graphs cache.
   pynative::OpCompiler::GetInstance().ClearAllCache();
   kernel::KernelModCache::GetInstance().ClearAllCache();
@@ -301,10 +300,7 @@ py::object PyNativeExecutor::GetDynamicInput(const py::object &actual_input) con
 
 void PyNativeExecutor::ParentBeforeFork() {
   MS_LOG(DEBUG) << "PyNativeExecutor prepare before fork.";
-  MS_LOG(DEBUG) << "Wait for OpExecutor.";
-  runtime::OpExecutor::GetInstance().WaitAll();
-  MS_LOG(DEBUG) << "Wait for grad_executor_.";
-  grad_executor_->bprop_queue()->Wait();
+  runtime::Pipeline::Get().WaitAll();
   MS_LOG(DEBUG) << "PyNativeExecutor prepare before fork done.";
 }
 

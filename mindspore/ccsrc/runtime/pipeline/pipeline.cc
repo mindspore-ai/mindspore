@@ -16,6 +16,7 @@
 #include "runtime/pipeline/pipeline.h"
 #include <memory>
 #include "runtime/pipeline/async_rqueue.h"
+#include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
 namespace runtime {
@@ -25,9 +26,24 @@ Pipeline &Pipeline::Get() {
 }
 
 Pipeline::Pipeline()
-    : frontend_stage_(
-        std::make_shared<runtime::AsyncRQueue>("frontend_queue", runtime::kThreadWaitLevel::kLevelFrontend)),
-      backend_stage_(std::make_shared<runtime::AsyncRQueue>("backend_queue", kThreadWaitLevel::kLevelBackend)),
-      launch_stage_(std::make_shared<runtime::AsyncRQueue>("launch_queue", kThreadWaitLevel::kLevelDevice)) {}
+    : frontend_stage_(std::make_unique<AsyncRQueue>("frontend_queue", runtime::kThreadWaitLevel::kLevelFrontend)),
+      bprop_stage_(std::make_unique<AsyncHqueue>("bprop_queue")),
+      backend_stage_(std::make_unique<AsyncRQueue>("backend_queue", kThreadWaitLevel::kLevelBackend)),
+      launch_stage_(std::make_unique<AsyncRQueue>("launch_queue", kThreadWaitLevel::kLevelDevice)) {}
+
+void Pipeline::WaitAll() {
+  GilReleaseWithCheck gil_release;
+  frontend_stage_->Wait();
+  bprop_stage_->Wait();
+  backend_stage_->Wait();
+  launch_stage_->Wait();
+}
+
+void Pipeline::WaitForward() {
+  GilReleaseWithCheck gil_release;
+  frontend_stage_->Wait();
+  backend_stage_->Wait();
+  launch_stage_->Wait();
+}
 }  // namespace runtime
 }  // namespace mindspore

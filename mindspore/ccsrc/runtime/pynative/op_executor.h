@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,6 @@ class BACKEND_EXPORT OpExecutor {
  public:
   static OpExecutor &GetInstance();
 
-  void RegisterForwardCallback(const std::function<void()> &callback);
-
   void PushOpRunTask(const std::shared_ptr<DeviceOpRunTask> &op_run_task);
 
   void PushOpRunTask(const std::shared_ptr<PyBoostDeviceTask> &op_run_task);
@@ -51,11 +49,6 @@ class BACKEND_EXPORT OpExecutor {
   // When an exception occurs, the state needs to be reset.
   // Because we may sometimes have to ignore the exception and continue to run other tasks
   void Reset();
-
-  // Wait for all OpRunTasks to finish executing.
-  void Wait();
-
-  void WaitAll();
 
   // Thread join before the process exit.
   void WorkerJoin();
@@ -76,7 +69,6 @@ class BACKEND_EXPORT OpExecutor {
   ~OpExecutor();
   DISABLE_COPY_AND_ASSIGN(OpExecutor);
 
-  void WaitForRun();
   std::function<void()> forward_callback_{nullptr};
   inline static bool async_for_graph_{false};
 };

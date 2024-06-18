@@ -43,7 +43,7 @@ tensor::BaseTensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, con
   // Create device address for output tensors
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitForward();
   auto device_context = op->device_context();
   const auto &op_outputs = op->outputs();
 
