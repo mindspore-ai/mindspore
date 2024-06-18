@@ -1063,17 +1063,23 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
 
   auto multi_stream_controller = device::MultiStreamController::GetInstance();
   bool ret = false;
-  {
+  if (!ActorDispatcher::enable_async_launch_kernel()) {
     std::lock_guard<std::mutex> lock(
       multi_stream_controller->GetStreamMutex(device_contexts_[0], kernel_info_->stream_id()));
-    // Here should process multi stream first to make inputs is memory safe.
     ProcessMultiStreamBeforeKernelLaunch(context);
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel_->fullname_with_scope();
     ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
       kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_mod_, stream_);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel_->fullname_with_scope();
+    ProcessMultiStreamAfterKernelLaunch(context);
+  } else {
+    ProcessMultiStreamBeforeKernelLaunch(context);
+    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel_->fullname_with_scope();
+    ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
+      kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_mod_, stream_);
+    MS_LOG(DEBUG) << "End launch kernel: " << kernel_->fullname_with_scope();
+    ProcessMultiStreamAfterKernelLaunch(context);
   }
-  ProcessMultiStreamAfterKernelLaunch(context);
   return ret;
 }
 
