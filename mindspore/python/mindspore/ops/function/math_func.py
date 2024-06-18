@@ -7746,6 +7746,11 @@ def gumbel_softmax(logits, tau=1.0, hard=False, dim=-1):
     _check_logits_shape(logits)
     logits_dtype = dtype_(logits)
     _check_input_dtype("logits", logits_dtype, [mstype.float16, mstype.float32], "gumbel_softmax")
+    valid_types = [mstype.float16, mstype.float32]
+    if logits_dtype not in valid_types:
+        names = [t.__name__ if hasattr(t, "__name__") else t for t in valid_types]
+        logits_dtype = logits_dtype.__name__ if hasattr(logits_dtype, '__name__') else repr(logits_dtype)
+        raise TypeError(f"For 'gumbel_softmax', the 'logits' should be one of '{names}', but got type '{logits_dtype}'")
     _check_attr_dtype("tau", tau, [float], "gumbel_softmax")
     _check_attr_dtype("hard", hard, [bool], "gumbel_softmax")
     _check_attr_dtype("dim", dim, [int], "gumbel_softmax")
