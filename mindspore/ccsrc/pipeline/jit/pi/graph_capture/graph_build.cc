@@ -36,6 +36,7 @@
 #include "ops/structure_ops.h"
 #include "mindspore/core/ir/cell.h"
 #include "pybind_api/ir/primitive_py.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace pijit {
@@ -3537,11 +3538,37 @@ bool MindGraphBuilder::HandleCallClass(CallNode *call_node) {
   return false;
 }
 
+// Fix dynamic shape tensor get shape issue.
+// Guard and Renormalize strategy should be refactored later.
+py::object MindGraphBuilder::HandleGetShapeOfDynamicLengthTensor(const py::object &object) {
+  auto anf_node = fg_builder_->ReadLocalVariable(object);
+  if (anf_node == nullptr || anf_node->abstract() == nullptr) {
+    return py::object();
+  }
+  auto abs = anf_node->abstract();
+  auto shape = abs->BuildShape();
+  if (!shape->isa<abstract::TensorShape>()) {
+    return py::object();
+  }
+  const auto &tensor_shape = shape->cast<abstract::TensorShapePtr>()->GetShapeVector();
+  if (std::all_of(tensor_shape.begin(), tensor_shape.end(), [](auto e) { return e > 0; })) {
+    return py::object();
+  }
+  std::vector<py::object> input_objects = {object};
+  return fg_builder_->AddNode(prim::kPrimShape, input_objects);
+}
+
 ValueNode *MindGraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &instr) {
   auto attr_node = NewValueNode(target_node->get_attr(instr.name()), instr, {target_node});
   MS_EXCEPTION_IF_NULL(attr_node);
   ValueNode *graph_attr_node = nullptr;
   auto attr_obj = attr_node->GetVobj()->GetPyObject();
+  if (instr.name() == "shape") {
+    auto ret_object = HandleGetShapeOfDynamicLengthTensor(target_node->GetVobj()->GetPyObject());
+    if (ret_object.ptr() != nullptr) {
+      return NewValueNode(AObject::Convert(ret_object), instr, {target_node});
+    }
+  }
   // If the attr_obj can convert to anf node directly, return the origin attr node.
   if (fg_builder_->AddAttrPythonObject(attr_obj)) {
     graph_attr_node = attr_node;
