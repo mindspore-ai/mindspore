@@ -892,9 +892,8 @@ int BenchmarkUnifiedApi::CompareDataGetTotalCosineDistanceAndSize(const std::str
 int BenchmarkUnifiedApi::MarkPerformance() {
   MS_LOG(INFO) << "Running warm up loops...";
   std::cout << "Running warm up loops..." << std::endl;
-
+  std::vector<MSTensor> outputs;
   for (int i = 0; i < flags_->warm_up_loop_count_; i++) {
-    std::vector<MSTensor> outputs;
     auto status = ms_model_.Predict(ms_inputs_for_api_, &outputs);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "Inference error ";
@@ -910,7 +909,6 @@ int BenchmarkUnifiedApi::MarkPerformance() {
   uint64_t time_avg = 0;
 
   for (int i = 0; i < flags_->loop_count_; i++) {
-    std::vector<MSTensor> outputs;
     auto inputs = ms_model_.GetInputs();
     for (auto tensor : inputs) {
       tensor.MutableData();  // prepare data
