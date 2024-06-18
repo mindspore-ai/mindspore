@@ -3618,8 +3618,9 @@ class ROIAlign(Primitive):
 
 
     Inputs:
-        - **features** (Tensor) - The input features, whose shape must be :math:`(N, C, H, W)`.
-        - **rois** (Tensor) - The shape is :math:`(rois\_n, 5)`. With data type of float16 or float32.
+        - **features** (Tensor) - The input features, whose shape must be :math:`(N, C, H, W)`, with data type of
+          float16 or float32.
+        - **rois** (Tensor) - The shape is :math:`(rois\_n, 5)`, with data type of float16 or float32.
           `rois_n` represents the number of RoI. The size of the second dimension must be `5` and the `5` colunms
           are :math:`(image\_index, top\_left\_x, top\_left\_y, bottom\_right\_x, bottom\_right\_y)`.
           `image_index` represents the index of image. `top_left_x` and `top_left_y` represent the `x, y`
