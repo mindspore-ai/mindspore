@@ -53,6 +53,10 @@ abstract::AnalysisResult AbstractAnalyze(const abstract::AnalysisEnginePtr &engi
                                          bool clear = false);
 abstract::AnalysisResult AbstractAnalyze(const ValuePtr &value, const abstract::AbstractBasePtrList &args_abs,
                                          bool clear = false);
+
+abstract::AnalysisResult AbstractAnalyzeWithResourceClean(const ValuePtr &value,
+                                                          const abstract::AbstractBasePtrList &args_abs);
+
 FuncGraphPtr ProgramSpecialize(const abstract::AnalysisEnginePtr &engine, const FuncGraphPtr &func_graph,
                                const abstract::AnalysisContextPtr &context);
 FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_graph,

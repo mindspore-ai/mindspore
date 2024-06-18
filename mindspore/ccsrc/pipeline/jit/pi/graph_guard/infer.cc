@@ -934,7 +934,7 @@ py::object EvalMSAPIValue(const py::object &ms_api, const py::object &args, cons
       inputs_abs_list[i] = inputs_abs_list[i]->Broaden();
     }
     try {
-      auto analyze_res = pipeline::AbstractAnalyze(func_graph, inputs_abs_list);
+      auto analyze_res = pipeline::AbstractAnalyzeWithResourceClean(func_graph, inputs_abs_list);
       eval_result = analyze_res.eval_result == nullptr ? nullptr : analyze_res.eval_result->abstract();
     } catch (const std::exception &ex) {
       MS_LOG(ERROR) << "AbstractAnalyze failed for [" << func_graph->ToString() << "], error:" << ex.what();

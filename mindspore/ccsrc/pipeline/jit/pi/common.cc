@@ -93,6 +93,12 @@ class ByteCodeRunStatistic {
   std::map<uint64_t, size_t> graph_;
 };
 
+class StaticAnalysisExceptionCleaner {
+ public:
+  StaticAnalysisExceptionCleaner() = default;
+  ~StaticAnalysisExceptionCleaner() { StaticAnalysisException::Instance().ClearException(); }
+};
+
 static void PrintGuardPerf() {
   std::map<std::string, std::pair<size_t, size_t>> guard_info;
   std::map<std::string, std::pair<size_t, size_t>> guard_freq_info;
@@ -1000,6 +1006,9 @@ std::vector<py::object> PackArgs(const PyFrameObject *frame) {
 static py::object CallGraph(const JitCompileResults *c, const py::object &args, const py::object &kwvargs) {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureRunGraph,
                                      "PIJitRunGraph");
+
+  StaticAnalysisExceptionCleaner exception_cleaner;
+
   PyObject *py_args = args.ptr();
   PyObject *py_kwvargs = kwvargs.ptr();
   PyObject *res;
@@ -1233,6 +1242,9 @@ static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
 
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureGuard,
                                      "PIJitGuard");
+
+  StaticAnalysisExceptionCleaner exception_cleaner;
+
   c->code = nullptr;
   std::map<size_t, PyObject *> cache;
   std::map<size_t, bool> success;
@@ -1282,6 +1294,7 @@ static bool JitCompileWithTry(PyThreadState *tstate, JitCompileResults *c) {
   TimeRecorder time_recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
 
   JitSyntaxLevelScope jit_syntax_level_scope(c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag));
+  StaticAnalysisExceptionCleaner exception_cleaner;
 
   if (!c->conf->GetBoolConfig(GraphJitConfig::kCompileWithTry)) {
     return JitCompile(tstate, c);
