@@ -152,6 +152,7 @@ class ReprRecursionScope {
 };
 
 bool HasMutableOrConstAttr(PyObject *obj);
+bool IsMutableObj(const py::object &obj);
 bool CheckMutableOrNonConstAttr(PyObject *obj);
 bool HasDynamicLength(PyObject *obj);
 bool CheckDynamicLength(PyObject *obj);
