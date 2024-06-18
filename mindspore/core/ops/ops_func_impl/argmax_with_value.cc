@@ -25,6 +25,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr size_t kInputElementSize = 3;
+
 inline BaseShapePtr GetOutputShape(const ShapeVector &output_shape) {
   return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{
     std::make_shared<abstract::TensorShape>(output_shape), std::make_shared<abstract::TensorShape>(output_shape)});
@@ -38,8 +40,9 @@ inline ShapeArray GetOutputShapeArray(const ShapeVector &output_shape) {
 
 BaseShapePtr ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) const {
-  if (input_args.size() < 3) {
-    MS_EXCEPTION(ValueError) << primitive->name() << " should have 3 inputs. Please try other inputs";
+  if (input_args.size() < kInputElementSize) {
+    MS_EXCEPTION(ValueError) << primitive->name() << " should have" << kInputElementSize
+                             << "inputs. Please try other inputs";
   }
   auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
   auto x_shape = x_shape_ptr->GetShapeVector();
@@ -97,8 +100,9 @@ BaseShapePtr ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 ShapeArray ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
-  if (input_values.size() < 3) {
-    MS_EXCEPTION(ValueError) << primitive->name() << " should have 3 inputs. Please try other inputs";
+  if (input_values.size() < kInputElementSize) {
+    MS_EXCEPTION(ValueError) << primitive->name() << " should have" << kInputElementSize
+                             << "inputs. Please try other inputs";
   }
   const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
