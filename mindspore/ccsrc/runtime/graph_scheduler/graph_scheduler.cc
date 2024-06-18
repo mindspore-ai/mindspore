@@ -1104,8 +1104,9 @@ void GraphScheduler::UpdateDeviceAddressByRefInternalParameter(const GraphCompil
       auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(origin_node_pair.first);
       MS_EXCEPTION_IF_NULL(front_output_with_index.first);
       if (graph_output_to_actor_.count(front_output_with_index) == 0) {
-        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Can't find graph output by front node:"
-                                   << front_output_with_index.first->DebugString();
+        MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, front_output_with_index.first)
+          << "#dmsg#Runtime error info:#dmsg#Can't find graph output by front node:"
+          << front_output_with_index.first->DebugString();
       }
       auto real_origin_node_pair = graph_output_to_actor_[front_output_with_index].second;
       real_origin_node_pair =
@@ -1657,8 +1658,8 @@ KernelActorPtr GraphScheduler::GenerateRpcActor(const CNodePtr &kernel, const De
     MS_EXCEPTION_IF_NULL(recv_actor);
     return recv_actor;
   } else {
-    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Kernel " << kernel->fullname_with_scope()
-                               << " is not a rpc kernel.";
+    MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, kernel)
+      << "#dmsg#Runtime error info:#dmsg#Kernel " << kernel->fullname_with_scope() << " is not a rpc kernel.";
   }
 #endif
   return nullptr;
@@ -1672,8 +1673,9 @@ KernelActorPtr GraphScheduler::GenerateInnerControlFlowActor(const CNodePtr &ker
   MS_EXCEPTION_IF_NULL(kernel);
   if (common::AnfAlgo::GetCNodeName(kernel) != "ConditionSwitch" &&
       common::AnfAlgo::GetCNodeName(kernel) != "ConditionGather") {
-    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Kernel " << kernel->fullname_with_scope()
-                               << " is not a inner control flow kernel.";
+    MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, kernel)
+      << "#dmsg#Runtime error info:#dmsg#Kernel " << kernel->fullname_with_scope()
+      << " is not a inner control flow kernel.";
   }
   if (common::AnfAlgo::GetCNodeName(kernel) == "ConditionSwitch") {
     return std::make_shared<ConditionSwitchActor>(kernel->fullname_with_scope(), kernel, device_context,
@@ -1727,7 +1729,8 @@ bool IsNeedLinkForFirstInput(const CNodePtr &cnode,
                              const mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> &cnode_to_monad_inputs) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->size() <= kUpdateStateStateInput) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid update state node:" << cnode->DebugString();
+    MS_LOG_WITH_NODE(EXCEPTION, cnode) << "#dmsg#Runtime error info:#dmsg#Invalid update state node:"
+                                       << cnode->DebugString();
   }
   const auto &u_input = cnode->input(kUpdateStateStateInput);
   MS_EXCEPTION_IF_NULL(u_input);
@@ -1900,9 +1903,9 @@ void GraphScheduler::LinkDataArrow(AbstractActor *const to_actor, const GraphCom
 
   if (kKernelTypeToLinkFunc.count(kernel_type) == 0) {
     if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) {
-      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid from node:"
-                                 << from_kernel->fullname_with_scope() << " to actor:" << to_actor->GetAID().Name()
-                                 << ", type:" << kernel_type;
+      MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, from_kernel)
+        << "#dmsg#Runtime error info:#dmsg#Invalid from node:" << from_kernel->fullname_with_scope()
+        << " to actor:" << to_actor->GetAID().Name() << ", type:" << kernel_type;
     }
     return;
   }
@@ -1948,9 +1951,10 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
   } else {
     // front node ---> actor.
     if (graph_output_to_actor_.count(front_output_with_index) == 0) {
-      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Can't find actor by front node:"
-                                 << common::AnfAlgo::GetNodeDebugString(front_output_node)
-                                 << ", internal parameter:" << common::AnfAlgo::GetNodeDebugString(internal_parameter);
+      MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, front_output_node)
+        << "#dmsg#Runtime error info:#dmsg#Can't find actor by front node:"
+        << common::AnfAlgo::GetNodeDebugString(front_output_node)
+        << ", internal parameter:" << common::AnfAlgo::GetNodeDebugString(internal_parameter);
     }
     auto actor_pair = graph_output_to_actor_[front_output_with_index];
     MS_EXCEPTION_IF_NULL(actor_pair.first);
@@ -1978,8 +1982,9 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
 
   if (kKernelTypeToLinkFunc.count(kernel_type) == 0) {
     MS_EXCEPTION_IF_NULL(internal_parameter);
-    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid internal parameter:"
-                               << internal_parameter->DebugString() << ", type:" << kernel_type;
+    MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, internal_parameter)
+      << "#dmsg#Runtime error info:#dmsg#Invalid internal parameter:" << internal_parameter->DebugString()
+      << ", type:" << kernel_type;
   }
   (this->*kKernelTypeToLinkFunc[kernel_type])(real_from_actor, to_actor, real_from_kernel_with_output_idx,
                                               to_kernel_with_input_idx, graph);
@@ -2269,8 +2274,9 @@ void GraphScheduler::LinkControlArrowByAutoMonad(
       }
 
       if (graph_output_to_actor_.count(front_output_with_index) == 0) {
-        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Can't find graph output by front node:"
-                                   << front_output_with_index.first->DebugString();
+        MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, front_output_with_index.first)
+          << "#dmsg#Runtime error info:#dmsg#Can't find graph output by front node:"
+          << front_output_with_index.first->DebugString();
       }
       real_depend_kernel = graph_output_to_actor_[front_output_with_index].second.first;
       MS_EXCEPTION_IF_NULL(real_depend_kernel);
@@ -2464,9 +2470,9 @@ void GraphScheduler::LinkControlArrowForCustomActor(const ActorSet *actor_set,
                                                      graph_compiler_info.strategy_);
       auto to_actor = FetchActor(to_kernel_type, graph_compiler_info.name_, to_node, graph);
       if (to_actor == nullptr) {
-        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Fetch no actor for node:"
-                                   << to_node->fullname_with_scope()
-                                   << ", from node:" << from_node->fullname_with_scope();
+        MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, to_node)
+          << "#dmsg#Runtime error info:#dmsg#Fetch no actor for node:" << to_node->fullname_with_scope()
+          << ", from node:" << from_node->fullname_with_scope();
       }
 
       AbstractActor *from_actor = nullptr;
@@ -2815,8 +2821,9 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
     const auto &front_output_with_index = origin_output_order.first;
     if (graph_output_to_actor_.count(front_output_with_index) == 0) {
       MS_EXCEPTION_IF_NULL(front_output_with_index.first);
-      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Can't find graph output by front node:"
-                                 << front_output_with_index.first->DebugString();
+      MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, front_output_with_index.first)
+        << "#dmsg#Runtime error info:#dmsg#Can't find graph output by front node:"
+        << front_output_with_index.first->DebugString();
     }
     const auto &graph_output_pair = graph_output_to_actor_.at(front_output_with_index);
     const auto &from_actor = graph_output_pair.first;
@@ -2831,9 +2838,9 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
     } else {
       if (from_actor == nullptr) {
         MS_EXCEPTION_IF_NULL(front_output_with_index.first);
-        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Can't find output actor by front node:"
-                                   << front_output_with_index.first->DebugString()
-                                   << ", output node:" << real_from_kernel->DebugString();
+        MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, front_output_with_index.first)
+          << "#dmsg#Runtime error info:#dmsg#Can't find output actor by front node:"
+          << front_output_with_index.first->DebugString() << ", output node:" << real_from_kernel->DebugString();
       }
       // Update the real node in the host data source actor.
       if (from_actor->type() == KernelTransformType::kHostDataSourceActor) {
@@ -3083,8 +3090,9 @@ void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompi
     const auto &node_with_index_with_context =
       parser->FetchBackendParameterWithContextByFrontParameter({root_graph_parameter, 0});
     if (node_with_index_with_context.first.first == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Can't find backend node for weight parameter:"
-                                 << root_graph_parameter->DebugString();
+      MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, root_graph_parameter)
+        << "#dmsg#Runtime error info:#dmsg#Can't find backend node for weight parameter:"
+        << root_graph_parameter->DebugString();
     }
     const auto &backend_node = node_with_index_with_context.first.first;
     const auto &index = node_with_index_with_context.first.second;
@@ -3092,7 +3100,7 @@ void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompi
     MS_EXCEPTION_IF_NULL(backend_node);
     MS_EXCEPTION_IF_NULL(device_context);
     if (index != 0) {
-      MS_LOG(INTERNAL_EXCEPTION)
+      MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, backend_node)
         << "#dmsg#Runtime error info:#dmsg#Device tensor store does not support tuple type, node:"
         << backend_node->DebugString() << " index:" << index;
     }

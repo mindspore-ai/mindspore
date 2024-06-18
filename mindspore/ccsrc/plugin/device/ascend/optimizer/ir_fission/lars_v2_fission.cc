@@ -87,7 +87,8 @@ const AnfNodePtr LarsV2Fission::Process(const FuncGraphPtr &graph, const AnfNode
   auto lars_v2 = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(lars_v2);
   if (common::AnfAlgo::IsDynamicShape(lars_v2)) {
-    MS_LOG(EXCEPTION) << "LarsV2 don't support dynamic shape, node: " << lars_v2->fullname_with_scope();
+    MS_LOG_WITH_NODE(EXCEPTION, lars_v2) << "LarsV2 don't support dynamic shape, node: "
+                                         << lars_v2->fullname_with_scope();
   }
 
   std::vector<AnfNodePtr> square_sum_all_outputs;

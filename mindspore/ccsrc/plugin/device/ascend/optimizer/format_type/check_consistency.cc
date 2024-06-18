@@ -96,8 +96,9 @@ const AnfNodePtr CheckConsistency::Process(const FuncGraphPtr &, const AnfNodePt
   size_t in_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 0; i < in_num; ++i) {
     if (!CheckFormatForConsistency(cnode, i) || !CheckDataTypeForConsistency(cnode, i)) {
-      MS_LOG(EXCEPTION) << "Found inconsistent format or data type! Op: " << common::AnfAlgo::GetCNodeName(cnode) << "["
-                        << cnode->DebugString() << "], fullname: " << node->fullname_with_scope();
+      MS_LOG_WITH_NODE(EXCEPTION, cnode) << "Found inconsistent format or data type! Op: "
+                                         << common::AnfAlgo::GetCNodeName(cnode) << "[" << cnode->DebugString()
+                                         << "], fullname: " << node->fullname_with_scope();
     }
   }
   return nullptr;

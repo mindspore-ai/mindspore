@@ -114,8 +114,8 @@ kernel::KernelModPtr CreateKernelPacketKernelMod(const CNodePtr &kernel) {
   if (!kp_kernelmod->KernelMod::Init(prim, input_kernel_tensors, output_kernel_tensors) ||
       !kernel::KernelPacketInitializer::InitKernel(real_kernel, real_kernel_info->GetKernelMod(), kp_kernelmod.get(),
                                                    infer_func.get())) {
-    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize kernel op[" << real_kernel->fullname_with_scope()
-                      << "] failed.";
+    MS_LOG_WITH_NODE(EXCEPTION, real_kernel)
+      << "#dmsg#Kernel build failed:#dmsg#Initialize kernel op[" << real_kernel->fullname_with_scope() << "] failed.";
   }
   real_kernel_info->set_kernel_mod(nullptr);
   return kp_kernelmod;
@@ -159,8 +159,9 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
     } else if (kernel_type == KernelType::INTERNAL_KERNEL) {
       kernel_mod_ptr = kernel::InternalKernelBuild(kernel);
     } else {
-      MS_LOG(EXCEPTION) << "The kernel: " << kernel->fullname_with_scope() << " kernel build failed, kernel type: "
-                        << kernel::KernelTypeLabel(AnfAlgo::GetKernelType(kernel));
+      MS_LOG_WITH_NODE(EXCEPTION, kernel)
+        << "The kernel: " << kernel->fullname_with_scope()
+        << " kernel build failed, kernel type: " << kernel::KernelTypeLabel(AnfAlgo::GetKernelType(kernel));
     }
     MS_LOG(INFO) << "kernel opname:" << opname << ", kernel type:" << GetKernelTypeStr(kernel_type);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
@@ -372,8 +373,9 @@ CNodePtr GetBranchNode(const KernelGraphPtr &graph, const CNodePtr &old_branch_n
     if (branch_tuple_getitem.find(input) != branch_tuple_getitem.end()) {
       branch_inputs.push_back(branch_tuple_getitem.at(input));
     } else {
-      MS_LOG(EXCEPTION) << "Invalid input of branch node: " << old_branch_node->fullname_with_scope() << ", " << i
-                        << ", " << input->fullname_with_scope();
+      MS_LOG_WITH_NODE(EXCEPTION, old_branch_node)
+        << "Invalid input of branch node: " << old_branch_node->fullname_with_scope() << ", " << i << ", "
+        << input->fullname_with_scope();
     }
   }
   auto branch_node = graph->NewCNode(branch_inputs);
@@ -558,7 +560,7 @@ AnfNodePtrList CreateTupleGetItemForTupleOutput(const AnfNodePtr &node, const Ke
   MS_EXCEPTION_IF_NULL(node);
   const auto &abstract = node->abstract();
   if (abstract == nullptr) {
-    MS_LOG(EXCEPTION) << "Invalid abstract for node:" << node->DebugString();
+    MS_LOG_WITH_NODE(EXCEPTION, node) << "Invalid abstract for node:" << node->DebugString();
   }
 
   if (!abstract->isa<abstract::AbstractSequence>()) {
@@ -604,8 +606,8 @@ CNodePtr FlattenConditionGatherNodeInput(const CNodePtr &kernel, const KernelGra
     AnfNodePtrList outputs = CreateTupleGetItemForTupleOutput(input, graph);
     // All input branch should have same output num.
     if (output_num != SIZE_MAX && output_num != outputs.size()) {
-      MS_LOG(EXCEPTION) << "Invalid output size:" << output_num << " and " << outputs.size()
-                        << " for kernel:" << kernel->fullname_with_scope();
+      MS_LOG_WITH_NODE(EXCEPTION, kernel) << "Invalid output size:" << output_num << " and " << outputs.size()
+                                          << " for kernel:" << kernel->fullname_with_scope();
     }
     output_num = outputs.size();
     new_inputs.insert(new_inputs.end(), outputs.begin(), outputs.end());
@@ -637,14 +639,16 @@ CNodePtr FlattenConditionGatherNodeInput(const CNodePtr &kernel, const KernelGra
   MS_LOG(INFO) << "Abstract construct index:" << abstract_construct_index->ToString()
                << " for rebuild the abstract of kernel:" << new_kernel->DebugString();
   if (new_abstract_list.size() != output_num || output_num != index_num) {
-    MS_LOG(EXCEPTION) << "Invalid abstract list size:" << new_abstract_list.size() << " and output size:" << output_num
-                      << " output index size:" << index_num << " for kernel:" << kernel->DebugString()
-                      << " abstract:" << kernel->abstract()->ToString();
+    MS_LOG_WITH_NODE(EXCEPTION, kernel) << "Invalid abstract list size:" << new_abstract_list.size()
+                                        << " and output size:" << output_num << " output index size:" << index_num
+                                        << " for kernel:" << kernel->DebugString()
+                                        << " abstract:" << kernel->abstract()->ToString();
   }
   new_kernel->set_abstract(std::make_shared<abstract::AbstractTuple>(new_abstract_list));
   SelectKernelInfo(graph, new_kernel);
   if (output_num == SIZE_MAX) {
-    MS_LOG(EXCEPTION) << "Invalid output size:" << output_num << " for kernel:" << kernel->fullname_with_scope();
+    MS_LOG_WITH_NODE(EXCEPTION, kernel) << "Invalid output size:" << output_num
+                                        << " for kernel:" << kernel->fullname_with_scope();
   }
   new_kernel->AddAttr(kAttrBranchOutputNum, MakeValue<size_t>(output_num));
   if (kernel->HasAttr(kAttrBranchGraphName)) {
@@ -786,7 +790,7 @@ void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *co
       }
       InlineSubGraph(graph, inline_subgraph, kernel_cnode, nullptr, true);
     } else {
-      MS_LOG(EXCEPTION) << "Invalid node type, node: " << kernel_cnode->fullname_with_scope();
+      MS_LOG_WITH_NODE(EXCEPTION, kernel_cnode) << "Invalid node type, node: " << kernel_cnode->fullname_with_scope();
     }
   }
   FlattenConditionNodeInput(graph);
@@ -830,9 +834,9 @@ void FixExecutionOrderForInlineControlFlowGraph(const KernelGraphPtr &graph) {
       }
       if (*iter == condition_node_pair.first) {
         if (!is_get_switch) {
-          MS_LOG(EXCEPTION) << "Condition gather:" << condition_node_pair.first->fullname_with_scope()
-                            << " is in front of condition switch: "
-                            << condition_node_pair.second->fullname_with_scope();
+          MS_LOG_WITH_NODE(EXCEPTION, condition_node_pair.first)
+            << "Condition gather:" << condition_node_pair.first->fullname_with_scope()
+            << " is in front of condition switch: " << condition_node_pair.second->fullname_with_scope();
         }
         new_order.emplace_back(condition_node_pair.second->cast<CNodePtr>());
         new_order.insert(new_order.end(), new_order_after_switch.begin(), new_order_after_switch.end());

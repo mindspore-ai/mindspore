@@ -105,7 +105,8 @@ struct TbeLaunchKernelModRegister {
           device_address_ptr->set_is_ptr_persisted(true);
           auto ret = runtime_instance->GetMemoryManager()->MallocMemFromMemPool(device_address_ptr, size);
           if (!ret) {
-            MS_LOG(EXCEPTION) << "MallocMem from memory pool failed. Node info :" << kernel->fullname_with_scope();
+            MS_LOG_WITH_NODE(EXCEPTION, kernel)
+              << "MallocMem from memory pool failed. Node info :" << kernel->fullname_with_scope();
           }
           const KernelTensorPtr &workspace = device_address_ptr->kernel_tensor();
           (void)workspaces->emplace_back(workspace.get());
@@ -531,7 +532,8 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
         device_address_ptr->set_is_ptr_persisted(true);
         auto device_ptr = runtime_instance->MallocMem(MemType::kDynamicMem, size, device_address_ptr);
         if (device_ptr == nullptr) {
-          MS_LOG(EXCEPTION) << "MallocMem from memory pool failed. Node info :" << kernel->fullname_with_scope();
+          MS_LOG_WITH_NODE(EXCEPTION, kernel)
+            << "MallocMem from memory pool failed. Node info :" << kernel->fullname_with_scope();
         }
 
         const auto &workspace = device_address_ptr->kernel_tensor();

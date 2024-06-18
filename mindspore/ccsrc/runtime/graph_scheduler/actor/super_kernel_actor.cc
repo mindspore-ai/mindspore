@@ -168,7 +168,7 @@ size_t SuperKernelActor::FetchInputNodePosition(const AnfNodePtr &intput_node) {
   auto &input_nodes = graph_->input_nodes();
   const auto &iter = find(input_nodes.begin(), input_nodes.end(), intput_node);
   if (iter == input_nodes.end()) {
-    MS_LOG(EXCEPTION) << "Invalid input node:" << intput_node->fullname_with_scope();
+    MS_LOG_WITH_NODE(EXCEPTION, intput_node) << "Invalid input node:" << intput_node->fullname_with_scope();
   }
   return iter - input_nodes.begin();
 }
@@ -847,7 +847,8 @@ void SuperKernelActor::BuildKernelActors() {
     }
     auto iter = node_to_kernel_actor_.find(output_kernel);
     if (iter == node_to_kernel_actor_.end()) {
-      MS_LOG(EXCEPTION) << "Can not find kernel actor for node: " << output_kernel->fullname_with_scope();
+      MS_LOG_WITH_NODE(EXCEPTION, output_kernel)
+        << "Can not find kernel actor for node: " << output_kernel->fullname_with_scope();
     }
     const auto &output_actor = iter->second;
     MS_EXCEPTION_IF_NULL(output_actor);
@@ -892,7 +893,8 @@ void SuperKernelActor::ParseInputIndex() {
       if (real_input_node.first->isa<Parameter>()) {
         auto iter = node_to_input_idx.find(real_input_node.first.get());
         if (iter == node_to_input_idx.end()) {
-          MS_LOG(EXCEPTION) << "Can not find index for input node: " << real_input_node.first->fullname_with_scope();
+          MS_LOG_WITH_NODE(EXCEPTION, real_input_node.first)
+            << "Can not find index for input node: " << real_input_node.first->fullname_with_scope();
         }
         kernel_input_to_graph_input_indices_[kernel.get()].emplace_back(j, iter->second);
       } else if (real_input_node.first->isa<ValueNode>()) {

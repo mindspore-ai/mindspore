@@ -108,7 +108,7 @@ void DeviceQueueDataSourceActor::FillDataBuffer() {
     MS_EXCEPTION_IF_NULL(kernel_mod);
     int ret = kernel_mod->Resize({}, output_kernel_tensors_);
     if (ret != kernel::KRET_OK) {
-      MS_LOG(EXCEPTION) << "Resize failed for kernel: " << data_kernel_->fullname_with_scope();
+      MS_LOG_WITH_NODE(EXCEPTION, data_kernel_) << "Resize failed for kernel: " << data_kernel_->fullname_with_scope();
     }
   }
 
@@ -370,8 +370,8 @@ size_t HostQueueDataSourceActor::FetchNodePosition(const KernelWithIndex &data_n
   MS_EXCEPTION_IF_NULL(data_node.first);
   const auto &iter = data_node_position_map_.find(data_node);
   if (iter == data_node_position_map_.end()) {
-    MS_LOG(EXCEPTION) << "Data node: " << data_node.first->DebugString() << " index:" << data_node.second
-                      << " is not exist.";
+    MS_LOG_WITH_NODE(EXCEPTION, data_node.first)
+      << "Data node: " << data_node.first->DebugString() << " index:" << data_node.second << " is not exist.";
   }
   return iter->second;
 }

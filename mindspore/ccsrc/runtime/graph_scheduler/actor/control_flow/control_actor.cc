@@ -118,8 +118,9 @@ size_t ControlActor::FetchNodePosition(const KernelWithIndex &node) const {
                       << (formal_parameter.first != nullptr ? formal_parameter.first->DebugString() : "")
                       << " index:" << formal_parameter.second << " node ptr:" << formal_parameter.first;
     }
-    MS_LOG(EXCEPTION) << "Invalid formal parameter:" << (node.first != nullptr ? node.first->DebugString() : "")
-                      << " node ptr:" << node.first << " index:" << node.second << " for actor:" << GetAID();
+    MS_LOG_WITH_NODE(EXCEPTION, node.first)
+      << "Invalid formal parameter:" << (node.first != nullptr ? node.first->DebugString() : "")
+      << " node ptr:" << node.first << " index:" << node.second << " for actor:" << GetAID();
   }
   return iter - formal_parameters_.begin();
 }

@@ -130,7 +130,7 @@ bool AclSomas::RuntimeNodeProcess(const session::KernelGraph &graph) {
       }
       union_tensors_list_.insert(union_tensors_list_.end(), union_tensors.begin(), union_tensors.end());
     } else {
-      MS_LOG(EXCEPTION) << "Can't find somas node for inplace node " << kernel->fullname_with_scope();
+      MS_LOG_WITH_NODE(EXCEPTION, kernel) << "Can't find somas node for inplace node " << kernel->fullname_with_scope();
     }
   }
   return true;

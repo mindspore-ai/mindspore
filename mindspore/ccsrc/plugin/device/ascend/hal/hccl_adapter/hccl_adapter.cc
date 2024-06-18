@@ -582,7 +582,7 @@ bool HcclAdapter::IsSameServer(const std::vector<uint32_t> &rank_ids) const {
 string HcclAdapter::GetHcomGroup(const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(cnode);
   if (!common::AnfAlgo::HasNodeAttr(kAttrGroup, cnode)) {
-    MS_LOG(EXCEPTION) << "Hcom node " << cnode->fullname_with_scope() << " has no group attribute.";
+    MS_LOG_WITH_NODE(EXCEPTION, cnode) << "Hcom node " << cnode->fullname_with_scope() << " has no group attribute.";
   }
 
   auto group_name = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrGroup);

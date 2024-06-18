@@ -44,8 +44,9 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
 
   if (!std::static_pointer_cast<KernelMod>(kernel_mod_ptr)
          ->Init(primitive, input_kernel_tensors, output_kernel_tensors)) {
-    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[" << anf_node->fullname_with_scope()
-                      << "] failed." << trace::DumpSourceLines(anf_node);
+    MS_LOG_WITH_NODE(EXCEPTION, anf_node)
+      << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[" << anf_node->fullname_with_scope() << "] failed."
+      << trace::DumpSourceLines(anf_node);
   }
 
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(anf_node);

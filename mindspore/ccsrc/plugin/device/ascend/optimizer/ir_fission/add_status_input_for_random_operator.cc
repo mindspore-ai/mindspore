@@ -187,16 +187,17 @@ bool AddStatusInputForRandomOperator::Run(const FuncGraphPtr &graph) {
       auto [s0, s1, seed_attrs] = GetSnapStatus(snap_map, k, i);
       for (const auto &[attr_name, attr_value] : seed_attrs) {
         if (!common::AnfAlgo::HasNodeAttr(attr_name, cnode)) {
-          MS_LOG(EXCEPTION) << "Node " << cnode->fullname_with_scope() << " does not have attr " << attr_name
-                            << ", but read " << attr_value << " from checkpoint.";
+          MS_LOG_WITH_NODE(EXCEPTION, cnode) << "Node " << cnode->fullname_with_scope() << " does not have attr "
+                                             << attr_name << ", but read " << attr_value << " from checkpoint.";
         }
         int64_t value = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, attr_name);
         if (value == 0) {
-          MS_LOG(EXCEPTION) << "Node " << cnode->fullname_with_scope() << " have attr " << attr_name << " value is "
-                            << value << ", in this case the randomness cannot be fixed.";
+          MS_LOG_WITH_NODE(EXCEPTION, cnode)
+            << "Node " << cnode->fullname_with_scope() << " have attr " << attr_name << " value is " << value
+            << ", in this case the randomness cannot be fixed.";
         }
         if (value != attr_value) {
-          MS_LOG(EXCEPTION)
+          MS_LOG_WITH_NODE(EXCEPTION, cnode)
             << "Node " << cnode->fullname_with_scope() << " have attr " << attr_name << " value is " << value
             << ", but read " << attr_value
             << " from checkpoint. When loading the operators’ random state, please do not modify the network script.";

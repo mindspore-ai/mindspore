@@ -46,16 +46,17 @@ KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
 
   if (!std::static_pointer_cast<KernelMod>(kernel_ptr)
          ->Init(common::AnfAlgo::GetCNodePrimitive(anf_node), input_kernel_tensors, output_kernel_tensors)) {
-    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize aclnn kernel op["
-                      << anf_node->fullname_with_scope() << "] failed." << trace::DumpSourceLines(anf_node);
+    MS_LOG_WITH_NODE(EXCEPTION, anf_node)
+      << "#dmsg#Kernel build failed:#dmsg#Initialize aclnn kernel op[" << anf_node->fullname_with_scope() << "] failed."
+      << trace::DumpSourceLines(anf_node);
   }
 
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (CheckResizeCondition(cnode)) {
     if (kernel_ptr->Resize(input_kernel_tensors, output_kernel_tensors) == KRET_RESIZE_FAILED) {
-      MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#hostapi kernel op[" << cnode->fullname_with_scope()
-                        << "] Resize failed.";
+      MS_LOG_WITH_NODE(EXCEPTION, cnode) << "#dmsg#Kernel build failed:#dmsg#hostapi kernel op["
+                                         << cnode->fullname_with_scope() << "] Resize failed.";
     }
   } else {
     kernel_ptr->SetDynamic(true);

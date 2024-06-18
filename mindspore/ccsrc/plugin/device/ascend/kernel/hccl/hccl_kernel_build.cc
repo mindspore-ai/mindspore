@@ -45,8 +45,8 @@ KernelModPtr HcclOpBuild(const AnfNodePtr &anf_node) {
   std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
   std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(anf_node);
   if (!std::static_pointer_cast<KernelMod>(kernel_mod_ptr)->Init(prim, input_kernel_tensors, output_kernel_tensors)) {
-    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize hccl kernel op[" << anf_node->fullname_with_scope()
-                      << "] failed.";
+    MS_LOG_WITH_NODE(EXCEPTION, anf_node)
+      << "#dmsg#Kernel build failed:#dmsg#Initialize hccl kernel op[" << anf_node->fullname_with_scope() << "] failed.";
   }
 
   auto cnode = anf_node->cast<CNodePtr>();

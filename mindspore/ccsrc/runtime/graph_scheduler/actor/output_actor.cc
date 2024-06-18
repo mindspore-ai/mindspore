@@ -418,16 +418,17 @@ void OutputActor::UpdateOutputDeviceAddress() {
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(), device::tracker::MemType::kOther,
                                                      tensor_device_address->GetSize(), tensor_device_address.get());
       if (!device_context->device_res_manager_->AllocateMemory(tensor_device_address.get(), kDefaultStreamIndex)) {
-        MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
-                          << ") memory isn't enough and alloc failed in output actor, kernel name: "
-                          << output_node->fullname_with_scope() << ", alloc size: " << tensor_device_address->GetSize()
-                          << "B.";
+        MS_LOG_WITH_NODE(EXCEPTION, output_node)
+          << "Device(id:" << device_context->device_context_key().device_id_
+          << ") memory isn't enough and alloc failed in output actor, kernel name: "
+          << output_node->fullname_with_scope() << ", alloc size: " << tensor_device_address->GetSize() << "B.";
       }
       MS_LOG(DEBUG) << "Sync device data from device tensor: " << device_tensor
                     << ", to device tensor: " << tensor_device_address << ", size: " << device_tensor->GetSize();
       if (!tensor_device_address->SyncDeviceToDevice(device_tensor)) {
-        MS_LOG(EXCEPTION) << "Sync device to device failed, device type: " << tensor_device_address->GetDeviceType()
-                          << ", output node: " << output_node->fullname_with_scope();
+        MS_LOG_WITH_NODE(EXCEPTION, output_node)
+          << "Sync device to device failed, device type: " << tensor_device_address->GetDeviceType()
+          << ", output node: " << output_node->fullname_with_scope();
       }
     } else {
       MS_LOG(DEBUG) << "Swap ptr:" << device_tensor->GetPtr() << " from device tensor:" << device_tensor

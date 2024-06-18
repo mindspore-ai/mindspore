@@ -114,8 +114,8 @@ TypeId GetValueNodeType(const AnfNodePtr &node) {
   auto type_id = input_tensor->data_type();
   if (type_id != TypeId::kNumberTypeFloat32 && type_id != TypeId::kNumberTypeFloat16 &&
       type_id != TypeId::kNumberTypeInt32) {
-    MS_LOG(EXCEPTION) << "Data type of scalar value input only supports float, but got: " << TypeIdToString(type_id)
-                      << " node: " << node->fullname_with_scope();
+    MS_LOG_WITH_NODE(EXCEPTION, node) << "Data type of scalar value input only supports float, but got: "
+                                      << TypeIdToString(type_id) << " node: " << node->fullname_with_scope();
   }
   return type_id;
 }
@@ -220,7 +220,8 @@ class OpBuilder {
           ops_map_[anf_node] = kernel_->Store(nullptr, input2);
           outputs_[anf_node] = ops_map_[anf_node];
         } else {
-          MS_LOG(EXCEPTION) << "AssignOp " << node->fullname_with_scope() << " is not in graph kernel 's outputs.";
+          MS_LOG_WITH_NODE(EXCEPTION, node)
+            << "AssignOp " << node->fullname_with_scope() << " is not in graph kernel 's outputs.";
         }
         break;
       }
@@ -257,8 +258,9 @@ class OpBuilder {
       if (inputs[i]->isa<ValueNode>()) {
         scalar_index = i;
         if (size != 1) {
-          MS_LOG(EXCEPTION) << "In GraphKernel the input node " << inputs[i]->fullname_with_scope() << " of "
-                            << node->fullname_with_scope() << " should have a size of 1, but get " << size;
+          MS_LOG_WITH_NODE(EXCEPTION, node)
+            << "In GraphKernel the input node " << inputs[i]->fullname_with_scope() << " of "
+            << node->fullname_with_scope() << " should have a size of 1, but get " << size;
         }
       }
     }
@@ -306,7 +308,7 @@ class OpBuilder {
       MS_EXCEPTION_IF_NULL(skip_mode_attr);
       auto skip_mode = GetValue<bool>(skip_mode_attr);
       if (skip_mode == true) {
-        MS_LOG(EXCEPTION) << node->fullname_with_scope() << " skip_mode == True is unsupported.";
+        MS_LOG_WITH_NODE(EXCEPTION, node) << node->fullname_with_scope() << " skip_mode == True is unsupported.";
       }
     }
     auto shape_ref = CacheAxis(node, node->input(2));
@@ -333,8 +335,8 @@ class OpBuilder {
     // Input: (prim, a, b)
     constexpr auto kMatMulInputNum = 3;
     if (node->size() != kMatMulInputNum) {
-      MS_LOG(EXCEPTION) << "Input size of " << prim_name << " should be " << kMatMulInputNum << " but got "
-                        << node->size();
+      MS_LOG_WITH_NODE(EXCEPTION, node) << "Input size of " << prim_name << " should be " << kMatMulInputNum
+                                        << " but got " << node->size();
     }
     auto transpose_a = GetValue<bool>(prim->GetAttr(kTransposeA));
     auto transpose_b = GetValue<bool>(prim->GetAttr(kTransposeB));
@@ -347,7 +349,8 @@ class OpBuilder {
     auto type_id = AnfAlgo::GetOutputDeviceDataType(node, 0);
     auto iter = ms_type_map.find(type_id);
     if (iter == ms_type_map.end()) {
-      MS_LOG(EXCEPTION) << node->ToString() << " 's type " << TypeIdToString(type_id) << " is unsupported data type.";
+      MS_LOG_WITH_NODE(EXCEPTION, node) << node->ToString() << " 's type " << TypeIdToString(type_id)
+                                        << " is unsupported data type.";
     }
     auto shape = AnfAlgo::GetOutputDeviceShape(node, 0);
     shapes_ref_source_->push_back(shape);
@@ -368,7 +371,7 @@ class OpBuilder {
         op = kernel_->Load(nullptr, shape_ref, type);
         inputs_[node] = op;
       } else {
-        MS_LOG(EXCEPTION) << node->DebugString() << " is unsupported node type.";
+        MS_LOG_WITH_NODE(EXCEPTION, node) << node->DebugString() << " is unsupported node type.";
       }
       ops_map_[node] = op;
       return op;
@@ -385,7 +388,7 @@ class OpBuilder {
         op = kernel_->SliceLoad(nullptr, shape_ref, start, size, type);
         inputs_[node] = op;
       } else {
-        MS_LOG(EXCEPTION) << node->DebugString() << " is unsupported node type.";
+        MS_LOG_WITH_NODE(EXCEPTION, node) << node->DebugString() << " is unsupported node type.";
       }
       ops_map_[node] = op;
       return op;
@@ -402,7 +405,7 @@ class OpBuilder {
         op = kernel_->StridedSliceLoad(nullptr, shape_ref, start, end, step, type);
         inputs_[node] = op;
       } else {
-        MS_LOG(EXCEPTION) << node->DebugString() << " is unsupported node type.";
+        MS_LOG_WITH_NODE(EXCEPTION, node) << node->DebugString() << " is unsupported node type.";
       }
       ops_map_[node] = op;
       return op;
@@ -522,8 +525,8 @@ FuncGraphPtr GetNodeFuncGraph(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto func_graph = common::AnfAlgo::GetNodeAttr<FuncGraphPtr>(node, kAttrFuncGraph);
   if (func_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "Can not get dvm func graph from node[" << node->fullname_with_scope() << "] "
-                      << node->DebugString();
+    MS_LOG_WITH_NODE(EXCEPTION, node) << "Can not get dvm func graph from node[" << node->fullname_with_scope() << "] "
+                                      << node->DebugString();
   }
   return func_graph;
 }

@@ -353,7 +353,7 @@ void EmbeddingCacheScheduler::SetEmbedCachedParamAddress(const DeviceContext *de
     }
 
     if (node->isa<Parameter>() && !NodeDeviceAddressExist(device_context, node, 0)) {
-      MS_LOG(EXCEPTION) << "Not found device address for parameter: " << node->fullname_with_scope();
+      MS_LOG_WITH_NODE(EXCEPTION, node) << "Not found device address for parameter: " << node->fullname_with_scope();
     }
 
     if (embedding_cache_table_manager.QueryEmbeddingDeviceAddress(param_name) == nullptr) {
@@ -396,7 +396,8 @@ void EmbeddingCacheScheduler::InitEmbeddingStorage(const std::vector<AnfNodePtr>
   for (size_t i = 0; i < parameters.size(); i++) {
     MS_EXCEPTION_IF_NULL(parameters[i]);
     if (!parameters[i]->isa<Parameter>()) {
-      MS_LOG(EXCEPTION) << "The node with name: " << parameters[i]->fullname_with_scope() << "is not a Parameter.";
+      MS_LOG_WITH_NODE(EXCEPTION, parameters[i])
+        << "The node with name: " << parameters[i]->fullname_with_scope() << "is not a Parameter.";
     }
 
     ParameterPtr param = parameters[i]->cast<ParameterPtr>();

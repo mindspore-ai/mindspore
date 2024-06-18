@@ -61,8 +61,8 @@ KernelModPtr InternalKernelBuild(const AnfNodePtr &anf_node) {
 
   if (!std::static_pointer_cast<KernelMod>(kernel_ptr)
          ->Init(common::AnfAlgo::GetCNodePrimitive(anf_node), input_kernel_tensors, output_kernel_tensors)) {
-    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize aclnn kernel op["
-                      << anf_node->fullname_with_scope() << "] failed.";
+    MS_LOG_WITH_NODE(EXCEPTION, anf_node) << "#dmsg#Kernel build failed:#dmsg#Initialize aclnn kernel op["
+                                          << anf_node->fullname_with_scope() << "] failed.";
   }
 
   auto cnode = anf_node->cast<CNodePtr>();
