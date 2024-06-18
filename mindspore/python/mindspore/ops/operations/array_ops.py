@@ -4054,7 +4054,7 @@ class EditDistance(Primitive):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> class EditDistance(nn.Cell):
         ...     def __init__(self, hypothesis_shape, truth_shape, normalize=True):
         ...         super(EditDistance, self).__init__()
@@ -5050,7 +5050,7 @@ class TensorScatterElements(Primitive):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> op = ops.TensorScatterElements(0, "none")
         >>> data = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
@@ -5062,7 +5062,7 @@ class TensorScatterElements(Primitive):
          [ 0.0  5.0  0.0]
          [ 7.0  0.0  0.0]]
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> op = ops.TensorScatterElements(1, "add")
         >>> data = Tensor(np.array([[1, 2, 3, 4, 5]]), mindspore.float32)
@@ -5269,7 +5269,7 @@ class LowerBound(Primitive):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> lowerbound = ops.LowerBound(out_type = mindspore.int32)
         >>> sorted_x = Tensor(np.arange(12).reshape(3, 4).astype(np.int8))
         >>> values = Tensor(np.array([[3], [4], [8]]).astype(np.int8))
@@ -5322,7 +5322,7 @@ class UpperBound(Primitive):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> upperbound = ops.UpperBound(out_type = mindspore.int32)
         >>> sorted_x = Tensor(np.arange(12).reshape(3, 4).astype(np.int8))
         >>> values = Tensor(np.array([[3], [6], [9]]).astype(np.int8))

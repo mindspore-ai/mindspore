@@ -8340,7 +8340,7 @@ class ApplyAdamWithAmsgradV2(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor, Parameter
         >>> import numpy as np

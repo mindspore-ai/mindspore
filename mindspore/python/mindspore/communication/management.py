@@ -611,7 +611,7 @@ def create_group(group, rank_ids):
 
         >>> import mindspore as ms
         >>> from mindspore import set_context
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore.communication import init, create_group, get_rank
         >>> set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
         >>> init()
@@ -664,7 +664,7 @@ def destroy_group(group):
 
         >>> import mindspore as ms
         >>> from mindspore import set_context
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore.communication import init, create_group, destroy_group, get_rank
         >>> set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
         >>> init()

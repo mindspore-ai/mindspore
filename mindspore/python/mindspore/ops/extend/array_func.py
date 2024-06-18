@@ -240,7 +240,7 @@ def one_hot(tensor, num_classes):
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> tensor = Tensor(np.array([0, 1, 2]), mindspore.int32)
         >>> num_classes = 3

@@ -183,7 +183,7 @@ class ParameterProcess:
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor, Parameter, nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore.boost import ParameterProcess
         >>>
         >>> class Net(nn.Cell):

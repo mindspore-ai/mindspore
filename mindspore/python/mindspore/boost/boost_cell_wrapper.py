@@ -435,7 +435,7 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor, Parameter, nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore.nn import WithLossCell
         >>> from mindspore import dtype as mstype
         >>> from mindspore import boost

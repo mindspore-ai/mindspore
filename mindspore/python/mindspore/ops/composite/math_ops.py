@@ -112,7 +112,7 @@ def mm(input, mat2):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import numpy as np
         >>> x1 = ms.Tensor(np.random.rand(2, 3), ms.float32)
         >>> x2 = ms.Tensor(np.random.rand(3, 4), ms.float32)

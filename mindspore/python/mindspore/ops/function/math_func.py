@@ -1286,7 +1286,7 @@ def sign(input):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> input = ms.Tensor([[-1, 0, 2, 4, 6], [2, 3, 5, -6, 0]])
         >>> output = ops.sign(input)
         >>> print(output)
@@ -1323,7 +1323,7 @@ def signbit(input):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> input = ms.Tensor([0.3, 1.2, 0., -2.5])
         >>> output = ops.signbit(input)
         >>> print(output)
@@ -1361,7 +1361,7 @@ def sgn(input):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> input = ms.Tensor([[3 + 4j, 7 - 24j, 0, 6 + 8j, 8], [15 + 20j, 7 - 24j, 0, 3 + 4j, 20]], dtype=ms.complex64)
         >>> output = ops.sgn(input)
         >>> print(output)
@@ -1408,7 +1408,7 @@ def cosine_similarity(x1, x2, dim=1, eps=1e-08):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> x1 = ms.Tensor([[-0.0256, 0.0127, -0.2475, 0.2316, 0.8037],
         ...                 [0.5809, -1.2712, -0.7038, -0.2558, 0.7494]], dtype=ms.float32)
         >>> x2 = ms.Tensor([[-0.6115, -0.1965, -0.8484, 0.2389, 0.2409],
@@ -1510,7 +1510,7 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> x = ms.Tensor([[0., 3.], [5., 5.], [7., 0.]]).T
         >>> print(x)
         [[0. 5. 7.]
@@ -4470,7 +4470,7 @@ def reciprocal(input):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import numpy as np
         >>> input = ms.Tensor(np.array([1.0, 2.0, 4.0]), ms.float32)
         >>> output = ops.reciprocal(input)
@@ -4997,7 +4997,7 @@ def bernoulli(input, p=0.5, seed=None):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int8)
         >>> output = ops.bernoulli(input_x, p=1.0)
         >>> print(output)
@@ -5234,7 +5234,7 @@ def rad2deg(x):
     Examples:
         >>> import mindspore
         >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> x = Tensor([[6.283, -3.142],[1.570, -6.283],[3.142, -1.570]], mindspore.float32)
         >>> output = ops.rad2deg(x)
         >>> print(output)
@@ -5274,7 +5274,7 @@ def frac(x):
         >>> import mindspore
         >>> from mindspore import Tensor
         >>> from mindspore import dtype as mstype
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> x = Tensor([2, 4.2, -2.5], mstype.float16)
         >>> output = ops.frac(x)
         >>> print(output)
@@ -5395,7 +5395,7 @@ def cumsum(x, axis, dtype=None):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
         >>> # case 1: along the axis 0
         >>> y = ops.cumsum(x, 0)
@@ -6232,7 +6232,7 @@ def copysign(x, other):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> x = np.array([[0.3, -0.7], [0.5, 0.5]])
         >>> other = np.array([[-0.4, 0.6], [0.4, -0.6]])
         >>> out = ops.copysign(x, other)
@@ -6378,7 +6378,7 @@ def logcumsumexp(input, axis):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import numpy as np
         >>> x = ms.Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
         >>> output = ops.logcumsumexp(x, 0)
@@ -7057,7 +7057,7 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> data_range = ops.arange(-13, 13, dtype=ms.float32)
         >>> # Exclude 0 from original data for 0 is invalid input when `ord` is negative.
         >>> x = data_range[data_range != 0]
@@ -7325,7 +7325,7 @@ def norm_ext(A, ord=None, dim=None, keepdim=False, *, dtype=None):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> data_range = ops.arange(-13, 13, dtype=ms.float32)
         >>> # Exclude 0 from original data for 0 is invalid input when `ord` is negative.
         >>> x = data_range[data_range != 0]
@@ -8543,7 +8543,7 @@ def roll(input, shifts, dims=None):
     Examples:
         >>> import numpy as np
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
         >>> output = ops.roll(input_x, shifts=2, dims=0)
@@ -10138,7 +10138,7 @@ def tanhshrink(input):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> import numpy as np
         >>> input = Tensor(np.array([1, 2, 3, 2, 1]), ms.float16)

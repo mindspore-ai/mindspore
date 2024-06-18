@@ -81,7 +81,7 @@ class Cell(Cell_):
 
     Examples:
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> class MyCell(nn.Cell):
         ...     def __init__(self, forward_net):
         ...         super(MyCell, self).__init__(auto_prefix=False)
