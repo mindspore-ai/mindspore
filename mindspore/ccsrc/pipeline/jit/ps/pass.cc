@@ -50,6 +50,7 @@
 #include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/parallel/shard/shard.h"
+#include "frontend/parallel/pass/optimize_parallel_allgather_comm.h"
 #include "frontend/parallel/pass/label_micro_interleaved_index.h"
 #include "frontend/parallel/pass/label_fine_grained_interleaved_index.h"
 #include "frontend/parallel/pass/reorder_send_recv_between_fp_bp.h"
@@ -788,6 +789,12 @@ bool OverlapRecomputeAllGatherAndFlashAttentionGradPass(const ResourcePtr &resou
   return true;
 }
 
+bool OptimizeParallelAllGatherCommPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::OptimizeParallelAllGatherComm(resource->func_graph());
+  return true;
+}
+
 bool LabelFineGrainedInterleavedIndexPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::LabelFineGrainedInterleavedIndex(resource->func_graph());
@@ -1204,6 +1211,7 @@ std::vector<PassItem> kVmPasses = {
   {"convert_after_rewriter", ConvertAfterRewriterPass},
   {"order_py_execute_after_rewriter", OrderPyExecuteAfterRewriterPass},
   {"opt_b", OptPassBGroup},
+  {"optimize_parallel_all_gather_comm", OptimizeParallelAllGatherCommPass},
   {"cconv", CconvPass},
   {"opt_after_cconv", OptPassAfterCconvGroup},
   {"remove_dup_value", RemoveValueNodeDuplicationsPass},
