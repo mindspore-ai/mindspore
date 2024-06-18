@@ -23,15 +23,18 @@
 namespace mindspore {
 namespace dataset {
 SequentialSamplerRT::SequentialSamplerRT(int64_t start_index, int64_t num_samples, int64_t samples_per_tensor)
-    : SamplerRT(num_samples, samples_per_tensor), current_id_(start_index), start_index_(start_index), id_count_(0) {}
+    : SamplerRT(num_samples, samples_per_tensor),
+      current_index_(start_index),
+      start_index_(start_index),
+      index_produced_(0) {}
 
 Status SequentialSamplerRT::GetNextSample(TensorRow *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
-  if (id_count_ > num_samples_) {
+  if (index_produced_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED(
       "[Internal ERROR] Sampler index must be less than or equal to num_samples(total rows in dataset), but got:" +
-      std::to_string(id_count_) + ", num_samples_: " + std::to_string(num_samples_));
-  } else if (id_count_ == num_samples_) {
+      std::to_string(index_produced_) + ", num_samples_: " + std::to_string(num_samples_));
+  } else if (index_produced_ == num_samples_) {
     (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {
     if (HasChildSampler()) {
@@ -42,23 +45,23 @@ Status SequentialSamplerRT::GetNextSample(TensorRow *out) {
 
     // Compute how many ids are left to pack, and pack this amount into a new Tensor.  Respect the setting for
     // samples per Tensor though.
-    int64_t remaining_ids = num_samples_ - id_count_;
+    int64_t remaining_ids = num_samples_ - index_produced_;
     int64_t num_elements = std::min(remaining_ids, samples_per_tensor_);
 
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIds, num_elements));
     auto idPtr = sampleIds->begin<int64_t>();
     for (int64_t i = 0; i < num_elements; i++) {
-      int64_t sampled_id = current_id_;
+      int64_t sampled_id = current_index_;
       if (HasChildSampler()) {
         RETURN_IF_NOT_OK(GetAssociatedChildId(&sampled_id, sampled_id));
       }
 
       *idPtr = sampled_id;
-      current_id_++;  // Move the current id to the next one in the sequence
+      current_index_++;  // Move the current id to the next one in the sequence
       ++idPtr;
     }
 
-    id_count_ += num_elements;  // Count the packed ids towards our overall sample count
+    index_produced_ += num_elements;  // Count the packed ids towards our overall sample count
 
     (*out) = {sampleIds};
   }
@@ -94,10 +97,10 @@ Status SequentialSamplerRT::InitSampler() {
 }
 
 Status SequentialSamplerRT::ResetSampler(const bool failover_reset) {
-  CHECK_FAIL_RETURN_UNEXPECTED(failover_reset || id_count_ == num_samples_,
+  CHECK_FAIL_RETURN_UNEXPECTED(failover_reset || index_produced_ == num_samples_,
                                "[Internal ERROR] ResetSampler() called early or late.");
-  current_id_ = start_index_;
-  id_count_ = 0;
+  current_index_ = start_index_;
+  index_produced_ = 0;
 
   if (HasChildSampler()) {
     RETURN_IF_NOT_OK(child_[0]->ResetSampler(failover_reset));

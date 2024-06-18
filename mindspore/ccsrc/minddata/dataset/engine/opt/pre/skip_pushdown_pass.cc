@@ -126,13 +126,6 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<GeneratorNode> node, b
 }
 #endif
 
-#ifndef ENABLE_ANDROID
-// Since MindDataset requires its own SkipFirstEpochSampler (which is not implemented) we insert the skip node above it.
-Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<MindDataNode> node, bool *const modified) {
-  return InsertSkipNode(node);
-}
-#endif
-
 // This functions is used for Ops that are random, and the ones in which Visit is Not Implemented yet;
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
   return InsertSkipNode(node);

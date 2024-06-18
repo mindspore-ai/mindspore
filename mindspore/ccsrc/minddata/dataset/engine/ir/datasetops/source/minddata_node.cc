@@ -23,6 +23,7 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/mind_record_sampler.h"
 #include "minddata/dataset/engine/ir/datasetops/cache_lookup_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/mindrecord_sampler_ir.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/skip_first_epoch_sampler_ir.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 
@@ -187,7 +188,12 @@ Status MindDataNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
                                  "Internal error. CacheLookupNode's sampler should be a MindRecordSamplerObj object");
     RETURN_IF_NOT_OK(mr_sampler->GetShardReader(&shard_reader));
   } else {
-    auto mr_sampler = std::dynamic_pointer_cast<MindRecordSamplerObj>(sampler_);
+    auto mindrecord_sampler = sampler_;
+    // In checkpoint recovery, a SkipFirstEpochSampler will be inserted, so MindRecordSampler will be its child
+    if (std::dynamic_pointer_cast<SkipFirstEpochSamplerObj>(mindrecord_sampler) != nullptr) {
+      mindrecord_sampler = mindrecord_sampler->GetChild()[0];
+    }
+    auto mr_sampler = std::dynamic_pointer_cast<MindRecordSamplerObj>(mindrecord_sampler);
     CHECK_FAIL_RETURN_UNEXPECTED(mr_sampler != nullptr,
                                  "Internal error. MindDataNode's sampler should be a MindRecordSamplerObj object");
     RETURN_IF_NOT_OK(mr_sampler->GetShardReader(&shard_reader));
