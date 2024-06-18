@@ -29,10 +29,11 @@ class ShapeContext {
   ShapeContext(PyFrameObject *f, PyObject *signature);
   virtual ~ShapeContext();
 
- protected:
   virtual bool CheckValid();
   virtual void ApplySignature();
   virtual void RevertSignature();
+
+ protected:
   PyFrameObject *frame_;
   PyObject *signature_;
   std::vector<PyObject *> origin_;
