@@ -54,17 +54,17 @@ def test_ckpt_save_with_crc(mode):
                         [1.3987198, 0.04099071]], dtype=ms.float32)
     bias = ms.Tensor([-0.41271235, 0.28378568, -0.81612898], dtype=ms.float32)
     net = Network(weight, bias)
-    ms.save_checkpoint(net, './net.ckpt', crc_check=True)
+    ms.save_checkpoint(net, './save_with_crc.ckpt', crc_check=True)
 
     _ckpt_fs = FileSystem()
-    with _ckpt_fs.open("./net.ckpt", *_ckpt_fs.open_args) as f:
+    with _ckpt_fs.open("./save_with_crc.ckpt", *_ckpt_fs.open_args) as f:
         pb_content = f.read()
         assert b"crc_num" in pb_content
 
-    ms.load_checkpoint("./net.ckpt", crc_check=True)
-    ms.load_checkpoint("./net.ckpt", crc_check=False)
-    os.chmod('./net.ckpt', stat.S_IWRITE)
-    os.remove('./net.ckpt')
+    ms.load_checkpoint("./save_with_crc.ckpt", crc_check=True)
+    ms.load_checkpoint("./save_with_crc.ckpt", crc_check=False)
+    os.chmod('./save_with_crc.ckpt', stat.S_IWRITE)
+    os.remove('./save_with_crc.ckpt')
 
 
 @pytest.mark.level0
@@ -87,14 +87,14 @@ def test_ckpt_save_with_crc_failed(mode):
                         [1.3987198, 0.04099071]], dtype=ms.float32)
     bias = ms.Tensor([-0.41271235, 0.28378568, -0.81612898], dtype=ms.float32)
     net = Network(weight, bias)
-    ms.save_checkpoint(net, './net.ckpt', crc_check=True)
+    ms.save_checkpoint(net, './save_with_crc_failed.ckpt', crc_check=True)
 
     _ckpt_fs = FileSystem()
-    os.chmod("./net.ckpt", stat.S_IWRITE)
-    with _ckpt_fs.open("./net.ckpt", *_ckpt_fs.create_args) as f:
+    os.chmod("./save_with_crc_failed.ckpt", stat.S_IWRITE)
+    with _ckpt_fs.open("./save_with_crc_failed.ckpt", *_ckpt_fs.create_args) as f:
         f.write(b"111")
 
     with pytest.raises(ValueError):
-        ms.load_checkpoint("./net.ckpt", crc_check=True)
-    os.chmod('./net.ckpt', stat.S_IWRITE)
-    os.remove('./net.ckpt')
+        ms.load_checkpoint("./save_with_crc_failed.ckpt", crc_check=True)
+    os.chmod('./save_with_crc_failed.ckpt', stat.S_IWRITE)
+    os.remove('./save_with_crc_failed.ckpt')
