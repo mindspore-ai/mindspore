@@ -1347,15 +1347,23 @@ static int FindTryBlockEnd(int start, const CFG *cfg) {
     while (res < list.size() && list[res]->op() != RERAISE) {
       res = list[res + 2]->extra_jump()->bci();
     }
+    if (list[res - 1]->op() == JUMP_FORWARD) {
+      res = list[res - 1]->extra_jump()->bci();
+    }
     return res;
   }
   // finally block has two copies in bytecodes, first is normally and end with JUMP_FORWARD, second is end with RERAISE
   int reraise_finally_block_start = tar->bci();
-  MS_EXCEPTION_IF_CHECK_FAIL(start + 1 < SizeToInt(list.size()) && list[start + 1]->op() == SETUP_FINALLY,
-                             "can't find finally block");
-  res = IntToSize(list[start + 1]->extra_jump()->bci());
-  while (res < list.size() && list[res]->op() != RERAISE) {
-    res = list[res + 2]->extra_jump()->bci();
+  if (start + 1 < SizeToInt(list.size()) && list[start + 1]->op() != SETUP_FINALLY) {
+    // Handle try without exception scene.
+    res = start;
+  } else {
+    MS_EXCEPTION_IF_CHECK_FAIL(start + 1 < SizeToInt(list.size()) && list[start + 1]->op() == SETUP_FINALLY,
+                               "can't find finally block");
+    res = IntToSize(list[start + 1]->extra_jump()->bci());
+    while (res < list.size() && list[res]->op() != RERAISE) {
+      res = list[res + 2]->extra_jump()->bci();
+    }
   }
   /*
     In the current situation:

@@ -360,14 +360,6 @@ void CFG::MarkDeadBB() {
       continue;
     }
     i->set_is_dead(true);
-    for (int bci = i->begin_ci(); bci < i->end_ci(); ++bci) {
-      const auto &instr = instrs_[bci];
-      instr->set_op(NOP);
-      instr->set_arg(0);
-      instr->set_name("");
-      instr->set_cnst(nullptr);
-      instr->set_extra_jump(nullptr);
-    }
   }
 }
 
