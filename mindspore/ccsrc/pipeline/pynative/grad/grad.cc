@@ -1608,6 +1608,11 @@ py::object GradExecutor::RunGradGraph() {
                     top_input_args_info_->sens_type, &arg_list);
   MS_LOG(DEBUG) << "Convert args size " << top_input_args_info_->input_arg_value_vec.size() << ", graph param size "
                 << arg_list.size();
+
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  context->SetJitLevel(kAttrJitLevelO0);
+
   compile::VmEvalFuncPtr run = resource->GetResult(pipeline::kOutput).cast<compile::VmEvalFuncPtr>();
   MS_EXCEPTION_IF_NULL(run);
 

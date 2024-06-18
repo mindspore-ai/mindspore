@@ -458,11 +458,16 @@ void PrintJitLevelAndExecMode(bool is_jit_level_changed, const std::string &jit_
 }
 }  // namespace
 
-std::string MsContext::GetJitLevel() const {
-  if (get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    return kAttrJitLevelO0;
+void MsContext::SetJitLevel(const std::string &jit_level) const {
+  if (jit_level.empty()) {
+    return;
   }
+  std::map<std::string, std::string> jit_config = PhaseManager::GetInstance().jit_config();
+  jit_config["jit_level"] = jit_level;
+  PhaseManager::GetInstance().set_jit_config(jit_config);
+}
 
+std::string MsContext::GetJitLevel() const {
   const auto &jit_config = PhaseManager::GetInstance().jit_config();
   std::string jit_level = "";
   auto iter = jit_config.find("jit_level");
@@ -471,15 +476,21 @@ std::string MsContext::GetJitLevel() const {
   }
 
   auto global_jit_level = get_param<std::string>(MS_CTX_JIT_LEVEL);
+  auto mode = get_param<int>(MS_CTX_EXECUTION_MODE);
   auto device_target = get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (jit_level.empty()) {
     if (!global_jit_level.empty()) {
       jit_level = global_jit_level;
-    } else if (device_target == kAscendDevice) {
+    } else if (device_target == kAscendDevice && mode == kGraphMode) {
       jit_level = kAttrJitLevelO2;
     } else {
       jit_level = kAttrJitLevelO0;
     }
+  }
+
+  if (mode == kPynativeMode && jit_level == kAttrJitLevelO2) {
+    MS_LOG(WARNING) << "Pynative mode can not set jit_level to O2, use O0 instead.";
+    return kAttrJitLevelO0;
   }
   return jit_level;
 }
