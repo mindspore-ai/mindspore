@@ -25,6 +25,19 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kTensorNum1 = 1;
+constexpr size_t kTensorNum2 = 2;
+constexpr size_t kTensorNum3 = 3;
+constexpr size_t kTensorNum4 = 4;
+constexpr size_t kTensorNum5 = 5;
+constexpr size_t kTensorNum6 = 6;
+constexpr size_t kTensorNum7 = 7;
+constexpr size_t kTensorNum8 = 8;
+constexpr size_t kTensorNum9 = 9;
+constexpr size_t kTensorNum10 = 10;
+constexpr size_t kTensorNum11 = 11;
+constexpr size_t kTensorNum12 = 12;
+
 template <size_t N>
 class CustomAclnnKernelMod : public AclnnKernelMod {
  public:
@@ -90,30 +103,30 @@ inline std::shared_ptr<AclnnKernelMod> GetCustomAclNNKernelMod(const AnfNodePtr 
   MS_LOG(INFO) << "Kernel " << anf_node->fullname_with_scope() << " is a custom op, op type : " << op_type
                << ", arg num : " << arg_num;
   switch (arg_num) {
-    case 1:
-      return std::make_shared<CustomAclnnKernelMod<1>>(op_type);
-    case 2:
-      return std::make_shared<CustomAclnnKernelMod<2>>(op_type);
-    case 3:
-      return std::make_shared<CustomAclnnKernelMod<3>>(op_type);
-    case 4:
-      return std::make_shared<CustomAclnnKernelMod<4>>(op_type);
-    case 5:
-      return std::make_shared<CustomAclnnKernelMod<5>>(op_type);
-    case 6:
-      return std::make_shared<CustomAclnnKernelMod<6>>(op_type);
-    case 7:
-      return std::make_shared<CustomAclnnKernelMod<7>>(op_type);
-    case 8:
-      return std::make_shared<CustomAclnnKernelMod<8>>(op_type);
-    case 9:
-      return std::make_shared<CustomAclnnKernelMod<9>>(op_type);
-    case 10:
-      return std::make_shared<CustomAclnnKernelMod<10>>(op_type);
-    case 11:
-      return std::make_shared<CustomAclnnKernelMod<11>>(op_type);
-    case 12:
-      return std::make_shared<CustomAclnnKernelMod<12>>(op_type);
+    case kTensorNum1:
+      return std::make_shared<CustomAclnnKernelMod<kTensorNum1>>(op_type);
+    case kTensorNum2:
+      return std::make_shared<CustomAclnnKernelMod<kTensorNum2>>(op_type);
+    case kTensorNum3:
+      return std::make_shared<CustomAclnnKernelMod<kTensorNum3>>(op_type);
+    case kTensorNum4:
+      return std::make_shared<CustomAclnnKernelMod<kTensorNum4>>(op_type);
+    case kTensorNum5:
+      return std::make_shared<CustomAclnnKernelMod<kTensorNum5>>(op_type);
+    case kTensorNum6:
+      return std::make_shared<CustomAclnnKernelMod<kTensorNum6>>(op_type);
+    case kTensorNum7:
+      return std::make_shared<CustomAclnnKernelMod<kTensorNum7>>(op_type);
+    case kTensorNum8:
+      return std::make_shared<CustomAclnnKernelMod<kTensorNum8>>(op_type);
+    case kTensorNum9:
+      return std::make_shared<CustomAclnnKernelMod<kTensorNum9>>(op_type);
+    case kTensorNum10:
+      return std::make_shared<CustomAclnnKernelMod<kTensorNum10>>(op_type);
+    case kTensorNum11:
+      return std::make_shared<CustomAclnnKernelMod<kTensorNum11>>(op_type);
+    case kTensorNum12:
+      return std::make_shared<CustomAclnnKernelMod<kTensorNum12>>(op_type);
     default:
       MS_LOG(ERROR) << "Aclnn custom only support arg nums between 0 and 12, but get: " << arg_num;
   }

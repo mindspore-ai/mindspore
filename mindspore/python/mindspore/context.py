@@ -231,7 +231,6 @@ class _Context:
                              f"or context.DEBUG, but got {level}.")
         self.set_param(ms_ctx_param.debug_level, level)
 
-
     def set_memory_optimize_level(self, memory_optimize_level):
         """
         The memory optimize level, support "O0", "O1".
@@ -533,7 +532,7 @@ class _Context:
         global_jit_config = get_jit_config()
         is_force_kbk = False
         if global_jit_config:
-            is_force_kbk = global_jit_config['jit_level'] == "O0" or global_jit_config['jit_level'] == "O1"
+            is_force_kbk = global_jit_config.get('jit_level') == "O0" or global_jit_config.get('jit_level') == "O1"
         if _get_mode() == GRAPH_MODE and not is_force_kbk:
             logger.warning("Graph mode doesn't support to set parameter 'mempool_block_size' of context currently, "
                            "you can use context.set_context to set pynative mode or set jit_level=O0/O1.")
