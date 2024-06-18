@@ -66,20 +66,21 @@ inline bool InputDataNoNeedCopy(const AnfNodePtr &input_node, DeviceTensor *inpu
   return false;
 }
 
-void UpdateRefCountWithOnlyDependShape(const CNodePtr &kernel, const AnfNodePtr &node, size_t index) {
+void UpdateRefCountWithOnlyDependShape(const CNodePtr &kernel, size_t input_index, const AnfNodePtr &node,
+                                       size_t output_index) {
   // Shape depend kernel should not increase ref count.
   const auto &only_depend_shape_attr = common::AnfAlgo::GetCNodePrimitiveAttr(kernel, kAttrOnlyDependShape);
   if (only_depend_shape_attr != nullptr) {
     const auto &only_depend_shape = GetValue<std::vector<bool>>(only_depend_shape_attr);
-    if (index < only_depend_shape.size() && only_depend_shape[index]) {
+    if (input_index < only_depend_shape.size() && only_depend_shape[input_index]) {
       // Only depend shape no need to increase ref count, and update flag.
-      auto device_tensor = AnfAlgo::GetMutableOutputAddr(node, index, false);
+      auto device_tensor = AnfAlgo::GetMutableOutputAddr(node, output_index, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
       device_tensor->UpdateFlag(device::kDeviceAddressFlagNullptr);
       return;
     }
   }
-  UpdateRefCount(node, index, false);
+  UpdateRefCount(node, output_index, false);
 }
 }  // namespace
 void SuperKernelActor::Init() {
@@ -933,9 +934,9 @@ void SuperKernelActor::CalcRefCount() {
         if (IsSkippedKernelActor(input_node_with_idx.first)) {
           const auto &real_input_node_with_idx =
             common::AnfAlgo::GetPrevNodeOutput(input_node_with_idx.first, 0, false);
-          UpdateRefCountWithOnlyDependShape(kernel, real_input_node_with_idx.first, real_input_node_with_idx.second);
+          UpdateRefCountWithOnlyDependShape(kernel, j, real_input_node_with_idx.first, real_input_node_with_idx.second);
         } else {
-          UpdateRefCountWithOnlyDependShape(kernel, input_node_with_idx.first, input_node_with_idx.second);
+          UpdateRefCountWithOnlyDependShape(kernel, j, input_node_with_idx.first, input_node_with_idx.second);
         }
       } else if (IsPersistentDeviceTensor(input_node_with_idx.first)) {
         UpdateRefCount(input_node_with_idx.first, input_node_with_idx.second, true);
