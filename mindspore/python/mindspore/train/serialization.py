@@ -71,6 +71,8 @@ from mindspore.train._utils import read_proto
 from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir, \
     split_mindir, split_dynamic_mindir
 from mindspore.common.generator import Generator
+from mindspore.train._utils import get_parameter_redundancy, remove_param_redundancy
+from mindspore.parallel.parameter_broadcast import parameter_broadcast
 from ..ops.operations._opaque_predicate_registry import add_opaque_predicate, clean_funcs
 
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
@@ -505,6 +507,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     crc_check = Validator.check_isinstance('crc_check', crc_check, bool)
     map_param_inc = kwargs.get('incremental', False)
     logger.info("Execute the process of saving checkpoint files.")
+    global_step_num = kwargs.get('global_step_num', None)
 
     save_obj = _convert_save_obj_to_param_list(save_obj, integrated_save, append_dict, choice_func)
 
@@ -519,10 +522,14 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         save_obj.extend(append_info_list)
 
     data_list = OrderedDict()
+    data_list_np = OrderedDict()
     with _ckpt_mutex:
         for param in save_obj:
             if param["name"] == "random_op":
-                data_list["random_op"] = param["data"]
+                if os.getenv("AITURBO") == "1":
+                    data_list_np["random_op"] = param["data"]
+                else:
+                    data_list["random_op"] = param["data"]
                 continue
             key = param["name"]
             data_list[key] = []
@@ -538,23 +545,33 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                     _save_param_list_data(data_list, key, param)
 
             if isinstance(param["data"], str):
-                data_list[key].append([0])
-                data_list[key].append('str')
-                data = np.array(param["data"])
-                data_list[key].append(data)
+                if os.getenv("AITURBO") == "1":
+                    data_list_np[key] = np.array(param["data"])
+                else:
+                    data_list[key].append([0])
+                    data_list[key].append('str')
+                    data = np.array(param["data"])
+                    data_list[key].append(data)
             else:
                 if isinstance(param["data"], Parameter):
                     param["data"].init_data()
-                dims = []
-                for dim in param['data'].shape:
-                    dims.append(dim)
-                data_list[key].append(dims)
-                tensor_type = str(param["data"].dtype)
-                data_list[key].append(tensor_type)
-                data = param["data"]
-                data_list[key].append(data)
+                if os.getenv("AITURBO") == "1":
+                    data_list_np[key] = param["data"].asnumpy()
+                else:
+                    dims = []
+                    for dim in param['data'].shape:
+                        dims.append(dim)
+                    data_list[key].append(dims)
+                    tensor_type = str(param["data"].dtype)
+                    data_list[key].append(tensor_type)
+                    data = param["data"]
+                    data_list[key].append(data)
 
-    if async_save:
+    if os.getenv("AITURBO") == "1":
+        import aiturbo
+        ckpt_name = os.path.basename(ckpt_file_name)
+        aiturbo.save_ckpt(ckpt_name, global_step_num, data_list_np)
+    elif async_save:
         data_copy = copy.deepcopy(data_list)
         thr = Thread(target=_exec_save, args=(ckpt_file_name, data_copy, enc_key, enc_mode, map_param_inc, crc_check),
                      name="asyn_save_ckpt")
@@ -1056,6 +1073,69 @@ def obfuscate_model(obf_config, **kwargs):
     export(obf_net, *model_inputs, file_name=saved_path, file_format="MINDIR", **kwargs)
 
 
+def _load_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, filter_prefix, choice_func, dec_key,
+                          dec_mode, crc_check):
+    """load parameter into parameter_dict"""
+    ckpt_file_name = _check_ckpt_file_name(ckpt_file_name)
+    checkpoint_list = _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode, crc_check)
+    try:
+        param_data_list = []
+        map_data_list = [[], [], []]
+        map_shape_list = [0, 0, 0]
+        if specify_prefix:
+            logger.warning("For load_checkpoint, this parameter `specity_prefix` will be deprecated, "
+                           "please use `choice_func` instead.")
+        if filter_prefix:
+            logger.warning("For load_checkpoint, this parameter `filter_prefix` will be deprecated, "
+                           "please use `choice_func` instead.")
+        for element_id, element in enumerate(checkpoint_list.value):
+            if element.tag == "random_op":
+                parameter_dict["random_op"] = element.tensor.tensor_content
+                continue
+            if not _whether_load_param(specify_prefix, filter_prefix, element.tag):
+                continue
+            if specify_prefix is None and filter_prefix is None and \
+                    choice_func is not None and not choice_func(element.tag):
+                continue
+            if element.tensor.ByteSize() == 0:
+                _load_map_parameter(checkpoint_list, element, element_id, map_data_list, map_shape_list,
+                                    parameter_dict)
+                if element.tag in parameter_dict:
+                    map_data_list = [[], [], []]
+                    map_shape_list = [0, 0, 0]
+                continue
+            data = element.tensor.tensor_content
+            data_type = element.tensor.tensor_type
+            np_type = tensor_to_np_type.get(data_type)
+            ms_type = tensor_to_ms_type[data_type]
+            if data_type == 'str':
+                str_length = int(len(data) / 4)
+                np_type = np_type + str(str_length)
+            param_data_list.append(data)
+            if (element_id == len(checkpoint_list.value) - 1) or \
+                    (element.tag != checkpoint_list.value[element_id + 1].tag):
+                new_data = b"".join(param_data_list)
+                param_data_list.clear()
+                dims = element.tensor.dims
+                if data_type == 'str':
+                    str_value = np.frombuffer(new_data, np_type)
+                    parameter_dict[element.tag] = str(str_value[0])
+                else:
+                    if dims == [0]:
+                        dims = []
+                    param_data = Tensor_.convert_bytes_to_tensor(new_data, tuple(dims), ms_type)
+                    parameter = Parameter(param_data, name=element.tag)
+                    parameter_dict[element.tag] = parameter
+                    _offload_if_config(parameter)
+
+        logger.info("Loading checkpoint files process is finished.")
+
+    except BaseException as e:
+        logger.critical("Failed to load the checkpoint file '%s'.", ckpt_file_name)
+        raise ValueError(e.__str__() + "\nFor 'load_checkpoint', "
+                                       "failed to load the checkpoint file {}.".format(ckpt_file_name)) from e
+
+
 def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None,
                     dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None,
                     crc_check=False):
@@ -1134,71 +1214,29 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         - `Saving and Loading the Model - Saving and Loading the Model Weight
           <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
-    ckpt_file_name = _check_ckpt_file_name(ckpt_file_name)
     specify_prefix = _check_prefix(specify_prefix)
     filter_prefix = _check_prefix(filter_prefix)
     dec_key = Validator.check_isinstance('dec_key', dec_key, (type(None), bytes))
     dec_mode = Validator.check_isinstance('dec_mode', dec_mode, str)
     crc_check = Validator.check_isinstance('crc_check', crc_check, bool)
     logger.info("Execute the process of loading checkpoint files.")
-    checkpoint_list = _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode, crc_check)
 
     parameter_dict = {}
-    try:
-        param_data_list = []
-        map_data_list = [[], [], []]
-        map_shape_list = [0, 0, 0]
-        if specify_prefix:
-            logger.warning("For load_checkpoint, this parameter `specity_prefix` will be deprecated, "
-                           "please use `choice_func` instead.")
-        if filter_prefix:
-            logger.warning("For load_checkpoint, this parameter `filter_prefix` will be deprecated, "
-                           "please use `choice_func` instead.")
-        for element_id, element in enumerate(checkpoint_list.value):
-            if element.tag == "random_op":
-                parameter_dict["random_op"] = element.tensor.tensor_content
-                continue
-            if not _whether_load_param(specify_prefix, filter_prefix, element.tag):
-                continue
-            if specify_prefix is None and filter_prefix is None and \
-                    choice_func is not None and not choice_func(element.tag):
-                continue
-            if element.tensor.ByteSize() == 0:
-                _load_map_parameter(checkpoint_list, element, element_id, map_data_list, map_shape_list, parameter_dict)
-                if element.tag in parameter_dict:
-                    map_data_list = [[], [], []]
-                    map_shape_list = [0, 0, 0]
-                continue
-            data = element.tensor.tensor_content
-            data_type = element.tensor.tensor_type
-            np_type = tensor_to_np_type.get(data_type)
-            ms_type = tensor_to_ms_type[data_type]
-            if data_type == 'str':
-                str_length = int(len(data) / 4)
-                np_type = np_type + str(str_length)
-            param_data_list.append(data)
-            if (element_id == len(checkpoint_list.value) - 1) or \
-                    (element.tag != checkpoint_list.value[element_id + 1].tag):
-                new_data = b"".join(param_data_list)
-                param_data_list.clear()
-                dims = element.tensor.dims
-                if dims == [0] and data_type == 'str':
-                    str_value = np.frombuffer(new_data, np_type)
-                    parameter_dict[element.tag] = str(str_value[0])
-                else:
-                    if dims == [0]:
-                        dims = []
-                    param_data = Tensor_.convert_bytes_to_tensor(new_data, tuple(dims), ms_type)
-                    parameter = Parameter(param_data, name=element.tag)
-                    parameter_dict[element.tag] = parameter
-                    _offload_if_config(parameter)
 
-        logger.info("Loading checkpoint files process is finished.")
-
-    except BaseException as e:
-        logger.critical("Failed to load the checkpoint file '%s'.", ckpt_file_name)
-        raise ValueError(e.__str__() + "\nFor 'load_checkpoint', "
-                                       "failed to load the checkpoint file {}.".format(ckpt_file_name)) from e
+    if os.getenv("AITURBO") == "1":
+        rank_id = get_rank()
+        import aiturbo
+        ckpt_path = os.path.dirname(ckpt_file_name)
+        ckpt_name = os.path.basename(ckpt_file_name)
+        np_dict = aiturbo.load_ckpt(ckpt_path, ckpt_name, rank_id)
+        for key, value in np_dict.items():
+            if isinstance(value, str):
+                parameter_dict[key] = value
+            else:
+                parameter_dict[key] = Parameter(Tensor(value), name=key)
+    else:
+        _load_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, filter_prefix, choice_func, dec_key,
+                              dec_mode, crc_check)
 
     if not parameter_dict:
         raise ValueError(f"The loaded parameter dict is empty after filter or specify, please check whether "
@@ -1430,6 +1468,22 @@ def _init_parameter_data_in_parallel_mode(net, parameter_dict):
             param._update_tensor_data(new_tensor)
 
 
+def _check_load_param_into_net(net, parameter_dict):
+    """check load_param_into_net"""
+    if not isinstance(net, nn.Cell):
+        logger.critical("Failed to combine the net and the parameters.")
+        msg = ("For 'load_param_into_net', the argument 'net' should be a Cell, but got {}.".format(type(net)))
+        raise TypeError(msg)
+    if not isinstance(parameter_dict, dict):
+        logger.critical("Failed to combine the net and the parameters.")
+        msg = ("For 'load_param_into_net', the argument 'parameter_dict' should be a dict, "
+               "but got {}.".format(type(parameter_dict)))
+        raise TypeError(msg)
+    if "random_op" in parameter_dict.keys():
+        net._add_attr("random_op_snapshot", parameter_dict["random_op"])
+        parameter_dict.pop("random_op")
+
+
 def load_param_into_net(net, parameter_dict, strict_load=False):
     """
     Load parameters into network, return parameter list that are not loaded in the network.
@@ -1466,18 +1520,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         - `Saving and Loading the Model - Saving and Loading the Model Weight
           <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
-    if not isinstance(net, nn.Cell):
-        logger.critical("Failed to combine the net and the parameters.")
-        msg = ("For 'load_param_into_net', the argument 'net' should be a Cell, but got {}.".format(type(net)))
-        raise TypeError(msg)
-    if not isinstance(parameter_dict, dict):
-        logger.critical("Failed to combine the net and the parameters.")
-        msg = ("For 'load_param_into_net', the argument 'parameter_dict' should be a dict, "
-               "but got {}.".format(type(parameter_dict)))
-        raise TypeError(msg)
-    if "random_op" in parameter_dict.keys():
-        net._add_attr("random_op_snapshot", parameter_dict["random_op"])
-        parameter_dict.pop("random_op")
+    _check_load_param_into_net(net, parameter_dict)
     for key, value in parameter_dict.items():
         if not isinstance(key, str) or not isinstance(value, (Parameter, str, list)):
             logger.critical("Load parameters into net failed.")
@@ -1519,6 +1562,14 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
                        "'parameter_dict', please check whether the network structure is consistent "
                        "when training and loading checkpoint.".format(len(param_not_load)))
         logger.warning("{} are not loaded.".format(param_not_load))
+    if os.getenv("AITURBO") == "1" and net.parameter_layout_dict is not None:
+        param_layout = net.parameter_layout_dict
+        param_redundancy = get_parameter_redundancy(param_layout)
+        remove_param_redundancy_dict = remove_param_redundancy(param_redundancy)
+        target_parameter_name_set = set(parameter_dict.keys())
+        for rank_id, param_name_set in remove_param_redundancy_dict:
+            if param_name_set == target_parameter_name_set:
+                parameter_broadcast(net, param_layout, rank_id)
     return param_not_load, ckpt_not_load
 
 

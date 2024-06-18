@@ -28,6 +28,10 @@ from mindspore.train._utils import _make_directory
 from mindspore.train.serialization import save_checkpoint, _save_graph
 from mindspore.parallel._cell_wrapper import destroy_allgather_cell
 from mindspore.parallel._recovery_context import _set_recovery_context, _get_recovery_context
+from mindspore.parallel._auto_parallel_context import _get_auto_parallel_context
+from mindspore.parallel._utils import _get_device_num
+from mindspore.communication.management import get_rank
+from mindspore.train._utils import get_parameter_redundancy, remove_param_redundancy
 from mindspore.train.callback._callback import Callback, set_cur_net
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
@@ -38,6 +42,30 @@ from mindspore._c_expression import _collect_host_info
 _cur_dir = os.getcwd()
 SAVE_DIR = _cur_dir
 _info_list = ["epoch_num", "step_num"]
+
+
+def _get_dp_tp_from_redundancy(redundancy_tuple):
+    """From redundancy get dp and tp"""
+    dp = []
+    tp = []
+    for dp_value in redundancy_tuple:
+        dp.append(list(dp_value))
+    for i in range(len(redundancy_tuple[0])):
+        tp.append([v[i] for v in redundancy_tuple])
+    return dp, tp
+
+
+def _get_dp_tp_from_layout(parameter_layout_dict, initial_rank=0):
+    """From layout dict get dp and tp"""
+    tp = []
+    dp = []
+    parameter_redundancy_dict = get_parameter_redundancy(parameter_layout_dict, initial_rank)
+    value_len = 0
+    for _, value in parameter_redundancy_dict.items():
+        if len(value) > value_len:
+            value_len = len(value)
+            dp, tp = _get_dp_tp_from_redundancy(value)
+    return dp, tp
 
 
 def _chg_ckpt_file_name_if_same_exist(directory, prefix, exception=False):
@@ -206,6 +234,7 @@ class CheckpointConfig:
         self._enc_mode = Validator.check_isinstance('enc_mode', enc_mode, str)
         self._crc_check = Validator.check_isinstance('crc_check', crc_check, bool)
         self._map_param_inc = kwargs.get('incremental', False)
+        self.enable_redundance = kwargs.get('enable_redundance', False)
 
     @property
     def save_checkpoint_steps(self):
@@ -465,8 +494,13 @@ class ModelCheckpoint(Callback):
                                 "but got {}.".format(type(config)))
             self._config = config
 
+        self._aiturbo_init_flag = os.getenv("AITURBO") == "1"
         # get existing checkpoint files
-        self._manager = CheckpointManager()
+        if self._aiturbo_init_flag:
+            import aiturbo
+            self._manager = aiturbo.CheckpointShmManager()
+        else:
+            self._manager = CheckpointManager()
         if not callable(directory) and not callable(prefix):
             self._prefix = _chg_ckpt_file_name_if_same_exist(self._directory, self._prefix)
         self._append_dict = self._config.append_dict or {}
@@ -484,6 +518,28 @@ class ModelCheckpoint(Callback):
             run_context (RunContext): Context of the train running.
         """
         cb_params = run_context.original_args()
+        if self._aiturbo_init_flag:
+            import aiturbo
+            ckpt_storage_path = self._directory
+            rank_id = get_rank()
+            stage_num = _get_auto_parallel_context("pipeline_stages")
+            stage_rank_num = _get_device_num() // stage_num
+            param_layout = cb_params.train_network.parameter_layout_dict
+            if not param_layout:
+                layout = {"stage_num": stage_num, "stage_rank_num": stage_rank_num, "stage_layout": None}
+                aiturbo.init(ckpt_storage_path, rank_id, layout, None, False, None)
+            else:
+                device_num = _get_device_num()
+                chunk_size = device_num // stage_num
+                initial_rank = (rank_id // chunk_size) * chunk_size
+                param_redundancy_dict = get_parameter_redundancy(param_layout, initial_rank)
+                dp, _ = _get_dp_tp_from_layout(param_redundancy_dict)
+                layout = {"stage_num": stage_num, "stage_rank_num": stage_rank_num,
+                          "stage_layout": param_redundancy_dict}
+                single_params = remove_param_redundancy(param_redundancy_dict)
+                single_params = {device_id: list(params) for device_id, params in single_params.items()}
+                aiturbo.init(ckpt_storage_path, rank_id, layout, single_params, self._config.enable_redundance, dp)
+            self._aiturbo_init_flag = False
         if self._prefix_func:
             self._prefix = self._prefix_func(cb_params)
             if not isinstance(self._prefix, str) or self._prefix.find('/') >= 0:
@@ -594,10 +650,15 @@ class ModelCheckpoint(Callback):
             if "step_num" in self._append_dict:
                 self._append_dict["step_num"] = self._append_step_num + cb_params.cur_step_num
             network = self._config.saved_network if self._config.saved_network is not None else cb_params.train_network
-            save_checkpoint(network, cur_file, self._config.integrated_save, self._config.async_save,
-                            self._append_dict, self._config.enc_key, self._config.enc_mode,
-                            crc_check=self._config.crc_check,
-                            incremental=self._map_param_inc)
+            if os.getenv("AITURBO") == "1":
+                save_checkpoint(network, cur_file, self._config.integrated_save, self._config.async_save,
+                                self._append_dict, self._config.enc_key, self._config.enc_mode,
+                                crc_check=self._config.crc_check, incremental=self._map_param_inc,
+                                global_step_num=cb_params.cur_step_num)
+            else:
+                save_checkpoint(network, cur_file, self._config.integrated_save, self._config.async_save,
+                                self._append_dict, self._config.enc_key, self._config.enc_mode,
+                                crc_check=self._config.crc_check, incremental=self._map_param_inc)
 
             self._latest_ckpt_file_name = cur_file
 
