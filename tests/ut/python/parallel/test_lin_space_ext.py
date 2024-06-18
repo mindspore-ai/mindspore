@@ -33,7 +33,7 @@ class Net(Cell):
         super(Net, self).__init__()
         self.lin_space = _get_cache_prim(LinSpaceExt)().shard(strategy)
 
-    def construct(self, start, end, x, dtype):
+    def construct(self, start, end, x, dtype=None):
         return self.lin_space(start, end, x, dtype)
 
 
@@ -85,6 +85,23 @@ def test_lin_space_ext_parallel_with_x_2():
     phase = compile_net(net, start, end, x, mstype.float32)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs('LinSpaceExt-0', ['ScalarAdd-0', 'ScalarAdd-1', 1, 43])
+
+
+def test_lin_space_ext_parallel_with_x_2_no_dtype_input():
+    """
+    Feature: test LinSpaceExt parallel
+    Description: parallel with input x is 2
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    start = Tensor(1, mstype.float32)
+    end = Tensor(10, mstype.float32)
+    x = 2
+    strategy = ((2,),)
+    net = Net(strategy)
+    phase = compile_net(net, start, end, x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs('LinSpaceExt-0', ['ScalarAdd-0', 'ScalarAdd-1', 1, 'None'])
 
 
 def test_lin_space_ext_parallel_strategy_wrong():

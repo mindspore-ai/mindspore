@@ -210,12 +210,7 @@ Status LinSpaceExtInfo::GetAttrs() {
     return FAILED;
   }
 
-  if (!input_value_[kLinSpaceExtLastInputIndex]->isa<Int64Imm>()) {
-    MS_LOG(ERROR) << name_ << ": The value of type is not int";
-    return FAILED;
-  }
-
-  dtype_ = GetValue<int64_t>(input_value_[kLinSpaceExtLastInputIndex]);
+  dtype_ = ValuePtrToAnfNodePtr(input_value_[kLinSpaceExtLastInputIndex]);
   return SUCCESS;
 }
 
@@ -253,8 +248,8 @@ Status LinSpaceExtInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto start_end_offset =
     gen_g.PushBack({gen_g.NewOpInst(SCALAR_MUL, keep_alive_attr), interval, CreatInt64Imm(slice_output_size - 1)});
   auto new_end = gen_g.PushBack({gen_g.NewOpInst(SCALAR_ADD), new_start, start_end_offset});
-  auto lin_space = gen_g.PushBack(
-    {gen_g.NewOpInst(LIN_SPACE_EXT), new_start, new_end, CreatInt64Imm(slice_output_size), CreatInt64Imm(dtype_)});
+  auto lin_space =
+    gen_g.PushBack({gen_g.NewOpInst(LIN_SPACE_EXT), new_start, new_end, CreatInt64Imm(slice_output_size), dtype_});
 
   std::vector<std::pair<AnfNodePtr, int64_t>> inputs_nodes = {std::make_pair(sub, 1), std::make_pair(sub, 2),
                                                               std::make_pair(new_start, 1)};
