@@ -353,9 +353,9 @@ def avg_pool2d_forward_functional(nptype):
     Description: test inputs for given input dtype.
     Expectation: the result match with expected result.
     """
-    input_x = Tensor(np.ones((2, 3, 4, 6)).astype(nptype))
+    input_x = Tensor(np.ones((2, 9, 4, 6)).astype(nptype))
     output = F.avg_pool2d(input_x, kernel_size=3, stride=1)
-    expected = np.ones((2, 3, 2, 4)).astype(nptype)
+    expected = np.ones((2, 9, 2, 4)).astype(nptype)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
