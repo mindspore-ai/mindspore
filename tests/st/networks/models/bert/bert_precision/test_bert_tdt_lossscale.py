@@ -22,7 +22,7 @@ import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as C
-from mindspore import context
+import mindspore
 from mindspore import log as logger
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
@@ -42,7 +42,6 @@ from tests.models.official.nlp.bert.src.bert_model import BertConfig
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = ["/home/workspace/mindspore_dataset/bert/example/examples.tfrecord"]
 SCHEMA_DIR = "/home/workspace/mindspore_dataset/bert/example/datasetSchema.json"
-
 
 def get_config(version='base'):
     """get config"""
@@ -180,9 +179,10 @@ class TimeMonitor(Callback):
 
 def test_bert_precision(enable_graph_kernel=False):
     """test bert precision"""
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False)
+    mindspore.set_context(mode=mindspore.GRAPH_MODE, device_target="Ascend",
+                          reserve_class_name_in_scope=False, deterministic='ON')
     if enable_graph_kernel:
-        context.set_context(enable_graph_kernel=True)
+        mindspore.set_context(enable_graph_kernel=True)
     data_set, new_repeat_count, _ = me_de_train_dataset()
     version = os.getenv('VERSION', 'large')
     config = get_config(version=version)
