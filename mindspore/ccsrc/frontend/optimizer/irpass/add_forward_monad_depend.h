@@ -26,8 +26,6 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 namespace internal {
-constexpr char kFlagAddedForwardU[] = "added_forward_u";
-
 AnfNodePtr GetBpropGetter(const FuncGraphManagerPtr &manager, const CNodePtr &node) {
   const auto &user_nodes = manager->node_users()[node];
   for (const auto &iter : user_nodes) {
@@ -90,7 +88,7 @@ void PropagateUMonadInput(const FuncGraphManagerPtr &manager, const FuncGraphPtr
   auto new_u_para = bprop_graph->add_parameter();
   new_u_para->debug_info()->set_name("forward_u");
   new_u_para->set_abstract(u_abs);
-  bprop_graph->set_flag(kFlagAddedForwardU, true);
+  bprop_graph->set_flag(kFuncGraphFlagAddedForwardU, true);
   if (add_u_input) {
     AddUMonadInput(manager, bprop_graph, new_u_para);
   }
@@ -117,7 +115,7 @@ void PropagateUMonadInput(const FuncGraphManagerPtr &manager, const FuncGraphPtr
     }
     auto bprop_fg = bprop_getter_abs->func_graph();
     MS_EXCEPTION_IF_NULL(bprop_fg);
-    if (bprop_fg->has_flag(kFlagAddedForwardU)) {
+    if (bprop_fg->has_flag(kFuncGraphFlagAddedForwardU)) {
       continue;
     }
     PropagateUMonadInput(manager, bprop_fg, u_abs, propagate_node->HasAttr(kAttrSideEffectBpropApp));
