@@ -59,6 +59,10 @@ void CollectControlActors(const ActorSet *actor_set, std::vector<AbstractActorPt
 
 bool IsSkipLaunchShapeRelatedOp(KernelActor *kernel_actor) {
   MS_EXCEPTION_IF_NULL(kernel_actor);
+  if (kernel_actor->skip_launch_shape_related_op()) {
+    return true;
+  }
+
   auto &kernel = kernel_actor->kernel();
   MS_EXCEPTION_IF_NULL(kernel);
 
@@ -108,7 +112,6 @@ bool IsSkipLaunchShapeRelatedOp(KernelActor *kernel_actor) {
     }
 
     if (can_skip_launch_real_make_tuple) {
-      kernel_actor->set_skip_launch_shape_related_op(true);
       return true;
     }
   }
@@ -307,6 +310,7 @@ bool SchedulerHelper::IsIgnoredInputAddress(AbstractActor *const to_actor, size_
   MS_EXCEPTION_IF_NULL(to_kernel);
 
   if (IsSkipLaunchShapeRelatedOp(kernel_actor)) {
+    kernel_actor->set_skip_launch_shape_related_op(true);
     return true;
   }
 
@@ -354,6 +358,16 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
     MS_LOG(WARNING) << "Kernel actor:" << from_actor->GetAID().Name()
                     << " link data arrow to actor:" << to_actor->GetAID().Name() << " is not an exit actor.";
   }
+
+  if (from_actor->type() == KernelTransformType::kKernelActor &&
+      to_actor->type() == KernelTransformType::kKernelActor) {
+    auto from_kernel_actor = dynamic_cast<KernelActor *>(from_actor);
+    MS_EXCEPTION_IF_NULL(from_kernel_actor);
+    if (IsSkipLaunchShapeRelatedOp(from_kernel_actor)) {
+      from_kernel_actor->set_skip_launch_shape_related_op(true);
+    }
+  }
+
   // The continuous memory inpus need allocate memory in advance, so must be from the inside subgraph.
   if (to_actor->type() == KernelTransformType::kKernelActor) {
     auto to_kernel_actor = dynamic_cast<KernelActor *>(to_actor);
