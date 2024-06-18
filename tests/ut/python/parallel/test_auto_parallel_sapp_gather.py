@@ -38,6 +38,17 @@ class GatherNet(nn.Cell):
         out = self.matmul(out, y)
         return out
 
+class GatherNet1D(nn.Cell):
+    def __init__(self, axis=0, shape=None, target=""):
+        super().__init__()
+        self.gatherv2 = P.Gather().set_device(target)
+        self.index = Tensor(np.ones(shape), dtype=ms.int32)
+        self.axis = axis
+
+    def construct(self, x):
+        out = self.gatherv2(x, self.index, self.axis)
+        return out
+
 def test_auto_parallel_sapp_gather_1():
     """
     Feature: test Gather in SAPP
@@ -78,7 +89,27 @@ def test_auto_parallel_sapp_gather_2():
     _cell_graph_executor.compile(net, x, y, phase='train')
 
     strategies = _cell_graph_executor._get_shard_strategy(net)
-    print(strategies)
     for (k, v) in strategies.items():
         if re.search('Default/Gather-op0', k) is not None:
             assert v == [[4, 1], [2, 1]]
+
+def test_auto_parallel_sapp_gather_3():
+    """
+    Feature: test Gather in SAPP
+    Description: auto parallel
+    Expectation: compile success and and strategy correct
+    """
+    context.set_auto_parallel_context(dataset_strategy="full_batch")
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="recursive_programming")
+
+    x = Tensor(np.ones([128]), dtype=ms.float32)
+
+    net = GatherNet1D(shape=[4])
+    net.set_train()
+    _cell_graph_executor.compile(net, x, phase='train')
+
+    strategies = _cell_graph_executor._get_shard_strategy(net)
+    for (k, v) in strategies.items():
+        if re.search('Default/Gather-op0', k) is not None:
+            assert v == [[1], [4]]

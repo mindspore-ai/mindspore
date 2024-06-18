@@ -30,7 +30,6 @@
 namespace mindspore {
 namespace parallel {
 static std::map<std::string, Dimensions> param_strategy_;
-constexpr char BATCH_DIMS[] = "batch_dims";
 class RecStrategyPropagator {
  public:
   typedef std::list<size_t> prop_list_t;
