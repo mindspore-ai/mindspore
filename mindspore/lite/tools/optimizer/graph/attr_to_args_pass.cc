@@ -226,6 +226,11 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
      "transpose_x2",
      "dtype",
    }},
+  {"GroupedMatmul",
+   {
+     "split_item",
+     "group_type",
+   }},
 };
 
 constexpr size_t kMatMulInputSizeWithBias = 6;  // primitive, x1, x2, bias, transpose_a, transpose_b
