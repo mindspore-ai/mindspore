@@ -24,9 +24,9 @@ namespace {
 const uint32_t kOutputNum = 2;
 const uint32_t kInputNum = 3;
 const char *const kTopKRouter = "TopKRouter";
-#define TOPKROUTER_COMPUTE_CASE(DTYPE, TYPE)                           \
+#define TOPKROUTER_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
   case (DTYPE): {                                                      \
-    uint32_t result = TopKRouterCompute<TYPE>(ctx);                    \
+    uint32_t result = TopKRouterCompute<TYPE>(CTX);                    \
     if (result != KERNEL_STATUS_OK) {                                  \
       CUST_KERNEL_LOG_ERROR(ctx, "TopKRouter kernel compute failed."); \
       return result;                                                   \
@@ -42,15 +42,14 @@ uint32_t TopKRouterCpuKernel::Compute(CpuKernelContext &ctx) {
   CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
                            "TopKRouter check input and output number failed.");
   auto output_type = ctx.Output(0)->GetDataType();
-  uint32_t ret;
   switch (output_type) {
-    TOPKROUTER_COMPUTE_CASE(DT_INT32, int32_t)
-    TOPKROUTER_COMPUTE_CASE(DT_INT64, int64_t)
+    TOPKROUTER_COMPUTE_CASE(DT_INT32, int32_t, ctx)
+    TOPKROUTER_COMPUTE_CASE(DT_INT64, int64_t, ctx)
     default:
       CUST_KERNEL_LOG_ERROR(ctx, "Output data type [%s] not support.", DTypeStr(output_type).c_str());
-      ret = KERNEL_STATUS_PARAM_INVALID;
+      return KERNEL_STATUS_PARAM_INVALID;
   }
-  return ret;
+  return KERNEL_STATUS_OK;
 }
 
 template <typename T>
