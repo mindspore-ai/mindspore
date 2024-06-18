@@ -70,8 +70,8 @@ bool JustCallAndSetRes(CallNode *call_node, GraphBuilder *unused) {
   pi_jit_disable();
   PyObject *value = PyObject_Call(func.ptr(), pair.first.ptr(), pair.second.ptr());
   if (PyErr_Occurred()) {
-    MS_LOG(ERROR) << "got an error " << py::error_already_set().what() << " at call the "
-                  << std::string(py::str(func.ptr()));
+    MS_LOG(INFO) << "got an error " << py::error_already_set().what() << " at call the "
+                 << std::string(py::str(func.ptr()));
     PyErr_Clear();
   }
   pi_jit_enable();
