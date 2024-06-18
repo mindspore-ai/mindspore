@@ -240,7 +240,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   pm->Add(std::make_shared<UssAtomicAdd>(), OptLevel_1, is_gpu);
   pm->Add(std::make_shared<CsrAtomicAdd>(), OptLevel_1, is_gpu);
 
-  // Replace Assign with InplaceAssign, and replace original output with overridden parameters
+  // Replace original output(which is input of Assign) with overridden parameters
   pm->Add(std::make_shared<OptimizeAssign>(), OptLevel_2);
   pm->Add(std::make_shared<ExtendOutputForUpdateState>(), std::min(recompute_lv, OptLevel_2));
   pm->Add(std::make_shared<MergeOutputForUpdateState>(), std::min(recompute_lv, OptLevel_2));
@@ -267,8 +267,9 @@ PassManagerPtr GraphKernelOptimizer::Combine() const {
 }
 
 PassManagerPtr GraphKernelOptimizer::Build() const {
+  // DVM does not need this stage
   auto pm = std::make_shared<GraphKernelPassManager>(6, "build");
-  pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
+  pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1, !is_dvm);
   // Reduce fake output memory.
   auto only_static_shape_fusion = GetPassLevelByFlag(!GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
   pm->Add(std::make_shared<ReduceFakeOutMem>(), only_static_shape_fusion, !is_dvm);
@@ -282,8 +283,8 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
 #endif
   pm->Add(std::make_shared<ConvertCustomForGE>(), OptLevel_1, is_ge);
   pm->Add(std::make_shared<GeneratedDependElimination>(), OptLevel_2, is_gpu || (is_ascend && !is_ge && !is_dvm));
-  pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
-  pm->Add(std::make_shared<MergeOutputForUpdateState>(), OptLevel_1);
+  pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1, !is_dvm);
+  pm->Add(std::make_shared<MergeOutputForUpdateState>(), OptLevel_1, !is_dvm);
   return pm;
 }
 
