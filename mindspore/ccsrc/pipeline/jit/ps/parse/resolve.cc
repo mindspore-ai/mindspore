@@ -593,9 +593,9 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
     auto resolve_params = user_top_fg->parameters();
     auto top_arg_size = top_fg->GetPositionalArgsCount();
     auto user_arg_size = user_top_fg->GetPositionalArgsCount();
-    if (top_arg_size != user_arg_size) {
+    if (top_arg_size > user_arg_size) {
       MS_LOG(INFO) << "Top graph's parameter size: " << top_arg_size
-                   << " does not match the user top func_graph's parameter size: " << user_arg_size;
+                   << " should not be greater than resolved func_graph's parameter size: " << user_arg_size;
     } else {
       for (int i = 0; i < top_arg_size; i++) {
         auto param_ptr = top_params[i]->cast<ParameterPtr>();
