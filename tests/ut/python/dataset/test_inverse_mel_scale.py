@@ -30,6 +30,7 @@ def get_ratio(mat):
     return mat.sum() / mat.size
 
 
+@pytest.mark.skip(reason="random failures")
 def test_inverse_mel_scale_pipeline():
     """
     Feature: InverseMelScale

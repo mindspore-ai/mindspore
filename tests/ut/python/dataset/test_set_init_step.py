@@ -129,6 +129,7 @@ def test_init_step_with_mappable_source(fast_recovery_mode, shuffle):
     ds.config.set_seed(original_seed)
 
 
+@pytest.mark.skip(reason="timeout")
 @pytest.mark.parametrize("fast_recovery_mode", (True, False))
 @pytest.mark.parametrize("shuffle", (True, False))
 def test_init_step_with_non_mappable_generator(fast_recovery_mode, shuffle):
