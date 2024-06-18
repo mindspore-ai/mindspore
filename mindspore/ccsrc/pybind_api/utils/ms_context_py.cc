@@ -142,6 +142,7 @@ void RegMsContext(const py::module *m) {
     .value("enable_fused_cast_add_opt", MsCtxParam::MS_CTX_ENABLE_FUSED_CAST_ADD_OPT)
     .value("host_scheduling_max_threshold", MsCtxParam::MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD)
     .value("topo_order", MsCtxParam::MS_CTX_TOPO_ORDER)
+    .value("exec_order", MsCtxParam::MS_CTX_EXEC_ORDER)
     .value("cur_step_num", MsCtxParam::MS_CTX_CUR_STEP_NUM)
     .value("need_ckpt", MsCtxParam::MS_CTX_NEED_CKPT)
     .value("save_checkpoint_steps", MsCtxParam::MS_CTX_SAVE_CKPT_STEPS)

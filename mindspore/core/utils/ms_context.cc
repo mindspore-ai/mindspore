@@ -626,6 +626,7 @@ void MsContext::InitStringTypeDefaultValue() {
   set_param<std::string>(MS_CTX_JIT_LEVEL, "");
   set_param<std::string>(MS_CTX_INFER_BOOST, "off");
   set_param<std::string>(MS_CTX_PROF_MEM_OUTPUT_PATH, "");
+  set_param<std::string>(MS_CTX_EXEC_ORDER, "bfs");
 }
 
 void MsContext::InitDigitalTypeDefaultValue() {
