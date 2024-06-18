@@ -1,7 +1,7 @@
-mindspore.np_dtype
-==================
+mindspore.common.np_dtype
+=========================
 
-.. py:class:: mindspore.np_dtype
+.. py:class:: mindspore.common.np_dtype
 
     `np_dtype` 扩展了Numpy的数据类型。
 
@@ -9,7 +9,7 @@ mindspore.np_dtype
 
     .. code-block::
 
-        from mindspore import np_dtype
+        from mindspore.common import np_dtype
 
     - **数值型**
 
