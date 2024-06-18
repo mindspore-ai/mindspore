@@ -128,6 +128,7 @@ void RegMsContext(const py::module *m) {
     .value("recompute_allgather_overlap_fagrad", MsCtxParam::MS_CTX_RECOMPUTE_ALLGATHER_OVERLAP_FAGRAD)
     .value("matmul_allow_tf32", MsCtxParam::MS_CTX_MATMUL_ALLOW_TF32)
     .value("jit_level", MsCtxParam::MS_CTX_JIT_LEVEL)
+    .value("infer_boost", MsCtxParam::MS_CTX_INFER_BOOST)
     .value("enable_task_opt", MsCtxParam::MS_CTX_ENABLE_TASK_OPT)
     .value("enable_grad_comm_opt", MsCtxParam::MS_CTX_ENABLE_GRAD_COMM_OPT)
     .value("enable_opt_shard_comm_opt", MsCtxParam::MS_CTX_ENABLE_OPT_SHARD_COMM_OPT)

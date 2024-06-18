@@ -401,7 +401,7 @@ class _Context:
 
                 - jit_level (str): "O0", "O1" or "O2" to control the compilation optimization level.
         """
-        jit_cfgs = {'jit_level': ["O0", "O1", "O2"]}
+        jit_cfgs = {'jit_level': ["O0", "O1", "O2"], 'infer_boost': ["on", "off"]}
         for jit_key in jit_config:
             if jit_key not in jit_cfgs:
                 raise ValueError(f"For 'context.set_context', the key of argument 'jit_config' must be one of "
@@ -412,6 +412,7 @@ class _Context:
                                  f"{supported_value}, but got {jit_config[jit_key]}.")
             self._jit_config = jit_config
             self.set_param(ms_ctx_param.jit_level, jit_config[jit_key])
+            self.set_param(ms_ctx_param.infer_boost, jit_config[jit_key])
 
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
@@ -1685,6 +1686,11 @@ def set_context(**kwargs):
               - ``"O1"``: Using commonly used optimizations and automatic operator fusion optimizations,
                 adopt KernelByKernel execution mode.
               - ``"O2"``: Ultimate performance optimization, adopt Sink execution mode.
+
+            - infer_boost (str): Used to control the infer mode. Default: ``"off"`` . The value range is as follows:
+
+              - ``"on"``: Enable infer mode, get better infer performance.
+              - ``"off"``: Disable infer mode, use forward to infer, performance is not good.
 
     Raises:
         ValueError: If input key is not an attribute in context.
