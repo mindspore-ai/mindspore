@@ -744,8 +744,6 @@ int AnfTransform::RunPass(const FuncGraphPtr &old_graph, const std::shared_ptr<C
 }
 
 STATUS AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
-  MS_ASSERT(old_graph != nullptr);
-  MS_ASSERT(param != nullptr);
   if (param->no_fusion && param->save_type == kMindIR) {  // converter, online
     if (ProcOnlineTransform(old_graph, param) != lite::RET_OK) {
       MS_LOG(ERROR) << "Proc online transform failed.";

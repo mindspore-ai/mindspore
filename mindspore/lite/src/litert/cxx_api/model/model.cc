@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021~2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -332,8 +332,8 @@ Status Model::UpdateWeights(const std::vector<MSTensor> &new_weights) {
 }
 
 Status Model::RunStep(const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Model implement is null.";
+  if (MS_UNLIKELY(impl_ == nullptr)) {
+    MS_LOG(ERROR) << "Model implement is null!";
     return kLiteNullptr;
   }
   auto inputs = impl_->GetInputs();
@@ -343,16 +343,16 @@ Status Model::RunStep(const MSKernelCallBack &before, const MSKernelCallBack &af
 
 Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                       const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Model implement is null.";
+  if (MS_UNLIKELY(impl_ == nullptr)) {
+    MS_LOG(ERROR) << "Model implement is null!";
     return kLiteNullptr;
   }
   return impl_->Predict(inputs, outputs, before, after);
 }
 
 Status Model::Predict(const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Model implement is null.";
+  if (MS_UNLIKELY(impl_ == nullptr)) {
+    MS_LOG(ERROR) << "Model implement is null!";
     return kLiteNullptr;
   }
   return impl_->Predict(before, after);
@@ -360,12 +360,12 @@ Status Model::Predict(const MSKernelCallBack &before, const MSKernelCallBack &af
 
 Status Model::PredictWithPreprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs,
                                     const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  MS_LOG(ERROR) << "Unsupported Feature.";
+  MS_LOG(ERROR) << "Unsupported Feature!";
   return kLiteNotSupport;
 }
 
 Status Model::Preprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs) {
-  MS_LOG(ERROR) << "Unsupported Feature.";
+  MS_LOG(ERROR) << "Unsupported Feature!";
   return kLiteNotSupport;
 }
 
@@ -380,7 +380,7 @@ Model::Model() {
 #endif
   impl_ = std::make_shared<ModelImpl>();
   if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Failed to create ModelImpl";
+    MS_LOG(ERROR) << "Failed to create ModelImpl!";
   }
 }
 

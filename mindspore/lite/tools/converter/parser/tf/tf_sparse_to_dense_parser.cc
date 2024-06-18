@@ -20,6 +20,7 @@
 #include <memory>
 #include "ops/sparse_to_dense.h"
 #include "nnacl/op_base.h"
+#include "tools/converter/parser/tf/tf_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {

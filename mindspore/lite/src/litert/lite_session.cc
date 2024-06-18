@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,17 +98,8 @@ bool ExistCustomCpuKernel() {
 #endif
   return false;
 }
-}  // namespace
 
-LiteSession::LiteSession() {
-#ifdef USE_GLOG
-  mindspore::mindspore_log_init();
-#endif
-  this->is_running_.store(false);
-}
-
-int LiteSession::CheckTensorValid(lite::Tensor *dst_tensor) {
-  MS_ASSERT(dst_tensor != nullptr);
+int CheckTensorValid(lite::Tensor *dst_tensor) {
   if (dst_tensor->data_type() == kObjectTypeTensorType) {
     return RET_OK;
   }
@@ -121,9 +112,7 @@ int LiteSession::CheckTensorValid(lite::Tensor *dst_tensor) {
   return RET_OK;
 }
 
-void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor) {
-  MS_ASSERT(src_tensor != nullptr);
-  MS_ASSERT(dst_tensor != nullptr);
+void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor) {
   auto quant_params = src_tensor->quantParams();
   if (quant_params != nullptr) {
     for (size_t j = 0; j < quant_params->size(); j++) {
@@ -155,6 +144,14 @@ void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lit
     }
     dst_tensor->set_quant_clusters(clusters);
   }
+}
+}  // namespace
+
+LiteSession::LiteSession() {
+#ifdef USE_GLOG
+  mindspore::mindspore_log_init();
+#endif
+  this->is_running_.store(false);
 }
 
 int LiteSession::ConvertTensorsData(const lite::LiteModel *model, size_t tensor_index, lite::Tensor *dst_tensor) {
@@ -890,7 +887,7 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
     MS_LOG(ERROR) << "Check graph input shapes failed.";
     return ret;
   }
-  MS_ASSERT(this->context_ != nullptr);
+
   ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_, before, after);
   if (MS_UNLIKELY(ret != RET_OK)) {
     MS_LOG(ERROR) << "RunGraph failed : " << ret;

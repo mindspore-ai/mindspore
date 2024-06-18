@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,12 +208,13 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
                         const std::shared_ptr<Context> &ms_context) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
-  if (session_ != nullptr) {
-    MS_LOG(ERROR) << "Model has been called Build";
+  MS_LOG(DEBUG) << "Build model begin.";
+  if (MS_UNLIKELY(session_ != nullptr)) {
+    MS_LOG(ERROR) << "Model has been Built!";
     return kLiteModelRebuild;
   }
   if (!PlatformInstructionSetSupportCheck()) {
-    MS_LOG(ERROR) << "The platform exist don't support's instruction.";
+    MS_LOG(ERROR) << "The platform exist don't support's instruction!";
     return kLiteNotSupport;
   }
 
@@ -417,22 +418,25 @@ Status ModelImpl::UpdateConfig(const std::string &section, const std::pair<std::
 Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
-  MS_CHECK_TRUE_MSG(session_ != nullptr, kLiteNullptr, "Model has not been called Build, or Model Build has failed.");
-  MS_CHECK_TRUE_MSG(outputs != nullptr, kLiteError, "outputs is nullptr.");
+  MS_CHECK_TRUE_MSG(session_ != nullptr, kLiteNullptr, "Model has not been Built, or Model Build failed!");
+  MS_CHECK_TRUE_MSG(outputs != nullptr, kLiteError, "outputs is nullptr!");
   auto input_tensors = session_->GetInputs();
   if (input_tensors.empty()) {
-    MS_LOG(ERROR) << "Failed to get input tensor.";
+    MS_LOG(ERROR) << "Failed to get input tensor!";
     return kLiteError;
   }
   if (input_tensors.size() != inputs.size()) {
-    MS_LOG(ERROR) << "Wrong input size.";
+    MS_LOG(ERROR) << "Wrong input size " << inputs.size() << ", session input tensor size " << input_tensors.size();
     return kLiteError;
   }
-  std::vector<void *> old_data;
-  for (size_t i = 0; i < inputs.size(); i++) {
-    old_data.push_back(input_tensors.at(i)->data());
+
+  size_t inputs_size = input_tensors.size();
+  std::vector<void *> old_data(inputs_size);
+  for (size_t i = 0; i < inputs_size; i++) {
+    old_data[i] = input_tensors.at(i)->data();
   }
-  for (size_t i = 0; i < inputs.size(); i++) {
+
+  for (size_t i = 0; i < inputs_size; i++) {
     auto input = input_tensors.at(i);
     auto user_input = inputs.at(i);
     if (user_input.DataType() != static_cast<enum DataType>(input->data_type())) {
@@ -494,13 +498,13 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   auto ret = RunGraph(before, after);
   ResetTensorData(old_data, input_tensors);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Run graph failed.";
+    MS_LOG(ERROR) << "Run graph failed!ret = " << ret;
     return ret;
   }
   MS_LOG(DEBUG) << "Run graph success.";
   auto res = GetOutputs();
   if (res.empty()) {
-    MS_LOG(DEBUG) << "Empty outputs.";
+    MS_LOG(ERROR) << "Empty outputs!";
     return kLiteError;
   }
   outputs->clear();

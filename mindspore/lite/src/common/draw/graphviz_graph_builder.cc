@@ -194,7 +194,10 @@ int GVGraphBuilder::AppendComputeNode(const AdapterNode &node) {
 int GVGraphBuilder::AppendGraphOutputNode(const std::vector<lite::Tensor *> &out_tensors) {
   auto out_tensor_size = out_tensors.size();
   auto gv_node = lite::GVNode::CreateOutput("return", out_tensor_size);
-  MS_ASSERT(gv_node != nullptr);
+  if (gv_node == nullptr) {
+    MS_LOG(ERROR) << "create output node failed!";
+    return RET_ERROR;
+  }
   gv_graph_->AppendNode(gv_node);
   for (size_t i = 0; i < out_tensors.size(); i++) {
     auto out_tensor = out_tensors[i];

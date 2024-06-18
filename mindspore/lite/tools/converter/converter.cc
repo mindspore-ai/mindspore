@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,17 +195,17 @@ int InitModelInputShape(const std::string &value, const std::shared_ptr<Converte
       name += ":" + string_split[i];
     }
     if (name.empty()) {
-      MS_LOG(ERROR) << "input tensor name is empty";
+      MS_LOG(ERROR) << "input tensor name is empty!";
       return lite::RET_INPUT_PARAM_INVALID;
     }
     auto dim_strs = string_split[string_split.size() - 1];
     if (dim_strs.empty()) {
-      MS_LOG(ERROR) << "input tensor dim string is empty";
+      MS_LOG(ERROR) << "input tensor dim string is empty!";
       return lite::RET_INPUT_PARAM_INVALID;
     }
     auto dims = lite::StrSplit(dim_strs, std::string(","));
     if (dims.empty()) {
-      MS_LOG(ERROR) << "input tensor dim is empty";
+      MS_LOG(ERROR) << "input tensor dim is empty!";
       return lite::RET_INPUT_PARAM_INVALID;
     }
     for (const auto &dim : dims) {
@@ -428,7 +428,7 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param,
     ret = config_parser.ParseConfigParam(&param->config_param);
   }
   if (ret != RET_OK || parse_map_ret != RET_OK) {
-    MS_LOG(ERROR) << "Parse config param failed.";
+    MS_LOG(ERROR) << "Parse config param failed!";
     return ret;
   }
   ret = ParseParam(&config_parser, param, model_param_infos, maps);

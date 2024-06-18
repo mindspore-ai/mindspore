@@ -143,8 +143,6 @@ class MS_API LiteSession {
   int UpdateWeights(std::vector<lite::Tensor *> modify_tensors);
 
  protected:
-  static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
-  int CheckTensorValid(lite::Tensor *dst_tensor);
   int ConvertTensorsData(const lite::LiteModel *model, size_t tensor_index, lite::Tensor *dst_tensor);
   lite::Tensor *ConvertTensor(const schema::Tensor &src_tensor);
   int ConvertTensors(const lite::Model *model);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022~2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,15 @@ constexpr int16_t kInputDataInt8Max = 127;
 constexpr int16_t kInputDataUint8Min = 0;
 constexpr int16_t kInputDataUint8Max = 254;
 }  // namespace
+
+template <typename T, typename Distribution>
+void FillRandomData(size_t size, void *data, Distribution distribution) {
+  std::mt19937 random_engine;
+  size_t elements_num = size / sizeof(T);
+  (void)std::generate_n(static_cast<T *>(data), elements_num,
+                        [&]() { return static_cast<T>(distribution(random_engine)); });
+}
+
 int GenRandomData(size_t size, void *data, int data_type) {
   MS_ASSERT(data != nullptr);
   switch (data_type) {
@@ -81,7 +90,7 @@ int GenRandomData(mindspore::MSTensor *tensor) {
   CHECK_NULL_RETURN(tensor);
   auto input_data = tensor->MutableData();
   if (input_data == nullptr) {
-    MS_LOG(ERROR) << "MallocData for inTensor failed";
+    MS_LOG(ERROR) << "MallocData for inTensor failed!";
     return RET_ERROR;
   }
   int status = RET_ERROR;
@@ -89,7 +98,7 @@ int GenRandomData(mindspore::MSTensor *tensor) {
     MSTensor *input = MSTensor::StringsToTensor(tensor->Name(), {"you're the best."});
     if (input == nullptr) {
       std::cerr << "StringsToTensor failed" << std::endl;
-      MS_LOG(ERROR) << "StringsToTensor failed";
+      MS_LOG(ERROR) << "StringsToTensor failed!";
       return RET_ERROR;
     }
     *tensor = *input;

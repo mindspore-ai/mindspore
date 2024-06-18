@@ -21,6 +21,7 @@
 #include "ops/ops_func_impl/triu.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {

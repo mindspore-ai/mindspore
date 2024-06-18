@@ -61,7 +61,7 @@ bool OnnxQuantizeLinearAdjust::SetQuantParam(const CNodePtr &cnode, const QuantP
   auto zero_point = GetValue<int>(zero_point_value);
 
   std::vector<schema::QuantParamT> quant_params;
-  QuantParamT quant_param;
+  schema::QuantParamT quant_param;
   quant_param.scale = scale;
   quant_param.zeroPoint = zero_point;
   quant_param.inited = true;

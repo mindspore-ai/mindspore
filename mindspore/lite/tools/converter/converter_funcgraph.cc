@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,7 +183,7 @@ FuncGraphPtr ConverterFuncGraph::Build(const std::shared_ptr<ConverterPara> &par
     func_graph = Load3rdModelToFuncgraph(param);
   }
   if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Load model file failed";
+    MS_LOG(ERROR) << "Load model file failed!";
     return nullptr;
   }
 
@@ -214,21 +214,21 @@ STATUS ConverterFuncGraph::UnifyFuncGraphForInfer(const std::shared_ptr<Converte
   MS_CHECK_TRUE_MSG(remove_public_primitive != nullptr, RET_NULL_PTR,
                     "RemovePublicPrimitiveInterference is a nullptr.");
   if (!remove_public_primitive->Run(func_graph)) {
-    MS_LOG(ERROR) << "remove interference due to public-pirmitive failed.";
+    MS_LOG(ERROR) << "remove interference due to public-pirmitive failed!";
     return RET_ERROR;
   }
   MindsporeImporter::RemoveUnusedGraphInput(func_graph);
 
   auto status = CommonAnfAdjust(func_graph);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "CommonAnfAdjust failed.";
+    MS_LOG(ERROR) << "CommonAnfAdjust failed!ret = " << status;
     return status;
   }
 
   // get output_names must be between CommonAnfAdjust and Mindir2AnfAdjust;
   *output_names = FuncGraphUtils::GetFuncGraphOutputNames(func_graph);
   if (output_names->empty()) {
-    MS_LOG(ERROR) << "GetFuncGraphOutputNames failed.";
+    MS_LOG(ERROR) << "GetFuncGraphOutputNames failed!";
     return RET_ERROR;
   }
 
@@ -239,7 +239,7 @@ STATUS ConverterFuncGraph::UnifyFuncGraphForInfer(const std::shared_ptr<Converte
   }
   status = MindsporeImporter::Mindir2AnfAdjust(func_graph, param);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Mindir2AnfAdjust failed.";
+    MS_LOG(ERROR) << "Mindir2AnfAdjust failed!ret = " << status;
     return status;
   }
 
@@ -247,7 +247,7 @@ STATUS ConverterFuncGraph::UnifyFuncGraphForInfer(const std::shared_ptr<Converte
     auto redundant_op_remove_pass = std::make_shared<mindspore::opt::RemoveRedundantOpPass>(param->train_model, true);
     MS_CHECK_TRUE_MSG(redundant_op_remove_pass != nullptr, RET_NULL_PTR, "redundant_op_remove_pass is nullptr.");
     if (!redundant_op_remove_pass->Run(func_graph)) {
-      MS_LOG(ERROR) << "Run remove redundant op failed";
+      MS_LOG(ERROR) << "Run remove redundant op failed!";
       return RET_ERROR;
     }
   }
@@ -255,7 +255,7 @@ STATUS ConverterFuncGraph::UnifyFuncGraphForInfer(const std::shared_ptr<Converte
   auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model, param->save_type);
   MS_CHECK_TRUE_MSG(unify_format != nullptr, RET_NULL_PTR, "unify_format is nullptr.");
   if (!unify_format->Run(func_graph)) {
-    MS_LOG(ERROR) << "Run insert transpose failed.";
+    MS_LOG(ERROR) << "Run insert transpose failed!";
     return RET_ERROR;
   }
   func_graph->set_attr(kIsOptimized, MakeValue(false));
@@ -268,7 +268,7 @@ STATUS ConverterFuncGraph::UnifyFuncGraphInputFormat(const std::shared_ptr<Conve
   mindspore::Format cur_input_format = DEFAULT_FORMAT;
   auto status = opt::SpecifyGraphInputFormat::GetCurGraphInputFormat(func_graph, param->fmk_type, &cur_input_format);
   if (!status) {
-    MS_LOG(ERROR) << "Failed to get current format of graph input";
+    MS_LOG(ERROR) << "Failed to get current format of graph input!";
     return RET_ERROR;
   }
 

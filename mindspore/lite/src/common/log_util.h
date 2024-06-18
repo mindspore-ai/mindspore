@@ -23,7 +23,7 @@
 #define MSLITE_CHECK_PTR(ptr)                                    \
   do {                                                           \
     if ((ptr) == nullptr) {                                      \
-      MS_LOG(ERROR) << ": The pointer[" << #ptr << "] is null."; \
+      MS_LOG(ERROR) << ": The pointer[" << #ptr << "] is null!"; \
       return mindspore::lite::RET_ERROR;                         \
     }                                                            \
   } while (0)
@@ -31,7 +31,7 @@
 #define CHECK_MALLOC_RES(ptr, errcode)        \
   do {                                        \
     if ((ptr) == nullptr) {                   \
-      MS_LOG(ERROR) << "malloc data failed."; \
+      MS_LOG(ERROR) << "malloc data failed!"; \
       return errcode;                         \
     }                                         \
   } while (0)
@@ -39,7 +39,7 @@
 #define MSLITE_CHECK_PTR_RETURN(ptr, errcode)                     \
   do {                                                            \
     if ((ptr) == nullptr) {                                       \
-      MS_LOG(ERROR) << ": The pointer [" << #ptr << "] is null."; \
+      MS_LOG(ERROR) << ": The pointer [" << #ptr << "] is null!"; \
       return errcode;                                             \
     }                                                             \
   } while (0)
@@ -120,50 +120,50 @@
     }                                           \
   } while (0)
 
-#define MS_CHECK_LT(value1, value2, errcode)                                         \
-  do {                                                                               \
-    if ((value1) >= (value2)) {                                                      \
-      MS_LOG(ERROR) << "check ge fail, value1: " << value1 << " value2: " << value2; \
-      return errcode;                                                                \
-    }                                                                                \
+#define MS_CHECK_LT(value1, value2, errcode)                                             \
+  do {                                                                                   \
+    if ((value1) >= (value2)) {                                                          \
+      MS_LOG(ERROR) << "check ge fail! value1: " << (value1) << " value2: " << (value2); \
+      return errcode;                                                                    \
+    }                                                                                    \
   } while (0)
 
-#define MS_CHECK_GT(value1, value2, errcode)                                         \
-  do {                                                                               \
-    if ((value1) <= (value2)) {                                                      \
-      MS_LOG(ERROR) << "check gt fail, value1: " << value1 << " value2: " << value2; \
-      return errcode;                                                                \
-    }                                                                                \
+#define MS_CHECK_GT(value1, value2, errcode)                                             \
+  do {                                                                                   \
+    if ((value1) <= (value2)) {                                                          \
+      MS_LOG(ERROR) << "check gt fail! value1: " << (value1) << " value2: " << (value2); \
+      return errcode;                                                                    \
+    }                                                                                    \
   } while (0)
 
-#define MS_CHECK_LE(value1, value2, errcode)                                         \
-  do {                                                                               \
-    if ((value1) > (value2)) {                                                       \
-      MS_LOG(ERROR) << "check le fail, value1: " << value1 << " value2: " << value2; \
-      return errcode;                                                                \
-    }                                                                                \
+#define MS_CHECK_LE(value1, value2, errcode)                                             \
+  do {                                                                                   \
+    if ((value1) > (value2)) {                                                           \
+      MS_LOG(ERROR) << "check le fail! value1: " << (value1) << " value2: " << (value2); \
+      return errcode;                                                                    \
+    }                                                                                    \
   } while (0)
 
-#define MS_CHECK_GE(value1, value2, errcode)                                         \
-  do {                                                                               \
-    if ((value1) < (value2)) {                                                       \
-      MS_LOG(ERROR) << "check ge fail, value1: " << value1 << " value2: " << value2; \
-      return errcode;                                                                \
-    }                                                                                \
+#define MS_CHECK_GE(value1, value2, errcode)                                             \
+  do {                                                                                   \
+    if ((value1) < (value2)) {                                                           \
+      MS_LOG(ERROR) << "check ge fail! value1: " << (value1) << " value2: " << (value2); \
+      return errcode;                                                                    \
+    }                                                                                    \
   } while (0)
 
-#define MS_CHECK_EQ(value1, value2, errcode)                                         \
-  do {                                                                               \
-    if ((value1) != (value2)) {                                                      \
-      MS_LOG(ERROR) << "check eq fail, value1: " << value1 << " value2: " << value2; \
-      return errcode;                                                                \
-    }                                                                                \
+#define MS_CHECK_EQ(value1, value2, errcode)                                             \
+  do {                                                                                   \
+    if ((value1) != (value2)) {                                                          \
+      MS_LOG(ERROR) << "check eq fail! value1: " << (value1) << " value2: " << (value2); \
+      return errcode;                                                                    \
+    }                                                                                    \
   } while (0)
 
 #define MS_CHECK_PTR_IF_NULL(ptr)                                \
   do {                                                           \
     if ((ptr) == nullptr) {                                      \
-      MS_LOG(ERROR) << ": The pointer[" << #ptr << "] is null."; \
+      MS_LOG(ERROR) << ": The pointer[" << #ptr << "] is null!"; \
       return;                                                    \
     }                                                            \
   } while (0)

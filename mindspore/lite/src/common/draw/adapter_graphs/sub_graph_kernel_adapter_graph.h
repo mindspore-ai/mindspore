@@ -77,11 +77,16 @@ class SubGraphKernelAdapterGraph : public AdapterGraph {
     auto nodes = graph->immutable_nodes();
     auto ret = kernel::KernelExecUtil::TopologicalSortNodes(&nodes, graph->in_nodes());
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "TopologicalSortNodes failed";
+      MS_LOG(ERROR) << "TopologicalSortNodes failed!";
       return nullptr;
     }
     for (auto node : nodes) {
-      adapter_graph->nodes_.emplace_back(new KernelExecAdapterNode(node, mark_filter));
+      auto *adapter_node = new (std::nothrow) KernelExecAdapterNode(node, mark_filter);
+      if (adapter_node == nullptr) {
+        MS_LOG(ERROR) << "new KernelExecAdapterNode failed! Please check whether memory is enough!";
+        return nullptr;
+      }
+      adapter_graph->nodes_.emplace_back(adapter_node);
     }
     return adapter_graph;
   }

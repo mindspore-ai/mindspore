@@ -52,7 +52,11 @@ std::string Edge::Code() const {
 GVNode *GVNode::CreateCNode(const std::string &id, const std::string &label, size_t input_size,
                             const std::vector<std::string> &output_names, const std::vector<std::string> &output_infos,
                             bool highlight) {
-  auto node = new GVNode(id, label, kNodeTypeCNode, input_size, output_names.size(), highlight);
+  auto node = new (std::nothrow) GVNode(id, label, kNodeTypeCNode, input_size, output_names.size(), highlight);
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "new GVNode failed!";
+    return nullptr;
+  }
   node->prefix_ = "Node_";
   node->shape_ = "plaintext";
   node->color_ = "cornsilk";
@@ -62,7 +66,11 @@ GVNode *GVNode::CreateCNode(const std::string &id, const std::string &label, siz
 
 GVNode *GVNode::CreateInput(const std::string &id, const std::vector<std::string> &output_names,
                             const std::vector<std::string> &output_infos, bool highlight) {
-  auto node = new GVNode(id, id, kNodeTypeInput, 0, output_names.size(), highlight);
+  auto node = new (std::nothrow) GVNode(id, id, kNodeTypeInput, 0, output_names.size(), highlight);
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "new GVNode failed!";
+    return nullptr;
+  }
   node->prefix_ = "Input_";
   node->shape_ = "egg";
   node->Init(output_names, output_infos);
@@ -70,7 +78,11 @@ GVNode *GVNode::CreateInput(const std::string &id, const std::vector<std::string
 }
 
 GVNode *GVNode::CreateOutput(const std::string &id, size_t input_size, bool highlight) {
-  auto node = new GVNode(id, id, kNodeTypeOutput, input_size, 0, highlight);
+  auto node = new (std::nothrow) GVNode(id, id, kNodeTypeOutput, input_size, 0, highlight);
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "new GVNode failed!";
+    return nullptr;
+  }
   node->prefix_ = "Output_";
   node->shape_ = "egg";
   node->Init({}, {});
@@ -80,7 +92,11 @@ GVNode *GVNode::CreateOutput(const std::string &id, size_t input_size, bool high
 GVNode *GVNode::CreateWeight(const std::string &id, const std::string &label,
                              const std::vector<std::string> &output_names, const std::vector<std::string> &output_infos,
                              bool highlight) {
-  auto node = new GVNode(id, label, kNodeTypeWeight, 0, output_names.size(), highlight);
+  auto node = new (std::nothrow) GVNode(id, label, kNodeTypeWeight, 0, output_names.size(), highlight);
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "new GVNode failed!";
+    return nullptr;
+  }
   node->prefix_ = "Weight_";
   node->shape_ = "octagon";
   node->color_ = "paleturquoise";
@@ -98,9 +114,18 @@ GVNode::~GVNode() {
 void GVNode::Init(const std::vector<std::string> &output_names, const std::vector<std::string> &output_infos) {
   inputs_.reserve(input_size_);
   outputs_.reserve(output_size_);
-  MS_ASSERT(output_names.size() == output_size_);
+  if (output_names.size() != output_size_) {
+    MS_LOG(ERROR) << "GVNode init failed! output_names size " << output_names.size()
+                  << ", output_size_ = " << output_size_;
+    return;
+  }
   for (size_t i = 0; i < output_size_; i++) {
-    auto edge = new Edge(output_names[i], this, i, output_infos[i]);
+    auto edge = new (std::nothrow) Edge(output_names[i], this, i, output_infos[i]);
+    if (edge == nullptr) {
+      MS_LOG(ERROR) << "GVNode init failed! New Edge failed, please check whether memory is enough!";
+      return;
+    }
+
     this->outputs_.emplace_back(edge);
   }
 }
@@ -189,7 +214,11 @@ int GVGraph::Link(const std::string &from_name, size_t from_port, const std::str
     MS_LOG(ERROR) << "Node " << from_name << " is not belong to this graph.";
     return RET_ERROR;
   }
-  MS_ASSERT(from->second != nullptr);
+
+  if (from->second == nullptr) {
+    MS_LOG(ERROR) << "from node is null!";
+    return RET_ERROR;
+  }
   if (from_port >= from->second->output_size()) {
     MS_LOG(ERROR) << "`from_port`(" << from_port << ") out of range of node(" << from_name
                   << ")'s output ports number: " << from->second->output_size();
@@ -200,7 +229,10 @@ int GVGraph::Link(const std::string &from_name, size_t from_port, const std::str
     MS_LOG(ERROR) << "Node " << to_name << " is not belong to this graph.";
     return RET_ERROR;
   }
-  MS_ASSERT(to->second != nullptr);
+  if (to->second == nullptr) {
+    MS_LOG(ERROR) << "to node is null!";
+    return RET_ERROR;
+  }
   if (to_port >= to->second->input_size()) {
     MS_LOG(ERROR) << "`to_port`(" << to_port << ") out of range of node(" << to_name
                   << ")'s input ports number: " << to->second->input_size();

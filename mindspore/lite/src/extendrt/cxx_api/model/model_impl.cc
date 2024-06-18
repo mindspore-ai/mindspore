@@ -244,13 +244,13 @@ FuncGraphPtr ModelImpl::LoadGraphByBufferImpl(const void *model_buff, size_t mod
                                               const std::shared_ptr<Context> &model_context,
                                               const std::string &model_path) {
   if (model_type != kMindIR) {
-    MS_LOG(ERROR) << "Invalid model type";
+    MS_LOG(ERROR) << "Invalid model type!";
     return nullptr;
   }
-  MS_CHECK_TRUE_MSG(model_context != nullptr, nullptr, "Invalid context pointers.");
+
   auto status = UpdateSharingWorkspaceConfig(model_buff, model_size, model_path);
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "UpdateSharingWorkspaceConfig failed.";
+    MS_LOG(ERROR) << "UpdateSharingWorkspaceConfig failed!";
     return nullptr;
   }
   auto mindir_path = GetConfig(lite::kConfigModelFileSection, lite::kConfigMindIRPathKey);
@@ -337,20 +337,24 @@ void ModelImpl::UpdateProvider() {
 Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, ModelType model_type,
                                     const std::shared_ptr<Context> &model_context, const std::string &model_path) {
   if (model_buff == nullptr) {
-    MS_LOG(ERROR) << "The input model buffer is nullptr.";
+    MS_LOG(ERROR) << "The input model buffer is nullptr!";
     return kLiteError;
   }
   if (model_size == 0) {
-    MS_LOG(ERROR) << "The input model buffer size is 0.";
+    MS_LOG(ERROR) << "The input model buffer size is 0!";
+    return kLiteError;
+  }
+  if (model_context == nullptr) {
+    MS_LOG(ERROR) << "Invalid context pointers!";
     return kLiteError;
   }
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   if (session_) {
-    MS_LOG(ERROR) << "Model has been called Build";
+    MS_LOG(ERROR) << "Model has been called Build!";
     return kLiteModelRebuild;
   }
   if (model_context == nullptr) {
-    MS_LOG(ERROR) << "Invalid context pointers.";
+    MS_LOG(ERROR) << "Invalid context pointers!";
     return kLiteError;
   }
   SetMsContext();
@@ -362,7 +366,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
   UpdateProvider();
   auto status = UpdateSharingWorkspaceConfig(model_buff, model_size, model_path);
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "UpdateSharingWorkspaceConfig failed.";
+    MS_LOG(ERROR) << "UpdateSharingWorkspaceConfig failed!";
     return kLiteError;
   }
   auto mindir_path = GetConfig(lite::kConfigModelFileSection, lite::kConfigMindIRPathKey);
@@ -372,14 +376,14 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
   }
   session_ = InferSession::CreateSession(model_context, config_info_);
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Create session failed.";
+    MS_LOG(ERROR) << "Create session failed!";
     return kLiteError;
   }
   Status ret;
   if (model_type == kMindIR_Lite) {
     ret = session_->CompileGraph(model_buff, model_size, &graph_id_);
     if (ret != kSuccess) {
-      MS_LOG(ERROR) << "compile graph failed.";
+      MS_LOG(ERROR) << "compile graph failed!ret = " << ret;
       return ret;
     }
     return kSuccess;
@@ -401,20 +405,20 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     // convert and optimize func graph to infer
     ret = ConvertGraphOnline(func_graph, model_context);
     if (ret != kSuccess) {
-      MS_LOG(ERROR) << "convert graph failed.";
+      MS_LOG(ERROR) << "convert graph failed!ret = " << ret;
       return ret;
     }
   } else {
     // new a func graph contains a custom node, which is the data-flow graph.
     func_graph = CreateFuncGraphFromDataFlow(model_buff, model_size);
     if (func_graph == nullptr) {
-      MS_LOG(ERROR) << "Create func graph failed from data flow graph.";
+      MS_LOG(ERROR) << "Create func graph failed from data flow graph!";
       return kLiteError;
     }
   }
   ret = session_->CompileGraph(func_graph, nullptr, 0, &graph_id_);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "compile graph failed.";
+    MS_LOG(ERROR) << "compile graph failed!ret = " << ret;
     return ret;
   }
   std::shared_lock<std::shared_mutex> build_lock(g_model_converter_lock);
@@ -424,11 +428,11 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
 Status ModelImpl::Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Context> &model_context) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   if (session_) {
-    MS_LOG(ERROR) << "Model has been called Build";
+    MS_LOG(ERROR) << "Model has been called Build!";
     return kLiteModelRebuild;
   }
   if (model_context == nullptr) {
-    MS_LOG(ERROR) << "Invalid context pointers.";
+    MS_LOG(ERROR) << "Invalid context pointers!";
     return kLiteError;
   }
   SetMsContext();
@@ -440,29 +444,29 @@ Status ModelImpl::Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Co
   UpdateProvider();
   session_ = InferSession::CreateSession(model_context, config_info_);
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Create session failed.";
+    MS_LOG(ERROR) << "Create session failed!";
     return kLiteError;
   }
   // get func_graph
   if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Input func graph is nullptr";
+    MS_LOG(ERROR) << "Input func graph is nullptr!";
     return kLiteError;
   }
   // transfer primitivePy to primitiveC
   auto ret = PrimitivePyToC(func_graph);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "transfer primitivePy to primitiveCfailed.";
+    MS_LOG(ERROR) << "transfer primitivePy to primitiveCfailed!";
     return ret;
   }
   // convert and optimize func graph to infer
   ret = ConvertGraphOnline(func_graph, model_context);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "convert graph failed.";
+    MS_LOG(ERROR) << "convert graph failed!ret = " << ret;
     return ret;
   }
   ret = session_->CompileGraph(func_graph, nullptr, 0, &graph_id_);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "compile graph failed.";
+    MS_LOG(ERROR) << "compile graph failed!ret = " << ret;
     return ret;
   }
   std::shared_lock<std::shared_mutex> build_lock(g_model_converter_lock);
@@ -477,7 +481,7 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
                         const std::shared_ptr<Context> &model_context) {
   if (model_path.empty()) {
-    MS_LOG(ERROR) << "Model path cannot be empty";
+    MS_LOG(ERROR) << "Model path cannot be empty!";
     return kLiteError;
   }
   auto buffer = ReadFile(model_path);
@@ -522,16 +526,16 @@ Status ModelImpl::ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::
 
 Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
-  if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+  if (MS_UNLIKELY(session_ == nullptr)) {
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build failed!";
     return kLiteError;
   }
   if (inputs.empty()) {
-    MS_LOG(ERROR) << "Inputs is null.";
+    MS_LOG(ERROR) << "Inputs is null!";
     return kLiteInputParamInvalid;
   }
   if (dims.empty()) {
-    MS_LOG(ERROR) << "Dims is null.";
+    MS_LOG(ERROR) << "Dims is null!";
     return kLiteInputParamInvalid;
   }
   for (size_t j = 0; j < dims.size(); j++) {
@@ -564,7 +568,7 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
 std::vector<MSTensor> ModelImpl::GetInputs() {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build failed!";
     return {};
   }
   auto graph_inputs = session_->GetInputs(graph_id_);
@@ -577,7 +581,7 @@ std::vector<MSTensor> ModelImpl::GetInputs() {
 std::vector<MSTensor> ModelImpl::GetOutputs() {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build failed!";
     return {};
   }
   auto graph_outputs = session_->GetOutputs(graph_id_);
@@ -589,8 +593,8 @@ std::vector<MSTensor> ModelImpl::GetOutputs() {
 
 MSTensor ModelImpl::GetInputByTensorName(const std::string &name) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
-  if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+  if (MS_UNLIKELY(session_ == nullptr)) {
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build failed!";
     return MSTensor(nullptr);
   }
   auto tensor_impl = session_->GetInputByTensorName(graph_id_, name);
@@ -612,8 +616,8 @@ std::vector<std::string> ModelImpl::GetOutputTensorNames() {
 
 MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
-  if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+  if (MS_UNLIKELY(session_ == nullptr)) {
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build failed!";
     return MSTensor(nullptr);
   }
   auto tensor_impl = session_->GetOutputByTensorName(graph_id_, name);
@@ -625,10 +629,11 @@ MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
 }
 
 Status ModelImpl::UpdateWeights(const std::vector<std::vector<MSTensor>> &weights) {
-  std::vector<std::vector<mindspore::tensor::TensorPtr>> new_weights;
-  for (auto &weight : weights) {
-    std::vector<mindspore::tensor::TensorPtr> new_weight = TensorUtils::MSTensorToTensorPtr(weight);
-    new_weights.push_back(new_weight);
+  size_t weights_size = weights.size();
+  std::vector<std::vector<mindspore::tensor::TensorPtr>> new_weights(weights_size);
+
+  for (size_t i = 0; i < weights_size; ++i) {
+    new_weights[i] = TensorUtils::MSTensorToTensorPtr(weights[i]);
   }
   return session_->UpdateWeights(new_weights);
 }
@@ -636,8 +641,8 @@ Status ModelImpl::UpdateWeights(const std::vector<std::vector<MSTensor>> &weight
 Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
-  if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+  if (MS_UNLIKELY(session_ == nullptr)) {
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build failed!";
     return kLiteError;
   }
   MS_EXCEPTION_IF_NULL(outputs);
@@ -650,7 +655,7 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   }
   auto ret = session_->RunGraph(graph_id_, graph_inputs, &graph_outputs, before, after);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "ModelImpl::Predict RunGraph failed with " << ret;
+    MS_LOG(ERROR) << "ModelImpl::Predict RunGraph failed!ret = " << ret;
     return ret;
   }
   bool output_remain = false;
@@ -782,7 +787,7 @@ Status ModelImpl::PredictWithPreprocess(const std::vector<std::vector<MSTensor>>
                                         std::vector<MSTensor> *outputs) {
 #if !defined(_WIN32) && !defined(_WIN64)
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
+    MS_LOG(ERROR) << "Model has not been called Build, or Model Build failed!";
     return kLiteError;
   }
   // Run preprocess
@@ -807,14 +812,14 @@ Status ModelImpl::PredictWithPreprocess(const std::vector<std::vector<MSTensor>>
 
 Status ModelImpl::LoadConfig(const std::string &config_path) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
-  if (session_) {
+  if (session_ != nullptr) {
     MS_LOG(ERROR) << "Model has been called Build, please call LoadConfig before Build.";
     return kLiteError;
   }
   ConfigInfos all_config_info;
   int ret = lite::GetAllSectionInfoFromConfigFile(config_path, &all_config_info);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "GetAllSectionInfoFromConfigFile fail!ret: " << ret;
+    MS_LOG(ERROR) << "GetAllSectionInfoFromConfigFile fail!ret = " << ret;
     return kLiteFileError;
   }
   for (auto &section : all_config_info) {

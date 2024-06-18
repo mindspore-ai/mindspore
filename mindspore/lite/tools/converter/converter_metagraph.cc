@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020~2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,13 +56,13 @@ STATUS ConverterToMetaGraph::UnifyFuncGraphFormat(const std::shared_ptr<Converte
     auto format_pass = std::make_shared<opt::ToNHWCFormat>(param->fmk_type, param->train_model);
     MS_CHECK_TRUE_RET(format_pass != nullptr, RET_ERROR);
     if (!format_pass->Run(old_graph)) {
-      MS_LOG(ERROR) << "Run ToNHWCFormat pass failed";
+      MS_LOG(ERROR) << "Run ToNHWCFormat pass failed!";
       return RET_ERROR;
     }
     auto transpose_pass = std::make_shared<opt::DecreaseTransposeAlgo>(param->fmk_type, param->train_model);
     MS_CHECK_TRUE_RET(transpose_pass != nullptr, RET_ERROR);
     if (!transpose_pass->Run(old_graph)) {
-      MS_LOG(ERROR) << "Run DecreaseTransposeAlgo pass failed";
+      MS_LOG(ERROR) << "Run DecreaseTransposeAlgo pass failed!";
       return RET_ERROR;
     }
   }
@@ -73,7 +73,7 @@ STATUS ConverterToMetaGraph::UnifyFuncGraphFormat(const std::shared_ptr<Converte
 schema::MetaGraphT *ConverterToMetaGraph::Build(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
   auto manager = Manage(func_graph, true);
   if (manager == nullptr) {
-    MS_LOG(ERROR) << "make func graph failed.";
+    MS_LOG(ERROR) << "make func graph failed!";
     return nullptr;
   }
   auto output_tensor_name = FuncGraphUtils::GetFuncGraphOutputNames(func_graph);
@@ -84,14 +84,14 @@ schema::MetaGraphT *ConverterToMetaGraph::Build(const std::shared_ptr<ConverterP
 
   auto status = UnifyFuncGraphFormat(param, func_graph);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "unify func graph format failed " << status;
+    MS_LOG(ERROR) << "unify func graph format failed!ret = " << status;
     return nullptr;
   }
 
   // protobuf -> flatbuffer
   auto meta_graph = Export(func_graph, false, false, param->train_model);
   if (meta_graph == nullptr) {
-    MS_LOG(ERROR) << "Export to meta graph return nullptr";
+    MS_LOG(ERROR) << "Export to meta graph return nullptr!";
     return nullptr;
   }
 
@@ -99,7 +99,7 @@ schema::MetaGraphT *ConverterToMetaGraph::Build(const std::shared_ptr<ConverterP
   metagraph_transform.SetGraphDef(meta_graph);
   status = metagraph_transform.Transform(param);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Transform meta graph failed " << status;
+    MS_LOG(ERROR) << "Transform meta graph failed!ret = " << status;
     delete meta_graph;
     return nullptr;
   }
@@ -107,7 +107,7 @@ schema::MetaGraphT *ConverterToMetaGraph::Build(const std::shared_ptr<ConverterP
   // output name will be modified by Transform
   status = UpdateMetaGraphOutputName(meta_graph, output_tensor_name);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "UpdateGraphOutputName failed.";
+    MS_LOG(ERROR) << "UpdateGraphOutputName failed!ret = " << status;
     delete meta_graph;
     return nullptr;
   }
@@ -122,13 +122,13 @@ STATUS ConverterToMetaGraph::Save(schema::MetaGraphT *meta_graph, const std::sha
     auto packed_buffer = MetaGraphSerializer::GetMetaGraphPackedBuff(&builder, *meta_graph, data_size);
     auto buffer = malloc(*data_size);
     if (buffer == nullptr) {
-      MS_LOG(ERROR) << "malloc failed.";
+      MS_LOG(ERROR) << "malloc failed!size = " << *data_size;
       return RET_ERROR;
     }
 
     if (memcpy_s(buffer, *data_size, packed_buffer, *data_size) != EOK) {
       free(buffer);
-      MS_LOG(ERROR) << "memory copy failed.";
+      MS_LOG(ERROR) << "memory copy failed!";
       return RET_ERROR;
     }
     *model_data = buffer;
@@ -137,13 +137,13 @@ STATUS ConverterToMetaGraph::Save(schema::MetaGraphT *meta_graph, const std::sha
     size_t keyLen = 0;
     auto status = InitEncryptKey(param, encKey, &keyLen);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "check encryption failed.";
+      MS_LOG(ERROR) << "check encryption failed!ret = " << status;
       return status;
     }
 
     status = MetaGraphSerializer::Save(*meta_graph, param->output_file, encKey, keyLen, param->encrypt_mode);
     if (memset_s(encKey, kEncMaxLen, 0, kEncMaxLen) != EOK) {
-      MS_LOG(ERROR) << "memset_s failed.";
+      MS_LOG(ERROR) << "memset_s failed!";
       return RET_ERROR;
     }
     if (status != RET_OK) {

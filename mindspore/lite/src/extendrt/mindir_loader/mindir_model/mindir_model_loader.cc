@@ -26,7 +26,7 @@ namespace mindspore::infer::mindir {
 const char kNodeTypeConstant[] = "Constant";
 
 AbstractBaseModel *MindirModelLoader::ImportModel(const char *model_buf, size_t size, bool take_buf) {
-  this->model_ = new MindirModel();
+  this->model_ = new (std::nothrow) MindirModel();
   MS_CHECK_TRUE_MSG(this->model_ != nullptr, nullptr,
                     "MindirModelLoader: Import model failed: new mindir model failed.");
   this->model_->model_type_ = mindspore::lite::ModelType_MindIR;
