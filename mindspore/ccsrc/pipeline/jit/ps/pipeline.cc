@@ -1028,6 +1028,8 @@ bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &a
   bool is_auto_parallel = (parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kSemiAutoParallel ||
                            parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kAutoParallel);
   ConvertArgs(args, kwargs, is_auto_parallel, &args_abs, &arguments);
+  ConvertSymbolicShape(args, &args_abs);
+  AddManagerForFuncGraphArgs(resource, arguments);
   resource->set_arguments(arguments);
   resource->set_args_abs(args_abs);
   executor_info->arg_list_size = args.size() + kwargs.size();

@@ -215,8 +215,10 @@ CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObjec
   if (graph == nullptr) {
     return nullptr;
   }
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    DumpIR("func_graph_builder.ir", graph);
+  }
   args = ExpandVariableArgs(args, code->co_flags, code->co_argcount);
-  args = EliminateSelf(args, name);
   MarkArgmentMutable(args);
   try {
     SkipBoostInferScope skip_boost_infer_scope;
