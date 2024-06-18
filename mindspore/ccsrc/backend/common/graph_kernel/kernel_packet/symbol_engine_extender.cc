@@ -255,8 +255,6 @@ bool SymbolEngineExtender::Run(const FuncGraphPtr &func_graph) {
   // Find the manager for the FuncGraph.
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
-  SymbolEnginePtr main_engine = func_graph->symbol_engine();
-  MS_EXCEPTION_IF_NULL(main_engine);
   // Find all cnodes.
   auto cnodes = TopoSort(func_graph->output(), SuccIncoming, [](const AnfNodePtr &node) {
     if (node->isa<CNode>()) {
