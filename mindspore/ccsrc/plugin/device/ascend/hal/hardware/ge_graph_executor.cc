@@ -464,13 +464,6 @@ void SetKernelInfo(const AnfNodePtr &node) {
   kernel_info->set_select_kernel_build_info(build_info);
 }
 
-std::string RemoveSuffix(const std::string &str, const std::string &suffix) {
-  if (str.size() >= suffix.size() && str.substr(str.size() - suffix.size()) == suffix) {
-    return str.substr(0, str.length() - suffix.length());
-  }
-  return str;
-}
-
 bool BuildFakeGraph(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
 #ifdef ENABLE_DUMP_IR
@@ -718,55 +711,35 @@ void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, s
   runtime_instance->AssignStaticMemoryInput(*kernel_graph.get());
 }
 
+void GeGraphExecutor::InitGraphInfo(const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
+  MS_EXCEPTION_IF_NULL(kg);
+  BuildInputDataGeTensor(kg);
+  BuildOutputDataGeTensor(kg);
+}
+
 void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph) {
   MS_LOG(INFO) << "Start BuildInputDataGeTensor, kernel graph: " << kernel_graph->ToString();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_inputs;
+  std::vector<DeviceAddress *> device_addrs;
   std::vector<std::pair<AnfNodeWeakPtr, size_t>> need_update_input;
-  InputNameAndType input_names;
-  auto input_name_list = kernel_graph->user_data<transform::InputNameList>();
-  if (input_name_list) {
-    input_names = input_name_list->input_names;
+  std::vector<AnfNodeWeakPtr> ge_input_nodes;
+  auto ge_input_list = kernel_graph->user_data<transform::GEInputList>();
+  if (ge_input_list) {
+    ge_input_nodes = ge_input_list->ge_inputs;
   }
-  if (input_names.empty()) {
-    MS_LOG(INFO) << "Kernel graph: " << kernel_graph->graph_id() << " input data list is nullptr";
-    input_datas_[kernel_graph.get()] = {ge_inputs, need_update_input};
-    return;
-  }
-  auto parameters = FilterAllParameters(kernel_graph);
-  const auto &cur_inputs = kernel_graph->get_inputs();
-  size_t cur_inputs_index = 0;
-  for (auto [name, is_ref] : input_names) {
-    AnfNodePtr node = nullptr;
-    if (!is_ref) {
-      while (HasAbstractMonad(cur_inputs.at(cur_inputs_index))) {
-        cur_inputs_index++;
-      }
-      auto abs = cur_inputs.at(cur_inputs_index)->abstract();
-      MS_EXCEPTION_IF_NULL(abs);
-      while (abs->isa<abstract::AbstractSequence>()) {
-        cur_inputs_index++;
-        abs = cur_inputs.at(cur_inputs_index)->abstract();
-        MS_EXCEPTION_IF_NULL(abs);
-      }
-      node = cur_inputs.at(cur_inputs_index);
-      cur_inputs_index++;
-    } else {
-      auto iter = parameters.find(name);
-      if (iter == parameters.end()) {
-        MS_LOG(WARNING) << "Cannot find parameter " << name << " from kernel graph: " << kernel_graph->graph_id();
-        name = RemoveSuffix(name, "_temp");
-        iter = parameters.find(name);
-      }
-      if (iter != parameters.end()) {
-        node = iter->second;
-      } else {
-        MS_LOG(EXCEPTION) << "Cannot find parameter " << name << " from kernel graph: " << kernel_graph->graph_id();
-      }
+  for (const auto &node_wptr : ge_input_nodes) {
+    auto node = node_wptr.lock();
+    if (!node) {
+      MS_LOG(ERROR) << "Get node lock failed, kerne graph: " << kernel_graph->ToString();
+      continue;
     }
-    MS_EXCEPTION_IF_NULL(node);
+    auto name = node->fullname_with_scope();
     MS_LOG(INFO) << "Build input ge tensor: " << name << ", kernel graph: " << kernel_graph->graph_id();
     auto output_addr = AnfAlgo::GetMutableOutputAddr(node, 0, false);
+    (void)device_addrs.emplace_back(output_addr.get());
     auto shapes = trans::GetRuntimePaddingShape(node, 0);
     auto host_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
     auto ge_tensor_desc = transform::TransformUtil::GetGeTensorDesc(shapes, host_type, kOpFormat_DEFAULT);
@@ -774,13 +747,11 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
     ge_tensor_desc->SetPlacement(::ge::kPlacementDevice);
     GeTensor ge_tensor(*ge_tensor_desc);
     if (output_addr->GetMutablePtr() != nullptr) {
+      MS_LOG(INFO) << "Node: " << name << " Has addr, size: " << output_addr->GetSize();
       if (ge_tensor.SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), output_addr->GetSize(),
                             [](void *) {}) != ::ge::GRAPH_SUCCESS) {
         MS_LOG(EXCEPTION) << "SetData failed, ge input data " << ge_inputs.size() << " name: " << name
                           << " size: " << output_addr->GetSize();
-      }
-      if (kernel_graph->is_dynamic_shape()) {
-        (void)need_update_input.emplace_back(node, ge_inputs.size());
       }
       MS_LOG(INFO) << "ge input data " << ge_inputs.size() << " name: " << name << " size: " << output_addr->GetSize();
     }
@@ -789,14 +760,7 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
     (void)need_update_input.emplace_back(node, ge_inputs.size());
     (void)ge_inputs.emplace_back(std::move(ge_tensor));
   }
-  while (cur_inputs_index < cur_inputs.size() && HasAbstractMonad(cur_inputs.at(cur_inputs_index))) {
-    cur_inputs_index++;
-  }
-  if (cur_inputs_index != cur_inputs.size()) {
-    MS_LOG(WARNING) << "Not use all cur inputs, cur_inputs_index: " << cur_inputs_index
-                    << ", cur_inputs.size(): " << cur_inputs.size() << ", kernel graph: " << kernel_graph->graph_id();
-  }
-  input_datas_[kernel_graph.get()] = {ge_inputs, need_update_input};
+  input_datas_[kernel_graph.get()] = {ge_inputs, device_addrs, need_update_input};
   MS_LOG(INFO) << "BuildInputDataGeTensor finish.";
 }
 
@@ -804,6 +768,7 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
   MS_LOG(INFO) << "Start BuildOutputDataGeTensor, kernel graph: " << kernel_graph->ToString();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_outputs;
+  std::vector<DeviceAddress *> device_addrs;
   std::vector<std::pair<AnfNodeWeakPtr, size_t>> graph_outputs;
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(kernel_graph->output());
   for (const auto &output : outputs) {
@@ -818,6 +783,8 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
       continue;
     }
     auto real_index = output_node->isa<ValueNode>() ? 0 : index;
+    auto device_addr = AnfAlgo::GetMutableOutputAddr(output_node, real_index, false);
+    (void)device_addrs.emplace_back(device_addr.get());
     auto shapes = trans::GetRuntimePaddingShape(output_node, real_index);
     auto host_type = common::AnfAlgo::GetOutputInferDataType(output_node, real_index);
     auto ge_tensor_desc = transform::TransformUtil::GetGeTensorDesc(shapes, host_type, kOpFormat_DEFAULT);
@@ -830,7 +797,7 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
   MS_EXCEPTION_IF_CHECK_FAIL(
     ge_outputs.size() == graph_outputs.size(),
     "The size of ge_outputs and graph_outputs check error, kernel graph: " + kernel_graph->ToString());
-  output_datas_[kernel_graph.get()] = {ge_outputs, graph_outputs};
+  output_datas_[kernel_graph.get()] = {ge_outputs, device_addrs, graph_outputs};
   MS_LOG(INFO) << "BuildOutputDataGeTensor finish.";
 }
 
@@ -970,8 +937,6 @@ bool GeGraphExecutor::BuildGraph(const KernelGraphPtr &graph, const transform::T
 void GeGraphExecutor::AllocMemory(const KernelGraphPtr &graph) {
   AllocParameterMemory(graph);
   AllocOutputMemory(graph);
-  BuildInputDataGeTensor(graph);
-  BuildOutputDataGeTensor(graph);
   EnableGraphInputZeroCopy(graph);
   EnableGraphOutputZeroCopy(graph);
 }
@@ -1526,22 +1491,23 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
   if (iter == input_datas_.end()) {
     return ge_inputs;
   }
+  bool is_dynamic_shape = kernel_graph->is_dynamic_shape();
   const auto &input_datas = iter->second.ge_inputs;
   ge_inputs = input_datas;
-  for (auto &kv : iter->second.need_update_input) {
-    auto input_node = kv.first.lock();
+  for (size_t i = 0; i < iter->second.device_addrs.size(); ++i) {
+    auto input_node = iter->second.need_update_input[i].first.lock();
     MS_EXCEPTION_IF_NULL(input_node);
-    auto output_addr = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
+    auto output_addr = iter->second.device_addrs[i];
     MS_EXCEPTION_IF_NULL(output_addr);
-    bool is_dynamic_shape = kernel_graph->is_dynamic_shape();
     if (is_dynamic_shape) {
       auto ge_tensor_desc = transform::TransformUtil::GetGeTensorDesc(output_addr->kernel_tensor()->GetShapeVector(),
                                                                       output_addr->type_id(), output_addr->format());
       MS_EXCEPTION_IF_NULL(ge_tensor_desc);
       ge_tensor_desc->SetPlacement(::ge::kPlacementDevice);
-      (void)ge_inputs[kv.second].SetTensorDesc(*ge_tensor_desc);
+      (void)ge_inputs[i].SetTensorDesc(*ge_tensor_desc);
     }
-    if (output_addr->GetMutablePtr() == nullptr) {
+    auto node_output_addr = output_addr->GetMutablePtr();
+    if (node_output_addr == nullptr) {
       // alloc static memory for unused inputs
       // error in ge when set nullptr into ge tensor
       std::vector<size_t> shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(input_node, 0));
@@ -1559,19 +1525,13 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
       UpdateTracker("UnusedInput", input_node->fullname_with_scope(), kernel_graph->ToString(), memory_size, memory,
                     device::tracker::MemType::kOther);
     }
-    if (kv.second >= ge_inputs.size()) {
-      MS_LOG(EXCEPTION) << input_node->DebugString() << ", index: " << kv.second << " is greater than "
-                        << ge_inputs.size();
-    }
-    MS_LOG(DEBUG) << "[ZeroCopy] For Graph " << kernel_graph->ToString() << ", update input "
-                  << input_node->DebugString() << " address to " << output_addr->GetMutablePtr()
-                  << ", shape:" << output_addr->kernel_tensor()->GetShapeVector()
-                  << ", type: " << TypeIdToString(output_addr->type_id()) << ", format: " << output_addr->format()
-                  << ", memory size: " << output_addr->GetSize();
-    if (output_addr->GetPtr() != ge_inputs[kv.second].GetData() ||
-        output_addr->GetSize() != ge_inputs[kv.second].GetSize()) {
-      (void)ge_inputs[kv.second].SetData(static_cast<uint8_t *>(output_addr->GetMutablePtr()), output_addr->GetSize(),
-                                         [](void *) {});
+    MS_LOG(INFO) << "[ZeroCopy] For Graph " << kernel_graph->ToString() << ", update input "
+                 << input_node->DebugString() << " address to " << output_addr->GetMutablePtr()
+                 << ", shape:" << output_addr->kernel_tensor()->GetShapeVector()
+                 << ", type: " << TypeIdToString(output_addr->type_id()) << ", format: " << output_addr->format()
+                 << ", memory size: " << output_addr->GetSize();
+    if (node_output_addr != ge_inputs[i].GetData() || output_addr->GetSize() != ge_inputs[i].GetSize()) {
+      (void)ge_inputs[i].SetData(static_cast<uint8_t *>(node_output_addr), output_addr->GetSize(), [](void *) {});
     }
   }
   return ge_inputs;
@@ -1588,23 +1548,22 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
   ge_outputs = output_datas;
 
   bool is_dynamic_shape = kernel_graph->is_dynamic_shape();
-  size_t idx = 0;
-  for (const auto &output : iter->second.graph_outputs) {
+  for (size_t idx = 0; idx < iter->second.device_addrs.size(); ++idx) {
     if (is_dynamic_shape) {
       ge_outputs[idx].SetData(nullptr, 0U, [](void *) {});
-      idx++;
       continue;
     }
-    auto output_node = output.first.lock();
-    auto index = output.second;
+    auto output_node = iter->second.graph_outputs[idx].first.lock();
+    auto index = iter->second.graph_outputs[idx].second;
     MS_EXCEPTION_IF_NULL(output_node);
     MS_EXCEPTION_IF_CHECK_FAIL(
       idx < ge_outputs.size(),
       "GenerateOutputGeTensor idx is greater equal than ge_outputs size, idx: " + std::to_string(idx) +
         ", ge outputs size: " + std::to_string(ge_outputs.size()) + ", kernel graph: " + kernel_graph->ToString());
-    auto output_device_addr = AnfAlgo::GetMutableOutputAddr(output_node, index, false);
-    MS_LOG(INFO) << "Output addr " << output_device_addr->GetMutablePtr();
-    if (output_device_addr->GetMutablePtr() == nullptr) {
+    auto output_device_addr = iter->second.device_addrs[idx];
+    auto node_output_device_addr = output_device_addr->GetMutablePtr();
+    MS_LOG(INFO) << "Output addr " << node_output_device_addr;
+    if (node_output_device_addr == nullptr) {
       MS_LOG(EXCEPTION) << "Output " << output_node->fullname_with_scope() << ", index: " << index
                         << " address is nullptr, kernel graph: " << kernel_graph->ToString()
                         << ", addr memory size: " << output_device_addr->GetSize()
@@ -1617,18 +1576,12 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
                  << ", shape:" << output_device_addr->kernel_tensor()->GetShapeVector()
                  << ", type: " << TypeIdToString(output_device_addr->type_id())
                  << ", format: " << output_device_addr->format() << ", memory size: " << output_device_addr->GetSize();
-
-    if (output_device_addr->GetPtr() != ge_outputs[idx].GetData() ||
+    if (node_output_device_addr != ge_outputs[idx].GetData() ||
         output_device_addr->GetSize() != ge_outputs[idx].GetSize()) {
-      ge_outputs[idx].SetData(reinterpret_cast<uint8_t *>(output_device_addr->GetMutablePtr()),
-                              output_device_addr->GetSize(), [](void *) {});
+      (void)ge_outputs[idx].SetData(reinterpret_cast<uint8_t *>(node_output_device_addr), output_device_addr->GetSize(),
+                                    [](void *) {});
     }
-    idx++;
   }
-  MS_EXCEPTION_IF_CHECK_FAIL(idx == ge_outputs.size(),
-                             "GenerateOutputGeTensor idx not equal to ge_outputs size, idx: " + std::to_string(idx) +
-                               ", ge outputs size: " + std::to_string(ge_outputs.size()) +
-                               ", kernel graph: " + kernel_graph->ToString());
   return ge_outputs;
 }
 

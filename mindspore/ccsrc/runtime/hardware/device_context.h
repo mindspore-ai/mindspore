@@ -346,6 +346,7 @@ class GraphExecutor {
   }
   virtual std::string GetRandomStatus(const std::vector<FuncGraphPtr> &graphs) { return ""; }
   virtual size_t GetGraphFeatureMemory(const FuncGraphPtr &graph) const { return 0; }
+  virtual void InitGraphInfo(const FuncGraphPtr &graph) { return; };
 
  protected:
   DeviceContext *device_context_{nullptr};
