@@ -217,7 +217,7 @@ def recompute(block, *args, **kwargs):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor, recompute
         >>> class MyCell(nn.Cell):
         ...     def __init__(self):

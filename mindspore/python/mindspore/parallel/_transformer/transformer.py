@@ -400,7 +400,7 @@ class FeedForward(Cell):
             >>> from mindspore.nn.transformer import FeedForward
             >>> from mindspore import dtype as mstype
             >>> from mindspore import Tensor, nn
-            >>> import mindspore.ops as ops
+            >>> from mindspore import ops
             >>> model = FeedForward(hidden_size=15, ffn_hidden_size=30, dropout_rate=0.1)
             >>> tensor = Tensor(np.ones((2, 20, 15)), mstype.float32)
             >>> output = model(tensor)

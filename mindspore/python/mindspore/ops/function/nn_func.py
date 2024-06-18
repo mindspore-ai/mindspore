@@ -2047,7 +2047,7 @@ def flip(input, dims):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import numpy as np
         >>> input = ms.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
         >>> output = ops.flip(input, (0, 2))
@@ -2079,7 +2079,7 @@ def flipud(input):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import numpy as np
         >>> input = ms.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
         >>> output = ops.flipud(input)
@@ -2110,7 +2110,7 @@ def fliplr(input):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import numpy as np
         >>> input = ms.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
         >>> output = ops.fliplr(input)
@@ -2139,7 +2139,7 @@ def is_floating_point(input):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> x = ms.Tensor([1, 2, 3], ms.float32)
         >>> y = ms.Tensor([1, 2, 3], ms.int64)
@@ -3750,7 +3750,7 @@ def pad(input_x, padding, mode='constant', value=None):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import numpy as np
         >>> x = ms.Tensor(np.arange(1 * 2 * 2 * 2).reshape((1, 2, 2, 2)), dtype=ms.float64)
         >>> output = ops.pad(x, [1, 0, 0, 1], mode='constant', value=6.0)
@@ -5227,7 +5227,7 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     Examples:
         >>> import numpy as np
         >>> import mindspore.common.dtype as mstype
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> arr1 = np.array([0.9, -1.2, 2, 0.8, 3.9, 2, 1, 0, -1]).reshape((3, 3))
         >>> arr2 = np.array([1, 1, -1, 1, -1, 1, -1, 1, 1]).reshape((3, 3))
@@ -7071,7 +7071,7 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> import numpy as np
         >>> x = Tensor(np.arange(2 * 3 * 4).reshape((2, 3, 4)), dtype=ms.float32)
@@ -7156,7 +7156,7 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> import numpy as np
         >>> x = Tensor(np.arange(2 * 3 * 4 * 5).reshape((2, 3, 4, 5)), dtype=ms.float32)
@@ -7282,7 +7282,7 @@ def msort(input):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import numpy as np
         >>> input = ms.Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), ms.float16)
         >>> output = ops.msort(input)

@@ -206,7 +206,7 @@ class GradientFreeze:
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor, Parameter, nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore.nn import WithLossCell
         >>> from mindspore import dtype as mstype
         >>> from mindspore import boost
@@ -347,7 +347,7 @@ def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulat
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor, Parameter, nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore.boost.grad_freeze import freeze_cell, FreezeOpt
         >>>
         >>> class Net(nn.Cell):

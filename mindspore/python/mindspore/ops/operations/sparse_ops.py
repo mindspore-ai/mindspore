@@ -584,7 +584,7 @@ class SparseTensorDenseAdd(Primitive):
 
     Examples:
         >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import dtype as mstype
         >>> x1_indices = Tensor([[0, 0], [0, 1]], dtype=mstype.int64)
         >>> x1_values = Tensor([1, 1], dtype=mstype.float32)

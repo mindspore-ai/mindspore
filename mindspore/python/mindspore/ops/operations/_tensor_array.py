@@ -46,7 +46,7 @@ class TensorArray(PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> create_op = ops.TensorArray(mindspore.int32, ())
         >>> handle = create_op()
         >>> print(handle)
@@ -90,7 +90,7 @@ class TensorArrayWrite(PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> create_op = ops.TensorArray(mindspore.int32, ())
         >>> handle = create_op()
         >>> write_op = ops.TensorArrayWrite()
@@ -133,7 +133,7 @@ class TensorArrayRead(PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> create_op = ops.TensorArray(mindspore.int32, ())
         >>> handle = create_op()
         >>> write_op = ops.TensorArrayWrite()
@@ -179,7 +179,7 @@ class TensorArrayClose(PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> create_op = ops.TensorArray(mindspore.int32, ())
         >>> handle = create_op()
         >>> close_op = ops.TensorArrayClose()
@@ -215,7 +215,7 @@ class TensorArrayClear(PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> create_op = ops.TensorArray(mindspore.int32, ())
         >>> handle = create_op()
         >>> clear_op = ops.TensorArrayClear()
@@ -255,7 +255,7 @@ class TensorArrayStack(Primitive):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> create_op = ops.TensorArray(mindspore.int32, ())
         >>> handle = create_op()
         >>> write_op = ops.TensorArrayWrite()
@@ -295,7 +295,7 @@ class TensorArraySize(PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> create_op = ops.TensorArray(mindspore.int32, ())
         >>> handle = create_op()
         >>> size_op = ops.TensorArraySize()
@@ -333,7 +333,7 @@ class TensorArrayGather(PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import numpy as mnp
         >>> create_op = ops.TensorArray(mindspore.float32, dynamic_size=False, element_shape=(8,))
         >>> handle = create_op()

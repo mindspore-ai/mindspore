@@ -686,7 +686,7 @@ def normal_ext(mean, std, generator=None):
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> mean = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> std = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -940,7 +940,7 @@ def rand(*size, dtype=None, seed=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> print(ops.rand((2,3)))
         [[4.1702199e-01 9.9718481e-01 7.2032452e-01]
          [9.3255734e-01 1.1438108e-04 1.2812445e-01]]
@@ -1031,7 +1031,7 @@ def randn(*size, dtype=None, seed=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> print(ops.randn((2, 2)))
         [[ 0.30639967 -0.42438635]
          [-0.4287376   1.3054721 ]]
@@ -1125,7 +1125,7 @@ def randint(low, high, size, seed=None, *, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> print(ops.randint(1, 10, (2,3)))
         [[4 9 7]
          [9 1 2]]

@@ -228,7 +228,7 @@ def all_gather_into_tensor(tensor, group=GlobalComm.WORLD_COMM_GROUP):
 
         >>> import numpy as np
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore.communication import init
         >>> from mindspore.communication.comm_func import all_gather_into_tensor
         >>> from mindspore import Tensor
@@ -357,7 +357,7 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
 
             This example should be run with 4 devices.
 
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore.communication.comm_func import reduce
@@ -835,7 +835,7 @@ def isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
 
             This example should be run with 2 devices.
 
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore.communication.comm_func import isend
@@ -897,7 +897,7 @@ def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
 
             This example should be run with 2 devices.
 
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore.communication.comm_func import irecv

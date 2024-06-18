@@ -156,7 +156,7 @@ class AllReduce(Primitive):
         >>> from mindspore import Tensor
         >>> from mindspore.ops import ReduceOp
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>>
         >>> init()
         >>> class Net(nn.Cell):
@@ -240,7 +240,7 @@ class Reduce(PrimitiveWithInfer):
 
             This example should be run with 4 devices.
 
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
@@ -326,7 +326,7 @@ class AllGather(PrimitiveWithInfer):
 
         >>> import numpy as np
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
@@ -551,7 +551,7 @@ class ReduceScatter(Primitive):
         >>> from mindspore.communication import init
         >>> from mindspore.ops import ReduceOp
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import numpy as np
         >>>
         >>> ms.set_context(mode=ms.GRAPH_MODE)
@@ -689,7 +689,7 @@ class Broadcast(PrimitiveWithInfer):
         >>> from mindspore import Tensor
         >>> from mindspore.communication import init
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import numpy as np
         >>>
         >>> ms.set_context(mode=ms.GRAPH_MODE)
@@ -822,7 +822,7 @@ class NeighborExchange(Primitive):
         >>> from mindspore import Tensor
         >>> from mindspore.communication import init
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import numpy as np
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -922,7 +922,7 @@ class AlltoAll(PrimitiveWithInfer):
         >>> from mindspore import Tensor
         >>> from mindspore.communication import init
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import numpy as np
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -1045,7 +1045,7 @@ class NeighborExchangeV2(Primitive):
         >>> import mindspore as ms
         >>> from mindspore.communication import init
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import numpy as np
         >>>
         >>> class Net0(nn.Cell):
@@ -1316,7 +1316,7 @@ class Barrier(PrimitiveWithInfer):
 
             This example should be run with 2 devices.
         >>> import numpy as np
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
@@ -1383,7 +1383,7 @@ class Send(PrimitiveWithInfer):
 
             This example should be run with 2 devices.
         >>> import numpy as np
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
@@ -1457,7 +1457,7 @@ class Receive(PrimitiveWithInfer):
 
             This example should be run with 2 devices.
         >>> import numpy as np
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
@@ -1843,7 +1843,7 @@ class BatchISendIRecv(PrimitiveWithInfer):
 
         >>> import numpy as np
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init, get_rank
         >>> from mindspore import Tensor
@@ -1955,7 +1955,7 @@ class AlltoAllV(PrimitiveWithInfer):
 
         >>> import numpy as np
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init, get_rank
         >>> from mindspore import Tensor

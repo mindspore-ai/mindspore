@@ -80,7 +80,7 @@ class ScalarSummary(Primitive):
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor, set_context
         >>>
         >>>
@@ -137,7 +137,7 @@ class ImageSummary(Primitive):
     Examples:
 
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>>
         >>>
         >>> class Net(nn.Cell):
@@ -189,7 +189,7 @@ class TensorSummary(Primitive):
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor, set_context
         >>>
         >>>
@@ -329,7 +329,7 @@ class HistogramSummary(Primitive):
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor, set_context
         >>>
         >>>

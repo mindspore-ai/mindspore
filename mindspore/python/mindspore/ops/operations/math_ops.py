@@ -2664,7 +2664,7 @@ class SquareSumAll(Primitive):
     Examples:
         >>> import numpy as np
         >>> import mindspore
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> x = Tensor(np.array([0, 0, 2, 0]), mindspore.float32)
         >>> y = Tensor(np.array([0, 0, 2, 4]), mindspore.float32)
@@ -4369,7 +4369,7 @@ class Cross(Primitive):
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> from mindspore import dtype as mstype
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> cross = ops.Cross(dim = 0)
         >>> x1 = Tensor([1, 2, 3], mstype.int8)
         >>> x2 = Tensor([1, 2, 3], mstype.int8)

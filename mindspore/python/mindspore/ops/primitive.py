@@ -74,7 +74,7 @@ class Primitive(Primitive_):
             value (Any): Attribute value.
 
         Examples:
-            >>> import mindspore.ops as ops
+            >>> from mindspore import ops
             >>> a = ops.Add()
             >>> a = a.add_prim_attr("attr",1)
             >>> out = a.attrs["attr"]
@@ -112,7 +112,7 @@ class Primitive(Primitive_):
             device_target (str): The target device to run, support "Ascend", "GPU", and "CPU".
 
         Examples:
-            >>> import mindspore.ops as ops
+            >>> from mindspore import ops
             >>> a = ops.Add()
             >>> a = a.set_device("GPU")
             >>> print(a.primitive_target)
@@ -222,7 +222,7 @@ class Primitive(Primitive_):
         Args:
             name (str): Attribute Name.
         Examples:
-            >>> import mindspore.ops as ops
+            >>> from mindspore import ops
             >>> a = ops.Add()
             >>> a = a.add_prim_attr("attr",1)
             >>> a = a.del_prim_attr("attr")
@@ -331,7 +331,7 @@ class Primitive(Primitive_):
             instance_name (str): Instance name of primitive operator set by user.
 
         Examples:
-            >>> import mindspore.ops as ops
+            >>> from mindspore import ops
             >>> a = ops.Add()
             >>> a = a.set_prim_instance_name("add")
             >>> print(a.instance_name)
@@ -416,7 +416,7 @@ class Primitive(Primitive_):
             inputs (list[str]): list of inputs names.
             outputs (list[str]): list of outputs names.
         Examples:
-            >>> import mindspore.ops as ops
+            >>> from mindspore import ops
             >>> a = ops.Add()
             >>> a.init_prim_io_names(["x","y"],["sum"])
             >>> print(a.input_names)
@@ -504,7 +504,7 @@ class Primitive(Primitive_):
 
         Examples:
             >>> from mindspore import context
-            >>> import mindspore.ops as ops
+            >>> from mindspore import ops
             >>> context.set_context(mode=context.GRAPH_MODE)
             >>> matmul = ops.MatMul()
             >>> matmul.place('MS_WORKER', 0)

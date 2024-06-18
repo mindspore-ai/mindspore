@@ -53,8 +53,8 @@ mindspore.nn.AdaMax
     异常：
         - **TypeError** - `learning_rate` 不是int、float、Tensor、iterable或LearningRateSchedule。
         - **TypeError** - `parameters` 的元素不是Parameter或字典。
-        - **TypeError** - `beta1` 、`beta2` 、 `eps` 或 `loss_scale` 不是float。
+        - **TypeError** - `beta1` 、 `beta2` 、 `eps` 或 `loss_scale` 不是float。
         - **TypeError** - `weight_decay` 不是float或int。
         - **ValueError** - `loss_scale` 或 `eps` 小于或等于0。
-        - **ValueError** - `beta1` 、`beta2` 不在（0.0,1.0）范围内。
+        - **ValueError** - `beta1` 、 `beta2` 不在（0.0,1.0）范围内。
         - **ValueError** - `weight_decay` 小于0。

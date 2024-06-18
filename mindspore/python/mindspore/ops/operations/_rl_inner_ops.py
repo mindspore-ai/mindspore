@@ -1132,7 +1132,7 @@ class MuxSend(PrimitiveWithInfer):
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Examples:
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
@@ -1190,7 +1190,7 @@ class MuxReceive(PrimitiveWithInfer):
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Examples:
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor

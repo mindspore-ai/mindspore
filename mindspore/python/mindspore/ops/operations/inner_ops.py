@@ -412,7 +412,7 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor, Parameter
         >>> from mindspore import dtype as mstype
         >>> class Net(nn.Cell):
@@ -542,7 +542,7 @@ class FusedAdaFactor(PrimitiveWithInfer):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor, Parameter
         >>> from mindspore import dtype as mstype
         >>> param_shape = [2, 3, 2]

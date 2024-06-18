@@ -430,7 +430,7 @@ class Partial(Primitive):
 
     Examples:
         >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> def show_input(x, y, z):
         ...     return x, y, z
         >>> partial = ops.Partial()
@@ -487,7 +487,7 @@ class Depend(Primitive):
         >>> import numpy as np
         >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -561,7 +561,7 @@ class StopGradient(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> from mindspore import dtype as mstype
         >>> def net(x, y):

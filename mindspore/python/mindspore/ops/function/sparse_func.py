@@ -140,7 +140,7 @@ def coalesce(x_indices: Tensor, x_values: Tensor, x_shape: Tensor) -> Tuple[Tens
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> x_indices = Tensor([[0, 0, 1], [1, 1, 2]], dtype=ms.int64)
         >>> x_values = Tensor([1, 5, 4], dtype=ms.float32)
@@ -271,7 +271,7 @@ def csr_mm(a: CSRTensor, b: CSRTensor, trans_a: bool = False, trans_b: bool = Fa
     Examples:
         >>> from mindspore import Tensor, CSRTensor
         >>> from mindspore import dtype as mstype
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> a_shape = (4, 5)
         >>> a_indptr = Tensor([0, 1, 1, 3, 4], dtype=mstype.int32)
         >>> a_indices = Tensor([0, 3, 4, 0],dtype=mstype.int32)
@@ -745,7 +745,7 @@ def csr_softmax(logits: CSRTensor, dtype: mstype):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> import mindspore.common.dtype as mstype
         >>> from mindspore import Tensor, CSRTensor
         >>> logits_indptr = Tensor([0, 4, 6], dtype=mstype.int32)
@@ -807,7 +807,7 @@ def csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTenso
     Examples:
         >>> import mindspore.common.dtype as mstype
         >>> from mindspore import Tensor, CSRTensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> a_indptr = Tensor([0, 1, 2], dtype=mstype.int32)
         >>> a_indices = Tensor([0, 1], dtype=mstype.int32)
         >>> a_values = Tensor([1, 2], dtype=mstype.float32)

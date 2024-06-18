@@ -37,7 +37,7 @@ def partial(func, *args):
 
     Examples:
         >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> def show_input(x, y, z):
         ...     return x, y, z
         >>> partial_show_input = ops.partial(show_input, Tensor(1))
@@ -81,7 +81,7 @@ def depend(value, expr):
         >>> import numpy as np
         >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def __init__(self):

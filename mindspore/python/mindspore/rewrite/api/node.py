@@ -142,7 +142,7 @@ class Node:
         Examples:
             >>> from mindspore.rewrite import SymbolTree, ScopedValue
             >>> import mindspore.nn as nn
-            >>> import mindspore.ops as ops
+            >>> from mindspore import ops
             >>> # Define the network structure of LeNet5. Refer to
             >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()

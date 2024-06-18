@@ -483,7 +483,7 @@ def jet(fn, primals, series):
         >>> import numpy as np
         >>> import mindspore.nn as nn
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> class Net(nn.Cell):
@@ -593,7 +593,7 @@ def derivative(fn, primals, order):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> class Net(nn.Cell):
@@ -1388,7 +1388,7 @@ def stop_gradient(value):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> from mindspore import dtype as mstype
         >>> def net(x, y):

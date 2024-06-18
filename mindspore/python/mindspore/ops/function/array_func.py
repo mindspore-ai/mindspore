@@ -3831,7 +3831,7 @@ def meshgrid(*inputs, indexing='xy'):
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
         >>> y = Tensor(np.array([5, 6, 7]).astype(np.int32))
         >>> z = Tensor(np.array([8, 9, 0, 1, 2]).astype(np.int32))
@@ -3914,7 +3914,7 @@ def affine_grid(theta, size, align_corners=False):
     Examples:
         >>> import mindspore
         >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> theta = Tensor([[[0.8, 0.5, 0],[-0.5, 0.8, 0]]], mindspore.float32)
         >>> out_size = (1, 3, 2, 3)
         >>> output = ops.affine_grid(theta, out_size, False)
@@ -4107,7 +4107,7 @@ def index_fill(x, axis, index, value):
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32))
         >>> index = Tensor([0, 2], mindspore.int32)
@@ -6222,7 +6222,7 @@ def swapaxes(input, axis0, axis1):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> input = Tensor(np.ones((2,3,4), dtype=np.float32))
         >>> output = ops.swapaxes(input, 0, 2)
@@ -6272,7 +6272,7 @@ def swapdims(input, dim0, dim1):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> from mindspore import Tensor
         >>> input = Tensor(np.ones((2,3,4), dtype=np.float32))
         >>> output = ops.swapdims(input, 0, 2)
