@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -393,6 +393,26 @@ class Next : public MetaFuncGraph {
   friend bool operator==(const Next &lhs, const Next &rhs) { return lhs.name_ == rhs.name_; }
 };
 using NextPtr = std::shared_ptr<Next>;
+
+class TupleFunc : public MetaFuncGraph {
+ public:
+  explicit TupleFunc(const std::string &name) : MetaFuncGraph(name) {}
+  ~TupleFunc() override = default;
+  MS_DECLARE_PARENT(TupleFunc, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
+  friend bool operator==(const TupleFunc &lhs, const TupleFunc &rhs) { return lhs.name_ == rhs.name_; }
+};
+using TupleFuncPtr = std::shared_ptr<TupleFunc>;
+
+class ListFunc : public MetaFuncGraph {
+ public:
+  explicit ListFunc(const std::string &name) : MetaFuncGraph(name) {}
+  ~ListFunc() override = default;
+  MS_DECLARE_PARENT(ListFunc, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
+  friend bool operator==(const ListFunc &lhs, const ListFunc &rhs) { return lhs.name_ == rhs.name_; }
+};
+using ListFuncPtr = std::shared_ptr<ListFunc>;
 }  // namespace prim
 }  // namespace mindspore
 

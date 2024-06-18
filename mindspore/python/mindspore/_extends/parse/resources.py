@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -171,8 +171,6 @@ if not security.enable_security():
 
 # Convert class object to callable function
 convert_class_to_function_map = {
-    "class 'list'":  M.list_func,
-    "class 'tuple'": M.tuple_func,
     "class 'int'":   M.int_func,
     "class 'float'": M.float_func,
     "class 'bool'":  M.bool_func,
