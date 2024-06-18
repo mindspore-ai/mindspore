@@ -1,0 +1,26 @@
+matrix_inverse_ext:
+    description: |
+        Compute the inverse of the input matrix.
+
+        Args:
+            input (Tensor): A matrix to be calculated. Input `input` must be at least two dimensions, and the size of
+                the last two dimensions must be the same size.
+
+        Returns:
+            Tensor, has the same type and shape as input`.
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            ValueError: If the size of the last two dimensions of `input` is not the same.
+            ValueError: If the dimension of `input` is 1.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> from mindspore import Tensor, ops
+            >>> from mindspore import dtype as mstype
+            >>> x = Tensor([[1., 2.], [3., 4.]], mstype.float32)
+            >>> print(ops.matrix_inverse_ext(x))
+            [[-2.   1. ]
+             [ 1.5 -0.5]]
