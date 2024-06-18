@@ -108,6 +108,8 @@ static TypeId GetDataType(const py::buffer_info &buf) {
         break;
       case '?':
         return TypeId::kNumberTypeBool;
+      case 'T':
+        return TypeId::kNumberTypeBFloat16;
       default:
         break;
     }
@@ -129,6 +131,8 @@ static std::string GetPyTypeFormat(TypeId data_type) {
   switch (data_type) {
     case TypeId::kNumberTypeFloat16:
       return "e";
+    case TypeId::kNumberTypeBFloat16:
+      return "T";
     case TypeId::kNumberTypeFloat32:
       return py::format_descriptor<float>::format();
     case TypeId::kNumberTypeFloat64:
@@ -225,7 +229,9 @@ class TensorDataNumpy : public TensorData {
   /// py::array object. by default, use py::str() as the dummy owner to prevent data copy.
   py::array py_array(const py::handle &owner = py::str()) const {
     py::gil_scoped_acquire acquire;
-    return py::array(py::dtype(*buffer()), buffer()->shape, buffer()->strides, buffer()->ptr, owner);
+    py::dtype np_dtype =
+      (buffer()->format == "T") ? py::detail::npy_format_descriptor<bfloat16>::dtype() : py::dtype(*buffer());
+    return py::array(np_dtype, buffer()->shape, buffer()->strides, buffer()->ptr, owner);
   }
 
  private:
@@ -277,10 +283,31 @@ class PersistentTensorDataNumpy : public TensorDataNumpy {
   int slice_num_{1};
 };
 
+py::buffer_info TensorPy::GetPyBufferFromPyArray(const py::array &input) {
+  py::buffer_info buf;
+  auto descr = py::detail::array_descriptor_proxy(py::detail::array_proxy(input.ptr())->descr);
+  // For bfloat16, modify descr->type_num to support acquiring buffer_info from numpy.
+  if (descr->type == 'T') {
+    // convert descr->type_num from T(NPY_BFLOAT16) to H(NPY_USHORT)
+    const int NPY_USHORT = 4;
+    int orig_type_num = descr->type_num;
+    descr->type_num = NPY_USHORT;
+    // acquire buffer_info with type of NPY_USHORT
+    buf = input.request();
+    // convert buffer_info.format from H(NPY_USHORT) to T(NPY_BFLOAT16)
+    buf.format = "T";
+    // change back descr->type_num
+    descr->type_num = orig_type_num;
+  } else {
+    buf = input.request();
+  }
+  return buf;
+}
+
 TensorPtr TensorPy::MakeTensor(const py::array &input, const TypePtr &type_ptr) {
   py::gil_scoped_acquire acquire;
   // Get input buffer info.
-  py::buffer_info buf = input.request();
+  py::buffer_info buf = TensorPy::GetPyBufferFromPyArray(input);
   // Check data types.
   auto data_type = type_ptr ? type_ptr->type_id() : TypeId::kTypeUnknown;
   auto buf_type = GetDataType(buf);
@@ -327,7 +354,7 @@ TensorPtr TensorPy::MakeTensorOfNumpy(const py::array &input) {
     MS_LOG(EXCEPTION) << "Array should be C contiguous.";
   }
   // Get input buffer info.
-  py::buffer_info buf = input.request();
+  py::buffer_info buf = TensorPy::GetPyBufferFromPyArray(input);
   // Get tensor dtype and check it.
   auto dtype = GetDataType(buf);
   if (dtype == TypeId::kTypeUnknown) {
@@ -348,7 +375,7 @@ TensorPtr TensorPy::MakePersistentDataTensorOfNumpy(const py::array &input, cons
     MS_LOG(EXCEPTION) << "Array should be C contiguous.";
   }
   // Get input buffer info.
-  py::buffer_info buf = input.request();
+  py::buffer_info buf = TensorPy::GetPyBufferFromPyArray(input);
   // Get tensor dtype and check it.
   auto dtype = GetDataType(buf);
   if (dtype == TypeId::kTypeUnknown) {
@@ -525,6 +552,16 @@ py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kAsnumpy);
   {
     py::gil_scoped_release gil_release;
+
+    // BFloat16 may not be supported in numpy.
+    std::string numpy_version = np_dtypes::GetNumpyVersion();
+    std::string minimum_numpy_version = np_dtypes::GetMinimumSupportedNumpyVersion();
+    if (tensor.data_type() == kNumberTypeBFloat16 && !np_dtypes::NumpyVersionValid(numpy_version)) {
+      MS_EXCEPTION(TypeError) << "For asnumpy, the numpy bfloat16 data type is supported in Numpy versions "
+                              << minimum_numpy_version << " to 1.26, but got " << numpy_version
+                              << ", please upgrade numpy version.";
+    }
+
     if (tensor.get_copy_done_flag()) {
       const_cast<Tensor &>(tensor).set_copy_done_flag(false);
       if (tensor.need_release_device_mem()) {
@@ -537,12 +574,6 @@ py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
     // Release device address of graph output tensor.
     if (tensor.need_release_device_mem()) {
       const_cast<Tensor &>(tensor).set_device_address(nullptr);
-    }
-
-    // BFloat16 is not supported in numpy.
-    if (tensor.data_type() == kNumberTypeBFloat16) {
-      MS_EXCEPTION(TypeError) << "For asnumpy, the type of tensor cannot be BFloat16, but got "
-                              << TypeIdLabel(tensor.data_type());
     }
   }
   return AsNumpy(tensor);
@@ -561,7 +592,10 @@ py::array TensorPy::AsNumpy(const Tensor &tensor) {
   }
   // Otherwise, create numpy array by buffer protocol.
   auto info = GetPyBufferInfo(tensor);
-  return py::array(py::dtype(info), info.shape, info.strides, info.ptr, owner);
+  py::dtype np_dtype = (tensor.data_type() == kNumberTypeBFloat16)
+                         ? py::detail::npy_format_descriptor<bfloat16>::dtype()
+                         : py::dtype(info);
+  return py::array(np_dtype, info.shape, info.strides, info.ptr, owner);
 }
 
 void TensorPy::Offload(const Tensor &tensor) {

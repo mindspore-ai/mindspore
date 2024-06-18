@@ -24,6 +24,7 @@
 #include "pybind11/numpy.h"
 
 #include "ir/tensor.h"
+#include "include/common/np_dtype/np_dtypes.h"
 
 namespace py = pybind11;
 
@@ -79,6 +80,21 @@ template <>
 struct type_caster<float16> : public npy_scalar_caster<float16> {
   static constexpr auto name = "float16";
 };
+
+template <>
+struct npy_format_descriptor<bfloat16> {
+  static constexpr auto name = "bfloat16";
+  static pybind11::dtype dtype() {
+    handle ptr = npy_api::get().PyArray_DescrFromType_(mindspore::GetBFloat16NpDType());
+    return reinterpret_borrow<pybind11::dtype>(ptr);
+  }
+  virtual ~npy_format_descriptor<bfloat16>() {}
+};
+
+template <>
+struct type_caster<bfloat16> : public npy_scalar_caster<bfloat16> {
+  static constexpr auto name = "bfloat16";
+};
 }  // namespace detail
 }  // namespace pybind11
 
@@ -112,6 +128,8 @@ class TensorPy {
   static TensorPtr MakePersistentDataTensorOfNumpy(const py::array &input, const py::int_ slice_num);
 
   static py::bytes GetBytes(const Tensor &tensor);
+
+  static py::buffer_info GetPyBufferFromPyArray(const py::array &input);
 
   static TensorPtr ConvertBytesToTensor(const py::bytes &bytes_obj, const py::tuple &dims,
                                         const TypePtr &type_ptr = nullptr);

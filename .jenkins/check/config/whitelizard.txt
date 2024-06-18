@@ -66,6 +66,7 @@ mindspore/mindspore/python/mindspore/ops_generate/gen_pyboost_func.py:generate_p
 mindspore/mindspore/python/mindspore/ops_generate/gen_pyboost_func.py:generate_pyboost_functions
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::GetDataType
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_index_py.cc:mindspore::tensor::TensorIndex::GetItemByTupleWithView
+mindspore/mindspore/ccsrc/common/np_dtype/np_dtypes.cc:mindspore::np_dtypes::RegisterNpTypeUFuncs
 mindspore/mindspore/ccsrc/frontend/operator/composite/tensor_index.cc:mindspore::prim::TensorIndexGetitem::GetStrideInfoFromTuple
 mindspore/mindspore/lite/src/litert/thread_pool.c:GetArch
 mindspore/mindspore/lite/src/litert/kernel/opencl/kernel/conv2d.cc:mindspore::kernel::UseWinograd4x4To6x6
