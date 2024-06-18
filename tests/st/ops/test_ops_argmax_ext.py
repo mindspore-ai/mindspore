@@ -16,6 +16,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
+from mindspore import mint
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.utils import test_utils
 
@@ -34,7 +35,7 @@ def generate_expect_backward_output(x, dim=None, keepdim=False):
 
 @test_utils.run_with_cell
 def argmax_ext_forward_func(x, dim=None, keepdim=False):
-    return ops.argmax(x, dim=dim, keepdim=keepdim)
+    return mint.argmax(x, dim=dim, keepdim=keepdim)
 
 
 @test_utils.run_with_cell
@@ -93,7 +94,7 @@ def test_ops_argmax_ext_backward(context_mode):
 def test_argmax_ext_dynamic_shape():
     """
     Feature: Test argmax with dynamic shape in graph mode.
-    Description: call ops.argmax with valid input and dim, keepdim is False.
+    Description: call mint.argmax with valid input and dim, keepdim is False.
     Expectation: return the correct value.
     """
     ms_data1 = GenInputData(np.float32, (2, 3, 4, 5))

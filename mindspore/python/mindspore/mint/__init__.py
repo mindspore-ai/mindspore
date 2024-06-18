@@ -109,7 +109,7 @@ from mindspore.ops.functional import erfinv
 # 41
 
 # 42
-from mindspore.ops.functional import argmax
+from mindspore.ops.functional import argmax_ext as argmax
 # 43
 
 # 44
