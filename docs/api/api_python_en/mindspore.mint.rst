@@ -36,6 +36,7 @@ Pointwise Operations
     :template: classtemplate.rst
 
     mindspore.mint.abs
+    mindspore.mint.unique
 
 mindspore.mint.nn
 ------------------

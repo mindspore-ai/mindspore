@@ -36,6 +36,7 @@ Tensor
     :template: classtemplate.rst
 
     mindspore.mint.abs
+    mindspore.mint.unique
 
 mindspore.mint.nn
 ------------------

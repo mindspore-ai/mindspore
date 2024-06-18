@@ -1,0 +1,28 @@
+#operator unique_dim
+unique2:
+  args:
+    input:
+      dtype: tensor
+    sorted:
+      dtype: bool
+      default: True
+    return_inverse:
+      dtype: bool
+      default: False
+    return_counts:
+      dtype: bool
+      default: False
+  returns:
+    output:
+      dtype: tensor
+    inverse_indices:
+      dtype: tensor
+    counts:
+      dtype: tensor
+  class:
+    name: Unique2
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: Unique2Ascend

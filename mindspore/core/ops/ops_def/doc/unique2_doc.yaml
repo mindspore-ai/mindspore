@@ -1,0 +1,50 @@
+unique2:
+    description: |
+        Returns the unique elements of input tensor.
+
+        when `return_inverse=True`, also return a tensor containing the index of each value of input
+        tensor corresponding to the output unique tensor.
+        when `return_counts=True`, also return a tensor containing the number of occurrences for each
+        unique value or tensor
+
+        Inputs:
+            - **input**(Tensor) - The input tensor.
+            - **sorted**(bool) - Whether to sort the unique elements in ascending order before returning as output.
+              Default: ``True`` .
+            - **return_inverse**(bool) - Whether to also return the indices for where elements in the original input ended up in
+              the returned unique list. Default: ``False`` .
+            - **return_counts**(bool) - Whether to also return the counts for each unique element. Default: ``False`` .
+
+
+        Returns:
+            A tensor or a tuple of tensors containing some of tensor objects (`output`, `inverse_indices`, `counts`).
+
+            - **output**(Tensor) - the output list of unique scalar elements.
+            - **inverse_indices**(Tensor) - Return when ``return_inverse`` is True. It represents the indices for where
+              elements in the original input map to in the output; The shape is input.shape[dim].
+            - **counts**(Tensor) - Return when ``return_counts`` is True. It represents the number of occurrences for each
+              unique value or tensor. The shape is output.shape(dim).
+
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, nn
+            >>> from mindspore import ops
+            >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
+            >>> unique =  ops.auto_generate.Unique2()
+            >>> output = unique(x, return_inverse=True)
+            >>> print(output)
+            (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 1]))
+            >>> y = output[0]
+            >>> print(y)
+            [1 2 5]
+            >>> idx = output[1]
+            >>> print(idx)
+            [0 1 2 1]
