@@ -5,6 +5,9 @@ mindspore.save_checkpoint
 
     将网络权重保存到checkpoint文件中。
 
+    .. note::
+        `enc_mode` 和 `crc_check` 参数互斥，不能同时配置。
+
     参数：
         - **save_obj** (Union[Cell, list, dict]) - 待保存的对象。数据类型可为 :class:`mindspore.nn.Cell` 、list或dict。若为list，可以是 `Cell.trainable_params()` 的返回值，或元素为dict的列表（如[{"name": param_name, "data": param_data},…]，`param_name` 的类型必须是str，`param_data` 的类型必须是Parameter或者Tensor）；若为dict，可以是 `mindspore.load_checkpoint()` 的返回值。
         - **ckpt_file_name** (str) - checkpoint文件名称。如果文件已存在，将会覆盖原有文件。

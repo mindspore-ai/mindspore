@@ -75,14 +75,15 @@ class CheckpointConfig:
     The configuration of model checkpoint.
 
     Note:
-        During the training process, if dataset is transmitted through the data channel,
-        it is suggested to set 'save_checkpoint_steps' to an integer multiple of loop_size.
-        Otherwise, the time to save the checkpoint may be biased.
-        It is recommended to set only one save strategy and one keep strategy at the same time.
-        If both `save_checkpoint_steps` and `save_checkpoint_seconds` are set,
-        `save_checkpoint_seconds` will be invalid.
-        If both `keep_checkpoint_max` and `keep_checkpoint_per_n_minutes` are set,
-        `keep_checkpoint_per_n_minutes` will be invalid.
+        - During the training process, if dataset is transmitted through the data channel,
+          it is suggested to set 'save_checkpoint_steps' to an integer multiple of loop_size.
+          Otherwise, the time to save the checkpoint may be biased.
+          It is recommended to set only one save strategy and one keep strategy at the same time.
+          If both `save_checkpoint_steps` and `save_checkpoint_seconds` are set,
+          `save_checkpoint_seconds` will be invalid.
+          If both `keep_checkpoint_max` and `keep_checkpoint_per_n_minutes` are set,
+          `keep_checkpoint_per_n_minutes` will be invalid.
+        - The `enc_mode` and `crc_check` parameters are mutually exclusive and cannot be configured simultaneously.
 
     Args:
         save_checkpoint_steps (int): Steps to save checkpoint. Default: ``1`` .

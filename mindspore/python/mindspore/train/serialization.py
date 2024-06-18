@@ -437,6 +437,9 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     r"""
     Save checkpoint to a specified file.
 
+    Note:
+        The `enc_mode` and `crc_check` parameters are mutually exclusive and cannot be configured simultaneously.
+
     Args:
         save_obj (Union[Cell, list, dict]): The object to be saved. The data type can be :class:`mindspore.nn.Cell`,
             list, or dict. If a list, it can be the returned value of `Cell.trainable_params()`, or a list of dict
