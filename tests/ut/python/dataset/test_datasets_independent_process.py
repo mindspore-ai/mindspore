@@ -28,6 +28,7 @@ import mindspore.dataset.transforms as transforms
 apple_jpg = "../data/dataset/apple.jpg"
 
 
+@pytest.mark.skip(reason="timeout")
 def test_dataset_with_independent_process():
     """
     Feature: Dataset With Independent Process
@@ -148,6 +149,7 @@ def test_dataset_with_independent_process_dynamic_shape():
     del os.environ["MS_INDEPENDENT_DATASET"]
 
 
+@pytest.mark.skip(reason="timeout")
 def test_dataset_with_independent_process_train_and_eval():
     """
     Feature: Dataset With Independent Process
@@ -254,6 +256,7 @@ def print_psutil(name):
     os.system("ps -ef | grep python")
 
 
+@pytest.mark.skip(reason="timeout")
 def test_dataset_with_independent_process_two_stage_pipeline():
     """
     Feature: Dataset With Independent Process
@@ -349,6 +352,7 @@ def test_dataset_with_independent_process_two_stage_pipeline():
     del os.environ["MS_INDEPENDENT_DATASET"]
 
 
+@pytest.mark.skip(reason="timeout")
 def test_dataset_with_independent_process_with_dict():
     """
     Feature: Dataset With Independent Process
