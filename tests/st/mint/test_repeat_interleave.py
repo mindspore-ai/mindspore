@@ -117,9 +117,12 @@ def test_repeat_interleave_forward_tensor(mode, dim):
     if mode == 'pynative':
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
         output = repeat_interleave_forward(Tensor(x), Tensor(repeats), dim)
+        output2 = repeat_interleave_forward(Tensor(x), repeats, dim)
     elif mode == 'KBK':
         output = (jit(repeat_interleave_forward, jit_config=JitConfig(jit_level="O0")))(Tensor(x), Tensor(repeats), dim)
+        output2 = (jit(repeat_interleave_forward, jit_config=JitConfig(jit_level="O0")))(Tensor(x), repeats, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+    np.testing.assert_allclose(output2.asnumpy(), expect, rtol=1e-3)
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
@@ -134,17 +137,21 @@ def test_repeat_interleave_backward_tensor(mode, dim):
     """
     x = generate_random_input((2, 4), np.float32)
     if dim is None:
-        repeats = np.random.randint(10, size=8)
+        repeats = np.random.randint(10, size=8).tolist()
     else:
         repeats = [np.random.randint(1, 5) for i in range(x.shape[dim])]
     expect = generate_expect_backward_output(x, repeats, dim)
     if mode == 'pynative':
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
         output = repeat_interleave_backward(Tensor(x), Tensor(repeats), dim)
+        output2 = repeat_interleave_backward(Tensor(x), repeats, dim)
     elif mode == 'KBK':
         output = (jit(repeat_interleave_backward, jit_config=JitConfig(jit_level="O0")))(
             Tensor(x), Tensor(repeats), dim)
+        output2 = (jit(repeat_interleave_backward, jit_config=JitConfig(jit_level="O0")))(
+            Tensor(x), repeats, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+    np.testing.assert_allclose(output2.asnumpy(), expect, rtol=1e-3)
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training

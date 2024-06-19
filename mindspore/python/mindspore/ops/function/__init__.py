@@ -156,6 +156,7 @@ from .array_func import (
     sequence_mask,
     repeat_elements,
     repeat_interleave,
+    repeat_interleave_ext,
     argwhere,
     column_stack,
     hstack,
