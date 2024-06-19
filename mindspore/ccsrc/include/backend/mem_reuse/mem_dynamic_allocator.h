@@ -124,7 +124,8 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   size_t TotalIdleMemStatistics() const;
   size_t TotalEagerFreeMemStatistics() const;
   size_t UsedMemPeakStatistics() const;
-  size_t ReservedMemPeakStatistics() const;
+  size_t MaxMemAllocatedStatistics() const;
+  size_t MaxMemReservedStatistics() const;
   size_t ActualPeakStatistics() const;
   std::unordered_map<std::string, std::size_t> BlockCountsStatistics() const;
   std::unordered_map<std::string, std::size_t> BlockUnitSizeStatistics() const;
@@ -354,7 +355,12 @@ struct DeviceState {
   // Update peak size.
   void UpdatePeakSize() {
     used_mem_peak_size_ = std::max(used_mem_peak_size_, total_used_mem_size_ + total_used_by_event_mem_size_);
-    reserved_mem_peak_size_ = std::max(reserved_mem_peak_size_, total_mem_size_);
+    size_t mem_increment = ((total_used_mem_size_ + total_used_by_event_mem_size_) >
+                            (temp_total_used_mem_size_ + temp_total_used_by_event_mem_size_))
+                             ? (total_used_mem_size_ + total_used_by_event_mem_size_ - temp_total_used_mem_size_ -
+                                temp_total_used_by_event_mem_size_)
+                             : 0;
+    temp_used_mem_peak_size_ = std::max(temp_used_mem_peak_size_, mem_increment);
   }
 
   // Memory allocated from device
@@ -369,8 +375,14 @@ struct DeviceState {
   size_t total_eager_free_mem_size_{0};
   // Maximum peak memory usage
   size_t used_mem_peak_size_{0};
-  // Maximum peak memory allocated from device
-  size_t reserved_mem_peak_size_{0};
+  // Recorded data for memory in use since reset maximum allocated memory
+  size_t temp_total_used_mem_size_{0};
+  // Recorded data for memory in use by event since reset maximum allocated memory
+  size_t temp_total_used_by_event_mem_size_{0};
+  // Recorded data for maximum peak memory usage since reset maximum allocated memory
+  size_t temp_used_mem_peak_size_{0};
+  // Temporary recorded data for memory reserved since reset maximum reserved memory
+  size_t temp_total_mem_size_{0};
 };
 
 struct MemStatusManager {

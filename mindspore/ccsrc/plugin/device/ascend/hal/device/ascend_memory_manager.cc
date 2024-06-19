@@ -74,10 +74,10 @@ size_t AscendMemoryManager::GetTotalEagerFreeMemStatistics() const {
   return AscendMemoryPool::GetInstance().TotalEagerFreeMemStatistics();
 }
 size_t AscendMemoryManager::GetUsedMemPeakStatistics() const {
-  return AscendMemoryPool::GetInstance().UsedMemPeakStatistics();
+  return AscendMemoryPool::GetInstance().MaxMemAllocatedStatistics();
 }
 size_t AscendMemoryManager::GetReservedMemPeakStatistics() const {
-  return AscendMemoryPool::GetInstance().ReservedMemPeakStatistics();
+  return AscendMemoryPool::GetInstance().MaxMemReservedStatistics();
 }
 std::unordered_map<std::string, std::size_t> AscendMemoryManager::GetBlockCountsStatistics() const {
   return AscendMemoryPool::GetInstance().BlockCountsStatistics();

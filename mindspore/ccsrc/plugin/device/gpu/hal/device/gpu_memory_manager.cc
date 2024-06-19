@@ -57,10 +57,10 @@ size_t GPUMemoryManager::GetTotalEagerFreeMemStatistics() const {
   return GPUMemoryAllocator::GetInstance().TotalEagerFreeMemStatistics();
 }
 size_t GPUMemoryManager::GetUsedMemPeakStatistics() const {
-  return GPUMemoryAllocator::GetInstance().UsedMemPeakStatistics();
+  return GPUMemoryAllocator::GetInstance().MaxMemAllocatedStatistics();
 }
 size_t GPUMemoryManager::GetReservedMemPeakStatistics() const {
-  return GPUMemoryAllocator::GetInstance().ReservedMemPeakStatistics();
+  return GPUMemoryAllocator::GetInstance().MaxMemReservedStatistics();
 }
 std::unordered_map<std::string, std::size_t> GPUMemoryManager::GetBlockCountsStatistics() const {
   return GPUMemoryAllocator::GetInstance().BlockCountsStatistics();
