@@ -39,7 +39,7 @@ mindspore.Profiler
           - "time": 只记录host侧时间戳。
           - "memory": 只记录host侧内存占用情况。
           - None: 不记录host信息。
-        - **host_stack** (bool, 可选) -（Ascend）表示是否收集框架host侧调用栈的数据，使用此参数时， `op_time` 必须设置成 ``True`` 。默认值： ``True`` 。
+        - **host_stack** (bool, 可选) -（Ascend）表示是否收集框架host侧调用栈的数据，默认值： ``True`` 。
 
     异常：
         - **RuntimeError** - 当CANN的版本与MindSpore版本不匹配时，生成的ascend_job_id目录结构MindSpore无法解析。
