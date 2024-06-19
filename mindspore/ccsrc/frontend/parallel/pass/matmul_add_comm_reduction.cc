@@ -30,6 +30,7 @@
 namespace mindspore {
 namespace parallel {
 namespace {
+constexpr size_t kCommReductionValidCommOpsNum = 2;
 constexpr auto MATMUL_ADD_COMM_BEGIN = "matmul_add_comm_begin";
 constexpr auto MATMUL_ADD_COMM_END = "matmul_add_comm_end";
 constexpr auto MATMUL_ADD_COMM_MUL = "matmul_add_comm_mul";
@@ -282,7 +283,7 @@ void HandleNodePullDown(const AnfNodePtr &add_node, const AnfNodePtr &comm_node)
 void HandleAddNode(const HashMap<AnfNodePtr, std::vector<AnfNodePtr>> &pull_down_node_map) {
   HashMap<AnfNodePtr, AnfNodePtr> comm_node_map;
   for (auto &each_pull_down_node : pull_down_node_map) {
-    if (each_pull_down_node.second.size() < 2) {
+    if (each_pull_down_node.second.size() < kCommReductionValidCommOpsNum) {
       MS_LOG(WARNING) << "For comm reduction, cur node cannot find match structure, skip it. current node is "
                       << each_pull_down_node.first->DebugString();
       continue;

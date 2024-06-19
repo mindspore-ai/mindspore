@@ -142,7 +142,7 @@ void changeNodeShape(const CNodePtr &add_node, size_t rank_size) {
   if (add_node_shape.size() < 1) {
     return;
   }
-  add_node_shape[0] = add_node_shape[0] * rank_size;
+  add_node_shape[0] = add_node_shape[0] * SizeToLong(rank_size);
   auto new_shape_item = std::make_shared<abstract::Shape>(add_node_shape);
   add_node_abstract->set_shape(new_shape_item);
   add_node->set_abstract(add_node_abstract);
