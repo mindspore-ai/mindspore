@@ -274,5 +274,7 @@ LeakyReLUGradExt: 'aclnnLeakyReluBackward'
 
 # 100
 
+# 176
+Atan2Ext: 'aclnnAtan2'
 # 231
 MatrixInverseExt: 'aclnnInverse'

@@ -1026,6 +1026,25 @@ REG_BPROP_BUILDER("Atan2").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
 });
 
+REG_BPROP_BUILDER("Atan2Ext").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+
+  auto tmp =
+    ib->Div(dout, ib->Emit("AddExt", {ib->Emit("Square", {x}), ib->Emit("Square", {y}), ib->Value<int64_t>(1)}));
+
+  NodePtr bc_dx = nullptr;
+  NodePtr bc_dy = nullptr;
+  if (x->need_compute_grad_out()) {
+    bc_dx = ib->Mul(tmp, y);
+  }
+  if (y->need_compute_grad_out()) {
+    bc_dy = ib->Neg(ib->Mul(tmp, x));
+  }
+  return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
+});
+
 REG_BPROP_BUILDER("BesselI0e").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);

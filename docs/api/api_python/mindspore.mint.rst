@@ -54,6 +54,8 @@ Array操作
 
     mindspore.mint.abs
     mindspore.mint.cumsum
+    mindspore.mint.atan2
+    mindspore.mint.arctan2
     mindspore.mint.unique
     mindspore.mint.div
     mindspore.mint.divide
