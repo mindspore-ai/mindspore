@@ -17,11 +17,13 @@ from __future__ import absolute_import
 
 import os
 import stat
+import glob
 import time
 from threading import RLock
 
 from mindspore.train.callback._callback import Callback
 from mindspore.communication.management import get_rank, get_local_rank
+from mindspore import log as logger
 from mindspore.parallel._auto_parallel_context import _get_auto_parallel_context
 from mindspore.parallel._utils import _get_device_num
 from mindspore.train._utils import get_parameter_redundancy
@@ -87,6 +89,19 @@ def _parse_perf_config():
     return perf_config_dict
 
 
+def _remove_pre_log():
+    """Remove the previously saved log files."""
+    directory = os.getenv("PERF_DUMP_PATH")
+    pattern = os.path.join(directory, "perf_ms_*.log")
+    files_to_delete = glob.glob(pattern)
+    for file_path in files_to_delete:
+        try:
+            os.remove(file_path)
+        except OSError as e:
+            logger.warning(f"When CCAE is opening, {file_path} need to be removed, but failed to remove.")
+            raise e
+
+
 class ClusterMonitor(Callback):
     """
     Monitor the cluster in train process.
@@ -94,6 +109,7 @@ class ClusterMonitor(Callback):
 
     def __init__(self):
         super(ClusterMonitor, self).__init__()
+        _remove_pre_log()
         self.perf_config = _parse_perf_config()
         self.enabled = self.perf_config.get("enable")
         self.enable_step_time = self.perf_config.get("steptime")
