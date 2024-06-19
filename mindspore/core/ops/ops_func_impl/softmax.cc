@@ -72,6 +72,20 @@ TypePtrList SoftmaxFuncImpl::InferType(const PrimitivePtr &primitive, const Valu
 ShapeArray SoftmaxFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
   const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
+  auto axis_value_opt = GetArrayValue<int64_t>(input_values[kInputIndex1]);
+  auto x_shape = x_tensor->shape();
+  auto rank = SizeToLong(x_shape.size());
+  if (axis_value_opt.has_value()) {
+    auto axis_value = axis_value_opt.value();
+    auto axis_size = axis_value.size();
+    MS_CHECK_VALUE(axis_size >= 1, CheckAndConvertUtils::FormatCheckIntegerMsg("length of axis", SizeToLong(axis_size),
+                                                                               kGreaterEqual, 1, primitive));
+    for (size_t i = 0; i < axis_size; ++i) {
+      auto item = axis_value[i];
+      MS_CHECK_VALUE(-rank <= item && item < rank, CheckAndConvertUtils::FormatCheckInRangeMsg<int64_t>(
+                                                     "axis", item, kIncludeLeft, {-rank, rank}, primitive));
+    }
+  }
   return {x_tensor->shape()};
 }
 REGISTER_SIMPLE_INFER(kNameSoftmax, SoftmaxFuncImpl)
