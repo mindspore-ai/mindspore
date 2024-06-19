@@ -1,0 +1,25 @@
+#operator unique_dim
+unique_dim:
+  args:
+    input:
+      dtype: tensor
+    sorted:
+      dtype: bool
+    return_inverse:
+      dtype: bool
+    dim:
+      dtype: int
+  returns:
+    output:
+      dtype: tensor
+    inverse_indices:
+      dtype: tensor
+    counts:
+      dtype: tensor
+  class:
+    name: UniqueDim
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: UniqueDimAscend

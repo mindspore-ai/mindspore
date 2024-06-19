@@ -37,6 +37,7 @@ Tensor
     :template: classtemplate.rst
 
     mindspore.mint.abs
+    mindspore.mint.unique
 
 
 BLAS和LAPACK运算

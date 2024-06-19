@@ -37,6 +37,7 @@ Pointwise Operations
     :template: classtemplate.rst
 
     mindspore.mint.abs
+    mindspore.mint.unique
 
 
 BLAS and LAPACK Operations
