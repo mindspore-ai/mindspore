@@ -53,6 +53,7 @@ class CustomOOC():
 
     def __init__(self, args):
         self.args = args
+        self.ori_cmake_preset = ""
 
     def check_args(self):
         """check config"""
@@ -93,7 +94,6 @@ class CustomOOC():
                 raise ValueError(
                     f"Install path [{self.args.install_path}] is not valid path, please check your set"
                     f" --install_path is set correctly")
-        self.ori_cmake_preset = ""
 
     def compile_config(self):
         """create CMakePresets.json by config"""
@@ -142,9 +142,11 @@ class CustomOOC():
     def install_custom(self):
         """install custom run"""
         if self.args.install or self.args.install_path != "":
+            script_path = os.path.abspath(__file__)
+            project_path = os.path.dirname(script_path)
             logger.info("Install custom opp run in {}".format(self.args.install_path))
             os.environ['ASCEND_CUSTOM_OPP_PATH'] = self.args.install_path
-            result = subprocess.run(['bash', 'build_out/*.run'], stdout=os.fdopen(
+            result = subprocess.run(['bash', project_path + '/build_out/*.run'], stdout=os.fdopen(
                 os.open("install.log", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700), "w"),
                                     stderr=subprocess.STDOUT)
             if result.returncode == 0:
@@ -159,8 +161,8 @@ class CustomOOC():
                         logger.error(line.strip())
                 raise RuntimeError("Install failed!")
 
-    def compile_custom(self):
-        """compile custom op"""
+    def clean_and_copy_src(self):
+        """clean cache and copy new src code"""
         script_path = os.path.abspath(__file__)
         project_path = os.path.dirname(script_path)
         ascend_suffix = {SUFFIX_CPP, SUFFIX_H}
@@ -191,9 +193,15 @@ class CustomOOC():
                 if file_extension == ".sh":
                     os.chmod(os.path.join(root, f), 0o700)
 
+    def compile_custom(self):
+        """compile custom op"""
+        self.clean_and_copy_src()
         log_fd = os.open("build.log", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700)
         log_file = os.fdopen(log_fd, "w")
-        bash_command = 'unset ASCEND_CUSTOM_OPP_PATH && ./build.sh'
+        script_path = os.path.abspath(__file__)
+        project_path = os.path.dirname(script_path)
+        build_path = os.path.join(project_path, 'build.sh')
+        bash_command = 'unset ASCEND_CUSTOM_OPP_PATH && ' + build_path
         result = subprocess.run(['bash', '-c', bash_command],
                                 stdout=log_file,
                                 stderr=subprocess.STDOUT)
