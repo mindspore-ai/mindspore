@@ -3320,29 +3320,40 @@ def scatter(input, axis, index, src):
 
 def scatter_add_ext(input, dim, index, src):
     """
-    Update the value in `src` to `input` according to the specified index.
+    Add all elements in `src` to the index specified by `index` to `input` along dimension specified by `dim`.
+    It takes three inputs `input`, `src` and `index` of the same rank r >= 1.
+
+    For a 3-D tensor, the operation updates input as follows:
+
+    .. code-block::
+
+        input[index[i][j][k]][j][k] += src[i][j][k]  # if dim == 0
+
+        input[i][index[i][j][k]][k] += src[i][j][k]  # if dim == 1
+
+        input[i][j][index[i][j][k]] += src[i][j][k]  # if dim == 2
 
     Args:
-        input (Tensor): The target tensor. The rank of `input` must be at least 1.
-        dim (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(input).
-        index (Tensor): The index to do update operation whose data type must be mindspore.int32 or
-            mindspore.int64. Same rank as `input` . And accepted range is [-s, s) where s is the size along axis.
-        src (Tensor): The tensor doing the update operation with `input` , has the same type as `input` ,
-            and the shape of `src` should be equal to the shape of `index` .
+        input (Tensor): The target tensor. The rank must be at least 1.
+        dim (int): Which dim to scatter. Accepted range is [-r, r) where r = rank(input). Default: ``0``.
+        index (Tensor): The index of `input` to do scatter operation whose data type must be mindspore.int32 or
+            mindspore.int64. Same rank as `input`. Except for the dimension specified by `dim`,
+            the size of each dimension of index must be less than or equal to the size of
+            the corresponding dimension of input.
+        src (Tensor): The tensor doing the scatter operation with `input`, has the same type as `input` as `index` and
+            the size of each dimension must be greater than or equal to that of `index`.
 
     Returns:
-        Tensor, has the same shape and type as `input` .
+        Tensor, has the same shape and type as `input`.
 
     Raises:
         TypeError: If `index` is neither int32 nor int64.
-        ValueError: If anyone of the rank among `input` , `index` and `src` less than 1.
-        ValueError: If the shape of `src` is not equal to the shape of `index` .
-        ValueError: If the rank of `src` is not equal to the rank of `input` .
-        RuntimeError: If the data type of `input` and `src` conversion of Parameter
-            is required when data type conversion of Parameter is not supported.
+        ValueError: If anyone of the rank among `input`, `index` and `src` less than 1.
+        ValueError: If the shape of `src` is not equal to the shape of `index`.
+        ValueError: If the rank of `src` is not equal to the rank of `input`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -3353,7 +3364,7 @@ def scatter_add_ext(input, dim, index, src):
         >>> index = Tensor(np.array([[2, 4]]), dtype=ms.int64)
         >>> out = ops.scatter_add_ext(input=input, dim=1, index=index, src=src)
         >>> print(out)
-        [[1. 2. 8. 4. 8.]]
+        [[1. 2. 11. 4. 13.]]
         >>> input = Tensor(np.zeros((5, 5)), dtype=ms.float32)
         >>> src = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
         >>> index = Tensor(np.array([[0, 0, 0], [2, 2, 2], [4, 4, 4]]), dtype=ms.int64)

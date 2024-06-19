@@ -46,7 +46,7 @@ from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, f
 from mindspore.ops.auto_generate.gen_ops_prim import GroupNorm
 from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op,
                                          replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
-                                         constant_pad_nd_op, dropout_ext_op)
+                                         constant_pad_nd_op, dropout_ext_op, reverse_v2_impl)
 from mindspore.ops.auto_generate.gen_ops_prim import embedding_op, Convolution
 from mindspore.common.generator import default_generator
 
@@ -2046,10 +2046,10 @@ def flip(input, dims):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore as ms
+        >>> import mindspore
         >>> from mindspore import ops
         >>> import numpy as np
-        >>> input = ms.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
+        >>> input = mindspore.Tensor(np.arange(1, 9).reshape((2, 2, 2)))
         >>> output = ops.flip(input, (0, 2))
         >>> print(output)
         [[[6 5]
@@ -2057,7 +2057,7 @@ def flip(input, dims):
          [[2 1]
           [4 3]]]
     """
-    res = _get_cache_prim(ops.ReverseV2)(axis=dims)(input)
+    res = reverse_v2_impl(input, dims)
     return res
 
 
@@ -6134,7 +6134,7 @@ def group_norm(input, num_groups, weight=None, bias=None, eps=1e-5):
     where :math:`\gamma` is `weight`, :math:`\beta` is `bias`, :math:`\epsilon` is `eps`.
 
     Args:
-        input (Tensor) : The input feature with shape :math:`(N, C, *)` where :math:`*` means, any number of
+        input (Tensor): The input feature with shape :math:`(N, C, *)` where :math:`*` means, any number of
             additional dimensions.
         num_groups (int): The number of groups to be divided along the channel dimension.
         weight (Tensor, optional): The shape :math:`(C,)`, Default: ``None``, has the same data type with `input`.
@@ -6156,9 +6156,9 @@ def group_norm(input, num_groups, weight=None, bias=None, eps=1e-5):
     Examples:
         >>> import mindspore as ms
         >>> import numpy as np
-        >>> from mindspore.ops import group_norm
+        >>> from mindspore import ops
         >>> x = ms.Tensor(np.ones([1, 2, 4, 4], np.float32))
-        >>> output = group_norm(x, 2)
+        >>> output = ops.group_norm(x, 2)
         >>> print(output)
         [[[[0. 0. 0. 0.]
            [0. 0. 0. 0.]
