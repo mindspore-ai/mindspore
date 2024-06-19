@@ -448,6 +448,20 @@ void MakeDefaultValue(const py::dict &defaults, const std::string &arg_name,
   }
 }
 
+bool CheckIgnoreSelfParam(const py::object &input) {
+  auto input_type = parse::data_converter::GetObjType(input);
+  if (input_type == parse::ResolveType::RESOLVE_TYPE_CLASS_INSTANCE) {
+    return true;
+  }
+  if (input_type == parse::ResolveType::RESOLVE_TYPE_METHOD) {
+    py::object method_object = python_adapter::GetPyObjAttr(input, parse::PYTHON_GET_METHOD_SELF_CLASS);
+    if (!py::isinstance<py::none>(method_object)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 FuncArgSpec GetFuncArgSpec(const FuncGraphPtr &func_graph, const py::object &input) {
   auto func = input;
   if (py::hasattr(input, parse::PYTHON_PARSE_METHOD)) {
@@ -461,10 +475,11 @@ FuncArgSpec GetFuncArgSpec(const FuncGraphPtr &func_graph, const py::object &inp
   std::vector<std::string> namelist_for_default_value;
   std::vector<AnfNodePtr> default_values;
   FuncArgSpec arg_spec;
+  bool ignore_self_param = CheckIgnoreSelfParam(input);
   if (py::hasattr(full_arg_spec, "args")) {
     for (const auto &arg : full_arg_spec.attr("args")) {
       auto arg_name = py::cast<std::string>(arg);
-      if (arg_name == "self") {
+      if (arg_name == "self" && ignore_self_param) {
         continue;
       }
       auto para = func_graph->add_parameter();
