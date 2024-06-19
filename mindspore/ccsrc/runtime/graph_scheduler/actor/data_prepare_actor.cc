@@ -537,12 +537,10 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
     SetInitTensorsIfNeeded(input_tensors);
   }
   try {
-    auto mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
     static const bool enable_infer_boost = ms_context->IsEnableInferBoost();
-    if (first_step_ || mode == kPynativeMode || !tensors_need_reprepare_.empty() ||
-        (has_parameter_input_ && !enable_infer_boost)) {
+    if (first_step_ || !tensors_need_reprepare_.empty() || (has_parameter_input_ && !enable_infer_boost)) {
       PrepareDataForDeviceTensorStore(input_tensors, args, context);
     }
     PrepareDataForHostTensorQueue(input_tensors, args, context);
@@ -931,10 +929,6 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
   auto tensor = node_value->cast<TensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->is_forward_output()) {
-    auto device_tensor = tensor->device_address();
-    MS_EXCEPTION_IF_NULL(device_tensor);
-    CopyDataFromDeviceTensorStore(front_node, node, std::dynamic_pointer_cast<device::DeviceAddress>(device_tensor),
-                                  device_context, context);
     return;
   }
 
