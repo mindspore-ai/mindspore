@@ -19,6 +19,7 @@
 #include "backend/common/graph_kernel/split_model/split_model.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "utils/hash_set.h"
+#include "mindspore/core/symbolic_shape/int_symbol.h"
 
 namespace mindspore::graphkernel::inner {
 namespace {
@@ -129,6 +130,9 @@ void SplitModel::AlignShape(const LiteGraphPtr &litegraph) const {
   for (auto &inp : litegraph->inputs()) {
     if (inp->shape.empty()) {
       inp->shape.push_back(1LL);
+      if (inp->symbolic_shape != nullptr && inp->symbolic_shape->size() == 0) {
+        inp->symbolic_shape = ListSymbol::Make({kSym1});
+      }
     }
   }
   auto check_pattern = [](const NodePtr &op) {
@@ -139,6 +143,9 @@ void SplitModel::AlignShape(const LiteGraphPtr &litegraph) const {
     if (!check_pattern(op)) {
       if (op->shape.empty()) {
         op->shape.push_back(1LL);
+        if (op->symbolic_shape != nullptr && op->symbolic_shape->size() == 0) {
+          op->symbolic_shape = ListSymbol::Make({kSym1});
+        }
       }
       continue;
     }
@@ -151,6 +158,11 @@ void SplitModel::AlignShape(const LiteGraphPtr &litegraph) const {
     if (cur_shape_size > op->shape.size()) {
       auto num = cur_shape_size - op->shape.size();
       (void)op->shape.insert(op->shape.cbegin(), num, 1LL);
+      if (op->symbolic_shape != nullptr) {
+        auto symbols = op->symbolic_shape->symbols();
+        (void)symbols.insert(symbols.begin(), num, kSym1);
+        op->symbolic_shape = ListSymbol::Make(std::move(symbols));
+      }
     }
   }
 }
