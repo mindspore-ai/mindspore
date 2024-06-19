@@ -312,7 +312,7 @@ def test_sum_default_dtype(axis, in_dtype, context_mode):
     np.testing.assert_equal(grads.dtype, in_dtype)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
