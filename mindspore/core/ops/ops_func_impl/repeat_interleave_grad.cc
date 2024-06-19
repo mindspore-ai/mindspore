@@ -45,25 +45,9 @@ inline ShapeVector GetInferredShape(const ShapeVector &input_shape, const ShapeV
   }
   return result_shape;
 }
-}  // namespace
 
-BaseShapePtr RepeatInterleaveGradFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                                      const std::vector<AbstractBasePtr> &input_args) const {
-  auto x_base_shape = input_args[kInputIndex0]->GetShape();
-  auto x_shape = x_base_shape->GetShapeVector();
-  if (MS_UNLIKELY(IsDynamicRank(x_shape))) {
-    return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
-  }
-
-  auto repeats_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
-  auto dim_opt = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue());
-  if (!repeats_opt.has_value() || !dim_opt.has_value()) {
-    return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
-  }
-
-  auto repeats_values = repeats_opt.value();
-  auto dim = dim_opt.value();
-
+template <typename T>
+ShapeVector GradGetNewRepeats(const PrimitivePtr &primitive, const ArrayValue<T> repeats_values) {
   ShapeVector repeats;
   for (size_t i = 0; i < repeats_values.size(); i++) {
     if (repeats_values.IsValueUnknown(i)) {
@@ -75,7 +59,58 @@ BaseShapePtr RepeatInterleaveGradFuncImpl::InferShape(const PrimitivePtr &primit
       repeats.push_back(repeats_values[i]);
     }
   }
+  return repeats;
+}
+}  // namespace
 
+BaseShapePtr RepeatInterleaveGradFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                                      const std::vector<AbstractBasePtr> &input_args) const {
+  auto x_base_shape = input_args[kInputIndex0]->GetShape();
+  auto x_shape = x_base_shape->GetShapeVector();
+  auto repeats_base_shape = input_args[kInputIndex1]->GetShape();
+  auto repeats_shape = repeats_base_shape->GetShapeVector();
+  if (MS_UNLIKELY(IsDynamicRank(x_shape)) || MS_UNLIKELY(IsDynamicRank(repeats_shape))) {
+    return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
+  }
+
+  if (repeats_shape.size() > 1) {
+    MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', 'repeats' must be 0-dim or 1-dim tensor.";
+  }
+
+  std::vector<TypeId> valid_types = {kNumberTypeInt32, kNumberTypeInt64};
+  auto input1_tensor = input_args[kInputIndex1]->GetType()->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(input1_tensor);
+  auto repeats_type = input1_tensor->element()->type_id();
+  if (std::find(valid_types.begin(), valid_types.end(), repeats_type) == valid_types.end()) {
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'repeats' must be int32 or int64. but got "
+                            << TypeIdToType(repeats_type)->ToString();
+  }
+
+  ShapeVector repeats;
+  if (repeats_type == kNumberTypeInt32) {
+    auto repeats_opt = GetArrayValue<int32_t>(input_args[kInputIndex1]);
+    if (!repeats_opt.has_value()) {
+      return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
+    }
+
+    auto repeats_values = repeats_opt.value();
+    repeats = GradGetNewRepeats<int32_t>(primitive, repeats_values);
+  } else {
+    auto repeats_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
+    if (!repeats_opt.has_value()) {
+      return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
+    }
+
+    auto repeats_values = repeats_opt.value();
+    repeats = GradGetNewRepeats<int64_t>(primitive, repeats_values);
+  }
+
+  auto dim_opt = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue());
+  if (!dim_opt.has_value()) {
+    return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
+  }
+
+  auto dim = dim_opt.value();
   auto inferred_shape = GetInferredShape(x_shape, repeats, dim);
   return std::make_shared<abstract::TensorShape>(inferred_shape);
 }
@@ -90,25 +125,34 @@ ShapeArray RepeatInterleaveGradFuncImpl::InferShape(const PrimitivePtr &primitiv
   const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
   const auto x_shape = x_tensor->shape();
+  const auto &repeats_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(repeats_tensor);
+  const auto repeats_shape = repeats_tensor->shape();
 
-  auto repeats_opt = GetArrayValue<int64_t>(input_values[kInputIndex1]);
-  auto dim_opt = GetScalarValue<int64_t>(input_values[kInputIndex2]);
-
-  auto repeats_values = repeats_opt.value();
-  auto dim = dim_opt.value();
-
-  ShapeVector repeats;
-  for (size_t i = 0; i < repeats_values.size(); i++) {
-    if (repeats_values.IsValueUnknown(i)) {
-      repeats.push_back(abstract::Shape::kShapeDimAny);
-    } else {
-      if (repeats_values[i] < 0) {
-        MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', 'repeats' can not be negative.";
-      }
-      repeats.push_back(repeats_values[i]);
-    }
+  if (repeats_shape.size() > 1) {
+    MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', 'repeats' must be 0-dim or 1-dim tensor.";
   }
 
+  std::vector<TypeId> valid_types = {kNumberTypeInt32, kNumberTypeInt64};
+  auto repeats_type = repeats_tensor->data_type();
+  if (std::find(valid_types.begin(), valid_types.end(), repeats_type) == valid_types.end()) {
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'repeats' must be int32 or int64. but got "
+                            << TypeIdToType(repeats_type)->ToString();
+  }
+
+  ShapeVector repeats;
+  if (repeats_type == kNumberTypeInt32) {
+    auto repeats_opt = GetArrayValue<int32_t>(input_values[kInputIndex1]);
+    auto repeats_values = repeats_opt.value();
+    repeats = GradGetNewRepeats<int32_t>(primitive, repeats_values);
+  } else {
+    auto repeats_opt = GetArrayValue<int64_t>(input_values[kInputIndex1]);
+    auto repeats_values = repeats_opt.value();
+    repeats = GradGetNewRepeats<int64_t>(primitive, repeats_values);
+  }
+
+  auto dim_opt = GetScalarValue<int64_t>(input_values[kInputIndex2]);
+  auto dim = dim_opt.value();
   auto inferred_shape = GetInferredShape(x_shape, repeats, dim);
   return ShapeArray{
     inferred_shape,
