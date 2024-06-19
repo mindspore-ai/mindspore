@@ -20,6 +20,9 @@
 #include <pthread.h>
 #include <sys/syscall.h>
 #endif
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>  // for GetCurrentProcessId()
+#endif
 #include <chrono>
 #include <exception>
 #include <functional>

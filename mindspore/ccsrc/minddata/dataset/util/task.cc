@@ -44,6 +44,11 @@ void Task::operator()() {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   native_handle_ = pthread_self();
   thread_id_ = syscall(SYS_gettid);
+#endif
+
+#if defined(_WIN32) || defined(_WIN64)
+  process_id_ = GetCurrentProcessId();
+#else
   process_id_ = getpid();
 #endif
   try {
@@ -159,7 +164,7 @@ Status Task::Join(WaitFlag blocking) {
 #endif
   // If the current process is subprocess of map or batch, the getpid() != process_id_.
   // And no need to join WatchDog.
-  if (running_ && getpid() == process_id_) {
+  if (running_ && getpid() == process_id_ && my_name_.find("WatchDog") == std::string::npos) {
     RETURN_UNEXPECTED_IF_NULL(MyTaskGroup());
     auto interrupt_svc = MyTaskGroup()->GetIntrpService();
     try {
