@@ -34,8 +34,6 @@ std::string GetRankID() {
 #if !defined(BUILD_LITE)
   if (distributed::collective::CollectiveManager::instance()->initialized()) {
     rank_id = CommManager::GetInstance().GetRank();
-  } else {
-    rank_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   }
 #endif
   return std::to_string(rank_id);
@@ -73,7 +71,11 @@ std::pair<std::string, std::string> MemoryTrackerEnabled::GetPath() {
   std::string task_csv_path;
 
   auto ms_context = MsContext::GetInstance();
-  const auto &trace_path = ms_context->get_param<std::string>(MS_CTX_PROF_MEM_OUTPUT_PATH);
+  auto trace_path = ms_context->get_param<std::string>(MS_CTX_PROF_MEM_OUTPUT_PATH);
+  if (trace_path.empty()) {
+    trace_path = "./";
+  }
+
   if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
     block_csv_path = trace_path + "/rank_" + GetRankID() + "/memory_block.csv";
     task_csv_path = trace_path + "/rank_" + GetRankID() + "/task.csv";
@@ -552,12 +554,13 @@ void MemoryTrackerEnabled::DumpProfilingMemInfo(const std::string &path, const s
   MS_LOG(INFO) << "MemoryTracker DumpProfilingMemInfo start, last_profiling_pos:" << last_profiling_pos_;
 
   std::ofstream block_file(csv_path);
+  auto old_file_flags = block_file.flags();
+  auto old_precision = block_file.precision();
   block_file.unsetf(std::ios_base::floatfield);
   block_file.precision(kPrecisionDigits);
   for (const auto &csv : prof_csv) {
     block_file << csv.first << ",";
   }
-
   block_file << "\n";
 
   for (size_t i = 0; i < mem_block_list_.size(); i++) {
@@ -575,6 +578,10 @@ void MemoryTrackerEnabled::DumpProfilingMemInfo(const std::string &path, const s
     }
     block_file << "\n";
   }
+
+  // Restore file flags and precision
+  block_file.flags(old_file_flags);
+  block_file.precision(old_precision);
   block_file.close();
 
   // record the last time stamp

@@ -169,7 +169,7 @@ void CopyTensorDataToDevice(const tensor::BaseTensorPtr &tensor, const AnfNodePt
     return;
   }
 
-  auto mem_type = tensor->is_parameter() ? device::tracker::MemType::kWeight : device::tracker::MemType::kConstantValue;
+  auto mem_type = tensor->is_parameter() ? device::tracker::MemType::kWeight : device::tracker::MemType::kPyNativeInput;
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", mem_type, device_address->GetSize(),
                                                  device_address.get());
   if ((device_address->GetPtr() == nullptr) &&
@@ -1011,7 +1011,7 @@ void DynamicOpRunner::CopyHostToDevice(const OpCompilerInfoPtr &op_compiler_info
     }
 
     auto mem_type =
-      input_tensor->is_parameter() ? device::tracker::MemType::kWeight : device::tracker::MemType::kConstantValue;
+      input_tensor->is_parameter() ? device::tracker::MemType::kWeight : device::tracker::MemType::kPyNativeInput;
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", mem_type, device_address->GetSize(),
                                                    device_address.get());
     if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
