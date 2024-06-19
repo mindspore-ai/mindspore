@@ -85,8 +85,12 @@ mindspore.mint.nn.functional
 非线性激活函数
 ^^^^^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
-
+    mindpsore.mint.nn.functional.leaky_relu
 
 
 

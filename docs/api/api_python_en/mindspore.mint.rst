@@ -85,7 +85,12 @@ Attention Mechanisms
 Non-linear activation functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
+    mindpsore.mint.nn.functional.leaky_relu
 
 
 
