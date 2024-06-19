@@ -91,7 +91,7 @@ DataType
     ``env_type``                    Used to store the gradient of the free variable of a function, where the key is the ``symbolic_key`` of the free variable's node and the value is the gradient.
     ============================   =================
 
-.. class:: mindspore.np_dtype
+.. class:: mindspore.common.np_dtype
 
   ``np_dtype`` expands Numpy's data types.
 
@@ -100,7 +100,7 @@ DataType
 
   .. code-block::
 
-      from mindspore import np_dtype
+      from mindspore.common import np_dtype
 
   * **Numeric Type**
 
