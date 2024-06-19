@@ -53,15 +53,20 @@ AnfNodePtrList GetCNodesOfFuncGraph(const FuncGraphPtr &fg) {
 
 std::pair<FuncGraphPtr, size_t> GetFuncGraphFromCNode(const CNodePtr &cnode) {
   auto sub_fg = GetCNodeFuncGraph(cnode);
-  size_t index = kIndex1;
+  size_t begin_index = kIndex1;
   if (sub_fg == nullptr && IsPrimitiveCNode(cnode, prim::kPrimPartial)) {
     auto vnode = cnode->input(kIndex1)->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(vnode);
     sub_fg = vnode->value()->cast<FuncGraphPtr>();
     MS_EXCEPTION_IF_NULL(sub_fg);
-    index = kIndex2;
+    begin_index = kIndex2;
   }
-  return std::make_pair(sub_fg, index);
+  if (sub_fg != nullptr && sub_fg->parameters().size() + begin_index < cnode->size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "For graph " << sub_fg->ToString() << ", the parameter size "
+                               << sub_fg->parameters().size() << " is less than cnode input num "
+                               << cnode->size() - begin_index;
+  }
+  return std::make_pair(sub_fg, begin_index);
 }
 
 class ControlFlowJoinNode : public SpecialCNodeHelper {
@@ -213,7 +218,7 @@ void SymbolEngineImpl::PreBuild() {
   auto func_graph = func_graph_.lock();
   MS_EXCEPTION_IF_NULL(func_graph);
   cnodes_ = GetCNodesOfFuncGraph(func_graph);
-  (void)visited_graph_.insert(func_graph.get());
+  visited_graph_[func_graph.get()] = 1;
   PreBuildQueryDependStatus(cnodes_);
   visited_graph_.clear();
 }
@@ -223,10 +228,12 @@ void SymbolEngineImpl::BuildImpl() {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(DEBUG) << "Build " << ToString() << " with graph " << func_graph->ToString();
   emitter_ = std::make_unique<OperationEmitter>(&ops_);
-  (void)visited_graph_.insert(func_graph.get());
+  visited_graph_[func_graph.get()] = 1;
   BuildNodesSymbol(func_graph, cnodes_);
   emitter_->Clean();
   visited_graph_.clear();
+  generalized_shape_.clear();
+  generalized_value_.clear();
 }
 
 void SymbolEngineImpl::PreBuildSpecialNode(const CNodePtr &cnode) {
@@ -293,13 +300,16 @@ void SymbolEngineImpl::PreBuildQueryDependStatus(const AnfNodePtrList &cnodes) {
 
 void SymbolEngineImpl::PreBuildQuerySubgraphDependStatus(const CNodePtr &cnode, const FuncGraphPtr &sub_fg,
                                                          size_t begin_input_index) {
-  if (!visited_graph_.insert(sub_fg.get()).second) {
+  if (++visited_graph_[sub_fg.get()] > 1) {
     return;
   }
   sub_fg->set_symbol_engine(shared_from_base<SymbolEngine>());
   depend_status_map_[sub_fg->output()] = depend_status_map_[cnode];
   PreBuildQueryDependStatus(GetCNodesOfFuncGraph(sub_fg));
   for (auto &param : sub_fg->parameters()) {
+    if (begin_input_index >= cnode->size()) {
+      break;
+    }
     auto &cnode_input_depend_status = depend_status_map_[cnode->input(begin_input_index++)];
     auto depend_status = depend_status_map_[param];
     if (depend_status.shape) {
@@ -358,6 +368,7 @@ bool SymbolEngineImpl::IsDependShape(const AnfNodePtr &node) {
   }
   return false;
 }
+
 std::string SymbolEngineImpl::QuerySymbolExprHelper(
   const SymbolPtr &s, const std::unordered_map<std::string, std::string> &symbol_expr_map) {
   auto raw_string = s->ToRawString();
@@ -402,17 +413,110 @@ void SymbolEngineImpl::QuerySymbolExpr(const AnfNodePtr &node,
   }
 }
 
-void SymbolEngineImpl::BuildSubgraphImpl(const CNodePtr &cnode, const FuncGraphPtr &sub_fg, size_t begin_input_index) {
-  MS_EXCEPTION_IF_NULL(sub_fg);
-  if (!visited_graph_.insert(sub_fg.get()).second) {
-    // in while-block, the funcgraph is called recursively, only build symbolengine once.
-    return;
+bool SymbolEngineImpl::GeneralizeParamShape(const AnfNodePtr &param, const AbstractBasePtr &input_abs) {
+  if (generalized_shape_.count(param) > 0) {
+    return false;
   }
-  MS_LOG(DEBUG) << "Build subgraph " << sub_fg->ToString() << " of node " << cnode->fullname_with_scope();
-  auto param_num = sub_fg->parameters().size();
-  MS_EXCEPTION_IF_CHECK_FAIL(param_num + begin_input_index == cnode->size(), "cnode and parameter size mismatch");
-  for (size_t i = 0; i < param_num; i++) {
-    auto inp = cnode->input(i + begin_input_index);
+  auto param_abs = param->abstract();
+  MS_EXCEPTION_IF_NULL(param_abs);
+  if (param_abs->GetSymbolicShape() == nullptr || input_abs->GetSymbolicShape() == nullptr) {
+    return false;
+  }
+  auto param_shape = param_abs->GetSymbolicShape();
+  auto input_shape = input_abs->GetSymbolicShape();
+  if (param_shape->EqualsTo(input_shape)) {
+    return false;
+  }
+  bool build_again = false;
+  bool gen_all = false;
+  auto NewInt = [&build_again]() -> IntSymbolPtr {
+    build_again = true;
+    return IntSymbol::Make();
+  };
+  std::function<SymbolPtrList(const SymbolPtrList &, const SymbolPtrList &)> process;
+  process = [&NewInt, &gen_all, &process](const SymbolPtrList &s1, const SymbolPtrList &s2) {
+    SymbolPtrList ret;
+    if (s1.size() != s2.size()) {
+      gen_all = true;
+      return ret;
+    }
+    ret = s1;
+    for (size_t i = 0; i < s1.size(); i++) {
+      if (s1[i]->EqualsTo(s2[i])) {
+        continue;
+      }
+      if (s1[i]->is<ListSymbol>()) {
+        ret[i] = ListSymbol::Make(process(s1[i]->as<ListSymbol>()->symbols(), s2[i]->as<ListSymbol>()->symbols()));
+        continue;
+      }
+      auto v1 = s1[i]->as<IntSymbol>();
+      auto v2 = s2[i]->as<IntSymbol>();
+      if (v2->is_const()) {
+        if (v1->is_const()) {
+          ret[i] = NewInt();
+        } else {
+          auto d1 = v1->divisor();
+          auto r1 = v1->remainder();
+          // if "d1 * v1 + r1 == v2", that's v2 match the condition of v1.
+          if ((v2->value() - r1 + d1) % d1 != 0) {
+            ret[i] = NewInt();
+          }
+        }
+      } else if (v1->is_const()) {
+        ret[i] = NewInt();
+      } else {
+        // two symbols are variable
+        auto d1 = v1->divisor();
+        auto r1 = v1->remainder();
+        auto d2 = v2->divisor();
+        auto r2 = v2->remainder();
+        if (r1 == r2) {
+          if (d2 % d1 != 0) {
+            auto t = NewInt();
+            t->SetDivisorRemainder(std::gcd(d1, d2), r1);
+            ret[i] = t;
+          }
+        } else {
+          ret[i] = NewInt();
+        }
+      }
+    }
+    return ret;
+  };
+  auto ret = process(param_shape->symbols(), input_shape->symbols());
+  if (gen_all) {
+    (void)generalized_shape_.insert(param);
+    param_abs->SetSymbolicShape(param_abs->GetShape()->BuildSymbolicShape());
+    return true;
+  }
+  return build_again;
+}
+
+bool SymbolEngineImpl::GeneralizeParamValue(const AnfNodePtr &param, const AbstractBasePtr &input_abs) {
+  if (generalized_value_.count(param) > 0) {
+    return false;
+  }
+  auto param_abs = param->abstract();
+  MS_EXCEPTION_IF_NULL(param_abs);
+  if (param_abs->GetSymbolicValue() == nullptr || input_abs->GetSymbolicValue() == nullptr) {
+    return false;
+  }
+  auto param_value = param_abs->GetSymbolicValue();
+  auto input_value = input_abs->GetSymbolicValue();
+  if (param_value->EqualsTo(input_value)) {
+    return false;
+  }
+  param_abs->SetSymbolicValue(BuildSymbolicValue(param_abs));
+  (void)generalized_value_.insert(param);
+  return true;
+}
+
+bool SymbolEngineImpl::SetParamSymbols(const CNodePtr &cnode, const FuncGraphPtr &sub_fg, size_t begin_input_index,
+                                       size_t visit_cnt) {
+  bool build_again = false;
+  const size_t max_visit_cnt = 5;  // to avoid unexplained dead loop
+  for (size_t i = begin_input_index; i < cnode->size(); i++) {
+    auto inp = cnode->input(i);
     auto input_abs = inp->abstract();
     MS_EXCEPTION_IF_NULL(input_abs);
     if (IsDependShape(inp) && input_abs->GetSymbolicShape() == nullptr) {
@@ -421,11 +525,34 @@ void SymbolEngineImpl::BuildSubgraphImpl(const CNodePtr &cnode, const FuncGraphP
     if (IsDependValue(inp) && input_abs->GetSymbolicValue() == nullptr) {
       input_abs->SetSymbolicValue(BuildSymbolicValue(input_abs));
     }
-    auto param_abs = CloneAbstractIfSymbolExists(sub_fg->parameters()[i]);
-    MS_EXCEPTION_IF_NULL(param_abs);
-    param_abs->SetSymbolicShape(input_abs->GetSymbolicShape());
-    param_abs->SetSymbolicValue(input_abs->GetSymbolicValue());
+    auto param = sub_fg->parameters()[i - begin_input_index];
+    if (visit_cnt == 1) {
+      auto param_abs = CloneAbstractIfSymbolExists(param);
+      MS_EXCEPTION_IF_NULL(param_abs);
+      param_abs->SetSymbolicShape(input_abs->GetSymbolicShape());
+      param_abs->SetSymbolicValue(input_abs->GetSymbolicValue());
+    } else if (visit_cnt <= max_visit_cnt) {
+      build_again = GeneralizeParamShape(param, input_abs) || build_again;
+      build_again = GeneralizeParamValue(param, input_abs) || build_again;
+    }
   }
+  return build_again;
+}
+
+void SymbolEngineImpl::BuildSubgraphImpl(const CNodePtr &cnode, const FuncGraphPtr &sub_fg, size_t begin_input_index) {
+  MS_EXCEPTION_IF_NULL(sub_fg);
+  auto visit_cnt = ++visited_graph_[sub_fg.get()];
+  MS_LOG(DEBUG) << "Build subgraph " << sub_fg->ToString() << " of node " << cnode->fullname_with_scope()
+                << ". visit count: " << visit_cnt;
+  bool build_again = SetParamSymbols(cnode, sub_fg, begin_input_index, visit_cnt);
+  if (visit_cnt > 1) {
+    if (!build_again) {
+      MS_LOG(DEBUG) << "The inputs of graph " << sub_fg->ToString() << " are equal to last building, don't build again";
+      return;
+    }
+    support_infer_ = false;
+  }
+
   BuildNodesSymbol(sub_fg, GetCNodesOfFuncGraph(sub_fg));
   // only set the abstract for "call" node.
   if (IsValueNode<FuncGraph>(cnode->input(0))) {
@@ -594,10 +721,12 @@ AbstractBasePtr CloneAbstractIfSymbolExists(const AbstractBasePtr &abs) {
     new_abs->SetSymbolicValue(nullptr);
     return new_abs;
   } catch (std::exception &e) {
-    std::string sym_shape = abs->GetSymbolicShape() == nullptr ? "" : abs->GetSymbolicShape()->ToString();
-    std::string sym_value = abs->GetSymbolicValue() == nullptr ? "" : abs->GetSymbolicValue()->ToString();
-    MS_LOG(WARNING) << "The abstract has symbol (S:" << sym_shape << ", V:" << sym_value
-                    << ") but cannot be cloned. abstract: " << abs->ToString() << ", failed info:" << e.what();
+    if (IS_OUTPUT_ON(MsLogLevel::kDebug)) {
+      std::string sym_shape = abs->GetSymbolicShape() == nullptr ? "" : abs->GetSymbolicShape()->ToString();
+      std::string sym_value = abs->GetSymbolicValue() == nullptr ? "" : abs->GetSymbolicValue()->ToString();
+      MS_LOG(DEBUG) << "The abstract has symbol (S:" << sym_shape << ", V:" << sym_value
+                    << ") but cannot be cloned. abstract: " << abs->ToString() << ", msg:" << e.what();
+    }
   }
   return abs;
 }
