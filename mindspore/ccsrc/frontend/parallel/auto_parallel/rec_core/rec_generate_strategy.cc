@@ -29,6 +29,7 @@
 #include "frontend/parallel/ops_info/flash_attention_score_info.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/ops_info/strided_slice_info.h"
+#include "frontend/parallel/ops_info/gather_info.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
@@ -196,8 +197,21 @@ int64_t GetGatherAxis(const std::shared_ptr<OperatorInfo> &op) {
   if (axis_input < 0) {
     axis_input += SizeToLong(op->inputs_shape()[0].size());
   }
-
+  if (axis_input >= SizeToLong(op->inputs_shape()[0].size())) {
+    MS_LOG(EXCEPTION) << "Failure: Gather's axis out of range.";
+  }
   return axis_input;
+}
+
+int64_t GetGatherBatchDims(const std::shared_ptr<OperatorInfo> &op) {
+  int64_t batch_dims = -1;
+  auto batch_dims_val = GetScalarValueFromInputs<int64_t>(op->input_value(), op->name(), BATCH_DIMS);
+  if (batch_dims_val.has_value()) {
+    batch_dims = batch_dims_val.value();
+  } else {
+    MS_LOG(EXCEPTION) << op->name() << ": Failed to fetch the value of batch dims";
+  }
+  return batch_dims;
 }
 
 void ReverseRemainingList(const std::shared_ptr<std::vector<size_t>> &no_stra_op_list) {
@@ -819,17 +833,10 @@ Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions str
   Dimensions strategie = GenGatherStra(targeted_shape);
 
   int64_t axis = GetGatherAxis(op);
-  if (axis >= SizeToLong(strategy.size())) {
-    MS_LOG(EXCEPTION) << "Failure: Gather's axis out of range.";
-  }
+  MS_LOG(INFO) << op->name() << ": the axis is " << axis;
 
-  int64_t batch_dims = -1;
-  auto batch_dims_val = GetScalarValueFromInputs<int64_t>(op->input_value(), op->name(), BATCH_DIMS);
-  if (batch_dims_val.has_value()) {
-    batch_dims = batch_dims_val.value();
-  } else {
-    MS_LOG(EXCEPTION) << op->name() << ": Failed to fetch the value of batch dims";
-  }
+  int64_t batch_dims = GetGatherBatchDims(op);
+  MS_LOG(INFO) << op->name() << ": the batch_dims is " << batch_dims;
 
   if (batch_dims > 1) {
     for (size_t i = 0; i < op->inputs_shape().size(); i++) {
@@ -870,6 +877,16 @@ Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions str
     strategies.push_back(strategy);
   } else {
     MS_LOG(EXCEPTION) << "Failure: Normal Gather's axis is neither 0 nor 1.";
+  }
+
+  auto gather = std::static_pointer_cast<GatherInfo>(op);
+  auto gather_mode = gather->GetGatherMode(strategies[0], strategies[1]);
+  MS_LOG(INFO) << op->name() << ": the gather_mode is " << gather_mode;
+  if (gather_mode == SHARD_AXIS_0_DYNAMIC || gather_mode == SHARD_AXIS_0_STATIC || gather_mode == SHARD_AXIS_1) {
+    if (DevicesForDimensions(strategies[1]) != 1 && strategies[0][axis] != 1) {
+      strategies[0][axis] = 1;
+      MS_LOG(INFO) << op->name() << ": param_strategy[" << axis << "] is changed to 1.";
+    }
   }
 
   return strategies;

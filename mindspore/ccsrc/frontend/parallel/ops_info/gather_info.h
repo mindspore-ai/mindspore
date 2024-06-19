@@ -331,6 +331,7 @@ class GatherInfo : public OperatorInfo {
   std::shared_ptr<Strategies> GenerateBatchStrategies() override;
   const std::vector<int64_t> &param_split_shapes() const { return param_split_shapes_; }
   const std::vector<int64_t> &index_offsets() const { return index_offsets_; }
+  GatherMode GetGatherMode(const Shape &param_strategy, const Shape &indices_strategy) const;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
@@ -348,7 +349,6 @@ class GatherInfo : public OperatorInfo {
   int64_t axis_ = 0;
 
  private:
-  GatherMode GetGatherMode(const Shape &param_strategy, const Shape &indices_strategy) const;
   int64_t batch_dims_ = 0;
   Status GetManualSplitAttr();
   Status GetManualSplitWithoutOffsetAttr();
