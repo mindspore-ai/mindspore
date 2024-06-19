@@ -47,7 +47,6 @@ namespace transform {
 class BaseOpAdapter;
 
 using ParamIndexMap = std::map<std::size_t, std::size_t>;
-using InputNameAndType = std::vector<std::pair<std::string, bool>>;
 enum class GraphType { kNormal, kCond, kBody, kAfter, kBranch };
 enum class DfsVisitFlag { kUnVisited, kVisiting, kVisited };
 enum class RefModeFlag {
@@ -59,9 +58,9 @@ enum class RefModeFlag {
 constexpr char kGraphFlagHasGetNext[] = "graph_has_getnext";
 constexpr char kGraphNeedIteration[] = "graph_need_iteration";
 
-struct InputNameList {
-  InputNameAndType input_names;
-  constexpr static char key[] = "InputNameList";
+struct GEInputList {
+  std::vector<AnfNodeWeakPtr> ge_inputs;
+  constexpr static char key[] = "GEInputs";
 };
 
 class GeOpConvertor {
@@ -215,7 +214,7 @@ class DfGraphConvertor {
   bool dynamic_shape_inputs() const { return dynamic_shape_inputs_; }
   std::vector<ShapeVector> input_shapes() { return input_shapes_; }
 
-  void SetupInputFormat(const FuncGraphManagerPtr &manager, const AnfNodePtr &node, InputNameAndType *input_names);
+  void SetupInputFormat(const FuncGraphManagerPtr &manager, const AnfNodePtr &node);
 
  protected:
   bool InitLoopVar(std::vector<::ge::Operator> *init_input);
@@ -267,7 +266,7 @@ class DfGraphConvertor {
   void AddGraphConstInput(const OperatorPtr &op);
   AnfNodePtr ParseLoadInput(const CNodePtr &cnode) const;
   void SetGraphInputs(std::vector<Operator> *inputs);
-  void SetGraphInputs(std::vector<Operator> *inputs, InputNameAndType *input_names);
+  void SetGraphInputs(std::vector<Operator> *inputs, AnfNodeWeakPtrList *ge_inputs);
   void TransformConstOp(const CNodePtr &node, const AnfNodePtr &pred);
   void ProcessInputData(std::vector<Operator> *init_input,
                         std::unordered_set<std::string> *infer_need_update_parameter_names, const OperatorPtr &param_op,

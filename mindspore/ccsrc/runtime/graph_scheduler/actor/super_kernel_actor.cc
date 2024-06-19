@@ -160,6 +160,12 @@ void SuperKernelActor::Init() {
     ParseInputIndex();
     CalcRefCount();
   }
+
+  if (type_ == KernelTransformType::kSuperKernelActor && !enable_kbk_sub_graph_execute_) {
+    MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+    MS_EXCEPTION_IF_NULL(device_contexts_[0]->graph_executor_);
+    device_contexts_[0]->graph_executor_->InitGraphInfo(graph_);
+  }
 }
 
 size_t SuperKernelActor::FetchInputNodePosition(const AnfNodePtr &intput_node) {
