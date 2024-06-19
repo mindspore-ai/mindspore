@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_VIEW_UNSTACK_STRIDES_CALC_H_
-#define MINDSPORE_CORE_OPS_VIEW_UNSTACK_STRIDES_CALC_H_
+#ifndef MINDSPORE_CORE_OPS_VIEW_UNSTACK_EXT_STRIDES_CALC_H_
+#define MINDSPORE_CORE_OPS_VIEW_UNSTACK_EXT_STRIDES_CALC_H_
 
 #include <vector>
 #include "ops/view/view_strides_calculator.h"
 
 namespace mindspore {
 namespace ops {
-MS_CORE_API TensorStorageInfoPtrList UnstackCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs);
+MS_CORE_API TensorStorageInfoPtrList UnstackExtCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs);
 
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_VIEW_UNSTACK_STRIDES_CALC_H_
+#endif  // MINDSPORE_CORE_OPS_VIEW_UNSTACK_EXT_STRIDES_CALC_H_

@@ -4,6 +4,17 @@ mindspore.mint
 Tensor
 ---------------
 
+Array Operation
+^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nonzero
+
+
 Creation Operations
 ^^^^^^^^^^^^^^^^^^^^^^
 

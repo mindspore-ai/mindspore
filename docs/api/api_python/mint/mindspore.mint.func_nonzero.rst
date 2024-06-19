@@ -1,7 +1,7 @@
-mindspore.ops.nonzero
-=====================
+mindspore.mint.nonzero
+======================
 
-.. py:function:: mindspore.ops.nonzero(input, as_tuple=False)
+.. py:function:: mindspore.mint.nonzero(input, as_tuple=False)
 
     返回所有非零元素下标位置。
 

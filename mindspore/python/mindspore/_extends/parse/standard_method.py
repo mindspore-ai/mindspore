@@ -3067,11 +3067,11 @@ def negative(input):
     return F.neg(input)
 
 
-def nonzero(input):
+def nonzero(input, as_tuple=False):
     """
     Return a Tensor of the positions of all non-zero values.
     """
-    return F.nonzero(input)
+    return F.nonzero(input, as_tuple)
 
 
 def new_zeros(x, size, *, dtype=None):
