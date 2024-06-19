@@ -38,6 +38,10 @@ class SplitTensorAscend : public AclnnKernelMod {
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
 
   int64_t GetDimValue(KernelTensor *axis_ptr) const noexcept;
+
+  bool IsTuple(const KernelTensor *tensor);
+
+  std::vector<KernelTensor *> GetSplitRealOutputs(const std::vector<KernelTensor *> &outputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

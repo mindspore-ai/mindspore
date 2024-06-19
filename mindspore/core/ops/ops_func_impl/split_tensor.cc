@@ -21,16 +21,16 @@
 namespace mindspore {
 namespace ops {
 namespace {
-int64_t CaculateSplitAxis(const AbstractBasePtr &input_abs) {
-  auto axis_value = input_abs->GetValue();
-  auto axis = GetScalarValue<int64_t>(axis_value).value();
-  return axis;
-}
-
 int64_t CaculateSplitSections(const AbstractBasePtr &input_abs) {
   auto split_size_value = input_abs->GetValue();
-  auto split_size = GetScalarValue<int64_t>(split_size_value).value();
-  return split_size;
+  auto split_size = GetScalarValue<int64_t>(split_size_value);
+  if (MS_UNLIKELY(!split_size.has_value())) {
+    MS_LOG(EXCEPTION) << "split_size's value is valueany";
+  }
+  if (split_size.value() == 0) {
+    MS_EXCEPTION(ValueError) << "split_size's value cannot be zero";
+  }
+  return split_size.value();
 }
 }  // namespace
 BaseShapePtr SplitTensorFuncImpl::InferShape(const PrimitivePtr &primitive,
@@ -38,8 +38,12 @@ BaseShapePtr SplitTensorFuncImpl::InferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto input_shape_ptr = input_args[kIndex0]->GetShape();
   auto input_shape = input_shape_ptr->GetShapeVector();
-  auto axis = CaculateSplitAxis(input_args[kIndex2]);
+  auto axis_value = GetScalarValue<int64_t>(input_args[kIndex2]->GetValue());
+  if (MS_UNLIKELY(!axis_value.has_value())) {
+    MS_LOG(EXCEPTION) << "split_size's value is valueany";
+  }
 
+  auto axis = axis_value.value();
   std::vector<abstract::BaseShapePtr> output_list;
   auto split_sections = CaculateSplitSections(input_args[kIndex1]);
   auto rank = SizeToLong(input_shape.size());
@@ -69,8 +73,12 @@ TypePtr SplitTensorFuncImpl::InferType(const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) const {
   auto input_shape_ptr = input_args[kIndex0]->GetShape();
   auto input_shape = input_shape_ptr->GetShapeVector();
-  auto axis = CaculateSplitAxis(input_args[kIndex2]);
+  auto axis_value = GetScalarValue<int64_t>(input_args[kIndex2]->GetValue());
+  if (MS_UNLIKELY(!axis_value.has_value())) {
+    MS_LOG(EXCEPTION) << "axis's value is valueany";
+  }
 
+  auto axis = axis_value.value();
   auto rank = SizeToLong(input_shape.size());
   if (axis < 0) {
     axis += rank;
@@ -81,8 +89,8 @@ TypePtr SplitTensorFuncImpl::InferType(const PrimitivePtr &primitive,
                                                              : (input_shape[pos] / split_sections) + 1;
   auto infer_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(infer_type);
-  static const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,     kUInt32,
-                                                kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool};
+  static const std::set<TypePtr> valid_types = {kInt8,    kInt16,   kInt32,     kInt64,      kFloat16,
+                                                kFloat32, kFloat64, kComplex64, kComplex128, kBool};
   auto type = CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_types, primitive->name());
   std::vector<TypePtr> type_tuple;
   for (int32_t i = 0; i < output_num; i++) {
@@ -97,7 +105,11 @@ int32_t SplitTensorFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   auto input_shape = input_args[kIndex0]->GetShape()->GetShapeVector();
   auto rank = SizeToLong(input_shape.size());
   MS_CHECK_VALUE(rank > 0, CheckAndConvertUtils::FormatCheckIntegerMsg("rank", rank, kGreaterEqual, 1, primitive));
-  auto axis = CaculateSplitAxis(input_args[kIndex2]);
+  auto axis_value = GetScalarValue<int64_t>(input_args[kIndex2]->GetValue());
+  if (MS_UNLIKELY(!axis_value.has_value())) {
+    return OP_CHECK_RETRY;
+  }
+  auto axis = axis_value.value();
   MS_CHECK_VALUE(axis >= -rank && axis < rank,
                  CheckAndConvertUtils::FormatCheckInRangeMsg("axis", axis, kIncludeLeft, {-rank, rank}, primitive));
   if (!input_args[kInputIndex1]->GetType()->isa<TypeNone>()) {

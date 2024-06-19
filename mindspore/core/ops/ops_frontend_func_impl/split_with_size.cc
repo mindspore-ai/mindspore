@@ -35,7 +35,11 @@ class SplitWithSizeFrontendFuncImpl : public OpFrontendFuncImpl {
     auto split_size_opt = GetArrayValue<int64_t>(input_args[kIndex1]);
     AbstractBasePtrList output_list;
     if (!split_size_opt.has_value()) {
-      MS_LOG(EXCEPTION) << "The variable-length output scenario is not supported currently.";
+      auto dynamic_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+      (void)output_list.push_back(abstract::MakeAbstractTensor(dynamic_shape, input_abs->GetType()));
+      auto abs_tuple = std::make_shared<abstract::AbstractTuple>(output_list);
+      abs_tuple->CheckAndConvertToDynamicLenSequence();
+      return abs_tuple;
     }
     auto split_size = split_size_opt.value();
     if (IsDynamicRank(input_shape)) {
@@ -57,6 +61,10 @@ class SplitWithSizeFrontendFuncImpl : public OpFrontendFuncImpl {
         axis += rank;
       }
       size_t pos = LongToSize(axis);
+      int64_t sum_split_size = std::accumulate(split_size.ToVector().begin(), split_size.ToVector().end(), 0);
+      if (sum_split_size != output_shape[pos]) {
+        MS_EXCEPTION(ValueError) << "split_size's length must be equal with dimIndex";
+      }
       for (size_t i = 0; i < split_size.size(); ++i) {
         if (split_size.IsValueUnknown(i)) {
           output_shape[pos] = abstract::Shape::kShapeDimAny;

@@ -39,11 +39,18 @@ class SplitTensorFrontendFuncImpl : public OpFrontendFuncImpl {
     if (!axis_opt.has_value() || !split_sections_opt.has_value() || IsDynamicRank(input_shape) ||
         input_shape[(axis_opt.value() + static_cast<int64_t>(input_shape.size())) %
                     static_cast<int64_t>(input_shape.size())] == abstract::Shape::kShapeDimAny) {
-      MS_LOG(EXCEPTION) << "The variable-length output scenario is not supported currently.";
+      auto dynamic_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+      output_list.push_back(abstract::MakeAbstractTensor(dynamic_shape, input_abs->GetType()));
+      auto abs_tuple = std::make_shared<abstract::AbstractTuple>(output_list);
+      abs_tuple->CheckAndConvertToDynamicLenSequence();
+      return abs_tuple;
     }
     auto rank = SizeToLong(input_shape.size());
     auto axis = axis_opt.value();
     auto split_sections = split_sections_opt.value();
+    if (split_sections == 0) {
+      MS_EXCEPTION(ValueError) << "split_size's value cannot be zero";
+    }
     if (axis < 0) {
       axis += rank;
     }

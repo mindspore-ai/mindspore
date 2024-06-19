@@ -39,6 +39,10 @@ class SplitWithSizeAscend : public AclnnKernelMod {
 
   int64_t GetDimValue(KernelTensor *axis_ptr) const noexcept;
 
+  bool IsTuple(const KernelTensor *tensor);
+
+  std::vector<KernelTensor *> GetSplitRealOutputs(const std::vector<KernelTensor *> &outputs);
+
  protected:
   std::vector<int64_t> dims_{};
 };
