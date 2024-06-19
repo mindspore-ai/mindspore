@@ -102,7 +102,8 @@ class CANNEvent(BaseEvent):
         if self.ph == 'f':
             return {"ph": self.ph, "name": self.name, "id": self.id, "pid": self.pid,
                     "tid": self.tid, "ts": str(self.ts), "cat": self.cat, 'bp': "e"}
-        return {}
+        return {'name': self.name, 'pid': self.pid, 'tid': self.tid,
+                'ts': str(self.ts), 'args': self.args, 'ph': self.ph}
 
 
 class MindSporeOpEnum(Enum):

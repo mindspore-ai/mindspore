@@ -34,7 +34,9 @@ class MsprofTimelineParser:
             if cann_event.is_x_event():
                 x_event_list.append(cann_event)
             else:
-                other_event_json.append(cann_event.to_json())
+                cann_event_json = cann_event.to_json()
+                if cann_event_json:
+                    other_event_json.append(cann_event_json)
 
             if cann_event.is_flow_start_event():
                 flow_start_dict[cann_event.id] = (cann_event.tid, cann_event.ts)
@@ -48,6 +50,8 @@ class MsprofTimelineParser:
             if flow_id is not None and start_flow_info is not None:
                 start_flow_to_npu_dict[start_flow_info].append(cann_event)
             else:
-                device_data_without_flow_json.append(cann_event.to_json())
+                cann_event_json = cann_event.to_json()
+                if cann_event_json:
+                    device_data_without_flow_json.append(cann_event_json)
 
         return start_flow_to_npu_dict, device_data_without_flow_json + other_event_json
