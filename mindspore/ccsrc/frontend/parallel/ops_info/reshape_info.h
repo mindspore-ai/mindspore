@@ -104,6 +104,7 @@ class ReshapeInfo : public OperatorInfo {
   Status InferDefaultLayout(const Shape &shape, TensorLayout *const layout);
   std::vector<int64_t> GetInputShape(const AnfNodePtr &shape_input_node);
   void ChangeDynamicDstShapeForSkipRedistribution(const AnfNodePtr &shape_input_node);
+  void ChangeDstShape();
 
   int64_t dev_num_;
   int64_t pre_operator_index_;

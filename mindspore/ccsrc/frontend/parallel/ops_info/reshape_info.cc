@@ -475,26 +475,30 @@ Status ReshapeInfo::ComputeReplaceOp() {
   }
   MS_LOG(DEBUG) << name_ << ": replace op size = " << replace_op_.size();
   if (replace_op_.size() == 1 && replace_op_.front().first == RESHAPE) {
-    int64_t shape_dim = 2;
-    auto value = replace_op_.front().second.second.front().first.second;
-    Shape dst_shape = GetValue<std::vector<int64_t>>(value);
-    Shape origin_dst_shape = GetInputShape(cnode_->input(LongToSize(shape_dim)));
-    if (dst_shape.size() == origin_dst_shape.size()) {
-      for (size_t i = 0; i < dst_shape.size(); ++i) {
-        if (origin_dst_shape[i] != dst_shape[i] && origin_dst_shape[i] != DYNAMIC_DIM_VAL) {
-          return SUCCESS;
-        }
-      }
-      int64_t dyn_dim_cnt = std::count(origin_dst_shape.cbegin(), origin_dst_shape.cend(), DYNAMIC_DIM_VAL);
-      if (dyn_dim_cnt > 1) {
-        MS_LOG(DEBUG) << "Don't need to replace reshape's target shape.";
-        return SUCCESS;
-      }
-      MS_LOG(INFO) << "The reshape would not change the target shape.";
-      replace_op_.front().second.second.front().first.second = MakeValue(origin_dst_shape);
-    }
+    ChangeDstShape();
   }
   return SUCCESS;
+}
+
+void ReshapeInfo::ChangeDstShape() {
+  int64_t shape_dim = 2;
+  auto value = replace_op_.front().second.second.front().first.second;
+  Shape dst_shape = GetValue<std::vector<int64_t>>(value);
+  Shape origin_dst_shape = GetInputShape(cnode_->input(LongToSize(shape_dim)));
+  if (dst_shape.size() == origin_dst_shape.size()) {
+    for (size_t i = 0; i < dst_shape.size(); ++i) {
+      if (origin_dst_shape[i] != dst_shape[i] && origin_dst_shape[i] != DYNAMIC_DIM_VAL) {
+        return;
+      }
+    }
+    int64_t dyn_dim_cnt = std::count(origin_dst_shape.cbegin(), origin_dst_shape.cend(), DYNAMIC_DIM_VAL);
+    if (dyn_dim_cnt > 1) {
+      MS_LOG(DEBUG) << name_ << ": Don't need to replace reshape's target shape.";
+      return;
+    }
+    MS_LOG(INFO) << name_ << ": The reshape would not change the target shape.";
+    replace_op_.front().second.second.front().first.second = MakeValue(origin_dst_shape);
+  }
 }
 
 /*
