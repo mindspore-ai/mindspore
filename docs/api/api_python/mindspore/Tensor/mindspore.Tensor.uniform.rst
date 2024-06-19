@@ -1,7 +1,7 @@
 mindspore.Tensor.uniform
 =======================================
 
-.. py:method:: mindspore.Tensor.uniform(from_=0., to=1., generator=None):
+.. py:method:: mindspore.Tensor.uniform(from_=0., to=1., generator=None)
 
     在半开区间 [from\_, to) 内生成随机数。
 

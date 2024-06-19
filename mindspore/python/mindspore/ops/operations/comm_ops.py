@@ -226,7 +226,7 @@ class Reduce(PrimitiveWithInfer):
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
-    ``Ascend``
+        ``Ascend``
 
     Examples:
         .. note::
@@ -1122,7 +1122,7 @@ class CollectiveScatter(Primitive):
     Scatter tensor evently across the processes in the specified communication group.
 
     Note:
-        Only the tensor in process `src`(global rank) will do scatter.
+        Only the tensor in process `src` (global rank) will do scatter.
 
     Args:
         src_rank (int, optional): Specifies the rank of the process that send the tensor.
@@ -1134,7 +1134,7 @@ class CollectiveScatter(Primitive):
 
     Outputs:
         Tensor, the shape of output is :math:`(x_1/src_rank, x_2, ..., x_R)`. The dimension 0 of data is equal to
-            the dimension of input tensor divided by `src`, and the other dimension keep the same.
+        the dimension of input tensor divided by `src`, and the other dimension keep the same.
 
     Raises:
         TypeError: If `group` is not a str.
@@ -1157,6 +1157,7 @@ class CollectiveScatter(Primitive):
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
             This example should be run with 2 devices.
+
         >>> import numpy as np
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
@@ -1202,11 +1203,11 @@ class CollectiveScatter(Primitive):
 class CollectiveGather(Primitive):
     """
     Gathers tensors from the specified communication group. The operation will gather the tensor
-        from processes according to dimension 0.
+    from processes according to dimension 0.
 
     Note:
-        Only the tensor in process `dst`(global rank) will keep the gathered tensor. The other process
-            will keep a tensor with shape [1], which has no mathematical meaning.
+        Only the tensor in process `dst` (global rank) will keep the gathered tensor. The other process
+        will keep a tensor with shape [1], which has no mathematical meaning.
 
     Args:
         dest_rank(int): Specifies the rank of the process that receive the tensor.
@@ -1217,8 +1218,8 @@ class CollectiveGather(Primitive):
         - **input_x** (Tensor) - The tensor to be gathered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
-       Tensor, the shape of output is :math:`(sum x_1, x_2, ..., x_R)`. The dimension 0 of data is equal to
-            sum of the dimension of input tensor, and the other dimension keep the same.
+        Tensor, the shape of output is :math:`(sum x_1, x_2, ..., x_R)`. The dimension 0 of data is equal to
+        sum of the dimension of input tensor, and the other dimension keep the same.
 
     Raises:
         TypeError: If `group` is not a str.
@@ -1288,8 +1289,8 @@ class CollectiveGather(Primitive):
 class Barrier(PrimitiveWithInfer):
     """
     Synchronizes all processes in the specified group. Once the process call this operation, it will be blocked until
-        all processes call this operation. After all processes finish calling the operations, the blocked processes
-        will be weaken and continue their task.
+    all processes call this operation. After all processes finish calling the operations, the blocked processes
+    will be weaken and continue their task.
 
     Args:
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
@@ -1315,6 +1316,7 @@ class Barrier(PrimitiveWithInfer):
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
             This example should be run with 2 devices.
+
         >>> import numpy as np
         >>> from mindspore import ops
         >>> import mindspore.nn as nn
@@ -1382,6 +1384,7 @@ class Send(PrimitiveWithInfer):
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
             This example should be run with 2 devices.
+
         >>> import numpy as np
         >>> from mindspore import ops
         >>> import mindspore.nn as nn
@@ -1456,6 +1459,7 @@ class Receive(PrimitiveWithInfer):
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
             This example should be run with 2 devices.
+
         >>> import numpy as np
         >>> from mindspore import ops
         >>> import mindspore.nn as nn

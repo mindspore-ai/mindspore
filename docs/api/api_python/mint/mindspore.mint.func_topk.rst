@@ -1,7 +1,7 @@
 mindspore.mint.topk
 ===================
 
-.. py:function:: mindspore.mint.topk(input, k, dim=None, largest=True, sorted=True)
+.. py:function:: mindspore.mint.topk(input, k, dim=-1, largest=True, sorted=True)
 
     沿给定维度查找 `k` 个最大或最小元素和对应的索引。
 

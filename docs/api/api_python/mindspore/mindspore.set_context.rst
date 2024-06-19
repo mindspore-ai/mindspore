@@ -295,15 +295,14 @@ mindspore.set_context
 
           - **matmul_allow_tf32** (bool): 该标志表示是否开启矩阵乘在CUBLAS下的TF32张量核计算。默认值： ``False`` 。
 
-      - **jit_config** (dict) - 设置全局编译选项的配置，只在使用Cell或者jit装饰器定义的网络中生效，默认不设置。
-        context设置全局jit config，而JitConfig设置局部网络的jit config，二者同时存在时，全局jit config不会覆盖局部网络的jit config。
+        - **jit_config** (dict) - 设置全局编译选项的配置，只在使用Cell或者jit装饰器定义的网络中生效，默认不设置。
+          context设置全局jit config，而JitConfig设置局部网络的jit config，二者同时存在时，全局jit config不会覆盖局部网络的jit config。
 
-        - **jit_level** (str): 用来控制编译优化级别。默认值为空，框架自动选择优化级别。其值范围如下：
+          - **jit_level** (str): 用来控制编译优化级别。默认值为空，框架自动选择优化级别。其值范围如下：
 
-          - O0: 除必要影响功能的优化外，其他优化均关闭，使用逐算子执行的执行方式。
-          - O1: 使能常用优化和自动算子融合优化，使用逐算子执行的执行方式。
-          - O2: 开启极致性能优化，使用下沉的执行方式。
-
+            - O0: 除必要影响功能的优化外，其他优化均关闭，使用逐算子执行的执行方式。
+            - O1: 使能常用优化和自动算子融合优化，使用逐算子执行的执行方式。
+            - O2: 开启极致性能优化，使用下沉的执行方式。
 
     异常：
         - **ValueError** - 输入key不是上下文中的属性。

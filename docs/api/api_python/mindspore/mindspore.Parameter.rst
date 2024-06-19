@@ -1,7 +1,7 @@
 ﻿mindspore.Parameter
 ========================
 
-.. py:class:: mindspore.Parameter(default_input, name=None, requires_grad=True, layerwise_parallel=False, parallel_optimizer=True)
+.. py:class:: mindspore.Parameter(default_input, name=None, requires_grad=True, layerwise_parallel=False, parallel_optimizer=True, storage_format="")
 
     `Parameter` 是 `Tensor` 的子类，当它们被绑定为Cell的属性时，会自动添加到其参数列表中，并且可以通过Cell的某些方法获取，例如 `cell.get_parameters()` 。
 
