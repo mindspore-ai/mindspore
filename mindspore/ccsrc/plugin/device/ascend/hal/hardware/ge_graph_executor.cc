@@ -648,7 +648,8 @@ void GeGraphExecutor::AllocConstMemory(const transform::RunOptions &options, con
     MS_LOG(WARNING) << "Need Profile Memory, alloc type: ConstMemory, size: " << memory_size
                     << ", graph: " << graph->ToString() << ", device address addr: " << memory;
   }
-  UpdateTracker("AllocConstMemory", "", graph->ToString(), memory_size, memory, device::tracker::MemType::kGeConst);
+  UpdateTracker("AllocConstMemory", "ConstMemory", graph->ToString(), memory_size, memory,
+                device::tracker::MemType::kGeConst);
   auto graph_runner = transform::GetGraphRunner();
   MS_EXCEPTION_IF_NULL(graph_runner);
   auto ret = graph_runner->SetConstMemory(options, memory, memory_size);
