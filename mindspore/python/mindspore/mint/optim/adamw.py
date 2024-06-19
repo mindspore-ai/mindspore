@@ -116,7 +116,7 @@ class AdamW(Optimizer):
         ValueError: If the `weight_decay` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> import mindspore
@@ -160,7 +160,7 @@ class AdamW(Optimizer):
         self.exp_avg = self.parameters.clone(prefix="exp_avg", init='zeros')
         self.exp_avg_sq = self.parameters.clone(prefix="exp_avg_sq", init='zeros')
         self.max_exp_avg_sq = self.parameters.clone(prefix="max_exp_avg_sq", init='zeros')
-        self.state_step = Parameter(Tensor([0], mstype.float32), "state_step")
+        self.state_step = Parameter(Tensor([-1], mstype.float32), "state_step")
         self.increase_tensor = Tensor(1, mstype.float32)
         self.assignadd = P.AssignAdd()
         self.op_cast = P.Cast()
