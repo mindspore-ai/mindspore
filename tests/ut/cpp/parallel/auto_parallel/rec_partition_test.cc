@@ -271,9 +271,12 @@ TEST_F(TestPartition, test_ApplyStrToTensor) {
 /// Description:
 /// Expectation: success
 TEST_F(TestPartition, test_get_dp_mp) {
-  std::shared_ptr<Graph> graph = MakeMatMulData(9);
   size_t dp, mp;
-  std::tie(dp, mp) = GetDPAndMP(graph);
+  bool isTraining = true;
+  double device_memory = 1024.0 * 1024.0 * 1024.0 * 16.0;
+  std::shared_ptr<Graph> graph = MakeMatMulData(9);
+  PartitionForAllDevices(8, device_memory, graph, isTraining, nullptr);
+  std::tie(dp, mp) = GetDPAndMP(graph, 1);
   ASSERT_GT(dp, 0);
   ASSERT_GT(mp, 0);
   ASSERT_LE(dp, GetNumDevices());

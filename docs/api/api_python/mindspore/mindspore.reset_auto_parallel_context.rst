@@ -19,4 +19,5 @@ mindspore.reset_auto_parallel_context
     - enable_parallel_optimizer：False。
     - enable_alltoall：False。
     - pipeline_stages：1。
+    - auto_pipeline：False。
     - fusion_threshold：64。

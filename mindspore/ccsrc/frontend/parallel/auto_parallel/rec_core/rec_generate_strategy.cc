@@ -226,7 +226,10 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
                       const std::vector<std::vector<size_t>> &param_users_ops_index, const FuncGraphPtr &root) {
   RecStrategyPropagator propagator(graph, ops, eli_list, input_tensor_names, index_list, is_training,
                                    param_users_ops_index, root);
-  propagator.ExtraShardMatmulOnBatchDim();
+
+  if (g_device_manager->DeviceNum() > SIZE_THIRTY_TWO) {
+    propagator.ExtraShardMatmulOnBatchDim();
+  }
   if (is_training) {
     propagator.GenerateStrategyV3();
   } else {
