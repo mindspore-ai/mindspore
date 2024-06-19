@@ -47,6 +47,7 @@ const mindspore::HashSet<std::string> kHookOp = {"HookBackward", "CellBackwardHo
 constexpr char kGrad[] = "grad";
 constexpr auto kNeedRecompute = "is_cell_recompute";
 constexpr auto kInternalParams = "internal_params";
+constexpr auto kUsedBpropInputs = "used_bprop_inputs";
 constexpr size_t kContainerRatio = 2;
 
 void ParsePyArgsToInputArgsInfo(const InputArgsInfoPtr &input_args_info, const py::object &obj, const py::args &args,
@@ -436,6 +437,49 @@ std::string GetInputArgsId(const py::args &args) {
   }
   return input_args_id;
 }
+
+void SetCustomBpropInputs(const py::object &obj, const InputArgsInfoPtr &input_args_info) {
+  if (py::hasattr(obj, kUsedBpropInputs)) {
+    py::object object = py::getattr(obj, kUsedBpropInputs);
+    if (!py::isinstance<py::tuple>(object) && !py::isinstance<py::list>(object)) {
+      MS_LOG(EXCEPTION) << "For cell bprop, used bprop inputs sholud be tuple or list";
+    }
+    auto used_bprop_inputs = py::cast<py::tuple>(object);
+    std::unordered_set<int64_t> used_inputs;
+    for (size_t i = 0; i < used_bprop_inputs.size(); ++i) {
+      const auto value = PyNativeAlgo::DataConvert::PyObjToValue(used_bprop_inputs[i]);
+      MS_EXCEPTION_IF_NULL(value);
+      int used_index = GetValue<int64_t>(value);
+      (void)used_inputs.insert(used_index);
+    }
+    const size_t input_size = input_args_info->input_arg_value_vec.size();
+    for (size_t i = 0; i < input_size; ++i) {
+      const auto &input_value = input_args_info->input_arg_value_vec[i];
+      if (used_inputs.find(i) == used_inputs.end()) {
+        auto fake_value = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(input_value);
+        input_args_info->input_arg_value_vec[i] = fake_value;
+      }
+    }
+    if (used_inputs.find(input_size) == used_inputs.end()) {
+      auto fake_value = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(input_args_info->out_value);
+      input_args_info->out_value = fake_value;
+    }
+  }
+
+  if (py::hasattr(obj, kInternalParams)) {
+    py::object weights = py::getattr(obj, kInternalParams);
+    if (py::isinstance<py::tuple>(weights) || py::isinstance<py::list>(weights)) {
+      auto weights_tuple = py::cast<py::tuple>(weights);
+      for (size_t i = 0; i < weights_tuple.size(); ++i) {
+        const auto value = PyNativeAlgo::DataConvert::PyObjToValue(weights_tuple[i]);
+        auto tensor = value->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor);
+        (void)input_args_info->input_arg_value_vec.emplace_back(tensor);
+        (void)input_args_info->input_arg_id_vec.emplace_back(tensor->id());
+      }
+    }
+  }
+}
 }  // namespace
 
 ForwardExecutorPtr GradExecutor::forward() const {
@@ -818,6 +862,7 @@ void GradExecutor::EndGraphInner(const py::object &obj, const py::object &out, c
         ConvertOutputValueToTensor(input_args_info->out_value, !top_cell()->jit_out_has_dict());
     }
     const auto &out_id = PyNativeAlgo::Common::GetIdByValue(input_args_info->out_value);
+    SetCustomBpropInputs(obj, input_args_info);
     DoGradForCustomBprop(input_args_info, out_id);
   }
 
@@ -931,28 +976,16 @@ void GradExecutor::GetCustomBpropPrim(const py::object &obj, const py::args &arg
     input_args_info->is_need_recompute = cell_ptr->HasAttr(kNeedRecompute);
     fake_prim->set_bprop_cls_name(cell_ptr->name());
   }
-  if (py::hasattr(obj, kInternalParams)) {
-    py::object weights = py::getattr(obj, kInternalParams);
-    if (py::isinstance<py::tuple>(weights) || py::isinstance<py::list>(weights)) {
-      auto weights_tuple = py::cast<py::tuple>(weights);
-      for (size_t i = 0; i < weights_tuple.size(); ++i) {
-        const auto value = PyNativeAlgo::DataConvert::PyObjToValue(weights_tuple[i]);
-        auto tensor = value->cast<tensor::TensorPtr>();
-        MS_EXCEPTION_IF_NULL(tensor);
-        (void)input_args_info->input_arg_value_vec.emplace_back(tensor);
-        (void)input_args_info->input_arg_id_vec.emplace_back(tensor->id());
-      }
+  if (input_args_info->input_arg_value_vec.empty()) {
+    for (size_t i = 0; i < args.size(); ++i) {
+      (void)input_args_info->input_arg_value_vec.emplace_back(PyNativeAlgo::DataConvert::PyObjToValue(args[i]));
     }
   }
   fake_prim->AddBackwardHookFn(0, bprop_func);
 
   (void)fake_prim->AddAttr("cell_id", MakeValue(input_args_info->cell_id));
   (void)fake_prim->AddAttr(parse::CUSTOM_BPROP_NAME, MakeValue(true));
-  if (input_args_info->input_arg_value_vec.empty()) {
-    for (size_t i = 0; i < args.size(); ++i) {
-      (void)input_args_info->input_arg_value_vec.emplace_back(PyNativeAlgo::DataConvert::PyObjToValue(args[i]));
-    }
-  }
+
   input_args_info->custom_bprop_prim = fake_prim;
 }
 
