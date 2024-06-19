@@ -66,7 +66,6 @@ def compile_net(net):
     context.reset_auto_parallel_context()
 
 
-@pytest.mark.skip(reason="fail")
 def test_dynamic_shape_merge_allgather():
     """
     Feature: test dynamic shape merge allgather
