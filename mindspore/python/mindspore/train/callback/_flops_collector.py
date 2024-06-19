@@ -24,7 +24,6 @@ from math import floor
 from mindspore import _checkparam as Validator
 from mindspore.train.callback._callback import Callback
 from mindspore.common.api import flops_collection
-from mindspore import log as logger
 
 from mindspore.communication.management import (create_group, get_group_size,
                                                 get_rank)
@@ -79,7 +78,7 @@ class FlopsUtilizationCollector(Callback):
         >>> net = nn.Dense(10, 5)
         >>> crit = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-        >>> flops_callback = FlopsUtilizationCollector(data.get_dataset_size(), computility=10e6)
+        >>> flops_callback = FlopsUtilizationCollector(train_dataset.get_dataset_size(), computility=10e6)
         >>> model = Model(network=net, optimizer=opt, loss_fn=crit, metrics={"recall"})
         >>> model.train(2, train_dataset, callbacks=[flops_callback])
         Full model flops is 6400, Full hardware flops is 6400, Shard model flops is 6400, Shard hardware flops is 6400
@@ -188,9 +187,9 @@ class FlopsUtilizationCollector(Callback):
                     f.write(model_flops_log)
                     f.write(hardware_flops_log)
             if self.verbose:
-                flops_log = f"Full model flops is {full_model_flops}, Full hardware flops is {full_hardware_flops}," \
+                flops_log = f"Full model flops is {full_model_flops}, Full hardware flops is {full_hardware_flops}, " \
                             f"Shard model flops is {shard_model_flops}, Shard hardware flops is {shard_hardware_flops}."
-                logger.info(flops_log)
+                print(flops_log, flush=True)
                 if auto_parallel_context().get_pipeline_stages() > 1:
                     pipeline_group_list, pipeline_group_name = self._get_pipeline_group()
                     auto_parallel_context().set_pipeline_stages(1)
@@ -221,6 +220,8 @@ class FlopsUtilizationCollector(Callback):
             modes = stat.S_IWUSR | stat.S_IRUSR
             with os.fdopen(os.open(self.time_step_path, flags, modes), 'w') as f:
                 f.write(train_log + '\n')
+        train_log = "{} epoch time: {:5.3f} ms, per step time: {:5.3f} ms".format(
+            cb_params.mode.title(), epoch_seconds, step_seconds)
         if self.verbose:
             mfu = 1000 * self.full_mfu / step_seconds
             hfu = 1000 * self.full_hfu / step_seconds
@@ -230,4 +231,4 @@ class FlopsUtilizationCollector(Callback):
                 return index + '{1:.{0}f}%'.format(digits, floor(val) / 10 ** digits)
             train_log += floored_percentage(' mfu:', mfu, 2)
             train_log += floored_percentage(' hfu:', hfu, 2)
-            logger.info(train_log)
+            print(train_log, flush=True)
