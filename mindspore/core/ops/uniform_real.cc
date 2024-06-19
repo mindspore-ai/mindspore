@@ -78,7 +78,7 @@ BaseShapePtr UniformRealInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(tensor_type);
     element_type = tensor_type->element()->type_id();
   } else if (CheckAndConvertUtils::IsTuple(x)) {
-    auto tuple_type = x->BuildType()->cast<TuplePtr>();
+    auto tuple_type = x->GetType()->cast<TuplePtr>();
     if (tuple_type->dynamic_len()) {
       element_type = tuple_type->dynamic_element_type()->type_id();
     } else {
