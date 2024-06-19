@@ -816,6 +816,9 @@ AnfNodePtr GetChildCastNode(const AnfNodePtr &node_ptr, const NodeUsersMap &node
 // computation node. This function is used to find the target type for CreateFP16Cast. Only returns the target type if
 // it is float16, and the source node is float32. If the situation is not matched, then return the nullptr.
 TypePtr FindChildCastWithFP32ToFP16(const std::pair<AnfNodePtr, int> &res, const NodeUsersMap &node_users_map) {
+  if (ParallelContext::GetInstance()->pipeline_stage_split_num() <= 1) {
+    return nullptr;
+  }
   auto cnode_ptr = res.first->cast<CNodePtr>();
   if (!cnode_ptr) {
     return nullptr;
