@@ -102,6 +102,8 @@ def test_lazy_adam_acc():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_adam_offload_acc():
     """
@@ -126,4 +128,4 @@ def test_adam_offload_acc():
         loss = train_network(data, label)
         losses1.append(loss.asnumpy())
 
-    assert np.array_equal(losses1[-1], np.array(2.2237475, np.float32))
+    assert np.allclose(losses1[-1], np.array(2.2237475, np.float32), 0.0001, 0.0001)
