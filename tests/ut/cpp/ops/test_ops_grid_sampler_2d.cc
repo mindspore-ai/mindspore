@@ -92,16 +92,12 @@ auto GridSampler2DOpShapeTestCases = testing::ValuesIn({
     {1, 2, -1, 4}, {1, 6, 7, 2}, MakeValue("bilinear"), MakeValue("zeros"), MakeValue(false), {1, 2, 6, 7}},
   GridSampler2DShape{
     {1, -1, -1, -1}, {1, 6, -1, 2}, MakeValue("bilinear"), MakeValue("zeros"), MakeValue(false), {1, -1, 6, -1}},
-  GridSampler2DShape{{5, -1, -1, -1},
-                     {5, -1, 1, 2},
-                     MakeValue("bilinear"),
-                     MakeValue("zeros"),
-                     MakeValue(false),
-                     {5, -1, -1, 1}},
-  /* dynamic rank */
-  GridSampler2DShape{{-1, 3, 4, 5}, {-2}, MakeValue("nearest"), MakeValue("zeros"), MakeValue(false), {-1, 3, -1, -1}},
   GridSampler2DShape{
-    {-2}, {5, -1, 7, 2}, MakeValue("bilinear"), MakeValue("relection"), MakeValue(false), {5, -1, -1, 7}},
+    {5, -1, -1, -1}, {5, -1, 1, 2}, MakeValue("bilinear"), MakeValue("zeros"), MakeValue(false), {5, -1, -1, 1}},
+  /* dynamic rank */
+  GridSampler2DShape{{-1, 3, 4, 5}, {-2}, MakeValue("nearest"), MakeValue("zeros"), MakeValue(false), {-1, -1, -1, -1}},
+  GridSampler2DShape{
+    {-2}, {5, -1, 7, 2}, MakeValue("bilinear"), MakeValue("relection"), MakeValue(false), {-1, -1, -1, -1}},
   GridSampler2DShape{{-2}, {-2}, MakeValue("bilinear"), MakeValue("zeros"), MakeValue(false), {-1, -1, -1, -1}},
 });
 

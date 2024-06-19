@@ -15,79 +15,89 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/grid_sampler_grad_gpu_kernel.h"
+#include <utility>
+#include <vector>
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(GridSampler2DGrad,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
-                        .AddOutputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16),
-                      GridSampler2DGradKernelMod, half)
+std::vector<std::pair<KernelAttr, GridSampler2DGradKernelMod::KernelFunc>> GridSampler2DGradKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16),
+   &GridSampler2DGradKernelMod::LaunchKernel<half>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &GridSampler2DGradKernelMod::LaunchKernel<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &GridSampler2DGradKernelMod::LaunchKernel<double>}};
 
-MS_REG_GPU_KERNEL_ONE(GridSampler2DGrad,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
-                        .AddOutputAttr(kNumberTypeFloat32)
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      GridSampler2DGradKernelMod, float)
+std::vector<KernelAttr> GridSampler2DGradKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, KernelFunc> &pair) { return pair.first; });
+  return support_list;
+}
 
-MS_REG_GPU_KERNEL_ONE(GridSampler2DGrad,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
-                        .AddOutputAttr(kNumberTypeFloat64)
-                        .AddOutputAttr(kNumberTypeFloat64),
-                      GridSampler2DGradKernelMod, double)
+std::vector<std::pair<KernelAttr, GridSampler3DGradKernelMod::KernelFunc>> GridSampler3DGradKernelMod::func_list_ = {
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat16)
+     .AddOutputAttr(kNumberTypeFloat16),
+   &GridSampler3DGradKernelMod::LaunchKernel<half>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   &GridSampler3DGradKernelMod::LaunchKernel<float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &GridSampler3DGradKernelMod::LaunchKernel<double>}};
 
-MS_REG_GPU_KERNEL_ONE(GridSampler3DGrad,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
-                        .AddOutputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16),
-                      GridSampler3DGradKernelMod, half)
-
-MS_REG_GPU_KERNEL_ONE(GridSampler3DGrad,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
-                        .AddOutputAttr(kNumberTypeFloat32)
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      GridSampler3DGradKernelMod, float)
-
-MS_REG_GPU_KERNEL_ONE(GridSampler3DGrad,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
-                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
-                        .AddOutputAttr(kNumberTypeFloat64)
-                        .AddOutputAttr(kNumberTypeFloat64),
-                      GridSampler3DGradKernelMod, double)
+std::vector<KernelAttr> GridSampler3DGradKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, KernelFunc> &pair) { return pair.first; });
+  return support_list;
+}
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, GridSampler2DGrad, GridSampler2DGradKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, GridSampler3DGrad, GridSampler3DGradKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

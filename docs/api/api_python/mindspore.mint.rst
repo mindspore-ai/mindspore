@@ -57,6 +57,17 @@ mindspore.mint.nn
 mindspore.mint.nn.functional
 -----------------------------
 
+神经网络层函数
+^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.functional.grid_sample
+
+
 卷积函数
 ^^^^^^^^^^
 

@@ -125,10 +125,10 @@ auto GridSampler3DOpShapeTestCases = testing::ValuesIn({
                      {1, 2, 6, 7, 8}},
   /* dynamic rank */
   GridSampler3DShape{
-    {-1, 2, 3, 4, 5}, {-2}, MakeValue("nearest"), MakeValue("zeros"), MakeValue(false), {-1, 2, -1, -1, -1}},
+    {-1, 2, 3, 4, 5}, {-2}, MakeValue("nearest"), MakeValue("zeros"), MakeValue(false), {-1, -1, -1, -1, -1}},
   GridSampler3DShape{{-2}, {-2}, MakeValue("bilinear"), MakeValue("relection"), MakeValue(false), {-1, -1, -1, -1, -1}},
   GridSampler3DShape{
-    {-2}, {6, 7, 8, 9, 3}, MakeValue("bilinear"), MakeValue("relection"), MakeValue(false), {6, -1, 7, 8, 9}},
+    {-2}, {6, 7, 8, 9, 3}, MakeValue("bilinear"), MakeValue("relection"), MakeValue(false), {-1, -1, -1, -1, -1}},
 });
 
 auto GridSampler3DOpTypeTestCases = testing::ValuesIn({

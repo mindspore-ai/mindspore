@@ -43,7 +43,7 @@ BaseShapePtr GridSampler3DGradFuncImpl::InferShape(const PrimitivePtr &primitive
   auto grid_base_shape = input_args[kInputIndex2]->GetShape();
   MS_EXCEPTION_IF_NULL(grid_base_shape);
   auto grid_shape = grid_base_shape->GetShapeVector();
-  if (IsDynamicRank(input_x_shape) && IsDynamicRank(grid_shape)) {
+  if (IsDynamicRank(input_x_shape) || IsDynamicRank(grid_shape)) {
     return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{
       std::make_shared<abstract::TensorShape>(ShapeVector{
         abstract::TensorShape::kShapeDimAny, abstract::TensorShape::kShapeDimAny, abstract::TensorShape::kShapeDimAny,
@@ -88,22 +88,24 @@ BaseShapePtr GridSampler3DGradFuncImpl::InferShape(const PrimitivePtr &primitive
   }
   std::vector<int64_t> out_shape = {input_x_shape[kInputIndex0], input_x_shape[kInputIndex1], grid_shape[kInputIndex1],
                                     grid_shape[kInputIndex2], grid_shape[kInputIndex3]};
-  bool shape_error = false;
-  for (size_t i = kInputIndex0; i < k5DSize; i++) {
-    if (out_shape[i] != grad_shape[i]) {
-      shape_error = true;
-      break;
+  if (!IsDynamic(out_shape) && !IsDynamic(grad_shape)) {
+    bool shape_error = false;
+    for (size_t i = kInputIndex0; i < k5DSize; i++) {
+      if (out_shape[i] != grad_shape[i]) {
+        shape_error = true;
+        break;
+      }
     }
-  }
-  if (shape_error) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', the shape of 'grad' must be the same as that of output, but got 'grad' shape: "
-                             << input_args[kInputIndex0]->GetShape()->ToString() << ", output shape: ("
-                             << std::to_string(out_shape[kInputIndex0]) << ", "
-                             << std::to_string(out_shape[kInputIndex1]) << ", "
-                             << std::to_string(out_shape[kInputIndex2]) << ", "
-                             << std::to_string(out_shape[kInputIndex3]) << ", "
-                             << std::to_string(out_shape[kInputIndex4]) << ").";
+    if (shape_error) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', the shape of 'grad' must be the same as that of output, but got 'grad' shape: "
+                               << input_args[kInputIndex0]->GetShape()->ToString() << ", output shape: ("
+                               << std::to_string(out_shape[kInputIndex0]) << ", "
+                               << std::to_string(out_shape[kInputIndex1]) << ", "
+                               << std::to_string(out_shape[kInputIndex2]) << ", "
+                               << std::to_string(out_shape[kInputIndex3]) << ", "
+                               << std::to_string(out_shape[kInputIndex4]) << ").";
+    }
   }
   abstract::TensorShapePtr dx_shape = std::make_shared<abstract::TensorShape>(input_x_shape);
   abstract::TensorShapePtr dgrid_shape = std::make_shared<abstract::TensorShape>(grid_shape);

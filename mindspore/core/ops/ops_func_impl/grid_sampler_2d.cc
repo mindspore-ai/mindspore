@@ -41,7 +41,7 @@ BaseShapePtr GridSampler2DFuncImpl::InferShape(const PrimitivePtr &primitive,
   const int64_t label3 = 3;
   const int64_t num2 = 2;
   // dynamic rank
-  if (IsDynamicRank(input_x_shape) && IsDynamicRank(grid_shape)) {
+  if (IsDynamicRank(input_x_shape) || IsDynamicRank(grid_shape)) {
     return std::make_shared<abstract::TensorShape>(
       ShapeVector{abstract::TensorShape::kShapeDimAny, abstract::TensorShape::kShapeDimAny,
                   abstract::TensorShape::kShapeDimAny, abstract::TensorShape::kShapeDimAny});
