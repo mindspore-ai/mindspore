@@ -23,6 +23,7 @@
 #include "ops/ops_frontend_func_impl.h"
 #include "ops/op_utils.h"
 #include "utils/ms_context.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -35,25 +36,12 @@ TypePtr DivFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<
   auto prim_name = primitive->name();
   auto x_dtype = input_args[kIndex0]->GetType();
   auto y_dtype = input_args[kIndex1]->GetType();
-
-  // temporary code for aclnnLog，need to be deleted when aclnnDiv is done
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    static std::set<int> x_set = {kNumberTypeUInt8, kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32,
-                                  kNumberTypeInt64};
-    static std::set<int> integral_set = {kNumberTypeBool,  kNumberTypeUInt8, kNumberTypeInt8,
-                                         kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64};
-    auto x_tensor_type = x_dtype->cast<TensorTypePtr>();
-    auto y_tensor_type = y_dtype->cast<TensorTypePtr>();
-    MS_EXCEPTION_IF_NULL(x_tensor_type);
-    MS_EXCEPTION_IF_NULL(y_tensor_type);
-    auto x_type_id = x_tensor_type->element()->type_id();
-    auto y_type_id = y_tensor_type->element()->type_id();
-    if ((x_type_id == kNumberTypeFloat32 && integral_set.find(y_type_id) != integral_set.end()) ||
-        (x_set.find(x_type_id) != x_set.end() && integral_set.find(y_type_id) != integral_set.end())) {
-      return kFloat32;
-    }
+  static std::set<int> x_set = {kNumberTypeBool,   kNumberTypeUInt8,  kNumberTypeInt8,
+                                kNumberTypeInt16,  kNumberTypeUInt16, kNumberTypeInt32,
+                                kNumberTypeUInt32, kNumberTypeInt64,  kNumberTypeUInt64};
+  auto input_type_id = x_dtype->cast<TensorTypePtr>()->element()->type_id();
+  if (x_set.find(input_type_id) != x_set.end()) {
+    return std::make_shared<TensorType>(kFloat32);
   }
 
   std::map<std::string, TypePtr> types;
@@ -61,5 +49,24 @@ TypePtr DivFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<
   (void)types.emplace("y", y_dtype);
   return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types_with_complex, prim_name);
 }
+TypePtrList DivFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &x_dtype = x_tensor->Dtype();
+  const auto &x_type_id = x_tensor->Dtype()->type_id();
+  static const std::vector<TypeId> int_or_bool = {kNumberTypeUInt8, kNumberTypeInt8,  kNumberTypeInt16,
+                                                  kNumberTypeInt32, kNumberTypeInt64, kNumberTypeBool};
+  bool is_int_or_bool = std::any_of(int_or_bool.begin(), int_or_bool.end(),
+                                    [&x_type_id](const TypeId &type_id) { return x_type_id == type_id; });
+  if (is_int_or_bool) {
+    return {kFloat32};
+  } else {
+    return {x_dtype};
+  }
+}
+ShapeArray DivFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {BroadCastInferShape(primitive->name(), input_values)};
+}
+REGISTER_SIMPLE_INFER(kNameDiv, DivFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

@@ -38,7 +38,8 @@ Pointwise Operations
 
     mindspore.mint.abs
     mindspore.mint.unique
-
+    mindspore.mint.div
+    mindspore.mint.divide
 
 BLAS and LAPACK Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -23,6 +23,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -33,5 +34,12 @@ BaseShapePtr GreaterFuncImpl::InferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
   return BroadCastInferShape(primitive->name(), input_args);
 }
+TypePtrList GreaterFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {kBool};
+}
+ShapeArray GreaterFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {BroadCastInferShape(primitive->name(), input_values)};
+}
+REGISTER_SIMPLE_INFER(kNameGreater, GreaterFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

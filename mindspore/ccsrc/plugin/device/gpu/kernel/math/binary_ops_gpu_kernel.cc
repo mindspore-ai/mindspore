@@ -145,6 +145,19 @@ std::vector<KernelAttr> BroadcastOptGpuKernelMod::GetOpSupport() {
     MS_REG_BROADCAST_OP_MIX_COMPLEX_TYPE(OP_TYPE, kNumberTypeFloat32, kNumberTypeComplex64, float, Complex<float>), \
     MS_REG_BROADCAST_OP_MIX_COMPLEX_TYPE(OP_TYPE, kNumberTypeFloat64, kNumberTypeComplex128, double, Complex<double>)
 
+#define MS_REG_BROADCAST_DIV_INT_TYPE(OP_TYPE, NUM_TYPE, TYPE) \
+  MS_REG_BROADCAST_OP_DIFF_TYPE(OP_TYPE, NUM_TYPE, NUM_TYPE, kNumberTypeFloat32, TYPE, TYPE, float)
+
+#define MS_REG_BROADCAST_DIV_INT_TO_FLOAT_TYPE(OP_TYPE)                  \
+  MS_REG_BROADCAST_DIV_INT_TYPE(OP_TYPE, kNumberTypeUInt8, uint8_t),     \
+    MS_REG_BROADCAST_DIV_INT_TYPE(OP_TYPE, kNumberTypeUInt16, uint16_t), \
+    MS_REG_BROADCAST_DIV_INT_TYPE(OP_TYPE, kNumberTypeUInt32, uint32_t), \
+    MS_REG_BROADCAST_DIV_INT_TYPE(OP_TYPE, kNumberTypeUInt64, uint64_t), \
+    MS_REG_BROADCAST_DIV_INT_TYPE(OP_TYPE, kNumberTypeInt8, int8_t),     \
+    MS_REG_BROADCAST_DIV_INT_TYPE(OP_TYPE, kNumberTypeInt16, int16_t),   \
+    MS_REG_BROADCAST_DIV_INT_TYPE(OP_TYPE, kNumberTypeInt32, int32_t),   \
+    MS_REG_BROADCAST_DIV_INT_TYPE(OP_TYPE, kNumberTypeInt64, int64_t)
+
 #define MS_REG_BROADCAST_COMP_OP_TYPE(OP_TYPE, NUM_TYPE, TYPE) \
   MS_REG_BROADCAST_OP_DIFF_TYPE(OP_TYPE, NUM_TYPE, NUM_TYPE, kNumberTypeBool, TYPE, TYPE, bool)
 
@@ -186,7 +199,7 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastOptGpuKernelMod
      {MS_REG_BROADCAST_OP_INT_TYPE(BinaryOpType::kMul), MS_REG_BROADCAST_OP_FLOAT_TYPE(BinaryOpType::kMul),
       MS_REG_BROADCAST_OP_COMPLEX_TYPE(BinaryOpType::kMul)}},
     {"Div",
-     {MS_REG_BROADCAST_OP_INT_TYPE(BinaryOpType::kDiv), MS_REG_BROADCAST_OP_FLOAT_TYPE(BinaryOpType::kDiv),
+     {MS_REG_BROADCAST_DIV_INT_TO_FLOAT_TYPE(BinaryOpType::kDiv), MS_REG_BROADCAST_OP_FLOAT_TYPE(BinaryOpType::kDiv),
       MS_REG_BROADCAST_OP_COMPLEX_TYPE(BinaryOpType::kDiv)}},
     {"Pow",
      {MS_REG_BROADCAST_OP_INT_TYPE(BinaryOpType::kPow), MS_REG_BROADCAST_OP_FLOAT_TYPE(BinaryOpType::kPow),

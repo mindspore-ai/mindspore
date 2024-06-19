@@ -72,7 +72,7 @@ def test_div_infer_value(mode):
     out2 = div_infer_value1()
     np_x2 = np.array([[2, 2], [3, 3]]).astype(np.int64)
     np_y2 = np.array([3]).astype(np.int64)
-    expect2 = (np_x2 / np_y2).astype(np.int64)
+    expect2 = np_x2 / np_y2
     assert np.allclose(out2.asnumpy(), expect2)
 
 
