@@ -2338,6 +2338,8 @@ def check_checkpoint(ckpt_file_name):
         >>> print(check_result)
         True
     """
+    if not ckpt_file_name.endswith('.ckpt'):
+        return False
     checkpoint_list = Checkpoint()
     with _ckpt_fs.open(ckpt_file_name, *_ckpt_fs.open_args) as f:
         pb_content = f.read()
