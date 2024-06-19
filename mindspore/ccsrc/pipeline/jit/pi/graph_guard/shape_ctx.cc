@@ -49,7 +49,6 @@ ShapeContext::ShapeContext(PyFrameObject *f, PyObject *signature)
     std::vector<PyObject *> locals(&(frame_->f_localsplus[is_method_ ? 1 : 0]), &(frame_->f_localsplus[argc]));
     origin_ = locals;
   }
-  ApplySignature();
 }
 
 ShapeContext::~ShapeContext() {

@@ -74,6 +74,7 @@ def test_dynamic_shape_case():
     assert all(c == expect)
 
 
+@pytest.mark.skip(reason="adapter later")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu

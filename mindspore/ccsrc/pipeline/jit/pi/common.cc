@@ -935,6 +935,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
                                        "PIJitCapture");
     c->stat = JitCompileResults::GRAPH_BUILDING;
     GraphCapture(c);
+    sc.ApplySignature();
     if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
       PyFrameObject *f = PrepareCallCompiledCallable(tstate, c->origin_frame_, c);
       frame = py::reinterpret_steal<py::object>(reinterpret_cast<PyObject *>(f));
@@ -945,6 +946,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
       AddGuardForGlobals(f, c->code->GetGuard(), c->conf->GetBoolConfig(GraphJitConfig::kGuardDetachObject));
     }
   }
+  sc.ApplySignature();
 
   if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
     TimeRecorder time_recorder("kTimeCompileGraph", kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
