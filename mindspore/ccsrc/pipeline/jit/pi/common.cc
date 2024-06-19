@@ -1005,6 +1005,37 @@ std::vector<py::object> PackArgs(const PyFrameObject *frame) {
   return {args, vargs, kwvargs};
 }
 
+static py::object ResultMutable(py::object obj) {
+  py::object mutable_func = Utils::GetModuleAttr("mindspore.common", "mutable", false, true);
+  if (py::isinstance<py::tuple>(obj)) {
+    auto tuple_obj = obj.cast<py::tuple>();
+    py::list mutable_list(tuple_obj);
+    for (size_t i = 0; i < tuple_obj.size(); i++) {
+      try {
+        auto mutable_element = mutable_func(tuple_obj[i]);
+        mutable_list[i] = mutable_element;
+      } catch (py::error_already_set &e) {
+        if (PyErr_Occurred()) {
+          PyErr_Clear();
+        }
+        continue;
+      }
+    }
+    auto mutable_tuple = py::tuple(mutable_list);
+    return mutable_tuple;
+  } else {
+    try {
+      auto mutable_obj = mutable_func(obj);
+      return mutable_obj;
+    } catch (py::error_already_set &e) {
+      if (PyErr_Occurred()) {
+        PyErr_Clear();
+      }
+    }
+  }
+  return obj;
+}
+
 static py::object CallGraph(const JitCompileResults *c, const py::object &args, const py::object &kwvargs) {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureRunGraph,
                                      "PIJitRunGraph");
@@ -1032,7 +1063,8 @@ static py::object CallGraph(const JitCompileResults *c, const py::object &args, 
   if (res == NULL && !PyErr_Occurred()) {
     PyErr_SetString(PyExc_RuntimeError, "compiled graph execute failed");
   }
-  return py::reinterpret_steal<py::object>(res);
+  auto res_obj = py::reinterpret_steal<py::object>(res);
+  return ResultMutable(res_obj);
 }
 
 static py::object CallCompiledCallable(PyThreadState *tstate, PyFrameObject *f, const JitCompileResults *c) {
@@ -1177,6 +1209,10 @@ static bool PreferCallGraph(const JitCompileResults *c, py::object args) {
   }
   py::tuple t = py::cast<py::tuple>(args);
   for (size_t i = 0; i < t.size(); ++i) {
+    py::object obj = t[i];
+    if (IsMutableObj(obj)) {
+      continue;
+    }
     if ((py::isinstance<py::list>(t[i]) || py::isinstance<py::tuple>(t[i])) && CheckTensorInContainer(t[i])) {
       return false;
     }

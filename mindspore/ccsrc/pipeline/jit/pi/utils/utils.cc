@@ -278,6 +278,8 @@ bool HasMutableOrConstAttr(PyObject *obj) {
   return py::hasattr(pyObj, kMutableAttr) || py::hasattr(pyObj, kConstArgAttr);
 }
 
+bool IsMutableObj(const py::object &obj) { return py::getattr(obj, kMutableAttr, nullptr).ptr() == Py_True; }
+
 bool CheckMutableOrNonConstAttr(PyObject *obj) {
   auto pyObj = py::cast<py::object>(obj);
   if (py::hasattr(pyObj, kMutableAttr)) {
