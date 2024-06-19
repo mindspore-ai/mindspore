@@ -52,14 +52,13 @@ std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr, tensor::BaseTensorPtr> 
   auto &all_acl_tensor = std::get<2>(return_value);
   // update shape
   auto output_real_shape0 = transform::UpdateOutputShape(all_acl_tensor.get<4>());
-  outputs[0]->set_shape(output_real_shape0);
   auto output_real_shape1 = transform::UpdateOutputShape(all_acl_tensor.get<5>());
-  outputs[1]->set_shape(output_real_shape1);
   auto output_real_shape2 = transform::UpdateOutputShape(all_acl_tensor.get<6>());
-  outputs[2]->set_shape(output_real_shape2);
-  std::vector<AbstractBasePtr> outputs_abs = {outputs[0]->ToAbstract(), outputs[1]->ToAbstract(),
-                                              outputs[2]->ToAbstract()};
-  op->set_output_abs(std::make_shared<abstract::AbstractTuple>(outputs_abs));
+  auto simple_infer_ptr = op->output_value_simple_info();
+  simple_infer_ptr->shape_vector_ = ShapeArray{output_real_shape0, output_real_shape1, output_real_shape2};
+  op->output(0)->set_shape(output_real_shape0);
+  op->output(1)->set_shape(output_real_shape1);
+  op->output(2)->set_shape(output_real_shape2);
   MS_LOG(DEBUG) << "Run device task unique2 end";
 
   return std::make_tuple(op->output(0), op->output(1), op->output(2));
