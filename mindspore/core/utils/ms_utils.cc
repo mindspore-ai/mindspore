@@ -36,6 +36,7 @@ const char *SafeCStr(const std::string &&str) {
   return STR_HOLDER[cur_index].c_str();
 }
 
+namespace {
 class Config {
  public:
   static std::string GetValue(const std::string &config, const std::string &config_key);
@@ -84,6 +85,7 @@ std::string Config::GetValue(const std::string &config, const std::string &confi
 }
 
 void Config::Reset(const std::string &config) { (void)has_parsed_config.erase(config); }
+}  // namespace
 
 MS_CORE_API void ResetConfig(const std::string &config) { Config::Reset(config); }
 
