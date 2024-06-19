@@ -70,7 +70,7 @@ class LinSpaceExtInfo : public LinSpaceInfo {
 
  private:
   Status ComputeReplaceGraph(const CNodePtr &cnode) override;
-  int64_t dtype_ = 0;
+  AnfNodePtr dtype_;
 };
 }  // namespace parallel
 }  // namespace mindspore
