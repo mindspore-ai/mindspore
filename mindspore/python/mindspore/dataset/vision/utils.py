@@ -638,7 +638,7 @@ def read_video(filename, start_pts=0, end_pts=None, pts_unit="pts"):
         start_pts(Union[float, Fraction, int], optional): The start presentation timestamp of the video. Default: 0.
         end_pts(Union[float, Fraction, int], optional): The end presentation timestamp of the video. Default: None.
             The None is represented by 2147483647.
-        pts_unit(str, optional)): The unit of the timestamps. It can be any of ["pts", "sec"]. Default: "pts".
+        pts_unit(str, optional): The unit of the timestamps. It can be any of ["pts", "sec"]. Default: "pts".
 
     Returns:
         - numpy.ndarray, four dimensions uint8 data for video. The format is [T, H, W, C]. `T` is the number of frames,

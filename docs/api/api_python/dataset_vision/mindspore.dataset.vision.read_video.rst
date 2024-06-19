@@ -9,8 +9,8 @@ mindspore.dataset.vision.read_video
 
     参数：
         - **filename** (str) - 待读取视频文件路径。
-        - **start_pts** (Union[float, fraction, int], 可选) - 视频的开始时间戳。默认值: 0。
-        - **end_pts** (Union[float, fraction, int], 可选) - 视频的结束时间戳。默认值: None，对应2147483647。
+        - **start_pts** (Union[float, Fraction, int], 可选) - 视频的开始时间戳。默认值: 0。
+        - **end_pts** (Union[float, Fraction, int], 可选) - 视频的结束时间戳。默认值: None，对应2147483647。
         - **pts_unit** (str, 可选) - 时间戳的单位，它可以是["pts", "sec"]中的任何一个。默认值: "pts"。
 
     返回：

@@ -10,7 +10,7 @@ mindspore.communication.comm_func.all_gather_into_tensor
 
     参数：
         - **tensor** (Tensor) - 输入待汇聚操作的Tensor，Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。
-        - **group** (str) - 工作的通信组，默认值： ``GlobalComm.WORLD_COMM_GROUP`` （即Ascend平台为 ``"hccl_world_group"`` ，GPU平台为 ``"nccl_world_group"`` ）。
+        - **group** (str，可选) - 工作的通信组，默认值： ``GlobalComm.WORLD_COMM_GROUP`` （即Ascend平台为 ``"hccl_world_group"`` ，GPU平台为 ``"nccl_world_group"`` ）。
 
     返回：
         Tensor，如果组中的device数量为N，则输出的shape为 :math:`(N, x_1, x_2, ..., x_R)` 。

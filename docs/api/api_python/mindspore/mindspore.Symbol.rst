@@ -11,7 +11,7 @@ mindspore.Symbol
         - **max** (int) - 最大值，表示此维度的最大长度。只有当它大于 `min` 值时才有效。默认值： ``0`` 。
         - **min** (int) - 最小值，表示此维度的最小长度，要求是正数。默认值： ``1`` 。
         - **divisor** (int) - 约数 :math:`d` 。默认值： ``1`` 。
-        - **remainder** (int) - 余数 :math:`r`。与 `divisor` 一起表示符号值为 :math:`d*N+r`，其中 :math:`N \ge 1`。 默认值： ``0`` 。
+        - **remainder** (int) - 余数 :math:`r`。与 `divisor` 一起表示符号值为 :math:`d * N + r, N \ge 1` 。 默认值： ``0`` 。
         - **unique** (bool) - 符号具有唯一值。当这个 `Symbol` 对象被 `Tensor` 多次引用时，如果 `unique` 为 ``True`` ，表示用到这个 `Symbol` 对象的维度的长度都相等；否则表示只共享符号信息，不一定相等。默认值： ``False`` 。
 
     输出：

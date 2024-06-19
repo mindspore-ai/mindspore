@@ -689,7 +689,7 @@ def get_process_group_ranks(group=GlobalComm.WORLD_COMM_GROUP):
             means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
 
     Returns:
-        List (List[int]): List of process ranks in the specified communication group.
+        List (List[int]), List of process ranks in the specified communication group.
 
     Raises:
         TypeError: If the `group` is not a str.

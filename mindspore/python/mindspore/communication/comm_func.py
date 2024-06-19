@@ -562,7 +562,7 @@ def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
     Note:
         The interface behavior only support Tensor input and scatter evenly, which
         is different from that of `pytoch.distributed.scatter`.
-        Only the tensor in process `src`(global rank) will do scatter.
+        Only the tensor in process `src` (global rank) will do scatter.
         Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
@@ -629,7 +629,7 @@ def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
     from processes according to dimension 0.
 
     Note:
-        Only the tensor in process `dst`(global rank) will keep the gathered tensor. The other process
+        Only the tensor in process `dst` (global rank) will keep the gathered tensor. The other process
         will keep a tensor with shape [1], which has no mathematical meaning.
         Only support PyNative mode, Graph mode is not currently supported.
 

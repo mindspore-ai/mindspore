@@ -35,7 +35,7 @@ def lazy_inline(fn=None, attrs=None, policy=None):
     Args:
         fn (function): `__init__` function of a cell.
         attrs (Union[list[string], string]): The attributes list to add for the cell.
-        policy: The policy of inline. Default is None.
+        policy (Union[None, "front"]): The policy of inline. Default is None.
 
             - ``None``: The cell will be compiled to sub graph and will not be inline.
             - ``"front"``: The cell will be compiled to sub graph first and will be inline at front end.
