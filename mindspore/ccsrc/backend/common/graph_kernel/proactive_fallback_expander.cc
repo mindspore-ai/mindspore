@@ -50,7 +50,11 @@ bool ProactiveFallbackExpander::Run(const FuncGraphPtr &func_graph) {
       MS_LOG(DEBUG) << "Start Fallback node: " << cnode->fullname_with_scope();
       auto func = [](const CNodePtr &cnode) -> bool {
         MS_EXCEPTION_IF_NULL(cnode);
-        for (const auto &input : cnode->inputs()) {
+        for (size_t i = 1; i < cnode->size(); i++) {
+          const auto &input = cnode->input(i);
+          if (!input->isa<ValueNode>()) {
+            continue;
+          }
           auto input_kernel_info = input->kernel_info_ptr();
           if (input_kernel_info == nullptr) {
             input_kernel_info = std::make_shared<device::KernelInfo>();
@@ -73,7 +77,7 @@ bool ProactiveFallbackExpander::Run(const FuncGraphPtr &func_graph) {
             info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
             info_builder->SetOutputsDeviceType(std::vector<TypeId>{scalar->type()->type_id()});
           } else {
-            MS_LOG(EXCEPTION) << "Unsupported value type.";
+            return false;
           }
           AnfAlgo::SetSelectKernelBuildInfo(info_builder->Build(), input.get());
         }
