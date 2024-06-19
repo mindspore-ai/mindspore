@@ -1,7 +1,7 @@
 mindspore.ops.CollectiveGather
 ==============================
 
-.. py:class:: mindspore.ops.CollectiveGather(dest_rank=0, group=GlobalComm.WORLD_COMM_GROUP)
+.. py:class:: mindspore.ops.CollectiveGather(dest_rank, group=GlobalComm.WORLD_COMM_GROUP)
 
     对通信组的输入张量进行聚合。操作会将每张卡的输入Tensor的第0维度上进行聚合，发送到对应卡上。
 
@@ -11,7 +11,7 @@ mindspore.ops.CollectiveGather
         
 
     参数：
-        - **dest_rank** (int，可选) - 表示发送目标的进程编号。只有该进程会接收汇聚张量。
+        - **dest_rank** (int) - 表示发送目标的进程编号。只有该进程会接收汇聚张量。
         - **group** (str，可选) - 表示通信域。默认值： ``GlobalComm.WORLD_COMM_GROUP`` 。
 
     输入：

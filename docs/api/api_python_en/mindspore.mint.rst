@@ -91,7 +91,7 @@ Non-linear activation functions
     :nosignatures:
     :template: classtemplate.rst
 
-    mindpsore.mint.nn.functional.leaky_relu
+    mindspore.mint.nn.functional.leaky_relu
 
 
 

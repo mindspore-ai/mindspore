@@ -1181,6 +1181,7 @@ class CollectiveScatter(Primitive):
                               [2. 3.]]
         Process with rank 1: [[4. 5.],
                               [6. 7.]]
+
     Tutorial Examples:
         - `Distributed Set Communication Primitives - CollectiveScatter
           <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#reducescatter>`_
@@ -1358,7 +1359,7 @@ class Send(PrimitiveWithInfer):
         sr_tag (int): The tag to identify the send/recv message. The message will
                       be received by the Receive op with the same "sr_tag".
         dest_rank (int): A required integer identifying the destination rank.
-        group (str): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.

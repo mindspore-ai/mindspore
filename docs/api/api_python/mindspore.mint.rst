@@ -91,7 +91,7 @@ mindspore.mint.nn.functional
     :nosignatures:
     :template: classtemplate.rst
 
-    mindpsore.mint.nn.functional.leaky_relu
+    mindspore.mint.nn.functional.leaky_relu
 
 
 
