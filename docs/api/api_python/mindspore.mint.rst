@@ -23,6 +23,7 @@ Tensor
     :template: classtemplate.rst
 
     mindspore.mint.index_select
+    mindspore.mint.topk
 
 数学运算
 -----------------

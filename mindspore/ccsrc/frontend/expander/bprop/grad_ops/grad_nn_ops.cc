@@ -718,8 +718,7 @@ REG_BPROP_BUILDER("TopkExt").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib) {
   auto indices = ib->TupleGetItem(out, kIndex1);
   auto dout0 = ib->TupleGetItem(dout, kIndex0);
   auto dim = ib->GetInput(kIndex2);
-  auto zeros = ib->ZerosLike(input_x);
-
+  auto zeros = ib->Emit("ZerosLikeExt", {input_x, ib->Value(static_cast<int64_t>(ib->GetDtypeId(input_x)))});
   auto dim_value = dim->BuildValue();
   MS_EXCEPTION_IF_CHECK_FAIL(dim_value != nullptr, "The input dim of 'Topk' must be constant.");
   MS_EXCEPTION_IF_CHECK_FAIL(!dim_value->isa<ValueAny>(), "The input dim of 'Topk' must be constant.");

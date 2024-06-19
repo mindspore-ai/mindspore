@@ -26,7 +26,7 @@ from mindspore.ops.function.array_func import zeros_like_ext as zeros_like
 from mindspore.ops.auto_generate import abs
 # 1
 from mindspore.ops.function.math_func import divide, div
-from mindspore.ops.function.array_func import topk_ext as topk
+from mindspore.ops.auto_generate import topk_ext as topk
 # 2
 from mindspore.ops.function.math_func import sin
 # 3

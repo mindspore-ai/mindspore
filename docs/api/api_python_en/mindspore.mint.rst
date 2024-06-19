@@ -23,6 +23,7 @@ Indexing, Slicing, Joining, Mutating Operations
     :template: classtemplate.rst
 
     mindspore.mint.index_select
+    mindspore.mint.topk
 
 Math Operations
 -----------------

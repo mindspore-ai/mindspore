@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -72,14 +73,18 @@ BaseShapePtr TopkExtFuncImpl::InferShape(const PrimitivePtr &primitive,
     MS_LOG(EXCEPTION) << "Invalid abstract type:" << input_args[kInputIndex1]->type_name();
   }
 
-  if (!x_shape.empty()) {
+  // empty tensor shape: {0}
+  if (!x_shape.empty() && !(x_shape.size() == 1 && x_shape[0] == 0)) {
     auto ndims = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue()).value();
+    CheckAndConvertUtils::CheckInRange<int64_t>("dim", ndims, kIncludeLeft, {-x_shape.size(), x_shape.size()},
+                                                prim_name);
     if (ndims < 0) {
       ndims = SizeToLong(x_shape.size()) + ndims;
     }
+
     if (x_shape[ndims] != abstract::Shape::kShapeDimAny) {
       std::pair<int64_t, int64_t> k_range(0, x_shape[ndims]);
-      CheckAndConvertUtils::CheckInRange<int64_t>("k", k_v, kIncludeRight, k_range, prim_name);
+      CheckAndConvertUtils::CheckInRange<int64_t>("k", k_v, kIncludeBoth, k_range, prim_name);
       x_shape[ndims] = k_v;
     }
   }
@@ -88,5 +93,41 @@ BaseShapePtr TopkExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
 }
 
+ShapeArray TopkExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  auto x_shape_vector = x_tensor->shape();
+
+  if (x_shape_vector.empty() || (x_shape_vector.size() == 1 && x_shape_vector[0] == 0)) {
+    return {x_shape_vector, x_shape_vector};
+  }
+
+  const auto &dim = input_values[kInputIndex2]->cast<Int64ImmPtr>();
+  MS_EXCEPTION_IF_NULL(dim);
+  auto dim_value = dim->value();
+  MS_CHECK_VALUE(dim_value >= static_cast<int64_t>(-x_shape_vector.size()) &&
+                   dim_value < static_cast<int64_t>(x_shape_vector.size()),
+                 CheckAndConvertUtils::FormatCheckInRangeMsg(
+                   "dim", dim_value, kIncludeLeft, {-x_shape_vector.size(), x_shape_vector.size()}, primitive));
+  if (dim_value < 0) {
+    dim_value += x_shape_vector.size();
+  }
+
+  const auto &k = input_values[kInputIndex1]->cast<Int64ImmPtr>();
+  MS_EXCEPTION_IF_NULL(k);
+  auto k_value = k->value();
+
+  x_shape_vector[dim_value] = k_value;
+
+  return {x_shape_vector, x_shape_vector};
+}
+
+TypePtrList TopkExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->Dtype(), kInt64};
+}
+
+REGISTER_SIMPLE_INFER(kNameTopkExt, TopkExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
