@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -83,8 +82,7 @@ def test_lamb_apply_optimizer_assign_ascend():
     Description: LambApplyOptimizerAssign expander
     Expectation: the result match with the expected result
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     np.random.seed(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     lamb_apply_optimizer_assign()
-    del os.environ["GRAPH_OP_RUN"]

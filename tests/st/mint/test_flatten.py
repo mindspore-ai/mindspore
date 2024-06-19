@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import pytest
 import numpy as np
 import mindspore as ms
@@ -55,7 +54,7 @@ def test_flatten_forward(mode):
     Description: test op flatten.
     Expectation: expect correct result.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    ms.set_context(jit_level='O0')
     ms.set_context(mode=mode)
     test_shape = (2, 3, 4, 5)
     x = generate_random_input(test_shape, np.float32)
@@ -66,7 +65,6 @@ def test_flatten_forward(mode):
     output2 = flatten_forward_func(ms.Tensor(x), 0, 2)
     expect2 = x.reshape((24, 5))
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level1
@@ -79,7 +77,7 @@ def test_flatten_bfloat16(mode):
     Description: testcase for ne functional API.
     Expectation: the result match with expected result.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    ms.set_context(jit_level='O0')
     ms.set_context(mode=mode)
     test_shape = (2, 3, 4)
     x = generate_random_input(test_shape, np.float32)
@@ -90,7 +88,6 @@ def test_flatten_bfloat16(mode):
     output2 = flatten_forward_func(ms.Tensor(x), 0, 1)
     expect2 = x.reshape((6, 4))
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=5e-3, atol=5e-3)
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level0
@@ -104,7 +101,7 @@ def test_flatten_backward(mode):
     Description: test op flatten.
     Expectation: expect correct result.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    ms.set_context(jit_level='O0')
     ms.set_context(mode=mode)
     test_shape = (2, 3, 4, 5)
     x = generate_random_input(test_shape, np.float32)
@@ -115,7 +112,6 @@ def test_flatten_backward(mode):
     output2 = flatten_backward_func(ms.Tensor(x), 0, 2)
     expect2 = np.ones(test_shape).astype(np.float32)
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level0

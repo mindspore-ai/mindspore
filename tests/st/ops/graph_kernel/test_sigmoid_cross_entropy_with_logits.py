@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import numpy as np
 import pytest
 
@@ -52,7 +51,7 @@ def test_sigmoid_cross_entropy_with_logits():
     Description: SigmoidCrossEntropyWithLogits expander
     Expectation: the result match with the expected result
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     logits = Tensor(np.array([[1, 1, 2],
                               [1, 2, 1],
                               [2, 1, 1]]).astype(np.float32))
@@ -70,7 +69,6 @@ def test_sigmoid_cross_entropy_with_logits():
     sigmoid_cross_entropy_with_logits_beta = NetSigmoidCrossEntropyWithLogits()
     result_close_gk = sigmoid_cross_entropy_with_logits_beta(logits, labels)
     diff = result_open_gk.asnumpy() - result_close_gk.asnumpy()
-    del os.environ["GRAPH_OP_RUN"]
     assert np.all(abs(diff) < error)
 
 
@@ -84,7 +82,7 @@ def test_sigmoid_cross_entropy_with_logits_grad():
     Description: SigmoidCrossEntropyWithLogitsGrad expander
     Expectation: the result match with the expected result
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     logits = Tensor(np.array([[1, 1, 2],
                               [1, 2, 1],
                               [2, 1, 1]]).astype(np.float32))
@@ -103,5 +101,4 @@ def test_sigmoid_cross_entropy_with_logits_grad():
     sigmoid_cross_entropy_with_logits_grad_beta = NetSigmoidCrossEntropyWithLogitsGrad()
     result_close_gk = sigmoid_cross_entropy_with_logits_grad_beta(logits, labels, dout)
     diff = result_open_gk.asnumpy() - result_close_gk.asnumpy()
-    del os.environ["GRAPH_OP_RUN"]
     assert np.all(abs(diff) < error)

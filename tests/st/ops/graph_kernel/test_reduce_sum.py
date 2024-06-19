@@ -15,7 +15,6 @@
 
 import numpy as np
 import pytest
-import os
 import mindspore.ops as ops
 from mindspore import context, Tensor
 from mindspore.nn import Cell
@@ -87,8 +86,7 @@ def test_reduce_arithmetic_simplify(shape, axis):
     Description: reduce sum with Arithmetic Simplify
     Expectation: the result match with numpy result
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
                         enable_graph_kernel=True)
     run_reduce_with_axis(shape, axis)
-    del os.environ["GRAPH_OP_RUN"]

@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import pytest
 import numpy as np
 import mindspore as ms
@@ -44,7 +43,7 @@ def test_scatter_add_ext_normal(mode):
     Expectation: expect correct result.
     """
     if mode == ms.GRAPH_MODE:
-        os.environ['GRAPH_OP_RUN'] = "1"
+        ms.set_context(jit_level='O0')
     ms.context.set_context(mode=mode, device_target="Ascend")
     ## forward
     x = Tensor(np.array([[1, 2, 3, 4, 5]]), dtype=ms.float32)
@@ -87,8 +86,6 @@ def test_scatter_add_ext_normal(mode):
     expect_dsrc = np.ones((1, 2))
     assert np.allclose(out1[0].asnumpy(), expect_dx)
     assert np.allclose(out1[1].asnumpy(), expect_dsrc)
-    if mode == ms.GRAPH_MODE:
-        del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level1
@@ -102,7 +99,7 @@ def test_scatter_add_ext_vmap(mode):
     Expectation: expect correct result.
     """
     if mode == ms.GRAPH_MODE:
-        os.environ['GRAPH_OP_RUN'] = "1"
+        ms.set_context(jit_level='O0')
     ms.context.set_context(mode=mode)
     x = Tensor(np.array([[[1, 2, 3, 4, 5]]]), dtype=ms.float32)
     src = Tensor(np.array([[8, 8]]), dtype=ms.float32)
@@ -113,8 +110,6 @@ def test_scatter_add_ext_vmap(mode):
     out = nest_vmap(x, dim, index, src)
     expect = scatter_add_ext_forward_func(x[0], dim, index, src)
     assert np.allclose(out.asnumpy(), expect.asnumpy())
-    if mode == ms.GRAPH_MODE:
-        del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level1
@@ -128,7 +123,7 @@ def test_scatter_add_ext_bfloat16(mode):
     Expectation: expect correct result.
     """
     if mode == ms.GRAPH_MODE:
-        os.environ['GRAPH_OP_RUN'] = "1"
+        ms.set_context(jit_level='O0')
     ms.context.set_context(mode=mode, device_target="Ascend")
     ## forward
     x = Tensor(np.array([[1, 2, 3, 4, 5]]), dtype=ms.bfloat16)
@@ -171,8 +166,6 @@ def test_scatter_add_ext_bfloat16(mode):
     expect_dsrc = np.ones((1, 2))
     assert np.allclose(out1[0].float().asnumpy(), expect_dx, rtol=4e-3, atol=4e-3)
     assert np.allclose(out1[1].float().asnumpy(), expect_dsrc, rtol=4e-3, atol=4e-3)
-    if mode == ms.GRAPH_MODE:
-        del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level1

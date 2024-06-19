@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import pytest
 from mindspore import context
 from mindspore.common.tensor import Tensor
@@ -46,9 +45,8 @@ def test_dynamic_tuple_input():
     Expectation: output equal with 11.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    os.environ['GRAPH_OP_RUN'] = "1"
+    context.set_context(jit_level='O0')
     y = Tensor([5])
     net = Net()
     output = net(y)
-    os.environ.pop('GRAPH_OP_RUN')
     assert output == 11

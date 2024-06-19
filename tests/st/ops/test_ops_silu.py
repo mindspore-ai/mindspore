@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import os
 import numpy as np
 import mindspore as ms
 from mindspore import ops
@@ -146,7 +145,7 @@ def test_ops_silu_forward_dynamic_rank(mode):
     Description: Test function silu forward with dynamic rank.
     Expectation: Correct result.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=mode)
     x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
     test_cell = test_utils.to_cell_obj(silu_forward_func)
@@ -161,7 +160,6 @@ def test_ops_silu_forward_dynamic_rank(mode):
     output = test_cell(ms.Tensor(x2))
     expect = generate_expect_forward_output(x2)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    os.environ.pop('GRAPH_OP_RUN')
 
 
 @pytest.mark.level1
@@ -206,7 +204,7 @@ def test_ops_silu_backward_dynamic_rank(mode):
     Description: Test function silu backward with dynamic rank.
     Expectation: Correct result.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=mode)
     x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
     test_cell = test_utils.to_cell_obj(silu_backward_func)
@@ -221,4 +219,3 @@ def test_ops_silu_backward_dynamic_rank(mode):
     output = test_cell(ms.Tensor(x2))
     expect = generate_expect_backward_output(x2)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    os.environ.pop('GRAPH_OP_RUN')

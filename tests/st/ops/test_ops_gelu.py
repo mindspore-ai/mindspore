@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 
 import numpy as np
 import pytest
@@ -47,7 +46,7 @@ def test_ops_forward(context_mode, approximate):
     Description: test gelu forward
     Expectation: success
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=context_mode)
 
     gelu_cell = GeluCell()
@@ -124,7 +123,6 @@ def test_ops_forward(context_mode, approximate):
                             [0.5306, 0.6305]]])
 
     np.testing.assert_allclose(output, expect, rtol=rtol)
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level1
@@ -140,7 +138,7 @@ def test_ops_backward(context_mode, approximate):
     Description: test gelu backward
     Expectation: success
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=context_mode)
 
     gelu_cell = GeluCell()
@@ -157,4 +155,3 @@ def test_ops_backward(context_mode, approximate):
                            [0.7323, 0.8027]])
 
     np.testing.assert_allclose(output, expect, rtol=rtol)
-    del os.environ["GRAPH_OP_RUN"]

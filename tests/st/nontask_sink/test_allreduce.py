@@ -27,8 +27,8 @@ from mindspore import context
 from mindspore.ops import ReduceOp
 
 np.random.seed(1)
-os.environ['GRAPH_OP_RUN'] = str(1)
 os.environ['HCCL_WHITELIST_DISABLE'] = str(1)
+context.set_context(jit_level='O0')
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 init()
 

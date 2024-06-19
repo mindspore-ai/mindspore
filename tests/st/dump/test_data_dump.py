@@ -145,9 +145,8 @@ def test_kbk_e2e_set_dump():
     Expectation: Targets are dumped
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     run_e2e_dump(test_key="test_kbk_e2e_set_dump")
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level0
@@ -162,9 +161,8 @@ def test_kbk_e2e_dump_reg():
     Expectation: Targets are dumped
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     run_e2e_dump(test_key="test_kbk_e2e_dump_reg")
-    del os.environ['GRAPH_OP_RUN']
 
 
 class ReluReduceMeanDenseRelu(Cell):

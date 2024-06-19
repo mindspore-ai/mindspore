@@ -14,7 +14,6 @@
 # ============================================================================
 
 import numpy as np
-import os
 import pytest
 import mindspore.context as context
 from mindspore import Tensor, nn
@@ -71,7 +70,6 @@ def test_slice_dvm(dtype):
     Description: ascend test case, use graph_kernel execute ops.
     Expectation: the result match with close graph_kernel result
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     fuse(dtype)
-    del os.environ["GRAPH_OP_RUN"]

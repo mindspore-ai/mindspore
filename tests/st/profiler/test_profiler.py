@@ -206,12 +206,11 @@ class TestProfiler:
     @pytest.mark.env_onecard
     @security_off_wrap
     def test_ascend_kbyk_profiler(self):
-        os.environ['GRAPH_OP_RUN'] = "1"
+        context.set_context(jit_level='O0')
         self._train_with_profiler(device_target="Ascend", profile_memory=False, host_stack=True)
         self._check_d_profiling_file()
         self._check_host_profiling_file()
         self._check_kbyk_profiling_file()
-        del os.environ['GRAPH_OP_RUN']
 
     def _check_kbyk_profiling_file(self):
         op_range_file = os.path.join(self.profiler_path, "FRAMEWORK/op_range_0")

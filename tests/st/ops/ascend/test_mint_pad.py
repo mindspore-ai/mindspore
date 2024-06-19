@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import pytest
 import numpy as np
 from tests.st.utils import test_utils
@@ -571,7 +570,7 @@ def test_ops_pad_backward_constantND(context_mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    os.environ['GRAPH_OP_RUN'] = "1"
+    ms.context.set_context(jit_level='O0')
     x_value = [[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]
     x = Tensor(x_value, dtype=ms.float32)
     padding = (1, 2, 2, 1)
@@ -595,7 +594,7 @@ def test_ops_pad_backward_reflect1d(context_mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    os.environ['GRAPH_OP_RUN'] = "1"
+    ms.context.set_context(jit_level='O0')
     x_value = [[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]
     x = Tensor(x_value, dtype=ms.float32)
     padding = (1, 2)
@@ -619,7 +618,7 @@ def test_ops_pad_backward_reflect2d(context_mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    os.environ['GRAPH_OP_RUN'] = "1"
+    ms.context.set_context(jit_level='O0')
     x_value = [[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]
     x = Tensor(x_value, dtype=ms.float32)
     padding = (1, 2, 1, 2)
@@ -643,7 +642,7 @@ def test_ops_pad_backward_replicate1d(context_mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    os.environ['GRAPH_OP_RUN'] = "1"
+    ms.context.set_context(jit_level='O0')
     x_value = [[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]
     x = Tensor(x_value, dtype=ms.float32)
     padding = (1, 2)
@@ -667,7 +666,7 @@ def test_ops_pad_backward_replicate2d(context_mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    os.environ['GRAPH_OP_RUN'] = "1"
+    ms.context.set_context(jit_level='O0')
     x_value = [[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]
     x = Tensor(x_value, dtype=ms.float32)
     padding = (1, 2, 1, 2)
@@ -691,7 +690,7 @@ def test_ops_pad_backward_replicate3d(context_mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    os.environ['GRAPH_OP_RUN'] = "1"
+    ms.context.set_context(jit_level='O0')
     x_value = [[[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]]
     x = Tensor(x_value, dtype=ms.float32)
     padding = (1, 2, 1, 2, 1, 2)

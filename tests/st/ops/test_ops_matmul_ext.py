@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 
 import numpy as np
 import pytest
@@ -158,7 +157,7 @@ def test_mix_dynamic_shape():
     Description: mix dynamic shape
     Expectation: success
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    ms.set_context(jit_level='O0')
     shape1, shape2 = [1, 10, 20, 64], [1, 10, 64, 77]
     ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -175,7 +174,6 @@ def test_mix_dynamic_shape():
         ms.tensor(shape=[1, 10, None, 77], dtype=ms.float32),
     )
     _, _ = grad_matmul_cell(ms.tensor(x), ms.tensor(y))
-    del os.environ['GRAPH_OP_RUN']
 
 
 def random_input(shape, dtype=np.float32):

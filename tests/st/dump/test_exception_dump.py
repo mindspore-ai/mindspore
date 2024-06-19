@@ -36,6 +36,7 @@ class Net(ms.nn.Cell):
 
 
 def run_exception_net():
+    ms.set_context(jit_level='O0')
     input_params = Tensor(np.random.uniform(0, 1, size=(64,)).astype("float32"))
     input_indices = Tensor(np.array([100000, 101]), ms.int32)
     input_axis = 0
@@ -60,7 +61,6 @@ def test_exception_dump():
         dump_path = os.path.join(tmp_dir, 'test_exception_dump')
         dump_config_path = os.path.join(tmp_dir, 'test_exception_dump.json')
         generate_dump_json(dump_path, dump_config_path, 'test_exception_dump', 'exception_data')
-        os.environ['GRAPH_OP_RUN'] = "1"
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
         dump_file_path = os.path.join(dump_path, 'rank_0', 'exception_data', '0', '0')
         if os.path.isdir(dump_path):
@@ -72,5 +72,4 @@ def test_exception_dump():
             if not os.path.exists(dump_file_path):
                 time.sleep(2)
         check_dump_structure(dump_path, dump_config_path, 1, 1, 1, execution_history=False)
-        del os.environ['GRAPH_OP_RUN']
         del os.environ['MINDSPORE_DUMP_CONFIG']

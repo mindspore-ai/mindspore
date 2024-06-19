@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import inspect
 from functools import wraps
 from mindspore import nn
@@ -111,11 +110,12 @@ def run_test_with_On(test_func):
         if not need_run_graph_op_mode(test_func, args, kwargs):
             return
 
+        org_jit_level = ms.get_context('jit_level')
         try:
-            # set environment var GRAPH_OP_RUN='1' to run graph in kernel mode
-            os.environ['GRAPH_OP_RUN'] = '1'
+            # run graph in kernel by kernel mode
+            ms.set_context(jit_level='O0')
             test_func(*args, **kwargs)
         finally:
-            del os.environ['GRAPH_OP_RUN']
+            ms.set_context(jit_level=org_jit_level)
 
     return wrapper

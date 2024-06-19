@@ -15,7 +15,6 @@
 
 """test hccl BatchISendIRecv with 8p"""
 
-import os
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
@@ -23,9 +22,9 @@ from mindspore.ops.operations.comm_ops import BatchISendIRecv
 from mindspore.communication.comm_func import batch_isend_irecv, P2POp
 from mindspore.communication.management import init, get_rank, get_group_size
 
-# 'BatchISendIRecv' operator only supports KernelByKernel mode by now. So we set 'GRAPH_OP_RUN' to 1.
+# 'BatchISendIRecv' operator only supports KernelByKernel mode by now.
 np.random.seed(1)
-os.environ['GRAPH_OP_RUN'] = str(1)
+ms.set_context(jit_level='O0')
 init()
 this_rank = get_rank()
 world_size = get_group_size()

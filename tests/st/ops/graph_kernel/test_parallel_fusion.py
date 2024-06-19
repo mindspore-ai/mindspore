@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -87,7 +86,7 @@ def test_parallel_fusion_ascend():
     Description: run test case on Ascend
     Expectation: the result matches the expected result
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     var1 = np.random.random([2, 2]).astype(np.float32)
     var2 = np.random.random([2, 2]).astype(np.float32)
     var3 = np.random.random([2, 2]).astype(np.float32)
@@ -119,4 +118,3 @@ def test_parallel_fusion_ascend():
             expect_np = expect[i][j].asnumpy().copy()
             output_np = output[i][j].asnumpy().copy()
             assert np.allclose(expect_np, output_np)
-    del os.environ["GRAPH_OP_RUN"]

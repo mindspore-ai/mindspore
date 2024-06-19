@@ -21,7 +21,6 @@ from mindspore import ops, Tensor
 from mindspore.ops.function.math_func import linspace_ext
 import mindspore as ms
 from mindspore.common import mutable
-import os
 
 def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)
@@ -47,7 +46,7 @@ def test_lin_space_ext_normal(mode, dtype):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=mode)
-    os.environ["GRAPH_OP_RUN"] = '1'
+    ms.set_context(jit_level='O0')
     ## forward
     start_scalar, end_scalar, steps_scalar = 5, 25, 5
     start_tensor, end_tensor, steps_tensor = ms.Tensor(start_scalar), ms.Tensor(end_scalar), ms.Tensor(steps_scalar)
@@ -85,7 +84,6 @@ def test_lin_space_ext_normal(mode, dtype):
     grads_ = [out.asnumpy() for out in grads]
     expect = [0, 0]
     assert np.allclose(grads_, expect)
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level0
@@ -100,7 +98,7 @@ def test_lin_space_ext_bfloat16(mode, dtype):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=mode)
-    os.environ["GRAPH_OP_RUN"] = '1'
+    ms.set_context(jit_level='O0')
 
     start_scalar, end_scalar, steps_scalar = 5, 25, 5
     start_tensor, end_tensor, steps_tensor = ms.Tensor(start_scalar), ms.Tensor(end_scalar), ms.Tensor(steps_scalar)
@@ -130,7 +128,6 @@ def test_lin_space_ext_bfloat16(mode, dtype):
     output6 = lin_space_ext_forward_func(start_tensor, end_tensor, steps_tensor, dtype)
     expect6 = np.linspace(start_scalar, end_scalar, steps_scalar, axis=-1)
     assert np.allclose(output6.float().asnumpy(), expect6)
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level1

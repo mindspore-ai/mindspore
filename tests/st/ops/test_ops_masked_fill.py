@@ -252,14 +252,14 @@ def test_ops_masked_fill_backward_dynamic_rank(context_mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@pytest.mark.parametrize('run_mode', ["1", "0"])
-def test_ops_masked_fill_forward_with_broadcast(context_mode, run_mode):
+@pytest.mark.parametrize('param_jit_level', ["O2", "O0"])
+def test_ops_masked_fill_forward_with_broadcast(context_mode, param_jit_level):
     """
     Feature: pyboost function.
     Description: test function masked_fill forward.
     Expectation: expect correct result.
     """
-    os.environ["GRAPH_OP_RUN"] = run_mode
+    ms.set_context(jit_level=param_jit_level)
     ms.context.set_context(mode=context_mode)
     input_x = ms.Tensor(np.array([[1., 2.]]).astype(np.float32))
     mask = ms.Tensor(np.array([[False], [True]]).astype(np.bool_))

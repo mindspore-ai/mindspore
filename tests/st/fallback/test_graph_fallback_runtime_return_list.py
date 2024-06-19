@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """Test return list type object from graph"""
-import os
 import pytest
 import numpy as np
 
@@ -176,14 +175,13 @@ def test_return_make_list_node():
     Description: Support return make list node.
     Expectation: No exception.
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     @jit
     def foo(x):
         return [x, x+1, x+2, 1]
 
     res = foo(mutable(1))
     assert res == [1, 2, 3, 1]
-    os.environ["GRAPH_OP_RUN"] = "0"
 
 
 @pytest.mark.level2

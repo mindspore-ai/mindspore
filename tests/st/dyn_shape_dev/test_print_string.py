@@ -265,7 +265,7 @@ def test_print_none(mode):
     """
     ms.set_context(mode=mode)
     if mode == ms.GRAPH_MODE:
-        os.environ['GRAPH_OP_RUN'] = '1'
+        ms.set_context(jit_level='O0')
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()

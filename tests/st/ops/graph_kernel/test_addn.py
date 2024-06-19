@@ -15,7 +15,6 @@
 
 import numpy as np
 import pytest
-import os
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -73,7 +72,6 @@ def test_basic_ascend():
     Description: run test case on Ascend
     Expectation: the result match with expect
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", enable_graph_kernel=True)
     run_basic()
-    del os.environ["GRAPH_OP_RUN"]

@@ -18,9 +18,8 @@
 
 import numpy as np
 import pytest
-import os
 
-from mindspore import ops, Tensor, jit, JitConfig
+from mindspore import ops, Tensor, jit, JitConfig, context
 from mindspore.common.api import _pynative_executor
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 import time
@@ -150,8 +149,8 @@ def test_gather_ext_dynamic_shape():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize('graph_level', ["0", "1"])
-def test_gather_ext_vmap(graph_level):
+@pytest.mark.parametrize('param_jit_level', ["O2", "O0"])
+def test_gather_ext_vmap(param_jit_level):
     """
     Feature: Test gather with vmap.
     Description: call ops.extend.gather with valid input and index.
@@ -170,7 +169,7 @@ def test_gather_ext_vmap(graph_level):
         out = ops.Stack()(out)
         return out
 
-    os.environ['GRAPH_OP_RUN'] = graph_level
+    context.set_context(jit_level=param_jit_level)
     ms_data = GenInputData(np.float32, (4, 5, 6))
     ms_indices = Tensor(np.random.randint(4, size=(4, 5, 6)))
     dim = GenDim()
@@ -186,7 +185,6 @@ def test_gather_ext_vmap(graph_level):
     expect = _foreach_run(ms_data, dim, ms_indices, batch_axis)
     assert np.allclose(ms_out.asnumpy(), expect.asnumpy(), rtol=1e-4)
 
-    del os.environ['GRAPH_OP_RUN']
 
 
 # @pytest.mark.parametrize('batch', [8, 16, 32, 64, 128])

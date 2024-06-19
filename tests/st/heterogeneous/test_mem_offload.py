@@ -73,7 +73,7 @@ def test_resnet():
     Description: Test mem offload
     Expectation: Run resnet success
     '''
-    os.environ['GRAPH_OP_RUN'] = '1'
+    context.set_context(jit_level='O0')
     context.set_context(memory_offload='ON')
     context.set_context(max_device_memory='0.2GB')
     num_classes = 10
@@ -97,7 +97,6 @@ def test_resnet():
         loss = train_network(data, label)
         losses.append(loss)
     assert losses[-1].asnumpy() < 1
-    os.environ['GRAPH_OP_RUN'] = '0'
 
 
 @pytest.mark.level0
@@ -110,7 +109,7 @@ def test_lenet():
     Description: Test mem offload
     Expectation: Run lenet success
     '''
-    os.environ['GRAPH_OP_RUN'] = '1'
+    context.set_context(jit_level='O0')
     context.set_context(memory_offload='ON')
     context.set_context(max_device_memory='0.1GB')
     data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
@@ -127,7 +126,6 @@ def test_lenet():
     res = train_network(data, label)
     diff = res.asnumpy()[0] - 2.3025851
     assert np.all(diff < 1.e-6)
-    os.environ['GRAPH_OP_RUN'] = '0'
 
 
 @pytest.mark.level1
@@ -140,7 +138,7 @@ def test_lenet_manual_offload():
     Description: Test set offload strategy
     Expectation: Run lenet success
     '''
-    os.environ['GRAPH_OP_RUN'] = '1'
+    context.set_context(jit_level='O0')
     context.set_context(memory_offload='ON')
     context.set_context(max_device_memory='0.1GB')
     data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
@@ -158,7 +156,6 @@ def test_lenet_manual_offload():
     res = train_network(data, label)
     diff = res.asnumpy()[0] - 2.3025851
     assert np.all(diff < 1.e-6)
-    os.environ['GRAPH_OP_RUN'] = '0'
 
 
 @pytest.mark.level1
@@ -171,7 +168,7 @@ def test_1024_batch_size_resnet():
     Description: Test memory offload.
     Expectation: Run resnet with 1024 batch size successfully.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    context.set_context(jit_level='O0')
     num_classes = 10
     epoch = 6
     batch_size = 1024
@@ -197,4 +194,3 @@ def test_1024_batch_size_resnet():
         loss = train_network(data, label)
         losses.append(loss)
     assert losses[-1].asnumpy() < 1.5
-    os.environ['GRAPH_OP_RUN'] = '0'

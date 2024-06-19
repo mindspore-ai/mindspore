@@ -244,7 +244,7 @@ def parse_args(args=None):
 
 
 def main(args):
-    os.environ["GRAPH_OP_RUN"] = "1"
+    ms.set_context(jit_level='O0')
     os.environ["MS_ENABLE_ACLNN"] = "1"
     # init
     _, rank_id, device_num = init_env(
@@ -444,7 +444,6 @@ def main(args):
         min_cost = float(np.array(cost_list).min())
         assert min_cost < 700, "min cost need less than 1000 ms"
         logger.info("epoch: %d avg time %f", epoch, float(np.array(cost_list).mean()))
-    os.environ.pop("GRAPH_OP_RUN")
     os.environ.pop("MS_ENABLE_ACLNN")
 
 

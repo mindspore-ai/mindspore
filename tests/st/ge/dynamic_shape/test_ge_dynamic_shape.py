@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import pytest
 import numpy as np
 import mindspore.common.dtype as mstype
@@ -38,7 +37,7 @@ class DynNet(nn.Cell):
 
 
 def dyn_basic():
-    os.environ['GRAPH_OP_RUN'] = '0'
+    context.set_context(jit_level='O2')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     x = Tensor(np.ones([2, 3, 4, 3]).astype(np.float32))
     y = Tensor(np.ones([2, 3, 4, 3]).astype(np.float32))
@@ -51,7 +50,6 @@ def dyn_basic():
     output = net(x, y, z)
     expect = np.ones([2, 3, 4, 3]).astype(np.float32) * 5
     assert np.allclose(output.asnumpy(), expect)
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level0
@@ -61,7 +59,7 @@ def dyn_basic():
 def test_ge_dyn_shape():
     """
     Feature: convert ge graph
-    Description: test ge dynamic by GRAPH_OP_RUN = 0
+    Description: test ge dynamic by jit_level='O2'
     Expectation: success
     """
     dyn_basic()

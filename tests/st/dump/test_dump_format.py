@@ -115,10 +115,9 @@ def test_ascend_kernel_by_kernel_trans_true():
     Description: Test kernel by kernel dump in Ascend with trans_flag is configured to true.
     Expectation: Dump files has tensor data in host format (4 dimensions).
     """
-    os.environ['GRAPH_OP_RUN'] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_trans_flag("test_e2e_dump_trans_true")
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level1
@@ -130,10 +129,9 @@ def test_ascend_kernel_by_kernel_trans_false():
     Description: Test kernel by kernel dump in Ascend with trans_flag is configured to false.
     Expectation: Dump files has tensor data in device format.
     """
-    os.environ['GRAPH_OP_RUN'] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_trans_flag("test_e2e_dump_trans_false")
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level0

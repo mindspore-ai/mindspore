@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import os
 import numpy as np
 import mindspore as ms
 from mindspore import ops
@@ -54,7 +53,7 @@ def test_ops_narrow_forward(context_mode):
     Description: test function narrow forward.
     Expectation: expect correct result.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
+    ms.set_context(jit_level='O0')
     ms.context.set_context(mode=context_mode)
     x = generate_random_input((2, 3, 4, 5), np.float32)
     dim = 2
@@ -68,7 +67,6 @@ def test_ops_narrow_forward(context_mode):
     expect = np.zeros_like(x)
     expect[:, :, start:start+length, :] = 1
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level1

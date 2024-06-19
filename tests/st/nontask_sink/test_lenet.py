@@ -161,7 +161,7 @@ def test_ascend_lenet():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ascend_lenet1():
-    os.environ['GRAPH_OP_RUN'] = str(1)
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     loss_output = test_ascend_lenet()
     assert loss_output.asnumpy() < 0.004
@@ -173,7 +173,7 @@ def test_ascend_lenet1():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ascend_lenet2():
-    os.environ['GRAPH_OP_RUN'] = str(1)
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     loss_output = test_ascend_lenet()
     assert loss_output.asnumpy() < 0.004
@@ -190,7 +190,7 @@ def test_ascend_lenet3():
     Description: LeNet with Somas Ascend kernel by kernel.
     Expectation: No exception.
     """
-    os.environ['GRAPH_OP_RUN'] = str(1)
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", memory_optimize_level='O1')
     loss_output = test_ascend_lenet()
     assert loss_output.asnumpy() < 0.004
@@ -207,7 +207,7 @@ def test_ascend_lenet4():
     Description: LeNet with Ascend kernel by kernel and VMM.
     Expectation: No exception.
     """
-    os.environ['GRAPH_OP_RUN'] = str(1)
+    context.set_context(jit_level='O0')
     os.environ['MS_DEV_ENABLE_ASCEND_VMM'] = str(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     loss_output = test_ascend_lenet()
@@ -225,7 +225,7 @@ def test_ascend_lenet5():
     Description: LeNet with Ascend kernel by kernel and VMM.
     Expectation: No exception.
     """
-    os.environ['GRAPH_OP_RUN'] = str(1)
+    context.set_context(jit_level='O0')
     os.environ['MS_DEV_ENABLE_ASCEND_VMM'] = str(1)
     os.environ['MS_DEV_ASCEND_VMM_ALIGN_SIZE'] = "20MB"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -293,7 +293,7 @@ def test_ascend_lenet_grad_by_list_tuple1():
     Description: Grad with Parameters as input type and fv. list or tuple as fv of grad.
     Expectation: No exception.
     """
-    os.environ['GRAPH_OP_RUN'] = str(1)
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     loss_output = test_ascend_lenet_grad_by_list_tuple()
     assert loss_output.asnumpy() < 0.004
@@ -310,7 +310,7 @@ def test_ascend_lenet_grad_by_list_tuple2():
     Description: Grad with Parameters as input type and fv. list or tuple as fv of grad.
     Expectation: No exception.
     """
-    os.environ['GRAPH_OP_RUN'] = str(1)
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", memory_optimize_level='O1')
     loss_output = test_ascend_lenet_grad_by_list_tuple()
     assert loss_output.asnumpy() < 0.004

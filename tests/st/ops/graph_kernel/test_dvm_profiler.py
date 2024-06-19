@@ -14,7 +14,6 @@
 # ============================================================================
 
 import numpy as np
-import os
 import pytest
 import mindspore.context as context
 from mindspore import Tensor, nn
@@ -49,7 +48,6 @@ def test_dvm_profiling():
     Description: ascend test case, use graph_kernel execute ops.
     Expectation: Timeline generated successfully.
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     fuse((32, 1024), (32, 1024), np.float16)
-    del os.environ["GRAPH_OP_RUN"]

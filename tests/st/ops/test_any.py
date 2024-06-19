@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import os
 import numpy as np
 import mindspore as ms
 from mindspore import ops, jit, JitConfig
@@ -182,8 +181,8 @@ def test_any_dynamic_shape_testop():
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('graph_level', ["0", "1"])
-def test_any_vmap(graph_level):
+@pytest.mark.parametrize('param_jit_level', ["O2", "O0"])
+def test_any_vmap(param_jit_level):
     """
     Feature: Test any with vmap.
     Description: call ops.any with valid input and index.
@@ -200,7 +199,7 @@ def test_any_vmap(graph_level):
         out = ops.Stack()(out)
         return out
 
-    os.environ['GRAPH_OP_RUN'] = graph_level
+    ms.set_context(jit_level=param_jit_level)
     x = generate_random_input((4, 5, 6), np.float32)
 
     batch_axis = -1
@@ -212,6 +211,4 @@ def test_any_vmap(graph_level):
     output = any_vmap_func(ms.Tensor(x), batch_axis)
     expect = _foreach_run(ms.Tensor(x), batch_axis)
     assert np.allclose(output.asnumpy(), expect.asnumpy(), rtol=1e-4)
-
-    del os.environ['GRAPH_OP_RUN']
     

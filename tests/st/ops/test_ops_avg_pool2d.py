@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import os
 import numpy as np
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
@@ -21,7 +20,7 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore import ops, context, mint
 
-os.environ["GRAPH_OP_RUN"] = "1"
+ms.set_context(jit_level='O0')
 
 @test_utils.run_with_cell
 def avg_pool2d_forward_func(image, kernel_size, stride=None, padding=0,

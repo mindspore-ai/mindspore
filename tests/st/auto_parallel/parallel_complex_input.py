@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import numpy as np
 
 import mindspore as ms
@@ -65,8 +64,8 @@ def test_graph_mode():
     '''
     ms.set_context(mode=ms.GRAPH_MODE)
     ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.SEMI_AUTO_PARALLEL, dataset_strategy="full_batch")
-    # Parallel in the case of complex input only supports KernelByKernel mode by now. So we set 'GRAPH_OP_RUN' to 1.
-    os.environ['GRAPH_OP_RUN'] = str(1)
+    # Parallel in the case of complex input only supports KernelByKernel mode by now. So we set 'jit_level' to 'O0'.
+    ms.set_context(jit_level='O0')
 
     D.init()
     ms.set_seed(1)

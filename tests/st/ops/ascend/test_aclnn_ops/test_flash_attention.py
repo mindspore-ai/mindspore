@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import numpy as np
 import math
 import pytest
@@ -167,7 +166,7 @@ def test_nn_flash_attention_fwd(dtype):
     Expectation: success
     """
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ['GRAPH_OP_RUN'] = "1"
+    context.set_context(jit_level='O0')
     B = 1
     S = 4096
     H = 128
@@ -190,5 +189,3 @@ def test_nn_flash_attention_fwd(dtype):
     grad_net = FlashAttentionGradNet(fa_net)
     grad_out = grad_net(qv_tensor, k_tensor, qv_tensor, attention_mask)
     print(grad_out[0].asnumpy())
-
-    os.environ.pop('GRAPH_OP_RUN')

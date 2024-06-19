@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-import os
 import numpy as np
 import mindspore as ms
 from mindspore import ops
@@ -43,7 +42,7 @@ def test_ops_max_pool2d_forward_return_indices(mode):
     Description: Test function max_pool2d forward with return indices.
     Expectation: Correct result.
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    ms.context.set_context(jit_level='O0')
     ms.context.set_context(mode=mode)
     x = np.array([[[[1, 2, 3], [1, 2, 3]]]]).astype(np.float32)
     kernel_size = 2
@@ -58,7 +57,6 @@ def test_ops_max_pool2d_forward_return_indices(mode):
     expect_out2 = np.array([[[[1]]]])
     np.testing.assert_allclose(output.asnumpy(), expect_out1, rtol=1e-6)
     np.testing.assert_allclose(indices.asnumpy(), expect_out2, rtol=1e-6)
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level0
@@ -71,7 +69,7 @@ def test_ops_max_pool2d_forward_without_return_indices(mode):
     Description: Test function max_pool2d forward without return indices.
     Expectation: Correct result.
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    ms.context.set_context(jit_level='O0')
     ms.context.set_context(mode=mode)
     x = np.array([[[[1, 2, 3], [1, 2, 3]]]]).astype(np.float32)
     kernel_size = 2
@@ -84,7 +82,6 @@ def test_ops_max_pool2d_forward_without_return_indices(mode):
                                      dilation, ceil_mode, return_indices)
     expect_out = np.array([[[[2.]]]])
     np.testing.assert_allclose(output.asnumpy(), expect_out, rtol=1e-6)
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level1
@@ -97,7 +94,7 @@ def test_ops_max_pool2d_backward_return_indices(mode):
     Description: Test function max_pool2d backward with return indices.
     Expectation: Correct result.
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    ms.context.set_context(jit_level='O0')
     ms.context.set_context(mode=mode)
     x = np.array([[[[1, 2, 3], [1, 2, 3]]]]).astype(np.float32)
     kernel_size = 2
@@ -110,7 +107,6 @@ def test_ops_max_pool2d_backward_return_indices(mode):
                                       ceil_mode, return_indices)
     expect = np.array([[[[0., 1., 0.], [0., 0., 0.]]]])
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-6)
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level1
@@ -123,7 +119,7 @@ def test_ops_max_pool2d_backward_without_return_indices(mode):
     Description: Test function max_pool2d backward without return indices.
     Expectation: Correct result.
     """
-    os.environ["GRAPH_OP_RUN"] = "1"
+    ms.context.set_context(jit_level='O0')
     ms.context.set_context(mode=mode)
     x = np.array([[[[1, 2, 3], [1, 2, 3]]]]).astype(np.float32)
     kernel_size = 2
@@ -136,7 +132,6 @@ def test_ops_max_pool2d_backward_without_return_indices(mode):
                                       ceil_mode, return_indices)
     expect = np.array([[[[0., 1., 0.], [0., 0., 0.]]]])
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-6)
-    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level0
