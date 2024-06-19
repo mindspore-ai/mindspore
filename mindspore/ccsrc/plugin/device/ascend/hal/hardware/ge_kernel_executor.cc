@@ -888,51 +888,6 @@ void GeKernelExecutor::AddMindIRPass(const KernelGraphPtr &graph) const {
   GEGraphOptimization::GetInstance().GEMindIRPass(graph);
 }
 
-namespace {
-void AddTensorMoveForMonad(const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
-    return;
-  }
-  auto all_nodes = TopoSort(graph->get_return());
-  for (const auto &node : all_nodes) {
-    MS_EXCEPTION_IF_NULL(node);
-    if (!common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState)) {
-      continue;
-    }
-    const auto &update_state = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(update_state);
-    for (size_t i = kUpdateStateRealInput; i < update_state->size(); ++i) {
-      const auto &input = update_state->input(i);
-      MS_EXCEPTION_IF_NULL(input);
-      if (!common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimMakeTuple)) {
-        continue;
-      }
-      const auto &make_tuple = input->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(make_tuple);
-      if (make_tuple->size() <= kUpdateStateRealInput) {
-        continue;
-      }
-      auto value_node = graph->NewValueNode(MakeValue(std::make_shared<tensor::Tensor>(1)));
-      MS_EXCEPTION_IF_NULL(value_node);
-      auto depend = graph->NewCNode({NewValueNode(prim::kPrimDepend), value_node, make_tuple});
-      MS_EXCEPTION_IF_NULL(depend);
-      depend->set_abstract(value_node->abstract());
-      auto tensor_move =
-        graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimTensorMove->name())), depend});
-      MS_EXCEPTION_IF_NULL(tensor_move);
-      tensor_move->set_abstract(value_node->abstract());
-      SelectKernelInfo(graph, tensor_move);
-      update_state->set_input(i, tensor_move);
-      MS_LOG(DEBUG) << "Update update state node:" << update_state->DebugString();
-    }
-  }
-}
-}  // namespace
-
 void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   // will be cached by OpCompileInfo
   MS_EXCEPTION_IF_NULL(graph);
@@ -953,7 +908,6 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   InlineCallGraph(kernel_graph);
   memo.clear();
   InlineSwitchGraph(kernel_graph, &memo);
-  AddTensorMoveForMonad(kernel_graph);
   OptimizeExecutionOrder(NOT_NULL(graph));
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 1);
 }
