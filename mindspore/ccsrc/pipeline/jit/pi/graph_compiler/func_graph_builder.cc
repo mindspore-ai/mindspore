@@ -126,9 +126,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::ParameterPtr &node) {
     func_graph_->set_param_default_value(name, value_node);
   }
   assigned_vars_[name] = param;
-  if (!param->abstract()->isa<abstract::AbstractFunction>()) {
-    func_graph_->add_parameter(param);
-  }
+  func_graph_->add_parameter(param);
   return std::make_shared<MindNode>(param);
 }
 
@@ -460,18 +458,6 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::LoadValueNodePtr &node) {
 
 ir::NodePtr FuncGraphBuilder::Mutate_(const ir::LoadFieldNodePtr &node) {
   auto instance = GetAnfNode(node->GetArg(0));
-  if (instance->isa<Parameter>()) {
-    auto name = instance->cast<ParameterPtr>()->name();
-    auto iter = param_name_to_index_.find(name);
-    MS_EXCEPTION_IF_CHECK_FAIL(iter != param_name_to_index_.end(), name + " is not a parameter.");
-    auto index = param_name_to_index_.at(name);
-    MS_EXCEPTION_IF_CHECK_FAIL(index < args_.size() + 1, name + " does not have a default value.");
-    if (index < args_.size()) {
-      instance = args_[index];
-    } else {
-      instance = kwargs_;
-    }
-  }
   auto field = GetAnfNode(node->GetArg(1));
   MS_EXCEPTION_IF_CHECK_FAIL(IsValueNode<StringImm>(field), "Excepted attr/name.");
   return std::make_shared<MindNode>(func_graph_->NewCNodeInOrder(prim::kPrimGetAttr, {instance, field}));
