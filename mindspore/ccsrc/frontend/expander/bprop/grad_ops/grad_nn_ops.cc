@@ -1843,8 +1843,8 @@ REG_BPROP_BUILDER("BatchNormExt").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto running_mean = ib->GetInput(kIndex3);
   auto running_var = ib->GetInput(kIndex4);
   auto training = ib->GetInput(kIndex5);
-  auto eps = ib->GetInput(kIndex6);
-  auto momentum = ib->GetInput(kIndex7);
+  auto eps = ib->GetInput(kIndex7);
+  auto momentum = ib->GetInput(kIndex6);
   auto out = ib->GetInput(kIndex8);
   auto dout = ib->GetInput(kIndex9);
   auto is_training_value_ptr = training->BuildValue();
