@@ -3234,11 +3234,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             to (number): The upper bound of the interval.
             generator (Generator, optional): The random seed. Default: None.
 
-        Raises:
-            TypeError: If `from_` is larger than `to`.
-
         Returns:
             Tensor, with the same shape as tensor.
+
+        Raises:
+            TypeError: If `from_` is larger than `to`.
 
         Supported Platforms:
             ``Ascend``

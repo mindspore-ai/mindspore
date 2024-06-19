@@ -6,10 +6,10 @@ mindspore.ops.Send
     发送张量到指定线程。
 
     .. note::
-        Send 和 Receive 算子需组合使用，且有同一个`sr_tag`。
+        Send 和 Receive 算子需组合使用，且有同一个 `sr_tag` 。
 
     参数：
-        - **sr_tag** (int) - 用于区分发送、接收消息的标签。该消息将被拥有相同`sr_tag`的Receive接收。
+        - **sr_tag** (int) - 用于区分发送、接收消息的标签。该消息将被拥有相同 `sr_tag` 的Receive接收。
         - **dest_rank** (int) - 表示发送目标的进程编号。只有目标进程会收到张量。
         - **group** (str，可选) - 表示通信域。默认值： ``GlobalComm.WORLD_COMM_GROUP`` 。
 

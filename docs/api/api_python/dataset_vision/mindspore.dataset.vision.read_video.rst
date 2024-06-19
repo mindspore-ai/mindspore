@@ -20,8 +20,8 @@ mindspore.dataset.vision.read_video
 
     异常：
         - **TypeError** - 如果 `filename` 不是str类型。
-        - **TypeError** - 如果 `start_pts` 的类型不是Union[float, fraction, int]类型。
-        - **TypeError** - 如果 `end_pts` 的类型不是Union[float, fraction, int]类型。
+        - **TypeError** - 如果 `start_pts` 的类型不是Union[float, Fraction, int]类型。
+        - **TypeError** - 如果 `end_pts` 的类型不是Union[float, Fraction, int]类型。
         - **TypeError** - 如果 `pts_unit` 不是str类型。
         - **RuntimeError** - 如果 `filename` 不存在，或不是普通文件，或由于格式等原因无法正常读取。
         - **ValueError** - 如果 `start_pts` 小于 0。

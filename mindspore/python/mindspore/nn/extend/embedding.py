@@ -57,7 +57,7 @@ class Embedding(Cell):
           mindspore.int32 or mindspore.int64, and the value should be in range `[0, num_embeddings)`.
 
     Outputs:
-        Tensor, has the same data type as weight, the shape is :math:`(*input.shape, embedding_dim)`.
+        Tensor, has the same data type as weight, the shape is :math:`(*input.shape, embedding\_dim)`.
 
     Raises:
         TypeError: If `num_embeddings` is not an int.
