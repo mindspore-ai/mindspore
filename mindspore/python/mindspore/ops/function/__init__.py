@@ -164,6 +164,7 @@ from .array_func import (
     searchsorted,
     aminmax,
     sort,
+    sort_ext,
     top_k,
     deepcopy,
     arange_ext,

@@ -1020,6 +1020,17 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   return NodePtrList{dx};
 });
 
+REG_BPROP_BUILDER("SortExt").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto dim = ib->GetInput(kIndex1);
+
+  auto indices = ib->TupleGetItem(ib->GetInput(kIndex4), kIndex1);
+  auto dout0 = ib->TupleGetItem(ib->GetInput(kIndex5), kIndex0);
+  auto zeros = ib->Emit("ZerosLikeExt", {input, ib->Value(static_cast<int64_t>(ib->GetDtypeId(dout0)))});
+  auto res = ib->Emit("Scatter", {zeros, dim, indices, dout0, ib->EmitValue(MakeValue<int64_t>(0))});
+  return {res, ib->OutZeros(dim), ib->OutZeros(ib->GetInput(kIndex2)), ib->OutZeros(ib->GetInput(kIndex3))};
+});
+
 REG_BPROP_BUILDER("Identity").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   return {dout};

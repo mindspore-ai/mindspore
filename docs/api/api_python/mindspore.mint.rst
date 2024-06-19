@@ -24,6 +24,7 @@ Tensor
 
     mindspore.mint.index_select
     mindspore.mint.topk
+    mindspore.mint.sort
 
 数学运算
 -----------------

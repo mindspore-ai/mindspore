@@ -24,6 +24,7 @@ Indexing, Slicing, Joining, Mutating Operations
 
     mindspore.mint.index_select
     mindspore.mint.topk
+    mindspore.mint.sort
 
 Math Operations
 -----------------
