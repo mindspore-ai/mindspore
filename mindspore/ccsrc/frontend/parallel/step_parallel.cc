@@ -1281,6 +1281,9 @@ static std::pair<AnfNodePtr, int64_t> FindSubGraph(const FuncGraphPtr &graph, co
 }
 
 static CNodePtr InsertAllGatherAfterCast(const std::pair<AnfNodePtr, int> &node_pair) {
+  if (ParallelContext::GetInstance()->pipeline_stage_split_num() <= 1) {
+    return nullptr;
+  }
   auto cnode = node_pair.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto graph = cnode->func_graph();
@@ -2919,7 +2922,8 @@ static void InsertDivAndAllReduceForNorm(const NodeUsersMap &node_user_map, cons
     if (cnode->in_forward_flag()) {
       continue;
     }
-    auto expand_dims_node = FindExpandDimsWIthGradScale(cnode, node_user_map, MAX_BFS_DEPTH);
+    constexpr size_t bfs_depth = 10;
+    auto expand_dims_node = FindExpandDimsWIthGradScale(cnode, node_user_map, bfs_depth);
     if (!expand_dims_node) {
       continue;
     }
@@ -2946,7 +2950,7 @@ static AnfNodePtr GetMirrorOp(const NodeUsersMap &node_user_map, const AnfNodePt
       continue;
     }
     while (IsInTrivialNodeList(cnode) || IsSomePrimitive(cnode, LOAD) ||
-           IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather)) {
+           IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather) || IsPrimitiveCNode(cnode, prim::kPrimAllGather)) {
       auto load_users = node_user_map.at(cnode);
       cnode = node_user_map.at(cnode).front().first->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
@@ -3124,8 +3128,8 @@ static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const 
   }
   auto comm_group = FindCommonMirrorGroup(root);
   StrategyCheckpoint::GetInstance().set_common_mirror_group(comm_group);
-  HandleGlobalNormScale(root, manager);
   MoveMicroMirrorOutCallFunc(root);
+  HandleGlobalNormScale(root, manager);
   if (pipeline_stages > 1 && is_pp_interleave) {
     pipeline_processor->HandleSendParam();
     MarkForwardCNode(root);
