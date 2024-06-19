@@ -184,7 +184,7 @@ def test_bool_tensor_index_set_item_x_3x3_index_3_value_1(mode):
     assert np.allclose(x_ms.asnumpy(), x_np)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
