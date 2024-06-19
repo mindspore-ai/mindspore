@@ -22,13 +22,14 @@ class Reshard(Primitive):
     parallel procedure.
 
     Note:
-        - The in and out layout should be the type mindspore.parallel.shard.Layout.
+        - The in and out layout should be the type mindspore.Layout.
         - The in and out layout should be the same value of layout when invoke
-          ops.Shard(layout, layout).
-        - Reshard can only be used in GRAPH_MODE.
+          ops.Reshard(layout, layout, in_strategy).
+        - The in_strategy should be the strategy derived from the layout.
+        - This primitive is not recommended to use directly. We recommend to use mindspore.reshard.
 
     Inputs:
-        - **tensor** (Tensor) - The tensor to be sharded.
+        - **tensor** (Tensor) - The tensor to be resharded.
 
     Outputs:
         Tensor. The mathematically equivalent of the input tensor.
@@ -37,13 +38,14 @@ class Reshard(Primitive):
         >>> from mindspore.parallel.shard import Layout
         >>> _layout = Layout((4, 2), ("dp", "mp"))
         >>> layout = (_layout("dp", "mp"),)
-        >>> shard = ops.Reshard(layout, layout)
-        >>> shard(tensor)
+        >>> reshard = ops.Reshard(layout, layout, in_strategy)
+        >>> reshard(tensor)
     """
     @prim_attr_register
-    def __init__(self, in_layout, out_layout):
+    def __init__(self, in_layout, out_layout, in_strategy):
         super().__init__(name="Reshard")
         self.shard(in_layout, out_layout)
+        self.in_strategy = in_strategy
 
     def __call__(self, tensor):
         return tensor

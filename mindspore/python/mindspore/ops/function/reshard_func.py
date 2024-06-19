@@ -31,10 +31,7 @@ def reshard(tensor, layout):
 
     Raises:
         TypeError: Reshard takes in Tensor type as the first input param, but got: `type(tensor)`.
-        TypeError: Reshard only support tuple of layout as input, where layout is type
-                   mindspore.parallel.shard.Layout but got: `type(layout)`.
-        TypeError: Reshard only support tuple of layout as input, where layout is type
-                   mindspore.parallel.shard.Layout but got tuple of: `type(ele)`.
+        TypeError: Reshard only support type mindspore.Layout but got: `type(layout)`.
 
         Examples:
             >>> from mindspore.parallel.shard import Layout
@@ -44,7 +41,7 @@ def reshard(tensor, layout):
             >>>         self.matmul = ops.MatMul()
             >>>         self.relu = ops.ReLU()
             >>>         layout = Layout((4, 2), ("dp", "mp"))
-            >>>         self.layout = (layout("dp", "mp"),)
+            >>>         self.layout = layout("dp", "mp")
             >>>     def construct(self, x):
             >>>         x = self.matmul(x)
             >>>         x = ops.reshard(x, self.layout)
@@ -53,15 +50,23 @@ def reshard(tensor, layout):
     """
     if not isinstance(tensor, Tensor):
         raise TypeError(f"Reshard takes in Tensor type as the first input param, but got: {type(tensor)}.")
-    if not isinstance(layout, tuple):
-        raise TypeError(f"Reshard only support tuple of layout as input, where layout is type "
-                        f"mindspore.parallel.shard.Layout but got: {type(layout)}.")
-    for ele in layout:
-        if not isinstance(ele, Layout):
-            raise TypeError(f"Reshard only support tuple of layout as input, where layout is type "
-                            f"mindspore.parallel.shard.Layout but got tuple of: {type(ele)}.")
+    if not isinstance(layout, Layout):
+        raise TypeError(f"Reshard only support type mindspore.Layout, but got: {type(layout)}.")
 
-    _reshard = _get_cache_prim(P.Reshard)(in_layout=layout, out_layout=layout)
+    def layoutToTuple(layout):
+        layout_dict = layout.to_dict()
+        tensor_map = layout_dict["tensor_map"]
+        device_matrix = layout_dict["device_matrix"]
+        axis_stgy = ()
+        for ind in tensor_map:
+            if ind == -1:
+                axis_stgy += (1,)
+            else:
+                axis_stgy += (device_matrix[ind],)
+        return axis_stgy
+
+    in_strategy = layoutToTuple(layout)
+    _reshard = _get_cache_prim(P.Reshard)(in_layout=(layout,), out_layout=(layout,), in_strategy=(in_strategy,))
     return _reshard(tensor)
 
 __all__ = [

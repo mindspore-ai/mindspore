@@ -404,22 +404,22 @@ static bool SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfN
       set_success = true;
     }
     if (IsPrimitiveCNode(node, prim::kPrimReshard)) {
-      constexpr size_t kTensorIndex = 1;
-
+      // Get reshard attributes, e.g., in_layout/in_strategy.
       auto reshard_cnode = node->cast<CNodePtr>();
       auto attrs = GetCNodePrimitive(reshard_cnode)->attrs();
 
-      auto cur_graph = node->func_graph();
-      AnfNodePtrList new_cnode = {NewValueNode(prim::kPrimidentity), reshard_cnode->input(kTensorIndex)};
-      auto identity_cnode = cur_graph->NewCNode(new_cnode);
-      auto reshard_cnode_abstract = reshard_cnode->abstract();
-      MS_EXCEPTION_IF_NULL(reshard_cnode_abstract);
-      identity_cnode->set_abstract(reshard_cnode_abstract->Clone());
-      FuncGraphManagerPtr manager = cur_graph->manager();
-      (void)manager->Replace(reshard_cnode, identity_cnode);
+      // New a identity prim and set the attributes the same as reshard prim.
+      auto new_identity_prim = std::make_shared<Primitive>(prim::kPrimidentity->name());
+      new_identity_prim->SetAttrs(attrs);
 
-      auto prim = GetCNodePrimitive(identity_cnode);
-      prim->SetAttrs(attrs);
+      // Make identity prim into identity node and cast to AnfNode.
+      ValuePtr new_identity_value = MakeValue(new_identity_prim);
+      ValueNodePtr new_identity_value_node = NewValueNode(new_identity_value);
+      auto new_identity_anf_node = new_identity_value_node->cast<AnfNodePtr>();
+
+      // Replace reshard node as identity node.
+      constexpr size_t kPrimIndex = 0;
+      reshard_cnode->set_input(kPrimIndex, new_identity_anf_node);
 
       set_success = true;
     }

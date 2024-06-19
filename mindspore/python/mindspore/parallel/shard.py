@@ -145,15 +145,17 @@ class Shard(Shard_):
         self.level = None
 
     def __call__(self, fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascend", level=0):
-        if ms.context.get_auto_parallel_context("parallel_mode") not in ["auto_parallel", "semi_auto_parallel"]:
+        parallel_mode = ms.context.get_auto_parallel_context("parallel_mode")
+        if parallel_mode not in ["auto_parallel", "semi_auto_parallel"]:
             raise AssertionError(
                 f"Cell shard only supports auto parallel and semi auto parallel.")
         if ms.context.get_context("device_target") not in ["Ascend", "GPU"]:
             raise AssertionError(
                 f"'Shard' now only supports 'Ascend' and 'GPU'")
-        if ms.context.get_auto_parallel_context("search_mode") != "sharding_propagation":
-            raise AssertionError(
-                f"'search_mode' must be 'sharding_propagation' for 'Shard'")
+        if parallel_mode == "auto_parallel" and \
+            ms.context.get_auto_parallel_context("search_mode") != "sharding_propagation":
+            raise AssertionError(f"'search_mode' must be 'sharding_propagation' for 'Shard' when the "
+                                 f"'parallel_mode' is 'auto_parallel.'")
         if not isinstance(in_strategy, tuple):
             raise TypeError(
                 f"For 'Shard', the 'in_strategy' should be a tuple, but got {type(in_strategy).__name__}")
