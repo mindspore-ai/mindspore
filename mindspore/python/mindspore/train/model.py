@@ -35,7 +35,8 @@ from mindspore.common.tensor import Tensor
 from mindspore.train.metrics import get_metrics, get_metric_fn
 from mindspore._checkparam import check_input_data, check_output_data
 from mindspore import _checkparam as Validator
-from mindspore.train.callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback, TimeMonitor, FlopsUtilizationCollector
+from mindspore.train.callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback, TimeMonitor,\
+    FlopsUtilizationCollector, MindIOTTPAdapter
 from mindspore.train.callback import __all__ as internal_cb_names
 from mindspore.train.callback._cluster_monitor import ClusterMonitor
 from mindspore import context
@@ -848,6 +849,7 @@ class Model:
             dataset_sink_num = math.ceil(epoch * sink_size / dataset_size)
             train_dataset.__total_batch__ = epoch * sink_size
 
+        cb_params.sink_size = sink_size
         cb_params.cur_step_num = 0
         cb_params.dataset_sink_mode = True
 
@@ -1148,6 +1150,28 @@ class Model:
 
         list_callback.on_train_end(run_context)
 
+    def _wrapper_train(self, callbacks):
+        """
+            This method used to wrap train function with ttp wrapper which will do event notify when
+        Args:
+            callbacks (function): callbacks pass by train method
+        """
+        if not callbacks:
+            return self._train
+        cbs = callbacks if isinstance(callbacks, list) else [callbacks]
+        obj = None
+        _train_wrapper = None
+        for item in cbs:
+            if isinstance(item, MindIOTTPAdapter):
+                obj = item
+
+        if (obj is not None) and (obj.enable is True):
+            logger.info("MindIO TTP is enable, so we wrapper ttp exception handdler for self train method.")
+            _train_wrapper = obj.wrapper_ttp_persist(self._train)
+
+        return self._train if not _train_wrapper else _train_wrapper
+
+
     def train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=False, sink_size=-1, initial_epoch=0):
         """
         Training API.
@@ -1256,16 +1280,16 @@ class Model:
         _device_number_check(self._parallel_mode, self._device_number)
 
         callbacks = _append_ccae(callbacks)
-
+        _train_wrapper = None
         if callbacks:
             self._check_methods_for_custom_callbacks(callbacks, "train")
-
-        self._train(epoch,
-                    train_dataset,
-                    callbacks=callbacks,
-                    dataset_sink_mode=dataset_sink_mode,
-                    sink_size=sink_size,
-                    initial_epoch=initial_epoch)
+        _train_wrapper = self._wrapper_train(callbacks)
+        _train_wrapper(epoch,
+                       train_dataset,
+                       callbacks=callbacks,
+                       dataset_sink_mode=dataset_sink_mode,
+                       sink_size=sink_size,
+                       initial_epoch=initial_epoch)
 
         # When it's distributed training and using MindRT,
         # the node id should be reset to start from 0.

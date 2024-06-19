@@ -29,6 +29,7 @@
 #include "include/transform/graph_ir/types.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/hardware/ge_device_res_manager.h"
+#include "plugin/device/ascend/mindio/mindio_adapter.h"
 
 namespace mindspore {
 namespace device {
@@ -82,6 +83,7 @@ class GeGraphExecutor : public GraphExecutor {
                                              size_t need_alloc_output_cnt) const;
   void AllocMemory(const KernelGraphPtr &graph);
   void DoAsyncCkpt(const FuncGraphPtr &graph);
+  bool IsNeedNotifyTTP(const FuncGraphPtr &graph);
   mindspore::HashMap<session::KernelGraph *, GeInputData> input_datas_;
   mindspore::HashMap<session::KernelGraph *, GeOutputData> output_datas_;
   std::map<std::string, int64_t> graph_sink_size_;

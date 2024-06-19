@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 from __future__ import division
 
+import os
 from types import FunctionType, MethodType
 
 from mindspore import log as logger
@@ -740,6 +741,8 @@ class _TrainGradAccuStepCell(TrainOneStepCell):
         self.hyper_map = ops.HyperMap()
         self.opt_shard = _get_enable_parallel_optimizer()
         self._get_attr_from_cell(network)
+        self.enable_mindio = os.getenv("MS_ENABLE_MINDIO_GRACEFUL_EXIT")
+        self.barrier = ops.Barrier()
 
     def construct(self, *inputs):
         if not self.sense_flag:
@@ -748,6 +751,8 @@ class _TrainGradAccuStepCell(TrainOneStepCell):
         sens = ops.fill(ops.DType()(loss), ops.Shape()(loss), self.sens)
         grads = self.grad(self.network, self.weights)(*inputs, sens)
         accu_grads = ops.depend(self.accu_grads, grads)
+        if self.enable_mindio:
+            self.barrier()
         if self.opt_shard:
             succ = self.optimizer(grads)
         else:
@@ -762,6 +767,8 @@ class _TrainGradAccuStepCell(TrainOneStepCell):
         loss = self.network(*inputs)
         grads = self.grad_no_sens(self.network, self.weights)(*inputs)
         accu_grads = ops.depend(self.accu_grads, grads)
+        if self.enable_mindio:
+            self.barrier()
         if self.opt_shard:
             succ = self.optimizer(grads)
         else:

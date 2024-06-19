@@ -27,6 +27,7 @@
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "plugin/device/ascend/hal/hardware/ge_graph_executor.h"
+#include "plugin/device/ascend/mindio/mindio_adapter.h"
 
 namespace mindspore {
 namespace device {
@@ -78,6 +79,7 @@ class GeKernelExecutor : public KernelExecutor {
                        const vector<KernelTensor *> &outputs) const;
   bool PySyncRuning(void *stream) const;
   void DoAsyncCkpt(const CNodePtr &kernel) const;
+  bool IsNeedNotifyTTP(const CNodePtr &kernel) const;
 
   mutable std::set<CNodePtr> nop_op_to_memcpy_;
   // Maybe AscendDeviceResManager and GEDeviceResManager now
