@@ -124,11 +124,15 @@ bool TwoCastEliminater::CheckTypesIsIncreasingOrDecreasing() {
   }
 
   auto y_dtype_id_value = GetValueNode<Int64ImmPtr>(y_);
-  MS_EXCEPTION_IF_NULL(y_dtype_id_value);
+  if (y_dtype_id_value == nullptr) {
+    return false;
+  }
   auto y_type_id = static_cast<TypeId>(y_dtype_id_value->value());
 
   auto t_dtype_id_value = GetValueNode<Int64ImmPtr>(t_);
-  MS_EXCEPTION_IF_NULL(t_dtype_id_value);
+  if (t_dtype_id_value == nullptr) {
+    return false;
+  }
   auto t_type_id = static_cast<TypeId>(t_dtype_id_value->value());
 
   auto x_type_id = x_type->type_id();
