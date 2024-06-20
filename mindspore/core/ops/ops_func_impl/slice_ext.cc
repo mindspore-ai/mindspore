@@ -45,30 +45,27 @@ BaseShapePtr SliceExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto input_begin_value = input_begin_value_opt.value();
   auto input_end_value = input_end_value_opt.value();
   auto x_rank = SizeToLong(input_x_shape.size());
-  auto x_axis_size = input_x_shape[axis_value];
 
   if (input_begin_value > input_end_value) {
     MS_EXCEPTION(ValueError) << "For Slice, the end must be no greater than start.";
   }
 
-  MS_CHECK_VALUE(
-    axis_value >= -x_rank && axis_value < x_rank,
-    CheckAndConvertUtils::FormatCheckInRangeMsg("axis", axis_value, kIncludeLeft, {-x_rank, x_rank}, primitive));
+  MS_CHECK_VALUE(axis_value >= -x_rank && axis_value < x_rank, "For primitive [SliceExt]: dim exceed range");
   axis_value = axis_value < 0 ? axis_value + x_rank : axis_value;
+
+  auto x_axis_size = input_x_shape[axis_value];
 
   if (input_x_shape[axis_value] == abstract::Shape::kShapeDimAny) {
     return std::make_shared<abstract::TensorShape>(input_x_shape);
   }
 
   MS_CHECK_VALUE(input_begin_value >= -x_axis_size && input_begin_value <= x_axis_size,
-                 CheckAndConvertUtils::FormatCheckInRangeMsg("start", input_begin_value, kIncludeBoth,
-                                                             {-x_axis_size, x_axis_size}, primitive));
+                 "For primitive [SliceExt]: start exceed range");
   auto input_length = input_end_value - input_begin_value;
   input_begin_value = input_begin_value < 0 ? input_begin_value + x_axis_size : input_begin_value;
   input_end_value = input_begin_value + input_length;
   MS_CHECK_VALUE(input_end_value >= -x_axis_size && input_end_value <= x_axis_size,
-                 CheckAndConvertUtils::FormatCheckInRangeMsg("start", input_end_value, kIncludeBoth,
-                                                             {-x_axis_size, x_axis_size}, primitive));
+                 "For primitive [SliceExt]: end exceed range");
   auto out_shape = input_x_shape;
   out_shape[axis_value] = input_end_value - input_begin_value;
 
@@ -78,6 +75,9 @@ BaseShapePtr SliceExtFuncImpl::InferShape(const PrimitivePtr &primitive,
 TypePtr SliceExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const {
   auto input_type = input_args[kIndex0]->GetType();
+  const std::set<TypePtr> valid_type = {kInt8, kInt32, kInt64, kUInt8, kFloat16, kFloat32, kBool, kBFloat16};
+  (void)CheckAndConvertUtils::CheckTypeValid("input", input_type, valid_type, primitive->name());
+
   return input_type->Clone();
 }
 }  // namespace mindspore::ops

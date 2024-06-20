@@ -1,0 +1,35 @@
+slice_ext:
+    description: |
+        Returns a sliced tensor from input tensor, and
+        the dimension axis is input from start to end by step.
+
+        Args:
+            input (Tensor): the tensor to slice.
+            dim (int): dimension  along which to slice.
+            start (int): the starting dimension.
+            end (int): the ending dimension.
+            step (int): the slice step size
+
+        Returns:
+            Tensor.
+
+        Raises:
+            TypeError: If the input is not a tensor.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import mindspore
+            >>> from mindspore import ops
+            >>> from mindspore import Tensor
+            >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mindspore.int32)
+            >>> output = ops.SliceExt()(x, 0, 0, 2, 1)
+            >>> print(output)
+            [[ 1 2 3]
+             [ 4 5 6]]
+            >>> output = ops.SliceExt()(x, 1, 1, 3, 1)
+            >>> print(output)
+            [[ 2 3]
+             [ 5 6]
+             [ 8 9]]

@@ -21,52 +21,11 @@ Array Operators
 from mindspore.common import Tensor
 from mindspore.ops.operations.array_ops import ArgMaxWithValue, ArgMinWithValue
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops.auto_generate.gen_ops_prim import gather_d_op, slice_ext_op, OneHotExt
+from mindspore.ops.auto_generate.gen_ops_prim import gather_d_op, OneHotExt
 from mindspore.ops.auto_generate.gen_ops_def import max_, min_
-from mindspore import _checkparam as validator
 
 
 # define Primitive global variables
-def narrow(input, dim, start, length):
-    """
-    Returns a narrowed tensor from input tensor, and
-    the dimension axis is input from start to start + length.
-
-    Args:
-        input (Tensor): the tensor to narrow.
-        dim (int): dimension  along which to narrow.
-        start (int): the starting dimension.
-        length (int): the distance to the ending dimension.
-
-    Returns:
-        Tensor.
-
-        - output (Tensors) - The narrowed tensor.
-
-    Raises:
-        TypeError: If the input is not a tensor or tuple or list of tensors.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> from mindspore import Tensor
-        >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mindspore.int32)
-        >>> output = ops.narrow(x, 0, 0, 2)
-        >>> print(output)
-        [[ 1 2 3]
-         [ 4 5 6]]
-        >>> output = ops.narrow(x, 1, 1, 2)
-        >>> print(output)
-        [[ 2 3]
-         [ 5 6]
-         [ 8 9]]
-    """
-    validator.check_value_type("input", input, Tensor, "narrow")
-    return slice_ext_op(input, dim, start, start+length, 1)
-
 
 def gather(input, dim, index):
     r"""

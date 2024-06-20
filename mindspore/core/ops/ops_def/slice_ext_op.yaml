@@ -16,8 +16,8 @@ slice_ext:
             dtype: tensor
     function:
         disable: True
+    view: True
     class:
         name: SliceExt
     dispatch:
         enable: True
-        Ascend: SliceExtAscend

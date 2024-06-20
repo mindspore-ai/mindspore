@@ -193,7 +193,7 @@ from mindspore.ops.function.array_func import index_select_ext as index_select
 # 82
 
 # 83
-
+from mindspore.ops.function.array_func import narrow_ext as narrow
 # 84
 
 # 85
