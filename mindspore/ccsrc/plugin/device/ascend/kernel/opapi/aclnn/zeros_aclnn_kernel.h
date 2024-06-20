@@ -33,6 +33,8 @@ class ZerosAscendCall : public AclnnKernelMod {
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex0}; }
+
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
 };
