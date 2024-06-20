@@ -39,9 +39,9 @@ Status DvppConvertColorOp::Compute(const std::shared_ptr<DeviceTensorAscend910B>
   IO_CHECK(input, output);
 
   // the input should be NHWC, N is 1.
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->GetShape().Rank() == kNHWCImageRank,
-    "DvppAutoContrast: the input tensor is not HW, HWC or 1HWC, but got: " + std::to_string(input->GetShape().Rank()));
+  CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().Rank() == kNHWCImageRank,
+                               "DvppConvertColorOp: the input tensor is not HW, HWC or 1HWC, but got: " +
+                                 std::to_string(input->GetShape().Rank()));
 
   // Dvpp Limit
   int64_t input_h = input->GetShape()[kHeightIndexNHWC];

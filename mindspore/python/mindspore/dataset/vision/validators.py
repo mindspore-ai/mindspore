@@ -294,7 +294,7 @@ def check_erase(method):
             for i, val in enumerate(value):
                 check_value(val, (UINT8_MIN, UINT8_MAX), "value[{}]".format(i))
         else:
-            raise TypeError("fill_value should be a single integer/float or a 3-tuple.")
+            raise TypeError("value should be a single integer/float or a 3-tuple.")
 
         return method(self, *args, **kwargs)
 
