@@ -137,7 +137,9 @@ bool FloatStatusAddNFusion::Run(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(cnode);
     bool pattern_match =
       std::all_of(cnode->inputs().begin() + 1, cnode->inputs().end(), [](const AnfNodePtr &anf_node) {
-        return IsPrimitiveCNode(anf_node, prim::kPrimFloatStatus) && !common::AnfAlgo::IsDynamicShape(anf_node);
+        return IsPrimitiveCNode(anf_node, prim::kPrimFloatStatus) &&
+               (!common::AnfAlgo::IsDynamicShape(anf_node) ||
+                GraphKernelFlags::GetInstance().kernel_generator == "DVM");
       });
     if (!pattern_match) {
       continue;

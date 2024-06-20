@@ -381,7 +381,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         elif runtime_conf is not None and ("all_finite:False" in runtime_conf or "all_finite:false" in runtime_conf):
             self.enable_allfinite = False
         elif global_jit_config:
-            self.enable_allfinite = global_jit_config["jit_level"] == "O0"
+            self.enable_allfinite = global_jit_config["jit_level"] == "O0" or global_jit_config["jit_level"] == "O1"
 
         if isinstance(scale_sense, Cell):
             self.loss_scaling_manager = scale_sense

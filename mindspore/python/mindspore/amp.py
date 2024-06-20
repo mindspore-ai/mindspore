@@ -71,7 +71,7 @@ def _enable_all_finite():
         return False
 
     if global_jit_config:
-        return global_jit_config["jit_level"] == "O0"
+        return global_jit_config["jit_level"] == "O0" or global_jit_config["jit_level"] == "O1"
     return False
 
 
