@@ -35,7 +35,7 @@ class ComplexNet(nn.Cell):
         return self.div(mul_xy, sub_xy)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_complex_gpu():
