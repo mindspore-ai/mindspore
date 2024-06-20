@@ -681,7 +681,8 @@ InputArgsInfoPtr GradExecutor::GetInputArgsInfo(const py::object &obj, const py:
   return input_args_info;
 }
 
-bool GradExecutor::GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info) {
+bool GradExecutor::GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info,
+                                         const std::string &obj_id_with_grad_order) {
   MS_EXCEPTION_IF_NULL(input_args_info);
   // Just has a forward process, and forward is dynamic(by set_inputs)
   if (forward_use_dynamic_shape_process_) {
@@ -695,18 +696,49 @@ bool GradExecutor::GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info
     return true;
   }
 
+  // Dynamic structure
   auto pre_top_cell = GetAlreadyRunTopCell(input_args_info->already_run_cell_id);
-  if (pre_top_cell != nullptr) {
-    MS_LOG(DEBUG) << "Get dynamic from already run top cell";
-    return pre_top_cell->use_dynamic_shape_process();
+  if (pre_top_cell != nullptr && pre_top_cell->use_dynamic_shape_process()) {
+    MS_LOG(DEBUG) << "Get dynamic shape from already run top cell";
+    return true;
   }
 
+  // Dynamic structure for pipeline top cell
   pre_top_cell = GetPipelineRunTopCell(input_args_info->already_run_cell_id);
-  if (pre_top_cell != nullptr) {
-    MS_LOG(DEBUG) << "Get dynamic from pipeline top cell";
-    return pre_top_cell->use_dynamic_shape_process();
+  if (pre_top_cell != nullptr && pre_top_cell->use_dynamic_shape_process()) {
+    MS_LOG(DEBUG) << "Get dynamic shape from pipeline top cell";
+    return true;
   }
-  return false;
+
+  // Dynamic shape
+  if (std::any_of(already_run_top_cell_.begin(), already_run_top_cell_.end(),
+                  [&obj_id_with_grad_order](const auto &item) {
+                    if (item.second != nullptr && item.second->obj_id_with_grad_order() == obj_id_with_grad_order) {
+                      return item.second->use_dynamic_shape_process();
+                    }
+                    return false;
+                  })) {
+    MS_LOG(DEBUG) << "Get dynamic shape from pipeline top cell with obj_id_with_grad_order " << obj_id_with_grad_order;
+    return true;
+  }
+
+  // Dynamic shape for pipeline top cell
+  return std::any_of(
+    pipeline_top_cell_map_.begin(), pipeline_top_cell_map_.end(), [&obj_id_with_grad_order](const auto &item) {
+      const auto &pipe_top_cell_list = item.second;
+      if (std::any_of(pipe_top_cell_list.begin(), pipe_top_cell_list.end(),
+                      [&obj_id_with_grad_order](const auto &pipe_item) {
+                        if (pipe_item != nullptr && pipe_item->obj_id_with_grad_order() == obj_id_with_grad_order) {
+                          return pipe_item->use_dynamic_shape_process();
+                        }
+                        return false;
+                      })) {
+        MS_LOG(DEBUG) << "Get dynamic shape from pipeline top cell with obj_id_with_grad_order "
+                      << obj_id_with_grad_order;
+        return true;
+      }
+      return false;
+    });
 }
 
 void GradExecutor::MakeNewTopCell(const InputArgsInfoPtr &input_args_info) {
@@ -736,7 +768,7 @@ void GradExecutor::MakeNewTopCell(const InputArgsInfoPtr &input_args_info) {
     input_args_info->already_run_cell_id, resource, fg, op_num_in_bprop_graph_ * kContainerRatio);
   top_cell_->set_forward_already_run(true);
   top_cell_->set_input_args_id(input_args_info->input_args_id);
-  auto use_dynamic_shape_process = GetTopCellDynamicFlag(input_args_info);
+  auto use_dynamic_shape_process = GetTopCellDynamicFlag(input_args_info, obj_id_with_grad_order);
   top_cell_->set_use_dynamic_shape_process(use_dynamic_shape_process);
   top_cell_->set_need_save_dynamic_detect_nodes(
     dynamic_shape()->IsNeedSaveDynamicDetectNodes(top_cell_, use_dynamic_shape_process));

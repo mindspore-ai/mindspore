@@ -191,7 +191,7 @@ class GradExecutor {
   }
   uint32_t kernel_graph_id_for_control_flow() { return --kernel_graph_id_for_control_flow_; }
   void ClearPreTopCell(const TopCellInfoPtr &new_top_cell, bool is_need_clear_device_mem);
-  bool GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info);
+  bool GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info, const std::string &obj_id_with_grad_order);
   void SwitchTopCell();
   TopCellInfoPtr GetTopCell(const std::string &already_run_cell_id, const std::string &input_args_id);
   void DoParameterReplace(const FuncGraphPtr &first_grad_fg, const GraphInfoPtr &inner_graph_info,
