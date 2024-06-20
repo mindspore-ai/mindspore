@@ -29,6 +29,17 @@ constexpr int64_t kInputMinNum = 2;
 }  // namespace
 
 STATUS ConcatV2Mapper::Mapper(const CNodePtr &cnode) {
+  ValueNodePtr value_node = nullptr;
+  PrimitivePtr src_prim = nullptr;
+  if (GetValueNodeAndPrimFromCnode(cnode, &value_node, &src_prim) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Get primitive from cnode failed.";
+    return lite::RET_ERROR;
+  }
+  auto dst_prim = std::make_shared<acl::ConcatV2>();
+  CHECK_NULL_RETURN(dst_prim);
+  dst_prim->SetAttrs(src_prim->attrs());
+  value_node->set_value(dst_prim);
+
   if (AddAttrForDynInputPrimitive(cnode) != RET_OK) {
     MS_LOG(ERROR) << "ConcatV2 mapper failed.";
     return RET_ERROR;

@@ -82,7 +82,12 @@ PrimitiveCPtr TFSplitParser::Parse(const tensorflow::NodeDef &tf_op,
         MS_LOG(ERROR) << "memcpy_s failed";
         return nullptr;
       }
+    } else {
+      for (auto i = 0; i < size_splits_tensor.int_val_size(); i++) {
+        size_splits_int32.push_back(size_splits_tensor.int_val(i));
+      }
     }
+
     std::vector<int64_t> size_splits;
     std::transform(size_splits_int32.begin(), size_splits_int32.end(), std::back_inserter(size_splits),
                    [](int32_t val) { return static_cast<int64_t>(val); });

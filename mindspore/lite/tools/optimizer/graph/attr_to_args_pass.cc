@@ -138,6 +138,11 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
      "axis",
      "output_num",
    }},
+  {"SplitD",
+   {
+     "split_dim",
+     "num_split",
+   }},
   {"ResizeBicubic",
    {
      "align_corners",
