@@ -1256,7 +1256,18 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
   py::object kwvargs = packed_args[2];
   bool graph_preferred = PreferCallGraph(c, args);
   SetExecStatus(c, f, graph_preferred);
-  py::object res = graph_preferred ? CallGraph(c, args, kwvargs) : CallCompiledCallable(tstate, f, c);
+  py::object res;
+  if (!graph_preferred) {
+    res = CallCompiledCallable(tstate, f, c);
+  } else if (!c->conf->GetBoolConfig(GraphJitConfig::kCompileWithTry)) {
+    res = CallGraph(c, args, kwvargs);
+  } else {
+    try {
+      res = CallGraph(c, args, kwvargs);
+    } catch (std::exception &e) {
+      MS_LOG(WARNING) << "compile result has an error, de-optimization\n" << e.what();
+    }
+  }
   c->code->Inc();
 
   if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf)) {

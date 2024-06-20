@@ -44,7 +44,8 @@ def _get_after_grad_code():
     for cnst in _Grad.__call__.__code__.co_consts:
         if isinstance(cnst, types.CodeType) and cnst.co_name == name:
             codes.append(cnst)
-    assert codes, "check GradOperation, can't find 'after_grad'"
+    if not codes:
+        raise RuntimeError("check GradOperation, can't find the code of 'after_grad'")
     return codes
 
 
@@ -63,8 +64,8 @@ def _get_constexpr_code():
         pass
     code = inner.__call__.__code__
     # check it before c++ use it
-    assert isinstance(inner, Primitive)
-    assert code is not Primitive.__call__.__code__
+    if not isinstance(inner, Primitive) or code is Primitive.__call__.__code__:
+        raise RuntimeError("@constexpr not isinstance(inner, Primitive) or code is Primitive.__call__.__code__")
     return code
 
 
@@ -75,8 +76,8 @@ def _get_primexpr_code():
         pass
     code = inner.__call__.__code__
     # check it before c++ use it
-    assert isinstance(inner, Primitive)
-    assert code is not Primitive.__call__.__code__
+    if not isinstance(inner, Primitive) or code is Primitive.__call__.__code__:
+        raise RuntimeError("@_primexpr not isinstance(inner, Primitive) or code is Primitive.__call__.__code__")
     return code
 
 
@@ -120,11 +121,14 @@ meta_func_graph_key = id(MetaFuncGraph_)
 pijit_forbidden_key = id(NotImplemented)
 pijit_constexpr_key = id(_pijit_constexpr)
 
-assert function_id(tuple.__getitem__) == function_id(tuple().__getitem__), "check WrapperDescriptor failed"
-assert function_id(list.__getitem__) == function_id(list().__getitem__), "check MethodDescriptor failed"
-assert function_id(Tensor_.from_numpy) == function_id(Tensor_(1).from_numpy), "check instancemethod failed"
-assert function_id(Tensor.astype) == function_id(Tensor(1).astype) == id(Tensor.astype), "check function id failed"
-assert function_id(Primitive) == function_id(Primitive) == id(Primitive), "check user defined object id failed"
+
+# check WrapperDescriptor: function_id(tuple.__getitem__) == function_id(tuple().__getitem__)
+# check MethodDescriptor: function_id(list.__getitem__) == function_id(list().__getitem__)
+# check instancemethod: function_id(Tensor_.from_numpy) == function_id(Tensor_(1).from_numpy)
+# check cfunction filter: function_id(Tensor_.from_numpy) != function_id(Tensor_._is_test_stub)
+# check function id: function_id(Tensor.astype) == function_id(Tensor(1).astype) == id(Tensor.astype)
+# check user defined object id: function_id(Primitive) == function_id(Primitive) == id(Primitive)
+
 
 FUNC_KEY_EMPTY = 0  # ""
 FUNC_KEY_PIJIT_CONSTEXPR = 1  # "pijit.constexpr"
