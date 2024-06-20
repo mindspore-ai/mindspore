@@ -26,6 +26,7 @@ Tensor
     mindspore.mint.scatter_add
     mindspore.mint.narrow
     mindspore.mint.topk
+    mindspore.mint.sort
 
 数学运算
 -----------------

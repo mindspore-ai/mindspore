@@ -175,7 +175,7 @@ from mindspore.ops.functional import isfinite
 # 73
 from mindspore.ops.functional import ceil
 # 74
-
+from mindspore.ops.function.array_func import sort_ext as sort
 # 75
 from mindspore.ops.functional import less, lt
 # 76
@@ -398,7 +398,7 @@ __all__ = [
     # 73
     'ceil',
     # 74
-
+    'sort',
     # 75
     'less',
     'lt',
