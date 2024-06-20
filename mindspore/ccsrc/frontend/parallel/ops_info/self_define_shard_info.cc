@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <utility>
+#include <algorithm>
 
 #include "ir/value.h"
 #include "frontend/parallel/device_manager.h"
@@ -89,6 +90,40 @@ Status SelfDefineShardInfo::InferOutputTensorInfo() {
   MS_LOG(ERROR) << "Please pass output layout to " << name_
                 << ", self define shard ops does not support infer output tensor layout";
   return FAILED;
+}
+
+Status SelfDefineShardInfo::InferAsLossDivisorByLayout() {
+  if (!ParallelContext::GetInstance()->loss_repeated_mean()) {
+    as_loss_divisor_ = 1;
+    return SUCCESS;
+  }
+
+  if (outputs_tensor_info_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The outputs tensor info is empty.";
+    return FAILED;
+  }
+
+  TensorMaps outputs_tensor_map = outputs_tensor_info_[0].tensor_layout().tensor_map_before();
+  if (outputs_tensor_map.empty()) {
+    MS_LOG(INFO) << name_ << ": out_dev_matrix_shape is empty";
+    as_loss_divisor_ = stage_device_size_;
+    MS_LOG(INFO) << name_ << ": The output is a scalar, use the dev size " << as_loss_divisor_ << ", loss divisor.";
+    return SUCCESS;
+  }
+
+  auto out_dev_matrix_shape = outputs_tensor_info_[0].tensor_layout().device_arrangement_origin().array();
+  if (out_dev_matrix_shape.empty()) {
+    out_dev_matrix_shape = dev_matrix_shape_;
+  }
+  Shape squashed_tensor_map;
+  for (const auto &tensor_map : outputs_tensor_map) {
+    std::copy(tensor_map.begin(), tensor_map.end(), std::back_inserter(squashed_tensor_map));
+  }
+  as_loss_divisor_ = ComputeRepeatDeviceNumByTensorMap(out_dev_matrix_shape, squashed_tensor_map);
+  MS_LOG(INFO) << name_ << ": the dev matrix shape is " << ShapeToString(out_dev_matrix_shape)
+               << ", the output tensor map is " << ShapeToString(squashed_tensor_map) << ", loss divisor is "
+               << as_loss_divisor_;
+  return SUCCESS;
 }
 
 REGISTER(SelfDefineShardInfo);

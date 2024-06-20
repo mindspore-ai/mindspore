@@ -40,6 +40,7 @@ class SelfDefineShardInfo : public OperatorInfo {
  protected:
   Status UnreachableError();
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status InferAsLossDivisorByLayout() override;
   Status CheckInputLayout() override;
   Status CheckOutputLayout() override;
   Status InferOutputTensorInfo() override;
