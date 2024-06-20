@@ -515,7 +515,8 @@ tensor::BaseTensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t o
   // Delete tensor->data_sync() when MindRT is enabled in all scenes.
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
+      !runtime::OpExecutor::GetInstance().async_for_graph()) {
     // If execution mode is Graph Mode in MsContext, the tensor will be the input of graph which will execute in Graph
     // Mode, if the graph contain no CNode after optimization, the tensor need sync to host.
     tensor->data_sync(false);
@@ -551,7 +552,8 @@ tensor::BaseTensorPtr CreateOutputTensorDynamicImpl(const OpCompilerInfoPtr &op_
   // Delete tensor->data_sync() when MindRT is enabled in all scenes.
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
+      !runtime::OpExecutor::GetInstance().async_for_graph()) {
     // If execution mode is Graph Mode in MsContext, the tensor will be the input of graph which will execute in Graph
     // Mode, if the graph contain no CNode after optimization, the tensor need sync to host.
     tensor->data_sync(false);
@@ -565,11 +567,6 @@ bool EnablePyNativeSyncRunning() {
   MS_EXCEPTION_IF_NULL(ms_context);
   return ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
 }
-int GetExecutionMode() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  return ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
-}
 #endif
 
 bool DisableRunOpAsync(const OpCompilerInfoPtr &op_compiler_info, const session::BackendOpRunInfoPtr &op_run_info) {
@@ -579,7 +576,7 @@ bool DisableRunOpAsync(const OpCompilerInfoPtr &op_compiler_info, const session:
   return op_run_info->base_op_run_info.has_dynamic_output ||  // Infer output is dynamic.
          op_compiler_info->need_refresh_abstract_ ||          // Graph output is dynamic after IR Pass. (e.g. Dropout)
          op_compiler_info->need_erase_ ||                     // Random op cache need to be erased.
-         GetExecutionMode() == kGraphMode ||                  // Cannot find a wait point before compile graph.
+         runtime::OpExecutor::NeedSync() ||                   // Cannot find a wait point before compile graph.
          EnablePyNativeSyncRunning();                         // context.set_context(pynative_synchronize=True)
 #endif
 }

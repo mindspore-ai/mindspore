@@ -96,7 +96,7 @@ bool OpExecutor::NeedSync() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   return context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) ||
-         context->get_param<int>(MS_CTX_EXECUTION_MODE) == mindspore::kGraphMode;
+         (context->get_param<int>(MS_CTX_EXECUTION_MODE) == mindspore::kGraphMode && !async_for_graph_);
 }
 
 void OpExecutor::ChildAfterFork() {

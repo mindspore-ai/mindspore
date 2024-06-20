@@ -326,7 +326,7 @@ bool ForwardExecutor::enable_async() const {
 
 bool ForwardExecutor::EnablePipeline(const std::string &op_name) const {
   return enable_async() && !IsVmOp(op_name) && op_name != kOpNameCustom && !ScopedFallbackRunning::on() &&
-         MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
+         !runtime::OpExecutor::NeedSync();
 }
 
 void ForwardExecutor::DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_info) {

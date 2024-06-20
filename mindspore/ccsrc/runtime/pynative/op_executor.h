@@ -63,6 +63,10 @@ class BACKEND_EXPORT OpExecutor {
   // Child process reinitialize resource after fork.
   void ChildAfterFork();
 
+  void set_async_for_graph(bool flag) { async_for_graph_ = flag; }
+
+  bool async_for_graph() const { return async_for_graph_; }
+
   static bool NeedSync();
 
   static void DispatchLaunchTask(const std::function<void()> &func);
@@ -74,6 +78,7 @@ class BACKEND_EXPORT OpExecutor {
 
   void WaitForRun();
   std::function<void()> forward_callback_{nullptr};
+  inline static bool async_for_graph_{false};
 };
 }  // namespace mindspore::runtime
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_OP_EXECUTOR_H_

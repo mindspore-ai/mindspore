@@ -1555,6 +1555,9 @@ class _PyNativeExecutor:
         """
         self._executor.set_grad_flag(flag)
 
+    def set_async_for_graph(self, flag):
+        self._executor.set_async_for_graph(flag)
+
     def enable_grad(self):
         """
         The global flag whether needing to calculate gradient.
