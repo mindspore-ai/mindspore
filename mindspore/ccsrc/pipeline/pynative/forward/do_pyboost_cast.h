@@ -40,6 +40,14 @@ class PyBoostCastOperation : public CastBaseOperation {
   template <typename... InputArgs, std::size_t... Index>
   auto SetTensorMixPrecisionCastHelper(const FrontendOpRunInfoPtr &op_run_info, std::index_sequence<Index...>,
                                        const InputArgs &... input_args) {
+    if (op_run_info->mix_type == kAutoPromote) {
+      auto [args_type_id, args_has_tensor] =
+        GetTypeInfo(op_run_info, std::make_tuple(input_args...), std::make_index_sequence<sizeof...(InputArgs)>{});
+      auto promote_type_id = GetMixPrecisionPromoteType(args_type_id, args_has_tensor);
+      op_run_info->mix_precision_type = TypeIdToType(promote_type_id);
+      MS_LOG(DEBUG) << "Set op " << op_run_info->base_op_run_info.op_name << " promote type "
+                    << TypeIdToString(promote_type_id);
+    }
     return std::make_tuple(SetTensorMixPrecisionCast(op_run_info, input_args, Index)...);
   }
 

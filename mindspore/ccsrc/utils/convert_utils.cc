@@ -932,6 +932,15 @@ TypeId ConvertTypeForTensorsOrScalars(const TypeId &type1, const TypeId &type2) 
   return ConvertTypeForTensorsOrScalars(type1, type2, GetHashId(type1, type2));
 }
 
+TypeId GetMixPrecisionPromoteType(const std::vector<TypeId> &args_type_id, const std::vector<bool> &args_is_tensor) {
+  size_t args_size = args_type_id.size();
+  auto type_id = args_type_id.front();
+  for (size_t i = 1; i < args_size; ++i) {
+    type_id = ConvertTypeForTensorsOrScalars(args_type_id[i], type_id, GetHashId(args_type_id[i], type_id));
+  }
+  return type_id;
+}
+
 std::string ValueSimpleInfoToString(const ValueSimpleInfo &value_simple_info) {
   std::ostringstream buf;
   buf << "Value simple info element size : " << value_simple_info.size_;

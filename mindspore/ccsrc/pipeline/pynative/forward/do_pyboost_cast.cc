@@ -79,22 +79,23 @@ tensor::BaseTensorPtr PyBoostCastOperation::SetTensorMixPrecisionCast(const Fron
                                                                       size_t index) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(t);
-  if (op_run_info->mix_type != kNotSet) {
-    auto dst_dtype = kFloat16;
+  auto dst_dtype = kFloat16;
+  if (op_run_info->mix_precision_type == nullptr) {
     if (op_run_info->mix_type == kFP32) {
       dst_dtype = kFloat32;
     } else if (op_run_info->mix_type == kBF16) {
       dst_dtype = kBFloat16;
     }
-
-    auto source_dtype = t->Dtype();
-    if (source_dtype != nullptr && (IsSubType(source_dtype, kFloat) || IsSubType(source_dtype, kBFloat)) &&
-        *source_dtype != *dst_dtype) {
-      MS_LOG(DEBUG) << "MixPrecision cast for " << op_run_info->base_op_run_info.op_name << " " << index
-                    << "th input, and to type " << dst_dtype->ToString();
-      auto cast_t = DoAutoCast(op_run_info, std::make_pair(dst_dtype->type_id(), true), index, t);
-      return cast_t;
-    }
+  } else {
+    dst_dtype = op_run_info->mix_precision_type;
+  }
+  auto source_dtype = t->Dtype();
+  if (source_dtype != nullptr && (IsSubType(source_dtype, kFloat) || IsSubType(source_dtype, kBFloat)) &&
+      *source_dtype != *dst_dtype) {
+    MS_LOG(DEBUG) << "MixPrecision cast for " << op_run_info->base_op_run_info.op_name << " " << index
+                  << "th input, and to type " << dst_dtype->ToString();
+    auto cast_t = DoAutoCast(op_run_info, std::make_pair(dst_dtype->type_id(), true), index, t);
+    return cast_t;
   }
   return t;
 }

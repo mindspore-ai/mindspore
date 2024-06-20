@@ -130,23 +130,26 @@ ValuePtr CastOperation::DoParamMixPrecisionCast(const FrontendOpRunInfoPtr &op_r
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(is_cast);
   MS_EXCEPTION_IF_NULL(v);
-  if (op_run_info->mix_type != kNotSet) {
-    auto dst_dtype = kFloat16;
+  auto dst_dtype = kFloat16;
+  if (op_run_info->mix_precision_type == nullptr) {
     if (op_run_info->mix_type == kFP32) {
       dst_dtype = kFloat32;
     } else if (op_run_info->mix_type == kBF16) {
       dst_dtype = kBFloat16;
     }
-    const auto &tensor = v->cast<tensor::BaseTensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
-    auto source_dtype = tensor->Dtype();
-    if (source_dtype != nullptr && (IsSubType(source_dtype, kFloat) || IsSubType(source_dtype, kBFloat)) &&
-        *source_dtype != *dst_dtype) {
-      MS_LOG(DEBUG) << "MixPrecision cast for " << op_run_info->base_op_run_info.op_name << " " << index
-                    << "th input, and to type " << dst_dtype->ToString();
-      *is_cast = true;
-      return DoAutoCast(op_run_info, tensor, std::make_pair(dst_dtype->type_id(), true), op_name, index);
-    }
+  } else {
+    dst_dtype = op_run_info->mix_precision_type;
+  }
+
+  const auto &tensor = v->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto source_dtype = tensor->Dtype();
+  if (source_dtype != nullptr && (IsSubType(source_dtype, kFloat) || IsSubType(source_dtype, kBFloat)) &&
+      *source_dtype != *dst_dtype) {
+    MS_LOG(DEBUG) << "MixPrecision cast for " << op_run_info->base_op_run_info.op_name << " " << index
+                  << "th input, and to type " << dst_dtype->ToString();
+    *is_cast = true;
+    return DoAutoCast(op_run_info, tensor, std::make_pair(dst_dtype->type_id(), true), op_name, index);
   }
   return v;
 }
@@ -243,6 +246,46 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
   }
 }
 
+namespace {
+std::pair<std::vector<TypeId>, std::vector<bool>> GetTypeInfo(const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  std::vector<TypeId> args_type_id;
+  std::vector<bool> args_has_tensor;
+  args_type_id.resize(op_run_info->input_size);
+  args_has_tensor.resize(op_run_info->input_size, false);
+
+  const auto &input_value = op_run_info->op_grad_info->input_value;
+  for (size_t i = 0; i < op_run_info->input_size; ++i) {
+    if (input_value[i]->isa<tensor::BaseTensor>()) {
+      args_type_id[i] = input_value[i]->cast<tensor::BaseTensorPtr>()->data_type();
+      if (op_run_info->source_type[i] == ops::OP_DTYPE::DT_BEGIN) {
+        args_has_tensor[i] = true;
+      }
+    } else if (input_value[i]->isa<Scalar>()) {
+      const auto type = input_value[i]->cast<ScalarPtr>()->type();
+      MS_EXCEPTION_IF_NULL(type);
+      args_type_id[i] = type->type_id();
+    } else {
+      MS_LOG(DEBUG) << "Get input value " << input_value[i]->ToString();
+      args_type_id[i] = kTypeUnknown;
+    }
+  }
+  return {args_type_id, args_has_tensor};
+}
+
+void GetMixPrecisionAutoPromoteType(const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  if (op_run_info->mix_type != kAutoPromote) {
+    return;
+  }
+  auto [args_type_id, args_has_tensor] = GetTypeInfo(op_run_info);
+  auto promote_type_id = GetMixPrecisionPromoteType(args_type_id, args_has_tensor);
+  op_run_info->mix_precision_type = TypeIdToType(promote_type_id);
+  MS_LOG(DEBUG) << "Set op " << op_run_info->base_op_run_info.op_name << " promote type "
+                << TypeIdToString(promote_type_id);
+}
+}  // namespace
+
 void CastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   if (op_run_info->async_status.disable_mix_precision) {
@@ -252,6 +295,7 @@ void CastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run
   }
   MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info->op_prim);
   const auto &signature = op_run_info->signatures;
+  GetMixPrecisionAutoPromoteType(op_run_info);
   for (size_t i = 0; i < op_run_info->none_init_inputs_num; i++) {
     const auto &v = op_run_info->op_grad_info->input_value[i];
     auto sig = SignatureEnumRW::kRWDefault;
@@ -285,34 +329,6 @@ void CastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run
     }
   }
 }
-
-namespace {
-std::pair<std::vector<TypeId>, std::vector<bool>> GetTypeInfo(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  std::vector<TypeId> args_type_id;
-  std::vector<bool> args_has_tensor;
-  args_type_id.resize(op_run_info->input_size);
-  args_has_tensor.resize(op_run_info->input_size, false);
-
-  const auto &input_value = op_run_info->op_grad_info->input_value;
-  for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    if (input_value[i]->isa<tensor::BaseTensor>()) {
-      args_type_id[i] = input_value[i]->cast<tensor::BaseTensorPtr>()->data_type();
-      if (op_run_info->source_type[i] == ops::OP_DTYPE::DT_BEGIN) {
-        args_has_tensor[i] = true;
-      }
-    } else if (input_value[i]->isa<Scalar>()) {
-      const auto type = input_value[i]->cast<ScalarPtr>()->type();
-      MS_EXCEPTION_IF_NULL(type);
-      args_type_id[i] = type->type_id();
-    } else {
-      MS_LOG(DEBUG) << "Get input value " << input_value[i]->ToString();
-      args_type_id[i] = kTypeUnknown;
-    }
-  }
-  return {args_type_id, args_has_tensor};
-}
-}  // namespace
 
 void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);

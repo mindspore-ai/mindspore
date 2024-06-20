@@ -28,7 +28,7 @@
 namespace mindspore {
 using abstract::AbstractBasePtr;
 using abstract::AbstractBasePtrList;
-enum MixedPrecisionType { kNotSet = 0, kFP16 = 1, kFP32 = 2, kBF16 = 3 };
+enum MixedPrecisionType { kNotSet = 0, kFP16 = 1, kFP32 = 2, kBF16 = 3, kAutoPromote = 4 };
 
 /// \brief The Cell class of MindSpore is the base class for building all networks and the basic unit of a network.
 class MS_CORE_API Cell final : public Named {

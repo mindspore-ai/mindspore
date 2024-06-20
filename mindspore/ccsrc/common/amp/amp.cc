@@ -26,7 +26,7 @@ PrimArgList g_AutoPromoteList = {PrimArg("Addcdiv", {}),  PrimArg("Addcmul", {})
                                  PrimArg("Dot", {}),      PrimArg("GridSampler2D", {}), PrimArg("GridSampler3D", {}),
                                  PrimArg("IndexPut", {}), PrimArg("BiasAdd", {})};
 
-PrimCastStrategyInfo AmpStrategy::GetPrimCastStrategyInfo(std::string op_name) {
+PrimCastStrategyInfo AmpStrategy::GetPrimCastStrategyInfo(const std::string &op_name) {
   PrimCastStrategyInfo strategy_info = {PrimCastStrategy::Ignore, kFloat32, {}};
   // Check cache to improve performance
   if (strategy_info_cache.find(op_name) != strategy_info_cache.end()) {

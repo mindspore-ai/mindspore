@@ -126,6 +126,7 @@ struct FrontendOpRunInfo {
   bool is_jit_input = false;
   bool is_view_op = false;
   int mix_type{0};
+  TypePtr mix_precision_type{nullptr};
   size_t input_size = 0;
   // none_intit_inputs is the inputs those not defined in Primitive's __init__ function
   size_t none_init_inputs_num = 0;

@@ -24,6 +24,7 @@
 #include "ops/framework_ops.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "include/common/amp/amp.h"
 #include "include/common/utils/python_fallback_running.h"
 #include "backend/graph_compiler/transform.h"
 #include "utils/ms_context.h"
@@ -246,6 +247,24 @@ size_t GetCurStreamId(const std::string &device_target) {
   return device_ctx->device_res_manager_->GetCurrentStreamId();
 }
 #endif
+
+bool GetMixprecisionTypeFromStrategy(const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  auto cur_amp_Strategy = amp::GetCurrentAmpStrategy();
+  if (cur_amp_Strategy == nullptr || cur_amp_Strategy->GetAmpLevel() == amp::AmpLevel::O0) {
+    return false;
+  }
+  const auto &op_cast_strategy_info =
+    cur_amp_Strategy->GetPrimCastStrategyInfo(op_run_info->op_grad_info->op_prim->name());
+  if (op_cast_strategy_info.strategy == amp::Ignore) {
+    return false;
+  }
+  if (op_cast_strategy_info.strategy == amp::AutoPromote) {
+    op_run_info->mix_type = kAutoPromote;
+  }
+  op_run_info->mix_precision_type = op_cast_strategy_info.dtype;
+  return true;
+}
 }  // namespace
 
 void ForwardExecutor::WaitForwardTask() {
@@ -812,13 +831,16 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
 
 bool ForwardExecutor::CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &cur_cell = forward_cell_stack_.top();
-  MS_EXCEPTION_IF_NULL(cur_cell);
-  MixedPrecisionType mix_type = cur_cell->GetMixedPrecisionType();
-  if (mix_type == kNotSet) {
-    return true;
+  // If not have amp strategy, try get from cell stack
+  if (!GetMixprecisionTypeFromStrategy(op_run_info)) {
+    const auto &cur_cell = forward_cell_stack_.top();
+    MS_EXCEPTION_IF_NULL(cur_cell);
+    MixedPrecisionType mix_type = cur_cell->GetMixedPrecisionType();
+    if (mix_type == kNotSet) {
+      return true;
+    }
+    op_run_info->mix_type = mix_type;
   }
-  op_run_info->mix_type = mix_type;
   return false;
 }
 

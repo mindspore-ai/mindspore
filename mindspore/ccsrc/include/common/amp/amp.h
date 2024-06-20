@@ -69,7 +69,7 @@ class COMMON_EXPORT AmpStrategy {
   TypePtr GetAmpDtype() { return amp_dtype_; }
   PrimArgList GetWhiteList() { return white_list_; }
   PrimArgList GetBlackList() { return black_list_; }
-  PrimCastStrategyInfo GetPrimCastStrategyInfo(std::string op_name);
+  PrimCastStrategyInfo GetPrimCastStrategyInfo(const std::string &op_name);
 
  private:
   AmpLevel amp_level_ = AmpLevel::Auto;
@@ -81,7 +81,6 @@ class COMMON_EXPORT AmpStrategy {
   PrimArgList auto_promote_list_;
   std::map<std::string, PrimCastStrategyInfo> strategy_info_cache;
 };
-
 using AmpStrategyPtr = std::shared_ptr<AmpStrategy>;
 
 AmpStrategyPtr COMMON_EXPORT CreateAmpStrategy(const AmpLevel amp_level, const TypePtr amp_dtype,

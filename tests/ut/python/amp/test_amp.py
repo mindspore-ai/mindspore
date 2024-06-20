@@ -133,11 +133,11 @@ def test_modify_amp_list():
     assert amp_c.SetDtypeOptList == [("ProdExt", []), ("SumExt", [])]
     assert not amp_c.SetDtypeList
     assert amp_c.AutoPromoteList == [("Addcdiv", []), ("Addcmul", []), ("Cross", []), ("Dot", []),
-                                     ("GridSampler2D", []), ("GridSampler3D", []), ("IndexPut", [])]
+                                     ("GridSampler2D", []), ("GridSampler3D", []), ("IndexPut", []), ("BiasAdd", [])]
     amp_c.SetDtypeOptList.append(("LogSoftmax", [0]))
     amp_c.SetDtypeList.append(("NormExt", [0]))
     amp_c.AutoPromoteList.remove(("Addcmul", []))
     assert amp_c.SetDtypeOptList == [("ProdExt", []), ("SumExt", []), ("LogSoftmax", [0])]
     assert amp_c.SetDtypeList == [("NormExt", [0])]
     assert amp_c.AutoPromoteList == [("Addcdiv", []), ("Cross", []), ("Dot", []), ("GridSampler2D", []),
-                                     ("GridSampler3D", []), ("IndexPut", [])]
+                                     ("GridSampler3D", []), ("IndexPut", []), ("BiasAdd", [])]

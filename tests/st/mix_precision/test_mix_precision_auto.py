@@ -41,7 +41,7 @@ class Net(nn.Cell):
                               out_channels=out_c,
                               kernel_size=3,
                               stride=1,
-                              has_bias=True,
+                              has_bias=False,
                               pad_mode='same',
                               weight_init='ones',
                               bias_init='ones')
@@ -75,7 +75,7 @@ class Net_FP16(nn.Cell):
                               out_channels=out_c,
                               kernel_size=3,
                               stride=1,
-                              has_bias=True,
+                              has_bias=False,
                               pad_mode='same',
                               weight_init='ones',
                               bias_init='ones').to_float(ms.float16)
