@@ -1556,6 +1556,15 @@ class _PyNativeExecutor:
         self._executor.set_grad_flag(flag)
 
     def set_async_for_graph(self, flag):
+        """
+        Set the flag for graph async run.
+
+        Args:
+            flag (bool): Specifying whether enable graph async run.
+
+        Return:
+            None.
+        """
         self._executor.set_async_for_graph(flag)
 
     def enable_grad(self):
