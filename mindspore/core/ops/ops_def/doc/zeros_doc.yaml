@@ -1,6 +1,6 @@
 zeros:
     description: |
-        Creates a tensor filled with 0 with shape described by `size` and fills it with value 0 in type of `dtype`.
+        Creates a tensor filled with value zeros, whose shape and type are described by the first argument `size` and second argument `dtype` respectively.
 
         .. warning::
             For argument `size`, Tensor type input will be deprecated in the future version.

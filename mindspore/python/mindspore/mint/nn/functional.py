@@ -146,6 +146,7 @@ from mindspore.ops.functional import embedding
 # 63
 
 # 64
+from mindspore.ops.extend import one_hot as one_hot_ext
 
 # 65
 
@@ -218,6 +219,10 @@ from mindspore.ops.function.math_func import tanh
 # 99
 
 # 100
+
+def one_hot(tensor, num_classes=-1):
+    return one_hot_ext(tensor, num_classes)
+
 
 __all__ = [
     'conv_transpose2d',
@@ -349,7 +354,7 @@ __all__ = [
     # 63
 
     # 64
-
+    'one_hot',
     # 65
 
     # 66
