@@ -34,6 +34,7 @@
 #include "mindspore/ccsrc/frontend/parallel/ops_info/ops_utils.h"
 #include "mindspore/core/ir/anf.h"
 #include "utils/phase.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 
 namespace mindspore::opt {
 const BaseRef MatMulAllReduceFusion::DefinePattern() const {
@@ -109,7 +110,8 @@ const AnfNodePtr MatMulAllReduceFusion::Process(const mindspore::FuncGraphPtr &f
   }
 
   auto phase = PhaseManager::GetInstance().phase();
-  if (common::GetEnv("MS_ENABLE_LCCL").empty() || phase.rfind(kPhaseNamePrefill) == std::string::npos) {
+  auto enable_lccl = device::ascend::EnableLcclEnv();
+  if (enable_lccl != "on" || phase.rfind(kPhaseNamePrefill) == std::string::npos) {
     return nullptr;
   }
 

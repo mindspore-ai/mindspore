@@ -37,6 +37,7 @@ class HcomAllBroadCastKernel : public HcclKernel {
  private:
 #ifdef ENABLE_INTERNAL_KERNELS
   BroadcastFunPtr lccl_broadcast_func_;
+  bool use_lccl_{false};
 #endif
 };
 MS_HCCL_REG_KERNEL(Broadcast, HcomAllBroadCastKernel);
