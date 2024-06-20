@@ -1485,6 +1485,54 @@ void UseEmptyNodeReplaceNone(const FuncGraphPtr &graph, const std::string &cnode
   }
 }
 
+void GetPlantInputsAndSize(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr, std::vector<AnfNodePtr> *plant_inputs,
+                           std::vector<int64_t> *dyn_input_sizes) {
+  MS_EXCEPTION_IF_NULL(cnode_ptr);
+  auto cnode_name = common::AnfAlgo::GetCNodeName(cnode_ptr);
+  plant_inputs->push_back(common::AnfAlgo::GetCNodePrimitiveNode(cnode_ptr));
+  size_t input_num = cnode_ptr->size() - 1;
+  bool cnode_is_print = common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPrint);
+  for (size_t i = 0; i < input_num; ++i) {
+    auto input_node = common::AnfAlgo::GetInputNode(cnode_ptr, i);
+    MS_EXCEPTION_IF_NULL(input_node);
+    bool output_is_tuple = common::AnfAlgo::IsTupleOutput(input_node);
+    if (output_is_tuple && cnode_is_print) {
+      continue;
+    } else if (output_is_tuple) {
+      int64_t dyn_input_size;
+      if (IsNotSequenceOfTensor(input_node->abstract())) {
+        dyn_input_size = 0;
+      } else {
+        dyn_input_size = SplitTupleInputs(graph, input_node, plant_inputs);
+      }
+      if (dyn_input_size == 0) {
+        dyn_input_sizes->push_back(-1);
+        plant_inputs->push_back(input_node);
+      } else {
+        (void)dyn_input_sizes->emplace_back(dyn_input_size);
+      }
+    } else if (OpInputDtypeMap.find(cnode_name) != OpInputDtypeMap.end()) {
+      // Only op in OpInputDtypeMap can be replace None input.
+      auto opdef_ptr = mindspore::ops::GetOpDef(cnode_name);
+      MS_EXCEPTION_IF_NULL(opdef_ptr);
+      auto input_args = (opdef_ptr)->args_;
+      if (i >= input_args.size()) {
+        MS_LOG(EXCEPTION) << "The [" << i << "] in op [" << cnode_name << "] is out of op_def args range";
+      }
+      // When input[i] is None and input[i] type in op_yaml is dynamic type, do replace
+      if (common::AnfAlgo::IsNoneInput(cnode_ptr, i) && InputArgTypeIsDynamicType(input_args[i].arg_dtype_)) {
+        UseEmptyNodeReplaceNone(graph, cnode_name, i, dyn_input_sizes, plant_inputs);
+      } else {
+        dyn_input_sizes->push_back(-1);
+        plant_inputs->push_back(input_node);
+      }
+    } else {
+      dyn_input_sizes->push_back(-1);
+      plant_inputs->push_back(input_node);
+    }
+  }
+}
+
 AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);
@@ -1499,51 +1547,10 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
                  << " has dynamic tuple input, can't convert. Node debug string:" << cnode_ptr->DebugString();
     return nullptr;
   }
-  bool cnode_is_print = common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPrint);
-  auto cnode_name = common::AnfAlgo::GetCNodeName(cnode_ptr);
   std::vector<AnfNodePtr> plant_inputs;
   std::vector<int64_t> dyn_input_sizes;
-  plant_inputs.push_back(common::AnfAlgo::GetCNodePrimitiveNode(cnode_ptr));
-  size_t input_num = cnode_ptr->size() - 1;
-  for (size_t i = 0; i < input_num; ++i) {
-    auto input_node = common::AnfAlgo::GetInputNode(cnode_ptr, i);
-    MS_EXCEPTION_IF_NULL(input_node);
-    bool output_is_tuple = common::AnfAlgo::IsTupleOutput(input_node);
-    if (output_is_tuple && cnode_is_print) {
-      continue;
-    } else if (output_is_tuple) {
-      int64_t dyn_input_size;
-      if (IsNotSequenceOfTensor(input_node->abstract())) {
-        dyn_input_size = 0;
-      } else {
-        dyn_input_size = SplitTupleInputs(graph, input_node, &plant_inputs);
-      }
-      if (dyn_input_size == 0) {
-        dyn_input_sizes.push_back(-1);
-        plant_inputs.push_back(input_node);
-      } else {
-        (void)dyn_input_sizes.emplace_back(dyn_input_size);
-      }
-    } else if (OpInputDtypeMap.find(cnode_name) != OpInputDtypeMap.end()) {
-      // Only op in OpInputDtypeMap can be replace None input.
-      auto opdef_ptr = mindspore::ops::GetOpDef(cnode_name);
-      MS_EXCEPTION_IF_NULL(opdef_ptr);
-      auto input_args = (opdef_ptr)->args_;
-      if (i >= input_args.size()) {
-        MS_LOG(EXCEPTION) << "The [" << i << "] in op [" << cnode_name << "] is out of op_def args range";
-      }
-      // When input[i] is None and input[i] type in op_yaml is dynamic type, do replace
-      if (common::AnfAlgo::IsNoneInput(cnode_ptr, i) && InputArgTypeIsDynamicType(input_args[i].arg_dtype_)) {
-        UseEmptyNodeReplaceNone(graph, cnode_name, i, &dyn_input_sizes, &plant_inputs);
-      } else {
-        dyn_input_sizes.push_back(-1);
-        plant_inputs.push_back(input_node);
-      }
-    } else {
-      dyn_input_sizes.push_back(-1);
-      plant_inputs.push_back(input_node);
-    }
-  }
+  GetPlantInputsAndSize(graph, cnode_ptr, &plant_inputs, &dyn_input_sizes);
+
   // If there is dynamic input, set the dyn_input_sizes as an attribute and update the inputs.
   if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
     auto new_cnode = NewCNode(plant_inputs, graph, {cnode_ptr});
@@ -1552,6 +1559,7 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
     new_cnode->set_scope(cnode_ptr->scope());
     new_cnode->set_primal_attrs(cnode_ptr->primal_attrs());
     new_cnode->set_attrs(cnode_ptr->attrs());
+    bool cnode_is_print = common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPrint);
     if (cnode_is_print) {
       dyn_input_sizes = GenPrintAttrDynInputSizes(new_cnode);
     }
