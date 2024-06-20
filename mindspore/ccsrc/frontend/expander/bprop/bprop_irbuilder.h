@@ -54,8 +54,14 @@ class COMMON_EXPORT BpropBuilder : public Emitter {
     return GetValue<S>(GetAttr(attr));
   }
   const mindspore::HashMap<std::string, ValuePtr> &GetAttrs() const { return *attrs_ptr_; }
-  NodePtr GetInput(size_t i) const;
-  const NodePtrList &GetInputs() const { return *inputs_ptr_; }
+  inline const NodePtr &GetInput(size_t i) const {
+    if (MS_UNLIKELY(i >= inputs_ptr_->size())) {
+      MS_LOG(EXCEPTION) << "For " << name_ << ", the index " << i << " is out of range of inputs size "
+                        << inputs_ptr_->size();
+    }
+    return (*inputs_ptr_)[i];
+  }
+  inline const NodePtrList &GetInputs() const { return *inputs_ptr_; }
 
   NodePtrList BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift = 0LL);
 

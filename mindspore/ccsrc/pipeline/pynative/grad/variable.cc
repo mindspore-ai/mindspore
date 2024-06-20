@@ -46,10 +46,10 @@ ValuePtrList BackwardNode::PostProcess(const ValuePtrList &gradient_value) {
   ValuePtrList flatten_values = PyNativeAlgo::DataConvert::FlattenTensorSeqInValueSeq(gradient_value, false);
   gradients.reserve(flatten_values.size());
   for (const auto index : gradient_index_) {
-    if (index >= flatten_values.size()) {
+    if (MS_UNLIKELY(index >= flatten_values.size())) {
       MS_LOG(EXCEPTION) << "Inputs gradient index should smaller than flatten_values size!";
     }
-    auto gradient_tensor = flatten_values[index];
+    const auto &gradient_tensor = flatten_values[index];
     (void)gradients.emplace_back(gradient_tensor);
   }
   return gradients;

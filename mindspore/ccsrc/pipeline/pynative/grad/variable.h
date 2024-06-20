@@ -250,7 +250,7 @@ class Variable {
   ///
   /// \return void
   void Release() {
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRealeaseSource,
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kReleaseResource,
                                        runtime::ProfilerRecorder::kNoName, false);
     MS_EXCEPTION_IF_NULL(func_node_);
     func_node_->Release();

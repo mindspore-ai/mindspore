@@ -34,33 +34,25 @@
 namespace mindspore::pynative::autograd {
 class FuncBackwardNode : public BackwardNode {
  public:
-  FuncBackwardNode(const string &name, expander::bprop::BpropBuilderFunc func,
-                   mindspore::HashMap<std::string, ValuePtr> attrs, ValuePtrList op_inputs,
-                   AbstractBasePtrList input_abstract, ValuePtr op_output, size_t output_size,
-                   AbstractBasePtr out_abstract, std::vector<InputType> grad_type)
-      : BackwardNode(name, output_size),
+  FuncBackwardNode(string name, expander::bprop::BpropBuilderFunc func, FuncBuilderPtr emitter,
+                   mindspore::HashMap<std::string, ValuePtr> attrs, NodePtrList node_inputs, size_t output_size)
+      : BackwardNode(std::move(name), output_size),
         attrs_(std::move(attrs)),
-        op_inputs_(std::move(op_inputs)),
-        input_abstract_(std::move(input_abstract)),
-        grad_type_(std::move(grad_type)),
-        out_abstract_(std::move(out_abstract)),
-        func_(std::move(func)) {
-    op_output_ = std::move(op_output);
-  }
+        node_inputs_(std::move(node_inputs)),
+        func_(std::move(func)),
+        emitter_(std::move(emitter)) {}
   ~FuncBackwardNode() override = default;
   ValuePtrList CallBackward(const ValuePtrList &grads) override;
-  NodePtrList PreProcess(const ValuePtrList &dout, FuncBuilder *emitter);
+  void PreProcess(const ValuePtrList &dout, const FuncBuilderPtr &emitter);
   const expander::bprop::BpropBuilderFunc &grad_func() { return func_; }
   void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) { attrs_ = attrs; }
   void Release() override;
 
  private:
   mindspore::HashMap<std::string, ValuePtr> attrs_;
-  ValuePtrList op_inputs_;
-  abstract::AbstractBasePtrList input_abstract_;
-  std::vector<InputType> grad_type_;
-  abstract::AbstractBasePtr out_abstract_;
+  NodePtrList node_inputs_;
   expander::bprop::BpropBuilderFunc func_;
+  FuncBuilderPtr emitter_;
 };
 
 class HookBackwardNode : public BackwardNode {

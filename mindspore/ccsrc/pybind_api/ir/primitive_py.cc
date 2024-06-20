@@ -260,7 +260,7 @@ py::tuple check_bprop_out(const py::object &grads_obj, const py::tuple &py_args,
     MS_LOG(DEBUG) << "Contain weights";
     py::tuple input_grads = py::cast<py::tuple>(grads[0]);
     py::dict weight_grads = py::cast<py::dict>(grads[1]);
-    check_bprop_input_grads(py_args, input_grads, bprop_cls_name, weight_grads.size() + 1);
+    check_bprop_input_grads(py_args, input_grads, bprop_cls_name, 1);
     if (weight_grads.empty()) {
       return input_grads;
     }
@@ -384,7 +384,7 @@ BaseRef PrimitivePy::RunCellCustomBpropFunction(const py::tuple &py_args) const 
   }
   MS_LOG(DEBUG) << "Get cell input arg size " << inp_args_size;
   // Run bprop function.
-  auto inst = pynative::PyNativeExecutor::GetInstance();
+  const auto &inst = pynative::PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   try {
     MS_LOG(DEBUG) << "Run cell custom bprop function start.";

@@ -89,14 +89,6 @@ ValuePtr BpropBuilder::GetAttr(const std::string &attr) const {
   return nullptr;
 }
 
-NodePtr BpropBuilder::GetInput(size_t i) const {
-  if (i >= inputs_ptr_->size()) {
-    MS_LOG(EXCEPTION) << "For " << name_ << ", the index " << i << " is out of range of inputs size "
-                      << inputs_ptr_->size();
-  }
-  return (*inputs_ptr_)[i];
-}
-
 ValuePtr BpropBuilder::GetAttr(const NodePtr &node, const std::string &attr) const {
   auto p = GetCNodePrimitive(node->get());
   MS_EXCEPTION_IF_NULL(p);

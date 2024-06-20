@@ -29,6 +29,8 @@
 #include "pipeline/pynative/pynative_utils.h"
 #include "mindspore/core/ops/op_utils.h"
 #include "frontend/operator/cc_implementations.h"
+#include "mindspore/ccsrc/kernel/pyboost/op_register.h"
+#include "kernel/pyboost/auto_generate/cast.h"
 
 namespace mindspore::pynative::autograd {
 namespace {
@@ -136,7 +138,7 @@ bool ParseCond(const NodePtr &cond) {
 }  // namespace
 
 NodePtr FuncBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kEmitOp, name(),
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kEmitOp, prim->name(),
                                      false);
   MS_LOG(DEBUG) << "Emit op " << prim->name();
   auto real_inputs = pass_forward_->PassForOpInput(prim, inputs);
@@ -265,7 +267,7 @@ ValuePtr FuncBuilder::Add(const ValuePtr &input, const ValuePtr &other) {
   auto other_abs = PyNativeAlgo::Common::SetAbstractValueToAnyValue(other->ToAbstract());
   auto input_node = NewFuncNode(input, input_abs, InputType::kOpOutput);
   auto other_node = NewFuncNode(other, other_abs, InputType::kOpOutput);
-  return Emit(mindspore::kAddOpName, {input_node, other_node})->Value();
+  return EmitOp(prim::kPrimAdd, {input_node, other_node})->Value();
 }
 
 NodePtr FuncBuilder::TupleGetItem(const NodePtr &input, const NodePtr &index) {

@@ -965,6 +965,7 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
   op_run_info->base_op_run_info.op_name = input_args_info->custom_bprop_prim->name();
   op_run_info->op_grad_info->op_prim = input_args_info->custom_bprop_prim;
   op_run_info->op_grad_info->input_value = input_args_info->input_arg_value_vec;
+  op_run_info->op_grad_info->weight_size = op_run_info->op_grad_info->input_value.size() - input_args_info->input_size;
   op_run_info->op_grad_info->is_need_recompute = input_args_info->is_need_recompute;
   op_run_info->input_size = input_args_info->input_arg_value_vec.size();
   op_run_info->input_value_id = input_args_info->input_arg_id_vec;
@@ -1644,7 +1645,7 @@ py::object GradExecutor::RunGradFunc(const autograd::GradAttr &grad_attr,
 
   MS_LOG(DEBUG) << "Eval run begin";
   MS_EXCEPTION_IF_NULL(top_cell_);
-  const auto &auto_grad_cell = std::dynamic_pointer_cast<autograd::FuncGrad>(top_cell_->auto_grad_cell_ptr());
+  auto auto_grad_cell = std::dynamic_pointer_cast<autograd::FuncGrad>(top_cell_->auto_grad_cell_ptr());
   MS_EXCEPTION_IF_NULL(auto_grad_cell);
   top_cell_->set_grad_is_running(true);
   auto grads = auto_grad_cell->Finish(w_args, p_args, grad_attr, sens);
@@ -1656,6 +1657,8 @@ py::object GradExecutor::RunGradFunc(const autograd::GradAttr &grad_attr,
 
   // Clear top cell resource
   top_cell_->ClearMetaGradInfo();
+  // Set auto_grad_cell nullptr to make sure that auto grad cell can async clear.
+  auto_grad_cell = nullptr;
   // Func grad need to use auto grad meta in finish, so clear it after finish.
   AsyncClearAutoGradCell(top_cell_);
   ClearGradRes();

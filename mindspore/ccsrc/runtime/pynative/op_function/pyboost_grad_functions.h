@@ -58,7 +58,7 @@ class PyBoostOpExecute {
   void GetMindRtBackend(const string &cur_device_target);
 
   compile::MindRTBackendPtr backend_;
-  std::map<std::string, FuncObject> grad_op_func_map_;
+  std::unordered_map<std::string, FuncObject> grad_op_func_map_;
 };
 
 class PyBoostGradOpRegistrar {

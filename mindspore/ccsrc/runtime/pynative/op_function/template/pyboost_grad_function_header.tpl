@@ -51,6 +51,8 @@ bool PyBoostOpExecute::IsPyBoostOpRegistered(const std::string &op_name) {
 }
 
 void PyBoostOpExecute::Execute(OpRunnerInfo *op_runner_info, VectorRef *op_outputs) {
+ runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kExecute,
+                                    op_runner_info->prim->name(), false);
  #ifndef ENABLE_TEST
   GilReleaseWithCheck release_gil;
   MS_EXCEPTION_IF_NULL(op_runner_info);

@@ -74,7 +74,8 @@ struct OpGradInfo {
   // If op output value used in bprop grad and not in first step or dynamic process, need to do output value replace in
   // bprop graph
   bool need_do_forward_output_replace{true};
-
+  // If recompute, we record weight_size.
+  size_t weight_size{0};
   // op output size
   size_t output_size;
 

@@ -265,7 +265,8 @@ bool IrGrad::KPynativeOp(const GradParamPtr &grad_param) {
     }
   } else {
     PyNativeAlgo::AutoGrad::CheckRecomputeInputs(grad_param);
-    ir_bprop_->BuildBPropCutCNode(input_node, prim, &outputs, grad_param->op_grad_info->is_need_recompute);
+    ir_bprop_->BuildBPropCutCNode(input_node, prim, &outputs, grad_param->op_grad_info->weight_size,
+                                  grad_param->op_grad_info->is_need_recompute);
   }
   // cppcheck-suppress unreadVariable
   if (MS_UNLIKELY(outputs.empty())) {
@@ -422,6 +423,7 @@ CNodePtr IrGrad::ConstructBpropGraphInput(const GradParamPtr &grad_param, const 
   AnfNodePtrList node_list;
   (void)node_list.emplace_back(NewValueNode(grad_param->op_grad_info->op_prim));
   if (grad_by_value_ || is_custom_prim) {
+    // If recompute, we do not push weight data to cnode inputs.
     for (size_t i = 0; i < grad_param->input_size; ++i) {
       if (PyNativeAlgo::Common::IsParam(grad_param->op_grad_info->input_value_grad_type[i])) {
         // To solve the input is a tuple like (parameter, ...)
