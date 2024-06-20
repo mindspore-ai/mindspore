@@ -136,6 +136,8 @@ bool ParseCond(const NodePtr &cond) {
 }  // namespace
 
 NodePtr FuncBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kEmitOp, name(),
+                                     false);
   MS_LOG(DEBUG) << "Emit op " << prim->name();
   auto real_inputs = pass_forward_->PassForOpInput(prim, inputs);
   std::vector<ValuePtr> op_inputs;

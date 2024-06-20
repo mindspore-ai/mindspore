@@ -178,6 +178,8 @@ ValuePtrList CallBackwardHooks(const ValuePtr &value, ValuePtrList *grad_in) {
 }  // namespace
 
 ValuePtrList FuncBackwardNode::CallBackward(const ValuePtrList &gradients_in) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRunExpanderFunc,
+                                     name(), false);
   MS_LOG(DEBUG) << "Begin CallBackward: " << name();
   const auto &device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   auto ir_builder = FuncBuilder(name_, device_target, nullptr);
@@ -223,6 +225,8 @@ void FuncBackwardNode::Release() {
 }
 
 ValuePtrList HookBackwardNode::CallBackward(const ValuePtrList &grads) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRunExpanderFunc,
+                                     name(), false);
   runtime::Pipeline::Get().WaitForward();
   MS_LOG(DEBUG) << "Begin HookBackwardNode CallBackward ";
   auto gradient = ValueListToValue(grads, out_abstract_);
@@ -251,6 +255,8 @@ ValuePtrList HookBackwardNode::CallBackward(const ValuePtrList &grads) {
 void HookBackwardNode::Release() { args_.clear(); }
 
 ValuePtrList GraphBackwardNode::CallBackward(const ValuePtrList &grads) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRunExpanderFunc,
+                                     name(), false);
   MS_LOG(DEBUG) << "Begin GraphBackwardNode CallBackward ";
   MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(grads, "bprop cut input grads: ");
   auto graph_call_back = PyNativeAlgo::AutoGrad::CreateGraphCallBack(func_graph_, cache_key_, graph_call_condition_);
