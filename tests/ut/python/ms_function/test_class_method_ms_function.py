@@ -34,6 +34,17 @@ def test_user_defined_class_with_jit_decorated_function():
     net.test(x, y)
 
 
+def test_call_jit_decorated_class_funciton_without_an_instance():
+    """
+    Feature: User defined class in the function decorated with jit
+    Description: Test call class function without class instance.
+    Expectation: No exception.
+    """
+    x = ms.Tensor([3])
+    y = ms.Tensor([2])
+    Net.test(None, x, y)
+
+
 @ms.jit_class
 class MsClassNet:
     @ms.jit
