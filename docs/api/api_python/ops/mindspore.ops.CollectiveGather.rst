@@ -7,8 +7,7 @@ mindspore.ops.CollectiveGather
 
     .. note::
         只有目标为dest_rank的进程(全局的进程编号)才会收到聚合操作后的输出。其他进程只得到一个形状为[1]的张量，且该张量没有数学意义。
-        当前支持PyNative模式，不支持Graph模式。
-        
+
 
     参数：
         - **dest_rank** (int) - 表示发送目标的进程编号。只有该进程会接收汇聚张量。
@@ -23,4 +22,16 @@ mindspore.ops.CollectiveGather
 
     异常：
         - **TypeError** - 首个输入的数据类型不为Tensor，`op` 或 `group` 不是str。
-        - **RuntimeError** - 如果目标设备无效，或者后端无效，或者分布式初始化失败
+        - **RuntimeError** - 如果目标设备无效，或者后端无效，或者分布式初始化失败。
+        - **ValueError** - 调用进程的rank id大于本通信组的rank大小。
+
+    样例：
+
+    .. note::
+        .. include:: mindspore.ops.comm_note.rst
+
+        该样例需要在2卡环境下运行。
+    
+    教程样例：
+        - `分布式集合通信原语 - CollectiveGather
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/ops/communicate_ops.html#collectivegather>`_
