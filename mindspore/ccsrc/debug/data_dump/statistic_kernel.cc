@@ -201,7 +201,7 @@ TensorPtr DimStatisticKernel::LaunchKernel(KernelTensor *input) {
   MS_EXCEPTION_IF_NULL(input);
   const auto stream_id = input->stream_id();
   vector<KernelTensor *> inputs{input};
-  auto output_addr = GetOutputDeviceAddress(stream_id, input->dtype_id());
+  auto output_addr = GetOutputDeviceAddress(stream_id, kNumberTypeFloat32);
   MS_EXCEPTION_IF_NULL(output_addr);
   MS_EXCEPTION_IF_NULL(kernel_mod_);
 
@@ -212,7 +212,7 @@ TensorPtr DimStatisticKernel::LaunchKernel(KernelTensor *input) {
   auto keepdims = GetKeepDimsDeviceAddress(stream_id);
   inputs.emplace_back(keepdims->kernel_tensor().get());
 
-  auto dtype = GetDtypeDeviceAddress(stream_id, input->dtype_id());
+  auto dtype = GetDtypeDeviceAddress(stream_id, kNumberTypeFloat32);
   inputs.emplace_back(dtype->kernel_tensor().get());
 
   return Launch(inputs, output_addr, stream_id);

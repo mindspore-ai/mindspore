@@ -64,7 +64,7 @@ class BACKEND_EXPORT DumpJsonParser {
   std::string dump_layer() const { return dump_layer_; }
   bool async_dump_enabled() const { return async_dump_enabled_; }
   bool e2e_dump_enabled() const { return e2e_dump_enabled_; }
-  std::set<std::string> statistic_category() const { return statistic_category_; }
+  std::vector<std::string> statistic_category() const { return statistic_category_; }
   uint32_t dump_mode() const { return dump_mode_; }
   std::string path() const { return path_; }
   std::string saved_data() const { return saved_data_; }
@@ -151,7 +151,7 @@ class BACKEND_EXPORT DumpJsonParser {
   std::string dump_layer_{""};
   std::string stat_calc_mode_{"host"};
   nlohmann::json kernels_json_ = nlohmann::json::array();
-  std::set<std::string> statistic_category_;
+  std::vector<std::string> statistic_category_;
 
   // Save graphs for dump.
   std::vector<session::KernelGraph *> graphs_;

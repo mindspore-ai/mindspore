@@ -184,7 +184,7 @@ def compare(expect, actual, grad, ignore_output_index):
 def compare_result(expect, actual, stage='', index=None, ignore_output_index=None):
     if not isinstance(actual, type(expect)):
         print("Compare Failed because the types of static-shape out(as expect) and dynamic-shape out(as actual) "
-              "are not matched(exepct is a sequence).")
+              "are not matched(expect is a sequence).")
         print(f"  static-shape out(as expect): {expect}")
         print(f"  dynamic-shape out(as actual): {actual}")
         assert False
@@ -662,8 +662,8 @@ def TEST_OP(op, inputs_seq, yaml_name, *, disable_input_check=False, disable_yam
             enabled on this running mode.
             Default: ``[]`` .
         disable_tensor_dynamic_type (str): Disable dynamic shape test or dynamic rank test.
-            If `DYNAMIC_SHAPE` , tensor input will not covert to dynamic shape.
-            If `DYNAMIC_RANK` , tensor input will not covert to dynamic rank.
+            If `DYNAMIC_SHAPE` , tensor input will not convert to dynamic shape.
+            If `DYNAMIC_RANK` , tensor input will not convert to dynamic rank.
             Default: ``None``.
         disable_nontensor_dynamic_type (str): Disable the dynamic length test or mutable inputs test of nontensor inputs
             like tuple/list/scalar.
