@@ -429,6 +429,7 @@ def generate_pyboost_functions(work_path, yaml_data):
         convert_stub_str = ''
         optional_to_value_str = ''
         need_contiguous = 'true'
+        value_str = '_value'
         if op_proto.is_view:
             # view/aclnn op no need to contiguous tensor.
             need_contiguous = 'false'
@@ -444,7 +445,7 @@ def generate_pyboost_functions(work_path, yaml_data):
                                                                            need_contiguous=need_contiguous)
                     cast_output = cast_str + convert_stub_output_name
 
-                    convert_optional_to_value_name = op_arg.arg_name + "_value"
+                    convert_optional_to_value_name = op_arg.arg_name + value_str
                     optional_to_value_str += \
                         convert_optional_to_value_template.replace(input=cast_output,
                                                                    output=convert_optional_to_value_name)
@@ -468,7 +469,7 @@ def generate_pyboost_functions(work_path, yaml_data):
                                                                                 need_contiguous=need_contiguous)
                     cast_output = cast_str + convert_stub_output_name
 
-                    convert_optional_to_value_name = op_arg.arg_name + "_value"
+                    convert_optional_to_value_name = op_arg.arg_name + value_str
                     optional_to_value_str += \
                         convert_optional_to_value_template.replace(input=cast_output,
                                                                    output=convert_optional_to_value_name)
@@ -488,7 +489,7 @@ def generate_pyboost_functions(work_path, yaml_data):
                 grad_arg = cast_str + op_arg.arg_name
                 cast_arg = grad_arg
                 if is_optional_param(op_arg):
-                    convert_optional_to_value_name = op_arg.arg_name + "_value"
+                    convert_optional_to_value_name = op_arg.arg_name + value_str
                     optional_to_value_str += \
                         convert_optional_to_value_template.replace(input=call_arg,
                                                                    output=convert_optional_to_value_name)
