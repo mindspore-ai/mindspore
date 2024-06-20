@@ -24,6 +24,7 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr TanhFuncImpl::InferShape(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto x_shape = input_args[kInputIndex0]->GetShape();
   return x_shape->Clone();
 }
