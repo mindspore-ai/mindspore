@@ -36,10 +36,10 @@ class TruncateSequencePairOp : public TensorOp {
   std::string Name() const override { return kTruncateSequencePairOp; }
 
   // Unknown input size
-  uint32_t NumInput() override { return -1; }
+  uint32_t NumInput() override { return 2; }
 
   // Unknown output size
-  uint32_t NumOutput() override { return -1; }
+  uint32_t NumOutput() override { return 2; }
 
  private:
   dsize_t max_length_;
