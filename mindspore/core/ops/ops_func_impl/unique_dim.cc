@@ -36,6 +36,11 @@ BaseShapePtr UniqueDimFrontendInferShape(const PrimitivePtr &primitive,
   auto shape_x = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(shape_x);
   auto x_shape_vector = shape_x->GetShapeVector();
+  if (x_shape_vector.empty()) {
+    MS_EXCEPTION(ValueError)
+      << "For '" << primitive->name()
+      << "', the input tensor has no dimensions, but got 'dim' value, you can set 'dim' to None and try again.";
+  }
 
   // dynamic rank
   if (IsDynamicRank(x_shape_vector)) {
@@ -55,6 +60,12 @@ BaseShapePtr UniqueDimFrontendInferShape(const PrimitivePtr &primitive,
       std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeDimAny})});
   }
   auto dim_value = dim.value();
+  if (dim_value < -static_cast<int64_t>(x_shape_vector.size()) ||
+      dim_value >= static_cast<int64_t>(x_shape_vector.size())) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the value of 'dim' should be in ["
+                             << -static_cast<int64_t>(x_shape_vector.size()) << ", " << x_shape_vector.size()
+                             << "), but got " << dim_value;
+  }
   if (dim_value < 0) {
     dim_value += x_shape_vector.size();
   }
