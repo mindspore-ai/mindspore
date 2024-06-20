@@ -33,8 +33,13 @@ namespace mindspore {
 namespace symshape {
 AnfNodePtrList GetCNodesOfFuncGraph(const FuncGraphPtr &fg) {
   bool has_node_in_other_graph = false;
-  auto nodes = TopoSort(fg->output(), SuccIncoming, [&has_node_in_other_graph, &fg](const AnfNodePtr &node) {
+  auto nodes = TopoSort(fg->output(), SuccDeeperSimple, [&has_node_in_other_graph, &fg](const AnfNodePtr &node) {
     if (!node->isa<CNode>()) {
+      if (GetValuePtr<FuncGraph>(node) != nullptr) {
+        // some nodes of this graph can be linked in other graph.
+        has_node_in_other_graph = true;
+        return FOLLOW;
+      }
       return EXCLUDE;
     }
     if (node->func_graph() != fg) {
@@ -45,7 +50,8 @@ AnfNodePtrList GetCNodesOfFuncGraph(const FuncGraphPtr &fg) {
   // at frontend, a node may directly links to other node in other graph.
   if (has_node_in_other_graph) {
     (void)nodes.erase(
-      std::remove_if(nodes.begin(), nodes.end(), [&fg](const AnfNodePtr &node) { return node->func_graph() != fg; }),
+      std::remove_if(nodes.begin(), nodes.end(),
+                     [&fg](const AnfNodePtr &node) { return !node->isa<CNode>() || node->func_graph() != fg; }),
       nodes.end());
   }
   return nodes;
