@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace dataset {
 const uint8_t kNumOfCols = 4;
-const float kEpsilon = 1e-5;
+const float kEpsilon = 1e-4;
 
 BoundingBox::BoundingBox(bbox_float x, bbox_float y, bbox_float width, bbox_float height)
     : x_(x), y_(y), width_(width), height_(height) {}
