@@ -88,7 +88,8 @@ int64_t DynamicDimWrap(int64_t dim, int64_t dim_post_expr) {
     }
     return dim;
   }
-  MS_EXCEPTION(ValueError) << "dim:" << dim << " dim_post_expr:" << dim_post_expr;
+  MS_EXCEPTION(ValueError) << "dim value error. dim:" << dim << ", dim value should be in [" << -dim_post_expr << ", "
+                           << dim_post_expr << ").";
 }
 
 OldTensorInfoPtr GetOldTensorInfo(const tensor::BaseTensorPtr &tensor) {

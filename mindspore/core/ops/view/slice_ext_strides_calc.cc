@@ -54,11 +54,21 @@ TensorStorageInfoPtrList SliceExtCalc(const PrimitivePtr &prim, const std::vecto
   dim = DynamicDimWrap(dim, dim_size);
   auto dim_value = old_shape[dim];
   auto length = end - start;
-  MS_CHECK_VALUE(length >= 0, "For Primitive [SliceExt] end should less or less equal start");
+
+  MS_CHECK_VALUE(start >= -dim_value && start <= dim_value,
+                 "For Primitive [SliceExt] start exceed range. start: " + std::to_string(start) +
+                   ", start should be in [" + std::to_string(-dim_value) + ", " + std::to_string(dim_value) + "].");
   start = start < 0 ? start + dim_value : start;
-  MS_CHECK_VALUE(start >= 0 && start <= dim_value, "For Primitive [SliceExt] start exceed range");
+
+  auto max_length = dim_value - start;
+  MS_CHECK_VALUE(length >= 0 && length <= max_length, "length value error. length: " + std::to_string(length) +
+                                                        ", length should be in [0, " + std::to_string(max_length) +
+                                                        "].");
+
   end = start + length;
-  MS_CHECK_VALUE(end >= 0 && end <= dim_value, "For Primitive [SliceExt] end exceed range");
+  MS_CHECK_VALUE(end >= 0 && end <= dim_value,
+                 "For Primitive [SliceExt] end exceed range. end: " + std::to_string(end) + ", end should be in [" +
+                   std::to_string(start) + ", " + std::to_string(dim_value) + "].");
 
   auto new_shape = old_shape;
   new_shape[dim] = length;
