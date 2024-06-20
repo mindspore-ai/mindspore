@@ -94,5 +94,5 @@ RUN cd /tmp \
     && chmod 755 -R /usr/local/nodejs \
     && ln -sf /usr/local/nodejs/node-v12.18.4-linux-x64/bin/node /usr/bin/node \
     && ln -sf /usr/local/nodejs/node-v12.18.4-linux-x64/bin/npm /usr/bin/npm \
-    && npm config set registry https://registry.npm.taobao.org/ \
+    && npm config set registry https://registry.npmmirror.com/ \
     && rm -f /tmp/node-v12.18.4-linux-x64.tar.gz
