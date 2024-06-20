@@ -1,0 +1,44 @@
+cumsum_ext:
+    description: |
+        Computes the cumulative sum of input Tensor along `dim`.
+
+        .. math::
+
+            y_i = x_1 + x_2 + x_3 + ... + x_i
+
+        Args:
+            input (Tensor): The input Tensor.
+            dim (int): Dim along which the cumulative sum is computed.
+            dtype (:class:`mindspore.dtype`, optional): The desired dtype of returned Tensor. If specified,
+                the input Tensor will be cast to `dtype` before the computation. This is useful for preventing overflows.
+                If not specified, stay the same as original Tensor. Default: ``None`` .
+
+        Returns:
+            Tensor, the shape of the output Tensor is consistent with the input Tensor's.
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            ValueError: If the `dim` is out of range.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> import mindspore.ops as ops
+            >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
+            >>> # case 1: along the dim 0
+            >>> y = ops.auto_generate.cumsum_ext(x, 0)
+            >>> print(y)
+            [[ 3.  4.  6. 10.]
+            [ 4. 10. 13. 19.]
+            [ 8. 13. 21. 26.]
+            [ 9. 16. 28. 35.]]
+            >>> # case 2: along the dim 1
+            >>> y = ops.auto_generate.cumsum_ext(x, 1)
+            >>> print(y)
+            [[ 3.  7. 13. 23.]
+            [ 1.  7. 14. 23.]
+            [ 4.  7. 15. 22.]
+            [ 1.  4. 11. 20.]]

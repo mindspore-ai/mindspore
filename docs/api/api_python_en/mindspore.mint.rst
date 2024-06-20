@@ -40,6 +40,7 @@ Pointwise Operations
     :template: classtemplate.rst
 
     mindspore.mint.abs
+    mindspore.mint.cumsum
     mindspore.mint.unique
     mindspore.mint.div
     mindspore.mint.divide

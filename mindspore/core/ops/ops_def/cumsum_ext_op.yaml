@@ -1,0 +1,17 @@
+#operator cumsum_ext
+cumsum_ext:
+  args:
+    input:
+      dtype: tensor
+    dim:
+      dtype: int
+    dtype:
+      dtype: TypeId
+      arg_handler: dtype_to_type_id
+      default: None
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: CumsumExtAscend

@@ -35,7 +35,7 @@ from mindspore.ops.function.clip_func import clamp
 # 4
 
 # 5
-
+from mindspore.ops.auto_generate import cumsum_ext as cumsum
 # 6
 from mindspore.ops.auto_generate import stack_ext as stack
 
@@ -256,7 +256,7 @@ __all__ = [
     # 4
 
     # 5
-
+    'cumsum',
     # 6
     'stack',
     # 7

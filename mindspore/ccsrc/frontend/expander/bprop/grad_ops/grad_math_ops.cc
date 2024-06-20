@@ -1145,6 +1145,33 @@ REG_BPROP_BUILDER("CumSum").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
           ib->OutZeros(axis), ib->OutZeros(exclusive), ib->OutZeros(reverse)};
 });
 
+REG_BPROP_BUILDER("CumsumExt").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto x_shape = ib->GetShape(x);
+  auto num_elements =
+    std::accumulate(x_shape.begin(), x_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
+  auto dim = ib->GetInput(kIndex1);
+  auto dtype = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dim_value_ptr = dim->BuildValue();
+  auto dim_opt = mindspore::ops::GetScalarValue<int64_t>(dim_value_ptr);
+  int64_t dim_value;
+  if (dim_opt.has_value()) {
+    dim_value = dim_opt.value();
+    if (x_shape.size() == 0 || x_shape[dim_value] == 1) {
+      return {dout, ib->OutZeros(dim), ib->OutZeros(dtype)};
+    }
+  }
+  if (!IsDynamic(x_shape) && (num_elements <= 1)) {
+    return {dout, ib->OutZeros(dim), ib->OutZeros(dtype)};
+  }
+
+  auto flip = ib->Emit("ReverseV2", {dout, ib->MakeTuple({dim})});
+  auto cumsum = ib->Emit("CumsumExt", {flip, dim, dtype});
+  auto ret = ib->Emit("ReverseV2", {cumsum, ib->MakeTuple({dim})});
+  return {ret, ib->OutZeros(dim), ib->OutZeros(dtype)};
+});
+
 REG_BPROP_BUILDER("MulNoNan").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
