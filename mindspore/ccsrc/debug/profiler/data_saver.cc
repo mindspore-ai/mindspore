@@ -18,6 +18,7 @@
 #include <numeric>
 #include "sys/stat.h"
 #include "utils/ms_utils.h"
+#include "include/common/debug/common.h"
 
 namespace mindspore {
 namespace profiler {
@@ -227,7 +228,12 @@ void DataSaver::ParseMemoryInfo(const MemoryInfoList &memory_info_list) {
 
 void DataSaver::WriteMemoryData(const std::string &saver_base_dir) {
   std::string file_path = saver_base_dir + "/" + op_side_ + "_ms_memory_record_" + device_id_ + ".txt";
-  std::ofstream ofs(file_path);
+  auto realpath = Common::CreatePrefixPath(file_path);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get realpath failed, path=" << file_path;
+    return;
+  }
+  std::ofstream ofs(realpath.value());
   // check if the file is writable
   if (!ofs.is_open()) {
     MS_LOG(WARNING) << "Open file '" << file_path << "' failed!";

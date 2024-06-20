@@ -75,12 +75,10 @@ std::vector<std::tuple<std::string, int, std::string>> GetPythonStack_() {
     py::list extracted_stack = traceback_module.attr("extract_stack")();
     for (size_t i = 0; i < extracted_stack.size(); ++i) {
       py::tuple frame_info = extracted_stack[i].cast<py::tuple>();
-
       if (frame_info.size() < min_frame_info_size) {
         MS_LOG(ERROR) << "frame_info size is invalid, frame_info size:" << frame_info.size();
         continue;
       }
-
       // frame_info: (filename, line number, function name, code_context)
       std::string file_name = frame_info[0].cast<std::string>();
       int line_number = frame_info[1].cast<int>();

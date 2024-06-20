@@ -20,9 +20,8 @@ Users can visualize the results using the MindInsight tool.
 Now, Profiler supports AICORE operator, AICPU operator, HostCPU operator, memory,
 correspondence, cluster, etc data analysis.
 """
+__all__ = ["Profiler", "EnvProfiler", "ProfilerLevel"]
+
 from mindspore.profiler.profiling import Profiler
 from mindspore.profiler.envprofiling import EnvProfiler
 from mindspore.profiler.profiling import ProfilerLevel
-
-
-__all__ = ["Profiler", "EnvProfiler", "ProfilerLevel"]

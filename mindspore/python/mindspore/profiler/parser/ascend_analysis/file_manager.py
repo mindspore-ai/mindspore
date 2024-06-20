@@ -105,7 +105,8 @@ class FileManager:
         if not data:
             return
         try:
-            with open(file_path, "w", newline="") as file:
+            with os.fdopen(os.open(file_path, os.O_WRONLY | os.O_CREAT, 0o600),
+                           'w', newline="") as file:
                 writer = csv.writer(file)
                 if headers:
                     writer.writerow(headers)

@@ -79,14 +79,14 @@ class CANNEvent(BaseEvent):
 
     def to_json(self):
         """Cast to trace event."""
-        if self.ph == 'M':
+        if self.ph == Constant.META_EVENT:
             res = {'name': self.name, 'pid': self.pid, 'tid': self.tid,
                    'args': self.args, 'ph': self.ph}
             if self.cat:
                 res.update({'cat': self.cat})
             return res
 
-        if self.ph == 'X':
+        if self.ph == Constant.COMPLETE_EVENT:
             if self.parent is not None:
                 self.args.update({'mindspore_op': self.parent.name})
             res = {'name': self.name, 'pid': self.pid, 'tid': self.tid,
@@ -95,11 +95,11 @@ class CANNEvent(BaseEvent):
                 res.update({'cat': self.cat})
             return res
 
-        if self.ph == 's':
+        if self.ph == Constant.START_FLOW:
             return {"ph": self.ph, "name": self.name, "id": self.id, "pid": self.pid,
                     "tid": self.tid, "ts": str(self.ts), "cat": self.cat}
 
-        if self.ph == 'f':
+        if self.ph == Constant.END_FLOW:
             return {"ph": self.ph, "name": self.name, "id": self.id, "pid": self.pid,
                     "tid": self.tid, "ts": str(self.ts), "cat": self.cat, 'bp': "e"}
         return {'name': self.name, 'pid': self.pid, 'tid': self.tid,

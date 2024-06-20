@@ -165,4 +165,7 @@ class MemoryRecordBean:
         return Decimal(self._data.get("Timestamp(us)", 0))
 
     def is_ge_component(self):
+        """
+        Determine if it is GE
+        """
         return self.component == "GE"

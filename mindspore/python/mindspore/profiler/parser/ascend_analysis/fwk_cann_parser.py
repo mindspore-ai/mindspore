@@ -83,11 +83,10 @@ class FwkCANNParser:
             logger.warning("Failed to create link between mindspore operator and kernels.")
 
         for device_tid in acl_to_npu_by_tid:
-            acl_sorted = sorted(acl_to_npu_by_tid.get(device_tid).items(), key=lambda x: x[0])
             host_data_sorted = sorted(op_data_by_tid.get(device_tid, []), key=lambda x: x.ts)
             op_idx = 0
 
-            for ts, device_data_list in acl_sorted:
+            for ts, device_data_list in sorted(acl_to_npu_by_tid.get(device_tid).items(), key=lambda x: x[0]):
                 op_idx, status = FwkCANNParser.__find_launch_op(ts, host_data_sorted, op_idx)
 
                 for device_data in device_data_list:

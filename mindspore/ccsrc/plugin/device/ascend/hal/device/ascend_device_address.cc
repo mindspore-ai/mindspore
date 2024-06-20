@@ -1159,36 +1159,21 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
     return true;
   }
   bool ret_sync = false;
-  if (trans_flag) {
-    if (async_copy) {
+  if (async_copy) {
+    if (trans_flag) {
       ret_sync = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
     } else {
-      // copy device to host using sync mode
-      auto ret_rt_memcpy = CALL_ASCEND_API(aclrtMemcpy, out_tensor->data_c(), host_size, GetDevicePtr(), GetSize(),
-                                           ACL_MEMCPY_DEVICE_TO_HOST);
-      if (ret_rt_memcpy != ACL_ERROR_NONE) {
-        MS_LOG(ERROR) << "SyncDeviceToHost: aclrtMemcpy mem size[" << GetSize() << "] fail, ret[" << ret_rt_memcpy
-                      << "]";
-        return false;
-      } else {
-        ret_sync = true;
-      }
-    }
-
-  } else {
-    if (async_copy) {
       ret_sync = SyncDeviceToHost(host_size, out_tensor->data_c());
+    }
+  } else {
+    // copy device to host using sync mode
+    auto ret_rt_memcpy = CALL_ASCEND_API(aclrtMemcpy, out_tensor->data_c(), host_size, GetDevicePtr(), GetSize(),
+                                         ACL_MEMCPY_DEVICE_TO_HOST);
+    if (ret_rt_memcpy != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "SyncDeviceToHost: aclrtMemcpy mem size[" << GetSize() << "] fail, ret[" << ret_rt_memcpy << "]";
+      return false;
     } else {
-      // copy device to host using sync mode
-      auto ret_rt_memcpy = CALL_ASCEND_API(aclrtMemcpy, out_tensor->data_c(), host_size, GetDevicePtr(), GetSize(),
-                                           ACL_MEMCPY_DEVICE_TO_HOST);
-      if (ret_rt_memcpy != ACL_ERROR_NONE) {
-        MS_LOG(ERROR) << "SyncDeviceToHost: aclrtMemcpy mem size[" << GetSize() << "] fail, ret[" << ret_rt_memcpy
-                      << "]";
-        return false;
-      } else {
-        ret_sync = true;
-      }
+      ret_sync = true;
     }
   }
   if (!ret_sync) {
