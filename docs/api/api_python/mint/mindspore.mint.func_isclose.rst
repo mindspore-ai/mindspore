@@ -1,7 +1,7 @@
-mindspore.ops.isclose
-=====================
+mindspore.mint.isclose
+=======================
 
-.. py:function:: mindspore.ops.isclose(input, other, rtol=1e-05, atol=1e-08, equal_nan=False)
+.. py:function:: mindspore.mint.isclose(input, other, rtol=1e-05, atol=1e-08, equal_nan=False)
 
     返回一个布尔型Tensor，表示 `input` 的每个元素与 `other` 的对应元素在给定容忍度内是否“接近”。其中“接近”的数学公式为：
 

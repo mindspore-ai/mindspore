@@ -23,7 +23,7 @@
 #include <algorithm>
 #include <map>
 #include <functional>
-#include "mindspore/core/ops/is_close.h"
+#include "mindspore/core/ops/ops_func_impl/isclose.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/isclose_helper.h"

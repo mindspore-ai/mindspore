@@ -3380,23 +3380,24 @@ def isclose(input, other, rtol=1e-05, atol=1e-08, equal_nan=False):
         |input-other| ≤ atol + rtol × |other|
 
     Args:
-        input (Tensor): First Tensor to compare, with data type belongs to float32, float16, int32.
-        other (Tensor): Second Tensor to compare, with data type belongs to float32, float16, int32.
-        rtol (float, optional): Relative tolerance. Default: ``1e-05`` .
-        atol (float, optional): Absolute tolerance. Default: ``1e-08`` .
-        equal_nan (bool, optional): If True, then two NaNs will be considered equal. Default: ``False`` .
+        input (Tensor): First tensor to compare.
+            Support dtype: float16, float32, float64, int8, int16, int32, int64 and uint8.
+            On Ascend, more dtypes are support: bool and bfloat16.
+        other (Tensor): Second tensor to compare. Dtype must be same as `input`.
+        rtol (Union[float, int, bool], optional): Relative tolerance. Default: ``1e-05`` .
+        atol (Union[float, int, bool], optional): Absolute tolerance. Default: ``1e-08`` .
+        equal_nan (bool, optional): If ``True`` , then two NaNs will be considered equal. Default: ``False``.
 
     Returns:
         A bool Tensor, with the shape as broadcasted result of the input `input` and `other`.
 
     Raises:
-        TypeError: If either of `input` and `other` is not Tensor.
-        TypeError: If either of `input` and `other` is not float16, float32 or int32.
-        TypeError: If either of `atol` and `rtol` is not float.
-        TypeError: If `equal_nan` is not bool.
-        TypeError: If the dtype of `input` is not same as the `other`.
-        ValueError: If `input` and `other` can not be broadcast.
-        ValueError: If either of `atol` and `rtol` is less than zero.
+        TypeError: `input` or `other` is not Tensor.
+        TypeError: `input` or `other` dtype is not support.
+        TypeError: `atol` or `rtol` is not float, int or bool.
+        TypeError: `equal_nan` is not bool.
+        TypeError: `input` and `other` have different dtypes.
+        ValueError: `input` and `other` cannot broadcast.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

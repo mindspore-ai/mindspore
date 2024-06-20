@@ -25,6 +25,7 @@ from mindspore.ops.function.array_func import full_ext as full
 from mindspore.ops.function.array_func import ones_like_ext as ones_like
 from mindspore.ops.function.array_func import zeros_like_ext as zeros_like
 from mindspore.ops.function.array_func import unique_ext as unique
+from mindspore.ops.function.math_func import isclose
 from mindspore.ops.auto_generate import abs
 # 1
 from mindspore.ops.function.math_func import divide, div
@@ -246,6 +247,7 @@ __all__ = [
     'erf',
     'where',
     'linspace',
+    'isclose',
     # 1
     'div',
     'divide',
