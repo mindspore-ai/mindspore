@@ -255,7 +255,7 @@ bool ExportDepFilesHash(const std::string &compile_cache_dep_files_hash) {
 
 bool ExportDataQueueName(const std::string &dataset_phase, const string &queue_name) {
   if (queue_name.empty()) {
-    MS_LOG(WARNING) << "Export data queue name in dataset phase: " << dataset_phase << ", queue name: " << queue_name;
+    MS_LOG(INFO) << "Export data queue name in dataset phase: " << dataset_phase << ", queue name: " << queue_name;
     return true;
   }
   MS_LOG(INFO) << "Export data queue name in dataset phase: " << dataset_phase;
