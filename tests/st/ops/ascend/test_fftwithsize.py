@@ -47,3 +47,24 @@ def test_fft_with_size_irfft(mode):
     x = Tensor(x_real + 1j * x_img, dtype=x_dtype[1])
     output = irfft_backward_func(x, 1, True, True, signal_sizes=(4,))
     assert output.shape == (10, 3, 3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_fft_with_size_irfft_signal_sizes(mode):
+    """
+    Feature: irfft function
+    Description: test cases for irfft when signal_sizes=()
+    Expectation: The result match to the expect value
+    """
+    ms.context.set_context(mode=mode)
+    x_dtype = [np.float32, mstype.complex128]
+    x_shape = [10, 3, 3]
+    x_real = np.random.randn(*x_shape).astype(x_dtype[0])
+    x_img = np.random.randn(*x_shape).astype(x_dtype[0])
+    x = Tensor(x_real + 1j * x_img, dtype=x_dtype[1])
+    output = irfft_forward_func(x, 1, True, True, 'forward')
+    assert output.shape == (10, 3, 3)

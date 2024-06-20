@@ -512,7 +512,7 @@ CUST_IMPLEMT_INFERFUNC(FFTWithSize, FFTWithSizeInfer) {
       y_shape.back() = x_shape.back() / kDimNum + 1;
     } else {
       if (signal_sizes.size() == 0) {
-        y_shape.back() = (x_shape.back() - 1) * kDimNum;
+        y_shape.back() = x_shape.back();
       } else {
         y_shape.back() = signal_sizes.back();
       }
