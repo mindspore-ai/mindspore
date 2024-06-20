@@ -1803,9 +1803,11 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
   return true;
 }
 
-static std::vector<ActionItem> CommonPipeline(bool trace_flag, bool enable_boost_infer) {
+static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
   std::vector<ActionItem> actions;
-  const bool boost_infer = common::GetEnv("MS_DEV_BOOST_INFER") != "0" && enable_boost_infer;
+  auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
+  MS_EXCEPTION_IF_NULL(graph_executor);
+  const bool boost_infer = common::GetEnv("MS_DEV_BOOST_INFER") != "0" && graph_executor->graph_cell_count() == 0;
   if (!trace_flag) {
     if (boost_infer) {
       // Bootstrap for JIT.
@@ -1885,7 +1887,7 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag,
   if (IsPhaseLoadFromMindIR(phase)) {
     actions = MindIRPipeline();
   } else if (!resource->EnableCompileCache() || resource->func_graph() == nullptr) {
-    actions = CommonPipeline(trace_flag, !py::hasattr(resource->source_input(), "graph_cell"));
+    actions = CommonPipeline(trace_flag);
 
     // Optimize
     (void)actions.emplace_back(std::make_pair(kOptimize, VmOptimizeAction));

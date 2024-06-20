@@ -14,9 +14,10 @@
 # ============================================================================
 import numpy as np
 from mindspore.nn import Cell, GraphCell
-from mindspore import ops, nn
+from mindspore import ops, nn, jit
 from mindspore import Tensor, export, load, Parameter, dtype, context
 from mindspore.common.initializer import initializer
+import mindspore as ms
 
 
 def test_export_control_flow():
@@ -54,6 +55,26 @@ def test_export_control_flow():
     export_out = g_net(Tensor(x), Tensor(y))
     correct_out = net(Tensor(x), Tensor(y))
     assert np.allclose(export_out.asnumpy(), correct_out.asnumpy())
+
+
+def test_export_graph_cell_in_jit():
+    """
+    Feature: Test MindIR Export model
+    Description: test mindir export when there is a GraphCell in jit function.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
+    x = Tensor(np.ones([1, 120, 1024, 640]), ms.float32)
+    export(net, x, file_name="test_conv2d", file_format='MINDIR')
+    graph = load('test_conv2d.mindir')
+    g_net = GraphCell(graph)
+
+    @jit
+    def g_net_jit_func(inputs):
+        return g_net(inputs)
+
+    g_net_jit_func(x)
 
 
 def test_mindir_export_none():

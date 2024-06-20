@@ -1912,6 +1912,14 @@ class _CellGraphExecutor:
         """Clear the memory resource of a network."""
         self._graph_executor.del_net_res(obj, net_id)
 
+    def inc_graph_cell_count(self):
+        """Increase the count of GraphCell instance."""
+        self._graph_executor.inc_graph_cell_count()
+
+    def dec_graph_cell_count(self):
+        """Decrease the count of GraphCell instance."""
+        self._graph_executor.dec_graph_cell_count()
+
     def _get_branch_control_input(self):
         if ('obf_ratio' not in self.obfuscate_config.keys()) or (
                 'obf_random_seed' not in self.obfuscate_config.keys()):

@@ -401,6 +401,8 @@ class Cell(Cell_):
             cells_compile_cache.pop(id(self), None)
         if hasattr(self, "compile_cache") and self.compile_cache:
             _cell_graph_executor.del_net_res(self, self.compile_cache)
+        if isinstance(self, GraphCell):
+            _cell_graph_executor.dec_graph_cell_count()
         Cell.total_instance_count -= 1
 
     def __delattr__(self, name):
@@ -2617,7 +2619,7 @@ class GraphCell(Cell):
         params_dict = update_func_graph_hyper_params(self.graph, params_init)
         for name, param in params_dict.items():
             self._params[name] = param
-        self.graph_cell = True
+        _cell_graph_executor.inc_graph_cell_count()
 
     def construct(self, *inputs):
         return self.graph(*inputs)
