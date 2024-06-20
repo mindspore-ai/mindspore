@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_REPEAT_INTERLEAVE_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_REPEAT_INTERLEAVE_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_REPEAT_INTERLEAVE_TENSOR_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_REPEAT_INTERLEAVE_TENSOR_H_
 
 #include <vector>
 #include <memory>
@@ -27,11 +27,12 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::BaseTensorPtr RepeatInterleaveAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                      const BaseTensorPtr &input_tensor, const BaseTensorPtr &repeats,
-                                                      const std::optional<Int64ImmPtr> &axis,
-                                                      const std::optional<Int64ImmPtr> &output_size);
+tensor::BaseTensorPtr RepeatInterleaveTensorAscendCustomize(const std::shared_ptr<OpRunner> &op,
+                                                            const BaseTensorPtr &input_tensor,
+                                                            const BaseTensorPtr &repeats,
+                                                            const std::optional<Int64ImmPtr> &dim,
+                                                            const std::optional<Int64ImmPtr> &output_size);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_REPEAT_INTERLEAVE_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_REPEAT_INTERLEAVE_TENSOR_H_

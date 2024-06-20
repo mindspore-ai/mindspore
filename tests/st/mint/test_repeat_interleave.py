@@ -14,111 +14,199 @@
 # ============================================================================
 import pytest
 import numpy as np
-import mindspore
+import mindspore as ms
 from mindspore import Tensor
 from mindspore import ops
 from mindspore import mint
 from mindspore import jit, JitConfig
+from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.st.utils import test_utils
 
 def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)
 
-def generate_expect_forward_output(input_tensor, repeats, axis=None):
-    return np.repeat(input_tensor, repeats, axis)
+def generate_expect_forward_output(input_tensor, repeats, dim=None):
+    return np.repeat(input_tensor, repeats, dim)
 
-def generate_expect_backward_output(input_tensor, repeats, axis):
+def generate_expect_backward_output(input_tensor, repeats, dim):
     if isinstance(repeats, int):
         repeats = [repeats,]
     output = []
     if len(repeats) == 1:
         output = repeats[0]*np.ones_like(input_tensor, np.float32)
     else:
-        if axis == 0:
+        if dim == 0:
             output = [r*np.ones_like(input_tensor[0], np.float32) for r in repeats]
-        elif axis == 1:
+        elif dim == 1:
             output = [repeats for i in range(input_tensor.shape[0])]
+        elif dim is None:
+            output = np.reshape(repeats, input_tensor.shape)
     return output
 
-def repeat_interleave_forward(input_tensor, repeats, axis):
-    return mint.repeat_interleave(input_tensor, repeats, axis)
+@test_utils.run_with_cell
+def repeat_interleave_forward(input_tensor, repeats, dim, output_size=None):
+    return mint.repeat_interleave(input_tensor, repeats, dim, output_size)
 
-def repeat_interleave_backward(input_tensor, repeats, axis):
-    input_grad = ops.grad(repeat_interleave_forward)(input_tensor, repeats, axis)
+@test_utils.run_with_cell
+def repeat_interleave_backward(input_tensor, repeats, dim, output_size=None):
+    input_grad = ops.grad(repeat_interleave_forward)(input_tensor, repeats, dim, output_size)
     return input_grad
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [mindspore.GRAPH_MODE, mindspore.PYNATIVE_MODE])
-@pytest.mark.parametrize('axis', [0, 1])
-def test_repeat_interleave_forward_int(mode, axis):
+@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
+@pytest.mark.parametrize('dim', [0, None])
+def test_repeat_interleave_forward_int(mode, dim):
     """
     Feature: mint.repeat_interleave
     Description: Verify the result of mint.repeat_interleave when `repeats` is integer
     Expectation: success
     """
-    mindspore.set_context(mode=mode)
     x = generate_random_input((5, 3), np.float32)
     repeats = 2
-    output = (jit(repeat_interleave_forward, jit_config=JitConfig(jit_level="O0")))(Tensor(x), repeats, axis)
-    expect = generate_expect_forward_output(x, repeats, axis)
+    expect = generate_expect_forward_output(x, repeats, dim)
+    if mode == 'pynative':
+        ms.context.set_context(mode=ms.PYNATIVE_MODE)
+        output = repeat_interleave_forward(Tensor(x), repeats, dim)
+    elif mode == 'KBK':
+        output = (jit(repeat_interleave_forward, jit_config=JitConfig(jit_level="O0")))(Tensor(x), repeats, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [mindspore.GRAPH_MODE, mindspore.PYNATIVE_MODE])
-@pytest.mark.parametrize('axis', [0, 1])
-def test_repeat_interleave_backward_int(mode, axis):
+@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
+@pytest.mark.parametrize('dim', [0, None])
+def test_repeat_interleave_backward_int(mode, dim):
     """
     Feature: mint.repeat_interleave
     Description: Verify the result of back propagation for mint.repeat_interleave when `repeats` is integer
     Expectation: success
     """
-    mindspore.set_context(mode=mode)
     x = generate_random_input((5, 3), np.float32)
     repeats = 2
-    output = (jit(repeat_interleave_backward, jit_config=JitConfig(jit_level="O0")))(Tensor(x), repeats, axis)
-    expect = generate_expect_backward_output(x, repeats, axis)
+    expect = generate_expect_backward_output(x, repeats, dim)
+    if mode == 'pynative':
+        ms.context.set_context(mode=ms.PYNATIVE_MODE)
+        output = repeat_interleave_backward(Tensor(x), repeats, dim)
+    elif mode == 'KBK':
+        output = (jit(repeat_interleave_backward, jit_config=JitConfig(jit_level="O0")))(Tensor(x), repeats, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [mindspore.GRAPH_MODE, mindspore.PYNATIVE_MODE])
-@pytest.mark.parametrize('axis', [0, 1])
-def test_repeat_interleave_forward_tensor(mode, axis):
+@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
+@pytest.mark.parametrize('dim', [None, 1])
+def test_repeat_interleave_forward_tensor(mode, dim):
     """
     Feature: mint.repeat_interleave
     Description: Verify the result of mint.repeat_interleave when `repeats` is tensor
     Expectation: success
     """
-    mindspore.set_context(mode=mode)
-    x = generate_random_input((5, 3), np.float32)
-    repeats = [np.random.randint(1, 5) for i in range(x.shape[axis])]
-    output = (jit(repeat_interleave_forward, jit_config=JitConfig(jit_level="O0")))(Tensor(x), repeats, axis)
-    expect = generate_expect_forward_output(x, repeats, axis)
+    x = generate_random_input((2, 4), np.float32)
+    if dim is None:
+        repeats = 4
+    else:
+        repeats = [np.random.randint(1, 5) for i in range(x.shape[dim])]
+    expect = generate_expect_forward_output(x, repeats, dim)
+    if mode == 'pynative':
+        ms.context.set_context(mode=ms.PYNATIVE_MODE)
+        output = repeat_interleave_forward(Tensor(x), Tensor(repeats), dim)
+    elif mode == 'KBK':
+        output = (jit(repeat_interleave_forward, jit_config=JitConfig(jit_level="O0")))(Tensor(x), Tensor(repeats), dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [mindspore.PYNATIVE_MODE, mindspore.GRAPH_MODE])
-@pytest.mark.parametrize('axis', [0, 1])
-def test_repeat_interleave_backward_tensor(mode, axis):
+@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
+@pytest.mark.parametrize('dim', [None, 1])
+def test_repeat_interleave_backward_tensor(mode, dim):
     """
     Feature: mint.repeat_interleave
     Description: Verify the result of back propagation for mint.repeat_interleave when `repeats` is tensor
     Expectation: success
     """
-    mindspore.set_context(mode=mode)
-    x = generate_random_input((5, 3), np.float32)
-    repeats = [np.random.randint(1, 5) for i in range(x.shape[axis])]
-    output = (jit(repeat_interleave_backward, jit_config=JitConfig(jit_level="O0")))(Tensor(x), repeats, axis)
-    expect = generate_expect_backward_output(x, repeats, axis)
+    x = generate_random_input((2, 4), np.float32)
+    if dim is None:
+        repeats = np.random.randint(10, size=8)
+    else:
+        repeats = [np.random.randint(1, 5) for i in range(x.shape[dim])]
+    expect = generate_expect_backward_output(x, repeats, dim)
+    if mode == 'pynative':
+        ms.context.set_context(mode=ms.PYNATIVE_MODE)
+        output = repeat_interleave_backward(Tensor(x), Tensor(repeats), dim)
+    elif mode == 'KBK':
+        output = (jit(repeat_interleave_backward, jit_config=JitConfig(jit_level="O0")))(
+            Tensor(x), Tensor(repeats), dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
+@pytest.mark.parametrize('dim', [None, 1])
+def test_repeat_interleave_bfloat16(mode, dim):
+    """
+    Feature: test ne functional API.
+    Description: testcase for ne functional API.
+    Expectation: the result match with expected result.
+    """
+    x = generate_random_input((3, 4), np.float32)
+    if dim is None:
+        repeats = np.random.randint(10, size=12)
+    else:
+        repeats = [np.random.randint(1, 5) for i in range(x.shape[dim])]
+    expect = generate_expect_forward_output(x, repeats, dim)
+    if mode == 'pynative':
+        ms.context.set_context(mode=ms.PYNATIVE_MODE)
+        output = repeat_interleave_forward(Tensor(x, dtype=ms.bfloat16), Tensor(repeats), dim)
+    elif mode == 'KBK':
+        output = (jit(repeat_interleave_forward, jit_config=JitConfig(jit_level="O0")))(
+            Tensor(x, dtype=ms.bfloat16), Tensor(repeats), dim)
+    assert np.allclose(output.float().asnumpy(), expect, 0.004, 0.004)
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+def test_repeat_interleave_dynamic_shape_int():
+    """
+    Feature: Test dynamic shape.
+    Description: test function div dynamic feature.
+    Expectation: expect correct result.
+    """
+    dim1 = 0
+    repeats1 = 5
+    input_case1 = Tensor(np.random.rand(2, 3).astype(np.float32))
+    input_case2 = Tensor(np.random.rand(3, 4, 5).astype(np.float32))
+    dim2 = 1
+    repeats2 = 7
+    TEST_OP(repeat_interleave_forward, [[input_case1, repeats1, dim1], [input_case2, repeats2, dim2]],
+            '', disable_yaml_check=True, disable_mode=['GRAPH_MODE'])
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend910b_training
+def test_repeat_interleave_dynamic_shape_tensor():
+    """
+    Feature: Test dynamic shape.
+    Description: test function div dynamic feature.
+    Expectation: expect correct result.
+    """
+    dim1 = 0
+    repeats1 = Tensor([4, 2])
+    output_size1 = 6
+    input_case1 = Tensor(np.random.rand(2, 3).astype(np.float32))
+    input_case2 = Tensor(np.random.rand(3, 4, 5).astype(np.float32))
+    dim2 = 1
+    output_size2 = 14
+    repeats2 = Tensor([2, 3, 5, 4])
+    TEST_OP(repeat_interleave_forward, [[input_case1, repeats1, dim1, output_size1],
+                                        [input_case2, repeats2, dim2, output_size2]],
+            '', disable_input_check=True, disable_yaml_check=True, disable_mode=['GRAPH_MODE'])

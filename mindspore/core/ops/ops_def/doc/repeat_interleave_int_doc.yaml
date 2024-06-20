@@ -1,0 +1,30 @@
+repeat_interleave_int:
+    description: |
+        Repeat elements of a tensor.
+
+        Args:
+            tensor (Tensor): the input tensor.
+            repeats (int) the number of repetitions for each element
+            dim (int, optional) the dim along wich to repeat, if None, defaults to 0.
+            output_size (int, optional): Calculated output size along specified dim.
+
+        Returns:
+            Tensor, one-hot tensor.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import ops
+            >>> from mindspore import Tensor
+            >>> tensor = Tensor(np.array([0, 1, 2], [3, 4, 5]), mindspore.int32)
+            >>> repeats = 2
+            >>> dim = 0
+            >>> output = ops.repeat_interleave_ext(tensor, repeats, dim)
+            >>> print(output)
+            [[0. 1. 2.]
+            [0. 1. 2.]
+            [3. 4. 5.]
+            [3. 4. 5.]]

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REPEAT_INTERLEAVE_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REPEAT_INTERLEAVE_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REPEAT_INTERLEAVE_TENSOR_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REPEAT_INTERLEAVE_TENSOR_H_
 
 #include <vector>
 #include <set>
@@ -23,12 +23,16 @@
 
 namespace mindspore {
 namespace ops {
-class MIND_API RepeatInterleaveFuncImpl : public OpFuncImpl {
+class MIND_API RepeatInterleaveTensorFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+
+  // simply infer
+  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REPEAT_INTERLEAVE_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_REPEAT_INTERLEAVE_TENSOR_H_
