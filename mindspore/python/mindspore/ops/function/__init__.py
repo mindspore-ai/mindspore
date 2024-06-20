@@ -542,6 +542,7 @@ from .nn_func import (
     multilabel_margin_loss,
     multilabel_soft_margin_loss,
     elu,
+    elu_ext,
     gelu,
     hinge_embedding_loss,
     gaussian_nll_loss,

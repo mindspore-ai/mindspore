@@ -1,0 +1,18 @@
+#operator elu_grad_ext
+elu_grad_ext:
+  args:
+    dout:
+      dtype: tensor
+    x:
+      dtype: tensor
+    alpha:
+      dtype: float
+      default: 1.0
+  returns:
+    dx:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: EluGradExtAscend

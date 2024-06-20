@@ -36,12 +36,21 @@ INPUT_ATTR_MAP(Elu) = {{2, ATTR_DESC(alpha, AnyTraits<float>())}};
 ATTR_MAP(Elu) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Elu) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Elu, kNameElu, ADPT_DESC(Elu))
+REG_ADPT_DESC(EluExt, kNameEluExt, ADPT_DESC(Elu))
 
 // EluGrad
 INPUT_MAP(EluGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(activations)}};
 ATTR_MAP(EluGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(EluGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(EluGrad, kNameEluGrad, ADPT_DESC(EluGrad))
+
+// EluGradExt
+INPUT_MAP(EluGradV2) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(activations)}};
+ATTR_MAP(EluGradV2) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(EluGradV2) = {{3, ATTR_DESC(alpha, AnyTraits<float>())}};
+OUTPUT_MAP(EluGradV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(EluGradExt, kNameEluGradExt, ADPT_DESC(EluGradV2))
+REG_ADPT_DESC(EluGradV2, kEluGradV2OpName, ADPT_DESC(EluGradV2))
 
 // PRelu
 INPUT_MAP(PRelu) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(weight)}};

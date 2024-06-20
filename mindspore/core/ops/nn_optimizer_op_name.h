@@ -84,6 +84,7 @@ constexpr auto kApplyProximalAdagradOpName = "ApplyProximalAdagrad";
 constexpr auto kApplyProximalGradientDescentOpName = "ApplyProximalGradientDescent";
 constexpr auto kCeLUOpName = "CeLU";
 constexpr auto kCeluV2OpName = "CeluV2";
+constexpr auto kEluGradV2OpName = "EluGradV2";
 constexpr auto kFastGeluOpName = "FastGelu";
 constexpr auto kFastGeluGradOpName = "FastGeluGrad";
 constexpr auto kFusedAdaFactorOpName = "FusedAdaFactor";

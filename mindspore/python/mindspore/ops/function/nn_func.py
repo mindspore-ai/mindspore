@@ -41,7 +41,7 @@ from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
+from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6, elu_ext
 from mindspore.ops.auto_generate import group_norm_op, layer_norm_ext_op, batch_norm_ext_op
 from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op,
                                          replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
@@ -8108,6 +8108,7 @@ __all__ = [
     'multilabel_margin_loss',
     'multilabel_soft_margin_loss',
     'elu',
+    'elu_ext',
     'gelu',
     'hinge_embedding_loss',
     'gaussian_nll_loss',

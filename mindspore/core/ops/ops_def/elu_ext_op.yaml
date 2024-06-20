@@ -1,0 +1,15 @@
+#operator elu_ext
+elu_ext:
+  args:
+    input:
+      dtype: tensor
+    alpha:
+      dtype: float
+      default: 1.0
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: EluExtAscend
