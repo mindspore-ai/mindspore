@@ -981,7 +981,7 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
     auto context = parallel::ParallelContext::GetInstance();
     if (context != nullptr && para_node->has_default()) {
       auto param_abs = pipeline::GetDefaultValueAbstract(para_node);
-      context->ParallelParameterContextRestoreShape(func_graph, para_node, param_abs);
+      context->ParallelParameterContextRestoreShape(top_func_graph, para_node, param_abs);
       para_node->set_abstract(param_abs);
     }
   }
