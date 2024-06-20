@@ -1081,6 +1081,9 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   UpdateOutputDynamic(op_run_info, op_compiler_info, device_address_list, outputs);
   UpdateOutputAbstract(*outputs, op_run_info);
   ClearOpInputOutput(op_compiler_info);
+  if (op_compiler_info->need_erase_) {
+    EraseSingleOpCache(op_compiler_info->graph_info_);
+  }
 }
 
 void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
