@@ -18,6 +18,7 @@ from mindspore.ops.extend import *
 from mindspore.ops.extend import array_func, math_func, nn_func
 from mindspore.mint.nn.functional import *
 from mindspore.mint.nn import functional
+from mindspore.mint import linalg
 from mindspore.ops import erf, where, triu
 from mindspore.ops.function.math_func import linspace_ext as linspace
 from mindspore.ops.function.array_func import full_ext as full
@@ -471,3 +472,4 @@ __all__.extend(nn_func.__all__)
 __all__.extend(functional.__all__)
 __all__.extend(nn.__all__)
 __all__.extend(optim.__all__)
+__all__.extend(linalg.__all__)
