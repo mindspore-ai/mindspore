@@ -131,6 +131,8 @@ pows = tensor_pow
 tensor_sub = P.Sub()
 transpose_ = P.Transpose()
 xdivy_ = P.Xdivy()
+tensor_div_ = P.Div()
+tensor_divmod_ = DivMod()
 
 #####################################
 # Private Operation Functions.
@@ -760,9 +762,9 @@ def div(input, other, *, rounding_mode=None):
     if rounding_mode is not None and rounding_mode not in ['floor', 'trunc']:
         raise ValueError("For ops.div, rounding_mode value should be None, 'floor' or 'trunc'.")
     if rounding_mode:
-        output = DivMod()(input, other, rounding_mode)
+        output = tensor_divmod_(input, other, rounding_mode)
     else:
-        output = P.Div()(input, other)
+        output = tensor_div_(input, other)
     return output
 
 

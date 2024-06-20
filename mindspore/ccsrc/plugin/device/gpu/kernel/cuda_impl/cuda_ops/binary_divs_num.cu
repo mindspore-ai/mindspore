@@ -20,11 +20,42 @@
 template <typename In0_t, typename In1_t, typename Out_t>
 struct BinaryFunc<BinaryOpType::kDiv, In0_t, In1_t, Out_t> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
-  __device__ __forceinline__ Out_t operator()(In0_t val0, In1_t val1) const { return val0 / val1; }
+  __device__ __forceinline__ Out_t operator()(In0_t val0, In1_t val1) const {
+    return static_cast<float>(val0) / static_cast<float>(val1);
+  }
+};
+template <>
+struct BinaryFunc<BinaryOpType::kDiv, Complex<float>, Complex<float>, Complex<float>> {
+  __device__ __host__ __forceinline__ BinaryFunc() {}
+  __device__ __forceinline__ Complex<float> operator()(Complex<float> val0, Complex<float> val1) const {
+    return val0 / val1;
+  }
+};
+template <>
+struct BinaryFunc<BinaryOpType::kDiv, Complex<double>, Complex<double>, Complex<double>> {
+  __device__ __host__ __forceinline__ BinaryFunc() {}
+  __device__ __forceinline__ Complex<double> operator()(Complex<double> val0, Complex<double> val1) const {
+    return val0 / val1;
+  }
+};
+template <>
+struct BinaryFunc<BinaryOpType::kDiv, half, half, half> {
+  __device__ __host__ __forceinline__ BinaryFunc() {}
+  __device__ __forceinline__ half operator()(half val0, half val1) const { return val0 / val1; }
+};
+template <>
+struct BinaryFunc<BinaryOpType::kDiv, float, float, float> {
+  __device__ __host__ __forceinline__ BinaryFunc() {}
+  __device__ __forceinline__ float operator()(float val0, float val1) const { return val0 / val1; }
+};
+template <>
+struct BinaryFunc<BinaryOpType::kDiv, double, double, double> {
+  __device__ __host__ __forceinline__ BinaryFunc() {}
+  __device__ __forceinline__ double operator()(double val0, double val1) const { return val0 / val1; }
 };
 REGISTER_BINARY_OP_CUDA_FUNC_COMPLEX_TYPE(BinaryOpType::kDiv);
 REGISTER_BINARY_OP_CUDA_FUNC_FLOAT_TYPE(BinaryOpType::kDiv);
-REGISTER_BINARY_OP_CUDA_FUNC_INT_TYPE(BinaryOpType::kDiv);
+REGISTER_BINARY_OP_CUDA_DIV_INT_TYPE(BinaryOpType::kDiv);
 
 template <typename In0_t, typename In1_t, typename Out_t>
 struct BinaryFunc<BinaryOpType::kRealDiv, In0_t, In1_t, Out_t> {
