@@ -14,18 +14,15 @@
 # ============================================================================
 """ test_auto_grad """
 
+import numpy as np
+import mindspore
 from mindspore.ops import composite as C
 from mindspore import Tensor, Parameter
 from mindspore import nn
-import numpy as np
-import mindspore
 from mindspore import ops
 
 
 class MultiInputNet(nn.Cell):
-    def __init__(self):
-        super(MultiInputNet, self).__init__()
-
     def construct(self, x, t):
         y = x * x
         z = y * t[0]
@@ -103,9 +100,6 @@ class NormalNet(nn.Cell):
 
 
 class NoneTensorInputNet(nn.Cell):
-    def __init__(self):
-        super(NoneTensorInputNet, self).__init__()
-
     def construct(self, x):
         y = x[0] * x[0]
         z = y * x[0]
@@ -123,16 +117,13 @@ class ParamNet(nn.Cell):
 
 
 class CustomBpropNet(nn.Cell):
-    def __init__(self):
-        super(CustomBpropNet, self).__init__()
-
     def construct(self, x):
         y = x * x
         z = y + y
         return z
 
     def bprop(self, *args):
-        return args[0] * 4,
+        return (args[0] * 4,)
 
 
 class StopGradientNet(nn.Cell):
@@ -145,6 +136,7 @@ class StopGradientNet(nn.Cell):
         y = ops.stop_gradient(y)
         z = y * self.p1
         return z
+
 
 def test_auto_grad_multi_input():
     """
@@ -312,8 +304,8 @@ def test_auto_grad_none_inputs_and_weights():
     net.set_inputs(Tensor(shape=[None], dtype=mindspore.float32))
     grads = grad_net(net)((x, y))
     assert len(grads) == 2
-    assert len(grads[0]) == 0
-    assert len(grads[1]) == 0
+    assert not grads[0]
+    assert not grads[1]
 
 
 def test_auto_grad_by_position():
@@ -378,4 +370,3 @@ def test_auto_grad_bprop_net():
     net.set_inputs(Tensor(shape=[None], dtype=mindspore.float32))
     grad = ops.grad(net)(x)
     assert np.allclose(grad.asnumpy(), np.array([8], dtype=np.float32), 0.00001, 0.00001)
-
