@@ -61,7 +61,8 @@ class MaxPool3DGradWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
   void MaxPool3DGradWithArgmaxSingleCompute(DATA_T *input_grad, INDICES_T *input_argmax, DATA_T *output_y, size_t iD,
                                             size_t iH, size_t iW, size_t oD, size_t oH, size_t oW, size_t kD, size_t kH,
                                             size_t kW, size_t sD, size_t sH, size_t sW, size_t pD, size_t pH, size_t pW,
-                                            size_t dD, size_t dH, size_t dW);
+                                            size_t dD, size_t dH, size_t dW, size_t input_grads_len,
+                                            size_t input_argmax_len, size_t output_y_len);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;

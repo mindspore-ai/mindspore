@@ -79,7 +79,7 @@ template <typename DATA_T, typename INDICES_T>
 void MaxPool3DGradWithArgmaxCpuKernelMod::MaxPool3DGradWithArgmaxSingleCompute(
   DATA_T *input_grad, INDICES_T *input_argmax, DATA_T *output_y, size_t iD, size_t iH, size_t iW, size_t oD, size_t oH,
   size_t oW, size_t kD, size_t kH, size_t kW, size_t sD, size_t sH, size_t sW, size_t pD, size_t pH, size_t pW,
-  size_t dD, size_t dH, size_t dW) {
+  size_t dD, size_t dH, size_t dW, size_t input_grads_len, size_t input_argmax_len, size_t output_y_len) {
   DATA_T *in_grad = input_grad;
   DATA_T *out_y = output_y;
   INDICES_T *argmax = input_argmax;
@@ -93,11 +93,16 @@ void MaxPool3DGradWithArgmaxCpuKernelMod::MaxPool3DGradWithArgmaxSingleCompute(
       for (j = 0; j < oW; j++) {
         /* retrieve position of max */
         size_t index = ti * oH * oW + i * oW + j;
-        size_t maxp = argmax[index];
+        size_t maxp = 0;
+        if (index < input_argmax_len) {
+          maxp = argmax[index];
+        }
 
         if (maxp != -kOne) {
           /* update gradient */
-          out_y[maxp] += in_grad[index];
+          if (maxp < output_y_len && index < input_grads_len) {
+            out_y[maxp] += in_grad[index];
+          }
         }
       }
     }
@@ -151,6 +156,11 @@ bool MaxPool3DGradWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<KernelT
   auto input_grads = static_cast<DATA_T *>(inputs[kOne]->device_ptr());
   auto input_argmax = static_cast<INDICES_T *>(inputs[kTwo]->device_ptr());
   auto output_y = static_cast<DATA_T *>(outputs[kZero]->device_ptr());
+
+  size_t input_grads_len = inputs[kOne]->size() / sizeof(DATA_T);
+  size_t input_argmax_len = inputs[kTwo]->size() / sizeof(INDICES_T);
+  size_t output_y_len = outputs[kZero]->size() / sizeof(DATA_T);
+
   auto input_shape_vec = x_shape_;
   auto output_shape_vec = grads_shape_;
   const size_t in_width = static_cast<size_t>(input_shape_vec[kFour]);
@@ -233,10 +243,10 @@ bool MaxPool3DGradWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<KernelT
   }  // attributes limitations
   (void)OutPutInitKernel(output_y, length);
   for (size_t i = 0; i < batch; i++) {
-    MaxPool3DGradWithArgmaxSingleCompute(input_grads + i * out_stride, input_argmax + i * out_stride,
-                                         output_y + i * in_stride, in_depth, in_height, in_width, out_depth, out_height,
-                                         out_width, k_depth, k_height, k_width, s_depth, s_height, s_width, p_depth,
-                                         p_height, p_width, d_depth, d_height, d_width);
+    MaxPool3DGradWithArgmaxSingleCompute(
+      input_grads + i * out_stride, input_argmax + i * out_stride, output_y + i * in_stride, in_depth, in_height,
+      in_width, out_depth, out_height, out_width, k_depth, k_height, k_width, s_depth, s_height, s_width, p_depth,
+      p_height, p_width, d_depth, d_height, d_width, input_grads_len, input_argmax_len, output_y_len);
   }
   return true;
 }
