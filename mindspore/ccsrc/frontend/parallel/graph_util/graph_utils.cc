@@ -32,7 +32,7 @@
 
 namespace mindspore::parallel {
 int64_t GetPrimeFactor(int64_t value) {
-  static const std::vector<int64_t> prime_table = {3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47};
+  static const std::vector<int64_t> prime_table = PrimeGenerator::GetInstance()->GetPrimeTable();
   for (const auto &prime : prime_table) {
     if (prime > value) {
       return -1;
@@ -562,6 +562,25 @@ bool WhetherMatchingIsNeededForReshape(const Shape &shape_vec, const TensorRedis
   return true;
 }
 
+inline bool HasOnlyOneDynamicAxis(const Shape &shape_vec,
+                                  const TensorRedistributionPtr &tensor_redistribution_from_cnode) {
+  Shape origin_to_no_assembled = tensor_redistribution_from_cnode->to_origin_no_assembled().tensor_shape().array();
+  Shape origin_to_no_assembled_slice = tensor_redistribution_from_cnode->to_origin_no_assembled().slice_shape().array();
+  bool has_only_one_dynamic_axis = std::count(origin_to_no_assembled.begin(), origin_to_no_assembled.end(), -1) == 1;
+  MS_LOG(INFO) << "shape_vec: " << shape_vec << ", origin_to_no_assembled: " << origin_to_no_assembled
+               << ", origin_to_no_assembled_slice: " << origin_to_no_assembled_slice;
+  return (origin_to_no_assembled.size() == shape_vec.size()) && has_only_one_dynamic_axis;
+}
+
+void ReplaceDynamicAxisToNegOne(const TensorRedistributionPtr &tensor_redistribution_from_cnode, Shape *shape_vec) {
+  Shape origin_to_no_assembled = tensor_redistribution_from_cnode->to_origin_no_assembled().tensor_shape().array();
+  for (size_t i = 0; i < origin_to_no_assembled.size(); ++i) {
+    if (origin_to_no_assembled[i] == -1) {
+      (*shape_vec)[i] = -1;
+    }
+  }
+}
+
 Status ConvertReshapeInputs(const OperatorParams &params,
                             const TensorRedistributionPtr &tensor_redistribution_from_cnode,
                             const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *new_node_input) {
@@ -600,6 +619,21 @@ Status ConvertReshapeInputs(const OperatorParams &params,
   size_t dynamic_axis_cnt = std::count(shape_vec.begin(), shape_vec.end(), -1);
   if (shape_vec.size() > 1 && dynamic_axis_cnt >= SIZE_TWO) {
     MS_LOG(WARNING) << "The shape of Reshape op has more than one -1, cannot be supported for now.";
+  }
+  Shape origin_to_no_assembled = tensor_redistribution_from_cnode->to_origin_no_assembled().tensor_shape().array();
+  Shape origin_to_no_assembled_slice = tensor_redistribution_from_cnode->to_origin_no_assembled().slice_shape().array();
+  MS_LOG(INFO) << "shape_vec: " << shape_vec << ", reshape_mode: " << reshape_mode
+               << ", origin_to_no_assembled: " << origin_to_no_assembled
+               << ", origin_to_no_assembled_slice: " << origin_to_no_assembled_slice;
+  // if only has one dynamic axis, then replace it with -1 simply.
+  if (reshape_mode == ReshapeMode::NO_RESHAPE && HasOnlyOneDynamicAxis(shape_vec, tensor_redistribution_from_cnode)) {
+    // After HasOnlyOneDynamicAxis checks, shape_vec must have one dynamic axis and it must be prime axis.
+    Shape new_shape_vec(shape_vec);
+    ReplaceDynamicAxisToNegOne(tensor_redistribution_from_cnode, &new_shape_vec);
+    MS_LOG(INFO) << "Replace shape: " << shape_vec << " to new_shape_vec: " << new_shape_vec;
+    AnfNodePtr val = NewValueNode(new_shape_vec);
+    (void)new_node_input->emplace_back(val);
+    return SUCCESS;
   }
   if (!WhetherMatchingIsNeededForReshape(shape_vec, tensor_redistribution_from_cnode)) {
     MS_LOG(INFO) << "No need to matching for " << shape_vec;

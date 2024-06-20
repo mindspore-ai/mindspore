@@ -309,9 +309,38 @@ Status TensorRedistribution::CalculateToTensorShapeUsingEnumeration(const Shape 
   }
 }
 
+void CalculateToTensorShapeForOneDynamicAxis(const Shape &from_shape, const Shape &origin_to_shape, Shape *to_shape) {
+  Shape from_shape_divisor(from_shape);
+  size_t dynamic_axis = 0;
+  for (size_t i = 0; i < origin_to_shape.size(); ++i) {
+    int64_t dim_val = origin_to_shape[i];
+    (*to_shape)[i] = dim_val;
+    if (dim_val == -1) {
+      dynamic_axis = i;
+      continue;
+    }
+    for (int64_t &from_dim_val : from_shape_divisor) {
+      if (dim_val == 1) {
+        break;
+      }
+      int64_t f = std::gcd(dim_val, from_dim_val);
+      from_dim_val /= f;
+      dim_val /= f;
+    }
+  }
+  (*to_shape)[dynamic_axis] = GetTensorSize(from_shape_divisor);
+  MS_LOG(INFO) << "to_shape=" << (*to_shape) << ", from_shape_divisor=" << from_shape_divisor;
+}
+
 Status TensorRedistribution::CalculateToTensorShape(const Shape &from_shape, const Shape &origin_to_shape,
                                                     const Array &to_in_factors, Shape *to_shape) {
+  MS_LOG(INFO) << "from_shape=" << from_shape << ", origin_to_shape=" << origin_to_shape
+               << ", to_in_factors=" << to_in_factors.array();
   // Use forward and backward matching first, if failed, turn to enumeration.
+  if (std::count(origin_to_shape.begin(), origin_to_shape.end(), -1) == 1) {
+    CalculateToTensorShapeForOneDynamicAxis(from_shape, origin_to_shape, to_shape);
+    return Status::SUCCESS;
+  }
   bool flag_forward_match = ForwardMatching(from_shape, origin_to_shape, to_shape, to_in_factors);
   if (!flag_forward_match && !BackwardMatching(origin_to_shape, to_shape, to_in_factors)) {
     MS_LOG(DEBUG) << "Backward matching failed.";
@@ -650,7 +679,7 @@ void TensorRedistribution::CreateAssembledDynamicMapping(const CNodePtr &cur_cno
     auto prim_tuple_get_item = std::make_shared<Primitive>(TUPLE_GETITEM_OP);
     AnfNodePtrList inputs{NewValueNode(prim_tuple_get_item), shape_cnode, NewValueNode(MakeValue(dim))};
     auto tuple_get_item_cnode = func_graph->NewCNode(inputs);
-    tuple_get_item_cnode->set_fullname_with_scope("tuple_getitem_for_value_" + std::to_string(replacement));
+    tuple_get_item_cnode->set_fullname_with_scope(std::string(REDISTRIBUTION_OP) + "_getitem");
     prim_tuple_get_item->set_instance_name(instance_name + "_getitem");
     this->dynamic_dim_mapping_.insert({replacement, {iter.first, tuple_get_item_cnode}});
     MS_LOG(INFO) << "Create TupleGetItem for dim=" << dim << " to replace value=" << replacement;
