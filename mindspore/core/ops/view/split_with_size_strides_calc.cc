@@ -28,8 +28,9 @@ namespace mindspore::ops {
 void SplitSizeInputsCheck(const PrimitivePtr &prim, const int64_t &output_num, const int64_t &axis,
                           const std::vector<int64_t> &tensor_shape) {
   auto prim_name = prim->name();
-  if (output_num <= 0) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', output_num must be positive, but got " << output_num << ".";
+  if (output_num != tensor_shape[axis]) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', output_num must be equal with dimIndex, but got "
+                             << output_num << ".";
     return;
   }
 }

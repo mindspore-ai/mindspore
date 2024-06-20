@@ -4883,8 +4883,8 @@ def split_ext(tensor, split_size_or_sections, axis=0):
 
     Raises:
         TypeError: If argument `tensor` is not Tensor.
-        TypeError: If argument `axis` is not Tensor.
-        ValueError: If argument `axis` is out of range of :math:`[-tensor.ndim, tensor.ndim)` .
+        TypeError: If argument `axis` is not int.
+        ValueError: If argument `axis` is out of range of :[-tensor.ndim, tensor.ndim).
         TypeError: If each element in `split_size_or_sections` is not integer.
         TypeError: If argument `split_size_or_sections` is not int, tuple(int) or list(int).
         ValueError: The sum of `split_size_or_sections` is not equal to x.shape[axis].
@@ -4896,7 +4896,7 @@ def split_ext(tensor, split_size_or_sections, axis=0):
         >>> import numpy as np
         >>> from mindspore import ops, Tensor
         >>> input_x = np.arange(9).astype("float32")
-        >>> output = ops.split(Tensor(input_x), 3)
+        >>> output = ops.split_ext(Tensor(input_x), 3)
         >>> print(output)
         (Tensor(shape=[3], dtype=Float32, value= [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00]),
          Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
