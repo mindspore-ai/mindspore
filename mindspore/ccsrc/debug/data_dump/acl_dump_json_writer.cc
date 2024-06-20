@@ -56,7 +56,13 @@ void AclDumpJsonWriter::Parse() {
   for (const auto &iter : kernels) {
     MS_LOG(INFO) << iter.dump();
   }
-  layer_ = kernels;
+  auto kernel_strings = dump_parser.GetKernelStrs();
+  for (auto iter = kernel_strings.begin(); iter != kernel_strings.end(); iter++) {
+    auto kernel_str = iter->first;
+    if (kernel_str != "") {
+      layer_.push_back(kernel_str);
+    }
+  }
   auto op_debug_mode = dump_parser.op_debug_mode();
   MS_LOG(INFO) << "Op_debug_mode is: " << op_debug_mode;
   switch (op_debug_mode) {

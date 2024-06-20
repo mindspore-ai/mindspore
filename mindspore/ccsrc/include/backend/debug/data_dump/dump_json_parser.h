@@ -114,6 +114,7 @@ class BACKEND_EXPORT DumpJsonParser {
   static bool IsAclDump();
   nlohmann::json GetKernelsJson() { return kernels_json_; }
   std::map<std::string, std::regex> GetKernelRegs() { return kernel_regs_; }
+  std::map<std::string, uint32_t> GetKernelStrs() { return kernel_strings_; }
 
  private:
   DumpJsonParser() = default;
