@@ -142,7 +142,8 @@ ParameterPtr UpdateWeight::BuildFloatVec4DParameterNode(const FuncGraphPtr &anf_
 bool JudgeNodeType(const AnfNodePtr &node) {
   return !mindspore::opt::CheckPrimitiveType(node, mindspore::prim::kPrimConv2D) &&
          !mindspore::opt::CheckPrimitiveType(node, mindspore::prim::kPrimMatMulV2) &&
-         !mindspore::opt::CheckPrimitiveType(node, mindspore::prim::kPrimMatMul);
+         !mindspore::opt::CheckPrimitiveType(node, mindspore::prim::kPrimMatMul) &&
+         !mindspore::opt::CheckPrimitiveType(node, mindspore::prim::kPrimBatchMatMul);
 }
 
 bool UpdateWeight::CreateAddOpNodeForGraph(const FuncGraphPtr &anf_graph) {
