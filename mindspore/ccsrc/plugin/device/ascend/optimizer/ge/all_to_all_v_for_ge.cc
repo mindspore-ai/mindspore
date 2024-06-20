@@ -282,10 +282,6 @@ const AnfNodePtr AllToAllvForGE::Process(const FuncGraphPtr &graph, const AnfNod
     return nullptr;
   }
 
-  if (common::AnfAlgo::GetInputTensorNum(all_to_all_v) == 1) {
-    return nullptr;
-  }
-
   auto all_to_all_v_inputs = all_to_all_v->inputs();
   auto flatten_reshape_nodes =
     CreateFlattenReshapeNodes(graph, {all_to_all_v_inputs.begin() + 1, all_to_all_v_inputs.end()});
