@@ -350,7 +350,7 @@ Status TaskGroup::DoServiceStop() {
   return (join_all(Task::WaitFlag::kNonBlocking));
 }
 
-TaskGroup::TaskGroup() : has_dataqueue_(false), grp_list_(&Task::group), intrp_svc_(nullptr) {
+TaskGroup::TaskGroup() : has_dataqueue_(false), grp_list_(&Task::group), intrp_svc_(nullptr), rc_(Status::OK()) {
   auto alloc = Services::GetAllocator<IntrpService>();
   intrp_svc_ = std::allocate_shared<IntrpService>(alloc);
   (void)Service::ServiceStart();
