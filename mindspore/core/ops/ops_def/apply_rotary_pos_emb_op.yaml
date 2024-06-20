@@ -9,12 +9,14 @@ apply_rotary_pos_emb:
             dtype: tensor
         sin:
             dtype: tensor
-        position_ids:
+        seq_len:
             dtype: tensor
         cos_format:
             dtype: int
             default: 0
-            prim_init: True
+        rotary_coeff:
+            dtype: int
+            default: 0
     returns:
         query_embed:
             dtype: tensor
