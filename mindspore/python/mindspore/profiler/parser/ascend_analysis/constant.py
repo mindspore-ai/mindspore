@@ -22,6 +22,7 @@ class Constant:
     START_FLOW = "s"
     END_FLOW = "f"
     FLOW_OP = "flow"
+    INVALID_FLOW_ID = 18446744073709551615
 
     # file authority
     MAX_FILE_SIZE = 1024 * 1024 * 1024 * 10

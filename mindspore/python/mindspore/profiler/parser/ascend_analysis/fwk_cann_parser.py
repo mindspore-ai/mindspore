@@ -57,12 +57,12 @@ class FwkCANNParser:
         for op_data in self._fwk_data:
             if op_data.name == Constant.FLOW_OP:
                 link_event_dict[op_data.flow_id].insert(0, op_data)
-            elif op_data.flow_id != 0:
+            elif op_data.flow_id != Constant.INVALID_FLOW_ID:
                 link_event_dict[op_data.flow_id].append(op_data)
         flow_json = []
         for op_data_list in link_event_dict.values():
             if len(op_data_list) != 2:
-                logger.warning('Only alow 2 op_data have the same flow_id. but got %s', len(op_data_list))
+                logger.info('Only alow 2 op_data have the same flow_id. but got %s', len(op_data_list))
                 continue
             flow_json.extend(TraceEventManager.create_mindspore_to_self_flow(op_data_list[0],
                                                                              op_data_list[1]))
@@ -96,7 +96,9 @@ class FwkCANNParser:
                         trace_data_json.extend(TraceEventManager.create_mindspore_to_npu_flow(host_data_sorted[op_idx],
                                                                                               device_data))
                         self.kernels.append(device_data)
-                    trace_data_json.append(device_data.to_json())
+                    device_data_json = device_data.to_json()
+                    if device_data_json:
+                        trace_data_json.append(device_data_json)
 
         return trace_data_json
 
