@@ -31,7 +31,7 @@ class FwkFileParser:
     """Framework-side operator file parser."""
 
     _op_range = "FRAMEWORK/op_range_{}"
-    _op_range_struct_size = 65
+    _op_range_struct_size = 73
 
     def __init__(self, source_path: str, rank_id: int):
         """
@@ -41,7 +41,7 @@ class FwkFileParser:
         self._op_range_path = None
         self.__init_framework_path(source_path)
 
-    def get_op_range_data(self) -> List[MindSporeOpEvent]:
+    def get_op_range_data(self, step_list=None) -> List[MindSporeOpEvent]:
         """Read and decode all the mindspore oprange data."""
         op_range_list = []
         if os.path.exists(self._op_range_path):
@@ -49,6 +49,10 @@ class FwkFileParser:
             op_range_list = TLVDecoder.decode(op_range_bytes, MindSporeOpEvent, self._op_range_struct_size)
         else:
             logger.error("Failed to find op_range data.")
+        if step_list and isinstance(step_list, list):
+            first_step = min(op.step for op in op_range_list)
+            step_list = [step - 1 + first_step for step in step_list]
+            op_range_list = list(filter(lambda op: op.step in step_list, op_range_list))
         return op_range_list
 
     def get_fwk_trace_data(self, mindspore_op_data: List[MindSporeOpEvent] = None):

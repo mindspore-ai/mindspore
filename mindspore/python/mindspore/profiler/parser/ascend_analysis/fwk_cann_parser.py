@@ -32,13 +32,13 @@ class FwkCANNParser:
 
     _time_padding_diff = 1000 # ns
 
-    def __init__(self, source_path: str, msprof_data: List, rank_id: int):
+    def __init__(self, source_path: str, msprof_data: List, rank_id: int, step_list=None):
         source_path = validate_and_normalize_path(source_path)
         ProfilerInfoParser.init_source_path(source_path)
         ProfilerInfoParser.init_rank_id(rank_id)
         fwk_parser = FwkFileParser(source_path, rank_id)
         msprof_timeline_parser = MsprofTimelineParser(msprof_data)
-        self._fwk_data = fwk_parser.get_op_range_data()
+        self._fwk_data = fwk_parser.get_op_range_data(step_list)
         self._fwk_json = fwk_parser.get_fwk_trace_data(self._fwk_data)
         self._start_flow_to_npu_dict, self._device_most_json = msprof_timeline_parser.get_acl_to_npu_data()
         self.rank_id: int = rank_id

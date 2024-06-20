@@ -117,6 +117,7 @@ std::vector<uint8_t> OpRangeData::encode() {
   EncodeFixedData<int64_t>({start_ns, end_ns, sequence_number}, result);
   EncodeFixedData<uint64_t>({process_id, start_thread_id, end_thread_id, forward_thread_id}, result);
   EncodeFixedData<uint64_t>({flow_id}, result);
+  EncodeFixedData<uint64_t>({step}, result);
   result->push_back(is_async);
   EncodeStrData(static_cast<uint16_t>(OpRangeDataType::NAME), name, result);
   if (!input_dtypes.empty()) {
@@ -145,7 +146,7 @@ std::vector<uint8_t> OpRangeData::encode() {
 }
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
-void ProfilingFrameworkData::RecordHostProfile(std::shared_ptr<ProfilerData> data) {
+void ProfilingFrameworkData::RecordHostProfile(std::shared_ptr<ProfilerData> data, uint64_t step) {
   auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
   if (!ascend_profiler->EnableHostStack()) {
@@ -159,12 +160,13 @@ void ProfilingFrameworkData::RecordHostProfile(std::shared_ptr<ProfilerData> dat
   } else if (data->op_name_ != "flow") {
     op_name = kProfilerModuleString.at(data->module_) + "::" + kProfilerEventString.at(data->event_) + "::" + op_name;
   }
-  OpRangeData report = OpRangeData(data->start_time_, data->end_time_, 0, 0, data->tid_, data->tid_, data->tid_, false,
-                                   op_name, std::move(stack_vec), data->flow_id_, ProfilingFrameworkData::Device_Id);
+  OpRangeData report =
+    OpRangeData(data->start_time_, data->end_time_, 0, 0, data->tid_, data->tid_, data->tid_, false, op_name,
+                std::move(stack_vec), data->flow_id_, ProfilingFrameworkData::Device_Id, step);
   ProfilingDataDumper::GetInstance().Report(std::make_unique<OpRangeData>(report));
 }
 #else
-void ProfilingFrameworkData::RecordHostProfile(std::shared_ptr<ProfilerData> data) {
+void ProfilingFrameworkData::RecordHostProfile(std::shared_ptr<ProfilerData> data, uint64_t step) {
   MS_LOG(INTERNAL_EXCEPTION) << "profiler not support cpu windows.";
 }
 #endif

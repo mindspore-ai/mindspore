@@ -243,7 +243,7 @@ void ProfilerAnalyzer::RecordData(const ProfilerDataPtr &data) noexcept {
 #if defined(ENABLE_DEBUGGER)
     auto ascend_profiler = mindspore::profiler::Profiler::GetInstance(kAscendDevice);
     if (ascend_profiler != nullptr && ascend_profiler->EnableHostStack()) {
-      profiler::ascend::ProfilingFrameworkData::RecordHostProfile(data);
+      profiler::ascend::ProfilingFrameworkData::RecordHostProfile(data, step_);
     }
 #endif
   }
@@ -261,7 +261,7 @@ void ProfilerAnalyzer::RecordFlowData(uint64_t flow_id) {
 
 void ProfilerAnalyzer::StartStep() {
   Initialize();
-  if (!profiler_enable_) {
+  if (!profiler_enable()) {
     return;
   }
 
@@ -314,7 +314,7 @@ void ProfilerAnalyzer::ProcessModuleSummaryData(const ProfilerDataSpan &span) {
 }
 
 void ProfilerAnalyzer::EndStep() {
-  if (!profiler_enable_) {
+  if (!profiler_enable()) {
     return;
   }
 
