@@ -626,7 +626,7 @@ void TensorPy::SetDeviceAddress(const Tensor &tensor, uintptr_t addr, const Shap
   }
 
   void *data = reinterpret_cast<void *>(addr);
-  ssize_t elem_num = 1;
+  size_t elem_num = 1;
   for (size_t i = 0; i < shape.size(); ++i) {
     elem_num *= shape[i];
   }
