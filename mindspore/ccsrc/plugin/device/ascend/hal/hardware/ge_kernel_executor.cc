@@ -1070,11 +1070,6 @@ void GeKernelExecutor::OptimizeExecutionOrder(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(DEBUG) << "Status record: start optimize execution order. graph id: " << kernel_graph->graph_id();
   auto execution_order = kernel_graph->execution_order();
-  if (common::IsEnableRuntimeConfig(common::kRuntimeCompileStat)) {
-    const auto &nodes = TopoSort(graph->get_return());
-    std::cout << "The size of execution order: " << execution_order.size() << std::endl;
-    std::cout << "The size of all node: " << nodes.size() << std::endl;
-  }
   kernel_graph->EnableRuntimeCache();
   common::AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
   kernel_graph->DisableRuntimeCache();
@@ -1088,7 +1083,12 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 0);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-
+  const auto &nodes = kernel_graph->execution_order();
+  if (common::IsEnableRuntimeConfig(common::kRuntimeCompileStat)) {
+    const auto &all_nodes = TopoSort(graph->get_return());
+    std::cout << "The size of execution order: " << nodes.size() << std::endl;
+    std::cout << "The size of all node: " << all_nodes.size() << std::endl;
+  }
   // use GE
   if (kernel_graph->is_graph_run_mode() && IsEnableRefMode()) {
     if (GraphWithNoRealKernel(kernel_graph)) {
@@ -1101,7 +1101,6 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   }
 
   // nop op -> memcpy
-  const auto &nodes = kernel_graph->execution_order();
   for (const auto &node : nodes) {
     auto op_name = common::AnfAlgo::GetCNodeName(node);
     // If the 2nd input of reshape is not a value node, then there are two inputs to select the host reshape operator
