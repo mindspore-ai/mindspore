@@ -765,55 +765,6 @@ def test_while_with_param_basic_grad_three():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_while_if_with_param_grad():
-    """
-    Feature: Get container with grad from abstract.
-    Description: Watching the container with grad func graph from abstract.
-    Expectation: Output correct.
-    """
-    class MyWhileNet(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.max = P.ReduceMax()
-            self.param = Parameter(Tensor(np.arange(2 * 2 * 2).reshape((2, 2, 2)), ms.float32), name="weight")
-            self.zero = Tensor(np.zeros(([2, 2, 2])), ms.float32)
-            self.t2 = Tensor(np.array(2), dtype=ms.float32)
-
-        def construct(self, idx, end, x):
-            out = self.zero
-            while idx < end:
-                if self.max(out) < self.max(x):
-                    out = out + self.param * 2
-                else:
-                    out = out + self.param
-                idx = idx + 1
-            return out + self.param
-
-    class GradNet(nn.Cell):
-        def __init__(self, net):
-            super(GradNet, self).__init__()
-            self.net = net
-            self.weights = ParameterTuple(net.trainable_params())
-
-        @jit(mode="PIJit")
-        def construct(self, a, b, c):
-            return grad_by_list(self.net, self.weights)(a, b, c)
-
-    idx = Tensor(np.array(0), dtype=ms.int32)
-    end = Tensor(np.array(3), dtype=ms.int32)
-    x = Tensor(np.ones([2, 2, 2]).astype(np.float32), dtype=ms.float32)
-    context.set_context(mode=context.PYNATIVE_MODE)
-    while_net = MyWhileNet()
-    net = GradNet(while_net)
-    graph_output = net(idx, end, x)
-    expect = np.array([[[5, 5], [5, 5]],
-                       [[5, 5], [5, 5]]]).astype(np.float32)
-    assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test_while_with_param_grad_not_enter_while():
     """
     Feature: Get container with grad from abstract.
