@@ -13,9 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test summary ops."""
-import os
-import shutil
-import tempfile
 import time
 
 import numpy as np
@@ -75,174 +72,180 @@ class LeNet5(nn.Cell):
         return x
 
 
-class TestSummaryOps:
-    """Test summary ops."""
-    base_summary_dir = ''
-    device_id = int(os.getenv('DEVICE_ID', '0'))
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_graph_summary_ops():
+    """
+    Feature: Test graph summary ops
+    Description: Verify that the summary operator name is duplicated
+    Expectation: success
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
+    ds_train_iter = ds_train.create_dict_iterator()
+    expected_data = next(ds_train_iter)['image'].asnumpy()
 
-    @classmethod
-    def setup_class(cls):
-        """Run before test this class."""
-        cls.base_summary_dir = tempfile.mkdtemp(suffix='summary')
+    net = LeNet5()
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+    optim = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    model = Model(net, loss_fn=loss, optimizer=optim, metrics={'loss': Loss()})
+    model.train(1, ds_train, dataset_sink_mode=False)
 
-    @classmethod
-    def teardown_class(cls):
-        """Run after test this class."""
-        if os.path.exists(cls.base_summary_dir):
-            shutil.rmtree(cls.base_summary_dir)
+    time.sleep(0.5)
+    summary_data = _get_summary_tensor_data()
+    image_data = summary_data.get('x[:Image]').asnumpy()
+    tensor_data = summary_data.get('x[:Tensor]').asnumpy()
+    histogram_data = summary_data.get('x[:Histogram]').asnumpy()
+    x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
 
-    @pytest.mark.level1
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_gpu_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
-    def test_graph_summary_ops(self):
-        """Test summary operators in GRAPH mode."""
-        context.set_context(mode=context.GRAPH_MODE, device_id=self.device_id)
-        ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
-        ds_train_iter = ds_train.create_dict_iterator()
-        expected_data = next(ds_train_iter)['image'].asnumpy()
-
-        net = LeNet5()
-        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-        optim = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        model = Model(net, loss_fn=loss, optimizer=optim, metrics={'loss': Loss()})
-        model.train(1, ds_train, dataset_sink_mode=False)
-
-        time.sleep(0.5)
-        summary_data = _get_summary_tensor_data()
-        image_data = summary_data.get('x[:Image]').asnumpy()
-        tensor_data = summary_data.get('x[:Tensor]').asnumpy()
-        histogram_data = summary_data.get('x[:Histogram]').asnumpy()
-        x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
-
-        assert np.allclose(expected_data, image_data)
-        assert np.allclose(expected_data, tensor_data)
-        assert np.allclose(expected_data, histogram_data)
-        assert not np.allclose(0, x_fc3)
-
-    @pytest.mark.level1
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_gpu_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
-    def test_pynative_summary_ops(self):
-        """Test summary operators in PyNative mode."""
-        context.set_context(mode=context.PYNATIVE_MODE)
-        ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
-        ds_train_iter = ds_train.create_dict_iterator()
-        expected_data = next(ds_train_iter)['image'].asnumpy()
-
-        net = LeNet5()
-        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-        optim = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        model = Model(net, loss_fn=loss, optimizer=optim, metrics={'loss': Loss()})
-        model.train(1, ds_train, dataset_sink_mode=False)
-        _record_summary_tensor_data()
-        summary_data = _get_summary_tensor_data()
-        image_data = summary_data.get('x[:Image]').asnumpy()
-        tensor_data = summary_data.get('x[:Tensor]').asnumpy()
-        histogram_data = summary_data.get('x[:Histogram]').asnumpy()
-        x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
-
-        assert np.allclose(expected_data, image_data)
-        assert np.allclose(expected_data, tensor_data)
-        assert np.allclose(expected_data, histogram_data)
-        assert not np.allclose(0, x_fc3)
-
-    @pytest.mark.level1
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_gpu_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
-    def test_kernel_by_kernel_summary_ops(self):
-        context.set_context(jit_level='O0')
-        context.set_context(mode=context.GRAPH_MODE, device_id=self.device_id)
-        ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
-        ds_train_iter = ds_train.create_dict_iterator()
-        expected_data = next(ds_train_iter)['image'].asnumpy()
-
-        net = LeNet5()
-        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-        optim = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        model = Model(net, loss_fn=loss, optimizer=optim, metrics={'loss': Loss()})
-        model.train(1, ds_train, dataset_sink_mode=False)
-
-        time.sleep(0.5)
-        summary_data = _get_summary_tensor_data()
-        image_data = summary_data.get('x[:Image]').asnumpy()
-        tensor_data = summary_data.get('x[:Tensor]').asnumpy()
-        histogram_data = summary_data.get('x[:Histogram]').asnumpy()
-        x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
-
-        assert np.allclose(expected_data, image_data)
-        assert np.allclose(expected_data, tensor_data)
-        assert np.allclose(expected_data, histogram_data)
-        assert not np.allclose(0, x_fc3)
+    assert np.allclose(expected_data, image_data)
+    assert np.allclose(expected_data, tensor_data)
+    assert np.allclose(expected_data, histogram_data)
+    assert not np.allclose(0, x_fc3)
 
 
-    @pytest.mark.level1
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_gpu_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
-    def test_dynamic_shape_summary_ops(self):
-        context.set_context(mode=context.GRAPH_MODE, device_id=self.device_id)
-        ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
-        ds_train_iter = ds_train.create_dict_iterator()
-        expected_data = next(ds_train_iter)['image'].asnumpy()
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_pynative_summary_ops():
+    """
+    Feature: Test pynative summary ops
+    Description: Verify that the summary operator name is duplicated
+    Expectation: success
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
+    ds_train_iter = ds_train.create_dict_iterator()
+    expected_data = next(ds_train_iter)['image'].asnumpy()
 
-        net = LeNet5()
-        dynamic_shape = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
-        net.set_inputs(dynamic_shape)
-        net(ms.Tensor(expected_data))
+    net = LeNet5()
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+    optim = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    model = Model(net, loss_fn=loss, optimizer=optim, metrics={'loss': Loss()})
+    model.train(1, ds_train, dataset_sink_mode=False)
+    _record_summary_tensor_data()
+    summary_data = _get_summary_tensor_data()
+    image_data = summary_data.get('x[:Image]').asnumpy()
+    tensor_data = summary_data.get('x[:Tensor]').asnumpy()
+    histogram_data = summary_data.get('x[:Histogram]').asnumpy()
+    x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
 
-        time.sleep(0.5)
-        summary_data = _get_summary_tensor_data()
-        image_data = summary_data.get('x[:Image]').asnumpy()
-        tensor_data = summary_data.get('x[:Tensor]').asnumpy()
-        histogram_data = summary_data.get('x[:Histogram]').asnumpy()
-        x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
+    assert np.allclose(expected_data, image_data)
+    assert np.allclose(expected_data, tensor_data)
+    assert np.allclose(expected_data, histogram_data)
+    assert not np.allclose(0, x_fc3)
 
-        assert np.allclose(expected_data, image_data)
-        assert np.allclose(expected_data, tensor_data)
-        assert np.allclose(expected_data, histogram_data)
-        assert not np.allclose(0, x_fc3)
 
-    @pytest.mark.level1
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_gpu_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
-    def test_summary_op_in_duplicate_name(self):
-        """
-        Feature: Test summary ops
-        Description: Verify that the summary operator name is duplicated
-        Expectation: success
-        """
-        class SummaryDemo(nn.Cell):
-            def __init__(self,):
-                super(SummaryDemo, self).__init__()
-                self.add = P.Add()
-                self.summary = P.TensorSummary()
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_kernel_by_kernel_summary_ops():
+    """
+    Feature: Test kernel by kernel summary ops
+    Description: Verify that the summary operator name is duplicated
+    Expectation: success
+    """
 
-            def construct(self, x, y):
-                x = self.add(x, y)
-                self.summary("data", x)
-                self.summary("data", x)
-                return x
+    context.set_context(jit_level='O0')
+    context.set_context(mode=context.GRAPH_MODE)
+    ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
+    ds_train_iter = ds_train.create_dict_iterator()
+    expected_data = next(ds_train_iter)['image'].asnumpy()
 
-        ms.set_context(mode=ms.GRAPH_MODE)
-        net = SummaryDemo()
-        out = net(ms.Tensor([1.], dtype=ms.float32),
-                  ms.Tensor([2.], dtype=ms.float32))
+    net = LeNet5()
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+    optim = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    model = Model(net, loss_fn=loss, optimizer=optim, metrics={'loss': Loss()})
+    model.train(1, ds_train, dataset_sink_mode=False)
 
-        time.sleep(0.5)
-        _record_summary_tensor_data()
-        summary_data = _get_summary_tensor_data()
-        assert summary_data['data[:Tensor]'].asnumpy() == out.asnumpy()
+    time.sleep(0.5)
+    summary_data = _get_summary_tensor_data()
+    image_data = summary_data.get('x[:Image]').asnumpy()
+    tensor_data = summary_data.get('x[:Tensor]').asnumpy()
+    histogram_data = summary_data.get('x[:Histogram]').asnumpy()
+    x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
+
+    assert np.allclose(expected_data, image_data)
+    assert np.allclose(expected_data, tensor_data)
+    assert np.allclose(expected_data, histogram_data)
+    assert not np.allclose(0, x_fc3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_dynamic_shape_summary_ops():
+    """
+    Feature: Test dynamic shape summary ops
+    Description: Verify that the summary operator name is duplicated
+    Expectation: success
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
+    ds_train_iter = ds_train.create_dict_iterator()
+    expected_data = next(ds_train_iter)['image'].asnumpy()
+
+    net = LeNet5()
+    dynamic_shape = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
+    net.set_inputs(dynamic_shape)
+    net(ms.Tensor(expected_data))
+
+    time.sleep(0.5)
+    summary_data = _get_summary_tensor_data()
+    image_data = summary_data.get('x[:Image]').asnumpy()
+    tensor_data = summary_data.get('x[:Tensor]').asnumpy()
+    histogram_data = summary_data.get('x[:Histogram]').asnumpy()
+    x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
+
+    assert np.allclose(expected_data, image_data)
+    assert np.allclose(expected_data, tensor_data)
+    assert np.allclose(expected_data, histogram_data)
+    assert not np.allclose(0, x_fc3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_summary_op_in_duplicate_name():
+    """
+    Feature: Test summary ops
+    Description: Verify that the summary operator name is duplicated
+    Expectation: success
+    """
+
+    class SummaryDemo(nn.Cell):
+        def __init__(self):
+            super(SummaryDemo, self).__init__()
+            self.add = P.Add()
+            self.summary = P.TensorSummary()
+
+        def construct(self, x, y):
+            x = self.add(x, y)
+            self.summary("data", x)
+            self.summary("data", x)
+            return x
+
+    ms.set_context(mode=ms.GRAPH_MODE)
+    net = SummaryDemo()
+    out = net(ms.Tensor([1.], dtype=ms.float32), ms.Tensor([2.], dtype=ms.float32))
+
+    time.sleep(0.5)
+    _record_summary_tensor_data()
+    summary_data = _get_summary_tensor_data()
+    assert summary_data['data[:Tensor]'].asnumpy() == out.asnumpy()
