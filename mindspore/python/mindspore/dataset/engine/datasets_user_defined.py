@@ -390,7 +390,7 @@ class SamplerFn:
     def _stop_subprocess(self):
         """Only the main process can call join."""
         if self.need_join is True and self.ppid == os.getpid():
-            if hasattr(self, 'eof') and self.eof is not None and not self.eof.is_set():
+            if hasattr(self, 'eof') and self.eof is not None:
                 self.eof.set()
             # close the watch dog first
             self._abort_watchdog()
@@ -402,10 +402,12 @@ class SamplerFn:
                         del w.res_queue
                         del w.idx_queue
 
-                        # close all the subprocess workers
-                        w.terminate()
-                        w.join()
-                        w.close()
+                        # let the quit event notify the worker process to exit
+                        w.join(timeout=5)
+                        if w.is_alive():
+                            # if the worker process did not exit, it may hang, try to terminate it
+                            w.terminate()
+                            w.close()
                     except Exception:  # pylint: disable=W0703
                         # Block all errors when join
                         continue
@@ -500,7 +502,7 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
     if is_multiprocessing:
         result_queue.cancel_join_thread()  # Ensure that the process does not hung when exiting
         signal.signal(signal.SIGTERM, partial(_subprocess_handle, eof))
-    while True:
+    while not eof.is_set():
         _ignore_sigint(is_multiprocessing=is_multiprocessing)
 
         # Fetch index, block
@@ -535,7 +537,7 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
         except Exception:  # pylint: disable=broad-except
             result = ExceptionHandler(where="in GeneratorDataset worker process")
         # Send data, block
-        while True:
+        while not eof.is_set():
             try:
                 result_queue.put(result, timeout=5)
             except queue.Full:
