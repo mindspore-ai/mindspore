@@ -948,6 +948,15 @@ void DumpJsonParser::JudgeDumpEnabled() {
       MS_LOG(WARNING) << "Dump is not enabled. device_id:" << device_id << " not support";
     }
   }
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    if (async_dump_enabled_ && !IsAclDump()) {
+      if (context->IsKByKExecutorMode()) {
+        MS_LOG(WARNING)
+          << "When jit_level is set to 'o0' or 'o1', async_dump only support acl dump method, ie. set environment "
+             "MS_ACL_DUMP_CFG_PATH to the same path with MINDSPORE_DUMP_CONFIG. In fact, e2e dump is preferable.";
+      }
+    }
+  }
   JsonConfigToString();
 }
 

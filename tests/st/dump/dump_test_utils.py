@@ -381,10 +381,8 @@ def check_statistic_dump(dump_file_path):
                 assert tensor['L2Norm Value'] == '32.9242'
 
 
-def check_data_dump(dump_file_path, is_ge=False):
-    output_name = "Add.Add-op*.output.0.*.npy"
-    if is_ge:
-        output_name = "Add.*Add-op*.output.0.*.npy"
+def check_data_dump(dump_file_path):
+    output_name = "Add.*Add-op*.output.0.*.npy"
     output_path = glob.glob(os.path.join(dump_file_path, output_name))[0]
     real_path = os.path.realpath(output_path)
     output = np.load(real_path)
@@ -398,7 +396,7 @@ def check_saved_data(iteration_path, saved_data):
     if saved_data in ('statistic', 'full'):
         check_statistic_dump(iteration_path)
     if saved_data in ('tensor', 'full'):
-        check_data_dump(iteration_path, True)
+        check_data_dump(iteration_path)
     if saved_data == 'statistic':
         # assert only file is statistic.csv, tensor data is not saved
         assert len(os.listdir(iteration_path)) == 1
