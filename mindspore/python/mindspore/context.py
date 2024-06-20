@@ -1724,7 +1724,7 @@ def set_context(**kwargs):
         ...                "ge_options": {"global": {"ge.opSelectImplmode": "high_precision"},
         ...                               "session": {"ge.exec.atomicCleanPolicy": "0"}}})
         >>> ms.set_context(jit_syntax_level=ms.STRICT)
-        >>> ms.set_context(debug_level=ms.DEBUG)
+        >>> ms.set_context(debug_level=ms.context.DEBUG)
         >>> ms.set_context(gpu_config={"conv_fprop_algo": "performance", "conv_allow_tf32": True,
         ...                "matmul_allow_tf32": True})
         >>> ms.set_context(jit_config={"jit_level": "O0"})
