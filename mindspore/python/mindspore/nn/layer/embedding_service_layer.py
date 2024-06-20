@@ -128,7 +128,7 @@ class EsEmbeddingLookup(nn.Cell):
     EsEmbeddingLookup.
     """
     def __init__(self, table_id, es_initializer, embedding_dim, max_key_num, optimizer_mode=None,
-                 optimizer_params=None, es_filter=None):
+                 optimizer_params=None, es_filter=None, es_padding_key=None, es_completion_key=None):
         super(EsEmbeddingLookup, self).__init__()
         self.cast = ops.cast
         self.reshape = ops.Reshape()
@@ -144,7 +144,7 @@ class EsEmbeddingLookup(nn.Cell):
         self.slot_var_num = _get_slot_var_num(self.optimizer_mode)
         self.value_total_len = [self.embedding_dim[table_id] * (self.slot_var_num + 1) + 2] * len(embedding_dim)
 
-        self.default_key_or_value = True
+        self.default_key_or_value = 1
         self.filter_freq = 0
         self.default_key = 0
         self.optimizer_params = optimizer_params
@@ -157,7 +157,28 @@ class EsEmbeddingLookup(nn.Cell):
             self.default_value = 0.0
         else:
             self.filter_mode = "no_filter"
+            self.filter_freq = 1
+            self.default_key_or_value = 1
+            self.default_key = 0
             self.default_value = -1.0
+
+        self.global_step = 1
+        if es_padding_key is not None:
+            self.mask_zero = 0 if es_padding_key.mask_zero is None else int(es_padding_key.mask_zero)
+            self.padding_key = es_padding_key.padding_key
+            self.padding_key_mask = int(es_padding_key.mask)
+        else:
+            self.mask_zero = 0
+            self.padding_key = 0
+            self.padding_key_mask = 1
+        self.backward_int_params = ([self.global_step], [self.mask_zero], [self.padding_key], [self.padding_key_mask])
+
+        if es_completion_key is not None:
+            self.completion_key = es_completion_key.completion_key
+            self.completion_key_mask = int(es_completion_key.mask)
+        else:
+            self.completion_key = 0
+            self.completion_key_mask = 1
 
         self.b = Parameter(Tensor(0, ms.float32), name="b", requires_grad=True)
         self.max_grad_norm = Tensor([1.0], ms.float32)
@@ -207,6 +228,9 @@ class EsEmbeddingLookup(nn.Cell):
                                                     _max_key_num=self.max_key_num,
                                                     _table_id=self._table_id,
                                                     _use_counter_filter=use_counter_filter,
+                                                    backward_int_params=self.backward_int_params,
+                                                    completion_key=self.completion_key,
+                                                    completion_key_mask=self.completion_key_mask,
                                                     parameter=self.b
                                                     )
             else:
@@ -232,6 +256,9 @@ class EsEmbeddingLookup(nn.Cell):
                                                        _max_key_num=self.max_key_num,
                                                        _table_id=self._table_id,
                                                        _use_counter_filter=use_counter_filter,
+                                                       backward_int_params=self.backward_int_params,
+                                                       completion_key=self.completion_key,
+                                                       completion_key_mask=self.completion_key_mask,
                                                        parameter=self.b)
         else:
             output = embedding_table_find(self.table_id, keys,

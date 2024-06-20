@@ -34,15 +34,42 @@ class CounterFilter:
         self.default_key_or_value = default_key_or_value
 
 
+class PaddingParamsOption:
+    """ padding key option for embedding service table. """
+    def __init__(self, padding_key=None,
+                 mask=True,
+                 mask_zero=False):
+        self.padding_key = padding_key
+        self.mask = mask
+        self.mask_zero = mask_zero
+
+
+class CompletionKeyOption:
+    """ completion key option for embedding service table. """
+    def __init__(self, completion_key=None, mask=1):
+        self.completion_key = completion_key
+        self.mask = mask
+
+
+class EvictOption:
+    """ Evict option for embedding table. """
+    def __init__(self, steps_to_live):
+        self.steps_to_live = steps_to_live
+
+
 class EmbeddingVariableOption:
     """ option for embedding service table. """
     def __init__(self, filter_option=None,
+                 padding_option=None,
                  evict_option=None,
+                 completion_option=None,
                  storage_option=None,
                  feature_freezing_option=None,
                  communication_option=None):
         self.filter_option = filter_option
+        self.padding_option = padding_option
         self.evict_option = evict_option
+        self.completion_option = completion_option
         self.storage_option = storage_option
         self.feature_freezing_option = feature_freezing_option
         self.communication_option = communication_option
@@ -124,6 +151,8 @@ class EmbeddingService:
         self._table_to_optimizer = {}
         self._table_to_slot_var_num = {}
         self._table_to_counter_filter = {}
+        self._table_id_to_padding_key = {}
+        self._table_id_to_completion_key = {}
         self._train_mode = True
         self._train_level = False
         self._optimizer = None
@@ -134,6 +163,7 @@ class EmbeddingService:
         self._table_name_to_id = {}
         self._table_id_to_name = {}
         self._table_id_to_initializer = {}
+        self._table_id_to_steps_to_live = {}
 
         self._ps_table_id_list = []
         # storage lookup: table_id list, lookup result list, lookup key list
@@ -148,6 +178,9 @@ class EmbeddingService:
         # use for counter filter
         self._table_use_counter_filter = {}
         self._use_counter_filter = False
+        self._use_evict = False
+        self._use_padding_key = False
+        self._use_completion_key = False
 
     def embedding_init(self, name, init_vocabulary_size, embedding_dim, max_feature_count,
                        initializer=Uniform(scale=0.01), ev_option=None, optimizer=None, optimizer_param=None,
@@ -191,13 +224,46 @@ class EmbeddingService:
             if initializer is not None:
                 self._train_level = True
         filter_mode = self._init_counter_filter(table_id, ev_option)
+        self._init_padding_key(table_id, ev_option)
+        self._init_completion_key(table_id, ev_option)
         self._init_optimizer_mode_and_params(table_id, optimizer_param)
         es_init_layer = ESInitLayer(self._ps_num, self._ps_ids, self._train_mode, self._train_level, table_id,
                                     bucket_size, embedding_dim, self._table_to_slot_var_num.get(table_id),
                                     self._table_id_to_initializer.get(table_id), filter_mode, optimizer,
                                     self._ps_table_id_to_optimizer_params.get(table_id), max_feature_count, mode)
         es_init_layer()
-        return self._table_name_to_id, self._table_id_to_initializer, self._table_to_counter_filter
+        return self._table_name_to_id, self._table_id_to_initializer, self._table_to_counter_filter, \
+               self._table_id_to_padding_key, self._table_id_to_completion_key
+
+    def padding_param(self, padding_key, mask=True, mask_zero=False):
+        """
+        Init padding key param
+        :param padding_key: padding key
+        :param mask: padding key mask
+        :param mask_zero: mask zero
+        :return: PaddingParamsOption obj
+        """
+        if not isinstance(padding_key, int):
+            raise TypeError("padding_key must be int, please check.")
+        if not isinstance(mask, bool):
+            raise TypeError("mask must be bool, please check.")
+        self._use_padding_key = True
+        return PaddingParamsOption(padding_key=padding_key, mask=mask, mask_zero=mask_zero)
+
+    def completion_key(self, completion_key, mask=True):
+        """
+        Init completion key param
+        :param completion_key: completion key
+        :param mask: completion key mask
+        :return: CompletionKeyOption obj
+        """
+        if not isinstance(completion_key, int):
+            raise TypeError("completion_key must be int, please check.")
+        if not isinstance(mask, bool):
+            raise TypeError("mask must be bool, please check.")
+        self._use_completion_key = True
+        completion_key_mask = 1 if mask is True else 0
+        return CompletionKeyOption(completion_key=completion_key, mask=completion_key_mask)
 
     def counter_filter(self, filter_freq, default_key=None, default_value=None):
         """
@@ -222,27 +288,49 @@ class EmbeddingService:
         self._use_counter_filter = True
         if default_key is None:
             return CounterFilter(filter_freq=filter_freq, default_key_or_value=0,
-                                 default_key=default_key, default_value=default_value)
+                                 default_key=0, default_value=default_value)
         return CounterFilter(filter_freq=filter_freq, default_key_or_value=1,
-                             default_key=default_key, default_value=default_value)
+                             default_key=default_key, default_value=1)
 
-    def embedding_variable_option(self, filter_option=None, evict_option=None, storage_option=None,
-                                  feature_freezing_option=None, communication_option=None):
+    def evict_option(self, steps_to_live):
+        """
+        Set evict_option
+        :param steps_to_live: steps to live
+        :return: EvictOption obj
+        """
+        if not isinstance(steps_to_live, int):
+            raise TypeError("steps_to_live must be int, please check.")
+        if steps_to_live <= 0:
+            raise ValueError("steps_to_live must must be greater than 0.")
+        self._use_evict = True
+        return EvictOption(steps_to_live=steps_to_live)
+
+    def embedding_variable_option(self, filter_option=None, padding_option=None, evict_option=None,
+                                  completion_option=None, storage_option=None, feature_freezing_option=None,
+                                  communication_option=None):
         """
         Set embedding variable option
         :param filter_option: filter policy, is the output of counter_filter
-        :param evict_option: not support
+        :param padding_option: padding policy, is the output of padding_keys
+        :param evict_option: evict policy
+        :param completion_option: not support
         :param storage_option: not support
         :param feature_freezing_option: not support
         :param communication_option: not support
         :return: EmbeddingVariableOption obj
         """
-        if filter_option is None:
-            raise ValueError("Now filter_option can't be None.")
-        if not isinstance(filter_option, CounterFilter):
-            raise TypeError("If filter_option isn't None, it must be CounterFilter type.")
-        self._use_counter_filter = True
-        return EmbeddingVariableOption(filter_option=filter_option, evict_option=evict_option,
+        if (filter_option is not None) and (not isinstance(filter_option, CounterFilter)):
+            raise ValueError("If padding_option isn't None, it must be CounterFilter type.")
+        if filter_option is not None:
+            self._use_counter_filter = True
+        if (padding_option is not None) and (not isinstance(padding_option, PaddingParamsOption)):
+            raise TypeError("If padding_option isn't None, it must be EmbeddingPaddingParamsOption type.")
+        if (completion_option is not None) and (not isinstance(completion_option, CompletionKeyOption)):
+            raise TypeError("If completion_option isn't None, it must be EmbeddingPaddingCompletionKeyOption type.")
+        if (evict_option is not None) and (not isinstance(evict_option, EvictOption)):
+            raise TypeError("When evict_option is not None, it must be EvictOption type.")
+        return EmbeddingVariableOption(filter_option=filter_option, padding_option=padding_option,
+                                       evict_option=evict_option, completion_option=completion_option,
                                        storage_option=storage_option, feature_freezing_option=feature_freezing_option,
                                        communication_option=communication_option)
 
@@ -259,7 +347,7 @@ class EmbeddingService:
             embedding_dim_list.append(self._table_to_embedding_dim.get(table_id))
             value_total_len_list.append(self._table_to_embedding_dim.get(table_id) *
                                         (self._table_to_slot_var_num.get(table_id) + 1) + 2)
-            steps_to_live_list.append(0)
+            steps_to_live_list.append(self._table_id_to_steps_to_live.get(table_id, 0))
         embedding_ckpt_export_layer = ESEmbeddingCKPTExport(embedding_dim_list, value_total_len_list,
                                                             self._ps_table_name_list, self._ps_table_id_list,
                                                             file_path, steps_to_live_list)
@@ -275,7 +363,7 @@ class EmbeddingService:
         steps_to_live_list = []
         for table_id in self._ps_table_id_list:
             embedding_dim_list.append(self._table_to_embedding_dim.get(table_id))
-            steps_to_live_list.append(0)
+            steps_to_live_list.append(self._table_id_to_steps_to_live.get(table_id, 0))
 
         embedding_table_export_layer = ESEmbeddingTableExport(embedding_dim_list, embedding_dim_list,
                                                               self._ps_table_name_list, self._ps_table_id_list,
@@ -318,10 +406,13 @@ class EmbeddingService:
         """
         Check parameter server params and init table id
         """
+        steps_to_live = 0
         if max_feature_count is None:
             raise ValueError("For ps table, max_feature_count can not be None.")
         if (ev_option is not None) and (not isinstance(ev_option, EmbeddingVariableOption)):
             raise TypeError("For ps table, ev_option must be EmbeddingVariableOption type.")
+        if (ev_option is not None) and (ev_option.evict_option is not None):
+            steps_to_live = ev_option.evict_option.steps_to_live
         if not isinstance(max_feature_count, int):
             raise ValueError("For ps table, max_feature_count must be int.")
         if init_vocabulary_size >= _INT32_MAX_VALUE:
@@ -332,6 +423,7 @@ class EmbeddingService:
             table_id = self._ps_table_count
             self._table_name_to_id[name] = table_id
             self._table_id_to_name[table_id] = name
+            self._table_id_to_steps_to_live[table_id] = steps_to_live
             self._ps_table_count += 1
             self._table_name_has_init.append(name)
         else:
@@ -390,6 +482,20 @@ class EmbeddingService:
             filter_mode = "no_filter"
             self._table_use_counter_filter[table_id] = 0
         return filter_mode
+
+    def _init_padding_key(self, table_id, ev_option):
+        """
+        Init padding key params
+        """
+        if (ev_option is not None) and (ev_option.padding_option is not None):
+            self._table_id_to_padding_key[table_id] = ev_option.padding_option
+
+    def _init_completion_key(self, table_id, ev_option):
+        """
+        Init completion key params
+        """
+        if (ev_option is not None) and (ev_option.completion_option is not None):
+            self._table_id_to_completion_key[table_id] = ev_option.completion_option
 
     def _init_optimizer_mode_and_params(self, table_id, optimizer_param):
         """
