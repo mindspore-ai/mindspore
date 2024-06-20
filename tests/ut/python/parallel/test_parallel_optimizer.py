@@ -18,6 +18,7 @@ import numpy as np
 import pytest
 
 import mindspore.nn as nn
+from mindspore import dtype as mstype
 from mindspore import Tensor, Parameter
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
@@ -104,6 +105,29 @@ class Net4(nn.Cell):
     def construct(self, x, y):
         x = self.fc1(x, self.p1)
         x = self.fc2(x, self.p2)
+        return x - y
+
+
+class Net5(nn.Cell):
+    """Net definition"""
+
+    def __init__(self, strategy1, strategy2, param_init_type=mstype.float32, compute_dtype=mstype.float32):
+        super(Net5, self).__init__()
+        self.fc1 = P.MatMul().shard(strategy1)
+        self.fc2 = P.MatMul().shard(strategy2)
+        self.p1 = Parameter(Tensor(np.ones([48, 1152]), param_init_type), name="weight1")
+        self.p2 = Parameter(Tensor(np.ones([1152, 16]), param_init_type), name="weight2")
+        self.cast = P.Cast()
+        self.compute_dtype = compute_dtype
+
+    def construct(self, x, y):
+        ori_dtype = x.dtype
+        p1 = self.cast(self.p1, self.compute_dtype)
+        p2 = self.cast(self.p2, self.compute_dtype)
+        x = self.cast(x, self.compute_dtype)
+        x = self.fc1(x, p1)
+        x = self.fc2(x, p2)
+        x = self.cast(x, ori_dtype)
         return x - y
 
 
@@ -335,6 +359,7 @@ class DatasetLenet():
     def create_tuple_iterator(self, num_epochs=1, do_copy=True):
         return self
 
+
 def test_repeat_size_large_than_shard_size():
     """
     Feature: semi-parallel-optimizer repeat size larger than shard size
@@ -376,3 +401,26 @@ def test_repeat_size_large_than_shard_size():
     out = str(output, 'utf-8').strip()
     context.reset_auto_parallel_context()
     assert out == "1"
+
+
+@pytest.mark.parametrize('param_init_dtype', [mstype.float32, mstype.float16])
+@pytest.mark.parametrize('compute_dtype', [mstype.float32, mstype.float16])
+def test_parallel_optimizer_mix_precision(param_init_dtype, compute_dtype):
+    """
+    Feature: Test parallel optimize all_gather communication
+    Description: param_dtype: fp32, compute_dtype: bf16/fp16
+    Expectation: Execute AllGather with fp16/bf16 and ReduceScatter with fp32
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, enable_parallel_optimizer=True,
+                                      parallel_optimizer_config={"parallel_optimizer_threshold": 1})
+    inputs = Tensor(np.ones([32, 48]).astype(np.float32))
+    label = Tensor(np.zeros([32, 16]).astype(np.float32))
+    net = Net5(strategy1=((4, 8), (8, 1)), strategy2=((4, 4), (4, 2)), param_init_type=param_init_dtype,
+               compute_dtype=compute_dtype)
+    net = _VirtualDatasetCell(net)
+    optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    train_network = TrainOneStepCell(net, optimizer).set_comm_fusion(4)
+    train_network.set_train()
+    _cell_graph_executor.compile(train_network, inputs, label, phase="train")
+    context.reset_auto_parallel_context()
