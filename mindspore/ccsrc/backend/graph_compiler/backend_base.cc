@@ -632,6 +632,22 @@ bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
   MS_LOG(INFO) << "Enable switch inline.";
   return true;
 }
+
+void AddGraphDynamicShapeAttr(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (kernel_graph->is_dynamic_shape()) {
+    return;
+  }
+
+  const auto &nodes = TopoSort(kernel_graph->get_return());
+  for (const auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (node->isa<CNode>() && common::AnfAlgo::IsDynamicShape(node)) {
+      kernel_graph->SetGraphDynamicAttr(true);
+      break;
+    }
+  }
+}
 }  // namespace
 
 void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
@@ -745,6 +761,7 @@ void MindRTBackendBase::CompileGraph(const FuncGraphPtr &func_graph, device::Run
     }
   } else {
     auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+    AddGraphDynamicShapeAttr(kernel_graph);
     MS_EXCEPTION_IF_NULL(kernel_graph);
     const auto &session = graph_compiler_->session_ptr();
     MS_EXCEPTION_IF_NULL(session);
