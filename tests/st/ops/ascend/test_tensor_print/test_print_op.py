@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore as ms
 from mindspore import Tensor, ops
+from tests.st.utils import test_utils
 
 
 class PrintNet(nn.Cell):
@@ -101,6 +102,7 @@ def test_print_tensor_dtype(mode):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@test_utils.run_test_with_On
 def test_print_tensor_dtype_in_nested_tuple(mode):
     """
     Feature: Print op.

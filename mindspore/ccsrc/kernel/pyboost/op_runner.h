@@ -120,7 +120,8 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   }
 
   void ProfileMemoryInfo() {
-    if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PROF_MEM)) {
+    static bool enable_trace_mem = common::IsEnableAlllocConfig(common::kAllocMemoryTracker);
+    if (!(MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PROF_MEM) || enable_trace_mem)) {
       return;
     }
 
