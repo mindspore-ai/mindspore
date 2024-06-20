@@ -502,7 +502,7 @@ CNodePtr CreateReplaceFSPGraph(const FuncGraphManagerPtr &manager,
     }
   }
   acc_attention = NewCastNode(acc_attention, TypeId::kNumberTypeFloat16);
-  softmax_out = NewTupleGetItemNode(local_fa_node, 2);
+  softmax_out = NewTupleGetItemNode(local_fa_node, kIndex2);
   std::vector<AnfNodePtr> output_tuple = {history_max, history_sum, softmax_out, acc_attention};
   auto attention_results = NewMakeTupleNode(output_tuple);
   return attention_results;
