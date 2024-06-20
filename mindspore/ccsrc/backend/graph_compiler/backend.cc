@@ -189,12 +189,28 @@ void ClearInputDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *d
   }
 }
 
-void AllocateMemForTensor(const tensor::BaseTensorPtr &tensor, DeviceContext *device_context) {
+void AllocateMemForTensor(const tensor::BaseTensorPtr &tensor, DeviceContext *device_context,
+                          bool is_cpu_address_exist) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(device_context);
 
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   MS_EXCEPTION_IF_NULL(device_address);
+  device_address->set_is_view(true);
+  if (is_cpu_address_exist) {
+    if (device_address->from_mem_pool()) {
+      // If CPU address is exit, and address from pool, no need to copy.
+      return;
+    } else {
+      // If not from the pool, the lifetime of the device ptr is guaranteed elsewhere.
+      // Before applying for a new address, clear the address. Otherwise a warnging is generated.
+      device_address->set_ptr(nullptr);
+      if (device_context->GetDeviceType() != device_address->GetDeviceType()) {
+        device_context = runtime::OpRunner::GetDeviceContext(kCPUDevice);
+        MS_EXCEPTION_IF_NULL(device_context);
+      }
+    }
+  }
 
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "ContiguousAllocMem", "");
   auto mem_type = tensor->is_parameter() ? device::tracker::MemType::kWeight : device::tracker::MemType::kPyNativeInput;
@@ -1149,11 +1165,16 @@ void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run
       auto input_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
 
       input_tensor->set_device_address(input_addr);
-      RunAllocMemTask(device_context, input_tensor, enable_async);
+      RunAllocMemTask(device_context, input_tensor, enable_async, false);
       (void)input_addr_list.emplace_back(input_addr);
     } else {
-      (void)input_addr_list.emplace_back(
-        std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address()));
+      auto input_addr = std::static_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
+      MS_EXCEPTION_IF_NULL(input_addr);
+      if (input_addr->GetDeviceType() == device::DeviceType::kCPU) {
+        RunAllocMemTask(device_context, input_tensor, enable_async, true);
+      }
+
+      (void)input_addr_list.emplace_back(input_addr);
     }
   }
 
@@ -1173,12 +1194,14 @@ void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run
 }
 
 void MindRTBackend::RunAllocMemTask(DeviceContext *device_context, const tensor::BaseTensorPtr &tensor,
-                                    bool enable_async) {
+                                    bool enable_async, bool is_cpu_address_exist) {
   if (!enable_async) {
     WaitTaskFinish();
-    return AllocateMemForTensor(tensor, device_context);
+    return AllocateMemForTensor(tensor, device_context, is_cpu_address_exist);
   }
-  auto alloc_mem_func = [device_context, tensor]() { AllocateMemForTensor(tensor, device_context); };
+  auto alloc_mem_func = [device_context, tensor, is_cpu_address_exist]() {
+    AllocateMemForTensor(tensor, device_context, is_cpu_address_exist);
+  };
   runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
     std::make_shared<runtime::PassthroughDeviceTask>(alloc_mem_func));
 }

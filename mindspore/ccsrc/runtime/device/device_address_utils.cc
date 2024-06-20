@@ -881,21 +881,37 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
                 << ", Size:" << tensor_size;
 }
 
-void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, const tensor::BaseTensorPtr &tensor) {
+void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, const tensor::BaseTensorPtr &tensor,
+                                        bool is_view) {
   MS_EXCEPTION_IF_NULL(tensor);
   const auto &device_sync = tensor->device_address();
-  MS_EXCEPTION_IF_NULL(device_sync);
-  if (device_sync->GetMutablePtr() != nullptr) {
-    return;
-  }
-
   auto device_address = std::static_pointer_cast<device::DeviceAddress>(device_sync);
+  MS_EXCEPTION_IF_NULL(device_address);
+  device_address->set_is_view(is_view);
+
   auto mem_type = tensor->is_parameter() ? device::tracker::MemType::kWeight : device::tracker::MemType::kPyNativeInput;
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", mem_type, device_address->GetSize(),
                                                  device_address.get());
-  if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
-    MS_LOG(EXCEPTION) << "Allocate memory failed";
+  if (device_address->GetMutablePtr() != nullptr) {
+    if (!is_view || device_address->GetDeviceType() != device::DeviceType::kCPU || device_address->from_mem_pool()) {
+      return;
+    }
+    // If not from the pool, the lifetime of the device ptr is guaranteed elsewhere.
+    // Before applying for a new address, clear the address. Otherwise a warnging is generated.
+    device_address->set_ptr(nullptr);
+    if (device_context->GetDeviceType() != device_address->GetDeviceType()) {
+      const auto new_device_context = runtime::OpRunner::GetDeviceContext(kCPUDevice);
+      MS_EXCEPTION_IF_NULL(new_device_context);
+      if (!new_device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+        MS_LOG(EXCEPTION) << "Allocate memory failed";
+      }
+    }
+  } else {
+    if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+      MS_LOG(EXCEPTION) << "Allocate memory failed";
+    }
   }
+
   auto tensor_size = LongToSize(tensor->data().nbytes());
   if (device_address->GetDeviceType() == device::DeviceType::kAscend) {
     OpExecutor::DispatchLaunchTask([=]() {
@@ -913,18 +929,18 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
 }
 
 void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context,
-                                        const std::vector<tensor::BaseTensorPtr> &tensors) {
+                                        const std::vector<tensor::BaseTensorPtr> &tensors, bool is_view) {
   for (const auto &tensor : tensors) {
-    MallocForInput(device_context, tensor);
+    MallocForInput(device_context, tensor, is_view);
   }
 }
 
 void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context,
-                                        const std::optional<tensor::BaseTensorPtr> &val) {
+                                        const std::optional<tensor::BaseTensorPtr> &val, bool is_view) {
   if (!val.has_value()) {
     return;
   }
-  MallocForInput(device_context, val.value());
+  MallocForInput(device_context, val.value(), is_view);
 }
 
 void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_context, size_t stream_id, size_t index,
