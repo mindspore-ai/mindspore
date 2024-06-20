@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace runtime {
 static const int kPrecisionDigits = 2;
+static const double kNsToUs = 1000;
 
 // The string of json file.
 static const char kJsonName[] = "name";
@@ -62,28 +63,36 @@ std::string GetRealPathName(const std::string &name) {
   }
   return real_path.value();
 }
+
+uint64_t GetClockTimeNs() {
+  auto ts = std::chrono::system_clock::now();
+  int64_t system_t = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.time_since_epoch()).count();
+  return static_cast<uint64_t>(system_t);
+}
 }  // namespace
 
 ProfilerRecorder::ProfilerRecorder(ProfilerModule module, ProfilerEvent event, const std::string &op_name,
                                    bool is_inner_event, bool need_py_stack, uint64_t flow_id) {
-  if (!ProfilerAnalyzer::GetInstance().profiler_enable()) {
+  auto &profiler = ProfilerAnalyzer::GetInstance();
+  if (!profiler.profiler_enable()) {
     return;
   }
-  data_ = std::make_unique<Data>(module, event, ProfilerAnalyzer::GetInstance().GetBriefName(op_name),
-                                 need_py_stack ? GetPythonStackStr_() : std::string(),
-                                 ProfilerAnalyzer::GetInstance().GetTimeStamp(), flow_id, is_inner_event);
+  data_ = std::make_unique<Data>(module, event, profiler.GetBriefName(op_name),
+                                 !profiler.enable_by_env() && need_py_stack ? GetPythonStackStr_() : std::string(),
+                                 profiler.GetTimeStamp(), flow_id, is_inner_event);
 }
 
 ProfilerRecorder::~ProfilerRecorder() {
-  if (!ProfilerAnalyzer::GetInstance().profiler_enable()) {
+  auto &profiler = ProfilerAnalyzer::GetInstance();
+  if (!profiler.profiler_enable()) {
     return;
   }
   if (data_ == nullptr) {
     return;
   }
-  ProfilerAnalyzer::GetInstance().RecordData(std::make_shared<ProfilerData>(
-    data_->module_, data_->event_, data_->op_name_, data_->is_inner_event_, data_->start_time_,
-    ProfilerAnalyzer::GetInstance().GetTimeStamp(), data_->flow_id_, data_->py_stack_));
+  profiler.RecordData(std::make_shared<ProfilerData>(data_->module_, data_->event_, data_->op_name_,
+                                                     data_->is_inner_event_, data_->start_time_,
+                                                     profiler.GetTimeStamp(), data_->flow_id_, data_->py_stack_));
 }
 
 PythonProfilerRecorder::PythonProfilerRecorder(const std::string &record_name)
@@ -153,15 +162,7 @@ void ProfilerAnalyzer::Initialize() {
   detail_info_file_name_ = GetRealPathName(kDetailInfoFileName + now_time + ".csv");
 }
 
-bool ProfilerAnalyzer::profiler_enable() const {
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__) && \
-  defined(ENABLE_DEBUGGER)
-  auto ascend_profiler = mindspore::profiler::Profiler::GetInstance(kAscendDevice);
-  return profiler_enable_ || (ascend_profiler != nullptr && ascend_profiler->EnableHostStack());
-#else
-  return profiler_enable_;
-#endif
-}
+bool ProfilerAnalyzer::profiler_enable() const { return profiler_enable_ || mi_profiler_enable_; }
 
 void ProfilerAnalyzer::SetThreadIdToName(const std::thread::id &id, const std::string &name) {
   std::unique_lock<SpinLock> lock(data_mutex_);
@@ -206,7 +207,12 @@ void ProfilerAnalyzer::Clear() noexcept {
   init_ = false;
 }
 
+void ProfilerAnalyzer::EnableMiProfile() { mi_profiler_enable_ = true; }
+
 uint64_t ProfilerAnalyzer::GetTimeStamp() const noexcept {
+  if (profiler_enable_) {
+    return GetClockTimeNs();
+  }
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__) && \
   defined(ENABLE_DEBUGGER)
   return profiler::GetClockSyscnt();
@@ -233,12 +239,14 @@ void ProfilerAnalyzer::RecordData(const ProfilerDataPtr &data) noexcept {
   if (profiler_enable_) {
     (void)data_.emplace_back(data);
   }
+  if (mi_profiler_enable_) {
 #if defined(ENABLE_DEBUGGER)
-  auto ascend_profiler = mindspore::profiler::Profiler::GetInstance(kAscendDevice);
-  if (ascend_profiler != nullptr && ascend_profiler->EnableHostStack()) {
-    profiler::ascend::ProfilingFrameworkData::RecordHostProfile(data);
-  }
+    auto ascend_profiler = mindspore::profiler::Profiler::GetInstance(kAscendDevice);
+    if (ascend_profiler != nullptr && ascend_profiler->EnableHostStack()) {
+      profiler::ascend::ProfilingFrameworkData::RecordHostProfile(data);
+    }
 #endif
+  }
 #endif
 }
 
@@ -333,8 +341,8 @@ void ProfilerAnalyzer::SaveJsonData(const ProfilerDataPtr &data) {
   json_data[kJsonPh] = kJsonPhX;
   json_data[kJsonPid] = std::to_string(data->pid_);
   json_data[kJsonTid] = std::to_string(data->tid_);
-  json_data[kJsonTs] = data->start_time_;
-  json_data[kJsonDur] = data->dur_time_;
+  json_data[kJsonTs] = static_cast<double>(data->start_time_) / kNsToUs;
+  json_data[kJsonDur] = static_cast<double>(data->dur_time_) / kNsToUs;
   nlohmann::json args;
   args[kJsonFlowId] = data->flow_id_;
   if (!data->py_stack_.empty()) {

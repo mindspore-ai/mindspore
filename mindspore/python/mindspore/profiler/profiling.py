@@ -34,6 +34,7 @@ from mindspore.context import get_auto_parallel_context
 from mindspore.communication.management import GlobalComm, get_rank, get_group_size, get_local_rank
 import mindspore._c_expression as c_expression
 import mindspore._c_dataengine as cde
+from mindspore._c_expression import _framework_profiler_enable_mi
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
     ProfilerIOException, ProfilerException, ProfilerRawFileException, ProfilerParamTypeErrorException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerPathErrorException
@@ -882,6 +883,7 @@ class Profiler:
         ProfilerInfo.set_profiling_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         ProfilerInfo.set_system_time(int(c_expression.get_clock_time() * 1e3)) # cast us to ns
         ProfilerInfo.set_system_cnt(c_expression.get_clock_syscnt())
+        _framework_profiler_enable_mi()
 
     def stop(self):
         """

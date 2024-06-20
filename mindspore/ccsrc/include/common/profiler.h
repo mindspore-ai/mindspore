@@ -437,8 +437,12 @@ class COMMON_EXPORT ProfilerAnalyzer {
 
   void Clear() noexcept;
 
+  // Enable MindInsight Profile
+  void EnableMiProfile();
+
   // The used by ProfilerRecorder to record data.
   bool profiler_enable() const;
+  bool enable_by_env() const { return profiler_enable_; }
   void RecordData(const ProfilerDataPtr &data) noexcept;
   void RecordFlowData(uint64_t flow_id);
   uint64_t GetTimeStamp() const noexcept;
@@ -509,6 +513,7 @@ class COMMON_EXPORT ProfilerAnalyzer {
   // The relevant members of init.
   int show_top_num_{0};
   bool profiler_enable_{false};
+  bool mi_profiler_enable_{false};
   bool init_{false};
 };
 }  // namespace runtime
