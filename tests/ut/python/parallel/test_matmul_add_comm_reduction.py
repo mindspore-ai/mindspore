@@ -103,8 +103,8 @@ def test_matmul_add_comm_reduction_normal():
         device_num=8, global_rank=0)
 
     matmul_in_strategy = ((2, 4), (4, 1))
-    bias_add_strategy = ((8, 1), (1,))
-    add_strategy = ((8, 1), (8, 1))
+    bias_add_strategy = ((2, 1), (1,))
+    add_strategy = ((2, 1), (2, 1))
     net = GradWrap(NetWithLoss(Net(matmul_in_strategy, bias_add_strategy, add_strategy)))
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float16)
@@ -156,8 +156,8 @@ def test_matmul_add_comm_reduction_two_matmul_left():
         device_num=8, global_rank=0)
 
     matmul_in_strategy = ((2, 4), (4, 1))
-    bias_add_strategy = ((4, 1), (1,))
-    add_strategy = ((4, 1), (4, 1))
+    bias_add_strategy = ((2, 1), (1,))
+    add_strategy = ((2, 1), (2, 1))
     mm_weight_shape = [64, 64]
     net = GradWrap(
         NetWithLoss(Net(matmul_in_strategy, bias_add_strategy, add_strategy, mm_weight_shape=mm_weight_shape)))

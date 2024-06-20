@@ -45,6 +45,11 @@ bool IsSubRankList(const RankList &child_list, const RankList &parent_list) {
   return true;
 }
 
+bool IsPrimitiveAttrValid(const PrimitivePtr &prim, const std::string &attr_name) {
+  MS_EXCEPTION_IF_NULL(prim);
+  return !prim->HasAttr(attr_name) || !GetValue<bool>(prim->GetAttr(attr_name));
+}
+
 bool IsAddNodeValid(const AnfNodePtr &add_node, const AnfNodePtr &comm_node) {
   OperatorInfoPtr add_distribute_operator = add_node->user_data<OperatorInfo>();
   if (add_distribute_operator == nullptr) {
@@ -94,11 +99,9 @@ AnfNodePtr FindPullDownNode(const AnfNodePtr &anode) {
         return std::make_pair(false, i);
       }
       // cur prim must in ALLREDUCE_PULL_DOWN_WHITE_LIST and input_prim is not marked or marked false
-      bool filter =
-        (ALLREDUCE_PULL_DOWN_WHITE_LIST.find(prim->name()) != ALLREDUCE_PULL_DOWN_WHITE_LIST.end() ||
-         prim->name() == MATMUL || prim->name() == BATCH_MATMUL) &&
-        (!input_prim->HasAttr(MATMUL_ADD_COMM_BEGIN) ||
-         (input_prim->HasAttr(MATMUL_ADD_COMM_BEGIN) && !GetValue<bool>(input_prim->GetAttr(MATMUL_ADD_COMM_BEGIN))));
+      bool filter = (ALLREDUCE_PULL_DOWN_WHITE_LIST.find(prim->name()) != ALLREDUCE_PULL_DOWN_WHITE_LIST.end() ||
+                     prim->name() == MATMUL || prim->name() == BATCH_MATMUL) &&
+                    IsPrimitiveAttrValid(input_prim, MATMUL_ADD_COMM_BEGIN);
       return std::make_pair(filter, i);
     }
     return std::make_pair(false, LongToSize(1));
@@ -112,8 +115,7 @@ void FindAllValidAddNode(const FuncGraphPtr &graph, HashMap<AnfNodePtr, std::vec
   for (const auto &node : origin_nodes_topological) {
     // add node
     auto prim = GetCNodePrimitive(node);
-    if (prim == nullptr || prim->name() != ADD || !prim->HasAttr(MATMUL_ADD_COMM_END) ||
-        (prim->HasAttr(MATMUL_ADD_COMM_END) && !GetValue<bool>(prim->GetAttr(MATMUL_ADD_COMM_END)))) {
+    if (prim == nullptr || prim->name() != ADD || IsPrimitiveAttrValid(prim, MATMUL_ADD_COMM_END)) {
       continue;
     }
     auto input_nodes = node->inputs();
@@ -124,27 +126,28 @@ void FindAllValidAddNode(const FuncGraphPtr &graph, HashMap<AnfNodePtr, std::vec
       }
       auto comm_node = FindPullDownNode(input_node);
       if (comm_node == nullptr) {
-        MS_LOG(WARNING) << "For matmul add comm reduction, can not find valid comm node, node is "
-                        << input_node->DebugString();
+        MS_LOG(INFO) << "For matmul add comm reduction, can not find valid comm node, node is "
+                     << input_node->DebugString();
         continue;
       }
       if ((!IsPrimitiveCNode(comm_node, prim::kPrimAllReduce) &&
            !IsPrimitiveCNode(comm_node, prim::kPrimReduceScatter))) {
-        MS_LOG(WARNING) << "For matmul comm reduction, comm node is not allreduce or reduce scatter, node is "
-                        << comm_node->DebugString();
+        MS_LOG(INFO) << "For matmul comm reduction, comm node is not allreduce or reduce scatter, node is "
+                     << comm_node->DebugString();
         continue;
       }
 
       auto comm_cnode = comm_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(comm_node);
       auto pre_prim = GetCNodePrimitive(comm_cnode->input(1));
-      if (pre_prim == nullptr || !pre_prim->HasAttr(MATMUL_ADD_COMM_BEGIN) ||
-          (pre_prim->HasAttr(MATMUL_ADD_COMM_BEGIN) && !GetValue<bool>(pre_prim->GetAttr(MATMUL_ADD_COMM_BEGIN)))) {
-        MS_LOG(WARNING) << "For matmul comm reduction,  cannot find matmul/batch matmul node, "
-                        << "skip cur node: " << input_node->DebugString();
+      if (pre_prim == nullptr || IsPrimitiveAttrValid(pre_prim, MATMUL_ADD_COMM_BEGIN)) {
+        MS_LOG(INFO) << "For matmul comm reduction,  cannot find matmul/batch matmul node, "
+                     << "skip cur node: " << input_node->DebugString();
         continue;
       }
       (*pull_down_node_map)[node].push_back(comm_node);
+      MS_LOG(INFO) << "For matmul comm reduction, find one side with matmul-allreduce structure, add node is: "
+                   << node->DebugString() << " comm node is: " << comm_node->DebugString();
     }
   }
 }
@@ -171,8 +174,8 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node, const AnfNodePtr &add_node_i
   auto comm_prim = GetCNodePrimitive(comm_node);
   MS_EXCEPTION_IF_NULL(comm_prim);
   if (!comm_prim->HasAttr(GROUP)) {
-    MS_LOG(WARNING) << "For matmul comm reduction, cur prim has not attr " << GROUP
-                    << ", skip it, node is: " << comm_node->DebugString();
+    MS_LOG(INFO) << "For matmul comm reduction, cur prim has not attr " << GROUP
+                 << ", skip it, node is: " << comm_node->DebugString();
     return;
   }
   auto comm_group = GetValue<std::string>(comm_prim->GetAttr(GROUP));
@@ -182,13 +185,13 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node, const AnfNodePtr &add_node_i
 
   auto add_node = FindBiasAdd(comm_node, add_node_input);
   if (add_node == nullptr || !IsPrimitiveCNode(add_node, prim::kPrimAdd)) {
-    MS_LOG(WARNING) << "For matmul comm reduction, cannot find bias add node, find node is: " << add_node->DebugString()
-                    << " start node is " << add_node_input->DebugString();
+    MS_LOG(INFO) << "For matmul comm reduction, cannot find bias add node, find node is: " << add_node->DebugString()
+                 << " start node is " << add_node_input->DebugString();
     return;
   }
   if (!IsAddNodeValid(add_node, comm_node)) {
-    MS_LOG(WARNING) << "For matmul comm reduction, strategy of add node mismatched, skip it, add node is: "
-                    << add_node->DebugString();
+    MS_LOG(INFO) << "For matmul comm reduction, strategy of add node mismatched, skip it, add node is: "
+                 << add_node->DebugString();
     return;
   }
   auto add_cnode = add_node->cast<CNodePtr>();
@@ -204,12 +207,12 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node, const AnfNodePtr &add_node_i
     return std::make_pair(filter, 1);
   });
   if (bias_node == nullptr || !IsPrimitiveCNode(bias_node, prim::kPrimLoad)) {
-    MS_LOG(WARNING) << "For comm reduction, cannot find load op for bias parameter along current add node, please "
-                       "check whether it exists, cur add node is: "
-                    << add_node->DebugString();
+    MS_LOG(INFO) << "For comm reduction, cannot find load op for bias parameter along current add node, please "
+                    "check whether it exists, cur add node is: "
+                 << add_node->DebugString();
     return;
   }
-  // insert div node
+  // insert mul node
   auto bias_node_abstract = bias_node->abstract();
   MS_EXCEPTION_IF_NULL(bias_node_abstract);
   auto bias_dtype = bias_node_abstract->cast<abstract::AbstractTensorPtr>();
@@ -235,6 +238,7 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node, const AnfNodePtr &add_node_i
   auto manager = fg->manager();
   MS_EXCEPTION_IF_NULL(manager);
   (void)manager->Replace(bias_node, mul_node);
+  MS_LOG(INFO) << "for comm reduction, insert new mul node after parameter node";
 }
 
 void HandleNodePullUp(const AnfNodePtr &add_node, const std::vector<AnfNodePtr> &comm_node_list,
@@ -246,9 +250,8 @@ void HandleNodePullUp(const AnfNodePtr &add_node, const std::vector<AnfNodePtr> 
     auto each_cnode = each_node->cast<CNodePtr>();
     auto pre_node = each_cnode->input(1);
     auto pre_prim = GetCNodePrimitive(pre_node);
-    if (pre_prim == nullptr || !pre_prim->HasAttr(MATMUL_ADD_COMM_BEGIN) ||
-        (pre_prim->HasAttr(MATMUL_ADD_COMM_BEGIN) && !GetValue<bool>(pre_prim->GetAttr(MATMUL_ADD_COMM_BEGIN)))) {
-      MS_LOG(WARNING) << "For comm reduction, its pre node does not marked or marked false, skip it.";
+    if (pre_prim == nullptr || IsPrimitiveAttrValid(pre_prim, MATMUL_ADD_COMM_BEGIN)) {
+      MS_LOG(INFO) << "For comm reduction, its pre node does not marked or marked false, skip it.";
       continue;
     }
     auto graph = each_node->func_graph();
@@ -258,6 +261,7 @@ void HandleNodePullUp(const AnfNodePtr &add_node, const std::vector<AnfNodePtr> 
     auto add_cnode = add_node->cast<CNodePtr>();
     HandleNodeBiasAdd(each_node, add_cnode->input(index));
     (void)manager->Replace(each_node, pre_node);
+    MS_LOG(INFO) << "For comm reduction, pull up node next to comm node, node is: " << pre_node->DebugString();
     if ((*comm_node_map).find(add_node) == (*comm_node_map).end()) {
       (*comm_node_map)[add_node] = each_node;
     }
@@ -278,14 +282,15 @@ void HandleNodePullDown(const AnfNodePtr &add_node, const AnfNodePtr &comm_node)
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   (void)manager->Replace(add_node, new_comm_node);
+  MS_LOG(INFO) << "For comm reduction, pull down comm node, node is: " << new_comm_node->DebugString();
 }
 
 void HandleAddNode(const HashMap<AnfNodePtr, std::vector<AnfNodePtr>> &pull_down_node_map) {
   HashMap<AnfNodePtr, AnfNodePtr> comm_node_map;
   for (auto &each_pull_down_node : pull_down_node_map) {
     if (each_pull_down_node.second.size() < kCommReductionValidCommOpsNum) {
-      MS_LOG(WARNING) << "For comm reduction, cur node cannot find match structure, skip it. current node is "
-                      << each_pull_down_node.first->DebugString();
+      MS_LOG(INFO) << "For comm reduction, cur node cannot find match structure, skip it. current node is "
+                   << each_pull_down_node.first->DebugString();
       continue;
     }
     // Handle node pull up
