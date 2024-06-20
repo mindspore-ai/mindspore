@@ -71,38 +71,6 @@ int64_t NewSeedGeneration() {
   return seed_generation;
 }
 
-template <typename T>
-T GetInputValueFromCNode(const CNodePtr &cnode, size_t index) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto inputs = cnode->inputs();
-  if (index >= inputs.size()) {
-    MS_LOG(EXCEPTION) << "The input index (" << index << ") is exceed of inputs size (" << inputs.size() << ").";
-  }
-  auto input_node = inputs[index];
-  MS_EXCEPTION_IF_NULL(input_node);
-  if (!input_node->isa<ValueNode>()) {
-    MS_LOG(EXCEPTION) << "The " << GetSerialNumberString(index) << " input is not a value node.";
-  }
-  auto value = input_node->cast<ValueNodePtr>()->value();
-  MS_EXCEPTION_IF_NULL(value);
-  return GetValue<T>(value);
-}
-
-template <typename T>
-void SetValueInputToCNode(const CNodePtr &cnode, size_t index, T value) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto inputs = cnode->inputs();
-  if (index >= inputs.size()) {
-    MS_LOG(EXCEPTION) << "The input index (" << index << ") is exceed of inputs size (" << inputs.size() << ").";
-  }
-  auto func_graph = cnode->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto manager = func_graph->manager();
-  auto value_node = NewValueNode(MakeValue(value));
-  MS_EXCEPTION_IF_NULL(value_node);
-  manager->SetEdge(cnode, index, value_node);
-}
-
 int64_t LongAdd(int64_t base, int64_t shift) {
   int64_t result;
   if (shift > 0) {

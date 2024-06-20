@@ -76,38 +76,6 @@ const std::map<int64_t, int64_t> opAttrUpdateMap = {{kSparseDefaultMask, kLeftUp
 const std::vector<int64_t> needCompressAttnMask = {kSparseLeftUpCausal, kSparseRightDownCausal, kSparseBand};
 }  // namespace
 
-template <typename T>
-T GetInputValueFromCNode(const CNodePtr &cnode, size_t index) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto inputs = cnode->inputs();
-  if (index >= inputs.size()) {
-    MS_LOG(EXCEPTION) << "The input index (" << index << ") is exceed of inputs size (" << inputs.size() << ").";
-  }
-  auto input_node = inputs[index];
-  MS_EXCEPTION_IF_NULL(input_node);
-  if (!input_node->isa<ValueNode>()) {
-    MS_LOG(EXCEPTION) << "The " << GetSerialNumberString(index) << " input is not a value node.";
-  }
-  auto value = input_node->cast<ValueNodePtr>()->value();
-  MS_EXCEPTION_IF_NULL(value);
-  return GetValue<T>(value);
-}
-
-template <typename T>
-void SetValueInputToCNode(const CNodePtr &cnode, size_t index, T value) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto inputs = cnode->inputs();
-  if (index >= inputs.size()) {
-    MS_LOG(EXCEPTION) << "The input index (" << index << ") is exceed of inputs size (" << inputs.size() << ").";
-  }
-  auto func_graph = cnode->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto manager = func_graph->manager();
-  auto value_node = NewValueNode(MakeValue(value));
-  MS_EXCEPTION_IF_NULL(value_node);
-  manager->SetEdge(cnode, index, value_node);
-}
-
 bool FusedInferAttentionScoreInfo::CheckStrategyOnIndex(int64_t strategy, int64_t true_value,
                                                         const std::string &dim_name, const std::string &input_name) {
   if (strategy != true_value) {
@@ -125,8 +93,8 @@ void FusedInferAttentionScoreInfo::SetOptionalInputs() {
     auto optional_input_ptr = input_value_[index];
     if (optional_input_ptr == nullptr || optional_input_ptr->isa<tensor::Tensor>()) {
       if (index == ops::kFusedInferAttentionScoreInputPseShiftIndex && valid_input_index < inputs_shape_new_.size()) {
-        auto padding_mask_shape = inputs_shape_new_[valid_input_index]->GetAllElements();
-        padding_mask_rank_ = padding_mask_shape[0].size();
+        auto pse_shift_shape = inputs_shape_new_[valid_input_index]->GetAllElements();
+        pse_shift_rank_ = pse_shift_shape[0].size();
       }
       if (index == ops::kFusedInferAttentionScoreInputAttnMaskIndex && valid_input_index < inputs_shape_new_.size()) {
         auto atten_mask_shape = inputs_shape_new_[valid_input_index]->GetAllElements();
@@ -140,12 +108,12 @@ void FusedInferAttentionScoreInfo::SetOptionalInputs() {
   // init optional tensor map
   Shape atten_mask_tensor_map(atten_mask_rank_, -1);
   Shape atten_mask_strategy_map(atten_mask_rank_, 0);
-  Shape padding_mask_tensor_map(padding_mask_rank_, -1);
-  Shape padding_mask_strategy_map(padding_mask_rank_, 0);
+  Shape pse_shift_tensor_map(pse_shift_rank_, -1);
+  Shape pse_shift_strategy_map(pse_shift_rank_, 0);
   optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = atten_mask_tensor_map;
-  optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = padding_mask_tensor_map;
+  optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = pse_shift_tensor_map;
   optional_op_strategies_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = atten_mask_strategy_map;
-  optional_op_strategies_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = padding_mask_strategy_map;
+  optional_op_strategies_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = pse_shift_strategy_map;
 }
 
 void FusedInferAttentionScoreInfo::GenerateExpectStrategies() {
@@ -156,10 +124,10 @@ void FusedInferAttentionScoreInfo::GenerateExpectStrategies() {
   if (atten_mask_rank_ == kRank3) {
     expect_strategies_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {dp_, 1, 1};
   }
-  if (padding_mask_rank_ == kRank2) {
+  if (pse_shift_rank_ == kRank2) {
     expect_strategies_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {1, 1};
   }
-  if (padding_mask_rank_ == kRank3) {
+  if (pse_shift_rank_ == kRank3) {
     expect_strategies_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {dp_, 1, 1};
   }
 }
@@ -175,6 +143,10 @@ Status FusedInferAttentionScoreInfo::GetAttrs() {
   need_update_op_attrs_mode_ = sparse_mode_ != kSparseAllMask;
   input_layout_ = GetInputValueFromCNode<int64_t>(cnode_, ops::kFusedInferAttentionScoreInputLayoutIndex + 1);
   softmax_lse_flag_ = GetInputValueFromCNode<bool>(cnode_, ops::kFusedInferAttentionScoreInputSoftmaxLseFlagIndex + 1);
+  auto fias_node_prim = GetCNodePrimitive(cnode_);
+  if (fias_node_prim != nullptr && fias_node_prim->HasAttr(parallel::ENABLE_RING_ATTENTION)) {
+    enable_ring_attention_ = true;
+  }
   SetOptionalInputs();
   return SUCCESS;
 }
@@ -194,7 +166,7 @@ Status FusedInferAttentionScoreInfo::CheckQueryStrategy(const NewStrategies &str
       is_ifa_ = query_input[kInputQuerySeqDimBSH] == 1;
       dp_ = query_strategy[kInputQueryBatchDimBSH];
       mp_ = query_strategy[kInputQueryHiddenDimBSH];
-      sp_ = key_strategys[0][kInputQuerySeqDimBSH];
+      sp_ = is_ifa_ ? key_strategys[0][kInputQuerySeqDimBSH] : query_strategy[kInputQuerySeqDimBSH];
       break;
     case FASInputLayoutMode::BNSD:
       if (!CheckStrategyOnIndex(query_strategy[kInputQueryHiddenDimBNSD], 1, "D-Dimention", "query")) {
@@ -203,7 +175,7 @@ Status FusedInferAttentionScoreInfo::CheckQueryStrategy(const NewStrategies &str
       is_ifa_ = query_input[kInputQuerySeqDimBNSD] == 1;
       dp_ = query_strategy[kInputQueryBatchDimBNSD];
       mp_ = query_strategy[kInputQueryNDimBNSD];
-      sp_ = key_strategys[0][kInputQuerySeqDimBNSD];
+      sp_ = is_ifa_ ? key_strategys[0][kInputQuerySeqDimBNSD] : query_strategy[kInputQuerySeqDimBNSD];
       break;
     case FASInputLayoutMode::BSND:
       if (!CheckStrategyOnIndex(query_strategy[kInputQueryHiddenDimBSND], 1, "D-Dimention", "query")) {
@@ -212,7 +184,7 @@ Status FusedInferAttentionScoreInfo::CheckQueryStrategy(const NewStrategies &str
       is_ifa_ = query_input[kInputQuerySeqDimBSND] == 1;
       dp_ = query_strategy[kInputQueryBatchDimBSND];
       mp_ = query_strategy[kInputQueryNDimBSND];
-      sp_ = key_strategys[0][kInputQuerySeqDimBSND];
+      sp_ = is_ifa_ ? key_strategys[0][kInputQuerySeqDimBSND] : query_strategy[kInputQuerySeqDimBSND];
       break;
     default:
       MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
@@ -247,6 +219,10 @@ Status FusedInferAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) 
   }
   if (!std::equal(key_strategys.begin(), key_strategys.end(), value_strategys.begin())) {
     MS_LOG(ERROR) << "For " << name_ << " : The in_strategy among 'key' and 'value' must be same.";
+    return FAILED;
+  }
+  if (stra.size() > inputs_shape_new_.size()) {
+    MS_LOG(ERROR) << name_ << ": Strategy size must be less than input size.";
     return FAILED;
   }
   // shapevalue and shapelist into one vector
@@ -305,14 +281,14 @@ Status FusedInferAttentionScoreInfo::InferDevMatrixShape() {
 void FusedInferAttentionScoreInfo::InferOptionalTensorMap() {
   if (is_ifa_) {  // IFA
     if (atten_mask_rank_ == kRank2) {
-      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex][0] = dev_matrix_batch_dim_;
-      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex][1] = dev_matrix_s1_dim_;
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {dev_matrix_batch_dim_,
+                                                                                dev_matrix_s1_dim_};
     } else if (atten_mask_rank_ == kRank3) {
-      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex][0] = dev_matrix_batch_dim_;
-      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex][2] = dev_matrix_s1_dim_;
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {dev_matrix_batch_dim_, -1,
+                                                                                dev_matrix_s1_dim_};
     } else if (atten_mask_rank_ == kRank4) {
-      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex][0] = dev_matrix_batch_dim_;
-      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex][3] = dev_matrix_s1_dim_;
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {dev_matrix_batch_dim_, -1, -1,
+                                                                                dev_matrix_s1_dim_};
     }
   } else {
     int32_t pos_s = 0;
@@ -333,18 +309,17 @@ void FusedInferAttentionScoreInfo::InferOptionalTensorMap() {
       optional_tensor_map_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {2, -1, pos_s, -1};
       optional_op_strategies_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] = {2, 0, 0, 0};
     }
-    if (padding_mask_rank_ == kRank2) {
+    if (pse_shift_rank_ == kRank2) {
       optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {pos_s, -1};
       optional_op_strategies_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {0, 0};
     }
-    if (padding_mask_rank_ == kRank3) {
+    if (pse_shift_rank_ == kRank3) {
       optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {2, pos_s, -1};
       optional_op_strategies_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {2, 0, 0};
     }
-    if (padding_mask_rank_ == kRank4) {
-      optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex][0] = dev_matrix_batch_dim_;
-      optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex][1] = dev_matrix_n1_dim_;
-      optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex][3] = dev_matrix_s1_dim_;
+    if (pse_shift_rank_ == kRank4) {
+      optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {
+        dev_matrix_batch_dim_, dev_matrix_n1_dim_, -1, dev_matrix_s1_dim_};
     }
   }
 
@@ -454,23 +429,24 @@ Status FusedInferAttentionScoreInfo::InferTensorMap() {
   if (optional_inputs_.empty()) {
     SetOptionalInputs();
   }
-  Shape validMap;
   Shape valid_q_map;
+  Shape valid_kv_map;
+  // ifa only support kv_s split; pfa only support q_s split except for enable ring attention
   switch (input_layout_) {
     case FASInputLayoutMode::BSH:
       // (b, s, h) -> (dp_, sp_, mp_) -> (2, 1, 0)
-      validMap = Shape{2, 1, 0};
-      valid_q_map = is_ifa_ ? Shape{2, -1, 0} : validMap;
+      valid_q_map = is_ifa_ ? Shape{2, -1, 0} : Shape{2, 1, 0};
+      valid_kv_map = is_ifa_ || enable_ring_attention_ ? Shape{2, 1, 0} : Shape{2, -1, 0};
       break;
     case FASInputLayoutMode::BNSD:
       // (b, n, s) -> (dp_, mp_, sp_) -> (2, 1, 0) BNSD -> (2, 1, 0, )
-      validMap = Shape{2, 1, 0, -1};
-      valid_q_map = is_ifa_ ? Shape{2, 1, -1, -1} : validMap;
+      valid_q_map = is_ifa_ ? Shape{2, 1, -1, -1} : Shape{2, 1, 0, -1};
+      valid_kv_map = is_ifa_ || enable_ring_attention_ ? Shape{2, 1, 0, -1} : Shape{2, 1, -1, -1};
       break;
     case FASInputLayoutMode::BSND:
       // (b, s, n) -> (dp_, sp_, mp_) -> (2, 1, 0) BSND -> (2, 1, 0, )
-      validMap = Shape{2, 1, 0, -1};
-      valid_q_map = is_ifa_ ? Shape{2, -1, 0, -1} : validMap;
+      valid_q_map = is_ifa_ ? Shape{2, -1, 0, -1} : Shape{2, 1, 0, -1};
+      valid_kv_map = is_ifa_ || enable_ring_attention_ ? Shape{2, 1, 0, -1} : Shape{2, -1, 0, -1};
       break;
     default:
       MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
@@ -479,7 +455,7 @@ Status FusedInferAttentionScoreInfo::InferTensorMap() {
   Shape lse_tensor_map = Shape{dev_matrix_batch_dim_, dev_matrix_n1_dim_, -1, -1};
   std::vector<ShapeBasePtr> key_value_tensorist_map_idx;
   for (size_t i = 0; i < inputs_shape_new_[ops::kFusedInferAttentionScoreInputKeyIndex]->size(); i++) {
-    key_value_tensorist_map_idx.emplace_back(std::make_shared<ShapeValue>(validMap));
+    key_value_tensorist_map_idx.emplace_back(std::make_shared<ShapeValue>(valid_kv_map));
   }
   inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeValue>(valid_q_map));                 // query
   inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeList>(key_value_tensorist_map_idx));  // key
@@ -531,7 +507,7 @@ void FusedInferAttentionScoreInfo::ReComputeBatchSplitFlagList() {
   split_flag_list_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] =
     (optional_inputs_[ops::kFusedInferAttentionScoreInputAttnMaskIndex] && atten_mask_rank_ > kRank2);
   split_flag_list_[ops::kFusedInferAttentionScoreInputPseShiftIndex] =
-    (optional_inputs_[ops::kFusedInferAttentionScoreInputPseShiftIndex] && padding_mask_rank_ > kRank2);
+    (optional_inputs_[ops::kFusedInferAttentionScoreInputPseShiftIndex] && pse_shift_rank_ > kRank2);
   split_flag_list_[ops::kFusedInferAttentionScoreInputActualSeqLengthsIndex] =
     optional_inputs_[ops::kFusedInferAttentionScoreInputActualSeqLengthsIndex];
   split_flag_list_[ops::kFusedInferAttentionScoreInputActualSeqLengthsKvIndex] =
@@ -571,7 +547,8 @@ void FusedInferAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
                                   kv_head_num_ / mp_);
     if (sp_ > 1 && need_update_op_attrs_mode_) {
       int64_t split_id = GetSplitIdAndRank();
-      int64_t new_pre_tokens, new_next_tokens;
+      int64_t new_pre_tokens = 0;
+      int64_t new_next_tokens = 0;
       std::tie(new_pre_tokens, new_next_tokens) = GetAttentionMaskAttrs(split_id, sp_);
       int64_t new_sparse_mode = is_attn_mask_compressed_ ? kSparseBand : sparse_mode_;
       SetValueInputToCNode<int64_t>(cnode, ops::kFusedInferAttentionScoreInputSparseModeIndex + 1, new_sparse_mode);
@@ -645,16 +622,21 @@ void FusedInferAttentionScoreInfo::SplitKVSequenceGraph(const Group &group, Gene
 
   auto exp_lse = gen_g->PushBack({gen_g->NewOpInst(EXP), sub_lse});
 
+  auto query_input = inputs_shape_new_[ops::kFusedInferAttentionScoreInputQueryIndex]->GetAllElements()[0];
+  auto batch_size = query_input[kInputQueryBatchDimBSH];
+  auto hidden_size = query_input[kInputQueryHiddenDimBSH];
   if (input_layout_ == FASInputLayoutMode::BSH) {
-    auto query_input = inputs_shape_new_[ops::kFusedInferAttentionScoreInputQueryIndex]->GetAllElements()[0];
-    auto batch_size = query_input[kInputQueryBatchDimBSH];
-    auto hidden_size = query_input[kInputQueryHiddenDimBSH];
     auto hidden_dim = hidden_size / head_num_;
     std::vector<int64_t> make_shape = {batch_size / dp_, head_num_ / mp_, 1, hidden_dim};
     attention_out = gen_g->PushBack({gen_g->NewOpInst(RESHAPE), attention_out, NewValueNode(MakeValue(make_shape))});
   }
 
   auto mul = gen_g->PushBack({gen_g->NewOpInst(MUL), attention_out, exp_lse});
+
+  if (input_layout_ == FASInputLayoutMode::BSH) {
+    std::vector<int64_t> make_shape = {batch_size / dp_, 1, hidden_size / mp_};
+    mul = gen_g->PushBack({gen_g->NewOpInst(RESHAPE), mul, NewValueNode(MakeValue(make_shape))});
+  }
 
   // Then aggregate all segments with AllReduce.
   auto reduce_op = gen_g->PushBack({gen_g->NewOpInst(ALL_REDUCE, attrs), mul});
@@ -685,7 +667,8 @@ Status FusedInferAttentionScoreInfo::ComputeReplaceGraphForSplitKVSeq(const CNod
   }
   MS_LOG(INFO) << name_ << ": The rank is " << g_device_manager->rank_index_in_stage();
 
-  AnfNodePtr fused_attention_score, output_maketuple;
+  AnfNodePtr fused_attention_score;
+  AnfNodePtr output_maketuple;
   SplitKVSequenceGraph(group, &gen_g, &fused_attention_score, &output_maketuple);
 
   std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {

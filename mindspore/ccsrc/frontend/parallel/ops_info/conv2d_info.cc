@@ -33,6 +33,12 @@
 
 namespace mindspore {
 namespace parallel {
+namespace {
+constexpr size_t kHDimensionIndex = 2;
+constexpr size_t kWDimensionIndex = 3;
+constexpr size_t kRank4 = 4;
+}  // namespace
+
 Status Conv2DInfo::CheckAttrsBase() {
   if (format_ != NCHW) {
     MS_LOG(ERROR) << name_ << ": The format must be 'NCHW', but got " << format_;
@@ -1572,8 +1578,6 @@ void Conv2DBackpropInputInfo::InferNewPadList() {
 void Conv2DBackpropInputInfo::ReplaceNodeInputOrAttrs() { UpdateOutShape(); }
 
 Status ConvolutionInfo::CheckStrategy(const StrategyPtr &strategy) {
-  w_dim_need_exchange_overlap_ = false;
-  h_dim_need_exchange_overlap_ = false;
   if (CheckStrategyBase(strategy) != SUCCESS) {
     return FAILED;
   }
@@ -1581,7 +1585,7 @@ Status ConvolutionInfo::CheckStrategy(const StrategyPtr &strategy) {
   std::vector<Dimensions> stra = strategy->GetInputDim();
   Dimensions input_strategy = stra[0];
   Dimensions weight_strategy = stra[1];
-  if (input_strategy.size() != 4 || weight_strategy.size() != 4) {
+  if (input_strategy.size() != kRank4 || weight_strategy.size() != kRank4) {
     MS_LOG(ERROR) << name_
                   << ": The size of input strategy or weight strategy must be 4, but the size of input strategy is "
                   << input_strategy.size() << ", the size of weight strategy is " << weight_strategy.size();
@@ -1594,13 +1598,13 @@ Status ConvolutionInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  if (weight_strategy[2] != 1 || weight_strategy[3] != 1) {
+  if (weight_strategy[kHDimensionIndex] != 1 || weight_strategy[kWDimensionIndex] != 1) {
     MS_LOG(ERROR) << name_ << ": The kernel size can not be split, but the strategy for kernel size is ("
-                  << weight_strategy[2] << ", " << weight_strategy[3] << ")";
+                  << weight_strategy[kHDimensionIndex] << ", " << weight_strategy[kWDimensionIndex] << ")";
     return FAILED;
   }
 
-  if (input_strategy[2] != 1 || input_strategy[3] != 1) {
+  if (input_strategy[kHDimensionIndex] != 1 || input_strategy[kWDimensionIndex] != 1) {
     MS_LOG(ERROR) << name_ << ": Do not support split H or W dimension.";
     return FAILED;
   }

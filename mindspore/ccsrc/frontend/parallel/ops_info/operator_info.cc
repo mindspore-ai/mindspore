@@ -689,6 +689,7 @@ void OperatorInfo::SetRepeatedCalcDevMatrix() {
 }
 
 void OperatorInfo::ResetTupleTensorMapIfRepeatedCalc(NewTensorMaps *tensor_map_new) {
+  MS_EXCEPTION_IF_NULL(tensor_map_new);
   for (auto &tensor_map : *tensor_map_new) {
     if (tensor_map->is_list()) {
       std::vector<ShapeBasePtr> new_list;

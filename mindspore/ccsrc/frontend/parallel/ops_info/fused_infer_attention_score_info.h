@@ -87,9 +87,10 @@ class FusedInferAttentionScoreInfo : public OperatorInfo {
                                                 {0}, {0}, {0}, {0},          {0},       {0}, {0}, {0}};
   std::vector<bool> optional_inputs_;
   size_t atten_mask_rank_ = 0;
-  size_t padding_mask_rank_ = 0;
+  size_t pse_shift_rank_ = 0;
   std::vector<Shape> expect_strategies_;
-  bool is_ifa_ = 0;
+  bool is_ifa_ = false;
+  bool enable_ring_attention_ = false;
   bool is_attn_mask_compressed_ = false;
   bool need_update_op_attrs_mode_ = false;
 };
