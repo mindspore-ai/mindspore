@@ -1680,6 +1680,7 @@ class _VirtualConverterEnd(PrimitiveWithInfer):
     def infer_dtype(self, *args):
         return args[0]
 
+
 class _VirtualConverterBegin(PrimitiveWithInfer):
     """
     Auto parallel virtual operator.
