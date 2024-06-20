@@ -111,6 +111,8 @@ Dropout层
 
 
 
+
+
 卷积层
 ^^^^^^
 
@@ -121,6 +123,17 @@ Dropout层
 
     mindspore.mint.nn.Fold
     mindspore.mint.nn.Unfold
+
+
+损失函数
+^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.BCEWithLogitsLoss
 
 
 mindspore.mint.nn.functional
@@ -233,6 +246,12 @@ Dropout函数
 损失函数
 ^^^^^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.functional.binary_cross_entropy_with_logits
 
 
 

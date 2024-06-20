@@ -41,7 +41,6 @@
 #include "plugin/device/gpu/optimizer/replace_momentum_cast_fusion.h"
 #include "plugin/device/gpu/optimizer/replace_addn_fusion.h"
 #include "plugin/device/gpu/optimizer/print_reduce_fusion.h"
-#include "plugin/device/gpu/optimizer/bce_with_logits_loss_fusion.h"
 #include "plugin/device/gpu/optimizer/remove_format_transform_pair.h"
 #include "plugin/device/gpu/optimizer/remove_redundant_format_transform.h"
 #include "plugin/device/gpu/optimizer/reduce_precision_fusion.h"
@@ -164,7 +163,6 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
   pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
-  pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
   pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
   pm->AddPass(std::make_shared<opt::NeighborExchangeV2Fusion>());
   pm->AddPass(std::make_shared<opt::NeighborExchangeV2GradFusion>());
@@ -205,7 +203,6 @@ void GPUSession::RunOpOptimize(const std::shared_ptr<KernelGraph> &kernel_graph)
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
   pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);

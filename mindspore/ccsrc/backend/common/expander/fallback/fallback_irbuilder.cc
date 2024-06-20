@@ -16,6 +16,7 @@
 
 #include "backend/common/expander/fallback/fallback_irbuilder.h"
 #include <algorithm>
+#include <vector>
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
@@ -108,6 +109,60 @@ ValuePtr FallbackIRBuilder::GetAttr(const std::string &attr) const {
   }
   MS_LOG(WARNING) << "The attr " << attr << " does not exist in op " << name_;
   return nullptr;
+}
+
+int64_t FallbackIRBuilder::GetSize(const NodePtr &node) const {
+  auto shape = GetShape(node);
+  return std::accumulate(shape.begin(), shape.end(), 1LL, std::multiplies<int64_t>());
+}
+
+DEF_PURE_SHAPE_CALC(g_dyn_size)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray { return {{abstract::ShapeSize(inputs.at(0))}}; })
+  .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> ShapeVector { return {1}; });
+
+NodePtr FallbackIRBuilder::DynSize(const NodePtr &node) {
+  if (!IsDynamic(GetShape(node))) {
+    return Tensor(GetSize(node), kInt64);
+  }
+  return SequenceToTensor(ShapeCalc(g_dyn_size, {node})[0]);
+}
+
+NodePtr FallbackIRBuilder::DynSize(const NodePtr &node, const TypePtr &type) {
+  return Cast(SequenceToTensor(DynSize(node)), type);
+}
+
+NodePtr FallbackIRBuilder::SequenceToTensor(const NodePtr &node, const TypePtr &dtype) {
+  auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractSequence>()) {
+    if (node->input_type() == InputType::kConstant) {
+      return Tensor(GetIntList(node), dtype);
+    }
+    if (abs->isa<abstract::AbstractTuple>()) {
+      return Emit(kTupleToTensorOpName, {node, Value(static_cast<int64_t>(dtype->type_id()))});
+    } else {
+      return Emit(kListToTensorOpName, {node, Value(dtype)});
+    }
+  }
+  return node;
+}
+
+std::vector<int64_t> FallbackIRBuilder::GetIntList(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    tensor->data_sync();
+    return CheckAndConvertUtils::CheckTensorIntValue("tensor", value, "bprop");
+  } else {
+    return CheckAndConvertUtils::CheckIntOrTupleInt("value", value, "bprop");
+  }
+}
+
+std::vector<int64_t> FallbackIRBuilder::GetIntList(const NodePtr &node) {
+  auto value = node->BuildValue();
+  MS_EXCEPTION_IF_NULL(value);
+  return GetIntList(value);
 }
 }  // namespace expander
 }  // namespace mindspore

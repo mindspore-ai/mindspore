@@ -529,7 +529,6 @@ void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
   if (graph->is_dynamic_shape()) {
     MS_LOG(INFO) << "Dynamic shape skip some fusion pass";
     pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
-    pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
   } else {
     pm->AddPass(std::make_shared<opt::ClipByNormFission>());
     pm->AddPass(std::make_shared<opt::MatMulBiasAddFusion>());
@@ -544,7 +543,6 @@ void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
     }
     pm->AddPass(std::make_shared<opt::CombineOptimizerFusion>(kCombineOptimizerOpName));
     pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
-    pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
     pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
     pm->AddPass(std::make_shared<opt::NeighborExchangeV2Fusion>());
     pm->AddPass(std::make_shared<opt::NeighborExchangeV2GradFusion>());
@@ -561,7 +559,6 @@ void RunOpOptimize(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
   pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);

@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_set>
 #include <functional>
+#include <vector>
 
 #include "include/common/expander/core/node.h"
 #include "include/common/expander/core/emitter.h"
@@ -54,6 +55,13 @@ class FallbackIRBuilder : public IrEmitter {
     return inputs_[i];
   }
   const NodePtrList &GetInputs() const { return inputs_; }
+  int64_t GetSize(const NodePtr &node) const;
+  ShapeVector GetShape(const NodePtr &node) const { return node->shape(); }
+  NodePtr DynSize(const NodePtr &node, const TypePtr &type);
+  NodePtr DynSize(const NodePtr &node);
+  NodePtr SequenceToTensor(const NodePtr &node, const TypePtr &dtype = kInt64);
+  std::vector<int64_t> GetIntList(const ValuePtr &value);
+  std::vector<int64_t> GetIntList(const NodePtr &node);
 
  protected:
   std::string name_;

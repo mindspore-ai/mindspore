@@ -1,0 +1,29 @@
+#operator binary_cross_entropy_with_logits_backward
+binary_cross_entropy_with_logits_backward:
+  args:
+    grad_output:
+      dtype: tensor
+    input:
+      dtype: tensor
+    target:
+      dtype: tensor
+    weight:
+      dtype: tensor
+      default: None
+    posWeight:
+      dtype: tensor
+      default: None
+    reduction:
+      dtype: int
+      default: "'mean'"
+      arg_handler: str_to_enum
+  returns:
+    out:
+      dtype: tensor
+  class:
+    name: BinaryCrossEntropyWithLogitsBackward
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: BinaryCrossEntropyWithLogitsBackwardAscend

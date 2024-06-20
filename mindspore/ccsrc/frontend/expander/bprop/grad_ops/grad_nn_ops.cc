@@ -2241,48 +2241,53 @@ REG_BPROP_BUILDER("Conv2DBackpropFilter").SetUnusedInputs({i2, i3}).SetBody(BODY
 });
 
 REG_BPROP_BUILDER("BCEWithLogitsLoss").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
-  auto reduction = GetValue<std::string>(ib->GetAttr("reduction"));
-  auto predict = ib->GetInput(kIndex0);
+  // input, target, weight, posWeight, reduction, out, dout
+  auto dout = ib->GetInput(kIndex6);
+  auto input = ib->GetInput(kIndex0);
   auto target = ib->GetInput(kIndex1);
   auto weight = ib->GetInput(kIndex2);
-  auto pos_weight = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex5);
-  auto sigmoid_input = ib->Emit("Sigmoid", {predict});
-  NodePtr dx;
-  if (predict->need_compute_grad_out()) {
-    auto t = ib->Mul(target, pos_weight);
-    dx = ib->Mul(ib->Sub(ib->Mul(ib->Sub(ib->Add(t, ib->Tensor(1, ib->GetDtype(t))), target), sigmoid_input), t), dout);
-    dx = ib->Mul(dx, weight);
-    if (reduction == "mean") {
-      if (IsDynamic(ib->GetShape(dx))) {
-        auto res = ib->DynSize(dx, ib->GetDtype(dx));
-        dx = ib->RealDiv(dx, res);
-      } else {
-        dx = ib->RealDiv(dx, ib->Tensor(ib->GetSize(dx), ib->GetDtype(dx)));
-      }
-    }
+  auto posweight = ib->GetInput(kIndex3);
+  auto reduction = ib->GetInput(kIndex4);
+  bool posweight_type_none = ib->GetDtype(posweight)->isa<TypeNone>();
+  bool weight_type_none = ib->GetDtype(weight)->isa<TypeNone>();
+
+  NodePtr grad_input = nullptr;
+  if (input->need_compute_grad_out()) {
+    grad_input = ib->Emit("BinaryCrossEntropyWithLogitsBackward", {dout, input, target, weight, posweight, reduction});
   } else {
-    dx = ib->OutZeros(predict);
+    grad_input = ib->OutZeros(input);
   }
 
-  NodePtr grad_target;
+  NodePtr grad_target = nullptr;
   if (target->need_compute_grad_out()) {
-    grad_target = ib->Mul(ib->Sub(ib->Log(ib->Sub(ib->Tensor(1, ib->GetDtype(sigmoid_input)), sigmoid_input)),
-                                  ib->Mul(pos_weight, ib->Log(sigmoid_input))),
-                          dout);
-    grad_target = ib->Mul(grad_target, weight);
-    if (reduction == "mean") {
-      if (IsDynamic(ib->GetShape(dx))) {
+    if (!posweight_type_none) {
+      auto sigmoid_input = ib->Emit("Sigmoid", {input});
+      grad_target = ib->Mul(ib->Sub(ib->Log(ib->Sub(ib->Tensor(1, ib->GetDtype(sigmoid_input)), sigmoid_input)),
+                                    ib->Mul(posweight, ib->Log(sigmoid_input))),
+                            dout);
+    } else {
+      grad_target = ib->Mul(input, ib->Emit("Neg", {dout}));
+    }
+
+    if (!weight_type_none) {
+      grad_target = ib->Mul(grad_target, weight);
+    }
+
+    auto reduction_value = reduction->BuildValue();
+    auto reduction_int_value = ops::GetScalarValue<int64_t>(reduction_value);
+    if (reduction_int_value == Reduction::MEAN) {
+      if (IsDynamic(ib->GetShape(grad_input))) {
         auto res2 = ib->DynSize(target, ib->GetDtype(grad_target));
-        grad_target = ib->RealDiv(grad_target, res2);
+        grad_target = ib->Div(grad_target, res2);
       } else {
-        grad_target = ib->RealDiv(grad_target, ib->Tensor(ib->GetSize(target), ib->GetDtype(grad_target)));
+        grad_target = ib->Div(grad_target, ib->Tensor(ib->GetSize(target), ib->GetDtype(grad_target)));
       }
     }
   } else {
     grad_target = ib->OutZeros(target);
   }
-  return {dx, grad_target, ib->OutZeros(weight), ib->OutZeros(pos_weight)};
+
+  return {grad_input, grad_target, ib->OutZeros(weight), ib->OutZeros(posweight), ib->OutZeros(reduction)};
 });
 
 REG_BPROP_BUILDER("KLDivLoss").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {

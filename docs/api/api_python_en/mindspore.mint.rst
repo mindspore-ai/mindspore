@@ -125,6 +125,16 @@ Convolution Layers
 
 
 
+Loss Functions
+^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.BCEWithLogitsLoss
+
 mindspore.mint.nn.functional
 -----------------------------
 
@@ -229,10 +239,15 @@ Distance functions
 
 
 
-Loss functions
+Loss Functions
 ^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.binary_cross_entropy_with_logits
 
 
 

@@ -1310,10 +1310,6 @@ def binary_cross_entropy_with_logits(logits, label, weight=None, pos_weight=None
         0.3463612
     """
 
-    if weight is None:
-        weight = ops.ones_like(logits)
-    if pos_weight is None:
-        pos_weight = ops.ones_like(logits)
     bce_with_logits_loss_op = _get_cache_prim(NN_OPS.BCEWithLogitsLoss)(reduction)
     return bce_with_logits_loss_op(logits, label, weight, pos_weight)
 
