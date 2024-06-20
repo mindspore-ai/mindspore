@@ -82,7 +82,11 @@ class Allocator {
     }
   }
 
-  void deallocate(pointer p, std::size_t n = 0) noexcept { pool_->Deallocate(p); }
+  void deallocate(pointer p, std::size_t n = 0) noexcept {
+    if (pool_ != nullptr) {
+      pool_->Deallocate(p);
+    }
+  }
 
   size_type max_size() { return pool_->get_max_size(); }
 

@@ -126,6 +126,8 @@ class TreeAdapter {
   Status SplitBySendReceiveOp();
 #endif
 
+  Status CheckTreeIfNull();
+
   // Build an Execution tree
   Status Build(const std::shared_ptr<DatasetNode> &root_ir, int64_t init_epoch = 0);
 
@@ -140,11 +142,22 @@ class TreeAdapter {
   std::shared_ptr<DatasetNode> root_ir_;
 #if !defined(__APPLE__) && !defined(BUILD_LITE) && !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && \
   !defined(ANDROID)
+  // Launch the subprocess
+  Status LaunchSubprocess();
+
+  // The subprocess is changed to daemon and do nothing, just waiting for the main process exit
+  void SubprocessDaemonLoop();
+
   // the send tree, like: xxDataset -> map -> ... -> batch -> send
   std::unique_ptr<ExecutionTree> send_tree_;
   // the receive tree, like: receive -> iterator / data_queue
   std::unique_ptr<ExecutionTree> receive_tree_;
+
+  pid_t parent_process_id_;  // parent process id
+  pid_t process_id_;         // current process id
+  pid_t sub_process_id_;     // sub process id
 #endif
+
   // 1. the tree holder, the send_tree_ will be moved to it and launched in independent dataset process
   // 2. the tree holder, the receive_tree_ will be moved to it and launched in main dataset process
   std::unique_ptr<ExecutionTree> tree_;

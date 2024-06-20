@@ -130,7 +130,7 @@ Task::Task(const std::string &myName, const std::function<Status()> &f, int32_t 
     : my_name_(myName),
       operator_id_(operator_id),
       thread_id_(-1),
-      rc_(),
+      rc_(Status::OK()),
       fnc_obj_(f),
       task_group_(nullptr),
       is_master_(false),

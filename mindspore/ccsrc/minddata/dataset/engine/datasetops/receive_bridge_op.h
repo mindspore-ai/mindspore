@@ -112,6 +112,7 @@ class ReceiveBridgeOp : public ParallelOp<TensorRow, TensorRow> {
   MessageQueue msg_queue_;           // get msg from independent process
   ReceiveInfo receive_info_;         // receive info, including msgrcv and msgsnd status
   int subprocess_pid_;               // the independent dataset process id
+  bool subprocess_status_;           // the independent dataset process status, 1: running, 0: exit
 
  protected:
   /// \brief Gets the implementation status for operator in pull mode
