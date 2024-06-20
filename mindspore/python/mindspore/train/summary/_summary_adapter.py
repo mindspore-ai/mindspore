@@ -190,7 +190,7 @@ def _nptype_to_prototype(np_value):
     if proto is None:
         raise TypeError("Transform numpy type failed in Summary, expect numpy type is one of ['np.bool_', 'np.int8', "
                         "'np.int16', 'np.int32', 'np.int64', 'np.uint8', 'np.uint16', 'np.uint32', 'np.uint64', "
-                        "'np.float16', 'np.float', 'np.float64'].")
+                        "'np.float16', 'np.float_', 'np.float64'].")
 
     return proto
 

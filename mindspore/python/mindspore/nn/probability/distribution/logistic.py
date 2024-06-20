@@ -170,7 +170,7 @@ class Logistic(Distribution):
         self.neg = P.Neg()
 
         self.threshold = np.log(np.finfo(np.float32).eps) + 1.
-        self.tiny = np.finfo(np.float).tiny
+        self.tiny = np.finfo(np.float_).tiny
         self.sd_const = np.pi / np.sqrt(3)
 
     def _softplus(self, x):

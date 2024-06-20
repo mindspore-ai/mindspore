@@ -656,7 +656,7 @@ def choice_with_mask(input_x, count=256, seed=None):
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool))
+        >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool_))
         >>> output_y, output_mask = ops.choice_with_mask(input_x)
         >>> result = output_y.shape
         >>> print(result)

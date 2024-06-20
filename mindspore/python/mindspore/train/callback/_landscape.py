@@ -66,7 +66,7 @@ def nptype_to_prototype(np_value):
         np.uint32: 'DT_UINT32',
         np.uint64: 'DT_UINT64',
         np.float16: 'DT_FLOAT16',
-        np.float: 'DT_FLOAT64',
+        np.float_: 'DT_FLOAT64',
         np.float32: 'DT_FLOAT32',
         np.float64: 'DT_FLOAT64',
         None: 'DT_UNDEFINED'

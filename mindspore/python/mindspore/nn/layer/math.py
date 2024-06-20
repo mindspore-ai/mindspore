@@ -136,7 +136,7 @@ class Range(Cell):
         if delta == 0:
             raise ValueError(f"For '{self.cls_name}', the 'delta' can not be zero.")
         data = np.arange(start, limit, delta)
-        if data.dtype == np.float:
+        if data.dtype == np.float_:
             self.ms_dtype = mstype.float32
         else:
             self.ms_dtype = mstype.int32

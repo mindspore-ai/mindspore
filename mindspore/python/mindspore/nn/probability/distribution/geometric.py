@@ -152,7 +152,7 @@ class Geometric(Distribution):
         if self._probs is not None:
             check_prob(self.probs)
 
-        self.minval = np.finfo(np.float).tiny
+        self.minval = np.finfo(np.float_).tiny
 
         # ops needed for the class
         self.exp = exp_generic
