@@ -1162,6 +1162,12 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
       MS_LOG(INFO) << "The graph " << graph->graph_id() << " is an empty graph and skips linking.";
       continue;
     }
+    auto manager = graph->manager();
+    if (manager == nullptr) {
+      manager = Manage(graph, true);
+      graph->set_manager(manager);
+    }
+
     if (graph->is_graph_run_mode() || graph->is_any_type_input()) {
       LinkDataArrowInSinkMode(graph, graph_compiler_info, &auto_monad_actors);
     } else {

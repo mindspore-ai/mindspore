@@ -123,6 +123,7 @@ class KernelActor : public DebugAwareActor {
   // Set the memory address for the tensors which use the somas.
   void SetSomasMemory(OpContext<DeviceTensor> *const context) const;
 
+  bool skip_launch_shape_related_op() const { return skip_launch_shape_related_op_; }
   void set_skip_launch_shape_related_op(bool skip_launch_shape_related_op) {
     skip_launch_shape_related_op_ = skip_launch_shape_related_op;
   }
