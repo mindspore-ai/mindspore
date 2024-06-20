@@ -18,11 +18,11 @@ fused_infer_attention_score:
     actual_seq_lengths:
       dtype: tuple[int]
       default: None
-      type_cast: list[int]
+      type_cast: list[int], tensor
     actual_seq_lengths_kv:
       dtype: tuple[int]
       default: None
-      type_cast: list[int]
+      type_cast: list[int], tensor
     dequant_scale1:
       dtype: tensor
       default: None
