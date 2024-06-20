@@ -33,6 +33,7 @@
 #include "utils/ms_utils.h"
 #include "utils/hash_map.h"
 #include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 #include "include/common/visible.h"
 #include "mindrt/include/async/spinlock.h"
 
@@ -309,7 +310,7 @@ struct ProfilerData {
         end_time_(end_time),
         dur_time_(end_time - start_time),
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
-        tid_(syscall(SYS_gettid)),
+        tid_(LongToUlong(syscall(SYS_gettid))),
 #else
         tid_(0),
 #endif
@@ -329,7 +330,7 @@ struct ProfilerData {
         end_time_(end_time) {
     dur_time_ = end_time - start_time;
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
-    tid_ = syscall(SYS_gettid);
+    tid_ = LongToUlong(syscall(SYS_gettid));
 #else
     tid_ = 0;
 #endif

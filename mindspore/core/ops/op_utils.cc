@@ -281,7 +281,7 @@ void CheckAndGetAxisValueFromAttr(const PrimitivePtr &primitive, std::vector<int
   auto op_name = primitive->name();
   auto axis_ptr = primitive->GetAttr("axis");
   MS_EXCEPTION_IF_NULL(axis_ptr);
-  if (axis_ptr->isa<tensor::Tensor>()) {
+  if (axis_ptr->isa<tensor::BaseTensor>()) {
     *axis_value = CheckAndConvertUtils::CheckTensorIntValue("axis", axis_ptr, op_name);
   } else {
     *axis_value = CheckAndConvertUtils::CheckIntOrTupleInt("axis", axis_ptr, op_name);
@@ -325,7 +325,7 @@ bool CheckAndGetAxisValueFromTensor(const std::vector<abstract::AbstractBasePtr>
   bool is_dynamic = false;
   (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", input_args[kInputIndex1]->GetType(), {kInt32, kInt64},
                                                    op_name);
-  if (input_value->isa<tensor::Tensor>()) {
+  if (input_value->isa<tensor::BaseTensor>()) {
     *axis_value = CheckAndConvertUtils::CheckTensorIntValue("axis", input_value, op_name);
     if (axis_value->empty()) {
       *axis_shape_v = 0;
@@ -1109,9 +1109,9 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
         array_data.push_back(GetValue<T>(element));
       }
     }
-  } else if (value->isa<tensor::Tensor>()) {
+  } else if (value->isa<tensor::BaseTensor>()) {
     // Tensor structure: Data is stored continuously.
-    auto tensor = value->cast<tensor::TensorPtr>();
+    auto tensor = value->cast<tensor::BaseTensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     size_t element_size = tensor->DataSize();
     T *data = reinterpret_cast<T *>(tensor->data_c());

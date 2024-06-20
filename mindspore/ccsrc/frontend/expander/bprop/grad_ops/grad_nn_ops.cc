@@ -1060,7 +1060,7 @@ REG_BPROP_BUILDER("LayerNormExt").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   bool is_shape_mutable = true;
   if (normalized_shape_ptr != nullptr &&
       (normalized_shape_ptr->isa<ValueSequence>() || normalized_shape_ptr->isa<Scalar>() ||
-       normalized_shape_ptr->isa<tensor::Tensor>())) {
+       normalized_shape_ptr->isa<tensor::BaseTensor>())) {
     is_shape_mutable = false;
   }
   auto result = ib->Emit(

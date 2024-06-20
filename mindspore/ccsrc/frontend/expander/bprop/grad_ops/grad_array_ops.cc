@@ -479,7 +479,7 @@ bool IsMutable(const NodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   ValuePtr value_ptr = node->BuildValue();
   if (value_ptr != nullptr &&
-      (value_ptr->isa<ValueSequence>() || value_ptr->isa<Scalar>() || value_ptr->isa<tensor::Tensor>())) {
+      (value_ptr->isa<ValueSequence>() || value_ptr->isa<Scalar>() || value_ptr->isa<tensor::BaseTensor>())) {
     return false;
   }
   return true;

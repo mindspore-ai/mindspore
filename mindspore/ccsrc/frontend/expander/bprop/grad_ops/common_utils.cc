@@ -233,7 +233,7 @@ std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vecto
 int64_t GetIntValue(const NodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto value = node->BuildValue();
-  if (value->isa<tensor::Tensor>()) {
+  if (value->isa<tensor::BaseTensor>()) {
     auto t_vec = CheckAndConvertUtils::CheckTensorIntValue("tensor", value, "bprop");
     MS_EXCEPTION_IF_CHECK_FAIL(t_vec.size() >= kIndex1, "Get single tensor value failed");
     return t_vec[kIndex0];
@@ -243,8 +243,8 @@ int64_t GetIntValue(const NodePtr &node) {
 
 std::vector<int64_t> GetIntList(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>()) {
-    auto tensor = value->cast<tensor::TensorPtr>();
+  if (value->isa<tensor::BaseTensor>()) {
+    auto tensor = value->cast<tensor::BaseTensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     tensor->data_sync();
     return CheckAndConvertUtils::CheckTensorIntValue("tensor", value, "bprop");
