@@ -30,6 +30,11 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr int32_t kNum3 = 3;
+constexpr auto kNumberChars = "0123456789";
+}  // namespace
+
 uint64_t GetTimeUs() {
 #ifdef _MSC_VER
   const int sec_to_us = 1000000;
@@ -249,6 +254,37 @@ std::vector<std::string> Tokenize(const std::string &src, const std::string &del
     offset = delimiter;
   }
   return tokens;
+}
+
+std::string GetShortVersionStr(const std::string &str) {
+  size_t first_digit = str.find_first_of(kNumberChars);
+  if (first_digit == std::string::npos) {
+    return "";
+  }
+  auto str_splits = StrSplit(str.substr(first_digit), ".");
+  if (str_splits.size() < kNum3) {
+    return "";
+  }
+  auto str3 = str_splits[kNum3 - 1];
+  size_t last_digit = str3.find_first_not_of(kNumberChars);
+  if (last_digit != std::string::npos) {
+    str_splits[kNum3 - 1] = str3.substr(0, last_digit);
+  }
+  return str_splits[0] + "." + str_splits[1] + "." + str_splits[2];
+}
+
+bool IsVersionGreaterThan(const std::string &str1, const std::string &str2) {
+  auto str1_splits = StrSplit(str1, ".");
+  auto str2_splits = StrSplit(str2, ".");
+  size_t len1 = str1_splits.size();
+  size_t len2 = str2_splits.size();
+  size_t len = std::min(len1, len2);
+  for (size_t i = 0; i < len; ++i) {
+    if (str1_splits[i] != str2_splits[i]) {
+      return std::stoi(str1_splits[i]) > std::stoi(str2_splits[i]);
+    }
+  }
+  return len1 > len2;
 }
 
 #if defined(__ANDROID__) || defined(MS_COMPILE_OHOS)

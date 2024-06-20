@@ -29,6 +29,7 @@
 #include "src/common/prim_util.h"
 #include "src/common/graph_util.h"
 #include "src/common/file_utils.h"
+#include "src/common/utils.h"
 #include "src/tensor.h"
 #include "extendrt/mindir_loader/model_loader.h"
 #include "src/common/mmap_utils.h"
@@ -423,9 +424,11 @@ int LiteModel::GenerateModelByVersion() {
     delete (model_deobf);
   }
 #endif
-  if (this->graph_.version_ != Version()) {
-    MS_LOG(INFO) << "model version is " << this->graph_.version_ << ", inference version is " << Version()
-                 << " not equal";
+  if (IsVersionGreaterThan(GetShortVersionStr(this->graph_.version_), GetShortVersionStr(Version()))) {
+    MS_LOG(WARNING) << "The current model version " << this->graph_.version_
+                    << " is later than the inference engine version " << Version()
+                    << ". Use a converter tool whose version is earlier than or equal to "
+                    << "the inference engine version to convert the model.";
   }
   MS_LOG(INFO) << "MindSpore Lite inference version: " << Version();
   return status;

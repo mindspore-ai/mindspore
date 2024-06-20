@@ -274,6 +274,12 @@ enum RemoveSubStrMode { PREFIX, SUFFIX, ANY };
 // remove redundant character
 std::string RemoveSubStr(const std::string &from, const std::string &sub_str, RemoveSubStrMode mode = ANY);
 
+// match version: x.y.z
+std::string GetShortVersionStr(const std::string &str);
+
+// compare string
+bool IsVersionGreaterThan(const std::string &str1, const std::string &str2);
+
 template <typename T>
 inline Option<T> GenericParseValue(const std::string &value) {
   T ret;

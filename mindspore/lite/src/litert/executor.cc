@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,18 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
     for (auto *tensor : kernel->in_tensors()) {
       CHECK_NULL_RETURN(tensor);
       tensor->set_ref_count(0);
+    }
+  }
+
+  // clear output ref_couont
+  for (auto output_tensor : out_tensors) {
+    CHECK_NULL_RETURN(output_tensor);
+    if (output_tensor->allocator() != nullptr) {
+      output_tensor->DecRefCount();
+    } else {
+      /* user set graph->-output-tensor from outside */
+      output_tensor->set_own_data(false);
+      output_tensor->set_allocator(nullptr);
     }
   }
 

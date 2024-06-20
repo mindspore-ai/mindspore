@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,12 +41,15 @@ int ReshapeKernel::Run() {
     return RET_OK;
   }
 
-  if (in_tensor->data_type() != out_tensor->data_type() || in_tensor->data() == nullptr ||
-      in_tensor->Size() != out_tensor->Size()) {
-    MS_LOG(ERROR) << "NNACL check reshape parameter failed. Kernel: " << name();
+  if (in_tensor->data_type() != out_tensor->data_type()) {
+    MS_LOG(ERROR) << "NNACL check in_tensor and out_tensor dtype failed. Kernel: " << name();
     return RET_ERROR;
   }
 
+  if (in_tensor->data() == nullptr || in_tensor->Size() != out_tensor->Size()) {
+    MS_LOG(ERROR) << "NNACL check in_tensor and out_tensor size failed, Kernel: " << name();
+    return RET_ERROR;
+  }
   return NNACLKernel::OptimizeDataCopy();
 }
 

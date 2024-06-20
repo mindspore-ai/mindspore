@@ -1001,6 +1001,8 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   MS_CHECK_TRUE_MSG(op_parameter != nullptr, RET_ERROR, "op parameter is nullptr.");
   auto op_type = op_parameter->type_;
   if (!KernelRegistry::GetInstance()->SupportKernel(desc)) {
+    MS_LOG(INFO) << "unsupported op_type: " << PrimitiveCurVersionTypeName(op_type)
+                 << ", data_type: " << desc.data_type;
     return RET_NOT_SUPPORT;
   }
   kernel::KernelKey cpu_desc = desc;
