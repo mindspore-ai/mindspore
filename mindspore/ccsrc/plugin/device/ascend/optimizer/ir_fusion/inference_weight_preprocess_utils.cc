@@ -16,6 +16,7 @@
  */
 
 #include "plugin/device/ascend/optimizer/ir_fusion/inference_weight_preprocess_utils.h"
+#include <string>
 #include <memory>
 #include <algorithm>
 
@@ -54,11 +55,17 @@ bool CheckFusionValid(const CNodePtr &matmul, int64_t *k, const int trans_a_pos,
   MS_EXCEPTION_IF_NULL(trans_b_node);
   bool trans_a = GetValue<bool>(trans_a_node);
   bool trans_b = GetValue<bool>(trans_b_node);
-  if (trans_a != false) return false;
-  if (trans_b != true) return false;
+  if (trans_a != false) {
+    return false;
+  }
+  if (trans_b != true) {
+    return false;
+  }
   auto weight_node = inputs[kIndex2]->cast<CNodePtr>();
   auto w_param = GetParamFromLoad(weight_node, false);
-  if (!w_param) return false;
+  if (!w_param) {
+    return false;
+  }
   auto w_type_id = static_cast<TypeId>(w_param->data_type_c());
   if (std::find(valid_dtypes.begin(), valid_dtypes.end(), w_type_id) == valid_dtypes.end()) {
     return false;
@@ -75,7 +82,9 @@ bool CheckFusionValid(const CNodePtr &matmul, int64_t *k, const int trans_a_pos,
     }
   }
   const int shape_num_two = 2;
-  if (origin_shape.size() != shape_num_two) return false;
+  if (origin_shape.size() != shape_num_two) {
+    return false;
+  }
   if (*k == -1) {
     *k = origin_shape[1];
   } else if (*k != origin_shape[1]) {
@@ -93,8 +102,9 @@ void ConcatWeightsToNewTensor(void *data_ptr, const std::vector<void *> &data_c_
   for (int idx = 0; idx < static_cast<int>(data_c_list.size()); idx++) {
     auto count = k_len * n_len_list[idx];
     auto rank_offset = need_rank_offset ? global_rank_id * count : 0;
-    std::memcpy(reinterpret_cast<T *>(data_ptr) + offset, reinterpret_cast<T *>(data_c_list[idx]) + rank_offset,
-                count * data_size);
+    auto byte_size = count * data_size;
+    memcpy_s(reinterpret_cast<T *>(data_ptr) + offset, byte_size, reinterpret_cast<T *>(data_c_list[idx]) + rank_offset,
+             byte_size);
     offset += count;
   }
 }
