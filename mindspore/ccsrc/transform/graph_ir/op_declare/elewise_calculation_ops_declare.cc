@@ -714,9 +714,10 @@ REG_ADPT_DESC(Lerp, prim::kPrimLerp->name(), ADPT_DESC(Lerp))
 
 // IsClose
 INPUT_MAP(IsClose) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
-ATTR_MAP(IsClose) = {{"rtol", ATTR_DESC(rtol, AnyTraits<float>())},
-                     {"atol", ATTR_DESC(atol, AnyTraits<float>())},
-                     {"equal_nan", ATTR_DESC(equal_nan, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(IsClose) = {{3, ATTR_DESC(rtol, AnyTraits<float>())},
+                           {4, ATTR_DESC(atol, AnyTraits<float>())},
+                           {5, ATTR_DESC(equal_nan, AnyTraits<bool>())}};
+ATTR_MAP(IsClose) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(IsClose) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(IsClose, prim::kPrimIsClose->name(), ADPT_DESC(IsClose))
 

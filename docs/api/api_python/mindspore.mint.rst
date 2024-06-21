@@ -208,6 +208,12 @@ Dropout函数
 距离函数
 ^^^^^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.isclose
 
 
 

@@ -30,21 +30,69 @@ using IsClosePtrCreatorFunc =
   std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
 const std::vector<std::pair<KernelAttr, IsClosePtrCreatorFunc>> kernel_attr = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
    CreateIsCloseKernelPtr<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
    CreateIsCloseKernelPtr<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
    CreateIsCloseKernelPtr<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
    CreateIsCloseKernelPtr<int8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
    CreateIsCloseKernelPtr<int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
    CreateIsCloseKernelPtr<int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
    CreateIsCloseKernelPtr<int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
    CreateIsCloseKernelPtr<uint8_t>}};
 }  // namespace
 
@@ -65,13 +113,7 @@ bool IsCloseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
   if (!is_match) {
     return false;
   }
-
-  attr_ptr_->atol = GetValue<float>(primitive_->GetAttr("atol"));
-  attr_ptr_->rtol = GetValue<float>(primitive_->GetAttr("rtol"));
-  attr_ptr_->equal_nan = GetValue<bool>(primitive_->GetAttr("equal_nan"));
-  helper_ptr_ = kernel_attr[index].second(kernel_name_, device_id_);
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
-  helper_ptr_->SetKernelParam(attr_ptr_);
 
   size_t first_rank = inputs[kIndex0]->GetShapeVector().size();
   size_t second_rank = inputs[kIndex1]->GetShapeVector().size();
@@ -99,7 +141,6 @@ bool IsCloseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
     return true;
   }
   for (size_t i = 0; i < inputs.size(); i++) input_shapes.emplace_back(inputs[i]->GetDeviceShapeVector());
-  helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
   if (!is_input_dynamic_shape_.has_value()) {
     bool is_input_dynamic_shape = false;
@@ -124,6 +165,11 @@ int IsCloseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
       return KRET_UNKNOWN_SHAPE;
     }
   }
+  attr_ptr_->rtol = inputs[kIndex2]->GetValueWithCheck<float>();
+  attr_ptr_->atol = inputs[kIndex3]->GetValueWithCheck<float>();
+  attr_ptr_->equal_nan = inputs[kIndex4]->GetValueWithCheck<bool>();
+  helper_ptr_->SetKernelParam(attr_ptr_);
+
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> inpx_shape = inputs.at(kIndex0)->GetShapeVector();
   std::vector<int64_t> inpy_shape = inputs.at(kIndex1)->GetShapeVector();

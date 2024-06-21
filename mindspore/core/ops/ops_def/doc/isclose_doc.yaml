@@ -1,0 +1,36 @@
+isclose:
+  description: |
+    Returns a tensor of Boolean values indicating whether each element of `input`
+    is "close" to the corresponding element of `other`. Closeness is defined as:
+    
+    .. math::
+        |input-other| <= atol + rtol * |other|
+
+    Refer to :func:`mindspore.ops.isclose` for more details.
+
+    Args:
+        rtol(float, optional): Relative tolerance. Default: ``1e-05`` .
+        atol(float, optional): Absolute tolerance. Default: ``1e-08`` .
+        equal_nan(bool, optional): If ``True`` , then two NaNs will be considered equal. Default: ``True`` .
+
+    Inputs:
+        - **input** (Tensor) - First tensor to compare.
+        - **other** (Tensor) - Second tensor to compare.
+
+    Outputs:
+        Tensor, with the same shape as `input` and `other` after broadcasting, its dtype is bool.
+    
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import IsClose
+        >>> input = Tensor(np.array([1.3, 2.1, 3.2, 4.1, 5.1]), mindspore.float16)
+        >>> other = Tensor(np.array([1.3, 3.3, 2.3, 3.1, 5.1]), mindspore.float16)
+        >>> isclose = IsClose()
+        >>> output = isclose(input, other)
+        >>> print(output)
+        [ True False False False  True]

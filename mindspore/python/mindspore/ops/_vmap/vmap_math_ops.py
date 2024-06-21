@@ -63,7 +63,6 @@ def _broadcast_shape(nd, x_ndim, x_shape):
 @vmap_rules_getters.register(P.BitwiseAnd)
 @vmap_rules_getters.register(P.BitwiseOr)
 @vmap_rules_getters.register(P.BitwiseXor)
-@vmap_rules_getters.register(P.IsClose)
 @vmap_rules_getters.register(P.Xlogy)
 @vmap_rules_getters.register(P.ApproximateEqual)
 @vmap_rules_getters.register(P.TruncateDiv)
@@ -884,6 +883,35 @@ def get_logit_vmap_rule(prim_func, axis_size):
         x, x_dim = x_bdim
         eps, _ = eps_bdim
         out = prim_func(x, eps)
+        return out, x_dim
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.IsClose)
+def get_isclose_vmap_rule(prim, axis_size):
+    """VmapRule for `IsClose` operation"""
+
+    def vmap_rule(x_bdim, y_bdim, rtol_bdim, atol_bdim, equal_nan_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, x_bdim, rtol_bdim, atol_bdim, equal_nan_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        y, y_dim = y_bdim
+        rtol, _ = rtol_bdim
+        atol, _ = atol_bdim
+        equal_nan, _ = equal_nan_bdim
+
+        if x_dim == y_dim:
+            out = prim(x, y, rtol, atol, equal_nan)
+            return out, x_dim
+        if y_dim is None:
+            y = _broadcast_by_axis(y, x_dim, axis_size)
+        else:
+            y = mnp.moveaxis(y, y_dim, x_dim)
+
+        out = prim(x, y, rtol, atol, equal_nan)
         return out, x_dim
 
     return vmap_rule

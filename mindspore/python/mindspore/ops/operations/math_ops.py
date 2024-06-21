@@ -40,7 +40,7 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
                              Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
                              FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, DivMod, CumProd,
-                             CumSum, Less, LessEqual, AssignAdd, IsFinite, TanhGrad)
+                             CumSum, Less, LessEqual, AssignAdd, IsFinite, IsClose, TanhGrad)
 
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
@@ -3879,53 +3879,6 @@ class Igammac(Primitive):
     def __init__(self):
         """Initialize Igammac"""
         self.init_prim_io_names(inputs=['a', 'x'], outputs=['z'])
-
-
-class IsClose(Primitive):
-    r"""
-    Returns a tensor of Boolean values indicating whether two input tensors
-    are element-wise equal within a given tolerance.
-
-    Refer to :func:`mindspore.ops.isclose` for more details.
-
-    Args:
-        rtol(float, optional): Relative tolerance. Default: ``1e-05`` .
-        atol(float, optional): Absolute tolerance. Default: ``1e-08`` .
-        equal_nan(bool, optional): If ``True`` , then two NaNs will be considered equal. Default: ``True`` .
-
-    Inputs:
-        - **input** (Tensor) - First tensor to compare, with data type belongs to float32, float16, int32.
-        - **other** (Tensor) - Second tensor to compare, with data type belongs to float32, float16, int32.
-
-    Outputs:
-        Tensor, with the same shape as `input` and `other` after broadcasting, its dtype is bool.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops import IsClose
-        >>> input = Tensor(np.array([1.3, 2.1, 3.2, 4.1, 5.1]), mindspore.float16)
-        >>> other = Tensor(np.array([1.3, 3.3, 2.3, 3.1, 5.1]), mindspore.float16)
-        >>> isclose = IsClose()
-        >>> output = isclose(input, other)
-        >>> print(output)
-        [ True False False False  True]
-    """
-
-    @prim_attr_register
-    def __init__(self, rtol=1e-05, atol=1e-08, equal_nan=True):
-        """Initialize IsClose"""
-        validator.check_value_type('rtol', rtol, [float], self.name)
-        validator.check_value_type('atol', atol, [float], self.name)
-        validator.check_value_type('equal_nan', equal_nan, [bool], self.name)
-        if context.get_context("device_target") == "Ascend" and not equal_nan:
-            raise ValueError("For IsClose, the `equal_nan` must be True on Ascend, but got False.")
-        validator.check_non_negative_float(rtol, 'rtol', self.name)
-        validator.check_non_negative_float(atol, 'atol', self.name)
 
 
 class MatrixSolve(Primitive):
