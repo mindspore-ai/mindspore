@@ -43,7 +43,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
-                                         log, log1p, neg, not_equal, pow, round, isfinite, argmax, mean_ext_op,
+                                         log, log1p, neg, not_equal, pow, round, isfinite, argmax_ext, mean_ext_op,
                                          sum_ext_op, prod_ext_op, all, matrix_inverse_ext)
 from mindspore.ops.auto_generate import tanh
 from mindspore.nn import layer
@@ -11627,7 +11627,7 @@ __all__ = [
     'addcdiv',
     'addcmul',
     'angle',
-    'argmax',
+    'argmax_ext',
     'argmin',
     'arccosh',
     'arcsin',

@@ -54,6 +54,7 @@ from mindspore.ops.operations.array_ops import (
     Lstsq,
     Mvlgamma,
     Tril,
+    Argmax,
     ArgMaxWithValue,
     ArgMinWithValue
 )
@@ -5352,6 +5353,52 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
     return values, indices
 
 
+def argmax(input, dim=None, keepdim=False):
+    """
+    Return the indices of the maximum values of a tensor across a dimension.
+
+    Args:
+        input (Tensor): Input tensor.
+        dim (Union[int, None], optional): The dimension to reduce. If `dim` is ``None`` , the indices of the maximum
+            value within the flattened input will be returned. Default: ``None`` .
+        keepdim (bool, optional): Whether the output tensor retains the specified
+            dimension. Ignored if `dim` is None. Default: ``False`` .
+
+    Returns:
+        Tensor, indices of the maximum values across a dimension.
+
+    Raises:
+        TypeError: If `keepdim` is not bool.
+        ValueError: If `dim` is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
+        >>> output = ops.argmax(x, dim=-1)
+        >>> print(output)
+        [1 0 0]
+    """
+    _check_attr_dtype("keepdim", keepdim, [bool], "argmax")
+    if not input.shape:
+        return Tensor(0)
+    if input.dtype == mstype.bool_:
+        input = input.astype(mstype.int32)
+    is_dim_none = False
+    if dim is None:
+        input = reshape_(input, (-1,))
+        dim = 0
+        is_dim_none = True
+    out = _get_cache_prim(Argmax)(dim, mstype.int64)(input)
+    if keepdim and not is_dim_none:
+        out = expand_dims(out, dim)
+    return out
+
+
+
 def min(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylint: disable=redefined-outer-name
     """
     Calculates the minimum value along with the given axis for the input tensor. It returns the minimum values and
@@ -6800,6 +6847,7 @@ __all__ = [
     'index_select',
     'index_select_ext',
     'max',
+    'argmax',
     'min',
     'unsorted_segment_sum',
     'population_count',

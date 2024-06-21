@@ -114,7 +114,7 @@ from mindspore.ops.functional import any as any_ext
 from mindspore.ops.auto_generate import add_ext
 
 # 42
-from mindspore.ops.functional import argmax
+from mindspore.ops.functional import argmax_ext as argmax
 # 43
 from mindspore.ops.auto_generate import cat as cat_ext
 
