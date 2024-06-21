@@ -23,6 +23,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -78,5 +79,52 @@ int32_t OneHotExtFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   return OP_CHECK_SUCCESS;
 }
 
+TypePtrList OneHotExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->Dtype()};
+}
+
+ShapeArray OneHotExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &in_shape = x_tensor->shape();
+  if (std::any_of(in_shape.begin(), in_shape.end(), [](int64_t s) { return s == 0; })) {
+    MS_LOG(EXCEPTION) << "Shape of input should not contain 0, bug got shape: " << in_shape;
+  }
+
+  ShapeVector output_shape = in_shape;
+  if (IsDynamicRank(output_shape)) {
+    return {output_shape};
+  }
+  const auto &depth_ = input_values[kInputIndex1];
+  auto depth_opt = GetScalarValue<int64_t>(depth_);
+  int64_t depth_value;
+  if (!depth_opt.has_value()) {
+    depth_value = abstract::Shape::kShapeDimAny;
+  } else {
+    depth_value = depth_opt.value();
+    MS_CHECK_VALUE(depth_value >= -1, CheckAndConvertUtils::FormatCheckIntegerMsg("num_classes value", depth_value,
+                                                                                  kGreaterEqual, -1, primitive));
+  }
+  const auto &axis_ = input_values[kInputIndex4];
+  auto axis_opt = GetScalarValue<int64_t>(axis_);
+  if (!axis_opt.has_value()) {
+    output_shape = ShapeVector(in_shape.size() + 1, abstract::Shape::kShapeDimAny);
+  } else {
+    int64_t axis_value = axis_opt.value();
+    auto in_shape_size = SizeToLong(in_shape.size());
+    MS_CHECK_VALUE(axis_value >= -1 && axis_value <= in_shape_size,
+                   CheckAndConvertUtils::FormatCheckInRangeMsg("axis value", axis_value, kIncludeBoth,
+                                                               {-1, in_shape_size}, primitive));
+    if (axis_value >= 0) {
+      (void)output_shape.insert(output_shape.begin() + axis_value, depth_value);
+    } else {
+      output_shape.push_back(depth_value);
+    }
+  }
+  return {output_shape};
+}
+REGISTER_SIMPLE_INFER(kNameOneHotExt, OneHotExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
