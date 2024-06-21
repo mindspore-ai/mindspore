@@ -768,6 +768,12 @@ void GenerateTopGraphParams(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *par
       MS_LOG(DEBUG) << "exist: " << parameter_name;
     } else {
       auto fv = top_func_graph->AddFvParameter(parameter_name, parse::GetParameterValue(value));
+      auto context = parallel::ParallelContext::GetInstance();
+      if (context != nullptr && fv->has_default()) {
+        auto fv_abs = pipeline::GetDefaultValueAbstract(fv);
+        context->ParallelParameterContextRestoreShape(top_func_graph, fv, fv_abs);
+        fv->set_abstract(fv_abs);
+      }
       MS_LOG(DEBUG) << "New: " << parameter_name;
       params->push_back(fv);
     }
