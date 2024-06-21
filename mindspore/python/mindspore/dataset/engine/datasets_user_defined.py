@@ -252,11 +252,8 @@ class SamplerFn:
             self._log_stuck_warning(self.workers[i % self.num_worker], cost_time)
         return wait_count
 
-    def process(self, indices):
-        """
-        The main process, start the child process or child thread, and fill the index queue.
-        Get the result and return.
-        """
+    def _check_and_start_process(self):
+        """Check the idx_queue and start the process"""
         for w in self.workers:
             # Check whether the queue of the subprocess is empty.
             if not w.queue_empty():
@@ -270,7 +267,20 @@ class SamplerFn:
                         continue
             # Start all workers
             if not w.is_alive():
-                w.start()
+                try:
+                    w.start()
+                except RuntimeError as e:
+                    # the worker may be being started.
+                    if w._started.is_set():  # pylint: disable=W0212
+                        continue
+                    raise e
+
+    def process(self, indices):
+        """
+        The main process, start the child process or child thread, and fill the index queue.
+        Get the result and return.
+        """
+        self._check_and_start_process()
 
         # Fill initial index queues
         idx_cursor = 0
