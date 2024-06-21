@@ -14,6 +14,7 @@
 # ============================================================================
 """A singleton implement in python"""
 
+
 class Singleton:
     """A singleton implement"""
 

@@ -321,11 +321,11 @@ def combine_stream_task_id(stream_id, task_id):
 
 
 def get_newest_file(file_list):
-    '''
+    """
     Find the newest files
     :param file_list:
     :return:
-    '''
+    """
     newest_file_list = []
     newest_timestamp = '0'
     for file_path in file_list:
@@ -338,6 +338,7 @@ def get_newest_file(file_list):
 
     newest_file_list.sort()
     return newest_file_list
+
 
 class ProfilerPathManager:
     """A path manager to manage profiler path"""

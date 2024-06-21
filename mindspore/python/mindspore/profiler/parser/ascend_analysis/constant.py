@@ -21,6 +21,8 @@ class Constant:
     HOST_TO_DEVICE = "HostToDevice"
     START_FLOW = "s"
     END_FLOW = "f"
+    META_EVENT = 'M'
+    COMPLETE_EVENT = 'X'
     FLOW_OP = "flow"
     INVALID_FLOW_ID = 18446744073709551615
 

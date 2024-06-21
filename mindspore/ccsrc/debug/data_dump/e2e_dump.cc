@@ -292,7 +292,12 @@ void E2eDump::DumpArgsSingleNode(const CNodePtr &node, const std::string &dump_p
 
   constexpr int kJsonIndent = 4;
   std::string file_path = dump_path + op_t + "." + scope_name + ".json";
-  std::ofstream outFile(file_path);
+  auto realpath = Common::CreatePrefixPath(file_path);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get realpath failed, path=" << file_path;
+    return;
+  }
+  std::ofstream outFile(realpath.value());
   outFile << json.dump(kJsonIndent);
   outFile.close();
 }
