@@ -71,7 +71,17 @@ class AclDataDumper : public DataDumper {
         for (const auto &s : all_kernel_names) {
           if (std::regex_search(s, kernel_reg)) {
             target_kernel_names.emplace_back(s);
+            dump_parser.MatchKernel(iter->first);
           }
+        }
+      }
+    }
+
+    auto kernels_strs = dump_parser.GetKernelStrs();
+    for (auto iter = kernels_strs.begin(); iter != kernels_strs.end(); iter++) {
+      for (const auto &s : all_kernel_names) {
+        if (iter->first == s) {
+          dump_parser.MatchKernel(iter->first);
         }
       }
     }

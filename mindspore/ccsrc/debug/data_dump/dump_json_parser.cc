@@ -745,6 +745,10 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
     auto kernel_str = kernel.dump();
     MS_LOG(INFO) << "Need dump kernel:" << kernel_str;
     kernel_str.erase(std::remove(kernel_str.begin(), kernel_str.end(), '\"'), kernel_str.end());
+    kernel_str.erase(std::remove(kernel_str.begin(), kernel_str.end(), ' '), kernel_str.end());
+    if (kernel_str == "") {
+      continue;
+    }
     if (static_cast<int>(kernel_str.find("name-regex(")) == 0 &&
         static_cast<int>(kernel_str.rfind(")")) == static_cast<int>(kernel_str.length()) - kBracketsOffset) {
       std::string kernel_reg_exp = kernel_str.substr(
@@ -767,6 +771,10 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
     kernel_strings_.try_emplace({kernel_str, 0});
     if (!ret) {
       MS_LOG(WARNING) << "Duplicate dump kernel name:" << kernel_str;
+    }
+    if (kernel_strings_.empty()) {
+      kernel_types_.try_emplace({"", 0});
+      kernel_strings_.try_emplace({"", 0});
     }
   }
 }
