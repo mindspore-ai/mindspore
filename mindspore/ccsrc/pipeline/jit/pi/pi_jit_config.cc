@@ -83,6 +83,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"pijit_forbidden", &GraphJitConfig::AddJitForbidden},
   {"pijit_constexpr", &GraphJitConfig::AddJitConstexpr},
   {"relax_guard_func", &GraphJitConfig::AddJitRelaxGuard},
+  {"jit_level", &GraphJitConfig::AddJitLevel},
 };
 
 GraphJitConfig::GraphJitConfig() {
@@ -95,7 +96,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kPrintCFG - kBoolConf] = false;
   bool_conf[kInterpretCapturedCode - kBoolConf] = false;
   bool_conf[kCompileWithoutCapture - kBoolConf] = false;
-  bool_conf[kCompileWithTry - kBoolConf] = false;
+  bool_conf[kCompileWithTry - kBoolConf] = true;
   bool_conf[kGuardSpecializeScalar - kBoolConf] = true;
   bool_conf[kGuardSpecializeContainer - kBoolConf] = false;
   bool_conf[kGuardSpecializeTensor - kBoolConf] = false;
@@ -140,6 +141,8 @@ GraphJitConfig::GraphJitConfig() {
   int_conf[kGuardRelaxCount - kIntConf] = 0;
 
   allowed_inline_modules_.insert("mindspore");
+
+  jit_level = "O0";
 }
 
 static py::object GetObjectsMap() {
@@ -185,6 +188,21 @@ bool GraphJitConfig::AddJitForbidden(PyObject *list) {
   return AddToFuncMap(list, kFuncMapName, "FUNC_KEY_PIJIT_FORBIDDEN");
 }
 
+bool GraphJitConfig::AddJitLevel(PyObject *str) {
+  if (py::isinstance<py::str>(str)) {
+    py::str jit_level_obj = py::cast<py::str>(str);
+    auto jit_level_str = py::cast<std::string>(jit_level_obj);
+    if (jit_level_str != "O0" && jit_level_str != "O1" && jit_level_str != "O2") {
+      return false;
+    }
+    jit_level = jit_level_str;
+    return true;
+  }
+  return false;
+}
+
+std::string GraphJitConfig::getJitLevel() const { return jit_level; }
+
 bool GraphJitConfig::AddJitConstexpr(PyObject *list) {
   return AddToFuncMap(list, kFuncMapName, "FUNC_KEY_PIJIT_CONSTEXPR");
 }
@@ -214,7 +232,7 @@ bool GraphJitConfig::AddAllowedInlineModules(PyObject *list) {
 }
 
 void GraphJitConfig::AddAllowedInlineModules(const std::string &module_name) {
-  allowed_inline_modules_.insert(module_name);
+  kPIJitConfigDefault.allowed_inline_modules_.insert(module_name);
 }
 
 bool GraphJitConfig::SetAutoJitFilter(PyObject *callable) {

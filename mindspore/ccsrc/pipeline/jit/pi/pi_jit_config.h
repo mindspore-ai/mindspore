@@ -96,6 +96,8 @@ class GraphJitConfig {
   bool AddJitConstexpr(PyObject *callable_list);
   bool AddJitForbidden(PyObject *callable_list);
   bool AddAllowedInlineModules(PyObject *str_list);
+  std::string getJitLevel() const;
+  bool AddJitLevel(PyObject *str);
 
   template <Options o>
   bool SetBool(PyObject *value) {
@@ -122,6 +124,7 @@ class GraphJitConfig {
   std::set<std::string> allowed_inline_modules_;
   int int_conf[kOptionsCount - kIntConf];
   bool bool_conf[kIntConf - kBoolConf];
+  std::string jit_level;
 };
 
 extern GraphJitConfig kPIJitConfigDefault;

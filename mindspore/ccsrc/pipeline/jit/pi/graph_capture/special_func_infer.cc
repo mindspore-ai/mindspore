@@ -520,7 +520,7 @@ static bool GuardIsInstance(CallNode *call_node) {
   if (cnst != nullptr && cnst->type() != nullptr) {
     constexpr int second_arg = 2;
     auto success = graph->GuardValueNode(call_node->input(second_arg));
-    if (!success && (kPIJitConfigDefault.getIntConfig(GraphJitConfig::kGuardRelaxCount) > 0)) {
+    if (!success && (call_node->GetGraph()->Config().getIntConfig(GraphJitConfig::kGuardRelaxCount) > 0)) {
       TracePtr tr = graph->TraceValueNode(call_node->input(second_arg));
       if (tr == nullptr) {
         return true;
@@ -529,7 +529,7 @@ static bool GuardIsInstance(CallNode *call_node) {
     return success;
   }
   auto success = graph->GuardValueNode(call_node);
-  if (!success && (kPIJitConfigDefault.getIntConfig(GraphJitConfig::kGuardRelaxCount) > 0)) {
+  if (!success && (call_node->GetGraph()->Config().getIntConfig(GraphJitConfig::kGuardRelaxCount) > 0)) {
     TracePtr tr = graph->TraceValueNode(call_node);
     if (tr == nullptr) {
       return true;

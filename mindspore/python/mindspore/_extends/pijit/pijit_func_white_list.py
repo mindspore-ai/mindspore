@@ -84,12 +84,14 @@ def _get_primexpr_code():
 def _pijit_constexpr():
     """Placeholder for uniqure id"""
 
+
 def _get_pijit_constexpr_code():
     codes = []
     for cnst in validator.check_transpose_axis.__code__.co_consts:
         if isinstance(cnst, types.CodeType) and cnst.co_name == "_check_dim":
             codes.append(cnst)
     return codes
+
 
 def _get_ms_api():
     """Get ms api"""

@@ -1320,6 +1320,10 @@ bool GraphBuilder::DoCompare(const Instr &instr) {
         PyErr_Clear();
       } else if (l->GetVobj()->GetType() == AObject::kTypeTensor || r->GetVobj()->GetType() == AObject::kTypeTensor) {
         o = l->GetVobj()->GetType() == AObject::kTypeTensor ? l->GetVobj() : r->GetVobj();
+        auto tensor_type = py::reinterpret_borrow<py::object>(GetMsTensorType());
+        py::object dtype_bool = Utils::GetModuleAttr("mindspore.common.dtype", "bool_");
+        auto result_tensor = tensor_type(o->GetPyObject(), dtype_bool);
+        o = AObject::Convert(result_tensor);
       } else {
         o = AObject::MakeAObject(AObject::kTypeBool);
       }
@@ -3080,7 +3084,7 @@ bool IsSatisfyPruneLimit(int cond, Graph *graph_, ValueNode *cond_node) {
   }
   auto tr = graph_->TraceValueNode(cond_node);
   if (tr == nullptr) {
-    if (kPIJitConfigDefault.getIntConfig(GraphJitConfig::kGuardRelaxCount) > 0) {
+    if (graph_->Config().getIntConfig(GraphJitConfig::kGuardRelaxCount) > 0) {
       PyObject *bool_value = cond_node->GetVobj()->GetPyObject().ptr();
       if ((bool_value == Py_True || bool_value == Py_False) && TryGuardEscape(cond_node)) {
         return true;
