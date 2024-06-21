@@ -38,10 +38,20 @@ void Init_MSC_VER_kernels(void) {
   return;
 }
 
+bool checkOpValid(int opType) {
+  if (opType < PrimType_MIN || opType >= PrimType_MAX) {
+    return false;
+  }
+  return true;
+}
+
 bool SupportKernelC(int opType, int dataType) {
   Init_MSC_VER_kernels();
   const int length = 16;
   if (REGIST_DT(dataType) < 0 || REGIST_DT(dataType) >= length) {
+    return false;
+  }
+  if (!checkOpValid(opType)) {
     return false;
   }
   KernelCreator creator = g_kernelCreatorRegistry[opType][REGIST_DT(dataType)];
@@ -78,6 +88,9 @@ KernelBase *CreateKernel(OpParameter *param, TensorC **ins, size_t in_size, Tens
                          int data_type, ExecEnv *env) {
   Init_MSC_VER_kernels();
   if (param == NULL) {
+    return NULL;
+  }
+  if (!checkOpValid(param->type_)) {
     return NULL;
   }
 

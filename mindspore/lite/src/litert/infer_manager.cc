@@ -231,7 +231,10 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
         return tensor_ret;
       }
     } else {
-      if (out_tensors.at(i)->data_ != nullptr) {
+      // During the online phase of shape operator fusion, the output data is computed in advance during the infer shape
+      // stage. Therefore, the output data is not nullptr and is constant.
+      if (parameter->type_ == static_cast<int>(PrimType::PrimType_Inner_ShapeFusion) &&
+          out_tensors.at(i)->data_ != nullptr) {
         outputs.at(i)->set_own_data(true);
         outputs.at(i)->set_category(CONST_TENSOR);
       }
