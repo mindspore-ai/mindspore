@@ -179,6 +179,7 @@ mindspore.mint.nn.functional
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.binary_cross_entropy
     mindspore.mint.nn.functional.leaky_relu
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
