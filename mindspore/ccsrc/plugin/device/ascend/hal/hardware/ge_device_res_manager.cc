@@ -181,48 +181,59 @@ size_t GeDeviceResManager::GetTotalMemStatistics() const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->GetTotalMemStatistics();
 }
+
 size_t GeDeviceResManager::GetTotalUsedMemStatistics() const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->GetTotalUsedMemStatistics();
 }
+
 size_t GeDeviceResManager::GetTotalIdleMemStatistics() const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->GetTotalIdleMemStatistics();
 }
+
 size_t GeDeviceResManager::GetTotalEagerFreeMemStatistics() const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->GetTotalEagerFreeMemStatistics();
 }
+
 size_t GeDeviceResManager::GetUsedMemPeakStatistics() const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->GetUsedMemPeakStatistics();
 }
+
 size_t GeDeviceResManager::GetReservedMemPeakStatistics() const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->GetReservedMemPeakStatistics();
 }
+
 std::unordered_map<std::string, std::size_t> GeDeviceResManager::GetBlockCountsStatistics() const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->GetBlockCountsStatistics();
 }
+
 std::unordered_map<std::string, std::size_t> GeDeviceResManager::GetBlockUnitSizeStatistics() const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->GetBlockUnitSizeStatistics();
 }
+
 std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
 GeDeviceResManager::GetCommonMemBlocksInfoStatistics() const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->GetCommonMemBlocksInfoStatistics();
 }
+
 std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
 GeDeviceResManager::GetPersistentMemBlocksInfoStatistics() const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->GetPersistentMemBlocksInfoStatistics();
 }
+
 void GeDeviceResManager::ResetMaxMemoryReserved() const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->ResetMaxMemoryReserved();
 }
+
 void GeDeviceResManager::ResetMaxMemoryAllocated() const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->ResetMaxMemoryAllocated();
