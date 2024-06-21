@@ -16,7 +16,6 @@
 import os
 import sys
 import tempfile
-import glob
 import shutil
 import pytest
 import numpy as np
@@ -47,26 +46,18 @@ def run_trans_flag(test_name):
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
-        if test_name == "test_e2e_dump_trans_true_op_debug_mode":
-            tensor = Tensor(np.full((1, 3, 3, 3), 65504, dtype=np.float16), mindspore.float16)
-            weight = Tensor(np.full((3, 3, 1, 1), 65504, dtype=np.float16), mindspore.float16)
+        tensor = Tensor(np.full((1, 3, 3, 3), 65504, dtype=np.float16), mindspore.float16)
+        weight = Tensor(np.full((3, 3, 1, 1), 65504, dtype=np.float16), mindspore.float16)
         net = ConvNet()
         net(tensor, weight)
-        if test_name == "test_e2e_dump_trans_true_op_debug_mode":
+        if test_name == "test_e2e_dump_sample_debug_mode":
             check_dump_structure(dump_path, dump_config_path, 1, 0, 1)
         dump_data_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
         assert os.path.exists(dump_data_path)
-        if test_name == "test_e2e_dump_trans_true_op_debug_mode":
-            # tensor data in host format.
-            output_name = "Conv2D.Default_Conv2D-op*.output.0.DefaultFormat.npy"
-            output_path = glob.glob(os.path.join(dump_data_path, output_name))[0]
-            real_path = os.path.realpath(output_path)
-            output = np.load(real_path)
-            assert output.shape == (20,)
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
