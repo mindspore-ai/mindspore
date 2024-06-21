@@ -53,11 +53,13 @@ Array操作
     :template: classtemplate.rst
 
     mindspore.mint.abs
+    mindspore.mint.add
     mindspore.mint.cumsum
     mindspore.mint.unique
     mindspore.mint.div
     mindspore.mint.divide
     mindspore.mint.floor
+    mindspore.mint.sub
 
 
 BLAS和LAPACK运算
