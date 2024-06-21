@@ -47,8 +47,7 @@ static const std::set<std::string> SUPPORT_NEW_SHAPEBASE_OPS = {VIRTUAL_DATA_SET
                                                                 GROUPED_MATMUL};
 // op list for allreduce pull down
 static const std::set<std::string> ALLREDUCE_PULL_DOWN_WHITE_LIST = {
-  STRIDED_SLICE, TUPLE_GETITEM_OP, RESHAPE, TRANSPOSE, MIRROR_OPERATOR, ADD, MUL, DIV, GATHERV2, PRELU, RELU, SILU,
-  GELU,          FAST_GELU};
+  TUPLE_GETITEM_OP, RESHAPE, TRANSPOSE, MIRROR_OPERATOR, ADD, MUL, DIV, GATHERV2};
 
 const int64_t TWO_INPUT_SIZE = 2;
 
