@@ -50,6 +50,9 @@ void AoeUtil::Initialize() {
   }
   if (IsAscendServer()) {
     std::string ascend_path = GetAscendPath();
+    auto ld_library_path = common::GetEnv("LD_LIBRARY_PATH");
+    ld_library_path = ascend_path + "lib64:" + ld_library_path;
+    common::SetEnv("LD_LIBRARY_PATH", ld_library_path.c_str());
     std::string aoe_plugin_path = "lib64/libaoe_tuning.so";
     auto plugin_path = ascend_path + aoe_plugin_path;
     auto ret = access(plugin_path.c_str(), F_OK);
