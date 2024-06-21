@@ -1,0 +1,40 @@
+softplus_ext:
+    description: |
+        Applies softplus function to `input` element-wise.
+
+        The softplus function is shown as follows, x is the element of `input` :
+
+        .. math::
+
+            \text{output} = \frac{1}{beta}\log(1 + \exp(\text{beta * x}))
+        
+        where :math:`input * beta > threshold`, the implementation converts to the linear function to ensure numerical stability.
+    
+        Args:
+            input (Tensor): Tensor of any dimension. Supported dtypes: 
+
+                - Ascend: float16, float32, bfloat16.
+            beta (number.Number, optional): Scaling parameters in the softplus function. Default: ``1`` .
+            threshold (number.Number, optional): For numerical stability, the softplus function is converted 
+                to a threshold parameter of a linear function. Default: ``20`` .
+    
+        Returns:
+            Tensor, with the same type and shape as the input.
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            TypeError: If dtype of `input` is not float16, float32, bfloat16.
+    
+        Supported Platforms:
+            ``Ascend`` 
+    
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([0.1, 0.2, 30, 25]), mindspore.float32)
+            >>> output = ops.softplus_ext(input)
+            >>> print(output)
+            [0.74439657 0.7981388 30. 25.]
+        
+        

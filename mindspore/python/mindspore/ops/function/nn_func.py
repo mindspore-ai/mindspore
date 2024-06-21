@@ -45,7 +45,7 @@ from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, f
 from mindspore.ops.auto_generate import group_norm_op, layer_norm_ext_op, batch_norm_ext_op
 from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op,
                                          replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
-                                         constant_pad_nd_op, dropout_ext_op, reverse_v2_impl)
+                                         constant_pad_nd_op, dropout_ext_op, reverse_v2_impl, softplus_ext)
 from mindspore.ops.auto_generate.gen_ops_prim import embedding_op, Convolution
 from mindspore.common.generator import default_generator
 
@@ -3241,51 +3241,6 @@ def softplus(input, beta=1, threshold=20): # pylint:disable=redefined-outer-name
     scaling_input = beta * input
     op_output = (1 / beta) * softplus_(scaling_input)
     return ops.select(input * beta > threshold, input, op_output)
-
-
-def softplus_ext(input, beta=1, threshold=20): # pylint:disable=redefined-outer-name
-    r"""
-    Applies softplus function to `input` element-wise.
-
-    The softplus function is shown as follows, x is the element of `input` :
-
-    .. math::
-
-        \text{output} = \frac{1}{beta}\log(1 + \exp(\text{beta * x}))
-
-    When :math:`input * beta > threshold`, the implementation converts to the linear function
-    to ensure numerical stability.
-
-    Args:
-        input (Tensor) - Tensor of any dimension.
-            Supported dtypes:
-
-            - Ascend: float16, float32, bfloat16
-
-        beta (number, optional) - The :math:`\beta` value in softplus function. Default: ``1`` .
-        threshold (number, optional) - When :math:`input * beta > threshold`, converting softplus to a linear function.
-            Default: ``20`` .
-
-    Returns:
-        Tensor, with the same type and shape as the `input` .
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If the dtype of `input` is not float16, float32, bfloat16.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, mint
-        >>> input = Tensor(np.array([0.1, 0.2, 30, 25]), mindspore.float32)
-        >>> output = mint.softplus(input)
-        >>> print(output)
-        [0.74439657 0.7981388 30. 25.]
-    """
-    return _get_cache_prim(ops.auto_generate.SoftplusExt)()(input, beta, threshold)
 
 
 def selu(input_x):
@@ -8216,6 +8171,7 @@ __all__ = [
     'group_norm',
     'dropout_ext',
     'softmax_ext',
+    'softplus_ext',
     'avg_pool2d_ext',
 ]
 __all__.sort()

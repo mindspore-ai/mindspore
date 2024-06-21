@@ -58,6 +58,7 @@ Array操作
     mindspore.mint.unique
     mindspore.mint.div
     mindspore.mint.divide
+    mindspore.mint.erf
     mindspore.mint.floor
     mindspore.mint.sub
 
@@ -178,6 +179,7 @@ mindspore.mint.nn.functional
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
     mindspore.mint.nn.functional.softmax
+    mindspore.mint.nn.functional.softplus
 
 
 

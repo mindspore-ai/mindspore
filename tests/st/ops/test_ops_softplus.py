@@ -16,7 +16,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops
-from mindspore.mint import softplus
+from mindspore.mint.nn.functional import softplus
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
@@ -42,8 +42,8 @@ def softplus_backward_func(x, beta=1, threshold=20):
 
 
 @test_utils.run_with_cell
-def softplusinv_vmap_func(x, beta=1, threshold=20):
-    return ops.vmap(softplus_forward_func)(x, beta, threshold)
+def softplus_vmap_func(x, beta=1, threshold=20):
+    return ops.vmap(softplus_forward_func, in_axes=(0, None, None), out_axes=0)(x, beta, threshold)
 
 
 @pytest.mark.level0
@@ -110,6 +110,29 @@ def test_ops_softplus_backward(context_mode):
     output2 = softplus_backward_func(ms.Tensor(x), 0.2, 0.2)
     expect2 = np.array([0.50499983, 0.5099986, 0.5149955, 0.5498339, 1.00000]).astype(np.float32)
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_softplus_vmap(context_mode):
+    """
+    Feature: pyboost function.
+    Description: test function softplus vmap feature.
+    Expectation: expect correct result.
+    """
+    os.environ['GRAPH_OP_RUN'] = '1'
+    ms.context.set_context(mode=context_mode)
+    x = generate_random_input((2, 3, 4, 5), np.float32)
+    output = softplus_vmap_func(ms.Tensor(x))
+    expect = generate_expect_forward_output(x)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
+
+    output2 = softplus_vmap_func(ms.Tensor(x), 2, 12)
+    expect2 = generate_expect_forward_output(x, 2, 12)
+    np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
+    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level0
