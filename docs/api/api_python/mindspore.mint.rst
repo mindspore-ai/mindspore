@@ -24,7 +24,9 @@ Array操作
 
     mindspore.mint.eye
     mindspore.mint.ones
+    mindspore.mint.ones_like
     mindspore.mint.zeros
+    mindspore.mint.zeros_like
 
 索引、切分、连接、突变运算
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -25,7 +25,9 @@ Creation Operations
 
     mindspore.mint.eye
     mindspore.mint.ones
+    mindspore.mint.ones_like
     mindspore.mint.zeros
+    mindspore.mint.zeros_like
 
 Indexing, Slicing, Joining, Mutating Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
