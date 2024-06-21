@@ -559,6 +559,7 @@ from .nn_func import (
     group_norm,
     dropout_ext,
     softmax_ext,
+    softplus_ext,
     avg_pool2d_ext,
 )
 from .linalg_func import (

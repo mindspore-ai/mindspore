@@ -206,7 +206,7 @@ from mindspore.ops.function.nn_func import avg_pool2d_ext as avg_pool2d
 # 92
 from mindspore.ops.extend import leaky_relu_ext as leaky_relu
 # 93
-from mindspore.ops.function.nn_func import softplus_ext as softplus
+from mindspore.ops.function.nn_func import softplus_ext as softplus # pylint: disable=W0611
 # 94
 from mindspore.ops.function.math_func import tanh
 # 95
@@ -418,7 +418,7 @@ __all__ = [
     # 92
     'leaky_relu',
     # 93
-    'softplus',
+
     # 94
     'tanh',
     # 95

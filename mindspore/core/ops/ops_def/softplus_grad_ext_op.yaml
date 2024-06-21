@@ -7,11 +7,9 @@ softplus_grad_ext:
             dtype: tensor
         beta:
             dtype: number
-            type_cast: tensor
             default: 1
         threshold:
             dtype: number
-            type_cast: tensor
             default: 20
     returns:
         output:
