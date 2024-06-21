@@ -15,9 +15,7 @@
  */
 #include "plugin/device/gpu/kernel/nn/binary_cross_entropy_grad_kernel.h"
 #include <map>
-#include "mindspore/core/ops/grad/binary_cross_entropy_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/loss_with_reduction_impl.cuh"
-#include "ops/binary_cross_entropy.h"
 #include "ops/op_name.h"
 
 namespace mindspore {
@@ -46,6 +44,14 @@ void BinaryCrossEntropyGradGpuKernelMod::LaunchKernel(const std::vector<KernelTe
   if (inputs[kIndex3]->type_id() != kMetaTypeNone) {
     weight = GetDeviceAddress<T>(inputs, kIndex3);
   }
+  auto reduction = static_cast<Reduction>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
+  if (reduction == Reduction::NONE) {
+    reduction_ = ReductionMode::kNone;
+  } else if (reduction == Reduction::MEAN) {
+    reduction_ = ReductionMode::kMean;
+  } else {
+    reduction_ = ReductionMode::kSum;
+  }
   T *dx = GetDeviceAddress<T>(outputs, kIndex0);
   if (input_size_ > 0) {
     auto status = BinaryCrossEntropyLossGrad(input_size_, reduction_, input_x, input_y, weight, dloss, dx,
@@ -63,14 +69,6 @@ bool BinaryCrossEntropyGradGpuKernelMod::Init(const std::vector<KernelTensor *> 
   }
 
   dtype_ = inputs[kIndex0]->dtype_id();
-  const auto reduction = ops::BinaryCrossEntropy::get_reduction(primitive_->GetAttr(ops::kReduction));
-  if (reduction == Reduction::NONE) {
-    reduction_ = ReductionMode::kNone;
-  } else if (reduction == Reduction::MEAN) {
-    reduction_ = ReductionMode::kMean;
-  } else {
-    reduction_ = ReductionMode::kSum;
-  }
   return true;
 }
 
@@ -91,12 +89,14 @@ std::vector<KernelAttr> BinaryCrossEntropyGradGpuKernelMod::GetOpSupport() {
                                                        .AddInputAttr(kNumberTypeFloat16)
                                                        .AddInputAttr(kNumberTypeFloat16)
                                                        .AddOptionalInputAttr(kNumberTypeFloat16)
+                                                       .AddInputAttr(kNumberTypeInt64)
                                                        .AddOutputAttr(kNumberTypeFloat16),
                                                      KernelAttr()
                                                        .AddInputAttr(kNumberTypeFloat32)
                                                        .AddInputAttr(kNumberTypeFloat32)
                                                        .AddInputAttr(kNumberTypeFloat32)
                                                        .AddOptionalInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeInt64)
                                                        .AddOutputAttr(kNumberTypeFloat32)};
   return kernel_attr_list;
 }

@@ -37,7 +37,8 @@ from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6, Dense, Tanh
                              ApplyRotaryPosEmb, PagedAttention, PagedAttentionMask, ReshapeAndCache,
                              FlashAttentionScore, Embedding, UpsampleNearest1D, UpsampleNearest2D,
                              UpsampleNearest3D, UpsampleTrilinear3D,
-                             UpsampleBilinear2D, UpsampleLinear1D)
+                             UpsampleBilinear2D, UpsampleLinear1D,
+                             BinaryCrossEntropy)
 from .manually_defined import BatchNorm
 
 
@@ -4409,86 +4410,6 @@ class KLDivLoss(Primitive):
             raise ValueError(f"'{self.name}' unknown device target: '{device_target}'")
 
         self.reduction = validator.check_string(reduction, support_mode, 'reduction', self.name)
-
-
-class BinaryCrossEntropy(Primitive):
-    r"""
-    Computes the binary cross entropy between the logits and the labels.
-
-    Sets logits as :math:`x`, labels as :math:`y`, output as :math:`\ell(x, y)`.
-    Let,
-
-    .. math::
-        L = \{l_1,\dots,l_N\}^\top, \quad
-        l_n = - w_n \left[ y_n \cdot \log x_n + (1 - y_n) \cdot \log (1 - x_n) \right]
-
-    In which, :math:`L` indicates the loss of all batch_sizes, :math:`l` indicates the loss of one batch_size,
-    and n indicates one batch_size in the 1-N range, :math:`w_n` indicates the
-    weight of :math:`n`-th batch of binary cross entropy. Then,
-
-    .. math::
-        \ell(x, y) = \begin{cases}
-        L, & \text{if reduction} = \text{'none';}\\
-        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
-        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
-        \end{cases}
-
-    .. warning::
-        - The value of :math:`x` must range from 0 to 1.
-
-    Args:
-        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
-            ``'sum'`` . Default: ``'mean'`` .
-
-            - ``'none'``: no reduction will be applied.
-            - ``'mean'``: compute and return the weighted mean of elements in the output.
-            - ``'sum'``: the output elements will be summed.
-
-    Inputs:
-        - **logits** (Tensor) - The predictive value whose data type must be float16 or float32,
-          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **labels** (Tensor) - The target value which has the same shape and data type as `logits`.
-        - **weight** (Tensor, optional) - A rescaling weight applied to the loss of each batch element.
-          And it must have the same shape and data type as `logits`. Default: ``None`` .
-
-    Outputs:
-        Tensor or Scalar. Returns Tensor that has the same dtype and shape as `logits` if `reduction` is 'none'.
-        Otherwise, returns a scalar Tensor.
-
-    Raises:
-        TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 nor float32.
-        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
-        ValueError: If shape of `labels` is not the same as `logits` or `weight` (if given).
-        TypeError: If `logits`, `labels` or `weight` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, nn, ops
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.binary_cross_entropy = ops.BinaryCrossEntropy()
-        ...     def construct(self, logits, labels, weight):
-        ...         result = self.binary_cross_entropy(logits, labels, weight)
-        ...         return result
-        ...
-        >>> net = Net()
-        >>> logits = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
-        >>> labels = Tensor(np.array([0., 1., 0.]), mindspore.float32)
-        >>> weight = Tensor(np.array([1, 2, 2]), mindspore.float32)
-        >>> output = net(logits, labels, weight)
-        >>> print(output)
-        0.38240486
-    """
-
-    @prim_attr_register
-    def __init__(self, reduction='mean'):
-        """Initialize BinaryCrossEntropy."""
-        self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
 
 
 class ApplyAdaMax(Primitive):

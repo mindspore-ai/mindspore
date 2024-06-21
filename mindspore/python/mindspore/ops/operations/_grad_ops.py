@@ -35,7 +35,8 @@ from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad, AsinGrad, 
                              SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad, GridSampler2DGrad,
                              ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad, ResizeNearestNeighborGrad, LayerNormGrad,
                              HShrinkGrad, LayerNormGradGrad, SiLUGrad, MaximumGrad, MaximumGradGrad,
-                             FlashAttentionScoreGrad, UpsampleTrilinear3DGrad, UpsampleNearest3DGrad)
+                             FlashAttentionScoreGrad, UpsampleTrilinear3DGrad, UpsampleNearest3DGrad,
+                             BinaryCrossEntropyGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):
@@ -95,14 +96,6 @@ class KLDivLossGrad(Primitive):
         else:
             raise ValueError(f"'{self.name}' unknown device target: '{device_target}'")
         self.reduction = validator.check_string(reduction, support_mode, 'reduction', self.name)
-
-
-class BinaryCrossEntropyGrad(Primitive):
-    """Computes gradients for `BinaryCrossEntropy` operation."""
-
-    @prim_attr_register
-    def __init__(self, reduction='mean'):
-        self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
 
 
 class LuUnpackGrad(Primitive):

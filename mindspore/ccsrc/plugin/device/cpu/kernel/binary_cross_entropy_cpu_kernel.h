@@ -20,12 +20,12 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "mindapi/base/types.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-enum ReductionType { kNone, kMean, kSum };
 
 class BinaryCrossEntropyCpuKernelMod : public NativeCpuKernelMod {
  public:
@@ -43,13 +43,13 @@ class BinaryCrossEntropyCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  void LaunchToScalar(const int &input_size, const ReductionType &reduction, T *loss, T *tmp_loss) const;
+  void LaunchToScalar(const int &input_size, const Reduction &reduction, T *loss, T *tmp_loss) const;
   template <typename T>
   void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   TypeId dtype_{kTypeUnknown};
   size_t input_size_{1};
-  ReductionType reduction_{kNone};
+  Reduction reduction_{Reduction::MEAN};
 };
 }  // namespace kernel
 }  // namespace mindspore

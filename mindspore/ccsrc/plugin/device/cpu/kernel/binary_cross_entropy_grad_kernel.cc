@@ -16,13 +16,11 @@
 
 #include "plugin/device/cpu/kernel/binary_cross_entropy_grad_kernel.h"
 #include <map>
-#include "mindspore/core/ops/grad/binary_cross_entropy_grad.h"
-#include "ops/binary_cross_entropy.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kBceGradInputsNumWithWeight = 4;
+constexpr size_t kBceGradInputsNumWithWeight = 5;
 constexpr size_t kBceGradOutputsNum = 1;
 }  // namespace
 
@@ -38,7 +36,7 @@ void BinaryCrossEntropyGradCpuKernelMod::LaunchKernel(const std::vector<KernelTe
   auto one = static_cast<T>(1);
 
   std::function<void(size_t, size_t)> func;
-  if (reduction_ == kNone) {
+  if (reduction_ == Reduction::NONE) {
     if (weight != nullptr) {
       func = [&](size_t start, size_t end) -> void {
         for (size_t i = start; i < end; i++) {
@@ -58,7 +56,7 @@ void BinaryCrossEntropyGradCpuKernelMod::LaunchKernel(const std::vector<KernelTe
     }
   } else {
     T dloss1 = dloss[0];
-    if (reduction_ == kMean) {
+    if (reduction_ == Reduction::MEAN) {
       dloss1 = dloss[0] / static_cast<T>(input_size_);
     }
     if (weight != nullptr) {
@@ -88,6 +86,8 @@ bool BinaryCrossEntropyGradCpuKernelMod::Launch(const std::vector<KernelTensor *
   const size_t expect_inputs_num = kBceGradInputsNumWithWeight;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), expect_inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBceGradOutputsNum, kernel_name_);
+  auto reduction = inputs[kIndex4]->GetValueWithCheck<int64_t>();
+  reduction_ = static_cast<Reduction>(reduction);
   if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat16) {
@@ -102,15 +102,6 @@ bool BinaryCrossEntropyGradCpuKernelMod::Launch(const std::vector<KernelTensor *
 bool BinaryCrossEntropyGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[kIndex0]->dtype_id();
-
-  const auto reduction = ops::BinaryCrossEntropy::get_reduction(primitive_->GetAttr(ops::kReduction));
-  if (reduction == Reduction::NONE) {
-    reduction_ = kNone;
-  } else if (reduction == Reduction::MEAN) {
-    reduction_ = kMean;
-  } else {
-    reduction_ = kSum;
-  }
   return true;
 }
 
@@ -134,12 +125,14 @@ std::vector<KernelAttr> BinaryCrossEntropyGradCpuKernelMod::GetOpSupport() {
                                                        .AddInputAttr(kNumberTypeFloat16)
                                                        .AddInputAttr(kNumberTypeFloat16)
                                                        .AddOptionalInputAttr(kNumberTypeFloat16)
+                                                       .AddInputAttr(kNumberTypeInt64)
                                                        .AddOutputAttr(kNumberTypeFloat16),
                                                      KernelAttr()
                                                        .AddInputAttr(kNumberTypeFloat32)
                                                        .AddInputAttr(kNumberTypeFloat32)
                                                        .AddInputAttr(kNumberTypeFloat32)
                                                        .AddOptionalInputAttr(kNumberTypeFloat32)
+                                                       .AddInputAttr(kNumberTypeInt64)
                                                        .AddOutputAttr(kNumberTypeFloat32)};
 
   return kernel_attr_list;
