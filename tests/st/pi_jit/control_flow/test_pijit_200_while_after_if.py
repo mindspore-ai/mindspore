@@ -17,6 +17,7 @@ import pytest
 import numpy as np
 from mindspore import Tensor, jit, context
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -26,6 +27,7 @@ def test_while_after_if_tensor():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
+
     @jit(mode="PIJit")
     def control_flow_while_after_if():
         x = Tensor([1])
@@ -37,9 +39,11 @@ def test_while_after_if_tensor():
             y -= x
         z = z + y
         return y + z
+
     context.set_context(mode=context.PYNATIVE_MODE)
     res = control_flow_while_after_if()
     assert res == 11
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -50,6 +54,7 @@ def test_while_after_if_tensor_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
+
     @jit(mode="PIJit")
     def control_flow_while_after_if():
         x = Tensor([1])
@@ -63,13 +68,15 @@ def test_while_after_if_tensor_2():
             y += x
             z = z - y
         return x, y, z
+
     context.set_context(mode=context.PYNATIVE_MODE)
     res_x, res_y, res_z = control_flow_while_after_if()
     assert res_x == 2
     assert res_y == 4
     assert res_z == 1
 
-@pytest.mark.level0
+
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_while_after_if_numpy():
@@ -78,6 +85,7 @@ def test_while_after_if_numpy():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
+
     @jit(mode="PIJit")
     def control_flow_while_after_if():
         x = np.array([3, 2])
@@ -89,9 +97,11 @@ def test_while_after_if_numpy():
         while (y >= 0).all():
             y -= Tensor(x[0])
         return y
+
     context.set_context(mode=context.PYNATIVE_MODE)
     res = control_flow_while_after_if()
     assert (res.asnumpy() == [-3, -4]).all()
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -102,6 +112,7 @@ def test_while_after_if_numpy_2():
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
+
     @jit(mode="PIJit")
     def control_flow_while_after_if():
         x = np.array([3, 2])
@@ -113,6 +124,7 @@ def test_while_after_if_numpy_2():
         while len(y) <= 5:
             y.append(x[1])
         return Tensor(y)
+
     context.set_context(mode=context.PYNATIVE_MODE)
     res = control_flow_while_after_if()
     assert (res.asnumpy() == [1, 2, 3, 4, 5, 5]).all()
