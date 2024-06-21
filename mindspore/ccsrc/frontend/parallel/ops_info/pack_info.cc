@@ -64,17 +64,18 @@ Status StackExtInfo::GetAttrs() {
   if (!axis_value.has_value()) {
     return FAILED;
   }
-  axis_ = axis_value.value();
+  auto axis = axis_value.value();
 
   if (inputs_shape_.empty()) {
     MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
     return FAILED;
   }
-  int64_t dim = SizeToLong(inputs_shape_[0].size());
 
-  if (axis_ < 0) {
-    axis_ = axis_ + dim;
+  if (axis < 0) {
+    const int64_t dim = SizeToLong(inputs_shape_[0].size());
+    axis = axis + dim;
   }
+  axis_ = axis;
   return SUCCESS;
 }
 
