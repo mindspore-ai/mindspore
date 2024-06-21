@@ -35,6 +35,9 @@ from mindspore.train import Model, Accuracy
 from mindspore import Profiler
 
 
+mnist_path = '/home/workspace/mindspore_dataset/mnist'
+
+
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
     """weight initial for conv layer"""
     weight = weight_variable()
@@ -120,239 +123,310 @@ def create_dataset(data_path, batch_size=32, repeat_size=1, num_parallel_workers
     return mnist_ds
 
 
-def cleanup():
-    kernel_meta_path = os.path.join(os.getcwd(), "kernel_data")
-    cache_path = os.path.join(os.getcwd(), "__pycache__")
-    if os.path.exists(kernel_meta_path):
-        shutil.rmtree(kernel_meta_path)
-    if os.path.exists(cache_path):
-        shutil.rmtree(cache_path)
+@pytest.mark.level3
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_cpu_profiler():
+    """
+    Feature: profiler support cpu mode.
+    Description: profiling op time and timeline.
+    Expectation: No exception.
+    """
+    if sys.platform != 'linux':
+        return
+    device_id = 0
+    data_path = tempfile.mkdtemp(prefix='profiler_data', dir='/tmp')
+    profiler_path = os.path.join(data_path, 'profiler/')
+    try:
+        _train_with_profiler(data_path=data_path, device_target="CPU", profile_memory=False)
+        _check_cpu_profiling_file(profiler_path, device_id)
+    finally:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
 
 
-class TestProfiler:
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_gpu_profiler():
+    """
+    Feature: profiler support GPU  mode.
+    Description: profiling op time and timeline.
+    Expectation: No exception.
+    """
     device_id = int(os.getenv('DEVICE_ID')) if os.getenv('DEVICE_ID') else 0
     rank_id = int(os.getenv('RANK_ID')) if os.getenv('RANK_ID') else 0
-    mnist_path = '/home/workspace/mindspore_dataset/mnist'
+    data_path = tempfile.mkdtemp(prefix='profiler_data', dir='/tmp')
+    profiler_path = os.path.join(data_path, 'profiler/')
+    try:
+        _train_with_profiler(data_path=data_path, device_target="GPU", profile_memory=False,
+                             context_mode=context.GRAPH_MODE)
+        _check_gpu_profiling_file(profiler_path, device_id)
+        _check_host_profiling_file(profiler_path, rank_id)
+    finally:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
 
-    def setup(self):
-        """Run begin each test case start."""
-        cleanup()
-        self.data_path = tempfile.mkdtemp(prefix='profiler_data', dir='/tmp')
 
-    def teardown(self):
-        """Run after each test case end."""
-        cleanup()
-        if os.path.exists(self.data_path):
-            shutil.rmtree(self.data_path)
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_gpu_profiler_pynative():
+    """
+    Feature: profiler support GPU pynative mode.
+    Description: profiling l2 GPU pynative mode data, analyze performance issues.
+    Expectation: No exception.
+    """
+    device_id = int(os.getenv('DEVICE_ID')) if os.getenv('DEVICE_ID') else 0
+    rank_id = int(os.getenv('RANK_ID')) if os.getenv('RANK_ID') else 0
+    data_path = tempfile.mkdtemp(prefix='profiler_data', dir='/tmp')
+    profiler_path = os.path.join(data_path, 'profiler/')
+    try:
+        _train_with_profiler(data_path=data_path, device_target="GPU", profile_memory=False,
+                             context_mode=context.PYNATIVE_MODE)
+        _check_gpu_profiling_file(profiler_path, device_id)
+        _check_host_profiling_file(profiler_path, rank_id)
+    finally:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
 
-    @pytest.mark.level3
-    @pytest.mark.platform_x86_cpu
-    @pytest.mark.env_onecard
-    @security_off_wrap
-    def test_cpu_profiler(self):
-        if sys.platform != 'linux':
-            return
-        self._train_with_profiler(device_target="CPU", profile_memory=False)
-        self._check_cpu_profiling_file()
 
-    @pytest.mark.level1
-    @pytest.mark.platform_x86_gpu_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
-    def test_gpu_profiler(self):
-        self._train_with_profiler(device_target="GPU", profile_memory=False)
-        self._check_gpu_profiling_file()
-        self._check_host_profiling_file()
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_profiler():
+    """
+    Feature: profiler support ascend mode.
+    Description: profiling op time, timeline, step trace and host data.
+    Expectation: No exception.
+    """
+    rank_id = int(os.getenv('RANK_ID')) if os.getenv('RANK_ID') else 0
+    data_path = tempfile.mkdtemp(prefix='profiler_data', dir='/tmp')
+    profiler_path = os.path.join(data_path, 'profiler/')
+    try:
+        _train_with_profiler(data_path=data_path, device_target="Ascend", profile_memory=True)
+        _check_d_profiling_file(profiler_path, rank_id)
+        _check_d_profiling_step_trace_on_multisubgraph(profiler_path, rank_id)
+        _check_host_profiling_file(profiler_path, rank_id)
+    finally:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
 
-    @pytest.mark.level1
-    @pytest.mark.platform_x86_gpu_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
-    def test_gpu_profiler_pynative(self):
-        """
-        Feature: profiler support GPU pynative mode.
-        Description: profiling l2 GPU pynative mode data, analyze performance issues.
-        Expectation: No exception.
-        """
-        self._train_with_profiler(device_target="GPU", profile_memory=False, context_mode=context.PYNATIVE_MODE)
-        self._check_gpu_profiling_file()
-        self._check_host_profiling_file()
 
-    @pytest.mark.level0
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
-    def test_ascend_profiler(self):
-        self._train_with_profiler(device_target="Ascend", profile_memory=True)
-        self._check_d_profiling_file()
-        self._check_d_profiling_step_trace_on_multisubgraph()
-        self._check_host_profiling_file()
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+@pytest.mark.parametrize("profile_framework", ['all', 'time', 'memory', None])
+def test_host_profiler(profile_framework):
+    """
+    Feature: profiling support ascend kbyk mode.
+    Description: profiling kbyk host data.
+    Expectation: No exception.
+    """
+    rank_id = int(os.getenv('RANK_ID')) if os.getenv('RANK_ID') else 0
+    data_path = tempfile.mkdtemp(prefix='profiler_data', dir='/tmp')
+    profiler_path = os.path.join(data_path, 'profiler/')
+    try:
+        _train_with_profiler(data_path=data_path, device_target="Ascend", profile_memory=False, only_profile_host=True,
+                             profile_framework=profile_framework)
+        _check_host_profiling_file(profiler_path, rank_id, profile_framework=profile_framework)
+    finally:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
 
-    @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
-    @pytest.mark.parametrize("profile_framework", ['all', 'time', 'memory', None])
-    def test_host_profiler(self, profile_framework):
-        self._train_with_profiler(device_target="Ascend", profile_memory=False, only_profile_host=True,
-                                  profile_framework=profile_framework)
-        self._check_host_profiling_file(profile_framework=profile_framework)
 
-    @pytest.mark.level0
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
-    def test_ascend_kbyk_profiler(self):
-        context.set_context(jit_level='O0')
-        self._train_with_profiler(device_target="Ascend", profile_memory=False, host_stack=True)
-        self._check_d_profiling_file()
-        self._check_host_profiling_file()
-        self._check_kbyk_profiling_file()
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_kbyk_profiler():
+    """
+    Feature: profiling ascend kbyk host data.
+    Description: profiling ascend and host data.
+    Expectation: No exception.
+    """
+    os.environ['GRAPH_OP_RUN'] = "1"
+    rank_id = int(os.getenv('RANK_ID')) if os.getenv('RANK_ID') else 0
+    data_path = tempfile.mkdtemp(prefix='profiler_data', dir='/tmp')
+    profiler_path = os.path.join(data_path, 'profiler/')
+    try:
+        _train_with_profiler(data_path=data_path, device_target="Ascend", profile_memory=False, host_stack=True)
+        _check_d_profiling_file(profiler_path, rank_id)
+        _check_host_profiling_file(profiler_path, rank_id)
+        _check_kbyk_profiling_file(profiler_path, rank_id)
+        del os.environ['GRAPH_OP_RUN']
+    finally:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
 
-    def _check_kbyk_profiling_file(self):
-        op_range_file = os.path.join(self.profiler_path, "FRAMEWORK/op_range_0")
-        assert os.path.isfile(op_range_file)
 
-    def _train_with_profiler(self, device_target, profile_memory, context_mode=context.GRAPH_MODE,
-                             only_profile_host=False, profile_framework='all', host_stack=True):
-        context.set_context(mode=context_mode, device_target=device_target)
-        ds_train = create_dataset(os.path.join(self.mnist_path, "train"))
-        if ds_train.get_dataset_size() == 0:
-            raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
-        if only_profile_host:
-            profiler = Profiler(output_path=self.data_path, op_time=False,
-                                parallel_strategy=False, aicore_metrics=-1, data_process=False,
-                                profile_framework=profile_framework, host_stack=host_stack, data_simplification=False)
-        else:
-            profiler = Profiler(profile_memory=profile_memory, output_path=self.data_path,
-                                profile_framework=profile_framework, host_stack=host_stack, data_simplification=False)
-        profiler_name = 'profiler/'
-        self.profiler_path = os.path.join(self.data_path, profiler_name)
-        lenet = LeNet5()
-        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-        optim = Momentum(lenet.trainable_params(), learning_rate=0.1, momentum=0.9)
-        model = Model(lenet, loss_fn=loss, optimizer=optim, metrics={'acc': Accuracy()})
+def _check_kbyk_profiling_file(profiler_path, rank_id):
+    op_range_file = os.path.join(profiler_path, "FRAMEWORK/op_range_" + str(rank_id))
+    assert os.path.isfile(op_range_file)
 
-        model.train(1, ds_train, dataset_sink_mode=True)
-        profiler.analyse()
-        if device_target != 'Ascend':
-            profiler.op_analyse(op_name="Conv2D")
 
-    def _check_gpu_profiling_file(self):
-        op_detail_file = self.profiler_path + f'gpu_op_detail_info_{self.device_id}.csv'
-        op_type_file = self.profiler_path + f'gpu_op_type_info_{self.device_id}.csv'
-        activity_file = self.profiler_path + f'gpu_activity_data_{self.device_id}.csv'
-        timeline_file = self.profiler_path + f'gpu_timeline_display_{self.device_id}.json'
-        getnext_file = self.profiler_path + f'minddata_getnext_profiling_{self.device_id}.txt'
-        pipeline_file = self.profiler_path + f'minddata_pipeline_raw_{self.device_id}.csv'
-        framework_file = self.profiler_path + f'gpu_framework_{self.device_id}.txt'
+def _train_with_profiler(device_target, profile_memory, data_path, context_mode=context.GRAPH_MODE,
+                         only_profile_host=False, profile_framework='all', host_stack=True):
+    context.set_context(mode=context_mode, device_target=device_target)
+    ds_train = create_dataset(os.path.join(mnist_path, "train"))
+    if ds_train.get_dataset_size() == 0:
+        raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
+    if only_profile_host:
+        profiler = Profiler(output_path=data_path, op_time=False,
+                            parallel_strategy=False, aicore_metrics=-1, data_process=False,
+                            profile_framework=profile_framework, host_stack=host_stack, data_simplification=False)
+    else:
+        profiler = Profiler(profile_memory=profile_memory, output_path=data_path,
+                            profile_framework=profile_framework, host_stack=host_stack, data_simplification=False)
+    lenet = LeNet5()
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+    optim = Momentum(lenet.trainable_params(), learning_rate=0.1, momentum=0.9)
+    model = Model(lenet, loss_fn=loss, optimizer=optim, metrics={'acc': Accuracy()})
 
-        gpu_profiler_files = (op_detail_file, op_type_file, activity_file,
-                              timeline_file, getnext_file, pipeline_file, framework_file)
-        for file in gpu_profiler_files:
-            assert os.path.isfile(file)
+    model.train(1, ds_train, dataset_sink_mode=True)
+    profiler.analyse()
+    if device_target != 'Ascend':
+        profiler.op_analyse(op_name="Conv2D")
 
-    def _check_d_profiling_step_trace_on_multisubgraph(self):
-        step_trace_file = self.profiler_path + f'step_trace_raw_{self.rank_id}_detail_time.csv'
-        assert os.path.isfile(step_trace_file)
-        with open(step_trace_file, 'r') as fr:
-            reader = csv.DictReader(fr)
-            row_count = sum(1 for _ in reader)
-        assert row_count == 11
 
-    def _check_d_profiling_file(self):
-        aicore_file = self.profiler_path + f'aicore_intermediate_{self.rank_id}_detail.csv'
-        timeline_file = self.profiler_path + f'ascend_timeline_display_{self.rank_id}.json'
-        aicpu_file = self.profiler_path + f'aicpu_intermediate_{self.rank_id}.csv'
-        minddata_pipeline_file = self.profiler_path + f'minddata_pipeline_raw_{self.rank_id}.csv'
-        queue_profiling_file = self.profiler_path + f'device_queue_profiling_{self.rank_id}.txt'
+def _check_gpu_profiling_file(profiler_path, device_id):
+    op_detail_file = profiler_path + f'gpu_op_detail_info_{device_id}.csv'
+    op_type_file = profiler_path + f'gpu_op_type_info_{device_id}.csv'
+    activity_file = profiler_path + f'gpu_activity_data_{device_id}.csv'
+    timeline_file = profiler_path + f'gpu_timeline_display_{device_id}.json'
+    getnext_file = profiler_path + f'minddata_getnext_profiling_{device_id}.txt'
+    pipeline_file = profiler_path + f'minddata_pipeline_raw_{device_id}.csv'
+    framework_file = profiler_path + f'gpu_framework_{device_id}.txt'
 
-        d_profiler_files = (aicore_file, timeline_file, aicpu_file,
-                            minddata_pipeline_file, queue_profiling_file)
-        for file in d_profiler_files:
-            assert os.path.isfile(file)
+    gpu_profiler_files = (op_detail_file, op_type_file, activity_file,
+                          timeline_file, getnext_file, pipeline_file, framework_file)
+    for file in gpu_profiler_files:
+        assert os.path.isfile(file)
 
-    def _check_cpu_profiling_file(self):
-        op_detail_file = self.profiler_path + f'cpu_op_detail_info_{self.device_id}.csv'
-        op_type_file = self.profiler_path + f'cpu_op_type_info_{self.device_id}.csv'
-        timeline_file = self.profiler_path + f'cpu_op_execute_timestamp_{self.device_id}.txt'
 
-        cpu_profiler_files = (op_detail_file, op_type_file, timeline_file)
-        for file in cpu_profiler_files:
-            assert os.path.isfile(file)
+def _check_d_profiling_step_trace_on_multisubgraph(profiler_path, rank_id):
+    step_trace_file = profiler_path + f'step_trace_raw_{rank_id}_detail_time.csv'
+    assert os.path.isfile(step_trace_file)
+    with open(step_trace_file, 'r') as fr:
+        reader = csv.DictReader(fr)
+        row_count = sum(1 for _ in reader)
+    assert row_count == 11
 
-    def _check_host_profiling_file(self, profile_framework='all'):
-        host_dir = os.path.join(self.profiler_path, 'host_info')
-        if profile_framework is None:
-            assert not os.path.exists(host_dir)
-            return
-        if profile_framework in ['all', 'time']:
-            timeline_file = os.path.join(host_dir, f'timeline_{self.rank_id}.json')
-            assert os.path.isfile(timeline_file)
-        csv_file = os.path.join(host_dir, f'host_info_{self.rank_id}.csv')
-        assert os.path.exists(csv_file)
-        with open(csv_file, 'r') as f:
-            f_reader = csv.reader(f)
-            header = next(f_reader)
-            assert header == ['tid', 'pid', 'parent_pid', 'module_name', 'event', 'stage', 'level', 'start_end',
-                              'custom_info', 'memory_usage(kB)', 'time_stamp(us)']
-            for row in f_reader:
-                assert len(row) == 11
 
-    @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
-    def test_ascend_pynative_profiler(self):
-        self._train_with_profiler(device_target='Ascend', profile_memory=False,
-                                  context_mode=context.PYNATIVE_MODE, host_stack=True)
-        self._check_pynative_timeline_host_data()
+def _check_d_profiling_file(profiler_path, rank_id):
+    aicore_file = profiler_path + f'aicore_intermediate_{rank_id}_detail.csv'
+    timeline_file = profiler_path + f'ascend_timeline_display_{rank_id}.json'
+    aicpu_file = profiler_path + f'aicpu_intermediate_{rank_id}.csv'
+    minddata_pipeline_file = profiler_path + f'minddata_pipeline_raw_{rank_id}.csv'
+    queue_profiling_file = profiler_path + f'device_queue_profiling_{rank_id}.txt'
 
-    def _check_pynative_timeline_host_data(self):
-        timeline_display_file = os.path.join(self.profiler_path, f'ascend_timeline_display_{self.rank_id}.json')
-        assert os.path.isfile(timeline_display_file)
-        with open(timeline_display_file, 'r') as fr:
-            data = json.load(fr)
-        async_ms_dict, async_npu_dict, host_to_device_dict = defaultdict(int), defaultdict(int), defaultdict(int)
-        RunOp_set, FrontendTask_set, DeviceTask_set, LaunchTask_set, KernelLaunch_set \
-            = set(), set(), set(), set(), set()
+    d_profiler_files = (aicore_file, timeline_file, aicpu_file,
+                        minddata_pipeline_file, queue_profiling_file)
+    for file in d_profiler_files:
+        assert os.path.isfile(file)
 
-        for d in data:
-            ph = d.get('ph')
-            cat = d.get('cat')
-            name = d.get('name')
-            if ph in ('s', 'f'):
-                if cat == 'async_mindspore':
-                    async_ms_dict[d.get('id')] += 1
-                elif cat == 'async_npu':
-                    async_npu_dict[d.get('id')] += 1
-                elif cat == 'HostToDevice':
-                    host_to_device_dict[d.get('id')] += 1
-            elif ph == 'X':
-                if 'RunOp' in name:
-                    assert d.get('args', {}).get('Call stack')
-                    RunOp_set.add(name)
-                elif 'FrontendTask' in name:
-                    FrontendTask_set.add(name)
-                elif 'DeviceTask' in name:
-                    DeviceTask_set.add(name)
-                elif 'LaunchTask' in name:
-                    LaunchTask_set.add(name)
-                elif 'KernelLaunch' in name:
-                    KernelLaunch_set.add(name)
 
-        assert RunOp_set
-        assert FrontendTask_set
-        assert DeviceTask_set
-        assert LaunchTask_set
-        assert KernelLaunch_set
-        for v in async_ms_dict.values():
-            assert v == 2
-        for v in async_npu_dict.values():
-            assert v == 2
-        for v in host_to_device_dict.values():
-            assert v == 2
+def _check_cpu_profiling_file(profiler_path, device_id):
+    op_detail_file = profiler_path + f'cpu_op_detail_info_{device_id}.csv'
+    op_type_file = profiler_path + f'cpu_op_type_info_{device_id}.csv'
+    timeline_file = profiler_path + f'cpu_op_execute_timestamp_{device_id}.txt'
+
+    cpu_profiler_files = (op_detail_file, op_type_file, timeline_file)
+    for file in cpu_profiler_files:
+        assert os.path.isfile(file)
+
+
+def _check_host_profiling_file(profiler_path, rank_id, profile_framework='all'):
+    host_dir = os.path.join(profiler_path, 'host_info')
+    if profile_framework is None:
+        assert not os.path.exists(host_dir)
+        return
+    if profile_framework in ['all', 'time']:
+        timeline_file = os.path.join(host_dir, f'timeline_{rank_id}.json')
+        assert os.path.isfile(timeline_file)
+    csv_file = os.path.join(host_dir, f'host_info_{rank_id}.csv')
+    assert os.path.exists(csv_file)
+    with open(csv_file, 'r') as f:
+        f_reader = csv.reader(f)
+        header = next(f_reader)
+        assert header == ['tid', 'pid', 'parent_pid', 'module_name', 'event', 'stage', 'level', 'start_end',
+                          'custom_info', 'memory_usage(kB)', 'time_stamp(us)']
+        for row in f_reader:
+            assert len(row) == 11
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_pynative_profiler():
+    """
+    Feature: profiling ascend pynative host data.
+    Description: profiling pynative host data.
+    Expectation: No exception.
+    """
+    rank_id = int(os.getenv('RANK_ID')) if os.getenv('RANK_ID') else 0
+    data_path = tempfile.mkdtemp(prefix='profiler_data', dir='/tmp')
+    profiler_path = os.path.join(data_path, 'profiler/')
+    try:
+        _train_with_profiler(data_path=data_path, device_target='Ascend', profile_memory=False,
+                             context_mode=context.PYNATIVE_MODE, host_stack=True)
+        _check_pynative_timeline_host_data(profiler_path, rank_id)
+    finally:
+        if os.path.exists(data_path):
+            shutil.rmtree(data_path)
+
+
+def _check_pynative_timeline_host_data(profiler_path, rank_id):
+    timeline_display_file = os.path.join(profiler_path, f'ascend_timeline_display_{rank_id}.json')
+    assert os.path.isfile(timeline_display_file)
+    with open(timeline_display_file, 'r') as fr:
+        data = json.load(fr)
+    async_ms_dict, async_npu_dict, host_to_device_dict = defaultdict(int), defaultdict(int), defaultdict(int)
+    RunOp_set, FrontendTask_set, DeviceTask_set, LaunchTask_set, KernelLaunch_set \
+        = set(), set(), set(), set(), set()
+
+    for d in data:
+        ph = d.get('ph')
+        cat = d.get('cat')
+        name = d.get('name')
+        if ph in ('s', 'f'):
+            if cat == 'async_mindspore':
+                async_ms_dict[d.get('id')] += 1
+            elif cat == 'async_npu':
+                async_npu_dict[d.get('id')] += 1
+            elif cat == 'HostToDevice':
+                host_to_device_dict[d.get('id')] += 1
+        elif ph == 'X':
+            if 'RunOp' in name:
+                assert d.get('args', {}).get('Call stack')
+                RunOp_set.add(name)
+            elif 'FrontendTask' in name:
+                FrontendTask_set.add(name)
+            elif 'DeviceTask' in name:
+                DeviceTask_set.add(name)
+            elif 'LaunchTask' in name:
+                LaunchTask_set.add(name)
+            elif 'KernelLaunch' in name:
+                KernelLaunch_set.add(name)
+
+    assert RunOp_set
+    assert FrontendTask_set
+    assert DeviceTask_set
+    assert LaunchTask_set
+    assert KernelLaunch_set
+    for v in async_ms_dict.values():
+        assert v == 2
+    for v in async_npu_dict.values():
+        assert v == 2
+    for v in host_to_device_dict.values():
+        assert v == 2
