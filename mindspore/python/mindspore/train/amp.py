@@ -448,9 +448,12 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
         >>> net = amp.auto_mixed_precision(network, amp_level)
     """
     if not isinstance(network, nn.Cell):
-        if amp_level == "auto" and not inspect.isfunction(network) or not inspect.ismethod(network):
-            raise TypeError("For amp_level 'auto', the network type should be Cell or function.")
-        raise TypeError(f"For amp_level '{amp_level}', the network type should be Cell.")
+        if amp_level == "auto":
+            if not inspect.isfunction(network) and not inspect.ismethod(network):
+                raise TypeError("For amp_level 'auto', the network type should be Cell or function.")
+            # function is supported for amp_level 'auto'
+        else:
+            raise TypeError(f"For amp_level '{amp_level}', the network type should be Cell.")
 
     if dtype not in (mstype.float16, mstype.bfloat16):
         raise ValueError(f"The dtype should be one of (mstype.float16, mstype.bfloat16), but got {dtype}.")
@@ -459,7 +462,7 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
         return network
 
     # Return network if the same amp level has already been configurated
-    if getattr(network, "_amp_level") in ("O1", "O2", "O3"):
+    if hasattr(network, "_amp_level") and getattr(network, "_amp_level") in ("O1", "O2", "O3"):
         logger.warning(f"The network's auto mixed-precision level is adjusted from {getattr(network, '_amp_level')} "
                        f"to {amp_level}, and repeated calls to mixed-precision interfaces can cause performance "
                        f"degradation.")
