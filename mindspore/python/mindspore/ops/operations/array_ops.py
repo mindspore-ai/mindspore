@@ -41,7 +41,7 @@ from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather
                              GatherNd, GatherD, Range, MaskedFill, RightShift, NonZero,
                              ResizeNearestNeighbor, Identity, Split, CumSum, CumProd,
                              Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, ScalarToTensor,
-                             Triu, BroadcastTo, StridedSlice, Select, TopkExt)
+                             Triu, BroadcastTo, StridedSlice, Select, TopkExt, SearchSorted)
 from .manually_defined import Rank, Shape, Tile, Cast, Ones, Zeros
 from ..auto_generate import ArgMaxWithValue, ArgMinWithValue
 
@@ -4401,60 +4401,6 @@ class MaskedSelect(PrimitiveWithCheck):
     def check_dtype(self, x_dtype, mask_dtype):
         validator.check_tensor_dtype_valid('mask', mask_dtype, [mstype.bool_], self.name)
         validator.check_tensor_dtype_valid('x', x_dtype, (mstype.bool_,) + mstype.number_type, self.name)
-
-
-class SearchSorted(Primitive):
-    """
-    Returns the indices correspond to the positions where the given numbers in `values` should be inserted
-    into `sorted_sequence` so that the order of the sequence is maintained.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.searchsorted` for more details.
-
-    Args:
-        dtype (:class:`mindspore.dtype`, optional): Output data type. An optional data type of
-            ``mstype.int32`` and ``mstype.int64``. Default: ``mstype.int64``.
-        right (bool, optional): Search Strategy. If ``True`` , return the last suitable index found;
-            if ``False`` , return the first such index. Default: ``False`` .
-
-    Inputs:
-        - **sorted_sequence** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_R)` or `(x_1)`.
-          It must contain a monotonically increasing sequence on the innermost dimension.
-        - **values** (Tensor) - The value that should be inserted.
-          The shape of tensor is :math:`(x_1, x_2, ..., x_R-1, x_S)`.
-
-    Outputs:
-        Tensor containing the indices from the innermost dimension of `sorted_sequence` such that,
-        if insert the corresponding value in the `values` tensor, the order of `sorted_sequence` would be preserved,
-        whose datatype is int32 if out_int32 is True, otherwise int64, and shape is the same as the shape of `values`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> sorted_sequence = Tensor(np.array([[0, 1, 3, 5, 7], [2, 4, 6, 8, 10]]), mindspore.float32)
-        >>> values = Tensor(np.array([[3, 6, 9], [3, 6, 9]]), mindspore.float32)
-        >>> output = ops.SearchSorted()(sorted_sequence, values)
-        >>> print(output)
-        [[2 4 5]
-         [1 2 4]]
-    """
-
-    @prim_attr_register
-    def __init__(self, dtype=mstype.int64, right=False):
-        """Initialize SearchSorted"""
-        validator.check_value_type("dtype", dtype, [mstype.Type], self.name)
-        valid_values = (mstype.int64, mstype.int32)
-        self.dtype = validator.check_type_name(
-            "dtype", dtype, valid_values, self.name)
-        validator.check_value_type('right', right, [bool], self.name)
-        self.init_prim_io_names(
-            inputs=['sorted_sequence', 'values'], outputs=['output'])
 
 
 class _TensorScatterOp(PrimitiveWithInfer):

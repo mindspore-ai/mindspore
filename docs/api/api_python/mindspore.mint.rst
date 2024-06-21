@@ -72,6 +72,16 @@ BLAS和LAPACK运算
 
     mindspore.mint.inverse
 
+其他运算
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.searchsorted
+
 mindspore.mint.nn
 ------------------
 

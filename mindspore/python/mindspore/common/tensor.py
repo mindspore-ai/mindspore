@@ -3161,9 +3161,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
                 location found is given. If 'right', return the last such index. If there is
                 no suitable index, return either 0 or N (where N is the length of the tensor).
                 Default: ``left`` .
-            sorter (Union[int, float, bool, list, tuple, Tensor]): 1-D optional tensor of
-                integer indices that sort the tensor into ascending order. They are typically
-                the result of argsort. Default: ``None`` .
+            sorter (Union[int, list, tuple, Tensor]): optional tensor of
+                integer indices that sort the tensor into ascending order on the innermost dimension
+                and the type must be int64. They are typically the result of argsort. Default: ``None`` .
 
         Returns:
             Tensor, array of insertion points with the same shape as `v`.
@@ -3184,31 +3184,21 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         if side not in ('left', 'right'):
             raise ValueError(f"For 'Tensor.searchsorted', the argument 'side' should be one of in "
                              f"['left', 'right'], but got {side}.")
-        a = self.astype(mstype.float32)
         if not isinstance(v, Tensor):
             v = tensor_operator_registry.get('make_tensor')(v)
-        shape = v.shape
         if sorter is not None:
-            if not isinstance(sorter, (int, float, bool, list, tuple, Tensor)):
+            if not isinstance(sorter, (int, list, tuple, Tensor)):
                 raise TypeError("For Tensor.searchsorted, the type of the argument 'sorter' must be one of 'int', "
-                                "'float', 'bool', 'list', 'tuple', 'Tensor', but got {}.".format(type(sorter)))
+                                "'list', 'tuple', 'Tensor', but got {}.".format(type(sorter)))
             if not isinstance(sorter, Tensor):
                 sorter = tensor_operator_registry.get('make_tensor')(sorter)
-            if sorter.ndim != 1 or sorter.size != a.size:
-                raise ValueError('sorter must be 1-D array with the same size as the Tensor')
-            sorter = sorter.reshape(sorter.shape + (1,))
-            a = tensor_operator_registry.get('gather_nd')(a, sorter)
-        less_op = tensor_operator_registry.get('__le__') if side == 'left' else tensor_operator_registry.get('__lt__')
-        i = tensor_operator_registry.get('fill')(mstype.int32, shape, 0)
-        j = tensor_operator_registry.get('fill')(mstype.int32, shape, a.size)
+            if sorter.size != self.size:
+                raise ValueError('The size of sorter must be the same as the Tensor')
 
-        sort_range = tuple(range(math.ceil(math.log2(tensor_operator_registry.get('shape_mul')(a.shape) + 1))))
-        for _ in sort_range:
-            mid = (i - -j) // 2
-            mask = less_op(v, tensor_operator_registry.get('gather_nd')(a, mid.reshape(mid.shape + (1,))))
-            i = tensor_operator_registry.get('select')(mask, i, mid)
-            j = tensor_operator_registry.get('select')(mask, mid, j)
-        return j
+        dtype = mstype.int32
+        right = (side == 'right')
+        search_sorted_ = tensor_operator_registry.get('searchsorted')(dtype, right)
+        return search_sorted_(self, v, sorter)
 
     def gather_nd(self, indices):
         r"""

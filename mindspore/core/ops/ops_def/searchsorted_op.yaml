@@ -1,0 +1,32 @@
+#operator searchsorted
+searchsorted:
+    args:
+        sorted_sequence:
+            dtype: tensor
+        values:
+            dtype: tensor
+        sorter:
+            dtype: tensor
+            default: None
+        dtype:
+            dtype: TypeId
+            default: mstype.int64
+            arg_handler: dtype_to_type_id
+            prim_init: True
+        right:
+            dtype: bool
+            default: False
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor
+
+    function:
+        disable: True
+    class:
+        name: SearchSorted
+    dispatch:
+        enable: True
+        Ascend: SearchSortedAscend
+        GPU: SearchSortedGPU
+        CPU: SearchSortedCPU

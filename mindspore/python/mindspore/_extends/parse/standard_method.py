@@ -1812,39 +1812,24 @@ def searchsorted(x, v, side='left', sorter=None):
         2
     """
 
-    def get_log2_size(size):
-        """Get log2 size"""
-        log2_res = F.log2(F.cast(size, mstype.float32))
-        ceil_res = F.ceil(log2_res)
-        cast_res = F.cast(ceil_res, mstype.int64)
-        return cast_res
-
     if side not in ('left', 'right'):
-        const_utils.raise_value_error('invalid value for keyword "side"')
-    a = x.astype(mstype.float32)
-    if not check_is_tensor(F.typeof(v)):
+        raise ValueError(f"For 'Tensor.searchsorted', the argument 'side' should be one of in "
+                            f"['left', 'right'], but got {side}.")
+    if not isinstance(v, Tensor):
         v = const_utils.make_tensor(v)
-    shape = v.shape
     if sorter is not None:
-        if sorter.ndim != 1 or sorter.size != a.size:
-            const_utils.raise_value_error(
-                'sorter must be 1-D array with the same size as `a`')
-        sorter = const_utils.make_tensor(sorter)
-        sorter = sorter.reshape(sorter.shape + (1,))
-        a = F.gather_nd(a, sorter)
-    less_op = F.tensor_le if side == 'left' else F.tensor_lt
-    i = F.fill(mstype.int32, shape, 0)
-    j = F.fill(mstype.int32, shape, a.size)
+        if not isinstance(sorter, (int, list, tuple, Tensor)):
+            raise TypeError("For Tensor.searchsorted, the type of the argument 'sorter' must be one of 'int', "
+                            "'list', 'tuple', 'Tensor', but got {}.".format(type(sorter)))
+        if not isinstance(sorter, Tensor):
+            sorter = const_utils.make_tensor(sorter)
+        if sorter.size != x.size:
+            raise ValueError('The size of sorter must be the same as the Tensor')
 
-    loop_num = get_log2_size(F.shape_mul(a.shape) + 1)
-    index = Tensor([0])
-    while index < loop_num:
-        mid = (i - F.neg(j)) // 2
-        mask = less_op(v, F.gather_nd(a, mid.reshape(mid.shape + (1,))))
-        i = F.select(mask, i, mid)
-        j = F.select(mask, mid, j)
-        index += 1
-    return j
+    dtype = mstype.int32
+    right = (side == 'right')
+    search_sorted_ = P.SearchSorted(dtype, right)
+    return search_sorted_(x, v, sorter)
 
 
 def fill(x, value):

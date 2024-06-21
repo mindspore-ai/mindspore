@@ -1,7 +1,7 @@
-mindspore.ops.searchsorted
-==========================
+mindspore.mint.searchsorted
+===========================
 
-.. py:function:: mindspore.ops.searchsorted(sorted_sequence, values, *, out_int32=False, right=False, side=None, sorter=None)
+.. py:function:: mindspore.mint.searchsorted(sorted_sequence, values, *, out_int32=False, right=False, side=None, sorter=None)
 
     返回位置索引，根据这个索引将 `values` 插入 `sorted_sequence` 后，`sorted_sequence` 的最内维度的顺序保持不变。
 
