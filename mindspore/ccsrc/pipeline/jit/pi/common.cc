@@ -99,6 +99,42 @@ class StaticAnalysisExceptionCleaner {
   ~StaticAnalysisExceptionCleaner() { StaticAnalysisException::Instance().ClearException(); }
 };
 
+class RunEnvironment {
+ public:
+  RunEnvironment() = default;
+
+  void fetchAndSetRunEnv(const JitCompileResults *jcr) {
+    auto ms_context = MsContext::GetInstance();
+    run_mode_ = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
+    jit_level_ = ms_context->GetJitLevel();
+    task_sink_ = ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+
+    auto jit_level = jcr->conf->getJitLevel();
+    auto grad_flag = pynative::PyNativeExecutor::GetInstance()->grad_flag();
+    auto run_mode = jit_level == "O2" && !grad_flag ? kGraphMode : kPynativeMode;
+    auto task_sink = jit_level == "O2" && !grad_flag;
+    ms_context->set_param(MS_CTX_EXECUTION_MODE, run_mode);
+    ms_context->set_param(MS_CTX_JIT_LEVEL, jit_level);
+    ms_context->SetJitLevel(jit_level);
+    ms_context->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, task_sink);
+    ms_context->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, task_sink);
+  }
+
+  void resumePreviousRunEnv() {
+    auto ms_context = MsContext::GetInstance();
+    ms_context->set_param(MS_CTX_EXECUTION_MODE, run_mode_);
+    ms_context->set_param(MS_CTX_JIT_LEVEL, jit_level_);
+    ms_context->SetJitLevel(jit_level_);
+    ms_context->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, task_sink_);
+    ms_context->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, task_sink_);
+  }
+
+ private:
+  int run_mode_ = kPynativeMode;
+  std::string jit_level_;
+  bool task_sink_ = false;
+};
+
 static void PrintGuardPerf() {
   std::map<std::string, std::pair<size_t, size_t>> guard_info;
   std::map<std::string, std::pair<size_t, size_t>> guard_freq_info;
@@ -874,7 +910,10 @@ static void GraphCompile(JitCompileResults *jcr, const PyFrameObject *frame) {
     backup = jcr->code->GetGuard()->ApplyDynamicShape(f);
     PyFrame_FastToLocals(f);
   }
+  RunEnvironment runEnvironment;
+  runEnvironment.fetchAndSetRunEnv(jcr);
   std::string phase = CallGraphCompiler(jcr, func, frame);
+  runEnvironment.resumePreviousRunEnv();
   if (enable_dynamicshape) {
     jcr->code->GetGuard()->RevertDynamicShape(f, backup);
     PyFrame_FastToLocals(f);
@@ -1240,7 +1279,7 @@ static void SetExecStatus(const JitCompileResults *c, const PyFrameObject *f, bo
   }
 }
 
-static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, const JitCompileResults *c) {
+static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, JitCompileResults *c) {
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
     return py::none();
   }
@@ -1266,6 +1305,8 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
       res = CallGraph(c, args, kwvargs);
     } catch (std::exception &e) {
       MS_LOG(WARNING) << "compile result has an error, de-optimization\n" << e.what();
+      res = CallCompiledCallable(tstate, f, c);
+      c->stat = JitCompileResults::NEVER_COMPILE;
     }
   }
   c->code->Inc();
