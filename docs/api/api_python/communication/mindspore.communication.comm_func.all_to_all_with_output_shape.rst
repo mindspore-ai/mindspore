@@ -22,6 +22,8 @@ mindspore.communication.comm_func.all_to_all_with_output_shape
         - **TypeError** - `output_shape_list` 中不全是张量或者元组类型。
         - **TypeError** - `input_tensor_list` 中张量的数据类型不全部一致。
 
+    样例：
+
     .. note::
         .. include:: ../ops/mindspore.ops.comm_note.rst
 
