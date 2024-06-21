@@ -1147,8 +1147,8 @@ bool DynamicMemPoolBestFit::SyncAllEventsInner() {
 std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>>
 DynamicMemPoolBestFit::ExtractBlocksListInfo(const MemStatusManagerPtr &mem_mng) const {
   std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>> blocks_list_info;
-  std::unordered_map<std::string, size_t> block_info;
   for (auto iter = mem_mng->mem_block_list_.begin(); iter != mem_mng->mem_block_list_.end(); ++iter) {
+    std::unordered_map<std::string, size_t> block_info;
     block_info[kBlockMemorySize] = (*iter)->size();
     block_info[kBlockStreamId] = (*iter)->stream_id_;
     blocks_list_info[(std::string *)(*iter)->device_addr()] = block_info;
@@ -1175,8 +1175,12 @@ size_t DynamicMemPoolBestFit::TotalEagerFreeMemStatistics() const {
 size_t DynamicMemPoolBestFit::UsedMemPeakStatistics() const {
   return common_mem_->mps_.used_mem_peak_size_ + persistent_mem_->mps_.used_mem_peak_size_;
 }
-size_t DynamicMemPoolBestFit::ReservedMemPeakStatistics() const {
-  return common_mem_->mps_.reserved_mem_peak_size_ + persistent_mem_->mps_.reserved_mem_peak_size_;
+size_t DynamicMemPoolBestFit::MaxMemAllocatedStatistics() const {
+  return common_mem_->mps_.temp_used_mem_peak_size_ + persistent_mem_->mps_.temp_used_mem_peak_size_;
+}
+size_t DynamicMemPoolBestFit::MaxMemReservedStatistics() const {
+  return common_mem_->mps_.total_mem_size_ + persistent_mem_->mps_.total_mem_size_ -
+         common_mem_->mps_.temp_total_mem_size_ - persistent_mem_->mps_.temp_total_mem_size_;
 }
 size_t DynamicMemPoolBestFit::ActualPeakStatistics() const {
   return common_mem_->CalActualPeak() + persistent_mem_->CalActualPeak();
@@ -1206,12 +1210,16 @@ DynamicMemPoolBestFit::PersistentMemBlocksInfoStatistics() const {
   return ExtractBlocksListInfo(persistent_mem_);
 }
 void DynamicMemPoolBestFit::ResetMaxMemReserved() const {
-  common_mem_->mps_.reserved_mem_peak_size_ = 0;
-  persistent_mem_->mps_.reserved_mem_peak_size_ = 0;
+  common_mem_->mps_.temp_total_mem_size_ = common_mem_->mps_.total_mem_size_;
+  persistent_mem_->mps_.temp_total_mem_size_ = persistent_mem_->mps_.total_mem_size_;
 }
 void DynamicMemPoolBestFit::ResetMaxMemAllocated() const {
-  common_mem_->mps_.used_mem_peak_size_ = 0;
-  persistent_mem_->mps_.used_mem_peak_size_ = 0;
+  common_mem_->mps_.temp_total_used_mem_size_ = common_mem_->mps_.total_used_mem_size_;
+  persistent_mem_->mps_.temp_total_used_mem_size_ = persistent_mem_->mps_.total_used_mem_size_;
+  common_mem_->mps_.temp_total_used_by_event_mem_size_ = common_mem_->mps_.total_used_by_event_mem_size_;
+  persistent_mem_->mps_.temp_total_used_by_event_mem_size_ = persistent_mem_->mps_.total_used_by_event_mem_size_;
+  common_mem_->mps_.temp_used_mem_peak_size_ = 0;
+  persistent_mem_->mps_.temp_used_mem_peak_size_ = 0;
 }
 
 size_t MemStatusManager::CalActualPeak() {
