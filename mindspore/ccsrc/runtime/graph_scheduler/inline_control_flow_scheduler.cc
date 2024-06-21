@@ -85,8 +85,8 @@ void GetBranchNameToCondtionActor(const KernelGraphPtr &graph,
     }
     const auto &tuple_name = branch_graph_names->cast<ValueTuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_name);
-    const auto &gather_actor = FetchActor(gather_cnode->fullname_with_scope());
-    const auto &switch_actor = FetchActor(switch_cnode->fullname_with_scope());
+    const auto &gather_actor = FetchActor(GetActorIdByKernel(gather_cnode));
+    const auto &switch_actor = FetchActor(GetActorIdByKernel(switch_cnode));
     MS_EXCEPTION_IF_NULL(gather_actor);
     MS_EXCEPTION_IF_NULL(switch_actor);
     for (const auto &value : tuple_name->value()) {
@@ -414,7 +414,7 @@ void InlineControlFlowScheduler::FixRefCountForRefNode(const KernelWithIndex &in
     MS_LOG(DEBUG) << "Check switch node:" << input_with_index.first->fullname_with_scope()
                   << " index:" << input_with_index.second << " ref count:" << ref_count
                   << " branch name:" << branch_name;
-    const auto &actor = FetchActor(input_with_index.first->fullname_with_scope());
+    const auto &actor = FetchActor(GetActorIdByKernel(input_with_index.first));
     MS_EXCEPTION_IF_NULL(actor);
     const auto &switch_actor = dynamic_cast<ConditionSwitchActor *>(actor);
     MS_EXCEPTION_IF_NULL(switch_actor);
@@ -426,7 +426,7 @@ void InlineControlFlowScheduler::FixRefCountForRefNode(const KernelWithIndex &in
                   << " by switch node:" << input_with_index.first->fullname_with_scope()
                   << " in kernel graph:" << kernel_graph->ToString() << " ref count:" << ref_count;
   } else if (common::AnfAlgo::CheckPrimitiveType(input_with_index.first, prim::kPrimConditionGather)) {
-    const auto &actor = FetchActor(input_with_index.first->fullname_with_scope());
+    const auto &actor = FetchActor(GetActorIdByKernel(input_with_index.first));
     MS_EXCEPTION_IF_NULL(actor);
     const auto &gather_actor = dynamic_cast<ConditionGatherActor *>(actor);
     MS_EXCEPTION_IF_NULL(gather_actor);
@@ -489,7 +489,7 @@ void InlineControlFlowScheduler::FixRefCountForInputNode(const KernelWithIndex &
   if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimConditionGather)) {
     const auto &gather_cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(gather_cnode);
-    const auto &actor = FetchActor(gather_cnode->fullname_with_scope());
+    const auto &actor = FetchActor(GetActorIdByKernel(gather_cnode));
     MS_EXCEPTION_IF_NULL(actor);
     const auto &gather_actor = dynamic_cast<ConditionGatherActor *>(actor);
     MS_EXCEPTION_IF_NULL(gather_actor);
@@ -669,7 +669,7 @@ void InlineControlFlowScheduler::HandleConditionGatherActor(const KernelActorPtr
       << "Failed to get switch node by gather node:" << gather_node->fullname_with_scope()
       << " in kernel graph:" << kernel_graph->ToString();
   }
-  const auto &actor = FetchActor(gather_switch_iter->second->fullname_with_scope());
+  const auto &actor = FetchActor(GetActorIdByKernel(gather_switch_iter->second));
   MS_EXCEPTION_IF_NULL(actor);
   const auto &condition_switch_actor = dynamic_cast<ConditionSwitchActor *>(actor);
   MS_EXCEPTION_IF_NULL(condition_switch_actor);
@@ -766,7 +766,7 @@ void InlineControlFlowScheduler::Link(ActorSet *actor_set, const GraphCompilerIn
       MS_EXCEPTION_IF_NULL(input_pair.first);
       MS_LOG(DEBUG) << "output node:" << output_pair.first->fullname_with_scope()
                     << " input node:" << input_pair.first->fullname_with_scope();
-      const auto &actor = FetchActor(output_pair.first->fullname_with_scope());
+      const auto &actor = FetchActor(GetActorIdByKernel(output_pair.first));
       if (actor == nullptr) {
         MS_LOG_WITH_NODE(EXCEPTION, output_pair.first)
           << "Failed to get actor by ref node:" << output_pair.first->fullname_with_scope()
@@ -803,7 +803,7 @@ void InlineControlFlowScheduler::FixRefCountRecursively(const KernelWithIndex &o
         << " index:" << output_pair.second << " in kernel graph:" << kernel_graph->ToString();
     }
     const auto &branch_name = iter->second;
-    const auto &actor = FetchActor(input_pair.first->fullname_with_scope());
+    const auto &actor = FetchActor(GetActorIdByKernel(input_pair.first));
     MS_EXCEPTION_IF_NULL(actor);
     const auto &switch_actor = dynamic_cast<ConditionSwitchActor *>(actor);
     MS_EXCEPTION_IF_NULL(switch_actor);
