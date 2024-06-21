@@ -108,7 +108,7 @@ int32_t SplitFuncImpl::CheckValidation(const PrimitivePtr &primitive,
     check_status = OP_CHECK_RETRY;
   } else {
     const auto output_num = output_num_opt.value();
-    if (output_num < 0) {
+    if (output_num <= 0) {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', output_num must be positive, but got " << output_num << ".";
     }
   }
