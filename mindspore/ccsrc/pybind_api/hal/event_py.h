@@ -71,7 +71,8 @@ class EventPy {
   std::shared_ptr<DeviceEvent> event_{nullptr};
   // The stream object that helps create event_. We can use this to access device_res_manager_;
   StreamPyPtr creator_stream_{nullptr};
-  int64_t task_id_on_stream_{0};
+  // Transfer between multi-stage pipelines
+  std::shared_ptr<int64_t> task_id_on_stream_ = std::make_shared<int64_t>(0L);
   size_t record_stream_id_{0};
   device::DeviceContext *device_ctx_;
 };

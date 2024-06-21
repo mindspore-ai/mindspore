@@ -513,6 +513,7 @@ DeviceEventPtr GeDeviceResManager::CreateEventWithFlag(bool enable_timing, bool 
   auto flag = enable_timing ? ACL_EVENT_TIME_LINE : ACL_EVENT_DEFAULT;
   auto event = std::make_shared<AscendEvent>(flag);
   MS_EXCEPTION_IF_NULL(event);
+  std::lock_guard<std::mutex> lock(device_events_mutex_);
   device_events_.push_back(event);
   return event;
 }

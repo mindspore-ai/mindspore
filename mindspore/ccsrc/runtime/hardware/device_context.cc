@@ -65,6 +65,7 @@ bool DeviceResManager::DestroyEvent(const DeviceEventPtr &event) {
     return false;
   }
 
+  std::lock_guard<std::mutex> lock(device_events_mutex_);
   const auto &iter = std::find(device_events_.begin(), device_events_.end(), event);
   if (iter == device_events_.end()) {
     MS_LOG(ERROR) << "Can't find specified device event.";
@@ -75,7 +76,14 @@ bool DeviceResManager::DestroyEvent(const DeviceEventPtr &event) {
 }
 
 bool DeviceResManager::DestroyAllEvents() {
-  (void)std::for_each(device_events_.begin(), device_events_.end(), [this](const auto &event) {
+  DeviceEventPtrList device_events_inner;
+  {
+    // Reduce the scopt to prevent deadlock.
+    std::lock_guard<std::mutex> lock(device_events_mutex_);
+    device_events_inner = device_events_;
+    device_events_.clear();
+  }
+  (void)std::for_each(device_events_inner.begin(), device_events_inner.end(), [this](const auto &event) {
     MS_EXCEPTION_IF_NULL(event);
     if (!event->DestroyEvent()) {
       MS_LOG(ERROR) << "DestroyEvent failed.";
