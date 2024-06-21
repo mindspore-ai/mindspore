@@ -240,7 +240,6 @@ Status FusedInferAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) 
   }
   auto key_strategys = stra[ops::kFusedInferAttentionScoreInputKeyIndex]->GetAllElements();
   auto value_strategys = stra[ops::kFusedInferAttentionScoreInputValueIndex]->GetAllElements();
-
   if (key_strategys.size() != value_strategys.size()) {
     MS_LOG(ERROR) << "For " << name_ << " : The num of in_strategy among 'key' and 'value' must be same.";
     return FAILED;
