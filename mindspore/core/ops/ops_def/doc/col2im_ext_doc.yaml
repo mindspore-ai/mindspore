@@ -1,0 +1,62 @@
+col2im_ext:
+    description: |
+        Combines an array of sliding local blocks into a large containing tensor.
+
+        Consider a batched input tensor of shape :math:`(N, C \times \prod(\text{kernel_size}), L)` ,
+        where :math:`N` is the batch dimension, :math:`C \times \prod(\text{kernel_size})` is the
+        total number of values within each block (a block has :math:`\prod(\text{kernel_size})` spatial
+        locations each containing a `C`-channeled vector), and :math:`L` is the total number of such blocks:
+
+        .. math::
+            L = \prod_d \left\lfloor\frac{\text{output_size}[d] + 2 \times \text{padding}[d] %
+                - \text{dilation}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{stride}[d]} + 1\right\rfloor,
+
+        where :math:`d` is over all spatial dimensions.
+
+        Therefore, `output_size` is the spatial shape of the large containing tensor of the sliding local blocks.
+
+        The `dilation`, `padding` and `stride` arguments specify how the sliding blocks are retrieved.
+
+        .. warning::
+            Currently, only unbatched(3D) or batched(4D) image-like output tensors are supported.
+
+        Args:
+            input (Tensor): 2-D or 3-D Tensor.
+            output_size (Union[int, tuple[int], list[int]]): The shape of the spatial dimensions of
+                the output(i.e., output.shape[2:]).
+            kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
+                for height and width. If type is int, it means that height equal with width. Must be specified.
+            dilation (Union[int, tuple[int], list[int]], optional): The size of the dilation, should be two int
+                for height and width. If type is int, it means that height equal with width. Default: ``1`` .
+            padding (Union[int, tuple[int], list[int]], optional): The size of the padding, should be two int
+                for height and width. If type is int, it means that height equal with width. Default: ``0`` .
+            stride (Union[int, tuple[int], list[int]], optional): The size of the stride, should be two int
+                for height and width. If type is int, it means that height equal with width. Default: ``1`` .
+
+        Returns:
+            A Tensor, with same type as `input` .
+
+        Shape:
+            - Input: :math:`(N, C \times \prod(\text{kernel_size}), L)` or
+              :math:`(C \times \prod(\text{kernel_size}), L)`
+            - Output: :math:`(N, C, output\_size[0], output\_size[1], ...)` or
+              :math:`(C, output\_size[0], output\_size[1], ...)`
+
+        Raises:
+            TypeError: If `kernel_size`, `dilation`, `padding`, `stride` data type is not int, tuple or list.
+            ValueError: If `kernel_size`, `dilation`, `stride` value is not
+                greater than zero or elements number invalid.
+            ValueError: If `padding` value is less than zero or elements number invalid.
+            ValueError: If input.shape[-2] can't be divisible by the product of kernel_size.
+            ValueError: If `input.shape[-1]` is not equal to the calculated number of sliding blocks `L`.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.random.rand(16, 64, 25).astype(np.float32))
+            >>> output = ops.fold_ext(x, (8, 8), [2, 2], [2, 2], [2, 2], [2, 2])
+            >>> print(output.shape)
+            (16, 16, 8, 8)
