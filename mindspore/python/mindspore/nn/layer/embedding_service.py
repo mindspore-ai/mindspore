@@ -77,10 +77,11 @@ class EmbeddingVariableOption:
 
 class EsInitializer:
     """Initializer for embedding service table."""
-    def __init__(self, initializer_mode, min=-0.01, max=0.01, constant_value=1.0, mu=0.0, sigma=1.0, seed=0):
+    def __init__(self, initializer_mode, min_scale=-0.01, max_scale=0.01,
+                 constant_value=1.0, mu=0.0, sigma=1.0, seed=0):
         self.initializer_mode = initializer_mode
-        self.min = min
-        self.max = max
+        self.min = min_scale
+        self.max = max_scale
         self.constant_value = constant_value
         self.mu = mu
         self.sigma = sigma
@@ -110,6 +111,19 @@ def check_common_init_params(name, init_vocabulary_size, embedding_dim):
         raise ValueError("init_vocabulary_size can not be smaller than zero.")
     if embedding_dim <= 0:
         raise ValueError("embedding_dim must be greater than zero.")
+
+
+class EmbeddingServiceOut:
+    """
+    EmbeddingServiceOut
+    """
+    def __init__(self, table_id_dict, es_initializer=None, es_counter_filter=None,
+                 es_padding_keys=None, es_completion_keys=None):
+        self.table_id_dict = table_id_dict
+        self.es_initializer = es_initializer
+        self.es_counter_filter = es_counter_filter
+        self.es_padding_keys = es_padding_keys
+        self.es_completion_keys = es_completion_keys
 
 
 class EmbeddingService:
@@ -232,8 +246,9 @@ class EmbeddingService:
                                     self._table_id_to_initializer.get(table_id), filter_mode, optimizer,
                                     self._ps_table_id_to_optimizer_params.get(table_id), max_feature_count, mode)
         es_init_layer()
-        return self._table_name_to_id, self._table_id_to_initializer, self._table_to_counter_filter, \
-               self._table_id_to_padding_key, self._table_id_to_completion_key
+        return EmbeddingServiceOut(self._table_name_to_id, self._table_id_to_initializer,
+                                   self._table_to_counter_filter, self._table_id_to_padding_key,
+                                   self._table_id_to_completion_key)
 
     def padding_param(self, padding_key, mask=True, mask_zero=False):
         """
@@ -449,8 +464,9 @@ class EmbeddingService:
                                   sigma=initializer.sigma, seed=initializer.seed[0])
             elif isinstance(initializer, Uniform):
                 self._table_id_to_initializer[table_id] = \
-                    EsInitializer(initializer_mode="random_uniform", min=-initializer.scale,
-                                  max=initializer.scale, seed=initializer.seed[0])
+                    EsInitializer(initializer_mode="random_uniform",
+                                  min_scale=-initializer.scale,
+                                  max_scale=initializer.scale, seed=initializer.seed[0])
             elif isinstance(initializer, Constant):
                 self._table_id_to_initializer[table_id] = \
                     EsInitializer(initializer_mode="constant", constant_value=initializer.value)
