@@ -190,16 +190,16 @@ def test_hccl_send_receive():
     return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_send_receive.py")
     assert return_code == 0
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
 @test_utils.run_test_with_On
 def test_hccl_all_to_all_v():
     """
-    Feature: mpi run 8P case of 'alltoallv' communication operator.
-    Description: mpi run 8P case of 'alltoallv' communication operator.
+    Feature: mpi run 2P case of 'alltoallv' communication operator.
+    Description: mpi run 2P case of 'alltoallv' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_all_to_all_v.py")
+    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_all_to_all_v.py")
     assert return_code == 0

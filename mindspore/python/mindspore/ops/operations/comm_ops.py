@@ -1828,6 +1828,7 @@ class _GetTensorSlice(PrimitiveWithInfer):
             tensor_slice = tensor_slice.reshape(slice_shape)
         return Tensor(tensor_slice, x.dtype)
 
+
 class BatchISendIRecv(PrimitiveWithInfer):
     """
     Batch send and recv tensors asynchronously.

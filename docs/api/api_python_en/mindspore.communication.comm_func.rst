@@ -20,10 +20,12 @@ for more details.
     mindspore.communication.comm_func.all_to_all_single_with_output_shape
     mindspore.communication.comm_func.all_to_all_with_output_shape
     mindspore.communication.comm_func.barrier
+    mindspore.communication.comm_func.batch_isend_irecv
     mindspore.communication.comm_func.broadcast
     mindspore.communication.comm_func.gather_into_tensor
     mindspore.communication.comm_func.irecv
     mindspore.communication.comm_func.isend
+    mindspore.communication.comm_func.P2POp
     mindspore.communication.comm_func.reduce
     mindspore.communication.comm_func.reduce_scatter_tensor
     mindspore.communication.comm_func.scatter_tensor

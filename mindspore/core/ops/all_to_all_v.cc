@@ -47,7 +47,7 @@ class AlltoAllVInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
-    auto prim_name = primitive->name();
+    const auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
     if (!(input_args[0]->isa<abstract::AbstractTensor>())) {
@@ -71,7 +71,7 @@ class AlltoAllVInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(prim);
-    auto prim_name = prim->name();
+    const auto prim_name = prim->name();
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
 
@@ -95,7 +95,7 @@ class AlltoAllVInfer : public abstract::OpInferBase {
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
-    auto prim_name = primitive->name();
+    const auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
 
     auto type = InferType(primitive, input_args);

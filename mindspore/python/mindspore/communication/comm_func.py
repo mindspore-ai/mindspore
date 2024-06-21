@@ -383,29 +383,29 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
 
 class P2POp:
     """
-    Object for ``batch_isend_irecv``, to store information of ``"isend"`` and ``"irecv"``.
+    Object for `batch_isend_irecv` input, to store information of ``"isend"`` and ``"irecv"``.
 
     Note:
-        - Allow pass-in recv shape rather than tensor when ``op`` is ``"irecv"``.
-        - ``tensor`` will not be modified in-place.
+        - Allow pass-in recv shape rather than tensor when `op` is 'irecv'.
+        - `tensor` will not be modified in-place by final result.
 
     Args:
-        op(Union[str, function]: Only string of ``"isend"`` and ``"irecv"`` are allow.
-                                 Or function of ``comm_func.isend`` and ``comm_func.irecv`` are allow.
+        op(Union[str, function]): Only string of ``"isend"`` and ``"irecv"`` are allow.
+                                  Or function of ``comm_func.isend`` and ``comm_func.irecv`` are allow.
         tensor(Union[Tensor, Tuple(int)]): tensor for sending/receiving or receive tensor shape
-                                           when op is ``"irecv"``.
+                                           when `op` is ``"irecv"``.
         peer(int): remote global rank for send/receive.
-        tag(int): currently not supported yet. default: 0.
-        recv_dtype(mindspore.dtype): when ``tensor`` is a tuple shape, this arg will be used and has
-                                     to be configured. default: None
+        tag(int): currently not supported yet. default: ``0``.
+        recv_dtype(mindspore.dtype): when `tensor` is a tuple shape, this arg will be used and has
+                                     to be configured. default: ``None``
 
     Returns:
-        P2POP Object.
+        P2POp Object.
 
     Raises:
-        ValueError: when ``op`` is not string or function of ``"isend"`` and ``"irecv"``.
-        TypeError: when ``tensor`` is not type of mindspore.Tensor or Tuple.
-        NotImplementedError: when ``tag`` is not 0.
+        ValueError: when `op` is not string or function of 'isend' and 'irecv'.
+        TypeError: when `tensor` is not type of Tensor or Tuple.
+        NotImplementedError: when `tag` is not 0.
 
     Supported Platforms:
         ``Ascend``
@@ -413,7 +413,7 @@ class P2POp:
     Examples:
         >>> import numpy as np
         >>> import mindspore
-        >>> from mindspore.communication.comm_func import batch_isend_irecv, P2POp, isend, irecv
+        >>> from mindspore.communication.comm_func import P2POp, isend, irecv
         >>> from mindspore import Tensor
         >>> send_tensor = Tensor(1.)
         >>> send_op = P2POp('isend', send_tensor, 1)
@@ -450,21 +450,22 @@ def batch_isend_irecv(p2p_op_list):
     Batch send and recv tensors asynchronously.
 
     Note:
-        - The ``isend`` and ``irecv`` of ``P2POp`` in ``p2p_op_list`` between ranks need to match each other.
-        - ``P2POp`` in ``p2p_op_list`` can only use the same communication group.
-        - ``tag`` of ``P2POp`` in ``p2p_op_list`` is not support yet.
+        - The 'isend' and 'irecv' of `P2POp` in `p2p_op_list` between ranks need to match each other.
+        - `P2POp` in `p2p_op_list` can only use the same communication group.
+        - `tag` of `P2POp` in `p2p_op_list` is not support yet.
+        - `tensor` of `P2POp` in `p2p_op_list` will not be modified by result inplace.
         - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
-        p2p_op_list(P2POp): list contains P2POps.
+        p2p_op_list(P2POp): list contains `P2POp`. `P2POp` is type of :class:`mindspore.communication.comm_func.P2POp`
 
     Returns:
-        tuple(Tensor). Output tensors is corresponding to ``p2p_op_list``:
-        At P2POp with "isend" position, output tensor is a fake tensor with scalar, which has no meaning.
-        At P2POp with "irecv" position, output tensor is a tensor received from remote end.
+        tuple(Tensor). Output tensors is corresponding to `p2p_op_list`.
+        At `P2POp` with 'isend' position, output tensor is a fake tensor with scalar, which has no meaning.
+        At `P2POp` with 'irecv' position, output tensor is a tensor received from remote device.
 
     Raises:
-        TypeError: If ``p2p_op_list`` is not type of ``P2POp``.
+        TypeError: If `p2p_op_list` are not all type of `P2POp`.
 
     Supported Platforms:
         ``Ascend``
@@ -928,7 +929,7 @@ def all_to_all_with_output_shape(output_shape_list, input_tensor_list, group=Non
     scatter and gather list of tensor to/from all rank according to input/output tensor list.
 
     Note:
-        tensor shape in 'output_shape_list' and 'input_tensor_list' should be match across ranks.
+        tensor shape in `output_shape_list` and `input_tensor_list` should be match across ranks.
         Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
@@ -943,9 +944,9 @@ def all_to_all_with_output_shape(output_shape_list, input_tensor_list, group=Non
         Tuple(Tensor), the tensors gathered from remote ranks.
 
     Raises:
-        TypeError: If 'input_tensor_list' is not list of tensors.
-        TypeError: If 'output_shape_list' is not list of tuple or tensors.
-        TypeError: If tensors in 'input_tensor_list' are not the same type.
+        TypeError: If `input_tensor_list` is not list of tensors.
+        TypeError: If `output_shape_list` is not list of tuple or tensors.
+        TypeError: If tensors in `input_tensor_list` are not the same type.
 
     Supported Platforms:
         ``Ascend``
@@ -1023,6 +1024,43 @@ def all_to_all_with_output_shape(output_shape_list, input_tensor_list, group=Non
     return tuple(result)
 
 
+def _get_all_to_all_single_numel_list(tensor, output_shape, output_split_sizes, input_split_sizes, group):
+    """get numel list for all_to_all_single."""
+    if input_split_sizes is None or not input_split_sizes:
+        _world_size = get_group_size(group)
+        if tensor.shape[0] % _world_size != 0:
+            raise ValueError("input shape at dim 0 must be divided by world_size, "
+                             f"but got {tensor.shape[0]} and {_world_size}.")
+        _split_size = tensor.shape[0] // _world_size
+        input_split_sizes = (_split_size,) * _world_size
+    if output_split_sizes is None or not output_split_sizes:
+        _world_size = get_group_size(group)
+        shape_dim_0 = None
+        if isinstance(output_shape, Tensor):
+            shape_dim_0 = output_shape.shape[0]
+        else:
+            shape_dim_0 = output_shape[0]
+        if shape_dim_0 % _world_size != 0:
+            raise ValueError("output shape at dim 0 must be divided by world_size, "
+                             f"but got {shape_dim_0} and {_world_size}.")
+        _split_size = shape_dim_0 // _world_size
+        output_split_sizes = (_split_size,) * _world_size
+
+    send_size_without_first_dim = _get_size(tensor.shape[1:])
+    send_numel_list = [size * send_size_without_first_dim for size in input_split_sizes]
+
+    recv_size_without_first_dim = None
+    recv_shape_without_first_dim = None
+    if isinstance(output_shape, Tensor):
+        recv_shape_without_first_dim = output_shape.shape[1:]
+        recv_size_without_first_dim = _get_size(recv_shape_without_first_dim)
+    else:
+        recv_shape_without_first_dim = output_shape[1:]
+        recv_size_without_first_dim = _get_size(recv_shape_without_first_dim)
+    recv_numel_list = [size * recv_size_without_first_dim for size in output_split_sizes]
+    return send_numel_list, recv_numel_list, recv_shape_without_first_dim
+
+
 def all_to_all_single_with_output_shape(output_shape, tensor, output_split_sizes=None,
                                         input_split_sizes=None, group=None):
     """
@@ -1049,8 +1087,8 @@ def all_to_all_single_with_output_shape(output_shape, tensor, output_split_sizes
         which has no actual meanning.
 
     Raises:
-        TypeError: If 'tensor' is not tensor.
-        TypeError: If 'output_shape' is not tuple or tensors.
+        TypeError: If `tensor` is not tensor.
+        TypeError: If `output_shape` is not tuple or tensors.
 
     Supported Platforms:
         ``Ascend``
@@ -1102,39 +1140,8 @@ def all_to_all_single_with_output_shape(output_shape, tensor, output_split_sizes
     if group is None:
         group = GlobalComm.WORLD_COMM_GROUP
 
-    if input_split_sizes is None or not input_split_sizes:
-        _world_size = get_group_size(group)
-        if tensor.shape[0] % _world_size != 0:
-            raise ValueError("input shape at dim 0 must be divided by world_size, "
-                             f"but got {tensor.shape[0]} and {_world_size}.")
-        _split_size = tensor.shape[0] // _world_size
-        input_split_sizes = (_split_size,) * _world_size
-    if output_split_sizes is None or not output_split_sizes:
-        _world_size = get_group_size(group)
-        shape_dim_0 = None
-        if isinstance(output_shape, Tensor):
-            shape_dim_0 = output_shape.shape[0]
-        else:
-            shape_dim_0 = output_shape[0]
-        if shape_dim_0 % _world_size != 0:
-            raise ValueError("output shape at dim 0 must be divided by world_size, "
-                             f"but got {shape_dim_0} and {_world_size}.")
-        _split_size = shape_dim_0 // _world_size
-        output_split_sizes = (_split_size,) * _world_size
-
-    send_size_without_first_dim = _get_size(tensor.shape[1:])
-    send_numel_list = [size * send_size_without_first_dim for size in input_split_sizes]
-
-    recv_size_without_first_dim = None
-    recv_shape_without_first_dim = None
-    if isinstance(output_shape, Tensor):
-        recv_shape_without_first_dim = output_shape.shape[1:]
-        recv_size_without_first_dim = _get_size(recv_shape_without_first_dim)
-    else:
-        recv_shape_without_first_dim = output_shape[1:]
-        recv_size_without_first_dim = _get_size(recv_shape_without_first_dim)
-    recv_numel_list = [size * recv_size_without_first_dim for size in output_split_sizes]
-
+    send_numel_list, recv_numel_list, recv_shape_without_first_dim = \
+        _get_all_to_all_single_numel_list(tensor, output_shape, output_split_sizes, input_split_sizes, group)
     _op = _get_cache_prim(P.AlltoAllV)(send_numel_list, recv_numel_list, group)
     _input = tensor.reshape(-1)
     result = _op(_input)
