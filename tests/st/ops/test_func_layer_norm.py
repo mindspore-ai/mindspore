@@ -32,25 +32,34 @@ def layer_norm_forward_func(input_x, normalized_shape, gamma, beta, eps=1e-7):
 def layer_norm_backward_func(input_x, normalized_shape, gamma, beta, eps=1e-7):
     return ops.grad(layer_norm_forward_func, (0, 2, 3))(input_x, normalized_shape, gamma, beta, eps)
 
+def generate_random_input(shape, dtype):
+    return np.random.randn(*shape).astype(dtype)
+
+def layer_norm_forward_func_np(input_x, normalized_shape, gamma, beta, eps=1e-7):
+    mean_np = np.mean(input_x, axis=-1, keepdims=True)
+    var_np = np.var(input_x, axis=-1, keepdims=True)
+    x_norm = (input_x - mean_np) / np.sqrt(var_np + eps)
+    return gamma * x_norm + beta
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_ops_layer_norm_ext_forward(mode):
+def test_ops_layer_norm_forward(mode):
     """
     Feature: pyboost function.
     Description: test layer_norm_ext forward.
     Expectation: success.
     """
     context.set_context(mode=mode, device_target="Ascend")
-    input_x = Tensor(np.array([[1, 2, 3], [1, 2, 3]]).astype(np.float32))
-    normalized_shape = (3,)
-    gamma = Tensor(np.ones(normalized_shape), ms.float32)
-    beta = Tensor(np.zeros(normalized_shape), ms.float32)
-    output = layer_norm_forward_func(input_x, normalized_shape, gamma, beta)
+    input_x = generate_random_input((64, 255, 448), np.float32)
+    normalized_shape = (448,)
+    gamma = generate_random_input(normalized_shape, np.float32)
+    beta = generate_random_input(normalized_shape, np.float32)
+    output = layer_norm_forward_func(Tensor(input_x), normalized_shape, Tensor(gamma), Tensor(beta), eps=1e-5)
 
-    expect_output = np.array([[-1.22474468, 0., 1.22474468], [-1.22474468, 0., 1.22474468]])
+    expect_output = layer_norm_forward_func_np(input_x, normalized_shape, gamma, beta, eps=1e-5)
     assert np.allclose(output.asnumpy(), expect_output, atol=1e-6)
 
 

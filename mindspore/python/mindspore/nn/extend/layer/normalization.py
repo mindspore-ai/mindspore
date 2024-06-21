@@ -48,7 +48,8 @@ class LayerNorm(Cell):
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\beta` weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
             ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'zeros'`` .
-        epsilon (float): A value added to the denominator for numerical stability(:math:`\epsilon`). Default: ``1e-5`` .
+        eps (float): A value added to the denominator for numerical stability(:math:`\epsilon`). Default: ``1e-5`` .
+        elementwise_affine (bool): A bool value, When set to True, gamma and beta can be learned. Default: True.
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
@@ -78,7 +79,8 @@ class LayerNorm(Cell):
                  normalized_shape,
                  gamma_init='ones',
                  beta_init='zeros',
-                 epsilon=1e-5,
+                 eps=1e-5,
+                 elementwise_affine=True,
                  dtype=mstype.float32
                  ):
         """Initialize LayerNorm."""
@@ -92,11 +94,11 @@ class LayerNorm(Cell):
                 f"least one element, but got normalized_shape = {normalized_shape}"
             )
         self.normalized_shape = normalized_shape
-        self.epsilon = epsilon
+        self.epsilon = eps
         self.gamma = Parameter(initializer(
-            gamma_init, normalized_shape, dtype=dtype), name="gamma")
+            gamma_init, normalized_shape, dtype=dtype), name="gamma", requires_grad=elementwise_affine)
         self.beta = Parameter(initializer(
-            beta_init, normalized_shape, dtype=dtype), name="beta")
+            beta_init, normalized_shape, dtype=dtype), name="beta", requires_grad=elementwise_affine)
 
     def construct(self, input_x):
         y = F.layer_norm(input_x, self.normalized_shape, self.gamma.astype(input_x.dtype),
