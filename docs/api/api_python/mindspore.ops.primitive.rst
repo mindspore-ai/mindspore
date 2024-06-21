@@ -217,7 +217,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
 
     mindspore.ops.NoRepeatNGram
 
-精度敏感检测
+特征值检测
 ^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
