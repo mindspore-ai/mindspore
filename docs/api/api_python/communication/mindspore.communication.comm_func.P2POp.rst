@@ -25,6 +25,8 @@ mindspore.communication.comm_func.P2POp
         - **TypeError** - 当 `tensor` 不是张量或者元组类型。
         - **NotImplementedError** - 当 `tag` 入参不为0。
 
+    样例：
+
     .. note::
         .. include:: ../ops/mindspore.ops.comm_note.rst
 
