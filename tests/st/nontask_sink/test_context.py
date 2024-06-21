@@ -23,12 +23,12 @@ from mindspore import context
 def test_memory_optimize_level_context():
     """
     Feature: memory optimize level context.
-    Description: CPU/GPU/Ascend O0.
+    Description: CPU/GPU O0, Ascend O1.
     Expectation: No exception.
     """
     context.set_context(device_target='Ascend')
     ascend_memory_optimize_level = context.get_context("memory_optimize_level")
-    assert ascend_memory_optimize_level == 0
+    assert ascend_memory_optimize_level == 1
     context.set_context(device_target='CPU')
     cpu_memory_optimize_level = context.get_context("memory_optimize_level")
     assert cpu_memory_optimize_level == 0
