@@ -813,7 +813,7 @@ class RandomChoiceWithMask(Primitive):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> rnd_choice_mask = ops.RandomChoiceWithMask()
-        >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool))
+        >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool_))
         >>> output_y, output_mask = rnd_choice_mask(input_x)
         >>> result = output_y.shape
         >>> print(result)

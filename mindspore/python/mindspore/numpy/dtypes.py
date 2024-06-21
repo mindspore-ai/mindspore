@@ -86,7 +86,7 @@ dtype_map = {
 }
 
 all_types = [
-    'np.int',
+    'np.int_',
     'np.int8',
     'np.int16',
     'np.int32',
@@ -96,11 +96,11 @@ all_types = [
     'np.uint16',
     'np.uint32',
     'np.uint64',
-    'np.float',
+    'np.float_',
     'np.float16',
     'np.float32',
     'np.float64',
-    'np.bool']
+    'np.bool_']
 
 promotion_rule = {
     (uint8, uint16): uint16,

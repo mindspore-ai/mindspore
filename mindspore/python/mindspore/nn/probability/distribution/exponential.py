@@ -152,7 +152,7 @@ class Exponential(Distribution):
         if self.rate is not None:
             check_greater_zero(self.rate, 'rate')
 
-        self.minval = np.finfo(np.float).tiny
+        self.minval = np.finfo(np.float_).tiny
 
         # ops needed for the class
         self.exp = exp_generic
