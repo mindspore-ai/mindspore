@@ -295,6 +295,12 @@ if(ENABLE_DEBUGGER)
     list(APPEND MINDSPORE_PROTO_LIST ${DUMP_DATA_PROTO_SRCS})
 endif()
 
+if(ENABLE_SECURITY OR NOT ENABLE_CPU AND ENABLE_DEBUGGER)
+    list(APPEND BACKEND_SUB_OBJECTS_SRC
+        plugin/device/cpu/hal/profiler/cpu_profiling.cc
+        plugin/device/cpu/hal/profiler/cpu_data_saver.cc)
+endif()
+
 if(ENABLE_DUMP_PROTO)
     include_directories(${CMAKE_BINARY_DIR})
 
@@ -485,9 +491,6 @@ if(ENABLE_TEST OR ENABLE_TESTCASES)
     include_directories(${CMAKE_BINARY_DIR})
     list(APPEND STUB_BACKEND_SOURCE ${CMAKE_SOURCE_DIR}/tests/ut/cpp/stub/ps/ps_core_stub.cc)
     add_library(stub_backend_obj OBJECT ${STUB_BACKEND_SOURCE})
-    list(APPEND BACKEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:stub_backend_obj>
-        "plugin/device/cpu/hal/profiler/cpu_profiling.cc"
-        "plugin/device/cpu/hal/profiler/cpu_data_saver.cc")
 endif()
 
 if(ENABLE_D)
