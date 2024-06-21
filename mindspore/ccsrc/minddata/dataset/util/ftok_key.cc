@@ -68,6 +68,8 @@ Status GetKey(key_t *key) {
   fs1.open(ipc_key_file, std::fstream::out);
   fs1.close();
 
+  platform::ChangeFileMode(ipc_key_file, S_IRUSR | S_IWUSR);
+
   // get key by ftok
   *key = ftok(ipc_key_file.c_str(), 0x600);
   if (*key < 0) {

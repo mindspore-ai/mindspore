@@ -50,6 +50,7 @@
 #include "minddata/dataset/engine/datasetops/receive_bridge_op.h"
 #include "minddata/dataset/core/shared_memory_queue.h"
 #include "minddata/dataset/core/message_queue.h"
+#include "minddata/dataset/util/gil_scoped.h"
 #include "minddata/dataset/util/ftok_key.h"
 #endif
 
@@ -512,11 +513,32 @@ Status TreeAdapter::Launch() {
     // move the send_tree_ to tree_ and launch it
     tree_ = std::move(send_tree_);
 
+    // begin hold gil
+    MS_LOG(INFO) << "[Main Dataset Process] Begin acquire gil. Current Py_IsInitialized: " << Py_IsInitialized()
+                 << ", PyGILState_Check: " << PyGILState_Check();
+    GilAcquireWithCheck gil_acquire_with_check;
+    PyOS_BeforeFork();
+
     // launch the sub-process to detach dataset with send
     pid_t fpid = fork();
     if (fpid < 0) {  // fork sub-process failed
       RETURN_STATUS_UNEXPECTED("Create an independent dataset process failed.");
-    } else if (fpid == 0) {              // in sub-process
+    } else if (fpid == 0) {  // in sub-process
+      PyOS_AfterFork_Child();
+
+      // release the gil in child process
+      MS_LOG(INFO) << "[Independent Dataset Process] Begin release gil. Current Py_IsInitialized: "
+                   << Py_IsInitialized() << ", PyGILState_Check: " << PyGILState_Check();
+      py::gil_scoped_release release;
+      MS_LOG(INFO) << "[Independent Dataset Process] End release gil. Current Py_IsInitialized: " << Py_IsInitialized()
+                   << ", PyGILState_Check: " << PyGILState_Check();
+      if (PyGILState_Check()) {
+        MS_LOG(ERROR) << "[Independent Dataset Process] PyGILState_Check: " << PyGILState_Check()
+                      << ", it should be 0.";
+        exit(0);
+      }
+
+      prctl(PR_SET_NAME, "independent_dataset_process");
       prctl(PR_SET_PDEATHSIG, SIGKILL);  // if the main process exit, the subprocess will exit too.
 
       auto pid = getpid();
@@ -546,6 +568,9 @@ Status TreeAdapter::Launch() {
                    << ", parent pid: " << std::to_string(ppid) << ", thread id: " << tid << " exit.";
       exit(0);
     }
+
+    PyOS_AfterFork_Parent();
+
     // In the main thread
     MS_LOG(INFO) << "[Main Dataset Process] Process pid: " << std::to_string(getpid())
                  << ", sub-process pid: " << std::to_string(fpid);
@@ -561,10 +586,13 @@ Status TreeAdapter::Launch() {
         break;
       }
     }
+    MS_LOG(INFO) << "[Main Datast Process] Begin release gil. Current Py_IsInitialized: " << Py_IsInitialized()
+                 << ", PyGILState_Check: " << PyGILState_Check();
   }
 #endif
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && !defined(ENABLE_ANDROID)
+  // set num threads of opencv only for main process
   int32_t thread_num = get_nprocs();
   if (thread_num == 0) {
     std::string err_msg = "Invalid thread number, got 0.";
