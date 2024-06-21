@@ -39,9 +39,15 @@ bool InferenceMatmulSplitFusion::Run(const FuncGraphPtr &graph) {
     return false;
   }
   constexpr auto kInferenceMatmulSplitSiluName = "InferenceMatmulSplitSilu";
+  constexpr auto kInferenceMatmulSplitName = "InferenceMatmulSplit";
   auto enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
-  enable_fusion_silu = (std::find(enable_op_list.begin(), enable_op_list.end(),
-                                  kInferenceMatmulSplitSiluName) != enable_op_list.end());
+  auto enable_fusion =
+    (std::find(enable_op_list.begin(), enable_op_list.end(), kInferenceMatmulSplitName) != enable_op_list.end());
+  if (!enable_fusion) {
+    return false;
+  }
+  enable_fusion_silu =
+    (std::find(enable_op_list.begin(), enable_op_list.end(), kInferenceMatmulSplitSiluName) != enable_op_list.end());
 
   std::string pattern_name = "";
   auto node_list = TopoSort(graph->output());
@@ -88,7 +94,8 @@ std::string InferenceMatmulSplitFusion::GetSplitFusionPatternName(const CNodePtr
     } else if (reshape_input_name == prim::kPrimAdd->name()) {
       auto bias_add_cnode = reshape_input_node->cast<CNodePtr>();
       auto bias_input_node = common::AnfAlgo::GetInputNode(bias_add_cnode, kIndex0);
-      if (bias_input_node->isa<CNode>() && common::AnfAlgo::GetCNodeName(bias_input_node) == prim::kPrimMatMul->name()) {
+      if (bias_input_node->isa<CNode>() &&
+          common::AnfAlgo::GetCNodeName(bias_input_node) == prim::kPrimMatMul->name()) {
         MS_LOG(DEBUG) << "process matmul biasadd reshape split fusion";
         pattern_name = kPatternNameMatMulBiasAddSplit;
       }
@@ -160,8 +167,8 @@ size_t InferenceMatmulSplitFusion::GetSplitSizeLen(const CNodePtr &split_cnode) 
   return split_size_len;
 }
 
-PrimitivePtr InferenceMatmulSplitFusion::CreateMatmulSplitPrim(const CNodePtr &split_cnode,
-                                                size_t split_size_len, const std::string &pattern_name) const {
+PrimitivePtr InferenceMatmulSplitFusion::CreateMatmulSplitPrim(const CNodePtr &split_cnode, size_t split_size_len,
+                                                               const std::string &pattern_name) const {
   PrimitivePtr matmul_split_prim = nullptr;
   std::string prim_name = "";
   auto iter = PatternPrimMap.find(split_size_len);
@@ -179,8 +186,8 @@ PrimitivePtr InferenceMatmulSplitFusion::CreateMatmulSplitPrim(const CNodePtr &s
   return matmul_split_prim;
 }
 
-CNodePtr InferenceMatmulSplitFusion::CreateMatmulSplitNode(const FuncGraphPtr &func_graph,
-                                          const AnfNodePtr &node, const std::string &pattern_name) const {
+CNodePtr InferenceMatmulSplitFusion::CreateMatmulSplitNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                           const std::string &pattern_name) const {
   MS_LOG(DEBUG) << "start create MatmulSplit node";
   MS_ASSERT(func_graph != nullptr && node != nullptr);
   auto split_cnode = node->cast<CNodePtr>();
@@ -219,7 +226,8 @@ CNodePtr InferenceMatmulSplitFusion::CreateMatmulSplitNode(const FuncGraphPtr &f
 }
 
 CNodePtr InferenceMatmulSplitFusion::CreateMatmulBiasAddSplitNode(const FuncGraphPtr &func_graph,
-                                          const AnfNodePtr &node, const std::string &pattern_name) const {
+                                                                  const AnfNodePtr &node,
+                                                                  const std::string &pattern_name) const {
   MS_LOG(DEBUG) << "start create MatmulBiasAddSplit node";
   MS_ASSERT(func_graph != nullptr && node != nullptr);
   auto split_cnode = node->cast<CNodePtr>();
@@ -262,7 +270,8 @@ CNodePtr InferenceMatmulSplitFusion::CreateMatmulBiasAddSplitNode(const FuncGrap
 }
 
 CNodePtr InferenceMatmulSplitFusion::CreateQuantBatchMatMulSplitNode(const FuncGraphPtr &func_graph,
-                                          const AnfNodePtr &node, const std::string &pattern_name) const {
+                                                                     const AnfNodePtr &node,
+                                                                     const std::string &pattern_name) const {
   MS_LOG(DEBUG) << "start create QuantBatchMatMulSplit node";
   MS_ASSERT(func_graph != nullptr && node != nullptr);
   auto split_cnode = node->cast<CNodePtr>();
@@ -303,8 +312,8 @@ CNodePtr InferenceMatmulSplitFusion::CreateQuantBatchMatMulSplitNode(const FuncG
   return qbmm_split_cnode;
 }
 
-CNodePtr InferenceMatmulSplitFusion::CreateMatmulSplitSiluNode(const FuncGraphPtr &func_graph,
-                                          const AnfNodePtr &node, const std::string &pattern_name) const {
+CNodePtr InferenceMatmulSplitFusion::CreateMatmulSplitSiluNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                               const std::string &pattern_name) const {
   MS_LOG(DEBUG) << "start create MatmulSplitSilu node";
   MS_ASSERT(func_graph != nullptr && node != nullptr);
   auto silu_cnode = node->cast<CNodePtr>();
@@ -347,7 +356,8 @@ CNodePtr InferenceMatmulSplitFusion::CreateMatmulSplitSiluNode(const FuncGraphPt
 }
 
 CNodePtr InferenceMatmulSplitFusion::CreateMatmulBiasAddSplitSiluNode(const FuncGraphPtr &func_graph,
-                                            const AnfNodePtr &node, const std::string &pattern_name) const {
+                                                                      const AnfNodePtr &node,
+                                                                      const std::string &pattern_name) const {
   MS_LOG(DEBUG) << "start create MatmulBiasAddSplitSilu node";
   MS_ASSERT(func_graph != nullptr && node != nullptr);
   auto silu_cnode = node->cast<CNodePtr>();
@@ -396,7 +406,8 @@ CNodePtr InferenceMatmulSplitFusion::CreateMatmulBiasAddSplitSiluNode(const Func
 }
 
 CNodePtr InferenceMatmulSplitFusion::CreateQuantBatchMatMulSplitSiluNode(const FuncGraphPtr &func_graph,
-                                            const AnfNodePtr &node, const std::string &pattern_name) const {
+                                                                         const AnfNodePtr &node,
+                                                                         const std::string &pattern_name) const {
   MS_LOG(DEBUG) << "start create QuantBatchMatMulSplitSilu node";
   MS_ASSERT(func_graph != nullptr && node != nullptr);
   auto silu_cnode = node->cast<CNodePtr>();
@@ -442,8 +453,8 @@ CNodePtr InferenceMatmulSplitFusion::CreateQuantBatchMatMulSplitSiluNode(const F
   return qbmm_split_cnode;
 }
 
-AnfNodePtr InferenceMatmulSplitFusion::Process(const std::string &pattern_name,
-                              const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
+AnfNodePtr InferenceMatmulSplitFusion::Process(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                               const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(func_graph);
   auto manager = func_graph->manager();
