@@ -85,7 +85,18 @@ TypePtr AddRmsNormQuantV2FuncImpl::InferType(const PrimitivePtr &prim,
   auto x_type = input_args[kInputIndex0]->GetType();
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  const auto &quant_type = std::make_shared<TensorType>(kInt8);
+  mindspore::TensorTypePtr quant_type;
+  if (prim->HasAttr("dst_type")) {
+    auto value_ptr = prim->GetAttr("dst_type");
+    MS_EXCEPTION_IF_NULL(value_ptr);
+    auto dst_type = GetValue<int64_t>(value_ptr);
+    auto type = TypeIdToType(static_cast<TypeId>(dst_type));
+    MS_CHECK_VALUE(type == kInt8 || type == kInt4, prim->name() + " error: dtype should be " + kInt8->ToString() +
+                                                     " or " + kInt4->ToString() + " but got " + type->ToString());
+    quant_type = std::make_shared<TensorType>(type);
+  } else {
+    quant_type = std::make_shared<TensorType>(kInt8);
+  }
   std::vector<TypePtr> types_list = {quant_type, quant_type, x_type};
   return std::make_shared<Tuple>(types_list);
 }
@@ -94,7 +105,18 @@ TypePtrList AddRmsNormQuantV2FuncImpl::InferType(const PrimitivePtr &primitive,
                                                  const ValuePtrList &input_values) const {
   const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
-  const auto &quant_type = std::make_shared<TensorType>(kInt8);
+  mindspore::TensorTypePtr quant_type;
+  if (primitive->HasAttr("dst_type")) {
+    auto value_ptr = primitive->GetAttr("dst_type");
+    MS_EXCEPTION_IF_NULL(value_ptr);
+    auto dst_type = GetValue<int64_t>(value_ptr);
+    auto type = TypeIdToType(static_cast<TypeId>(dst_type));
+    MS_CHECK_VALUE(type == kInt8 || type == kInt4, primitive->name() + " error: dtype should be " + kInt8->ToString() +
+                                                     " or " + kInt4->ToString() + " but got " + type->ToString());
+    quant_type = std::make_shared<TensorType>(type);
+  } else {
+    quant_type = std::make_shared<TensorType>(kInt8);
+  }
   return {quant_type, quant_type, x_tensor->Dtype()};
 }
 
