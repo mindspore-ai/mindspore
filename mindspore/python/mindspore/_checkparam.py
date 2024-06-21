@@ -1145,21 +1145,8 @@ def check_coo_tensor_dtype(indices_dtype):
                         f"{indices_dtype}.")
 
 
-def check_dynamic_shape(dyn_elem, actual_input, i):
-    """Check the consistency of dynamic shape tensors and actual input tensors."""
-    if dyn_elem.dtype != actual_input.dtype:
-        raise TypeError(f"The data type of '{i}'th args in actual input tensors should be '{dyn_elem.dtype}', " \
-                        f"but got '{actual_input.dtype}'.")
-    if -2 in dyn_elem.shape:
-        return
-    if dyn_elem.ndim != actual_input.ndim:
-        raise ValueError(f"The dimension of '{i}'th args in actual input tensors should be '{dyn_elem.ndim}', " \
-                         f"but got '{actual_input.ndim}'.")
-    check_dyn_shape_value_equal(i, dyn_elem.shape, actual_input.shape)
-
-
 def check_element_type_of_iterable(arg_name, arg_value, valid_types, prim_name=None):
-    """Check type of the element of a iterabel object, execpt dict."""
+    """Check type of the element of a iterabel object, except dict."""
     check_value_type(arg_name, arg_value, [list, tuple], prim_name)
     type_names = [t.__name__ if hasattr(t, '__name__') else str(t) for t in valid_types]
     num_types = len(valid_types)
@@ -1197,14 +1184,6 @@ def check_size_and_element_type_of_tuple(arg_name, arg_value, expect_size, expec
     check_value_type(arg_name, arg_value, [tuple], prim_name)
     check_equal_int(len(arg_value), expect_size, arg_name + ' size', prim_name)
     check_element_type_of_iterable('arg_name', arg_value, [expect_element_type], prim_name)
-
-
-def check_dyn_shape_value_equal(index, dyn_shape, actual_shape):
-    """Check the consistency of dynamic shape and actual input shape."""
-    for i, x in enumerate(dyn_shape):
-        if x not in (-1, actual_shape[i]):
-            raise ValueError(f"The {i}th shape value of `{index}`th actual input args should be `{x}`, but got " \
-                             f"`{actual_shape[i]}`.")
 
 
 def _check_symbol(dyn_input, net_input, index, symbolic_shape_data):

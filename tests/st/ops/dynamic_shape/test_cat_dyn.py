@@ -56,8 +56,8 @@ def test_cat_dynamic_shape():
     net = CatNet()
     net.set_inputs(input_x, axis)
 
-    inputs2 = [[ms.Tensor(np.random.randn(3, 8), dtype=ms.float32) for _ in range(2)], 0]
-    inputs3 = [[ms.Tensor(np.random.randn(12, 6), dtype=ms.float32) for _ in range(2)], -1]
+    inputs2 = [[ms.Tensor(np.random.randn(3, 8), dtype=ms.float32) for _ in range(2)], ms.mutable(0)]
+    inputs3 = [[ms.Tensor(np.random.randn(12, 6), dtype=ms.float32) for _ in range(2)], ms.mutable(-1)]
     for (x, axis) in [inputs2, inputs3]:
         out_ms = net(x, axis)
         tensors = [torch.from_numpy(i.asnumpy()) for i in x]
