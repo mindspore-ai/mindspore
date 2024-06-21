@@ -1504,6 +1504,12 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
   return anf_graph;
 }
 
+static inline std::string GetNodeInfo(const AnfNodeWeakPtr &node) {
+  auto input_node = node.lock();
+  MS_EXCEPTION_IF_NULL(input_node);
+  return input_node->DebugString();
+}
+
 std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPtr &kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_inputs;
@@ -1515,8 +1521,6 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
   const auto &input_datas = iter->second.ge_inputs;
   ge_inputs = input_datas;
   for (size_t i = 0; i < iter->second.device_addrs.size(); ++i) {
-    auto input_node = iter->second.need_update_input[i].first.lock();
-    MS_EXCEPTION_IF_NULL(input_node);
     auto output_addr = iter->second.device_addrs[i];
     MS_EXCEPTION_IF_NULL(output_addr);
     if (is_dynamic_shape) {
@@ -1528,6 +1532,8 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
     }
     auto node_output_addr = output_addr->GetMutablePtr();
     if (node_output_addr == nullptr) {
+      auto input_node = iter->second.need_update_input[i].first.lock();
+      MS_EXCEPTION_IF_NULL(input_node);
       // alloc static memory for unused inputs
       // error in ge when set nullptr into ge tensor
       std::vector<size_t> shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(input_node, 0));
@@ -1546,8 +1552,8 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
                     device::tracker::MemType::kOther);
     }
     MS_LOG(INFO) << "[ZeroCopy] For Graph " << kernel_graph->ToString() << ", update input "
-                 << input_node->DebugString() << " address to " << output_addr->GetMutablePtr()
-                 << ", shape:" << output_addr->kernel_tensor()->GetShapeVector()
+                 << GetNodeInfo(iter->second.need_update_input[i].first) << " address to "
+                 << output_addr->GetMutablePtr() << ", shape:" << output_addr->kernel_tensor()->GetShapeVector()
                  << ", type: " << TypeIdToString(output_addr->type_id()) << ", format: " << output_addr->format()
                  << ", memory size: " << output_addr->GetSize();
     if (node_output_addr != ge_inputs[i].GetData() || output_addr->GetSize() != ge_inputs[i].GetSize()) {
