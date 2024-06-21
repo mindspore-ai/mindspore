@@ -1327,6 +1327,9 @@ def set_context(**kwargs):
             - True or 2: Generate more ir files related to backend process.
             - 3: Generate visualization computing graphs and detailed frontend ir graphs.
 
+            When the network structure is complex, setting `save_graphs` attribute to ``2`` or ``3`` may take too long.
+            If you need quick problem locating, you can switch to ``1`` first.
+
             When the `save_graphs` attribute is set as ``True`` , ``1`` , ``2`` or ``3`` , attribute of
             `save_graphs_path` is used to set the intermediate compilation graph storage path. By default, the graphs
             are saved in the current directory.
