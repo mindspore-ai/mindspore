@@ -1,0 +1,37 @@
+atan2_ext:
+    description: |
+        Returns arctangent of input/other element-wise.
+
+        It returns :math:`\theta\ \in\ [-\pi, \pi]`
+        such that :math:`input = r*\sin(\theta), other = r*\cos(\theta)`, where :math:`r = \sqrt{input^2 + other^2}`.
+
+        Note:
+            - Arg `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
+              If they have different data types, the lower precision data type will be converted to relatively the
+              highest precision data type.
+
+        Args:
+            input (Tensor, Number.number): The input tensor or scalar.
+            other (Tensor, Number.number): The input tensor or scalar. It has the same shape with `input` or
+                its shape is able to broadcast with `input`.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting, and the data type is same as `input`.
+
+        Raises:
+            TypeError: If `input` or `other` is not a Tensor or scalar.
+            RuntimeError: If the data type of `input` and `other` conversion of Parameter is required
+                        when data type conversion of Parameter is not supported.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([0, 1]), mindspore.float32)
+            >>> other = Tensor(np.array([1, 1]), mindspore.float32)
+            >>> output = mint.atan2(input, other)
+            >>> print(output)
+            [0.        0.7853982]

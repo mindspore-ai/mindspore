@@ -233,6 +233,9 @@ from mindspore.ops.function.math_func import tanh
 
 # 100
 
+# 176
+from mindspore.ops.function.math_func import atan2_ext as atan2
+from mindspore.ops.function.math_func import arctan2_ext as arctan2
 # 208
 from mindspore.ops.function.array_func import eye
 # 210
@@ -666,6 +669,9 @@ __all__ = [
 
     # 100
 
+    # 176
+    'atan2',
+    'arctan2',
     # 208
     'eye',
     # 210
