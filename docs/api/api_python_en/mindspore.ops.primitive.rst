@@ -221,7 +221,7 @@ Text Processing
 
     mindspore.ops.NoRepeatNGram
 
-Accuracy-Sensitive Detection
+Feature Value Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatwarnautosummary::

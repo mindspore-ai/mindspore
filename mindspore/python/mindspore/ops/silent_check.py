@@ -31,10 +31,10 @@ NPU_ASD_ENABLE = 'NPU_ASD_ENABLE'
 
 class ASDBase:
     """
-    ASDBase is the base class of operator with accuracy-sensitive detection feature in python.
+    ASDBase is the base class of operator with feature value detection in python.
 
     Args:
-        cls (Primitive): Original operator requiring accuracy-sensitive detection feature.
+        cls (Primitive): Original operator requiring feature value detection.
         args (tuple):  A variable parameter tuple to the original operator.
         kwargs (dict): A variable parameter dictionary passed the original operator.
 
@@ -90,11 +90,11 @@ class ASDBase:
 
     def generate_params(self):
         """
-        Generate support params for accuracy-sensitive detection.
+        Generate support params for feature value detection.
 
         Returns:
             tuple consisting of four elements.
-            The derived class initializes the parameters required for accuracy-sensitive detection by calling
+            The derived class initializes the parameters required for feature value detection by calling
             this function.
 
         Examples:
@@ -103,7 +103,7 @@ class ASDBase:
             >>> class LayerNormASD(ASDBase):
             ...     def __init__(self, *args, **kwargs):
             ...         super().__init__(OriginLayerNorm, *args, **kwargs)
-            ...         # init parameters for accuracy-sensitive detection by calling the base class function
+            ...         # init parameters for feature value detection by calling the base class function
             ...         self.pre_val, self.min_val, self.max_val, self.cnt = self.generate_params()
         """
         pre_val = Parameter(Tensor(0, mstype.float32),
