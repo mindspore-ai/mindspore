@@ -123,7 +123,7 @@ int64_t LongAdd(int64_t base, int64_t shift) {
 
 int64_t GetSplitNumByMapId(const Shape &dev_matrix, int64_t map_id) {
   if (map_id == MAP_NONE) {
-    return (int64_t)1;
+    return NO_SPLIT_STRATEGY;
   }
   auto axis = dev_matrix.size() - 1 - LongToSize(map_id);
   if (axis >= dev_matrix.size()) {
@@ -895,10 +895,10 @@ Status FlashAttentionScoreInfo::InferSplitNumAndDevMatrixShapeByLayout() {
 
   auto dev_matrix_shape = dev_matrix_shape_;
   if (input_layout_ == FASInputLayoutMode::TND) {
-    if (query_batch_map.size() == 1) {
+    if (query_batch_map.size() == kSizeOne) {
       dev_matrix_batch_dim_ = query_batch_map[0];
       dev_matrix_s1_dim_ = MAP_NONE;
-    } else if (query_batch_map.size() == 2) {
+    } else if (query_batch_map.size() == kSizeTwo) {
       dev_matrix_batch_dim_ = query_batch_map[0];
       dev_matrix_s1_dim_ = query_batch_map[1];
     } else {

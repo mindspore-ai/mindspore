@@ -148,7 +148,6 @@ void OverlapRecomputeAGAndFlashAttentionGrad(const FuncGraphPtr &backward_graph)
       return std::make_pair(filter, 1);
     });
 
-    // depend_cnode->set_input(kIndex2, fa_grad->input(4));
     (void)manager->SetEdge(depend_cnode, kIndex2, new_depend_rely);
     depend_cnode->AddAttr(kAttrRecomputeCommDepend, MakeValue(true));
     if (!IsPrimitiveCNode(depend_rely_node) || depend_rely_node->cast<CNodePtr>()->size() < SIZE_TWO ||
