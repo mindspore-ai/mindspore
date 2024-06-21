@@ -192,6 +192,20 @@ REG_FALLBACK_BUILDER("Dense").SetBody(BODYFUNC(ib) {
   return {ret};
 });
 
+REG_FALLBACK_BUILDER("NonZeroExt").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto output_tensor = ib->Emit("NonZero", {input});
+  auto input_shape = input->shape();
+  if (IsDynamicRank(input_shape)) {
+    MS_EXCEPTION(ValueError)
+      << "For `NonZeroExt` op, would use unstack op, the dynamic rank is not support on input be empty.";
+  }
+  auto num = SizeToLong(input_shape.size());
+  auto output_tuple =
+    ib->Emit("Unstack", {output_tensor}, {{"num", MakeValue(num)}, {"axis", MakeValue<int64_t>(1LL)}});
+  return {output_tuple};
+});
+
 class SoftmaxShapeCalc : public ShapeCalcFunctor {
  public:
   SoftmaxShapeCalc() : ShapeCalcFunctor("ShapeCalc_Softmax") {}

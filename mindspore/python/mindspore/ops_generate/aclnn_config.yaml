@@ -143,7 +143,7 @@ CumsumExt: 'aclnnCumsum'
 # 36
 
 # 37
-
+NonZero: 'aclnnNonzero'
 # 38
 
 # 39

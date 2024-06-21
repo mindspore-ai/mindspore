@@ -3549,11 +3549,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         validator.check_value_type('index', index, (Tensor, Tensor_,), 'Tensor.gather_elements')
         return tensor_operator_registry.get('gather_elements')(self, dim, index)
 
-    def nonzero(self):
+    def nonzero(self, as_tuple=False):
         """
         For details, please refer to :func:`mindspore.ops.nonzero`.
         """
-        return tensor_operator_registry.get('nonzero')(self)
+        return tensor_operator_registry.get('nonzero')(self, as_tuple)
 
     def svd(self, full_matrices=False, compute_uv=True):
         """

@@ -4,6 +4,16 @@ mindspore.mint
 Tensor
 ---------------
 
+Array操作
+^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nonzero
+
 创建运算
 ^^^^^^^^^^^^^^^
 

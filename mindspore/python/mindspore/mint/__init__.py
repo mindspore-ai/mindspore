@@ -101,7 +101,7 @@ from mindspore.ops.functional import erfinv
 # 36
 
 # 37
-
+from mindspore.ops.function.array_func import nonzero
 # 38
 
 # 39
@@ -143,7 +143,7 @@ from mindspore.ops import normal_ext as normal
 # 57
 from mindspore.ops.functional import broadcast_to
 # 58
-
+from mindspore.ops.function.math_func import greater_equal
 # 59
 from mindspore.ops.functional import square
 # 60
@@ -323,7 +323,7 @@ __all__ = [
     # 36
 
     # 37
-
+    'nonzero',
     # 38
 
     # 39
@@ -365,7 +365,7 @@ __all__ = [
     # 57
     'broadcast_to',
     # 58
-
+    'greater_equal',
     # 59
     'square',
     # 60
