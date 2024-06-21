@@ -14,7 +14,7 @@
 # ============================================================================
 """mint module."""
 from __future__ import absolute_import
-from mindspore.ops.extend import *
+from mindspore.ops.extend import gather, conv2d, max, min
 from mindspore.ops.extend import array_func, math_func, nn_func
 from mindspore.mint.nn.functional import *
 from mindspore.mint.nn import functional
@@ -41,7 +41,8 @@ from mindspore.ops.auto_generate import cumsum_ext as cumsum
 from mindspore.ops.auto_generate import stack_ext as stack
 
 # 7
-
+from mindspore.ops.auto_generate import ones as ones_ext
+from mindspore.ops.auto_generate import zeros as zeros_ext
 # 8
 
 # 9
@@ -61,7 +62,7 @@ from mindspore.ops.auto_generate import flatten_ext as flatten
 # 16
 from mindspore.ops.functional import matmul
 # 17
-
+from mindspore.ops.functional import mean_ext
 # 18
 from mindspore.ops.functional import sum
 # 19
@@ -73,7 +74,7 @@ from mindspore.ops.functional import mul
 # 22
 
 # 23
-from mindspore.ops.functional import mean_ext as mean
+
 # 24
 
 # 25
@@ -85,13 +86,13 @@ from mindspore.ops.functional import reciprocal
 # 28
 from mindspore.ops.functional import exp
 # 29
-from mindspore.ops.functional import sqrt
+from mindspore.ops.auto_generate import sqrt as sqrt_ext
 # 30
 
 # 31
 
 # 32
-
+from mindspore.ops.auto_generate import sub_ext
 # 33
 from mindspore.ops.function.array_func import split_ext as split
 # 34
@@ -107,12 +108,15 @@ from mindspore.ops.function.array_func import nonzero
 # 39
 
 # 40
+from mindspore.ops.functional import any as any_ext
 
 # 41
+from mindspore.ops.auto_generate import add_ext
 
 # 42
 from mindspore.ops.functional import argmax
 # 43
+from mindspore.ops.auto_generate import cat as cat_ext
 
 # 44
 from mindspore.ops.functional import cos
@@ -129,7 +133,7 @@ from mindspore.ops.functional import cos
 # 50
 from mindspore.ops.functional import tile
 # 51
-
+from mindspore.ops.functional import permute as permute_ext
 # 52
 
 # 53
@@ -238,6 +242,106 @@ from mindspore.ops.function.math_func import inverse_ext as inverse
 # 285
 from mindspore.ops.function.array_func import scatter_add_ext as scatter_add
 
+def add(input, other, *, alpha=1):
+    return add_ext(input, other, alpha)
+
+
+def any(input, dim=None, keepdim=False):
+    return any_ext(input, dim, keepdim)
+
+
+def baddbmm(input, batch1, batch2, *, beta=1, alpha=1):
+    return baddbmm_ext(input, batch1, batch2, beta, alpha)
+
+
+def cat(tensors, dim=0):
+    return cat_ext(tensors, dim)
+
+
+def mean(input, dim=None, keepdim=False, *, dtype=None):
+    return mean_ext(input, axis=dim, keep_dims=keepdim, dtype=dtype)
+
+
+def ones(size, *, dtype=None):
+    r"""
+    Creates a tensor filled with value ones.
+
+    Creates a tensor with shape described by the first argument and fills it with value ones in type of the second
+    argument.
+
+    Args:
+        size (Union[tuple[int], list[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
+            tuple or Tensor containing positive integers are allowed. If it is a Tensor,
+            it must be a 0-D or 1-D Tensor with int32 or int64 dtypes.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`): The specified type of output tensor. If `dtype` is ``None`` ,
+            `mindspore.float32` will be used. Default: ``None`` .
+
+    Returns:
+        Tensor, whose dtype and size are defined by input.
+
+    Raises:
+        TypeError: If `size` is neither an int nor an tuple/list/Tensor of int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import mint
+        >>> output = mint.ones((2, 2), mindspore.float32)
+        >>> print(output)
+        [[1. 1.]
+         [1. 1.]]
+    """
+    return ones_ext(size, dtype)
+
+
+def permute(input, dims):
+    return permute_ext(input, dims)
+
+
+def sqrt(input):
+    return sqrt_ext(input)
+
+
+def sub(input, other, *, alpha=1):
+    return sub_ext(input, other, alpha)
+
+
+def zeros(size, *, dtype=None):
+    """
+    Creates a tensor filled with 0 with shape described by `size` and fills it with value 0 in type of `dtype`.
+
+    Args:
+        size (Union[tuple[int], list[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
+            tuple or Tensor containing positive integers are allowed. If it is a Tensor,
+            it must be a 0-D or 1-D Tensor with int32 or int64 dtypes.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is ``None`` ,
+            mindspore.float32 will be used. Default: ``None`` .
+
+    Returns:
+        Tensor, whose dtype and size are defined by input.
+
+    Raises:
+        TypeError: If `size` is neither an int nor an tuple/list/Tensor of int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import mint
+        >>> output = mint.zeros((2, 2), mindspore.float32)
+        >>> print(output)
+        [[0. 0.]
+         [0. 0.]]
+    """
+    return zeros_ext(size, dtype)
+
 __all__ = [
     'full',
     'ones_like',
@@ -261,7 +365,7 @@ __all__ = [
     # 6
     'stack',
     # 7
-
+    'zeros',
     # 8
 
     # 9
@@ -274,7 +378,6 @@ __all__ = [
     "repeat_interleave",
     # 13
     "flip",
-
     # 14
 
     # 15
@@ -282,7 +385,7 @@ __all__ = [
     # 16
     'matmul',
     # 17
-
+    'mean',
     # 18
     'sum',
     # 19
@@ -313,7 +416,7 @@ __all__ = [
     # 31
 
     # 32
-
+    'sub',
     # 33
     'split',
     # 34
@@ -329,13 +432,13 @@ __all__ = [
     # 39
 
     # 40
-
+    'any',
     # 41
-
+    'add',
     # 42
     'argmax',
     # 43
-
+    'cat',
     # 44
     'cos',
     # 45
@@ -351,7 +454,7 @@ __all__ = [
     # 50
     'tile',
     # 51
-
+    'permute',
     # 52
 
     # 53

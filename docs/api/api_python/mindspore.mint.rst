@@ -23,6 +23,8 @@ Array操作
     :template: classtemplate.rst
 
     mindspore.mint.eye
+    mindspore.mint.ones
+    mindspore.mint.zeros
 
 索引、切分、连接、突变运算
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

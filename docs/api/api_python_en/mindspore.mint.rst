@@ -24,6 +24,8 @@ Creation Operations
     :template: classtemplate.rst
 
     mindspore.mint.eye
+    mindspore.mint.ones
+    mindspore.mint.zeros
 
 Indexing, Slicing, Joining, Mutating Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -142,7 +142,7 @@ def test_zeros_forward_dynamic_rank(context_mode):
     expect_output = np.zeros(size, np.int32)
     assert np.allclose(out.asnumpy(), expect_output)
 
-    with pytest.raises((RuntimeError, ValueError)):
+    with pytest.raises((TypeError, ValueError)):
         size = Tensor(np.array([[2, 3], [4, 5]]).astype(np.int64))
         _ = test_cell(size, ms.int32)
 
@@ -197,6 +197,6 @@ def test_zeros_backward_dynamic_rank(context_mode):
     expect_output = [0, 0]
     assert np.allclose(out.asnumpy(), expect_output)
 
-    with pytest.raises((RuntimeError, ValueError)):
+    with pytest.raises((TypeError, ValueError)):
         size = Tensor(np.array([[2, 3], [4, 5]]).astype(np.int64))
         _ = test_cell(size, ms.int32)
