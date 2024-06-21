@@ -29,6 +29,17 @@ def arg_invalid_info(op_name, arg_name, arg_val):
     return f"For '{op_name}', the value of '{arg_name}' is invalid: '{arg_val}'."
 
 
+def to_pair(op_name, arg_name, arg_val):
+    """
+    convert arg_val: int/tuple[int*2] -> tuple[int*2].
+    """
+    if isinstance(arg_val, (int, float)):
+        return (arg_val, arg_val)
+    if isinstance(arg_val, (list, tuple)):
+        return arg_val
+    raise ValueError(arg_invalid_info(op_name, arg_name, arg_val))
+
+
 def to_kernel_size(op_name, arg_name, kernel_size):
     """
     convert kernel_size: int/tuple[int*4] -> tuple[int*2].

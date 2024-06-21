@@ -1,0 +1,37 @@
+#operator col2im_ext
+col2im_ext:
+    args:
+        input:
+            dtype: tensor
+        output_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+        kernel_size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+        dilation:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+            default: 1
+        padding:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+            default: 0
+        stride:
+            dtype: tuple[int]
+            type_cast: list[int]
+            arg_handler: to_pair
+            default: 1
+    returns:
+        output:
+            dtype: tensor
+    function:
+        name: fold_ext
+    class:
+        name: Col2ImExt
+    dispatch:
+        enable: True

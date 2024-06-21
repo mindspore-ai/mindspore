@@ -42,6 +42,7 @@
 "mindspore/mindspore/core/ops/max_pool3d.cc"                                                          "zerodivcond"
 "mindspore/mindspore/core/ops/pooling.cc"                                                             "zerodivcond"
 "mindspore/mindspore/core/ops/symbol_ops_impl/"                                                       "unknownMacro"
+"mindspore/mindspore/core/ops/ops_func_impl/im2col_and_col2im_ext.cc"                                 "unknownMacro"
 "mindspore/core/utils/log_adapter.cc"                                                                 "stlIfStrFind"
 "mindspore/mindspore/ccsrc/transform/graph_ir/convert.cc"                                             "knownConditionTrueFalse"
 "mindspore/mindspore/ccsrc/frontend/expander/bprop/grad_ops/grad_array_ops.cc"                        "internalAstError"

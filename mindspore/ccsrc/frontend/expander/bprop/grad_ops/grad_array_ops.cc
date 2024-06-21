@@ -2286,6 +2286,56 @@ REG_BPROP_BUILDER("Col2Im").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(output_size)};
 });
 
+REG_BPROP_BUILDER("Col2ImExt").SetUnusedInputs({i0, i1, i6}).SetBody(BODYFUNC(ib) {
+  auto output_size = ib->GetInput(kIndex1);
+  auto kernel_size = ib->GetInput(kIndex2);
+  auto dilation = ib->GetInput(kIndex3);
+  auto padding = ib->GetInput(kIndex4);
+  auto stride = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex7);
+  auto dx = ib->Emit("Col2ImGrad", {dout, kernel_size, dilation, padding, stride});
+  return {dx,
+          ib->OutZeros(output_size),
+          ib->OutZeros(kernel_size),
+          ib->OutZeros(dilation),
+          ib->OutZeros(padding),
+          ib->OutZeros(stride)};
+});
+
+DEF_PURE_SHAPE_CALC(g_im2col_ext)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto input_shape = inputs.at(0);
+    std::vector<int64_t> output_size{input_shape.begin() + input_shape.size() - 2, input_shape.end()};
+    return {output_size};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) -> std::vector<int64_t> {
+    return {2};
+  });
+
+REG_BPROP_BUILDER("Im2ColExt").SetUnusedInputs({i0, i1, i6}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto kernel_size = ib->GetInput(kIndex1);
+  auto dilation = ib->GetInput(kIndex2);
+  auto padding = ib->GetInput(kIndex3);
+  auto stride = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex6);
+  auto output_size = ib->ShapeCalc(g_im2col_ext, {input})[0];
+  auto dx = ib->Emit("Col2ImExt", {dout, output_size, kernel_size, dilation, padding, stride});
+  return {dx, ib->OutZeros(kernel_size), ib->OutZeros(dilation), ib->OutZeros(padding), ib->OutZeros(stride)};
+});
+
+REG_BPROP_BUILDER("Col2ImGrad").SetUnusedInputs({i0, i1, i6}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto kernel_size = ib->GetInput(kIndex1);
+  auto dilation = ib->GetInput(kIndex2);
+  auto padding = ib->GetInput(kIndex3);
+  auto stride = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex6);
+  auto output_size = ib->ShapeCalc(g_im2col_ext, {input})[0];
+  auto dx = ib->Emit("Col2ImExt", {dout, output_size, kernel_size, dilation, padding, stride});
+  return {dx, ib->OutZeros(kernel_size), ib->OutZeros(dilation), ib->OutZeros(padding), ib->OutZeros(stride)};
+});
+
 REG_BPROP_BUILDER("ExtractVolumePatches").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto ksize = GetValue<std::vector<int64_t>>(ib->GetAttr("kernel_size"));
   auto ksize_d = ksize.at(2);
