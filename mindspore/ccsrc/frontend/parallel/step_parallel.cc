@@ -1823,8 +1823,8 @@ ValuePtr ObtainStrategyForNewShapes(const ShapeBasePtr &shape, const int64_t &de
   return stra_value_ptr;
 }
 
-void ObtainElementsForStrategy(const std::vector<NewShapes> &new_shape_list, const int64_t &dev_num,
-                               std::vector<ValuePtr> *elements) {
+void ObtainElementsForStrategyNewShape(const std::vector<NewShapes> &new_shape_list, const int64_t &dev_num,
+                                       std::vector<ValuePtr> *elements) {
   for (size_t i = 0; i < new_shape_list[0].size(); i++) {
     if (new_shape_list[0][i]->empty()) {
       (void)elements->emplace_back(MakeValue(Dimensions()));
@@ -1833,6 +1833,37 @@ void ObtainElementsForStrategy(const std::vector<NewShapes> &new_shape_list, con
     auto input_strategy = ObtainStrategyForNewShapes(new_shape_list[0][i], dev_num);
     (void)elements->emplace_back(MakeValue(input_strategy));
   }
+}
+
+void ObtainElementsForStrategy(const std::vector<Shapes> &shape_list, const int64_t &dev_num,
+                               std::vector<ValuePtr> *elements) {
+  for (size_t i = 0; i < shape_list[0].size(); i++) {
+    if (shape_list[0][i].empty()) {
+      (void)elements->emplace_back(MakeValue(Dimensions()));
+      continue;
+    }
+    Dimensions input_strategy;
+    input_strategy.push_back(dev_num);
+    if (shape_list[0][i][0] > 0 && shape_list[0][i][0] % dev_num != 0) {
+      MS_LOG(EXCEPTION) << "The shapes of dataset is " << shape_list[0]
+                        << ", the batch dim can not be evenly div by dev_num " << dev_num;
+    }
+    for (size_t j = 1; j < shape_list[0][i].size(); j++) {
+      input_strategy.push_back(1);
+    }
+    (void)elements->emplace_back(MakeValue(input_strategy));
+  }
+}
+
+std::pair<std::vector<Shapes>, std::vector<NewShapes>> ObtainShape(const CNodePtr &node) {
+  std::vector<Shapes> shape_list;
+  std::vector<NewShapes> new_shape_list;
+  if (HasSupportedValueSequence(node)) {
+    new_shape_list = ExtractNewShape(node);
+  } else {
+    shape_list = ExtractShape(node);
+  }
+  return std::make_pair(shape_list, new_shape_list);
 }
 
 void SetVirtualDatasetStrategy(const CNodePtr &node) {
@@ -1874,35 +1905,16 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
       shape_list = ExtractRealDivisor(node);
       MS_LOG(INFO) << "The node is in dynamic shape graph, the real divisor is " << ShapesToString(shape_list[0]);
     } else {
-      if (HasSupportedValueSequence(node)) {
-        new_shape_list = ExtractNewShape(node);
-      } else {
-        shape_list = ExtractShape(node);
-      }
+      std::tie(shape_list, new_shape_list) = ObtainShape(node);
     }
     if (shape_list.empty() && new_shape_list.empty()) {
       MS_LOG(EXCEPTION) << "Failure:node " << node->ToString() << " failed to extract shape";
     }
     std::vector<ValuePtr> elements;
     if (new_shape_list.empty()) {
-      for (size_t i = 0; i < shape_list[0].size(); i++) {
-        if (shape_list[0][i].empty()) {
-          (void)elements.emplace_back(MakeValue(Dimensions()));
-          continue;
-        }
-        Dimensions input_strategy;
-        input_strategy.push_back(dev_num);
-        if (shape_list[0][i][0] > 0 && shape_list[0][i][0] % dev_num != 0) {
-          MS_LOG(EXCEPTION) << "The shapes of dataset is " << shape_list[0]
-                            << ", the batch dim can not be evenly div by dev_num " << dev_num;
-        }
-        for (size_t j = 1; j < shape_list[0][i].size(); j++) {
-          input_strategy.push_back(1);
-        }
-        (void)elements.emplace_back(MakeValue(input_strategy));
-      }
+      ObtainElementsForStrategy(shape_list, dev_num, &elements);
     } else {
-      ObtainElementsForStrategy(new_shape_list, dev_num, &elements);
+      ObtainElementsForStrategyNewShape(new_shape_list, dev_num, &elements);
     }
     ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
     attrs_temp[IN_STRATEGY] = strategy;
@@ -1922,6 +1934,27 @@ static bool CheckExtractInformation(const CNodePtr &cnode) {
   }
 
   return IsParallelCareNode(cnode);
+}
+
+StrategyPtr GenerateStandAloneStra(const OperatorInfoPtr &op_info) {
+  StrategyPtr in_strategy;
+  if (op_info->inputs_shape_new().empty()) {
+    in_strategy = GenerateStandAloneStrategy(op_info->inputs_shape());
+  } else {
+    in_strategy = GenerateStandAloneStrategyForNewShapes(op_info->inputs_shape_new());
+  }
+  return in_strategy;
+}
+
+void CheckStrategyAndShape(const StrategyPtr &in_strategy, const OperatorInfoPtr &op_info) {
+  MS_EXCEPTION_IF_NULL(in_strategy);
+  auto has_tuple_stra = in_strategy->HasTupleInTupleStrategy();
+  auto has_new_shape = !op_info->inputs_shape_new().empty();
+  if (has_tuple_stra != has_new_shape) {
+    MS_LOG(EXCEPTION)
+      << "One of the strategy or input shape have tuple in tuple input, but the other does not; in_strategy is "
+      << has_tuple_stra << ", input shape is " << has_new_shape;
+  }
 }
 
 static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &prim, const OperatorInfoPtr &op_info) {
@@ -1966,20 +1999,9 @@ static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &pr
         in_strategy = stra_map[strategy_key_name];
       }
     } else {
-      if (op_info->inputs_shape_new().empty()) {
-        in_strategy = GenerateStandAloneStrategy(op_info->inputs_shape());
-      } else {
-        in_strategy = GenerateStandAloneStrategyForNewShapes(op_info->inputs_shape_new());
-      }
+      in_strategy = GenerateStandAloneStra(op_info);
     }
-    auto has_tuple_stra = in_strategy->HasTupleInTupleStrategy();
-    auto has_new_shape = !op_info->inputs_shape_new().empty();
-    if (has_tuple_stra != has_new_shape) {
-      MS_LOG(EXCEPTION)
-        << "One of the strategy or input shape have tuple in tuple input, but the other does not; in_strategy is "
-        << has_tuple_stra << ", input shape is " << has_new_shape;
-    }
-    MS_EXCEPTION_IF_NULL(in_strategy);
+    CheckStrategyAndShape(in_strategy, op_info);
   }
   if (op_info->Init(in_strategy, out_strategy, in_tensor_layouts, out_tensor_layouts) == FAILED) {
     MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " init failed" << trace::DumpSourceLines(cnode);
@@ -2759,6 +2781,33 @@ static bool IsGatherInfo(const std::string &name) {
   return false;
 }
 
+void AssignStrategyMap(const StrategyPtr &stra, const std::string &strategy_key_name, StrategyMap *stra_map) {
+  if (stra) {
+    (*stra_map)[strategy_key_name] = stra;
+  } else {
+    Strategies new_stra_v;
+    StrategyPtr new_stra = std::make_shared<Strategy>(g_device_manager->stage_id(), new_stra_v);
+    (*stra_map)[strategy_key_name] = new_stra;
+  }
+}
+
+void AssignManualShapeMapForGather(const OperatorInfoPtr &operator_info, const std::string &param_name,
+                                   ManualShapeMap *manual_shape_map) {
+  if (IsGatherInfo(operator_info->name())) {
+    auto gather_info = std::dynamic_pointer_cast<GatherInfo>(operator_info);
+    auto param_split_shapes = gather_info->param_split_shapes();
+    auto index_offsets = gather_info->index_offsets();
+    if (param_split_shapes.size() != index_offsets.size()) {
+      MS_LOG(EXCEPTION) << "In manual split, the param_split_shapes and index_offsets length should be same.";
+    }
+    std::vector<std::pair<int64_t, int64_t>> manual_shape;
+    for (int64_t i = 0; i < UlongToLong(param_split_shapes.size()); ++i) {
+      (void)manual_shape.emplace_back(std::make_pair(param_split_shapes[LongToSize(i)], index_offsets[LongToSize(i)]));
+    }
+    (*manual_shape_map)[param_name] = manual_shape;
+  }
+}
+
 static void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
   if (!StrategyCheckpoint::GetInstance().SaveCheckPointOn()) {
     return;
@@ -2794,31 +2843,12 @@ static void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const F
       } else {
         stra = operator_info->strategy();
       }
-      if (stra) {
-        stra_map[strategy_key_name] = stra;
-      } else {
-        Strategies new_stra_v;
-        StrategyPtr new_stra = std::make_shared<Strategy>(g_device_manager->stage_id(), new_stra_v);
-        stra_map[strategy_key_name] = new_stra;
-      }
+      AssignStrategyMap(stra, strategy_key_name, &stra_map);
 
       for (auto param_name_pair : param_names) {
         tensor_info_map[param_name_pair.first] = param_name_pair.second->user_data<TensorLayout>();
       }
-      if (IsGatherInfo(operator_info->name())) {
-        auto gather_info = std::dynamic_pointer_cast<GatherInfo>(operator_info);
-        auto param_split_shapes = gather_info->param_split_shapes();
-        auto index_offsets = gather_info->index_offsets();
-        if (param_split_shapes.size() != index_offsets.size()) {
-          MS_LOG(EXCEPTION) << "In manual split, the param_split_shapes and index_offsets length should be same.";
-        }
-        std::vector<std::pair<int64_t, int64_t>> manual_shape;
-        for (int64_t i = 0; i < UlongToLong(param_split_shapes.size()); ++i) {
-          (void)manual_shape.emplace_back(
-            std::make_pair(param_split_shapes[LongToSize(i)], index_offsets[LongToSize(i)]));
-        }
-        manual_shape_map[param_name] = manual_shape;
-      }
+      AssignManualShapeMapForGather(operator_info, param_name, &manual_shape_map);
     }
   }
   for (auto &cloned_parameter_node : root->parameters()) {
