@@ -97,6 +97,12 @@ mindspore.mint.nn.functional
 池化函数
 ^^^^^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.functional.max_pool2d
 
 
 
@@ -121,6 +127,9 @@ mindspore.mint.nn.functional
     :template: classtemplate.rst
 
     mindspore.mint.nn.functional.leaky_relu
+    mindspore.mint.nn.functional.sigmoid
+    mindspore.mint.nn.functional.silu
+
 
 
 
