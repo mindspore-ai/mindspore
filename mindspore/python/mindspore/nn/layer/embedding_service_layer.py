@@ -44,6 +44,27 @@ def _get_slot_var_num(optimizer_mode):
     return 2
 
 
+def _get_backward_float_params(optimizer_mode):
+    """
+    backward_float_params (Union[tuple[float], list[float]]):
+        - when the backward_mode is 'adam', it means:
+          [beta1_power, beta2_power, lr, beta1, beta2, epsilon]
+        - when the backward_mode is 'ftrl', it means:
+          [lr, lr_power, lambda1, lambda2]
+        - when the backward_mode is 'adamw', it means:
+          [beta1_power, beta2_power, lr, weight_decay, beta1, beta2, epsilon]
+        - when the backward_mode is 'adagrad', it means [lr,]
+    """
+    if optimizer_mode == "adagrad":
+        return [0.001]
+    if optimizer_mode == "adam":
+        return [0.9, 0.99, 0.001, 0.9, 0.999, 1e-08]
+    if optimizer_mode == "ftrl":
+        return [0.001, -0.5, 0.0, 0.0]
+    # adamw
+    return [0.9, 0.99, 0.001, 0.01, 0.9, 0.999, 1e-08]
+
+
 class ESInitLayer(nn.Cell):
     """
     ESInitLayer.
@@ -138,6 +159,7 @@ class EsEmbeddingLookup(nn.Cell):
         self.es_initializer = es_initializer
         self.embedding_dim = embedding_dim
         self.optimizer_mode = optimizer_mode
+        self.backward_float_params = _get_backward_float_params(self.optimizer_mode)
         self.max_key_num = max_key_num
         self.es_filter = es_filter
 
@@ -171,7 +193,12 @@ class EsEmbeddingLookup(nn.Cell):
             self.mask_zero = 0
             self.padding_key = 0
             self.padding_key_mask = 1
-        self.backward_int_params = ([self.global_step], [self.mask_zero], [self.padding_key], [self.padding_key_mask])
+        if (self.optimizer_mode == "adam") or (self.optimizer_mode == "ftrl") or (self.optimizer_mode == "adagrad"):
+            self.backward_int_params = ([self.global_step], [self.mask_zero],
+                                        [self.padding_key], [self.padding_key_mask])
+        else:
+            self.backward_int_params = ([self.global_step], [0], [0], [self.mask_zero],
+                                        [self.padding_key], [self.padding_key_mask])
 
         if es_completion_key is not None:
             self.completion_key = es_completion_key.completion_key
@@ -226,7 +253,9 @@ class EsEmbeddingLookup(nn.Cell):
                                                     _max_key_num=self.max_key_num,
                                                     _table_id=self._table_id,
                                                     _use_counter_filter=use_counter_filter,
+                                                    backward_mode=self.optimizer_mode,
                                                     backward_int_params=self.backward_int_params,
+                                                    backward_float_params=self.backward_float_params,
                                                     completion_key=self.completion_key,
                                                     completion_key_mask=self.completion_key_mask,
                                                     parameter=self.b
@@ -254,7 +283,9 @@ class EsEmbeddingLookup(nn.Cell):
                                                        _max_key_num=self.max_key_num,
                                                        _table_id=self._table_id,
                                                        _use_counter_filter=use_counter_filter,
+                                                       backward_mode=self.optimizer_mode,
                                                        backward_int_params=self.backward_int_params,
+                                                       backward_float_params=self.backward_float_params,
                                                        completion_key=self.completion_key,
                                                        completion_key_mask=self.completion_key_mask,
                                                        parameter=self.b)
