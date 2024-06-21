@@ -72,7 +72,7 @@ BLAS and LAPACK Operations
 mindspore.mint.nn
 ------------------
 
-Dropout Layer
+Dropout Layers
 ^^^^^^^^^^^^^^^
 
 .. msplatformautosummary::
@@ -81,6 +81,21 @@ Dropout Layer
     :template: classtemplate.rst
 
     mindspore.mint.nn.Dropout
+
+
+
+
+Convolution Layers
+^^^^^^^^^^^^^^^^^^
+.. msplatformautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.Fold
+    mindspore.mint.nn.Unfold
+
+
 
 mindspore.mint.nn.functional
 -----------------------------
@@ -99,6 +114,14 @@ Neural Network Layer Functions
 
 Convolution functions
 ^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.functional.fold
+    mindspore.mint.nn.functional.unfold
 
 
 
@@ -140,6 +163,7 @@ Non-linear activation functions
     mindspore.mint.nn.functional.leaky_relu
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
+    mindspore.mint.nn.functional.softmax
 
 
 

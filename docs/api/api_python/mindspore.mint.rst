@@ -82,6 +82,20 @@ Dropout层
 
     mindspore.mint.nn.Dropout
 
+
+
+卷积层
+^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.Fold
+    mindspore.mint.nn.Unfold
+
+
 mindspore.mint.nn.functional
 -----------------------------
 
@@ -99,6 +113,15 @@ mindspore.mint.nn.functional
 
 卷积函数
 ^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.functional.fold
+    mindspore.mint.nn.functional.unfold
+
 
 
 
@@ -141,7 +164,7 @@ mindspore.mint.nn.functional
     mindspore.mint.nn.functional.leaky_relu
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
-
+    mindspore.mint.nn.functional.softmax
 
 
 
