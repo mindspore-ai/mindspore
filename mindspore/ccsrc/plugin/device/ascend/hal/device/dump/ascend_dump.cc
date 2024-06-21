@@ -268,15 +268,7 @@ bool AscendAsyncDump::DumpTensorStatsIfNeeded(const dump_data_t &dump_tensor_inf
   std::shared_ptr<tensor::Tensor> trans_buf = nullptr;
   if (dump_tensor_info.trans_buf) {
     src_data_type = static_cast<TypeId>(dump_tensor_info.trans_buf->data_type_c());
-    if (dump_tensor_info.trans_buf->data_type_c() == TypeId::kNumberTypeBFloat16) {
-      trans_buf = std::make_shared<tensor::Tensor>(*dump_tensor_info.trans_buf, TypeId::kNumberTypeFloat32);
-    } else {
-      trans_buf = dump_tensor_info.trans_buf;
-    }
-  } else if (dump_tensor_info.data_type == TypeId::kNumberTypeBFloat16) {
-    std::shared_ptr<tensor::Tensor> bfloat16_tensor = std::make_shared<tensor::Tensor>(
-      dump_tensor_info.data_type, dump_tensor_info.host_shape, dump_tensor_info.data_ptr, dump_tensor_info.data_size);
-    trans_buf = std::make_shared<tensor::Tensor>(*bfloat16_tensor, TypeId::kNumberTypeFloat32);
+    trans_buf = dump_tensor_info.trans_buf;
   }
   if (trans_buf) {
     data->SetByteSize(trans_buf->Size());
