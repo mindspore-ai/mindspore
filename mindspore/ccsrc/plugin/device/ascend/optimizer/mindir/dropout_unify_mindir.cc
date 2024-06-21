@@ -72,8 +72,8 @@ TypeId GetOriginInputXDataType(const AnfNodePtr &node) {
   return common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
 }
 
-ValueNodePtr CreateKeepProbValueNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, TypeId type_id,
-                                     bool enable_keep_prob = false) {
+AnfNodePtr CreateKeepProbValueNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, TypeId type_id,
+                                   bool enable_keep_prob = false) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -81,25 +81,45 @@ ValueNodePtr CreateKeepProbValueNode(const FuncGraphPtr &func_graph, const AnfNo
   // Step1: get keep_prob
   float keep_prob = 0.5;
   auto cnode_name = common::AnfAlgo::GetCNodeName(cnode);
-  if (cnode_name == kDropoutOpName || cnode_name == prim::kPrimDropoutExt->name()) {
+  if (cnode_name == kDropoutOpName) {
     auto keep_prob_v = cnode->input(kIndex2)->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(keep_prob_v);
     auto keep_prob_opt = ops::GetScalarValue<float>(keep_prob_v->value());
     MS_EXCEPTION_IF_CHECK_FAIL(keep_prob_opt.has_value(), "can't get keep_prob value from " + cnode_name);
     keep_prob = keep_prob_opt.value();
-  } else if (cnode_name == prim::kPrimDropoutGradExt->name()) {
-    auto keep_prob_v = cnode->input(kIndex3)->cast<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(keep_prob_v);
-    auto keep_prob_opt = ops::GetScalarValue<float>(keep_prob_v->value());
-    MS_EXCEPTION_IF_CHECK_FAIL(keep_prob_opt.has_value(), "can't get keep_prob value from " + cnode_name);
-    keep_prob = keep_prob_opt.value();
+  } else if (cnode_name == prim::kPrimDropoutExt->name() || cnode_name == prim::kPrimDropoutGradExt->name()) {
+    auto p_idx = (cnode_name == prim::kPrimDropoutExt->name()) ? kIndex2 : kIndex3;
+    auto p_value = cnode->input(p_idx)->cast<ValueNodePtr>();
+    if (p_value == nullptr) {
+      // Can't get value from p, calculate keep_prob(1 - p) for ge ir.
+      auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+      MS_EXCEPTION_IF_NULL(kernel_graph);
+      auto one_tensor_node = CreateTensorInput(kernel_graph, NewValueNode(static_cast<float>(1.0)));
+      auto dst_type_node = CreateValueNodeWithKernelInfo(func_graph, MakeValue(static_cast<int64_t>(type_id)));
+      auto src_type_node =
+        CreateValueNodeWithKernelInfo(func_graph, MakeValue(static_cast<int64_t>(kNumberTypeFloat32)));
+
+      auto p_tensor_node = func_graph->NewCNode(
+        {NewValueNode(std::make_shared<Primitive>("ScalarToTensor")), cnode->input(p_idx), src_type_node});
+      p_tensor_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{}));
+
+      auto keep_prob_node =
+        func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>("Sub")), one_tensor_node, p_tensor_node});
+      keep_prob_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{}));
+
+      keep_prob_node =
+        func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>("Cast")), keep_prob_node, dst_type_node});
+      keep_prob_node->set_abstract(std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), ShapeVector{}));
+      return keep_prob_node;
+    }
+    MS_EXCEPTION_IF_NULL(p_value);
+    auto p_opt = ops::GetScalarValue<float>(p_value->value());
+    MS_EXCEPTION_IF_CHECK_FAIL(p_opt.has_value(), "can't get p value from " + cnode_name);
+    keep_prob = static_cast<float>(1.0) - p_opt.value();
   } else {
     keep_prob = common::AnfAlgo::GetNodeAttr<float>(node, kAttrKeepProb);
   }
 
-  if (enable_keep_prob) {
-    keep_prob = static_cast<float>(1.0) - keep_prob;
-  }
   MS_LOG(DEBUG) << "Keep_prob value: " << keep_prob;
 
   std::vector<int64_t> keep_prob_shape = {};
@@ -219,7 +239,7 @@ CNodePtr GetRecomputeDropoutGenMask(const FuncGraphPtr &func_graph, const CNodeP
 }
 
 CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePtr &dropout,
-                                   const ValueNodePtr &keep_prob_value, const abstract::ShapePtr &input_shape,
+                                   const AnfNodePtr &keep_prob_value, const abstract::ShapePtr &input_shape,
                                    const bool use_v3, bool enable_keep_prob = false) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(dropout);
@@ -233,7 +253,9 @@ CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePt
     dropout_gen_mask_inputs.push_back(dynamic_shape);
     dropout_gen_mask_inputs.push_back(keep_prob_value);
   } else {
-    auto shape_value = CreateShapeValueNode(func_graph, input_shape->shape(), true);
+    auto shape_value = (enable_keep_prob && input_shape->shape().empty())
+                         ? CreateShapeValueNode(func_graph, input_shape->shape(), false)
+                         : CreateShapeValueNode(func_graph, input_shape->shape(), true);
     dropout_gen_mask_inputs.push_back(shape_value);
     dropout_gen_mask_inputs.push_back(keep_prob_value);
   }
