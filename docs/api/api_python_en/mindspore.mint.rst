@@ -212,8 +212,12 @@ Loss functions
 Vision functions
 ^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
-
+    mindspore.mint.nn.functional.pad
 
 
 

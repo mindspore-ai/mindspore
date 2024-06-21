@@ -211,6 +211,8 @@ abstract::ShapePtr ReduceExtInferShape(const PrimitivePtr &primitive, const std:
 TypePtr ReduceExtInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args);
 
 BaseShapePtr SetPadShape(const ShapeVector &x_shape, const ArrayValue<int64_t> &paddings);
+BaseShapePtr PadInferShapeBase(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
+                               const size_t pad_dim);
 
 template <typename T>
 api::SharedPtr<T> GetOperator(const AnfNodePtr &node) {

@@ -211,8 +211,12 @@ Dropout函数
 视觉函数
 ^^^^^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
-
+    mindspore.mint.nn.functional.pad
 
 
 

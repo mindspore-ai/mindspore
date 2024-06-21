@@ -31,7 +31,7 @@ def expect_forward_output(x, padding, mode):
     return np.pad(x, padding, mode)
 
 @test_utils.run_with_cell
-def pad_forward_func(x, padding, mode="constant", value=None):
+def pad_forward_func(x, padding, mode="constant", value=0.0):
     return pad(x, padding, mode, value)
 
 class Pad(Cell):
@@ -601,7 +601,7 @@ def test_ops_pad_backward_reflect1d(context_mode):
     expect = np.array([[[2., 6., 3.],
                         [8., 15., 6.],
                         [14., 24., 9.]]])
-    net = Pad(padding, "reflect", None)
+    net = Pad(padding, "reflect", 0.0)
     out_grad = net(x)
     grad_net = GradOfFirstInput(net)
     input_grad = grad_net(x, out_grad)
@@ -625,7 +625,7 @@ def test_ops_pad_backward_reflect2d(context_mode):
     expect = np.array([[[[4., 12., 6.],
                          [24., 45., 18.],
                          [14., 24., 9.]]]])
-    net = Pad(padding, "reflect", None)
+    net = Pad(padding, "reflect", 0.0)
     out_grad = net(x)
     grad_net = GradOfFirstInput(net)
     input_grad = grad_net(x, out_grad)
@@ -649,7 +649,7 @@ def test_ops_pad_backward_replicate1d(context_mode):
     expect = np.array([[[2., 2., 9.],
                         [8., 5., 18.],
                         [14., 8., 27.]]])
-    net = Pad(padding, "replicate", None)
+    net = Pad(padding, "replicate", 0.0)
     out_grad = net(x)
     grad_net = GradOfFirstInput(net)
     input_grad = grad_net(x, out_grad)
@@ -673,7 +673,7 @@ def test_ops_pad_backward_replicate2d(context_mode):
     expect = np.array([[[[4., 4., 18.],
                          [8., 5., 18.],
                          [42., 24., 81.]]]])
-    net = Pad(padding, "replicate", None)
+    net = Pad(padding, "replicate", 0.0)
     out_grad = net(x)
     grad_net = GradOfFirstInput(net)
     input_grad = grad_net(x, out_grad)
@@ -697,7 +697,7 @@ def test_ops_pad_backward_replicate3d(context_mode):
     expect = np.array([[[[[16., 16., 72.],
                           [32., 20., 72.],
                           [168., 96., 324.]]]]])
-    net = Pad(padding, "replicate", None)
+    net = Pad(padding, "replicate", 0.0)
     out_grad = net(x)
     grad_net = GradOfFirstInput(net)
     input_grad = grad_net(x, out_grad)

@@ -29,7 +29,6 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr ConstantPadNDFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) const {
-  const size_t kNum2 = 2;
   MS_EXCEPTION_IF_NULL(primitive);
   auto x_base_shape = input_args[kInputIndex0]->GetShape();
   auto x_shape = x_base_shape->GetShapeVector();
@@ -50,28 +49,26 @@ BaseShapePtr ConstantPadNDFuncImpl::InferShape(const PrimitivePtr &primitive,
     out_shape.resize(x_rank, abstract::Shape::kShapeDimAny);
     return std::make_shared<abstract::Shape>(std::move(out_shape));
   }
-
-  const size_t kNumTwo = 2;
+  constexpr size_t kScaleNum = 2;
   auto paddings = paddings_opt.value();
-  if (!(paddings.size() % kNum2 == 0)) {
+  if (!(paddings.size() % kScaleNum == 0)) {
     MS_EXCEPTION(ValueError) << "Length of padding must be even but got " << paddings.size();
   }
-
-  if (!(x_rank >= paddings.size() / kNum2)) {
+  if (!(x_rank >= paddings.size() / kScaleNum)) {
     MS_EXCEPTION(ValueError) << "Length of padding must be no more than 2 * dim of the input. "
                              << "Length of padding is: " << paddings.size() << "，while the input's dim is:" << x_rank;
   }
-  auto l_diff = x_rank - (paddings.size() / kNumTwo);
+  auto l_diff = x_rank - (paddings.size() / kScaleNum);
   for (size_t i = 0; i < l_diff; ++i) {
     (void)out_shape.emplace_back(x_shape[i]);
   }
-  for (size_t i = 0; i < paddings.size() / kNum2; ++i) {
+  for (size_t i = 0; i < paddings.size() / kScaleNum; ++i) {
     auto pad_idx = paddings.size() - ((i + 1) * 2);
-    if (x_shape[l_diff + i] == abstract::Shape::kShapeDimAny) {
+    if (x_shape[l_diff + i] == abstract::Shape::kShapeDimAny || paddings.IsValueUnknown(pad_idx) ||
+        paddings.IsValueUnknown(pad_idx + 1)) {
       (void)out_shape.emplace_back(abstract::Shape::kShapeDimAny);
     } else {
       auto new_dim = x_shape[l_diff + i] + paddings[pad_idx] + paddings[pad_idx + 1];
-      (void)CheckAndConvertUtils::CheckInteger("output size", new_dim, kGreaterThan, 0, primitive->name());
       (void)out_shape.emplace_back(new_dim);
     }
   }
