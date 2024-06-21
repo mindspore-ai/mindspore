@@ -239,3 +239,24 @@ def test_ops_conv3d(mode):
                                  [128114.7656, 128490.7656, 128866.7656],
                                  [129618.7656, 129994.7656, 130370.7656]]]]])
     assert np.allclose(output.asnumpy(), expect_output, atol=1e-5, rtol=1e-5)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_conv1d_with_bf16():
+    """
+    Feature: The weight init of conv 1d with type of bfloat16.
+    Description: The weight init of conv 1d is implemented by numpy, test type of bfloat16.
+    Expectation: Success.
+    """
+    weight_init = ms.Tensor(np.ones([2, 2, 4]), ms.bfloat16)
+    net = ms.nn.Conv1d(2, 2, 4, has_bias=False, weight_init=weight_init)
+    x = ms.Tensor(np.ones([1, 2, 3]), ms.bfloat16)
+    output = net(x)
+    expected = [[[6., 6., 4.],
+                 [6., 6., 4.]]]
+    cpu_cast = ops.Cast().set_device("CPU")
+    output = cpu_cast(output, ms.float32)
+    assert np.allclose(output.asnumpy(), expected)

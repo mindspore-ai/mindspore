@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 
 import math
+import numpy as np
 
 from mindspore import context
 from mindspore.ops import operations as P
@@ -541,10 +542,14 @@ class Conv1d(_Conv):
         stride = (1, stride)
         dilation = (1, dilation)
         get_shape = P.Shape()
+        get_dtype = P.DType()
         if isinstance(weight_init, Tensor):
             weight_init_shape = get_shape(weight_init)
             Validator.check_equal_int(len(weight_init_shape), 3, 'weight_init_shape', self.cls_name)
-            weight_init = weight_init.expand_dims(2)
+            weight_init_dtype = get_dtype(weight_init)
+            weight_init_value = weight_init.asnumpy()
+            weight_init_value = np.expand_dims(weight_init_value, 2)
+            weight_init = Tensor(weight_init_value, weight_init_dtype)
 
         super(Conv1d, self).__init__(
             in_channels,
@@ -1432,10 +1437,14 @@ class Conv1dTranspose(_Conv):
         stride = (1, stride)
         dilation = (1, dilation)
         get_shape = P.Shape()
+        get_dtype = P.DType()
         if isinstance(weight_init, Tensor):
             weight_init_shape = get_shape(weight_init)
             Validator.check_equal_int(len(weight_init_shape), 3, 'weight_init_shape', self.cls_name)
-            weight_init = weight_init.expand_dims(2)
+            weight_init_dtype = get_dtype(weight_init)
+            weight_init_value = weight_init.asnumpy()
+            weight_init_value = np.expand_dims(weight_init_value, 2)
+            weight_init = Tensor(weight_init_value, weight_init_dtype)
         # out_channels and in_channels swap.
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel,
         # then Conv1dTranspose's out_channel refers to Conv2DBackpropInput's in_channel.
