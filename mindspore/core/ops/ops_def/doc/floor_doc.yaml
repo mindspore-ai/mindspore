@@ -4,18 +4,20 @@ floor:
 
         .. math::
 
-            out_i = \lfloor x_i \rfloor
+            out_i = \lfloor input_i \rfloor
 
         Args:
-            input (Tensor): The input tensor, :math:`x` in the above formula. Its data type must be float16,
-                float32 or float64.
+            input (Tensor): The input tensor. Its supported data types are:
+            
+                - Ascend: float16, float32, float64, bfloat16, int8, int16, int32, int64, uint8, uint16, uint32, uint64.
+                - GPU/CPU: float16, float32, float64.
 
         Returns:
             Tensor, has the same shape as `input`.
 
         Raises:
             TypeError: If `input` is not a Tensor.
-            TypeError: If dtype of `input` is not in [float16, float32, float64].
+            TypeError: If dtype of `input` is not support.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

@@ -57,6 +57,7 @@ Array操作
     mindspore.mint.unique
     mindspore.mint.div
     mindspore.mint.divide
+    mindspore.mint.floor
 
 
 BLAS和LAPACK运算
