@@ -148,6 +148,10 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   void ParentAfterFork();
   void ChildAfterFork();
 
+  void IncGraphCellCount() { ++graph_cell_count_; }
+  void DecGraphCellCount() { --graph_cell_count_; }
+  size_t graph_cell_count() const { return graph_cell_count_; }
+
  private:
   GraphExecutorPy() = default;
   void ParallelPostProcess(const string &phase, bool use_compile_cache);
@@ -184,6 +188,8 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   py::dict weights_;
   std::map<PyObject *, std::pair<ValuePtr, AbstractBasePtr>> cur_convert_input_;
   bool executor_running_{false};
+  // Temporary solution, disable boost infer when there is a graph cell instance.
+  size_t graph_cell_count_{0};
 };
 using GraphExecutorPyPtr = std::shared_ptr<GraphExecutorPy>;
 
