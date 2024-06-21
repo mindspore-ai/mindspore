@@ -233,8 +233,10 @@ std::string AscendMemAdapter::DevMemStatistics() const {
   oss << "\nDevice HBM memory size: " << device_hbm_total_size_ / kMBToByte << "M";
   oss << "\nMindSpore Used memory size: " << ms_used_hbm_size_ / kMBToByte << "M";
   oss << "\nMindSpore memory base address: " << reinterpret_cast<void *>(device_mem_base_addr_);
-  oss << "\nTotal Static Memory size: " << (ms_used_hbm_size_ - static_mem_offset_) / kMBToByte << "M";
-  oss << "\nTotal Dynamic memory size: " << history_max_dynamic_mem_offset_ / kMBToByte << "M";
+  if (!context->IsKByKExecutorMode()) {
+    oss << "\nTotal Static Memory size: " << (ms_used_hbm_size_ - static_mem_offset_) / kMBToByte << "M";
+    oss << "\nTotal Dynamic memory size: " << history_max_dynamic_mem_offset_ / kMBToByte << "M";
+  }
   if (IsMemoryPoolRecycle()) {
     size_t max_actual = std::max(actual_peak_memory_, (ms_used_hbm_size_ - static_mem_offset_));
     oss << "\nActual peak memory usage: " << max_actual / kMBToByte << "M";
@@ -242,7 +244,9 @@ std::string AscendMemAdapter::DevMemStatistics() const {
     oss << "\nUsed peak memory usage (without fragments): " << used_peak_memory_ / kMBToByte << "M";
     oss << "\nActual peak memory usage (with fragments): " << actual_peak_memory_ / kMBToByte << "M";
   }
-  oss << "\nDynamic memory size of this graph: " << cur_dynamic_mem_offset_ / kMBToByte << "M";
+  if (!context->IsKByKExecutorMode()) {
+    oss << "\nDynamic memory size of this graph: " << cur_dynamic_mem_offset_ / kMBToByte << "M";
+  }
   oss << std::endl;
   return oss.str();
 }
