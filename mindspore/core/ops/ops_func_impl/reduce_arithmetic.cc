@@ -210,5 +210,43 @@ BaseShapePtr ReduceExtandInferShape(const PrimitivePtr &primitive, const std::ve
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }
+
+ShapeArray ReduceInferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) {
+  const auto &keep_dims_opt = input_values[kIndex2]->cast<BoolImmPtr>();
+  MS_EXCEPTION_IF_NULL(keep_dims_opt);
+  const bool &keep_dims = keep_dims_opt->value();
+
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &x_shape = x_tensor->shape();
+
+  const auto &axis_value = input_values[kIndex1];
+
+  if (axis_value == mindspore::kNone) {
+    return keep_dims ? ShapeArray{ShapeVector(x_shape.size(), 1)} : ShapeArray{ShapeVector({})};
+  }
+
+  const auto &axis_opt = axis_value->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(axis_opt);
+
+  std::vector<int64_t> axis_vec;
+  const auto &axis_items = axis_opt->value();
+  for (const auto &axis_item : axis_items) {
+    (void)axis_vec.emplace_back(GetValue<int64_t>(axis_item));
+  }
+
+  if (axis_vec.size() == 0) {
+    return keep_dims ? ShapeArray{ShapeVector(x_shape.size(), 1)} : ShapeArray{ShapeVector({})};
+  }
+
+  std::vector<int64_t> real_axis_vec;
+  const auto &x_shape_size = x_shape.size();
+  (void)std::transform(
+    axis_vec.begin(), axis_vec.end(), std::back_inserter(real_axis_vec),
+    [&x_shape_size, &primitive](const int64_t &axis) { return CalRealAixs(axis, x_shape_size, primitive); });
+
+  return {ReduceFuncCalShapeInferImpl(primitive, x_shape, real_axis_vec, keep_dims)};
+}
+
 }  // namespace ops
 }  // namespace mindspore

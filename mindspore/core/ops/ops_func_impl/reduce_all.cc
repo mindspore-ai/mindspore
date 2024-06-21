@@ -18,6 +18,7 @@
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
 #include "ops/ops_func_impl/reduce_arithmetic.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -47,5 +48,16 @@ TypePtr ReduceAllFuncImpl::InferType(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(input_args[0]->GetType());
   return std::make_shared<TensorType>(kBool);
 }
+
+ShapeArray ReduceAllFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return ReduceInferShape(primitive, input_values);
+}
+
+TypePtrList ReduceAllFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {kBool};
+}
+
+REGISTER_SIMPLE_INFER(kNameReduceAll, ReduceAllFuncImpl)
+
 }  // namespace ops
 }  // namespace mindspore
