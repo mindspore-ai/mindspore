@@ -272,7 +272,11 @@ std::vector<size_t> AclKernelMod::GetLaunchIgnoredInputAddressIdx() const {
     {"ResizeNearestNeighborV2Grad", {1}},
     {"StandardNormal", {0}},
     {"Slice", {1, 2}},
-    {"Ones", {0, 1}}};
+    {"Ones", {0, 1}},
+    {"Zeros", {0, 1}},
+    {"StridedSlice", {1, 2, 3}},
+    {"StridedSliceGrad", {1, 2, 3, 4}},
+    {"UniformInt", {0}}};
   if (launch_ignored_input_addr_idx.count(kernel_name_) > 0) {
     return launch_ignored_input_addr_idx.at(kernel_name_);
   } else {
