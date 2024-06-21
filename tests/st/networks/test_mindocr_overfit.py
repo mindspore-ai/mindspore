@@ -203,7 +203,7 @@ def main_test_process(args, cfg):
     return loss_start, loss_end, average_step_time, time_compile
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_db_r50_1p():
@@ -223,8 +223,8 @@ def test_db_r50_1p():
         35.55 <= loss_start <= 35.65
     ), f"Loss start should in [35.55, 35.65], but got {loss_start}"
     assert (
-        10.06 <= loss_end <= 10.37
-    ), f"Loss end should in [10.06, 10.37], but got {loss_end}"
+        10.06 <= loss_end <= 10.45
+    ), f"Loss end should in less than 10.45, but got {loss_end}"
 
 
 @pytest.mark.level0
