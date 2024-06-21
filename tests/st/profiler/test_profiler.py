@@ -23,6 +23,7 @@ import csv
 from tests.security_utils import security_off_wrap
 import pytest
 
+import mindspore as ms
 from mindspore import dataset as ds
 from mindspore import nn, Tensor, context
 from mindspore.nn.optim import Momentum
@@ -205,6 +206,7 @@ def test_ascend_profiler():
     Description: profiling op time, timeline, step trace and host data.
     Expectation: No exception.
     """
+    ms.set_context(jit_level="O2")
     rank_id = int(os.getenv('RANK_ID')) if os.getenv('RANK_ID') else 0
     data_path = tempfile.mkdtemp(prefix='profiler_data', dir='/tmp')
     profiler_path = os.path.join(data_path, 'profiler/')

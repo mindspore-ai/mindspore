@@ -181,6 +181,7 @@ def test_bert_precision(enable_graph_kernel=False):
     """test bert precision"""
     mindspore.set_context(mode=mindspore.GRAPH_MODE, device_target="Ascend",
                           reserve_class_name_in_scope=False, deterministic='ON')
+    mindspore.set_context(jit_level="O2")
     if enable_graph_kernel:
         mindspore.set_context(enable_graph_kernel=True)
     data_set, new_repeat_count, _ = me_de_train_dataset()

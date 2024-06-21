@@ -98,6 +98,7 @@ class TestProfiler:
     @security_off_wrap
     def test_ascend_profiler(self):
         ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
+        ms.set_context(jit_level="O2")
 
         profile_call_back = StopAtStep(5, 8, self.data_path)
 

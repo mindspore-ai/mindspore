@@ -46,6 +46,9 @@ def test_resnet50_boost_imagenet2012_ascend():
                 "\\\"total_steps\\\""]
     list_new = ["1", "=1", "=True", r"\\\"param_groups\\\"\: 2, \\\"total_steps\\\""]
     utils.exec_sed_command(list_old, list_new, os.path.join(cur_model_path, "train.py"))
+    list_old = ["ms.set_seed(1)"]
+    list_new = ['ms.set_seed(1)\\nms.set_context(jit_level=\\"O2\\")']
+    utils.exec_sed_command(list_old, list_new, os.path.join(cur_model_path, "train.py"))
     old_list = ["from mindspore._checkparam import Validator"]
     new_list = ["from mindspore import _checkparam as Validator"]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "src/momentum.py"))

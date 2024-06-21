@@ -400,6 +400,7 @@ def test_amp_bfloat16(amp_level):
     """
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(jit_config={"jit_level": "O2"})
     context.set_context(save_graphs=True, save_graphs_path=f'./test_amp_{amp_level}')
     x = Tensor(np.random.rand(1, 3, 16, 16), ms.float32)
     net_graph = TestAmpNet()
@@ -427,6 +428,7 @@ def test_custom_mixed_precision_bfloat16():
     """
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(jit_config={"jit_level": "O2"})
     context.set_context(save_graphs=True, save_graphs_path=f'./test_custom_amp')
     x = Tensor(np.random.rand(1, 3, 16, 16), ms.float32)
     net_graph = TestAmpNet()

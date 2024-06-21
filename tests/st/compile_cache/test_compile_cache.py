@@ -152,21 +152,21 @@ def run_compile_cache_mp(file_name, cache_path, log_file_name_first, log_file_na
     ret = utils.process_check(100, check_cmd)
     assert ret
     assert os.path.exists(cache_path)
-    log_fullname = log_file_name_first + "0"
+    log_fullname = 'worker_0.log'
     assert os.path.exists(log_fullname)
     with open(log_fullname, "r") as f_first:
         data_first = f_first.read()
     assert "Check the consistency of dependency files hash failed. Execute all the compilation actions." in data_first
     assert "loss is" in data_first
     for i in range(8):
-        os.remove(log_file_name_first + str(i))
+        os.remove(f'worker_{i}.log')
     cmd = "bash run_compile_cache_mp.sh {} {} {} {}".format(file_name, cache_path, log_file_name_second,
                                                             utils.rank_table_path)
     os.system(cmd)
     ret = utils.process_check(100, check_cmd)
     assert ret
 
-    log_fullname = log_file_name_second + "0"
+    log_fullname = 'worker_0.log'
     assert os.path.exists(log_fullname)
     with open(log_fullname, "r") as f_second:
         data_second = f_second.read()
@@ -182,7 +182,7 @@ def run_compile_cache_mp(file_name, cache_path, log_file_name_first, log_file_na
     # Clean files
     shutil.rmtree(cache_path)
     for i in range(8):
-        os.remove(log_file_name_second + str(i))
+        os.remove(f'worker_{i}.log')
 
 
 def run_twice_with_different_networks(file_name_first, file_name_second, cache_path, log_file_name_first,

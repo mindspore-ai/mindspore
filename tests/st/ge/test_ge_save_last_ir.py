@@ -62,6 +62,7 @@ def test_ge_last_ir():
     save_path = "./test_ge_last_ir"
     clean_all_ir_files(save_path)
     context.set_context(mode=context.GRAPH_MODE, save_graphs=1, save_graphs_path=save_path)
+    context.set_context(jit_level="O2")
     input_x = Tensor(np.random.randint(2, size=(1, 3, 2, 2)).astype((np.float32)))
     net = TestConvNet()
     _ = net(input_x)

@@ -123,6 +123,7 @@ class LossCallBack(LossMonitor):
 
 if __name__ == "__main__":
     context.set_context(mode=context.GRAPH_MODE, enable_compile_cache=True, compile_cache_path=sys.argv[1])
+    context.set_context(jit_level='O0')
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", pipeline_stages=8)
     init()
     data1 = Tensor(np.ones([32, 64]), dtype=ms.float32)

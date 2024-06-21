@@ -18,7 +18,7 @@ from tests.st.utils import test_utils
 
 import mindspore as ms
 from mindspore import Tensor, context
-from mindspore import ops
+from mindspore import ops, JitConfig
 from mindspore import dtype as mstype
 
 
@@ -42,7 +42,7 @@ def softmax_backward_forward_func(dout, out, dim=-1):
     return ops.auto_generate.SoftmaxBackward()(dout, out, dim)
 
 
-@test_utils.run_with_cell
+@test_utils.run_with_cell_ext(JitConfig(jit_level="O2"))
 def softmax_double_backward_func(dout, out, dim=-1):
     return ops.grad(softmax_backward_forward_func, (0, 1))(dout, out, dim)
 
@@ -108,6 +108,7 @@ def test_softmax_double_backward(mode):
     Expectation: expect correct result.
     """
     context.set_context(mode=mode)
+    context.set_context(jit_config={"jit_level": "O2"})
     dout = Tensor(np.random.rand(10, 10))
     out = Tensor(np.random.rand(10, 10))
     dim = -1

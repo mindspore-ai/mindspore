@@ -471,6 +471,13 @@ void MsContext::SetJitLevel(const std::string &jit_level) const {
 }
 
 std::string MsContext::GetJitLevel() const {
+  static const auto env_var = common::GetEnv("GRAPH_OP_RUN");
+  if (env_var == "1") {
+    return kAttrJitLevelO0;
+  } else if (env_var == "0") {
+    return kAttrJitLevelO2;
+  }
+
   // If use rank table startup method, set jit level to O2.
   if (!common::UseDynamicCluster() && !common::GetEnv("RANK_TABLE_FILE").empty()) {
     MS_LOG(WARNING) << "Set jit level to O2 for rank table startup method.";
@@ -491,7 +498,7 @@ std::string MsContext::GetJitLevel() const {
     if (!global_jit_level.empty()) {
       jit_level = global_jit_level;
     } else if (device_target == kAscendDevice && mode == kGraphMode) {
-      jit_level = kAttrJitLevelO2;
+      jit_level = ascend_soc_version() == kAscendVersion910 ? kAttrJitLevelO2 : kAttrJitLevelO0;
     } else {
       jit_level = kAttrJitLevelO0;
     }
@@ -530,7 +537,7 @@ bool MsContext::IsKByKExecutorMode() const {
   }
 
   if (mode == kGraphMode) {
-    if (common::GetEnv("GRAPH_OP_RUN") == "1" || jit_level == kAttrJitLevelO0 || jit_level == kAttrJitLevelO1) {
+    if (jit_level == kAttrJitLevelO0 || jit_level == kAttrJitLevelO1) {
       PrintJitLevelAndExecMode(is_jit_level_changed, jit_level, "enable kernelbykernel executor in the GRAPH mode.");
       return true;
     }

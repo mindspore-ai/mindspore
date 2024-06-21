@@ -19,6 +19,7 @@ import numpy as np
 
 workspace = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(workspace, "mindformers"))
+import mindspore as ms
 from mindformers import LlamaConfig, TransformerOpParallelConfig, LlamaTokenizer, LlamaForCausalLM, init_context
 from mindformers.tools.register import MindFormerConfig
 
@@ -63,6 +64,7 @@ def main(args):
     init_context(use_parallel=args.use_parallel,
                  context_config=config.context,
                  parallel_config=config.parallel)
+    ms.set_context(jit_config={"jit_level": "O2"})
 
     model_config = LlamaConfig(**config.model.model_config)
 

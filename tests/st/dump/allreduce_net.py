@@ -21,6 +21,7 @@ from mindspore import context
 
 
 context.set_context(mode=ms.GRAPH_MODE)
+context.set_context(jit_level="O2")
 init()
 
 

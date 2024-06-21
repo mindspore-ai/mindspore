@@ -176,6 +176,7 @@ def test_collect_custom_aicpu():
     Expectation: The file aicpu_intermediate_*.csv generated successfully and s1 == s2
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(jit_level="O2")
     with tempfile.TemporaryDirectory() as tmpdir:
         profiler = Profiler(output_path=tmpdir)
         net = Net1()

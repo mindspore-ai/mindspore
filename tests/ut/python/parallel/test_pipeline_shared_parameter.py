@@ -324,6 +324,7 @@ def test_pipeline_with_begin_end_inline():
     context.set_auto_parallel_context(
         device_num=32, global_rank=0, pipeline_stages=2)
     context.set_context(save_graphs=True, save_graphs_path="./")
+    context.set_context(jit_config={"jit_level": "O2"})
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     if os.path.exists("./speed_up.json"):
         os.remove("./speed_up.json")
@@ -367,6 +368,7 @@ def test_grad_accumulation_with_begin_end_inline():
     context.set_auto_parallel_context(
         device_num=32, global_rank=0, pipeline_stages=2)
     context.set_context(save_graphs=True, save_graphs_path="./")
+    context.set_context(jit_config={"jit_level": "O2"})
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     if os.path.exists("./speed_up.json"):
         os.remove("./speed_up.json")

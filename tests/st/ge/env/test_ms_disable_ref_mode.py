@@ -31,6 +31,7 @@ def test_ms_disable_ref_mode_0_graph_mode():
     Expectation: the result is correct
     """
     os.environ['MS_DISABLE_REF_MODE'] = '0'
+    context.set_context(jit_level="O2")
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     net = Net()
     x = Tensor(np.array([1, 2, 3]).astype(np.float32))
@@ -47,6 +48,7 @@ def test_ms_disable_ref_mode_1_graph_mode():
     Expectation: the result is correct
     """
     os.environ['MS_DISABLE_REF_MODE'] = '1'
+    context.set_context(jit_level="O2")
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     net = Net()
     x = Tensor(np.array([1, 2, 3]).astype(np.float32))
@@ -64,6 +66,7 @@ def test_ms_disable_ref_mode_0_pynative_mode():
     Expectation: the result is correct
     """
     os.environ['MS_DISABLE_REF_MODE'] = '0'
+    context.set_context(jit_level="O2")
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     net = Net()
     x = Tensor(np.array([1, 2, 3]).astype(np.float32))
@@ -80,6 +83,7 @@ def test_ms_disable_ref_mode_1_pynative_mode():
     Expectation: the result is correct
     """
     os.environ['MS_DISABLE_REF_MODE'] = '1'
+    context.set_context(jit_level="O2")
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     net = Net()
     x = Tensor(np.array([1, 2, 3]).astype(np.float32))
