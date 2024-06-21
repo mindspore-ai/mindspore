@@ -23,6 +23,8 @@ mindspore.communication.comm_func.all_to_all_single_with_output_shape
         - **TypeError** - `tensor` 不是张量类型。
         - **TypeError** - `output_shape` 不是元组或者张量类型。
 
+    样例：
+
     .. note::
         .. include:: ../ops/mindspore.ops.comm_note.rst
 
