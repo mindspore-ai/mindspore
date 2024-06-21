@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
+import subprocess
+import shutil
 import numpy as np
 import mindspore
 from mindspore import lazy_inline, context, nn, Tensor, Parameter
@@ -65,6 +68,21 @@ class SimpleNet(nn.Cell):
         x = self.fc1(x)
         x = self.fc2(x, w)
         return x
+
+
+class ShareParaNet(nn.Cell):
+    def __init__(self, shape):
+        super().__init__()
+        self.w = Parameter(Tensor(np.ones(shape), mindspore.float32), name="weight")
+        self.fc0 = FC2()
+        self.fc1 = FC2()
+        self.fc0.pipeline_stage = 0
+        self.fc1.pipeline_stage = 1
+
+    def construct(self, x):
+        x = self.fc0(x, self.w)
+        y = self.fc1(x, self.w)
+        return y
 
 
 class PipelineInferenceWrapper(nn.Cell):
@@ -134,6 +152,62 @@ def test_pipeline_inference_last_stage():
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs_has('call @graph_0', ['network.fc1.weight', 'network.fc0.weight', 'Receive-1'],
                                            graph_id=1)
+
+
+def test_pipeline_inference_without_lazy_inline_first_stage():
+    """
+    Feature: Test pipeline inference does not send embedding
+    Description: Shared parameter does not send between different stage.
+    Expectation: Successful.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_auto_parallel_context(device_num=4, global_rank=0, parallel_mode="semi_auto_parallel",
+                                      full_batch=True, pipeline_stages=2)
+    context.set_context(save_graphs=True, save_graphs_path="./pp_no_send_embed")
+
+    batch_size, hidden_size = 8, 32
+    net = PipelineInferenceWrapper(ShareParaNet(shape=(hidden_size, hidden_size)), micro_batch_num=2)
+    net.set_train(False)
+    x = Tensor(np.ones((batch_size, hidden_size)), mindspore.float32)
+    if os.path.exists("./pp_no_send_embed/rank_0"):
+        shutil.rmtree("./pp_no_send_embed/rank_0")
+    compile_infer_net(net, x)
+    file = "./pp_no_send_embed/rank_0/*validate*.ir"
+    prim_name = "Send("
+    output = subprocess.check_output(
+        ["grep -r '%s' %s |wc -l" % (prim_name, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == '2'
+    context.set_context(save_graphs=False)
+
+
+def test_pipeline_inference_without_lazy_inline_last_stage():
+    """
+    Feature: Test pipeline inference does not send embedding
+    Description: Shared parameter does not send between different stage.
+    Expectation: Successful.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_auto_parallel_context(device_num=4, global_rank=2, parallel_mode="semi_auto_parallel",
+                                      full_batch=True, pipeline_stages=2)
+    context.set_context(save_graphs=True, save_graphs_path="./pp_no_send_embed")
+
+    batch_size, hidden_size = 8, 32
+    net = PipelineInferenceWrapper(ShareParaNet(shape=(hidden_size, hidden_size)), micro_batch_num=2)
+    net.set_train(False)
+    x = Tensor(np.ones((batch_size, hidden_size)), mindspore.float32)
+    if os.path.exists("./pp_no_send_embed/rank_0"):
+        shutil.rmtree("./pp_no_send_embed/rank_0")
+    compile_infer_net(net, x)
+    file = "./pp_no_send_embed/rank_0/*validate*.ir"
+    prim_name = "Receive("
+    output = subprocess.check_output(
+        ["grep -r '%s' %s |wc -l" % (prim_name, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == '2'
+    context.set_context(save_graphs=False)
 
 
 def test_pipeline_inference_result_broadcast():
