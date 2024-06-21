@@ -518,6 +518,7 @@ class Custom(ops.PrimitiveWithInfer):
         return out
 
     def get_bprop(self):
+        """return back propagation function"""
         return self.bprop
 
     def _set_akg_kernel_type(self):
