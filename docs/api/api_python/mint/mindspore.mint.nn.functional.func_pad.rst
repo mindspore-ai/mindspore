@@ -16,7 +16,7 @@ mindspore.mint.nn.functional.pad
           - 示例：若只需要填充输入tensor的最后两个维度，则 `pad` 的填充方式为 :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})`;
           - 示例：若只需要填充输入tensor的最后三个维度，则 `pad` 的填充方式为 :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom}, \text{padding_front}, \text{padding_back})`;
 
-        - **mode** (str，可选) - Pad的填充模式，可选择 ``'constant'`` 、 ``'reflect'`` 、 ``'replicate'`` 或者 ``'circular'`` 。默认值： ``'constant'`` 。
+        - **mode** (str，可选) - pad的填充模式，可选择 ``'constant'`` 、 ``'reflect'`` 、 ``'replicate'`` 或者 ``'circular'`` 。默认值： ``'constant'`` 。
 
           - 对于 ``'constant'`` 模式，请参考 :class:`mindspore.nn.ConstantPad1d` 作为示例来理解这个填充模式，并将这个模式扩展到n维。
           - 对于 ``'reflect'`` 模式，请参考 :class:`mindspore.nn.ReflectionPad1d` 作为示例来理解这个填充模式，reflect模式用于填充四维或五维输入的最后三个维度、三维或四维输入的最后两个维度，或者二维或三维输入的最后一个维度。
