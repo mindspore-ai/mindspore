@@ -30,7 +30,7 @@ def compile_custom_run(workspace_dir):
     os.environ["PATH"] = new_value
     ms_path = ms.__file__
     ms_dir_path, _ = os.path.split(ms_path)
-    custom_compiler_path = os.path.join(ms_dir_path, "custom_compiler")
+    custom_compiler_path = os.path.join(ms_dir_path, "lib/plugin/ascend/custom_compiler")
     dst_compiler_path = os.path.join(workspace_dir, "custom_compiler")
 
     try:

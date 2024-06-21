@@ -131,10 +131,6 @@ package_data = {
         'include/*/*',
         'include/*/*/*',
         'include/*/*/*/*',
-        'custom_compiler/*',
-        'custom_compiler/*/*',
-        'custom_compiler/*/*/*',
-        'custom_compiler/*/*/*/*',
         'Third_Party_Open_Source_Software_Notice'
     ]
 }

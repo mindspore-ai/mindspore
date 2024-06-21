@@ -42,6 +42,7 @@ set(INSTALL_BIN_DIR "bin")
 set(INSTALL_CFG_DIR "config")
 set(INSTALL_LIB_DIR "lib")
 set(INSTALL_PLUGIN_DIR "${INSTALL_LIB_DIR}/plugin")
+set(INSTALL_ASCEND_DIR "${INSTALL_PLUGIN_DIR}/ascend")
 # set package files
 install(
     TARGETS _c_expression
@@ -325,7 +326,6 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/mint
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/multiprocessing
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/hal
-        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/custom_compiler
     DESTINATION ${INSTALL_PY_DIR}
     COMPONENT mindspore
 )
@@ -446,7 +446,8 @@ if(ENABLE_D)
     install(
         DIRECTORY
         ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/hal/custom_compiler
-        DESTINATION ${INSTALL_PY_DIR}
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/custom_compiler
+        DESTINATION ${INSTALL_ASCEND_DIR}
         COMPONENT mindspore
     )
 endif()
