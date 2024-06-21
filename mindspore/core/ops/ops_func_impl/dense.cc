@@ -24,6 +24,7 @@
 #include "ir/primitive.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -67,6 +68,7 @@ BaseShapePtr DenseFuncImpl::InferShape(const PrimitivePtr &primitive,
         MS_EXCEPTION(ValueError) << "The dim of b should be equal to 0" << kDimW;
       }
     }
+    ret_shape.assign(x_shp.begin(), x_shp.end() - 1);
     return std::make_shared<abstract::Shape>(ret_shape);
   }
 
@@ -109,5 +111,94 @@ TypePtr DenseFuncImpl::InferType(const PrimitivePtr &primitive, const std::vecto
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   return input_args[kDenseIndex0]->GetType();
 }
+
+TypePtrList DenseFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &y_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+  TypePtr ret_type = x_tensor->Dtype();
+  const auto x_dtype_id = x_tensor->data_type();
+  const auto y_dtype_id = y_tensor->data_type();
+  if (x_dtype_id != y_dtype_id) {
+    MS_EXCEPTION(TypeError) << "For Dense, all dtypes should be the same, but got 'input' with "
+                            << "dtype: " << x_dtype_id << " and 'other' with dtype: " << y_dtype_id << ".";
+  }
+  if (input_values[kInputIndex2] != mindspore::kNone) {
+    const auto &bias_tensor = input_values[kInputIndex2]->cast<tensor::BaseTensorPtr>();
+    MS_EXCEPTION_IF_NULL(bias_tensor);
+    const auto bias_dtype_id = bias_tensor->data_type();
+    if (x_dtype_id != bias_dtype_id) {
+      MS_EXCEPTION(TypeError) << "For Dense, all dtypes should be the same, but got 'input' with "
+                              << "dtype: " << x_dtype_id << " and 'bias' with dtype: " << bias_dtype_id << ".";
+    }
+  }
+
+  return {ret_type};
+}
+
+ShapeArray DenseFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &y_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+
+  const auto &x_shp = x_tensor->shape();
+  const auto &w_shp = y_tensor->shape();
+
+  const size_t kZero = 0;
+  const size_t kOne = 1;
+  const size_t kTwo = 2;
+
+  ShapeVector ret_shape;
+
+  if (w_shp.size() == kOne) {
+    const auto kDimW = " if the dim of w is 1.";
+    if (x_shp.size() < kOne) {
+      MS_EXCEPTION(ValueError) << "The dim of x should be at least 1" << kDimW;
+    }
+    if (x_shp[x_shp.size() - 1] != w_shp[0]) {
+      MS_EXCEPTION(ValueError) << "The value of x.shape[-1] should be equal to w.shape[0]" << kDimW;
+    }
+    if (input_values[kInputIndex2] != mindspore::kNone) {
+      const auto &bias_tensor = input_values[kInputIndex2]->cast<tensor::BaseTensorPtr>();
+      MS_EXCEPTION_IF_NULL(bias_tensor);
+      const auto b_shp = bias_tensor->shape();
+      if (b_shp.size() != kZero) {
+        MS_EXCEPTION(ValueError) << "The dim of b should be equal to 0" << kDimW;
+      }
+    }
+    ret_shape.assign(x_shp.begin(), x_shp.end() - 1);
+    return {ret_shape};
+  }
+
+  const auto kDimW = " if the dim of w is 2.";
+  if (w_shp.size() != kTwo) {
+    MS_EXCEPTION(ValueError) << "The dim of w should be equal to 1 or 2.";
+  }
+  if (x_shp.size() < kOne) {
+    MS_EXCEPTION(ValueError) << "The dim of x should be at least 1" << kDimW;
+  }
+  if (input_values[kInputIndex2] != mindspore::kNone) {
+    const auto &bias_tensor = input_values[kInputIndex2]->cast<tensor::BaseTensorPtr>();
+    MS_EXCEPTION_IF_NULL(bias_tensor);
+    const auto b_shp = bias_tensor->shape();
+    if (b_shp.size() != kZero && b_shp.size() != kOne) {
+      MS_EXCEPTION(ValueError) << "The dim of b should be equal to 0 or 1" << kDimW;
+    }
+  }
+
+  auto x_col = x_shp[x_shp.size() - 1];
+  auto w_row = w_shp[1];
+  if (x_col != -1 && w_row != -1 && x_col != w_row && x_col >= 0 && w_row >= 0) {
+    MS_EXCEPTION(ValueError) << "Dense shape error, got x_col: " << x_col << ", w_row: " << w_row
+                             << ". In Dense x_col and w_row should be equal." << kDimW;
+  }
+
+  ret_shape.assign(x_shp.begin(), x_shp.end() - 1);
+  ret_shape.push_back(w_shp[0]);
+  return {ret_shape};
+}
+REGISTER_SIMPLE_INFER(kNameDense, DenseFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

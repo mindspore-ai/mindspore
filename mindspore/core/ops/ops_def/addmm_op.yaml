@@ -1,0 +1,19 @@
+#operator addmm
+addmm:
+  args:
+    input:
+      dtype: tensor
+    mat1:
+      dtype: tensor
+    mat2:
+      dtype: tensor
+    beta:
+      dtype: number
+    alpha:
+      dtype: number
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: AddmmAscend

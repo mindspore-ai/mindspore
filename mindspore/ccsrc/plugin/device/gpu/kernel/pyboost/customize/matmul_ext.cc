@@ -66,7 +66,7 @@ ValueTuplePtr ReduceTo3D(const ShapeVector &shape) {
 void MatMulExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
                            const BaseTensorPtr &mat2_tensor) {
   MS_LOG(DEBUG) << "Call start";
-
+  OpRunner::InferOpOutput(op, input_tensor, mat2_tensor);
   auto device_context = op->device_context();
 
   // convert input_tensor into input, input is a BaseTensorPtr

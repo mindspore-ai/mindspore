@@ -20,6 +20,7 @@
 #include <string>
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -231,5 +232,58 @@ void WeightQuantBatchMatmulFuncImpl::CheckBatchMatmulInputWhetherCanBeBroadcast(
   }
 }
 
+TypePtrList WeightQuantBatchMatmulFuncImpl::InferType(const PrimitivePtr &primitive,
+                                                      const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputX]->cast<tensor::BaseTensorPtr>();
+  const auto &w_tensor = input_values[kInputWeight]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(w_tensor);
+  TypePtr x_type = x_tensor->Dtype();
+
+  if (input_values[kInputQuantScale] == mindspore::kNone) {
+    MS_LOG(INFO) << "WeightQuantBatchMatmulFuncImpl InferType is " << x_type;
+    return {x_type};
+  } else {
+    MS_LOG(INFO) << "WeightQuantBatchMatmulFuncImpl InferType is kInt8";
+    return {kInt8};
+  }
+}
+
+ShapeArray WeightQuantBatchMatmulFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                                      const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &y_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+
+  const auto &x_shp = x_tensor->shape();
+  const auto &weight_shp = y_tensor->shape();
+
+  auto prim_name = primitive->name();
+
+  auto transpose_x_any = GetScalarValue<bool>(input_values[kInputTransposeX]);
+
+  bool transpose_x = transpose_x_any.value();
+
+  auto transpose_weight_any = GetScalarValue<bool>(input_values[kInputTransposeWeight]);
+  bool transpose_weight = transpose_weight_any.value();
+
+  CheckBatchMatmulInputSize(prim_name, "x", x_shp);
+
+  CheckBatchMatmulInputSize(prim_name, "weight", weight_shp);
+
+  CheckBatchMatmulInputWhetherCanBeMul(prim_name, x_shp, weight_shp, transpose_x, transpose_weight,
+                                       y_tensor->data_type());
+
+  CheckBatchMatmulInputWhetherCanBeBroadcast(prim_name, x_shp, weight_shp);
+
+  ShapeVector ret_shape;
+  BatchMatMulMakeShape(&ret_shape, x_shp, weight_shp, transpose_x, transpose_weight, kMatSize);
+  if (y_tensor->data_type() == TypeId::kNumberTypeInt4 && !transpose_weight) {
+    ret_shape[ret_shape.size() - 1] *= kInt4ShapeMul;
+  }
+  return {ret_shape};
+}
+// REGISTER_SIMPLE_INFER(kNameWeightQuantBatchMatmul, WeightQuantBatchMatmulFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

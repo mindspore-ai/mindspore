@@ -21,6 +21,7 @@
 #include "utils/ms_context.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -133,5 +134,75 @@ TypePtr MatMulFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
   }
   return x_type;
 }
+
+TypePtrList MatMulFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &y_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+  TypePtr ret_type = x_tensor->Dtype();
+  if (primitive->HasAttr("cast_type")) {
+    auto out_type = primitive->GetAttr("cast_type");
+    MS_EXCEPTION_IF_NULL(out_type);
+    if (!out_type->isa<Type>()) {
+      MS_EXCEPTION(ValueError) << "MatMul cast_type must be a `Type`";
+    }
+    ret_type = out_type->cast<TypePtr>();
+  }
+  const auto x_dtype_id = x_tensor->data_type();
+  const auto y_dtype_id = y_tensor->data_type();
+  if (x_dtype_id != y_dtype_id) {
+    MS_EXCEPTION(ValueError) << "For MatMul, the dtype of 'input' and 'other' should be the same, but got 'input' with "
+                             << "dtype: " << x_dtype_id << " and 'other' with dtype: " << y_dtype_id << ".";
+  }
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (x_dtype_id == TypeId::kNumberTypeInt8 && device_target == kAscendDevice) {
+    ret_type = kInt32;
+  }
+  return {ret_type};
+}
+
+ShapeArray MatMulFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &y_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+
+  const auto &x_shp = x_tensor->shape();
+  const auto &y_shp = y_tensor->shape();
+
+  auto transpose_a_op = GetScalarValue<bool>(input_values[kInputIndex2]);
+  auto transpose_b_op = GetScalarValue<bool>(input_values[kInputIndex3]);
+
+  auto transpose_a = transpose_a_op.value();
+  auto transpose_b = transpose_b_op.value();
+
+  if (x_shp.size() == 1 && y_shp.size() == 1 && x_shp[0] == 0 && y_shp[0] == 0) {
+    ShapeVector ret_shape;
+    return {ret_shape};
+  }
+
+  const size_t SHAPE_SIZE = 2;
+
+  if (x_shp.size() != SHAPE_SIZE || y_shp.size() != SHAPE_SIZE) {
+    MS_EXCEPTION(ValueError) << "MatMul inputs should have the same dimension size and equal to 2.";
+  }
+  auto x_col = x_shp[(transpose_a ? 0 : 1)];
+  auto y_row = y_shp[(transpose_b ? 1 : 0)];
+  if (x_col != y_row && x_col >= 0 && y_row >= 0) {
+    MS_EXCEPTION(ValueError) << "For 'MatMul' the input dimensions must be equal, but got 'x1_col': " << x_col
+                             << " and 'x2_row': " << y_row << ".";
+  }
+
+  ShapeVector ret_shape;
+  if (!x_shp.empty() && !y_shp.empty()) {
+    ret_shape.push_back(x_shp[(transpose_a ? 1 : 0)]);
+    ret_shape.push_back(y_shp[(transpose_b ? 0 : 1)]);
+  }
+  return {ret_shape};
+}
+REGISTER_SIMPLE_INFER(kNameMatMul, MatMulFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

@@ -31,6 +31,8 @@ class MIND_API MatMulExtFuncImpl : public OpFuncImpl {
   BaseShapePtr InferShapeND(const ShapeVector &x_shp, const ShapeVector &y_shp) const;
   BaseShapePtr InferShape3D(const ShapeVector &x_shp, const ShapeVector &y_shp) const;
   BaseShapePtr InferShape2D(const ShapeVector &x_shp, const ShapeVector &y_shp) const;
+  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
 };
 MIND_API ShapeVector CheckMatMulShapes(const ShapeVector &shape1, const ShapeVector &shape2);
 MIND_API ShapeVector InferShapeRem(const ShapeVector &shape_backbone, const ShapeVector &shape1,

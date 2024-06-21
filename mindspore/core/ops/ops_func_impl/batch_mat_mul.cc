@@ -28,6 +28,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -178,5 +179,61 @@ TypePtr BatchMatMulFuncImpl::InferType(const PrimitivePtr &prim, const std::vect
   }
   return x_type;
 }
+
+TypePtrList BatchMatMulFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &y_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+  TypePtr ret_type = x_tensor->Dtype();
+  if (primitive->HasAttr("cast_type")) {
+    auto out_type = primitive->GetAttr("cast_type");
+    MS_EXCEPTION_IF_NULL(out_type);
+    if (!out_type->isa<Type>()) {
+      MS_EXCEPTION(ValueError) << "BatchMatMul cast_type must be a `Type`";
+    }
+    ret_type = out_type->cast<TypePtr>();
+  }
+  const auto x_dtype_id = x_tensor->data_type();
+  const auto y_dtype_id = y_tensor->data_type();
+  if (x_dtype_id != y_dtype_id) {
+    MS_EXCEPTION(ValueError)
+      << "For BatchMatMul, the dtype of 'input' and 'other' should be the same, but got 'input' with "
+      << "dtype: " << x_dtype_id << " and 'other' with dtype: " << y_dtype_id << ".";
+  }
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (x_dtype_id == TypeId::kNumberTypeInt8 && device_target == kAscendDevice) {
+    ret_type = kInt32;
+  }
+  return {ret_type};
+}
+
+ShapeArray BatchMatMulFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &y_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(y_tensor);
+
+  const auto &x_shp = x_tensor->shape();
+  const auto &y_shp = y_tensor->shape();
+
+  auto transpose_a_op = GetScalarValue<bool>(input_values[kInputIndex2]);
+  auto transpose_b_op = GetScalarValue<bool>(input_values[kInputIndex3]);
+
+  auto transpose_a = transpose_a_op.value();
+  auto transpose_b = transpose_b_op.value();
+
+  auto prim_name = primitive->name();
+  CheckBatchMatmulInputSize(prim_name, "x", x_shp);
+  CheckBatchMatmulInputSize(prim_name, "y", y_shp);
+  CheckBatchMatmulInputWhetherCanBeMul(prim_name, x_shp, y_shp, transpose_a, transpose_b);
+  CheckBatchMatmulInputWhetherCanBeBroadcast(prim_name, x_shp, y_shp);
+  ShapeVector ret_shape;
+  BatchMatMulMakeShape(&ret_shape, x_shp, y_shp, transpose_a, transpose_b);
+  return {ret_shape};
+}
+REGISTER_SIMPLE_INFER(kNameBatchMatMul, BatchMatMulFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
