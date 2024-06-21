@@ -31,7 +31,10 @@ def setup_function():
 class Net(Cell):
     def __init__(self, strategy=None):
         super(Net, self).__init__()
-        self.lin_space = _get_cache_prim(LinSpaceExt)().shard(strategy)
+        if strategy is None:
+            self.lin_space = _get_cache_prim(LinSpaceExt)()
+        else:
+            self.lin_space = _get_cache_prim(LinSpaceExt)().shard(strategy)
 
     def construct(self, start, end, x, dtype=None):
         return self.lin_space(start, end, x, dtype)
@@ -51,6 +54,24 @@ def test_lin_space_ext_data_parallel():
     phase = compile_net(net, start, end, x, mstype.float32)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs('LinSpaceExt-0', ['ScalarAdd-0', 'ScalarAdd-1', 1, 43])
+
+
+def test_lin_space_ext_data_parallel_steps_dynamic_shape():
+    """
+    Feature: test LinSpaceExt parallel with dynamic shape
+    Description: strategy > 1
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    s = Symbol(divisor=8)
+    start = Tensor(1, dtype=mstype.float32)
+    end = Tensor(10, mstype.float32)
+    x = Tensor(shape=[s], dtype=mstype.int64)
+    net = Net()
+    phase = compile_net(net, start, end, x, mstype.float32)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs('LinSpaceExt-0',
+                                       ['TensorToScalar-0', 'TensorToScalar-1', 'TensorToScalar-2', 43])
 
 
 def test_lin_space_ext_parallel_with_repeated_cal():

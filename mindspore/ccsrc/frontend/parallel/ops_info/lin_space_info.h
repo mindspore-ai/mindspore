@@ -68,7 +68,8 @@ class LinSpaceExtInfo : public LinSpaceInfo {
 
   Status GetAttrs() override;
 
- private:
+ protected:
+  std::shared_ptr<Strategies> GenerateBatchStrategies() override;
   Status ComputeReplaceGraph(const CNodePtr &cnode) override;
   AnfNodePtr dtype_;
 };

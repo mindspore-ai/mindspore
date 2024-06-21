@@ -44,7 +44,7 @@ Status LinSpaceInfo::CheckStrategy(const StrategyPtr &strategy) {
                   << StrategyToString(strategies);
     return FAILED;
   }
-  if (outputs_shape_[0][0] > 0 && (outputs_shape_[0][0] % split_num_ != 0)) {
+  if (output_size_ > 0 && (output_size_ % split_num_ != 0)) {
     MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(strategies) << ", output size is  "
                   << output_size_ << " cannot be divisible by strategy value " << split_num_;
     return FAILED;
@@ -212,6 +212,19 @@ Status LinSpaceExtInfo::GetAttrs() {
 
   dtype_ = ValuePtrToAnfNodePtr(input_value_[kLinSpaceExtLastInputIndex]);
   return SUCCESS;
+}
+
+std::shared_ptr<Strategies> LinSpaceExtInfo::GenerateBatchStrategies() {
+  if (InferAttrs() != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
+  }
+
+  int64_t dev_num = g_device_manager->stage_device_num();
+  if (output_size_ == -1) {  // no split default when output is dynamic shape
+    dev_num = 1;
+  }
+  Strategies strategies = {Dimensions{dev_num}};
+  return std::make_shared<Strategies>(strategies);
 }
 
 Status LinSpaceExtInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
