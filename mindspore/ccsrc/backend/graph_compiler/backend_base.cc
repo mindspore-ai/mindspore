@@ -51,6 +51,8 @@
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/ps/ps_context.h"
 #endif
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "include/common/symbol_engine/symbol_engine_impl.h"
 
 namespace mindspore {
 namespace compile {
@@ -451,6 +453,39 @@ void UnifyIR(const CNodePtr &cnode, bool enable_run_graph_by_single_op) {
                  << ", debug name:" << cnode->DebugString();
   }
 }
+
+bool EnableSymbolEngine(const FuncGraphPtr &func_graph, device::RunMode run_mode) {
+  // Currently, only Graph Kernel Fusion dynamic shape case need build symbol engine
+  if (run_mode != device::RunMode::kKernelMode) {
+    return false;
+  }
+  if (common::GetEnv("MS_SYMBOL_ENGINE_OPTIMIZE") == "off") {
+    return false;
+  }
+  if (!graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+    return false;
+  }
+  return common::AnfAlgo::IsDynamicGraph(func_graph);
+}
+
+void BuildSymbolEngine(const FuncGraphPtr &func_graph, device::RunMode run_mode) {
+  if (func_graph == nullptr) {
+    return;
+  }
+  MS_LOG(INFO) << "Status record: start build symbol engine for function graph: " << func_graph->ToString();
+  if (!EnableSymbolEngine(func_graph, run_mode)) {
+    MS_LOG(INFO) << "Status record: skip build symbol engine for function graph: " << func_graph->ToString();
+    return;
+  }
+  try {
+    MS_LOG_TRY_CATCH_SCOPE;
+    symshape::SymbolEngineImpl::Build(func_graph);
+  } catch (std::exception &e) {
+    MS_LOG(WARNING) << "A problem occurs when build symbol engine for function graph[" << func_graph->ToString()
+                    << "]: " << e.what();
+  }
+  MS_LOG(INFO) << "Status record: end build symbol engine for function graph: " << func_graph->ToString();
+}
 }  // namespace
 
 const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph) {
@@ -501,12 +536,16 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
       auto graph_id = graph_compiler_->CompileWholeGraphForGraphRunMode(func_graph, device_context);
       graph_id_to_device_context_[graph_id] = device_context;
     } else {
+      // Build symbol engine for root graph before partition graph
+      BuildSymbolEngine(func_graph, device::RunMode::kKernelMode);
       CompileSubGraph(func_graph, device::RunMode::kKernelMode);
     }
   } else {
     if (NeedCheckMultiTarget(func_graph, ms_execution_mode_)) {
       ProcessNotSupportCnode(func_graph, device_context->GetDeviceType(), mindspore::device::DeviceType::kCPU);
     }
+    // Build symbol engine for root graph before partition graph
+    BuildSymbolEngine(func_graph, device_context->GetRunMode(func_graph));
     CompileSubGraph(func_graph);
   }
   PROF_END(CompileSubGraph);

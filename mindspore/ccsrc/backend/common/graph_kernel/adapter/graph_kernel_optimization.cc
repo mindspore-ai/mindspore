@@ -196,7 +196,7 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape};
   pm->Add(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
   // Use symbol to calculate a more precise edge relation between nodes
-  pm->Add(std::make_shared<SymbolEngineBuilder>(false), OptLevel_1);
+  pm->Add(std::make_shared<SymbolEngineBuilder>(false), OptLevel_1, is_dvm);
   // Split kernel according to costmodel
   pm->Add(std::make_shared<GraphKernelSplitterWithPy>(false), OptLevel_1);
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
