@@ -29,9 +29,13 @@ from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithM
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import randperm
 from mindspore.common.generator import default_generator
-from mindspore.ops.auto_generate import UniformExt, NormalExt
+from mindspore.ops.auto_generate import UniformExt, NormalTensorTensor,\
+     NormalTensorFloat, NormalFloatTensor, NormalFloatFloat
 
-normal_ext_op = NormalExt()
+normal_tensor_tensor_op = NormalTensorTensor()
+normal_tensor_float_op = NormalTensorFloat()
+normal_float_tensor_op = NormalFloatTensor()
+normal_float_float_op = NormalFloatFloat()
 cast_ = P.Cast()
 log_ = P.Log()
 real_div_ = P.RealDiv()
@@ -679,19 +683,22 @@ def is_cpu_backend():
     """Check if the CPU is used"""
     return context.get_context('device_target') == 'CPU'
 
-
-def normal_ext(mean, std, generator=None):
+def normal_ext(mean=0.0, std=1.0, size=None, generator=None):
     r"""
     Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
 
     Args:
-        mean (Union[float, Tensor]): The mean is a tensor with the mean of each output
-          element's normal distribution.
-        std (Union[float, Tensor]): The tensor of per-element standard deviations.
-        generator (Generator, optional): Mindspore generator.
+        mean (Union[float, Tensor]): Mean value of each element, the shape of the 'mean' tensor
+        should be the same as that of the 'std' tensor. Default: ``0.0``.
+        std (Union[float, Tensor]): Standard deviation for each element, the shape of the 'std' tensor
+        should be the same as that of the 'mean' tensor. The value of std should be greater than or equal to 0.
+        Default: ``1.0``.
+        size (tuple): output size, where 'mean' and 'std' are constants. Default: ``None``.
+        generator (generator): MindSpore generator. Default: ``None``.
 
     Returns:
-        - **output** (Tensor) - With the same type and shape as the 'mean'.
+        Outputs a tensor with the same shape as 'mean',
+        or when 'mean' and 'std' are constants and shape is specified as 'size'.
 
     Raises:
         TypeError: If `mean` or `std` is not Union[float, Tensor].
@@ -713,7 +720,17 @@ def normal_ext(mean, std, generator=None):
     if generator is None:
         generator = default_generator
     seed, offset = generator._step(1)  # pylint: disable=protected-access
-    return normal_ext_op(mean, std, seed, offset)
+
+    is_mean_tensor = isinstance(mean, Tensor)
+    is_std_tensor = isinstance(std, Tensor)
+
+    if is_mean_tensor and is_std_tensor:
+        return normal_tensor_tensor_op(mean, std, seed, offset)
+    if is_mean_tensor and not is_std_tensor:
+        return normal_tensor_float_op(mean, std, seed, offset)
+    if not is_mean_tensor and is_std_tensor:
+        return normal_float_tensor_op(mean, std, seed, offset)
+    return normal_float_float_op(mean, std, size, seed, offset)
 
 
 @_function_forbid_reuse

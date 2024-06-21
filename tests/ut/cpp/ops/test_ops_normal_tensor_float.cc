@@ -20,42 +20,44 @@
 #include "common/common_test.h"
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
-#include "ops/ops_func_impl/normal_ext.h"
+#include "ops/ops_func_impl/normal_tensor_float.h"
 #include "ops/test_ops.h"
 #include "test_value_utils.h"
 
 namespace mindspore {
 namespace ops {
-struct NormalExtOpParams {
+struct NormalTensorFloatOpParams {
   ShapeVector mean_shape;
   TypePtr mean_type;
-  ShapeVector std_shape;
-  TypePtr std_type;
+  ValuePtr std_float;
   ValuePtr seed_;
   ValuePtr offset_;
   ShapeVector output_shape;
   TypePtr output_type;
 };
-class TestNormalExt : public TestOps, public testing::WithParamInterface<NormalExtOpParams> {};
+class TestNormalTensorFloat : public TestOps, public testing::WithParamInterface<NormalTensorFloatOpParams> {};
 
-TEST_P(TestNormalExt, normal_dyn_shape) {
-  auto primitive = std::make_shared<Primitive>("Normal");
+TEST_P(TestNormalTensorFloat, normal_dyn_shape) {
+  auto primitive = std::make_shared<Primitive>("NormalTensorFloat");
   ASSERT_NE(primitive, nullptr);
   const auto &param = GetParam();
   auto mean = std::make_shared<abstract::AbstractTensor>(param.mean_type, param.mean_shape);
   ASSERT_NE(mean, nullptr);
   std::vector<abstract::AbstractBasePtr> input_args{std::move(mean)};
-  auto std = std::make_shared<abstract::AbstractTensor>(param.std_type, param.std_shape);
+
+  auto std = std::make_shared<abstract::AbstractScalar>(param.std_float);
   ASSERT_NE(std, nullptr);
   input_args.push_back(std::move(std));
+
   auto seed_ = param.seed_->ToAbstract();
   ASSERT_NE(seed_, nullptr);
+
   input_args.push_back(std::move(seed_));
   auto offset_ = param.offset_->ToAbstract();
   ASSERT_NE(offset_, nullptr);
   input_args.push_back(std::move(offset_));
 
-  auto infer_impl = std::make_shared<NormalExtFuncImpl>();
+  auto infer_impl = std::make_shared<NormalTensorFloatFuncImpl>();
   ASSERT_NE(infer_impl, nullptr);
   auto infer_shape = infer_impl->InferShape(primitive, input_args);
   ASSERT_NE(infer_shape, nullptr);
@@ -70,14 +72,17 @@ TEST_P(TestNormalExt, normal_dyn_shape) {
   ASSERT_TRUE(*infer_type == *expect_type);
 }
 
-INSTANTIATE_TEST_CASE_P(TestNormalExtGroup, TestNormalExt,
-                        testing::Values(NormalExtOpParams{{2, 2},
-                                                          kFloat16,
-                                                          {2, 2},
-                                                          kFloat16,
-                                                          CreateScalar<float>(1.0),
-                                                          CreateScalar<float>(1.0),
-                                                          {2, 2},
-                                                          kFloat32}));
+INSTANTIATE_TEST_CASE_P(
+  TestNormalTensorFloatGroup, TestNormalTensorFloat,
+  testing::Values(
+    NormalTensorFloatOpParams{
+      {2, 2}, kFloat16, CreateScalar<float>(1.0), CreateScalar<float>(1.0), CreateScalar<float>(1.0), {2, 2}, kFloat16},
+    NormalTensorFloatOpParams{{2, 2},
+                              kFloat32,
+                              CreateScalar<float>(1.0),
+                              CreateScalar<float>(1.0),
+                              CreateScalar<float>(1.0),
+                              {2, 2},
+                              kFloat32}));
 }  // namespace ops
 }  // namespace mindspore

@@ -1,5 +1,5 @@
-#operator normal_ext
-normal_ext:
+#operator normal_tensor_tensor
+normal_tensor_tensor:
     args:
         mean:
             dtype: tensor
@@ -14,8 +14,9 @@ normal_ext:
     returns:
         output: 
             dtype: tensor
+    class:
+        name: NormalTensorTensor
     function:
         disable: True
     dispatch:
-        Ascend: NormalExtAscend
         enable: True

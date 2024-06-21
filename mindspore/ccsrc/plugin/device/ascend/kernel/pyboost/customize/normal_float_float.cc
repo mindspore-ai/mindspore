@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/pyboost/customize/normal_ext.h"
+#include "plugin/device/ascend/kernel/pyboost/customize/normal_float_float.h"
 #include <memory>
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "kernel/pyboost/op_register.h"
@@ -24,32 +24,33 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::BaseTensorPtr NormalExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &mean_tensor,
-                                               const BaseTensorPtr &std_tensor, const Int64ImmPtr &seed,
-                                               const Int64ImmPtr &offset) {
-  MS_LOG(DEBUG) << "NormalExt call start";
-  OpRunner::InferOpOutput(op, mean_tensor, std_tensor, seed, offset);
+tensor::BaseTensorPtr NormalFloatFloatAscendCustomize(const std::shared_ptr<OpRunner> &op, const FP32ImmPtr &mean_float,
+                                                      const FP32ImmPtr &std_float, const ValueTuplePtr &size,
+                                                      const Int64ImmPtr &seed, const Int64ImmPtr &offset) {
+  MS_LOG(DEBUG) << "NormalFloatFloat call start";
+  OpRunner::InferOpOutput(op, mean_float, std_float, size, seed, offset);
   // ValueTuple to std::vector
-  auto seed_imm = static_cast<uint64_t>(GetValue<int64_t>(seed));
-  auto offset_imm = static_cast<uint64_t>(GetValue<int64_t>(offset));
+  auto mean_imm = GetValue<float>(mean_float);
+  auto std_imm = GetValue<float>(std_float);
+  auto seed_imm = static_cast<int64_t>(GetValue<int64_t>(seed));
+  auto offset_imm = static_cast<int64_t>(GetValue<int64_t>(offset));
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), mean_tensor, std_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Async
   PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, mean_tensor, std_tensor, seed_imm, offset_imm]() {
-      MS_LOG(DEBUG) << "Run device task NormalExt end";
+    std::make_shared<runtime::PyBoostDeviceTask>([op, mean_imm, std_imm, seed_imm, offset_imm]() {
+      MS_LOG(DEBUG) << "Run device task NormalFloatFloat end";
       auto device_context = op->device_context();
       const auto &outputs = op->outputs();
       // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, mean_tensor, std_tensor);
+      PyBoostUtils::MallocOpInputs(device_context);
       // Malloc for output tensors
       PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
-      LAUNCH_ACLNN(aclnnNormalTensorTensor, device_context, op->stream_id(), mean_tensor, std_tensor, seed_imm,
-                   offset_imm, outputs[0]);
-      MS_LOG(DEBUG) << "Run device task NormalExt end";
+      LAUNCH_ACLNN(aclnnNormalFloatFloat, device_context, op->stream_id(), mean_imm, std_imm, seed_imm, offset_imm,
+                   outputs[0]);
+      MS_LOG(DEBUG) << "Run device task NormalFloatFloat end";
     }));
   return op->output(0);
 }

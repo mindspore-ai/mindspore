@@ -17,7 +17,7 @@
 #include <memory>
 #include <set>
 #include <string>
-#include "ops/ops_func_impl/normal_ext.h"
+#include "ops/ops_func_impl/normal_tensor_tensor.h"
 #include "ops/op_utils.h"
 #include "ir/dtype.h"
 #include "utils/check_convert_utils.h"
@@ -26,15 +26,15 @@
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr NormalExtFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) const {
+BaseShapePtr NormalTensorTensorFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                                    const std::vector<AbstractBasePtr> &input_args) const {
   // Get input tensor shape.
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0]) &&
       CheckAndConvertUtils::IsTensor(input_args[kInputIndex1])) {
     auto mean_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
-    auto std_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+    auto std_shape = input_args[kInputIndex1]->GetShape()->GetShapeVector();
     if (IsDynamicRank(mean_shape) || IsDynamicRank(std_shape)) {
       return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
     }
@@ -42,30 +42,19 @@ BaseShapePtr NormalExtFuncImpl::InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::TensorShape>(output_size);
   } else {
     MS_EXCEPTION(TypeError) << "For '" << primitive->name()
-                            << "', mean and std must be a Tensor with all Int elements, but got: "
-                            << input_args[kInputIndex0]->ToString() << " and, " << input_args[kInputIndex1]->ToString()
-                            << ".";
+                            << "', mean and std must be a Tensor, but got: " << input_args[kInputIndex0]->ToString()
+                            << " and, " << input_args[kInputIndex1]->ToString() << ".";
   }
 }
 
-TypePtr NormalExtFuncImpl::InferType(const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args) const {
+TypePtr NormalTensorTensorFuncImpl::InferType(const PrimitivePtr &primitive,
+                                              const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0]) &&
-      CheckAndConvertUtils::IsTensor(input_args[kInputIndex1])) {
-    const std::set<TypePtr> valid_shape_types = {kBFloat16, kFloat16, kFloat32, kFloat64};
-    auto mean_dtype = input_args[kInputIndex0]->GetType();
-    auto std_dtype = input_args[kInputIndex1]->GetType();
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("mean", mean_dtype, valid_shape_types, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("std", std_dtype, valid_shape_types, prim_name);
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', mean and std must be a Tensor with all Int elements, but got: "
-                            << input_args[kInputIndex0]->ToString() << " and, " << input_args[kInputIndex1]->ToString()
-                            << ".";
-  }
-  return std::make_shared<TensorType>(kFloat32);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  auto x_type = input_args[0]->GetType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types_with_complex_and_bool, prim_name);
+  return x_type;
 }
 }  // namespace ops
 }  // namespace mindspore

@@ -1662,7 +1662,13 @@ REG_BPROP_BUILDER("ScatterUpdate").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUN
   return {dx, ib->OutZeros(indices), updates_grad};
 });
 
-REG_BPROP_BUILDER("NormalExt").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("NormalTensorTensor").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(ReturnZeros);
+
+REG_BPROP_BUILDER("NormalTensorFloat").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(ReturnZeros);
+
+REG_BPROP_BUILDER("NormalFloatTensor").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(ReturnZeros);
+
+REG_BPROP_BUILDER("NormalFloatFloat").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("UniformExt").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(ReturnZeros);
 

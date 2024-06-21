@@ -35,6 +35,7 @@ Array操作
     mindspore.mint.index_select
     mindspore.mint.scatter_add
     mindspore.mint.narrow
+    mindspore.mint.normal
     mindspore.mint.topk
     mindspore.mint.sort
 
