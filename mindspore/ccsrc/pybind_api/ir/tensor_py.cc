@@ -558,8 +558,8 @@ py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
     std::string minimum_numpy_version = np_dtypes::GetMinimumSupportedNumpyVersion();
     if (tensor.data_type() == kNumberTypeBFloat16 && !np_dtypes::NumpyVersionValid(numpy_version)) {
       MS_EXCEPTION(TypeError) << "For asnumpy, the numpy bfloat16 data type is supported in Numpy versions "
-                              << minimum_numpy_version << " to 1.26, but got " << numpy_version
-                              << ", please upgrade numpy version.";
+                              << minimum_numpy_version << " to " << minimum_numpy_version[0] << ".x.x, but got "
+                              << numpy_version << ", please upgrade numpy version.";
     }
 
     if (tensor.get_copy_done_flag()) {
