@@ -22,7 +22,7 @@ def no_inline(fn=None):
     Make the function to be reusable. The corresponding sub graph will not be inline.
 
     Args:
-        fn (function): It is the python function. If it is a methon of a cell，please
+        fn (function): It is the python function. If it is a methon of a cell, please
             refer to :func:`mindspore.lazy_inline`.
 
     Returns:
@@ -37,7 +37,6 @@ def no_inline(fn=None):
         ... def no_inline_fun(val):
         ...     x = val * 3 + 2
         ...     return x
-
         >>> @jit
         ... def call_no_inline_fun(val):
         ...     for _ in range(100):
