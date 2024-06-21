@@ -85,7 +85,7 @@ class VarianceAndMeanCalculator {
 
 class L2Calculator {
  public:
-  L2Calculator() : squre_sum_div_max_(0.0), max_value_(0.0) {}
+  L2Calculator() : squre_sum(0.0) {}
   ~L2Calculator() = default;
   void ProcessElement(double value);
   void ProcessElement(const L2Calculator &other);
@@ -94,8 +94,7 @@ class L2Calculator {
  private:
   // save (x^2 + y^2)/y^2, when y > x, to avoid itermidiate value overflow
   // the true l2 value should be sqrt(squre_sum_div_max_ * max_value_^2)
-  double squre_sum_div_max_;
-  double max_value_;
+  double squre_sum;
 };
 
 class ITensorSummary {

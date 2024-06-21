@@ -61,6 +61,25 @@ def check_statistic_l2_value(tensor, l2_value):
     if "L2Norm Value" in tensor:
         assert math.isclose(float(tensor["L2Norm Value"]), l2_value, rel_tol=1e-4, abs_tol=1e-4)
 
+def get_dumped_stat_list(dump_file_path):
+    output_name = "statistic.csv"
+    output_path = glob.glob(os.path.join(dump_file_path, output_name))[0]
+    real_path = os.path.realpath(output_path)
+    with open(real_path) as f:
+        reader = csv.DictReader(f)
+        stats = list(reader)
+
+        def get_add_node(statistic):
+            return statistic['Op Type'] == 'Add'
+
+        add_statistics = list(filter(get_add_node, stats))
+        num_tensors = len(add_statistics)
+        assert num_tensors == 3
+        return add_statistics
+
+def check_stat_value(tensor, IO, slot, stat_key, exp_value):
+    if tensor["IO"] == IO and tensor["Slot"] == slot:
+        assert tensor[stat_key] == exp_value
 
 def check_statistic_device_dump(dump_file_path):
     output_name = "statistic.csv"
@@ -200,5 +219,107 @@ def test_kbk_stat_calc_mode_l2_dump_device():
         _ = net(x, y)
         time.sleep(2)
         check_statistic_device_dump(path / "dump_data" / "rank_0" / "Net" / "0" / "0")
+    finally:
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_kbk_stat_calc_with_inf():
+    """
+    Feature: kbyk statistic dump support device l2 value dump.
+    Description: Test kbyk statistic l2 value dump on device.
+    Expectation: The statistics result meet the requirement.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    test_dir = tempfile.TemporaryDirectory(suffix="device")
+
+    path = Path(test_dir.name)
+    dump_path = str(path / "dump_data")
+    dump_config_path = str(path / "config.json")
+
+    def extra_json_settings(data):
+        data["e2e_dump_settings"]["stat_calc_mode"] = "host"
+        data["common_dump_settings"]["saved_data"] = "statistic"
+
+    generate_dump_json(dump_path, dump_config_path, "e2e_dump_settings", extra_json_settings)
+    os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+    try:
+        class Net(nn.Cell):
+            def construct(self, x, y):
+                return x + y
+        def check_inf_dump(dump_file_path):
+            stat_list = get_dumped_stat_list(dump_file_path)
+            for tensor in stat_list:
+                check_stat_value(tensor, "input", "0", "Max Value", "inf")
+                check_stat_value(tensor, "input", "0", "Min Value", "1")
+
+                check_stat_value(tensor, "input", "1", "Max Value", "2")
+                check_stat_value(tensor, "input", "1", "Min Value", "-inf")
+
+                check_stat_value(tensor, "output", "0", "Max Value", "inf")
+                check_stat_value(tensor, "output", "0", "Min Value", "-inf")
+
+        jit_config = JitConfig(jit_level="O0")
+        net = Net()
+        net.set_jit_config(jit_config)
+        x = Tensor([1., 2., float('inf')])
+        y = Tensor([-float("inf"), 2., -10.])
+        _ = net(x, y)
+        time.sleep(2)
+        check_inf_dump(path / "dump_data" / "rank_0" / "Net" / "0" / "0")
+    finally:
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_kbk_stat_calc_with_nan():
+    """
+    Feature: kbyk statistic dump support device l2 value dump.
+    Description: Test kbyk statistic l2 value dump on device.
+    Expectation: The statistics result meet the requirement.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    test_dir = tempfile.TemporaryDirectory(suffix="device")
+
+    path = Path(test_dir.name)
+    dump_path = str(path / "dump_data")
+    dump_config_path = str(path / "config.json")
+
+    def extra_json_settings(data):
+        data["e2e_dump_settings"]["stat_calc_mode"] = "host"
+        data["common_dump_settings"]["saved_data"] = "statistic"
+
+    generate_dump_json(dump_path, dump_config_path, "e2e_dump_settings", extra_json_settings)
+    os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+    try:
+        class Net(nn.Cell):
+            def construct(self, x, y):
+                return x + y
+        def check_inf_dump(dump_file_path):
+            stat_list = get_dumped_stat_list(dump_file_path)
+            for tensor in stat_list:
+                check_stat_value(tensor, "input", "0", "Max Value", "nan")
+                check_stat_value(tensor, "input", "0", "Min Value", "nan")
+
+                check_stat_value(tensor, "input", "1", "Max Value", "2")
+                check_stat_value(tensor, "input", "1", "Min Value", "-inf")
+
+                check_stat_value(tensor, "output", "0", "Max Value", "nan")
+                check_stat_value(tensor, "output", "0", "Min Value", "nan")
+
+        jit_config = JitConfig(jit_level="O0")
+        net = Net()
+        net.set_jit_config(jit_config)
+        x = Tensor([1., 2., float('nan')])
+        y = Tensor([-float("inf"), 2., -10.])
+        _ = net(x, y)
+        time.sleep(2)
+        check_inf_dump(path / "dump_data" / "rank_0" / "Net" / "0" / "0")
     finally:
         del os.environ['MINDSPORE_DUMP_CONFIG']

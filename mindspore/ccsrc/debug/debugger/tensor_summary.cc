@@ -89,50 +89,11 @@ double VarianceAndMeanCalculator::GetVariance() const {
 
 double VarianceAndMeanCalculator::GetStandardDeviation() const { return sqrt(GetVariance()); }
 
-void L2Calculator::ProcessElement(double value) {
-  if (std::isinf(this->max_value_) || std::isnan(this->max_value_) || value == 0.0) {
-    return;
-  }
-  if (std::isinf(value) || std::isnan(value)) {
-    this->max_value_ = value;
-    return;
-  }
-  value = std::abs(value);
-  if (value > this->max_value_) {
-    double scale_factor = this->max_value_ / value;
-    this->squre_sum_div_max_ *= scale_factor * scale_factor;
-    this->squre_sum_div_max_ += 1;
-    this->max_value_ = value;
-  } else {
-    double scale_factor = value / this->max_value_;
-    this->squre_sum_div_max_ += scale_factor * scale_factor;
-  }
-}
+void L2Calculator::ProcessElement(double value) { squre_sum += value * value; }
 
-void L2Calculator::ProcessElement(const L2Calculator& other) {
-  if (std::isinf(this->max_value_) || std::isnan(this->max_value_)) {
-    return;
-  }
-  if (std::isinf(other.max_value_) || std::isnan(other.max_value_)) {
-    this->max_value_ = other.max_value_;
-    return;
-  }
-  if (this->max_value_ > other.max_value_) {
-    double scale_factor = other.max_value_ / this->max_value_;
-    this->squre_sum_div_max_ += other.squre_sum_div_max_ * scale_factor * scale_factor;
-  } else if (this->max_value_ < other.max_value_) {
-    double scale_factor = this->max_value_ / other.max_value_;
-    this->squre_sum_div_max_ *= scale_factor * scale_factor;
-    this->squre_sum_div_max_ += other.squre_sum_div_max_;
-    this->max_value_ = other.max_value_;
-  } else {
-    this->squre_sum_div_max_ += other.squre_sum_div_max_;
-  }
-}
+void L2Calculator::ProcessElement(const L2Calculator &other) { this->squre_sum += other.squre_sum; }
 
-double L2Calculator::GetL2Value() const {
-  return std::sqrt(squre_sum_div_max_) * max_value_;
-}
+double L2Calculator::GetL2Value() const { return std::sqrt(squre_sum); }
 
 template <typename T>
 TensorSummary<T>::TensorSummary(const void *current_tensor_ptr, const void *const previous_tensor_ptr,
@@ -280,6 +241,14 @@ void TensorSummary<T>::TensorStatisticsSingleThread() {
   MeanCalculator mean_calc = MeanCalculator();
   for (size_t i = 0; i < num_elements_; ++i) {
     auto current_value = static_cast<double>(current_tensor_ptr_[i]);
+    l2_calc_.ProcessElement(current_value);
+    if (std::isnan(current_value)) {
+      nan_count_ += 1;
+      max_ = current_value;
+      min_ = current_value;
+      mean_calc.ProcessElement(current_value);
+      continue;
+    }
     if (std::isinf(current_value)) {
       if (current_value > 0) {
         pos_inf_count_ += 1;
@@ -290,21 +259,15 @@ void TensorSummary<T>::TensorStatisticsSingleThread() {
     if (current_value == 0.0) {
       zero_count_ += 1;
     }
-    if (std::isnan(current_value)) {
-      nan_count_ += 1;
+    // only considering tensor elements with value
+    if (std::signbit(current_value) && !(current_value == 0.0)) {
+      neg_zero_count_ += 1;
+    } else if (!(current_value == 0.0)) {
+      pos_zero_count_ += 1;
     }
-    if (!(std::isnan(current_value) || std::isinf(current_value))) {
-      // only considering tensor elements with value
-      if (std::signbit(current_value) && !(current_value == 0.0)) {
-        neg_zero_count_ += 1;
-      } else if (!(current_value == 0.0)) {
-        pos_zero_count_ += 1;
-      }
-      max_ = std::max(max_, current_value);
-      min_ = std::min(min_, current_value);
-      mean_calc.ProcessElement(current_value);
-    }
-    l2_calc_.ProcessElement(current_value);
+    max_ = std::max(max_, current_value);
+    min_ = std::min(min_, current_value);
+    mean_calc.ProcessElement(current_value);
   }
   avg_ = mean_calc.GetMean();
 }
