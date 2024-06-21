@@ -27,18 +27,29 @@ namespace {
 const size_t kNumInputSize = 2;
 }
 STATUS SplitMapper::Mapper(const CNodePtr &cnode) {
+  ValueNodePtr value_node = nullptr;
+  PrimitivePtr src_prim = nullptr;
+  if (GetValueNodeAndPrimFromCnode(cnode, &value_node, &src_prim) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Get primitive from cnode failed.";
+    return lite::RET_ERROR;
+  }
+
   auto func_graph = cnode->func_graph();
   CHECK_NULL_RETURN(func_graph);
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  CHECK_NULL_RETURN(prim);
-
-  auto split_num_val = prim->GetAttr(ops::kOutputNum);
+  auto splitd_dst_prim = std::make_shared<acl::SplitD>();
+  CHECK_NULL_RETURN(splitd_dst_prim);
+  auto split_num_val = src_prim->GetAttr(ops::kOutputNum);
   CHECK_NULL_RETURN(split_num_val);
-  prim->AddAttr("num_split", split_num_val);
-  ValuePtr axis_value = prim->GetAttr("axis");
+  splitd_dst_prim->AddAttr("num_split", split_num_val);
+  ValuePtr axis_value = src_prim->GetAttr("axis");
+  if (axis_value != nullptr) {
+    auto split_dim = GetValue<int64_t>(axis_value);
+    splitd_dst_prim->AddAttr("split_dim", MakeValue(split_dim));
+  }
+  value_node->set_value(splitd_dst_prim);
 
   bool size_split_is_equla = true;
-  ValuePtr size_splits_value = prim->GetAttr("size_splits");
+  ValuePtr size_splits_value = src_prim->GetAttr("size_splits");
   if (size_splits_value != nullptr) {
     auto size_splits_vector = GetValue<std::vector<int64_t>>(size_splits_value);
     // SplitV not support dynamic shape in CANN.
@@ -60,7 +71,7 @@ STATUS SplitMapper::Mapper(const CNodePtr &cnode) {
       dst_prim->AddAttr("size_splits", size_splits_value);
     }
     if (size_splits_value == nullptr) {
-      int status = AddIntAttrToInput(func_graph, cnode, prim, ops::kAxis, false);
+      int status = AddIntAttrToInput(func_graph, cnode, dst_prim, ops::kAxis, false);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Add axis constant value to input failed.";
         return RET_ERROR;
