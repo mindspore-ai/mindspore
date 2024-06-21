@@ -196,9 +196,7 @@ class EsEmbeddingLookup(nn.Cell):
             actual_keys_input = self.cast(actual_keys_input, ms.int64)
             unique_indices = self.cast(unique_indices, ms.int32)
         if use_host_unique:
-            if use_counter_filter:
-                key_count = key_count
-            else:
+            if not use_counter_filter:
                 key_count = keys
         if self.training:
             if use_host_unique:
