@@ -609,6 +609,7 @@ void MsContext::InitStringTypeDefaultValue() {
   set_param<std::string>(MS_CTX_CONV_DGRAD_ALGO, "normal");
   set_param<std::string>(MS_CTX_CONV_WGRAD_ALGO, "normal");
   set_param<std::string>(MS_CTX_JIT_LEVEL, "");
+  set_param<std::string>(MS_CTX_INFER_BOOST, "off");
   set_param<std::string>(MS_CTX_PROF_MEM_OUTPUT_PATH, "");
 }
 
@@ -687,6 +688,14 @@ bool MsContext::IsEnableInferBoost() {
   if (iter != jit_config.end() && iter->second == "on") {
     enable_infer_boost_ = true;
     MS_LOG(INFO) << "MSContext enable ms infer boost from JitConfig";
+    SetMsInternalEnableCustomKernelList();
+    return enable_infer_boost_.value();
+  }
+
+  auto global_infer_boost = get_param<std::string>(MS_CTX_INFER_BOOST);
+  if (global_infer_boost == "on") {
+    enable_infer_boost_ = true;
+    MS_LOG(INFO) << "MSContext enable ms infer boost from Global Context JitConfig";
     SetMsInternalEnableCustomKernelList();
     return enable_infer_boost_.value();
   }
