@@ -25,8 +25,6 @@
 
 #if NPY_API_VERSION < 0x0000000d
 #error Current Numpy version is too low, the required version is not less than 1.19.3.
-#elif NPY_API_VERSION > 0x00000011
-#error Numpy version 2.0 or later is not supported yet.
 #endif
 
 #if NPY_ABI_VERSION < 0x02000000
@@ -1479,8 +1477,10 @@ std::string GetMinimumSupportedNumpyVersion() {
       return "1.23.0";
     case 0x00000011:  // 1.25 & 1.26
       return "1.20.0";
-    default:  // Values that exceed the macro definition limit. It shouldn't happen.
-      return "";
+    case 0x00000012:  // 2.0
+      return "2.0.0";
+    default:  // Values that exceed the macro definition limit.
+      return (NPY_API_VERSION < 0x0000000d) ? "1.19.3" : "2.0.0";
   }
 }
 
@@ -1503,11 +1503,7 @@ bool NumpyVersionValid(std::string version) {
   std::istringstream minimum_iss(minimum_version);
   std::vector<int> minimum_version_parts(3);
   minimum_iss >> minimum_version_parts[0] >> minimum_version_parts[1] >> minimum_version_parts[2];
-  // version after 2.0 is not supported yet
-  if (version_parts[0] != 1) {
-    return false;
-  }
-  return (version_parts[1] >= minimum_version_parts[1]);
+  return (version_parts[0] == minimum_version_parts[0]) && (version_parts[1] >= minimum_version_parts[1]);
 }
 
 void RegisterNumpyTypes() {
@@ -1515,7 +1511,8 @@ void RegisterNumpyTypes() {
   std::string minimum_numpy_version = GetMinimumSupportedNumpyVersion();
   if (!NumpyVersionValid(numpy_version)) {
     MS_LOG(INFO) << "For asnumpy, the numpy bfloat16 data type is supported in Numpy versions " << minimum_numpy_version
-                 << " to 1.26, but got " << numpy_version << ", please upgrade numpy version.";
+                 << " to " << minimum_numpy_version[0] << ".x.x, but got " << numpy_version
+                 << ", please upgrade numpy version.";
     return;
   }
   if (!RegisterNumpyType<bfloat16>()) {
@@ -1535,8 +1532,8 @@ bool IsNumpyVersionValid(bool show_warning = false) {
   if (!np_dtypes::NumpyVersionValid(numpy_version)) {
     if (show_warning) {
       MS_LOG(WARNING) << "For asnumpy, the numpy bfloat16 data type is supported in Numpy versions "
-                      << minimum_numpy_version << " to 1.26, but got " << numpy_version
-                      << ", please upgrade numpy version.";
+                      << minimum_numpy_version << " to " << minimum_numpy_version[0] << ".x.x, but got "
+                      << numpy_version << ", please upgrade numpy version.";
     }
     return false;
   }
