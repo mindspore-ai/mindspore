@@ -17,22 +17,6 @@
 
 namespace mindspore::parallel {
 const int MAX_PRIME_RANGE = 1e5 + 1;  // 100,001
-
-DecomposeDim DecomposeDim::Decompose(int64_t dim, const std::vector<int64_t> &src_factor) {
-  int64_t left_size = dim;
-  DecomposeDim decompose;
-  for (size_t i = 0; i < src_factor.size(); ++i) {
-    if (left_size % src_factor[i] == 0) {
-      decompose.AppendPrimeDim(src_factor[i], i);
-      left_size /= src_factor[i];
-    }
-  }
-  if (left_size != 1) {
-    decompose.set_factor(left_size);
-  }
-  return decompose;
-}
-
 void get_prime_table(Shape *prime_arr, const size_t arr_size) {
   std::vector<bool> is_composite_num(arr_size, false);
   for (size_t i = 2; i <= arr_size; i++) {
@@ -52,13 +36,17 @@ void get_prime_table(Shape *prime_arr, const size_t arr_size) {
   prime_arr->resize(prime_arr->size());
 }
 
-PrimeGenerator::PrimeGenerator() { get_prime_table(&this->prime_table_, MAX_PRIME_RANGE); }
+PrimeGenerator::PrimeGenerator() {
+  this->prime_table_ = {3,   5,   7,   11,  13,  17,  19,  23,  29,  31,  37,  41,  43,  47,  53,  59,
+                        61,  67,  71,  73,  79,  83,  89,  97,  101, 103, 107, 109, 113, 127, 131, 137,
+                        139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227,
+                        229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293};
+}
 
 int64_t PrimeGenerator::GetCoprimeNum(const Shape &tensor_shape) {
   const int64_t unknown_val = -1;
   if (tensor_shape.empty()) {
-    // skip prime 2.
-    return this->prime_table_[1];
+    return this->prime_table_[0];
   }
   std::set<int64_t> input_flag;
   for (int64_t i : tensor_shape) {

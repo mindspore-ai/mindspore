@@ -38,36 +38,13 @@ class PrimeGenerator {
   PrimeGenerator(const PrimeGenerator &) = delete;
   const PrimeGenerator &operator=(const PrimeGenerator &) = delete;
   int64_t GetCoprimeNum(const Shape &tensor_shape);
+  const std::vector<int64_t> GetPrimeTable() { return this->prime_table_; }
 
  private:
   PrimeGenerator();
   ~PrimeGenerator() = default;
 
   std::vector<int64_t> prime_table_;
-};
-
-class DecomposeDim {
- public:
-  DecomposeDim() = default;
-  ~DecomposeDim() = default;
-
-  void AppendPrimeDim(int64_t v, size_t index) {
-    this->prime_.emplace_back(v);
-    this->index_.emplace_back(index);
-  }
-
-  static DecomposeDim Decompose(int64_t dim, const std::vector<int64_t> &src_factor);
-
-  std::vector<int64_t> prime() const { return this->prime_; }
-  std::vector<int64_t> prime_index() const { return this->index_; }
-  int64_t factor() const { return this->factor_; }
-  void set_factor(int64_t f) { this->factor_ = f; }
-  bool IsDecomposable() const { return !this->prime_.empty(); }
-
- private:
-  std::vector<int64_t> prime_;
-  std::vector<int64_t> index_;
-  int64_t factor_ = 1;
 };
 }  // namespace mindspore::parallel
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PRIME_GENERATOR_H_
