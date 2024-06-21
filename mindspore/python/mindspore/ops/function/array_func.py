@@ -1086,7 +1086,9 @@ def zeros_like(input, *, dtype=None):
 
 def ones_like_ext(input, *, dtype=None):
     """
-    Returns a Tensor with a value of 1 and its shape is the same as the input.
+    Creates a tensor filled with 1, with the same shape as input, and its data type is determined by the given dtype.
+
+    If `dtype = None`, the tensor will have the same dtype as input `input`.
 
     Args:
         input (Tensor): Tensor of any dimension.
@@ -1108,7 +1110,7 @@ def ones_like_ext(input, *, dtype=None):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
-        >>> output = ops.mint.ones_like(x)
+        >>> output = ops.ones_like_ext(x)
         >>> print(output)
         [[1 1]
          [1 1]]
@@ -1118,7 +1120,7 @@ def ones_like_ext(input, *, dtype=None):
 
 def zeros_like_ext(input, *, dtype=None):
     r"""
-    Creates a tensor filled with 0, with the same size as input, and the given dtype.
+    Creates a tensor filled with 0, with the same size as input. Its data type is determined by the given dtype.
 
     If `dtype = None`, the tensor will have the same dtype as input `input`.
 
@@ -1143,7 +1145,7 @@ def zeros_like_ext(input, *, dtype=None):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(4).reshape(2, 2))
-        >>> output = ops.mint.zeros_like(x, dtype=mindspore.float32)
+        >>> output = ops.zeros_like_ext(x, dtype=mindspore.float32)
         >>> print(output)
         [[0. 0.]
          [0. 0.]]

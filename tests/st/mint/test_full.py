@@ -163,9 +163,8 @@ def test_full_forward_dynamic_rank(context_mode):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_full_backward_dynamic_rank(context_mode):
     """
