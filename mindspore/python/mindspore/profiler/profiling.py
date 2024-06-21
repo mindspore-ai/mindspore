@@ -380,7 +380,6 @@ class Profiler:
             - 4: ResourceConflictRatio contains vec_bankgroup/bank/resc_cflt_ratio etc.
             - 5: MemoryUB contains ub_read/write_bw_mte, ub_read/write_bw_vector, ub\_/write_bw_scalar etc.
             - 6: L2Cache contains write_cache_hit, write_cache_miss_allocate, r0_read_cache_hit, r1_read_cache_hit etc.
-              (only support on 910B).
 
         l2_cache (bool, optional): (Ascend only) Whether to collect l2 cache data, collect when True.
             Default: ``False`` .
@@ -409,8 +408,8 @@ class Profiler:
             - "time": Only record host timestamp.
             - "memory": Only record host memory usage.
             - None: Not record host information.
-        host_stack (bool, optional): (Ascend) Whether to collect frame host call stack data.
-            Default value: ``True`` .
+        host_stack (bool, optional): (Ascend) Whether to collect frame host call stack data. When using this
+            parameter, `op_time` must be set to ``True`` . Default value: ``True`` .
 
     Raises:
         RuntimeError: When the version of CANN does not match the version of MindSpore,
