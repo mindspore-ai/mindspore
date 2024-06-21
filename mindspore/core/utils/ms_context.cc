@@ -656,22 +656,34 @@ inline std::string SetToString(const std::set<std::string> &kernel_list) {
 }
 
 void MsContext::SetMsInternalEnableCustomKernelList() {
-  const std::string kDefaultEnabledOpList =
-    "MatMul,RmsNorm,Add,Sub,FlashAttentionScore,PagedAttention,AddRmsNorm,AddLayerNorm,InferenceMatmulSplit";
+  const std::string kDefaultEnabledOpList = "AddRmsNorm,AddLayerNorm,MatMulAllReduce,InferenceMatmulSplit";
   auto internal_op_boost_env = common::GetEnv("MS_ENABLE_INTERNAL_BOOST");
-  bool is_enalbe_internal_op = true;
+  bool is_enable_internal_op = true;
   if (internal_op_boost_env == "off") {
-    is_enalbe_internal_op = false;
+    is_enable_internal_op = false;
   }
 
-  ms_internal_enable_custom_kernel_list_.clear();
-  if (is_enalbe_internal_op) {
-    SplitString(kDefaultEnabledOpList, ',', &ms_internal_enable_custom_kernel_list_);
+  std::set<std::string> enable_fusion_list;
+  if (is_enable_internal_op) {
+    SplitString(kDefaultEnabledOpList, ',', &enable_fusion_list);
   }
 
   std::string env = common::GetEnv("MS_INTERNAL_ENABLE_CUSTOM_KERNEL_LIST");
   if (!env.empty()) {
-    SplitString(env, ',', &ms_internal_enable_custom_kernel_list_);
+    SplitString(env, ',', &enable_fusion_list);
+  }
+
+  std::set<std::string> disable_fusion_list;
+  env = common::GetEnv("MS_INTERNAL_DISABLE_CUSTOM_KERNEL_LIST");
+  if (!env.empty()) {
+    SplitString(env, ',', &disable_fusion_list);
+  }
+
+  ms_internal_enable_custom_kernel_list_.clear();
+  for (const auto &fusion_name : enable_fusion_list) {
+    if (disable_fusion_list.find(fusion_name) == disable_fusion_list.end()) {
+      ms_internal_enable_custom_kernel_list_.emplace(fusion_name);
+    }
   }
 
   MS_LOG(INFO) << "Enable internal kernel list: " << SetToString(ms_internal_enable_custom_kernel_list_);
