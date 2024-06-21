@@ -26,14 +26,7 @@
 
 namespace mindspore::dataset {
 #if !defined(_WIN32) && !defined(_WIN64)
-constexpr uint32_t O_CREX = O_CREAT | O_EXCL;
-static constexpr int64_t kMapAllocAlignment = 64;
-
-struct CountInfo {
-  std::atomic<int32_t> refcount;
-};
-
-std::string make_filename() {
+std::string GenerateShmName() {
   static std::atomic<uint64_t> counter{0};
   static std::random_device rd;
   std::string handle = "/mindspore_";
@@ -45,114 +38,82 @@ std::string make_filename() {
   return handle;
 }
 
-SharedMem::SharedMem(const std::string &name, bool create, size_t size) {
-  if (size < 0) {
-    MS_EXCEPTION(RuntimeError) << "SharedMemory: size must be a positive integer.";
+SharedMem::SharedMem(const std::string &name, bool create, int fd, size_t size)
+    : name_(name), create_(create), fd_(fd), size_(size) {
+  if (name_.empty()) {
+    MS_EXCEPTION(RuntimeError) << "SharedMemory: name can not be empty.";
   }
 
-  if (create) {
-    flags_ = O_CREX | O_RDWR;
-    if (size == 0) {
-      MS_EXCEPTION(RuntimeError) << "SharedMemory: size must be a positive number different from zero.";
-    }
+  if (!create_ && fd_ < 0) {
+    MS_EXCEPTION(RuntimeError) << "SharedMemory: fd must be non-negative when create is false, but got: " << fd_;
   }
 
-  if (name.empty() && !(flags_ & O_EXCL)) {
-    MS_EXCEPTION(RuntimeError) << "SharedMemory: name can only be empty if create is true.";
+  if (size_ <= 0) {
+    MS_EXCEPTION(RuntimeError) << "SharedMemory: size must be a positive integer, but got: " << size_;
   }
 
-  if (name.empty()) {
-    std::string file_name = make_filename();
-    fd_ = shm_open(file_name.c_str(), flags_, mode_);
-    if (fd_ == -1) {
+  if (create_) {
+    mode_t mode = 0600;
+    if ((fd_ = shm_open(name_.c_str(), O_RDWR | O_CREAT | O_EXCL, mode)) == -1) {
       MS_EXCEPTION(RuntimeError) << "SharedMemory: shm_open failed with errno: " << errno;
-    }
-    name_ = file_name;
-  } else {
-    std::string file_name = "/" + name;
-    fd_ = shm_open(file_name.c_str(), flags_, mode_);
-    if (fd_ == -1) {
-      MS_EXCEPTION(RuntimeError) << "SharedMemory: shm_open failed with errno: " << errno;
-    }
-    name_ = file_name;
-  }
-
-  if (create && size != 0) {
-    size += kMapAllocAlignment;
-    int ret = ftruncate(fd_, size);
-    if (ret == -1) {
-      MS_EXCEPTION(RuntimeError) << "SharedMemory: ftruncate failed with errno: " << errno;
     }
   }
 
   struct stat file_stat {};
   if (fstat(fd_, &file_stat) == -1) {
-    ::close(fd_);
+    errno_t fstat_errno = errno;
+    if (create) {
+      ::close(fd_);
+    }
+    MS_EXCEPTION(RuntimeError) << "SharedMemory: fstat failed with errno: " << fstat_errno;
   }
-  auto file_size = static_cast<size_t>(file_stat.st_size);
-  buf_ = mmap(nullptr, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0);
-  if (buf_ == MAP_FAILED) {
+
+  if (size_ > static_cast<size_t>(file_stat.st_size)) {
+    if (ftruncate(fd_, static_cast<off_t>(size_)) == -1) {
+      MS_EXCEPTION(RuntimeError) << "SharedMemory: ftruncate failed with errno: " << errno;
+    }
+  }
+
+  if ((buf_ = mmap(nullptr, size_, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0)) == MAP_FAILED) {
+    buf_ = nullptr;
     MS_EXCEPTION(RuntimeError) << "SharedMemory: mmap failed with errno: " << errno;
   }
-  auto *count_info = reinterpret_cast<CountInfo *>(buf_);
-  if (create) {
-    new (&count_info->refcount) std::atomic<int32_t>(1);
+
+  if (create_) {
+    if (shm_unlink(name_.c_str()) == -1) {
+      MS_EXCEPTION(RuntimeError) << "SharedMemory: shm_unlink failed with errno: " + std::to_string(errno);
+    }
+    MS_LOG(INFO) << "Shared memory " << name_ << " has been created, fd: " << fd_ << ", size: " << size_;
   } else {
-    count_info->refcount++;
+    MS_LOG(INFO) << "Attach to shared memory " << name_ << ", fd: " << fd_ << ", size: " << size_;
   }
-  size_ = file_size;
 }
 
 SharedMem::~SharedMem() { Close(); }
 
-void *SharedMem::Buf() { return static_cast<void *>(static_cast<char *>(buf_) + kMapAllocAlignment); }
+void *SharedMem::Buf() { return buf_; }
 
-std::string SharedMem::Name() const {
-  std::string reported_name = name_;
-  if (name_.at(0) == '/') {
-    reported_name = name_.substr(1);
-  }
-  return reported_name;
-}
+std::string SharedMem::Name() const { return name_; }
+
+int32_t SharedMem::Fd() const { return fd_; }
 
 size_t SharedMem::Size() const { return size_; }
 
-void SharedMem::Incref() {
-  auto *info = static_cast<CountInfo *>(buf_);
-  ++info->refcount;
-}
-
-int SharedMem::Decref() {
-  auto *info = static_cast<CountInfo *>(buf_);
-  return --info->refcount == 0;
-}
-
-Status SharedMem::Close() {
+void SharedMem::Close() {
   if (buf_ != nullptr) {
-    auto *info = reinterpret_cast<CountInfo *>(buf_);
-    if (--info->refcount == 0) {
-      RETURN_IF_NOT_OK(Unlink());
+    if (munmap(buf_, size_) != 0) {
+      MS_EXCEPTION(RuntimeError) << "SharedMemory: munmap failed with errno: " << errno;
     }
-
-    int ret = munmap(buf_, size_);
-    CHECK_FAIL_RETURN_UNEXPECTED(ret == 0, "SharedMemory: munmap failed with errno: " + std::to_string(errno));
     buf_ = nullptr;
   }
 
   if (fd_ >= 0) {
-    int ret = ::close(fd_);
-    CHECK_FAIL_RETURN_UNEXPECTED(ret == 0, "SharedMemory: close fd failed with errno: " + std::to_string(errno));
+    if (::close(fd_) != 0) {
+      MS_EXCEPTION(RuntimeError) << "SharedMemory: close fd failed with errno: " << errno;
+    }
     fd_ = -1;
   }
-  return Status::OK();
-}
-
-Status SharedMem::Unlink() {
-  if (!name_.empty()) {
-    int ret = shm_unlink(name_.c_str());
-    CHECK_FAIL_RETURN_UNEXPECTED(ret == 0, "SharedMemory: shm_inlink failed with errno: " + std::to_string(errno));
-  }
-  return Status::OK();
+  MS_LOG(INFO) << "Shared memory " << name_ << " has been closed.";
 }
 #endif
 }  // namespace mindspore::dataset

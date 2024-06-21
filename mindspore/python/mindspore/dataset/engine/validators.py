@@ -1114,8 +1114,8 @@ def check_generatordataset(method):
         nreq_param_bool = ["shuffle", "python_multiprocessing"]
         validate_dataset_param_value(nreq_param_bool, param_dict, bool)
 
-        if param_dict.get("max_rowsize") != -1:
-            check_pos_int32(param_dict.get("max_rowsize"), "max_rowsize")
+        check_value(param_dict.get("max_rowsize"), [-1, INT32_MAX], "max_rowsize")
+
         num_shards = param_dict.get("num_shards")
         shard_id = param_dict.get("shard_id")
         check_dataset_num_shards_shard_id(num_shards, shard_id)
@@ -1410,13 +1410,11 @@ def check_max_rowsize(max_rowsize):
     type_check(max_rowsize, (int, list), "max_rowsize")
     if isinstance(max_rowsize, int):
         type_check(max_rowsize, (int,), "max_rowsize")
-        if max_rowsize != -1:
-            check_pos_int32(max_rowsize, "max_rowsize")
+        check_value(max_rowsize, [-1, INT32_MAX], "max_rowsize")
     elif isinstance(max_rowsize, list) and len(max_rowsize) == 2:
         for index, value in enumerate(max_rowsize):
             type_check(value, (int,), "max_rowsize[{}]".format(index))
-            if value != -1:
-                check_pos_int32(value, "max_rowsizei[{}]".format(index))
+            check_value(value, [-1, INT32_MAX], "max_rowsizei[{}]".format(index))
     else:
         raise TypeError("max_rowsize should be a single integer or a list[in_rowsize, out_rowsize] of length 2.")
 

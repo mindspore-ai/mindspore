@@ -32,6 +32,7 @@ def test_batch_corner_cases():
         - where Batch op is done before Repeat op with different drop
     Expectation: Output is equal to the expected output
     """
+
     def gen(num):
         for i in range(num):
             yield (np.array([i]),)
@@ -210,6 +211,7 @@ def test_get_batchsize_on_callable_batchsize():
     Description: Use get_batch_size() func on dataset pipeline with dynamic batch size.
     Expectation: Return -1 which means the batch size is unknown.
     """
+
     def gen(num):
         for i in range(num):
             yield (np.array([i]),)
@@ -230,6 +232,7 @@ def test_basic_batch_map():
     Description: Test basic map Batch op with per_batch_map
     Expectation: Output is equal to the expected output
     """
+
     def check_res(arr1, arr2):
         for ind, _ in enumerate(arr1):
             if not np.array_equal(arr1[ind], np.array(arr2[ind])):
@@ -268,6 +271,7 @@ def test_batch_multi_col_map():
     Description: Test map Batch op with multiple columns input with per_batch_map
     Expectation: Output is equal to the expected output
     """
+
     def check_res(arr1, arr2):
         for ind, _ in enumerate(arr1):
             if not np.array_equal(arr1[ind], np.array(arr2[ind])):
@@ -322,6 +326,7 @@ def test_var_batch_multi_col_map():
     Description: Test Batch op with a function arg for batch_size using multiple columns input with per_batch_map
     Expectation: Output is equal to the expected output
     """
+
     def check_res(arr1, arr2):
         for ind, _ in enumerate(arr1):
             if not np.array_equal(arr1[ind], np.array(arr2[ind])):
@@ -367,6 +372,7 @@ def test_var_batch_var_resize():
     Description: Test Batch op with a function arg for batch_size with resize as per_batch_map
     Expectation: Output is equal to the expected output
     """
+
     # fake resize image according to its batch number, if it's 5-th batch, resize to (5^2, 5^2) = (25, 25)
     def np_psedo_resize(col, batch_info):
         s = (batch_info.get_batch_num() + 1) ** 2
@@ -390,6 +396,7 @@ def test_exception():
     Description: Test Batch op with bad batch size and bad map function
     Expectation: Error is raised as expected
     """
+
     def gen(num):
         for i in range(num):
             yield (np.array([i]),)
@@ -425,6 +432,7 @@ def test_multi_col_map():
     Description: Test Batch op with multiple columns with various per_batch_map args with valid and invalid inputs
     Expectation: Output is equal to the expected output for valid input and error is raised otherwise
     """
+
     def gen_2_cols(num):
         for i in range(1, 1 + num):
             yield (np.array([i]), np.array([i ** 2]))
@@ -495,6 +503,7 @@ def test_single_col_map():
     Description: Test Batch op with single columns with concat per_batch_map args with valid inputs
     Expectation: Output is equal to the expected output for valid input
     """
+
     def gen_1_cols():
         for i in range(1, 11):
             yield (np.array([i]),)
@@ -508,11 +517,13 @@ def test_single_col_map():
     # test dict
     def per_batch_batch_dict(x, batch_info):
         return {"anno": [100, 200, 300, 400], "label": 4}
+
     batch_map_config(per_batch_batch_dict, {"anno": [100, 200, 300, 400], "label": 4})
 
     # test numpy
     def per_batch_batch_numpy(x, batch_info):
         return (np.array(10),)
+
     batch_map_config(per_batch_batch_numpy, 10)
 
 
@@ -522,6 +533,7 @@ def test_multi_col_concat_map():
     Description: Test Batch op with multiple columns with concat per_batch_map args with valid inputs
     Expectation: Output is equal to the expected output for valid input
     """
+
     def gen_2_cols(num):
         for i in range(1, 1 + num):
             yield np.array([i]), np.array([i * 2]), np.array([i ** 2])
@@ -653,6 +665,7 @@ def test_exceptions_2():
     Description: Test Batch op with invalid column name and invalid per_batch_map function argument
     Expectation: Error is raised as expected
     """
+
     def gen(num):
         for i in range(num):
             yield (np.array([i]),)
@@ -704,6 +717,7 @@ def test_batch_multiprocessing_with_in_out_rowsize_exception():
     """
 
     dataset = ds.GeneratorDataset(FakeData(), ["input_ids", "input_mask"])
+
     def long_running_op(col1, col2):
         data1 = np.ones([3, 65, 65], dtype=np.float64)
         data2 = np.ones([3, 60, 60], dtype=np.float64)
@@ -744,6 +758,16 @@ def test_batch_multiprocessing_with_in_out_rowsize_exception():
                                 python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[-8, 20])
     assert "is not within the required interval of " in str(info.value)
 
+    with pytest.raises(ValueError) as e:
+        dataset = dataset.batch(batch_size=4, per_batch_map=batch_func, input_columns=["input_ids", "input_mask"],
+                                python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[-2, 16])
+    assert "not within the required interval of [-1, 2147483647]" in str(e.value)
+
+    with pytest.raises(ValueError) as e:
+        dataset = dataset.batch(batch_size=4, per_batch_map=batch_func, input_columns=["input_ids", "input_mask"],
+                                python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[16, -2])
+    assert "not within the required interval of [-1, 2147483647]" in str(e.value)
+
 
 def test_batch_multiprocessing_with_in_out_rowsize():
     """
@@ -753,6 +777,7 @@ def test_batch_multiprocessing_with_in_out_rowsize():
     """
 
     dataset = ds.GeneratorDataset(FakeData(), ["input_ids", "input_mask"])
+
     def long_running_op(col1, col2):
         data1 = np.ones([3, 65, 65], dtype=np.float64)
         data2 = np.ones([3, 60, 60], dtype=np.float64)
@@ -798,6 +823,7 @@ def test_per_batch_map_getter():
     Description: call getter on batch with multiprocessing or multithreading
     Expectation: success
     """
+
     def gen(num):
         for i in range(num):
             yield (np.array([i]),)

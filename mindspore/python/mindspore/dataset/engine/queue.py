@@ -109,11 +109,12 @@ class _SharedQueue(multiprocessing.queues.Queue):
                                         .format(type(r)))
                     if isinstance(r, np.ndarray) and self.dynamic_shm:
                         byte = r.nbytes
-                        shm = cde.SharedMemory("", True, byte)
+                        shm = cde.SharedMemory(None, True, -1, byte)
                         dest = np.ndarray(r.shape, r.dtype, buffer=shm.buf())
                         np.copyto(dest, r)
-                        name_list.append((self.data_shared, shm.name(), r.dtype, r.shape))
-                        shm.incref()
+                        fd = shm.fd()
+                        df = multiprocessing.reduction.DupFd(fd)
+                        name_list.append((self.data_shared, r.dtype, r.shape, shm.name(), df, shm.size()))
                     elif (isinstance(r, np.ndarray) and r.size > self.min_shared_mem
                           and start_bytes + r.nbytes < self.seg_size):
                         # need to convert start_bytes to offset in array
@@ -175,11 +176,11 @@ class _SharedQueue(multiprocessing.queues.Queue):
         for x in result:
             if x[0] == self.data_shared:
                 if self.dynamic_shm:
-                    shm_name, dtype, shape = x[1:]
-                    shm = cde.SharedMemory(shm_name, False, 0)
+                    dtype, shape, shm_name, df, buf_size = x[1:]
+                    fd = df.detach()
+                    shm = cde.SharedMemory(shm_name, False, fd, buf_size)
                     data = np.ndarray(shape, dtype, buffer=shm.buf())
                     dest = np.copy(data)
-                    shm.decref()
                     r.append(dest)
                 else:
                     seg_pos, byte, dtype, shape = x[1:]

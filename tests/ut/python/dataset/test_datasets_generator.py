@@ -2462,6 +2462,19 @@ def test_generator_with_dynamic_shared_queue():
     assert count == 3
 
 
+def test_generator_with_invalid_max_row_size():
+    """
+    Feature: GeneratorDataset
+    Description: test GeneratorDataset with invalid max_rowsize when using shared memory
+    Expectation: Raise errors as expected
+    """
+
+    with pytest.raises(ValueError) as e:
+        _ = ds.GeneratorDataset(DatasetGenerator(), column_names=["data"], num_parallel_workers=2,
+                                shuffle=False, max_rowsize=-2)
+    assert "not within the required interval of [-1, 2147483647]" in str(e.value)
+
+
 if __name__ == "__main__":
     test_generator_0()
     test_generator_1()
@@ -2522,3 +2535,4 @@ if __name__ == "__main__":
     test_generator_with_next_and_dataset_size_when_iter()
     test_generator_multiprocessing_with_fixed_handle()
     test_generator_with_dynamic_shared_queue()
+    test_generator_with_invalid_max_row_size()

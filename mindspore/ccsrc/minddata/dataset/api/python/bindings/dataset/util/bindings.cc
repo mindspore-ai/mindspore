@@ -25,8 +25,14 @@ namespace dataset {
 #if !defined(_WIN32) && !defined(_WIN64)
 PYBIND_REGISTER(SharedMemory, 0, ([](const py::module *m) {
                   (void)py::class_<SharedMem, std::shared_ptr<SharedMem>>(*m, "SharedMemory")
-                    .def(py::init([](const py::str &name, bool create, size_t size) {
-                      return std::make_shared<SharedMem>(name, create, size);
+                    .def(py::init([](const py::object &name, bool create, int fd, size_t size) {
+                      std::string shm_name;
+                      if (py::isinstance<py::none>(name)) {
+                        shm_name = GenerateShmName();
+                      } else {
+                        shm_name = py::cast<std::string>(name);
+                      }
+                      return std::make_shared<SharedMem>(shm_name, create, fd, size);
                     }))
                     .def("buf",
                          [](py::object &obj) {
@@ -40,29 +46,14 @@ PYBIND_REGISTER(SharedMemory, 0, ([](const py::module *m) {
                            auto &shared_memory = py::cast<SharedMem &>(obj);
                            return shared_memory.Name();
                          })
-                    .def("size",
+                    .def("fd",
                          [](py::object &obj) {
                            auto &shared_memory = py::cast<SharedMem &>(obj);
-                           return shared_memory.Size();
+                           return shared_memory.Fd();
                          })
-                    .def("incref",
-                         [](py::object &obj) {
-                           auto &shared_memory = py::cast<SharedMem &>(obj);
-                           return shared_memory.Incref();
-                         })
-                    .def("decref",
-                         [](py::object &obj) {
-                           auto &shared_memory = py::cast<SharedMem &>(obj);
-                           return shared_memory.Decref();
-                         })
-                    .def("close",
-                         [](py::object &obj) {
-                           auto &shared_memory = py::cast<SharedMem &>(obj);
-                           THROW_IF_ERROR(shared_memory.Close());
-                         })
-                    .def("unlink", [](py::object &obj) {
+                    .def("size", [](py::object &obj) {
                       auto &shared_memory = py::cast<SharedMem &>(obj);
-                      THROW_IF_ERROR(shared_memory.Unlink());
+                      return shared_memory.Size();
                     });
                 }));
 #endif

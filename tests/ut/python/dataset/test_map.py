@@ -561,6 +561,16 @@ def test_map_multiprocessing_with_in_out_rowsize_exception():
                               python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[-8, 20])
     assert "is not within the required interval of " in str(info.value)
 
+    with pytest.raises(ValueError) as e:
+        dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"],
+                              python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[-2, 16])
+    assert "not within the required interval of [-1, 2147483647]" in str(e.value)
+
+    with pytest.raises(ValueError) as e:
+        dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"],
+                              python_multiprocessing=True, num_parallel_workers=2, max_rowsize=[16, -5])
+    assert "not within the required interval of [-1, 2147483647]" in str(e.value)
+
 
 def test_map_multiprocessing_with_in_out_rowsize():
     """
