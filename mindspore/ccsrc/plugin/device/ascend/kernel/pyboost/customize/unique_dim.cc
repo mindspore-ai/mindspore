@@ -47,21 +47,22 @@ std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr, tensor::BaseTensorPtr> 
   // Malloc for output tensors
   PyBoostUtils::MallocOpOutputs(device_context, outputs);
   // Run sync
-  auto return_value = LAUNCH_ACLNN_SYNC(aclnnUniqueDim, device_context, stream_id, input_tensor, sorted_imm,
-                                        return_inverse_imm, dim_imm, outputs[0], outputs[1], outputs[2]);
-  auto &all_acl_tensor = std::get<2>(return_value);
+  auto return_value =
+    LAUNCH_ACLNN_SYNC(aclnnUniqueDim, device_context, stream_id, input_tensor, sorted_imm, return_inverse_imm, dim_imm,
+                      outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]);
+  auto &all_acl_tensor = std::get<kIndex2>(return_value);
   // update shape
-  auto output_real_shape0 = transform::UpdateOutputShape(all_acl_tensor.get<4>());
-  auto output_real_shape1 = transform::UpdateOutputShape(all_acl_tensor.get<5>());
-  auto output_real_shape2 = transform::UpdateOutputShape(all_acl_tensor.get<6>());
+  auto output_real_shape0 = transform::UpdateOutputShape(all_acl_tensor.get<kIndex4>());
+  auto output_real_shape1 = transform::UpdateOutputShape(all_acl_tensor.get<kIndex5>());
+  auto output_real_shape2 = transform::UpdateOutputShape(all_acl_tensor.get<kIndex6>());
   auto simple_infer_ptr = op->output_value_simple_info();
   simple_infer_ptr->shape_vector_ = ShapeArray{output_real_shape0, output_real_shape1, output_real_shape2};
-  op->output(0)->set_shape(output_real_shape0);
-  op->output(1)->set_shape(output_real_shape1);
-  op->output(2)->set_shape(output_real_shape2);
+  op->output(kIndex0)->set_shape(output_real_shape0);
+  op->output(kIndex1)->set_shape(output_real_shape1);
+  op->output(kIndex2)->set_shape(output_real_shape2);
   MS_LOG(DEBUG) << "Run device task unique_dim end";
 
-  return std::make_tuple(op->output(0), op->output(1), op->output(2));
+  return std::make_tuple(op->output(kIndex0), op->output(kIndex1), op->output(kIndex2));
 }
 }  // namespace pyboost
 }  // namespace kernel

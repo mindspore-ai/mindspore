@@ -1188,12 +1188,15 @@ def _check_target_specific_cfgs(device, arg_key):
     return False
 
 
-def _check_ascend_device_context_initialized(device_target):
+def _check_ascend_device_context_initialized(device_target, settings):
     if device_target == 'Ascend' and is_initialized(device_target):
-        logger.warning(f"For 'context.set_context' in Ascend backend, the backend is already initialized, please set "
-                       "it before the definition of any Tensor and Parameter, and the instantiation and execution of "
-                       "any operation and net, otherwise the settings may not take effect.")
-
+        for key, _ in settings.items():
+            if key in ('ascend_config', 'deterministic', 'jit_compile', 'exception_dump', 'device_id'):
+                logger.warning(f"For 'context.set_context' in Ascend backend, the backend is already initialized, "
+                               "please set it before the definition of any Tensor and Parameter, and the "
+                               "instantiation and execution of any operation and net, otherwise the settings may not "
+                               "take effect. ")
+                break
 
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=(bool, int),
                  save_graphs_path=str, enable_dump=bool, aoe_tune_mode=str, aoe_config=dict,
@@ -1740,7 +1743,7 @@ def set_context(**kwargs):
     if 'device_target' in kwargs:
         ctx.set_device_target(kwargs['device_target'])
     device = ctx.get_param(ms_ctx_param.device_target)
-    _check_ascend_device_context_initialized(device)
+    _check_ascend_device_context_initialized(device, kwargs)
 
     for key, value in kwargs.items():
         if key in ('enable_sparse', 'auto_tune_mode'):

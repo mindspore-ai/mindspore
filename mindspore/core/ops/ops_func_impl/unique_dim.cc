@@ -41,7 +41,6 @@ BaseShapePtr UniqueDimFrontendInferShape(const PrimitivePtr &primitive,
       << "For '" << primitive->name()
       << "', the input tensor has no dimensions, but got 'dim' value, you can set 'dim' to None and try again.";
   }
-
   // dynamic rank
   if (IsDynamicRank(x_shape_vector)) {
     abstract::BaseShapePtr out_shape_ptr =
@@ -67,7 +66,7 @@ BaseShapePtr UniqueDimFrontendInferShape(const PrimitivePtr &primitive,
                              << "), but got " << dim_value;
   }
   if (dim_value < 0) {
-    dim_value += x_shape_vector.size();
+    dim_value += static_cast<int64_t>(x_shape_vector.size());
   }
 
   // indices, when return_inverse=false, its still x_shape[dim], otherwise the shape after execute in ascend will be
@@ -92,7 +91,6 @@ BaseShapePtr UniqueDimFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto shape_x = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(shape_x);
   auto x_shape_vector = shape_x->GetShapeVector();
-
   if (x_shape_vector.empty()) {
     MS_EXCEPTION(ValueError)
       << "For '" << primitive->name()
@@ -116,7 +114,7 @@ BaseShapePtr UniqueDimFuncImpl::InferShape(const PrimitivePtr &primitive,
                              << "), but got " << dim_value;
   }
   if (dim_value < 0) {
-    dim_value += x_shape_vector.size();
+    dim_value += static_cast<int64_t>(x_shape_vector.size());
   }
   // indices, when return_inverse=false, its still x_shape[dim], otherwise the shape after execute in ascend will be
   // wrong
@@ -157,7 +155,7 @@ ShapeArray UniqueDimFuncImpl::InferShape(const PrimitivePtr &primitive, const Va
                              << "), but got " << dim_value;
   }
   if (dim_value < 0) {
-    dim_value += x_shape_vector.size();
+    dim_value += static_cast<int64_t>(x_shape_vector.size());
   }
 
   return {x_shape_vector, ShapeVector{x_shape_vector[dim_value]}, ShapeVector{x_shape_vector[dim_value]}};
