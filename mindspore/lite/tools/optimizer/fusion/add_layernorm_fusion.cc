@@ -48,6 +48,7 @@ constexpr int kInputIndex2 = 2;
 constexpr int kInvalidDim = -1;
 constexpr int kAdditionalOutIdx = 3;
 constexpr int kStructureNum = 2;
+constexpr int kLayerNormOutNum = 3;
 }  // namespace
 
 bool LayerNormFusionInferShape(const AnfNodePtr &layernorm_node, const AnfNodePtr &layernorm_input) {
@@ -285,7 +286,6 @@ AnfNodePtr LayerNormV3Fusion::Process(const std::string &pattern_name, const min
 
   AnfNodePtr cnode = nullptr;
   cnode = CreateLayerNormV3Node(func_graph, node, equiv);
-
   if (cnode == nullptr) {
     MS_LOG(INFO) << "new fusion node failed under " << pattern_name;
     return nullptr;
@@ -344,7 +344,7 @@ const AnfNodePtr FuseAddAndLayernorm::Process(const FuncGraphPtr &graph, const A
   AbstractBasePtrList abstracts;
   std::transform(layernorm_abs_tuple->elements().begin(), layernorm_abs_tuple->elements().end(),
                  std::back_inserter(abstracts), [](const AbstractBasePtr &abs) { return (abs->Clone()); });
-  if (layer_norm_output_size < 3) {
+  if (layer_norm_output_size < kLayerNormOutNum) {
     if (!LayerNormFusionInferShape(layernorm_node, tensor_add)) {
       return node;
     }

@@ -83,13 +83,13 @@ class FuseAddAndLayernorm : public opt::LitePatternProcessPass {
  private:
   VarPtr x1_;
   VarPtr x2_;
+  VarPtr layer_norm_;
   VarPtr gamma_;
   VarPtr beta_;
   VarPtr begin_norm_axis_;
   VarPtr begin_params_axis_;
   VarPtr eps_;
   CondVarPtr tuple_get_item_;
-  VarPtr layer_norm_;
 };
 
 }  // namespace opt
