@@ -22,6 +22,7 @@ import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common import set_seed
+import mindspore.common.dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE,
                     device_target="Ascend")
@@ -38,18 +39,21 @@ class Net(nn.Cell):
         return self.mask(shape_x, y_)
 
 
-x = np.ones([2, 4, 2, 2]).astype(np.int32)
 y = np.array([1.0]).astype(np.float32)
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_net():
+    x = np.ones([2, 4, 2, 2]).astype(np.int32)
+    tx = Tensor(x)
+    ty = Tensor(1, dtype=mstype.float32)
     mask = Net()
-    tx, ty = Tensor(x), Tensor(y)
     output = mask(tx, ty)
     print(output.asnumpy())
-    assert ([255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255] == output.asnumpy()).all()
+    assert ([255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] == output.asnumpy()).all()
 
 
 class Drop(nn.Cell):
@@ -138,11 +142,9 @@ class Net2(nn.Cell):
         return out_1, out_2
 
 
-px = np.ones([2, 4, 2, 2]).astype(np.int32)
-py = np.array([0.5]).astype(np.float32)
-
-
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_diff_seed():
     """
@@ -154,9 +156,11 @@ def test_diff_seed():
     net_1 = Net1()
     net_2 = Net2()
 
-    net0_out0, net0_out1 = net_0(Tensor(px), Tensor(py))
-    net1_out0, net1_out1 = net_1(Tensor(px), Tensor(py))
-    net2_out0, net2_out1 = net_2(Tensor(px), Tensor(py))
+    px = np.ones([2, 4, 2, 2]).astype(np.int32)
+    py = Tensor(0.5, dtype=mstype.float32)
+    net0_out0, net0_out1 = net_0(Tensor(px), py)
+    net1_out0, net1_out1 = net_1(Tensor(px), py)
+    net2_out0, net2_out1 = net_2(Tensor(px), py)
 
     assert (np.allclose(net0_out0.asnumpy(), net1_out0.asnumpy(), 0, 0) is False) or \
            (np.allclose(net0_out1.asnumpy(), net1_out1.asnumpy(), 0, 0) is False)
