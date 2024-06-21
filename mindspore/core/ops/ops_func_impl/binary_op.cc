@@ -19,11 +19,15 @@
 #include <memory>
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
 BaseShapePtr BinaryOpFuncImpl::InferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) const {
+  const std::string op_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckInteger("input_number", SizeToLong(input_args.size()), kGreaterEqual, kSize2,
+                                           op_name);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
