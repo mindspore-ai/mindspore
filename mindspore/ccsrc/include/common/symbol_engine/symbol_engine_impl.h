@@ -96,8 +96,10 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
 
   void BuildNodesSymbol(const FuncGraphPtr &fg, const AnfNodePtrList &cnodes);
   void BuildCNodeSymbol(const CNodePtr &cnode);
-
+  bool SetParamSymbols(const CNodePtr &cnode, const FuncGraphPtr &sub_fg, size_t begin_input_index, size_t visit_cnt);
   bool HasAbstractAny(const AbstractBasePtrList &inputs, const AbstractBasePtr &output);
+  bool GeneralizeParamShape(const AnfNodePtr &param, const AbstractBasePtr &input_abs);
+  bool GeneralizeParamValue(const AnfNodePtr &param, const AbstractBasePtr &input_abs);
 
   std::string name_;
   AnfNodePtrList cnodes_;
@@ -105,9 +107,11 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
   std::unique_ptr<OperationEmitter> emitter_;
   bool support_infer_{true};
   std::map<AnfNodePtr, DependStatus> depend_status_map_;
-  std::set<FuncGraph *> visited_graph_;
+  std::map<FuncGraph *, size_t> visited_graph_;
   std::map<AnfNodePtr, std::shared_ptr<SpecialCNodeHelper>> special_cnodes_;
   std::mutex infer_mutex_;
+  std::set<AnfNodePtr> generalized_shape_;
+  std::set<AnfNodePtr> generalized_value_;
 };
 
 using SymbolEngineImplPtr = std::shared_ptr<symshape::SymbolEngineImpl>;
