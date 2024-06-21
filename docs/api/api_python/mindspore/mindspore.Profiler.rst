@@ -7,6 +7,12 @@ mindspore.Profiler
 
     参数：
         - **output_path** (str, 可选) - 表示输出数据的路径。默认值： ``"./data"`` 。
+        - **profiler_level** (ProfilerLevel, 可选) -（仅限Ascend）表示采集性能数据级别。默认值：``None`` 。
+
+          - Profiler.Level0: 最精简的采集性能数据级别，采集计算类算子的耗时数据和通信类大算子的基础数据。
+          - Profiler.Level1: 在Level0的基础上额外采集CANN层中AscendCL数据、AICORE性能数据以及通信类小算子数据。
+          - Profiler.Level2: 在Level1的基础上额外采集CANN层中GE和Runtime数据。
+
         - **op_time** (bool, 可选) -（Ascend/GPU）表示是否收集算子性能数据，默认值： ``True`` 。
         - **profile_communication** (bool, 可选) -（仅限Ascend）表示是否在多设备训练中收集通信性能数据。当值为 ``True`` 时，收集这些数据。在单卡训练中，该参数的设置无效。使用此参数时， `op_time` 必须设置成 ``True`` 。默认值： ``False`` 。
         - **profile_memory** (bool, 可选) -（仅限Ascend）表示是否收集Tensor内存数据。当值为 ``True`` 时，收集这些数据。使用此参数时， `op_time` 必须设置成 ``True`` 。默认值： ``False`` 。
@@ -40,11 +46,13 @@ mindspore.Profiler
           - "memory": 只记录host侧内存占用情况。
           - None: 不记录host信息。
         - **host_stack** (bool, 可选) -（Ascend）表示是否收集框架host侧调用栈的数据，使用此参数时， `op_time` 必须设置成 ``True`` 。默认值： ``True`` 。
+        - **data_simplification** (bool, 可选) - （仅限Ascend）是否开启数据精简，开启后将在导出性能数据后删除FRAMEWORK目录数据以及其他多余数据，仅保留profiler的交付件以及PROF_XXX目录下的原始性能数据，以节省空间。默认值: ``True`` 。
+        - **host_stack** (bool, 可选) -（Ascend）表示是否收集框架host侧调用栈的数据，默认值： ``True`` 。
 
     异常：
         - **RuntimeError** - 当CANN的版本与MindSpore版本不匹配时，生成的ascend_job_id目录结构MindSpore无法解析。
 
-    .. py:method:: analyse(offline_path=None, pretty=False, step_list=None)
+    .. py:method:: analyse(offline_path=None, pretty=False, step_list=None, mode="sync")
 
         收集和分析训练的性能数据，支持在训练中和训练后调用。样例如上所示。
 
@@ -52,6 +60,10 @@ mindspore.Profiler
             - **offline_path** (Union[str, None], 可选) - 需要使用离线模式进行分析的数据路径。离线模式用于非正常退出场景。对于在线模式，此参数应设置为 ``None`` 。默认值： ``None`` 。
             - **pretty** (bool, 可选) - 对json文件进行格式化处理。此参数默认值为 ``False``，即不进行格式化。
             - **step_list** (list, 可选) - 只分析指定step的性能数据。此参数默认值为 ``None``，即进行全解析。
+            - **mode** (str, 可选) - 解析模式，同步解析或异步解析，可选参数为["sync", "async"], 默认值为 ``"sync"``。
+
+              - "sync": 同步模式解析性能数据，会阻塞当前进程。
+              - "async": 异步模式，另起一个子进程解析性能数据，不会阻塞当前进程。由于解析进程会额外占用CPU资源，请根据实际资源情况开启该模式。
 
     .. py:method:: offline_analyse(path: str, pretty=False, step_list=None)
         :classmethod:
