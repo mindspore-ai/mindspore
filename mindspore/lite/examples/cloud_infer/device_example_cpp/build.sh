@@ -16,7 +16,7 @@
 
 if [ $# -ne 1 ]; then
     echo "Usage: bash build.sh [DEVICE_TARGET]
-    DEVICE_TARGET can choose from ['Ascend', 'GPU']."
+    DEVICE_TARGET can choose from ['GPU']."
 exit
 fi
 
@@ -27,8 +27,8 @@ if [ 0"$LITE_HOME" = "0" ]; then
   exit
 fi
 
-if [ 0"$device_target" != "0GPU" ] && [ 0"$device_target" != "0Ascend" ]; then
-  echo "Please set args 1 EXAMPLE_TARGET to Ascend or GPU"
+if [ 0"$device_target" != "0GPU" ]; then
+  echo "Please set args 1 EXAMPLE_TARGET to GPU"
   exit
 fi
 

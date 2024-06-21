@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,7 @@
 #include "include/api/status.h"
 #include "include/api/types.h"
 
-#ifdef ENABLE_ASCEND
-#include "./mem_ascend.h"
-#else
 #include "./mem_gpu.h"
-#endif
 
 namespace {
 constexpr int kNumPrintOfOutData = 50;
@@ -377,12 +373,7 @@ int QuickStart(int argc, const char **argv) {
     return -1;
   }
   auto &device_list = context->MutableDeviceInfo();
-
-#ifdef ENABLE_ASCEND
-  auto device_info = std::make_shared<mindspore::AscendDeviceInfo>();
-#else
   auto device_info = std::make_shared<mindspore::GPUDeviceInfo>();
-#endif
   device_info->SetDeviceID(0);
   if (device_info == nullptr) {
     std::cerr << "New CPUDeviceInfo failed." << std::endl;
