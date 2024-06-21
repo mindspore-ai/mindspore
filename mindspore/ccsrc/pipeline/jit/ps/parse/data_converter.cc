@@ -863,7 +863,6 @@ FuncGraphPtr MakeCellFuncGraph(const py::object &obj, const std::string &obj_id,
   PyObjectWrapperPtr python_obj = std::make_shared<PyObjectWrapper>(obj, "graph python obj");
   func_graph->set_python_obj(python_obj);
   func_graph->set_flag(FUNC_GRAPH_FLAG_PROXY_GRAPH, true);
-  func_graph->set_flag(FUNC_GRAPH_FLAG_NO_CHILD_GRAPH, true);
   std::vector<AnfNodePtr> new_node_inputs;
   new_node_inputs.push_back(NewValueNode(reusing_graph));
   for (const auto &origin_param : reusing_graph->parameters()) {

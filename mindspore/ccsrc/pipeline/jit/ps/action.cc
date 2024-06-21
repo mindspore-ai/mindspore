@@ -836,6 +836,7 @@ void GeneralizeReusingGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &
   }
 
   // Update call nodes
+  auto no_inline_flag = reusing_graph->has_flag(FUNC_GRAPH_FLAG_NO_INLINE);
   auto cnodes_index = fg->func_graph_cnodes_index();
   for (auto &cnode_index : cnodes_index) {
     MS_EXCEPTION_IF_NULL(cnode_index.first);
@@ -844,6 +845,9 @@ void GeneralizeReusingGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &
     auto cell_func_graph = old_cnode->func_graph();
     MS_EXCEPTION_IF_NULL(cell_func_graph);
     UpdateCellFuncGraph(cell_func_graph, reusing_graph, top_func_graph);
+
+    // optimize FuncGraph::scope() performance
+    cell_func_graph->set_flag(FUNC_GRAPH_FLAG_NO_CHILD_GRAPH, no_inline_flag);
   }
 }
 
