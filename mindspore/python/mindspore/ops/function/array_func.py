@@ -287,13 +287,10 @@ def arange_ext(start=0, end=None, step=1, *, dtype=None):
     `step` up to but not including `end`.
 
     Args:
-        start (Union[float, int, Tensor], optional): The start of the interval.
-            If Tensor, the shape must be :math:`()` . Default: ``0`` .
-        end (Union[float, int, Tensor], optional): The end of the interval, exclusive.
-            If Tensor, the shape must be :math:`()`.
+        start (Union[float, int], optional): The start of the interval.
+        end (Union[float, int], optional): The end of the interval, exclusive.
             Default: ``None`` . If ``None`` , it defaults to the value of `start`, and 0 is used as the starting value.
-        step (Union[float, int, Tensor], optional): Number that increments `start`.
-            If Tensor, the shape must be :math:`()`. Default: ``1`` .
+        step (Union[float, int], optional): The step size with which the array element increments. Default: ``1`` .
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The required data type of returned Tensor. Default: ``None`` .
@@ -304,11 +301,10 @@ def arange_ext(start=0, end=None, step=1, *, dtype=None):
             If `start`, `end`, and `step` contain at least one floating-point number, the dtype of output is float32.
 
     Returns:
-        A 1-D Tensor, with the same type as the inputs.
+        A 1-D Tensor, cast to `dtype` if provided, may potentially lose precision due to casting.
 
     Raises:
-        TypeError: If `start`, `end` or `step` is not an int or a float or a TensorScalar(Special Tensor with shape ())
-                   in valid dtypes.
+        TypeError: If `start`, `end` or `step` are not of type int or float.
         ValueError: If `step` = 0.
         ValueError: If `start` >= `end` when `step` > 0.
         ValueError: If `start` <= `end` when `step` < 0.
@@ -318,23 +314,23 @@ def arange_ext(start=0, end=None, step=1, *, dtype=None):
 
     Examples:
         >>> import mindspore as ms
-        >>> from mindspore import Tensor, mint
-        >>> output = mint.arange(1, 6)
+        >>> from mindspore import Tensor, ops
+        >>> output = ops.arange_ext(1, 6)
         >>> print(output)
         [1 2 3 4 5]
         >>> print(output.dtype)
         Int64
-        >>> output = mint.arange(0, 3, 1.2)
+        >>> output = ops.arange_ext(0, 3, 1.2)
         >>> print(output)
         [0.  1.2 2.4]
         >>> print(output.dtype)
         Float32
-        >>> output = mint.arange(7, 1, -2)
+        >>> output = ops.arange_ext(7, 1, -2)
         >>> print(output)
         [7 5 3]
         >>> print(output.dtype)
         Int64
-        >>> output = mint.arange(ms.Tensor(12.0, dtype=ms.float64), 2, ms.Tensor(-1.0, dtype=ms.float32))
+        >>> output = ops.arange_ext(ms.Tensor(12.0, dtype=ms.float64), 2, ms.Tensor(-1.0, dtype=ms.float32))
         >>> print(output)
         [12. 11. 10.  9.  8.  7.  6.  5.  4.  3.]
         >>> print(output.dtype)
@@ -342,11 +338,7 @@ def arange_ext(start=0, end=None, step=1, *, dtype=None):
     """
     if end is None:
         start, end = 0, start
-
-    out = arange_(start, end, step)
-    if dtype is not None:
-        out = cast_(out, dtype)
-    return out
+    return arange_(start, end, step, dtype)
 
 
 def concat(tensors, axis=0):

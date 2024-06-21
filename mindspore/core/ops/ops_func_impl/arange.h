@@ -29,6 +29,9 @@ class MIND_API ArangeFuncImpl : public OpFuncImpl {
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   std::set<int64_t> GetValueDependArgIndices() const override { return {kInputIndex0, kInputIndex1, kInputIndex2}; };
+  // simple infer
+  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
 };
 }  // namespace mindspore::ops
 
