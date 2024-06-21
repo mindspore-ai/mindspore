@@ -20,6 +20,9 @@
 
 namespace mindspore::graphkernel {
 bool SymbolEngineBuilder::Run(const FuncGraphPtr &func_graph) {
+  if (!common::AnfAlgo::IsDynamicGraph(func_graph)) {
+    return false;
+  }
   if (multi_engine_) {
     symshape::MultiSymbolEngine::Build(func_graph);
   } else {
