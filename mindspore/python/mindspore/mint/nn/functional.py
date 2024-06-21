@@ -30,9 +30,9 @@ from mindspore.ops.functional import (
 # 5
 from mindspore.ops.functional import pad_ext as pad
 # 6
-
+from mindspore.ops.function.array_func import unfold_ext as unfold
 # 7
-
+from mindspore.ops.function.array_func import fold_ext as fold
 # 8
 from mindspore.ops.functional import layer_norm
 # 9
@@ -80,6 +80,7 @@ from mindspore.ops.function.nn_func import dropout_ext as dropout
 # 30
 
 # 31
+from mindspore.ops.functional import softmax_ext as softmax
 
 # 32
 
@@ -238,9 +239,9 @@ __all__ = [
     # 5
     'pad',
     # 6
-
+    'unfold',
     # 7
-
+    'fold',
     # 8
     'layer_norm',
     # 9
@@ -288,7 +289,7 @@ __all__ = [
     # 30
 
     # 31
-
+    'softmax',
     # 32
 
     # 33

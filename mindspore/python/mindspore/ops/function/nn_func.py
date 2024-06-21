@@ -539,22 +539,23 @@ def avg_pool2d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
             count_include_pad (bool): If True, include the zero-padding in the averaging calculation.
                 Default: ``True`` .
             divisor_override (int): If specified, it will be used as divisor in the averaging calculation,
-                otherwise `kernel_size` will be used. Default: ``None``.
+                otherwise size of pooling region will be used. Default: ``None``.
 
         Returns:
             Tensor, with shape :math:`(N, C, H_{out}, W_{out})`.
 
-        .. math::
-
-            H_{out} = \frac{H_{in} + 2 \times padding[0] - kernel_size[0]}{stride[0]} + 1
-            W_{out} = \frac{W_{in} + 2 \times padding[1] - kernel_size[1]}{stride[1]} + 1
+            .. math::
+                \begin{array}{ll} \\
+                    H_{out} = \frac{H_{in} + 2 \times padding[0] - kernel_size[0]}{stride[0]} + 1 \\
+                    W_{out} = \frac{W_{in} + 2 \times padding[1] - kernel_size[1]}{stride[1]} + 1
+                \end{array}
 
         Raises:
             TypeError: If `input` is not a Tensor.
             TypeError: If `kernel_size` or `stride` is neither int nor tuple.
             TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
-            TypeError: If `divisor_override` is not an int.
-            ValueError: If length of shape of `input` is not equal to `4` or `3`.
+            TypeError: If `divisor_override` is not an int or None.
+            ValueError: If the dimension of `input` is not equal to `4` or `3`.
             ValueError: If `kernel_size` or `stride` is less than 1.
             ValueError: If `kernel_size` or `stride` is a tuple whose length is not equal to `2` or `1`.
             ValueError: If `padding` is neither a int nor a tuple whose length is equal to `2` or `1`.
@@ -566,9 +567,9 @@ def avg_pool2d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
         Examples:
             >>> import mindspore
             >>> import numpy as np
-            >>> from mindspore import Tensor, mint
+            >>> from mindspore import Tensor, ops
             >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mindspore.float32)
-            >>> output = mint.avg_pool2d(x, kernel_size=2, stride=1)
+            >>> output = ops.avg_pool2d_ext(x, kernel_size=2, stride=1)
             >>> print(output)
             [[[[ 2.5   3.5   4.5]
             [ 6.5   7.5   8.5]]
@@ -3037,6 +3038,55 @@ def softmax(input, axis=-1, *, dtype=None):
     if dtype is not None:
         input = ops.cast(input, dtype)
     softmax_ = _get_cache_prim(P.Softmax)(axis)
+    return softmax_(input)
+
+
+def softmax_ext(input, dim=None, dtype=None):
+    r"""
+    Applies the Softmax operation to the input tensor on the specified axis.
+    Suppose a slice in the given axis :math:`dim`, then for each element :math:`input_i`,
+    the Softmax function is shown as follows:
+
+    .. math::
+        \text{output}(input_i) = \frac{\exp(input_i)}{\sum_{j = 0}^{N-1}\exp(input_j)},
+
+    where :math:`N` is the length of the tensor.
+
+    Args:
+        input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+            additional dimensions.
+        dim (int, optional): The dim to perform the Softmax operation. Default: ``None`` .
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): When set, `input` will be converted to the specified type,
+            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: ``None`` .
+
+    Returns:
+        Tensor, with the same type and shape as the `input`.
+
+    Raises:
+        TypeError: If `dim` is not an int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> output = ops.softmax_ext(input)
+        >>> print(output)
+        [0.01165623 0.03168492 0.08612854 0.23412167 0.6364086 ]
+    """
+
+    if not isinstance(dim, int):
+        type_dim = type(dim).__name__
+        raise TypeError(f" the type of 'dim' must be 'int', but got '{dim}' with type '{type_dim}'.")
+    dim = -1 if dim is None else dim
+    if dtype is not None:
+        input = ops.cast(input, dtype)
+    softmax_ = _get_cache_prim(P.Softmax)(dim)
     return softmax_(input)
 
 
@@ -8123,5 +8173,7 @@ __all__ = [
     'hardsigmoid',
     'group_norm',
     'dropout_ext',
+    'softmax_ext',
+    'avg_pool2d_ext',
 ]
 __all__.sort()

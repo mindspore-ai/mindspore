@@ -86,7 +86,7 @@ WeightQuantBatchMatmul: 'aclnnWeightQuantBatchMatmulV2'
 # 6
 CumsumExt: 'aclnnCumsum'
 # 7
-
+Col2ImGrad: 'aclnnIm2col'
 # 8
 
 # 9
@@ -134,7 +134,8 @@ CumsumExt: 'aclnnCumsum'
 # 30
 
 # 31
-
+Im2ColExt: 'aclnnIm2col'
+Col2ImExt: 'aclnnIm2colBackward'
 # 32
 
 # 33

@@ -28,6 +28,7 @@ from mindspore.common.initializer import initializer, HeUniform, Uniform
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.function.nn_func import interpolate_ext
+from mindspore.ops.function.array_func import unfold_ext
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import constexpr, Primitive, _primexpr
 from mindspore.common.parameter import Parameter
@@ -36,7 +37,7 @@ from mindspore import _checkparam as Validator
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 from mindspore.common._decorator import deprecated
-from mindspore.ops.auto_generate import dropout_ext_op
+from mindspore.ops.auto_generate import dropout_ext_op, fold_ext
 from mindspore.common.generator import default_generator
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold', 'Tril', 'Triu',
@@ -475,16 +476,16 @@ class Upsample(Cell):
 
 class UpsampleExt(Cell):
     r"""
-    For details, please refer to :func:`mindspore.mint.interpolate`.
+    For details, please refer to :func:`mindspore.mint.nn.functional.interpolate`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> import mindspore as ms
-        >>> from mindspore import mint
+        >>> from mindspore import nn
         >>> x = ms.Tensor([[[[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]]]])
-        >>> upsample = mint.Upsample(size=(5, 5))
+        >>> upsample = nn.UpsampleExt(size=(5, 5))
         >>> out = upsample(x)
         >>> print(x.asnumpy())
         [[[[1. 2. 3. 4.]
@@ -1127,6 +1128,68 @@ class Unfold(Cell):
     def construct(self, input_x):
         result = self.extract_image_patches(input_x)
         return result
+
+
+class UnfoldExt(Cell):
+    r"""
+    Extracts sliding local blocks from a batched input tensor.
+
+    For details, please refer to :func:`mindspore.mint.nn.functional.unfold`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn
+        >>> input = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float64)
+        >>> unfold = nn.UnfoldExt(kernel_size=3, dilation=1, stride=1)
+        >>> output = unfold(input)
+        >>> print(output.shape)
+        (4, 36, 900)
+    """
+    def __init__(self, kernel_size, dilation=1, padding=0, stride=1):
+        super(UnfoldExt, self).__init__()
+        self.kernel_size = kernel_size
+        self.dilation = dilation
+        self.padding = padding
+        self.stride = stride
+
+    def construct(self, input):
+        return unfold_ext(input, self.kernel_size, self.dilation, self.padding, self.stride)
+
+
+class Fold(Cell):
+    r"""
+    Combines an array of sliding local blocks into a large containing tensor.
+
+    For details, please refer to :func:`mindspore.mint.nn.functional.fold`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn
+        >>> from mindspore import dtype as mstype
+        >>> fold = nn.Fold([8, 8], [2, 2], [2, 2], [2, 2], [2, 2])
+        >>> input = Tensor(input_data=np.random.rand(16, 64, 25), dtype=mstype.float32)
+        >>> output = fold(input)
+        >>> print(output.shape)
+        (16, 16, 8, 8)
+    """
+    def __init__(self, output_size, kernel_size, dilation=1, padding=0, stride=1):
+        super(Fold, self).__init__()
+        self.output_size = output_size
+        self.kernel_size = kernel_size
+        self.dilation = dilation
+        self.padding = padding
+        self.stride = stride
+
+    def construct(self, input):
+        return fold_ext(input, self.output_size, self.kernel_size,
+                        self.dilation, self.padding, self.stride)
 
 
 @_primexpr
