@@ -224,6 +224,11 @@ from mindspore.ops.function.math_func import tanh
 def one_hot(tensor, num_classes=-1):
     return one_hot_ext(tensor, num_classes)
 
+# 323
+
+# 324
+from mindspore.ops.function.nn_func import elu_ext as elu # pylint: disable=C0413
+# 325
 
 __all__ = [
     'conv_transpose2d',
@@ -427,4 +432,10 @@ __all__ = [
     # 99
 
     # 100
+
+    # 323
+
+    # 324
+    'elu',
+    # 325
 ]
