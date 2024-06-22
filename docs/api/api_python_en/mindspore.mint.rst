@@ -80,6 +80,7 @@ Pointwise Operations
     mindspore.mint.erf
     mindspore.mint.floor
     mindspore.mint.log
+    mindspore.mint.sqrt
     mindspore.mint.sub
 
 
