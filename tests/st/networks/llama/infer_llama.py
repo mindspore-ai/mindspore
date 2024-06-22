@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
+import sys
 import argparse
-
 import numpy as np
 
+workspace = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(workspace, "mindformers"))
 from mindformers import LlamaConfig, TransformerOpParallelConfig, LlamaTokenizer, LlamaForCausalLM, init_context
-from mindformers.normal_config import MindFormerConfig
+from mindformers.tools.register import MindFormerConfig
 
 
 def str2bool(b):
