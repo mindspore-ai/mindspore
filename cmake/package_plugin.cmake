@@ -75,6 +75,13 @@ if(ENABLE_D)
             DESTINATION ${INSTALL_BASE_DIR}
             COMPONENT mindspore
     )
+    install(
+            DIRECTORY
+            ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/hal/custom_compiler
+            ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/custom_compiler
+            DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
+            COMPONENT mindspore
+    )
 endif()
 
 if(ENABLE_ACL)
