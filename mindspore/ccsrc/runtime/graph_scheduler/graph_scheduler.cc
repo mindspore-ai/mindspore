@@ -2022,7 +2022,7 @@ void GraphScheduler::LinkDataArrowForBaseActor(AbstractActor *const from_actor, 
     auto to_kernel = to_kernel_actor->kernel();
     auto cnode = to_kernel->cast<CNodePtr>();
     if (cnode != nullptr) {
-      MS_LOG(DEBUG) << "Process value depend attribute for cnode : " << cnode->fullname_with_scope();
+      MS_LOG(DEBUG) << "Process shape depend attribute for cnode : " << cnode->fullname_with_scope();
       const auto &only_depend_shape_attr = common::AnfAlgo::GetCNodePrimitiveAttr(cnode, kAttrOnlyDependShape);
       if (only_depend_shape_attr != nullptr) {
         auto only_depend_shape = GetValue<std::vector<bool>>(only_depend_shape_attr);

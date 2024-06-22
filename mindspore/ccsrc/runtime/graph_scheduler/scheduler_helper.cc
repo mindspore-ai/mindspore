@@ -121,14 +121,14 @@ bool IsSkipLaunchShapeRelatedOp(KernelActor *kernel_actor) {
 
 void UpdateDataArrowRefCount(AbstractActor *const to_actor, size_t to_input_index,
                              const DeviceTensorPtr &device_tensor) {
-  MS_LOG(DEBUG) << "Process value depend attribute for actor : " << to_actor->GetAID().Name();
+  MS_LOG(DEBUG) << "Process shape depend attribute for actor : " << to_actor->GetAID().Name();
   bool need_increase_ref_count = true;
   auto to_kernel_actor = dynamic_cast<KernelActor *>(to_actor);
   if (to_kernel_actor != nullptr) {
     auto to_kernel = to_kernel_actor->kernel();
     auto cnode = to_kernel->cast<CNodePtr>();
     if (cnode != nullptr) {
-      MS_LOG(DEBUG) << "Process value depend attribute for cnode : " << cnode->fullname_with_scope();
+      MS_LOG(DEBUG) << "Process shape depend attribute for cnode : " << cnode->fullname_with_scope();
       const auto &only_depend_shape_attr = common::AnfAlgo::GetCNodePrimitiveAttr(cnode, kAttrOnlyDependShape);
       if (only_depend_shape_attr != nullptr) {
         auto only_depend_shape = GetValue<std::vector<bool>>(only_depend_shape_attr);
@@ -137,7 +137,7 @@ void UpdateDataArrowRefCount(AbstractActor *const to_actor, size_t to_input_inde
                         << " is out of range, only_depend_shape size : " << only_depend_shape.size();
         } else {
           auto is_shape_depend = only_depend_shape[to_input_index];
-          MS_LOG(DEBUG) << "value_depend[" << to_input_index << "] : " << is_shape_depend;
+          MS_LOG(DEBUG) << "only_depend_shape[" << to_input_index << "] : " << is_shape_depend;
           if (is_shape_depend) {
             need_increase_ref_count = false;
           }

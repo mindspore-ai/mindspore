@@ -105,6 +105,15 @@ void KernelActor::Init() {
     ++output_data_index;
   }
 
+  auto device_context = device_contexts_[0];
+  // cpu kernel does not need multi stream process, and gpu kernel has not adapt it currently.
+  if (device_context->GetDeviceType() == device::DeviceType::kCPU ||
+      device_context->GetDeviceType() == device::DeviceType::kGPU) {
+    MS_LOG(DEBUG) << "Kernel : " << kernel_->fullname_with_scope() << " device type is "
+                  << device_context->GetDeviceType() << ", will skip multi stream process.";
+    is_multi_stream_process_skipped_ = true;
+  }
+
   // Share pointer of task id on stream with output kernel tensor.
   for (auto &output_kernel_tensor : output_kernel_tensors_) {
     output_kernel_tensor->set_task_id_on_stream(task_id_on_stream_);
@@ -116,21 +125,12 @@ void KernelActor::Init() {
     return;
   }
 
+  // shape depend need kernel is cnode.
   InitShapeDependInfo();
 
   auto input0 = cnode->input(kAnfPrimitiveIndex);
   if (IsValueNode<FuncGraph>(input0)) {
-    MS_LOG(INFO) << "cnode is not a func graph value node : " << kernel_->DebugString() << ".";
-    return;
-  }
-
-  auto device_context = device_contexts_[0];
-  // cpu kernel does not need multi stream process, and gpu kernel has not adapt it currently.
-  if (device_context->GetDeviceType() == device::DeviceType::kCPU ||
-      device_context->GetDeviceType() == device::DeviceType::kGPU) {
-    MS_LOG(DEBUG) << "kernel : " << cnode->DebugString() << " device type is " << device_context->GetDeviceType()
-                  << ", will skip multi stream process.";
-    is_multi_stream_process_skipped_ = true;
+    MS_LOG(INFO) << "Cnode is not a func graph value node : " << kernel_->fullname_with_scope() << ".";
     return;
   }
 
@@ -1135,6 +1135,11 @@ void KernelActor::ProcessMultiStreamBeforeKernelLaunch(OpContext<DeviceTensor> *
     }
     if (input_kernel_tensor->managed_by_somas()) {
       MS_LOG(DEBUG) << "Input_kernel_tensor : " << input_kernel_tensor << " is managed by somas.";
+      continue;
+    }
+    // Nullptr device ptr is normal case, here need skip these inputs.
+    if (input_kernel_tensor->device_ptr() == nullptr) {
+      MS_LOG(DEBUG) << "Input kernel tensor device ptr is nullptr.";
       continue;
     }
     (void)cross_stream_addresses_.emplace_back(input_kernel_tensor->stream_id(), input_kernel_tensor->device_ptr());
