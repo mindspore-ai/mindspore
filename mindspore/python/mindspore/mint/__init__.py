@@ -319,6 +319,59 @@ def baddbmm(input, batch1, batch2, *, beta=1, alpha=1):
 
 
 def cat(tensors, dim=0):
+    r"""
+    Connect input tensors along with the given dimension.
+
+    The input data is a tuple or a list of tensors. These tensors have the same rank :math:`R`.
+    Set the given dimension as :math:`m`, and :math:`0 \le m < R`. Set the number of input tensors as :math:`N`.
+    For the :math:`i`-th tensor :math:`t_i`, it has the shape of :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`.
+    :math:`x_{mi}` is the :math:`m`-th dimension of the :math:`t_i`. Then, the shape of the output tensor is
+
+    .. math::
+
+        (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
+
+    Args:
+        tensors (Union[tuple, list]): A tuple or a list of input tensors.
+            Suppose there are two tensors in this tuple or list, namely t1 and t2.
+            To perform `concat` in the dimension 0 direction, except for the :math:`0`-th dimension,
+            all other dimensions should be equal, that is,
+            :math:`t1.shape[1] = t2.shape[1], t1.shape[2] = t2.shape[2], ..., t1.shape[R-1] = t2.shape[R-1]`,
+            where :math:`R` represents the rank of tensor.
+        dim (int): The specified dimension, whose value is in range :math:`[-R, R)`. Default: ``0`` .
+
+    Returns:
+        Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
+        The data type is the same with `tensors`.
+
+    Raises:
+        TypeError: If `dim` is not an int.
+        ValueError: If `tensors` have different dimension of tensor.
+        ValueError: If `dim` not in range :math:`[-R, R)`.
+        ValueError: If tensor's shape in `tensors` except for `dim` are different.
+        ValueError: If `tensors` is an empty tuple or list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore import mint
+        >>> input_x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> input_x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> output = mint.cat((input_x1, input_x2))
+        >>> print(output)
+        [[0. 1.]
+         [2. 1.]
+         [0. 1.]
+         [2. 1.]]
+        >>> output = mint.cat((input_x1, input_x2), 1)
+        >>> print(output)
+        [[0. 1. 0. 1.]
+         [2. 1. 2. 1.]]
+    """
     return cat_ext(tensors, dim)
 
 

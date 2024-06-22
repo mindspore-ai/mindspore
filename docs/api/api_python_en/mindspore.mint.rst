@@ -38,6 +38,7 @@ Indexing, Slicing, Joining, Mutating Operations
     :template: classtemplate.rst
 
     mindspore.mint.arange
+    mindspore.mint.cat
     mindspore.mint.index_select
     mindspore.mint.scatter_add
     mindspore.mint.narrow
