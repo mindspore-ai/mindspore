@@ -68,5 +68,40 @@ int32_t NonZeroExtFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", tensor_type, valid_types, primitive->name());
   return OP_CHECK_SUCCESS;
 }
+
+ShapeArray NonZeroExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  auto x_shape = x_tensor->shape();
+  auto x_rank = SizeToLong(x_shape.size());
+  MS_CHECK_VALUE(x_rank >= kNonZeroExtInputMinDim,
+                 CheckAndConvertUtils::FormatCheckIntegerMsg("dimension of 'x'", x_rank, kGreaterEqual,
+                                                             kNonZeroExtInputMinDim, primitive));
+  // x_num is the multiply of shape elements
+  auto x_num = std::accumulate(x_shape.begin(), x_shape.end(), int64_t(1), std::multiplies<int64_t>());
+  // tuple nums is the rank of input tensor
+  ShapeArray out_shapes;
+  out_shapes.reserve(x_rank);
+
+  for (int i = 0; i < x_rank; i++) {
+    // shape is the x_num
+    ShapeVector tensor_shape = {x_num};
+    out_shapes.push_back(tensor_shape);
+  }
+  return out_shapes;
+}
+
+TypePtrList NonZeroExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto x_shape = x_tensor->shape();
+  auto x_rank_size = x_shape.size();
+  TypePtrList type_tuple;
+  for (size_t i = 0; i < x_rank_size; i++) {
+    type_tuple.push_back(std::make_shared<TensorType>(kInt64));
+  }
+  return type_tuple;
+}
+REGISTER_SIMPLE_INFER(kNameNonZeroExt, NonZeroExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

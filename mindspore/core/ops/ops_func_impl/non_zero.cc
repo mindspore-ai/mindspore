@@ -20,6 +20,7 @@
 #include "ops/ops_frontend_func_impl.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -52,5 +53,24 @@ int32_t NonZeroFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", tensor_type, valid_types, primitive->name());
   return OP_CHECK_SUCCESS;
 }
+
+ShapeArray NonZeroFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  auto x_shape = x_tensor->shape();
+  auto x_rank = SizeToLong(x_shape.size());
+  MS_CHECK_VALUE(x_rank >= kNonZeroInputMinDim,
+                 CheckAndConvertUtils::FormatCheckIntegerMsg("dimension of 'x'", x_rank, kGreaterEqual,
+                                                             kNonZeroInputMinDim, primitive));
+  auto x_num = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<int64_t>());
+  return {ShapeVector({x_num, x_rank})};
+}
+
+TypePtrList NonZeroFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {kInt64};
+}
+REGISTER_SIMPLE_INFER(kNameNonZero, NonZeroFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

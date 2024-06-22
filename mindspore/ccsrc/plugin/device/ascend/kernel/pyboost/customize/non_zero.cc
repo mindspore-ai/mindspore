@@ -52,8 +52,9 @@ tensor::BaseTensorPtr NonZeroAscendCustomize(const std::shared_ptr<OpRunner> &op
   if (output_real_shape[0] == -1) {
     output_real_shape[0] = 0;
   }
+  auto simple_infer_ptr = op->output_value_simple_info();
+  simple_infer_ptr->shape_vector_ = ShapeArray{output_real_shape};
   outputs[0]->set_shape(output_real_shape);
-  op->set_output_abs(outputs[0]->ToAbstract());
   MS_LOG(DEBUG) << "NonZero Ascend end";
 
   return op->output(0);
