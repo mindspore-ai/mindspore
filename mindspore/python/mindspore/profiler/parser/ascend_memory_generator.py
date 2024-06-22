@@ -72,6 +72,20 @@ class AscendMemoryGenerator:
         if len(data) > 1:
             self._ms_memory_record.extend(data[1:])
 
+    def _get_app_reserved_memory(self) -> list:
+        """Get the reserved memory of the application from npu_mem.csv"""
+        npu_module_mem_file_list = FileManager.get_csv_file_list_by_start_name(self._mindstudio_profiler_output,
+                                                                               "npu_mem")
+        app_mems = []
+        for file in npu_module_mem_file_list:
+            md_mems = FileManager.read_csv_file(file)
+            for mem in md_mems:
+                if mem[1] == "APP":
+                    app_mems.append(MemoryRecordBean([mem[1], mem[-1].rstrip('\t'), 0.0, float(mem[4]), 0.0,
+                                                      f"NPU:{self._rank_id}"]).row)
+
+        return app_mems
+
     def _combine_ge_ms_memory_record(self) -> list:
         """Combine ge and mindspore memory record data"""
         memory_records = []
@@ -106,7 +120,7 @@ class AscendMemoryGenerator:
                 last_ge_memory = memory_record
             else:
                 last_ms_memory = memory_record
-        return result_data
+        return result_data + self._get_app_reserved_memory()
 
 
 class MemoryRecordBean:
