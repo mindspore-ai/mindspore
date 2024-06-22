@@ -453,8 +453,8 @@ class EmbeddingService:
         :param table_id: table id
         :return:
         """
-        if optimizer not in ["adam", "adagrad", "adamw"]:
-            raise ValueError("optimizer should be one of adam, adagrad, adamw")
+        if optimizer not in ["adam", "adagrad", "adamw", "ftrl"]:
+            raise ValueError("optimizer should be one of adam, adagrad, adamw, ftrl")
         if initializer is not None:
             if isinstance(initializer, EsInitializer):
                 self._table_id_to_initializer[table_id] = initializer
@@ -520,11 +520,12 @@ class EmbeddingService:
         optimizer = self._table_to_optimizer.get(table_id)
         if optimizer is None:
             return
-        if optimizer == "adagrad":
-            if optimizer_param is None or len(optimizer_param) != 1:
-                self._ps_table_id_to_optimizer_params[table_id].extend(optimizer_param)
+        if optimizer == "adagrad" or optimizer == "ftrl":
+            if optimizer_param is not None:
+                self._ps_table_id_to_optimizer_params[table_id].append(optimizer_param)
             else:
                 raise ValueError("For adagrad optimizer, optimizer_param should have 1 param, "
-                                 "initial_accumulator_value")
-        if optimizer in ["adam", "adamw", "sgd"]:
+                                 "initial_accumulator_value.")
+
+        if optimizer in ["adam", "adamw", "sgd", "ftrl"]:
             self._ps_table_id_to_optimizer_params[table_id].append(0.)
