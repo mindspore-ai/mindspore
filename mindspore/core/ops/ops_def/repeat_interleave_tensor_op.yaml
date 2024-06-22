@@ -5,7 +5,7 @@ repeat_interleave_tensor:
       dtype: tensor
     repeats:
       dtype: tensor
-      type_cast: list[int], tuple[int]
+      type_cast: int, list[int], tuple[int]
     dim:
       dtype: int
       default: None

@@ -98,22 +98,6 @@ inline ShapeVector GetInferredShape(const ShapeVector &input_shape, const ShapeV
   }
   return result_shape;
 }
-
-template <typename T>
-ShapeVector GetNewRepeats(const PrimitivePtr &primitive, const ArrayValue<T> repeats_values) {
-  ShapeVector repeats;
-  for (size_t i = 0; i < repeats_values.size(); i++) {
-    if (repeats_values.IsValueUnknown(i)) {
-      repeats.push_back(abstract::Shape::kShapeDimAny);
-    } else {
-      if (repeats_values[i] < 0) {
-        MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', 'repeats' can not be negative.";
-      }
-      repeats.push_back(repeats_values[i]);
-    }
-  }
-  return repeats;
-}
 }  // namespace
 
 BaseShapePtr RepeatInterleaveTensorFuncImpl::InferShape(const PrimitivePtr &primitive,
@@ -129,35 +113,23 @@ BaseShapePtr RepeatInterleaveTensorFuncImpl::InferShape(const PrimitivePtr &prim
   if (repeats_shape.size() > 1) {
     MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', 'repeats' must be 0-dim or 1-dim tensor.";
   }
-
-  std::vector<TypeId> valid_types = {kNumberTypeInt32, kNumberTypeInt64};
-  auto input1_tensor = input_args[kInputIndex1]->GetType()->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(input1_tensor);
-  auto repeats_type = input1_tensor->element()->type_id();
-  if (std::find(valid_types.begin(), valid_types.end(), repeats_type) == valid_types.end()) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'repeats' must be int32 or int64. but got "
-                            << TypeIdToType(repeats_type)->ToString();
+  auto repeats_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
+  if (!repeats_opt.has_value()) {
+    return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
   }
 
+  auto repeats_values = repeats_opt.value();
   ShapeVector repeats;
-  if (repeats_type == kNumberTypeInt32) {
-    auto repeats_opt = GetArrayValue<int32_t>(input_args[kInputIndex1]);
-    if (!repeats_opt.has_value()) {
-      return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
+  for (size_t i = 0; i < repeats_values.size(); i++) {
+    if (repeats_values.IsValueUnknown(i)) {
+      repeats.push_back(abstract::Shape::kShapeDimAny);
+    } else {
+      if (repeats_values[i] < 0) {
+        MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', 'repeats' can not be negative.";
+      }
+      repeats.push_back(repeats_values[i]);
     }
-
-    auto repeats_values = repeats_opt.value();
-    repeats = GetNewRepeats<int32_t>(primitive, repeats_values);
-  } else {
-    auto repeats_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
-    if (!repeats_opt.has_value()) {
-      return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
-    }
-
-    auto repeats_values = repeats_opt.value();
-    repeats = GetNewRepeats<int64_t>(primitive, repeats_values);
   }
-
   auto dim = input_args[kInputIndex2]->GetValue();
   if (!check_repeats_dim(primitive, x_shape, repeats, dim) && !IsDynamicShape(x_shape)) {
     MS_EXCEPTION(RuntimeError) << "For '" << primitive->name()
@@ -185,27 +157,22 @@ ShapeArray RepeatInterleaveTensorFuncImpl::InferShape(const PrimitivePtr &primit
   if (repeats_shape.size() > 1) {
     MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', 'repeats' must be 0-dim or 1-dim tensor.";
   }
-
-  std::vector<TypeId> valid_types = {kNumberTypeInt32, kNumberTypeInt64};
-  auto repeats_type = repeats_tensor->data_type();
-  if (std::find(valid_types.begin(), valid_types.end(), repeats_type) == valid_types.end()) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'repeats' must be int32 or int64. but got "
-                            << TypeIdToType(repeats_type)->ToString();
-  }
+  auto repeats_opt = GetArrayValue<int64_t>(input_values[kInputIndex1]);
+  auto repeats_values = repeats_opt.value();
 
   ShapeVector repeats;
-  if (repeats_type == kNumberTypeInt32) {
-    auto repeats_opt = GetArrayValue<int32_t>(input_values[kInputIndex1]);
-    auto repeats_values = repeats_opt.value();
-    repeats = GetNewRepeats<int32_t>(primitive, repeats_values);
-  } else {
-    auto repeats_opt = GetArrayValue<int64_t>(input_values[kInputIndex1]);
-    auto repeats_values = repeats_opt.value();
-    repeats = GetNewRepeats<int64_t>(primitive, repeats_values);
+  for (size_t i = 0; i < repeats_values.size(); i++) {
+    if (repeats_values.IsValueUnknown(i)) {
+      repeats.push_back(abstract::Shape::kShapeDimAny);
+    } else {
+      if (repeats_values[i] < 0) {
+        MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', 'repeats' can not be negative.";
+      }
+      repeats.push_back(repeats_values[i]);
+    }
   }
-
   auto dim = input_values[kInputIndex2];
-  if (!check_repeats_dim(primitive, x_shape, repeats, dim)) {
+  if (!check_repeats_dim(primitive, x_shape, repeats, dim) && !IsDynamicShape(x_shape)) {
     MS_EXCEPTION(RuntimeError) << "For '" << primitive->name()
                                << "', 'repeats' must have the same size as input along dim.";
   }
