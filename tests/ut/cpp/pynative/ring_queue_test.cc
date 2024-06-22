@@ -32,6 +32,9 @@ class RingQueueTest : public testing::Test {
 namespace mindspore {
 class TestA {};
 
+/// Feature: Test PyNative RingQueue.
+/// Description: Test Enqueue/Dequeue for RingQueue.
+/// Expectation: Enqueue/Dequeue execute success.
 TEST_F(RingQueueTest, TestRingQueue1) {
   auto queue1 = RingQueue<std::shared_ptr<TestA>, 16>();
   for (size_t i = 0; i < 15; ++i) {

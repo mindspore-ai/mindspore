@@ -427,4 +427,3 @@ def vm_impl_sum_ext(self):
         return Tensor(np.array(out))
 
     return vm_impl
-

@@ -27,8 +27,10 @@ namespace mindspore {
 namespace pynative {
 class PyBoostConverterTest : public PyCommon {};
 
+/// Feature: Test Pyboost Converter.
+/// Description: Test ToTensor for pyboost input converter.
+/// Expectation: Python Tensor to Tensor success.
 TEST_F(PyBoostConverterTest, ToTensorTest1) {
-  py::gil_scoped_acquire gil;
   Converter converter(&ops::gSin);
 
   auto tensor_py = NewPyTensor(std::make_shared<tensor::Tensor>(1));
@@ -41,8 +43,10 @@ TEST_F(PyBoostConverterTest, ToTensorTest1) {
   ASSERT_EQ(t, tensor_py.cast<TensorPtr>());
 }
 
+/// Feature: Test Pyboost Converter.
+/// Description: Test ToTensor for pyboost input converter.
+/// Expectation: Python Tensor to Tensor success.
 TEST_F(PyBoostConverterTest, ToTensorTest2) {
-  py::gil_scoped_acquire gil;
   Converter converter(&ops::gSin);
 
   auto tensor = std::make_shared<tensor::BaseTensor>(1);
@@ -60,8 +64,10 @@ TEST_F(PyBoostConverterTest, ToTensorTest2) {
   ASSERT_EQ(stub_node->WaitValue(), tensor);
 }
 
+/// Feature: Test Pyboost Converter.
+/// Description: Test ToTensor for pyboost input converter.
+/// Expectation: Python float to Tensor success.
 TEST_F(PyBoostConverterTest, ToTensorTest3) {
-  py::gil_scoped_acquire gil;
   Converter converter(&ops::gAdd);
 
   auto x_obj = NewPyTensor(std::make_shared<tensor::Tensor>(1));
@@ -79,8 +85,10 @@ TEST_F(PyBoostConverterTest, ToTensorTest3) {
   ASSERT_EQ(y_out->isa<tensor::Tensor>(), true);
 }
 
+/// Feature: Test Pyboost Converter.
+/// Description: Test ToTensorOptional for pyboost input input converter.
+/// Expectation: ToTensorOptional return none when input is py::none().
 TEST_F(PyBoostConverterTest, ToTensorOptionalTest) {
-  py::gil_scoped_acquire gil;
   Converter converter(&ops::gClampTensor);
 
   auto input = NewPyTensor(std::make_shared<tensor::Tensor>(1));
@@ -102,6 +110,9 @@ TEST_F(PyBoostConverterTest, ToTensorOptionalTest) {
   ASSERT_EQ(max_out.has_value(), false);
 }
 
+/// Feature: Test Pyboost Converter.
+/// Description: Test ToTensorOptional for pyboost input converter.
+/// Expectation: To int success.
 TEST_F(PyBoostConverterTest, ToIntOptionalTest1) {
   py::gil_scoped_acquire gil;
   Converter converter(&ops::gArgMaxExt);
@@ -127,6 +138,9 @@ TEST_F(PyBoostConverterTest, ToIntOptionalTest1) {
   ASSERT_EQ(keep_dim_out->value(), true);
 }
 
+/// Feature: Test Pyboost Converter.
+/// Description: Test ToIntOptional for pyboost input converter.
+/// Expectation: To in success.
 TEST_F(PyBoostConverterTest, ToIntOptionalTest2) {
   py::gil_scoped_acquire gil;
   Converter converter(&ops::gArgMaxExt);
@@ -149,6 +163,9 @@ TEST_F(PyBoostConverterTest, ToIntOptionalTest2) {
   ASSERT_EQ(keep_dim_out->value(), false);
 }
 
+/// Feature: Test Pyboost Converter.
+/// Description: Test ToBoolOptional for pyboost input converter.
+/// Expectation: To bool and get none.
 TEST_F(PyBoostConverterTest, ToBoolOptionalTest1) {
   py::gil_scoped_acquire gil;
   Converter converter(&ops::gSin);
@@ -161,6 +178,9 @@ TEST_F(PyBoostConverterTest, ToBoolOptionalTest1) {
   ASSERT_EQ(t.has_value(), false);
 }
 
+/// Feature: Test Pyboost Converter.
+/// Description: Test ToBoolOptional for pyboost input converter.
+/// Expectation: To bool success.
 TEST_F(PyBoostConverterTest, ToBoolOptionalTest2) {
   py::gil_scoped_acquire gil;
   Converter converter(&ops::gSin);
@@ -173,7 +193,5 @@ TEST_F(PyBoostConverterTest, ToBoolOptionalTest2) {
   ASSERT_EQ(t.has_value(), true);
   ASSERT_EQ(t.value()->value(), true);
 }
-
-
 }  // namespace pynative
 }  // namespace mindspore

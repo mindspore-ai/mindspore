@@ -35,6 +35,9 @@ class OpExecuteTest : public testing::Test {
 
 namespace mindspore {
 namespace compile {
+/// Feature: Test PyNative OpExecutor.
+/// Description: Test NeedSync for OpExecutor in PyNative mode or Graph mode.
+/// Expectation: The NeedSync return changes when graph/pynative mode changed.
 TEST_F(OpExecuteTest, TestNeedSync) {
   const auto &context = MsContext::GetInstance();
   ASSERT_NE(context, nullptr);
@@ -53,6 +56,9 @@ TEST_F(OpExecuteTest, TestNeedSync) {
   ASSERT_EQ(executor.NeedSync(), true);
 }
 
+/// Feature: Test PyNative OpExecutor.
+/// Description: Test RegisterForwardCallback for OpExecutor.
+/// Expectation: The lambda function is registered successfully.
 TEST_F(OpExecuteTest, TestRegisterForwardCallback) {
   auto &executor = runtime::OpExecutor::GetInstance();
   int x = 0;
@@ -67,6 +73,9 @@ TEST_F(OpExecuteTest, TestRegisterForwardCallback) {
   ASSERT_EQ(x, 2);
 }
 
+/// Feature: Test PyNative OpExecutor.
+/// Description: Test PushOpRunTask for OpExecutor.
+/// Expectation: task execute successfully.
 TEST_F(OpExecuteTest, TestPushOpRunTask) {
   auto &executor = runtime::OpExecutor::GetInstance();
 
