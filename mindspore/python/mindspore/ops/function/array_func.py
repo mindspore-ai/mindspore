@@ -6578,21 +6578,16 @@ def repeat_interleave(input, repeats, axis=None):
 
 def repeat_interleave_ext(input, repeats, dim=None, output_size=None):
     r"""
-    Repeat elements of a tensor along an axis, like `numpy.repeat`.
+    Repeat elements of a tensor.
 
     Args:
-        input (Tensor): The tensor to repeat values for. Must be of type: float16,
-            float32, int8, uint8, int16, int32, or int64.
-        repeats (Union[int, tuple, list, Tensor]): The number of times to repeat, must be positive.
-        dim (int, optional): The dim along which to repeat, Default: ``None``. if dims is None,
-            the input Tensor will be flattened and the output will alse be flattened.
-        output_size (int, optional): Total output size for the given axis (e.g. sum of repeats),
-            Default: ``None``. 
+        input (Tensor): the input tensor.
+        repeats (Union[int, list, tuple, Tensor]) the number of repetitions for each element
+        dim (int, optional) the dim along wich to repeat, if None, defaults to 0.
+        output_size (int, optional): Calculated output size along specified dim.
 
     Returns:
-        One tensor with values repeated along the specified dim. If input has shape
-        :math:`(s1, s2, ..., sn)` and dim is i, the output will have shape :math:`(s1, s2, ...,
-        si * repeats, ..., sn)`. The output type will be the same as the type of `input`.
+        Tensor, one-hot tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -6600,14 +6595,17 @@ def repeat_interleave_ext(input, repeats, dim=None, output_size=None):
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
-        >>> output = ops.repeat_interleave_ext(input, repeats=2, dim=0)
+        >>> from mindspore import mint
+        >>> from mindspore import Tensor
+        >>> tensor = Tensor(np.array([0, 1, 2], [3, 4, 5]), mindspore.int32)
+        >>> repeats = 2
+        >>> dim = 0
+        >>> output = mint.repeat_interleave(tensor, repeats, dim)
         >>> print(output)
-        [[0 1 2]
-         [0 1 2]
-         [3 4 5]
-         [3 4 5]]
+        [[0. 1. 2.]
+        [0. 1. 2.]
+        [3. 4. 5.]
+        [3. 4. 5.]]
     """
     if isinstance(repeats, int):
         return repeat_interleave_int_(input, repeats, dim, output_size)
@@ -6877,7 +6875,6 @@ __all__ = [
     'sequence_mask',
     'repeat_elements',
     'repeat_interleave',
-    'repeat_interleave_ext',
     'argwhere',
     'column_stack',
     'hstack',

@@ -17,19 +17,20 @@ stack_ext:
 
         Raises:
             TypeError: If the data types of elements in `tensors` are not the same.
-            ValueError: If `dim` is out of the range [-(R+1), R+1);
+            ValueError: If the length of `tensors` is not greater than zero;
+                        or if dim is out of the range [-(R+1), R+1);
                         or if the shapes of elements in tensors are not the same.
 
         Supported Platforms:
-            ``Ascend``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> import mindspore
-            >>> from mindspore import Tensor, ops
+            >>> from mindspore import Tensor, mint
             >>> import numpy as np
             >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))
             >>> data2 = Tensor(np.array([2, 3]).astype(np.float32))
-            >>> output = ops.auto_generate.stack_ext([data1, data2], 0)
+            >>> output = mint.stack([data1, data2], 0)
             >>> print(output)
             [[0. 1.]
-             [2. 3.]]
+                [2. 3.]]
