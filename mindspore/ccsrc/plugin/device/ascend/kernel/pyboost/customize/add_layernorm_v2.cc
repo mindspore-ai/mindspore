@@ -46,7 +46,8 @@ void AddLayerNormAscendCustomize(const std::shared_ptr<OpRunner> &op, const Base
       // Malloc for output tensors
       PyBoostUtils::MallocOpOutputs(device_context, outputs);
       LAUNCH_ACLNN(aclnnAddLayerNorm, device_context, op->stream_id(), x1_tensor, x2_tensor, gamma_tensor, beta_tensor,
-                   nullptr, epsilon_imm, additional_out_imm, outputs[0], outputs[1], outputs[2], outputs[3]);
+                   nullptr, epsilon_imm, additional_out_imm, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2],
+                   outputs[kIndex3]);
       MS_LOG(DEBUG) << "Run device task AddLayerNorm end";
     }));
 }
