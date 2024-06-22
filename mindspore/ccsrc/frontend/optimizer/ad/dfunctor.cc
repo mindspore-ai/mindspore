@@ -648,11 +648,16 @@ AnfNodePtr DFunctor::MapPrimitiveToK(const CNodePtr &primitive_user, size_t inde
   auto prim = GetValueNode<PrimitivePtr>(value_node);
   if ((prim->Hash() == prim::kPrimStopGradient->Hash() && prim->name() == prim::kPrimStopGradient->name()) ||
       (prim->Hash() == prim::kPrimUpdateState->Hash() && prim->name() == prim::kPrimUpdateState->name()) ||
-      (prim->Hash() == prim::kPrimPyExecute->Hash() && prim->name() == prim::kPrimPyExecute->name()) ||
       StopGradientForScalar(primitive_user)) {
     MS_LOG(DEBUG) << "Should stop gradient for " << prim->ToString();
     need_cut_ = true;
   }
+  if (prim->Hash() == prim::kPrimPyExecute->Hash() && prim->name() == prim::kPrimPyExecute->name()) {
+    MS_LOG(WARNING) << "The gradient will be stopped from propagating at the PyExecute node created at the location: "
+                    << trace::GetDebugInfoStr(primitive_user->debug_info());
+    need_cut_ = true;
+  }
+
   auto k_prim = g_k_prims.KPrimitive(primitive_user, value_node, resources_);
   if (k_prim != nullptr) {
     auto prim_recompute_attr = prim->GetAttr(kAttrRecompute);
