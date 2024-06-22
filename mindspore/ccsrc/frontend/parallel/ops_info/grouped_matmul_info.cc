@@ -57,6 +57,10 @@ constexpr size_t kInputGroupList = 7;
 constexpr size_t kInputSplitItem = 8;
 // output
 constexpr size_t kOutputY = 0;
+// TensorShape
+constexpr size_t gmmTensor2D = 2;
+constexpr size_t gmmTensor3D = 3;
+constexpr size_t gmmTensor4D = 4;
 
 // 1.getattr
 Status GroupedMatmulInfo::GetAttrs() {
@@ -71,13 +75,13 @@ Status GroupedMatmulInfo::GetAttrs() {
 
   mat_x_dimension_ = tensorlist_x_shape->GetElement(0)->GetValue().size();  // get inputx[0] shape size
   mat_w_dimension_ = tensorlist_w_shape->GetElement(0)->GetValue().size();  // get weight[0] shape size
-  if (!(mat_x_dimension_ >= 2 && mat_x_dimension_ <= 4)) {
+  if (!(mat_x_dimension_ >= gmmTensor2D && mat_x_dimension_ <= gmmTensor4D)) {
     MS_LOG(ERROR) << name_ << ": The dim of mat_x should be 2D ~ 3D Tensor , but the dim of mat_x is "
                   << mat_x_dimension_ << ", the dim of mat_w is " << mat_w_dimension_;
     return FAILED;
   }
 
-  if (mat_x_dimension_ > 3 || mat_w_dimension_ > 3) {
+  if (mat_x_dimension_ > gmmTensor3D || mat_w_dimension_ > gmmTensor3D) {
     MS_LOG(ERROR) << name_ << ": The dim of mat_x or mat_w can not smaller than 2, but the dim of mat_x is "
                   << mat_x_dimension_ << ", the dim of mat_w is " << mat_w_dimension_;
     return FAILED;
@@ -95,7 +99,6 @@ Status GroupedMatmulInfo::CheckStrategy(const StrategyPtr &strategy) {
   for (size_t i = 0; i < mat_x_strategy.size(); i++) {
     size_t mat_x_size = mat_x_strategy[i].size();
     size_t mat_w_size = mat_w_strategy[i].size();
-
     if ((mat_x_size != mat_x_dimension_) || (mat_w_size != mat_w_dimension_)) {
       MS_LOG(ERROR) << name_ << ": The dimensions of mat_x or mat_w's strategy is wrong. "
                     << "The length of strategy should equal the length of input. Current input x dimension is "
@@ -153,7 +156,7 @@ void GroupedMatmulInfo::SetOptionalInputTensorMap(const size_t &index, size_t *v
     Shape nosplit_tensor_map_idx;
     if (input_shape->size() == 1) {
       nosplit_tensor_map_idx.emplace_back(0);  // {0}
-    } else if (input_shape->size() == 2) {
+    } else if (input_shape->size() == gmmTensor2D) {
       nosplit_tensor_map_idx.emplace_back(-1);
       nosplit_tensor_map_idx.emplace_back(0);  // {-1, 0}
     } else {
@@ -193,7 +196,7 @@ Status GroupedMatmulInfo::InferTensorMap() {
 
   // weight: [h, 4h] --> {1, 0} [E, h, 4h] --> {-1, 1, 0}
   Shape weight_tensor_map_idx;
-  if (inputs_shape_new_[kInputWeight]->GetElement(0)->size() == 3) {
+  if (inputs_shape_new_[kInputWeight]->GetElement(0)->size() == gmmTensor3D) {
     weight_tensor_map_idx.emplace_back(-1);
   }
   weight_tensor_map_idx.emplace_back(1);
@@ -207,7 +210,7 @@ Status GroupedMatmulInfo::InferTensorMap() {
   // bias: [4h] --> {0} / [E, 4h] --> {-1, 0} / not emplace_back shape when b is None
   if (!input_value_[kInputBias]->isa<None>()) {
     Shape bias_tensor_map_idx;
-    if (inputs_shape_new_[kInputBias]->GetElement(0)->size() == 2) {
+    if (inputs_shape_new_[kInputBias]->GetElement(0)->size() == gmmTensor2D) {
       bias_tensor_map_idx.emplace_back(-1);
     }
     bias_tensor_map_idx.emplace_back(0);
