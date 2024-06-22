@@ -15,13 +15,13 @@
  */
 
 #include "ops/ops_func_impl/matmul_bias_split_out3.h"
-#include "ops/ops_func_impl/matmul_fusion_utils.h"
 
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
 
+#include "ops/ops_func_impl/matmul_fusion_utils.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"

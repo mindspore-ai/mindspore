@@ -30,12 +30,12 @@ namespace mindspore {
 namespace ops {
 
 BaseShapePtr QuantbatchmatmulSplitOut2FuncImpl::InferShape(const PrimitivePtr &primitive,
-                                                     const std::vector<AbstractBasePtr> &input_args) const {
+                                                           const std::vector<AbstractBasePtr> &input_args) const {
   return MatmulFusionUtils::InferenceMultiMatmulInferShape(primitive, input_args);
 }
 
 TypePtr QuantbatchmatmulSplitOut2FuncImpl::InferType(const PrimitivePtr &primitive,
-                                               const std::vector<AbstractBasePtr> &input_args) const {
+                                                     const std::vector<AbstractBasePtr> &input_args) const {
   return MatmulFusionUtils::InferenceMultiMatmulInferType(primitive, input_args);
 }
 

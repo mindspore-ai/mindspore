@@ -36,4 +36,3 @@ class InternalQuantBatchMatmul : public InternalKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_QUANT_BATCH_MATMUL_H_
-

@@ -83,9 +83,7 @@ class InternalKernelMod : public KernelMod {
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
-  void set_fullname(const std::string &fullname) {
-    fullname_ = fullname;
-  }
+  void set_fullname(const std::string &fullname) { fullname_ = fullname; }
 
   std::vector<KernelAttr> GetOpSupport() override {
     MS_LOG(EXCEPTION) << "This interface is not support in internal kernel.";

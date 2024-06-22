@@ -666,7 +666,9 @@ inline std::string SetToString(const std::set<std::string> &kernel_list) {
 }
 
 void MsContext::SetMsInternalEnableCustomKernelList() {
-  const std::string kDefaultEnabledOpList = "AddRmsNorm,AddLayerNorm,MatMulAllReduce,InferenceMatmulSplit";
+  const std::string kDefaultEnabledOpList =
+    "MatMul,RmsNorm,Add,Sub,FlashAttentionScore,PagedAttention,AddRmsNorm,AddLayerNorm,MatMulAllReduce,"
+    "InferenceMatmulSplit";
   auto internal_op_boost_env = common::GetEnv("MS_ENABLE_INTERNAL_BOOST");
   bool is_enable_internal_op = true;
   if (internal_op_boost_env == "off") {

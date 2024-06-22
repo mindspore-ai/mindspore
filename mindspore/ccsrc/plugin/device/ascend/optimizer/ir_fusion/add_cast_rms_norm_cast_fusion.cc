@@ -98,7 +98,6 @@ const AnfNodePtr AddCastRmsNormCastFusion::Process(const FuncGraphPtr &graph, co
 
   auto tuple_get_item_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   auto rms_norm_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_get_item_node), 0);
-
   if (IsUsedByOthers(graph, rms_norm_node)) {
     // we only deal with case that rstd result from rms norm is not used
     return nullptr;
@@ -134,8 +133,9 @@ const AnfNodePtr AddCastRmsNormCastFusion::Process(const FuncGraphPtr &graph, co
 
   // the second output is rstd from the second output of rmsnorm
   size_t output_num = AnfAlgo::GetOutputElementNum(rms_norm_node);
-
-  MS_EXCEPTION_IF_CHECK_FAIL(output_num == 2, "For rms norm, it should have 2 output, but get: " + output_num);
+  constexpr auto kRmsNormOutputNum = 2;
+  MS_EXCEPTION_IF_CHECK_FAIL(output_num == kRmsNormOutputNum,
+                             "For rms norm, it should have 2 output, but get: " + output_num);
 
   types.push_back(common::AnfAlgo::GetOutputInferDataType(rms_norm_node, 1));
   shapes.push_back(AnfAlgo::GetOutputDetailShape(rms_norm_node, 1));
