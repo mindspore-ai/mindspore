@@ -18,7 +18,6 @@
 #include <utility>
 #include <memory>
 #include "ops/op_utils.h"
-#include "ir/dtype.h"
 #include "ops/op_name.h"
 #include "utils/check_convert_utils.h"
 
@@ -61,10 +60,40 @@ BaseShapePtr ArgMaxExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::TensorShape>(output_shape);
 }
 
+ShapeArray ArgMaxExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &x_shape_vec = x_tensor->shape();
+  ShapeVector output_shape(x_shape_vec);
+  if (input_values[kInputIndex1] != mindspore::kNone) {
+    const auto &axis_value_scalar = GetScalarValue<int64_t>(input_values[kInputIndex1]);
+    int64_t axis = axis_value_scalar.value();
+    const auto &x_rank = SizeToLong(x_shape_vec.size());
+    MS_CHECK_VALUE(axis >= -x_rank && axis < x_rank, CheckAndConvertUtils::FormatCheckInRangeMsg(
+                                                       "dim", axis, kIncludeLeft, {-x_rank, x_rank}, primitive));
+    axis = axis < 0 ? axis + x_rank : axis;
+    const auto &keepdim = GetScalarValue<bool>(input_values[kInputIndex2]);
+    const auto &keepdim_value = keepdim.value();
+    if (keepdim_value) {
+      output_shape[axis] = 1;
+    } else {
+      output_shape.erase(output_shape.cbegin() + axis);
+    }
+  } else {
+    // dim is None, return index of flatten input
+    output_shape = ShapeVector{};
+  }
+  return {output_shape};
+}
+
 TypePtr ArgMaxExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
   auto type = kInt64;
   return std::make_shared<TensorType>(type);
+}
+
+TypePtrList ArgMaxExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {kInt64};
 }
 }  // namespace ops
 }  // namespace mindspore
