@@ -17,10 +17,9 @@
 #include "frontend/parallel/ops_info/split_info.h"
 
 #include <cstdint>
-#include <string>
 #include <memory>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
