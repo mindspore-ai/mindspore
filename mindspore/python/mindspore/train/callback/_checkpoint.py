@@ -55,11 +55,10 @@ def _get_dp_tp_from_redundancy(redundancy_tuple):
     return dp, tp
 
 
-def _get_dp_tp_from_layout(parameter_layout_dict, initial_rank=0):
+def _get_dp_tp_from_layout(parameter_redundancy_dict):
     """From layout dict get dp and tp"""
     tp = []
     dp = []
-    parameter_redundancy_dict = get_parameter_redundancy(parameter_layout_dict, initial_rank)
     value_len = 0
     for _, value in parameter_redundancy_dict.items():
         if len(value) > value_len:
