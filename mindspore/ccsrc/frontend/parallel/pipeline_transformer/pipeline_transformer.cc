@@ -88,6 +88,14 @@ static AbstractBasePtr GetRealAbstract(const AnfNodePtr &node) {
   return node->abstract();
 }
 
+FuncGraphPtr FindNodeGraph(const CNodePtr &cnode) {
+  auto graph = cnode->func_graph();
+  if (IsValueNode<FuncGraph>(cnode->input(0))) {
+    graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
+  }
+  return graph;
+}
+
 void PipelineTransformer::UpdateParameterSharedInfo(const AnfNodePtr &node, const AnfNodePtr &communcate_op,
                                                     bool is_send) {
   MS_EXCEPTION_IF_NULL(node);
@@ -223,7 +231,6 @@ bool PipelineTransformer::MainGraph() {
   }
   MS_LOG(INFO) << "Enable micro-fold, the folded cell is " << shared_cell_->ToString();
   enable_share_cell_ = true;
-
   return true;
 }
 
@@ -783,10 +790,7 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
       }
       auto node = user.first;
       auto cnode = node->cast<CNodePtr>();
-      auto graph = node->func_graph();
-      if (IsValueNode<FuncGraph>(cnode->input(0))) {
-        graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
-      }
+      auto graph = FindNodeGraph(cnode);
       if (graph == root_ || graph->stage() == -1 || parameter_stage.count(stage_) == 0) {
         continue;
       }
@@ -795,7 +799,7 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
         MS_LOG(INFO) << "parameter: " << parameter->ToString() << " doesn't have micro batch";
         micro = MakeValue(int64_t(0));
       }
-      if (stage_ == *parameter_stage.begin()) {
+      if (stage_ == *(parameter_stage.begin())) {
         auto user_stage = graph->stage();
         auto stage_info = node->user_data<NodeStageInfo>();
         if (stage_info) {

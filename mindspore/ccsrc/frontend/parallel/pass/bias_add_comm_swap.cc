@@ -107,12 +107,12 @@ void FindAllValidAddNode(const FuncGraphPtr &graph, HashMap<CNodePtr, AnfNodePtr
 
     auto comm_node = FindValidCommNode(node);
     if (comm_node == nullptr) {
-      MS_LOG(WARNING) << "For bias_add_comm_swap, cannot find valid comm node, cur node is " << node->DebugString();
+      MS_LOG(INFO) << "For bias_add_comm_swap, cannot find valid comm node, cur node is " << node->DebugString();
       continue;
     }
     if (!IsAddNodeValid(node, comm_node)) {
-      MS_LOG(WARNING) << "For bias_add_comm_swap, strategy of add node and comm node are not equal, cur node is "
-                      << node->DebugString() << " comm node is " << comm_node->DebugString();
+      MS_LOG(INFO) << "For bias_add_comm_swap, strategy of add node and comm node are not equal, cur node is "
+                   << node->DebugString() << " comm node is " << comm_node->DebugString();
       continue;
     }
     (*add_node_map)[node] = comm_node;
