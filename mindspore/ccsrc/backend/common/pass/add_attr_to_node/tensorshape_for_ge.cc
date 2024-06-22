@@ -23,6 +23,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr char kDtypeAttrName[] = "dtype";
+constexpr char kDisableKernelBackoff[] = "MS_DISABLE_KERNEL_BACKOFF";
 }  // namespace
 
 const AnfNodePtr TensorShapeAddDtype(const FuncGraphPtr &, const AnfNodePtr &node) {
@@ -46,6 +47,9 @@ const AnfNodePtr AddOnlyDependShapeAttr(const FuncGraphPtr &, const AnfNodePtr &
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  if (common::GetEnv(kDisableKernelBackoff) == "1") {
+    return node;
+  }
   if (common::AnfAlgo::HasNodeAttr(kAttrOnlyDependShape, cnode)) {
     return nullptr;
   }
