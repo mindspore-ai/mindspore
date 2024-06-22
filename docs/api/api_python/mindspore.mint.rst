@@ -44,6 +44,7 @@ Array操作
     mindspore.mint.normal
     mindspore.mint.topk
     mindspore.mint.sort
+    mindspore.mint.stack
 
 随机采样
 -----------------
@@ -58,6 +59,13 @@ Array操作
 
 数学运算
 -----------------
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.repeat_interleave
 
 逐元素运算
 ^^^^^^^^^^^^^^^^^^^^^
