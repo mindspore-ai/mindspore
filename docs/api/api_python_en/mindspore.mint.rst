@@ -45,6 +45,19 @@ Indexing, Slicing, Joining, Mutating Operations
     mindspore.mint.topk
     mindspore.mint.sort
 
+
+Random Sampling
+-----------------
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.rand_like
+    mindspore.mint.rand
+
+
 Math Operations
 -----------------
 

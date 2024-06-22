@@ -44,6 +44,17 @@ Array操作
     mindspore.mint.topk
     mindspore.mint.sort
 
+随机采样
+-----------------
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.rand_like
+    mindspore.mint.rand
+
+
 数学运算
 -----------------
 

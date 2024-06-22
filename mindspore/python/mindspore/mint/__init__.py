@@ -237,8 +237,12 @@ from mindspore.ops.function.math_func import tanh
 # 176
 from mindspore.ops.function.math_func import atan2_ext as atan2
 from mindspore.ops.function.math_func import arctan2_ext as arctan2
+
+
 # 208
 from mindspore.ops.function.array_func import eye
+from mindspore.ops import rand_ext as rand
+from mindspore.ops import rand_like_ext as rand_like
 # 210
 from mindspore.ops.auto_generate import floor
 # 231
@@ -246,6 +250,7 @@ from mindspore.ops.function.math_func import inverse_ext as inverse
 
 # 285
 from mindspore.ops.function.array_func import scatter_add_ext as scatter_add
+
 
 def add(input, other, *, alpha=1):
     r"""
@@ -454,6 +459,7 @@ def zeros(size, *, dtype=None):
          [0. 0.]]
     """
     return zeros_ext(size, dtype)
+
 
 __all__ = [
     'full',
@@ -674,8 +680,11 @@ __all__ = [
     # 176
     'atan2',
     'arctan2',
+
     # 208
     'eye',
+    'rand',
+    'rand_like',
     # 210
     'floor',
     # 231

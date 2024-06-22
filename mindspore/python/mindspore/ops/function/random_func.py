@@ -29,8 +29,8 @@ from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithM
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import randperm
 from mindspore.common.generator import default_generator
-from mindspore.ops.auto_generate import UniformExt, NormalTensorTensor,\
-     NormalTensorFloat, NormalFloatTensor, NormalFloatFloat
+from mindspore.ops.auto_generate import UniformExt, NormalTensorTensor, \
+    NormalTensorFloat, NormalFloatTensor, NormalFloatFloat, RandExt, RandLikeExt
 
 normal_tensor_tensor_op = NormalTensorTensor()
 normal_tensor_float_op = NormalTensorFloat()
@@ -43,6 +43,9 @@ reshape_ = P.Reshape()
 shape_ = P.Shape()
 top_k_ = P.TopK()
 uniform_ = UniformExt()
+rand_ext_ = RandExt()
+rand_like_ext_ = RandLikeExt()
+generator_step_ = Tensor(10, mstype.int64)
 
 
 @constexpr
@@ -683,6 +686,7 @@ def is_cpu_backend():
     """Check if the CPU is used"""
     return context.get_context('device_target') == 'CPU'
 
+
 def normal_ext(mean=0.0, std=1.0, size=None, generator=None):
     r"""
     Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
@@ -1039,6 +1043,75 @@ def rand_like(input, seed=None, *, dtype=None):
     rand_op = _set_prim_op_user_data(rand_op, "random_cache", False)
     output = rand_op(shape)
     return cast_(output, dtype)
+
+
+@_function_forbid_reuse
+def rand_ext(*size, generator=None, dtype=None):
+    r"""
+    Returns a new tensor that fills numbers from the uniform distribution over an interval :math:`[0, 1)`
+    based on the given shape and dtype.
+
+    Args:
+        size (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g. :math:`(2, 3)` or :math:`2`.
+
+    Keyword Args:
+        generator (:class:`mindspore.Generator`, optional): a pseudorandom number generator. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
+            `mindspore.float32` will be applied. Default: ``None`` .
+
+    Returns:
+        Tensor, with the designated shape and dtype, filled with random numbers from the uniform distribution on
+        the interval :math:`[0, 1)`.
+
+    Raises:
+        ValueError: If `dtype` is not a `mstype.float_type` type.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore.ops as ops
+        >>> print(ops.rand_ext((2, 3)).shape)
+        (2, 3)
+    """
+    if not generator:
+        generator = default_generator
+    seed, offset = generator._step(generator_step_)  # pylint: disable=protected-access
+    return rand_ext_(size, dtype, seed, offset)
+
+
+@_function_forbid_reuse
+def rand_like_ext(input, *, dtype=None):
+    r"""
+    Returns a new tensor that fills numbers from the uniform distribution over an interval :math:`[0, 1)`
+    based on the given dtype and shape of the input tensor.
+
+    Args:
+        input (Tensor): Input Tensor to specify the output shape and its default dtype.
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
+            the same dtype of `input` will be applied. Default: ``None`` .
+
+    Returns:
+        Tensor, with the designated shape and dtype, filled with random numbers from the uniform distribution on
+        the interval :math:`[0, 1)`.
+
+    Raises:
+        ValueError: If `dtype` is not a `mstype.float_type` type.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor, ops
+        >>> a = Tensor([[2, 3, 4], [1, 2, 3]])
+        >>> print(ops.rand_like_ext(a, dtype=ms.float32).shape)
+        (2, 3)
+    """
+    seed, offset = default_generator._step(generator_step_)  # pylint: disable=protected-access
+    return rand_like_ext_(input, dtype, seed, offset)
 
 
 @_function_forbid_reuse
@@ -1457,7 +1530,8 @@ def _check_param(op_name, param_name, param_value):
 __all__ = [
     'standard_laplace', 'random_categorical', 'uniform', 'uniform_ext', 'standard_normal', 'random_gamma',
     'uniform_candidate_sampler', 'random_poisson', 'log_uniform_candidate_sampler', 'shuffle', 'choice_with_mask',
-    'normal_ext', 'normal', 'laplace', 'gamma', 'poisson', 'multinomial', 'rand', 'rand_like', 'randn', 'randn_like',
+    'normal_ext', 'normal', 'laplace', 'gamma', 'poisson', 'multinomial', 'rand', 'rand_like',
+    'rand_ext', 'rand_like_ext', 'randn', 'randn_like',
     'randint', 'randint_like', 'multinomial_with_replacement', 'randperm'
 ]
 __all__.sort()

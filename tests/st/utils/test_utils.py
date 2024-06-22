@@ -17,7 +17,7 @@ import inspect
 from functools import wraps
 from mindspore import nn
 import mindspore as ms
-from mindspore import Tensor
+from mindspore import Tensor, jit, JitConfig
 import numpy as np
 
 ms.set_context(jit_syntax_level=ms.STRICT)
@@ -41,6 +41,30 @@ def run_with_cell(fn):
         cell_obj = Net(fn)
         return cell_obj(*args, **kwargs)
 
+    return wrapper
+
+
+def run_with_mode(fn):
+    if fn is None:
+        raise ValueError("fn cannot be none!")
+
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if 'mode' not in kwargs:
+            raise ValueError("mode not provided.")
+        mode = kwargs['mode'].lower()
+        if mode not in ['pynative', 'graph', 'kbk']:
+            raise ValueError(
+                "Invalid mode. Available option: ['pynative', 'graph', 'kbk'].")
+
+        del kwargs['mode']
+        if mode == "graph":
+            return (jit(fn, jit_config=JitConfig(jit_level="O2")))(*args, **kwargs)
+        if mode == "kbk":
+            return (jit(fn, jit_config=JitConfig(jit_level="O0")))(*args, **kwargs)
+        return fn(*args, **kwargs)
+
+    setattr(wrapper, "__wrapped_with_mode__", True)
     return wrapper
 
 
