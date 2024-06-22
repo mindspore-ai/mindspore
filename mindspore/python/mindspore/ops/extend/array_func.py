@@ -21,9 +21,10 @@ Array Operators
 from mindspore.common import Tensor
 from mindspore.ops.operations.array_ops import ArgMaxWithValue, ArgMinWithValue
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops.auto_generate.gen_ops_prim import gather_d_op, OneHotExt
+from mindspore.ops.auto_generate.gen_ops_prim import gather_d_op
 from mindspore.ops.auto_generate.gen_ops_def import max_, min_
-
+from mindspore.ops.auto_generate.pyboost_inner_prim import _PyboostOneHotExtPrim
+one_hot_ext_impl = _PyboostOneHotExtPrim()
 
 # define Primitive global variables
 
@@ -211,8 +212,7 @@ def one_hot(tensor, num_classes):
     """
     on_value = Tensor(1, dtype=tensor.dtype)
     off_value = Tensor(0, dtype=tensor.dtype)
-    onehot = _get_cache_prim(OneHotExt)(-1)
-    return onehot(tensor, num_classes, on_value, off_value)
+    return one_hot_ext_impl(tensor, num_classes, on_value, off_value, -1)
 
 
 __all__ = ['gather', 'max', 'min', 'one_hot']

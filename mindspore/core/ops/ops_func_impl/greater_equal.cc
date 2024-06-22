@@ -23,6 +23,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -34,5 +35,12 @@ BaseShapePtr GreaterEqualFuncImpl::InferShape(const PrimitivePtr &primitive,
   return BroadCastInferShape(primitive->name(), input_args);
 }
 
+TypePtrList GreaterEqualFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {kBool};
+}
+ShapeArray GreaterEqualFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {BroadCastInferShape(primitive->name(), input_values)};
+}
+REGISTER_SIMPLE_INFER(kNameGreaterEqual, GreaterEqualFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
