@@ -106,7 +106,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kPrintReuseGraph - kBoolConf] = false;
   bool_conf[kAutoCleanCache - kBoolConf] = false;
   bool_conf[kPruneCase - kBoolConf] = true;
-  bool_conf[kLoopUnrolling - kBoolConf] = false;
+  bool_conf[kLoopUnrolling - kBoolConf] = true;
   bool_conf[kSkipException - kBoolConf] = false;
   bool_conf[kInferOnly - kBoolConf] = true;
   bool_conf[kInferPrimitive - kBoolConf] = true;
