@@ -172,16 +172,6 @@ void *callback_thread_func(void *data) {
   return data;
 }
 
-std::string EnableLcclEnv() {
-  std::string enable_lccl = "off";
-  if (MsContext::GetInstance()->IsEnableInferBoost()) {
-    enable_lccl = common::GetEnv("MS_ENABLE_LCCL", "on");
-  } else {
-    enable_lccl = common::GetEnv("MS_ENABLE_LCCL", "off");
-  }
-  return enable_lccl;
-}
-
 void InitializeAcl() {
   std::lock_guard<std::mutex> lock(g_acl_init_mutex);
   if (g_acl_initialized) {

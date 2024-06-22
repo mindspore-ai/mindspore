@@ -36,7 +36,6 @@ class HcomAllReduceScatterKernel : public HcclKernel {
  private:
 #ifdef ENABLE_INTERNAL_KERNELS
   ReduceScatterFunPtr lccl_reduce_scatter_func_;
-  bool use_lccl_{false};
 #endif
 };
 

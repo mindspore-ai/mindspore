@@ -15,11 +15,7 @@
  */
 
 #include "plugin/device/ascend/kernel/hccl/hcom_all_gather.h"
-
-#include <string>
-
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
-#include "plugin/device/ascend/hal/common/ascend_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,11 +25,9 @@ bool HcomAllGatherKernel::Init(const std::vector<KernelTensor *> &inputs, const 
     MS_LOG(EXCEPTION) << "Failed to init HcomAllGatherKernel";
   }
 #ifdef ENABLE_INTERNAL_KERNELS
-  std::string enable_lccl = device::ascend::EnableLcclEnv();
-  if (enable_lccl == "on") {
+  if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {
     lccl_all_gather_func_ = DlsymFuncObj(AllGather, lowlatency_comm_lib_handle_);
     MS_EXCEPTION_IF_NULL(lccl_all_gather_func_);
-    use_lccl_ = true;
   }
 #endif
   return true;
@@ -52,7 +46,7 @@ bool HcomAllGatherKernel::Launch(const std::vector<KernelTensor *> &inputs, cons
   MS_EXCEPTION_IF_NULL(stream_ptr);
 
 #ifdef ENABLE_INTERNAL_KERNELS
-  if (use_lccl_) {
+  if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {
     auto lccl_result = lccl_all_gather_func_(lccl_ptr_, inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
                                              hccl_data_type_list_[0], stream_ptr);
     if (lccl_result != Lcal::LCAL_SUCCESS) {
