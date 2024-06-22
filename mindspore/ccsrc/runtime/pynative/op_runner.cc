@@ -174,7 +174,7 @@ void CopyTensorDataToDevice(const tensor::BaseTensorPtr &tensor, const AnfNodePt
                                                  device_address.get());
   if ((device_address->GetPtr() == nullptr) &&
       (!device_context->device_res_manager_->AllocateMemory(device_address.get()))) {
-    MS_LOG(EXCEPTION) << "Allocate memory failed";
+    MS_LOG(EXCEPTION) << "Allocate memory failed, alloc size " << device_address->GetSize() << "B";
   }
   // Copy data from host tensor to device.
   auto tensor_size = LongToSize(tensor->data().nbytes());
@@ -295,7 +295,7 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeOutput,
                                                      input_address->GetSize(), input_address.get());
       if (!device_context->device_res_manager_->AllocateMemory(input_address.get())) {
-        return false;
+        MS_LOG(EXCEPTION) << "Allocate memory failed, alloc size " << input_address->GetSize() << "B";
       }
     }
   }
@@ -338,8 +338,8 @@ bool MallocForKernelOutput(const std::shared_ptr<OpRuntimeInfo> &runtime_info, c
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeOutput,
                                                      device_address->GetSize(), device_address.get());
       if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
-        MS_LOG(ERROR) << "Allocate output memory failed, node:" << node->fullname_with_scope();
-        return false;
+        MS_LOG(EXCEPTION) << "Allocate output memory failed, alloc node:" << node->fullname_with_scope()
+                          << " alloc size:" << device_address->GetSize() << "B";
       }
     }
   }
@@ -386,7 +386,7 @@ std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const std::shared_
                                                    device_address->GetSize(), device_address.get());
     if (device_address->GetPtr() == nullptr &&
         !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
-      MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
+      MS_LOG(EXCEPTION) << "Allocate workspace memory failed, alloc size:" << device_address->GetSize() << "B";
     }
     (void)workspaces.emplace_back(device_address->kernel_tensor().get());
     MS_EXCEPTION_IF_NULL(workspaces.back());
@@ -442,7 +442,7 @@ std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const std::shared_
                                                    device_address->GetSize(), device_address.get());
     if (device_address->GetPtr() == nullptr &&
         !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
-      MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
+      MS_LOG(EXCEPTION) << "Allocate workspace memory failed, alloc size:" << device_address->GetSize() << "B";
     }
     (void)workspaces.emplace_back(device_address->kernel_tensor().get());
     MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->device_ptr()
@@ -472,7 +472,7 @@ std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensorsDynamic(
                                                    device_address->GetSize(), device_address.get());
     if (device_address->GetPtr() == nullptr &&
         !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
-      MS_LOG(EXCEPTION) << "Allocate dynamic workspace memory failed";
+      MS_LOG(EXCEPTION) << "Allocate dynamic workspace memory failed, alloc size:" << device_address->GetSize() << "B";
     }
     MS_EXCEPTION_IF_NULL(workspace_device_address);
     (void)workspace_device_address->emplace_back(device_address);
@@ -643,7 +643,7 @@ void AllocateOutputMemory(const std::vector<EdgePtr> &output_edges, const device
                                                      device_address->GetSize(), device_address.get());
       MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
       if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
-        MS_LOG(EXCEPTION) << "Allocate device memory failed!";
+        MS_LOG(EXCEPTION) << "Allocate device memory failed, alloc size:" << device_address->GetSize() << "B";
       }
     }
   }
