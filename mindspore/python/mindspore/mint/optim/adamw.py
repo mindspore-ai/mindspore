@@ -89,16 +89,17 @@ class AdamW(Optimizer):
         This is an experimental optimizer API that is subject to change.
         This module must be used with lr scheduler module in `LRScheduler Class
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
+        For Ascend, it is only supported on platforms above Atlas A2.
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
-            parameter groups
-        lr (Union[int, float, Tensor], optional): learning rate. Default: ``1e-3``.
+            parameter groups.
+        lr (Union[float, Tensor], optional): learning rate. Default: ``1e-3``.
         betas (Tuple[float, float], optional): The exponential decay rate for the moment estimations.
             Default: ``(0.9, 0.999)``.
         eps (float, optional): term added to the denominator to improve
-            numerical stability. Default: ``1e-8``.
-        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0.``.
+            numerical stability. Must be greater than 0. Default: ``1e-8``.
+        weight_decay (float, optional): weight decay (L2 penalty). Default: ``1e-2.``.
         amsgrad (bool, optional): whether to use the AMSGrad algorithm. Default: ``False``.
 
     Keyword Args:
@@ -111,7 +112,7 @@ class AdamW(Optimizer):
     Raises:
         ValueError: If the learning rate is not int, float or Tensor.
         ValueError: If the learning rate is less than 0.
-        ValueError: If the `eps` is less than 0.0.
+        ValueError: If the `eps` is less than 0.
         ValueError: If the `betas` not in the range of [0, 1).
         ValueError: If the `weight_decay` is less than 0.
 

@@ -287,6 +287,13 @@ Dropout函数
 mindspore.mint.optim
 ---------------------
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.optim.AdamW
+
 mindspore.mint.linalg
 ----------------------
 
