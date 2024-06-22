@@ -44,9 +44,17 @@ Indexing, Slicing, Joining, Mutating Operations
     mindspore.mint.normal
     mindspore.mint.topk
     mindspore.mint.sort
+    mindspore.mint.stack
 
 Math Operations
 -----------------
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.repeat_interleave
 
 Pointwise Operations
 ^^^^^^^^^^^^^^^^^^^^^
