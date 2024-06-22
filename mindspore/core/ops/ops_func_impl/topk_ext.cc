@@ -97,7 +97,6 @@ ShapeArray TopkExtFuncImpl::InferShape(const PrimitivePtr &primitive, const Valu
   const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
   auto x_shape_vector = x_tensor->shape();
-
   if (x_shape_vector.empty() || (x_shape_vector.size() == 1 && x_shape_vector[0] == 0)) {
     return {x_shape_vector, x_shape_vector};
   }
@@ -110,7 +109,7 @@ ShapeArray TopkExtFuncImpl::InferShape(const PrimitivePtr &primitive, const Valu
                  CheckAndConvertUtils::FormatCheckInRangeMsg(
                    "dim", dim_value, kIncludeLeft, {-x_shape_vector.size(), x_shape_vector.size()}, primitive));
   if (dim_value < 0) {
-    dim_value += x_shape_vector.size();
+    dim_value += static_cast<int64_t>(x_shape_vector.size());
   }
 
   const auto &k = input_values[kInputIndex1]->cast<Int64ImmPtr>();

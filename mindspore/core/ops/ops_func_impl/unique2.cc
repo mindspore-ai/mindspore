@@ -35,7 +35,6 @@ BaseShapePtr Unique2FrontendInferShape(const PrimitivePtr &primitive, const std:
   auto shape_x = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(shape_x);
   auto x_shape_vector = shape_x->GetShapeVector();
-
   // dynamic rank
   if (IsDynamicRank(x_shape_vector)) {
     abstract::BaseShapePtr out_shape_ptr =

@@ -43,16 +43,17 @@ bool UniqueDimAscend::Launch(const std::vector<KernelTensor *> &inputs, const st
   auto res = GEN_EXECUTOR_CUST(op_type_, use_huge_pages, inputs[kIndex0], sorted, return_inverse, dim, outputs[kIndex0],
                                outputs[kIndex1], outputs[kIndex2]);
   UpdateWorkspace(res);
-  executor_ = std::get<1>(res);
-  auto &all_acl_tensor = std::get<2>(res);
+  executor_ = std::get<kIndex1>(res);
+  auto &all_acl_tensor = std::get<kIndex2>(res);
   RunOpSync(stream_ptr, workspace);
   MS_LOG(DEBUG) << "Run UniqueDim end.";
 
   // update output shape
-  output_shapes_.resize(3);
-  output_shapes_[kIndex0] = transform::UpdateOutputShape(all_acl_tensor.get<4>());
-  output_shapes_[kIndex1] = transform::UpdateOutputShape(all_acl_tensor.get<5>());
-  output_shapes_[kIndex2] = transform::UpdateOutputShape(all_acl_tensor.get<6>());
+  size_t output_size = 3;
+  output_shapes_.resize(output_size);
+  output_shapes_[kIndex0] = transform::UpdateOutputShape(all_acl_tensor.get<kIndex4>());
+  output_shapes_[kIndex1] = transform::UpdateOutputShape(all_acl_tensor.get<kIndex5>());
+  output_shapes_[kIndex2] = transform::UpdateOutputShape(all_acl_tensor.get<kIndex6>());
   return true;
 }
 
