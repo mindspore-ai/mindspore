@@ -34,9 +34,8 @@ enum ApplyRotaryPosEmbQueryInputIndex : size_t {
   kApplyRotaryPosEmbKeyIndex,
   kApplyRotaryPosEmbCosIndex,
   kApplyRotaryPosEmbSinIndex,
-  kApplyRotaryPosEmbSeqLenIndex,
+  kApplyRotaryPosEmbPositionIdsIndex,
   kApplyRotaryPosEmbCosFormatIndex,
-  kApplyRotaryPosEmbRotaryCoeffIndex,
   kApplyRotaryPosEmbInputsNum,
 };
 enum ApplyRotaryPosEmbQueryOutputIndex : size_t {

@@ -77,9 +77,9 @@ TypePtr ApplyRotaryPosEmbFuncImpl::InferType(const PrimitivePtr &prim,
                             << query_type->ToString() << "," << key_type->ToString() << "," << cos_type->ToString()
                             << "," << sin_type->ToString() << "}";
   }
-  auto seq_len_type = input_args[kApplyRotaryPosEmbSeqLenIndex]->GetType();
-  const std::set<TypePtr> valid_position_ids_types = {kInt32};
-  (void)CheckAndConvertUtils::CheckTypeValid("seq_len", seq_len_type, valid_position_ids_types, op_name);
+  auto position_ids_type = input_args[kApplyRotaryPosEmbPositionIdsIndex]->GetType();
+  const std::set<TypePtr> valid_position_ids_types = {kInt32, kInt64, kUInt32, kUInt64};
+  (void)CheckAndConvertUtils::CheckTypeValid("position_ids", position_ids_type, valid_position_ids_types, op_name);
 
   TypePtrList output_type_ptr_list(kFApplyRotaryPosEmbOutputsNum);
   output_type_ptr_list[kApplyRotaryPosEmbQueryEmbedIndex] = query_type;

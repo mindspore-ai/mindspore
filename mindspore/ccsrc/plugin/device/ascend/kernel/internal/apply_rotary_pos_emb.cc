@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/kernel/internal/apply_rotary_pos_emb.h"
-#include "param/apply_rotary_pos_emb_param.h"
 #include <memory>
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
@@ -24,32 +23,17 @@ namespace mindspore {
 namespace kernel {
 internal::OpParamPtr ApplyRotaryPosEmb::CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                                       const std::vector<KernelTensor *> &outputs) {
-  auto param_ptr = std::make_shared<internal::ApplyRotaryPosEmbParam>();
+  internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
   param_ptr->opId = internal::OpId::ApplyRotaryPosEmb;
 
-  auto cos_format_ptr = inputs.at(kIndex5);
-  if (cos_format_ptr->dtype_id() == TypeId::kNumberTypeInt64) {
-    param_ptr->cosFormat = static_cast<int32_t>(cos_format_ptr->GetValue<int64_t>().value());
+  internal::ApplyRotaryPosEmbParam ropeParam;
+  auto last_input = inputs.at(kIndex5);
+  if (last_input->dtype_id() == TypeId::kNumberTypeInt64) {
+    ropeParam.cosFormat = static_cast<int32_t>(last_input->GetValue<int64_t>().value());
   } else {
     MS_LOG(EXCEPTION) << "ApplyRotaryPosEmb input[5] dtype is not kNumberTypeInt64";
   }
-  auto rotary_coeff_ptr = inputs.at(kIndex6);
-  if (rotary_coeff_ptr->dtype_id() == TypeId::kNumberTypeInt64) {
-    param_ptr->rotaryCoeff = static_cast<int32_t>(rotary_coeff_ptr->GetValue<int64_t>().value());
-
-  } else {
-    MS_LOG(EXCEPTION) << "ApplyRotaryPosEmb input[6] dtype is not kNumberTypeInt64";
-  }
-
-  param_ptr->queryDims = internal::VecToSVec<int64_t>(inputs[kIndex0]->GetShapeVector());
-  param_ptr->keyDims = internal::VecToSVec<int64_t>(inputs[kIndex1]->GetShapeVector());
-
-  internal::MixParam op_param;
-  op_param.mixType = internal::MixParam::MixType::MIX_ROPE;
-  op_param.cosFormat = param_ptr->cosFormat;
-  op_param.rotaryCoeff = param_ptr->rotaryCoeff;
-  // setup rope param from inputs
-  param_ptr->specificParam = op_param;
+  param_ptr->specificParam = ropeParam;
   return param_ptr;
 }
 
