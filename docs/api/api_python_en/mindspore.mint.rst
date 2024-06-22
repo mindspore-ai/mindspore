@@ -103,6 +103,17 @@ Other Operations
 
     mindspore.mint.searchsorted
 
+Reduction Functions
+^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.argmax
+
+
 mindspore.mint.nn
 ------------------
 

@@ -102,6 +102,16 @@ BLAS和LAPACK运算
 
     mindspore.mint.searchsorted
 
+Reduction函数
+^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.argmax
+
 mindspore.mint.nn
 ------------------
 
