@@ -48,20 +48,17 @@ class InferenceMatmulSplitFusion : public Pass {
   std::string GetSplitFusionPatternName(const CNodePtr &cnode) const;
   bool CheckMatMulDataFormat(const CNodePtr &matmul_cnode) const;
   size_t GetSplitSizeLen(const CNodePtr &split_cnode) const;
-  PrimitivePtr CreateMatmulSplitPrim(const CNodePtr &split_cnode,
-                                    size_t split_size_len, const std::string &) const;
-  CNodePtr CreateMatmulSplitNode(const FuncGraphPtr &func_graph,
-                                const AnfNodePtr &node, const std::string &) const;
-  CNodePtr CreateMatmulBiasAddSplitNode(const FuncGraphPtr &func_graph,
-                                const AnfNodePtr &node, const std::string &) const;
-  CNodePtr CreateQuantBatchMatMulSplitNode(const FuncGraphPtr &func_graph,
-                                const AnfNodePtr &node, const std::string &) const;
-  CNodePtr CreateMatmulSplitSiluNode(const FuncGraphPtr &func_graph,
-                                const AnfNodePtr &node, const std::string &) const;
-  CNodePtr CreateMatmulBiasAddSplitSiluNode(const FuncGraphPtr &func_graph,
-                                const AnfNodePtr &node, const std::string &) const;
-  CNodePtr CreateQuantBatchMatMulSplitSiluNode(const FuncGraphPtr &func_graph,
-                                const AnfNodePtr &node, const std::string &) const;
+  PrimitivePtr CreateMatmulSplitPrim(const CNodePtr &split_cnode, size_t split_size_len, const std::string &) const;
+  CNodePtr CreateMatmulSplitNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const std::string &) const;
+  CNodePtr CreateMatmulBiasAddSplitNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                        const std::string &) const;
+  CNodePtr CreateQuantBatchMatMulSplitNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                           const std::string &) const;
+  CNodePtr CreateMatmulSplitSiluNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const std::string &) const;
+  CNodePtr CreateMatmulBiasAddSplitSiluNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                            const std::string &) const;
+  CNodePtr CreateQuantBatchMatMulSplitSiluNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                               const std::string &) const;
   bool enable_fusion_silu = false;
 
  protected:
@@ -84,25 +81,20 @@ class InferenceMatmulSplitFusion : public Pass {
   const std::string kPatternNameQuantBatchMatmulSplitSilu = "QuantBatchMatmulSplitSilu";
 
   std::map<size_t, std::map<std::string, std::string>> PatternPrimMap = {
-    {kMatmulQkvSplitSizeLen,
-      {
-        {kPatternNameMatMulSplit,        kPrimNameMatmulSplitOut3},
-        {kPatternNameMatMulBiasAddSplit, kPrimNameMatmulBiasSplitOut3},
-        {kPatternNameQuantBatchMatmulSplit,    kPrimNameQuantBatchMatmulSplitOut3}
-      },
+    {
+      kMatmulQkvSplitSizeLen,
+      {{kPatternNameMatMulSplit, kPrimNameMatmulSplitOut3},
+       {kPatternNameMatMulBiasAddSplit, kPrimNameMatmulBiasSplitOut3},
+       {kPatternNameQuantBatchMatmulSplit, kPrimNameQuantBatchMatmulSplitOut3}},
     },
 
     {kMatmulFfnSplitSizeLen,
-      {
-        {kPatternNameMatMulSplit,            kPrimNameMatmulSplitOut2},
-        {kPatternNameMatMulSplitSilu,        kPrimNameMatmulSplitSiluOut2},
-        {kPatternNameMatMulBiasAddSplit,     kPrimNameMatmulBiasSplitOut2},
-        {kPatternNameMatMulBiasAddSplitSilu, kPrimNameMatmulBiasSplitSiluOut2},
-        {kPatternNameQuantBatchMatmulSplit,        kPrimNameQuantBatchMatmulSplitOut2},
-        {kPatternNameQuantBatchMatmulSplitSilu,    kPrimNameQuantBatchMatmulSplitSiluOut2}
-      }
-    }
-  };
+     {{kPatternNameMatMulSplit, kPrimNameMatmulSplitOut2},
+      {kPatternNameMatMulSplitSilu, kPrimNameMatmulSplitSiluOut2},
+      {kPatternNameMatMulBiasAddSplit, kPrimNameMatmulBiasSplitOut2},
+      {kPatternNameMatMulBiasAddSplitSilu, kPrimNameMatmulBiasSplitSiluOut2},
+      {kPatternNameQuantBatchMatmulSplit, kPrimNameQuantBatchMatmulSplitOut2},
+      {kPatternNameQuantBatchMatmulSplitSilu, kPrimNameQuantBatchMatmulSplitSiluOut2}}}};
 };
 }  // namespace opt
 }  // namespace mindspore

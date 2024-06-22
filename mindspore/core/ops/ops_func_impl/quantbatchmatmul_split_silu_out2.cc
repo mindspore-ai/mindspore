@@ -15,13 +15,13 @@
  */
 
 #include "ops/ops_func_impl/quantbatchmatmul_split_silu_out2.h"
-#include "ops/ops_func_impl/matmul_fusion_utils.h"
 
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
 
+#include "ops/ops_func_impl/matmul_fusion_utils.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -32,12 +32,12 @@ namespace mindspore {
 namespace ops {
 
 BaseShapePtr QuantbatchmatmulSplitSiluOut2FuncImpl::InferShape(const PrimitivePtr &primitive,
-                                                         const std::vector<AbstractBasePtr> &input_args) const {
+                                                               const std::vector<AbstractBasePtr> &input_args) const {
   return MatmulFusionUtils::InferenceMultiMatmulInferShape(primitive, input_args);
 }
 
 TypePtr QuantbatchmatmulSplitSiluOut2FuncImpl::InferType(const PrimitivePtr &primitive,
-                                                   const std::vector<AbstractBasePtr> &input_args) const {
+                                                         const std::vector<AbstractBasePtr> &input_args) const {
   return MatmulFusionUtils::InferenceMultiMatmulInferType(primitive, input_args);
 }
 

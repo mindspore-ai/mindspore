@@ -37,8 +37,8 @@ internal::OpParamPtr InternalInferenceMultiMatmulBase::CreateOpParam(const std::
     n_list.push_back(0);
   }
   bool with_bias = primitive_->HasAttr("with_bias") ? GetValue<bool>(primitive_->GetAttr("with_bias")) : false;
-  int32_t silu_position = primitive_->HasAttr("silu_position") ?
-                            GetValue<int32_t>(primitive_->GetAttr("silu_position")) : -1;
+  int32_t silu_position =
+    primitive_->HasAttr("silu_position") ? GetValue<int32_t>(primitive_->GetAttr("silu_position")) : -1;
   const auto n_input_zero = 0;
   const auto n_input_one = 1;
   const auto n_input_two = 2;
