@@ -79,7 +79,6 @@ void ActorBase::Quit() {
 
 void ActorBase::Run() {
   auto msgHandler = [this](const std::unique_ptr<MessageBase> &msg) {
-    AddMsgRecord(msg->Name());
     switch (msg->GetType()) {
       case MessageBase::Type::KMSG:
       case MessageBase::Type::KUDP: {
@@ -120,7 +119,6 @@ void ActorBase::Run() {
         if (msg == nullptr) {
           continue;
         }
-        MS_LOG(DEBUG) << "dequeue message]actor=" << id.Name() << ",msg=" << msg->Name();
         if (msgHandler(msg) == ACTOR_TERMINATED) {
           return;
         }
