@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include "ops/op_name.h"
+#include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/shape_utils.h"
 #include "utils/log_adapter.h"
@@ -45,6 +46,9 @@ BaseShapePtr TraceFuncImpl::InferShape(const PrimitivePtr &primitive,
 TypePtr TraceFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto input_type = input_args[kInputIndex0]->GetType();
+  const std::set<TypePtr> valid_types = {kInt8,  kInt16,  kInt32,  kInt64,  kFloat16,   kFloat32,   kFloat64,
+                                         kUInt8, kUInt16, kUInt32, kUInt64, kComplex64, kComplex128};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, primitive->name());
   return input_type;
 }
 }  // namespace mindspore::ops
