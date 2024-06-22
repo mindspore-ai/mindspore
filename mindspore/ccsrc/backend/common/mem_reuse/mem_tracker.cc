@@ -24,6 +24,7 @@
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/distributed/collective/collective_manager.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -496,14 +497,18 @@ void MemoryTrackerEnabled::Dump() {
   has_dump = true;
 
   auto [block_csv_path, task_csv_path] = GetPath();
-  Common::CreatePrefixPath(block_csv_path);
-  Common::CreatePrefixPath(task_csv_path);
+  auto block_csv_path_opt = Common::CreatePrefixPath(block_csv_path);
+  auto task_csv_path_opt = Common::CreatePrefixPath(task_csv_path);
+  if (!block_csv_path_opt.has_value() || !task_csv_path_opt.has_value()) {
+    MS_LOG(ERROR) << "Get realpath failed, block_csv_path:" << block_csv_path << ", task_csv_path:" << task_csv_path;
+    return;
+  }
 
   MS_LOG(INFO) << "MemoryTracker Dump start";
-
-  std::ofstream block_file(block_csv_path);
+  ChangeFileMode(block_csv_path_opt.value(), S_IWUSR | S_IRUSR);
+  std::ofstream block_file(block_csv_path_opt.value());
   if (!block_file) {
-    MS_LOG(EXCEPTION) << "Open file " << block_csv_path << " failed.";
+    MS_LOG(EXCEPTION) << "Open file " << block_csv_path_opt.value() << " failed.";
   }
   size_t not_bind_size = 0;
   for (const auto &csv : block_csv) {
@@ -524,9 +529,10 @@ void MemoryTrackerEnabled::Dump() {
     block_file << "\n";
   }
 
-  std::ofstream task_file(task_csv_path);
+  ChangeFileMode(task_csv_path_opt.value(), S_IWUSR | S_IRUSR);
+  std::ofstream task_file(task_csv_path_opt.value());
   if (!task_file) {
-    MS_LOG(EXCEPTION) << "Open file " << task_csv_path << " failed.";
+    MS_LOG(EXCEPTION) << "Open file " << task_csv_path_opt.value() << " failed.";
   }
   for (const auto &csv : task_csv) {
     task_file << csv.first << ",";
@@ -550,10 +556,15 @@ void MemoryTrackerEnabled::DumpProfilingMemInfo(const std::string &path, const s
   std::lock_guard<std::mutex> lock(mutex_);
 
   auto csv_path = path + "/" + file_name + "_" + GetRankID() + ".csv";
-  Common::CreatePrefixPath(csv_path);
-  MS_LOG(INFO) << "MemoryTracker DumpProfilingMemInfo start, last_profiling_pos:" << last_profiling_pos_;
+  auto csv_path_opt = Common::CreatePrefixPath(csv_path);
+  if (!csv_path_opt.has_value()) {
+    MS_LOG(ERROR) << "Get realpath failed, csv_path:" << csv_path;
+    return;
+  }
 
-  std::ofstream block_file(csv_path);
+  MS_LOG(INFO) << "MemoryTracker DumpProfilingMemInfo start, last_profiling_pos:" << last_profiling_pos_;
+  ChangeFileMode(csv_path_opt.value(), S_IWUSR | S_IRUSR);
+  std::ofstream block_file(csv_path_opt.value());
   auto old_file_flags = block_file.flags();
   auto old_precision = block_file.precision();
   block_file.unsetf(std::ios_base::floatfield);
