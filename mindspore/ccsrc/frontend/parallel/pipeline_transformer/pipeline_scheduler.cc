@@ -317,7 +317,7 @@ void InterleavedScheduler::LastForwardMicroReorder() {
   auto sorted_bwd_begin = SortBetweenMicro(bwd_begin_, true);
   auto sorted_bwd_cell = SortBetweenMicro(bwd_cell_, true);
   auto sorted_bwd_end = SortBetweenMicro(bwd_end_, true);
-  auto index = chunk_num_ * micro_size_ - 1 - bias_;
+  auto index = chunk_num_ * micro_size_ - 1 - SizeToLong(bias_);
   if (index < 0) {
     auto prior = sorted_fwd_end.back().second;
     auto last = sorted_bwd_begin.front().first;
@@ -343,7 +343,7 @@ void InterleavedScheduler::LastForwardMicroReorder() {
     return;
   }
   if (stage_ == 0) {
-    auto loop_index = sorted_bwd_end[index].second.micro / (stage_num_ + offset_);
+    auto loop_index = sorted_bwd_end[index].second.micro / (stage_num_ + SizeToLong(offset_));
     if (loop_index == 0) {
       auto prior2 = sorted_fwd_end.back().second;
       auto last2 = sorted_bwd_begin[index + 1].first;
@@ -375,7 +375,7 @@ void InterleavedScheduler::EndPhaseReorder() {
     LongToSize(chunk_num_ * micro_size_) > bias_ ? LongToSize(chunk_num_ * micro_size_ - bias_ - 1) : 0;
   for (size_t i = LongToSize(begin_index); i < LongToSize(chunk_num_ * micro_size_ - 1); ++i) {
     if (stage_ == 0) {
-      auto loop_index = sorted_bwd_end[i].second.micro / (stage_num_ + offset_);
+      auto loop_index = sorted_bwd_end[i].second.micro / (stage_num_ + SizeToLong(offset_));
       auto offset = LongToSize(offset_);
       if (loop_index != 0 || sorted_bwd_end[i].second.chunk == 0) {
         offset = 0;
@@ -492,18 +492,18 @@ void InterleavedScheduler::MemoryOptimizedWarmUpPhaseReorder() {
       ControlOrder(prior, last);
       continue;
     } else {
-      auto offset = 0;
+      size_t offset = 0;
       if (sorted_fwd_begin[i + 1].first.chunk != 0) {
         offset = offset_;
       }
       auto prior = sorted_fwd_end[i].second;
       auto last = sorted_fwd_cell[i + 1].first;
       ControlOrder(prior, last);
-      auto prior1 = sorted_fwd_cell[i - offset].second;
+      auto prior1 = sorted_fwd_cell[i - LongToSize(offset)].second;
       auto last1 = sorted_fwd_begin[i + 1].first;
       ControlOrder(prior1, last1);
       auto prior2 = sorted_fwd_begin[i + 1].second;
-      auto last2 = sorted_fwd_end[i - offset].first;
+      auto last2 = sorted_fwd_end[i - LongToSize(offset)].first;
       ControlOrder(prior1, last1);
     }
   }
@@ -541,11 +541,11 @@ void InterleavedScheduler::MemoryOptimizedStablePhaseReorder() {
       ControlOrder(prior, last);
     } else {
       auto offset = offset_;
-      auto loop_index_bwd = sorted_bwd_end[i - bias_].second.micro / (LongToSize(stage_num_) + offset_);
+      auto loop_index_bwd = sorted_bwd_end[i - bias_].second.micro / (stage_num_ + SizeToLong(offset_));
       if (loop_index_bwd != 0) {
         offset = 0;
       }
-      auto loop_index_fwd = sorted_fwd_end[i + 1].second.micro / (LongToSize(stage_num_) + offset_);
+      auto loop_index_fwd = sorted_fwd_end[i + 1].second.micro / (stage_num_ + SizeToLong(offset_));
       if (loop_index_fwd == 0) {
         auto prior1 = sorted_fwd_end[i - offset_].second;
         auto last1 = sorted_fwd_cell[i + 1 - offset_].first;
@@ -679,7 +679,7 @@ void InterleavedScheduler::StablePhaseReorder() {
         ControlOrder(prior1, last1);
       }
       if (stage_ != 0 || sorted_bwd_end[i - LongToSize(bias_)].first.chunk != 0) {
-        auto loop_index = sorted_bwd_end[i - LongToSize(bias_)].first.micro / (stage_num_ + offset_);
+        auto loop_index = sorted_bwd_end[i - LongToSize(bias_)].first.micro / (stage_num_ + SizeToLong(offset_));
         auto offset = LongToSize(offset_);
         if (loop_index != 0 || stage_ != 0) {
           offset = 0;
@@ -738,8 +738,8 @@ void InterleavedScheduler::Reorder() {
     OptimizerShardCommReorder();
     return;
   }
-  offset_ = micro_size_ % stage_num_;
-  bias_ = (stage_num_ + offset_) * (chunk_num_ - 1) + (stage_num_ - stage_ - 1) * 2;
+  offset_ = LongToSize(micro_size_ % stage_num_);
+  bias_ = LongToSize((stage_num_ + SizeToLong(offset_)) * (chunk_num_ - 1) + (stage_num_ - stage_ - 1) * 2);
   is_even_stage_ = stage_ % 2 == 0;
   if (micro_size_ < stage_num_) {
     MS_LOG(EXCEPTION) << "For 1F1B Scheduler, MicroBatch num must be larger or equal than StageNum, but got MicroBatch:"
