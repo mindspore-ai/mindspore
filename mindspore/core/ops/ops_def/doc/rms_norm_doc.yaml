@@ -1,0 +1,45 @@
+rms_norm:
+    description: |
+        The RmsNorm(Root Mean Square Layer Normalization) operator is a normalization operation. Compared to
+        LayerNorm, it retains scaling invariance and removes translation invariance. Its formula is:
+
+        .. math::
+            y=\frac{x_i}{\sqrt{\frac{1}{n}}\sum_{i=1}^{n}{ x_i^2}+\varepsilon  }\gamma_i
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion. This API is only supported in Atlas A2 training
+                series for now.
+
+        Args:
+            x (Tensor): Input data of RmsNorm. Support data type: float16, float32, bfloat16.
+            gamma (Tensor): Learnable parameter :math:`\gamma` . Support data type: float16, float32, bfloat16.
+            epsilon (float, optional): A float number to prevent division by 0. The value is between 0 and 1, default value
+                is `1e-6`.
+
+        Returns:
+            - y, a tensor denotes the normalized input, has the same type and shape as `x`.
+            - rstd, a float tensor denotes the reciprocal of the input standard deviation, used by gradient calculation.
+
+        Raises:
+            TypeError: If data type of `x` is not one of the following: float16, float32, bfloat16.
+            TypeError: If data type of `gamma` is not one of the following: float16, float32, bfloat16.
+            TypeError: If data type of `x` is not the same with the data type of `gamma`.
+            ValueError: If `epsilon` is not a float between 0 and 1.
+            ValueError: If the rank of `gamma` is lagger than the rank of `x`.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([[1, 2, 3], [1, 2, 3]]), mindspore.float32)
+            >>> gamma = Tensor(np.ones([3]), mindspore.float32)
+            >>> y, rstd = ops.rms_norm(x, gamma)
+            >>> print(y)
+            [[0.46290997  0.92581993  1.3887299]
+             [0.46290997  0.92581993  1.3887299]]
+            >>> print(rstd)
+            [[0.46290997]
+             [0.46290997]]

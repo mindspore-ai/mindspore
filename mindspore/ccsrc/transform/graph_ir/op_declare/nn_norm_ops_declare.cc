@@ -355,19 +355,21 @@ CUST_OUTPUT_MAP(MultiMarginLoss) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MultiMarginLoss, prim::kPrimMultiMarginLoss->name(), CUST_ADPT_DESC(MultiMarginLoss));
 
 // RmsNorm
-INPUT_MAP(RmsNorm) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}};
-ATTR_MAP(RmsNorm) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+INPUT_MAP(RmsNorm) = {{kIndex1, INPUT_DESC(x)}, {kIndex2, INPUT_DESC(gamma)}};
+INPUT_ATTR_MAP(RmsNorm) = {{kIndex3, ATTR_DESC(epsilon, AnyTraits<float>())}};
+ATTR_MAP(RmsNorm) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(RmsNorm) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(rstd)}};
-REG_ADPT_DESC(RmsNorm, prim::kPrimRmsNorm->name(), ADPT_DESC(RmsNorm))
+REG_ADPT_DESC(RmsNorm, kRmsNormOpName, ADPT_DESC(RmsNorm))
 
 // RmsNormGrad
-INPUT_MAP(RmsNormGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(rstd)}, {4, INPUT_DESC(gamma)}};
+INPUT_MAP(RmsNormGrad) = {
+  {kIndex1, INPUT_DESC(dy)}, {kIndex2, INPUT_DESC(x)}, {kIndex3, INPUT_DESC(rstd)}, {kIndex4, INPUT_DESC(gamma)}};
 ATTR_MAP(RmsNormGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(RmsNormGrad) = {
   {0, OUTPUT_DESC(dx)},
   {1, OUTPUT_DESC(dgamma)},
 };
-REG_ADPT_DESC(RmsNormGrad, prim::kPrimRmsNormGrad->name(), ADPT_DESC(RmsNormGrad))
+REG_ADPT_DESC(RmsNormGrad, kRmsNormGradOpName, ADPT_DESC(RmsNormGrad))
 
 // MultilabelMarginLossGrad
 CUST_INPUT_MAP(MultilabelMarginLossGrad) = {

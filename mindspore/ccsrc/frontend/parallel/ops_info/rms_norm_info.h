@@ -31,6 +31,7 @@ namespace parallel {
 constexpr size_t RMS_NORM_INPUT_SIZE = 2;
 constexpr size_t RMS_NORM_INPUT_INDEX = 0;
 constexpr size_t RMS_NORM_GAMMA_INDEX = 1;
+constexpr float DEFAULT_EPS = 1e-6;
 constexpr char BEGIN_NORM_AXIS[] = "begin_norm_axis";
 
 class RmsNormInfo : public OperatorInfo {

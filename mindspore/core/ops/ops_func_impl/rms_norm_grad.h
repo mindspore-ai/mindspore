@@ -14,26 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_RMS_NORM_GRAD_H_
-#define MINDSPORE_CORE_OPS_RMS_NORM_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_RMS_NORM_GRAD_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_RMS_NORM_GRAD_H_
 #include <memory>
 #include <vector>
-
 #include "mindapi/base/types.h"
-#include "ops/base_operator.h"
-#include "ops/nn_op_name.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-
-class MIND_API RmsNormGrad : public BaseOperator {
+class MIND_API RmsNormGradFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(RmsNormGrad);
-  RmsNormGrad() : BaseOperator(kRmsNormGradOpName) { InitIOName({"dy", "x", "rstd", "gamma"}, {"dx", "dgamma"}); }
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
-
-MIND_API abstract::AbstractBasePtr RmsNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_RMS_NORM_GRAD_H_
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_RMS_NORM_GRAD_H_

@@ -1,0 +1,20 @@
+#operator rms_norm_grad
+rms_norm_grad:
+  args:
+    dy:
+      dtype: tensor
+    x:
+      dtype: tensor
+    rstd:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+  returns:
+    dx:
+      dtype: tensor
+    dgamma:
+      dtype: tensor
+  dispatch:
+    enable: True
+  function:
+    disable: True

@@ -1,0 +1,19 @@
+#operator rms_norm
+rms_norm:
+  args:
+    x:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+    epsilon:
+      dtype: float
+      default: 1e-6
+      prim_init: True
+  returns:
+    y:
+      dtype: tensor
+    rstd:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: RmsNormAscend

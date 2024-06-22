@@ -79,7 +79,7 @@ def test_rms_norm_model_parallel():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((1, 16, 1), (1, 16, 1))
-    strategy2 = ((1, 16, 1), (16, 1))
+    strategy2 = ((16, 1, 1), (1, 1))
     strategy3 = ((1, 16, 1), (1, 16, 1))
     net = Net(_w, strategy1, strategy2, strategy3)
     compile_net(net, _x, _b)
@@ -93,7 +93,7 @@ def test_rms_norm_hybrid_parallel():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((2, 8, 1), (2, 8, 1))
-    strategy2 = ((2, 8, 1), (8, 1))
+    strategy2 = ((2, 1, 1), (1, 1))
     strategy3 = ((2, 8, 1), (2, 8, 1))
     net = Net(_w, strategy1, strategy2, strategy3)
     compile_net(net, _x, _b)
@@ -119,7 +119,7 @@ def test_rms_norm_repeat_calc():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((2, 2, 4), (2, 2, 4))
-    strategy2 = ((2, 2, 1), (2, 1))
+    strategy2 = ((2, 1, 1), (1, 1))
     strategy3 = ((2, 2, 4), (2, 2, 4))
     net = Net(_w, strategy1, strategy2, strategy3)
     compile_net(net, _x, _b)
@@ -153,7 +153,7 @@ def test_rms_norm_data_parallel_2d():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((16, 1), (16, 1))
-    strategy2 = ((16, 1), (1,))
+    strategy2 = ((1, 1), (1,))
     strategy3 = ((16, 1), (16, 1))
     net = Net(_w_2d, strategy1, strategy2, strategy3)
     compile_net(net, _x_2d, _b_2d)

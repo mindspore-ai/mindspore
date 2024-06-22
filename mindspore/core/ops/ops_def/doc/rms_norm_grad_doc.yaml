@@ -1,0 +1,19 @@
+rms_norm_grad:
+  description: |
+    Calculates the gradient of RmsNorm operation.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Inputs:
+        - **dy** (Tensor) - The grad of previous operator, support data type: float16, float32, bfloat16.
+        - **x** (Tensor) - Input data of RmsNorm, support data type: float16, float32, bfloat16.
+        - **rstd** (Tensor) - The second output of RmsNorm, support data type: float16, float32, bfloat16.
+        - **gamma** (Tensor) - Support data type: float16, float32, bfloat16.
+
+    Returns:
+        - **dx** (Tensor) - Has the same type and shape as `dy`.
+        - **dgamma** (Tensor) - A float32 Tensor with the same shape as `gamma`.
+
+    Supported Platforms:
+        ``Ascend``
