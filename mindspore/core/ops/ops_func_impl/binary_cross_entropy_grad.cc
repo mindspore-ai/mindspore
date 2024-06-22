@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -39,5 +40,23 @@ BaseShapePtr BinaryCrossEntropyGradFuncImpl::InferShape(
 
   return input_shape_ptr->Clone();
 }
+
+TypePtrList BinaryCrossEntropyGradFuncImpl::InferType(const PrimitivePtr &primitive,
+                                                      const ValuePtrList &input_values) const {
+  const auto &input_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  return {input_tensor->Dtype()};
+}
+
+ShapeArray BinaryCrossEntropyGradFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                                      const ValuePtrList &input_values) const {
+  const auto &input_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  auto input_shape = input_tensor->shape();
+  return {input_shape};
+}
+
+REGISTER_SIMPLE_INFER(kNameBinaryCrossEntropyGrad, BinaryCrossEntropyGradFuncImpl)
+
 }  // namespace ops
 }  // namespace mindspore

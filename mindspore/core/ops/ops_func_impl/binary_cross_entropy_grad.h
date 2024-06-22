@@ -25,8 +25,9 @@ namespace ops {
 class MIND_API BinaryCrossEntropyGradFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
