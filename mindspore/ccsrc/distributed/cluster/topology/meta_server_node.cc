@@ -675,10 +675,8 @@ bool MetaServerNode::CheckRankIdValidation(const std::string &node_id, const std
 }
 
 void MetaServerNode::ReassignNodeRank() {
-  if (common::GetEnv("MS_HCCL_CM_INIT") != "1" &&
-      std::all_of(nodes_.begin(), nodes_.end(), [](const auto &node) { return common::IsStrNumeric(node.first); })) {
-    MS_LOG(WARNING)
-      << "Rank ids are already set by numeric node ids, and this is not CM initialization. No need to reassign them.";
+  if (std::all_of(nodes_.begin(), nodes_.end(), [](const auto &node) { return common::IsStrNumeric(node.first); })) {
+    MS_LOG(WARNING) << "Rank ids are already set by numeric node ids. No need to reassign them.";
     for (const auto &n : nodes_) {
       const std::shared_ptr<NodeInfo> &node_info = n.second;
       const std::string &role = node_info->role;

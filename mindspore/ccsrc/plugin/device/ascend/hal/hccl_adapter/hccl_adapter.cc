@@ -548,9 +548,8 @@ HcclResult HcclAdapter::HcclExecAllToAllv(const ::HcomAllToAllVParams &params, c
 }
 
 bool HcclAdapter::UseHcclCM() const {
-  // If environment variable 'MS_HCCL_CM_INIT' is set and using dynamic cluster, we consider this process should be
-  // launched by CM methods provided by HCCL.
-  return common::UseDynamicCluster() && !common::GetEnv("MS_HCCL_CM_INIT").empty();
+  // This MS_HCCL_CM_INIT env is deperacated since MindSpore 2.3 version.
+  return false;
 }
 
 HcclResult HcclAdapter::HcclAllToAllv(void *send_buf, void *recv_buf, hccl::HcclAllToAllVParams params,
