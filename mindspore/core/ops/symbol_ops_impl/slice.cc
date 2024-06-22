@@ -56,7 +56,7 @@ SymbolPtr Slice::Eval() {
     auto data_s = data->item_as_sptr<IntSymbol>(i);
     auto begin_s = begin->item_as_sptr<IntSymbol>(i);
     auto size_s = size->item_as_sptr<IntSymbol>(i);
-    if (size_s->is_positive()) {
+    if (size_s->is_greater_equal(0)) {
       new_syms[i] = size_s;
     } else if (size_s->is_negative()) {
       // when the size is "-1", result is data[begin:]
