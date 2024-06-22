@@ -23,6 +23,8 @@
 namespace mindspore::kernel {
 namespace acl {
 AclAllocator *CreateAclAllocator() {
+  MS_LOG(INFO) << "LoadAscendApiSymbols for MindSpore lite.";
+  mindspore::transform::LoadAscendApiSymbols();
   MS_LOG(INFO) << "CreateAclAllocator..";
   return new AclAllocator();
 }
