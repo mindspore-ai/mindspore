@@ -64,8 +64,20 @@ Array操作
     mindspore.mint.div
     mindspore.mint.divide
     mindspore.mint.erf
+    mindspore.mint.erfinv
+    mindspore.mint.exp
     mindspore.mint.floor
     mindspore.mint.log
+    mindspore.mint.logical_and
+    mindspore.mint.logical_not
+    mindspore.mint.logical_or
+    mindspore.mint.mul
+    mindspore.mint.neg
+    mindspore.mint.negative
+    mindspore.mint.pow
+    mindspore.mint.reciprocal
+    mindspore.mint.rsqrt
+    mindspore.mint.sin
     mindspore.mint.sqrt
     mindspore.mint.sub
 
@@ -82,6 +94,22 @@ Reduction运算
     mindspore.mint.prod
     mindspore.mint.sum
 
+
+比较运算
+^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.eq
+    mindspore.mint.greater
+    mindspore.mint.gt
+    mindspore.mint.le
+    mindspore.mint.less
+    mindspore.mint.less_equal
+    mindspore.mint.lt
 
 BLAS和LAPACK运算
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

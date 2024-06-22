@@ -24,4 +24,4 @@ exp:
             >>> input = Tensor(np.array([0.0, 1.0, 3.0]), mindspore.float32)
             >>> output = ops.exp(input)
             >>> print(output)
-            [ 1.        2.718282 20.085537]
+            [ 1.        2.7182817 20.085537]
