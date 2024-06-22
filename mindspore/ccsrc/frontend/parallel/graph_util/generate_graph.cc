@@ -139,11 +139,6 @@ const char *GetOpPythonPath(const char *op_name) {
     return NN_OPS_PATH;
   }
 
-  static const py::module comm_mod = py::module::import(COMM_OP_PATH);
-  if (py::hasattr(comm_mod, op_name)) {
-    return COMM_OP_PATH;
-  }
-
   static const py::module functional_mod = py::module::import(FUNCTIONAL_OP_PATH);
   if (!py::hasattr(functional_mod, op_name)) {
     MS_LOG(EXCEPTION) << OP_PATH << " and " << INNER_OP_PATH << " and " << GRAD_OP_PATH << " and " << NN_OPS_PATH

@@ -2507,3 +2507,38 @@ class _MirrorSilentCheck(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype, pre_dtype, min_dtype, max_dtype, n_dtype, loss_scale_dtype):
         return x_dtype
+
+
+class _VirtualConverterEnd(PrimitiveWithInfer):
+    """
+    Auto parallel virtual operator.
+    """
+
+    @prim_attr_register
+    def __init__(self, input_nums):
+        """Initialize _VirtualConverterEnd."""
+        self.input_nums = input_nums
+
+    def infer_shape(self, *args):
+        return (args[0][0] * self.input_nums,) + tuple(args[0][1:])
+
+    def infer_dtype(self, *args):
+        return args[0]
+
+
+class _VirtualConverterBegin(PrimitiveWithInfer):
+    """
+    Auto parallel virtual operator.
+    """
+
+    @prim_attr_register
+    def __init__(self, output_nums):
+        """Initialize _VirtualConverterBegin."""
+        self.output_nums = output_nums
+
+    def infer_shape(self, arg):
+        new_arg = (arg[0] / self.output_nums,) + tuple(arg[1:])
+        return (new_arg,) * self.output_nums
+
+    def infer_dtype(self, arg):
+        return (arg,) * self.output_nums

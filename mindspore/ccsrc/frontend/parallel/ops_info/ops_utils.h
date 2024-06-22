@@ -147,7 +147,6 @@ constexpr char REDUCE_OP_ALL[] = "prod";
 constexpr char REDUCE_OP_PROD[] = "prod";
 constexpr char OP_PATH[] = "mindspore.ops.operations";
 constexpr char INNER_OP_PATH[] = "mindspore.ops.operations._inner_ops";
-constexpr char COMM_OP_PATH[] = "mindspore.ops.operations.comm_ops";
 constexpr char GRAD_OP_PATH[] = "mindspore.ops.operations._grad_ops";
 constexpr char FUNCTIONAL_OP_PATH[] = "mindspore.ops.functional";
 constexpr char NN_OPS_PATH[] = "mindspore.ops.operations.nn_ops";
