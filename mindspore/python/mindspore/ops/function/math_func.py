@@ -6701,11 +6701,15 @@ def mean(x, axis=None, keep_dims=False):
     And reduce a dimension of `x` along the specified `axis`. `keep_dims`
     determines whether the dimensions of the output and input are the same.
 
+    Note:
+        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
+
     Args:
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: ``None`` , reduce all dimensions.
-          Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
+        axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` ,
+            reduce all dimensions. Only constant value is allowed. Assume the rank of `x` is r,
+            and the value range is [-r,r).
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default: ``False`` .
 
@@ -6721,7 +6725,7 @@ def mean(x, axis=None, keep_dims=False):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple, list or Tensor.
         TypeError: If `keep_dims` is not a bool.
         ValueError: If `axis` is out of range.
 
@@ -6797,19 +6801,19 @@ def mean_ext(input, axis=None, keep_dims=False, dtype=None):
         dtype (:class:`mindspore.dtype`): The desired data type of returned Tensor. Default: ``None`` .
 
     Returns:
-        Tensor, has the same data type as input tensor.
+        Tensor, has the same data type as the `input`.
 
         - If `axis` is ``None`` , and `keep_dims` is ``False`` ,
-            the output is a 0-D tensor representing the product of all elements in the input tensor.
+          the output is a 0-D tensor representing the product of all elements in the input tensor.
         - If `axis` is int, set as 1, and `keep_dims` is ``False`` ,
-            the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+          the shape of output is :math:`(input_0, input_2, ..., input_R)`.
         - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is ``False`` ,
-            the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+          the shape of output is :math:`(input_0, input_3, ..., input_R)`.
         - If `axis` is 1-D Tensor, set as [1, 2], and `keep_dims` is ``False`` ,
-            the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+          the shape of output is :math:`(input_0, input_3, ..., input_R)`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple, list or Tensor.
         TypeError: If `keep_dims` is not a bool.
         ValueError: If `axis` is out of range.
@@ -6822,7 +6826,7 @@ def mean_ext(input, axis=None, keep_dims=False, dtype=None):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> output = ops.mean(x, 1, keep_dims=True)
+        >>> output = ops.mean_ext(x, 1, keep_dims=True)
         >>> result = output.shape
         >>> print(result)
         (3, 1, 5, 6)
@@ -6831,25 +6835,25 @@ def mean_ext(input, axis=None, keep_dims=False, dtype=None):
         ... [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
         ... [[6, 6, 6, 6, 6, 6], [8, 8, 8, 8, 8, 8], [10, 10, 10, 10, 10, 10]]]),
         ... mindspore.float32)
-        >>> output = ops.mean(x)
+        >>> output = ops.mean_ext(x)
         >>> print(output)
         5.0
         >>> print(output.shape)
         ()
         >>> # case 2: Reduces a dimension along the axis 0
-        >>> output = ops.mean(x, 0, True)
+        >>> output = ops.mean_ext(x, 0, True)
         >>> print(output)
         [[[4. 4. 4. 4. 4. 4.]
         [5. 5. 5. 5. 5. 5.]
         [6. 6. 6. 6. 6. 6.]]]
         >>> # case 3: Reduces a dimension along the axis 1
-        >>> output = ops.mean(x, 1, True)
+        >>> output = ops.mean_ext(x, 1, True)
         >>> print(output)
         [[[2. 2. 2. 2. 2. 2.]]
         [[5. 5. 5. 5. 5. 5.]]
         [[8. 8. 8. 8. 8. 8.]]]
         >>> # case 4: Reduces a dimension along the axis 2
-        >>> output = ops.mean(x, 2, True)
+        >>> output = ops.mean_ext(x, 2, True)
         >>> print(output)
         [[[ 2.]
         [ 2.]
@@ -6883,7 +6887,7 @@ def prod(input, axis=None, keep_dims=False, dtype=None):
         dtype (:class:`mindspore.dtype`): The desired data type of returned Tensor. Default: ``None`` .
 
     Returns:
-        Tensor, has the same data type as input tensor.
+        Tensor, has the same data type as the `input`.
 
         - If `axis` is ``None`` , and `keep_dims` is ``False`` ,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
@@ -10143,7 +10147,7 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
         dtype (:class:`mindspore.dtype`, optional): The desired data type of returned Tensor. Default: ``None`` .
 
     Returns:
-       A Tensor, sum of elements over a given `dim` in `input`.
+        A Tensor, sum of elements over a given dim in `input`.
 
     Raises:
         TypeError: If `input` is not a Tensor.

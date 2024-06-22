@@ -39,7 +39,7 @@ tensor::BaseTensorPtr ProdExtAscendCustomize(const std::shared_ptr<OpRunner> &op
   }
 
   // Infer function has confirmed the actual dtype of output
-  TypeId out_dtype = op->output_abs()->GetType()->cast<TensorTypePtr>()->element()->type_id();
+  TypeId out_dtype = op->output_value_simple_info()->dtype_vector_[kIndex0]->type_id();
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());

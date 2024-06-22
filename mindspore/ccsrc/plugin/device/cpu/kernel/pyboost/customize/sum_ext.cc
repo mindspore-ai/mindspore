@@ -18,6 +18,7 @@
 #include "plugin/device/cpu/kernel/pyboost/auto_generate/cast.h"
 #include "plugin/device/cpu/kernel/pyboost/auto_generate/sum_ext.h"
 #include "kernel/pyboost/pyboost_utils.h"
+#include "kernel/pyboost/op_runner.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
@@ -66,7 +67,7 @@ void SumExtCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr
   }
 
   // Infer function has confirmed the actual dtype of output
-  TypeId out_dtype = op->output_abs()->GetType()->cast<TensorTypePtr>()->element()->type_id();
+  TypeId out_dtype = op->output_value_simple_info()->dtype_vector_[kIndex0]->type_id();
 
   BaseTensorPtr act_tensor = input_tensor;
   // Call Cast before Launch ReduceSum
@@ -78,28 +79,11 @@ void SumExtCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr
   }
 
   const auto skip_mode = std::make_shared<BoolImm>(false);
+
   // Set new input abstract for ReduceSum
   std::vector<AbstractBasePtr> new_input_abs{act_tensor->ToAbstract(), act_axis->ToAbstract(), keep_dims->ToAbstract(),
                                              skip_mode->ToAbstract()};
-
-  // Check if dtype is matched on ReduceSum kernel
-  auto kernel_attr_pair =
-    PyBoostUtils::SelectKernel(new_input_abs, op->output_abs(), op->device_context(), prim::kPrimReduceSum->name());
-  if (kernel_attr_pair.first) {
-    SumExtCPUCall(op, act_tensor, act_axis, keep_dims, std::make_shared<BoolImm>(false), new_input_abs);
-  } else {
-    auto &select_kernel = kernel_attr_pair.second;
-    auto &device_name = op->device_context()->device_context_key_.device_name_;
-    const auto &real_input_tensor =
-      PyBoostUtils::CastTensor(act_tensor, select_kernel.input_type()[0].dtype, device_name);
-
-    const auto &sum_ext_op = CREATE_PYBOOST_OP(SumExt, device_name);
-    sum_ext_op->set_primitive(prim::kPrimSumExt);
-    const auto out_tensor = sum_ext_op->Call(real_input_tensor, axis, keep_dims, std::nullopt);
-
-    const auto &real_output_tensor = PyBoostUtils::CastTensor(out_tensor, out_dtype, device_name);
-    op->set_outputs({real_output_tensor});
-  }
+  SumExtCPUCall(op, act_tensor, act_axis, keep_dims, skip_mode, new_input_abs);
 }
 }  // namespace pyboost
 }  // namespace kernel
