@@ -36,7 +36,6 @@ class HcomAllReduceKernel : public HcclKernel {
  private:
 #ifdef ENABLE_INTERNAL_KERNELS
   AllReduceFunPtr lccl_all_reduce_func_;
-  bool use_lccl_{false};
 #endif
 };
 

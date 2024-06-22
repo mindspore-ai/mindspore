@@ -30,7 +30,6 @@
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
-#include "plugin/device/ascend/hal/common/ascend_utils.h"
 
 using AscendCollectiveCommLib = mindspore::device::ascend::AscendCollectiveCommLib;
 namespace {
@@ -139,8 +138,7 @@ bool HcclKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vect
 
   if (common::GetEnv(kSimulationLevel).empty() && !common::IsNeedProfileMemory()) {
 #ifdef ENABLE_INTERNAL_KERNELS
-    std::string enable_lccl = device::ascend::EnableLcclEnv();
-    if (enable_lccl == "on") {
+    if (!common::GetEnv("MS_ENABLE_LCCL").empty()) {
       LoadLcclLibrary();
     } else {
       LoadHcclLibrary();
