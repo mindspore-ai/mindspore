@@ -14,7 +14,9 @@ slice_ext:
             Tensor.
 
         Raises:
-            TypeError: If the input is not a tensor.
+            ValueError: If dim is out of range [-input.ndim, input.ndim).
+            ValueError: If start is out of range [-input.shape[dim], input.shape[dim]].
+            ValueError: It end is out of range [start, input.shape[dim]].
 
         Supported Platforms:
             ``Ascend``
