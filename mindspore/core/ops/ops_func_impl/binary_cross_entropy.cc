@@ -47,10 +47,13 @@ BaseShapePtr BinaryCrossEntropyFuncImpl::InferShape(const PrimitivePtr &primitiv
     auto &input_shape = input_shape_ptr->GetShapeVector();
     auto &target_shape = target_shape_ptr->GetShapeVector();
     auto &weight_shape = weight_shape_ptr->GetShapeVector();
-    MS_CHECK_VALUE(input_shape == target_shape,
-                   CheckAndConvertUtils::FormatCheckMsg("input_shape", input_shape, kEqual, target_shape, primitive));
-    MS_CHECK_VALUE(input_shape == weight_shape,
-                   CheckAndConvertUtils::FormatCheckMsg("input_shape", input_shape, kEqual, weight_shape, primitive));
+    bool is_dynamic = IsDynamic(input_shape) || IsDynamic(target_shape) || IsDynamic(weight_shape);
+    if (!is_dynamic) {
+      MS_CHECK_VALUE(input_shape == target_shape,
+                     CheckAndConvertUtils::FormatCheckMsg("input_shape", input_shape, kEqual, target_shape, primitive));
+      MS_CHECK_VALUE(input_shape == weight_shape,
+                     CheckAndConvertUtils::FormatCheckMsg("input_shape", input_shape, kEqual, weight_shape, primitive));
+    }
   }
   auto reduction = GetScalarValue<int64_t>(input_args[kInputIndex3]->GetValue());
 
@@ -79,10 +82,13 @@ ShapeArray BinaryCrossEntropyFuncImpl::InferShape(const PrimitivePtr &primitive,
   const auto &weight_tensor = input_values[kInputIndex2]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(weight_tensor);
   auto &weight_shape = weight_tensor->shape();
-  MS_CHECK_VALUE(input_shape == target_shape,
-                 CheckAndConvertUtils::FormatCheckMsg("input_shape", input_shape, kEqual, target_shape, primitive));
-  MS_CHECK_VALUE(input_shape == weight_shape,
-                 CheckAndConvertUtils::FormatCheckMsg("input_shape", input_shape, kEqual, weight_shape, primitive));
+  bool is_dynamic = IsDynamic(input_shape) || IsDynamic(target_shape) || IsDynamic(weight_shape);
+  if (!is_dynamic) {
+    MS_CHECK_VALUE(input_shape == target_shape,
+                   CheckAndConvertUtils::FormatCheckMsg("input_shape", input_shape, kEqual, target_shape, primitive));
+    MS_CHECK_VALUE(input_shape == weight_shape,
+                   CheckAndConvertUtils::FormatCheckMsg("input_shape", input_shape, kEqual, weight_shape, primitive));
+  }
   const auto &reduction = input_values[kInputIndex3]->cast<Int64ImmPtr>();
   MS_EXCEPTION_IF_NULL(reduction);
   auto reduction_value = reduction->value();
