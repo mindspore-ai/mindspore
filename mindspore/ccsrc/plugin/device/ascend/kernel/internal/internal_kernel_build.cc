@@ -101,6 +101,10 @@ bool IsRegisteredInternalKernel(const AnfNodePtr &anf_node) {
   if (Factory<InternalKernelMod>::Instance().IsRegistered(opname)) {
     internal::DtypesParamPtr check_param = std::make_shared<internal::DtypesParam>();
     check_param->op_id_ = InternalKernelUtils::ToInternalOpId(opname);
+    if (check_param->op_id_ == -1) {
+      MS_LOG(INFO) << "internal can't find Kernel[" << opname << "]";
+      return false;
+    }
     std::vector<TypeId> ms_in_dtypes;
     std::vector<TypeId> ms_out_dtypes;
     auto cnode = anf_node->cast<CNodePtr>();

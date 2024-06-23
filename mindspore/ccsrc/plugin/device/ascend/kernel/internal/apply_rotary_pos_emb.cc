@@ -15,9 +15,7 @@
  */
 
 #include "plugin/device/ascend/kernel/internal/apply_rotary_pos_emb.h"
-
 #include <memory>
-
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 
@@ -35,8 +33,6 @@ internal::OpParamPtr ApplyRotaryPosEmb::CreateOpParam(const std::vector<KernelTe
   } else {
     MS_LOG(EXCEPTION) << "ApplyRotaryPosEmb input[5] dtype is not kNumberTypeInt64";
   }
-
-  // setup rope param from inputs
   param_ptr->specificParam = ropeParam;
   return param_ptr;
 }

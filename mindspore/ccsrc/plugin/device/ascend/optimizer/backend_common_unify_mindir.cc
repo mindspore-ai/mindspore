@@ -33,7 +33,6 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnorm_to_bninfer.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/histogram_fixed_width_fusion.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/inference_multi_matmul_with_split_fusion.h"
 #include "plugin/device/ascend/optimizer/mindir/renorm_split.h"
 #include "plugin/device/ascend/optimizer/mindir/optimizer_unify_output.h"
 #include "plugin/device/ascend/optimizer/mindir/space_batch_nd_attr_update.h"
@@ -56,8 +55,6 @@
 #include "plugin/device/ascend/optimizer/ge/getnext_for_ge.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/adaptive_max_pool2d_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/flash_attention_fusion.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/inference_multi_matmul_fusion.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/multi_weight_matmuls_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/add_layer_norm_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/add_rms_norm_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/add_cast_rms_norm_cast_fusion.h"
@@ -66,6 +63,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/shape_reshape_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/matmul_allreduce_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/matmul_elemwise_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/inference_matmul_split_fusion.h"
 
 namespace mindspore {
 namespace opt {
@@ -143,18 +141,12 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   }
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::CentralizationMindIR>());
 #ifdef ENABLE_INTERNAL_KERNELS
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::InferenceMultiMatmulWithSplitFusion>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::InferenceMultiMatmulFusion>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::MultiWeightMatmulsFusion>());
-
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddLayernormFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::ShapeReshapeFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddRmsNormFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddCastRmsNormCastFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatMulAllReduceFusion>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulElemBiasaddFusion>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulElemReluFusion>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulElemGeluFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::InferenceMatmulSplitFusion>());
 #endif  // ENABLE_INTERNAL_KERNELS
 }
 
