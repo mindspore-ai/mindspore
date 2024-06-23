@@ -80,6 +80,9 @@ void MoveCastBehindAllGather(const FuncGraphPtr &func_graph, const CNodePtr &all
   manager->SetEdge(all_gather_cnode, kIndex1, cast_cnode);
 
   // Update abstract from cast to all_gather
+  auto new_cast_abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(cast_dtype),
+                                                                 cast_cnode->input(kIndex1)->abstract()->GetShape());
+  cast_cnode->set_abstract(new_cast_abs);
   for (auto node : op_list) {
     auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(cast_dtype), node->abstract()->GetShape());
     node->set_abstract(abs);
