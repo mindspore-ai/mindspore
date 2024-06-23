@@ -29,12 +29,7 @@ def chunk_backward_func(x, chunks, dim):
     return ops.grad(chunk_forward_func, (0,))(x, chunks, dim)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize("mode", ['GE', 'pynative', 'KBK'])
-def test_chunk_forward(mode):
+def do_test_chunk_forward(mode):
     """
     Feature: Split
     Description: test op Split
@@ -88,6 +83,33 @@ def test_chunk_forward_with_minus_dim(mode):
         out = chunk_forward_func(x, chunks, dims)
     for res, exp in zip(out, expect):
         assert np.allclose(res.asnumpy(), exp)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize("mode", ['GE', 'pynative'])
+def test_chunk_forward(mode):
+    """
+    Feature: Chunk
+    Description: test op Chunk
+    Expectation: expect correct result.
+    """
+    do_test_chunk_forward(mode)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+def test_chunk_forward_kbk():
+    """
+    Feature: Chunk
+    Description: test op Chunk
+    Expectation: expect correct result.
+    """
+    do_test_chunk_forward('KBK')
 
 
 @pytest.mark.level0

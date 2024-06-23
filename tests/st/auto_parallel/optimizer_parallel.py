@@ -276,6 +276,7 @@ class OptimizerSemiAutoAndAutoParallelFactory:
                                      epoch,
                                      device_num):
         set_algo_parameters(fully_use_devices=False)
+        context.set_context(jit_level="O2")
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL,
                                           device_num=device_num, search_mode="dynamic_programming")
@@ -289,6 +290,7 @@ class OptimizerSemiAutoAndAutoParallelFactory:
                                                epoch,
                                                device_num):
         set_algo_parameters(fully_use_devices=False)
+        context.set_context(jit_level="O2")
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL,
                                           device_num=device_num, search_mode="dynamic_programming",

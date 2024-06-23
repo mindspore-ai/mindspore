@@ -113,6 +113,7 @@ def check_ge_dump_structure_acl(dump_path, num_iteration, device_num=1, check_ov
 
 def run_ge_dump(test_name):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(jit_level="O2")
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'ge_dump')
         dump_config_path = os.path.join(tmp_dir, 'ge_dump.json')
@@ -144,6 +145,7 @@ def run_ge_dump(test_name):
 
 def run_ge_dump_complex(test_name, dtype):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(jit_level="O2")
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'ge_dump')
         dump_config_path = os.path.join(tmp_dir, 'ge_dump.json')
@@ -178,6 +180,7 @@ def run_ge_dump_complex(test_name, dtype):
 
 def run_ge_dump_acl(test_name):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(jit_level="O2")
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'acl_dump')
         dump_config_path = os.path.join(tmp_dir, 'acl_dump.json')
@@ -315,6 +318,7 @@ def run_overflow_dump():
     """Run async dump and generate overflow"""
     if sys.platform != 'linux':
         return
+    context.set_context(jit_level="O2")
     overflow_x = np.array([60000, 60000]).astype(np.float16)
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
         dump_path = os.path.join(tmp_dir, 'overflow_dump')
@@ -386,6 +390,7 @@ def test_ge_statistic_dump_bfloat16():
     """
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(jit_level="O2")
     run_saved_data_dump_test_bf16('test_ge_dump', 'full')
 
 
@@ -401,11 +406,13 @@ def test_ge_overflow_dump():
     Expectation: Overflow is occurred, and overflow dump file is in correct format
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+    context.set_context(jit_level="O2")
     run_overflow_dump()
 
 
 def run_train():
     context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(jit_level="O2")
     add = Net()
     add(Tensor(x), Tensor(y))
 

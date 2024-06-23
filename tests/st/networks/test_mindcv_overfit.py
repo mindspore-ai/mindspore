@@ -53,6 +53,7 @@ def train(args, device_id=0, rank_id=0, device_num=1):
     os.environ["RANK_SIZE"] = str(device_num)
     ms.set_context(mode=args.mode, device_id=device_id)
     ms.set_context(deterministic="ON")
+    ms.set_context(jit_level="O2")
 
     # change learning rate
     args.lr = args.lr / 8

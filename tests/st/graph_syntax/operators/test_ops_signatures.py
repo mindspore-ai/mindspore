@@ -75,6 +75,9 @@ def test_tensor_add_tensor_compare(mode):
         for key2 in ms_data.keys():
             if key1 == "bool" and key2 == "bool":
                 continue
+            # aclnnCast does not support bfloat16
+            if key1 == "bfloat16" or key2 == "bfloat16":
+                continue
             out_ms = Net()(ms_data[key1], ms_data[key2])
             out_torch = torch_data[key1] + torch_data[key2]
             dtype_ms = get_dtype(out_ms)
@@ -152,5 +155,6 @@ def test_assignadd_bfloat16_float16(mode):
             return x
 
     ms.context.set_context(mode=mode)
+    ms.set_context(jit_level="O2")
     out = Net()(ms.Parameter(ms_data["float16"], name="x"), ms_data["bfloat16"])
     assert out.dtype == ms.float16

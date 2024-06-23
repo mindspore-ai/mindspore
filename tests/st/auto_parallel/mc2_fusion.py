@@ -106,6 +106,7 @@ def test_all_gather_matmul_forward():
     Expectation: Run success
     '''
     context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+    context.set_context(jit_config={"jit_level": "O2"})
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", dataset_strategy="full_batch")
     D.init()
     seq_len, hidden_size = 4096, 12288
@@ -129,6 +130,7 @@ def test_matmul_reduce_scatter_forward():
     Expectation: Run success
     '''
     context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+    context.set_context(jit_config={"jit_level": "O2"})
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", dataset_strategy="full_batch")
     D.init()
     seq_len, hidden_size = 4096, 12288

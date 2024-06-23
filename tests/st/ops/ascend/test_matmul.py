@@ -17,7 +17,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, JitConfig
 from mindspore.common.api import jit
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
@@ -93,11 +93,7 @@ def test_matmul_tensor_api_modes(mode):
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_matmul_dtypes():
+def do_test_matmul_dtypes(valid_dtypes, is_ge_only=False):
     """
     Feature: Test matmul dtypes.
     Description: Test matmul dtypes for Graph mode.
@@ -112,7 +108,10 @@ def test_matmul_dtypes():
     x_np.shape = m, k
     y_np.shape = k, n
     matmul = Net()
-    valid_dtypes = (mstype.int8, mstype.int32, mstype.float16, mstype.float32)
+    if is_ge_only:
+        matmul.set_jit_config(JitConfig(jit_level="O2"))
+    else:
+        matmul.set_jit_config(JitConfig(jit_level="O0"))
     all_dtypes = mstype.all_types
     for dtype in all_dtypes:
         # bfloat16 is not supported yet
@@ -129,3 +128,29 @@ def test_matmul_dtypes():
         else:
             with pytest.raises((RuntimeError, TypeError)):
                 matmul(x_ms, y_ms)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_matmul_dtypes():
+    """
+    Feature: Test matmul dtypes.
+    Description: Test matmul dtypes for Graph mode.
+    Expectation: The result match to the expect value.
+    """
+    do_test_matmul_dtypes([mstype.float16, mstype.float32])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_matmul_dtypes_ge():
+    """
+    Feature: Test matmul dtypes.
+    Description: Test matmul dtypes for Graph mode.
+    Expectation: The result match to the expect value.
+    """
+    do_test_matmul_dtypes([mstype.int8, mstype.int32, mstype.float16, mstype.float32], True)
