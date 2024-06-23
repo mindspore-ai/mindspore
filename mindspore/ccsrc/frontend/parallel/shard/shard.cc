@@ -278,7 +278,7 @@ static void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_
       if (IsSettingStrategyByInsertIdentity(func_graph, to_insert_cnode, parameter->fullname_with_scope())) {
         continue;
       }
-      auto layout_index = i;
+      int64_t layout_index = static_cast<int64_t>(i);
       CNodePtr identity_cnode = nullptr;
       if (execution_mode == kGraphMode) {
         // Setting strategy by insert identity CNode directly using inputs in GraphMode.

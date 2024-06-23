@@ -18,6 +18,7 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.parallel.shard import Layout
 from mindspore.common.tensor import Tensor
 
+
 def reshard(tensor, layout):
     r"""
     Reshard tensor by the given layout.
@@ -53,19 +54,19 @@ def reshard(tensor, layout):
     if not isinstance(layout, Layout):
         raise TypeError(f"Reshard only support type mindspore.Layout, but got: {type(layout)}.")
 
-    def layoutToTuple(layout):
+    def layout_to_tuple(layout):
         layout_dict = layout.to_dict()
         tensor_map = layout_dict["tensor_map"]
-        device_matrix = layout_dict["device_matrix"]
+        device_matrix_rev = layout_dict["device_matrix"][::-1]
         axis_stgy = ()
         for ind in tensor_map:
             if ind == -1:
                 axis_stgy += (1,)
             else:
-                axis_stgy += (device_matrix[ind],)
+                axis_stgy += (device_matrix_rev[ind],)
         return axis_stgy
 
-    in_strategy = layoutToTuple(layout)
+    in_strategy = layout_to_tuple(layout)
     _reshard = _get_cache_prim(P.Reshard)(in_layout=(layout,), out_layout=(layout,), in_strategy=(in_strategy,))
     return _reshard(tensor)
 
