@@ -46,59 +46,60 @@ bool ProactiveFallbackExpander::Run(const FuncGraphPtr &func_graph) {
     }
     auto cnode = node->cast<CNodePtr>();
     const std::string &prim_name = GetCNodePrimitive(cnode)->name();
-    if (need_fallback_ops.find(prim_name) != need_fallback_ops.end()) {
-      MS_LOG(DEBUG) << "Start Fallback node: " << cnode->fullname_with_scope();
-      auto func = [](const CNodePtr &cnode) -> bool {
-        MS_EXCEPTION_IF_NULL(cnode);
-        for (size_t i = 1; i < cnode->size(); i++) {
-          const auto &input = cnode->input(i);
-          if (!input->isa<ValueNode>()) {
-            continue;
-          }
-          auto input_kernel_info = input->kernel_info_ptr();
-          if (input_kernel_info == nullptr) {
-            input_kernel_info = std::make_shared<device::KernelInfo>();
-            input->set_kernel_info(input_kernel_info);
-          }
-          if (input_kernel_info->has_build_info()) {
-            continue;
-          }
-          auto info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-          MS_EXCEPTION_IF_NULL(info_builder);
-          auto vnode = input->cast<ValueNodePtr>();
-          auto value = vnode->value();
-          MS_EXCEPTION_IF_NULL(value);
-          if (value->isa<tensor::Tensor>()) {
-            auto tensor = value->cast<tensor::TensorPtr>();
-            info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
-            info_builder->SetOutputsDeviceType(std::vector<TypeId>{tensor->Dtype()->type_id()});
-          } else if (value->isa<Scalar>()) {
-            auto scalar = value->cast<ScalarPtr>();
-            info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
-            info_builder->SetOutputsDeviceType(std::vector<TypeId>{scalar->type()->type_id()});
-          } else {
-            return false;
-          }
-          AnfAlgo::SetSelectKernelBuildInfo(info_builder->Build(), input.get());
-        }
-        auto kernel_info = cnode->kernel_info_ptr();
-        if (kernel_info == nullptr) {
-          cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
-        }
-        auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kAscendDevice);
-        MS_EXCEPTION_IF_NULL(kernel_info_setter);
-        kernel_info_setter->SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);
-        return true;
-      };
-      expander::FallbackIRBuilder ib(prim_name, cnode->func_graph(), func);
-      const auto *handle = expander::IRBuilderFactory::Instance().GetBuilder(prim_name);
-      if (handle == nullptr) {
-        MS_LOG(EXCEPTION) << "No fallback handle for node: " << cnode->fullname_with_scope();
-        return false;
-      }
-      auto output = ib.Run(cnode, *handle);
-      (void)mng->Replace(cnode, output);
+    if (need_fallback_ops.find(prim_name) == need_fallback_ops.end()) {
+      continue;
     }
+    MS_LOG(DEBUG) << "Start Fallback node: " << cnode->fullname_with_scope();
+    auto func = [](const CNodePtr &cnode) -> bool {
+      MS_EXCEPTION_IF_NULL(cnode);
+      for (size_t i = 1; i < cnode->size(); i++) {
+        const auto &input = cnode->input(i);
+        if (!input->isa<ValueNode>()) {
+          continue;
+        }
+        auto input_kernel_info = input->kernel_info_ptr();
+        if (input_kernel_info == nullptr) {
+          input_kernel_info = std::make_shared<device::KernelInfo>();
+          input->set_kernel_info(input_kernel_info);
+        }
+        if (input_kernel_info->has_build_info()) {
+          continue;
+        }
+        auto info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+        MS_EXCEPTION_IF_NULL(info_builder);
+        auto vnode = input->cast<ValueNodePtr>();
+        auto value = vnode->value();
+        MS_EXCEPTION_IF_NULL(value);
+        if (value->isa<tensor::Tensor>()) {
+          auto tensor = value->cast<tensor::TensorPtr>();
+          info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
+          info_builder->SetOutputsDeviceType(std::vector<TypeId>{tensor->Dtype()->type_id()});
+        } else if (value->isa<Scalar>()) {
+          auto scalar = value->cast<ScalarPtr>();
+          info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
+          info_builder->SetOutputsDeviceType(std::vector<TypeId>{scalar->type()->type_id()});
+        } else {
+          return false;
+        }
+        AnfAlgo::SetSelectKernelBuildInfo(info_builder->Build(), input.get());
+      }
+      auto kernel_info = cnode->kernel_info_ptr();
+      if (kernel_info == nullptr) {
+        cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
+      }
+      auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kAscendDevice);
+      MS_EXCEPTION_IF_NULL(kernel_info_setter);
+      kernel_info_setter->SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);
+      return true;
+    };
+    expander::FallbackIRBuilder ib(prim_name, cnode->func_graph(), func);
+    const auto *handle = expander::IRBuilderFactory::Instance().GetBuilder(prim_name);
+    if (handle == nullptr) {
+      MS_LOG(EXCEPTION) << "No fallback handle for node: " << cnode->fullname_with_scope();
+      return false;
+    }
+    auto output = ib.Run(cnode, *handle);
+    (void)mng->Replace(cnode, output);
   }
   return true;
 }
