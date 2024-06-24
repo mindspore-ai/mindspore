@@ -327,7 +327,7 @@ TypePtr FlashAttentionScoreGradFuncImpl::InferType(const PrimitivePtr &prim,
   }
   if (!IsFlashAttentionScoreGradOptionalInputNotPass(input_args[kFASGradInputAttnMaskIndex])) {
     auto attn_mask_type = input_args[kFASGradInputAttnMaskIndex]->GetType();
-    CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8, kBool, kFloat16}, op_name);
+    CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8, kBool}, op_name);
   }
   if (!IsFlashAttentionScoreGradOptionalInputNotPass(input_args[kFASGradInputPaddingMaskIndex])) {
     MS_LOG(EXCEPTION) << op_name << ": 'padding_mask' must be None currently.";
