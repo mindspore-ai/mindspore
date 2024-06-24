@@ -1921,7 +1921,6 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag,
 
     // Eliminate the virtual mirror node
     (void)actions.emplace_back(std::make_pair(kEliminateSpecialOpNode, EliminateSpecialOpNode));
-    (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
 
 #if defined(__linux__) && defined(WITH_BACKEND)
     if (!pipeline::IsPhaseExport(phase)) {
@@ -1935,6 +1934,9 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag,
       }
     }
 #endif
+
+    // Mind Compiler finish.
+    (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
   }
 
   if (erase_parse) {
