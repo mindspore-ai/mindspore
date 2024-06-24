@@ -42,7 +42,7 @@ def test_is_none_asnumpy():
     assert not ret2
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_is_int_and_int():
@@ -113,7 +113,7 @@ def test_is_int_and_int_3():
     assert not ret2
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_is_not_int_and_int():
