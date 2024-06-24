@@ -14,12 +14,12 @@
 # ============================================================================
 """test cases for gamma distribution"""
 
-import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import dtype as ms
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
@@ -38,10 +38,7 @@ class GammaMean(nn.Cell):
         return out1, out2, out3, out4, out5
 
 
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_probability_gamma_mean_cdoncentration_rate_rand_2_ndarray():
     concentration = np.random.uniform(0.0001, 100, size=(1024, 512, 7, 7)).astype(np.float32)
     rate = np.random.uniform(0.0001, 100, size=(1024, 512, 7, 7)).astype(np.float32)

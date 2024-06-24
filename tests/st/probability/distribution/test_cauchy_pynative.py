@@ -14,13 +14,13 @@
 # ============================================================================
 """test cases for cauchy distribution"""
 
-import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import Tensor
 from mindspore import dtype as ms
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
@@ -35,10 +35,7 @@ class CauchyMean(nn.Cell):
         return out4
 
 
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_probability_cauchy_mean_loc_scale_rand_2_ndarray():
     loc = np.random.randn(1024, 512, 7, 7).astype(np.float32)
     scale = np.random.uniform(0.0001, 100, size=(1024, 512, 7, 7)).astype(np.float32)
@@ -61,9 +58,7 @@ class CauchyProb(nn.Cell):
         return out1, out2, out3, out4, out5, out6
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_probability_cauchy_prob_cdf_loc_scale_rand_4_ndarray():
     loc = np.random.randn(1024, 512, 7, 7).astype(np.float32)
     scale = np.random.uniform(0.0001, 100, size=(1024, 512, 7, 7)).astype(np.float32)

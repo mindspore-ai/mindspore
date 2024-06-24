@@ -15,7 +15,6 @@
 """smoke tests for CSR operations"""
 
 import os
-import pytest
 import numpy as np
 
 from mindspore import Tensor, CSRTensor, jit, nn, ops
@@ -25,14 +24,11 @@ from mindspore.ops import functional as F
 from mindspore.ops.operations import _csr_ops
 
 from .sparse_utils import get_platform, compare_res, compare_csr
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_make_csr():
     """
     Feature: Test CSRTensor Constructor in Graph and PyNative.
@@ -48,6 +44,7 @@ def test_make_csr():
 
     def test_pynative():
         return CSRTensor(indptr, indices, values, shape)
+
     test_graph = jit(test_pynative)
 
     csr1 = test_pynative()
@@ -57,12 +54,8 @@ def test_make_csr():
     compare_csr(csr3, csr2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_csr_attr():
     """
     Feature: Test CSRTensor GetAttr in Graph and PyNative.
@@ -119,17 +112,15 @@ def test_csr_attr():
             assert py_tuple[i] == g_tuple[i]
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
+          essential_mark='unessential')
 def test_csr_tensor_in_while():
     """
     Feature: Test CSRTensor in while loop.
     Description: Test CSRTensor computation in while loop.
     Expectation: Success.
     """
+
     class CSRTensorValuesDouble(nn.Cell):
 
         def construct(self, x):
@@ -163,6 +154,7 @@ def test_csr_tensor_in_while():
                 x = self.op1(x)
                 b = b + 1
             return x
+
     a = Tensor(3, mstype.int32)
     b = Tensor(0, mstype.int32)
     indptr = Tensor([0, 1, 2])
@@ -191,15 +183,15 @@ def test_csr_tensor_in_while():
     assert out.shape == outputs_after_load.shape
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard',
+          essential_mark='unessential')
 def test_csr_tensor_in_while_cpu():
     """
     Feature: Test CSRTensor in while loop.
     Description: Test CSRTensor computation in while loop.
     Expectation: Success.
     """
+
     class CSRTensorValuesDouble(nn.Cell):
 
         def construct(self, x):
@@ -233,6 +225,7 @@ def test_csr_tensor_in_while_cpu():
                 x = self.op1(x)
                 b = b + 1
             return x
+
     a = Tensor(3, mstype.int32)
     b = Tensor(0, mstype.int32)
     indptr = Tensor([0, 1, 2])
@@ -247,10 +240,8 @@ def test_csr_tensor_in_while_cpu():
     assert shape == out.shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_batch_csr_ops():
     """
     Feature: Test Batch CSR-related Ops.
@@ -313,10 +304,8 @@ def test_batch_csr_ops():
     assert np.allclose(graph_res_gather.asnumpy(), expect5)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_csr_ops():
     """
     Feature: Test CSR-related Ops.
@@ -376,12 +365,8 @@ def test_csr_ops():
     assert np.allclose(graph_res_sparse[2].values.asnumpy(), expect3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='unessential')
 def test_csrtensor_export_and_import_mindir():
     """
     Feature: Test exporting and loading CSRTensor MindIR.
@@ -420,15 +405,14 @@ def test_csrtensor_export_and_import_mindir():
     assert out.shape == outputs_after_load.shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_csrops_export_and_import_mindir():
     """
     Feature: Test exporting and loading CSRTensor MindIR in a net.
     Description: Test export and load.
     Expectation: Success.
     """
+
     class TestCSRNet(nn.Cell):
         def __init__(self, shape):
             super(TestCSRNet, self).__init__()
@@ -479,12 +463,8 @@ def test_csrops_export_and_import_mindir():
     assert out[4].shape == outputs_after_load[4].shape
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_isinstance_csr_tensor():
     """
     Feature: Test isinstance.
@@ -511,6 +491,7 @@ def test_isinstance_csr_tensor():
         is_tensor_2 = isinstance(indptr, CSRTensor)
         is_tuple_2 = isinstance(indptr, (Tensor, CSRTensor))
         return is_tensor, is_bool, is_float, is_tuple, is_csr_tensor, is_tensor_2, is_tuple_2
+
     graph_test_csr_tensor = jit(pynative_test_csr_tensor)
 
     out1 = pynative_test_csr_tensor()
@@ -519,10 +500,8 @@ def test_isinstance_csr_tensor():
     assert out2 == (False, False, False, True, True, False, True)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_dtype_csr_tensor():
     """
     Feature: Test F.dtype with CSRTensor.
@@ -539,6 +518,7 @@ def test_dtype_csr_tensor():
     def pynative_test():
         x = CSRTensor(indptr, indices, values, shape)
         return F.dtype(x), x.dtype
+
     graph_test = jit(pynative_test)
 
     out1, out2 = pynative_test()
@@ -549,10 +529,8 @@ def test_dtype_csr_tensor():
     assert out4 in [mstype.float32]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_bprop():
     """
     Feature: Test back-propagation with CSR-related Ops.
@@ -640,10 +618,8 @@ def test_bprop():
     assert np.allclose(csr_div_output_2[3].asnumpy(), csr_div_expect_2_2)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_csr_method():
     """
     Feature: Test csr tensor methods.
@@ -678,10 +654,8 @@ def test_csr_method():
     assert np.allclose(to_dense_output.asnumpy(), to_dense_expect)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_bprop2():
     """
     Feature: Test back-propagation with CSR-related Ops.
@@ -778,9 +752,7 @@ def test_bprop2():
     compare_res(test_csr_to_dense(indptr, indices, values, dense_shape), values_on)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dense_to_csr():
     """
     Feature: Test dense tensor to csr methods.
@@ -789,6 +761,7 @@ def test_dense_to_csr():
     """
     dense_tensor = Tensor([[0, 1, 2, 0], [0, 0, 0, 0], [1, 0, 0, 0]], dtype=mstype.float32)
     grad_op = ops.GradOperation(get_all=True, sens_param=True)
+
     def test_to_csr(dense_tensor):
         return dense_tensor.to_csr()
 
@@ -807,10 +780,8 @@ def test_dense_to_csr():
     assert (dense_tensor_grad[0].asnumpy() == np.array([[0, 1, 2, 0], [0, 0, 0, 0], [1, 0, 0, 0]])).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_csr_magic_methods():
     """
     Feature: Test csr magic methods.
@@ -864,10 +835,8 @@ def test_csr_magic_methods():
     compare_csr(sub_output, sub_expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_csr_add_dynamic_shape_methods():
     """
     Feature: Test csr add dynamic shape methods.

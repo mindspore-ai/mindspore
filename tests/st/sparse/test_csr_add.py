@@ -24,6 +24,8 @@ from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr
 from mindspore.common.api import _pynative_executor
 
+from tests.mark_utils import arg_mark
+
 
 @constexpr
 def _make_tensor(a, dtype=mstype.int64):
@@ -50,10 +52,8 @@ def create_csr_tensor():
     return csra, csrb
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_function_csr_add():
     """
     Feature: Test function csr_add.
@@ -82,10 +82,8 @@ def test_function_csr_add():
     assert np.allclose(c.values.asnumpy(), c_values_excpected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_graph_csr_add():
     """
     Feature: Test ops SparseMatrixAdd.
@@ -121,10 +119,8 @@ def test_graph_csr_add():
     assert np.allclose(c[4].asnumpy(), c_values_excpected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_pynative_csr_add():
     """
     Feature: Test Tensor csr_add.
@@ -153,10 +149,8 @@ def test_pynative_csr_add():
     assert np.allclose(c.values.asnumpy(), c_values_excpected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_tensor_csr_add():
     """
     Feature: Test Tensor csr_add.
@@ -185,9 +179,7 @@ def test_tensor_csr_add():
     assert np.allclose(c.values.asnumpy(), c_values_excpected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_csr_add_3d():
     """
     Feature: Test 3D Tensor csr_add.
@@ -219,9 +211,7 @@ def test_csr_add_3d():
     assert np.allclose(c[4].asnumpy(), (1, 2, 4, 5, 3, 1, 2, 4, 5, 3))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_csr_add_abnormal():
     """
     Feature: Test abnormal csr_add.

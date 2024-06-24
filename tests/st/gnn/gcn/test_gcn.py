@@ -23,6 +23,7 @@ from tests.models.official.gnn.gcn.src.metrics import LossAccuracyWrapper, Train
 from tests.models.official.gnn.gcn.src.config import ConfigGCN
 from tests.models.official.gnn.gcn.src.dataset import get_adj_features_labels, get_mask
 
+from tests.mark_utils import arg_mark
 
 DATA_DIR = '/home/workspace/mindspore_dataset/cora/cora_mr/cora_mr'
 TRAIN_NODE_NUM = 140
@@ -32,10 +33,7 @@ SEED = 20
 
 
 @pytest.mark.skip(reason="because GraphData API was deleted in dataset")
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gcn():
     print("test_gcn begin")
     np.random.seed(SEED)

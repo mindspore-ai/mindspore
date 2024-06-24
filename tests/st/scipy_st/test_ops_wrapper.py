@@ -17,6 +17,7 @@ import numpy as onp
 import pytest
 import mindspore.scipy.ops_wrapper as ops_wrapper
 from mindspore import context, Tensor
+from tests.mark_utils import arg_mark
 from tests.st.scipy_st.utils import match_array
 
 DEFAULT_ALIGNMENT = "LEFT_LEFT"
@@ -275,10 +276,8 @@ def fat_matrix(alignment=None, data_type=None):
     return mat, pack_diagonals_in_matrix(tests, num_rows, num_cols, alignment)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('data_type', [onp.int32, onp.int64, onp.float32, onp.float64])
 def test_matrix_set_diag(data_type):
     """

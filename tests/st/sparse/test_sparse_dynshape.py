@@ -13,10 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """smoke tests for sparse dynamic shape operations"""
-import pytest
 import numpy as np
 from mindspore import Tensor, nn, CSRTensor, ops
 from mindspore.common import dtype as mstype
+
+from tests.mark_utils import arg_mark
 from tests.st.ops.dynamic_shape.grad.test_grad_of_dynamic import TestDynamicGrad
 
 
@@ -27,10 +28,8 @@ class NetDenseToCSR(nn.Cell):
         return csr.indptr, csr.indices, csr.values
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_dense_to_csr():
     """
     Feature: Test tensor.to_csr in Graph and PyNative.
@@ -50,10 +49,8 @@ class NetDenseToCOO(nn.Cell):
         return coo.indices, coo.values
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_dense_to_coo():
     """
     Feature: Test tensor.to_coo in Graph and PyNative.
@@ -73,10 +70,8 @@ class NetCSRToCOO(nn.Cell):
         return coo.indices, coo.values
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_csr_to_coo():
     """
     Feature: Test ops.csr_to_coo in Graph and PyNative.
@@ -97,10 +92,8 @@ class NetCSRToDense(nn.Cell):
         return x.to_dense()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_csr_to_dense_dshape():
     """
     Feature: Test csr_tensor.to_dense in Graph and PyNative.
@@ -116,10 +109,8 @@ def test_csr_to_dense_dshape():
     test_dynamic.test_dynamic_grad_net(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_csr_to_dense_drank():
     """
     Feature: Test csr_tensor.to_dense in Graph and PyNative.

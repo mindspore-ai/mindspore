@@ -29,6 +29,8 @@ from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.linalg_ops import Eigh
 from mindspore.scipy.ops import Eig, LinearSumAssignment
 from mindspore.scipy.utils import _nd_transpose
+
+from tests.mark_utils import arg_mark
 from tests.st.scipy_st.utils import create_sym_pos_matrix, create_random_rank_matrix, compare_eigen_decomposition
 
 np.random.seed(0)
@@ -55,10 +57,8 @@ class LinearSumAssignmentNet(nn.Cell):
         return self.solve(cost_matrix, dimension_limit, maximize)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('n', [3, 5, 7])
 @pytest.mark.parametrize('dtype', [np.float64])
 def test_cholesky(n: int, dtype: Generic):
@@ -76,10 +76,8 @@ def test_cholesky(n: int, dtype: Generic):
     assert np.allclose(expect, output.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('shape', [(3, 4, 4), (3, 5, 5), (2, 3, 5, 5)])
 @pytest.mark.parametrize('lower', [True, False])
 @pytest.mark.parametrize('data_type', [np.float32, np.float64])
@@ -112,9 +110,7 @@ def test_batch_cholesky(shape, lower: bool, data_type):
     assert np.allclose(b_m_l.asnumpy(), b_s_l, rtol=rtol, atol=atol)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('shape', [(6, 6), (10, 10)])
 @pytest.mark.parametrize('data_type, rtol, atol', [(np.float32, 1e-3, 1e-4), (np.float64, 1e-5, 1e-8),
                                                    (np.complex64, 1e-3, 1e-4), (np.complex128, 1e-5, 1e-8)])
@@ -145,9 +141,7 @@ def test_eig(shape, data_type, rtol, atol):
     compare_eigen_decomposition((mw,), (sw,), False, rtol, atol)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('shape', [(), (1)])
 @pytest.mark.parametrize('data_type', [np.float32, np.float64])
 def test_eig_illegal_input(shape, data_type):
@@ -166,9 +160,7 @@ def test_eig_illegal_input(shape, data_type):
     assert "ValueError" in str(err)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('shape', [(2, 4, 4)])
 @pytest.mark.parametrize('data_type, rtol, atol', [(np.float32, 1e-3, 1e-4), (np.float64, 1e-5, 1e-8),
                                                    (np.complex64, 1e-3, 1e-4), (np.complex128, 1e-5, 1e-8)])
@@ -193,10 +185,8 @@ def test_batch_eig(shape, data_type, rtol, atol):
         assert np.allclose(batch_a @ batch_v - batch_v @ np.diag(batch_w), np.zeros_like(batch_a), rtol, atol)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('n', [4, 6, 9, 10])
 def test_eigh(n: int):
     """
@@ -293,10 +283,8 @@ def test_eigh(n: int):
     assert np.allclose(msp_wu.asnumpy() - msp_wu0.asnumpy(), np.zeros((n, n)), rtol, atol)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('n', [10, 20])
 @pytest.mark.parametrize('trans', ["N", "T", "C"])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
@@ -317,10 +305,8 @@ def test_solve_triangular_2d(n: int, dtype, lower: bool, unit_diagonal: bool, tr
     np.testing.assert_almost_equal(expect, output, decimal=5)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('n', [10, 20])
 @pytest.mark.parametrize('trans', ["N", "T", "C"])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
@@ -341,10 +327,8 @@ def test_solve_triangular_1d(n: int, dtype, lower: bool, unit_diagonal: bool, tr
     np.testing.assert_almost_equal(expect, output, decimal=5)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('shape', [(4, 5), (10, 20)])
 @pytest.mark.parametrize('trans', ["N", "T", "C"])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
@@ -375,10 +359,8 @@ def test_solve_triangular_matrix(shape: int, dtype, lower: bool, unit_diagonal: 
     np.testing.assert_almost_equal(expect, output, decimal=5)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('n', [10, 20, 15])
 @pytest.mark.parametrize('batch', [(3,), (4, 5)])
 @pytest.mark.parametrize('trans', ["N", "T", "C"])
@@ -414,10 +396,8 @@ def test_solve_triangular_batched(n: int, batch, dtype, lower: bool, unit_diagon
     assert np.allclose(expect, output, rtol=rtol, atol=atol)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_solve_triangular_error_dims():
     """
     Feature: ALL TO ALL
@@ -445,10 +425,8 @@ def test_solve_triangular_error_dims():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_solve_triangular_error_dims_mismatched():
     """
     Feature: ALL TO ALL
@@ -489,12 +467,8 @@ def test_solve_triangular_error_dims_mismatched():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('cost_matrix_type', [ms.float16, ms.float32, ms.float64, ms.bool_, ms.int16, ms.int32,
                                               ms.int64, ms.int8, ms.uint16, ms.uint32, ms.uint64, ms.uint8])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
