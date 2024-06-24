@@ -267,17 +267,30 @@ IMPLEMT_COMMON_INFERFUNC(TypicalReduceInferShape) {
 
 IMPLEMT_COMMON_INFERFUNC(ScalarReduceProdInferShape) {
   OP_LOGD(TbeGetName(op), "Enter %s InferShape", TbeGetOpType(op).c_str());
-  if (op.GetInputDesc(0).GetShape().GetDimNum() == 0) {
-    auto output_desc = op.GetOutputDesc(0);
+  auto input_desc = op.GetInputDesc(0);
+  auto output_desc = op.GetOutputDesc(0);
+  if (input_desc.GetShape().GetDimNum() == 0) {
     std::vector<int64_t> output_shape{1};
     output_desc.SetShape(Shape(output_shape));
     output_desc.SetDataType(op.GetInputDesc(0).GetDataType());
     op.UpdateOutputDesc("y", output_desc);
     return GRAPH_SUCCESS;
   }
-  const int64_t input_x_idx = 0;
-  const int64_t output_y_idx = 0;
-  if (InferReduceShapeProcess(op, input_x_idx, output_y_idx, "axes")) {
+  auto axes_desc = op.GetOutputDesc(1);
+  uint8_t *data = nullptr;
+  size_t len = 0;
+  auto ret = axes_desc.GetConstData(&data, len);
+  bool keep_dims = false;
+  op.GetAttr("keep_dims", keep_dims);
+  if (ret == GRAPH_SUCCESS) {
+    const int64_t input_x_idx = 0;
+    const int64_t output_y_idx = 0;
+    if (reduce_ops::CommonReduceInferWithInputAxes(op, input_x_idx, output_y_idx, "axes", keep_dims)) {
+      return GRAPH_SUCCESS;
+    }
+  }
+  const Shape &axes_shape = axes_desc.GetShape();
+  if (reduce_ops::DoReduceInferShapeWithoutAxes(op, input_desc, output_desc, axes_shape, keep_dims)) {
     return GRAPH_SUCCESS;
   }
   return GRAPH_FAILED;
