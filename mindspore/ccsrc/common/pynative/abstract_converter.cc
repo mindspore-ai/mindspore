@@ -22,7 +22,17 @@ namespace mindspore {
 namespace pynative {
 void AbstractConverter::CacheAbstract(const AbstractBasePtr &abstract) { abstract_cache_.Push(abstract); }
 
-AbstractBasePtr AbstractConverter::ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
+AbstractBasePtr AbstractConverter::ConvertAbstract(const ValuePtr &t) {
+  if (t->isa<BaseTensor>()) {
+    auto tensor = t->cast<BaseTensorPtr>();
+    return ConvertAbstract(tensor);
+  } else if (t->isa<ValueTuple>()) {
+    auto tuple = t->cast<ValueTuplePtr>();
+    return ConvertAbstract(tuple);
+  } else {
+    return t->ToAbstract();
+  }
+}
 
 // Tensor is held by Abstract, may lead to memory leak.
 AbstractBasePtr AbstractConverter::ConvertAbstract(const BaseTensorPtr &t) {
