@@ -38,6 +38,7 @@ Indexing, Slicing, Joining, Mutating Operations
     mindspore.mint.arange
     mindspore.mint.broadcast_to
     mindspore.mint.cat
+    mindspore.mint.flip
     mindspore.mint.index_select
     mindspore.mint.scatter_add
     mindspore.mint.split
@@ -303,6 +304,7 @@ Non-linear activation functions
     mindspore.mint.nn.functional.elu
     mindspore.mint.nn.functional.gelu
     mindspore.mint.nn.functional.leaky_relu
+    mindspore.mint.nn.functional.relu
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
     mindspore.mint.nn.functional.softmax

@@ -29,5 +29,6 @@ mindspore.mint.scatter_add
     异常：
         - **TypeError** - `index` 的数据类型不满足int32或int64。
         - **ValueError** - `input` 、 `index` 和 `src` 中，任意一者的rank小于1。
-        - **ValueError** - `src` 的shape和 `index` 的shape不一致。
-        - **ValueError** - `src` 的rank和 `input` 的rank不一致。
+        - **ValueError** - `input`, `index` 和 `src` 的rank不一致。
+        - **ValueError** - 除了 `dim` 指定的维度， `index` 的任意维的size大于 `input` 对应维度的size。
+        - **ValueError** - `src` 任意维度size小于 `index` 对应维度的size。

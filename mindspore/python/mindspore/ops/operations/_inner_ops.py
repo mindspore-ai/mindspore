@@ -14,7 +14,6 @@
 # ============================================================================
 
 """Inner operators."""
-# pylint: disable=unused-import
 from types import FunctionType, MethodType
 from collections.abc import Iterable
 import os
