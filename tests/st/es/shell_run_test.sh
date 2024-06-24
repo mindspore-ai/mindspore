@@ -27,8 +27,8 @@ export RANK_SIZE=1
 
 python ${CURDIR}/test_ops_es.py >es.log 2>&1 &
 
-status=$(echo $?)
-if [ "${status}" != "0" ]; then
+status=$?
+if [ $status != "0" ]; then
     exit 1
 fi
 exit 0
