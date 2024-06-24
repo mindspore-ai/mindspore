@@ -41,11 +41,12 @@ from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6, elu_ext
+from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
 from mindspore.ops.auto_generate import group_norm_op, rms_norm, layer_norm_ext_op, batch_norm_ext_op
 from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op,
                                          replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
-                                         constant_pad_nd_op, dropout_ext_op, reverse_v2_impl, softplus_ext)
+                                         constant_pad_nd_op, dropout_ext_op, reverse_v2_impl, softplus_ext,
+                                         elu_ext)
 from mindspore.ops.auto_generate.gen_ops_prim import embedding_op, Convolution
 from mindspore.common.generator import default_generator
 

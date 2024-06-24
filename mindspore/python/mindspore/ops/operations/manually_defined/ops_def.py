@@ -1183,6 +1183,9 @@ class Cast(Primitive):
 
 
 def to_sequence(val):
+    """
+    to_sequence
+    """
     if isinstance(val, (tuple, list)):
         return val
     return (val,)
@@ -1190,13 +1193,7 @@ def to_sequence(val):
 
 class EmbeddingTableExport(Primitive):
     """
-    .. code-block::
-
-        prim = ops.EmbeddingTableExport(embedding_dim, value_total_len,
-                                        export_mode, only_var_flag, file_type,
-                                        table_name, filter_export_flag)
-        out = prim(file_path, ps_id, table_id)
-
+    EmbeddingTableExport
     """
 
     @prim_attr_register
@@ -1209,12 +1206,7 @@ class EmbeddingTableExport(Primitive):
 
 class EmbeddingTableImport(Primitive):
     """
-    .. code-block::
-
-        prim = ops.EmbeddingTableImport(embedding_dim, value_total_len,
-                                        only_var_flag, file_type, table_name)
-        out = prim(file_path, ps_id, table_id)
-
+    EmbeddingTableImport
     """
 
     @prim_attr_register
@@ -1226,11 +1218,7 @@ class EmbeddingTableImport(Primitive):
 
 class EmbeddingComputeVarImport(Primitive):
     """
-    .. code-block::
-
-        prim = ops.EmbeddingComputeVarImport(table_name)
-        out = prim(file_path, ps_id, table_id)
-
+    EmbeddingComputeVarImport
     """
 
     @prim_attr_register
@@ -1241,11 +1229,7 @@ class EmbeddingComputeVarImport(Primitive):
 
 class EmbeddingComputeVarExport(Primitive):
     """
-    .. code-block::
-
-        prim = ops.EmbeddingComputeVarExport(table_name)
-        out = prim(file_path, ps_id, table_id)
-
+    EmbeddingComputeVarExport
     """
 
     @prim_attr_register

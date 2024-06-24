@@ -221,6 +221,13 @@ from mindspore.ops.function.math_func import tanh
 
 # 100
 from mindspore.ops.function import binary_cross_entropy_with_logits as bce_with_logits
+# 323
+
+# 324
+from mindspore.ops.function.nn_func import elu_ext as elu
+# 325
+
+
 def binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean', pos_weight=None):
     r"""
     Adds sigmoid activation function to `input` as logits, and uses this logits to compute binary cross entropy
@@ -320,11 +327,6 @@ def binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean
 def one_hot(tensor, num_classes=-1):
     return one_hot_ext(tensor, num_classes)
 
-# 323
-
-# 324
-from mindspore.ops.function.nn_func import elu_ext as elu # pylint: disable=C0413
-# 325
 
 __all__ = [
     'conv_transpose2d',

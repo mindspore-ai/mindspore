@@ -707,13 +707,13 @@ namespace mindspore::ops {
             dtype = get_dtype(arg_info)
             if dtype == "str":
                 dtype = "std::string"
-            if dtype == "tuple[str]" or dtype == "list[str]":
+            if dtype in ("tuple[str]", "list[str]"):
                 dtype = "std::vector<std::string>"
-            if dtype == "tuple[int]" or dtype == "list[int]":
+            if dtype in ("tuple[int]", "list[int]"):
                 dtype = "std::vector<int64_t>"
-            if dtype == "tuple[float]" or dtype == "list[float]":
+            if dtype in ("tuple[float]", "list[float]"):
                 dtype = "std::vector<float>"
-            if dtype == "tuple[bool]" or dtype == "list[bool]":
+            if dtype in ("tuple[bool]", "list[bool]"):
                 dtype = "std::vector<bool>"
             if dtype == "int":
                 dtype = "int64_t"

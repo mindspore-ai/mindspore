@@ -50,12 +50,12 @@ from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchT
                         ScatterNdMul, SegmentMean, SegmentProd, SegmentSum, SegmentMax, SegmentMin, Tril, Triu,
                         UniqueConsecutive, UnravelIndex, FillV2, CountNonZero, TensorScatterElements, IndexPut,
                         MaskedScatter)
-from .comm_ops import (AllGather, AllReduce, Reduce, NeighborExchange, NeighborExchangeV2, AlltoAll, _AllSwap, ReduceScatter,
+from .comm_ops import (AllGather, AllReduce, Reduce, NeighborExchange, NeighborExchangeV2, AlltoAll, _AllSwap,
                        Broadcast, CollectiveGather, CollectiveScatter, Barrier, Send, Receive, BatchISendIRecv,
                        _MirrorOperator, _MirrorMiniStepOperator, _MiniStepAllGather, ReduceOp, _VirtualDataset,
                        _VirtualOutput, _VirtualDiv, _GetTensorSlice, _VirtualAdd, _VirtualAssignAdd, _VirtualAccuGrad,
                        _HostAllGather, _HostReduceScatter, _MirrorMicroStepOperator, _MicroStepAllGather,
-                       _VirtualPipelineEnd, AlltoAllV)
+                       _VirtualPipelineEnd, AlltoAllV, ReduceScatter)
 from .control_ops import GeSwitch, Merge
 from .custom_ops import (Custom)
 from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSummary,
