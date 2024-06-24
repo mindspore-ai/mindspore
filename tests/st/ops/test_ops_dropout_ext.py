@@ -237,22 +237,22 @@ def test_ops_DropoutExt_normal(context_mode):
 
     x = np.array(np.random.random((256, 128)), np.float32)
 
-    output, mask = dropout_cell(ms.tensor(x), p)
+    output, mask = dropout_cell(ms.tensor(x), ms.mutable(p))
     compare_func(x, p, output, mask)
 
     x = np.array(np.random.random((128, 256)), np.float32)
 
-    output, mask = dropout_cell(ms.tensor(x), p)
+    output, mask = dropout_cell(ms.tensor(x), ms.mutable(p))
     compare_func(x, p, output, mask)
 
     dropout_cell.set_inputs(ms.tensor(shape=None, dtype=ms.float32), ms.mutable(p))
 
     x = np.array(np.random.random((128, 128, 128)), np.float32)
 
-    output, mask = dropout_cell(ms.tensor(x), p)
+    output, mask = dropout_cell(ms.tensor(x), ms.mutable(p))
     compare_func(x, p, output, mask)
 
     x = np.array(np.random.random((16, 16, 16, 16)), np.float32)
 
-    output, mask = dropout_cell(ms.tensor(x), p)
+    output, mask = dropout_cell(ms.tensor(x), ms.mutable(p))
     compare_func(x, p, output, mask)
