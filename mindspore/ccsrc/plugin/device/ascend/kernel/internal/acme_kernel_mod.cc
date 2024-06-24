@@ -152,43 +152,43 @@ void AcmeKernelMod::GetOrGenerateTiling(const std::vector<KernelTensor *> &input
   auto tiling_cache_item = AcmeTilingCache::GetInstance().Bind(key);
   AcmeTilingCache::GetInstance().Unbind(last_item_);
   if (tiling_cache_item == nullptr) {
+    std::lock_guard<SimpleSpinLock> lock(lock_);
     auto tiling_size = acme_op_->GetTilingSize();
-    auto [host_mem_type, host_addr] = TilingMemMgr::GetInstance().pool_host_.Malloc(tiling_size);
+    auto host_addr = TilingMemMgr::GetInstance().pool_host_.Malloc(tiling_size);
     acme::HostRunInfoPtr host_run_info_ptr = nullptr;
     auto status = acme_op_->Tiling(host_addr, &host_run_info_ptr);
     if (status != acme::kAcmeOk || host_run_info_ptr == nullptr) {
       MS_LOG(EXCEPTION) << "Tiling error for " << kernel_name_ << ", status: " << status
                         << ", host_run_info_ptr: " << host_run_info_ptr;
     }
-    auto [device_mem_type, device_addr] = TilingMemMgr::GetInstance().pool_device_.Malloc(tiling_size);
-    device_tiling_mem_type_ = device_mem_type;
 
-    TilingMemMgr::GetInstance().CopySync(host_addr, device_addr, tiling_size);
+    auto device_addr = TilingMemMgr::GetInstance().pool_device_.Malloc(tiling_size);
+    TilingMemMgr::GetInstance().CopyAsync(host_addr, device_addr, tiling_size);
     auto tiling_info = std::make_shared<acme::TilingInfo>(device_addr, nullptr);
     acme_op_->SetTilingInfo(tiling_info);
     tiling_info->host_run_info_ = host_run_info_ptr;
-    auto tiling_info_ptr = std::make_shared<TilingCacheItem>(tiling_info);
+    auto tiling_info_ptr = std::make_shared<TilingCacheItem>(tiling_info, host_addr, tiling_size);
     auto ret = AcmeTilingCache::GetInstance().Insert(key, tiling_info_ptr);
     if (!ret) {
       // op cache is full, comb out some items which are not recently used with high probability
-      auto device_addrs = AcmeTilingCache::GetInstance().CombOutSuspectedUselessItems();
-      for (auto &addr : device_addrs) {
-        TilingMemMgr::GetInstance().pool_device_.Free(addr);
+      auto erased_items = AcmeTilingCache::GetInstance().CombOutSuspectedUselessItems();
+      for (auto &item : erased_items) {
+        TilingMemMgr::GetInstance().pool_device_.Free(item->tiling_info_->tiling_addr_, item->size_);
+        TilingMemMgr::GetInstance().pool_host_.Free(item->host_addr_, item->size_);
       }
+      TilingMemMgr::GetInstance().pool_device_.Rearrange();
+      TilingMemMgr::GetInstance().pool_host_.Rearrange();
 
       // try insert again, ignore the result of the insertion
       (void)AcmeTilingCache::GetInstance().Insert(key, tiling_info_ptr);
     }
-
-    // For now, the copy of tiling data is synchronized, so the host memory can be freed immediately.
-    // If asynchroized copy is enabled, be aware to change the time of host memory free.
-    TilingMemMgr::GetInstance().pool_host_.Free(host_mem_type, host_addr);
     workspace_size_list_ = acme_op_->GetWorkspaceSize();
     acme_wss_addr_.resize(workspace_size_list_.size());
+    last_item_ = tiling_info_ptr;
   } else {
     acme_op_->SetTilingInfo(tiling_cache_item->tiling_info_);
+    last_item_ = tiling_cache_item;
   }
-  last_item_ = tiling_cache_item;
 }
 
 void AcmeKernelMod::GetAcmeKernel(const std::vector<KernelTensor *> &inputs,
