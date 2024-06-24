@@ -5607,10 +5607,12 @@ def narrow_ext(input, dim, start, length):
         Tensor.
 
     Raises:
-        TypeError: If the input is not a tensor or tuple or list of tensors.
+        ValueError: If dim is out of range [-input.ndim, input.ndim).
+        ValueError: If start is out of range [-input.shape[dim], input.shape[dim]].
+        ValueError: It length is out of range [0, input.shape[dim]-start].
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> import mindspore
