@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import numpy as np
 import mindspore as ms
 import mindspore.common.dtype as mstype
@@ -147,18 +146,15 @@ def generate_inputs(B, N1, N2, S1, S2, D, input_layout, dtype, return_tensor=Tru
     return query, key, value, real_shift, attn_mask, prefix
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
-@pytest.mark.parametrize('input_layout', ["TND"])
-@pytest.mark.parametrize('dtype', [mstype.float16])
-def test_flash_attention_score_tnd(mode, dtype, input_layout):
+def test_flash_attention_score_tnd():
     """
     Feature: Test the precision for TND.
     Description: Test function flash attention score forward and backward.
     Expectation: The result of TND and BSH is equal.
     """
+    mode = ms.context.GRAPH_MODE
+    dtype = mstype.float16
+    input_layout = "TND"
     context.set_context(jit_level='O0')
     context.set_context(mode=mode)
     init()

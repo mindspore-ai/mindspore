@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -27,6 +26,8 @@ from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.ops.function.clip_func import get_square_sum
+
+from tests.mark_utils import arg_mark
 
 
 class LeNet(nn.Cell):
@@ -151,11 +152,8 @@ class FusedAdamWeightDecayWithGlobalNorm(Optimizer):
         return optim_result
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level2", card_mark="onecard",
+          essential_mark="essential")
 def test_fused_cast_adam_weight_decay():
     '''
     Feature: FusedCastAdamWeightDecay
@@ -181,11 +179,8 @@ def test_fused_cast_adam_weight_decay():
     assert np.all(loss[-1] < 0.1)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level2", card_mark="onecard",
+          essential_mark="essential")
 def test_fused_cast_adam_weight_decay_with_memory_optimize():
     '''
     Feature: Integration of dynamic and static memory in the heterogeneous scene

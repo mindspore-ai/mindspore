@@ -15,7 +15,6 @@
 import os
 import time
 import numpy as np
-import pytest
 
 import mindspore.nn as nn
 from mindspore import context, Tensor, ParameterTuple
@@ -26,6 +25,8 @@ from mindspore.nn.wrap.cell_wrapper import WithLossCell
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+
+from tests.mark_utils import arg_mark
 
 np.random.seed(1)
 grad_by_list = C.GradOperation(get_by_list=True)
@@ -156,10 +157,7 @@ def test_ascend_lenet():
     return loss_output
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
 def test_ascend_lenet1():
     context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -168,10 +166,7 @@ def test_ascend_lenet1():
     assert loss_output.asnumpy() > 0.003
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
 def test_ascend_lenet2():
     context.set_context(jit_level='O0')
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
@@ -180,10 +175,7 @@ def test_ascend_lenet2():
     assert loss_output.asnumpy() > 0.003
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
 def test_ascend_lenet3():
     """
     Feature: Somas Ascend kernel by kernel.
@@ -197,10 +189,7 @@ def test_ascend_lenet3():
     assert loss_output.asnumpy() > 0.003
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
 def test_ascend_lenet4():
     """
     Feature: Ascend kernel by kernel and Ascend VMM.
@@ -215,10 +204,7 @@ def test_ascend_lenet4():
     assert loss_output.asnumpy() > 0.003
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
 def test_ascend_lenet5():
     """
     Feature: Ascend kernel by kernel and Ascend VMM.
@@ -283,10 +269,7 @@ def test_ascend_lenet_grad_by_list_tuple():
     return loss_output
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
 def test_ascend_lenet_grad_by_list_tuple1():
     """
     Feature: GradOperation get_by_list pass tuple/list
@@ -300,10 +283,7 @@ def test_ascend_lenet_grad_by_list_tuple1():
     assert loss_output.asnumpy() > 0.003
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
 def test_ascend_lenet_grad_by_list_tuple2():
     """
     Feature: GradOperation get_by_list pass tuple/list with Ascend kernel by kernel Somas.

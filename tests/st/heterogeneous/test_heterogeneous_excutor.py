@@ -13,7 +13,6 @@
 # limitations under the License.
 """Test network turn on mix_precision and heterogeneous_excutor."""
 
-import pytest
 import numpy as np
 from mindspore import nn
 from mindspore import ops
@@ -21,6 +20,7 @@ from mindspore import amp
 from mindspore import Tensor
 from mindspore import context
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -57,11 +57,8 @@ class Net(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="onecard",
+          essential_mark="essential")
 def test_heterogeneous_excutor():
     input_data = np.random.randn(32, 3, 224, 224).astype(np.float64)
     label_data = np.random.randn(32, 10).astype(np.float32)
