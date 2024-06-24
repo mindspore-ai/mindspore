@@ -408,8 +408,12 @@ class Profiler:
             - "time": Only record host timestamp.
             - "memory": Only record host memory usage.
             - None: Not record host information.
-        host_stack (bool, optional): (Ascend) Whether to collect frame host call stack data. When using this
-            parameter, `op_time` must be set to ``True`` . Default value: ``True`` .
+        data_simplification (bool, optional): (Ascend only) Whether to remove FRAMEWORK data and other redundant data.
+            If set to True, only the delivery of profiler and the original performance data in the PROF_XXX
+            directory are retained to save disk space.
+            Default value: ``True`` .
+        host_stack (bool, optional): (Ascend) Whether to collect frame host call stack data.
+            Default value: ``True`` .
 
     Raises:
         RuntimeError: When the version of CANN does not match the version of MindSpore,
@@ -726,7 +730,7 @@ class Profiler:
                 return message
         return op_info
 
-    def analyse(self, offline_path=None, pretty=False, step_list=None, mode=ANALYSIS_SYNC_MODE):
+    def analyse(self, offline_path=None, pretty=False, step_list=None, mode="sync"):
         """
         Collect and analyze training performance data, support calls during and after training. The example shows above.
 
@@ -737,8 +741,12 @@ class Profiler:
             pretty (bool, optional): Whether to pretty json files. Default: ``False``.
             step_list (list, optional): A list of steps that need to be analyzed. Default: ``None``.
                 By default, all steps will be analyzed.
-            mode (str, optional): Analysis mode. Whether to analyse data in subprocess. Default: ``sync``.
-                By default, analyse data in current process.
+            mode (str, optional): Analysis mode, it must be one of ["sync", "async"]. Default: ``sync``.
+
+                - sync: analyse data in current process, it will block the current process.
+                - async: analyse data in subprocess, it will not the current process.Since the parsing process
+                  will take up extra CPU resources, please enable this mode according to the actual resource situation.
+
         """
         try:
             if isinstance(pretty, bool):
