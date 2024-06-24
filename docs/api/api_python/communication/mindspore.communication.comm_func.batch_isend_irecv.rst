@@ -23,6 +23,8 @@ mindspore.communication.comm_func.batch_isend_irecv
     异常:
         - **TypeError** - `p2p_op_list` 中不全是 `P2POp` 类型。
 
+    样例：
+
     .. note::
         .. include:: ../ops/mindspore.ops.comm_note.rst
 

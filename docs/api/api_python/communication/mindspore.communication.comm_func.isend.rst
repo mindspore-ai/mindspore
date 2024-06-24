@@ -19,6 +19,8 @@ mindspore.communication.comm_func.isend
         - **TypeError** - dst不是int或group不是str。
         - **ValueError** - 如果该线程的rank id 大于通信组的rank size。
 
+    样例：
+
     .. note::
         .. include:: ../ops/mindspore.ops.comm_note.rst
 
