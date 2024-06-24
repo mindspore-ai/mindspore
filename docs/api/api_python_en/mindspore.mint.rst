@@ -4,16 +4,6 @@ mindspore.mint
 Tensor
 ---------------
 
-Array Operation
-^^^^^^^^^^^^^^^
-
-.. msplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.nonzero
-
 
 Creation Operations
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -42,6 +32,7 @@ Indexing, Slicing, Joining, Mutating Operations
     mindspore.mint.index_select
     mindspore.mint.scatter_add
     mindspore.mint.narrow
+    mindspore.mint.nonzero
     mindspore.mint.normal
     mindspore.mint.topk
     mindspore.mint.sort

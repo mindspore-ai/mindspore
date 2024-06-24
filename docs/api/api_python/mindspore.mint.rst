@@ -4,16 +4,6 @@ mindspore.mint
 Tensor
 ---------------
 
-Array操作
-^^^^^^^^^^^^^^^^
-
-.. mscnplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.nonzero
-
 创建运算
 ^^^^^^^^^^^^^^^
 
@@ -41,6 +31,7 @@ Array操作
     mindspore.mint.index_select
     mindspore.mint.scatter_add
     mindspore.mint.narrow
+    mindspore.mint.nonzero
     mindspore.mint.normal
     mindspore.mint.topk
     mindspore.mint.sort
