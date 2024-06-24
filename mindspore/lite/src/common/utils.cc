@@ -270,7 +270,7 @@ std::string GetShortVersionStr(const std::string &str) {
   if (last_digit != std::string::npos) {
     str_splits[kNum3 - 1] = str3.substr(0, last_digit);
   }
-  return str_splits[0] + "." + str_splits[1] + "." + str_splits[2];
+  return str_splits[0] + "." + str_splits[1] + "." + str_splits[kNum3 - 1];
 }
 
 bool IsVersionGreaterThan(const std::string &str1, const std::string &str2) {
