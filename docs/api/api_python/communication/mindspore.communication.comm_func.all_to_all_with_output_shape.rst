@@ -17,7 +17,7 @@ mindspore.communication.comm_func.all_to_all_with_output_shape
     返回：
         Tuple(Tensor)，从远端设备接收的张量列表。
 
-    异常:
+    异常：
         - **TypeError** - `input_tensor_list` 中不全是张量类型。
         - **TypeError** - `output_shape_list` 中不全是张量或者元组类型。
         - **TypeError** - `input_tensor_list` 中张量的数据类型不全部一致。

@@ -1,7 +1,7 @@
-mindspore.ops.rand_like
+mindspore.mint.rand_like
 ========================
 
-.. py:function:: mindspore.ops.rand_like(input, *, dtype=None)
+.. py:function:: mindspore.mint.rand_like(input, *, dtype=None)
 
     返回shape与输入相同，类型为 `dtype` 的Tensor，dtype由输入决定，其元素取值服从 :math:`[0, 1)` 区间内的均匀分布。
 

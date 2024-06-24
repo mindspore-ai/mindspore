@@ -1,7 +1,7 @@
 mindspore.mint.sub
 ===========================
 
-.. py:function:: mindspore.mint.sub(input, other, alpha=1)
+.. py:function:: mindspore.mint.sub(input, other, *, alpha=1)
 
     对 `other` 缩放 `scalar` 后与 `input` 相减。
 

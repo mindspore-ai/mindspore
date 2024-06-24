@@ -692,13 +692,13 @@ def normal_ext(mean=0.0, std=1.0, size=None, generator=None):
     Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
 
     Args:
-        mean (Union[float, Tensor]): Mean value of each element, the shape of the 'mean' tensor
-        should be the same as that of the 'std' tensor. Default: ``0.0``.
-        std (Union[float, Tensor]): Standard deviation for each element, the shape of the 'std' tensor
-        should be the same as that of the 'mean' tensor. The value of std should be greater than or equal to 0.
-        Default: ``1.0``.
-        size (tuple): output size, where 'mean' and 'std' are constants. Default: ``None``.
-        generator (generator): MindSpore generator. Default: ``None``.
+        mean (Union[float, Tensor], optional): Mean value of each element, the shape of the 'mean' tensor
+            should be the same as that of the 'std' tensor. Default: ``0.0``.
+        std (Union[float, Tensor], optional): Standard deviation for each element, the shape of the 'std' tensor
+            should be the same as that of the 'mean' tensor. The value of std should be greater than or equal to 0.
+            Default: ``1.0``.
+        size (tuple, optional): output size, where 'mean' and 'std' are constants. Default: ``None``.
+        generator (generator, optional): MindSpore generator. Default: ``None``.
 
     Returns:
         Outputs a tensor with the same shape as 'mean',
