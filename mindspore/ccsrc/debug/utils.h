@@ -28,7 +28,7 @@ const std::unordered_map<std::string, std::string> header_map = {{"max", "Max Va
                                                                  {"count", "Count"},
                                                                  {"negative zero count", "Negative Zero Count"},
                                                                  {"positive zero count", "Positive Zero Count"},
-                                                                 {"nan count", "Nan Count"},
+                                                                 {"nan count", "NaN Count"},
                                                                  {"negative inf count", "Negative Inf Count"},
                                                                  {"positive inf count", "Positive Inf Count"},
                                                                  {"zero count", "Zero Count"},
