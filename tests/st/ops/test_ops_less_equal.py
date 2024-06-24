@@ -63,6 +63,12 @@ def test_ops_less_equal_forward(context_mode):
     expect = generate_expect_forward_output(x, other)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
+    x, _ = generate_random_input((2, 3, 4, 5), np.float32)
+    other, _ = generate_random_input((2, 3, 4, 1), np.float32)
+    output = less_equal_forward_func(ms.Tensor(x), ms.Tensor(other))
+    expect = generate_expect_forward_output(x, other)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
