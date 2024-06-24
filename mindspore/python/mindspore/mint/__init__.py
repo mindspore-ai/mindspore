@@ -452,7 +452,7 @@ def split(tensor, split_size_or_sections, dim=0):
         >>> import numpy as np
         >>> from mindspore import ops, Tensor
         >>> input_x = np.arange(9).astype("float32")
-        >>> output = ops.split_ext(Tensor(input_x), 3)
+        >>> output = ops.split(Tensor(input_x), 3)
         >>> print(output)
         (Tensor(shape=[3], dtype=Float32, value= [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00]),
          Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
