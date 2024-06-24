@@ -204,7 +204,7 @@ class BACKEND_EXPORT DeviceAddressUtils {
   static void GetCrossStreamAddressInfo(size_t op_stream_id,
                                         std::vector<std::pair<uint32_t, void *>> *cross_stream_addresses,
                                         const std::vector<T> &inputs) {
-    if constexpr (!std::is_base_of_v<T, tensor::BaseTensorPtr> &&
+    if constexpr (!std::is_same_v<T, tensor::BaseTensorPtr> && !std::is_same_v<T, tensor::TensorPtr> &&
                   !std::is_same_v<T, mindspore::kernel::KernelTensor *> &&
                   !std::is_same_v<T, device::DeviceAddressPtr>) {
       return;
@@ -218,8 +218,8 @@ class BACKEND_EXPORT DeviceAddressUtils {
   static void GetCrossStreamAddressInfo(size_t op_stream_id,
                                         std::vector<std::pair<uint32_t, void *>> *cross_stream_addresses,
                                         const T &input) {
-    if constexpr (std::is_base_of_v<T, tensor::BaseTensorPtr> || std::is_same_v<T, mindspore::kernel::KernelTensor *> ||
-                  std::is_same_v<T, device::DeviceAddressPtr>) {
+    if constexpr (std::is_same_v<T, tensor::BaseTensorPtr> || std::is_same_v<T, tensor::TensorPtr> ||
+                  std::is_same_v<T, mindspore::kernel::KernelTensor *> || std::is_same_v<T, device::DeviceAddressPtr>) {
       GetCrossStreamAddressInfoFromInput(op_stream_id, cross_stream_addresses, input);
     }
   }
