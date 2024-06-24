@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import tests.st.ge.ge_test_utils as utils
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_convert_return():
     """
     Feature: convert ge graph
@@ -29,10 +26,7 @@ def test_convert_return():
     utils.run_testcase('ge_convert', 'test_convert_return')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_convert_update_state():
     """
     Feature: convert ge graph
@@ -42,10 +36,7 @@ def test_convert_update_state():
     utils.run_testcase('ge_convert', 'test_convert_update_state')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_convert_load():
     """
     Feature: convert ge graph
@@ -55,10 +46,7 @@ def test_convert_load():
     utils.run_testcase('ge_convert', 'test_convert_load')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_convert_make_tuple():
     """
     Feature: convert ge graph
@@ -68,10 +56,7 @@ def test_convert_make_tuple():
     utils.run_testcase('ge_convert', 'test_convert_make_tuple')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_convert_tuple_get_item():
     """
     Feature: convert ge graph
@@ -81,10 +66,7 @@ def test_convert_tuple_get_item():
     utils.run_testcase('ge_convert', 'test_convert_tuple_get_item')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_convert_make_tuple_make_tuple():
     """
     Feature: convert ge graph

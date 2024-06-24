@@ -12,19 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import tests.st.ge.ge_test_utils as utils
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(
+    plat_marks=["platform_ascend", "platform_ascend910b"],
+    level_mark="level0",
+    card_mark="onecard",
+    essential_mark="essential",
+)
 def test_sparse_tensor():
     """
     Feature: sparse tensor
     Description: test sparse tensor with ge backend
     Expectation: success
     """
-    utils.run_testcase('run_sparse_tensor')
+    utils.run_testcase("run_sparse_tensor")

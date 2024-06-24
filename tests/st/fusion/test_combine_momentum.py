@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
 import numpy as np
 
+from tests.mark_utils import arg_mark
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import set_context
@@ -67,9 +67,7 @@ def find_files(para, file):
 SAVE_GRAPHS_PATH = "./ir_path"
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ir_fusion_combine_weight_decay_scale_momentum_weight():
     """"
     Feature: Test weight decay scale momentum fusion
@@ -106,9 +104,7 @@ def test_ir_fusion_combine_weight_decay_scale_momentum_weight():
     assert result == '2'
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ir_fusion_combine_momentum():
     """"
     Feature: Test momentum fusion

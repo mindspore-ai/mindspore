@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
 import mindspore.context as context
 from mindspore import Tensor, nn
 from mindspore.common import dtype as mstype
 from mindspore import Parameter
+from tests.mark_utils import arg_mark
 
 
 class GraphNet(nn.Cell):
@@ -37,6 +37,7 @@ class GraphNet(nn.Cell):
         out1 += self.param_a
         return out, out1
 
+
 def aoe_online():
     context.set_context(mode=context.GRAPH_MODE, aoe_tune_mode="online", aoe_config={"job_type": "2"})
     context.set_context(jit_config={"jit_level": "O2"})
@@ -46,11 +47,13 @@ def aoe_online():
     assert out0 == Tensor(20, mstype.float32)
     assert out1 == Tensor(30, mstype.float32)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
+@arg_mark(
+    plat_marks=["platform_ascend", "platform_ascend910b"],
+    level_mark="level0",
+    card_mark="onecard",
+    essential_mark="essential",
+)
 def test_aoe():
     """
     Feature: aoe

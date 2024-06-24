@@ -13,14 +13,15 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(
+    plat_marks=["platform_ascend", "platform_ascend910b"],
+    level_mark="level1",
+    card_mark="onecard",
+    essential_mark="unessential",
+)
 def test_if_by_if():
     """
     Feature: control flow(if) impl

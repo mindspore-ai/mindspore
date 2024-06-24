@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.ops import operations as P
@@ -40,9 +40,7 @@ class Net(nn.Cell):
         return output
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bias_dropout_add():
     """"
     Feature: Test bias dropout add fusion

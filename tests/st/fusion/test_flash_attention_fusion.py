@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-
 import mindspore.common.dtype as mstype
 import mindspore.context as context
 import mindspore.nn as nn
@@ -21,6 +20,7 @@ from mindspore import ops, Tensor
 from mindspore import jit
 import mindspore as ms
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 context.set_context(device_target="Ascend")
 
@@ -50,9 +50,7 @@ class PFA_FusionV1_Net(nn.Cell):
         attn_output = self.attention_compuation(query, key, value, attention_mask, nums_heads_per_partition, head_dim)
         return attn_output
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_prompt_flash_attention_fusion_v1(mode):
     """
@@ -115,9 +113,7 @@ class PFA_FusionV2_Net(nn.Cell):
         return attn_output
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_prompt_flash_attention_fusion_v2(mode):

@@ -12,14 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import tests.st.ge.ge_test_utils as utils
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_avg_pool_grad():
     """
     Description: Auto-diff AvgPool in ge backend
@@ -28,10 +26,7 @@ def test_avg_pool_grad():
     utils.run_testcase('pass_avg_pool_grad')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dropout():
     """
     Description: run dropout and dropoutgrad in ge backend
@@ -40,22 +35,7 @@ def test_dropout():
     utils.run_testcase('pass_dropout')
 
 
-@pytest.mark.skip(reason="DT_RESOURCE not support")
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_tensor_array():
-    """
-    Description: run TensorArray in ge backend
-    Expectation: success
-    """
-    utils.run_testcase('pass_tensor_array')
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_reduce_axis_update():
     """
     Description: test axis of reduce operator is empty
@@ -64,10 +44,7 @@ def test_reduce_axis_update():
     utils.run_testcase('pass_reduce_axis_update')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_convert_attr_to_input():
     """
     Description: test convert attr to input
@@ -76,10 +53,7 @@ def test_convert_attr_to_input():
     utils.run_testcase('pass_convert_attr_to_input')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_convert_resize_nearest_neighbor_x_dtype():
     """
     Description: test convert ReszieNearestNeighborX dytpe
@@ -87,10 +61,7 @@ def test_convert_resize_nearest_neighbor_x_dtype():
     """
     utils.run_testcase('pass_convert_resize_nearest_neighbor_x_dtype')
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_adaptive_max_pool2d_x_dtype():
     """
     Description: test AdaptiveMaxPool2DGeFusion dytpe
