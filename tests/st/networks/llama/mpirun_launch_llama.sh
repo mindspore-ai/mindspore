@@ -18,7 +18,9 @@ BASE_PATH=$(cd "$(dirname $0)"; pwd)
 USE_DEVICE_NUM=$1
 TEST_MODE=$2
 MF_PATH=${BASE_PATH}/../mindformers
+sed -i 's/numpy==1.26.4/numpy==1.20.0/' ${MF_PATH}/requirements.txt
 pip install -r ${MF_PATH}/requirements.txt
+
 
 export MS_FORMAT_MODE=1
 export MS_GE_TRAIN=1
@@ -29,31 +31,5 @@ export MS_GE_ATOMIC_CLEAN_POLICY=1
 
 export MS_MEMORY_POOL_RECYCLE=1
 
-if [ "$TEST_MODE" == "test_train" ]
-then
-  msrun --worker_num=${USE_DEVICE_NUM} \
-   --local_worker_num=${USE_DEVICE_NUM} \
-   --master_port=8118 \
-   --log_dir=msrun_log \
-   --join=True \
-   --cluster_time_out=300 \
-   ${BASE_PATH}/parallel_llama.py --test_train True > parallel_llama_train.log 2>&1
-elif [ "$TEST_MODE" == "test_predict" ]
-then
-  msrun --worker_num=${USE_DEVICE_NUM} \
-   --local_worker_num=${USE_DEVICE_NUM} \
-   --master_port=8118 \
-   --log_dir=msrun_log \
-   --join=True \
-   --cluster_time_out=300 \
-   ${BASE_PATH}/parallel_llama.py --test_predict True > parallel_llama_predict.log 2>&1
-elif [ "$TEST_MODE" == "test_train_cp" ]
-then
-  msrun --worker_num=${USE_DEVICE_NUM} \
-   --local_worker_num=${USE_DEVICE_NUM} \
-   --master_port=8118 \
-   --log_dir=msrun_log \
-   --join=True \
-   --cluster_time_out=300 \
-   ${BASE_PATH}/parallel_llama.py --test_train_cp True > parallel_llama_train_cp.log 2>&1
-fi
+mpirun --allow-run-as-root -n ${USE_DEVICE_NUM} \
+  python ${BASE_PATH}/parallel_llama.py --${TEST_MODE} True >${TEST_MODE}.log 2>&1

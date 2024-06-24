@@ -120,11 +120,11 @@ model:
     eos_token_id: 2
     pad_token_id: 0
     ignore_token_id: -100
-    compute_dtype: "bfloat16"
-    layernorm_compute_type: "float32"
+    compute_dtype: "float16"
+    layernorm_compute_type: "float16"
     softmax_compute_type: "float16"
-    rotary_dtype: "float32"
-    param_init_type: "bfloat16"
+    rotary_dtype: "float16"
+    param_init_type: "float16"
     use_past: True
     pretrain_seqlen: 4096 # seqlen of the pretrain checkpoint: 2048 for llama and 4096 for llama2
     extend_method: "None" # support "None", "PI", "NTK"
@@ -134,7 +134,7 @@ model:
     fine_grain_interleave: 1
     block_size: 16
     num_blocks: 512
-    is_dynamic: False
+    is_dynamic: True
     use_kvcache_op: False
     is_flexible_shape: False
     offset: 0

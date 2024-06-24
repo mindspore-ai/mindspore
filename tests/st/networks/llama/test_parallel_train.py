@@ -20,39 +20,36 @@ pytest tests/st/test_model/test_llama_model/test_parallel_train.py
 import os
 import pytest
 
-class TestLlamaParallelTrain:
-    """A test class for testing pipeline."""
 
-    @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend910b_training
-    @pytest.mark.env_single
-    def test_train(self):
-        """
-        Feature: Trainer.train()
-        Description: Test parallel trainer for train.
-        Expectation: AssertionError
-        """
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
-        sh_path = os.path.split(os.path.realpath(__file__))[0]
-        os.system(f"source {sh_path}/env.sh")
-        ret = os.system(f"bash {sh_path}/msrun_launch_llama.sh 8 test_train")
-        os.system(f"cat {sh_path}/msrun_log/worker_7.log")
-        os.system(f"grep -E 'ERROR|error' {sh_path}/msrun_log/worker_7.log -C 3")
-        assert ret == 0
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_single
+def test_train():
+    """
+    Feature: Trainer.train()
+    Description: Test parallel trainer for train.
+    Expectation: AssertionError
+    """
+    os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+    sh_path = os.path.split(os.path.realpath(__file__))[0]
+    os.system(f"source {sh_path}/env.sh")
+    ret = os.system(f"bash {sh_path}/mpirun_launch_llama.sh 8 test_train")
+    os.system(f"grep -E 'ERROR|error' {sh_path}/test_train.log -C 10")
+    assert ret == 0
 
-    @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend910b_training
-    @pytest.mark.env_single
-    def test_train_cp(self):
-        """
-        Feature: Trainer.train()
-        Description: Test context parallel trainer for train.
-        Expectation: AssertionError
-        """
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
-        sh_path = os.path.split(os.path.realpath(__file__))[0]
-        os.system(f"source {sh_path}/env.sh")
-        ret = os.system(f"bash {sh_path}/msrun_launch_llama.sh 8 test_train_cp")
-        os.system(f"cat {sh_path}/msrun_log/worker_7.log")
-        os.system(f"grep -E 'ERROR|error' {sh_path}/msrun_log/worker_7.log -C 3")
-        assert ret == 0
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_single
+def test_train_cp():
+    """
+    Feature: Trainer.train()
+    Description: Test context parallel trainer for train.
+    Expectation: AssertionError
+    """
+    os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+    sh_path = os.path.split(os.path.realpath(__file__))[0]
+    os.system(f"source {sh_path}/env.sh")
+    ret = os.system(f"bash {sh_path}/mpirun_launch_llama.sh 8 test_train_cp")
+    os.system(f"grep -E 'ERROR|error' {sh_path}/test_train_cp.log -C 10")
+    assert ret == 0

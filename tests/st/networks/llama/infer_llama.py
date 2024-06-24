@@ -55,16 +55,18 @@ def main(args):
     else:
         config.context.device_id = args.device_id
 
-    if not args.do_bf16:
-        config.model.model_config.compute_dtype = "float16"
-        config.model.model_config.rotary_dtype = "float16"
-        config.model.model_config.param_init_type = "float16"
+    if args.use_bf16:
+        config.model.model_config.compute_dtype = "bfloat16"
+        config.model.model_config.layernorm_compute_type = "bfloat16"
+        config.model.model_config.softmax_compute_type = "bfloat16"
+        config.model.model_config.rotary_dtype = "bfloat16"
+        config.model.model_config.param_init_type = "bfloat16"
 
     # initialize env
     init_context(use_parallel=args.use_parallel,
                  context_config=config.context,
                  parallel_config=config.parallel)
-    ms.set_context(jit_config={"jit_level": "O2"})
+    ms.set_context(jit_config={"jit_level": "O0"})
 
     model_config = LlamaConfig(**config.model.model_config)
 
@@ -72,6 +74,7 @@ def main(args):
     model_config.parallel_config = TransformerOpParallelConfig(**config.parallel_config)
     model_config.batch_size = args.batch_size
     model_config.use_past = args.use_past
+    model_config.is_dynamic = args.is_dynamic
     model_config.seq_length = args.seq_length
     model_config.checkpoint_name_or_path = args.checkpoint_path
     model_config.max_decode_length = args.max_decode_length
@@ -82,7 +85,7 @@ def main(args):
     model = LlamaForCausalLM(model_config)
     model.set_train(False)
 
-    inputs_ids = tokenizer(inputs, max_length=model_config.seq_length, padding="max_length")["input_ids"]
+    inputs_ids = tokenizer(inputs, max_length=model_config.seq_length)["input_ids"]
     outputs = model.generate(inputs_ids,
                              max_length=model_config.max_decode_length,
                              do_sample=model_config.do_sample,
@@ -111,6 +114,8 @@ if __name__ == "__main__":
                         help='set tokenizer model path.')
     parser.add_argument('--use_past', default=True, type=str2bool,
                         help='whether use past.')
+    parser.add_argument('--is_dynamic', default=True, type=str2bool,
+                        help='whether is dynamic shape.')
     parser.add_argument('--use_parallel', default=False, type=str2bool,
                         help='whether use past.')
     parser.add_argument('--yaml_file', default="", type=str,
@@ -127,7 +132,7 @@ if __name__ == "__main__":
                         help='model_parallel')
     parser.add_argument('--pipeline_stage', default=1, type=int,
                         help='pipeline_stage')
-    parser.add_argument("--do_bf16", default=False, type=str2bool,
+    parser.add_argument("--use_bf16", default=False, type=str2bool,
                         help="whether use bfloat16 to train")
     args_ = parser.parse_args()
     main(args_)
