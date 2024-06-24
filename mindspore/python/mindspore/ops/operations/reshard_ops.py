@@ -42,6 +42,7 @@ class Reshard(Primitive):
         >>> reshard = ops.Reshard(layout, layout, in_strategy)
         >>> reshard(tensor)
     """
+
     @prim_attr_register
     def __init__(self, in_layout, out_layout, in_strategy):
         super().__init__(name="Reshard")

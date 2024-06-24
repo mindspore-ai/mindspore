@@ -1756,6 +1756,7 @@ def arctan2(input, other):
     """
     return atan2_(input, other)
 
+
 def arctan2_ext(input, other):
     r"""
     Alias for :func:`mindspore.ops.atan2_ext`.
@@ -2138,6 +2139,7 @@ def inverse(input):
     """
     _check_is_tensor("input", input, "inverse")
     return matrix_inverse_(input)
+
 
 def inverse_ext(input):
     """
