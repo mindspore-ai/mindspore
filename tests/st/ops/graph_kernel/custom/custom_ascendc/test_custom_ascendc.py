@@ -26,7 +26,7 @@ class TestCase():
         self.temp_dir = tempfile.mkdtemp()
         compile_custom_run(self.temp_dir)
         self.cus_path = ""
-        for root, dirs, _ in os.walk(os.path.join(self.temp_dir, "custom_compiler", 'build_out')):
+        for root, dirs, _ in os.walk(os.path.join(self.temp_dir, "custom_compiler", 'CustomProject', 'build_out')):
             if "customize" in dirs:
                 self.cus_path = os.path.join(root, "customize")
                 break

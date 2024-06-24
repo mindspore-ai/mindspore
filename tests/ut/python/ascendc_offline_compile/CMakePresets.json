@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 19,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "Default Config",
+      "description": "Default build using Unix Makefiles generator",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build_out",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Release"
+        },
+        "ENABLE_SOURCE_PACKAGE": {
+          "type": "BOOL",
+          "value": "True"
+        },
+        "ENABLE_BINARY_PACKAGE": {
+          "type": "BOOL",
+          "value": "True"
+        },
+        "ASCEND_COMPUTE_UNIT": {
+          "type": "STRING",
+          "value": "ascend310p;ascend310b;ascend910;ascend910b"
+        },
+        "ENABLE_TEST": {
+          "type": "BOOL",
+          "value": "True"
+        },
+        "vendor_name": {
+          "type": "STRING",
+          "value": "customize"
+        },
+        "ASCEND_CANN_PACKAGE_PATH": {
+          "type": "PATH",
+          "value": "/usr/local/Ascend/ascend-toolkit/latest"
+        },
+        "ASCEND_PYTHON_EXECUTABLE": {
+          "type": "STRING",
+          "value": "python3"
+        },
+        "CMAKE_INSTALL_PREFIX": {
+          "type": "PATH",
+          "value": "${sourceDir}/build_out"
+        },
+        "ENABLE_CROSS_COMPILE": {
+          "type": "BOOL",
+          "value": "False"
+        },
+        "CMAKE_CROSS_PLATFORM_COMPILER": {
+          "type": "PATH",
+          "value": "/usr/bin/aarch64-linux-gnu-g++"
+        }
+      }
+    }
+  ]
+}

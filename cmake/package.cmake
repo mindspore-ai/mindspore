@@ -445,7 +445,6 @@ endif()
 if(ENABLE_D)
     install(
         DIRECTORY
-        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/ascend/hal/custom_compiler
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/custom_compiler
         DESTINATION ${INSTALL_ASCEND_DIR}
         COMPONENT mindspore
