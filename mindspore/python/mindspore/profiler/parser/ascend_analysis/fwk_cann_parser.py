@@ -97,9 +97,7 @@ class FwkCANNParser:
                         trace_data_json.extend(TraceEventManager.create_mindspore_to_npu_flow(host_data_sorted[op_idx],
                                                                                               device_data))
                         self.kernels.append(device_data)
-                    device_data_json = device_data.to_json()
-                    if device_data_json:
-                        trace_data_json.append(device_data_json)
+                    trace_data_json.append(device_data.to_json())
 
         return trace_data_json
 
