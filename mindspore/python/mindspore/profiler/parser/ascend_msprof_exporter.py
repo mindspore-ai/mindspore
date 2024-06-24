@@ -99,17 +99,29 @@ class AscendMsprofExporter:
         logger.info("The msprof command has been added to the path!")
 
     @classmethod
-    def get_msprof_info_path(cls):
-        """Check the existence of get_msprof_info.py script"""
-        outs, _ = AscendMsprofExporter.run_cmd(['which', cls._msprof_cmd])
+    def get_msprof_script_path(cls, script_path=""):
+        """Check the existence of msprof script"""
+        if not script_path:
+            return ""
+        outs, _ = AscendMsprofExporter.run_cmd(["which", cls._msprof_cmd])
         if not outs:
             return ""
         msprof_path = os.path.realpath(outs.strip())
-        sup_path = msprof_path.split('tools')[0]
-        script_path = os.path.join(sup_path, 'tools/profiler/profiler_tool/analysis/interface/get_msprof_info.py')
+        sup_path = msprof_path.split("tools")[0]
+        script_path = os.path.join(sup_path, script_path)
         if not os.path.exists(script_path):
             return ""
         return script_path
+
+    @classmethod
+    def get_msprof_info_path(cls):
+        """Check the existence of get_msprof_info.py script"""
+        return cls.get_msprof_script_path("tools/profiler/profiler_tool/analysis/interface/get_msprof_info.py")
+
+    @classmethod
+    def get_msprof_py_script_path(cls):
+        """Check the existence of msprof.py script"""
+        return cls.get_msprof_script_path("tools/profiler/profiler_tool/analysis/msprof/msprof.py")
 
     @classmethod
     def run_cmd(cls, cmd, timeout=300):
@@ -166,12 +178,8 @@ class AscendMsprofExporter:
                 model_iteration_dict = self._generate_step_trace()
 
             if model_iteration_dict:
-                for model_id, value in model_iteration_dict.items():
-                    for iteration_id in value:
-                        msprof_export_cmd = self._msprof_command_generator_old(self.prof_root_dir, model_id,
-                                                                               iteration_id)
-                        AscendMsprofExporter.run_cmd(msprof_export_cmd, self._time_out)
-
+                for model_id, iter_list in model_iteration_dict.items():
+                    self._run_msprof_export_cmd(self.prof_root_dir, model_id, iter_list)
         else:
             msprof_export_cmd = self._msprof_command_generator(self.prof_root_dir)
             AscendMsprofExporter.run_cmd(msprof_export_cmd, self._time_out)
@@ -183,6 +191,22 @@ class AscendMsprofExporter:
         AscendMsprofExporter.run_cmd(msprof_analyze_cmd, self._time_out)
 
         return flag
+
+    def _run_msprof_export_cmd(self, prof_root_dir, model_id, iter_list):
+        """run msprof.py export cmd"""
+        script_path = AscendMsprofExporter.get_msprof_py_script_path()
+        if not script_path:
+            raise FileNotFoundError("Can not find msprof.py path, please check the cann environment.")
+        export_cmd = ['python', script_path]
+        iter_param = []
+        if isinstance(model_id, int) and model_id >= 0:
+            iter_param.extend(["--model-id", str(model_id)])
+        if iter_list and isinstance(iter_list, list):
+            iter_list.sort()
+            iter_param.extend(["--iteration-id", str(iter_list[0]), "--iteration-count", str(len(iter_list))])
+        for export_type in ("timeline", "summary"):
+            cmd = export_cmd + ["export", export_type, "-dir", prof_root_dir] + iter_param
+            AscendMsprofExporter.run_cmd(cmd, self._time_out)
 
     def _msprof_command_generator_old(self, output, model_id=None, iter_id=None):
         """msprof export helper"""

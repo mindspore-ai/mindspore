@@ -107,6 +107,7 @@ class CANNEvent(BaseEvent):
 
 
 class MindSporeOpEnum(Enum):
+    """MindSporeOp index enum"""
     START_NS = 0
     END_NS = 1
     SEQUENCE_UNMBER = 2
@@ -115,7 +116,8 @@ class MindSporeOpEnum(Enum):
     END_THREAD_ID = 5
     FORWORD_THREAD_ID = 6
     FLOW_ID = 7
-    IS_ASYNC = 8
+    STEP_ID = 8
+    IS_ASYNC = 9
 
 
 class MindSporeOpEvent(BaseEvent):
@@ -129,7 +131,7 @@ class MindSporeOpEvent(BaseEvent):
         Constant.OP_NAME: 3, Constant.INPUT_SHAPES: 5, Constant.INPUT_DTYPES: 4,
         Constant.CALL_STACK: 6, Constant.MODULE_HIERARCHY: 7, Constant.FLOPS: 8
     }
-    _fix_data_format = "<3q5Q?"
+    _fix_data_format = "<3q6Q?"
 
     def _init_params(self):
         """Initialize the attribute value of MindSporeOpEvent."""
@@ -141,6 +143,7 @@ class MindSporeOpEvent(BaseEvent):
         self.end_us = ProfilerInfoParser.get_local_time(fix_size_data[MindSporeOpEnum.END_NS.value])
         self.dur = self.end_us - self.ts
         self.flow_id = int(fix_size_data[MindSporeOpEnum.FLOW_ID.value])
+        self.step = int(fix_size_data[MindSporeOpEnum.STEP_ID.value])
         self.args = self.__get_args(fix_size_data)
 
     def __get_args(self, fix_size_data) -> Dict:

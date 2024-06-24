@@ -37,7 +37,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
     scope_index = 1
     cpu_index = 2
 
-    def __init__(self, profiling_dir, source_path, mindstudio_profiler_output, rank_id, rank_size, mode):
+    def __init__(self, profiling_dir, source_path, mindstudio_profiler_output, rank_id, rank_size, mode,
+                 step_list=None):
         super().__init__(DeviceTarget.ASCEND.value, mode)
         self._profiling_dir = profiling_dir
         self._source_path = source_path
@@ -47,6 +48,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         self._timeline_display_filename = self._timeline_display_filename.format(rank_id)
         self._timeline_summary_filename = self._timeline_summary_filename.format(rank_id)
         self._timeline_data = []
+        self._step_list = step_list
 
         self.step_time_list_df = np.dtype(
             [('Iteration ID', object), ('Steps', object), ('Iteration Start', float), ('Iteration Time', float)])
@@ -256,7 +258,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         """
         Get framework op range trace data, flow events and hardware kernel events
         """
-        fwkcann_parser = FwkCANNParser(self._source_path, cann_kernel_data, self._rank_id)
+        fwkcann_parser = FwkCANNParser(self._source_path, cann_kernel_data, self._rank_id, self._step_list)
         fwk_link_data = fwkcann_parser.generate_trace_data()
         kernels = fwkcann_parser.kernels
         result = {"trace_data": fwk_link_data, "kernels": kernels}

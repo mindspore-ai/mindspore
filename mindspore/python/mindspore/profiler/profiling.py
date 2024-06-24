@@ -759,11 +759,17 @@ class Profiler:
             if step_list is not None and not isinstance(step_list, list):
                 raise ProfilerParamTypeErrorException("Parameter step_list must be a list.")
             if step_list:
-                if not isinstance(step_list[0], int):
+                if not all(isinstance(step_id, int) for step_id in step_list):
                     raise ProfilerParamTypeErrorException("The elements of the parameter step_list must be integers.")
-                model_iteration_dict.setdefault(DEFAULT_MODEL_ID, []).append(step_list[0])
+                step_list.sort()
+                if step_list[-1] - step_list[0] != len(step_list) - 1:
+                    err_msg = "The elements of the parameter step_list must be continuous integers."
+                    raise ProfilerParamTypeErrorException(err_msg)
+                model_iteration_dict[DEFAULT_MODEL_ID] = step_list
+            if offline_path is not None and not isinstance(offline_path, str):
+                raise ProfilerParamTypeErrorException("For analyse, the type of parameter offline_path must be str.")
             self._analyse(offline_path=offline_path, model_iteration_dict=model_iteration_dict, mode=mode)
-        except (ProfilerException, RuntimeError, OSError) as err:
+        except (ProfilerException, RuntimeError, OSError, TypeError, NameError) as err:
             logger.error("Profiler analyse failed: %s", str(err))
 
     def _analyse(self, offline_path=None, model_iteration_dict=None, mode=ANALYSIS_SYNC_MODE):
@@ -1327,7 +1333,8 @@ class Profiler:
         try:
             logger.info("Profiling: analyzing the timeline data")
             timeline_analyser = AscendTimelineGenerator(self._output_path, source_path, mindstudio_profiler_output,
-                                                        self._rank_id, self._rank_size, context.get_context('mode'))
+                                                        self._rank_id, self._rank_size, context.get_context('mode'),
+                                                        self._model_iteration_dict.get(DEFAULT_MODEL_ID))
             timeline_analyser.parse_cluster_data(op_summary, steptrace)
             timeline_analyser.parse_timeline_data(pretty=self._pretty_json)
             timeline_analyser.write_timeline_display()
