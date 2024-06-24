@@ -1482,14 +1482,7 @@ void Pipeline::Run() {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
   FuncGraphPtr user_graph = nullptr;
-#if defined(__linux__) && defined(WITH_BACKEND)
-  std::string last_compile_action = kDistributedSplit;
-  if (pipeline::IsPhaseExport(PhaseManager::GetInstance().phase())) {
-    last_compile_action = kValidate;
-  }
-#else
-  std::string last_compile_action = kValidate;
-#endif
+  const std::string last_compile_action = kValidate;
   bool already_print_profile = false;
   static const auto compile_profile_finish_action = common::GetCompileConfig("COMPILE_PROFILE_FINISH_ACTION");
   ProfileExecute(MsProfile::GetProfile(), [this, &user_graph, &last_compile_action, &already_print_profile]() {
