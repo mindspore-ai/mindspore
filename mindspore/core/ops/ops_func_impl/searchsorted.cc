@@ -74,14 +74,12 @@ abstract::BaseShapePtr SearchSortedFuncImpl::InferShape(const PrimitivePtr &prim
 
   auto values_shape_ptr = input_args[kInputIndex1]->GetShape();
   auto values_shape = values_shape_ptr->GetShapeVector();
-
   if (MS_UNLIKELY(IsDynamicRank(sequence_shape)) || MS_UNLIKELY(IsDynamicRank(values_shape))) {
     return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
   }
 
   auto dtype_opt = GetScalarValue<int64_t>(input_args[kInputIndex3]->GetValue());
   auto right_opt = GetScalarValue<bool>(input_args[kInputIndex4]->GetValue());
-
   if (!dtype_opt.has_value() || !right_opt.has_value()) {
     return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
   }
@@ -89,7 +87,6 @@ abstract::BaseShapePtr SearchSortedFuncImpl::InferShape(const PrimitivePtr &prim
   std::map<std::string, TypePtr> types;
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
   TypePtr sorter_type = input_args[kInputIndex2]->GetType();
-
   if (!sorter_type->isa<TypeNone>()) {
     (void)types.emplace("sorter", sorter_type);
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, {kInt64}, prim_name);

@@ -128,7 +128,6 @@ ShapeArray RepeatInterleaveGradFuncImpl::InferShape(const PrimitivePtr &primitiv
   const auto &repeats_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(repeats_tensor);
   const auto repeats_shape = repeats_tensor->shape();
-
   if (repeats_shape.size() > 1) {
     MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', 'repeats' must be 0-dim or 1-dim tensor.";
   }

@@ -64,7 +64,6 @@ BaseShapePtr RepeatInterleaveIntFuncImpl::InferShape(const PrimitivePtr &primiti
   auto x_base_shape = input_args[kInputIndex0]->GetShape();
   auto x_shape = x_base_shape->GetShapeVector();
   auto repeats_opt = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue());
-
   if (MS_UNLIKELY(IsDynamicRank(x_shape)) || MS_UNLIKELY(!repeats_opt.has_value())) {
     return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
   }

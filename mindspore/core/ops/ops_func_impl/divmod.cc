@@ -65,7 +65,6 @@ TypePtrList DivModFuncImpl::InferType(const PrimitivePtr &primitive, const Value
   const auto &x_type_id = x_dtype->type_id();
 
   auto rounding_mode = input_values[kIndex2]->cast<Int64ImmPtr>()->value();
-
   if (rounding_mode == RoundingMode::TRUNC || rounding_mode == RoundingMode::FLOOR) {
     return {x_dtype};
   } else {

@@ -256,7 +256,6 @@ BaseShapePtr Im2ColExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto is_padding_unknown = ArrayOptHasUnknownValue(padding_opt);
   auto stride_opt = GetArrayValue<int64_t>(input_args[kIndex4]);
   auto is_stride_unknown = ArrayOptHasUnknownValue(stride_opt);
-
   if (MS_UNLIKELY(is_dynamic_dim(input_height) || is_dynamic_dim(input_width) || is_kernel_unknown ||
                   is_padding_unknown || is_dilation_unknown || is_stride_unknown)) {
     out_shape.push_back(abstract::TensorShape::kShapeDimAny);

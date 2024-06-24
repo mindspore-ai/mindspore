@@ -40,16 +40,16 @@ bool SearchSortedGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  sequence_per_size_ = abstract::TypeIdSize(inputs[0]->dtype_id());
-  value_per_size_ = abstract::TypeIdSize(inputs[1]->dtype_id());
-  unit_output_size_ = abstract::TypeIdSize(outputs[0]->dtype_id());
-  right = inputs[4]->GetValueWithCheck<bool>();
+  sequence_per_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  value_per_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
+  unit_output_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id());
+  right = inputs[kIndex4]->GetValueWithCheck<bool>();
   return true;
 }
 
 int SearchSortedGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
-  if (!IsValidShape(inputs[0]->GetShapeVector()) || !IsValidShape(inputs[1]->GetShapeVector())) {
+  if (!IsValidShape(inputs[kIndex0]->GetShapeVector()) || !IsValidShape(inputs[kIndex1]->GetShapeVector())) {
     return KRET_UNKNOWN_SHAPE;
   }
 
