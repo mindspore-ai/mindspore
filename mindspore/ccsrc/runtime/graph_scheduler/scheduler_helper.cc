@@ -124,7 +124,10 @@ void UpdateDataArrowRefCount(AbstractActor *const to_actor, size_t to_input_inde
   MS_LOG(DEBUG) << "Process shape depend attribute for actor : " << to_actor->GetAID().Name();
   bool need_increase_ref_count = true;
   auto to_kernel_actor = dynamic_cast<KernelActor *>(to_actor);
-  if (to_kernel_actor != nullptr) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  static const bool enable_infer_boost = ms_context->IsEnableInferBoost();
+  if (to_kernel_actor != nullptr && !enable_infer_boost) {
     auto to_kernel = to_kernel_actor->kernel();
     auto cnode = to_kernel->cast<CNodePtr>();
     if (cnode != nullptr) {

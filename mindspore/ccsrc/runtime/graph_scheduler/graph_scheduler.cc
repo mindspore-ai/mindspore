@@ -2017,8 +2017,11 @@ void GraphScheduler::LinkDataArrowForBaseActor(AbstractActor *const from_actor, 
   // The custom actor will sync the device tensor data from the data arrow and no need copy.
   // Ignore the input address that no need copy.
   bool need_copy = true;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  static const bool enable_infer_boost = ms_context->IsEnableInferBoost();
   auto to_kernel_actor = dynamic_cast<KernelActor *>(to_actor);
-  if (to_kernel_actor != nullptr) {
+  if (to_kernel_actor != nullptr && !enable_infer_boost) {
     auto to_kernel = to_kernel_actor->kernel();
     auto cnode = to_kernel->cast<CNodePtr>();
     if (cnode != nullptr) {
