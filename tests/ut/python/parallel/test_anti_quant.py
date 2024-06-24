@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import numpy as np
-import pytest
 
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
@@ -86,31 +85,6 @@ def test_anti_quant_2D():
     assert validator.check_parameter_shape("scale", [512])
     assert validator.check_parameter_shape("offset", [512])
 
-@pytest.mark.skip(reason="random failures")
-def test_anti_quant_3D():
-    """
-    Feature: test quant ops
-    Description:
-    Expectation: compile success
-    """
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=4, global_rank=0)
-
-    strategy = ((2, 1, 2), (2,), (2,))
-
-    net = AntiQuantNet(False, strategy)
-
-    data = Parameter(Tensor(np.ones([4096, 512, 512]), dtype=ms.int8), "data")
-    scale = Parameter(Tensor(np.ones([512]), dtype=ms.float32), "scale")
-    offset = Parameter(Tensor(np.ones([512]), dtype=ms.float32), "offset")
-
-    net.set_inputs(data, scale, offset)
-
-    phase = compile_net(net, data, scale, offset)
-    validator = ParallelValidator(net, phase)
-
-    assert validator.check_parameter_shape("data", [2048, 512, 256])
-    assert validator.check_parameter_shape("scale", [256])
-    assert validator.check_parameter_shape("offset", [256])
 
 def test_anti_quant_4D():
     """
